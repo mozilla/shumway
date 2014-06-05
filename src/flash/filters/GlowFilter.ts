@@ -16,6 +16,7 @@
 // Class: GlowFilter
 module Shumway.AVM2.AS.flash.filters {
 
+  import assert = Shumway.Debug.assert;
   import Rectangle = flash.geom.Rectangle;
 
   export class GlowFilter extends flash.filters.BitmapFilter {

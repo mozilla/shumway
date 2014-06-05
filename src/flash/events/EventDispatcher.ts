@@ -20,6 +20,7 @@ module Shumway.AVM2.AS.flash.events {
   import isFunction = Shumway.isFunction;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import assert = Shumway.Debug.assert;
 
   class EventListenerEntry {
     constructor(public listener: EventHandler, public useCapture: boolean, public priority: number)

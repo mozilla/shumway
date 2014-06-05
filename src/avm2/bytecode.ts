@@ -15,6 +15,7 @@
  */
 
 module Shumway.AVM2 {
+  import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
 
   import AbcFile = Shumway.AVM2.ABC.AbcFile;

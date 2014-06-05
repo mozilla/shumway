@@ -15,6 +15,7 @@
  */
 // Class: AS2Globals
 module Shumway.AVM2.AS.avm1lib {
+  import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Loader = Shumway.AVM2.AS.flash.display.Loader;

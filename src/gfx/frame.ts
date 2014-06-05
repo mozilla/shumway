@@ -9,6 +9,7 @@ module Shumway.GFX {
   import Tile = Geometry.Tile;
   import OBB = Geometry.OBB;
 
+  import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
 
   export enum Direction {

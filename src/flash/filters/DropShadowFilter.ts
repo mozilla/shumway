@@ -16,6 +16,7 @@
 // Class: DropShadowFilter
 module Shumway.AVM2.AS.flash.filters {
 
+  import assert = Shumway.Debug.assert;
   import Rectangle = flash.geom.Rectangle;
 
   export class DropShadowFilter extends flash.filters.BitmapFilter {

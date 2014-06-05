@@ -24,6 +24,7 @@ module Shumway.GFX.GL {
   import radianToDegrees = Geometry.radianToDegrees;
   import degreesToRadian = Geometry.degreesToRadian;
 
+  import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
   import notImplemented = Shumway.Debug.notImplemented;
 

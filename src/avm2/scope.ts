@@ -31,6 +31,7 @@ module Shumway.AVM2.Runtime {
   import defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
+  import assert = Shumway.Debug.assert;
 
   import boxValue = Shumway.ObjectUtilities.boxValue
 

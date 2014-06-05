@@ -307,6 +307,8 @@ module Shumway {
   }
 
   export module ArrayUtilities {
+    import assert = Shumway.Debug.assert;
+
     /**
      * Pops elements from a source array into a destination array. This avoids
      * allocations and should be faster. The elements in the destination array
@@ -552,16 +554,16 @@ module Shumway {
     }
 
     readInt(): number {
-      release || assert ((this._offset & 0x3) === 0);
-      release || assert (this._offset <= this._u8.length - 4);
+      release || Debug.assert ((this._offset & 0x3) === 0);
+      release || Debug.assert (this._offset <= this._u8.length - 4);
       var v = this._i32[this._offset >> 2];
       this._offset += 4;
       return v;
     }
 
     readFloat(): number {
-      release || assert ((this._offset & 0x3) === 0);
-      release || assert (this._offset <= this._u8.length - 4);
+      release || Debug.assert ((this._offset & 0x3) === 0);
+      release || Debug.assert (this._offset <= this._u8.length - 4);
       var v = this._f32[this._offset >> 2];
       this._offset += 4;
       return v;
@@ -678,7 +680,7 @@ module Shumway {
       for (var property in template) {
         if (hasOwnProperty(template, property)) {
           var descriptor = Object.getOwnPropertyDescriptor(template, property);
-          assert (descriptor);
+          release || Debug.assert (descriptor);
           try {
             Object.defineProperty(object, property, descriptor);
           } catch (e) {
@@ -749,7 +751,7 @@ module Shumway {
     }
 
     export function defineNewNonEnumerableProperty(obj, name, value) {
-      release || assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
+      release || Debug.assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
       ObjectUtilities.defineNonEnumerableProperty(obj, name, value);
     }
   }
@@ -776,6 +778,8 @@ module Shumway {
   }
 
   export module StringUtilities {
+    import assert = Shumway.Debug.assert;
+
     export function memorySizeToString(value: number) {
       value |= 0;
       var K = 1024;
@@ -1581,14 +1585,14 @@ module Shumway {
     private _length: number;
 
     constructor (compare: (l: T, r: T) => number) {
-      release || assert(compare);
+      release || Debug.assert(compare);
       this._compare = compare;
       this._head = null;
       this._length = 0;
     }
 
     public push(value: T) {
-      release || assert(value !== undefined);
+      release || Debug.assert(value !== undefined);
       this._length ++;
       if (!this._head) {
         this._head = new SortedListNode<T>(value, null);
@@ -1734,6 +1738,8 @@ module Shumway {
   }
 
   export module BitSets {
+    import assert = Shumway.Debug.assert;
+
     export var ADDRESS_BITS_PER_WORD = 5;
     export var BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
     export var BIT_INDEX_MASK = BITS_PER_WORD - 1;
@@ -2384,10 +2390,10 @@ module Shumway {
     private _yMax: number;
 
     constructor (xMin: number, yMin: number, xMax: number, yMax: number) {
-      assert(isInteger(xMin));
-      assert(isInteger(yMin));
-      assert(isInteger(xMax));
-      assert(isInteger(yMax));
+      Debug.assert(isInteger(xMin));
+      Debug.assert(isInteger(yMin));
+      Debug.assert(isInteger(xMax));
+      Debug.assert(isInteger(yMax));
       this._xMin = xMin|0;
       this._yMin = yMin|0;
       this._xMax = xMax|0;
@@ -2460,7 +2466,7 @@ module Shumway {
     }
 
     set xMin(value: number) {
-      assert(isInteger(value));
+      Debug.assert(isInteger(value));
       this._xMin = value;
       this.assertValid();
     }
@@ -2470,7 +2476,7 @@ module Shumway {
     }
 
     set yMin(value: number) {
-      assert(isInteger(value));
+      Debug.assert(isInteger(value));
       this._yMin = value|0;
       this.assertValid();
     }
@@ -2480,7 +2486,7 @@ module Shumway {
     }
 
     set xMax(value: number) {
-      assert(isInteger(value));
+      Debug.assert(isInteger(value));
       this._xMax = value|0;
       this.assertValid();
     }
@@ -2494,7 +2500,7 @@ module Shumway {
     }
 
     set yMax(value: number) {
-      assert(isInteger(value));
+      Debug.assert(isInteger(value));
       this._yMax = value|0;
       this.assertValid();
     }
@@ -2768,8 +2774,8 @@ module Shumway {
     }
 
     public register(type, callback) {
-      assert(type);
-      assert(callback);
+      Debug.assert(type);
+      Debug.assert(callback);
       var queue = this._queues[type];
       if (queue) {
         if (queue.indexOf(callback) > -1) {
@@ -2782,8 +2788,8 @@ module Shumway {
     }
 
     public unregister(type: string, callback) {
-      assert(type);
-      assert(callback);
+      Debug.assert(type);
+      Debug.assert(callback);
       var queue = this._queues[type];
       if (!queue) {
         return;
@@ -3172,6 +3178,3 @@ module Shumway {
 
   global.Promise = Promise;
 })();
-
-import assert = Shumway.Debug.assert;
-import IndentingWriter = Shumway.IndentingWriter;

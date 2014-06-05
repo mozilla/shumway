@@ -36,6 +36,7 @@ module Shumway.Remoting.Player {
 
   import IDataInput = Shumway.ArrayUtilities.IDataInput;
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
+  import assert = Shumway.Debug.assert;
 
   export class PlayerChannelSerializer {
     public output: IDataOutput;

@@ -15,6 +15,7 @@
  */
 // Class: Loader
 module Shumway.AVM2.AS.flash.display {
+  import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import FileLoadingService = Shumway.FileLoadingService;
   import Telemetry = Shumway.Telemetry;

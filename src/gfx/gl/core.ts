@@ -3,6 +3,7 @@
 module Shumway.GFX.GL {
   var release = false;
 
+  import assert = Shumway.Debug.assert;
   import Rectangle = Geometry.Rectangle;
   import RegionAllocator = Geometry.RegionAllocator;
   import RenderableTileCache = Geometry.RenderableTileCache;

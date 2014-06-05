@@ -18,6 +18,7 @@
 
 /// <reference path='references.ts'/>
 module Shumway.SWF {
+  import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
 
   export var InflateNoDataError = {};

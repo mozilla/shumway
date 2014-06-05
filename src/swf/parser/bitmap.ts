@@ -16,6 +16,7 @@
 
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
+  import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
 
   export enum BitmapFormat {

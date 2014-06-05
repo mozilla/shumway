@@ -17,6 +17,7 @@
  */
 
 module Shumway.AVM2.Compiler.Backend {
+  import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
   import pushUnique = Shumway.ArrayUtilities.pushUnique;
   import Timer = Shumway.Metrics.Timer;

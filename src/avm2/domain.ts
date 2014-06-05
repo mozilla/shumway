@@ -29,6 +29,7 @@ module Shumway.AVM2.Runtime {
   var counter = Shumway.Metrics.Counter.instance;
 
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
+  import assert = Shumway.Debug.assert;
   import IndentingWriter = Shumway.IndentingWriter;
 
   declare var createFunction;

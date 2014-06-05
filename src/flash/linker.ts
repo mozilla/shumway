@@ -6,6 +6,7 @@ module Shumway.AVM2.AS {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import flash = Shumway.AVM2.AS.flash;
 
+  import assert = Shumway.Debug.assert;
 
   function M(classSimpleName: string, nativeName?: string, cls?: ASClass ) {
     return {

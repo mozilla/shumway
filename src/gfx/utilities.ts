@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 module Shumway {
+  import assert = Shumway.Debug.assert;
 
   /**
    * Things that can be kept in linked lists.

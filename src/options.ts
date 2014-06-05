@@ -41,6 +41,7 @@
 module Shumway.Options {
   import isObject = Shumway.isObject;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
+  import assert = Shumway.Debug.assert;
 
   export class Argument {
     shortName: string;

@@ -21,6 +21,7 @@ module Shumway.AVM2.ABC {
   import isNumber = Shumway.isNumber;
   import isNumeric = Shumway.isNumeric;
   import isObject = Shumway.isObject;
+  import assert = Shumway.Debug.assert;
 
   declare var TextDecoder;
 

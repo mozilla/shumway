@@ -35,6 +35,7 @@ module Shumway.AVM2.Runtime {
   import copyProperties = Shumway.ObjectUtilities.copyProperties;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
+  import assert = Shumway.Debug.assert;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;

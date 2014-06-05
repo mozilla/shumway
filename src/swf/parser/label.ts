@@ -16,6 +16,7 @@
 
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
+  import assert = Shumway.Debug.assert;
   import rgbaObjToCSSStyle = Shumway.ColorUtilities.rgbaObjToCSSStyle;
   var fromCharCode = String.fromCharCode;
 

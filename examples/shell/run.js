@@ -50,6 +50,10 @@ console.time("Load Parser Dependencies");
 
 load("../../lib/jpgjs/jpg.js");
 
+load("../../build/ts/utilities.js");
+load("../../build/ts/dataBuffer.js");
+load("../../build/ts/ShapeData.js");
+
 // Load SWF Dependencies
 console.time("Load SWF Dependencies");
 load("../../build/ts/swf/inflate.js");

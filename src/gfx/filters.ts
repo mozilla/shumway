@@ -5,6 +5,8 @@ module Shumway.GFX {
   import Matrix = Geometry.Matrix;
   import DirtyRegion = Geometry.DirtyRegion;
 
+  import assert = Shumway.Debug.assert;
+
   export class Filter {
 
   }

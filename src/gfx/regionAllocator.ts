@@ -17,6 +17,7 @@
 /// <reference path='references.ts'/>
 module Shumway.GFX.Geometry {
   import roundToMultipleOfPowerOfTwo = IntegerUtilities.roundToMultipleOfPowerOfTwo;
+  import assert = Shumway.Debug.assert;
 
   /**
    * Various 2D rectangular region allocators. These are used to manage

@@ -19,6 +19,7 @@ module Shumway.GFX.Geometry {
 
   import clamp = Shumway.NumberUtilities.clamp;
   import pow2 = Shumway.NumberUtilities.pow2;
+  import assert = Shumway.Debug.assert;
 
   export function radianToDegrees(r) {
     return r * 180 / Math.PI;

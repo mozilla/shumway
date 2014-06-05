@@ -32,6 +32,7 @@ module Shumway.Remoting.GFX {
 
   import IDataInput = Shumway.ArrayUtilities.IDataInput;
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
+  import assert = Shumway.Debug.assert;
 
   export class GFXChannelSerializer {
     output: IDataOutput;

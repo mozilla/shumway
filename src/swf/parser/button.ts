@@ -16,6 +16,8 @@
 
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
+  import assert = Shumway.Debug.assert;
+
   export function defineButton(tag: any, dictionary: any): any {
     var characters = tag.characters;
     var states = {

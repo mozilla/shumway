@@ -9,6 +9,8 @@ module Shumway.GFX {
   import Tile = Geometry.Tile;
   import OBB = Geometry.OBB;
 
+  import assert = Shumway.Debug.assert;
+
   export class FrameContainer extends Frame {
     _children: Frame [];
     constructor() {

@@ -39,7 +39,7 @@ XRegExp.install({ natives: true });
  * know if a proxied operation is triggered by AS3 code or VM code.
 */
 
-var callWriter = new IndentingWriter(false, function (str){
+var callWriter = new Shumway.IndentingWriter(false, function (str){
   print(str);
 });
 

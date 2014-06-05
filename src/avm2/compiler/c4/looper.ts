@@ -24,6 +24,8 @@ module Shumway.AVM2.Compiler.Looper {
   import Block = Compiler.IR.Block;
   import BlockVisitor = Compiler.IR.BlockVisitor;
 
+  import assert = Shumway.Debug.assert;
+
   export module Control {
     export enum Kind {
       SEQ = 1,

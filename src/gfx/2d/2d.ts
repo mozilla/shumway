@@ -27,6 +27,7 @@ module Shumway.GFX {
 
   declare var FILTERS;
 
+  import assert = Shumway.Debug.assert;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
   import Point = Shumway.GFX.Geometry.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;

@@ -19,6 +19,8 @@
 
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
+  import assert = Shumway.Debug.assert;
+
   function getUint16(buff, pos) {
     return (buff[pos] << 8) | buff[pos + 1];
   }

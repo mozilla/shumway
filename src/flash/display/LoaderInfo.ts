@@ -15,6 +15,7 @@
  */
 // Class: LoaderInfo
 module Shumway.AVM2.AS.flash.display {
+  import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;

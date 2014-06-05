@@ -18,6 +18,7 @@ module Shumway.AVM2.AS.flash.filters {
 
   import Rectangle = flash.geom.Rectangle;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import assert = Shumway.Debug.assert;
 
   export class BevelFilter extends flash.filters.BitmapFilter {
 

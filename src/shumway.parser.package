@@ -2,6 +2,10 @@
 
 lib/jpgjs/jpg.js
 
+build/ts/utilities.js
+build/ts/dataBuffer.js
+build/ts/ShapeData.js
+
 ## Load SWF Dependencies
 #!inline console.time("Load SWF Dependencies");
 build/ts/swf/inflate.js

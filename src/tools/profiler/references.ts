@@ -13,8 +13,6 @@
 /// <reference path='tracelogger/thread.ts' />
 /// <reference path='theme/ui.ts' />
 
-declare var release: boolean;
-
 interface MouseWheelEvent extends MouseEvent {
   deltaX: number;
   deltaY: number;

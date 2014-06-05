@@ -15,6 +15,7 @@
  */
 // Class: SoundChannel
 module Shumway.AVM2.AS.flash.media {
+  import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;

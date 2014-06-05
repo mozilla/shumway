@@ -140,6 +140,8 @@
 module Shumway {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import nearestPowerOfTwo = Shumway.IntegerUtilities.nearestPowerOfTwo;
+
+  import assert = Shumway.Debug.assert;
   /**
    * Used for (de-)serializing Graphics path data in defineShape, flash.display.Graphics
    * and the renderer.

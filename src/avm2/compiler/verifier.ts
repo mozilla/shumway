@@ -20,6 +20,7 @@ module Shumway.AVM2.Verifier {
   import Trait = Shumway.AVM2.ABC.Trait;
   import Info = Shumway.AVM2.ABC.Info;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
+  import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import popManyIntoVoid = Shumway.ArrayUtilities.popManyIntoVoid;
 

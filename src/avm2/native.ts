@@ -41,6 +41,7 @@ module Shumway.AVM2.AS {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   var _notImplemented = notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import assert = Shumway.Debug.assert;
   import createFunction = Shumway.AVM2.Runtime.createFunction;
   import Runtime = Shumway.AVM2.Runtime;
   import IndentingWriter = Shumway.IndentingWriter;

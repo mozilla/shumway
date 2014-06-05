@@ -38,17 +38,6 @@
 /// <reference path='dom/dom.ts'/>
 /// <reference path='easel.ts'/>
 
-declare var release: boolean;
-
-declare class IndentingWriter {
-  writeLn(str: string);
-  enter(str: string);
-  leaveAndEnter(str: string);
-  leave(str: string);
-  indent(str: string);
-  outdent(str: string);
-}
-
 interface WebGLFramebuffer {
   texture: WebGLTexture;
 }

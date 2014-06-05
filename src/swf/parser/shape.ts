@@ -23,6 +23,7 @@ module Shumway.SWF.Parser {
   import Bounds = Shumway.Bounds;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import ShapeData = Shumway.ShapeData;
+  import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   var push = Array.prototype.push;
 

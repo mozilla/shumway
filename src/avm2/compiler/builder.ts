@@ -22,6 +22,7 @@ module Shumway.AVM2.Compiler {
   import Info = Shumway.AVM2.ABC.Info;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
   import notImplemented = Shumway.Debug.notImplemented;
+  import assert = Shumway.Debug.assert;
   import popManyIntoVoid = Shumway.ArrayUtilities.popManyIntoVoid;
   import top = Shumway.ArrayUtilities.top;
   import unique = Shumway.ArrayUtilities.unique;

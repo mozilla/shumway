@@ -41,6 +41,7 @@ module Shumway.AVM2 {
   import popManyInto = Shumway.ArrayUtilities.popManyInto;
   import construct = Shumway.AVM2.Runtime.construct;
   import Multiname = Shumway.AVM2.ABC.Multiname;
+  import assert = Shumway.Debug.assert;
 
   var counter = Shumway.Metrics.Counter.instance;
 

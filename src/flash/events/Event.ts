@@ -15,6 +15,7 @@
  */
 // Class: Event
 module Shumway.AVM2.AS.flash.events {
+  import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Event extends ASNative {
