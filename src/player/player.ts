@@ -184,6 +184,10 @@ module Shumway {
     }
 
     private _pumpDisplayListUpdates(): void {
+      this.syncDisplayObject(this._stage);
+    }
+
+    public syncDisplayObject(displayObject: flash.display.DisplayObject): void {
       var updates = new DataBuffer();
       var assets = [];
       var serializer = new Remoting.Player.PlayerChannelSerializer();
@@ -191,14 +195,14 @@ module Shumway {
       serializer.outputAssets = assets;
 
       serializer.phase = Remoting.RemotingPhase.Objects;
-      enterPlayerTimeline("remoteObjects");
-      serializer.writeStage(this._stage);
-      leavePlayerTimeline("remoteObjects");
+      enterPlayerTimeline("writeDisplayObject");
+      serializer.writeDisplayObject(displayObject);
+      leavePlayerTimeline("writeDisplayObject");
 
       serializer.phase = Remoting.RemotingPhase.References;
-      enterPlayerTimeline("remoteReferences");
-      serializer.writeStage(this._stage);
-      leavePlayerTimeline("remoteReferences");
+      enterPlayerTimeline("writeDisplayObject 2");
+      serializer.writeDisplayObject(displayObject);
+      leavePlayerTimeline("writeDisplayObject 2");
 
       updates.writeInt(Remoting.MessageTag.EOF);
 
@@ -223,12 +227,12 @@ module Shumway {
 
         serializer.phase = Remoting.RemotingPhase.Objects;
         enterPlayerTimeline("cacheAsBitmap");
-        serializer.writeStage(displayObject);
+        serializer.writeDisplayObject(displayObject);
         leavePlayerTimeline("cacheAsBitmap");
 
         serializer.phase = Remoting.RemotingPhase.References;
         enterPlayerTimeline("cacheAsBitmap 2");
-        serializer.writeStage(displayObject);
+        serializer.writeDisplayObject(displayObject);
         leavePlayerTimeline("cacheAsBitmap 2");
       }
 

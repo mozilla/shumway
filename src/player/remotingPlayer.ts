@@ -44,10 +44,10 @@ module Shumway.Remoting.Player {
 
     public phase: RemotingPhase = RemotingPhase.Objects;
 
-    writeStage(stage: DisplayObject) {
+    writeDisplayObject(displayObject: DisplayObject) {
       var serializer = this;
-      stage.visit(function (displayObject) {
-        serializer.writeDisplayObject(displayObject);
+      displayObject.visit(function (displayObject) {
+        serializer.writeUpdateFrame(displayObject);
         return VisitorFlags.Continue;
       }, VisitorFlags.Filter, DisplayObjectFlags.Dirty);
     }
@@ -81,7 +81,7 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeDisplayObject(displayObject: DisplayObject) {
+    writeUpdateFrame(displayObject: DisplayObject) {
       // Write Header
       this.output.writeInt(MessageTag.UpdateFrame);
       this.output.writeInt(displayObject._id);
