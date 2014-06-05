@@ -107,12 +107,40 @@ function endsWith(string, value) {
   return string.substring(string.length - value.length, string.length) === value;
 }
 
+function removeJSLibDups(filePath) {
+  var content = fs.readFileSync(filePath, 'utf8');
+  var re = new RegExp('^load\\([^)]+\\);$', 'gm');
+  var loaded = {};
+  content = content.replace(re, function(all) {
+    if (!loaded[all]) {
+      loaded[all] = true;
+      return all;
+    }
+    return '// DUP: ' + all;
+  });
+  fs.writeFileSync(filePath, content, 'utf8');
+}
+
+function removeLibDups(filePath) {
+  var content = fs.readFileSync(filePath, 'utf8');
+  var re = new RegExp('^(\\s*)(<script[^>]*><\/script>)(\\s*)$', 'gm');
+  var loaded = {};
+  content = content.replace(re, function(all, head, script, tail) {
+    if (!loaded[script]) {
+      loaded[script] = true;
+      return all;
+    }
+    return head + '<!-- DUP: ' + script + ' -->' + tail;
+  });
+  fs.writeFileSync(filePath, content, 'utf8');
+}
 
 var homeBase = path.join(__dirname, '../');
 var packageFilesBase = path.join(homeBase, 'src/');
 
 function updateRefs(filePath, includes) {
-  var updateFn = endsWith(filePath, ".js") ? updateJSLibRefs : updateLibRefs;
+  var isJS = endsWith(filePath, ".js");
+  var updateFn = isJS ? updateJSLibRefs : updateLibRefs;
   if (includes.gfx) {
     updateFn(filePath, path.join(packageFilesBase, '/shumway.gfx.package'), 'gfx');
   }
@@ -121,6 +149,11 @@ function updateRefs(filePath, includes) {
   }
   if (includes.player) {
     updateFn(filePath, path.join(packageFilesBase, '/shumway.player.package'), 'player');
+  }
+  if (isJS) {
+    removeJSLibDups(filePath);
+  } else {
+    removeLibDups(filePath);
   }
 }
 module.exports.updateRefs = updateRefs;
