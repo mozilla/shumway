@@ -142,11 +142,11 @@ module.exports = function(grunt) {
 
   grunt.registerTask('update-flash-refs', function  () {
     var updateFlashRefs = require('./utils/update-flash-refs.js');
-    updateFlashRefs('examples/inspector/inspector.html', 'src', {shared: true, gfx: true, parser: true, player: true});
-    updateFlashRefs('test/harness/slave.html', 'src', {shared: true, gfx: true, parser: true, player: true});
-    updateFlashRefs('examples/xlsimport/index.html', 'src', {shared: true, gfx: true, parser: true, player: true});
-    updateFlashRefs('examples/inspector/inspector.player.html', 'src', {shared: true, parser: true, player: true});
-    updateFlashRefs('examples/shell/run.js', 'src', {shared: true, parser: true, player: true});
+    updateFlashRefs('examples/inspector/inspector.html', 'src', {gfx: true, parser: true, player: true});
+    updateFlashRefs('test/harness/slave.html', 'src', {gfx: true, parser: true, player: true});
+    updateFlashRefs('examples/xlsimport/index.html', 'src', {gfx: true, parser: true, player: true});
+    updateFlashRefs('examples/inspector/inspector.player.html', 'src', {parser: true, player: true});
+    updateFlashRefs('examples/shell/run.js', 'src', {parser: true, player: true});
     updateFlashRefs('src/swf/worker.js', 'src', {parser: true});
   });
 

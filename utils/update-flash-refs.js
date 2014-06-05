@@ -111,9 +111,6 @@ var packageFilesBase = path.join(__dirname, '../src/');
 
 function updateFlashRefs(filePath, srcDir, includes) {
   var updateFn = endsWith(filePath, ".js") ? updateJSLibRefs : updateLibRefs;
-  if (includes.shared) {
-    updateFn(filePath, path.join(packageFilesBase, '/shumway.package'), 'shared');
-  }
   if (includes.gfx) {
     updateFn(filePath, path.join(packageFilesBase, '/shumway.gfx.package'), 'gfx');
   }
