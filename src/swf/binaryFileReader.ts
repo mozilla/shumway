@@ -31,7 +31,7 @@ module Shumway {
     mimeType: string;
     data: any;
 
-    constructor(url: string, method: string, mimeType: string, data) {
+    constructor(url: string, method?: string, mimeType?: string, data?) {
       this.url = url;
       this.method = method;
       this.mimeType = mimeType;

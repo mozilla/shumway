@@ -27,3 +27,4 @@
 ///<reference path='easel.ts' />
 ///<reference path='embed.ts' />
 ///<reference path='fakeSyncWorker.ts' />
+///<reference path='avmLoader.ts' />

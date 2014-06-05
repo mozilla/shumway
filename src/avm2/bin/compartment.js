@@ -66,9 +66,6 @@ load(tsBuildPath + "avm2/trampoline.js");
 load(tsBuildPath + "avm2/bindings.js");
 load(tsBuildPath + "avm2/scope.js");
 
-var playerglobalLoadedPromise;
-var playerglobal;
-
 load(tsBuildPath + "avm2/domain.js");
 load(jsBuildPath + "avm2/xregexp.js");
 load(tsBuildPath + "avm2/runtime.js");

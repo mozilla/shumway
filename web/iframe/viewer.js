@@ -24,11 +24,11 @@ if (typeof performance === 'undefined') {
   window.performance = { now: Date.now };
 }
 
-var SHUMWAY_ROOT = "../src/";
+var SHUMWAY_ROOT = "../../src/";
 
 var viewerPlayerglobalInfo = {
-  abcs: "../build/playerglobal/playerglobal.abcs",
-  catalog: "../build/playerglobal/playerglobal.json"
+  abcs: "../../build/playerglobal/playerglobal.abcs",
+  catalog: "../../build/playerglobal/playerglobal.json"
 };
 
 
@@ -129,28 +129,61 @@ Shumway.FileLoadingService.instance = {
 
 function parseSwf(url, movieParams, objectParams, compilerSettings) {
   var enableVerifier = Shumway.AVM2.Runtime.enableVerifier;
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
 
-  enableVerifier.value = compilerSettings.verifier;
-  forceHidpi.value = compilerSettings.forceHidpi;
+//  enableVerifier.value = compilerSettings.verifier;
+//  forceHidpi.value = compilerSettings.forceHidpi;
 
   console.log("Compiler settings: " + JSON.stringify(compilerSettings));
   console.log("Parsing " + url + "...");
   function loaded() { }
   function frame(e) {}
 
-  createAVM2(builtinPath, viewerPlayerglobalInfo, avm1Path,
+  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, avm1Path,
     compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     function (avm2) {
       console.time("Initialize Renderer");
-      SWF.embed(url, document, document.getElementById("viewer"), {
-         url: url,
-         movieParams: movieParams,
-         objectParams: objectParams,
-         onComplete: loaded,
-         onBeforeFrame: frame
-      });
+
+      var swfURL = Shumway.FileLoadingService.instance.resolveUrl(url);
+      //var loaderURL = getQueryVariable("loaderURL") || swfURL;
+
+      var easel = createEasel();
+
+      var player = new Shumway.EaselEmbedding(easel).embed();
+      player.load(url);
+//      SWF.embed(url, document, document.getElementById("viewer"), {
+//         url: url,
+//         movieParams: movieParams,
+//         objectParams: objectParams,
+//         onComplete: loaded,
+//         onBeforeFrame: frame
+//      });
   });
 }
 
+var avm2Root = "../../src/avm2/";
+var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
+
+var Stage = Shumway.GFX.Stage;
+var Easel = Shumway.GFX.Easel;
+var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
+var _easel;
+
+function createEasel() {
+  Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
+  var canvas = document.createElement("canvas");
+  canvas.style.backgroundColor = "#14171a";
+  document.getElementById("stageContainer").appendChild(canvas);
+  var backend = Shumway.GFX.backend.value | 0;
+  _easel = new Easel(canvas, backend);
+  return _easel;
+}
+
+var frameWriter = new Shumway.IndentingWriter(false, function (str){
+  console.info(str);
+});
+Shumway.GFX.writer = frameWriter;
+
+runViewer();

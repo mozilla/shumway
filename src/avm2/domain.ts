@@ -77,8 +77,9 @@ module Shumway.AVM2.Runtime {
     ALL               = Glue.PUBLIC_PROPERTIES | Glue.PUBLIC_METHODS
   }
 
-  declare var playerglobalLoadedPromise;
-  declare var playerglobal;
+  // TODO we don't need them here?
+  export var playerglobalLoadedPromise;
+  export var playerglobal;
 
   function grabAbc(abcName: string): AbcFile {
     var entry = playerglobal.scripts[abcName];
@@ -132,20 +133,21 @@ module Shumway.AVM2.Runtime {
     public systemDomain: ApplicationDomain;
     public applicationDomain: ApplicationDomain;
     public findDefiningAbc: (mn: Multiname) => AbcFile;
-    public loadAVM1: boolean;
+    public loadAVM1: (next) => void;
     public isAVM1Loaded: boolean;
     public exception: any;
     public exceptions: any [];
     public globals: Map<any>;
+    public builtinsLoaded: boolean;
 
 
     public static instance: AVM2;
-    public static initialize(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: boolean) {
+    public static initialize(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: (next) => void = null) {
       assert (!AVM2.instance);
       AVM2.instance = new AVM2(sysMode, appMode, loadAVM1);
     }
 
-    constructor(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: boolean) {
+    constructor(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: (next) => void) {
       // TODO: this will change when we implement security domains.
       this.systemDomain = new ApplicationDomain(this, null, sysMode, true);
       this.applicationDomain = new ApplicationDomain(this, this.systemDomain, appMode, false);

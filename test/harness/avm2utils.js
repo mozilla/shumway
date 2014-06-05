@@ -33,37 +33,3 @@ var playerglobalInfo = {
   catalog: WEB_ROOT + "../build/playerglobal/playerglobal.json"
 };
 
-
-// avm2 must be global.
-var avm2;
-
-function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
-  assert (builtinPath);
-  var builtinAbc, avm1Abc;
-  var BinaryFileReader = Shumway.BinaryFileReader;
-
-  new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-    AVM2.initialize(sysMode, appMode, avm1Path && loadAVM1);
-    avm2 = AVM2.instance;
-    avm2.loadedAbcs = {};
-
-    var builtinAbc = new AbcFile(new Uint8Array(buffer), "builtin.abc");
-    avm2.builtinsLoaded = false;
-    // avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
-    avm2.systemDomain.executeAbc(builtinAbc);
-    avm2.builtinsLoaded = true;
-
-    AVM2.loadPlayerglobal(libraryPath.abcs, libraryPath.catalog).then(function () {
-      next(avm2);
-    });
-  });
-
-
-  function loadAVM1(next) {
-    new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
-      avm1Abc = new AbcFile(new Uint8Array(buffer), "avm1.abc");;
-      avm2.systemDomain.executeAbc(avm1Abc);
-      next();
-    });
-  }
-}

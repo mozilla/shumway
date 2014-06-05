@@ -21,49 +21,6 @@ var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"))
 var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
 var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
 
-
-// avm2 must be global.
-var avm2;
-function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
-  var BinaryFileReader = Shumway.BinaryFileReader;
-  function loadAVM1(next) {
-    new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
-      avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "avm1.abc"));
-      next();
-    });
-  }
-
-  assert (builtinPath);
-  new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-    AVM2.initialize(sysMode, appMode, avm1Path && loadAVM1);
-    avm2 = AVM2.instance;
-    console.time("Execute builtin.abc");
-    avm2.loadedAbcs = {};
-    // Avoid loading more Abcs while the builtins are loaded
-    avm2.builtinsLoaded = false;
-    // avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
-    avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
-    avm2.builtinsLoaded = true;
-    console.timeEnd("Execute builtin.abc");
-
-    // If library is shell.abc, then just go ahead and run it now since
-    // it's not worth doing it lazily given that it is so small.
-    if (typeof libraryPath === 'string') {
-      new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
-        avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
-        next(avm2);
-      });
-      return;
-    }
-
-    if (!AVM2.isPlayerglobalLoaded()) {
-      AVM2.loadPlayerglobal(libraryPath.abcs, libraryPath.catalog).then(function () {
-        next(avm2);
-      });
-    }
-  });
-}
-
 var avm2Root = "../../src/avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
@@ -186,7 +143,7 @@ function runSwfPlayer(data) {
   var loaderURL = data.loaderURL;
   var movieParams = data.movieParams;
   var file = data.file;
-  createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
+  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
     function runSWF(file) {
       var player = new Shumway.Player(new IFramePlayerChannel());
       player.load(file);

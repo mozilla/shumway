@@ -48,51 +48,6 @@ var BinaryFileReader = (function binaryFileReader() {
   return constructor;
 })();
 
-var avm2;
-function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
-  function loadAVM1(next) {
-    new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
-      avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "avm1.abc"));
-      next();
-    });
-  }
-
-  var AVM2 = Shumway.AVM2.Runtime.AVM2;
-
-  new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-    if (!buffer) {
-      throw new Error('no builtin');
-    }
-    AVM2.initialize(sysMode, appMode, avm1Path && loadAVM1);
-
-    avm2 = AVM2.instance;
-    console.time("Execute builtin.abc");
-    avm2.loadedAbcs = {};
-    // Avoid loading more Abcs while the builtins are loaded
-    avm2.builtinsLoaded = false;
-    // avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
-    avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
-    avm2.builtinsLoaded = true;
-    console.timeEnd("Execute builtin.abc");
-
-    // If library is shell.abc, then just go ahead and run it now since
-    // it's not worth doing it lazily given that it is so small.
-    if (typeof libraryPath === 'string') {
-      new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
-        avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
-        next(avm2);
-      });
-      return;
-    }
-
-    if (!AVM2.isPlayerglobalLoaded()) {
-      AVM2.loadPlayerglobal(libraryPath.abcs, libraryPath.catalog).then(function () {
-        next(avm2);
-      });
-    }
-  });
-}
-
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
 };
