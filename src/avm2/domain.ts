@@ -24,18 +24,18 @@ module Shumway.AVM2.Runtime {
   import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
   import Callback = Shumway.Callback;
+  import Timer = Shumway.Metrics.Timer;
+
+  var counter = Shumway.Metrics.Counter.instance;
 
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import IndentingWriter = Shumway.IndentingWriter;
 
   declare var createFunction;
-  declare var Timer;
 
-  declare var compileAbc;
   declare var compileAbc;
   declare var Promise;
   declare var natives;
-  declare var Counter: Shumway.Metrics.Counter;
   declare var GlobalMultinameResolver;
   declare var avm2;
   declare var homePath;
@@ -448,7 +448,7 @@ module Shumway.AVM2.Runtime {
         }
       }
 
-      Counter.count("ApplicationDomain: findDefiningScript");
+      counter.count("ApplicationDomain: findDefiningScript");
 
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {

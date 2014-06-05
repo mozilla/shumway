@@ -32,7 +32,8 @@ module Shumway.AVM2.Runtime {
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
 
   declare var callWriter: IndentingWriter;
-  declare var Counter: Shumway.Metrics.Counter;
+
+  var counter = Shumway.Metrics.Counter.instance;
 
   var vmNextTrampolineId = 1;
   var vmNextMemoizerId = 1;
@@ -183,7 +184,7 @@ module Shumway.AVM2.Runtime {
         if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
           log("Trampolining");
         }
-        Counter.count("Executing Trampoline");
+        counter.count("Executing Trampoline");
         Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Trampoline: " + description);
         if (!target) {
           target = forward(trampoline);
@@ -195,7 +196,7 @@ module Shumway.AVM2.Runtime {
        * Just triggers the trampoline without executing it.
        */
       trampoline.trigger = function trigger() {
-        Counter.count("Triggering Trampoline");
+        counter.count("Triggering Trampoline");
         if (!target) {
           target = forward(trampoline);
           release || assert (target);
@@ -213,14 +214,14 @@ module Shumway.AVM2.Runtime {
 
   export function makeMemoizer(qn, target): IMemoizer {
     function memoizer() {
-      Counter.count("Runtime: Memoizing");
+      counter.count("Runtime: Memoizing");
       // release || assert (!Object.prototype.hasOwnProperty.call(this, "class"), this);
       if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
         log("Memoizing: " + qn);
       }
       Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Memoizing: " + qn);
       if (isNativePrototype(this)) {
-        Counter.count("Runtime: Method Closures");
+        counter.count("Runtime: Method Closures");
         return bindSafely(target.value, this);
       }
       if (isTrampoline(target.value)) {
@@ -232,7 +233,7 @@ module Shumway.AVM2.Runtime {
       release || assert (!isTrampoline(target.value), "We should avoid binding trampolines.");
       var mc = null;
       if (isClass(this)) {
-        Counter.count("Runtime: Static Method Closures");
+        counter.count("Runtime: Static Method Closures");
         mc = bindSafely(target.value, this);
         defineReadOnlyProperty(this, qn, mc);
         return mc;
@@ -240,10 +241,10 @@ module Shumway.AVM2.Runtime {
       if (Object.prototype.hasOwnProperty.call(this, qn)) {
         var pd = Object.getOwnPropertyDescriptor(this, qn);
         if (pd.get) {
-          Counter.count("Runtime: Method Closures");
+          counter.count("Runtime: Method Closures");
           return bindSafely(target.value, this);
         }
-        Counter.count("Runtime: Unpatched Memoizer");
+        counter.count("Runtime: Unpatched Memoizer");
         return this[qn];
       }
       mc = bindSafely(target.value, this);
@@ -253,7 +254,7 @@ module Shumway.AVM2.Runtime {
       return mc;
     }
     var m: IMemoizer = <IMemoizer><any>memoizer;
-    Counter.count("Runtime: Memoizers");
+    counter.count("Runtime: Memoizers");
     m.isMemoizer = true;
     m.debugName = "Memoizer #" + vmNextMemoizerId++;
     return m;

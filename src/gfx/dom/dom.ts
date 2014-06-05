@@ -41,7 +41,7 @@ module Shumway.GFX {
       var div = shapeProperties["div"];
       if (!div) {
         div = shapeProperties["div"] = document.createElement("div");
-        // div.style.backgroundColor = randomStyle();
+        // div.style.backgroundColor = Shumway.ColorStyle.randomStyle();
         div.style.width = shape.w + "px";
         div.style.height = shape.h + "px";
         div.style.position = "absolute";

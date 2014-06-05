@@ -196,11 +196,11 @@ module.exports = function(grunt) {
   grunt.registerTask('gfx', ['exec:build_gfx_ts']);
   grunt.registerTask('avm1', ['exec:build_avm1_ts']);
   grunt.registerTask('shu', [
-    'exec:build_avm1_ts',
     'exec:build_avm2_ts',
-    'exec:build_gfx_ts',
-    'exec:build_swf_ts',
     'exec:build_flash_ts',
+    'exec:build_avm1_ts',
+    'exec:build_swf_ts',
+    'exec:build_gfx_ts',
     'exec:build_player_ts'
   ]);
 };

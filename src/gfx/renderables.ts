@@ -26,6 +26,7 @@ module Shumway.GFX {
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
   import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
+  import notImplemented = Shumway.Debug.notImplemented;
 
   export enum RenderableFlags {
     None          = 0,

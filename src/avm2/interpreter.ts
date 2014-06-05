@@ -42,7 +42,7 @@ module Shumway.AVM2 {
   import construct = Shumway.AVM2.Runtime.construct;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 
-  declare var Counter: Shumway.Metrics.Counter;
+  var counter = Shumway.Metrics.Counter.instance;
 
   /**
    * Helps the interpreter allocate fewer Scope objects.
@@ -110,7 +110,7 @@ module Shumway.AVM2 {
   export class Interpreter {
     public static interpretMethod($this, method, savedScope, methodArgs) {
       release || assert(method.analysis);
-      Counter.count("Interpret Method");
+      counter.count("Interpret Method");
       var abc = method.abc;
       var ints = abc.constantPool.ints;
       var uints = abc.constantPool.uints;

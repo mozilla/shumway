@@ -16,6 +16,8 @@
 // Class: KeyboardEvent
 module Shumway.AVM2.AS.flash.events {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import notImplemented = Shumway.Debug.notImplemented;
+
   export class KeyboardEvent extends flash.events.Event {
 
     static classInitializer: any = null;

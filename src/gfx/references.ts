@@ -38,10 +38,6 @@
 /// <reference path='dom/dom.ts'/>
 /// <reference path='easel.ts'/>
 
-declare function randomStyle(): string;
-declare function assert(...args : any[]);
-declare function unexpected(...args : any[]);
-declare function notImplemented(...args : any[]);
 declare var release: boolean;
 
 declare class IndentingWriter {
@@ -51,11 +47,6 @@ declare class IndentingWriter {
   leave(str: string);
   indent(str: string);
   outdent(str: string);
-}
-
-declare class Timeline {
-  enter(str: string);
-  leave(str: string);
 }
 
 interface WebGLFramebuffer {
@@ -91,17 +82,16 @@ module Shumway.GFX {
     Verbose,
   }
 
-  declare var Counter: any;
-  declare var FrameCounter: any;
+  var counter = Shumway.Metrics.Counter.instance;
+  export var frameCounter = new Shumway.Metrics.Counter(true);
 
   export var traceLevel = TraceLevel.Verbose;
   export var release = true;
   export var writer: IndentingWriter = null;
-  export var timeline: Timeline = null;
 
-  export function count(name) {
-    Counter.count(name);
-    FrameCounter.count(name);
+  export function frameCount(name) {
+    counter.count(name);
+    frameCounter.count(name);
   }
 
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;

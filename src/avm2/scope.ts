@@ -33,7 +33,9 @@ module Shumway.AVM2.Runtime {
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
 
   import boxValue = Shumway.ObjectUtilities.boxValue
-  declare var Counter;
+
+  var counter = Shumway.Metrics.Counter.instance;
+
   declare var jsGlobal;
 
   function makeCacheKey(namespaces: Namespace [], name: any, flags: number) {
@@ -131,7 +133,7 @@ module Shumway.AVM2.Runtime {
      * Property lookups are cached in scopes but are not used when only looking at |scopesOnly|.
      */
     public findScopeProperty(namespaces: Namespace [], name: any, flags: number, domain: any, strict: boolean, scopeOnly: boolean) {
-      Counter.count("findScopeProperty");
+      counter.count("findScopeProperty");
       var object;
       var key = makeCacheKey(namespaces, name, flags);
       if (!scopeOnly && (object = this.cache[key])) {
@@ -201,7 +203,7 @@ module Shumway.AVM2.Runtime {
       }
     }
     if (!boundMethod) {
-      Counter.count("Bind Scope - Slow Path");
+      counter.count("Bind Scope - Slow Path");
       boundMethod = function () {
         Array.prototype.unshift.call(arguments, scope);
         var global = (this === jsGlobal ? scope.global.object : this);

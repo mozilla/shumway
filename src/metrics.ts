@@ -90,6 +90,8 @@ module Shumway.Metrics {
    * Quick way to count named events.
    */
   export class Counter {
+    public static instance: Counter = new Counter(true);
+
     private _enabled: boolean;
     private _counts: Map<number>;
     constructor(enabled: boolean) {
@@ -160,5 +162,3 @@ module Shumway.Metrics {
   }
 }
 
-import Timer = Shumway.Metrics.Timer;
-var Counter = new Shumway.Metrics.Counter(true);

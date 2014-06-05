@@ -16,15 +16,13 @@
  * limitations under the License.
  */
 
-var FrameCounter = new Shumway.Metrics.Counter(true);
-var CanvasCounter = new Shumway.Metrics.Counter(true);
-
 var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
 
 document.createElement = (function () {
+  var counter = Shumway.Metrics.Counter.instance;
   var nativeCreateElement = document.createElement;
   return function (x) {
-    Counter.count("createElement: " + x);
+    counter.count("createElement: " + x);
     return nativeCreateElement.call(document, x);
   };
 })();
@@ -161,11 +159,7 @@ IFramePlayer._updatesListener = null;
 IFramePlayer.sendUpdates = function (data) {
   var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
-  var assetLengths = data.assetLengths;
-  var assets = data.assets.map(function (assetBytes, index) {
-    return DataBuffer.FromArrayBuffer(assetBytes.buffer, assetLengths[index]);
-  });
-  IFramePlayer._updatesListener(updates, assets);
+  IFramePlayer._updatesListener(updates, data.assets);
 };
 IFramePlayer.prototype = {
   sendEventUpdates: function(updates) {
@@ -373,9 +367,11 @@ Shumway.FileLoadingService.instance = {
   setTimeout(function displayInfo() {
     var output = "";
     var pairs = [];
+    var counter = Shumway.Metrics.Counter.instance;
+    var Timer = Shumway.Metrics.Timer;
 
-    for (var name in Counter.counts) {
-      pairs.push([name, Counter.counts[name]]);
+    for (var name in counter.counts) {
+      pairs.push([name, counter.counts[name]]);
     }
 
     pairs.sort(function (a, b) {
@@ -406,7 +402,7 @@ Shumway.FileLoadingService.instance = {
 
     document.getElementById("info").innerHTML = output;
 
-    copyProperties(lastCounts, Counter.counts);
+    copyProperties(lastCounts, counter.counts);
 
     output = "";
     for (var name in Timer._flat._timers) {
@@ -467,7 +463,8 @@ HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
       return nativeGetContext.call(this, contextId, args);
     }
     var target = nativeGetContext.call(this, contextId, args);
-    return new DebugCanvasRenderingContext2D(target, FrameCounter, DebugCanvasRenderingContext2D.Options);
+    return new DebugCanvasRenderingContext2D(target,
+      Shumway.GFX.frameCounter, DebugCanvasRenderingContext2D.Options);
   }
   return nativeGetContext.call(this, contextId, args);
 };

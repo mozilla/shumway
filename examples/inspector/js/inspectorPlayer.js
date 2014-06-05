@@ -16,11 +16,6 @@
  * limitations under the License.
  */
 
-var FrameCounter = new Shumway.Metrics.Counter(true);
-var CanvasCounter = new Shumway.Metrics.Counter(true);
-
-var timeline = null;
-
 var shumwayOptions = Shumway.Settings.shumwayOptions;
 var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"));
 var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
@@ -171,16 +166,10 @@ IFramePlayerChannel.sendEventUpdates = function (data) {
 IFramePlayerChannel.prototype = {
   sendUpdates: function (updates, assets) {
     var bytes = updates.getBytes();
-    var assetLengths = [];
-    var assetsBytes = assets.map(function (asset) {
-      assetLengths.push(asset.length);
-      return asset.getBytes();
-    });
     window.parent.postMessage({
       type: 'player',
       updates: bytes,
-      assets: assetsBytes,
-      assetLengths: assetLengths
+      assets: assets
     }, '*', [bytes.buffer]);
   },
   registerForEventUpdates: function (listener) {

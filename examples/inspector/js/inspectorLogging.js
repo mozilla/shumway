@@ -55,9 +55,4 @@ function appendToFrameTerminal(str, color) {
 var frameWriter = new IndentingWriter(false, function (str){
   appendToFrameTerminal(str);
 });
-
-var timeline = new Timeline(document.getElementById("fpsCanvas"));
-
-
-Shumway.GFX.timeline = timeline;
 Shumway.GFX.writer = frameWriter;

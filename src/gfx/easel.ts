@@ -413,7 +413,7 @@ module Shumway.GFX {
         this._canvas.height = ch * ratio;
         this._canvas.style.width = cw + 'px';
         this._canvas.style.height = ch + 'px';
-        this._stage.matrix.scale(ratio, ratio);
+        this._stage.matrix.set(new Matrix(ratio, 0, 0, ratio, 0, 0));
       } else {
         this._canvas.width = cw;
         this._canvas.height = ch;

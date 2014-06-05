@@ -4,6 +4,8 @@
   var FrameContainer = Shumway.GFX.FrameContainer;
   var Geometry = Shumway.GFX.Geometry;
 
+  var timeline = null;
+
   Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
 
   function syncOptions(options) {

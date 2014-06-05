@@ -49,6 +49,8 @@ module Shumway.GFX.GL {
   import Tile = Geometry.Tile;
   import OBB = Geometry.OBB;
 
+  import unexpected = Shumway.Debug.unexpected;
+
   import radianToDegrees = Geometry.radianToDegrees;
   import degreesToRadian = Geometry.degreesToRadian;
 

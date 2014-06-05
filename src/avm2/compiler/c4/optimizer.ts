@@ -21,6 +21,7 @@ module Shumway.AVM2.Compiler.IR {
   import top = Shumway.ArrayUtilities.top;
   import bitCount = Shumway.IntegerUtilities.bitCount;
   import IndentingWriter = Shumway.IndentingWriter;
+  import Timer = Shumway.Metrics.Timer;
 
   declare var BitSetFunctor;
   var debug = false;

@@ -24,6 +24,9 @@ module Shumway.GFX.GL {
   import radianToDegrees = Geometry.radianToDegrees;
   import degreesToRadian = Geometry.degreesToRadian;
 
+  import unexpected = Shumway.Debug.unexpected;
+  import notImplemented = Shumway.Debug.notImplemented;
+
   export var SHADER_ROOT = "shaders/";
 
   function endsWith(str, end) {
@@ -247,7 +250,7 @@ module Shumway.GFX.GL {
         regions[i].texture = null;
       }
       texture.atlas.reset();
-      count("evictTexture");
+      frameCount("evictTexture");
       return texture;
     }
 

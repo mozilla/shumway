@@ -27,7 +27,7 @@ module Shumway {
     private _player: Player;
     private _easelHost: EaselHost;
 
-    private _worker: Worker;
+    private _worker: Shumway.FakeSyncWorker;
     private _channelEventUpdatesListener: (updates: DataBuffer) => void;
     private _channelUpdatesListener: (updates: DataBuffer, assets: Array<DataBuffer>) => void;
 
@@ -35,8 +35,9 @@ module Shumway {
       this._easelHost = new EaselHost(easel, this);
 
       // TODO this is temporary worker to test postMessage tranfers
-      this._worker = new Worker('../../src/player/fakechannel.js');
+      this._worker = new Shumway.FakeSyncWorker('../../src/player/fakechannel.js');
       this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
+      this._worker.onsyncmessage = this._onWorkerMessage.bind(this);
     }
 
     private _onWorkerMessage(e) {

@@ -30,6 +30,7 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
+  import unexpected = Shumway.Debug.unexpected;
 
   import Bounds = Shumway.Bounds;
   import geom = flash.geom;

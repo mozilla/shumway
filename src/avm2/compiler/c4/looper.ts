@@ -18,6 +18,7 @@
 module Shumway.AVM2.Compiler.Looper {
   import top = Shumway.ArrayUtilities.top;
   import peek = Shumway.ArrayUtilities.peek;
+  import Timer = Shumway.Metrics.Timer;
 
   import CFG = Compiler.IR.CFG;
   import Block = Compiler.IR.Block;
