@@ -151,16 +151,6 @@ function runIFramePlayer(data) {
 }
 
 function executeFile(file, buffer, movieParams) {
-  var BinaryFileReader = Shumway.BinaryFileReader;
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
-
-  // All execution paths must now load AVM2.
-  if (!appCompiler.value) {
-    showMessage("Running in the Interpreter");
-  }
-  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-
   var filename = file.split('?')[0].split('#')[0];
 
   var isFramePlayerEnabled = !!document.getElementById('playerWorker');
@@ -171,6 +161,16 @@ function executeFile(file, buffer, movieParams) {
       movieParams: movieParams, file: file, asyncLoading: asyncLoading});
     return;
   }
+
+  var BinaryFileReader = Shumway.BinaryFileReader;
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
+
+  // All execution paths must now load AVM2.
+  if (!appCompiler.value) {
+    showMessage("Running in the Interpreter");
+  }
+  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
 
   if (filename.endsWith(".abc")) {
     libraryScripts = {};
