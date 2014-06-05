@@ -40,6 +40,7 @@ module Shumway {
       });
     }
 
+    var avm2;
     assert (builtinPath);
     new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
       AVM2.initialize(sysMode, appMode, avm1Path ? loadAVM1 : null);
@@ -71,6 +72,3 @@ module Shumway {
     });
   }
 }
-
-// avm2 must be global.
-var avm2: Shumway.AVM2.Runtime.AVM2;

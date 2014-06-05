@@ -525,6 +525,7 @@ module Shumway.AVM2.Runtime {
           source: this
         });
       } catch (e) {
+        var avm2 = AVM2.instance;
         avm2.exceptions.push({source: type, message: e.message,
           stack: e.stack});
         throw e;
