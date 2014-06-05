@@ -26,3 +26,4 @@
 ///<reference path='player.ts' />
 ///<reference path='easel.ts' />
 ///<reference path='embed.ts' />
+///<reference path='fakeSyncWorker.ts' />
