@@ -218,7 +218,7 @@ module Shumway.GFX {
   }
 
   export class SolidRectangle extends Frame {
-    fillStyle: string = randomStyle();
+    fillStyle: string = Shumway.ColorStyle.randomStyle();
     constructor() {
       super();
     }

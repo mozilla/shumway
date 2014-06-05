@@ -21,8 +21,6 @@ module Shumway.SWF {
   import SwfTag = Shumway.SWF.Parser.SwfTag;
   import createSoundStream = Shumway.SWF.Parser.createSoundStream;
 
-  declare function defineText(swfTag, symbols);
-
   declare class FileReaderSync {
     readAsArrayBuffer(request):ArrayBuffer;
   }

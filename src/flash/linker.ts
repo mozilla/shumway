@@ -183,7 +183,6 @@ module Shumway.AVM2.AS {
   declare var escape;
   declare var unescape;
   declare var AMFUtils;
-  declare var window;
 
   registerNativeFunction('FlashUtilScript::escapeMultiByte', escape);
   registerNativeFunction('FlashUtilScript::unescapeMultiByte', unescape);

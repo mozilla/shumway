@@ -69,9 +69,7 @@ module Shumway.AVM1 {
   import OptionSet = Shumway.Options.OptionSet;
   import Telemetry = Shumway.Telemetry;
 
-  declare var avm2;
   declare var Proxy;
-
   declare class Error {
     constructor(obj: string);
   }
@@ -1853,7 +1851,8 @@ module Shumway.AVM1 {
               throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
             }
             console.error('AVM1 error: ' + e);
-            avm2.exceptions.push({source: 'avm1', message: e.message,
+            var avm2 = Shumway.AVM2.Runtime.AVM2;
+            avm2.instance.exceptions.push({source: 'avm1', message: e.message,
               stack: e.stack});
             executionContext.recoveringFromError = true;
           }
@@ -2329,7 +2328,8 @@ module Shumway.AVM1 {
             throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
           }
           console.error('AVM1 error: ' + e);
-          avm2.exceptions.push({source: 'avm1', message: e.message,
+          var avm2 = Shumway.AVM2.Runtime.AVM2;
+          avm2.instance.exceptions.push({source: 'avm1', message: e.message,
             stack: e.stack});
           executionContext.recoveringFromError = true;
         }

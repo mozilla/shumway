@@ -38,9 +38,6 @@
 /// <reference path='dom/dom.ts'/>
 /// <reference path='easel.ts'/>
 
-declare function randomStyle(): string;
-declare function assert(...args : any[]);
-declare function unexpected(...args : any[]);
 declare var release: boolean;
 
 declare class IndentingWriter {
