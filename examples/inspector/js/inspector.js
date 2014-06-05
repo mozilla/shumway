@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
-
 document.createElement = (function () {
   var counter = Shumway.Metrics.Counter.instance;
   var nativeCreateElement = document.createElement;
@@ -52,6 +50,7 @@ function timeAllocation(C, count) {
 // avm2 must be global.
 var avm2;
 function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
+  var BinaryFileReader = Shumway.BinaryFileReader;
   function loadAVM1(next) {
     new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
       avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "avm1.abc"));
@@ -193,6 +192,9 @@ function runIFramePlayer(data) {
 }
 
 function executeFile(file, buffer, movieParams) {
+  var BinaryFileReader = Shumway.BinaryFileReader;
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
+
   // All execution paths must now load AVM2.
   if (!appCompiler.value) {
     showMessage("Running in the Interpreter");
@@ -315,7 +317,7 @@ Shumway.FileLoadingService.instance = {
         var self = this;
         var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
-        new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
+        new Shumway.BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },

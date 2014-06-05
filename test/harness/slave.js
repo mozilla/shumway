@@ -65,6 +65,7 @@ function loadMovie(path, reportFrames) {
     }
 
     Shumway.FileLoadingService.instance.baseUrl = path;
+    var BinaryFileReader = Shumway.BinaryFileReader;
     new BinaryFileReader(path).readAll(null, function(buffer) {
       if (!buffer) {
         throw "Unable to open the file " + SWF_PATH + ": " + error;
@@ -147,7 +148,7 @@ Shumway.FileLoadingService.instance = {
         base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
         var path = base ? base + request.url : request.url;
         console.log('FileLoadingService: loading ' + path);
-        new BinaryFileReader(path).readAsync(
+        new Shumway.BinaryFileReader(path).readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },

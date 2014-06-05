@@ -1,7 +1,7 @@
 /* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,27 +15,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var BinaryFileReader = (function binaryFileReader() {
-  function constructor(url, method, mimeType, data) {
-    this.url = url;
-    this.method = method;
-    this.mimeType = mimeType;
-    this.data = data;
+
+module Shumway {
+  declare var XMLHttpRequest;
+  import unexpected = Shumway.Debug.unexpected;
+
+  export interface BinaryFileReaderProgressInfo {
+    loaded: number;
+    total: number;
   }
 
-  constructor.prototype = {
-    readAll: function(progress, complete) {
+  export class BinaryFileReader {
+    url: string;
+    method: string;
+    mimeType: string;
+    data: any;
+
+    constructor(url: string, method: string, mimeType: string, data) {
+      this.url = url;
+      this.method = method;
+      this.mimeType = mimeType;
+      this.data = data;
+    }
+
+    readAll(progress: (response: any, loaded: number, total: number) => void,
+            complete: (response: any, error?: any) => void) {
       var url = this.url;
-      var xhr = new XMLHttpRequest({mozSystem:true});
+      var xhr = new XMLHttpRequest({mozSystem: true});
       var async = true;
       xhr.open(this.method || "GET", this.url, async);
       xhr.responseType = "arraybuffer";
       if (progress) {
-        xhr.onprogress = function(event) {
+        xhr.onprogress = function (event) {
           progress(xhr.response, event.loaded, event.total);
         };
       }
-      xhr.onreadystatechange = function(event) {
+      xhr.onreadystatechange = function (event) {
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
             unexpected("Path: " + url + " not found.");
@@ -49,9 +64,14 @@ var BinaryFileReader = (function binaryFileReader() {
         xhr.setRequestHeader("Content-Type", this.mimeType);
       }
       xhr.send(this.data || null);
-    },
-    readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
-      var xhr = new XMLHttpRequest({mozSystem:true});
+    }
+
+    readAsync(ondata: (data: Uint8Array, progress:BinaryFileReaderProgressInfo) => void,
+              onerror: (err: any) => void,
+              onopen?: () => void,
+              oncomplete?: () => void,
+              onhttpstatus?: (location: string, status: string, responseHeaders: any) => void) {
+      var xhr = new XMLHttpRequest({mozSystem: true});
       var url = this.url;
       xhr.open(this.method || "GET", url, true);
       xhr.responseType = 'moz-chunked-arraybuffer';
@@ -63,8 +83,8 @@ var BinaryFileReader = (function binaryFileReader() {
         if (isNotProgressive) return;
         ondata(new Uint8Array(xhr.response), { loaded: e.loaded, total: e.total });
       };
-      xhr.onreadystatechange = function(event) {
-        if(xhr.readyState === 2 && onhttpstatus) {
+      xhr.onreadystatechange = function (event) {
+        if (xhr.readyState === 2 && onhttpstatus) {
           onhttpstatus(url, xhr.status, xhr.getAllResponseHeaders());
         }
         if (xhr.readyState === 4) {
@@ -84,9 +104,10 @@ var BinaryFileReader = (function binaryFileReader() {
         xhr.setRequestHeader("Content-Type", this.mimeType);
       }
       xhr.send(this.data || null);
-      if (onopen)
+      if (onopen) {
         onopen();
+      }
     }
-  };
-  return constructor;
-})();
+  }
+}
+

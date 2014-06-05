@@ -25,6 +25,7 @@ var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler",
 // avm2 must be global.
 var avm2;
 function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
+  var BinaryFileReader = Shumway.BinaryFileReader;
   function loadAVM1(next) {
     new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
       avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "avm1.abc"));
@@ -93,6 +94,7 @@ Shumway.FileLoadingService.instance = {
         var self = this;
         var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
+        var BinaryFileReader = Shumway.BinaryFileReader;
         new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
@@ -193,7 +195,7 @@ function runSwfPlayer(data) {
     if (asyncLoading) {
       runSWF(file);
     } else {
-      new BinaryFileReader(file).readAll(null, function(buffer, error) {
+      new Shumway.BinaryFileReader(file).readAll(null, function(buffer, error) {
         if (!buffer) {
           throw "Unable to open the file " + file + ": " + error;
         }

@@ -5,6 +5,7 @@
   var URLRequest = flash.net.URLRequest;
   var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  var BinaryFileReader = Shumway.BinaryFileReader;
 
   var timeline = null;
 
