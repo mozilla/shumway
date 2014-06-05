@@ -61,8 +61,6 @@ module Shumway.AVM2.AS.flash.display {
     private _tabChildren: boolean;
     private _mouseChildren: boolean;
 
-    _children: DisplayObject [];
-
     /**
      * This object's children have changed.
      */

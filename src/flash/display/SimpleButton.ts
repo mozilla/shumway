@@ -36,6 +36,7 @@ module Shumway.AVM2.AS.flash.display {
       self._hitTestState = null;
 
       self._currentState = null;
+      self._children = [];
 
       if (symbol) {
         if (symbol.upState) {
@@ -70,15 +71,15 @@ module Shumway.AVM2.AS.flash.display {
 
     // AS -> JS Bindings
 
-    _useHandCursor: boolean;
-    _enabled: boolean;
-    _trackAsMenu: boolean;
-    _upState: flash.display.DisplayObject;
-    _overState: flash.display.DisplayObject;
-    _downState: flash.display.DisplayObject;
-    _hitTestState: flash.display.DisplayObject;
+    private _useHandCursor: boolean;
+    private _enabled: boolean;
+    private _trackAsMenu: boolean;
+    private _upState: flash.display.DisplayObject;
+    private _overState: flash.display.DisplayObject;
+    private _downState: flash.display.DisplayObject;
+    private _hitTestState: flash.display.DisplayObject;
 
-    _currentState: flash.display.DisplayObject;
+    private _currentState: flash.display.DisplayObject;
 
     get useHandCursor(): boolean {
       return this._useHandCursor;
@@ -190,8 +191,13 @@ module Shumway.AVM2.AS.flash.display {
       if (this._stage) {
         // TODO dispatch addedToStage event
       }
+      if (state) {
+        this._children[0] = state;
+      } else {
+        this._children.length = 0;
+      }
+      this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
       this._invalidateFillAndLineBounds();
-      this._invalidatePaint();
     }
   }
 }
