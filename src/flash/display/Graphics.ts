@@ -23,8 +23,8 @@ module Shumway.AVM2.AS.flash.display {
   import Bounds = Shumway.Bounds;
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
-  import enterTimeline = Shumway.Player.enterTimeline;
-  import leaveTimeline = Shumway.Player.leaveTimeline;
+//  import enterTimeline = Shumway.Player.enterTimeline;
+//  import leaveTimeline = Shumway.Player.leaveTimeline;
 
   import DisplayObject = flash.display.DisplayObject;
   import GradientType = flash.display.GradientType;
@@ -880,7 +880,7 @@ module Shumway.AVM2.AS.flash.display {
         return false;
       }
 
-      enterTimeline("Graphics._containsPoint");
+//      enterTimeline("Graphics._containsPoint");
       var containsPoint = false;
 
       // If we have any fills at all, tt's vastly more likely that the point is in a fill,
@@ -893,13 +893,13 @@ module Shumway.AVM2.AS.flash.display {
       if (includeLines) {
         containsPoint = this._linesContainsPoint(x, y);
       }
-      leaveTimeline("Graphics._containsPoint");
+//      leaveTimeline("Graphics._containsPoint");
       return containsPoint;
     }
 
 
     private _fillContainsPoint(x: number, y: number): boolean {
-      enterTimeline("Graphics._fillContainsPoint");
+//      enterTimeline("Graphics._fillContainsPoint");
 
       var data = this._graphicsData;
       var commands = data.commands;
@@ -1003,7 +1003,7 @@ module Shumway.AVM2.AS.flash.display {
       {
         inside = !inside;
       }
-      leaveTimeline("Graphics._fillContainsPoint");
+//      leaveTimeline("Graphics._fillContainsPoint");
       return inside;
     }
 
