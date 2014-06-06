@@ -21,7 +21,7 @@ build/ts/tools/profiler/timelineBuffer.js
 src/gfx/filters/filters.js
 src/gfx/filters/filters_cxform.js
 
-build/ts/gfx/references.js
+build/ts/gfx/module.js
 build/ts/gfx/utilities.js
 build/ts/gfx/options.js
 build/ts/gfx/geometry.js

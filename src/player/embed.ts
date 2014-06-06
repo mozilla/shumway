@@ -24,7 +24,7 @@ module Shumway {
 
   export class EaselEmbedding implements IPlayerChannel, IGFXChannel {
 
-    private _player: Player;
+    private _player: Player.Player;
     private _easelHost: EaselHost;
 
     private _worker: Shumway.FakeSyncWorker;
@@ -76,8 +76,8 @@ module Shumway {
       this._worker.postMessage({type: 'gfx', updates: bytes}, [bytes.buffer]);
     }
 
-    public embed(): Player {
-      return this._player = new Shumway.Player(this);
+    public embed(): Player.Player {
+      return this._player = new Shumway.Player.Player(this);
     }
   }
 }

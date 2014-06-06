@@ -55,6 +55,8 @@ load(tsBuildPath + "/options.js");
 load(tsBuildPath + "/settings.js");
 
 load(jsBuildPath + "avm2/avm2Util.js");
+load(tsBuildPath + "tools/profiler/timelineFrame.js");
+load(tsBuildPath + "tools/profiler/timelineBuffer.js");
 
 var IndentingWriter = Shumway.IndentingWriter;
 
@@ -69,6 +71,7 @@ var argumentParser = new ArgumentParser();
 var systemOptions = new OptionSet("System Options");
 var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
 
+load(tsBuildPath + "avm2/module.js");
 load(tsBuildPath + "avm2/options.js");
 
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));

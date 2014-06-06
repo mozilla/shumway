@@ -18,6 +18,7 @@
 ///<reference path='../swf/references.ts' />
 ///<reference path='../flash/references.ts' />
 ///<reference path='../gfx/references.ts' />
+///<reference path='module.ts' />
 ///<reference path='options.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='remoting.ts' />

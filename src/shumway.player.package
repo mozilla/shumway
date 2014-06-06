@@ -15,11 +15,12 @@ build/ts/player/remoting.js
 
 build/ts/tools/profiler/timelineFrame.js
 build/ts/tools/profiler/timelineBuffer.js
+build/ts/avm2/module.js
 
 #!inline console.timeEnd("Load Shared Dependencies");
 
 ## Load AVM2 Dependencies
-#!inline console.time("Load AVM2 Dependencies");
+#!inline Shumway.AVM2.enterTimeline("Load AVM2 Dependencies");
 src/avm2/constants.js
 build/ts/avm2/options.js
 build/ts/avm2/errors.js
@@ -56,7 +57,7 @@ build/ts/avm2/natives/byteArray.js
 src/avm2/disassembler.js
 build/ts/avm2/interpreter.js
 #build/ts/avm2/vm.js
-#!inline console.timeEnd("Load AVM2 Dependencies");
+#!inline Shumway.AVM2.leaveTimeline();
 
 ## Load AVM1 Dependencies
 #!inline console.time("Load AVM1 Dependencies");
@@ -67,21 +68,12 @@ build/ts/avm1/interpreter.js
 #!inline console.timeEnd("Load AVM1 Dependencies");
 
 #!inline console.time("Load Compiled Code Cache");
-#build/ts/avm2/bin/out.js
-#build/ts/avm2/bin/builtin.as.js
-#build/ts/avm2/bin/race3.as.js
-#build/ts/avm2/bin/player.as.js
-#build/ts/avm2/bin/demo.as.js
-#build/ts/avm2/bin/box.as.js
-#build/ts/avm2/bin/box.as.cc.js
-#build/ts/avm2/bin/main.as.js
-#build/ts/avm2/bin/main.as.cc.js
-#build/ts/avm2/bin/truck.as.js
-#build/ts/avm2/bin/candy.as.js
 #!inline console.timeEnd("Load Compiled Code Cache");
 
+build/ts/player/module.js
+
 ## Load Flash TS Dependencies
-#!inline console.time("Load Flash TS Dependencies");
+#!inline Shumway.Player.enterTimeline("Load Flash TS Dependencies");
 build/ts/flash/geom/Matrix.js
 build/ts/flash/geom/PerspectiveProjection.js
 build/ts/flash/geom/ColorTransform.js
@@ -459,7 +451,7 @@ build/ts/flash/display/MovieClip.js
 #build/ts/flash/events/ContextMenuEvent.js
 #build/ts/flash/display3D/textures/CubeTexture.js
 build/ts/flash/text/TextLineMetrics.js
-#!inline console.timeEnd("Load Flash TS Dependencies");
+#!inline Shumway.Player.leaveTimeline();
 
 #!inline console.time("Load avm1lib Dependencies");
 build/ts/avm1lib/AS2Button.js

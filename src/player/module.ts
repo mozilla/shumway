@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Mozilla Foundation
+ * Copyright 2013 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-///<reference path='../utilities.ts' />
-///<reference path='../tools/profiler/references.ts' />
-///<reference path='../ShapeData.ts' />
+/// <reference path='references.ts'/>
 
-///<reference path='module.ts'/>
-///<reference path='parser/references.ts' />
-///<reference path='jpeg.ts' />
-///<reference path='stream.ts' />
-///<reference path='inflate.ts' />
-///<reference path='resourceLoader.ts' />
-///<reference path='binaryFileReader.ts' />
+module Shumway.Player {
+  export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("Player");
+
+  export function enterTimeline(name: string) {
+    timelineBuffer && timelineBuffer.enter(name);
+  }
+
+  export function leaveTimeline(name: string) {
+    timelineBuffer && timelineBuffer.leave(name);
+  }
+}

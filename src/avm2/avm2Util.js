@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
 var error = Shumway.Debug.error;
 var assert = Shumway.Debug.assert;
 var assertNotImplemented = Shumway.Debug.assertNotImplemented;
@@ -45,4 +44,3 @@ var Map = (function() {
   };
   return map;
 })();
-*/

@@ -16,7 +16,6 @@
 ///<reference path='references.ts' />
 
 module Shumway.AVM2.ABC {
-  import Timer = Shumway.Metrics.Timer;
   import isString = Shumway.isString;
   import isNumber = Shumway.isNumber;
   import isNumeric = Shumway.isNumeric;
@@ -667,16 +666,16 @@ module Shumway.AVM2.ABC {
     applicationDomain: any;
 
     constructor(bytes: Uint8Array, name: string, hash: number = 0) {
-      Timer.start("Parse ABC");
+      enterTimeline("Parse ABC");
       this.name = name;
       this.env = {};
 
       var computedHash;
       if (!hash || !release) {
         // Compute hash if one was not supplied or if we're in debug mode so we can do a sanity check.
-        Timer.start("Adler");
+        enterTimeline("Adler");
         computedHash = Shumway.HashUtilities.hashBytesTo32BitsAdler(bytes, 0, bytes.length);
-        Timer.stop();
+        leaveTimeline();
       }
       if (hash) {
         this.hash = hash;
@@ -689,62 +688,62 @@ module Shumway.AVM2.ABC {
       var n, i;
       var stream = new AbcStream(bytes);
       AbcFile._checkMagic(stream);
-      Timer.start("Parse constantPool");
+      enterTimeline("Parse constantPool");
       this.constantPool = new ConstantPool(stream, this);
-      Timer.stop();
+      leaveTimeline();
 
       // Method Infos
-      Timer.start("Parse Method Infos");
+      enterTimeline("Parse Method Infos");
       this.methods = [];
       n = stream.readU30();
       for (i = 0; i < n; ++i) {
         this.methods.push(new MethodInfo(this, i, stream));
       }
-      Timer.stop();
+      leaveTimeline();
 
-      Timer.start("Parse MetaData Infos");
+      enterTimeline("Parse MetaData Infos");
       // MetaData Infos
       this.metadata = [];
       n = stream.readU30();
       for (i = 0; i < n; ++i) {
         this.metadata.push(new MetaDataInfo(this, stream));
       }
-      Timer.stop();
+      leaveTimeline();
 
-      Timer.start("Parse Instance Infos");
+      enterTimeline("Parse Instance Infos");
       // Instance Infos
       this.instances = [];
       n = stream.readU30();
       for (i = 0; i < n; ++i) {
         this.instances.push(new InstanceInfo(this, i, stream));
       }
-      Timer.stop();
+      leaveTimeline();
 
-      Timer.start("Parse Class Infos");
+      enterTimeline("Parse Class Infos");
       // Class Infos
       this.classes = [];
       for (i = 0; i < n; ++i) {
         this.classes.push(new ClassInfo(this, i, stream));
       }
-      Timer.stop();
+      leaveTimeline();
 
-      Timer.start("Parse Script Infos");
+      enterTimeline("Parse Script Infos");
       // Script Infos
       this.scripts = [];
       n = stream.readU30();
       for (i = 0; i < n; ++i) {
         this.scripts.push(new ScriptInfo(this, i, stream));
       }
-      Timer.stop();
+      leaveTimeline();
 
-      Timer.start("Parse Method Body Info");
+      enterTimeline("Parse Method Body Info");
       // Method body info just live inside methods
       n = stream.readU30();
       for (i = 0; i < n; ++i) {
         MethodInfo.parseBody(this, stream);
       }
-      Timer.stop();
-      Timer.stop();
+      leaveTimeline();
+      leaveTimeline();
     }
 
     private static _checkMagic(stream: AbcStream) {
@@ -1657,7 +1656,7 @@ module Shumway.AVM2.ABC {
       for (var i = 1; i < n; ++i) {
         doubles.push(stream.readDouble());
       }
-      Timer.start("Parse Strings");
+      enterTimeline("Parse Strings");
       // Parse Strings
       var strings = [""];
       n = stream.readU30();
@@ -1665,23 +1664,23 @@ module Shumway.AVM2.ABC {
         strings.push(stream.readUTFString(stream.readU30()));
       }
       this.positionAfterUTFStrings = stream.position;
-      Timer.stop();
+      leaveTimeline();
 
       this.ints = ints;
       this.uints = uints;
       this.doubles = doubles;
       this.strings = strings;
 
-      Timer.start("Parse Namespaces");
+      enterTimeline("Parse Namespaces");
       // Namespaces
       var namespaces = [undefined];
       n = stream.readU30();
       for (var i = 1; i < n; ++i) {
         namespaces.push(Namespace.parse(this, stream, abc.hash + i));
       }
-      Timer.stop();
+      leaveTimeline();
 
-      Timer.start("Parse Namespace Sets");
+      enterTimeline("Parse Namespace Sets");
       // Namespace Sets
       var namespaceSets = [undefined];
       n = stream.readU30();
@@ -1694,12 +1693,12 @@ module Shumway.AVM2.ABC {
         }
         namespaceSets.push(set);
       }
-      Timer.stop();
+      leaveTimeline();
 
       this.namespaces = namespaces;
       this.namespaceSets = namespaceSets;
 
-      Timer.start("Parse Multinames");
+      enterTimeline("Parse Multinames");
       // Multinames
       var multinames = [undefined];
       var patchFactoryTypes = [];
@@ -1713,7 +1712,7 @@ module Shumway.AVM2.ABC {
 //      patch.Multiname.name = Multiname.name;
 //      patch.Multiname.namespaces = Multiname.namespaces;
 //    });
-      Timer.stop();
+      leaveTimeline();
 
       this.multinames = multinames;
     }

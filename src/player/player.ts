@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway {
+module Shumway.Player {
   import assert = Shumway.Debug.assert;
   import flash = Shumway.AVM2.AS.flash;
   import Point = Shumway.AVM2.AS.flash.geom.Point;
@@ -40,18 +40,6 @@ module Shumway {
 
   import Remoting = Shumway.Remoting;
   import IPlayerChannel = Remoting.IPlayerChannel;
-
-  import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
-
-  export var playerTimelineBuffer = new TimelineBuffer("Player");
-
-  export function enterPlayerTimeline(name: string) {
-    playerTimelineBuffer && playerTimelineBuffer.enter(name);
-  }
-
-  export function leavePlayerTimeline(name: string) {
-    playerTimelineBuffer && playerTimelineBuffer.leave(name);
-  }
 
   /**
    * Shumway Player
@@ -195,20 +183,20 @@ module Shumway {
       serializer.outputAssets = assets;
 
       serializer.phase = Remoting.RemotingPhase.Objects;
-      enterPlayerTimeline("writeDisplayObject");
+      enterTimeline("writeDisplayObject");
       serializer.writeDisplayObject(displayObject);
-      leavePlayerTimeline("writeDisplayObject");
+      leaveTimeline("writeDisplayObject");
 
       serializer.phase = Remoting.RemotingPhase.References;
-      enterPlayerTimeline("writeDisplayObject 2");
+      enterTimeline("writeDisplayObject 2");
       serializer.writeDisplayObject(displayObject);
-      leavePlayerTimeline("writeDisplayObject 2");
+      leaveTimeline("writeDisplayObject 2");
 
       updates.writeInt(Remoting.MessageTag.EOF);
 
-      enterPlayerTimeline("sendUpdates");
+      enterTimeline("sendUpdates");
       this._channel.sendUpdates(updates, assets);
-      leavePlayerTimeline("sendUpdates");
+      leaveTimeline("sendUpdates");
     }
 
     public cacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
@@ -226,23 +214,23 @@ module Shumway {
         var displayObject = <flash.display.DisplayObject>source;
 
         serializer.phase = Remoting.RemotingPhase.Objects;
-        enterPlayerTimeline("cacheAsBitmap");
+        enterTimeline("cacheAsBitmap");
         serializer.writeDisplayObject(displayObject);
-        leavePlayerTimeline("cacheAsBitmap");
+        leaveTimeline("cacheAsBitmap");
 
         serializer.phase = Remoting.RemotingPhase.References;
-        enterPlayerTimeline("cacheAsBitmap 2");
+        enterTimeline("cacheAsBitmap 2");
         serializer.writeDisplayObject(displayObject);
-        leavePlayerTimeline("cacheAsBitmap 2");
+        leaveTimeline("cacheAsBitmap 2");
       }
 
       serializer.writeCacheAsBitmap(bitmapData, source, matrix, colorTransform, blendMode, clipRect, smoothing);
 
       updates.writeInt(Shumway.Remoting.MessageTag.EOF);
 
-      enterPlayerTimeline("sendUpdates");
+      enterTimeline("sendUpdates");
       this._channel.sendUpdates(updates, assets);
-      leavePlayerTimeline("sendUpdates");
+      leaveTimeline("sendUpdates");
     }
 
     public requestRendering(): void {
@@ -260,12 +248,12 @@ module Shumway {
       if (timeSinceLastPump < (1000 / pumpRateOption.value)) {
         return;
       }
-      enterPlayerTimeline("pump");
+      enterTimeline("pump");
       if (pumpEnabledOption.value) {
         this._pumpDisplayListUpdates();
         this._lastPumpTime = performance.now();
       }
-      leavePlayerTimeline("pump");
+      leaveTimeline("pump");
     }
 
     private _leaveSyncLoop(): void {
@@ -288,15 +276,15 @@ module Shumway {
           return;
         }
         for (var i = 0; i < frameRateMultiplierOption.value; i++) {
-          enterPlayerTimeline("eventLoop");
-          enterPlayerTimeline("initFrame");
+          enterTimeline("eventLoop");
+          enterTimeline("initFrame");
           MovieClip.initFrame();
-          leavePlayerTimeline("initFrame");
-          enterPlayerTimeline("constructFrame");
+          leaveTimeline("initFrame");
+          enterTimeline("constructFrame");
           MovieClip.constructFrame(!autoPlayOption.value);
-          leavePlayerTimeline("constructFrame");
+          leaveTimeline("constructFrame");
           Loader.progress();
-          leavePlayerTimeline("eventLoop");
+          leaveTimeline("eventLoop");
         }
         if (rootInitialized) {
           stage.render();
@@ -371,6 +359,8 @@ module Shumway {
               var symbolInstance = symbol.originalSymbolClass.initializeFrom(symbol);
               symbol.originalSymbolClass.instanceConstructorNoInitialize.call(symbolInstance);
               stage.addChild(symbolInstance);
+              symbolInstance.x = Math.random() * 512;
+              symbolInstance.y = Math.random() * 512;
             });
           } else {
             var symbol = loaderInfo.getSymbolById(id);

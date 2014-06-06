@@ -173,6 +173,7 @@ module Shumway.SWF.Parser {
   }
 
   export function defineBitmap(tag: any): ImageDefinition {
+    enterTimeline("defineBitmap");
     var bmpData = tag.bmpData;
     var data: Uint32Array;
     var type = ImageType.None;
@@ -192,7 +193,7 @@ module Shumway.SWF.Parser {
       default:
         assertUnreachable('invalid bitmap format');
     }
-
+    leaveTimeline();
     return {
       type: 'image',
       id: tag.id,

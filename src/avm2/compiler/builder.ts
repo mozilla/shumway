@@ -1605,57 +1605,57 @@ module Shumway.AVM2.Compiler {
 
       counter.count("Compiler: Compiled Methods");
 
-      Timer.start("Compiler");
-      Timer.start("Mark Loops");
+      enterTimeline("Compiler");
+      enterTimeline("Mark Loops");
       methodInfo.analysis.markLoops();
-      Timer.stop();
+      leaveTimeline();
 
 
       if (Shumway.AVM2.Verifier.enabled.value) {
         // TODO: Can we verify even if |hadDynamicScope| is |true|?
-        Timer.start("Verify");
+        enterTimeline("Verify");
         verifier.verifyMethod(methodInfo, scope);
-        Timer.stop();
+        leaveTimeline();
       }
 
       var traceSource = Shumway.AVM2.Compiler.traceLevel.value > 0;
       var traceIR = Shumway.AVM2.Compiler.traceLevel.value > 1;
 
-      Timer.start("Build IR");
+      enterTimeline("Build IR");
       Node.startNumbering();
       var dfg = new Builder(methodInfo, scope, hasDynamicScope).buildGraph();
-      Timer.stop();
+      leaveTimeline();
 
       traceIR && dfg.trace(writer);
 
-      Timer.start("Build CFG");
+      enterTimeline("Build CFG");
       var cfg = dfg.buildCFG();
-      Timer.stop();
+      leaveTimeline();
 
-      Timer.start("Optimize Phis");
+      enterTimeline("Optimize Phis");
       cfg.optimizePhis();
-      Timer.stop();
+      leaveTimeline();
 
-      Timer.start("Schedule Nodes");
+      enterTimeline("Schedule Nodes");
       cfg.scheduleEarly();
-      Timer.stop();
+      leaveTimeline();
 
       traceIR && cfg.trace(writer);
 
-      Timer.start("Verify IR");
+      enterTimeline("Verify IR");
       cfg.verify();
-      Timer.stop();
+      leaveTimeline();
 
-      Timer.start("Allocate Variables");
+      enterTimeline("Allocate Variables");
       cfg.allocateVariables();
-      Timer.stop();
+      leaveTimeline();
 
-      Timer.start("Generate Source");
+      enterTimeline("Generate Source");
       var result = Shumway.AVM2.Compiler.Backend.generate(cfg);
-      Timer.stop();
+      leaveTimeline();
       traceSource && writer.writeLn(result.body);
       Node.stopNumbering();
-      Timer.stop();
+      leaveTimeline();
 
       return result;
     }

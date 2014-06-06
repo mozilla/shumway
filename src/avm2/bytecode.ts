@@ -738,7 +738,9 @@ module Shumway.AVM2 {
     analyzedControlFlow: boolean;
     constructor(public methodInfo: MethodInfo) {
       if (this.methodInfo.code) {
+        enterTimeline("normalizeBytecode");
         this.normalizeBytecode();
+        leaveTimeline();
       }
     }
 
@@ -895,10 +897,12 @@ module Shumway.AVM2 {
 
     analyzeControlFlow() {
       release || assert(this.bytecodes);
+      enterTimeline("analyzeControlFlow");
       this.detectBasicBlocks();
       this.normalizeReachableBlocks();
       this.computeDominance();
       this.analyzedControlFlow = true;
+      leaveTimeline();
       return true;
     }
 

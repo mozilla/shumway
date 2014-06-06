@@ -1151,7 +1151,7 @@ module Shumway.AVM2.AS {
       for (var i = names.length - 1; i >= 0; i--) {
         var key = Multiname.getPublicQualifiedName(names[i]);
         if (ASArray.CACHE_NUMERIC_COMPARATORS && options[i] & SORT.NUMERIC) {
-          var str = "var x = toNumber(a." + key + "), y = toNumber(b." + key + ");";
+          var str = "var x = +(a." + key + "), y = +(b." + key + ");";
           if (options[i] & SORT.DESCENDING) {
             str += "return x < y ? 1 : (x > y ? -1 : 0);";
           } else {

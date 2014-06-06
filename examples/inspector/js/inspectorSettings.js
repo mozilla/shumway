@@ -87,11 +87,17 @@ var GUI = (function () {
   function viewProfile() {
     //alert("Not Implemented");
     var buffers = [];
-    if (Shumway.playerTimelineBuffer) {
-      buffers.push(Shumway.playerTimelineBuffer);
+    if (Shumway.AVM2.timelineBuffer) {
+      buffers.push(Shumway.AVM2.timelineBuffer);
+    }
+    if (Shumway.Player.timelineBuffer) {
+      buffers.push(Shumway.Player.timelineBuffer);
     }
     if (Shumway.GFX.timelineBuffer) {
       buffers.push(Shumway.GFX.timelineBuffer);
+    }
+    if (Shumway.GFX.timelineBuffer) {
+      buffers.push(Shumway.SWF.timelineBuffer);
     }
     profiler.createProfile(buffers);
   }

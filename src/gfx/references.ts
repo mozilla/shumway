@@ -21,6 +21,7 @@
 /// <reference path='../dataBuffer.ts' />
 /// <reference path='../ShapeData.ts' />
 
+/// <reference path='module.ts' />
 /// <reference path='utilities.ts' />
 /// <reference path='options.ts'/>
 /// <reference path='geometry.ts'/>
@@ -62,36 +63,4 @@ interface WebGLProgram extends WebGLObject {
 interface CanvasRenderingContext2D {
   fillRule: string;
   mozFillRule: string;
-}
-
-module Shumway.GFX {
-  export enum TraceLevel {
-    None,
-    Brief,
-    Verbose,
-  }
-
-  var counter = Shumway.Metrics.Counter.instance;
-  export var frameCounter = new Shumway.Metrics.Counter(true);
-
-  export var traceLevel = TraceLevel.Verbose;
-  export var release = true;
-  export var writer: IndentingWriter = null;
-
-  export function frameCount(name) {
-    counter.count(name);
-    frameCounter.count(name);
-  }
-
-  import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
-
-  export var timelineBuffer = new TimelineBuffer("GFX");
-
-  export function enterTimeline(name: string) {
-    timelineBuffer && timelineBuffer.enter(name);
-  }
-
-  export function leaveTimeline(name: string) {
-    timelineBuffer && timelineBuffer.leave(name);
-  }
 }

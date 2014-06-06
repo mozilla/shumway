@@ -30,8 +30,12 @@ load("../../build/ts/utilities.js");
 load("../../build/ts/dataBuffer.js");
 load("../../build/ts/ShapeData.js");
 
+load("../../build/ts/tools/profiler/timelineFrame.js");
+load("../../build/ts/tools/profiler/timelineBuffer.js");
+
 // Load SWF Dependencies
 console.time("Load SWF Dependencies");
+load("../../build/ts/swf/module.js");
 load("../../build/ts/swf/inflate.js");
 load("../../build/ts/swf/stream.js");
 load("../../build/ts/swf/parser/bitmap.js");
@@ -73,13 +77,14 @@ load("../../build/ts/metrics.js");
 
 load("../../build/ts/player/remoting.js");
 
-load("../../build/ts/tools/profiler/timelineFrame.js");
-load("../../build/ts/tools/profiler/timelineBuffer.js");
+// DUP: load("../../build/ts/tools/profiler/timelineFrame.js");
+// DUP: load("../../build/ts/tools/profiler/timelineBuffer.js");
+load("../../build/ts/avm2/module.js");
 
 console.timeEnd("Load Shared Dependencies");
 
 // Load AVM2 Dependencies
-console.time("Load AVM2 Dependencies");
+Shumway.AVM2.enterTimeline("Load AVM2 Dependencies");
 load("../../src/avm2/constants.js");
 load("../../build/ts/avm2/options.js");
 load("../../build/ts/avm2/errors.js");
@@ -116,7 +121,7 @@ load("../../build/ts/avm2/natives/byteArray.js");
 load("../../src/avm2/disassembler.js");
 load("../../build/ts/avm2/interpreter.js");
 //../../build/ts/avm2/vm.js
-console.timeEnd("Load AVM2 Dependencies");
+Shumway.AVM2.leaveTimeline();
 
 // Load AVM1 Dependencies
 console.time("Load AVM1 Dependencies");
@@ -127,21 +132,12 @@ load("../../build/ts/avm1/interpreter.js");
 console.timeEnd("Load AVM1 Dependencies");
 
 console.time("Load Compiled Code Cache");
-//../../build/ts/avm2/bin/out.js
-//../../build/ts/avm2/bin/builtin.as.js
-//../../build/ts/avm2/bin/race3.as.js
-//../../build/ts/avm2/bin/player.as.js
-//../../build/ts/avm2/bin/demo.as.js
-//../../build/ts/avm2/bin/box.as.js
-//../../build/ts/avm2/bin/box.as.cc.js
-//../../build/ts/avm2/bin/main.as.js
-//../../build/ts/avm2/bin/main.as.cc.js
-//../../build/ts/avm2/bin/truck.as.js
-//../../build/ts/avm2/bin/candy.as.js
 console.timeEnd("Load Compiled Code Cache");
 
+load("../../build/ts/player/module.js");
+
 // Load Flash TS Dependencies
-console.time("Load Flash TS Dependencies");
+Shumway.Player.enterTimeline("Load Flash TS Dependencies");
 load("../../build/ts/flash/geom/Matrix.js");
 load("../../build/ts/flash/geom/PerspectiveProjection.js");
 load("../../build/ts/flash/geom/ColorTransform.js");
@@ -519,7 +515,7 @@ load("../../build/ts/flash/display/MovieClip.js");
 //../../build/ts/flash/events/ContextMenuEvent.js
 //../../build/ts/flash/display3D/textures/CubeTexture.js
 load("../../build/ts/flash/text/TextLineMetrics.js");
-console.timeEnd("Load Flash TS Dependencies");
+Shumway.Player.leaveTimeline();
 
 console.time("Load avm1lib Dependencies");
 load("../../build/ts/avm1lib/AS2Button.js");

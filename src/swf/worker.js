@@ -35,8 +35,12 @@ load("../../build/ts/utilities.js");
 load("../../build/ts/dataBuffer.js");
 load("../../build/ts/ShapeData.js");
 
+load("../../build/ts/tools/profiler/timelineFrame.js");
+load("../../build/ts/tools/profiler/timelineBuffer.js");
+
 // Load SWF Dependencies
 console.time("Load SWF Dependencies");
+load("../../build/ts/swf/module.js");
 load("../../build/ts/swf/inflate.js");
 load("../../build/ts/swf/stream.js");
 load("../../build/ts/swf/parser/bitmap.js");

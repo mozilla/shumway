@@ -75,6 +75,7 @@ module Shumway.SWF.Parser {
   }
 
   export function defineImage(tag: DefineImageTag, dictionary: any): ImageDefinition {
+    enterTimeline("defineImage");
     var image: any = {
       type: 'image',
       id: tag.id,
@@ -131,6 +132,7 @@ module Shumway.SWF.Parser {
     } else {
       image.data = imgData;
     }
+    leaveTimeline();
     return image;
   }
 }

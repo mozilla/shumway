@@ -47,6 +47,7 @@ module Shumway.AVM2.Runtime {
   }
 
   export function executeScript(script) {
+    enterTimeline("executeScript " + script);
     var abc = script.abc;
     release || assert(!script.executing && !script.executed);
     var global = new Global(script);
@@ -59,6 +60,7 @@ module Shumway.AVM2.Runtime {
     // pushing current runtime to the stack, so Runtime.currentDomain is successful
     createFunction(script.init, scope).call(script.global, false);
     script.executed = true;
+    leaveTimeline();
   }
 
   export function ensureScriptIsExecuted(script, reason: string = "") {

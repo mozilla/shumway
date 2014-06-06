@@ -18,8 +18,10 @@
 ///<reference path='../metrics.ts' />
 ///<reference path='../options.ts' />
 ///<reference path='../settings.ts' />
+///<reference path='../tools/profiler/references.ts' />
 ///<reference path='../dataBuffer.ts' />
 
+///<reference path='module.ts' />
 ///<reference path='errors.ts' />
 ///<reference path='parser.ts' />
 ///<reference path='bytecode.ts' />

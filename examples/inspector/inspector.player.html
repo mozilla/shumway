@@ -37,8 +37,12 @@ limitations under the License.
     <script src="../../build/ts/dataBuffer.js"></script>
     <script src="../../build/ts/ShapeData.js"></script>
 
+    <script src="../../build/ts/tools/profiler/timelineFrame.js"></script>
+    <script src="../../build/ts/tools/profiler/timelineBuffer.js"></script>
+
     <!-- Load SWF Dependencies -->
     <script> console.time("Load SWF Dependencies"); </script>
+    <script src="../../build/ts/swf/module.js"></script>
     <script src="../../build/ts/swf/inflate.js"></script>
     <script src="../../build/ts/swf/stream.js"></script>
     <script src="../../build/ts/swf/parser/bitmap.js"></script>
@@ -80,13 +84,14 @@ limitations under the License.
 
     <script src="../../build/ts/player/remoting.js"></script>
 
-    <script src="../../build/ts/tools/profiler/timelineFrame.js"></script>
-    <script src="../../build/ts/tools/profiler/timelineBuffer.js"></script>
+    <!-- DUP: <script src="../../build/ts/tools/profiler/timelineFrame.js"></script> -->
+    <!-- DUP: <script src="../../build/ts/tools/profiler/timelineBuffer.js"></script> -->
+    <script src="../../build/ts/avm2/module.js"></script>
 
     <script> console.timeEnd("Load Shared Dependencies"); </script>
 
     <!-- Load AVM2 Dependencies -->
-    <script> console.time("Load AVM2 Dependencies"); </script>
+    <script> Shumway.AVM2.enterTimeline("Load AVM2 Dependencies"); </script>
     <script src="../../src/avm2/constants.js"></script>
     <script src="../../build/ts/avm2/options.js"></script>
     <script src="../../build/ts/avm2/errors.js"></script>
@@ -123,7 +128,7 @@ limitations under the License.
     <script src="../../src/avm2/disassembler.js"></script>
     <script src="../../build/ts/avm2/interpreter.js"></script>
     <!--<script src="../../build/ts/avm2/vm.js"></script>-->
-    <script> console.timeEnd("Load AVM2 Dependencies"); </script>
+    <script> Shumway.AVM2.leaveTimeline(); </script>
 
     <!-- Load AVM1 Dependencies -->
     <script> console.time("Load AVM1 Dependencies"); </script>
@@ -134,21 +139,12 @@ limitations under the License.
     <script> console.timeEnd("Load AVM1 Dependencies"); </script>
 
     <script> console.time("Load Compiled Code Cache"); </script>
-    <!--<script src="../../build/ts/avm2/bin/out.js"></script>-->
-    <!--<script src="../../build/ts/avm2/bin/builtin.as.js"></script>-->
-    <!--<script src="../../build/ts/avm2/bin/race3.as.js"></script>-->
-    <!--<script src="../../build/ts/avm2/bin/player.as.js"></script>-->
-    <!--<script src="../../build/ts/avm2/bin/demo.as.js"></script>-->
-    <!--<script src="../../build/ts/avm2/bin/box.as.js"></script>-->
-    <!--<script src="../../build/ts/avm2/bin/box.as.cc.js"></script>-->
-    <!--<script src="../../build/ts/avm2/bin/main.as.js"></script>-->
-    <!--<script src="../../build/ts/avm2/bin/main.as.cc.js"></script>-->
-    <!--<script src="../../build/ts/avm2/bin/truck.as.js"></script>-->
-    <!--<script src="../../build/ts/avm2/bin/candy.as.js"></script>-->
     <script> console.timeEnd("Load Compiled Code Cache"); </script>
 
+    <script src="../../build/ts/player/module.js"></script>
+
     <!-- Load Flash TS Dependencies -->
-    <script> console.time("Load Flash TS Dependencies"); </script>
+    <script> Shumway.Player.enterTimeline("Load Flash TS Dependencies"); </script>
     <script src="../../build/ts/flash/geom/Matrix.js"></script>
     <script src="../../build/ts/flash/geom/PerspectiveProjection.js"></script>
     <script src="../../build/ts/flash/geom/ColorTransform.js"></script>
@@ -526,7 +522,7 @@ limitations under the License.
     <!--<script src="../../build/ts/flash/events/ContextMenuEvent.js"></script>-->
     <!--<script src="../../build/ts/flash/display3D/textures/CubeTexture.js"></script>-->
     <script src="../../build/ts/flash/text/TextLineMetrics.js"></script>
-    <script> console.timeEnd("Load Flash TS Dependencies"); </script>
+    <script> Shumway.Player.leaveTimeline(); </script>
 
     <script> console.time("Load avm1lib Dependencies"); </script>
     <script src="../../build/ts/avm1lib/AS2Button.js"></script>
