@@ -26,10 +26,6 @@
  (partners.adobe.com/public/developer/en/ps/sdk/5116.DCT_Filter.pdf)
  */
 
-interface XMLHttpRequest {
-  mozResponseArrayBuffer: ArrayBuffer;
-}
-
 module Shumway.JPEG {
   var dctZigZag = new Int32Array([
     0,
