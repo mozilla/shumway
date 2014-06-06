@@ -1419,7 +1419,9 @@ module Shumway.AVM2.AS.flash.display {
       }
       var graphics = this._getGraphics();
       if (graphics) {
-        return graphics._containsPoint(point);
+        // TODO: split this up into internal and external versions.
+        // The external one must include strokes, the internal shouldn't do the argument validation.
+        return graphics._containsPoint(point.x, point.y, true);
       }
       return false;
     }

@@ -16,13 +16,15 @@
 
 // Class: Graphics
 module Shumway.AVM2.AS.flash.display {
-  import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
-  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
   import Bounds = Shumway.Bounds;
+  import assert = Shumway.Debug.assert;
+  import assertUnreachable = Shumway.Debug.assertUnreachable;
+//  import enterTimeline = Shumway.Player.enterTimeline;
+//  import leaveTimeline = Shumway.Player.leaveTimeline;
 
   import DisplayObject = flash.display.DisplayObject;
   import GradientType = flash.display.GradientType;
@@ -39,6 +41,12 @@ module Shumway.AVM2.AS.flash.display {
   // TODO duplicate refactor to remove duplication code from GFX geometry.ts
   //import quadraticBezierExtreme = Shumway.GFX.Geometry.quadraticBezierExtreme;
   //import cubicBezierExtremes = Shumway.GFX.Geometry.cubicBezierExtremes;
+
+  function distanceSq(x1, y1, x2, y2) {
+    var dX = x2 - x1;
+    var dY = y2 - y1;
+    return dX * dX + dY * dY;
+  }
 
   function quadraticBezier(from: number, cp: number, to: number, t: number): number {
     var inverseT = 1 - t;
@@ -59,7 +67,7 @@ module Shumway.AVM2.AS.flash.display {
     var inverseT = 1 - t;
     var inverseTSq = inverseT * inverseT;
     return from * inverseT * inverseTSq + 3 * cp * t * inverseTSq +
-      3 * cp2 * inverseT * tSq + to * t * tSq;
+           3 * cp2 * inverseT * tSq + to * t * tSq;
   }
 
   function cubicBezierExtremes(from: number, cp: number, cp2: number, to): number[] {
@@ -87,6 +95,249 @@ module Shumway.AVM2.AS.flash.display {
     }
     return result;
   }
+
+  function cubicXAtY(x0, y0, cx, cy, cx1, cy1, x1, y1, y) {
+    var dX = 3.0 * (cx - x0);
+    var dY = 3.0 * (cy - y0);
+
+    var bX = 3.0 * (cx1 - cx) - dX;
+    var bY = 3.0 * (cy1 - cy) - dY;
+
+    var c3X = x1 - x0 - dX - bX;
+    var c3Y = y1 - y0 - dY - bY;
+    // Find one root - any root - then factor out (t-r) to get a quadratic poly.
+    function f(t) {
+      return t * (dY + t * (bY + t * c3Y)) + y0 - y;
+    }
+    function pointAt(t)
+    {
+      if (t < 0) {
+        t = 0;
+      } else if (t > 1) {
+        t = 1;
+      }
+
+      return x0 + t * (dX + t * (bX + t * c3X));
+    }
+    // Bisect the specified range to isolate an interval with a root.
+    function bisectCubicBezierRange(f, l, r, limit) {
+      if (Math.abs(r - l) <= limit) {
+        return;
+      }
+
+      var middle = 0.5 * (l + r);
+      if (f(l) * f(r) <= 0) {
+        left = l;
+        right = r;
+        return;
+      }
+      bisectCubicBezierRange(f, l, middle, limit);
+      bisectCubicBezierRange(f, middle, r, limit);
+    }
+
+    // some curves that loop around on themselves may require bisection
+    var left = 0;
+    var right = 1;
+    bisectCubicBezierRange(f, 0, 1, 0.05);
+
+    // experiment with tolerance - but not too tight :)
+    var t0 = findRoot(left, right, f, 50, 0.000001);
+    var evalResult = Math.abs(f(t0));
+    if (evalResult > 0.00001) {
+      return [];
+    }
+
+    var result = [];
+    if (t0 <= 1) {
+      result.push(pointAt(t0));
+    }
+
+    // Factor theorem: t-r is a factor of the cubic polynomial if r is a root.
+    // Use this to reduce to a quadratic poly. using synthetic division
+    var a = c3Y;
+    var b = t0 * a + bY;
+    var c = t0 * b + dY;
+
+    // Process the quadratic for the remaining two possible roots
+    var d = b * b - 4 * a * c;
+    if (d < 0) {
+      return result;
+    }
+
+    d = Math.sqrt(d);
+    a = 1 / (a + a);
+    var t1 = (d - b) * a;
+    var t2 = (-b - d) * a;
+
+    if (t1 >= 0 && t1 <= 1) {
+      result.push(pointAt(t1));
+    }
+
+    if (t2 >= 0 && t2 <= 1) {
+      result.push(pointAt(t2));
+    }
+
+    return result;
+  }
+
+  function findRoot(x0, x2, f, maxIterations, epsilon) {
+    var x1;
+    var y0;
+    var y1;
+    var y2;
+    var b;
+    var c;
+    var y10;
+    var y20;
+    var y21;
+    var xm;
+    var ym;
+    var temp;
+
+    var xmlast = x0;
+    y0 = f(x0);
+
+    if (y0 === 0) {
+      return x0;
+    }
+
+    y2 = f(x2);
+    if (y2 === 0) {
+      return x2;
+    }
+
+    if (y2 * y0 > 0) {
+// dispatchEvent( new Event(ERROR) );
+      return x0;
+    }
+
+    var __iter = 0;
+    for (var i = 0; i < maxIterations; ++i) {
+      __iter++;
+
+      x1 = 0.5 * (x2 + x0);
+      y1 = f(x1);
+      if (y1 === 0) {
+        return x1;
+      }
+
+      if (Math.abs(x1 - x0) < epsilon) {
+        return x1;
+      }
+
+      if (y1 * y0 > 0) {
+        temp = x0;
+        x0 = x2;
+        x2 = temp;
+        temp = y0;
+        y0 = y2;
+        y2 = temp;
+      }
+
+      y10 = y1 - y0;
+      y21 = y2 - y1;
+      y20 = y2 - y0;
+      if (y2 * y20 < 2 * y1 * y10) {
+        x2 = x1;
+        y2 = y1;
+      }
+      else {
+        b = (x1 - x0 ) / y10;
+        c = (y10 - y21) / (y21 * y20);
+        xm = x0 - b * y0 * (1 - c * y1);
+        ym = f(xm);
+        if (ym === 0) {
+          return xm;
+        }
+
+        if (Math.abs(xm - xmlast) < epsilon) {
+          return xm;
+        }
+
+        xmlast = xm;
+        if (ym * y0 < 0) {
+          x2 = xm;
+          y2 = ym;
+        }
+        else {
+          x0 = xm;
+          y0 = ym;
+          x2 = x1;
+          y2 = y1;
+        }
+      }
+    }
+    return x1;
+  }
+
+  // See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+  function rayIntersectsLine(x: number, y: number, x1: number, y1: number, x2: number,
+                             y2: number): boolean
+  {
+    return (y2 > y) !== (y1 > y) && x < (x1 - x2) * (y - y2) / (y1 - y2) + x2;
+  }
+
+  function rayFullyCrossesCurve(x: number, y: number, fromX: number, fromY: number, cpX: number,
+                               cpY: number, toX: number, toY: number): boolean
+  {
+    if ((cpY > y) === (fromY > y) && (toY > y) === (fromY > y)) {
+      return false;
+    }
+    if (fromX >= x && cpX >= x && toX >= x) {
+      return true;
+    }
+
+    // Finding the intersections with our ray means solving a quadratic
+    // equation of the form y = ax^2 + bx + c for y.
+    // See http://en.wikipedia.org/wiki/Quadratic_equation and
+    // http://code.google.com/p/degrafa/source/browse/trunk/Degrafa/com/degrafa/geometry/AdvancedQuadraticBezier.as?r=613#394
+    var a = fromY - 2 * cpY + toY;
+    var c = fromY - y;
+    var b = 2 * (cpY - fromY);
+
+    var d = b * b - 4 * a * c;
+    if (d < 0) {
+      return false;
+    }
+
+    d = Math.sqrt(d);
+    a = 1 / (a + a);
+    var t1 = (d - b) * a;
+    var t2 = (-b - d) * a;
+
+    var crosses = false;
+    if (t1 >= 0 && t1 <= 1 && quadraticBezier(fromX, cpX, toX, t1) > x) {
+      crosses = !crosses;
+    }
+
+    if (t2 >= 0 && t2 <= 1 && quadraticBezier(fromX, cpX, toX, t2) > x) {
+      crosses = !crosses;
+    }
+    return crosses;
+  }
+
+  function rayFullyCrossesCubicCurve(x: number, y: number, fromX: number, fromY: number,
+                                     cpX: number, cpY: number, cp2X: number, cp2Y: number,
+                                     toX: number, toY: number): boolean
+  {
+    var curveStartsAfterY = fromY > y;
+    if ((cpY > y) === curveStartsAfterY && (cp2Y > y) === curveStartsAfterY &&
+        (toY > y) === curveStartsAfterY)
+    {
+      return false;
+    }
+    if (fromX < x && cpX < x && cp2X < x && toX < x) {
+      return false;
+    }
+    var crosses = false;
+    var roots = cubicXAtY(fromX, fromY, cpX, cpY, cp2X, cp2Y, toX, toY, y);
+    for (var i = roots.length; i--;) {
+      if (roots[i] >= x) {
+        crosses = !crosses;
+      }
+    }
+    return crosses;
+  }
   // end of GFX geometry.ts
 
   export class Graphics extends ASNative implements Shumway.Remoting.IRemotable {
@@ -102,22 +353,31 @@ module Shumway.AVM2.AS.flash.display {
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._graphicsData = new ShapeData();
       this._textures = [];
+      this._hasFills = this._hasLines = false;
       this._fillBounds = new Bounds(0x8000000, 0x8000000, 0x8000000, 0x8000000);
       this._lineBounds = new Bounds(0x8000000, 0x8000000, 0x8000000, 0x8000000);
-      this._lastX = 0;
-      this._lastY = 0;
+      this._lastX = this._lastY = 0;
       this._boundsIncludeLastCoordinates = false;
       this._parent = null;
 
       this._topLeftStrokeWidth = this._bottomRightStrokeWidth = 0;
     }
 
-    getGraphicsData(): ShapeData {
-      return this._graphicsData;
+    static FromData(data: any): Graphics {
+      var graphics: Graphics = new flash.display.Graphics();
+      graphics._graphicsData = ShapeData.FromPlainObject(data.shape);
+      graphics._hasFills = !!data.hasFills;
+      graphics._hasLines = !!data.hasLines;
+      if (data.fillBounds) {
+        assert(data.hasLines === !!data.lineBounds);
+        graphics._fillBounds.copyFrom(data.fillBounds);
+        graphics._lineBounds.copyFrom(graphics._hasLines ? data.lineBounds : data.fillBounds);
+      }
+      return graphics;
     }
 
-    setGraphicsData(data: ShapeData) {
-      this._graphicsData = data;
+    getGraphicsData(): ShapeData {
+      return this._graphicsData;
     }
 
     getUsedTextures(): BitmapData[] {
@@ -130,6 +390,8 @@ module Shumway.AVM2.AS.flash.display {
     // AS -> JS Bindings
     private _graphicsData: ShapeData;
     private _textures: BitmapData[];
+    private _hasFills: boolean;
+    private _hasLines: boolean;
     private _lastX: number;
     private _lastY: number;
     private _boundsIncludeLastCoordinates: boolean;
@@ -218,6 +480,7 @@ module Shumway.AVM2.AS.flash.display {
       color = color >>> 0 & 0xffffff;
       alpha = Math.round(clamp(+alpha, -1, 1) * 0xff)|0;
       this._graphicsData.beginFill((color << 8) | alpha);
+      this._hasFills = true;
     }
 
     beginGradientFill(type: string, colors: number[], alphas: number[], ratios: number[],
@@ -226,6 +489,7 @@ module Shumway.AVM2.AS.flash.display {
     {
       this._writeGradientStyle(PathCommand.BeginGradientFill, type, colors, alphas, ratios, matrix,
                               spreadMethod, interpolationMethod, focalPointRatio);
+      this._hasFills = true;
     }
 
     beginBitmapFill(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
@@ -246,6 +510,7 @@ module Shumway.AVM2.AS.flash.display {
       var index = this._textures.length;
       this._textures.push(bitmap);
       this._graphicsData.beginBitmapFill(index, matrix, repeat, smooth);
+      this._hasFills = true;
     }
 
     endFill(): void {
@@ -302,6 +567,7 @@ module Shumway.AVM2.AS.flash.display {
 
       this._graphicsData.lineStyle(thickness, (color << 8) | alpha, pixelHinting,
                                    lineScaleMode, capsStyle, jointStyle, miterLimit);
+      this._hasLines = true;
     }
 
     lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [],
@@ -614,29 +880,351 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Tests if the specified point is within this graphics path.
      */
-    _containsPoint(point: flash.geom.Point, includeStrokes: boolean = false): boolean {
-      // TODO: Implement this in a smart way.
-      return this._lineBounds.contains(point.x, point.y);
+    _containsPoint(x: number, y: number, includeLines: boolean): boolean {
+      var hasStrokes = this._hasLines;
+      if (!(includeLines && hasStrokes ? this._lineBounds : this._fillBounds).contains(x, y)) {
+        return false;
+      }
 
-//      var paths = this._paths;
-//      for (var i = 0; i < paths.length; i++) {
-//        var path = paths[i];
-//        if (path.isPointInPath(point.x, point.y)) {
-//          return true;
-//        }
-//
-//        if (path.strokeStyle) {
-//          var strokePath = path._strokePath;
-//          if (!strokePath) {
-//            strokePath = path.strokePath(path.drawingStyles);
-//            path._strokePath = strokePath;
-//          }
-//
-//          if (strokePath.isPointInPath(point.x, point.y)) {
-//            return true;
-//          }
-//        }
-//      }
+//      enterTimeline("Graphics._containsPoint");
+      var containsPoint = false;
+
+      // If we have any fills at all, tt's vastly more likely that the point is in a fill,
+      // so test that first.
+      if (this._hasFills) {
+        containsPoint = this._fillContainsPoint(x, y);
+      } else {
+        assert(hasStrokes, "Can't have non-empty bounds without line or fill set.");
+      }
+      if (includeLines) {
+        containsPoint = this._linesContainsPoint(x, y);
+      }
+//      leaveTimeline();
+      return containsPoint;
+    }
+
+
+    private _fillContainsPoint(x: number, y: number): boolean {
+//      enterTimeline("Graphics._fillContainsPoint");
+
+      var data = this._graphicsData;
+      var commands = data.commands;
+      var commandsCount = data.commandsPosition;
+      var coordinates = data.coordinates;
+      var coordinatesIndex = 0;
+
+      var fromX = 0;
+      var fromY = 0;
+      var toX = 0;
+      var toY = 0;
+      var cpX: number;
+      var cpY: number;
+      var formOpen = false;
+      var fillActive = false;
+      var formOpenX = 0;
+      var formOpenY = 0;
+      var inside = false;
+      // Description of serialization format can be found in ShapeData.
+      // Rough outline of the algorithm's mode of operation:
+      // from x,y an infinite ray to the right is "cast". All operations are then
+      // tested for intersections with this ray, where each intersection means
+      // switching between being outside and inside the shape.
+      for (var commandIndex = 0; commandIndex < commandsCount; commandIndex++) {
+        var command = commands[commandIndex];
+        switch (command) {
+          case PathCommand.MoveTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            if (formOpen && fillActive &&
+                rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
+            {
+              inside = !inside;
+            }
+            formOpen = true;
+            fromX = formOpenX = coordinates[coordinatesIndex++];
+            fromY = formOpenY = coordinates[coordinatesIndex++];
+            // Continue outer loop.
+            continue;
+          case PathCommand.LineTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            toX = coordinates[coordinatesIndex++];
+            toY = coordinates[coordinatesIndex++];
+            if (fillActive && rayIntersectsLine(x, y, fromX, fromY, toX, toY)) {
+              inside = !inside;
+            }
+            break;
+          case PathCommand.CurveTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 4);
+            cpX = coordinates[coordinatesIndex++];
+            cpY = coordinates[coordinatesIndex++];
+            toX = coordinates[coordinatesIndex++];
+            toY = coordinates[coordinatesIndex++];
+            if (fillActive && rayFullyCrossesCurve(x, y, fromX, fromY, cpX, cpY, toX, toY)) {
+              inside = !inside;
+            }
+            break;
+          case PathCommand.CubicCurveTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 6);
+            cpX = coordinates[coordinatesIndex++];
+            cpY = coordinates[coordinatesIndex++];
+            var cp2X = coordinates[coordinatesIndex++];
+            var cp2Y = coordinates[coordinatesIndex++];
+            toX = coordinates[coordinatesIndex++];
+            toY = coordinates[coordinatesIndex++];
+            if (fillActive &&
+                rayFullyCrossesCubicCurve(x, y, fromX, fromY, cpX, cpY, cp2X, cp2Y, toX, toY))
+            {
+              inside = !inside;
+            }
+            break;
+          case PathCommand.BeginSolidFill:
+          case PathCommand.BeginGradientFill:
+          case PathCommand.BeginBitmapFill:
+          case PathCommand.EndFill:
+            if (formOpen && fillActive &&
+                rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
+            {
+              inside = !inside;
+            }
+            formOpen = false;
+            fillActive = command !== PathCommand.EndFill;
+            break;
+          case PathCommand.LineStyleSolid:
+            commandIndex++; // Skip thickness
+            break;
+          case PathCommand.LineStyleGradient:
+          case PathCommand.LineStyleBitmap:
+          case PathCommand.LineEnd:
+            break;
+          default:
+            assertUnreachable('Invalid command ' + command + ' encountered at index' +
+                              (commandIndex - 1) + ' of ' + commandsCount);
+        }
+        fromX = toX;
+        fromY = toY;
+      }
+      assert(commandIndex === commandsCount);
+      assert(coordinatesIndex === data.coordinatesPosition);
+      if (formOpen && fillActive &&
+          rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
+      {
+        inside = !inside;
+      }
+//      leaveTimeline();
+      return inside;
+    }
+
+    private _linesContainsPoint(x: number, y: number): boolean {
+//      enterTimeline("Graphics._lineContainsPoint");
+
+      var data = this._graphicsData;
+      var commands = data.commands;
+      var commandsCount = data.commandsPosition;
+      var coordinates = data.coordinates;
+      var coordinatesIndex = 0;
+
+      var fromX = 0;
+      var fromY = 0;
+      var toX = 0;
+      var toY = 0;
+      var cpX: number;
+      var cpY: number;
+      var curveX: number;
+      var curveY: number;
+      var t: number;
+
+      var width = 0;
+      var halfWidth = 0;
+      var halfWidthSq = 0;
+      var minX = 0;
+      var maxX = 0;
+      var minY = 0;
+      var maxY = 0;
+
+      // Description of serialization format can be found in ShapeData.
+      // Rough outline of the algorithm's mode of operation:
+      // from x,y an infinite ray to the right is "cast". All operations are then
+      // tested for intersections with this ray, where each intersection means
+      // switching between being outside and inside the shape.
+      for (var commandIndex = 0; commandIndex < commandsCount; commandIndex++) {
+        var command = commands[commandIndex];
+        switch (command) {
+          case PathCommand.MoveTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            fromX = coordinates[coordinatesIndex++];
+            fromY = coordinates[coordinatesIndex++];
+            // Continue outer loop.
+            continue;
+          case PathCommand.LineTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            if (width === 0) {
+              fromX = coordinates[coordinatesIndex++];
+              fromX = coordinates[coordinatesIndex++];
+              continue;
+            }
+            toX = coordinates[coordinatesIndex++];
+            toY = coordinates[coordinatesIndex++];
+
+            // Lines with length == 0 aren't rendered.
+            if (fromX === toX && fromY === toY) {
+              break;
+            }
+            // Eliminate based on bounds.
+            if (maxX < fromX && maxX < toX || minX > fromX && minX > toX ||
+                maxY < fromY && maxY < toY || minY > fromY && minY > toY)
+            {
+              break;
+            }
+            // Vertical and horizontal lines are a certain hit at this point
+            if (toX === fromX || toY === fromY) {
+              return true;
+            }
+            // http://stackoverflow.com/a/1501725/517791
+            t = ((x - fromX) * (toX - fromX) + (y - fromY) * (toY - fromY)) /
+                distanceSq(fromX, fromY, toX, toY);
+            if (t < 0) {
+              if (distanceSq(x, y, fromX, fromY) <= halfWidthSq) {
+                return true;
+              }
+              break;
+            }
+            if (t > 1) {
+              if (distanceSq(x, y, toX, toY) <= halfWidthSq) {
+                return true;
+              }
+              break;
+            }
+            if (distanceSq(x, y, fromX + t * (toX - fromX),
+                           fromY + t * (toY - fromY)) <= halfWidthSq)
+            {
+              return true;
+            }
+            break;
+          case PathCommand.CurveTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 4);
+            if (width === 0) {
+              coordinatesIndex += 2;
+              fromX = coordinates[coordinatesIndex++];
+              fromX = coordinates[coordinatesIndex++];
+              continue;
+            }
+            cpX = coordinates[coordinatesIndex++];
+            cpY = coordinates[coordinatesIndex++];
+            toX = coordinates[coordinatesIndex++];
+            toY = coordinates[coordinatesIndex++];
+            // Eliminate based on bounds
+            var extremeX = quadraticBezierExtreme(fromX, cpX, toX);
+            if (maxX < fromX && maxX < extremeX && maxX < toX ||
+                minX > fromX && minX > extremeX && minX > toX)
+            {
+              break;
+            }
+            var extremeY = quadraticBezierExtreme(fromY, cpY, toY);
+            if (maxY < fromY && maxY < extremeY && maxY < toY ||
+                minY > fromY && minY > extremeY && minY > toY)
+            {
+              break;
+            }
+            // So, this is very much not ideal, but I'll punt on proper curve
+            // hit-testing for now and just sample an amount of points that seems
+            // sufficient.
+            for (t = 0; t < 1; t += 0.02) {
+              curveX = quadraticBezier(fromX, cpX, toX, t);
+              if (curveX < minX || curveX > maxX) {
+                continue;
+              }
+              curveY = quadraticBezier(fromY, cpY, toY, t);
+              if (curveY < minY || curveY > maxY) {
+                continue;
+              }
+              if ((x - curveX) * (x - curveX) + (y - curveY) * (y - curveY) < halfWidthSq) {
+                return true;
+              }
+            }
+            break;
+          case PathCommand.CubicCurveTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 6);
+            if (width === 0) {
+              coordinatesIndex += 4;
+              fromX = coordinates[coordinatesIndex++];
+              fromX = coordinates[coordinatesIndex++];
+              continue;
+            }
+            cpX = coordinates[coordinatesIndex++];
+            cpY = coordinates[coordinatesIndex++];
+            var cp2X = coordinates[coordinatesIndex++];
+            var cp2Y = coordinates[coordinatesIndex++];
+            toX = coordinates[coordinatesIndex++];
+            toY = coordinates[coordinatesIndex++];
+            // Eliminate based on bounds
+            var extremesX = cubicBezierExtremes(fromX, cpX, cp2X, toX);
+            while(extremesX.length < 2) {
+              extremesX.push(toX);
+            }
+            if (maxX < fromX && maxX < toX && maxX < extremesX[0] &&
+                maxX < extremesX[1] ||
+                minX > fromX && minX > toX && minX > extremesX[0] &&
+                minX > extremesX[1])
+            {
+              break;
+            }
+            var extremesY = cubicBezierExtremes(fromY, cpY, cp2Y, toY);
+            while(extremesY.length < 2) {
+              extremesY.push(toY);
+            }
+            if (maxY < fromY && maxY < toY && maxY < extremesY[0] &&
+                maxY < extremesY[1] ||
+                minY > fromY && minY > toY && minY > extremesY[0] &&
+                minY > extremesY[1])
+            {
+              break;
+            }
+            // So, this is very much not ideal, but I'll punt on proper curve
+            // hit-testing for now and just sample an amount of points that seems
+            // sufficient.
+            for (t = 0; t < 1; t += 0.02) {
+              curveX = cubicBezier(fromX, cpX, cp2X, toX, t);
+              if (curveX < minX || curveX > maxX) {
+                continue;
+              }
+              curveY = cubicBezier(fromY, cpY, cp2Y, toY, t);
+              if (curveY < minY || curveY > maxY) {
+                continue;
+              }
+              if ((x - curveX) * (x - curveX) + (y - curveY) * (y - curveY) <
+                  halfWidthSq)
+              {
+                return true;
+              }
+            }
+            break;
+          case PathCommand.LineStyleSolid:
+            width = commands[++commandIndex] * 20;
+            halfWidth = width >> 2;
+            halfWidthSq = halfWidth * halfWidth;
+            minX = x - halfWidth;
+            maxX = x + halfWidth;
+            minY = y - halfWidth;
+            maxY = y + halfWidth;
+            break;
+          case PathCommand.BeginSolidFill:
+          case PathCommand.BeginGradientFill:
+          case PathCommand.BeginBitmapFill:
+          case PathCommand.EndFill:
+          case PathCommand.LineStyleGradient:
+          case PathCommand.LineStyleBitmap:
+          case PathCommand.LineEnd:
+            break;
+          default:
+            assertUnreachable('Invalid command ' + command + ' encountered at index' +
+                              (commandIndex - 1) + ' of ' + commandsCount);
+        }
+        fromX = toX;
+        fromY = toY;
+      }
+      assert(commandIndex === commandsCount);
+      assert(coordinatesIndex === data.coordinatesPosition);
+//      leaveTimeline();
+      return false;
     }
 
     /**

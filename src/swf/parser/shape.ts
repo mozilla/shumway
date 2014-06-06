@@ -405,6 +405,8 @@ module Shumway.SWF.Parser {
       lineBoundsMorph: tag.strokeBboxMorph,
       fillBoundsMorph: tag.bboxMorph,
       isMorph: tag.isMorph,
+      hasFills: fillPaths.length > 0,
+      hasLines: linePaths.length > 0,
       shape: shape.toPlainObject(),
       transferables: shape.buffers,
       require: dependencies.length ? dependencies : null
