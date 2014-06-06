@@ -71,7 +71,7 @@ module Shumway.SWF.Parser {
       move = $.move = flags & 1;
       if (tagCode === 70) {
         hasBackgroundColor = $.hasBackgroundColor = flags >> 15 & 1;
-        hasVisibility = $.hasVisibility = flags >> 14 & 1;
+        hasVisibility = $.hasVisibility = flags >> 13 & 1;
         hasImage = $.hasImage = flags >> 12 & 1;
         hasClassName = $.hasClassName = flags >> 11 & 1;
         cache = $.cache = flags >> 10 & 1;
