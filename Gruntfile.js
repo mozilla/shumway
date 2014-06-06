@@ -152,11 +152,13 @@ module.exports = function(grunt) {
   grunt.registerTask('update-flash-refs', ['update-refs']); // TODO deprecated
 
   grunt.registerTask('bundles', function () {
+    var outputDir = 'build/bundles/';
+    grunt.file.mkdir(outputDir);
     var packageRefs = require('./utils/update-flash-refs.js').packageRefs;
-    packageRefs(['gfx'], 'build/bundles/shumway.gfx.js');
-    packageRefs(['player'], 'build/bundles/shumway.player.js');
-    packageRefs(['parser'], 'build/bundles/shumway.parser.js');
-    packageRefs(['gfx', 'parser', 'player'], 'build/bundles/shumway.combined.js');
+    packageRefs(['gfx'], outputDir + 'shumway.gfx.js');
+    packageRefs(['player'], outputDir + 'shumway.player.js');
+    packageRefs(['parser'], outputDir + 'shumway.parser.js');
+    packageRefs(['gfx', 'parser', 'player'], outputDir + 'shumway.combined.js');
   });
 
 
