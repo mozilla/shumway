@@ -172,7 +172,7 @@ module Shumway.SWF.Parser {
     return null;
   }
 
-  export function defineBitmap(tag: any) {
+  export function defineBitmap(tag: any): ImageDefinition {
     var bmpData = tag.bmpData;
     var data: Uint32Array;
     var type = ImageType.None;

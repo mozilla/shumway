@@ -1036,5 +1036,57 @@ module Shumway.JPEG {
       }
       return data;
     }
+
+    copyToImageData(imageData: ImageData) {
+      var width = imageData.width, height = imageData.height;
+      var imageDataBytes = width * height * 4;
+      var imageDataArray = imageData.data;
+      var data = this.getData(width, height, true);
+      var i = 0, j = 0;
+      var Y, K, C, M, R, G, B;
+      switch (this.components.length) {
+        case 1:
+          while (j < imageDataBytes) {
+            Y = data[i++];
+
+            imageDataArray[j++] = Y;
+            imageDataArray[j++] = Y;
+            imageDataArray[j++] = Y;
+            imageDataArray[j++] = 255;
+          }
+          break;
+        case 3:
+          while (j < imageDataBytes) {
+            R = data[i++];
+            G = data[i++];
+            B = data[i++];
+
+            imageDataArray[j++] = R;
+            imageDataArray[j++] = G;
+            imageDataArray[j++] = B;
+            imageDataArray[j++] = 255;
+          }
+          break;
+        case 4:
+          while (j < imageDataBytes) {
+            C = data[i++];
+            M = data[i++];
+            Y = data[i++];
+            K = data[i++];
+
+            R = 255 - clamp0to255(C * (1 - K / 255) + K);
+            G = 255 - clamp0to255(M * (1 - K / 255) + K);
+            B = 255 - clamp0to255(Y * (1 - K / 255) + K);
+
+            imageDataArray[j++] = R;
+            imageDataArray[j++] = G;
+            imageDataArray[j++] = B;
+            imageDataArray[j++] = 255;
+          }
+          break;
+        default:
+          throw 'Unsupported color mode';
+      }
+    }
   }
 }

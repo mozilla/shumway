@@ -67,13 +67,9 @@ module Shumway.AVM2.AS.flash.display {
       this._dictionary = [];
     }
 
-    // JS -> AS Bindings
-
-    parameters: ASObject;
     uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
-    // AS -> JS Bindings
-    static getLoaderInfoByDefinition(object: ASObject): flash.display.LoaderInfo {
+    static getLoaderInfoByDefinition(object: Object): flash.display.LoaderInfo {
       object = object;
       notImplemented("public flash.display.LoaderInfo::static getLoaderInfoByDefinition"); return;
     }
@@ -87,13 +83,13 @@ module Shumway.AVM2.AS.flash.display {
     _swfVersion: number /*uint*/;
     _actionScriptVersion: number /*uint*/;
     _frameRate: number;
-    _parameters: ASObject;
+    _parameters: Object;
     _width: number /*int*/;
     _height: number /*int*/;
     _contentType: string;
     _sharedEvents: flash.events.EventDispatcher;
-    _parentSandboxBridge: ASObject;
-    _childSandboxBridge: ASObject;
+    _parentSandboxBridge: Object;
+    _childSandboxBridge: Object;
     _sameDomain: boolean;
     _childAllowsParent: boolean;
     _parentAllowsChild: boolean;
@@ -158,20 +154,20 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.LoaderInfo::get sharedEvents"); return;
       // return this._sharedEvents;
     }
-    get parentSandboxBridge(): ASObject {
+    get parentSandboxBridge(): Object {
       notImplemented("public flash.display.LoaderInfo::get parentSandboxBridge"); return;
       // return this._parentSandboxBridge;
     }
-    set parentSandboxBridge(door: ASObject) {
+    set parentSandboxBridge(door: Object) {
       door = door;
       notImplemented("public flash.display.LoaderInfo::set parentSandboxBridge"); return;
       // this._parentSandboxBridge = door;
     }
-    get childSandboxBridge(): ASObject {
+    get childSandboxBridge(): Object {
       notImplemented("public flash.display.LoaderInfo::get childSandboxBridge"); return;
       // return this._childSandboxBridge;
     }
-    set childSandboxBridge(door: ASObject) {
+    set childSandboxBridge(door: Object) {
       door = door;
       notImplemented("public flash.display.LoaderInfo::set childSandboxBridge"); return;
       // this._childSandboxBridge = door;
@@ -201,8 +197,13 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.LoaderInfo::get bytes"); return;
       // return this._bytes;
     }
-    _getArgs(): ASObject {
-      notImplemented("public flash.display.LoaderInfo::_getArgs"); return;
+
+    get parameters(): Object {
+      somewhatImplemented("public flash.display.LoaderInfo::get parameters");
+      if (this._parameters) {
+        return Shumway.ObjectUtilities.cloneObject(this._parameters);
+      }
+      return null;
     }
     _getUncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
       notImplemented("public flash.display.LoaderInfo::_getUncaughtErrorEvents"); return;

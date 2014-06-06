@@ -25,7 +25,7 @@ module Shumway.SWF.Parser {
     return (buff[pos] << 8) | buff[pos + 1];
   }
 
-  export function parseJpegChunks(imgDef, bytes) {
+  export function parseJpegChunks(image: any, bytes) {
     var i = 0;
     var n = bytes.length;
     var chunks = [];
@@ -45,28 +45,37 @@ module Shumway.SWF.Parser {
       } else if (code < 0xd0 || code > 0xd8) {
         var length = getUint16(bytes, i);
         if (code >= 0xc0 && code <= 0xc3) {
-          imgDef.height = getUint16(bytes, i + 3);
-          imgDef.width = getUint16(bytes, i + 5);
+          image.height = getUint16(bytes, i + 3);
+          image.width = getUint16(bytes, i + 5);
         }
         i += length;
       }
       chunks.push(bytes.subarray(begin, i));
     } while (i < n);
-    assert(imgDef.width && imgDef.height, 'bad image', 'jpeg');
+    assert(image.width && image.height, 'bad image', 'jpeg');
     return chunks;
   }
 
-  declare class JpegImage {
-    width:number;
-    height:number;
-
-    parse(data:Uint8Array);
-
-    copyToImageData(data);
+  export interface ImageDefinition {
+    type: string;
+    id: number;
+    width: number;
+    height: number;
+    mimeType: string;
+    data: Uint8Array;
+    dataType?: ImageType;
   }
 
-  export function defineImage(tag:any, dictionary:any) {
-    var img: any = {
+  export interface DefineImageTag {
+    id: number;
+    imgData: Uint8Array;
+    mimeType: string;
+    alphaData: boolean;
+    incomplete: boolean;
+  }
+
+  export function defineImage(tag: DefineImageTag, dictionary: any): ImageDefinition {
+    var image: any = {
       type: 'image',
       id: tag.id,
       mimeType: tag.mimeType
@@ -77,24 +86,25 @@ module Shumway.SWF.Parser {
     if (tag.mimeType === 'image/jpeg') {
       var alphaData = tag.alphaData;
       if (alphaData) {
-        var j = new JpegImage();
-        j.parse(imgData);
+        var jpegImage = new Shumway.JPEG.JpegImage();
+        jpegImage.parse(imgData);
 
-        var width = img.width = j.width;
-        var height = img.height = j.height;
+        var width = image.width = jpegImage.width;
+        var height = image.height = jpegImage.height;
         var length = width * height;
         var symbolMaskBytes = createInflatedStream(alphaData, length).bytes;
-        var data = img.data = new Uint8ClampedArray(length * 4);
+        var data = image.data = new Uint8ClampedArray(length * 4);
 
-        j.copyToImageData(img);
+        jpegImage.copyToImageData(image);
 
         for (var i = 0, k = 3; i < length; i++, k += 4) {
           data[k] = symbolMaskBytes[i];
         }
 
-        img.mimeType = 'application/octet-stream';
+        image.mimeType = 'application/octet-stream';
+        image.dataType = ImageType.PremultipliedAlphaARGB;
       } else {
-        chunks = parseJpegChunks(img, imgData);
+        chunks = parseJpegChunks(image, imgData);
 
         if (tag.incomplete) {
           var tables = dictionary[0];
@@ -105,22 +115,22 @@ module Shumway.SWF.Parser {
             chunks.unshift(header.slice(0, header.size - 2));
           }
         }
-        var len = 0;
+        var length = 0;
         for (var i = 0; i < chunks.length; i++) {
-          len += chunks[i].length;
+          length += chunks[i].length;
         }
-        var data = new Uint8Array(len);
+        var data = new Uint8Array(length);
         var offset = 0;
         for (var i = 0; i < chunks.length; i++) {
           var chunk = chunks[i];
           data.set(chunk, offset);
           offset += chunk.length;
         }
-        img.data = data;
+        image.data = data;
       }
     } else {
-      img.data = imgData;
+      image.data = imgData;
     }
-    return img;
+    return image;
   }
 }

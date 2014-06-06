@@ -17,6 +17,7 @@
 ///<reference path='../utilities.ts' />
 ///<reference path='../ShapeData.ts' />
 ///<reference path='parser/references.ts' />
+///<reference path='jpeg.ts' />
 
 ///<reference path='stream.ts' />
 ///<reference path='inflate.ts' />

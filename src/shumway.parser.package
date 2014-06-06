@@ -1,6 +1,6 @@
 #!inline console.time("Load Parser Dependencies");
 
-lib/jpgjs/jpg.js
+build/ts/swf/jpeg.js
 
 build/ts/utilities.js
 build/ts/dataBuffer.js
