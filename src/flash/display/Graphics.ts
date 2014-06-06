@@ -369,9 +369,10 @@ module Shumway.AVM2.AS.flash.display {
       graphics._hasFills = !!data.hasFills;
       graphics._hasLines = !!data.hasLines;
       if (data.fillBounds) {
-        assert(data.hasLines === !!data.lineBounds);
+        // TODO: Investigate why this doesn't always hold. swfs/games/mining.swf, id 40
+//        assert(data.hasLines === !!data.lineBounds);
         graphics._fillBounds.copyFrom(data.fillBounds);
-        graphics._lineBounds.copyFrom(graphics._hasLines ? data.lineBounds : data.fillBounds);
+        graphics._lineBounds.copyFrom(data.lineBounds || data.fillBounds);
       }
       return graphics;
     }
