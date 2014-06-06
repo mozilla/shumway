@@ -145,7 +145,7 @@ function runSwfPlayer(data) {
   var file = data.file;
   Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
     function runSWF(file) {
-      var player = new Shumway.Player(new IFramePlayerChannel());
+      var player = new Shumway.Player.Player(new IFramePlayerChannel());
       player.load(file);
     }
     file = Shumway.FileLoadingService.instance.setBaseUrl(file);
