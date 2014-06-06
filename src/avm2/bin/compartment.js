@@ -22,8 +22,7 @@ var tsBuildPath = homePath + "build/ts/";
 
 load(tsBuildPath + "utilities.js");
 
-
-assert(homePath, "Host compartment needs to initialize homePath.");
+Shumway.Debug.assert(homePath, "Host compartment needs to initialize homePath.");
 
 load(jsBuildPath + "avm2/avm2Util.js");
 load(tsBuildPath + "dataBuffer.js");
@@ -32,6 +31,7 @@ load(tsBuildPath + "settings.js");
 load(tsBuildPath + "metrics.js");
 
 var ArgumentParser = Shumway.Options.ArgumentParser;
+var Timer = new Shumway.Metrics.Timer();
 var Option = Shumway.Options.Option;
 var OptionSet = Shumway.Options.OptionSet;
 
