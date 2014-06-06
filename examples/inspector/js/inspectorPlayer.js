@@ -102,11 +102,17 @@ function onWindowMessage(e) {
   if (typeof data === 'object' && data !== null) {
     switch (data.type) {
       case 'runSwf':
+        if (data.settings) {
+          Shumway.Settings.setSettings(data.settings);
+        }
         runSwfPlayer(data);
         document.body.style.backgroundColor = 'green';
         break;
       case 'gfx':
         IFramePlayerChannel.sendEventUpdates(data);
+        break;
+      case 'options':
+        Shumway.Settings.setSettings(data.settings);
         break;
     }
   }

@@ -40,7 +40,6 @@ var GUI = (function () {
   var OptionSet = Shumway.Options.OptionSet;
 
   var gui = new dat.GUI({ autoPlace: false, width: 300 });
-
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
   gui.add({ "View Profile": viewProfile }, "View Profile");
   //gui.add({ "Start/Stop Profiling": toggleProfile }, "Start/Stop Profiling");
@@ -60,6 +59,7 @@ var GUI = (function () {
       if (option) {
         option.open = isOpen;
         Shumway.Settings.save();
+        notifyOptionsChanged();
       } else {
         if (e.target.textContent === "Inspector Options") {
           state.folderOpen = isOpen;
@@ -72,6 +72,12 @@ var GUI = (function () {
   function resetOptions() {
     delete window.localStorage[Shumway.Settings.ROOT];
     delete window.localStorage[LC_KEY_INSPECTOR_SETTINGS];
+  }
+
+  function notifyOptionsChanged() {
+    var event = document.createEvent('CustomEvent');
+    event.initCustomEvent('shumwayoptionschanged', false, false, null);
+    document.dispatchEvent(event);
   }
 
   function setMute(value) {
@@ -159,6 +165,7 @@ var GUI = (function () {
         ctrl.name(option.longName);
         ctrl.onChange(function() {
           Shumway.Settings.save();
+          notifyOptionsChanged();
         });
         addTooltip(ctrl, option.description);
         option.ctrl = ctrl;

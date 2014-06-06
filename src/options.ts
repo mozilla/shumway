@@ -230,6 +230,22 @@ module Shumway.Options {
       });
       return settings;
     }
+    public setSettings(settings: any) {
+      if (!settings) {
+        return;
+      }
+      this.options.forEach(function (option) {
+        if (option instanceof OptionSet) {
+          if (option.name in settings) {
+            option.setSettings(settings[option.name].settings);
+          }
+        } else {
+          if (option.longName in settings) {
+            option.value = settings[option.longName];
+          }
+        }
+      });
+    }
   }
 
   export class Option {

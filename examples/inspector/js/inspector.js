@@ -132,6 +132,7 @@ IFramePlayer.prototype = {
 var easelHost;
 function runIFramePlayer(data) {
   data.type = 'runSwf';
+  data.settings = Shumway.Settings.getSettings();
   var playerWorkerIFrame = document.getElementById('playerWorker');
   playerWorkerIFrame.addEventListener('load', function () {
     var playerWorker = playerWorkerIFrame.contentWindow;
@@ -146,6 +147,12 @@ function runIFramePlayer(data) {
           IFramePlayer.sendUpdates(data);
         }
       }
+    });
+    document.addEventListener('shumwayoptionschanged', function () {
+      playerWorker.postMessage({
+        type: 'options',
+        settings: Shumway.Settings.getSettings()
+      }, '*');
     });
   });
 }
@@ -194,10 +201,10 @@ function executeFile(file, buffer, movieParams) {
 
         var easel = createEasel();
 
-        setInterval(function () {
+        document.addEventListener('shumwayoptionschanged', function () {
           syncGFXOptions(easel.options);
           easel.stage.invalidatePaint();
-        }, 1000);
+        });
 
         var player = new Shumway.EaselEmbedding(easel).embed();
         player.load(file);

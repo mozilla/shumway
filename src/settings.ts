@@ -56,4 +56,11 @@ module Shumway.Settings {
     }
   }
 
+  export function setSettings(settings: any) {
+    shumwayOptions.setSettings(settings);
+  }
+
+  export function getSettings(settings: any) {
+    return shumwayOptions.getSettings();
+  }
 }
