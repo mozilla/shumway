@@ -192,6 +192,8 @@ var asDefaultCompareFunction = Shumway.AVM2.Runtime.asDefaultCompareFunction;
 var asCompare = Shumway.AVM2.Runtime.asCompare;
 var asAdd = Shumway.AVM2.Runtime.asAdd;
 
+var toNumber = Shumway.toNumber;
+
 /**
  * It's not possible to resolve the multiname {a, b, c}::x to {b}::x if no trait exists in any of the currently
  * loaded abc files that defines the {b}::x name. Of course, this can change if we load an abc file that defines it.
