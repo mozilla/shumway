@@ -54,8 +54,6 @@ var console = {
   }
 };
 
-load("../../src/avm2/avm2Util.js");
-
 var str = snarf("catalog.json");
 var obj = JSON.parse(str);
 var abcs = obj.swc.libraries.library.script;

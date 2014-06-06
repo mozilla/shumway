@@ -54,7 +54,6 @@ load(tsBuildPath + "/dataBuffer.js");
 load(tsBuildPath + "/options.js");
 load(tsBuildPath + "/settings.js");
 
-load(jsBuildPath + "avm2/avm2Util.js");
 load(tsBuildPath + "tools/profiler/timelineFrame.js");
 load(tsBuildPath + "tools/profiler/timelineBuffer.js");
 

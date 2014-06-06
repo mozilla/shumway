@@ -24,7 +24,6 @@ load(tsBuildPath + "utilities.js");
 
 Shumway.Debug.assert(homePath, "Host compartment needs to initialize homePath.");
 
-load(jsBuildPath + "avm2/avm2Util.js");
 load(tsBuildPath + "dataBuffer.js");
 load(tsBuildPath + "options.js");
 load(tsBuildPath + "settings.js");

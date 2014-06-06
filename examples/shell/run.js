@@ -72,7 +72,6 @@ console.time("Load Shared Dependencies");
 load("../../build/ts/options.js");
 load("../../build/ts/settings.js");
 
-load("../../src/avm2/avm2Util.js");
 load("../../build/ts/metrics.js");
 
 load("../../build/ts/player/remoting.js");

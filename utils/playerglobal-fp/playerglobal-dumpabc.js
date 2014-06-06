@@ -38,8 +38,6 @@ load("../../src/swf/label.js");
 load("../../src/swf/shape.js");
 load("../../src/swf/text.js");
 
-load("../../src/avm2/avm2Util.js");
-
 SWF.parse(snarf("bin/library.min.swf", "binary"), {
   oncomplete: function(result) {
     var tags = result.tags;

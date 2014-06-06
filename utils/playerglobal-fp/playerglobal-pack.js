@@ -53,8 +53,6 @@ var console = {
   }
 };
 
-load("../../src/avm2/avm2Util.js");
-
 SWF.parse(snarf("bin/library.swf", "binary"), {
   oncomplete: function(result) {
     var tags = result.tags;
