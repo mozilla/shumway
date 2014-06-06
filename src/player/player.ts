@@ -325,14 +325,14 @@ module Shumway.Player {
 
         var nextSymbolIndex = 1;
         function showNextSymbol() {
+          flash.display.MovieClip.reset();
+          flash.display.DisplayObjectContainer.reset();
           var symbol = loaderInfo.getSymbolById(displayObjectSymbolIds[nextSymbolIndex]);
           var symbolInstance = symbol.symbolClass.initializeFrom(symbol);
           symbol.symbolClass.instanceConstructorNoInitialize.call(symbolInstance);
           if (symbol instanceof Shumway.Timeline.BitmapSymbol) {
             symbolInstance = new flash.display.Bitmap(symbolInstance);
           }
-          flash.display.MovieClip.reset();
-          flash.display.DisplayObjectContainer.reset();
           while (stage.numChildren > 0) {
             stage.removeChildAt(0);
           }
@@ -341,7 +341,11 @@ module Shumway.Player {
           if (nextSymbolIndex === displayObjectSymbolIds.length) {
             nextSymbolIndex = 1;
           }
-          setTimeout(showNextSymbol, 1000 / frameRateOption.value);
+          var frames = 1;
+          if (symbol instanceof Shumway.Timeline.SpriteSymbol) {
+            frames = (<Shumway.Timeline.SpriteSymbol>symbol).numFrames;
+          }
+          setTimeout(showNextSymbol, (1000 / frameRateOption.value) * frames);
         }
         setTimeout(showNextSymbol, 1000 / frameRateOption.value);
       });
