@@ -292,10 +292,11 @@ module Shumway {
     lineStyle(thickness: number, color: number, pixelHinting: boolean,
               scaleMode: number, caps: number, joints: number, miterLimit: number): void
     {
-      this.ensurePathCapacities(1, 0);
+      assert((thickness & 0xff) === thickness);
+      this.ensurePathCapacities(2, 0);
       this.commands[this.commandsPosition++] = PathCommand.LineStyleSolid;
+      this.commands[this.commandsPosition++] = thickness;
       var styles: DataBuffer = this.styles;
-      styles.writeUnsignedByte(thickness);
       styles.writeUnsignedInt(color);
       styles.writeBoolean(pixelHinting);
       styles.writeUnsignedByte(scaleMode);
