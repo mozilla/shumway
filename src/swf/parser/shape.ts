@@ -85,6 +85,7 @@ module Shumway.SWF.Parser {
                                      recordsMorph): ShapeData
   {
     var isMorph = recordsMorph !== null;
+    isMorph = false;
     var styles = {fill0: 0, fill1: 0, line: 0};
     var segment: PathSegment = null;
 
@@ -387,7 +388,7 @@ module Shumway.SWF.Parser {
 
     var fillBounds: Bounds = Bounds.FromUntyped(tag.bbox);
     var lineBounds: Bounds = tag.strokeBbox ? Bounds.FromUntyped(tag.strokeBbox) : null;
-    if (tag.bboxMorph) {
+    if (false && tag.bboxMorph) {
       var mbox = tag.bboxMorph;
       fillBounds.extendByPoint(mbox.xMin, mbox.yMin);
       fillBounds.extendByPoint(mbox.xMax, mbox.yMax);
@@ -404,7 +405,7 @@ module Shumway.SWF.Parser {
       fillBounds: fillBounds,
       lineBoundsMorph: tag.strokeBboxMorph,
       fillBoundsMorph: tag.bboxMorph,
-      isMorph: tag.isMorph,
+      isMorph: false && tag.isMorph,
       hasFills: fillPaths.length > 0,
       hasLines: linePaths.length > 0,
       shape: shape.toPlainObject(),
