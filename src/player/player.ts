@@ -109,6 +109,7 @@ module Shumway.Player {
 
       if (playAllSymbolsOption.value) {
         this._playAllSymbols();
+        loaderInfo._allowSymbolClasses = false;
       } else {
         loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, function onProgress() {
           var root = loader.content;
@@ -325,8 +326,8 @@ module Shumway.Player {
         var nextSymbolIndex = 1;
         function showNextSymbol() {
           var symbol = loaderInfo.getSymbolById(displayObjectSymbolIds[nextSymbolIndex]);
-          var symbolInstance = symbol.originalSymbolClass.initializeFrom(symbol);
-          symbol.originalSymbolClass.instanceConstructorNoInitialize.call(symbolInstance);
+          var symbolInstance = symbol.symbolClass.initializeFrom(symbol);
+          symbol.symbolClass.instanceConstructorNoInitialize.call(symbolInstance);
           if (symbol instanceof Shumway.Timeline.BitmapSymbol) {
             symbolInstance = new flash.display.Bitmap(symbolInstance);
           }

@@ -28,13 +28,11 @@ module Shumway.Timeline {
   export class Symbol {
     id: number = -1;
     symbolClass: Shumway.AVM2.AS.ASClass;
-    originalSymbolClass: Shumway.AVM2.AS.ASClass;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
       assert (isInteger(id));
       this.id = id;
       this.symbolClass = symbolClass;
-      this.originalSymbolClass = symbolClass;
     }
   }
 

@@ -295,7 +295,9 @@ module Shumway.AVM2.AS.flash.display {
           var symbol = loaderInfo.getSymbolById(asset.symbolId);
           assert (symbol, "Symbol is not defined.");
           symbolClass.defaultInitializerArgument = symbol;
-          symbol.symbolClass = symbolClass;
+          if (loaderInfo._allowSymbolClasses) {
+            symbol.symbolClass = symbolClass;
+          }
         }
       }
 
