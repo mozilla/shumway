@@ -241,8 +241,7 @@ module Shumway.Remoting.GFX {
         input.readInt();
         // frame.blendMode = input.readInt();
         // TODO: Should make a proper flag for this.
-        input.readBoolean(); // Visibility
-        // frame.alpha = input.readBoolean() ? 1 : 0;
+        frame.alpha = input.readBoolean() ? 1 : 0;
       }
       if (hasBits & MessageBits.HasChildren) {
         var count = input.readInt();

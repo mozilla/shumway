@@ -853,13 +853,17 @@ module Shumway.AVM2.AS.flash.display {
       this._name = state.name;
       this._clipDepth = state.clipDepth;
       this._filters = state.filters;
-      if (state.blendMode) {
+      if (state.blendMode !== this._blendMode) {
         this._blendMode = state.blendMode;
+        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
       }
       if (state.cacheAsBitmap) {
         this._setFlags(flash.display.DisplayObjectFlags.CacheAsBitmap);
       }
-      this._toggleFlags(DisplayObjectFlags.Visible, state.visible);
+      if (state.visible !== this._hasFlags(DisplayObjectFlags.Visible)) {
+        this._toggleFlags(DisplayObjectFlags.Visible, state.visible);
+        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      }
       // TODO: state.events
       this._invalidatePaint();
     }
