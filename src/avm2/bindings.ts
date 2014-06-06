@@ -43,6 +43,7 @@ module Shumway.AVM2.Runtime {
   import defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
   import makeForwardingGetter = Shumway.FunctionUtilities.makeForwardingGetter;
   import makeForwardingSetter = Shumway.FunctionUtilities.makeForwardingSetter;
+  import pushUnique = Shumway.ArrayUtilities.pushUnique;
 
   export class Binding {
     public trait: Trait;
@@ -173,11 +174,11 @@ module Shumway.AVM2.Runtime {
           if (key !== qn) {
             traitsWriter && traitsWriter.yellowLn("Binding Trait: " + key + " -> " + qn);
             defineNonEnumerableGetter(object, key, makeForwardingGetter(qn));
-            object.asBindings.pushUnique(key);
+            pushUnique(object.asBindings, key);
           } else {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
             defineNonEnumerableProperty(object, qn, defaultValue);
-            object.asBindings.pushUnique(qn);
+            pushUnique(object.asBindings, qn);
             var slotInfo = new SlotInfo(
               qn,
               trait.isConst(),
@@ -196,7 +197,7 @@ module Shumway.AVM2.Runtime {
           } else {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
           }
-          object.asBindings.pushUnique(key);
+          pushUnique(object.asBindings, key);
           if (this instanceof ScriptBindings) {
             applyNonMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
           } else {

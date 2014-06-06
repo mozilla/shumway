@@ -219,7 +219,7 @@ for (var f = 0; f < files.length; f++) {
       }
     });
   } else {
-    release || assert(file.endsWith(".abc"));
+    release || Shumway.Debug.assert(file.endsWith(".abc"));
     abcBuffers.push([snarf(file, "binary")]);
   }
 }

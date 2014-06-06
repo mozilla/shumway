@@ -363,7 +363,7 @@ Shumway.FileLoadingService.instance = {
 
     document.getElementById("info").innerHTML = output;
 
-    copyProperties(lastCounts, counter.counts);
+    Shumway.ObjectUtilities.copyProperties(lastCounts, counter.counts);
 
     output = "";
     for (var name in Timer._flat._timers) {

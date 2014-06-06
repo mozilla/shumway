@@ -27,7 +27,6 @@ module Shumway.AVM2.Runtime {
   import Timer = Shumway.Metrics.Timer;
 
   var counter = Shumway.Metrics.Counter.instance;
-
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import assert = Shumway.Debug.assert;
   import IndentingWriter = Shumway.IndentingWriter;
@@ -538,7 +537,7 @@ module Shumway.AVM2.Runtime {
     public traceLoadedClasses(lastOnly) {
       var writer = new IndentingWriter();
       lastOnly || writer.enter("Loaded Classes And Interfaces");
-      var classes = lastOnly ? [this.loadedClasses.last()] : this.loadedClasses;
+      var classes = lastOnly ? [Shumway.ArrayUtilities.last(this.loadedClasses)] : this.loadedClasses;
       classes.forEach(function (cls) {
         if (cls !== Shumway.AVM2.AS.ASClass) {
           cls.trace(writer);

@@ -475,7 +475,7 @@ var SourceTracer = (function () {
         // var methods = traits.methods;
 
         var methods = [];
-        var gettersAndSetters = createEmptyObject();
+        var gettersAndSetters = Shumway.ObjectUtilities.createEmptyObject();
 
         traits.methods.forEach(function (trait, i) {
           var traitName = trait.name.getName();

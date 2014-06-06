@@ -65,6 +65,7 @@ module Shumway.AVM2.Compiler.Backend {
   var Control = Looper.Control;
 
   import ControlNode = Looper.Control.ControlNode;
+  import last = Shumway.ArrayUtilities.last;
 
   Control.Break.prototype.compile = function (cx, state) {
     return cx.compileBreak(this, state);
@@ -375,12 +376,12 @@ module Shumway.AVM2.Compiler.Backend {
         }
         body.push(statement);
       }
-      var end = block.nodes.last();
+      var end = last(block.nodes);
       if (end instanceof IR.Stop) {
         body.push(new ReturnStatement(compileValue(end.argument, this)));
       }
       var result = new BlockStatement(body);
-      result.end = block.nodes.last();
+      result.end = last(block.nodes);
       release || assert (result.end instanceof IR.End);
       // print("Block: " + block + " -> " + generateSource(result));
       return result;

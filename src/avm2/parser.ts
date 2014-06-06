@@ -1001,7 +1001,7 @@ module Shumway.AVM2.ABC {
       } else {
         namespaceNames = [simpleName];
       }
-      return Namespace._simpleNameCache[simpleName] = namespaceNames.map(function (name) {
+      return Namespace._simpleNameCache[simpleName] = namespaceNames.map(function (name: string) {
         name = name.trim();
         var kindName, uri;
         if (name.indexOf(" ") > 0) {

@@ -87,7 +87,7 @@ Timer.stop();
 Timer.stop();
 
 function grabAbc(fileOrBuffer) {
-  if (isString(fileOrBuffer)) {
+  if (Shumway.isString(fileOrBuffer)) {
 //    var buffer = snarf(fileOrBuffer, "binary");
 //    for (var i = 0; i < 10; i++) {
 //      var start = performance.now();

@@ -350,10 +350,16 @@ module Shumway {
       return array.length && array[array.length - 1]
     }
 
+    export function last(array: any []) {
+      return array.length && array[array.length - 1]
+    }
+
     export function peek(array: any []) {
       release || assert(array.length > 0);
       return array[array.length - 1];
     }
+
+
 
     export function pushUnique<T>(array: T [], value: T) {
       for (var i = 0, j = array.length; i < j; i++) {
@@ -3183,3 +3189,74 @@ declare var exports;
 if (typeof exports !== "undefined") {
   exports["Shumway"] = Shumway;
 }
+
+
+/**
+ * Extend builtin prototypes.
+ *
+ * TODO: Go through the code and remove all references to these.
+ */
+(function () {
+  function extendBuiltin(prototype, property, value) {
+    if (!prototype[property]) {
+      Object.defineProperty(prototype, property,
+        { value: value,
+          writable: true,
+          configurable: true,
+          enumerable: false });
+    }
+  }
+
+  function removeColors(s) {
+    return s.replace(/\033\[[0-9]*m/g, "");
+  }
+
+  extendBuiltin(String.prototype, "padRight", function (c, n) {
+    var str = this;
+    var length = removeColors(str).length;
+    if (!c || length >= n) {
+      return str;
+    }
+    var max = (n - length) / c.length;
+    for (var i = 0; i < max; i++) {
+      str += c;
+    }
+    return str;
+  });
+
+  extendBuiltin(String.prototype, "padLeft", function (c, n) {
+    var str = this;
+    var length = str.length;
+    if (!c || length >= n) {
+      return str;
+    }
+    var max = (n - length) / c.length;
+    for (var i = 0; i < max; i++) {
+      str = c + str;
+    }
+    return str;
+  });
+
+  extendBuiltin(String.prototype, "trim", function () {
+    return this.replace(/^\s+|\s+$/g,"");
+  });
+
+  extendBuiltin(String.prototype, "endsWith", function (str) {
+    return this.indexOf(str, this.length - str.length) !== -1;
+  });
+
+  extendBuiltin(Array.prototype, "replace", function(x, y) {
+    if (x === y) {
+      return 0;
+    }
+    var count = 0;
+    for (var i = 0; i < this.length; i++) {
+      if (this[i] === x) {
+        this[i] = y;
+        count ++;
+      }
+    }
+    return count;
+  });
+
+})();

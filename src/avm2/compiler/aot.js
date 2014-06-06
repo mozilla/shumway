@@ -31,7 +31,7 @@ function objectConstantName2(object) {
   if (object instanceof LazyInitializer) {
     return object.getName();
   } else if (object instanceof MethodInfo) {
-    return "$" + variableLengthEncodeInt32(object.abc.hash) + ".methods[" + object.index + "]";
+    return "$" + Shumway.StringUtilities.variableLengthEncodeInt32(object.abc.hash) + ".methods[" + object.index + "]";
   }
   hasUsedConstants = true;
   return "X";

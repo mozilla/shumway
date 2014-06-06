@@ -136,7 +136,7 @@ function readDirectoryListing(path, next) {
         return;
       }
       readDirectoryListing(path + directories.pop(), function (x) {
-        files.pushMany(x);
+        Shumway.ArrayUtilities.pushMany(files, x);
         readNextDirectory(done);
       });
     }

@@ -51,7 +51,7 @@ var objectIDs = 0;
 var OBJECT_NAME = "Object Name";
 
 function objectConstantName(object) {
-  release || assert(object);
+  release || Shumway.Debug.assert(object);
   if (object.hasOwnProperty(OBJECT_NAME)) {
     return object[OBJECT_NAME];
   }

@@ -23,8 +23,9 @@ module Shumway.AVM2.Compiler.IR {
   import bitCount = Shumway.IntegerUtilities.bitCount;
   import IndentingWriter = Shumway.IndentingWriter;
   import Timer = Shumway.Metrics.Timer;
+  import pushUnique = Shumway.ArrayUtilities.pushUnique;
+  import unique = Shumway.ArrayUtilities.unique;
 
-  declare var BitSetFunctor;
   var debug = false;
 
   function toID(node) {
@@ -358,7 +359,7 @@ module Shumway.AVM2.Compiler.IR {
       if (!entry) {
         entry = this.entries[def.id] = {def: def, uses:[]};
       }
-      entry.uses.pushUnique(use);
+      pushUnique(entry.uses, use);
     }
     trace(writer) {
       writer.enter("> Uses");
@@ -563,7 +564,7 @@ module Shumway.AVM2.Compiler.IR {
 
     createBlockSet() {
       if (!this.setConstructor) {
-        this.setConstructor = BitSetFunctor(this.blocks.length);
+        this.setConstructor = Shumway.BitSets.BitSetFunctor(this.blocks.length);
       }
       return new this.setConstructor();
     }
@@ -787,7 +788,7 @@ module Shumway.AVM2.Compiler.IR {
       }
 
       function simplify(phi, args) {
-        args = args.unique();
+        args = unique(args);
         if (args.length === 1) {
           // x = phi(y) -> y
           return args[0];
