@@ -311,12 +311,11 @@ module Shumway.GFX {
       var coordinates = data.coordinates;
       var styles = data.styles;
       styles.position = 0;
-      var commandIndex = 0;
       var coordinatesIndex = 0;
       var commandsCount = data.commandsPosition;
       // Description of serialization format can be found in flash.display.Graphics.
-      while (commandIndex < commandsCount) {
-        var command = commands[commandIndex++];
+      for (var commandIndex = 0; commandIndex < commandsCount; commandIndex++) {
+        var command = commands[commandIndex];
         switch (command) {
           case PathCommand.MoveTo:
             assert(coordinatesIndex <= data.coordinatesPosition - 2);
@@ -429,7 +428,7 @@ module Shumway.GFX {
             }
             strokePath = new Path2D();
             strokePath.moveTo(x, y);
-            context.lineWidth = styles.readUnsignedByte();
+            context.lineWidth = commands[commandIndex++];
             context.strokeStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             // Skip pixel hinting and scale mode for now.
             styles.position += 2;
@@ -445,7 +444,7 @@ module Shumway.GFX {
             }
             break;
           default:
-            assertUnreachable('Invalid command ' + command + ' encountered at position' +
+            assertUnreachable('Invalid command ' + command + ' encountered at index' +
                               (commandIndex - 1) + ' of ' + commandsCount);
         }
       }

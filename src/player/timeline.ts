@@ -66,13 +66,7 @@ module Shumway.Timeline {
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
       var symbol = new ShapeSymbol(data.id);
       symbol._setBoundsFromData(data);
-      symbol.graphics = new flash.display.Graphics();
-      symbol.graphics.setGraphicsData(ShapeData.FromPlainObject(data.shape));
-
-      if (data.type === "shape") {
-        symbol.graphics._getContentBounds(true).copyFrom(symbol.lineBounds);
-        symbol.graphics._getContentBounds(false).copyFrom(symbol.fillBounds);
-      }
+      symbol.graphics = flash.display.Graphics.FromData(data);
 
       if (data.require) {
         var dependencies = data.require;
