@@ -19,16 +19,16 @@
 function requestTimelineBuffers() {
   var buffersPromises = [];
   // TODO request timelineBuffers using postMessage (instead of IFramePlayer.Shumway)
-  
+
   if (IFramePlayer.Shumway) {
     if (IFramePlayer.Shumway.AVM2.timelineBuffer) {
-      buffersPromises.push(Promise.resolve(IFramePlayer.Shumway.AVM2.timelineBuffer));
+      buffersPromises.push(IFramePlayer.instance.requestTimeline('AVM2'));
     }
     if (IFramePlayer.Shumway.Player.timelineBuffer) {
-      buffersPromises.push(Promise.resolve(IFramePlayer.Shumway.Player.timelineBuffer));
+      buffersPromises.push(IFramePlayer.instance.requestTimeline('Player'));
     }
     if (IFramePlayer.Shumway.SWF.timelineBuffer) {
-      buffersPromises.push(Promise.resolve(IFramePlayer.Shumway.SWF.timelineBuffer));
+      buffersPromises.push(IFramePlayer.instance.requestTimeline('SWF'));
     }
   } else {
     if (Shumway.AVM2.timelineBuffer) {

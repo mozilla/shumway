@@ -114,6 +114,19 @@ function onWindowMessage(e) {
       case 'options':
         Shumway.Settings.setSettings(data.settings);
         break;
+      case 'timeline':
+        switch (data.request) {
+          case 'AVM2':
+            parent.postMessage({type:'timelineResponse', request: data.request, timeline: Shumway.AVM2.timelineBuffer}, '*');
+            break;
+          case 'Player':
+            parent.postMessage({type:'timelineResponse', request: data.request, timeline: Shumway.Player.timelineBuffer}, '*');
+            break;
+          case 'SWF':
+            parent.postMessage({type:'timelineResponse', request: data.request, timeline: Shumway.SWF.timelineBuffer}, '*');
+            break;
+        }
+        break;
     }
   }
 }

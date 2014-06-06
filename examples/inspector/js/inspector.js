@@ -111,7 +111,12 @@ function showOpenFileButton(show) {
 }
 
 function IFramePlayer(playerWorker) {
+  if (IFramePlayer.instance) {
+    throw "Only one IFramePlayer allowed.";
+  }
+  IFramePlayer.instance = this;
   this._worker = playerWorker;
+  this._timelineRequests = {};
 }
 IFramePlayer._updatesListener = null;
 IFramePlayer.Shumway = undefined;
@@ -127,6 +132,12 @@ IFramePlayer.prototype = {
   },
   registerForUpdates: function (listener) {
     IFramePlayer._updatesListener = listener;
+  },
+  requestTimeline: function(type) {
+    return new Promise(function (resolve) {
+      this._timelineRequests[type] = resolve;
+      this._worker.postMessage({type: 'timeline', request: type}, '*');
+    }.bind(this));
   }
 };
 
@@ -147,6 +158,12 @@ function runIFramePlayer(data) {
       if (typeof data === 'object' && data !== null) {
         if (data.type === 'player') {
           IFramePlayer.sendUpdates(data);
+        } else if (data.type === 'timelineResponse') {
+          // Transform timeline into a Timeline object.
+          data.timeline.__proto__ = Shumway.Tools.Profiler.TimelineBuffer.prototype;
+          data.timeline._marks.__proto__ = Shumway.CircularBuffer.prototype;
+          data.timeline._times.__proto__ = Shumway.CircularBuffer.prototype;
+          IFramePlayer.instance._timelineRequests[data.request](data.timeline);
         }
       }
     });
