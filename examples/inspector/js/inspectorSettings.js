@@ -90,28 +90,6 @@ var GUI = (function () {
     saveInspectorState();
   }
 
-  function viewProfile() {
-    //alert("Not Implemented");
-    var buffers = [];
-    if (Shumway.AVM2.timelineBuffer) {
-      buffers.push(Shumway.AVM2.timelineBuffer);
-    }
-    if (Shumway.Player.timelineBuffer) {
-      buffers.push(Shumway.Player.timelineBuffer);
-    }
-    if (Shumway.GFX.timelineBuffer) {
-      buffers.push(Shumway.GFX.timelineBuffer);
-    }
-    if (Shumway.GFX.timelineBuffer) {
-      buffers.push(Shumway.SWF.timelineBuffer);
-    }
-    profiler.createProfile(buffers);
-  }
-
-  function toggleProfile() {
-    alert("Not Implemented");
-  }
-
   function findOptionSetByName(name, optionSet) {
     for (var i = 0, n = optionSet.options.length; i < n; i++) {
       var option = optionSet.options[i];
