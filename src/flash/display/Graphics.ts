@@ -42,6 +42,12 @@ module Shumway.AVM2.AS.flash.display {
   //import quadraticBezierExtreme = Shumway.GFX.Geometry.quadraticBezierExtreme;
   //import cubicBezierExtremes = Shumway.GFX.Geometry.cubicBezierExtremes;
 
+  function distanceSq(x1, y1, x2, y2) {
+    var dX = x2 - x1;
+    var dY = y2 - y1;
+    return dX * dX + dY * dY;
+  }
+
   function quadraticBezier(from: number, cp: number, to: number, t: number): number {
     var inverseT = 1 - t;
     return from * inverseT * inverseT + 2 * cp * inverseT * t + to * t * t;
@@ -893,7 +899,7 @@ module Shumway.AVM2.AS.flash.display {
       if (includeLines) {
         containsPoint = this._linesContainsPoint(x, y);
       }
-//      leaveTimeline("Graphics._containsPoint");
+//      leaveTimeline();
       return containsPoint;
     }
 
@@ -1003,11 +1009,221 @@ module Shumway.AVM2.AS.flash.display {
       {
         inside = !inside;
       }
-//      leaveTimeline("Graphics._fillContainsPoint");
+//      leaveTimeline();
       return inside;
     }
 
     private _linesContainsPoint(x: number, y: number): boolean {
+//      enterTimeline("Graphics._lineContainsPoint");
+
+      var data = this._graphicsData;
+      var commands = data.commands;
+      var commandsCount = data.commandsPosition;
+      var coordinates = data.coordinates;
+      var coordinatesIndex = 0;
+
+      var fromX = 0;
+      var fromY = 0;
+      var toX = 0;
+      var toY = 0;
+      var cpX: number;
+      var cpY: number;
+      var curveX: number;
+      var curveY: number;
+      var t: number;
+
+      var width = 0;
+      var halfWidth = 0;
+      var halfWidthSq = 0;
+      var minX = 0;
+      var maxX = 0;
+      var minY = 0;
+      var maxY = 0;
+
+      // Description of serialization format can be found in ShapeData.
+      // Rough outline of the algorithm's mode of operation:
+      // from x,y an infinite ray to the right is "cast". All operations are then
+      // tested for intersections with this ray, where each intersection means
+      // switching between being outside and inside the shape.
+      for (var commandIndex = 0; commandIndex < commandsCount; commandIndex++) {
+        var command = commands[commandIndex];
+        switch (command) {
+          case PathCommand.MoveTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            fromX = coordinates[coordinatesIndex++];
+            fromY = coordinates[coordinatesIndex++];
+            // Continue outer loop.
+            continue;
+          case PathCommand.LineTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            if (width === 0) {
+              fromX = coordinates[coordinatesIndex++];
+              fromX = coordinates[coordinatesIndex++];
+              continue;
+            }
+            toX = coordinates[coordinatesIndex++];
+            toY = coordinates[coordinatesIndex++];
+
+            // Lines with length == 0 aren't rendered.
+            if (fromX === toX && fromY === toY) {
+              break;
+            }
+            // Eliminate based on bounds.
+            if (maxX < fromX && maxX < toX || minX > fromX && minX > toX ||
+                maxY < fromY && maxY < toY || minY > fromY && minY > toY)
+            {
+              break;
+            }
+            // Vertical and horizontal lines are a certain hit at this point
+            if (toX === fromX || toY === fromY) {
+              return true;
+            }
+            // http://stackoverflow.com/a/1501725/517791
+            t = ((x - fromX) * (toX - fromX) + (y - fromY) * (toY - fromY)) /
+                distanceSq(fromX, fromY, toX, toY);
+            if (t < 0) {
+              if (distanceSq(x, y, fromX, fromY) <= halfWidthSq) {
+                return true;
+              }
+              break;
+            }
+            if (t > 1) {
+              if (distanceSq(x, y, toX, toY) <= halfWidthSq) {
+                return true;
+              }
+              break;
+            }
+            if (distanceSq(x, y, fromX + t * (toX - fromX),
+                           fromY + t * (toY - fromY)) <= halfWidthSq)
+            {
+              return true;
+            }
+            break;
+          case PathCommand.CurveTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 4);
+            if (width === 0) {
+              coordinatesIndex += 2;
+              fromX = coordinates[coordinatesIndex++];
+              fromX = coordinates[coordinatesIndex++];
+              continue;
+            }
+            cpX = coordinates[coordinatesIndex++];
+            cpY = coordinates[coordinatesIndex++];
+            toX = coordinates[coordinatesIndex++];
+            toY = coordinates[coordinatesIndex++];
+            // Eliminate based on bounds
+            var extremeX = quadraticBezierExtreme(fromX, cpX, toX);
+            if (maxX < fromX && maxX < extremeX && maxX < toX ||
+                minX > fromX && minX > extremeX && minX > toX)
+            {
+              break;
+            }
+            var extremeY = quadraticBezierExtreme(fromY, cpY, toY);
+            if (maxY < fromY && maxY < extremeY && maxY < toY ||
+                minY > fromY && minY > extremeY && minY > toY)
+            {
+              break;
+            }
+            // So, this is very much not ideal, but I'll punt on proper curve
+            // hit-testing for now and just sample an amount of points that seems
+            // sufficient.
+            for (t = 0; t < 1; t += 0.02) {
+              curveX = quadraticBezier(fromX, cpX, toX, t);
+              if (curveX < minX || curveX > maxX) {
+                continue;
+              }
+              curveY = quadraticBezier(fromY, cpY, toY, t);
+              if (curveY < minY || curveY > maxY) {
+                continue;
+              }
+              if ((x - curveX) * (x - curveX) + (y - curveY) * (y - curveY) < halfWidthSq) {
+                return true;
+              }
+            }
+            break;
+          case PathCommand.CubicCurveTo:
+            assert(coordinatesIndex <= data.coordinatesPosition - 6);
+            if (width === 0) {
+              coordinatesIndex += 4;
+              fromX = coordinates[coordinatesIndex++];
+              fromX = coordinates[coordinatesIndex++];
+              continue;
+            }
+            cpX = coordinates[coordinatesIndex++];
+            cpY = coordinates[coordinatesIndex++];
+            var cp2X = coordinates[coordinatesIndex++];
+            var cp2Y = coordinates[coordinatesIndex++];
+            toX = coordinates[coordinatesIndex++];
+            toY = coordinates[coordinatesIndex++];
+            // Eliminate based on bounds
+            var extremesX = cubicBezierExtremes(fromX, cpX, cp2X, toX);
+            while(extremesX.length < 2) {
+              extremesX.push(toX);
+            }
+            if (maxX < fromX && maxX < toX && maxX < extremesX[0] &&
+                maxX < extremesX[1] ||
+                minX > fromX && minX > toX && minX > extremesX[0] &&
+                minX > extremesX[1])
+            {
+              break;
+            }
+            var extremesY = cubicBezierExtremes(fromY, cpY, cp2Y, toY);
+            while(extremesY.length < 2) {
+              extremesY.push(toY);
+            }
+            if (maxY < fromY && maxY < toY && maxY < extremesY[0] &&
+                maxY < extremesY[1] ||
+                minY > fromY && minY > toY && minY > extremesY[0] &&
+                minY > extremesY[1])
+            {
+              break;
+            }
+            // So, this is very much not ideal, but I'll punt on proper curve
+            // hit-testing for now and just sample an amount of points that seems
+            // sufficient.
+            for (t = 0; t < 1; t += 0.02) {
+              curveX = cubicBezier(fromX, cpX, cp2X, toX, t);
+              if (curveX < minX || curveX > maxX) {
+                continue;
+              }
+              curveY = cubicBezier(fromY, cpY, cp2Y, toY, t);
+              if (curveY < minY || curveY > maxY) {
+                continue;
+              }
+              if ((x - curveX) * (x - curveX) + (y - curveY) * (y - curveY) <
+                  halfWidthSq)
+              {
+                return true;
+              }
+            }
+            break;
+          case PathCommand.LineStyleSolid:
+            width = commands[++commandIndex] * 20;
+            halfWidth = width >> 2;
+            halfWidthSq = halfWidth * halfWidth;
+            minX = x - halfWidth;
+            maxX = x + halfWidth;
+            minY = y - halfWidth;
+            maxY = y + halfWidth;
+            break;
+          case PathCommand.BeginSolidFill:
+          case PathCommand.BeginGradientFill:
+          case PathCommand.BeginBitmapFill:
+          case PathCommand.EndFill:
+          case PathCommand.LineStyleGradient:
+          case PathCommand.LineStyleBitmap:
+          case PathCommand.LineEnd:
+            break;
+          default:
+            assertUnreachable('Invalid command ' + command + ' encountered at index' +
+                              (commandIndex - 1) + ' of ' + commandsCount);
+        }
+        fromX = toX;
+        fromY = toY;
+      }
+      assert(commandIndex === commandsCount);
+      assert(coordinatesIndex === data.coordinatesPosition);
+//      leaveTimeline();
       return false;
     }
 
