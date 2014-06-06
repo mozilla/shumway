@@ -881,8 +881,8 @@ module Shumway.AVM2.AS.flash.display {
      * Tests if the specified point is within this graphics path.
      */
     _containsPoint(x: number, y: number, includeLines: boolean): boolean {
-      var hasStrokes = this._hasLines;
-      if (!(includeLines && hasStrokes ? this._lineBounds : this._fillBounds).contains(x, y)) {
+      var hasLines = this._hasLines;
+      if (!(includeLines && hasLines ? this._lineBounds : this._fillBounds).contains(x, y)) {
         return false;
       }
 
@@ -894,9 +894,9 @@ module Shumway.AVM2.AS.flash.display {
       if (this._hasFills) {
         containsPoint = this._fillContainsPoint(x, y);
       } else {
-        assert(hasStrokes, "Can't have non-empty bounds without line or fill set.");
+        assert(hasLines, "Can't have non-empty bounds without line or fill set.");
       }
-      if (includeLines) {
+      if (!containsPoint && includeLines) {
         containsPoint = this._linesContainsPoint(x, y);
       }
 //      leaveTimeline();
