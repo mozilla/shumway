@@ -107,7 +107,9 @@ module Shumway.Player {
       var loader = this._loader = flash.display.Loader.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
 
-      if (autoPlayOption.value) {
+      if (playAllSymbolsOption.value) {
+        this._playAllSymbols();
+      } else {
         loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, function onProgress() {
           var root = loader.content;
           if (!root) {
@@ -121,8 +123,6 @@ module Shumway.Player {
           // self._pumpUpdates();
           self._enterLoops();
         });
-      } else {
-        this._enterInspectorMode();
       }
       this._loader.load(new flash.net.URLRequest(url));
     }
@@ -265,11 +265,6 @@ module Shumway.Player {
       var self = this;
       var stage = this._stage;
       var rootInitialized = false;
-      // TODO remove, player.ts will not have access to the DOM
-      if (frameRateOption.ctrl) {
-        frameRateOption.value = stage.frameRate;
-        frameRateOption.ctrl.updateDisplay();
-      }
       (function tick() {
         self._frameTimeout = setTimeout(tick, 1000 / frameRateOption.value);
         if (!frameEnabledOption.value || self._shouldThrottleDownFrameExecution()) {
@@ -281,7 +276,7 @@ module Shumway.Player {
           MovieClip.initFrame();
           leaveTimeline("initFrame");
           enterTimeline("constructFrame");
-          MovieClip.constructFrame(!autoPlayOption.value);
+          MovieClip.constructFrame(playAllSymbolsOption.value);
           leaveTimeline("constructFrame");
           Loader.progress();
           leaveTimeline("eventLoop");
@@ -301,8 +296,7 @@ module Shumway.Player {
       this._frameTimeout = -1;
     }
 
-    // TODO remove, player.ts will not have access to the DOM
-    private _enterInspectorMode() {
+    private _playAllSymbols() {
       var stage = this._stage;
       var loader = this._loader;
       var loaderInfo = this._loaderInfo;
@@ -321,57 +315,32 @@ module Shumway.Player {
         stage.stageWidth = 1024;
         stage.stageHeight = 1024;
 
-        /**
-         * Create options list with all the symbols.
-         */
-        var options = {
-          "None":         -3,
-          "All Shapes":   -2,
-          "All Sprites":  -1
-        };
-
+        var displayObjectSymbolIds = [];
         loaderInfo._dictionary.forEach(function (value, key) {
-          var label = key + ": " + value.originalSymbolClass.toString();
-          if (value.symbolClass !== value.originalSymbolClass) {
-            label += " (" + value.symbolClass.toString() + ")";
+          if (value instanceof Shumway.Timeline.DisplaySymbol) {
+            displayObjectSymbolIds.push(key);
           }
-          options[label] = key;
         });
 
-        playSymbolOption.ctrl.updateOptions(options);
-        playSymbolOption.ctrl.onChange(function () {
-          var id = playSymbolOption.value | 0;
-          if (id === -2 || id === -1) {
-            while (stage.numChildren > 0) {
-              stage.removeChildAt(0);
-            }
-            loaderInfo._dictionary.forEach(function (_, key) {
-              var symbol = loaderInfo.getSymbolById(key);
-              if (id === -2) {
-                if (!(symbol instanceof Shumway.Timeline.ShapeSymbol)) {
-                  return;
-                }
-              } else if (id === -1) {
-                if (!(symbol instanceof Shumway.Timeline.SpriteSymbol)) {
-                  return;
-                }
-              }
-              var symbolInstance = symbol.originalSymbolClass.initializeFrom(symbol);
-              symbol.originalSymbolClass.instanceConstructorNoInitialize.call(symbolInstance);
-              stage.addChild(symbolInstance);
-              symbolInstance.x = Math.random() * 512;
-              symbolInstance.y = Math.random() * 512;
-            });
-          } else {
-            var symbol = loaderInfo.getSymbolById(id);
-            var symbolInstance = symbol.originalSymbolClass.initializeFrom(symbol);
-            symbol.originalSymbolClass.instanceConstructorNoInitialize.call(symbolInstance);
-            while (stage.numChildren > 0) {
-              stage.removeChildAt(0);
-            }
-            stage.addChild(symbolInstance);
+        var nextSymbolIndex = 1;
+        function showNextSymbol() {
+          var symbol = loaderInfo.getSymbolById(displayObjectSymbolIds[nextSymbolIndex]);
+          var symbolInstance = symbol.originalSymbolClass.initializeFrom(symbol);
+          symbol.originalSymbolClass.instanceConstructorNoInitialize.call(symbolInstance);
+          if (symbol instanceof Shumway.Timeline.BitmapSymbol) {
+            symbolInstance = new flash.display.Bitmap(symbolInstance);
           }
-        });
+          while (stage.numChildren > 0) {
+            stage.removeChildAt(0);
+          }
+          stage.addChild(symbolInstance);
+          nextSymbolIndex ++;
+          if (nextSymbolIndex === displayObjectSymbolIds.length) {
+            nextSymbolIndex = 1;
+          }
+          setTimeout(showNextSymbol, 1000 / frameRateOption.value);
+        }
+        setTimeout(showNextSymbol, 1000 / frameRateOption.value);
       });
     }
   }
