@@ -103,7 +103,7 @@ module Shumway.SWF.Parser {
         }
 
         image.mimeType = 'application/octet-stream';
-        image.dataType = ImageType.StraightAlphaARGB;
+        image.dataType = ImageType.StraightAlphaRGBA;
       } else {
         chunks = parseJpegChunks(image, imgData);
 

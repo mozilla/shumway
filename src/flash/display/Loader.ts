@@ -291,11 +291,11 @@ module Shumway.AVM2.AS.flash.display {
         for (var i = 0; i < symbolClasses.length; i++) {
           var asset = symbolClasses[i];
           var tag = asset.symbolId;
-          var symbolClass = appDomain.getClass(asset.className);
-          var symbol = loaderInfo.getSymbolById(asset.symbolId);
-          assert (symbol, "Symbol is not defined.");
-          symbolClass.defaultInitializerArgument = symbol;
           if (loaderInfo._allowSymbolClasses) {
+            var symbolClass = appDomain.getClass(asset.className);
+            var symbol = loaderInfo.getSymbolById(asset.symbolId);
+            assert (symbol, "Symbol is not defined.");
+            symbolClass.defaultInitializerArgument = symbol;
             symbol.symbolClass = symbolClass;
           }
         }
