@@ -30,8 +30,12 @@ module Shumway.AVM2.AS.flash.display {
     private static _displayObjectContainerInstances: DisplayObjectContainer [];
 
     static classInitializer: any = function () {
-      DisplayObjectContainer._displayObjectContainerInstances = [];
+      DisplayObjectContainer.reset();
     };
+
+    static reset() {
+      DisplayObjectContainer._displayObjectContainerInstances = [];
+    }
 
     static initializer: any = function () {
       var self: DisplayObjectContainer = this;

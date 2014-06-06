@@ -30,10 +30,12 @@ module Shumway.AVM2.AS.flash.display {
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
+      MovieClip.reset();
+    };
+    static reset() {
       MovieClip._movieClipInstances = [];
       MovieClip._callQueue = [];
-    };
-    
+    }
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.SpriteSymbol) {
       var self: MovieClip = this;

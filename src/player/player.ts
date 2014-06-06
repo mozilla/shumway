@@ -331,6 +331,8 @@ module Shumway.Player {
           if (symbol instanceof Shumway.Timeline.BitmapSymbol) {
             symbolInstance = new flash.display.Bitmap(symbolInstance);
           }
+          flash.display.MovieClip.reset();
+          flash.display.DisplayObjectContainer.reset();
           while (stage.numChildren > 0) {
             stage.removeChildAt(0);
           }
