@@ -114,6 +114,7 @@ function IFramePlayer(playerWorker) {
   this._worker = playerWorker;
 }
 IFramePlayer._updatesListener = null;
+IFramePlayer.Shumway = undefined;
 IFramePlayer.sendUpdates = function (data) {
   var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
@@ -136,6 +137,7 @@ function runIFramePlayer(data) {
   var playerWorkerIFrame = document.getElementById('playerWorker');
   playerWorkerIFrame.addEventListener('load', function () {
     var playerWorker = playerWorkerIFrame.contentWindow;
+    IFramePlayer.Shumway = playerWorker.Shumway;
     playerWorker.postMessage(data, '*');
     var player = new IFramePlayer(playerWorker);
     var easel = createEasel();

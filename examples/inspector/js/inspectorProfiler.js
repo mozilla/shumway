@@ -18,18 +18,31 @@
 
 function requestTimelineBuffers() {
   var buffersPromises = [];
-  if (Shumway.AVM2.timelineBuffer) {
+
+  // TODO request timelineBuffers using postMessage (instead of IFramePlayer.Shumway)
+
+  if (IFramePlayer.Shumway.AVM2.timelineBuffer) {
+    buffersPromises.push(Promise.resolve(IFramePlayer.Shumway.AVM2.timelineBuffer));
+  } else if (Shumway.AVM2.timelineBuffer) {
     buffersPromises.push(Promise.resolve(Shumway.AVM2.timelineBuffer));
   }
-  if (Shumway.Player.timelineBuffer) {
+
+  if (IFramePlayer.Shumway.Player.timelineBuffer) {
+    buffersPromises.push(Promise.resolve(IFramePlayer.Shumway.Player.timelineBuffer));
+  } else if (Shumway.Player.timelineBuffer) {
     buffersPromises.push(Promise.resolve(Shumway.Player.timelineBuffer));
   }
+
   if (Shumway.GFX.timelineBuffer) {
     buffersPromises.push(Promise.resolve(Shumway.GFX.timelineBuffer));
   }
-  if (Shumway.SWF.timelineBuffer) {
+
+  if (IFramePlayer.Shumway.SWF.timelineBuffer) {
+    buffersPromises.push(Promise.resolve(IFramePlayer.Shumway.SWF.timelineBuffer));
+  } else if (Shumway.SWF.timelineBuffer) {
     buffersPromises.push(Promise.resolve(Shumway.SWF.timelineBuffer));
   }
+
 
   return Promise.all(buffersPromises);
 }
