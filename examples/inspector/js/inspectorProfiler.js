@@ -16,6 +16,98 @@
  * limitations under the License.
  */
 
+var profiler = (function() {
+
+  var elProfilerContainer = document.getElementById("profilerContainer");
+  var elProfilerToolbar = document.getElementById("profilerToolbar");
+  var elProfilerMessage = document.getElementById("profilerMessage");
+  var elProfilerPanel = document.getElementById("profilePanel");
+  var elBtnMinimize = document.getElementById("profilerMinimizeButton");
+  var elBtnStartStop = document.getElementById("profilerStartStop");
+
+  var controller;
+  var startTime;
+  var timerHandle;
+  var timeoutHandle;
+
+  var Profiler = function() {
+    controller = new Shumway.Tools.Profiler.Controller(elProfilerPanel);
+    elBtnMinimize.addEventListener("click", this._onMinimizeClick.bind(this));
+    elBtnStartStop.addEventListener("click", this._onStartStopClick.bind(this));
+  }
+
+  Profiler.prototype.start = function(maxTime) {
+    try {
+      requestTimelineBuffers().then(function (buffers) {
+        for (var i = 0; i < buffers.length; i++) {
+          buffers[i].reset();
+        }
+      });
+    }
+    catch (e) {}
+    controller.deactivateProfile();
+    maxTime = maxTime || 0;
+    elProfilerToolbar.classList.add("withEmphasis");
+    elBtnStartStop.textContent = "Stop";
+    startTime = Date.now();
+    timerHandle = setInterval(showTimeMessage, 1000);
+    if (maxTime) {
+      timeoutHandle = setTimeout(this.createProfile.bind(this), state.profileStartupDuration);
+    }
+    showTimeMessage();
+  }
+
+  Profiler.prototype.createProfile = function() {
+    requestTimelineBuffers().then(function (buffers) {
+      controller.createProfile(buffers);
+      elProfilerToolbar.classList.remove("withEmphasis");
+      elBtnStartStop.textContent = "Start";
+      clearInterval(timerHandle);
+      clearTimeout(timeoutHandle);
+      timerHandle = 0;
+      timeoutHandle = 0;
+      showTimeMessage(false);
+    });
+  }
+
+  Profiler.prototype.openPanel = function() {
+    elProfilerContainer.classList.remove("collapsed");
+  }
+
+  Profiler.prototype.closePanel = function() {
+    elProfilerContainer.classList.add("collapsed");
+  }
+
+  Profiler.prototype.resize = function() {
+    controller.resize();
+  }
+
+  Profiler.prototype._onMinimizeClick = function(e) {
+    if (elProfilerContainer.classList.contains("collapsed")) {
+      this.openPanel();
+    } else {
+      this.closePanel();
+    }
+  }
+
+  Profiler.prototype._onStartStopClick = function(e) {
+    if (timerHandle) {
+      this.createProfile();
+    } else {
+      this.start();
+    }
+  }
+
+  function showTimeMessage(show) {
+    show = typeof show === "undefined" ? true : show;
+    var time = Math.round((Date.now() - startTime) / 1000);
+    elProfilerMessage.textContent = show ? "Running: " + time + " Seconds" : "";
+  }
+
+  return new Profiler();
+
+})();
+
 function requestTimelineBuffers() {
   var buffersPromises = [];
   // TODO request timelineBuffers using postMessage (instead of IFramePlayer.Shumway)
@@ -45,14 +137,4 @@ function requestTimelineBuffers() {
     buffersPromises.push(Promise.resolve(Shumway.GFX.timelineBuffer));
   }
   return Promise.all(buffersPromises);
-}
-
-function viewProfile() {
-  requestTimelineBuffers().then(function (buffers) {
-    profiler.createProfile(buffers);
-  });
-}
-
-function toggleProfile() {
-  alert("Not Implemented");
 }

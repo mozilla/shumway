@@ -32,7 +32,7 @@ limitations under the License.
 
     <div id="topToolbar" class="toolbarBox withEmphasis">
       <div class="toolbarLabel">Shumway Inspector <span id="message" class="toolbarMessage"></span></div>
-      <div id="debugInfoToolbarTabs" class="toolbarButtonBar" class="active">
+      <div id="debugInfoToolbarTabs" class="toolbarButtonBar active">
         <div id="showDebugInfo" class="toolbarButton" data-panelid="debugInfoContainer">Debug Info</div>
         <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Display List</div>
         <div id="showSettings" class="toolbarButton pressedState" data-panelid="settingsContainer">Settings</div>
@@ -57,12 +57,22 @@ limitations under the License.
     <div id="settingsContainer" class="active">
     </div>
 
-    <div id="profiler">
+    <div id="profilerContainer" class="collapsed">
         <div id="profilerToolbar" class="toolbarBox">
-          <div class="toolbarLabel">Shumway Profiler <span id="profilerMessage" class="toolbarMessage"></span></div>
+          <div class="toolbarLabel">Shumway Profiler <span id="profilerMessage" class="toolbarMessage">6 Seconds</span></div>
+          <div id="profilerMinimizeButton" class="toolbarIconButton icon-generic"></div>
+          <div id="profilerButtons">
+            <div class="toolbarButtonBar active">
+              <div id="profilerImport" class="toolbarButton">Import</div>
+              <div id="profilerExport" class="toolbarButton">Export</div>
+            </div>
+            <div id="profilerStartStop" class="toolbarButton">Start</div>
+          </div>
         </div>
-        <div id="profilerContainer">
-          <div id="profilePanelContainer">
+        <div id="profiler">
+          <div id="profileList">
+          </div>
+          <div id="profilePanel">
           </div>
         </div>
     </div>

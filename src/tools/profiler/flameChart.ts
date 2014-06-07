@@ -71,7 +71,7 @@ module Shumway.Tools.Profiler {
 
       context.save();
       context.scale(ratio, ratio);
-      context.fillStyle = this._controller.theme.sidebarBackground(1); //"#181d20";
+      context.fillStyle = this._controller.theme.bodyBackground(1);
       context.fillRect(0, 0, this._width, this._height);
 
       if (this._initialized) {

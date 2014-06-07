@@ -16,25 +16,6 @@
  * limitations under the License.
  */
 
-var profiler = new Shumway.Tools.Profiler.Controller(document.getElementById("profilePanelContainer"));
-var profileSessionTimeoutHandle;
-var profileBuffers = (function() {
-  var buffers = [];
-  if (Shumway.AVM2.timelineBuffer) {
-    buffers.push(Shumway.AVM2.timelineBuffer);
-  }
-  if (Shumway.Player.timelineBuffer) {
-    buffers.push(Shumway.Player.timelineBuffer);
-  }
-  if (Shumway.GFX.timelineBuffer) {
-    buffers.push(Shumway.GFX.timelineBuffer);
-  }
-  if (Shumway.SWF.timelineBuffer) {
-    buffers.push(Shumway.SWF.timelineBuffer);
-  }
-  return buffers;
-})();
-
 var LC_KEY_INSPECTOR_SETTINGS = "Inspector Options";
 
 var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
@@ -42,8 +23,8 @@ var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
 var stateDefaults = {
   folderOpen: true,
   debugPanelId: "settingsContainer",
-  profileAtStartup: true,
-  profileAtStartupDuration: 10000,
+  profileStartup: true,
+  profileStartupDuration: 10000,
   logToConsole: false,
   mute: false
 };
@@ -52,6 +33,10 @@ for (var option in stateDefaults) {
   if (typeof state[option] === "undefined") {
     state[option] = stateDefaults[option];
   }
+}
+
+if (state.profileStartup && state.profileStartupDuration > 0) {
+  profiler.start(state.profileStartupDuration);
 }
 
 function saveInspectorState() {
@@ -64,13 +49,11 @@ var GUI = (function () {
 
   var gui = new dat.GUI({ autoPlace: false, width: 300 });
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
-  gui.add({ "View Profile": viewProfile }, "View Profile");
-  //gui.add({ "Start/Stop Profiling": toggleProfile }, "Start/Stop Profiling");
 
   var inspectorOptions = gui.addFolder("Inspector Options");
   inspectorOptions.add(state, "logToConsole").onChange(saveInspectorOption);
-  inspectorOptions.add(state, "profileAtStartup").onChange(saveInspectorOption);
-  inspectorOptions.add(state, "profileAtStartupDuration").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
@@ -179,13 +162,6 @@ var GUI = (function () {
   return gui;
 
 })();
-
-if (state.profileAtStartup && state.profileAtStartupDuration > 0) {
-  profileSessionTimeoutHandle = setTimeout(function() {
-    profiler.createProfile(profileBuffers);
-    profileSessionTimeoutHandle = 0;
-  }, state.profileAtStartupDuration);
-}
 
 function syncGFXOptions(options) {
   var GFX = Shumway.GFX;
