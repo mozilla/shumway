@@ -16,19 +16,27 @@
  * limitations under the License.
  */
 
-var profiler = new Shumway.Tools.Profiler.Controller(document.getElementById("profilePanelContainer"));
-
 var LC_KEY_INSPECTOR_SETTINGS = "Inspector Options";
 
 var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
 
-if (Object.keys(state).length === 0) {
-  state = {
-    folderOpen: true,
-    debugPanelId: "settingsContainer",
-    logToConsole: false,
-    mute: false
+var stateDefaults = {
+  folderOpen: true,
+  debugPanelId: "settingsContainer",
+  profileStartup: true,
+  profileStartupDuration: 10000,
+  logToConsole: false,
+  mute: false
+};
+
+for (var option in stateDefaults) {
+  if (typeof state[option] === "undefined") {
+    state[option] = stateDefaults[option];
   }
+}
+
+if (state.profileStartup && state.profileStartupDuration > 0) {
+  profiler.start(state.profileStartupDuration);
 }
 
 function saveInspectorState() {
@@ -41,12 +49,12 @@ var GUI = (function () {
 
   var gui = new dat.GUI({ autoPlace: false, width: 300 });
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
-  gui.add({ "View Profile": viewProfile }, "View Profile");
-  //gui.add({ "Start/Stop Profiling": toggleProfile }, "Start/Stop Profiling");
 
   var inspectorOptions = gui.addFolder("Inspector Options");
-  inspectorOptions.add(state, "logToConsole").onChange(setLogToConsole);
-  //inspectorOptions.add(state, "mute").onChange(setMute);
+  inspectorOptions.add(state, "logToConsole").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
+  //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
   }
@@ -80,13 +88,8 @@ var GUI = (function () {
     document.dispatchEvent(event);
   }
 
-  function setMute(value) {
-    state.mute = value;
-    saveInspectorState();
-  }
-
-  function setLogToConsole(value) {
-    state.logToConsole = value;
+  function saveInspectorOption(value) {
+    state[this.property] = value;
     saveInspectorState();
   }
 

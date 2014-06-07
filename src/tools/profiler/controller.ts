@@ -74,6 +74,10 @@ module Shumway.Tools.Profiler {
       }
     }
 
+    resize() {
+      this._onResize();
+    }
+
     getProfileAt(index: number): Profile {
       return this._profiles[index];
     }
@@ -149,14 +153,16 @@ module Shumway.Tools.Profiler {
     }
 
     private _onResize() {
-      var self = this;
-      var width = this._container.offsetWidth;
-      this._overviewHeader.setSize(width);
-      this._overview.setSize(width);
-      this._activeProfile.forEachSnapshot(function(snapshot: TimelineBufferSnapshot, index: number) {
-        self._headers[index].setSize(width);
-        self._charts[index].setSize(width);
-      });
+      if (this._activeProfile) {
+        var self = this;
+        var width = this._container.offsetWidth;
+        this._overviewHeader.setSize(width);
+        this._overview.setSize(width);
+        this._activeProfile.forEachSnapshot(function (snapshot:TimelineBufferSnapshot, index:number) {
+          self._headers[index].setSize(width);
+          self._charts[index].setSize(width);
+        });
+      }
     }
 
     private _updateViews() {

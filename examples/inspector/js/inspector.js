@@ -434,6 +434,7 @@ function togglePanelVisibility(id, visible) {
   if (_easel) {
     _easel.resize();
   }
+  profiler.resize();
 }
 
 // TODO:

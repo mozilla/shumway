@@ -31,8 +31,8 @@ limitations under the License.
     </div>
 
     <div id="topToolbar" class="toolbarBox withEmphasis">
-      <div class="toolbarLabel">Shumway Inspector <span id="message"></span></div>
-      <div id="debugInfoToolbarTabs" class="toolbarButtonBar" class="active">
+      <div class="toolbarLabel">Shumway Inspector <span id="message" class="toolbarMessage"></span></div>
+      <div id="debugInfoToolbarTabs" class="toolbarButtonBar active">
         <div id="showDebugInfo" class="toolbarButton" data-panelid="debugInfoContainer">Debug Info</div>
         <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Display List</div>
         <div id="showSettings" class="toolbarButton pressedState" data-panelid="settingsContainer">Settings</div>
@@ -40,23 +40,11 @@ limitations under the License.
       </div>
       <div id="openFile" class="toolbarButton" title="Select SWF/ABC file (or drag'n'drop the file on the stage).">Open File</div>
     </div>
+    <!--
     <div id="fpsPanelContainer">
       <canvas id="fpsCanvas"></canvas>
     </div>
-    <div id="profilePanelContainer">
-    </div>
-
-      <!--
-    <div id="debugInfoToolbar" class="toolbarBox withEmphasis">
-      <div id="debugInfoToolbarTabs" class="toolbarButtonBar" class="active">
-        <div id="showDebugInfo" class="toolbarButton" data-panelid="debugInfoContainer">Debug Info</div>
-        <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Display List</div>
-        <div id="showSettings" class="toolbarButton pressedState" data-panelid="settingsContainer">Settings</div>
-        <div id="showNothing" class="toolbarButton" data-panelid="none">×</div>
-      </div>
-      <div id="openFile" class="toolbarButton" title="Select SWF/ABC file (or drag'n'drop the file on the stage).">Open File</div>
-    </div>
-      -->
+    -->
 
     <div id="debugInfoContainer">
       <canvas id="traceTerminal" width="600" height="210" tabindex='2'></canvas>
@@ -67,6 +55,26 @@ limitations under the License.
     <div id="displayListContainer">
     </div>
     <div id="settingsContainer" class="active">
+    </div>
+
+    <div id="profilerContainer" class="collapsed">
+        <div id="profilerToolbar" class="toolbarBox">
+          <div class="toolbarLabel">Shumway Profiler <span id="profilerMessage" class="toolbarMessage">6 Seconds</span></div>
+          <div id="profilerMinimizeButton" class="toolbarIconButton icon-generic"></div>
+          <div id="profilerButtons">
+            <div class="toolbarButtonBar active">
+              <div id="profilerImport" class="toolbarButton">Import</div>
+              <div id="profilerExport" class="toolbarButton">Export</div>
+            </div>
+            <div id="profilerStartStop" class="toolbarButton">Start</div>
+          </div>
+        </div>
+        <div id="profiler">
+          <div id="profileList">
+          </div>
+          <div id="profilePanel">
+          </div>
+        </div>
     </div>
 
     <canvas id="frameTimeline" height="100" style="background-color: #333333; display: none"  tabindex='0'></canvas>
