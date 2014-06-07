@@ -1327,6 +1327,10 @@ module Shumway {
       return x && ((x & (x - 1)) === 0);
     }
 
+    export function roundToMultipleOfFour(x: number) {
+      return (x + 3) & ~0x3;
+    }
+
     export function nearestPowerOfTwo(x: number) {
       x --;
       x |= x >> 1;

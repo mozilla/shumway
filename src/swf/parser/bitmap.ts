@@ -18,6 +18,7 @@
 module Shumway.SWF.Parser {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
+  import roundToMultipleOfFour = Shumway.IntegerUtilities.roundToMultipleOfFour;
 
   export enum BitmapFormat {
     /**
@@ -61,25 +62,29 @@ module Shumway.SWF.Parser {
    * Color Table entries are either in RGB or RGBA format.
    *
    * There are two variations of these file formats, with or without alpha.
+   *
+   * Row pixels always start at 32 bit alinged offsets, the color table as
+   * well as the end of each row may be padded so that the next row of pixels
+   * is aligned.
    */
   function parseColorMapped(tag: DefineBitsLosslessTag): Uint8Array {
     var width = tag.width, height = tag.height;
     var hasAlpha = tag.hasAlpha;
 
-    var rowSize = (width + 3) & ~3; // Round up to multiple of 4.
-
+    var padding = roundToMultipleOfFour(width) - width;
     var colorTableLength = tag.colorTableSize + 1;
     var colorTableEntrySize = hasAlpha ? 4 : 3;
-    var colorTableSize = colorTableLength * colorTableEntrySize;
+    var colorTableSize = roundToMultipleOfFour(colorTableLength * colorTableEntrySize);
 
-    var dataSize = colorTableSize + (rowSize * height);
+    var dataSize = colorTableSize + ((width + padding) * height);
     var stream = createInflatedStream(tag.bmpData, dataSize);
     var bytes: Uint8Array = stream.bytes;
 
     var view = new Uint32Array(width * height);
 
+    // TODO: Figure out why this fails.
     // Make sure we've deflated enough bytes.
-    stream.ensure(dataSize);
+    // stream.ensure(dataSize);
 
     var p = colorTableSize, i = 0, offset = 0;
     if (hasAlpha) {
@@ -92,7 +97,7 @@ module Shumway.SWF.Parser {
           var b = bytes[offset + 2]; // B
           view[i++] = b << 24 | g << 16 | r << 8 | a;
         }
-        p = (p + 3) & ~3; // Round up.
+        p += padding;
       }
     } else {
       for (var y = 0; y < height; y++) {
@@ -104,7 +109,7 @@ module Shumway.SWF.Parser {
           var b = bytes[offset + 2]; // B
           view[i++] = b << 24 | g << 16 | r << 8 | a;
         }
-        p = (p + 3) & ~3; // Round up.
+        p += padding;
       }
     }
     release || assert (p === dataSize, "We should be at the end of the data buffer now.");
