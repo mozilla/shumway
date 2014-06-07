@@ -49,6 +49,14 @@ module Shumway {
   );
 
   export var playAllSymbolsOption = playerOptions.register (
-    new Shumway.Options.Option("", "Play All Symbols", "boolean", false, "Plays all SWF symbols automatically.")
+    new Shumway.Options.Option("", "Play Symbols", "boolean", false, "Plays all SWF symbols automatically.")
+  );
+
+  export var playSymbolOption = playerOptions.register (
+    new Shumway.Options.Option("", "Play Symbol Number", "number", 0, "Select symbol by Id.", {range: { min: 0, max: 2000, step: 1 }})
+  );
+
+  export var stageScaleOption = playerOptions.register (
+    new Shumway.Options.Option("", "Stage Scale", "number", 1, "Scales the symbols.", {range: { min: 0.1, max: 64, step: 0.1 }})
   );
 }

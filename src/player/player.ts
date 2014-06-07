@@ -271,6 +271,7 @@ module Shumway.Player {
         if (!frameEnabledOption.value || self._shouldThrottleDownFrameExecution()) {
           return;
         }
+        stage.scaleX = stage.scaleY = stageScaleOption.value;
         for (var i = 0; i < frameRateMultiplierOption.value; i++) {
           enterTimeline("eventLoop");
           enterTimeline("initFrame");
@@ -316,18 +317,16 @@ module Shumway.Player {
         stage.stageWidth = 1024;
         stage.stageHeight = 1024;
 
-        var displayObjectSymbolIds = [];
-        loaderInfo._dictionary.forEach(function (value, key) {
-          if (value instanceof Shumway.Timeline.DisplaySymbol) {
-            displayObjectSymbolIds.push(key);
+        var symbols = [];
+        loaderInfo._dictionary.forEach(function (symbol, key) {
+          if (symbol instanceof Shumway.Timeline.DisplaySymbol) {
+            symbols.push(symbol);
           }
         });
 
-        var nextSymbolIndex = 1;
-        function showNextSymbol() {
+        function show(symbol) {
           flash.display.MovieClip.reset();
           flash.display.DisplayObjectContainer.reset();
-          var symbol = loaderInfo.getSymbolById(displayObjectSymbolIds[nextSymbolIndex]);
           var symbolInstance = symbol.symbolClass.initializeFrom(symbol);
           symbol.symbolClass.instanceConstructorNoInitialize.call(symbolInstance);
           if (symbol instanceof Shumway.Timeline.BitmapSymbol) {
@@ -337,13 +336,30 @@ module Shumway.Player {
             stage.removeChildAt(0);
           }
           stage.addChild(symbolInstance);
-          nextSymbolIndex ++;
-          if (nextSymbolIndex === displayObjectSymbolIds.length) {
-            nextSymbolIndex = 1;
+        }
+
+        var nextSymbolIndex = 0;
+        function showNextSymbol() {
+          var symbol;
+          if (playSymbolOption.value > 0) {
+            symbol = loaderInfo.getSymbolById(playSymbolOption.value);
+            if (symbol instanceof Shumway.Timeline.DisplaySymbol) {
+
+            } else {
+              symbol = null;
+            }
+          } else {
+            symbol = symbols[nextSymbolIndex ++];
+            if (nextSymbolIndex === symbols.length) {
+              nextSymbolIndex = 0;
+            }
           }
           var frames = 1;
-          if (symbol instanceof Shumway.Timeline.SpriteSymbol) {
-            frames = (<Shumway.Timeline.SpriteSymbol>symbol).numFrames;
+          if (symbol) {
+            show(symbol);
+            if (symbol instanceof Shumway.Timeline.SpriteSymbol) {
+              frames = (<Shumway.Timeline.SpriteSymbol>symbol).numFrames;
+            }
           }
           setTimeout(showNextSymbol, (1000 / frameRateOption.value) * frames);
         }
