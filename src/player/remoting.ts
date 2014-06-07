@@ -58,6 +58,7 @@ module Shumway.Remoting {
     UpdateFrame                 = 100,
     UpdateGraphics              = 101,
     UpdateBitmapData            = 102,
+    UpdateStage                 = 103,
 
     CacheAsBitmap               = 200,
 

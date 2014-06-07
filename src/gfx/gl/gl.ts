@@ -39,7 +39,6 @@ module Shumway.GFX.GL {
   import Frame = Shumway.GFX.Frame;
   import Stage = Shumway.GFX.Stage;
   import Shape = Shumway.GFX.Shape;
-  import SolidRectangle = Shumway.GFX.SolidRectangle;
   import Filter = Shumway.GFX.Filter;
   import BlurFilter = Shumway.GFX.BlurFilter;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
@@ -61,6 +60,8 @@ module Shumway.GFX.GL {
     perspectiveCameraDistance: number;
     perspectiveCameraFOV: number;
     perspectiveCameraAngle: number;
+
+    animateZoom: boolean = true;
 
     /**
      * Ignores viewport clipping, this is useful to check of viewport culling is working
@@ -283,12 +284,12 @@ module Shumway.GFX.GL {
           colorMatrix = frame.getConcatenatedColorMatrix();
         }
         if (frame instanceof FrameContainer) {
-          if (options.paintBounds) {
+          if (frame instanceof Clip || options.paintBounds) {
             var bounds = frame.getBounds();
             if (!frame.color) {
               frame.color = Color.randomColor(0.3);
             }
-            brush.fillRectangle(new Rectangle(bounds.x, bounds.y, bounds.w, bounds.h), frame.color, matrix, depth);
+            brush.fillRectangle(bounds, frame.color, matrix, depth);
           }
           if (frame !== root && frame.blendMode !== BlendMode.Normal) {
             self._renderFrameLayer(frame, matrix, brush);
@@ -393,7 +394,7 @@ module Shumway.GFX.GL {
       // TODO: Only set the camera once, not every frame.
       if (options.perspectiveCamera) {
         this.context.modelViewProjectionMatrix = this.context.createPerspectiveMatrix (
-          options.perspectiveCameraDistance,
+          options.perspectiveCameraDistance + (options.animateZoom ? Math.sin(Date.now() / 3000) * 0.8 : 0),
           options.perspectiveCameraFOV,
           options.perspectiveCameraAngle
         );

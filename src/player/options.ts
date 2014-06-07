@@ -57,6 +57,6 @@ module Shumway {
   );
 
   export var stageScaleOption = playerOptions.register (
-    new Shumway.Options.Option("", "Stage Scale", "number", 1, "Scales the symbols.", {range: { min: 0.1, max: 64, step: 0.1 }})
+    new Shumway.Options.Option("", "Stage Scale", "number", 1, "Scales the symbols.", {range: { min: 0.1, max: 3, step: 0.01 }})
   );
 }

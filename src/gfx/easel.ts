@@ -383,7 +383,7 @@ module Shumway.GFX {
       return this._worldViewOverlay;
     }
 
-    get stage(): FrameContainer {
+    get stage(): Stage {
       return this._stage;
     }
 

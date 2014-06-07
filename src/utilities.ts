@@ -2574,6 +2574,14 @@ module Shumway {
       this.b = b;
       this.a = a;
     }
+    static FromARGB(argb: number) {
+      return new Color (
+        (argb >> 16 & 0xFF) / 255,
+        (argb >>  8 & 0xFF) / 255,
+        (argb >>  0 & 0xFF) / 255,
+        (argb >> 24 & 0xFF) / 255
+      );
+    }
     set (other: Color) {
       this.r = other.r;
       this.g = other.g;

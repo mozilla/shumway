@@ -217,10 +217,15 @@ module Shumway.GFX {
     }
   }
 
-  export class SolidRectangle extends Frame {
-    fillStyle: string = Shumway.ColorStyle.randomStyle();
-    constructor() {
+  export class Clip extends FrameContainer {
+    color: Color = Color.None;
+    clipBounds: Rectangle;
+    constructor(w: number, h: number) {
       super();
+      this.clipBounds = new Rectangle(0, 0, w, h);
+    }
+    public getBounds(): Rectangle {
+      return this.clipBounds;
     }
   }
 

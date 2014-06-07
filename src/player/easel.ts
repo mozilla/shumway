@@ -19,6 +19,7 @@ module Shumway {
 
   import Easel = Shumway.GFX.Easel;
   import FrameContainer = Shumway.GFX.FrameContainer;
+  import Stage = Shumway.GFX.Stage;
   import Point = Shumway.GFX.Geometry.Point;
 
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
@@ -41,6 +42,10 @@ module Shumway {
 
       channel.registerForUpdates(this.readData.bind(this));
       this._addEventListeners();
+    }
+
+    get stage(): Stage {
+      return this._easel.stage;
     }
 
     private _mouseEventListener(event: MouseEvent) {

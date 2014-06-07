@@ -15,6 +15,7 @@
  */
 module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
+  import Clip = Shumway.GFX.Clip;
   import Shape = Shumway.GFX.Shape;
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
@@ -75,12 +76,12 @@ module Shumway.Remoting.GFX {
   }
 
   export class GFXChannelDeserializerContext {
-    root: FrameContainer;
+    root: Clip;
     _frames: Frame [];
     _assets: Renderable [];
 
     constructor(root: FrameContainer) {
-      this.root = root;
+      root.addChild(this.root = new Clip(1024, 1024));
       this._frames = [];
       this._assets = [];
     }
@@ -119,6 +120,9 @@ module Shumway.Remoting.GFX {
             break;
           case MessageTag.UpdateFrame:
             this._readUpdateFrame();
+            break;
+          case MessageTag.UpdateStage:
+            this._readUpdateStage();
             break;
           case MessageTag.CacheAsBitmap:
             this._readCacheAsBitmap();
@@ -218,6 +222,13 @@ module Shumway.Remoting.GFX {
       }
     }
 
+    private _readUpdateStage() {
+      var context = this.context;
+      var color = this.input.readInt();
+      context.root.color = Color.FromARGB(color);
+      context.root.clipBounds = this._readRectangle();
+    }
+
     private _readUpdateFrame() {
       var input = this.input;
       var context = this.context;
@@ -225,11 +236,9 @@ module Shumway.Remoting.GFX {
       var firstFrame = context._frames.length === 0;
       var frame = context._frames[id];
       if (!frame) {
-        frame = context._frames[id] = new FrameContainer();
+        frame = context._frames[id] = firstFrame ? context.root : new FrameContainer();
       }
-      if (firstFrame) {
-        context.root.addChild(frame);
-      }
+
       var hasBits = input.readInt();
       if (hasBits & MessageBits.HasMatrix) {
         frame.matrix = this._readMatrix();

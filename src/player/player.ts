@@ -183,6 +183,10 @@ module Shumway.Player {
       serializer.output = updates;
       serializer.outputAssets = assets;
 
+      if (flash.display.Stage.isType(displayObject)) {
+        serializer.writeStage(<flash.display.Stage>displayObject);
+      }
+
       serializer.phase = Remoting.RemotingPhase.Objects;
       enterTimeline("writeDisplayObject");
       serializer.writeDisplayObject(displayObject);

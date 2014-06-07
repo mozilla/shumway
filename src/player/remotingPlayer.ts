@@ -53,6 +53,13 @@ module Shumway.Remoting.Player {
       }, VisitorFlags.Filter, DisplayObjectFlags.Dirty);
     }
 
+    writeStage(stage: Stage) {
+      var serializer = this;
+      this.output.writeInt(MessageTag.UpdateStage);
+      this.output.writeInt(0xFFFF0000);
+      this.writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
+    }
+
     writeGraphics(graphics: Graphics) {
       if (graphics._isDirty) {
         var textures = graphics.getUsedTextures();
