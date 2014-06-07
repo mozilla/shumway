@@ -39,18 +39,19 @@ module Shumway.Tools.Profiler {
     private _marks: Shumway.CircularBuffer;
     private _times: Shumway.CircularBuffer;
     private _stack: number [];
+    private _startTime: number;
 
     public name: string;
 
-    constructor(name?: string) {
+    constructor(name?: string, startTime?: number) {
       this.name = name || "";
-      this._depth = 0;
       this._kindCount = 0;
       this._kinds = [];
       this._kindNameMap = createEmptyObject();
       this._marks = new Shumway.CircularBuffer(Int32Array, 20);
       this._times = new Shumway.CircularBuffer(Float64Array, 20);
       this._stack = [];
+      this.reset(startTime);
     }
 
     getKind(kind: number): TimelineItemKind {
@@ -82,7 +83,7 @@ module Shumway.Tools.Profiler {
       this._depth++;
       var kind = this._getKindId(name);
       this._marks.write(TimelineBuffer.ENTER | kind);
-      this._times.write(time || performance.now());
+      this._times.write((isNullOrUndefined(time) ? performance.now() : time) - this._startTime);
       this._stack.push(kind);
     }
 
@@ -92,7 +93,7 @@ module Shumway.Tools.Profiler {
         kind = this._getKindId(name);
       }
       this._marks.write(TimelineBuffer.LEAVE | kind);
-      this._times.write(time || performance.now());
+      this._times.write((isNullOrUndefined(time) ? performance.now() : time) - this._startTime);
       this._depth--;
     }
 
@@ -149,21 +150,21 @@ module Shumway.Tools.Profiler {
       return snapshot;
     }
 
-    reset() {
+    reset(startTime?: number) {
       this._depth = 0;
       this._marks.reset();
       this._times.reset();
+      this._startTime = isNullOrUndefined(startTime) ? performance.now() : startTime;
     }
 
-    static FromFirefoxProfile(profile) {
+    static FromFirefoxProfile(profile, name?: string) {
       var samples = profile.profile.threads[0].samples;
-      var buffer = new TimelineBuffer();
-      var startTime = samples[0].time;
+      var buffer = new TimelineBuffer(name, samples[0].time);
       var currentStack = [];
       var sample;
       for (var i = 0; i < samples.length; i++) {
         sample = samples[i];
-        var time = (sample.time - startTime) || 0.000000001;
+        var time = sample.time;
         var stack = sample.frames;
         var j = 0;
         var minStackLen = Math.min(stack.length, currentStack.length);
@@ -187,17 +188,16 @@ module Shumway.Tools.Profiler {
       return buffer;
     }
 
-    static FromChromeProfile(profile) {
-      var buffer = new TimelineBuffer();
+    static FromChromeProfile(profile, name?: string) {
       var timestamps = profile.timestamps;
       var samples = profile.samples;
-      var startTime = timestamps[0] / 1000;
+      var buffer = new TimelineBuffer(name, timestamps[0] / 1000);
       var currentStack = [];
       var idMap = {};
       var sample;
       TimelineBuffer._resolveIds(profile.head, idMap);
       for (var i = 0; i < timestamps.length; i++) {
-        var time = (timestamps[i] / 1000 - startTime) || 0.000000001;
+        var time = timestamps[i] / 1000;
         var stack = [];
         sample = idMap[samples[i]];
         while (sample) {
