@@ -361,6 +361,7 @@ module Shumway.AVM2.AS.flash.display {
       this._parent = null;
 
       this._topLeftStrokeWidth = this._bottomRightStrokeWidth = 0;
+      this._isDirty = true;
     }
 
     static FromData(data: any): Graphics {
@@ -402,6 +403,11 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _topLeftStrokeWidth: number;
     private _bottomRightStrokeWidth: number;
+
+    /**
+     * Indicates whether this graphics object has changed since the last time it was synchronized.
+     */
+    _isDirty: boolean;
 
     /**
      * Flash special-cases lines that are 1px and 3px wide.
@@ -452,6 +458,11 @@ module Shumway.AVM2.AS.flash.display {
       this._parent._invalidateFillAndLineBounds();
     }
 
+    _invalidate() {
+      this._invalidateParent();
+      this._isDirty = true;
+    }
+
     _getContentBounds(includeStrokes: boolean = true): Bounds {
       return includeStrokes ? this._lineBounds : this._fillBounds;
     }
@@ -466,7 +477,7 @@ module Shumway.AVM2.AS.flash.display {
       this._lineBounds.setToSentinels();
       this._lastX = this._lastY = 0;
       this._boundsIncludeLastCoordinates = false;
-      this._invalidateParent();
+      this._invalidate();
     }
 
     /**
@@ -607,7 +618,7 @@ module Shumway.AVM2.AS.flash.display {
       this._extendBoundsByPoint(x2, y2);
       this._applyLastCoordinates(x, y);
 
-      this._invalidateParent();
+      this._invalidate();
     }
 
     drawRoundRect(x: number, y: number, width: number, height: number, ellipseWidth: number,
@@ -784,7 +795,7 @@ module Shumway.AVM2.AS.flash.display {
 
       this._graphicsData.lineTo(x, y);
       this._applyLastCoordinates(x, y);
-      this._invalidateParent();
+      this._invalidate();
     }
 
     curveTo(controlX: number, controlY: number, anchorX: number, anchorY: number): void {
@@ -803,7 +814,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._applyLastCoordinates(anchorX, anchorY);
 
-      this._invalidateParent();
+      this._invalidate();
     }
 
     cubicCurveTo(controlX1: number, controlY1: number, controlX2: number, controlY2: number,
@@ -836,7 +847,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._applyLastCoordinates(anchorX, anchorY);
 
-      this._invalidateParent();
+      this._invalidate();
     }
 
     copyFrom(sourceGraphics: flash.display.Graphics): void {
@@ -847,7 +858,7 @@ module Shumway.AVM2.AS.flash.display {
       this._lastX = sourceGraphics._lastX;
       this._lastY = sourceGraphics._lastY;
       this._boundsIncludeLastCoordinates = sourceGraphics._boundsIncludeLastCoordinates;
-      this._invalidateParent();
+      this._invalidate();
     }
 
 //    lineShaderStyle(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
