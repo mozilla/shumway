@@ -93,6 +93,7 @@ var profiler = (function() {
   Profiler.prototype._onStartStopClick = function(e) {
     if (timerHandle) {
       this.createProfile();
+      this.openPanel();
     } else {
       this.start();
     }
