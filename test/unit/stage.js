@@ -2,9 +2,6 @@
   var Stage = flash.display.Stage;
   var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
-  function log(message) {
-    console.info(message);
-  }
 
   function createDisplayObjectTree(depth, width, height) {
     var nodes = [];
@@ -21,7 +18,7 @@
         parent.addChild(new DisplayObject());
       }
     }
-    var container = new DisplayObjectContainer();
+    var container = new Stage();
     make(container, 2, depth);
     return {
       node: container,
@@ -29,98 +26,95 @@
     };
   }
 
-  unitTests.push(function runInspectorSanityTests() {
-    log("Check Defaults")
-    var o = new Stage();
-    check(o.root === o, "root");
-    check(o.scaleMode === "showAll", "scaleMode");
-    check(o.stage === o, "stage");
-    check(o.tabIndex === -1, "tabIndex");
-    check(o.mouseEnabled === true, "mouseEnabled");
-    check(o.focusRect === null, "focusRect");
-    check(o.mask === null, "mask");
-    check(o.tabEnabled === false, "tabEnabled");
-    check(o.visible === true, "visible");
-    check(o.doubleClickEnabled === false, "doubleClickEnabled");
-    check(o.scaleZ === 1, "scaleZ");
-    check(o.accessibilityImplementation === null, "accessibilityImplementation");
-    check(o.softKeyboardInputAreaOfInterest === null, "softKeyboardInputAreaOfInterest");
-    check(o.rotation === 0, "rotation");
-    check(o.needsSoftKeyboard === false, "needsSoftKeyboard");
-    check(o.rotationX === 0, "rotationX");
-    check(o.scaleX === 1, "scaleX");
-    check(o.scaleY === 1, "scaleY");
-    check(o.rotationZ === 0, "rotationZ");
-    check(o.rotationY === 0, "rotationY");
-    check(o.cacheAsBitmap === false, "cacheAsBitmap");
-    check(o.opaqueBackground === null, "opaqueBackground");
-    check(o.scrollRect === null, "scrollRect");
-    check(o.contextMenu === null, "contextMenu");
-    check(o.blendMode === "normal", "blendMode");
-    check(o.transform, "transform");
-    check(o.frameRate === 24, "frameRate");
+  unitTests.push(function checkDefaults() {
+    var stage = new Stage();
+    eq(stage.root, stage, "root");
+    check(stage.scaleMode === "showAll", "scaleMode");
+    eq(stage.stage, stage, "stage");
+    check(stage.tabIndex === -1, "tabIndex");
+    eq(stage.mouseEnabled, true, "mouseEnabled");
+    eq(stage.focusRect, null, "focusRect");
+    eq(stage.mask, null, "mask");
+    eq(stage.tabEnabled, false, "tabEnabled");
+    eq(stage.visible, true, "visible");
+    eq(stage.doubleClickEnabled, false, "doubleClickEnabled");
+    eq(stage.scaleZ, 1, "scaleZ");
+    eq(stage.accessibilityImplementation, null, "accessibilityImplementation");
+    eq(stage.softKeyboardInputAreaOfInterest, null, "softKeyboardInputAreaOfInterest");
+    eq(stage.rotation, 0, "rotation");
+    eq(stage.needsSoftKeyboard, false, "needsSoftKeyboard");
+    eq(stage.rotationX, 0, "rotationX");
+    eq(stage.scaleX, 1, "scaleX");
+    eq(stage.scaleY, 1, "scaleY");
+    eq(stage.rotationZ, 0, "rotationZ");
+    eq(stage.rotationY, 0, "rotationY");
+    eq(stage.cacheAsBitmap, false, "cacheAsBitmap");
+    eq(stage.opaqueBackground, null, "opaqueBackground");
+    eq(stage.scrollRect, null, "scrollRect");
+    eq(stage.contextMenu, null, "contextMenu");
+    check(stage.blendMode === "normal", "blendMode");
+    check(stage.transform, "transform");
+    eq(stage.frameRate, 24, "frameRate");
     //check(o.numChildren === 1, "numChildren");
-    check(o.scale9Grid === null, "scale9Grid");
+    eq(stage.scale9Grid, null, "scale9Grid");
     //check(o.constructor === null, "constructor");
     //check(o.stageWidth === 550, "stageWidth");
-    check(o.color === 4294967295, "color");
-    check(o.tabChildren === true, "tabChildren");
+    eq(stage.color, 4294967295, "color");
+    eq(stage.tabChildren, true, "tabChildren");
     //check(o.quality === "HIGH", "quality");
-    check(o.mouseChildren === true, "mouseChildren");
+    eq(stage.mouseChildren, true, "mouseChildren");
     //check(o.loaderInfo, "loaderInfo");
-    check(o.focus === null, "focus");
-    check(o.colorCorrection === "default", "colorCorrection");
-    check(o.height === 0, "height");
+    eq(stage.focus, null, "focus");
+    check(stage.colorCorrection === "default", "colorCorrection");
+    eq(stage.height, 0, "height");
     //check(o.name === null, "name");
-    check(o.colorCorrectionSupport === "defaultOff", "colorCorrectionSupport");
-    check(o.showDefaultContextMenu === true, "showDefaultContextMenu");
-    check(o.width === 0, "width");
+    check(stage.colorCorrectionSupport === "defaultOff", "colorCorrectionSupport");
+    eq(stage.showDefaultContextMenu, true, "showDefaultContextMenu");
+    eq(stage.width, 0, "width");
     //check(o.accessibilityProperties === null, "accessibilityProperties");
-    check(o.align === "", "align");
-    check(o.displayState === null, "displayState");
-    check(o.fullScreenSourceRect === null, "fullScreenSourceRect");
-    check(o.mouseLock === false, "mouseLock");
-    check(o.stageFocusRect === true, "stageFocusRect");
-    check(o.fullScreenWidth === 0, "fullScreenWidth");
-    check(o.z === 0, "z");
-    check(o.fullScreenHeight === 0, "fullScreenHeight");
-    check(o.x === 0, "x");
-    check(o.softKeyboardRect, "softKeyboardRect");
-    check(o.wmodeGPU === false, "wmodeGPU");
-    check(o.allowsFullScreen === false, "allowsFullScreen");
-    check(o.allowsFullScreenInteractive === false, "allowsFullScreenInteractive");
-    check(o.contentsScaleFactor === 1, "contentsScaleFactor");
-    check(o.alpha === 1, "alpha");
+    check(stage.align === "", "align");
+    eq(stage.displayState, null, "displayState");
+    eq(stage.fullScreenSourceRect, null, "fullScreenSourceRect");
+    eq(stage.mouseLock, false, "mouseLock");
+    eq(stage.stageFocusRect, true, "stageFocusRect");
+    eq(stage.fullScreenWidth, 0, "fullScreenWidth");
+    eq(stage.z, 0, "z");
+    eq(stage.fullScreenHeight, 0, "fullScreenHeight");
+    eq(stage.x, 0, "x");
+    check(stage.softKeyboardRect, "softKeyboardRect");
+    eq(stage.wmodeGPU, false, "wmodeGPU");
+    eq(stage.allowsFullScreen, false, "allowsFullScreen");
+    eq(stage.allowsFullScreenInteractive, false, "allowsFullScreenInteractive");
+    eq(stage.contentsScaleFactor, 1, "contentsScaleFactor");
+    eq(stage.alpha, 1, "alpha");
     //check(o.metaData === null, "metaData");
-    check(o.y === 0, "y");
-    check(o.displayContextInfo === null, "displayContextInfo");
-    check(o.parent === null, "parent");
+    eq(stage.y, 0, "y");
+    eq(stage.displayContextInfo, null, "displayContextInfo");
+    eq(stage.parent, null, "parent");
   });
 
-  unitTests.push(function runInspectorSanityTests() {
+  unitTests.push(function stagePropertySetup() {
     var s = new Stage();
-    check(s.stage === s);
+    eq(s.stage, s, 'stage correctly assigns its `stage` property');
   });
 
-  unitTests.push(function runInspectorSanityTests() {
-    var r = createDisplayObjectTree(10, 1024, 1024);
+  unitTests.push(function displayListStateConsistency() {
+    var tree = createDisplayObjectTree(10, 1024, 1024);
 
     for (var i = 0; i < 1024; i++) {
-      var x = r.nodes[(Math.random() * (r.nodes.length - 1)) | 0];
-      if (DisplayObjectContainer.isType(x)) {
-        var w = r.nodes[(Math.random() * (r.nodes.length - 1)) | 0];
-        if (!w._isAncestor(x)) {
-          x.addChild(w);
+      var element = tree.nodes[(Math.random() * (tree.nodes.length - 1)) | 0];
+      if (DisplayObjectContainer.isType(element)) {
+        var otherElement = tree.nodes[(Math.random() * (tree.nodes.length - 1)) | 0];
+        if (!otherElement._isAncestor(element)) {
+          element.addChild(otherElement);
         }
       }
-      var y = x.stage;
-      var z = x.root;
-      if (!(y === null || y.stage === y)) {
-        check(false);
-      }
-      if (!(z === null || z.root === z)) {
-        check(false);
-      }
+      var stage = element.stage;
+      var root = element.root;
+      check(stage);
+      eq(stage, stage.stage);
+      check(root);
+      eq(root, root.root);
     }
   });
 
