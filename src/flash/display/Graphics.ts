@@ -550,14 +550,12 @@ module Shumway.AVM2.AS.flash.display {
       // Flash stops drawing strokes whenever a thickness is supplied that can't be coerced to a
       // number.
       if (isNaN(thickness)) {
-
         this._setStrokeWidth(0);
         this._graphicsData.endLine();
         return;
       }
-      // thickness is rounded to the nearest pixel value.
-      thickness = clamp(Math.round(thickness)|0, 0, 0xff)|0;
-      this._setStrokeWidth(thickness * 20|0);
+      thickness = clamp(+thickness, 0, 0xff) * 20|0;
+      this._setStrokeWidth(thickness);
 
       // If `scaleMode` is invalid, "normal" is used.
       var lineScaleMode = LineScaleMode.toNumber(asCoerceString(scaleMode));
@@ -1321,7 +1319,7 @@ module Shumway.AVM2.AS.flash.display {
       if (interpolation < 0) {
         interpolation = InterpolationMethod.toNumber(InterpolationMethod.RGB);
       }
-      // Focal point is stored as a signed byte.
+      // Focal point is scaled by 0xff, rounded and stored as a signed short.
       focalPointRatio = clamp(+focalPointRatio, -1, 1) / 2 * 0xff|0;
       this._graphicsData.beginGradient(pathCommand, colorsRGBA, coercedRatios, gradientType,
                                        matrix, spread, interpolation, focalPointRatio);

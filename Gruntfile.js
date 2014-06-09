@@ -69,6 +69,9 @@ module.exports = function(grunt) {
       build_avm1lib_ts: {
         cmd: 'node utils/typescript/tsc --target --outDir build/ts ES5 src/avm1lib/references.ts'
       },
+      shell_test: {
+        cmd: 'utils/jsshell/js test/harness/run-unit-test.js ' + (grunt.option('tests') || 'test/unit/shell-tests.js')
+      },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       }
@@ -194,13 +197,14 @@ module.exports = function(grunt) {
 
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
-  grunt.registerTask('swf', ['exec:build_swf_ts']);
-  grunt.registerTask('flash', ['exec:build_flash_ts']);
-  grunt.registerTask('player', ['exec:build_player_ts']);
+  grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:shell_test']);
+  grunt.registerTask('flash', ['exec:build_flash_ts', 'exec:shell_test']);
+  grunt.registerTask('player', ['exec:build_player_ts', 'exec:shell_test']);
   grunt.registerTask('profiler', ['exec:build_profiler_ts']);
-  grunt.registerTask('avm2', ['exec:build_avm2_ts']);
+  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'exec:shell_test']);
   grunt.registerTask('gfx', ['exec:build_gfx_ts']);
-  grunt.registerTask('avm1', ['exec:build_avm1_ts']);
+  grunt.registerTask('avm1', ['exec:build_avm1_ts', 'exec:shell_test']);
+  grunt.registerTask('shell-test', ['exec:shell_test']);
   grunt.registerTask('shu', [
     'exec:build_avm2_ts',
     'exec:build_flash_ts',
@@ -208,7 +212,8 @@ module.exports = function(grunt) {
     'exec:build_swf_ts',
     'exec:build_gfx_ts',
     'exec:build_player_ts',
-    'bundles'
+    'bundles',
+    'exec:shell_test'
   ]);
   grunt.registerTask('firefox', ['shu', 'exec:build_extension']);
 };

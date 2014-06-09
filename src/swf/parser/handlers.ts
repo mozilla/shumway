@@ -804,9 +804,9 @@ module Shumway.SWF.Parser {
       $130.push($132);
     }
     if (type === 19) {
-      $.focalPoint = readSi8($bytes, $stream);
+      $.focalPoint = readSi16($bytes, $stream);
       if (isMorph) {
-        $.focalPointMorph = readSi8($bytes, $stream);
+        $.focalPointMorph = readSi16($bytes, $stream);
       }
     }
   }
