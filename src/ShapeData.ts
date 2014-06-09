@@ -75,7 +75,7 @@
  * Note: the style fields are ordered this way to optimize performance in the rendering backend
  * Note: the style record has a variable length depending on the number of color stops
  * styles:        uint8  - GradientType.{LINEAR,RADIAL}
- *                int8   - focalPoint [-128,127]
+ *                fix8   - focalPoint [-128.0xff,127.0xff]
  *                matrix - transform (see Matrix#writeExternal for details)
  *                uint8  - colorStops (Number of color stop records that follow)
  *                list of uint8,uint32 pairs:
@@ -320,7 +320,8 @@ module Shumway {
       this.commands[this.commandsPosition++] = pathCommand;
       var styles: DataBuffer = this.styles;
       styles.writeUnsignedByte(gradientType);
-      styles.writeByte(focalPointRatio);
+      assert(focalPointRatio === (focalPointRatio|0));
+      styles.writeShort(focalPointRatio);
 
       this._writeStyleMatrix(matrix);
 

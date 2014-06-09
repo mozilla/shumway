@@ -397,7 +397,7 @@ module Shumway.GFX {
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
             var gradientType = styles.readUnsignedByte();
-            var focalPoint = styles.readByte() * 2 / 0xff;
+            var focalPoint = styles.readShort() * 2 / 0xff;
             assert(focalPoint >= -1 && focalPoint <= 1);
             fillTransform = this._readMatrix(styles);
             // This effectively applies the matrix to the line the gradient is drawn along:

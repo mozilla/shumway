@@ -728,7 +728,7 @@ module Shumway.SWF.Parser {
                                GradientType.Radial;
             shape.beginGradient(PathCommand.BeginGradientFill, fillStyle.colors, fillStyle.ratios,
                                 gradientType, fillStyle.transform, fillStyle.spreadMethod,
-                                fillStyle.interpolationMode, fillStyle.focalPoint || 0);
+                                fillStyle.interpolationMode, fillStyle.focalPoint|0);
             break;
           case FillType.ClippedBitmap:
           case FillType.RepeatingBitmap:
