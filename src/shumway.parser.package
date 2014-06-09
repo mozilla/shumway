@@ -32,5 +32,6 @@ build/ts/swf/parser/parser.js
 #!inline console.timeEnd("Load SWF Parser");
 
 build/ts/swf/resourceLoader.js
+build/ts/swf/binaryFileReader.js
 
 #!inline console.timeEnd("Load Parser Dependencies");

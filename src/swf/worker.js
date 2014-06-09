@@ -61,6 +61,7 @@ load("../../build/ts/swf/parser/parser.js");
 console.timeEnd("Load SWF Parser");
 
 load("../../build/ts/swf/resourceLoader.js");
+load("../../build/ts/swf/binaryFileReader.js");
 
 console.timeEnd("Load Parser Dependencies");
 
