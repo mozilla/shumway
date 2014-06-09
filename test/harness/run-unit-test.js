@@ -80,10 +80,12 @@ var console = {
 	},
 	time: function(id) {
 		this.timestamps[id] = dateNow();
-		print(id + ": timer started");
+    if (logLevel > 3) {
+      print(id + ": timer started");
+    }
 	},
 	timeEnd: function(id) {
-		if (this.timestamps[id]) {
+		if (this.timestamps[id] && logLevel > 3) {
 			print(id + ": " + (dateNow() - this.timestamps[id]) + 'ms');
 		}
 	},
@@ -110,27 +112,38 @@ loadEngine();
 
 load('examples/inspector/js/unit.js');
 
-var unitTests;
 var executeUnitTests = function(avm2) {
-	var start = dateNow();
 	for (var i = 0; i < scriptArgs.length; i++) {
 		var testFile = scriptArgs[i];
 		if (testFile.substr(testFile.length - 3) !== '.js') {
 			testFile += '.js';
 		}
-		unitTests = [];
-		print('\nRunning tests in file ' + testFile);
-		try {
-			load(fixPath(testFile));
-			unitTests.forEach(test => test(avm2));
-		} catch (e) {
-			print('Exception encountered while running ' + testFile + ':');
-			print(e);
-			print('stack:\n', e.stack);
-		}
-		print(testFile + ': Complete (' + Math.round((dateNow() - start) * 100) / 100 + 'ms + ' +
-			  initDuration + 'ms startup)');
+    executeTestFile(testFile);
 	}
+}
+
+var unitTests;
+var testFiles;
+function executeTestFile(testFile) {
+  unitTests = [];
+  testFiles = [];
+  var start = dateNow();
+  try {
+    load(fixPath(testFile));
+    if (testFiles.length) {
+      var basePath = testFile.substr(0, testFile.lastIndexOf('/') + 1);
+      testFiles.forEach(file => executeTestFile(basePath + file));
+      return;
+    }
+    print('\nRunning tests in file ' + testFile);
+    unitTests.forEach(test => test(avm2));
+  } catch (e) {
+    print('Exception encountered while running ' + testFile + ':');
+    print(e);
+    print('stack:\n', e.stack);
+  }
+  print(testFile + ': Complete (' + Math.round((dateNow() - start) * 100) / 100 + 'ms + ' +
+        initDuration + 'ms startup)');
 }
 
 // Shumway.AVM2.Runtime.traceExecution.value = true;
