@@ -250,6 +250,10 @@ module Shumway.AVM2.AS.flash.display {
       throwError("Error", Errors.InvalidStageMethodError);
     }
 
+    get alpha(): number {
+      return this._colorTransform.alphaMultiplier;
+    }
+
     get fullScreenWidth(): number /*uint*/ {
       return this._fullScreenWidth;
     }
