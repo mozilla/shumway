@@ -27,20 +27,6 @@ if (!CanvasRenderingContext2D) {
 	}
 }
 
-function BinaryFileReader(path) {
-	this.path = path;
-}
-BinaryFileReader.prototype = {
-	readAll: function(something, callback) {
-		var buffer = read(this.path, "binary");
-		try {
-			callback(buffer);
-		} catch (e) {
-			print(e, "\nstack: \n" + e.stack);
-		}
-	}
-}
-
 function fixPath(path) {
 	while (path.indexOf('../') === 0) {
 		path = path.substr(3);
@@ -49,7 +35,7 @@ function fixPath(path) {
 }
 
 var self = this;
-self.addEventListener = function(){}
+self.addEventListener = function(){};
 
 function importScripts(scripts) {
 	if (typeof scripts === 'string') {
@@ -116,7 +102,7 @@ function loadPackage(id) {
   });
 }
 function loadEngine() {
-  loadPackage('');
+  loadPackage('.parser');
   loadPackage('.player');
 }
 
@@ -125,7 +111,7 @@ loadEngine();
 load('examples/inspector/js/unit.js');
 
 var unitTests;
-executeUnitTests = function(avm2) {
+var executeUnitTests = function(avm2) {
 	var start = dateNow();
 	for (var i = 0; i < scriptArgs.length; i++) {
 		var testFile = scriptArgs[i];
@@ -150,47 +136,56 @@ executeUnitTests = function(avm2) {
 // Shumway.AVM2.Runtime.traceExecution.value = true;
 Shumway.AVM2.Runtime.globalMultinameAnalysis.value = true;
 
-
-AVM2.loadPlayerglobal = function (abcsPath, catalogPath) {
-    if (playerglobal) {
-        throw new Error('Playerglobal is already loaded');
-    }
-    playerglobal = {
-        abcs: read(abcsPath, 'binary').buffer,
-        map: Object.create(null),
-        scripts: Object.create(null)
-    };
-    var catalog = JSON.parse(read(catalogPath));
-    for (var i = 0; i < catalog.length; i++) {
-        var abc = catalog[i];
-        playerglobal.scripts[abc.name] = abc;
-        if (typeof abc.defs === 'string') {
-            playerglobal.map[abc.defs] = abc.name;
-        print(abc.defs)
-        } else {
-            for (var j = 0; j < abc.defs.length; j++) {
-                var def = abc.defs[j];
-                playerglobal.map[def] = abc.name;
-            }
-        }
-    }
-};
-
 var avm2Root = "src/avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var shellAbcPath = avm2Root + "generated/shell/shell.abc";
-var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 
 // different playerglobals can be used here
 var playerglobalInfo = {
-  abcs: "../../build/playerglobal/playerglobal.abcs",
-  catalog: "../../build/playerglobal/playerglobal.json"
+  abcs: "build/playerglobal/playerglobal.abcs",
+  catalog: "build/playerglobal/playerglobal.json"
 };
 
+var AVM2 = Shumway.AVM2.Runtime.AVM2;
+var avm2 = null;
 
+function loadPlayerglobal(abcsPath, catalogPath) {
+  var playerglobal = Shumway.AVM2.Runtime.playerglobal = {
+    abcs: read(abcsPath, 'binary').buffer,
+    map: Object.create(null),
+    scripts: Object.create(null)
+  };
+  var catalog = JSON.parse(read(catalogPath));
+  console.time("Execute playerglobals.abc");
+  for (var i = 0; i < catalog.length; i++) {
+    var abc = catalog[i];
+    playerglobal.scripts[abc.name] = abc;
+    if (typeof abc.defs === 'string') {
+      playerglobal.map[abc.defs] = abc.name;
+      print(abc.defs)
+    } else {
+      for (var j = 0; j < abc.defs.length; j++) {
+        var def = abc.defs[j];
+        playerglobal.map[def] = abc.name;
+      }
+    }
+  }
+  console.timeEnd("Execute playerglobals.abc");
+}
+
+function createAVM2(builtinPath, libraryPathInfo, sysMode, appMode) {
+  var buffer = read(builtinPath, 'binary');
+  AVM2.initialize(sysMode, appMode, null);
+  avm2 = AVM2.instance;
+  console.time("Execute builtin.abc");
+  // Avoid loading more Abcs while the builtins are loaded
+  avm2.builtinsLoaded = false;
+  avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
+  avm2.builtinsLoaded = true;
+  console.timeEnd("Execute builtin.abc");
+  loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
+}
 var initDuration = Math.round((dateNow() - initStart) * 100)/100;
+createAVM2(builtinPath, playerglobalInfo, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET);
+var flash = Shumway.AVM2.AS.flash;
+executeUnitTests(avm2);
 
-Shumway.createAVM2(builtinPath, playerglobalInfo, null, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET,
-			function (avm2) {
-			  executeUnitTests(avm2);
-			});
