@@ -458,7 +458,6 @@ module Shumway.GFX {
       assert(coordinatesIndex === data.coordinatesPosition);
       if (formOpen && fillPath) {
         fillPath.lineTo(formOpenX, formOpenY);
-        strokePath && strokePath.lineTo(formOpenX, formOpenY);
       }
       if (fillPath) {
         clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
