@@ -118,38 +118,44 @@ module Shumway.Tools.Profiler {
     }
 
     private _createViews() {
-      var self = this;
-      this._overviewHeader = new Profiler.FlameChartHeader(this, FlameChartHeaderType.OVERVIEW);
-      this._overview = new Profiler.FlameChartOverview(this, FlameChartOverviewMode.OVERLAY);
-      this._activeProfile.forEachSnapshot(function(snapshot: TimelineBufferSnapshot, index: number) {
-        self._headers.push(new Profiler.FlameChartHeader(self, FlameChartHeaderType.CHART));
-        self._charts.push(new Profiler.FlameChart(self, snapshot));
-      });
-      window.addEventListener("resize", this._onResize.bind(this));
+      if (this._activeProfile) {
+        var self = this;
+        this._overviewHeader = new Profiler.FlameChartHeader(this, FlameChartHeaderType.OVERVIEW);
+        this._overview = new Profiler.FlameChartOverview(this, FlameChartOverviewMode.OVERLAY);
+        this._activeProfile.forEachSnapshot(function (snapshot:TimelineBufferSnapshot, index:number) {
+          self._headers.push(new Profiler.FlameChartHeader(self, FlameChartHeaderType.CHART));
+          self._charts.push(new Profiler.FlameChart(self, snapshot));
+        });
+        window.addEventListener("resize", this._onResize.bind(this));
+      }
     }
 
     private _destroyViews() {
-      if (this._overviewHeader) { this._overviewHeader.destroy(); }
-      if (this._overview) { this._overview.destroy(); }
-      while (this._headers.length) {
-        this._headers.pop().destroy();
+      if (this._activeProfile) {
+        this._overviewHeader.destroy();
+        this._overview.destroy();
+        while (this._headers.length) {
+          this._headers.pop().destroy();
+        }
+        while (this._charts.length) {
+          this._charts.pop().destroy();
+        }
+        window.removeEventListener("resize", this._onResize.bind(this));
       }
-      while (this._charts.length) {
-        this._charts.pop().destroy();
-      }
-      window.removeEventListener("resize", this._onResize.bind(this));
     }
 
     private _initializeViews() {
-      var self = this;
-      var startTime = this._activeProfile.startTime;
-      var endTime = this._activeProfile.endTime;
-      this._overviewHeader.initialize(startTime, endTime);
-      this._overview.initialize(startTime, endTime);
-      this._activeProfile.forEachSnapshot(function(snapshot: TimelineBufferSnapshot, index: number) {
-        self._headers[index].initialize(startTime, endTime);
-        self._charts[index].initialize(startTime, endTime);
-      });
+      if (this._activeProfile) {
+        var self = this;
+        var startTime = this._activeProfile.startTime;
+        var endTime = this._activeProfile.endTime;
+        this._overviewHeader.initialize(startTime, endTime);
+        this._overview.initialize(startTime, endTime);
+        this._activeProfile.forEachSnapshot(function (snapshot:TimelineBufferSnapshot, index:number) {
+          self._headers[index].initialize(startTime, endTime);
+          self._charts[index].initialize(startTime, endTime);
+        });
+      }
     }
 
     private _onResize() {
@@ -166,21 +172,23 @@ module Shumway.Tools.Profiler {
     }
 
     private _updateViews() {
-      var self = this;
-      var start = this._activeProfile.windowStart;
-      var end = this._activeProfile.windowEnd;
-      this._overviewHeader.setWindow(start, end);
-      this._overview.setWindow(start, end);
-      this._activeProfile.forEachSnapshot(function(snapshot: TimelineBufferSnapshot, index: number) {
-        self._headers[index].setWindow(start, end);
-        self._charts[index].setWindow(start, end);
-      });
+      if (this._activeProfile) {
+        var self = this;
+        var start = this._activeProfile.windowStart;
+        var end = this._activeProfile.windowEnd;
+        this._overviewHeader.setWindow(start, end);
+        this._overview.setWindow(start, end);
+        this._activeProfile.forEachSnapshot(function (snapshot:TimelineBufferSnapshot, index:number) {
+          self._headers[index].setWindow(start, end);
+          self._charts[index].setWindow(start, end);
+        });
+      }
     }
 
     private _drawViews() {
+      /*
       var self = this;
       this._overviewHeader.draw();
-      /*
       this._overview.setWindow(start, end);
       this._profile.forEachBuffer(function(buffer: TimelineBufferSnapshot, index: number) {
         self._headers[index].setWindow(start, end);
