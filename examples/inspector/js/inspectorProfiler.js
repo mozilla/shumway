@@ -113,29 +113,20 @@ function requestTimelineBuffers() {
   var buffersPromises = [];
   // TODO request timelineBuffers using postMessage (instead of IFramePlayer.Shumway)
 
-  if (IFramePlayer.Shumway) {
-    if (IFramePlayer.Shumway.AVM2.timelineBuffer) {
-      buffersPromises.push(IFramePlayer.instance.requestTimeline('AVM2'));
-    }
-    if (IFramePlayer.Shumway.Player.timelineBuffer) {
-      buffersPromises.push(IFramePlayer.instance.requestTimeline('Player'));
-    }
-    if (IFramePlayer.Shumway.SWF.timelineBuffer) {
-      buffersPromises.push(IFramePlayer.instance.requestTimeline('SWF'));
-    }
+  if (IFramePlayer.instance) {
+    buffersPromises.push(IFramePlayer.instance.requestTimeline('AVM2'));
+    buffersPromises.push(IFramePlayer.instance.requestTimeline('Player'));
+    buffersPromises.push(IFramePlayer.instance.requestTimeline('SWF'));
   } else {
-    if (Shumway.AVM2.timelineBuffer) {
-      buffersPromises.push(Promise.resolve(Shumway.AVM2.timelineBuffer));
-    }
-    if (Shumway.Player.timelineBuffer) {
-      buffersPromises.push(Promise.resolve(Shumway.Player.timelineBuffer));
-    }
-    if (Shumway.SWF.timelineBuffer) {
-      buffersPromises.push(Promise.resolve(Shumway.SWF.timelineBuffer));
-    }
+    buffersPromises.push(Promise.resolve(Shumway.AVM2.timelineBuffer));
+    buffersPromises.push(Promise.resolve(Shumway.Player.timelineBuffer));
+    buffersPromises.push(Promise.resolve(Shumway.SWF.timelineBuffer));
   }
-  if (Shumway.GFX.timelineBuffer) {
-    buffersPromises.push(Promise.resolve(Shumway.GFX.timelineBuffer));
-  }
-  return Promise.all(buffersPromises);
+  buffersPromises.push(Promise.resolve(Shumway.GFX.timelineBuffer));
+
+  return Promise.all(buffersPromises).then(function (result) {
+    return result.filter(function (i) {
+      return !!i;
+    })
+  });
 }
