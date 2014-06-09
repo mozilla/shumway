@@ -19,16 +19,16 @@
  * (canonical, update this instead of anything else!)
  *
  * Shape data is serialized into a set of three buffers:
- * - `commands`: a Uint8Array for commands*
+ * - `commands`: a Uint8Array for commands
  *  - valid values: [1-11] (i.e. one of the PathCommand enum values)
- *                  OR uint8 thickness iff the previous value is PathCommand.LineStyleSolid
- * - `coordinates`: an Int32Array for path coordinates
+ * - `coordinates`: an Int32Array for path coordinates*
+ *                  OR uint8 thickness iff the current command is PathCommand.LineStyleSolid
  *  - valid values: the full range of 32bit numbers, representing x,y coordinates in twips
  * - `styles`: a DataBuffer for style definitions
  *  - valid values: structs for the various style definitions as described below
  *
  * (*: with one exception: to make various things faster, stroke widths are stored in the
- * command buffer, too.)
+ * coordinates buffer, too.)
  *
  * All entries always contain all fields, default values aren't omitted.
  *
@@ -75,7 +75,7 @@
  * Note: the style fields are ordered this way to optimize performance in the rendering backend
  * Note: the style record has a variable length depending on the number of color stops
  * styles:        uint8  - GradientType.{LINEAR,RADIAL}
- *                int8   - focalPoint [-128,127]
+ *                fix8   - focalPoint [-128.0xff,127.0xff]
  *                matrix - transform (see Matrix#writeExternal for details)
  *                uint8  - colorStops (Number of color stop records that follow)
  *                list of uint8,uint32 pairs:
@@ -95,8 +95,7 @@
  *
  * lineStyle:
  * commands:      PathCommand.LineStyleSolid
- *                uint8  - thickness (!)
- * coordinates:   n/a
+ * coordinates:   uint32 - thickness (!)
  * style:         uint32 - RGBA color
  *                bool   - pixelHinting
  *                uint8  - LineScaleMode, [0-3] see LineScaleMode.fromNumber for meaning
@@ -292,10 +291,10 @@ module Shumway {
     lineStyle(thickness: number, color: number, pixelHinting: boolean,
               scaleMode: number, caps: number, joints: number, miterLimit: number): void
     {
-      assert((thickness & 0xff) === thickness);
+      assert(thickness === (thickness|0), thickness >= 0 && thickness <= 0xff * 20);
       this.ensurePathCapacities(2, 0);
       this.commands[this.commandsPosition++] = PathCommand.LineStyleSolid;
-      this.commands[this.commandsPosition++] = thickness;
+      this.coordinates[this.coordinatesPosition++] = thickness;
       var styles: DataBuffer = this.styles;
       styles.writeUnsignedInt(color);
       styles.writeBoolean(pixelHinting);
@@ -321,7 +320,8 @@ module Shumway {
       this.commands[this.commandsPosition++] = pathCommand;
       var styles: DataBuffer = this.styles;
       styles.writeUnsignedByte(gradientType);
-      styles.writeByte(focalPointRatio);
+      assert(focalPointRatio === (focalPointRatio|0));
+      styles.writeShort(focalPointRatio);
 
       this._writeStyleMatrix(matrix);
 

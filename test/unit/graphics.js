@@ -141,8 +141,8 @@
     g.lineStyle(1);
     shape.styles.position = 0;
     eq(shape.commands[0], PathCommand.LineStyleSolid, "style is stored");
-    eq(shape.commands[1], 1, "given thickness is stored");
-    eq(shape.coordinatesPosition, 0, "styles don't write coordinates");
+    eq(shape.coordinatesPosition, 1, "lineStyle writes thickness into coordinates");
+    eq(shape.coordinates[0], 20, "given thickness is stored");
     eq(shape.styles.readUnsignedInt(), 0xff, "default color is full-opacity black");
     eq(shape.styles.readBoolean(), false, "defaults to no pixel hinting");
     eq(LineScaleMode.fromNumber(shape.styles.readUnsignedByte()), LineScaleMode.NORMAL,
@@ -157,22 +157,22 @@
 
     g.lineStyle(0.4);
     shape.styles.position = 0;
-    eq(shape.commands[1], 0, "thickness is correctly rounded");
+    eq(shape.coordinates[0], 8, "thickness is correctly rounded");
     g.clear();
 
     g.lineStyle(0.6);
     shape.styles.position = 0;
-    eq(shape.commands[1], 1, "thickness is correctly rounded");
+    eq(shape.coordinates[0], 12, "thickness is correctly rounded");
     g.clear();
 
     g.lineStyle(1.1);
     shape.styles.position = 0;
-    eq(shape.commands[1], 1, "thickness is correctly rounded");
+    eq(shape.coordinates[0], 22, "thickness is correctly rounded");
     g.clear();
 
     g.lineStyle(1.5);
     shape.styles.position = 0;
-    eq(shape.commands[1], 2, "thickness is correctly rounded");
+    eq(shape.coordinates[0], 30, "thickness is correctly rounded");
   }
 
   function lineStyle_invalidWidth() {
@@ -194,8 +194,8 @@
                 JointStyle.BEVEL, 10);
     shape.styles.position = 0;
     eq(shape.commands[0], PathCommand.LineStyleSolid, "style is stored");
-    eq(shape.coordinatesPosition, 0, "styles don't write coordinates");
-    eq(shape.commands[1], 10, "given thickness is stored");
+    eq(shape.coordinatesPosition, 1, "lineStyle writes thickness into coordinates");
+    eq(shape.coordinates[0], 200, "given thickness is stored");
     eq(shape.styles.readUnsignedInt(), 0xaabbcc80, "alpha is stored correctly");
     eq(shape.styles.readBoolean(), true, "pixel hinting is stored");
     eq(LineScaleMode.fromNumber(shape.styles.readUnsignedByte()), LineScaleMode.HORIZONTAL,
@@ -203,7 +203,7 @@
     eq(CapsStyle.fromNumber(shape.styles.readUnsignedByte()), CapsStyle.SQUARE, "capsStyle is stored");
     eq(JointStyle.fromNumber(shape.styles.readUnsignedByte()), JointStyle.BEVEL, "jointsStyle is stored");
     eq(shape.styles.readUnsignedByte(), 10, "miterLimit is stored");
-    eq(shape.commandsPosition, 2, "instructions didn't write more data than expected");
+    eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
     eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
   }
 

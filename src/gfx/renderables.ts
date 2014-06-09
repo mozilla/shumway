@@ -397,7 +397,7 @@ module Shumway.GFX {
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
             var gradientType = styles.readUnsignedByte();
-            var focalPoint = styles.readByte() * 2 / 0xff;
+            var focalPoint = styles.readShort() * 2 / 0xff;
             assert(focalPoint >= -1 && focalPoint <= 1);
             fillTransform = this._readMatrix(styles);
             // This effectively applies the matrix to the line the gradient is drawn along:
@@ -433,7 +433,7 @@ module Shumway.GFX {
             }
             strokePath = new Path2D();
             strokePath.moveTo(x, y);
-            context.lineWidth = commands[++commandIndex];
+            context.lineWidth = coordinates[coordinatesIndex++]/20;
             context.strokeStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             // Skip pixel hinting and scale mode for now.
             styles.position += 2;
@@ -458,7 +458,6 @@ module Shumway.GFX {
       assert(coordinatesIndex === data.coordinatesPosition);
       if (formOpen && fillPath) {
         fillPath.lineTo(formOpenX, formOpenY);
-        strokePath && strokePath.lineTo(formOpenX, formOpenY);
       }
       if (fillPath) {
         clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
