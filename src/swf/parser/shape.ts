@@ -767,6 +767,11 @@ module Shumway.SWF.Parser {
         current.serialize(shape, lastPosition);
         current = current.next;
       }
+      if (this.fillStyle) {
+        shape.endFill();
+      } else {
+        shape.endLine();
+      }
       return shape;
     }
   }
