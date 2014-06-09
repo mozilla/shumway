@@ -88,6 +88,23 @@ function check(condition, test) {
   console.info("PASS" + test);
 }
 
+function assertThrowsInstanceOf(f, ctor, test) {
+  test = description(test);
+  var msg;
+  try {
+    f();
+  } catch (exc) {
+    if (exc instanceof ctor) {
+      return;
+    }
+    msg = "Expected exception " + ctor.name + ", got " + exc;
+  }
+  if (msg === undefined) {
+    msg = "Expected exception " + ctor.name + ", no exception thrown";
+  }
+  return fail("FAIL " + test + ". " + msg + failedLocation());
+}
+
 function description(test) {
   testNumber++;
   return test ? ": " + test : " #" + testNumber;
