@@ -1,7 +1,4 @@
 (function displayTests() {
-  var GFXShape = Shumway.GFX.Shape;
-  var FrameContainer = Shumway.GFX.FrameContainer;
-  var Geometry = Shumway.GFX.Geometry;
 
   function timeAllocation(C) {
     var s = Date.now();
