@@ -466,6 +466,8 @@ build/ts/player/options.js
 build/ts/player/timeline.js
 build/ts/player/remotingPlayer.js
 build/ts/player/player.js
+build/ts/player/avmLoader.js
+build/ts/player/embed.js
 
 build/ts/flash/linker.js
 

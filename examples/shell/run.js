@@ -56,6 +56,7 @@ load("../../build/ts/swf/parser/parser.js");
 console.timeEnd("Load SWF Parser");
 
 load("../../build/ts/swf/resourceLoader.js");
+load("../../build/ts/swf/binaryFileReader.js");
 
 console.timeEnd("Load Parser Dependencies");
 
@@ -530,6 +531,8 @@ load("../../build/ts/player/options.js");
 load("../../build/ts/player/timeline.js");
 load("../../build/ts/player/remotingPlayer.js");
 load("../../build/ts/player/player.js");
+load("../../build/ts/player/avmLoader.js");
+load("../../build/ts/player/embed.js");
 
 load("../../build/ts/flash/linker.js");
 
