@@ -6,5 +6,6 @@ testFiles = [
   'broadcastEvents.js',
   'bitmap.js',
   'stage.js',
-  'filters.js'
+  'filters.js',
+  'menu.js'
 ];
