@@ -359,7 +359,7 @@ module Shumway.Player {
             }
           }
           var frames = 1;
-          if (symbol) {
+          if (symbol && symbol.id > 0) {
             show(symbol);
             if (symbol instanceof Shumway.Timeline.SpriteSymbol) {
               frames = (<Shumway.Timeline.SpriteSymbol>symbol).numFrames;
