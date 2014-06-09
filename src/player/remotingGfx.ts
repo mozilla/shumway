@@ -15,7 +15,7 @@
  */
 module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
-  import Clip = Shumway.GFX.Clip;
+  import ClipRectangle = Shumway.GFX.ClipRectangle;
   import Shape = Shumway.GFX.Shape;
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
@@ -26,6 +26,7 @@ module Shumway.Remoting.GFX {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Stage = Shumway.GFX.Stage;
   import Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
+  import Canvas2DStageRendererState = Shumway.GFX.Canvas2DStageRendererState;
 
   import Point = Shumway.GFX.Geometry.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;
@@ -76,17 +77,20 @@ module Shumway.Remoting.GFX {
   }
 
   export class GFXChannelDeserializerContext {
-    root: Clip;
+    root: ClipRectangle;
     _frames: Frame [];
     _assets: Renderable [];
 
     constructor(root: FrameContainer) {
-      root.addChild(this.root = new Clip(1024, 1024));
+      root.addChild(this.root = new ClipRectangle(1024, 1024));
       this._frames = [];
       this._assets = [];
     }
 
     _makeFrame(id: number): Frame {
+      if (id === -1) {
+        return null;
+      }
       if (id & IDMask.Asset) {
         id &= ~IDMask.Asset;
         return new Shape(this._assets[id]);
@@ -226,7 +230,7 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var color = this.input.readInt();
       context.root.color = Color.FromARGB(color);
-      context.root.clipBounds = this._readRectangle();
+      context.root.bounds = this._readRectangle();
     }
 
     private _readUpdateFrame() {
@@ -245,6 +249,9 @@ module Shumway.Remoting.GFX {
       }
       if (hasBits & MessageBits.HasColorTransform) {
         frame.colorMatrix = this._readColorMatrix();
+      }
+      if (hasBits & MessageBits.HasMask) {
+        frame.mask = context._makeFrame(input.readInt());
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
         input.readInt();
@@ -311,7 +318,7 @@ module Shumway.Remoting.GFX {
       canvas.height = bounds.h;
       var renderer = new Canvas2DStageRenderer(canvas, null);
       var options = new Shumway.GFX.Canvas2DStageRendererOptions();
-      renderer.renderFrame(renderer.context, frame, matrix, null, null, 0, options);
+      renderer.renderFrame(renderer.context, frame, matrix, new Canvas2DStageRendererState(options));
       return new RenderableBitmap(canvas, bounds);
     }
   }

@@ -173,15 +173,20 @@ module Shumway.AVM2.AS.flash.display {
     DirtyChild                                = 0x1000000,
 
     /**
-     * Indicates whether this display object's color transform has changed since the last time it was synchronized
+     * Indicates whether this display object's color transform has changed since the last time it was synchronized.
      */
     DirtyColorTransform                       = 0x2000000,
+
+    /**
+     * Indicates whether this display object's mask has changed since the last time it was synchronized.
+     */
+    DirtyMask                                 = 0x4000000,
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
      * bits so we don't serialize as much.
      */
-    DirtyMiscellaneousProperties              = 0x4000000,
+    DirtyMiscellaneousProperties              = 0x8000000,
 
     /**
      * Display object has changed since the last time it was drawn.
@@ -191,7 +196,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * All synchronizable properties are dirty.
      */
-    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyBitmapData | DirtyColorTransform | DirtyMiscellaneousProperties
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyBitmapData | DirtyColorTransform | DirtyMask | DirtyMiscellaneousProperties
   }
 
   /**
@@ -266,6 +271,7 @@ module Shumway.AVM2.AS.flash.display {
                                  DisplayObjectFlags.DirtyGraphics                      |
                                  DisplayObjectFlags.DirtyMatrix                        |
                                  DisplayObjectFlags.DirtyColorTransform                |
+                                 DisplayObjectFlags.DirtyMask                          |
                                  DisplayObjectFlags.DirtyMiscellaneousProperties;
 
       self._root = null;
@@ -1077,7 +1083,7 @@ module Shumway.AVM2.AS.flash.display {
       if (value) {
         value._maskedObject = this;
       }
-      this._invalidatePaint();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMask);
     }
 
     get transform(): flash.geom.Transform {

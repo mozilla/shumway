@@ -93,15 +93,16 @@ module Shumway.GFX {
     }
 
     /**
-     * Render source content.
+     * Render source content in the specified |context|. If specified, the rectangular |cullBounds| can be used to cull parts of the shape
+     * for better performance. If specified, |clipRegion| indicates whether the shape's fills should be used as clip regions instead.
      */
-    render(context: CanvasRenderingContext2D, clipBounds?: Shumway.GFX.Geometry.Rectangle): void {
+    render(context: CanvasRenderingContext2D, cullBounds?: Shumway.GFX.Geometry.Rectangle, clipRegion?: boolean): void {
 
     }
   }
 
   export class CustomRenderable extends Renderable {
-    constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle) => void) {
+    constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, cullBounds: Shumway.GFX.Geometry.Rectangle) => void) {
       super(bounds);
       this.render = render;
     }
@@ -206,7 +207,7 @@ module Shumway.GFX {
       this._canvas = canvas;
     }
 
-    render(context: CanvasRenderingContext2D, clipBounds: Rectangle): void {
+    render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
       context.save();
       if (this._canvas) {
         context.drawImage(this._canvas, 0, 0);
@@ -272,8 +273,12 @@ module Shumway.GFX {
       return this._bounds;
     }
 
-    render(context: CanvasRenderingContext2D, clipBounds: Rectangle): void {
-      context.save();
+    /**
+     * If |clipRegion| is |true| then we must call |clip| instead of |fill|. We also cannot call |save| or |restore|
+     * because those functions reset the current clipping region. It looks like Flash ignores strokes when clipping
+     * so we can also ignore stroke paths when computing the clip region.
+     */
+    render(context: CanvasRenderingContext2D, cullBounds: Rectangle, clipRegion: boolean = false): void {
       context.fillStyle = context.strokeStyle = 'transparent';
 
       var data = this._pathData;
@@ -359,7 +364,7 @@ module Shumway.GFX {
           case PathCommand.BeginSolidFill:
             assert(styles.bytesAvailable >= 4);
             if (fillPath) {
-              context.fill(fillPath, 'evenodd');
+              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
@@ -368,7 +373,7 @@ module Shumway.GFX {
           case PathCommand.BeginBitmapFill:
             assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
             if (fillPath) {
-              context.fill(fillPath, 'evenodd');
+              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
@@ -387,7 +392,7 @@ module Shumway.GFX {
             assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
                                             1 + 1 + 4 + 1 + 1);
             if (fillPath) {
-              context.fill(fillPath, 'evenodd');
+              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
@@ -417,14 +422,14 @@ module Shumway.GFX {
             break;
           case PathCommand.EndFill:
             if (fillPath) {
-              context.fill(fillPath, 'evenodd');
+              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
               context.fillStyle = null;
               fillPath = null;
             }
             break;
           case PathCommand.LineStyleSolid:
             if (strokePath) {
-              this._strokePath(context, strokePath);
+              !clipRegion && this._strokePath(context, strokePath);
             }
             strokePath = new Path2D();
             strokePath.moveTo(x, y);
@@ -438,7 +443,7 @@ module Shumway.GFX {
             break;
           case PathCommand.LineEnd:
             if (strokePath) {
-              this._strokePath(context, strokePath);
+              !clipRegion && this._strokePath(context, strokePath);
               context.strokeStyle = null;
               strokePath = null;
             }
@@ -456,14 +461,13 @@ module Shumway.GFX {
         strokePath && strokePath.lineTo(formOpenX, formOpenY);
       }
       if (fillPath) {
-        context.fill(fillPath, 'evenodd');
+        clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
         context.fillStyle = null;
       }
       if (strokePath) {
-        this._strokePath(context, strokePath);
+        !clipRegion && this._strokePath(context, strokePath);
         context.strokeStyle = null;
       }
-      context.restore();
       leaveTimeline("RenderableShape.render");
     }
 
@@ -528,7 +532,7 @@ module Shumway.GFX {
       super(new Rectangle(0, 0, w, h));
     }
 
-    render (context: CanvasRenderingContext2D, clipBounds?: Rectangle) {
+    render (context: CanvasRenderingContext2D, cullBounds?: Rectangle) {
       context.save();
       context.textBaseline = "top";
       context.fillStyle = "white";
@@ -545,10 +549,10 @@ module Shumway.GFX {
       super(Rectangle.createMaxI16());
     }
 
-    render (context: CanvasRenderingContext2D, clipBounds?: Rectangle) {
+    render (context: CanvasRenderingContext2D, cullBounds?: Rectangle) {
       context.save();
 
-      var gridBounds = clipBounds || this.getBounds();
+      var gridBounds = cullBounds || this.getBounds();
 
       context.fillStyle = ColorStyle.VeryDark;
       context.fillRect(gridBounds.x, gridBounds.y, gridBounds.w, gridBounds.h);

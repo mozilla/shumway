@@ -56,7 +56,7 @@ module Shumway.Remoting.Player {
     writeStage(stage: Stage) {
       var serializer = this;
       this.output.writeInt(MessageTag.UpdateStage);
-      this.output.writeInt(0xFFFF0000);
+      this.output.writeInt(0x00000000);
       this.writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
     }
 
@@ -97,6 +97,7 @@ module Shumway.Remoting.Player {
       this.output.writeInt(MessageTag.UpdateFrame);
       this.output.writeInt(displayObject._id);
 
+      var hasMask = false;
       var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
       var hasColorTransform = displayObject._hasFlags(DisplayObjectFlags.DirtyColorTransform);
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
@@ -109,12 +110,14 @@ module Shumway.Remoting.Player {
           DisplayObjectFlags.DirtyGraphics     |
           DisplayObjectFlags.DirtyBitmapData
         );
+        hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
       }
 
       // Write Has Bits
       var hasBits = 0;
       hasBits |= hasMatrix                  ? MessageBits.HasMatrix         : 0;
       hasBits |= hasColorTransform          ? MessageBits.HasColorTransform : 0;
+      hasBits |= hasMask                    ? MessageBits.HasMask : 0;
       hasBits |= hasMiscellaneousProperties ? MessageBits.HasMiscellaneousProperties : 0;
       hasBits |= hasRemotableChildren       ? MessageBits.HasChildren       : 0;
       this.output.writeInt(hasBits);
@@ -125,6 +128,9 @@ module Shumway.Remoting.Player {
       }
       if (hasColorTransform) {
         this.writeColorTransform(displayObject._colorTransform);
+      }
+      if (hasMask) {
+        this.output.writeInt(displayObject.mask ? displayObject.mask._id : -1);
       }
       if (hasMiscellaneousProperties) {
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));

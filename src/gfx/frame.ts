@@ -22,7 +22,6 @@ module Shumway.GFX {
     Empty                                     = 0x0000,
     Dirty                                     = 0x0001,
     IsMask                                    = 0x0002,
-    Culled                                    = 0x0004,
     IgnoreMask                                = 0x0008,
     IgnoreQuery                               = 0x0010,
 
@@ -372,7 +371,8 @@ module Shumway.GFX {
       }
       this._mask = value;
       if (this._mask) {
-        assert (!this._mask._hasFlags(FrameFlags.IsMask));
+        // TODO: Check if this assertion makes sense.
+        // assert (!this._mask._hasFlags(FrameFlags.IsMask));
         this._mask._setFlags(FrameFlags.IsMask);
         this._mask.invalidate();
       }

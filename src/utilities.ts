@@ -2582,6 +2582,12 @@ module Shumway {
         (argb >> 24 & 0xFF) / 255
       );
     }
+    public toRGBA() {
+      return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255)
+    }
+    public toCSSStyle() {
+      return ColorUtilities.rgbaToCSSStyle(this.toRGBA());
+    }
     set (other: Color) {
       this.r = other.r;
       this.g = other.g;
@@ -2620,7 +2626,7 @@ module Shumway {
       result.a = m[4] ? parseFloat(m[4]) / 255 : 1;
       return Color.colorCache[color] = result;
     }
-    }
+  }
 
   export module ColorUtilities {
     export function componentsToRgb(components: {red: number; green: number; blue: number}): number {

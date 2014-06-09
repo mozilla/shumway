@@ -44,17 +44,33 @@ module Shumway.Remoting {
     HasChildren                 = 0x0004,
     HasColorTransform           = 0x0008,
     HasClipRect                 = 0x0010,
-    HasMiscellaneousProperties  = 0x0020
+    HasMiscellaneousProperties  = 0x0020,
+    HasMask                     = 0x0040
   }
 
   export enum IDMask {
     None                        = 0x00000000,
-    Asset                       = 0x80000000
+    Asset                       = 0x08000000
   }
 
+  /**
+   * Serialization Format. All commands start with a message tag.
+   */
   export enum MessageTag {
     EOF                         = 0,
 
+    /**
+     * id                   int32,
+     * hasBits              int32,
+     * matrix               Matrix,
+     * colorMatrix          ColorMatrix,
+     * mask                 int32,
+     * misc
+     *   blendMode          int32,
+     *   visible            int32
+     *
+     * @type {number}
+     */
     UpdateFrame                 = 100,
     UpdateGraphics              = 101,
     UpdateBitmapData            = 102,

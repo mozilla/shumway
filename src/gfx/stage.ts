@@ -217,26 +217,27 @@ module Shumway.GFX {
     }
   }
 
-  export class Clip extends FrameContainer {
+  /**
+   * A frame container that clips everything outside of its bounds.
+   */
+  export class ClipRectangle extends FrameContainer {
     color: Color = Color.None;
-    clipBounds: Rectangle;
+    bounds: Rectangle;
     constructor(w: number, h: number) {
       super();
-      this.clipBounds = new Rectangle(0, 0, w, h);
+      this.bounds = new Rectangle(0, 0, w, h);
     }
     public getBounds(): Rectangle {
-      return this.clipBounds;
+      return this.bounds;
     }
   }
 
   export class Shape extends Frame {
-    source: Renderable;
-
+    public source: Renderable;
     constructor(source: Renderable) {
       super();
       this.source = source;
     }
-
     public getBounds(): Rectangle {
       return this.source.getBounds();
     }

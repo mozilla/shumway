@@ -284,7 +284,7 @@ module Shumway.GFX.GL {
           colorMatrix = frame.getConcatenatedColorMatrix();
         }
         if (frame instanceof FrameContainer) {
-          if (frame instanceof Clip || options.paintBounds) {
+          if (frame instanceof ClipRectangle || options.paintBounds) {
             var bounds = frame.getBounds();
             if (!frame.color) {
               frame.color = Color.randomColor(0.3);
