@@ -132,11 +132,11 @@ function executeTestFile(testFile) {
     load(fixPath(testFile));
     if (testFiles.length) {
       var basePath = testFile.substr(0, testFile.lastIndexOf('/') + 1);
-      testFiles.forEach(file => executeTestFile(basePath + file));
+      testFiles.forEach(function(file) { executeTestFile(basePath + file)});
       return;
     }
     print('\nRunning tests in file ' + testFile);
-    unitTests.forEach(test => test(avm2));
+    unitTests.forEach(function(test) {test(avm2)});
   } catch (e) {
     print('Exception encountered while running ' + testFile + ':');
     print(e);
