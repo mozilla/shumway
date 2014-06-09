@@ -52,7 +52,6 @@ function appendToFrameTerminal(str, color) {
   }
 }
 
-var frameWriter = new Shumway.IndentingWriter(false, function (str){
+Shumway.GFX.writer = new Shumway.IndentingWriter(false, function (str){
   appendToFrameTerminal(str);
 });
-Shumway.GFX.writer = frameWriter;

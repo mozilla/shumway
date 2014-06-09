@@ -1721,7 +1721,7 @@ module Shumway.GFX.Geometry {
       var sourceBounds = this._source.getBounds();
       scratchContext.translate(-sourceBounds.x, -sourceBounds.y);
       timelineBuffer && timelineBuffer.enter("renderTiles");
-      traceLevel >= TraceLevel.Verbose && writer.writeLn("Rendering Tiles: " + uncachedTileBounds);
+      traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Rendering Tiles: " + uncachedTileBounds);
       this._source.render(scratchContext);
       scratchContext.restore();
       timelineBuffer && timelineBuffer.leave("renderTiles");

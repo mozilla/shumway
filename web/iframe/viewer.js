@@ -181,9 +181,4 @@ function createEasel() {
   return _easel;
 }
 
-var frameWriter = new Shumway.IndentingWriter(false, function (str){
-  console.info(str);
-});
-Shumway.GFX.writer = frameWriter;
-
 runViewer();

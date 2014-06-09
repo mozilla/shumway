@@ -253,7 +253,7 @@ module Shumway.GFX.GL {
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
         timelineBuffer && timelineBuffer.enter("texSubImage2D");
         gl.texSubImage2D(gl.TEXTURE_2D, 0, region.x, region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
-        traceLevel >= TraceLevel.Verbose && writer.writeLn("texSubImage2D: " + region);
+        traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("texSubImage2D: " + region);
         timelineBuffer && timelineBuffer.leave("texSubImage2D");
         frameCount("texSubImage2D");
       }

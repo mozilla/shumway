@@ -171,11 +171,11 @@ module Shumway.GFX.GL {
     }
 
     private discardCachedImages() {
-      traceLevel >= TraceLevel.Verbose && writer.writeLn("Discard Cache");
+      traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Discard Cache");
       var count = this.textureRegionCache.count / 2 | 0;
       for (var i = 0; i < count; i++) {
         var textureRegion = this.textureRegionCache.pop();
-        traceLevel >= TraceLevel.Verbose && writer.writeLn("Discard: " + textureRegion);
+        traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Discard: " + textureRegion);
         textureRegion.texture.atlas.remove(textureRegion.region);
         textureRegion.texture = null;
       }
@@ -185,7 +185,7 @@ module Shumway.GFX.GL {
       var w = image.width;
       var h = image.height;
       var textureRegion = this.allocateTextureRegion(w, h);
-      traceLevel >= TraceLevel.Verbose && writer.writeLn("Uploading Image: @ " + textureRegion.region);
+      traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Uploading Image: @ " + textureRegion.region);
       this.textureRegionCache.use(textureRegion);
       this.updateTextureRegion(image, textureRegion);
       return textureRegion;
@@ -243,7 +243,7 @@ module Shumway.GFX.GL {
      * Find a texture with available space.
      */
     private recycleTexture(): WebGLTexture {
-      traceLevel >= TraceLevel.Verbose && writer.writeLn("Recycling Texture");
+      traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Recycling Texture");
       // var texture: WebGLTexture = this._textures.shift();
       var texture: WebGLTexture = this._textures.splice(Math.random() * this._textures.length | 0, 1)[0];
       var regions = texture.regions;

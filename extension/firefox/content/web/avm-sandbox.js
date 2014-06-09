@@ -290,11 +290,6 @@ function setupServices() {
       return FirefoxCom.requestSync('externalCom', {action: 'getId'});
     }
   };
-
-  var frameWriter = new Shumway.IndentingWriter(false, function (str) {
-    console.info(str);
-  });
-  Shumway.GFX.writer = frameWriter;
 }
 
 function parseSwf(url, movieParams, objectParams) {
