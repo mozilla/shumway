@@ -433,7 +433,7 @@ module Shumway.GFX {
             }
             strokePath = new Path2D();
             strokePath.moveTo(x, y);
-            context.lineWidth = commands[++commandIndex];
+            context.lineWidth = coordinates[coordinatesIndex++]/20;
             context.strokeStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             // Skip pixel hinting and scale mode for now.
             styles.position += 2;

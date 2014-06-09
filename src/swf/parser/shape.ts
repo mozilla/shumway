@@ -23,6 +23,7 @@ module Shumway.SWF.Parser {
   import Bounds = Shumway.Bounds;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import ShapeData = Shumway.ShapeData;
+  import clamp = Shumway.NumberUtilities.clamp;
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   var push = Array.prototype.push;
@@ -750,7 +751,8 @@ module Shumway.SWF.Parser {
         // TODO: Figure out how to handle startCapsStyle
         switch (lineStyle.type) {
           case FillType.Solid:
-            shape.lineStyle(lineStyle.width/20, lineStyle.color,
+            var thickness = clamp(lineStyle.width, 0, 0xff * 20)|0;
+            shape.lineStyle(thickness, lineStyle.color,
                             lineStyle.pixelHinting, scaleMode, lineStyle.endCapsStyle,
                             lineStyle.jointStyle, lineStyle.miterLimit);
             break;

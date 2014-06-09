@@ -550,14 +550,12 @@ module Shumway.AVM2.AS.flash.display {
       // Flash stops drawing strokes whenever a thickness is supplied that can't be coerced to a
       // number.
       if (isNaN(thickness)) {
-
         this._setStrokeWidth(0);
         this._graphicsData.endLine();
         return;
       }
-      // thickness is rounded to the nearest pixel value.
-      thickness = clamp(Math.round(thickness)|0, 0, 0xff)|0;
-      this._setStrokeWidth(thickness * 20|0);
+      thickness = clamp(+thickness, 0, 0xff) * 20|0;
+      this._setStrokeWidth(thickness);
 
       // If `scaleMode` is invalid, "normal" is used.
       var lineScaleMode = LineScaleMode.toNumber(asCoerceString(scaleMode));
