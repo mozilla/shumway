@@ -33,9 +33,6 @@ module.exports = function(grunt) {
       build_extension: {
         cmd: 'make -C extension/firefox/ build'
       },
-      build_bundle: {
-        cmd: 'make -C utils/builder build'
-      },
       build_gfx_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/gfx/references.ts'
       },
@@ -193,10 +190,7 @@ module.exports = function(grunt) {
   grunt.registerTask('watch-profiler', ['exec:build_profiler_ts', 'watch:profiler_ts']);
 
   // temporary make/python calls based on grunt-exec
-  grunt.registerTask('build-web', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
-  grunt.registerTask('build-extension', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension']);
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
-  grunt.registerTask('build-bundle', ['exec:build_avm2_ts', 'exec:build_avm1_ts', 'exec:build_bundle']);
 
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
@@ -216,4 +210,5 @@ module.exports = function(grunt) {
     'exec:build_player_ts',
     'bundles'
   ]);
+  grunt.registerTask('firefox', ['shu', 'exec:build_extension']);
 };

@@ -29,6 +29,9 @@ module Shumway.AVM2.AS.flash.display {
 
   import Bounds = Shumway.Bounds;
 
+  declare var SHUMWAY_ROOT: string;
+  declare var LOADER_WORKER_PATH: string;
+
   enum LoadStatus {
     Unloaded    = 0,
     Opened      = 1,
@@ -71,10 +74,8 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = ["load"]; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
 
-    static RELEASE = false;
     static WORKERS_ENABLED = typeof Worker !== 'undefined';
-    static SHUMWAY_ROOT = '../../src/';
-    static LOADER_PATH = Loader.RELEASE ? 'shumway-worker.js' : 'swf/worker.js';
+    static LOADER_PATH = 'swf/worker.js';
 
     /**
      * Handles the load status and dispatches progress events. This gets manually triggered in the
@@ -497,7 +498,9 @@ module Shumway.AVM2.AS.flash.display {
       //}
       var worker;
       if (Loader.WORKERS_ENABLED) {
-        worker = new Worker(Loader.SHUMWAY_ROOT + Loader.LOADER_PATH);
+        var loaderPath = typeof LOADER_WORKER_PATH !== 'undefined' ?
+          LOADER_WORKER_PATH : SHUMWAY_ROOT + Loader.LOADER_PATH;
+        worker = new Worker(loaderPath);
       } else {
         var ResourceLoader = (<any>Shumway).SWF.ResourceLoader;
         worker = new ResourceLoader(window, false);

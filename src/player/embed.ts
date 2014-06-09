@@ -35,7 +35,7 @@ module Shumway {
       this._easelHost = new EaselHost(easel, this);
 
       // TODO this is temporary worker to test postMessage tranfers
-      this._worker = new Shumway.FakeSyncWorker('../../src/player/fakechannel.js');
+      this._worker = new Shumway.FakeSyncWorker();
       this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
       this._worker.onsyncmessage = this._onWorkerMessage.bind(this);
     }

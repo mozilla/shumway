@@ -16,11 +16,13 @@
 
 module Shumway {
   export class FakeSyncWorker {
+    public static WORKER_PATH = '../../src/player/fakechannel.js';
+
     private _worker: Worker;
     onsyncmessage: (ev: any) => any;
 
-    constructor(url: string) {
-      this._worker = new Worker(url);
+    constructor() {
+      this._worker = new Worker(FakeSyncWorker.WORKER_PATH);
     }
 
     set onmessage(value: (ev: any) => any) {

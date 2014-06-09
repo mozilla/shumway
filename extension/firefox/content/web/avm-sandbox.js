@@ -80,12 +80,21 @@ function fallback() {
   FirefoxCom.requestSync('fallback', null)
 }
 
-var playerglobalInfo = {
+window.print = function(msg) {
+  console.log(msg);
+};
+
+var viewerPlayerglobalInfo = {
   abcs: SHUMWAY_ROOT + "playerglobal/playerglobal.abcs",
   catalog: SHUMWAY_ROOT + "playerglobal/playerglobal.json"
 };
 
+var builtinPath = SHUMWAY_ROOT + "avm2/generated/builtin/builtin.abc";
+var avm1Path = SHUMWAY_ROOT + "avm2/generated/avm1lib/avm1lib.abc";
+
 function runViewer() {
+  setupServices();
+
   var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
   Shumway.FileLoadingService.instance.setBaseUrl(flashParams.baseUrl);
 
@@ -134,8 +143,6 @@ function runViewer() {
   inspectorMenu.addEventListener('click', showInInspector);
   var reportMenu = document.getElementById('reportMenu');
   reportMenu.addEventListener('click', reportIssue);
-
-  document.getElementById('copyProfileMenu').addEventListener('click', copyProfile);
 }
 
 function showURL() {
@@ -171,29 +178,13 @@ function reportIssue() {
   FirefoxCom.requestSync('reportIssue', JSON.stringify(prunedExceptions));
 }
 
-function copyProfile() {
-  function toArray(v) {
-    var array = [];
-    for (var i = 0; i < v.length; i++) {
-      array.push(v[i]);
-    }
-    return array;
-  }
-  var profile = {
-    loops: {counts: toArray($L), lines: $LL},
-    functions: {counts: toArray($F), lines: $FL},
-    allocations: {counts: toArray($A), lines: $AL}
-  };
-  FirefoxCom.request('unsafeSetClipboard', JSON.stringify(profile));
-}
-
 var movieUrl, movieParams, objectParams;
 
 window.addEventListener("message", function handlerMessage(e) {
   var args = e.data;
   switch (args.callback) {
     case "loadFile":
-      var session = FileLoadingService.sessions[args.sessionId];
+      var session = Shumway.FileLoadingService.instance.sessions[args.sessionId];
       if (session) {
         session.notify(args);
       }
@@ -201,109 +192,124 @@ window.addEventListener("message", function handlerMessage(e) {
   }
 }, true);
 
-Shumway.Telemetry.instance = {
-  reportTelemetry: function (data) {
-    FirefoxCom.request('reportTelemetry', data, null);
-  }
-};
+var LOADER_WORKER_PATH = SHUMWAY_ROOT + 'web/worker.js';
 
-Shumway.FileLoadingService.instance = {
-  get baseUrl() { return movieUrl; },
-  nextSessionId: 1, // 0 - is reserved
-  sessions: [],
-  createSession: function () {
-    var sessionId = this.nextSessionId++;
-    return this.sessions[sessionId] = {
-      open: function (request) {
-        var self = this;
-        var path = FileLoadingService.resolveUrl(request.url);
-        console.log('Session #' + sessionId +': loading ' + path);
-        FirefoxCom.requestSync('loadFile', {url: path, method: request.method,
-          mimeType: request.mimeType, postData: request.data,
-          checkPolicyFile: request.checkPolicyFile, sessionId: sessionId});
-      },
-      notify: function (args) {
-        switch (args.topic) {
-          case "open": this.onopen(); break;
-          case "close":
-            this.onclose();
-            FileLoadingService.sessions[sessionId] = null;
-            console.log('Session #' + sessionId +': closed');
-            break;
-          case "error":
-            this.onerror && this.onerror(args.error);
-            break;
-          case "progress":
-            console.log('Session #' + sessionId + ': loaded ' + args.loaded + '/' + args.total);
-            this.onprogress && this.onprogress(args.array, {bytesLoaded: args.loaded, bytesTotal: args.total});
-            break;
+function setupServices() {
+  Shumway.FakeSyncWorker.WORKER_PATH = SHUMWAY_ROOT + 'fakechannel.js';
+
+  Shumway.Telemetry.instance = {
+    reportTelemetry: function (data) {
+      FirefoxCom.request('reportTelemetry', data, null);
+    }
+  };
+
+  Shumway.FileLoadingService.instance = {
+    get baseUrl() {
+      return movieUrl;
+    },
+    nextSessionId: 1, // 0 - is reserved
+    sessions: [],
+    createSession: function () {
+      var sessionId = this.nextSessionId++;
+      return this.sessions[sessionId] = {
+        open: function (request) {
+          var self = this;
+          var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
+          console.log('Session #' + sessionId + ': loading ' + path);
+          FirefoxCom.requestSync('loadFile', {url: path, method: request.method,
+            mimeType: request.mimeType, postData: request.data,
+            checkPolicyFile: request.checkPolicyFile, sessionId: sessionId});
+        },
+        notify: function (args) {
+          switch (args.topic) {
+            case "open":
+              this.onopen();
+              break;
+            case "close":
+              this.onclose();
+              Shumway.FileLoadingService.instance.sessions[sessionId] = null;
+              console.log('Session #' + sessionId + ': closed');
+              break;
+            case "error":
+              this.onerror && this.onerror(args.error);
+              break;
+            case "progress":
+              console.log('Session #' + sessionId + ': loaded ' + args.loaded + '/' + args.total);
+              this.onprogress && this.onprogress(args.array, {bytesLoaded: args.loaded, bytesTotal: args.total});
+              break;
+          }
         }
+      };
+    },
+    setBaseUrl: function (url) {
+      var baseUrl;
+      if (typeof URL !== 'undefined') {
+        baseUrl = new URL(url, document.location.href).href;
+      } else {
+        var a = document.createElement('a');
+        a.href = url || '#';
+        a.setAttribute('style', 'display: none;');
+        document.body.appendChild(a);
+        baseUrl = a.href;
+        document.body.removeChild(a);
       }
-    };
-  },
-  setBaseUrl: function (url) {
-    var baseUrl;
-    if (typeof URL !== 'undefined') {
-      baseUrl = new URL(url, document.location.href).href;
-    } else {
-      var a = document.createElement('a');
-      a.href = url || '#';
-      a.setAttribute('style', 'display: none;');
-      document.body.appendChild(a);
-      baseUrl = a.href;
-      document.body.removeChild(a);
-    }
-    FileLoadingService.baseUrl = baseUrl;
-    return baseUrl;
-  },
-  resolveUrl: function (url) {
-    if (url.indexOf('://') >= 0) return url;
+      Shumway.FileLoadingService.instance.baseUrl = baseUrl;
+      return baseUrl;
+    },
+    resolveUrl: function (url) {
+      if (url.indexOf('://') >= 0) return url;
 
-    var base = FileLoadingService.baseUrl;
-    base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-    if (url.indexOf('/') === 0) {
-      var m = /^[^:]+:\/\/[^\/]+/.exec(base);
-      if (m) base = m[0];
+      var base = Shumway.FileLoadingService.instance.baseUrl;
+      base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
+      if (url.indexOf('/') === 0) {
+        var m = /^[^:]+:\/\/[^\/]+/.exec(base);
+        if (m) base = m[0];
+      }
+      return base + url;
     }
-    return base + url;
-  }
-};
+  };
 
-Shumway.ExternalInterfaceService.instance = {
-  enabled: true,
-  initJS: function (callback) {
-    FirefoxCom.initJS(callback);
-  },
-  registerCallback: function (functionName) {
-    FirefoxCom.request('externalCom', {action: 'register', functionName: functionName, remove: false});
-  },
-  unregisterCallback: function (functionName) {
-    FirefoxCom.request('externalCom', {action: 'register', functionName: functionName, remove: true});
-  },
-  eval: function (expression) {
-    return FirefoxCom.requestSync('externalCom', {action: 'eval', expression: expression});
-  },
-  call: function (request) {
-    return FirefoxCom.requestSync('externalCom', {action: 'call', request: request});
-  },
-  getId: function () {
-    return FirefoxCom.requestSync('externalCom', {action: 'getId'});
-  }
-};
+  Shumway.ExternalInterfaceService.instance = {
+    enabled: true,
+    initJS: function (callback) {
+      FirefoxCom.initJS(callback);
+    },
+    registerCallback: function (functionName) {
+      FirefoxCom.request('externalCom', {action: 'register', functionName: functionName, remove: false});
+    },
+    unregisterCallback: function (functionName) {
+      FirefoxCom.request('externalCom', {action: 'register', functionName: functionName, remove: true});
+    },
+    eval: function (expression) {
+      return FirefoxCom.requestSync('externalCom', {action: 'eval', expression: expression});
+    },
+    call: function (request) {
+      return FirefoxCom.requestSync('externalCom', {action: 'call', request: request});
+    },
+    getId: function () {
+      return FirefoxCom.requestSync('externalCom', {action: 'getId'});
+    }
+  };
+
+  var frameWriter = new Shumway.IndentingWriter(false, function (str) {
+    console.info(str);
+  });
+  Shumway.GFX.writer = frameWriter;
+}
 
 function parseSwf(url, movieParams, objectParams) {
   var enableVerifier = Shumway.AVM2.Runtime.enableVerifier;
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
 
   var compilerSettings = JSON.parse(
     FirefoxCom.requestSync('getCompilerSettings', null));
-  enableVerifier.value = compilerSettings.verifier;
+  // enableVerifier.value = compilerSettings.verifier;
 
   // init misc preferences
-  turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
-  hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});
-  forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
-  dummyAnimation.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false});
+  //turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
+  //hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});
+  //forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
+  //dummyAnimation.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false});
 
   console.log("Compiler settings: " + JSON.stringify(compilerSettings));
   console.log("Parsing " + url + "...");
@@ -311,41 +317,42 @@ function parseSwf(url, movieParams, objectParams) {
     FirefoxCom.request('endActivation', null);
   }
 
-  createAVM2(builtinPath, playerglobalInfo, avm1Path,
+
+  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, avm1Path,
     compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     function (avm2) {
       console.time("Initialize Renderer");
-      SWF.embed(url, document, document.getElementById("viewer"), {
-         url: url,
-         movieParams: movieParams,
-         objectParams: objectParams,
-         onComplete: loaded,
-         onBeforeFrame: frame
-      });
-  });
+
+      var swfURL = Shumway.FileLoadingService.instance.resolveUrl(url);
+      //var loaderURL = getQueryVariable("loaderURL") || swfURL;
+
+      var easel = createEasel();
+
+      var player = new Shumway.EaselEmbedding(easel).embed();
+      player.load(url);
+//      SWF.embed(url, document, document.getElementById("stageContainer"), {
+//         url: url,
+//         movieParams: movieParams,
+//         objectParams: objectParams,
+//         onComplete: loaded,
+//         onBeforeFrame: frame
+//      });
+    });
 }
 
-var pauseExecution = false;
-var initializeFrameControl = true;
-function frame(e) {
-  if (initializeFrameControl) {
-    // marking that movie is started
-    document.body.classList.add("started");
+var _easel;
 
-    Shumway.Telemetry.instance.reportTelemetry({topic: "firstFrame"});
+function createEasel() {
+  var Stage = Shumway.GFX.Stage;
+  var Easel = Shumway.GFX.Easel;
+  var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
 
-    // skipping frame 0
-    initializeFrameControl = false;
-    return;
-  }
-  if (pauseExecution) {
-    e.cancel = true;
-  }
+  Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
+  var canvas = document.createElement("canvas");
+  canvas.style.backgroundColor = "#14171a";
+  document.getElementById("stageContainer").appendChild(canvas);
+  var backend = Shumway.GFX.backend.value | 0;
+  _easel = new Easel(canvas, backend);
+  return _easel;
 }
-
-document.addEventListener('keydown', function (e) {
-  if (e.keyCode == 119 && e.ctrlKey) { // Ctrl+F8
-    pauseExecution = !pauseExecution;
-  }
-}, false);
