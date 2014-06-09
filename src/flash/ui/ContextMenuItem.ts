@@ -31,47 +31,42 @@ module Shumway.AVM2.AS.flash.ui {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["clone"];
     
-    constructor (caption: string, separatorBefore: boolean = false, enabled: boolean = true, visible: boolean = true) {
+    constructor (caption: string, separatorBefore: boolean = false,
+                 enabled: boolean = true, visible: boolean = true) {
       caption = asCoerceString(caption); separatorBefore = !!separatorBefore; enabled = !!enabled; visible = !!visible;
-      false && super();
-      notImplemented("Dummy Constructor: public flash.ui.ContextMenuItem");
+      this._caption = caption;
+      this._separatorBefore = separatorBefore;
+      this._enabled = enabled;
+      this._visible = visible;
     }
     
-    // JS -> AS Bindings
-    
     clone: () => flash.ui.ContextMenuItem;
-    
-    // AS -> JS Bindings
-    
-    // _caption: string;
-    // _separatorBefore: boolean;
-    // _visible: boolean;
+
+    _caption: string;
+    _separatorBefore: boolean;
+    _visible: boolean;
+    _enabled: boolean;
+
     get caption(): string {
-      notImplemented("public flash.ui.ContextMenuItem::get caption"); return;
-      // return this._caption;
+      return this._caption;
     }
     set caption(value: string) {
       value = asCoerceString(value);
-      notImplemented("public flash.ui.ContextMenuItem::set caption"); return;
-      // this._caption = value;
+      this._caption = value;
     }
     get separatorBefore(): boolean {
-      notImplemented("public flash.ui.ContextMenuItem::get separatorBefore"); return;
-      // return this._separatorBefore;
+      return this._separatorBefore;
     }
     set separatorBefore(value: boolean) {
       value = !!value;
-      notImplemented("public flash.ui.ContextMenuItem::set separatorBefore"); return;
-      // this._separatorBefore = value;
+      this._separatorBefore = value;
     }
     get visible(): boolean {
-      notImplemented("public flash.ui.ContextMenuItem::get visible"); return;
-      // return this._visible;
+      return this._visible;
     }
     set visible(value: boolean) {
       value = !!value;
-      notImplemented("public flash.ui.ContextMenuItem::set visible"); return;
-      // this._visible = value;
+      this._visible = value;
     }
   }
 }

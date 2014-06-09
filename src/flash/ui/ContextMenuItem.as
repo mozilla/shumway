@@ -19,9 +19,8 @@ import flash.display.NativeMenuItem;
 
 [native(cls='ContextMenuItemClass')]
 public final class ContextMenuItem extends NativeMenuItem {
-  public function ContextMenuItem(caption: String, separatorBefore: Boolean = false,
-                                  enabled: Boolean = true, visible: Boolean = true)
-  {}
+  public native function ContextMenuItem(caption: String, separatorBefore: Boolean = false,
+                                         enabled: Boolean = true, visible: Boolean = true);
   public native function get caption(): String;
   public native function set caption(value: String): void;
   public native function get separatorBefore(): Boolean;
