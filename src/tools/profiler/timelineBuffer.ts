@@ -124,21 +124,25 @@ module Shumway.Tools.Profiler {
           } else if (action === TimelineBuffer.ENTER) {
             var node = stack.pop();
             var top = stack[stack.length - 1];
-            if (!top.children) {
-              top.children = [node];
-            } else {
-              top.children.unshift(node);
-            }
-            var currentDepth = stack.length;
-            node.depth = currentDepth;
-            node.startTime = time;
-            while (node) {
-              if (node.maxDepth < currentDepth) {
-                node.maxDepth = currentDepth;
-                node = node.parent;
+            if (top) {
+              if (!top.children) {
+                top.children = [node];
               } else {
-                break;
+                top.children.unshift(node);
               }
+              var currentDepth = stack.length;
+              node.depth = currentDepth;
+              node.startTime = time;
+              while (node) {
+                if (node.maxDepth < currentDepth) {
+                  node.maxDepth = currentDepth;
+                  node = node.parent;
+                } else {
+                  break;
+                }
+              }
+            } else {
+              return true;
             }
           }
         }
