@@ -20,6 +20,8 @@ module Shumway.AVM2.AS.flash.text {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
+  import clamp = Shumway.NumberUtilities.clamp;
+
   export class TextField extends flash.display.InteractiveObject {
 
     static classSymbols: string [] = null;
@@ -321,12 +323,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get maxScrollH(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get maxScrollH"); return;
-      // return this._maxScrollH;
+      return this._maxScrollH;
     }
+
     get maxScrollV(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get maxScrollV"); return;
-      // return this._maxScrollV;
+      return this._maxScrollV;
     }
 
     get mouseWheelEnabled(): boolean {
@@ -397,22 +398,21 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get selectionBeginIndex(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get selectionBeginIndex"); return;
-      // return this._selectionBeginIndex;
+      return this._selectionBeginIndex;
     }
+
     get selectionEndIndex(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get selectionEndIndex"); return;
-      // return this._selectionEndIndex;
+      return this._selectionEndIndex;
     }
+
     get sharpness(): number {
-      notImplemented("public flash.text.TextField::get sharpness"); return;
-      // return this._sharpness;
+      return this._sharpness;
     }
+
     set sharpness(value: number) {
-      value = +value;
-      notImplemented("public flash.text.TextField::set sharpness"); return;
-      // this._sharpness = value;
+      this._sharpness = clamp(+value, -400, 400);
     }
+
     get styleSheet(): flash.text.StyleSheet {
       notImplemented("public flash.text.TextField::get styleSheet"); return;
       // return this._styleSheet;
@@ -451,13 +451,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get thickness(): number {
-      notImplemented("public flash.text.TextField::get thickness"); return;
-      // return this._thickness;
+      return this._thickness;
     }
+
     set thickness(value: number) {
-      value = +value;
-      notImplemented("public flash.text.TextField::set thickness"); return;
-      // this._thickness = value;
+      this._thickness = clamp(+value, -200, 200);
     }
 
     get type(): string {
