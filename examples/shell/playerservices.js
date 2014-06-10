@@ -47,6 +47,7 @@ var BinaryFileReader = (function binaryFileReader() {
   };
   return constructor;
 })();
+Shumway.BinaryFileReader = BinaryFileReader;
 
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }

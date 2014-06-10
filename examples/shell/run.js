@@ -532,7 +532,6 @@ load("../../build/ts/player/timeline.js");
 load("../../build/ts/player/remotingPlayer.js");
 load("../../build/ts/player/player.js");
 load("../../build/ts/player/avmLoader.js");
-load("../../build/ts/player/embed.js");
 
 load("../../build/ts/flash/linker.js");
 
@@ -566,16 +565,13 @@ var playerglobalInfo = {
   catalog: "../../build/playerglobal/playerglobal.json"
 };
 
-function FakePlayerChannel() {}
-FakePlayerChannel._eventUpdatesListener
-FakePlayerChannel.prototype = {
-  sendUpdates: function (updates, assets) {
-    var bytes = updates.getBytes();
-    // console.log('Updates sent');
-  },
-  registerForEventUpdates: function (listener) {
-    FakePlayerChannel._eventUpdatesListener = listener;
-  }
+function FakePlayer() {
+  Shumway.Player.Player.call(this);
+}
+FakePlayer.prototype = Object.create(Shumway.Player.Player.prototype);
+FakePlayer.prototype.onSendUpdates = function (updates, assets) {
+  var bytes = updates.getBytes();
+  // console.log('Updates sent');
 };
 
 function runSwfPlayer(data) {
@@ -587,10 +583,9 @@ function runSwfPlayer(data) {
   var file = data.file;
   Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
     function runSWF(file) {
-      var player = new Shumway.Player(new FakePlayerChannel());
+      var player = new FakePlayer();
       player.load(file);
     }
-
 
     if (asyncLoading) {
       Shumway.FileLoadingService.instance.setBaseUrl(file);

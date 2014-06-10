@@ -15,8 +15,6 @@
  */
 
 module Shumway {
-  import IGFXChannel = Shumway.Remoting.IGFXChannel;
-
   import Easel = Shumway.GFX.Easel;
   import FrameContainer = Shumway.GFX.FrameContainer;
   import Stage = Shumway.GFX.Stage;
@@ -29,19 +27,20 @@ module Shumway {
     private static _keyboardEvents = Shumway.Remoting.KeyboardEventNames;
 
     private _easel: Easel;
-    private _channel: IGFXChannel;
     private _frameContainer: FrameContainer;
     private _context: Shumway.Remoting.GFX.GFXChannelDeserializerContext;
 
-    constructor(easel: Easel, channel: IGFXChannel) {
+    constructor(easel: Easel) {
       this._easel = easel;
-      this._channel = channel;
       var frameContainer = easel.world;
       this._frameContainer = frameContainer;
       this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this._frameContainer);
 
-      channel.registerForUpdates(this.readData.bind(this));
       this._addEventListeners();
+    }
+
+    public onSendEventUpdates(update: DataBuffer) {
+      throw new Error('This method is abstract');
     }
 
     get stage(): Stage {
@@ -56,7 +55,7 @@ module Shumway {
       var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
       serializer.output = buffer;
       serializer.writeMouseEvent(event, point);
-      this._channel.sendEventUpdates(buffer);
+      this.onSendEventUpdates(buffer);
     }
 
     private _keyboardEventListener(event: KeyboardEvent) {
@@ -64,7 +63,7 @@ module Shumway {
       var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
       serializer.output = buffer;
       serializer.writeKeyboardEvent(event);
-      this._channel.sendEventUpdates(buffer);
+      this.onSendEventUpdates(buffer);
     }
 
     _addEventListeners() {
@@ -86,7 +85,7 @@ module Shumway {
       var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
       serializer.output = buffer;
       serializer.writeFocusEvent(type);
-      this._channel.sendEventUpdates(buffer);
+      this.onSendEventUpdates(buffer);
     }
 
     private _addFocusEventListeners() {
@@ -104,7 +103,7 @@ module Shumway {
       });
     }
 
-    readData(updates: DataBuffer, assets: Array<DataBuffer>) {
+    processUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
       var deserializer = new Shumway.Remoting.GFX.GFXChannelDeserializer();
       deserializer.input = updates;
       deserializer.inputAssets = assets;

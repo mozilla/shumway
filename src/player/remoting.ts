@@ -134,14 +134,4 @@ module Shumway.Remoting {
     WindowBlur,
     WindowFocus
   }
-
-  export interface IPlayerChannel {
-    sendUpdates(updates: DataBuffer, assets: Array<DataBuffer>);
-    registerForEventUpdates(listener: (updates: DataBuffer) => void);
-  }
-
-  export interface IGFXChannel {
-    sendEventUpdates(update: DataBuffer);
-    registerForUpdates(listener: (updates: DataBuffer, assets: Array<DataBuffer>) => void);
-  }
 }

@@ -15,21 +15,19 @@
  */
 
 module Shumway.Player.Window {
-  import IGFXChannel = Shumway.Remoting.IGFXChannel;
   import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   import CircularBuffer = Shumway.CircularBuffer;
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
-  export class WindowEaselHost extends EaselHost implements IGFXChannel {
-    private _listener: (updates: DataBuffer, assets: Array<DataBuffer>) => void;
+  export class WindowEaselHost extends EaselHost {
     private _timelineRequests: Map<(data) => void>;
     private _window;
     private _playerWindow;
 
     public constructor(easel: Easel, playerWindow, window) {
-      super(easel, this);
+      super(easel);
       this._timelineRequests = Object.create(null);
       this._playerWindow = playerWindow;
       this._window = window;
@@ -38,16 +36,12 @@ module Shumway.Player.Window {
       }.bind(this));
     }
 
-    public sendEventUpdates(updates: DataBuffer) {
+    public onSendEventUpdates(updates: DataBuffer) {
       var bytes = updates.getBytes();
       this._playerWindow.postMessage({
         type: 'gfx',
         updates: bytes
       }, '*', [bytes.buffer]);
-    }
-
-    public registerForUpdates(listener: (updates: DataBuffer, assets: Array<DataBuffer>) => void) {
-      this._listener = listener;
     }
 
     public requestTimeline(type: string, cmd: string): Promise<TimelineBuffer> {
@@ -65,7 +59,7 @@ module Shumway.Player.Window {
       if (typeof data === 'object' && data !== null) {
         if (data.type === 'player') {
           var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
-          this._listener(updates, data.assets);
+          this.processUpdates(updates, data.assets);
         } else if (data.type === 'timelineResponse' && data.timeline) {
           // Transform timeline into a Timeline object.
           data.timeline.__proto__ = TimelineBuffer.prototype;

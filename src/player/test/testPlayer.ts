@@ -15,16 +15,14 @@
  */
 
 module Shumway.Player.Test {
-  import IPlayerChannel = Shumway.Remoting.IPlayerChannel;
   import Player = Shumway.Player.Player;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
-  export class TestPlayer extends Player implements IPlayerChannel {
-    private _channelEventUpdatesListener: (updates: DataBuffer) => void;
+  export class TestPlayer extends Player {
     private _worker;
 
     constructor() {
-      super(this);
+      super();
 
       // TODO this is temporary worker to test postMessage tranfers
       this._worker = Shumway.Player.Test.FakeSyncWorker.instance;
@@ -32,17 +30,13 @@ module Shumway.Player.Test {
       this._worker.onsyncmessage = this._onWorkerMessage.bind(this);
     }
 
-    public sendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
+    public onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
       var bytes = updates.getBytes();
       this._worker.postMessage({
         type: 'player',
         updates: bytes,
         assets: assets
       }, [bytes.buffer]);
-    }
-
-    public registerForEventUpdates(listener: (updates: DataBuffer) => void) {
-      this._channelEventUpdatesListener = listener;
     }
 
     private _onWorkerMessage(e) {
@@ -52,11 +46,8 @@ module Shumway.Player.Test {
       }
       switch (data.type) {
         case 'gfx':
-          if (!this._channelEventUpdatesListener) {
-            return;
-          }
           var updates = DataBuffer.FromArrayBuffer(e.data.updates.buffer);
-          this._channelEventUpdatesListener(updates);
+          this.processEventUpdates(updates);
           break;
       }
     }

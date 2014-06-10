@@ -15,17 +15,15 @@
  */
 
 module Shumway.Player.Window {
-  import IPlayerChannel = Shumway.Remoting.IPlayerChannel;
   import Player = Shumway.Player.Player;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
-  export class WindowPlayer extends Player implements IPlayerChannel {
-    private _eventUpdatesListener: (updates: DataBuffer) => void;
+  export class WindowPlayer extends Player {
     private _window;
     private _parent;
 
     constructor(window, parent?) {
-      super(this);
+      super();
       this._window = window;
       this._parent = parent || window.parent;
       this._window.addEventListener('message', function (e) {
@@ -33,7 +31,7 @@ module Shumway.Player.Window {
       }.bind(this));
     }
 
-    public sendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
+    public onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
       var bytes = updates.getBytes();
       this._parent.postMessage({
         type: 'player',
@@ -42,20 +40,13 @@ module Shumway.Player.Window {
       }, '*', [bytes.buffer]);
     }
 
-    public registerForEventUpdates(listener: (updates: DataBuffer) => void) {
-      this._eventUpdatesListener = listener;
-    }
-
     private onWindowMessage(data) {
       if (typeof data === 'object' && data !== null) {
         switch (data.type) {
           case 'gfx':
-            if (!this._eventUpdatesListener) {
-              return;
-            }
             var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
             var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
-            this._eventUpdatesListener(updates);
+            this.processEventUpdates(updates);
             break;
           case 'options':
             Shumway.Settings.setSettings(data.settings);

@@ -50,9 +50,15 @@ XMLHttpRequest.prototype = {
           response = JSON.parse(response);
         }
         this.response = response;
+        this.readyState = 4;
+        this.status = 200;
+        this.onreadystatechange && this.onreadystatechange();
         this.onload && this.onload();
       } catch (e) {
         this.error = e;
+        this.readyState = 4;
+        this.status = 404;
+        this.onreadystatechange && this.onreadystatechange();
         this.onerror && this.onerror();
       }
     }.bind(this));

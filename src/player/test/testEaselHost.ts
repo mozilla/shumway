@@ -15,19 +15,17 @@
  */
 
 module Shumway.Player.Test {
-  import IGFXChannel = Shumway.Remoting.IGFXChannel;
   import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   import CircularBuffer = Shumway.CircularBuffer;
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
-  export class TestEaselHost extends EaselHost implements IGFXChannel {
-    private _channelUpdatesListener: (updates: DataBuffer, assets: Array<DataBuffer>) => void;
+  export class TestEaselHost extends EaselHost {
     private _worker;
 
     public constructor(easel: Easel) {
-      super(easel, this);
+      super(easel);
 
       // TODO this is temporary worker to test postMessage tranfers
       this._worker = Shumway.Player.Test.FakeSyncWorker.instance;
@@ -35,16 +33,12 @@ module Shumway.Player.Test {
       this._worker.onsyncmessage = this._onWorkerMessage.bind(this);
     }
 
-    public sendEventUpdates(updates: DataBuffer) {
+    public onSendEventUpdates(updates: DataBuffer) {
       var bytes = updates.getBytes();
       this._worker.postMessage({
         type: 'gfx',
         updates: bytes
       }, [bytes.buffer]);
-    }
-
-    public registerForUpdates(listener: (updates: DataBuffer, assets: Array<DataBuffer>) => void) {
-      this._channelUpdatesListener = listener;
     }
 
     requestTimeline(type: string, cmd: string): Promise<TimelineBuffer> {
@@ -84,7 +78,7 @@ module Shumway.Player.Test {
       switch (type) {
         case 'player':
           var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
-          this._channelUpdatesListener(updates, data.assets);
+          this.processUpdates(updates, data.assets);
           break;
       }
     }

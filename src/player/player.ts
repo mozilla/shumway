@@ -38,9 +38,6 @@ module Shumway.Player {
 
   import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
 
-  import Remoting = Shumway.Remoting;
-  import IPlayerChannel = Remoting.IPlayerChannel;
-
   /**
    * Shumway Player
    *
@@ -53,7 +50,6 @@ module Shumway.Player {
     private _loaderInfo: flash.display.LoaderInfo;
     private _syncTimeout: number;
     private _frameTimeout: number;
-    private _channel: IPlayerChannel;
 
     private static _syncFrameRate = 60;
 
@@ -75,15 +71,20 @@ module Shumway.Player {
      */
     private _hasFocus = true;
 
-    constructor(channel: IPlayerChannel) {
-      this._channel = channel;
-
+    constructor() {
       this._keyboardEventDispatcher = new KeyboardEventDispatcher();
       this._mouseEventDispatcher = new MouseEventDispatcher();
 
-      channel.registerForEventUpdates(this._processEventUpdates.bind(this));
-
       AVM2.instance.globals['Shumway.Player.Utils'] = this;
+    }
+
+    /**
+     * Abstract method to notify about updates.
+     * @param updates
+     * @param assets
+     */
+    public onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
+      throw new Error('This method is abstract');
     }
 
     /**
@@ -128,7 +129,7 @@ module Shumway.Player {
       this._loader.load(new flash.net.URLRequest(url));
     }
 
-    private _processEventUpdates(updates: DataBuffer) {
+    public processEventUpdates(updates: DataBuffer) {
       var deserializer = new Remoting.Player.PlayerChannelDeserializer();
       var EventKind = Remoting.Player.EventKind;
       var FocusEventType = Remoting.FocusEventType;
@@ -200,7 +201,7 @@ module Shumway.Player {
       updates.writeInt(Remoting.MessageTag.EOF);
 
       enterTimeline("sendUpdates");
-      this._channel.sendUpdates(updates, assets);
+      this.onSendUpdates(updates, assets);
       leaveTimeline("sendUpdates");
     }
 
@@ -234,7 +235,7 @@ module Shumway.Player {
       updates.writeInt(Shumway.Remoting.MessageTag.EOF);
 
       enterTimeline("sendUpdates");
-      this._channel.sendUpdates(updates, assets);
+      this.onSendUpdates(updates, assets);
       leaveTimeline("sendUpdates");
     }
 
