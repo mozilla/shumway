@@ -194,10 +194,10 @@ module Shumway.SWF.Parser {
     var loca = '\x00\x00';
     var offset = 16;
     var maxPoints = 0;
-    var xMins = [];
-    var xMaxs = [];
-    var yMins = [];
-    var yMaxs = [];
+    var allXMin = 1024;
+    var allXMax = -1024;
+    var allYMin = 1024;
+    var allYMax = -1024;
     var maxContours = 0;
     var i = 0;
     code;
@@ -317,10 +317,10 @@ module Shumway.SWF.Parser {
       glyf += entry;
       loca += toString16(offset / 2);
       offset += entry.length;
-      xMins.push(xMin);
-      xMaxs.push(xMax);
-      yMins.push(yMin);
-      yMaxs.push(yMax);
+      allXMin = min(allXMin, xMin);
+      allXMax = max(allXMax, xMax);
+      allYMin = min(allYMin, yMin);
+      allYMax = max(allYMax, yMax);
       if (numberOfContours > maxContours)
         maxContours = numberOfContours;
       if (endPoint > maxPoints)
@@ -338,10 +338,10 @@ module Shumway.SWF.Parser {
     '\x04\x00' + // unitsPerEm
     '\x00\x00\x00\x00' + toString32(Date.now()) + // created
     '\x00\x00\x00\x00' + toString32(Date.now()) + // modified
-    toString16(min.apply(null, xMins)) + // xMin
-    toString16(min.apply(null, yMins)) + // yMin
-    toString16(max.apply(null, xMaxs)) + // xMax
-    toString16(max.apply(null, yMaxs)) + // yMax
+    toString16(allXMin) + // xMin
+    toString16(allYMin) + // yMin
+    toString16(allXMax) + // xMax
+    toString16(allYMax) + // yMax
     toString16((tag.italic ? 2 : 0) | (tag.bold ? 1 : 0)) + // macStyle
     '\x00\x08' + // lowestRecPPEM
     '\x00\x02' + // fontDirectionHint
@@ -349,13 +349,17 @@ module Shumway.SWF.Parser {
     '\x00\x00' // glyphDataFormat
     ;
 
-    var advance = tag.advance;
+    var advances = tag.advance;
+    var advance = 1024;
+    if (advances) {
+      advance = advances.reduce(function(currentMax, entry) {return max(currentMax, entry);});
+    }
     tables['hhea'] =
     '\x00\x01\x00\x00' + // version
     toString16(ascent) + // ascender
     toString16(descent) + // descender
     toString16(leading) + // lineGap
-    toString16(advance ? max.apply(null, advance) : 1024) + // advanceWidthMax
+    toString16(advance) + // advanceWidthMax
     '\x00\x00' + // minLeftSidebearing
     '\x00\x00' + // minRightSidebearing
     '\x03\xb8' + // xMaxExtent
