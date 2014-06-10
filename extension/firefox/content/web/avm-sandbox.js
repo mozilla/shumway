@@ -268,26 +268,23 @@ function setupServices() {
       return base + url;
     }
   };
+}
 
-  Shumway.ExternalInterfaceService.instance = {
-    enabled: true,
-    initJS: function (callback) {
-      FirefoxCom.initJS(callback);
-    },
-    registerCallback: function (functionName) {
-      FirefoxCom.request('externalCom', {action: 'register', functionName: functionName, remove: false});
-    },
-    unregisterCallback: function (functionName) {
-      FirefoxCom.request('externalCom', {action: 'register', functionName: functionName, remove: true});
-    },
-    eval: function (expression) {
-      return FirefoxCom.requestSync('externalCom', {action: 'eval', expression: expression});
-    },
-    call: function (request) {
-      return FirefoxCom.requestSync('externalCom', {action: 'call', request: request});
-    },
-    getId: function () {
-      return FirefoxCom.requestSync('externalCom', {action: 'getId'});
+function setupExternalInterface(player, easelHost) {
+  Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
+  easelHost.processExternalCommand = function (command) {
+    switch (command.action) {
+      case 'isEnabled':
+        command.result = true;
+        break;
+      case 'initJS':
+        FirefoxCom.initJS(function (functionName, args) {
+          return easelHost.sendExernalCallback(functionName, args);
+        });
+        break;
+      default:
+        command.result = FirefoxCom.requestSync('externalCom', command);
+        break;
     }
   };
 }
@@ -327,6 +324,9 @@ function parseSwf(url, movieParams, objectParams) {
       var player = new Shumway.Player.Test.TestPlayer();
       var easelHost = new Shumway.Player.Test.TestEaselHost(easel);
       player.load(url);
+
+      setupExternalInterface(player, easelHost);
+
 //      SWF.embed(url, document, document.getElementById("stageContainer"), {
 //         url: url,
 //         movieParams: movieParams,
@@ -337,18 +337,11 @@ function parseSwf(url, movieParams, objectParams) {
     });
 }
 
-var _easel;
-
 function createEasel() {
-  var Stage = Shumway.GFX.Stage;
-  var Easel = Shumway.GFX.Easel;
-  var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
-
   Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var canvas = document.createElement("canvas");
   canvas.style.backgroundColor = "#14171a";
   document.getElementById("stageContainer").appendChild(canvas);
   var backend = Shumway.GFX.backend.value | 0;
-  _easel = new Easel(canvas, backend);
-  return _easel;
+  return new Shumway.GFX.Easel(canvas, backend);
 }

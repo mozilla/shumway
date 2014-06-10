@@ -39,7 +39,7 @@ module Shumway {
       this._addEventListeners();
     }
 
-    public onSendEventUpdates(update: DataBuffer) {
+    onSendEventUpdates(update: DataBuffer) {
       throw new Error('This method is abstract');
     }
 
@@ -109,6 +109,30 @@ module Shumway {
       deserializer.inputAssets = assets;
       deserializer.context = this._context;
       deserializer.read();
+    }
+
+    processExternalCommand(command) {
+      if (command.action === 'isEnabled') {
+        command.result = false;
+        return;
+      }
+      throw new Error('This command is not supported');
+    }
+
+    onExernalCallback(request) {
+      throw new Error('This method is abstract');
+    }
+
+    sendExernalCallback(functionName: string, args: any[]): any {
+      var request: any = {
+        functionName: functionName,
+        args: args
+      };
+      this.onExernalCallback(request);
+      if (request.error) {
+        throw new Error(request.error);
+      }
+      return request.result;
     }
   }
 }
