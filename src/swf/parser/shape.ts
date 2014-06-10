@@ -292,6 +292,8 @@ module Shumway.SWF.Parser {
         style.type = fillStyle.type;
         style.transform = fillStyle.transform;
         style.records = fillStyle.records;
+        style.colors = fillStyle.colors;
+        style.ratios = fillStyle.ratios;
         style.focalPoint = fillStyle.focalPoint;
         style.bitmapId = fillStyle.bitmapId;
         style.bitmapIndex = -1;
@@ -715,49 +717,52 @@ module Shumway.SWF.Parser {
       }
 
       if (this.fillStyle) {
-        var fillStyle = this.fillStyle;
-        switch (fillStyle.type) {
+        var style = this.fillStyle;
+        switch (style.type) {
           case FillType.Solid:
-            shape.beginFill(fillStyle.color);
+            shape.beginFill(style.color);
             break;
           case FillType.LinearGradient:
           case FillType.RadialGradient:
           case FillType.FocalRadialGradient:
-            var gradientType = fillStyle.type === FillType.LinearGradient ?
+            var gradientType = style.type === FillType.LinearGradient ?
                                GradientType.Linear :
                                GradientType.Radial;
-            shape.beginGradient(PathCommand.BeginGradientFill, fillStyle.colors, fillStyle.ratios,
-                                gradientType, fillStyle.transform, fillStyle.spreadMethod,
-                                fillStyle.interpolationMode, fillStyle.focalPoint|0);
+            shape.beginGradient(PathCommand.BeginGradientFill, style.colors, style.ratios,
+                                gradientType, style.transform, style.spreadMethod,
+                                style.interpolationMode, style.focalPoint|0);
             break;
           case FillType.ClippedBitmap:
           case FillType.RepeatingBitmap:
           case FillType.NonsmoothedClippedBitmap:
           case FillType.NonsmoothedRepeatingBitmap:
-            assert(fillStyle.bitmapIndex > -1);
-            shape.beginBitmapFill(fillStyle.bitmapIndex, fillStyle.transform,
-                                  fillStyle.repeat, fillStyle.smooth);
+            assert(style.bitmapIndex > -1);
+            shape.beginBitmapFill(style.bitmapIndex, style.transform,
+                                  style.repeat, style.smooth);
             break;
           default:
-            assertUnreachable('Invalid fill style type: ' + fillStyle.type);
+            assertUnreachable('Invalid fill style type: ' + style.type);
         }
       } else {
-        var lineStyle = this.lineStyle;
-        assert(lineStyle);
-        // No scaling == 0, normal == 1, vertical only == 2, horizontal only == 3.
-        var scaleMode = lineStyle.noHscale ?
-                        (lineStyle.noVscale ? 0 : 2) :
-                        lineStyle.noVscale ? 3 : 1;
-        // TODO: Figure out how to handle startCapsStyle
-        switch (lineStyle.type) {
+        var style = this.lineStyle;
+        assert(style);
+        switch (style.type) {
           case FillType.Solid:
-            var thickness = clamp(lineStyle.width, 0, 0xff * 20)|0;
-            shape.lineStyle(thickness, lineStyle.color,
-                            lineStyle.pixelHinting, scaleMode, lineStyle.endCapsStyle,
-                            lineStyle.jointStyle, lineStyle.miterLimit);
+            writeLineStyle(style, shape);
+            break;
+          case FillType.LinearGradient:
+          case FillType.RadialGradient:
+          case FillType.FocalRadialGradient:
+            var gradientType = style.type === FillType.LinearGradient ?
+                               GradientType.Linear :
+                               GradientType.Radial;
+            writeLineStyle(style, shape);
+            shape.beginGradient(PathCommand.LineStyleGradient, style.colors, style.ratios,
+                                gradientType, style.transform, style.spreadMethod,
+                                style.interpolationMode, style.focalPoint|0);
             break;
           default:
-            console.error('Line style type not yet supported: ' + lineStyle.type);
+            console.error('Line style type not yet supported: ' + style.type);
         }
       }
 
@@ -774,5 +779,17 @@ module Shumway.SWF.Parser {
       }
       return shape;
     }
+  }
+
+  function writeLineStyle(style: any, shape: ShapeData): void {
+    // No scaling == 0, normal == 1, vertical only == 2, horizontal only == 3.
+    var scaleMode = style.noHscale ?
+                    (style.noVscale ? 0 : 2) :
+                    style.noVscale ? 3 : 1;
+    // TODO: Figure out how to handle startCapsStyle
+    var thickness = clamp(style.width, 0, 0xff * 20)|0;
+    shape.lineStyle(thickness, style.color,
+                    style.pixelHinting, scaleMode, style.endCapsStyle,
+                    style.jointStyle, style.miterLimit);
   }
 }
