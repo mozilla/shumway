@@ -1292,13 +1292,8 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       // If the colors, alphas and ratios arrays don't all have the same length or if any of the
-      // given ratios falls outside [0,0xff], Flash uses a solid white fill.
+      // given ratios falls outside [0,0xff], Flash just ignores the gradient style.
       if (!recordsValid) {
-        if (pathCommand === PathCommand.BeginGradientFill) {
-          this.beginFill(0xffffff, 1);
-        } else {
-          this.lineStyle(0xffffff, 1);
-        }
         return;
       }
 

@@ -127,13 +127,10 @@
     g.clear();
 
     g.beginGradientFill(GradientType.LINEAR, [0, 0xff0000], [1], [0, 100]);
-    shape.styles.position = 0;
-    eq(shape.commands[0], PathCommand.BeginSolidFill, "Calling beginGradientFill with different " +
-                                                      "lengths for the colors, alphas and ratios " +
-                                                      "writes a solid fill instead");
-    eq(shape.styles.readUnsignedInt(), 0xffffffff, "the fallback solid fill is opaque white");
+    eq(shape.commandsPosition, 0, "Calls of beginGradientFill with different " +
+                                  "lengths for the colors, alphas and ratios " +
+                                  "are ignored");
     eq(shape.coordinatesPosition, 0, "fills don't write coordinates");
-    eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
     eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
   }
 
