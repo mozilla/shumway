@@ -212,7 +212,7 @@ module Shumway.Player {
       serializer.output = updates;
       serializer.outputAssets = assets;
       serializer.writeFont(font);
-      this._channel.sendUpdates(updates, assets);
+      this.onSendUpdates(updates, assets);
     }
 
     public cacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
