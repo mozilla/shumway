@@ -4,6 +4,7 @@
 
 build/ts/utilities.js
 build/ts/dataBuffer.js
+build/ts/htmlparser.js
 build/ts/ShapeData.js
 build/ts/options.js
 build/ts/settings.js
