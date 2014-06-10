@@ -231,7 +231,9 @@ module Shumway.AVM2.AS.flash.display {
               // immediately.
               appDomain.loadAbc(abc);
             } else {
-              appDomain.executeAbc(abc);
+              if (loaderInfo._allowCodeExecution) {
+                appDomain.executeAbc(abc);
+              }
             }
           }
           break;
@@ -271,6 +273,9 @@ module Shumway.AVM2.AS.flash.display {
           break;
         case 'font':
           symbol = Timeline.FontSymbol.FromData(data);
+          var font = flash.text.Font.initializeFrom(symbol);
+          flash.text.Font.instanceConstructorNoInitialize.call(font);
+          AVM2.instance.globals['Shumway.Player.Utils'].registerFont(font);
           break;
         case 'sound':
           symbol = Timeline.SoundSymbol.FromData(data);
@@ -292,7 +297,7 @@ module Shumway.AVM2.AS.flash.display {
         for (var i = 0; i < symbolClasses.length; i++) {
           var asset = symbolClasses[i];
           var tag = asset.symbolId;
-          if (loaderInfo._allowSymbolClasses) {
+          if (loaderInfo._allowCodeExecution) {
             var symbolClass = appDomain.getClass(asset.className);
             var symbol = loaderInfo.getSymbolById(asset.symbolId);
             assert (symbol, "Symbol is not defined.");

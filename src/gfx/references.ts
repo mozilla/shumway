@@ -64,3 +64,9 @@ interface CanvasRenderingContext2D {
   fillRule: string;
   mozFillRule: string;
 }
+
+interface CanvasPattern {
+  setTransform: (matrix: SVGMatrix) => void;
+}
+
+

@@ -19,7 +19,7 @@ module Shumway.GFX {
   import Point = Geometry.Point;
   import Rectangle = Geometry.Rectangle;
   import PathCommand = Shumway.PathCommand;
-  import Matrix = Shumway.ShapeMatrix;
+  import Matrix = Geometry.Matrix;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import swap32 = Shumway.IntegerUtilities.swap32;
   import memorySizeToString = Shumway.StringUtilities.memorySizeToString;
@@ -384,6 +384,7 @@ module Shumway.GFX {
             var texture = this._textures[textureIndex];
             assert(texture._canvas);
             context.fillStyle = context.createPattern(texture._canvas, repeat);
+            context.fillStyle.setTransform(fillTransform.toSVGMatrix());
             context.msImageSmoothingEnabled = context.msImageSmoothingEnabled =
                                               context['imageSmoothingEnabled'] = smooth;
             break;
@@ -490,10 +491,11 @@ module Shumway.GFX {
       }
     }
 
-    private _readMatrix(data: DataBuffer): Matrix
-    {
-      return {a: data.readFloat(), b: data.readFloat(), c: data.readFloat(), d: data.readFloat(),
-              tx: data.readFloat(), ty: data.readFloat()};
+    private _readMatrix(data: DataBuffer): Matrix {
+      return new Matrix (
+        data.readFloat(), data.readFloat(), data.readFloat(),
+        data.readFloat(), data.readFloat(), data.readFloat()
+      );
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {
