@@ -500,7 +500,7 @@ module Shumway.AVM2.AS.flash.display {
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
       this._writeGradientStyle(PathCommand.BeginGradientFill, type, colors, alphas, ratios, matrix,
-                              spreadMethod, interpolationMethod, focalPointRatio);
+                              spreadMethod, interpolationMethod, focalPointRatio, false);
       this._hasFills = true;
     }
 
@@ -584,9 +584,8 @@ module Shumway.AVM2.AS.flash.display {
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
-      // TODO: only emit this if a stroke width has been set by calling `lineStyle`
       this._writeGradientStyle(PathCommand.LineStyleGradient, type, colors, alphas, ratios, matrix,
-                              spreadMethod, interpolationMethod, focalPointRatio);
+                              spreadMethod, interpolationMethod, focalPointRatio, !this._hasLines);
     }
 
     lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
@@ -1241,11 +1240,15 @@ module Shumway.AVM2.AS.flash.display {
      * Gradients are specified the same for fills and strokes, so we only need to serialize them
      * once. The Parameter `pathCommand` is treated as the actual command to serialize, and must
      * be one of PATH_COMMAND_BEGIN_GRADIENT_FILL and PATH_COMMAND_LINE_STYLE_GRADIENT.
+     *
+     * This method doesn't actually write anything if the `skipWrite` argument is true. In that
+     * case, it only does arguments checks so the right exceptions are thrown.
      */
     private _writeGradientStyle(pathCommand: PathCommand, type: string,
                                 colors: number[], alphas: number[], ratios: number[],
                                 matrix: geom.Matrix, spreadMethod: string,
-                                interpolationMethod: string, focalPointRatio: number): void
+                                interpolationMethod: string, focalPointRatio: number,
+                                skipWrite: boolean): void
     {
       if (isNullOrUndefined(type)) {
         throwError('TypeError', Errors.NullPointerError, 'type');
@@ -1301,6 +1304,10 @@ module Shumway.AVM2.AS.flash.display {
         matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
       } else if (!(flash.geom.Matrix.isType(matrix))) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+      }
+
+      if (skipWrite) {
+        return;
       }
 
       // If `spreadMethod` is invalid, "pad" is used.

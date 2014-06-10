@@ -37,6 +37,7 @@
   unitTests.push(lineStyle_defaults);
   unitTests.push(lineStyle_invalidWidth);
   unitTests.push(lineStyle_allArgs);
+  unitTests.push(lineGradientStyle);
   unitTests.push(moveTo);
   unitTests.push(lineTo);
   unitTests.push(curveTo);
@@ -240,14 +241,65 @@
     eq(shape.commands[0], PathCommand.LineStyleSolid, "style is stored");
     eq(shape.coordinatesPosition, 1, "lineStyle writes thickness into coordinates");
     eq(shape.coordinates[0], 200, "given thickness is stored");
-    eq(shape.styles.readUnsignedInt(), 0xaabbcc80, "alpha is stored correctly");
+    eq(shape.styles.readUnsignedInt(), 0xaabbcc80, "color and alpha are stored correctly");
     eq(shape.styles.readBoolean(), true, "pixel hinting is stored");
     eq(LineScaleMode.fromNumber(shape.styles.readUnsignedByte()), LineScaleMode.HORIZONTAL,
        "lineScaleMode is stored");
-    eq(CapsStyle.fromNumber(shape.styles.readUnsignedByte()), CapsStyle.SQUARE, "capsStyle is stored");
-    eq(JointStyle.fromNumber(shape.styles.readUnsignedByte()), JointStyle.BEVEL, "jointsStyle is stored");
+    eq(CapsStyle.fromNumber(shape.styles.readUnsignedByte()), CapsStyle.SQUARE,
+       "capsStyle is stored");
+    eq(JointStyle.fromNumber(shape.styles.readUnsignedByte()), JointStyle.BEVEL,
+       "jointsStyle is stored");
     eq(shape.styles.readUnsignedByte(), 10, "miterLimit is stored");
     eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
+  }
+
+  function lineGradientStyle() {
+    var g = createGraphics();
+    var shape = g.getGraphicsData();
+
+    // TODO: enable this test once throwError works without AS3 on the stack.
+//    assertThrowsInstanceOf(function() {g.beginGradientFill(null)}, TypeError,
+//                           'beginGradientFill must specify a valid type');
+
+    g.lineGradientStyle(GradientType.LINEAR, [0, 0xff0000], [1, 0.5], [45.3, 198.24]);
+    shape.styles.position = 0;
+    eq(shape.commandsPosition, 0, "lineGradientStyle doesn't write data if no lineStyle is set");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
+    g.clear();
+
+    g.lineStyle(10, 0xff00ff);
+    var initialPosition = shape.styles.position;
+    var matrix = new Matrix(1, 2, 3, 4, 5, 6);
+    g.lineGradientStyle(GradientType.LINEAR, [0, 0xff0000], [1, 0.5], [45.3, 198.24], matrix,
+                        SpreadMethod.REPEAT, InterpolationMethod.LINEAR_RGB, -0.73);
+    shape.styles.position = initialPosition;
+    eq(shape.commands[0], PathCommand.LineStyleSolid, "initial line style is stored");
+    eq(shape.commands[1], PathCommand.LineStyleGradient, "gradient line style is stored");
+    eq(shape.coordinatesPosition, 1, "lineStyle writes thickness into coordinates");
+    eq(GradientType.fromNumber(shape.styles.readUnsignedByte()), GradientType.LINEAR,
+       'gradient type is stored');
+    eq(shape.styles.readShort(), -93, 'focal point is stored as fixed8');
+    structEq(Matrix.FromDataBuffer(shape.styles), matrix, "matrix is stored");
+
+    eq(shape.styles.readUnsignedByte(), 2, 'number of color stops is stored');
+    eq(shape.styles.readUnsignedByte(), 45, 'first ratio is stored');
+    eq(shape.styles.readUnsignedInt(), 0x000000ff, 'first RGBA color is stored');
+    eq(shape.styles.readUnsignedByte(), 198, 'second ratio is stored');
+    eq(shape.styles.readUnsignedInt(), 0xff00007f, 'second RGBA color is stored');
+
+    eq(SpreadMethod.fromNumber(shape.styles.readUnsignedByte()), SpreadMethod.REPEAT,
+       'spread method is stored');
+    eq(InterpolationMethod.fromNumber(shape.styles.readUnsignedByte()),
+       InterpolationMethod.LINEAR_RGB, 'interpolation method is stored');
+    eq(shape.commandsPosition, 2, "instructions didn't write more data than expected");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
+    g.clear();
+
+    g.lineGradientStyle(GradientType.LINEAR, [0, 0xff0000], [1], [0, 100]);
+    eq(shape.commandsPosition, 0, "Calls of lineGradientStyle with different lengths for the " +
+                                  "colors, alphas and ratios are ignored");
+    eq(shape.coordinatesPosition, 0, "fills don't write coordinates");
     eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
   }
 
