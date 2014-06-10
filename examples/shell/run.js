@@ -69,6 +69,7 @@ console.time("Load Shared Dependencies");
 
 // DUP: load("../../build/ts/utilities.js");
 // DUP: load("../../build/ts/dataBuffer.js");
+load("../../build/ts/htmlparser.js");
 // DUP: load("../../build/ts/ShapeData.js");
 load("../../build/ts/options.js");
 load("../../build/ts/settings.js");
@@ -190,7 +191,7 @@ load("../../build/ts/flash/events/KeyboardEvent.js");
 //../../build/ts/flash/display3D/Context3DRenderMode.js
 //../../build/ts/flash/ui/GameInputControl.js
 //../../build/ts/flash/events/ThrottleType.js
-//../../build/ts/flash/text/TextInteractionMode.js
+load("../../build/ts/flash/text/TextInteractionMode.js");
 load("../../build/ts/flash/filters/DisplacementMapFilterMode.js");
 
 load("../../build/ts/flash/utils/Timer.js");
@@ -213,7 +214,7 @@ load("../../build/ts/flash/display/IGraphicsData.js");
 load("../../build/ts/flash/display/IGraphicsFill.js");
 load("../../build/ts/flash/display/GraphicsEndFill.js");
 load("../../build/ts/flash/accessibility/Accessibility.js");
-//../../build/ts/flash/text/GridFitType.js
+load("../../build/ts/flash/text/GridFitType.js");
 //../../build/ts/flash/globalization/CollatorMode.js
 //../../build/ts/flash/errors/StackOverflowError.js
 //../../build/ts/flash/errors/ScriptTimeoutError.js
@@ -275,7 +276,7 @@ load("../../build/ts/flash/display/SWFVersion.js");
 load("../../build/ts/flash/events/ProgressEvent.js");
 load("../../build/ts/flash/media/Camera.js");
 //../../build/ts/flash/text/engine/TextBaseline.js
-//../../build/ts/flash/text/AntiAliasType.js
+load("../../build/ts/flash/text/AntiAliasType.js");
 //../../build/ts/flash/net/NetGroup.js
 load("../../build/ts/flash/events/ErrorEvent.js");
 load("../../build/ts/flash/events/IOErrorEvent.js");
@@ -532,6 +533,7 @@ load("../../build/ts/player/timeline.js");
 load("../../build/ts/player/remotingPlayer.js");
 load("../../build/ts/player/player.js");
 load("../../build/ts/player/avmLoader.js");
+load("../../build/ts/player/embed.js");
 
 load("../../build/ts/flash/linker.js");
 

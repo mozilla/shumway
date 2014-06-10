@@ -126,7 +126,7 @@ build/ts/flash/events/KeyboardEvent.js
 #build/ts/flash/display3D/Context3DRenderMode.js
 #build/ts/flash/ui/GameInputControl.js
 #build/ts/flash/events/ThrottleType.js
-#build/ts/flash/text/TextInteractionMode.js
+build/ts/flash/text/TextInteractionMode.js
 build/ts/flash/filters/DisplacementMapFilterMode.js
 
 build/ts/flash/utils/Timer.js
@@ -149,7 +149,7 @@ build/ts/flash/display/IGraphicsData.js
 build/ts/flash/display/IGraphicsFill.js
 build/ts/flash/display/GraphicsEndFill.js
 build/ts/flash/accessibility/Accessibility.js
-#build/ts/flash/text/GridFitType.js
+build/ts/flash/text/GridFitType.js
 #build/ts/flash/globalization/CollatorMode.js
 #build/ts/flash/errors/StackOverflowError.js
 #build/ts/flash/errors/ScriptTimeoutError.js
@@ -211,7 +211,7 @@ build/ts/flash/display/SWFVersion.js
 build/ts/flash/events/ProgressEvent.js
 build/ts/flash/media/Camera.js
 #build/ts/flash/text/engine/TextBaseline.js
-#build/ts/flash/text/AntiAliasType.js
+build/ts/flash/text/AntiAliasType.js
 #build/ts/flash/net/NetGroup.js
 build/ts/flash/events/ErrorEvent.js
 build/ts/flash/events/IOErrorEvent.js
