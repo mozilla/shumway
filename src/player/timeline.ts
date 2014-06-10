@@ -292,6 +292,7 @@ module Shumway.Timeline {
     name: string = "";
     bold: boolean = false;
     italic: boolean = false;
+    data: Uint8Array;
 
     constructor(id: number) {
       super(id, flash.text.Font);
@@ -302,6 +303,7 @@ module Shumway.Timeline {
       symbol.name = data.name;
       symbol.bold = data.bold;
       symbol.italic = data.italic;
+      symbol.data = data.data;
       return symbol;
     }
   }

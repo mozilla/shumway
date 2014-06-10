@@ -80,7 +80,9 @@ module Shumway.Remoting {
 
     MouseEvent                  = 300,
     KeyboardEvent               = 301,
-    FocusEvent                  = 302
+    FocusEvent                  = 302,
+
+    RegisterFont                = 400
   }
 
   /**

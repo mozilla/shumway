@@ -21,7 +21,7 @@ module Shumway.AVM2.AS.flash.text {
   import FontStyle = flash.text.FontStyle;
   import FontType = flash.text.FontType;
 
-  export class Font extends ASNative {
+  export class Font extends ASNative implements Shumway.Remoting.IRemotable {
 
     private static fonts: Font[];
     private static fontsBySymbolId: Shumway.Map<Font>;
@@ -37,47 +37,51 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = function (symbol: Shumway.Timeline.FontSymbol) {
       var self: Font = this;
 
+      self._id = flash.display.DisplayObject.getNextSyncID();
+
       self._fontName = null;
       self._fontStyle = null;
       self._fontType = null;
 
       if (symbol) {
+        self._symbol = symbol;
         self._fontName = symbol.name;
         if (symbol.bold) {
           if (symbol.italic) {
             self._fontStyle = FontStyle.BOLD_ITALIC;
-        } else {
+          } else {
             self._fontStyle = FontStyle.BOLD;
-        }
+          }
         } else if (symbol.italic) {
           self._fontStyle = FontStyle.ITALIC;
-      } else {
+        } else {
           self._fontStyle = FontStyle.REGULAR;
-      }
+        }
         self._fontType = FontType.EMBEDDED;
         Font.fontsBySymbolId[symbol.id] = self;
-    }
+      }
     };
 
     constructor() {
       false && super();
     }
 
-    static getFontBySymbolId(id) {
+    static getBySymbolId(id) {
       return this.fontsBySymbolId[id];
     }
 
-    ascent: number;
-    descent: number;
-    leading: number;
-
+    // JS -> AS Bindings
     //private _fontId: string;
     private _fontName: string;
     private _fontStyle: string;
     private _fontType: string;
 
-    // JS -> AS Bindings
+    _id: number;
+    _symbol: Shumway.Timeline.FontSymbol;
 
+    ascent: number;
+    descent: number;
+    leading: number;
 
     // AS -> JS Bindings
     static enumerateFonts(enumerateDeviceFonts: boolean = false): any [] {

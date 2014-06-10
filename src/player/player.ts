@@ -204,6 +204,16 @@ module Shumway.Player {
       leaveTimeline("sendUpdates");
     }
 
+    public registerFont(font: flash.text.Font) {
+      var updates = new DataBuffer();
+      var assets = [];
+      var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
+      serializer.output = updates;
+      serializer.outputAssets = assets;
+      serializer.writeFont(font);
+      this._channel.sendUpdates(updates, assets);
+    }
+
     public cacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
       var updates = new DataBuffer();
       var assets = [];
