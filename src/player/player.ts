@@ -109,7 +109,7 @@ module Shumway.Player {
 
       if (playAllSymbolsOption.value) {
         this._playAllSymbols();
-        loaderInfo._allowSymbolClasses = false;
+        loaderInfo._allowCodeExecution = false;
       } else {
         loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, function onProgress() {
           var root = loader.content;

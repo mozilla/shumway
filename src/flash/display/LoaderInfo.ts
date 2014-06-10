@@ -63,7 +63,7 @@ module Shumway.AVM2.AS.flash.display {
       this._content = null;
       this._bytes = null;
       this._uncaughtErrorEvents = null;
-      this._allowSymbolClasses = true;
+      this._allowCodeExecution = true;
       this._dictionary = [];
     }
 
@@ -99,9 +99,9 @@ module Shumway.AVM2.AS.flash.display {
     _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
     /**
-     * Use this to ignore user defined symbol classes.
+     * Use this to ignore any user code.
      */
-    _allowSymbolClasses: boolean;
+    _allowCodeExecution: boolean;
 
     _dictionary: Shumway.Timeline.Symbol [];
 

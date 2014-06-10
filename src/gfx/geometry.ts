@@ -554,6 +554,8 @@ module Shumway.GFX.Geometry {
     tx: number;
     ty: number;
 
+    private static _svg: any = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
     constructor (a: number, b: number, c: number, d: number, tx: number, ty: number) {
       this.setElements(a, b, c, d, tx, ty);
     }
@@ -807,6 +809,11 @@ module Shumway.GFX.Geometry {
       this.ty = 0;
     }
 
+    isIdentity (): boolean {
+      return this.a === 1 && this.b  === 0 && this.c  === 0 &&
+             this.d === 1 && this.tx === 0 && this.ty === 0;
+    }
+
     transformPoint (point: Point) {
       var x = point.x;
       var y = point.y;
@@ -931,6 +938,17 @@ module Shumway.GFX.Geometry {
     static multiply = function (dst, src) {
       dst.transform(src.a, src.b, src.c, src.d, src.tx, src.ty);
     };
+
+    public toSVGMatrix(): SVGMatrix {
+      var matrix: SVGMatrix = Matrix._svg.createSVGMatrix();
+      matrix.a = this.a;
+      matrix.b = this.b;
+      matrix.c = this.c;
+      matrix.d = this.d;
+      matrix.e = this.tx;
+      matrix.f = this.ty;
+      return matrix;
+    }
   }
 
   /**
