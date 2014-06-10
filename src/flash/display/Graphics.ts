@@ -500,7 +500,7 @@ module Shumway.AVM2.AS.flash.display {
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
       this._writeGradientStyle(PathCommand.BeginGradientFill, type, colors, alphas, ratios, matrix,
-                              spreadMethod, interpolationMethod, focalPointRatio);
+                              spreadMethod, interpolationMethod, focalPointRatio, false);
       this._hasFills = true;
     }
 
@@ -584,9 +584,8 @@ module Shumway.AVM2.AS.flash.display {
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
-      // TODO: only emit this if a stroke width has been set by calling `lineStyle`
       this._writeGradientStyle(PathCommand.LineStyleGradient, type, colors, alphas, ratios, matrix,
-                              spreadMethod, interpolationMethod, focalPointRatio);
+                              spreadMethod, interpolationMethod, focalPointRatio, !this._hasLines);
     }
 
     lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
@@ -1241,11 +1240,15 @@ module Shumway.AVM2.AS.flash.display {
      * Gradients are specified the same for fills and strokes, so we only need to serialize them
      * once. The Parameter `pathCommand` is treated as the actual command to serialize, and must
      * be one of PATH_COMMAND_BEGIN_GRADIENT_FILL and PATH_COMMAND_LINE_STYLE_GRADIENT.
+     *
+     * This method doesn't actually write anything if the `skipWrite` argument is true. In that
+     * case, it only does arguments checks so the right exceptions are thrown.
      */
     private _writeGradientStyle(pathCommand: PathCommand, type: string,
                                 colors: number[], alphas: number[], ratios: number[],
                                 matrix: geom.Matrix, spreadMethod: string,
-                                interpolationMethod: string, focalPointRatio: number): void
+                                interpolationMethod: string, focalPointRatio: number,
+                                skipWrite: boolean): void
     {
       if (isNullOrUndefined(type)) {
         throwError('TypeError', Errors.NullPointerError, 'type');
@@ -1258,18 +1261,18 @@ module Shumway.AVM2.AS.flash.display {
       if (isNullOrUndefined(colors)) {
         throwError('TypeError', Errors.NullPointerError, 'colors');
       }
-      if (typeof colors !== 'array') {
+      if (!(colors instanceof Array)) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
       }
 
-      if (typeof alphas !== 'array') {
+      if (!(alphas instanceof Array)) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
       }
       if (isNullOrUndefined(alphas)) {
         throwError('TypeError', Errors.NullPointerError, 'alphas');
       }
 
-      if (typeof ratios !== 'array') {
+      if (!(ratios instanceof Array)) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
       }
       if (isNullOrUndefined(ratios)) {
@@ -1292,13 +1295,8 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       // If the colors, alphas and ratios arrays don't all have the same length or if any of the
-      // given ratios falls outside [0,0xff], Flash uses a solid white fill.
+      // given ratios falls outside [0,0xff], Flash just ignores the gradient style.
       if (!recordsValid) {
-        if (pathCommand === PathCommand.BeginGradientFill) {
-          this.beginFill(0xffffff, 1);
-        } else {
-          this.lineStyle(0xffffff, 1);
-        }
         return;
       }
 
@@ -1306,6 +1304,10 @@ module Shumway.AVM2.AS.flash.display {
         matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
       } else if (!(flash.geom.Matrix.isType(matrix))) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+      }
+
+      if (skipWrite) {
+        return;
       }
 
       // If `spreadMethod` is invalid, "pad" is used.
@@ -1319,7 +1321,7 @@ module Shumway.AVM2.AS.flash.display {
       if (interpolation < 0) {
         interpolation = InterpolationMethod.toNumber(InterpolationMethod.RGB);
       }
-      // Focal point is scaled by 0xff, rounded and stored as a signed short.
+      // Focal point is scaled by 0xff, divided by 2, rounded and stored as a signed short.
       focalPointRatio = clamp(+focalPointRatio, -1, 1) / 2 * 0xff|0;
       this._graphicsData.beginGradient(pathCommand, colorsRGBA, coercedRatios, gradientType,
                                        matrix, spread, interpolation, focalPointRatio);

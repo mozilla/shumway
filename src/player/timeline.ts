@@ -288,11 +288,13 @@ module Shumway.Timeline {
     }
   }
 
+  // TODO: move this, and the other symbol classes, into better-suited files.
   export class FontSymbol extends Symbol {
     name: string = "";
     bold: boolean = false;
     italic: boolean = false;
     data: Uint8Array;
+    metrics: any;
 
     constructor(id: number) {
       super(id, flash.text.Font);
@@ -304,6 +306,7 @@ module Shumway.Timeline {
       symbol.bold = data.bold;
       symbol.italic = data.italic;
       symbol.data = data.data;
+      symbol.metrics = data.metrics;
       return symbol;
     }
   }

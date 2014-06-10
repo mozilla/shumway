@@ -1,4 +1,4 @@
-"use strict";
+//"use strict";
 
 if (typeof scriptArgs === 'undefined') {
 	var scriptArgs = arguments;
@@ -113,6 +113,7 @@ loadEngine();
 load('examples/inspector/js/unit.js');
 
 var executeUnitTests = function(avm2) {
+  var testsStart = dateNow();
 	for (var i = 0; i < scriptArgs.length; i++) {
 		var testFile = scriptArgs[i];
 		if (testFile.substr(testFile.length - 3) !== '.js') {
@@ -120,6 +121,8 @@ var executeUnitTests = function(avm2) {
 		}
     executeTestFile(testFile);
 	}
+  print('All tests complete (' + Math.round((dateNow() - testsStart) * 100) / 100 + 'ms + ' +
+        initDuration + 'ms startup)');
 }
 
 var unitTests;
@@ -142,8 +145,7 @@ function executeTestFile(testFile) {
     print(e);
     print('stack:\n', e.stack);
   }
-  print(testFile + ': Complete (' + Math.round((dateNow() - start) * 100) / 100 + 'ms + ' +
-        initDuration + 'ms startup)');
+  print(testFile + ': Complete (' + Math.round((dateNow() - start) * 100) / 100 + 'ms)');
 }
 
 // Shumway.AVM2.Runtime.traceExecution.value = true;

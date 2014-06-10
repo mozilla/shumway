@@ -397,29 +397,7 @@ module Shumway.GFX {
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
-            var gradientType = styles.readUnsignedByte();
-            var focalPoint = styles.readShort() * 2 / 0xff;
-            assert(focalPoint >= -1 && focalPoint <= 1);
-            fillTransform = this._readMatrix(styles);
-            // This effectively applies the matrix to the line the gradient is drawn along:
-            var x1 = fillTransform.tx - fillTransform.a;
-            var y1 = fillTransform.ty - fillTransform.b;
-            var x2 = fillTransform.tx + fillTransform.a;
-            var y2 = fillTransform.ty + fillTransform.b;
-
-            var gradient = gradientType === GradientType.Linear ?
-                           context.createLinearGradient(x1, y1, x2, y2) :
-                           context.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
-            var colorStopsCount = styles.readUnsignedByte();
-            for (var i = 0; i < colorStopsCount; i++) {
-              var ratio = styles.readUnsignedByte() / 0xff;
-              var cssColor = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
-              gradient.addColorStop(ratio, cssColor);
-            }
-            context.fillStyle = gradient;
-
-            // Skip spread and interpolation modes for now.
-            styles.position += 2;
+            context.fillStyle = this._readGradient(styles, context);
             break;
           case PathCommand.EndFill:
             if (fillPath) {
@@ -442,6 +420,12 @@ module Shumway.GFX {
             context.lineJoin = RenderableShape.LINE_JOINT_STYLES[styles.readByte()];
             context.miterLimit = styles.readByte();
             break;
+          case PathCommand.LineStyleGradient:
+            if (strokePath) {
+              !clipRegion && this._strokePath(context, strokePath);
+            }
+            context.strokeStyle = this._readGradient(styles, context);
+            break;
           case PathCommand.LineEnd:
             if (strokePath) {
               !clipRegion && this._strokePath(context, strokePath);
@@ -451,7 +435,7 @@ module Shumway.GFX {
             break;
           default:
             assertUnreachable('Invalid command ' + command + ' encountered at index' +
-                              (commandIndex - 1) + ' of ' + commandsCount);
+                              commandIndex + ' of ' + commandsCount);
         }
       }
       assert(styles.bytesAvailable === 0);
@@ -496,6 +480,33 @@ module Shumway.GFX {
         data.readFloat(), data.readFloat(), data.readFloat(),
         data.readFloat(), data.readFloat(), data.readFloat()
       );
+    }
+
+    private _readGradient(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasGradient {
+      var gradientType = styles.readUnsignedByte();
+      var focalPoint = styles.readShort() * 2 / 0xff;
+      assert(focalPoint >= -1 && focalPoint <= 1);
+      var transform = this._readMatrix(styles);
+      // This effectively applies the matrix to the line the gradient is drawn along:
+      var x1 = transform.tx - transform.a;
+      var y1 = transform.ty - transform.b;
+      var x2 = transform.tx + transform.a;
+      var y2 = transform.ty + transform.b;
+
+      var gradient = gradientType === GradientType.Linear ?
+                     context.createLinearGradient(x1, y1, x2, y2) :
+                     context.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
+      var colorStopsCount = styles.readUnsignedByte();
+      for (var i = 0; i < colorStopsCount; i++) {
+        var ratio = styles.readUnsignedByte() / 0xff;
+        var cssColor = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
+        gradient.addColorStop(ratio, cssColor);
+      }
+
+      // Skip spread and interpolation modes for now.
+      styles.position += 2;
+
+      return gradient;
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {
