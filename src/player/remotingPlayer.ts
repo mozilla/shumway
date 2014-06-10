@@ -92,6 +92,18 @@ module Shumway.Remoting.Player {
       }
     }
 
+    writeFont(font: flash.text.Font) {
+      if (font._symbol) {
+        var symbol = font._symbol;
+        this.output.writeInt(MessageTag.RegisterFont);
+        this.output.writeInt(font._id);
+        this.output.writeBoolean(symbol.bold);
+        this.output.writeBoolean(symbol.italic);
+        this.output.writeInt(this.outputAssets.length);
+        this.outputAssets.push(symbol.data);
+      }
+    }
+
     writeUpdateFrame(displayObject: DisplayObject) {
       // Write Header
       this.output.writeInt(MessageTag.UpdateFrame);

@@ -122,6 +122,9 @@ module Shumway.Remoting.GFX {
           case MessageTag.UpdateBitmapData:
             this._readUpdateBitmapData();
             break;
+          case MessageTag.RegisterFont:
+            this._readFont();
+            break;
           case MessageTag.UpdateFrame:
             this._readUpdateFrame();
             break;
@@ -231,6 +234,28 @@ module Shumway.Remoting.GFX {
       var color = this.input.readInt();
       context.root.color = Color.FromARGB(color);
       context.root.bounds = this._readRectangle();
+    }
+
+    private _readFont() {
+      var input = this.input;
+      var fontId = input.readInt();
+      var bold = input.readBoolean();
+      var italic = input.readBoolean();
+      var assetId = input.readInt();
+      var data = this.inputAssets[assetId];
+
+      var head = document.head;
+      head.insertBefore(document.createElement('style'), head.firstChild);
+      var style = <CSSStyleSheet>document.styleSheets[0];
+      style.insertRule(
+        '@font-face{' +
+          'font-family:swffont' + fontId + ';' +
+          'src:url(data:font/opentype;base64,' + Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' +
+        '}',
+        style.cssRules.length
+      );
+
+      this.inputAssets[assetId] = null;
     }
 
     private _readUpdateFrame() {

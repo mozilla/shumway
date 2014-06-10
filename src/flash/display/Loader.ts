@@ -273,6 +273,9 @@ module Shumway.AVM2.AS.flash.display {
           break;
         case 'font':
           symbol = Timeline.FontSymbol.FromData(data);
+          var font = flash.text.Font.initializeFrom(symbol);
+          flash.text.Font.instanceConstructorNoInitialize.call(font);
+          AVM2.instance.globals['Shumway.Player.Utils'].registerFont(font);
           break;
         case 'sound':
           symbol = Timeline.SoundSymbol.FromData(data);

@@ -15,6 +15,7 @@
  */
 
 ///<reference path='../avm2/references.ts' />
+///<reference path='../htmlparser.ts' />
 ///<reference path='../ShapeData.ts' />
 ///<reference path='../player/remoting.ts' />
 
@@ -329,7 +330,7 @@
 ///<reference path='text/TextFormat.ts' />
 ///<reference path='text/TextFormatAlign.ts' />
 ///<reference path='text/TextFormatDisplay.ts' />
-// ///<reference path='text/TextInteractionMode.ts' />
+///<reference path='text/TextInteractionMode.ts' />
 ///<reference path='text/TextLineMetrics.ts' />
 // ///<reference path='text/TextRenderer.ts' />
 // ///<reference path='text/TextRun.ts' />
