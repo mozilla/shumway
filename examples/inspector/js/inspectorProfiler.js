@@ -37,14 +37,7 @@ var profiler = (function() {
   }
 
   Profiler.prototype.start = function(maxTime) {
-    try {
-      requestTimelineBuffers().then(function (buffers) {
-        for (var i = 0; i < buffers.length; i++) {
-          buffers[i].reset();
-        }
-      });
-    }
-    catch (e) {}
+    requestTimelineBuffers('clear');
     controller.deactivateProfile();
     maxTime = maxTime || 0;
     elProfilerToolbar.classList.add("withEmphasis");
@@ -58,7 +51,7 @@ var profiler = (function() {
   }
 
   Profiler.prototype.createProfile = function() {
-    requestTimelineBuffers().then(function (buffers) {
+    requestTimelineBuffers('get').then(function (buffers) {
       controller.createProfile(buffers);
       elProfilerToolbar.classList.remove("withEmphasis");
       elBtnStartStop.textContent = "Start";
@@ -109,20 +102,20 @@ var profiler = (function() {
 
 })();
 
-function requestTimelineBuffers() {
+function requestTimelineBuffers(cmd) {
   var buffersPromises = [];
   // TODO request timelineBuffers using postMessage (instead of IFramePlayer.Shumway)
 
-  if (IFramePlayer.instance) {
-    buffersPromises.push(IFramePlayer.instance.requestTimeline('AVM2'));
-    buffersPromises.push(IFramePlayer.instance.requestTimeline('Player'));
-    buffersPromises.push(IFramePlayer.instance.requestTimeline('SWF'));
-  } else {
-    buffersPromises.push(Promise.resolve(Shumway.AVM2.timelineBuffer));
-    buffersPromises.push(Promise.resolve(Shumway.Player.timelineBuffer));
-    buffersPromises.push(Promise.resolve(Shumway.SWF.timelineBuffer));
+  if (typeof easelHost !== 'undefined') {
+    buffersPromises.push(easelHost.requestTimeline('AVM2', cmd));
+    buffersPromises.push(easelHost.requestTimeline('Player', cmd));
+    buffersPromises.push(easelHost.requestTimeline('SWF', cmd));
   }
-  buffersPromises.push(Promise.resolve(Shumway.GFX.timelineBuffer));
+  if (cmd === 'clear') {
+    Shumway.GFX.timelineBuffer.reset();
+  } else {
+    buffersPromises.push(Promise.resolve(Shumway.GFX.timelineBuffer));
+  }
 
   return Promise.all(buffersPromises).then(function (result) {
     return result.filter(function (i) {

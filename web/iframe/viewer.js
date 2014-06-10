@@ -150,7 +150,8 @@ function parseSwf(url, movieParams, objectParams, compilerSettings) {
 
       var easel = createEasel();
 
-      var player = new Shumway.EaselEmbedding(easel).embed();
+      var player = new Shumway.Player.Test.TestPlayer();
+      var easelHost = new Shumway.Player.Test.TestEaselHost(easel);
       player.load(url);
 //      SWF.embed(url, document, document.getElementById("viewer"), {
 //         url: url,

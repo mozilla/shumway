@@ -110,37 +110,6 @@ function showOpenFileButton(show) {
   document.getElementById('debugInfoToolbarTabs').classList.toggle('active', !show);
 }
 
-function IFramePlayer(playerWorker) {
-  if (IFramePlayer.instance) {
-    throw "Only one IFramePlayer allowed.";
-  }
-  IFramePlayer.instance = this;
-  this._worker = playerWorker;
-  this._timelineRequests = {};
-}
-IFramePlayer._updatesListener = null;
-IFramePlayer.instance = undefined;
-IFramePlayer.sendUpdates = function (data) {
-  var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
-  IFramePlayer._updatesListener(updates, data.assets);
-};
-IFramePlayer.prototype = {
-  sendEventUpdates: function(updates) {
-    var bytes = updates.getBytes();
-    this._worker.postMessage({type: 'gfx', updates: bytes}, '*', [bytes.buffer]);
-  },
-  registerForUpdates: function (listener) {
-    IFramePlayer._updatesListener = listener;
-  },
-  requestTimeline: function(type) {
-    return new Promise(function (resolve) {
-      this._timelineRequests[type] = resolve;
-      this._worker.postMessage({type: 'timeline', request: type}, '*');
-    }.bind(this));
-  }
-};
-
 var easelHost;
 function runIFramePlayer(data) {
   data.type = 'runSwf';
@@ -149,29 +118,9 @@ function runIFramePlayer(data) {
   playerWorkerIFrame.addEventListener('load', function () {
     var playerWorker = playerWorkerIFrame.contentWindow;
     playerWorker.postMessage(data, '*');
-    var player = new IFramePlayer(playerWorker);
+
     var easel = createEasel();
-    easelHost = new Shumway.EaselHost(easel, player);
-    window.addEventListener('message', function (e) {
-      var data = e.data;
-      if (typeof data === 'object' && data !== null) {
-        if (data.type === 'player') {
-          IFramePlayer.sendUpdates(data);
-        } else if (data.type === 'timelineResponse') {
-          // Transform timeline into a Timeline object.
-          data.timeline.__proto__ = Shumway.Tools.Profiler.TimelineBuffer.prototype;
-          data.timeline._marks.__proto__ = Shumway.CircularBuffer.prototype;
-          data.timeline._times.__proto__ = Shumway.CircularBuffer.prototype;
-          IFramePlayer.instance._timelineRequests[data.request](data.timeline);
-        }
-      }
-    });
-    document.addEventListener('shumwayoptionschanged', function () {
-      playerWorker.postMessage({
-        type: 'options',
-        settings: Shumway.Settings.getSettings()
-      }, '*');
-    });
+    easelHost = new Shumway.Player.Window.WindowEaselHost(easel, playerWorker, window);
   });
 }
 
@@ -224,7 +173,8 @@ function executeFile(file, buffer, movieParams) {
           easel.stage.invalidatePaint();
         });
 
-        var player = new Shumway.EaselEmbedding(easel).embed();
+        var player = new Shumway.Player.Test.TestPlayer();
+        easelHost = new Shumway.Player.Test.TestEaselHost(easel);
         player.load(file);
 
         // embedding.loader

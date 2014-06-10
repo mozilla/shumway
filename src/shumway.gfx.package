@@ -40,7 +40,6 @@ build/ts/gfx/easel.js
 #build/ts/gfx/shapes.js
 
 build/ts/player/remotingGfx.js
-build/ts/player/fakeSyncWorker.js
-build/ts/player/easel.js
+build/ts/player/easelHost.js
 
 #!inline console.timeEnd("Load GFX Dependencies");

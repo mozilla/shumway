@@ -14,29 +14,45 @@
  * limitations under the License.
  */
 
-module Shumway {
+module Shumway.Player.Test {
   export class FakeSyncWorker {
     public static WORKER_PATH = '../../src/player/fakechannel.js';
 
+    private static _singelton: FakeSyncWorker;
+
+    public static get instance() {
+      if (!FakeSyncWorker._singelton) {
+        FakeSyncWorker._singelton = new FakeSyncWorker();
+      }
+      return FakeSyncWorker._singelton;
+    }
+
     private _worker: Worker;
-    onsyncmessage: (ev: any) => any;
+    private _onsyncmessageListeners: Array<(ev: any) => any>;
 
     constructor() {
       this._worker = new Worker(FakeSyncWorker.WORKER_PATH);
-    }
-
-    set onmessage(value: (ev: any) => any) {
-      this._worker.onmessage = value;
+      this._onsyncmessageListeners = [];
     }
 
     addEventListener(type: string, listener: EventListener, useCapture?: boolean): void {
       if (type !== 'syncmessage') {
         this._worker.addEventListener(type, listener, useCapture);
+      } else {
+        this._onsyncmessageListeners.push(listener);
       }
     }
 
     removeEventListener(eventType: string, callback: (ev: any) => any): void {
+      if (eventType === 'syncmessage') {
+        var i = this._onsyncmessageListeners.indexOf(callback);
+        if (i >= 0) {
+          this._onsyncmessageListeners.splice(i, 1);
+        }
+        return;
+      }
       this._worker.removeEventListener(eventType, callback);
+
     }
 
     postMessage(message: any, ports?: any): void {
@@ -44,13 +60,10 @@ module Shumway {
     }
 
     postSyncMessage(message: any, ports?: any): void {
-      if (this.onsyncmessage) {
-        this.onsyncmessage({ data: message });
-      }
-    }
+      this._onsyncmessageListeners.forEach(function (callback) {
+        callback({ data: message });
 
-    terminate(): void {
-      this._worker.terminate();
+      });
     }
   }
 }

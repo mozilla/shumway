@@ -97,64 +97,6 @@ Shumway.FileLoadingService.instance = {
   }
 };
 
-function onWindowMessage(e) {
-  var data = e.data;
-  if (typeof data === 'object' && data !== null) {
-    switch (data.type) {
-      case 'runSwf':
-        if (data.settings) {
-          Shumway.Settings.setSettings(data.settings);
-        }
-        runSwfPlayer(data);
-        document.body.style.backgroundColor = 'green';
-        break;
-      case 'gfx':
-        IFramePlayerChannel.sendEventUpdates(data);
-        break;
-      case 'options':
-        Shumway.Settings.setSettings(data.settings);
-        break;
-      case 'timeline':
-        switch (data.request) {
-          case 'AVM2':
-            parent.postMessage({type:'timelineResponse', request: data.request, timeline: Shumway.AVM2.timelineBuffer}, '*');
-            break;
-          case 'Player':
-            parent.postMessage({type:'timelineResponse', request: data.request, timeline: Shumway.Player.timelineBuffer}, '*');
-            break;
-          case 'SWF':
-            parent.postMessage({type:'timelineResponse', request: data.request, timeline: Shumway.SWF.timelineBuffer}, '*');
-            break;
-        }
-        break;
-    }
-  }
-}
-
-function IFramePlayerChannel() { }
-IFramePlayerChannel._eventUpdatesListener = null;
-IFramePlayerChannel.sendEventUpdates = function (data) {
-  if (!IFramePlayerChannel._eventUpdatesListener) {
-    return;
-  }
-  var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
-  IFramePlayerChannel._eventUpdatesListener(updates);
-};
-IFramePlayerChannel.prototype = {
-  sendUpdates: function (updates, assets) {
-    var bytes = updates.getBytes();
-    window.parent.postMessage({
-      type: 'player',
-      updates: bytes,
-      assets: assets
-    }, '*', [bytes.buffer]);
-  },
-  registerForEventUpdates: function (listener) {
-    IFramePlayerChannel._eventUpdatesListener = listener;
-  }
-};
-
 function runSwfPlayer(data) {
   var sysMode = data.sysMode;
   var appMode = data.appMode;
@@ -164,7 +106,7 @@ function runSwfPlayer(data) {
   var file = data.file;
   Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
     function runSWF(file) {
-      var player = new Shumway.Player.Player(new IFramePlayerChannel());
+      var player = new Shumway.Player.Window.WindowPlayer(window);
       player.load(file);
     }
     file = Shumway.FileLoadingService.instance.setBaseUrl(file);
@@ -181,4 +123,16 @@ function runSwfPlayer(data) {
   });
 }
 
-window.addEventListener('message', onWindowMessage);
+window.addEventListener('message', function onWindowMessage(e) {
+  var data = e.data;
+  if (typeof data !== 'object' || data === null || data.type !== 'runSwf') {
+    return;
+  }
+  window.removeEventListener('message', onWindowMessage);
+
+  if (data.settings) {
+    Shumway.Settings.setSettings(data.settings);
+  }
+  runSwfPlayer(data);
+  document.body.style.backgroundColor = 'green';
+});
