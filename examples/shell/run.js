@@ -346,7 +346,6 @@ load("../../build/ts/flash/net/NetStreamMulticastInfo.js");
 load("../../build/ts/flash/net/NetConnection.js");
 //../../build/ts/flash/events/VideoEvent.js
 load("../../build/ts/flash/filters/BitmapFilterType.js");
-load("../../build/ts/flash/display/SpreadMethod.js");
 load("../../build/ts/flash/text/TextField.js");
 //../../build/ts/flash/events/GestureEvent.js
 //../../build/ts/flash/events/PressAndTapGestureEvent.js
@@ -375,6 +374,9 @@ load("../../build/ts/flash/xml/XMLNodeType.js");
 //../../build/ts/flash/net/GroupSpecifier.js
 load("../../build/ts/flash/system/SecurityPanel.js");
 //../../build/ts/flash/globalization/Collator.js
+load("../../build/ts/flash/display/GradientType.js");
+load("../../build/ts/flash/display/InterpolationMethod.js");
+load("../../build/ts/flash/display/SpreadMethod.js");
 load("../../build/ts/flash/display/GraphicsPathWinding.js");
 load("../../build/ts/flash/display/GraphicsPathCommand.js");
 load("../../build/ts/flash/display/GraphicsPath.js");
@@ -459,7 +461,6 @@ load("../../build/ts/flash/text/StyleSheet.js");
 //../../build/ts/flash/display/ShaderInput.js
 //../../build/ts/flash/net/NetStreamPlayTransitions.js
 load("../../build/ts/flash/display/BitmapEncodingColorSpace.js");
-load("../../build/ts/flash/display/InterpolationMethod.js");
 load("../../build/ts/flash/media/ID3Info.js");
 load("../../build/ts/flash/system/TouchscreenType.js");
 load("../../build/ts/flash/events/SecurityErrorEvent.js");
@@ -470,7 +471,6 @@ load("../../build/ts/flash/net/URLStream.js");
 //../../build/ts/flash/events/OutputProgressEvent.js
 load("../../build/ts/flash/display/SimpleButton.js");
 //../../build/ts/flash/display/JPEGXREncoderOptions.js
-load("../../build/ts/flash/display/GradientType.js");
 load("../../build/ts/flash/net/URLVariables.js");
 //../../build/ts/flash/globalization/CurrencyFormatter.js
 //../../build/ts/flash/printing/PrintJobOrientation.js
@@ -533,6 +533,7 @@ load("../../build/ts/player/timeline.js");
 load("../../build/ts/player/remotingPlayer.js");
 load("../../build/ts/player/player.js");
 load("../../build/ts/player/avmLoader.js");
+load("../../build/ts/player/embed.js");
 
 load("../../build/ts/flash/linker.js");
 

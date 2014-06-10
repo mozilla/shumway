@@ -1258,18 +1258,18 @@ module Shumway.AVM2.AS.flash.display {
       if (isNullOrUndefined(colors)) {
         throwError('TypeError', Errors.NullPointerError, 'colors');
       }
-      if (typeof colors !== 'array') {
+      if (!(colors instanceof Array)) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
       }
 
-      if (typeof alphas !== 'array') {
+      if (!(alphas instanceof Array)) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
       }
       if (isNullOrUndefined(alphas)) {
         throwError('TypeError', Errors.NullPointerError, 'alphas');
       }
 
-      if (typeof ratios !== 'array') {
+      if (!(ratios instanceof Array)) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
       }
       if (isNullOrUndefined(ratios)) {
@@ -1319,7 +1319,7 @@ module Shumway.AVM2.AS.flash.display {
       if (interpolation < 0) {
         interpolation = InterpolationMethod.toNumber(InterpolationMethod.RGB);
       }
-      // Focal point is scaled by 0xff, rounded and stored as a signed short.
+      // Focal point is scaled by 0xff, divided by 2, rounded and stored as a signed short.
       focalPointRatio = clamp(+focalPointRatio, -1, 1) / 2 * 0xff|0;
       this._graphicsData.beginGradient(pathCommand, colorsRGBA, coercedRatios, gradientType,
                                        matrix, spread, interpolation, focalPointRatio);

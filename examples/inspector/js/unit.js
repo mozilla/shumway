@@ -8,7 +8,6 @@ function eqFloat(a, b, test) {
     return fail("FAIL " + test + ". Got " + a + ", expected " + b + failedLocation());
   }
   console.info("PASS" + test);
-  testNumber ++;
 }
 
 function neq(a, b, test) {
@@ -18,7 +17,6 @@ function neq(a, b, test) {
                 failedLocation());
   }
   console.info("PASS" + test);
-  testNumber ++;
 }
 
 function eq(a, b, test) {
@@ -27,7 +25,6 @@ function eq(a, b, test) {
     return fail("FAIL " + test + ". Got " + a + ", expected " + b + failedLocation());
   }
   console.info("PASS" + test);
-  testNumber ++;
 }
 
 function eqArray(a, b, test) {
@@ -51,7 +48,6 @@ function eqArray(a, b, test) {
     }
   }
   console.info("PASS" + test);
-  testNumber ++;
 }
 
 function structEq(a, b, test) {
@@ -81,7 +77,6 @@ function structEq(a, b, test) {
     }
   }
   console.info("PASS" + test);
-  testNumber++;
 }
 
 function check(condition, test) {
@@ -91,10 +86,27 @@ function check(condition, test) {
                 failedLocation());
   }
   console.info("PASS" + test);
-  testNumber ++;
+}
+
+function assertThrowsInstanceOf(f, ctor, test) {
+  test = description(test);
+  var msg;
+  try {
+    f();
+  } catch (exc) {
+    if (exc instanceof ctor) {
+      return;
+    }
+    msg = "Expected exception " + ctor.name + ", got " + exc;
+  }
+  if (msg === undefined) {
+    msg = "Expected exception " + ctor.name + ", no exception thrown";
+  }
+  return fail("FAIL " + test + ". " + msg + failedLocation());
 }
 
 function description(test) {
+  testNumber++;
   return test ? ": " + test : " #" + testNumber;
 }
 

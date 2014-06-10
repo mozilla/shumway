@@ -1,4 +1,4 @@
-"use strict";
+//"use strict";
 
 if (typeof scriptArgs === 'undefined') {
 	var scriptArgs = arguments;
