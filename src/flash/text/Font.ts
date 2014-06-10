@@ -43,6 +43,11 @@ module Shumway.AVM2.AS.flash.text {
       self._fontStyle = null;
       self._fontType = null;
 
+      self.ascent = 0;
+      self.descent = 0;
+      self.leading = 0;
+      self.advances = null;
+
       if (symbol) {
         self._symbol = symbol;
         self._fontName = symbol.name;
@@ -57,6 +62,13 @@ module Shumway.AVM2.AS.flash.text {
         } else {
           self._fontStyle = FontStyle.REGULAR;
         }
+
+        var metrics = symbol.metrics;
+        self.ascent = metrics.ascent;
+        self.descent = metrics.descent;
+        self.leading = metrics.leading;
+        self.advances = metrics.advances;
+
         self._fontType = FontType.EMBEDDED;
         Font.fontsBySymbolId[symbol.id] = self;
       }
@@ -82,6 +94,7 @@ module Shumway.AVM2.AS.flash.text {
     ascent: number;
     descent: number;
     leading: number;
+    advances: number[];
 
     // AS -> JS Bindings
     static enumerateFonts(enumerateDeviceFonts: boolean = false): any [] {

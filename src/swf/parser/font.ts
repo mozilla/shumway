@@ -43,9 +43,7 @@ module Shumway.SWF.Parser {
   }
 
   export function defineFont(tag, dictionary) {
-    // Ignoring "['glyf'] is better written in dot notation"
-    /*jshint -W069 */
-
+    var uniqueName = 'swf-font-' + tag.id;
     var fontName = tag.name || uniqueName;
 
     var font = {
@@ -426,7 +424,6 @@ module Shumway.SWF.Parser {
     '\x00\x00' // maxComponentDepth
     ;
 
-    var uniqueName = 'swf-font-' + tag.id;
     var psName = fontName.replace(/ /g, '');
     var strings = [
         tag.copyright || 'Original licence', // 0. Copyright
@@ -504,7 +501,8 @@ module Shumway.SWF.Parser {
     var metrics = {
       ascent: ascent / unitPerEm,
       descent: -descent / unitPerEm,
-      leading: leading / unitPerEm
+      leading: leading / unitPerEm,
+      advances: advances
     };
 
     // TODO: use a buffer to generate font data
