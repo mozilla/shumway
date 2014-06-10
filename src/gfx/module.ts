@@ -108,7 +108,13 @@ module Shumway.GFX {
         this.transform(i.a, i.b, i.c, i.d, i.e, i.f);
         return;
       }
-      originalFill.call(this, path, fillRule);
+      if (arguments.length === 0) {
+        originalFill.call(this);
+      } else if (arguments.length === 1) {
+        originalFill.call(this, path);
+      } else if (arguments.length === 2) {
+        originalFill.call(this, path, fillRule);
+      }
     });
   }
 }
