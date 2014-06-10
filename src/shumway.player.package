@@ -281,7 +281,6 @@ build/ts/flash/net/NetStreamMulticastInfo.js
 build/ts/flash/net/NetConnection.js
 #build/ts/flash/events/VideoEvent.js
 build/ts/flash/filters/BitmapFilterType.js
-build/ts/flash/display/SpreadMethod.js
 build/ts/flash/text/TextField.js
 #build/ts/flash/events/GestureEvent.js
 #build/ts/flash/events/PressAndTapGestureEvent.js
@@ -310,6 +309,9 @@ build/ts/flash/xml/XMLNodeType.js
 #build/ts/flash/net/GroupSpecifier.js
 build/ts/flash/system/SecurityPanel.js
 #build/ts/flash/globalization/Collator.js
+build/ts/flash/display/GradientType.js
+build/ts/flash/display/InterpolationMethod.js
+build/ts/flash/display/SpreadMethod.js
 build/ts/flash/display/GraphicsPathWinding.js
 build/ts/flash/display/GraphicsPathCommand.js
 build/ts/flash/display/GraphicsPath.js
@@ -394,7 +396,6 @@ build/ts/flash/text/StyleSheet.js
 #build/ts/flash/display/ShaderInput.js
 #build/ts/flash/net/NetStreamPlayTransitions.js
 build/ts/flash/display/BitmapEncodingColorSpace.js
-build/ts/flash/display/InterpolationMethod.js
 build/ts/flash/media/ID3Info.js
 build/ts/flash/system/TouchscreenType.js
 build/ts/flash/events/SecurityErrorEvent.js
@@ -405,7 +406,6 @@ build/ts/flash/net/URLStream.js
 #build/ts/flash/events/OutputProgressEvent.js
 build/ts/flash/display/SimpleButton.js
 #build/ts/flash/display/JPEGXREncoderOptions.js
-build/ts/flash/display/GradientType.js
 build/ts/flash/net/URLVariables.js
 #build/ts/flash/globalization/CurrencyFormatter.js
 #build/ts/flash/printing/PrintJobOrientation.js
