@@ -187,24 +187,6 @@ for (var f = 0; f < files.length; f++) {
        * Load SWF Dependencies
        */
       SWF = {};
-//      // load(tsBuildPath + "swf/swf.js");
-////      load(tsBuildPath + "swf/util.js");
-//      load(jsBuildPath + "swf/parser/types.js");
-////      load(tsBuildPath + "swf/structs.js");
-//      load(jsBuildPath + "swf/parser/tags.js");
-//      load(tsBuildPath + "swf/inflate.js");
-//      load(tsBuildPath + "swf/stream.js");
-//      load(tsBuildPath + "swf/templates.js");
-//      load(tsBuildPath + "swf/generator.js");
-//      load(tsBuildPath + "swf/handlers.js");
-//      load(tsBuildPath + "swf/parser.js");
-//      load(tsBuildPath + "swf/bitmap.js");
-//      load(homePattsBuildPath + "swf/button.js");
-//      load(tsBuildPath + "swf/font.js");
-//      load(tsBuildPath + "swf/image.js");
-//      load(tsBuildPath + "swf/label.js");
-//      load(tsBuildPath + "swf/shape.js");
-//      load(tsBuildPath + "swf/text.js");
       load(tsBuildPath + "swf/module.js");
       load(tsBuildPath + "swf/inflate.js");
       load(tsBuildPath + "swf/stream.js");

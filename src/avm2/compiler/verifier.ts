@@ -358,6 +358,16 @@ module Shumway.AVM2.Verifier {
       }
     }
 
+    getTraitAt(slotId: number) {
+      var traits = this.info.traits;
+      for (var i = traits.length - 1; i >= 0; i--) {
+        if (traits[i].slotId === slotId) {
+          return traits[i];
+        }
+      }
+      Shumway.Debug.unexpected("Cannot find trait with slotId: " + slotId + " in " + traits);
+    }
+
     equals(other: Type): boolean {
       if (other.isTraitsType()) {
         return this.info.traits === (<TraitsType>other).info.traits;
@@ -790,7 +800,7 @@ module Shumway.AVM2.Verifier {
           } else if (traitsType === Type.Array) {
             // Can't do much about Arrays unfortunately.
           } else {
-            writer && writer.redLn("WARNING: getProperty(" + mn + ")");
+            writer && writer.warnLn("getProperty(" + mn + ")");
           }
         }
         return Type.Any;
@@ -808,7 +818,7 @@ module Shumway.AVM2.Verifier {
           } else if (traitsType === Type.Array) {
             // We can optimize these.
           } else {
-            writer && writer.redLn("WARNING: setProperty(" + mn + ")");
+            writer && writer.warnLn("setProperty(" + mn + ")");
           }
         }
       }
@@ -839,7 +849,7 @@ module Shumway.AVM2.Verifier {
               return traitsType;
             }
           } else {
-            writer && writer.redLn("WARNING: findProperty(" + mn + ")");
+            writer && writer.warnLn("findProperty(" + mn + ")");
             return Type.Any;
           }
         }
@@ -858,11 +868,24 @@ module Shumway.AVM2.Verifier {
           }
         }
 
-        writer && writer.redLn("WARNING: findProperty(" + mn + ")");
+        writer && writer.warnLn("findProperty(" + mn + ")");
         return Type.Any;
       }
 
       function accessSlot(object: Type): Type {
+        if (object instanceof TraitsType) {
+          var traitsType = <TraitsType>object;
+          var trait = traitsType.getTraitAt(bc.index);
+          writer && writer.debugLn("accessSlot() -> " + trait);
+          if (trait) {
+            ti().trait = trait;
+            if (trait.isSlot()) {
+              return Type.fromName(trait.typeName, self.domain).instanceType();
+            } else if (trait.isClass()) {
+              return Type.from(trait.classInfo, self.domain);
+            }
+          }
+        }
         return Type.Any;
       }
 
@@ -873,7 +896,7 @@ module Shumway.AVM2.Verifier {
           }
           return object.instanceType();
         } else {
-          writer && writer.redLn("WARNING: construct(" + object + ")");
+          writer && writer.warnLn("construct(" + object + ")");
           return Type.Any;
         }
       }

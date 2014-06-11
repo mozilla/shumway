@@ -61,6 +61,7 @@ module Shumway.AVM2.Compiler {
   import isConstant = IR.isConstant;
 
   import ASScope = IR.ASScope;
+  import ASMultiname = IR.ASMultiname;
 
   import TypeInformation = Verifier.TypeInformation;
   var writer = new IndentingWriter();
@@ -129,7 +130,7 @@ module Shumway.AVM2.Compiler {
         this.local.length === other.local.length;
     }
 
-    makeLoopPhis(control: Control) {
+    makeLoopPhis(control: Control, dirtyLocals: boolean []) {
       var s = new State();
       release || assert (control);
       function makePhi(x) {
@@ -138,7 +139,12 @@ module Shumway.AVM2.Compiler {
         return phi;
       }
       s.index = this.index;
-      s.local = this.local.map(makePhi);
+      s.local = this.local.map(function (v, i) {
+        if (dirtyLocals[i]) {
+          return makePhi(v);
+        }
+        return v;
+      });
       s.stack = this.stack.map(makePhi);
       s.scope = this.scope.map(makePhi);
       s.loads = this.loads.slice(0);
@@ -315,7 +321,7 @@ module Shumway.AVM2.Compiler {
   }
 
   function warn(message) {
-    // console.warn(message);
+    // writer.warnLn(message);
   }
 
   function unary(operator: IR.Operator, argument: Value): Value {
@@ -452,7 +458,7 @@ module Shumway.AVM2.Compiler {
       this.methodInfo = builder.methodInfo;
     }
 
-    popMultiname(): Value {
+    popMultiname(): ASMultiname {
       var multiname = this.constantPool.multinames[this.bc.index];
       var namespaces, name, flags = multiname.flags;
       if (multiname.isRuntimeName()) {
@@ -570,7 +576,7 @@ module Shumway.AVM2.Compiler {
       return getJSPropertyWithState(this.state, scope, "object");
     }
 
-    findProperty(multiname: Value, strict: boolean): Value {
+    findProperty(multiname: ASMultiname, strict: boolean): Value {
       var ti = this.bc.ti;
       var slowPath = new IR.ASFindProperty(this.region, this.state.store, this.topScope(), multiname, this.domain, strict);
       if (ti) {
@@ -636,7 +642,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new Call(this.region, this.state.store, callee, object, args, IR.Flags.AS_CALL));
     }
 
-    callProperty(object: Value, multiname: Value, args: Value [], isLex: boolean) {
+    callProperty(object: Value, multiname: ASMultiname, args: Value [], isLex: boolean) {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -669,7 +675,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASCallProperty(region, state.store, object, multiname, args, IR.Flags.PRISTINE, isLex));
     }
 
-    getProperty(object: Value, multiname: Value, getOpenMethod?: boolean) {
+    getProperty(object: Value, multiname: ASMultiname, getOpenMethod?: boolean) {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -689,7 +695,8 @@ module Shumway.AVM2.Compiler {
           return this.store(new IR.ASGetProperty(region, state.store, object, multiname, IR.Flags.INDEXED | (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
         }
       }
-      warn("Can't optimize getProperty " + multiname);
+
+      warn("Can't optimize getProperty " + multiname.name + " " + multiname.name.ty);
       var qn = this.resolveMultinameGlobally(multiname);
       if (qn) {
         return this.store(new IR.ASGetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), IR.Flags.RESOLVED | (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
@@ -698,7 +705,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASGetProperty(region, state.store, object, multiname, (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
     }
 
-    setProperty(object: Value, multiname: Value, value: Value) {
+    setProperty(object: Value, multiname: ASMultiname, value: Value) {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -726,7 +733,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASSetProperty(region, state.store, object, multiname, value, 0));
     }
 
-    callSuper(scope: ASScope, object: Value, multiname: Value, args: Value []): Value {
+    callSuper(scope: ASScope, object: Value, multiname: ASMultiname, args: Value []): Value {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -738,7 +745,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASCallSuper(region, state.store, object, multiname, args, IR.Flags.PRISTINE, scope));
     }
 
-    getSuper(scope: ASScope, object: Value, multiname: Value): Value {
+    getSuper(scope: ASScope, object: Value, multiname: ASMultiname): Value {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -750,7 +757,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASGetSuper(region, state.store, object, multiname, scope));
     }
 
-    setSuper(scope: ASScope, object: Value, multiname: Value, value: Value) {
+    setSuper(scope: ASScope, object: Value, multiname: ASMultiname, value: Value) {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -931,7 +938,7 @@ module Shumway.AVM2.Compiler {
 
       var left: Value, right: Value, index: Value;
       var value: Value, object: Value, callee: Value;
-      var multiname: Value, type: Value, args: Value [];
+      var multiname: ASMultiname, type: Value, args: Value [];
       var operator: Operator;
 
       var push = this.push.bind(this);
@@ -1526,10 +1533,12 @@ module Shumway.AVM2.Compiler {
             traceBuilder && writer.leave("}");
           } else {
             region = target.region = new Region(stop.control);
+            var dirtyLocals: boolean [] = null;
             if (target.loop) {
-              traceBuilder && writer.writeLn("Adding PHIs to loop region.");
+              dirtyLocals = enableDirtyLocals.value && target.loop.getDirtyLocals();
+              traceBuilder && writer.writeLn("Adding PHIs to loop region. " + dirtyLocals);
             }
-            region.entryState = target.loop ? stop.state.makeLoopPhis(region) : stop.state.clone(target.position);
+            region.entryState = target.loop ? stop.state.makeLoopPhis(region, dirtyLocals) : stop.state.clone(target.position);
             traceBuilder && writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
             worklist.push({region: region, block: target});
           }
@@ -1563,10 +1572,10 @@ module Shumway.AVM2.Compiler {
     }
 
 
-    buildBlock(region: Region, block, state) {
+    buildBlock(region: Region, block: Bytecode, state: State) {
       release || assert (region && block && state);
       state.optimize();
-      var typeState = block.entryState;
+      var typeState = block.verifierEntryState;
       if (typeState) {
         this.traceBuilder && writer.writeLn("Type State: " + typeState);
         for (var i = 0; i < typeState.local.length; i++) {
