@@ -377,11 +377,7 @@ module Shumway.GFX {
             context.fillStyle = null;
             break;
           case PathCommand.LineStyleSolid:
-            if (strokePath) {
-              !clipRegion && this._strokePath(context, strokePath);
-            }
-            strokePath = new Path2D();
-            strokePath.moveTo(x, y);
+            strokePath = this._applyStroke(context, strokePath, clipRegion, true, x, y);
             context.lineWidth = coordinates[coordinatesIndex++]/20;
             context.strokeStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             // Skip pixel hinting and scale mode for now.
@@ -391,23 +387,15 @@ module Shumway.GFX {
             context.miterLimit = styles.readByte();
             break;
           case PathCommand.LineStyleGradient:
-            if (strokePath) {
-              !clipRegion && this._strokePath(context, strokePath);
-            }
+            strokePath = this._applyStroke(context, strokePath, clipRegion, true, x, y);
             context.strokeStyle = this._readGradient(styles, context);
             break;
           case PathCommand.LineStyleBitmap:
-            if (strokePath) {
-              !clipRegion && this._strokePath(context, strokePath);
-            }
+            strokePath = this._applyStroke(context, strokePath, clipRegion, true, x, y);
             context.strokeStyle = this._readBitmap(styles, context);
             break;
           case PathCommand.LineEnd:
-            if (strokePath) {
-              !clipRegion && this._strokePath(context, strokePath);
-              context.strokeStyle = null;
-              strokePath = null;
-            }
+            strokePath = this._applyStroke(context, strokePath, clipRegion, false, 0, 0);
             break;
           default:
             assertUnreachable('Invalid command ' + command + ' encountered at index' +
@@ -422,20 +410,17 @@ module Shumway.GFX {
       }
       this._applyFill(context, fillPath, clipRegion, false, 0, 0);
       context.fillStyle = null;
-      if (strokePath) {
-        !clipRegion && this._strokePath(context, strokePath);
-        context.strokeStyle = null;
-      }
+      this._applyStroke(context, strokePath, clipRegion, false, 0, 0);
       leaveTimeline("RenderableShape.render");
     }
 
     private _applyFill(context: CanvasRenderingContext2D, path: Path2D, clipRegion: boolean,
                        createNewPath: boolean, x: number, y: number): Path2D
     {
-
       if (path) {
         clipRegion ? context.clip(path, 'evenodd') : context.fill(path, 'evenodd');
       }
+
       if (createNewPath) {
         path = new Path2D();
         path.moveTo(x, y);
@@ -453,15 +438,30 @@ module Shumway.GFX {
     // on coordinates slightly below round pixels (0.8, say) will be moved up/left.
     // Properly fixing this would probably have to happen in the rasterizer. Or when replaying
     // all the drawing commands, which seems expensive.
-    private _strokePath(context: CanvasRenderingContext2D, path: Path2D): void {
-      var lineWidth = context.lineWidth;
-      if (lineWidth === 1 || lineWidth === 3) {
-        context.translate(0.5, 0.5);
+    private _applyStroke(context: CanvasRenderingContext2D, path: Path2D, clipRegion: boolean,
+                         createNewPath: boolean, x: number, y: number): Path2D
+    {
+      if (clipRegion) {
+        return null;
       }
-      context.stroke(path);
-      if (lineWidth === 1 || lineWidth === 3) {
-        context.translate(-0.5, -0.5);
+      if (path) {
+        var lineWidth = context.lineWidth;
+        var isSpecialCaseWidth = lineWidth === 1 || lineWidth === 3;
+        if (isSpecialCaseWidth) {
+          context.translate(0.5, 0.5);
+        }
+        context.stroke(path);
+        if (isSpecialCaseWidth) {
+          context.translate(-0.5, -0.5);
+        }
       }
+
+      if (createNewPath) {
+        path = new Path2D();
+        path.moveTo(x, y);
+        return path;
+      }
+      return null;
     }
 
     private _readMatrix(data: DataBuffer): Matrix {
