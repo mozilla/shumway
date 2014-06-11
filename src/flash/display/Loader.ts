@@ -278,8 +278,6 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.BitmapSymbol.FromData(data);
           break;
         case 'label':
-          symbol = Timeline.TextSymbol.FromLabelData(data);
-          break;
         case 'text':
           symbol = Timeline.TextSymbol.FromTextData(data);
           break;

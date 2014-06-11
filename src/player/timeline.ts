@@ -138,22 +138,19 @@ module Shumway.Timeline {
     maxChars: number = 0;
     autoSize: string = flash.text.TextFieldAutoSize.NONE;
     variableName: string = null;
-    data: any = null;
+    coords: number[];
 
     constructor(id: number) {
       super(id, flash.text.TextField);
     }
 
-    static FromLabelData(data: any): TextSymbol {
-      var symbol = new TextSymbol(data.id);
-      symbol._setBoundsFromData(data);
-      symbol.symbolClass = flash.text.StaticText;
-      symbol.data = data.data;
-      return symbol;
-    }
-
     static FromTextData(data: any): TextSymbol {
       var symbol = new TextSymbol(data.id);
+      symbol._setBoundsFromData(data);
+      if (data.static) {
+        symbol.symbolClass = flash.text.StaticText;
+        symbol.coords = data.coords;
+      }
       var tag = data.tag;
       if (tag.hasColor) {
         symbol.textColor = tag.color;

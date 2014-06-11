@@ -17,57 +17,47 @@
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   import assert = Shumway.Debug.assert;
-  import rgbaObjToCSSStyle = Shumway.ColorUtilities.rgbaObjToCSSStyle;
   var fromCharCode = String.fromCharCode;
-
-  var black = {red: 0, green: 0, blue: 0, alpha: 0};
 
   export function defineLabel(tag: any, dictionary: any) {
     var records = tag.records;
-    var m = tag.matrix;
     var bbox = tag.bbox;
+    var htmlText = '';
+    var coords = [];
 
-    // expand bbox to match browser text metrices
-    //bbox.xMin -= 40;
-    //bbox.xMax += 40;
-    //bbox.yMin -= 40;
-    //bbox.yMax += 40;
-
-    var tx = ((m.tx - bbox.xMin) / 20) | 0;
-    var ty = ((m.ty - bbox.yMin) / 20) | 0;
-    var cmds = [
-      'c.save()',
-      'c.transform(' + [m.a, m.b, m.c, m.d, tx, ty].join(',') + ')',
-      'c.scale(0.05, 0.05)'
-    ];
     var dependencies = [];
     var x = 0;
     var y = 0;
     var i = 0;
     var record;
     var codes;
-    var color = black;
     while ((record = records[i++])) {
       if (record.eot)
         break;
+
+      htmlText += '<font';
+
       if (record.hasFont) {
         var font = dictionary[record.fontId];
         assert(font, 'undefined font', 'label');
         codes = font.codes;
-        cmds.push('c.font="' + record.fontHeight + 'px \'swf-font-' + font.id + '\'"');
         dependencies.push(font.id);
+        htmlText += ' face="' + font.name + '"';
       }
 
       if (record.hasColor) {
-        color = record.color;
+        var color = record.color;
+        color = (color.red << 16) | (color.green << 8) | color.blue;
+        htmlText += ' color="' + color + '"';
       }
-
-      cmds.push('c.fillStyle="' + rgbaObjToCSSStyle(color) + '"');
 
       if (record.hasMoveX)
         x = record.moveX;
       if (record.hasMoveY)
         y = record.moveY;
+
+      htmlText += '>';
+
       var entries = record.entries;
       var j = 0;
       var entry;
@@ -76,16 +66,26 @@ module Shumway.SWF.Parser {
         assert(code, 'undefined glyph', 'label');
         var text = code >= 32 && code != 34 && code != 92 ? fromCharCode(code) :
                    '\\u' + (code + 0x10000).toString(16).substring(1);
-        cmds.push('c.fillText("' + text + '",' + x + ',' + y + ')');
+        htmlText += text;
+        coords.push(x, y);
         x += entry.advance;
       }
+
+      htmlText += '</font>';
     }
-    cmds.push('c.restore()');
     var label = {
-      type: 'label',
+      type: 'text',
       id: tag.id,
       bbox: bbox,
-      data: cmds.join('\n'),
+      matrix: tag.matrix,
+      tag: {
+        hasText: true,
+        initialText: htmlText,
+        html: true,
+        readonly: true
+      },
+      coords: coords,
+      static: true,
       require: null
     };
     if (dependencies.length)

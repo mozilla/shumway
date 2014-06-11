@@ -332,9 +332,7 @@ module Shumway.Remoting.Player {
       output.writeInt(+textFormat.rightMargin);
       output.writeInt(+textFormat.size);
       //output.writeInt(textFormat.tabStops);
-      //output.writeInt(textFormat.target);
       output.writeBoolean(!!textFormat.underline);
-      //output.writeInt(textFormat.url);
     }
   }
 
