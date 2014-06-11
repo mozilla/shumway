@@ -998,7 +998,7 @@ module Shumway.AVM2.AS.flash.display {
             fillActive = command !== PathCommand.EndFill;
             break;
           case PathCommand.LineStyleSolid:
-            commandIndex++; // Skip thickness
+            coordinatesIndex++; // Skip thickness
             break;
           case PathCommand.LineStyleGradient:
           case PathCommand.LineStyleBitmap:
@@ -1207,7 +1207,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             break;
           case PathCommand.LineStyleSolid:
-            width = commands[++commandIndex] * 20;
+            width = coordinates[++coordinatesIndex] * 20;
             halfWidth = width >> 2;
             halfWidthSq = halfWidth * halfWidth;
             minX = x - halfWidth;
