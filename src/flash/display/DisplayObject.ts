@@ -609,7 +609,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Return's a list of ancestors excluding the |last|, the return list is reused.
      */
-    private static _getAncestors(node: DisplayObject, last: DisplayObject = null) {
+    private static _getAncestors(node: DisplayObject, last: DisplayObject) {
       var path = DisplayObject._path;
       path.length = 0;
       while (node && node !== last) {
@@ -772,7 +772,7 @@ module Shumway.AVM2.AS.flash.display {
      * If the |targetCoordinateSpace| is |null| then assume the identity coordinate space.
      */
     private _getTransformedBounds(targetCoordinateSpace: DisplayObject,
-                                  includeStroke: boolean = true): Bounds
+                                  includeStroke: boolean): Bounds
     {
       var bounds = this._getContentBounds(includeStroke).clone();
       if (targetCoordinateSpace === this || bounds.isEmpty()) {
