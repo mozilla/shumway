@@ -609,7 +609,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Return's a list of ancestors excluding the |last|, the return list is reused.
      */
-    private static _getAncestors(node: DisplayObject, last: DisplayObject = null) {
+    private static _getAncestors(node: DisplayObject, last: DisplayObject) {
       var path = DisplayObject._path;
       path.length = 0;
       while (node && node !== last) {
@@ -621,30 +621,26 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Computes the combined transformation matrixes of this display object and all of its parents. It is not
-     * the same as |transform.concatenatedMatrix|, the latter also includes the screen space matrix.
+     * Computes the combined transformation matrixes of this display object and all of its parents.
+     * It is not the same as |transform.concatenatedMatrix|, the latter also includes the screen
+     * space matrix.
      */
     _getConcatenatedMatrix(): flash.geom.Matrix {
-      // Compute the concatenated transforms for this node and all of its ancestors.
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix)) {
-        var ancestor = this._findNearestAncestor(DisplayObjectFlags.InvalidConcatenatedMatrix, false);
-        var path = DisplayObject._getAncestors(this, ancestor);
-        var m = ancestor ? ancestor._concatenatedMatrix.clone() : new geom.Matrix();
-        for (var i = path.length - 1; i >= 0; i--) {
-          var ancestor = path[i];
-          assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix));
-          m.preMultiply(ancestor._getMatrix());
-          ancestor._concatenatedMatrix.copyFrom(m);
-          ancestor._removeFlags(DisplayObjectFlags.InvalidConcatenatedMatrix);
+        if (this._parent) {
+          this._parent._getConcatenatedMatrix().preMultiplyInto(this._getMatrix(),
+                                                                this._concatenatedMatrix);
+        } else {
+          this._concatenatedMatrix.copyFrom(this._getMatrix());
         }
+        this._removeFlags(DisplayObjectFlags.InvalidConcatenatedMatrix);
       }
       return this._concatenatedMatrix;
     }
 
     _getInvertedConcatenatedMatrix(): flash.geom.Matrix {
       if (this._hasFlags(DisplayObjectFlags.InvalidInvertedConcatenatedMatrix)) {
-        this._invertedConcatenatedMatrix.copyFrom(this._getConcatenatedMatrix());
-        this._invertedConcatenatedMatrix.invert();
+        this._getConcatenatedMatrix().invertInto(this._invertedConcatenatedMatrix);
         this._removeFlags(DisplayObjectFlags.InvalidInvertedConcatenatedMatrix);
       }
       return this._invertedConcatenatedMatrix;
@@ -775,7 +771,7 @@ module Shumway.AVM2.AS.flash.display {
      * If the |targetCoordinateSpace| is |null| then assume the identity coordinate space.
      */
     private _getTransformedBounds(targetCoordinateSpace: DisplayObject,
-                                  includeStroke: boolean = true): Bounds
+                                  includeStroke: boolean): Bounds
     {
       var bounds = this._getContentBounds(includeStroke).clone();
       if (targetCoordinateSpace === this || bounds.isEmpty()) {
@@ -783,9 +779,9 @@ module Shumway.AVM2.AS.flash.display {
       }
       var m;
       if (targetCoordinateSpace) {
-        m = targetCoordinateSpace._getConcatenatedMatrix().clone();
-        m.invert();
-        m.preMultiply(this._getConcatenatedMatrix());
+        m = geom.Matrix.TEMP_MATRIX;
+        var invertedTargetMatrix = targetCoordinateSpace._getInvertedConcatenatedMatrix();
+        invertedTargetMatrix.preMultiplyInto(this._getConcatenatedMatrix(), m);
       } else {
         m = this._getConcatenatedMatrix();
       }
