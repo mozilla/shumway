@@ -20,7 +20,6 @@
 /// <reference path='../tools/profiler/references.ts' />
 /// <reference path='../dataBuffer.ts' />
 /// <reference path='../ShapeData.ts' />
-/// <reference path='../TextContent.ts' />
 
 /// <reference path='module.ts' />
 /// <reference path='utilities.ts' />
