@@ -59,25 +59,24 @@ module Shumway.AVM2.AS.flash.text {
     private _underline: Object;
     private _url: string;
 
-
-    fromNative(nativeFormat: NativeTextFormat): TextFormat {
-      this._font = nativeFormat.face;
-      this._size = nativeFormat.size;
-      this._color = nativeFormat.color;
-      this._bold = nativeFormat.bold;
-      this._italic = nativeFormat.italic;
-      this._underline = nativeFormat.underline;
-      this._url = nativeFormat.url;
-      this._target = nativeFormat.target;
-      this._align = nativeFormat.align;
-      this._leftMargin = nativeFormat.leftMargin;
-      this._rightMargin = nativeFormat.rightMargin;
-      this._indent = nativeFormat.indent;
-      this._leading = nativeFormat.leading;
-      this._letterSpacing = nativeFormat.letterSpacing;
-      this._kerning = nativeFormat.kerning;
-      return this;
-    }
+    //fromNative(nativeFormat: NativeTextFormat): TextFormat {
+    //  this._font = nativeFormat.face;
+    //  this._size = nativeFormat.size;
+    //  this._color = nativeFormat.color;
+    //  this._bold = nativeFormat.bold;
+    //  this._italic = nativeFormat.italic;
+    //  this._underline = nativeFormat.underline;
+    //  this._url = nativeFormat.url;
+    //  this._target = nativeFormat.target;
+    //  this._align = nativeFormat.align;
+    //  this._leftMargin = nativeFormat.leftMargin;
+    //  this._rightMargin = nativeFormat.rightMargin;
+    //  this._indent = nativeFormat.indent;
+    //  this._leading = nativeFormat.leading;
+    //  this._letterSpacing = nativeFormat.letterSpacing;
+    //  this._kerning = nativeFormat.kerning;
+    //  return this;
+    //}
 
     /**
      * Inside TextField, a native representation of TextFormat is used for efficiency:
@@ -86,23 +85,23 @@ module Shumway.AVM2.AS.flash.text {
      * in all calculations, TextFormat is converted into NativeTextFormat, with the null checks
      * happening once during the conversion.
      */
-    toNative(): NativeTextFormat {
-      var format: NativeTextFormat = new NativeTextFormat();
-      format.face = this._font || 'serif';
-      format.size = isNaN(+this._size) ? 12 : +this._size;
-      format.color = +this._color | 0;
-      format.bold = !!this._bold;
-      format.italic = !!this._italic;
-      format.underline = !!this._underline;
-      format.url = this._url;
-      format.target = this._target;
-      format.align = this._align;
-      format.leftMargin = +this._leftMargin;
-      format.rightMargin = +this._rightMargin;
-      format.indent = isNaN(+this._indent) ? 0 : +this._indent;
-      format.leading = isNaN(+this._leading) ? 0 : +this._indent;
-      return format;
-    }
+    //toNative(): NativeTextFormat {
+    //  var format: NativeTextFormat = new NativeTextFormat();
+    //  format.face = this._font || 'serif';
+    //  format.size = isNaN(+this._size) ? 12 : +this._size;
+    //  format.color = +this._color | 0;
+    //  format.bold = !!this._bold;
+    //  format.italic = !!this._italic;
+    //  format.underline = !!this._underline;
+    //  format.url = this._url;
+    //  format.target = this._target;
+    //  format.align = this._align;
+    //  format.leftMargin = +this._leftMargin;
+    //  format.rightMargin = +this._rightMargin;
+    //  format.indent = isNaN(+this._indent) ? 0 : +this._indent;
+    //  format.leading = isNaN(+this._leading) ? 0 : +this._indent;
+    //  return format;
+    //}
 
     as2GetTextExtent(text: string, width: number/* optional */) {
       if (!TextFormat.measureTextField) {
@@ -138,9 +137,9 @@ module Shumway.AVM2.AS.flash.text {
 
     set align(value: string) {
       value = asCoerceString(value);
-      if (TextFormatAlign.toNumber(value) < 0) {
-        throwError("ArgumentError", Errors.InvalidEnumError, "align");
-      }
+      //if (TextFormatAlign.toNumber(value) < 0) {
+      //  throwError("ArgumentError", Errors.InvalidEnumError, "align");
+      //}
       this._align = value;
     }
 
@@ -316,24 +315,42 @@ module Shumway.AVM2.AS.flash.text {
     private static coerceBoolean(value: any): any {
       return value == undefined ? null : !!value;
     }
+
+    clone(): TextFormat {
+      return new flash.text.TextFormat(
+        this.font,
+        this.size,
+        this.color,
+        this.bold,
+        this.italic,
+        this.underline,
+        this.url,
+        this.target,
+        this.align,
+        this.leftMargin,
+        this.rightMargin,
+        this.indent,
+        this.leading
+      );
+    }
   }
 
-  export class NativeTextFormat {
-    face: string;
-    fontObj: Font;
-    size: number;
-    color: number;
-    bold: boolean;
-    italic: boolean;
-    underline: boolean;
-    url: string;
-    target: string;
-    align: string;
-    leftMargin: number;
-    rightMargin: number;
-    indent: number;
-    leading: number;
-    letterSpacing: number;
-    kerning: number;
-  }
+  //export class NativeTextFormat {
+  //  face: string;
+  //  fontObj: Font;
+  //  size: number;
+  //  color: number;
+  //  bold: boolean;
+  //  italic: boolean;
+  //  underline: boolean;
+  //  url: string;
+  //  target: string;
+  //  align: string;
+  //  leftMargin: number;
+  //  rightMargin: number;
+  //  indent: number;
+  //  leading: number;
+  //  letterSpacing: number;
+  //  kerning: number;
+  //}
 }

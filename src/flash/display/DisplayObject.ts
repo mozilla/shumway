@@ -1343,12 +1343,30 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
+     * Only these objects can have text content.
+     */
+    _canHaveTextContent(): boolean {
+      return flash.text.StaticText.isType(this) || flash.text.TextField.isType(this);
+    }
+
+    /**
      * Gets the graphics object of this object. Only Shapes, Sprites, and MorphShapes can have
      * graphics.
      */
     _getGraphics(): flash.display.Graphics {
       if (this._canHaveGraphics()) {
         return (<any>this)._graphics;
+      }
+      return null;
+    }
+
+    /**
+     * Gets the text content of this object. Only StaticTexts and TextFields can have
+     * text content.
+     */
+    _getTextContent(): Shumway.TextContent {
+      if (this._canHaveTextContent()) {
+        return (<any>this)._textContent;
       }
       return null;
     }

@@ -536,6 +536,33 @@ module Shumway.GFX {
 
   }
 
+  export class RenderableText extends Renderable {
+    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
+    properties: {[name: string]: any} = {};
+
+    private _plainText: string;
+    private _textRunData: DataBuffer;
+
+    constructor(plainText: string, textRunData: DataBuffer, bounds: Rectangle) {
+      super(bounds);
+      this.update(plainText, textRunData, bounds);
+    }
+
+    update(plainText: string, textRunData: DataBuffer, bounds: Rectangle) {
+      this._plainText = plainText;
+      this._textRunData = textRunData;
+      this._bounds = bounds;
+    }
+
+    getBounds(): Shumway.GFX.Geometry.Rectangle {
+      return this._bounds;
+    }
+
+    render(context: CanvasRenderingContext2D, cullBounds: Rectangle):void {
+      // TODO
+    }
+  }
+
   export class Label extends Renderable {
     _flags: RenderableFlags = RenderableFlags.Dynamic | RenderableFlags.Scalable;
     properties: {[name: string]: any} = {};

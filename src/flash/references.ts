@@ -17,6 +17,7 @@
 ///<reference path='../avm2/references.ts' />
 ///<reference path='../htmlparser.ts' />
 ///<reference path='../ShapeData.ts' />
+///<reference path='../TextContent.ts' />
 ///<reference path='../player/remoting.ts' />
 
 ///<reference path='accessibility/Accessibility.ts' />
@@ -333,7 +334,7 @@
 ///<reference path='text/TextInteractionMode.ts' />
 ///<reference path='text/TextLineMetrics.ts' />
 // ///<reference path='text/TextRenderer.ts' />
-// ///<reference path='text/TextRun.ts' />
+///<reference path='text/TextRun.ts' />
 ///<reference path='text/TextSnapshot.ts' />
 
 // ///<reference path='text/engine/BreakOpportunity.ts' />
