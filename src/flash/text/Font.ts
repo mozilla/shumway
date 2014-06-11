@@ -64,10 +64,12 @@ module Shumway.AVM2.AS.flash.text {
         }
 
         var metrics = symbol.metrics;
-        self.ascent = metrics.ascent;
-        self.descent = metrics.descent;
-        self.leading = metrics.leading;
-        self.advances = metrics.advances;
+        if (metrics) {
+          self.ascent = metrics.ascent;
+          self.descent = metrics.descent;
+          self.leading = metrics.leading;
+          self.advances = metrics.advances;
+        }
 
         self._fontType = FontType.EMBEDDED;
         Font.fontsBySymbolId[symbol.id] = self;
