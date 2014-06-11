@@ -47,6 +47,14 @@ module Shumway.AVM2.AS {
         return _asCallProperty.call(self, [Namespace.PROXY], "getProperty", 0, false, [name]);
       }
 
+      public asGetNumericProperty(name: number) {
+        return this.asGetProperty(null, name, 0);
+      }
+
+      public asSetNumericProperty(name: number, value) {
+        this.asSetProperty(null, name, 0, value);
+      }
+
       public asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
         var self: Object = this;
         if (_asHasTraitProperty.call(self, namespaces, name, flags)) {

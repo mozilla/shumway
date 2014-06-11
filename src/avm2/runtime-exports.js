@@ -84,7 +84,6 @@ var getNamespaceResolutionMap = Shumway.AVM2.Runtime.getNamespaceResolutionMap;
 var resolveMultinameProperty = Shumway.AVM2.Runtime.resolveMultinameProperty;
 var asGetPublicProperty = Shumway.AVM2.Runtime.asGetPublicProperty;
 var asGetProperty = Shumway.AVM2.Runtime.asGetProperty;
-var asGetPropertyLikelyNumeric = Shumway.AVM2.Runtime.asGetPropertyLikelyNumeric;
 
 /**
  * Resolved string accessors.
@@ -95,7 +94,6 @@ var asCallResolvedStringProperty = Shumway.AVM2.Runtime.asCallResolvedStringProp
 var asGetResolvedStringPropertyFallback = Shumway.AVM2.Runtime.asGetResolvedStringPropertyFallback;
 var asSetPublicProperty = Shumway.AVM2.Runtime.asSetPublicProperty;
 var asSetProperty = Shumway.AVM2.Runtime.asSetProperty;
-var asSetPropertyLikelyNumeric = Shumway.AVM2.Runtime.asSetPropertyLikelyNumeric;
 var asDefinePublicProperty = Shumway.AVM2.Runtime.asDefinePublicProperty;
 var asDefineProperty = Shumway.AVM2.Runtime.asDefineProperty;
 var asCallPublicProperty = Shumway.AVM2.Runtime.asCallPublicProperty;

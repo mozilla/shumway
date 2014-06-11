@@ -78,6 +78,14 @@ module Shumway.AVM2.AS {
         this.primitiveMap = createEmptyObject();
       }
 
+      public asGetNumericProperty(name: number) {
+        return this.asGetProperty(null, name, 0);
+      }
+
+      public asSetNumericProperty(name: number, value) {
+        this.asSetProperty(null, name, 0, value);
+      }
+
       public asGetProperty(namespaces: Namespace [], name: any, flags: number) {
         if (Dictionary.isTraitsOrDynamicPrototype(this)) {
           return _asGetProperty.call(this, namespaces, name, flags);

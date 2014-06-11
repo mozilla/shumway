@@ -665,8 +665,6 @@ module Shumway.AVM2.Compiler {
           var qn = Multiname.getQualifiedName(ti.trait.name);
           return this.store(new IR.CallProperty(region, state.store, object, constant(qn), args, IR.Flags.AS_CALL));
         }
-      } else if (ti && ti.propertyQName) {
-        return this.store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, IR.Flags.PRISTINE));
       }
       var mn = this.resolveMultinameGlobally(multiname);
       if (mn) {
@@ -689,13 +687,10 @@ module Shumway.AVM2.Compiler {
           var get = new IR.GetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name));
           return ti.trait.isGetter() ? this.store(get) : this.load(get);
         }
-        if (ti.propertyQName) {
-          return this.store(new IR.GetProperty(region, state.store, object, constant(ti.propertyQName)));
-        } else if (ti.isIndexedReadable) {
-          return this.store(new IR.ASGetProperty(region, state.store, object, multiname, IR.Flags.INDEXED | (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
-        }
       }
-
+      if (hasNumericType(multiname.name)) {
+        return this.store(new IR.ASGetProperty(region, state.store, object, multiname, IR.Flags.NumericProperty));
+      }
       warn("Can't optimize getProperty " + multiname.name + " " + multiname.name.ty);
       var qn = this.resolveMultinameGlobally(multiname);
       if (qn) {
@@ -719,11 +714,9 @@ module Shumway.AVM2.Compiler {
           this.store(new IR.SetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name), value));
           return;
         }
-        if (ti.propertyQName) {
-          return this.store(new IR.SetProperty(region, state.store, object, constant(ti.propertyQName), value));
-        } else if (ti.isIndexedWriteable) {
-          return this.store(new IR.ASSetProperty(region, state.store, object, multiname, value, IR.Flags.INDEXED));
-        }
+      }
+      if (hasNumericType(multiname.name)) {
+        return this.store(new IR.ASSetProperty(region, state.store, object, multiname, value, IR.Flags.NumericProperty));
       }
       warn("Can't optimize setProperty " + multiname);
       var qn = this.resolveMultinameGlobally(multiname);

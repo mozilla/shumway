@@ -72,7 +72,7 @@ module Shumway.AVM2.Compiler.IR {
 
   // Clean this up.
   export enum Flags {
-    INDEXED = 0x01,
+    NumericProperty = 0x01,
     RESOLVED = 0x02,
     PRISTINE = 0x04,
     IS_METHOD = 0x08,
