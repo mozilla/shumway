@@ -29,6 +29,8 @@ module Shumway.AVM2.AS.flash.display {
 
   import Bounds = Shumway.Bounds;
 
+  import AS2Context = Shumway.AVM1.AS2Context;
+
   declare var SHUMWAY_ROOT: string;
   declare var LOADER_WORKER_PATH: string;
 
@@ -131,6 +133,9 @@ module Shumway.AVM2.AS.flash.display {
       this._loadStatus = LoadStatus.Unloaded;
 
       this._contentLoaderInfo._loader = this;
+
+      this._avm1Promise = null;
+      this._avm1Context = null;
     }
 
     // JS -> AS Bindings
@@ -158,7 +163,10 @@ module Shumway.AVM2.AS.flash.display {
     private _worker: Worker;
     private _startPromise: any;
     private _lastPromise: any;
+    private _avm1Promise: any;
     private _loadStatus: LoadStatus;
+
+    private _avm1Context: AS2Context;
 
     private _commitData(data: any): void {
       var loaderInfo = this._contentLoaderInfo;
@@ -172,6 +180,7 @@ module Shumway.AVM2.AS.flash.display {
           loaderInfo._swfVersion = info.swfVersion;
           if (!info.fileAttributes || !info.fileAttributes.doAbc) {
             loaderInfo._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
+            this._initAvm1(loaderInfo);
           }
           loaderInfo._frameRate = info.frameRate;
           var bbox = info.bbox;
@@ -238,6 +247,15 @@ module Shumway.AVM2.AS.flash.display {
           }
           break;
       }
+    }
+
+    private _initAvm1(loaderInfo: LoaderInfo): void {
+      this._avm1Promise = this._lastPromise.then(function () {
+        return AVM2.instance.loadAVM1();
+      }).then(function() {
+        this._avm1Context = AS2Context.create(loaderInfo.swfVersion);
+      }.bind(this));
+      this._lastPromise = this._avm1Promise;
     }
 
     private _commitAsset(data: any): void {
@@ -307,7 +325,7 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
 
-      //if (data.exports && !loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT3) {
+      //if (data.exports && loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
       //  var exports = data.exports;
       //  for (var i = 0; i < exports.length; i++) {
       //    var asset = exports[i];
@@ -352,37 +370,9 @@ module Shumway.AVM2.AS.flash.display {
           }
         }
 
-        //if (!loader._isAvm2Enabled) {
-        //  var avm1Context = loader._avm1Context;
-
-        //  // Finding movie top root
-        //  var _root = root;
-        //  if (parent && parent !== loader._stage) {
-        //    var parentLoader = parent.loaderInfo._loader;
-        //    while (parentLoader._parent && parentLoader._parent !== loader._stage) {
-        //      parentLoader = parentLoader._parent.loaderInfo._loader;
-        //    }
-        //    if (parentLoader._isAvm2Enabled) {
-        //      somewhatImplemented('AVM1Movie');
-        //      this._worker && this._worker.terminate();
-        //      return;
-        //    }
-        //    _root = parentLoader._content;
-        //  }
-
-        //  var as2Object = _root._getAS2Object();
-        //  avm1Context.globals.asSetPublicProperty('_root', as2Object);
-        //  avm1Context.globals.asSetPublicProperty('_level0', as2Object);
-        //  avm1Context.globals.asSetPublicProperty('_level1', as2Object);
-
-        //  // transfer parameters
-        //  var parameters = loader.loaderInfo._parameters;
-        //  for (var paramName in parameters) {
-        //    if (!(paramName in as2Object)) { // not present yet
-        //      as2Object[paramName] = parameters[paramName];
-        //    }
-        //  }
-        //}
+        if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+          this._initAvm1Root(root);
+        }
 
         root._loaderInfo = loaderInfo;
         this._content = root;
@@ -394,7 +384,7 @@ module Shumway.AVM2.AS.flash.display {
           (<MovieClip>root).addFrameLabel(frameIndex, data.labelName);
         }
 
-        //if (!loader._isAvm2Enabled) {
+        //if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         //  var avm1Context = loader._avm1Context;
 
         //  if (initActionBlocks) {
@@ -435,6 +425,40 @@ module Shumway.AVM2.AS.flash.display {
       //if (frame.soundStreamBlock) {
       //  root._addSoundStreamBlock(frameNum, frame.soundStreamBlock);
       //}
+    }
+
+    private _initAvm1Root(root:flash.display.DisplayObject) {
+      // Finding movie top root
+      var topRoot = root;
+      var parent = this._parent;
+      if (parent && parent !== this._stage) {
+        var parentLoader = parent.loaderInfo._loader;
+        while (parentLoader._parent && parentLoader._parent !== this._stage) {
+          parentLoader = parentLoader._parent.loaderInfo._loader;
+        }
+        if (parentLoader.loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+          notImplemented('AVM1Movie');
+          this._worker && this._worker.terminate();
+          return;
+        }
+        topRoot = parentLoader._content;
+      }
+
+      var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(topRoot);
+      this._avm1Promise.then(function () {
+        var avm1Context = this._avm1Context;
+        avm1Context.globals.asSetPublicProperty('_root', as2Object);
+        avm1Context.globals.asSetPublicProperty('_level0', as2Object);
+        avm1Context.globals.asSetPublicProperty('_level1', as2Object);
+
+        // transfer parameters
+        var parameters = this.loaderInfo._parameters;
+        for (var paramName in parameters) {
+          if (!(paramName in as2Object)) { // not present yet
+            as2Object[paramName] = parameters[paramName];
+          }
+        }
+      }.bind(this));
     }
 
     private _commitImage(data: any): void {

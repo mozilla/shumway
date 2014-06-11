@@ -29,7 +29,7 @@ module Shumway.AVM2.AS.avm1lib {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["_alpha", "_alpha", "antiAliasType", "antiAliasType", "autoSize", "autoSize", "background", "background", "backgroundColor", "backgroundColor", "border", "border", "borderColor", "borderColor", "bottomScroll", "condenseWhite", "condenseWhite", "embedFonts", "embedFonts", "getNewTextFormat", "getTextFormat", "_height", "_height", "_highquality", "_highquality", "hscroll", "hscroll", "html", "html", "htmlText", "htmlText", "length", "maxChars", "maxChars", "maxhscroll", "maxscroll", "multiline", "multiline", "_name", "_name", "_parent", "_parent", "password", "password", "_quality", "_quality", "_rotation", "_rotation", "scroll", "scroll", "selectable", "selectable", "setNewTextFormat", "setTextFormat", "_soundbuftime", "_soundbuftime", "tabEnabled", "tabEnabled", "tabIndex", "tabIndex", "_target", "text", "text", "textColor", "textColor", "textHeight", "textHeight", "textWidth", "textWidth", "type", "type", "_url", "_visible", "_visible", "_width", "_width", "wordWrap", "wordWrap", "_x", "_x", "_xmouse", "_xscale", "_xscale", "_y", "_y", "_ymouse", "_yscale", "_yscale"];
+    static instanceSymbols: string [] = null;
 
     constructor (nativeTextField: TextField) {
       false && super();
@@ -42,57 +42,6 @@ module Shumway.AVM2.AS.avm1lib {
 
 
     // JS -> AS Bindings
-
-    _alpha: any;
-    antiAliasType: any;
-    autoSize: any;
-    background: any;
-    backgroundColor: any;
-    border: any;
-    borderColor: any;
-    bottomScroll: any;
-    condenseWhite: any;
-    embedFonts: any;
-    getNewTextFormat: () => any;
-    getTextFormat: () => any;
-    _height: any;
-    _highquality: any;
-    hscroll: any;
-    html: any;
-    htmlText: any;
-    length: any;
-    maxChars: any;
-    maxhscroll: any;
-    maxscroll: any;
-    multiline: any;
-    _name: any;
-    _parent: any;
-    password: any;
-    _quality: any;
-    _rotation: any;
-    scroll: any;
-    selectable: any;
-    setNewTextFormat: (value: any) => any;
-    setTextFormat: () => any;
-    _soundbuftime: any;
-    tabEnabled: any;
-    tabIndex: any;
-    _target: any;
-    text: any;
-    textColor: any;
-    textHeight: any;
-    textWidth: any;
-    type: any;
-    _url: any;
-    _visible: any;
-    _width: any;
-    wordWrap: any;
-    _x: any;
-    _xmouse: any;
-    _xscale: any;
-    _y: any;
-    _ymouse: any;
-    _yscale: any;
 
     // AS -> JS Bindings
 

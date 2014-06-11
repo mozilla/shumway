@@ -1,5 +1,6 @@
 ///<reference path='../flash/references.ts' />
-///<reference path='../avm1/references.ts' />
+
+///<reference path='../avm1/context.ts' />
 
 ///<reference path='AS2Button.ts' />
 ///<reference path='AS2Globals.ts' />

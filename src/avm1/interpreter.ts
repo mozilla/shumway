@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-declare module avm1lib {
+declare module Shumway.AVM2.AS.avm1lib {
   export class AS2Globals {
     constructor();
     getURL(url: string, target, method?: string);
     nextFrame();
     prevFrame();
-    gotoAndPlay(frame: number);
-    gotoAndStop(frame: number);
+    gotoAndPlay(scene, frame?);
+    gotoAndStop(scene, frame?);
     play();
     stop();
     toggleHighQuality();
@@ -45,8 +45,8 @@ declare module avm1lib {
     setAS2Property(target, index:number, value);
     duplicateMovieClip(target, newname: string, depth: number);
     removeMovieClip(target);
-    startDrag();
-    stopDrag();
+    startDrag(target: any, lock: any, left: any, top: any, right: any, bottom: any);
+    stopDrag(target?);
     trace(msg);
     getTimer();
     random(max: number);
@@ -101,23 +101,6 @@ module Shumway.AVM1 {
     }
   }
 
-  export class AS2Context {
-    public static instance: AS2Context = null;
-    public stage;
-    public classes;
-    public globals: avm1lib.AS2Globals;
-    constructor() {}
-    public static create(swfVersion: number): AS2Context {
-      return new AS2ContextImpl(swfVersion);
-    }
-    public flushPendingScripts() {}
-    public addAsset(className: string, symbolProps) {}
-    public getAsset(className: string): any {}
-    public resolveTarget(target): any {}
-    public resolveLevel(level: number): any {}
-    public addToPendingScripts(fn) {}
-  }
-
   class AS2ContextImpl extends AS2Context {
     swfVersion: number;
     initialScope: AS2ScopeListItem;
@@ -135,7 +118,7 @@ module Shumway.AVM1 {
     constructor(swfVersion: number) {
       super();
       this.swfVersion = swfVersion;
-      this.globals = new avm1lib.AS2Globals();
+      this.globals = new Shumway.AVM2.AS.avm1lib.AS2Globals();
       this.initialScope = new AS2ScopeListItem(this.globals, null);
       this.assets = {};
       this.isActive = false;
@@ -188,6 +171,10 @@ module Shumway.AVM1 {
     }
   }
 
+  AS2Context.create = function (swfVersion: number): AS2Context {
+    return new AS2ContextImpl(swfVersion);
+  };
+
   class AS2Error {
     constructor(public error) {}
   }
@@ -200,7 +187,7 @@ module Shumway.AVM1 {
 
   function isAS2MovieClip(obj): boolean {
     return typeof obj === 'object' && obj &&
-      obj instanceof avm1lib.AS2MovieClip;
+      obj instanceof Shumway.AVM2.AS.avm1lib.AS2MovieClip;
   }
 
   function as2GetType(v): string {
@@ -308,7 +295,7 @@ module Shumway.AVM1 {
       case 'string':
         return value;
       case 'movieclip':
-        return (<avm1lib.AS2MovieClip> value).__targetPath;
+        return (<Shumway.AVM2.AS.avm1lib.AS2MovieClip> value).__targetPath;
       case 'object':
         var result = value.toString !== Function.prototype.toString ?
           value.toString() : value;
@@ -349,7 +336,7 @@ module Shumway.AVM1 {
     }
 
     if (isAS2MovieClip(obj)) {
-      var child = (<avm1lib.AS2MovieClip> obj).__lookupChild(name);
+      var child = (<Shumway.AVM2.AS.avm1lib.AS2MovieClip> obj).__lookupChild(name);
       if (child) {
         return name;
       }
@@ -372,7 +359,7 @@ module Shumway.AVM1 {
 
   function as2GetProperty(obj, name: string) {
     if (!obj.asHasProperty(undefined, name, 0) && isAS2MovieClip(obj)) {
-      return (<avm1lib.AS2MovieClip> obj).__lookupChild(name);
+      return (<Shumway.AVM2.AS.avm1lib.AS2MovieClip> obj).__lookupChild(name);
     }
     return obj.asGetPublicProperty(name);
   }
@@ -565,7 +552,7 @@ module Shumway.AVM1 {
 
   interface ExecutionContext {
     context: AS2ContextImpl;
-    global: avm1lib.AS2Globals;
+    global: Shumway.AVM2.AS.avm1lib.AS2Globals;
     scopeContainer: AS2ScopeListItem;
     scope: any;
     actionTracer: ActionTracer;

@@ -35,7 +35,7 @@ module Shumway {
                              next: (avm2: AVM2)=> void) {
     function loadAVM1(next) {
       new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
-        avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "avm1.abc"));
+        avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), avm1Path));
         next();
       });
     }

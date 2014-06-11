@@ -17,8 +17,8 @@
 module Shumway.AVM2.AS.avm1lib {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import MovieClip = Shumway.AVM2.AS.flash.display.MovieClip;
-  import Stage = Shumway.AVM2.AS.flash.display.Stage;
+
+  import display = Shumway.AVM2.AS.flash.display;
   import AS2Context = Shumway.AVM1.AS2Context;
 
   export class AS2Utils extends ASNative {
@@ -63,16 +63,16 @@ module Shumway.AVM2.AS.avm1lib {
       });
     }
 
-    static resolveTarget(target_mc: any = undefined): MovieClip {
+    static resolveTarget(target_mc: any = undefined): display.MovieClip {
       return AS2Context.instance.resolveTarget(target_mc);
     }
 
-    static resolveLevel(level: number): MovieClip {
+    static resolveLevel(level: number): display.MovieClip {
       level = +level;
       return AS2Context.instance.resolveLevel(level);
     }
 
-    static get currentStage(): Stage {
+    static get currentStage(): display.Stage {
       return AS2Context.instance.stage;
     }
 
@@ -118,5 +118,15 @@ module Shumway.AVM2.AS.avm1lib {
       var p = defaultListeners[i];
       p.asGetPublicProperty('setter').call(thisArg, p.value);
     }
+  }
+
+  export function getAS2Object(as3Object) {
+    if (as3Object._as2Object) {
+      return as3Object._as2Object;
+    }
+    if (display.MovieClip.isType(as3Object)) {
+      return new AS2MovieClip(as3Object);
+    }
+    notImplemented('Not impletemented');
   }
 }

@@ -128,6 +128,7 @@ console.time("Load AVM1 Dependencies");
 load("../../build/ts/avm1/stream.js");
 load("../../build/ts/avm1/parser.js");
 load("../../build/ts/avm1/analyze.js");
+load("../../build/ts/avm1/context.js");
 load("../../build/ts/avm1/interpreter.js");
 console.timeEnd("Load AVM1 Dependencies");
 
