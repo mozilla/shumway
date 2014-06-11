@@ -64,7 +64,6 @@ module Shumway.AVM2.AS.flash.text {
       self._selectionEndIndex = 0;
       self._sharpness = 0;
       self._styleSheet = null;
-      self._text = '';
       self._textColor = -1;
       self._textHeight = 0;
       self._textWidth = 0;
@@ -73,7 +72,7 @@ module Shumway.AVM2.AS.flash.text {
       self._wordWrap = false;
       self._useRichTextClipboard = false;
 
-      self._textRuns = [];
+      self._textContent = new Shumway.TextContent();
 
       if (symbol) {
         self._textColor = symbol.textColor;
@@ -171,7 +170,6 @@ module Shumway.AVM2.AS.flash.text {
     _selectionEndIndex: number /*int*/;
     _sharpness: number;
     _styleSheet: flash.text.StyleSheet;
-    _text: string;
     _textColor: number /*uint*/;
     _textHeight: number;
     _textWidth: number;
@@ -180,7 +178,7 @@ module Shumway.AVM2.AS.flash.text {
     _wordWrap: boolean;
     _useRichTextClipboard: boolean;
 
-    _textRuns: TextRun[];
+    _textContent: Shumway.TextContent;
 
     get alwaysShowSelection(): boolean {
       return this._alwaysShowSelection;
@@ -303,7 +301,7 @@ module Shumway.AVM2.AS.flash.text {
 
       var plainText = '';
 
-      var textRuns = this._textRuns;
+      var textRuns = this._textContent.textRuns;
       textRuns.length = 0;
 
       var beginIndex = 0;
@@ -444,7 +442,8 @@ module Shumway.AVM2.AS.flash.text {
       });
 
       this._htmlText = value;
-      this._text = plainText;
+      this._textContent.plainText = plainText;
+      this._textContent._isDirty = true;
     }
 
     get length(): number /*int*/ {
@@ -566,15 +565,16 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get text(): string {
-      return this._text;
+      return this._textContent.plainText;
     }
 
     set text(value: string) {
       somewhatImplemented("public flash.text.TextField::set text");
       var value = asCoerceString(value);
-      this._text = value;
-      this._textRuns.length = 0;
-      this._textRuns[0] = new TextRun(0, value.length, this._defaultTextFormat);
+      this._textContent.plainText = value;
+      this._textContent.textRuns.length = 0;
+      this._textContent.textRuns[0] = new TextRun(0, value.length, this._defaultTextFormat);
+      this._textContent._isDirty = true;
     }
 
     get textColor(): number /*uint*/ {
@@ -674,7 +674,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     getTextRuns(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): any [] {
-      var textRuns = this._textRuns;
+      var textRuns = this._textContent.textRuns;
       var result = [];
       for (var i = 0; i < textRuns.length; i++) {
         var textRun = textRuns[i];

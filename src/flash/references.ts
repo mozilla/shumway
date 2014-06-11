@@ -17,6 +17,7 @@
 ///<reference path='../avm2/references.ts' />
 ///<reference path='../htmlparser.ts' />
 ///<reference path='../ShapeData.ts' />
+///<reference path='../TextContent.ts' />
 ///<reference path='../player/remoting.ts' />
 
 ///<reference path='accessibility/Accessibility.ts' />

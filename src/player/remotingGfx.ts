@@ -20,6 +20,7 @@ module Shumway.Remoting.GFX {
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
   import RenderableBitmap = Shumway.GFX.RenderableBitmap;
+  import RenderableText = Shumway.GFX.RenderableText;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
   import ShapeData = Shumway.ShapeData;
@@ -121,6 +122,9 @@ module Shumway.Remoting.GFX {
             break;
           case MessageTag.UpdateBitmapData:
             this._readUpdateBitmapData();
+            break;
+          case MessageTag.UpdateTextContent:
+            this._readUpdateTextContent();
             break;
           case MessageTag.RegisterFont:
             this._readFont();
@@ -226,6 +230,27 @@ module Shumway.Remoting.GFX {
       } else {
         var renderableBitmap = <RenderableBitmap>context._assets[id];
         renderableBitmap.updateFromDataBuffer(type, dataBuffer);
+      }
+    }
+
+    private _readUpdateTextContent() {
+      var input = this.input;
+      var context = this.context;
+      var id = input.readInt();
+      var asset = context._assets[id];
+      var bounds = this._readRectangle();
+      var assetId = input.readInt();
+      var numTextRuns = input.readInt();
+      var textRunData = new DataBuffer(numTextRuns * 48);
+      input.readBytes(textRunData, 0, numTextRuns * 48);
+      var plainText = this.inputAssets[assetId];
+      debugger;
+      this.inputAssets[assetId] = null;
+      if (!asset) {
+        context._assets[id] = new RenderableText(plainText, textRunData, bounds);
+      } else {
+        var renderableText = <RenderableText>context._assets[id];
+        renderableText.update(plainText, textRunData, bounds);
       }
     }
 

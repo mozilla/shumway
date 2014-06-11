@@ -92,6 +92,26 @@ module Shumway.Remoting.Player {
       }
     }
 
+    writeTextContent(textContent: Shumway.TextContent) {
+      if (textContent._isDirty) {
+        var textRuns = textContent.textRuns;
+        var numTextRuns = textRuns.length;
+        this.output.writeInt(MessageTag.UpdateTextContent);
+        this.output.writeInt(textContent._id);
+        //this.writeRectangle(textContent._getContentBounds());
+        this.output.writeInt(this.outputAssets.length);
+        this.outputAssets.push(textContent.plainText);
+        this.output.writeInt(numTextRuns);
+        for (var i = 0; i < numTextRuns; i++) {
+          var textRun = textRuns[i];
+          this.output.writeInt(textRun.beginIndex);
+          this.output.writeInt(textRun.endIndex);
+          this.writeTextFormat(textRun.textFormat);
+        }
+        textContent._isDirty = false;
+      }
+    }
+
     writeFont(font: flash.text.Font) {
       // Device fonts can be skipped, they obviously should exist on the device.
       if (font.fontType === 'embedded') {
@@ -165,6 +185,7 @@ module Shumway.Remoting.Player {
         bitmap = <Bitmap>displayObject;
       }
       var graphics = displayObject._getGraphics();
+      var textContent = displayObject._getTextContent();
       if (hasRemotableChildren) {
         if (bitmap) {
           if (bitmap.bitmapData) {
@@ -197,6 +218,8 @@ module Shumway.Remoting.Player {
       // Visit remotable child objects that are not otherwise visited.
       if (graphics) {
         this.writeGraphics(graphics);
+      } else if (textContent) {
+        this.writeTextContent(textContent);
       } else if (bitmap) {
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);
@@ -283,6 +306,29 @@ module Shumway.Remoting.Player {
         output.writeInt(bo);
         output.writeInt(ao);
       }
+    }
+
+    writeTextFormat(textFormat: flash.text.TextFormat) {
+      var output = this.output;
+      output.writeInt(flash.text.TextFormatAlign.toNumber(textFormat.align));
+      //output.writeInt(textFormat.blockIndent);
+      output.writeBoolean(!!textFormat.bold);
+      output.writeBoolean(!!textFormat.bullet);
+      output.writeInt(+textFormat.color);
+      //output.writeInt(textFormat.display);
+      //output.writeInt(textFormat.font);
+      output.writeInt(+textFormat.indent);
+      output.writeBoolean(!!textFormat.italic);
+      output.writeInt(+textFormat.kerning);
+      output.writeInt(+textFormat.leading);
+      output.writeInt(+textFormat.leftMargin);
+      output.writeInt(+textFormat.letterSpacing);
+      output.writeInt(+textFormat.rightMargin);
+      output.writeInt(+textFormat.size);
+      //output.writeInt(textFormat.tabStops);
+      //output.writeInt(textFormat.target);
+      output.writeBoolean(!!textFormat.underline);
+      //output.writeInt(textFormat.url);
     }
   }
 
