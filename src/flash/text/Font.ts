@@ -71,7 +71,8 @@ module Shumway.AVM2.AS.flash.text {
           self.advances = metrics.advances;
         }
 
-        self._fontType = FontType.EMBEDDED;
+        // Font symbols without any glyphs describe device fonts.
+        self._fontType = symbol.data ? FontType.EMBEDDED : FontType.DEVICE;
         Font.fontsBySymbolId[symbol.id] = self;
       }
     };
