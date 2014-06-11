@@ -206,6 +206,7 @@ module.exports = function(grunt) {
   grunt.registerTask('avm1', ['exec:build_avm1_ts', 'exec:shell_test']);
   grunt.registerTask('shell-test', ['exec:shell_test']);
   grunt.registerTask('shu', [
+    'exec:build_playerglobal',
     'exec:build_avm2_ts',
     'exec:build_flash_ts',
     'exec:build_avm1_ts',
