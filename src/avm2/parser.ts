@@ -805,11 +805,10 @@ module Shumway.AVM2.ABC {
       if (uri === undefined) {
         uri = "";
       }
-      if (prefix !== undefined) {
-        this.prefix = prefix;
-      }
       this.kind = kind;
       this.uri = uri;
+      this.prefix = prefix;
+      this.qualifiedName = undefined;
       this._buildNamespace(uniqueURIHash);
     }
 
