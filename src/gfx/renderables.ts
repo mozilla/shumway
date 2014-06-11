@@ -407,6 +407,7 @@ module Shumway.GFX {
       assert(coordinatesIndex === data.coordinatesPosition);
       if (formOpen && fillPath) {
         fillPath.lineTo(formOpenX, formOpenY);
+        strokePath && strokePath.lineTo(formOpenX, formOpenY);
       }
       this._applyFill(context, fillPath, clipRegion, false, 0, 0);
       context.fillStyle = null;
