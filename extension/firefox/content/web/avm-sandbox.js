@@ -195,7 +195,7 @@ window.addEventListener("message", function handlerMessage(e) {
 var LOADER_WORKER_PATH = SHUMWAY_ROOT + 'web/worker.js';
 
 function setupServices() {
-  Shumway.FakeSyncWorker.WORKER_PATH = SHUMWAY_ROOT + 'fakechannel.js';
+  Shumway.Player.Test.FakeSyncWorker.WORKER_PATH = SHUMWAY_ROOT + 'fakechannel.js';
 
   Shumway.Telemetry.instance = {
     reportTelemetry: function (data) {

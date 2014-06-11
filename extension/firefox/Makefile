@@ -40,6 +40,7 @@ build: ensureoutputdir
 	# Coping shumway.js files
 	cp $(GENERIC_DIR)/shumway*.js $(BUILD_DIR)/content/
 	cp ../../src/player/fakechannel.js $(BUILD_DIR)/content/
+	cp ../../build/ts/player/test/*.js $(BUILD_DIR)/content/
 	echo $(VERSION) > $(BUILD_DIR)/content/version.txt
 	echo $(VERSION_SHA) >> $(BUILD_DIR)/content/version.txt
 	echo "extension" >> $(BUILD_DIR)/content/version.txt
