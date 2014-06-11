@@ -45,7 +45,6 @@ var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boo
 Timer.start("Loading VM");
 
 load(tsBuildPath + "avm2/module.js");
-load(jsBuildPath + "avm2/constants.js");
 load(tsBuildPath + "avm2/errors.js");
 load(tsBuildPath + "avm2/parser.js");
 load(tsBuildPath + "avm2/bytecode.js");
