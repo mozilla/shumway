@@ -265,19 +265,6 @@ module Shumway {
       this.styles.writeUnsignedInt(color);
     }
 
-    beginBitmapFill(bitmapId: number,
-                    matrix: {a: number; b: number; c: number; d: number; tx: number; ty: number},
-                    repeat: boolean, smooth: boolean): void
-    {
-      this.ensurePathCapacities(1, 0);
-      this.commands[this.commandsPosition++] = PathCommand.BeginBitmapFill;
-      var styles: DataBuffer = this.styles;
-      styles.writeUnsignedInt(bitmapId);
-      this._writeStyleMatrix(matrix);
-      styles.writeBoolean(repeat);
-      styles.writeBoolean(smooth);
-    }
-
     endFill() {
       this.ensurePathCapacities(1, 0);
       this.commands[this.commandsPosition++] = PathCommand.EndFill;
@@ -302,6 +289,26 @@ module Shumway {
       styles.writeUnsignedByte(caps);
       styles.writeUnsignedByte(joints);
       styles.writeUnsignedByte(miterLimit);
+    }
+
+    /**
+     * Bitmaps are specified the same for fills and strokes, so we only need to serialize them
+     * once. The Parameter `pathCommand` is treated as the actual command to serialize, and must
+     * be one of BeginBitmapFill and LineStyleBitmap.
+     */
+    beginBitmap(pathCommand: PathCommand, bitmapId: number, matrix: ShapeMatrix,
+                repeat: boolean, smooth: boolean): void
+    {
+      assert(pathCommand === PathCommand.BeginBitmapFill ||
+             pathCommand === PathCommand.LineStyleBitmap);
+
+      this.ensurePathCapacities(1, 0);
+      this.commands[this.commandsPosition++] = pathCommand;
+      var styles: DataBuffer = this.styles;
+      styles.writeUnsignedInt(bitmapId);
+      this._writeStyleMatrix(matrix);
+      styles.writeBoolean(repeat);
+      styles.writeBoolean(smooth);
     }
 
     /**
