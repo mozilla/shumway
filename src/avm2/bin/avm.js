@@ -88,9 +88,9 @@ var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", 
 
 
 load(tsBuildPath + "metrics.js");
-load(jsBuildPath + "avm2/constants.js");
 load(tsBuildPath + "avm2/parser.js");
 load(tsBuildPath + "avm2/domain.js");
+load(tsBuildPath + "avm2/bytecode.js");
 
 var AbcFile = Shumway.AVM2.ABC.AbcFile;
 var AbcStream = Shumway.AVM2.ABC.AbcStream;
@@ -187,24 +187,23 @@ for (var f = 0; f < files.length; f++) {
        * Load SWF Dependencies
        */
       SWF = {};
-      load(homePath + "src/swf/swf.js");
-      load(homePath + "src/swf/util.js");
-      load(homePath + "src/swf/types.js");
-      load(homePath + "src/swf/structs.js");
-      load(homePath + "src/swf/tags.js");
-      load(homePath + "src/swf/inflate.js");
-      load(homePath + "src/swf/stream.js");
-      load(homePath + "src/swf/templates.js");
-      load(homePath + "src/swf/generator.js");
-      load(homePath + "src/swf/handlers.js");
-      load(homePath + "src/swf/parser.js");
-      load(homePath + "src/swf/bitmap.js");
-      load(homePath + "src/swf/button.js");
-      load(homePath + "src/swf/font.js");
-      load(homePath + "src/swf/image.js");
-      load(homePath + "src/swf/label.js");
-      load(homePath + "src/swf/shape.js");
-      load(homePath + "src/swf/text.js");
+      load(tsBuildPath + "swf/module.js");
+      load(tsBuildPath + "swf/inflate.js");
+      load(tsBuildPath + "swf/stream.js");
+      load(tsBuildPath + "swf/parser/bitmap.js");
+      load(tsBuildPath + "swf/parser/button.js");
+      load(tsBuildPath + "swf/parser/font.js");
+      load(tsBuildPath + "swf/parser/image.js");
+      load(tsBuildPath + "swf/parser/label.js");
+      load(tsBuildPath + "swf/parser/shape.js");
+      load(tsBuildPath + "swf/parser/sound.js");
+      load(tsBuildPath + "swf/parser/text.js");
+
+      load(tsBuildPath + "swf/parser/swfTag.js");
+      load(tsBuildPath + "swf/parser/templates.js");
+      load(tsBuildPath + "swf/parser/handlers.js");
+      load(tsBuildPath + "swf/parser/parser.js");
+      
     }
     var SWF_TAG_CODE_DO_ABC = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC;
     Shumway.SWF.Parser.parse(snarf(file, "binary"), {

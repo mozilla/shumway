@@ -279,6 +279,7 @@ module Shumway.Remoting.GFX {
         frame.mask = context._makeFrame(input.readInt());
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
+        frame.clip = input.readInt();
         input.readInt();
         // frame.blendMode = input.readInt();
         // TODO: Should make a proper flag for this.

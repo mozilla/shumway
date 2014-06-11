@@ -531,6 +531,7 @@ module Shumway.AVM2 {
     spbacks: BlockSet;
     bdo: number;
     index: number;
+    object: number;
     argCount: number;
 
     verifierEntryState: Verifier.State;
@@ -1259,6 +1260,8 @@ module Shumway.AVM2 {
         return false;
       }
 
+      var bytecodes = this.bytecodes;
+
       var BoundBlockSet = this.boundBlockSet;
 
       //
@@ -1357,7 +1360,42 @@ module Shumway.AVM2 {
         this.save = {};
         this.head = new BoundBlockSet();
         this.npreds = 0;
+        this._dirtyLocals = null;
       }
+
+      LoopInfo.prototype.getDirtyLocals = function () {
+        if (this._dirtyLocals) {
+          return this._dirtyLocals;
+        }
+        var dirtyLocals = this._dirtyLocals = [];
+        var blocks = this.body.members();
+        blocks.forEach(function (block: Bytecode) {
+          for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
+            var bc = bytecodes[bci];
+            var op = bc.op;
+            switch (op) {
+              case OP.inclocal:
+              case OP.declocal:
+              case OP.setlocal:
+              case OP.inclocal_i:
+              case OP.declocal_i:
+                dirtyLocals[bc.index] = true;
+                break;
+              case OP.hasnext2:
+                dirtyLocals[bc.index] = true;
+                dirtyLocals[bc.object] = true;
+                break;
+              case OP.setlocal0:
+              case OP.setlocal1:
+              case OP.setlocal2:
+              case OP.setlocal3:
+                dirtyLocals[op - OP.setlocal0] = true;
+                break;
+            }
+          }
+        });
+        return dirtyLocals;
+      };
 
       var heads = findLoopHeads(this.blocks);
       if (heads.length <= 0) {

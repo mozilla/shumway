@@ -455,7 +455,7 @@ module Shumway.AVM2.Compiler.Backend {
 
   IR.ASGetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    if (this.flags & IR.Flags.INDEXED) {
+    if (this.flags & IR.Flags.NumericProperty) {
       release || assert (!(this.flags & IR.Flags.IS_METHOD));
       return call(property(object, "asGetNumericProperty"), [compileValue(this.name.name, cx)]);
     } else if (this.flags & IR.Flags.RESOLVED) {
@@ -590,7 +590,7 @@ module Shumway.AVM2.Compiler.Backend {
   IR.ASSetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var value = compileValue(this.value, cx);
-    if (this.flags & IR.Flags.INDEXED) {
+    if (this.flags & IR.Flags.NumericProperty) {
       return call(property(object, "asSetNumericProperty"), [compileValue(this.name.name, cx), value]);
     }
     var name = compileMultiname(this.name, cx);

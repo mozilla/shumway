@@ -36,8 +36,15 @@ var Timer = new Shumway.Metrics.Timer();
 var Option = Shumway.Options.Option;
 var OptionSet = Shumway.Options.OptionSet;
 
+
+
 var systemOptions = new OptionSet("System Options");
 var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
+
+Shumway.Settings = {
+  shumwayOptions: shumwayOptions
+};
+
 load(tsBuildPath + "avm2/options.js");
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
@@ -45,7 +52,6 @@ var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boo
 Timer.start("Loading VM");
 
 load(tsBuildPath + "avm2/module.js");
-load(jsBuildPath + "avm2/constants.js");
 load(tsBuildPath + "avm2/errors.js");
 load(tsBuildPath + "avm2/parser.js");
 load(tsBuildPath + "avm2/bytecode.js");

@@ -82,13 +82,10 @@ module Shumway.GFX {
    * You shuold at least be able to get a build of Firefox or Chrome where setTransform works. Eventually,
    * we'll have to polyfill Path2D, we can work around the addPath limitation at that point.
    */
-  if (!CanvasPattern.prototype.setTransform) {
-    /**
-     * Save the transform matrix on the CanvasPattern.
-     */
-    CanvasPattern.prototype.setTransform = function (matrix: SVGMatrix) {
-      this._transform = matrix;
-    };
+  CanvasPattern.prototype.setTransform = function (matrix: SVGMatrix) {
+    this._transform = matrix;
+  };
+  if (!CanvasPattern.prototype.setTransform && Path2D.prototype.addPath) {
     var originalFill = CanvasRenderingContext2D.prototype.fill;
     /**
      * If the current fillStyle is a CanvasPattern that has a SVGMatrix transformed applied to it, we

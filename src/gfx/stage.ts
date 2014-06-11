@@ -71,7 +71,12 @@ module Shumway.GFX {
     /**
      * Visit front to back.
      */
-    FrontToBack  = 8
+    FrontToBack  = 8,
+
+    /**
+     * Visit clip leave events.
+     */
+    Clips        = 16
   }
 
   function getRandomIntInclusive(min: number, max: number): number {

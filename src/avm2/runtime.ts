@@ -313,8 +313,7 @@ module Shumway.AVM2.Runtime {
    * - asCallProperty(namespaces, name, flags, isLex, args)
    * - asDeleteProperty(namespaces, name, flags)
    *
-   * The default implementation of as[Get|Set]Property checks if these properties are defined on the object and
-   * calls them if the name is numeric:
+   * If the compiler can prove that the property name is numeric, it calls these functions instead.
    *
    * - asGetNumericProperty(index)
    * - asSetNumericProperty(index, value)
@@ -410,14 +409,6 @@ module Shumway.AVM2.Runtime {
     return self[resolved];
   }
 
-  export function asGetPropertyLikelyNumeric(namespaces: Namespace [], name: any, flags: number) {
-    var self: Object = this;
-    if (typeof name === "number") {
-      return self.asGetNumericProperty(name);
-    }
-    return asGetProperty.call(self, namespaces, name, flags);
-  }
-
   /**
    * Resolved string accessors.
    */
@@ -486,15 +477,6 @@ module Shumway.AVM2.Runtime {
     }
     tryInjectToStringAndValueOfForwarder(self, resolved);
     self[resolved] = value;
-  }
-
-  export function asSetPropertyLikelyNumeric(namespaces: Namespace [], name: any, flags: number, value: any) {
-    var self: Object = this;
-    if (typeof name === "number") {
-      self.asSetNumericProperty(name, value);
-      return;
-    }
-    return asSetProperty.call(self, namespaces, name, flags, value);
   }
 
   export function asDefinePublicProperty(name: any, descriptor: PropertyDescriptor) {
@@ -1059,6 +1041,7 @@ module Shumway.AVM2.Runtime {
 
     [
       "Array",
+      "Object",
       "Int8Array",
       "Uint8Array",
       "Uint8ClampedArray",
@@ -1075,9 +1058,6 @@ module Shumway.AVM2.Runtime {
         }
         defineNonEnumerableProperty(global[name].prototype, "asGetNumericProperty", asGetNumericProperty);
         defineNonEnumerableProperty(global[name].prototype, "asSetNumericProperty", asSetNumericProperty);
-
-        defineNonEnumerableProperty(global[name].prototype, "asGetProperty", asGetPropertyLikelyNumeric);
-        defineNonEnumerableProperty(global[name].prototype, "asSetProperty", asSetPropertyLikelyNumeric);
       });
 
     global.Array.prototype.asGetProperty = function (namespaces: Namespace [], name: any, flags: number): any {

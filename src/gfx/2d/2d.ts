@@ -168,6 +168,15 @@ module Shumway.GFX {
           return VisitorFlags.Skip;
         }
 
+        if (flags & FrameFlags.EnterClip) {
+          context.save();
+          self.renderFrame(context, frame, transform, new Canvas2DStageRendererState(state.options, true));
+          return;
+        } else if (flags & FrameFlags.LeaveClip) {
+          context.restore();
+          return;
+        }
+
         context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
         context.globalAlpha = frame.getConcatenatedAlpha();
 
@@ -205,7 +214,7 @@ module Shumway.GFX {
         }
 
         return VisitorFlags.Continue;
-      }, transform, FrameFlags.Empty);
+      }, transform, FrameFlags.Empty, VisitorFlags.Clips);
     }
 
     private getCompositeOperation(blendMode: BlendMode): string {

@@ -109,12 +109,8 @@ public dynamic class Array extends Object
     return _join(this, sep)
   }
 
-  private static native function _pop(o)
   AS3 native function pop()
-  prototype.pop = function()
-  {
-    return _pop(this)
-  }
+  prototype.pop = unsafeJSNative("Original.Array.prototype.pop");
 
   /**
    15.4.4.2 Array.prototype.toString ( )
@@ -186,14 +182,7 @@ public dynamic class Array extends Object
    is implementation-dependent.
    */
   AS3 native function push(...args):uint
-  prototype.push = function(...args):uint
-  {
-    var n:uint = uint(this.length)
-    for (var i:uint=0, argc:uint=args.length; i < argc; i++)
-      this[n++] = args[i]
-    this.length = n
-    return n
-  }
+  prototype.push = unsafeJSNative("Original.Array.prototype.push");
 
   private static native function _reverse(o)
   AS3 function reverse():Array

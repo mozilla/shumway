@@ -51,7 +51,10 @@ module Shumway.GFX {
     /**
      * Frame has changed since the last time it was drawn.
      */
-    DirtyPaint                                = 0x0200
+    DirtyPaint                                = 0x0200,
+
+    EnterClip                                 = 0x1000,
+    LeaveClip                                 = 0x2000
   }
 
   /**
@@ -66,12 +69,14 @@ module Shumway.GFX {
     AllowFiltersWrite           = 8,
     AllowMaskWrite              = 16,
     AllowChildrenWrite          = 32,
+    AllowClipWrite              = 64,
     AllowAllWrite               = AllowMatrixWrite      |
                                   AllowColorMatrixWrite |
                                   AllowBlendModeWrite   |
                                   AllowFiltersWrite     |
                                   AllowMaskWrite        |
-                                  AllowChildrenWrite
+                                  AllowChildrenWrite    |
+                                  AllowClipWrite
   }
 
   export class Frame {
@@ -110,6 +115,12 @@ module Shumway.GFX {
     private _concatenatedColorMatrix: ColorMatrix;
     private _properties: {[name: string]: any};
     private _mask: Frame;
+
+    /**
+     * The number of sibilings to clip in back-to-front order. If zero then this does not specify a clipping region.
+     */
+    private _clip: number;
+
     private _flags: FrameFlags;
     private _capability: FrameCapabilityFlags;
 
@@ -134,6 +145,7 @@ module Shumway.GFX {
       this._capability = FrameCapabilityFlags.AllowAllWrite;
       this._parent = null;
       this._alpha = 1;
+      this._clip = 0;
       this._blendMode = BlendMode.Normal;
       this._filters = [];
       this._mask = null;
@@ -383,6 +395,15 @@ module Shumway.GFX {
       return this._mask;
     }
 
+    set clip(value: number) {
+      this.checkCapability(FrameCapabilityFlags.AllowClipWrite);
+      this._clip = value;
+    }
+
+    get clip(): number {
+      return this._clip;
+    }
+
     public getBounds(): Rectangle {
       assert(false, "Override this.");
       return null;
@@ -488,19 +509,19 @@ module Shumway.GFX {
                  transform?: Matrix,
                  flags: FrameFlags = FrameFlags.Empty,
                  visitorFlags: VisitorFlags = VisitorFlags.None) {
-      var stack: Frame [];
+      var frameStack: Frame [];
       var frame: Frame;
       var frameContainer: FrameContainer;
       var frontToBack = visitorFlags & VisitorFlags.FrontToBack;
-      stack = [this];
+      frameStack = [this];
       var transformStack: Matrix [];
       var calculateTransform = !!transform;
       if (calculateTransform) {
         transformStack = [transform.clone()];
       }
       var flagsStack: FrameFlags [] = [flags];
-      while (stack.length > 0) {
-        frame = stack.pop();
+      while (frameStack.length > 0) {
+        frame = frameStack.pop();
         if (calculateTransform) {
           transform = transformStack.pop();
         }
@@ -510,18 +531,52 @@ module Shumway.GFX {
           if (frame instanceof FrameContainer) {
             frameContainer = <FrameContainer>frame;
             var length = frameContainer._children.length;
-            for (var i = 0; i < length; i++) {
-              var child = frameContainer._children[frontToBack ? i : length - 1 - i];
-              if (!child) {
-                continue;
+            if (visitorFlags & VisitorFlags.Clips) {
+              var clipLeave: Frame [][] = frameContainer.gatherClipLeaveEvents();
+
+              /* This code looks a bit strange because it needs to push nodes into the |frameStack| in reverse. This is the
+               * reason we had to collect the clip regions in a seperate pass before. */
+              for (var i = length - 1; i >= 0; i--) {
+                // Check to see if we have any clip leave events that we need to push into the |frameStack|?
+                if (clipLeave && clipLeave[i]) {
+                  while (clipLeave[i].length) {
+                    var clipFrame = clipLeave[i].shift();
+                    frameStack.push(clipFrame);
+                    flagsStack.push(FrameFlags.LeaveClip);
+                    if (calculateTransform) {
+                      transformStack.push(null);
+                    }
+                  }
+                }
+                var child = frameContainer._children[i];
+                assert(child);
+                frameStack.push(child);
+                if (calculateTransform) {
+                  var t = transform.clone();
+                  t.preMultiply(child.matrix);
+                  transformStack.push(t);
+                }
+                if (child.clip > 0) {
+                  flagsStack.push(flags | FrameFlags.EnterClip);
+                } else {
+                  flagsStack.push(flags);
+                }
               }
-              stack.push(child);
-              if (calculateTransform) {
-                var t = transform.clone();
-                t.preMultiply(child.matrix);
-                transformStack.push(t);
+
+            } else {
+              for (var i = 0; i < length; i++) {
+                var child = frameContainer._children[frontToBack ? i : length - 1 - i];
+                if (!child) {
+                  continue;
+                }
+                frameStack.push(child);
+                if (calculateTransform) {
+                  var t = transform.clone();
+                  t.preMultiply(child.matrix);
+                  transformStack.push(t);
+                }
+                flagsStack.push(flags);
               }
-              flagsStack.push(flags);
             }
           }
         } else if (result === VisitorFlags.Stop) {

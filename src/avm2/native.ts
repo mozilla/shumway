@@ -1656,12 +1656,12 @@ module Shumway.AVM2.AS {
     export var Date = jsGlobal.Date;
     export var ASObject = Shumway.AVM2.AS.ASObject;
 
-    function makeOriginalPrototype(constructor: Function) {
-      return {
-        prototype: {
-          valueOf: constructor.prototype.valueOf, toString: constructor.prototype.toString
-        }
-      };
+    function makeOriginalPrototype(constructor: Function, properties: string []) {
+      var o = { prototype: createEmptyObject() }
+      for (var i = 0; i < properties.length; i++) {
+        o.prototype[properties[i]] = constructor.prototype[properties[i]];
+      }
+      return o;
     }
 
     /**
@@ -1669,11 +1669,11 @@ module Shumway.AVM2.AS {
      * prevent cyycles.
      */
     export var Original = {
-      Date: makeOriginalPrototype(Date),
-      Array: makeOriginalPrototype(Array),
-      String: makeOriginalPrototype(String),
-      Number: makeOriginalPrototype(Number),
-      Boolean: makeOriginalPrototype(Boolean)
+      Date: makeOriginalPrototype(Date, ["toString", "valueOf"]),
+      Array: makeOriginalPrototype(Array, ["toString", "valueOf", "push", "pop"]),
+      String: makeOriginalPrototype(String, ["toString", "valueOf"]),
+      Number: makeOriginalPrototype(Number, ["toString", "valueOf"]),
+      Boolean: makeOriginalPrototype(Boolean, ["toString", "valueOf"])
     }
 
     export function print(...args: any []) {
