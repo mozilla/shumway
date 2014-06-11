@@ -237,10 +237,6 @@ module Shumway.AVM2.Verifier {
       assert (this.isParameterizedType());
       return <ParameterizedType>this;
     }
-
-    isDirectlyReadable() {
-      return this === Type.Array;
-    }
   }
 
   class AtomType extends Type {
