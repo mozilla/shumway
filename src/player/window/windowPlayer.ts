@@ -29,15 +29,27 @@ module Shumway.Player.Window {
       this._window.addEventListener('message', function (e) {
         this.onWindowMessage(e.data);
       }.bind(this));
+      this._window.addEventListener('syncmessage', function (e) {
+        this.onWindowMessage(e.detail);
+      }.bind(this));
     }
 
-    public onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
+    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
       var bytes = updates.getBytes();
       this._parent.postMessage({
         type: 'player',
         updates: bytes,
         assets: assets
       }, '*', [bytes.buffer]);
+    }
+
+    onExternalCommand(command) {
+      var event = this._parent.document.createEvent('CustomEvent');
+      event.initCustomEvent('syncmessage', false, false, {
+        type: 'external',
+        request: command
+      });
+      this._parent.dispatchEvent(event);
     }
 
     private onWindowMessage(data) {
@@ -47,6 +59,9 @@ module Shumway.Player.Window {
             var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
             var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
             this.processEventUpdates(updates);
+            break;
+          case 'externalCallback':
+            this.processExternalCallback(data.request);
             break;
           case 'options':
             Shumway.Settings.setSettings(data.settings);

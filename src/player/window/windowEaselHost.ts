@@ -34,14 +34,26 @@ module Shumway.Player.Window {
       this._window.addEventListener('message', function (e) {
         this.onWindowMessage(e.data);
       }.bind(this));
+      this._window.addEventListener('syncmessage', function (e) {
+        this.onWindowMessage(e.detail);
+      }.bind(this));
     }
 
-    public onSendEventUpdates(updates: DataBuffer) {
+    onSendEventUpdates(updates: DataBuffer) {
       var bytes = updates.getBytes();
       this._playerWindow.postMessage({
         type: 'gfx',
         updates: bytes
       }, '*', [bytes.buffer]);
+    }
+
+    onExernalCallback(request) {
+      var event = this._playerWindow.document.createEvent('CustomEvent');
+      event.initCustomEvent('syncmessage', false, false, {
+        type: 'externalCallback',
+        request: request
+      });
+      this._playerWindow.dispatchEvent(event);
     }
 
     public requestTimeline(type: string, cmd: string): Promise<TimelineBuffer> {
@@ -60,6 +72,8 @@ module Shumway.Player.Window {
         if (data.type === 'player') {
           var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
           this.processUpdates(updates, data.assets);
+        } else if (data.type === 'external') {
+          this.processExternalCommand(data.command);
         } else if (data.type === 'timelineResponse' && data.timeline) {
           // Transform timeline into a Timeline object.
           data.timeline.__proto__ = TimelineBuffer.prototype;
