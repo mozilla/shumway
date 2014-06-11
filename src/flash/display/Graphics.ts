@@ -507,21 +507,7 @@ module Shumway.AVM2.AS.flash.display {
     beginBitmapFill(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
                     repeat: boolean = true, smooth: boolean = false): void
     {
-      if (isNullOrUndefined(bitmap)) {
-        throwError('TypeError', Errors.NullPointerError, 'bitmap');
-      } else if (!(flash.display.BitmapData.isType(bitmap))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap', 'flash.display.BitmapData');
-      }
-      if (isNullOrUndefined(matrix)) {
-        matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
-      } else if (!(flash.geom.Matrix.isType(matrix))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
-      }
-      repeat = !!repeat;
-      smooth = !!smooth;
-      var index = this._textures.length;
-      this._textures.push(bitmap);
-      this._graphicsData.beginBitmapFill(index, matrix, repeat, smooth);
+      this._writeBitmapStyle(PathCommand.BeginBitmapFill, bitmap, matrix, repeat, smooth, false);
       this._hasFills = true;
     }
 
@@ -591,11 +577,8 @@ module Shumway.AVM2.AS.flash.display {
     lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
                     repeat: boolean = true, smooth: boolean = false): void
     {
-      // TODO: only emit this if a stroke width has been set by calling `lineStyle`
-      //bitmap = bitmap; matrix = matrix;
-      //this._closePath();
-      //var fill = this._graphicsData.push(new GraphicsBitmapFill(bitmap, matrix, !!repeat, !!smooth));
-      // TODO
+      this._writeBitmapStyle(PathCommand.LineStyleBitmap, bitmap, matrix, repeat, smooth,
+                             !this._hasLines);
     }
 
     drawRect(x: number, y: number, width: number, height: number): void {
@@ -1237,9 +1220,43 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
+     * Bitmaps are specified the same for fills and strokes, so we only need to serialize them
+     * once. The Parameter `pathCommand` is treated as the actual command to serialize, and must
+     * be one of PathCommand.BeginBitmapFill and PathCommand.LineStyleBitmap.
+     *
+     * This method doesn't actually write anything if the `skipWrite` argument is true. In that
+     * case, it only does arguments checks so the right exceptions are thrown.
+     */
+    private _writeBitmapStyle(pathCommand: PathCommand, bitmap: flash.display.BitmapData,
+                              matrix: flash.geom.Matrix, repeat: boolean, smooth: boolean,
+                              skipWrite: boolean): void
+    {
+      if (isNullOrUndefined(bitmap)) {
+        throwError('TypeError', Errors.NullPointerError, 'bitmap');
+      } else if (!(flash.display.BitmapData.isType(bitmap))) {
+        throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap', 'flash.display.BitmapData');
+      }
+      if (isNullOrUndefined(matrix)) {
+        matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
+      } else if (!(flash.geom.Matrix.isType(matrix))) {
+        throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+      }
+      repeat = !!repeat;
+      smooth = !!smooth;
+
+      if (skipWrite) {
+        return;
+      }
+
+      var index = this._textures.length;
+      this._textures.push(bitmap);
+      this._graphicsData.beginBitmap(pathCommand, index, matrix, repeat, smooth);
+    }
+
+    /**
      * Gradients are specified the same for fills and strokes, so we only need to serialize them
      * once. The Parameter `pathCommand` is treated as the actual command to serialize, and must
-     * be one of PATH_COMMAND_BEGIN_GRADIENT_FILL and PATH_COMMAND_LINE_STYLE_GRADIENT.
+     * be one of PathCommand.BeginGradientFill and PathCommand.LineStyleGradient.
      *
      * This method doesn't actually write anything if the `skipWrite` argument is true. In that
      * case, it only does arguments checks so the right exceptions are thrown.

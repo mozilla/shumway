@@ -301,8 +301,6 @@ module Shumway.GFX {
       // stroke paths onto a stack.
       var fillPath: Path2D = null;
       var strokePath: Path2D = null;
-      var fillTransform: Matrix = null;
-      var strokeTransform: Matrix = null;
       // We have to alway store the last position because Flash keeps the drawing cursor where it
       // was when changing fill or line style, whereas Canvas forgets it on beginning a new path.
       var x = 0;
@@ -363,55 +361,23 @@ module Shumway.GFX {
             break;
           case PathCommand.BeginSolidFill:
             assert(styles.bytesAvailable >= 4);
-            if (fillPath) {
-              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
-            }
-            fillPath = new Path2D();
-            fillPath.moveTo(x, y);
+            fillPath = this._applyFill(context, fillPath, clipRegion, true, x, y);
             context.fillStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             break;
           case PathCommand.BeginBitmapFill:
-            assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
-            if (fillPath) {
-              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
-            }
-            fillPath = new Path2D();
-            fillPath.moveTo(x, y);
-            var textureIndex = styles.readUnsignedInt();
-            fillTransform = this._readMatrix(styles);
-            var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
-            var smooth = styles.readBoolean();
-            var texture = this._textures[textureIndex];
-            assert(texture._canvas);
-            context.fillStyle = context.createPattern(texture._canvas, repeat);
-            context.fillStyle.setTransform(fillTransform.toSVGMatrix());
-            context.msImageSmoothingEnabled = context.msImageSmoothingEnabled =
-                                              context['imageSmoothingEnabled'] = smooth;
+            fillPath = this._applyFill(context, fillPath, clipRegion, true, x, y);
+            context.fillStyle = this._readBitmap(styles, context);
             break;
           case PathCommand.BeginGradientFill:
-            // Assert at least one color stop.
-            assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
-                                            1 + 1 + 4 + 1 + 1);
-            if (fillPath) {
-              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
-            }
-            fillPath = new Path2D();
-            fillPath.moveTo(x, y);
+            fillPath = this._applyFill(context, fillPath, clipRegion, true, x, y);
             context.fillStyle = this._readGradient(styles, context);
             break;
           case PathCommand.EndFill:
-            if (fillPath) {
-              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
-              context.fillStyle = null;
-              fillPath = null;
-            }
+            fillPath = this._applyFill(context, fillPath, clipRegion, false, 0, 0);
+            context.fillStyle = null;
             break;
           case PathCommand.LineStyleSolid:
-            if (strokePath) {
-              !clipRegion && this._strokePath(context, strokePath);
-            }
-            strokePath = new Path2D();
-            strokePath.moveTo(x, y);
+            strokePath = this._applyStroke(context, strokePath, clipRegion, true, x, y);
             context.lineWidth = coordinates[coordinatesIndex++]/20;
             context.strokeStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             // Skip pixel hinting and scale mode for now.
@@ -421,17 +387,15 @@ module Shumway.GFX {
             context.miterLimit = styles.readByte();
             break;
           case PathCommand.LineStyleGradient:
-            if (strokePath) {
-              !clipRegion && this._strokePath(context, strokePath);
-            }
+            strokePath = this._applyStroke(context, strokePath, clipRegion, true, x, y);
             context.strokeStyle = this._readGradient(styles, context);
             break;
+          case PathCommand.LineStyleBitmap:
+            strokePath = this._applyStroke(context, strokePath, clipRegion, true, x, y);
+            context.strokeStyle = this._readBitmap(styles, context);
+            break;
           case PathCommand.LineEnd:
-            if (strokePath) {
-              !clipRegion && this._strokePath(context, strokePath);
-              context.strokeStyle = null;
-              strokePath = null;
-            }
+            strokePath = this._applyStroke(context, strokePath, clipRegion, false, 0, 0);
             break;
           default:
             assertUnreachable('Invalid command ' + command + ' encountered at index' +
@@ -443,16 +407,27 @@ module Shumway.GFX {
       assert(coordinatesIndex === data.coordinatesPosition);
       if (formOpen && fillPath) {
         fillPath.lineTo(formOpenX, formOpenY);
+        strokePath && strokePath.lineTo(formOpenX, formOpenY);
       }
-      if (fillPath) {
-        clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
-        context.fillStyle = null;
-      }
-      if (strokePath) {
-        !clipRegion && this._strokePath(context, strokePath);
-        context.strokeStyle = null;
-      }
+      this._applyFill(context, fillPath, clipRegion, false, 0, 0);
+      context.fillStyle = null;
+      this._applyStroke(context, strokePath, clipRegion, false, 0, 0);
       leaveTimeline("RenderableShape.render");
+    }
+
+    private _applyFill(context: CanvasRenderingContext2D, path: Path2D, clipRegion: boolean,
+                       createNewPath: boolean, x: number, y: number): Path2D
+    {
+      if (path) {
+        clipRegion ? context.clip(path, 'evenodd') : context.fill(path, 'evenodd');
+      }
+
+      if (createNewPath) {
+        path = new Path2D();
+        path.moveTo(x, y);
+        return path;
+      }
+      return null;
     }
 
     // Special-cases 1px and 3px lines by moving the drawing position down/right by 0.5px.
@@ -464,15 +439,30 @@ module Shumway.GFX {
     // on coordinates slightly below round pixels (0.8, say) will be moved up/left.
     // Properly fixing this would probably have to happen in the rasterizer. Or when replaying
     // all the drawing commands, which seems expensive.
-    private _strokePath(context: CanvasRenderingContext2D, path: Path2D): void {
-      var lineWidth = context.lineWidth;
-      if (lineWidth === 1 || lineWidth === 3) {
-        context.translate(0.5, 0.5);
+    private _applyStroke(context: CanvasRenderingContext2D, path: Path2D, clipRegion: boolean,
+                         createNewPath: boolean, x: number, y: number): Path2D
+    {
+      if (clipRegion) {
+        return null;
       }
-      context.stroke(path);
-      if (lineWidth === 1 || lineWidth === 3) {
-        context.translate(-0.5, -0.5);
+      if (path) {
+        var lineWidth = context.lineWidth;
+        var isSpecialCaseWidth = lineWidth === 1 || lineWidth === 3;
+        if (isSpecialCaseWidth) {
+          context.translate(0.5, 0.5);
+        }
+        context.stroke(path);
+        if (isSpecialCaseWidth) {
+          context.translate(-0.5, -0.5);
+        }
       }
+
+      if (createNewPath) {
+        path = new Path2D();
+        path.moveTo(x, y);
+        return path;
+      }
+      return null;
     }
 
     private _readMatrix(data: DataBuffer): Matrix {
@@ -483,6 +473,9 @@ module Shumway.GFX {
     }
 
     private _readGradient(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasGradient {
+      // Assert at least one color stop.
+      assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
+                                      1 + 1 + 4 + 1 + 1);
       var gradientType = styles.readUnsignedByte();
       var focalPoint = styles.readShort() * 2 / 0xff;
       assert(focalPoint >= -1 && focalPoint <= 1);
@@ -507,6 +500,22 @@ module Shumway.GFX {
       styles.position += 2;
 
       return gradient;
+    }
+
+    private _readBitmap(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasPattern {
+      assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
+      var textureIndex = styles.readUnsignedInt();
+      var fillTransform: Matrix = this._readMatrix(styles);
+      var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
+      var smooth = styles.readBoolean();
+      var texture = this._textures[textureIndex];
+      assert(texture._canvas);
+      var fillStyle: CanvasPattern = context.createPattern(texture._canvas, repeat);
+      fillStyle.setTransform(fillTransform.toSVGMatrix());
+      // TODO: make it possible to set smoothing for fills but not strokes and vice-versa.
+      context['mozImageSmoothingEnabled'] = context.msImageSmoothingEnabled =
+                                            context['imageSmoothingEnabled'] = smooth;
+      return fillStyle;
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {

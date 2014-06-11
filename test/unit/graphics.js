@@ -38,6 +38,7 @@
   unitTests.push(lineStyle_invalidWidth);
   unitTests.push(lineStyle_allArgs);
   unitTests.push(lineGradientStyle);
+  unitTests.push(lineBitmapStyle);
   unitTests.push(moveTo);
   unitTests.push(lineTo);
   unitTests.push(curveTo);
@@ -300,6 +301,64 @@
     eq(shape.commandsPosition, 0, "Calls of lineGradientStyle with different lengths for the " +
                                   "colors, alphas and ratios are ignored");
     eq(shape.coordinatesPosition, 0, "fills don't write coordinates");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
+  }
+
+  function lineBitmapStyle() {
+    var g = createGraphics();
+    var shape = g.getGraphicsData();
+
+    // TODO: enable this test once throwError works without AS3 on the stack.
+//    assertThrowsInstanceOf(function() {g.beginGradientFill(null)}, TypeError,
+//                           'beginGradientFill must specify a valid type');
+
+    var bitmap = new BitmapData(100, 100);
+    g.lineBitmapStyle(bitmap);
+    shape.styles.position = 0;
+    eq(shape.commandsPosition, 0, "lineBitmapStyle doesn't write data if no lineStyle is set");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
+    g.clear();
+
+    g.lineStyle(10, 0xff00ff);
+    var initialPosition = shape.styles.position;
+    g.lineBitmapStyle(bitmap);
+    shape.styles.position = initialPosition;
+    eq(shape.commands[1], PathCommand.LineStyleBitmap, "style is stored");
+    eq(shape.coordinatesPosition, 1, "bitmap styles don't write coordinates");
+    var index = shape.styles.readUnsignedInt();
+    eq(index, 0, "lineBitmapStyle stores given bitmap's id");
+    eq(g.getUsedTextures()[index], bitmap, "lineBitmapStyle stores given bitmap's id");
+    structEq(Matrix.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
+             "default matrix is serialized if none is provided");
+    eq(shape.styles.readBoolean(), true, "defaults to repeat");
+    eq(shape.styles.readBoolean(), false, "defaults to no smooting");
+    eq(shape.commandsPosition, 2, "instructions didn't write more data than expected");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
+    g.clear();
+
+    try {
+      g.lineBitmapStyle({});
+      assertUnreachable("lineBitmapStyle with invalid bitmap argument throws");
+    } catch (e) {
+    }
+    try {
+      g.lineBitmapStyle(bitmap, {});
+      assertUnreachable("lineBitmapStyle with non-matrix 2nd argument throws");
+    } catch (e) {
+    }
+    eq(shape.commandsPosition, 0, "invalid lineBitmapStyle calls don't write a command");
+    eq(shape.styles.length, 0, "invalid lineBitmapStyle calls don't write style data");
+
+    g.lineStyle(10, 0xff00ff);
+    var matrix = new Matrix(1, 2, 3, 4, 5, 6);
+    initialPosition = shape.styles.position;
+    g.lineBitmapStyle(bitmap, matrix, false, true);
+    shape.styles.position = initialPosition;
+    shape.styles.readUnsignedInt(); // skip bitmap id
+    structEq(Matrix.FromDataBuffer(shape.styles), matrix,
+             "serialized matrix is identical to input matrix");
+    eq(shape.styles.readBoolean(), false, "repeat flag is written correctly");
+    eq(shape.styles.readBoolean(), true, "smooth flag is written correctly");
     eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
   }
 

@@ -296,7 +296,7 @@ module Shumway.SWF.Parser {
         style.ratios = fillStyle.ratios;
         style.focalPoint = fillStyle.focalPoint;
         style.bitmapId = fillStyle.bitmapId;
-        style.bitmapIndex = -1;
+        style.bitmapIndex = fillStyle.bitmapIndex;
         style.repeat = fillStyle.repeat;
         style.fillStyle = null;
         return style;
@@ -737,8 +737,8 @@ module Shumway.SWF.Parser {
           case FillType.NonsmoothedClippedBitmap:
           case FillType.NonsmoothedRepeatingBitmap:
             assert(style.bitmapIndex > -1);
-            shape.beginBitmapFill(style.bitmapIndex, style.transform,
-                                  style.repeat, style.smooth);
+            shape.beginBitmap(PathCommand.BeginBitmapFill, style.bitmapIndex, style.transform,
+                              style.repeat, style.smooth);
             break;
           default:
             assertUnreachable('Invalid fill style type: ' + style.type);
@@ -760,6 +760,15 @@ module Shumway.SWF.Parser {
             shape.beginGradient(PathCommand.LineStyleGradient, style.colors, style.ratios,
                                 gradientType, style.transform, style.spreadMethod,
                                 style.interpolationMode, style.focalPoint|0);
+            break;
+          case FillType.ClippedBitmap:
+          case FillType.RepeatingBitmap:
+          case FillType.NonsmoothedClippedBitmap:
+          case FillType.NonsmoothedRepeatingBitmap:
+            assert(style.bitmapIndex > -1);
+            writeLineStyle(style, shape);
+            shape.beginBitmap(PathCommand.LineStyleBitmap, style.bitmapIndex, style.transform,
+                              style.repeat, style.smooth);
             break;
           default:
             console.error('Line style type not yet supported: ' + style.type);
