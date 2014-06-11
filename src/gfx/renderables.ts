@@ -361,35 +361,20 @@ module Shumway.GFX {
             break;
           case PathCommand.BeginSolidFill:
             assert(styles.bytesAvailable >= 4);
-            if (fillPath) {
-              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
-            }
-            fillPath = new Path2D();
-            fillPath.moveTo(x, y);
+            fillPath = this._applyFill(context, fillPath, clipRegion, true, x, y);
             context.fillStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             break;
           case PathCommand.BeginBitmapFill:
-            if (fillPath) {
-              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
-            }
-            fillPath = new Path2D();
-            fillPath.moveTo(x, y);
+            fillPath = this._applyFill(context, fillPath, clipRegion, true, x, y);
             context.fillStyle = this._readBitmap(styles, context);
             break;
           case PathCommand.BeginGradientFill:
-            if (fillPath) {
-              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
-            }
-            fillPath = new Path2D();
-            fillPath.moveTo(x, y);
+            fillPath = this._applyFill(context, fillPath, clipRegion, true, x, y);
             context.fillStyle = this._readGradient(styles, context);
             break;
           case PathCommand.EndFill:
-            if (fillPath) {
-              clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
-              context.fillStyle = null;
-              fillPath = null;
-            }
+            fillPath = this._applyFill(context, fillPath, clipRegion, false, 0, 0);
+            context.fillStyle = null;
             break;
           case PathCommand.LineStyleSolid:
             if (strokePath) {
@@ -435,15 +420,28 @@ module Shumway.GFX {
       if (formOpen && fillPath) {
         fillPath.lineTo(formOpenX, formOpenY);
       }
-      if (fillPath) {
-        clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
-        context.fillStyle = null;
-      }
+      this._applyFill(context, fillPath, clipRegion, false, 0, 0);
+      context.fillStyle = null;
       if (strokePath) {
         !clipRegion && this._strokePath(context, strokePath);
         context.strokeStyle = null;
       }
       leaveTimeline("RenderableShape.render");
+    }
+
+    private _applyFill(context: CanvasRenderingContext2D, path: Path2D, clipRegion: boolean,
+                       createNewPath: boolean, x: number, y: number): Path2D
+    {
+
+      if (path) {
+        clipRegion ? context.clip(path, 'evenodd') : context.fill(path, 'evenodd');
+      }
+      if (createNewPath) {
+        path = new Path2D();
+        path.moveTo(x, y);
+        return path;
+      }
+      return null;
     }
 
     // Special-cases 1px and 3px lines by moving the drawing position down/right by 0.5px.
