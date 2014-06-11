@@ -640,8 +640,7 @@ module Shumway.AVM2.AS.flash.display {
 
     _getInvertedConcatenatedMatrix(): flash.geom.Matrix {
       if (this._hasFlags(DisplayObjectFlags.InvalidInvertedConcatenatedMatrix)) {
-        this._invertedConcatenatedMatrix.copyFrom(this._getConcatenatedMatrix());
-        this._invertedConcatenatedMatrix.invert();
+        this._getConcatenatedMatrix().invertInto(this._invertedConcatenatedMatrix);
         this._removeFlags(DisplayObjectFlags.InvalidInvertedConcatenatedMatrix);
       }
       return this._invertedConcatenatedMatrix;
@@ -780,9 +779,9 @@ module Shumway.AVM2.AS.flash.display {
       }
       var m;
       if (targetCoordinateSpace) {
-        m = targetCoordinateSpace._getConcatenatedMatrix().clone();
-        m.invert();
-        m.preMultiply(this._getConcatenatedMatrix());
+        m = geom.Matrix.TEMP_MATRIX;
+        var invertedTargetMatrix = targetCoordinateSpace._getInvertedConcatenatedMatrix();
+        invertedTargetMatrix.preMultiplyInto(this._getConcatenatedMatrix(), m);
       } else {
         m = this._getConcatenatedMatrix();
       }

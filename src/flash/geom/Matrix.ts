@@ -55,6 +55,8 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public static FROZEN_IDENTITY_MATRIX: Matrix = Object.freeze(new Matrix());
+    // Must only be used in cases where the members are fully initialized and then directly used.
+    public static TEMP_MATRIX: Matrix = new Matrix();
 
     public a: number;
     public b: number;
@@ -183,38 +185,41 @@ module Shumway.AVM2.AS.flash.geom {
       target.ty = ty;
     }
 
-    public invert(): Matrix {
+    public invert(): void {
+      this.invertInto(this);
+    }
+
+    public invertInto(target: Matrix): void {
       var b  = this.b;
       var c  = this.c;
       var tx = this.tx;
       var ty = this.ty;
       if (b === 0 && c === 0) {
-        var a = this.a = 1 / this.a;
-        var d = this.d = 1 / this.d;
-        this.tx = -a * tx;
-        this.ty = -d * ty;
-      } else {
-        var a = this.a;
-        var d = this.d;
-        var determinant = a * d - b * c;
-        if (determinant === 0) {
-          this.identity();
-          return this;
-        }
-        /**
-         * Multiplying by reciprocal of the |determinant| is only accurate if the reciprocal is
-         * representable without loss of precision. This is usually only the case for powers of
-         * two: 1/2, 1/4 ...
-         */
-        determinant = 1 / determinant;
-        this.a = d * determinant;
-        b = this.b = -b * determinant;
-        c = this.c = -c * determinant;
-        d = this.d =  a * determinant;
-        this.tx = -(this.a * tx + c * ty);
-        this.ty = -(b * tx + d * ty);
+        var a = target.a = 1 / this.a;
+        var d = target.d = 1 / this.d;
+        target.tx = -a * tx;
+        target.ty = -d * ty;
+        return;
       }
-      return this;
+      var a = this.a;
+      var d = this.d;
+      var determinant = a * d - b * c;
+      if (determinant === 0) {
+        target.identity();
+        return;
+      }
+      /**
+       * Multiplying by reciprocal of the |determinant| is only accurate if the reciprocal is
+       * representable without loss of precision. This is usually only the case for powers of
+       * two: 1/2, 1/4 ...
+       */
+      determinant = 1 / determinant;
+      a = target.a = d * determinant;
+      b = target.b = -b * determinant;
+      c = target.c = -c * determinant;
+      d = target.d =  a * determinant;
+      target.tx = -(a * tx + c * ty);
+      target.ty = -(b * tx + d * ty);
     }
 
     public identity(): void {
