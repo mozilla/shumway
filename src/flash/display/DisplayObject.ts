@@ -302,7 +302,7 @@ module Shumway.AVM2.AS.flash.display {
 
       self._fillBounds = new Bounds(0, 0, 0, 0);
       self._lineBounds = new Bounds(0, 0, 0, 0);
-      self._clipDepth = 0;
+      self._clipDepth = -1;
 
       self._concatenatedMatrix = new geom.Matrix();
       self._invertedConcatenatedMatrix = new geom.Matrix();
@@ -514,6 +514,16 @@ module Shumway.AVM2.AS.flash.display {
      */
     _lineBounds: Bounds;
 
+    /*
+     * If larger than |-1| then this object acts like a mask for all objects between |_depth + 1| and |_clipDepth| inclusive. The
+     * swf experts say that Adobe tools only generate neatly nested clip segments.
+     *
+     * A: -------------[-------------------)---------------
+     * B: -----------------[-------------)-----------------
+     *    ----X----------Y--------Z-------------W----------
+     *
+     * X is not clipped, Y is only clipped by A, Z by both A and B and finally W is not clipped at all.
+     */
     _clipDepth: number;
 
     /**
@@ -1519,13 +1529,16 @@ module Shumway.AVM2.AS.flash.display {
       return this.globalToLocal(flash.ui.Mouse._currentPosition).y;
     }
 
-    public debugTrace() {
+    public debugTrace(maxDistance = 1024) {
       var self = this;
       var writer = new IndentingWriter();
       this.visit(function (node) {
         var distance = node._getDistance(self);
+        if (distance > maxDistance) {
+          return VisitorFlags.Skip;
+        }
         var prefix = Shumway.StringUtilities.multiple(" ", distance);
-        writer.writeLn(prefix + node._id + ": " + node);
+        writer.writeLn(prefix + node._id + " [" + node._depth + "]: " + node);
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
     }

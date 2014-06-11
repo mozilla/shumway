@@ -145,6 +145,15 @@ module Shumway.Remoting.Player {
         this.output.writeInt(displayObject.mask ? displayObject.mask._id : -1);
       }
       if (hasMiscellaneousProperties) {
+        if (displayObject._clipDepth >= 0 && displayObject._parent) {
+          // Clips in GFX land don't use absolute clip depth numbers. Instead we need to encode the number of sibilings you want to clip.
+          // If childen are removed, GFX cilp values need to be recomputed.
+          var i = displayObject._parent.getChildIndex(displayObject);
+          var j = displayObject._parent._getDepthIndex(displayObject._clipDepth);
+          this.output.writeInt(j - i);
+        } else {
+          this.output.writeInt(0);
+        }
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
       }

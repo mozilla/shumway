@@ -305,7 +305,6 @@ module Shumway.AVM2.AS.flash.display {
      */
     getChildAtDepth(depth: number /*int*/): flash.display.DisplayObject {
       depth = depth | 0;
-
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
@@ -317,6 +316,22 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       return null;
+    }
+
+    /**
+     * Returns the last child index to have a depth that is less than or equal the specified depth.
+     */
+    _getDepthIndex(depth: number): number {
+      depth = depth | 0;
+      var children = this._children;
+      var index = this._children.length - 1;
+      for (var i = index; i >= 0; i--) {
+        var child = children[i];
+        if (child._depth <= depth) {
+          return i;
+        }
+      }
+      return 0;
     }
 
     getChildByName(name: string): DisplayObject {
