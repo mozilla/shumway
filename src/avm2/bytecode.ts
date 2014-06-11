@@ -531,6 +531,7 @@ module Shumway.AVM2 {
     spbacks: BlockSet;
     bdo: number;
     index: number;
+    object: number;
     argCount: number;
 
     verifierEntryState: Verifier.State;
@@ -1379,6 +1380,10 @@ module Shumway.AVM2 {
               case OP.inclocal_i:
               case OP.declocal_i:
                 dirtyLocals[bc.index] = true;
+                break;
+              case OP.hasnext2:
+                dirtyLocals[bc.index] = true;
+                dirtyLocals[bc.object] = true;
                 break;
               case OP.setlocal0:
               case OP.setlocal1:
