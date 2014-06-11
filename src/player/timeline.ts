@@ -119,7 +119,7 @@ module Shumway.Timeline {
   export class TextSymbol extends DisplaySymbol {
     textColor: number = 0;
     textHeight: number = 0;
-    font: flash.text.Font = null;
+    font: string = "";
     fontClass: flash.text.Font = null;
     align: string = flash.text.TextFormatAlign.LEFT;
     leftMargin: number = 0;
@@ -160,7 +160,9 @@ module Shumway.Timeline {
       }
       if (tag.hasFont) {
         symbol.textHeight = tag.fontHeight;
-        symbol.font = null;
+        var font = flash.text.Font.getBySymbolId(tag.fontId);
+        assert (font, "Font is not defined.");
+        symbol.font = font.fontName;
         if (tag.fontClass) {
           var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
           symbol.fontClass = <flash.text.Font><any>

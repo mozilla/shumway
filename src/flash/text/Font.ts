@@ -23,12 +23,14 @@ module Shumway.AVM2.AS.flash.text {
 
   export class Font extends ASNative implements Shumway.Remoting.IRemotable {
 
-    private static fonts: Font[];
-    private static fontsBySymbolId: Shumway.Map<Font>;
+    private static _fonts: Font[];
+    private static _fontsBySymbolId: Shumway.Map<Font>;
+    private static _fontsByName: Shumway.Map<Font>;
 
     static classInitializer: any = function () {
-      Font.fonts = [];
-      Font.fontsBySymbolId = Shumway.ObjectUtilities.createMap<Font>();
+      Font._fonts = [];
+      Font._fontsBySymbolId = Shumway.ObjectUtilities.createMap<Font>();
+      Font._fontsByName = Shumway.ObjectUtilities.createMap<Font>();
     };
 
     static classSymbols: string [] = null;
@@ -73,7 +75,8 @@ module Shumway.AVM2.AS.flash.text {
 
         // Font symbols without any glyphs describe device fonts.
         self._fontType = symbol.data ? FontType.EMBEDDED : FontType.DEVICE;
-        Font.fontsBySymbolId[symbol.id] = self;
+        Font._fontsBySymbolId[symbol.id] = self;
+        Font._fontsByName[symbol.name] = self;
       }
     };
 
@@ -81,8 +84,12 @@ module Shumway.AVM2.AS.flash.text {
       false && super();
     }
 
-    static getBySymbolId(id) {
-      return this.fontsBySymbolId[id];
+    static getBySymbolId(id: number): Font {
+      return this._fontsBySymbolId[id];
+    }
+
+    static getByName(name: string): Font {
+      return this._fontsByName[name];
     }
 
     // JS -> AS Bindings
@@ -103,7 +110,7 @@ module Shumway.AVM2.AS.flash.text {
     static enumerateFonts(enumerateDeviceFonts: boolean = false): any [] {
       //TODO: support iterating device fonts, perhaps?
       somewhatImplemented("public flash.text.Font::static enumerateFonts");
-      return Font.fonts.slice();
+      return Font._fonts.slice();
     }
 
     static registerFont(font: ASClass): void {

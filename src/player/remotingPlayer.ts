@@ -316,7 +316,14 @@ module Shumway.Remoting.Player {
       output.writeBoolean(!!textFormat.bullet);
       output.writeInt(+textFormat.color);
       //output.writeInt(textFormat.display);
-      //output.writeInt(textFormat.font);
+      debugger;
+      var font = flash.text.Font.getByName(textFormat.font);
+      if (font) {
+        output.writeInt(font._id);
+      } else {
+        // TODO: handle device fonts;
+        output.writeInt(0);
+      }
       output.writeInt(+textFormat.indent);
       output.writeBoolean(!!textFormat.italic);
       output.writeInt(+textFormat.kerning);

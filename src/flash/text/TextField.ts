@@ -77,10 +77,7 @@ module Shumway.AVM2.AS.flash.text {
       if (symbol) {
         self._textColor = symbol.textColor;
         self._textHeight = symbol.textHeight;
-
-        //symbol.font
-        //symbol.fontClass
-
+        self._defaultTextFormat.font = symbol.font;
         self._defaultTextFormat.align = symbol.align;
         self._defaultTextFormat.leftMargin = symbol.leftMargin;
         self._defaultTextFormat.rightMargin = symbol.rightMargin;

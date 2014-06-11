@@ -241,8 +241,8 @@ module Shumway.Remoting.GFX {
       var bounds = this._readRectangle();
       var assetId = input.readInt();
       var numTextRuns = input.readInt();
-      var textRunData = new DataBuffer(numTextRuns * 48);
-      input.readBytes(textRunData, 0, numTextRuns * 48);
+      var textRunData = new DataBuffer(numTextRuns * 52);
+      input.readBytes(textRunData, 0, numTextRuns * 52);
       var plainText = this.inputAssets[assetId];
       debugger;
       this.inputAssets[assetId] = null;
