@@ -621,22 +621,19 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Computes the combined transformation matrixes of this display object and all of its parents. It is not
-     * the same as |transform.concatenatedMatrix|, the latter also includes the screen space matrix.
+     * Computes the combined transformation matrixes of this display object and all of its parents.
+     * It is not the same as |transform.concatenatedMatrix|, the latter also includes the screen
+     * space matrix.
      */
     _getConcatenatedMatrix(): flash.geom.Matrix {
-      // Compute the concatenated transforms for this node and all of its ancestors.
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix)) {
-        var ancestor = this._findNearestAncestor(DisplayObjectFlags.InvalidConcatenatedMatrix, false);
-        var path = DisplayObject._getAncestors(this, ancestor);
-        var m = ancestor ? ancestor._concatenatedMatrix.clone() : new geom.Matrix();
-        for (var i = path.length - 1; i >= 0; i--) {
-          var ancestor = path[i];
-          assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix));
-          m.preMultiply(ancestor._getMatrix());
-          ancestor._concatenatedMatrix.copyFrom(m);
-          ancestor._removeFlags(DisplayObjectFlags.InvalidConcatenatedMatrix);
+        if (this._parent) {
+          this._parent._getConcatenatedMatrix().preMultiplyInto(this._getMatrix(),
+                                                                this._concatenatedMatrix);
+        } else {
+          this._concatenatedMatrix.copyFrom(this._getMatrix());
         }
+        this._removeFlags(DisplayObjectFlags.InvalidConcatenatedMatrix);
       }
       return this._concatenatedMatrix;
     }

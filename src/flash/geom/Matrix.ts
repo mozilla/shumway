@@ -152,6 +152,13 @@ module Shumway.AVM2.AS.flash.geom {
      * this = m * this
      */
     public preMultiply(m: Matrix): void {
+      this.preMultiplyInto(m, this);
+    }
+
+    /**
+     * target = m * this
+     */
+    public preMultiplyInto(m: Matrix, target: Matrix): void {
       var a =  m.a * this.a;
       var b =  0.0;
       var c =  0.0;
@@ -168,12 +175,12 @@ module Shumway.AVM2.AS.flash.geom {
         ty += m.tx * this.b;
       }
 
-      this.a  = a;
-      this.b  = b;
-      this.c  = c;
-      this.d  = d;
-      this.tx = tx;
-      this.ty = ty;
+      target.a  = a;
+      target.b  = b;
+      target.c  = c;
+      target.d  = d;
+      target.tx = tx;
+      target.ty = ty;
     }
 
     public invert(): Matrix {
