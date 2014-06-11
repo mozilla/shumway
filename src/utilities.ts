@@ -285,7 +285,13 @@ module Shumway {
       Debug.assert(false, "Abstract Method " + message);
     }
 
+    var somewhatImplementedCache = {};
+
     export function somewhatImplemented(message: string) {
+      if (somewhatImplementedCache[message]) {
+        return;
+      }
+      somewhatImplementedCache[message] = true;
       Debug.warning("somewhatImplemented: " + message);
     }
 
