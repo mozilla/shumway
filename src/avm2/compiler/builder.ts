@@ -28,7 +28,7 @@ module Shumway.AVM2.Compiler {
   import unique = Shumway.ArrayUtilities.unique;
   import Scope = Shumway.AVM2.Runtime.Scope;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
-  import asCoerceByMultiname = Shumway.AVM2.Runtime.asCoerceByMultiname;
+  import Runtime = Shumway.AVM2.Runtime
   import GlobalMultinameResolver = Shumway.AVM2.Runtime.GlobalMultinameResolver;
   import Timer = Shumway.Metrics.Timer;
 
@@ -220,6 +220,11 @@ module Shumway.AVM2.Compiler {
     }
   }
 
+  function asConstant(node: Value): Constant {
+    assert (node instanceof Constant);
+    return <Constant>node;
+  }
+
   function isNumericConstant(node: Value): boolean {
     return node instanceof Constant && isNumeric((<Constant>node).value);
   }
@@ -400,6 +405,8 @@ module Shumway.AVM2.Compiler {
   function coerceString(value: Value): Value {
     if (isStringConstant(value)) {
       return value;
+    } else if (isConstant(value)) {
+      return new Constant(Runtime.asCoerceString(asConstant(value).value));
     }
     return callPure(globalProperty("asCoerceString"), null, [value]);
   }
@@ -600,7 +607,7 @@ module Shumway.AVM2.Compiler {
       // TODO: Try to do the coercion of constant values without causing classes to be
       // loaded, as is the case when calling |asCoerceByMultiname|.
       if (false && isConstant(value)) {
-        return constant(asCoerceByMultiname(this.domain.value, multiname, (<Constant>value).value));
+        return constant(Runtime.asCoerceByMultiname(this.domain.value, multiname, (<Constant>value).value));
       } else {
         var coercer = getCoercerForType(multiname);
         if (coercer) {
