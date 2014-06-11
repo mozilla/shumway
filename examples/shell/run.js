@@ -86,7 +86,6 @@ console.timeEnd("Load Shared Dependencies");
 
 // Load AVM2 Dependencies
 Shumway.AVM2.enterTimeline("Load AVM2 Dependencies");
-load("../../src/avm2/constants.js");
 load("../../build/ts/avm2/options.js");
 load("../../build/ts/avm2/errors.js");
 load("../../build/ts/avm2/parser.js");
