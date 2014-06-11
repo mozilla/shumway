@@ -58,8 +58,8 @@ module Shumway {
   export interface HTMLParserHandler {
     comment?: (text: string) => void;
     chars?: (text: string) => void;
-    start?: (tagName: string, attributes: any[], unary: boolean) => void;
-    end?: (tagName: string) => void;
+    start?: (tag: string, attrs: any, unary: boolean) => void;
+    end?: (tag: string) => void;
   }
 
   export function HTMLParser( html: string, handler: HTMLParserHandler ) {
@@ -118,7 +118,7 @@ module Shumway {
         }
 
       } else {
-        html = html.replace(new RegExp("(.*)<\/" + top() + "[^>]*>"), function(all, text){
+        html = html.replace(new RegExp("(.*)<\/" + top() + "[^>]*>"), function(all: string, text: string){
           text = text.replace(/<!--(.*?)-->/g, "$1")
             .replace(/<!\[CDATA\[(.*?)]]>/g, "$1");
 
@@ -158,19 +158,17 @@ module Shumway {
         stack.push( tagName );
 
       if ( handler.start ) {
-        var attrs = [];
+        var attrs = Object.create(null);
 
-        rest.replace(attr, function(match, name) {
+        rest.replace(attr, function(match: string, name: string) {
+          name = name.toLowerCase();
+
           var value = arguments[2] ? arguments[2] :
             arguments[3] ? arguments[3] :
               arguments[4] ? arguments[4] :
                 fillAttrs[name] ? name : "";
 
-          attrs.push({
-            name: name,
-            value: value,
-            escaped: value.replace(/(^|[^\\])"/g, '$1\\\"') //"
-          });
+          attrs[name] = value;
 
           return match;
         });

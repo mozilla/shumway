@@ -333,7 +333,7 @@
 ///<reference path='text/TextInteractionMode.ts' />
 ///<reference path='text/TextLineMetrics.ts' />
 // ///<reference path='text/TextRenderer.ts' />
-// ///<reference path='text/TextRun.ts' />
+///<reference path='text/TextRun.ts' />
 ///<reference path='text/TextSnapshot.ts' />
 
 // ///<reference path='text/engine/BreakOpportunity.ts' />

@@ -42,7 +42,7 @@ module Shumway.AVM2.AS.flash.text {
       self._bottomScrollV = 1;
       self._caretIndex = 0;
       self._condenseWhite = false;
-      self._defaultTextFormat = new TextFormat();
+      self._defaultTextFormat = new flash.text.TextFormat();
       self._embedFonts = false;
       self._gridFitType = GridFitType.PIXEL;
       self._htmlText = '';
@@ -73,6 +73,8 @@ module Shumway.AVM2.AS.flash.text {
       self._wordWrap = false;
       self._useRichTextClipboard = false;
 
+      self._textRuns = [];
+
       if (symbol) {
         self._textColor = symbol.textColor;
         self._textHeight = symbol.textHeight;
@@ -90,7 +92,6 @@ module Shumway.AVM2.AS.flash.text {
         self._embedFonts = symbol.embedFonts;
         self._selectable = symbol.selectable;
         self._border = symbol.border;
-
 
         if (symbol.html) {
           self.htmlText = symbol.initialText;
@@ -178,6 +179,8 @@ module Shumway.AVM2.AS.flash.text {
     _type: string;
     _wordWrap: boolean;
     _useRichTextClipboard: boolean;
+
+    _textRuns: TextRun[];
 
     get alwaysShowSelection(): boolean {
       return this._alwaysShowSelection;
@@ -297,12 +300,151 @@ module Shumway.AVM2.AS.flash.text {
     set htmlText(value: string) {
       somewhatImplemented("public flash.text.TextField::set htmlText");
       value = asCoerceString(value);
-      var text = "";
+
+      var plainText = '';
+
+      var textRuns = this._textRuns;
+      textRuns.length = 0;
+
+      var beginIndex = 0;
+      var endIndex = 0;
+      var textFormat = this._defaultTextFormat;
+
+      var stack = [];
+
       Shumway.HTMLParser(value, {
-        chars: (t) => { text += t }
+        chars: (text) => {
+          plainText += text;
+          endIndex += text.length;
+        },
+        start: (tagName, attributes) => {
+          switch (tagName) {
+            case 'a':
+              somewhatImplemented('<a/>');
+              stack.push(textFormat);
+              var target = attributes.target;
+              var url = attributes.url;
+              if (target !== textFormat.target || url !== textFormat.url) {
+                textFormat = textFormat.clone();
+                textFormat.target = target;
+                textFormat.url = url;
+              }
+              break;
+            case 'b':
+              stack.push(textFormat);
+              if (!textFormat.bold) {
+                textFormat = textFormat.clone();
+                textFormat.bold = true;
+              }
+              break;
+            case 'br':
+              if (this._multiline) {
+                plainText += '\n';
+                endIndex++;
+              }
+            case 'font':
+              stack.push(textFormat);
+              var color = attributes.color;
+              // TODO: the value of the face property can be a string specifying a list of
+              // comma-delimited font names in which case the first available font should be used.
+              var font = attributes.face;
+              var size = attributes.size;
+              if (textFormat.color !== color ||
+                  textFormat.font !== font ||
+                  textFormat.color !== color)
+              {
+                textFormat = textFormat.clone();
+                textFormat.align = align;
+                textFormat.font = font;
+                textFormat.color = color;
+              }
+              break;
+            case 'img':
+              notImplemented('<img/>');
+              break;
+            case 'i':
+              stack.push(textFormat);
+              if (!textFormat.italic) {
+                textFormat = textFormat.clone();
+                textFormat.italic = true;
+              }
+              break;
+            case 'li':
+              stack.push(textFormat);
+              if (!textFormat.bullet) {
+                textFormat = textFormat.clone();
+                textFormat.bullet = true;
+              }
+              break;
+            case 'p':
+              stack.push(textFormat);
+              var align = attributes.align;
+              if (textFormat.align !== align) {
+                textFormat = textFormat.clone();
+                textFormat.align = align;
+              }
+              break;
+            case 'span':
+              stack.push(textFormat);
+              // TODO: support CSS style classes.
+              break;
+            case 'textformat':
+              stack.push(textFormat);
+              var blockIndent = attributes.blockindent;
+              var indent = attributes.indent;
+              var leading = attributes.leading;
+              var leftMargin = attributes.leftmargin;
+              var rightMargin = attributes.rightmargin;
+              //var tabStops = attributes.tabstops || null;
+              if (textFormat.blockIndent !== blockIndent ||
+                  textFormat.indent !== indent ||
+                  textFormat.leading !== leading ||
+                  textFormat.leftMargin !== leftMargin ||
+                  textFormat.rightMargin !== rightMargin /*||
+                  textFormat.tabStops !== tabStops*/)
+              {
+                textFormat = textFormat.clone();
+                textFormat.blockIndent = blockIndent;
+                textFormat.indent = indent;
+                textFormat.leading = leading;
+                textFormat.leftMargin = leftMargin;
+                textFormat.rightMargin = rightMargin;
+                //textFormat.tabStops = tabStops;
+              }
+              break;
+            case 'u':
+              stack.push(textFormat);
+              if (!textFormat.underline) {
+                textFormat = textFormat.clone();
+                textFormat.underline = true;
+              }
+              break;
+          }
+        },
+        end: (tagName) => {
+          if ((tagName === 'li' || tagName === 'p') && this._multiline) {
+            plainText += '\n';
+            endIndex++;
+          }
+          if (tagName !== 'br' && tagName !== 'img') {
+            var f = stack.pop();
+            if (f === textFormat) {
+              if (textRuns.length) {
+                textRuns[textRuns.length - 1].endIndex = endIndex;
+              } else {
+                textRuns.push(new TextRun(beginIndex, endIndex, f));
+              }
+            } else {
+              textRuns.push(new TextRun(beginIndex, endIndex, f));
+              beginIndex = endIndex = endIndex + 1;
+              textFormat = f;
+            }
+          }
+        }
       });
+
       this._htmlText = value;
-      this._text = text;
+      this._text = plainText;
     }
 
     get length(): number /*int*/ {
@@ -429,7 +571,10 @@ module Shumway.AVM2.AS.flash.text {
 
     set text(value: string) {
       somewhatImplemented("public flash.text.TextField::set text");
-      this._text = asCoerceString(value);
+      var value = asCoerceString(value);
+      this._text = value;
+      this._textRuns.length = 0;
+      this._textRuns[0] = new TextRun(0, value.length, this._defaultTextFormat);
     }
 
     get textColor(): number /*uint*/ {
@@ -527,10 +672,19 @@ module Shumway.AVM2.AS.flash.text {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
       notImplemented("public flash.text.TextField::getTextFormat"); return;
     }
+
     getTextRuns(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): any [] {
-      beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextField::getTextRuns"); return;
+      var textRuns = this._textRuns;
+      var result = [];
+      for (var i = 0; i < textRuns.length; i++) {
+        var textRun = textRuns[i];
+        if (textRun.beginIndex >= beginIndex && textRun.endIndex <= endIndex) {
+          result.push(textRun.clone());
+        }
+      }
+      return result;
     }
+
     getRawText(): string {
       notImplemented("public flash.text.TextField::getRawText"); return;
     }
