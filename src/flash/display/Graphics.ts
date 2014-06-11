@@ -577,11 +577,8 @@ module Shumway.AVM2.AS.flash.display {
     lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
                     repeat: boolean = true, smooth: boolean = false): void
     {
-      // TODO: only emit this if a stroke width has been set by calling `lineStyle`
-      //bitmap = bitmap; matrix = matrix;
-      //this._closePath();
-      //var fill = this._graphicsData.push(new GraphicsBitmapFill(bitmap, matrix, !!repeat, !!smooth));
-      // TODO
+      this._writeBitmapStyle(PathCommand.LineStyleBitmap, bitmap, matrix, repeat, smooth,
+                             !this._hasLines);
     }
 
     drawRect(x: number, y: number, width: number, height: number): void {

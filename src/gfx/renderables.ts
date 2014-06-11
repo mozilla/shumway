@@ -301,8 +301,6 @@ module Shumway.GFX {
       // stroke paths onto a stack.
       var fillPath: Path2D = null;
       var strokePath: Path2D = null;
-      var fillTransform: Matrix = null;
-      var strokeTransform: Matrix = null;
       // We have to alway store the last position because Flash keeps the drawing cursor where it
       // was when changing fill or line style, whereas Canvas forgets it on beginning a new path.
       var x = 0;
@@ -371,27 +369,14 @@ module Shumway.GFX {
             context.fillStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             break;
           case PathCommand.BeginBitmapFill:
-            assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
             if (fillPath) {
               clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
-            var textureIndex = styles.readUnsignedInt();
-            fillTransform = this._readMatrix(styles);
-            var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
-            var smooth = styles.readBoolean();
-            var texture = this._textures[textureIndex];
-            assert(texture._canvas);
-            context.fillStyle = context.createPattern(texture._canvas, repeat);
-            context.fillStyle.setTransform(fillTransform.toSVGMatrix());
-            context.msImageSmoothingEnabled = context.msImageSmoothingEnabled =
-                                              context['imageSmoothingEnabled'] = smooth;
+            context.fillStyle = this._readBitmap(styles, context);
             break;
           case PathCommand.BeginGradientFill:
-            // Assert at least one color stop.
-            assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
-                                            1 + 1 + 4 + 1 + 1);
             if (fillPath) {
               clipRegion ? context.clip(fillPath, 'evenodd') : context.fill(fillPath, 'evenodd');
             }
@@ -425,6 +410,12 @@ module Shumway.GFX {
               !clipRegion && this._strokePath(context, strokePath);
             }
             context.strokeStyle = this._readGradient(styles, context);
+            break;
+          case PathCommand.LineStyleBitmap:
+            if (strokePath) {
+              !clipRegion && this._strokePath(context, strokePath);
+            }
+            context.strokeStyle = this._readBitmap(styles, context);
             break;
           case PathCommand.LineEnd:
             if (strokePath) {
@@ -483,6 +474,9 @@ module Shumway.GFX {
     }
 
     private _readGradient(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasGradient {
+      // Assert at least one color stop.
+      assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
+                                      1 + 1 + 4 + 1 + 1);
       var gradientType = styles.readUnsignedByte();
       var focalPoint = styles.readShort() * 2 / 0xff;
       assert(focalPoint >= -1 && focalPoint <= 1);
@@ -507,6 +501,22 @@ module Shumway.GFX {
       styles.position += 2;
 
       return gradient;
+    }
+
+    private _readBitmap(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasPattern {
+      assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
+      var textureIndex = styles.readUnsignedInt();
+      var fillTransform: Matrix = this._readMatrix(styles);
+      var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
+      var smooth = styles.readBoolean();
+      var texture = this._textures[textureIndex];
+      assert(texture._canvas);
+      var fillStyle: CanvasPattern = context.createPattern(texture._canvas, repeat);
+      fillStyle.setTransform(fillTransform.toSVGMatrix());
+      // TODO: make it possible to set smoothing for fills but not strokes and vice-versa.
+      context['mozImageSmoothingEnabled'] = context.msImageSmoothingEnabled =
+                                            context['imageSmoothingEnabled'] = smooth;
+      return fillStyle;
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {
