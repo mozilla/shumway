@@ -1543,6 +1543,10 @@ module Shumway.AVM2.AS.flash.display {
       return this.globalToLocal(flash.ui.Mouse._currentPosition).y;
     }
 
+    public debugName(): string {
+      return this._id + " [" + this._depth + "]: " + this;
+    }
+
     public debugTrace(maxDistance = 1024) {
       var self = this;
       var writer = new IndentingWriter();
@@ -1552,7 +1556,7 @@ module Shumway.AVM2.AS.flash.display {
           return VisitorFlags.Skip;
         }
         var prefix = Shumway.StringUtilities.multiple(" ", distance);
-        writer.writeLn(prefix + node._id + " [" + node._depth + "]: " + node);
+        writer.writeLn(prefix + node.debugName());
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
     }
