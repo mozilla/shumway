@@ -197,4 +197,7 @@ function syncGFXOptions(options) {
   // options.disable = GFX.disableStage.value;
   options.compositeMask = GFX.compositeMask.value;
   options.disableTextureUploads = GFX.disableTextureUploads.value;
+
+  options.snapToDevicePixels = GFX.snapToDevicePixels.value;
+  options.imageSmoothing = GFX.imageSmoothing.value;
 }

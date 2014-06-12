@@ -50,7 +50,12 @@ module Shumway.GFX {
     /**
      * Whether the source's content should be tiled.
      */
-    Tileable      = 8
+    Tileable      = 8,
+
+    /**
+     * Whether the source should be drawn with pixel snapping.
+     */
+    SnappedToDevicePixels      = 16
   }
 
   /**
@@ -109,7 +114,7 @@ module Shumway.GFX {
   }
 
   export class RenderableBitmap extends Renderable {
-    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
+    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty | RenderableFlags.SnappedToDevicePixels;
     properties: {[name: string]: any} = {};
     _canvas: HTMLCanvasElement;
     private fillStyle: ColorStyle;
@@ -208,13 +213,13 @@ module Shumway.GFX {
     }
 
     render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
-      context.save();
+      enterTimeline("RenderableBitmap.render");
       if (this._canvas) {
         context.drawImage(this._canvas, 0, 0);
       } else {
         this._renderFallback(context);
       }
-      context.restore();
+      leaveTimeline("RenderableBitmap.render");
     }
 
     draw(source: RenderableBitmap, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle): void {

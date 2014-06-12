@@ -19,6 +19,7 @@ module Shumway.GFX.Geometry {
 
   import clamp = Shumway.NumberUtilities.clamp;
   import pow2 = Shumway.NumberUtilities.pow2;
+  import epsilonEquals = Shumway.NumberUtilities.epsilonEquals;
   import assert = Shumway.Debug.assert;
 
   export function radianToDegrees(r) {
@@ -657,7 +658,18 @@ module Shumway.GFX.Geometry {
     }
 
     isTranslationOnly(): boolean {
-      return this.a === 1 && this.b === 0 && this.c === 0 && this.d === 1;
+      if (this.a === 1 &&
+          this.b === 0 &&
+          this.c === 0 &&
+          this.d === 1) {
+        return true;
+      } else if (epsilonEquals(this.a, 1) &&
+                 epsilonEquals(this.b, 0) &&
+                 epsilonEquals(this.c, 0) &&
+                 epsilonEquals(this.d, 1)) {
+        return true;
+      }
+      return false;
     }
 
     transformRectangleAABB (rectangle: Rectangle) {
@@ -948,6 +960,19 @@ module Shumway.GFX.Geometry {
       matrix.e = this.tx;
       matrix.f = this.ty;
       return matrix;
+    }
+
+    public snap (): boolean {
+      if (this.isTranslationOnly()) {
+        this.a = 1;
+        this.b = 0;
+        this.c = 0;
+        this.d = 1;
+        this.tx = Math.round(this.tx);
+        this.ty = Math.round(this.ty);
+        return true;
+      }
+      return false;
     }
   }
 

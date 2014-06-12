@@ -596,6 +596,16 @@ module Shumway.GFX {
     }
 
     /**
+     * Whether the frame should be drawn snapped in device pixels.
+     */
+    public shouldSnapToDevicePixels(): boolean {
+      if (this instanceof Shape && (<Shape>this).source.hasFlags(RenderableFlags.SnappedToDevicePixels)) {
+        return true;
+      }
+      return false;
+    }
+
+    /**
      * Returns a list of frames whose bounds intersect the query point. The frames
      * are returned front to back. By default, only the first frame that intersects
      * the query point is returned, unless the |multiple| argument is specified.

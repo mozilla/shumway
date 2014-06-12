@@ -1228,6 +1228,10 @@ module Shumway {
       }
       return Math.round(value);
     }
+
+    export function epsilonEquals(value: number, other: number): boolean {
+      return Math.abs(value - other) < 0.0000001;
+    }
   }
 
   export enum Numbers {
