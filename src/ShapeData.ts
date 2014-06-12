@@ -138,7 +138,7 @@
 ///<reference path='dataBuffer.ts' />
 module Shumway {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  import nearestPowerOfTwo = Shumway.IntegerUtilities.nearestPowerOfTwo;
+  import ensureTypedArrayCapacity = Shumway.ArrayUtilities.ensureTypedArrayCapacity;
 
   import assert = Shumway.Debug.assert;
   /**
@@ -402,17 +402,11 @@ module Shumway {
 
     private ensurePathCapacities(numCommands: number, numCoordinates: number)
     {
-      if (this.commands.length < this.commandsPosition + numCommands) {
-        var oldCommands = this.commands;
-        this.commands = new Uint8Array(nearestPowerOfTwo(this.commandsPosition + numCommands));
-        this.commands.set(oldCommands, 0);
-      }
-      if (this.coordinates.length < this.coordinatesPosition + numCoordinates) {
-        var oldCoordinates = this.coordinates;
-        this.coordinates = new Int32Array(nearestPowerOfTwo(this.coordinatesPosition +
-                                                            numCoordinates));
-        this.coordinates.set(oldCoordinates, 0);
-      }
+      // ensureTypedArrayCapacity will hopefully be inlined, in which case the field writes
+      // will be optimized out.
+      this.commands = ensureTypedArrayCapacity(this.commands, this.commandsPosition + numCommands);
+      this.coordinates = ensureTypedArrayCapacity(this.coordinates,
+                                                  this.coordinatesPosition + numCoordinates);
     }
   }
 }
