@@ -169,37 +169,33 @@ body.simple #stageContainer {
   top: 0;
   bottom: 0;
   overflow-y: auto;
-
   font: 10px Consolas, "Liberation Mono", Courier, monospace;
   color: #999;
-}
-
-#assetList {
-
 }
 
 #assetList {
   padding: 0;
 }
 
+#assetList canvas {
+  border: 1px solid #630;
+}
+
 #assetList li {
   list-style: none;
   padding: 10px 10px 10px 10px;
-  // padding: 10 10 10 10;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 // CSS experts said this works.
 
-#assetList li:nth-child(odd) {
-  background-color: rgba(0, 0, 0, 0.2);
-}
-
 #assetList li:nth-child(even) {
-  background-color: rgba(100, 100, 100, 0.2);
+  background-color: rgba(0, 0, 0, 0.6);
 }
 
 #assetList li:hover {
-  background-color: rgba(255, 0, 0, 0.3);
+  border-top: 2px solid #F60;
+  border-bottom: 2px solid #F60;
 }
 
 #assetListContainer.active, #debugInfoContainer.active, #displayListContainer.active, #settingsContainer.active {

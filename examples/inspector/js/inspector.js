@@ -436,6 +436,15 @@ function registerInspectorAsset(id, asset) {
     canvas.height = bounds.h;
     var context = canvas.getContext("2d");
     context.translate(-bounds.x, -bounds.y);
+    // Draw axis if not at origin.
+    if (bounds.x !== 0 || bounds.y !== 0) {
+      context.beginPath();
+      context.lineWidth = 2;
+      context.strokeStyle = "white";
+      context.moveTo(-4, 0); context.lineTo(4, 0);
+      context.moveTo( 0,-4); context.lineTo(0, 4);
+      context.stroke();
+    }
     asset.render(context);
   }
   if (asset instanceof Shumway.GFX.RenderableText) {
