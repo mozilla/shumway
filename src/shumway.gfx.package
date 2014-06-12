@@ -18,8 +18,8 @@ build/ts/tools/profiler/timelineBuffer.js
 
 #!inline console.time("Load GFX Dependencies");
 
-src/gfx/filters/filters.js
-src/gfx/filters/filters_cxform.js
+# src/gfx/filters/filters.js
+# src/gfx/filters/filters_cxform.js
 
 build/ts/gfx/module.js
 build/ts/gfx/utilities.js
