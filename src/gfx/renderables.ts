@@ -558,8 +558,50 @@ module Shumway.GFX {
       return this._bounds;
     }
 
-    render(context: CanvasRenderingContext2D, cullBounds: Rectangle):void {
-      // TODO
+    render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
+      var plainText = this._plainText;
+      var textRunData = this._textRunData;
+      textRunData.position = 0;
+      var x = 0;
+      while (textRunData.position < textRunData.length) {
+        var beginIndex = textRunData.readInt();
+        var endIndex = textRunData.readInt();
+        var align = textRunData.readInt();
+        //var blockIndent = textRunData.readInt();
+        var bold = textRunData.readBoolean();
+        var bullet = textRunData.readBoolean();
+        var color = textRunData.readInt();
+        //var display = textRunData.readInt();
+        var fontId = textRunData.readInt();
+        var indent = textRunData.readInt();
+        var italic = textRunData.readBoolean();
+        var kerning = textRunData.readInt();
+        var leading = textRunData.readInt();
+        var leftMargin = textRunData.readInt();
+        var letterSpacing = textRunData.readInt();
+        var rightMargin = textRunData.readInt();
+        var size = textRunData.readInt();
+        //var tabStops = textRunData.readInt();
+        var underline = textRunData.readBoolean();
+
+        var text = plainText.substr(beginIndex, endIndex);
+        if (text === '\n') {
+          continue;
+        }
+
+        var boldItalic = '';
+        if (italic) {
+          boldItalic += 'italic';
+        }
+        if (bold) {
+          boldItalic += ' bold';
+        }
+        context.font = boldItalic + ' ' + size + 'px swffont' + fontId;
+        context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
+
+        context.fillText(text, x, size);
+        x += context.measureText(text).width;
+      }
     }
   }
 

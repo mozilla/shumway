@@ -117,8 +117,8 @@ module Shumway.Timeline {
   }
 
   export class TextSymbol extends DisplaySymbol {
-    textColor: number = 0;
-    textHeight: number = 0;
+    color: number = 0;
+    size: number = 0;
     font: string = "";
     fontClass: flash.text.Font = null;
     align: string = flash.text.TextFormatAlign.LEFT;
@@ -153,10 +153,14 @@ module Shumway.Timeline {
       }
       var tag = data.tag;
       if (tag.hasColor) {
-        symbol.textColor = tag.color;
+        var color = tag.color;
+        symbol.color = (color.red << 24) |
+                       (color.green << 16) |
+                       (color.blue << 8) |
+                       color.alpha;
       }
       if (tag.hasFont) {
-        symbol.textHeight = tag.fontHeight;
+        symbol.size = tag.fontHeight;
         var font = flash.text.Font.getBySymbolId(tag.fontId);
         assert (font, "Font is not defined.");
         symbol.font = font.fontName;

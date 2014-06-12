@@ -76,7 +76,7 @@ module Shumway.SWF.Parser {
     var label = {
       type: 'text',
       id: tag.id,
-      bbox: bbox,
+      fillBounds: bbox,
       matrix: tag.matrix,
       tag: {
         hasText: true,

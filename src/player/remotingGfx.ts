@@ -248,7 +248,6 @@ module Shumway.Remoting.GFX {
       var textRunData = new DataBuffer(numTextRuns * 52);
       input.readBytes(textRunData, 0, numTextRuns * 52);
       var plainText = this.inputAssets[assetId];
-      debugger;
       this.inputAssets[assetId] = null;
       if (!asset) {
         context._assets[id] = new RenderableText(plainText, textRunData, bounds);

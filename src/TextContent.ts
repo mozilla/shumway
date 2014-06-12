@@ -87,7 +87,7 @@ module Shumway {
               var size = attributes.size;
               if (textFormat.color !== color ||
                 textFormat.font !== font ||
-                textFormat.color !== color)
+                textFormat.size !== size)
               {
                 textFormat = textFormat.clone();
                 textFormat.align = align;
