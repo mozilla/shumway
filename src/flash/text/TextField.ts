@@ -72,19 +72,28 @@ module Shumway.AVM2.AS.flash.text {
       self._wordWrap = false;
       self._useRichTextClipboard = false;
 
-      self._textContent = new Shumway.TextContent();
+      self._textContent = new Shumway.TextContent(self._defaultTextFormat);
 
       if (symbol) {
-        self._setFillAndLineBoundsFromSymbol(symbol);
+        var bounds = symbol.fillBounds;
+        if (bounds) {
+          self._matrix.tx += bounds.xMin;
+          self._matrix.ty += bounds.yMin;
+          this._invalidatePosition();
+          this._dirtyMatrix();
+          self._setFillAndLineBoundsFromWidthAndHeight(
+            bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin
+          );
+        }
 
-        self._textColor = symbol.textColor;
-        self._textHeight = symbol.textHeight;
+        self._defaultTextFormat.color = symbol.color;
+        self._defaultTextFormat.size = (symbol.size / 20) | 0;
         self._defaultTextFormat.font = symbol.font;
         self._defaultTextFormat.align = symbol.align;
-        self._defaultTextFormat.leftMargin = symbol.leftMargin;
-        self._defaultTextFormat.rightMargin = symbol.rightMargin;
-        self._defaultTextFormat.indent = symbol.indent;
-        self._defaultTextFormat.leading = symbol.leading;
+        self._defaultTextFormat.leftMargin = (symbol.leftMargin / 20) | 0;
+        self._defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
+        self._defaultTextFormat.indent = (symbol.indent / 20) | 0;
+        self._defaultTextFormat.leading = (symbol.leading / 20) | 0;
         self._multiline = symbol.multiline;
         self._wordWrap = symbol.wordWrap;
         self._embedFonts = symbol.embedFonts;
@@ -101,17 +110,9 @@ module Shumway.AVM2.AS.flash.text {
         self._type = symbol.type;
         self._maxChars = symbol.maxChars;
         self._autoSize = symbol.autoSize;
-
-        //var bounds = symbol.fillBounds;
-        //if (bounds) {
-        //  this._matrix.tx += bounds.xMin;
-        //  this._matrix.ty += bounds.yMin;
-        //  this._fillBounds.xMax = bounds.xMax - bounds.xMin;
-        //  this._fillBounds.yMax = bounds.yMax - bounds.yMin;
-        //}
       } else {
-        //self._matrix.tx -= 40;
-        //self._matrix.ty -= 40;
+        self._matrix.tx -= 40;
+        self._matrix.ty -= 40;
       }
     };
 

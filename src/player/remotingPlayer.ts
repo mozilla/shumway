@@ -92,13 +92,13 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeTextContent(textContent: Shumway.TextContent) {
+    writeTextContent(textContent: Shumway.TextContent, bounds: Bounds) {
       if (textContent._isDirty) {
         var textRuns = textContent.textRuns;
         var numTextRuns = textRuns.length;
         this.output.writeInt(MessageTag.UpdateTextContent);
         this.output.writeInt(textContent._id);
-        //this.writeRectangle(textContent._getContentBounds());
+        this.writeRectangle(bounds);
         this.output.writeInt(this.outputAssets.length);
         this.outputAssets.push(textContent.plainText);
         this.output.writeInt(numTextRuns);
@@ -194,7 +194,7 @@ module Shumway.Remoting.Player {
           }
         } else {
           // Check if we have a graphics object and write that as a child first.
-          var count = graphics ? 1 : 0;
+          var count = graphics || textContent ? 1 : 0;
           var children = displayObject._children;
           if (children) {
             count += children.length;
@@ -202,6 +202,8 @@ module Shumway.Remoting.Player {
           this.output.writeInt(count);
           if (graphics) {
             this.output.writeInt(IDMask.Asset | graphics._id);
+          } else if (textContent) {
+            this.output.writeInt(IDMask.Asset | textContent._id);
           }
           // Write all the display object children.
           if (children) {
@@ -219,7 +221,7 @@ module Shumway.Remoting.Player {
       if (graphics) {
         this.writeGraphics(graphics);
       } else if (textContent) {
-        this.writeTextContent(textContent);
+        this.writeTextContent(textContent, displayObject._getContentBounds());
       } else if (bitmap) {
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);
