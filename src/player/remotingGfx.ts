@@ -39,6 +39,7 @@ module Shumway.Remoting.GFX {
   import IDataInput = Shumway.ArrayUtilities.IDataInput;
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
   import assert = Shumway.Debug.assert;
+  var writer = null; // release ? null : new IndentingWriter();
 
   export class GFXChannelSerializer {
     output: IDataOutput;
@@ -290,6 +291,7 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
+      writer && writer.writeLn("Receiving UpdateFrame: " + id);
       var firstFrame = context._frames.length === 0;
       var frame = context._frames[id];
       if (!frame) {
@@ -322,7 +324,7 @@ module Shumway.Remoting.GFX {
         for (var i = 0; i < count; i++) {
           var childId = input.readInt();
           var child = context._makeFrame(childId);
-          assert (child);
+          assert (child, "Child ", childId, " of ", id, " has not been sent yet.");
           container.addChild(child);
         }
       }

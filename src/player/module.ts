@@ -19,11 +19,15 @@
 module Shumway.Player {
   export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("Player");
 
+  export var writer = null; // release ? null : new IndentingWriter();
+
   export function enterTimeline(name: string) {
+    writer && writer.enter(name);
     timelineBuffer && timelineBuffer.enter(name);
   }
 
   export function leaveTimeline(name: string) {
     timelineBuffer && timelineBuffer.leave(name);
+    writer && writer.leave(name);
   }
 }

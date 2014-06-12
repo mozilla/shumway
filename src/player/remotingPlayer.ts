@@ -39,6 +39,7 @@ module Shumway.Remoting.Player {
   import IDataInput = Shumway.ArrayUtilities.IDataInput;
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
   import assert = Shumway.Debug.assert;
+  import writer = Shumway.Player.writer;
 
   export class PlayerChannelSerializer {
     public output: IDataOutput;
@@ -131,6 +132,8 @@ module Shumway.Remoting.Player {
       // Write Header
       this.output.writeInt(MessageTag.UpdateFrame);
       this.output.writeInt(displayObject._id);
+
+      writer && writer.writeLn("Sending UpdateFrame: " + displayObject.debugName());
 
       var hasMask = false;
       var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
