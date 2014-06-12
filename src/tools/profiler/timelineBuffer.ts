@@ -29,11 +29,15 @@ module Shumway.Tools.Profiler {
    * The goal here is to be able to handle large amounts of data.
    */
   export class TimelineBuffer {
-    static ENTER = 0xBEEF0000 | 0;
-    static LEAVE = 0xDEAD0000 | 0;
+
+    static ENTER = 0 << 31;
+    static LEAVE = 1 << 31;
+
+    static MAX_KINDID = 0xffff;
+    static MAX_DATAID = 0x7fff;
 
     private _depth: number;
-    private _kindCount: number;
+    private _data: any [];
     private _kinds: TimelineItemKind [];
     private _kindNameMap: Shumway.Map<TimelineItemKind>;
     private _marks: Shumway.CircularBuffer;
@@ -43,9 +47,9 @@ module Shumway.Tools.Profiler {
 
     public name: string;
 
-    constructor(name?: string, startTime?: number) {
+    constructor(name: string = "", startTime?: number) {
       this.name = name || "";
-      this._kindCount = 0;
+      this._data = [];
       this._kinds = [];
       this._kindNameMap = createEmptyObject();
       this._marks = new Shumway.CircularBuffer(Int32Array, 20);
@@ -67,33 +71,56 @@ module Shumway.Tools.Profiler {
     }
 
     private _getKindId(name: string):number {
+      var kindId = TimelineBuffer.MAX_KINDID;
       if (this._kindNameMap[name] === undefined) {
-        var kind: TimelineItemKind = <TimelineItemKind>{
-          id: this._kinds.length,
-          name: name,
-          visible: true
-        };
-        this._kinds.push(kind);
-        this._kindNameMap[name] = kind;
+        kindId = this._kinds.length;
+        if (kindId < TimelineBuffer.MAX_KINDID) {
+          var kind: TimelineItemKind = <TimelineItemKind>{
+            id: kindId,
+            name: name,
+            visible: true
+          };
+          this._kinds.push(kind);
+          this._kindNameMap[name] = kind;
+        } else {
+          kindId = TimelineBuffer.MAX_KINDID;
+        }
+      } else {
+        kindId = this._kindNameMap[name].id;
       }
-      return this._kindNameMap[name].id;
+      return kindId;
     }
 
-    enter(name: string, time?: number) {
+    private _getMark(type: number, kindId: number, data?: any): number {
+      var dataId = TimelineBuffer.MAX_DATAID;
+      if (!isNullOrUndefined(data) && kindId !== TimelineBuffer.MAX_KINDID) {
+        dataId = this._data.length;
+        if (dataId < TimelineBuffer.MAX_DATAID) {
+          this._data.push(data);
+        } else {
+          dataId = TimelineBuffer.MAX_DATAID;
+        }
+      }
+      return type | (dataId << 16) | kindId;
+    }
+
+    enter(name: string, data?: any, time?: number) {
+      time = (isNullOrUndefined(time) ? performance.now() : time) - this._startTime;
       this._depth++;
-      var kind = this._getKindId(name);
-      this._marks.write(TimelineBuffer.ENTER | kind);
-      this._times.write((isNullOrUndefined(time) ? performance.now() : time) - this._startTime);
-      this._stack.push(kind);
+      var kindId = this._getKindId(name);
+      this._marks.write(this._getMark(TimelineBuffer.ENTER, kindId, data));
+      this._times.write(time);
+      this._stack.push(kindId);
     }
 
-    leave(name?: string, time?: number) {
-      var kind = this._stack.pop();
+    leave(name?: string, data?: any, time?: number) {
+      time = (isNullOrUndefined(time) ? performance.now() : time) - this._startTime;
+      var kindId = this._stack.pop();
       if (name) {
-        kind = this._getKindId(name);
+        kindId = this._getKindId(name);
       }
-      this._marks.write(TimelineBuffer.LEAVE | kind);
-      this._times.write((isNullOrUndefined(time) ? performance.now() : time) - this._startTime);
+      this._marks.write(this._getMark(TimelineBuffer.LEAVE, kindId, data));
+      this._times.write(time);
       this._depth--;
     }
 
@@ -103,14 +130,18 @@ module Shumway.Tools.Profiler {
     createSnapshot(count: number = Number.MAX_VALUE): TimelineBufferSnapshot {
       var times = this._times;
       var kinds = this._kinds;
+      var datastore = this._data;
       var snapshot = new TimelineBufferSnapshot(this.name);
       var stack: TimelineFrame [] = [snapshot];
       var topLevelFrameCount = 0;
 
       this._marks.forEachInReverse(function (mark, i) {
-        var kind = kinds[mark & 0xFFFF];
-        if (kind.visible) {
-          var action = mark & 0xFFFF0000;
+        var dataId = (mark >>> 16) & TimelineBuffer.MAX_DATAID;
+        var data = datastore[dataId];
+        var kindId = mark & TimelineBuffer.MAX_KINDID;
+        var kind = kinds[kindId];
+        if (isNullOrUndefined(kind) || kind.visible) {
+          var action = mark & 0x80000000;
           var time = times.get(i);
           var stackLength = stack.length;
           if (action === TimelineBuffer.LEAVE) {
@@ -120,7 +151,7 @@ module Shumway.Tools.Profiler {
                 return true;
               }
             }
-            stack.push(new TimelineFrame(stack[stackLength - 1], kind, NaN, time));
+            stack.push(new TimelineFrame(stack[stackLength - 1], kind, null, data, NaN, time));
           } else if (action === TimelineBuffer.ENTER) {
             var node = stack.pop();
             var top = stack[stack.length - 1];
@@ -132,6 +163,7 @@ module Shumway.Tools.Profiler {
               }
               var currentDepth = stack.length;
               node.depth = currentDepth;
+              node.startData = data;
               node.startTime = time;
               while (node) {
                 if (node.maxDepth < currentDepth) {
@@ -156,6 +188,7 @@ module Shumway.Tools.Profiler {
 
     reset(startTime?: number) {
       this._depth = 0;
+      this._data = [];
       this._marks.reset();
       this._times.reset();
       this._startTime = isNullOrUndefined(startTime) ? performance.now() : startTime;
@@ -178,16 +211,16 @@ module Shumway.Tools.Profiler {
         var leaveCount = currentStack.length - j;
         for (var k = 0; k < leaveCount; k++) {
           sample = currentStack.pop();
-          buffer.leave(sample.location, time);
+          buffer.leave(sample.location, null, time);
         }
         while (j < stack.length) {
           sample = stack[j++];
-          buffer.enter(sample.location, time);
+          buffer.enter(sample.location, null, time);
         }
         currentStack = stack;
       }
       while (sample = currentStack.pop()) {
-        buffer.leave(sample.location, time);
+        buffer.leave(sample.location, null, time);
       }
       return buffer;
     }
@@ -216,16 +249,16 @@ module Shumway.Tools.Profiler {
         var leaveCount = currentStack.length - j;
         for (var k = 0; k < leaveCount; k++) {
           sample = currentStack.pop();
-          buffer.leave(sample.functionName, time);
+          buffer.leave(sample.functionName, null, time);
         }
         while (j < stack.length) {
           sample = stack[j++];
-          buffer.enter(sample.functionName, time);
+          buffer.enter(sample.functionName, null, time);
         }
         currentStack = stack;
       }
       while (sample = currentStack.pop()) {
-        buffer.leave(sample.functionName, time);
+        buffer.leave(sample.functionName, null, time);
       }
       return buffer;
     }

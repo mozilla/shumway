@@ -65,11 +65,11 @@ module Shumway.Tools.Profiler.TraceLogger {
         var hasChildren = ((textId & 1) === 1);
         textId >>>= 1;
         var text = this._text[textId];
-        buffer.enter(text, start / 1000000);
+        buffer.enter(text, null, start / 1000000);
         if (hasChildren) {
           this._walkTree(id + 1);
         }
-        buffer.leave(text, stop / 1000000);
+        buffer.leave(text, null, stop / 1000000);
         id = nextId;
       } while(id !== 0);
     }

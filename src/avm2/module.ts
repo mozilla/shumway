@@ -19,11 +19,11 @@
 module Shumway.AVM2 {
   export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("AVM2");
 
-  export function enterTimeline(name: string) {
-    timelineBuffer && timelineBuffer.enter(name);
+  export function enterTimeline(name: string, data?: any) {
+    timelineBuffer && timelineBuffer.enter(name, data);
   }
 
-  export function leaveTimeline() {
-    timelineBuffer && timelineBuffer.leave();
+  export function leaveTimeline(data?: any) {
+    timelineBuffer && timelineBuffer.leave(null, data);
   }
 }

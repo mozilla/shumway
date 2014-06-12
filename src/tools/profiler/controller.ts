@@ -105,6 +105,7 @@ module Shumway.Tools.Profiler {
           break;
       }
     }
+
     get themeType(): UIThemeType {
       return this._themeType;
     }
@@ -221,14 +222,8 @@ module Shumway.Tools.Profiler {
     }
 
     showTooltip(chart: FlameChart, frame: TimelineFrame, x: number, y: number) {
-      var totalTime = Math.round(frame.totalTime * 100000) / 100000;
-      var selfTime = Math.round(frame.selfTime * 100000) / 100000;
-      var selfPercent = Math.round(frame.selfTime * 100 * 100 / frame.totalTime) / 100;
-      this._tooltip.innerHTML = "<div>"
-                              +   "<h1>" + frame.kind.name + "</h1>"
-                              +   "<p>Total time: " + totalTime + " ms</p>"
-                              +   "<p>Self time: " + selfTime + " ms (" + selfPercent + "%)</p>"
-                              + "</div>";
+      this.removeTooltipContent();
+      this._tooltip.appendChild(this.createTooltipContent(frame));
       this._tooltip.style.display = "block";
       var elContent = <HTMLElement>this._tooltip.firstChild;
       var tooltipWidth = elContent.clientWidth;
@@ -244,6 +239,55 @@ module Shumway.Tools.Profiler {
       this._tooltip.style.display = "none";
     }
 
-  }
+    createTooltipContent(frame: TimelineFrame): HTMLElement {
+      var totalTime = Math.round(frame.totalTime * 100000) / 100000;
+      var selfTime = Math.round(frame.selfTime * 100000) / 100000;
+      var selfPercent = Math.round(frame.selfTime * 100 * 100 / frame.totalTime) / 100;
 
+      var elContent = document.createElement("div");
+
+      var elName = document.createElement("h1");
+      elName.textContent = frame.kind.name;
+      elContent.appendChild(elName);
+
+      var elTotalTime = document.createElement("p");
+      elTotalTime.textContent = totalTime + " ms";
+      elContent.appendChild(elTotalTime);
+
+      var elSelfTime = document.createElement("p");
+      elSelfTime.textContent = selfTime + " ms (" + selfPercent + "%)";
+      elContent.appendChild(elSelfTime);
+
+      this.appendDataElements(elContent, frame.startData);
+      this.appendDataElements(elContent, frame.endData);
+
+      return elContent;
+    }
+
+    appendDataElements(el: HTMLElement, data: any) {
+      if (!isNullOrUndefined(data)) {
+        el.appendChild(document.createElement("hr"));
+        var elData:HTMLElement;
+        if (isObject(data)) {
+          for (var key in data) {
+            elData = document.createElement("p");
+            elData.textContent = key + ": " + data[key];
+            el.appendChild(elData);
+          }
+        } else {
+          elData = document.createElement("p");
+          elData.textContent = data.toString();
+          el.appendChild(elData);
+        }
+      }
+    }
+
+    removeTooltipContent() {
+      var el = this._tooltip;
+      while (el.firstChild) {
+        el.removeChild(el.firstChild);
+      }
+    }
+
+  }
 }
