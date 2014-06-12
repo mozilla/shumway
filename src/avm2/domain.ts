@@ -47,7 +47,7 @@ module Shumway.AVM2.Runtime {
   }
 
   export function executeScript(script) {
-    enterTimeline("executeScript " + script);
+    enterTimeline("executeScript", { name: script.name });
     var abc = script.abc;
     release || assert(!script.executing && !script.executed);
     var global = new Global(script);
