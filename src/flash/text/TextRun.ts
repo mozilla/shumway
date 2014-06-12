@@ -26,19 +26,45 @@ module Shumway.AVM2.AS.flash.text {
     constructor(beginIndex: number /*int*/, endIndex: number /*int*/,
                 textFormat: flash.text.TextFormat)
     {
-      beginIndex = beginIndex | 0;
-      endIndex = endIndex | 0;
-      textFormat = textFormat;
+      //beginIndex = beginIndex | 0;
+      //endIndex = endIndex | 0;
+      //textFormat = textFormat;
       false && super();
       notImplemented("Dummy Constructor: public flash.text.TextRun");
     }
 
     // JS -> AS Bindings
-    beginIndex: number /*int*/;
-    endIndex: number /*int*/;
-    textFormat: flash.text.TextFormat;
+    _beginIndex: number /*int*/;
+    _endIndex: number /*int*/;
+    _textFormat: flash.text.TextFormat;
 
     // AS -> JS Bindings
+    get beginIndex(): number {
+      return this._beginIndex;
+    }
 
+    set beginIndex(value: number) {
+      this._beginIndex = value | 0;
+    }
+
+    get endIndex(): number {
+      return this._endIndex;
+    }
+
+    set endIndex(value: number) {
+      this._endIndex = value | 0;
+    }
+
+    get textFormat(): TextFormat {
+      return this._textFormat;
+    }
+
+    set textFormat(value: TextFormat) {
+      this._textFormat = value;
+    }
+
+    clone(): TextRun {
+      return new flash.text.TextRun(this.beginIndex, this.endIndex, this.textFormat);
+    }
   }
 }

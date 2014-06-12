@@ -32,7 +32,14 @@ module Shumway.AVM2.AS.flash.display {
       self._smoothing = null;
 
       if (symbol) {
-        self._bitmapData = symbol.symbolClass.initializeFrom(symbol);
+        var symbolClass = symbol.symbolClass;
+        // If the symbol class inherits from Bitmap, we are already within its initializer.
+        // Make sure to create a BitmapData instance here to avoid recursively calling the
+        // initializer again.
+        if (symbolClass.isSubtypeOf(flash.display.Bitmap)) {
+          symbolClass = flash.display.BitmapData;
+        }
+        self._bitmapData = symbolClass.initializeFrom(symbol);
         self._setFillAndLineBoundsFromWidthAndHeight(symbol.width * 20|0, symbol.height * 20|0);
       }
     };
@@ -47,7 +54,7 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
       if (this._symbol) {
-        this._symbol.symbolClass.instanceConstructorNoInitialize.call(this._bitmapData);
+        this._bitmapData.class.instanceConstructorNoInitialize.call(this._bitmapData);
       } else {
         this.bitmapData = bitmapData;
       }

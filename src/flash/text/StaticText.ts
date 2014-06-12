@@ -25,8 +25,12 @@ module Shumway.AVM2.AS.flash.text {
 
     static initializer: any = function (symbol: Shumway.Timeline.TextSymbol) {
       var self: StaticText = this;
+
+      self._textContent = new Shumway.TextContent();
+
       if (symbol) {
         self._setFillAndLineBoundsFromSymbol(symbol);
+        self._textContent.parseHtml(symbol.initialText);
       }
     };
 
@@ -36,6 +40,8 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     private _text: string;
+
+    _textContent: Shumway.TextContent;
 
     set text(text: string) {
       this._text = text;

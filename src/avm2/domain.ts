@@ -134,13 +134,13 @@ module Shumway.AVM2.Runtime {
     public systemDomain: ApplicationDomain;
     public applicationDomain: ApplicationDomain;
     public findDefiningAbc: (mn: Multiname) => AbcFile;
-    public loadAVM1: (next) => void;
-    public isAVM1Loaded: boolean;
     public exception: any;
     public exceptions: any [];
     public globals: Map<any>;
     public builtinsLoaded: boolean;
 
+    private _loadAVM1: (next) => void;
+    private _loadAVM1Promise: Promise<void>;
 
     public static instance: AVM2;
     public static initialize(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: (next) => void = null) {
@@ -153,8 +153,9 @@ module Shumway.AVM2.Runtime {
       this.systemDomain = new ApplicationDomain(this, null, sysMode, true);
       this.applicationDomain = new ApplicationDomain(this, this.systemDomain, appMode, false);
       this.findDefiningAbc = findDefiningAbc;
-      this.loadAVM1 = loadAVM1;
-      this.isAVM1Loaded = false;
+
+      this._loadAVM1 = loadAVM1;
+      this._loadAVM1Promise = null;
 
       /**
        * All runtime exceptions are boxed in this object to tag them as having
@@ -194,6 +195,18 @@ module Shumway.AVM2.Runtime {
 
     public static isPlayerglobalLoaded() {
       return !!playerglobal;
+    }
+
+    public loadAVM1(): Promise<void> {
+      var loadAVM1Callback = this._loadAVM1;
+      assert(loadAVM1Callback);
+
+      if (!this._loadAVM1Promise) {
+        this._loadAVM1Promise = new Promise<void>(function (resolve) {
+          loadAVM1Callback(resolve);
+        });
+      }
+      return this._loadAVM1Promise;
     }
 
     public static loadPlayerglobal(abcsPath, catalogPath) {

@@ -67,7 +67,7 @@ module.exports = function(grunt) {
         cwd: 'utils/'
       },
       build_avm1lib_ts: {
-        cmd: 'node utils/typescript/tsc --target --outDir build/ts ES5 src/avm1lib/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm1lib/references.ts'
       },
       shell_test: {
         cmd: 'utils/jsshell/js test/harness/run-unit-test.js ' + (grunt.option('tests') || 'test/unit/shell-tests.js')

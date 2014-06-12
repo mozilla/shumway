@@ -45,7 +45,7 @@ module Shumway.AVM2.AS.avm1lib {
     static classSymbols: string [] = null;
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["_global", "flash", "createFlashObject", "$asfunction", "call", "chr", "clearInterval", "clearTimeout", "duplicateMovieClip", "fscommand", "getAS2Property", "getTimer", "getURL", "getVersion", "gotoAndPlay", "gotoAndStop", "gotoLabel", "ifFrameLoaded", "int", "length", "loadMovie", "loadMovieNum", "loadVariables", "mbchr", "mblength", "mbord", "mbsubstring", "nextFrame", "nextScene", "ord", "play", "prevFrame", "prevScene", "print", "printAsBitmap", "printAsBitmapNum", "printNum", "random", "removeMovieClip", "setInterval", "setAS2Property", "setTimeout", "showRedrawRegions", "startDrag", "stop", "stopAllSounds", "stopDrag", "substring", "targetPath", "toggleHighQuality", "unloadMovie", "unloadMovieNum", "updateAfterEvent", "NaN", "Infinity", "isFinite", "isNaN", "parseFloat", "parseInt", "undefined", "MovieClip", "AsBroadcaster", "System", "Stage", "Button", "TextField", "Color", "Key", "Mouse", "MovieClipLoader", "Sound", "SharedObject", "ContextMenu", "ContextMenuItem", "ColorTransform", "Point", "Rectangle", "TextFormat"];
+    static instanceSymbols: string [] = ["_global", "flash", "$asfunction", "call", "chr", "clearInterval", "clearTimeout", "duplicateMovieClip", "fscommand", "getAS2Property", "getTimer", "getURL", "getVersion", "gotoAndPlay", "gotoAndStop", "gotoLabel", "ifFrameLoaded", "int", "length", "loadMovie", "loadMovieNum", "loadVariables", "mbchr", "mblength", "mbord", "mbsubstring", "nextFrame", "nextScene", "ord", "play", "prevFrame", "prevScene", "print", "printAsBitmap", "printAsBitmapNum", "printNum", "random", "removeMovieClip", "setInterval", "setAS2Property", "setTimeout", "showRedrawRegions", "startDrag", "stop", "stopAllSounds", "stopDrag", "substring", "targetPath", "toggleHighQuality", "unloadMovie", "unloadMovieNum", "updateAfterEvent", "NaN", "Infinity", "isFinite", "isNaN", "parseFloat", "parseInt", "undefined", "MovieClip", "AsBroadcaster", "System", "Stage", "Button", "TextField", "Color", "Key", "Mouse", "MovieClipLoader", "Sound", "SharedObject", "ContextMenu", "ContextMenuItem", "ColorTransform", "Point", "Rectangle", "TextFormat"];
 
     constructor () {
       false && super();
@@ -56,24 +56,23 @@ module Shumway.AVM2.AS.avm1lib {
 
     _global: any;
     flash: ASObject;
-    createFlashObject: () => ASObject;
     $asfunction: (link: any) => any;
     call: (frame: any) => any;
     chr: (number: any) => any;
     clearInterval: ASFunction;
     clearTimeout: ASFunction;
     duplicateMovieClip: (target: any, newname: any, depth: any) => any;
-    fscommand: ASFunction;
+    fscommand: (...rest:any[]) => any;
     getAS2Property: (target: any, index: any) => any;
-    getTimer: ASFunction;
-    getURL: (url: any, target: any, method: any) => any;
+    getTimer: () => number;
+    getURL: (url: any, target: any, method?: any) => any;
     getVersion: () => any;
-    gotoAndPlay: (scene: any, frame: any) => any;
-    gotoAndStop: (scene: any, frame: any) => any;
+    gotoAndPlay: (scene: any, frame?: any) => any;
+    gotoAndStop: (scene: any, frame?: any) => any;
     gotoLabel: (label: any) => any;
-    ifFrameLoaded: (scene: any, frame: any) => any;
+    ifFrameLoaded: (scene: any, frame?: any) => any;
     int: (value: any) => any;
-    length: (expression: ASObject) => number;
+    length: (expression: any) => number;
     loadMovie: (url: string, target: ASObject, method: string) => void;
     loadMovieNum: (url: any, level: any, method: any) => any;
     loadVariables: (url: string, target: ASObject, method?: string) => void;
@@ -100,7 +99,7 @@ module Shumway.AVM2.AS.avm1lib {
     startDrag: (target: any, lock: any, left: any, top: any, right: any, bottom: any) => any;
     stop: () => any;
     stopAllSounds: () => any;
-    stopDrag: (target: any) => any;
+    stopDrag: (target?: any) => any;
     substring: (value: any, index: any, count: any) => any;
     targetPath: (target: any) => any;
     toggleHighQuality: () => any;

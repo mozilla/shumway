@@ -31,6 +31,7 @@ module Shumway.SWF.Parser {
     var props = {
       type: 'text',
       id: tag.id,
+      bbox: tag.bbox,
       variableName: tag.variableName, // for AVM1
       tag: tag,
       bold: bold,

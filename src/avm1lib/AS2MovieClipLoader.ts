@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.avm1lib {
     static classSymbols: string [] = null;
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["loadClip", "unloadClip", "getProgress", "openHandler", "progressHandler", "ioErrorHandler", "completeHandler", "initHandler"];
+    static instanceSymbols: string [] = null;
 
     constructor () {
       false && super();
@@ -40,15 +40,6 @@ module Shumway.AVM2.AS.avm1lib {
     private _nativeAS3Object: Loader;
 
     // JS -> AS Bindings
-
-    loadClip: (url: string, target: ASObject) => boolean;
-    unloadClip: (target: ASObject) => boolean;
-    getProgress: (target: ASObject) => ASObject;
-    openHandler: (event: flash.events.Event) => void;
-    progressHandler: (event: flash.events.ProgressEvent) => void;
-    ioErrorHandler: (event: flash.events.IOErrorEvent) => void;
-    completeHandler: (event: flash.events.Event) => void;
-    initHandler: (event: flash.events.Event) => void;
 
     // AS -> JS Bindings
 

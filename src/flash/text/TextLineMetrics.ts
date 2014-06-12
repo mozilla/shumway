@@ -36,7 +36,7 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("Dummy Constructor: public flash.text.TextLineMetrics");
     }
 
-    largestFormat: NativeTextFormat;
+    //largestFormat: NativeTextFormat;
     y: number;
 
     // JS -> AS Bindings

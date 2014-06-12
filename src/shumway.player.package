@@ -63,6 +63,7 @@ build/ts/avm2/interpreter.js
 build/ts/avm1/stream.js
 build/ts/avm1/parser.js
 build/ts/avm1/analyze.js
+build/ts/avm1/context.js
 build/ts/avm1/interpreter.js
 #!inline console.timeEnd("Load AVM1 Dependencies");
 

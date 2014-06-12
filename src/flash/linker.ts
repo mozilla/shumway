@@ -81,6 +81,7 @@ module Shumway.AVM2.AS {
     M("flash.text.StaticText", "StaticTextClass", flash.text.StaticText),
     M("flash.text.StyleSheet", "StyleSheetClass", flash.text.StyleSheet),
     M("flash.text.TextFormat", "TextFormatClass", flash.text.TextFormat),
+    M("flash.text.TextRun", "TextRunClass", flash.text.TextRun),
     M("flash.text.TextLineMetrics"),
 //    M("flash.text.engine.ContentElement", "ContentElementClass", flash.text.engine.ContentElement),
 //    M("flash.text.engine.ElementFormat", "ElementFormatClass", flash.text.engine.ElementFormat),

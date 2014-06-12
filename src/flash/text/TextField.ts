@@ -42,7 +42,7 @@ module Shumway.AVM2.AS.flash.text {
       self._bottomScrollV = 1;
       self._caretIndex = 0;
       self._condenseWhite = false;
-      self._defaultTextFormat = new TextFormat();
+      self._defaultTextFormat = new flash.text.TextFormat();
       self._embedFonts = false;
       self._gridFitType = GridFitType.PIXEL;
       self._htmlText = '';
@@ -64,7 +64,6 @@ module Shumway.AVM2.AS.flash.text {
       self._selectionEndIndex = 0;
       self._sharpness = 0;
       self._styleSheet = null;
-      self._text = '';
       self._textColor = -1;
       self._textHeight = 0;
       self._textWidth = 0;
@@ -73,13 +72,14 @@ module Shumway.AVM2.AS.flash.text {
       self._wordWrap = false;
       self._useRichTextClipboard = false;
 
+      self._textContent = new Shumway.TextContent();
+
       if (symbol) {
+        self._setFillAndLineBoundsFromSymbol(symbol);
+
         self._textColor = symbol.textColor;
         self._textHeight = symbol.textHeight;
-
-        //symbol.font
-        //symbol.fontClass
-
+        self._defaultTextFormat.font = symbol.font;
         self._defaultTextFormat.align = symbol.align;
         self._defaultTextFormat.leftMargin = symbol.leftMargin;
         self._defaultTextFormat.rightMargin = symbol.rightMargin;
@@ -90,7 +90,6 @@ module Shumway.AVM2.AS.flash.text {
         self._embedFonts = symbol.embedFonts;
         self._selectable = symbol.selectable;
         self._border = symbol.border;
-
 
         if (symbol.html) {
           self.htmlText = symbol.initialText;
@@ -170,7 +169,6 @@ module Shumway.AVM2.AS.flash.text {
     _selectionEndIndex: number /*int*/;
     _sharpness: number;
     _styleSheet: flash.text.StyleSheet;
-    _text: string;
     _textColor: number /*uint*/;
     _textHeight: number;
     _textWidth: number;
@@ -178,6 +176,8 @@ module Shumway.AVM2.AS.flash.text {
     _type: string;
     _wordWrap: boolean;
     _useRichTextClipboard: boolean;
+
+    _textContent: Shumway.TextContent;
 
     get alwaysShowSelection(): boolean {
       return this._alwaysShowSelection;
@@ -297,12 +297,8 @@ module Shumway.AVM2.AS.flash.text {
     set htmlText(value: string) {
       somewhatImplemented("public flash.text.TextField::set htmlText");
       value = asCoerceString(value);
-      var text = "";
-      Shumway.HTMLParser(value, {
-        chars: (t) => { text += t }
-      });
+      this._textContent.parseHtml(value, this._multiline);
       this._htmlText = value;
-      this._text = text;
     }
 
     get length(): number /*int*/ {
@@ -424,12 +420,12 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get text(): string {
-      return this._text;
+      return this._textContent.plainText;
     }
 
     set text(value: string) {
       somewhatImplemented("public flash.text.TextField::set text");
-      this._text = asCoerceString(value);
+      this._textContent.plainText = asCoerceString(value);
     }
 
     get textColor(): number /*uint*/ {
@@ -527,10 +523,19 @@ module Shumway.AVM2.AS.flash.text {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
       notImplemented("public flash.text.TextField::getTextFormat"); return;
     }
+
     getTextRuns(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): any [] {
-      beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextField::getTextRuns"); return;
+      var textRuns = this._textContent.textRuns;
+      var result = [];
+      for (var i = 0; i < textRuns.length; i++) {
+        var textRun = textRuns[i];
+        if (textRun.beginIndex >= beginIndex && textRun.endIndex <= endIndex) {
+          result.push(textRun.clone());
+        }
+      }
+      return result;
     }
+
     getRawText(): string {
       notImplemented("public flash.text.TextField::getRawText"); return;
     }
