@@ -63,12 +63,12 @@ module Shumway.GFX {
 
   export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("GFX");
 
-  export function enterTimeline(name: string) {
-    timelineBuffer && timelineBuffer.enter(name);
+  export function enterTimeline(name: string, data?: any) {
+    timelineBuffer && timelineBuffer.enter(name, data);
   }
 
-  export function leaveTimeline(name: string) {
-    timelineBuffer && timelineBuffer.leave(name);
+  export function leaveTimeline(name: string, data?: any) {
+    timelineBuffer && timelineBuffer.leave(name, data);
   }
 
   /**

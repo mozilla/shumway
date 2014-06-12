@@ -2638,8 +2638,15 @@ module Shumway {
     }
   }
 
+  export interface RGBComponents {red: number; green: number; blue: number}
+  export interface RGBAComponents {red: number; green: number; blue: number; alpha: number}
+
   export module ColorUtilities {
-    export function componentsToRgb(components: {red: number; green: number; blue: number}): number {
+    export function componentsToRGB(components: RGBComponents): number {
+      return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
+    }
+
+    export function componentsToRGBA(components: RGBAComponents): number {
       return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
     }
 
@@ -2648,7 +2655,7 @@ module Shumway {
                   (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';
     }
 
-    export function rgbaObjToCSSStyle(color: {red: number; green: number; blue: number; alpha: number}): string {
+    export function rgbaObjToCSSStyle(color: RGBAComponents): string {
       return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
              color.alpha / 255 + ')';
     }

@@ -32,7 +32,7 @@ module Shumway.AVM2.AS.flash.filters {
 
     public static FromUntyped(obj: any) {
       // obj.color is an object with separate color components
-      var color: number = ColorUtilities.componentsToRgb(obj.color);
+      var color: number = ColorUtilities.componentsToRGB(obj.color);
       var alpha: number = (obj.color.alpha & 0xff) / 255;
       return new ConvolutionFilter(
         obj.matrixX,
