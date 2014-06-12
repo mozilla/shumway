@@ -536,13 +536,12 @@ module Shumway.AVM2.AS.flash.display {
       //loader._worker = worker;
       worker.onmessage = function (e) {
         if (e.data.type === 'exception') {
-          notImplemented("exception");
           console.log('error in parser: \n' + e.data.stack);
-//          AVM2.exceptions.push({
-//            source: 'parser',
-//            message: e.data.message,
-//            stack: e.data.stack
-//          });
+          AVM2.instance.exceptions.push({
+            source: 'parser',
+            message: e.data.message,
+            stack: e.data.stack
+          });
         } else {
           loader._commitData(e.data);
         }
