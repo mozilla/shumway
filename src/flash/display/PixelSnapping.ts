@@ -40,9 +40,31 @@ module Shumway.AVM2.AS.flash.display {
     static NEVER: string = "never";
     static ALWAYS: string = "always";
     static AUTO: string = "auto";
-    
-    
-    // AS -> JS Bindings
-    
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return PixelSnapping.NEVER;
+        case 1:
+          return PixelSnapping.ALWAYS;
+        case 2:
+          return PixelSnapping.AUTO;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case PixelSnapping.NEVER:
+          return 0;
+        case PixelSnapping.ALWAYS:
+          return 1;
+        case PixelSnapping.AUTO:
+          return 2;
+        default:
+          return -1;
+      }
+    }
   }
 }
