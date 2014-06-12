@@ -36,12 +36,12 @@ module Shumway.AVM2.AS.flash.filters {
 
     public static FromUntyped(obj: any) {
       // obj.highlightColor is an object with separate color components
-      var highlightColor: number = ColorUtilities.componentsToRgb(obj.highlightColor);
+      var highlightColor: number = ColorUtilities.componentsToRGB(obj.highlightColor);
       var highlightAlpha: number = (obj.highlightColor.alpha & 0xff) / 255;
       // obj.colors is an array of objects with separate color components
       // here it contains exactly one color object, which maps to shadowColor and shadowAlpha
       assert(obj.colors && obj.colors.length === 1, "colors must be Array of length 1");
-      var shadowColor: number = ColorUtilities.componentsToRgb(obj.colors[0]);
+      var shadowColor: number = ColorUtilities.componentsToRGB(obj.colors[0]);
       var shadowAlpha: number = (obj.colors[0].alpha & 0xff) / 255;
       // type is derived from obj.onTop and obj.innerShadow
       // obj.onTop true: type is FULL

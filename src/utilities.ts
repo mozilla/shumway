@@ -2638,7 +2638,7 @@ module Shumway {
   export interface RGBAComponents {red: number; green: number; blue: number; alpha: number}
 
   export module ColorUtilities {
-    export function componentsToRgb(components: RGBComponents): number {
+    export function componentsToRGB(components: RGBComponents): number {
       return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
     }
 
