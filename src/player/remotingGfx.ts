@@ -28,6 +28,9 @@ module Shumway.Remoting.GFX {
   import Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
   import Canvas2DStageRendererState = Shumway.GFX.Canvas2DStageRendererState;
 
+  import Smoothing = Shumway.GFX.Smoothing;
+  import PixelSnapping = Shumway.GFX.PixelSnapping;
+
   import Point = Shumway.GFX.Geometry.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
@@ -284,6 +287,8 @@ module Shumway.Remoting.GFX {
         // frame.blendMode = input.readInt();
         // TODO: Should make a proper flag for this.
         frame.alpha = input.readBoolean() ? 1 : 0;
+        frame.pixelSnapping = <PixelSnapping>input.readInt();
+        frame.smoothing = <Smoothing>input.readInt();
       }
       if (hasBits & MessageBits.HasChildren) {
         var count = input.readInt();

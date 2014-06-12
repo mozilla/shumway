@@ -28,6 +28,7 @@ module Shumway.Remoting.Player {
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   import SimpleButton = flash.display.SimpleButton;
   import BlendMode = flash.display.BlendMode;
+  import PixelSnapping = flash.display.PixelSnapping;
   import VisitorFlags = flash.display.VisitorFlags;
 
   import Point = flash.geom.Point;
@@ -126,6 +127,10 @@ module Shumway.Remoting.Player {
         );
         hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
       }
+      var bitmap: Bitmap = null;
+      if (display.Bitmap.isType(displayObject)) {
+        bitmap = <Bitmap>displayObject;
+      }
 
       // Write Has Bits
       var hasBits = 0;
@@ -158,12 +163,15 @@ module Shumway.Remoting.Player {
         }
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
+        if (bitmap) {
+          this.output.writeInt(PixelSnapping.toNumber(bitmap.pixelSnapping));
+          this.output.writeInt(bitmap.smoothing ? 1 : 0);
+        } else {
+          this.output.writeInt(PixelSnapping.toNumber(PixelSnapping.AUTO));
+          this.output.writeInt(1);
+        }
       }
 
-      var bitmap: Bitmap = null;
-      if (display.Bitmap.isType(displayObject)) {
-        bitmap = <Bitmap>displayObject;
-      }
       var graphics = displayObject._getGraphics();
       if (hasRemotableChildren) {
         if (bitmap) {

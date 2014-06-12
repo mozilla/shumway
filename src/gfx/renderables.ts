@@ -50,12 +50,7 @@ module Shumway.GFX {
     /**
      * Whether the source's content should be tiled.
      */
-    Tileable      = 8,
-
-    /**
-     * Whether the source should be drawn with pixel snapping.
-     */
-    SnappedToDevicePixels      = 16
+    Tileable      = 8
   }
 
   /**
@@ -114,7 +109,7 @@ module Shumway.GFX {
   }
 
   export class RenderableBitmap extends Renderable {
-    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty | RenderableFlags.SnappedToDevicePixels;
+    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     properties: {[name: string]: any} = {};
     _canvas: HTMLCanvasElement;
     private fillStyle: ColorStyle;

@@ -180,10 +180,12 @@ module Shumway.GFX {
           return;
         }
 
-        if (frame.shouldSnapToDevicePixels() && state.options.snapToDevicePixels) {
+        if (frame.pixelSnapping === PixelSnapping.Always || state.options.snapToDevicePixels) {
           transform.snap();
         }
-        context.imageSmoothingEnabled = context.mozImageSmoothingEnabled = state.options.imageSmoothing;
+
+        context.imageSmoothingEnabled =
+          frame.smoothing === Smoothing.Always || state.options.imageSmoothing;
 
         context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
         context.globalAlpha = frame.getConcatenatedAlpha();
