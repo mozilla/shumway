@@ -41,6 +41,8 @@ module Shumway.Remoting.GFX {
   import assert = Shumway.Debug.assert;
   var writer = null; // release ? null : new IndentingWriter();
 
+  declare var registerInspectorAsset;
+
   export class GFXChannelSerializer {
     output: IDataOutput;
 
@@ -90,6 +92,13 @@ module Shumway.Remoting.GFX {
       root.addChild(this.root = new ClipRectangle(1024, 1024));
       this._frames = [];
       this._assets = [];
+    }
+
+    _registerAsset(id: number, asset: Renderable) {
+      if (typeof registerInspectorAsset !== "undefined") {
+        registerInspectorAsset(id, asset);
+      }
+      this._assets[id] = asset;
     }
 
     _makeFrame(id: number): Frame {
@@ -215,7 +224,7 @@ module Shumway.Remoting.GFX {
         textures.push(context._assets[bitmapId]);
       }
       if (!asset) {
-        context._assets[id] = new RenderableShape(id, pathData, textures, bounds);
+        context._registerAsset(id, new RenderableShape(id, pathData, textures, bounds));
       }
     }
 
@@ -230,7 +239,7 @@ module Shumway.Remoting.GFX {
       var dataBuffer = DataBuffer.FromPlainObject(this.inputAssets[assetId]);
       this.inputAssets[assetId] = null;
       if (!asset) {
-        context._assets[id] = RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds);
+        context._registerAsset(id, RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds));
       } else {
         var renderableBitmap = <RenderableBitmap>context._assets[id];
         renderableBitmap.updateFromDataBuffer(type, dataBuffer);
@@ -250,7 +259,7 @@ module Shumway.Remoting.GFX {
       var plainText = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
       if (!asset) {
-        context._assets[id] = new RenderableText(plainText, textRunData, bounds);
+        context._registerAsset(id, new RenderableText(plainText, textRunData, bounds));
       } else {
         var renderableText = <RenderableText>context._assets[id];
         renderableText.update(plainText, textRunData, bounds);

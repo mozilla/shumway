@@ -421,3 +421,28 @@ function createEasel() {
   _easel = new Easel(canvas, backend);
   return _easel;
 }
+
+function registerInspectorAsset(id, asset) {
+  var li = document.createElement("li");
+  var div = document.createElement("div");
+  var bounds = asset.getBounds();
+  var details = asset.constructor.name + ": " + id + ", bounds: " + bounds;
+  var canvas = null;
+  if (asset instanceof Shumway.GFX.RenderableBitmap) {
+    canvas = asset._canvas;
+  } else {
+    canvas = document.createElement("canvas");
+    canvas.width = bounds.w;
+    canvas.height = bounds.h;
+    var context = canvas.getContext("2d");
+    context.translate(-bounds.x, -bounds.y);
+    asset.render(context);
+  }
+  if (asset instanceof Shumway.GFX.RenderableText) {
+    details += ", text: " + asset._plainText;
+  }
+  div.innerHTML = details
+  li.appendChild(div);
+  li.appendChild(canvas);
+  document.getElementById("assetList").appendChild(li);
+}

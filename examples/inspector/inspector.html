@@ -29,10 +29,10 @@ limitations under the License.
         <div id="stage"></div>
       </div>
     </div>
-
     <div id="topToolbar" class="toolbarBox withEmphasis">
       <div class="toolbarLabel">Shumway Inspector <span id="message" class="toolbarMessage"></span></div>
       <div id="debugInfoToolbarTabs" class="toolbarButtonBar active">
+        <div id="showAsset" class="toolbarButton" data-panelid="assetListContainer">Assets</div>
         <div id="showDebugInfo" class="toolbarButton" data-panelid="debugInfoContainer">Debug Info</div>
         <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Display List</div>
         <div id="showSettings" class="toolbarButton pressedState" data-panelid="settingsContainer">Settings</div>
@@ -45,7 +45,9 @@ limitations under the License.
       <canvas id="fpsCanvas"></canvas>
     </div>
     -->
-
+    <div id="assetListContainer">
+      <ul id="assetList"></ul>
+    </div>
     <div id="debugInfoContainer">
       <canvas id="traceTerminal" width="600" height="210" tabindex='2'></canvas>
       <canvas id="frameTerminal" width="600" height="410" tabindex='3'></canvas>
