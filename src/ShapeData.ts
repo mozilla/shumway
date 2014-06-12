@@ -188,6 +188,7 @@ module Shumway {
   export class PlainObjectShapeData {
     constructor(public commands: Uint8Array, public commandsPosition: number,
                 public coordinates: Int32Array, public coordinatesPosition: number,
+                public morphCoordinates: Int32Array,
                 public styles: ArrayBuffer, public stylesLength: number)
     {}
   }
@@ -204,6 +205,8 @@ module Shumway {
     commandsPosition: number;
     coordinates: Int32Array;
     coordinatesPosition: number;
+    // Note: creation and capacity-ensurance have to happen from the outside for this field.
+    morphCoordinates: Int32Array;
     styles: DataBuffer;
 
     constructor(initialize: boolean = true) {
@@ -216,6 +219,7 @@ module Shumway {
       var data = new ShapeData(false);
       data.commands = source.commands;
       data.coordinates = source.coordinates;
+      data.morphCoordinates = source.morphCoordinates;
       data.commandsPosition = source.commandsPosition;
       data.coordinatesPosition = source.coordinatesPosition;
       data.styles = DataBuffer.FromArrayBuffer(source.styles, source.stylesLength);
@@ -345,15 +349,24 @@ module Shumway {
       styles.writeUnsignedByte(interpolation);
     }
 
-    writeCommand(command: PathCommand) {
-      this.ensurePathCapacities(1, 0);
+    writeCommandAndCoordinates(command: PathCommand, x: number, y: number) {
+      this.ensurePathCapacities(1, 2);
       this.commands[this.commandsPosition++] = command;
+      this.coordinates[this.coordinatesPosition++] = x;
+      this.coordinates[this.coordinatesPosition++] = y;
     }
 
     writeCoordinates(x: number, y: number) {
       this.ensurePathCapacities(0, 2);
       this.coordinates[this.coordinatesPosition++] = x;
       this.coordinates[this.coordinatesPosition++] = y;
+    }
+
+    writeMorphCoordinates(x: number, y: number) {
+      this.morphCoordinates = ensureTypedArrayCapacity(this.morphCoordinates,
+                                                       this.coordinatesPosition);
+      this.morphCoordinates[this.coordinatesPosition - 2] = x;
+      this.morphCoordinates[this.coordinatesPosition - 1] = y;
     }
 
     clear() {
@@ -380,13 +393,18 @@ module Shumway {
     }
 
     toPlainObject(): PlainObjectShapeData {
-      return new PlainObjectShapeData(this.commands, this.commandsPosition, this.coordinates,
-                                      this.coordinatesPosition, this.styles.buffer,
-                                      this.styles.length);
+      return new PlainObjectShapeData(this.commands, this.commandsPosition,
+                                      this.coordinates, this.coordinatesPosition,
+                                      this.morphCoordinates,
+                                      this.styles.buffer, this.styles.length);
     }
 
     public get buffers(): ArrayBuffer[] {
-      return [this.commands.buffer, this.coordinates.buffer, this.styles.buffer];
+      var buffers = [this.commands.buffer, this.coordinates.buffer, this.styles.buffer];
+      if (this.morphCoordinates) {
+        buffers.push(this.morphCoordinates.buffer);
+      }
+      return buffers;
     }
 
     private _writeStyleMatrix(matrix: ShapeMatrix)

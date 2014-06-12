@@ -57,27 +57,47 @@ module Shumway.Timeline {
   export class ShapeSymbol extends DisplaySymbol {
     graphics: flash.display.Graphics = null;
 
-    constructor(id: number) {
-      super(id, flash.display.Shape);
+    constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass = flash.display.Shape) {
+      super(id, symbolClass);
     }
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
       var symbol = new ShapeSymbol(data.id);
       symbol._setBoundsFromData(data);
       symbol.graphics = flash.display.Graphics.FromData(data);
+      symbol.processRequires(data.require, loaderInfo);
+      return symbol;
+    }
 
-      if (data.require) {
-        var dependencies = data.require;
-        var textures = symbol.graphics.getUsedTextures();
-        for (var i = 0; i < dependencies.length; i++) {
-          var bitmap = <BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
-          assert (bitmap, "Bitmap symbol is not defined.");
-          var bitmapData = bitmap.symbolClass.initializeFrom(bitmap);
-          bitmap.symbolClass.instanceConstructorNoInitialize.call(bitmapData);
-          textures.push(bitmapData);
-        }
+    processRequires(dependencies: any[], loaderInfo: flash.display.LoaderInfo): void {
+      if (!dependencies) {
+        return;
       }
+      var textures = this.graphics.getUsedTextures();
+      for (var i = 0; i < dependencies.length; i++) {
+        var bitmap = <BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
+        assert(bitmap, "Bitmap symbol is not defined.");
+        var bitmapData = bitmap.symbolClass.initializeFrom(bitmap);
+        bitmap.symbolClass.instanceConstructorNoInitialize.call(bitmapData);
+        textures.push(bitmapData);
+      }
+    }
+  }
 
+  export class MorphShapeSymbol extends ShapeSymbol {
+    morphFillBounds: Bounds;
+    morphLineBounds: Bounds;
+    constructor(id: number) {
+      super(id, flash.display.MorphShape);
+    }
+
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): MorphShapeSymbol {
+      var symbol = new MorphShapeSymbol(data.id);
+      symbol._setBoundsFromData(data);
+      symbol.graphics = flash.display.Graphics.FromData(data);
+      symbol.processRequires(data.require, loaderInfo);
+      symbol.morphFillBounds = data.morphFillBounds;
+      symbol.morphLineBounds = data.morphLineBounds;
       return symbol;
     }
   }
