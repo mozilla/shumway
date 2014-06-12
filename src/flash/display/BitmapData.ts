@@ -336,10 +336,10 @@ module Shumway.AVM2.AS.flash.display {
       // Finally do the copy. All the math above is needed just so we don't do any branches inside
       // this hot loop.
       for (var y = 0; y < tH; y++) {
+        var sP = (sY + y) * sStride + sX;
+        var tP = (tY + y) * tStride + tX;
         for (var x = 0; x < tW; x++) {
-          var sp = (sY + y) * sStride + (sX + x);
-          var tp = (tY + y) * tStride + (tX + x);
-          t[tp] = s[sp];
+          t[tP + x] = s[sP + x];
         }
       }
       this._isDirty = true;
