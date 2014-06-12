@@ -37,7 +37,7 @@ module Shumway.AVM2.AS.flash.filters {
       // obj.colors is an array of objects with separate color components
       // the rgb and alpha components must be separated into colors and alphas arrays
       var colors = obj.colors.map(function(value) {
-        return ColorUtilities.componentsToRgb(value);
+        return ColorUtilities.componentsToRGB(value);
       });
       var alphas = obj.colors.map(function(value) {
         return (value.alpha & 0xff) / 255;
