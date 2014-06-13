@@ -115,12 +115,9 @@ module Shumway.Player {
         this._playAllSymbols();
         loaderInfo._allowCodeExecution = false;
       } else {
-        loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, function onProgress() {
+        var codeExecutionPromise = loader._codeExecutionPromiseCapability.promise;
+        codeExecutionPromise.then(function () {
           var root = loader.content;
-          if (!root) {
-            return;
-          }
-          loaderInfo.removeEventListener(flash.events.ProgressEvent.PROGRESS, onProgress);
           stage.frameRate = loaderInfo.frameRate;
           stage.stageWidth = loaderInfo.width;
           stage.stageHeight = loaderInfo.height;

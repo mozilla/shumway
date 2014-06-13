@@ -136,6 +136,7 @@ module Shumway.AVM2.AS.flash.display {
 
       this._avm1Promise = null;
       this._avm1Context = null;
+      this._codeExecutionPromiseCapability = new PromiseCapability<void>();
     }
 
     // JS -> AS Bindings
@@ -167,6 +168,8 @@ module Shumway.AVM2.AS.flash.display {
     private _loadStatus: LoadStatus;
 
     private _avm1Context: AS2Context;
+
+    _codeExecutionPromiseCapability: PromiseCapability<void>;
 
     private _commitData(data: any): void {
       var loaderInfo = this._contentLoaderInfo;
@@ -250,11 +253,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _initAvm1(loaderInfo: LoaderInfo): void {
-      this._avm1Promise = this._lastPromise.then(function () {
+      var loader = this;
+      this._avm1Promise = loader._lastPromise.then(function () {
         return AVM2.instance.loadAVM1();
       }).then(function() {
-        this._avm1Context = AS2Context.create(loaderInfo.swfVersion);
-      }.bind(this));
+        loader._avm1Context = AS2Context.create(loaderInfo.swfVersion);
+      });
       this._lastPromise = this._avm1Promise;
     }
 
@@ -370,6 +374,9 @@ module Shumway.AVM2.AS.flash.display {
 
         if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
           this._initAvm1Root(root);
+          this._avm1Promise.then(this._codeExecutionPromiseCapability.resolve);
+        } else {
+          this._codeExecutionPromiseCapability.resolve(undefined);
         }
 
         root._loaderInfo = loaderInfo;
@@ -382,36 +389,9 @@ module Shumway.AVM2.AS.flash.display {
           (<MovieClip>root).addFrameLabel(frameIndex, data.labelName);
         }
 
-        //if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-        //  var avm1Context = loader._avm1Context;
-
-        //  if (initActionBlocks) {
-        //    // HACK using symbol init actions as regular action blocks, the spec has a note
-        //    // "DoAction tag is not the same as specifying them in a DoInitAction tag"
-        //    for (var i = 0; i < initActionBlocks.length; i++) {
-        //      var spriteId = initActionBlocks[i].spriteId;
-        //      var actionsData = new AS2ActionsData(initActionBlocks[i].actionsData,
-        //        'f' + frameNum + 's' + spriteId + 'i' + i);
-        //      root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
-        //        if (state.executed) return;
-        //        state.executed = true;
-        //        return executeActions(actionsData, avm1Context, this._getAS2Object());
-        //      }.bind(root, actionsData, spriteId, {executed: false}));
-        //    }
-        //  }
-
-        //  if (actionBlocks) {
-        //    for (var i = 0; i < actionBlocks.length; i++) {
-        //      var actionsData = new AS2ActionsData(actionBlocks[i],
-        //        'f' + frameNum + 'i' + i);
-        //      root.addFrameScript(frameNum - 1, (function(actionsData) {
-        //        return function () {
-        //          return executeActions(actionsData, avm1Context, this._getAS2Object());
-        //        };
-        //      })(actionsData));
-        //    }
-        //  }
-        //}
+        if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+          this._executeAvm1Actions(<MovieClip>root, frameIndex, data);
+        }
       }
 
       //if (frame.startSounds) {
@@ -442,21 +422,56 @@ module Shumway.AVM2.AS.flash.display {
         topRoot = parentLoader._content;
       }
 
-      var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(topRoot);
       this._avm1Promise.then(function () {
         var avm1Context = this._avm1Context;
+        var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(topRoot);
         avm1Context.globals.asSetPublicProperty('_root', as2Object);
         avm1Context.globals.asSetPublicProperty('_level0', as2Object);
         avm1Context.globals.asSetPublicProperty('_level1', as2Object);
 
         // transfer parameters
-        var parameters = this.loaderInfo._parameters;
+        var parameters = this._contentLoaderInfo._parameters;
         for (var paramName in parameters) {
           if (!(paramName in as2Object)) { // not present yet
             as2Object[paramName] = parameters[paramName];
           }
         }
       }.bind(this));
+    }
+
+    private _executeAvm1Actions(root: flash.display.MovieClip, frameIndex: number, frameData: any) {
+      var initActionBlocks: any[] = frameData.initActionBlocks;
+      var actionBlocks: any[] = frameData.actionBlocks;
+
+      var loader = this;
+      if (initActionBlocks) {
+        // HACK using symbol init actions as regular action blocks, the spec has a note
+        // "DoAction tag is not the same as specifying them in a DoInitAction tag"
+        for (var i = 0; i < initActionBlocks.length; i++) {
+          var spriteId = initActionBlocks[i].spriteId;
+          var actionsData = new AVM1.AS2ActionsData(initActionBlocks[i].actionsData,
+            'f' + frameIndex + 's' + spriteId + 'i' + i);
+          root.addFrameScript(frameIndex, function(actionsData, spriteId, state) {
+            if (state.executed) return;
+            state.executed = true;
+            var avm1Context = loader._avm1Context;
+            var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(root);
+            return avm1Context.executeActions(actionsData, as2Object);
+          }.bind(null, actionsData, spriteId, {executed: false}));
+        }
+      }
+
+      if (actionBlocks) {
+        for (var i = 0; i < actionBlocks.length; i++) {
+          var actionsData = new AVM1.AS2ActionsData(actionBlocks[i],
+            'f' + frameIndex + 'i' + i);
+          root.addFrameScript(frameIndex, function () {
+            var avm1Context = loader._avm1Context;
+            var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(root);
+            return avm1Context.executeActions(actionsData, as2Object);
+          }.bind(null, actionsData));
+        }
+      }
     }
 
     private _commitImage(data: any): void {
@@ -531,6 +546,9 @@ module Shumway.AVM2.AS.flash.display {
       } else {
         var ResourceLoader = (<any>Shumway).SWF.ResourceLoader;
         worker = new ResourceLoader(window, false);
+      }
+      if (!loaderInfo._allowCodeExecution) {
+        this._codeExecutionPromiseCapability.reject('Disabled by _allowCodeExecution');
       }
       var loader = this;
       //loader._worker = worker;
