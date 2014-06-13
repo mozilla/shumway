@@ -19,8 +19,9 @@ module Shumway.Timeline {
   import isInteger = Shumway.isInteger;
   import assert = Shumway.Debug.assert;
   import abstractMethod = Shumway.Debug.abstractMethod;
-  import flash = Shumway.AVM2.AS.flash;
   import Bounds = Shumway.Bounds;
+  import ColorUtilities = Shumway.ColorUtilities;
+  import flash = Shumway.AVM2.AS.flash;
 
   /**
    * TODO document
@@ -173,11 +174,7 @@ module Shumway.Timeline {
       }
       var tag = data.tag;
       if (tag.hasColor) {
-        var color = tag.color;
-        symbol.color = (color.red << 24) |
-                       (color.green << 16) |
-                       (color.blue << 8) |
-                       color.alpha;
+        symbol.color = ColorUtilities.componentsToRGB(tag.color);
       }
       if (tag.hasFont) {
         symbol.size = tag.fontHeight;

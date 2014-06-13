@@ -17,7 +17,7 @@
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   import assert = Shumway.Debug.assert;
-  var fromCharCode = String.fromCharCode;
+  import ColorUtilities = Shumway.ColorUtilities;
 
   export function defineLabel(tag: any, dictionary: any) {
     var records = tag.records;
@@ -46,9 +46,8 @@ module Shumway.SWF.Parser {
       }
 
       if (record.hasColor) {
-        var color = record.color;
-        color = (color.red << 16) | (color.green << 8) | color.blue;
-        htmlText += ' color="' + color + '"';
+        var color = ColorUtilities.componentsToRGB(record.color);
+        htmlText += ' color="' + ColorUtilities.rgbToHex(color) + '"';
       }
 
       if (record.hasMoveX)
@@ -64,7 +63,7 @@ module Shumway.SWF.Parser {
       while ((entry = entries[j++])) {
         var code = codes[entry.glyphIndex];
         assert(code, 'undefined glyph', 'label');
-        var text = code >= 32 && code != 34 && code != 92 ? fromCharCode(code) :
+        var text = code >= 32 && code != 34 && code != 92 ? String.fromCharCode(code) :
                    '\\u' + (code + 0x10000).toString(16).substring(1);
         htmlText += text;
         coords.push(x, y);
@@ -76,7 +75,7 @@ module Shumway.SWF.Parser {
     var label = {
       type: 'text',
       id: tag.id,
-      fillBounds: bbox,
+      bbox: bbox,
       matrix: tag.matrix,
       tag: {
         hasText: true,

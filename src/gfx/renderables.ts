@@ -573,6 +573,7 @@ module Shumway.GFX {
       this._plainText = plainText;
       this._textRunData = textRunData;
       this._bounds = bounds;
+      this.setFlags(RenderableFlags.Dirty);
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
@@ -580,10 +581,35 @@ module Shumway.GFX {
     }
 
     render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
+      var bounds = this._bounds;
       var plainText = this._plainText;
       var textRunData = this._textRunData;
+
+      var line = '';
+      var y = 0;
+      var lineHeight = 0;
+
+      var drawLine = function () {
+        var x = 0;
+        var width = context.measureText(line).width;
+        switch (align) {
+          case 0:
+            break;
+          case 1:
+            x = bounds.w - width;
+            break;
+          case 2:
+            x = (bounds.w - width) / 2;
+            break;
+        }
+        y += lineHeight;
+        context.fillText(line, x, y);
+        line = '';
+        lineHeight = 0;
+      };
+
       textRunData.position = 0;
-      var x = 0;
+
       while (textRunData.position < textRunData.length) {
         var beginIndex = textRunData.readInt();
         var endIndex = textRunData.readInt();
@@ -591,7 +617,7 @@ module Shumway.GFX {
         //var blockIndent = textRunData.readInt();
         var bold = textRunData.readBoolean();
         var bullet = textRunData.readBoolean();
-        var color = textRunData.readInt();
+        var color = (textRunData.readInt() << 8) | 0xff;
         //var display = textRunData.readInt();
         var fontId = textRunData.readInt();
         var indent = textRunData.readInt();
@@ -604,11 +630,7 @@ module Shumway.GFX {
         var size = textRunData.readInt();
         //var tabStops = textRunData.readInt();
         var underline = textRunData.readBoolean();
-
-        var text = plainText.substr(beginIndex, endIndex);
-        if (text === '\n') {
-          continue;
-        }
+        var text = plainText.substring(beginIndex, endIndex);
 
         var boldItalic = '';
         if (italic) {
@@ -620,9 +642,23 @@ module Shumway.GFX {
         context.font = boldItalic + ' ' + size + 'px swffont' + fontId;
         context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
 
-        context.fillText(text, x, size);
-        x += context.measureText(text).width;
+        var lines = text.split('\n');
+
+        if (size > lineHeight) {
+          lineHeight = size;
+        }
+
+        for (var i = 0; i < lines.length; i++) {
+          var t = lines[i];
+          if (t === '') {
+            drawLine();
+            continue;
+          }
+          line += t;
+        }
       }
+
+      drawLine();
     }
   }
 

@@ -2662,7 +2662,7 @@ module Shumway {
     }
 
     export function componentsToRGBA(components: RGBAComponents): number {
-      return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
+      return ((components.red << 24) | (components.green << 16) | (components.blue << 8) | components.alpha) >>> 0;
     }
 
     export function rgbaToCSSStyle(color: number): string {
@@ -2673,6 +2673,14 @@ module Shumway {
     export function rgbaObjToCSSStyle(color: RGBAComponents): string {
       return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
              color.alpha / 255 + ')';
+    }
+
+    export function hexToRGB(color: string): number {
+      return parseInt(color.slice(1), 16);
+    }
+
+    export function rgbToHex(color: number): string {
+      return '#' + ('000000' + color.toString(16)).slice(-6);
     }
 
     /**

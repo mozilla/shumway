@@ -18,6 +18,7 @@ module Shumway {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
+  import ColorUtilities = Shumway.ColorUtilities;
   import flash = Shumway.AVM2.AS.flash;
 
   export class TextContent implements Shumway.Remoting.IRemotable {
@@ -25,6 +26,8 @@ module Shumway {
     _isDirty: boolean;
 
     private _plainText: string;
+    private _backgroundColor: number;
+    private _borderColor: number;
     defaultTextFormat: flash.text.TextFormat;
     textRuns: flash.text.TextRun[];
 
@@ -32,6 +35,8 @@ module Shumway {
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._isDirty = false;
       this._plainText = '';
+      this._backgroundColor = 0;
+      this._borderColor = 0;
       this.defaultTextFormat = defaultTextFormat || new flash.text.TextFormat();
       this.textRuns = [];
     }
@@ -54,6 +59,7 @@ module Shumway {
           endIndex += text.length;
         },
         start: (tagName, attributes) => {
+          var tf = textFormat;
           switch (tagName) {
             case 'a':
               somewhatImplemented('<a/>');
@@ -80,7 +86,7 @@ module Shumway {
               }
             case 'font':
               stack.push(textFormat);
-              var color = attributes.color;
+              var color = attributes.color && ColorUtilities.hexToRGB(attributes.color);
               // TODO: the value of the face property can be a string specifying a list of
               // comma-delimited font names in which case the first available font should be used.
               var font = attributes.face;
@@ -90,9 +96,9 @@ module Shumway {
                 textFormat.size !== size)
               {
                 textFormat = textFormat.clone();
-                textFormat.align = align;
-                textFormat.font = font;
                 textFormat.color = color;
+                textFormat.font = font;
+                textFormat.size = size;
               }
               break;
             case 'img':
@@ -156,28 +162,25 @@ module Shumway {
               }
               break;
           }
+          if (textFormat !== tf) {
+            if (endIndex - beginIndex) {
+              textRuns.push(new flash.text.TextRun(beginIndex, endIndex, tf));
+              beginIndex = endIndex = endIndex;
+            }
+          }
         },
         end: (tagName) => {
           if ((tagName === 'li' || tagName === 'p') && multiline) {
             plainText += '\n';
             endIndex++;
           }
-          if (tagName !== 'br' && tagName !== 'img') {
-            var f = stack.pop();
-            if (f === textFormat) {
-              if (textRuns.length) {
-                textRuns[textRuns.length - 1].endIndex = endIndex;
-              } else {
-                textRuns.push(new flash.text.TextRun(beginIndex, endIndex, f));
-              }
-            } else {
-              textRuns.push(new flash.text.TextRun(beginIndex, endIndex, f));
-              beginIndex = endIndex = endIndex + 1;
-              textFormat = f;
-            }
-          }
+          //if (tagName !== 'br' && tagName !== 'img') {
+          //  textFormat = stack.pop();
+          //}
         }
       });
+
+      textRuns.push(new flash.text.TextRun(beginIndex, endIndex, textFormat));
 
       this._plainText = plainText;
       this._isDirty = true;
@@ -191,6 +194,24 @@ module Shumway {
       this._plainText = value;
       this.textRuns.length = 0;
       this.textRuns[0] = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
+      this._isDirty = true;
+    }
+
+    get backgroundColor(): number {
+      return this._backgroundColor;
+    }
+
+    set backgroundColor(value: number) {
+      this._backgroundColor = value;
+      this._isDirty = true;
+    }
+
+    get borderColor(): number {
+      return this._borderColor;
+    }
+
+    set borderColor(value: number) {
+      this._borderColor = value;
       this._isDirty = true;
     }
   }

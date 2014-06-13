@@ -94,6 +94,7 @@ module Shumway.AVM2.AS.flash.text {
         self._defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
         self._defaultTextFormat.indent = (symbol.indent / 20) | 0;
         self._defaultTextFormat.leading = (symbol.leading / 20) | 0;
+
         self._multiline = symbol.multiline;
         self._wordWrap = symbol.wordWrap;
         self._embedFonts = symbol.embedFonts;
