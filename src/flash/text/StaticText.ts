@@ -39,6 +39,10 @@ module Shumway.AVM2.AS.flash.text {
       flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
     }
 
+    _getTextContent(): Shumway.TextContent {
+      return this._textContent;
+    }
+
     private _text: string;
 
     _textContent: Shumway.TextContent;

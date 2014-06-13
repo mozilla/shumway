@@ -121,6 +121,12 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("Dummy Constructor: public flash.text.TextField");
     }
 
+    _getTextContent(): Shumway.TextContent {
+      return this._textContent;
+    }
+
+    _textContent: Shumway.TextContent;
+
     // JS -> AS Bindings
 
     //selectedText: string;
@@ -177,8 +183,6 @@ module Shumway.AVM2.AS.flash.text {
     _type: string;
     _wordWrap: boolean;
     _useRichTextClipboard: boolean;
-
-    _textContent: Shumway.TextContent;
 
     get alwaysShowSelection(): boolean {
       return this._alwaysShowSelection;
