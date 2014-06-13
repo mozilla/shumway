@@ -15,17 +15,24 @@
  */
 // Class: MorphShape
 module Shumway.AVM2.AS.flash.display {
-  import notImplemented = Shumway.Debug.notImplemented;
-
+  import Bounds = Shumway.Bounds;
   export class MorphShape extends flash.display.DisplayObject {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.Timeline.ShapeSymbol) {
+    static initializer: any = function (symbol: Shumway.Timeline.MorphShapeSymbol) {
       var self: MorphShape = this;
-      self._graphics = symbol ? symbol.graphics : new flash.display.Graphics();
+      if (symbol) {
+        self._graphics = symbol.graphics;
+        self.morphFillBounds = symbol.morphFillBounds;
+        self.morphLineBounds = symbol.morphLineBounds;
+      } else {
+        self._graphics = new flash.display.Graphics();
+        self.morphFillBounds = null;
+        self.morphLineBounds = null;
+      }
     };
 
     // List of static symbols to link.
@@ -45,5 +52,7 @@ module Shumway.AVM2.AS.flash.display {
     // AS -> JS Bindings
 
     _graphics: flash.display.Graphics;
+    morphFillBounds: Bounds;
+    morphLineBounds: Bounds;
   }
 }
