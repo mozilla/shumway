@@ -204,9 +204,9 @@ module Shumway {
     commands: Uint8Array;
     commandsPosition: number;
     coordinates: Int32Array;
-    coordinatesPosition: number;
     // Note: creation and capacity-ensurance have to happen from the outside for this field.
     morphCoordinates: Int32Array;
+    coordinatesPosition: number;
     styles: DataBuffer;
 
     constructor(initialize: boolean = true) {
