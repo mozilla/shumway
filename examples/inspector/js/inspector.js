@@ -428,6 +428,7 @@ function registerInspectorAsset(id, asset) {
   var bounds = asset.getBounds();
   var details = asset.constructor.name + ": " + id + ", bounds: " + bounds;
   var canvas = null;
+  var renderTime = 0;
   if (asset instanceof Shumway.GFX.RenderableBitmap) {
     canvas = asset._canvas;
   } else {
@@ -445,10 +446,15 @@ function registerInspectorAsset(id, asset) {
       context.moveTo( 0,-4); context.lineTo(0, 4);
       context.stroke();
     }
+    var start = performance.now();
     asset.render(context);
+    renderTime = (performance.now() - start)
   }
   if (asset instanceof Shumway.GFX.RenderableText) {
     details += ", text: " + asset._plainText;
+  }
+  if (renderTime) {
+    details += " (" + renderTime.toFixed(3) + " ms)";
   }
   div.innerHTML = details
   li.appendChild(div);
