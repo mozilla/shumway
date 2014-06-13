@@ -18,6 +18,17 @@ module Shumway.GFX {
     Downward   = 2
   }
 
+  export enum PixelSnapping {
+    Never      = 0,
+    Always     = 1,
+    Auto       = 2
+  }
+
+  export enum Smoothing {
+    Never      = 0,
+    Always     = 1
+  }
+
   export enum FrameFlags {
     Empty                                     = 0x0000,
     Dirty                                     = 0x0001,
@@ -132,6 +143,9 @@ module Shumway.GFX {
 
     _parent: Frame;
 
+    _smoothing: Smoothing;
+    _pixelSnapping: PixelSnapping;
+
     public ignoreMaskAlpha: boolean;
 
     constructor () {
@@ -154,6 +168,9 @@ module Shumway.GFX {
       this._invertedConcatenatedMatrix = null;
       this._colorMatrix = ColorMatrix.createIdentity();
       this._concatenatedColorMatrix = ColorMatrix.createIdentity();
+
+      this._smoothing = Smoothing.Always;
+      this._pixelSnapping = PixelSnapping.Never;
     }
 
     _setFlags(flags: FrameFlags) {
@@ -593,6 +610,24 @@ module Shumway.GFX {
         frame = frame._parent;
       }
       return depth;
+    }
+
+    set smoothing(value: Smoothing) {
+      this._smoothing = value;
+      this.invalidate();
+    }
+
+    get smoothing(): Smoothing {
+      return this._smoothing;
+    }
+
+    set pixelSnapping(value: PixelSnapping) {
+      this._pixelSnapping = value;
+      this.invalidate();
+    }
+
+    get pixelSnapping(): PixelSnapping {
+      return this._pixelSnapping;
     }
 
     /**

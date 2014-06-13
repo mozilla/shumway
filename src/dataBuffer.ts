@@ -183,7 +183,7 @@ module Shumway.ArrayUtilities {
     _ensureCapacity(length: number) {
       var currentBuffer = this._buffer;
       if (currentBuffer.byteLength < length) {
-        var newLength = currentBuffer.byteLength;
+        var newLength = Math.max(currentBuffer.byteLength, 1);
         while (newLength < length) {
           newLength *= 2;
         }

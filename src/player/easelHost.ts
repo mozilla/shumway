@@ -99,7 +99,7 @@ module Shumway {
         self._sendFocusEvent(Shumway.Remoting.FocusEventType.WindowFocus);
       });
       window.addEventListener('blur', function(event) {
-        self._sendFocusEvent(Shumway.Remoting.FocusEventType.WindowFocus);
+        self._sendFocusEvent(Shumway.Remoting.FocusEventType.WindowBlur);
       });
     }
 

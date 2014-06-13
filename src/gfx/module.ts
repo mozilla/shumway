@@ -19,6 +19,9 @@ interface CanvasRenderingContext2D {
   fill(path: Path2D, fillRule?: string): void;
   clip(path: Path2D, fillRule?: string): void;
   stroke(path: Path2D): void;
+
+  imageSmoothingEnabled: boolean
+  mozImageSmoothingEnabled: boolean
 }
 
 declare class Path2D {

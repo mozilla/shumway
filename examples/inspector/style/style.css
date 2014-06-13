@@ -162,10 +162,48 @@ body.simple #stageContainer {
   border-bottom: 1px solid #666;
 }
 
-#debugInfoContainer.active, #displayListContainer.active, #settingsContainer.active {
-  display: block;
+#assetList {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+  font: 10px Consolas, "Liberation Mono", Courier, monospace;
+  color: #999;
 }
-#debugInfoContainer, #displayListContainer, #settingsContainer {
+
+#assetList {
+  padding: 0;
+}
+
+#assetList canvas {
+  border: 1px solid #630;
+}
+
+#assetList li {
+  list-style: none;
+  padding: 10px 10px 10px 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+// CSS experts said this works.
+
+#assetList li:nth-child(even) {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+#assetList li:hover {
+  border-top: 2px solid #F60;
+  border-bottom: 2px solid #F60;
+}
+
+#assetListContainer.active, #debugInfoContainer.active, #displayListContainer.active, #settingsContainer.active {
+  display: block;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAJ0lEQVQYV2NkYGD4D8QoQElJCV2IgXEoKAQ6HMMz9+7dw/TMEFAIAB41Gv8t0rLDAAAAAElFTkSuQmCC) repeat;
+}
+
+#assetListContainer, #debugInfoContainer, #displayListContainer, #settingsContainer {
   display: none;
   position: absolute;
   top: 32px;
@@ -180,6 +218,7 @@ body.simple #stageContainer {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
+
 #debugInfoContainer > canvas {
   padding-bottom: 4px;
   border-bottom: 1px solid #666;

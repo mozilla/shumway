@@ -208,13 +208,13 @@ module Shumway.GFX {
     }
 
     render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
-      context.save();
+      enterTimeline("RenderableBitmap.render");
       if (this._canvas) {
         context.drawImage(this._canvas, 0, 0);
       } else {
         this._renderFallback(context);
       }
-      context.restore();
+      leaveTimeline("RenderableBitmap.render");
     }
 
     draw(source: RenderableBitmap, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle): void {
@@ -249,6 +249,27 @@ module Shumway.GFX {
     }
   }
 
+  enum PathType {
+    Fill,
+    Stroke,
+    StrokeFill /* Doesn't define thickness, caps and joints. */
+  }
+
+  class StyledPath {
+    path: Path2D;
+    constructor(public type: PathType, public style: any, public strokeProperties: StrokeProperties)
+    {
+      this.path = new Path2D();
+      assert ((type === PathType.Stroke) === !!strokeProperties);
+    }
+  }
+
+  class StrokeProperties {
+    constructor(public thickness: number, public capsStyle: string, public jointsStyle: string,
+                public miterLimit: number)
+    {}
+  }
+
   export class RenderableShape extends Renderable {
     _flags: RenderableFlags = RenderableFlags.Dirty | RenderableFlags.Scalable |
                               RenderableFlags.Tileable;
@@ -257,10 +278,11 @@ module Shumway.GFX {
     private _id: number;
     private fillStyle: ColorStyle;
     private _pathData: ShapeData;
+    private _paths: StyledPath[];
     private _textures: RenderableBitmap[];
 
-    private static LINE_CAP_STYLES = ['round', 'butt', 'square'];
-    private static LINE_JOINT_STYLES = ['round', 'bevel', 'miter'];
+    private static LINE_CAPS_STYLES = ['round', 'butt', 'square'];
+    private static LINE_JOINTS_STYLES = ['round', 'bevel', 'miter'];
 
     constructor(id: number, pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
       super(bounds);
@@ -274,33 +296,75 @@ module Shumway.GFX {
     }
 
     /**
-     * If |clipRegion| is |true| then we must call |clip| instead of |fill|. We also cannot call |save| or |restore|
-     * because those functions reset the current clipping region. It looks like Flash ignores strokes when clipping
-     * so we can also ignore stroke paths when computing the clip region.
+     * If |clipRegion| is |true| then we must call |clip| instead of |fill|. We also cannot call
+     * |save| or |restore| because those functions reset the current clipping region. It looks
+     * like Flash ignores strokes when clipping so we can also ignore stroke paths when computing
+     * the clip region.
      */
-    render(context: CanvasRenderingContext2D, cullBounds: Rectangle, clipRegion: boolean = false): void {
+    render(context: CanvasRenderingContext2D, cullBounds: Rectangle,
+           clipRegion: boolean = false): void
+    {
       context.fillStyle = context.strokeStyle = 'transparent';
 
       var data = this._pathData;
-      if (!data || data.commandsPosition === 0) {
-        this._renderFallback(context);
-        return;
+
+      if (data) {
+        this._deserializePaths(data, context);
       }
+
+      var paths = this._paths;
+      assert(paths);
+
       enterTimeline("RenderableShape.render");
+      for (var i = 0; i < paths.length; i++) {
+        var path = paths[i];
+        if (path.type === PathType.Fill) {
+          context.fillStyle = path.style;
+          clipRegion ? context.clip(path.path, 'evenodd') : context.fill(path.path, 'evenodd');
+          context.fillStyle = 'transparent';
+        } else if (!clipRegion) {
+          context.strokeStyle = path.style;
+          if (path.strokeProperties) {
+            context.lineWidth = path.strokeProperties.thickness;
+            context.lineCap = path.strokeProperties.capsStyle;
+            context.lineJoin = path.strokeProperties.jointsStyle;
+            context.miterLimit = path.strokeProperties.miterLimit;
+          }
+          // Special-cases 1px and 3px lines by moving the drawing position down/right by 0.5px.
+          // Flash apparently does this to create sharp, non-aliased lines in the normal case of thin
+          // lines drawn on round pixel values.
+          // Our handling doesn't always create the same results: for drawing coordinates with
+          // fractional values, Flash draws blurry lines. We do, too, but we still move the line
+          // down/right. Flash does something slightly different, with the result that a line drawn
+          // on coordinates slightly below round pixels (0.8, say) will be moved up/left.
+          // Properly fixing this would probably have to happen in the rasterizer. Or when replaying
+          // all the drawing commands, which seems expensive.
+          var lineWidth = context.lineWidth;
+          var isSpecialCaseWidth = lineWidth === 1 || lineWidth === 3;
+          if (isSpecialCaseWidth) {
+            context.translate(0.5, 0.5);
+          }
+          context.stroke(path.path);
+          if (isSpecialCaseWidth) {
+            context.translate(-0.5, -0.5);
+          }
+          context.strokeStyle = 'transparent';
+        }
+      }
+      leaveTimeline("RenderableShape.render");
+    }
+
+    private _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D): void {
+      assert(!this._paths);
+      enterTimeline("RenderableShape.deserializePaths");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
       // geometry.
-      // TODO: cache Path2D and style objects.
-      // We really only need to process the shape data once, and can then cache the results and
-      // discard the original buffer. That should vastly improve performance of subsequent
-      // renderings of the same shape.
-      // TODO: correctly handle style changes.
-      // Flash allows switching line and fill styles at arbitrary points, so you can have a
-      // shape with a single fill but varying line styles. We support that, but don't yet
-      // delay stroking of the lines until the fill is finished. Probably by pushing all
-      // stroke paths onto a stack.
+      this._paths = [];
+
       var fillPath: Path2D = null;
       var strokePath: Path2D = null;
+
       // We have to alway store the last position because Flash keeps the drawing cursor where it
       // was when changing fill or line style, whereas Canvas forgets it on beginning a new path.
       var x = 0;
@@ -361,41 +425,41 @@ module Shumway.GFX {
             break;
           case PathCommand.BeginSolidFill:
             assert(styles.bytesAvailable >= 4);
-            fillPath = this._applyFill(context, fillPath, clipRegion, true, x, y);
-            context.fillStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
+            fillPath = this._createPath(PathType.Fill,
+                                        ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt()),
+                                        null, x, y);
             break;
           case PathCommand.BeginBitmapFill:
-            fillPath = this._applyFill(context, fillPath, clipRegion, true, x, y);
-            context.fillStyle = this._readBitmap(styles, context);
+            fillPath = this._createPath(PathType.Fill, this._readBitmap(styles, context),
+                                        null, x, y);
             break;
           case PathCommand.BeginGradientFill:
-            fillPath = this._applyFill(context, fillPath, clipRegion, true, x, y);
-            context.fillStyle = this._readGradient(styles, context);
+            fillPath = this._createPath(PathType.Fill, this._readGradient(styles, context),
+                                        null, x, y);
             break;
           case PathCommand.EndFill:
-            fillPath = this._applyFill(context, fillPath, clipRegion, false, 0, 0);
-            context.fillStyle = null;
+            fillPath = null;
             break;
           case PathCommand.LineStyleSolid:
-            strokePath = this._applyStroke(context, strokePath, clipRegion, true, x, y);
-            context.lineWidth = coordinates[coordinatesIndex++]/20;
-            context.strokeStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
+            var color = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             // Skip pixel hinting and scale mode for now.
             styles.position += 2;
-            context.lineCap = RenderableShape.LINE_CAP_STYLES[styles.readByte()];
-            context.lineJoin = RenderableShape.LINE_JOINT_STYLES[styles.readByte()];
-            context.miterLimit = styles.readByte();
+            var capsStyle: string = RenderableShape.LINE_CAPS_STYLES[styles.readByte()];
+            var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
+            var strokeProperties = new StrokeProperties(coordinates[coordinatesIndex++]/20,
+                                                        capsStyle, jointsStyle, styles.readByte());
+            strokePath = this._createPath(PathType.Stroke, color, strokeProperties, x, y);
             break;
           case PathCommand.LineStyleGradient:
-            strokePath = this._applyStroke(context, strokePath, clipRegion, true, x, y);
-            context.strokeStyle = this._readGradient(styles, context);
+            strokePath = this._createPath(PathType.StrokeFill, this._readGradient(styles, context),
+                                          null, x, y);
             break;
           case PathCommand.LineStyleBitmap:
-            strokePath = this._applyStroke(context, strokePath, clipRegion, true, x, y);
-            context.strokeStyle = this._readBitmap(styles, context);
+            strokePath = this._createPath(PathType.StrokeFill, this._readBitmap(styles, context),
+                                          null, x, y);
             break;
           case PathCommand.LineEnd:
-            strokePath = this._applyStroke(context, strokePath, clipRegion, false, 0, 0);
+            strokePath = null;
             break;
           default:
             assertUnreachable('Invalid command ' + command + ' encountered at index' +
@@ -409,60 +473,17 @@ module Shumway.GFX {
         fillPath.lineTo(formOpenX, formOpenY);
         strokePath && strokePath.lineTo(formOpenX, formOpenY);
       }
-      this._applyFill(context, fillPath, clipRegion, false, 0, 0);
-      context.fillStyle = null;
-      this._applyStroke(context, strokePath, clipRegion, false, 0, 0);
-      leaveTimeline("RenderableShape.render");
+      this._pathData = null;
+      leaveTimeline("RenderableShape.deserializePaths");
     }
 
-    private _applyFill(context: CanvasRenderingContext2D, path: Path2D, clipRegion: boolean,
-                       createNewPath: boolean, x: number, y: number): Path2D
+    private _createPath(type: PathType, style: any, strokeProperties: StrokeProperties,
+                        x: number, y: number): Path2D
     {
-      if (path) {
-        clipRegion ? context.clip(path, 'evenodd') : context.fill(path, 'evenodd');
-      }
-
-      if (createNewPath) {
-        path = new Path2D();
-        path.moveTo(x, y);
-        return path;
-      }
-      return null;
-    }
-
-    // Special-cases 1px and 3px lines by moving the drawing position down/right by 0.5px.
-    // Flash apparently does this to create sharp, non-aliased lines in the normal case of thin
-    // lines drawn on round pixel values.
-    // Our handling doesn't always create the same results: for drawing coordinates with
-    // fractional values, Flash draws blurry lines. We do, too, but we still move the line
-    // down/right. Flash does something slightly different, with the result that a line drawn
-    // on coordinates slightly below round pixels (0.8, say) will be moved up/left.
-    // Properly fixing this would probably have to happen in the rasterizer. Or when replaying
-    // all the drawing commands, which seems expensive.
-    private _applyStroke(context: CanvasRenderingContext2D, path: Path2D, clipRegion: boolean,
-                         createNewPath: boolean, x: number, y: number): Path2D
-    {
-      if (clipRegion) {
-        return null;
-      }
-      if (path) {
-        var lineWidth = context.lineWidth;
-        var isSpecialCaseWidth = lineWidth === 1 || lineWidth === 3;
-        if (isSpecialCaseWidth) {
-          context.translate(0.5, 0.5);
-        }
-        context.stroke(path);
-        if (isSpecialCaseWidth) {
-          context.translate(-0.5, -0.5);
-        }
-      }
-
-      if (createNewPath) {
-        path = new Path2D();
-        path.moveTo(x, y);
-        return path;
-      }
-      return null;
+      var path = new StyledPath(type, style, strokeProperties);
+      this._paths.push(path);
+      path.path.moveTo(x, y);
+      return path.path;
     }
 
     private _readMatrix(data: DataBuffer): Matrix {

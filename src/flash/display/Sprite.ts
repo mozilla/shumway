@@ -82,6 +82,14 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
+    _canHaveGraphics(): boolean {
+      return true;
+    }
+
+    _getGraphics(): flash.display.Graphics {
+      return this._graphics;
+    }
+
     get graphics(): flash.display.Graphics {
       return this._ensureGraphics();
     }

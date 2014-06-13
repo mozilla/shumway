@@ -278,6 +278,9 @@ module Shumway.AVM2.AS.flash.display {
         case 'shape':
           symbol = Timeline.ShapeSymbol.FromData(data, loaderInfo);
           break;
+        case 'morphshape':
+          symbol = Timeline.MorphShapeSymbol.FromData(data, loaderInfo);
+          break;
         case 'image':
           symbol = Timeline.BitmapSymbol.FromData(data);
           break;

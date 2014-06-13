@@ -27,6 +27,7 @@ module Shumway.Player {
   import Event = flash.events.Event;
   import DisplayObject = flash.display.DisplayObject;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  import EventDispatcher = flash.events.EventDispatcher;
   import MovieClip = flash.display.MovieClip;
   import Loader = flash.display.Loader;
   import VisitorFlags = flash.display.VisitorFlags;
@@ -159,9 +160,11 @@ module Shumway.Player {
               this._isPageVisible = true;
               break;
             case FocusEventType.WindowBlur:
+              EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.DEACTIVATE));
               this._hasFocus = false;
               break;
             case FocusEventType.WindowFocus:
+              EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ACTIVATE));
               this._hasFocus = true;
               break;
           }
@@ -189,20 +192,20 @@ module Shumway.Player {
       }
 
       serializer.phase = Remoting.RemotingPhase.Objects;
-      enterTimeline("writeDisplayObject");
+      enterTimeline("remoting objects");
       serializer.writeDisplayObject(displayObject);
-      leaveTimeline("writeDisplayObject");
+      leaveTimeline("remoting objects");
 
       serializer.phase = Remoting.RemotingPhase.References;
-      enterTimeline("writeDisplayObject 2");
+      enterTimeline("remoting references");
       serializer.writeDisplayObject(displayObject);
-      leaveTimeline("writeDisplayObject 2");
+      leaveTimeline("remoting references");
 
       updates.writeInt(Remoting.MessageTag.EOF);
 
-      enterTimeline("sendUpdates");
+      enterTimeline("remoting assets");
       this.onSendUpdates(updates, assets);
-      leaveTimeline("sendUpdates");
+      leaveTimeline("remoting assets");
     }
 
     public registerFont(font: flash.text.Font) {

@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import throwError = Shumway.AVM2.Runtime.throwError;
   export class Bitmap extends flash.display.DisplayObject {
     
     // Called whenever the class is initialized.
@@ -75,6 +76,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set pixelSnapping(value: string) {
+      if (PixelSnapping.toNumber(value) < 0) {
+        throwError("ArgumentError", Errors.InvalidEnumError, "pixelSnapping");
+      }
       this._pixelSnapping = asCoerceString(value);
     }
 

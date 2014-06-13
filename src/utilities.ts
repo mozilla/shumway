@@ -389,6 +389,21 @@ module Shumway {
       ArrayUtilities.pushMany(dst, src);
     }
 
+    /**
+     * Makes sure that a typed array has the requested capacity. If required, it creates a new
+     * instance of the array's class with a power-of-two capacity at least as large as required.
+     *
+     * Note: untyped because generics with constraints are pretty annoying.
+     */
+    export function ensureTypedArrayCapacity(array: any, capacity: number): any {
+      if (array.length < capacity) {
+        var oldArray = array;
+        array = new array.constructor(Shumway.IntegerUtilities.nearestPowerOfTwo(capacity));
+        array.set(oldArray, 0);
+      }
+      return array;
+    }
+
     export class ArrayWriter {
       _u8: Uint8Array;
       _u16: Uint16Array;
@@ -1227,6 +1242,10 @@ module Shumway {
         return floor % 2 === 0 ? floor : Math.ceil(value);
       }
       return Math.round(value);
+    }
+
+    export function epsilonEquals(value: number, other: number): boolean {
+      return Math.abs(value - other) < 0.0000001;
     }
   }
 

@@ -56,7 +56,10 @@ module Shumway.GFX {
     clipDirtyRegions: boolean;
     clipCanvas: boolean;
     cull: boolean;
-    drawLayers: boolean
+    drawLayers: boolean;
+
+    snapToDevicePixels: boolean;
+    imageSmoothing: boolean;
   }
 
   export class Canvas2DStageRendererState {
@@ -176,6 +179,13 @@ module Shumway.GFX {
           context.restore();
           return;
         }
+
+        if (frame.pixelSnapping === PixelSnapping.Always || state.options.snapToDevicePixels) {
+          transform.snap();
+        }
+
+        context.imageSmoothingEnabled =
+          frame.smoothing === Smoothing.Always || state.options.imageSmoothing;
 
         context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
         context.globalAlpha = frame.getConcatenatedAlpha();

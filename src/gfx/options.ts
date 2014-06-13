@@ -102,4 +102,7 @@ module Shumway.GFX {
   export var clipCanvas = canvas2DOptions.register(new Option("", "clipCanvas", "boolean", false, "Clip Regions."));
   export var cull = canvas2DOptions.register(new Option("", "cull", "boolean", false, "Enable culling."));
   export var compositeMask = canvas2DOptions.register(new Option("", "compositeMask", "boolean", false, "Composite Mask."));
+
+  export var snapToDevicePixels = canvas2DOptions.register(new Option("", "snapToDevicePixels", "boolean", false, ""));
+  export var imageSmoothing = canvas2DOptions.register(new Option("", "imageSmoothing", "boolean", false, ""));
 }

@@ -28,6 +28,7 @@ module Shumway.Remoting.Player {
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   import SimpleButton = flash.display.SimpleButton;
   import BlendMode = flash.display.BlendMode;
+  import PixelSnapping = flash.display.PixelSnapping;
   import VisitorFlags = flash.display.VisitorFlags;
 
   import Point = flash.geom.Point;
@@ -38,6 +39,7 @@ module Shumway.Remoting.Player {
   import IDataInput = Shumway.ArrayUtilities.IDataInput;
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
   import assert = Shumway.Debug.assert;
+  import writer = Shumway.Player.writer;
 
   export class PlayerChannelSerializer {
     public output: IDataOutput;
@@ -131,6 +133,8 @@ module Shumway.Remoting.Player {
       this.output.writeInt(MessageTag.UpdateFrame);
       this.output.writeInt(displayObject._id);
 
+      writer && writer.writeLn("Sending UpdateFrame: " + displayObject.debugName());
+
       var hasMask = false;
       var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
       var hasColorTransform = displayObject._hasFlags(DisplayObjectFlags.DirtyColorTransform);
@@ -145,6 +149,10 @@ module Shumway.Remoting.Player {
           DisplayObjectFlags.DirtyBitmapData
         );
         hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
+      }
+      var bitmap: Bitmap = null;
+      if (display.Bitmap.isType(displayObject)) {
+        bitmap = <Bitmap>displayObject;
       }
 
       // Write Has Bits
@@ -178,12 +186,15 @@ module Shumway.Remoting.Player {
         }
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
+        if (bitmap) {
+          this.output.writeInt(PixelSnapping.toNumber(bitmap.pixelSnapping));
+          this.output.writeInt(bitmap.smoothing ? 1 : 0);
+        } else {
+          this.output.writeInt(PixelSnapping.toNumber(PixelSnapping.AUTO));
+          this.output.writeInt(1);
+        }
       }
 
-      var bitmap: Bitmap = null;
-      if (display.Bitmap.isType(displayObject)) {
-        bitmap = <Bitmap>displayObject;
-      }
       var graphics = displayObject._getGraphics();
       var textContent = displayObject._getTextContent();
       if (hasRemotableChildren) {
@@ -229,7 +240,11 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeCacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
+    writeCacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable,
+                       matrix: flash.geom.Matrix = null,
+                       colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
+                       clipRect: flash.geom.Rectangle = null, smoothing: boolean = false)
+    {
       this.output.writeInt(MessageTag.CacheAsBitmap);
       this.output.writeInt(bitmapData._id);
       if (BitmapData.isType(source)) {
