@@ -1337,37 +1337,20 @@ module Shumway.AVM2.AS.flash.display {
      * Only these objects can have graphics.
      */
     _canHaveGraphics(): boolean {
-      return flash.display.Shape.isType(this) ||
-             flash.display.Sprite.isType(this) ||
-             flash.display.MorphShape.isType(this);
+      return false;
     }
 
     /**
-     * Only these objects can have text content.
-     */
-    _canHaveTextContent(): boolean {
-      return flash.text.StaticText.isType(this) || flash.text.TextField.isType(this);
-    }
-
-    /**
-     * Gets the graphics object of this object. Only Shapes, Sprites, and MorphShapes can have
-     * graphics.
+     * Gets the graphics object of this object. Shapes, MorphShapes, and Sprites override this.
      */
     _getGraphics(): flash.display.Graphics {
-      if (this._canHaveGraphics()) {
-        return (<any>this)._graphics;
-      }
       return null;
     }
 
     /**
-     * Gets the text content of this object. Only StaticTexts and TextFields can have
-     * text content.
+     * Gets the text content of this object. StaticTexts and TextFields override this.
      */
     _getTextContent(): Shumway.TextContent {
-      if (this._canHaveTextContent()) {
-        return (<any>this)._textContent;
-      }
       return null;
     }
 
@@ -1387,18 +1370,15 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * This is only ever called from |_animate|. Thes graphics objects cannot be modified so they don't need a back reference.
+     * This is only ever called from |_animate|. These graphics objects cannot be modified so
+     * they don't need a back reference.
      */
     _setGraphics(graphics: flash.display.Graphics) {
-      if (this._canHaveGraphics()) {
-        this._graphics = graphics;
-        this._invalidateFillAndLineBounds();
-        this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
-        return;
-      }
-      unexpected("Cannot set graphics on this type of display object.");
+      assert(this._canHaveGraphics(), "Cannot set graphics on this type of display object.");
+      this._graphics = graphics;
+      this._invalidateFillAndLineBounds();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
     }
-
     /**
      * Checks if the bounding boxes of two display objects overlap, this happens in the global
      * coordinate coordinate space.
