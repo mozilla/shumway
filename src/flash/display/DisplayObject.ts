@@ -162,31 +162,36 @@ module Shumway.AVM2.AS.flash.display {
     DirtyGraphics                             = 0x400000,
 
     /**
+     * Indicates whether this display object's text content has changed since the last time it was synchronized.
+     */
+    DirtyTextContent                          = 0x800000,
+
+    /**
      * Indicates whether this display object's bitmap data has changed since the last time it was synchronized.
      */
-    DirtyBitmapData                           = 0x800000,
+    DirtyBitmapData                           = 0x1000000,
 
     /**
      * Indicates whether this display object's has dirty descendents. If this flag is not set then the subtree does not
      * need to be synchronized.
      */
-    DirtyChild                                = 0x1000000,
+    DirtyChild                                = 0x2000000,
 
     /**
      * Indicates whether this display object's color transform has changed since the last time it was synchronized.
      */
-    DirtyColorTransform                       = 0x2000000,
+    DirtyColorTransform                       = 0x4000000,
 
     /**
      * Indicates whether this display object's mask has changed since the last time it was synchronized.
      */
-    DirtyMask                                 = 0x4000000,
+    DirtyMask                                 = 0x8000000,
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
      * bits so we don't serialize as much.
      */
-    DirtyMiscellaneousProperties              = 0x8000000,
+    DirtyMiscellaneousProperties              = 0x10000000,
 
     /**
      * Display object has changed since the last time it was drawn.
@@ -196,7 +201,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * All synchronizable properties are dirty.
      */
-    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyBitmapData | DirtyColorTransform | DirtyMask | DirtyMiscellaneousProperties
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyTextContent | DirtyBitmapData | DirtyColorTransform | DirtyMask | DirtyMiscellaneousProperties
   }
 
   /**

@@ -557,58 +557,91 @@ module Shumway.GFX {
 
   }
 
+  class Line {
+    ascent: number = 0;
+    descent: number = 0;
+    height: number = 0;
+    leading: number = 0;
+    width: number = 0;
+    x: number = 0;
+    y: number = 0;
+    runs: any[] = [];
+  }
+  class Run {
+    constructor(public font: string = '',
+                public fillStyle: string = '',
+                public text: string = '',
+                public width: number = 0) {
+
+    }
+  }
+
   export class RenderableText extends Renderable {
+    private static _measureContext = document.createElement('canvas').getContext('2d');
+
     _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     properties: {[name: string]: any} = {};
 
     private _plainText: string;
-    private _textRunData: DataBuffer;
+    private _lines: any[];
+    private _output: DataBuffer;
+    private _backgroundColor: number;
+    private _borderColor: number;
 
-    constructor(plainText: string, textRunData: DataBuffer, bounds: Rectangle) {
+    constructor(plainText: string, textRunData: DataBuffer, bounds: Rectangle, backgroundColor: number, borderColor: number) {
       super(bounds);
-      this.update(plainText, textRunData, bounds);
+      this.update(plainText, textRunData, bounds, backgroundColor, borderColor);
     }
 
-    update(plainText: string, textRunData: DataBuffer, bounds: Rectangle) {
+    update(plainText: string, textRunData: DataBuffer, bounds: Rectangle, backgroundColor: number, borderColor: number) {
       this._plainText = plainText;
-      this._textRunData = textRunData;
+      this._lines = [];
+      this._output = new DataBuffer();
       this._bounds = bounds;
+      this._backgroundColor = backgroundColor;
+      this._borderColor = borderColor;
+      this._processTextRuns(textRunData);
       this.setFlags(RenderableFlags.Dirty);
     }
 
-    getBounds(): Shumway.GFX.Geometry.Rectangle {
-      return this._bounds;
-    }
-
-    render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
+    private _processTextRuns(textRunData: DataBuffer): void {
       var bounds = this._bounds;
       var plainText = this._plainText;
-      var textRunData = this._textRunData;
+      var lines = this._lines;
+      var measureContext = RenderableText._measureContext;
 
-      var line = '';
-      var y = 0;
+      var line = new Line();
       var lineHeight = 0;
+      var lineWidth = 0;
 
-      var drawLine = function () {
+      var that = this;
+      var finishLine = function () {
+        if (!line.runs.length) {
+          return;
+        }
+
         var x = 0;
-        var width = context.measureText(line).width;
         switch (align) {
           case 0:
             break;
           case 1:
-            x = bounds.w - width;
+            x = bounds.w - lineWidth;
             break;
           case 2:
-            x = (bounds.w - width) / 2;
+            x = (bounds.w - lineWidth) / 2;
             break;
         }
-        y += lineHeight;
-        context.fillText(line, x, y);
-        line = '';
-        lineHeight = 0;
-      };
 
-      textRunData.position = 0;
+        line.height = lineHeight;
+        line.width = lineWidth;
+        line.x = x;
+        lines.push(line);
+        that._writeLineMetrics(line);
+
+        line = new Line();
+        lineHeight = 0;
+        lineWidth = 0;
+      };
 
       while (textRunData.position < textRunData.length) {
         var beginIndex = textRunData.readInt();
@@ -639,26 +672,74 @@ module Shumway.GFX {
         if (bold) {
           boldItalic += ' bold';
         }
-        context.font = boldItalic + ' ' + size + 'px swffont' + fontId;
-        context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
-
-        var lines = text.split('\n');
+        var font = boldItalic + ' ' + size + 'px swffont' + fontId;
+        var fillStyle = ColorUtilities.rgbaToCSSStyle(color);
+        var chunks = text.split('\n');
 
         if (size > lineHeight) {
           lineHeight = size;
         }
 
-        for (var i = 0; i < lines.length; i++) {
-          var t = lines[i];
-          if (t === '') {
-            drawLine();
+        for (var i = 0; i < chunks.length; i++) {
+          var chunk = chunks[i];
+          if (chunk === '') {
+            finishLine();
             continue;
           }
-          line += t;
+          measureContext.font = font;
+          var width = measureContext.measureText(chunk).width;
+          line.runs.push(new Run(font, fillStyle, chunk, width));
+          lineWidth += width;
         }
       }
+      finishLine();
+    }
 
-      drawLine();
+    private _writeLineMetrics(line: Line): void {
+      this._output.writeInt(line.ascent);
+      this._output.writeInt(line.descent);
+      this._output.writeInt(line.height);
+      this._output.writeInt(line.leading);
+      this._output.writeInt(line.width);
+      this._output.writeInt(line.x);
+    }
+
+    getBounds(): Shumway.GFX.Geometry.Rectangle {
+      return this._bounds;
+    }
+
+    render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
+      var bounds = this._bounds;
+
+      context.rect(0, 0, bounds.w, bounds.h);
+      context.clip();
+
+      if (this._backgroundColor) {
+        context.fillStyle =  ColorUtilities.rgbaToCSSStyle(this._backgroundColor);
+        context.fillRect(0, 0, bounds.w, bounds.h);
+      }
+      if (this._borderColor) {
+        context.strokeStyle =  ColorUtilities.rgbaToCSSStyle(this._borderColor);
+        context.lineCap = 'square';
+        context.lineWidth = 1;
+        context.strokeRect(0.5, 0.5, bounds.w | 0, bounds.h | 0);
+      }
+
+      var lines = this._lines;
+      var y = 0;
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var x = line.x;
+        y += line.height;
+        var runs = line.runs;
+        for (var j = 0; j < runs.length; j++) {
+          var run = runs[j];
+          context.font = run.font;
+          context.fillStyle = run.fillStyle;
+          context.fillText(run.text, x, y);
+          x += run.width;
+        }
+      }
     }
   }
 

@@ -101,6 +101,8 @@ module Shumway.Remoting.Player {
         this.output.writeInt(MessageTag.UpdateTextContent);
         this.output.writeInt(textContent._id);
         this.writeRectangle(bounds);
+        this.output.writeInt(textContent.backgroundColor);
+        this.output.writeInt(textContent.borderColor);
         this.output.writeInt(this.outputAssets.length);
         this.outputAssets.push(textContent.plainText);
         this.output.writeInt(numTextRuns);
