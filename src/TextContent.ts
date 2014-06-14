@@ -43,7 +43,6 @@ module Shumway {
 
     parseHtml(htmlText: string, multiline: boolean = false) {
       var plainText = '';
-
       var textRuns = this.textRuns;
       textRuns.length = 0;
 
@@ -53,30 +52,37 @@ module Shumway {
 
       var stack = [];
 
+      var finishTextRun = function () {
+        if (endIndex - beginIndex) {
+          textRuns.push(new flash.text.TextRun(beginIndex, endIndex, textFormat));
+          beginIndex = endIndex = endIndex;
+        }
+      };
+
       Shumway.HTMLParser(htmlText, {
         chars: (text) => {
           plainText += text;
           endIndex += text.length;
         },
         start: (tagName, attributes) => {
-          var tf = textFormat;
+          var newTextFormat: flash.text.TextFormat;
           switch (tagName) {
             case 'a':
               somewhatImplemented('<a/>');
               stack.push(textFormat);
-              var target = attributes.target;
-              var url = attributes.url;
+              var target = attributes.target || '';
+              var url = attributes.url || '';
               if (target !== textFormat.target || url !== textFormat.url) {
-                textFormat = textFormat.clone();
-                textFormat.target = target;
-                textFormat.url = url;
+                  newTextFormat = textFormat.clone();
+                  newTextFormat.target = target;
+                  newTextFormat.url = url;
               }
               break;
             case 'b':
               stack.push(textFormat);
               if (!textFormat.bold) {
-                textFormat = textFormat.clone();
-                textFormat.bold = true;
+                  newTextFormat = textFormat.clone();
+                  newTextFormat.bold = true;
               }
               break;
             case 'br':
@@ -84,21 +90,22 @@ module Shumway {
                 plainText += '\n';
                 endIndex++;
               }
+              break;
             case 'font':
               stack.push(textFormat);
-              var color = attributes.color && ColorUtilities.hexToRGB(attributes.color);
+              var color = attributes.color !== undefined ? ColorUtilities.hexToRGB(attributes.color) : textFormat.color;
               // TODO: the value of the face property can be a string specifying a list of
               // comma-delimited font names in which case the first available font should be used.
-              var font = attributes.face;
-              var size = attributes.size;
-              if (textFormat.color !== color ||
-                textFormat.font !== font ||
-                textFormat.size !== size)
+              var font = attributes.face || textFormat.font;
+              var size = isNaN(attributes.size) ? textFormat.size : attributes.size;
+              if (color !== textFormat.color ||
+                  font !== textFormat.font ||
+                  size !== textFormat.size)
               {
-                textFormat = textFormat.clone();
-                textFormat.color = color;
-                textFormat.font = font;
-                textFormat.size = size;
+                newTextFormat = textFormat.clone();
+                newTextFormat.color = color;
+                newTextFormat.font = font;
+                newTextFormat.size = size;
               }
               break;
             case 'img':
@@ -107,80 +114,84 @@ module Shumway {
             case 'i':
               stack.push(textFormat);
               if (!textFormat.italic) {
-                textFormat = textFormat.clone();
-                textFormat.italic = true;
+                  newTextFormat = textFormat.clone();
+                  newTextFormat.italic = true;
               }
               break;
             case 'li':
               stack.push(textFormat);
               if (!textFormat.bullet) {
-                textFormat = textFormat.clone();
-                textFormat.bullet = true;
+                  newTextFormat = textFormat.clone();
+                  newTextFormat.bullet = true;
               }
               break;
             case 'p':
               stack.push(textFormat);
               var align = attributes.align;
-              if (textFormat.align !== align) {
-                textFormat = textFormat.clone();
-                textFormat.align = align;
+              if (align !== undefined && align !== textFormat.align) {
+                  newTextFormat = textFormat.clone();
+                  newTextFormat.align = align;
               }
-              break;
             case 'span':
-              stack.push(textFormat);
               // TODO: support CSS style classes.
               break;
             case 'textformat':
               stack.push(textFormat);
-              var blockIndent = attributes.blockindent;
-              var indent = attributes.indent;
-              var leading = attributes.leading;
-              var leftMargin = attributes.leftmargin;
-              var rightMargin = attributes.rightmargin;
-              //var tabStops = attributes.tabstops || null;
-              if (textFormat.blockIndent !== blockIndent ||
-                textFormat.indent !== indent ||
-                textFormat.leading !== leading ||
-                textFormat.leftMargin !== leftMargin ||
-                textFormat.rightMargin !== rightMargin /*||
-               textFormat.tabStops !== tabStops*/)
+              var blockIndent = isNaN(attributes.blockindent) ? textFormat.blockIndent : attributes.blockindent;
+              var indent      = isNaN(attributes.indent)      ? textFormat.indent      : attributes.indent;
+              var leading     = isNaN(attributes.leading)     ? textFormat.leading     : attributes.leading;
+              var leftMargin  = isNaN(attributes.leftmargin)  ? textFormat.leftMargin  : attributes.leftmargin;
+              var rightMargin = isNaN(attributes.rightmargin) ? textFormat.rightMargin : attributes.rightmargin;
+              //var tabStops = attributes.tabstops || textFormat.tabStops;
+              if (blockIndent !== textFormat.blockIndent ||
+                  indent !==textFormat.indent ||
+                  leading !== textFormat.leading ||
+                  leftMargin !== textFormat.leftMargin ||
+                  rightMargin !== textFormat.rightMargin /*||
+                  tabStops !== textFormat.tabStops*/)
               {
-                textFormat = textFormat.clone();
-                textFormat.blockIndent = blockIndent;
-                textFormat.indent = indent;
-                textFormat.leading = leading;
-                textFormat.leftMargin = leftMargin;
-                textFormat.rightMargin = rightMargin;
-                //textFormat.tabStops = tabStops;
+                newTextFormat = textFormat.clone();
+                newTextFormat.blockIndent = blockIndent;
+                newTextFormat.indent = indent;
+                newTextFormat.leading = leading;
+                newTextFormat.leftMargin = leftMargin;
+                newTextFormat.rightMargin = rightMargin;
+                //newTextFormat.tabStops = tabStops;
               }
               break;
             case 'u':
               stack.push(textFormat);
               if (!textFormat.underline) {
-                textFormat = textFormat.clone();
-                textFormat.underline = true;
+                  newTextFormat = textFormat.clone();
+                  newTextFormat.underline = true;
               }
               break;
           }
-          if (textFormat !== tf) {
-            if (endIndex - beginIndex) {
-              textRuns.push(new flash.text.TextRun(beginIndex, endIndex, tf));
-              beginIndex = endIndex = endIndex;
-            }
+          if (newTextFormat) {
+            finishTextRun();
+            textFormat = newTextFormat;
           }
         },
         end: (tagName) => {
-          if ((tagName === 'li' || tagName === 'p') && multiline) {
-            plainText += '\n';
-            endIndex++;
+          switch (tagName) {
+            case 'li':
+            case 'p':
+              if (multiline) {
+                plainText += '\r';
+                endIndex++;
+              }
+            case 'a':
+            case 'b':
+            case 'font':
+            case 'i':
+            case 'textformat':
+            case 'u':
+              finishTextRun();
+              textFormat = stack.pop();
           }
-          //if (tagName !== 'br' && tagName !== 'img') {
-          //  textFormat = stack.pop();
-          //}
         }
       });
-
-      textRuns.push(new flash.text.TextRun(beginIndex, endIndex, textFormat));
+      finishTextRun();
 
       this._plainText = plainText;
       this._isDirty = true;

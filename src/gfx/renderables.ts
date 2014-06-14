@@ -563,7 +563,6 @@ module Shumway.GFX {
     leading: number = 0;
     width: number = 0;
     x: number = 0;
-    y: number = 0;
     runs: any[] = [];
   }
   class Run {
@@ -613,7 +612,7 @@ module Shumway.GFX {
       var lineHeight = 0;
       var lineWidth = 0;
 
-      var that = this;
+      //var that = this;
       var finishLine = function () {
         if (!line.runs.length) {
           return;
@@ -630,12 +629,11 @@ module Shumway.GFX {
             x = (bounds.w - lineWidth) / 2;
             break;
         }
-
         line.height = lineHeight;
         line.width = lineWidth;
         line.x = x;
         lines.push(line);
-        that._writeLineMetrics(line);
+        //that._writeLineMetrics(line);
 
         line = new Line();
         lineHeight = 0;
@@ -673,7 +671,7 @@ module Shumway.GFX {
         }
         var font = boldItalic + ' ' + size + 'px swffont' + fontId;
         var fillStyle = ColorUtilities.rgbaToCSSStyle(color);
-        var chunks = text.split('\n');
+        var chunks = text.split('\r');
 
         if (size > lineHeight) {
           lineHeight = size;
@@ -707,7 +705,7 @@ module Shumway.GFX {
       return this._bounds;
     }
 
-    render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
+    render(context: CanvasRenderingContext2D): void {
       var bounds = this._bounds;
 
       context.rect(0, 0, bounds.w, bounds.h);
