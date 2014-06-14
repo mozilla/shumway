@@ -124,4 +124,8 @@ package {
     trace(c);
     trace(c.toString());
   })();
+
+  (function () {
+    trace((1234).toString(16));
+  })();
 }

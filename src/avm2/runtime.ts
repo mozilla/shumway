@@ -444,9 +444,8 @@ module Shumway.AVM2.Runtime {
     return self.asSetProperty(undefined, name, 0, value);
   }
 
-  var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF + "()");
-  var forwardToString: () => string = <any>new Function("", 'return this.' + Multiname.TO_STRING + "()");
-
+  var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF + ".apply(this, arguments)");
+  var forwardToString: () => string = <any>new Function("", 'return this.' + Multiname.TO_STRING + ".apply(this, arguments)");
 
   function tryInjectToStringAndValueOfForwarder(self: Object, resolved: string) {
     if (resolved === Multiname.VALUE_OF) {

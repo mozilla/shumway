@@ -2680,9 +2680,7 @@ module Shumway {
     }
 
     export function rgbToHex(color: number): string {
-      // Temporary workaround till issue #1342 is fixed.
-      color = Shumway.AVM2.AS.Natives.Original.Number.prototype.toString.call(color, 16);
-      return '#' + ('000000' + color).slice(-6);
+      return '#' + ('000000' + color.toString(16)).slice(-6);
     }
 
     /**
