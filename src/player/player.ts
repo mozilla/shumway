@@ -163,7 +163,9 @@ module Shumway.Player {
               this._isPageVisible = true;
               break;
             case FocusEventType.WindowBlur:
-              EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.DEACTIVATE));
+              // TODO: This is purposely disabled so that applications don't pause when their out of
+              // focus while the debugging window is open.
+              // EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.DEACTIVATE));
               this._hasFocus = false;
               break;
             case FocusEventType.WindowFocus:
