@@ -128,8 +128,7 @@ module Shumway.GFX {
         }
         return;
       }
-      var timelineDetails = "convertImage: " + ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length) + ")";
-      enterTimeline(timelineDetails);
+      enterTimeline("convertImage", ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length));
 
       if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
           targetFormat === ImageType.StraightAlphaRGBA) {
@@ -152,7 +151,7 @@ module Shumway.GFX {
       } else {
         notImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
       }
-      leaveTimeline(timelineDetails);
+      leaveTimeline("convertImage");
     }
 
     public static FromDataBuffer(type: ImageType, dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
@@ -167,7 +166,7 @@ module Shumway.GFX {
     }
 
     public updateFromDataBuffer(type: ImageType, dataBuffer: DataBuffer) {
-      enterTimeline("RenderableBitmap.updateFromDataBuffer");
+      enterTimeline("RenderableBitmap.updateFromDataBuffer", this);
 
       var context = this._canvas.getContext("2d");
 
@@ -315,7 +314,7 @@ module Shumway.GFX {
       var paths = this._paths;
       assert(paths);
 
-      enterTimeline("RenderableShape.render");
+      enterTimeline("RenderableShape.render", this);
       for (var i = 0; i < paths.length; i++) {
         var path = paths[i];
         if (path.type === PathType.Fill) {
