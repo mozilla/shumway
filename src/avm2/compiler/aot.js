@@ -37,17 +37,17 @@ function compileTrait(trait, writer) {
       try {
         var method = createCompiledFunction(methodInfo, new Scope(null, {}), false, false, false);
         if (trait.isMethod()) {
-          writer.writeLn("get " + traitName + "() { return this." + VM_OPEN_METHOD_PREFIX + traitName + ".bind(this); },");
+          writer && writer.writeLn("get " + traitName + "() { return this." + VM_OPEN_METHOD_PREFIX + traitName + ".bind(this); },");
         }
         if (trait.isMethod()) {
-          writer.enter(VM_OPEN_METHOD_PREFIX + traitName + ": ");
+          writer && writer.enter(VM_OPEN_METHOD_PREFIX + traitName + ": ");
         } else if (trait.isGetter()) {
-          writer.enter("get_" + traitName + ": ");
+          writer && writer.enter("get_" + traitName + ": ");
         } else if (trait.isSetter()) {
-          writer.enter("set_" + traitName + ": ");
+          writer && writer.enter("set_" + traitName + ": ");
         }
-        writer.writeLns(method.toSource());
-        writer.leave(",");
+        // writer.writeLns(method.toSource());
+        writer && writer.leave(",");
       } catch (x) {
 
       }
@@ -66,21 +66,21 @@ function compileClass(classInfo, writer) {
     if (canCompile(methodInfo)) {
       ensureFunctionIsInitialized(methodInfo);
       var method = createCompiledFunction(methodInfo, new Scope(null, {}), false, false, false);
-      writer.enter("constructor:");
-      writer.writeLns(method.toSource());
-      writer.leave(", ");
+      writer && writer.enter("constructor:");
+      // writer.writeLns(method.toSource());
+      writer && writer.leave(", ");
     }
   }
 
-  writer.enter(Multiname.getQualifiedName(classInfo.instanceInfo.name) + ": {");
+  writer && writer.enter(Multiname.getQualifiedName(classInfo.instanceInfo.name) + ": {");
 
-  writer.enter("static: {");
+  writer && writer.enter("static: {");
   compileInitializer(classInfo.init);
   compileTraits(classInfo.traits);
-  writer.leave("}, ");
-  writer.enter("instance: {");
+  writer && writer.leave("}, ");
+  writer && writer.enter("instance: {");
   compileInitializer(classInfo.instanceInfo.init);
   compileTraits(classInfo.instanceInfo.traits);
-  writer.leave("}");
-  writer.leave("},");
+  writer && writer.leave("}");
+  writer && writer.leave("},");
 }

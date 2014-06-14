@@ -64,10 +64,10 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/src/avm2/*.js $(BUILD_DIR)/src/avm2/
 	mkdir $(BUILD_DIR)/src/avm2/compiler
 	cp $(SHUMWAY_ROOT)/src/avm2/compiler/*.js $(BUILD_DIR)/src/avm2/compiler/
+	mkdir $(BUILD_DIR)/src/avm2/compiler/ast
+	cp $(SHUMWAY_ROOT)/src/avm2/compiler/ast/*.js $(BUILD_DIR)/src/avm2/compiler/ast
 	mkdir $(BUILD_DIR)/src/avm2/compiler/c4
 	cp $(SHUMWAY_ROOT)/src/avm2/compiler/c4/*.js $(BUILD_DIR)/src/avm2/compiler/c4/
-	mkdir -p $(BUILD_DIR)/src/avm2/compiler/lljs/src
-	cp $(SHUMWAY_ROOT)/src/avm2/compiler/lljs/src/*.js $(BUILD_DIR)/src/avm2/compiler/lljs/src/
 	mkdir -p $(BUILD_DIR)/src/avm2/generated/builtin
 	cp $(SHUMWAY_ROOT)/src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/src/avm2/generated/builtin/
 	mkdir -p $(BUILD_DIR)/src/avm2/generated/shell

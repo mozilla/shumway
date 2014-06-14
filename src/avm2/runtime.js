@@ -190,7 +190,7 @@ var LazyInitializer = (function () {
     return target.lazyInitializer = new LazyInitializer(target);
   };
   function lazyInitializer(target) {
-    assert (!target.lazyInitializer);
+    release || assert (!target.lazyInitializer);
     this.target = target;
   }
   lazyInitializer.prototype.getName = function getName() {
@@ -213,11 +213,11 @@ var LazyInitializer = (function () {
       notImplemented(target);
     }
     var name = this.name;
-    assert (!holder[name]);
+    release || assert (!holder[name]);
     Object.defineProperty(holder, name, {
       get: function () {
         var value = initialize();
-        assert (value);
+        release || assert (value);
         Object.defineProperty(holder, name, { value: value, writable: true });
         return value;
       }, configurable: true
@@ -458,7 +458,7 @@ function asCallSuper(scope, namespaces, name, flags, args) {
   var baseClass = scope.object.baseClass;
   var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
   var openMethods = baseClass.traitsPrototype[VM_OPEN_METHODS];
-  assert (openMethods && openMethods[resolved]);
+  release || assert (openMethods && openMethods[resolved]);
   var method = openMethods[resolved];
   var result = method.apply(this, args);
   traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
@@ -1619,7 +1619,9 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
     mi.freeMethod = createInterpretedFunction(mi, scope, hasDynamicScope);
   } else {
     compiledFunctionCount++;
-    console.info("Compiling: " + mi + " count: " + compiledFunctionCount);
+    if (traceExecution.value > 0) {
+      console.info("Compiling: " + mi + " count: " + compiledFunctionCount);
+    }
     if (compileOnly.value >= 0 || compileUntil.value >= 0) {
       print("Compiling " + totalFunctionCount);
     }

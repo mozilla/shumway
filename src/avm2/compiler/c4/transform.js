@@ -1,7 +1,7 @@
 (function (exports) {
   var TRACE_REGISTER_ALLOCATOR = false;
 
-  var T = estransform;
+  var T = AST;
   var Node = T.Node;
   var Identifier = T.Identifier;
   var VariableDeclaration = T.VariableDeclaration;

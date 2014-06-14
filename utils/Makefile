@@ -144,6 +144,7 @@ $(APPARAT_HOME)/apparat.tar.gz:
 install-node-modules:
 	mkdir -p node_modules
 	npm install mocha@1.11.0 expect.js@0.2.0 temp@0.5.0 jshint@2.1.3
+	npm install typescript
 
 install-swfdec:
 	git clone git://anongit.freedesktop.org/swfdec/swfdec

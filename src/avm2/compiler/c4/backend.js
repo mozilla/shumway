@@ -18,7 +18,7 @@
 
 (function (exports) {
 
-  var T = estransform;
+  var T = AST;
   var Literal = T.Literal;
   var Identifier = T.Identifier;
   var VariableDeclaration = T.VariableDeclaration;
@@ -106,9 +106,9 @@
     } else if (value === Infinity) {
       return new Identifier("Infinity");
     } else if (value === -Infinity) {
-      return new UnaryExpression("-", new Identifier("Infinity"));
+      return new UnaryExpression("-", true, new Identifier("Infinity"));
     } else if (typeof value === "number" && (1 / value) < 0) {
-      return new UnaryExpression("-", new Literal(Math.abs(value)));
+      return new UnaryExpression("-", true, new Literal(Math.abs(value)));
     } else if (typeof value === "number") {
       return new Literal(value);
     } else {
@@ -174,11 +174,11 @@
 
   function assignment(left, right) {
     release || assert(left && right);
-    return new AssignmentExpression(left, "=", right);
+    return new AssignmentExpression("=", left, right);
   }
 
   function variableDeclaration(declarations) {
-    return new VariableDeclaration("var", declarations);
+    return new VariableDeclaration(declarations, "var");
   }
 
   function negate(node) {
@@ -187,7 +187,7 @@
         return constant(!node.value);
       }
     } else if (node instanceof Identifier) {
-      return new UnaryExpression(Operator.FALSE.name, node);
+      return new UnaryExpression(Operator.FALSE.name, true, node);
     }
     release || assert(node instanceof BinaryExpression || node instanceof UnaryExpression, node);
     var left = node instanceof BinaryExpression ? node.left : node.argument;
@@ -203,10 +203,10 @@
       if (node instanceof BinaryExpression) {
         return new BinaryExpression(operator.not.name, left, right);
       } else {
-        return new UnaryExpression(operator.not.name, left);
+        return new UnaryExpression(operator.not.name, true, left);
       }
     }
-    return new UnaryExpression(Operator.FALSE.name, node);
+    return new UnaryExpression(Operator.FALSE.name, true, node);
   }
 
 
@@ -471,6 +471,7 @@
   IR.Unary.prototype.compile = function (cx) {
     return new UnaryExpression (
       this.operator.name,
+      true,
       compileValue(this.argument, cx)
     );
   };
@@ -668,10 +669,11 @@
   };
 
   function generateSource(node) {
-    return escodegen.generate(node, {base: "", indent: "  ", comment: true, format: { compact: false }});
+    return node.toSource();
+    // return escodegen.generate(node, {base: "", indent: "  ", comment: true, format: { compact: false }});
   }
 
-  function generate(cfg, useRegisterAllocator) {
+  function generate(cfg) {
     Timer.start("Looper");
     var root = Looper.analyze(cfg);
     Timer.stop();
@@ -698,27 +700,12 @@
       code.body.unshift(variables);
     }
 
-    var node = new FunctionDeclaration(id("fn"), parameters, code);
+    var node = new FunctionDeclaration(id("fn"), parameters, null, null, code);
 
-    if (useRegisterAllocator) {
-      if (c4TraceLevel.value > 0) {
-        writer.writeLn("=== BEFORE ===============================");
-        writer.writeLn(generateSource(node));
-        writer.writeLn("=== TRANSFORMING =========================");
-      }
-      Transform.transform(node);
-      if (c4TraceLevel.value > 0) {
-        writer.writeLn("=== AFTER ================================");
-        writer.writeLn(generateSource(node));
-        writer.writeLn("==========================================");
-      }
-      var body = generateSource(code);
-      // body = " { debugger; " + body + " }";
-      return {parameters: parameters.map(function (p) { return p.name; }), body: body};
-    }
     Timer.start("Serialize AST");
     var source = generateSource(code);
     Timer.stop();
+
     return {parameters: parameters.map(function (p) { return p.name; }), body: source};
   }
 

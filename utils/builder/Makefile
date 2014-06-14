@@ -17,6 +17,7 @@ CLOSURE ?= $(UTILS_HOME)/cc.jar
 BUILD_DIR ?= ../../build/bundle
 CLOSURE_BASIC_OPT ?= -fc -c s
 CLOSURE_ADV_OPT ?= -fc -c a
+TSC ?= $(UTILS_HOME)/node_modules/typescript/bin/tsc
 
 build: ensureoutputdir
 	# Coping JavaScript content files
@@ -56,8 +57,9 @@ build: ensureoutputdir
 	cp ../../src/avm2/compiler/*.js $(BUILD_DIR)/avm2/compiler/
 	mkdir $(BUILD_DIR)/avm2/compiler/c4
 	cp ../../src/avm2/compiler/c4/*.js $(BUILD_DIR)/avm2/compiler/c4/
-	mkdir -p $(BUILD_DIR)/avm2/compiler/lljs/src
-	cp ../../src/avm2/compiler/lljs/src/*.js $(BUILD_DIR)/avm2/compiler/lljs/src/
+	mkdir -p $(BUILD_DIR)/avm2/compiler/ast
+	$(TSC) --target ES5 ../../src/avm2/compiler/ast/ast.ts
+	cp ../../src/avm2/compiler/ast/*.js $(BUILD_DIR)/avm2/compiler/ast/
 	mkdir -p $(BUILD_DIR)/avm2/generated/builtin
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/avm2/generated/builtin/
 	mkdir -p $(BUILD_DIR)/avm2/generated/avm1lib

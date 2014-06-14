@@ -321,12 +321,12 @@ var ApplicationDomain = (function () {
     compileAbc: function compileAbc(abc) {
       // console.time("Compile ABC: " + abc.name);
       this.loadAbc(abc);
-      var writer = new IndentingWriter();
-      writer.enter("var classes = {");
+      var writer = null; // new IndentingWriter();
+      writer && writer.enter("var classes = {");
       for (var i = 0; i < abc.scripts.length; i++) {
         compileScript(abc.scripts[i], writer);
       }
-      writer.leave("}");
+      writer && writer.leave("}");
       //console.timeEnd("Compile ABC: " + abc.name);
     },
 
