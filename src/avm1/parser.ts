@@ -122,11 +122,6 @@ module Shumway.AVM1 {
     ActionStrictMode = 0x89
   }
 
-  export class AS2ActionsData {
-    public ir; // will cache compiled representation
-    constructor(public bytes: Uint8Array, public id: string) {}
-  }
-
   export class ParsedPushRegisterAction {
     constructor(public registerNumber: number) {}
   }

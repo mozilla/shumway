@@ -45,7 +45,7 @@ module Shumway.AVM2.AS.avm1lib {
     static classSymbols: string [] = null;
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["_global", "flash", "$asfunction", "call", "chr", "clearInterval", "clearTimeout", "duplicateMovieClip", "fscommand", "getAS2Property", "getTimer", "getURL", "getVersion", "gotoAndPlay", "gotoAndStop", "gotoLabel", "ifFrameLoaded", "int", "length", "loadMovie", "loadMovieNum", "loadVariables", "mbchr", "mblength", "mbord", "mbsubstring", "nextFrame", "nextScene", "ord", "play", "prevFrame", "prevScene", "print", "printAsBitmap", "printAsBitmapNum", "printNum", "random", "removeMovieClip", "setInterval", "setAS2Property", "setTimeout", "showRedrawRegions", "startDrag", "stop", "stopAllSounds", "stopDrag", "substring", "targetPath", "toggleHighQuality", "unloadMovie", "unloadMovieNum", "updateAfterEvent", "NaN", "Infinity", "isFinite", "isNaN", "parseFloat", "parseInt", "undefined", "MovieClip", "AsBroadcaster", "System", "Stage", "Button", "TextField", "Color", "Key", "Mouse", "MovieClipLoader", "Sound", "SharedObject", "ContextMenu", "ContextMenuItem", "ColorTransform", "Point", "Rectangle", "TextFormat"];
+    static instanceSymbols: string [] = ["_global", "flash", "$asfunction", "call", "chr", "clearInterval", "clearTimeout", "duplicateMovieClip", "fscommand", "getAS2Property", "getTimer", "getURL", "getVersion", "gotoAndPlay", "gotoAndStop", "gotoLabel", "ifFrameLoaded", "int", "length", "loadMovie", "loadMovieNum", "loadVariables", "mbchr", "mblength", "mbord", "mbsubstring", "nextFrame", "nextScene", "ord", "play", "prevFrame", "prevScene", "print", "printAsBitmap", "printAsBitmapNum", "printNum", "random", "removeMovieClip", "setInterval", "setAS2Property", "setTimeout", "showRedrawRegions", "startDrag", "stop", "stopAllSounds", "stopDrag", "substring", "targetPath", "toggleHighQuality", "unloadMovie", "unloadMovieNum", "updateAfterEvent"];
 
     constructor () {
       false && super();
@@ -106,31 +106,6 @@ module Shumway.AVM2.AS.avm1lib {
     unloadMovie: (target: any) => any;
     unloadMovieNum: (level: any) => any;
     updateAfterEvent: () => any;
-    NaN: number;
-    Infinity: number;
-    isFinite: ASFunction;
-    isNaN: ASFunction;
-    parseFloat: ASFunction;
-    parseInt: ASFunction;
-    undefined: any;
-    MovieClip: ASClass;
-    AsBroadcaster: ASClass;
-    System: ASClass;
-    Stage: ASClass;
-    Button: ASClass;
-    TextField: ASClass;
-    Color: ASClass;
-    Key: ASClass;
-    Mouse: ASClass;
-    MovieClipLoader: ASClass;
-    Sound: ASClass;
-    SharedObject: ASClass;
-    ContextMenu: ASClass;
-    ContextMenuItem: ASClass;
-    ColorTransform: ASClass;
-    Point: ASClass;
-    Rectangle: ASClass;
-    TextFormat: ASClass;
 
     // AS -> JS Bindings
     static _addInternalClasses(proto: ASObject): void {

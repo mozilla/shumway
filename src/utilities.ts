@@ -389,6 +389,21 @@ module Shumway {
       ArrayUtilities.pushMany(dst, src);
     }
 
+    /**
+     * Makes sure that a typed array has the requested capacity. If required, it creates a new
+     * instance of the array's class with a power-of-two capacity at least as large as required.
+     *
+     * Note: untyped because generics with constraints are pretty annoying.
+     */
+    export function ensureTypedArrayCapacity(array: any, capacity: number): any {
+      if (array.length < capacity) {
+        var oldArray = array;
+        array = new array.constructor(Shumway.IntegerUtilities.nearestPowerOfTwo(capacity));
+        array.set(oldArray, 0);
+      }
+      return array;
+    }
+
     export class ArrayWriter {
       _u8: Uint8Array;
       _u16: Uint16Array;
@@ -2647,7 +2662,7 @@ module Shumway {
     }
 
     export function componentsToRGBA(components: RGBAComponents): number {
-      return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
+      return ((components.red << 24) | (components.green << 16) | (components.blue << 8) | components.alpha) >>> 0;
     }
 
     export function rgbaToCSSStyle(color: number): string {
@@ -2658,6 +2673,16 @@ module Shumway {
     export function rgbaObjToCSSStyle(color: RGBAComponents): string {
       return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
              color.alpha / 255 + ')';
+    }
+
+    export function hexToRGB(color: string): number {
+      return parseInt(color.slice(1), 16);
+    }
+
+    export function rgbToHex(color: number): string {
+      // Temporary workaround till issue #1342 is fixed.
+      color = Shumway.AVM2.AS.Natives.Original.Number.prototype.toString.call(color, 16);
+      return '#' + ('000000' + color).slice(-6);
     }
 
     /**
@@ -2891,6 +2916,19 @@ module Shumway {
     JPEG,
     PNG,
     GIF
+  }
+
+  export class PromiseCapability<T> {
+    public promise: Promise<T>;
+    public resolve: (result:T) => void;
+    public reject: (reason) => void;
+
+    constructor() {
+      this.promise = new Promise<T>(function (resolve, reject) {
+        this.resolve = resolve;
+        this.reject = reject;
+      }.bind(this));
+    }
   }
 }
 

@@ -169,6 +169,10 @@ module Shumway.AVM1 {
       }
       this.deferScriptExecution = false;
     }
+
+    executeActions(actionsData: AS2ActionsData, scope) {
+      executeActions(actionsData, this, scope);
+    }
   }
 
   AS2Context.create = function (swfVersion: number): AS2Context {

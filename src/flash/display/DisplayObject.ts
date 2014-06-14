@@ -162,31 +162,36 @@ module Shumway.AVM2.AS.flash.display {
     DirtyGraphics                             = 0x400000,
 
     /**
+     * Indicates whether this display object's text content has changed since the last time it was synchronized.
+     */
+    DirtyTextContent                          = 0x800000,
+
+    /**
      * Indicates whether this display object's bitmap data has changed since the last time it was synchronized.
      */
-    DirtyBitmapData                           = 0x800000,
+    DirtyBitmapData                           = 0x1000000,
 
     /**
      * Indicates whether this display object's has dirty descendents. If this flag is not set then the subtree does not
      * need to be synchronized.
      */
-    DirtyChild                                = 0x1000000,
+    DirtyChild                                = 0x2000000,
 
     /**
      * Indicates whether this display object's color transform has changed since the last time it was synchronized.
      */
-    DirtyColorTransform                       = 0x2000000,
+    DirtyColorTransform                       = 0x4000000,
 
     /**
      * Indicates whether this display object's mask has changed since the last time it was synchronized.
      */
-    DirtyMask                                 = 0x4000000,
+    DirtyMask                                 = 0x8000000,
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
      * bits so we don't serialize as much.
      */
-    DirtyMiscellaneousProperties              = 0x8000000,
+    DirtyMiscellaneousProperties              = 0x10000000,
 
     /**
      * Display object has changed since the last time it was drawn.
@@ -196,7 +201,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * All synchronizable properties are dirty.
      */
-    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyBitmapData | DirtyColorTransform | DirtyMask | DirtyMiscellaneousProperties
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyTextContent | DirtyBitmapData | DirtyColorTransform | DirtyMask | DirtyMiscellaneousProperties
   }
 
   /**
@@ -1337,37 +1342,20 @@ module Shumway.AVM2.AS.flash.display {
      * Only these objects can have graphics.
      */
     _canHaveGraphics(): boolean {
-      return flash.display.Shape.isType(this) ||
-             flash.display.Sprite.isType(this) ||
-             flash.display.MorphShape.isType(this);
+      return false;
     }
 
     /**
-     * Only these objects can have text content.
-     */
-    _canHaveTextContent(): boolean {
-      return flash.text.StaticText.isType(this) || flash.text.TextField.isType(this);
-    }
-
-    /**
-     * Gets the graphics object of this object. Only Shapes, Sprites, and MorphShapes can have
-     * graphics.
+     * Gets the graphics object of this object. Shapes, MorphShapes, and Sprites override this.
      */
     _getGraphics(): flash.display.Graphics {
-      if (this._canHaveGraphics()) {
-        return (<any>this)._graphics;
-      }
       return null;
     }
 
     /**
-     * Gets the text content of this object. Only StaticTexts and TextFields can have
-     * text content.
+     * Gets the text content of this object. StaticTexts and TextFields override this.
      */
     _getTextContent(): Shumway.TextContent {
-      if (this._canHaveTextContent()) {
-        return (<any>this)._textContent;
-      }
       return null;
     }
 
@@ -1387,18 +1375,15 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * This is only ever called from |_animate|. Thes graphics objects cannot be modified so they don't need a back reference.
+     * This is only ever called from |_animate|. These graphics objects cannot be modified so
+     * they don't need a back reference.
      */
     _setGraphics(graphics: flash.display.Graphics) {
-      if (this._canHaveGraphics()) {
-        this._graphics = graphics;
-        this._invalidateFillAndLineBounds();
-        this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
-        return;
-      }
-      unexpected("Cannot set graphics on this type of display object.");
+      assert(this._canHaveGraphics(), "Cannot set graphics on this type of display object.");
+      this._graphics = graphics;
+      this._invalidateFillAndLineBounds();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
     }
-
     /**
      * Checks if the bounding boxes of two display objects overlap, this happens in the global
      * coordinate coordinate space.

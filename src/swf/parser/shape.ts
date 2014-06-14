@@ -86,7 +86,6 @@ module Shumway.SWF.Parser {
                                      recordsMorph): ShapeData
   {
     var isMorph = recordsMorph !== null;
-    isMorph = false;
     var styles = {fill0: 0, fill1: 0, line: 0};
     var segment: PathSegment = null;
 
@@ -277,6 +276,9 @@ module Shumway.SWF.Parser {
     }
 
     var shape: ShapeData = new ShapeData();
+    if (isMorph) {
+      shape.morphCoordinates = new Int32Array(shape.coordinates.length);
+    }
     for (i = 0; i < allPaths.length; i++) {
       allPaths[i].serialize(shape);
     }
@@ -391,7 +393,8 @@ module Shumway.SWF.Parser {
 
     var fillBounds: Bounds = Bounds.FromUntyped(tag.bbox);
     var lineBounds: Bounds = tag.strokeBbox ? Bounds.FromUntyped(tag.strokeBbox) : null;
-    if (false && tag.bboxMorph) {
+
+    if (tag.bboxMorph) {
       var mbox = tag.bboxMorph;
       fillBounds.extendByPoint(mbox.xMin, mbox.yMin);
       fillBounds.extendByPoint(mbox.xMax, mbox.yMax);
@@ -402,13 +405,12 @@ module Shumway.SWF.Parser {
       }
     }
     return {
-      type: 'shape',
+      type: tag.isMorph ? 'morphshape' : 'shape',
       id: tag.id,
-      lineBounds: lineBounds,
       fillBounds: fillBounds,
-      lineBoundsMorph: tag.strokeBboxMorph,
-      fillBoundsMorph: tag.bboxMorph,
-      isMorph: false && tag.isMorph,
+      lineBounds: lineBounds,
+      morphFillBounds: tag.bboxMorph || null,
+      morphLineBounds: tag.strokeBboxMorph || null,
       hasFills: fillPaths.length > 0,
       hasLines: linePaths.length > 0,
       shape: shape.toPlainObject(),
@@ -424,9 +426,8 @@ module Shumway.SWF.Parser {
     private startPoint: string;
     private endPoint: string;
 
-    constructor(public commands: DataBuffer, public data: DataBuffer,
-                public prev: PathSegment, public next: PathSegment,
-                public isMorph: boolean, public isReversed: boolean)
+    constructor(public commands: DataBuffer, public data: DataBuffer, public morphData: DataBuffer,
+                public prev: PathSegment, public next: PathSegment, public isReversed: boolean)
     {
       this.id = PathSegment._counter++;
     }
@@ -435,7 +436,12 @@ module Shumway.SWF.Parser {
       var commands = new DataBuffer();
       var data = new DataBuffer();
       commands.endian = data.endian = 'auto';
-      return new PathSegment(commands, data, null, null, isMorph, false);
+      var morphData: any = null;
+      if (isMorph) {
+        morphData = new DataBuffer();
+        morphData.endian = 'auto';
+      }
+      return new PathSegment(commands, data, morphData, null, null, false);
     }
 
     moveTo(x: number, y: number) {
@@ -446,8 +452,8 @@ module Shumway.SWF.Parser {
 
     morphMoveTo(x: number, y: number, mx: number, my: number) {
       this.moveTo(x, y);
-      this.data.writeInt(mx);
-      this.data.writeInt(my);
+      this.morphData.writeInt(mx);
+      this.morphData.writeInt(my);
     }
 
     lineTo(x: number, y: number) {
@@ -458,8 +464,8 @@ module Shumway.SWF.Parser {
 
     morphLineTo(x: number, y: number, mx: number, my: number) {
       this.lineTo(x, y);
-      this.data.writeInt(mx);
-      this.data.writeInt(my);
+      this.morphData.writeInt(mx);
+      this.morphData.writeInt(my);
     }
 
     curveTo(cpx: number, cpy: number, x: number, y: number) {
@@ -474,10 +480,10 @@ module Shumway.SWF.Parser {
             mcpx: number, mcpy: number, mx: number, my: number)
     {
       this.curveTo(cpx, cpy, x, y);
-      this.data.writeInt(mcpx);
-      this.data.writeInt(mcpy);
-      this.data.writeInt(mx);
-      this.data.writeInt(my);
+      this.morphData.writeInt(mcpx);
+      this.morphData.writeInt(mcpy);
+      this.morphData.writeInt(mx);
+      this.morphData.writeInt(my);
     }
 
     /**
@@ -488,17 +494,17 @@ module Shumway.SWF.Parser {
      */
     toReversed(): PathSegment {
       assert(!this.isReversed);
-      return new PathSegment(this.commands, this.data, null, null, this.isMorph, true);
+      return new PathSegment(this.commands, this.data, this.morphData, null, null, true);
     }
 
     clone(): PathSegment {
-      return new PathSegment(this.commands, this.data, null, null, this.isMorph, this.isReversed);
+      return new PathSegment(this.commands, this.data, this.morphData, null, null, this.isReversed);
     }
 
     storeStartAndEnd() {
       var data = this.data.ints;
       var endPoint1 = data[0] + ',' + data[1];
-      var endPoint2Offset = (this.data.length >> 2) - (this.isMorph ? 4 : 2);
+      var endPoint2Offset = (this.data.length >> 2) - 2;
       var endPoint2 = data[endPoint2Offset] + ',' + data[endPoint2Offset + 1];
       if (!this.isReversed) {
         this.startPoint = endPoint1;
@@ -524,8 +530,7 @@ module Shumway.SWF.Parser {
       var commands = this.commands.bytes;
       // Note: this *must* use `this.data.length`, because buffers will have padding.
       var dataLength = this.data.length >> 2;
-      var isMorph = this.isMorph;
-      var dataStride = isMorph ? 4 : 2;
+      var morphData = this.morphData ? this.morphData.ints : null;
       var data = this.data.ints;
       assert(commands[0] === PathCommand.MoveTo);
       // If the segment's first moveTo goes to the current coordinates, we have to skip it.
@@ -534,13 +539,13 @@ module Shumway.SWF.Parser {
         offset++;
       }
       var commandsCount = this.commands.length;
-      var dataPosition = offset * dataStride;
+      var dataPosition = offset * 2;
       for (var i = offset; i < commandsCount; i++) {
-        dataPosition = this._writeCommand(commands[i], dataPosition, data, isMorph, shape);
+        dataPosition = this._writeCommand(commands[i], dataPosition, data, morphData, shape);
       }
       assert(dataPosition === dataLength);
-      lastPosition.x = data[dataLength - dataStride];
-      lastPosition.y = data[dataLength - dataStride + 1];
+      lastPosition.x = data[dataLength - 2];
+      lastPosition.y = data[dataLength - 1];
     }
     private _serializeReversed(shape: ShapeData, lastPosition: {x: number; y: number}) {
       // For reversing the fill0 segments, we rely on the fact that each segment
@@ -549,18 +554,17 @@ module Shumway.SWF.Parser {
       // commands, we take the coordinates of the command originally *preceding*
       // it as the new target coordinates. The final coordinates we target will be
       // the ones from the original first moveTo.
-      var isMorph = this.isMorph;
-      var dataStride = isMorph ? 4 : 2;
       // Note: these *must* use `this.{data,commands}.length`, because buffers will have padding.
       var commandsCount = this.commands.length;
-      var dataPosition = (this.data.length >> 2) - dataStride;
+      var dataPosition = (this.data.length >> 2) - 2;
       var commands = this.commands.bytes;
       assert(commands[0] === PathCommand.MoveTo);
       var data = this.data.ints;
+      var morphData = this.morphData ? this.morphData.ints : null;
 
       // Only write the first moveTo if it doesn't go to the current coordinates.
       if (data[dataPosition] !== lastPosition.x || data[dataPosition + 1] !== lastPosition.y) {
-        this._writeCommand(PathCommand.MoveTo, dataPosition, data, isMorph, shape);
+        this._writeCommand(PathCommand.MoveTo, dataPosition, data, morphData, shape);
       }
       if (commandsCount === 1) {
         lastPosition.x = data[0];
@@ -568,18 +572,17 @@ module Shumway.SWF.Parser {
         return;
       }
       for (var i = commandsCount; i-- > 1;) {
-        dataPosition -= dataStride;
+        dataPosition -= 2;
         var command: PathCommand = commands[i];
-        shape.writeCommand(command);
-        shape.writeCoordinates(data[dataPosition], data[dataPosition + 1]);
-        if (isMorph) {
-          shape.writeCoordinates(data[dataPosition] + 2, data[dataPosition + 3]);
+        shape.writeCommandAndCoordinates(command, data[dataPosition], data[dataPosition + 1]);
+        if (morphData) {
+          shape.writeMorphCoordinates(morphData[dataPosition], morphData[dataPosition + 1]);
         }
         if (command === PathCommand.CurveTo) {
-          dataPosition -= dataStride;
+          dataPosition -= 2;
           shape.writeCoordinates(data[dataPosition], data[dataPosition + 1]);
-          if (isMorph) {
-            shape.writeCoordinates(data[dataPosition] + 2, data[dataPosition + 3]);
+          if (morphData) {
+            shape.writeMorphCoordinates(morphData[dataPosition], morphData[dataPosition + 1]);
           }
         } else {
         }
@@ -589,17 +592,16 @@ module Shumway.SWF.Parser {
       lastPosition.y = data[1];
     }
     private _writeCommand(command: PathCommand, position: number, data: Uint32Array,
-                          isMorph: boolean, shape: ShapeData): number
+                          morphData: Uint32Array, shape: ShapeData): number
     {
-      shape.writeCommand(command);
-      shape.writeCoordinates(data[position++], data[position++]);
+      shape.writeCommandAndCoordinates(command, data[position++], data[position++]);
+      if (morphData) {
+        shape.writeMorphCoordinates(morphData[position-2], morphData[position-1]);
+      }
       if (command === PathCommand.CurveTo) {
         shape.writeCoordinates(data[position++], data[position++]);
-      }
-      if (isMorph) {
-        shape.writeCoordinates(data[position++], data[position++]);
-        if (command === PathCommand.CurveTo) {
-          shape.writeCoordinates(data[position++], data[position++]);
+        if (morphData) {
+          shape.writeMorphCoordinates(morphData[position-2], morphData[position-1]);
         }
       }
       return position;

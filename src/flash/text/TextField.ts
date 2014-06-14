@@ -22,6 +22,8 @@ module Shumway.AVM2.AS.flash.text {
 
   import clamp = Shumway.NumberUtilities.clamp;
 
+  import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+
   export class TextField extends flash.display.InteractiveObject {
 
     static classSymbols: string [] = null;
@@ -36,9 +38,9 @@ module Shumway.AVM2.AS.flash.text {
       self._antiAliasType = AntiAliasType.NORMAL;
       self._autoSize = TextFieldAutoSize.NONE;
       self._background = false;
-      self._backgroundColor = 0xffffff;
+      self._backgroundColor = 0xffffffff;
       self._border = false;
-      self._borderColor = 0;
+      self._borderColor = 0x000000ff;
       self._bottomScrollV = 1;
       self._caretIndex = 0;
       self._condenseWhite = false;
@@ -94,12 +96,13 @@ module Shumway.AVM2.AS.flash.text {
         self._defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
         self._defaultTextFormat.indent = (symbol.indent / 20) | 0;
         self._defaultTextFormat.leading = (symbol.leading / 20) | 0;
+
         self._multiline = symbol.multiline;
         self._wordWrap = symbol.wordWrap;
         self._embedFonts = symbol.embedFonts;
         self._selectable = symbol.selectable;
-        self._border = symbol.border;
 
+        self.border = symbol.border;
         if (symbol.html) {
           self.htmlText = symbol.initialText;
         } else {
@@ -120,6 +123,12 @@ module Shumway.AVM2.AS.flash.text {
       super();
       notImplemented("Dummy Constructor: public flash.text.TextField");
     }
+
+    _getTextContent(): Shumway.TextContent {
+      return this._textContent;
+    }
+
+    _textContent: Shumway.TextContent;
 
     // JS -> AS Bindings
 
@@ -178,8 +187,6 @@ module Shumway.AVM2.AS.flash.text {
     _wordWrap: boolean;
     _useRichTextClipboard: boolean;
 
-    _textContent: Shumway.TextContent;
-
     get alwaysShowSelection(): boolean {
       return this._alwaysShowSelection;
     }
@@ -219,15 +226,29 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set background(value: boolean) {
-      this._background = !!value;
+      value = !!value;
+      if (value === this._background) {
+        return;
+      }
+      this._background = value;
+      this._textContent.backgroundColor = value ? this._backgroundColor : 0;
+      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
     }
 
     get backgroundColor(): number /*uint*/ {
-      return this._backgroundColor;
+      return this._backgroundColor >> 8;
     }
 
     set backgroundColor(value: number /*uint*/) {
-      this._backgroundColor = value >>> 0;
+      value = ((value << 8) | 0xff) >>> 0;
+      if (value === this._backgroundColor) {
+        return;
+      }
+      this._backgroundColor = value;
+      if (this._background) {
+        this._textContent.backgroundColor = value;
+        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      }
     }
 
     get border(): boolean {
@@ -235,15 +256,29 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set border(value: boolean) {
-      this._border = !!value;
+      value = !!value;
+      if (value === this._border) {
+        return;
+      }
+      this._border = value;
+      this._textContent.borderColor = value ? this._borderColor : 0;
+      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
     }
 
     get borderColor(): number /*uint*/ {
-      return this._borderColor;
+      return this._borderColor >> 8;
     }
 
     set borderColor(value: number /*uint*/) {
-      this._borderColor = value >>> 0;
+      value = ((value << 8) | 0xff) >>> 0;
+      if (value === this._borderColor) {
+        return;
+      }
+      this._borderColor = value;
+      if (this._border) {
+        this._textContent.borderColor = value;
+        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      }
     }
 
     get bottomScrollV(): number /*int*/ {
@@ -300,6 +335,7 @@ module Shumway.AVM2.AS.flash.text {
       value = asCoerceString(value);
       this._textContent.parseHtml(value, this._multiline);
       this._htmlText = value;
+      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
     }
 
     get length(): number /*int*/ {
@@ -427,6 +463,7 @@ module Shumway.AVM2.AS.flash.text {
     set text(value: string) {
       somewhatImplemented("public flash.text.TextField::set text");
       this._textContent.plainText = asCoerceString(value);
+      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
     }
 
     get textColor(): number /*uint*/ {

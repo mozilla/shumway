@@ -101,6 +101,8 @@ module Shumway.Remoting.Player {
         this.output.writeInt(MessageTag.UpdateTextContent);
         this.output.writeInt(textContent._id);
         this.writeRectangle(bounds);
+        this.output.writeInt(textContent.backgroundColor);
+        this.output.writeInt(textContent.borderColor);
         this.output.writeInt(this.outputAssets.length);
         this.outputAssets.push(textContent.plainText);
         this.output.writeInt(numTextRuns);
@@ -205,7 +207,7 @@ module Shumway.Remoting.Player {
           }
         } else {
           // Check if we have a graphics object and write that as a child first.
-          var count = graphics || textContent ? 1 : 0;
+          var count = (graphics || textContent) ? 1 : 0;
           var children = displayObject._children;
           if (children) {
             count += children.length;
@@ -240,7 +242,11 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeCacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
+    writeCacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable,
+                       matrix: flash.geom.Matrix = null,
+                       colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
+                       clipRect: flash.geom.Rectangle = null, smoothing: boolean = false)
+    {
       this.output.writeInt(MessageTag.CacheAsBitmap);
       this.output.writeInt(bitmapData._id);
       if (BitmapData.isType(source)) {
