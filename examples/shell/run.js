@@ -139,6 +139,9 @@ load("../../build/ts/player/module.js");
 
 // Load Flash TS Dependencies
 Shumway.Player.enterTimeline("Load Flash TS Dependencies");
+
+load("../../build/ts/TextContent.js");
+
 load("../../build/ts/flash/geom/Matrix.js");
 load("../../build/ts/flash/geom/PerspectiveProjection.js");
 load("../../build/ts/flash/geom/ColorTransform.js");
@@ -355,7 +358,7 @@ load("../../build/ts/flash/accessibility/AccessibilityImplementation.js");
 //../../build/ts/flash/text/CSMSettings.js
 //../../build/ts/flash/events/StageVideoAvailabilityEvent.js
 //../../build/ts/flash/net/NetGroupSendMode.js
-//../../build/ts/flash/text/TextRun.js
+load("../../build/ts/flash/text/TextRun.js");
 //../../build/ts/flash/net/XMLSocket.js
 //../../build/ts/flash/utils/Dictionary.js
 //../../build/ts/flash/display3D/Context3DCompareMode.js
