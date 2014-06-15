@@ -1,4 +1,4 @@
-(function displayTests() {
+function displayTests() {
   function log(message) {
     console.info(message);
   }
@@ -7,14 +7,21 @@
   var Matrix = flash.geom.Matrix;
   var Bounds = Shumway.Bounds;
   var Point = flash.geom.Point;
-  var DisplayObject = flash.display.DisplayObject;
-  var VisitorFlags = flash.display.VisitorFlags;
 
+  var VisitorFlags = flash.display.VisitorFlags;
   var DisplayObjectFlags = flash.display.DisplayObjectFlags;
-  var InteractiveObject = flash.display.InteractiveObject;
+
+  var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  var InteractiveObject = flash.display.InteractiveObject;
   var Shape = flash.display.Shape;
+  var MorphShape = flash.display.MorphShape;
   var Sprite = flash.display.Sprite;
+  var MovieClip = flash.display.MovieClip;
+  var SimpleButton = flash.display.SimpleButton;
+  var TextField = flash.text.TextField;
+  var Video = flash.media.Video;
+  var Bitmap = flash.display.Bitmap;
 
   var identity = new Matrix();
   var scaleBy5 = new Matrix();
@@ -320,7 +327,7 @@
     eq(o.filters.length, 0);
   });
 
-  unitTests.push(function runInspectorSanityTests() {
+  unitTests.push(function matrix3DStuff() {
     var s = new Shape();
     neq(s.transform.matrix, null, "Make sure matrix is not null when no Z value is set.");
     eq(s.transform.matrix3D, null, "Matrix 3D should be null by default.");
@@ -337,4 +344,23 @@
     eq(s.width, 50, "Setting the width when the object is not added to a parent.");
   });
 
-})();
+  function canHaveGraphics() {
+    check(!new DisplayObject()._canHaveGraphics(), "DisplayObject can't have graphics");
+    check(!new DisplayObjectContainer()._canHaveGraphics(),
+          "DisplayObjectContainer can't have graphics");
+    check(!new InteractiveObject()._canHaveGraphics(), "InteractiveObject can't have graphics");
+    check(!new SimpleButton()._canHaveGraphics(), "SimpleButton can't have graphics");
+    check(!new TextField()._canHaveGraphics(), "TextField can't have graphics");
+    check(!new Bitmap()._canHaveGraphics(), "Bitmap can't have graphics");
+    // TODO: enable once enough of Video is implemented.
+//    check(!new Video()._canHaveGraphics(), "Video can't have graphics");
+
+    check(new Shape()._canHaveGraphics(), "Shape can have graphics");
+    check(new MorphShape()._canHaveGraphics(), "MorphShape can have graphics");
+    check(new Sprite()._canHaveGraphics(), "Sprite can have graphics");
+    check(new MovieClip()._canHaveGraphics(), "MovieClip can have graphics");
+  }
+  unitTests.push(canHaveGraphics);
+
+}
+displayTests();

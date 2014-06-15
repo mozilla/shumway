@@ -15,6 +15,7 @@
  */
 
 package flash.display {
+[native(cls='MorphShapeClass')]
 public final class MorphShape extends DisplayObject {
   public function MorphShape() {}
 }
