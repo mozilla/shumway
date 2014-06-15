@@ -896,7 +896,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get x(): number {
-      return this._matrix.tx * 0.05;
+      return this._matrix.tx / 20;
     }
 
     set x(value: number) {
@@ -911,7 +911,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get y(): number {
-      return this._matrix.ty * 0.05;
+      return this._matrix.ty / 20;
     }
 
     set y(value: number) {
@@ -1012,7 +1012,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     get width(): number {
       var bounds = this._getTransformedBounds(this._parent, true);
-      return bounds.width * 0.05;
+      return bounds.width / 20;
     }
 
     /**
@@ -1045,7 +1045,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     get height(): number {
       var bounds = this._getTransformedBounds(this._parent, true);
-      return bounds.height * 0.05;
+      return bounds.height / 20;
     }
 
     /**
