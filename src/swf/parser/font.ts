@@ -348,16 +348,19 @@ module Shumway.SWF.Parser {
     ;
 
     var advances = tag.advance;
-    var advance = 1024;
+    var maxAdvance = 1024;
     if (advances) {
-      advance = advances.reduce(function(currentMax, entry) {return max(currentMax, entry);});
+      maxAdvance = advances[0];
+      for (var j = 1; j < advances.length; j++) {
+        maxAdvance = max(maxAdvance, advances[j]);
+      }
     }
     tables['hhea'] =
     '\x00\x01\x00\x00' + // version
     toString16(ascent) + // ascender
     toString16(descent) + // descender
     toString16(leading) + // lineGap
-    toString16(advance) + // advanceWidthMax
+    toString16(maxAdvance) + // advanceWidthMax
     '\x00\x00' + // minLeftSidebearing
     '\x00\x00' + // minRightSidebearing
     '\x03\xb8' + // xMaxExtent
@@ -374,7 +377,7 @@ module Shumway.SWF.Parser {
 
     var hmtx = '\x00\x00\x00\x00';
     for (var i = 0; i < glyphCount; ++i)
-      hmtx += toString16(advance ? (advance[i] / resolution) : 1024) + '\x00\x00';
+      hmtx += toString16(advances ? (advances[i] / resolution) : 1024) + '\x00\x00';
     tables['hmtx'] = hmtx;
 
     if (tag.kerning) {
