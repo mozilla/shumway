@@ -140,7 +140,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageWidth(): number /*int*/ {
-      return (this._stageWidth * 0.05) | 0;
+      return (this._stageWidth / 20) | 0;
     }
 
     set stageWidth(value: number /*int*/) {
@@ -148,7 +148,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageHeight(): number /*int*/ {
-      return (this._stageHeight * 0.05) | 0;
+      return (this._stageHeight / 20) | 0;
     }
 
     set stageHeight(value: number /*int*/) {

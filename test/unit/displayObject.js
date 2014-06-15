@@ -106,9 +106,9 @@
       var v = Random.next() * 100;
       var vTwipsRounded = (v * 20 | 0) / 20;
       o.x = v;
-      eqFloat(o.x, vTwipsRounded, "x is rounded to twips");
+      eq(o.x, vTwipsRounded, "x is rounded to twips");
       o.y = v;
-      eqFloat(o.y, vTwipsRounded, "y is rounded to twips");
+      eq(o.y, vTwipsRounded, "y is rounded to twips");
     }
 
     for (var i = 0; i < 10; i++) {
@@ -153,14 +153,14 @@
     }
 
     s.width = 50;
-    eqFloat(s.width, 95.7, "Width: " + s.width);
-    eqFloat(s.height, 95.7, "Height: " + s.height);
+    eq(s.width, 95.7, "Width: " + s.width);
+    eq(s.height, 95.7, "Height: " + s.height);
     eqFloat(s.scaleX, 0.353, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 1, "ScaleY: " + s.scaleY);
 
     s.width = 10;
-    eqFloat(s.width, 52.85, "Width: " + s.width);
-    eqFloat(s.height, 52.85, "Height: " + s.height);
+    eq(s.width, 52.85, "Width: " + s.width);
+    eq(s.height, 52.85, "Height: " + s.height);
     eqFloat(s.scaleX, 0.070, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 0.676, "ScaleY: " + s.scaleY);
 
@@ -171,8 +171,8 @@
     eqFloat(s.scaleY, 0.373, "ScaleY: " + s.scaleY);
 
     s.rotation = 0;
-    eqFloat(s.width, 7.05, "Width: " + s.width);
-    eqFloat(s.height, 37.35, "Height: " + s.height);
+    eq(s.width, 7.05, "Width: " + s.width);
+    eq(s.height, 37.35, "Height: " + s.height);
     eqFloat(s.scaleX, 0.070, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 0.373, "ScaleY: " + s.scaleY);
   });
@@ -187,14 +187,14 @@
     }
 
     s.height = 50;
-    eqFloat(s.width, 95.7, "Width: " + s.width);
-    eqFloat(s.height, 95.7, "Height: " + s.height);
+    eq(s.width, 95.7, "Width: " + s.width);
+    eq(s.height, 95.7, "Height: " + s.height);
     eqFloat(s.scaleX, 1, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 0.353, "ScaleY: " + s.scaleY);
 
     s.height = 10;
-    eqFloat(s.width, 52.85, "Width: " + s.width);
-    eqFloat(s.height, 52.85, "Height: " + s.height);
+    eq(s.width, 52.85, "Width: " + s.width);
+    eq(s.height, 52.85, "Height: " + s.height);
     eqFloat(s.scaleX, 0.676, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 0.070, "ScaleY: " + s.scaleY);
 
@@ -205,8 +205,8 @@
     eqFloat(s.scaleY, 0.070, "ScaleY: " + s.scaleY);
 
     s.rotation = 0;
-    eqFloat(s.width, 37.35, "Width: " + s.width);
-    eqFloat(s.height, 7.05, "Height: " + s.height);
+    eq(s.width, 37.35, "Width: " + s.width);
+    eq(s.height, 7.05, "Height: " + s.height);
     eqFloat(s.scaleX, 0.373, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 0.070, "ScaleY: " + s.scaleY);
   });
@@ -244,8 +244,9 @@
     for (var i = 0; i < 100; i ++) {
       s.width = 10;
     }
-    eqFloat(s.width, 10, "Width should converge on 10");
-    eqFloat(s.height, 10, "Height should converge on 10");
+    eq(s.width, 10, "Width should converge on 10");
+    // TODO: height mustn't really converge on 10: it stabilizes at 10.5 in Flash.
+    eq(s.height, 10, "Height should converge on 10");
   });
 
   unitTests.push(function globalToLocalAndBack() {
@@ -259,8 +260,8 @@
       return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
-    eqFloat(s.globalToLocal(new Point(300, 0)).x, 100);
-    eqFloat(s.localToGlobal(new Point(100, 0)).x, 300);
+    eq(s.globalToLocal(new Point(300, 0)).x, 100);
+    eq(s.localToGlobal(new Point(100, 0)).x, 300);
 
     // Some random points.
     for (var i = 0; i < 10; i++) {
