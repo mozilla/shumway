@@ -215,7 +215,7 @@ module Shumway.AVM2.Runtime {
       release || assert (methodInfo.needsActivation());
       this.methodInfo = methodInfo;
       // ASC creates activation even if the method has no traits, weird.
-      // assert (methodInfo.traits.length);
+      // release || assert (methodInfo.traits.length);
 
       /**
        * Add activation traits.

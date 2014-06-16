@@ -49,7 +49,7 @@ module Shumway.AVM2.AS.flash.events {
         Event._instances[type] = instance;
         // Some events are documented as broadcast event in the AS3 docs. We can't set |_isBroadcastEvent| flag in the
         // constructor because if you create custom events with these types they do capture and bubble.
-        assert (Event.isBroadcastEventType(type));
+        release || assert (Event.isBroadcastEventType(type));
       }
       instance._isBroadcastEvent = true;
       instance._bubbles = bubbles;

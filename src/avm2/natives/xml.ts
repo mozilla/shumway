@@ -250,7 +250,7 @@ module Shumway.AVM2.AS {
       case ASXMLKind.ProcessingInstruction:
         return s + '<?' + node._name.localName + ' ' + node._value + '?>';
       default:
-        assert(kind === ASXMLKind.Element);
+        release || assert(kind === ASXMLKind.Element);
         break;
     }
 
@@ -1400,7 +1400,7 @@ module Shumway.AVM2.AS {
       // TODO review
       if (child._parent) {
         var index = child._parent._children.indexOf(child);
-        assert(index >= 0);
+        release || assert(index >= 0);
         child._parent._children.splice(index, 1);
       }
       this._children.push(child);

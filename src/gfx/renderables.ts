@@ -259,7 +259,7 @@ module Shumway.GFX {
     constructor(public type: PathType, public style: any, public strokeProperties: StrokeProperties)
     {
       this.path = new Path2D();
-      assert ((type === PathType.Stroke) === !!strokeProperties);
+      release || assert ((type === PathType.Stroke) === !!strokeProperties);
     }
   }
 
@@ -312,7 +312,7 @@ module Shumway.GFX {
       }
 
       var paths = this._paths;
-      assert(paths);
+      release || assert(paths);
 
       enterTimeline("RenderableShape.render", this);
       for (var i = 0; i < paths.length; i++) {
@@ -354,7 +354,7 @@ module Shumway.GFX {
     }
 
     private _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D): void {
-      assert(!this._paths);
+      release || assert(!this._paths);
       enterTimeline("RenderableShape.deserializePaths");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
@@ -384,7 +384,7 @@ module Shumway.GFX {
         var command = commands[commandIndex];
         switch (command) {
           case PathCommand.MoveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             if (formOpen && fillPath) {
               fillPath.lineTo(formOpenX, formOpenY);
               strokePath && strokePath.lineTo(formOpenX, formOpenY);
@@ -396,14 +396,14 @@ module Shumway.GFX {
             strokePath && strokePath.moveTo(x, y);
             break;
           case PathCommand.LineTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             x = coordinates[coordinatesIndex++] / 20;
             y = coordinates[coordinatesIndex++] / 20;
             fillPath && fillPath.lineTo(x, y);
             strokePath && strokePath.lineTo(x, y);
             break;
           case PathCommand.CurveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 4);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 4);
             cpX = coordinates[coordinatesIndex++] / 20;
             cpY = coordinates[coordinatesIndex++] / 20;
             x = coordinates[coordinatesIndex++] / 20;
@@ -412,7 +412,7 @@ module Shumway.GFX {
             strokePath && strokePath.quadraticCurveTo(cpX, cpY, x, y);
             break;
           case PathCommand.CubicCurveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 6);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 6);
             cpX = coordinates[coordinatesIndex++] / 20;
             cpY = coordinates[coordinatesIndex++] / 20;
             var cpX2 = coordinates[coordinatesIndex++] / 20;
@@ -423,7 +423,7 @@ module Shumway.GFX {
             strokePath && strokePath.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
             break;
           case PathCommand.BeginSolidFill:
-            assert(styles.bytesAvailable >= 4);
+            release || assert(styles.bytesAvailable >= 4);
             fillPath = this._createPath(PathType.Fill,
                                         ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt()),
                                         null, x, y);
@@ -461,13 +461,13 @@ module Shumway.GFX {
             strokePath = null;
             break;
           default:
-            assertUnreachable('Invalid command ' + command + ' encountered at index' +
-                              commandIndex + ' of ' + commandsCount);
+            release || assertUnreachable('Invalid command ' + command + ' encountered at index' +
+                                         commandIndex + ' of ' + commandsCount);
         }
       }
-      assert(styles.bytesAvailable === 0);
-      assert(commandIndex === commandsCount);
-      assert(coordinatesIndex === data.coordinatesPosition);
+      release || assert(styles.bytesAvailable === 0);
+      release || assert(commandIndex === commandsCount);
+      release || assert(coordinatesIndex === data.coordinatesPosition);
       if (formOpen && fillPath) {
         fillPath.lineTo(formOpenX, formOpenY);
         strokePath && strokePath.lineTo(formOpenX, formOpenY);
@@ -494,11 +494,11 @@ module Shumway.GFX {
 
     private _readGradient(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasGradient {
       // Assert at least one color stop.
-      assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
-                                      1 + 1 + 4 + 1 + 1);
+      release || assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
+                                                 1 + 1 + 4 + 1 + 1);
       var gradientType = styles.readUnsignedByte();
       var focalPoint = styles.readShort() * 2 / 0xff;
-      assert(focalPoint >= -1 && focalPoint <= 1);
+      release || assert(focalPoint >= -1 && focalPoint <= 1);
       var transform = this._readMatrix(styles);
       // This effectively applies the matrix to the line the gradient is drawn along:
       var x1 = transform.tx - transform.a;
@@ -524,13 +524,13 @@ module Shumway.GFX {
     }
 
     private _readBitmap(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasPattern {
-      assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
+      release || assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
       var textureIndex = styles.readUnsignedInt();
       var fillTransform: Matrix = this._readMatrix(styles);
       var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
       var smooth = styles.readBoolean();
       var texture = this._textures[textureIndex];
-      assert(texture._canvas);
+      release || assert(texture._canvas);
       var fillStyle: CanvasPattern = context.createPattern(texture._canvas, repeat);
       fillStyle.setTransform(fillTransform.toSVGMatrix());
       // TODO: make it possible to set smoothing for fills but not strokes and vice-versa.

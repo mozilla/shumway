@@ -39,7 +39,7 @@ module Shumway.SWF.Parser {
 
       if (record.hasFont) {
         var font = dictionary[record.fontId];
-        assert(font, 'undefined font', 'label');
+        release || assert(font, 'undefined font', 'label');
         codes = font.codes;
         dependencies.push(font.id);
         htmlText += ' face="' + font.name + '"';
@@ -62,7 +62,7 @@ module Shumway.SWF.Parser {
       var entry;
       while ((entry = entries[j++])) {
         var code = codes[entry.glyphIndex];
-        assert(code, 'undefined glyph', 'label');
+        release || assert(code, 'undefined glyph', 'label');
         var text = code >= 32 && code != 34 && code != 92 ? String.fromCharCode(code) :
                    '\\u' + (code + 0x10000).toString(16).substring(1);
         htmlText += text;

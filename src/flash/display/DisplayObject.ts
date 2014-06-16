@@ -300,7 +300,7 @@ module Shumway.AVM2.AS.flash.display {
       self._scrollRect = null;
       self._filters = [];
       self._blendMode = BlendMode.NORMAL;
-      assert (self._blendMode);
+      release || assert (self._blendMode);
       self._scale9Grid = null;
       self._loaderInfo = null;
       self._accessibilityProperties = null;
@@ -378,7 +378,7 @@ module Shumway.AVM2.AS.flash.display {
           // TODO: Fire RENDER events only for objects on the display list.
           event = events.Event.getBroadcastInstance(type);
       }
-      assert (event, "Invalid frame event.");
+      release || assert (event, "Invalid frame event.");
       events.EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 
@@ -621,7 +621,7 @@ module Shumway.AVM2.AS.flash.display {
         path.push(node);
         node = node._parent;
       }
-      assert (node === last, "Last ancestor is not an ancestor.");
+      release || assert (node === last, "Last ancestor is not an ancestor.");
       return path;
     }
 
@@ -699,7 +699,7 @@ module Shumway.AVM2.AS.flash.display {
                                                                   : new geom.ColorTransform();
         while (i >= 0) {
           ancestor = path[i--];
-          assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
+          release || assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
           m.preMultiply(ancestor._colorTransform);
           m.convertToFixedPoint();
           ancestor._concatenatedColorTransform.copyFrom(m);
@@ -1139,7 +1139,7 @@ module Shumway.AVM2.AS.flash.display {
       var node = this;
       do {
         if (node._stage === node) {
-          assert(flash.display.Stage.isType(node));
+          release || assert(flash.display.Stage.isType(node));
           return <flash.display.Stage>node;
         }
         node = node._parent;
@@ -1237,7 +1237,7 @@ module Shumway.AVM2.AS.flash.display {
         this._filters.length = 0;
       } else {
         this._filters = value.map(function (x: flash.filters.BitmapFilter) {
-          assert (flash.filters.BitmapFilter.isType(x));
+          release || assert (flash.filters.BitmapFilter.isType(x));
           return x.clone();
         });
       }
@@ -1332,7 +1332,7 @@ module Shumway.AVM2.AS.flash.display {
     get loaderInfo(): flash.display.LoaderInfo {
       var root = this.root;
       if (root) {
-        assert(root._loaderInfo, "No LoaderInfo object found on root.");
+        release || assert(root._loaderInfo, "No LoaderInfo object found on root.");
         return root._loaderInfo;
       }
       return null;
@@ -1379,7 +1379,7 @@ module Shumway.AVM2.AS.flash.display {
      * they don't need a back reference.
      */
     _setGraphics(graphics: flash.display.Graphics) {
-      assert(this._canHaveGraphics(), "Cannot set graphics on this type of display object.");
+      release || assert(this._canHaveGraphics(), "Cannot set graphics on this type of display object.");
       this._graphics = graphics;
       this._invalidateFillAndLineBounds();
       this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
@@ -1463,7 +1463,7 @@ module Shumway.AVM2.AS.flash.display {
      * Otherwise this is an unsinged number.
      */
     set opaqueBackground(value: any) {
-      assert (value === null || Shumway.isInteger(value));
+      release || assert (value === null || Shumway.isInteger(value));
       this._opaqueBackground = value;
     }
 

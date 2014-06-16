@@ -533,7 +533,7 @@ module Shumway.AVM2.Runtime {
     var baseClass = scope.object.baseClass;
     var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
     var openMethods = baseClass.traitsPrototype.asOpenMethods;
-    assert (openMethods && openMethods[resolved]);
+    release || assert (openMethods && openMethods[resolved]);
     var method = openMethods[resolved];
     var result = method.asApply(this, args);
     traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
@@ -1150,7 +1150,7 @@ module Shumway.AVM2.Runtime {
       return target.asLazyInitializer = new LazyInitializer(target);
     }
     constructor (target: Object) {
-      assert (!target.asLazyInitializer);
+      release || assert (!target.asLazyInitializer);
       this.target = target;
     }
     public getName() {
@@ -1178,11 +1178,11 @@ module Shumway.AVM2.Runtime {
         Shumway.Debug.notImplemented(String(target));
       }
       var name = this.name;
-      assert (!LazyInitializer._holder[name], "Holder already has " + name);
+      release || assert (!LazyInitializer._holder[name], "Holder already has " + name);
       Object.defineProperty(LazyInitializer._holder, name, {
         get: function () {
           var value = initialize();
-          assert (value);
+          release || assert (value);
           Object.defineProperty(LazyInitializer._holder, name, { value: value, writable: true });
           return value;
         }, configurable: true

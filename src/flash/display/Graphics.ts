@@ -447,12 +447,12 @@ module Shumway.AVM2.AS.flash.display {
     _parent: DisplayObject;
 
     _setParent(parent: DisplayObject) {
-      assert (!this._parent);
+      release || assert (!this._parent);
       this._parent = parent;
     }
 
     _invalidateParent() {
-      assert (this._parent, "Graphics instances must have a parent.");
+      release || assert (this._parent, "Graphics instances must have a parent.");
       this._parent._invalidateFillAndLineBounds();
     }
 
@@ -884,7 +884,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._hasFills) {
         containsPoint = this._fillContainsPoint(x, y);
       } else {
-        assert(hasLines, "Can't have non-empty bounds without line or fill set.");
+        release || assert(hasLines, "Can't have non-empty bounds without line or fill set.");
       }
       if (!containsPoint && includeLines) {
         containsPoint = this._linesContainsPoint(x, y);
@@ -923,7 +923,7 @@ module Shumway.AVM2.AS.flash.display {
         var command = commands[commandIndex];
         switch (command) {
           case PathCommand.MoveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             if (formOpen && fillActive &&
                 rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
             {
@@ -935,7 +935,7 @@ module Shumway.AVM2.AS.flash.display {
             // Continue outer loop.
             continue;
           case PathCommand.LineTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             toX = coordinates[coordinatesIndex++];
             toY = coordinates[coordinatesIndex++];
             if (fillActive && rayIntersectsLine(x, y, fromX, fromY, toX, toY)) {
@@ -943,7 +943,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             break;
           case PathCommand.CurveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 4);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 4);
             cpX = coordinates[coordinatesIndex++];
             cpY = coordinates[coordinatesIndex++];
             toX = coordinates[coordinatesIndex++];
@@ -953,7 +953,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             break;
           case PathCommand.CubicCurveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 6);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 6);
             cpX = coordinates[coordinatesIndex++];
             cpY = coordinates[coordinatesIndex++];
             var cp2X = coordinates[coordinatesIndex++];
@@ -986,14 +986,14 @@ module Shumway.AVM2.AS.flash.display {
           case PathCommand.LineEnd:
             break;
           default:
-            assertUnreachable('Invalid command ' + command + ' encountered at index' +
+            release || assertUnreachable('Invalid command ' + command + ' encountered at index' +
                               (commandIndex - 1) + ' of ' + commandsCount);
         }
         fromX = toX;
         fromY = toY;
       }
-      assert(commandIndex === commandsCount);
-      assert(coordinatesIndex === data.coordinatesPosition);
+      release || assert(commandIndex === commandsCount);
+      release || assert(coordinatesIndex === data.coordinatesPosition);
       if (formOpen && fillActive &&
           rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
       {
@@ -1039,13 +1039,13 @@ module Shumway.AVM2.AS.flash.display {
         var command = commands[commandIndex];
         switch (command) {
           case PathCommand.MoveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             fromX = coordinates[coordinatesIndex++];
             fromY = coordinates[coordinatesIndex++];
             // Continue outer loop.
             continue;
           case PathCommand.LineTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             if (width === 0) {
               fromX = coordinates[coordinatesIndex++];
               fromX = coordinates[coordinatesIndex++];
@@ -1090,7 +1090,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             break;
           case PathCommand.CurveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 4);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 4);
             if (width === 0) {
               coordinatesIndex += 2;
               fromX = coordinates[coordinatesIndex++];
@@ -1132,7 +1132,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             break;
           case PathCommand.CubicCurveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 6);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 6);
             if (width === 0) {
               coordinatesIndex += 4;
               fromX = coordinates[coordinatesIndex++];
@@ -1205,14 +1205,14 @@ module Shumway.AVM2.AS.flash.display {
           case PathCommand.LineEnd:
             break;
           default:
-            assertUnreachable('Invalid command ' + command + ' encountered at index' +
+            release || assertUnreachable('Invalid command ' + command + ' encountered at index' +
                               (commandIndex - 1) + ' of ' + commandsCount);
         }
         fromX = toX;
         fromY = toY;
       }
-      assert(commandIndex === commandsCount);
-      assert(coordinatesIndex === data.coordinatesPosition);
+      release || assert(commandIndex === commandsCount);
+      release || assert(coordinatesIndex === data.coordinatesPosition);
 //      leaveTimeline();
       return false;
     }

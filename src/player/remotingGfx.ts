@@ -152,7 +152,7 @@ module Shumway.Remoting.GFX {
             this._readCacheAsBitmap();
             break;
           default:
-            assert(false, 'Unknown MessageReader tag: ' + tag);
+            release || assert(false, 'Unknown MessageReader tag: ' + tag);
             break;
         }
       }
@@ -334,7 +334,7 @@ module Shumway.Remoting.GFX {
         for (var i = 0; i < count; i++) {
           var childId = input.readInt();
           var child = context._makeFrame(childId);
-          assert (child, "Child ", childId, " of ", id, " has not been sent yet.");
+          release || assert (child, "Child ", childId, " of ", id, " has not been sent yet.");
           container.addChild(child);
         }
       }

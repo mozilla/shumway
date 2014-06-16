@@ -198,12 +198,12 @@ module Shumway.AVM2.AS.flash.display {
           var info = data.result;
           var bytesLoaded = info.bytesLoaded;
           var bytesTotal = info.bytesTotal;
-          assert (bytesLoaded <= bytesTotal, "Loaded bytes should not exceed total bytes.");
+          release || assert (bytesLoaded <= bytesTotal, "Loaded bytes should not exceed total bytes.");
           loaderInfo._bytesLoaded = bytesLoaded;
           if (!loaderInfo._bytesTotal) {
             loaderInfo._bytesTotal = bytesTotal;
           } else {
-            assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes should not change.");
+            release || assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes should not change.");
           }
           if (this._loadStatus !== LoadStatus.Unloaded) {
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS, false,
@@ -307,7 +307,7 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.BinarySymbol.FromData(data);
           break;
       }
-      assert (symbol, "Unknown symbol type.");
+      release || assert (symbol, "Unknown symbol type.");
       loaderInfo.registerSymbol(symbol);
     }
 
@@ -323,7 +323,7 @@ module Shumway.AVM2.AS.flash.display {
           if (loaderInfo._allowCodeExecution) {
             var symbolClass = appDomain.getClass(asset.className);
             var symbol = loaderInfo.getSymbolById(asset.symbolId);
-            assert (symbol, "Symbol is not defined.");
+            release || assert (symbol, "Symbol is not defined.");
             symbolClass.defaultInitializerArgument = symbol;
             symbol.symbolClass = symbolClass;
           }
@@ -335,7 +335,7 @@ module Shumway.AVM2.AS.flash.display {
       //  for (var i = 0; i < exports.length; i++) {
       //    var asset = exports[i];
       //    var symbolInfo = dictionary[asset.symbolId];
-      //    assert (symbolInfo);
+      //    release || assert (symbolInfo);
       //    loader._avm1Context.addAsset(asset.className, symbolInfo.props);
       //  }
       //}

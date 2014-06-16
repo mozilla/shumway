@@ -746,7 +746,7 @@ module Shumway.AVM2 {
     }
 
     makeBlockSetFactory(length: number, blockById: Shumway.Map<Bytecode>) {
-      assert (!this.boundBlockSet);
+      release || assert (!this.boundBlockSet);
       this.boundBlockSet = <any>(function blockSet() {
         return new Shumway.AVM2.BlockSet(length, blockById);
       });

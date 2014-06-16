@@ -112,7 +112,7 @@ module Shumway.GFX {
         path.push(node);
         node = node._parent;
       }
-      assert (node === last, "Last ancestor is not an ancestor.");
+      release || assert (node === last, "Last ancestor is not an ancestor.");
       return path;
     }
 
@@ -401,7 +401,7 @@ module Shumway.GFX {
       this._mask = value;
       if (this._mask) {
         // TODO: Check if this assertion makes sense.
-        // assert (!this._mask._hasFlags(FrameFlags.IsMask));
+        // release || assert (!this._mask._hasFlags(FrameFlags.IsMask));
         this._mask._setFlags(FrameFlags.IsMask);
         this._mask.invalidate();
       }
@@ -422,7 +422,7 @@ module Shumway.GFX {
     }
 
     public getBounds(): Rectangle {
-      assert(false, "Override this.");
+      release || assert(false, "Override this.");
       return null;
     }
 
@@ -453,7 +453,7 @@ module Shumway.GFX {
         var m = ancestor ? ancestor._concatenatedColorMatrix.clone() : ColorMatrix.createIdentity();
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
-          assert (ancestor._hasFlags(FrameFlags.InvalidConcatenatedColorMatrix));
+          release || assert (ancestor._hasFlags(FrameFlags.InvalidConcatenatedColorMatrix));
           // TODO: Premultiply here.
           m.multiply(ancestor._colorMatrix);
           ancestor._concatenatedColorMatrix.set(m);
@@ -497,7 +497,7 @@ module Shumway.GFX {
         var m = ancestor ? ancestor._concatenatedMatrix.clone() : Matrix.createIdentity();
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
-          assert (ancestor._hasFlags(FrameFlags.InvalidConcatenatedMatrix));
+          release || assert (ancestor._hasFlags(FrameFlags.InvalidConcatenatedMatrix));
           m.preMultiply(ancestor._matrix);
           ancestor._concatenatedMatrix.set(m);
           ancestor._removeFlags(FrameFlags.InvalidConcatenatedMatrix);
@@ -566,7 +566,7 @@ module Shumway.GFX {
                   }
                 }
                 var child = frameContainer._children[i];
-                assert(child);
+                release || assert(child);
                 frameStack.push(child);
                 if (calculateTransform) {
                   var t = transform.clone();

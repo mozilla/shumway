@@ -106,7 +106,7 @@ module Shumway.Player {
     }
 
     public load(url: string) {
-      assert (!this._loader, "Can't load twice.");
+      release || assert (!this._loader, "Can't load twice.");
       var self = this;
       var stage = this._stage = new flash.display.Stage();
       var loader = this._loader = flash.display.Loader.getRootLoader();
@@ -278,7 +278,7 @@ module Shumway.Player {
     }
 
     private _leaveSyncLoop(): void {
-      assert (this._frameTimeout > -1);
+      release || assert (this._frameTimeout > -1);
       clearInterval(this._frameTimeout);
     }
 
@@ -313,7 +313,7 @@ module Shumway.Player {
     }
 
     private _leaveEventLoop(): void {
-      assert (this._frameTimeout > -1);
+      release || assert (this._frameTimeout > -1);
       clearInterval(this._frameTimeout);
       this._frameTimeout = -1;
     }

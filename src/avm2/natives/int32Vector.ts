@@ -56,9 +56,9 @@ module Shumway.AVM2.AS {
     }
 
     static compare(a, b, options, compareFunction) {
-      assertNotImplemented (!(options & Int32Vector.CASEINSENSITIVE), "CASEINSENSITIVE");
-      assertNotImplemented (!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
-      assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+      release || assertNotImplemented (!(options & Int32Vector.CASEINSENSITIVE), "CASEINSENSITIVE");
+      release || assertNotImplemented (!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
+      release || assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
       var result = 0;
       if (!compareFunction) {
         compareFunction = Int32Vector.defaultCompareFunction;

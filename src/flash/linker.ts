@@ -148,7 +148,7 @@ module Shumway.AVM2.AS {
   function makeStub(container, classSimpleName, shortName) {
     Object.defineProperty(container, shortName, {
       get: function () {
-        assert (Shumway.AVM2.Runtime.AVM2.instance, "AVM2 needs to be initialized.");
+        release || assert (Shumway.AVM2.Runtime.AVM2.instance, "AVM2 needs to be initialized.");
         var cls = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass(classSimpleName);
         release || assert(cls.instanceConstructor);
         Object.defineProperty(container, shortName, {

@@ -185,7 +185,7 @@ module Shumway.SWF.Parser {
       }
       // type 1 is a StraightEdge or CurvedEdge record
       else {
-        assert(record.type === 1);
+        release || assert(record.type === 1);
         if (!segment) {
           if (!defaultPath) {
             var style = {color: {red: 0, green: 0, blue: 0, alpha: 0}, width: 20};
@@ -345,7 +345,7 @@ module Shumway.SWF.Parser {
         }
         break;
       default:
-        assertUnreachable('shape parser encountered invalid fill style');
+        release || assertUnreachable('shape parser encountered invalid fill style');
     }
     if (!style.matrix) {
       style.transform = IDENTITY_MATRIX;
@@ -495,7 +495,7 @@ module Shumway.SWF.Parser {
      * Note: Don't modify the original, or the reversed copy, after this operation!
      */
     toReversed(): PathSegment {
-      assert(!this.isReversed);
+      release || assert(!this.isReversed);
       return new PathSegment(this.commands, this.data, this.morphData, null, null, true);
     }
 
@@ -518,9 +518,9 @@ module Shumway.SWF.Parser {
     }
 
     connectsTo(other: PathSegment): boolean {
-      assert(other !== this);
-      assert(this.endPoint);
-      assert(other.startPoint);
+      release || assert(other !== this);
+      release || assert(this.endPoint);
+      release || assert(other.startPoint);
       return this.endPoint === other.startPoint;
     }
 
@@ -534,7 +534,7 @@ module Shumway.SWF.Parser {
       var dataLength = this.data.length >> 2;
       var morphData = this.morphData ? this.morphData.ints : null;
       var data = this.data.ints;
-      assert(commands[0] === PathCommand.MoveTo);
+      release || assert(commands[0] === PathCommand.MoveTo);
       // If the segment's first moveTo goes to the current coordinates, we have to skip it.
       var offset = 0;
       if (data[0] === lastPosition.x && data[1] === lastPosition.y) {
@@ -545,7 +545,7 @@ module Shumway.SWF.Parser {
       for (var i = offset; i < commandsCount; i++) {
         dataPosition = this._writeCommand(commands[i], dataPosition, data, morphData, shape);
       }
-      assert(dataPosition === dataLength);
+      release || assert(dataPosition === dataLength);
       lastPosition.x = data[dataLength - 2];
       lastPosition.y = data[dataLength - 1];
     }
@@ -560,7 +560,7 @@ module Shumway.SWF.Parser {
       var commandsCount = this.commands.length;
       var dataPosition = (this.data.length >> 2) - 2;
       var commands = this.commands.bytes;
-      assert(commands[0] === PathCommand.MoveTo);
+      release || assert(commands[0] === PathCommand.MoveTo);
       var data = this.data.ints;
       var morphData = this.morphData ? this.morphData.ints : null;
 
@@ -589,7 +589,7 @@ module Shumway.SWF.Parser {
         } else {
         }
       }
-      assert(dataPosition === 0);
+      release || assert(dataPosition === 0);
       lastPosition.x = data[0];
       lastPosition.y = data[1];
     }
@@ -617,12 +617,12 @@ module Shumway.SWF.Parser {
     }
 
     addSegment(segment: PathSegment) {
-      assert(segment);
-      assert(segment.next === null);
-      assert(segment.prev === null);
+      release || assert(segment);
+      release || assert(segment.next === null);
+      release || assert(segment.prev === null);
       var currentHead = this._head;
       if (currentHead) {
-        assert(segment !== currentHead);
+        release || assert(segment !== currentHead);
         currentHead.next = segment;
         segment.prev = currentHead;
       }
@@ -740,16 +740,16 @@ module Shumway.SWF.Parser {
           case FillType.RepeatingBitmap:
           case FillType.NonsmoothedClippedBitmap:
           case FillType.NonsmoothedRepeatingBitmap:
-            assert(style.bitmapIndex > -1);
+            release || assert(style.bitmapIndex > -1);
             shape.beginBitmap(PathCommand.BeginBitmapFill, style.bitmapIndex, style.transform,
                               style.repeat, style.smooth);
             break;
           default:
-            assertUnreachable('Invalid fill style type: ' + style.type);
+            release || assertUnreachable('Invalid fill style type: ' + style.type);
         }
       } else {
         var style = this.lineStyle;
-        assert(style);
+        release || assert(style);
         switch (style.type) {
           case FillType.Solid:
             writeLineStyle(style, shape);
@@ -769,7 +769,7 @@ module Shumway.SWF.Parser {
           case FillType.RepeatingBitmap:
           case FillType.NonsmoothedClippedBitmap:
           case FillType.NonsmoothedRepeatingBitmap:
-            assert(style.bitmapIndex > -1);
+            release || assert(style.bitmapIndex > -1);
             writeLineStyle(style, shape);
             shape.beginBitmap(PathCommand.LineStyleBitmap, style.bitmapIndex, style.transform,
                               style.repeat, style.smooth);

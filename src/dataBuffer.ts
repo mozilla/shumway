@@ -626,7 +626,7 @@ module Shumway.ArrayUtilities {
           input._bitBuffer = input._bitLength = 0;
           var len = input.readUnsignedShort();
           var nlen = input.readUnsignedShort();
-          // assert((~nlen & 0xffff) === len, 'bad uncompressed block length', 'inflate');
+          // release || assert((~nlen & 0xffff) === len, 'bad uncompressed block length', 'inflate');
           if ((~nlen & 0xffff) !== len) {
             throwCompressedDataError();
           }
@@ -715,7 +715,7 @@ module Shumway.ArrayUtilities {
       }
       var code = codeTable.codes[buffer & ((1 << maxBits) - 1)];
       var len = code >> 16;
-      //assert(len, 'bad encoding', 'inflate');
+      //release || assert(len, 'bad encoding', 'inflate');
       if (!len) {
         throwCompressedDataError();
       }

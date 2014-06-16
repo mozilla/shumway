@@ -65,7 +65,7 @@ module Shumway.AVM2.AS {
         if (typeof key === "string" || typeof key === "number") {
           return key;
         }
-        assert (typeof key === "object" || typeof key === "function", typeof key);
+        release || assert (typeof key === "object" || typeof key === "function", typeof key);
         return undefined;
       }
 
