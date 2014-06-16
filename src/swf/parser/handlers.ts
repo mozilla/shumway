@@ -30,7 +30,9 @@ module Shumway.SWF.Parser {
     }
     var hasStrokes = $.hasStrokes = tagCode === 83 || tagCode === 84;
     if (hasStrokes) {
-      var $2 = $.strokeBbox = {};
+      // If the tag has two bounds, the first is the outer, stroke-including one.
+      $.strokeBbox = $0;
+      var $2 = $.bbox = {};
       bbox($bytes, $stream, $2, swfVersion, tagCode);
       if (isMorph) {
         var $3 = $.strokeBboxMorph = {};
