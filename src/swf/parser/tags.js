@@ -162,9 +162,9 @@ var DEFINE_SHAPE = {
   $isMorph: 'tagCode===46||tagCode===84',
   bboxMorph: ['isMorph', [RECT]],
   $hasStrokes: 'tagCode===83||tagCode===84',
-  $0: ['hasStrokes', [{
+  $0: ['canHaveStrokes', [{
     strokeBbox: RECT,
-    strokeBboxMorph: ['isMorph', [RECT]],
+    fillBoundsMorph: ['isMorph', [RECT]],
     $$reserved: UB(5),
     fillWinding: UB(1),
     nonScalingStrokes: UB(1),
