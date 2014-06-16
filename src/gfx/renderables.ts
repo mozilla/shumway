@@ -709,8 +709,8 @@ module Shumway.GFX {
     render(context: CanvasRenderingContext2D): void {
       var bounds = this._bounds;
 
-      context.rect(0, 0, bounds.w, bounds.h);
-      context.clip();
+      // context.rect(0, 0, bounds.w, bounds.h);
+      // context.clip();
 
       if (this._backgroundColor) {
         context.fillStyle =  ColorUtilities.rgbaToCSSStyle(this._backgroundColor);
