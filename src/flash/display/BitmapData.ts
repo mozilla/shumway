@@ -68,7 +68,9 @@ module Shumway.AVM2.AS.flash.display {
       if (this._symbol) {
         this._data = new Uint8Array(this._symbol.data.buffer);
         this._type = this._symbol.type;
-        if (this._type === ImageType.PremultipliedAlphaARGB) {
+        if (this._type === ImageType.PremultipliedAlphaARGB ||
+            this._type === ImageType.StraightAlphaARGB      ||
+            this._type === ImageType.StraightAlphaRGBA) {
           this._view = new Int32Array(this._symbol.data.buffer);
         }
       } else {
@@ -204,6 +206,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clone(): flash.display.BitmapData {
+      somewhatImplemented("public flash.display.BitmapData::clone");
+      // This should be coping the buffer not the view.
       var bd = new BitmapData(this._rect.width, this._rect.height, this._transparent, this._fillColorBGRA);
       bd._view.set(this._view);
       return bd;
@@ -332,6 +336,10 @@ module Shumway.AVM2.AS.flash.display {
 
       var s = sourceBitmapData._view;
       var t = this._view;
+
+      if (sourceBitmapData._type !== this._type) {
+        somewhatImplemented("public flash.display.BitmapData::copyPixels - Color Format Conversion");
+      }
 
       // Finally do the copy. All the math above is needed just so we don't do any branches inside
       // this hot loop.
