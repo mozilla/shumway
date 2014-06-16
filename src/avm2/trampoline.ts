@@ -185,7 +185,7 @@ module Shumway.AVM2.Runtime {
         if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
           log("Trampolining");
         }
-        counter.count("Executing Trampoline");
+        countTimeline("Executing Trampoline");
         Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Trampoline: " + description);
         if (!target) {
           target = forward(trampoline);
@@ -197,7 +197,7 @@ module Shumway.AVM2.Runtime {
        * Just triggers the trampoline without executing it.
        */
       trampoline.trigger = function trigger() {
-        counter.count("Triggering Trampoline");
+        countTimeline("Triggering Trampoline");
         if (!target) {
           target = forward(trampoline);
           release || assert (target);
@@ -215,14 +215,14 @@ module Shumway.AVM2.Runtime {
 
   export function makeMemoizer(qn, target): IMemoizer {
     function memoizer() {
-      counter.count("Runtime: Memoizing");
+      countTimeline("Runtime: Memoizing");
       // release || assert (!Object.prototype.hasOwnProperty.call(this, "class"), this);
       if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
         log("Memoizing: " + qn);
       }
       Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Memoizing: " + qn);
       if (isNativePrototype(this)) {
-        counter.count("Runtime: Method Closures");
+        countTimeline("Runtime: Method Closures");
         return bindSafely(target.value, this);
       }
       if (isTrampoline(target.value)) {
@@ -234,7 +234,7 @@ module Shumway.AVM2.Runtime {
       release || assert (!isTrampoline(target.value), "We should avoid binding trampolines.");
       var mc = null;
       if (isClass(this)) {
-        counter.count("Runtime: Static Method Closures");
+        countTimeline("Runtime: Static Method Closures");
         mc = bindSafely(target.value, this);
         defineReadOnlyProperty(this, qn, mc);
         return mc;
@@ -242,10 +242,10 @@ module Shumway.AVM2.Runtime {
       if (Object.prototype.hasOwnProperty.call(this, qn)) {
         var pd = Object.getOwnPropertyDescriptor(this, qn);
         if (pd.get) {
-          counter.count("Runtime: Method Closures");
+          countTimeline("Runtime: Method Closures");
           return bindSafely(target.value, this);
         }
-        counter.count("Runtime: Unpatched Memoizer");
+        countTimeline("Runtime: Unpatched Memoizer");
         return this[qn];
       }
       mc = bindSafely(target.value, this);
@@ -255,7 +255,7 @@ module Shumway.AVM2.Runtime {
       return mc;
     }
     var m: IMemoizer = <IMemoizer><any>memoizer;
-    counter.count("Runtime: Memoizers");
+    countTimeline("Runtime: Memoizers");
     m.isMemoizer = true;
     m.debugName = "Memoizer #" + vmNextMemoizerId++;
     return m;

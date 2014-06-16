@@ -22,7 +22,6 @@ module Shumway.AVM2.Compiler.IR {
   import top = Shumway.ArrayUtilities.top;
   import bitCount = Shumway.IntegerUtilities.bitCount;
   import IndentingWriter = Shumway.IndentingWriter;
-  import Timer = Shumway.Metrics.Timer;
   import pushUnique = Shumway.ArrayUtilities.pushUnique;
   import unique = Shumway.ArrayUtilities.unique;
 
@@ -271,7 +270,7 @@ module Shumway.AVM2.Compiler.IR {
       DFG.preOrderDepthFirstSearch(this.exit, function (node, visitor) {
         node.visitInputsNoConstants(visitor);
       }, function (node) {
-        counter.count(node.nodeName);
+        countTimeline(node.nodeName);
       });
       counter.trace(writer);
     }
@@ -702,7 +701,7 @@ module Shumway.AVM2.Compiler.IR {
      * () -> Map[id -> {def:Node, uses:Array[Node]}]
      */
     computeUses() {
-      Timer.start("computeUses");
+      enterTimeline("computeUses");
       var writer = debug && new IndentingWriter();
 
       debug && writer.enter("> Compute Uses");
@@ -724,7 +723,7 @@ module Shumway.AVM2.Compiler.IR {
         writer.leave("<");
         writer.leave("<");
       }
-      Timer.stop();
+      leaveTimeline();
       return uses;
     }
 

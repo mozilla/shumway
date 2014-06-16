@@ -19,6 +19,10 @@
 module Shumway.AVM2 {
   export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("AVM2");
 
+  export function countTimeline(name: string, value: number = 1, data?: any) {
+    // timelineBuffer && timelineBuffer.enter(name, data);
+  }
+
   export function enterTimeline(name: string, data?: any) {
     timelineBuffer && timelineBuffer.enter(name, data);
   }

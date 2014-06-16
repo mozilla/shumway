@@ -1360,7 +1360,7 @@ module Shumway.AVM2.Runtime {
     var cacheInfo = CODE_CACHE[methodInfo.abc.hash];
     if (!cacheInfo) {
       warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
-      counter.count("Code Cache ABC Miss");
+      countTimeline("Code Cache ABC Miss");
       return;
     }
     if (!cacheInfo.isInitialized) {
@@ -1375,17 +1375,17 @@ module Shumway.AVM2.Runtime {
     var method = cacheInfo.methods[methodInfo.index];
     if (!method) {
       if (methodInfo.isInstanceInitializer || methodInfo.isClassInitializer) {
-        counter.count("Code Cache Query On Initializer");
+        countTimeline("Code Cache Query On Initializer");
       } else {
-        counter.count("Code Cache MISS ON OTHER");
+        countTimeline("Code Cache MISS ON OTHER");
         warn("Shouldn't MISS: " + methodInfo + " " + methodInfo.debugName);
       }
       // warn("Cannot Find Code Cache For Method, name: " + methodInfo);
-      counter.count("Code Cache Miss");
+      countTimeline("Code Cache Miss");
       return;
     }
     log("Linking CC: " + methodInfo);
-    counter.count("Code Cache Hit");
+    countTimeline("Code Cache Hit");
     return method;
   }
 

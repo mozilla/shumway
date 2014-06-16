@@ -30,7 +30,6 @@ module Shumway.AVM2.Compiler {
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Runtime = Shumway.AVM2.Runtime
   import GlobalMultinameResolver = Shumway.AVM2.Runtime.GlobalMultinameResolver;
-  import Timer = Shumway.Metrics.Timer;
 
   var counter = Shumway.Metrics.Counter.instance;
 
@@ -162,7 +161,7 @@ module Shumway.AVM2.Compiler {
         var args = unique(phi.args);
         if (args.length === 1) {
           phi.seal();
-          counter.count("Builder: OptimizedPhi");
+          countTimeline("Builder: OptimizedPhi");
           return args[0];
         }
       }
@@ -703,7 +702,7 @@ module Shumway.AVM2.Compiler {
       if (qn) {
         return this.store(new IR.ASGetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), IR.Flags.RESOLVED | (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
       }
-      counter.count("Compiler: Slow ASGetProperty");
+      countTimeline("Compiler: Slow ASGetProperty");
       return this.store(new IR.ASGetProperty(region, state.store, object, multiname, (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
     }
 
@@ -828,11 +827,11 @@ module Shumway.AVM2.Compiler {
         return;
       }
       if (!isConstant(namespaces) || !isConstant(name) || multiname.isAttribute()) {
-        counter.count("GlobalMultinameResolver: Cannot resolve runtime multiname or attribute.");
+        countTimeline("GlobalMultinameResolver: Cannot resolve runtime multiname or attribute.");
         return;
       }
       if (isNumeric(name.value) || !isString(name.value) || !name.value) {
-        counter.count("GlobalMultinameResolver: Cannot resolve numeric or any names.");
+        countTimeline("GlobalMultinameResolver: Cannot resolve numeric or any names.");
         return;
       }
       return GlobalMultinameResolver.resolveMultiname(new Multiname(namespaces.value, name.value, multiname.flags));
@@ -1106,10 +1105,10 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.coerce:
             if (bc.ti && bc.ti.noCoercionNeeded) {
-              counter.count("Compiler: NoCoercionNeeded");
+              countTimeline("Compiler: NoCoercionNeeded");
               break;
             } else {
-              counter.count("Compiler: CoercionNeeded");
+              countTimeline("Compiler: CoercionNeeded");
             }
             value = pop();
             push(this.coerce(this.constantPool.multinames[bc.index], value));
@@ -1612,7 +1611,7 @@ module Shumway.AVM2.Compiler {
       release || assert (methodInfo.analysis);
       release || assert (!methodInfo.hasExceptions());
 
-      counter.count("Compiler: Compiled Methods");
+      countTimeline("Compiler: Compiled Methods");
 
       enterTimeline("Compiler");
       enterTimeline("Mark Loops");

@@ -465,7 +465,7 @@ module Shumway.AVM2.Runtime {
         }
       }
 
-      counter.count("ApplicationDomain: findDefiningScript");
+      countTimeline("ApplicationDomain: findDefiningScript");
 
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {

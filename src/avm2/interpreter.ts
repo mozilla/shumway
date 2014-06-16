@@ -111,7 +111,7 @@ module Shumway.AVM2 {
   export class Interpreter {
     public static interpretMethod($this, method, savedScope, methodArgs) {
       release || assert(method.analysis);
-      counter.count("Interpret Method");
+      countTimeline("Interpret Method");
       var abc = method.abc;
       var ints = abc.constantPool.ints;
       var uints = abc.constantPool.uints;
