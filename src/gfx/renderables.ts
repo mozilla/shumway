@@ -223,11 +223,11 @@ module Shumway.GFX {
         context.rect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);
         context.clip();
       }
-      var bounds = source.getBounds();
-      if (bounds.x || bounds.y) {
-        matrix.translate(bounds.x, bounds.y);
-      }
       if (matrix) {
+        var bounds = source.getBounds();
+        if (bounds.x || bounds.y) {
+          matrix.translate(bounds.x, bounds.y);
+        }
         context.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
       }
       context.drawImage(source._canvas, 0, 0);

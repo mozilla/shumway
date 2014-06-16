@@ -13,6 +13,7 @@ module Shumway.GFX {
 
   export class FrameContainer extends Frame {
     _children: Frame [];
+    _bounds: Rectangle;
     constructor() {
       super();
       this._children = [];
@@ -75,6 +76,9 @@ module Shumway.GFX {
     }
 
     public getBounds(): Rectangle {
+      if (!this._hasFlags(FrameFlags.InvalidBounds)) {
+        return this._bounds;
+      }
       var bounds = Rectangle.createEmpty();
       for (var i = 0; i < this._children.length; i++) {
         var child = this._children[i];
@@ -82,6 +86,8 @@ module Shumway.GFX {
         child.matrix.transformRectangleAABB(childBounds);
         bounds.union(childBounds);
       }
+      this._bounds = bounds;
+      this._removeFlags(FrameFlags.InvalidBounds);
       return bounds;
     }
 
