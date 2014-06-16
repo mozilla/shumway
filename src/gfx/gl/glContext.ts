@@ -84,7 +84,7 @@ module Shumway.GFX.GL {
           premultipliedAlpha: false
         })
       );
-      assert (this.gl, "Cannot create WebGL context.");
+      release || assert (this.gl, "Cannot create WebGL context.");
       this._programCache = Object.create(null);
       canvas.addEventListener('resize', this.resize.bind(this), false);
       this.resize();
@@ -219,7 +219,7 @@ module Shumway.GFX.GL {
         }
         this._textures.push(texture);
         region = texture.atlas.add(null, w, h);
-        assert (region);
+        release || assert (region);
       }
       return new WebGLTextureRegion(texture, region);
     }
@@ -277,7 +277,7 @@ module Shumway.GFX.GL {
       var request = new XMLHttpRequest();
       request.open("GET", path, false);
       request.send();
-      assert (request.status === 200, "File : " + path + " not found.");
+      release || assert (request.status === 200, "File : " + path + " not found.");
       var shaderType;
       if (endsWith(path, ".vert")) {
         shaderType = gl.VERTEX_SHADER;

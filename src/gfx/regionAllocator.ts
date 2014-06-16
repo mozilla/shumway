@@ -260,7 +260,7 @@ module Shumway.GFX.Geometry {
        */
       allocate(w: number, h: number): Region {
         w = Math.ceil(w); h = Math.ceil(h);
-        assert (w > 0 && h > 0);
+        release || assert (w > 0 && h > 0);
         var size = Math.max(w, h);
         if (w > this._w || h > this._h) {
           // Too big, cannot allocate this.

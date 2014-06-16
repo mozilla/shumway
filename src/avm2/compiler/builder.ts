@@ -221,7 +221,7 @@ module Shumway.AVM2.Compiler {
   }
 
   function asConstant(node: Value): Constant {
-    assert (node instanceof Constant);
+    release || assert (node instanceof Constant);
     return <Constant>node;
   }
 
@@ -909,7 +909,7 @@ module Shumway.AVM2.Compiler {
       release || assert (x instanceof IR.Node);
       if (bc.ti) {
         if (x.ty) {
-          // assert (x.ty == bc.ti.type);
+          // release || assert (x.ty == bc.ti.type);
         } else {
           x.ty = bc.ti.type;
         }
@@ -1582,7 +1582,7 @@ module Shumway.AVM2.Compiler {
           var type = typeState.local[i];
           var local = state.local[i];
           if (local.ty) {
-            // assert (type.isSubtypeOf(local.ty), local + " " + local.ty + " !== " + type + " " + type.merge(local.ty));
+            // release || assert (type.isSubtypeOf(local.ty), local + " " + local.ty + " !== " + type + " " + type.merge(local.ty));
           } else {
             local.ty = type;
           }

@@ -30,7 +30,7 @@ module Shumway.GFX {
 
     public addChildAt(child: Frame, index: number): Frame {
       this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
-      assert(index >= 0 && index <= this._children.length);
+      release || assert(index >= 0 && index <= this._children.length);
       if (index === this._children.length) {
         this._children.push(child);
       } else {
@@ -53,7 +53,7 @@ module Shumway.GFX {
 
     public removeChildAt(index: number) {
       this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
-      assert(index >= 0 && index < this._children.length);
+      release || assert(index >= 0 && index < this._children.length);
       var result = this._children.splice(index, 1);
       var child = result[0];
       if (!child) {

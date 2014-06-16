@@ -15,30 +15,32 @@ var console_info = console.info;
 var console_warn = console.warn;
 var console_error = console.error;
 
-console.log = function (str) {
-  if (state.logToConsole) {
-    console_log.apply(console, arguments);
-  }
-  appendToTraceTerminal([].join.call(arguments, " "));
-};
-console.info = function (str) {
-  if (state.logToConsole) {
-    console_info.apply(console, arguments);
-  }
-  appendToTraceTerminal([].join.call(arguments, " "), "#666600");
-};
-console.warn = function (str) {
-  if (state.logToConsole) {
-    console_warn.apply(console, arguments);
-  }
-  appendToTraceTerminal([].join.call(arguments, " "), "#FF6700");
-};
-console.error = function (str) {
-  if (state.logToConsole) {
-    console_error.apply(console, arguments);
-  }
-  appendToTraceTerminal([].join.call(arguments, " "), "#AA0000");
-};
+if (state.logToDebugPanel) {
+  console.log = function (str) {
+    if (state.logToConsole) {
+      console_log.apply(console, arguments);
+    }
+    appendToTraceTerminal([].join.call(arguments, " "));
+  };
+  console.info = function (str) {
+    if (state.logToConsole) {
+      console_info.apply(console, arguments);
+    }
+    appendToTraceTerminal([].join.call(arguments, " "), "#666600");
+  };
+  console.warn = function (str) {
+    if (state.logToConsole) {
+      console_warn.apply(console, arguments);
+    }
+    appendToTraceTerminal([].join.call(arguments, " "), "#FF6700");
+  };
+  console.error = function (str) {
+    if (state.logToConsole) {
+      console_error.apply(console, arguments);
+    }
+    appendToTraceTerminal([].join.call(arguments, " "), "#AA0000");
+  };
+}
 
 var frameTerminal = new Terminal(document.getElementById("frameTerminal"));
 frameTerminal.refreshEvery(100);

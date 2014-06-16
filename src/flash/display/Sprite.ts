@@ -44,7 +44,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         if (symbol.numFrames) {
           var frame = symbol.frames[0];
-          assert (frame, "Initial frame is not defined.");
+          release || assert (frame, "Initial frame is not defined.");
           self._initializeChildren(frame);
         }
       }

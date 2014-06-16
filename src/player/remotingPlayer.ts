@@ -120,7 +120,7 @@ module Shumway.Remoting.Player {
       // Device fonts can be skipped, they obviously should exist on the device.
       if (font.fontType === 'embedded') {
         var symbol = font._symbol;
-        assert(symbol);
+        release || assert(symbol);
         this.output.writeInt(MessageTag.RegisterFont);
         this.output.writeInt(font._id);
         this.output.writeBoolean(symbol.bold);
@@ -379,7 +379,7 @@ module Shumway.Remoting.Player {
         case MessageTag.FocusEvent:
           return this._readFocusEvent();
       }
-      assert(false, 'Unknown MessageReader tag: ' + tag);
+      release || assert(false, 'Unknown MessageReader tag: ' + tag);
     }
 
     private _readFocusEvent(): FocusEventData {

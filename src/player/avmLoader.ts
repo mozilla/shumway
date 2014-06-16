@@ -41,7 +41,7 @@ module Shumway {
     }
 
     var avm2;
-    assert (builtinPath);
+    release || assert (builtinPath);
     new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
       AVM2.initialize(sysMode, appMode, avm1Path ? loadAVM1 : null);
       avm2 = AVM2.instance;

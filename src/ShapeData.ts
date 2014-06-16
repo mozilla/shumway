@@ -282,7 +282,7 @@ module Shumway {
     lineStyle(thickness: number, color: number, pixelHinting: boolean,
               scaleMode: number, caps: number, joints: number, miterLimit: number): void
     {
-      assert(thickness === (thickness|0), thickness >= 0 && thickness <= 0xff * 20);
+      release || assert(thickness === (thickness|0), thickness >= 0 && thickness <= 0xff * 20);
       this.ensurePathCapacities(2, 0);
       this.commands[this.commandsPosition++] = PathCommand.LineStyleSolid;
       this.coordinates[this.coordinatesPosition++] = thickness;
@@ -303,7 +303,7 @@ module Shumway {
     beginBitmap(pathCommand: PathCommand, bitmapId: number, matrix: ShapeMatrix,
                 repeat: boolean, smooth: boolean): void
     {
-      assert(pathCommand === PathCommand.BeginBitmapFill ||
+      release || assert(pathCommand === PathCommand.BeginBitmapFill ||
              pathCommand === PathCommand.LineStyleBitmap);
 
       this.ensurePathCapacities(1, 0);
@@ -324,14 +324,14 @@ module Shumway {
                   gradientType: number, matrix: ShapeMatrix,
                   spread: number, interpolation: number, focalPointRatio: number)
     {
-      assert(pathCommand === PathCommand.BeginGradientFill ||
+      release || assert(pathCommand === PathCommand.BeginGradientFill ||
              pathCommand === PathCommand.LineStyleGradient);
 
       this.ensurePathCapacities(1, 0);
       this.commands[this.commandsPosition++] = pathCommand;
       var styles: DataBuffer = this.styles;
       styles.writeUnsignedByte(gradientType);
-      assert(focalPointRatio === (focalPointRatio|0));
+      release || assert(focalPointRatio === (focalPointRatio|0));
       styles.writeShort(focalPointRatio);
 
       this._writeStyleMatrix(matrix);

@@ -333,7 +333,7 @@ module Shumway.AVM2.Compiler.Looper {
     }
 
     makeBlockSetFactory(length: number, blockById: Block []) {
-      assert (!this.boundBlockSet);
+      release || assert (!this.boundBlockSet);
       this.boundBlockSet = <any>(function blockSet() {
         return new BlockSet(length, <any>blockById);
       });

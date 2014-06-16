@@ -1008,7 +1008,7 @@ module Shumway {
     export function variableLengthEncodeInt32(n) {
       var e = _encoding;
       var bitCount = (32 - Math.clz32(n));
-      assert (bitCount <= 32, bitCount);
+      release || assert (bitCount <= 32, bitCount);
       var l = Math.ceil(bitCount / 6);
       // Encode length followed by six bit chunks.
       var s = e[l];
@@ -1038,7 +1038,7 @@ module Shumway {
       } else if (c === 95) {
         return 63;
       }
-      assert (false, "Invalid Encoding");
+      release || assert (false, "Invalid Encoding");
     }
 
     export function variableLengthDecodeInt32(s) {
@@ -1410,8 +1410,8 @@ module Shumway {
      * http://geomalgorithms.com/a03-_inclusion.html
      */
     export function pointInPolygon(x: number, y: number, polygon: Float32Array): boolean {
-      // assert (((polygon.length & 1) === 0) && polygon.length >= 8);
-      // assert (polygon[0] === polygon[polygon.length - 2] &&
+      // release || assert (((polygon.length & 1) === 0) && polygon.length >= 8);
+      // release || assert (polygon[0] === polygon[polygon.length - 2] &&
       //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
       var crosses = 0;
       var n = polygon.length - 2;
@@ -1449,8 +1449,8 @@ module Shumway {
     }
 
     export function pointInPolygonInt32(x: number, y: number, polygon: Int32Array): boolean {
-      // assert (((polygon.length & 1) === 0) && polygon.length >= 8);
-      // assert (polygon[0] === polygon[polygon.length - 2] &&
+      // release || assert (((polygon.length & 1) === 0) && polygon.length >= 8);
+      // release || assert (polygon[0] === polygon[polygon.length - 2] &&
       //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
       x = x | 0;
       y = y | 0;
@@ -2578,8 +2578,8 @@ module Shumway {
     }
 
     private assertValid(): void {
-//      assert(this._xMax >= this._xMin);
-//      assert(this._yMax >= this._yMin);
+//      release || assert(this._xMax >= this._xMin);
+//      release || assert(this._yMax >= this._yMin);
     }
   }
 

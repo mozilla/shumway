@@ -31,7 +31,7 @@ module Shumway.Timeline {
     symbolClass: Shumway.AVM2.AS.ASClass;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
-      assert (isInteger(id));
+      release || assert (isInteger(id));
       this.id = id;
       this.symbolClass = symbolClass;
     }
@@ -77,7 +77,7 @@ module Shumway.Timeline {
       var textures = this.graphics.getUsedTextures();
       for (var i = 0; i < dependencies.length; i++) {
         var bitmap = <BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
-        assert(bitmap, "Bitmap symbol is not defined.");
+        release || assert(bitmap, "Bitmap symbol is not defined.");
         var bitmapData = bitmap.symbolClass.initializeFrom(bitmap);
         bitmap.symbolClass.instanceConstructorNoInitialize.call(bitmapData);
         textures.push(bitmapData);
@@ -179,7 +179,7 @@ module Shumway.Timeline {
       if (tag.hasFont) {
         symbol.size = tag.fontHeight;
         var font = flash.text.Font.getBySymbolId(tag.fontId);
-        assert (font, "Font is not defined.");
+        release || assert (font, "Font is not defined.");
         symbol.font = font.fontName;
         if (tag.fontClass) {
           var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
@@ -416,7 +416,7 @@ module Shumway.Timeline {
             var events = null;
             if (cmd.symbolId) {
               symbol = loaderInfo.getSymbolById(cmd.symbolId);
-              assert (symbol, "Symbol is not defined.");
+              release || assert (symbol, "Symbol is not defined.");
             }
             if (cmd.hasMatrix) {
               matrix = flash.geom.Matrix.FromUntyped(cmd.matrix);
@@ -440,7 +440,7 @@ module Shumway.Timeline {
                   case 6: filter = flash.filters.ColorMatrixFilter.FromUntyped(obj); break;
                   case 7: filter = flash.filters.GradientBevelFilter.FromUntyped(obj); break;
                 }
-                assert (filter, "Unknown filter type.");
+                release || assert (filter, "Unknown filter type.");
                 filters.push(filter);
               }
             }

@@ -52,7 +52,7 @@ module Shumway.SWF.Parser {
       }
       chunks.push(bytes.subarray(begin, i));
     } while (i < n);
-    assert(image.width && image.height, 'bad image', 'jpeg');
+    release || assert(image.width && image.height, 'bad image', 'jpeg');
     return chunks;
   }
 
@@ -109,7 +109,7 @@ module Shumway.SWF.Parser {
 
         if (tag.incomplete) {
           var tables = dictionary[0];
-          assert(tables, 'missing tables', 'jpeg');
+          release || assert(tables, 'missing tables', 'jpeg');
           var header = tables.data;
           if (header && header.size) {
             chunks[0] = chunks[0].subarray(2);

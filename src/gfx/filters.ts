@@ -82,7 +82,7 @@ module Shumway.GFX {
     private _m: Float32Array;
 
     constructor (m: any) {
-      assert (m.length === 20);
+      release || assert (m.length === 20);
       this._m = new Float32Array(m);
     }
 

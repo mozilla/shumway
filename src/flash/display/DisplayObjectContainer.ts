@@ -144,7 +144,7 @@ module Shumway.AVM2.AS.flash.display {
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
       index = index | 0;
 
-      assert (child._hasFlags(DisplayObjectFlags.Constructed), "Child is not fully constructed.");
+      release || assert (child._hasFlags(DisplayObjectFlags.Constructed), "Child is not fully constructed.");
       if (child === this) {
         throwError('ArgumentError', Errors.CantAddSelfError);
       }

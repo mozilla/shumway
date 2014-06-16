@@ -288,7 +288,7 @@ module Shumway.AVM2.AS {
      * functions: Object, Array, etc. Here, we take over the builtin function prototype.
      */
     static configureBuiltinPrototype(self: ASClass, baseClass: ASClass) {
-      assert (self.instanceConstructor);
+      release || assert (self.instanceConstructor);
       self.baseClass = baseClass;
       self.dynamicPrototype = self.traitsPrototype = self.instanceConstructor.prototype;
     }
@@ -320,8 +320,8 @@ module Shumway.AVM2.AS {
      * Called when the class is actually constructed during bytecode execution.
      */
     static create(self: ASClass, baseClass: ASClass, instanceConstructor: any) {
-      assert (!self.instanceConstructorNoInitialize, "This should not be set yet.");
-      assert (!self.dynamicPrototype && !self.traitsPrototype, "These should not be set yet.");
+      release || assert (!self.instanceConstructorNoInitialize, "This should not be set yet.");
+      release || assert (!self.dynamicPrototype && !self.traitsPrototype, "These should not be set yet.");
       if (self.instanceConstructor && !isPrototypeWriteable(self.instanceConstructor)) {
         ASClass.configureBuiltinPrototype(self, baseClass);
       } else {
@@ -414,7 +414,7 @@ module Shumway.AVM2.AS {
       }
 
       if (self.initializers) {
-        assert (self.instanceConstructorNoInitialize === self.instanceConstructor);
+        release || assert (self.instanceConstructorNoInitialize === self.instanceConstructor);
         var previousConstructor: any = self;
         self.instanceConstructor = <any>function (...args) {
           ASClass.runInitializers(this, undefined);
@@ -468,7 +468,7 @@ module Shumway.AVM2.AS {
           if (!containsSymbol(symbols, trait.name.name)) {
             continue;
           }
-          assert (!trait.name.getNamespace().isPrivate(), "Why are you linking against private members?");
+          release || assert (!trait.name.getNamespace().isPrivate(), "Why are you linking against private members?");
           if (trait.isConst()) {
             notImplemented("Don't link against const traits.");
             return;
@@ -481,11 +481,11 @@ module Shumway.AVM2.AS {
               set: <(any) => void>new Function("v", "this." + qn + " = v")
             });
           } else if (trait.isMethod()) {
-            assert (!object[name], "Symbol should not already exist.")
-            assert (object.asOpenMethods[qn], "There should be an open method for this symbol.");
+            release || assert (!object[name], "Symbol should not already exist.")
+            release || assert (object.asOpenMethods[qn], "There should be an open method for this symbol.");
             object[name] = object.asOpenMethods[qn];
           } else if (trait.isGetter()) {
-            assert (hasOwnGetter(object, qn), "There should be an getter method for this symbol.");
+            release || assert (hasOwnGetter(object, qn), "There should be an getter method for this symbol.");
             Object.defineProperty(object, name, {
               get: <() => any>new Function("", "return this." + qn),
             });
@@ -626,12 +626,12 @@ module Shumway.AVM2.AS {
     }
 
     morphIntoASClass(classInfo: ClassInfo): void {
-      assert (this.classInfo === classInfo);
-      assert (this instanceof ASClass);
+      release || assert (this.classInfo === classInfo);
+      release || assert (this instanceof ASClass);
     }
 
     get native_prototype(): Object {
-      assert (this.dynamicPrototype);
+      release || assert (this.dynamicPrototype);
       return this.dynamicPrototype;
     }
 
@@ -738,13 +738,13 @@ module Shumway.AVM2.AS {
       }
 
       if (self === ASObject) {
-        assert (!self.baseClass, "ASObject should have no base class.");
+        release || assert (!self.baseClass, "ASObject should have no base class.");
       } else {
-        assert (self.baseClass, self.classInfo.instanceInfo.name + " has no base class.");
-        assert (self.baseClass !== self);
+        release || assert (self.baseClass, self.classInfo.instanceInfo.name + " has no base class.");
+        release || assert (self.baseClass !== self);
       }
 
-      assert (self.traitsPrototype === self.instanceConstructor.prototype, "The traitsPrototype is not set correctly.");
+      release || assert (self.traitsPrototype === self.instanceConstructor.prototype, "The traitsPrototype is not set correctly.");
 
       if (self !== ASObject) {
         if (ASObject.staticNatives === self.staticNatives) {
@@ -1506,12 +1506,12 @@ module Shumway.AVM2.AS {
   var nativeFunctions: Shumway.Map<Function> = Shumway.ObjectUtilities.createMap<Function>();
 
   export function registerNativeClass(name: string, cls: ASClass) {
-    assert (!nativeClasses[name], "Native class: " + name + " is already registered.");
+    release || assert (!nativeClasses[name], "Native class: " + name + " is already registered.");
     nativeClasses[name] = cls;
   }
 
   export function registerNativeFunction(name: string, fn: Function) {
-    assert (!nativeFunctions[name], "Native function: " + name + " is already registered.");
+    release || assert (!nativeFunctions[name], "Native function: " + name + " is already registered.");
     nativeFunctions[name] = fn;
   }
 
@@ -1547,7 +1547,7 @@ module Shumway.AVM2.AS {
     classScope.object = cls;
     var instanceConstructor = null;
     if (ii.init.isNative()) {
-      assert (isNativeClass);
+      release || assert (isNativeClass);
       instanceConstructor = cls;
     } else {
       instanceConstructor = createFunction(ii.init, classScope, false);
@@ -1620,10 +1620,10 @@ module Shumway.AVM2.AS {
             value = pd.set;
           }
         } else {
-          assert (trait.isMethod());
+          release || assert (trait.isMethod());
           value = native[fullName];
         }
-        assert (value, "Method or Accessor property exists but it's undefined: " + trait);
+        release || assert (value, "Method or Accessor property exists but it's undefined: " + trait);
         return value;
       }
     }
@@ -1946,7 +1946,7 @@ module Shumway.AVM2.AS {
                 encounteredAccessors[name] = val;
                 break;
               default:
-                assert(false, "Unknown trait type: " + t.kind);
+                release || assert(false, "Unknown trait type: " + t.kind);
                 break;
             }
           }

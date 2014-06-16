@@ -36,7 +36,7 @@ module Shumway.AVM2.AS.flash.filters {
     public static FromUntyped(obj: any) {
       // obj.colors is an array of objects with separate color components
       // here it contains exactly one color object, which maps to color and alpha
-      assert(obj.colors && obj.colors.length === 1, "colors must be Array of length 1");
+      release || assert(obj.colors && obj.colors.length === 1, "colors must be Array of length 1");
       var color: number = ColorUtilities.componentsToRGB(obj.colors[0]);
       var alpha: number = (obj.colors[0].alpha & 0xff) / 255;
       return new GlowFilter(

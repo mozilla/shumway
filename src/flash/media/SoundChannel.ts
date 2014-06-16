@@ -265,7 +265,7 @@ module Shumway.AVM2.AS.flash.media {
       this._applySoundTransform();
     }
     _playSoundDataViaChannel(soundData, startTime, loops) {
-      assert(soundData.pcm, 'no pcm data found');
+      release || assert(soundData.pcm, 'no pcm data found');
 
       this._registerWithSoundMixer();
       var self = this;

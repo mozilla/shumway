@@ -70,7 +70,7 @@ module Shumway.AVM2.Verifier {
     };
 
     static from(info: Info, domain: ApplicationDomain): Type {
-      assert (info.hash);
+      release || assert (info.hash);
       var type = Type._cache[info.hash];
       if (!type) {
         type = Type._cache[info.hash] = new TraitsType(info, domain);
@@ -209,32 +209,32 @@ module Shumway.AVM2.Verifier {
     }
 
     asTraitsType(): TraitsType {
-      assert (this.isTraitsType());
+      release || assert (this.isTraitsType());
       return <TraitsType>this;
     }
 
     asMethodType(): MethodType {
-      assert (this.isMethodType());
+      release || assert (this.isMethodType());
       return <MethodType>this;
     }
 
     asMultinameType(): MultinameType {
-      assert (this.isMultinameType());
+      release || assert (this.isMultinameType());
       return <MultinameType>this;
     }
 
     asConstantType(): ConstantType {
-      assert (this.isConstantType());
+      release || assert (this.isConstantType());
       return <ConstantType>this;
     }
 
     getConstantValue(): any {
-      assert (this.isConstantType());
+      release || assert (this.isConstantType());
       return (<ConstantType>this).value;
     }
 
     asParameterizedType(): ParameterizedType {
-      assert (this.isParameterizedType());
+      release || assert (this.isParameterizedType());
       return <ParameterizedType>this;
     }
   }
@@ -583,7 +583,7 @@ module Shumway.AVM2.Verifier {
       if (this.writer) {
         this.methodInfo.trace(this.writer);
       }
-      assert(methodInfo.localCount >= methodInfo.parameters.length + 1);
+      release || assert(methodInfo.localCount >= methodInfo.parameters.length + 1);
       this._verifyBlocks(this._prepareEntryState());
     }
 
@@ -613,7 +613,7 @@ module Shumway.AVM2.Verifier {
         entryState.local.push(Type.Undefined);
       }
 
-      assert(entryState.local.length === methodInfo.localCount);
+      release || assert(entryState.local.length === methodInfo.localCount);
 
       return entryState;
     }
@@ -1470,7 +1470,7 @@ module Shumway.AVM2.Verifier {
         if (object.class) {
           return Type.from(object.class.classInfo.instanceInfo, domain);
         }
-        assert (false, object.toString());
+        release || assert (false, object.toString());
         return Type.Any;
       });
     }
