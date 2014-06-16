@@ -26,7 +26,6 @@ var inBrowser = typeof console != "undefined";
 // declare var getComputedStyle;
 
 /** @const */ var release: boolean = false;
-/** @const */ var debug: boolean = !release;
 
 declare var dateNow: () => number;
 

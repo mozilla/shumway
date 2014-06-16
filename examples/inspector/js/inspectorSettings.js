@@ -52,6 +52,7 @@ var GUI = (function () {
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
 
   var inspectorOptions = gui.addFolder("Inspector Options");
+  inspectorOptions.add(window, "release");
   inspectorOptions.add(state, "logToConsole").onChange(saveInspectorOption);
   inspectorOptions.add(state, "logToDebugPanel").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);

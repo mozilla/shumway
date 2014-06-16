@@ -529,9 +529,6 @@ module Shumway.AVM2.Runtime {
     }
 
     public broadcastMessage(type, message, origin) {
-      if (debug) {
-        Timer.start("broadcast: " + type);
-      }
       try {
         this.onMessage.notify1(type, {
           data: message,
@@ -543,9 +540,6 @@ module Shumway.AVM2.Runtime {
         avm2.exceptions.push({source: type, message: e.message,
           stack: e.stack});
         throw e;
-      }
-      if (debug) {
-        Timer.stop();
       }
     }
 
