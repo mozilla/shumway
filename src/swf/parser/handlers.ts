@@ -18,38 +18,33 @@
 
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
-  function defineShape($bytes, $stream, $, swfVersion, tagCode) {
-    $ || ($ = {});
-    $.id = readUi16($bytes, $stream);
-    var $0 = $.bbox = {};
-    bbox($bytes, $stream, $0, swfVersion, tagCode);
-    var isMorph = $.isMorph = tagCode === 46 || tagCode === 84;
+  function defineShape($bytes, $stream, output, swfVersion, tagCode) {
+    output || (output = {});
+    output.id = readUi16($bytes, $stream);
+    var lineBounds = output.lineBounds = {};
+    bbox($bytes, $stream, lineBounds, swfVersion, tagCode);
+    var isMorph = output.isMorph = tagCode === 46 || tagCode === 84;
     if (isMorph) {
-      var $1 = $.bboxMorph = {};
-      bbox($bytes, $stream, $1, swfVersion, tagCode);
+      var lineBoundsMorph = output.lineBoundsMorph = {};
+      bbox($bytes, $stream, lineBoundsMorph, swfVersion, tagCode);
     }
-    var hasStrokes = $.hasStrokes = tagCode === 83 || tagCode === 84;
-    if (hasStrokes) {
-      // If the tag has two bounds, the first is the outer, stroke-including one.
-      $.strokeBbox = $0;
-      var $2 = $.bbox = {};
-      bbox($bytes, $stream, $2, swfVersion, tagCode);
+    var canHaveStrokes = output.canHaveStrokes = tagCode === 83 || tagCode === 84;
+    if (canHaveStrokes) {
+      var fillBounds = output.fillBounds = {};
+      bbox($bytes, $stream, fillBounds, swfVersion, tagCode);
       if (isMorph) {
-        var $3 = $.strokeBboxMorph = {};
-        bbox($bytes, $stream, $3, swfVersion, tagCode);
+        var fillBoundsMorph = output.fillBoundsMorph = {};
+        bbox($bytes, $stream, fillBoundsMorph, swfVersion, tagCode);
       }
-      var reserved = readUb($bytes, $stream, 5);
-      $.fillWinding = readUb($bytes, $stream, 1);
-      $.nonScalingStrokes = readUb($bytes, $stream, 1);
-      $.scalingStrokes = readUb($bytes, $stream, 1);
+      output.flags = readUi8($bytes, $stream);
     }
     if (isMorph) {
-      $.offsetMorph = readUi32($bytes, $stream);
-      morphShapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
+      output.offsetMorph = readUi32($bytes, $stream);
+      morphShapeWithStyle($bytes, $stream, output, swfVersion, tagCode, isMorph, canHaveStrokes);
     } else {
-      shapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
+      shapeWithStyle($bytes, $stream, output, swfVersion, tagCode, isMorph, canHaveStrokes);
     }
-    return $;
+    return output;
   }
 
   function placeObject($bytes, $stream, $, swfVersion, tagCode) {

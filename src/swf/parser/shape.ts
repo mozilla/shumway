@@ -391,17 +391,17 @@ module Shumway.SWF.Parser {
     var shape = convertRecordsToShapeData(tag.records, fillPaths, linePaths,
                                           dictionary, dependencies, tag.recordsMorph || null);
 
-    var fillBounds: Bounds = Bounds.FromUntyped(tag.bbox);
-    var lineBounds: Bounds = tag.strokeBbox ? Bounds.FromUntyped(tag.strokeBbox) : null;
+    var lineBounds: Bounds = Bounds.FromUntyped(tag.lineBounds);
+    var fillBounds: Bounds = tag.fillBounds ? Bounds.FromUntyped(tag.fillBounds) : null;
 
-    if (tag.bboxMorph) {
-      var mbox = tag.bboxMorph;
-      fillBounds.extendByPoint(mbox.xMin, mbox.yMin);
-      fillBounds.extendByPoint(mbox.xMax, mbox.yMax);
-      mbox = tag.strokeBboxMorph;
-      if (mbox) {
-        lineBounds.extendByPoint(mbox.xMin, mbox.yMin);
-        lineBounds.extendByPoint(mbox.xMax, mbox.yMax);
+    if (tag.lineBoundsMorph) {
+      var lineBoundsMorph = tag.lineBoundsMorph;
+      lineBounds.extendByPoint(lineBoundsMorph.xMin, lineBoundsMorph.yMin);
+      lineBounds.extendByPoint(lineBoundsMorph.xMax, lineBoundsMorph.yMax);
+      var fillBoundsMorph = tag.fillBoundsMorph;
+      if (fillBoundsMorph) {
+        fillBounds.extendByPoint(fillBoundsMorph.xMin, fillBoundsMorph.yMin);
+        fillBounds.extendByPoint(fillBoundsMorph.xMax, fillBoundsMorph.yMax);
       }
     }
     return {
@@ -410,7 +410,7 @@ module Shumway.SWF.Parser {
       fillBounds: fillBounds,
       lineBounds: lineBounds,
       morphFillBounds: tag.bboxMorph || null,
-      morphLineBounds: tag.strokeBboxMorph || null,
+      morphLineBounds: tag.fillBoundsMorph || null,
       hasFills: fillPaths.length > 0,
       hasLines: linePaths.length > 0,
       shape: shape.toPlainObject(),
