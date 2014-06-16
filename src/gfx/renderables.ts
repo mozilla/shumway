@@ -509,6 +509,7 @@ module Shumway.GFX {
       var gradient = gradientType === GradientType.Linear ?
                      context.createLinearGradient(x1, y1, x2, y2) :
                      context.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
+      gradient.setTransform(transform.toSVGMatrix());
       var colorStopsCount = styles.readUnsignedByte();
       for (var i = 0; i < colorStopsCount; i++) {
         var ratio = styles.readUnsignedByte() / 0xff;

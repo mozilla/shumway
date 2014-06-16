@@ -72,10 +72,8 @@ module Shumway.GFX {
   }
 
   /**
-   * Polyfill for missing |setTransform| on CanvasPatterns. Firefox implements this in a special build
-   * that you can download from here:
-   *
-   * https://bugzilla.mozilla.org/show_bug.cgi?id=1019257
+   * Polyfill for missing |setTransform| on CanvasPattern and CanvasGradient. Firefox implements |CanvasPattern| in nightly
+   * but doesn't handle CanvasGradient yet.
    *
    * Otherwise you'll have to fall back on this polyfill that depends on yet another canvas feature that
    * is not implemented across all browsers, namely |Path2D.addPath|. You can get this working in Chrome
@@ -85,10 +83,14 @@ module Shumway.GFX {
    * You shuold at least be able to get a build of Firefox or Chrome where setTransform works. Eventually,
    * we'll have to polyfill Path2D, we can work around the addPath limitation at that point.
    */
-  CanvasPattern.prototype.setTransform = function (matrix: SVGMatrix) {
-    this._transform = matrix;
-  };
-  if (!CanvasPattern.prototype.setTransform && Path2D.prototype.addPath) {
+  if (!CanvasPattern.prototype.setTransform &&
+      !CanvasGradient.prototype.setTransform &&
+      Path2D.prototype.addPath) {
+    CanvasPattern.prototype.setTransform  =
+    CanvasGradient.prototype.setTransform = function (matrix: SVGMatrix) {
+      this._transform = matrix;
+    };
+
     var originalFill = CanvasRenderingContext2D.prototype.fill;
     /**
      * If the current fillStyle is a CanvasPattern that has a SVGMatrix transformed applied to it, we
@@ -96,7 +98,7 @@ module Shumway.GFX {
      * inverse fillStyle transform applied to it so that it is drawn in the expected original location.
      */
     CanvasRenderingContext2D.prototype.fill = <any>(function fill(path: Path2D, fillRule?: string): void {
-      if (this.fillStyle instanceof CanvasPattern &&
+      if ((this.fillStyle instanceof CanvasPattern || this.fillStyle instanceof CanvasGradient) &&
           this.fillStyle._transform &&
           path instanceof Path2D) {
         var m = this.fillStyle._transform;

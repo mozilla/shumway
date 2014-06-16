@@ -69,4 +69,8 @@ interface CanvasPattern {
   setTransform: (matrix: SVGMatrix) => void;
 }
 
+interface CanvasGradient {
+  setTransform: (matrix: SVGMatrix) => void;
+}
+
 
