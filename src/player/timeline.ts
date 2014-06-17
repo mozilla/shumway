@@ -22,6 +22,7 @@ module Shumway.Timeline {
   import Bounds = Shumway.Bounds;
   import ColorUtilities = Shumway.ColorUtilities;
   import flash = Shumway.AVM2.AS.flash;
+  import PlaceObjectFlags = Shumway.SWF.Parser.PlaceObjectFlags;
 
   /**
    * TODO document
@@ -415,13 +416,13 @@ module Shumway.Timeline {
               symbol = loaderInfo.getSymbolById(cmd.symbolId);
               release || assert (symbol, "Symbol is not defined.");
             }
-            if (cmd.hasMatrix) {
+            if (cmd.flags & PlaceObjectFlags.HasMatrix) {
               matrix = flash.geom.Matrix.FromUntyped(cmd.matrix);
             }
-            if (cmd.hasCxform) {
+            if (cmd.flags & PlaceObjectFlags.HasColorTransform) {
               colorTransform = flash.geom.ColorTransform.FromCXForm(cmd.cxform);
             }
-            if (cmd.hasFilters) {
+            if (cmd.flags & PlaceObjectFlags.HasFilterList) {
               filters = [];
               var swfFilters = cmd.filters;
               for (var j = 0; j < swfFilters.length; j++) {
@@ -441,7 +442,7 @@ module Shumway.Timeline {
                 filters.push(filter);
               }
             }
-            if (cmd.hasEvents) {
+            if (cmd.flags & PlaceObjectFlags.HasClipActions) {
               // TODO
             }
             var state = new Timeline.AnimationState (
@@ -454,8 +455,8 @@ module Shumway.Timeline {
               cmd.clipDepth,
               filters,
               flash.display.BlendMode.fromNumber(cmd.blendMode),
-              cmd.cache,
-              cmd.hasVisibility ? !!cmd.visibility : true,
+              !!(cmd.flags & PlaceObjectFlags.HasCacheAsBitmap),
+              cmd.flags & PlaceObjectFlags.HasVisible ? !!cmd.visibility : true,
               events
             );
             this.place(depth, state);
