@@ -25,7 +25,7 @@ build/ts/swf/parser/text.js
 #!inline console.timeEnd("Load SWF Dependencies");
 
 #!inline console.time("Load SWF Parser");
-build/ts/swf/parser/swfTag.js
+build/ts/SWFTags.js
 build/ts/swf/parser/templates.js
 build/ts/swf/parser/handlers.js
 build/ts/swf/parser/parser.js

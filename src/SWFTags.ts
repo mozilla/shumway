@@ -15,9 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global self */
 
-/// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   export enum SwfTag {
     CODE_CSM_TEXT_SETTINGS                 = 74,
