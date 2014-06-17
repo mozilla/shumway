@@ -94,9 +94,9 @@ module Shumway.Remoting.GFX {
       this._assets = [];
     }
 
-    _registerAsset(id: number, asset: Renderable) {
+    _registerAsset(id: number, symbolId: number, asset: Renderable) {
       if (typeof registerInspectorAsset !== "undefined") {
-        registerInspectorAsset(id, asset);
+        registerInspectorAsset(id, symbolId, asset);
       }
       this._assets[id] = asset;
     }
@@ -212,6 +212,7 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
+      var symbolId = input.readInt();
       var asset = context._assets[id];
       var bounds = this._readRectangle();
       var assetId = input.readInt();
@@ -224,7 +225,7 @@ module Shumway.Remoting.GFX {
         textures.push(context._assets[bitmapId]);
       }
       if (!asset) {
-        context._registerAsset(id, new RenderableShape(id, pathData, textures, bounds));
+        context._registerAsset(id, symbolId, new RenderableShape(id, pathData, textures, bounds));
       }
     }
 
@@ -232,6 +233,7 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
+      var symbolId = input.readInt();
       var asset = context._assets[id];
       var bounds = this._readRectangle();
       var type: ImageType = input.readInt();
@@ -239,7 +241,7 @@ module Shumway.Remoting.GFX {
       var dataBuffer = DataBuffer.FromPlainObject(this.inputAssets[assetId]);
       this.inputAssets[assetId] = null;
       if (!asset) {
-        context._registerAsset(id, RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds));
+        context._registerAsset(id, symbolId, RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds));
       } else {
         var renderableBitmap = <RenderableBitmap>context._assets[id];
         renderableBitmap.updateFromDataBuffer(type, dataBuffer);
@@ -250,6 +252,7 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
+      var symbolId = input.readInt();
       var asset = context._assets[id];
       var bounds = this._readRectangle();
       var backgroundColor = input.readInt();
@@ -262,7 +265,7 @@ module Shumway.Remoting.GFX {
       this.inputAssets[assetId] = null;
       if (!asset) {
         asset = new RenderableText(plainText, textRunData, bounds, backgroundColor, borderColor);
-        context._registerAsset(id, asset);
+        context._registerAsset(id, symbolId, asset);
       } else {
         (<RenderableText>asset).update(plainText, textRunData, bounds, backgroundColor, borderColor);
       }

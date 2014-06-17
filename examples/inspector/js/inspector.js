@@ -362,11 +362,11 @@ function createEasel() {
   return _easel;
 }
 
-function registerInspectorAsset(id, asset) {
+function registerInspectorAsset(id, symbolId, asset) {
   var li = document.createElement("li");
   var div = document.createElement("div");
   var bounds = asset.getBounds();
-  var details = asset.constructor.name + ": " + id + ", bounds: " + bounds;
+  var details = asset.constructor.name + ": " + id + " (" + symbolId + "), bounds: " + bounds;
   var canvas = null;
   var renderTime = 0;
   if (asset instanceof Shumway.GFX.RenderableBitmap) {

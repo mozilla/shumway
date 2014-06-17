@@ -71,6 +71,7 @@ module Shumway.Remoting.Player {
         }
         this.output.writeInt(MessageTag.UpdateGraphics);
         this.output.writeInt(graphics._id);
+        this.output.writeInt(-1);
         this.writeRectangle(graphics._getContentBounds());
         this.output.writeInt(this.outputAssets.length);
         this.outputAssets.push(graphics.getGraphicsData().toPlainObject());
@@ -86,6 +87,7 @@ module Shumway.Remoting.Player {
       if (bitmapData._isDirty) {
         this.output.writeInt(MessageTag.UpdateBitmapData);
         this.output.writeInt(bitmapData._id);
+        this.output.writeInt(bitmapData._symbol ? bitmapData._symbol.id : -1);
         this.writeRectangle(bitmapData._getContentBounds());
         this.output.writeInt(bitmapData._type);
         this.output.writeInt(this.outputAssets.length);
@@ -100,6 +102,7 @@ module Shumway.Remoting.Player {
         var numTextRuns = textRuns.length;
         this.output.writeInt(MessageTag.UpdateTextContent);
         this.output.writeInt(textContent._id);
+        this.output.writeInt(-1);
         this.writeRectangle(bounds);
         this.output.writeInt(textContent.backgroundColor);
         this.output.writeInt(textContent.borderColor);
