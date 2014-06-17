@@ -171,16 +171,18 @@ module Shumway.GFX {
       var context = this._canvas.getContext("2d");
 
       if (type === ImageType.JPEG ||
-          type === ImageType.PNG ||
+          type === ImageType.PNG  ||
           type === ImageType.GIF)
       {
-        var img = new Image();
-        img.src = URL.createObjectURL(dataBuffer.toBlob());
-        img.onload = function () {
-          context.drawImage(img, 0, 0);
+        var self = this;
+        var image = new Image();
+        image.src = URL.createObjectURL(dataBuffer.toBlob());
+        image.onload = function () {
+          context.drawImage(image, 0, 0);
+          self.setFlags(RenderableFlags.Dirty);
         };
-        img.onerror = function () {
-          throw "img error";
+        image.onerror = function () {
+          throw "image error";
         };
       } else {
         var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
