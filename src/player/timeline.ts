@@ -389,17 +389,14 @@ module Shumway.Timeline {
    * TODO document
    */
   export class Frame {
-    loaderInfo: flash.display.LoaderInfo;
     stateAtDepth: Shumway.Map<AnimationState>;
 
     constructor(loaderInfo: flash.display.LoaderInfo, commands: any []) {
-      this.loaderInfo = loaderInfo;
       this.stateAtDepth = Shumway.ObjectUtilities.createMap<AnimationState>();
-      this._applyCommands(commands);
+      this._applyCommands(commands, loaderInfo);
     }
 
-    private _applyCommands(commands: any []): void {
-      var loaderInfo = this.loaderInfo;
+    private _applyCommands(commands: any [], loaderInfo: flash.display.LoaderInfo): void {
       for (var i = 0; i < commands.length; i++) {
         var cmd = commands[i];
         var depth = cmd.depth;
@@ -412,7 +409,7 @@ module Shumway.Timeline {
             var symbol = null;
             var matrix = null;
             var colorTransform = null;
-            var filters = null;
+            var filters: flash.filters.BitmapFilter[] = null;
             var events = null;
             if (cmd.symbolId) {
               symbol = loaderInfo.getSymbolById(cmd.symbolId);
