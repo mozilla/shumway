@@ -70,7 +70,7 @@ module Shumway.SWF.Parser {
         var subbytes = substream.bytes;
         var nextTag: ISwfTagData = { code: tagCode };
 
-        if (tagCode === 39) {
+        if (tagCode === SwfTag.CODE_DEFINE_SPRITE) {
           nextTag.type = 'sprite';
           nextTag.id = readUi16(subbytes, substream);
           nextTag.frameCount = readUi16(subbytes, substream);
@@ -339,8 +339,7 @@ module Shumway.SWF.Parser {
       }
 
       var readStartTime = performance.now();
-      readTags(swf, stream, swfVersion, finalBlock, options.onprogress,
-        options.onexception);
+      readTags(swf, stream, swfVersion, finalBlock, options.onprogress, options.onexception);
       swf.parseTime += performance.now() - readStartTime;
 
       var read = stream.pos;
@@ -457,11 +456,7 @@ module Shumway.SWF.Parser {
     return pipe;
   }
 
-  export function parse(buffer, options) {
-    if (!options) {
-      options = { };
-    }
-
+  export function parse(buffer, options = {}) {
     var pipe = parseAsync(options);
     var bytes = new Uint8Array(buffer);
     var progressInfo: ProgressInfo = { bytesLoaded: bytes.length, bytesTotal: bytes.length };

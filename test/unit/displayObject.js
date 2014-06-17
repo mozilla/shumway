@@ -22,6 +22,7 @@ function displayTests() {
   var TextField = flash.text.TextField;
   var Video = flash.media.Video;
   var Bitmap = flash.display.Bitmap;
+  var Stage = flash.display.Stage;
 
   var identity = new Matrix();
   var scaleBy5 = new Matrix();
@@ -352,6 +353,7 @@ function displayTests() {
     check(!new SimpleButton()._canHaveGraphics(), "SimpleButton can't have graphics");
     check(!new TextField()._canHaveGraphics(), "TextField can't have graphics");
     check(!new Bitmap()._canHaveGraphics(), "Bitmap can't have graphics");
+    check(!new Stage()._canHaveGraphics(), "Stage can't have graphics");
     // TODO: enable once enough of Video is implemented.
 //    check(!new Video()._canHaveGraphics(), "Video can't have graphics");
 

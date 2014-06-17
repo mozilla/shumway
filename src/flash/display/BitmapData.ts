@@ -365,7 +365,7 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.BitmapData::draw");
       var serializer : IBitmapDataSerializer = AVM2.instance.globals['Shumway.Player.Utils'];
       if (matrix) {
-        matrix = matrix.clone().toTwips();
+        matrix = matrix.clone().toTwipsInPlace();
       }
       serializer.cacheAsBitmap(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }

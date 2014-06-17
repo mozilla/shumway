@@ -659,7 +659,7 @@ module Shumway.AVM2.AS.flash.display {
       var m = this._matrix;
       m.copyFrom(matrix);
       if (toTwips) {
-        m.toTwips();
+        m.toTwipsInPlace();
       }
       this._scaleX = m.getScaleX();
       this._scaleY = m.getScaleY();

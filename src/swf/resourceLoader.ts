@@ -384,7 +384,7 @@ module Shumway.SWF {
           loader.postMessage(data, transferables);
         } catch (ex) {
           // Attempting to fix IE10/IE11 transferables by retrying without
-          // Transerables.
+          // Transferables.
           if (ex != 'DataCloneError') {
             throw ex;
           }
