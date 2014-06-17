@@ -77,6 +77,7 @@ module Shumway.AVM2.AS.flash.text {
         self._fontType = symbol.data ? FontType.EMBEDDED : FontType.DEVICE;
         Font._fontsBySymbolId[symbol.id] = self;
         Font._fontsByName[symbol.name] = self;
+        Font._fontsByName['swffont' + symbol.id] = self;
       }
     };
 
@@ -93,7 +94,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     // JS -> AS Bindings
-    //private _fontId: string;
     private _fontName: string;
     private _fontStyle: string;
     private _fontType: string;

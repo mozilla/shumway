@@ -160,7 +160,8 @@ module Shumway.Timeline {
     maxChars: number = 0;
     autoSize: string = flash.text.TextFieldAutoSize.NONE;
     variableName: string = null;
-    coords: number[];
+    matrix: flash.geom.Matrix = null;
+    coords: number[] = null;
 
     constructor(id: number) {
       super(id, flash.text.TextField);
@@ -171,6 +172,7 @@ module Shumway.Timeline {
       symbol._setBoundsFromData(data);
       if (data.static) {
         symbol.symbolClass = flash.text.StaticText;
+        symbol.matrix = flash.geom.Matrix.FromUntyped(data.matrix);
         symbol.coords = data.coords;
       }
       var tag = data.tag;
@@ -375,6 +377,10 @@ module Shumway.Timeline {
                 public cacheAsBitmap: boolean = false,
                 public visible: boolean = true,
                 public events: any [] = null) {
+      if (matrix && symbol instanceof TextSymbol) {
+        this.matrix = this.matrix.clone();
+        this.matrix.translate(-40, -40);
+      }
     }
 
     canBeAnimated(obj: flash.display.DisplayObject): boolean {

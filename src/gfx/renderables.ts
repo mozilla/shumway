@@ -558,12 +558,12 @@ module Shumway.GFX {
   }
 
   class Line {
+    x: number = 0;
+    y: number = 0;
+    width: number = 0;
     ascent: number = 0;
     descent: number = 0;
-    height: number = 0;
     leading: number = 0;
-    width: number = 0;
-    x: number = 0;
     runs: any[] = [];
   }
   class Run {
@@ -586,19 +586,23 @@ module Shumway.GFX {
     private _output: DataBuffer;
     private _backgroundColor: number;
     private _borderColor: number;
+    private _matrix: Shumway.GFX.Geometry.Matrix;
+    private _coords: DataBuffer;
 
-    constructor(plainText: string, textRunData: DataBuffer, bounds: Rectangle, backgroundColor: number, borderColor: number) {
+    constructor(plainText: string, textRunData: DataBuffer, bounds: Rectangle, backgroundColor: number, borderColor: number, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer) {
       super(bounds);
-      this.update(plainText, textRunData, bounds, backgroundColor, borderColor);
+      this.update(plainText, textRunData, bounds, backgroundColor, borderColor, matrix, coords);
     }
 
-    update(plainText: string, textRunData: DataBuffer, bounds: Rectangle, backgroundColor: number, borderColor: number) {
+    update(plainText: string, textRunData: DataBuffer, bounds: Rectangle, backgroundColor: number, borderColor: number, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer) {
       this._plainText = plainText;
       this._lines = [];
       this._output = new DataBuffer();
-      this._bounds = bounds;
+      this._bounds = new Rectangle(0, 0, bounds.x + bounds.w, bounds.y + bounds.h);
       this._backgroundColor = backgroundColor;
       this._borderColor = borderColor;
+      this._matrix = matrix;
+      this._coords = coords;
       this._processTextRuns(textRunData);
       this.setFlags(RenderableFlags.Dirty);
     }
@@ -610,8 +614,7 @@ module Shumway.GFX {
       var measureContext = RenderableText._measureContext;
 
       var line = new Line();
-      var lineHeight = 0;
-      var lineWidth = 0;
+      var baseLinePos = 0;
 
       //var that = this;
       var finishLine = function () {
@@ -624,45 +627,57 @@ module Shumway.GFX {
           case 0:
             break;
           case 1:
-            x = bounds.w - lineWidth;
+            x = bounds.w - line.width - 4;
             break;
           case 2:
-            x = (bounds.w - lineWidth) / 2;
+            x = (bounds.w - line.width - 4) / 2;
             break;
         }
-        line.height = lineHeight;
-        line.width = lineWidth;
+
         line.x = x;
+        baseLinePos += line.ascent;
+        line.y = baseLinePos;
+        baseLinePos += line.descent + line.leading;
         lines.push(line);
         //that._writeLineMetrics(line);
-
         line = new Line();
-        lineHeight = 0;
-        lineWidth = 0;
       };
 
       while (textRunData.position < textRunData.length) {
         var beginIndex = textRunData.readInt();
         var endIndex = textRunData.readInt();
-        var align = textRunData.readInt();
-        //var blockIndent = textRunData.readInt();
-        var bold = textRunData.readBoolean();
-        var bullet = textRunData.readBoolean();
-        var color = (textRunData.readInt() << 8) | 0xff;
-        //var display = textRunData.readInt();
+        var size = textRunData.readInt();
         var fontId = textRunData.readInt();
-        var indent = textRunData.readInt();
-        var italic = textRunData.readBoolean();
-        var kerning = textRunData.readInt();
+        var ascent = textRunData.readInt();
+        var descent = textRunData.readInt();
         var leading = textRunData.readInt();
+        var bold = textRunData.readBoolean();
+        var italic = textRunData.readBoolean();
+        var color = (textRunData.readInt() << 8) | 0xff;
+        var align = textRunData.readInt();
+        var bullet = textRunData.readBoolean();
+        //var display = textRunData.readInt();
+        var indent = textRunData.readInt();
+        //var blockIndent = textRunData.readInt();
+        var kerning = textRunData.readInt();
         var leftMargin = textRunData.readInt();
         var letterSpacing = textRunData.readInt();
         var rightMargin = textRunData.readInt();
-        var size = textRunData.readInt();
         //var tabStops = textRunData.readInt();
         var underline = textRunData.readBoolean();
-        var text = plainText.substring(beginIndex, endIndex);
 
+        var fontName: string;
+        if (fontId) {
+          fontName = 'swffont' + fontId;
+        } else {
+          // Use Times Roman as the default device font for now.
+          //fontName = 'Times Roman';
+          //ascent = 0.75;
+          //descent = 0.25;
+          fontName = 'sans-serif';
+          ascent = 1 * size;
+          descent = 0.25 * size;
+        }
         var boldItalic = '';
         if (italic) {
           boldItalic += 'italic';
@@ -670,36 +685,47 @@ module Shumway.GFX {
         if (bold) {
           boldItalic += ' bold';
         }
-        var font = boldItalic + ' ' + size + 'px swffont' + fontId;
+        var font = boldItalic + ' ' + size + 'px ' + fontName;
         var fillStyle = ColorUtilities.rgbaToCSSStyle(color);
-        var chunks = text.split('\r');
 
-        if (size > lineHeight) {
-          lineHeight = size;
-        }
-
-        for (var i = 0; i < chunks.length; i++) {
-          var chunk = chunks[i];
-          if (chunk === '') {
-            finishLine();
-            continue;
+        var text = '';
+        measureContext.font = font;
+        for (var i = beginIndex; i < endIndex; i++) {
+          var char = plainText[i];
+          if (char !== '\r' && char !== '\n') {
+            text += char;
+            if (i < plainText.length - 1) {
+              continue;
+            }
           }
-          measureContext.font = font;
-          var width = measureContext.measureText(chunk).width;
-          line.runs.push(new Run(font, fillStyle, chunk, width));
-          lineWidth += width;
+          if (text) {
+            if (ascent > line.ascent) {
+              line.ascent = ascent;
+            }
+            if (descent > line.descent) {
+              line.descent = descent;
+            }
+            if (leading > line.leading) {
+              line.leading = leading;
+            }
+            var width = measureContext.measureText(text).width;
+            line.runs.push(new Run(font, fillStyle, text, width));
+            line.width += width;
+            text = '';
+          }
+          finishLine();
+          if (char === '\r' && plainText[i + 1] === '\n') {
+            i++;
+          }
         }
       }
-      finishLine();
     }
-
     private _writeLineMetrics(line: Line): void {
+      this._output.writeInt(line.x);
+      this._output.writeInt(line.width);
       this._output.writeInt(line.ascent);
       this._output.writeInt(line.descent);
-      this._output.writeInt(line.height);
       this._output.writeInt(line.leading);
-      this._output.writeInt(line.width);
-      this._output.writeInt(line.x);
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
@@ -709,26 +735,60 @@ module Shumway.GFX {
     render(context: CanvasRenderingContext2D): void {
       var bounds = this._bounds;
 
-      // context.rect(0, 0, bounds.w, bounds.h);
-      // context.clip();
-
       if (this._backgroundColor) {
-        context.fillStyle =  ColorUtilities.rgbaToCSSStyle(this._backgroundColor);
+        context.fillStyle = ColorUtilities.rgbaToCSSStyle(this._backgroundColor);
         context.fillRect(0, 0, bounds.w, bounds.h);
       }
       if (this._borderColor) {
-        context.strokeStyle =  ColorUtilities.rgbaToCSSStyle(this._borderColor);
+        context.strokeStyle = ColorUtilities.rgbaToCSSStyle(this._borderColor);
         context.lineCap = 'square';
-        context.lineWidth = 1;
-        context.strokeRect(0.5, 0.5, bounds.w | 0, bounds.h | 0);
+        context.lineWidth = 0.5;
+        context.strokeRect(0, 0, bounds.w | 0, bounds.h | 0);
       }
 
+      context.translate(2, 2);
+      context.rect(0, 0, bounds.w - 4, bounds.h - 4);
+      context.clip();
+
+      if (this._matrix) {
+        var m = this._matrix;
+        context.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+      }
+
+      if (this._coords) {
+        this._renderChars(context);
+      } else {
+        this._renderLines(context);
+      }
+    }
+
+    private _renderChars(context: CanvasRenderingContext2D) {
+      var coords = this._coords;
+      coords.position = 0;
       var lines = this._lines;
-      var y = 0;
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var runs = line.runs;
+        for (var j = 0; j < runs.length; j++) {
+          var run = runs[j];
+          context.font = run.font;
+          context.fillStyle = run.fillStyle;
+          var text = run.text;
+          for (var j = 0; j < text.length; j++) {
+            var x = coords.readInt();
+            var y = coords.readInt();
+            context.fillText(text[j], x, y);
+          }
+        }
+      }
+    }
+
+    private _renderLines(context: CanvasRenderingContext2D) {
+      var lines = this._lines;
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var x = line.x;
-        y += line.height;
+        var y = line.y;
         var runs = line.runs;
         for (var j = 0; j < runs.length; j++) {
           var run = runs[j];

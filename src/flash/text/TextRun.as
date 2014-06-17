@@ -18,11 +18,7 @@ package flash.text {
 
 [native(cls='TextRunClass')]
 public class TextRun {
-  public function TextRun(beginIndex: int, endIndex: int, textFormat: TextFormat) {
-    this.beginIndex = beginIndex;
-    this.endIndex = endIndex;
-    this.textFormat = textFormat;
-  }
+  public native function TextRun(beginIndex: int, endIndex: int, textFormat: TextFormat);
   public native function get beginIndex(): int;
   public native function set beginIndex(value: int): void;
   public native function get endIndex(): int;

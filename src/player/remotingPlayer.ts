@@ -101,6 +101,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(MessageTag.UpdateTextContent);
         this.output.writeInt(textContent._id);
         this.writeRectangle(bounds);
+        this.writeMatrix(textContent.matrix || flash.geom.Matrix.FROZEN_IDENTITY_MATRIX);
         this.output.writeInt(textContent.backgroundColor);
         this.output.writeInt(textContent.borderColor);
         this.output.writeInt(this.outputAssets.length);
@@ -111,6 +112,16 @@ module Shumway.Remoting.Player {
           this.output.writeInt(textRun.beginIndex);
           this.output.writeInt(textRun.endIndex);
           this.writeTextFormat(textRun.textFormat);
+        }
+        var coords = textContent.coords;
+        if (coords) {
+          var numCoords = coords.length;
+          this.output.writeInt(numCoords);
+          for (var i = 0; i < numCoords; i++) {
+            this.output.writeInt(coords[i] / 20);
+          }
+        } else {
+          this.output.writeInt(0);
         }
         textContent._isDirty = false;
       }
@@ -329,27 +340,50 @@ module Shumway.Remoting.Player {
 
     writeTextFormat(textFormat: flash.text.TextFormat) {
       var output = this.output;
-      output.writeInt(flash.text.TextFormatAlign.toNumber(textFormat.align));
-      //output.writeInt(textFormat.blockIndent);
-      output.writeBoolean(!!textFormat.bold);
-      output.writeBoolean(!!textFormat.bullet);
-      output.writeInt(+textFormat.color);
-      //output.writeInt(textFormat.display);
+
+      var size = +textFormat.size;
+      output.writeInt(size);
+
       var font = flash.text.Font.getByName(textFormat.font);
-      if (font) {
+      if (font && font.fontType === flash.text.FontType.EMBEDDED) {
         output.writeInt(font._id);
+        output.writeInt(font.ascent * size);
+        output.writeInt(font.descent * size);
+        output.writeInt(textFormat.leading === null ? font.leading * size : +textFormat.leading);
+        var bold: boolean;
+        var italic: boolean;
+        if (textFormat.bold === null) {
+          bold = font.fontStyle === flash.text.FontStyle.BOLD || font.fontType === flash.text.FontStyle.BOLD_ITALIC;
+        } else {
+          bold = !!textFormat.bold;
+        }
+        if (textFormat.italic === null) {
+          italic = font.fontStyle === flash.text.FontStyle.ITALIC || font.fontType === flash.text.FontStyle.BOLD_ITALIC;
+        } else {
+          italic = !!textFormat.italic;
+        }
+        output.writeBoolean(bold);
+        output.writeBoolean(italic);
       } else {
         // TODO: handle device fonts;
         output.writeInt(0);
+        output.writeInt(0);
+        output.writeInt(0);
+        output.writeInt(+textFormat.leading);
+        output.writeBoolean(!!textFormat.bold);
+        output.writeBoolean(!!textFormat.italic);
       }
+
+      output.writeInt(+textFormat.color);
+      output.writeInt(flash.text.TextFormatAlign.toNumber(textFormat.align));
+      output.writeBoolean(!!textFormat.bullet);
+      //output.writeInt(textFormat.display);
       output.writeInt(+textFormat.indent);
-      output.writeBoolean(!!textFormat.italic);
+      //output.writeInt(textFormat.blockIndent);
       output.writeInt(+textFormat.kerning);
-      output.writeInt(+textFormat.leading);
       output.writeInt(+textFormat.leftMargin);
       output.writeInt(+textFormat.letterSpacing);
       output.writeInt(+textFormat.rightMargin);
-      output.writeInt(+textFormat.size);
       //output.writeInt(textFormat.tabStops);
       output.writeBoolean(!!textFormat.underline);
     }
