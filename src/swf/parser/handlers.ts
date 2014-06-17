@@ -48,62 +48,37 @@ module Shumway.SWF.Parser {
   }
 
   function placeObject($bytes, $stream, $, swfVersion, tagCode) {
-    var flags, hasEvents, clip, hasName, hasRatio, hasCxform, hasMatrix, place;
-    var move, hasBackgroundColor, hasVisibility, hasImage, hasClassName, cache;
-    var blend, hasFilters, eoe;
+    var flags;
     $ || ($ = {});
-    if (tagCode > 4) {
-      if (tagCode > 26) {
-        flags = readUi16($bytes, $stream);
-      } else {
-        flags = readUi8($bytes, $stream);
-      }
-      hasEvents = $.hasEvents = flags >> 7 & 1;
-      clip = $.clip = flags >> 6 & 1;
-      hasName = $.hasName = flags >> 5 & 1;
-      hasRatio = $.hasRatio = flags >> 4 & 1;
-      hasCxform = $.hasCxform = flags >> 3 & 1;
-      hasMatrix = $.hasMatrix = flags >> 2 & 1;
-      place = $.place = flags >> 1 & 1;
-      move = $.move = flags & 1;
-      if (tagCode === 70) {
-        hasBackgroundColor = $.hasBackgroundColor = flags >> 15 & 1;
-        hasVisibility = $.hasVisibility = flags >> 13 & 1;
-        hasImage = $.hasImage = flags >> 12 & 1;
-        hasClassName = $.hasClassName = flags >> 11 & 1;
-        cache = $.cache = flags >> 10 & 1;
-        blend = $.blend = flags >> 9 & 1;
-        hasFilters = $.hasFilters = flags >> 8 & 1;
-      } else {
-        cache = $.cache = 0;
-        blend = $.blend = 0;
-        hasFilters = $.hasFilters = 0;
-      }
+    if (tagCode > SwfTag.CODE_PLACE_OBJECT) {
+      flags = $.flags = tagCode > SwfTag.CODE_PLACE_OBJECT2 ?
+                        readUi16($bytes, $stream) :
+                        readUi8($bytes, $stream);
       $.depth = readUi16($bytes, $stream);
-      if (hasClassName) {
+      if (flags & PlaceObjectFlags.HasClassName) {
         $.className = readString($bytes, $stream, 0);
       }
-      if (place) {
+      if (flags & PlaceObjectFlags.HasCharacter) {
         $.symbolId = readUi16($bytes, $stream);
       }
-      if (hasMatrix) {
+      if (flags & PlaceObjectFlags.HasMatrix) {
         var $0 = $.matrix = {};
         matrix($bytes, $stream, $0, swfVersion, tagCode);
       }
-      if (hasCxform) {
+      if (flags & PlaceObjectFlags.HasColorTransform) {
         var $1 = $.cxform = {};
         cxform($bytes, $stream, $1, swfVersion, tagCode);
       }
-      if (hasRatio) {
+      if (flags & PlaceObjectFlags.HasRatio) {
         $.ratio = readUi16($bytes, $stream);
       }
-      if (hasName) {
+      if (flags & PlaceObjectFlags.HasName) {
         $.name = readString($bytes, $stream, 0);
       }
-      if (clip) {
+      if (flags & PlaceObjectFlags.HasClipDepth) {
         $.clipDepth = readUi16($bytes, $stream);
       }
-      if (hasFilters) {
+      if (flags & PlaceObjectFlags.HasFilterList) {
         var count = readUi8($bytes, $stream);
         var $2 = $.filters = [];
         var $3 = count;
@@ -113,13 +88,13 @@ module Shumway.SWF.Parser {
           $2.push($4);
         }
       }
-      if (blend) {
+      if (flags & PlaceObjectFlags.HasBlendMode) {
         $.blendMode = readUi8($bytes, $stream);
       }
-      if (cache) {
+      if (flags & PlaceObjectFlags.HasCacheAsBitmap) {
         $.bmpCache = readUi8($bytes, $stream);
       }
-      if (hasEvents) {
+      if (flags & PlaceObjectFlags.HasClipActions) {
         var reserved = readUi16($bytes, $stream);
         if (swfVersion >= 6) {
           var allFlags = readUi32($bytes, $stream);
@@ -130,27 +105,25 @@ module Shumway.SWF.Parser {
         var $28 = $.events = [];
         do {
           var $29 = {};
-          var temp = events($bytes, $stream, $29, swfVersion, tagCode);
-          eoe = temp.eoe;
+          var eoe = events($bytes, $stream, $29, swfVersion, tagCode);
           $28.push($29);
         } while (!eoe);
       }
-      if (hasBackgroundColor) {
+      if (flags & PlaceObjectFlags.OpaqueBackground) {
         var $126 = $.backgroundColor = {};
         argb($bytes, $stream, $126, swfVersion, tagCode);
       }
-      if (hasVisibility) {
+      if (flags & PlaceObjectFlags.HasVisible) {
         $.visibility = readUi8($bytes, $stream);
       }
     } else {
-      $.place = 1;
       $.symbolId = readUi16($bytes, $stream);
       $.depth = readUi16($bytes, $stream);
-      $.hasMatrix = 1;
+      $.flags |= PlaceObjectFlags.HasMatrix;
       var $30 = $.matrix = {};
       matrix($bytes, $stream, $30, swfVersion, tagCode);
       if ($stream.remaining()) {
-        $.hasCxform = 1;
+        $.flags |= PlaceObjectFlags.HasColorTransform;
         var $31 = $.cxform = {};
         cxform($bytes, $stream, $31, swfVersion, tagCode);
       }
@@ -203,7 +176,7 @@ module Shumway.SWF.Parser {
   }
 
   function defineButton($bytes, $stream, $, swfVersion, tagCode) {
-    var eob: boolean, hasFilters, count, blend;
+    var eob: boolean;
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     if (tagCode == 7) {
@@ -226,12 +199,11 @@ module Shumway.SWF.Parser {
         var flags = readUi8($bytes, $stream);
         var eob = $29.eob = !flags;
         if (swfVersion >= 8) {
-          blend = $29.blend = flags >> 5 & 1;
-          hasFilters = $29.hasFilters = flags >> 4 & 1;
+          $29.flags = (flags >> 5 & 1 ? PlaceObjectFlags.HasBlendMode : 0) |
+                      (flags >> 4 & 1 ? PlaceObjectFlags.HasFilterList : 0);
         }
         else {
-          blend = $29.blend = 0;
-          hasFilters = $29.hasFilters = 0;
+          $29.flags = 0;
         }
         $29.stateHitTest = flags >> 3 & 1;
         $29.stateDown = flags >> 2 & 1;
@@ -246,7 +218,7 @@ module Shumway.SWF.Parser {
             var $31 = $29.cxform = {};
             cxform($bytes, $stream, $31, swfVersion, tagCode);
           }
-          if (hasFilters) {
+          if ($29.flags & PlaceObjectFlags.HasFilterList) {
             var count = readUi8($bytes, $stream);
             var $2 = $.filters = [];
             var $3 = count;
@@ -256,7 +228,7 @@ module Shumway.SWF.Parser {
               $2.push($4);
             }
           }
-          if (blend) {
+          if ($29.flags & PlaceObjectFlags.HasBlendMode) {
             $29.blendMode = readUi8($bytes, $stream);
           }
         }
@@ -1203,14 +1175,9 @@ module Shumway.SWF.Parser {
   }
 
   function events($bytes, $stream, $, swfVersion, tagCode) {
-    var flags, keyPress;
-    if (swfVersion >= 6) {
-      flags = readUi32($bytes, $stream);
-    }
-    else {
-      flags = readUi16($bytes, $stream);
-    }
+    var flags = swfVersion >= 6 ? readUi32($bytes, $stream) : readUi16($bytes, $stream);
     var eoe = $.eoe = !flags;
+    var keyPress;
     $.onKeyUp = flags >> 7 & 1;
     $.onKeyDown = flags >> 6 & 1;
     $.onMouseUp = flags >> 5 & 1;
@@ -1241,9 +1208,9 @@ module Shumway.SWF.Parser {
       if (keyPress) {
         $.keyCode = readUi8($bytes, $stream);
       }
-      $.actionsData = readBinary($bytes, $stream, length - (keyPress ? 1 : 0));
+      $.actionsData = readBinary($bytes, $stream, length - +keyPress);
     }
-    return {eoe: eoe};
+    return eoe;
   }
 
   function kerning($bytes, $stream, $, swfVersion, tagCode, wide) {
@@ -1351,16 +1318,14 @@ module Shumway.SWF.Parser {
   }
 
   function button($bytes, $stream, $, swfVersion, tagCode) {
-    var hasFilters, blend;
     var flags = readUi8($bytes, $stream);
     var eob = $.eob = !flags;
     if (swfVersion >= 8) {
-      blend = $.blend = flags >> 5 & 1;
-      hasFilters = $.hasFilters = flags >> 4 & 1;
+      $.flags = (flags >> 5 & 1 ? PlaceObjectFlags.HasBlendMode : 0) |
+                (flags >> 4 & 1 ? PlaceObjectFlags.HasFilterList : 0);
     }
     else {
-      blend = $.blend = 0;
-      hasFilters = $.hasFilters = 0;
+      $.flags = 0;
     }
     $.stateHitTest = flags >> 3 & 1;
     $.stateDown = flags >> 2 & 1;
@@ -1371,16 +1336,16 @@ module Shumway.SWF.Parser {
       $.depth = readUi16($bytes, $stream);
       var $2 = $.matrix = {};
       matrix($bytes, $stream, $2, swfVersion, tagCode);
-      if (tagCode === 34) {
+      if (tagCode === SwfTag.CODE_DEFINE_BUTTON2) {
         var $3 = $.cxform = {};
         cxform($bytes, $stream, $3, swfVersion, tagCode);
       }
-      if (hasFilters) {
+      if ($.flags & PlaceObjectFlags.HasFilterList) {
         $.filterCount = readUi8($bytes, $stream);
         var $4 = $.filters = {};
         anyFilter($bytes, $stream, $4, swfVersion, tagCode);
       }
-      if (blend) {
+      if ($.flags & PlaceObjectFlags.HasBlendMode) {
         $.blendMode = readUi8($bytes, $stream);
       }
     }

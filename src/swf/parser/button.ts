@@ -35,7 +35,7 @@ module Shumway.SWF.Parser {
       var cmd = {
         symbolId: characterItem.id,
         depth: character.depth,
-        hasMatrix: !!character.matrix,
+        flags: character.matrix ? PlaceObjectFlags.HasMatrix : 0,
         matrix: character.matrix
       };
       if (character.stateUp)

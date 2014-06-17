@@ -49,7 +49,7 @@ load("../../build/ts/swf/parser/text.js");
 console.timeEnd("Load SWF Dependencies");
 
 console.time("Load SWF Parser");
-load("../../build/ts/swf/parser/swfTag.js");
+load("../../build/ts/SWFTags.js");
 load("../../build/ts/swf/parser/templates.js");
 load("../../build/ts/swf/parser/handlers.js");
 load("../../build/ts/swf/parser/parser.js");
@@ -141,6 +141,7 @@ load("../../build/ts/player/module.js");
 Shumway.Player.enterTimeline("Load Flash TS Dependencies");
 
 load("../../build/ts/TextContent.js");
+// DUP: load("../../build/ts/SWFTags.js");
 
 load("../../build/ts/flash/geom/Matrix.js");
 load("../../build/ts/flash/geom/PerspectiveProjection.js");

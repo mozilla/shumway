@@ -428,13 +428,13 @@ module Shumway.AVM2.AS.flash.geom {
       this.ty = +ty;
     }
 
-    public toTwips(): Matrix {
+    public toTwipsInPlace(): Matrix {
       this.tx = (this.tx * 20) | 0;
       this.ty = (this.ty * 20) | 0;
       return this;
     }
 
-    public toPixels(): Matrix {
+    public toPixelsInPlace(): Matrix {
       this.tx /= 20;
       this.ty /= 20;
       return this;

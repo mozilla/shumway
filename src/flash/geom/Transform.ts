@@ -37,7 +37,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     get matrix(): flash.geom.Matrix {
-      return this._displayObject._getMatrix().clone().toPixels();
+      return this._displayObject._getMatrix().clone().toPixelsInPlace();
     }
 
     set matrix(value: flash.geom.Matrix) {
@@ -53,7 +53,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     get concatenatedMatrix(): flash.geom.Matrix {
-      var matrix = this._displayObject._getConcatenatedMatrix().clone().toPixels();
+      var matrix = this._displayObject._getConcatenatedMatrix().clone().toPixelsInPlace();
       if (!this._displayObject._stage) {
         matrix.scale(5, 5);
       }

@@ -54,7 +54,7 @@ load("../../build/ts/swf/parser/text.js");
 console.timeEnd("Load SWF Dependencies");
 
 console.time("Load SWF Parser");
-load("../../build/ts/swf/parser/swfTag.js");
+load("../../build/ts/SWFTags.js");
 load("../../build/ts/swf/parser/templates.js");
 load("../../build/ts/swf/parser/handlers.js");
 load("../../build/ts/swf/parser/parser.js");
