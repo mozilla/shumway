@@ -105,8 +105,7 @@ module Shumway.SWF.Parser {
         var $28 = $.events = [];
         do {
           var $29 = {};
-          var temp = events($bytes, $stream, $29, swfVersion, tagCode);
-          var eoe = temp.eoe;
+          var eoe = events($bytes, $stream, $29, swfVersion, tagCode);
           $28.push($29);
         } while (!eoe);
       }
@@ -1176,14 +1175,9 @@ module Shumway.SWF.Parser {
   }
 
   function events($bytes, $stream, $, swfVersion, tagCode) {
-    var flags, keyPress;
-    if (swfVersion >= 6) {
-      flags = readUi32($bytes, $stream);
-    }
-    else {
-      flags = readUi16($bytes, $stream);
-    }
+    var flags = swfVersion >= 6 ? readUi32($bytes, $stream) : readUi16($bytes, $stream);
     var eoe = $.eoe = !flags;
+    var keyPress;
     $.onKeyUp = flags >> 7 & 1;
     $.onKeyDown = flags >> 6 & 1;
     $.onMouseUp = flags >> 5 & 1;
@@ -1214,9 +1208,9 @@ module Shumway.SWF.Parser {
       if (keyPress) {
         $.keyCode = readUi8($bytes, $stream);
       }
-      $.actionsData = readBinary($bytes, $stream, length - (keyPress ? 1 : 0));
+      $.actionsData = readBinary($bytes, $stream, length - +keyPress);
     }
-    return {eoe: eoe};
+    return eoe;
   }
 
   function kerning($bytes, $stream, $, swfVersion, tagCode, wide) {
