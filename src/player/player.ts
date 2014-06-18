@@ -373,6 +373,10 @@ module Shumway.Player {
             if (nextSymbolIndex === symbols.length) {
               nextSymbolIndex = 0;
             }
+            if (playSymbolCountOption.value >= 0 &&
+                nextSymbolIndex > playSymbolCountOption.value) {
+              nextSymbolIndex = 0;
+            }
           }
           var frames = 1;
           if (symbol && symbol.id > 0) {
