@@ -8,5 +8,6 @@ testFiles = [
   'stage.js',
   'filters.js',
   'menu.js',
-  'vector3D.js'
+  'vector3D.js',
+  'matrix3D.js'
 ];

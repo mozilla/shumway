@@ -2,9 +2,11 @@ function fail(message) {
   console.error(message);
 }
 
-function eqFloat(a, b, test) {
+function eqFloat(a, b, test, tolerance) {
+  tolerance = typeof tolerance === "undefined" ? 0.1 : tolerance;
   test = description(test);
-  if (Math.abs(a -b) >= 0.1) {
+  var d = Math.abs(a - b);
+  if (isNaN(d) || d >= tolerance) {
     return fail("FAIL " + test + ". Got " + a + ", expected " + b + failedLocation());
   }
   console.info("PASS" + test);
