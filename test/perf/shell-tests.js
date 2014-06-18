@@ -1,0 +1,3 @@
+testFiles = [
+  'vectors.js'
+];

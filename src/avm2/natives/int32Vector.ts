@@ -157,7 +157,7 @@ module Shumway.AVM2.AS {
       }
       // New length doesn't fit at all, resize buffer.
       var oldCapacity = this._buffer.length;
-      var newCapacity = (oldCapacity * 3) >> 1 + 1;
+      var newCapacity = ((oldCapacity * 3) >> 1) + 1;
       if (newCapacity < minCapacity) {
         newCapacity = minCapacity;
       }
