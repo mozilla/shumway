@@ -16,132 +16,41 @@
 
 package flash.geom
 {
+  [native(cls='Vector3DClass')]
   public class Vector3D
   {
     public static const X_AXIS:Vector3D = new Vector3D(1, 0, 0);
     public static const Y_AXIS:Vector3D = new Vector3D(0, 1, 0);
     public static const Z_AXIS:Vector3D = new Vector3D(0, 0, 1);
+    public native static function angleBetween(a:Vector3D, b:Vector3D):Number;
+    public native static function distance(pt1:Vector3D, pt2:Vector3D):Number;
 
-    public var x:Number;
-    public var y:Number;
-    public var z:Number;
-    public var w:Number;
-
-    public function Vector3D(x:Number = 0, y:Number = 0, z:Number = 0, w:Number = 0) {
-      this.x = x;
-      this.y = y;
-      this.z = z;
-      this.w = w;
-    }
-
-    public function get length():Number {
-      return Math.sqrt(lengthSquared);
-    }
-
-    public function get lengthSquared():Number {
-      return x * x + y * y + z * z;
-    }
-
-    public static function angleBetween(a:Vector3D, b:Vector3D):Number {
-      // http://chemistry.about.com/od/workedchemistryproblems/a/scalar-product-vectors-problem.htm
-      return Math.acos(a.dotProduct(b) / (a.length * b.length));
-    }
-
-    public static function distance(pt1:Vector3D, pt2:Vector3D):Number {
-      // http://en.wikipedia.org/wiki/Euclidean_distance#Three_dimensions
-      return pt1.subtract(pt2).length;
-    }
-
-    public function dotProduct(a:Vector3D):Number {
-      return x * a.x + y * a.y + z * a.z;
-    }
-
-    public function crossProduct(a:Vector3D):Vector3D {
-      return  new Vector3D(y * a.z - z * a.y, z * a.x - x * a.z, x * a.y - y * a.x, 1.0);
-    }
-
-    public function normalize():Number {
-      var curLength:Number = length;
-      if (curLength != 0) {
-        x /= curLength;
-        y /= curLength;
-        z /= curLength;
-      } else {
-        x = y = z = 0;
-      }
-      return curLength;
-    }
-
-    public function scaleBy(s:Number):void {
-      x *= s;
-      y *= s;
-      z *= s;
-    }
-
-    public function incrementBy(a:Vector3D):void {
-      x += a.x;
-      y += a.y;
-      z += a.z;
-    }
-
-    public function decrementBy(a:Vector3D):void {
-      x -= a.x;
-      y -= a.y;
-      z -= a.z;
-    }
-
-    public function add(a:Vector3D):Vector3D {
-      return new Vector3D(x + a.x, y + a.y, z + a.z);
-    }
-
-    public function subtract(a:Vector3D):Vector3D {
-      return new Vector3D(x - a.x, y - a.y, z - a.z);
-    }
-
-    public function negate():void {
-      x = -x;
-      y = -y;
-      z = -z;
-    }
-
-    public function equals(toCompare:Vector3D, allFour:Boolean = false):Boolean {
-      return (x == toCompare.x)
-          && (y == toCompare.y)
-          && (z == toCompare.z)
-          && (!allFour || (w == toCompare.w));
-    }
-
-    public function nearEquals(toCompare:Vector3D, tolerance:Number, allFour:Boolean = false):Boolean {
-      return (Math.abs(x - toCompare.x) < tolerance)
-          && (Math.abs(y - toCompare.y) < tolerance)
-          && (Math.abs(z - toCompare.z) < tolerance)
-          && (!allFour || (Math.abs(w - toCompare.w) < tolerance));
-    }
-
-    public function project():void {
-      x /= w;
-      y /= w;
-      z /= w;
-    }
-
-    public function copyFrom(sourceVector3D:Vector3D):void {
-      x = sourceVector3D.x;
-      y = sourceVector3D.y;
-      z = sourceVector3D.z;
-    }
-
-    public function setTo(xa:Number, ya:Number, za:Number):void {
-      x = xa;
-      y = ya;
-      z = za;
-    }
-
-    public function clone():Vector3D {
-      return new Vector3D(x, y, z, w);
-    }
-
-    public function toString():String {
-      return "Vector3D(" + x + ", " + y + ", " + z + ")";
-    }
+    public native function get x():Number;
+    public native function set x(v: Number):void;
+    public native function get y():Number;
+    public native function set y(v: Number):void;
+    public native function get z():Number;
+    public native function set z(v: Number):void;
+    public native function get w():Number;
+    public native function set w(v: Number):void;
+    public native function Vector3D(x:Number = 0, y:Number = 0, z:Number = 0, w:Number = 0);
+    public native function get length():Number;
+    public native function get lengthSquared():Number;
+    public native function dotProduct(a:Vector3D):Number;
+    public native function crossProduct(a:Vector3D):Vector3D;
+    public native function normalize():Number;
+    public native function scaleBy(s:Number):void;
+    public native function incrementBy(a:Vector3D):void;
+    public native function decrementBy(a:Vector3D):void;
+    public native function add(a:Vector3D):Vector3D;
+    public native function subtract(a:Vector3D):Vector3D;
+    public native function negate():void;
+    public native function equals(toCompare:Vector3D, allFour:Boolean = false):Boolean;
+    public native function nearEquals(toCompare:Vector3D, tolerance:Number, allFour:Boolean = false):Boolean;
+    public native function project():void;
+    public native function copyFrom(sourceVector3D:Vector3D):void;
+    public native function setTo(xa:Number, ya:Number, za:Number):void;
+    public native function clone():Vector3D;
+    public native function toString():String;
   }
 }

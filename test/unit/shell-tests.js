@@ -7,5 +7,6 @@ testFiles = [
   'bitmap.js',
   'stage.js',
   'filters.js',
-  'menu.js'
+  'menu.js',
+  'vector3D.js'
 ];
