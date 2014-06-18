@@ -1753,7 +1753,7 @@ module Shumway.AVM2.Runtime {
       if (!isNullOrUndefined(type)) {
         typeClassName = type.classInfo.instanceInfo.name.name.toLowerCase();
         switch (typeClassName) {
-          case "Number":
+          case "number":
             typeClassName = "double";
           case "int":
           case "uint":
