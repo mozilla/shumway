@@ -869,12 +869,12 @@ module Shumway.AVM2.AS {
       self.prototype = p;
     }
 
-    get length(): number {
+    get native_length(): number {
       // Check if we're getting the length of a trampoline.
       if (this.hasOwnProperty(Runtime.VM_LENGTH)) {
         return this.asLength;
       }
-      return this.length;
+      return (<any>this).length;
     }
 
     asCall: (self?, ...args: any []) => any;
@@ -1026,8 +1026,8 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [String];
     public static instanceNatives: any [] = [String.prototype];
     public static coerce: (value: any) => string = Runtime.asCoerceString;
-    get length(): number {
-      return this.length;
+    get native_length(): number {
+      return (<any>this).length;
     }
 
     match(re) {
@@ -1204,12 +1204,12 @@ module Shumway.AVM2.AS {
     private static _some(o: any, callback: Function, thisObject: any): boolean {
       return o.some(callback, thisObject);
     }
-    get length(): number /*uint*/ {
-      return this.length;
+    get native_length(): number /*uint*/ {
+      return (<any>this).length;
     }
-    set length(newLength: number /*uint*/) {
+    set native_length(newLength: number /*uint*/) {
       newLength = newLength >>> 0;
-      this.length = newLength;
+      (<any>this).length = newLength;
     }
   }
 
