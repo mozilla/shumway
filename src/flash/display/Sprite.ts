@@ -74,7 +74,7 @@ module Shumway.AVM2.AS.flash.display {
 
     _hitTarget: flash.display.Sprite;
 
-    private _initializeChildren(frame: Timeline.Frame): void {
+    private _initializeChildren(frame: Timeline.FrameDelta): void {
       for (var depth in frame.stateAtDepth) {
         var state = frame.stateAtDepth[depth];
         var character = DisplayObject.createAnimatedDisplayObject(state, false);

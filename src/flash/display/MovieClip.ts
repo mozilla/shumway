@@ -128,7 +128,7 @@ module Shumway.AVM2.AS.flash.display {
     private _enabled: boolean;
     private _isPlaying: boolean;
 
-    private _frames: Shumway.Timeline.Frame [];
+    private _frames: Shumway.Timeline.FrameDelta[];
     private _sceneIndex: number;
     private _frameScripts: any;
     private _currentFrameAbs: number;
@@ -303,7 +303,7 @@ module Shumway.AVM2.AS.flash.display {
       var startIndex = currentFrameAbs;
       if (nextFrameAbs < currentFrameAbs) {
         var frame = frames[0];
-        release || assert (frame, "Frame is not defined.");
+        release || assert (frame, "FrameDelta is not defined.");
         var stateAtDepth = frame.stateAtDepth;
         var children = this._children.slice();
         for (var i = 0; i < children.length; i++) {
@@ -319,7 +319,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       for (var i = startIndex; i < nextFrameAbs; i++) {
         var frame = frames[i];
-        release || assert (frame, "Frame is not defined.");
+        release || assert (frame, "FrameDelta is not defined.");
         var stateAtDepth = frame.stateAtDepth;
         for (var depth in stateAtDepth) {
           var child = this.getChildAtDepth(depth);

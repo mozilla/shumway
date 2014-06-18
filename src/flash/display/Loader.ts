@@ -319,7 +319,6 @@ module Shumway.AVM2.AS.flash.display {
         var appDomain = AVM2.instance.applicationDomain;
         for (var i = 0; i < symbolClasses.length; i++) {
           var asset = symbolClasses[i];
-          var tag = asset.symbolId;
           if (loaderInfo._allowCodeExecution) {
             var symbolClass = appDomain.getClass(asset.className);
             var symbol = loaderInfo.getSymbolById(asset.symbolId);
@@ -345,7 +344,7 @@ module Shumway.AVM2.AS.flash.display {
       var frames = rootSymbol.frames;
       var frameIndex = frames.length;
 
-      var frame = new Timeline.Frame(loaderInfo, data.commands);
+      var frame = new Timeline.FrameDelta(loaderInfo, data.commands);
       var repeat = data.repeat;
       while (repeat--) {
         frames.push(frame);
