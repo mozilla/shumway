@@ -31,13 +31,15 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["_name", "_labels", "_numFrames", "name", "labels", "numFrames"];
     
-    constructor (name: string, labels: any [], numFrames: number /*int*/) {
+    constructor (name: string, labels: any[], offset: number, numFrames: number /*int*/) {
       false && super();
       this._name = asCoerceString(name);
       this._labels = labels;
+      this.offset = offset;
       this._numFrames = numFrames | 0;
     }
-    
+
+    offset: number;
     // JS -> AS Bindings
     
     private _name: string;
@@ -58,11 +60,11 @@ module Shumway.AVM2.AS.flash.display {
       return this._numFrames;
     }
 
-    clone() {
+    clone(): Scene {
       var labels = this._labels.map(function (x: flash.display.FrameLabel) {
         return x.clone();
       });
-      return new Scene(this._name, labels, this._numFrames);
+      return new Scene(this._name, labels, this.offset, this._numFrames);
     }
   }
 }

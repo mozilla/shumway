@@ -362,7 +362,7 @@ module Shumway.AVM2.AS.flash.display {
               var sceneInfo = scenes[i];
               var startFrame = sceneInfo.offset;
               var endFrame = i < n - 1 ? scenes[i + 1].offset : rootSymbol.numFrames;
-              mc.addScene(sceneInfo.name, [], endFrame - startFrame);
+              mc.addScene(sceneInfo.name, [], startFrame, endFrame - startFrame);
             }
             var labels = data.sceneData.labels;
             for (var i = 0; i < labels.length; i++) {
@@ -370,7 +370,7 @@ module Shumway.AVM2.AS.flash.display {
               mc.addFrameLabel(labelInfo.frame, labelInfo.name);
             }
           } else {
-            mc.addScene('Scene 1', [], rootSymbol.numFrames);
+            mc.addScene('Scene 1', [], 1, rootSymbol.numFrames);
           }
         }
 
