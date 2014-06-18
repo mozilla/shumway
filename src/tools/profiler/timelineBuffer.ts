@@ -124,6 +124,10 @@ module Shumway.Tools.Profiler {
       this._depth--;
     }
 
+    count(name: string, value: number, data?: any) {
+      // Not Implemented
+    }
+
     /**
      * Constructs an easier to work with TimelineFrame data structure.
      */
