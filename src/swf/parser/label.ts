@@ -42,12 +42,12 @@ module Shumway.SWF.Parser {
         release || assert(font, 'undefined font', 'label');
         codes = font.codes;
         dependencies.push(font.id);
-        htmlText += ' face="' + font.name + '"';
+        htmlText += ' size="' + (record.fontHeight / 20) + '" face="swffont' + font.id + '"';
       }
 
       if (record.hasColor) {
         var color = ColorUtilities.componentsToRGB(record.color);
-        htmlText += ' color="' + ('000000' + color.toString(16)).slice(-6) + '"';
+        htmlText += ' color="#' + ('000000' + color.toString(16)).slice(-6) + '"';
       }
 
       if (record.hasMoveX)
@@ -75,7 +75,7 @@ module Shumway.SWF.Parser {
     var label = {
       type: 'text',
       id: tag.id,
-      bbox: bbox,
+      fillBounds: bbox,
       matrix: tag.matrix,
       tag: {
         hasText: true,

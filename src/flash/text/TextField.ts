@@ -44,7 +44,18 @@ module Shumway.AVM2.AS.flash.text {
       self._bottomScrollV = 1;
       self._caretIndex = 0;
       self._condenseWhite = false;
-      self._defaultTextFormat = new flash.text.TextFormat();
+      self._defaultTextFormat = new flash.text.TextFormat(
+        'Times Roman',
+        12,
+        0,
+        false,
+        false,
+        false,
+        '',
+        '',
+        TextFormatAlign.LEFT
+      );
+
       self._embedFonts = false;
       self._gridFitType = GridFitType.PIXEL;
       self._htmlText = '';
@@ -77,16 +88,7 @@ module Shumway.AVM2.AS.flash.text {
       self._textContent = new Shumway.TextContent(self._defaultTextFormat);
 
       if (symbol) {
-        var bounds = symbol.fillBounds;
-        if (bounds) {
-          self._matrix.tx += bounds.xMin;
-          self._matrix.ty += bounds.yMin;
-          this._invalidatePosition();
-          this._dirtyMatrix();
-          self._setFillAndLineBoundsFromWidthAndHeight(
-            bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin
-          );
-        }
+        self._setFillAndLineBoundsFromSymbol(symbol);
 
         self._defaultTextFormat.color = symbol.color;
         self._defaultTextFormat.size = (symbol.size / 20) | 0;
@@ -102,7 +104,10 @@ module Shumway.AVM2.AS.flash.text {
         self._embedFonts = symbol.embedFonts;
         self._selectable = symbol.selectable;
 
-        self.border = symbol.border;
+        if (symbol.border) {
+          self.background = true;
+          self.border = true;
+        }
         if (symbol.html) {
           self.htmlText = symbol.initialText;
         } else {
@@ -113,9 +118,6 @@ module Shumway.AVM2.AS.flash.text {
         self._type = symbol.type;
         self._maxChars = symbol.maxChars;
         self._autoSize = symbol.autoSize;
-      } else {
-        self._matrix.tx -= 40;
-        self._matrix.ty -= 40;
       }
     };
 
@@ -123,6 +125,8 @@ module Shumway.AVM2.AS.flash.text {
       super();
       notImplemented("Dummy Constructor: public flash.text.TextField");
     }
+
+
 
     _getTextContent(): Shumway.TextContent {
       return this._textContent;

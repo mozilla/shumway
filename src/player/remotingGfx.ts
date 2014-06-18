@@ -255,19 +255,26 @@ module Shumway.Remoting.GFX {
       var symbolId = input.readInt();
       var asset = context._assets[id];
       var bounds = this._readRectangle();
+      var matrix = this._readMatrix();
       var backgroundColor = input.readInt();
       var borderColor = input.readInt();
       var assetId = input.readInt();
       var numTextRuns = input.readInt();
-      var textRunData = new DataBuffer(numTextRuns * 52);
-      input.readBytes(textRunData, 0, numTextRuns * 52);
+      var textRunData = new DataBuffer(numTextRuns * 60);
+      input.readBytes(textRunData, 0, numTextRuns * 60);
+      var coords = null;
+      var numCoords = input.readInt();
+      if (numCoords) {
+        coords = new DataBuffer(numCoords* 4);
+        input.readBytes(coords, 0, numCoords * 4);
+      }
       var plainText = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
       if (!asset) {
-        asset = new RenderableText(plainText, textRunData, bounds, backgroundColor, borderColor);
+        asset = new RenderableText(plainText, textRunData, bounds, backgroundColor, borderColor, matrix, coords);
         context._registerAsset(id, symbolId, asset);
       } else {
-        (<RenderableText>asset).update(plainText, textRunData, bounds, backgroundColor, borderColor);
+        (<RenderableText>asset).update(plainText, textRunData, bounds, backgroundColor, borderColor, matrix, coords);
       }
     }
 

@@ -30,6 +30,8 @@ module Shumway {
     private _borderColor: number;
     defaultTextFormat: flash.text.TextFormat;
     textRuns: flash.text.TextRun[];
+    matrix: flash.geom.Matrix;
+    coords: number[];
 
     constructor(defaultTextFormat?: flash.text.TextFormat) {
       this._id = flash.display.DisplayObject.getNextSyncID();
@@ -39,6 +41,8 @@ module Shumway {
       this._borderColor = 0;
       this.defaultTextFormat = defaultTextFormat || new flash.text.TextFormat();
       this.textRuns = [];
+      this.matrix = null;
+      this.coords = null;
     }
 
     parseHtml(htmlText: string, multiline: boolean = false) {
@@ -70,8 +74,8 @@ module Shumway {
             case 'a':
               somewhatImplemented('<a/>');
               stack.push(textFormat);
-              var target = attributes.target || '';
-              var url = attributes.url || '';
+              var target = attributes.target || textFormat.target;
+              var url = attributes.url || textFormat.url;
               if (target !== textFormat.target || url !== textFormat.url) {
                   newTextFormat = textFormat.clone();
                   newTextFormat.target = target;
@@ -97,7 +101,7 @@ module Shumway {
               // TODO: the value of the face property can be a string specifying a list of
               // comma-delimited font names in which case the first available font should be used.
               var font = attributes.face || textFormat.font;
-              var size = isNaN(attributes.size) ? textFormat.size : attributes.size;
+              var size = isNaN(attributes.size) ? textFormat.size : +attributes.size;
               if (color !== textFormat.color ||
                   font !== textFormat.font ||
                   size !== textFormat.size)
@@ -137,14 +141,14 @@ module Shumway {
               break;
             case 'textformat':
               stack.push(textFormat);
-              var blockIndent = isNaN(attributes.blockindent) ? textFormat.blockIndent : attributes.blockindent;
-              var indent      = isNaN(attributes.indent)      ? textFormat.indent      : attributes.indent;
-              var leading     = isNaN(attributes.leading)     ? textFormat.leading     : attributes.leading;
-              var leftMargin  = isNaN(attributes.leftmargin)  ? textFormat.leftMargin  : attributes.leftmargin;
-              var rightMargin = isNaN(attributes.rightmargin) ? textFormat.rightMargin : attributes.rightmargin;
+              var blockIndent = isNaN(attributes.blockindent) ? textFormat.blockIndent : +attributes.blockindent;
+              var indent      = isNaN(attributes.indent)      ? textFormat.indent      : +attributes.indent;
+              var leading     = isNaN(attributes.leading)     ? textFormat.leading     : +attributes.leading;
+              var leftMargin  = isNaN(attributes.leftmargin)  ? textFormat.leftMargin  : +attributes.leftmargin;
+              var rightMargin = isNaN(attributes.rightmargin) ? textFormat.rightMargin : +attributes.rightmargin;
               //var tabStops = attributes.tabstops || textFormat.tabStops;
               if (blockIndent !== textFormat.blockIndent ||
-                  indent !==textFormat.indent ||
+                  indent !== textFormat.indent ||
                   leading !== textFormat.leading ||
                   leftMargin !== textFormat.leftMargin ||
                   rightMargin !== textFormat.rightMargin /*||
@@ -160,7 +164,6 @@ module Shumway {
               }
               break;
             case 'u':
-              stack.push(textFormat);
               if (!textFormat.underline) {
                   newTextFormat = textFormat.clone();
                   newTextFormat.underline = true;
@@ -169,6 +172,7 @@ module Shumway {
           }
           if (newTextFormat) {
             finishTextRun();
+            stack.push(newTextFormat);
             textFormat = newTextFormat;
           }
         },
@@ -186,8 +190,11 @@ module Shumway {
             case 'i':
             case 'textformat':
             case 'u':
-              finishTextRun();
-              textFormat = stack.pop();
+              var f = stack.pop();
+              if (f !== textFormat) {
+                finishTextRun();
+              }
+              textFormat = f;
           }
         }
       });

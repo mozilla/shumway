@@ -34,7 +34,19 @@ module Shumway.AVM2.AS.flash.text {
                 leading: Object = null)
     {
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.TextFormat");
+      this.font = font;
+      this.size = size;
+      this.color = color;
+      this.bold = bold;
+      this.italic = italic;
+      this.underline = underline;
+      this.url = url;
+      this.target = target;
+      this.align = align;
+      this.leftMargin = leftMargin;
+      this.rightMargin = rightMargin;
+      this.indent = indent;
+      this.leading = leading;
     }
 
     private static measureTextField: flash.text.TextField;

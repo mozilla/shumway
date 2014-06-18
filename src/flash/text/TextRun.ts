@@ -26,11 +26,10 @@ module Shumway.AVM2.AS.flash.text {
     constructor(beginIndex: number /*int*/, endIndex: number /*int*/,
                 textFormat: flash.text.TextFormat)
     {
-      //beginIndex = beginIndex | 0;
-      //endIndex = endIndex | 0;
-      //textFormat = textFormat;
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.TextRun");
+      this._beginIndex = beginIndex | 0;
+      this._endIndex = endIndex | 0;
+      this._textFormat = textFormat;
     }
 
     // JS -> AS Bindings
@@ -60,7 +59,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set textFormat(value: TextFormat) {
-      this._textFormat = value;
+      this._textFormat = value.clone();
     }
 
     clone(): TextRun {

@@ -31,6 +31,8 @@ module Shumway.AVM2.AS.flash.text {
       if (symbol) {
         self._setFillAndLineBoundsFromSymbol(symbol);
         self._textContent.parseHtml(symbol.initialText);
+        self._textContent.matrix = symbol.matrix;
+        self._textContent.coords = symbol.coords;
       }
     };
 
