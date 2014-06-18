@@ -373,7 +373,7 @@ module Shumway.Remoting.GFX {
       var target = <RenderableBitmap>context._assets[targetId];
       var source: RenderableBitmap;
       if (sourceId & IDMask.Asset) {
-        source = <RenderableBitmap>context._assets[sourceId];
+        source = <RenderableBitmap>context._assets[sourceId & ~IDMask.Asset];
       } else {
         source = this._cacheAsBitmap(context._frames[sourceId]);
       }
