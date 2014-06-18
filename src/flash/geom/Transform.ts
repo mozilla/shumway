@@ -16,6 +16,7 @@
 // Class: Transform
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import Errors = Shumway.AVM2.Errors;
@@ -75,14 +76,13 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     set matrix3D(m: flash.geom.Matrix3D) {
-      //m = m;
       if (!(Matrix3D.isType(m))) {
         throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
       }
 
       var raw = m.rawData;
       // TODO why is this not a 3D matrix?
-      this.matrix = new flash.geom.Matrix(
+      this.matrix = new flash.geom.Matrix (
         raw.asGetPublicProperty(0),
         raw.asGetPublicProperty(1),
         raw.asGetPublicProperty(4),
@@ -92,8 +92,8 @@ module Shumway.AVM2.AS.flash.geom {
       );
       // this.matrix will reset this._target._matrix3D
       // TODO: Must make sure to also deal with the _rotateXYZ properties.
-      notImplemented("public flash.geom.Transform::set matrix3D"); return;
-      this._displayObject._matrix3D = m;
+      somewhatImplemented("public flash.geom.Transform::set matrix3D");
+      // this._displayObject._matrix3D = m;
     }
 
     getRelativeMatrix3D(relativeTo: flash.display.DisplayObject): flash.geom.Matrix3D {
