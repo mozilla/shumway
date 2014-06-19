@@ -587,6 +587,7 @@ module Shumway.GFX {
     _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     properties: {[name: string]: any} = {};
 
+    private _textRunData: DataBuffer;
     private _plainText: string;
     private _lines: any[];
     private _output: DataBuffer;
@@ -595,25 +596,46 @@ module Shumway.GFX {
     private _matrix: Shumway.GFX.Geometry.Matrix;
     private _coords: DataBuffer;
 
-    constructor(plainText: string, textRunData: DataBuffer, bounds: Rectangle, backgroundColor: number, borderColor: number, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer) {
+    constructor(bounds) {
       super(bounds);
-      this.update(plainText, textRunData, bounds, backgroundColor, borderColor, matrix, coords);
+      this.setBounds(bounds)
+      this._textRunData = null;
+      this._plainText = '';
+      this._lines = [];
+      this._output = new DataBuffer();
+      this._backgroundColor = 0;
+      this._borderColor = 0;
+      this._matrix = null;
+      this._coords = null;
     }
 
-    update(plainText: string, textRunData: DataBuffer, bounds: Rectangle, backgroundColor: number, borderColor: number, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer) {
+    setBounds(bounds): void {
+      this._bounds.x = 0;
+      this._bounds.y = 0;
+      this._bounds.w = Math.abs(bounds.x) + bounds.w;
+      this._bounds.h = Math.abs(bounds.y) + bounds.h;
+    }
+
+    setContent(plainText: string, textRunData: DataBuffer, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer): void {
+      this._textRunData = textRunData;
       this._plainText = plainText;
       this._lines = [];
       this._output = new DataBuffer();
-      this._bounds = new Rectangle(0, 0, bounds.x + bounds.w, bounds.y + bounds.h);
-      this._backgroundColor = backgroundColor;
-      this._borderColor = borderColor;
       this._matrix = matrix;
       this._coords = coords;
-      this._processTextRuns(textRunData);
-      this.setFlags(RenderableFlags.Dirty);
+      if (this._coords) {
+        this._bounds.w += this._bounds.x + 4;
+        this._bounds.h += this._bounds.y + 4;
+      }
     }
 
-    private _processTextRuns(textRunData: DataBuffer): void {
+    setStyle(backgroundColor: number, borderColor: number): void {
+      this._backgroundColor = backgroundColor;
+      this._borderColor = borderColor;
+    }
+
+    reflow(autoSize: boolean, wordWrap: boolean): void {
+      var textRunData = this._textRunData;
       var bounds = this._bounds;
       var plainText = this._plainText;
       var lines = this._lines;
@@ -622,30 +644,34 @@ module Shumway.GFX {
       var line = new Line();
       var baseLinePos = 0;
 
-      //var that = this;
+      var finishRun = function (font: string, fillStyle: string, text: string) {
+        if (text) {
+          var width = measureContext.measureText(text).width;
+          line.runs.push(new Run(font, fillStyle, text, width, underline));
+          line.width += width;
+        }
+      };
       var finishLine = function () {
         if (!line.runs.length) {
+          baseLinePos += line.ascent + line.descent + (line.leading * 2);
           return;
         }
 
-        var x = 0;
         switch (align) {
           case 0:
             break;
           case 1:
-            x = bounds.w - line.width - 4;
+            line.x = bounds.w - line.width - 4;
             break;
           case 2:
-            x = (bounds.w - line.width - 4) / 2;
+            line.x = (bounds.w - line.width - 4) / 2;
             break;
         }
 
-        line.x = x;
         baseLinePos += line.ascent;
         line.y = baseLinePos;
         baseLinePos += line.descent + line.leading;
         lines.push(line);
-        //that._writeLineMetrics(line);
         line = new Line();
       };
 
@@ -659,7 +685,7 @@ module Shumway.GFX {
         var leading = textRunData.readInt();
         var bold = textRunData.readBoolean();
         var italic = textRunData.readBoolean();
-        var color = (textRunData.readInt() << 8) | 0xff;
+        var color = textRunData.readInt();
         var align = textRunData.readInt();
         var bullet = textRunData.readBoolean();
         //var display = textRunData.readInt();
@@ -672,17 +698,17 @@ module Shumway.GFX {
         //var tabStops = textRunData.readInt();
         var underline = textRunData.readBoolean();
 
-        var fontName: string;
+        var fontName:string;
         if (fontId) {
           fontName = 'swffont' + fontId;
         } else {
           // Use Times Roman as the default device font for now.
-          //fontName = 'Times Roman';
-          //ascent = 0.75;
-          //descent = 0.25;
-          fontName = 'sans-serif';
-          ascent = 1 * size;
+          fontName = 'Times Roman';
+          ascent = 0.75 * size;
           descent = 0.25 * size;
+          //fontName = 'sans-serif';
+          //ascent = 1 * size;
+          //descent = 0.25 * size;
         }
         var boldItalic = '';
         if (italic) {
@@ -692,7 +718,7 @@ module Shumway.GFX {
           boldItalic += ' bold';
         }
         var font = boldItalic + ' ' + size + 'px ' + fontName;
-        var fillStyle = ColorUtilities.rgbaToCSSStyle(color);
+        var fillStyle = ColorUtilities.rgbaToCSSStyle((color << 8) | 0xff);
 
         var text = '';
         measureContext.font = font;
@@ -704,34 +730,26 @@ module Shumway.GFX {
               continue;
             }
           }
-          if (text) {
-            if (ascent > line.ascent) {
-              line.ascent = ascent;
-            }
-            if (descent > line.descent) {
-              line.descent = descent;
-            }
-            if (leading > line.leading) {
-              line.leading = leading;
-            }
-            var width = measureContext.measureText(text).width;
-            line.runs.push(new Run(font, fillStyle, text, width));
-            line.width += width;
-            text = '';
+          finishRun(font, fillStyle, text);
+          if (ascent > line.ascent) {
+            line.ascent = ascent;
+          }
+          if (descent > line.descent) {
+            line.descent = descent;
+          }
+          if (leading > line.leading) {
+            line.leading = leading;
           }
           finishLine();
           if (char === '\r' && plainText[i + 1] === '\n') {
             i++;
           }
+          text = '';
         }
+        finishRun(font, fillStyle, text);
       }
-    }
-    private _writeLineMetrics(line: Line): void {
-      this._output.writeInt(line.x);
-      this._output.writeInt(line.width);
-      this._output.writeInt(line.ascent);
-      this._output.writeInt(line.descent);
-      this._output.writeInt(line.leading);
+
+      this.setFlags(RenderableFlags.Dirty);
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
@@ -741,6 +759,8 @@ module Shumway.GFX {
     render(context: CanvasRenderingContext2D): void {
       var bounds = this._bounds;
 
+      context.save();
+
       if (this._backgroundColor) {
         context.fillStyle = ColorUtilities.rgbaToCSSStyle(this._backgroundColor);
         context.fillRect(0, 0, bounds.w, bounds.h);
@@ -748,7 +768,7 @@ module Shumway.GFX {
       if (this._borderColor) {
         context.strokeStyle = ColorUtilities.rgbaToCSSStyle(this._borderColor);
         context.lineCap = 'square';
-        context.lineWidth = 0.5;
+        context.lineWidth = 1;
         context.strokeRect(0, 0, bounds.w | 0, bounds.h | 0);
       }
 
@@ -766,12 +786,14 @@ module Shumway.GFX {
       } else {
         this._renderLines(context);
       }
+
+      context.restore();
     }
 
     private _renderChars(context: CanvasRenderingContext2D) {
+      var lines = this._lines;
       var coords = this._coords;
       coords.position = 0;
-      var lines = this._lines;
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var runs = line.runs;
@@ -790,6 +812,7 @@ module Shumway.GFX {
     }
 
     private _renderLines(context: CanvasRenderingContext2D) {
+      // TODO: Render bullet points and underlines.
       var lines = this._lines;
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
@@ -804,6 +827,14 @@ module Shumway.GFX {
           x += run.width;
         }
       }
+    }
+
+    private _writeLineMetrics(line: Line): void {
+      this._output.writeInt(line.x);
+      this._output.writeInt(line.width);
+      this._output.writeInt(line.ascent);
+      this._output.writeInt(line.descent);
+      this._output.writeInt(line.leading);
     }
   }
 

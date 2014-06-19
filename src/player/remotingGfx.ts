@@ -253,11 +253,13 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = input.readInt();
       var symbolId = input.readInt();
-      var asset = context._assets[id];
+      var asset = <RenderableText>context._assets[id];
       var bounds = this._readRectangle();
       var matrix = this._readMatrix();
       var backgroundColor = input.readInt();
       var borderColor = input.readInt();
+      var autoSize = input.readBoolean();
+      var wordWrap = input.readBoolean();
       var assetId = input.readInt();
       var numTextRuns = input.readInt();
       var textRunData = new DataBuffer(numTextRuns * 60);
@@ -271,11 +273,18 @@ module Shumway.Remoting.GFX {
       var plainText = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
       if (!asset) {
-        asset = new RenderableText(plainText, textRunData, bounds, backgroundColor, borderColor, matrix, coords);
+        asset = new RenderableText(bounds);
+        asset.setContent(plainText, textRunData, matrix, coords);
+        asset.setStyle(backgroundColor, borderColor);
+        asset.reflow(autoSize, wordWrap);
         context._registerAsset(id, symbolId, asset);
       } else {
-        (<RenderableText>asset).update(plainText, textRunData, bounds, backgroundColor, borderColor, matrix, coords);
+        asset.setBounds(bounds);
+        asset.setContent(plainText, textRunData, matrix, coords);
+        asset.setStyle(backgroundColor, borderColor);
+        asset.reflow(autoSize, wordWrap);
       }
+
     }
 
     private _readUpdateStage() {

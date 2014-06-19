@@ -111,6 +111,8 @@ module Shumway.Remoting.Player {
         this.writeMatrix(textContent.matrix || flash.geom.Matrix.FROZEN_IDENTITY_MATRIX);
         this.output.writeInt(textContent.backgroundColor);
         this.output.writeInt(textContent.borderColor);
+        this.output.writeBoolean(textContent.autoSize);
+        this.output.writeBoolean(textContent.wordWrap);
         this.output.writeInt(this.outputAssets.length);
         this.outputAssets.push(textContent.plainText);
         this.output.writeInt(numTextRuns);
