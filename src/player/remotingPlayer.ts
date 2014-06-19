@@ -234,16 +234,16 @@ module Shumway.Remoting.Player {
           }
           this.output.writeInt(count);
           if (graphics) {
-            writer && writer.writeLn("Sending Graphics: " + graphics._id);
+            writer && writer.writeLn("Reference Graphics: " + graphics._id);
             this.output.writeInt(IDMask.Asset | graphics._id);
           } else if (textContent) {
-            writer && writer.writeLn("Sending TextContent: " + textContent._id);
+            writer && writer.writeLn("Reference TextContent: " + textContent._id);
             this.output.writeInt(IDMask.Asset | textContent._id);
           }
           // Write all the display object children.
           if (children) {
             for (var i = 0; i < children.length; i++) {
-              writer && writer.writeLn("Sending DisplayObject: " + children[i].debugName());
+              writer && writer.writeLn("Reference DisplayObject: " + children[i].debugName());
               this.output.writeInt(children[i]._id);
             }
           }
