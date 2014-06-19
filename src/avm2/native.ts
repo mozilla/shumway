@@ -1574,13 +1574,21 @@ module Shumway.AVM2.AS {
     ASClass.create(cls, baseClass, instanceConstructor);
     cls.verify();
 
+    enterTimeline("ClassBindings");
     cls.classBindings = new ClassBindings(classInfo, classScope, staticNatives);
+    enterTimeline("applyTo");
     cls.classBindings.applyTo(domain, cls);
+    leaveTimeline();
+    leaveTimeline();
 
+    enterTimeline("InstanceBindings");
     cls.instanceBindings = new InstanceBindings(baseClass ? baseClass.instanceBindings : null, ii, classScope, instanceNatives);
     if (cls.instanceConstructor) {
+      enterTimeline("applyTo");
       cls.instanceBindings.applyTo(domain, cls.traitsPrototype);
+      leaveTimeline();
     }
+    leaveTimeline();
 
     cls.implementedInterfaces = cls.instanceBindings.implementedInterfaces;
 
@@ -1590,9 +1598,11 @@ module Shumway.AVM2.AS {
       ASClass.instanceBindings.applyTo(domain, cls, true);
     }
 
+    enterTimeline("Configure");
     ASClass.configureInitializers(cls);
     ASClass.linkSymbols(cls);
     ASClass.runClassInitializer(cls);
+    leaveTimeline();
 
     return cls;
   }

@@ -1666,6 +1666,9 @@ module Shumway.AVM2.Runtime {
     var domain = ci.abc.applicationDomain;
 
     var className = Multiname.getName(ii.name);
+
+    enterTimeline("createClass", { className: className, classInfo: classInfo });
+
     if (traceExecution.value) {
       log("Creating " + (ii.isInterface() ? "Interface" : "Class") + ": " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
     }
@@ -1685,6 +1688,7 @@ module Shumway.AVM2.Runtime {
     }
 
     if (ii.isInterface()) {
+      leaveTimeline();
       return cls;
     }
 
@@ -1700,7 +1704,9 @@ module Shumway.AVM2.Runtime {
     if (traceExecution.value) {
       log("Running " + (ii.isInterface() ? "Interface" : "Class") + ": " + className + " Static Constructor");
     }
+    enterTimeline("staticInitializer");
     createFunction(classInfo.init, scope, false, false).call(cls);
+    leaveTimeline();
     if (traceExecution.value) {
       log("Done With Static Constructor");
     }
@@ -1709,7 +1715,7 @@ module Shumway.AVM2.Runtime {
     if (sealConstTraits) {
       this.sealConstantTraits(cls, ci.traits);
     }
-
+    leaveTimeline();
     return cls;
   }
 

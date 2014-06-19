@@ -293,6 +293,7 @@ module Shumway.AVM2.AS.flash.display {
                alphaPoint: flash.geom.Point = null,
                mergeAlpha: boolean = false): void
     {
+      enterTimeline("BitmapData.copyPixels");
       sourceBitmapData = sourceBitmapData; sourceRect = sourceRect; destPoint = destPoint; alphaBitmapData = alphaBitmapData; alphaPoint = alphaPoint; mergeAlpha = !!mergeAlpha;
       // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of the source rect, however a width
       // of |0.5| rounds down rather than up so we're not quite correct here.
@@ -304,6 +305,7 @@ module Shumway.AVM2.AS.flash.display {
 
       // Clipped source rect is empty so there's nothing to do.
       if (sR.isEmpty()) {
+        leaveTimeline();
         return;
       }
 
@@ -352,6 +354,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._isDirty = true;
       somewhatImplemented("public flash.display.BitmapData::copyPixels");
+      leaveTimeline();
       return;
     }
 
