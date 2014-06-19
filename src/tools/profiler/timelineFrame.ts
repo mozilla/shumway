@@ -23,11 +23,21 @@ module Shumway.Tools.Profiler {
     totalTime: number;
   }
 
+  export class TimelineFrameStatistics {
+    count: number = 0;
+    selfTime: number = 0;
+    totalTime: number = 0;
+    constructor(public kind: TimelineItemKind) {
+
+    }
+  }
+
   /**
    * Represents a single timeline frame range and makes it easier to work with the compacted
    * timeline buffer data.
    */
   export class TimelineFrame {
+    public statistics: TimelineFrameStatistics [];
     public children: TimelineFrame [];
     public total: number;
     public maxDepth: number;
@@ -206,6 +216,22 @@ module Shumway.Tools.Profiler {
         self = self.parent;
       }
       return depth;
+    }
+
+    public calculateStatistics() {
+      var statistics = this.statistics = [];
+      function visit(frame: TimelineFrame) {
+        if (frame.kind) {
+          var s = statistics[frame.kind.id] || (statistics[frame.kind.id] = new TimelineFrameStatistics(frame.kind));
+          s.count ++;
+          s.selfTime += frame.selfTime;
+          s.totalTime += frame.totalTime;
+        }
+        if (frame.children) {
+          frame.children.forEach(visit);
+        }
+      }
+      visit(this);
     }
   }
 
