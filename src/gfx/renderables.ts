@@ -166,6 +166,10 @@ module Shumway.GFX {
     }
 
     public updateFromDataBuffer(type: ImageType, dataBuffer: DataBuffer) {
+      if (!imageUpdateOption.value) {
+        return;
+      }
+
       enterTimeline("RenderableBitmap.updateFromDataBuffer", this);
 
       var context = this._canvas.getContext("2d");
