@@ -267,7 +267,7 @@ module Shumway.AVM2.AS.flash.display {
 
     applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, filter: flash.filters.BitmapFilter): void {
       sourceBitmapData = sourceBitmapData; sourceRect = sourceRect; destPoint = destPoint; filter = filter;
-      notImplemented("public flash.display.BitmapData::applyFilter"); return;
+      somewhatImplemented("public flash.display.BitmapData::applyFilter " + filter); return;
     }
     colorTransform(rect: flash.geom.Rectangle, colorTransform: flash.geom.ColorTransform): void {
       rect = rect; colorTransform = colorTransform;
