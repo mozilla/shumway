@@ -63,7 +63,7 @@ function objectConstantName(object) {
     name = "$G" + id;
   } else if (object instanceof Multiname) {
     name = "$M" + id;
-  } else if (isClass(object)) {
+  } else if (object instanceof Shumway.AVM2.AS.ASClass) {
     name = "$C" + id;
   } else {
     name = "$O" + id;

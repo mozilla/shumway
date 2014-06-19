@@ -143,7 +143,6 @@ module Shumway.AVM2.Runtime {
   export var VM_BINDINGS = "asBindings";
   export var VM_NATIVE_PROTOTYPE_FLAG = "asIsNative";
   export var VM_OPEN_METHODS = "asOpenMethods";
-  export var VM_IS_CLASS = "asIsClass";
 
   export var VM_OPEN_METHOD_PREFIX = "m";
   export var VM_MEMOIZER_PREFIX = "z";
@@ -165,11 +164,6 @@ module Shumway.AVM2.Runtime {
   var totalFunctionCount = 0;
   var compiledFunctionCount = 0;
   var compilationCount = 0;
-
-  export function isClass(object) {
-    release || assert (object);
-    return Object.hasOwnProperty.call(object, VM_IS_CLASS);
-  }
 
   /**
    * Checks if the specified |object| is the prototype of a native JavaScript object.

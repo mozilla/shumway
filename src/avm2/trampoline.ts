@@ -233,7 +233,7 @@ module Shumway.AVM2.Runtime {
       }
       release || assert (!isTrampoline(target.value), "We should avoid binding trampolines.");
       var mc = null;
-      if (isClass(this)) {
+      if (this instanceof Shumway.AVM2.AS.ASClass) {
         countTimeline("Runtime: Static Method Closures");
         mc = bindSafely(target.value, this);
         defineReadOnlyProperty(this, qn, mc);
