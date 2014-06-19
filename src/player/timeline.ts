@@ -244,7 +244,7 @@ module Shumway.Timeline {
           }
         } else {
           character = new Timeline.SpriteSymbol(-1);
-          character.frames.push(new Frame(loaderInfo, commands));
+          character.frames.push(new FrameDelta(loaderInfo, commands));
         }
         symbol[stateName + 'State'] =
           new Timeline.AnimationState(character, 0, matrix, colorTransform);
@@ -255,8 +255,8 @@ module Shumway.Timeline {
 
   export class SpriteSymbol extends DisplaySymbol {
     numFrames: number = 1;
-    frames: Frame [] = [];
-    labels: flash.display.FrameLabel [] = [];
+    frames: FrameDelta[] = [];
+    labels: flash.display.FrameLabel[] = [];
     isRoot: boolean;
 
     constructor(id: number, isRoot: boolean = false) {
@@ -270,7 +270,7 @@ module Shumway.Timeline {
       var frames = data.frames;
       for (var i = 0; i < frames.length; i++) {
         var frameInfo = frames[i];
-        var frame = new Frame(loaderInfo, frameInfo.commands);
+        var frame = new FrameDelta(loaderInfo, frameInfo.commands);
         var repeat = frameInfo.repeat;
         while (repeat--) {
           symbol.frames.push(frame);
@@ -395,7 +395,7 @@ module Shumway.Timeline {
   /**
    * TODO document
    */
-  export class Frame {
+  export class FrameDelta {
     stateAtDepth: Shumway.Map<AnimationState>;
 
     constructor(loaderInfo: flash.display.LoaderInfo, commands: any []) {

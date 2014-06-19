@@ -15,42 +15,36 @@
  */
 // Class: Scene
 module Shumway.AVM2.AS.flash.display {
-  import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Scene extends ASNative {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
+    static instanceSymbols: string [] = null;
     
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["_name", "_labels", "_numFrames", "name", "labels", "numFrames"];
-    
-    constructor (name: string, labels: any [], numFrames: number /*int*/) {
+    constructor (name: string, labels: FrameLabel[], offset: number, numFrames: number /*int*/) {
       false && super();
       this._name = asCoerceString(name);
+      // Note: creating Scene objects in ActionScript, while possible, is undocumented and entirely
+      // useless. Luckily, that also means that they're not very carefully implemented.
+      // Specifically, the `labels` array isn't cloned during construction or when returned from
+      // the getter. I.e., it can be modified freely.
       this._labels = labels;
+      this.offset = offset;
       this._numFrames = numFrames | 0;
     }
-    
-    // JS -> AS Bindings
-    
-    private _name: string;
-    private _labels: any [];
-    private _numFrames: number /*int*/;
-    
-    // AS -> JS Bindings
+
+    _name: string;
+    offset: number;
+    _numFrames: number /*int*/;
+    _labels: FrameLabel[];
 
     get name(): string {
       return this._name;
     }
 
-    get labels(): any [] {
+    get labels(): FrameLabel[] {
       return this._labels;
     }
 
@@ -58,11 +52,9 @@ module Shumway.AVM2.AS.flash.display {
       return this._numFrames;
     }
 
-    clone() {
-      var labels = this._labels.map(function (x: flash.display.FrameLabel) {
-        return x.clone();
-      });
-      return new Scene(this._name, labels, this._numFrames);
+    clone(): Scene {
+      var labels = this._labels.map(function (label: FrameLabel) { return label.clone(); });
+      return new Scene(this._name, labels, this.offset, this._numFrames);
     }
   }
 }
