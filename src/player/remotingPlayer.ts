@@ -97,7 +97,7 @@ module Shumway.Remoting.Player {
     }
 
     writeTextContent(textContent: Shumway.TextContent, bounds: Bounds) {
-      if (textContent._isDirty) {
+      if (textContent._isDirty && textContent.plainText) {
         var textRuns = textContent.textRuns;
         var numTextRuns = textRuns.length;
         this.output.writeInt(MessageTag.UpdateTextContent);
