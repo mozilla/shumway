@@ -52,8 +52,9 @@ module Shumway.GFX {
   var counter = Shumway.Metrics.Counter.instance;
   export var frameCounter = new Shumway.Metrics.Counter(true);
 
+  declare var release;
+  
   export var traceLevel = TraceLevel.Verbose;
-  export var release = true;
   export var writer: IndentingWriter = null;
 
   export function frameCount(name) {

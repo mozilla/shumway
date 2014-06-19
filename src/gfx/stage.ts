@@ -24,6 +24,7 @@ module Shumway.GFX {
   import TileCache = Geometry.TileCache;
   import Tile = Geometry.Tile;
   import OBB = Geometry.OBB;
+  import assert = Shumway.Debug.assert;
 
   export enum BlendMode {
     Normal     = 1,
@@ -238,11 +239,18 @@ module Shumway.GFX {
   }
 
   export class Shape extends Frame {
-    public source: Renderable;
+    public _source: Renderable;
+
+    get source(): Renderable {
+      return this._source;
+    }
+
     constructor(source: Renderable) {
       super();
-      this.source = source;
+      release || assert(source);
+      this._source = source;
     }
+
     public getBounds(): Rectangle {
       return this.source.getBounds();
     }
