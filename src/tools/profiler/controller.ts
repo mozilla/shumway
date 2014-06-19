@@ -223,7 +223,7 @@ module Shumway.Tools.Profiler {
 
     showTooltip(chart: FlameChart, frame: TimelineFrame, x: number, y: number) {
       this.removeTooltipContent();
-      this._tooltip.appendChild(this.createTooltipContent(frame));
+      this._tooltip.appendChild(this.createTooltipContent(chart, frame));
       this._tooltip.style.display = "block";
       var elContent = <HTMLElement>this._tooltip.firstChild;
       var tooltipWidth = elContent.clientWidth;
@@ -239,7 +239,7 @@ module Shumway.Tools.Profiler {
       this._tooltip.style.display = "none";
     }
 
-    createTooltipContent(frame: TimelineFrame): HTMLElement {
+    createTooltipContent(chart: FlameChart, frame: TimelineFrame): HTMLElement {
       var totalTime = Math.round(frame.totalTime * 100000) / 100000;
       var selfTime = Math.round(frame.selfTime * 100000) / 100000;
       var selfPercent = Math.round(frame.selfTime * 100 * 100 / frame.totalTime) / 100;
@@ -251,12 +251,30 @@ module Shumway.Tools.Profiler {
       elContent.appendChild(elName);
 
       var elTotalTime = document.createElement("p");
-      elTotalTime.textContent = totalTime + " ms";
+      elTotalTime.textContent = "Total: " + totalTime + " ms";
       elContent.appendChild(elTotalTime);
 
       var elSelfTime = document.createElement("p");
-      elSelfTime.textContent = selfTime + " ms (" + selfPercent + "%)";
+      elSelfTime.textContent = "Self: " + selfTime + " ms (" + selfPercent + "%)";
       elContent.appendChild(elSelfTime);
+
+      var statistics = chart.getStatistics(frame.kind);
+
+      if (statistics) {
+        var elAllCount = document.createElement("p");
+        elAllCount.textContent = "Count: " + statistics.count;
+        elContent.appendChild(elAllCount);
+
+        var allTotalTime = Math.round(statistics.totalTime * 100000) / 100000;
+        var elAllTotalTime = document.createElement("p");
+        elAllTotalTime.textContent = "All Total: " + allTotalTime + " ms";
+        elContent.appendChild(elAllTotalTime);
+
+        var allSelfTime = Math.round(statistics.selfTime * 100000) / 100000;
+        var elAllSelfTime = document.createElement("p");
+        elAllSelfTime.textContent = "All Self: " + allSelfTime + " ms";
+        elContent.appendChild(elAllSelfTime);
+      }
 
       this.appendDataElements(elContent, frame.startData);
       this.appendDataElements(elContent, frame.endData);

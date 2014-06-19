@@ -239,12 +239,12 @@ module Shumway.GFX {
   }
 
   export class Shape extends Frame {
-    public _source: Renderable;
+    private _source: Renderable;
 
     get source(): Renderable {
       return this._source;
     }
-
+    
     constructor(source: Renderable) {
       super();
       release || assert(source);

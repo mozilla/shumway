@@ -57,7 +57,7 @@ module Shumway {
   );
 
   export var playSymbolFrameDurationOption = playerOptions.register (
-    new Shumway.Options.Option("", "Play Symbol Duration", "number", 0, "How many frames to play, 0 for all frames of the movie clip.", {range: { min: 0, max: 1000, step: 1 }})
+    new Shumway.Options.Option("", "Play Symbol Duration", "number", 0, "How many frames to play, 0 for all frames of the movie clip.", {range: { min: 0, max: 128, step: 1 }})
   );
 
   export var playSymbolCountOption = playerOptions.register (
