@@ -56,6 +56,7 @@ module Shumway.Remoting.Player {
     }
 
     writeStage(stage: Stage) {
+      writer && writer.writeLn("Sending Stage");
       var serializer = this;
       this.output.writeInt(MessageTag.UpdateStage);
       this.output.writeInt(0x00000000);
@@ -64,6 +65,7 @@ module Shumway.Remoting.Player {
 
     writeGraphics(graphics: Graphics) {
       if (graphics._isDirty) {
+        writer && writer.writeLn("Sending Graphics: " + graphics._id);
         var textures = graphics.getUsedTextures();
         var numTextures = textures.length;
         for (var i = 0; i < numTextures; i++) {
@@ -85,6 +87,7 @@ module Shumway.Remoting.Player {
 
     writeBitmapData(bitmapData: BitmapData) {
       if (bitmapData._isDirty) {
+        writer && writer.writeLn("Sending BitmapData: " + bitmapData._id);
         this.output.writeInt(MessageTag.UpdateBitmapData);
         this.output.writeInt(bitmapData._id);
         this.output.writeInt(bitmapData._symbol ? bitmapData._symbol.id : -1);
@@ -98,6 +101,7 @@ module Shumway.Remoting.Player {
 
     writeTextContent(textContent: Shumway.TextContent, bounds: Bounds) {
       if (textContent._isDirty && textContent.plainText) {
+        writer && writer.writeLn("Sending TextContent: " + textContent._id);
         var textRuns = textContent.textRuns;
         var numTextRuns = textRuns.length;
         this.output.writeInt(MessageTag.UpdateTextContent);
@@ -133,6 +137,7 @@ module Shumway.Remoting.Player {
     writeFont(font: flash.text.Font) {
       // Device fonts can be skipped, they obviously should exist on the device.
       if (font.fontType === 'embedded') {
+        writer && writer.writeLn("Sending Font: " + font._id);
         var symbol = font._symbol;
         release || assert(symbol);
         this.output.writeInt(MessageTag.RegisterFont);
@@ -214,6 +219,7 @@ module Shumway.Remoting.Player {
       var graphics = displayObject._getGraphics();
       var textContent = displayObject._getTextContent();
       if (hasRemotableChildren) {
+        writer && writer.enter("Children: {");
         if (bitmap) {
           if (bitmap.bitmapData) {
             this.output.writeInt(1);
@@ -228,17 +234,21 @@ module Shumway.Remoting.Player {
           }
           this.output.writeInt(count);
           if (graphics) {
+            writer && writer.writeLn("Sending Graphics: " + graphics._id);
             this.output.writeInt(IDMask.Asset | graphics._id);
           } else if (textContent) {
+            writer && writer.writeLn("Sending TextContent: " + textContent._id);
             this.output.writeInt(IDMask.Asset | textContent._id);
           }
           // Write all the display object children.
           if (children) {
             for (var i = 0; i < children.length; i++) {
+              writer && writer.writeLn("Sending DisplayObject: " + children[i].debugName());
               this.output.writeInt(children[i]._id);
             }
           }
         }
+        writer && writer.leave("}");
       }
       if (this.phase === RemotingPhase.References) {
         displayObject._removeFlags(DisplayObjectFlags.Dirty);
