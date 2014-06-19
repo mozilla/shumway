@@ -360,17 +360,17 @@ module Shumway.AVM2.AS.flash.display {
             var scenes = data.sceneData.scenes;
             for (var i = 0, n = scenes.length; i < n; i++) {
               var sceneInfo = scenes[i];
-              var startFrame = sceneInfo.offset;
+              var offset = sceneInfo.offset;
               var endFrame = i < n - 1 ? scenes[i + 1].offset : rootSymbol.numFrames;
-              mc.addScene(sceneInfo.name, [], startFrame, endFrame - startFrame);
+              mc.addScene(sceneInfo.name, [], offset, endFrame - offset);
             }
             var labels = data.sceneData.labels;
             for (var i = 0; i < labels.length; i++) {
               var labelInfo = labels[i];
-              mc.addFrameLabel(labelInfo.frame, labelInfo.name);
+              mc.addFrameLabel(labelInfo.name, labelInfo.frame + 1);
             }
           } else {
-            mc.addScene('Scene 1', [], 1, rootSymbol.numFrames);
+            mc.addScene('Scene 1', [], 0, rootSymbol.numFrames);
           }
         }
 
@@ -388,7 +388,7 @@ module Shumway.AVM2.AS.flash.display {
 
       if (MovieClip.isType(root)) {
         if (data.labelName) {
-          (<MovieClip>root).addFrameLabel(frameIndex, data.labelName);
+          (<MovieClip>root).addFrameLabel(data.labelName, frameIndex + 1);
         }
 
         if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
