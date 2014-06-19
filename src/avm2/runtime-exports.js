@@ -145,6 +145,7 @@ var forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
 var wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
 
 var asCreateActivation = Shumway.AVM2.Runtime.asCreateActivation;
+var HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
 
 var CatchScopeObject = Shumway.AVM2.Runtime.CatchScopeObject;
 

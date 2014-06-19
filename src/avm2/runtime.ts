@@ -43,9 +43,12 @@ interface IProtocol {
   asPropertyIsEnumerable: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asHasTraitProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asDeleteProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
+
+  asHasNext2: (hasNext2Info: Shumway.AVM2.Runtime.HasNext2Info) => void;
   asNextName: (index: number) => any;
   asNextValue: (index: number) => any;
   asNextNameIndex: (index: number) => number;
+
   asGetEnumerableKeys: () => any [];
   hasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean; // TODO: What's this?
 }
@@ -694,6 +697,62 @@ module Shumway.AVM2.Runtime {
     return this.asGetPublicProperty(this.asNextName(index));
   }
 
+  /**
+   * Determine if the given object has any more properties after the specified |index| and if so, return
+   * the next index or |zero| otherwise. If the |obj| has no more properties then continue the search in
+   * |obj.__proto__|. This function returns an updated index and object to be used during iteration.
+   *
+   * the |for (x in obj) { ... }| statement is compiled into the following pseudo bytecode:
+   *
+   * index = 0;
+   * while (true) {
+   *   (obj, index) = hasNext2(obj, index);
+   *   if (index) { #1
+   *     x = nextName(obj, index); #2
+   *   } else {
+   *     break;
+   *   }
+   * }
+   *
+   * #1 If we return zero, the iteration stops.
+   * #2 The spec says we need to get the nextName at index + 1, but it's actually index - 1, this caused
+   * me two hours of my life that I will probably never get back.
+   *
+   * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
+   */
+  export function asHasNext2(hasNext2Info: HasNext2Info) {
+    if (isNullOrUndefined(hasNext2Info.object)) {
+      hasNext2Info.index = 0;
+      hasNext2Info.object = null;
+      return;
+    }
+    var object = boxValue(hasNext2Info.object);
+    var nextIndex = object.asNextNameIndex(hasNext2Info.index);
+    if (nextIndex > 0) {
+      hasNext2Info.index = nextIndex;
+      hasNext2Info.object = object;
+      return;
+    }
+    // If there are no more properties in the object then follow the prototype chain.
+    while (true) {
+      var object = Object.getPrototypeOf(object);
+      if (!object) {
+        hasNext2Info.index = 0;
+        hasNext2Info.object = null;
+        return;
+      }
+      nextIndex = object.asNextNameIndex(0);
+      if (nextIndex > 0) {
+        hasNext2Info.index = nextIndex;
+        hasNext2Info.object = object;
+        return;
+      }
+    }
+    hasNext2Info.index = 0;
+    hasNext2Info.object = null;
+    return;
+  }
+
   export function asGetEnumerableKeys(): any [] {
     var self: Object = this;
 
@@ -930,53 +989,6 @@ module Shumway.AVM2.Runtime {
     return l + r;
   }
 
-
-  /**
-   * Determine if the given object has any more properties after the specified |index| and if so, return
-   * the next index or |zero| otherwise. If the |obj| has no more properties then continue the search in
-   * |obj.__proto__|. This function returns an updated index and object to be used during iteration.
-   *
-   * the |for (x in obj) { ... }| statement is compiled into the following pseudo bytecode:
-   *
-   * index = 0;
-   * while (true) {
-   *   (obj, index) = hasNext2(obj, index);
-   *   if (index) { #1
-   *     x = nextName(obj, index); #2
-   *   } else {
-   *     break;
-   *   }
-   * }
-   *
-   * #1 If we return zero, the iteration stops.
-   * #2 The spec says we need to get the nextName at index + 1, but it's actually index - 1, this caused
-   * me two hours of my life that I will probably never get back.
-   *
-   * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
-   */
-  export function asHasNext2(object, index) {
-    if (isNullOrUndefined(object)) {
-      return {index: 0, object: null};
-    }
-    object = boxValue(object);
-    var nextIndex = object.asNextNameIndex(index);
-    if (nextIndex > 0) {
-      return {index: nextIndex, object: object};
-    }
-    // If there are no more properties in the object then follow the prototype chain.
-    while (true) {
-      var object = Object.getPrototypeOf(object);
-      if (!object) {
-        return {index: 0, object: null};
-      }
-      nextIndex = object.asNextNameIndex(0);
-      if (nextIndex > 0) {
-        return {index: nextIndex, object: object};
-      }
-    }
-    return {index: 0, object: null};
-  }
-
   function isXMLType(x): boolean {
     return x instanceof Shumway.AVM2.AS.ASXML ||
            x instanceof Shumway.AVM2.AS.ASXMLList;
@@ -1024,6 +1036,7 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Object.prototype, "asHasTraitProperty", asHasTraitProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
 
+    defineNonEnumerableProperty(global.Object.prototype, "asHasNext2", asHasNext2);
     defineNonEnumerableProperty(global.Object.prototype, "asNextName", asNextName);
     defineNonEnumerableProperty(global.Object.prototype, "asNextValue", asNextValue);
     defineNonEnumerableProperty(global.Object.prototype, "asNextNameIndex", asNextNameIndex);
@@ -1281,6 +1294,12 @@ module Shumway.AVM2.Runtime {
     methodInfo: MethodInfo;
     constructor(methodInfo: MethodInfo) {
       this.methodInfo = methodInfo;
+    }
+  }
+
+  export class HasNext2Info {
+    constructor(public object: Object, public index: number) {
+      // ...
     }
   }
 

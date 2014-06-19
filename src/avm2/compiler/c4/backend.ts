@@ -674,6 +674,10 @@ module Shumway.AVM2.Compiler.Backend {
     return call(id("asCreateActivation"), [methodInfo]);
   }
 
+  IR.ASNewHasNext2.prototype.compile = function (cx) {
+    return new NewExpression(id("HasNext2Info"), []);
+  }
+
   IR.ASMultiname.prototype.compile = function (cx) {
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);

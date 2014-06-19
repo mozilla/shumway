@@ -38,6 +38,7 @@ module Shumway.AVM2.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import clamp = Shumway.NumberUtilities.clamp;
   import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
   import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
@@ -472,15 +473,24 @@ module Shumway.AVM2.AS {
       }
     }
 
-    asGetEnumerableKeys() {
-      if (Uint32Vector.prototype === this) {
-        return Object.prototype.asGetEnumerableKeys.call(this);
+    asNextName(index: number): any {
+      return index - 1;
+    }
+
+    asNextValue(index: number): any {
+      return this._buffer[this._offset + index - 1];
+    }
+
+    asNextNameIndex(index: number): number {
+      var nextNameIndex = index + 1;
+      if (nextNameIndex <= this._length) {
+        return nextNameIndex;
       }
-      var keys = [];
-      for (var i = 0; i < this._length; i++) {
-        keys.push(i);
-      }
-      return keys;
+      return 0;
+    }
+
+    asHasNext2(hasNext2Info: HasNext2Info) {
+      hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
     }
 
     _reverse: () => void;

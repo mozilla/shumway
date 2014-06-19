@@ -170,4 +170,12 @@ module Shumway.AVM2.Compiler.IR {
   }
 
   ASNewActivation.prototype.nodeName = "ASNewActivation";
+
+  export class ASNewHasNext2 extends Value {
+    constructor() {
+      super();
+    }
+  }
+
+  ASNewActivation.prototype.nodeName = "ASNewHasNext2";
 }
