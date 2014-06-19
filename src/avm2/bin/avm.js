@@ -198,7 +198,7 @@ for (var f = 0; f < files.length; f++) {
       load(tsBuildPath + "swf/parser/sound.js");
       load(tsBuildPath + "swf/parser/text.js");
 
-      load(tsBuildPath + "swf/parser/swfTag.js");
+      load(tsBuildPath + "SWFTags.js");
       load(tsBuildPath + "swf/parser/templates.js");
       load(tsBuildPath + "swf/parser/handlers.js");
       load(tsBuildPath + "swf/parser/parser.js");
