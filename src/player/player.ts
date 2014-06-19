@@ -385,6 +385,9 @@ module Shumway.Player {
               frames = (<Shumway.Timeline.SpriteSymbol>symbol).numFrames;
             }
           }
+          if (playSymbolFrameDurationOption.value > 0) {
+            frames = playSymbolFrameDurationOption.value;
+          }
           setTimeout(showNextSymbol, (1000 / frameRateOption.value) * frames);
         }
         setTimeout(showNextSymbol, 1000 / frameRateOption.value);
