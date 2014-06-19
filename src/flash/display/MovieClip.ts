@@ -16,6 +16,7 @@
 // Class: MovieClip
 module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
+  import assertUnreachable = Shumway.Debug.assertUnreachable;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
@@ -45,16 +46,12 @@ module Shumway.AVM2.AS.flash.display {
       self._totalFrames = 1;
       self._trackAsMenu = false;
       self._scenes = [];
-      self._currentLabel = null;
-      self._currentFrameLabel = null;
       self._enabled = true;
       self._isPlaying = false;
 
       self._frames = [];
-      self._sceneIndex = 0;
       self._frameScripts = [];
-      self._currentFrameAbs = 1;
-      self._nextFrameAbs = 1;
+      self._nextFrame = 1;
       self._stopped = false;
       self._allowFrameNavigation = true;
 
@@ -62,11 +59,11 @@ module Shumway.AVM2.AS.flash.display {
         self._totalFrames = symbol.numFrames;
         self._currentFrame = 1;
         if (!symbol.isRoot) {
-          this.addScene('', symbol.labels, symbol.numFrames);
+          this.addScene('', symbol.labels, 0, symbol.numFrames);
         }
         self._frames = symbol.frames;
       } else {
-        this.addScene('', [], self._totalFrames);
+        this.addScene('', [], 0, self._totalFrames);
       }
     };
     
@@ -82,7 +79,7 @@ module Shumway.AVM2.AS.flash.display {
         var instance = instances[i];
         if (instance._totalFrames > 1 && instance._hasFlags(DisplayObjectFlags.Constructed)) {
           if (!instance._stopped) {
-            instance._nextFrameAbs++;
+            instance._nextFrame++;
           }
           instance._advanceFrame();
         }
@@ -98,10 +95,10 @@ module Shumway.AVM2.AS.flash.display {
         var instance = queue.shift();
         instance._allowFrameNavigation = false;
         if (!ignoreFrameScripts) {
-          instance.callFrame(instance._currentFrameAbs);
+          instance.callFrame(instance._currentFrame);
         }
         instance._allowFrameNavigation = true;
-        if (instance._nextFrameAbs !== instance._currentFrameAbs) {
+        if (instance._nextFrame !== instance._currentFrame) {
           instance._advanceFrame();
           instance._constructChildren();
         }
@@ -120,24 +117,21 @@ module Shumway.AVM2.AS.flash.display {
     // AS -> JS Bindings
     
     private _currentFrame: number;
+    private _nextFrame: number;
     private _totalFrames: number;
-    private _trackAsMenu: boolean;
-    private _scenes: flash.display.Scene [];
-    private _currentLabel: string;
-    private _currentFrameLabel: string;
+    private _frames: Shumway.Timeline.FrameDelta[];
+    private _frameScripts: any;
+    private _scenes: Scene[];
+
     private _enabled: boolean;
     private _isPlaying: boolean;
-
-    private _frames: Shumway.Timeline.Frame [];
-    private _sceneIndex: number;
-    private _frameScripts: any;
-    private _currentFrameAbs: number;
-    private _nextFrameAbs: number;
     private _stopped: boolean;
+
+    private _trackAsMenu: boolean;
     private _allowFrameNavigation: boolean;
 
     get currentFrame(): number /*int*/ {
-      return this._currentFrame;
+      return this._currentFrame - this._sceneForFrameIndex(this._currentFrame).offset;
     }
 
     get framesLoaded(): number /*int*/ {
@@ -156,24 +150,26 @@ module Shumway.AVM2.AS.flash.display {
       this._trackAsMenu = !!value;
     }
 
-    get scenes(): flash.display.Scene [] {
-      return this._scenes.map(function (x: Scene) {
-        return x.clone();
+    get scenes(): Scene[] {
+      return this._scenes.map(function (scene: Scene) {
+        return scene.clone();
       });
     }
 
-    get currentScene(): flash.display.Scene {
-      var scene = this._scenes[this._sceneIndex];
-      release || assert (scene, "Scene is not defined.");
+    get currentScene(): Scene {
+      var scene = this._sceneForFrameIndex(this._currentFrame);
       return scene.clone();
     }
 
     get currentLabel(): string {
-      return this._currentLabel;
+      var label: FrameLabel = this._labelForFrame(this.currentFrame);
+      return label ? label.name : null;
     }
 
     get currentFrameLabel(): string {
-      return this._currentFrameLabel;
+      var currentFrame = this.currentFrame;
+      var label: FrameLabel = this._labelForFrame(currentFrame);
+      return label && label.frame === currentFrame ? label.name : null;
     }
 
     get enabled(): boolean {
@@ -201,42 +197,34 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     gotoFrame(frame: any, sceneName: string = null): void {
-      var scenes = this._scenes;
-      release || assert (scenes.length, "There should be at least one scene defined.");
-      var sceneIndex = -1;
-      var sceneOffset = 0;
-      var frameNum = 1;
-
+      var scene: Scene;
       if (sceneName !== null) {
+        var scenes = this._scenes;
+        release || assert (scenes.length, "There should be at least one scene defined.");
         for (var i = 0; i < scenes.length; i++) {
-          var scene = scenes[i];
+          scene = scenes[i];
           if (scene.name === sceneName) {
-            sceneIndex = i;
             break;
           }
-          sceneOffset += scene.numFrames;
         }
-        if (sceneIndex < 0) {
+        if (i === scenes.length) {
           throwError('ArgumentError', Errors.SceneNotFoundError, sceneName);
         }
       } else {
-        sceneIndex = this._sceneIndex;
+        scene = this._sceneForFrameIndex(this._currentFrame);
       }
 
-      var scene = scenes[sceneIndex];
-
+      var frameNum = 1;
       if (typeof frame === 'string') {
         var labels = scene.labels;
-        var labelFound = null;
         for (var i = 0; i < labels.length; i++) {
           var label = labels[i];
           if (label.name === frame) {
-            labelFound = label;
             frameNum = label.frame;
             break;
           }
         }
-        if (!labelFound) {
+        if (i === labels.length) {
           throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame, sceneName);
         }
       } else {
@@ -249,12 +237,12 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
 
-      var frameNumAbs = sceneOffset + frameNum;
-      if (frameNumAbs === this._nextFrameAbs) {
+      var nextFrame = scene.offset + frameNum;
+      if (nextFrame === this._nextFrame) {
         return;
       }
 
-      this._nextFrameAbs = frameNumAbs;
+      this._nextFrame = nextFrame;
 
       if (this._allowFrameNavigation) { // TODO: also check if ActionScriptVersion < 3
         // TODO test inter-frame navigation behaviour for SWF versions < 10
@@ -264,16 +252,14 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _advanceFrame(): void {
-      var scenes = this._scenes;
-      release || assert (scenes.length, "There should be at least one scene defined.");
-      var currentFrameAbs = this._currentFrameAbs;
-      var nextFrameAbs = this._nextFrameAbs;
+      var currentFrame = this._currentFrame;
+      var nextFrame = this._nextFrame;
 
-      if (nextFrameAbs > this._totalFrames) {
-        nextFrameAbs = 1;
+      if (nextFrame > this._totalFrames) {
+        nextFrame = 1;
       }
 
-      if (currentFrameAbs === nextFrameAbs) {
+      if (currentFrame === nextFrame) {
         return;
       }
 
@@ -294,16 +280,16 @@ module Shumway.AVM2.AS.flash.display {
       //  }
       //}
 
-      if (nextFrameAbs > this.framesLoaded) {
+      if (nextFrame > this.framesLoaded) {
         // TODO
         return;
       }
 
       var frames = this._frames;
-      var startIndex = currentFrameAbs;
-      if (nextFrameAbs < currentFrameAbs) {
+      var startIndex = currentFrame;
+      if (nextFrame < currentFrame) {
         var frame = frames[0];
-        release || assert (frame, "Frame is not defined.");
+        release || assert (frame, "FrameDelta is not defined.");
         var stateAtDepth = frame.stateAtDepth;
         var children = this._children.slice();
         for (var i = 0; i < children.length; i++) {
@@ -317,9 +303,9 @@ module Shumway.AVM2.AS.flash.display {
         }
         startIndex = 0;
       }
-      for (var i = startIndex; i < nextFrameAbs; i++) {
+      for (var i = startIndex; i < nextFrame; i++) {
         var frame = frames[i];
-        release || assert (frame, "Frame is not defined.");
+        release || assert (frame, "FrameDelta is not defined.");
         var stateAtDepth = frame.stateAtDepth;
         for (var depth in stateAtDepth) {
           var child = this.getChildAtDepth(depth);
@@ -339,34 +325,52 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
 
-      var currentFrame = nextFrameAbs;
-      var sceneIndex = 0;
-      var currentLabel = null;
-      while (sceneIndex < scenes.length) {
-        var scene = scenes[sceneIndex];
-        if (currentFrame <= scene.numFrames) {
-          var labels = scene.labels;
-          for (var i = 0; i < labels.length; i++) {
-            var label = labels[i];
-            if (label.frame === currentFrame) {
-              currentLabel = label;
-            }
-          }
-          break;
-        }
-        currentFrame -= scene.numFrames;
-        sceneIndex++;
-      }
-      this._currentFrame = currentFrame;
-      this._sceneIndex = sceneIndex;
-      this._currentLabel = currentLabel;
-
-      if (this._frameScripts[nextFrameAbs]) {
+      if (this._frameScripts[nextFrame]) {
         MovieClip._callQueue.push(this);
       }
 
-      this._currentFrameAbs = nextFrameAbs;
-      this._nextFrameAbs = nextFrameAbs;
+      this._currentFrame = this._nextFrame = nextFrame;
+    }
+
+    /**
+     * Because that's how it's mostly used, the current frame is stored as an offset into the
+     * entire timeline. Sometimes, we need to know which scene it falls into. This utility
+     * function answers that.
+     */
+    private _sceneForFrameIndex(frameIndex: number) : Scene {
+      var scenes = this._scenes;
+      for (var i = 0; i < scenes.length; i++) {
+        var scene = scenes[i];
+        if (scene.offset < frameIndex && scene.offset + scene.numFrames >= frameIndex) {
+          return scene;
+        }
+      }
+      release || assertUnreachable("Must have at least one scene covering all frames.");
+    }
+
+    /**
+     * Frame indices are stored as offsets into the entire timline, whereas labels are stored
+     * in their scenes. This utility function iterates over scenes and their labels to find
+     * the label clostest to, but not after the target frame.
+     */
+    private _labelForFrame(frame: number): FrameLabel {
+      var scenes = this._scenes;
+      var label: FrameLabel = null;
+      for (var i = 0; i < scenes.length; i++) {
+        var scene = scenes[i];
+        if (scene.offset > frame) {
+          return label;
+        }
+        var labels = scene.labels;
+        for (var j = 0; j < labels.length; j++) {
+          var currentLabel = labels[j];
+          if (currentLabel.frame > frame - scene.offset) {
+            return label;
+          }
+          label = currentLabel;
+        }
+      }
+      return label;
     }
 
     private _removeAnimatedChild(child: flash.display.DisplayObject) {
@@ -400,11 +404,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     nextFrame(): void {
-      this.gotoAndStop(this._currentFrameAbs + 1);
+      this.gotoAndStop(this._currentFrame + 1);
     }
 
     prevFrame(): void {
-      this.gotoAndStop(this._currentFrameAbs - 1);
+      this.gotoAndStop(this._currentFrame - 1);
     }
 
     gotoAndPlay(frame: any, scene: string = null): void {
@@ -433,53 +437,32 @@ module Shumway.AVM2.AS.flash.display {
         release || assert (frameNum > 0 && frameNum <= this._totalFrames, "Invalid frame number.");
         var fn = args[i + 1];
         frameScripts[frameNum] = fn;
-        if (frameNum === this._currentFrameAbs) {
+        if (frameNum === this._currentFrame) {
           MovieClip._callQueue.push(this);
         }
       }
     }
 
-    addScene(name: string, labels: any [], numFrames: number): void {
-      this._scenes.push(new Scene(name, labels, numFrames));
+    addScene(name: string, labels: any [], offset: number, numFrames: number): void {
+      this._scenes.push(new Scene(name, labels, offset, numFrames));
     }
 
-    addFrameLabel(...args): void {
-      for (var i = 0; i < args.length; i += 2) {
-        var frameNum = args[i] + 1;
-        var labelName = args[i + 1];
-        var scenes = this._scenes;
-        release || assert (scenes.length, "There should be at least one scene defined.");
-        var offset = 0;
-        findScene: for (var i = 0; i < scenes.length; i++) {
-          var scene = scenes[i];
-          var labels = scene.labels;
-          for (var j = 0; j < labels.length; j++) {
-            var label = labels[j];
-            if (label.name === labelName) {
-              break findScene;
-            }
-          }
-          if (frameNum > offset && frameNum <= offset + scene.numFrames) {
-            labels.push(new FrameLabel(labelName, frameNum - offset));
-          }
-          offset += scene.numFrames;
-        }
-      }
+    addFrameLabel(name: string, frame: number): void {
+      this._sceneForFrameIndex(frame)._labels.push(new flash.display.FrameLabel(name, frame));
     }
 
     prevScene(): void {
-      var index = this._sceneIndex;
-      if (index <= 0) {
+      var currentScene = this._sceneForFrameIndex(this._currentFrame);
+      if (currentScene.offset === 0) {
         return;
       }
-      var prevScene = this._scenes[index - 1];
-      release || assert (prevScene, "Scene is not defined.");
-      this.gotoFrame(1, prevScene.name);
+      // Since scene offsets are 0-based, the current scene's offset, treated as a frame index,
+      // is the previous scene's last frame.
+      this.gotoFrame(1, this._sceneForFrameIndex(currentScene.offset).name);
     }
 
     nextScene(): void {
-      var currentScene = this._scenes[this._sceneIndex];
-      release || assert (currentScene, "Scene is not defined.");
+      var currentScene = this._sceneForFrameIndex(this._currentFrame);
       this.gotoFrame(currentScene.numFrames + 1);
     }
   }
