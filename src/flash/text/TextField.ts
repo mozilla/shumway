@@ -595,7 +595,7 @@ module Shumway.AVM2.AS.flash.text {
     }
     setTextFormat(format: flash.text.TextFormat, beginIndex: number /*int*/ = -1, endIndex: number /*int*/ = -1): void {
       format = format; beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextField::setTextFormat"); return;
+      somewhatImplemented("public flash.text.TextField::setTextFormat"); return;
     }
     getImageReference(id: string): flash.display.DisplayObject {
       id = "" + id;
