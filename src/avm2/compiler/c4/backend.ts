@@ -548,7 +548,9 @@ module Shumway.AVM2.Compiler.Backend {
     } else {
       object = new Literal(null);
     }
-    if (false && this.pristine &&
+    if (this.flags & IR.Flags.AS_CALL) {
+      return callAsCall(callee, object, args);
+    } else if (false && this.pristine &&
         (this.callee instanceof IR.GetProperty && this.callee.object === this.object) ||
         this.object === null) {
       return call(callee, args);
