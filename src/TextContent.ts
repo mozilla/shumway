@@ -28,6 +28,8 @@ module Shumway {
     private _plainText: string;
     private _backgroundColor: number;
     private _borderColor: number;
+    private _autoSize: boolean;
+    private _wordWrap: boolean;
     defaultTextFormat: flash.text.TextFormat;
     textRuns: flash.text.TextRun[];
     matrix: flash.geom.Matrix;
@@ -39,6 +41,8 @@ module Shumway {
       this._plainText = '';
       this._backgroundColor = 0;
       this._borderColor = 0;
+      this._autoSize = false;
+      this._wordWrap = false;
       this.defaultTextFormat = defaultTextFormat || new flash.text.TextFormat();
       this.textRuns = [];
       this.matrix = null;
@@ -52,52 +56,48 @@ module Shumway {
 
       var beginIndex = 0;
       var endIndex = 0;
-      var textFormat = this.defaultTextFormat;
-
+      var textFormat = this.defaultTextFormat.clone();
+      var prevTextRun: flash.text.TextRun = null;
       var stack = [];
 
-      var finishTextRun = function () {
-        if (endIndex - beginIndex) {
-          textRuns.push(new flash.text.TextRun(beginIndex, endIndex, textFormat));
-          beginIndex = endIndex = endIndex;
-        }
-      };
-
-      Shumway.HTMLParser(htmlText, {
+      var handler: HTMLParserHandler;
+      Shumway.HTMLParser(htmlText, handler = {
         chars: (text) => {
           plainText += text;
           endIndex += text.length;
+          if (endIndex - beginIndex) {
+            if (prevTextRun && prevTextRun.textFormat.equals(textFormat)) {
+              prevTextRun.endIndex = endIndex;
+            } else {
+              prevTextRun = new flash.text.TextRun(beginIndex, endIndex, textFormat);
+              textRuns.push(prevTextRun);
+            }
+            beginIndex = endIndex;
+          }
         },
         start: (tagName, attributes) => {
-          var newTextFormat: flash.text.TextFormat;
           switch (tagName) {
             case 'a':
-              somewhatImplemented('<a/>');
               stack.push(textFormat);
+              somewhatImplemented('<a/>');
               var target = attributes.target || textFormat.target;
               var url = attributes.url || textFormat.url;
               if (target !== textFormat.target || url !== textFormat.url) {
-                  newTextFormat = textFormat.clone();
-                  newTextFormat.target = target;
-                  newTextFormat.url = url;
+                textFormat = textFormat.clone();
+                textFormat.target = target;
+                textFormat.url = url;
               }
               break;
             case 'b':
               stack.push(textFormat);
               if (!textFormat.bold) {
-                  newTextFormat = textFormat.clone();
-                  newTextFormat.bold = true;
-              }
-              break;
-            case 'br':
-              if (multiline) {
-                plainText += '\n';
-                endIndex++;
+                textFormat = textFormat.clone();
+                textFormat.bold = true;
               }
               break;
             case 'font':
               stack.push(textFormat);
-              var color = attributes.color !== undefined ? ColorUtilities.hexToRGB(attributes.color) : textFormat.color;
+              var color = ColorUtilities.isValidHexColor(attributes.color) ? ColorUtilities.hexToRGB(attributes.color) : textFormat.color;
               // TODO: the value of the face property can be a string specifying a list of
               // comma-delimited font names in which case the first available font should be used.
               var font = attributes.face || textFormat.font;
@@ -106,10 +106,10 @@ module Shumway {
                   font !== textFormat.font ||
                   size !== textFormat.size)
               {
-                newTextFormat = textFormat.clone();
-                newTextFormat.color = color;
-                newTextFormat.font = font;
-                newTextFormat.size = size;
+                textFormat = textFormat.clone();
+                textFormat.color = color;
+                textFormat.font = font;
+                textFormat.size = size;
               }
               break;
             case 'img':
@@ -117,25 +117,33 @@ module Shumway {
               break;
             case 'i':
               stack.push(textFormat);
-              if (!textFormat.italic) {
-                  newTextFormat = textFormat.clone();
-                  newTextFormat.italic = true;
+              if (!prevTextRun) {
+                textFormat = textFormat.clone();
+                textFormat.italic = true;
               }
               break;
             case 'li':
               stack.push(textFormat);
               if (!textFormat.bullet) {
-                  newTextFormat = textFormat.clone();
-                  newTextFormat.bullet = true;
+                textFormat = textFormat.clone();
+                textFormat.bullet = true;
+              }
+              if (plainText[plainText.length - 1] === '\r') {
+                break;
+              }
+            case 'br':
+              if (multiline) {
+                handler.chars('\r');
               }
               break;
             case 'p':
               stack.push(textFormat);
               var align = attributes.align;
-              if (align !== undefined && align !== textFormat.align) {
-                  newTextFormat = textFormat.clone();
-                  newTextFormat.align = align;
+              if (flash.text.TextFormatAlign.toNumber(align) > -1 && align !== textFormat.align) {
+                textFormat = textFormat.clone();
+                textFormat.align = align;
               }
+              break;
             case 'span':
               // TODO: support CSS style classes.
               break;
@@ -154,26 +162,22 @@ module Shumway {
                   rightMargin !== textFormat.rightMargin /*||
                   tabStops !== textFormat.tabStops*/)
               {
-                newTextFormat = textFormat.clone();
-                newTextFormat.blockIndent = blockIndent;
-                newTextFormat.indent = indent;
-                newTextFormat.leading = leading;
-                newTextFormat.leftMargin = leftMargin;
-                newTextFormat.rightMargin = rightMargin;
-                //newTextFormat.tabStops = tabStops;
+                textFormat = textFormat.clone();
+                textFormat.blockIndent = blockIndent;
+                textFormat.indent = indent;
+                textFormat.leading = leading;
+                textFormat.leftMargin = leftMargin;
+                textFormat.rightMargin = rightMargin;
+                //textFormat.tabStops = tabStops;
               }
               break;
             case 'u':
+              stack.push(textFormat);
               if (!textFormat.underline) {
-                  newTextFormat = textFormat.clone();
-                  newTextFormat.underline = true;
+                textFormat = textFormat.clone();
+                textFormat.underline = true;
               }
               break;
-          }
-          if (newTextFormat) {
-            finishTextRun();
-            stack.push(newTextFormat);
-            textFormat = newTextFormat;
           }
         },
         end: (tagName) => {
@@ -181,8 +185,7 @@ module Shumway {
             case 'li':
             case 'p':
               if (multiline) {
-                plainText += '\r';
-                endIndex++;
+                handler.chars('\r');
               }
             case 'a':
             case 'b':
@@ -190,15 +193,10 @@ module Shumway {
             case 'i':
             case 'textformat':
             case 'u':
-              var f = stack.pop();
-              if (f !== textFormat) {
-                finishTextRun();
-              }
-              textFormat = f;
+              textFormat = stack.pop();
           }
         }
       });
-      finishTextRun();
 
       this._plainText = plainText;
       this._isDirty = true;
@@ -209,9 +207,36 @@ module Shumway {
     }
 
     set plainText(value: string) {
+      if (value === this._plainText) {
+        return;
+      }
       this._plainText = value;
       this.textRuns.length = 0;
       this.textRuns[0] = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
+      this._isDirty = true;
+    }
+
+    get autoSize(): boolean {
+      return this._autoSize;
+    }
+
+    set autoSize(value: boolean) {
+      if (value === this._autoSize) {
+        return;
+      }
+      this._autoSize = value;
+      this._isDirty = true;
+    }
+
+    get wordWrap(): boolean {
+      return this._wordWrap;
+    }
+
+    set wordWrap(value: boolean) {
+      if (value === this._wordWrap) {
+        return;
+      }
+      this._wordWrap = value;
       this._isDirty = true;
     }
 
@@ -220,6 +245,9 @@ module Shumway {
     }
 
     set backgroundColor(value: number) {
+      if (value === this._backgroundColor) {
+        return;
+      }
       this._backgroundColor = value;
       this._isDirty = true;
     }
@@ -229,6 +257,9 @@ module Shumway {
     }
 
     set borderColor(value: number) {
+      if (value === this._borderColor) {
+        return;
+      }
       this._borderColor = value;
       this._isDirty = true;
     }

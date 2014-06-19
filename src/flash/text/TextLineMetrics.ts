@@ -26,18 +26,15 @@ module Shumway.AVM2.AS.flash.text {
     constructor(x: number, width: number, height: number, ascent: number, descent: number,
                 leading: number)
     {
+      false && super();
+      notImplemented("Dummy Constructor: public flash.text.TextLineMetrics");
       x = +x;
       width = +width;
       height = +height;
       ascent = +ascent;
       descent = +descent;
       leading = +leading;
-      false && super();
-      notImplemented("Dummy Constructor: public flash.text.TextLineMetrics");
     }
-
-    //largestFormat: NativeTextFormat;
-    y: number;
 
     // JS -> AS Bindings
     x: number;

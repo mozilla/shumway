@@ -59,7 +59,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set textFormat(value: TextFormat) {
-      this._textFormat = value.clone();
+      this._textFormat = value;
     }
 
     clone(): TextRun {

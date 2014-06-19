@@ -82,7 +82,6 @@ module Shumway.AVM2.AS.flash.text {
       self._textWidth = 0;
       self._thickness = 0;
       self._type = TextFieldType.DYNAMIC;
-      self._wordWrap = false;
       self._useRichTextClipboard = false;
 
       self._textContent = new Shumway.TextContent(self._defaultTextFormat);
@@ -100,24 +99,25 @@ module Shumway.AVM2.AS.flash.text {
         self._defaultTextFormat.leading = (symbol.leading / 20) | 0;
 
         self._multiline = symbol.multiline;
-        self._wordWrap = symbol.wordWrap;
         self._embedFonts = symbol.embedFonts;
         self._selectable = symbol.selectable;
+        self._displayAsPassword = symbol.displayAsPassword;
+        self._type = symbol.type;
+        self._maxChars = symbol.maxChars;
 
         if (symbol.border) {
           self.background = true;
           self.border = true;
         }
+        self.autoSize = symbol.autoSize;
+        self.wordWrap = symbol.wordWrap;
         if (symbol.html) {
           self.htmlText = symbol.initialText;
         } else {
           self.text = symbol.initialText;
         }
-
-        self._displayAsPassword = symbol.displayAsPassword;
-        self._type = symbol.type;
-        self._maxChars = symbol.maxChars;
-        self._autoSize = symbol.autoSize;
+      } else {
+        self._setFillAndLineBoundsFromWidthAndHeight(100 * 20, 100 * 20);
       }
     };
 
@@ -125,8 +125,6 @@ module Shumway.AVM2.AS.flash.text {
       super();
       notImplemented("Dummy Constructor: public flash.text.TextField");
     }
-
-
 
     _getTextContent(): Shumway.TextContent {
       return this._textContent;
@@ -219,10 +217,14 @@ module Shumway.AVM2.AS.flash.text {
 
     set autoSize(value: string) {
       value = asCoerceString(value);
+      if (value === this._autoSize) {
+        return;
+      }
       if (TextFieldAutoSize.toNumber(value) < 0) {
         throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
       }
       this._autoSize = value;
+      this._textContent.autoSize = value !== TextFieldAutoSize.NONE;
     }
 
     get background(): boolean {
@@ -337,6 +339,11 @@ module Shumway.AVM2.AS.flash.text {
     set htmlText(value: string) {
       somewhatImplemented("public flash.text.TextField::set htmlText");
       value = asCoerceString(value);
+      // Flash resets the bold and italic flags when an html value is set on a text field created from a symbol.
+      if (this._symbol) {
+        this._defaultTextFormat.bold = false;
+        this._defaultTextFormat.italic = false;
+      }
       this._textContent.parseHtml(value, this._multiline);
       this._htmlText = value;
       this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
@@ -505,11 +512,16 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get wordWrap(): boolean {
-      return this._wordWrap;
+      return this._textContent.wordWrap;
     }
 
     set wordWrap(value: boolean) {
-      this._wordWrap = !!value;
+      value = !!value;
+      if (value === this._textContent.wordWrap) {
+        return;
+      }
+      this._textContent.wordWrap = !!value;
+      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
     }
 
     get useRichTextClipboard(): boolean {
