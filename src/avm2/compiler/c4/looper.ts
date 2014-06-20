@@ -483,19 +483,6 @@ module Shumway.AVM2.Compiler.Looper {
         return false;
       }
 
-      function LoopInfo(scc, loopId) {
-        var body = this.makeBlockSet();
-        body.setBlocks(scc);
-        body.recount();
-
-        this.id = loopId;
-        this.body = body;
-        this.exit = this.makeBlockSet();
-        this.save = {};
-        this.head = this.makeBlockSet();
-        this.npredecessors = 0;
-      }
-
 
       var heads = this.findLoopHeads(this.blocks);
       if (heads.length <= 0) {
@@ -517,7 +504,7 @@ module Shumway.AVM2.Compiler.Looper {
 
         for (var i = 0, j = sccs.length; i < j; i++) {
           var scc = sccs[i];
-          var loop = new LoopInfo(scc, loopId++);
+          var loop = new LoopInfo(this, scc, loopId++);
           for (var k = 0, l = scc.length; k < l; k++) {
             var h = scc[k];
             if (h.level === t.level + 1 && !h.loop) {
@@ -551,13 +538,13 @@ module Shumway.AVM2.Compiler.Looper {
     // Find all SCCs at or below the level of some root that are not already
     // natural loops.
     //
-    findSCCs(root) {
+    findSCCs(root): any[][] {
       var preorderId = 1;
       var preorder = {};
       var assigned = {};
       var unconnectedNodes = [];
       var pendingNodes = [];
-      var sccs = [];
+      var sccs: any[][] = [];
       var level = root.level + 1;
       var worklist = [root];
       var node;
@@ -1009,6 +996,24 @@ module Shumway.AVM2.Compiler.Looper {
     }
     exit.save = save;
     return exit;
+  }
+
+  export class LoopInfo {
+    public body: BlockSet;
+    public exit: BlockSet;
+    public head: BlockSet;
+    public save: any;
+    public npredecessors: number;
+
+    constructor(analysis: Analysis, scc: Block[], public id: number) {
+      var body = this.body = analysis.makeBlockSet();
+      body.setBlocks(scc);
+      body.recount();
+      this.exit = analysis.makeBlockSet();
+      this.head = analysis.makeBlockSet();
+      this.save = {};
+      this.npredecessors = 0;
+    }
   }
 
   export function analyze(cfg: CFG): Control.ControlNode {
