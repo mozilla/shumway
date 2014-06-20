@@ -260,22 +260,6 @@ module Shumway.AVM2.Compiler.Looper {
       super(length);
     }
 
-    forEachBlock(fn: BlockVisitor) {
-      release || assert(fn);
-      var byId = this.blockById;
-      var bits = this.bits;
-      for (var i = 0, j = bits.length; i < j; i++) {
-        var word = bits[i];
-        if (word) {
-          for (var k = 0; k < BITS_PER_WORD; k++) {
-            if (word & (1 << k)) {
-              fn(byId[i * BITS_PER_WORD + k]);
-            }
-          }
-        }
-      }
-    }
-
     choose(): Block {
       var byId = this.blockById;
       var bits = this.bits;
@@ -487,32 +471,6 @@ module Shumway.AVM2.Compiler.Looper {
           dominatees[i].level = block.level + 1;
         }
         worklist.push.apply(worklist, dominatees);
-      }
-    }
-
-    computeFrontiers() {
-      var BlockSet = this.boundBlockSet;
-      var blocks = this.blocks;
-
-      for (var b = 0, n = blocks.length; b < n; b++) {
-        blocks[b].frontier = new BlockSet();
-      }
-
-      for (var b = 1, n = blocks.length; b < n; b++) {
-        var block = blocks[b];
-        var predecessors = block.predecessors;
-
-        if (predecessors.length >= 2) {
-          var idom = block.dominator;
-          for (var i = 0, j = predecessors.length; i < j; i++) {
-            var runner = predecessors[i];
-
-            while (runner !== idom) {
-              runner.frontier.set(block.id);
-              runner = runner.dominator;
-            }
-          }
-        }
       }
     }
 

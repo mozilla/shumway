@@ -674,22 +674,6 @@ module Shumway.AVM2 {
       super(length);
     }
 
-    forEachBlock(fn: BytecodeVisitor) {
-      release || assert(fn);
-      var byId = this.blockById;
-      var bits = this.bits;
-      for (var i = 0, j = bits.length; i < j; i++) {
-        var word = bits[i];
-        if (word) {
-          for (var k = 0; k < BITS_PER_WORD; k++) {
-            if (word & (1 << k)) {
-              fn(byId[i * BITS_PER_WORD + k]);
-            }
-          }
-        }
-      }
-    }
-
     choose(): Bytecode {
       var byId = this.blockById;
       var bits = this.bits;
