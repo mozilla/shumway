@@ -647,7 +647,7 @@ module Shumway.GFX {
       var finishRun = function (font: string, fillStyle: string, text: string) {
         if (text) {
           var width = measureContext.measureText(text).width;
-          line.runs.push(new Run(font, fillStyle, text, width, underline));
+          line.runs.push(new Run(font, fillStyle, text, width));
           line.width += width;
         }
       };

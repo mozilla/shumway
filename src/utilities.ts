@@ -2682,6 +2682,10 @@ module Shumway {
       return '#' + ('000000' + color.toString(16)).slice(-6);
     }
 
+    export function isValidHexColor(value: any): boolean {
+      return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value);
+    }
+
     /**
      * Unpremultiplies the given |pARGB| color value.
      */
