@@ -22,17 +22,21 @@ module Shumway.Timeline {
   import flash = Shumway.AVM2.AS.flash;
   import Bounds = Shumway.Bounds;
 
+  import ActionScriptVersion = flash.display.ActionScriptVersion;
+
   /**
    * TODO document
    */
   export class Symbol {
     id: number = -1;
+    isAS2Object: boolean;
     symbolClass: Shumway.AVM2.AS.ASClass;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
       assert (isInteger(id));
       this.id = id;
       this.symbolClass = symbolClass;
+      this.isAS2Object = false;
     }
   }
 
@@ -267,6 +271,9 @@ module Shumway.Timeline {
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): SpriteSymbol {
       var symbol = new SpriteSymbol(data.id);
       symbol.numFrames = data.frameCount;
+      if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+        symbol.isAS2Object = true;
+      }
       var frames = data.frames;
       for (var i = 0; i < frames.length; i++) {
         var frameInfo = frames[i];
@@ -376,7 +383,8 @@ module Shumway.Timeline {
                 public blendMode: string = null,
                 public cacheAsBitmap: boolean = false,
                 public visible: boolean = true,
-                public events: any [] = null) {
+                public events: any [] = null,
+                public variableName: string = null) {
     }
 
     canBeAnimated(obj: flash.display.DisplayObject): boolean {
@@ -447,8 +455,42 @@ module Shumway.Timeline {
                 filters.push(filter);
               }
             }
-            if (cmd.hasEvents) {
-              // TODO
+            if (cmd.hasEvents && this.loaderInfo._allowCodeExecution &&
+                this.loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+              var loaderInfo = this.loaderInfo;
+              var swfEvents = cmd.events;
+              events = [];
+              for (var i = 0; i < swfEvents.length; i++) {
+                var swfEvent = swfEvents[i];
+                if (swfEvent.eoe) {
+                  break;
+                }
+                var actionsData = new AVM1.AS2ActionsData(swfEvent.actionsData,
+                    's' + cmd.symbolId + 'e' + i);
+                var fn = (function (actionsData, loaderInfo) {
+                  return function() {
+                    var avm1Context = loaderInfo._avm1Context;
+                    var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(this);
+                    return avm1Context.executeActions(actionsData, this.stage, as2Object);
+                  };
+                })(actionsData, loaderInfo);
+                var eventNames = [];
+                for (var eventName in swfEvent) {
+                  if (eventName.indexOf("on") !== 0 || !swfEvent[eventName]) {
+                    continue;
+                  }
+                  var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
+                  if (avm2EventName === 'enterFrame') {
+                    avm2EventName = 'frameConstructed';
+                  }
+                  eventNames.push(avm2EventName);
+                }
+                events.push({
+                  eventNames: eventNames,
+                  handler: fn,
+                  keyPress: swfEvent.keyPress
+                });
+              }
             }
             var state = new Timeline.AnimationState (
               symbol,
@@ -462,7 +504,8 @@ module Shumway.Timeline {
               flash.display.BlendMode.fromNumber(cmd.blendMode),
               cmd.cache,
               cmd.hasVisibility ? !!cmd.visibility : true,
-              events
+              events,
+              cmd.variableName
             );
             this.place(depth, state);
             break;

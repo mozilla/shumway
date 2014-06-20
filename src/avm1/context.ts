@@ -26,6 +26,6 @@ module Shumway.AVM1 {
     public resolveLevel(level: number): any {}
     public addToPendingScripts(fn) {}
 
-    public executeActions(actionsData: AS2ActionsData, scope) {}
+    public executeActions(actionsData: AS2ActionsData, stage, scopeObj) {}
   }
 }

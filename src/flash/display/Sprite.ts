@@ -79,6 +79,53 @@ module Shumway.AVM2.AS.flash.display {
         var state = frame.stateAtDepth[depth];
         var character = DisplayObject.createAnimatedDisplayObject(state, false);
         this.addChildAtDepth(character, state.depth);
+        if (state.symbol.isAS2Object) {
+          this._initAvm1Bindings(character, state);
+        }
+      }
+    }
+
+    _initAvm1Bindings(instance: DisplayObject, state: Shumway.Timeline.AnimationState) {
+      var getAS2Object = Shumway.AVM2.AS.avm1lib.getAS2Object;
+
+      var instanceAS2Object = getAS2Object(instance);
+      assert(instanceAS2Object);
+
+      if (state.variableName) {
+        instanceAS2Object.asSetPublicProperty('variable', state.variableName);
+      }
+
+      var events = state.events;
+      if (events) {
+        var eventsBound = [];
+        for (var i = 0; i < events.length; i++) {
+          var event = events[i];
+          var eventNames = event.eventNames;
+          var fn = event.handler.bind(instance);
+          for (var j = 0; j < eventNames.length; j++) {
+            var eventName = eventNames[j];
+            var avm2EventTarget = instance;
+            if (eventName === 'mouseDown' || eventName === 'mouseUp' || eventName === 'mouseMove') {
+              avm2EventTarget = instance.stage;
+            }
+            avm2EventTarget.addEventListener(eventName, fn, false);
+            eventsBound.push({eventName: eventName, fn: fn, target: avm2EventTarget});
+          }
+        }
+        if (eventsBound.length > 0) {
+          instance.addEventListener('removed', function (eventsBound) {
+            for (var i = 0; i < eventsBound.length; i++) {
+              eventsBound[i].target.removeEventListener(eventsBound[i].eventName, eventsBound[i].fn, false);
+            }
+          }.bind(instance, eventsBound), false);
+        }
+      }
+
+      // Only set the name property for display objects that have AS2
+      // reflections. Some SWFs contain AS2 names for things like Shapes.
+      if (state.name) {
+        var parentAS2Object = getAS2Object(this);
+        parentAS2Object.asSetPublicProperty(state.name, instanceAS2Object);
       }
     }
 
