@@ -175,5 +175,4 @@ module Shumway.AVM2.AS.flash.geom {
       return "Vector3D(" + this.x + ", " + this.y + ", " + this.z + ")";
     }
   }
-  Vector3D.prototype.native_toString = Vector3D.prototype.toString;
 }

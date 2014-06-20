@@ -1659,8 +1659,6 @@ module Shumway.AVM2.AS {
    */
   export function escapeNativeName(name: string) {
     switch (name) {
-      case "toString":              return "native_toString";
-      case "valueOf":               return "native_valueOf";
       case "prototype":             return "native_prototype";
       case "hasOwnProperty":        return "native_hasOwnProperty";
       case "isPrototypeOf":         return "native_isPrototypeOf";
