@@ -302,24 +302,23 @@ module Shumway.AVM2.Compiler.Looper {
   }
 
   export class Analysis {
+    initialBlocks: Map<Block>;
     blocks: Block [];
-    boundBlockSet: any;
+    blocksLength: number;
     analyzedControlFlow: boolean;
     markedLoops: boolean;
     hasExceptions: boolean;
     restructuredControlFlow: boolean;
     controlTree: Control.ControlNode;
     constructor (cfg: CFG) {
-      this.makeBlockSetFactory(cfg.blocks.length, cfg.blocks);
+      this.initialBlocks = <any>cfg.blocks;
+      this.blocksLength = cfg.blocks.length;
       this.hasExceptions = false;
       this.normalizeReachableBlocks(cfg.root);
     }
 
-    makeBlockSetFactory(length: number, blockById: Block []) {
-      release || assert (!this.boundBlockSet);
-      this.boundBlockSet = <any>(function blockSet() {
-        return new BlockSet(length, <any>blockById);
-      });
+    makeBlockSet(): BlockSet {
+      return new BlockSet(this.blocksLength, this.initialBlocks);
     }
 
     normalizeReachableBlocks(root) {
@@ -329,7 +328,6 @@ module Shumway.AVM2.Compiler.Looper {
 
       var ONCE = 1;
       var BUNCH_OF_TIMES = 2;
-      var BlockSet = this.boundBlockSet;
 
       var blocks = [];
       var visited = {};
@@ -365,7 +363,7 @@ module Shumway.AVM2.Compiler.Looper {
 
           if (ancestors[s.id]) {
             if (!node.spbacks) {
-              node.spbacks = new BlockSet();
+              node.spbacks = this.makeBlockSet();
             }
             node.spbacks.set(s.id);
           }
@@ -485,8 +483,6 @@ module Shumway.AVM2.Compiler.Looper {
         return false;
       }
 
-      var BlockSet = this.boundBlockSet;
-
       //
       // Find all SCCs at or below the level of some root that are not already
       // natural loops.
@@ -549,44 +545,21 @@ module Shumway.AVM2.Compiler.Looper {
         return sccs;
       }
 
-      function findLoopHeads(blocks) {
-        var heads = new BlockSet();
-
-        for (var i = 0, j = blocks.length; i < j; i++) {
-          var block = blocks[i];
-          var spbacks = block.spbacks;
-
-          if (!spbacks) {
-            continue;
-          }
-
-          var successors = block.successors;
-          for (var k = 0, l = successors.length; k < l; k++) {
-            var s = successors[k];
-            if (spbacks.get(s.id)) {
-              heads.set(s.dominator.id);
-            }
-          }
-        }
-
-        return heads.members();
-      }
-
       function LoopInfo(scc, loopId) {
-        var body = new BlockSet();
+        var body = this.makeBlockSet();
         body.setBlocks(scc);
         body.recount();
 
         this.id = loopId;
         this.body = body;
-        this.exit = new BlockSet();
+        this.exit = this.makeBlockSet();
         this.save = {};
-        this.head = new BlockSet();
+        this.head = this.makeBlockSet();
         this.npredecessors = 0;
       }
 
 
-      var heads = findLoopHeads(this.blocks);
+      var heads = this.findLoopHeads(this.blocks);
       if (heads.length <= 0) {
         this.markedLoops = true;
         return true;
@@ -636,371 +609,384 @@ module Shumway.AVM2.Compiler.Looper {
       return true;
     }
 
+    findLoopHeads(blocks) {
+      var heads = this.makeBlockSet();
+
+      for (var i = 0, j = blocks.length; i < j; i++) {
+        var block = blocks[i];
+        var spbacks = block.spbacks;
+
+        if (!spbacks) {
+          continue;
+        }
+
+        var successors = block.successors;
+        for (var k = 0, l = successors.length; k < l; k++) {
+          var s = successors[k];
+          if (spbacks.get(s.id)) {
+            heads.set(s.dominator.id);
+          }
+        }
+      }
+
+      return heads.members();
+    }
+
     induceControlTree() {
       var hasExceptions = this.hasExceptions;
-      var BlockSet = this.boundBlockSet;
-
-      function maybe(exit, save) {
-        exit.recount();
-        if (exit.count === 0) {
-          return null;
-        }
-        exit.save = save;
-        return exit;
-      }
-
       var exceptionId = this.blocks.length;
+      var root = this.blocks[0];
+      this.controlTree = this.induce(hasExceptions, exceptionId, root, this.makeBlockSet(), {});
+    }
 
-      //
-      // Based on emscripten's relooper algorithm.
-      // The algorithm is O(|E|) -- it visits every edge in the CFG once.
-      //
-      // Loop header detection is done separately, using an overlaid DJ graph.
-      //
-      // For a vertex v, let successor(v) denote its non-exceptional successoressors.
-      //
-      // Basic blocks can be restructured into 4 types of nodes:
-      //
-      //  1. Switch. |successor(v) > 2|
-      //  2. If.     |successor(v) = 2|
-      //  3. Plain.  |successor(v) = 1|
-      //  4. Loop.   marked as a loop header.
-      //
-      // The idea is fairly simple: start at a set of heads, induce all its
-      // successoressors recursively in that head's context, discharging the edges
-      // that we take. If a vertex no longer has any incoming edges when we
-      // visit it, emit the vertex, else emit a label marking that we need to
-      // go to that vertex and mark that vertex as an exit in the current
-      // context.
-      //
-      // The algorithm starts at the root, the first instruction.
-      //
-      // Exceptions are restructured via rewriting. AVM bytecode stores try
-      // blocks as a range of bytecode positions. Our basic blocks respects
-      // these range boundaries. Each basic block which is in one or more of
-      // such exception ranges have exceptional successoressors (jumps) to all
-      // matching catch blocks. We then restructure the entire basic block as
-      // a try and have the restructuring take care of the jumps to the actual
-      // catch blocks. Finally blocks fall out naturally, but are not emitted
-      // as JavaScript |finally|.
-      //
-      // Implementation Notes
-      // --------------------
-      //
-      // We discharge edges by keeping a property |npredecessors| on each block that
-      // says how many incoming edges we have _not yet_ discharged. We
-      // discharge edges as we recur on the tree, but in case we can't emit a
-      // block (i.e. its |npredecessors| > 0), we need to restore its |npredecessors| before
-      // we pop out. We do this via a |save| proeprty on each block that says
-      // how many predecessors we should restore.
-      //
-      // |exit| is the set of exits in the current context, i.e. the set of
-      // vertices that we visited but have not yet discharged every incoming
-      // edge.
-      //
-      // |save| is a mapping of block id -> save numbers.
-      //
-      // When setting an exit in the exit set, the save number must be set for
-      // it also in the save set.
-      //
-      function induce(head, exit, save, loop?, inLoopHead?, lookupSwitch?, fallthrough?) {
-        var v = [];
+    //
+    // Based on emscripten's relooper algorithm.
+    // The algorithm is O(|E|) -- it visits every edge in the CFG once.
+    //
+    // Loop header detection is done separately, using an overlaid DJ graph.
+    //
+    // For a vertex v, let successor(v) denote its non-exceptional successoressors.
+    //
+    // Basic blocks can be restructured into 4 types of nodes:
+    //
+    //  1. Switch. |successor(v) > 2|
+    //  2. If.     |successor(v) = 2|
+    //  3. Plain.  |successor(v) = 1|
+    //  4. Loop.   marked as a loop header.
+    //
+    // The idea is fairly simple: start at a set of heads, induce all its
+    // successoressors recursively in that head's context, discharging the edges
+    // that we take. If a vertex no longer has any incoming edges when we
+    // visit it, emit the vertex, else emit a label marking that we need to
+    // go to that vertex and mark that vertex as an exit in the current
+    // context.
+    //
+    // The algorithm starts at the root, the first instruction.
+    //
+    // Exceptions are restructured via rewriting. AVM bytecode stores try
+    // blocks as a range of bytecode positions. Our basic blocks respects
+    // these range boundaries. Each basic block which is in one or more of
+    // such exception ranges have exceptional successoressors (jumps) to all
+    // matching catch blocks. We then restructure the entire basic block as
+    // a try and have the restructuring take care of the jumps to the actual
+    // catch blocks. Finally blocks fall out naturally, but are not emitted
+    // as JavaScript |finally|.
+    //
+    // Implementation Notes
+    // --------------------
+    //
+    // We discharge edges by keeping a property |npredecessors| on each block that
+    // says how many incoming edges we have _not yet_ discharged. We
+    // discharge edges as we recur on the tree, but in case we can't emit a
+    // block (i.e. its |npredecessors| > 0), we need to restore its |npredecessors| before
+    // we pop out. We do this via a |save| proeprty on each block that says
+    // how many predecessors we should restore.
+    //
+    // |exit| is the set of exits in the current context, i.e. the set of
+    // vertices that we visited but have not yet discharged every incoming
+    // edge.
+    //
+    // |save| is a mapping of block id -> save numbers.
+    //
+    // When setting an exit in the exit set, the save number must be set for
+    // it also in the save set.
+    //
+    induce(hasExceptions: boolean, exceptionId: number, head, exit, save, loop?, inLoopHead?,
+           lookupSwitch?, fallthrough?)
+    {
+      var v = [];
 
-        while (head) {
-          if (head.count > 1) {
-            var exit2 = new BlockSet();
-            var save2 = {};
-
-            var cases = [];
-            var heads = head.members();
-
-            for (var i = 0, j = heads.length; i < j; i++) {
-              var h = heads[i];
-              var bid = h.id;
-              var c;
-
-              if (h.loop && head.contains(h.loop.head)) {
-                var loop2 = h.loop;
-                if (!loop2.induced) {
-                  var lheads = loop2.head.members();
-                  var lheadsave = 0;
-
-                  for (k = 0, l = lheads.length; k < l; k++) {
-                    lheadsave += head.save[lheads[k].id];
-                  }
-
-                  if (h.npredecessors - lheadsave > 0) {
-                    // Don't even enter the loop if we're just going to exit
-                    // anyways.
-                    h.npredecessors -= head.save[bid];
-                    h.save = head.save[bid];
-                    c = induce(h, exit2, save2, loop);
-                    cases.push(new Control.LabelCase([bid], c));
-                  } else {
-                    for (k = 0, l = lheads.length; k < l; k++) {
-                      var lh = lheads[k];
-                      lh.npredecessors -= lheadsave;
-                      lh.save = lheadsave;
-                    }
-                    c = induce(h, exit2, save2, loop);
-                    cases.push(new Control.LabelCase(loop2.head.toArray(), c));
-                    loop2.induced = true;
-                  }
-                }
-              } else {
-                h.npredecessors -= head.save[bid];
-                h.save = head.save[bid];
-                c = induce(h, exit2, save2, loop);
-                cases.push(new Control.LabelCase([bid], c));
-              }
-            }
-
-            var pruned = [];
-            var k = 0;
-            var c;
-            for (var i = 0; i < cases.length; i++) {
-              c = cases[i];
-              var labels = c.labels;
-              var lk = 0;
-              for (var ln = 0, nlabels = labels.length; ln < nlabels; ln++) {
-                var bid = labels[ln];
-                if (exit2.get(bid) && heads[i].npredecessors - head.save[bid] > 0) {
-                  pruned.push(bid);
-                } else {
-                  labels[lk++] = bid;
-                }
-              }
-              labels.length = lk;
-
-              // Prune the case unless it still has some entry labels.
-              if (labels.length > 0) {
-                cases[k++] = c;
-              }
-            }
-            cases.length = k;
-
-            if (cases.length === 0) {
-              for (var i = 0; i < pruned.length; i++) {
-                var bid = pruned[i];
-                save[bid] = (save[bid] || 0) + head.save[bid];
-                exit.set(bid);
-              }
-              break;
-            }
-
-            v.push(new Control.LabelSwitch(cases));
-
-            head = maybe(exit2, save2);
-            continue;
-          }
-
-          var h, bid, c;
-
-          if (head.count === 1) {
-            h = head.choose();
-            bid = h.id;
-            h.npredecessors -= head.save[bid];
-            h.save = head.save[bid];
-          } else {
-            h = head;
-            bid = h.id;
-          }
-
-          if (inLoopHead) {
-            inLoopHead = false;
-          } else {
-            if (loop && !loop.body.get(bid)) {
-              h.npredecessors += h.save;
-              loop.exit.set(bid);
-              loop.save[bid] = (loop.save[bid] || 0) + h.save;
-              v.push(new Control.Break(bid, loop));
-              break;
-            }
-
-            if (loop && h.loop === loop) {
-              h.npredecessors += h.save;
-              v.push(new Control.Continue(bid, loop));
-              break;
-            }
-
-            if (h === fallthrough) {
-              break;
-            }
-
-            if (h.npredecessors > 0) {
-              h.npredecessors += h.save;
-              save[bid] = (save[bid] || 0) + h.save;
-              exit.set(bid);
-              v.push(lookupSwitch ?
-                new Control.Break(bid, lookupSwitch) :
-                new Control.Exit(bid));
-              break;
-            }
-
-            if (h.loop) {
-              var l = h.loop;
-
-              var body;
-              if (l.head.count === 1) {
-                body = induce(l.head.choose(), null, null, l, true);
-              } else {
-                var lcases = [];
-                var lheads = l.head.members();
-
-                for (var i = 0, j = lheads.length; i < j; i++) {
-                  var lh = lheads[i];
-                  var lbid = lh.id;
-                  var c = induce(lh, null, null, l, true);
-                  lcases.push(new Control.LabelCase([lbid], c));
-                }
-
-                body = new Control.LabelSwitch(lcases);
-              }
-
-              v.push(new Control.Loop(body));
-              head = maybe(l.exit, l.save);
-              continue;
-            }
-          }
-
-          var sv;
-          var successors;
-          var exit2 = new BlockSet();
+      while (head) {
+        if (head.count > 1) {
+          var exit2 = this.makeBlockSet();
           var save2 = {};
 
+          var cases = [];
+          var heads = head.members();
+
+          for (var i = 0, j = heads.length; i < j; i++) {
+            var h = heads[i];
+            var bid = h.id;
+            var c;
+
+            if (h.loop && head.contains(h.loop.head)) {
+              var loop2 = h.loop;
+              if (!loop2.induced) {
+                var lheads = loop2.head.members();
+                var lheadsave = 0;
+
+                for (k = 0, l = lheads.length; k < l; k++) {
+                  lheadsave += head.save[lheads[k].id];
+                }
+
+                if (h.npredecessors - lheadsave > 0) {
+                  // Don't even enter the loop if we're just going to exit
+                  // anyways.
+                  h.npredecessors -= head.save[bid];
+                  h.save = head.save[bid];
+                  c = this.induce(hasExceptions, exceptionId, h, exit2, save2, loop);
+                  cases.push(new Control.LabelCase([bid], c));
+                } else {
+                  for (k = 0, l = lheads.length; k < l; k++) {
+                    var lh = lheads[k];
+                    lh.npredecessors -= lheadsave;
+                    lh.save = lheadsave;
+                  }
+                  c = this.induce(hasExceptions, exceptionId, h, exit2, save2, loop);
+                  cases.push(new Control.LabelCase(loop2.head.toArray(), c));
+                  loop2.induced = true;
+                }
+              }
+            } else {
+              h.npredecessors -= head.save[bid];
+              h.save = head.save[bid];
+              c = this.induce(hasExceptions, exceptionId, h, exit2, save2, loop);
+              cases.push(new Control.LabelCase([bid], c));
+            }
+          }
+
+          var pruned = [];
+          var k = 0;
+          var c;
+          for (var i = 0; i < cases.length; i++) {
+            c = cases[i];
+            var labels = c.labels;
+            var lk = 0;
+            for (var ln = 0, nlabels = labels.length; ln < nlabels; ln++) {
+              var bid = labels[ln];
+              if (exit2.get(bid) && heads[i].npredecessors - head.save[bid] > 0) {
+                pruned.push(bid);
+              } else {
+                labels[lk++] = bid;
+              }
+            }
+            labels.length = lk;
+
+            // Prune the case unless it still has some entry labels.
+            if (labels.length > 0) {
+              cases[k++] = c;
+            }
+          }
+          cases.length = k;
+
+          if (cases.length === 0) {
+            for (var i = 0; i < pruned.length; i++) {
+              var bid = pruned[i];
+              save[bid] = (save[bid] || 0) + head.save[bid];
+              exit.set(bid);
+            }
+            break;
+          }
+
+          v.push(new Control.LabelSwitch(cases));
+
+          head = maybe(exit2, save2);
+          continue;
+        }
+
+        var h, bid, c;
+
+        if (head.count === 1) {
+          h = head.choose();
+          bid = h.id;
+          h.npredecessors -= head.save[bid];
+          h.save = head.save[bid];
+        } else {
+          h = head;
+          bid = h.id;
+        }
+
+        if (inLoopHead) {
+          inLoopHead = false;
+        } else {
+          if (loop && !loop.body.get(bid)) {
+            h.npredecessors += h.save;
+            loop.exit.set(bid);
+            loop.save[bid] = (loop.save[bid] || 0) + h.save;
+            v.push(new Control.Break(bid, loop));
+            break;
+          }
+
+          if (loop && h.loop === loop) {
+            h.npredecessors += h.save;
+            v.push(new Control.Continue(bid, loop));
+            break;
+          }
+
+          if (h === fallthrough) {
+            break;
+          }
+
+          if (h.npredecessors > 0) {
+            h.npredecessors += h.save;
+            save[bid] = (save[bid] || 0) + h.save;
+            exit.set(bid);
+            v.push(lookupSwitch ?
+              new Control.Break(bid, lookupSwitch) :
+              new Control.Exit(bid));
+            break;
+          }
+
+          if (h.loop) {
+            var l = h.loop;
+
+            var body;
+            if (l.head.count === 1) {
+              body = this.induce(hasExceptions, exceptionId, l.head.choose(), null, null, l, true);
+            } else {
+              var lcases = [];
+              var lheads = l.head.members();
+
+              for (var i = 0, j = lheads.length; i < j; i++) {
+                var lh = lheads[i];
+                var lbid = lh.id;
+                var c = this.induce(hasExceptions, exceptionId, lh, null, null, l, true);
+                lcases.push(new Control.LabelCase([lbid], c));
+              }
+
+              body = new Control.LabelSwitch(lcases);
+            }
+
+            v.push(new Control.Loop(body));
+            head = maybe(l.exit, l.save);
+            continue;
+          }
+        }
+
+        var sv;
+        var successors;
+        var exit2 = this.makeBlockSet();
+        var save2 = {};
+
+        if (hasExceptions && h.hasCatches) {
+          var allsuccessors = h.successors;
+          var catchsuccessors = [];
+          successors = [];
+
+          for (var i = 0, j = allsuccessors.length; i < j; i++) {
+            var s = allsuccessors[i];
+            (s.exception ? catchsuccessors : successors).push(s);
+          }
+
+          var catches = [];
+          for (var i = 0; i < catchsuccessors.length; i++) {
+            var t = catchsuccessors[i];
+            t.npredecessors -= 1;
+            t.save = 1;
+            var c = this.induce(hasExceptions, exceptionId, t, exit2, save2, loop);
+            var ex = t.exception;
+            catches.push(new Control.Catch(ex.varName, ex.typeName, c));
+          }
+
+          sv = new Control.Try(h, catches);
+        } else {
+          successors = h.successors;
+          sv = h;
+        }
+
+        /*
+         if (h.end.op === OP_lookupswitch) {
+         var cases = [];
+         var targets = h.end.targets;
+
+         for (var i = targets.length - 1; i >= 0; i--) {
+         var t = targets[i];
+         t.npredecessors -= 1;
+         t.save = 1;
+         c = this.induce(hasExceptions, exceptionId, t, exit2, save2, loop, null, h, targets[i + 1]);
+         cases.unshift(new Control.Case(i, c));
+         }
+
+         // The last case is the default case.
+         cases.top().index = undefined;
+
+         if (hasExceptions && h.hasCatches) {
+         sv.nothingThrownLabel = exceptionId;
+         sv = new Control.Switch(sv, cases, exceptionId++);
+         } else {
+         sv = new Control.Switch(sv, cases);
+         }
+
+         head = maybe(exit2, save2);
+         } else
+         */
+
+        if (successors.length > 2) {
+          var cases = [];
+          var targets = successors;
+
+          for (var i = targets.length - 1; i >= 0; i--) {
+            var t = targets[i];
+            t.npredecessors -= 1;
+            t.save = 1;
+            c = this.induce(hasExceptions, exceptionId, t, exit2, save2, loop, null, h, targets[i + 1]);
+            cases.unshift(new Control.Case(i, c));
+          }
+
+          // The last case is the default case.
+          top(cases).index = undefined;
+
           if (hasExceptions && h.hasCatches) {
-            var allsuccessors = h.successors;
-            var catchsuccessors = [];
-            successors = [];
-
-            for (var i = 0, j = allsuccessors.length; i < j; i++) {
-              var s = allsuccessors[i];
-              (s.exception ? catchsuccessors : successors).push(s);
-            }
-
-            var catches = [];
-            for (var i = 0; i < catchsuccessors.length; i++) {
-              var t = catchsuccessors[i];
-              t.npredecessors -= 1;
-              t.save = 1;
-              var c = induce(t, exit2, save2, loop);
-              var ex = t.exception;
-              catches.push(new Control.Catch(ex.varName, ex.typeName, c));
-            }
-
-            sv = new Control.Try(h, catches);
+            sv.nothingThrownLabel = exceptionId;
+            sv = new Control.Switch(sv, cases, exceptionId++);
           } else {
-            successors = h.successors;
-            sv = h;
+            sv = new Control.Switch(sv, cases);
           }
 
-          /*
-           if (h.end.op === OP_lookupswitch) {
-           var cases = [];
-           var targets = h.end.targets;
+          head = maybe(exit2, save2);
+        } else if (successors.length === 2) {
+          var branch1 = h.hasFlippedSuccessors ? successors[1] : successors[0];
+          var branch2 = h.hasFlippedSuccessors ? successors[0] : successors[1];
+          branch1.npredecessors -= 1;
+          branch1.save = 1;
+          var c1 = this.induce(hasExceptions, exceptionId, branch1, exit2, save2, loop);
 
-           for (var i = targets.length - 1; i >= 0; i--) {
-           var t = targets[i];
-           t.npredecessors -= 1;
-           t.save = 1;
-           c = induce(t, exit2, save2, loop, null, h, targets[i + 1]);
-           cases.unshift(new Control.Case(i, c));
-           }
+          branch2.npredecessors -= 1;
+          branch2.save = 1;
+          var c2 = this.induce(hasExceptions, exceptionId, branch2, exit2, save2, loop);
 
-           // The last case is the default case.
-           cases.top().index = undefined;
-
-           if (hasExceptions && h.hasCatches) {
-           sv.nothingThrownLabel = exceptionId;
-           sv = new Control.Switch(sv, cases, exceptionId++);
-           } else {
-           sv = new Control.Switch(sv, cases);
-           }
-
-           head = maybe(exit2, save2);
-           } else
-           */
-
-          if (successors.length > 2) {
-            var cases = [];
-            var targets = successors;
-
-            for (var i = targets.length - 1; i >= 0; i--) {
-              var t = targets[i];
-              t.npredecessors -= 1;
-              t.save = 1;
-              c = induce(t, exit2, save2, loop, null, h, targets[i + 1]);
-              cases.unshift(new Control.Case(i, c));
-            }
-
-            // The last case is the default case.
-            top(cases).index = undefined;
-
-            if (hasExceptions && h.hasCatches) {
-              sv.nothingThrownLabel = exceptionId;
-              sv = new Control.Switch(sv, cases, exceptionId++);
-            } else {
-              sv = new Control.Switch(sv, cases);
-            }
-
-            head = maybe(exit2, save2);
-          } else if (successors.length === 2) {
-            var branch1 = h.hasFlippedSuccessors ? successors[1] : successors[0];
-            var branch2 = h.hasFlippedSuccessors ? successors[0] : successors[1];
-            branch1.npredecessors -= 1;
-            branch1.save = 1;
-            var c1 = induce(branch1, exit2, save2, loop);
-
-            branch2.npredecessors -= 1;
-            branch2.save = 1;
-            var c2 = induce(branch2, exit2, save2, loop);
-
-            if (hasExceptions && h.hasCatches) {
-              sv.nothingThrownLabel = exceptionId;
-              sv = new Control.If(sv, c1, c2, exceptionId++);
-            } else {
-              sv = new Control.If(sv, c1, c2);
-            }
-
-            head = maybe(exit2, save2);
+          if (hasExceptions && h.hasCatches) {
+            sv.nothingThrownLabel = exceptionId;
+            sv = new Control.If(sv, c1, c2, exceptionId++);
           } else {
-            c = successors[0];
-
-            if (c) {
-              if (hasExceptions && h.hasCatches) {
-                sv.nothingThrownLabel = c.id;
-                save2[c.id] = (save2[c.id] || 0) + 1;
-                exit2.set(c.id);
-
-                head = maybe(exit2, save2);
-              } else {
-                c.npredecessors -= 1;
-                c.save = 1;
-                head = c;
-              }
-            } else {
-              if (hasExceptions && h.hasCatches) {
-                sv.nothingThrownLabel = -1;
-                head = maybe(exit2, save2);
-              } else {
-                head = c;
-              }
-            }
+            sv = new Control.If(sv, c1, c2);
           }
 
-          v.push(sv);
+          head = maybe(exit2, save2);
+        } else {
+          c = successors[0];
+
+          if (c) {
+            if (hasExceptions && h.hasCatches) {
+              sv.nothingThrownLabel = c.id;
+              save2[c.id] = (save2[c.id] || 0) + 1;
+              exit2.set(c.id);
+
+              head = maybe(exit2, save2);
+            } else {
+              c.npredecessors -= 1;
+              c.save = 1;
+              head = c;
+            }
+          } else {
+            if (hasExceptions && h.hasCatches) {
+              sv.nothingThrownLabel = -1;
+              head = maybe(exit2, save2);
+            } else {
+              head = c;
+            }
+          }
         }
 
-
-        if (v.length > 1) {
-          return new Control.Seq(v);
-        }
-
-        return v[0];
+        v.push(sv);
       }
 
-      var root = this.blocks[0];
-      this.controlTree = induce(root, new BlockSet(), {});
+
+      if (v.length > 1) {
+        return new Control.Seq(v);
+      }
+
+      return v[0];
     }
 
     restructureControlFlow() {
@@ -1014,6 +1000,15 @@ module Shumway.AVM2.Compiler.Looper {
       leaveTimeline();
       return true;
     }
+  }
+
+  function maybe(exit, save) {
+    exit.recount();
+    if (exit.count === 0) {
+      return null;
+    }
+    exit.save = save;
+    return exit;
   }
 
   export function analyze(cfg: CFG): Control.ControlNode {
