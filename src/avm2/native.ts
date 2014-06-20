@@ -1985,5 +1985,7 @@ module Shumway.AVM2.AS {
     release || assert(v, "getNative(" + path + ") not found.");
     return <any>v;
   }
+
+  registerNativeFunction("unsafeJSNative", getNative);
 }
 

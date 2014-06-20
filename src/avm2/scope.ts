@@ -133,7 +133,7 @@ module Shumway.AVM2.Runtime {
      *
      * Property lookups are cached in scopes but are not used when only looking at |scopesOnly|.
      */
-    public findScopeProperty(namespaces: Namespace [], name: any, flags: number, domain: any, strict: boolean, scopeOnly: boolean) {
+    public findScopeProperty(namespaces: Namespace [], name: any, flags: number, method: MethodInfo, strict: boolean, scopeOnly: boolean) {
       countTimeline("findScopeProperty");
       var object;
       var key = makeCacheKey(namespaces, name, flags);
@@ -145,13 +145,13 @@ module Shumway.AVM2.Runtime {
         return this.isWith ? this.object : (this.cache[key] = this.object);
       }
       if (this.parent) {
-        return (this.cache[key] = this.parent.findScopeProperty(namespaces, name, flags, domain, strict, scopeOnly));
+        return (this.cache[key] = this.parent.findScopeProperty(namespaces, name, flags, method, strict, scopeOnly));
       }
       if (scopeOnly) {
         return null;
       }
       // If we can't find the property look in the domain.
-      if ((object = domain.findDomainProperty(new Multiname(namespaces, name, flags), strict, true))) {
+      if ((object = method.abc.applicationDomain.findDomainProperty(new Multiname(namespaces, name, flags), strict, true))) {
         return object;
       }
       if (strict) {

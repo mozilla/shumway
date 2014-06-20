@@ -54,7 +54,9 @@ interface IProtocol {
 }
 
 interface Object extends IProtocol {
+  hash: number;
   runtimeId: number;
+
   resolutionMap: Shumway.Map<Shumway.Map<string>>;
   bindings: Shumway.AVM2.Runtime.Bindings;
 
@@ -109,6 +111,8 @@ module Shumway.AVM2.Runtime {
   var counter = Shumway.Metrics.Counter.instance;
 
   import Map = Shumway.Map;
+  import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import HashMask = Shumway.AVM2.ABC.HashMask;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
@@ -315,7 +319,6 @@ module Shumway.AVM2.Runtime {
    * - asGetNumericProperty(index)
    * - asSetNumericProperty(index, value)
    *
-   * Not yet implemented:
    * - asGetDescendants(namespaces, name, flags)
    * - asNextName(index)
    * - asNextNameIndex(index)
@@ -886,7 +889,7 @@ module Shumway.AVM2.Runtime {
     return asIsType(type, value) ? value : null;
   }
 
-  export function asCoerceByMultiname(domain, multiname, value) {
+  export function asCoerceByMultiname(methodInfo: MethodInfo, multiname, value) {
     release || assert(multiname.isQName());
     switch (Multiname.getQualifiedName(multiname)) {
       case Multiname.Int:
@@ -902,7 +905,7 @@ module Shumway.AVM2.Runtime {
       case Multiname.Object:
         return asCoerceObject(value);
     }
-    return asCoerce(domain.getType(multiname), value);
+    return asCoerce(methodInfo.abc.applicationDomain.getType(multiname), value);
   }
 
   export function asCoerce(type: Shumway.AVM2.AS.ASClass, value) {
@@ -1179,7 +1182,7 @@ module Shumway.AVM2.Runtime {
           if (classInfo.classObject) {
             return classInfo.classObject;
           }
-          return classInfo.abc.applicationDomain.getProperty(classInfo.instanceInfo.name);
+          return classInfo.abc.applicationDomain.getProperty(classInfo.instanceInfo.name, false, false);
         };
       } else {
         Shumway.Debug.notImplemented(String(target));
@@ -1232,6 +1235,22 @@ module Shumway.AVM2.Runtime {
 
   export function asCreateActivation(methodInfo: MethodInfo): Object {
     return Object.create(methodInfo.activationPrototype);
+  }
+
+  export class ConstantManager {
+    static abcs: AbcFile [] = [];
+    static constants: {} = createEmptyObject();
+    public static loadAbc(abc: AbcFile) {
+      ConstantManager.abcs[abc.hash & HashMask.AbcMask] = abc;
+    }
+    public static getConstant(hash) {
+      var value = ConstantManager.constants[hash];
+      if (value) {
+        return value;
+      }
+      var abc = ConstantManager.abcs[hash & HashMask.AbcMask];
+      return ConstantManager.constants[hash] = abc.getConstant(hash);
+    }
   }
 
   /**
@@ -1630,8 +1649,6 @@ module Shumway.AVM2.Runtime {
       if (md && md.native) {
         var nativeName = md.native.value[0].value;
         fn = Shumway.AVM2.AS.getNative(nativeName);
-      } else if (md && md.unsafeJSNative) {
-        fn = Shumway.AVM2.AS.getNative(md.unsafeJSNative.value[0].value);
       } else if (natives) {
         fn = Shumway.AVM2.AS.getMethodOrAccessorNative(trait, natives);
       }
@@ -1763,7 +1780,7 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  export function applyType(domain: ApplicationDomain, factory: Shumway.AVM2.AS.ASClass, types) {
+  export function applyType(methodInfo: MethodInfo, factory: Shumway.AVM2.AS.ASClass, types) {
     var factoryClassName = factory.classInfo.instanceInfo.name.name;
     if (factoryClassName === "Vector") {
       release || assert(types.length === 1);
@@ -1777,10 +1794,10 @@ module Shumway.AVM2.Runtime {
           case "int":
           case "uint":
           case "double":
-            return domain.getClass("packageInternal __AS3__.vec.Vector$" + typeClassName);
+            return methodInfo.abc.applicationDomain.getClass("packageInternal __AS3__.vec.Vector$" + typeClassName);
         }
       }
-      return domain.getClass("packageInternal __AS3__.vec.Vector$object").applyType(type);
+      return methodInfo.abc.applicationDomain.getClass("packageInternal __AS3__.vec.Vector$object").applyType(type);
     } else {
       Shumway.Debug.notImplemented(factoryClassName);
       return;

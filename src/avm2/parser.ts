@@ -21,6 +21,7 @@ module Shumway.AVM2.ABC {
   import isNumeric = Shumway.isNumeric;
   import isObject = Shumway.isObject;
   import assert = Shumway.Debug.assert;
+  import notImplemented = Shumway.Debug.notImplemented;
 
   declare var TextDecoder;
 
@@ -253,7 +254,7 @@ module Shumway.AVM2.ABC {
         for (var i = 0, j = stream.readU30(); i < j; i++) {
           var md = metadata[stream.readU30()];
           if (md.name === "__go_to_definition_help" ||
-            md.name === "__go_to_ctor_definition_help") {
+              md.name === "__go_to_ctor_definition_help") {
             continue;
           }
           if (!traitMetadata) {
@@ -365,10 +366,10 @@ module Shumway.AVM2.ABC {
     index: number;
     hash: number;
     traits: any[];
-    constructor(abc: AbcFile, index: number, hashMask: number) {
+    constructor(abc: AbcFile, index: number, hashMask: HashMask) {
       this.abc = abc;
       this.index = index;
-      this.hash = abc.hash + hashMask + index;
+      this.hash = abc.hash & HashMask.AbcMask | hashMask | (index << 16);
     }
   }
 
@@ -407,7 +408,7 @@ module Shumway.AVM2.ABC {
     }
 
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
-      super(abc, index, HashMasks.MethodInfo);
+      super(abc, index, HashMask.MethodInfo);
       var constantPool = abc.constantPool;
       var parameterCount = stream.readU30();
       this.returnType = constantPool.multinames[stream.readU30()];
@@ -540,7 +541,7 @@ module Shumway.AVM2.ABC {
     traits: Trait [];
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
-      super(abc, index, HashMasks.InstanceInfo);
+      super(abc, index, HashMask.InstanceInfo);
       this.runtimeId = InstanceInfo.nextID ++;
       var constantPool = abc.constantPool;
       var methods = abc.methods;
@@ -578,11 +579,14 @@ module Shumway.AVM2.ABC {
     public isInterface(): boolean { return !!(this.flags & CONSTANT.ClassInterface); }
   }
 
-  enum HashMasks {
-    ClassInfo       = 0x10000,
-    InstanceInfo    = 0x20000,
-    MethodInfo      = 0x30000,
-    ScriptInfo      = 0x40000
+  export enum HashMask {
+    AbcMask         = 0x00000FFF,
+    KindMask        = 0x0000F000,
+    ClassInfo       = 0x00001000,
+    InstanceInfo    = 0x00002000,
+    MethodInfo      = 0x00003000,
+    ScriptInfo      = 0x00004000,
+    NamespaceSet    = 0x00005000,
   }
 
   export class ClassInfo extends Info {
@@ -595,7 +599,7 @@ module Shumway.AVM2.ABC {
     classObject: Shumway.AVM2.AS.ASClass;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
-      super(abc, index, HashMasks.ClassInfo);
+      super(abc, index, HashMask.ClassInfo);
       this.runtimeId = ClassInfo.nextID ++;
       this.init = abc.methods[stream.readU30()];
       this.init.isClassInitializer = true;
@@ -636,7 +640,7 @@ module Shumway.AVM2.ABC {
     executing: boolean;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
-      super(abc, index, HashMasks.ScriptInfo);
+      super(abc, index, HashMask.ScriptInfo);
       this.runtimeId = ClassInfo.nextID ++;
       this.name = abc.name + "$script" + index;
       this.init = abc.methods[stream.readU30()];
@@ -663,7 +667,7 @@ module Shumway.AVM2.ABC {
     classes: ClassInfo [];
     scripts: ScriptInfo [];
     env: any;
-    applicationDomain: any;
+    applicationDomain: Shumway.AVM2.Runtime.ApplicationDomain;
 
     constructor(bytes: Uint8Array, name: string, hash: number = 0) {
       enterTimeline("Parse ABC");
@@ -768,6 +772,24 @@ module Shumway.AVM2.ABC {
       return this.name;
     }
 
+    public getConstant(hash: number): any {
+      release || assert((this.hash & HashMask.AbcMask) === (hash & HashMask.AbcMask));
+      var index = hash >> 16;
+      switch (hash & HashMask.KindMask) {
+        case HashMask.ClassInfo:
+          return this.classes[index];
+        case HashMask.InstanceInfo:
+          return this.instances[index];
+        case HashMask.MethodInfo:
+          return this.methods[index];
+        case HashMask.ScriptInfo:
+          return this.scripts[index];
+        case HashMask.NamespaceSet:
+          return this.constantPool.namespaceSets[index];
+        default:
+          notImplemented("Kind");
+      }
+    }
   }
 
   export class Namespace {
@@ -1685,12 +1707,13 @@ module Shumway.AVM2.ABC {
       n = stream.readU30();
       for (var i = 1; i < n; ++i) {
         var count = stream.readU30();
-        var set = [];
-        set.runtimeId = ConstantPool._nextNamespaceSetID ++;
+        var namespaceSet = [];
+        namespaceSet.runtimeId = ConstantPool._nextNamespaceSetID ++;
+        namespaceSet.hash = abc.hash & HashMask.AbcMask | HashMask.NamespaceSet | (i << 16);
         for (var j = 0; j < count; ++j) {
-          set.push(namespaces[stream.readU30()]);
+          namespaceSet.push(namespaces[stream.readU30()]);
         }
-        namespaceSets.push(set);
+        namespaceSets.push(namespaceSet);
       }
       leaveTimeline();
 

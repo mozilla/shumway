@@ -137,7 +137,7 @@ module Shumway.AVM2 {
           value = parameter.value;
         }
         if (parameter.type && !parameter.type.isAnyName()) {
-          value = asCoerceByMultiname(domain, parameter.type, value);
+          value = asCoerceByMultiname(method, parameter.type, value);
         }
         locals.push(value);
       }
@@ -338,7 +338,7 @@ module Shumway.AVM2 {
             return;
           case OP.returnvalue:
             if (method.returnType) {
-              return asCoerceByMultiname(domain, method.returnType, stack.pop());
+              return asCoerceByMultiname(method, method.returnType, stack.pop());
             }
             return stack.pop();
           case OP.constructsuper:
@@ -381,7 +381,7 @@ module Shumway.AVM2 {
             break;
           case OP.applytype:
             popManyInto(stack, bc.argCount, args);
-            stack[stack.length - 1] = applyType(domain, stack[stack.length - 1], args);
+            stack[stack.length - 1] = applyType(method, stack[stack.length - 1], args);
             break;
           case OP.newobject:
             object = {};
@@ -418,13 +418,13 @@ module Shumway.AVM2 {
           case OP.findpropstrict:
             popNameInto(stack, multinames[bc.index], mn);
             stack.push(scopeStack.topScope().findScopeProperty (
-              mn.namespaces, mn.name, mn.flags, domain, op === OP.findpropstrict, false
+              mn.namespaces, mn.name, mn.flags, method, op === OP.findpropstrict, false
             ));
             break;
           case OP.getlex:
             multiname = multinames[bc.index];
             object = scopeStack.topScope().findScopeProperty (
-              multiname.namespaces, multiname.name, multiname.flags, domain, true, false
+              multiname.namespaces, multiname.name, multiname.flags, method, true, false
             );
             stack.push(object.asGetProperty(multiname.namespaces, multiname.name, multiname.flags));
             break;

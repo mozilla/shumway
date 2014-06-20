@@ -23,6 +23,7 @@
  */
 
 var hasUsedConstants = false;
+
 function objectConstantName2(object) {
   release || Shumway.Debug.assert(object);
   if (object.hasOwnProperty(OBJECT_NAME)) {

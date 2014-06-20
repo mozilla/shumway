@@ -50,13 +50,19 @@ var callWriter = new Shumway.IndentingWriter(false, function (str){
 var objectIDs = 0;
 var OBJECT_NAME = "Object Name";
 
+function $(hash) {
+  return Shumway.AVM2.Runtime.ConstantManager.getConstant(hash);
+}
+
 function objectConstantName(object) {
+  if (object.hash) {
+    return "$(" + object.hash + ")";
+  } else if (object instanceof LazyInitializer) {
+    return object.getName();
+  }
   release || Shumway.Debug.assert(object);
   if (object.hasOwnProperty(OBJECT_NAME)) {
     return object[OBJECT_NAME];
-  }
-  if (object instanceof LazyInitializer) {
-    return object.getName();
   }
   var name, id = objectIDs++;
   if (object instanceof Global) {

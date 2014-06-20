@@ -53,7 +53,7 @@ module Shumway.GFX {
   export var frameCounter = new Shumway.Metrics.Counter(true);
 
   declare var release;
-  
+
   export var traceLevel = TraceLevel.Verbose;
   export var writer: IndentingWriter = null;
 
