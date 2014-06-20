@@ -24,6 +24,7 @@ module Shumway.AVM2.Compiler.Backend {
   import AST = Shumway.AVM2.Compiler.AST;
   import Literal = AST.Literal;
   import Identifier = AST.Identifier;
+  import Statement = AST.Statement;
   import VariableDeclaration = AST.VariableDeclaration;
   import VariableDeclarator = AST.VariableDeclarator;
   import MemberExpression = AST.MemberExpression;
@@ -275,18 +276,20 @@ module Shumway.AVM2.Compiler.Backend {
     }
 
     compileSwitch(node) {
-      var dr = node.determinant.compile(this);
       var cases = [];
-      node.cases.forEach(function (x) {
-        var br;
-        if (x.body) {
-          br = x.body.compile(this);
+      var nodeCases = node.cases;
+      for (var i = 0; i < nodeCases.length; i++) {
+        var entry = nodeCases[i];
+        var test = typeof entry.index === "number" ? new Literal(entry.index) : undefined;
+        var consequent: Statement[] = [];
+        if (entry.body) {
+          consequent[0] = entry.body.compile(this);
         }
-        var test = typeof x.index === "number" ? new Literal(x.index) : undefined;
-        cases.push(new SwitchCase(test, br ? [br] : []));
-      }, this);
+        cases.push(new SwitchCase(test, consequent));
+      }
+      var dr = node.determinant.compile(this);
       var determinant = compileValue(dr.end.determinant, this);
-      dr.body.push(new SwitchStatement(determinant, cases, false))
+      dr.body.push(new SwitchStatement(determinant, cases, false));
       return dr;
     }
 
