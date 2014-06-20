@@ -382,20 +382,6 @@ module Shumway.AVM2.Compiler.Looper {
     // [1] Cooper et al. "A Simple, Fast Dominance Algorithm"
     //
     computeDominance() {
-      function intersectDominators(doms, b1, b2) {
-        var finger1 = b1;
-        var finger2 = b2;
-        while (finger1 !== finger2) {
-          while (finger1 > finger2) {
-            finger1 = doms[finger1];
-          }
-          while (finger2 > finger1) {
-            finger2 = doms[finger2];
-          }
-        }
-        return finger1;
-      }
-
       var blocks = this.blocks;
       var n = blocks.length;
       var doms = new Array(n);
@@ -996,6 +982,20 @@ module Shumway.AVM2.Compiler.Looper {
     }
     exit.save = save;
     return exit;
+  }
+
+  function intersectDominators(doms, b1, b2) {
+    var finger1 = b1;
+    var finger2 = b2;
+    while (finger1 !== finger2) {
+      while (finger1 > finger2) {
+        finger1 = doms[finger1];
+      }
+      while (finger2 > finger1) {
+        finger2 = doms[finger2];
+      }
+    }
+    return finger1;
   }
 
   export class LoopInfo {
