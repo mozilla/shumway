@@ -325,14 +325,18 @@ module Shumway.AVM2.Compiler.Backend {
     compileSequence(node) {
       var cx = this;
       var body = [];
-      node.body.forEach(function (x) {
-        var result = x.compile(cx);
-        if (result instanceof BlockStatement) {
-          body = body.concat(result.body);
+      var nodeBody = node.body;
+      for (var i = 0; i < nodeBody.length; i++) {
+        var statement = nodeBody[i].compile(cx);
+        if (statement instanceof BlockStatement) {
+          var subStatements = statement.body;
+          for (var j = 0; j < subStatements.length; j++) {
+            body.push(subStatements[j]);
+          }
         } else {
-          body.push(result);
+          body.push(statement);
         }
-      });
+      }
       return new BlockStatement(body);
     }
 
