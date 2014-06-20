@@ -483,68 +483,6 @@ module Shumway.AVM2.Compiler.Looper {
         return false;
       }
 
-      //
-      // Find all SCCs at or below the level of some root that are not already
-      // natural loops.
-      //
-      function findSCCs(root) {
-        var preorderId = 1;
-        var preorder = {};
-        var assigned = {};
-        var unconnectedNodes = [];
-        var pendingNodes = [];
-        var sccs = [];
-        var level = root.level + 1;
-        var worklist = [root];
-        var node;
-        var u, s;
-
-        while ((node = top(worklist))) {
-          if (preorder[node.id]) {
-            if (peek(pendingNodes) === node) {
-              pendingNodes.pop();
-
-              var scc = [];
-              do {
-                u = unconnectedNodes.pop();
-                assigned[u.id] = true;
-                scc.push(u);
-              } while (u !== node);
-
-              if (scc.length > 1 || (u.spbacks && u.spbacks.get(u.id))) {
-                sccs.push(scc);
-              }
-            }
-
-            worklist.pop();
-            continue;
-          }
-
-          preorder[node.id] = preorderId++;
-          unconnectedNodes.push(node);
-          pendingNodes.push(node);
-
-          var successors = node.successors;
-          for (var i = 0, j = successors.length; i < j; i++) {
-            s = successors[i];
-            if (s.level < level) {
-              continue;
-            }
-
-            var sid = s.id;
-            if (!preorder[sid]) {
-              worklist.push(s);
-            } else if (!assigned[sid]) {
-              while (preorder[peek(pendingNodes).id] > preorder[sid]) {
-                pendingNodes.pop();
-              }
-            }
-          }
-        }
-
-        return sccs;
-      }
-
       function LoopInfo(scc, loopId) {
         var body = this.makeBlockSet();
         body.setBlocks(scc);
@@ -572,7 +510,7 @@ module Shumway.AVM2.Compiler.Looper {
 
       for (var n = worklist.length - 1; n >= 0; n--) {
         var t = worklist[n];
-        var sccs = findSCCs(t);
+        var sccs = this.findSCCs(t);
         if (sccs.length === 0) {
           continue;
         }
@@ -607,6 +545,68 @@ module Shumway.AVM2.Compiler.Looper {
 
       this.markedLoops = true;
       return true;
+    }
+
+    //
+    // Find all SCCs at or below the level of some root that are not already
+    // natural loops.
+    //
+    findSCCs(root) {
+      var preorderId = 1;
+      var preorder = {};
+      var assigned = {};
+      var unconnectedNodes = [];
+      var pendingNodes = [];
+      var sccs = [];
+      var level = root.level + 1;
+      var worklist = [root];
+      var node;
+      var u, s;
+
+      while ((node = top(worklist))) {
+        if (preorder[node.id]) {
+          if (peek(pendingNodes) === node) {
+            pendingNodes.pop();
+
+            var scc = [];
+            do {
+              u = unconnectedNodes.pop();
+              assigned[u.id] = true;
+              scc.push(u);
+            } while (u !== node);
+
+            if (scc.length > 1 || (u.spbacks && u.spbacks.get(u.id))) {
+              sccs.push(scc);
+            }
+          }
+
+          worklist.pop();
+          continue;
+        }
+
+        preorder[node.id] = preorderId++;
+        unconnectedNodes.push(node);
+        pendingNodes.push(node);
+
+        var successors = node.successors;
+        for (var i = 0, j = successors.length; i < j; i++) {
+          s = successors[i];
+          if (s.level < level) {
+            continue;
+          }
+
+          var sid = s.id;
+          if (!preorder[sid]) {
+            worklist.push(s);
+          } else if (!assigned[sid]) {
+            while (preorder[peek(pendingNodes).id] > preorder[sid]) {
+              pendingNodes.pop();
+            }
+          }
+        }
+      }
+
+      return sccs;
     }
 
     findLoopHeads(blocks) {
