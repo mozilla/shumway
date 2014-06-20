@@ -180,7 +180,6 @@ module Shumway.AVM2.Compiler.IR {
 
   export class Start extends Region {
     scope: Node;
-    domain: Node;
     constructor() {
       super(null);
       this.control = this;
@@ -188,7 +187,6 @@ module Shumway.AVM2.Compiler.IR {
     visitInputs(visitor: NodeVisitor) {
       visitArrayInputs(this.predecessors, visitor);
       visitor(this.scope);
-      visitor(this.domain);
     }
   }
   Start.prototype.nodeName = "Start";

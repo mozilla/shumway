@@ -559,7 +559,7 @@ module Shumway.AVM2.Verifier {
       State._mergeArrays(this.scope, other.scope);
     }
     private static _mergeArrays(a: Type [], b: Type []) {
-      release || assert(a.length === b.length, "a: " + a + " b: " + b);
+      release || assert(a.length === b.length, "a: ", a, " b: ", b);
       for (var i = a.length - 1; i >= 0; i--) {
         release || assert((a[i] !== undefined) && (b[i] !== undefined));
         if (a[i] === b[i]) {

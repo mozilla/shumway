@@ -189,8 +189,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set stageFocusRect(on: boolean) {
-      //this._stageFocusRect = !!on;
-      notImplemented("public flash.display.Stage::set stageFocusRect"); return;
+      this._stageFocusRect = !!on;
     }
 
     get quality(): string {

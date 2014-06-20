@@ -17,6 +17,7 @@
 
 module Shumway.AVM2.Runtime {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import HashMask = Shumway.AVM2.ABC.HashMask;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
@@ -36,7 +37,6 @@ module Shumway.AVM2.Runtime {
   declare var compileAbc;
   declare var Promise;
   declare var natives;
-  declare var GlobalMultinameResolver;
   declare var avm2;
   declare var homePath;
   declare var snarf;
@@ -504,22 +504,23 @@ module Shumway.AVM2.Runtime {
     }
 
     public compileAbc(abc, writer) {
-      compileAbc(abc, writer);
+      Shumway.AVM2.Compiler.compileAbc(abc, writer);
     }
 
-    public executeAbc(abc) {
+    public executeAbc(abc: AbcFile) {
       // console.time("Execute ABC: " + abc.name);
       this.loadAbc(abc);
       executeScript(abc.lastScript);
       // console.timeEnd("Execute ABC: " + abc.name);
     }
 
-    public loadAbc(abc) {
+    public loadAbc(abc: AbcFile) {
       if (Shumway.AVM2.Runtime.traceExecution.value) {
         log("Loading: " + abc.name);
       }
       abc.applicationDomain = this;
       GlobalMultinameResolver.loadAbc(abc);
+      ConstantManager.loadAbc(abc);
       this.abcs.push(abc);
 
       if (!this.base) {

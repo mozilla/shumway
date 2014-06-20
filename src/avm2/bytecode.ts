@@ -533,6 +533,7 @@ module Shumway.AVM2 {
     index: number;
     object: number;
     argCount: number;
+    region: Shumway.AVM2.Compiler.IR.Region;
 
     verifierEntryState: Verifier.State;
     verifierExitState: Verifier.State;

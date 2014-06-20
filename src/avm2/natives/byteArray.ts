@@ -248,10 +248,12 @@ module Shumway.AVM2.AS {
 //        newValue = !!newValue;
 //        notImplemented("public flash.utils.ByteArray::set shareable"); return;
 //      }
+
     }
 
     ByteArray.prototype.asGetNumericProperty = DataBuffer.prototype.getValue;
     ByteArray.prototype.asSetNumericProperty = DataBuffer.prototype.setValue;
+    ByteArray.prototype.native_toString = DataBuffer.prototype.toString;
 
     export var OriginalByteArray = ByteArray;
   }

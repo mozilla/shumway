@@ -452,12 +452,12 @@ module Shumway.AVM2.Compiler {
     bytecodes: Bytecode [];
     stops: any [];
     constantPool: ConstantPool;
-    domain: Constant;
     traceBuilder: boolean;
     methodInfo: MethodInfo;
+    methodInfoConstant: Constant;
     constructor(public builder: Builder, public region: Region, public block: Bytecode, public state: State) {
       this.abc = builder.abc;
-      this.domain = builder.domain;
+      this.methodInfoConstant = builder.methodInfoConstant;
       this.bytecodes = builder.methodInfo.analysis.bytecodes;
       this.constantPool = builder.abc.constantPool;
       this.traceBuilder = builder.traceBuilder;
@@ -584,7 +584,7 @@ module Shumway.AVM2.Compiler {
 
     findProperty(multiname: ASMultiname, strict: boolean): Value {
       var ti = this.bc.ti;
-      var slowPath = new IR.ASFindProperty(this.region, this.state.store, this.topScope(), multiname, this.domain, strict);
+      var slowPath = new IR.ASFindProperty(this.region, this.state.store, this.topScope(), multiname, this.methodInfoConstant, strict);
       if (ti) {
         if (ti.object) {
           if (ti.object instanceof Shumway.AVM2.Runtime.Global && !ti.object.isExecuting()) {
@@ -606,7 +606,7 @@ module Shumway.AVM2.Compiler {
       // TODO: Try to do the coercion of constant values without causing classes to be
       // loaded, as is the case when calling |asCoerceByMultiname|.
       if (false && isConstant(value)) {
-        return constant(Runtime.asCoerceByMultiname(this.domain.value, multiname, (<Constant>value).value));
+        return constant(Runtime.asCoerceByMultiname(this.methodInfo, multiname, (<Constant>value).value));
       } else {
         var coercer = getCoercerForType(multiname);
         if (coercer) {
@@ -614,7 +614,7 @@ module Shumway.AVM2.Compiler {
         }
       }
       if (emitCoerceNonPrimitive) {
-        return this.call(globalProperty("asCoerceByMultiname"), null, [this.domain, constant(multiname), value]);
+        return this.call(globalProperty("asCoerceByMultiname"), null, [this.methodInfoConstant, constant(multiname), value]);
       }
       return value;
     }
@@ -1372,7 +1372,7 @@ module Shumway.AVM2.Compiler {
             args = popMany(bc.argCount);
             type = pop();
             callee = globalProperty("applyType");
-            push(this.call(callee, null, [this.domain, type, new NewArray(region, args)]));
+            push(this.call(callee, null, [this.methodInfoConstant, type, new NewArray(region, args)]));
             break;
           case OP.newarray:
             args = popMany(bc.argCount);
@@ -1415,8 +1415,8 @@ module Shumway.AVM2.Compiler {
   class Builder {
     abc: AbcFile;
     scope: Scope;
-    domain: Constant;
     methodInfo: MethodInfo;
+    methodInfoConstant: Constant;
     hasDynamicScope: boolean;
     traceBuilder: boolean;
     createFunctionCallee: Value;
@@ -1425,7 +1425,7 @@ module Shumway.AVM2.Compiler {
     constructor(methodInfo, scope, hasDynamicScope) {
       release || assert (methodInfo && methodInfo.abc && scope);
       this.abc = methodInfo.abc;
-      this.domain = new Constant(methodInfo.abc.applicationDomain);
+      this.methodInfoConstant = new Constant(methodInfo);
       this.scope = scope;
       this.methodInfo = methodInfo;
       this.hasDynamicScope = hasDynamicScope;
@@ -1466,7 +1466,6 @@ module Shumway.AVM2.Compiler {
         start.scope = new Constant(this.scope);
       }
       state.saved = new Projection(start, ProjectionType.SCOPE);
-      start.domain = this.domain;
 
       var args = new IR.Arguments(start);
 
@@ -1496,7 +1495,7 @@ module Shumway.AVM2.Compiler {
           if (coercer) {
             local = coercer(local);
           } else if (emitCoerceNonPrimitiveParameters) {
-            local = new Call(start, state.store, globalProperty("asCoerceByMultiname"), null, [this.domain, constant(parameter.type), local], 0);
+            local = new Call(start, state.store, globalProperty("asCoerceByMultiname"), null, [this.methodInfoConstant, constant(parameter.type), local], 0);
           }
         }
         state.local[index] = local;
@@ -1513,6 +1512,7 @@ module Shumway.AVM2.Compiler {
 
       for (var i = 0; i < blocks.length; i++) {
         blocks[i].bdo = i;
+        blocks[i].region = null
       }
 
       var worklist = new Shumway.SortedList<WorklistItem>(function compare(a: WorklistItem, b: WorklistItem) {

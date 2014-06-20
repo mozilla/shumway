@@ -138,14 +138,13 @@ module Shumway.AVM2.Compiler.IR {
   ASDeleteProperty.prototype.nodeName = "ASDeleteProperty";
 
   export class ASFindProperty extends StoreDependent {
-    constructor(control: Control, store: Store, public scope: ASScope, public name: Value, public domain: Value, public strict: boolean) {
+    constructor(control: Control, store: Store, public scope: ASScope, public name: Value, public methodInfo: Constant, public strict: boolean) {
       super(control, store);
     }
     visitInputs(visitor: NodeVisitor) {
       super.visitInputs(visitor);
       visitor(this.scope);
       visitor(this.name);
-      visitor(this.domain);
     }
   }
 

@@ -4,6 +4,11 @@
  * Compiling individual player globals abcs.
  *
  * find ~/Workspaces/Shumway/build/playerglobal/flash -name "*.abc" | xargs js avm.js -a -verify {} >> player.as.js
+ *
+ * Compiling against a list of .abcs
+ *
+ * js avm.js -c -verify ../generated/builtin/builtin.abc ../generated/playerGlobal/playerGlobal.min.abc `find ~/Workspaces/Shumway/build/playerglobal/flash -name "*.abc"`  ~/Dropbox/shumway/games/min/MiningTruck.swf
+ *
  */
 
 module Shumway.AVM2.Compiler {

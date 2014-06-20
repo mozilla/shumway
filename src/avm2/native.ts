@@ -310,10 +310,22 @@ module Shumway.AVM2.AS {
       var classes = [];
       while (self) {
         classes.push(self);
-        self = self.baseClass
+        self = self.baseClass;
       }
-      for (var i = classes.length - 1; i >= 0; i--) {
-        Shumway.ObjectUtilities.copyOwnPropertyDescriptors(traitsPrototype, classes[i].prototype);
+      for (var i = 0; i < classes.length; i++) {
+        var baseClassTraitsPrototype = classes[i].prototype;
+        for (var property in baseClassTraitsPrototype) {
+          if (hasOwnProperty(baseClassTraitsPrototype, property) &&
+              !hasOwnProperty(traitsPrototype, property)) {
+            var descriptor = Object.getOwnPropertyDescriptor(baseClassTraitsPrototype, property);
+            release || Debug.assert (descriptor);
+            try {
+              Object.defineProperty(traitsPrototype, property, descriptor);
+            } catch (e) {
+              // log("Can't define " + property);
+            }
+          }
+        }
       }
     }
 
@@ -1638,7 +1650,7 @@ module Shumway.AVM2.AS {
         return value;
       }
     }
-    log("Cannot find " + trait + " in " + natives);
+    log("Cannot find " + trait + " in natives.");
     return null;
   }
 
@@ -1647,6 +1659,8 @@ module Shumway.AVM2.AS {
    */
   export function escapeNativeName(name: string) {
     switch (name) {
+      case "toString":              return "native_toString";
+      case "valueOf":               return "native_valueOf";
       case "prototype":             return "native_prototype";
       case "hasOwnProperty":        return "native_hasOwnProperty";
       case "isPrototypeOf":         return "native_isPrototypeOf";
@@ -1667,10 +1681,11 @@ module Shumway.AVM2.AS {
     export var Date = jsGlobal.Date;
     export var ASObject = Shumway.AVM2.AS.ASObject;
 
-    function makeOriginalPrototype(constructor: Function, properties: string []) {
+    function makeOriginalPrototype(constructor: Function) {
       var o = { prototype: createEmptyObject() }
-      for (var i = 0; i < properties.length; i++) {
-        o.prototype[properties[i]] = constructor.prototype[properties[i]];
+      var keys = Object.getOwnPropertyNames(constructor.prototype);
+      for (var i = 0; i < keys.length; i++) {
+        o.prototype[keys[i]] = constructor.prototype[keys[i]];
       }
       return o;
     }
@@ -1680,11 +1695,11 @@ module Shumway.AVM2.AS {
      * prevent cyycles.
      */
     export var Original = {
-      Date: makeOriginalPrototype(Date, ["toString", "valueOf"]),
-      Array: makeOriginalPrototype(Array, ["toString", "valueOf", "push", "pop"]),
-      String: makeOriginalPrototype(String, ["toString", "valueOf"]),
-      Number: makeOriginalPrototype(Number, ["toString", "valueOf"]),
-      Boolean: makeOriginalPrototype(Boolean, ["toString", "valueOf"])
+      Date: makeOriginalPrototype(Date),
+      Array: makeOriginalPrototype(Array),
+      String: makeOriginalPrototype(String),
+      Number: makeOriginalPrototype(Number),
+      Boolean: makeOriginalPrototype(Boolean)
     }
 
     export function print(...args: any []) {

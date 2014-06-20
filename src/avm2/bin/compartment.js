@@ -66,7 +66,6 @@ load(tsBuildPath + "avm2/compiler/c4/optimizer.js");
 load(tsBuildPath + "avm2/compiler/c4/looper.js");
 load(tsBuildPath + "avm2/compiler/c4/backend.js");
 load(tsBuildPath + "avm2/compiler/builder.js");
-load(jsBuildPath + "avm2/compiler/aot.js");
 Timer.stop();
 
 Timer.start("Loading Runtime");
@@ -93,6 +92,8 @@ load(tsBuildPath + "avm2/natives/byteArray.js");
 
 Timer.stop();
 Timer.stop();
+
+load(tsBuildPath + "avm2/compiler/aot.js");
 
 function grabAbc(fileOrBuffer) {
   if (Shumway.isString(fileOrBuffer)) {

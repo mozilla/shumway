@@ -1380,6 +1380,9 @@ module Shumway.AVM2.AS {
     toString(): string {
       return toString(this);
     }
+    native_toString(): string {
+      return toString(this);
+    }
     native_hasOwnProperty(P: any = undefined): boolean {
       // 13.4.4.14 XML.prototype.hasOwnProperty ( P )
       if (this.hasProperty(P, isQNameAttribute(P), false)) {
@@ -2060,7 +2063,9 @@ module Shumway.AVM2.AS {
     toString(): string {
       return toString(this);
     }
-
+    native_toString(): string {
+      return toString(this);
+    }
     // 9.2.1.7 [[DeepCopy]] ( )
     _deepCopy() {
       // TODO 2. Copy all internal properties of x to list

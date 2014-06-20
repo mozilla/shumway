@@ -445,9 +445,9 @@ module Shumway.AVM2.Compiler.Backend {
   IR.ASFindProperty.prototype.compile = function (cx) {
     var scope = compileValue(this.scope, cx);
     var name = compileMultiname(this.name, cx);
-    var domain = compileValue(this.domain, cx);
+    var methodInfo = compileValue(this.methodInfo, cx);
     var strict = new Literal(this.strict);
-    return call(property(scope, "findScopeProperty"), name.concat([domain, strict]));
+    return call(property(scope, "findScopeProperty"), name.concat([methodInfo, strict]));
   }
 
   IR.ASGetProperty.prototype.compile = function (cx) {
