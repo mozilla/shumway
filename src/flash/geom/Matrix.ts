@@ -214,11 +214,12 @@ module Shumway.AVM2.AS.flash.geom {
        * two: 1/2, 1/4 ...
        */
       determinant = 1 / determinant;
-      a = target.a = d * determinant;
+      var t = 0;
+      t = target.a =  d * determinant;
       b = target.b = -b * determinant;
       c = target.c = -c * determinant;
       d = target.d =  a * determinant;
-      target.tx = -(a * tx + c * ty);
+      target.tx = -(t * tx + c * ty);
       target.ty = -(b * tx + d * ty);
     }
 
