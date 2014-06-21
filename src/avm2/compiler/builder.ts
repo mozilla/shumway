@@ -30,7 +30,6 @@ module Shumway.AVM2.Compiler {
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Runtime = Shumway.AVM2.Runtime
   import GlobalMultinameResolver = Shumway.AVM2.Runtime.GlobalMultinameResolver;
-  import Timer = Shumway.Metrics.Timer;
 
   var counter = Shumway.Metrics.Counter.instance;
 
@@ -162,7 +161,7 @@ module Shumway.AVM2.Compiler {
         var args = unique(phi.args);
         if (args.length === 1) {
           phi.seal();
-          counter.count("Builder: OptimizedPhi");
+          countTimeline("Builder: OptimizedPhi");
           return args[0];
         }
       }
@@ -221,7 +220,7 @@ module Shumway.AVM2.Compiler {
   }
 
   function asConstant(node: Value): Constant {
-    assert (node instanceof Constant);
+    release || assert (node instanceof Constant);
     return <Constant>node;
   }
 
@@ -703,7 +702,7 @@ module Shumway.AVM2.Compiler {
       if (qn) {
         return this.store(new IR.ASGetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), IR.Flags.RESOLVED | (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
       }
-      counter.count("Compiler: Slow ASGetProperty");
+      countTimeline("Compiler: Slow ASGetProperty");
       return this.store(new IR.ASGetProperty(region, state.store, object, multiname, (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
     }
 
@@ -828,11 +827,11 @@ module Shumway.AVM2.Compiler {
         return;
       }
       if (!isConstant(namespaces) || !isConstant(name) || multiname.isAttribute()) {
-        counter.count("GlobalMultinameResolver: Cannot resolve runtime multiname or attribute.");
+        countTimeline("GlobalMultinameResolver: Cannot resolve runtime multiname or attribute.");
         return;
       }
       if (isNumeric(name.value) || !isString(name.value) || !name.value) {
-        counter.count("GlobalMultinameResolver: Cannot resolve numeric or any names.");
+        countTimeline("GlobalMultinameResolver: Cannot resolve numeric or any names.");
         return;
       }
       return GlobalMultinameResolver.resolveMultiname(new Multiname(namespaces.value, name.value, multiname.flags));
@@ -840,6 +839,10 @@ module Shumway.AVM2.Compiler {
 
     getJSProperty(object: Value, path: string): Value {
       return getJSPropertyWithState(this.state, object, path);
+    }
+
+    setJSProperty(object: Value, name: string, value: Value) {
+      this.store(new IR.SetProperty(null, this.state.store, object, constant(name), value));
     }
 
     simplifyName(name): Value {
@@ -909,7 +912,7 @@ module Shumway.AVM2.Compiler {
       release || assert (x instanceof IR.Node);
       if (bc.ti) {
         if (x.ty) {
-          // assert (x.ty == bc.ti.type);
+          // release || assert (x.ty == bc.ti.type);
         } else {
           x.ty = bc.ti.type;
         }
@@ -1106,10 +1109,10 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.coerce:
             if (bc.ti && bc.ti.noCoercionNeeded) {
-              counter.count("Compiler: NoCoercionNeeded");
+              countTimeline("Compiler: NoCoercionNeeded");
               break;
             } else {
-              counter.count("Compiler: CoercionNeeded");
+              countTimeline("Compiler: CoercionNeeded");
             }
             value = pop();
             push(this.coerce(this.constantPool.multinames[bc.index], value));
@@ -1178,9 +1181,14 @@ module Shumway.AVM2.Compiler {
             );
             break;
           case OP.hasnext2:
-            var temp = this.call(globalProperty("asHasNext2"), null, [local[bc.object], local[bc.index]]);
-            local[bc.object] = this.getJSProperty(temp, "object");
-            push(local[bc.index] = this.getJSProperty(temp, "index"));
+            var hasNext2 = new IR.ASNewHasNext2();
+            this.setJSProperty(hasNext2, "object", local[bc.object]);
+            this.setJSProperty(hasNext2, "index", local[bc.index]);
+            this.store(new IR.CallProperty(region, state.store, local[bc.object], constant("asHasNext2"), [hasNext2], IR.Flags.PRISTINE));
+            // this.store(new IR.SetProperty(region, state.store, hasNext2, qualifiedNameConstant(ti.trait.name), value));
+            // var temp = this.call(globalProperty("asHasNext2"), null, [local[bc.object], local[bc.index]]);
+            local[bc.object] = this.getJSProperty(hasNext2, "object");
+            push(local[bc.index] = this.getJSProperty(hasNext2, "index"));
             break;
           case OP.pushnull:
             push(Null);
@@ -1582,7 +1590,7 @@ module Shumway.AVM2.Compiler {
           var type = typeState.local[i];
           var local = state.local[i];
           if (local.ty) {
-            // assert (type.isSubtypeOf(local.ty), local + " " + local.ty + " !== " + type + " " + type.merge(local.ty));
+            // release || assert (type.isSubtypeOf(local.ty), local + " " + local.ty + " !== " + type + " " + type.merge(local.ty));
           } else {
             local.ty = type;
           }
@@ -1612,7 +1620,7 @@ module Shumway.AVM2.Compiler {
       release || assert (methodInfo.analysis);
       release || assert (!methodInfo.hasExceptions());
 
-      counter.count("Compiler: Compiled Methods");
+      countTimeline("Compiler: Compiled Methods");
 
       enterTimeline("Compiler");
       enterTimeline("Mark Loops");

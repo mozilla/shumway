@@ -36,19 +36,19 @@ module Shumway.AVM2.AS.flash.display {
       this._stage = this;
       this._frameRate = 24;
       this._scaleMode = StageScaleMode.SHOW_ALL;
-      assert (this._scaleMode);
+      release || assert (this._scaleMode);
       this._align = "";
       this._stageWidth = 0;
       this._stageHeight = 0;
       this._showDefaultContextMenu = true;
       this._focus = null;
       this._colorCorrection = ColorCorrection.DEFAULT;
-      assert (this._colorCorrection);
+      release || assert (this._colorCorrection);
       this._colorCorrectionSupport = ColorCorrectionSupport.DEFAULT_OFF;
-      assert (this._colorCorrectionSupport);
+      release || assert (this._colorCorrectionSupport);
       this._stageFocusRect = true;
       this._quality = StageQuality.HIGH;
-      assert (this._quality);
+      release || assert (this._quality);
       this._displayState = null;
       this._fullScreenSourceRect = null;
       this._mouseLock = false;
@@ -125,7 +125,7 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleMode(value: string) {
       value = asCoerceString(value);
-      assert (flash.display.StageScaleMode.toNumber(value) >= 0);
+      release || assert (flash.display.StageScaleMode.toNumber(value) >= 0);
       this._scaleMode = value;
     }
 
@@ -135,12 +135,12 @@ module Shumway.AVM2.AS.flash.display {
 
     set align(value: string) {
       value = asCoerceString(value);
-      assert (flash.display.StageAlign.toNumber(value) >= 0);
+      release || assert (flash.display.StageAlign.toNumber(value) >= 0);
       this._align = value;
     }
 
     get stageWidth(): number /*int*/ {
-      return (this._stageWidth * 0.05) | 0;
+      return (this._stageWidth / 20) | 0;
     }
 
     set stageWidth(value: number /*int*/) {
@@ -148,7 +148,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageHeight(): number /*int*/ {
-      return (this._stageHeight * 0.05) | 0;
+      return (this._stageHeight / 20) | 0;
     }
 
     set stageHeight(value: number /*int*/) {
@@ -198,7 +198,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set quality(value: string) {
-      assert (flash.display.StageQuality.toNumber(value) >= 0);
+      release || assert (flash.display.StageQuality.toNumber(value) >= 0);
       this._quality = asCoerceString(value);
     }
 

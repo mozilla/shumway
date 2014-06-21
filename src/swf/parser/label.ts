@@ -17,7 +17,7 @@
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   import assert = Shumway.Debug.assert;
-  var fromCharCode = String.fromCharCode;
+  import ColorUtilities = Shumway.ColorUtilities;
 
   export function defineLabel(tag: any, dictionary: any) {
     var records = tag.records;
@@ -39,16 +39,15 @@ module Shumway.SWF.Parser {
 
       if (record.hasFont) {
         var font = dictionary[record.fontId];
-        assert(font, 'undefined font', 'label');
+        release || assert(font, 'undefined font', 'label');
         codes = font.codes;
         dependencies.push(font.id);
-        htmlText += ' face="' + font.name + '"';
+        htmlText += ' size="' + (record.fontHeight / 20) + '" face="swffont' + font.id + '"';
       }
 
       if (record.hasColor) {
-        var color = record.color;
-        color = (color.red << 16) | (color.green << 8) | color.blue;
-        htmlText += ' color="' + color + '"';
+        var color = ColorUtilities.componentsToRGB(record.color);
+        htmlText += ' color="#' + ('000000' + color.toString(16)).slice(-6) + '"';
       }
 
       if (record.hasMoveX)
@@ -63,8 +62,8 @@ module Shumway.SWF.Parser {
       var entry;
       while ((entry = entries[j++])) {
         var code = codes[entry.glyphIndex];
-        assert(code, 'undefined glyph', 'label');
-        var text = code >= 32 && code != 34 && code != 92 ? fromCharCode(code) :
+        release || assert(code, 'undefined glyph', 'label');
+        var text = code >= 32 && code != 34 && code != 92 ? String.fromCharCode(code) :
                    '\\u' + (code + 0x10000).toString(16).substring(1);
         htmlText += text;
         coords.push(x, y);

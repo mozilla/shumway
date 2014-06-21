@@ -15,7 +15,7 @@
  */
 
 ///<reference path='../references.ts' />
-///<reference path='swfTag.ts' />
+///<reference path='../../SWFTags.ts' />
 ///<reference path='templates.ts' />
 ///<reference path='handlers.ts' />
 ///<reference path='parser.ts' />

@@ -253,5 +253,12 @@ module Shumway.Tools.Profiler {
       }
     }
 
+    getStatistics(kind: TimelineItemKind): TimelineFrameStatistics {
+      var snapshot = this._snapshot;
+      if (!snapshot.statistics) {
+        snapshot.calculateStatistics();
+      }
+      return snapshot.statistics[kind.id];
+    }
   }
 }

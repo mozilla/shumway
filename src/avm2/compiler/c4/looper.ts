@@ -18,7 +18,6 @@
 module Shumway.AVM2.Compiler.Looper {
   import top = Shumway.ArrayUtilities.top;
   import peek = Shumway.ArrayUtilities.peek;
-  import Timer = Shumway.Metrics.Timer;
 
   import CFG = Compiler.IR.CFG;
   import Block = Compiler.IR.Block;
@@ -333,7 +332,7 @@ module Shumway.AVM2.Compiler.Looper {
     }
 
     makeBlockSetFactory(length: number, blockById: Block []) {
-      assert (!this.boundBlockSet);
+      release || assert (!this.boundBlockSet);
       this.boundBlockSet = <any>(function blockSet() {
         return new BlockSet(length, <any>blockById);
       });
@@ -1047,16 +1046,14 @@ module Shumway.AVM2.Compiler.Looper {
     }
 
     restructureControlFlow() {
-      Timer.start("Restructure Control Flow");
+      enterTimeline("Restructure Control Flow");
       if (!this.markedLoops && !this.markLoops()) {
-        Timer.stop();
+        leaveTimeline();
         return false;
       }
-
       this.induceControlTree();
-
       this.restructuredControlFlow = true;
-      Timer.stop();
+      leaveTimeline();
       return true;
     }
   }

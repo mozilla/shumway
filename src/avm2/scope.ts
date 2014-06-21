@@ -134,7 +134,7 @@ module Shumway.AVM2.Runtime {
      * Property lookups are cached in scopes but are not used when only looking at |scopesOnly|.
      */
     public findScopeProperty(namespaces: Namespace [], name: any, flags: number, domain: any, strict: boolean, scopeOnly: boolean) {
-      counter.count("findScopeProperty");
+      countTimeline("findScopeProperty");
       var object;
       var key = makeCacheKey(namespaces, name, flags);
       if (!scopeOnly && (object = this.cache[key])) {
@@ -204,7 +204,7 @@ module Shumway.AVM2.Runtime {
       }
     }
     if (!boundMethod) {
-      counter.count("Bind Scope - Slow Path");
+      countTimeline("Bind Scope - Slow Path");
       boundMethod = function () {
         Array.prototype.unshift.call(arguments, scope);
         var global = (this === jsGlobal ? scope.global.object : this);

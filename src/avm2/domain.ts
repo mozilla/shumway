@@ -144,7 +144,7 @@ module Shumway.AVM2.Runtime {
 
     public static instance: AVM2;
     public static initialize(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: (next) => void = null) {
-      assert (!AVM2.instance);
+      release || assert (!AVM2.instance);
       AVM2.instance = new AVM2(sysMode, appMode, loadAVM1);
     }
 
@@ -187,7 +187,7 @@ module Shumway.AVM2.Runtime {
 
     public static currentDomain() {
       var abc = AVM2.currentAbc();
-      assert (abc && abc.applicationDomain,
+      release || assert (abc && abc.applicationDomain,
           "No domain environment was found on the stack, increase STACK_DEPTH or " +
           "make sure that a compiled / interpreted function is on the call stack.");
       return abc.applicationDomain;
@@ -199,7 +199,7 @@ module Shumway.AVM2.Runtime {
 
     public loadAVM1(): Promise<void> {
       var loadAVM1Callback = this._loadAVM1;
-      assert(loadAVM1Callback);
+      release || assert(loadAVM1Callback);
 
       if (!this._loadAVM1Promise) {
         this._loadAVM1Promise = new Promise<void>(function (resolve) {
@@ -465,7 +465,7 @@ module Shumway.AVM2.Runtime {
         }
       }
 
-      counter.count("ApplicationDomain: findDefiningScript");
+      countTimeline("ApplicationDomain: findDefiningScript");
 
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {
@@ -529,9 +529,6 @@ module Shumway.AVM2.Runtime {
     }
 
     public broadcastMessage(type, message, origin) {
-      if (debug) {
-        Timer.start("broadcast: " + type);
-      }
       try {
         this.onMessage.notify1(type, {
           data: message,
@@ -543,9 +540,6 @@ module Shumway.AVM2.Runtime {
         avm2.exceptions.push({source: type, message: e.message,
           stack: e.stack});
         throw e;
-      }
-      if (debug) {
-        Timer.stop();
       }
     }
 

@@ -26,7 +26,6 @@ var inBrowser = typeof console != "undefined";
 // declare var getComputedStyle;
 
 /** @const */ var release: boolean = false;
-/** @const */ var debug: boolean = !release;
 
 declare var dateNow: () => number;
 
@@ -1008,7 +1007,7 @@ module Shumway {
     export function variableLengthEncodeInt32(n) {
       var e = _encoding;
       var bitCount = (32 - Math.clz32(n));
-      assert (bitCount <= 32, bitCount);
+      release || assert (bitCount <= 32, bitCount);
       var l = Math.ceil(bitCount / 6);
       // Encode length followed by six bit chunks.
       var s = e[l];
@@ -1038,7 +1037,7 @@ module Shumway {
       } else if (c === 95) {
         return 63;
       }
-      assert (false, "Invalid Encoding");
+      release || assert (false, "Invalid Encoding");
     }
 
     export function variableLengthDecodeInt32(s) {
@@ -1410,8 +1409,8 @@ module Shumway {
      * http://geomalgorithms.com/a03-_inclusion.html
      */
     export function pointInPolygon(x: number, y: number, polygon: Float32Array): boolean {
-      // assert (((polygon.length & 1) === 0) && polygon.length >= 8);
-      // assert (polygon[0] === polygon[polygon.length - 2] &&
+      // release || assert (((polygon.length & 1) === 0) && polygon.length >= 8);
+      // release || assert (polygon[0] === polygon[polygon.length - 2] &&
       //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
       var crosses = 0;
       var n = polygon.length - 2;
@@ -1449,8 +1448,8 @@ module Shumway {
     }
 
     export function pointInPolygonInt32(x: number, y: number, polygon: Int32Array): boolean {
-      // assert (((polygon.length & 1) === 0) && polygon.length >= 8);
-      // assert (polygon[0] === polygon[polygon.length - 2] &&
+      // release || assert (((polygon.length & 1) === 0) && polygon.length >= 8);
+      // release || assert (polygon[0] === polygon[polygon.length - 2] &&
       //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
       x = x | 0;
       y = y | 0;
@@ -2578,8 +2577,8 @@ module Shumway {
     }
 
     private assertValid(): void {
-//      assert(this._xMax >= this._xMin);
-//      assert(this._yMax >= this._yMin);
+//      release || assert(this._xMax >= this._xMin);
+//      release || assert(this._yMax >= this._yMin);
     }
   }
 
@@ -2662,7 +2661,7 @@ module Shumway {
     }
 
     export function componentsToRGBA(components: RGBAComponents): number {
-      return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
+      return ((components.red << 24) | (components.green << 16) | (components.blue << 8) | components.alpha) >>> 0;
     }
 
     export function rgbaToCSSStyle(color: number): string {
@@ -2673,6 +2672,18 @@ module Shumway {
     export function rgbaObjToCSSStyle(color: RGBAComponents): string {
       return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
              color.alpha / 255 + ')';
+    }
+
+    export function hexToRGB(color: string): number {
+      return parseInt(color.slice(1), 16);
+    }
+
+    export function rgbToHex(color: number): string {
+      return '#' + ('000000' + color.toString(16)).slice(-6);
+    }
+
+    export function isValidHexColor(value: any): boolean {
+      return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value);
     }
 
     /**

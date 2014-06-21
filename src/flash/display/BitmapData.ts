@@ -68,7 +68,9 @@ module Shumway.AVM2.AS.flash.display {
       if (this._symbol) {
         this._data = new Uint8Array(this._symbol.data.buffer);
         this._type = this._symbol.type;
-        if (this._type === ImageType.PremultipliedAlphaARGB) {
+        if (this._type === ImageType.PremultipliedAlphaARGB ||
+            this._type === ImageType.StraightAlphaARGB      ||
+            this._type === ImageType.StraightAlphaRGBA) {
           this._view = new Int32Array(this._symbol.data.buffer);
         }
       } else {
@@ -204,6 +206,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clone(): flash.display.BitmapData {
+      somewhatImplemented("public flash.display.BitmapData::clone");
+      // This should be coping the buffer not the view.
       var bd = new BitmapData(this._rect.width, this._rect.height, this._transparent, this._fillColorBGRA);
       bd._view.set(this._view);
       return bd;
@@ -263,7 +267,7 @@ module Shumway.AVM2.AS.flash.display {
 
     applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, filter: flash.filters.BitmapFilter): void {
       sourceBitmapData = sourceBitmapData; sourceRect = sourceRect; destPoint = destPoint; filter = filter;
-      notImplemented("public flash.display.BitmapData::applyFilter"); return;
+      somewhatImplemented("public flash.display.BitmapData::applyFilter " + filter); return;
     }
     colorTransform(rect: flash.geom.Rectangle, colorTransform: flash.geom.ColorTransform): void {
       rect = rect; colorTransform = colorTransform;
@@ -289,6 +293,7 @@ module Shumway.AVM2.AS.flash.display {
                alphaPoint: flash.geom.Point = null,
                mergeAlpha: boolean = false): void
     {
+      enterTimeline("BitmapData.copyPixels");
       sourceBitmapData = sourceBitmapData; sourceRect = sourceRect; destPoint = destPoint; alphaBitmapData = alphaBitmapData; alphaPoint = alphaPoint; mergeAlpha = !!mergeAlpha;
       // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of the source rect, however a width
       // of |0.5| rounds down rather than up so we're not quite correct here.
@@ -300,6 +305,7 @@ module Shumway.AVM2.AS.flash.display {
 
       // Clipped source rect is empty so there's nothing to do.
       if (sR.isEmpty()) {
+        leaveTimeline();
         return;
       }
 
@@ -333,6 +339,10 @@ module Shumway.AVM2.AS.flash.display {
       var s = sourceBitmapData._view;
       var t = this._view;
 
+      if (sourceBitmapData._type !== this._type) {
+        somewhatImplemented("public flash.display.BitmapData::copyPixels - Color Format Conversion");
+      }
+
       // Finally do the copy. All the math above is needed just so we don't do any branches inside
       // this hot loop.
       for (var y = 0; y < tH; y++) {
@@ -344,6 +354,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._isDirty = true;
       somewhatImplemented("public flash.display.BitmapData::copyPixels");
+      leaveTimeline();
       return;
     }
 
@@ -357,7 +368,7 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.BitmapData::draw");
       var serializer : IBitmapDataSerializer = AVM2.instance.globals['Shumway.Player.Utils'];
       if (matrix) {
-        matrix = matrix.clone().toTwips();
+        matrix = matrix.clone().toTwipsInPlace();
       }
       serializer.cacheAsBitmap(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }

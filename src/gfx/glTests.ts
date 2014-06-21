@@ -52,7 +52,7 @@ module Shumway.GFX.GL.Tests {
     for (var k = 0; k < c; k++) {
       for (var i = 0; i < c; i++) {
         var r = x.allocate(getRandomInt(10), getRandomInt(10));
-        assert (r);
+        release || assert (r);
         a.push(r);
       }
       for (var i = 0; i < c; i++) {

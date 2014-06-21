@@ -34,7 +34,19 @@ module Shumway.AVM2.AS.flash.text {
                 leading: Object = null)
     {
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.TextFormat");
+      this.font = font;
+      this.size = size;
+      this.color = color;
+      this.bold = bold;
+      this.italic = italic;
+      this.underline = underline;
+      this.url = url;
+      this.target = target;
+      this.align = align;
+      this.leftMargin = leftMargin;
+      this.rightMargin = rightMargin;
+      this.indent = indent;
+      this.leading = leading;
     }
 
     private static measureTextField: flash.text.TextField;
@@ -58,50 +70,6 @@ module Shumway.AVM2.AS.flash.text {
     private _target: string;
     private _underline: Object;
     private _url: string;
-
-    //fromNative(nativeFormat: NativeTextFormat): TextFormat {
-    //  this._font = nativeFormat.face;
-    //  this._size = nativeFormat.size;
-    //  this._color = nativeFormat.color;
-    //  this._bold = nativeFormat.bold;
-    //  this._italic = nativeFormat.italic;
-    //  this._underline = nativeFormat.underline;
-    //  this._url = nativeFormat.url;
-    //  this._target = nativeFormat.target;
-    //  this._align = nativeFormat.align;
-    //  this._leftMargin = nativeFormat.leftMargin;
-    //  this._rightMargin = nativeFormat.rightMargin;
-    //  this._indent = nativeFormat.indent;
-    //  this._leading = nativeFormat.leading;
-    //  this._letterSpacing = nativeFormat.letterSpacing;
-    //  this._kerning = nativeFormat.kerning;
-    //  return this;
-    //}
-
-    /**
-     * Inside TextField, a native representation of TextFormat is used for efficiency:
-     * The AS3 representation is almost entirely untyped and can contain null values, which are
-     * replaced by defaults for internal calculation purposes. To avoid having to check for them
-     * in all calculations, TextFormat is converted into NativeTextFormat, with the null checks
-     * happening once during the conversion.
-     */
-    //toNative(): NativeTextFormat {
-    //  var format: NativeTextFormat = new NativeTextFormat();
-    //  format.face = this._font || 'serif';
-    //  format.size = isNaN(+this._size) ? 12 : +this._size;
-    //  format.color = +this._color | 0;
-    //  format.bold = !!this._bold;
-    //  format.italic = !!this._italic;
-    //  format.underline = !!this._underline;
-    //  format.url = this._url;
-    //  format.target = this._target;
-    //  format.align = this._align;
-    //  format.leftMargin = +this._leftMargin;
-    //  format.rightMargin = +this._rightMargin;
-    //  format.indent = isNaN(+this._indent) ? 0 : +this._indent;
-    //  format.leading = isNaN(+this._leading) ? 0 : +this._indent;
-    //  return format;
-    //}
 
     as2GetTextExtent(text: string, width: number/* optional */) {
       if (!TextFormat.measureTextField) {
@@ -333,24 +301,27 @@ module Shumway.AVM2.AS.flash.text {
         this.leading
       );
     }
-  }
 
-  //export class NativeTextFormat {
-  //  face: string;
-  //  fontObj: Font;
-  //  size: number;
-  //  color: number;
-  //  bold: boolean;
-  //  italic: boolean;
-  //  underline: boolean;
-  //  url: string;
-  //  target: string;
-  //  align: string;
-  //  leftMargin: number;
-  //  rightMargin: number;
-  //  indent: number;
-  //  leading: number;
-  //  letterSpacing: number;
-  //  kerning: number;
-  //}
+    public equals(other: TextFormat): boolean {
+      return this._align === other._align &&
+             this._blockIndent === other._blockIndent &&
+             this._bold === other._bold &&
+             this._bullet === other._bullet &&
+             this._color === other._color &&
+             this._display === other._display &&
+             this._font === other._font &&
+             this._indent === other._indent &&
+             this._italic === other._italic &&
+             this._kerning === other._kerning &&
+             this._leading === other._leading &&
+             this._leftMargin === other._leftMargin &&
+             this._letterSpacing === other._letterSpacing &&
+             this._rightMargin === other._rightMargin &&
+             this._size === other._size &&
+             this._tabStops === other._tabStops &&
+             this._target === other._target &&
+             this._underline === other._underline &&
+             this._url === other._url;
+    }
+  }
 }

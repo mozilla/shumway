@@ -26,6 +26,7 @@ var stateDefaults = {
   profileStartup: true,
   profileStartupDuration: 10000,
   logToConsole: false,
+  logToDebugPanel: true,
   mute: false
 };
 
@@ -51,7 +52,9 @@ var GUI = (function () {
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
 
   var inspectorOptions = gui.addFolder("Inspector Options");
+  inspectorOptions.add(window, "release");
   inspectorOptions.add(state, "logToConsole").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "logToDebugPanel").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);

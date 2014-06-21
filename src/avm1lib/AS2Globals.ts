@@ -126,7 +126,7 @@ module Shumway.AVM2.AS.avm1lib {
       // TODO
     }
     _addToPendingScripts(subject: ASObject, fn: ASFunction, args: any [] = null): any {
-      assert(fn, 'invalid function in _addToPendingScripts');
+      release || assert(fn, 'invalid function in _addToPendingScripts');
       AS2Context.instance.addToPendingScripts(function () {
         (<Function><any> fn).apply(subject, args);
       });

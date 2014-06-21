@@ -56,6 +56,7 @@ module Shumway.Remoting.Player {
     }
 
     writeStage(stage: Stage) {
+      writer && writer.writeLn("Sending Stage");
       var serializer = this;
       this.output.writeInt(MessageTag.UpdateStage);
       this.output.writeInt(0x00000000);
@@ -64,6 +65,7 @@ module Shumway.Remoting.Player {
 
     writeGraphics(graphics: Graphics) {
       if (graphics._isDirty) {
+        writer && writer.writeLn("Sending Graphics: " + graphics._id);
         var textures = graphics.getUsedTextures();
         var numTextures = textures.length;
         for (var i = 0; i < numTextures; i++) {
@@ -71,6 +73,7 @@ module Shumway.Remoting.Player {
         }
         this.output.writeInt(MessageTag.UpdateGraphics);
         this.output.writeInt(graphics._id);
+        this.output.writeInt(-1);
         this.writeRectangle(graphics._getContentBounds());
         this.output.writeInt(this.outputAssets.length);
         this.outputAssets.push(graphics.getGraphicsData().toPlainObject());
@@ -84,8 +87,10 @@ module Shumway.Remoting.Player {
 
     writeBitmapData(bitmapData: BitmapData) {
       if (bitmapData._isDirty) {
+        writer && writer.writeLn("Sending BitmapData: " + bitmapData._id);
         this.output.writeInt(MessageTag.UpdateBitmapData);
         this.output.writeInt(bitmapData._id);
+        this.output.writeInt(bitmapData._symbol ? bitmapData._symbol.id : -1);
         this.writeRectangle(bitmapData._getContentBounds());
         this.output.writeInt(bitmapData._type);
         this.output.writeInt(this.outputAssets.length);
@@ -95,12 +100,19 @@ module Shumway.Remoting.Player {
     }
 
     writeTextContent(textContent: Shumway.TextContent, bounds: Bounds) {
-      if (textContent._isDirty) {
+      if (textContent._isDirty && textContent.plainText) {
+        writer && writer.writeLn("Sending TextContent: " + textContent._id);
         var textRuns = textContent.textRuns;
         var numTextRuns = textRuns.length;
         this.output.writeInt(MessageTag.UpdateTextContent);
         this.output.writeInt(textContent._id);
+        this.output.writeInt(-1);
         this.writeRectangle(bounds);
+        this.writeMatrix(textContent.matrix || flash.geom.Matrix.FROZEN_IDENTITY_MATRIX);
+        this.output.writeInt(textContent.backgroundColor);
+        this.output.writeInt(textContent.borderColor);
+        this.output.writeBoolean(textContent.autoSize);
+        this.output.writeBoolean(textContent.wordWrap);
         this.output.writeInt(this.outputAssets.length);
         this.outputAssets.push(textContent.plainText);
         this.output.writeInt(numTextRuns);
@@ -110,6 +122,16 @@ module Shumway.Remoting.Player {
           this.output.writeInt(textRun.endIndex);
           this.writeTextFormat(textRun.textFormat);
         }
+        var coords = textContent.coords;
+        if (coords) {
+          var numCoords = coords.length;
+          this.output.writeInt(numCoords);
+          for (var i = 0; i < numCoords; i++) {
+            this.output.writeInt(coords[i] / 20);
+          }
+        } else {
+          this.output.writeInt(0);
+        }
         textContent._isDirty = false;
       }
     }
@@ -117,8 +139,9 @@ module Shumway.Remoting.Player {
     writeFont(font: flash.text.Font) {
       // Device fonts can be skipped, they obviously should exist on the device.
       if (font.fontType === 'embedded') {
+        writer && writer.writeLn("Sending Font: " + font._id);
         var symbol = font._symbol;
-        assert(symbol);
+        release || assert(symbol);
         this.output.writeInt(MessageTag.RegisterFont);
         this.output.writeInt(font._id);
         this.output.writeBoolean(symbol.bold);
@@ -198,6 +221,7 @@ module Shumway.Remoting.Player {
       var graphics = displayObject._getGraphics();
       var textContent = displayObject._getTextContent();
       if (hasRemotableChildren) {
+        writer && writer.enter("Children: {");
         if (bitmap) {
           if (bitmap.bitmapData) {
             this.output.writeInt(1);
@@ -205,24 +229,28 @@ module Shumway.Remoting.Player {
           }
         } else {
           // Check if we have a graphics object and write that as a child first.
-          var count = graphics || textContent ? 1 : 0;
+          var count = (graphics || textContent) ? 1 : 0;
           var children = displayObject._children;
           if (children) {
             count += children.length;
           }
           this.output.writeInt(count);
           if (graphics) {
+            writer && writer.writeLn("Reference Graphics: " + graphics._id);
             this.output.writeInt(IDMask.Asset | graphics._id);
           } else if (textContent) {
+            writer && writer.writeLn("Reference TextContent: " + textContent._id);
             this.output.writeInt(IDMask.Asset | textContent._id);
           }
           // Write all the display object children.
           if (children) {
             for (var i = 0; i < children.length; i++) {
+              writer && writer.writeLn("Reference DisplayObject: " + children[i].debugName());
               this.output.writeInt(children[i]._id);
             }
           }
         }
+        writer && writer.leave("}");
       }
       if (this.phase === RemotingPhase.References) {
         displayObject._removeFlags(DisplayObjectFlags.Dirty);
@@ -327,27 +355,50 @@ module Shumway.Remoting.Player {
 
     writeTextFormat(textFormat: flash.text.TextFormat) {
       var output = this.output;
-      output.writeInt(flash.text.TextFormatAlign.toNumber(textFormat.align));
-      //output.writeInt(textFormat.blockIndent);
-      output.writeBoolean(!!textFormat.bold);
-      output.writeBoolean(!!textFormat.bullet);
-      output.writeInt(+textFormat.color);
-      //output.writeInt(textFormat.display);
+
+      var size = +textFormat.size;
+      output.writeInt(size);
+
       var font = flash.text.Font.getByName(textFormat.font);
-      if (font) {
+      if (font && font.fontType === flash.text.FontType.EMBEDDED) {
         output.writeInt(font._id);
+        output.writeInt(font.ascent * size);
+        output.writeInt(font.descent * size);
+        output.writeInt(textFormat.leading === null ? font.leading * size : +textFormat.leading);
+        var bold: boolean;
+        var italic: boolean;
+        if (textFormat.bold === null) {
+          bold = font.fontStyle === flash.text.FontStyle.BOLD || font.fontType === flash.text.FontStyle.BOLD_ITALIC;
+        } else {
+          bold = !!textFormat.bold;
+        }
+        if (textFormat.italic === null) {
+          italic = font.fontStyle === flash.text.FontStyle.ITALIC || font.fontType === flash.text.FontStyle.BOLD_ITALIC;
+        } else {
+          italic = !!textFormat.italic;
+        }
+        output.writeBoolean(bold);
+        output.writeBoolean(italic);
       } else {
         // TODO: handle device fonts;
         output.writeInt(0);
+        output.writeInt(0);
+        output.writeInt(0);
+        output.writeInt(+textFormat.leading);
+        output.writeBoolean(!!textFormat.bold);
+        output.writeBoolean(!!textFormat.italic);
       }
+
+      output.writeInt(+textFormat.color);
+      output.writeInt(flash.text.TextFormatAlign.toNumber(textFormat.align));
+      output.writeBoolean(!!textFormat.bullet);
+      //output.writeInt(textFormat.display);
       output.writeInt(+textFormat.indent);
-      output.writeBoolean(!!textFormat.italic);
+      //output.writeInt(textFormat.blockIndent);
       output.writeInt(+textFormat.kerning);
-      output.writeInt(+textFormat.leading);
       output.writeInt(+textFormat.leftMargin);
       output.writeInt(+textFormat.letterSpacing);
       output.writeInt(+textFormat.rightMargin);
-      output.writeInt(+textFormat.size);
       //output.writeInt(textFormat.tabStops);
       output.writeBoolean(!!textFormat.underline);
     }
@@ -377,7 +428,7 @@ module Shumway.Remoting.Player {
         case MessageTag.FocusEvent:
           return this._readFocusEvent();
       }
-      assert(false, 'Unknown MessageReader tag: ' + tag);
+      release || assert(false, 'Unknown MessageReader tag: ' + tag);
     }
 
     private _readFocusEvent(): FocusEventData {

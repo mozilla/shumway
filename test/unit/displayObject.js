@@ -1,13 +1,4 @@
-(function displayTests() {
-
-  function timeAllocation(C) {
-    var s = Date.now();
-    for (var i = 0; i < 10000; i++) {
-      var o = new C();
-    }
-    console.info("Took: " + (Date.now() - s) + " " + C);
-  }
-
+function displayTests() {
   function log(message) {
     console.info(message);
   }
@@ -16,30 +7,39 @@
   var Matrix = flash.geom.Matrix;
   var Bounds = Shumway.Bounds;
   var Point = flash.geom.Point;
-  var DisplayObject = flash.display.DisplayObject;
-  var VisitorFlags = flash.display.VisitorFlags;
 
+  var VisitorFlags = flash.display.VisitorFlags;
   var DisplayObjectFlags = flash.display.DisplayObjectFlags;
-  var InteractiveObject = flash.display.InteractiveObject;
+
+  var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  var InteractiveObject = flash.display.InteractiveObject;
   var Shape = flash.display.Shape;
+  var MorphShape = flash.display.MorphShape;
   var Sprite = flash.display.Sprite;
+  var MovieClip = flash.display.MovieClip;
+  var SimpleButton = flash.display.SimpleButton;
+  var TextField = flash.text.TextField;
+  var Video = flash.media.Video;
+  var Bitmap = flash.display.Bitmap;
+  var Stage = flash.display.Stage;
 
   var identity = new Matrix();
-  var scaleBy5 = new Matrix(); scaleBy5.scale(5, 5);
+  var scaleBy5 = new Matrix();
+  scaleBy5.scale(5, 5);
 
 
-  unitTests.push(function runInspectorSanityTests() {
+  unitTests.push(function transform() {
     var o = new DisplayObject();
     check(o.transform.matrix.equals(identity), "Should be the identity.");
     check(o.transform.concatenatedMatrix.equals(scaleBy5), "Should be the scaleBy5.");
     o.x = 10;
-    check(o.x === 10);
-    check(o.transform.matrix.tx === 10);
+    eq(o.x, 10, "`x` is applied");
+    eq(o.transform.matrix.tx, 10);
 
     o.y = 10.002;
-    check(o.y === 10);
-    check(o.transform.matrix.ty === 10);
+    eq(o.y, 10, "Coordinates are rounded to twips");
+    eq(o.transform.matrix.ty, 10, "Translation parameters are rounded to twips");
   });
 
   function createDisplayObjectTree(depth, branch, width, height) {
@@ -70,8 +70,7 @@
     return container;
   }
 
-  unitTests.push(function runInspectorSanityTests() {
-    var VisitorFlags = Shumway.AVM2.AS.flash.display.VisitorFlags;
+  unitTests.push(function transformPropagation() {
     var r = createDisplayObjectTree(10, 2, 64, 64);
     var containers = [];
     var leafs = [];
@@ -85,8 +84,8 @@
     });
 
     r.x = 10;
-    check(leafs[0].x === 0);
-    check(r.transform.concatenatedMatrix.tx === 50);
+    eq(leafs[0].x, 0);
+    eq(r.transform.concatenatedMatrix.tx, 50);
 
     var p = ["x", "y", "scaleX", "scaleY"];
 
@@ -98,41 +97,38 @@
       leafs[0]._getConcatenatedMatrix();
       check(!leafs[0]._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix),
         "Should have cached concatenatedMatrix when setting: " + p[i]);
+      eq(leafs[0]._getConcatenatedMatrix(), leafs[0]._getConcatenatedMatrix(),
+         "Repeatedly getting internal matrix gives same object.")
+      neq(leafs[0].transform.concatenatedMatrix, leafs[0].transform.concatenatedMatrix,
+         "Repeatedly getting external matrix gives different objects.")
     }
 
     log("Made: " + containers.length);
   });
 
-  unitTests.push(function runInspectorSanityTests() {
+  unitTests.push(function twipsRounding() {
     Random.seed(0x12343);
     var o = new DisplayObject();
-    var p = ["x", "y"];
-    for (var i = 0; i < p.length; i++) {
+
+    for (var i = 0; i < 10; i++) {
       var v = Random.next() * 100;
-      o[p[i]] = v;
-      eqFloat(o[p[i]], ((v * 20) | 0) / 20,
-        "Should have converted to twips and back to pixels: " + p[i]);
+      var vTwipsRounded = (v * 20 | 0) / 20;
+      o.x = v;
+      eq(o.x, vTwipsRounded, "x is rounded to twips");
+      o.y = v;
+      eq(o.y, vTwipsRounded, "y is rounded to twips");
     }
 
-    var p = ["scaleX", "scaleY"];
-    for (var i = 0; i < p.length; i++) {
+    for (var i = 0; i < 10; i++) {
       var v = Random.next() * 100;
-      o[p[i]] = v;
-      eqFloat(o[p[i]], v,
-        "No loss of precision when writing / reading: " + p[i]);
-    }
-
-    var v = [0.0001, 10, -10, 1000, -193, -193 - 360, 1256.5, -180, -181];
-    var x = [0.0001, 10, -10, -80,   167, 167, 176.5, -180, 179];
-    for (var i = 0; i < v.length; i++) {
-      o.rotation = v[i];
-      if (o.rotation !== x[i]) {
-        check(false, "Should read back rotation: " + x[i] + " got " + o.rotation);
-      }
+      o.scaleX = v;
+      eqFloat(o.scaleX, v, "scaleX is stored without precision loss");
+      o.scaleY = v;
+      eqFloat(o.scaleY, v, "scaleY is stored without precision loss");
     }
   });
 
-  unitTests.push(function runInspectorSanityTests() {
+  unitTests.push(function rotation() {
     var s = new Shape();
     var c = new DisplayObjectContainer();
     c.addChild(s);
@@ -142,37 +138,37 @@
       return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
-    var options = ["x", "y", "rotation", "scaleX", "scaleY", "width"];
-  });
-
-
-  unitTests.push(function runInspectorSanityTests() {
-    Random.seed(0x12343);
-    var s = new Shape();
-    var c = new DisplayObjectContainer();
-    c.addChild(s);
-    s.x = 200;
-    s.y = 200;
-    s._getContentBounds = function () {
-      return new Bounds(0, 0, 100 * 20, 100 * 20);
+    var rotationIn = [0.0001, 10, -10, 1000, -193, -553, 1256.5, -180, -181];
+    var rotationOut = [0.0001, 10, -10, -80,  167,  167, 176.5, -180, 179];
+    for (var i = 0; i < rotationIn.length; i++) {
+      s.rotation = rotationIn[i];
+      eq(s.rotation, rotationOut[i], "Rotation is mapped to [-180,180]");
     }
-
-    check(s.getBounds().width === 100 && s.getBounds().height === 100);
 
     s.rotation = 45;
-    check(s.x === 200, "Position should not change.");
+    eq(s.x, 200, "Position should not change.");
     eqFloat(s.width, 141.4, "Should also affect the width: " + s.width);
     eqFloat(s.height, 141.4, "Should also affect the height: " + s.height);
+  });
+
+  unitTests.push(function widthAppliedToRotatedObject() {
+    var s = new Shape();
+    s.x = 200;
+    s.y = 200;
+    s.rotation = 45;
+    s._getContentBounds = function () {
+      return new Bounds(0, 0, 100 * 20, 100 * 20);
+    }
 
     s.width = 50;
-    eqFloat(s.width, 95.7, "Width: " + s.width);
-    eqFloat(s.height, 95.7, "Height: " + s.height);
+    eq(s.width, 95.7, "Width: " + s.width);
+    eq(s.height, 95.7, "Height: " + s.height);
     eqFloat(s.scaleX, 0.353, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 1, "ScaleY: " + s.scaleY);
 
     s.width = 10;
-    eqFloat(s.width, 52.85, "Width: " + s.width);
-    eqFloat(s.height, 52.85, "Height: " + s.height);
+    eq(s.width, 52.85, "Width: " + s.width);
+    eq(s.height, 52.85, "Height: " + s.height);
     eqFloat(s.scaleX, 0.070, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 0.676, "ScaleY: " + s.scaleY);
 
@@ -183,39 +179,30 @@
     eqFloat(s.scaleY, 0.373, "ScaleY: " + s.scaleY);
 
     s.rotation = 0;
-    eqFloat(s.width, 7.05, "Width: " + s.width);
-    eqFloat(s.height, 37.35, "Height: " + s.height);
+    eq(s.width, 7.05, "Width: " + s.width);
+    eq(s.height, 37.35, "Height: " + s.height);
     eqFloat(s.scaleX, 0.070, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 0.373, "ScaleY: " + s.scaleY);
   });
 
-  unitTests.push(function runInspectorSanityTests() {
-    Random.seed(0x12343);
+  unitTests.push(function heightAppliedToRotatedObject() {
     var s = new Shape();
-    var c = new DisplayObjectContainer();
-    c.addChild(s);
     s.x = 200;
     s.y = 200;
+    s.rotation = 45;
     s._getContentBounds = function () {
       return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
-    check(s.getBounds().width === 100 && s.getBounds().height === 100);
-
-    s.rotation = 45;
-    check(s.x === 200, "Position should not change.");
-    eqFloat(s.width, 141.4, "Should also affect the width: " + s.width);
-    eqFloat(s.height, 141.4, "Should also affect the height: " + s.height);
-
     s.height = 50;
-    eqFloat(s.width, 95.7, "Width: " + s.width);
-    eqFloat(s.height, 95.7, "Height: " + s.height);
+    eq(s.width, 95.7, "Width: " + s.width);
+    eq(s.height, 95.7, "Height: " + s.height);
     eqFloat(s.scaleX, 1, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 0.353, "ScaleY: " + s.scaleY);
 
     s.height = 10;
-    eqFloat(s.width, 52.85, "Width: " + s.width);
-    eqFloat(s.height, 52.85, "Height: " + s.height);
+    eq(s.width, 52.85, "Width: " + s.width);
+    eq(s.height, 52.85, "Height: " + s.height);
     eqFloat(s.scaleX, 0.676, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 0.070, "ScaleY: " + s.scaleY);
 
@@ -226,56 +213,51 @@
     eqFloat(s.scaleY, 0.070, "ScaleY: " + s.scaleY);
 
     s.rotation = 0;
-    eqFloat(s.width, 37.35, "Width: " + s.width);
-    eqFloat(s.height, 7.05, "Height: " + s.height);
+    eq(s.width, 37.35, "Width: " + s.width);
+    eq(s.height, 7.05, "Height: " + s.height);
     eqFloat(s.scaleX, 0.373, "ScaleX: " + s.scaleX);
     eqFloat(s.scaleY, 0.070, "ScaleY: " + s.scaleY);
   });
 
 
-  unitTests.push(function runInspectorSanityTests() {
-    Random.seed(0x12343);
+  unitTests.push(function transformMatrixAssignment() {
     var s = new Shape();
-    var c = new DisplayObjectContainer();
-    c.addChild(s);
     s.x = 200;
     s.y = 200;
+    s.rotation = 45;
     s._getContentBounds = function () {
       return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
-    check(s.getBounds().width === 100 && s.getBounds().height === 100);
-
-    s.rotation = 45;
     var m = s.transform.matrix;
     m.b = 2;
     s.transform.matrix = m;
     eqFloat(s.transform.matrix.b, 2, "matrix.b: " + s.transform.matrix.b);
     eqFloat(s.rotation, 70.52, "rotation: " + s.rotation);
     eqFloat(s.width, 141.4, "Width: " + s.width);
+
+    s.transform.matrix = new Matrix(-1, 0, 0, -1, 0, 0);
+    eq(s.rotation, 180);
   });
 
-  unitTests.push(function runInspectorSanityTests() {
-    Random.seed(0x12343);
+  unitTests.push(function dimensionsConvergence() {
     var s = new Shape();
-    var c = new DisplayObjectContainer();
-    c.addChild(s);
     s.x = 200;
     s.y = 200;
+    s.rotation = 45;
     s._getContentBounds = function () {
       return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
-    check(s.getBounds().width === 100 && s.getBounds().height === 100);
-    s.rotation = 45;
     for (var i = 0; i < 100; i ++) {
       s.width = 10;
     }
-    eqFloat(s.width, 10, "Width should eventually become 10: " + s.width);
-    eqFloat(s.height, 10, "Height should eventually become 10: " + s.height);
+    eq(s.width, 10, "Width should converge on 10");
+    // TODO: height mustn't really converge on 10: it stabilizes at 10.5 in Flash.
+    eq(s.height, 10, "Height should converge on 10");
   });
 
-  unitTests.push(function runInspectorSanityTests() {
+  unitTests.push(function globalToLocalAndBack() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -286,12 +268,12 @@
       return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
-    eqFloat(s.globalToLocal(new Point(300, 0)).x, 100);
-    eqFloat(s.localToGlobal(new Point(100, 0)).x, 300);
+    eq(s.globalToLocal(new Point(300, 0)).x, 100);
+    eq(s.localToGlobal(new Point(100, 0)).x, 300);
 
     // Some random points.
     for (var i = 0; i < 10; i++) {
-      var p = new Point(Math.random() * 10, Math.random() * 10);
+      var p = new Point(Random.next() * 10, Random.next() * 10);
       s.rotation = i;
       var q = s.globalToLocal(p);
       var r = s.localToGlobal(q);
@@ -300,8 +282,7 @@
     }
   });
 
-  unitTests.push(function runInspectorSanityTests() {
-    Random.seed(0x12343);
+  unitTests.push(function hitTestObject() {
     var c = new DisplayObjectContainer();
 
     var a = new Shape();
@@ -335,8 +316,9 @@
     var a = [];
     o.filters = a;
     neq(o.filters, a);
+    neq(o.filters, o.filters);
     var D = new flash.filters.DropShadowFilter ();
-    o.filters = [D]
+    o.filters = [D];
     D.distance = 10;
     eq(o.filters[0].distance, 4);
     o.filters[0].distance = 19;
@@ -346,15 +328,7 @@
     eq(o.filters.length, 0);
   });
 
-  unitTests.push(function runInspectorSanityTests() {
-    Random.seed(0x12343);
-    var s = new Shape();
-    s.transform.matrix = new Matrix(-1, 0, 0, -1, 0, 0);
-    eq(s.rotation, 180);
-  });
-
-  unitTests.push(function runInspectorSanityTests() {
-    Random.seed(0x12343);
+  unitTests.push(function matrix3DStuff() {
     var s = new Shape();
     neq(s.transform.matrix, null, "Make sure matrix is not null when no Z value is set.");
     eq(s.transform.matrix3D, null, "Matrix 3D should be null by default.");
@@ -371,4 +345,24 @@
     eq(s.width, 50, "Setting the width when the object is not added to a parent.");
   });
 
-})();
+  function canHaveGraphics() {
+    check(!new DisplayObject()._canHaveGraphics(), "DisplayObject can't have graphics");
+    check(!new DisplayObjectContainer()._canHaveGraphics(),
+          "DisplayObjectContainer can't have graphics");
+    check(!new InteractiveObject()._canHaveGraphics(), "InteractiveObject can't have graphics");
+    check(!new SimpleButton()._canHaveGraphics(), "SimpleButton can't have graphics");
+    check(!new TextField()._canHaveGraphics(), "TextField can't have graphics");
+    check(!new Bitmap()._canHaveGraphics(), "Bitmap can't have graphics");
+    check(!new Stage()._canHaveGraphics(), "Stage can't have graphics");
+    // TODO: enable once enough of Video is implemented.
+//    check(!new Video()._canHaveGraphics(), "Video can't have graphics");
+
+    check(new Shape()._canHaveGraphics(), "Shape can have graphics");
+    check(new MorphShape()._canHaveGraphics(), "MorphShape can have graphics");
+    check(new Sprite()._canHaveGraphics(), "Sprite can have graphics");
+    check(new MovieClip()._canHaveGraphics(), "MovieClip can have graphics");
+  }
+  unitTests.push(canHaveGraphics);
+
+}
+displayTests();

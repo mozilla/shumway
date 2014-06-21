@@ -84,8 +84,7 @@ var compileBuiltins = shellOptions.register(new Option("cb", "compileBuiltins", 
 var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "boolean", false, "always interpret"));
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
-var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
-
+var releaseMode = shellOptions.register(new Option("r", "release", "boolean", false, "run in release mode (!release is the default)"));
 
 load(tsBuildPath + "metrics.js");
 load(tsBuildPath + "avm2/parser.js");
@@ -199,7 +198,7 @@ for (var f = 0; f < files.length; f++) {
       load(tsBuildPath + "swf/parser/sound.js");
       load(tsBuildPath + "swf/parser/text.js");
 
-      load(tsBuildPath + "swf/parser/swfTag.js");
+      load(tsBuildPath + "SWFTags.js");
       load(tsBuildPath + "swf/parser/templates.js");
       load(tsBuildPath + "swf/parser/handlers.js");
       load(tsBuildPath + "swf/parser/parser.js");
@@ -275,6 +274,7 @@ function runVM() {
   var argumentParser = new compartment.ArgumentParser();
   argumentParser.addBoundOptionSet(compartment.systemOptions);
   argumentParser.parse(originalArgs.slice(0));
+  compartment.release = releaseMode.value;
   var sysMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
   var appMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
   try {

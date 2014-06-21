@@ -70,7 +70,7 @@ module Shumway.AVM2.Verifier {
     };
 
     static from(info: Info, domain: ApplicationDomain): Type {
-      assert (info.hash);
+      release || assert (info.hash);
       var type = Type._cache[info.hash];
       if (!type) {
         type = Type._cache[info.hash] = new TraitsType(info, domain);
@@ -181,6 +181,10 @@ module Shumway.AVM2.Verifier {
       return false;
     }
 
+    isMethodInfo(): boolean {
+      return false;
+    }
+
     isTraitsType(): boolean {
       return this instanceof TraitsType;
     }
@@ -209,32 +213,32 @@ module Shumway.AVM2.Verifier {
     }
 
     asTraitsType(): TraitsType {
-      assert (this.isTraitsType());
+      release || assert (this.isTraitsType());
       return <TraitsType>this;
     }
 
     asMethodType(): MethodType {
-      assert (this.isMethodType());
+      release || assert (this.isMethodType());
       return <MethodType>this;
     }
 
     asMultinameType(): MultinameType {
-      assert (this.isMultinameType());
+      release || assert (this.isMultinameType());
       return <MultinameType>this;
     }
 
     asConstantType(): ConstantType {
-      assert (this.isConstantType());
+      release || assert (this.isConstantType());
       return <ConstantType>this;
     }
 
     getConstantValue(): any {
-      assert (this.isConstantType());
+      release || assert (this.isConstantType());
       return (<ConstantType>this).value;
     }
 
     asParameterizedType(): ParameterizedType {
-      assert (this.isParameterizedType());
+      release || assert (this.isParameterizedType());
       return <ParameterizedType>this;
     }
   }
@@ -251,17 +255,8 @@ module Shumway.AVM2.Verifier {
     }
   }
 
-  export class MethodType extends Type {
-    constructor(public methodInfo: MethodInfo) {
-      super();
-    }
-    toString(): string {
-      return "MT " + this.methodInfo;
-    }
-  }
-
   export class TraitsType extends Type {
-    _cachedType: TraitsType;
+    _cachedType: Type;
     constructor(public info: Info, public domain: ApplicationDomain) {
       super();
     }
@@ -269,13 +264,13 @@ module Shumway.AVM2.Verifier {
     instanceType(): TraitsType {
       release || assert(this.info instanceof ClassInfo);
       var classInfo = <ClassInfo>this.info;
-      return this._cachedType || (this._cachedType = <TraitsType>Type.from(classInfo.instanceInfo, this.domain));
+      return <TraitsType>(this._cachedType || (this._cachedType = <TraitsType>Type.from(classInfo.instanceInfo, this.domain)));
     }
 
     classType(): TraitsType {
       release || assert(this.info instanceof InstanceInfo);
       var instanceInfo = <InstanceInfo>this.info;
-      return this._cachedType || (this._cachedType = <TraitsType>Type.from(instanceInfo.classInfo, this.domain));
+      return <TraitsType>(this._cachedType || (this._cachedType = <TraitsType>Type.from(instanceInfo.classInfo, this.domain)));
     }
 
     super(): TraitsType {
@@ -399,6 +394,10 @@ module Shumway.AVM2.Verifier {
       return this.info instanceof ClassInfo;
     }
 
+    isMethodInfo(): boolean {
+      return this.info instanceof MethodInfo;
+    }
+
     isInstanceInfo(): boolean {
       return this.info instanceof InstanceInfo;
     }
@@ -441,6 +440,18 @@ module Shumway.AVM2.Verifier {
         case Type.Function: return "F";
       }
       return this._getInfoName();
+    }
+  }
+
+  export class MethodType extends TraitsType {
+    constructor(public methodInfo: MethodInfo, domain: ApplicationDomain) {
+      super(Type.Function.info, domain);
+    }
+    toString(): string {
+      return "MT " + this.methodInfo;
+    }
+    returnType(): Type {
+      return this._cachedType || (this._cachedType = Type.fromName(this.methodInfo.returnType, this.domain));
     }
   }
 
@@ -583,7 +594,7 @@ module Shumway.AVM2.Verifier {
       if (this.writer) {
         this.methodInfo.trace(this.writer);
       }
-      assert(methodInfo.localCount >= methodInfo.parameters.length + 1);
+      release || assert(methodInfo.localCount >= methodInfo.parameters.length + 1);
       this._verifyBlocks(this._prepareEntryState());
     }
 
@@ -613,7 +624,7 @@ module Shumway.AVM2.Verifier {
         entryState.local.push(Type.Undefined);
       }
 
-      assert(entryState.local.length === methodInfo.localCount);
+      release || assert(entryState.local.length === methodInfo.localCount);
 
       return entryState;
     }
@@ -781,7 +792,7 @@ module Shumway.AVM2.Verifier {
             } else if (trait.isClass()) {
               return Type.from(trait.classInfo, self.domain);
             } else if (trait.isMethod()) {
-              return Type.from(trait.methodInfo, self.domain);
+              return new MethodType(trait.methodInfo, self.domain)
             }
           } else if (isNumericMultiname(mn) && traitsType.isParameterizedType()) {
             var parameter = traitsType.asParameterizedType().parameter;
@@ -1098,8 +1109,8 @@ module Shumway.AVM2.Verifier {
             if (op === OP.callpropvoid || op === OP.callsupervoid) {
               break;
             }
-            if (type instanceof MethodType) {
-              returnType = Type.fromName(type.asMethodType().methodInfo.returnType, this.domain).instanceType();
+            if (type.isMethodType()) {
+              returnType = type.asMethodType().returnType().instanceType();
             } else if (type.isTraitsType() && type.isClassInfo()) {
               returnType = type.instanceType();
             } else {
@@ -1470,7 +1481,7 @@ module Shumway.AVM2.Verifier {
         if (object.class) {
           return Type.from(object.class.classInfo.instanceInfo, domain);
         }
-        assert (false, object.toString());
+        release || assert (false, object.toString());
         return Type.Any;
       });
     }

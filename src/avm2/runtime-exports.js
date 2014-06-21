@@ -63,7 +63,7 @@ function objectConstantName(object) {
     name = "$G" + id;
   } else if (object instanceof Multiname) {
     name = "$M" + id;
-  } else if (isClass(object)) {
+  } else if (object instanceof Shumway.AVM2.AS.ASClass) {
     name = "$C" + id;
   } else {
     name = "$O" + id;
@@ -145,6 +145,7 @@ var forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
 var wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
 
 var asCreateActivation = Shumway.AVM2.Runtime.asCreateActivation;
+var HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
 
 var CatchScopeObject = Shumway.AVM2.Runtime.CatchScopeObject;
 

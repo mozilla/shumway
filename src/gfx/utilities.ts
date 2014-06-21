@@ -48,7 +48,7 @@ module Shumway {
     }
 
     private _unshift(node: T) {
-      assert (!node.next && !node.previous);
+      release || assert (!node.next && !node.previous);
       if (this._count === 0) {
         this._head = this._tail = node;
       } else {
@@ -60,7 +60,7 @@ module Shumway {
     }
 
     private _remove(node: T) {
-      assert (this._count > 0);
+      release || assert (this._count > 0);
       if (node === this._head && node === this._tail) {
         this._head = this._tail = null;
       } else if (node === this._head) {

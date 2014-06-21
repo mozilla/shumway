@@ -1448,7 +1448,7 @@ module Shumway.GFX.Geometry {
       this.h = h;
       this.rows = Math.ceil(h / tileH);
       this.columns = Math.ceil(w / tileW);
-      assert (this.rows < 2048 && this.columns < 2048);
+      release || assert (this.rows < 2048 && this.columns < 2048);
       this.tiles = [];
       var index = 0;
       for (var y = 0; y < this.rows; y++) {
@@ -1677,7 +1677,7 @@ module Shumway.GFX.Geometry {
             break;
           }
           level --;
-          assert (level >= -MIN_CACHE_LEVELS);
+          release || assert (level >= -MIN_CACHE_LEVELS);
         }
       }
       // If the source is not scalable don't cache any tiles at a higher scale factor. However, it may still make
@@ -1753,7 +1753,7 @@ module Shumway.GFX.Geometry {
       cacheImageCallback: (old: ITextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ITextureRegion,
       scratchBounds: Rectangle,
       maxRecursionDepth: number = 4) {
-      assert (maxRecursionDepth > 0, "Infinite recursion is likely.");
+      release || assert (maxRecursionDepth > 0, "Infinite recursion is likely.");
       var uncachedTileBounds = this._getTileBounds(uncachedTiles);
       scratchContext.save();
       scratchContext.setTransform(1, 0, 0, 1, 0, 0);

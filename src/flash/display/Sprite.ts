@@ -44,7 +44,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         if (symbol.numFrames) {
           var frame = symbol.frames[0];
-          assert (frame, "Initial frame is not defined.");
+          release || assert (frame, "Initial frame is not defined.");
           self._initializeChildren(frame);
         }
       }
@@ -74,13 +74,15 @@ module Shumway.AVM2.AS.flash.display {
 
     _hitTarget: flash.display.Sprite;
 
-    private _initializeChildren(frame: Timeline.Frame): void {
+    private _initializeChildren(frame: Timeline.FrameDelta): void {
       for (var depth in frame.stateAtDepth) {
         var state = frame.stateAtDepth[depth];
-        var character = DisplayObject.createAnimatedDisplayObject(state, false);
-        this.addChildAtDepth(character, state.depth);
-        if (state.symbol.isAS2Object) {
-          this._initAvm1Bindings(character, state);
+        if (state) {
+          var character = DisplayObject.createAnimatedDisplayObject(state, false);
+          this.addChildAtDepth(character, state.depth);
+          if (state.symbol.isAS2Object) {
+            this._initAvm1Bindings(character, state);
+          }
         }
       }
     }

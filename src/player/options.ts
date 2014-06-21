@@ -53,10 +53,18 @@ module Shumway {
   );
 
   export var playSymbolOption = playerOptions.register (
-    new Shumway.Options.Option("", "Play Symbol Number", "number", 0, "Select symbol by Id.", {range: { min: 0, max: 2000, step: 1 }})
+    new Shumway.Options.Option("", "Play Symbol Number", "number", 0, "Select symbol by Id.", {range: { min: 0, max: 20000, step: 1 }})
+  );
+
+  export var playSymbolFrameDurationOption = playerOptions.register (
+    new Shumway.Options.Option("", "Play Symbol Duration", "number", 0, "How many frames to play, 0 for all frames of the movie clip.", {range: { min: 0, max: 128, step: 1 }})
+  );
+
+  export var playSymbolCountOption = playerOptions.register (
+    new Shumway.Options.Option("", "Play Symbol Count", "number", -1, "Select symbol count.", {range: { min: 0, max: 2000, step: 1 }})
   );
 
   export var stageScaleOption = playerOptions.register (
-    new Shumway.Options.Option("", "Stage Scale", "number", 1, "Scales the symbols.", {range: { min: 0.1, max: 3, step: 0.01 }})
+    new Shumway.Options.Option("", "Stage Scale", "number", 1, "Scales the symbols.", {range: { min: 0.1, max: 16, step: 0.01 }})
   );
 }

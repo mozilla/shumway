@@ -58,6 +58,5 @@ public class Matrix3D {
   public native function copyColumnTo(column: uint, vector3D: Vector3D): void;
   public native function copyRowFrom(row: uint, vector3D: Vector3D): void;
   public native function copyColumnFrom(column: uint, vector3D: Vector3D): void;
-  private native function ctor(v: Vector = null): void;
 }
 }

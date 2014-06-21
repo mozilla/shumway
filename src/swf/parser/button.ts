@@ -31,11 +31,11 @@ module Shumway.SWF.Parser {
       if (character.eob)
         break;
       var characterItem = dictionary[character.symbolId];
-      assert(characterItem, 'undefined character', 'button');
+      release || assert(characterItem, 'undefined character', 'button');
       var cmd = {
         symbolId: characterItem.id,
         depth: character.depth,
-        hasMatrix: !!character.matrix,
+        flags: character.matrix ? PlaceObjectFlags.HasMatrix : 0,
         matrix: character.matrix
       };
       if (character.stateUp)

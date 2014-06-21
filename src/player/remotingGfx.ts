@@ -94,9 +94,9 @@ module Shumway.Remoting.GFX {
       this._assets = [];
     }
 
-    _registerAsset(id: number, asset: Renderable) {
+    _registerAsset(id: number, symbolId: number, asset: Renderable) {
       if (typeof registerInspectorAsset !== "undefined") {
-        registerInspectorAsset(id, asset);
+        registerInspectorAsset(id, symbolId, asset);
       }
       this._assets[id] = asset;
     }
@@ -152,7 +152,7 @@ module Shumway.Remoting.GFX {
             this._readCacheAsBitmap();
             break;
           default:
-            assert(false, 'Unknown MessageReader tag: ' + tag);
+            release || assert(false, 'Unknown MessageReader tag: ' + tag);
             break;
         }
       }
@@ -212,6 +212,7 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
+      var symbolId = input.readInt();
       var asset = context._assets[id];
       var bounds = this._readRectangle();
       var assetId = input.readInt();
@@ -224,7 +225,7 @@ module Shumway.Remoting.GFX {
         textures.push(context._assets[bitmapId]);
       }
       if (!asset) {
-        context._registerAsset(id, new RenderableShape(id, pathData, textures, bounds));
+        context._registerAsset(id, symbolId, new RenderableShape(id, pathData, textures, bounds));
       }
     }
 
@@ -232,6 +233,7 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
+      var symbolId = input.readInt();
       var asset = context._assets[id];
       var bounds = this._readRectangle();
       var type: ImageType = input.readInt();
@@ -239,7 +241,7 @@ module Shumway.Remoting.GFX {
       var dataBuffer = DataBuffer.FromPlainObject(this.inputAssets[assetId]);
       this.inputAssets[assetId] = null;
       if (!asset) {
-        context._registerAsset(id, RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds));
+        context._registerAsset(id, symbolId, RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds));
       } else {
         var renderableBitmap = <RenderableBitmap>context._assets[id];
         renderableBitmap.updateFromDataBuffer(type, dataBuffer);
@@ -250,20 +252,39 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
-      var asset = context._assets[id];
+      var symbolId = input.readInt();
+      var asset = <RenderableText>context._assets[id];
       var bounds = this._readRectangle();
+      var matrix = this._readMatrix();
+      var backgroundColor = input.readInt();
+      var borderColor = input.readInt();
+      var autoSize = input.readBoolean();
+      var wordWrap = input.readBoolean();
       var assetId = input.readInt();
       var numTextRuns = input.readInt();
-      var textRunData = new DataBuffer(numTextRuns * 52);
-      input.readBytes(textRunData, 0, numTextRuns * 52);
+      var textRunData = new DataBuffer(numTextRuns * 60);
+      input.readBytes(textRunData, 0, numTextRuns * 60);
+      var coords = null;
+      var numCoords = input.readInt();
+      if (numCoords) {
+        coords = new DataBuffer(numCoords* 4);
+        input.readBytes(coords, 0, numCoords * 4);
+      }
       var plainText = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
       if (!asset) {
-        context._registerAsset(id, new RenderableText(plainText, textRunData, bounds));
+        asset = new RenderableText(bounds);
+        asset.setContent(plainText, textRunData, matrix, coords);
+        asset.setStyle(backgroundColor, borderColor);
+        asset.reflow(autoSize, wordWrap);
+        context._registerAsset(id, symbolId, asset);
       } else {
-        var renderableText = <RenderableText>context._assets[id];
-        renderableText.update(plainText, textRunData, bounds);
+        asset.setBounds(bounds);
+        asset.setContent(plainText, textRunData, matrix, coords);
+        asset.setStyle(backgroundColor, borderColor);
+        asset.reflow(autoSize, wordWrap);
       }
+
     }
 
     private _readUpdateStage() {
@@ -332,7 +353,7 @@ module Shumway.Remoting.GFX {
         for (var i = 0; i < count; i++) {
           var childId = input.readInt();
           var child = context._makeFrame(childId);
-          assert (child, "Child ", childId, " of ", id, " has not been sent yet.");
+          release || assert (child, "Child ", childId, " of ", id, " has not been sent yet.");
           container.addChild(child);
         }
       }
@@ -361,7 +382,7 @@ module Shumway.Remoting.GFX {
       var target = <RenderableBitmap>context._assets[targetId];
       var source: RenderableBitmap;
       if (sourceId & IDMask.Asset) {
-        source = <RenderableBitmap>context._assets[sourceId];
+        source = <RenderableBitmap>context._assets[sourceId & ~IDMask.Asset];
       } else {
         source = this._cacheAsBitmap(context._frames[sourceId]);
       }

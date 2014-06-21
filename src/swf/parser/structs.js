@@ -291,7 +291,7 @@ var FILL_STYLE_ARRAY = {
 var LINE_STYLE = {
   width: UI16,
   widthMorph: ['isMorph', [UI16]],
-  $0: ['hasStrokes', [
+  $0: ['canHaveStrokes', [
     {
       $$: ALIGN,
       startCapsStyle: UB(2),

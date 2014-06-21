@@ -196,7 +196,7 @@ module Shumway.SWF.Parser {
         type = ImageType.PremultipliedAlphaARGB;
         break;
       default:
-        assertUnreachable('invalid bitmap format');
+        release || assertUnreachable('invalid bitmap format');
     }
     leaveTimeline();
     return {

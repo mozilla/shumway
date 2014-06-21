@@ -70,7 +70,7 @@ module.exports = function(grunt) {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm1lib/references.ts'
       },
       shell_test: {
-        cmd: 'utils/jsshell/js test/harness/run-unit-test.js ' + (grunt.option('tests') || 'test/unit/shell-tests.js')
+        cmd: 'utils/jsshell/js test/harness/run-unit-test.js ' + (grunt.option('tests') || 'test/unit/shell-tests.js test/perf/shell-tests.js'),
       },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'

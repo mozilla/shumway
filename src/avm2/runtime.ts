@@ -43,9 +43,12 @@ interface IProtocol {
   asPropertyIsEnumerable: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asHasTraitProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asDeleteProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
+
+  asHasNext2: (hasNext2Info: Shumway.AVM2.Runtime.HasNext2Info) => void;
   asNextName: (index: number) => any;
   asNextValue: (index: number) => any;
   asNextNameIndex: (index: number) => number;
+
   asGetEnumerableKeys: () => any [];
   hasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean; // TODO: What's this?
 }
@@ -143,7 +146,6 @@ module Shumway.AVM2.Runtime {
   export var VM_BINDINGS = "asBindings";
   export var VM_NATIVE_PROTOTYPE_FLAG = "asIsNative";
   export var VM_OPEN_METHODS = "asOpenMethods";
-  export var VM_IS_CLASS = "asIsClass";
 
   export var VM_OPEN_METHOD_PREFIX = "m";
   export var VM_MEMOIZER_PREFIX = "z";
@@ -165,11 +167,6 @@ module Shumway.AVM2.Runtime {
   var totalFunctionCount = 0;
   var compiledFunctionCount = 0;
   var compilationCount = 0;
-
-  export function isClass(object) {
-    release || assert (object);
-    return Object.hasOwnProperty.call(object, VM_IS_CLASS);
-  }
 
   /**
    * Checks if the specified |object| is the prototype of a native JavaScript object.
@@ -444,9 +441,8 @@ module Shumway.AVM2.Runtime {
     return self.asSetProperty(undefined, name, 0, value);
   }
 
-  var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF + "()");
-  var forwardToString: () => string = <any>new Function("", 'return this.' + Multiname.TO_STRING + "()");
-
+  var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF + ".apply(this, arguments)");
+  var forwardToString: () => string = <any>new Function("", 'return this.' + Multiname.TO_STRING + ".apply(this, arguments)");
 
   function tryInjectToStringAndValueOfForwarder(self: Object, resolved: string) {
     if (resolved === Multiname.VALUE_OF) {
@@ -534,7 +530,7 @@ module Shumway.AVM2.Runtime {
     var baseClass = scope.object.baseClass;
     var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
     var openMethods = baseClass.traitsPrototype.asOpenMethods;
-    assert (openMethods && openMethods[resolved]);
+    release || assert (openMethods && openMethods[resolved]);
     var method = openMethods[resolved];
     var result = method.asApply(this, args);
     traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
@@ -699,6 +695,62 @@ module Shumway.AVM2.Runtime {
 
   export function asNextValue(index: number) {
     return this.asGetPublicProperty(this.asNextName(index));
+  }
+
+  /**
+   * Determine if the given object has any more properties after the specified |index| and if so, return
+   * the next index or |zero| otherwise. If the |obj| has no more properties then continue the search in
+   * |obj.__proto__|. This function returns an updated index and object to be used during iteration.
+   *
+   * the |for (x in obj) { ... }| statement is compiled into the following pseudo bytecode:
+   *
+   * index = 0;
+   * while (true) {
+   *   (obj, index) = hasNext2(obj, index);
+   *   if (index) { #1
+   *     x = nextName(obj, index); #2
+   *   } else {
+   *     break;
+   *   }
+   * }
+   *
+   * #1 If we return zero, the iteration stops.
+   * #2 The spec says we need to get the nextName at index + 1, but it's actually index - 1, this caused
+   * me two hours of my life that I will probably never get back.
+   *
+   * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
+   */
+  export function asHasNext2(hasNext2Info: HasNext2Info) {
+    if (isNullOrUndefined(hasNext2Info.object)) {
+      hasNext2Info.index = 0;
+      hasNext2Info.object = null;
+      return;
+    }
+    var object = boxValue(hasNext2Info.object);
+    var nextIndex = object.asNextNameIndex(hasNext2Info.index);
+    if (nextIndex > 0) {
+      hasNext2Info.index = nextIndex;
+      hasNext2Info.object = object;
+      return;
+    }
+    // If there are no more properties in the object then follow the prototype chain.
+    while (true) {
+      var object = Object.getPrototypeOf(object);
+      if (!object) {
+        hasNext2Info.index = 0;
+        hasNext2Info.object = null;
+        return;
+      }
+      nextIndex = object.asNextNameIndex(0);
+      if (nextIndex > 0) {
+        hasNext2Info.index = nextIndex;
+        hasNext2Info.object = object;
+        return;
+      }
+    }
+    hasNext2Info.index = 0;
+    hasNext2Info.object = null;
+    return;
   }
 
   export function asGetEnumerableKeys(): any [] {
@@ -937,53 +989,6 @@ module Shumway.AVM2.Runtime {
     return l + r;
   }
 
-
-  /**
-   * Determine if the given object has any more properties after the specified |index| and if so, return
-   * the next index or |zero| otherwise. If the |obj| has no more properties then continue the search in
-   * |obj.__proto__|. This function returns an updated index and object to be used during iteration.
-   *
-   * the |for (x in obj) { ... }| statement is compiled into the following pseudo bytecode:
-   *
-   * index = 0;
-   * while (true) {
-   *   (obj, index) = hasNext2(obj, index);
-   *   if (index) { #1
-   *     x = nextName(obj, index); #2
-   *   } else {
-   *     break;
-   *   }
-   * }
-   *
-   * #1 If we return zero, the iteration stops.
-   * #2 The spec says we need to get the nextName at index + 1, but it's actually index - 1, this caused
-   * me two hours of my life that I will probably never get back.
-   *
-   * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
-   */
-  export function asHasNext2(object, index) {
-    if (isNullOrUndefined(object)) {
-      return {index: 0, object: null};
-    }
-    object = boxValue(object);
-    var nextIndex = object.asNextNameIndex(index);
-    if (nextIndex > 0) {
-      return {index: nextIndex, object: object};
-    }
-    // If there are no more properties in the object then follow the prototype chain.
-    while (true) {
-      var object = Object.getPrototypeOf(object);
-      if (!object) {
-        return {index: 0, object: null};
-      }
-      nextIndex = object.asNextNameIndex(0);
-      if (nextIndex > 0) {
-        return {index: nextIndex, object: object};
-      }
-    }
-    return {index: 0, object: null};
-  }
-
   function isXMLType(x): boolean {
     return x instanceof Shumway.AVM2.AS.ASXML ||
            x instanceof Shumway.AVM2.AS.ASXMLList;
@@ -1031,6 +1036,7 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Object.prototype, "asHasTraitProperty", asHasTraitProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
 
+    defineNonEnumerableProperty(global.Object.prototype, "asHasNext2", asHasNext2);
     defineNonEnumerableProperty(global.Object.prototype, "asNextName", asNextName);
     defineNonEnumerableProperty(global.Object.prototype, "asNextValue", asNextValue);
     defineNonEnumerableProperty(global.Object.prototype, "asNextNameIndex", asNextNameIndex);
@@ -1151,7 +1157,7 @@ module Shumway.AVM2.Runtime {
       return target.asLazyInitializer = new LazyInitializer(target);
     }
     constructor (target: Object) {
-      assert (!target.asLazyInitializer);
+      release || assert (!target.asLazyInitializer);
       this.target = target;
     }
     public getName() {
@@ -1179,11 +1185,11 @@ module Shumway.AVM2.Runtime {
         Shumway.Debug.notImplemented(String(target));
       }
       var name = this.name;
-      assert (!LazyInitializer._holder[name], "Holder already has " + name);
+      release || assert (!LazyInitializer._holder[name], "Holder already has " + name);
       Object.defineProperty(LazyInitializer._holder, name, {
         get: function () {
           var value = initialize();
-          assert (value);
+          release || assert (value);
           Object.defineProperty(LazyInitializer._holder, name, { value: value, writable: true });
           return value;
         }, configurable: true
@@ -1291,6 +1297,12 @@ module Shumway.AVM2.Runtime {
     }
   }
 
+  export class HasNext2Info {
+    constructor(public object: Object, public index: number) {
+      // ...
+    }
+  }
+
   export function sliceArguments(args, offset: number = 0) {
     return Array.prototype.slice.call(args, offset);
   }
@@ -1361,7 +1373,7 @@ module Shumway.AVM2.Runtime {
     var cacheInfo = CODE_CACHE[methodInfo.abc.hash];
     if (!cacheInfo) {
       warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
-      counter.count("Code Cache ABC Miss");
+      countTimeline("Code Cache ABC Miss");
       return;
     }
     if (!cacheInfo.isInitialized) {
@@ -1376,17 +1388,17 @@ module Shumway.AVM2.Runtime {
     var method = cacheInfo.methods[methodInfo.index];
     if (!method) {
       if (methodInfo.isInstanceInitializer || methodInfo.isClassInitializer) {
-        counter.count("Code Cache Query On Initializer");
+        countTimeline("Code Cache Query On Initializer");
       } else {
-        counter.count("Code Cache MISS ON OTHER");
+        countTimeline("Code Cache MISS ON OTHER");
         warn("Shouldn't MISS: " + methodInfo + " " + methodInfo.debugName);
       }
       // warn("Cannot Find Code Cache For Method, name: " + methodInfo);
-      counter.count("Code Cache Miss");
+      countTimeline("Code Cache Miss");
       return;
     }
     log("Linking CC: " + methodInfo);
-    counter.count("Code Cache Hit");
+    countTimeline("Code Cache Hit");
     return method;
   }
 
@@ -1673,6 +1685,9 @@ module Shumway.AVM2.Runtime {
     var domain = ci.abc.applicationDomain;
 
     var className = Multiname.getName(ii.name);
+
+    enterTimeline("createClass", { className: className, classInfo: classInfo });
+
     if (traceExecution.value) {
       log("Creating " + (ii.isInterface() ? "Interface" : "Class") + ": " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
     }
@@ -1692,6 +1707,7 @@ module Shumway.AVM2.Runtime {
     }
 
     if (ii.isInterface()) {
+      leaveTimeline();
       return cls;
     }
 
@@ -1707,7 +1723,9 @@ module Shumway.AVM2.Runtime {
     if (traceExecution.value) {
       log("Running " + (ii.isInterface() ? "Interface" : "Class") + ": " + className + " Static Constructor");
     }
+    enterTimeline("staticInitializer");
     createFunction(classInfo.init, scope, false, false).call(cls);
+    leaveTimeline();
     if (traceExecution.value) {
       log("Done With Static Constructor");
     }
@@ -1716,7 +1734,7 @@ module Shumway.AVM2.Runtime {
     if (sealConstTraits) {
       this.sealConstantTraits(cls, ci.traits);
     }
-
+    leaveTimeline();
     return cls;
   }
 
@@ -1754,7 +1772,7 @@ module Shumway.AVM2.Runtime {
       if (!isNullOrUndefined(type)) {
         typeClassName = type.classInfo.instanceInfo.name.name.toLowerCase();
         switch (typeClassName) {
-          case "Number":
+          case "number":
             typeClassName = "double";
           case "int":
           case "uint":

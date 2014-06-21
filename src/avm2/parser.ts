@@ -821,11 +821,11 @@ module Shumway.AVM2.ABC {
         var n = this.uri.length - 1;
         var mark = this.uri.charCodeAt(n);
         if (mark > Namespace._MIN_API_MARK) {
-          assert(false, "What's this code for?");
+          release || assert(false, "What's this code for?");
           this.uri = this.uri.substring(0, n - 1);
         }
       } else if (this.isUnique()) {
-        assert (uniqueURIHash !== undefined);
+        release || assert (uniqueURIHash !== undefined);
         this.uri = "private " + uniqueURIHash;
       }
       if (this.kind === CONSTANT.StaticProtectedNs) {
@@ -1104,7 +1104,7 @@ module Shumway.AVM2.ABC {
     constructor(namespaces: Namespace [], name: string, flags: number = 0) {
       if (name !== undefined) {
         release || assert (name === null || isString(name), "Multiname name must be a string. " + name);
-        // assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
+        // release || assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
       }
       this.runtimeId = Multiname._nextID ++;
       this.namespaces = namespaces;

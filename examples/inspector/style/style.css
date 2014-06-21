@@ -223,10 +223,6 @@ body.simple #stageContainer {
   padding-bottom: 4px;
   border-bottom: 1px solid #666;
 }
-#timerInfo {
-  line-height: 1.6em;
-  padding: 3px;
-}
 
 #settingsContainer > .dg.main {
   width: 299px !important;

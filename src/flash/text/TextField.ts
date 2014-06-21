@@ -22,6 +22,8 @@ module Shumway.AVM2.AS.flash.text {
 
   import clamp = Shumway.NumberUtilities.clamp;
 
+  import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+
   export class TextField extends flash.display.InteractiveObject {
 
     static classSymbols: string [] = null;
@@ -36,13 +38,24 @@ module Shumway.AVM2.AS.flash.text {
       self._antiAliasType = AntiAliasType.NORMAL;
       self._autoSize = TextFieldAutoSize.NONE;
       self._background = false;
-      self._backgroundColor = 0xffffff;
+      self._backgroundColor = 0xffffffff;
       self._border = false;
-      self._borderColor = 0;
+      self._borderColor = 0x000000ff;
       self._bottomScrollV = 1;
       self._caretIndex = 0;
       self._condenseWhite = false;
-      self._defaultTextFormat = new flash.text.TextFormat();
+      self._defaultTextFormat = new flash.text.TextFormat(
+        'Times Roman',
+        12,
+        0,
+        false,
+        false,
+        false,
+        '',
+        '',
+        TextFormatAlign.LEFT
+      );
+
       self._embedFonts = false;
       self._gridFitType = GridFitType.PIXEL;
       self._htmlText = '';
@@ -69,22 +82,12 @@ module Shumway.AVM2.AS.flash.text {
       self._textWidth = 0;
       self._thickness = 0;
       self._type = TextFieldType.DYNAMIC;
-      self._wordWrap = false;
       self._useRichTextClipboard = false;
 
       self._textContent = new Shumway.TextContent(self._defaultTextFormat);
 
       if (symbol) {
-        var bounds = symbol.fillBounds;
-        if (bounds) {
-          self._matrix.tx += bounds.xMin;
-          self._matrix.ty += bounds.yMin;
-          this._invalidatePosition();
-          this._dirtyMatrix();
-          self._setFillAndLineBoundsFromWidthAndHeight(
-            bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin
-          );
-        }
+        self._setFillAndLineBoundsFromSymbol(symbol);
 
         self._defaultTextFormat.color = symbol.color;
         self._defaultTextFormat.size = (symbol.size / 20) | 0;
@@ -94,25 +97,27 @@ module Shumway.AVM2.AS.flash.text {
         self._defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
         self._defaultTextFormat.indent = (symbol.indent / 20) | 0;
         self._defaultTextFormat.leading = (symbol.leading / 20) | 0;
+
         self._multiline = symbol.multiline;
-        self._wordWrap = symbol.wordWrap;
         self._embedFonts = symbol.embedFonts;
         self._selectable = symbol.selectable;
-        self._border = symbol.border;
+        self._displayAsPassword = symbol.displayAsPassword;
+        self._type = symbol.type;
+        self._maxChars = symbol.maxChars;
 
+        if (symbol.border) {
+          self.background = true;
+          self.border = true;
+        }
+        self.autoSize = symbol.autoSize;
+        self.wordWrap = symbol.wordWrap;
         if (symbol.html) {
           self.htmlText = symbol.initialText;
         } else {
           self.text = symbol.initialText;
         }
-
-        self._displayAsPassword = symbol.displayAsPassword;
-        self._type = symbol.type;
-        self._maxChars = symbol.maxChars;
-        self._autoSize = symbol.autoSize;
       } else {
-        self._matrix.tx -= 40;
-        self._matrix.ty -= 40;
+        self._setFillAndLineBoundsFromWidthAndHeight(100 * 20, 100 * 20);
       }
     };
 
@@ -212,10 +217,14 @@ module Shumway.AVM2.AS.flash.text {
 
     set autoSize(value: string) {
       value = asCoerceString(value);
+      if (value === this._autoSize) {
+        return;
+      }
       if (TextFieldAutoSize.toNumber(value) < 0) {
         throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
       }
       this._autoSize = value;
+      this._textContent.autoSize = value !== TextFieldAutoSize.NONE;
     }
 
     get background(): boolean {
@@ -223,15 +232,29 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set background(value: boolean) {
-      this._background = !!value;
+      value = !!value;
+      if (value === this._background) {
+        return;
+      }
+      this._background = value;
+      this._textContent.backgroundColor = value ? this._backgroundColor : 0;
+      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
     }
 
     get backgroundColor(): number /*uint*/ {
-      return this._backgroundColor;
+      return this._backgroundColor >> 8;
     }
 
     set backgroundColor(value: number /*uint*/) {
-      this._backgroundColor = value >>> 0;
+      value = ((value << 8) | 0xff) >>> 0;
+      if (value === this._backgroundColor) {
+        return;
+      }
+      this._backgroundColor = value;
+      if (this._background) {
+        this._textContent.backgroundColor = value;
+        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      }
     }
 
     get border(): boolean {
@@ -239,15 +262,29 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set border(value: boolean) {
-      this._border = !!value;
+      value = !!value;
+      if (value === this._border) {
+        return;
+      }
+      this._border = value;
+      this._textContent.borderColor = value ? this._borderColor : 0;
+      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
     }
 
     get borderColor(): number /*uint*/ {
-      return this._borderColor;
+      return this._borderColor >> 8;
     }
 
     set borderColor(value: number /*uint*/) {
-      this._borderColor = value >>> 0;
+      value = ((value << 8) | 0xff) >>> 0;
+      if (value === this._borderColor) {
+        return;
+      }
+      this._borderColor = value;
+      if (this._border) {
+        this._textContent.borderColor = value;
+        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      }
     }
 
     get bottomScrollV(): number /*int*/ {
@@ -302,8 +339,14 @@ module Shumway.AVM2.AS.flash.text {
     set htmlText(value: string) {
       somewhatImplemented("public flash.text.TextField::set htmlText");
       value = asCoerceString(value);
+      // Flash resets the bold and italic flags when an html value is set on a text field created from a symbol.
+      if (this._symbol) {
+        this._defaultTextFormat.bold = false;
+        this._defaultTextFormat.italic = false;
+      }
       this._textContent.parseHtml(value, this._multiline);
       this._htmlText = value;
+      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
     }
 
     get length(): number /*int*/ {
@@ -431,6 +474,7 @@ module Shumway.AVM2.AS.flash.text {
     set text(value: string) {
       somewhatImplemented("public flash.text.TextField::set text");
       this._textContent.plainText = asCoerceString(value);
+      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
     }
 
     get textColor(): number /*uint*/ {
@@ -468,11 +512,16 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get wordWrap(): boolean {
-      return this._wordWrap;
+      return this._textContent.wordWrap;
     }
 
     set wordWrap(value: boolean) {
-      this._wordWrap = !!value;
+      value = !!value;
+      if (value === this._textContent.wordWrap) {
+        return;
+      }
+      this._textContent.wordWrap = !!value;
+      this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
     }
 
     get useRichTextClipboard(): boolean {

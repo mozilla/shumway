@@ -162,31 +162,36 @@ module Shumway.AVM2.AS.flash.display {
     DirtyGraphics                             = 0x400000,
 
     /**
+     * Indicates whether this display object's text content has changed since the last time it was synchronized.
+     */
+    DirtyTextContent                          = 0x800000,
+
+    /**
      * Indicates whether this display object's bitmap data has changed since the last time it was synchronized.
      */
-    DirtyBitmapData                           = 0x800000,
+    DirtyBitmapData                           = 0x1000000,
 
     /**
      * Indicates whether this display object's has dirty descendents. If this flag is not set then the subtree does not
      * need to be synchronized.
      */
-    DirtyChild                                = 0x1000000,
+    DirtyChild                                = 0x2000000,
 
     /**
      * Indicates whether this display object's color transform has changed since the last time it was synchronized.
      */
-    DirtyColorTransform                       = 0x2000000,
+    DirtyColorTransform                       = 0x4000000,
 
     /**
      * Indicates whether this display object's mask has changed since the last time it was synchronized.
      */
-    DirtyMask                                 = 0x4000000,
+    DirtyMask                                 = 0x8000000,
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
      * bits so we don't serialize as much.
      */
-    DirtyMiscellaneousProperties              = 0x8000000,
+    DirtyMiscellaneousProperties              = 0x10000000,
 
     /**
      * Display object has changed since the last time it was drawn.
@@ -196,7 +201,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * All synchronizable properties are dirty.
      */
-    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyBitmapData | DirtyColorTransform | DirtyMask | DirtyMiscellaneousProperties
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyTextContent | DirtyBitmapData | DirtyColorTransform | DirtyMask | DirtyMiscellaneousProperties
   }
 
   /**
@@ -295,7 +300,7 @@ module Shumway.AVM2.AS.flash.display {
       self._scrollRect = null;
       self._filters = [];
       self._blendMode = BlendMode.NORMAL;
-      assert (self._blendMode);
+      release || assert (self._blendMode);
       self._scale9Grid = null;
       self._loaderInfo = null;
       self._accessibilityProperties = null;
@@ -373,7 +378,7 @@ module Shumway.AVM2.AS.flash.display {
           // TODO: Fire RENDER events only for objects on the display list.
           event = events.Event.getBroadcastInstance(type);
       }
-      assert (event, "Invalid frame event.");
+      release || assert (event, "Invalid frame event.");
       events.EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 
@@ -616,7 +621,7 @@ module Shumway.AVM2.AS.flash.display {
         path.push(node);
         node = node._parent;
       }
-      assert (node === last, "Last ancestor is not an ancestor.");
+      release || assert (node === last, "Last ancestor is not an ancestor.");
       return path;
     }
 
@@ -654,7 +659,7 @@ module Shumway.AVM2.AS.flash.display {
       var m = this._matrix;
       m.copyFrom(matrix);
       if (toTwips) {
-        m.toTwips();
+        m.toTwipsInPlace();
       }
       this._scaleX = m.getScaleX();
       this._scaleY = m.getScaleY();
@@ -694,7 +699,7 @@ module Shumway.AVM2.AS.flash.display {
                                                                   : new geom.ColorTransform();
         while (i >= 0) {
           ancestor = path[i--];
-          assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
+          release || assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
           m.preMultiply(ancestor._colorTransform);
           m.convertToFixedPoint();
           ancestor._concatenatedColorTransform.copyFrom(m);
@@ -891,7 +896,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get x(): number {
-      return this._matrix.tx * 0.05;
+      return this._matrix.tx / 20;
     }
 
     set x(value: number) {
@@ -906,7 +911,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get y(): number {
-      return this._matrix.ty * 0.05;
+      return this._matrix.ty / 20;
     }
 
     set y(value: number) {
@@ -1007,7 +1012,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     get width(): number {
       var bounds = this._getTransformedBounds(this._parent, true);
-      return bounds.width * 0.05;
+      return bounds.width / 20;
     }
 
     /**
@@ -1040,7 +1045,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     get height(): number {
       var bounds = this._getTransformedBounds(this._parent, true);
-      return bounds.height * 0.05;
+      return bounds.height / 20;
     }
 
     /**
@@ -1134,7 +1139,7 @@ module Shumway.AVM2.AS.flash.display {
       var node = this;
       do {
         if (node._stage === node) {
-          assert(flash.display.Stage.isType(node));
+          release || assert(flash.display.Stage.isType(node));
           return <flash.display.Stage>node;
         }
         node = node._parent;
@@ -1232,7 +1237,7 @@ module Shumway.AVM2.AS.flash.display {
         this._filters.length = 0;
       } else {
         this._filters = value.map(function (x: flash.filters.BitmapFilter) {
-          assert (flash.filters.BitmapFilter.isType(x));
+          release || assert (flash.filters.BitmapFilter.isType(x));
           return x.clone();
         });
       }
@@ -1327,7 +1332,7 @@ module Shumway.AVM2.AS.flash.display {
     get loaderInfo(): flash.display.LoaderInfo {
       var root = this.root;
       if (root) {
-        assert(root._loaderInfo, "No LoaderInfo object found on root.");
+        release || assert(root._loaderInfo, "No LoaderInfo object found on root.");
         return root._loaderInfo;
       }
       return null;
@@ -1374,7 +1379,7 @@ module Shumway.AVM2.AS.flash.display {
      * they don't need a back reference.
      */
     _setGraphics(graphics: flash.display.Graphics) {
-      assert(this._canHaveGraphics(), "Cannot set graphics on this type of display object.");
+      release || assert(this._canHaveGraphics(), "Cannot set graphics on this type of display object.");
       this._graphics = graphics;
       this._invalidateFillAndLineBounds();
       this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
@@ -1458,7 +1463,7 @@ module Shumway.AVM2.AS.flash.display {
      * Otherwise this is an unsinged number.
      */
     set opaqueBackground(value: any) {
-      assert (value === null || Shumway.isInteger(value));
+      release || assert (value === null || Shumway.isInteger(value));
       this._opaqueBackground = value;
     }
 

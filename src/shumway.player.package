@@ -74,6 +74,10 @@ build/ts/player/module.js
 
 ## Load Flash TS Dependencies
 #!inline Shumway.Player.enterTimeline("Load Flash TS Dependencies");
+
+build/ts/TextContent.js
+build/ts/SWFTags.js
+
 build/ts/flash/geom/Matrix.js
 build/ts/flash/geom/PerspectiveProjection.js
 build/ts/flash/geom/ColorTransform.js
@@ -290,7 +294,7 @@ build/ts/flash/accessibility/AccessibilityImplementation.js
 #build/ts/flash/text/CSMSettings.js
 #build/ts/flash/events/StageVideoAvailabilityEvent.js
 #build/ts/flash/net/NetGroupSendMode.js
-#build/ts/flash/text/TextRun.js
+build/ts/flash/text/TextRun.js
 #build/ts/flash/net/XMLSocket.js
 #build/ts/flash/utils/Dictionary.js
 #build/ts/flash/display3D/Context3DCompareMode.js

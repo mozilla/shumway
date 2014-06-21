@@ -137,7 +137,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     add(type: string, target: EventDispatcher) {
-      assert (Event.isBroadcastEventType(type), "Can only register broadcast events.");
+      release || assert (Event.isBroadcastEventType(type), "Can only register broadcast events.");
       var queue = this._queues[type] || (this._queues[type] = []);
       if (queue.indexOf(target) >= 0) {
         return;
@@ -146,17 +146,17 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     remove(type: string, target: EventDispatcher) {
-      assert (Event.isBroadcastEventType(type), "Can only unregister broadcast events.");
+      release || assert (Event.isBroadcastEventType(type), "Can only unregister broadcast events.");
       var queue = this._queues[type];
-      assert (queue, "There should already be a queue for this.");
+      release || assert (queue, "There should already be a queue for this.");
       var index = queue.indexOf(target);
-      assert (index >= 0, "Target should be somewhere in this queue.");
+      release || assert (index >= 0, "Target should be somewhere in this queue.");
       queue[index] = null;
-      assert (queue.indexOf(target) < 0, "Target shouldn't be in this queue anymore.");
+      release || assert (queue.indexOf(target) < 0, "Target shouldn't be in this queue anymore.");
     }
 
     dispatchEvent(event: flash.events.Event) {
-      assert (event.isBroadcastEvent(), "Cannot dispatch non-broadcast events.");
+      release || assert (event.isBroadcastEvent(), "Cannot dispatch non-broadcast events.");
       var queue = this._queues[event.type];
       if (!queue) {
         return;
@@ -390,7 +390,7 @@ module Shumway.AVM2.AS.flash.events {
             continue;
           }
           var list = ancestor._getListenersForType(true, type);
-          assert(list);
+          release || assert(list);
           keepPropagating = EventDispatcher.callListeners(list, event, target, ancestor,
                                                           EventPhase.CAPTURING_PHASE);
         }

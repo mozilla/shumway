@@ -22,6 +22,7 @@ module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
   import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
@@ -42,9 +43,9 @@ module Shumway.AVM2.AS {
     }
 
     static compare(a, b, options, compareFunction) {
-      assertNotImplemented (!(options & GenericVector.CASEINSENSITIVE), "CASEINSENSITIVE");
-      assertNotImplemented (!(options & GenericVector.UNIQUESORT), "UNIQUESORT");
-      assertNotImplemented (!(options & GenericVector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+      release || assertNotImplemented (!(options & GenericVector.CASEINSENSITIVE), "CASEINSENSITIVE");
+      release || assertNotImplemented (!(options & GenericVector.UNIQUESORT), "UNIQUESORT");
+      release || assertNotImplemented (!(options & GenericVector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
       var result = 0;
       if (!compareFunction) {
         compareFunction = GenericVector.defaultCompareFunction;
@@ -315,15 +316,20 @@ module Shumway.AVM2.AS {
       this._buffer.splice.apply(this._buffer, [index, deleteCount].concat(items));
     }
 
-    asGetEnumerableKeys() {
-      if (GenericVector.prototype === this) {
-        return Object.prototype.asGetEnumerableKeys.call(this);
+    asNextName(index: number): any {
+      return index - 1;
+    }
+
+    asNextValue(index: number): any {
+      return this._buffer[index - 1];
+    }
+
+    asNextNameIndex(index: number): number {
+      var nextNameIndex = index + 1;
+      if (nextNameIndex <= this._buffer.length) {
+        return nextNameIndex;
       }
-      var keys = [];
-      for (var i = 0; i < this._buffer.length; i++) {
-        keys.push(i);
-      }
-      return keys;
+      return 0;
     }
 
     asHasProperty(namespaces, name, flags) {
@@ -332,6 +338,10 @@ module Shumway.AVM2.AS {
       }
       var index = toNumber(name);
       return index >= 0 && index < this._buffer.length;
+    }
+
+    asHasNext2(hasNext2Info: HasNext2Info) {
+      hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
     }
 
     _reverse: () => void;

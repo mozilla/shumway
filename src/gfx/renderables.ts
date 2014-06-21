@@ -128,8 +128,7 @@ module Shumway.GFX {
         }
         return;
       }
-      var timelineDetails = "convertImage: " + ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length) + ")";
-      enterTimeline(timelineDetails);
+      enterTimeline("convertImage", ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length));
 
       if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
           targetFormat === ImageType.StraightAlphaRGBA) {
@@ -152,7 +151,7 @@ module Shumway.GFX {
       } else {
         notImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
       }
-      leaveTimeline(timelineDetails);
+      leaveTimeline("convertImage");
     }
 
     public static FromDataBuffer(type: ImageType, dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
@@ -167,21 +166,27 @@ module Shumway.GFX {
     }
 
     public updateFromDataBuffer(type: ImageType, dataBuffer: DataBuffer) {
-      enterTimeline("RenderableBitmap.updateFromDataBuffer");
+      if (!imageUpdateOption.value) {
+        return;
+      }
+
+      enterTimeline("RenderableBitmap.updateFromDataBuffer", this);
 
       var context = this._canvas.getContext("2d");
 
       if (type === ImageType.JPEG ||
-          type === ImageType.PNG ||
+          type === ImageType.PNG  ||
           type === ImageType.GIF)
       {
-        var img = new Image();
-        img.src = URL.createObjectURL(dataBuffer.toBlob());
-        img.onload = function () {
-          context.drawImage(img, 0, 0);
+        var self = this;
+        var image = new Image();
+        image.src = URL.createObjectURL(dataBuffer.toBlob());
+        image.onload = function () {
+          context.drawImage(image, 0, 0);
+          self.setFlags(RenderableFlags.Dirty);
         };
-        img.onerror = function () {
-          throw "img error";
+        image.onerror = function () {
+          throw "image error";
         };
       } else {
         var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
@@ -224,11 +229,11 @@ module Shumway.GFX {
         context.rect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);
         context.clip();
       }
-      var bounds = source.getBounds();
-      if (bounds.x || bounds.y) {
-        matrix.translate(bounds.x, bounds.y);
-      }
       if (matrix) {
+        var bounds = source.getBounds();
+        if (bounds.x || bounds.y) {
+          matrix.translate(bounds.x, bounds.y);
+        }
         context.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
       }
       context.drawImage(source._canvas, 0, 0);
@@ -260,7 +265,7 @@ module Shumway.GFX {
     constructor(public type: PathType, public style: any, public strokeProperties: StrokeProperties)
     {
       this.path = new Path2D();
-      assert ((type === PathType.Stroke) === !!strokeProperties);
+      release || assert ((type === PathType.Stroke) === !!strokeProperties);
     }
   }
 
@@ -313,9 +318,9 @@ module Shumway.GFX {
       }
 
       var paths = this._paths;
-      assert(paths);
+      release || assert(paths);
 
-      enterTimeline("RenderableShape.render");
+      enterTimeline("RenderableShape.render", this);
       for (var i = 0; i < paths.length; i++) {
         var path = paths[i];
         if (path.type === PathType.Fill) {
@@ -355,7 +360,7 @@ module Shumway.GFX {
     }
 
     private _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D): void {
-      assert(!this._paths);
+      release || assert(!this._paths);
       enterTimeline("RenderableShape.deserializePaths");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
@@ -385,7 +390,7 @@ module Shumway.GFX {
         var command = commands[commandIndex];
         switch (command) {
           case PathCommand.MoveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             if (formOpen && fillPath) {
               fillPath.lineTo(formOpenX, formOpenY);
               strokePath && strokePath.lineTo(formOpenX, formOpenY);
@@ -397,14 +402,14 @@ module Shumway.GFX {
             strokePath && strokePath.moveTo(x, y);
             break;
           case PathCommand.LineTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             x = coordinates[coordinatesIndex++] / 20;
             y = coordinates[coordinatesIndex++] / 20;
             fillPath && fillPath.lineTo(x, y);
             strokePath && strokePath.lineTo(x, y);
             break;
           case PathCommand.CurveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 4);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 4);
             cpX = coordinates[coordinatesIndex++] / 20;
             cpY = coordinates[coordinatesIndex++] / 20;
             x = coordinates[coordinatesIndex++] / 20;
@@ -413,7 +418,7 @@ module Shumway.GFX {
             strokePath && strokePath.quadraticCurveTo(cpX, cpY, x, y);
             break;
           case PathCommand.CubicCurveTo:
-            assert(coordinatesIndex <= data.coordinatesPosition - 6);
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 6);
             cpX = coordinates[coordinatesIndex++] / 20;
             cpY = coordinates[coordinatesIndex++] / 20;
             var cpX2 = coordinates[coordinatesIndex++] / 20;
@@ -424,7 +429,7 @@ module Shumway.GFX {
             strokePath && strokePath.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
             break;
           case PathCommand.BeginSolidFill:
-            assert(styles.bytesAvailable >= 4);
+            release || assert(styles.bytesAvailable >= 4);
             fillPath = this._createPath(PathType.Fill,
                                         ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt()),
                                         null, x, y);
@@ -462,13 +467,13 @@ module Shumway.GFX {
             strokePath = null;
             break;
           default:
-            assertUnreachable('Invalid command ' + command + ' encountered at index' +
-                              commandIndex + ' of ' + commandsCount);
+            release || assertUnreachable('Invalid command ' + command + ' encountered at index' +
+                                         commandIndex + ' of ' + commandsCount);
         }
       }
-      assert(styles.bytesAvailable === 0);
-      assert(commandIndex === commandsCount);
-      assert(coordinatesIndex === data.coordinatesPosition);
+      release || assert(styles.bytesAvailable === 0);
+      release || assert(commandIndex === commandsCount);
+      release || assert(coordinatesIndex === data.coordinatesPosition);
       if (formOpen && fillPath) {
         fillPath.lineTo(formOpenX, formOpenY);
         strokePath && strokePath.lineTo(formOpenX, formOpenY);
@@ -495,11 +500,11 @@ module Shumway.GFX {
 
     private _readGradient(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasGradient {
       // Assert at least one color stop.
-      assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
-                                      1 + 1 + 4 + 1 + 1);
+      release || assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
+                                                 1 + 1 + 4 + 1 + 1);
       var gradientType = styles.readUnsignedByte();
       var focalPoint = styles.readShort() * 2 / 0xff;
-      assert(focalPoint >= -1 && focalPoint <= 1);
+      release || assert(focalPoint >= -1 && focalPoint <= 1);
       var transform = this._readMatrix(styles);
       // This effectively applies the matrix to the line the gradient is drawn along:
       var x1 = transform.tx - transform.a;
@@ -510,6 +515,7 @@ module Shumway.GFX {
       var gradient = gradientType === GradientType.Linear ?
                      context.createLinearGradient(x1, y1, x2, y2) :
                      context.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
+      gradient.setTransform && gradient.setTransform(transform.toSVGMatrix());
       var colorStopsCount = styles.readUnsignedByte();
       for (var i = 0; i < colorStopsCount; i++) {
         var ratio = styles.readUnsignedByte() / 0xff;
@@ -524,13 +530,13 @@ module Shumway.GFX {
     }
 
     private _readBitmap(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasPattern {
-      assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
+      release || assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
       var textureIndex = styles.readUnsignedInt();
       var fillTransform: Matrix = this._readMatrix(styles);
       var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
       var smooth = styles.readBoolean();
       var texture = this._textures[textureIndex];
-      assert(texture._canvas);
+      release || assert(texture._canvas);
       var fillStyle: CanvasPattern = context.createPattern(texture._canvas, repeat);
       fillStyle.setTransform(fillTransform.toSVGMatrix());
       // TODO: make it possible to set smoothing for fills but not strokes and vice-versa.
@@ -557,59 +563,153 @@ module Shumway.GFX {
 
   }
 
+  class Line {
+    x: number = 0;
+    y: number = 0;
+    width: number = 0;
+    ascent: number = 0;
+    descent: number = 0;
+    leading: number = 0;
+    runs: any[] = [];
+  }
+  class Run {
+    constructor(public font: string = '',
+                public fillStyle: string = '',
+                public text: string = '',
+                public width: number = 0) {
+
+    }
+  }
+
   export class RenderableText extends Renderable {
+    private static _measureContext = document.createElement('canvas').getContext('2d');
+
     _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     properties: {[name: string]: any} = {};
 
-    private _plainText: string;
     private _textRunData: DataBuffer;
+    private _plainText: string;
+    private _lines: any[];
+    private _output: DataBuffer;
+    private _backgroundColor: number;
+    private _borderColor: number;
+    private _matrix: Shumway.GFX.Geometry.Matrix;
+    private _coords: DataBuffer;
 
-    constructor(plainText: string, textRunData: DataBuffer, bounds: Rectangle) {
+    constructor(bounds) {
       super(bounds);
-      this.update(plainText, textRunData, bounds);
+      this.setBounds(bounds)
+      this._textRunData = null;
+      this._plainText = '';
+      this._lines = [];
+      this._output = new DataBuffer();
+      this._backgroundColor = 0;
+      this._borderColor = 0;
+      this._matrix = null;
+      this._coords = null;
     }
 
-    update(plainText: string, textRunData: DataBuffer, bounds: Rectangle) {
-      this._plainText = plainText;
+    setBounds(bounds): void {
+      this._bounds.x = 0;
+      this._bounds.y = 0;
+      this._bounds.w = Math.abs(bounds.x) + bounds.w;
+      this._bounds.h = Math.abs(bounds.y) + bounds.h;
+    }
+
+    setContent(plainText: string, textRunData: DataBuffer, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer): void {
       this._textRunData = textRunData;
-      this._bounds = bounds;
+      this._plainText = plainText;
+      this._lines = [];
+      this._output = new DataBuffer();
+      this._matrix = matrix;
+      this._coords = coords;
+      if (this._coords) {
+        this._bounds.w += this._bounds.x + 4;
+        this._bounds.h += this._bounds.y + 4;
+      }
     }
 
-    getBounds(): Shumway.GFX.Geometry.Rectangle {
-      return this._bounds;
+    setStyle(backgroundColor: number, borderColor: number): void {
+      this._backgroundColor = backgroundColor;
+      this._borderColor = borderColor;
     }
 
-    render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
-      var plainText = this._plainText;
+    reflow(autoSize: boolean, wordWrap: boolean): void {
       var textRunData = this._textRunData;
-      textRunData.position = 0;
-      var x = 0;
+      var bounds = this._bounds;
+      var plainText = this._plainText;
+      var lines = this._lines;
+      var measureContext = RenderableText._measureContext;
+
+      var line = new Line();
+      var baseLinePos = 0;
+
+      var finishRun = function (font: string, fillStyle: string, text: string) {
+        if (text) {
+          var width = measureContext.measureText(text).width;
+          line.runs.push(new Run(font, fillStyle, text, width));
+          line.width += width;
+        }
+      };
+      var finishLine = function () {
+        if (!line.runs.length) {
+          baseLinePos += line.ascent + line.descent + (line.leading * 2);
+          return;
+        }
+
+        switch (align) {
+          case 0:
+            break;
+          case 1:
+            line.x = bounds.w - line.width - 4;
+            break;
+          case 2:
+            line.x = (bounds.w - line.width - 4) / 2;
+            break;
+        }
+
+        baseLinePos += line.ascent;
+        line.y = baseLinePos;
+        baseLinePos += line.descent + line.leading;
+        lines.push(line);
+        line = new Line();
+      };
+
       while (textRunData.position < textRunData.length) {
         var beginIndex = textRunData.readInt();
         var endIndex = textRunData.readInt();
-        var align = textRunData.readInt();
-        //var blockIndent = textRunData.readInt();
-        var bold = textRunData.readBoolean();
-        var bullet = textRunData.readBoolean();
-        var color = textRunData.readInt();
-        //var display = textRunData.readInt();
+        var size = textRunData.readInt();
         var fontId = textRunData.readInt();
-        var indent = textRunData.readInt();
-        var italic = textRunData.readBoolean();
-        var kerning = textRunData.readInt();
+        var ascent = textRunData.readInt();
+        var descent = textRunData.readInt();
         var leading = textRunData.readInt();
+        var bold = textRunData.readBoolean();
+        var italic = textRunData.readBoolean();
+        var color = textRunData.readInt();
+        var align = textRunData.readInt();
+        var bullet = textRunData.readBoolean();
+        //var display = textRunData.readInt();
+        var indent = textRunData.readInt();
+        //var blockIndent = textRunData.readInt();
+        var kerning = textRunData.readInt();
         var leftMargin = textRunData.readInt();
         var letterSpacing = textRunData.readInt();
         var rightMargin = textRunData.readInt();
-        var size = textRunData.readInt();
         //var tabStops = textRunData.readInt();
         var underline = textRunData.readBoolean();
 
-        var text = plainText.substr(beginIndex, endIndex);
-        if (text === '\n') {
-          continue;
+        var fontName:string;
+        if (fontId) {
+          fontName = 'swffont' + fontId;
+        } else {
+          // Use Times Roman as the default device font for now.
+          fontName = 'Times Roman';
+          ascent = 0.75 * size;
+          descent = 0.25 * size;
+          //fontName = 'sans-serif';
+          //ascent = 1 * size;
+          //descent = 0.25 * size;
         }
-
         var boldItalic = '';
         if (italic) {
           boldItalic += 'italic';
@@ -617,12 +717,124 @@ module Shumway.GFX {
         if (bold) {
           boldItalic += ' bold';
         }
-        context.font = boldItalic + ' ' + size + 'px swffont' + fontId;
-        context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
+        var font = boldItalic + ' ' + size + 'px ' + fontName;
+        var fillStyle = ColorUtilities.rgbaToCSSStyle((color << 8) | 0xff);
 
-        context.fillText(text, x, size);
-        x += context.measureText(text).width;
+        var text = '';
+        measureContext.font = font;
+        for (var i = beginIndex; i < endIndex; i++) {
+          var char = plainText[i];
+          if (char !== '\r' && char !== '\n') {
+            text += char;
+            if (i < plainText.length - 1) {
+              continue;
+            }
+          }
+          finishRun(font, fillStyle, text);
+          if (ascent > line.ascent) {
+            line.ascent = ascent;
+          }
+          if (descent > line.descent) {
+            line.descent = descent;
+          }
+          if (leading > line.leading) {
+            line.leading = leading;
+          }
+          finishLine();
+          if (char === '\r' && plainText[i + 1] === '\n') {
+            i++;
+          }
+          text = '';
+        }
+        finishRun(font, fillStyle, text);
       }
+
+      this.setFlags(RenderableFlags.Dirty);
+    }
+
+    getBounds(): Shumway.GFX.Geometry.Rectangle {
+      return this._bounds;
+    }
+
+    render(context: CanvasRenderingContext2D): void {
+      var bounds = this._bounds;
+
+      context.save();
+
+      if (this._backgroundColor) {
+        context.fillStyle = ColorUtilities.rgbaToCSSStyle(this._backgroundColor);
+        context.fillRect(0, 0, bounds.w, bounds.h);
+      }
+      if (this._borderColor) {
+        context.strokeStyle = ColorUtilities.rgbaToCSSStyle(this._borderColor);
+        context.lineCap = 'square';
+        context.lineWidth = 1;
+        context.strokeRect(0, 0, bounds.w | 0, bounds.h | 0);
+      }
+
+      context.translate(2, 2);
+      context.rect(0, 0, bounds.w - 4, bounds.h - 4);
+      context.clip();
+
+      if (this._matrix) {
+        var m = this._matrix;
+        context.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+      }
+
+      if (this._coords) {
+        this._renderChars(context);
+      } else {
+        this._renderLines(context);
+      }
+
+      context.restore();
+    }
+
+    private _renderChars(context: CanvasRenderingContext2D) {
+      var lines = this._lines;
+      var coords = this._coords;
+      coords.position = 0;
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var runs = line.runs;
+        for (var j = 0; j < runs.length; j++) {
+          var run = runs[j];
+          context.font = run.font;
+          context.fillStyle = run.fillStyle;
+          var text = run.text;
+          for (var j = 0; j < text.length; j++) {
+            var x = coords.readInt();
+            var y = coords.readInt();
+            context.fillText(text[j], x, y);
+          }
+        }
+      }
+    }
+
+    private _renderLines(context: CanvasRenderingContext2D) {
+      // TODO: Render bullet points and underlines.
+      var lines = this._lines;
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        var x = line.x;
+        var y = line.y;
+        var runs = line.runs;
+        for (var j = 0; j < runs.length; j++) {
+          var run = runs[j];
+          context.font = run.font;
+          context.fillStyle = run.fillStyle;
+          context.fillText(run.text, x, y);
+          x += run.width;
+        }
+      }
+    }
+
+    private _writeLineMetrics(line: Line): void {
+      this._output.writeInt(line.x);
+      this._output.writeInt(line.width);
+      this._output.writeInt(line.ascent);
+      this._output.writeInt(line.descent);
+      this._output.writeInt(line.leading);
     }
   }
 

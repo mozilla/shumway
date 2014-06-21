@@ -273,7 +273,7 @@ module Shumway.AVM2 {
         }
         if (superName) {
           var superClassInfo = findClassInfo(superName);
-          assert (superClassInfo, "Can't find: " + superName);
+          release || assert (superClassInfo, "Can't find: " + superName);
           var superParameters = superClassInfo.instanceInfo.init.parameters;
           writer.writeLn("false && super(" + toSuperArgumentList(parameters, superParameters) + ");");
           writer.writeLn("notImplemented(\"Dummy Constructor: " + className.namespaces[0] + "." + className.name + "\");");

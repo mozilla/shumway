@@ -10,7 +10,7 @@ module Shumway {
     var request = new XMLHttpRequest();
     request.open("GET", path, false);
     request.send();
-    // assert (request.status === 200, "File : " + path + " not found.");
+    // release || assert (request.status === 200, "File : " + path + " not found.");
     return JSON.parse(request.responseText);
   }
 
@@ -145,7 +145,7 @@ module Shumway {
     }
     properties: {[name: string]: any} = {};
     getBounds (): Rectangle {
-      assert (this._image.complete);
+      release || assert (this._image.complete);
       return new Rectangle(0, 0, this._image.width, this._image.height);
     }
     render (context: CanvasRenderingContext2D) {

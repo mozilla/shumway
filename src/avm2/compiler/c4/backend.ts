@@ -20,9 +20,6 @@ module Shumway.AVM2.Compiler.Backend {
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
   import pushUnique = Shumway.ArrayUtilities.pushUnique;
-  import Timer = Shumway.Metrics.Timer;
-
-  var counter = Shumway.Metrics.Counter.instance;
 
   import AST = Shumway.AVM2.Compiler.AST;
   import Literal = AST.Literal;
@@ -551,7 +548,9 @@ module Shumway.AVM2.Compiler.Backend {
     } else {
       object = new Literal(null);
     }
-    if (false && this.pristine &&
+    if (this.flags & IR.Flags.AS_CALL) {
+      return callAsCall(callee, object, args);
+    } else if (false && this.pristine &&
         (this.callee instanceof IR.GetProperty && this.callee.object === this.object) ||
         this.object === null) {
       return call(callee, args);
@@ -677,6 +676,10 @@ module Shumway.AVM2.Compiler.Backend {
     return call(id("asCreateActivation"), [methodInfo]);
   }
 
+  IR.ASNewHasNext2.prototype.compile = function (cx) {
+    return new NewExpression(id("HasNext2Info"), []);
+  }
+
   IR.ASMultiname.prototype.compile = function (cx) {
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
@@ -692,17 +695,17 @@ module Shumway.AVM2.Compiler.Backend {
   }
 
   export function generate(cfg) {
-    Timer.start("Looper");
+    enterTimeline("Looper");
     var root = Looper.analyze(cfg);
-    Timer.stop();
+    leaveTimeline();
 
     var writer = new IndentingWriter();
     // root.trace(writer);
 
     var cx = new Context();
-    Timer.start("Construct AST");
+    enterTimeline("Construct AST");
     var code = <BlockStatement>root.compile(cx, null);
-    Timer.stop();
+    leaveTimeline();
 
     var parameters = [];
     for (var i = 0; i < cx.parameters.length; i++) {
@@ -713,7 +716,7 @@ module Shumway.AVM2.Compiler.Backend {
     }
 
     if (cx.variables.length) {
-      counter.count("Backend: Locals", cx.variables.length);
+      countTimeline("Backend: Locals", cx.variables.length);
       var variables = variableDeclaration(cx.variables.map(function (variable) {
         return new VariableDeclarator(id(variable.name));
       }));
@@ -723,9 +726,9 @@ module Shumway.AVM2.Compiler.Backend {
     // var node = new FunctionDeclaration(id("fn"), parameters, code);
     // var node = new FunctionDeclaration(id("fn"), parameters, null, null, code);
 
-    Timer.start("Serialize AST");
+    enterTimeline("Serialize AST");
     var source = generateSource(code);
-    Timer.stop();
+    leaveTimeline();
     return {parameters: parameters.map(function (p) { return p.name; }), body: source};
   }
 //

@@ -160,7 +160,7 @@ module Shumway.GFX {
 
       root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
         if (frame.getBounds().isEmpty()) {
-          return;
+          // return;
         }
 
         if (state.ignoreMask !== frame && frame.mask && !state.clipRegion) {

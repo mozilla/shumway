@@ -100,7 +100,7 @@ module Shumway.AVM2.AS.flash.events {
     private _position: flash.geom.Point;
 
     get localX(): number {
-      return (this._localX * 0.05) | 0;
+      return (this._localX / 20) | 0;
     }
 
     set localX(value: number) {
@@ -108,7 +108,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     get localY(): number {
-      return (this._localY * 0.05) | 0;
+      return (this._localY / 20) | 0;
     }
 
     set localY(value: number) {
@@ -153,11 +153,11 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     getStageX(): number {
-      return (this._getGlobalPoint().x * 0.05) | 0;
+      return (this._getGlobalPoint().x / 20) | 0;
     }
 
     getStageY(): number {
-      return (this._getGlobalPoint().y * 0.05) | 0;
+      return (this._getGlobalPoint().y / 20) | 0;
     }
   }
 }

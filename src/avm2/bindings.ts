@@ -198,11 +198,13 @@ module Shumway.AVM2.Runtime {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
           }
           pushUnique(object.asBindings, key);
+          enterTimeline("applyMethodTrait");
           if (this instanceof ScriptBindings) {
             applyNonMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
           } else {
             applyMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
           }
+          leaveTimeline();
         }
       }
     }
@@ -215,7 +217,7 @@ module Shumway.AVM2.Runtime {
       release || assert (methodInfo.needsActivation());
       this.methodInfo = methodInfo;
       // ASC creates activation even if the method has no traits, weird.
-      // assert (methodInfo.traits.length);
+      // release || assert (methodInfo.traits.length);
 
       /**
        * Add activation traits.

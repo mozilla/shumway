@@ -49,7 +49,7 @@ module Shumway.AVM2.AS.flash.display {
       this._applicationDomain = null;
       this._swfVersion = 9;
       this._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT3;
-      assert (this._actionScriptVersion);
+      release || assert (this._actionScriptVersion);
       this._frameRate = 24;
       this._parameters = null;
       this._width = 0;
@@ -148,11 +148,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get width(): number /*int*/ {
-      return (this._width * 0.05) | 0;
+      return (this._width / 20) | 0;
     }
 
     get height(): number /*int*/ {
-      return (this._height * 0.05) | 0;
+      return (this._height / 20) | 0;
     }
 
     get contentType(): string {

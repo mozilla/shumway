@@ -15,9 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global self */
 
-/// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   export enum SwfTag {
     CODE_CSM_TEXT_SETTINGS                 = 74,
@@ -85,6 +83,25 @@ module Shumway.SWF.Parser {
     CODE_START_SOUND2                      = 89,
     CODE_SYMBOL_CLASS                      = 76,
     CODE_VIDEO_FRAME                       = 61
+  }
+
+  export enum PlaceObjectFlags {
+    Reserved          = 0x800,
+    OpaqueBackground  = 0x400,
+    HasVisible        = 0x200,
+    HasImage          = 0x100,
+    HasClassName      = 0x800,
+    HasCacheAsBitmap  = 0x400,
+    HasBlendMode      = 0x200,
+    HasFilterList     = 0x100,
+    HasClipActions    = 0x080,
+    HasClipDepth      = 0x040,
+    HasName           = 0x020,
+    HasRatio          = 0x010,
+    HasColorTransform = 0x008,
+    HasMatrix         = 0x004,
+    HasCharacter      = 0x002,
+    Move              = 0x001
   }
 
   export interface ISwfTagData {

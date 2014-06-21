@@ -203,12 +203,12 @@ module Shumway.AVM2.AS.flash.display {
           var info = data.result;
           var bytesLoaded = info.bytesLoaded;
           var bytesTotal = info.bytesTotal;
-          assert (bytesLoaded <= bytesTotal, "Loaded bytes should not exceed total bytes.");
+          release || assert (bytesLoaded <= bytesTotal, "Loaded bytes should not exceed total bytes.");
           loaderInfo._bytesLoaded = bytesLoaded;
           if (!loaderInfo._bytesTotal) {
             loaderInfo._bytesTotal = bytesTotal;
           } else {
-            assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes should not change.");
+            release || assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes should not change.");
           }
           if (this._loadStatus !== LoadStatus.Unloaded) {
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS, false,
@@ -309,7 +309,7 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.BinarySymbol.FromData(data);
           break;
       }
-      assert (symbol, "Unknown symbol type.");
+      release || assert (symbol, "Unknown symbol type.");
       loaderInfo.registerSymbol(symbol);
     }
 
@@ -321,11 +321,10 @@ module Shumway.AVM2.AS.flash.display {
         var appDomain = AVM2.instance.applicationDomain;
         for (var i = 0; i < symbolClasses.length; i++) {
           var asset = symbolClasses[i];
-          var tag = asset.symbolId;
           if (loaderInfo._allowCodeExecution) {
             var symbolClass = appDomain.getClass(asset.className);
             var symbol = loaderInfo.getSymbolById(asset.symbolId);
-            assert (symbol, "Symbol is not defined.");
+            release || assert (symbol, "Symbol is not defined.");
             symbolClass.defaultInitializerArgument = symbol;
             symbol.symbolClass = symbolClass;
           }
@@ -337,7 +336,7 @@ module Shumway.AVM2.AS.flash.display {
       //  for (var i = 0; i < exports.length; i++) {
       //    var asset = exports[i];
       //    var symbolInfo = dictionary[asset.symbolId];
-      //    assert (symbolInfo);
+      //    release || assert (symbolInfo);
       //    loader._avm1Context.addAsset(asset.className, symbolInfo.props);
       //  }
       //}
@@ -347,7 +346,7 @@ module Shumway.AVM2.AS.flash.display {
       var frames = rootSymbol.frames;
       var frameIndex = frames.length;
 
-      var frame = new Timeline.Frame(loaderInfo, data.commands);
+      var frame = new Timeline.FrameDelta(loaderInfo, data.commands);
       var repeat = data.repeat;
       while (repeat--) {
         frames.push(frame);
@@ -363,17 +362,17 @@ module Shumway.AVM2.AS.flash.display {
             var scenes = data.sceneData.scenes;
             for (var i = 0, n = scenes.length; i < n; i++) {
               var sceneInfo = scenes[i];
-              var startFrame = sceneInfo.offset;
+              var offset = sceneInfo.offset;
               var endFrame = i < n - 1 ? scenes[i + 1].offset : rootSymbol.numFrames;
-              mc.addScene(sceneInfo.name, [], endFrame - startFrame);
+              mc.addScene(sceneInfo.name, [], offset, endFrame - offset);
             }
             var labels = data.sceneData.labels;
             for (var i = 0; i < labels.length; i++) {
               var labelInfo = labels[i];
-              mc.addFrameLabel(labelInfo.frame, labelInfo.name);
+              mc.addFrameLabel(labelInfo.name, labelInfo.frame + 1);
             }
           } else {
-            mc.addScene('Scene 1', [], rootSymbol.numFrames);
+            mc.addScene('Scene 1', [], 0, rootSymbol.numFrames);
           }
         }
 
@@ -390,7 +389,7 @@ module Shumway.AVM2.AS.flash.display {
 
       if (MovieClip.isType(root)) {
         if (data.labelName) {
-          (<MovieClip>root).addFrameLabel(frameIndex, data.labelName);
+          (<MovieClip>root).addFrameLabel(data.labelName, frameIndex + 1);
         }
 
         if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {

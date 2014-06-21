@@ -107,7 +107,7 @@ module Shumway.Player {
     }
 
     public load(url: string) {
-      assert (!this._loader, "Can't load twice.");
+      release || assert (!this._loader, "Can't load twice.");
       var self = this;
       var stage = this._stage = new flash.display.Stage();
       var loader = this._loader = flash.display.Loader.getRootLoader();
@@ -168,7 +168,9 @@ module Shumway.Player {
               this._isPageVisible = true;
               break;
             case FocusEventType.WindowBlur:
-              EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.DEACTIVATE));
+              // TODO: This is purposely disabled so that applications don't pause when their out of
+              // focus while the debugging window is open.
+              // EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.DEACTIVATE));
               this._hasFocus = false;
               break;
             case FocusEventType.WindowFocus:
@@ -284,7 +286,7 @@ module Shumway.Player {
     }
 
     private _leaveSyncLoop(): void {
-      assert (this._frameTimeout > -1);
+      release || assert (this._frameTimeout > -1);
       clearInterval(this._frameTimeout);
     }
 
@@ -319,7 +321,7 @@ module Shumway.Player {
     }
 
     private _leaveEventLoop(): void {
-      assert (this._frameTimeout > -1);
+      release || assert (this._frameTimeout > -1);
       clearInterval(this._frameTimeout);
       this._frameTimeout = -1;
     }
@@ -379,6 +381,10 @@ module Shumway.Player {
             if (nextSymbolIndex === symbols.length) {
               nextSymbolIndex = 0;
             }
+            if (playSymbolCountOption.value >= 0 &&
+                nextSymbolIndex > playSymbolCountOption.value) {
+              nextSymbolIndex = 0;
+            }
           }
           var frames = 1;
           if (symbol && symbol.id > 0) {
@@ -386,6 +392,9 @@ module Shumway.Player {
             if (symbol instanceof Shumway.Timeline.SpriteSymbol) {
               frames = (<Shumway.Timeline.SpriteSymbol>symbol).numFrames;
             }
+          }
+          if (playSymbolFrameDurationOption.value > 0) {
+            frames = playSymbolFrameDurationOption.value;
           }
           setTimeout(showNextSymbol, (1000 / frameRateOption.value) * frames);
         }

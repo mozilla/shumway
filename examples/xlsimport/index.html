@@ -110,7 +110,7 @@ limitations under the License.
     <script> console.timeEnd("Load SWF Dependencies"); </script>
 
     <script> console.time("Load SWF Parser"); </script>
-    <script src="../../build/ts/swf/parser/swfTag.js"></script>
+    <script src="../../build/ts/SWFTags.js"></script>
     <script src="../../build/ts/swf/parser/templates.js"></script>
     <script src="../../build/ts/swf/parser/handlers.js"></script>
     <script src="../../build/ts/swf/parser/parser.js"></script>
@@ -200,6 +200,10 @@ limitations under the License.
 
     <!-- Load Flash TS Dependencies -->
     <script> Shumway.Player.enterTimeline("Load Flash TS Dependencies"); </script>
+
+    <script src="../../build/ts/TextContent.js"></script>
+    <!-- DUP: <script src="../../build/ts/SWFTags.js"></script> -->
+
     <script src="../../build/ts/flash/geom/Matrix.js"></script>
     <script src="../../build/ts/flash/geom/PerspectiveProjection.js"></script>
     <script src="../../build/ts/flash/geom/ColorTransform.js"></script>
@@ -596,8 +600,6 @@ limitations under the License.
     <script src="../../build/ts/player/avmLoader.js"></script>
 
     <script src="../../build/ts/flash/linker.js"></script>
-
-    <script src="../../build/ts/TextContent.js"></script>
 
     <script> console.timeEnd("Load Player Dependencies"); </script>
 

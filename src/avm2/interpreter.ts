@@ -21,7 +21,6 @@ module Shumway.AVM2 {
   import asCoerceByMultiname = Shumway.AVM2.Runtime.asCoerceByMultiname;
   import asGetSlot = Shumway.AVM2.Runtime.asGetSlot;
   import asSetSlot = Shumway.AVM2.Runtime.asSetSlot;
-  import asHasNext2 = Shumway.AVM2.Runtime.asHasNext2;
   import asCoerce = Shumway.AVM2.Runtime.asCoerce;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import asAsType = Shumway.AVM2.Runtime.asAsType;
@@ -42,6 +41,7 @@ module Shumway.AVM2 {
   import construct = Shumway.AVM2.Runtime.construct;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import assert = Shumway.Debug.assert;
+  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
 
   var counter = Shumway.Metrics.Counter.instance;
 
@@ -111,7 +111,7 @@ module Shumway.AVM2 {
   export class Interpreter {
     public static interpretMethod($this, method, savedScope, methodArgs) {
       release || assert(method.analysis);
-      counter.count("Interpret Method");
+      countTimeline("Interpret Method");
       var abc = method.abc;
       var ints = abc.constantPool.ints;
       var uints = abc.constantPool.uints;
@@ -151,7 +151,7 @@ module Shumway.AVM2 {
       var bytecodes = method.analysis.bytecodes;
 
       var object, index, multiname, result, a, b, args = [], mn = Multiname.TEMPORARY;
-
+      var hasNext2Infos: HasNext2Info [] = [];
       interpretLabel:
       for (var pc = 0, end = bytecodes.length; pc < end; ) {
         try {
@@ -267,10 +267,15 @@ module Shumway.AVM2 {
             stack[stack.length - 1] = boxValue(stack[stack.length - 1]).asNextValue(index);
             break;
           case OP.hasnext2:
-            result = asHasNext2(locals[bc.object], locals[bc.index]);
-            locals[bc.object] = result.object;
-            locals[bc.index] = result.index;
-            stack.push(!!result.index);
+            var hasNext2Info = hasNext2Infos[pc] || (hasNext2Infos[pc] = new HasNext2Info(null, 0));
+            object = locals[bc.object];
+            index = locals[bc.index];
+            hasNext2Info.object = object;
+            hasNext2Info.index = index;
+            Object(object).asHasNext2(hasNext2Info);
+            locals[bc.object] = hasNext2Info.object;
+            locals[bc.index] = hasNext2Info.index;
+            stack.push(!!hasNext2Info.index);
             break;
           case OP.pushnull:
             stack.push(null);
