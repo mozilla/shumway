@@ -327,18 +327,19 @@ module Shumway.AVM2.AS.flash.display {
      */
     getObjectsUnderMouse(globalPoint: flash.geom.Point): flash.display.DisplayObject [] {
       var objectsUnderPoint: flash.display.DisplayObject [] = [];
-      this.visit(function (dispObj: flash.display.DisplayObject): VisitorFlags {
+      this.visit(function (displayObject: flash.display.DisplayObject): VisitorFlags {
         var isUnderMouse = false;
-        if (SimpleButton.isType(dispObj)) {
-          var hitTestState = (<SimpleButton>dispObj).hitTestState;
-          if (hitTestState) {
-            isUnderMouse = hitTestState.hitTestPoint(globalPoint.x, globalPoint.y, true);
+        if (SimpleButton.isType(displayObject)) {
+          var simpleButton = <SimpleButton>displayObject;
+          if (simpleButton.hitTestState) {
+            var point = simpleButton.globalToLocal(globalPoint).toTwips();
+            isUnderMouse = simpleButton.hitTestState._containsPoint(point, true, true);
           }
-        } else if (!Sprite.isType(dispObj) || !(<Sprite>dispObj).hitArea) {
-          isUnderMouse = dispObj.hitTestPoint(globalPoint.x, globalPoint.y, true, true);
+        } else if (!Sprite.isType(displayObject) || !(<Sprite>displayObject).hitArea) {
+          isUnderMouse = displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true, true);
         }
         if (isUnderMouse) {
-          objectsUnderPoint.push(dispObj);
+          objectsUnderPoint.push(displayObject);
         }
         return VisitorFlags.Continue;
       }, VisitorFlags.None);

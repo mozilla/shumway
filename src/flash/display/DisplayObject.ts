@@ -97,22 +97,27 @@ module Shumway.AVM2.AS.flash.display {
     InvalidMatrix                             = 0x0008,
 
     /**
+     * Display object has an invalid inverted matrix because its matrix has been mutated.
+     */
+    InvalidInvertedMatrix                     = 0x0010,
+
+    /**
      * Display object has an invalid concatenated matrix because its matrix or one of its ancestor's matrices has been mutated.
      */
-    InvalidConcatenatedMatrix                 = 0x0010,
+    InvalidConcatenatedMatrix                 = 0x0020,
 
     /**
      * Display object has an invalid inverted concatenated matrix because its matrix or one of its ancestor's matrices has been
      * mutated. We don't always need to compute the inverted matrix. This is why we use a sepearete invalid flag for it and don't
      * roll it under the |InvalidConcatenatedMatrix| flag.
      */
-    InvalidInvertedConcatenatedMatrix         = 0x0020,
+    InvalidInvertedConcatenatedMatrix         = 0x0040,
 
     /**
      * Display object has an invalid concatenated color transform because its color transform or one of its ancestor's color
      * transforms has been mutated.
      */
-    InvalidConcatenatedColorTransform         = 0x0040,
+    InvalidConcatenatedColorTransform         = 0x0080,
 
     /**
      * The display object's constructor has been executed or any of the derived class constructors have executed. It may be
@@ -311,6 +316,7 @@ module Shumway.AVM2.AS.flash.display {
       self._concatenatedMatrix = new geom.Matrix();
       self._invertedConcatenatedMatrix = new geom.Matrix();
       self._matrix = new geom.Matrix();
+      self._invertedMatrix = new geom.Matrix();
       self._matrix3D = null;
       self._colorTransform = new geom.ColorTransform();
       self._concatenatedColorTransform = new geom.ColorTransform();
@@ -536,6 +542,7 @@ module Shumway.AVM2.AS.flash.display {
      * are valid.
      */
     _matrix: flash.geom.Matrix;
+    _invertedMatrix: flash.geom.Matrix;
 
 
     _concatenatedMatrix: flash.geom.Matrix;
@@ -677,6 +684,14 @@ module Shumway.AVM2.AS.flash.display {
         this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       }
       return this._matrix;
+    }
+
+    _getInvertedMatrix() {
+      if (this._hasFlags(DisplayObjectFlags.InvalidInvertedMatrix)) {
+        this._getMatrix().invertInto(this._invertedMatrix);
+        this._removeFlags(DisplayObjectFlags.InvalidInvertedMatrix);
+      }
+      return this._invertedMatrix;
     }
 
     /**
@@ -827,7 +842,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _invalidateMatrix() {
       this._dirtyMatrix();
-      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._setFlags(DisplayObjectFlags.InvalidMatrix | DisplayObjectFlags.InvalidInvertedMatrix);
       if (this._parent) {
         this._parent._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
       }
@@ -905,6 +920,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._matrix.tx = value;
+      this._invertedMatrix.tx = -value;
       this._invalidatePosition();
       this._dirtyMatrix();
     }
@@ -920,6 +936,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._matrix.ty = value;
+      this._invertedMatrix.ty = -value;
       this._invalidatePosition();
       this._dirtyMatrix();
     }
@@ -1280,7 +1297,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     globalToLocal(point: flash.geom.Point): flash.geom.Point {
       var m = this._getInvertedConcatenatedMatrix();
-      var p = m.transformPointInPlace(point.clone().toTwips());
+      var p = m.transformPointInPlace(point.clone().toTwips()).round();
       return p.toPixels();
     }
 
@@ -1289,7 +1306,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     localToGlobal(point: flash.geom.Point): flash.geom.Point {
       var m = this._getConcatenatedMatrix();
-      var p = m.transformPointInPlace(point.clone().toTwips());
+      var p = m.transformPointInPlace(point.clone().toTwips()).round();
       return p.toPixels();
     }
 
@@ -1414,6 +1431,14 @@ module Shumway.AVM2.AS.flash.display {
       shapeFlag = !!shapeFlag;
       var point = new flash.geom.Point(x, y).toTwips();
       this._getInvertedConcatenatedMatrix().transformPointInPlace(point);
+      return this._containsPoint(point, shapeFlag, ignoreChildren);
+    }
+
+    /**
+     * Same as |hitTestPoint| but the point is in local coordinate space and in twips.
+     */
+    _containsPoint(point: flash.geom.Point, shapeFlag: boolean = false,
+                   ignoreChildren: boolean = false): boolean {
       if (!this._getContentBounds().contains(point.x, point.y)) {
         return false;
       }
@@ -1425,8 +1450,12 @@ module Shumway.AVM2.AS.flash.display {
        * testing the children. */
       if (!ignoreChildren && DisplayObjectContainer.isType(this)) {
         var children = (<DisplayObjectContainer>this)._children;
+        var childPoint = new geom.Point();
         for (var i = 0; i < children.length; i++) {
-          if (children[i].hitTestPoint(x, y, shapeFlag)) {
+          var child = children[i];
+          childPoint.copyFrom(point);
+          child._getInvertedMatrix().transformPointInPlace(childPoint);
+          if (child._containsPoint(childPoint, shapeFlag, ignoreChildren)) {
             return true;
           }
         }
@@ -1439,7 +1468,6 @@ module Shumway.AVM2.AS.flash.display {
       }
       return false;
     }
-
     get scrollRect(): flash.geom.Rectangle {
       return this._scrollRect ? this._scrollRect.clone() : null;
     }

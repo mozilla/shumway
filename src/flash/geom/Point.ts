@@ -133,6 +133,12 @@ module Shumway.AVM2.AS.flash.geom {
       return this;
     }
 
+    public round(): Point {
+      this.x = Math.round(this.x);
+      this.y = Math.round(this.y);
+      return this;
+    }
+
     public toString(): string {
       return "(x=" + this.x + ", y=" + this.y + ")";
     }
