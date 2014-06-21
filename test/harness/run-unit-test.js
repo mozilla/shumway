@@ -126,6 +126,7 @@ var executeUnitTests = function(avm2) {
 }
 
 var unitTests;
+var everFailed;
 var testFiles;
 function executeTestFile(testFile) {
   unitTests = [];
@@ -204,3 +205,6 @@ createAVM2(builtinPath, playerglobalInfo, EXECUTION_MODE.INTERPRET, EXECUTION_MO
 var flash = Shumway.AVM2.AS.flash;
 executeUnitTests(avm2);
 
+if (everFailed) {
+  quit(1);
+}

@@ -1,4 +1,5 @@
 function fail(message) {
+  everFailed = true;
   console.error(message);
 }
 
@@ -122,6 +123,7 @@ function failedLocation() {
  * makes it easy to disable test by pushing a zero in front.
  */
 var unitTests = [];
+var everFailed = false;
 
 var testNumber = 0;
 
