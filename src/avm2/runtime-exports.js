@@ -173,7 +173,6 @@ var makeMemoizer = Shumway.AVM2.Runtime.makeMemoizer;
 
 var createFunction = Shumway.AVM2.Runtime.createFunction;
 var ensureFunctionIsInitialized = Shumway.AVM2.Runtime.ensureFunctionIsInitialized;
-var getTraitFunction = Shumway.AVM2.Runtime.getTraitFunction;
 var createClass = Shumway.AVM2.Runtime.createClass;
 var sealConstantTraits = Shumway.AVM2.Runtime.sealConstantTraits;
 var applyType = Shumway.AVM2.Runtime.applyType;

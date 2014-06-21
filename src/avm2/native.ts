@@ -219,8 +219,6 @@ module Shumway.AVM2.AS {
     static native_hasOwnProperty: (V: string) => boolean;
     static native_propertyIsEnumerable: (V: string) => boolean;
     static setPropertyIsEnumerable: (V: string, enumerable: boolean) => boolean;
-    static native_toString: () => string;
-
 
     native_isPrototypeOf(V: Object): boolean {
       notImplemented("isPrototypeOf");
@@ -241,7 +239,10 @@ module Shumway.AVM2.AS {
       ASObject._setPropertyIsEnumerable(this, name, enumerable);
     }
 
-    native_toString(): string {
+    /**
+     * This is the top level Object.prototype.toString() function.
+     */
+    toString(): string {
       var self = boxValue(this);
       if (self instanceof ASClass) {
         var cls: ASClass = <any>self;
@@ -315,6 +316,9 @@ module Shumway.AVM2.AS {
       for (var i = 0; i < classes.length; i++) {
         var baseClassTraitsPrototype = classes[i].prototype;
         for (var property in baseClassTraitsPrototype) {
+          if (i > 0 && property === "toString") {
+            continue;
+          }
           if (hasOwnProperty(baseClassTraitsPrototype, property) &&
               !hasOwnProperty(traitsPrototype, property)) {
             var descriptor = Object.getOwnPropertyDescriptor(baseClassTraitsPrototype, property);
@@ -1621,13 +1625,27 @@ module Shumway.AVM2.AS {
   }
 
   /**
+   * These functions should never leak into the AS3 world.
+   */
+  var illegalAS3Functions = [
+    Runtime.forwardValueOf,
+    Runtime.forwardToString
+  ];
+
+  /**
    * Searches for a native property in a list of native holders.
    */
   export function getMethodOrAccessorNative(trait: Trait, natives: Object []): any {
     var name = escapeNativeName(Multiname.getName(trait.name));
+    log("getMethodOrAccessorNative(" + name + ")");
     for (var i = 0; i < natives.length; i++) {
       var native = natives[i];
       var fullName = name;
+      // Check for cases where the method has been patched, as could be the case for
+      // toString and valueOf.
+      if (hasOwnProperty(native, "original_" + name)) {
+        fullName = "original_" + name;
+      }
       // Because of name conflicts we need to prefix some names with "native_" sometimes,
       // check for that case here.
       if (!hasOwnProperty(native, name) && hasOwnProperty(native, "native_" + name)) {
@@ -1647,6 +1665,7 @@ module Shumway.AVM2.AS {
           value = native[fullName];
         }
         release || assert (value, "Method or Accessor property exists but it's undefined: " + trait);
+        release || assert (illegalAS3Functions.indexOf(value) < 0, "Leaking illegal function.");
         return value;
       }
     }
@@ -1984,7 +2003,7 @@ module Shumway.AVM2.AS {
    * Searchs for natives using a string path "a.b.c...".
    */
   export function getNative(path: string): Function {
-    log(path);
+    log("getNative(" + path + ")");
     var chain = path.split(".");
     var v = Natives;
     for (var i = 0, j = chain.length; i < j; i++) {
@@ -1996,6 +2015,7 @@ module Shumway.AVM2.AS {
     }
 
     release || assert(v, "getNative(" + path + ") not found.");
+    release || assert (illegalAS3Functions.indexOf(<any>v) < 0, "Leaking illegal function.");
     return <any>v;
   }
 

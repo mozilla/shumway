@@ -444,13 +444,29 @@ module Shumway.AVM2.Runtime {
     return self.asSetProperty(undefined, name, 0, value);
   }
 
-  var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF + ".apply(this, arguments)");
-  var forwardToString: () => string = <any>new Function("", 'return this.' + Multiname.TO_STRING + ".apply(this, arguments)");
+  export var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF + ".apply(this, arguments)");
+  export var forwardToString: () => string = <any>new Function("", 'return this.' + Multiname.TO_STRING + ".apply(this, arguments)");
 
+  /**
+   * Patches the |object|'s toString properties with a forwarder that calls the AS3 toString. We only do this when
+   * an AS3 object has the |toString| trait defined, or whenever the |toString| property is assigned to the object.
+   *
+   * Because native methods are linked lazily, if a class defines a native |toString| method we must make sure that
+   * we don't overwrite its template definition. If we do, then lose the template definition and also create a cycle,
+   * since we would be forwarding to ourselves.
+   *
+   * One way to solve this is to make sure that our template definitions don't live in the same objects as the ones
+   * we apply bindings too. This is a huge pain to change at this point.
+   *
+   * Instead, we save the original toString as original_toString and special case the property lookup it in the
+   * getNatve code in natives.ts.
+   */
   function tryInjectToStringAndValueOfForwarder(self: Object, resolved: string) {
     if (resolved === Multiname.VALUE_OF) {
+      (<any>self).original_valueOf = self.valueOf;
       self.valueOf = forwardValueOf;
     } else if (resolved === Multiname.TO_STRING) {
+      (<any>self).original_toString = self.toString;
       self.toString = forwardToString;
     }
   }
@@ -1637,7 +1653,7 @@ module Shumway.AVM2.Runtime {
   /**
    * Gets the function associated with a given trait.
    */
-  export function getTraitFunction(trait, scope, natives) {
+  export function getTraitFunction(trait: Trait, scope: Scope, natives: any) {
     release || assert(scope);
     release || assert(trait.isMethod() || trait.isGetter() || trait.isSetter());
 

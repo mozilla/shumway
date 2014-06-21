@@ -23,6 +23,7 @@ public dynamic class Object
   // E262 {ReadOnly, DontDelete, DontEnum }
   public static const length:int = 1
   protected static native function _setPropertyIsEnumerable(o, V:String, enumerable:Boolean):void
+
   AS3 native function isPrototypeOf(V=void 0):Boolean;
   AS3 native function hasOwnProperty(V=void 0):Boolean;
   AS3 native function propertyIsEnumerable(V=void 0):Boolean;
@@ -45,8 +46,8 @@ public dynamic class Object
     prototype.propertyIsEnumerable = unsafeJSNative("ASObject.prototype.native_propertyIsEnumerable");
     prototype.setPropertyIsEnumerable = unsafeJSNative("ASObject.prototype.setPropertyIsEnumerable")
     prototype.isPrototypeOf = unsafeJSNative("ASObject.prototype.native_isPrototypeOf")
-    prototype.toString = prototype.toLocaleString = unsafeJSNative("ASObject.prototype.native_toString");
-    prototype.valueOf = function() { return this; }
+    prototype.toString = prototype.toLocaleString = unsafeJSNative("ASObject.prototype.toString");
+    prototype.valueOf = prototype.toLocaleString = unsafeJSNative("ASObject.prototype.valueOf");
     _dontEnumPrototype(prototype);
   }
 }
