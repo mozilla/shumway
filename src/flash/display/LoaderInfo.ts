@@ -22,6 +22,8 @@ module Shumway.AVM2.AS.flash.display {
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
+  import AS2Context = Shumway.AVM1.AS2Context;
+
   export class LoaderInfo extends flash.events.EventDispatcher {
 
     // Called whenever the class is initialized.
@@ -65,6 +67,7 @@ module Shumway.AVM2.AS.flash.display {
       this._uncaughtErrorEvents = null;
       this._allowCodeExecution = true;
       this._dictionary = [];
+      this._avm1Context = null;
     }
 
     uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
@@ -104,6 +107,7 @@ module Shumway.AVM2.AS.flash.display {
     _allowCodeExecution: boolean;
 
     _dictionary: Shumway.Timeline.Symbol [];
+    _avm1Context: AS2Context;
 
     get loaderURL(): string {
       return this._loaderURL;

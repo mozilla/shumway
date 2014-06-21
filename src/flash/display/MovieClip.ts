@@ -321,6 +321,9 @@ module Shumway.AVM2.AS.flash.display {
           if (state && state.symbol) {
             var character = DisplayObject.createAnimatedDisplayObject(state, false);
             this.addChildAtDepth(character, state.depth);
+            if (state.symbol.isAS2Object) {
+              this._initAvm1Bindings(character, state);
+            }
           }
         }
       }

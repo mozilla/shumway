@@ -134,8 +134,8 @@ module Shumway.AVM2.AS.flash.display {
 
       this._contentLoaderInfo._loader = this;
 
-      this._avm1Promise = null;
-      this._avm1Context = null;
+      this._commitDataQueue = Promise.resolve();
+
       this._codeExecutionPromiseCapability = new PromiseCapability<void>();
     }
 
@@ -164,16 +164,21 @@ module Shumway.AVM2.AS.flash.display {
     private _worker: Worker;
     private _startPromise: any;
     private _lastPromise: any;
-    private _avm1Promise: any;
     private _loadStatus: LoadStatus;
 
-    private _avm1Context: AS2Context;
+    private _commitDataQueue: Promise<any>;
 
     _codeExecutionPromiseCapability: PromiseCapability<void>;
 
     private _commitData(data: any): void {
+      this._commitDataQueue = this._commitDataQueue.then(
+        this._commitQueuedData.bind(this, data));
+    }
+
+    private _commitQueuedData(data: any): Promise<any> {
       var loaderInfo = this._contentLoaderInfo;
       var command = data.command;
+      var suspendUntil: Promise<any> = null;
       switch (command) {
         case 'init':
           var info = data.result;
@@ -183,7 +188,7 @@ module Shumway.AVM2.AS.flash.display {
           loaderInfo._swfVersion = info.swfVersion;
           if (!info.fileAttributes || !info.fileAttributes.doAbc) {
             loaderInfo._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
-            this._initAvm1(loaderInfo);
+            suspendUntil = this._initAvm1(loaderInfo);
           }
           loaderInfo._frameRate = info.frameRate;
           var bbox = info.bbox;
@@ -250,16 +255,13 @@ module Shumway.AVM2.AS.flash.display {
           }
           break;
       }
+      return suspendUntil;
     }
 
-    private _initAvm1(loaderInfo: LoaderInfo): void {
-      var loader = this;
-      this._avm1Promise = loader._lastPromise.then(function () {
-        return AVM2.instance.loadAVM1();
-      }).then(function() {
-        loader._avm1Context = AS2Context.create(loaderInfo.swfVersion);
+    private _initAvm1(loaderInfo: LoaderInfo): Promise<any> {
+      return AVM2.instance.loadAVM1().then(function() {
+        loaderInfo._avm1Context = AS2Context.create(loaderInfo.swfVersion);
       });
-      this._lastPromise = this._avm1Promise;
     }
 
     private _commitAsset(data: any): void {
@@ -376,10 +378,9 @@ module Shumway.AVM2.AS.flash.display {
 
         if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
           this._initAvm1Root(root);
-          this._avm1Promise.then(this._codeExecutionPromiseCapability.resolve);
-        } else {
-          this._codeExecutionPromiseCapability.resolve(undefined);
         }
+
+        this._codeExecutionPromiseCapability.resolve(undefined);
 
         root._loaderInfo = loaderInfo;
         this._content = root;
@@ -424,28 +425,26 @@ module Shumway.AVM2.AS.flash.display {
         topRoot = parentLoader._content;
       }
 
-      this._avm1Promise.then(function () {
-        var avm1Context = this._avm1Context;
-        var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(topRoot);
-        avm1Context.globals.asSetPublicProperty('_root', as2Object);
-        avm1Context.globals.asSetPublicProperty('_level0', as2Object);
-        avm1Context.globals.asSetPublicProperty('_level1', as2Object);
+      var avm1Context = this._contentLoaderInfo._avm1Context;
+      var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(topRoot);
+      avm1Context.globals.asSetPublicProperty('_root', as2Object);
+      avm1Context.globals.asSetPublicProperty('_level0', as2Object);
+      avm1Context.globals.asSetPublicProperty('_level1', as2Object);
 
-        // transfer parameters
-        var parameters = this._contentLoaderInfo._parameters;
-        for (var paramName in parameters) {
-          if (!(paramName in as2Object)) { // not present yet
-            as2Object[paramName] = parameters[paramName];
-          }
+      // transfer parameters
+      var parameters = this._contentLoaderInfo._parameters;
+      for (var paramName in parameters) {
+        if (!(paramName in as2Object)) { // not present yet
+          as2Object[paramName] = parameters[paramName];
         }
-      }.bind(this));
+      }
     }
 
     private _executeAvm1Actions(root: flash.display.MovieClip, frameIndex: number, frameData: any) {
       var initActionBlocks: any[] = frameData.initActionBlocks;
       var actionBlocks: any[] = frameData.actionBlocks;
 
-      var loader = this;
+      var loaderInfo = this._contentLoaderInfo;
       if (initActionBlocks) {
         // HACK using symbol init actions as regular action blocks, the spec has a note
         // "DoAction tag is not the same as specifying them in a DoInitAction tag"
@@ -456,9 +455,9 @@ module Shumway.AVM2.AS.flash.display {
           root.addFrameScript(frameIndex, function(actionsData, spriteId, state) {
             if (state.executed) return;
             state.executed = true;
-            var avm1Context = loader._avm1Context;
+            var avm1Context = loaderInfo._avm1Context;
             var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(root);
-            return avm1Context.executeActions(actionsData, as2Object);
+            return avm1Context.executeActions(actionsData, root.stage, as2Object);
           }.bind(null, actionsData, spriteId, {executed: false}));
         }
       }
@@ -468,9 +467,9 @@ module Shumway.AVM2.AS.flash.display {
           var actionsData = new AVM1.AS2ActionsData(actionBlocks[i],
             'f' + frameIndex + 'i' + i);
           root.addFrameScript(frameIndex, function () {
-            var avm1Context = loader._avm1Context;
+            var avm1Context = loaderInfo._avm1Context;
             var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(root);
-            return avm1Context.executeActions(actionsData, as2Object);
+            return avm1Context.executeActions(actionsData, root.stage, as2Object);
           }.bind(null, actionsData));
         }
       }

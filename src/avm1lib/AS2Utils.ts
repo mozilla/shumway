@@ -127,6 +127,10 @@ module Shumway.AVM2.AS.avm1lib {
     if (display.MovieClip.isType(as3Object)) {
       return new AS2MovieClip(as3Object);
     }
-    notImplemented('Not impletemented');
+
+    // notImplemented('Not impletemented');
+    debugger;
+
+    return null;
   }
 }

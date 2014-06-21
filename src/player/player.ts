@@ -22,6 +22,7 @@ module Shumway.Player {
   import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
+  import avm1lib = Shumway.AVM2.AS.avm1lib;
   import IExternalInterfaceService = Shumway.IExternalInterfaceService;
 
   import Event = flash.events.Event;
@@ -118,6 +119,13 @@ module Shumway.Player {
       } else {
         var codeExecutionPromise = loader._codeExecutionPromiseCapability.promise;
         codeExecutionPromise.then(function () {
+          if (loaderInfo.actionScriptVersion === flash.display.ActionScriptVersion.ACTIONSCRIPT2) {
+            var AS2Key = (<any>avm1lib).AS2Key;
+            var AS2Mouse = (<any>avm1lib).AS2Mouse;
+            AS2Key.asCallPublicProperty('__bind', [stage]);
+            AS2Mouse.asCallPublicProperty('__bind', [stage]);
+          }
+
           var root = loader.content;
           stage.frameRate = loaderInfo.frameRate;
           stage.stageWidth = loaderInfo.width;
