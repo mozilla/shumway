@@ -455,21 +455,30 @@ module Shumway.AVM2.AS.flash.display {
       this._gotoFrame(frame, scene);
     }
 
-    addFrameScript(...args): void {
+    /**
+     * Takes pairs of `frameIndex`, `script` arguments and adds the `script`s to the `_frameScripts`
+     * Array.
+     *
+     * Undocumented method used to implement the old timeline concept in AS3.
+     */
+    addFrameScript(frameIndex: number, script: (any?)=>any /*, ...*/): void {
       if (!this._currentFrame) {
         return;
       }
       // arguments are pairs of frameIndex and script/function
       // frameIndex is in range 0..totalFrames-1
-      var numArgs = args.length;
+      var numArgs = arguments.length;
       if (numArgs & 1) {
         throwError('ArgumentError', Errors.TooFewArgumentsError, numArgs, numArgs + 1);
       }
       var frameScripts = this._frameScripts;
+      var totalFrames = this._totalFrames;
       for (var i = 0; i < numArgs; i += 2) {
-        var frameNum = args[i] + 1;
-        release || assert (frameNum > 0 && frameNum <= this._totalFrames, "Invalid frame number.");
-        var fn = args[i + 1];
+        var frameNum = (arguments[i]|0) + 1;
+        if (frameNum < 0 || frameNum >= totalFrames) {
+          continue;
+        }
+        var fn = arguments[i + 1];
         frameScripts[frameNum] = fn;
         if (frameNum === this._currentFrame) {
           MovieClip._callQueue.push(this);
