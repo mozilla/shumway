@@ -270,7 +270,6 @@ module Shumway.AVM2.AS.flash.display {
       self._displayObjectFlags = DisplayObjectFlags.Visible                            |
                                  DisplayObjectFlags.InvalidLineBounds                  |
                                  DisplayObjectFlags.InvalidFillBounds                  |
-                                 DisplayObjectFlags.InvalidMatrix                      |
                                  DisplayObjectFlags.InvalidConcatenatedMatrix          |
                                  DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
                                  DisplayObjectFlags.DirtyGraphics                      |
