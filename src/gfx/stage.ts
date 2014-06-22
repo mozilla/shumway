@@ -112,9 +112,10 @@ module Shumway.GFX {
 
     /**
      * Cheks to see if we should render and if so, clears any relevant dirty flags. Returns
-     * true if rendering should commence.
+     * true if rendering should commence. Flag clearing is made optional here in case there
+     * is any code that needs to check if rendering is about to happen.
      */
-    _prepareForRendering(): boolean {
+    _readyToRender(clearFlags = true): boolean {
       var options = this._options;
       if (options.disable) {
         return false;
@@ -122,7 +123,7 @@ module Shumway.GFX {
       var stage = this._stage;
       if (!options.forcePaint && !stage._hasFlags(FrameFlags.DirtyPaint)) {
         return false;
-      } else {
+      } else if (clearFlags) {
         stage.visit(function (frame: Frame): VisitorFlags {
           if (frame._hasFlags(FrameFlags.DirtyPaint)) {
             frame._toggleFlags(FrameFlags.DirtyPaint, false);
@@ -244,7 +245,7 @@ module Shumway.GFX {
     get source(): Renderable {
       return this._source;
     }
-    
+
     constructor(source: Renderable) {
       super();
       release || assert(source);

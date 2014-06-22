@@ -102,7 +102,7 @@ module Shumway.GFX {
      */
     private static _path: Frame[] = [];
 
-    /**
+    /*
      * Return's a list of ancestors excluding the |last|, the return list is reused.
      */
     private static _getAncestors(node: Frame, last: Frame = null): Frame [] {
@@ -143,12 +143,23 @@ module Shumway.GFX {
 
     _parent: Frame;
 
+    get parent(): Frame {
+      return this._parent;
+    }
+
     _smoothing: Smoothing;
     _pixelSnapping: PixelSnapping;
 
     public ignoreMaskAlpha: boolean;
 
+    private static _nextID: number = 0;
+    private _id: number;
+    get id(): number {
+      return this._id;
+    }
+
     constructor () {
+      this._id = Frame._nextID ++;
       this._flags = FrameFlags.DirtyPaint                         |
                     FrameFlags.InvalidBounds                      |
                     FrameFlags.InvalidConcatenatedMatrix          |

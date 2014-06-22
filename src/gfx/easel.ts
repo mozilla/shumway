@@ -258,6 +258,7 @@ module Shumway.GFX {
     private _mousePositionLabel: Label;
     private _frameInspectorProxy: FrameInspectorProxy;
     private _deferredResizeHandlerTimeout: number;
+    private _eventListeners: Shumway.Map<any []> = Shumway.ObjectUtilities.createEmptyObject();
 
     private _createToolbar(): Frame {
       var toolbar = new FrameContainer();
@@ -348,6 +349,26 @@ module Shumway.GFX {
       this._enterRenderLoop();
     }
 
+    /**
+     * Primitive event dispatching features.
+     */
+    addEventListener(type: string, listener) {
+      if (!this._eventListeners[type]) {
+        this._eventListeners[type] = [];
+      }
+      this._eventListeners[type].push(listener);
+    }
+
+    private _dispatchEvent(type: string) {
+      var listeners = this._eventListeners[type];
+      if (!listeners) {
+        return;
+      }
+      for (var i = 0; i < listeners.length; i++) {
+        listeners[i]();
+      }
+    }
+
     private _enterRenderLoop() {
       var self = this;
       requestAnimationFrame(function tick() {
@@ -363,6 +384,10 @@ module Shumway.GFX {
     private _render() {
       if (this.paused) {
         return;
+      }
+      var rendering = this._renderer._readyToRender(false);
+      if (rendering) {
+        this._dispatchEvent("render");
       }
       enterTimeline("Render");
       this._renderer.render();

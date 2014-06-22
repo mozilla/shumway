@@ -38,6 +38,7 @@
 /// <reference path='2d/2d.ts'/>
 /// <reference path='dom/dom.ts'/>
 /// <reference path='easel.ts'/>
+/// <reference path='debug/tree.ts'/>
 
 interface WebGLFramebuffer {
   texture: WebGLTexture;

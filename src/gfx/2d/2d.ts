@@ -90,7 +90,7 @@ module Shumway.GFX {
     }
 
     public render() {
-      if (!this._prepareForRendering()) {
+      if (!this._readyToRender()) {
         return;
       }
       var stage = this._stage;

@@ -68,6 +68,7 @@ module Shumway.Tools.Terminal {
     textColor = "#FFFFFF";
     selectionColor = "#96C9F3";
     selectionTextColor = "#000000";
+    ratio: number = 1;
     canvas: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
     fontSize: number;
@@ -235,12 +236,13 @@ module Shumway.Tools.Terminal {
       var devicePixelRatio = window.devicePixelRatio || 1;
       var backingStoreRatio = 1;
       if (devicePixelRatio !== backingStoreRatio) {
-        var ratio = devicePixelRatio / backingStoreRatio;
-        this.canvas.width = cw * ratio;
-        this.canvas.height = ch * ratio;
+        this.ratio = devicePixelRatio / backingStoreRatio;
+        this.canvas.width = cw * this.ratio;
+        this.canvas.height = ch * this.ratio;
         this.canvas.style.width = cw + 'px';
         this.canvas.style.height = ch + 'px';
       } else {
+        this.ratio = 1;
         this.canvas.width = cw;
         this.canvas.height = ch;
       }
@@ -273,6 +275,7 @@ module Shumway.Tools.Terminal {
       var lineRepeatMargin = lineTimeMargin + (this.showLineTime ? charSize * 8 : 2 * charSize);
       var lineMargin = lineRepeatMargin + charSize * 5;
       this.context.font = this.fontSize + 'px Consolas, "Liberation Mono", Courier, monospace';
+      this.context.setTransform(this.ratio, 0, 0, this.ratio, 0, 0);
 
       var w = this.canvas.width;
       var h = this.lineHeight;

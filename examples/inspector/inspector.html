@@ -28,7 +28,7 @@ limitations under the License.
       <div id="debugInfoToolbarTabs" class="toolbarButtonBar active">
         <div id="showAsset" class="toolbarButton" data-panelid="assetListContainer">Assets</div>
         <div id="showDebugInfo" class="toolbarButton" data-panelid="debugInfoContainer">Debug Info</div>
-        <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Display List</div>
+        <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Frame Tree</div>
         <div id="showSettings" class="toolbarButton pressedState" data-panelid="settingsContainer">Settings</div>
         <div id="showNothing" class="toolbarButton" data-panelid="none">×</div>
       </div>
@@ -47,6 +47,13 @@ limitations under the License.
         <canvas id="traceTerminal" tabindex='2'></canvas>
       </div>
       <div id="displayListContainer">
+        <div class="toolbarBox">
+          <div class="toolbarLabel"></div>
+          <div id="displayListButtons">
+            <div id="viewDisplayList" class="toolbarButton">Live View</div>
+          </div>
+        </div>
+          <canvas id="displayList" style="margin-top: 32px;"></canvas>
       </div>
       <div id="settingsContainer" class="active">
       </div>
@@ -139,6 +146,7 @@ limitations under the License.
     <script src="../../build/ts/gfx/gl/gl.js"></script>
     <script src="../../build/ts/gfx/gl/brush.js"></script>
     <script src="../../build/ts/gfx/2d/2d.js"></script>
+    <script src="../../build/ts/gfx/debug/tree.js"></script>
     <script src="../../build/ts/gfx/easel.js"></script>
     <!--<script src="../../build/ts/gfx/glTests.js"></script>-->
     <!--<script src="../../build/ts/gfx/shapes.js"></script>-->
@@ -700,6 +708,7 @@ limitations under the License.
     <script src="js/inspectorSettings.js"></script>
     <script src="js/inspectorLoader.js"></script>
     <script src="js/inspectorLogging.js"></script>
+    <script src="js/inspectorDisplayList.js"></script>
     <script src="js/inspectorMocks.js"></script>
     <script src="js/inspectorDebugging.js"></script> <!-- P -->
     <script src="js/unit.js"></script>

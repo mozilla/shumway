@@ -45,6 +45,7 @@ body.simple #stageContainer {
 }
 #profilerToolbar > .toolbarLabel {
 }
+
 #profilerButtons {
   display: inline-block;
   float: right;
@@ -332,6 +333,15 @@ body.hideDebugInfoPanels #profilerContainer {
   border-bottom: 1px solid #555;
 }
 
+#displayListButtons {
+  display: block;
+  float: left;
+  margin-left: 10px;
+}
+
+#displayListInnerContainer {
+  top: 32px;
+}
 
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   body {
@@ -340,7 +350,7 @@ body.hideDebugInfoPanels #profilerContainer {
 }
 
 @media only screen and (max-width: 2560px) {
-  #panelContainer { width: 800px; }
+  #panelContainer { width: 450px; }
 }
 
 @media only screen and (max-width: 1280px) {

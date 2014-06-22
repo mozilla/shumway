@@ -381,7 +381,7 @@ module Shumway.GFX.GL {
     }
 
     public render() {
-      if (!this._prepareForRendering()) {
+      if (!this._readyToRender()) {
         return;
       }
 
