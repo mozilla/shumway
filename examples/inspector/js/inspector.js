@@ -330,6 +330,7 @@ function togglePanelVisibility(id, visible) {
 function updateDisplayListTree() {
   //var displayList = new DisplayListTree();
   //displayList.update(swfController.stage, document.getElementById("displayListContainer"));
+  traceTerminal.resize();
 }
 
 var nativeGetContext = HTMLCanvasElement.prototype.getContext;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module Shumway.Tools.Profiler.Theme {
+module Shumway.Tools.Theme {
 
   export interface UITheme {
 

@@ -48,8 +48,8 @@ module.exports = function(grunt) {
       build_player_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/player/references.ts'
       },
-      build_profiler_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/tools/profiler/references.ts'
+      build_tools_ts: {
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/tools/references.ts'
       },
       build_avm1_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm1/references.ts'
@@ -127,9 +127,9 @@ module.exports = function(grunt) {
         		'src/player/**/*.ts'],
         tasks: ['exec:build_player_ts']
       },
-      profiler_ts: {
-        files: ['src/tools/profiler/**/*.ts'],
-        tasks: ['exec:build_profiler_ts']
+      tools_ts: {
+        files: ['src/tools/**/*.ts'],
+        tasks: ['exec:build_tools_ts']
       },
     }
   });
@@ -190,7 +190,7 @@ module.exports = function(grunt) {
   grunt.registerTask('watch-flash', ['exec:build_flash_ts', 'watch:flash_ts']);
   grunt.registerTask('watch-player', ['exec:build_player_ts', 'watch:player_ts']);
   grunt.registerTask('watch-gfx', ['exec:build_gfx_ts', 'watch:gfx_ts']);
-  grunt.registerTask('watch-profiler', ['exec:build_profiler_ts', 'watch:profiler_ts']);
+  grunt.registerTask('watch-tools', ['exec:build_tools_ts', 'watch:tools_ts']);
 
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
@@ -200,7 +200,7 @@ module.exports = function(grunt) {
   grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:shell_test']);
   grunt.registerTask('flash', ['exec:build_flash_ts', 'exec:shell_test']);
   grunt.registerTask('player', ['exec:build_player_ts', 'exec:shell_test']);
-  grunt.registerTask('profiler', ['exec:build_profiler_ts']);
+  grunt.registerTask('tools', ['exec:build_tools_ts']);
   grunt.registerTask('avm2', ['exec:build_avm2_ts', 'exec:shell_test']);
   grunt.registerTask('gfx', ['exec:build_gfx_ts']);
   grunt.registerTask('avm1', ['exec:build_avm1_ts', 'exec:shell_test']);

@@ -23,12 +23,6 @@ limitations under the License.
     <link rel="stylesheet" href="style/style.css">
   </head>
   <body>
-
-    <div id="stageContainer" tabindex='1'>
-      <div id="stageInnerContainer" tabindex='1'>
-        <div id="stage"></div>
-      </div>
-    </div>
     <div id="topToolbar" class="toolbarBox withEmphasis">
       <div class="toolbarLabel">Shumway Inspector <span id="message" class="toolbarMessage"></span></div>
       <div id="debugInfoToolbarTabs" class="toolbarButtonBar active">
@@ -40,46 +34,42 @@ limitations under the License.
       </div>
       <div id="openFile" class="toolbarButton" title="Select SWF/ABC file (or drag'n'drop the file on the stage).">Open File</div>
     </div>
-    <!--
-    <div id="fpsPanelContainer">
-      <canvas id="fpsCanvas"></canvas>
-    </div>
-    -->
-    <div id="assetListContainer">
-      <ul id="assetList"></ul>
-    </div>
-    <div id="debugInfoContainer">
-      <canvas id="traceTerminal" width="600" height="210" tabindex='2'></canvas>
-      <canvas id="frameTerminal" width="600" height="410" tabindex='3'></canvas>
-      <div id="info" class="debugPanel" tabindex='4'></div>
-    </div>
-    <div id="displayListContainer">
-    </div>
-    <div id="settingsContainer" class="active">
+
+    <div id="stageContainer" tabindex='1'>
+
     </div>
 
+    <div id="panelContainer">
+      <div id="assetListContainer">
+        <ul id="assetList"></ul>
+      </div>
+      <div id="debugInfoContainer">
+        <canvas id="traceTerminal" tabindex='2'></canvas>
+      </div>
+      <div id="displayListContainer">
+      </div>
+      <div id="settingsContainer" class="active">
+      </div>
+    </div>
     <div id="profilerContainer" class="collapsed">
-        <div id="profilerToolbar" class="toolbarBox">
-          <div class="toolbarLabel">Shumway Profiler <span id="profilerMessage" class="toolbarMessage">6 Seconds</span></div>
-          <div id="profilerMinimizeButton" class="toolbarIconButton icon-generic"></div>
-          <div id="profilerButtons">
-            <div class="toolbarButtonBar active">
-              <div id="profilerImport" class="toolbarButton">Import</div>
-              <div id="profilerExport" class="toolbarButton">Export</div>
-            </div>
-            <div id="profilerStartStop" class="toolbarButton">Start</div>
+      <div id="profilerToolbar" class="toolbarBox">
+        <div class="toolbarLabel">Shumway Profiler <span id="profilerMessage" class="toolbarMessage">6 Seconds</span></div>
+        <div id="profilerMinimizeButton" class="toolbarIconButton icon-generic"></div>
+        <div id="profilerButtons">
+          <div class="toolbarButtonBar active">
+            <div id="profilerImport" class="toolbarButton">Import</div>
+            <div id="profilerExport" class="toolbarButton">Export</div>
           </div>
+          <div id="profilerStartStop" class="toolbarButton">Start</div>
         </div>
-        <div id="profiler">
-          <div id="profileList">
-          </div>
-          <div id="profilePanel">
-          </div>
+      </div>
+      <div id="profiler">
+        <div id="profileList">
         </div>
+        <div id="profilePanel">
+        </div>
+      </div>
     </div>
-
-    <canvas id="frameTimeline" height="100" style="background-color: #333333; display: none"  tabindex='0'></canvas>
-
     <script>
       var requiredConsoleFunctions = ["profile", "profileEnd", "markTimeline",
         "time", "timeEnd"];
@@ -122,8 +112,10 @@ limitations under the License.
 
     <script src="../../build/ts/player/remoting.js"></script>
 
+    <script src="../../build/ts/tools/theme/ui.js"></script>
     <script src="../../build/ts/tools/profiler/timelineFrame.js"></script>
     <script src="../../build/ts/tools/profiler/timelineBuffer.js"></script>
+    <script src="../../build/ts/tools/terminal/terminal.js"></script>
 
     <script> console.timeEnd("Load Shared Dependencies"); </script>
 
@@ -260,6 +252,7 @@ limitations under the License.
     <!--<script src="../../build/ts/avm2/vm.js"></script>-->
     <script> Shumway.AVM2.leaveTimeline(); </script>
 
+    <script src="../../src/avm2/generated/builtin/builtin.abc.js"></script>
     <!-- Load AVM1 Dependencies -->
     <script> console.time("Load AVM1 Dependencies"); </script>
     <script src="../../build/ts/avm1/stream.js"></script>
@@ -694,13 +687,11 @@ limitations under the License.
     <script src="../../build/ts/tools/profiler/flameChart.js"></script>
     <script src="../../build/ts/tools/profiler/flameChartHeader.js"></script>
     <script src="../../build/ts/tools/profiler/flameChartOverview.js"></script>
-    <script src="../../build/ts/tools/profiler/theme/ui.js"></script>
 
     <input type="file" id="files" name="files[]" multiple style="visibility: hidden;" accept="application/x-shockwave-flash">
 
     <script src="js/classes/DisplayListTree.js"></script>
     <script src="js/classes/SWFController.js"></script>
-    <script src="js/classes/Terminal.js"></script>
     <script src="js/classes/DebugCanvas.js"></script>
     <script src="js/classes/classList.min.js"></script>
     <script src="js/classes/dat.gui.js"></script>

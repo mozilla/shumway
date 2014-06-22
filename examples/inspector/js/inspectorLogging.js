@@ -1,4 +1,4 @@
-var traceTerminal = new Terminal(document.getElementById("traceTerminal"));
+var traceTerminal = new Shumway.Tools.Terminal.Terminal(document.getElementById("traceTerminal"));
 traceTerminal.refreshEvery(100);
 
 function appendToTraceTerminal(str, color) {
@@ -41,19 +41,3 @@ if (state.logToDebugPanel) {
     appendToTraceTerminal([].join.call(arguments, " "), "#AA0000");
   };
 }
-
-var frameTerminal = new Terminal(document.getElementById("frameTerminal"));
-frameTerminal.refreshEvery(100);
-
-function appendToFrameTerminal(str, color) {
-  var scroll = frameTerminal.isScrolledToBottom();
-  frameTerminal.buffer.append(str, color);
-  if (scroll) {
-    frameTerminal.gotoLine(frameTerminal.buffer.length - 1);
-    frameTerminal.scrollIntoView();
-  }
-}
-
-Shumway.GFX.writer = new Shumway.IndentingWriter(false, function (str){
-  appendToFrameTerminal(str);
-});

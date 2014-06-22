@@ -11,7 +11,7 @@
 /// <reference path='flameChartHeader.ts' />
 /// <reference path='tracelogger/traceLogger.ts' />
 /// <reference path='tracelogger/thread.ts' />
-/// <reference path='theme/ui.ts' />
+/// <reference path='../theme/ui.ts' />
 
 interface MouseWheelEvent extends MouseEvent {
   deltaX: number;

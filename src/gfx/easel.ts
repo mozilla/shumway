@@ -1,4 +1,4 @@
-/// <reference path='references.ts'/>
+/// <eeference path='references.ts'/>
 module Shumway.GFX {
   import Point = Geometry.Point;
   import Matrix = Geometry.Matrix;
@@ -257,6 +257,7 @@ module Shumway.GFX {
 
     private _mousePositionLabel: Label;
     private _frameInspectorProxy: FrameInspectorProxy;
+    private _deferredResizeHandlerTimeout: number;
 
     private _createToolbar(): Frame {
       var toolbar = new FrameContainer();
@@ -293,7 +294,8 @@ module Shumway.GFX {
 
       this._canvas = canvas;
 
-      window.addEventListener('resize', this._resizeHandler.bind(this), false);
+      window.addEventListener('resize', this._deferredResizeHandler.bind(this), false);
+
       this._resizeHandler();
       switch (backend) {
         case Backend.Canvas2D:
@@ -391,22 +393,18 @@ module Shumway.GFX {
       return this._options;
     }
 
+    private _deferredResizeHandler() {
+      clearTimeout(this._deferredResizeHandlerTimeout);
+      this._deferredResizeHandlerTimeout = setTimeout(this._resizeHandler.bind(this), 1000);
+    }
+
     private _resizeHandler() {
       var parent = this._canvas.parentElement;
-      var cw = parent.offsetWidth;
-      var ch = parent.offsetHeight - 1;
+      var cw = parent.clientWidth;
+      var ch = parent.clientHeight - 1;
 
       var devicePixelRatio = window.devicePixelRatio || 1;
-      // devicePixelRatio = 1;
-
-//      var context = <any>this._context
       var backingStoreRatio = 1;
-//        context.webkitBackingStorePixelRatio ||
-//        context.mozBackingStorePixelRatio    ||
-//        context.msBackingStorePixelRatio     ||
-//        context.oBackingStorePixelRatio      ||
-//        context.backingStorePixelRatio       || 1;
-
       if (devicePixelRatio !== backingStoreRatio) {
         var ratio = devicePixelRatio / backingStoreRatio;
         this._canvas.width = cw * ratio;
@@ -420,7 +418,6 @@ module Shumway.GFX {
       }
       this._stage.w = this._canvas.width;
       this._stage.h = this._canvas.height;
-
       // this._context.font = 14 + 'px Consolas, "Liberation Mono", Courier, monospace';
       // this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
     }

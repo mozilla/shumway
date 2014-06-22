@@ -3,8 +3,7 @@ html {
 }
 
 body {
-  background-image: url(images/texture.png);
-  background-color: #1a2633;
+  background-color: #14171a;
 }
 
 *[hidden] {
@@ -34,7 +33,7 @@ body.simple #stageContainer {
 #profilerContainer {
   position: absolute;
   bottom: 0;
-  right: 300px;
+  right: 0;
   left: 0;
   width: auto;
   height: 332px;
@@ -126,40 +125,25 @@ body.simple #stageContainer {
   position: absolute;
   top: 32px;
   bottom: 32px;
-  left: 0;
-  right: 300px;
-  overflow: auto;
-  display: -webkit-box;
-  display: -moz-box;
-  display: -ms-flexbox;
-  display: -webkit-flex;
-  display: flex;
-  -webkit-flex-align: center;
-  -ms-flex-align: center;
-  -webkit-align-items: center;
-  align-items: center;
-}
-#stageInnerContainer {
-  -webkit-box-flex: 1 1 auto;
-  -moz-box-flex: 1 1 auto;
-  -webkit-flex: 1 1 auto;
-  -ms-flex: 1 1 auto;
-  flex: 1 1 auto;
-  text-align: center
-}
-#stage {
+  left: 0px;
+  right: 0px;
   display: inline-block;
 }
 
-#fpsPanelContainer {
-  display: none;
+#panelContainer {
+  display: block;
   position: absolute;
   top: 32px;
-  right: 300px;
-  left: 0;
-  height: 100px;
-  background-color: black;
-  border-bottom: 1px solid #666;
+  bottom: 32px;
+  right: 0;
+  width: 300px;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-left: 1px solid #666;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 #assetList {
@@ -200,16 +184,15 @@ body.simple #stageContainer {
 
 #assetListContainer.active, #debugInfoContainer.active, #displayListContainer.active, #settingsContainer.active {
   display: block;
-  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAJ0lEQVQYV2NkYGD4D8QoQElJCV2IgXEoKAQ6HMMz9+7dw/TMEFAIAB41Gv8t0rLDAAAAAElFTkSuQmCC) repeat;
+  background-color: rgba(0, 0, 0, 0.8);
 }
 
 #assetListContainer, #debugInfoContainer, #displayListContainer, #settingsContainer {
   display: none;
   position: absolute;
-  top: 32px;
+  width: 100%;
+  top: 0;
   bottom: 0;
-  right: 0;
-  width: 300px;
   overflow-y: auto;
   overflow-x: hidden;
   background-color: rgba(0, 0, 0, 0.2);
@@ -219,13 +202,16 @@ body.simple #stageContainer {
   box-sizing: border-box;
 }
 
+#debugInfoContainer {
+  overflow: hidden;
+}
 #debugInfoContainer > canvas {
   padding-bottom: 4px;
   border-bottom: 1px solid #666;
 }
 
 #settingsContainer > .dg.main {
-  width: 299px !important;
+  width: 100% !important;
 }
 #settingsContainer > .dg .property-name {
   width: 50%;
@@ -313,26 +299,13 @@ body.simple #stageContainer {
   display: block;
 }
 
-.debugPanel {
-  font-family: Consolas, Lucida Grande, sans-serif;
-  color: white;
-  opacity: 1;
-  font-size: 10px;
-  cursor: default;
-  line-height: 1.2em;
-  overflow-x: auto;
-}
-
 body.hideDebugInfoPanels #debugInfoContainer {
   display: none;
 }
-body.hideDebugInfoPanels #stageContainer {
-  right: 0;
-}
+
 body.hideDebugInfoPanels #profilerContainer {
   right: 0;
 }
-
 
 .profiler-tooltip {
     position: absolute;
@@ -366,13 +339,18 @@ body.hideDebugInfoPanels #profilerContainer {
   }
 }
 
+@media only screen and (max-width: 2560px) {
+  #panelContainer { width: 800px; }
+}
+
+@media only screen and (max-width: 1280px) {
+    #panelContainer { width: 350px; }
+}
+
 @media only screen and (max-width: 1024px) {
-  #stageContainer { right: 354px; }
-  #topToolbar, #fpsPanelContainer { right: 350px; }
-  #debugInfoContainer, #displayListContainer { width: 350px; }
+  #panelContainer { width: 250px; }
 }
 
 @media only screen and (max-width: 768px) {
-  #stageContainer, #topToolbar, #fpsPanelContainer { right: 0; }
-  #debugInfoContainer, #displayListContainer { display: none !important; }
+  #panelContainer { display: none !important; }
 }
