@@ -168,7 +168,7 @@ function executeFile(file, buffer, movieParams) {
 
         var easel = createEasel();
 
-        document.addEventListener('shumwayoptionschanged', function () {
+        document.addEventListener('shumwayOptionsChanged', function () {
           syncGFXOptions(easel.options);
           easel.stage.invalidatePaint();
         });

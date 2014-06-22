@@ -350,7 +350,7 @@ body.hideDebugInfoPanels #profilerContainer {
 }
 
 @media only screen and (max-width: 2560px) {
-  #panelContainer { width: 450px; }
+  #panelContainer { width: 550px; }
 }
 
 @media only screen and (max-width: 1280px) {

@@ -27,7 +27,8 @@ var stateDefaults = {
   profileStartupDuration: 10000,
   logToConsole: false,
   logToDebugPanel: true,
-  mute: false
+  mute: false,
+  release: false
 };
 
 for (var option in stateDefaults) {
@@ -36,9 +37,13 @@ for (var option in stateDefaults) {
   }
 }
 
+window.release = state.release;
+
 if (state.profileStartup && state.profileStartupDuration > 0) {
   profiler.start(state.profileStartupDuration);
 }
+
+
 
 function saveInspectorState() {
   Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
@@ -52,7 +57,7 @@ var GUI = (function () {
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
 
   var inspectorOptions = gui.addFolder("Inspector Options");
-  inspectorOptions.add(window, "release");
+  inspectorOptions.add(state, "release").onChange(saveInspectorOption);
   inspectorOptions.add(state, "logToConsole").onChange(saveInspectorOption);
   inspectorOptions.add(state, "logToDebugPanel").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
@@ -87,11 +92,14 @@ var GUI = (function () {
 
   function notifyOptionsChanged() {
     var event = document.createEvent('CustomEvent');
-    event.initCustomEvent('shumwayoptionschanged', false, false, null);
+    event.initCustomEvent('shumwayOptionsChanged', false, false, null);
     document.dispatchEvent(event);
   }
 
   function saveInspectorOption(value) {
+    if (this.property === "release") {
+      window.release = value;
+    }
     state[this.property] = value;
     saveInspectorState();
   }
