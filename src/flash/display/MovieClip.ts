@@ -75,6 +75,7 @@ module Shumway.AVM2.AS.flash.display {
 
     static initFrame(): void {
       var instances = MovieClip._movieClipInstances;
+      enterTimeline("MovieClip.initFrame", {instances: instances.length});
       for (var i = 0; i < instances.length; i++) {
         var instance = instances[i];
         if (instance._totalFrames > 1 && instance._hasFlags(DisplayObjectFlags.Constructed)) {
@@ -85,9 +86,11 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
+      leaveTimeline();
     }
 
     static constructFrame(ignoreFrameScripts?) {
+      enterTimeline("MovieClip.constructFrame");
       DisplayObjectContainer.constructChildren();
       DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
       var queue = MovieClip._callQueue;
@@ -104,6 +107,7 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
+      leaveTimeline("constructFrame");
     }
 
     constructor () {

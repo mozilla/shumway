@@ -302,12 +302,8 @@ module Shumway.Player {
         stage.scaleX = stage.scaleY = stageScaleOption.value;
         for (var i = 0; i < frameRateMultiplierOption.value; i++) {
           enterTimeline("eventLoop");
-          enterTimeline("initFrame");
           MovieClip.initFrame();
-          leaveTimeline("initFrame");
-          enterTimeline("constructFrame");
           MovieClip.constructFrame(playAllSymbolsOption.value);
-          leaveTimeline("constructFrame");
           Loader.progress();
           leaveTimeline("eventLoop");
         }

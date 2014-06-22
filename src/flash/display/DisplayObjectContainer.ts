@@ -50,10 +50,12 @@ module Shumway.AVM2.AS.flash.display {
      * children that were created in an earlier frame phase.
      */
     static constructChildren(): void {
-      var instances = DisplayObjectContainer._displayObjectContainerInstances;
+        var instances = DisplayObjectContainer._displayObjectContainerInstances;
+      enterTimeline("DisplayObjectContainer.constructChildren", {instances: instances.length});
       for (var i = 0; i < instances.length; i++) {
         instances[i]._constructChildren();
       }
+      leaveTimeline();
     }
 
     constructor () {

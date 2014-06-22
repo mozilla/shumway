@@ -320,16 +320,7 @@ function togglePanelVisibility(id, visible) {
   } else {
     document.body.classList.toggle("hideDebugInfoPanels", visible);
   }
-  if (_easel) {
-    _easel.resize();
-  }
   profiler.resize();
-}
-
-// TODO:
-function updateDisplayListTree() {
-  //var displayList = new DisplayListTree();
-  //displayList.update(swfController.stage, document.getElementById("displayListContainer"));
   traceTerminal.resize();
 }
 
