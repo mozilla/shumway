@@ -55,18 +55,22 @@ module Shumway.GFX {
       context.save();
       context.fillStyle = "white";
       var x = 0, y = 0;
-      var w = 6, h = 4, hPadding = 3, wColPadding = 8;
+      var w = 6, h = 2, hPadding = 1, wColPadding = 8;
       var colX = 0;
       var maxX = 0;
       function visit(frame: Frame) {
-        if (frame._hasFlags(FrameFlags.DirtyPaint)) {
+        var isFrameContainer = frame instanceof FrameContainer;
+        if (frame._hasFlags(FrameFlags.InvalidPaint)) {
           context.fillStyle = "red";
+        } else if (frame._hasFlags(FrameFlags.InvalidConcatenatedMatrix)) {
+          context.fillStyle = "blue";
         } else {
           context.fillStyle = "white";
         }
-        context.fillRect(x, y, w, h);
-        if (frame instanceof FrameContainer) {
-          x += w + 2;
+        var t = isFrameContainer ? 2 : w;
+        context.fillRect(x, y, t, h);
+        if (isFrameContainer) {
+          x += t + 2;
           maxX = Math.max(maxX, x + w);
           var frameContainer = <FrameContainer>frame;
           var children = frameContainer._children;
@@ -84,7 +88,7 @@ module Shumway.GFX {
               }
             }
           }
-          x -= w + 2;
+          x -= t + 2;
         }
       }
       visit(root);

@@ -37,7 +37,7 @@ module Shumway.GFX {
     IgnoreQuery                               = 0x0010,
 
     /**
-     * Frame has invalid bounds.
+     * Frame has invalid bounds because one of its children's bounds have been mutated.
      */
     InvalidBounds                             = 0x0020,
 
@@ -48,8 +48,8 @@ module Shumway.GFX {
 
     /**
      * Frame has an invalid inverted concatenated matrix because its matrix or one of its ancestor's matrices has been
-     * mutated. We don't always need to compute the inverted matrix. This is why we use a sepearete invalid flag for it and don't
-     * roll it under the |InvalidConcatenatedMatrix| flag.
+     * mutated. We don't always need to compute the inverted matrix. This is why we use a sepearete invalid flag for it
+     * and don't roll it under the |InvalidConcatenatedMatrix| flag.
      */
     InvalidInvertedConcatenatedMatrix         = 0x0080,
 
@@ -60,9 +60,9 @@ module Shumway.GFX {
     InvalidConcatenatedColorMatrix            = 0x0100,
 
     /**
-     * Frame has changed since the last time it was drawn.
+     * Frame has invalid contents and needs to be repainted, this bit is culled by the viewport.
      */
-    DirtyPaint                                = 0x0200,
+    InvalidPaint                              = 0x0200,
 
     EnterClip                                 = 0x1000,
     LeaveClip                                 = 0x2000
@@ -90,6 +90,16 @@ module Shumway.GFX {
                                   AllowClipWrite
   }
 
+  /**
+   * The |Frame| class is the base class for all nodes in the frame tree. Frames have several local and computed
+   * properties. Computed properties are evaluated lazily and cached locally. Invalid bits are used to mark
+   * computed properties as being invalid and may be cleared once these properties are re-evaluated.
+   *
+   * Capability flags are not yet implemented. The idea is to force some constraits on frames so that algorithms
+   * can run more effectively.
+   *
+   *
+   */
   export class Frame {
     /**
      * For debugging only.
@@ -160,11 +170,10 @@ module Shumway.GFX {
 
     constructor () {
       this._id = Frame._nextID ++;
-      this._flags = FrameFlags.DirtyPaint                         |
+      this._flags = FrameFlags.InvalidPaint                       |
                     FrameFlags.InvalidBounds                      |
                     FrameFlags.InvalidConcatenatedMatrix          |
                     FrameFlags.InvalidInvertedConcatenatedMatrix  |
-                    FrameFlags.InvalidConcatenatedMatrix          |
                     FrameFlags.InvalidConcatenatedColorMatrix;
 
       this._capability = FrameCapabilityFlags.AllowAllWrite;
@@ -304,10 +313,13 @@ module Shumway.GFX {
     }
 
     /**
-     * Marks this object as having been moved in its parent frame.
+     * Marks this frame as having been moved in its parent frame. This needs to be called whenever the position
+     * of a frame changes in the frame tree. For instance, its matrix has been mutated or it has been added or
+     * removed from a frame container.
      */
     _invalidatePosition() {
-      this._propagateFlags(FrameFlags.InvalidConcatenatedMatrix | FrameFlags.InvalidInvertedConcatenatedMatrix, Direction.Downward);
+      this._propagateFlags(FrameFlags.InvalidConcatenatedMatrix | FrameFlags.InvalidInvertedConcatenatedMatrix,
+                           Direction.Downward);
       if (this._parent) {
         this._parent._invalidateBounds();
       }
@@ -315,15 +327,15 @@ module Shumway.GFX {
     }
 
     /**
-     * Marks this object as needing to be repainted.
+     * Marks this frame as needing to be repainted.
      */
     public invalidatePaint() {
-      this._propagateFlags(FrameFlags.DirtyPaint, Direction.Upward);
+      this._propagateFlags(FrameFlags.InvalidPaint, Direction.Upward);
     }
 
     private _invalidateParentPaint() {
       if (this._parent) {
-        this._parent._propagateFlags(FrameFlags.DirtyPaint, Direction.Upward);
+        this._parent._propagateFlags(FrameFlags.InvalidPaint, Direction.Upward);
       }
     }
 
@@ -517,7 +529,7 @@ module Shumway.GFX {
       return this._concatenatedMatrix;
     }
 
-    public getInvertedConcatenatedMatrix(): Matrix {
+    private _getInvertedConcatenatedMatrix(): Matrix {
       if (this._hasFlags(FrameFlags.InvalidInvertedConcatenatedMatrix)) {
         if (!this._invertedConcatenatedMatrix) {
           this._invertedConcatenatedMatrix = Matrix.createIdentity();

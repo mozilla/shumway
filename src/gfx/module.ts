@@ -68,7 +68,7 @@ module Shumway.GFX {
     timelineBuffer && timelineBuffer.enter(name, data);
   }
 
-  export function leaveTimeline(name: string, data?: any) {
+  export function leaveTimeline(name?: string, data?: any) {
     timelineBuffer && timelineBuffer.leave(name, data);
   }
 

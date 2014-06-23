@@ -72,9 +72,7 @@ module Shumway.GFX {
 
   export class Canvas2DStageRenderer extends StageRenderer {
     _options: Canvas2DStageRendererOptions;
-    private _viewport: Rectangle;
     private _fillRule: string;
-
     context: CanvasRenderingContext2D;
     count = 0;
 

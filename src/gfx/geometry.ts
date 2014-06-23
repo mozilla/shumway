@@ -261,6 +261,8 @@ module Shumway.GFX.Geometry {
     w: number;
     h: number;
 
+    private static _temporary = Rectangle.createEmpty();
+
     constructor (x: number, y: number, w: number, h: number) {
       this.setElements(x, y, w, h);
     }
@@ -378,6 +380,16 @@ module Shumway.GFX.Geometry {
       var w = Math.min(this.x + this.w, other.x + other.w) - x;
       var h = Math.min(this.y + this.h, other.y + other.h) - y;
       return !(w <= 0 || h <= 0);
+    }
+
+    /**
+     * Tests if this rectangle intersects the AABB of the given rectangle.
+     */
+    intersectsTransformedAABB (other: Rectangle, matrix: Matrix): boolean {
+      var rectangle = Rectangle._temporary;
+      rectangle.set(other);
+      matrix.transformRectangleAABB(rectangle);
+      return this.intersects(rectangle);
     }
 
     intersectsTranslated (other: Rectangle, tx: number, ty: number): boolean {

@@ -29,7 +29,7 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
 
     static classSymbols: string [] = null;
-    static instanceSymbols: string [] = ["clone"];
+    static instanceSymbols: string [] = ["clone!"];
 
     static getInstance(type: string, bubbles: boolean = false, cancelable: boolean = false): Event {
       var instance = Event._instances[type];

@@ -101,6 +101,7 @@ module Shumway.GFX {
   }
 
   export class StageRenderer {
+    _viewport: Rectangle;
     _options: StageRendererOptions;
     _canvas: HTMLCanvasElement;
     _stage: Stage;
@@ -108,6 +109,11 @@ module Shumway.GFX {
       this._canvas = canvas;
       this._stage = stage;
       this._options = options;
+      this._viewport = Rectangle.createSquare(1024);
+    }
+
+    set viewport (viewport: Rectangle) {
+      this._viewport.set(viewport);
     }
 
     /**
@@ -121,17 +127,19 @@ module Shumway.GFX {
         return false;
       }
       var stage = this._stage;
-      if (!options.forcePaint && !stage._hasFlags(FrameFlags.DirtyPaint)) {
+      if (!options.forcePaint && !stage._hasFlags(FrameFlags.InvalidPaint)) {
         return false;
       } else if (clearFlags) {
+        enterTimeline("readyToRender");
         stage.visit(function (frame: Frame): VisitorFlags {
-          if (frame._hasFlags(FrameFlags.DirtyPaint)) {
-            frame._toggleFlags(FrameFlags.DirtyPaint, false);
+          if (frame._hasFlags(FrameFlags.InvalidPaint)) {
+            frame._toggleFlags(FrameFlags.InvalidPaint, false);
             return VisitorFlags.Continue;
           } else {
             return VisitorFlags.Skip;
           }
         });
+        leaveTimeline();
       }
       if (!options.forcePaint && options.disable) {
         return false;

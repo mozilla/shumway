@@ -92,7 +92,6 @@ module Shumway.GFX.GL {
   export class WebGLStageRenderer extends StageRenderer {
     _options: WebGLStageRendererOptions;
     context: WebGLContext;
-    private _viewport: Rectangle;
 
     private _brush: WebGLCombinedBrush;
     private _filterBrush: WebGLFilterBrush;
@@ -279,13 +278,21 @@ module Shumway.GFX.GL {
       root.visit(function (frame: Frame, matrix?: Matrix): VisitorFlags {
         depth += options.frameSpacing;
 
+        var bounds = frame.getBounds();
+
+        // Return early if the bounds are not within the viewport.
+        if (!viewport.intersectsTransformedAABB(bounds, matrix)) {
+          return VisitorFlags.Skip;
+        }
+
         var alpha = frame.getConcatenatedAlpha(root);
         if (!options.ignoreColorMatrix) {
           colorMatrix = frame.getConcatenatedColorMatrix();
         }
+
+
         if (frame instanceof FrameContainer) {
           if (frame instanceof ClipRectangle || options.paintBounds) {
-            var bounds = frame.getBounds();
             if (!frame.color) {
               frame.color = Color.randomColor(0.3);
             }
@@ -414,12 +421,14 @@ module Shumway.GFX.GL {
         viewport = Rectangle.createSquare(1024 * 8);
       }
 
+      enterTimeline("_renderFrame");
       this._renderFrame(stage, stage.matrix, brush, viewport, 0);
+      leaveTimeline();
 
       brush.flush(options.drawElements);
 
       if (options.paintViewport) {
-        brush.fillRectangle(viewport, new Color(1, 0, 0, 0.25), Matrix.createIdentity(), 0);
+        brush.fillRectangle(viewport, new Color(0.5, 0, 0, 0.25), Matrix.createIdentity(), 0);
         brush.flush();
       }
 

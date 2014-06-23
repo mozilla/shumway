@@ -8,6 +8,7 @@ module Shumway.GFX {
   import WebGLStageRenderer = Shumway.GFX.GL.WebGLStageRenderer;
   import WebGLStageRendererOptions = Shumway.GFX.GL.WebGLStageRendererOptions;
   import WebGLContext = Shumway.GFX.GL.WebGLContext;
+  import FPS = Shumway.Tools.Mini.FPS;
 
   declare var GUI;
 
@@ -89,6 +90,12 @@ module Shumway.GFX {
   class PersistentState extends State {
     private _keyCodes: boolean [] = [];
     private _paused: boolean = false;
+    private _mousePosition: Point = new Point(0, 0);
+
+    onMouseMove(easel: Easel, event: MouseEvent) {
+      this._mousePosition = easel.getMousePosition(event, null);
+    }
+
     onMouseDown(easel: Easel, event: MouseEvent) {
 
     }
@@ -119,6 +126,12 @@ module Shumway.GFX {
       easel.options.paintFlashing = this._keyCodes[70]; // F
       easel.options.paintViewport = this._keyCodes[86]; // V
       easel.paused = this._paused;
+      if (easel.options.paintViewport) {
+        var w = viewportLoupeDiameter.value, h = viewportLoupeDiameter.value;
+        easel.viewport = new Rectangle(this._mousePosition.x - w / 2, this._mousePosition.y - h / 2, w, h);
+      } else {
+        easel.viewport = null;
+      }
     }
   }
 
@@ -252,30 +265,16 @@ module Shumway.GFX {
     private _persistentState: State = new PersistentState();
 
     public paused: boolean = false;
+    public viewport: Rectangle = null;
+
     private _selection: FrameContainer;
     private _selectedFrames: Frame [] = [];
 
-    private _mousePositionLabel: Label;
     private _frameInspectorProxy: FrameInspectorProxy;
     private _deferredResizeHandlerTimeout: number;
     private _eventListeners: Shumway.Map<any []> = Shumway.ObjectUtilities.createEmptyObject();
-
-    private _createToolbar(): Frame {
-      var toolbar = new FrameContainer();
-      this._mousePositionLabel = new Label(256, 16);
-      this._mousePositionLabel.text = "Hello World";
-      var self = this;
-      toolbar.addChild(new Shape(new CustomRenderable(new Rectangle(0, 0, 1024, 32), function (context: CanvasRenderingContext2D) {
-        context.fillStyle = ColorStyle.Toolbars;
-        context.fillRect(0, 0, self._stage.w, 32);
-        this.isInvalid = false;
-      })));
-      var mousePositionLabelShape = toolbar.addChild(new Shape(this._mousePositionLabel));
-      mousePositionLabelShape.x = 4;
-      mousePositionLabelShape.y = 8;
-      toolbar.setCapability(FrameCapabilityFlags.AllowMatrixWrite, false, Direction.Downward);
-      return toolbar;
-    }
+    private _fpsCanvas: HTMLCanvasElement;
+    private _fps: FPS;
 
     constructor(canvas: HTMLCanvasElement, backend: Backend) {
       this._stage = new Stage(canvas.width, canvas.height, true);
@@ -283,17 +282,23 @@ module Shumway.GFX {
       this._worldViewOverlay = new FrameContainer();
       this._world = new FrameContainer();
       this._stage.addChild(this._worldView);
-      // this._worldView.addChild(new Shape(new Grid())).removeCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._worldView.addChild(this._world);
       this._worldView.addChild(this._worldViewOverlay);
       var screenOverlay = new FrameContainer();
-      screenOverlay.addChild(this._createToolbar());
-      // this._stage.addChild(screenOverlay);
-
-      this._selection = <FrameContainer>screenOverlay.addChild(new FrameContainer());
-      this._selection._setFlags(FrameFlags.IgnoreQuery);
 
       this._canvas = canvas;
+
+      var fpsCanvasContainer = document.createElement("div");
+      fpsCanvasContainer.style.position = "absolute";
+      fpsCanvasContainer.style.top = "0";
+      fpsCanvasContainer.style.width = "100%";
+      fpsCanvasContainer.style.height = "32px";
+      this._fpsCanvas = document.createElement("canvas");
+      fpsCanvasContainer.appendChild(this._fpsCanvas);
+      this._canvas.parentElement.appendChild(fpsCanvasContainer);
+      this._fps = new FPS(this._fpsCanvas);
+      this._selection = <FrameContainer>screenOverlay.addChild(new FrameContainer());
+      this._selection._setFlags(FrameFlags.IgnoreQuery);
 
       window.addEventListener('resize', this._deferredResizeHandler.bind(this), false);
 
@@ -323,8 +328,8 @@ module Shumway.GFX {
 
       window.addEventListener("mousemove", function (event) {
         var p = self.getMousePosition(event, self._world);
-        self._mousePositionLabel.text = "x: " + p.x + ", y: " + p.y;
         self._state.onMouseMove(self, event);
+        self._persistentState.onMouseMove(self, event);
       }, false);
 
       canvas.addEventListener("mousedown", function (event) {
@@ -385,6 +390,11 @@ module Shumway.GFX {
       if (this.paused) {
         return;
       }
+      if (this.viewport) {
+        this._renderer.viewport = this.viewport;
+      } else {
+        this._renderer.viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
+      }
       var rendering = this._renderer._readyToRender(false);
       if (rendering) {
         this._dispatchEvent("render");
@@ -392,6 +402,9 @@ module Shumway.GFX {
       enterTimeline("Render");
       this._renderer.render();
       leaveTimeline("Render");
+      if (rendering) {
+        this._fps.tickAndRender();
+      }
     }
 
     public render() {
@@ -443,8 +456,6 @@ module Shumway.GFX {
       }
       this._stage.w = this._canvas.width;
       this._stage.h = this._canvas.height;
-      // this._context.font = 14 + 'px Consolas, "Liberation Mono", Courier, monospace';
-      // this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
     }
 
     resize() {

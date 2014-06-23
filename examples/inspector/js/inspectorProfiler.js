@@ -34,6 +34,13 @@ var profiler = (function() {
     controller = new Shumway.Tools.Profiler.Controller(elProfilerPanel);
     elBtnMinimize.addEventListener("click", this._onMinimizeClick.bind(this));
     elBtnStartStop.addEventListener("click", this._onStartStopClick.bind(this));
+
+    var self = this;
+    window.addEventListener("keypress", function (event) {
+      if (event.keyCode === 114) { // R
+        self._onStartStopClick();
+      }
+    }, false);
   }
 
   Profiler.prototype.start = function(maxTime) {
@@ -106,15 +113,16 @@ function requestTimelineBuffers(cmd) {
   var buffersPromises = [];
   // TODO request timelineBuffers using postMessage (instead of IFramePlayer.Shumway)
 
-  if (typeof easelHost !== 'undefined') {
-    buffersPromises.push(easelHost.requestTimeline('AVM2', cmd));
-    buffersPromises.push(easelHost.requestTimeline('Player', cmd));
-    buffersPromises.push(easelHost.requestTimeline('SWF', cmd));
-  }
+
   if (cmd === 'clear') {
     Shumway.GFX.timelineBuffer.reset();
   } else {
     buffersPromises.push(Promise.resolve(Shumway.GFX.timelineBuffer));
+  }
+  if (typeof easelHost !== 'undefined') {
+    buffersPromises.push(easelHost.requestTimeline('AVM2', cmd));
+    buffersPromises.push(easelHost.requestTimeline('Player', cmd));
+    buffersPromises.push(easelHost.requestTimeline('SWF', cmd));
   }
 
   return Promise.all(buffersPromises).then(function (result) {

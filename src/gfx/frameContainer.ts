@@ -69,6 +69,7 @@ module Shumway.GFX {
       for (var i = 0; i < this._children.length; i++) {
         var child = this._children[i];
         if (child) {
+          child._invalidatePosition();
           // child.gatherPreviousDirtyRegions();
         }
       }

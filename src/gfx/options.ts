@@ -23,27 +23,13 @@ module Shumway.GFX {
   import shumwayOptions = Shumway.Settings.shumwayOptions;
 
   var rendererOptions = shumwayOptions.register(new OptionSet("Renderer Options"));
-  export var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
-  export var disableRendering = rendererOptions.register(new Option("drv", "disableRendering", "boolean", false, "disable rendering"));
-  export var disableMouse = rendererOptions.register(new Option("dmv", "disableMouse", "boolean", false, "disable mouse handling"));
-//  export var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
-  export var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
-  export var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
   export var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", true, "force hidpi"));
-  export var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", true, "skip frame when not on time"));
-  export var hud = rendererOptions.register(new Option("", "hud", "boolean", false, "show hud mode"));
-
+  export var hud = rendererOptions.register(new Option("", "hud", "boolean", true, "show hud mode"));
   export var imageUpdateOption = rendererOptions.register(new Option("", "imageUpdate", "boolean", true, "Enable image conversion."));
-
-  export var dummyAnimation = rendererOptions.register(new Option("", "dummy", "boolean", false, "show test balls animation"));
-
-//  export var enableConstructChildren = rendererOptions.register(new Option("", "constructChildren", "boolean", true, "Construct Children"));
-//  export var enableEnterFrame = rendererOptions.register(new Option("", "enterFrame", "boolean", true, "Enter Frame"));
-//  export var enableAdvanceFrame = rendererOptions.register(new Option("", "advanceFrame", "boolean", true, "Advance Frame"));
-
   export var stageOptions = shumwayOptions.register(new OptionSet("Stage Renderer Options"));
-
+  export var forcePaint = stageOptions.register(new Option("", "forcePaint", "boolean", false, "Force repainting."));
   export var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boolean", false, "Cull elements outside of the viewport."));
+  export var viewportLoupeDiameter = stageOptions.register(new Option("", "viewportLoupeDiameter", "number", 512, "Size of the viewport loupe.", {range: { min: 1, max: 1024, step: 1 }}));
   export var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTransform", "boolean", false, "Don't apply color transforms."));
   export var debugStage = stageOptions.register(new Option("", "debugStage", "boolean", false, "Debug Stage."));
   export var disableStage = stageOptions.register(new Option("", "disableStage", "boolean", false, "Disable Stage."));
