@@ -64,7 +64,6 @@ def main():
     compile_abc("builtin", ["builtin.as", "Math.as", "Error.as", "Date.as", "RegExp.as", "IDataInput.as", "IDataOutput.as", "ByteArray.as", "Proxy.as", "XML.as", "Dictionary.as"], configs=configs)
     compile_abc("shell", ["Capabilities.as", "Domain.as", "System.as"], deps=["builtin"], configs=configs)
     compile_abc("avmplus", ["avmplus.as"], deps=["builtin"], configs=configs)
-    compile_abc("avm1lib", ["AS2Utils.as", "AS2Broadcaster.as", "AS2MovieClip.as", "AS2Button.as", "AS2TextField.as", "AS2Key.as", "AS2Mouse.as", "AS2Stage.as", "AS2System.as", "AS2Color.as", "AS2Globals.as", "AS2MovieClipLoader.as"], deps=["builtin", "playerGlobal"], configs=configs)
 
 if __name__ == "__main__":
     main()

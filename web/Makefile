@@ -20,7 +20,7 @@ BUNDLE_DIR=../build/bundle
 EXTENSION_DIR=../build/firefox
 
 build: ensureoutputdir \
-       $(SHUMWAY_ROOT)/src/flash/playerglobal.abc
+       $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.abcs
 
 	cp -R $(SHUMWAY_ROOT)/LICENSE index.html main.css main.swf images $(BUILD_DIR)/
 	# Coping JavaScript content files
@@ -28,12 +28,12 @@ build: ensureoutputdir \
 	mkdir $(BUILD_DIR)/src/swf
 	cp $(SHUMWAY_ROOT)/src/swf/*.js $(BUILD_DIR)/src/swf/
 	mkdir $(BUILD_DIR)/src/flash
-	cp $(SHUMWAY_ROOT)/src/flash/*.js $(BUILD_DIR)/src/flash/
-	cp $(SHUMWAY_ROOT)/src/flash/playerglobal.abc $(BUILD_DIR)/src/flash/
+	cp $(SHUMWAY_ROOT)/src/flash/stubs.js $(BUILD_DIR)/src/flash/
+	cp $(SHUMWAY_ROOT)/src/flash/util.js $(BUILD_DIR)/src/flash/
+	mkdir $(BUILD_DIR)/src/avm1lib
+	cp $(SHUMWAY_ROOT)/src/avm1lib/*.js $(BUILD_DIR)/src/avm1lib/
 	mkdir $(BUILD_DIR)/src/flash/accessibility
 	cp $(SHUMWAY_ROOT)/src/flash/accessibility/*.js $(BUILD_DIR)/src/flash/accessibility/
-	mkdir $(BUILD_DIR)/src/flash/avm1lib
-	cp $(SHUMWAY_ROOT)/src/flash/avm1lib/*.js $(BUILD_DIR)/src/flash/avm1lib/
 	mkdir $(BUILD_DIR)/src/flash/display
 	cp $(SHUMWAY_ROOT)/src/flash/display/*.js $(BUILD_DIR)/src/flash/display/
 	mkdir $(BUILD_DIR)/src/flash/events
@@ -83,6 +83,11 @@ build: ensureoutputdir \
 	mkdir $(BUILD_DIR)/lib/stats
 	cp -R $(SHUMWAY_ROOT)/lib/stats/LICENSE $(BUILD_DIR)/lib/stats/
 	cp -R $(SHUMWAY_ROOT)/lib/stats/build $(BUILD_DIR)/lib/stats/
+	# playerglobals for the inspector
+	mkdir $(BUILD_DIR)/build
+	mkdir $(BUILD_DIR)/build/playerglobal
+	cp $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.json $(BUILD_DIR)/build/playerglobal/
+	cp $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.abcs $(BUILD_DIR)/build/playerglobal/
 	# Copy examples
 	cp -R $(SHUMWAY_ROOT)/examples $(BUILD_DIR)
 	# Copy build and iframe files
@@ -100,8 +105,8 @@ build: ensureoutputdir \
 	echo "Success gh-pages is created. To push:"
 	echo "  cd build/web; git push -f git@github.com:mozilla/shumway.git gh-pages"
 
-$(SHUMWAY_ROOT)/src/flash/playerglobal.abc:
-	make -C $(SHUMWAY_ROOT) build-playerglobal
+$(SHUMWAY_ROOT)/build/playerglobal/playerglobal.abcs:
+	make -C $(SHUMWAY_ROOT)/utils build-playerglobal
 
 ensureoutputdir: clean
 	-mkdir -p $(BUILD_DIR)

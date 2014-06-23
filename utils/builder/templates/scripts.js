@@ -29,8 +29,8 @@
 load($SHUMWAY_ROOT + "lib/DataView.js/DataView.js");
 load($SHUMWAY_ROOT + "lib/ByteArray.js");
 load($SHUMWAY_ROOT + "src/avm2/options.js");
-var Option = options.Option;
-var OptionSet = options.OptionSet;
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
 var coreOptions = new OptionSet("Core Options");
 
 load($SHUMWAY_ROOT + "src/swf/Timeline.js");
@@ -58,13 +58,25 @@ load($SHUMWAY_ROOT + "src/swf/resourceloader.js");
 load($SHUMWAY_ROOT + "src/avm1/stream.js");
 load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
+
+load($SHUMWAY_ROOT + "src/avm2/global.js");
+load($SHUMWAY_ROOT + "src/avm2/utilities.js");
+
+var assert = Shumway.Debug.assert;
+
 load($SHUMWAY_ROOT + "src/avm2/settings.js");
 load($SHUMWAY_ROOT + "src/avm2/avm2Util.js");
+load($SHUMWAY_ROOT + "src/avm2/options.js");
+
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
+
 load($SHUMWAY_ROOT + "src/avm2/metrics.js");
 
-var Counter = new metrics.Counter(true);
-var FrameCounter = new metrics.Counter(true);
-var Timer = metrics.Timer;
+var Timer = Shumway.Metrics.Timer;
+var Counter = new Shumway.Metrics.Counter(true);
+var FrameCounter = new Shumway.Metrics.Counter(true);
 var systemOptions = new OptionSet("System Options");
 var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
 var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
@@ -75,9 +87,33 @@ window.print = function(s) {
 
 load($SHUMWAY_ROOT + "src/avm2/constants.js");
 load($SHUMWAY_ROOT + "src/avm2/errors.js");
+
+var Errors = Shumway.AVM2.Errors;
+var getErrorMessage = Shumway.AVM2.getErrorMessage;
+var formatErrorMessage = Shumway.AVM2.formatErrorMessage;
+var translateErrorMessage = Shumway.AVM2.translateErrorMessage;
+
 load($SHUMWAY_ROOT + "src/avm2/opcodes.js");
+
+var opcodeTable = Shumway.AVM2.opcodeTable;
+var opcodeName = Shumway.AVM2.opcodeName;
+
 load($SHUMWAY_ROOT + "src/avm2/parser.js");
+
+var AbcFile = Shumway.AVM2.ABC.AbcFile;
+var AbcStream = Shumway.AVM2.ABC.AbcStream;
+var ConstantPool = Shumway.AVM2.ABC.ConstantPool;
+var ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+var MetaDataInfo = Shumway.AVM2.ABC.MetaDataInfo;
+var InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
+var ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+var Trait = Shumway.AVM2.ABC.Trait;
+var MethodInfo = Shumway.AVM2.ABC.MethodInfo;
+var Multiname = Shumway.AVM2.ABC.Multiname;
+var ASNamespace = Shumway.AVM2.ABC.Namespace;
+
 load($SHUMWAY_ROOT + "src/avm2/analyze.js");
+
 load($SHUMWAY_ROOT + "src/avm2/compiler/lljs/src/estransform.js");
 load($SHUMWAY_ROOT + "src/avm2/compiler/lljs/src/escodegen.js");
 load($SHUMWAY_ROOT + "src/avm2/compiler/inferrer.js");
@@ -86,25 +122,47 @@ load($SHUMWAY_ROOT + "src/avm2/compiler/builder.js");
 load($SHUMWAY_ROOT + "src/avm2/compiler/c4/looper.js");
 load($SHUMWAY_ROOT + "src/avm2/compiler/c4/transform.js");
 load($SHUMWAY_ROOT + "src/avm2/compiler/c4/backend.js");
+
+load($SHUMWAY_ROOT + "src/avm2/trampoline.js");
+load($SHUMWAY_ROOT + "src/avm2/bindings.js");
+load($SHUMWAY_ROOT + "src/avm2/scope.js");
+
+var playerglobalLoadedPromise;
+var playerglobal;
+
 load($SHUMWAY_ROOT + "src/avm2/domain.js");
+
+var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
+var AVM2 = Shumway.AVM2.Runtime.AVM2;
+var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+
 load($SHUMWAY_ROOT + "src/avm2/class.js");
+
+var Binding = Shumway.AVM2.Runtime.Binding;
+var Bindings = Shumway.AVM2.Runtime.Bindings;
+var ActivationBindings = Shumway.AVM2.Runtime.ActivationBindings;
+var CatchBindings = Shumway.AVM2.Runtime.CatchBindings;
+var ScriptBindings = Shumway.AVM2.Runtime.ScriptBindings;
+var ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
+var InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
+var Interface = Shumway.AVM2.Runtime.Interface;
+var Class = Shumway.AVM2.Runtime.Class;
+
 load($SHUMWAY_ROOT + "src/avm2/xregexp.js");
 load($SHUMWAY_ROOT + "src/avm2/runtime.js");
+load($SHUMWAY_ROOT + "src/avm2/runtime-exports.js");
 load($SHUMWAY_ROOT + "src/avm2/hacks.js");
 load($SHUMWAY_ROOT + "src/avm2/vectors-numeric.js");
 load($SHUMWAY_ROOT + "src/avm2/vectors-generic.js");
 load($SHUMWAY_ROOT + "src/avm2/array.js");
 load($SHUMWAY_ROOT + "src/avm2/xml.js");
-load($SHUMWAY_ROOT + "src/avm2/json2.js");
 load($SHUMWAY_ROOT + "src/avm2/amf.js");
 load($SHUMWAY_ROOT + "src/avm2/proxy.js");
 load($SHUMWAY_ROOT + "src/avm2/dictionary.js");
 load($SHUMWAY_ROOT + "src/avm2/native.js");
 load($SHUMWAY_ROOT + "src/avm2/disassembler.js");
 load($SHUMWAY_ROOT + "src/avm2/interpreter.js");
-load($SHUMWAY_ROOT + "src/avm2/vm.js");
 
-load($SHUMWAY_ROOT + "src/flash/playerglobal.js");  // this needs to come before avm2utils.js
 load($SHUMWAY_ROOT + "utils/builder/templates/avm2utils.js");
 
 // Manually add directories here, this doesn't get automatically updated by
@@ -122,6 +180,6 @@ load($SHUMWAY_ROOT + "src/flash/text");
 load($SHUMWAY_ROOT + "src/flash/ui");
 load($SHUMWAY_ROOT + "src/flash/utils");
 load($SHUMWAY_ROOT + "src/flash/accessibility");
-load($SHUMWAY_ROOT + "src/flash/avm1lib");
+load($SHUMWAY_ROOT + "src/avm1lib");
 
 load($SHUMWAY_ROOT + "src/flash/stubs.js");

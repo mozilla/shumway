@@ -24,18 +24,6 @@ var yt = getQueryVariable('yt');
 
 var swfController = new SWFController(timeline, pauseExecution);
 
-var libraryAbcs;
-var libraryScripts;
-function grabAbc(abcName) {
-  var entry = libraryScripts[abcName];
-  if (entry) {
-    var offset = entry.offset;
-    var length = entry.length;
-    return new AbcFile(new Uint8Array(libraryAbcs, offset, length), abcName);
-  }
-  return null
-}
-
 /** Global sanityTests array, sanity tests add themselves to this */
 var sanityTests = [];
 
@@ -61,16 +49,21 @@ function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) 
     avm2.builtinsLoaded = true;
     console.timeEnd("Execute builtin.abc");
 
-    new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
-      // If library is shell.abc, then just go ahead and run it now since
-      // it's not worth doing it lazily given that it is so small.
-      if (libraryPath === shellAbcPath) {
+    // If library is shell.abc, then just go ahead and run it now since
+    // it's not worth doing it lazily given that it is so small.
+    if (typeof libraryPath === 'string') {
+      new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
         avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
-      } else {
-        libraryAbcs = buffer;
-      }
-      next(avm2);
-    });
+        next(avm2);
+      });
+      return;
+    }
+
+    if (!AVM2.isPlayerglobalLoaded()) {
+      AVM2.loadPlayerglobal(libraryPath.abcs, libraryPath.catalog).then(function () {
+        next(avm2);
+      });
+    }
   });
 }
 
@@ -78,7 +71,12 @@ var avm2Root = "../../src/avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var shellAbcPath = avm2Root + "generated/shell/shell.abc";
 var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
-var playerGlobalAbcPath = "../../src/flash/playerglobal.abc";
+
+// different playerglobals can be used here
+var playerglobalInfo = {
+  abcs: "../../build/playerglobal/playerglobal.abcs",
+  catalog: "../../build/playerglobal/playerglobal.json"
+};
 
 function parseQueryString(qs) {
   if (!qs)
@@ -151,8 +149,7 @@ function executeFile(file, buffer, movieParams) {
       }
     });
   } else if (filename.endsWith(".swf")) {
-    libraryScripts = playerGlobalScripts;
-    createAVM2(builtinPath, playerGlobalAbcPath, avm1Path, sysMode, appMode, function (avm2) {
+    createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
         var swfURL = FileLoadingService.resolveUrl(file);
         var loaderURL = getQueryVariable("loaderURL") || swfURL;
@@ -182,8 +179,7 @@ function executeFile(file, buffer, movieParams) {
       }
     });
   } else if (filename.endsWith(".js") || filename.endsWith("/")) {
-    libraryScripts = playerGlobalScripts;
-    createAVM2(builtinPath, playerGlobalAbcPath, null, sysMode, appMode, function (avm2) {
+    createAVM2(builtinPath, playerglobalInfo, null, sysMode, appMode, function (avm2) {
       if (file.endsWith("/")) {
         readDirectoryListing(file, function (files) {
           function loadNextScript(done) {

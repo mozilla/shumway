@@ -109,7 +109,7 @@ var EventDispatcherDefinition = (function () {
               if (eventClass) {
                 event = new eventClass(event);
               } else {
-                if (event in mouseEvents) {
+                if (mouseEvents[event]) {
                   event = new flash.events.MouseEvent(event, mouseEvents[event]);
                   if (target._stage) {
                     event._localX = target.mouseX;
@@ -206,7 +206,7 @@ var EventDispatcherDefinition = (function () {
           if (item.handleEvent === listener) {
             queue.splice(i, 1);
             if (!queue.length) {
-              delete listeners[type];
+              listeners[type] = null;
             }
             return;
           }
@@ -217,7 +217,7 @@ var EventDispatcherDefinition = (function () {
       this._removeEventListenerImpl(type, listener, useCapture);
     },
     _hasEventListener: function hasEventListener(type) { // (type:String) -> Boolean
-      return type in this._listeners || type in this._captureListeners;
+      return this._listeners[type] || this._captureListeners[type];
     },
     _dispatchEvent: function dispatchEvent(event, eventClass, bubbles) {
       doDispatchEvent(this, event, eventClass, bubbles);
@@ -249,7 +249,7 @@ var EventDispatcherDefinition = (function () {
             return false;
           },
           dispatchEventFunction: function dispatchEventFunction(event) {
-            doDispatchEvent(this, event);
+            return doDispatchEvent(this, event);
           }
         }
       }

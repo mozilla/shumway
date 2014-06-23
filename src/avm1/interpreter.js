@@ -20,7 +20,7 @@
 
 var AVM1_TRACE_ENABLED = false;
 var AVM1_ERRORS_IGNORED = true;
-var MAX_AVM1_INSTRUCTIONS_LIMIT = 100000;
+var MAX_AVM1_HANG_TIMEOUT = 1000;
 var MAX_AVM1_ERRORS_LIMIT = 1000;
 var MAX_AVM1_STACK_LIMIT = 256;
 
@@ -39,7 +39,9 @@ function AS2Context(swfVersion) {
   this.globals = new avm1lib.AS2Globals(this);
   this.initialScope = new AS2ScopeListItem(this.globals, null);
   this.assets = {};
-  this.instructionsExecuted = 0;
+  this.isActive = false;
+  this.executionProhibited = false;
+  this.abortExecutionAt = 0;
   this.stackDepth = 0;
   this.isTryCatchListening = false;
   this.errorsIgnored = 0;
@@ -242,7 +244,8 @@ function as2ResolveProperty(obj, name) {
   var lowerCaseName = avm2PublicName.toLowerCase();
   for (var i in obj) {
     if (i.toLowerCase() === lowerCaseName) {
-      return i.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
+      notImplemented("FIX THIS");
+      // return i.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
     }
   }
   return null;
@@ -309,21 +312,32 @@ function as2CreatePrototypeProxy(obj) {
 }
 
 function executeActions(actionsData, context, scope) {
+  if (context.executionProhibited) {
+    return; // no more avm1 for this context
+  }
+
   var actionTracer = ActionTracerFactory.get();
 
   var scopeContainer = context.initialScope.create(scope);
   var savedContext = AS2Context.instance;
   try {
     AS2Context.instance = context;
+    context.isActive = true;
+    context.abortExecutionAt = Date.now() + MAX_AVM1_HANG_TIMEOUT;
+    context.errorsIgnored = 0;
     context.defaultTarget = scope;
     context.globals.asSetPublicProperty('this', scope);
     actionTracer.message('ActionScript Execution Starts');
     actionTracer.indent();
     interpretActions(actionsData, scopeContainer, null, []);
+  } catch (e) {
+    if (e instanceof AS2CriticalError) {
+      console.error('Disabling AVM1 execution');
+      context.executionProhibited = true;
+    }
+    throw e; // TODO shall we just ignore it?
   } finally {
-    context.instructionsExecuted = 0;
-    context.errorsIgnored = 0;
-
+    context.isActive = false;
     actionTracer.unindent();
     actionTracer.message('ActionScript Execution Stops');
     AS2Context.instance = savedContext;
@@ -455,12 +469,16 @@ function interpretActions(actionsData, scopeContainer,
       }
 
       var savedContext = AS2Context.instance;
-      var resetCounters;
+      var savedIsActive = currentContext.isActive;
       try
       {
         // switching contexts if called outside main thread
         AS2Context.instance = currentContext;
-        resetCounters = currentContext.instructionsExecuted === 0;
+        if (!savedIsActive) {
+          currentContext.abortExecutionAt = Date.now() + MAX_AVM1_HANG_TIMEOUT;
+          currentContext.errorsIgnored = 0;
+          currentContext.isActive = true;
+        }
         currentContext.defaultTarget = scope;
         actionTracer.indent();
         currentContext.stackDepth++;
@@ -470,10 +488,7 @@ function interpretActions(actionsData, scopeContainer,
         return interpretActions(actionsData, newScopeContainer,
           constantPool, registers);
       } finally {
-        if (resetCounters) {
-          currentContext.instructionsExecuted = 0;
-          currentContext.errorsIgnored = 0;
-        }
+        currentContext.isActive = savedIsActive;
         currentContext.stackDepth--;
         actionTracer.unindent();
         currentContext.defaultTarget = defaultTarget;
@@ -694,9 +709,12 @@ function interpretActions(actionsData, scopeContainer,
   while (stream.position < stream.end) {
     try {
 
+  var instructionsExecuted = 0;
+  var abortExecutionAt = currentContext.abortExecutionAt;
   while (stream.position < stream.end) {
-    if (currentContext.instructionsExecuted++ >= MAX_AVM1_INSTRUCTIONS_LIMIT) {
-      throw new AS2CriticalError('long running script -- AVM1 instruction limit is reached');
+    // let's check timeout every 100 instructions
+    if (instructionsExecuted++ % 100 === 0 && Date.now() >= abortExecutionAt) {
+      throw new AS2CriticalError('long running script -- AVM1 instruction hang timeout');
     }
 
     var actionCode = stream.readUI8();
@@ -926,21 +944,25 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x9A: // ActionGetURL2
         flags = stream.readUI8();
-        var httpMethod;
-        switch ((flags >> 6) & 3) {
-          case 1:
-            httpMethod = 'GET';
-            break;
-          case 2:
-            httpMethod  = 'POST';
-            break;
-        }
-        var loadMethod = !!(flags & 2) ?
-          (!!(flags & 1) ? _global.loadVariables : _global.loadMovie) :
-          (!!(flags & 1) ? _global.loadVariablesNum : _global.loadMovieNum);
         target = stack.pop();
         var url = stack.pop();
-        loadMethod.call(_global, url, target, httpMethod);
+        var sendVarsMethod;
+        if (flags & 1) {
+          sendVarsMethod = 'GET';
+        } else if (flags & 2) {
+          sendVarsMethod = 'POST';
+        }
+        var loadTargetFlag = flags & 1 << 6;
+        if (!loadTargetFlag) {
+          _global.getURL(url, target, sendVarsMethod);
+          break;
+        }
+        var loadVariablesFlag = flags & 1 << 7;
+        if (loadVariablesFlag) {
+          _global.loadVariables(url, target, sendVarsMethod);
+        } else {
+          _global.loadMovie(url, target, sendVarsMethod);
+        }
         break;
       case 0x9F: // ActionGotoFrame2
         flags = stream.readUI8();

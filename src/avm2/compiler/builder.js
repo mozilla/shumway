@@ -60,6 +60,12 @@ var createName = function createName(namespaces, name) {
   var writer = new IndentingWriter();
   var peepholeOptimizer = new IR.PeepholeOptimizer();
 
+  /**
+   * Use the 'typeof argument === "undefined" ? defaultValue : argument' pattern to
+   * check for undefined arguments instead of the more correct arguments.length version.
+   */
+  var USE_TYPE_OF_DEFAULT_ARGUMENT_CHECKING = false;
+
   var State = (function() {
     var nextID = 0;
     function constructor(index) {
@@ -226,8 +232,8 @@ var createName = function createName(namespaces, name) {
     return node;
   }
 
-  function info(message) {
-    console.info(message);
+  function warn(message) {
+    // console.warn(message);
   }
 
   function unary(operator, argument) {
@@ -303,7 +309,13 @@ var createName = function createName(namespaces, name) {
     return callPure(globalProperty("String"), null, [value]);
   }
 
-  var coerceString = callGlobalProperty.bind(null, "asCoerceString");
+  function coerceString(value) {
+    if (isStringConstant(value)) {
+      return value;
+    }
+    return callPure(globalProperty("asCoerceString"), null, [value]);
+  }
+
   var coerceObject = callGlobalProperty.bind(null, "asCoerceObject");
 
   var coercers = createEmptyObject();
@@ -357,7 +369,7 @@ var createName = function createName(namespaces, name) {
 
       /* Create the method's parameters. */
       for (var i = 0; i < parameterCount; i++) {
-        state.local.push(new Parameter(start, parameterIndexOffset + i, PARAMETER_PREFIX + mi.parameters[i].name));
+        state.local.push(new Parameter(start, parameterIndexOffset + i, mi.parameters[i].name));
       }
 
       /* Wipe out the method's remaining locals. */
@@ -389,7 +401,12 @@ var createName = function createName(namespaces, name) {
         var index = i + 1;
         var local = state.local[index];
         if (parameter.value !== undefined) {
-          var condition = new IR.Binary(Operator.LT, argumentsLength, constant(parameterIndexOffset + i + 1));
+          var condition;
+          if (USE_TYPE_OF_DEFAULT_ARGUMENT_CHECKING) {
+            condition = new IR.Binary(Operator.SEQ, new IR.Unary(Operator.TYPE_OF, local), constant("undefined"));
+          } else {
+            condition = new IR.Binary(Operator.LT, argumentsLength, constant(parameterIndexOffset + i + 1));
+          }
           local = new IR.Latch(null, condition, constant(parameter.value), local);
         }
         if (parameter.type && !parameter.type.isAnyName()) {
@@ -429,7 +446,7 @@ var createName = function createName(namespaces, name) {
         blocks[i].blockDominatorOrder = i;
       }
 
-      var worklist = new SortedList(function compare(a, b) {
+      var worklist = new Shumway.SortedList(function compare(a, b) {
         return a.block.blockDominatorOrder - b.block.blockDominatorOrder;
       });
 
@@ -574,6 +591,13 @@ var createName = function createName(namespaces, name) {
           return name;
         }
 
+        function getGlobalScope(ti) {
+          if (ti && ti.object) {
+            return constant(ti.object);
+          }
+          return new IR.ASGlobal(null, savedScope());
+        }
+
         function findProperty(multiname, strict, ti) {
           var slowPath = new IR.ASFindProperty(region, state.store, topScope(), multiname, domain, strict);
           if (ti) {
@@ -581,7 +605,7 @@ var createName = function createName(namespaces, name) {
               if (ti.object instanceof Global && !ti.object.isExecuting()) {
                 // If we find the property in a global whose script hasn't been executed yet
                 // we have to emit the slow path so it gets executed.
-                info("Can't optimize findProperty " + multiname + ", global object is not yet executed or executing.");
+                warn("Can't optimize findProperty " + multiname + ", global object is not yet executed or executing.");
                 return slowPath;
               }
               return constant(ti.object);
@@ -589,7 +613,7 @@ var createName = function createName(namespaces, name) {
               return getScopeObject(topScope(ti.scopeDepth));
             }
           }
-          info("Can't optimize findProperty " + multiname);
+          warn("Can't optimize findProperty " + multiname);
           return slowPath;
         }
 
@@ -643,7 +667,7 @@ var createName = function createName(namespaces, name) {
         function resolveMultinameGlobally(multiname) {
           var namespaces = multiname.namespaces;
           var name = multiname.name;
-          if (!globalMultinameAnalysis.value) {
+          if (!Shumway.AVM2.Runtime.globalMultinameAnalysis.value) {
             return;
           }
           if (!isConstant(namespaces) || !isConstant(name) || multiname.isAttribute()) {
@@ -684,6 +708,21 @@ var createName = function createName(namespaces, name) {
           return store(new IR.ASSetSuper(region, state.store, object, multiname, value, scope));
         }
 
+        function constructSuper(scope, object, args, ti) {
+          if (ti) {
+            if (ti.noCallSuperNeeded) {
+              return;
+            } else if (ti.baseClass) {
+              var callee = getJSProperty(constant(ti.baseClass), "instanceConstructorNoInitialize");
+              call(callee, object, args);
+              return;
+            }
+          }
+          callee = getJSProperty(scope, "object.baseClass.instanceConstructorNoInitialize");
+          call(callee, object, args);
+          return;
+        }
+
         function callProperty(object, multiname, args, isLex, ti) {
           if (ti && ti.trait) {
             if (ti.trait.isMethod()) {
@@ -714,7 +753,7 @@ var createName = function createName(namespaces, name) {
           return store(new IR.ASCallProperty(region, state.store, object, multiname, args, IR.Flags.PRISTINE, isLex));
         }
 
-        function getProperty(object, multiname, ti, getOpenMethod, ic) {
+        function getProperty(object, multiname, ti, getOpenMethod) {
           release || assert (multiname instanceof IR.ASMultiname);
           getOpenMethod = !!getOpenMethod;
           if (ti) {
@@ -733,7 +772,7 @@ var createName = function createName(namespaces, name) {
               return store(new IR.ASGetProperty(region, state.store, object, multiname, IR.Flags.INDEXED | (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
             }
           }
-          info("Can't optimize getProperty " + multiname);
+          warn("Can't optimize getProperty " + multiname);
           var qn = resolveMultinameGlobally(multiname);
           if (qn) {
             return store(new IR.ASGetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), IR.Flags.RESOLVED | (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
@@ -742,7 +781,7 @@ var createName = function createName(namespaces, name) {
           return store(new IR.ASGetProperty(region, state.store, object, multiname, (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
         }
 
-        function setProperty(object, multiname, value, ti, ic) {
+        function setProperty(object, multiname, value, ti) {
           release || assert (multiname instanceof IR.ASMultiname);
           if (ti) {
             if (ti.trait) {
@@ -761,7 +800,7 @@ var createName = function createName(namespaces, name) {
               return store(new IR.ASSetProperty(region, state.store, object, multiname, value, IR.Flags.INDEXED));
             }
           }
-          info("Can't optimize setProperty " + multiname);
+          warn("Can't optimize setProperty " + multiname);
           var qn = resolveMultinameGlobally(multiname);
           if (qn) {
             // TODO: return store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), value));
@@ -785,7 +824,7 @@ var createName = function createName(namespaces, name) {
               return store(new IR.GetProperty(region, state.store, object, constant(slotQn)));
             }
           }
-          info("Can't optimize getSlot " + index);
+          warn("Can't optimize getSlot " + index);
           return store(new IR.ASGetSlot(null, state.store, object, index));
         }
 
@@ -798,7 +837,7 @@ var createName = function createName(namespaces, name) {
               return;
             }
           }
-          info("Can't optimize setSlot " + index);
+          warn("Can't optimize setSlot " + index);
           store(new IR.ASSetSlot(region, state.store, object, index, value));
         }
 
@@ -968,7 +1007,7 @@ var createName = function createName(namespaces, name) {
               scope.pop();
               break;
             case 0x64: // OP_getglobalscope
-              push(new IR.ASGlobal(null, savedScope()));
+              push(getGlobalScope(bc.ti));
               break;
             case 0x65: // OP_getscopeobject
               push(getScopeObject(state.scope[bc.index]));
@@ -982,7 +1021,7 @@ var createName = function createName(namespaces, name) {
             case 0x66: // OP_getproperty
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(getProperty(object, multiname, bc.ti, false, ic(bc)));
+              push(getProperty(object, multiname, bc.ti, false));
               break;
             case 0x59: // OP_getdescendants
               multiname = buildMultiname(bc.index);
@@ -991,14 +1030,14 @@ var createName = function createName(namespaces, name) {
               break;
             case 0x60: // OP_getlex
               multiname = buildMultiname(bc.index);
-              push(getProperty(findProperty(multiname, true, bc.ti), multiname, bc.ti, false, ic(bc)));
+              push(getProperty(findProperty(multiname, true, bc.ti), multiname, bc.ti, false));
               break;
             case 0x68: // OP_initproperty
             case 0x61: // OP_setproperty
               value = pop();
               multiname = buildMultiname(bc.index);
               object = pop();
-              setProperty(object, multiname, value, bc.ti, ic(bc));
+              setProperty(object, multiname, value, bc.ti);
               break;
             case 0x6A: // OP_deleteproperty
               multiname = buildMultiname(bc.index);
@@ -1066,16 +1105,13 @@ var createName = function createName(namespaces, name) {
             case 0x49: // OP_constructsuper
               args = popMany(bc.argCount);
               object = pop();
-              if (!(bc.ti && bc.ti.noCallSuperNeeded)) {
-                callee = getJSProperty(savedScope(), "object.baseClass.instanceConstructorNoInitialize");
-                call(callee, object, args);
-              }
+              constructSuper(savedScope(), object, args, bc.ti);
               break;
             case 0x4A: // OP_constructprop
               args = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              callee = getProperty(object, multiname, bc.ti, false, ic(bc));
+              callee = getProperty(object, multiname, bc.ti, false);
               push(store(new IR.ASNew(region, state.store, callee, args)));
               break;
             case 0x80: // OP_coerce
@@ -1262,7 +1298,7 @@ var createName = function createName(namespaces, name) {
               left = pop();
               if (typesAreEqual(left, right)) {
                 operator = Operator.ADD;
-              } else if (useAsAdd) {
+              } else if (Shumway.AVM2.Runtime.useAsAdd) {
                 operator = Operator.AS_ADD;
               } else {
                 operator = Operator.ADD;
@@ -1483,7 +1519,7 @@ var createName = function createName(namespaces, name) {
     methodInfo.analysis.markLoops();
     Timer.stop();
 
-    if (enableVerifier.value) {
+    if (Shumway.AVM2.Runtime.enableVerifier.value) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
       Timer.start("Verify");
       verifier.verifyMethod(methodInfo, scope);

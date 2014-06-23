@@ -316,5 +316,26 @@
       "frames": [1],
       "swf": "/examples/textfield/align.swf",
       "type": "eq"
+    },
+    {  "id": "avm1 setInterval trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/setinterval/setinterval.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "avm1 setTimeout trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/settimeout/settimeout.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "avm1 loadVariables trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/loadvariables/loadvariables.swf"
+      ],
+      "type": "stas"
     }
 ]

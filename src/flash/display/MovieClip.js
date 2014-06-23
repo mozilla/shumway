@@ -190,7 +190,7 @@ var MovieClipDefinition = (function () {
             }
 
             if (nextCmd.blend) {
-              currentChild.blendMode = this._resolveBlendMode(nextCmd.blendMode);
+              currentChild._blendMode = this._resolveBlendMode(nextCmd.blendMode);
             }
           }
 
@@ -428,7 +428,7 @@ var MovieClipDefinition = (function () {
 
           if (sound.channel) {
             sound.channel.stop();
-            delete sound.channel;
+            sound.channel = null;
           }
           if (!info.stop) {
             // TODO envelope, in/out point

@@ -51,7 +51,7 @@ var LoaderDefinition = (function () {
       this._worker = null;
 
       var abc = AVM2.currentAbc();
-      if (abc) {
+      if (abc && abc.env.loader) {
         this._contentLoaderInfo._loaderURL = abc.env.loader._contentLoaderInfo._url;
       }
     },
@@ -72,6 +72,10 @@ var LoaderDefinition = (function () {
             }
           });
         });
+
+        // signal when we finish parsing, it's mostly to provide consistent testing results
+        this._contentLoaderInfo._dispatchEvent("parsed");
+
         Promise.all([frameConstructed, this._lastPromise]).then(function () {
           this._content._complete = true;
           this._contentLoaderInfo._dispatchEvent("complete");
@@ -480,7 +484,7 @@ var LoaderDefinition = (function () {
         loaderInfo._dispatchEvent("init");
       };
       img.src = URL.createObjectURL(imageInfo.data);
-      delete imageInfo.data;
+      imageInfo.data = null;
     },
     _commitSymbol: function (symbol) {
       var dictionary = this._dictionary;
@@ -800,8 +804,9 @@ var LoaderDefinition = (function () {
       loader._isAvm2Enabled = info.fileAttributes.doAbc;
       this._setup();
     },
-    _load: function (request, checkPolicyFile, applicationDomain,
-                     securityDomain, deblockingFilter)
+    _load: function (request, checkPolicyFile, applicationDomain, securityDomain,
+                     requestedContentParent, parameters, deblockingFilter, allowCodeImport,
+                     imageDecodingPolicy)
     {
       if (flash.net.URLRequest.class.isInstanceOf(request)) {
         this._contentLoaderInfo._url = request._url;
@@ -874,7 +879,13 @@ var LoaderDefinition = (function () {
         loader._vmPromise.resolve();
       };
       if (avm2.isAVM1Loaded) {
-        loaded();
+        if (AS2Context.instance) {
+          loader._avm1Context = AS2Context.instance;
+          loader._vmPromise.resolve();
+        } else {
+          assert(stage);
+          loaded();
+        }
       } else {
         avm2.isAVM1Loaded = true;
         avm2.loadAVM1(loaded);
@@ -898,8 +909,13 @@ var LoaderDefinition = (function () {
           return 0; //TODO: implement
         },
         _load: def._load,
-        _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain, requestedContentParent, parameters, deblockingFilter, allowLoadBytesCodeExecution, imageDecodingPolicy) { // (bytes:ByteArray, checkPolicyFile:Boolean, applicationDomain:ApplicationDomain, securityDomain:SecurityDomain, requestedContentParent:DisplayObjectContainer, parameters:Object, deblockingFilter:Number, allowLoadBytesCodeExecution:Boolean, imageDecodingPolicy:String) -> void
-          this._load(bytes.a, checkPolicyFile, applicationDomain, securityDomain);
+        _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain,
+                                        requestedContentParent, parameters, deblockingFilter,
+                                        allowLoadBytesCodeExecution, imageDecodingPolicy)
+        {
+          this._load(bytes.a, checkPolicyFile, applicationDomain, securityDomain,
+                     requestedContentParent, parameters, deblockingFilter,
+                     allowLoadBytesCodeExecution, imageDecodingPolicy);
         },
         _unload: function _unload(halt, gc) { // (halt:Boolean, gc:Boolean) -> void
           somewhatImplemented("Loader._unload, do we even need to do anything here?");

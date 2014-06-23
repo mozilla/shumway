@@ -29,7 +29,7 @@ function readTags(context, stream, swfVersion, final, onprogress, onexception) {
   var tag = null;
   if (context._readTag) {
     tag = context._readTag;
-    delete context._readTag;
+    context._readTag = null;
   }
 
   try {
@@ -162,7 +162,9 @@ function CompressedPipe(target, length) {
   this.length = length;
   this.initialize = true;
   this.buffer = new HeadTailBuffer(8096);
-  this.state = { bitBuffer: 0, bitLength : 0, compression: {} };
+  this.state = { bitBuffer: 0, bitLength : 0, compression: {
+    header: null, distanceTable: null, literalTable: null,
+    sym: null, len: null, sym2: null } };
   this.output = {
     data: new Uint8Array(length),
     available: 0,

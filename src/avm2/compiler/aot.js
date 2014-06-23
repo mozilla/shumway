@@ -15,72 +15,131 @@
  */
 
 /**
- * Throw away code, just used to debug the compiler for now.
+ * Examples:
+ *
+ * Compiling individual player globals abcs.
+ *
+ * find ~/Workspaces/Shumway/build/playerglobal/flash -name "*.abc" | xargs js avm.js -a -verify {} >> player.as.js
  */
 
+var hasUsedConstants = false;
+function objectConstantName2(object) {
+  release || assert(object);
+  if (object.hasOwnProperty(OBJECT_NAME)) {
+    return object[OBJECT_NAME];
+  }
+  if (object instanceof LazyInitializer) {
+    return object.getName();
+  } else if (object instanceof MethodInfo) {
+    return "$" + variableLengthEncodeInt32(object.abc.hash) + ".methods[" + object.index + "]";
+  }
+  hasUsedConstants = true;
+  return "X";
+}
+
+function compileAbc(abc, writer) {
+  // console.time("Compile ABC: " + abc.name);
+  writer.enter("{");
+  writer.enter("methods: {");
+  for (var i = 0; i < abc.scripts.length; i++) {
+    compileScript(abc.scripts[i], writer);
+  }
+  writer.leave("}");
+  writer.leave("}");
+  //console.timeEnd("Compile ABC: " + abc.name);
+}
+
 function compileScript(script, writer) {
+  objectConstantName = objectConstantName2;
+  var globalScope = new Scope(null, script);
+  var domain = script.abc.applicationDomain;
+  var closures = [];
+  compileMethod(script.init, writer, globalScope, closures);
   script.traits.forEach(function (trait) {
     if (trait.isClass()) {
-      compileClass(trait.classInfo, writer);
+      var inheritance = [];
+      var current = trait.classInfo;
+      while (current) {
+        inheritance.unshift(current);
+        if (current.instanceInfo.superName) {
+          current = domain.findClassInfo(current.instanceInfo.superName);
+        } else {
+          break;
+        }
+      }
+      var classScope = globalScope;
+      inheritance.forEach(function (classInfo) {
+        classScope = new Scope(classScope, classInfo);
+      });
+      compileClass(trait.classInfo, writer, classScope, closures);
     } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-      compileTrait(trait, writer);
+      compileTrait(trait, writer, globalScope, closures);
     }
+    closures.forEach(function(closure) {
+      compileMethod(closure.methodInfo, writer, closure.scope, null, true);
+    });
   });
 }
 
-function compileTrait(trait, writer) {
-  var traitName = Multiname.getQualifiedName(trait.name);
-  if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-    var methodInfo = trait.methodInfo;
-    if (shouldCompile(methodInfo)) {
-      ensureFunctionIsInitialized(methodInfo);
-      try {
-        var method = createCompiledFunction(methodInfo, new Scope(null, {}), false, false, false);
-        if (trait.isMethod()) {
-          writer.writeLn("get " + traitName + "() { return this." + VM_OPEN_METHOD_PREFIX + traitName + ".bind(this); },");
-        }
-        if (trait.isMethod()) {
-          writer.enter(VM_OPEN_METHOD_PREFIX + traitName + ": ");
-        } else if (trait.isGetter()) {
-          writer.enter("get_" + traitName + ": ");
-        } else if (trait.isSetter()) {
-          writer.enter("set_" + traitName + ": ");
-        }
+function compileMethod(methodInfo, writer, scope, closures, hasDynamicScope) {
+  if (canCompile(methodInfo)) {
+    ensureFunctionIsInitialized(methodInfo);
+    try {
+      hasUsedConstants = false;
+      var method = createCompiledFunction(methodInfo, scope, hasDynamicScope, false, false);
+      writer.enter(methodInfo.index + ": ");
+      if (!hasUsedConstants) {
         writer.writeLns(method.toSource());
-        writer.leave(",");
-      } catch (x) {
-
+      } else {
+        // writer.writeLns(method.toSource());
+        // quit();
+        writer.writeLn("undefined");
       }
+      writer.leave(",");
+      if (closures) {
+        scanMethod(methodInfo, writer, scope, closures);
+      }
+    } catch (x) {
+
     }
   }
 }
-
-function compileClass(classInfo, writer) {
-  function compileTraits(traits) {
-    traits.forEach(function (trait) {
-      compileTrait(trait, writer);
-    });
-  }
-
-  function compileInitializer(methodInfo) {
-    if (canCompile(methodInfo)) {
-      ensureFunctionIsInitialized(methodInfo);
-      var method = createCompiledFunction(methodInfo, new Scope(null, {}), false, false, false);
-      writer.enter("constructor:");
-      writer.writeLns(method.toSource());
-      writer.leave(", ");
+function scanMethod(methodInfo, writer, scope, innerMethods) {
+  // writer.enter("Scanning: " + methodInfo + " {");
+  var bytecodes = methodInfo.analysis.bytecodes;
+  var methods = methodInfo.abc.methods;
+  for (var i = 0; i < bytecodes.length; i++) {
+    var bc = bytecodes[i];
+    // writer.writeLn(bc);
+    if (bc.op === OP_newfunction) {
+      var innerMethodInfo = methods[bc.index];
+      ensureFunctionIsInitialized(innerMethodInfo);
+      var innerScope = new Scope(scope, methodInfo);
+      innerMethods.push({
+        scope: innerScope,
+        methodInfo: innerMethodInfo
+      });
+      scanMethod(innerMethodInfo, writer, innerScope, innerMethods);
     }
   }
+  // writer.leave("}");
+}
 
-  writer.enter(Multiname.getQualifiedName(classInfo.instanceInfo.name) + ": {");
+function compileTrait(trait, writer, scope, closures) {
+  if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+    compileMethod(trait.methodInfo, writer, scope, closures);
+  }
+}
 
-  writer.enter("static: {");
-  compileInitializer(classInfo.init);
-  compileTraits(classInfo.traits);
-  writer.leave("}, ");
-  writer.enter("instance: {");
-  compileInitializer(classInfo.instanceInfo.init);
-  compileTraits(classInfo.instanceInfo.traits);
-  writer.leave("}");
-  writer.leave("},");
+function compileTraits(traits, writer, scope, closures) {
+  traits.forEach(function (trait) {
+    compileTrait(trait, writer, scope, closures);
+  });
+}
+
+function compileClass(classInfo, writer, scope, closures) {
+  compileMethod(classInfo.init, writer, scope, closures);
+  compileTraits(classInfo.traits, writer, scope, closures);
+  compileMethod(classInfo.instanceInfo.init, writer, scope, closures);
+  compileTraits(classInfo.instanceInfo.traits, writer, scope, closures);
 }

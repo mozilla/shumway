@@ -47,15 +47,24 @@ console = {
  * Load Bare AVM2 Dependencies
  */
 
+
 load(homePath + "src/avm2/settings.js");
+load(homePath + "src/avm2/global.js");
+load(homePath + "src/avm2/utilities.js");
+
+var assert = Shumway.Debug.assert;
+
+
 load(homePath + "src/avm2/avm2Util.js");
 load(homePath + "src/avm2/options.js");
 
+var IndentingWriter = Shumway.IndentingWriter;
+
 var stdout = new IndentingWriter();
 
-var ArgumentParser = options.ArgumentParser;
-var Option = options.Option;
-var OptionSet = options.OptionSet;
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
 
 var argumentParser = new ArgumentParser();
 
@@ -65,22 +74,40 @@ var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean"
 var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
+var compile = shellOptions.register(new Option("c", "compile", "boolean", false, "compile"));
+var compileAll = shellOptions.register(new Option("ca", "compileAll", "boolean", false, "compile"));
+var compileBuiltins = shellOptions.register(new Option("cb", "compileBuiltins", "boolean", false, "compile"));
 var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "boolean", false, "always interpret"));
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
 
 load(homePath + "src/avm2/metrics.js");
-load(homePath + "src/avm2/domain.js")
 load(homePath + "src/avm2/constants.js");
 load(homePath + "src/avm2/opcodes.js");
 load(homePath + "src/avm2/parser.js");
+load(homePath + "src/avm2/domain.js");
+
+var AbcFile = Shumway.AVM2.ABC.AbcFile;
+var AbcStream = Shumway.AVM2.ABC.AbcStream;
+var ConstantPool = Shumway.AVM2.ABC.ConstantPool;
+var ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+var MetaDataInfo = Shumway.AVM2.ABC.MetaDataInfo;
+var InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
+var ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+var Trait = Shumway.AVM2.ABC.Trait;
+var MethodInfo = Shumway.AVM2.ABC.MethodInfo;
+var Multiname = Shumway.AVM2.ABC.Multiname;
+var ASNamespace = Shumway.AVM2.ABC.Namespace;
+var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+
+// var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
+var SecurityDomain = Shumway.AVM2.Runtime.SecurityDomain;
+
 load(homePath + "src/avm2/disassembler.js");
 
-
-var Timer = metrics.Timer;
-var Counter = new metrics.Counter();
-
+var Timer = Shumway.Metrics.Timer;
+var Counter = new Shumway.Metrics.Counter();
 
 argumentParser.addBoundOptionSet(systemOptions);
 
@@ -95,7 +122,6 @@ argumentParser.addArgument("h", "help", "boolean", {parse: function (x) {
 argumentParser.addArgument("to", "traceOptions", "boolean", {parse: function (x) {
   systemOptions.trace(stdout);
 }});
-
 
 var argv = [];
 var files = [];
@@ -144,7 +170,8 @@ function timeIt(fn, message, count) {
   print("Measure: " + message + " Count: " + count + " Elapsed: " + elapsed.toFixed(4) + " (" + (elapsed / count).toFixed(4) + ") (" + Math.pow(product, (1 / count)).toFixed(4) + ")");
 }
 
-var abcFiles = [];
+var abcBuffers = [];
+
 var self = {};
 var SWF;
 for (var f = 0; f < files.length; f++) {
@@ -174,51 +201,61 @@ for (var f = 0; f < files.length; f++) {
       load(homePath + "src/swf/shape.js");
       load(homePath + "src/swf/text.js");
     }
-    print("Processing; " + file);
     SWF.parse(snarf(file, "binary"), {
       oncomplete: function(result) {
         var tags = result.tags;
+        var abcs = []; // Group SWF ABCs in their own array.
         for (var i = 0, n = tags.length; i < n; i++) {
           var tag = tags[i];
           if (tag.code === SWF_TAG_CODE_DO_ABC) {
-            abcFiles.push(tag.data);
+            abcs.push(tag.data);
           }
         }
+        abcBuffers.push(abcs);
       }
     });
   } else {
     release || assert(file.endsWith(".abc"));
-    abcFiles.push(file);
+    abcBuffers.push([snarf(file, "binary")]);
   }
 }
 
-function grabAbc(fileOrBuffer) {
-  if (isString(fileOrBuffer)) {
-    return new AbcFile(snarf(fileOrBuffer, "binary"), fileOrBuffer);
-  } else {
-    var buffer = new Uint8Array(fileOrBuffer); // Copy into local compartment.
-    return new AbcFile(buffer, fileOrBuffer);
-  }
+function grabAbc(buffer) {
+  var localBuffer = new Uint8Array(buffer); // Copy into local compartment.
+  return new AbcFile(localBuffer);
 }
 
-if (execute.value) {
+if (execute.value || compile.value || compileAll.value || compileBuiltins.value) {
   if (false) {
     timeIt(function () {
       runVM();
-    }, "Create Compartment", 5);
+    }, "Create Compartment", 10);
   } else {
     runVM();
   }
-
 } else if (disassemble.value) {
-  abcFiles.map(function (abcFile) {
-    return grabAbc(abcFile);
-  }).forEach(function (abc) {
+  grabAbcs(abcBuffers).forEach(function (abcArray) {
+    abcArray.forEach(function (abc) {
       abc.trace(stdout);
     });
+  });
 }
 
-var securityDomains = [];
+function grabAbcs(abcBuffers) {
+  return abcBuffers.map(function (abcBuffer) {
+    return abcBuffer.map(function (abcBuffer) {
+      return grabAbc(abcBuffer);
+    });
+  });
+}
+
+function grabAbcsInCompartment(compartment, abcBuffers) {
+  return abcBuffers.map(function (abcBuffer) {
+    return abcBuffer.map(function (abcBuffer) {
+      return compartment.grabAbc(abcBuffer);
+    });
+  });
+}
 
 function runVM() {
   var securityDomain = new SecurityDomain();
@@ -229,17 +266,42 @@ function runVM() {
   var sysMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
   var appMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
   securityDomain.initializeShell(sysMode, appMode);
-  runAbcs(securityDomain, abcFiles.map(function (abcFile) {
-    return securityDomain.compartment.grabAbc(abcFile);
-  }));
+  runAbcs(securityDomain, grabAbcsInCompartment(securityDomain.compartment, abcBuffers));
+  return securityDomain;
 }
 
-function runAbcs(securityDomain, abcs) {
-  for (var i = 0; i < abcs.length; i++) {
-    if (i < files.lenth - 1) {
-      securityDomain.applicationDomain.loadAbc(abcs[i]);
-    } else {
-      securityDomain.applicationDomain.executeAbc(abcs[i]);
+function runAbcs(securityDomain, abcArrays) {
+  var writer = new IndentingWriter();
+  var compileQueue = [];
+  for (var i = 0; i < abcArrays.length; i++) {
+    var abcArray = abcArrays[i];
+    for (var j = 0; j < abcArray.length; j++) {
+      var abc = abcArray[j];
+      if (compileAll.value) {
+        securityDomain.applicationDomain.loadAbc(abc, writer);
+        compileQueue.push(abc);
+      } else if (i < abcArrays.length - 1) {
+        securityDomain.applicationDomain.loadAbc(abc);
+      } else if (compile.value) {
+        compileQueue.push(abc);
+      } else {
+        securityDomain.applicationDomain.executeAbc(abc);
+      }
     }
   }
+  if (compileBuiltins.value) {
+    securityDomain.systemDomain.abcs.forEach(function (abc) {
+      writer.writeLn("// " + abc.name);
+      writer.enter("CC[" + abc.hash + "] = ");
+      securityDomain.systemDomain.compileAbc(abc, writer);
+      writer.leave(";");
+    });
+  }
+
+  compileQueue.forEach(function (abc) {
+    writer.writeLn("// " + abc.name);
+    writer.enter("CC[" + abc.hash + "] = ");
+    securityDomain.applicationDomain.compileAbc(abc, writer);
+    writer.leave(";");
+  });
 }

@@ -210,7 +210,7 @@ function debugBreak(message) {
   print("\033[91mdebugBreak: " + message + "\033[0m");
 }
 
-var ASNamespace;
+var NativeASNamespace;
 
 var natives = (function () {
 
@@ -225,10 +225,6 @@ var natives = (function () {
 
     c.native = {
       instance: {
-        length: {
-          get: function() { return this.length; },
-          set: function(l) { this.length = l; }
-        },
         isPrototypeOf: Object.prototype.isPrototypeOf,
         hasOwnProperty: function (name) {
           if (name === undefined) {
@@ -348,7 +344,7 @@ var natives = (function () {
           get: function () {
             // Check if we're getting the length of a trampoline.
             if (this.hasOwnProperty(VM_LENGTH)) {
-              return this[VM_LENGTH];
+              return this.asLength;
             }
             return this.length;
           }
@@ -368,6 +364,18 @@ var natives = (function () {
     };
     return c;
   }
+
+  function MethodClosure($this, fn) {
+    var bound = bindSafely(fn, $this);
+    defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
+    defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
+  }
+
+  MethodClosure.prototype = {
+    toString: function () {
+      return "function Function() {}";
+    }
+  };
 
   function MethodClosureClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("MethodClosure", MethodClosure);
@@ -821,7 +829,7 @@ var natives = (function () {
    * Namespace.as
    */
   function NamespaceClass(runtime, scope, instanceConstructor, baseClass) {
-    ASNamespace = function ASNamespace(prefixValue, uriValue) {
+    NativeASNamespace = function NativeASNamespace(prefixValue, uriValue) {
       if (uriValue === undefined) {
         uriValue = prefixValue;
         prefixValue = undefined;
@@ -833,8 +841,8 @@ var natives = (function () {
           uri = "";
         } else if (typeof uriValue === "object") {
           prefix = uriValue.prefix;
-          if (uriValue instanceof ShumwayNamespace) {
-            uri = uriValue.originalURI;
+          if (uriValue instanceof ASNamespace) {
+            uri = uriValue.uri;
           } else if (uriValue instanceof QName) {
             uri = uriValue.uri;
           }
@@ -868,13 +876,13 @@ var natives = (function () {
           prefix = prefixValue + '';
         }
       }
-      return ShumwayNamespace.createNamespace(uri, prefix);
+      return ASNamespace.createNamespace(uri, prefix);
     }
 
-    var c = new Class("Namespace", ASNamespace, C(ASNamespace));
-    c.extendNative(baseClass, ShumwayNamespace);
+    var c = new Class("Namespace", NativeASNamespace, C(NativeASNamespace));
+    c.extendNative(baseClass, ASNamespace);
 
-    var Np = ShumwayNamespace.prototype;
+    var Np = ASNamespace.prototype;
     c.native = {
       instance: {
         prefix: {
@@ -921,7 +929,7 @@ var natives = (function () {
         var key = keys[i];
         var jsKey = key;
         if (!isNumeric(key)) {
-          jsKey = fromResolvedName(key);
+          jsKey = Multiname.getNameFromPublicQualifiedName(key);
         }
         result[jsKey] = transformASValueToJS(value[key]);
       }
@@ -1158,7 +1166,7 @@ var natives = (function () {
       instance: {
         init: function (base) {
           this.base = base;
-          this.nativeObject = new ApplicationDomain(avm2, base ? base.nativeObject : null);
+          this.nativeObject = new ApplicationDomain(AVM2.instance, base ? base.nativeObject : null);
         },
         loadBytes: function (byteArray, swfVersion) { // (byteArray:ByteArray, swfVersion:uint = 0);
           this.nativeObject.executeAbc(new AbcFile(byteArray.readRawBytes()));
@@ -1340,9 +1348,9 @@ var natives = (function () {
           }
           if (cls) {
             var name = cls.classInfo.instanceInfo.name;
-            var originalURI = name.namespaces[0].originalURI;
-            if (originalURI) {
-              return originalURI + "::" + name.name;
+            var uri = name.namespaces[0].uri;
+            if (uri) {
+              return uri + "::" + name.name;
             }
             return name.name;
           }
@@ -1371,9 +1379,9 @@ var natives = (function () {
           }
           if (cls && cls.baseClass) {
             var name = cls.baseClass.classInfo.instanceInfo.name;
-            var originalURI = name.namespaces[0].originalURI;
-            if (originalURI) {
-              return originalURI + "::" + name.name;
+            var uri = name.namespaces[0].uri;
+            if (uri) {
+              return uri + "::" + name.name;
             }
             return name.name;
           }
@@ -1405,7 +1413,7 @@ var natives = (function () {
       INCLUDE_CONSTRUCTOR : 0x0080,
       INCLUDE_TRAITS      : 0x0100,
       USE_ITRAITS         : 0x0200,
-      HIDE_OBJECT         : 0x0400,
+      HIDE_OBJECT         : 0x0400
     };
 
     // public keys used multiple times while creating the description
@@ -1452,8 +1460,8 @@ var natives = (function () {
     function unmangledQualifiedName(mn) {
       var name = mn.name;
       var namespace = mn.namespaces[0];
-      if (namespace && namespace.originalURI) {
-        return namespace.originalURI + '::' + name;
+      if (namespace && namespace.uri) {
+        return namespace.uri + '::' + name;
       }
       return name;
     }

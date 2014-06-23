@@ -49,7 +49,7 @@ package
     String.fromCharCode = unsafeJSNative("String.fromCharCode");
 
     // E262 {DontEnum, DontDelete, ReadOnly}
-    public override native function get length():uint;
+    public native function get length():uint;
 
     [compat]
     private native function _indexOf(s:String, i:int=0):int;

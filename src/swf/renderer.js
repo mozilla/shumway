@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global rgbaObjToStr, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
+/*global rgbaObjToStr, Shumway, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
@@ -26,7 +26,7 @@ var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWire
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
 var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
-var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", true, "skip frame when not on time"));
+var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", false, "skip frame when not on time"));
 var hud = rendererOptions.register(new Option("", "hud", "boolean", false, "show hud mode"));
 var dummyAnimation = rendererOptions.register(new Option("", "dummy", "boolean", false, "show test balls animation"));
 
@@ -767,7 +767,7 @@ function renderStage(stage, ctx, events) {
 
   var firstRun = true;
   var frameCount = 0;
-  var frameFPSAverage = new metrics.Average(120);
+  var frameFPSAverage = new Shumway.Metrics.Average(120);
 
   var frameRequested = true;
 

@@ -95,6 +95,7 @@ MIMEs = {
     '.stas': 'text/plain',
     '.trace': 'text/plain',
     '.abc': 'application/octet-stream',
+    '.abcs': 'application/octet-stream',
     '.bin': 'application/octet-stream',
     '.txt': 'text/plain',
 
