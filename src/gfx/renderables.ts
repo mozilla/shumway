@@ -99,6 +99,8 @@ module Shumway.GFX {
     render(context: CanvasRenderingContext2D, cullBounds?: Shumway.GFX.Geometry.Rectangle, clipRegion?: boolean): void {
 
     }
+
+    _output: any;
   }
 
   export class CustomRenderable extends Renderable {
@@ -564,33 +566,111 @@ module Shumway.GFX {
   }
 
   class Line {
+    private static _measureContext = document.createElement('canvas').getContext('2d');
+
     x: number = 0;
     y: number = 0;
     width: number = 0;
     ascent: number = 0;
     descent: number = 0;
     leading: number = 0;
+    align: number = 0;
     runs: any[] = [];
+
+    addRun(font: string, fillStyle: string, text: string, underline: boolean) {
+      if (text) {
+        Line._measureContext.font = font;
+        var width = Line._measureContext.measureText(text).width;
+        this.runs.push(new Run(font, fillStyle, text, width, underline));
+        this.width += width;
+      }
+    }
+
+    wrap(maxWidth: number): Line[] {
+      var lines: Line[] = [this];
+      var runs = this.runs;
+
+      var currentLine = this;
+      currentLine.width = 0;
+      currentLine.runs = [];
+
+      var measureContext = Line._measureContext;
+
+      for (var i = 0; i < runs.length; i++) {
+        var run = runs[i];
+        var text = run.text;
+        run.text = '';
+        run.width = 0;
+        measureContext.font = run.font;
+        var spaceLeft = maxWidth;
+        var words = text.split(/[\s.-]/);
+        var offset = 0;
+        for (var j = 0; j < words.length; j++) {
+          var word = words[j];
+          var chunk = text.substr(offset, word.length + 1);
+          var wordWidth = measureContext.measureText(chunk).width;
+          if (wordWidth > spaceLeft) {
+            do {
+              currentLine.runs.push(run);
+              run = new Run(run.font, run.fillStyle, '', 0, run.underline);
+              var newLine = new Line();
+              newLine.y = currentLine.y + currentLine.descent + currentLine.leading + currentLine.ascent;
+              newLine.ascent = currentLine.ascent;
+              newLine.descent = currentLine.descent;
+              newLine.leading = currentLine.leading;
+              newLine.align = currentLine.align;
+              lines.push(newLine);
+              currentLine = newLine;
+              spaceLeft = maxWidth - wordWidth;
+              if (spaceLeft < 0) {
+                var k = chunk.length;
+                var t;
+                var w;
+                do {
+                  k--;
+                  t = chunk.substr(0, k);
+                  w = measureContext.measureText(t).width;
+                } while (w > maxWidth);
+                run.text = t;
+                run.width = w;
+                chunk = chunk.substr(k);
+                wordWidth = measureContext.measureText(chunk).width;
+              }
+            } while (spaceLeft < 0);
+          } else {
+            spaceLeft = spaceLeft - wordWidth;
+          }
+          run.text += chunk;
+          run.width += wordWidth;
+          offset += word.length + 1;
+        }
+        currentLine.runs.push(run);
+        currentLine.width += run.width;
+      }
+
+      return lines;
+    }
   }
+
   class Run {
     constructor(public font: string = '',
                 public fillStyle: string = '',
                 public text: string = '',
-                public width: number = 0) {
+                public width: number = 0,
+                public underline: boolean = false)
+    {
 
     }
   }
 
   export class RenderableText extends Renderable {
-    private static _measureContext = document.createElement('canvas').getContext('2d');
 
     _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     properties: {[name: string]: any} = {};
 
     private _textRunData: DataBuffer;
     private _plainText: string;
-    private _lines: any[];
-    private _output: DataBuffer;
+    private _lines: Line[];
     private _backgroundColor: number;
     private _borderColor: number;
     private _matrix: Shumway.GFX.Geometry.Matrix;
@@ -598,7 +678,7 @@ module Shumway.GFX {
 
     constructor(bounds) {
       super(bounds);
-      this.setBounds(bounds)
+      this.setBounds(bounds);
       this._textRunData = null;
       this._plainText = '';
       this._lines = [];
@@ -620,7 +700,6 @@ module Shumway.GFX {
       this._textRunData = textRunData;
       this._plainText = plainText;
       this._lines = [];
-      this._output = new DataBuffer();
       this._matrix = matrix;
       this._coords = coords;
       if (this._coords) {
@@ -636,43 +715,53 @@ module Shumway.GFX {
 
     reflow(autoSize: boolean, wordWrap: boolean): void {
       var textRunData = this._textRunData;
+
+      if (!textRunData) {
+        return;
+      }
+
       var bounds = this._bounds;
       var plainText = this._plainText;
       var lines = this._lines;
-      var measureContext = RenderableText._measureContext;
 
-      var line = new Line();
+      var currentLine = new Line();
       var baseLinePos = 0;
 
-      var finishRun = function (font: string, fillStyle: string, text: string) {
-        if (text) {
-          var width = measureContext.measureText(text).width;
-          line.runs.push(new Run(font, fillStyle, text, width));
-          line.width += width;
-        }
-      };
+      var maxWidth = 0;
+      var maxAscent = 0;
+      var maxDescent = 0;
+      var maxLeading = 0;
+      var firstAlign = -1;
+
       var finishLine = function () {
-        if (!line.runs.length) {
-          baseLinePos += line.ascent + line.descent + (line.leading * 2);
+        if (!currentLine.runs.length) {
+          baseLinePos += maxAscent + maxDescent + maxLeading;
           return;
         }
 
-        switch (align) {
-          case 0:
-            break;
-          case 1:
-            line.x = bounds.w - line.width - 4;
-            break;
-          case 2:
-            line.x = (bounds.w - line.width - 4) / 2;
-            break;
+        baseLinePos += maxAscent;
+        currentLine.y = baseLinePos;
+        baseLinePos += maxDescent + maxLeading;
+        currentLine.ascent = maxAscent;
+        currentLine.descent = maxDescent;
+        currentLine.leading = maxLeading;
+        currentLine.align = firstAlign;
+
+        if (wordWrap && currentLine.width > bounds.w) {
+          var wrappedLines = currentLine.wrap(bounds.w);
+          for (var i = 0; i < wrappedLines.length; i++) {
+            var line = wrappedLines[i];
+            baseLinePos = line.y + line.descent + line.leading;
+            lines.push(line);
+          }
+        } else {
+          lines.push(currentLine);
+          if (currentLine.width > maxWidth) {
+            maxWidth = currentLine.width;
+          }
         }
 
-        baseLinePos += line.ascent;
-        line.y = baseLinePos;
-        baseLinePos += line.descent + line.leading;
-        lines.push(line);
-        line = new Line();
+        currentLine = new Line();
       };
 
       while (textRunData.position < textRunData.length) {
@@ -706,9 +795,18 @@ module Shumway.GFX {
           fontName = 'Times Roman';
           ascent = 0.75 * size;
           descent = 0.25 * size;
-          //fontName = 'sans-serif';
-          //ascent = 1 * size;
-          //descent = 0.25 * size;
+        }
+        if (ascent > maxAscent) {
+          maxAscent = ascent;
+        }
+        if (descent > maxDescent) {
+          maxDescent = descent;
+        }
+        if (leading > maxLeading) {
+          maxLeading = leading;
+        }
+        if (firstAlign === -1) {
+          firstAlign = align;
         }
         var boldItalic = '';
         if (italic) {
@@ -721,8 +819,10 @@ module Shumway.GFX {
         var fillStyle = ColorUtilities.rgbaToCSSStyle((color << 8) | 0xff);
 
         var text = '';
-        measureContext.font = font;
-        for (var i = beginIndex; i < endIndex; i++) {
+        var eof = false;
+        for (var i = beginIndex; !eof; i++) {
+          var eof = i >= endIndex - 1;
+
           var char = plainText[i];
           if (char !== '\r' && char !== '\n') {
             text += char;
@@ -730,23 +830,53 @@ module Shumway.GFX {
               continue;
             }
           }
-          finishRun(font, fillStyle, text);
-          if (ascent > line.ascent) {
-            line.ascent = ascent;
-          }
-          if (descent > line.descent) {
-            line.descent = descent;
-          }
-          if (leading > line.leading) {
-            line.leading = leading;
-          }
+          currentLine.addRun(font, fillStyle, text, underline);
           finishLine();
+          text = '';
+
+          if (eof) {
+            maxAscent = 0;
+            maxDescent = 0;
+            maxLeading = 0;
+            firstAlign = -1;
+            break;
+          }
+
           if (char === '\r' && plainText[i + 1] === '\n') {
             i++;
           }
-          text = '';
         }
-        finishRun(font, fillStyle, text);
+        currentLine.addRun(font, fillStyle, text, underline);
+      }
+
+      if (autoSize) {
+        if (!wordWrap) {
+          bounds.w = maxWidth + 4;
+        }
+        bounds.h = baseLinePos + 4;
+      }
+
+      this._output = new DataBuffer();
+      this._output.writeInt(maxWidth);
+      this._output.writeInt(baseLinePos);
+
+      var numLines = lines.length;
+      this._output.writeInt(numLines);
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        if (line.width < bounds.w) {
+          switch (line.align) {
+            case 0: // left
+              break;
+            case 1: // right
+              line.x = bounds.w - line.width - 4;
+              break;
+            case 2: // center
+              line.x = (bounds.w - line.width - 4) / 2;
+              break;
+          }
+        }
+        this._writeLineMetrics(line);
       }
 
       this.setFlags(RenderableFlags.Dirty);
@@ -812,7 +942,7 @@ module Shumway.GFX {
     }
 
     private _renderLines(context: CanvasRenderingContext2D) {
-      // TODO: Render bullet points and underlines.
+      // TODO: Render bullet points.
       var lines = this._lines;
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
@@ -823,6 +953,9 @@ module Shumway.GFX {
           var run = runs[j];
           context.font = run.font;
           context.fillStyle = run.fillStyle;
+          if (run.underline) {
+            context.fillRect(x, (y + (line.descent / 2)) | 0, run.width, 1);
+          }
           context.fillText(run.text, x, y);
           x += run.width;
         }

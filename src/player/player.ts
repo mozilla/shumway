@@ -88,7 +88,7 @@ module Shumway.Player {
      * @param updates
      * @param assets
      */
-    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
+    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true) {
       throw new Error('This method is abstract');
     }
 
@@ -190,7 +190,7 @@ module Shumway.Player {
       this.syncDisplayObject(this._stage);
     }
 
-    public syncDisplayObject(displayObject: flash.display.DisplayObject): void {
+    public syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean = true): void {
       var updates = new DataBuffer();
       var assets = [];
       var serializer = new Remoting.Player.PlayerChannelSerializer();
@@ -214,7 +214,7 @@ module Shumway.Player {
       updates.writeInt(Remoting.MessageTag.EOF);
 
       enterTimeline("remoting assets");
-      this.onSendUpdates(updates, assets);
+      this.onSendUpdates(updates, assets, async);
       leaveTimeline("remoting assets");
     }
 

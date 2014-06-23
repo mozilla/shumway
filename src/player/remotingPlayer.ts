@@ -100,7 +100,7 @@ module Shumway.Remoting.Player {
     }
 
     writeTextContent(textContent: Shumway.TextContent, bounds: Bounds) {
-      if (textContent._isDirty && textContent.plainText) {
+      if (textContent._isDirty) {
         writer && writer.writeLn("Sending TextContent: " + textContent._id);
         var textRuns = textContent.textRuns;
         var numTextRuns = textRuns.length;

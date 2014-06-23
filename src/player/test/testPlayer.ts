@@ -30,13 +30,19 @@ module Shumway.Player.Test {
       this._worker.addEventListener('syncmessage', this._onWorkerMessage.bind(this));
     }
 
-    public onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
+    public onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true) {
       var bytes = updates.getBytes();
-      this._worker.postMessage({
+      var message = {
         type: 'player',
         updates: bytes,
         assets: assets
-      }, [bytes.buffer]);
+      };
+      var transferList = [bytes.buffer];
+      if (async) {
+        this._worker.postMessage(message, transferList);
+      } else {
+        var result = this._worker.postSyncMessage(message, transferList);
+      }
     }
 
     onExternalCommand(command) {

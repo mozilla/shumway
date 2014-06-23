@@ -262,8 +262,11 @@ module Shumway.Remoting.GFX {
       var wordWrap = input.readBoolean();
       var assetId = input.readInt();
       var numTextRuns = input.readInt();
-      var textRunData = new DataBuffer(numTextRuns * 60);
-      input.readBytes(textRunData, 0, numTextRuns * 60);
+      var textRunData = null;
+      if (numTextRuns) {
+        textRunData = new DataBuffer(numTextRuns * 60);
+        input.readBytes(textRunData, 0, numTextRuns * 60);
+      }
       var coords = null;
       var numCoords = input.readInt();
       if (numCoords) {
@@ -284,7 +287,6 @@ module Shumway.Remoting.GFX {
         asset.setStyle(backgroundColor, borderColor);
         asset.reflow(autoSize, wordWrap);
       }
-
     }
 
     private _readUpdateStage() {

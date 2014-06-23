@@ -19,10 +19,11 @@ module Shumway.AVM2.AS.flash.text {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-
   import clamp = Shumway.NumberUtilities.clamp;
 
   import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+
+  declare var easelHost;
 
   export class TextField extends flash.display.InteractiveObject {
 
@@ -124,6 +125,10 @@ module Shumway.AVM2.AS.flash.text {
     constructor() {
       super();
       notImplemented("Dummy Constructor: public flash.text.TextField");
+    }
+
+    _hasNonScalableContent() {
+      return true;
     }
 
     _getTextContent(): Shumway.TextContent {
@@ -347,6 +352,7 @@ module Shumway.AVM2.AS.flash.text {
       this._textContent.parseHtml(value, this._multiline);
       this._htmlText = value;
       this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      this._ensureLineMetrics();
     }
 
     get length(): number /*int*/ {
@@ -475,6 +481,7 @@ module Shumway.AVM2.AS.flash.text {
       somewhatImplemented("public flash.text.TextField::set text");
       this._textContent.plainText = asCoerceString(value);
       this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      this._ensureLineMetrics();
     }
 
     get textColor(): number /*uint*/ {
@@ -486,12 +493,10 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get textHeight(): number {
-      somewhatImplemented("public flash.text.TextField::get textHeight");
       return this._textHeight;
     }
 
     get textWidth(): number {
-      somewhatImplemented("public flash.text.TextField::get textWidth");
       return this._textWidth;
     }
 
@@ -533,6 +538,25 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("public flash.text.TextField::set useRichTextClipboard"); return;
       // this._useRichTextClipboard = value;
     }
+
+    private _ensureLineMetrics() {
+      var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      serializer.syncDisplayObject(this, false);
+      var lineMetricsData = easelHost._context._assets[this._textContent._id]._output;
+      lineMetricsData.position = 0;
+      this._textWidth = lineMetricsData.readInt();
+      this._textHeight = lineMetricsData.readInt();
+      this._numLines = lineMetricsData.readInt();
+      //for (var i = 0; i < this._numLines; i++) {
+      //  var x = lineMetricsData.readInt();
+      //  var width = lineMetricsData.readInt();
+      //  var ascent = lineMetricsData.readInt();
+      //  var descent = lineMetricsData.readInt();
+      //  var leading = lineMetricsData.readInt();
+      //  var height = ascent + descent + leading;
+      //}
+    }
+
     getCharBoundaries(charIndex: number /*int*/): flash.geom.Rectangle {
       charIndex = charIndex | 0;
       notImplemented("public flash.text.TextField::getCharBoundaries"); return;

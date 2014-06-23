@@ -1042,6 +1042,10 @@ module Shumway.AVM2.AS.flash.display {
       if (value < 0) {
         return;
       }
+      if (this._hasNonScalableContent()) {
+        this._setFillAndLineBoundsFromWidthAndHeight(value, this._fillBounds.yMax);
+        return;
+      }
       var bounds = this._getTransformedBounds(this._parent, true);
       var contentBounds = this._getContentBounds(true);
       var angle = this._rotation / 180 * Math.PI;
@@ -1073,6 +1077,10 @@ module Shumway.AVM2.AS.flash.display {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
       if (value < 0) {
+        return;
+      }
+      if (this._hasNonScalableContent()) {
+        this._setFillAndLineBoundsFromWidthAndHeight(this._fillBounds.xMax, value);
         return;
       }
       var bounds = this._getTransformedBounds(this._parent, true);
@@ -1352,6 +1360,10 @@ module Shumway.AVM2.AS.flash.display {
         return root._loaderInfo;
       }
       return null;
+    }
+
+    _hasNonScalableContent(): boolean {
+      return false;
     }
 
     /**
