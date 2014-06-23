@@ -540,13 +540,13 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     private _ensureLineMetrics() {
-      var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
-      serializer.syncDisplayObject(this, false);
-      var lineMetricsData = easelHost._context._assets[this._textContent._id]._output;
-      lineMetricsData.position = 0;
-      this._textWidth = lineMetricsData.readInt();
-      this._textHeight = lineMetricsData.readInt();
-      this._numLines = lineMetricsData.readInt();
+      //var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      //serializer.syncDisplayObject(this, false);
+      //var lineMetricsData = easelHost._context._assets[this._textContent._id]._output;
+      //lineMetricsData.position = 0;
+      //this._textWidth = lineMetricsData.readInt();
+      //this._textHeight = lineMetricsData.readInt();
+      //this._numLines = lineMetricsData.readInt();
       //for (var i = 0; i < this._numLines; i++) {
       //  var x = lineMetricsData.readInt();
       //  var width = lineMetricsData.readInt();

@@ -282,7 +282,7 @@ module Shumway.Remoting.GFX {
         asset.reflow(autoSize, wordWrap);
         context._registerAsset(id, symbolId, asset);
       } else {
-        asset.setBounds(bounds);
+        asset.setBoundsNormalized(bounds);
         asset.setContent(plainText, textRunData, matrix, coords);
         asset.setStyle(backgroundColor, borderColor);
         asset.reflow(autoSize, wordWrap);
