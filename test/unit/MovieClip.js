@@ -1,8 +1,18 @@
 (function timelineTests() {
+  var assert = Shumway.Debug.assert;
   var LoaderInfo = flash.display.LoaderInfo;
   var MovieClip = flash.display.MovieClip;
+  var DisplayObjectContainer = flash.display.DisplayObjectContainer;
   var SpriteSymbol = Shumway.Timeline.SpriteSymbol;
   var FrameDelta = Shumway.Timeline.FrameDelta;
+
+  var MC_NAME_SUFFIX = 0;
+
+  function reset() {
+    MC_NAME_SUFFIX = 0;
+    MovieClip.reset();
+    DisplayObjectContainer.reset();
+  }
 
   function A(){}
   A.prototype.toString = function(){return "A"};
@@ -10,6 +20,7 @@
   B.prototype.toString = function(){return "B"};
 
   function createMovieClipWithFrames(numFrames) {
+    assert(typeof numFrames === 'number');
     var loaderInfo = new LoaderInfo();
     var symbol = new SpriteSymbol(0);
     symbol.numFrames = numFrames;
@@ -23,6 +34,7 @@
   function createMovieClipFromSymbol(symbol) {
     var mc = MovieClip.initializeFrom(symbol);
     mc.class.instanceConstructorNoInitialize.call(mc);
+    mc._name = 'movieclip_' + MC_NAME_SUFFIX++;
     return mc;
   }
 
@@ -31,6 +43,7 @@
     eq(mc.totalFrames, 10);
     eq(mc.framesLoaded, 10);
     eq(mc.currentFrame, 1);
+    reset();
   });
 
   unitTests.push(function frameScriptAddition() {
@@ -63,6 +76,39 @@
     eq(mc._frameScripts[1], A, "addFrameScript adds scripts until coercion fails");
     mc.addFrameScript(0, A, 0, B);
     eq(mc._frameScripts.length, 2, "addFrameScript replaces scripts on the same frame");
+    reset();
+  });
+
+  unitTests.push(function frameScriptExecution() {
+    var mc = createMovieClipWithFrames(10);
+    check(!mc.isPlaying);
+    mc.play();
+    check(mc.isPlaying);
+    var framesExecuted = [0, 0, 0, 0, 0, 0];
+    mc.addFrameScript(0, function(){
+      framesExecuted[0]++;
+    });
+    eq(framesExecuted[0], 0, "Just adding a script to the current frame doesn't run it");
+    MovieClip.constructFrame();
+    eq(framesExecuted[0], 1, "MovieClip.constructFrame() runs queued scripts");
+    mc.addFrameScript(2, function(){
+      framesExecuted[3]++;
+    });
+    mc.gotoAndPlay(3);
+    eq(framesExecuted[3], 1, "MovieClip.gotoAndPlay() runs the destination frame's script");
+    mc.gotoAndPlay(3);
+    eq(framesExecuted[3], 1, "MovieClip.gotoAndPlay() called twice doesn't run the script twice");
+    mc.addFrameScript(3, function(){
+      framesExecuted[4]++;
+    });
+    mc.gotoAndPlay(4);
+    mc.gotoAndPlay(3);
+    mc.gotoAndPlay(4);
+    eq(framesExecuted[3], 2, "Jumping between frames with MovieClip.gotoAndPlay() calls script " +
+                             "multiple times");
+    eq(framesExecuted[4], 2, "Jumping between frames with MovieClip.gotoAndPlay() calls script " +
+                             "multiple times");
+    reset();
   });
 
 })();
