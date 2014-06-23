@@ -463,10 +463,10 @@ module Shumway.AVM2.Runtime {
    */
   function tryInjectToStringAndValueOfForwarder(self: Object, resolved: string) {
     if (resolved === Multiname.VALUE_OF) {
-      (<any>self).original_valueOf = self.valueOf;
+      defineNonEnumerableProperty(self, "original_valueOf", self.valueOf);
       self.valueOf = forwardValueOf;
     } else if (resolved === Multiname.TO_STRING) {
-      (<any>self).original_toString = self.toString;
+      defineNonEnumerableProperty(self, "toString", self.toString);
       self.toString = forwardToString;
     }
   }
