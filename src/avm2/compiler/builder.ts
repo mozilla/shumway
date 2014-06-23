@@ -412,6 +412,7 @@ module Shumway.AVM2.Compiler {
 
   var coerceObject = callGlobalProperty.bind(null, "asCoerceObject");
 
+
   var coercers = createEmptyObject();
   coercers[Multiname.Int] = coerceInt;
   coercers[Multiname.Uint] = coerceUint;
@@ -437,6 +438,8 @@ module Shumway.AVM2.Compiler {
     release || assert (multiname instanceof Multiname);
     return callableConstructors[Multiname.getQualifiedName(multiname)];
   }
+
+  var callObject = callGlobalProperty.bind(null, "Object");
 
   interface WorklistItem {
     region: Region;
@@ -1184,7 +1187,7 @@ module Shumway.AVM2.Compiler {
             var hasNext2 = new IR.ASNewHasNext2();
             this.setJSProperty(hasNext2, "object", local[bc.object]);
             this.setJSProperty(hasNext2, "index", local[bc.index]);
-            this.store(new IR.CallProperty(region, state.store, local[bc.object], constant("asHasNext2"), [hasNext2], IR.Flags.PRISTINE));
+            this.store(new IR.CallProperty(region, state.store, callObject(local[bc.object]), constant("asHasNext2"), [hasNext2], IR.Flags.PRISTINE));
             // this.store(new IR.SetProperty(region, state.store, hasNext2, qualifiedNameConstant(ti.trait.name), value));
             // var temp = this.call(globalProperty("asHasNext2"), null, [local[bc.object], local[bc.index]]);
             local[bc.object] = this.getJSProperty(hasNext2, "object");

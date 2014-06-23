@@ -89,7 +89,7 @@ module Shumway.Tools.Mini {
 
       var time = performance.now() - this._lastTime;
       var context = this._context;
-      var w = 2;
+      var w = 2 * this._ratio;
       var wPadding = 1;
       var count = (Math.min(1024, this._canvas.width) / (w + wPadding)) | 0;
 
