@@ -84,6 +84,22 @@ function getDOMWindow(aChannel) {
   return win;
 }
 
+function makeContentReadable(obj, window) {
+  if (Cu.cloneInto) {
+    return Cu.cloneInto(obj, window);
+  }
+  // TODO remove for Firefox 32+
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+  var expose = {};
+  for (let k in obj) {
+    expose[k] = "rw";
+  }
+  obj.__exposedProps__ = expose;
+  return obj;
+}
+
 function parseQueryString(qs) {
   if (!qs)
     return {};
@@ -539,8 +555,10 @@ RequestListener.prototype.receive = function(event) {
         try {
           var listener = doc.createEvent('CustomEvent');
           listener.initCustomEvent('shumway.response', true, false,
-                                   {response: response,
-                                    cookie: cookie});
+                                   makeContentReadable({
+                                     response: response,
+                                     cookie: cookie
+                                   }, doc.defaultView));
 
           return message.dispatchEvent(listener);
         } catch (e) {
@@ -739,11 +757,11 @@ function initExternalCom(wrappedWindow, wrappedObject, targetDocument) {
       var args = Array.prototype.slice.call(arguments, 0);
       wrappedWindow.console.log('__flash__callIn: ' + functionName);
       var e = targetDocument.createEvent('CustomEvent');
-      e.initCustomEvent('shumway.remote', true, false, {
+      e.initCustomEvent('shumway.remote', true, false, makeContentReadable({
         functionName: functionName,
         args: args,
-        __exposedProps__: {args: 'r', functionName: 'r', result: 'rw'}
-      });
+        result: undefined
+      }, targetDocument.defaultView));
       targetDocument.dispatchEvent(e);
       return e.detail.result;
     };
