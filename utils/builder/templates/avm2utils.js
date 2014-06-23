@@ -16,14 +16,12 @@
  * limitations under the License.
  */
 
-enableVerifier.value = true;
-enableC4.value = true;
+Shumway.AVM2.Runtime.enableVerifier.value = true;
 release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
-var playerGlobalPath = SHUMWAY_ROOT + "flash/playerglobal.abc";
 
 var BinaryFileReader = (function binaryFileReader() {
   function constructor(url, responseType) {
@@ -111,17 +109,13 @@ function grabAbc(abcName) {
 
 // avm2 must be global.
 var avm2;
-var libraryScripts = playerGlobalScripts;    // defined in playerglobal.js
-var libraryNames = playerGlobalNames;        // ditto
 
 function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
   assert (builtinPath);
   avm2 = new AVM2(sysMode, appMode, loadAVM1);
-  var builtinAbc, libraryAbc, avm1Abc;
+  var builtinAbc, avm1Abc;
 
-  // Batch I/O requests.
-  new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
-    libraryAbcs = buffer;
+  AVM2.loadPlayerglobal(libraryPath.abcs, libraryPath.catalog).then(function () {
     new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
       builtinAbc = new AbcFile(new Uint8Array(buffer), "builtin.abc");
       executeAbc();

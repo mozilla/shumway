@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Flamechart Demo</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div id="container"></div>
+  <script src="../../../build/ts/utilities.js"></script>
+  <script src="../../../build/ts/tools/profiler/references.js"></script>
+  <script src="../../../build/ts/tools/profiler/profile.js"></script>
+  <script src="../../../build/ts/tools/profiler/controller.js"></script>
+  <script src="../../../build/ts/tools/profiler/mouseController.js"></script>
+  <script src="../../../build/ts/tools/profiler/flameChartBase.js"></script>
+  <script src="../../../build/ts/tools/profiler/flameChart.js"></script>
+  <script src="../../../build/ts/tools/profiler/flameChartHeader.js"></script>
+  <script src="../../../build/ts/tools/profiler/flameChartOverview.js"></script>
+  <script src="../../../build/ts/tools/profiler/timelineFrame.js"></script>
+  <script src="../../../build/ts/tools/profiler/timelineBuffer.js"></script>
+  <script src="../../../build/ts/tools/theme/ui.js"></script>
+  <script>
+
+    if (!jsGlobal.performance) { jsGlobal.performance = {}; }
+    if (!jsGlobal.performance.now) { jsGlobal.performance.now = Date.now; }
+
+    var Profiler = Shumway.Tools.Profiler;
+
+    var container = document.getElementById("container");
+    var controller = new Profiler.Controller(container);
+
+    getJSON("data/CPU-20140520T215105.json", function(profile1) {
+      getJSON("data/CPU-20140520T092003.json", function(profile2) {
+
+        var buffer1 = Profiler.TimelineBuffer.FromChromeProfile(profile1);
+        var buffer2 = Profiler.TimelineBuffer.FromChromeProfile(profile2);
+
+        controller.createProfile([buffer1, buffer2]);
+
+      });
+    });
+
+    //getJSON("data/Profile 1.json", function(result) {
+    //  var buffer = Profiler.TimelineBuffer.FromFirefoxProfile(result);
+    //  controller.createProfile([buffer]);
+    //});
+
+    function getJSON(url, callback) {
+      var req = new XMLHttpRequest();
+      req.open("get", url, true);
+      req.responseType = "json";
+      req.onreadystatechange = function() {
+        if (this.readyState == 4) {
+          var json = req.response;
+          if (typeof json === "string") {
+            try { json = JSON.parse(json); }
+            catch (e) { callback(null); }
+          }
+          callback(json);
+        }
+      };
+      req.send(null);
+    }
+
+    /*
+    function testA(size) {
+      var t = 0;
+      function next() {
+        return t += Math.random() / 1;
+      }
+      for (var i = 0; i < size; i++) {
+        buffer.enter("A", next());
+
+        for (var z = 0; z < 10; z++) {
+          var k = 1 + (Math.random() * 7) | 0;
+          for (var j = 0; j < k; j++) {
+            buffer.enter(String(z + j), next());
+          }
+          for (var j = 0; j < k; j++) {
+            buffer.leave(String(z + j), next());
+          }
+        }
+
+        buffer.leave("A", next());
+      }
+
+      var flameChart = new Profiler.FlameChart(container, buffer);
+    }
+
+    testA(1000);
+    */
+
+  </script>
+</body>
+</html>

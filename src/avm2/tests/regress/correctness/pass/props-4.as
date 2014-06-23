@@ -6,7 +6,7 @@ package {
     trace({"": 1}.hasOwnProperty(""));
     trace({undefined: 1}.hasOwnProperty("undefined"));
     trace({"null": 1}.hasOwnProperty(null));
-
+    trace({"null": 1}.hasOwnProperty(undefined));
     trace({undefined: 1}.hasOwnProperty(undefined));
   })();
 

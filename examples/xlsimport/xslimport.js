@@ -51,8 +51,10 @@ function main(avm2) {
 }
 
 var BUILTIN_PATH = SHUMWAY_ROOT + 'avm2/generated/builtin/builtin.abc';
-var PLAYERGLOBAL_PATH = SHUMWAY_ROOT + 'flash/playerglobal.abc';
+var PLAYERGLOBAL_ABCS = SHUMWAY_ROOT + "build/playerglobal/playerglobal.abcs";
+var PLAYERGLOBAL_CATALOG = SHUMWAY_ROOT + "build/playerglobal/playerglobal.json";
 var AS3XLS_PATH = './as3xls-lib.swc';
+
 
 function loadBinary(path, callback) {
   var xhr = new XMLHttpRequest();
@@ -67,34 +69,23 @@ function loadBinary(path, callback) {
   xhr.send(null);
 }
 
-function createAVM2(builtinPath, playerGlobalPath, libraryPath, next) {
+function createAVM2(libraryPath, next) {
+  var AVM2 = Shumway.AVM2.Runtime.AVM2;
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
+
   var sysMode = EXECUTION_MODE.COMPILE;
   var appMode = EXECUTION_MODE.COMPILE;
   enableC4.value = true;
   enableVerifier.value = true;
 
-  var library, playerglobal;
-
-  function findDefiningAbc(mn) {
-    var name, abcEntry;
-    for (var i = 0; i < mn.namespaces.length; i++) {
-      name = mn.namespaces[i].originalURI + ":" + mn.name;
-      abcEntry = library[name] || playerglobal[name];
-      if (abcEntry) {
-        break;
-      }
-    }
-    if (abcEntry) {
-      return new AbcFile(abcEntry.abc, abcEntry.name);
-    }
-    return null;
-  }
+  var library;
 
   function loadBuiltin() {
-    loadBinary(builtinPath, function (buffer) {
-      avm2 = new AVM2(sysMode, appMode, findDefiningAbc);
+    loadBinary(BUILTIN_PATH, function (buffer) {
+      var avm2 = new AVM2(sysMode, appMode);
+      AVM2.instance = avm2;
+
       console.time("Execute builtin.abc");
-      avm2.loadedAbcs = {};
       avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
       avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
       console.timeEnd("Execute builtin.abc");
@@ -108,25 +99,10 @@ function createAVM2(builtinPath, playerGlobalPath, libraryPath, next) {
       loadBuiltin();
     });
   }
-  function loadPlayerglobals() {
-    if (!playerGlobalPath) {
-      loadLibrary();
-      return;
-    }
 
-    loadBinary(playerGlobalPath, function (buffer) {
-      playerglobal = Object.create(null);
-      for (var className in playerGlobalNames) {
-        var script = playerGlobalScripts[playerGlobalNames[className]];
-        playerglobal[className] = {
-          name: playerGlobalNames[className],
-          abc: new Uint8Array(buffer, script.offset, script.length)
-        };
-      }
-      loadLibrary();
-    });
-  }
-  loadPlayerglobals();
+  AVM2.loadPlayerglobal(PLAYERGLOBAL_ABCS, PLAYERGLOBAL_CATALOG).then(function () {
+    loadLibrary();
+  });
 }
 
-createAVM2(BUILTIN_PATH, PLAYERGLOBAL_PATH, AS3XLS_PATH, main);
+createAVM2(AS3XLS_PATH, main);

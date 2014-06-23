@@ -37,13 +37,14 @@ global.assert = function () { };
 global.release = false;
 
 var shumwayRoot = __dirname + "/../../";
-var amv2Root = shumwayRoot + "src/avm2/";
+var srcRoot = shumwayRoot + "src/";
+var amv2Root = srcRoot + "avm2/";
 
-var options = require(amv2Root + "options.js");
+var options = require(srcRoot + "options.js");
 
-var ArgumentParser = options.ArgumentParser;
-var Option = options.Option;
-var OptionSet = options.OptionSet;
+var ArgumentParser = options.Shumway.Options.ArgumentParser;
+var Option = options.Shumway.Options.Option;
+var OptionSet = options.Shumway.Options.OptionSet;
 
 var esprima = require(amv2Root + "compiler/lljs/src/esprima.js");
 var escodegen = require(amv2Root + "compiler/lljs/src/escodegen.js");

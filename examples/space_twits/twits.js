@@ -80,6 +80,7 @@ Actor.prototype.toString = function() {
 
 
 function Alien(scene, x, y, direction, speed, strength) {
+    var avm2 = Shumway.AVM2.Runtime.AVM2.instance;
     var SpaceshipClass = avm2.applicationDomain.getClass('twits.Spaceship');
     Actor.call(this, scene, new SpaceshipClass.instanceConstructor(), x, y);
     this.direction = direction;
@@ -121,6 +122,7 @@ Alien.prototype.move = function() {
 
 
 function SpaceShip(scene, x, y) {
+    var avm2 = Shumway.AVM2.Runtime.AVM2.instance;
     var RocketClass = avm2.applicationDomain.getClass('twits.Rocket');
     Actor.call(this, scene, new RocketClass.instanceConstructor(), x, y);
     this.points = 0;
@@ -146,6 +148,7 @@ SpaceShip.prototype.right = function() {
 
 
 function Shot(scene, x, y) {
+    var avm2 = Shumway.AVM2.Runtime.AVM2.instance;
     var ShotClass = avm2.applicationDomain.getClass('twits.Shot');
     Actor.call(this, scene, new ShotClass.instanceConstructor(), x, y);
 }

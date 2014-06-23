@@ -23,6 +23,7 @@
 		public var decay:Number = .5;
 		public var xSpeed:Number = 0;
 		public var dragging:Boolean = false;
+		private var moved:Boolean = false;
 		
 		//*************************
 		// Constructor:
@@ -97,8 +98,11 @@
 						if( x < 231 ){
 							x = 465;
 						}
-						if( x > 465 ){
+						if (x > 370 && !moved) {
+							moved = true;
 							trace('wrap');
+						}
+						if( x > 465 ){
 							x = 231;
 						}
 						// Move the beetle in proportion to how far 

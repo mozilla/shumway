@@ -20,12 +20,7 @@
  * Package file that includes all Shumway files needed by the Loader worker.
  */
 load($SHUMWAY_ROOT + "src/swf/inflate.js");
-load($SHUMWAY_ROOT + "src/swf/inflate-exports.js");
 load($SHUMWAY_ROOT + "src/swf/stream.js");
-load($SHUMWAY_ROOT + "src/swf/stream-exports.js");
 load($SHUMWAY_ROOT + "src/swf/templates.js");
-load($SHUMWAY_ROOT + "src/swf/templates-exports.js");
 load($SHUMWAY_ROOT + "src/swf/handlers.js");
-load($SHUMWAY_ROOT + "src/swf/handlers-exports.js");
 load($SHUMWAY_ROOT + "src/swf/parser.js");
-load($SHUMWAY_ROOT + "src/swf/parser-exports.js");

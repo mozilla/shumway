@@ -16,7 +16,10 @@
  * limitations under the License.
  */
 
-turboMode.value = true;
+// turbo mode introduces intermittent failures in timeline and timeline_scene
+// tests since frames are not parsed fast enough for gotoAndPlay/gotoAndStop
+// turboMode.value = true;
+
 skipFrameDraw.value = false;
 
 function loadMovie(path, reportFrames) {
@@ -43,7 +46,7 @@ function loadMovie(path, reportFrames) {
     };
   }
 
-  createAVM2(builtinPath, playerGlobalPath, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
     function loaded() { movieReadyResolve(); }
     function terminate() {
       ignoreAdanvances = true;
@@ -61,14 +64,16 @@ function loadMovie(path, reportFrames) {
       }
     }
 
-    FileLoadingService.baseUrl = path;
+    Shumway.FileLoadingService.instance.baseUrl = path;
+    var BinaryFileReader = Shumway.BinaryFileReader;
     new BinaryFileReader(path).readAll(null, function(buffer) {
       if (!buffer) {
         throw "Unable to open the file " + SWF_PATH + ": " + error;
       }
       SWF.embed(buffer, document, document.getElementById("stage"), {
         url: path,
-        onComplete: loaded,
+        startPromise: movieReady,
+        onParsed: loaded,
         onAfterFrame: onFrameCallback,
         onTerminated: terminate
       });
@@ -76,67 +81,74 @@ function loadMovie(path, reportFrames) {
   });
 }
 
-var sanityTests = {
-  tests: [],
-  push: function () {
-    this.tests.push.apply(this.tests, arguments);
-    this.onload();
-  },
-  onload: null
-};
+var unitTests = [];
 
 function loadScripts(files) {
-  sanityTests.onload = next;
+  function mergeTests(tests) {
+    return function (avm2) {
+      var lastTest = Promise.resolve();
+      tests.forEach(function (test) {
+        lastTest = lastTest.then(function () {
+          test(avm2);
+        });
+      });
+      return lastTest;
+    };
+  }
 
-  var i = 0;
   function next() {
+    if (unitTests.length < i) {
+      unitTests.push(function () {
+        throw new Error('Test was not found');
+      });
+    }
+    if (unitTests.length > i) {
+      unitTests.push(mergeTests(unitTests.splice(i - 1, unitTests.length - i + 1)));
+    }
     if (i >= files.length) {
-      return runSanityTests(sanityTests.tests);
+      return runSanityTests(unitTests);
     }
     var script = document.createElement('script');
     script.src = files[i++];
+    script.onload = next;
     document.getElementsByTagName('head')[0].appendChild(script);
   }
+
+  var i = 0;
   next();
 }
 
 function runSanityTests(tests) {
-  createAVM2(builtinPath, playerGlobalPath, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.COMPILE, EXECUTION_MODE.COMPILE, function (avm2) {
     sendResponse();
-    for (var i = 0; i < tests.length; i++) {
-      var failed = false;
-      try {
-        tests[i]({
-          info: function (m) {
-            console.info(m);
-          },
-          error: function (m) {
-            console.error(m);
-            failed = true;
-          }
-        }, avm2);
-      } catch (ex) {
-        failed = true;
-      }
-      sendResponse({index: i, failure: failed});
-    }
+    var lastTestPromise = Promise.resolve();
+    var i = 0;
+    tests.forEach(function (test) {
+      lastTestPromise = lastTestPromise.then(function () {
+        test(avm2);
+      }).then(function () {
+        sendResponse({index: i++, failure: false});
+      }, function () {
+        sendResponse({index: i++, failure: true});
+      });
+    });
   });
 }
 
-var TelemetryService = {
+Shumway.Telemetry.instance = {
   reportTelemetry: function (data) {}
 };
 
-var FileLoadingService = {
+Shumway.FileLoadingService.instance = {
   createSession: function () {
     return {
       open: function (request) {
         var self = this;
-        var base = FileLoadingService.baseUrl || '';
+        var base = Shumway.FileLoadingService.instance.baseUrl || '';
         base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
         var path = base ? base + request.url : request.url;
         console.log('FileLoadingService: loading ' + path);
-        new BinaryFileReader(path).readAsync(
+        new Shumway.BinaryFileReader(path).readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },
@@ -149,7 +161,7 @@ var FileLoadingService = {
 };
 
 var traceMessages = '';
-natives.print = function() {
+window.print = function() {
    return function(s) {
      traceMessages += s + '\n';
    };

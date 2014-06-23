@@ -22,7 +22,7 @@ JSSHELL ?= $(UTILS_HOME)/jsshell/js
 THREADS ?= 8
 TIMEOUT ?= 30000
 
-NODE_MODULES = ../../../utils/node_modules
+NODE_MODULES = ../../../node_modules
 
 TEST_CMD = ASC=$(ASC) AVM=$(AVM) BUILTINABC=$(BUILTINABC) SHELLABC=$(SHELLABC) JSSHELL=$(JSSHELL) NODE_PATH=$(NODE_MODULES) node numbers.js -t $(TIMEOUT) -jo
 
@@ -68,5 +68,12 @@ run-shu-c:
 
 run-shu-cv:
 	$(UTILS_HOME)/jsshell/js -m -n avm.js -x -c4 -verify -rel $(TEST_PATH)
+
+generate-stubs:
+	js avm.js -s ../generated/builtin/builtin.abc ../../../build/playerglobal/playerglobal-single.abc
+
+generate-stubs-force:
+	js avm.js -s ../generated/builtin/builtin.abc ../../../build/playerglobal/playerglobal-single.abc > stubs.txt
+	./shu.py split stubs.txt ../../flash.ts/
 
 .PHONY: default hello-world test-pypy test-interpreter test-compiler test-all run-avm run-shu-i run-shu-c run-shu-cv

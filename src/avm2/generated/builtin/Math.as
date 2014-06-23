@@ -52,11 +52,6 @@ package
     public static const SQRT1_2 :Number = 0.7071067811865476;
     public static const SQRT2   :Number = 1.4142135623730951;
 
-    [compat]
-    native private static function _min    (x:Number, y:Number):Number;
-    [compat]
-    native private static function _max    (x:Number, y:Number):Number;
-
     public native static function abs   (x:Number)   :Number;
     public native static function acos  (x:Number)   :Number;
     public native static function asin  (x:Number)   :Number;

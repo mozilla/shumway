@@ -36,10 +36,13 @@ var temp = require('temp');
 
 global.assert = function () { };
 global.release = false;
-var options = require("../options.js");
-var ArgumentParser = options.ArgumentParser;
-var Option = options.Option;
-var OptionSet = options.OptionSet;
+
+eval(fs.readFileSync('../../../build/ts/utilities.js').toString())
+eval(fs.readFileSync('../../../build/ts/options.js').toString())
+
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
 
 // Parse arguments
 var arguments = process.argv.slice(2);
@@ -47,7 +50,7 @@ var argumentParser = new ArgumentParser();
 var numbersOptions = new OptionSet("Numbers Options");
 var jobs = numbersOptions.register(new Option("j", "jobs", "number", 1, "runs the tests in parallel"));
 var release = numbersOptions.register(new Option("r", "release", "boolean", false, "build and test release version"));
-var jsOptimazations = numbersOptions.register(new Option("jo", "jsOptimazations", "boolean", false, "run with -m -n"));
+var jsOptimazations = numbersOptions.register(new Option("jo", "jsOptimazations", "boolean", false, "run without ion and type inference"));
 var noMetrics = numbersOptions.register(new Option("nm", "noMetrics", "boolean", false, "runs without -tm -tj"));
 var timeout = numbersOptions.register(new Option("t", "timeout", "number", 30000, "timeout in ms"));
 var configurationSet = numbersOptions.register(new Option("c", "configurations", "string", "iclovx", "(i)nterpreter, (c)ompiler, (o)ptimized, in(l)ineCaching, (v)erifier, (x) c4"));
@@ -174,7 +177,7 @@ var configurations = [
 
 var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js";
 if (jsOptimazations.value) {
-  commandPrefix += " -m -n";
+  commandPrefix += " --no-ion --no-ti";
 }
 commandPrefix += " " + (release.value ? "avm-release.js" : "avm.js");
 

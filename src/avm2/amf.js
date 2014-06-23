@@ -15,8 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global utf8decode, utf8encode, Multiname, forEachPublicProperty, setProperty,
-         isNumeric, createEmptyObject */
+/*global Multiname, forEachPublicProperty, setProperty, isNumeric */
 
 var AMFUtils = (function AMFUtilsClosure() {
   var AMF0_NUMBER_MARKER = 0x00;
@@ -44,7 +43,7 @@ var AMFUtils = (function AMFUtilsClosure() {
       ba.writeByte(0x00);
       return;
     }
-    var bytes = utf8decode(s);
+    var bytes = Shumway.StringUtilities.utf8decode(s);
     ba.writeByte((bytes.length >> 8) & 255);
     ba.writeByte(bytes.length & 255);
     for (var i = 0; i < bytes.length; i++) {
@@ -63,7 +62,7 @@ var AMFUtils = (function AMFUtilsClosure() {
       buffer[i] = ba.readByte();
     }
 
-    return utf8encode(buffer);
+    return Shumway.StringUtilities.utf8encode(buffer);
   }
 
   function writeDouble(ba, value) {
@@ -259,7 +258,7 @@ var AMFUtils = (function AMFUtilsClosure() {
     for (var i = 0; i < byteLength; i++) {
       buffer[i] = ba.readByte();
     }
-    var value = utf8encode(buffer);
+    var value = Shumway.StringUtilities.utf8encode(buffer);
     stringsCache.push(value);
     return value;
   }
@@ -278,7 +277,7 @@ var AMFUtils = (function AMFUtilsClosure() {
     }
     stringsCache.push(value);
 
-    var bytes = utf8decode(value);
+    var bytes = Shumway.StringUtilities.utf8decode(value);
     writeU29(ba, 1 | (bytes.length << 1));
     for (var i = 0; i < bytes.length; i++) {
       ba.writeByte(bytes[i]);

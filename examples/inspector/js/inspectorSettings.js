@@ -16,196 +16,199 @@
  * limitations under the License.
  */
 
-var DEFAULT_SETTINGS = {
-  sysCompiler: true,
-  appCompiler: true,
-  verifier: true,
-  trace: false,
-  traceCalls: false,
-  traceRuntime: false,
-  allocator: false,
-  render: true,
-  mouse: true,
-  qtree: false,
-  redraw: false,
-  wireframe: false,
-  release: true,
+var LC_KEY_INSPECTOR_SETTINGS = "Inspector Options";
+
+var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
+
+var stateDefaults = {
+  folderOpen: true,
+  debugPanelId: "settingsContainer",
+  profileStartup: true,
+  profileStartupDuration: 10000,
   logToConsole: false,
+  logToDebugPanel: true,
   mute: false,
-  turbo: true
+  release: false
 };
 
-function loadState() {
-  var settings = {};
-  if (localStorage["Inspector-Settings"]) {
-    settings = JSON.parse(localStorage["Inspector-Settings"]);
+for (var option in stateDefaults) {
+  if (typeof state[option] === "undefined") {
+    state[option] = stateDefaults[option];
   }
-  for (var key in DEFAULT_SETTINGS) {
-    if (settings[key] === undefined) {
-      settings[key] = DEFAULT_SETTINGS[key];
-    }
-  }
-  return settings;
 }
 
-function saveState(state) {
-  localStorage["Inspector-Settings"] = JSON.stringify(state);
+window.release = state.release;
+
+if (state.profileStartup && state.profileStartupDuration > 0) {
+  profiler.start(state.profileStartupDuration);
 }
 
-var state = loadState();
 
-updateAVM2State();
 
-function updateAVM2State() {
-  enableC4.value = true;
-  enableVerifier.value = state.verifier;
-  enableRegisterAllocator.value = state.allocator;
-  traceExecution.value = state.trace ? 2 : 0;
-  traceRenderer.value = state.trace ? 2 : 0;
-  disableRenderVisitor.value = state.render ? false : true;
-  disableMouseVisitor.value = state.mouse ? false : true;
-  showQuadTree.value = state.qtree ? true : false;
-  turboMode.value = state.turbo ? true : false;
-  showRedrawRegions.value = state.redraw ? true : false;
-  renderAsWireframe.value = state.wireframe ? true : false;
-  traceCallExecution.value = state.traceCalls ? 1 : 0;
-  traceCallExecution.value = state.traceRuntime ? 2 : traceCallExecution.value;
-  debuggerMode.value = true;
-  release = state.release;
-  AVM1_TRACE_ENABLED = state.trace;
+function saveInspectorState() {
+  Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
 }
 
-var lastCounts = {};
+var GUI = (function () {
+  var Option = Shumway.Options.Option;
+  var OptionSet = Shumway.Options.OptionSet;
 
-setTimeout(function displayInfo() {
-  var output = "";
-  var pairs = [];
+  var gui = new dat.GUI({ autoPlace: false, width: 300 });
+  gui.add({ "Reset Options": resetOptions }, "Reset Options");
 
-  for (var name in Counter.counts) {
-    pairs.push([name, Counter.counts[name]]);
+  var inspectorOptions = gui.addFolder("Inspector Options");
+  inspectorOptions.add(state, "release").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "logToConsole").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "logToDebugPanel").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
+  //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
+  if (state.folderOpen) {
+    inspectorOptions.open();
   }
 
-  pairs.sort(function (a, b) {
-    return b[1] - a[1];
-  });
-
-  var totalCount = 0;
-  pairs.forEach(function (pair) {
-    var color;
-    if (pair[1] > 100000) {
-      color = "magenta";
-    } else if (pair[1] > 10000) {
-      color = "purple";
-    } else if (pair[1] > 1000) {
-      color = "red";
-    } else if (pair[1] > 100) {
-      color = "orange";
-    } else {
-      color = "green";
-    }
-    output += "<div style='padding: 2px; background-color: " + color + "'>" + pair[0] + ": " + pair[1] + " " + (pair[1] - lastCounts[pair[0]]) + "</div>";
-    totalCount += pair[1];
-  });
-  if (totalCount > 30000000) {
-    // Don't delete me, this is meant to be annoying.
-    throw "The Counters Are Too Damn High (> 30,000,000).";
-  }
-
-  document.getElementById("info").innerHTML = output;
-
-  copyProperties(lastCounts, Counter.counts);
-
-  output = "";
-  for (var name in Timer.flat.timers) {
-    var timer = Timer.flat.timers[name];
-    var str = timer.name + ": " + timer.total.toFixed(2) + " ms" +
-      ", count: " + timer.count +
-      ", avg: " + (timer.total / timer.count).toFixed(2) + " ms" +
-      ", last: " + timer.last.toFixed(2) + " ms";
-    output += str + "<br>";
-  }
-  document.getElementById("timerInfo").innerHTML = output;
-
-  setTimeout(displayInfo, 500);
-}, 500);
-
-Array.prototype.forEach.call(document.querySelectorAll(".avm2Option"), function(element) {
-  function setElementState(pressed) {
-    if (pressed)
-      element.classList.add("pressedState");
-    else
-      element.classList.remove("pressedState");
-  }
-
-  var id = element.getAttribute("id");
-  element.addEventListener("click", function () {
-    setElementState(state[id] = !state[id]);
-    updateAVM2State();
-    saveState(state);
-    if (id === "wireframe" && swfController.stage) {
-      swfController.stage._invalid = true;
+  gui.domElement.addEventListener("click", function(e) {
+    if (e.target.nodeName.toLowerCase() == "li" && e.target.classList.contains("title")) {
+      var isOpen = !e.target.parentElement.classList.contains("closed");
+      var option = findOptionSetByName(e.target.textContent,
+                                       Shumway.Settings.shumwayOptions);
+      if (option) {
+        option.open = isOpen;
+        Shumway.Settings.save();
+        notifyOptionsChanged();
+      } else {
+        if (e.target.textContent === "Inspector Options") {
+          state.folderOpen = isOpen;
+          saveInspectorState();
+        }
+      }
     }
   });
-  setElementState(state[id]);
-});
 
-document.getElementById("sample").addEventListener("click", function () {
-  triggerSampling(5);
-});
-
-(function() {
-  var chkLogToConsole = document.getElementById("chkLogToConsole")
-  chkLogToConsole.checked = state.logToConsole;
-  chkLogToConsole.addEventListener("click", function (event) {
-    state.logToConsole = event.target.checked;
-    saveState(state);
-  });
-})();
-
-(function() {
-  var muteButton = document.getElementById("muteButton");
-  function setElementState() {
-    if (state.mute) {
-      muteButton.classList.remove("icon-volume-up");
-      muteButton.classList.add("icon-volume-off");
-    } else {
-      muteButton.classList.add("icon-volume-up");
-      muteButton.classList.remove("icon-volume-off");
-    }
+  function resetOptions() {
+    delete window.localStorage[Shumway.Settings.ROOT];
+    delete window.localStorage[LC_KEY_INSPECTOR_SETTINGS];
   }
-  muteButton.addEventListener("click", function (event) {
-    state.mute = !state.mute;
-    avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
-    setElementState();
-    saveState(state);
-  });
-  setElementState();
-})();
 
-(function () {
-  var gui = new dat.GUI({ autoPlace: false });
+  function notifyOptionsChanged() {
+    var event = document.createEvent('CustomEvent');
+    event.initCustomEvent('shumwayOptionsChanged', false, false, null);
+    document.dispatchEvent(event);
+  }
 
-  function addOptionSet(parent, set, open) {
-    var folder = parent.addFolder(set.name);
-    set.options.forEach(function (option) {
+  function saveInspectorOption(value) {
+    if (this.property === "release") {
+      window.release = value;
+    }
+    state[this.property] = value;
+    saveInspectorState();
+  }
+
+  function findOptionSetByName(name, optionSet) {
+    for (var i = 0, n = optionSet.options.length; i < n; i++) {
+      var option = optionSet.options[i];
       if (option instanceof OptionSet) {
+        if (option.name === name) {
+          return option;
+        } else {
+          var child = findOptionSetByName(name, option);
+          if (child) {
+            return child;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function addTooltip(ctrl, text) {
+    var el = ctrl.domElement;
+    while ((el = el.parentElement)) {
+      if (el.classList.contains("cr")) {
+        el.setAttribute("title", text);
+      }
+    }
+  }
+
+  function addOptionSet(parent, optionSet) {
+    var ctrl, folder;
+    var isObject = Shumway.isObject;
+    var isNullOrUndefined = Shumway.isNullOrUndefined;
+    optionSet.options.forEach(function(option) {
+      if (option instanceof OptionSet) {
+        folder = parent.addFolder(option.name);
+        if (option.open) { folder.open(); }
         addOptionSet(folder, option);
       } else {
-        folder.add(option, "value", option.details).name(option.longName);
+        if (!isNullOrUndefined(option.config) && isObject(option.config)) {
+          if (isObject(option.config.list)) {
+            ctrl = parent.add(option, "value", option.config.list);
+          } else if (isObject(option.config.choices)) {
+            ctrl = parent.add(option, "value", option.config.choices);
+          } else if (isObject(option.config.range)) {
+            var range = option.config.range;
+            ctrl = parent.add(option, "value").min(range.min).max(range.max).step(range.step);
+          } else {
+            ctrl = parent.add(option, "value");
+          }
+        } else {
+          ctrl = parent.add(option, "value");
+        }
+        ctrl.name(option.longName);
+        ctrl.onChange(function() {
+          Shumway.Settings.save();
+          notifyOptionsChanged();
+        });
+        addTooltip(ctrl, option.description);
+        option.ctrl = ctrl;
       }
     });
-    open && folder.open();
   }
 
-  // addOptionSet(gui, webGLOptions);
-  addOptionSet(gui, rendererOptions, true);
-  addOptionSet(gui, systemOptions);
-
-  var folder = gui.addFolder("Debug Canvas");
-  for (var k in DebugCanvasRenderingContext2D.Options) {
-    folder.add(DebugCanvasRenderingContext2D.Options, k);
-  }
-  folder.open();
+  // shumwayOptions.register(webGLOptions);
+  addOptionSet(gui, Shumway.Settings.shumwayOptions);
 
   document.getElementById("settingsContainer").appendChild(gui.domElement);
+
+  return gui;
+
 })();
+
+function syncGFXOptions(options) {
+  var GFX = Shumway.GFX;
+  options.perspectiveCamera = GFX.perspectiveCamera.value;
+  options.perspectiveCameraFOV = GFX.perspectiveCameraFOV.value;
+  options.perspectiveCameraAngle = GFX.perspectiveCameraAngle.value;
+  options.perspectiveCameraDistance = GFX.perspectiveCameraDistance.value;
+
+  options.drawTiles = GFX.drawTiles.value;
+  options.drawTextures = GFX.drawTextures.value;
+  options.drawTexture = GFX.drawTexture.value;
+  options.drawElements = GFX.drawElements.value;
+  options.ignoreViewport = GFX.ignoreViewport.value;
+  options.ignoreColorTransform = GFX.ignoreColorTransform.value;
+  options.clipDirtyRegions = GFX.clipDirtyRegions.value;
+  options.clipCanvas = GFX.clipCanvas.value;
+
+  options.premultipliedAlpha = GFX.premultipliedAlpha.value;
+  options.unpackPremultiplyAlpha = GFX.unpackPremultiplyAlpha.value;
+
+  options.sourceBlendFactor = GFX.sourceBlendFactor.value;
+  options.destinationBlendFactor = GFX.destinationBlendFactor.value;
+
+  // These are set by holding down F and B in the easel, we don't want to
+  // override them here.
+  // options.paintFlashing = GFX.paintFlashing.value;
+  // options.paintBounds = GFX.paintBounds.value;
+
+  options.cull = GFX.cull.value;
+  options.disableMasking = GFX.disableMasking.value;
+  options.debug = GFX.debugStage.value;
+  options.forcePaint = GFX.forcePaint.value;
+  // options.disable = GFX.disableStage.value;
+  options.compositeMask = GFX.compositeMask.value;
+  options.disableTextureUploads = GFX.disableTextureUploads.value;
+
+  options.snapToDevicePixels = GFX.snapToDevicePixels.value;
+  options.imageSmoothing = GFX.imageSmoothing.value;
+}

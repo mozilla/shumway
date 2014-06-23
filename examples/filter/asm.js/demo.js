@@ -92,10 +92,10 @@ var Demo = (function() {
         cmParams.b0, cmParams.b1, cmParams.b2, cmParams.b3, cmParams.b4,
         cmParams.a0, cmParams.a1, cmParams.a2, cmParams.a3, cmParams.a4
       ]);
-    var pcm = Module._malloc(20 << 2);
-    Module.HEAPF32.set(cm, pcm >> 2);
+    var pcm = FILTERS.allocMemory(20 << 2);
+    FILTERS.HEAPF32.set(cm, pcm >> 2);
     FILTERS.colormatrix(pimg, w, h, pcm);
-    Module._free(pcm);
+    FILTERS.freeMemory(pcm);
   }
 
   demo.prototype = {
@@ -121,8 +121,8 @@ var Demo = (function() {
       var imgData = img.data;
 
       if (this.hasActiveFilters()) {
-        var pimg = Module._malloc(imgData.length);
-        Module.HEAPU8.set(imgData, pimg);
+        var pimg = FILTERS.allocMemory(imgData.length);
+        FILTERS.HEAPU8.set(imgData, pimg);
 
         FILTERS.preMultiplyAlpha(pimg, w, h);
         if (this.dropshadow.enabled) {
@@ -140,8 +140,8 @@ var Demo = (function() {
           doColorMatrix(pimg, w, h, this.colormatrix);
         }
 
-        imgData.set(Module.HEAPU8.subarray(pimg, pimg + imgData.length));
-        Module._free(pimg);
+        imgData.set(FILTERS.HEAPU8.subarray(pimg, pimg + imgData.length));
+        FILTERS.freeMemory(pimg);
       }
 
       this.ctxShapeTmp.putImageData(img, 0, 0);

@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf BitmapDataTest,200,200 test/swfs/flash_ui_BitmapData.as
+   node utils/compileabc.js --swf BitmapDataTest,600,600,60 -p test/swfs/flash_display_BitmapData.as
 */
 
 package {
@@ -11,7 +11,6 @@ package {
     public class BitmapDataTest extends Sprite {
         public var child;
         public function BitmapDataTest() {
-            stage.frameRate = 20;
             child = new BitmapDataObject();
             addChild(child);
             addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);

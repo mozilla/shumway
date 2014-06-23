@@ -37,7 +37,7 @@ if (isWorker) {
         var session = sessions[sessionId];
         if (session) {
           session.close();
-          delete sessions[sessionId];
+          sessions[sessionId] = null;
         }
         break;
       case 'decode':
@@ -97,14 +97,16 @@ if (isWorker) {
     }
   };
 
-  self.console = {
-    log: function (s) {
-      self.postMessage({ action: 'console', method: 'log', message: s });
-    },
-    error: function (s) {
-      self.postMessage({ action: 'console', method: 'error', message: s });
-    },
-  };
+  if (!self.console) {
+    self.console = {
+      log: function (s) {
+        self.postMessage({ action: 'console', method: 'log', message: s });
+      },
+      error: function (s) {
+        self.postMessage({ action: 'console', method: 'error', message: s });
+      },
+    };
+  }
 
 } else {
   var mp3Worker;

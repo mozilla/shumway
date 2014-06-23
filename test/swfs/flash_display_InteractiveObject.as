@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf InteractiveObjectTest,400,400 test/swfs/flash_display_InteractiveObject.as
+   node utils/compileabc.js --swf InteractiveObjectTest,400,400,60 -p test/swfs/flash_display_InteractiveObject.as
 */
 
 package {

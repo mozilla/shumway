@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf Class,100,100,2 test/swfs/flash_geom_Point.as
+   node utils/compileabc.js --swf PointTest,100,100,60 -p test/swfs/flash_geom_Point.as
 */
 
 package {
@@ -20,7 +20,7 @@ package {
 
 import flash.display.*;
 import flash.events.*;
-import flash.net.*;
+import flash.geom.Point;
 
 class TestObject extends Sprite {
     private var bgColor: uint = 0xFFCC00;

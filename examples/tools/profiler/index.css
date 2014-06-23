@@ -1,0 +1,52 @@
+html, body {
+    /*overflow: hidden;*/
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+html {
+}
+body {
+    color: white;
+    background-color: #444;
+}
+#progress-bar {
+    margin-bottom: 0;
+}
+.row-fluid {
+    text-align: right;
+    margin: 10px;
+}
+#form {
+    text-align: left;
+    display: inline-block;
+    margin: 0;
+}
+#form > div {
+    margin-bottom: 0;
+}
+#container {
+    margin: 0 10px 10px 10px;
+}
+canvas {
+    display: block;
+}
+.profiler-tooltip {
+    position: absolute;
+    font-family: sans-serif;
+    color: #ddd;
+}
+.profiler-tooltip {
+    background-color: #000;
+    border: 1px solid #aaa;
+    border-radius: 5px;
+    padding: 5px 8px;
+}
+.profiler-tooltip > div > h1 {
+    font-size: 11px;
+    margin: 1px 0 2px 0;
+}
+.profiler-tooltip > div > p {
+    font-size: 10px;
+    margin: 0 0 1px 0;
+}

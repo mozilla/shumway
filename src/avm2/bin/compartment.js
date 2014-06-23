@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -16,89 +14,89 @@
  * limitations under the License.
  */
 
-var console = {
-  time: function (name) {
-    Timer.start(name)
-  },
-  timeEnd: function (name) {
-    Timer.stop(name)
-  },
-  warn: function (s) {
-    if (traceWarnings.value) {
-      print(s);
-    }
-  },
-  info: function (s) {
-    // print(s);
-  }
-};
+var homePath;
+var release;
 
-load(homePath + "src/avm2/settings.js");
-load(homePath + "src/avm2/avm2Util.js");
+var jsBuildPath = homePath + "src/";
+var tsBuildPath = homePath + "build/ts/";
 
-if (false) {
-  var oldLoad = load;
-  load = function measureLoad(path) {
-    var start = performance.now();
-    oldLoad(path);
-    print("Loaded: " + path.padRight(' ', 64) + " in " + (performance.now() - start).toFixed(4));
-  }
-}
+load(tsBuildPath + "utilities.js");
 
-load(homePath + "src/avm2/options.js");
-var ArgumentParser = options.ArgumentParser;
-var Option = options.Option;
-var OptionSet = options.OptionSet;
+Shumway.Debug.assert(homePath, "Host compartment needs to initialize homePath.");
 
-load(homePath + "src/avm2/metrics.js");
-var Timer = metrics.Timer;
-var Counter = new metrics.Counter();
+load(tsBuildPath + "dataBuffer.js");
+load(tsBuildPath + "options.js");
+load(tsBuildPath + "settings.js");
+load(tsBuildPath + "metrics.js");
+load(tsBuildPath + "tools/profiler/timelineFrame.js");
+load(tsBuildPath + "tools/profiler/timelineBuffer.js");
+
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Timer = new Shumway.Metrics.Timer();
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
+
+
 
 var systemOptions = new OptionSet("System Options");
-var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
-var traceWarnings = systemOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
+var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
+
+Shumway.Settings = {
+  shumwayOptions: shumwayOptions
+};
+
+load(tsBuildPath + "avm2/options.js");
+var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
+var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 
 Timer.start("Loading VM");
-load(homePath + "src/avm2/constants.js");
-load(homePath + "src/avm2/errors.js");
-load(homePath + "src/avm2/opcodes.js");
-load(homePath + "src/avm2/parser.js");
-load(homePath + "src/avm2/disassembler.js");
-load(homePath + "src/avm2/analyze.js");
+
+load(tsBuildPath + "avm2/module.js");
+load(tsBuildPath + "avm2/errors.js");
+load(tsBuildPath + "avm2/parser.js");
+load(tsBuildPath + "avm2/bytecode.js");
+load(jsBuildPath + "avm2/disassembler.js");
 
 Timer.start("Loading Compiler");
-load(homePath + "src/avm2/compiler/lljs/src/estransform.js");
-load(homePath + "src/avm2/compiler/lljs/src/escodegen.js");
-load(homePath + "src/avm2/compiler/inferrer.js");
-load(homePath + "src/avm2/compiler/c4/ir.js");
-load(homePath + "src/avm2/compiler/c4/looper.js");
-load(homePath + "src/avm2/compiler/c4/transform.js");
-load(homePath + "src/avm2/compiler/c4/backend.js");
-load(homePath + "src/avm2/compiler/aot.js");
-load(homePath + "src/avm2/compiler/builder.js");
+load(tsBuildPath + "avm2/compiler/verifier.js");
+load(tsBuildPath + "avm2/compiler/c4/ir.js");
+load(tsBuildPath + "avm2/compiler/c4/as.ir.js");
+load(tsBuildPath + "avm2/compiler/c4/ast.js");
+load(tsBuildPath + "avm2/compiler/c4/optimizer.js");
+load(tsBuildPath + "avm2/compiler/c4/looper.js");
+load(tsBuildPath + "avm2/compiler/c4/backend.js");
+load(tsBuildPath + "avm2/compiler/builder.js");
 Timer.stop();
 
-load(homePath + "lib/ByteArray.js");
+Timer.start("Loading Runtime");
+load(tsBuildPath + "avm2/trampoline.js");
+load(tsBuildPath + "avm2/bindings.js");
+load(tsBuildPath + "avm2/scope.js");
 
-load(homePath + "src/avm2/domain.js");
-load(homePath + "src/avm2/class.js");
-load(homePath + "src/avm2/xregexp.js");
-load(homePath + "src/avm2/runtime.js");
-load(homePath + "src/avm2/viz.js");
-load(homePath + "src/avm2/interpreter.js");
-load(homePath + "src/avm2/xml.js");
-load(homePath + "src/avm2/vectors-numeric.js");
-load(homePath + "src/avm2/vectors-generic.js");
-load(homePath + "src/avm2/array.js");
-load(homePath + "src/avm2/proxy.js");
-load(homePath + "src/avm2/json2.js");
-load(homePath + "src/avm2/dictionary.js");
-load(homePath + "src/avm2/native.js");
-load(homePath + "src/avm2/vm.js");
+load(tsBuildPath + "avm2/domain.js");
+load(jsBuildPath + "avm2/xregexp.js");
+load(tsBuildPath + "avm2/runtime.js");
+load(jsBuildPath + "avm2/runtime-exports.js");
+load(tsBuildPath + "avm2/interpreter.js");
+
+load(tsBuildPath + "avm2/natives/int32Vector.js");
+load(tsBuildPath + "avm2/natives/uint32Vector.js");
+load(tsBuildPath + "avm2/natives/float64Vector.js");
+load(tsBuildPath + "avm2/native.js");
+load(tsBuildPath + "avm2/natives/GenericVector.js");
+load(tsBuildPath + "avm2/natives/dictionary.js");
+load(tsBuildPath + "avm2/natives/proxy.js");
+load(tsBuildPath + "avm2/natives/xml.js");
+load(tsBuildPath + "avm2/natives/system.js");
+load(tsBuildPath + "avm2/natives/byteArray.js");
+
 Timer.stop();
+Timer.stop();
+
+load(tsBuildPath + "avm2/compiler/aot.js");
 
 function grabAbc(fileOrBuffer) {
-  if (isString(fileOrBuffer)) {
+  if (Shumway.isString(fileOrBuffer)) {
 //    var buffer = snarf(fileOrBuffer, "binary");
 //    for (var i = 0; i < 10; i++) {
 //      var start = performance.now();
@@ -108,6 +106,6 @@ function grabAbc(fileOrBuffer) {
     return new AbcFile(snarf(fileOrBuffer, "binary"), fileOrBuffer);
   } else {
     var buffer = new Uint8Array(fileOrBuffer); // Copy into local compartment.
-    return new AbcFile(buffer, fileOrBuffer);
+    return new AbcFile(buffer);
   }
 }
