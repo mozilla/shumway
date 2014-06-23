@@ -111,4 +111,32 @@
     reset();
   });
 
+  unitTests.push(function basicPlaybackControl() {
+    var mc = createMovieClipWithFrames(10);
+    check(!mc.isPlaying);
+    mc.play();
+    check(mc.isPlaying);
+    mc.stop();
+    check(!mc.isPlaying);
+    var errorThrown = false;
+    try {
+      mc.gotoAndPlay({toString: function(){throw 1}});
+    } catch (e) {
+      errorThrown = true;
+    }
+    check(errorThrown);
+    check(!mc.isPlaying);
+    mc.play();
+    check(mc.isPlaying);
+    errorThrown = false;
+    try {
+      mc.gotoAndStop({toString: function(){throw 1}});
+    } catch (e) {
+      errorThrown = true;
+    }
+    check(errorThrown);
+    check(mc.isPlaying);
+    reset();
+  });
+
 })();

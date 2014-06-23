@@ -204,20 +204,11 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Implementation for both gotoAndPlay and gotoAndStop.
      *
-     * Technically, we should throw errors from those functions directly so the stack is correct.
+     * Technically, we should throw all errors from those functions directly so the stack is
+     * correct.
      * We might at some point do that by explicitly inlining this function using some build step.
      */
     private _gotoFrame(frame: string, sceneName: string = null): void {
-      // Argument handling for gotoAnd* is a bit peculiar:
-      // - too many arguments throw just as too few do
-      // - the `sceneName` argument is coerced first
-      // - the `frame` argument is coerced to string, but `undefined` results in `"null"`
-      if (arguments.length === 0 || arguments.length > 2) {
-        throwError('ArgumentError', Errors.WrongArgumentCountError,
-                   'flash.display::MovieClip/gotoAndPlay()', 1, arguments.length);
-      }
-      sceneName = asCoerceString(sceneName);
-      frame = asCoerceString(frame) + ''; // asCoerceString returns `null` for `undefined`.
       var scene: Scene;
       if (sceneName !== null) {
         sceneName = asCoerceString(sceneName);
@@ -439,6 +430,16 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     gotoAndPlay(frame: any, scene: string = null): void {
+      // Argument handling for gotoAnd* is a bit peculiar:
+      // - too many arguments throw just as too few do
+      // - the `sceneName` argument is coerced first
+      // - the `frame` argument is coerced to string, but `undefined` results in `"null"`
+      if (arguments.length === 0 || arguments.length > 2) {
+        throwError('ArgumentError', Errors.WrongArgumentCountError,
+                   'flash.display::MovieClip/gotoAndPlay()', 1, arguments.length);
+      }
+      scene = asCoerceString(scene);
+      frame = asCoerceString(frame) + ''; // The asCoerceString returns `null` for `undefined`.
       this.play();
       this._gotoFrame(frame, scene);
     }
