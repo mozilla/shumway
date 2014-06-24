@@ -2,6 +2,7 @@ testFiles = [
   'graphics.js',
   'displayObject.js',
   'displayObjectContainer.js',
+  'MovieClip.js',
   // 'eventDispatcher.js',
   'broadcastEvents.js',
   'bitmap.js',

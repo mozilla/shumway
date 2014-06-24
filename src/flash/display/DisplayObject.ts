@@ -350,9 +350,12 @@ module Shumway.AVM2.AS.flash.display {
 
     /**
      * Creates a new display object from a symbol and initializes its animated display properties.
-     * Calling its constructor is optional at this point, since that can happen in a later frame phase.
+     * Calling its constructor is optional at this point, since that can happen in a later frame
+     * phase.
      */
-    static createAnimatedDisplayObject(state: Shumway.Timeline.AnimationState, callConstructor: boolean = true): DisplayObject {
+    static createAnimatedDisplayObject(state: Shumway.Timeline.AnimationState,
+                                       callConstructor: boolean): DisplayObject
+    {
       var symbol = state.symbol;
       var symbolClass = symbol.symbolClass;
       var instance: DisplayObject;

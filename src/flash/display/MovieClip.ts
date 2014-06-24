@@ -19,6 +19,7 @@ module Shumway.AVM2.AS.flash.display {
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import isNullOrUndefined = Shumway.isNullOrUndefined;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
@@ -200,9 +201,17 @@ module Shumway.AVM2.AS.flash.display {
       this._stopped = true;
     }
 
-    gotoFrame(frame: any, sceneName: string = null): void {
+    /**
+     * Implementation for both gotoAndPlay and gotoAndStop.
+     *
+     * Technically, we should throw all errors from those functions directly so the stack is
+     * correct.
+     * We might at some point do that by explicitly inlining this function using some build step.
+     */
+    private _gotoFrame(frame: string, sceneName: string = null): void {
       var scene: Scene;
       if (sceneName !== null) {
+        sceneName = asCoerceString(sceneName);
         var scenes = this._scenes;
         release || assert (scenes.length, "There should be at least one scene defined.");
         for (var i = 0; i < scenes.length; i++) {
@@ -218,8 +227,10 @@ module Shumway.AVM2.AS.flash.display {
         scene = this._sceneForFrameIndex(this._currentFrame);
       }
 
-      var frameNum = 1;
-      if (typeof frame === 'string') {
+      // Amazingly, the `frame` argument, while first coerced to string, is then interpreted as a
+      // frame index even if a label with the same name exists.
+      var frameNum = parseInt(frame);
+      if (<any>frameNum != frame) { // TypeScript doesn't like using `==` for number,string vars.
         var labels = scene.labels;
         for (var i = 0; i < labels.length; i++) {
           var label = labels[i];
@@ -231,22 +242,22 @@ module Shumway.AVM2.AS.flash.display {
         if (i === labels.length) {
           throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame, sceneName);
         }
-      } else {
-        if (!frame) {
-          // TODO
-        }
-        frameNum = frame;
-        if (frameNum < 1) {
-          frameNum = 1;
-        }
       }
 
-      var nextFrame = scene.offset + frameNum;
-      if (nextFrame === this._nextFrame) {
+      this._gotoFrameAbs(scene.offset + frameNum);
+    }
+
+    private _gotoFrameAbs(frame: number): void {
+      if (frame < 1) {
+        frame = 1;
+      } else if (frame > this._totalFrames) {
+        frame = this._totalFrames;
+      }
+      if (frame === this._nextFrame) {
         return;
       }
 
-      this._nextFrame = nextFrame;
+      this._nextFrame = frame;
 
       if (this._allowFrameNavigation) { // TODO: also check if ActionScriptVersion < 3
         // TODO test inter-frame navigation behaviour for SWF versions < 10
@@ -419,30 +430,56 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     gotoAndPlay(frame: any, scene: string = null): void {
+      // Argument handling for gotoAnd* is a bit peculiar:
+      // - too many arguments throw just as too few do
+      // - the `sceneName` argument is coerced first
+      // - the `frame` argument is coerced to string, but `undefined` results in `"null"`
+      if (arguments.length === 0 || arguments.length > 2) {
+        throwError('ArgumentError', Errors.WrongArgumentCountError,
+                   'flash.display::MovieClip/gotoAndPlay()', 1, arguments.length);
+      }
+      scene = asCoerceString(scene);
+      frame = asCoerceString(frame) + ''; // The asCoerceString returns `null` for `undefined`.
       this.play();
-      this.gotoFrame(frame, asCoerceString(scene));
+      this._gotoFrame(frame, scene);
     }
 
     gotoAndStop(frame: any, scene: string = null): void {
+      // See comment in gotoAndPlay for an explanation of the arguments handling stuff.
+      if (arguments.length === 0 || arguments.length > 2) {
+        throwError('ArgumentError', Errors.WrongArgumentCountError,
+                   'flash.display::MovieClip/gotoAndPlay()', 1, arguments.length);
+      }
+      scene = asCoerceString(scene);
+      frame = asCoerceString(frame) + ''; // The asCoerceString returns `null` for `undefined`.
       this.stop();
-      this.gotoFrame(frame, asCoerceString(scene));
+      this._gotoFrame(frame, scene);
     }
 
-    addFrameScript(...args): void {
+    /**
+     * Takes pairs of `frameIndex`, `script` arguments and adds the `script`s to the `_frameScripts`
+     * Array.
+     *
+     * Undocumented method used to implement the old timeline concept in AS3.
+     */
+    addFrameScript(frameIndex: number, script: (any?)=>any /*, ...*/): void {
       if (!this._currentFrame) {
         return;
       }
       // arguments are pairs of frameIndex and script/function
       // frameIndex is in range 0..totalFrames-1
-      var numArgs = args.length;
+      var numArgs = arguments.length;
       if (numArgs & 1) {
         throwError('ArgumentError', Errors.TooFewArgumentsError, numArgs, numArgs + 1);
       }
       var frameScripts = this._frameScripts;
+      var totalFrames = this._totalFrames;
       for (var i = 0; i < numArgs; i += 2) {
-        var frameNum = args[i] + 1;
-        release || assert (frameNum > 0 && frameNum <= this._totalFrames, "Invalid frame number.");
-        var fn = args[i + 1];
+        var frameNum = (arguments[i]|0) + 1;
+        if (frameNum < 0 || frameNum > totalFrames) {
+          continue;
+        }
+        var fn = arguments[i + 1];
         frameScripts[frameNum] = fn;
         if (frameNum === this._currentFrame) {
           MovieClip._callQueue.push(this);
@@ -465,12 +502,12 @@ module Shumway.AVM2.AS.flash.display {
       }
       // Since scene offsets are 0-based, the current scene's offset, treated as a frame index,
       // is the previous scene's last frame.
-      this.gotoFrame(1, this._sceneForFrameIndex(currentScene.offset).name);
+      this._gotoFrameAbs(this._sceneForFrameIndex(currentScene.offset).offset + 1);
     }
 
     nextScene(): void {
       var currentScene = this._sceneForFrameIndex(this._currentFrame);
-      this.gotoFrame(currentScene.numFrames + 1);
+      this._gotoFrameAbs(currentScene.offset + currentScene.numFrames + 1);
     }
   }
 }
