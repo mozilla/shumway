@@ -241,7 +241,7 @@ module Shumway.GFX {
       enterTimeline("RenderableBitmap.drawFrame");
       var bounds = this.getBounds();
       var renderer = new Canvas2DStageRenderer(this._canvas, null);
-      renderer.draw(source, matrix, clipRect || bounds);
+      renderer.renderClippedFrame(source, clipRect || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
     }
 
@@ -578,7 +578,7 @@ module Shumway.GFX {
     descent: number = 0;
     leading: number = 0;
     align: number = 0;
-    runs: any[] = [];
+    runs: Run[] = [];
 
     addRun(font: string, fillStyle: string, text: string, underline: boolean) {
       if (text) {
@@ -767,6 +767,8 @@ module Shumway.GFX {
         currentLine = new Line();
       };
 
+      enterTimeline("RenderableText.reflow");
+
       while (textRunData.position < textRunData.length) {
         var beginIndex = textRunData.readInt();
         var endIndex = textRunData.readInt();
@@ -884,6 +886,8 @@ module Shumway.GFX {
       }
 
       this.setFlags(RenderableFlags.Dirty);
+
+      leaveTimeline("RenderableText.reflow");
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
@@ -891,6 +895,7 @@ module Shumway.GFX {
     }
 
     render(context: CanvasRenderingContext2D): void {
+      enterTimeline("RenderableText.render");
       var bounds = this._bounds;
 
       context.save();
@@ -922,6 +927,7 @@ module Shumway.GFX {
       }
 
       context.restore();
+      leaveTimeline("RenderableText.render");
     }
 
     private _renderChars(context: CanvasRenderingContext2D) {

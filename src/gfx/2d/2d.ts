@@ -132,7 +132,7 @@ module Shumway.GFX {
       context.globalAlpha = 1;
 
       var viewport = this._viewport;
-      this.drawFrame(stage, stage.matrix, viewport);
+      this.renderClippedFrame(stage, viewport, stage.matrix);
 
       if (stage.trackDirtyRegions) {
         stage.dirtyRegion.clear();
@@ -153,7 +153,7 @@ module Shumway.GFX {
       context.clearRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
     }
 
-    draw(source: Frame, matrix: Matrix, viewport: Rectangle) {
+    renderClippedFrame(source: Frame, viewport: Rectangle, matrix: Matrix) {
       var context = this.context;
       context.save();
       context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
