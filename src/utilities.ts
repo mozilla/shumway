@@ -1223,7 +1223,7 @@ module Shumway {
     private _map: WeakMap<T, T>;
     private _list: T [];
     constructor() {
-      if (typeof Components !== "undefined") {
+      if (typeof netscape !== "undefined" && netscape.security.PrivilegeManager) {
         this._map = new WeakMap<T, T>();
       } else {
         this._list = [];
