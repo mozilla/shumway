@@ -77,13 +77,12 @@ module Shumway.Remoting {
     UpdateTextContent           = 103,
     UpdateStage                 = 104,
 
-    CacheAsBitmap               = 200,
+    RegisterFont                = 200,
+    DrawToBitmap                = 201,
 
     MouseEvent                  = 300,
     KeyboardEvent               = 301,
-    FocusEvent                  = 302,
-
-    RegisterFont                = 400
+    FocusEvent                  = 302
   }
 
   /**

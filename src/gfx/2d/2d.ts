@@ -132,19 +132,13 @@ module Shumway.GFX {
       context.globalAlpha = 1;
 
       var viewport = this._viewport;
-      context.save();
-      context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
-      context.clip();
-      this.renderFrame(context, stage, stage.matrix, this._viewport, new Canvas2DStageRendererState(options));
-      context.restore();
+      this.drawFrame(stage, stage.matrix, viewport);
 
       if (stage.trackDirtyRegions) {
         stage.dirtyRegion.clear();
       }
 
       context.restore();
-
-
 
       if (options && options.paintViewport) {
         context.beginPath();
@@ -159,7 +153,16 @@ module Shumway.GFX {
       context.clearRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
     }
 
-    renderFrame(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState) {
+    draw(source: Frame, matrix: Matrix, viewport: Rectangle) {
+      var context = this.context;
+      context.save();
+      context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+      context.clip();
+      this._renderFrame(context, source, matrix, viewport, new Canvas2DStageRendererState(this._options));
+      context.restore();
+    }
+
+    private _renderFrame(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState) {
       var self = this;
 
       root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
@@ -167,15 +170,15 @@ module Shumway.GFX {
 
         if (state.ignoreMask !== frame && frame.mask && !state.clipRegion) {
           context.save();
-          self.renderFrame(context, frame.mask, frame.mask.getConcatenatedMatrix(), viewport, new Canvas2DStageRendererState(state.options, true));
-          self.renderFrame(context, frame, transform, viewport, new Canvas2DStageRendererState(state.options, false, frame));
+          self._renderFrame(context, frame.mask, frame.mask.getConcatenatedMatrix(), viewport, new Canvas2DStageRendererState(state.options, true));
+          self._renderFrame(context, frame, transform, viewport, new Canvas2DStageRendererState(state.options, false, frame));
           context.restore();
           return VisitorFlags.Skip;
         }
 
         if (flags & FrameFlags.EnterClip) {
           context.save();
-          self.renderFrame(context, frame, transform, viewport, new Canvas2DStageRendererState(state.options, true));
+          self._renderFrame(context, frame, transform, viewport, new Canvas2DStageRendererState(state.options, true));
           return;
         } else if (flags & FrameFlags.LeaveClip) {
           context.restore();

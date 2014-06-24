@@ -370,7 +370,7 @@ module Shumway.AVM2.AS.flash.display {
       if (matrix) {
         matrix = matrix.clone().toTwipsInPlace();
       }
-      serializer.cacheAsBitmap(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
+      serializer.drawToBitmap(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false, quality: string = null): void {
       source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing; quality = asCoerceString(quality);
@@ -504,6 +504,6 @@ module Shumway.AVM2.AS.flash.display {
   }
 
   export interface IBitmapDataSerializer {
-    cacheAsBitmap(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform, blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
+    drawToBitmap(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform, blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
   }
 }

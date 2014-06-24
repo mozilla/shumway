@@ -167,6 +167,18 @@ module Shumway.GFX {
       return renderableBitmap;
     }
 
+    public static FromFrame(source: Frame, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle) {
+      enterTimeline("RenderableBitmap.FromFrame");
+      var canvas = document.createElement("canvas");
+      var bounds = source.getBounds();
+      canvas.width = bounds.w;
+      canvas.height = bounds.h;
+      var renderableBitmap = new RenderableBitmap(canvas, bounds);
+      renderableBitmap.drawFrame(source, matrix, colorMatrix, blendMode, clipRect);
+      leaveTimeline("RenderableBitmap.FromFrame");
+      return renderableBitmap;
+    }
+
     public updateFromDataBuffer(type: ImageType, dataBuffer: DataBuffer) {
       if (!imageUpdateOption.value) {
         return;
@@ -224,22 +236,13 @@ module Shumway.GFX {
       leaveTimeline("RenderableBitmap.render");
     }
 
-    draw(source: RenderableBitmap, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle): void {
-      var context = this._canvas.getContext('2d');
-      context.save();
-      if (clipRect) {
-        context.rect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);
-        context.clip();
-      }
-      if (matrix) {
-        var bounds = source.getBounds();
-        if (bounds.x || bounds.y) {
-          matrix.translate(bounds.x, bounds.y);
-        }
-        context.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-      }
-      context.drawImage(source._canvas, 0, 0);
-      context.restore();
+    drawFrame(source: Frame, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle): void {
+      // TODO: Support colorMatrix and blendMode.
+      enterTimeline("RenderableBitmap.drawFrame");
+      var bounds = this.getBounds();
+      var renderer = new Canvas2DStageRenderer(this._canvas, null);
+      renderer.draw(source, matrix, clipRect || bounds);
+      leaveTimeline("RenderableBitmap.drawFrame");
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {

@@ -269,12 +269,12 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeCacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable,
+    writeDrawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable,
                        matrix: flash.geom.Matrix = null,
                        colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
                        clipRect: flash.geom.Rectangle = null, smoothing: boolean = false)
     {
-      this.output.writeInt(MessageTag.CacheAsBitmap);
+      this.output.writeInt(MessageTag.DrawToBitmap);
       this.output.writeInt(bitmapData._id);
       if (BitmapData.isType(source)) {
         this.output.writeInt(IDMask.Asset | source._id);

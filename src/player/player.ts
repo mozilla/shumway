@@ -228,7 +228,7 @@ module Shumway.Player {
       this.onSendUpdates(updates, assets);
     }
 
-    public cacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
+    public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
       var updates = new DataBuffer();
       var assets = [];
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
@@ -243,17 +243,17 @@ module Shumway.Player {
         var displayObject = <flash.display.DisplayObject>source;
 
         serializer.phase = Remoting.RemotingPhase.Objects;
-        enterTimeline("cacheAsBitmap");
+        enterTimeline("drawToBitmap");
         serializer.writeDisplayObject(displayObject);
-        leaveTimeline("cacheAsBitmap");
+        leaveTimeline("drawToBitmap");
 
         serializer.phase = Remoting.RemotingPhase.References;
-        enterTimeline("cacheAsBitmap 2");
+        enterTimeline("drawToBitmap 2");
         serializer.writeDisplayObject(displayObject);
-        leaveTimeline("cacheAsBitmap 2");
+        leaveTimeline("drawToBitmap 2");
       }
 
-      serializer.writeCacheAsBitmap(bitmapData, source, matrix, colorTransform, blendMode, clipRect, smoothing);
+      serializer.writeDrawToBitmap(bitmapData, source, matrix, colorTransform, blendMode, clipRect, smoothing);
 
       updates.writeInt(Shumway.Remoting.MessageTag.EOF);
 

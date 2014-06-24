@@ -138,17 +138,17 @@ module Shumway.Remoting.GFX {
           case MessageTag.UpdateTextContent:
             this._readUpdateTextContent();
             break;
-          case MessageTag.RegisterFont:
-            this._readFont();
-            break;
           case MessageTag.UpdateFrame:
             this._readUpdateFrame();
             break;
           case MessageTag.UpdateStage:
             this._readUpdateStage();
             break;
-          case MessageTag.CacheAsBitmap:
-            this._readCacheAsBitmap();
+          case MessageTag.RegisterFont:
+            this._readRegisterFont();
+            break;
+          case MessageTag.DrawToBitmap:
+            this._readDrawToBitmap();
             break;
           default:
             release || assert(false, 'Unknown MessageReader tag: ' + tag);
@@ -298,28 +298,6 @@ module Shumway.Remoting.GFX {
       var rectangle = this._readRectangle()
     }
 
-    private _readFont() {
-      var input = this.input;
-      var fontId = input.readInt();
-      var bold = input.readBoolean();
-      var italic = input.readBoolean();
-      var assetId = input.readInt();
-      var data = this.inputAssets[assetId];
-
-      var head = document.head;
-      head.insertBefore(document.createElement('style'), head.firstChild);
-      var style = <CSSStyleSheet>document.styleSheets[0];
-      style.insertRule(
-        '@font-face{' +
-          'font-family:swffont' + fontId + ';' +
-          'src:url(data:font/opentype;base64,' + Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' +
-        '}',
-        style.cssRules.length
-      );
-
-      this.inputAssets[assetId] = null;
-    }
-
     private _readUpdateFrame() {
       var input = this.input;
       var context = this.context;
@@ -362,7 +340,29 @@ module Shumway.Remoting.GFX {
       }
     }
 
-    private _readCacheAsBitmap() {
+    private _readRegisterFont() {
+      var input = this.input;
+      var fontId = input.readInt();
+      var bold = input.readBoolean();
+      var italic = input.readBoolean();
+      var assetId = input.readInt();
+      var data = this.inputAssets[assetId];
+
+      var head = document.head;
+      head.insertBefore(document.createElement('style'), head.firstChild);
+      var style = <CSSStyleSheet>document.styleSheets[0];
+      style.insertRule(
+          '@font-face{' +
+          'font-family:swffont' + fontId + ';' +
+          'src:url(data:font/opentype;base64,' + Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' +
+          '}',
+        style.cssRules.length
+      );
+
+      this.inputAssets[assetId] = null;
+    }
+
+    private _readDrawToBitmap() {
       var input = this.input;
       var context = this.context;
       var targetId = input.readInt();
@@ -383,33 +383,12 @@ module Shumway.Remoting.GFX {
       var blendMode = input.readInt();
       input.readBoolean(); // Smoothing
       var target = <RenderableBitmap>context._assets[targetId];
-      var source: RenderableBitmap;
-      if (sourceId & IDMask.Asset) {
-        source = <RenderableBitmap>context._assets[sourceId & ~IDMask.Asset];
+      var source = context._makeFrame(sourceId);
+      if (!target) {
+        context._assets[targetId] = RenderableBitmap.FromFrame(source, matrix, colorMatrix, blendMode, clipRect);
       } else {
-        source = this._cacheAsBitmap(context._frames[sourceId]);
+        target.drawFrame(source, matrix, colorMatrix, blendMode, clipRect);
       }
-      if (target) {
-        target.draw(source, matrix, colorMatrix, blendMode, clipRect);
-      } else {
-        context._assets[targetId] = source;
-      }
-    }
-
-    private _cacheAsBitmap(frame: Frame): RenderableBitmap {
-      Shumway.GFX.enterTimeline("cacheAsBitmap");
-      var canvas = document.createElement('canvas');
-      var bounds = frame.getBounds();
-      var matrix = Matrix.createIdentity();
-      if (bounds.x || bounds.y) {
-        matrix.translate(-bounds.x, -bounds.y);
-      }
-      canvas.width = bounds.w;
-      canvas.height = bounds.h;
-      var renderer = new Canvas2DStageRenderer(canvas, null);
-      var options = new Shumway.GFX.Canvas2DStageRendererOptions();
-      renderer.renderFrame(renderer.context, frame, matrix, new Rectangle(0, 0, bounds.w, bounds.h), new Canvas2DStageRendererState(options));
-      return new RenderableBitmap(canvas, bounds);
     }
   }
 }
