@@ -291,6 +291,10 @@ module Shumway.Remoting.GFX {
 
     private _readUpdateStage() {
       var context = this.context;
+      var id = this.input.readInt();
+      if (!context._frames[id]) {
+        context._frames[id] = context.root;
+      }
       var color = this.input.readInt();
       context.root.color = Color.FromARGB(color);
       context.root.bounds = this._readRectangle();
@@ -323,10 +327,9 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = input.readInt();
       writer && writer.writeLn("Receiving UpdateFrame: " + id);
-      var firstFrame = context._frames.length === 0;
       var frame = context._frames[id];
       if (!frame) {
-        frame = context._frames[id] = firstFrame ? context.root : new FrameContainer();
+        frame = context._frames[id] = new FrameContainer();
       }
 
       var hasBits = input.readInt();
