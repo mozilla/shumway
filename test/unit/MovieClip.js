@@ -48,14 +48,22 @@
 
   unitTests.push(function frameScriptAddition() {
     var mc = createMovieClipWithFrames(10);
-    mc.addFrameScript(-100, function(){});
-    mc.addFrameScript(100, function(){});
+    mc.addFrameScript(-100, A);
+    mc.addFrameScript(100, A);
     eq(mc._frameScripts.length, 0, "addFrameScript ignores out-of-bounds frame positions");
     mc.addFrameScript(0, A);
     eq(mc._frameScripts.length, 2, "addFrameScript properly adds script");
     eq(mc._frameScripts[1], A, "addFrameScript properly adds script");
+
+    mc._frameScripts.length = 0;
+    mc.addFrameScript(mc._totalFrames - 1, A);
+    eq(mc._frameScripts.length, mc._totalFrames + 1, "addFrameScript works for last frame");
+    eq(mc._frameScripts[mc._totalFrames], A, "addFrameScript properly adds script");
+
+    mc._frameScripts.length = 0;
     mc.addFrameScript("0", A);
     eq(mc._frameScripts.length, 2, "addFrameScript coerces frameIndex to number");
+
     assertThrowsInstanceOf(function(){
       mc.addFrameScript({
                           valueOf: function(){throw new A()},
@@ -67,6 +75,7 @@
                           toString: function(){throw new B()}
                         }, B);
     }, B, "addFrameScript frameIndex coercion falls back on the argument's toString");
+
     mc._frameScripts.length = 0;
     try {
       mc.addFrameScript(0, A, {toString: function(){throw new B()}}, B);
@@ -74,8 +83,12 @@
     }
     eq(mc._frameScripts.length, 2, "addFrameScript adds scripts until coercion fails");
     eq(mc._frameScripts[1], A, "addFrameScript adds scripts until coercion fails");
+
+    mc._frameScripts.length = 0;
     mc.addFrameScript(0, A, 0, B);
     eq(mc._frameScripts.length, 2, "addFrameScript replaces scripts on the same frame");
+    eq(mc._frameScripts[1], B, "addFrameScript adds scripts until coercion fails");
+
     reset();
   });
 

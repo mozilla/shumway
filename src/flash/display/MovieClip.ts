@@ -476,7 +476,7 @@ module Shumway.AVM2.AS.flash.display {
       var totalFrames = this._totalFrames;
       for (var i = 0; i < numArgs; i += 2) {
         var frameNum = (arguments[i]|0) + 1;
-        if (frameNum < 0 || frameNum >= totalFrames) {
+        if (frameNum < 0 || frameNum > totalFrames) {
           continue;
         }
         var fn = arguments[i + 1];
