@@ -15,7 +15,6 @@
  */
 module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
-  import ClipRectangle = Shumway.GFX.ClipRectangle;
   import Shape = Shumway.GFX.Shape;
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
@@ -84,12 +83,12 @@ module Shumway.Remoting.GFX {
   }
 
   export class GFXChannelDeserializerContext {
-    root: ClipRectangle;
+    root: FrameContainer;
     _frames: Frame [];
     _assets: Renderable [];
 
     constructor(root: FrameContainer) {
-      root.addChild(this.root = new ClipRectangle(1024, 1024));
+      this.root = root;
       this._frames = [];
       this._assets = [];
     }
@@ -296,8 +295,7 @@ module Shumway.Remoting.GFX {
         context._frames[id] = context.root;
       }
       var color = this.input.readInt();
-      context.root.color = Color.FromARGB(color);
-      context.root.bounds = this._readRectangle();
+      var rectangle = this._readRectangle()
     }
 
     private _readFont() {
@@ -410,7 +408,7 @@ module Shumway.Remoting.GFX {
       canvas.height = bounds.h;
       var renderer = new Canvas2DStageRenderer(canvas, null);
       var options = new Shumway.GFX.Canvas2DStageRendererOptions();
-      renderer.renderFrame(renderer.context, frame, matrix, new Canvas2DStageRendererState(options));
+      renderer.renderFrame(renderer.context, frame, matrix, new Rectangle(0, 0, bounds.w, bounds.h), new Canvas2DStageRendererState(options));
       return new RenderableBitmap(canvas, bounds);
     }
   }

@@ -26,7 +26,7 @@ module Shumway.AVM2.AS.flash.display {
 
   export class MovieClip extends flash.display.Sprite {
 
-    private static _movieClipInstances: MovieClip [];
+    private static _movieClipInstances: WeakList<MovieClip>;
     private static _callQueue: MovieClip [];
 
     // Called whenever the class is initialized.
@@ -34,7 +34,7 @@ module Shumway.AVM2.AS.flash.display {
       MovieClip.reset();
     };
     static reset() {
-      MovieClip._movieClipInstances = [];
+      MovieClip._movieClipInstances = new WeakList<MovieClip>();
       MovieClip._callQueue = [];
     }
     // Called whenever an instance of the class is initialized.
@@ -74,7 +74,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // ["currentLabels"];
 
     static initFrame(): void {
-      var instances = MovieClip._movieClipInstances;
+      var instances = MovieClip._movieClipInstances.values();
       enterTimeline("MovieClip.initFrame", {instances: instances.length});
       for (var i = 0; i < instances.length; i++) {
         var instance = instances[i];

@@ -56,7 +56,6 @@ module Shumway.GFX {
     clipDirtyRegions: boolean;
     clipCanvas: boolean;
     cull: boolean;
-    drawLayers: boolean;
 
     snapToDevicePixels: boolean;
     imageSmoothing: boolean;
@@ -132,20 +131,27 @@ module Shumway.GFX {
 
       context.globalAlpha = 1;
 
-      this.renderFrame(context, stage, stage.matrix, new Canvas2DStageRendererState(options));
+      var viewport = this._viewport;
+      context.save();
+      context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+      context.clip();
+      this.renderFrame(context, stage, stage.matrix, this._viewport, new Canvas2DStageRendererState(options));
+      context.restore();
 
       if (stage.trackDirtyRegions) {
         stage.dirtyRegion.clear();
       }
 
-      if (options && options.drawLayers) {
-        function drawRectangle(rectangle: Rectangle) {
-          context.rect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
-        }
-        context.strokeStyle = "#FF4981";
-      }
-
       context.restore();
+
+
+
+      if (options && options.paintViewport) {
+        context.beginPath();
+        context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+        context.strokeStyle = "#FF4981";
+        context.stroke();
+      }
     }
 
     static clearContext(context: CanvasRenderingContext2D, rectangle: Rectangle) {
@@ -153,29 +159,32 @@ module Shumway.GFX {
       context.clearRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
     }
 
-    renderFrame(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, state: Canvas2DStageRendererState) {
+    renderFrame(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState) {
       var self = this;
 
       root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
-        if (frame.getBounds().isEmpty()) {
-          // return;
-        }
+        var bounds = frame.getBounds();
 
         if (state.ignoreMask !== frame && frame.mask && !state.clipRegion) {
           context.save();
-          self.renderFrame(context, frame.mask, frame.mask.getConcatenatedMatrix(), new Canvas2DStageRendererState(state.options, true));
-          self.renderFrame(context, frame, transform, new Canvas2DStageRendererState(state.options, false, frame));
+          self.renderFrame(context, frame.mask, frame.mask.getConcatenatedMatrix(), viewport, new Canvas2DStageRendererState(state.options, true));
+          self.renderFrame(context, frame, transform, viewport, new Canvas2DStageRendererState(state.options, false, frame));
           context.restore();
           return VisitorFlags.Skip;
         }
 
         if (flags & FrameFlags.EnterClip) {
           context.save();
-          self.renderFrame(context, frame, transform, new Canvas2DStageRendererState(state.options, true));
+          self.renderFrame(context, frame, transform, viewport, new Canvas2DStageRendererState(state.options, true));
           return;
         } else if (flags & FrameFlags.LeaveClip) {
           context.restore();
           return;
+        }
+
+        // Return early if the bounds are not within the viewport.
+        if (!viewport.intersectsTransformedAABB(bounds, transform)) {
+          return VisitorFlags.Skip;
         }
 
         if (frame.pixelSnapping === PixelSnapping.Always || state.options.snapToDevicePixels) {

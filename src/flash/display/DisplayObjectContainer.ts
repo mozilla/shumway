@@ -27,14 +27,14 @@ module Shumway.AVM2.AS.flash.display {
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
     static bindings: string [] = null;
     static classSymbols: string [] = null;
-    private static _displayObjectContainerInstances: DisplayObjectContainer [];
+    private static _displayObjectContainerInstances: WeakList<DisplayObjectContainer>;
 
     static classInitializer: any = function () {
       DisplayObjectContainer.reset();
     };
 
     static reset() {
-      DisplayObjectContainer._displayObjectContainerInstances = [];
+      DisplayObjectContainer._displayObjectContainerInstances = new WeakList<DisplayObjectContainer>();
     }
 
     static initializer: any = function () {
@@ -50,7 +50,7 @@ module Shumway.AVM2.AS.flash.display {
      * children that were created in an earlier frame phase.
      */
     static constructChildren(): void {
-        var instances = DisplayObjectContainer._displayObjectContainerInstances;
+      var instances = DisplayObjectContainer._displayObjectContainerInstances.values();
       enterTimeline("DisplayObjectContainer.constructChildren", {instances: instances.length});
       for (var i = 0; i < instances.length; i++) {
         instances[i]._constructChildren();

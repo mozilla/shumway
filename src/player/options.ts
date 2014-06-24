@@ -52,6 +52,14 @@ module Shumway {
     new Shumway.Options.Option("", "Play Symbols", "boolean", false, "Plays all SWF symbols automatically.")
   );
 
+  export var initFrameOption = playerOptions.register (
+    new Shumway.Options.Option("", "Init Frame", "boolean", true, "Call MovieClip.initFrame.")
+  );
+
+  export var constructFrameOption = playerOptions.register (
+    new Shumway.Options.Option("", "Construct Frame", "boolean", true, "Call MovieClip.constructFrame.")
+  );
+
   export var playSymbolOption = playerOptions.register (
     new Shumway.Options.Option("", "Play Symbol Number", "number", 0, "Select symbol by Id.", {range: { min: 0, max: 20000, step: 1 }})
   );
@@ -61,7 +69,7 @@ module Shumway {
   );
 
   export var playSymbolCountOption = playerOptions.register (
-    new Shumway.Options.Option("", "Play Symbol Count", "number", -1, "Select symbol count.", {range: { min: 0, max: 2000, step: 1 }})
+    new Shumway.Options.Option("", "Play Symbol Count", "number", -1, "Select symbol count.", {range: { min: 0, max: 20000, step: 1 }})
   );
 
   export var stageScaleOption = playerOptions.register (

@@ -1216,6 +1216,45 @@ module Shumway {
 
   polyfillWeakMap();
 
+  declare var netscape;
+  declare var Components;
+
+  export class WeakList<T> {
+    private _map: WeakMap<T, T>;
+    private _list: T [];
+    constructor() {
+      if (typeof Components !== "undefined") {
+        this._map = new WeakMap<T, T>();
+      } else {
+        this._list = [];
+      }
+    }
+    clear() {
+      if (this._map) {
+        this._map.clear();
+      } else {
+        this._list.length = 0;
+      }
+    }
+    push(value: T) {
+      if (this._map) {
+        this._map.set(value, null);
+      } else {
+        this._list.push(value);
+      }
+    }
+    values(): T [] {
+      if (this._map) {
+        if (typeof netscape !== "undefined") {
+          netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
+        }
+        return Components.utils.nondeterministicGetWeakMapKeys(this._map);
+      } else {
+        return this._list;
+      }
+    }
+  }
+
   export module NumberUtilities {
     export function pow2(exponent: number): number {
       if (exponent === (exponent | 0)) {
