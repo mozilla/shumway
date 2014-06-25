@@ -46,9 +46,11 @@ module Shumway.Timeline {
     fillBounds: Bounds;
     lineBounds: Bounds;
     scale9Grid: Bounds;
+    dynamic: boolean;
 
-    constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
+    constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass, dynamic: boolean = true) {
       super(id, symbolClass);
+      this.dynamic = dynamic;
     }
 
     _setBoundsFromData(data: any) {
@@ -64,7 +66,7 @@ module Shumway.Timeline {
     graphics: flash.display.Graphics = null;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass = flash.display.Shape) {
-      super(id, symbolClass);
+      super(id, symbolClass, false);
     }
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
@@ -164,8 +166,7 @@ module Shumway.Timeline {
     maxChars: number = 0;
     autoSize: string = flash.text.TextFieldAutoSize.NONE;
     variableName: string = null;
-    matrix: flash.geom.Matrix = null;
-    coords: number[] = null;
+    textContent: Shumway.TextContent = null;
 
     constructor(id: number) {
       super(id, flash.text.TextField);
@@ -174,12 +175,18 @@ module Shumway.Timeline {
     static FromTextData(data: any): TextSymbol {
       var symbol = new TextSymbol(data.id);
       symbol._setBoundsFromData(data);
-      if (data.static) {
-        symbol.symbolClass = flash.text.StaticText;
-        symbol.matrix = flash.geom.Matrix.FromUntyped(data.matrix);
-        symbol.coords = data.coords;
-      }
       var tag = data.tag;
+      if (data.static) {
+        symbol.dynamic = false;
+        symbol.symbolClass = flash.text.StaticText;
+        if (tag.initialText) {
+          var textContent = new Shumway.TextContent();
+          textContent.parseHtml(tag.initialText);
+          textContent.matrix = flash.geom.Matrix.FromUntyped(data.matrix);
+          textContent.coords = data.coords;
+          symbol.textContent = textContent;
+        }
+      }
       if (tag.hasColor) {
         symbol.color = ColorUtilities.componentsToRGB(tag.color);
       }
@@ -372,7 +379,7 @@ module Shumway.Timeline {
    * TODO document
    */
   export class AnimationState {
-    constructor(public symbol: Symbol = null,
+    constructor(public symbol: DisplaySymbol = null,
                 public depth: number = 0,
                 public matrix: flash.geom.Matrix = null,
                 public colorTransform: flash.geom.ColorTransform = null,
@@ -393,8 +400,7 @@ module Shumway.Timeline {
 
     canBeAnimated(obj: flash.display.DisplayObject): boolean {
       return obj._hasFlags(flash.display.DisplayObjectFlags.AnimatedByTimeline) &&
-        (!this.symbol || obj._symbol === this.symbol ||
-        (this.symbol instanceof ShapeSymbol && obj._symbol instanceof ShapeSymbol)) &&
+        (!this.symbol || !this.symbol.dynamic || obj._symbol === this.symbol) &&
         (this.depth === obj._depth) &&
         (this.ratio === obj._ratio);
     }

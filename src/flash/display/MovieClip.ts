@@ -326,10 +326,15 @@ module Shumway.AVM2.AS.flash.display {
           var child = this.getChildAtDepth(depth);
           var state = stateAtDepth[depth];
           if (child) {
-            // TODO handle replacing graphics
-            if (state && state.canBeAnimated(child)) {
-              child._animate(state);
-              continue;
+            if (state) {
+              if (state.canBeAnimated(child)) {
+                if (state.symbol && !state.symbol.dynamic) {
+                  // TODO: Handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
+                  child._setStaticContentFromSymbol(state.symbol);
+                }
+                child._animate(state);
+                continue;
+              }
             }
             this._removeAnimatedChild(child);
           }
