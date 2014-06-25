@@ -116,6 +116,7 @@ module Shumway.Remoting.GFX {
   export class GFXChannelDeserializer {
     input: IDataInput;
     inputAssets: any[];
+    output: DataBuffer;
     context: GFXChannelDeserializerContext;
 
     public read() {
@@ -286,6 +287,26 @@ module Shumway.Remoting.GFX {
         asset.setStyle(backgroundColor, borderColor);
         asset.reflow(autoSize, wordWrap);
       }
+      if (this.output) {
+        var b = asset.getBounds();
+        this.output.writeInt(b.w);
+        this.output.writeInt(b.h);
+        var lines = asset.lines;
+        var numLines = lines.length;
+        this.output.writeInt(numLines);
+        for (var i = 0; i < numLines; i++) {
+          this._writeLineMetrics(lines[i]);
+        }
+      }
+    }
+
+    private _writeLineMetrics(line: Shumway.GFX.TextLine): void {
+      release || assert (this.output);
+      this.output.writeInt(line.x);
+      this.output.writeInt(line.width);
+      this.output.writeInt(line.ascent);
+      this.output.writeInt(line.descent);
+      this.output.writeInt(line.leading);
     }
 
     private _readUpdateStage() {

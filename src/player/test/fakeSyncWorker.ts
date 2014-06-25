@@ -28,14 +28,14 @@ module Shumway.Player.Test {
     }
 
     private _worker: Worker;
-    private _onsyncmessageListeners: Array<(ev: any) => any>;
+    private _onsyncmessageListeners: any[];
 
     constructor() {
       this._worker = new Worker(FakeSyncWorker.WORKER_PATH);
       this._onsyncmessageListeners = [];
     }
 
-    addEventListener(type: string, listener: EventListener, useCapture?: boolean): void {
+    addEventListener(type: string, listener: any, useCapture?: boolean): void {
       if (type !== 'syncmessage') {
         this._worker.addEventListener(type, listener, useCapture);
       } else {
@@ -43,15 +43,15 @@ module Shumway.Player.Test {
       }
     }
 
-    removeEventListener(eventType: string, callback: (ev: any) => any): void {
-      if (eventType === 'syncmessage') {
-        var i = this._onsyncmessageListeners.indexOf(callback);
+    removeEventListener(type: string, listener: any, useCapture?: boolean): void {
+      if (type === 'syncmessage') {
+        var i = this._onsyncmessageListeners.indexOf(listener);
         if (i >= 0) {
           this._onsyncmessageListeners.splice(i, 1);
         }
         return;
       }
-      this._worker.removeEventListener(eventType, callback);
+      this._worker.removeEventListener(type, listener, useCapture);
 
     }
 
@@ -59,11 +59,16 @@ module Shumway.Player.Test {
       this._worker.postMessage(message, ports);
     }
 
-    postSyncMessage(message: any, ports?: any): void {
-      this._onsyncmessageListeners.forEach(function (callback) {
-        callback({ data: message });
-
-      });
+    postSyncMessage(message: any, ports?: any): any {
+      var listener = this._onsyncmessageListeners[0];
+      if (listener) {
+        var ev = { data: message };
+        if (typeof listener === 'function') {
+          return listener(ev);
+        } else {
+          return listener.handleEvent(ev);
+        }
+      }
     }
   }
 }
