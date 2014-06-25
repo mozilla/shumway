@@ -321,7 +321,7 @@ module Shumway.AVM2.AS.flash.display {
       self._colorTransform = new geom.ColorTransform();
       self._concatenatedColorTransform = new geom.ColorTransform();
 
-      self._depth = 0;
+      self._depth = -1;
       self._ratio = 0;
       self._index = -1;
       self._maskedObject = null;

@@ -172,6 +172,7 @@ module Shumway.AVM2.AS.flash.display {
         children[i]._index++;
       }
       children.splice(index, 0, child);
+      child._depth = -1;
       child._index = index;
       child._parent = this;
       child._invalidatePosition();
@@ -248,6 +249,7 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = children.length - 1; i >= index; i--) {
         children[i]._index--;
       }
+      child._depth = -1;
       child._index = -1;
       child._parent = null;
       child._invalidatePosition();
@@ -269,6 +271,7 @@ module Shumway.AVM2.AS.flash.display {
       if (index < 0 || index > children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
+      child._depth = -1;
       var currentIndex = this.getChildIndex(child);
       if (children.length === 1 || currentIndex === index) {
         return;
@@ -404,8 +407,10 @@ module Shumway.AVM2.AS.flash.display {
       var child1 = children[index1];
       var child2 = children[index2];
       children[index2] = child1;
+      child1._depth = -1;
       child1._index = index2;
       children[index1] = child2;
+      child2._depth = -1;
       child2._index = index1;
     }
 
