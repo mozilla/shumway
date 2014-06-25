@@ -871,12 +871,6 @@ module Shumway.AVM2.AS.flash.display {
      * Animates this object's display properties.
      */
     _animate(state: Shumway.Timeline.AnimationState): void {
-      if (state.symbol) {
-        if (state.symbol instanceof Shumway.Timeline.ShapeSymbol) {
-          this._setGraphics((<Shumway.Timeline.ShapeSymbol>state.symbol).graphics);
-        }
-        // TODO: Handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
-      }
       if (state.matrix) {
         this._setMatrix(state.matrix, false);
       }
@@ -1406,15 +1400,24 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * This is only ever called from |_animate|. These graphics objects cannot be modified so
-     * they don't need a back reference.
+     * Sets this object's graphics or text content. Happens when an animated Shape or StaticText
+     * object is initialized from a symbol or replaced by a timeline command using the same symbol
+     * as this object was initialized from.
      */
-    _setGraphics(graphics: flash.display.Graphics) {
-      release || assert(this._canHaveGraphics(), "Cannot set graphics on this type of display object.");
-      this._graphics = graphics;
-      this._invalidateFillAndLineBounds();
-      this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
+    _setStaticContentFromSymbol(symbol: Shumway.Timeline.DisplaySymbol) {
+      release || assert(!symbol.dynamic);
+      if (this._canHaveGraphics()) {
+        this._graphics = (<Shumway.Timeline.ShapeSymbol>symbol).graphics;
+        this._invalidateFillAndLineBounds();
+        this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
+      } else if (flash.text.StaticText.isType(this)) {
+        var textSymbol = <Shumway.Timeline.TextSymbol>symbol;
+        this._setFillAndLineBoundsFromSymbol(textSymbol);
+        (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
+        this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
+      }
     }
+
     /**
      * Checks if the bounding boxes of two display objects overlap, this happens in the global
      * coordinate coordinate space.
