@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+var release = true;
 
 function parseQueryString(qs) {
   if (!qs)
