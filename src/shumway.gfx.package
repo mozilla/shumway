@@ -13,6 +13,7 @@ build/ts/player/remoting.js
 
 build/ts/tools/profiler/timelineFrame.js
 build/ts/tools/profiler/timelineBuffer.js
+build/ts/tools/mini/fps.js
 
 #!inline console.timeEnd("Load Shared Dependencies");
 

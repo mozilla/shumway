@@ -91,7 +91,7 @@ module Shumway.Tools.Mini {
       var context = this._context;
       var w = 2 * this._ratio;
       var wPadding = 1;
-      var count = (Math.min(1024, this._canvas.width) / (w + wPadding)) | 0;
+      var count = (this._canvas.width / (w + wPadding)) | 0;
 
       var index = this._index ++;
       if (this._index > count) {
@@ -103,7 +103,7 @@ module Shumway.Tools.Mini {
       var v = this._canvas.height * r | 0;
 
       context.clearRect(index * (w + wPadding), 0, w * 4, this._canvas.height);
-      context.fillRect(index * (w + wPadding), this._canvas.height - v, w, v);
+      context.fillRect(index * (w + wPadding), 0, w, v);
       this._lastTime = performance.now();
     }
   }
