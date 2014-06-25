@@ -112,7 +112,7 @@ module Shumway.AVM2.Runtime {
 
   import Map = Shumway.Map;
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
-  import HashMask = Shumway.AVM2.ABC.HashMask;
+  import Hashes = Shumway.AVM2.ABC.Hashes;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
@@ -1257,14 +1257,14 @@ module Shumway.AVM2.Runtime {
     static abcs: AbcFile [] = [];
     static constants: {} = createEmptyObject();
     public static loadAbc(abc: AbcFile) {
-      ConstantManager.abcs[abc.hash & HashMask.AbcMask] = abc;
+      ConstantManager.abcs[abc.hash & Hashes.AbcMask] = abc;
     }
     public static getConstant(hash) {
       var value = ConstantManager.constants[hash];
       if (value) {
         return value;
       }
-      var abc = ConstantManager.abcs[hash & HashMask.AbcMask];
+      var abc = ConstantManager.abcs[hash & Hashes.AbcMask];
       return ConstantManager.constants[hash] = abc.getConstant(hash);
     }
   }

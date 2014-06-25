@@ -17,7 +17,7 @@
 
 module Shumway.AVM2.Runtime {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
-  import HashMask = Shumway.AVM2.ABC.HashMask;
+  import Hashes = Shumway.AVM2.ABC.Hashes;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
