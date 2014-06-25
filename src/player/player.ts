@@ -88,8 +88,9 @@ module Shumway.Player {
      * @param updates
      * @param assets
      */
-    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true) {
+    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true): DataBuffer {
       throw new Error('This method is abstract');
+      return null;
     }
 
     /**
@@ -190,7 +191,7 @@ module Shumway.Player {
       this.syncDisplayObject(this._stage);
     }
 
-    public syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean = true): void {
+    public syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean = true): DataBuffer {
       var updates = new DataBuffer();
       var assets = [];
       var serializer = new Remoting.Player.PlayerChannelSerializer();
@@ -214,8 +215,10 @@ module Shumway.Player {
       updates.writeInt(Remoting.MessageTag.EOF);
 
       enterTimeline("remoting assets");
-      this.onSendUpdates(updates, assets, async);
+      var output = this.onSendUpdates(updates, assets, async);
       leaveTimeline("remoting assets");
+
+      return output;
     }
 
     public registerFont(font: flash.text.Font) {

@@ -103,10 +103,11 @@ module Shumway {
       });
     }
 
-    processUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
+    processUpdates(updates: DataBuffer, assets: Array<DataBuffer>, output: DataBuffer = null) {
       var deserializer = new Shumway.Remoting.GFX.GFXChannelDeserializer();
       deserializer.input = updates;
       deserializer.inputAssets = assets;
+      deserializer.output = output;
       deserializer.context = this._context;
       deserializer.read();
     }

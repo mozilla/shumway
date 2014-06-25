@@ -29,18 +29,25 @@ module Shumway.Player.Window {
       this._window.addEventListener('message', function (e) {
         this.onWindowMessage(e.data);
       }.bind(this));
-      this._window.addEventListener('syncmessage', function (e) {
-        this.onWindowMessage(e.detail);
-      }.bind(this));
+      //this._window.addEventListener('syncmessage', function (e) {
+      //  this.onWindowMessage(e.detail);
+      //}.bind(this));
     }
 
-    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
+    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true): DataBuffer {
       var bytes = updates.getBytes();
-      this._parent.postMessage({
+      var message = {
         type: 'player',
         updates: bytes,
         assets: assets
-      }, '*', [bytes.buffer]);
+      };
+      var transferList = [bytes.buffer];
+      if (!async) {
+        var result = this._parent.postSyncMessage(message, '*', transferList);
+        return DataBuffer.FromPlainObject(result);
+      }
+      this._parent.postMessage(message, '*', transferList);
+      return null;
     }
 
     onExternalCommand(command) {
