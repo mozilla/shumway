@@ -373,6 +373,8 @@ module Shumway.Remoting.GFX {
       var clipRect;
       if (hasBits & MessageBits.HasMatrix) {
         matrix = this._readMatrix();
+      } else {
+        matrix = Matrix.createIdentity();
       }
       if (hasBits & MessageBits.HasColorTransform) {
         colorMatrix = this._readColorMatrix();
