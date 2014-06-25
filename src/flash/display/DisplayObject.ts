@@ -1175,7 +1175,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get name(): string {
-      return this._name;
+      return this._name ? this._name : "";
     }
 
     set name(value: string) {
