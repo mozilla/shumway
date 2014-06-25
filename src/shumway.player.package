@@ -42,7 +42,7 @@ src/avm2/xregexp.js
 build/ts/avm2/runtime.js
 src/avm2/runtime-exports.js
 build/ts/avm2/hacks.js
-src/avm2/amf.js
+build/ts/avm2/amf.js
 build/ts/avm2/natives/int32Vector.js
 build/ts/avm2/natives/uint32Vector.js
 build/ts/avm2/natives/float64Vector.js

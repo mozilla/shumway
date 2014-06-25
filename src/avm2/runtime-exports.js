@@ -146,7 +146,6 @@ function resolveMultiname(object, mn, traitsOnly) {
 
 var sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
-var nonProxyingHasProperty = Shumway.AVM2.Runtime.nonProxyingHasProperty;
 var forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
 var wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
 

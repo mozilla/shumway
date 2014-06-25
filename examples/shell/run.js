@@ -107,7 +107,7 @@ load("../../src/avm2/xregexp.js");
 load("../../build/ts/avm2/runtime.js");
 load("../../src/avm2/runtime-exports.js");
 load("../../build/ts/avm2/hacks.js");
-load("../../src/avm2/amf.js");
+load("../../build/ts/avm2/amf.js");
 load("../../build/ts/avm2/natives/int32Vector.js");
 load("../../build/ts/avm2/natives/uint32Vector.js");
 load("../../build/ts/avm2/natives/float64Vector.js");

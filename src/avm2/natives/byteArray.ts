@@ -18,6 +18,7 @@
 module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
+  import unexpected = Shumway.Debug.unexpected;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Namespace = Shumway.AVM2.ABC.Namespace;
@@ -209,7 +210,16 @@ module Shumway.AVM2.AS {
       readUTF: () => string;
       readUTFBytes: (length: number /*uint*/) => string;
       bytesAvailable: number /*uint*/;
-      readObject: () => any;
+      readObject(): any {
+        switch (this._objectEncoding) {
+          case flash.net.ObjectEncoding.AMF0:
+            return AMF0.read(this);
+          case flash.net.ObjectEncoding.AMF3:
+            return AMF3.read(this);
+          default:
+            unexpected("Object Encoding");
+        }
+      }
 
       writeBytes: (bytes: flash.utils.ByteArray, offset?: number /*uint*/, length?: number /*uint*/) => void;
       writeBoolean: (value: boolean) => void;
@@ -222,7 +232,16 @@ module Shumway.AVM2.AS {
       writeMultiByte: (value: string, charSet: string) => void;
       writeUTF: (value: string) => void;
       writeUTFBytes: (value: string) => void;
-      writeObject: (object: any) => void;
+      writeObject(object: any) {
+        switch (this._objectEncoding) {
+          case flash.net.ObjectEncoding.AMF0:
+            return AMF0.write(this, object);
+          case flash.net.ObjectEncoding.AMF3:
+            return AMF3.write(this, object);
+          default:
+            unexpected("Object Encoding");
+        }
+      }
 
       objectEncoding: number /*uint*/;
       endian: string;

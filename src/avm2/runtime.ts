@@ -1217,7 +1217,7 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  export function forEachPublicProperty(object, fn, self) {
+  export function forEachPublicProperty(object, fn, self?) {
     if (!object.asBindings) {
       for (var key in object) {
         fn.call(self, key, object[key]);

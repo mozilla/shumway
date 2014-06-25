@@ -33,6 +33,8 @@
 ///<reference path='trampoline.ts' />
 ///<reference path='interpreter.ts' />
 ///<reference path='hacks.ts' />
+///<reference path='amf.ts' />
+
 ///<reference path='natives/int32Vector.ts' />
 ///<reference path='natives/uint32Vector.ts' />
 ///<reference path='natives/float64Vector.ts' />
