@@ -94,6 +94,7 @@ module Shumway.GFX {
 
     onMouseMove(easel: Easel, event: MouseEvent) {
       this._mousePosition = easel.getMousePosition(event, null);
+      this._update(easel);
     }
 
     onMouseDown(easel: Easel, event: MouseEvent) {
@@ -107,6 +108,15 @@ module Shumway.GFX {
     onKeyPress(easel: Easel, event: KeyboardEvent) {
       if (event.keyCode === 112) { // P
         this._paused = !this._paused;
+      }
+      if (this._keyCodes[86]) {  // V
+        easel.options.paintViewport = !easel.options.paintViewport;
+      }
+      if (this._keyCodes[66]) { // B
+        easel.options.paintBounds = !easel.options.paintBounds;
+      }
+      if (this._keyCodes[70]) { // F
+        easel.options.paintFlashing = !easel.options.paintFlashing;
       }
       this._update(easel);
     }
@@ -122,9 +132,6 @@ module Shumway.GFX {
     }
 
     private _update(easel: Easel) {
-      easel.options.paintBounds = this._keyCodes[66]; // B
-      easel.options.paintFlashing = this._keyCodes[70]; // F
-      easel.options.paintViewport = this._keyCodes[86]; // V
       easel.paused = this._paused;
       if (easel.options.paintViewport) {
         var w = viewportLoupeDiameter.value, h = viewportLoupeDiameter.value;
