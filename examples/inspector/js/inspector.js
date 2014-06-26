@@ -355,6 +355,9 @@ function createEasel() {
 }
 
 function registerInspectorAsset(id, symbolId, asset) {
+  if (!state.logAssets) {
+    return;
+  }
   var li = document.createElement("li");
   var div = document.createElement("div");
   var bounds = asset.getBounds();

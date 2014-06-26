@@ -27,6 +27,7 @@ var stateDefaults = {
   profileStartupDuration: 10000,
   logToConsole: false,
   logToDebugPanel: true,
+  logAssets: false,
   mute: false,
   release: false
 };
@@ -60,6 +61,7 @@ var GUI = (function () {
   inspectorOptions.add(state, "release").onChange(saveInspectorOption);
   inspectorOptions.add(state, "logToConsole").onChange(saveInspectorOption);
   inspectorOptions.add(state, "logToDebugPanel").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "logAssets").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
