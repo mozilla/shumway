@@ -186,7 +186,6 @@ function syncGFXOptions(options) {
   options.drawTexture = GFX.drawTexture.value;
   options.drawElements = GFX.drawElements.value;
   options.ignoreViewport = GFX.ignoreViewport.value;
-  options.ignoreColorTransform = GFX.ignoreColorTransform.value;
   options.clipDirtyRegions = GFX.clipDirtyRegions.value;
   options.clipCanvas = GFX.clipCanvas.value;
 
@@ -196,16 +195,8 @@ function syncGFXOptions(options) {
   options.sourceBlendFactor = GFX.sourceBlendFactor.value;
   options.destinationBlendFactor = GFX.destinationBlendFactor.value;
 
-  // These are set by holding down F and B in the easel, we don't want to
-  // override them here.
-  // options.paintFlashing = GFX.paintFlashing.value;
-  // options.paintBounds = GFX.paintBounds.value;
-
   options.cull = GFX.cull.value;
-  options.disableMasking = GFX.disableMasking.value;
-  options.debug = GFX.debugStage.value;
   options.forcePaint = GFX.forcePaint.value;
-  // options.disable = GFX.disableStage.value;
   options.compositeMask = GFX.compositeMask.value;
   options.disableTextureUploads = GFX.disableTextureUploads.value;
 

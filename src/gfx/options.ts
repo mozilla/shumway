@@ -23,22 +23,13 @@ module Shumway.GFX {
   import shumwayOptions = Shumway.Settings.shumwayOptions;
 
   var rendererOptions = shumwayOptions.register(new OptionSet("Renderer Options"));
-  export var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", true, "force hidpi"));
-  export var hud = rendererOptions.register(new Option("", "hud", "boolean", true, "show hud mode"));
   export var imageUpdateOption = rendererOptions.register(new Option("", "imageUpdate", "boolean", true, "Enable image conversion."));
   export var stageOptions = shumwayOptions.register(new OptionSet("Stage Renderer Options"));
   export var forcePaint = stageOptions.register(new Option("", "forcePaint", "boolean", false, "Force repainting."));
   export var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boolean", false, "Cull elements outside of the viewport."));
   export var viewportLoupeDiameter = stageOptions.register(new Option("", "viewportLoupeDiameter", "number", 512, "Size of the viewport loupe.", {range: { min: 1, max: 1024, step: 1 }}));
-  export var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTransform", "boolean", false, "Don't apply color transforms."));
-  export var debugStage = stageOptions.register(new Option("", "debugStage", "boolean", false, "Debug Stage."));
-  export var disableStage = stageOptions.register(new Option("", "disableStage", "boolean", false, "Disable Stage."));
-  export var disableMasking = stageOptions.register(new Option("", "disableMasking", "boolean", false, "Disable masking."));
-  export var forcePaint = stageOptions.register(new Option("", "forcePaint", "boolean", false, "Force repainting."));
-  export var paintBounds = stageOptions.register(new Option("", "paintBounds", "boolean", false, "Draw frame container bounding boxes."));
-  export var paintFlashing = stageOptions.register(new Option("", "paintFlashing", "boolean", false, "Flash redrawn regions."));
 
-  export var backend = stageOptions.register(new Option("t", "backend", "number", 0, "Backends", {
+  export var backend = stageOptions.register(new Option("t", "backend", "number", 1, "Backends", {
     choices: {
       Canvas2D: 0,
       WebGL: 1,
