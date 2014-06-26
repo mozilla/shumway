@@ -123,7 +123,17 @@ module Shumway.Remoting.GFX {
       var tag = 0;
       var input = this.input;
 
-      Shumway.GFX.enterTimeline("GFXChannelDeserializer.read");
+      var data = {
+        bytesAvailable: input.bytesAvailable,
+        updateGraphics: 0,
+        updateBitmapData: 0,
+        updateTextContent: 0,
+        updateFrame: 0,
+        updateStage: 0,
+        registerFont: 0,
+        drawToBitmap: 0
+      };
+      Shumway.GFX.enterTimeline("GFXChannelDeserializer.read", data);
       while (input.bytesAvailable > 0) {
         tag = input.readInt();
         switch (tag) {
@@ -131,24 +141,31 @@ module Shumway.Remoting.GFX {
             Shumway.GFX.leaveTimeline("GFXChannelDeserializer.read");
             return;
           case MessageTag.UpdateGraphics:
+            data.updateGraphics ++;
             this._readUpdateGraphics();
             break;
           case MessageTag.UpdateBitmapData:
+            data.updateBitmapData ++;
             this._readUpdateBitmapData();
             break;
           case MessageTag.UpdateTextContent:
+            data.updateTextContent ++;
             this._readUpdateTextContent();
             break;
           case MessageTag.UpdateFrame:
+            data.updateFrame ++;
             this._readUpdateFrame();
             break;
           case MessageTag.UpdateStage:
+            data.updateStage ++;
             this._readUpdateStage();
             break;
           case MessageTag.RegisterFont:
+            data.registerFont ++;
             this._readRegisterFont();
             break;
           case MessageTag.DrawToBitmap:
+            data.drawToBitmap ++;
             this._readDrawToBitmap();
             break;
           default:
