@@ -1854,7 +1854,7 @@ module Shumway.AVM1 {
 
     function generateActionCalls() {
       var wrap: Function;
-      if (!avm1ErrorsEnabled.value) {
+      if (avm1ErrorsEnabled.value) {
         wrap = wrapAvm1Error;
       } else {
         wrap = function (fn: Function) { return fn; };
