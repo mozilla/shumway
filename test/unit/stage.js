@@ -22,7 +22,10 @@
     make(container, 2, depth);
     return {
       node: container,
-      nodes: nodes
+      nodes: nodes,
+      getRandomNode: function () {
+        return this.nodes[(Math.random() * (this.nodes.length - 1)) | 0];
+      }
     };
   }
 
@@ -100,11 +103,10 @@
 
   unitTests.push(function displayListStateConsistency() {
     var tree = createDisplayObjectTree(10, 1024, 1024);
-
     for (var i = 0; i < 1024; i++) {
-      var element = tree.nodes[(Math.random() * (tree.nodes.length - 1)) | 0];
+      var element = tree.getRandomNode();
       if (DisplayObjectContainer.isType(element)) {
-        var otherElement = tree.nodes[(Math.random() * (tree.nodes.length - 1)) | 0];
+        var otherElement = tree.getRandomNode();
         if (!otherElement._isAncestor(element)) {
           element.addChild(otherElement);
         }

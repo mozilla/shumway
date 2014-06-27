@@ -50,11 +50,12 @@ module Shumway.AVM2.AS.flash.display {
      * children that were created in an earlier frame phase.
      */
     static constructChildren(): void {
-      var instances = DisplayObjectContainer._displayObjectContainerInstances.values();
-      enterTimeline("DisplayObjectContainer.constructChildren", {instances: instances.length});
-      for (var i = 0; i < instances.length; i++) {
-        instances[i]._constructChildren();
-      }
+      var timelineData = { instances: 0 };
+      enterTimeline("DisplayObjectContainer.constructChildren", timelineData);
+      DisplayObjectContainer._displayObjectContainerInstances.forEach(function (value: DisplayObjectContainer) {
+        value._constructChildren();
+        timelineData.instances++;
+      });
       leaveTimeline();
     }
 
@@ -163,6 +164,8 @@ module Shumway.AVM2.AS.flash.display {
         return child;
       }
 
+      child.addReference();
+
       if (child._parent) {
         child._parent.removeChild(child);
         // The children list could have been mutated as a result of |removeChild|.
@@ -207,6 +210,9 @@ module Shumway.AVM2.AS.flash.display {
           index = i;
         }
       }
+
+      child.addReference();
+
       if (index > maxIndex) {
         children.push(child);
         child._index = index;
@@ -245,6 +251,9 @@ module Shumway.AVM2.AS.flash.display {
         // we may need to operate on the new index of the child.
         index = this.getChildIndex(child);
       }
+
+      child.removeReference();
+
       children.splice(index, 1);
       for (var i = children.length - 1; i >= index; i--) {
         children[i]._index--;
