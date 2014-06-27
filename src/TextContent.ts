@@ -46,11 +46,6 @@ module Shumway {
 
     constructor(defaultTextFormat?: flash.text.TextFormat) {
       this._id = flash.display.DisplayObject.getNextSyncID();
-
-      if (this._id === 2184) {
-        debugger;
-      }
-
       this._plainText = '';
       this._backgroundColor = 0;
       this._borderColor = 0;
