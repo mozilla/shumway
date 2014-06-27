@@ -520,7 +520,6 @@ module Shumway.AVM2.Runtime {
       }
       abc.applicationDomain = this;
       GlobalMultinameResolver.loadAbc(abc);
-      ConstantManager.loadAbc(abc);
       this.abcs.push(abc);
 
       if (!this.base) {
