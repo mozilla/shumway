@@ -143,6 +143,7 @@ module Shumway.AVM2.Runtime {
   import toSafeString = Shumway.StringUtilities.toSafeString;
   import toSafeArrayString = Shumway.StringUtilities.toSafeArrayString;
 
+  import Compilation = Shumway.AVM2.Compiler.Backend.Compilation;
   import TRAIT = Shumway.AVM2.ABC.TRAIT;
 
   export var VM_SLOTS = "asSlots";
@@ -1166,10 +1167,9 @@ module Shumway.AVM2.Runtime {
    * classes.
    */
   export class LazyInitializer {
-    target: Object;
-    name: string;
-    private static _holder = jsGlobal;
-    static create(target): LazyInitializer {
+    private _target: Object;
+    private _resolved: Object;
+    static create(target: Object): LazyInitializer {
       if (target.asLazyInitializer) {
         return target.asLazyInitializer;
       }
@@ -1177,43 +1177,27 @@ module Shumway.AVM2.Runtime {
     }
     constructor (target: Object) {
       release || assert (!target.asLazyInitializer);
-      this.target = target;
+      this._target = target;
+      this._resolved = null;
     }
-    public getName() {
-      if (this.name) {
-        return this.name;
+    resolve(): Object {
+      if (this._resolved) {
+        return this._resolved;
       }
-      var target = this.target, initialize;
-      if (this.target instanceof ScriptInfo) {
-        var scriptInfo: ScriptInfo = <ScriptInfo>target;
-        this.name = "$" + Shumway.StringUtilities.variableLengthEncodeInt32(scriptInfo.hash);
-        initialize = function () {
-          ensureScriptIsExecuted(target, "Lazy Initializer");
-          return scriptInfo.global;
-        };
-      } else if (this.target instanceof ClassInfo) {
-        var classInfo: ClassInfo = <ClassInfo>target;
-        this.name = "$" + Shumway.StringUtilities.variableLengthEncodeInt32(classInfo.hash);
-        initialize = function () {
-          if (classInfo.classObject) {
-            return classInfo.classObject;
-          }
-          return classInfo.abc.applicationDomain.getProperty(classInfo.instanceInfo.name, false, false);
-        };
+      if (this._target instanceof ScriptInfo) {
+        var scriptInfo = <ScriptInfo>this._target;
+        ensureScriptIsExecuted(scriptInfo, "Lazy Initializer");
+        return this._resolved = scriptInfo.global;
+      } else if (this._target instanceof ClassInfo) {
+        var classInfo = <ClassInfo>this._target;
+        if (classInfo.classObject) {
+          return this._resolved = classInfo.classObject;
+        }
+        return this._resolved = classInfo.abc.applicationDomain.getProperty(classInfo.instanceInfo.name, false, false);
       } else {
-        Shumway.Debug.notImplemented(String(target));
+        Shumway.Debug.notImplemented(String(this._target));
+        return;
       }
-      var name = this.name;
-      release || assert (!LazyInitializer._holder[name], "Holder already has " + name);
-      Object.defineProperty(LazyInitializer._holder, name, {
-        get: function () {
-          var value = initialize();
-          release || assert (value);
-          Object.defineProperty(LazyInitializer._holder, name, { value: value, writable: true });
-          return value;
-        }, configurable: true
-      });
-      return name;
     }
   }
 
@@ -1251,22 +1235,6 @@ module Shumway.AVM2.Runtime {
 
   export function asCreateActivation(methodInfo: MethodInfo): Object {
     return Object.create(methodInfo.activationPrototype);
-  }
-
-  export class ConstantManager {
-    static abcs: AbcFile [] = [];
-    static constants: {} = createEmptyObject();
-    public static loadAbc(abc: AbcFile) {
-      ConstantManager.abcs[abc.hash & Hashes.AbcMask] = abc;
-    }
-    public static getConstant(hash) {
-      var value = ConstantManager.constants[hash];
-      if (value) {
-        return value;
-      }
-      var abc = ConstantManager.abcs[hash & Hashes.AbcMask];
-      return ConstantManager.constants[hash] = abc.getConstant(hash);
-    }
   }
 
   /**
@@ -1412,12 +1380,12 @@ module Shumway.AVM2.Runtime {
       return;
     }
     if (!cacheInfo.isInitialized) {
-      methodInfo.abc.scripts.forEach(function (scriptInfo) {
-        LazyInitializer.create(scriptInfo).getName();
-      });
-      methodInfo.abc.classes.forEach(function (classInfo) {
-        LazyInitializer.create(classInfo).getName();
-      });
+//      methodInfo.abc.scripts.forEach(function (scriptInfo) {
+//        LazyInitializer.create(scriptInfo).getName();
+//      });
+//      methodInfo.abc.classes.forEach(function (classInfo) {
+//        LazyInitializer.create(classInfo).getName();
+//      });
       cacheInfo.isInitialized = true;
     }
     var method = cacheInfo.methods[methodInfo.index];
@@ -1496,10 +1464,9 @@ module Shumway.AVM2.Runtime {
   export function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
     var mi = methodInfo;
     var cached = searchCodeCache(mi);
+    var compilation: Compilation;
     if (!cached) {
-      var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
-      var parameters = result.parameters;
-      var body = result.body;
+      compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
     }
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
@@ -1524,11 +1491,12 @@ module Shumway.AVM2.Runtime {
         breakpoint = true;
       }
     }
+    var body = compilation.body;
     if (compiledFunctionCount == functionBreak.value || breakpoint) {
       body = "{ debugger; \n" + body + "}";
     }
     if (!cached) {
-      var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
+      var fnSource = "function " + fnName + " (" + compilation.parameters.join(", ") + ") " + body;
     }
 
     if (traceFunctions.value > 1) {
@@ -1544,6 +1512,21 @@ module Shumway.AVM2.Runtime {
     // mi.freeMethod = new Function(parameters, body);
 
     var fn = cached || new Function("return " + fnSource)();
+    /**
+     * Object references are stored on the function object in a property called |constants|. Some of
+     * these constants are |LazyInitializer|s and the backend makes sure to emit a call to a function
+     * named |C| that resolves them.
+     */
+    defineNonEnumerableProperty(fn, "constants", compilation.constants);
+    defineNonEnumerableProperty(fn, "C", function (index: number) {
+      var value = this.constants[index];
+      // TODO: Avoid using |instanceof| here since this can be called quite frequently.
+      if (value instanceof LazyInitializer) {
+        this.constants[index] = value.resolve();
+      }
+      return this.constants[index];
+    });
+
     fn.debugName = "Compiled Function #" + vmNextCompiledFunctionId++;
     return fn;
   }
@@ -1730,7 +1713,6 @@ module Shumway.AVM2.Runtime {
     if (ii.isInterface()) {
       cls = Shumway.AVM2.AS.createInterface(classInfo);
     } else {
-      // cls = Class.createClass(classInfo, baseClass, scope);
       cls = Shumway.AVM2.AS.createClass(classInfo, baseClass, scope);
     }
 

@@ -19,6 +19,7 @@
 module Shumway.AVM2.Compiler.Backend {
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
+  import notImplemented = Shumway.Debug.notImplemented;
   import pushUnique = Shumway.ArrayUtilities.pushUnique;
 
   import AST = Shumway.AVM2.Compiler.AST;
@@ -49,8 +50,6 @@ module Shumway.AVM2.Compiler.Backend {
   import SwitchStatement = AST.SwitchStatement;
   import SwitchCase = AST.SwitchCase;
 
-  declare var objectConstantName;
-
   import Start = IR.Start;
   import Block = IR.Block;
   import Variable = IR.Variable;
@@ -64,50 +63,61 @@ module Shumway.AVM2.Compiler.Backend {
   import ControlNode = Looper.Control.ControlNode;
   import last = Shumway.ArrayUtilities.last;
 
-  Control.Break.prototype.compile = function (cx, state) {
-    return cx.compileBreak(this, state);
+  Control.Break.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    return cx.compileBreak(this);
   };
 
-  Control.Continue.prototype.compile = function (cx, state) {
-    return cx.compileContinue(this, state);
+  Control.Continue.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    return cx.compileContinue(this);
   };
 
-  Control.Exit.prototype.compile = function (cx, state) {
-    return cx.compileExit(this, state);
+  Control.Exit.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    return cx.compileExit(this);
   };
 
-  Control.LabelSwitch.prototype.compile = function (cx, state) {
-    return cx.compileLabelSwitch(this, state);
+  Control.LabelSwitch.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    return cx.compileLabelSwitch(this);
   };
 
-  Control.Seq.prototype.compile = function (cx, state) {
-    return cx.compileSequence(this, state);
+  Control.Seq.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    return cx.compileSequence(this);
   };
 
-  Control.Loop.prototype.compile = function (cx, state) {
-    return cx.compileLoop(this, state);
+  Control.Loop.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    return cx.compileLoop(this);
   };
 
-  Control.Switch.prototype.compile = function (cx, state) {
-    return cx.compileSwitch(this, state);
+  Control.Switch.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    return cx.compileSwitch(this);
   };
 
-  Control.If.prototype.compile = function (cx, state) {
-    return cx.compileIf(this, state);
+  Control.If.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    return cx.compileIf(this);
   };
 
-  Control.Try.prototype.compile = function (cx, state) {
-    return cx.compileTry(this, state);
+  Control.Try.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    notImplemented("try");
+    return null;
   };
 
-  function constant(value): AST.Node {
-    // TODO MEMORY: Cache AST nodes for constants.
+  var F = new Identifier("$F");
+  var C = new Identifier("$C");
+
+  function isLazyConstant(value) {
+    return value instanceof Shumway.AVM2.Runtime.LazyInitializer;
+  }
+
+  function constant(value, cx?: Context): AST.Node {
     if (typeof value === "string" || value === null || value === true || value === false) {
       return new Literal(value);
     } else if (value === undefined) {
       return new Identifier("undefined");
     } else if (typeof value === "object" || typeof value === "function") {
-      return new Identifier(objectConstantName(value));
+      if (isLazyConstant(value)) {
+        return call(property(F, "C"), [new Literal(cx.useConstant(value))]);
+      } else {
+        return new MemberExpression(C, new Literal(cx.useConstant(value)), true);
+      }
     } else if (typeof value === "number" && isNaN(value)) {
       return new Identifier("NaN");
     } else if (value === Infinity) {
@@ -220,17 +230,22 @@ module Shumway.AVM2.Compiler.Backend {
     return new UnaryExpression(Operator.FALSE.name, true, node);
   }
 
-  class Context {
+  export class Context {
     label = new Variable("$L");
     variables = [];
+    constants = [];
     parameters = [];
 
-    useVariable(variable) {
+    useConstant(constant: IR.Constant): number {
+      return pushUnique(this.constants, constant);
+    }
+
+    useVariable(variable: IR.Variable) {
       release || assert (variable);
       return pushUnique(this.variables, variable);
     }
 
-    useParameter(parameter) {
+    useParameter(parameter: IR.Parameter) {
       return this.parameters[parameter.index] = parameter;
     }
 
@@ -385,7 +400,7 @@ module Shumway.AVM2.Compiler.Backend {
     }
   }
 
-  function compileValue(value, cx, noVariable?) {
+  function compileValue(value, cx: Context, noVariable?) {
     release || assert (value);
     release || assert (value.compile, "Implement |compile| for ", value, " (", value.nodeName + ")");
     release || assert (cx instanceof Context);
@@ -398,7 +413,7 @@ module Shumway.AVM2.Compiler.Backend {
     return id(value.variable.name);
   }
 
-  function compileMultiname(name, cx) {
+  function compileMultiname(name, cx: Context) {
     return [
       compileValue(name.namespaces, cx),
       compileValue(name.name, cx),
@@ -410,39 +425,39 @@ module Shumway.AVM2.Compiler.Backend {
     return array instanceof Array;
   }
 
-  function compileValues(values, cx) {
+  function compileValues(values, cx: Context) {
     release || assert (isArray(values));
     return values.map(function (value) {
       return compileValue(value, cx);
     });
   }
 
-  IR.Parameter.prototype.compile = function (cx) {
+  IR.Parameter.prototype.compile = function (cx: Context): Compiler.AST.Node {
     cx.useParameter(this);
     return id(this.name);
   }
 
-  IR.Constant.prototype.compile = function (cx) {
-    return constant(this.value);
+  IR.Constant.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    return constant(this.value, cx);
   }
 
-  IR.Variable.prototype.compile = function (cx) {
+  IR.Variable.prototype.compile = function (cx: Context): Compiler.AST.Node {
     return id(this.name);
   }
 
-  IR.Phi.prototype.compile = function (cx) {
+  IR.Phi.prototype.compile = function (cx: Context): Compiler.AST.Node {
     release || assert (this.variable);
     return compileValue(this.variable, cx);
   }
 
-  IR.ASScope.prototype.compile = function (cx) {
+  IR.ASScope.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var parent = compileValue(this.parent, cx);
     var object = compileValue(this.object, cx);
     var isWith = new Literal(this.isWith);
     return new NewExpression(id("Scope"), [parent, object, isWith]);
   }
 
-  IR.ASFindProperty.prototype.compile = function (cx) {
+  IR.ASFindProperty.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var scope = compileValue(this.scope, cx);
     var name = compileMultiname(this.name, cx);
     var methodInfo = compileValue(this.methodInfo, cx);
@@ -450,7 +465,7 @@ module Shumway.AVM2.Compiler.Backend {
     return call(property(scope, "findScopeProperty"), name.concat([methodInfo, strict]));
   }
 
-  IR.ASGetProperty.prototype.compile = function (cx) {
+  IR.ASGetProperty.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     if (this.flags & IR.Flags.NumericProperty) {
       release || assert (!(this.flags & IR.Flags.IS_METHOD));
@@ -463,14 +478,14 @@ module Shumway.AVM2.Compiler.Backend {
     return call(property(object, "asGetProperty"), name.concat(isMethod));
   }
 
-  IR.ASGetSuper.prototype.compile = function (cx) {
+  IR.ASGetSuper.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var scope = compileValue(this.scope, cx);
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asGetSuper"), [scope].concat(name));
   }
 
-  IR.Latch.prototype.compile = function (cx) {
+  IR.Latch.prototype.compile = function (cx: Context): Compiler.AST.Node {
     return new ConditionalExpression (
       compileValue(this.condition, cx),
       compileValue(this.left, cx),
@@ -478,7 +493,7 @@ module Shumway.AVM2.Compiler.Backend {
     );
   }
 
-  IR.Unary.prototype.compile = function (cx) {
+  IR.Unary.prototype.compile = function (cx: Context): Compiler.AST.Node {
     return new UnaryExpression (
       this.operator.name,
       true,
@@ -486,11 +501,11 @@ module Shumway.AVM2.Compiler.Backend {
     );
   }
 
-  IR.Copy.prototype.compile = function (cx) {
+  IR.Copy.prototype.compile = function (cx: Context): Compiler.AST.Node {
     return compileValue(this.argument, cx);
   }
 
-  IR.Binary.prototype.compile = function (cx): AST.Expression {
+  IR.Binary.prototype.compile = function (cx: Context): AST.Expression {
     var left = compileValue(this.left, cx);
     var right = compileValue(this.right, cx);
     if (this.operator === IR.Operator.AS_ADD) {
@@ -499,7 +514,7 @@ module Shumway.AVM2.Compiler.Backend {
     return new BinaryExpression (this.operator.name, left, right);
   }
 
-  IR.CallProperty.prototype.compile = function (cx) {
+  IR.CallProperty.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     var callee = property(object, name);
@@ -515,7 +530,7 @@ module Shumway.AVM2.Compiler.Backend {
     }
   }
 
-  IR.ASCallProperty.prototype.compile = function (cx) {
+  IR.ASCallProperty.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
@@ -527,7 +542,7 @@ module Shumway.AVM2.Compiler.Backend {
     return call(property(object, "asCallProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
   }
 
-  IR.ASCallSuper.prototype.compile = function (cx) {
+  IR.ASCallSuper.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var scope = compileValue(this.scope, cx);
     var object = compileValue(this.object, cx);
     var args = this.args.map(function (arg) {
@@ -537,7 +552,7 @@ module Shumway.AVM2.Compiler.Backend {
     return call(property(object, "asCallSuper"), [scope].concat(name).concat(new ArrayExpression(args)));
   }
 
-  IR.Call.prototype.compile = function (cx) {
+  IR.Call.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
@@ -559,7 +574,7 @@ module Shumway.AVM2.Compiler.Backend {
     }
   }
 
-  IR.ASNew.prototype.compile = function (cx) {
+  IR.ASNew.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
@@ -568,25 +583,25 @@ module Shumway.AVM2.Compiler.Backend {
     return new NewExpression(callee, args);
   }
 
-  IR.This.prototype.compile = function (cx) {
+  IR.This.prototype.compile = function (cx: Context): Compiler.AST.Node {
     return new ThisExpression();
   }
 
-  IR.Throw.prototype.compile = function (cx) {
+  IR.Throw.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var argument = compileValue(this.argument, cx);
     return new ThrowStatement(argument);
   }
 
-  IR.Arguments.prototype.compile = function (cx) {
+  IR.Arguments.prototype.compile = function (cx: Context): Compiler.AST.Node {
     return id("arguments");
   }
 
-  IR.ASGlobal.prototype.compile = function (cx) {
+  IR.ASGlobal.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var scope = compileValue(this.scope, cx);
     return property(scope, "global", "object");
   }
 
-  IR.ASSetProperty.prototype.compile = function (cx) {
+  IR.ASSetProperty.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     var value = compileValue(this.value, cx);
     if (this.flags & IR.Flags.NumericProperty) {
@@ -596,7 +611,7 @@ module Shumway.AVM2.Compiler.Backend {
     return call(property(object, "asSetProperty"), name.concat(value));
   }
 
-  IR.ASSetSuper.prototype.compile = function (cx) {
+  IR.ASSetSuper.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var scope = compileValue(this.scope, cx);
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
@@ -604,65 +619,65 @@ module Shumway.AVM2.Compiler.Backend {
     return call(property(object, "asSetSuper"), [scope].concat(name).concat([value]));
   }
 
-  IR.ASDeleteProperty.prototype.compile = function (cx) {
+  IR.ASDeleteProperty.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asDeleteProperty"), name);
   }
 
-  IR.ASHasProperty.prototype.compile = function (cx) {
+  IR.ASHasProperty.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asHasProperty"), name);
   }
 
-  IR.GlobalProperty.prototype.compile = function (cx) {
+  IR.GlobalProperty.prototype.compile = function (cx: Context): Compiler.AST.Node {
     return id(this.name);
   }
 
-  IR.GetProperty.prototype.compile = function (cx) {
+  IR.GetProperty.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     return property(object, name);
   }
 
-  IR.SetProperty.prototype.compile = function (cx) {
+  IR.SetProperty.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
     return assignment(property(object, name), value);
   }
 
-  IR.ASGetDescendants.prototype.compile = function (cx) {
+  IR.ASGetDescendants.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     return call(id("getDescendants"), [object, name]);
   }
 
-  IR.ASSetSlot.prototype.compile = function (cx) {
+  IR.ASSetSlot.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
     return(call(id("asSetSlot"), [object, name, value]));
   }
 
-  IR.ASGetSlot.prototype.compile = function (cx) {
+  IR.ASGetSlot.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     return(call(id("asGetSlot"), [object, name]));
   }
 
-  IR.Projection.prototype.compile = function (cx) {
+  IR.Projection.prototype.compile = function (cx: Context): Compiler.AST.Node {
     release || assert (this.type === IR.ProjectionType.SCOPE);
     release || assert (this.argument instanceof Start);
     return compileValue(this.argument.scope, cx);
   }
 
-  IR.NewArray.prototype.compile = function (cx) {
+  IR.NewArray.prototype.compile = function (cx: Context): Compiler.AST.Node {
     return new ArrayExpression(compileValues(this.elements, cx));
   }
 
-  IR.NewObject.prototype.compile = function (cx) {
+  IR.NewObject.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var properties = this.properties.map(function (property) {
       var key = compileValue(property.key, cx);
       var value = compileValue(property.value, cx);
@@ -671,50 +686,64 @@ module Shumway.AVM2.Compiler.Backend {
     return new ObjectExpression(properties);
   }
 
-  IR.ASNewActivation.prototype.compile = function (cx) {
+  IR.ASNewActivation.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var methodInfo = compileValue(this.methodInfo, cx);
     return call(id("asCreateActivation"), [methodInfo]);
   }
 
-  IR.ASNewHasNext2.prototype.compile = function (cx) {
+  IR.ASNewHasNext2.prototype.compile = function (cx: Context): Compiler.AST.Node {
     return new NewExpression(id("HasNext2Info"), []);
   }
 
-  IR.ASMultiname.prototype.compile = function (cx) {
+  IR.ASMultiname.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
     return call(id("createName"), [namespaces, name]);
   }
 
-  IR.Block.prototype.compile = function (cx, state) {
-    return cx.compileBlock(this, state);
+  IR.Block.prototype.compile = function (cx: Context): Compiler.AST.Node {
+    return cx.compileBlock(this);
   };
 
   function generateSource(node) {
     return node.toSource();
   }
 
-  export function generate(cfg) {
+  export class Compilation {
+    constructor(public parameters: string [],
+                public body: string,
+                public constants: Object []) {
+      // ...
+    }
+  }
+
+  export function generate(cfg): Compilation {
     enterTimeline("Looper");
     var root = Looper.analyze(cfg);
     leaveTimeline();
 
     var writer = new IndentingWriter();
-    // root.trace(writer);
 
     var cx = new Context();
     enterTimeline("Construct AST");
-    var code = <BlockStatement>root.compile(cx, null);
+    var code = <BlockStatement>root.compile(cx);
     leaveTimeline();
 
     var parameters = [];
     for (var i = 0; i < cx.parameters.length; i++) {
-      // Closure Compiler complains if the parameter names are the same
-      // even if they are not used, so we differentiate them here.
+      // Closure Compiler complains if the parameter names are the same even if they are not used,
+      // so we differentiate them here.
       var name = cx.parameters[i] ? cx.parameters[i].name : "_" + i;
       parameters.push(id(name));
     }
-
+    if (cx.constants.length) {
+      var argumentsCallee = new MemberExpression(new Identifier("arguments"), new Identifier("callee"), false);
+      var constants = new MemberExpression(argumentsCallee, new Identifier("constants"), false);
+      code.body.unshift(variableDeclaration([
+        new VariableDeclarator(id("$F"), argumentsCallee),
+        new VariableDeclarator(id("$C"), constants)
+      ]));
+    }
     if (cx.variables.length) {
       countTimeline("Backend: Locals", cx.variables.length);
       var variables = variableDeclaration(cx.variables.map(function (variable) {
@@ -723,15 +752,13 @@ module Shumway.AVM2.Compiler.Backend {
       code.body.unshift(variables);
     }
 
-    // var node = new FunctionDeclaration(id("fn"), parameters, code);
-    // var node = new FunctionDeclaration(id("fn"), parameters, null, null, code);
-
     enterTimeline("Serialize AST");
     var source = generateSource(code);
     leaveTimeline();
-    return {parameters: parameters.map(function (p) { return p.name; }), body: source};
+    return new Compilation (
+      parameters.map(function (p) { return p.name; }),
+      source,
+      cx.constants
+    );
   }
-//
-//  Backend.generate = generate;
-
 }

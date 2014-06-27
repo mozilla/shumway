@@ -364,15 +364,14 @@ module Shumway {
       return array[array.length - 1];
     }
 
-
-
-    export function pushUnique<T>(array: T [], value: T) {
+    export function pushUnique<T>(array: T [], value: T): number {
       for (var i = 0, j = array.length; i < j; i++) {
         if (array[i] === value) {
-          return;
+          return i;
         }
       }
       array.push(value);
+      return array.length - 1;
     }
 
     export function unique<T>(array: T []): T [] {

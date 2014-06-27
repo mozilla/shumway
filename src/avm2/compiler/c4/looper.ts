@@ -46,7 +46,7 @@ module Shumway.AVM2.Compiler.Looper {
 
       }
 
-      compile: (cx, state) => Compiler.AST.Node;
+      compile: (cx: Backend.Context) => Compiler.AST.Node;
     }
 
     export class Seq extends ControlNode {

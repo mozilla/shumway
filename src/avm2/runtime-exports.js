@@ -50,10 +50,6 @@ var callWriter = new Shumway.IndentingWriter(false, function (str){
 var objectIDs = 0;
 var OBJECT_NAME = "Object Name";
 
-function $(hash) {
-  return Shumway.AVM2.Runtime.ConstantManager.getConstant(hash);
-}
-
 function objectConstantName(object) {
   if (object.hash) {
     return "$(" + object.hash + ")";

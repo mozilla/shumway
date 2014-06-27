@@ -500,7 +500,7 @@ module Shumway.AVM2.Compiler.AST {
     toSource(precedence: number) : string {
       var result = this.id.toSource(Precedence.Assignment);
       if (this.init) {
-        result += this.init.toSource(Precedence.Assignment);
+        result += "=" + this.init.toSource(Precedence.Assignment);
       }
       return result;
     }
