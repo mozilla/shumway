@@ -75,17 +75,17 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // ["currentLabels"];
 
     static initFrame(): void {
-      var instances = MovieClip._movieClipInstances.values();
-      enterTimeline("MovieClip.initFrame", {instances: instances.length});
-      for (var i = 0; i < instances.length; i++) {
-        var instance = instances[i];
-        if (instance._totalFrames > 1 && instance._hasFlags(DisplayObjectFlags.Constructed)) {
-          if (!instance._stopped) {
-            instance._nextFrame++;
+      var timelineData = { instances: 0 };
+      enterTimeline("MovieClip.initFrame", timelineData);
+      MovieClip._movieClipInstances.forEach(function (value: MovieClip) {
+        if (value._totalFrames > 1 && value._hasFlags(DisplayObjectFlags.Constructed)) {
+          if (!value._stopped) {
+            value._nextFrame++;
           }
-          instance._advanceFrame();
+          value._advanceFrame();
         }
-      }
+        timelineData.instances++;
+      });
       DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
       leaveTimeline();
     }

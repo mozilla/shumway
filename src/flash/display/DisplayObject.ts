@@ -253,7 +253,7 @@ module Shumway.AVM2.AS.flash.display {
    * since that's what the AS3 specifies.
    */
 
-  export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable, Shumway.Remoting.IRemotable {
+  export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable, Shumway.IReferenceCountable, Shumway.Remoting.IRemotable {
 
     /**
      * Every displayObject is assigned an unique integer ID.
@@ -332,6 +332,8 @@ module Shumway.AVM2.AS.flash.display {
       self._symbol = null;
       self._graphics = null;
       self._children = null;
+
+      self._referenceCount = 0;
 
       if (symbol) {
         if (symbol.scale9Grid) {
@@ -573,6 +575,11 @@ module Shumway.AVM2.AS.flash.display {
      * This is only ever used in classes that can have children, like |DisplayObjectContainer| or |SimpleButton|.
      */
     _children: DisplayObject [];
+
+    /**
+     *
+     */
+    _referenceCount: number;
 
     /**
      * Finds the nearest ancestor with a given set of flags that are either turned on or off.
@@ -1589,6 +1596,22 @@ module Shumway.AVM2.AS.flash.display {
         writer.writeLn(prefix + node.debugName());
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
+    }
+
+    addReference() {
+      this._referenceCount++;
+    }
+
+    removeReference() {
+      assert (this._referenceCount > 0, this._referenceCount);
+      this._referenceCount--;
+      if (this._referenceCount !== 0 || !this._children) {
+        return;
+      }
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        children[i].removeReference();
+      }
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------
