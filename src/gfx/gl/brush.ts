@@ -191,7 +191,7 @@ module Shumway.GFX.GL {
       this._geometry.addQuad();
     }
 
-    public flush(drawElements: boolean = true) {
+    public flush() {
       enterTimeline("WebGLCombinedBrush.flush");
       var g = this._geometry;
       var p = this._program;
@@ -238,9 +238,7 @@ module Shumway.GFX.GL {
       // Bind elements buffer.
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.elementBuffer);
 
-      if (drawElements) {
-        gl.drawElements(gl.TRIANGLES, g.triangleCount * 3, gl.UNSIGNED_SHORT, 0);
-      }
+      gl.drawElements(gl.TRIANGLES, g.triangleCount * 3, gl.UNSIGNED_SHORT, 0);
       this.reset();
       leaveTimeline("WebGLCombinedBrush.flush");
     }
@@ -260,7 +258,7 @@ module Shumway.GFX.GL {
       this._geometry.reset();
     }
 
-    public flush(drawElements: boolean = true) {
+    public flush() {
 
     }
   }

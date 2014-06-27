@@ -39,5 +39,8 @@ void main() {
     color = vec4(1.0, 0.0, 0.0, 1.0);
   }
   // color.rgb *= color.a;
+  if (color.a < 0.01) {
+    discard;
+  }
   gl_FragColor = color;
 }

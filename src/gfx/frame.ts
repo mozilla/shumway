@@ -584,7 +584,9 @@ module Shumway.GFX {
                     frameStack.push(clipFrame);
                     flagsStack.push(FrameFlags.LeaveClip);
                     if (calculateTransform) {
-                      transformStack.push(null);
+                      var t = transform.clone();
+                      t.preMultiply(clipFrame.matrix);
+                      transformStack.push(t);
                     }
                   }
                 }
