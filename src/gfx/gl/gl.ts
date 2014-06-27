@@ -67,18 +67,17 @@ module Shumway.GFX.GL {
      * Ignores viewport clipping, this is useful to check of viewport culling is working
      * corectly.
      */
-    ignoreViewport: boolean;
+    ignoreViewport: boolean = false;
 
     /**
      * Sometimes it's useful to temporarily disable texture uploads to see if rendering
      * is texture upload bound.
      */
-    disableTextureUploads: boolean;
+    disableTextureUploads: boolean = false;
     frameSpacing: number = 0.0001;
-    ignoreColorMatrix: boolean;
+    ignoreColorMatrix: boolean = false;
     drawTiles: boolean;
-    drawElements: boolean = true;
-    drawTextures: boolean = true;
+    drawTextures: boolean = false;
     drawTexture: number = -1;
 
     premultipliedAlpha: boolean = false;
@@ -91,7 +90,7 @@ module Shumway.GFX.GL {
 
   export class WebGLStageRenderer extends StageRenderer {
     _options: WebGLStageRendererOptions;
-    context: WebGLContext;
+    _context: WebGLContext;
 
     private _brush: WebGLCombinedBrush;
     private _filterBrush: WebGLFilterBrush;
@@ -105,12 +104,13 @@ module Shumway.GFX.GL {
     private _dynamicScratchCanvasContext: CanvasRenderingContext2D;
     private _uploadCanvas: HTMLCanvasElement;
     private _uploadCanvasContext: CanvasRenderingContext2D;
+    private _clipStack: Frame [];
 
-    constructor(canvas: HTMLCanvasElement, stage: Stage,
+    constructor(canvas: HTMLCanvasElement,
+                stage: Stage,
                 options: WebGLStageRendererOptions = new WebGLStageRendererOptions()) {
       super(canvas, stage, options);
-
-      var context = this.context = new WebGLContext(this._canvas, options);
+      var context = this._context = new WebGLContext(this._canvas, options);
 
       canvas.addEventListener('resize', this.resize.bind(this), false);
       this.resize();
@@ -140,6 +140,8 @@ module Shumway.GFX.GL {
         document.getElementById("temporaryCanvasPanelContainer").appendChild(this._uploadCanvas);
         document.getElementById("temporaryCanvasPanelContainer").appendChild(this._scratchCanvas);
       }
+
+      this._clipStack = [];
     }
 
     private _cachedTiles = [];
@@ -198,17 +200,17 @@ module Shumway.GFX.GL {
       this._uploadCanvasContext.drawImage(src.canvas, sx + w - 1, sy, 1, h, w + 1, 1, 1, h);
 
       if (!oldTextureRegion || !oldTextureRegion.texture) {
-        return this.context.cacheImage(this._uploadCanvas);
+        return this._context.cacheImage(this._uploadCanvas);
       } else {
         if (!this._options.disableTextureUploads) {
-          this.context.updateTextureRegion(this._uploadCanvas, oldTextureRegion);
+          this._context.updateTextureRegion(this._uploadCanvas, oldTextureRegion);
         }
         return oldTextureRegion;
       }
     }
 
     private _renderFrameIntoTextureRegion(frame: Frame, matrix: Matrix): WebGLTextureRegion {
-      var context = this.context;
+      var context = this._context;
       var bounds = frame.getBounds().clone();
       matrix.transformRectangleAABB(bounds);
       bounds.snap();
@@ -263,22 +265,66 @@ module Shumway.GFX.GL {
       if (!brush.drawImage(textureRegion, bounds, new Color(1, 1, 1, alpha), colorMatrix, m, 0, frame.blendMode)) {
         unexpected();
       }
-      this.context.freeTextureRegion(textureRegion);
+      this._context.freeTextureRegion(textureRegion);
+    }
+
+    private _enterClip(clip: Frame, matrix: Matrix, brush: WebGLCombinedBrush, viewport: Rectangle) {
+      brush.flush();
+      var gl = this._context.gl;
+      if (this._clipStack.length === 0) {
+        gl.enable(gl.STENCIL_TEST);
+        gl.clear(gl.STENCIL_BUFFER_BIT);
+        gl.stencilFunc(gl.ALWAYS, 1, 1);
+      }
+      this._clipStack.push(clip);
+      gl.colorMask(false, false, false, false);
+      gl.stencilOp(gl.KEEP, gl.KEEP, gl.INCR);
+      this._renderFrame(clip, matrix, brush, viewport, 0);
+      brush.flush();
+      gl.colorMask(true, true, true, true);
+      gl.stencilFunc(gl.NOTEQUAL, 0, this._clipStack.length);
+      gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+    }
+
+    private _leaveClip(clip: Frame, matrix: Matrix, brush: WebGLCombinedBrush, viewport: Rectangle) {
+      brush.flush();
+      var gl = this._context.gl;
+      var clip = this._clipStack.pop();
+      if (clip) {
+        gl.colorMask(false, false, false, false);
+        gl.stencilOp(gl.KEEP, gl.KEEP, gl.DECR);
+        this._renderFrame(clip, matrix, brush, viewport, 0);
+        brush.flush();
+        gl.colorMask(true, true, true, true);
+        gl.stencilFunc(gl.NOTEQUAL, 0, this._clipStack.length);
+        gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+      }
+      if (this._clipStack.length === 0) {
+        gl.disable(gl.STENCIL_TEST);
+      }
     }
 
     private _renderFrame(root: Frame, matrix: Matrix, brush: WebGLCombinedBrush, viewport: Rectangle, depth: number = 0) {
       var self = this;
       var options = this._options;
-      var context = this.context;
+      var context = this._context;
       var gl = context.gl;
       var cacheImageCallback = this._cacheImageCallback.bind(this);
       var tileMatrix = Matrix.createIdentity();
       var colorMatrix = ColorMatrix.createIdentity();
       var inverseMatrix = Matrix.createIdentity();
-      root.visit(function (frame: Frame, matrix?: Matrix): VisitorFlags {
+      root.visit(function (frame: Frame, matrix?: Matrix, flags?: FrameFlags): VisitorFlags {
         depth += options.frameSpacing;
 
         var bounds = frame.getBounds();
+
+        if (flags & FrameFlags.EnterClip) {
+          self._enterClip(frame, matrix, brush, viewport);
+          return;
+        } else if (flags & FrameFlags.LeaveClip) {
+          self._leaveClip(frame, matrix, brush, viewport);
+          return;
+        }
 
         // Return early if the bounds are not within the viewport.
         if (!viewport.intersectsTransformedAABB(bounds, matrix)) {
@@ -289,7 +335,6 @@ module Shumway.GFX.GL {
         if (!options.ignoreColorMatrix) {
           colorMatrix = frame.getConcatenatedColorMatrix();
         }
-
 
         if (frame instanceof FrameContainer) {
           if (frame instanceof ClipRectangle || options.paintBounds) {
@@ -353,12 +398,12 @@ module Shumway.GFX.GL {
           }
         }
         return VisitorFlags.Continue;
-      }, matrix);
+      }, matrix, FrameFlags.Empty, VisitorFlags.Clips);
     }
 
     private _renderTextures(brush: WebGLCombinedBrush) {
       var options = this._options;
-      var context = this.context;
+      var context = this._context;
       var viewport = this._viewport;
       if (options.drawTextures) {
         var textures = context.getTextures();
@@ -383,7 +428,7 @@ module Shumway.GFX.GL {
             brush.drawImage(new WebGLTextureRegion(texture, <RegionAllocator.Region>new Rectangle(0, 0, texture.w, texture.h)), textureWindow, Color.White, null, matrix, 0.2);
           }
         }
-        brush.flush(options.drawElements);
+        brush.flush();
       }
     }
 
@@ -395,18 +440,18 @@ module Shumway.GFX.GL {
       var self = this;
       var stage = this._stage;
       var options = this._options;
-      var context = this.context;
+      var context = this._context;
       var gl = context.gl;
 
       // TODO: Only set the camera once, not every frame.
       if (options.perspectiveCamera) {
-        this.context.modelViewProjectionMatrix = this.context.createPerspectiveMatrix (
+        this._context.modelViewProjectionMatrix = this._context.createPerspectiveMatrix (
           options.perspectiveCameraDistance + (options.animateZoom ? Math.sin(Date.now() / 3000) * 0.8 : 0),
           options.perspectiveCameraFOV,
           options.perspectiveCameraAngle
         );
       } else {
-        this.context.modelViewProjectionMatrix = this.context.create2DProjectionMatrix();
+        this._context.modelViewProjectionMatrix = this._context.create2DProjectionMatrix();
       }
 
       var brush = this._brush;
@@ -425,7 +470,7 @@ module Shumway.GFX.GL {
       this._renderFrame(stage, stage.matrix, brush, viewport, 0);
       leaveTimeline();
 
-      brush.flush(options.drawElements);
+      brush.flush();
 
       if (options.paintViewport) {
         brush.fillRectangle(viewport, new Color(0.5, 0, 0, 0.25), Matrix.createIdentity(), 0);
