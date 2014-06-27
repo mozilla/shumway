@@ -469,6 +469,7 @@ module Shumway.AVM1 {
 
     var scopeContainer = context.initialScope.create(scope);
     var savedContext = AS2Context.instance;
+    var caughtError;
     try {
       AS2Context.instance = context;
       context.isActive = true;
@@ -485,14 +486,17 @@ module Shumway.AVM1 {
         console.error('Disabling AVM1 execution');
         context.executionProhibited = true;
       }
-      throw e; // TODO shall we just ignore it?
-    } finally {
-      context.isActive = false;
-      context.defaultTarget = null;
-      context.currentTarget = null;
-      actionTracer.unindent();
-      actionTracer.message('ActionScript Execution Stops');
-      AS2Context.instance = savedContext;
+      caughtError = e;
+    }
+    context.isActive = false;
+    context.defaultTarget = null;
+    context.currentTarget = null;
+    actionTracer.unindent();
+    actionTracer.message('ActionScript Execution Stops');
+    AS2Context.instance = savedContext;
+    if (caughtError) {
+      // Note: this doesn't use `finally` because that's a no-go for performance.
+      throw caughtError; // TODO shall we just ignore it?
     }
   }
 
@@ -693,8 +697,8 @@ module Shumway.AVM1 {
         var savedIsActive = currentContext.isActive;
         var savedDefaultTarget = currentContext.defaultTarget;
         var savedCurrentTarget = currentContext.currentTarget;
-        try
-        {
+        var caughtError;
+        try {
           // switching contexts if called outside main thread
           AS2Context.instance = currentContext;
           if (!savedIsActive) {
@@ -712,13 +716,18 @@ module Shumway.AVM1 {
           }
           return interpretActions(actionsData, newScopeContainer,
             constantPool, registers);
-        } finally {
-          currentContext.defaultTarget = savedDefaultTarget;
-          currentContext.currentTarget = savedCurrentTarget;
-          currentContext.isActive = savedIsActive;
-          currentContext.stackDepth--;
-          actionTracer.unindent();
-          AS2Context.instance = savedContext;
+        } catch (e) {
+          caughtError = e;
+        }
+        currentContext.defaultTarget = savedDefaultTarget;
+        currentContext.currentTarget = savedCurrentTarget;
+        currentContext.isActive = savedIsActive;
+        currentContext.stackDepth--;
+        actionTracer.unindent();
+        AS2Context.instance = savedContext;
+        if (caughtError) {
+          // Note: this doesn't use `finally` because that's a no-go for performance.
+          throw caughtError;
         }
       });
 
@@ -896,28 +905,29 @@ module Shumway.AVM1 {
       var registers = ectx.registers;
 
       var savedTryCatchState = currentContext.isTryCatchListening;
+      var caughtError;
       try {
         currentContext.isTryCatchListening = true;
         interpretActions(tryBlock, scopeContainer, constantPool, registers);
       } catch (e) {
         currentContext.isTryCatchListening = savedTryCatchState;
-        if (!catchBlockFlag) {
-          throw e;
-        }
-        if (!(e instanceof AS2Error)) {
-          throw e;
-        }
-        if (typeof catchTarget === 'string') { // TODO catchIsRegisterFlag?
-          scope.asSetPublicProperty(catchTarget, e.error);
+        if (!catchBlockFlag || !(e instanceof AS2Error)) {
+          caughtError = e;
         } else {
-          registers[catchTarget] = e.error;
+          if (typeof catchTarget === 'string') { // TODO catchIsRegisterFlag?
+            scope.asSetPublicProperty(catchTarget, e.error);
+          } else {
+            registers[catchTarget] = e.error;
+          }
+          interpretActions(catchBlock, scopeContainer, constantPool, registers);
         }
-        interpretActions(catchBlock, scopeContainer, constantPool, registers);
-      } finally {
-        currentContext.isTryCatchListening = savedTryCatchState;
-        if (finallyBlockFlag) {
-          interpretActions(finallyBlock, scopeContainer, constantPool, registers);
-        }
+      }
+      currentContext.isTryCatchListening = savedTryCatchState;
+      if (finallyBlockFlag) {
+        interpretActions(finallyBlock, scopeContainer, constantPool, registers);
+      }
+      if (caughtError) {
+        throw caughtError;
       }
     }
 
@@ -1854,7 +1864,7 @@ module Shumway.AVM1 {
 
     function generateActionCalls() {
       var wrap: Function;
-      if (!avm1ErrorsEnabled.value) {
+      if (avm1ErrorsEnabled.value) {
         wrap = wrapAvm1Error;
       } else {
         wrap = function (fn: Function) { return fn; };

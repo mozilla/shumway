@@ -85,6 +85,9 @@ public dynamic class AS2Globals {
 
   public var fscommand:Function = fscommand;
 
+  public native function escape(str: String): String;
+  public native function unescape(str: String): String;
+
   public function getAS2Property(target, index) {
     var nativeTarget = AS2Utils.resolveTarget(target);
     return nativeTarget[PropertiesIndexMap[index]];
