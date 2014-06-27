@@ -79,7 +79,12 @@ module Shumway.AVM2.AS.avm1lib {
     }
     _insertChildAtDepth(mc: any, depth: any): any {
       var nativeAS3Object = <any> this._nativeAS3Object;
-      nativeAS3Object._insertChildAtDepth(mc, depth);
+      nativeAS3Object.addChildAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
+      var name: string = mc.name;
+      if (name) {
+        this.asSetPublicProperty(name, mc);
+      }
+      return mc;
     }
     _duplicate(name: any, depth: any, initObject: any): any {
       var nativeAS3Object = <any> this._nativeAS3Object;

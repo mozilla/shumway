@@ -234,11 +234,14 @@ module Shumway.SWF.Parser {
           inflateBlock(stream, output, this._state.compression);
         } while (stream.pos < buffer.length && !output.completed);
       } catch (e) {
-        if (e !== InflateNoDataError) throw e; // re-throw non data errors
-      } finally {
         this._state.bitBuffer = stream.bitBuffer;
         this._state.bitLength = stream.bitLength;
+        if (e !== InflateNoDataError) {
+          throw e; // Re-throw non data errors.
+        }
       }
+      this._state.bitBuffer = stream.bitBuffer;
+      this._state.bitLength = stream.bitLength;
       buffer.removeHead(stream.pos);
 
       // push data downstream

@@ -431,7 +431,7 @@ module Shumway.Timeline {
             var matrix = null;
             var colorTransform = null;
             var filters: flash.filters.BitmapFilter[] = null;
-            var events = null;
+            var events: any[] = null;
             if (cmd.symbolId) {
               symbol = loaderInfo.getSymbolById(cmd.symbolId);
               release || assert (symbol, "Symbol is not defined.");
@@ -467,13 +467,13 @@ module Shumway.Timeline {
                 loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
               var swfEvents = cmd.events;
               events = [];
-              for (var i = 0; i < swfEvents.length; i++) {
-                var swfEvent = swfEvents[i];
+              for (var j = 0; j < swfEvents.length; j++) {
+                var swfEvent = swfEvents[j];
                 if (swfEvent.eoe) {
                   break;
                 }
                 var actionsData = new AVM1.AS2ActionsData(swfEvent.actionsData,
-                    's' + cmd.symbolId + 'e' + i);
+                    's' + cmd.symbolId + 'e' + j);
                 var fn = (function (actionsData, loaderInfo) {
                   return function() {
                     var avm1Context = loaderInfo._avm1Context;

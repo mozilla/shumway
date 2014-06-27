@@ -52,7 +52,7 @@ module Shumway {
       }
       xhr.onreadystatechange = function (event) {
         if (xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0) {
+          if (xhr.status !== 200 && xhr.status !== 0 || xhr.response === null) {
             unexpected("Path: " + url + " not found.");
             complete(null, xhr.statusText);
             return;
@@ -88,8 +88,9 @@ module Shumway {
           onhttpstatus(url, xhr.status, xhr.getAllResponseHeaders());
         }
         if (xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0) {
+          if (xhr.status !== 200 && xhr.status !== 0 || xhr.response === null) {
             onerror(xhr.statusText);
+            return;
           }
           if (isNotProgressive) {
             var buffer = xhr.response;

@@ -24,6 +24,7 @@ module Shumway.AVM2.AS.flash.display {
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
   import events = flash.events;
+  import AS2MovieClip = Shumway.AVM2.AS.avm1lib.AS2MovieClip;
 
   export class MovieClip extends flash.display.Sprite {
 
@@ -134,6 +135,8 @@ module Shumway.AVM2.AS.flash.display {
 
     private _trackAsMenu: boolean;
     private _allowFrameNavigation: boolean;
+
+    private _as2Object;
 
     get currentFrame(): number /*int*/ {
       return this._currentFrame - this._sceneForFrameIndex(this._currentFrame).offset;
@@ -513,6 +516,28 @@ module Shumway.AVM2.AS.flash.display {
     nextScene(): void {
       var currentScene = this._sceneForFrameIndex(this._currentFrame);
       this._gotoFrameAbs(currentScene.offset + currentScene.numFrames + 1);
+    }
+    _getAS2Object() {
+      if (!this._as2Object) {
+        // TODO: support custom MovieClip child classes in AS2 again.
+//        if (this._avm1SymbolClass) {
+//          // Hacking wrapper to pass/initialize AS2MovieClip with nativeObject before AS2
+//          // constructor is run.
+//          var nativeObject = this;
+//          var nativeObjectClass = this._avm1SymbolClass;
+//          var constructWrapper = function () {
+//            this.init(nativeObject);
+//            nativeObjectClass.call(this);
+//          };
+//          constructWrapper.prototype = Object.create(nativeObjectClass.prototype);
+//          constructWrapper.instanceConstructor = constructWrapper;
+//          constructWrapper.debugName = 'avm1 <symbol constructor wrapper>';
+//          construct(constructWrapper);
+//        } else {
+          new avm1lib.AS2MovieClip(this);
+//        }
+      }
+      return this._as2Object;
     }
   }
 }
