@@ -114,7 +114,7 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.MovieClip");
+      Sprite.instanceConstructorNoInitialize.call(this);
     }
 
     // JS -> AS Bindings
@@ -329,15 +329,13 @@ module Shumway.AVM2.AS.flash.display {
           var child = this.getChildAtDepth(depth);
           var state = stateAtDepth[depth];
           if (child) {
-            if (state) {
-              if (state.canBeAnimated(child)) {
-                if (state.symbol && !state.symbol.dynamic) {
-                  // TODO: Handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
-                  child._setStaticContentFromSymbol(state.symbol);
-                }
-                child._animate(state);
-                continue;
+            if (state && state.canBeAnimated(child)) {
+              if (state.symbol && !state.symbol.dynamic) {
+                // TODO: Handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
+                child._setStaticContentFromSymbol(state.symbol);
               }
+              child._animate(state);
+              continue;
             }
             this._removeAnimatedChild(child);
           }
@@ -401,11 +399,13 @@ module Shumway.AVM2.AS.flash.display {
 
     private _removeAnimatedChild(child: flash.display.DisplayObject) {
       this.removeChild(child);
+      child._removeReference();
       if (child._name) {
         var mn = Multiname.getPublicQualifiedName(child._name);
         if (this[mn] === child) {
           this[mn] = null;
         }
+        //child._removeReference();
       }
     }
 

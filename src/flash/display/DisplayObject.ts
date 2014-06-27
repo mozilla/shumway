@@ -395,6 +395,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super(undefined);
       events.EventDispatcher.instanceConstructorNoInitialize();
+      this._addReference();
       this._setFlags(DisplayObjectFlags.Constructed);
     }
 
@@ -1598,19 +1599,19 @@ module Shumway.AVM2.AS.flash.display {
       }, VisitorFlags.None);
     }
 
-    addReference() {
+    _addReference() {
       this._referenceCount++;
     }
 
-    removeReference() {
-      //assert (this._referenceCount > 0, this._referenceCount);
+    _removeReference() {
+      //assert (this._referenceCount > 0);
       this._referenceCount--;
       if (this._referenceCount !== 0 || !this._children) {
         return;
       }
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
-        children[i].removeReference();
+        children[i]._removeReference();
       }
     }
 
