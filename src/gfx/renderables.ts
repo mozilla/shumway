@@ -676,6 +676,8 @@ module Shumway.GFX {
     private _matrix: Shumway.GFX.Geometry.Matrix;
     private _coords: DataBuffer;
 
+    textWidth: number;
+    textHeight: number;
     lines: TextLine[];
 
     constructor(bounds) {
@@ -687,6 +689,8 @@ module Shumway.GFX {
       this._borderColor = 0;
       this._matrix = null;
       this._coords = null;
+      this.textWidth = 0;
+      this.textHeight = 0;
       this.lines = [];
     }
 
@@ -700,13 +704,15 @@ module Shumway.GFX {
     setContent(plainText: string, textRunData: DataBuffer, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer): void {
       this._textRunData = textRunData;
       this._plainText = plainText;
-      this.lines = [];
       this._matrix = matrix;
-      this._coords = coords;
-      if (this._coords) {
+      if (coords) {
+        this._coords = coords;
         this._bounds.w += (this._bounds.x + 4) | 0;
         this._bounds.h += (this._bounds.y + 4) | 0;
       }
+      this.textWidth = 0;
+      this.textHeight = 0;
+      this.lines = [];
     }
 
     setStyle(backgroundColor: number, borderColor: number): void {
@@ -852,12 +858,15 @@ module Shumway.GFX {
         currentLine.addRun(font, fillStyle, text, underline);
       }
 
+      this.textWidth = maxWidth;
+      this.textHeight = baseLinePos;
+
       if (autoSize) {
         if (!wordWrap) {
-          availableWidth = maxWidth;
+          availableWidth = this.textWidth;
           bounds.w = availableWidth + 4;
         }
-        bounds.h = baseLinePos + 4;
+        bounds.h = this.textHeight + 4;
       }
 
       var numLines = lines.length;

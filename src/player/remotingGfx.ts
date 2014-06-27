@@ -251,17 +251,20 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = input.readInt();
       var symbolId = input.readInt();
-      var asset = context._assets[id];
+      var asset = <RenderableBitmap>context._assets[id];
       var bounds = this._readRectangle();
       var type: ImageType = input.readInt();
       var assetId = input.readInt();
       var dataBuffer = DataBuffer.FromPlainObject(this.inputAssets[assetId]);
       this.inputAssets[assetId] = null;
       if (!asset) {
-        context._registerAsset(id, symbolId, RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds));
+        asset = RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds);
+        context._registerAsset(id, symbolId, asset);
       } else {
-        var renderableBitmap = <RenderableBitmap>context._assets[id];
-        renderableBitmap.updateFromDataBuffer(type, dataBuffer);
+        asset.updateFromDataBuffer(type, dataBuffer);
+      }
+      if (this.output) {
+        // TODO: Write image data to output.
       }
     }
 
@@ -305,9 +308,8 @@ module Shumway.Remoting.GFX {
         asset.reflow(autoSize, wordWrap);
       }
       if (this.output) {
-        var b = asset.getBounds();
-        this.output.writeInt(b.w);
-        this.output.writeInt(b.h);
+        this.output.writeInt(asset.textWidth);
+        this.output.writeInt(asset.textHeight);
         var lines = asset.lines;
         var numLines = lines.length;
         this.output.writeInt(numLines);

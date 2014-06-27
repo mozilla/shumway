@@ -21,15 +21,24 @@ module Shumway {
   import ColorUtilities = Shumway.ColorUtilities;
   import flash = Shumway.AVM2.AS.flash;
 
+  export enum TextContentFlags {
+    None            = 0x0000,
+    DirtyDimensions = 0x0001,
+    DirtyContent    = 0x0002,
+    DirtyStyle      = 0x0004,
+    Dirty           = DirtyDimensions | DirtyContent | DirtyStyle
+  }
+
   export class TextContent implements Shumway.Remoting.IRemotable {
     _id: number;
-    _isDirty: boolean;
 
     private _plainText: string;
     private _backgroundColor: number;
     private _borderColor: number;
     private _autoSize: boolean;
     private _wordWrap: boolean;
+
+    flags: number;
     defaultTextFormat: flash.text.TextFormat;
     textRuns: flash.text.TextRun[];
     matrix: flash.geom.Matrix;
@@ -37,12 +46,17 @@ module Shumway {
 
     constructor(defaultTextFormat?: flash.text.TextFormat) {
       this._id = flash.display.DisplayObject.getNextSyncID();
-      this._isDirty = false;
+
+      if (this._id === 2184) {
+        debugger;
+      }
+
       this._plainText = '';
       this._backgroundColor = 0;
       this._borderColor = 0;
       this._autoSize = false;
       this._wordWrap = false;
+      this.flags = TextContentFlags.None;
       this.defaultTextFormat = defaultTextFormat || new flash.text.TextFormat();
       this.textRuns = [];
       this.matrix = null;
@@ -199,7 +213,7 @@ module Shumway {
       });
 
       this._plainText = plainText;
-      this._isDirty = true;
+      this.flags |= TextContentFlags.DirtyContent;
     }
 
     get plainText(): string {
@@ -213,7 +227,7 @@ module Shumway {
       this._plainText = value;
       this.textRuns.length = 0;
       this.textRuns[0] = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
-      this._isDirty = true;
+      this.flags |= TextContentFlags.DirtyContent;
     }
 
     get autoSize(): boolean {
@@ -225,7 +239,9 @@ module Shumway {
         return;
       }
       this._autoSize = value;
-      this._isDirty = true;
+      if (this._plainText) {
+        this.flags |= TextContentFlags.DirtyDimensions;
+      }
     }
 
     get wordWrap(): boolean {
@@ -237,7 +253,9 @@ module Shumway {
         return;
       }
       this._wordWrap = value;
-      this._isDirty = true;
+      if (this._plainText) {
+        this.flags |= TextContentFlags.DirtyDimensions;
+      }
     }
 
     get backgroundColor(): number {
@@ -249,7 +267,7 @@ module Shumway {
         return;
       }
       this._backgroundColor = value;
-      this._isDirty = true;
+      this.flags |= TextContentFlags.DirtyStyle;
     }
 
     get borderColor(): number {
@@ -261,7 +279,7 @@ module Shumway {
         return;
       }
       this._borderColor = value;
-      this._isDirty = true;
+      this.flags |= TextContentFlags.DirtyStyle;
     }
   }
 }

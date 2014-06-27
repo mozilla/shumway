@@ -101,10 +101,8 @@ module Shumway.Remoting.Player {
     }
 
     writeTextContent(textContent: Shumway.TextContent, bounds: Bounds) {
-      if (textContent._isDirty) {
+      if (textContent.flags & Shumway.TextContentFlags.Dirty) {
         writer && writer.writeLn("Sending TextContent: " + textContent._id);
-        var textRuns = textContent.textRuns;
-        var numTextRuns = textRuns.length;
         this.output.writeInt(MessageTag.UpdateTextContent);
         this.output.writeInt(textContent._id);
         this.output.writeInt(-1);
@@ -116,6 +114,8 @@ module Shumway.Remoting.Player {
         this.output.writeBoolean(textContent.wordWrap);
         this.output.writeInt(this.outputAssets.length);
         this.outputAssets.push(textContent.plainText);
+        var textRuns = textContent.textRuns;
+        var numTextRuns = textRuns.length;
         this.output.writeInt(numTextRuns);
         for (var i = 0; i < numTextRuns; i++) {
           var textRun = textRuns[i];
@@ -133,7 +133,7 @@ module Shumway.Remoting.Player {
         } else {
           this.output.writeInt(0);
         }
-        textContent._isDirty = false;
+        textContent.flags &= ~Shumway.TextContentFlags.Dirty
       }
     }
 

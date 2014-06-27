@@ -89,6 +89,7 @@ module Shumway.AVM2.AS.flash.display {
         child.class.instanceConstructorNoInitialize.call(child);
         if (child._name) {
           this[Multiname.getPublicQualifiedName(child._name)] = child;
+          child.addReference();
         }
         child._setFlags(DisplayObjectFlags.Constructed);
 
@@ -311,6 +312,9 @@ module Shumway.AVM2.AS.flash.display {
       if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
         return null;
       }
+
+      child.addReference();
+
       return child;
     }
 
@@ -361,6 +365,9 @@ module Shumway.AVM2.AS.flash.display {
           return child;
         }
       }
+
+      child.addReference();
+
       return null;
     }
 
@@ -375,6 +382,7 @@ module Shumway.AVM2.AS.flash.display {
           // Only include the objects whose shape is under the specified point.
           if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true, true)) {
             objectsUnderPoint.push(displayObject);
+            displayObject.addReference();
           }
         } else {
           // TODO: Exclude inaccessible objects, not sure what these are.

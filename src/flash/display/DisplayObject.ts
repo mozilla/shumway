@@ -1603,7 +1603,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     removeReference() {
-      assert (this._referenceCount > 0, this._referenceCount);
+      //assert (this._referenceCount > 0, this._referenceCount);
       this._referenceCount--;
       if (this._referenceCount !== 0 || !this._children) {
         return;
