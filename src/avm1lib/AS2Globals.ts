@@ -45,7 +45,20 @@ module Shumway.AVM2.AS.avm1lib {
     static classSymbols: string [] = null;
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["_global", "flash", "$asfunction", "call", "chr", "clearInterval", "clearTimeout", "duplicateMovieClip", "fscommand", "getAS2Property", "getTimer", "getURL", "getVersion", "gotoAndPlay", "gotoAndStop", "gotoLabel", "ifFrameLoaded", "int", "length", "loadMovie", "loadMovieNum", "loadVariables", "mbchr", "mblength", "mbord", "mbsubstring", "nextFrame", "nextScene", "ord", "play", "prevFrame", "prevScene", "print", "printAsBitmap", "printAsBitmapNum", "printNum", "random", "removeMovieClip", "setInterval", "setAS2Property", "setTimeout", "showRedrawRegions", "startDrag", "stop", "stopAllSounds", "stopDrag", "substring", "targetPath", "toggleHighQuality", "unloadMovie", "unloadMovieNum", "updateAfterEvent"];
+    static instanceSymbols: string [] = ["_global", "flash", "$asfunction", "call", "chr",
+                                         "clearInterval", "clearTimeout", "duplicateMovieClip",
+                                         "fscommand", "getAS2Property", "getTimer",
+                                         "getURL", "getVersion", "gotoAndPlay", "gotoAndStop",
+                                         "gotoLabel", "ifFrameLoaded", "int", "length", "loadMovie",
+                                         "loadMovieNum", "loadVariables", "mbchr", "mblength",
+                                         "mbord", "mbsubstring", "nextFrame", "nextScene", "ord",
+                                         "play", "prevFrame", "prevScene", "print", "printAsBitmap",
+                                         "printAsBitmapNum", "printNum", "random",
+                                         "removeMovieClip", "setInterval", "setAS2Property",
+                                         "setTimeout", "showRedrawRegions", "startDrag", "stop",
+                                         "stopAllSounds", "stopDrag", "substring", "targetPath",
+                                         "toggleHighQuality", "unloadMovie",
+                                         "unloadMovieNum", "updateAfterEvent"];
 
     constructor () {
       false && super();
@@ -131,6 +144,37 @@ module Shumway.AVM2.AS.avm1lib {
         (<Function><any> fn).apply(subject, args);
       });
     }
+
+    /**
+     * AS2 escapes slightly more characters than JS's encodeURIComponent, and even more than
+     * the deprecated JS version of escape. That leaves no other option but to do manual post-
+     * processing of the encoded result. :/
+     *
+     * Luckily, unescape isn't thus afflicted - it happily unescapes all the additional things
+     * we escape here.
+     */
+    escape(str: string): string {
+      var result = encodeURIComponent(str);
+      return result.replace(/\!|'|\(|\)|\*|-|\.|_|~/g, function(char: string): string {
+        switch (char) {
+          case '*':
+            return '%2A';
+          case '-':
+            return '%2D';
+          case '.':
+            return '%2E';
+          case '_':
+            return '%5F';
+          default:
+            return globalEscape(char);
+        }
+      });
+    }
+
+    unescape(str: string): string {
+      return decodeURIComponent(str);
+    }
+
     _setLevel(level: number /*uint*/, loader: Loader): any {
       level = level >>> 0;
       AS2Context.instance.stage._as2SetLevel(level, loader);
@@ -140,3 +184,5 @@ module Shumway.AVM2.AS.avm1lib {
     }
   }
 }
+
+var globalEscape = this['escape'];
