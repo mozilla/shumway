@@ -1442,9 +1442,13 @@ module Shumway.AVM2.Runtime {
         return function () {
           var savedDxns = Shumway.AVM2.AS.ASXML.defaultNamespace;
           try {
-            return fn.apply(this, arguments);
-          } finally {
+            var result = fn.apply(this, arguments);
             Shumway.AVM2.AS.ASXML.defaultNamespace = savedDxns;
+            return result;
+          } catch (e) {
+            // Note: this doesn't use `finally` because that's a no-go for performance.
+            Shumway.AVM2.AS.ASXML.defaultNamespace = savedDxns;
+            throw e;
           }
         };
       })(fn);
