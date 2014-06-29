@@ -433,13 +433,13 @@ module Shumway.Timeline {
             states[depth] = null;
             break;
           default:
-            var symbol = null;
-            var matrix = null;
-            var colorTransform = null;
+            var symbol: DisplaySymbol = null;
+            var matrix: flash.geom.Matrix = null;
+            var colorTransform: flash.geom.ColorTransform = null;
             var filters: flash.filters.BitmapFilter[] = null;
             var events: any[] = null;
             if (cmd.symbolId) {
-              symbol = loaderInfo.getSymbolById(cmd.symbolId);
+              symbol = <DisplaySymbol>loaderInfo.getSymbolById(cmd.symbolId);
               release || assert (symbol, "Symbol is not defined.");
             }
             if (cmd.flags & PlaceObjectFlags.HasMatrix) {
