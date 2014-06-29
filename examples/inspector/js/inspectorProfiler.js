@@ -44,6 +44,7 @@ var profiler = (function() {
   }
 
   Profiler.prototype.start = function(maxTime) {
+    window.profile = true;
     requestTimelineBuffers('clear');
     controller.deactivateProfile();
     maxTime = maxTime || 0;
@@ -58,6 +59,7 @@ var profiler = (function() {
   }
 
   Profiler.prototype.createProfile = function() {
+    window.profile = false;
     requestTimelineBuffers('get').then(function (buffers) {
       controller.createProfile(buffers);
       elProfilerToolbar.classList.remove("withEmphasis");
@@ -112,7 +114,6 @@ var profiler = (function() {
 function requestTimelineBuffers(cmd) {
   var buffersPromises = [];
   // TODO request timelineBuffers using postMessage (instead of IFramePlayer.Shumway)
-
 
   if (cmd === 'clear') {
     Shumway.GFX.timelineBuffer.reset();

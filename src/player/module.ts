@@ -23,11 +23,11 @@ module Shumway.Player {
 
   export function enterTimeline(name: string, data?: any) {
     writer && writer.enter(name);
-    timelineBuffer && timelineBuffer.enter(name, data);
+    profile && timelineBuffer && timelineBuffer.enter(name, data);
   }
 
   export function leaveTimeline(name: string, data?: any) {
     timelineBuffer && timelineBuffer.leave(name, data);
-    writer && writer.leave(name);
+    profile && writer && writer.leave(name);
   }
 }

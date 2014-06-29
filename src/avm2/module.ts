@@ -24,10 +24,10 @@ module Shumway.AVM2 {
   }
 
   export function enterTimeline(name: string, data?: any) {
-    timelineBuffer && timelineBuffer.enter(name, data);
+    profile && timelineBuffer && timelineBuffer.enter(name, data);
   }
 
   export function leaveTimeline(data?: any) {
-    timelineBuffer && timelineBuffer.leave(null, data);
+    profile && timelineBuffer && timelineBuffer.leave(null, data);
   }
 }
