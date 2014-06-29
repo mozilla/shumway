@@ -156,6 +156,7 @@ module Shumway.GFX {
     renderClippedFrame(source: Frame, viewport: Rectangle, matrix: Matrix) {
       var context = this.context;
       context.save();
+      context.beginPath();
       context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
       context.clip();
       this._renderFrame(context, source, matrix, viewport, new Canvas2DStageRendererState(this._options));

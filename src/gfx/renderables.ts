@@ -913,6 +913,7 @@ module Shumway.GFX {
       }
 
       context.translate(2, 2);
+      context.beginPath();
       context.rect(0, 0, bounds.w - 4, bounds.h - 4);
       context.clip();
 
