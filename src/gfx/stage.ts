@@ -86,8 +86,7 @@ module Shumway.GFX {
 
   export class StageRendererOptions {
     debug: boolean = false;
-    disable: boolean = false;
-    forcePaint: boolean = false;
+    paintRenderable: boolean = true;
     paintBounds: boolean = false;
     paintFlashing: boolean = false;
     paintViewport: boolean = false;
@@ -96,8 +95,9 @@ module Shumway.GFX {
   export enum Backend {
     Canvas2D = 0,
     WebGL = 1,
-    DOM = 2,
-    SVG = 3
+    Both = 2,
+    DOM = 3,
+    SVG = 4
   }
 
   export class StageRenderer {
@@ -116,38 +116,14 @@ module Shumway.GFX {
       this._viewport.set(viewport);
     }
 
-    /**
-     * Cheks to see if we should render and if so, clears any relevant dirty flags. Returns
-     * true if rendering should commence. Flag clearing is made optional here in case there
-     * is any code that needs to check if rendering is about to happen.
-     */
-    _readyToRender(clearFlags = true): boolean {
-      var options = this._options;
-      if (options.disable) {
-        return false;
-      }
-      var stage = this._stage;
-      if (!options.forcePaint && !stage._hasFlags(FrameFlags.InvalidPaint)) {
-        return false;
-      } else if (clearFlags) {
-        enterTimeline("readyToRender");
-        stage.visit(function (frame: Frame): VisitorFlags {
-          if (frame._hasFlags(FrameFlags.InvalidPaint)) {
-            frame._toggleFlags(FrameFlags.InvalidPaint, false);
-            return VisitorFlags.Continue;
-          } else {
-            return VisitorFlags.Skip;
-          }
-        });
-        leaveTimeline();
-      }
-      if (!options.forcePaint && options.disable) {
-        return false;
-      }
-      return true;
+    public render() {
+
     }
 
-    public render() {
+    /**
+     * Notify renderer that the viewport has changed.
+     */
+    public resize() {
 
     }
   }
@@ -165,6 +141,29 @@ module Shumway.GFX {
       this.dirtyRegion = new DirtyRegion(w, h);
       this.trackDirtyRegions = trackDirtyRegions;
       this._setFlags(FrameFlags.Dirty);
+    }
+
+    /**
+     * Checks to see if we should render and if so, clears any relevant dirty flags. Returns
+     * true if rendering should commence. Flag clearing is made optional here in case there
+     * is any code that needs to check if rendering is about to happen.
+     */
+    readyToRender(clearFlags = true): boolean {
+      if (!this._hasFlags(FrameFlags.InvalidPaint)) {
+        return false;
+      } else if (clearFlags) {
+        enterTimeline("readyToRender");
+        this.visit(function (frame: Frame): VisitorFlags {
+          if (frame._hasFlags(FrameFlags.InvalidPaint)) {
+            frame._toggleFlags(FrameFlags.InvalidPaint, false);
+            return VisitorFlags.Continue;
+          } else {
+            return VisitorFlags.Skip;
+          }
+        });
+        leaveTimeline();
+      }
+      return true;
     }
 
     gatherMarkedDirtyRegions(transform: Matrix) {
