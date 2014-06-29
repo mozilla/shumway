@@ -124,6 +124,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
+
       this._content = null;
       this._contentLoaderInfo = new flash.display.LoaderInfo();
 

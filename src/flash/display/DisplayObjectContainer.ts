@@ -89,7 +89,7 @@ module Shumway.AVM2.AS.flash.display {
         child.class.instanceConstructorNoInitialize.call(child);
         if (child._name) {
           this[Multiname.getPublicQualifiedName(child._name)] = child;
-          child.addReference();
+          //child._addReference();
         }
         child._setFlags(DisplayObjectFlags.Constructed);
 
@@ -165,8 +165,6 @@ module Shumway.AVM2.AS.flash.display {
         return child;
       }
 
-      child.addReference();
-
       if (child._parent) {
         child._parent.removeChild(child);
         // The children list could have been mutated as a result of |removeChild|.
@@ -179,6 +177,7 @@ module Shumway.AVM2.AS.flash.display {
       child._depth = -1;
       child._index = index;
       child._parent = this;
+      child._addReference();
       child._invalidatePosition();
       child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
       // ADDED event handlers may remove the child from the stage, in such cases
@@ -187,6 +186,7 @@ module Shumway.AVM2.AS.flash.display {
         child._propagateEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
       }
       this._invalidateChildren();
+      child._addReference();
       return child;
     }
 
@@ -212,8 +212,6 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
 
-      child.addReference();
-
       if (index > maxIndex) {
         children.push(child);
         child._index = index;
@@ -230,7 +228,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     removeChild(child: DisplayObject): DisplayObject {
-      //child = child
       return this.removeChildAt(this.getChildIndex(child));
     }
 
@@ -252,8 +249,6 @@ module Shumway.AVM2.AS.flash.display {
         // we may need to operate on the new index of the child.
         index = this.getChildIndex(child);
       }
-
-      child.removeReference();
 
       children.splice(index, 1);
       for (var i = children.length - 1; i >= index; i--) {
@@ -313,8 +308,7 @@ module Shumway.AVM2.AS.flash.display {
         return null;
       }
 
-      child.addReference();
-
+      child._addReference();
       return child;
     }
 
@@ -362,11 +356,10 @@ module Shumway.AVM2.AS.flash.display {
           continue;
         }
         if (child.name === name) {
+          child._addReference();
           return child;
         }
       }
-
-      child.addReference();
 
       return null;
     }
@@ -382,7 +375,7 @@ module Shumway.AVM2.AS.flash.display {
           // Only include the objects whose shape is under the specified point.
           if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true, true)) {
             objectsUnderPoint.push(displayObject);
-            displayObject.addReference();
+            displayObject._addReference();
           }
         } else {
           // TODO: Exclude inaccessible objects, not sure what these are.

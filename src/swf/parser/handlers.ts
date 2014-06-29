@@ -149,11 +149,11 @@ module Shumway.SWF.Parser {
       if (tagCode === 90) {
         $.deblock = readFixed8($bytes, $stream);
       }
-      imgData = $.imgData = readBinary($bytes, $stream, alphaDataOffset);
-      $.alphaData = readBinary($bytes, $stream, 0);
+      imgData = $.imgData = readBinary($bytes, $stream, alphaDataOffset, true);
+      $.alphaData = readBinary($bytes, $stream, 0, true);
     }
     else {
-      imgData = $.imgData = readBinary($bytes, $stream, 0);
+      imgData = $.imgData = readBinary($bytes, $stream, 0, true);
     }
     switch (imgData[0] << 8 | imgData[1]) {
       case 65496:
@@ -187,7 +187,7 @@ module Shumway.SWF.Parser {
         eob = temp.eob;
         $0.push($1);
       } while (!eob);
-      $.actionsData = readBinary($bytes, $stream, 0);
+      $.actionsData = readBinary($bytes, $stream, 0, false);
     }
     else {
       var trackFlags = readUi8($bytes, $stream);
@@ -249,7 +249,7 @@ module Shumway.SWF.Parser {
   function defineJPEGTables($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = 0;
-    $.imgData = readBinary($bytes, $stream, 0);
+    $.imgData = readBinary($bytes, $stream, 0, false);
     $.mimeType = "application/octet-stream";
     return $;
   }
@@ -265,7 +265,7 @@ module Shumway.SWF.Parser {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     var reserved = readUi32($bytes, $stream);
-    $.data = readBinary($bytes, $stream, 0);
+    $.data = readBinary($bytes, $stream, 0, false);
     return $;
   }
 
@@ -315,7 +315,7 @@ module Shumway.SWF.Parser {
     if (tagCode === 59) {
       $.spriteId = readUi16($bytes, $stream);
     }
-    $.actionsData = readBinary($bytes, $stream, 0);
+    $.actionsData = readBinary($bytes, $stream, 0, false);
     return $;
   }
 
@@ -328,7 +328,7 @@ module Shumway.SWF.Parser {
     $.soundSize = soundFlags >> 1 & 1;
     $.soundType = soundFlags & 1;
     $.samplesCount = readUi32($bytes, $stream);
-    $.soundData = readBinary($bytes, $stream, 0);
+    $.soundData = readBinary($bytes, $stream, 0, false);
     return $;
   }
 
@@ -365,7 +365,7 @@ module Shumway.SWF.Parser {
 
   function soundStreamBlock($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
-    $.data = readBinary($bytes, $stream, 0);
+    $.data = readBinary($bytes, $stream, 0, false);
     return $;
   }
 
@@ -379,7 +379,7 @@ module Shumway.SWF.Parser {
     if (format === 3) {
       $.colorTableSize = readUi8($bytes, $stream);
     }
-    $.bmpData = readBinary($bytes, $stream, 0);
+    $.bmpData = readBinary($bytes, $stream, 0, false);
     return $;
   }
 
@@ -560,7 +560,7 @@ module Shumway.SWF.Parser {
     else {
       $.name = "";
     }
-    $.data = readBinary($bytes, $stream, 0);
+    $.data = readBinary($bytes, $stream, 0, false);
     return $;
   }
 
@@ -1208,7 +1208,7 @@ module Shumway.SWF.Parser {
       if (keyPress) {
         $.keyCode = readUi8($bytes, $stream);
       }
-      $.actionsData = readBinary($bytes, $stream, length - +keyPress);
+      $.actionsData = readBinary($bytes, $stream, length - +keyPress, false);
     }
     return eoe;
   }
@@ -1367,9 +1367,9 @@ module Shumway.SWF.Parser {
     $.keyPress = buttonConditions >> 9 & 127;
     $.overDownToIdle = buttonConditions >> 8 & 1;
     if (!buttonCondSize) {
-      $.actionsData = readBinary($bytes, $stream, 0);
+      $.actionsData = readBinary($bytes, $stream, 0, false);
     } else {
-      $.actionsData = readBinary($bytes, $stream, buttonCondSize - 4);
+      $.actionsData = readBinary($bytes, $stream, buttonCondSize - 4, false);
     }
   }
 

@@ -1220,8 +1220,8 @@ module Shumway {
 
   export interface IReferenceCountable {
     _referenceCount: number;
-    addReference();
-    removeReference();
+    _addReference();
+    _removeReference();
   }
 
   export class WeakList<T extends IReferenceCountable> {
