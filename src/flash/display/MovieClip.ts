@@ -487,8 +487,7 @@ module Shumway.AVM2.AS.flash.display {
         if (frameNum < 0 || frameNum > totalFrames) {
           continue;
         }
-        var fn = arguments[i + 1];
-        frameScripts[frameNum] = fn;
+        frameScripts[frameNum] = arguments[i + 1];
         if (frameNum === this._currentFrame) {
           MovieClip._callQueue.push(this);
         }

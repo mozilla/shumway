@@ -27,7 +27,7 @@ module Shumway.Player {
   }
 
   export function leaveTimeline(name: string, data?: any) {
-    timelineBuffer && timelineBuffer.leave(name, data);
-    profile && writer && writer.leave(name);
+    writer && writer.leave(name);
+    profile && timelineBuffer && timelineBuffer.leave(name, data);
   }
 }
