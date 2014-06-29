@@ -572,15 +572,15 @@ module Shumway.GFX {
             frameContainer = <FrameContainer>frame;
             var length = frameContainer._children.length;
             if (visitorFlags & VisitorFlags.Clips) {
-              var clipLeave: Frame [][] = frameContainer.gatherClipLeaveEvents();
+              var leaveClip: Frame [][] = frameContainer.gatherLeaveClipEvents();
 
               /* This code looks a bit strange because it needs to push nodes into the |frameStack| in reverse. This is the
                * reason we had to collect the clip regions in a seperate pass before. */
               for (var i = length - 1; i >= 0; i--) {
                 // Check to see if we have any clip leave events that we need to push into the |frameStack|?
-                if (clipLeave && clipLeave[i]) {
-                  while (clipLeave[i].length) {
-                    var clipFrame = clipLeave[i].shift();
+                if (leaveClip && leaveClip[i]) {
+                  while (leaveClip[i].length) {
+                    var clipFrame = leaveClip[i].shift();
                     frameStack.push(clipFrame);
                     flagsStack.push(FrameFlags.LeaveClip);
                     if (calculateTransform) {
@@ -604,7 +604,6 @@ module Shumway.GFX {
                   flagsStack.push(flags);
                 }
               }
-
             } else {
               for (var i = 0; i < length; i++) {
                 var child = frameContainer._children[frontToBack ? i : length - 1 - i];

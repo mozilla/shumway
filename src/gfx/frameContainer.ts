@@ -93,7 +93,7 @@ module Shumway.GFX {
     }
 
     /**
-     * Returns an array that marks clip leave events.
+     * Returns an array that marks leave clip events.
      *
      * i:  0  1  2  3  4  5  6  7  8  9
      * A:  ---[--------------------]---
@@ -107,21 +107,21 @@ module Shumway.GFX {
      *
      * Here we return the sparse array: [8: [A, B], 7: [C]].
      */
-    public gatherClipLeaveEvents(): Frame [][] {
+    public gatherLeaveClipEvents(): Frame [][] {
       var length = this._children.length;
-      var clipLeave = null;
+      var leaveClip = null;
       for (var i = 0; i < length; i++) {
         var child = this._children[i];
         if (child.clip > 0) {
           var clipLeaveIndex = i + child.clip;
-          clipLeave = clipLeave || [];
-          if (!clipLeave[clipLeaveIndex]) {
-            clipLeave[clipLeaveIndex] = [];
+          leaveClip = leaveClip || [];
+          if (!leaveClip[clipLeaveIndex]) {
+            leaveClip[clipLeaveIndex] = [];
           }
-          clipLeave[clipLeaveIndex].push(child);
+          leaveClip[clipLeaveIndex].push(child);
         }
       }
-      return clipLeave;
+      return leaveClip;
     }
   }
 }

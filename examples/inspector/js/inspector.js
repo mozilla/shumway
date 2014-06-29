@@ -346,11 +346,8 @@ var _easel;
 
 function createEasel() {
   Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
-  var canvas = document.createElement("canvas");
-  canvas.style.backgroundColor = "#14171a";
-  document.getElementById("stageContainer").appendChild(canvas);
   var backend = Shumway.GFX.backend.value | 0;
-  _easel = new Easel(canvas, backend);
+  _easel = new Easel(document.getElementById("stageContainer"), backend);
   return _easel;
 }
 

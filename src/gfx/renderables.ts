@@ -94,7 +94,8 @@ module Shumway.GFX {
 
     /**
      * Render source content in the specified |context|. If specified, the rectangular |cullBounds| can be used to cull parts of the shape
-     * for better performance. If specified, |clipRegion| indicates whether the shape's fills should be used as clip regions instead.
+     * for better performance. If specified, |
+     * Region| indicates whether the shape's fills should be used as clip regions instead.
      */
     render(context: CanvasRenderingContext2D, cullBounds?: Shumway.GFX.Geometry.Rectangle, clipRegion?: boolean): void {
 
@@ -900,7 +901,6 @@ module Shumway.GFX {
       var bounds = this._bounds;
 
       context.save();
-
       if (this._backgroundColor) {
         context.fillStyle = ColorUtilities.rgbaToCSSStyle(this._backgroundColor);
         context.fillRect(0, 0, bounds.w, bounds.h);

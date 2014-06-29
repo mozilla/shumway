@@ -112,7 +112,6 @@ module Shumway.GFX.GL {
       super(canvas, stage, options);
       var context = this._context = new WebGLContext(this._canvas, options);
 
-      canvas.addEventListener('resize', this.resize.bind(this), false);
       this.resize();
 
       this._brush = new WebGLCombinedBrush(context, new WebGLGeometry(context));
@@ -146,8 +145,9 @@ module Shumway.GFX.GL {
 
     private _cachedTiles = [];
 
-    private resize() {
+    public resize() {
       this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
+      this._context._resize();
     }
 
     private _cacheImageCallback(oldTextureRegion: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
@@ -378,7 +378,7 @@ module Shumway.GFX.GL {
               tileMatrix.concat(matrix);
               var src = <WebGLTextureRegion>(tile.cachedTextureRegion);
               if (src && src.texture) {
-                context.textureRegionCache.use(src);
+                context._textureRegionCache.use(src);
               }
               var color = new Color(1, 1, 1, alpha);
               if (options.paintFlashing) {
@@ -433,10 +433,6 @@ module Shumway.GFX.GL {
     }
 
     public render() {
-      if (!this._readyToRender()) {
-        return;
-      }
-
       var self = this;
       var stage = this._stage;
       var options = this._options;

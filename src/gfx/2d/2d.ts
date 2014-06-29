@@ -27,11 +27,17 @@ module Shumway.GFX {
   }
 
   var originalSave = CanvasRenderingContext2D.prototype.save;
+  var originalClip = CanvasRenderingContext2D.prototype.clip;
   var originalRestore = CanvasRenderingContext2D.prototype.restore;
 
   CanvasRenderingContext2D.prototype.save = function () {
     if (this.stackDepth === undefined) {
       this.stackDepth = 0;
+    }
+    if (this.clipStack === undefined) {
+      this.clipStack = [0];
+    } else {
+      this.clipStack.push(0);
     }
     this.stackDepth ++;
     originalSave.call(this);
@@ -39,7 +45,16 @@ module Shumway.GFX {
 
   CanvasRenderingContext2D.prototype.restore = function () {
     this.stackDepth --;
+    this.clipStack.pop();
     originalRestore.call(this);
+  };
+
+  CanvasRenderingContext2D.prototype.clip = function () {
+    if (this.clipStack === undefined) {
+      this.clipStack = [0];
+    }
+    this.clipStack[this.clipStack.length - 1] ++;
+    originalClip.apply(this, arguments);
   };
 
   function findIntersectingIndex(rectangle: Rectangle, others: Rectangle []): number {
@@ -87,9 +102,6 @@ module Shumway.GFX {
     }
 
     public render() {
-      if (!this._readyToRender()) {
-        return;
-      }
       var stage = this._stage;
       var context = this.context;
 
@@ -100,7 +112,7 @@ module Shumway.GFX {
       var options = this._options;
 
       var lastDirtyRectangles: Rectangle[] = [];
-      if (stage.trackDirtyRegions) {
+      if (false && stage.trackDirtyRegions) {
         stage.gatherMarkedDirtyRegions(stage.matrix);
         stage.dirtyRegion.gatherRegions(lastDirtyRectangles);
         if (options.clipDirtyRegions) {
@@ -156,9 +168,11 @@ module Shumway.GFX {
     renderClippedFrame(source: Frame, viewport: Rectangle, matrix: Matrix) {
       var context = this.context;
       context.save();
-      context.beginPath();
-      context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
-      context.clip();
+      if (!this._options.paintViewport) {
+        context.beginPath();
+        context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+        context.clip();
+      }
       this._renderFrame(context, source, matrix, viewport, new Canvas2DStageRendererState(this._options));
       context.restore();
     }
@@ -216,7 +230,7 @@ module Shumway.GFX {
           frame._previouslyRenderedAABB = frameBoundsAABB;
           var shape = <Shape>frame;
           var bounds = shape.getBounds().clone();
-          if (!bounds.isEmpty()) {
+          if (!bounds.isEmpty() && state.options.paintRenderable) {
             shape.source.render(context, cullBounds, state.clipRegion);
           }
           if (state.options.paintFlashing) {

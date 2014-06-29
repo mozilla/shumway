@@ -198,7 +198,6 @@ function syncGFXOptions(options) {
   options.destinationBlendFactor = GFX.destinationBlendFactor.value;
 
   options.cull = GFX.cull.value;
-  options.forcePaint = GFX.forcePaint.value;
   options.compositeMask = GFX.compositeMask.value;
   options.disableTextureUploads = GFX.disableTextureUploads.value;
 

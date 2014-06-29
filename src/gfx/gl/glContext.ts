@@ -52,7 +52,7 @@ module Shumway.GFX.GL {
     private _fillColor: Color = Color.Red;
 
     private _textures: WebGLTexture [];
-    textureRegionCache: any = new LRUList<WebGLTextureRegion>();
+    _textureRegionCache: any = new LRUList<WebGLTextureRegion>();
 
     private _isTextureMemoryAvailable:boolean = true;
 
@@ -86,8 +86,7 @@ module Shumway.GFX.GL {
       );
       release || assert (this.gl, "Cannot create WebGL context.");
       this._programCache = Object.create(null);
-      canvas.addEventListener('resize', this.resize.bind(this), false);
-      this.resize();
+      this._resize();
       this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, options.unpackPremultiplyAlpha ? this.gl.ONE : this.gl.ZERO);
       this._backgroundColor = Color.Black;
 
@@ -172,9 +171,9 @@ module Shumway.GFX.GL {
 
     private discardCachedImages() {
       traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Discard Cache");
-      var count = this.textureRegionCache.count / 2 | 0;
+      var count = this._textureRegionCache.count / 2 | 0;
       for (var i = 0; i < count; i++) {
-        var textureRegion = this.textureRegionCache.pop();
+        var textureRegion = this._textureRegionCache.pop();
         traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Discard: " + textureRegion);
         textureRegion.texture.atlas.remove(textureRegion.region);
         textureRegion.texture = null;
@@ -186,7 +185,7 @@ module Shumway.GFX.GL {
       var h = image.height;
       var textureRegion = this.allocateTextureRegion(w, h);
       traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Uploading Image: @ " + textureRegion.region);
-      this.textureRegionCache.use(textureRegion);
+      this._textureRegionCache.use(textureRegion);
       this.updateTextureRegion(image, textureRegion);
       return textureRegion;
     }
@@ -255,23 +254,23 @@ module Shumway.GFX.GL {
       return texture;
     }
 
-    private resize() {
+    _resize() {
       var gl = this.gl;
       this._w = this._canvas.width;
       this._h = this._canvas.height;
       gl.viewport(0, 0, this._w, this._h);
       for (var k in this._programCache) {
-        this.initializeProgram(this._programCache[k]);
+        this._initializeProgram(this._programCache[k]);
       }
     }
 
-    private initializeProgram(program: WebGLProgram) {
+    private _initializeProgram(program: WebGLProgram) {
       var gl = this.gl;
       gl.useProgram(program);
       // gl.uniform2f(program.uniforms.uResolution.location, this._w, this._h);
     }
 
-    private createShaderFromFile(file: string) {
+    private _createShaderFromFile(file: string) {
       var path = SHADER_ROOT + file;
       var gl = this.gl;
       var request = new XMLHttpRequest();
@@ -286,26 +285,26 @@ module Shumway.GFX.GL {
       } else {
         throw "Shader Type: not supported.";
       }
-      return this.createShader(shaderType, request.responseText);
+      return this._createShader(shaderType, request.responseText);
     }
 
     public createProgramFromFiles(vertex: string, fragment: string) {
       var key = vertex + "-" + fragment;
       var program = this._programCache[key];
       if (!program) {
-        program = this.createProgram([
-          this.createShaderFromFile(vertex),
-          this.createShaderFromFile(fragment)
+        program = this._createProgram([
+          this._createShaderFromFile(vertex),
+          this._createShaderFromFile(fragment)
         ]);
-        this.queryProgramAttributesAndUniforms(program);
-        this.initializeProgram(program);
+        this._queryProgramAttributesAndUniforms(program);
+        this._initializeProgram(program);
         this._programCache[key] = program;
 
       }
       return program;
     }
 
-    private createProgram(shaders): WebGLProgram {
+    private _createProgram(shaders): WebGLProgram {
       var gl = this.gl;
       var program = gl.createProgram();
       shaders.forEach(function (shader) {
@@ -320,7 +319,7 @@ module Shumway.GFX.GL {
       return program;
     }
 
-    private createShader(shaderType, shaderSource): WebGLShader {
+    private _createShader(shaderType, shaderSource): WebGLShader {
       var gl = this.gl;
       var shader = gl.createShader(shaderType);
       gl.shaderSource(shader, shaderSource);
@@ -348,12 +347,12 @@ module Shumway.GFX.GL {
       texture.w = w;
       texture.h = h;
       texture.atlas = new WebGLTextureAtlas(this, texture, w, h, compact);
-      texture.framebuffer = this.createFramebuffer(texture);
+      texture.framebuffer = this._createFramebuffer(texture);
       texture.regions = [];
       return texture;
     }
 
-    createFramebuffer(texture: WebGLTexture): WebGLFramebuffer {
+    private _createFramebuffer(texture: WebGLTexture): WebGLFramebuffer {
       var gl = this.gl;
       var framebuffer: WebGLFramebuffer = gl.createFramebuffer();
       gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
@@ -363,7 +362,7 @@ module Shumway.GFX.GL {
       return framebuffer;
     }
 
-    private queryProgramAttributesAndUniforms(program) {
+    private _queryProgramAttributesAndUniforms(program) {
       program.uniforms = {};
       program.attributes = {};
 
@@ -421,22 +420,6 @@ module Shumway.GFX.GL {
         default:
           notImplemented(type);
       }
-    }
-
-    public beginPath() {
-
-    }
-
-    public closePath() {
-
-    }
-
-    public stroke() {
-
-    }
-
-    public rect() {
-
     }
   }
 }
