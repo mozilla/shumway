@@ -410,21 +410,27 @@ module Shumway.Timeline {
    * TODO document
    */
   export class FrameDelta {
-    stateAtDepth: Shumway.Map<AnimationState>;
+    _stateAtDepth: Shumway.Map<AnimationState>;
 
-    constructor(loaderInfo: flash.display.LoaderInfo, commands: any []) {
-      this.stateAtDepth = Shumway.ObjectUtilities.createMap<AnimationState>();
-      this._applyCommands(commands, loaderInfo);
+    get stateAtDepth() {
+      return this._stateAtDepth || this._initialize();
     }
 
-    private _applyCommands(commands: any [], loaderInfo: flash.display.LoaderInfo): void {
+    constructor(private loaderInfo: flash.display.LoaderInfo, private commands: any []) {
+      this._stateAtDepth = null;
+    }
+
+    private _initialize(): Shumway.Map<AnimationState> {
+      var states: Shumway.Map<AnimationState> = this._stateAtDepth = Object.create(null);
+      var commands = this.commands;
+      var loaderInfo = this.loaderInfo;
       for (var i = 0; i < commands.length; i++) {
         var cmd = commands[i];
         var depth = cmd.depth;
         switch (cmd.code) {
           case 5: // SWF_TAG_CODE_REMOVE_OBJECT
           case 28: // SWF_TAG_CODE_REMOVE_OBJECT2
-            this.remove(depth);
+            states[depth] = null;
             break;
           default:
             var symbol = null;
@@ -514,18 +520,12 @@ module Shumway.Timeline {
               events,
               cmd.variableName
             );
-            this.place(depth, state);
+            states[depth] = state;
             break;
         }
       }
-    }
-
-    place(depth: number, state: AnimationState): void {
-      this.stateAtDepth[depth] = state;
-    }
-
-    remove(depth: number): void {
-      this.stateAtDepth[depth] = null;
+      this.commands = null;
+      return states;
     }
   }
 }
