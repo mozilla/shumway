@@ -49,13 +49,7 @@ module Shumway.Tools.Profiler {
 
     constructor(name: string = "", startTime?: number) {
       this.name = name || "";
-      this._data = [];
-      this._kinds = [];
-      this._kindNameMap = createEmptyObject();
-      this._marks = new Shumway.CircularBuffer(Int32Array, 20);
-      this._times = new Shumway.CircularBuffer(Float64Array, 20);
-      this._stack = [];
-      this.reset(startTime);
+      this._startTime = isNullOrUndefined(startTime) ? performance.now() : startTime;
     }
 
     getKind(kind: number): TimelineItemKind {
@@ -68,6 +62,15 @@ module Shumway.Tools.Profiler {
 
     get depth(): number {
       return this._depth;
+    }
+
+    private _initialize() {
+      this._data = [];
+      this._kinds = [];
+      this._kindNameMap = createEmptyObject();
+      this._marks = new Shumway.CircularBuffer(Int32Array, 20);
+      this._times = new Shumway.CircularBuffer(Float64Array, 20);
+      this._stack = [];
     }
 
     private _getKindId(name: string):number {
@@ -106,6 +109,9 @@ module Shumway.Tools.Profiler {
 
     enter(name: string, data?: any, time?: number) {
       time = (isNullOrUndefined(time) ? performance.now() : time) - this._startTime;
+      if (!this._marks) {
+        this._initialize();
+      }
       this._depth++;
       var kindId = this._getKindId(name);
       this._marks.write(this._getMark(TimelineBuffer.ENTER, kindId, data));
