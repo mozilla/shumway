@@ -52,8 +52,6 @@ module Shumway.GFX {
   var counter = Shumway.Metrics.Counter.instance;
   export var frameCounter = new Shumway.Metrics.Counter(true);
 
-  declare var release;
-
   export var traceLevel = TraceLevel.Verbose;
   export var writer: IndentingWriter = null;
 
@@ -65,11 +63,11 @@ module Shumway.GFX {
   export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("GFX");
 
   export function enterTimeline(name: string, data?: any) {
-    timelineBuffer && timelineBuffer.enter(name, data);
+    profile && timelineBuffer && timelineBuffer.enter(name, data);
   }
 
   export function leaveTimeline(name?: string, data?: any) {
-    timelineBuffer && timelineBuffer.leave(name, data);
+    profile && timelineBuffer && timelineBuffer.leave(name, data);
   }
 
   /**
