@@ -365,6 +365,15 @@ module Shumway {
       return array[array.length - 1];
     }
 
+    export function indexOf<T>(array: T [], value: T): number {
+      for (var i = 0, j = array.length; i < j; i++) {
+        if (array[i] === value) {
+          return i;
+        }
+      }
+      return -1;
+    }
+
     export function pushUnique<T>(array: T [], value: T): number {
       for (var i = 0, j = array.length; i < j; i++) {
         if (array[i] === value) {
