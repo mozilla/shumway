@@ -381,7 +381,7 @@ module Shumway.Remoting.GFX {
         input.readInt();
         // frame.blendMode = input.readInt();
         // TODO: Should make a proper flag for this.
-        frame.alpha = input.readBoolean() ? 1 : 0;
+        input.readBoolean() ? 1 : 0;
         frame.pixelSnapping = <PixelSnapping>input.readInt();
         frame.smoothing = <Smoothing>input.readInt();
       }

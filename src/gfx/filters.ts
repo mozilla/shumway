@@ -245,6 +245,10 @@ module Shumway.GFX {
       a[4 * 4 + 3] = a03 * b40 + a13 * b41 + a23 * b42 + a33 * b43 + a43;
     }
 
+    public get alphaMultiplier(): number {
+      return this._m[15];
+    }
+
     public equals(other: ColorMatrix): boolean {
       if (!other) {
         return false;
