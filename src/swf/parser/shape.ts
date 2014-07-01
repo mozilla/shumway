@@ -306,10 +306,7 @@ module Shumway.SWF.Parser {
         style.type = FillType.Solid;
       }
     }
-    var color;
     if (style.type === undefined || style.type === FillType.Solid) {
-      color = style.color;
-      style.color = (color.red << 24) | (color.green << 16) | (color.blue << 8) | color.alpha;
       return style;
     }
     var scale;
@@ -322,8 +319,7 @@ module Shumway.SWF.Parser {
         var ratios = style.ratios = [];
         for (var i = 0; i < records.length; i++) {
           var record = records[i];
-          var color = record.color;
-          colors.push((color.red << 24) | (color.green << 16) | (color.blue << 8) | color.alpha);
+          colors.push(record.color);
           ratios.push(record.ratio);
         }
         scale = 819.2;

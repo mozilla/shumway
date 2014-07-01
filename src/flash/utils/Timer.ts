@@ -22,7 +22,7 @@ module Shumway.AVM2.AS.flash.utils {
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = ["start"]; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
+    static instanceSymbols: string [] = ["start!"]; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
 
     /**
      * This lets you toggle timer event dispatching which is useful when trying to profile other

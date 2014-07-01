@@ -46,7 +46,7 @@ module Shumway.SWF.Parser {
       }
 
       if (record.hasColor) {
-        var color = ColorUtilities.componentsToRGB(record.color);
+        var color = record.color >>> 8;
         htmlText += ' color="#' + ('000000' + color.toString(16)).slice(-6) + '"';
       }
 

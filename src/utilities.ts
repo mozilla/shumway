@@ -2728,26 +2728,10 @@ module Shumway {
     }
   }
 
-  export interface RGBComponents {red: number; green: number; blue: number}
-  export interface RGBAComponents {red: number; green: number; blue: number; alpha: number}
-
   export module ColorUtilities {
-    export function componentsToRGB(components: RGBComponents): number {
-      return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
-    }
-
-    export function componentsToRGBA(components: RGBAComponents): number {
-      return ((components.red << 24) | (components.green << 16) | (components.blue << 8) | components.alpha) >>> 0;
-    }
-
     export function rgbaToCSSStyle(color: number): string {
       return 'rgba(' + (color >> 24 & 0xff) + ',' + (color >> 16 & 0xff) + ',' +
                   (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';
-    }
-
-    export function rgbaObjToCSSStyle(color: RGBAComponents): string {
-      return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
-             color.alpha / 255 + ')';
     }
 
     export function hexToRGB(color: string): number {
