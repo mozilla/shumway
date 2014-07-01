@@ -33,7 +33,7 @@ module Shumway.AVM2.AS.avm1lib {
     static classSymbols: string [] = null;
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["__lookupChild", "__targetPath"];
+    static instanceSymbols: string [] = ["__lookupChild!", "__targetPath!"];
 
     constructor (nativeMovieClip: MovieClip) {
       false && super();
