@@ -65,12 +65,13 @@ module Shumway.Tools.Profiler {
     }
 
     private _initialize() {
+      this._depth = 0;
+      this._stack = [];
       this._data = [];
       this._kinds = [];
       this._kindNameMap = createEmptyObject();
       this._marks = new Shumway.CircularBuffer(Int32Array, 20);
       this._times = new Shumway.CircularBuffer(Float64Array, 20);
-      this._stack = [];
     }
 
     private _getKindId(name: string):number {
@@ -138,6 +139,9 @@ module Shumway.Tools.Profiler {
      * Constructs an easier to work with TimelineFrame data structure.
      */
     createSnapshot(count: number = Number.MAX_VALUE): TimelineBufferSnapshot {
+      if (!this._marks) {
+        return null;
+      }
       var times = this._times;
       var kinds = this._kinds;
       var datastore = this._data;
@@ -197,11 +201,15 @@ module Shumway.Tools.Profiler {
     }
 
     reset(startTime?: number) {
+      this._startTime = isNullOrUndefined(startTime) ? performance.now() : startTime;
+      if (!this._marks) {
+        this._initialize();
+        return;
+      }
       this._depth = 0;
       this._data = [];
       this._marks.reset();
       this._times.reset();
-      this._startTime = isNullOrUndefined(startTime) ? performance.now() : startTime;
     }
 
     static FromFirefoxProfile(profile, name?: string) {
