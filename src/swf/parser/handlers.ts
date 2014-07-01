@@ -110,8 +110,7 @@ module Shumway.SWF.Parser {
         } while (!eoe);
       }
       if (flags & PlaceObjectFlags.OpaqueBackground) {
-        var $126 = $.backgroundColor = {};
-        argb($bytes, $stream, $126, swfVersion, tagCode);
+        $.backgroundColor = argb($bytes, $stream);
       }
       if (flags & PlaceObjectFlags.HasVisible) {
         $.visibility = readUi8($bytes, $stream);
@@ -256,8 +255,7 @@ module Shumway.SWF.Parser {
 
   function setBackgroundColor($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
-    var $0 = $.color = {};
-    rgb($bytes, $stream, $0, swfVersion, tagCode);
+    $.color = rgb($bytes, $stream);
     return $;
   }
 
@@ -415,8 +413,7 @@ module Shumway.SWF.Parser {
       $.fontHeight = readUi16($bytes, $stream);
     }
     if (hasColor) {
-      var $1 = $.color = {};
-      rgba($bytes, $stream, $1, swfVersion, tagCode);
+      $.color = rgba($bytes, $stream);
     }
     if (hasMaxLength) {
       $.maxLength = readUi16($bytes, $stream);
@@ -637,43 +634,31 @@ module Shumway.SWF.Parser {
     align($bytes, $stream);
   }
 
-  function rgb($bytes, $stream, $, swfVersion, tagCode) {
-    $.red = readUi8($bytes, $stream);
-    $.green = readUi8($bytes, $stream);
-    $.blue = readUi8($bytes, $stream);
-    $.alpha = 255;
-    return;
+  function rgb($bytes, $stream): number {
+    return ((readUi8($bytes, $stream) << 24) | (readUi8($bytes, $stream) <<16) |
+            (readUi8($bytes, $stream) << 8) | 0xff) >>> 0;
   }
 
-  function rgba($bytes, $stream, $, swfVersion, tagCode) {
-    $.red = readUi8($bytes, $stream);
-    $.green = readUi8($bytes, $stream);
-    $.blue = readUi8($bytes, $stream);
-    $.alpha = readUi8($bytes, $stream);
-    return;
+  function rgba($bytes, $stream): number {
+    return (readUi8($bytes, $stream) << 24) | (readUi8($bytes, $stream) << 16) |
+           (readUi8($bytes, $stream) << 8) | readUi8($bytes, $stream);
   }
 
-  function argb($bytes, $stream, $, swfVersion, tagCode) {
-    $.alpha = readUi8($bytes, $stream);
-    $.red = readUi8($bytes, $stream);
-    $.green = readUi8($bytes, $stream);
-    $.blue = readUi8($bytes, $stream);
+  function argb($bytes, $stream) {
+    return readUi8($bytes, $stream) | (readUi8($bytes, $stream) << 24) |
+           (readUi8($bytes, $stream) << 16) | (readUi8($bytes, $stream) << 8);
   }
 
   function fillSolid($bytes, $stream, $, swfVersion, tagCode, isMorph) {
     if (tagCode > 22 || isMorph) {
-      var $125 = $.color = {};
-      rgba($bytes, $stream, $125, swfVersion, tagCode);
+      $.color = rgba($bytes, $stream);
     }
     else {
-      var $126 = $.color = {};
-      rgb($bytes, $stream, $126, swfVersion, tagCode);
+      $.color = rgb($bytes, $stream);
     }
     if (isMorph) {
-      var $127 = $.colorMorph = {};
-      rgba($bytes, $stream, $127, swfVersion, tagCode);
+      $.colorMorph = rgba($bytes, $stream);
     }
-    return;
   }
 
   function matrix($bytes, $stream, $, swfVersion, tagCode) {
@@ -783,17 +768,14 @@ module Shumway.SWF.Parser {
   function gradientRecord($bytes, $stream, $, swfVersion, tagCode, isMorph) {
     $.ratio = readUi8($bytes, $stream);
     if (tagCode > 22) {
-      var $133 = $.color = {};
-      rgba($bytes, $stream, $133, swfVersion, tagCode);
+      $.color = rgba($bytes, $stream);
     }
     else {
-      var $134 = $.color = {};
-      rgb($bytes, $stream, $134, swfVersion, tagCode);
+      $.color = rgb($bytes, $stream);
     }
     if (isMorph) {
       $.ratioMorph = readUi8($bytes, $stream);
-      var $135 = $.colorMorph = {};
-      rgba($bytes, $stream, $135, swfVersion, tagCode);
+      $.colorMorph = rgba($bytes, $stream);
     }
   }
 
@@ -1041,25 +1023,20 @@ module Shumway.SWF.Parser {
         var $141 = $.fillStyle = {};
         fillStyle($bytes, $stream, $141, swfVersion, tagCode, isMorph);
       } else {
-        var $155 = $.color = {};
-        rgba($bytes, $stream, $155, swfVersion, tagCode);
+        $.color = rgba($bytes, $stream);
         if (isMorph) {
-          var $156 = $.colorMorph = {};
-          rgba($bytes, $stream, $156, swfVersion, tagCode);
+          $.colorMorph = rgba($bytes, $stream);
         }
       }
     }
     else {
       if (tagCode > 22) {
-        var $157 = $.color = {};
-        rgba($bytes, $stream, $157, swfVersion, tagCode);
+        $.color = rgba($bytes, $stream);
       } else {
-        var $158 = $.color = {};
-        rgb($bytes, $stream, $158, swfVersion, tagCode);
+        $.color = rgb($bytes, $stream);
       }
       if (isMorph) {
-        var $159 = $.colorMorph = {};
-        rgba($bytes, $stream, $159, swfVersion, tagCode);
+        $.colorMorph = rgba($bytes, $stream);
       }
     }
   }
@@ -1086,13 +1063,10 @@ module Shumway.SWF.Parser {
     var $5 = $.colors = [];
     var $6 = count;
     while ($6--) {
-      var $7 = {};
-      rgba($bytes, $stream, $7, swfVersion, tagCode);
-      $5.push($7);
+      $5.push(rgba($bytes, $stream));
     }
     if (type === 3) {
-      var $8 = $.highlightColor = {};
-      rgba($bytes, $stream, $8, swfVersion, tagCode);
+      $.hightlightColor = rgba($bytes, $stream);
     }
     if (type === 4 || type === 7) {
       var $9 = $.ratios = [];
@@ -1136,8 +1110,7 @@ module Shumway.SWF.Parser {
     while ($18--) {
       $17.push(readFloat($bytes, $stream));
     }
-    var $19 = $.color = {};
-    rgba($bytes, $stream, $19, swfVersion, tagCode);
+    $.color = rgba($bytes, $stream);
     var reserved = readUb($bytes, $stream, 6);
     $.clamp = readUb($bytes, $stream, 1);
     $.preserveAlpha = readUb($bytes, $stream, 1);
@@ -1240,11 +1213,9 @@ module Shumway.SWF.Parser {
     }
     if (hasColor) {
       if (tagCode === 33) {
-        var $4 = $.color = {};
-        rgba($bytes, $stream, $4, swfVersion, tagCode);
+        $.color = rgba($bytes, $stream);
       } else {
-        var $5 = $.color = {};
-        rgb($bytes, $stream, $5, swfVersion, tagCode);
+        $.color = rgb($bytes, $stream);
       }
     }
     if (hasMoveX) {

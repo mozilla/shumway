@@ -59,7 +59,6 @@ var profiler = (function() {
   }
 
   Profiler.prototype.createProfile = function() {
-    window.profile = false;
     requestTimelineBuffers('get').then(function (buffers) {
       controller.createProfile(buffers);
       elProfilerToolbar.classList.remove("withEmphasis");
@@ -68,6 +67,7 @@ var profiler = (function() {
       clearTimeout(timeoutHandle);
       timerHandle = 0;
       timeoutHandle = 0;
+      window.profile = false;
       showTimeMessage(false);
     });
   }

@@ -188,7 +188,7 @@ module Shumway.Timeline {
         }
       }
       if (tag.hasColor) {
-        symbol.color = ColorUtilities.componentsToRGB(tag.color);
+        symbol.color = tag.color >>> 8;
       }
       if (tag.hasFont) {
         symbol.size = tag.fontHeight;

@@ -826,7 +826,7 @@ module Shumway.GFX {
           boldItalic += ' bold';
         }
         var font = boldItalic + ' ' + size + 'px ' + fontName;
-        var fillStyle = ColorUtilities.rgbaToCSSStyle((color << 8) | 0xff);
+        var fillStyle = ColorUtilities.rgbToHex(color);
 
         var text = '';
         var eof = false;
