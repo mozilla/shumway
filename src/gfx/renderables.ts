@@ -338,6 +338,9 @@ module Shumway.GFX {
       this._id = id;
       this._pathData = pathData;
       this._textures = textures;
+      if (textures.length) {
+        this.setFlags(RenderableFlags.Dynamic);
+      }
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
