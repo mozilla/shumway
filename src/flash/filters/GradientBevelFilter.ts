@@ -34,14 +34,15 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      // obj.colors is an array of objects with separate color components
-      // the rgb and alpha components must be separated into colors and alphas arrays
-      var colors = obj.colors.map(function(value) {
-        return ColorUtilities.componentsToRGB(value);
-      });
-      var alphas = obj.colors.map(function(value) {
-        return (value.alpha & 0xff) / 255;
-      });
+      // obj.colors is an array of RGBA colors.
+      // The RGB and alpha parts must be separated into colors and alphas arrays.
+      var colors: number[] = [];
+      var alphas: number[] = [];
+      for (var i = 0; i < obj.colors.length; i++) {
+        var color = obj.colors[i];
+        colors.push(color >>> 8);
+        alphas.push(color & 0xff) / 0xff;
+      }
       // type is derived from obj.onTop and obj.innerShadow
       // obj.onTop true: type is FULL
       // obj.inner true: type is INNER
@@ -83,7 +84,6 @@ module Shumway.AVM2.AS.flash.filters {
       this.quality = quality;
       this.type = type;
       this.knockout = knockout;
-      console.log(this)
     }
 
     _updateFilterBounds(bounds: Rectangle) {

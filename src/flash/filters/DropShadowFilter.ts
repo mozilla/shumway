@@ -34,11 +34,11 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      // obj.colors is an array of objects with separate color components
-      // here it contains exactly one color object, which maps to color and alpha
+      // obj.colors is an array of RGBA colors.
+      // Here it contains exactly one color object, which maps to color and alpha.
       release || assert(obj.colors && obj.colors.length === 1, "colors must be Array of length 1");
-      var color: number = ColorUtilities.componentsToRGB(obj.colors[0]);
-      var alpha: number = (obj.colors[0].alpha & 0xff) / 255;
+      var color: number = obj.colors[0] >>> 8;
+      var alpha: number = (obj.colors[0] & 0xff) / 0xff;
       // obj.angle is represented in radians, the api needs degrees
       var angle: number = obj.angle * 180 / Math.PI;
       // obj.compositeSource maps to !hideObject
