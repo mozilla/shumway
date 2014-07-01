@@ -126,7 +126,6 @@ module Shumway.GFX {
       return path;
     }
 
-    private _alpha: number;
     private _blendMode: BlendMode;
     private _matrix: Matrix;
     private _concatenatedMatrix: Matrix;
@@ -178,7 +177,6 @@ module Shumway.GFX {
 
       this._capability = FrameCapabilityFlags.AllowAllWrite;
       this._parent = null;
-      this._alpha = 1;
       this._clip = 0;
       this._blendMode = BlendMode.Normal;
       this._filters = [];
@@ -380,10 +378,6 @@ module Shumway.GFX {
       this._invalidatePosition();
     }
 
-    get alpha(): number {
-      return this._alpha;
-    }
-
     set blendMode(value: BlendMode) {
       value = value | 0;
       this.checkCapability(FrameCapabilityFlags.AllowBlendModeWrite);
@@ -490,15 +484,10 @@ module Shumway.GFX {
       var frame = this;
       var alpha = 1;
       while (frame && frame !== ancestor) {
-        alpha *= frame._alpha;
+        alpha *= frame._colorMatrix.alphaMultiplier;
         frame = frame._parent;
       }
       return alpha;
-    }
-
-    set alpha(value: number) {
-      this._alpha = value;
-      this.invalidate();
     }
 
     get stage(): Stage {

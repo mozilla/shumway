@@ -149,6 +149,10 @@ module Shumway.Tools.Profiler {
       var stack: TimelineFrame [] = [snapshot];
       var topLevelFrameCount = 0;
 
+      if (!this._marks) {
+        this._initialize();
+      }
+
       this._marks.forEachInReverse(function (mark, i) {
         var dataId = (mark >>> 16) & TimelineBuffer.MAX_DATAID;
         var data = datastore[dataId];

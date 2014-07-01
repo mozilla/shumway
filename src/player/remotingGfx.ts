@@ -85,7 +85,7 @@ module Shumway.Remoting.GFX {
   export class GFXChannelDeserializerContext {
     root: FrameContainer;
     _frames: Frame [];
-    _assets: Renderable [];
+    private _assets: Renderable [];
 
     constructor(root: FrameContainer) {
       this.root = root;
@@ -106,10 +106,24 @@ module Shumway.Remoting.GFX {
       }
       if (id & IDMask.Asset) {
         id &= ~IDMask.Asset;
-        return new Shape(this._assets[id]);
+        var shape = new Shape(this._assets[id]);
+        this._assets[id].addFrameReferrer(shape);
+        return shape;
       } else {
         return this._frames[id];
       }
+    }
+
+    _getAsset(id: number): Renderable {
+      return this._assets[id];
+    }
+
+    _getBitmapAsset(id: number): RenderableBitmap {
+      return <RenderableBitmap>this._assets[id];
+    }
+
+    _getTextAsset(id: number): RenderableText {
+      return <RenderableText>this._assets[id];
     }
   }
 
@@ -230,7 +244,7 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = input.readInt();
       var symbolId = input.readInt();
-      var asset = context._assets[id];
+      var asset = context._getAsset(id);
       var bounds = this._readRectangle();
       var assetId = input.readInt();
       var pathData = ShapeData.FromPlainObject(this.inputAssets[assetId]);
@@ -239,10 +253,14 @@ module Shumway.Remoting.GFX {
       var textures = [];
       for (var i = 0; i < numTextures; i++) {
         var bitmapId = input.readInt();
-        textures.push(context._assets[bitmapId]);
+        textures.push(context._getBitmapAsset(bitmapId));
       }
       if (!asset) {
-        context._registerAsset(id, symbolId, new RenderableShape(id, pathData, textures, bounds));
+        var renderable = new RenderableShape(id, pathData, textures, bounds);
+        for (var i = 0; i < textures.length; i++) {
+          textures[i].addRenderableReferrer(renderable);
+        }
+        context._registerAsset(id, symbolId, renderable);
       }
     }
 
@@ -251,7 +269,7 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = input.readInt();
       var symbolId = input.readInt();
-      var asset = <RenderableBitmap>context._assets[id];
+      var asset = context._getBitmapAsset(id);
       var bounds = this._readRectangle();
       var type: ImageType = input.readInt();
       var assetId = input.readInt();
@@ -273,7 +291,7 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = input.readInt();
       var symbolId = input.readInt();
-      var asset = <RenderableText>context._assets[id];
+      var asset = context._getTextAsset(id);
       var bounds = this._readRectangle();
       var matrix = this._readMatrix();
       var backgroundColor = input.readInt();
@@ -363,7 +381,7 @@ module Shumway.Remoting.GFX {
         input.readInt();
         // frame.blendMode = input.readInt();
         // TODO: Should make a proper flag for this.
-        frame.alpha = input.readBoolean() ? 1 : 0;
+        input.readBoolean() ? 1 : 0;
         frame.pixelSnapping = <PixelSnapping>input.readInt();
         frame.smoothing = <Smoothing>input.readInt();
       }
@@ -424,10 +442,10 @@ module Shumway.Remoting.GFX {
       }
       var blendMode = input.readInt();
       input.readBoolean(); // Smoothing
-      var target = <RenderableBitmap>context._assets[targetId];
+      var target = context._getBitmapAsset(targetId);
       var source = context._makeFrame(sourceId);
       if (!target) {
-        context._assets[targetId] = RenderableBitmap.FromFrame(source, matrix, colorMatrix, blendMode, clipRect);
+        context._registerAsset(targetId, -1, RenderableBitmap.FromFrame(source, matrix, colorMatrix, blendMode, clipRect));
       } else {
         target.drawFrame(source, matrix, colorMatrix, blendMode, clipRect);
       }

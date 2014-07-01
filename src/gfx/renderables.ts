@@ -28,6 +28,8 @@ module Shumway.GFX {
   import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
+  import pushUnique = Shumway.ArrayUtilities.pushUnique;
+  import indexOf = Shumway.ArrayUtilities.indexOf;
 
   export enum RenderableFlags {
     None          = 0,
@@ -50,7 +52,13 @@ module Shumway.GFX {
     /**
      * Whether the source's content should be tiled.
      */
-    Tileable      = 8
+    Tileable      = 8,
+
+    /**
+     * Whether the source's content is loading and thus not available yet. Once loading
+     * is complete this flag is cleared and the |Dirty| flag is set.
+     */
+    Loading  = 16
   }
 
   /**
@@ -78,6 +86,42 @@ module Shumway.GFX {
      * Property bag used to attach dynamic properties to this object.
      */
     properties: {[name: string]: any} = {};
+
+    /**
+     * Back reference to frames that use this renderable.
+     */
+    private _frameReferrers: Frame [] = [];
+
+    /**
+     * Back reference to renderables that use this renderable.
+     */
+    private _renderableReferrers: Renderable [] = [];
+
+    public addFrameReferrer(frame: Frame) {
+      release && assert(frame);
+      var index = indexOf(this._frameReferrers, frame);
+      release && assert(index < 0);
+      this._frameReferrers.push(frame);
+    }
+
+    public addRenderableReferrer(renderable: Renderable) {
+      release && assert(renderable);
+      var index = indexOf(this._renderableReferrers, renderable);
+      release && assert(index < 0);
+      this._renderableReferrers.push(renderable);
+    }
+
+    public invalidatePaint() {
+      this.setFlags(RenderableFlags.Dirty);
+      var frames = this._frameReferrers;
+      for (var i = 0; i < frames.length; i++) {
+        frames[i].invalidatePaint();
+      }
+      var renderables = this._renderableReferrers;
+      for (var i = 0; i < renderables.length; i++) {
+        renderables[i].invalidatePaint();
+      }
+    }
 
     _bounds: Rectangle;
 
@@ -130,7 +174,6 @@ module Shumway.GFX {
         return;
       }
       enterTimeline("convertImage", ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length));
-
       if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
           targetFormat === ImageType.StraightAlphaRGBA) {
         Shumway.ColorUtilities.ensureUnpremultiplyTable();
@@ -182,41 +225,37 @@ module Shumway.GFX {
       if (!imageUpdateOption.value) {
         return;
       }
-
       enterTimeline("RenderableBitmap.updateFromDataBuffer", this);
-
       var context = this._canvas.getContext("2d");
-
       if (type === ImageType.JPEG ||
           type === ImageType.PNG  ||
           type === ImageType.GIF)
       {
         var self = this;
+        self.setFlags(RenderableFlags.Loading);
         var image = new Image();
         image.src = URL.createObjectURL(dataBuffer.toBlob());
         image.onload = function () {
           context.drawImage(image, 0, 0);
-          self.setFlags(RenderableFlags.Dirty);
+          self.removeFlags(RenderableFlags.Loading);
+          self.invalidatePaint();
         };
         image.onerror = function () {
           throw "image error";
         };
       } else {
         var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
-
         RenderableBitmap._convertImage (
           type,
           ImageType.StraightAlphaRGBA,
           new Int32Array(dataBuffer.buffer),
           new Int32Array(imageData.data.buffer)
         );
-
         enterTimeline("putImageData");
         context.putImageData(imageData, 0, 0);
         leaveTimeline("putImageData");
       }
-
-      this.setFlags(RenderableFlags.Dirty);
+      this.invalidatePaint();
       leaveTimeline("RenderableBitmap.updateFromDataBuffer");
     }
 
@@ -280,7 +319,8 @@ module Shumway.GFX {
   }
 
   export class RenderableShape extends Renderable {
-    _flags: RenderableFlags = RenderableFlags.Dirty | RenderableFlags.Scalable |
+    _flags: RenderableFlags = RenderableFlags.Dirty     |
+                              RenderableFlags.Scalable  |
                               RenderableFlags.Tileable;
     properties: {[name: string]: any} = {};
 
@@ -298,6 +338,9 @@ module Shumway.GFX {
       this._id = id;
       this._pathData = pathData;
       this._textures = textures;
+      if (textures.length) {
+        this.setFlags(RenderableFlags.Dynamic);
+      }
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
@@ -315,8 +358,15 @@ module Shumway.GFX {
     {
       context.fillStyle = context.strokeStyle = 'transparent';
 
-      var data = this._pathData;
+      // Wait to deserialize paths until all textures have been loaded.
+      var textures = this._textures;
+      for (var i = 0; i < textures.length; i++) {
+        if (textures[i].hasFlags(RenderableFlags.Loading)) {
+          return;
+        }
+      }
 
+      var data = this._pathData;
       if (data) {
         this._deserializePaths(data, context);
       }
@@ -886,9 +936,7 @@ module Shumway.GFX {
           }
         }
       }
-
-      this.setFlags(RenderableFlags.Dirty);
-
+      this.invalidatePaint()
       leaveTimeline("RenderableText.reflow");
     }
 
