@@ -560,7 +560,7 @@ module Shumway.GFX {
           if (frame instanceof FrameContainer) {
             frameContainer = <FrameContainer>frame;
             var length = frameContainer._children.length;
-            if (visitorFlags & VisitorFlags.Clips) {
+            if (visitorFlags & VisitorFlags.Clips && !disableClipping.value) {
               var leaveClip: Frame [][] = frameContainer.gatherLeaveClipEvents();
 
               /* This code looks a bit strange because it needs to push nodes into the |frameStack| in reverse. This is the

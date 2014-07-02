@@ -38,13 +38,16 @@ for (var option in stateDefaults) {
   }
 }
 
-window.release = state.release;
+function setRelease(release) {
+  window.release = release;
+  Shumway.GFX.notifyReleaseChanged();
+}
+
+setRelease(state.release);
 
 if (state.profileStartup && state.profileStartupDuration > 0) {
   profiler.start(state.profileStartupDuration);
 }
-
-
 
 function saveInspectorState() {
   Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
@@ -100,7 +103,7 @@ var GUI = (function () {
 
   function saveInspectorOption(value) {
     if (this.property === "release") {
-      window.release = value;
+      setRelease(value);
     }
     state[this.property] = value;
     saveInspectorState();

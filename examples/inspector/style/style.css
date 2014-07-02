@@ -350,17 +350,21 @@ body.hideDebugInfoPanels #profilerContainer {
 }
 
 @media only screen and (max-width: 2560px) {
-  #panelContainer { width: 550px; }
+  #panelContainer { width: 450px; }
+  #stageContainer { right: 450px; }
 }
 
 @media only screen and (max-width: 1280px) {
-    #panelContainer { width: 350px; }
+  #panelContainer { width: 350px; }
+  #stageContainer { right: 350px; }
 }
 
 @media only screen and (max-width: 1024px) {
   #panelContainer { width: 250px; }
+  #stageContainer { right: 250px; }
 }
 
-@media only screen and (max-width: 768px) {
+@media only screen and (max-width: 512px) {
   #panelContainer { display: none !important; }
+  #stageContainer { right: 0; }
 }

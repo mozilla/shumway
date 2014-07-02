@@ -331,17 +331,26 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Returns the last child index to have a depth that is less than or equal the specified depth.
+     * Returns the last child index that is covered by the clip depth.
      */
-    _getDepthIndex(depth: number): number {
+    getClipDepthIndex(depth: number): number {
       depth = depth | 0;
       var children = this._children;
       var index = this._children.length - 1;
+      var first = true;
       for (var i = index; i >= 0; i--) {
         var child = children[i];
+        // Ignore children that don't have a depth value.
+        if (child._depth < 0) {
+          continue;
+        } 
+        // Usually we return the index of the first child that has a depth value less than or
+        // equal to the specified depth. However, Flash seems to clip all remaining children,
+        // including those that don't have a depth value if the clip appears at the end.
         if (child._depth <= depth) {
-          return i;
+          return first ? index : i;
         }
+        first = false;
       }
       return 0;
     }

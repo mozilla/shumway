@@ -152,6 +152,22 @@ module Shumway.Remoting.Player {
       }
     }
 
+    /**
+     * Writes the number of display objects this display object clips.
+     */
+    writeClip(displayObject: DisplayObject) {
+      if (displayObject._clipDepth >= 0 && displayObject._parent) {
+        // Clips in GFX land don't use absolute clip depth numbers. Instead we need to encode
+        // the number of sibilings you want to clip. If childen are removed, GFX cilp values
+        // need to be recomputed.
+        var i = displayObject._parent.getChildIndex(displayObject);
+        var j = displayObject._parent.getClipDepthIndex(displayObject._clipDepth);
+        this.output.writeInt(j - i);
+      } else {
+        this.output.writeInt(0);
+      }
+    }
+
     writeUpdateFrame(displayObject: DisplayObject) {
       // Write Header
       this.output.writeInt(MessageTag.UpdateFrame);
@@ -181,11 +197,11 @@ module Shumway.Remoting.Player {
 
       // Write Has Bits
       var hasBits = 0;
-      hasBits |= hasMatrix                  ? MessageBits.HasMatrix         : 0;
-      hasBits |= hasColorTransform          ? MessageBits.HasColorTransform : 0;
-      hasBits |= hasMask                    ? MessageBits.HasMask : 0;
+      hasBits |= hasMatrix                  ? MessageBits.HasMatrix                  : 0;
+      hasBits |= hasColorTransform          ? MessageBits.HasColorTransform          : 0;
+      hasBits |= hasMask                    ? MessageBits.HasMask                    : 0;
       hasBits |= hasMiscellaneousProperties ? MessageBits.HasMiscellaneousProperties : 0;
-      hasBits |= hasRemotableChildren       ? MessageBits.HasChildren       : 0;
+      hasBits |= hasRemotableChildren       ? MessageBits.HasChildren                : 0;
       this.output.writeInt(hasBits);
 
       // Write Properties
@@ -199,15 +215,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(displayObject.mask ? displayObject.mask._id : -1);
       }
       if (hasMiscellaneousProperties) {
-        if (displayObject._clipDepth >= 0 && displayObject._parent) {
-          // Clips in GFX land don't use absolute clip depth numbers. Instead we need to encode the number of sibilings you want to clip.
-          // If childen are removed, GFX cilp values need to be recomputed.
-          var i = displayObject._parent.getChildIndex(displayObject);
-          var j = displayObject._parent._getDepthIndex(displayObject._clipDepth);
-          this.output.writeInt(j - i);
-        } else {
-          this.output.writeInt(0);
-        }
+        this.writeClip(displayObject);
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
         if (bitmap) {
