@@ -231,7 +231,7 @@ public dynamic class AS2Globals {
   }
   public function nextScene() {
     var nativeTarget = AS2Utils.resolveTarget();
-    nativeTarget.nextScene();
+    _addToPendingScripts(nativeTarget, nativeTarget.nextScene);
   }
   public function ord(character) {
     return ('' + character).charCodeAt(0); // ASCII only?
@@ -246,7 +246,7 @@ public dynamic class AS2Globals {
   }
   public function prevScene() {
     var nativeTarget = AS2Utils.resolveTarget();
-    nativeTarget.prevScene();
+    _addToPendingScripts(nativeTarget, nativeTarget.prevScene);
   }
   public function print(target, boundingBox) {
     // flash.printing.PrintJob
@@ -375,7 +375,7 @@ public dynamic class AS2Globals {
   public var Mouse:Class = AS2Mouse;
   public var MovieClipLoader:Class = AS2MovieClipLoader;
 
-  public var Sound:Class = Sound;
+  public var Sound:Class = AS2Sound;
   public var SharedObject:Class = SharedObject;
   public var ContextMenu:Class = ContextMenu;
   public var ContextMenuItem:Class = ContextMenuItem;

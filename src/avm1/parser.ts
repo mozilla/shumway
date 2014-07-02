@@ -182,7 +182,7 @@ module Shumway.AVM1 {
           var nextActionCode = stream.readUI8();
           var play = false;
           if (nextActionCode !== 0x06 && nextActionCode !== 0x07) {
-            console.error('Unexpected gotoFrame next code: ' + nextActionCode);
+            stream.position--;
           } else {
             nextPosition++;
             play = nextActionCode === 0x06;

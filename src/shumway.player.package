@@ -65,6 +65,7 @@ build/ts/avm1/parser.js
 build/ts/avm1/analyze.js
 build/ts/avm1/context.js
 build/ts/avm1/interpreter.js
+build/ts/avm1lib/AS2Utils.js
 #!inline console.timeEnd("Load AVM1 Dependencies");
 
 #!inline console.time("Load Compiled Code Cache");
@@ -464,7 +465,6 @@ build/ts/avm1lib/AS2MovieClip.js
 build/ts/avm1lib/AS2MovieClipLoader.js
 build/ts/avm1lib/AS2TextField.js
 build/ts/avm1lib/AS2TextFormat.js
-build/ts/avm1lib/AS2Utils.js
 #!inline console.timeEnd("Load avm1lib Dependencies");
 
 build/ts/player/options.js

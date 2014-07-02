@@ -18,6 +18,7 @@ module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import getAS2Object = Shumway.AVM2.AS.avm1lib.getAS2Object;
 
   import Timeline = Shumway.Timeline;
 
@@ -88,8 +89,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _initAvm1Bindings(instance: DisplayObject, state: Shumway.Timeline.AnimationState) {
-      var getAS2Object = Shumway.AVM2.AS.avm1lib.getAS2Object;
-
       var instanceAS2Object = getAS2Object(instance);
       assert(instanceAS2Object);
 

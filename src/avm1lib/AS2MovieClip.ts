@@ -17,7 +17,6 @@
 module Shumway.AVM2.AS.avm1lib {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import MovieClip = Shumway.AVM2.AS.flash.display.MovieClip;
   import AS2Context = Shumway.AVM1.AS2Context;
 
 
@@ -35,11 +34,12 @@ module Shumway.AVM2.AS.avm1lib {
     // List of instance symbols to link.
     static instanceSymbols: string [] = ["__lookupChild!", "__targetPath!"];
 
-    constructor (nativeMovieClip: MovieClip) {
+    constructor (nativeMovieClip: flash.display.MovieClip) {
       false && super();
+      this._nativeAS3Object = nativeMovieClip;
     }
 
-    private _nativeAS3Object: MovieClip;
+    private _nativeAS3Object: flash.display.MovieClip;
 
     // JS -> AS Bindings
 
@@ -49,7 +49,7 @@ module Shumway.AVM2.AS.avm1lib {
     // AS -> JS Bindings
 
     // __as3Object: flash.display.MovieClip;
-    _init(nativeMovieClip: MovieClip): any {
+    _init(nativeMovieClip: flash.display.MovieClip): any {
       if (!nativeMovieClip) {
         return; // delaying initialization, see also _constructSymbol
       }
@@ -57,19 +57,17 @@ module Shumway.AVM2.AS.avm1lib {
       (<any> nativeMovieClip)._as2Object = this;
       initDefaultListeners(this);
     }
-    get _as3Object(): MovieClip {
+    get _as3Object(): flash.display.MovieClip {
       return this._nativeAS3Object;
     }
-    _constructSymbol(symbolId: any, name: any): any {
+    _constructSymbol(symbolId: string, name: string): flash.display.MovieClip {
       var theClass = AS2Context.instance.classes && AS2Context.instance.classes[symbolId];
-      var symbolProps = AS2Context.instance.getAsset(symbolId);
+      var symbol = AS2Context.instance.getAsset(symbolId);
 
-      var symbolClass = <any> MovieClip;
-      var mc = symbolClass.createAsSymbol(symbolProps); // TODO review
-      mc._avm1SymbolClass = theClass;
-      symbolClass.instanceConstructor.call(mc);
-      var nativeAS3Object = <any> this._nativeAS3Object;
-      nativeAS3Object.addChild(mc);
+      var mc: flash.display.MovieClip = flash.display.MovieClip.initializeFrom(symbol);
+      flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
+      mc._as2SymbolClass = theClass;
+      mc._name = name;
 
       return mc;
     }
@@ -78,7 +76,7 @@ module Shumway.AVM2.AS.avm1lib {
       nativeAS3Object._callFrame(frame);
     }
     _insertChildAtDepth(mc: any, depth: any): any {
-      var nativeAS3Object = <any> this._nativeAS3Object;
+      var nativeAS3Object = <flash.display.MovieClip> this._nativeAS3Object;
       nativeAS3Object.addChildAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
       var name: string = mc.name;
       if (name) {
