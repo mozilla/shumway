@@ -30,6 +30,7 @@ module Shumway.AVM2.AS.flash.display {
   import Bounds = Shumway.Bounds;
 
   import AS2Context = Shumway.AVM1.AS2Context;
+  import getAS2Object = Shumway.AVM2.AS.avm1lib.getAS2Object;
 
   declare var SHUMWAY_ROOT: string;
   declare var LOADER_WORKER_PATH: string;
@@ -332,15 +333,15 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
 
-      //if (data.exports && loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-      //  var exports = data.exports;
-      //  for (var i = 0; i < exports.length; i++) {
-      //    var asset = exports[i];
-      //    var symbolInfo = dictionary[asset.symbolId];
-      //    release || assert (symbolInfo);
-      //    loader._avm1Context.addAsset(asset.className, symbolInfo.props);
-      //  }
-      //}
+      if (data.exports && loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+        var exports = data.exports;
+        for (var i = 0; i < exports.length; i++) {
+          var asset = exports[i];
+          var symbol = loaderInfo.getSymbolById(asset.symbolId);
+          release || assert (symbol);
+          loaderInfo._avm1Context.addAsset(asset.className, symbol);
+        }
+      }
 
       var rootSymbol = <Shumway.Timeline.SpriteSymbol>loaderInfo.getSymbolById(0);
       var documentClass = rootSymbol.symbolClass;
@@ -427,7 +428,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       var avm1Context = this._contentLoaderInfo._avm1Context;
-      var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(topRoot);
+      var as2Object = getAS2Object(topRoot);
       avm1Context.globals.asSetPublicProperty('_root', as2Object);
       avm1Context.globals.asSetPublicProperty('_level0', as2Object);
       avm1Context.globals.asSetPublicProperty('_level1', as2Object);
@@ -457,7 +458,7 @@ module Shumway.AVM2.AS.flash.display {
             if (state.executed) return;
             state.executed = true;
             var avm1Context = loaderInfo._avm1Context;
-            var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(root);
+            var as2Object = getAS2Object(root);
             return avm1Context.executeActions(actionsData, root.stage, as2Object);
           }.bind(null, actionsData, spriteId, {executed: false}));
         }
@@ -469,7 +470,7 @@ module Shumway.AVM2.AS.flash.display {
             'f' + frameIndex + 'i' + i);
           root.addFrameScript(frameIndex, function () {
             var avm1Context = loaderInfo._avm1Context;
-            var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(root);
+            var as2Object = getAS2Object(root);
             return avm1Context.executeActions(actionsData, root.stage, as2Object);
           }.bind(null, actionsData));
         }
