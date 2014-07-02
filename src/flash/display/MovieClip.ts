@@ -24,7 +24,6 @@ module Shumway.AVM2.AS.flash.display {
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
   import events = flash.events;
-  import AS2MovieClip = Shumway.AVM2.AS.avm1lib.AS2MovieClip;
 
   export class MovieClip extends flash.display.Sprite {
 
