@@ -130,6 +130,7 @@ load("../../build/ts/avm1/parser.js");
 load("../../build/ts/avm1/analyze.js");
 load("../../build/ts/avm1/context.js");
 load("../../build/ts/avm1/interpreter.js");
+load("../../build/ts/avm1lib/AS2Utils.js");
 console.timeEnd("Load AVM1 Dependencies");
 
 console.time("Load Compiled Code Cache");
@@ -529,7 +530,6 @@ load("../../build/ts/avm1lib/AS2MovieClip.js");
 load("../../build/ts/avm1lib/AS2MovieClipLoader.js");
 load("../../build/ts/avm1lib/AS2TextField.js");
 load("../../build/ts/avm1lib/AS2TextFormat.js");
-load("../../build/ts/avm1lib/AS2Utils.js");
 console.timeEnd("Load avm1lib Dependencies");
 
 load("../../build/ts/player/options.js");
