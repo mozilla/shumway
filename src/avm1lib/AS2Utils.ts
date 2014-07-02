@@ -15,10 +15,6 @@
  */
 // Class: AS2Utils
 module Shumway.AVM2.AS.avm1lib {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-
-  import display = Shumway.AVM2.AS.flash.display;
   import AS2Context = Shumway.AVM1.AS2Context;
 
   export class AS2Utils extends ASNative {
@@ -30,10 +26,10 @@ module Shumway.AVM2.AS.avm1lib {
     static initializer:any = null;
 
     // List of static symbols to link.
-    static staticBindings:string [] = null; // ["getTarget", "addEventHandlerProxy"];
+    static classSymbols: string [] = null;//["getAS2Object!"];
 
     // List of instance symbols to link.
-    static bindings:string [] = null; // [];
+    static instanceSymbols: string [] = null;
 
     constructor() {
       false && super();
@@ -45,13 +41,6 @@ module Shumway.AVM2.AS.avm1lib {
 
 
     // AS -> JS Bindings
-    static getAS2Object(obj: ASObject):ASObject {
-      var nativeObject: any = obj;
-      return nativeObject && nativeObject._getAS2Object
-        ? nativeObject._getAS2Object()
-        : null;
-    }
-
     static addProperty(obj: ASObject, propertyName: string, getter: () => any,
                        setter: (v:any) => any, enumerable:boolean = true): any
     {
@@ -63,17 +52,21 @@ module Shumway.AVM2.AS.avm1lib {
       });
     }
 
-    static resolveTarget(target_mc: any = undefined): display.MovieClip {
+    static resolveTarget(target_mc: any = undefined): flash.display.MovieClip {
       return AS2Context.instance.resolveTarget(target_mc);
     }
 
-    static resolveLevel(level: number): display.MovieClip {
+    static resolveLevel(level: number): flash.display.MovieClip {
       level = +level;
       return AS2Context.instance.resolveLevel(level);
     }
 
-    static get currentStage(): display.Stage {
+    static get currentStage(): flash.display.Stage {
       return AS2Context.instance.stage;
+    }
+
+    static getAS2Object(as3Object) {
+      return avm1lib.getAS2Object(as3Object);
     }
 
     static _installObjectMethods(): any {
@@ -121,15 +114,25 @@ module Shumway.AVM2.AS.avm1lib {
   }
 
   export function getAS2Object(as3Object) {
+    if (!as3Object) {
+      return null;
+    }
     if (as3Object._as2Object) {
       return as3Object._as2Object;
     }
-    if (display.MovieClip.isType(as3Object)) {
+    if (flash.display.MovieClip.isType(as3Object)) {
+      if (<flash.display.MovieClip>as3Object._as2SymbolClass) {
+        var ctor: any = <flash.display.MovieClip>as3Object._as2SymbolClass;
+        return new ctor(as3Object);
+      }
       return new AS2MovieClip(as3Object);
     }
-
-    // notImplemented('Not impletemented');
-    debugger;
+    if (flash.display.SimpleButton.isType(as3Object)) {
+      return new AS2Button(as3Object);
+    }
+    if (flash.text.TextField.isType(as3Object)) {
+      return new AS2TextField(as3Object);
+    }
 
     return null;
   }

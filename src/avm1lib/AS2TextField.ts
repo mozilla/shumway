@@ -16,6 +16,7 @@
 // Class: AS2TextField
 module Shumway.AVM2.AS.avm1lib {
   import TextField = Shumway.AVM2.AS.flash.text.TextField;
+  import getAS2Object = Shumway.AVM2.AS.avm1lib.getAS2Object;
 
   export class AS2TextField extends ASNative {
 
@@ -35,6 +36,7 @@ module Shumway.AVM2.AS.avm1lib {
       false && super();
 
       this._variable = '';
+      this._init(nativeTextField);
     }
 
     private _nativeAS3Object: TextField;
@@ -68,13 +70,13 @@ module Shumway.AVM2.AS.avm1lib {
         var targetPath = name.split(/[.:\/]/g);
         name = targetPath.pop();
         if (targetPath[0] == '_root' || targetPath[0] === '') {
-          clip = instance.root._getAS2Object();
+          clip = getAS2Object(instance.root);
           targetPath.shift();
           if (targetPath[0] === '') {
             targetPath.shift();
           }
         } else {
-          clip = instance._parent._getAS2Object();
+          clip = getAS2Object(instance._parent);
         }
         while (targetPath.length > 0) {
           var childName = targetPath.shift();
@@ -84,7 +86,7 @@ module Shumway.AVM2.AS.avm1lib {
           }
         }
       } else {
-        clip = instance._parent._getAS2Object();
+        clip = getAS2Object(instance._parent);
       }
       if (!clip.asHasProperty(undefined, name, 0)) {
         clip.asSetPublicProperty(name, instance.text);

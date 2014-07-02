@@ -33,6 +33,9 @@ module Shumway.AVM2.AS.avm1lib {
 
     constructor (nativeButton: SimpleButton) {
       false && super();
+      if (nativeButton) {
+        this._init(nativeButton);
+      }
     }
 
     private _nativeAS3Object: SimpleButton;

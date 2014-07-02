@@ -125,6 +125,11 @@ module Shumway.Player {
             var AS2Mouse = (<any>avm1lib).AS2Mouse;
             AS2Key.asCallPublicProperty('__bind', [stage]);
             AS2Mouse.asCallPublicProperty('__bind', [stage]);
+            var avm1Context = loaderInfo._avm1Context;
+            stage.addEventListener('frameConstructed',
+                                   avm1Context.flushPendingScripts.bind(avm1Context),
+                                   false,
+                                   Number.MAX_VALUE);
           }
 
           var root = loader.content;
