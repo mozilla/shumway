@@ -241,11 +241,13 @@ module Shumway.Timeline {
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ButtonSymbol {
       var symbol = new ButtonSymbol(data.id);
+      if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+        symbol.isAS2Object = true;
+      }
       var states = data.states;
       var character, matrix, colorTransform;
       for (var stateName in states) {
         var commands = states[stateName];
-        var state;
         if (commands.length === 1) {
           var cmd = commands[0];
           character = loaderInfo.getSymbolById(cmd.symbolId);
