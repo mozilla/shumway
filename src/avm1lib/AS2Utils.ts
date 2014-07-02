@@ -127,6 +127,9 @@ module Shumway.AVM2.AS.avm1lib {
       }
       return new AS2MovieClip(as3Object);
     }
+    if (flash.text.TextField.isType(as3Object)) {
+      return new AS2TextField(as3Object);
+    }
 
     return null;
   }

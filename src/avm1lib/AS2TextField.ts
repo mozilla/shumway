@@ -36,6 +36,7 @@ module Shumway.AVM2.AS.avm1lib {
       false && super();
 
       this._variable = '';
+      this._init(nativeTextField);
     }
 
     private _nativeAS3Object: TextField;
