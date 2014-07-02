@@ -279,7 +279,7 @@ module Shumway.GFX {
       enterTimeline("RenderableBitmap.drawFrame");
       var bounds = this.getBounds();
       var renderer = new Canvas2DStageRenderer(this._canvas, null);
-      renderer.renderClippedFrame(source, clipRect || bounds, matrix);
+      renderer.renderFrame(source, clipRect || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
     }
 

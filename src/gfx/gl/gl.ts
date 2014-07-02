@@ -64,12 +64,6 @@ module Shumway.GFX.GL {
     animateZoom: boolean = true;
 
     /**
-     * Ignores viewport clipping, this is useful to check of viewport culling is working
-     * corectly.
-     */
-    ignoreViewport: boolean = false;
-
-    /**
      * Sometimes it's useful to temporarily disable texture uploads to see if rendering
      * is texture upload bound.
      */
@@ -458,9 +452,6 @@ module Shumway.GFX.GL {
       brush.reset();
 
       var viewport = this._viewport;
-      if (options.ignoreViewport) {
-        viewport = Rectangle.createSquare(1024 * 8);
-      }
 
       enterTimeline("_renderFrame");
       this._renderFrame(stage, stage.matrix, brush, viewport, 0);

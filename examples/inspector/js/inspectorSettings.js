@@ -190,7 +190,6 @@ function syncGFXOptions(options) {
   options.drawTextures = GFX.drawTextures.value;
   options.drawTexture = GFX.drawTexture.value;
   options.drawElements = GFX.drawElements.value;
-  options.ignoreViewport = GFX.ignoreViewport.value;
   options.clipDirtyRegions = GFX.clipDirtyRegions.value;
   options.clipCanvas = GFX.clipCanvas.value;
 

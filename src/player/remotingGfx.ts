@@ -22,6 +22,7 @@ module Shumway.Remoting.GFX {
   import RenderableText = Shumway.GFX.RenderableText;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
+  import ClipRectangle = Shumway.GFX.ClipRectangle;
   import ShapeData = Shumway.ShapeData;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Stage = Shumway.GFX.Stage;
@@ -83,12 +84,13 @@ module Shumway.Remoting.GFX {
   }
 
   export class GFXChannelDeserializerContext {
-    root: FrameContainer;
+    root: ClipRectangle;
     _frames: Frame [];
     private _assets: Renderable [];
 
     constructor(root: FrameContainer) {
-      this.root = root;
+      this.root = new ClipRectangle(128, 128);
+      root.addChild(this.root);
       this._frames = [];
       this._assets = [];
     }
@@ -354,6 +356,7 @@ module Shumway.Remoting.GFX {
       }
       var color = this.input.readInt();
       var rectangle = this._readRectangle()
+      context.root.setBounds(rectangle);
     }
 
     private _readUpdateFrame() {

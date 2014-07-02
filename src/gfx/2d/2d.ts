@@ -157,7 +157,6 @@ module Shumway.GFX {
       var context = this.context;
 
       context.setTransform(1, 0, 0, 1, 0, 0);
-      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
       context.save();
       var options = this._options;
@@ -195,7 +194,7 @@ module Shumway.GFX {
       context.globalAlpha = 1;
 
       var viewport = this._viewport;
-      this.renderClippedFrame(stage, viewport, stage.matrix);
+      this.renderFrame(stage, viewport, stage.matrix);
 
       if (stage.trackDirtyRegions) {
         stage.dirtyRegion.clear();
@@ -211,12 +210,9 @@ module Shumway.GFX {
       }
     }
 
-    static clearContext(context: CanvasRenderingContext2D, rectangle: Rectangle) {
-      var canvas = context.canvas;
-      context.clearRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
-    }
-
-    renderClippedFrame(source: Frame, viewport: Rectangle, matrix: Matrix) {
+    public renderFrame(root: Frame,
+                       viewport: Rectangle,
+                       matrix: Matrix) {
       var context = this.context;
       context.save();
       if (!this._options.paintViewport) {
@@ -224,15 +220,18 @@ module Shumway.GFX {
         context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
         context.clip();
       }
-      context.save();
-      this._renderFrame(context, source, matrix, viewport, new Canvas2DStageRendererState(this._options));
-      context.restore();
+      context.clearRect(viewport.x, viewport.y, viewport.w, viewport.h);
+      this._renderFrame(context, root, matrix, viewport, new Canvas2DStageRendererState(this._options));
       context.restore();
     }
 
-    private _renderFrame(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState) {
+    private _renderFrame(context: CanvasRenderingContext2D,
+                         root: Frame,
+                         transform: Matrix,
+                         viewport: Rectangle,
+                         state: Canvas2DStageRendererState,
+                         skipFirst: boolean = false) {
       var self = this;
-
       root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
         var bounds = frame.getBounds();
 
@@ -293,21 +292,24 @@ module Shumway.GFX {
             context.globalAlpha = 0.5;
             context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
           }
+        } else if (frame instanceof ClipRectangle) {
+          context.save();
+          context.beginPath();
+          context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+          context.clip();
+          self._renderFrame(context, frame, transform, frameBoundsAABB, state, true);
+          context.restore();
+          return VisitorFlags.Skip;
         } else if (state.options.paintBounds && frame instanceof FrameContainer) {
           var bounds = frame.getBounds().clone();
           context.strokeStyle = ColorStyle.LightOrange;
           context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
-        } else if (frame instanceof ClipRectangle) {
-          context.fillStyle = frame.color.toCSSStyle();
-          var bounds = frame.getBounds();
-          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
         }
-
         return VisitorFlags.Continue;
-      }, transform, FrameFlags.Empty, VisitorFlags.Clips);
+      }, transform, FrameFlags.Empty, VisitorFlags.Clips | (skipFirst ? VisitorFlags.SkipFirst : 0));
     }
 
-    private getCompositeOperation(blendMode: BlendMode): string {
+    private _getCompositeOperation(blendMode: BlendMode): string {
       // TODO:
 
       // These Flash blend modes have no canvas equivalent:
@@ -324,7 +326,6 @@ module Shumway.GFX {
       // - blendModeClass.LAYER [defines backdrop]
 
       var compositeOp: string = "source-over";
-
       switch (blendMode) {
         case BlendMode.Multiply:   compositeOp = "multiply";   break;
         case BlendMode.Screen:     compositeOp = "screen";     break;
@@ -334,9 +335,7 @@ module Shumway.GFX {
         case BlendMode.Overlay:    compositeOp = "overlay";    break;
         case BlendMode.HardLight:  compositeOp = "hard-light"; break;
       }
-
       return compositeOp;
     }
-
   }
 }
