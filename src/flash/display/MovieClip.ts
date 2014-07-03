@@ -24,6 +24,7 @@ module Shumway.AVM2.AS.flash.display {
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
   import events = flash.events;
+  import getAS2Object = Shumway.AVM2.AS.avm1lib.getAS2Object;
 
   export class MovieClip extends flash.display.Sprite {
 
@@ -60,11 +61,18 @@ module Shumway.AVM2.AS.flash.display {
         self._totalFrames = symbol.numFrames;
         self._currentFrame = 1;
         if (!symbol.isRoot) {
-          this.addScene('', symbol.labels, 0, symbol.numFrames);
+          self.addScene('', symbol.labels, 0, symbol.numFrames);
         }
         self._frames = symbol.frames;
+
+        if (symbol.isAS2Object && symbol.frameScripts) {
+          var data = symbol.frameScripts;
+          for (var i = 0; i < data.length; i += 2) {
+            self.addAS2FrameScript(data[i], data[i + 1]);
+          }
+        }
       } else {
-        this.addScene('', [], 0, self._totalFrames);
+        self.addScene('', [], 0, self._totalFrames);
       }
     };
     
@@ -136,6 +144,8 @@ module Shumway.AVM2.AS.flash.display {
     private _allowFrameNavigation: boolean;
 
     _as2SymbolClass;
+    private _boundExecuteAS2FrameScripts: () => void;
+    private _as2FrameScripts: AVM1.AS2ActionsData[][];
 
     get currentFrame(): number /*int*/ {
       return this._currentFrame - this._sceneForFrameIndex(this._currentFrame).offset;
@@ -483,13 +493,41 @@ module Shumway.AVM2.AS.flash.display {
       var totalFrames = this._totalFrames;
       for (var i = 0; i < numArgs; i += 2) {
         var frameNum = (arguments[i]|0) + 1;
-        if (frameNum < 0 || frameNum > totalFrames) {
+        if (frameNum < 1 || frameNum > totalFrames) {
           continue;
         }
         frameScripts[frameNum] = arguments[i + 1];
         if (frameNum === this._currentFrame) {
           MovieClip._callQueue.push(this);
         }
+      }
+    }
+
+    addAS2FrameScript(frameIndex: number, actionsBlock: Uint8Array): void {
+      var frameScripts = this._as2FrameScripts;
+      if (!frameScripts) {
+        release || assert(!this._boundExecuteAS2FrameScripts);
+        this._boundExecuteAS2FrameScripts = this._executeAS2FrameScripts.bind(this);
+        frameScripts = this._as2FrameScripts = [];
+      }
+      var scripts: AVM1.AS2ActionsData[] = frameScripts[frameIndex + 1];
+      if (!scripts) {
+        scripts = frameScripts[frameIndex + 1] = [];
+        this.addFrameScript(frameIndex, this._boundExecuteAS2FrameScripts);
+      }
+      var actionsData = new AVM1.AS2ActionsData(actionsBlock,
+                                                'f' + frameIndex + 'i' + scripts.length);
+      scripts.push(actionsData);
+    }
+
+    private _executeAS2FrameScripts() {
+      var avm1Context = this.loaderInfo._avm1Context;
+      var as2Object = getAS2Object(this);
+      var scripts: AVM1.AS2ActionsData[] = this._as2FrameScripts[this._currentFrame];
+      release || assert(scripts && scripts.length);
+      for (var i = 0; i < scripts.length; i++) {
+        var actionsData = scripts[i];
+        avm1Context.executeActions(actionsData, this.stage, as2Object);
       }
     }
 

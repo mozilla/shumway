@@ -466,13 +466,7 @@ module Shumway.AVM2.AS.flash.display {
 
       if (actionBlocks) {
         for (var i = 0; i < actionBlocks.length; i++) {
-          var actionsData = new AVM1.AS2ActionsData(actionBlocks[i],
-            'f' + frameIndex + 'i' + i);
-          root.addFrameScript(frameIndex, function () {
-            var avm1Context = loaderInfo._avm1Context;
-            var as2Object = getAS2Object(root);
-            return avm1Context.executeActions(actionsData, root.stage, as2Object);
-          }.bind(null, actionsData));
+          root.addAS2FrameScript(frameIndex, actionBlocks[i]);
         }
       }
     }
