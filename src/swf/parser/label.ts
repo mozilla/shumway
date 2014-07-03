@@ -31,29 +31,36 @@ module Shumway.SWF.Parser {
     var i = 0;
     var record;
     var codes;
+    var font;
+    var fontAttributes;
     while ((record = records[i++])) {
-      if (record.eot)
+      if (record.eot) {
         break;
+      }
 
       htmlText += '<font';
 
       if (record.hasFont) {
-        var font = dictionary[record.fontId];
+        font = dictionary[record.fontId];
         release || assert(font, 'undefined font', 'label');
         codes = font.codes;
         dependencies.push(font.id);
-        htmlText += ' size="' + (record.fontHeight / 20) + '" face="swffont' + font.id + '"';
+        fontAttributes = ' size="' + (record.fontHeight / 20) + '" face="swffont' + font.id + '"';
       }
+
+      htmlText += fontAttributes;
 
       if (record.hasColor) {
         var color = record.color >>> 8;
         htmlText += ' color="#' + ('000000' + color.toString(16)).slice(-6) + '"';
       }
 
-      if (record.hasMoveX)
+      if (record.hasMoveX) {
         x = record.moveX;
-      if (record.hasMoveY)
+      }
+      if (record.hasMoveY) {
         y = record.moveY;
+      }
 
       htmlText += '>';
 
@@ -87,8 +94,9 @@ module Shumway.SWF.Parser {
       static: true,
       require: null
     };
-    if (dependencies.length)
+    if (dependencies.length) {
       label.require = dependencies;
+    }
     return label;
   }
 }
