@@ -33,7 +33,6 @@ module Shumway.GFX.GL {
   import Matrix = Geometry.Matrix;
   import Matrix3D = Geometry.Matrix3D;
   import Rectangle = Geometry.Rectangle;
-  import RegionAllocator = Geometry.RegionAllocator;
   import RenderableTileCache = Geometry.RenderableTileCache;
 
   import Frame = Shumway.GFX.Frame;

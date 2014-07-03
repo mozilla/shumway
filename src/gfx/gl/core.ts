@@ -5,7 +5,6 @@ module Shumway.GFX.GL {
 
   import assert = Shumway.Debug.assert;
   import Rectangle = Geometry.Rectangle;
-  import RegionAllocator = Geometry.RegionAllocator;
   import RenderableTileCache = Geometry.RenderableTileCache;
 
   /**

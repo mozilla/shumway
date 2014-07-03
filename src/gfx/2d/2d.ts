@@ -16,10 +16,6 @@ module Shumway.GFX {
   import TileCache = Shumway.GFX.Geometry.TileCache;
   import Tile = Shumway.GFX.Geometry.Tile;
   import OBB = Shumway.GFX.Geometry.OBB;
-  import GridAllocator = Shumway.GFX.Geometry.RegionAllocator.GridAllocator;
-  import GridCell = Shumway.GFX.Geometry.RegionAllocator.GridCell;
-  import Region = Shumway.GFX.Geometry.RegionAllocator.Region;
-  import IRegionAllocator = Shumway.GFX.Geometry.RegionAllocator.IRegionAllocator;
 
   export enum FillRule {
     NONZERO,
@@ -117,6 +113,36 @@ module Shumway.GFX {
     return -1;
   }
 
+  export class Canvas2DTextureRegion implements ITextureRegion {
+    constructor (
+      public texture: Canvas2DTexture,
+      public region: RegionAllocator.Region) {
+      // ...
+    }
+  }
+
+  export class Canvas2DTexture implements ITexture {
+    w: number;
+    h: number;
+    canvas: HTMLCanvasElement;
+    context: CanvasRenderingContext2D;
+    private _regionAllocator: RegionAllocator.IRegionAllocator;
+    constructor(canvas: HTMLCanvasElement) {
+      this.canvas = canvas;
+      this.context = canvas.getContext("2d");
+      this.w = canvas.width;
+      this.h = canvas.height;
+      this._regionAllocator = new RegionAllocator.CompactAllocator(this.w, this.h);
+    }
+    allocate(w: number, h: number): Canvas2DTextureRegion {
+      var region = this._regionAllocator.allocate(w, h);
+      if (region) {
+        return new Canvas2DTextureRegion(this, region);
+      }
+      return null;
+    }
+  }
+
   export class Canvas2DStageRendererOptions extends StageRendererOptions {
     disable: boolean;
     clipDirtyRegions: boolean;
@@ -128,9 +154,10 @@ module Shumway.GFX {
   }
 
   export class Canvas2DStageRendererState {
-    constructor(public options: Canvas2DStageRendererOptions,
-                public clipRegion: boolean = false,
-                public ignoreMask: Frame = null) {
+    constructor (
+      public options: Canvas2DStageRendererOptions,
+      public clipRegion: boolean = false,
+      public ignoreMask: Frame = null) {
       // ...
     }
   }
@@ -141,6 +168,10 @@ module Shumway.GFX {
     context: CanvasRenderingContext2D;
     count = 0;
 
+    private _textureRegionAllocator: TextureRegionAllocator.ITextureRegionAllocator;
+    private _scratchCanvas: HTMLCanvasElement;
+    private _scratchCanvasContext: CanvasRenderingContext2D;
+
     constructor(canvas: HTMLCanvasElement,
                 stage: Stage,
                 options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
@@ -150,6 +181,15 @@ module Shumway.GFX {
       this._viewport = new Rectangle(0, 0, context.canvas.width, context.canvas.height);
       this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
+
+      this._textureRegionAllocator = new TextureRegionAllocator.SimpleAllocator (
+        function () {
+          var canvas = document.createElement("canvas");
+          // document.getElementById("temporaryCanvasPanelContainer").appendChild(canvas);
+          canvas.width = canvas.height = 1024;
+          return new Canvas2DTexture(canvas);
+        }
+      );
     }
 
     public render() {
@@ -225,6 +265,20 @@ module Shumway.GFX {
       context.restore();
     }
 
+    private _renderToTextureRegion(frame: Frame, transform: Matrix): Canvas2DTextureRegion {
+      var bounds = frame.getBounds();
+      var frameBoundsAABB = bounds.clone();
+      transform.transformRectangleAABB(frameBoundsAABB);
+      var textureRegion = <Canvas2DTextureRegion>(this._textureRegionAllocator.allocate(frameBoundsAABB.w, frameBoundsAABB.h));
+      var region = textureRegion.region;
+      var context = textureRegion.texture.context;
+      context.clearRect(region.x, region.y, region.w, region.h);
+      transform = transform.clone();
+      transform.translate(region.x - frameBoundsAABB.x, region.y - frameBoundsAABB.y);
+      this._renderFrame(context, frame, transform, region, new Canvas2DStageRendererState(this._options));
+      return textureRegion;
+    }
+
     private _renderFrame(context: CanvasRenderingContext2D,
                          root: Frame,
                          transform: Matrix,
@@ -280,6 +334,15 @@ module Shumway.GFX {
 
         var frameBoundsAABB = frame.getBounds().clone();
         transform.transformRectangleAABB(frameBoundsAABB);
+
+        context.globalCompositeOperation = self._getCompositeOperation(frame.blendMode);
+        if (frame.blendMode !== BlendMode.Normal) {
+//          var textureRegion = self._renderToTextureRegion(frame, transform);
+//          context.drawImage(textureRegion.texture.canvas, 0, 0);
+//          textureRegion.region.allocator.free(textureRegion.region);
+//          return VisitorFlags.Skip;
+        }
+
         if (frame instanceof Shape) {
           frame._previouslyRenderedAABB = frameBoundsAABB;
           var shape = <Shape>frame;

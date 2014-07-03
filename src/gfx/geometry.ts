@@ -1408,11 +1408,6 @@ module Shumway.GFX.Geometry {
     }
   }
 
-  export interface ITextureRegion {
-    texture: any;
-    region: Rectangle;
-  }
-
   export class Tile {
     x: number;
     y: number;

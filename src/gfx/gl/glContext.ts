@@ -19,7 +19,6 @@ module Shumway.GFX.GL {
   import Matrix = Geometry.Matrix;
   import Matrix3D = Geometry.Matrix3D;
   import Rectangle = Geometry.Rectangle;
-  import RegionAllocator = Geometry.RegionAllocator;
 
   import radianToDegrees = Geometry.radianToDegrees;
   import degreesToRadian = Geometry.degreesToRadian;

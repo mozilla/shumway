@@ -15,9 +15,21 @@
  */
 
 /// <reference path='references.ts'/>
-module Shumway.GFX.Geometry {
+module Shumway.GFX {
   import roundToMultipleOfPowerOfTwo = IntegerUtilities.roundToMultipleOfPowerOfTwo;
   import assert = Shumway.Debug.assert;
+  import Rectangle = Geometry.Rectangle;
+
+  export interface ITexture {
+    w: number;
+    h: number;
+    allocate(w: number, h: number): ITextureRegion;
+  }
+
+  export interface ITextureRegion {
+    texture: ITexture;
+    region: RegionAllocator.Region;
+  }
 
   /**
    * Various 2D rectangular region allocators. These are used to manage
@@ -309,6 +321,50 @@ module Shumway.GFX.Geometry {
         region.region.allocator.free(region.region);
       }
     }
+  }
 
+  export module TextureRegionAllocator {
+    export interface ITextureRegionAllocator {
+      /**
+       * Allocates a 2D region.
+       */
+      allocate(w: number, h: number): ITextureRegion;
+
+      /**
+       * Frees the specified region.
+       */
+      free(region: ITextureRegion);
+    }
+
+    export class SimpleAllocator implements ITextureRegionAllocator {
+      private _createTexture: () => ITexture;
+      private _textures: ITexture [];
+
+      constructor(createTexture: () => ITexture) {
+        this._createTexture = createTexture;
+        this._textures = [];
+      }
+
+      private _createNewTexture(): ITexture {
+        var texture = this._createTexture();
+        this._textures.push(texture);
+        return texture;
+      }
+
+      allocate(w: number, h: number): ITextureRegion {
+        for (var i = 0; i < this._textures.length; i++) {
+          var region = this._textures[i].allocate(w, h);
+          if (region) {
+            return region;
+          }
+        }
+        var texture = this._createNewTexture();
+        return texture.allocate(w, h);
+      }
+
+      free(region: ITextureRegion) {
+
+      }
+    }
   }
 }
