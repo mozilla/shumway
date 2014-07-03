@@ -394,10 +394,7 @@ module Shumway.Timeline {
                 public visible: boolean = true,
                 public events: any [] = null,
                 public variableName: string = null) {
-      if (matrix && symbol instanceof TextSymbol) {
-        this.matrix = this.matrix.clone();
-        this.matrix.translate(-40, -40);
-      }
+
     }
 
     canBeAnimated(obj: flash.display.DisplayObject): boolean {

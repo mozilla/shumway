@@ -239,6 +239,13 @@ module Shumway.Remoting.GFX {
       );
     }
 
+    private _popAsset(): any {
+      var assetId = this.input.readInt();
+      var asset = this.inputAssets[assetId];
+      this.inputAssets[assetId] = null;
+      return asset;
+    }
+
     private _readUpdateGraphics() {
       var input = this.input;
       var context = this.context;
@@ -246,9 +253,7 @@ module Shumway.Remoting.GFX {
       var symbolId = input.readInt();
       var asset = context._getAsset(id);
       var bounds = this._readRectangle();
-      var assetId = input.readInt();
-      var pathData = ShapeData.FromPlainObject(this.inputAssets[assetId]);
-      this.inputAssets[assetId] = null;
+      var pathData = ShapeData.FromPlainObject(this._popAsset());
       var numTextures = input.readInt();
       var textures = [];
       for (var i = 0; i < numTextures; i++) {
@@ -272,9 +277,7 @@ module Shumway.Remoting.GFX {
       var asset = context._getBitmapAsset(id);
       var bounds = this._readRectangle();
       var type: ImageType = input.readInt();
-      var assetId = input.readInt();
-      var dataBuffer = DataBuffer.FromPlainObject(this.inputAssets[assetId]);
-      this.inputAssets[assetId] = null;
+      var dataBuffer = DataBuffer.FromPlainObject(this._popAsset());
       if (!asset) {
         asset = RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds);
         context._registerAsset(id, symbolId, asset);
@@ -298,21 +301,14 @@ module Shumway.Remoting.GFX {
       var borderColor = input.readInt();
       var autoSize = input.readBoolean();
       var wordWrap = input.readBoolean();
-      var assetId = input.readInt();
-      var numTextRuns = input.readInt();
-      var textRunData = null;
-      if (numTextRuns) {
-        textRunData = new DataBuffer(numTextRuns * 60);
-        input.readBytes(textRunData, 0, numTextRuns * 60);
-      }
+      var plainText = this._popAsset();
+      var textRunData = DataBuffer.FromPlainObject(this._popAsset());
       var coords = null;
       var numCoords = input.readInt();
       if (numCoords) {
         coords = new DataBuffer(numCoords* 4);
         input.readBytes(coords, 0, numCoords * 4);
       }
-      var plainText = this.inputAssets[assetId];
-      this.inputAssets[assetId] = null;
       if (!asset) {
         asset = new RenderableText(bounds);
         asset.setContent(plainText, textRunData, matrix, coords);
@@ -320,7 +316,7 @@ module Shumway.Remoting.GFX {
         asset.reflow(autoSize, wordWrap);
         context._registerAsset(id, symbolId, asset);
       } else {
-        asset.setBoundsNormalized(bounds);
+        asset.setBounds(bounds);
         asset.setContent(plainText, textRunData, matrix, coords);
         asset.setStyle(backgroundColor, borderColor);
         asset.reflow(autoSize, wordWrap);
@@ -403,9 +399,7 @@ module Shumway.Remoting.GFX {
       var fontId = input.readInt();
       var bold = input.readBoolean();
       var italic = input.readBoolean();
-      var assetId = input.readInt();
-      var data = this.inputAssets[assetId];
-
+      var data = this._popAsset();
       var head = document.head;
       head.insertBefore(document.createElement('style'), head.firstChild);
       var style = <CSSStyleSheet>document.styleSheets[0];
@@ -416,8 +410,6 @@ module Shumway.Remoting.GFX {
           '}',
         style.cssRules.length
       );
-
-      this.inputAssets[assetId] = null;
     }
 
     private _readDrawToBitmap() {

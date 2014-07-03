@@ -18,6 +18,7 @@ module Shumway {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import ColorUtilities = Shumway.ColorUtilities;
   import flash = Shumway.AVM2.AS.flash;
 
@@ -41,6 +42,7 @@ module Shumway {
     flags: number;
     defaultTextFormat: flash.text.TextFormat;
     textRuns: flash.text.TextRun[];
+    textRunData: DataBuffer;
     matrix: flash.geom.Matrix;
     coords: number[];
 
@@ -54,6 +56,7 @@ module Shumway {
       this.flags = TextContentFlags.None;
       this.defaultTextFormat = defaultTextFormat || new flash.text.TextFormat();
       this.textRuns = [];
+      this.textRunData = new DataBuffer();
       this.matrix = null;
       this.coords = null;
     }
@@ -208,6 +211,10 @@ module Shumway {
       });
 
       this._plainText = plainText;
+      this.textRunData.clear();
+      for (var i = 0; i < textRuns.length; i++) {
+        this._writeTextRun(textRuns[i]);
+      }
       this.flags |= TextContentFlags.DirtyContent;
     }
 
@@ -221,7 +228,10 @@ module Shumway {
       }
       this._plainText = value;
       this.textRuns.length = 0;
-      this.textRuns[0] = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
+      var textRun = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
+      this.textRuns[0] = textRun;
+      this.textRunData.clear();
+      this._writeTextRun(textRun);
       this.flags |= TextContentFlags.DirtyContent;
     }
 
@@ -275,6 +285,56 @@ module Shumway {
       }
       this._borderColor = value;
       this.flags |= TextContentFlags.DirtyStyle;
+    }
+
+    private _writeTextRun(textRun: flash.text.TextRun) {
+      var textRunData = this.textRunData;
+
+      textRunData.writeInt(textRun.beginIndex);
+      textRunData.writeInt(textRun.endIndex);
+
+      var textFormat = textRun.textFormat;
+
+      var size = +textFormat.size;
+      textRunData.writeInt(size);
+
+      var font = flash.text.Font.getByName(textFormat.font) || flash.text.Font.getDefaultFont();
+      if (font.fontType === flash.text.FontType.EMBEDDED) {
+        textRunData.writeInt(font._id);
+      } else {
+        textRunData.writeInt(0);
+        textRunData.writeUTF(flash.text.Font.resolveFontName(font.fontName));
+      }
+      textRunData.writeInt(font.ascent * size);
+      textRunData.writeInt(font.descent * size);
+      textRunData.writeInt(textFormat.leading === null ? font.leading * size : +textFormat.leading);
+      var bold: boolean;
+      var italic: boolean;
+      if (textFormat.bold === null) {
+        bold = font.fontStyle === flash.text.FontStyle.BOLD || font.fontType === flash.text.FontStyle.BOLD_ITALIC;
+      } else {
+        bold = !!textFormat.bold;
+      }
+      if (textFormat.italic === null) {
+        italic = font.fontStyle === flash.text.FontStyle.ITALIC || font.fontType === flash.text.FontStyle.BOLD_ITALIC;
+      } else {
+        italic = !!textFormat.italic;
+      }
+      textRunData.writeBoolean(bold);
+      textRunData.writeBoolean(italic);
+
+      textRunData.writeInt(+textFormat.color);
+      textRunData.writeInt(flash.text.TextFormatAlign.toNumber(textFormat.align));
+      textRunData.writeBoolean(!!textFormat.bullet);
+      //textRunData.writeInt(textFormat.display);
+      textRunData.writeInt(+textFormat.indent);
+      //textRunData.writeInt(textFormat.blockIndent);
+      textRunData.writeInt(+textFormat.kerning);
+      textRunData.writeInt(+textFormat.leftMargin);
+      textRunData.writeInt(+textFormat.letterSpacing);
+      textRunData.writeInt(+textFormat.rightMargin);
+      //textRunData.writeInt(textFormat.tabStops);
+      textRunData.writeBoolean(!!textFormat.underline);
     }
   }
 }

@@ -733,7 +733,6 @@ module Shumway.GFX {
 
     constructor(bounds) {
       super(bounds);
-      this.setBoundsNormalized(bounds);
       this._textRunData = null;
       this._plainText = '';
       this._backgroundColor = 0;
@@ -745,22 +744,15 @@ module Shumway.GFX {
       this.lines = [];
     }
 
-    setBoundsNormalized(bounds): void {
-      this._bounds.x = 0;
-      this._bounds.y = 0;
-      this._bounds.w = (Math.abs(bounds.x) + bounds.w) | 0;
-      this._bounds.h = (Math.abs(bounds.y) + bounds.h) | 0;
+    setBounds(bounds): void {
+      this._bounds = bounds.clone();
     }
 
     setContent(plainText: string, textRunData: DataBuffer, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer): void {
       this._textRunData = textRunData;
       this._plainText = plainText;
       this._matrix = matrix;
-      if (coords) {
-        this._coords = coords;
-        this._bounds.w += (this._bounds.x + 4) | 0;
-        this._bounds.h += (this._bounds.y + 4) | 0;
-      }
+      this._coords = coords;
       this.textWidth = 0;
       this.textHeight = 0;
       this.lines = [];
@@ -827,15 +819,48 @@ module Shumway.GFX {
       while (textRunData.position < textRunData.length) {
         var beginIndex = textRunData.readInt();
         var endIndex = textRunData.readInt();
+
         var size = textRunData.readInt();
         var fontId = textRunData.readInt();
+        var fontName:string;
+        if (fontId) {
+          fontName = 'swffont' + fontId;
+        } else {
+          fontName = textRunData.readUTF();
+        }
+
         var ascent = textRunData.readInt();
         var descent = textRunData.readInt();
         var leading = textRunData.readInt();
+        if (ascent > maxAscent) {
+          maxAscent = ascent;
+        }
+        if (descent > maxDescent) {
+          maxDescent = descent;
+        }
+        if (leading > maxLeading) {
+          maxLeading = leading;
+        }
+
         var bold = textRunData.readBoolean();
         var italic = textRunData.readBoolean();
+        var boldItalic = '';
+        if (italic) {
+          boldItalic += 'italic';
+        }
+        if (bold) {
+          boldItalic += ' bold';
+        }
+        var font = boldItalic + ' ' + size + 'px ' + fontName;
+
         var color = textRunData.readInt();
+        var fillStyle = ColorUtilities.rgbToHex(color);
+
         var align = textRunData.readInt();
+        if (firstAlign === -1) {
+          firstAlign = align;
+        }
+
         var bullet = textRunData.readBoolean();
         //var display = textRunData.readInt();
         var indent = textRunData.readInt();
@@ -846,37 +871,6 @@ module Shumway.GFX {
         var rightMargin = textRunData.readInt();
         //var tabStops = textRunData.readInt();
         var underline = textRunData.readBoolean();
-
-        var fontName:string;
-        if (fontId) {
-          fontName = 'swffont' + fontId;
-        } else {
-          // Use Times Roman as the default device font for now.
-          fontName = 'Times Roman';
-          ascent = 0.75 * size;
-          descent = 0.25 * size;
-        }
-        if (ascent > maxAscent) {
-          maxAscent = ascent;
-        }
-        if (descent > maxDescent) {
-          maxDescent = descent;
-        }
-        if (leading > maxLeading) {
-          maxLeading = leading;
-        }
-        if (firstAlign === -1) {
-          firstAlign = align;
-        }
-        var boldItalic = '';
-        if (italic) {
-          boldItalic += 'italic';
-        }
-        if (bold) {
-          boldItalic += ' bold';
-        }
-        var font = boldItalic + ' ' + size + 'px ' + fontName;
-        var fillStyle = ColorUtilities.rgbToHex(color);
 
         var text = '';
         var eof = false;
@@ -923,7 +917,7 @@ module Shumway.GFX {
       var numLines = lines.length;
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
-        if (line.width < bounds.w) {
+        if (line.width < availableWidth) {
           switch (line.align) {
             case 0: // left
               break;
@@ -951,19 +945,19 @@ module Shumway.GFX {
       context.save();
       if (this._backgroundColor) {
         context.fillStyle = ColorUtilities.rgbaToCSSStyle(this._backgroundColor);
-        context.fillRect(0, 0, bounds.w, bounds.h);
+        context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
       }
       if (this._borderColor) {
         context.strokeStyle = ColorUtilities.rgbaToCSSStyle(this._borderColor);
         context.lineCap = 'square';
         context.lineWidth = 1;
-        context.strokeRect(0, 0, bounds.w, bounds.h);
+        context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
       }
 
-      context.translate(2, 2);
       context.beginPath();
-      context.rect(0, 0, bounds.w - 4, bounds.h - 4);
+      context.rect(bounds.x + 2, bounds.y + 2, bounds.w - 4, bounds.h - 4);
       context.clip();
+      context.translate(bounds.x + 2, bounds.y + 2);
 
       if (this._matrix) {
         var m = this._matrix;
