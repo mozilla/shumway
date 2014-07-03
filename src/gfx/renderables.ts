@@ -992,10 +992,10 @@ module Shumway.GFX {
           context.font = run.font;
           context.fillStyle = run.fillStyle;
           var text = run.text;
-          for (var j = 0; j < text.length; j++) {
+          for (var k = 0; k < text.length; k++) {
             var x = coords.readInt();
             var y = coords.readInt();
-            context.fillText(text[j], x, y);
+            context.fillText(text[k], x, y);
           }
         }
       }
