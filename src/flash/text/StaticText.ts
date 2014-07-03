@@ -40,17 +40,11 @@ module Shumway.AVM2.AS.flash.text {
       return this._textContent;
     }
 
-    private _text: string;
-
     _textContent: Shumway.TextContent;
-
-    set text(text: string) {
-      this._text = text;
-    }
 
     // AS -> JS Bindings
     get text(): string {
-      return this._text;
+      return this._textContent.plainText;
     }
   }
 }
