@@ -26,8 +26,6 @@ module Shumway.Remoting.GFX {
   import ShapeData = Shumway.ShapeData;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Stage = Shumway.GFX.Stage;
-  import Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
-  import Canvas2DStageRendererState = Shumway.GFX.Canvas2DStageRendererState;
 
   import Smoothing = Shumway.GFX.Smoothing;
   import PixelSnapping = Shumway.GFX.PixelSnapping;

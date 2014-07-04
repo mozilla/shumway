@@ -77,13 +77,7 @@ module Shumway.GFX {
     /**
      * Visit clip leave events.
      */
-    Clips        = 16,
-
-    /**
-     * Skip first node. This is useful for recursive visitors, where you want to do something when a node is visited and
-     * then recurse on its children.
-     */
-    SkipFirst    = 32
+    Clips        = 16
   }
 
   function getRandomIntInclusive(min: number, max: number): number {
@@ -246,9 +240,11 @@ module Shumway.GFX {
       super();
       this._bounds = new Rectangle(0, 0, w, h);
     }
+
     public setBounds(bounds: Rectangle) {
       this._bounds.set(bounds);
     }
+
     public getBounds(): Rectangle {
       return this._bounds;
     }

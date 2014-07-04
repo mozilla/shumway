@@ -18,12 +18,12 @@ module Shumway.GFX.Canvas2D {
     canvas: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
     private _regionAllocator: RegionAllocator.IRegionAllocator;
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement, regionAllocator: RegionAllocator.IRegionAllocator) {
       this.canvas = canvas;
       this.context = canvas.getContext("2d");
       this.w = canvas.width;
       this.h = canvas.height;
-      this._regionAllocator = new RegionAllocator.CompactAllocator(this.w, this.h);
+      this._regionAllocator = regionAllocator;
     }
     allocate(w: number, h: number): Canvas2DSurfaceRegion {
       var region = this._regionAllocator.allocate(w, h);

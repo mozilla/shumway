@@ -106,7 +106,6 @@ module Shumway.GFX {
      */
     public color: Color;
 
-
     /**
      * Used as a temporary array to avoid allocations.
      */
@@ -548,7 +547,6 @@ module Shumway.GFX {
       if (calculateTransform) {
         transformStack = [transform.clone()];
       }
-      var shouldSkipFirst = !!(visitorFlags & VisitorFlags.SkipFirst);
       var flagsStack: FrameFlags [] = [flags];
       while (frameStack.length > 0) {
         frame = frameStack.pop();
@@ -556,13 +554,7 @@ module Shumway.GFX {
           transform = transformStack.pop();
         }
         flags = flagsStack.pop() | frame._flags;
-        var result: VisitorFlags;
-        if (shouldSkipFirst) {
-          shouldSkipFirst = false;
-          result = VisitorFlags.Continue;
-        } else {
-          result = visitor(frame, transform, flags);
-        }
+        var result: VisitorFlags = visitor(frame, transform, flags);
         if (result === VisitorFlags.Continue) {
           if (frame instanceof FrameContainer) {
             frameContainer = <FrameContainer>frame;

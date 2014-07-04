@@ -66,16 +66,19 @@ module Shumway.GFX.Canvas2D {
       super(canvas, stage, options);
       var fillRule: FillRule = FillRule.NONZERO
       var context = this.context = canvas.getContext("2d");
-      this._viewport = new Rectangle(0, 0, context.canvas.width, context.canvas.height);
+      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
       this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
 
       this._surfaceRegionAllocator = new SurfaceRegionAllocator.SimpleAllocator (
         function () {
-          var canvas = document.createElement("canvas");
-          // document.getElementById("temporaryCanvasPanelContainer").appendChild(canvas);
-          canvas.width = canvas.height = 1024;
-          return new Canvas2DSurface(canvas);
+          var surfaceCanvas = document.createElement("canvas");
+          document.getElementById("scratchCanvasContainer").appendChild(surfaceCanvas);
+          surfaceCanvas.width = canvas.width;
+          surfaceCanvas.height = canvas.height;
+          return new Canvas2DSurface (
+            surfaceCanvas, new RegionAllocator.BucketAllocator(surfaceCanvas.width, surfaceCanvas.height)
+          );
         }
       );
     }
@@ -153,28 +156,75 @@ module Shumway.GFX.Canvas2D {
       context.restore();
     }
 
-    private _renderToTextureRegion(frame: Frame, transform: Matrix): Canvas2DSurfaceRegion {
+    /**
+     * Renders the frame into a temporary surface region in device coordinates clipped by the viewport.
+     */
+    private _renderToSurfaceRegion(frame: Frame, transform: Matrix, viewport: Rectangle): {
+        surfaceRegion: Canvas2DSurfaceRegion;
+        surfaceRegionBounds: Rectangle;
+        clippedBounds: Rectangle;
+      }
+    {
       var bounds = frame.getBounds();
-      var frameBoundsAABB = bounds.clone();
-      transform.transformRectangleAABB(frameBoundsAABB);
-      var surfaceRegion = <Canvas2DSurfaceRegion>(this._surfaceRegionAllocator.allocate(frameBoundsAABB.w, frameBoundsAABB.h));
+      var boundsAABB = bounds.clone();
+      transform.transformRectangleAABB(boundsAABB);
+      boundsAABB.snap();
+      var dx = boundsAABB.x;
+      var dy = boundsAABB.y;
+      var clippedBoundsAABB = boundsAABB.clone();
+      clippedBoundsAABB.intersect(viewport);
+      clippedBoundsAABB.snap();
+
+      dx += clippedBoundsAABB.x - boundsAABB.x;
+      dy += clippedBoundsAABB.y - boundsAABB.y;
+
+      var surfaceRegion = <Canvas2DSurfaceRegion>(this._surfaceRegionAllocator.allocate(clippedBoundsAABB.w, clippedBoundsAABB.h));
       var region = surfaceRegion.region;
+
+      // Region bounds may be smaller than the allocated surface region.
+      var surfaceRegionBounds = new Rectangle(region.x, region.y, clippedBoundsAABB.w, clippedBoundsAABB.h);
+
       var context = surfaceRegion.surface.context;
-      context.clearRect(region.x, region.y, region.w, region.h);
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      // Prepare region bounds for painting.
+      context.clearRect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
       transform = transform.clone();
-      transform.translate(region.x - frameBoundsAABB.x, region.y - frameBoundsAABB.y);
-      this._renderFrame(context, frame, transform, region, new Canvas2DStageRendererState(this._options));
-      return surfaceRegion;
+
+      transform.translate (
+        surfaceRegionBounds.x - dx,
+        surfaceRegionBounds.y - dy
+      );
+
+      // Clip region bounds so we don't paint outside.
+      context.save();
+      context.beginPath();
+      context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
+      context.clip();
+      // context.fillStyle = ColorStyle.randomStyle();
+      // context.fillRect(0, 0, 1000, 1000);
+      this._renderFrame(context, frame, transform, surfaceRegionBounds, new Canvas2DStageRendererState(this._options));
+      context.restore();
+      return {
+        surfaceRegion: surfaceRegion,
+        surfaceRegionBounds: surfaceRegionBounds,
+        clippedBounds: clippedBoundsAABB
+      };
     }
 
-    private _renderFrame(context: CanvasRenderingContext2D,
-                         root: Frame,
-                         transform: Matrix,
-                         viewport: Rectangle,
-                         state: Canvas2DStageRendererState,
-                         skipFirst: boolean = false) {
+    private _renderFrame (
+      context: CanvasRenderingContext2D,
+      root: Frame,
+      transform: Matrix,
+      viewport: Rectangle,
+      state: Canvas2DStageRendererState,
+      skipRoot: boolean = false) {
+
       var self = this;
       root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
+        if (skipRoot && root === frame) {
+          return VisitorFlags.Continue;
+        }
+
         var bounds = frame.getBounds();
 
         if (state.ignoreMask !== frame && frame.mask && !state.clipRegion) {
@@ -220,19 +270,37 @@ module Shumway.GFX.Canvas2D {
         var cullBounds = self._viewport.clone();
         inverseTransform.transformRectangleAABB(cullBounds);
 
-        var frameBoundsAABB = frame.getBounds().clone();
-        transform.transformRectangleAABB(frameBoundsAABB);
+        var boundsAABB = frame.getBounds().clone();
+        transform.transformRectangleAABB(boundsAABB);
+        boundsAABB.snap();
 
-        context.globalCompositeOperation = self._getCompositeOperation(frame.blendMode);
-        if (frame.blendMode !== BlendMode.Normal) {
-//          var textureRegion = self._renderToTextureRegion(frame, transform);
-//          context.drawImage(textureRegion.texture.canvas, 0, 0);
-//          textureRegion.region.allocator.free(textureRegion.region);
-//          return VisitorFlags.Skip;
+        if (frame !== root) {
+          context.globalCompositeOperation = self._getCompositeOperation(frame.blendMode);
+          if (frame.blendMode !== BlendMode.Normal) {
+            var result = self._renderToSurfaceRegion(frame, transform, viewport);
+            var surfaceRegion = result.surfaceRegion;
+            var surfaceRegionBounds = result.surfaceRegionBounds;
+            var clippedBounds = result.clippedBounds;
+            var region = surfaceRegion.region;
+            context.setTransform(1, 0, 0, 1, 0, 0);
+            context.drawImage (
+              surfaceRegion.surface.canvas,
+              surfaceRegionBounds.x,
+              surfaceRegionBounds.y,
+              surfaceRegionBounds.w,
+              surfaceRegionBounds.h,
+              clippedBounds.x,
+              clippedBounds.y,
+              surfaceRegionBounds.w,
+              surfaceRegionBounds.h
+            );
+            surfaceRegion.surface.free(surfaceRegion);
+            return VisitorFlags.Skip;
+          }
         }
 
         if (frame instanceof Shape) {
-          frame._previouslyRenderedAABB = frameBoundsAABB;
+          frame._previouslyRenderedAABB = boundsAABB;
           var shape = <Shape>frame;
           var bounds = shape.getBounds().clone();
           if (!bounds.isEmpty() && state.options.paintRenderable) {
@@ -248,7 +316,8 @@ module Shumway.GFX.Canvas2D {
           context.beginPath();
           context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
           context.clip();
-          self._renderFrame(context, frame, transform, frameBoundsAABB, state, true);
+          boundsAABB.intersect(viewport);
+          self._renderFrame(context, frame, transform, boundsAABB, state, true);
           context.restore();
           return VisitorFlags.Skip;
         } else if (state.options.paintBounds && frame instanceof FrameContainer) {
@@ -257,7 +326,7 @@ module Shumway.GFX.Canvas2D {
           context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
         }
         return VisitorFlags.Continue;
-      }, transform, FrameFlags.Empty, VisitorFlags.Clips | (skipFirst ? VisitorFlags.SkipFirst : 0));
+      }, transform, FrameFlags.Empty, VisitorFlags.Clips);
     }
 
     private _getCompositeOperation(blendMode: BlendMode): string {
