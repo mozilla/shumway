@@ -223,7 +223,7 @@ module Shumway.Timeline {
       if (tag.hasMaxLength) {
         symbol.maxChars = tag.maxLength;
       }
-      symbol.autoSize = flash.text.TextFieldAutoSize.fromNumber(tag.autoSize);
+      symbol.autoSize = tag.autoSize ? flash.text.TextFieldAutoSize.LEFT : flash.text.TextFieldAutoSize.NONE;
       symbol.variableName = tag.variableName;
       return symbol;
     }

@@ -664,6 +664,7 @@ module Shumway.GFX {
           if (wordWidth > spaceLeft) {
             do {
               currentLine.runs.push(run);
+              currentLine.width += run.width;
               run = new TextRun(run.font, run.fillStyle, '', 0, run.underline);
               var newLine = new TextLine();
               newLine.y = (currentLine.y + currentLine.descent + currentLine.leading + currentLine.ascent) | 0;
@@ -803,6 +804,9 @@ module Shumway.GFX {
             var line = wrappedLines[i];
             baseLinePos = line.y + line.descent + line.leading;
             lines.push(line);
+            if (line.width > maxWidth) {
+              maxWidth = line.width;
+            }
           }
         } else {
           lines.push(currentLine);
@@ -940,9 +944,9 @@ module Shumway.GFX {
 
     render(context: CanvasRenderingContext2D): void {
       enterTimeline("RenderableText.render");
-      var bounds = this._bounds;
-
       context.save();
+
+      var bounds = this._bounds;
       if (this._backgroundColor) {
         context.fillStyle = ColorUtilities.rgbaToCSSStyle(this._backgroundColor);
         context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
@@ -952,16 +956,6 @@ module Shumway.GFX {
         context.lineCap = 'square';
         context.lineWidth = 1;
         context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
-      }
-
-      context.beginPath();
-      context.rect(bounds.x + 2, bounds.y + 2, bounds.w - 4, bounds.h - 4);
-      context.clip();
-      context.translate(bounds.x + 2, bounds.y + 2);
-
-      if (this._matrix) {
-        var m = this._matrix;
-        context.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
       }
 
       if (this._coords) {
@@ -975,6 +969,10 @@ module Shumway.GFX {
     }
 
     private _renderChars(context: CanvasRenderingContext2D) {
+      if (this._matrix) {
+        var m = this._matrix;
+        context.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+      }
       var lines = this.lines;
       var coords = this._coords;
       coords.position = 0;
@@ -986,10 +984,10 @@ module Shumway.GFX {
           context.font = run.font;
           context.fillStyle = run.fillStyle;
           var text = run.text;
-          for (var j = 0; j < text.length; j++) {
+          for (var k = 0; k < text.length; k++) {
             var x = coords.readInt();
             var y = coords.readInt();
-            context.fillText(text[j], x, y);
+            context.fillText(text[k], x, y);
           }
         }
       }
@@ -997,6 +995,11 @@ module Shumway.GFX {
 
     private _renderLines(context: CanvasRenderingContext2D) {
       // TODO: Render bullet points.
+      var bounds = this._bounds;
+      context.beginPath();
+      context.rect(bounds.x + 2, bounds.y + 2, bounds.w - 4, bounds.h - 4);
+      context.clip();
+      context.translate(bounds.x + 2, bounds.y + 2);
       var lines = this.lines;
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
