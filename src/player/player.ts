@@ -133,6 +133,7 @@ module Shumway.Player {
           }
 
           var root = loader.content;
+          stage._loaderInfo = loaderInfo;
           stage.frameRate = loaderInfo.frameRate;
           stage.stageWidth = loaderInfo.width;
           stage.stageHeight = loaderInfo.height;
