@@ -44,7 +44,6 @@ module Shumway.AVM2.AS.flash.display {
           self._root = self;
         }
         if (symbol.numFrames) {
-          release || assert (symbol.frames.length === 1, "Sprites have exactly one frame.");
           var frame = symbol.frames[0];
           release || assert (frame, "Initial frame is not defined.");
           self._initializeChildren(frame);
