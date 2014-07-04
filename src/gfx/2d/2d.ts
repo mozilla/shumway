@@ -2,7 +2,7 @@
 
 
 
-module Shumway.GFX {
+module Shumway.GFX.Canvas2D {
 
   declare var FILTERS;
 
@@ -22,88 +22,6 @@ module Shumway.GFX {
     EVENODD
   }
 
-  var originalSave = CanvasRenderingContext2D.prototype.save;
-  var originalClip = CanvasRenderingContext2D.prototype.clip;
-  var originalFill = CanvasRenderingContext2D.prototype.fill;
-  var originalStroke = CanvasRenderingContext2D.prototype.stroke;
-  var originalRestore = CanvasRenderingContext2D.prototype.restore;
-  var originalBeginPath = CanvasRenderingContext2D.prototype.beginPath;
-
-  function debugSave() {
-    if (this.stackDepth === undefined) {
-      this.stackDepth = 0;
-    }
-    if (this.clipStack === undefined) {
-      this.clipStack = [0];
-    } else {
-      this.clipStack.push(0);
-    }
-    this.stackDepth ++;
-    originalSave.call(this);
-  }
-
-  function debugRestore() {
-    this.stackDepth --;
-    this.clipStack.pop();
-    originalRestore.call(this);
-  }
-
-  function debugFill() {
-    assert(!this.buildingClippingRegionDepth);
-    originalFill.apply(this, arguments);
-  }
-
-  function debugStroke() {
-    assert(debugClipping.value || !this.buildingClippingRegionDepth);
-    originalStroke.apply(this, arguments);
-  }
-
-  function debugBeginPath() {
-    originalBeginPath.call(this);
-  }
-
-  function debugClip() {
-    if (this.clipStack === undefined) {
-      this.clipStack = [0];
-    }
-    this.clipStack[this.clipStack.length - 1] ++;
-    if (debugClipping.value) {
-      this.strokeStyle = ColorStyle.Pink;
-      this.stroke.apply(this, arguments);
-    } else {
-      originalClip.apply(this, arguments);
-    }
-  }
-
-  export function notifyReleaseChanged() {
-    if (release) {
-      CanvasRenderingContext2D.prototype.save = originalSave;
-      CanvasRenderingContext2D.prototype.clip = originalClip;
-      CanvasRenderingContext2D.prototype.fill = originalFill;
-      CanvasRenderingContext2D.prototype.stroke = originalStroke;
-      CanvasRenderingContext2D.prototype.restore = originalRestore;
-      CanvasRenderingContext2D.prototype.beginPath = originalBeginPath;
-    } else {
-      CanvasRenderingContext2D.prototype.save = debugSave;
-      CanvasRenderingContext2D.prototype.clip = debugClip;
-      CanvasRenderingContext2D.prototype.fill = debugFill;
-      CanvasRenderingContext2D.prototype.stroke = debugStroke;
-      CanvasRenderingContext2D.prototype.restore = debugRestore;
-      CanvasRenderingContext2D.prototype.beginPath = debugBeginPath;
-    }
-  }
-
-  CanvasRenderingContext2D.prototype.enterBuildingClippingRegion = function () {
-    if (!this.buildingClippingRegionDepth) {
-      this.buildingClippingRegionDepth = 0;
-    }
-    this.buildingClippingRegionDepth ++;
-  };
-
-  CanvasRenderingContext2D.prototype.leaveBuildingClippingRegion = function () {
-    this.buildingClippingRegionDepth --;
-  };
-
   function findIntersectingIndex(rectangle: Rectangle, others: Rectangle []): number {
     for (var i = 0; i < others.length; i++) {
       if (others[i] && others[i].intersects(rectangle)) {
@@ -111,36 +29,6 @@ module Shumway.GFX {
       }
     }
     return -1;
-  }
-
-  export class Canvas2DTextureRegion implements ITextureRegion {
-    constructor (
-      public texture: Canvas2DTexture,
-      public region: RegionAllocator.Region) {
-      // ...
-    }
-  }
-
-  export class Canvas2DTexture implements ITexture {
-    w: number;
-    h: number;
-    canvas: HTMLCanvasElement;
-    context: CanvasRenderingContext2D;
-    private _regionAllocator: RegionAllocator.IRegionAllocator;
-    constructor(canvas: HTMLCanvasElement) {
-      this.canvas = canvas;
-      this.context = canvas.getContext("2d");
-      this.w = canvas.width;
-      this.h = canvas.height;
-      this._regionAllocator = new RegionAllocator.CompactAllocator(this.w, this.h);
-    }
-    allocate(w: number, h: number): Canvas2DTextureRegion {
-      var region = this._regionAllocator.allocate(w, h);
-      if (region) {
-        return new Canvas2DTextureRegion(this, region);
-      }
-      return null;
-    }
   }
 
   export class Canvas2DStageRendererOptions extends StageRendererOptions {
@@ -168,7 +56,7 @@ module Shumway.GFX {
     context: CanvasRenderingContext2D;
     count = 0;
 
-    private _textureRegionAllocator: TextureRegionAllocator.ITextureRegionAllocator;
+    private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
     private _scratchCanvas: HTMLCanvasElement;
     private _scratchCanvasContext: CanvasRenderingContext2D;
 
@@ -182,12 +70,12 @@ module Shumway.GFX {
       this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
 
-      this._textureRegionAllocator = new TextureRegionAllocator.SimpleAllocator (
+      this._surfaceRegionAllocator = new SurfaceRegionAllocator.SimpleAllocator (
         function () {
           var canvas = document.createElement("canvas");
           // document.getElementById("temporaryCanvasPanelContainer").appendChild(canvas);
           canvas.width = canvas.height = 1024;
-          return new Canvas2DTexture(canvas);
+          return new Canvas2DSurface(canvas);
         }
       );
     }
@@ -265,18 +153,18 @@ module Shumway.GFX {
       context.restore();
     }
 
-    private _renderToTextureRegion(frame: Frame, transform: Matrix): Canvas2DTextureRegion {
+    private _renderToTextureRegion(frame: Frame, transform: Matrix): Canvas2DSurfaceRegion {
       var bounds = frame.getBounds();
       var frameBoundsAABB = bounds.clone();
       transform.transformRectangleAABB(frameBoundsAABB);
-      var textureRegion = <Canvas2DTextureRegion>(this._textureRegionAllocator.allocate(frameBoundsAABB.w, frameBoundsAABB.h));
-      var region = textureRegion.region;
-      var context = textureRegion.texture.context;
+      var surfaceRegion = <Canvas2DSurfaceRegion>(this._surfaceRegionAllocator.allocate(frameBoundsAABB.w, frameBoundsAABB.h));
+      var region = surfaceRegion.region;
+      var context = surfaceRegion.surface.context;
       context.clearRect(region.x, region.y, region.w, region.h);
       transform = transform.clone();
       transform.translate(region.x - frameBoundsAABB.x, region.y - frameBoundsAABB.y);
       this._renderFrame(context, frame, transform, region, new Canvas2DStageRendererState(this._options));
-      return textureRegion;
+      return surfaceRegion;
     }
 
     private _renderFrame(context: CanvasRenderingContext2D,

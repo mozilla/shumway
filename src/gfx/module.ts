@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 /// <reference path='references.ts'/>
 module Shumway.GFX {
   export enum TraceLevel {
@@ -92,5 +90,20 @@ module Shumway.GFX {
         originalFill.call(this, path, fillRule);
       }
     });
+  }
+}
+
+module Shumway.GFX {
+
+  export interface ISurface {
+    w: number;
+    h: number;
+    allocate(w: number, h: number): ISurfaceRegion;
+    free(surfaceRegion: ISurfaceRegion);
+  }
+
+  export interface ISurfaceRegion {
+    surface: ISurface;
+    region: RegionAllocator.Region;
   }
 }

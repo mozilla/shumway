@@ -40,7 +40,7 @@ for (var option in stateDefaults) {
 
 function setRelease(release) {
   window.release = release;
-  Shumway.GFX.notifyReleaseChanged();
+  Shumway.GFX.Canvas2D.notifyReleaseChanged();
 }
 
 setRelease(state.release);

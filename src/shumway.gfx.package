@@ -34,8 +34,11 @@ build/ts/gfx/renderables.js
 build/ts/gfx/filters.js
 build/ts/gfx/gl/core.js
 build/ts/gfx/gl/glContext.js
+build/ts/gfx/gl/surface.js
 build/ts/gfx/gl/gl.js
 build/ts/gfx/gl/brush.js
+build/ts/gfx/2d/debug.js
+build/ts/gfx/2d/surface.js
 build/ts/gfx/2d/2d.js
 build/ts/gfx/easel.js
 #build/ts/gfx/glTests.js

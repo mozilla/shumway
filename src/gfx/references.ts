@@ -34,24 +34,15 @@
 /// <reference path='filters.ts'/>
 /// <reference path='gl/glContext.ts'/>
 /// <reference path='gl/core.ts'/>
+/// <reference path='gl/surface.ts'/>
 /// <reference path='gl/gl.ts'/>
 /// <reference path='gl/brush.ts'/>
+/// <reference path='2d/debug.ts'/>
+/// <reference path='2d/surface.ts'/>
 /// <reference path='2d/2d.ts'/>
 /// <reference path='dom/dom.ts'/>
 /// <reference path='easel.ts'/>
 /// <reference path='debug/tree.ts'/>
-
-interface WebGLFramebuffer {
-  texture: WebGLTexture;
-}
-
-interface WebGLTexture {
-  w: number;
-  h: number;
-  atlas: Shumway.GFX.GL.WebGLTextureAtlas;
-  framebuffer: WebGLFramebuffer;
-  regions: Shumway.GFX.GL.WebGLTextureRegion [];
-}
 
 interface WebGLActiveInfo {
   location: any;
@@ -102,4 +93,3 @@ declare class Path2D {
   arcTo(x1: number, y1: number, x2: number, y2: number, radius: number): void;
   closePath(): void;
 }
-

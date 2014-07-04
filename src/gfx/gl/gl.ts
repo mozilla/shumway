@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway.GFX.GL {
+module Shumway.GFX.WebGL {
   import Color = Shumway.Color;
   var SCRATCH_CANVAS_SIZE = 1024 * 2;
 
@@ -53,8 +53,8 @@ module Shumway.GFX.GL {
   import degreesToRadian = Geometry.degreesToRadian;
 
   export class WebGLStageRendererOptions extends StageRendererOptions {
-    maxTextures: number = 8;
-    maxTextureSize: number = 2048 * 2;
+    maxSurfaces: number = 8;
+    maxSurfaceSize: number = 2048 * 2;
     perspectiveCamera: boolean;
     perspectiveCameraDistance: number;
     perspectiveCameraFOV: number;
@@ -66,12 +66,12 @@ module Shumway.GFX.GL {
      * Sometimes it's useful to temporarily disable texture uploads to see if rendering
      * is texture upload bound.
      */
-    disableTextureUploads: boolean = false;
+    disableSurfaceUploads: boolean = false;
     frameSpacing: number = 0.0001;
     ignoreColorMatrix: boolean = false;
     drawTiles: boolean;
-    drawTextures: boolean = false;
-    drawTexture: number = -1;
+    drawSurfaces: boolean = false;
+    drawSurface: number = -1;
 
     premultipliedAlpha: boolean = false;
     unpackPremultiplyAlpha: boolean = true;
@@ -86,7 +86,6 @@ module Shumway.GFX.GL {
     _context: WebGLContext;
 
     private _brush: WebGLCombinedBrush;
-    private _filterBrush: WebGLFilterBrush;
     private _stencilBrush: WebGLCombinedBrush;
 
     private _tmpVertices: Vertex [] = Vertex.createEmptyVertices(Vertex, 64);
@@ -143,7 +142,7 @@ module Shumway.GFX.GL {
       this._context._resize();
     }
 
-    private _cacheImageCallback(oldTextureRegion: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
+    private _cacheImageCallback(oldSurfaceRegion: WebGLSurfaceRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLSurfaceRegion {
       /*
        * To avoid seeming caused by linear texture sampling we need to pad each atlased image with a 1 pixel border that duplicates
        * edge pixels, similar to CLAMP_TO_EDGE
@@ -192,73 +191,14 @@ module Shumway.GFX.GL {
       this._uploadCanvasContext.drawImage(src.canvas, sx,         sy, 1, h, 0,     1, 1, h);
       this._uploadCanvasContext.drawImage(src.canvas, sx + w - 1, sy, 1, h, w + 1, 1, 1, h);
 
-      if (!oldTextureRegion || !oldTextureRegion.texture) {
+      if (!oldSurfaceRegion || !oldSurfaceRegion.surface) {
         return this._context.cacheImage(this._uploadCanvas);
       } else {
-        if (!this._options.disableTextureUploads) {
-          this._context.updateTextureRegion(this._uploadCanvas, oldTextureRegion);
+        if (!this._options.disableSurfaceUploads) {
+          this._context.updateSurfaceRegion(this._uploadCanvas, oldSurfaceRegion);
         }
-        return oldTextureRegion;
+        return oldSurfaceRegion;
       }
-    }
-
-    private _renderFrameIntoTextureRegion(frame: Frame, matrix: Matrix): WebGLTextureRegion {
-      var context = this._context;
-      var bounds = frame.getBounds().clone();
-      matrix.transformRectangleAABB(bounds);
-      bounds.snap();
-      var textureRegion = context.allocateTextureRegion(Math.ceil(bounds.w), Math.ceil(bounds.h));
-      if (!textureRegion) {
-        debugger;
-        textureRegion = context.allocateTextureRegion(bounds.w, bounds.h);
-      }
-      // context.clearTextureRegion(textureRegion, Color.randomColor(0.5));
-      context.clearTextureRegion(textureRegion, Color.None);
-      var brush = new WebGLCombinedBrush(context, new WebGLGeometry(context), textureRegion.texture);
-      var region = textureRegion.region;
-      matrix = matrix.clone();
-      matrix.translate(region.x - bounds.x, region.y - bounds.y);
-//
-//      var transform = Matrix.createIdentity();
-//      var v = Math.abs(Math.sin(Date.now() / 1000) * (1024 * 4));
-//      transform.translate(v, v);
-      // transform.translate(Math.sin(Date.now() / 10000) * 100, 0);
-      var r = Rectangle.createSquare(1024 * 8);
-      this._renderFrame(frame, matrix, brush, r);
-      brush.flush();
-      return textureRegion;
-
-//      context.clearTextureRegion(self._layerTextureRegion);
-//      var bounds = frame.getBounds();
-//      var frameBoundsAABB = bounds.clone();
-//      transform.transformRectangleAABB(frameBoundsAABB);
-//      context.setTarget(self._layerTextureRegion.texture);
-//      var layerBrush = new WebGLCombinedBrush(context, new WebGLGeometry(context), self._layerTextureRegion.texture);
-//      self._renderFrame(frame, transform, layerBrush, 0);
-//      layerBrush.flush();
-//      // var m = Matrix.createIdentity().translate(frameBoundsAABB.x, frameBoundsAABB.y);
-//      var m = Matrix.createIdentity();
-//      var src = new WebGLTextureRegion(self._layerTextureRegion.texture, <RegionAllocator.Region>frameBoundsAABB);
-//      if (!brush.drawImage(src, frameBoundsAABB, new Color(1, 1, 1, alpha), colorTransform, m, depth, frame.blendMode)) {
-//        unexpected();
-//      }
-//
-    }
-
-    private _renderFrameLayer(frame: Frame, matrix: Matrix, brush: WebGLCombinedBrush) {
-      var textureRegion = this._renderFrameIntoTextureRegion(frame, matrix);
-
-      var bounds = frame.getBounds().clone();
-      matrix.transformRectangleAABB(bounds);
-      bounds.snap();
-
-      var m = Matrix.createIdentity();
-      var alpha = frame.getConcatenatedAlpha();
-      var colorMatrix = frame.getConcatenatedColorMatrix();
-      if (!brush.drawImage(textureRegion, bounds, new Color(1, 1, 1, alpha), colorMatrix, m, 0, frame.blendMode)) {
-        unexpected();
-      }
-      this._context.freeTextureRegion(textureRegion);
     }
 
     private _enterClip(clip: Frame, matrix: Matrix, brush: WebGLCombinedBrush, viewport: Rectangle) {
@@ -336,11 +276,11 @@ module Shumway.GFX.GL {
             }
             brush.fillRectangle(bounds, frame.color, matrix, depth);
           }
-          if (frame !== root && frame.blendMode !== BlendMode.Normal) {
-            self._renderFrameLayer(frame, matrix, brush);
-            // self._renderFrameIntoTextureRegion(frame, transform);
-            return VisitorFlags.Skip;
-          }
+//          if (frame !== root && frame.blendMode !== BlendMode.Normal) {
+//            // self._renderFrameLayer(frame, matrix, brush);
+//            // self._renderFrameIntoTextureRegion(frame, transform);
+//            return VisitorFlags.Skip;
+//          }
         } else if (frame instanceof Shape) {
           if (frame.blendMode !== BlendMode.Normal) {
             if (!WebGLContext.glSupportedBlendMode(frame.blendMode)) {
@@ -369,9 +309,9 @@ module Shumway.GFX.GL {
               tileMatrix.scale(1 / tile.scale, 1 / tile.scale);
               tileMatrix.translate(bounds.x, bounds.y);
               tileMatrix.concat(matrix);
-              var src = <WebGLTextureRegion>(tile.cachedTextureRegion);
-              if (src && src.texture) {
-                context._textureRegionCache.use(src);
+              var src = <WebGLSurfaceRegion>(tile.cachedSurfaceRegion);
+              if (src && src.surface) {
+                context._surfaceRegionCache.use(src);
               }
               var color = new Color(1, 1, 1, alpha);
               if (options.paintFlashing) {
@@ -394,31 +334,31 @@ module Shumway.GFX.GL {
       }, matrix, FrameFlags.Empty, VisitorFlags.Clips);
     }
 
-    private _renderTextures(brush: WebGLCombinedBrush) {
+    private _renderSurfaces(brush: WebGLCombinedBrush) {
       var options = this._options;
       var context = this._context;
       var viewport = this._viewport;
-      if (options.drawTextures) {
-        var textures = context.getTextures();
+      if (options.drawSurfaces) {
+        var surfaces = context.surfaces;
         var matrix = Matrix.createIdentity();
-        if (options.drawTexture >= 0 && options.drawTexture < textures.length) {
-          var texture = textures[options.drawTexture | 0];
-          var src = new Rectangle(0, 0, texture.w, texture.h);
+        if (options.drawSurface >= 0 && options.drawSurface < surfaces.length) {
+          var surface = surfaces[options.drawSurface | 0];
+          var src = new Rectangle(0, 0, surface.w, surface.h);
           var dst = src.clone();
           while(dst.w > viewport.w) {
             dst.scale(0.5, 0.5);
           }
-          brush.drawImage(new WebGLTextureRegion(texture, src), dst, Color.White, null, matrix, 0.2);
+          brush.drawImage(new WebGLSurfaceRegion(surface, <RegionAllocator.Region>src), dst, Color.White, null, matrix, 0.2);
         } else {
-          var textureWindowSize = viewport.w / 5;
-          if (textureWindowSize > viewport.h / textures.length) {
-            textureWindowSize = viewport.h / textures.length;
+          var surfaceWindowSize = viewport.w / 5;
+          if (surfaceWindowSize > viewport.h / surfaces.length) {
+            surfaceWindowSize = viewport.h / surfaces.length;
           }
-          brush.fillRectangle(new Rectangle(viewport.w - textureWindowSize, 0, textureWindowSize, viewport.h), new Color(0, 0, 0, 0.5), matrix, 0.1);
-          for (var i = 0; i < textures.length; i++) {
-            var texture = textures[i];
-            var textureWindow = new Rectangle(viewport.w - textureWindowSize, i * textureWindowSize, textureWindowSize, textureWindowSize);
-            brush.drawImage(new WebGLTextureRegion(texture, <RegionAllocator.Region>new Rectangle(0, 0, texture.w, texture.h)), textureWindow, Color.White, null, matrix, 0.2);
+          brush.fillRectangle(new Rectangle(viewport.w - surfaceWindowSize, 0, surfaceWindowSize, viewport.h), new Color(0, 0, 0, 0.5), matrix, 0.1);
+          for (var i = 0; i < surfaces.length; i++) {
+            var surface = surfaces[i];
+            var surfaceWindow = new Rectangle(viewport.w - surfaceWindowSize, i * surfaceWindowSize, surfaceWindowSize, surfaceWindowSize);
+            brush.drawImage(new WebGLSurfaceRegion(surface, <RegionAllocator.Region>new Rectangle(0, 0, surface.w, surface.h)), surfaceWindow, Color.White, null, matrix, 0.2);
           }
         }
         brush.flush();
@@ -463,9 +403,7 @@ module Shumway.GFX.GL {
         brush.flush();
       }
 
-      this._renderTextures(brush);
+      this._renderSurfaces(brush);
     }
   }
-
-
 }

@@ -20,24 +20,14 @@ module Shumway.GFX {
   import assert = Shumway.Debug.assert;
   import Rectangle = Geometry.Rectangle;
 
-  export interface ITexture {
-    w: number;
-    h: number;
-    allocate(w: number, h: number): ITextureRegion;
-  }
-
-  export interface ITextureRegion {
-    texture: ITexture;
-    region: RegionAllocator.Region;
-  }
 
   /**
    * Various 2D rectangular region allocators. These are used to manage
-   * areas of textures, 2D Canvases or WebGL textures. Each allocator
+   * areas of surfaces, 2D Canvases or WebGL surfaces. Each allocator
    * implements the |IRegionAllocator| interface and must provied two
    * methods to allocate and free regions.
    *
-   * CompactAllocator: Good for tightly packed texture atlases but becomes
+   * CompactAllocator: Good for tightly packed surface atlases but becomes
    * fragmented easily. Allocation / freeing cost is high and should only
    * be used for long lived regions.
    *
@@ -323,46 +313,54 @@ module Shumway.GFX {
     }
   }
 
-  export module TextureRegionAllocator {
-    export interface ITextureRegionAllocator {
+  export module SurfaceRegionAllocator {
+    export interface ISurfaceRegionAllocator {
+      /**
+       * Used surfaces.
+       */
+      surfaces: ISurface [];
+
       /**
        * Allocates a 2D region.
        */
-      allocate(w: number, h: number): ITextureRegion;
+      allocate(w: number, h: number): ISurfaceRegion;
 
       /**
        * Frees the specified region.
        */
-      free(region: ITextureRegion);
+      free(region: ISurfaceRegion);
     }
 
-    export class SimpleAllocator implements ITextureRegionAllocator {
-      private _createTexture: () => ITexture;
-      private _textures: ITexture [];
+    export class SimpleAllocator implements ISurfaceRegionAllocator {
+      private _createSurface: () => ISurface;
+      private _surfaces: ISurface [];
 
-      constructor(createTexture: () => ITexture) {
-        this._createTexture = createTexture;
-        this._textures = [];
+      public get surfaces(): ISurface [] {
+        return this._surfaces;
       }
 
-      private _createNewTexture(): ITexture {
-        var texture = this._createTexture();
-        this._textures.push(texture);
-        return texture;
+      constructor(createSurface: () => ISurface) {
+        this._createSurface = createSurface;
+        this._surfaces = [];
       }
 
-      allocate(w: number, h: number): ITextureRegion {
-        for (var i = 0; i < this._textures.length; i++) {
-          var region = this._textures[i].allocate(w, h);
+      private _createNewSurface(): ISurface {
+        var surface = this._createSurface();
+        this._surfaces.push(surface);
+        return surface;
+      }
+
+      allocate(w: number, h: number): ISurfaceRegion {
+        for (var i = 0; i < this._surfaces.length; i++) {
+          var region = this._surfaces[i].allocate(w, h);
           if (region) {
             return region;
           }
         }
-        var texture = this._createNewTexture();
-        return texture.allocate(w, h);
+        return this._createNewSurface().allocate(w, h);
       }
 
-      free(region: ITextureRegion) {
+      free(region: ISurfaceRegion) {
 
       }
     }

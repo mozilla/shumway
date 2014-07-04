@@ -50,10 +50,10 @@ module Shumway.GFX {
 
   export var drawTiles = webGLOptions.register(new Option("", "drawTiles", "boolean", false, "Draw WebGL Tiles"));
 
-  export var drawTextures = webGLOptions.register(new Option("", "drawTextures", "boolean", false, "Draw WebGL Textures."));
-  export var drawTexture = webGLOptions.register(new Option("", "drawTexture", "number", -1, "Draw WebGL Texture #"));
+  export var drawSurfaces = webGLOptions.register(new Option("", "drawSurfaces", "boolean", false, "Draw WebGL Surfaces."));
+  export var drawSurface = webGLOptions.register(new Option("", "drawSurface", "number", -1, "Draw WebGL Surface #"));
   export var drawElements = webGLOptions.register(new Option("", "drawElements", "boolean", true, "Actually call gl.drawElements. This is useful to test if the GPU is the bottleneck."));
-  export var disableTextureUploads = webGLOptions.register(new Option("", "disableTextureUploads", "boolean", false, "Disable texture uploads."));
+  export var disableSurfaceUploads = webGLOptions.register(new Option("", "disableSurfaceUploads", "boolean", false, "Disable surface uploads."));
 
   export var premultipliedAlpha = webGLOptions.register(new Option("", "premultipliedAlpha", "boolean", false, "Set the premultipliedAlpha flag on getContext()."));
   export var unpackPremultiplyAlpha = webGLOptions.register(new Option("", "unpackPremultiplyAlpha", "boolean", true, "Use UNPACK_PREMULTIPLY_ALPHA_WEBGL in pixelStorei."));

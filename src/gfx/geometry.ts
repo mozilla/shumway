@@ -1414,7 +1414,7 @@ module Shumway.GFX.Geometry {
     index: number;
     scale: number;
     bounds: Rectangle;
-    cachedTextureRegion: ITextureRegion;
+    cachedSurfaceRegion: ISurfaceRegion;
     color: Shumway.Color;
     private _obb: OBB;
     private static corners = Point.createEmptyPoints(4);
@@ -1674,7 +1674,7 @@ module Shumway.GFX.Geometry {
         level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
       }
       var scale = pow2(level);
-      // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our texture caches ...
+      // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our surface caches ...
 
       if (this._source.hasFlags(RenderableFlags.Dynamic)) {
         // .. so try a lower scale level until it fits.
@@ -1715,14 +1715,14 @@ module Shumway.GFX.Geometry {
       query: Rectangle,
       transform: Matrix,
       scratchContext: CanvasRenderingContext2D,
-      cacheImageCallback: (old: ITextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ITextureRegion): Tile []  {
+      cacheImageCallback: (old: ISurfaceRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ISurfaceRegion): Tile []  {
       var scratchBounds = new Rectangle(0, 0, scratchContext.canvas.width, scratchContext.canvas.height);
       var tiles = this._getTilesAtScale(query, transform, scratchBounds);
       var uncachedTiles: Tile [];
       var source = this._source;
       for (var i = 0; i < tiles.length; i++) {
         var tile = tiles[i];
-        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || (source.hasFlags(RenderableFlags.Dynamic | RenderableFlags.Dirty))) {
+        if (!tile.cachedSurfaceRegion || !tile.cachedSurfaceRegion.surface || (source.hasFlags(RenderableFlags.Dynamic | RenderableFlags.Dirty))) {
           if (!uncachedTiles) {
             uncachedTiles = [];
           }
@@ -1757,7 +1757,7 @@ module Shumway.GFX.Geometry {
     private _cacheTiles (
       scratchContext: CanvasRenderingContext2D,
       uncachedTiles: Tile [],
-      cacheImageCallback: (old: ITextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ITextureRegion,
+      cacheImageCallback: (old: ISurfaceRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ISurfaceRegion,
       scratchBounds: Rectangle,
       maxRecursionDepth: number = 4) {
       release || assert (maxRecursionDepth > 0, "Infinite recursion is likely.");
@@ -1788,7 +1788,7 @@ module Shumway.GFX.Geometry {
           }
           remainingUncachedTiles.push(tile);
         }
-        tile.cachedTextureRegion = cacheImageCallback(tile.cachedTextureRegion, scratchContext, region);
+        tile.cachedSurfaceRegion = cacheImageCallback(tile.cachedSurfaceRegion, scratchContext, region);
       }
       if (remainingUncachedTiles) {
         // This is really dumb at the moment; if we have some tiles left over, partition the tile set in half and recurse.

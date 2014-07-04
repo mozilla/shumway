@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module Shumway.GFX.GL {
+module Shumway.GFX.WebGL {
   import Point = Geometry.Point;
   import Point3D = Geometry.Point3D;
   import Matrix = Geometry.Matrix;
@@ -34,7 +34,7 @@ module Shumway.GFX.GL {
   }
 
   export class WebGLContext {
-    private static MAX_TEXTURES = 8;
+    private static MAX_SURFACES = 8;
 
     public gl: WebGLRenderingContext;
     private _canvas: HTMLCanvasElement;
@@ -42,34 +42,27 @@ module Shumway.GFX.GL {
     private _w: number;
     private _h: number;
     private _programCache: {};
-    private _maxTextures: number;
-    private _maxTextureSize: number;
+    private _maxSurfaces: number;
+    private _maxSurfaceSize: number;
     public _backgroundColor: Color;
 
     private _geometry: WebGLGeometry;
     private _tmpVertices: Vertex [];
     private _fillColor: Color = Color.Red;
 
-    private _textures: WebGLTexture [];
-    _textureRegionCache: any = new LRUList<WebGLTextureRegion>();
-
-    private _isTextureMemoryAvailable:boolean = true;
+    _surfaceRegionCache: any = new LRUList<WebGLSurfaceRegion>();
 
     public modelViewProjectionMatrix: Matrix3D = Matrix3D.createIdentity();
 
-    public isTextureMemoryAvailable() {
-      return this._isTextureMemoryAvailable;
+    get surfaces(): WebGLSurface [] {
+      return <WebGLSurface []>(this._surfaceRegionAllocator.surfaces);
     }
-
-    getTextures(): WebGLTexture [] {
-      return this._textures;
-    }
-
-    scratch: WebGLTexture [];
 
     set fillStyle(value: any) {
       this._fillColor.set(Color.parseColor(value));
     }
+
+    private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
 
     constructor (canvas: HTMLCanvasElement, options: WebGLStageRendererOptions) {
       this._canvas = canvas;
@@ -92,15 +85,22 @@ module Shumway.GFX.GL {
       this._geometry = new WebGLGeometry(this);
       this._tmpVertices = Vertex.createEmptyVertices(Vertex, 64);
 
-      this._textures = [];
-      this._maxTextures = options.maxTextures;
-      this._maxTextureSize = options.maxTextureSize;
+      this._maxSurfaces = options.maxSurfaces;
+      this._maxSurfaceSize = options.maxSurfaceSize;
 
       // this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
       this.gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
       this.gl.enable(this.gl.BLEND);
       // this.gl.enable(this.gl.DEPTH_TEST);
       this.modelViewProjectionMatrix = Matrix3D.create2DProjection(this._w, this._h, 2000);
+
+      var self = this;
+      this._surfaceRegionAllocator = new SurfaceRegionAllocator.SimpleAllocator (
+        function () {
+          var texture = self._createTexture(1024, 1024);
+          return new WebGLSurface(1024, 1024, texture);
+        }
+      );
     }
 
     public setBlendMode (value: BlendMode) {
@@ -170,30 +170,35 @@ module Shumway.GFX.GL {
 
     private discardCachedImages() {
       traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Discard Cache");
-      var count = this._textureRegionCache.count / 2 | 0;
+      var count = this._surfaceRegionCache.count / 2 | 0;
       for (var i = 0; i < count; i++) {
-        var textureRegion = this._textureRegionCache.pop();
-        traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Discard: " + textureRegion);
-        textureRegion.texture.atlas.remove(textureRegion.region);
-        textureRegion.texture = null;
+        var surfaceRegion = this._surfaceRegionCache.pop();
+        traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Discard: " + surfaceRegion);
+        surfaceRegion.texture.atlas.remove(surfaceRegion.region);
+        surfaceRegion.texture = null;
       }
     }
 
-    public cacheImage(image: any): WebGLTextureRegion {
+    public cacheImage(image: any): WebGLSurfaceRegion {
       var w = image.width;
       var h = image.height;
-      var textureRegion = this.allocateTextureRegion(w, h);
-      traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Uploading Image: @ " + textureRegion.region);
-      this._textureRegionCache.use(textureRegion);
-      this.updateTextureRegion(image, textureRegion);
-      return textureRegion;
+      var surfaceRegion = this.allocateSurfaceRegion(w, h);
+      traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Uploading Image: @ " + surfaceRegion.region);
+      this._surfaceRegionCache.use(surfaceRegion);
+      this.updateSurfaceRegion(image, surfaceRegion);
+      return surfaceRegion;
     }
 
-    public allocateTextureRegion(w: number, h: number, discardCache: boolean = true): WebGLTextureRegion {
+    public allocateSurfaceRegion(w: number, h: number, discardCache: boolean = true): WebGLSurfaceRegion {
+      return <WebGLSurfaceRegion>this._surfaceRegionAllocator.allocate(w, h);
+    }
+
+    /*
+    public allocateTextureRegion(w: number, h: number, discardCache: boolean = true): WebGLSurfaceRegion {
       var imageIsTileSized = (w === h) && (w === TILE_SIZE);
       var texture, region;
-      for (var i = 0; i < this._textures.length; i++) {
-        texture = this._textures[i];
+      for (var i = 0; i < this._surfaces.length; i++) {
+        texture = this._surfaces[i];
         if (imageIsTileSized && texture.atlas.compact) {
           continue;
         }
@@ -206,7 +211,7 @@ module Shumway.GFX.GL {
         if (w >= this._maxTextureSize || h >= this._maxTextureSize) {
           // Region cannot possibly fit in the standard texture atlas.
           texture = this.createTexture(w, h, !imageIsTileSized);
-        } else if (this._textures.length === this._maxTextures) {
+        } else if (this._surfaces.length === this._maxTextures) {
           if (discardCache) {
             this.discardCachedImages();
             return this.allocateTextureRegion(w, h, false);
@@ -215,42 +220,20 @@ module Shumway.GFX.GL {
         } else {
           texture = this.createTexture(this._maxTextureSize, this._maxTextureSize, !imageIsTileSized);
         }
-        this._textures.push(texture);
+        this._surfaces.push(texture);
         region = texture.atlas.add(null, w, h);
         release || assert (region);
       }
-      return new WebGLTextureRegion(texture, region);
+      return new WebGLSurfaceRegion(texture, region);
     }
+    */
 
-    public freeTextureRegion(textureRegion: WebGLTextureRegion) {
-      if (textureRegion.region instanceof RegionAllocator.Region) {
-        var region = <RegionAllocator.Region>textureRegion.region;
-        textureRegion.texture.atlas.remove(region);
-      }
-    }
-
-    public updateTextureRegion(image: any, textureRegion: WebGLTextureRegion) {
+    public updateSurfaceRegion(image: any, surfaceRegion: WebGLSurfaceRegion) {
       var gl = this.gl;
-      gl.bindTexture(gl.TEXTURE_2D, textureRegion.texture);
+      gl.bindTexture(gl.TEXTURE_2D, surfaceRegion.surface.texture);
       enterTimeline("texSubImage2D");
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, textureRegion.region.x, textureRegion.region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
+      gl.texSubImage2D(gl.TEXTURE_2D, 0, surfaceRegion.region.x, surfaceRegion.region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
       leaveTimeline("texSubImage2D");
-    }
-
-    /**
-     * Find a texture with available space.
-     */
-    private recycleTexture(): WebGLTexture {
-      traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Recycling Texture");
-      // var texture: WebGLTexture = this._textures.shift();
-      var texture: WebGLTexture = this._textures.splice(Math.random() * this._textures.length | 0, 1)[0];
-      var regions = texture.regions;
-      for (var i = 0; i < regions.length; i++) {
-        regions[i].texture = null;
-      }
-      texture.atlas.reset();
-      frameCount("evictTexture");
-      return texture;
     }
 
     _resize() {
@@ -332,22 +315,15 @@ module Shumway.GFX.GL {
       return shader;
     }
 
-    public createTexture(w: number, h: number, compact: boolean): WebGLTexture {
+    private _createTexture(w: number, h: number): WebGLTexture {
       var gl = this.gl;
       var texture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-      texture.w = w;
-      texture.h = h;
-      texture.atlas = new WebGLTextureAtlas(this, texture, w, h, compact);
-      texture.framebuffer = this._createFramebuffer(texture);
-      texture.regions = [];
       return texture;
     }
 
@@ -357,7 +333,6 @@ module Shumway.GFX.GL {
       gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
       gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
       return framebuffer;
     }
 
@@ -378,11 +353,11 @@ module Shumway.GFX.GL {
       }
     }
 
-    public set target(target: WebGLTexture) {
+    public set target(surface: WebGLSurface) {
       var gl = this.gl;
-      if (target) {
-        gl.viewport(0, 0, target.w, target.h);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
+      if (surface) {
+        gl.viewport(0, 0, surface.w, surface.h);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, surface.framebuffer);
       } else {
         gl.viewport(0, 0, this._w, this._h);
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -395,10 +370,10 @@ module Shumway.GFX.GL {
       gl.clear(gl.COLOR_BUFFER_BIT);
     }
 
-    public clearTextureRegion(textureRegion: WebGLTextureRegion, color: Color = Color.None) {
+    public clearTextureRegion(surfaceRegion: WebGLSurfaceRegion, color: Color = Color.None) {
       var gl = this.gl;
-      var region = textureRegion.region;
-      this.target = textureRegion.texture;
+      var region = surfaceRegion.region;
+      this.target = surfaceRegion.surface;
       gl.enable(gl.SCISSOR_TEST);
       gl.scissor(region.x, region.y, region.w, region.h);
       gl.clearColor(color.r, color.g, color.b, color.a);
