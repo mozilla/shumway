@@ -26,6 +26,7 @@ limitations under the License.
     <div id="topToolbar" class="toolbarBox withEmphasis">
       <div class="toolbarLabel">Shumway Inspector <span id="message" class="toolbarMessage"></span></div>
       <div id="debugInfoToolbarTabs" class="toolbarButtonBar active">
+        <div id="showScratchCanvases" class="toolbarButton" data-panelid="scratchCanvasContainer">Scratch Canvases</div>
         <div id="showAsset" class="toolbarButton" data-panelid="assetListContainer">Assets</div>
         <div id="showDebugInfo" class="toolbarButton" data-panelid="debugInfoContainer">Debug Info</div>
         <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Frame Tree</div>
@@ -40,6 +41,9 @@ limitations under the License.
     </div>
 
     <div id="panelContainer">
+      <div id="scratchCanvasContainer" tabindex='1'>
+
+      </div>
       <div id="assetListContainer">
         <ul id="assetList"></ul>
       </div>

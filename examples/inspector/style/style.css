@@ -183,12 +183,12 @@ body.simple #stageContainer {
   border-bottom: 2px solid #F60;
 }
 
-#assetListContainer.active, #debugInfoContainer.active, #displayListContainer.active, #settingsContainer.active {
+#scratchCanvasContainer.active, #assetListContainer.active, #debugInfoContainer.active, #displayListContainer.active, #settingsContainer.active {
   display: block;
   background-color: rgba(0, 0, 0, 0.8);
 }
 
-#assetListContainer, #debugInfoContainer, #displayListContainer, #settingsContainer {
+#scratchCanvasContainer, #assetListContainer, #debugInfoContainer, #displayListContainer, #settingsContainer {
   display: none;
   position: absolute;
   width: 100%;
@@ -202,6 +202,18 @@ body.simple #stageContainer {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
+
+#scratchCanvasContainer {
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+#scratchCanvasContainer > canvas {
+  width: 100%;
+  border: 1px solid white;
+  margin: 1px;
+}
+
 
 #debugInfoContainer {
   overflow: hidden;
