@@ -985,8 +985,8 @@ module Shumway.GFX {
           context.fillStyle = run.fillStyle;
           var text = run.text;
           for (var k = 0; k < text.length; k++) {
-            var x = coords.readInt();
-            var y = coords.readInt();
+            var x = coords.readInt() / 20;
+            var y = coords.readInt() / 20;
             context.fillText(text[k], x, y);
           }
         }

@@ -117,7 +117,7 @@ module Shumway.Remoting.Player {
           var numCoords = coords.length;
           this.output.writeInt(numCoords);
           for (var i = 0; i < numCoords; i++) {
-            this.output.writeInt(coords[i] / 20);
+            this.output.writeInt(coords[i]);
           }
         } else {
           this.output.writeInt(0);
