@@ -28,8 +28,8 @@ module Shumway.SWF.Parser {
     var size = 12;
     var face = 'Times Roman';
     var color = 0;
-    var x = 0;
-    var y = 0;
+    var x = bbox.xMin;
+    var y = bbox.yMin;
     var i = 0;
     var record;
     var codes;
@@ -50,9 +50,15 @@ module Shumway.SWF.Parser {
       }
       if (record.hasMoveX) {
         x = record.moveX;
+        if (x < bbox.xMin) {
+          bbox.xMin = x;
+        }
       }
       if (record.hasMoveY) {
         y = record.moveY;
+        if (y < bbox.yMin) {
+          bbox.yMin = y;
+        }
       }
       var text = '';
       var entries = record.entries;

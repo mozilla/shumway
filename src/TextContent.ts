@@ -27,7 +27,8 @@ module Shumway {
     DirtyDimensions = 0x0001,
     DirtyContent    = 0x0002,
     DirtyStyle      = 0x0004,
-    Dirty           = DirtyDimensions | DirtyContent | DirtyStyle
+    DirtyFlow       = 0x0008,
+    Dirty           = DirtyDimensions | DirtyContent | DirtyStyle | DirtyFlow
   }
 
   export class TextContent implements Shumway.Remoting.IRemotable {
@@ -245,7 +246,7 @@ module Shumway {
       }
       this._autoSize = value;
       if (this._plainText) {
-        this.flags |= TextContentFlags.DirtyDimensions;
+        this.flags |= TextContentFlags.DirtyFlow;
       }
     }
 
@@ -259,7 +260,7 @@ module Shumway {
       }
       this._wordWrap = value;
       if (this._plainText) {
-        this.flags |= TextContentFlags.DirtyDimensions;
+        this.flags |= TextContentFlags.DirtyFlow;
       }
     }
 
@@ -285,6 +286,10 @@ module Shumway {
       }
       this._borderColor = value;
       this.flags |= TextContentFlags.DirtyStyle;
+    }
+
+    invalidateDimensions() {
+      this.flags |= TextContentFlags.DirtyDimensions;
     }
 
     private _writeTextRun(textRun: flash.text.TextRun) {
