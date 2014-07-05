@@ -1,5 +1,5 @@
 
-/// <reference path='../../utilities.ts' />
+/// <reference path='../references.ts' />
 /// <reference path='profile.ts' />
 /// <reference path='timelineFrame.ts' />
 /// <reference path='timelineBuffer.ts' />
@@ -11,7 +11,6 @@
 /// <reference path='flameChartHeader.ts' />
 /// <reference path='tracelogger/traceLogger.ts' />
 /// <reference path='tracelogger/thread.ts' />
-/// <reference path='../theme/ui.ts' />
 
 interface MouseWheelEvent extends MouseEvent {
   deltaX: number;
