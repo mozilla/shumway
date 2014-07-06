@@ -15,7 +15,7 @@
  */
 
 ///<reference path='../../build/ts/base.d.ts' />
-///<reference path='../tools/profiler/references.ts' />
+/// <reference path='../../build/ts/tools.d.ts' />
 
 ///<reference path='module.ts'/>
 ///<reference path='parser/references.ts' />

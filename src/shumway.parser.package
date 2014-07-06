@@ -3,9 +3,7 @@
 build/ts/swf/jpeg.js
 
 build/ts/base.js
-
-build/ts/tools/profiler/timelineFrame.js
-build/ts/tools/profiler/timelineBuffer.js
+build/ts/tools.js
 
 ## Load SWF Dependencies
 #!inline console.time("Load SWF Dependencies");

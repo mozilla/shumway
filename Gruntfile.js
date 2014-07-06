@@ -18,6 +18,8 @@
 
 module.exports = function(grunt) {
 
+  var commonArguments = 'node utils/typescript/tsc --target ES5 --sourcemap --removeComments -d --out build/ts/';
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     jshint: {
@@ -34,10 +36,13 @@ module.exports = function(grunt) {
         cmd: 'make -C extension/firefox/ build'
       },
       build_base_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --removeComments -d --out build/ts/base.js src/base/references.ts'
+        cmd: commonArguments + 'base.js src/base/references.ts'
+      },
+      build_tools_ts: {
+        cmd: commonArguments + 'tools.js src/tools/references.ts'
       },
       build_gfx_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/gfx/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts/gfx src/gfx/references.ts'
       },
       build_avm2_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm2/references.ts'
@@ -50,9 +55,6 @@ module.exports = function(grunt) {
       },
       build_player_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/player/references.ts'
-      },
-      build_tools_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/tools/references.ts'
       },
       build_avm1_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm1/references.ts'

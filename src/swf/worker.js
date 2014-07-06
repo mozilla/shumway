@@ -32,9 +32,7 @@ console.time("Load Parser Dependencies");
 load("../../build/ts/swf/jpeg.js");
 
 load("../../build/ts/base.js");
-
-load("../../build/ts/tools/profiler/timelineFrame.js");
-load("../../build/ts/tools/profiler/timelineBuffer.js");
+load("../../build/ts/tools.js");
 
 // Load SWF Dependencies
 console.time("Load SWF Dependencies");
