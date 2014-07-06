@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
+/// <reference path='../../build/ts/avm2.d.ts' />
+
 ///<reference path='stream.ts' />
 ///<reference path='parser.ts' />
 ///<reference path='analyze.ts' />
 ///<reference path='context.ts' />
 ///<reference path='interpreter.ts' />
+///<reference path='AS2Utils.ts' />
 
-///<reference path='../avm2/references.ts' />
+///<reference path='flash.d.ts' />
+
+///<reference path='../avm1lib/references.ts' />

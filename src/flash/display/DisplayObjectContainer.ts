@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Class: DisplayObjectContainer
+
+///<reference path='../references.ts' />
 module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
 
   import events = flash.events;
   import VisitorFlags = flash.display.VisitorFlags;

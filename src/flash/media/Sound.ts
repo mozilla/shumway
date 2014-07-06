@@ -19,6 +19,7 @@ module Shumway.AVM2.AS.flash.media {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Telemetry = Shumway.Telemetry;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
 
   var PLAY_USING_AUDIO_TAG = true;
 

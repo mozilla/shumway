@@ -243,7 +243,7 @@ module Shumway.AVM2.Verifier {
     }
   }
 
-  class AtomType extends Type {
+  export class AtomType extends Type {
     constructor(public name: string, public symbol: string) {
       super();
     }

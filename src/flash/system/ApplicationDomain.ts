@@ -20,6 +20,7 @@ module Shumway.AVM2.AS.flash.system {
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import ExecutionMode = Shumway.AVM2.Runtime.ExecutionMode;
   import RuntimeApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
 
   export class ApplicationDomain extends ASNative {
     static classInitializer: any = null;
