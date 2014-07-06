@@ -23,3 +23,4 @@
 ///<reference path='ShapeData.ts' />
 ///<reference path='SWFTags.ts' />
 ///<reference path='binaryFileReader.ts' />
+///<reference path='remoting.ts' />

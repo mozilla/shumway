@@ -46,6 +46,7 @@ module Shumway {
     new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
       AVM2.initialize(sysMode, appMode, avm1Path ? loadAVM1 : null);
       avm2 = AVM2.instance;
+      Shumway.AVM2.AS.linkNatives(avm2);
       console.time("Execute builtin.abc");
       // Avoid loading more Abcs while the builtins are loaded
       avm2.builtinsLoaded = false;

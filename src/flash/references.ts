@@ -18,7 +18,16 @@
 
 ///<reference path='../htmlparser.ts' />
 ///<reference path='../TextContent.ts' />
-///<reference path='../player/remoting.ts' />
+
+///<reference path='geom/Matrix.ts' />
+///<reference path='geom/Matrix3D.ts' />
+///<reference path='geom/Orientation3D.ts' />
+///<reference path='geom/PerspectiveProjection.ts' />
+///<reference path='geom/Point.ts' />
+///<reference path='geom/Rectangle.ts' />
+///<reference path='geom/Transform.ts' />
+///<reference path='geom/Utils3D.ts' />
+///<reference path='geom/Vector3D.ts' />
 
 ///<reference path='accessibility/Accessibility.ts' />
 ///<reference path='accessibility/AccessibilityImplementation.ts' />
@@ -89,22 +98,12 @@
 ///<reference path='display/InteractiveObject.ts' />
 ///<reference path='display/SimpleButton.ts' />
 ///<reference path='display/DisplayObjectContainer.ts' />
-///<reference path='display/Graphics.ts' />
-///<reference path='display/Sprite.ts' />
-///<reference path='display/MovieClip.ts' />
-///<reference path='display/Stage.ts' />
-
-///<reference path='display/ActionScriptVersion.ts' />
-///<reference path='display/BlendMode.ts' />
+///<reference path='display/JointStyle.ts' />
 ///<reference path='display/CapsStyle.ts' />
-///<reference path='display/ColorCorrection.ts' />
-///<reference path='display/ColorCorrectionSupport.ts' />
-///<reference path='display/FocusDirection.ts' />
-///<reference path='display/FrameLabel.ts' />
+///<reference path='display/LineScaleMode.ts' />
 ///<reference path='display/GradientType.ts' />
-///<reference path='display/BitmapData.ts' />
-///<reference path='display/BitmapDataChannel.ts' />
-///<reference path='display/BitmapEncodingColorSpace.ts' />
+///<reference path='display/SpreadMethod.ts' />
+///<reference path='display/InterpolationMethod.ts' />
 ///<reference path='display/GraphicsBitmapFill.ts' />
 ///<reference path='display/GraphicsEndFill.ts' />
 ///<reference path='display/GraphicsGradientFill.ts' />
@@ -115,17 +114,28 @@
 ///<reference path='display/GraphicsSolidFill.ts' />
 ///<reference path='display/GraphicsStroke.ts' />
 ///<reference path='display/GraphicsTrianglePath.ts' />
-///<reference path='display/IBitmapDrawable.ts' />
 ///<reference path='display/IDrawCommand.ts' />
 ///<reference path='display/IGraphicsData.ts' />
 ///<reference path='display/IGraphicsFill.ts' />
 ///<reference path='display/IGraphicsPath.ts' />
 ///<reference path='display/IGraphicsStroke.ts' />
-///<reference path='display/InterpolationMethod.ts' />
+///<reference path='display/Graphics.ts' />
+///<reference path='display/Sprite.ts' />
+///<reference path='display/MovieClip.ts' />
+///<reference path='display/Stage.ts' />
+
+///<reference path='display/ActionScriptVersion.ts' />
+///<reference path='display/BlendMode.ts' />
+///<reference path='display/ColorCorrection.ts' />
+///<reference path='display/ColorCorrectionSupport.ts' />
+///<reference path='display/FocusDirection.ts' />
+///<reference path='display/FrameLabel.ts' />
+///<reference path='display/BitmapData.ts' />
+///<reference path='display/BitmapDataChannel.ts' />
+///<reference path='display/BitmapEncodingColorSpace.ts' />
+///<reference path='display/IBitmapDrawable.ts' />
 ///<reference path='display/JPEGEncoderOptions.ts' />
 // ///<reference path='display/JPEGXREncoderOptions.ts' />
-///<reference path='display/JointStyle.ts' />
-///<reference path='display/LineScaleMode.ts' />
 ///<reference path='display/Loader.ts' />
 ///<reference path='display/LoaderInfo.ts' />
 ///<reference path='display/MorphShape.ts' />
@@ -142,7 +152,6 @@
 // ///<reference path='display/ShaderParameter.ts' />
 // ///<reference path='display/ShaderParameterType.ts' />
 // ///<reference path='display/ShaderPrecision.ts' />
-///<reference path='display/SpreadMethod.ts' />
 // ///<reference path='display/Stage3D.ts' />
 ///<reference path='display/StageAlign.ts' />
 ///<reference path='display/StageDisplayState.ts' />
@@ -194,16 +203,6 @@
 ///<reference path='filters/GradientGlowFilter.ts' />
 // ///<reference path='filters/ShaderFilter.ts' />
 ///<reference path='geom/ColorTransform.ts' />
-
-///<reference path='geom/Matrix.ts' />
-///<reference path='geom/Matrix3D.ts' />
-///<reference path='geom/Orientation3D.ts' />
-///<reference path='geom/PerspectiveProjection.ts' />
-///<reference path='geom/Point.ts' />
-///<reference path='geom/Rectangle.ts' />
-///<reference path='geom/Transform.ts' />
-///<reference path='geom/Utils3D.ts' />
-///<reference path='geom/Vector3D.ts' />
 
 // ///<reference path='globalization/Collator.ts' />
 // ///<reference path='globalization/CollatorMode.ts' />
@@ -316,9 +315,9 @@
 
 ///<reference path='text/AntiAliasType.ts' />
 // ///<reference path='text/CSMSettings.ts' />
-///<reference path='text/Font.ts' />
 ///<reference path='text/FontStyle.ts' />
 ///<reference path='text/FontType.ts' />
+///<reference path='text/Font.ts' />
 ///<reference path='text/GridFitType.ts' />
 ///<reference path='text/StaticText.ts' />
 ///<reference path='text/StyleSheet.ts' />
