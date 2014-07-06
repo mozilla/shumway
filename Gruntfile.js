@@ -57,7 +57,7 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'flash.js src/flash/references.ts'
       },
       build_player_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/player/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts/player src/player/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',
@@ -209,6 +209,13 @@ module.exports = function(grunt) {
   grunt.registerTask('shu', [
     'exec:build_playerglobal',
     'exec:build_avm1lib',
+    'exec:build_base_ts',
+    'exec:build_tools_ts',
+    'exec:build_gfx_ts',
+    'exec:build_swf_ts',
+    'exec:build_avm2_ts',
+    'exec:build_avm1_ts',
+    'exec:build_flash_ts',
     'exec:build_player_ts',
     'bundles',
     'exec:shell_test'

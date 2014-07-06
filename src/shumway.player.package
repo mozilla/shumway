@@ -5,10 +5,6 @@
 build/ts/base.js
 build/ts/tools.js
 
-build/ts/htmlparser.js
-
-build/ts/player/remoting.js
-
 #!inline console.timeEnd("Load Shared Dependencies");
 
 #!inline console.time("Load AVM2 Dependencies");
@@ -25,7 +21,6 @@ build/ts/player/module.js
 
 ## Load Flash TS Dependencies
 #!inline console.time("Load Flash TS Dependencies");
-build/ts/TextContent.js
 build/ts/flash.js
 #!inline console.timeEnd("Load Flash TS Dependencies");
 
@@ -36,11 +31,8 @@ build/ts/avm1.js
 #!inline console.timeEnd("Load AVM1 Dependencies");
 
 build/ts/player/options.js
-build/ts/player/timeline.js
 build/ts/player/remotingPlayer.js
 build/ts/player/player.js
 build/ts/player/avmLoader.js
-
-build/ts/flash/linker.js
 
 #!inline console.timeEnd("Load Player Dependencies");

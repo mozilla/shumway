@@ -1,10 +1,6 @@
 #!inline console.time("Load Shared Dependencies");
 
 build/ts/base.js
-build/ts/htmlparser.js
-
-build/ts/player/remoting.js
-
 build/ts/tools.js
 
 #!inline console.timeEnd("Load Shared Dependencies");

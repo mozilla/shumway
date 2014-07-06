@@ -41,10 +41,6 @@ console.time("Load Shared Dependencies");
 // DUP: load("../../build/ts/base.js");
 // DUP: load("../../build/ts/tools.js");
 
-load("../../build/ts/htmlparser.js");
-
-load("../../build/ts/player/remoting.js");
-
 console.timeEnd("Load Shared Dependencies");
 
 console.time("Load AVM2 Dependencies");
@@ -61,7 +57,6 @@ load("../../build/ts/player/module.js");
 
 // Load Flash TS Dependencies
 console.time("Load Flash TS Dependencies");
-load("../../build/ts/TextContent.js");
 load("../../build/ts/flash.js");
 console.timeEnd("Load Flash TS Dependencies");
 
@@ -72,12 +67,9 @@ load("../../build/ts/avm1.js");
 console.timeEnd("Load AVM1 Dependencies");
 
 load("../../build/ts/player/options.js");
-load("../../build/ts/player/timeline.js");
 load("../../build/ts/player/remotingPlayer.js");
 load("../../build/ts/player/player.js");
 load("../../build/ts/player/avmLoader.js");
-
-load("../../build/ts/flash/linker.js");
 
 console.timeEnd("Load Player Dependencies");
 

@@ -192,6 +192,7 @@ function createAVM2(builtinPath, libraryPathInfo, sysMode, appMode) {
   var buffer = read(builtinPath, 'binary');
   AVM2.initialize(sysMode, appMode, null);
   avm2 = AVM2.instance;
+  Shumway.AVM2.AS.linkNatives(avm2);
   console.time("Execute builtin.abc");
   // Avoid loading more Abcs while the builtins are loaded
   avm2.builtinsLoaded = false;
