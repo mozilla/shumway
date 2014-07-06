@@ -21,4 +21,5 @@
 ///<reference path='metrics.ts' />
 ///<reference path='dataBuffer.ts' />
 ///<reference path='ShapeData.ts' />
+///<reference path='SWFTags.ts' />
 ///<reference path='binaryFileReader.ts' />

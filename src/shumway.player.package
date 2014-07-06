@@ -71,7 +71,6 @@ build/ts/player/module.js
 #!inline Shumway.Player.enterTimeline("Load Flash TS Dependencies");
 
 build/ts/TextContent.js
-build/ts/SWFTags.js
 
 build/ts/flash/geom/Matrix.js
 build/ts/flash/geom/PerspectiveProjection.js

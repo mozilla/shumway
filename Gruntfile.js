@@ -41,14 +41,14 @@ module.exports = function(grunt) {
       build_tools_ts: {
         cmd: commonArguments + 'tools.js src/tools/references.ts'
       },
+      build_swf_ts: {
+        cmd: commonArguments + 'swf.js src/swf/references.ts'
+      },
       build_gfx_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts/gfx src/gfx/references.ts'
       },
       build_avm2_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm2/references.ts'
-      },
-      build_swf_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/swf/references.ts'
       },
       build_flash_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/flash/references.ts'
