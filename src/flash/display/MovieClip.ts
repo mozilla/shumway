@@ -25,6 +25,7 @@ module Shumway.AVM2.AS.flash.display {
   import Telemetry = Shumway.Telemetry;
   import events = flash.events;
   import getAS2Object = Shumway.AVM2.AS.avm1lib.getAS2Object;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
 
   export class MovieClip extends flash.display.Sprite {
 

@@ -44,11 +44,11 @@ module.exports = function(grunt) {
       build_swf_ts: {
         cmd: commonArguments + 'swf.js src/swf/references.ts'
       },
+      build_avm2_ts: {
+        cmd: commonArguments + 'avm2.js src/avm2/references.ts'
+      },
       build_gfx_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts/gfx src/gfx/references.ts'
-      },
-      build_avm2_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm2/references.ts'
       },
       build_flash_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/flash/references.ts'
@@ -57,7 +57,7 @@ module.exports = function(grunt) {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/player/references.ts'
       },
       build_avm1_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm1/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts/avm1 src/avm1/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',

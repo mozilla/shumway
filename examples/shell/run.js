@@ -45,48 +45,14 @@ load("../../build/ts/htmlparser.js");
 
 load("../../build/ts/player/remoting.js");
 
-load("../../build/ts/avm2/module.js");
-
 console.timeEnd("Load Shared Dependencies");
 
-// Load AVM2 Dependencies
-Shumway.AVM2.enterTimeline("Load AVM2 Dependencies");
-load("../../build/ts/avm2/options.js");
-load("../../build/ts/avm2/errors.js");
-load("../../build/ts/avm2/parser.js");
-load("../../build/ts/avm2/bytecode.js");
-load("../../build/ts/avm2/compiler/verifier.js");
-load("../../build/ts/avm2/compiler/c4/ir.js");
-load("../../build/ts/avm2/compiler/c4/as.ir.js");
-load("../../build/ts/avm2/compiler/c4/ast.js");
-load("../../build/ts/avm2/compiler/c4/optimizer.js");
-load("../../build/ts/avm2/compiler/c4/looper.js");
-load("../../build/ts/avm2/compiler/c4/backend.js");
-load("../../build/ts/avm2/compiler/builder.js");
-load("../../build/ts/avm2/trampoline.js");
-load("../../build/ts/avm2/bindings.js");
-load("../../build/ts/avm2/scope.js");
-load("../../build/ts/avm2/domain.js");
-
+console.time("Load AVM2 Dependencies");
 load("../../src/avm2/xregexp.js");
-load("../../build/ts/avm2/runtime.js");
-load("../../src/avm2/runtime-exports.js");
-load("../../build/ts/avm2/hacks.js");
-load("../../build/ts/avm2/amf.js");
-load("../../build/ts/avm2/natives/int32Vector.js");
-load("../../build/ts/avm2/natives/uint32Vector.js");
-load("../../build/ts/avm2/natives/float64Vector.js");
-load("../../build/ts/avm2/native.js");
-load("../../build/ts/avm2/natives/genericVector.js");
-load("../../build/ts/avm2/natives/dictionary.js");
-load("../../build/ts/avm2/natives/proxy.js");
-load("../../build/ts/avm2/natives/xml.js");
-load("../../build/ts/avm2/natives/system.js");
-load("../../build/ts/avm2/natives/byteArray.js");
+load("../../build/ts/avm2.js");
 load("../../src/avm2/disassembler.js");
-load("../../build/ts/avm2/interpreter.js");
-//../../build/ts/avm2/vm.js
-Shumway.AVM2.leaveTimeline();
+load("../../src/avm2/runtime-exports.js");
+console.timeEnd("Load AVM2 Dependencies");
 
 // Load AVM1 Dependencies
 console.time("Load AVM1 Dependencies");

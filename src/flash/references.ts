@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-///<reference path='../avm2/references.ts' />
+/// <reference path='../../build/ts/avm2.d.ts' />
+
 ///<reference path='../htmlparser.ts' />
 ///<reference path='../TextContent.ts' />
 ///<reference path='../player/remoting.ts' />

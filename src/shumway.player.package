@@ -9,48 +9,14 @@ build/ts/htmlparser.js
 
 build/ts/player/remoting.js
 
-build/ts/avm2/module.js
-
 #!inline console.timeEnd("Load Shared Dependencies");
 
-## Load AVM2 Dependencies
-#!inline Shumway.AVM2.enterTimeline("Load AVM2 Dependencies");
-build/ts/avm2/options.js
-build/ts/avm2/errors.js
-build/ts/avm2/parser.js
-build/ts/avm2/bytecode.js
-build/ts/avm2/compiler/verifier.js
-build/ts/avm2/compiler/c4/ir.js
-build/ts/avm2/compiler/c4/as.ir.js
-build/ts/avm2/compiler/c4/ast.js
-build/ts/avm2/compiler/c4/optimizer.js
-build/ts/avm2/compiler/c4/looper.js
-build/ts/avm2/compiler/c4/backend.js
-build/ts/avm2/compiler/builder.js
-build/ts/avm2/trampoline.js
-build/ts/avm2/bindings.js
-build/ts/avm2/scope.js
-build/ts/avm2/domain.js
-
+#!inline console.time("Load AVM2 Dependencies");
 src/avm2/xregexp.js
-build/ts/avm2/runtime.js
-src/avm2/runtime-exports.js
-build/ts/avm2/hacks.js
-build/ts/avm2/amf.js
-build/ts/avm2/natives/int32Vector.js
-build/ts/avm2/natives/uint32Vector.js
-build/ts/avm2/natives/float64Vector.js
-build/ts/avm2/native.js
-build/ts/avm2/natives/genericVector.js
-build/ts/avm2/natives/dictionary.js
-build/ts/avm2/natives/proxy.js
-build/ts/avm2/natives/xml.js
-build/ts/avm2/natives/system.js
-build/ts/avm2/natives/byteArray.js
+build/ts/avm2.js
 src/avm2/disassembler.js
-build/ts/avm2/interpreter.js
-#build/ts/avm2/vm.js
-#!inline Shumway.AVM2.leaveTimeline();
+src/avm2/runtime-exports.js
+#!inline console.timeEnd("Load AVM2 Dependencies");
 
 ## Load AVM1 Dependencies
 #!inline console.time("Load AVM1 Dependencies");

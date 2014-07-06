@@ -99,48 +99,14 @@ limitations under the License.
 
     <!-- DUP: <script src="../../build/ts/player/remoting.js"></script> -->
 
-    <script src="../../build/ts/avm2/module.js"></script>
-
     <script> console.timeEnd("Load Shared Dependencies"); </script>
 
-    <!-- Load AVM2 Dependencies -->
-    <script> Shumway.AVM2.enterTimeline("Load AVM2 Dependencies"); </script>
-    <script src="../../build/ts/avm2/options.js"></script>
-    <script src="../../build/ts/avm2/errors.js"></script>
-    <script src="../../build/ts/avm2/parser.js"></script>
-    <script src="../../build/ts/avm2/bytecode.js"></script>
-    <script src="../../build/ts/avm2/compiler/verifier.js"></script>
-    <script src="../../build/ts/avm2/compiler/c4/ir.js"></script>
-    <script src="../../build/ts/avm2/compiler/c4/as.ir.js"></script>
-    <script src="../../build/ts/avm2/compiler/c4/ast.js"></script>
-    <script src="../../build/ts/avm2/compiler/c4/optimizer.js"></script>
-    <script src="../../build/ts/avm2/compiler/c4/looper.js"></script>
-    <script src="../../build/ts/avm2/compiler/c4/backend.js"></script>
-    <script src="../../build/ts/avm2/compiler/builder.js"></script>
-    <script src="../../build/ts/avm2/trampoline.js"></script>
-    <script src="../../build/ts/avm2/bindings.js"></script>
-    <script src="../../build/ts/avm2/scope.js"></script>
-    <script src="../../build/ts/avm2/domain.js"></script>
-
+    <script> console.time("Load AVM2 Dependencies"); </script>
     <script src="../../src/avm2/xregexp.js"></script>
-    <script src="../../build/ts/avm2/runtime.js"></script>
-    <script src="../../src/avm2/runtime-exports.js"></script>
-    <script src="../../build/ts/avm2/hacks.js"></script>
-    <script src="../../build/ts/avm2/amf.js"></script>
-    <script src="../../build/ts/avm2/natives/int32Vector.js"></script>
-    <script src="../../build/ts/avm2/natives/uint32Vector.js"></script>
-    <script src="../../build/ts/avm2/natives/float64Vector.js"></script>
-    <script src="../../build/ts/avm2/native.js"></script>
-    <script src="../../build/ts/avm2/natives/genericVector.js"></script>
-    <script src="../../build/ts/avm2/natives/dictionary.js"></script>
-    <script src="../../build/ts/avm2/natives/proxy.js"></script>
-    <script src="../../build/ts/avm2/natives/xml.js"></script>
-    <script src="../../build/ts/avm2/natives/system.js"></script>
-    <script src="../../build/ts/avm2/natives/byteArray.js"></script>
+    <script src="../../build/ts/avm2.js"></script>
     <script src="../../src/avm2/disassembler.js"></script>
-    <script src="../../build/ts/avm2/interpreter.js"></script>
-    <!--<script src="../../build/ts/avm2/vm.js"></script>-->
-    <script> Shumway.AVM2.leaveTimeline(); </script>
+    <script src="../../src/avm2/runtime-exports.js"></script>
+    <script> console.timeEnd("Load AVM2 Dependencies"); </script>
 
     <!-- Load AVM1 Dependencies -->
     <script> console.time("Load AVM1 Dependencies"); </script>
