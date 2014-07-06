@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/// <reference path='../../build/ts/base/references.d.ts' />
+/// <reference path='../../build/ts/base.d.ts' />
 ///<reference path='../tools/profiler/references.ts' />
 
 ///<reference path='module.ts' />

@@ -2,9 +2,7 @@
 
 build/ts/swf/jpeg.js
 
-build/ts/utilities.js
-build/ts/dataBuffer.js
-build/ts/ShapeData.js
+build/ts/base.js
 
 build/ts/tools/profiler/timelineFrame.js
 build/ts/tools/profiler/timelineBuffer.js
@@ -32,6 +30,5 @@ build/ts/swf/parser/parser.js
 #!inline console.timeEnd("Load SWF Parser");
 
 build/ts/swf/resourceLoader.js
-build/ts/swf/binaryFileReader.js
 
 #!inline console.timeEnd("Load Parser Dependencies");

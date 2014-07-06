@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-///<reference path='../utilities.ts' />
-///<reference path='../options.ts' />
-///<reference path='../settings.ts'/>
-///<reference path='../metrics.ts' />
-///<reference path='../dataBuffer.ts' />
-///<reference path='../ShapeData.ts' />
-///<reference path='../swf/binaryFileReader.ts' />
+///<reference path='es6-promises.d.ts' />
+///<reference path='utilities.ts' />
+///<reference path='options.ts' />
+///<reference path='settings.ts'/>
+///<reference path='metrics.ts' />
+///<reference path='dataBuffer.ts' />
+///<reference path='ShapeData.ts' />
+///<reference path='binaryFileReader.ts' />

@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
+///<reference path='references.ts' />
 module Shumway.Settings {
-
   declare var window;
 
   export var ROOT: string = "Shumway Options";
-
   export var shumwayOptions = new Shumway.Options.OptionSet(ROOT, load());
 
   export function isStorageSupported() {

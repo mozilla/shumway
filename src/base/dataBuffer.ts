@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+///<reference path='references.ts' />
 module Shumway.ArrayUtilities {
   import notImplemented = Shumway.Debug.notImplemented;
 

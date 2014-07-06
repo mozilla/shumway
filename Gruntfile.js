@@ -34,7 +34,7 @@ module.exports = function(grunt) {
         cmd: 'make -C extension/firefox/ build'
       },
       build_base_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap -d --outDir build/ts src/base/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --removeComments -d --out build/ts/base.js src/base/references.ts'
       },
       build_gfx_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/gfx/references.ts'

@@ -2,14 +2,10 @@
 
 #!inline console.time("Load Shared Dependencies");
 
-build/ts/utilities.js
-build/ts/dataBuffer.js
-build/ts/htmlparser.js
-build/ts/ShapeData.js
-build/ts/options.js
-build/ts/settings.js
+build/ts/base.js
 
-build/ts/metrics.js
+build/ts/htmlparser.js
+
 
 build/ts/player/remoting.js
 
