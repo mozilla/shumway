@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations undxr the License.
  */
-// Class: AS2Utils
-module Shumway.AVM2.AS.avm1lib {
-  import AS2Context = Shumway.AVM1.AS2Context;
 
+///<reference path='references.ts' />
+import ASNative = Shumway.AVM2.AS.ASNative;
+import ASObject = Shumway.AVM2.AS.ASObject;
+import flash = Shumway.AVM2.AS.flash;
+module Shumway.AVM1 {
   export class AS2Utils extends ASNative {
 
     // Called whenever the class is initialized.
@@ -52,21 +54,21 @@ module Shumway.AVM2.AS.avm1lib {
       });
     }
 
-    static resolveTarget(target_mc: any = undefined): flash.display.MovieClip {
+    static resolveTarget(target_mc: any = undefined): any {
       return AS2Context.instance.resolveTarget(target_mc);
     }
 
-    static resolveLevel(level: number): flash.display.MovieClip {
+    static resolveLevel(level: number): any {
       level = +level;
       return AS2Context.instance.resolveLevel(level);
     }
 
-    static get currentStage(): flash.display.Stage {
+    static get currentStage(): any {
       return AS2Context.instance.stage;
     }
 
     static getAS2Object(as3Object) {
-      return avm1lib.getAS2Object(as3Object);
+      return AVM1.getAS2Object(as3Object);
     }
 
     static _installObjectMethods(): any {
@@ -125,13 +127,13 @@ module Shumway.AVM2.AS.avm1lib {
         var ctor: any = <flash.display.MovieClip>as3Object._as2SymbolClass;
         return new ctor(as3Object);
       }
-      return new AS2MovieClip(as3Object);
+      return new Shumway.AVM2.AS.avm1lib.AS2MovieClip(as3Object);
     }
     if (flash.display.SimpleButton.isType(as3Object)) {
-      return new AS2Button(as3Object);
+      return new Shumway.AVM2.AS.avm1lib.AS2Button(as3Object);
     }
     if (flash.text.TextField.isType(as3Object)) {
-      return new AS2TextField(as3Object);
+      return new Shumway.AVM2.AS.avm1lib.AS2TextField(as3Object);
     }
 
     return null;

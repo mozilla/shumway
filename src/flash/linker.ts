@@ -141,19 +141,19 @@ module Shumway.AVM2.AS {
     M("flash.utils.Timer", "TimerClass", flash.utils.Timer),
     M("flash.utils.ByteArray", "ByteArrayClass", flash.utils.ByteArray),
 
-    M("avm1lib.AS2Utils", "AS2Utils", avm1lib.AS2Utils),
+    M("avm1lib.AS2Utils", "AS2Utils", Shumway.AVM2.AS.avm1lib.AS2Utils),
     M("avm1lib.AS2Broadcaster"),
     M("avm1lib.AS2Key"),
     M("avm1lib.AS2Mouse"),
-    M("avm1lib.AS2MovieClip", "AS2MovieClip", avm1lib.AS2MovieClip),
-    M("avm1lib.AS2Button", "AS2Button", avm1lib.AS2Button),
+    M("avm1lib.AS2MovieClip", "AS2MovieClip", Shumway.AVM2.AS.avm1lib.AS2MovieClip),
+    M("avm1lib.AS2Button", "AS2Button", Shumway.AVM2.AS.avm1lib.AS2Button),
     M("avm1lib.AS2Sound"),
-    M("avm1lib.AS2TextField", "AS2TextField", avm1lib.AS2TextField),
+    M("avm1lib.AS2TextField", "AS2TextField", Shumway.AVM2.AS.avm1lib.AS2TextField),
     M("avm1lib.AS2Stage"),
     M("avm1lib.AS2System"),
     M("avm1lib.AS2Color"),
-    M("avm1lib.AS2Globals", "AS2Globals", avm1lib.AS2Globals),
-    M("avm1lib.AS2MovieClipLoader", "AS2MovieClipLoader", avm1lib.AS2MovieClipLoader),
+    M("avm1lib.AS2Globals", "AS2Globals", Shumway.AVM2.AS.avm1lib.AS2Globals),
+    M("avm1lib.AS2MovieClipLoader", "AS2MovieClipLoader", Shumway.AVM2.AS.avm1lib.AS2MovieClipLoader),
   ];
 
   /**

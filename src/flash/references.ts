@@ -410,7 +410,7 @@
 ///<reference path='xml/XMLParser.ts' />
 ///<reference path='xml/XMLTag.ts' />
 
-///<reference path='../avm1lib/references.ts' />
+///<reference path='avm1.d.ts' />
 
 ///<reference path='../player/timeline.ts' />
 

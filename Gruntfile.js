@@ -47,6 +47,9 @@ module.exports = function(grunt) {
       build_avm2_ts: {
         cmd: commonArguments + 'avm2.js src/avm2/references.ts'
       },
+      build_avm1_ts: {
+        cmd: commonArguments + 'avm1.js src/avm1/references.ts'
+      },
       build_gfx_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts/gfx src/gfx/references.ts'
       },
@@ -55,9 +58,6 @@ module.exports = function(grunt) {
       },
       build_player_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/player/references.ts'
-      },
-      build_avm1_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts/avm1 src/avm1/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',
@@ -70,9 +70,6 @@ module.exports = function(grunt) {
       build_avm1lib: {
         cmd: 'node compileabc -m ../src/avm1lib/avm1lib.manifest',
         cwd: 'utils/'
-      },
-      build_avm1lib_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm1lib/references.ts'
       },
       shell_test: {
         cmd: 'utils/jsshell/js test/harness/run-unit-test.js ' + (grunt.option('tests') || 'test/unit/shell-tests.js test/perf/shell-tests.js'),
@@ -93,12 +90,6 @@ module.exports = function(grunt) {
       base: {
         files: 'src/base/**/*',
         tasks: ['exec:build_base_ts']
-      },
-      avm1lib_ts: {
-        files: ['src/avm2/**/*.ts',
-                'src/flash/**/*.ts',
-                'src/avm1lib/*.ts'],
-        tasks: ['exec:build_avm1lib_ts']
       },
       avm1lib: {
         files: ['src/avm1lib/*.as',
@@ -206,7 +197,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('base', ['exec:build_base_ts']);
-  grunt.registerTask('avm1lib', ['exec:build_avm1lib', 'exec:build_avm1lib_ts']);
+  grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
   grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:shell_test']);
   grunt.registerTask('flash', ['exec:build_flash_ts', 'exec:shell_test']);
   grunt.registerTask('player', ['exec:build_player_ts', 'exec:shell_test']);

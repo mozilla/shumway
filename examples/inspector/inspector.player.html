@@ -61,16 +61,6 @@ limitations under the License.
     <script src="../../src/avm2/runtime-exports.js"></script>
     <script> console.timeEnd("Load AVM2 Dependencies"); </script>
 
-    <!-- Load AVM1 Dependencies -->
-    <script> console.time("Load AVM1 Dependencies"); </script>
-    <script src="../../build/ts/avm1/stream.js"></script>
-    <script src="../../build/ts/avm1/parser.js"></script>
-    <script src="../../build/ts/avm1/analyze.js"></script>
-    <script src="../../build/ts/avm1/context.js"></script>
-    <script src="../../build/ts/avm1/interpreter.js"></script>
-    <script src="../../build/ts/avm1lib/AS2Utils.js"></script>
-    <script> console.timeEnd("Load AVM1 Dependencies"); </script>
-
     <script> console.time("Load Compiled Code Cache"); </script>
     <script> console.timeEnd("Load Compiled Code Cache"); </script>
 
@@ -460,14 +450,11 @@ limitations under the License.
     <script src="../../build/ts/flash/text/TextLineMetrics.js"></script>
     <script> Shumway.Player.leaveTimeline(); </script>
 
-    <script> console.time("Load avm1lib Dependencies"); </script>
-    <script src="../../build/ts/avm1lib/AS2Button.js"></script>
-    <script src="../../build/ts/avm1lib/AS2Globals.js"></script>
-    <script src="../../build/ts/avm1lib/AS2MovieClip.js"></script>
-    <script src="../../build/ts/avm1lib/AS2MovieClipLoader.js"></script>
-    <script src="../../build/ts/avm1lib/AS2TextField.js"></script>
-    <script src="../../build/ts/avm1lib/AS2TextFormat.js"></script>
-    <script> console.timeEnd("Load avm1lib Dependencies"); </script>
+
+    <!-- Load AVM1 Dependencies -->
+    <script> console.time("Load AVM1 Dependencies"); </script>
+    <script src="../../build/ts/avm1.js"></script>
+    <script> console.timeEnd("Load AVM1 Dependencies"); </script>
 
     <script src="../../build/ts/player/options.js"></script>
     <script src="../../build/ts/player/timeline.js"></script>

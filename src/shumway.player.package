@@ -18,16 +18,6 @@ src/avm2/disassembler.js
 src/avm2/runtime-exports.js
 #!inline console.timeEnd("Load AVM2 Dependencies");
 
-## Load AVM1 Dependencies
-#!inline console.time("Load AVM1 Dependencies");
-build/ts/avm1/stream.js
-build/ts/avm1/parser.js
-build/ts/avm1/analyze.js
-build/ts/avm1/context.js
-build/ts/avm1/interpreter.js
-build/ts/avm1lib/AS2Utils.js
-#!inline console.timeEnd("Load AVM1 Dependencies");
-
 #!inline console.time("Load Compiled Code Cache");
 #!inline console.timeEnd("Load Compiled Code Cache");
 
@@ -417,14 +407,11 @@ build/ts/flash/display/MovieClip.js
 build/ts/flash/text/TextLineMetrics.js
 #!inline Shumway.Player.leaveTimeline();
 
-#!inline console.time("Load avm1lib Dependencies");
-build/ts/avm1lib/AS2Button.js
-build/ts/avm1lib/AS2Globals.js
-build/ts/avm1lib/AS2MovieClip.js
-build/ts/avm1lib/AS2MovieClipLoader.js
-build/ts/avm1lib/AS2TextField.js
-build/ts/avm1lib/AS2TextFormat.js
-#!inline console.timeEnd("Load avm1lib Dependencies");
+
+## Load AVM1 Dependencies
+#!inline console.time("Load AVM1 Dependencies");
+build/ts/avm1.js
+#!inline console.timeEnd("Load AVM1 Dependencies");
 
 build/ts/player/options.js
 build/ts/player/timeline.js
