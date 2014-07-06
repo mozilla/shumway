@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-///<reference path='../../build/ts/base/references.d.ts' />
-///<reference path='../tools/profiler/references.ts' />
-
-///<reference path='module.ts'/>
-///<reference path='parser/references.ts' />
-///<reference path='jpeg.ts' />
-///<reference path='stream.ts' />
-///<reference path='inflate.ts' />
-///<reference path='resourceLoader.ts' />
+///<reference path='../utilities.ts' />
+///<reference path='../options.ts' />
+///<reference path='../settings.ts'/>
+///<reference path='../metrics.ts' />
+///<reference path='../dataBuffer.ts' />
+///<reference path='../ShapeData.ts' />
+///<reference path='../swf/binaryFileReader.ts' />

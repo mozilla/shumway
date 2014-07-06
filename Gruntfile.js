@@ -33,6 +33,9 @@ module.exports = function(grunt) {
       build_extension: {
         cmd: 'make -C extension/firefox/ build'
       },
+      build_base_ts: {
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap -d --outDir build/ts src/base/references.ts'
+      },
       build_gfx_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/gfx/references.ts'
       },
@@ -84,6 +87,10 @@ module.exports = function(grunt) {
       extension: {
         files: 'extension/firefox/**/*',
         tasks: ['build-extension']
+      },
+      base: {
+        files: 'src/base/**/*',
+        tasks: ['exec:build_base_ts']
       },
       avm1lib_ts: {
         files: ['src/avm2/**/*.ts',
@@ -161,7 +168,6 @@ module.exports = function(grunt) {
     packageRefs(['gfx', 'parser', 'player'], outputDir + 'shumway.combined.js');
   });
 
-
   grunt.registerTask('server', function () {
     var WebServer = require('./utils/webserver.js').WebServer;
     var done = this.async();
@@ -184,6 +190,7 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('watch-playerglobal', ['exec:build_playerglobal', 'watch:playerglobal']);
+  grunt.registerTask('watch-base', ['exec:build_base_ts', 'watch:base']);
   grunt.registerTask('watch-avm1lib', ['exec:build_avm1lib', 'watch:avm1lib']);
   grunt.registerTask('watch-avm2', ['exec:build_avm2_ts', 'watch:avm2_ts']);
   grunt.registerTask('watch-swf', ['exec:build_swf_ts', 'watch:swf_ts']);
@@ -196,6 +203,7 @@ module.exports = function(grunt) {
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
 
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
+  grunt.registerTask('base', ['exec:build_base_ts']);
   grunt.registerTask('avm1lib', ['exec:build_avm1lib', 'exec:build_avm1lib_ts']);
   grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:shell_test']);
   grunt.registerTask('flash', ['exec:build_flash_ts', 'exec:shell_test']);

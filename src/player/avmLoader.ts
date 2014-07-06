@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+///<reference path='references.ts' />
 module Shumway {
   import BinaryFileReader = Shumway.BinaryFileReader;
   import AbcFile = Shumway.AVM2.ABC.AbcFile;

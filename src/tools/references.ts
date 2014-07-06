@@ -1,5 +1,5 @@
 
-/// <reference path='../utilities.ts' />
+/// <reference path='../../build/ts/base/references.d.ts' />
 /// <reference path='theme/ui.ts' />
 /// <reference path='profiler/references.ts' />
 /// <reference path='terminal/references.ts' />

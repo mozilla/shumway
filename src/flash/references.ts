@@ -16,7 +16,6 @@
 
 ///<reference path='../avm2/references.ts' />
 ///<reference path='../htmlparser.ts' />
-///<reference path='../ShapeData.ts' />
 ///<reference path='../SWFTags.ts' />
 ///<reference path='../TextContent.ts' />
 ///<reference path='../player/remoting.ts' />
