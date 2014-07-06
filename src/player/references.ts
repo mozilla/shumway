@@ -17,9 +17,9 @@
 /// <reference path='../../build/ts/base.d.ts' />
 /// <reference path='../../build/ts/tools.d.ts' />
 /// <reference path='../../build/ts/swf.d.ts' />
+/// <reference path='../../build/ts/gfx.d.ts' />
 
 ///<reference path='../flash/references.ts' />
-///<reference path='../gfx/references.ts' />
 ///<reference path='module.ts' />
 ///<reference path='options.ts' />
 ///<reference path='frameScheduler.ts' />

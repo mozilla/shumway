@@ -51,7 +51,7 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'avm1.js src/avm1/references.ts'
       },
       build_gfx_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts/gfx src/gfx/references.ts'
+        cmd: commonArguments + 'gfx.js src/gfx/references.ts'
       },
       build_flash_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/flash/references.ts'
