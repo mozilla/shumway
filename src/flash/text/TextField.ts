@@ -132,6 +132,7 @@ module Shumway.AVM2.AS.flash.text {
     private _invalidateContent() {
       if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
         this._setFlags(DisplayObjectFlags.DirtyTextContent);
+        this._ensureLineMetrics();
       }
     }
 
@@ -240,7 +241,6 @@ module Shumway.AVM2.AS.flash.text {
       this._autoSize = value;
       this._textContent.autoSize = value !== TextFieldAutoSize.NONE;
       this._invalidateContent();
-      this._ensureLineMetrics();
     }
 
     get background(): boolean {
@@ -363,7 +363,6 @@ module Shumway.AVM2.AS.flash.text {
       this._textContent.parseHtml(value, this._multiline);
       this._htmlText = value;
       this._invalidateContent();
-      this._ensureLineMetrics();
     }
 
     get length(): number /*int*/ {
@@ -492,7 +491,6 @@ module Shumway.AVM2.AS.flash.text {
       somewhatImplemented("public flash.text.TextField::set text");
       this._textContent.plainText = asCoerceString(value);
       this._invalidateContent();
-      this._ensureLineMetrics();
     }
 
     get textColor(): number /*uint*/ {
@@ -538,7 +536,6 @@ module Shumway.AVM2.AS.flash.text {
       }
       this._textContent.wordWrap = !!value;
       this._invalidateContent();
-      this._ensureLineMetrics();
     }
 
     get useRichTextClipboard(): boolean {
@@ -661,6 +658,8 @@ module Shumway.AVM2.AS.flash.text {
     replaceText(beginIndex: number /*int*/, endIndex: number /*int*/, newText: string): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; newText = "" + newText;
       somewhatImplemented("public flash.text.TextField::replaceText"); return;
+      var plainText = this._textContent.plainText;
+      this._textContent.plainText = plainText.substring(0, beginIndex) + newText + plainText.substring(endIndex);
     }
     setSelection(beginIndex: number /*int*/, endIndex: number /*int*/): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
@@ -673,6 +672,22 @@ module Shumway.AVM2.AS.flash.text {
     getImageReference(id: string): flash.display.DisplayObject {
       id = "" + id;
       notImplemented("public flash.text.TextField::getImageReference"); return;
+    }
+
+    _scaleToWidth(width: number) {
+      var bounds = this._getContentBounds();
+      this._setFillAndLineBoundsFromWidthAndHeight(width, bounds.height);
+      this._textContent.invalidateDimensions();
+      this._invalidateContent();
+      this._invalidatePosition();
+    }
+
+    _scaleToHeight(height: number) {
+      var bounds = this._getContentBounds();
+      this._setFillAndLineBoundsFromWidthAndHeight(bounds.width, height);
+      this._textContent.invalidateDimensions();
+      this._invalidateContent();
+      this._invalidatePosition();
     }
   }
 }

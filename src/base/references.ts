@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-///<reference path='../references.ts' />
-///<reference path='templates.ts' />
-///<reference path='handlers.ts' />
-///<reference path='parser.ts' />
-
-///<reference path='bitmap.ts' />
-///<reference path='button.ts' />
-///<reference path='font.ts' />
-///<reference path='image.ts' />
-///<reference path='label.ts' />
-///<reference path='shape.ts' />
-///<reference path='sound.ts' />
-///<reference path='text.ts' />
+///<reference path='es6-promises.d.ts' />
+///<reference path='utilities.ts' />
+///<reference path='options.ts' />
+///<reference path='settings.ts'/>
+///<reference path='metrics.ts' />
+///<reference path='dataBuffer.ts' />
+///<reference path='ShapeData.ts' />
+///<reference path='SWFTags.ts' />
+///<reference path='binaryFileReader.ts' />
+///<reference path='remoting.ts' />

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-///<reference path='es6-promises.d.ts' />
+///<reference path='references.ts' />
 var jsGlobal = (function() { return this || (1, eval)('this'); })();
 var inBrowser = typeof console != "undefined";
 
@@ -1890,7 +1890,7 @@ module Shumway {
       return str;
     }
 
-    function toString(names: string []) {
+    function toString(names: any[]) {
       var self: BitSet = this;
       var set = [];
       for (var i = 0; i < length; i++) {
@@ -2048,7 +2048,7 @@ module Shumway {
         }
       }
 
-      toArray() {
+      toArray(): boolean[] {
         var set = [];
         var bits = this.bits;
         for (var i = 0, j = bits.length; i < j; i++) {

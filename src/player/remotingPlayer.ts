@@ -76,8 +76,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(graphics._id);
         this.output.writeInt(-1);
         this.writeRectangle(graphics._getContentBounds());
-        this.output.writeInt(this.outputAssets.length);
-        this.outputAssets.push(graphics.getGraphicsData().toPlainObject());
+        this.pushAsset(graphics.getGraphicsData().toPlainObject());
         this.output.writeInt(numTextures);
         for (var i = 0; i < numTextures; i++) {
           this.output.writeInt(textures[i]._id);
@@ -94,8 +93,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(bitmapData._symbol ? bitmapData._symbol.id : -1);
         this.writeRectangle(bitmapData._getContentBounds());
         this.output.writeInt(bitmapData._type);
-        this.output.writeInt(this.outputAssets.length);
-        this.outputAssets.push(bitmapData.getDataBuffer().toPlainObject());
+        this.pushAsset(bitmapData.getDataBuffer().toPlainObject());
         bitmapData._isDirty = false;
       }
     }
@@ -112,23 +110,14 @@ module Shumway.Remoting.Player {
         this.output.writeInt(textContent.borderColor);
         this.output.writeBoolean(textContent.autoSize);
         this.output.writeBoolean(textContent.wordWrap);
-        this.output.writeInt(this.outputAssets.length);
-        this.outputAssets.push(textContent.plainText);
-        var textRuns = textContent.textRuns;
-        var numTextRuns = textRuns.length;
-        this.output.writeInt(numTextRuns);
-        for (var i = 0; i < numTextRuns; i++) {
-          var textRun = textRuns[i];
-          this.output.writeInt(textRun.beginIndex);
-          this.output.writeInt(textRun.endIndex);
-          this.writeTextFormat(textRun.textFormat);
-        }
+        this.pushAsset(textContent.plainText);
+        this.pushAsset(textContent.textRunData.toPlainObject());
         var coords = textContent.coords;
         if (coords) {
           var numCoords = coords.length;
           this.output.writeInt(numCoords);
           for (var i = 0; i < numCoords; i++) {
-            this.output.writeInt(coords[i] / 20);
+            this.output.writeInt(coords[i]);
           }
         } else {
           this.output.writeInt(0);
@@ -147,8 +136,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(font._id);
         this.output.writeBoolean(symbol.bold);
         this.output.writeBoolean(symbol.italic);
-        this.output.writeInt(this.outputAssets.length);
-        this.outputAssets.push(symbol.data);
+        this.pushAsset(symbol.data);
       }
     }
 
@@ -362,54 +350,9 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeTextFormat(textFormat: flash.text.TextFormat) {
-      var output = this.output;
-
-      var size = +textFormat.size;
-      output.writeInt(size);
-
-      var font = flash.text.Font.getByName(textFormat.font);
-      if (font && font.fontType === flash.text.FontType.EMBEDDED) {
-        output.writeInt(font._id);
-        output.writeInt(font.ascent * size);
-        output.writeInt(font.descent * size);
-        output.writeInt(textFormat.leading === null ? font.leading * size : +textFormat.leading);
-        var bold: boolean;
-        var italic: boolean;
-        if (textFormat.bold === null) {
-          bold = font.fontStyle === flash.text.FontStyle.BOLD || font.fontType === flash.text.FontStyle.BOLD_ITALIC;
-        } else {
-          bold = !!textFormat.bold;
-        }
-        if (textFormat.italic === null) {
-          italic = font.fontStyle === flash.text.FontStyle.ITALIC || font.fontType === flash.text.FontStyle.BOLD_ITALIC;
-        } else {
-          italic = !!textFormat.italic;
-        }
-        output.writeBoolean(bold);
-        output.writeBoolean(italic);
-      } else {
-        // TODO: handle device fonts;
-        output.writeInt(0);
-        output.writeInt(0);
-        output.writeInt(0);
-        output.writeInt(+textFormat.leading);
-        output.writeBoolean(!!textFormat.bold);
-        output.writeBoolean(!!textFormat.italic);
-      }
-
-      output.writeInt(+textFormat.color);
-      output.writeInt(flash.text.TextFormatAlign.toNumber(textFormat.align));
-      output.writeBoolean(!!textFormat.bullet);
-      //output.writeInt(textFormat.display);
-      output.writeInt(+textFormat.indent);
-      //output.writeInt(textFormat.blockIndent);
-      output.writeInt(+textFormat.kerning);
-      output.writeInt(+textFormat.leftMargin);
-      output.writeInt(+textFormat.letterSpacing);
-      output.writeInt(+textFormat.rightMargin);
-      //output.writeInt(textFormat.tabStops);
-      output.writeBoolean(!!textFormat.underline);
+    pushAsset(asset: any) {
+      this.output.writeInt(this.outputAssets.length);
+      this.outputAssets.push(asset);
     }
   }
 

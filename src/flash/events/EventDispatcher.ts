@@ -121,7 +121,7 @@ module Shumway.AVM2.AS.flash.events {
    *
    * The logic here is pretty much copied from: http://www.senocular.com/flash/tutorials/orderofoperations/
    */
-  class BroadcastEventDispatchQueue {
+  export class BroadcastEventDispatchQueue {
     /**
      * The queues start off compact but can have null values if event targets are removed. Periodically we
      * compact them if too many null values exist.

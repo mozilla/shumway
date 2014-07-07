@@ -38,6 +38,7 @@
  * }});
  */
 
+///<reference path='references.ts' />
 module Shumway.Options {
   import isObject = Shumway.isObject;
   import isNullOrUndefined = Shumway.isNullOrUndefined;

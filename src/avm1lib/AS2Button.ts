@@ -47,7 +47,7 @@ module Shumway.AVM2.AS.avm1lib {
     // __as3Object: flash.display.SimpleButton;
     _init(nativeButton: SimpleButton): any {
       this._nativeAS3Object = nativeButton;
-      initDefaultListeners(this);
+      Shumway.AVM1.initDefaultListeners(this);
     }
     get _as3Object(): SimpleButton {
       return this._nativeAS3Object;

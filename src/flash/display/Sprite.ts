@@ -18,7 +18,6 @@ module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import getAS2Object = Shumway.AVM2.AS.avm1lib.getAS2Object;
 
   import Timeline = Shumway.Timeline;
 
@@ -44,6 +43,7 @@ module Shumway.AVM2.AS.flash.display {
           self._root = self;
         }
         if (symbol.numFrames) {
+          release || assert (symbol.frames.length >= 1, "Sprites have at least one frame.");
           var frame = symbol.frames[0];
           release || assert (frame, "Initial frame is not defined.");
           self._initializeChildren(frame);
@@ -89,7 +89,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _initAvm1Bindings(instance: DisplayObject, state: Shumway.Timeline.AnimationState) {
-      var instanceAS2Object = getAS2Object(instance);
+      var instanceAS2Object = Shumway.AVM1.getAS2Object(instance);
       assert(instanceAS2Object);
 
       if (state.variableName) {
@@ -125,7 +125,7 @@ module Shumway.AVM2.AS.flash.display {
       // Only set the name property for display objects that have AS2
       // reflections. Some SWFs contain AS2 names for things like Shapes.
       if (state.name) {
-        var parentAS2Object = getAS2Object(this);
+        var parentAS2Object = Shumway.AVM1.getAS2Object(this);
         parentAS2Object.asSetPublicProperty(state.name, instanceAS2Object);
       }
     }

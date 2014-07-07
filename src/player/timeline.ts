@@ -223,7 +223,7 @@ module Shumway.Timeline {
       if (tag.hasMaxLength) {
         symbol.maxChars = tag.maxLength;
       }
-      symbol.autoSize = flash.text.TextFieldAutoSize.fromNumber(tag.autoSize);
+      symbol.autoSize = tag.autoSize ? flash.text.TextFieldAutoSize.LEFT : flash.text.TextFieldAutoSize.NONE;
       symbol.variableName = tag.variableName;
       return symbol;
     }
@@ -270,6 +270,7 @@ module Shumway.Timeline {
     numFrames: number = 1;
     frames: FrameDelta[] = [];
     labels: flash.display.FrameLabel[] = [];
+    frameScripts: any[] = [];
     isRoot: boolean;
 
     constructor(id: number, isRoot: boolean = false) {
@@ -283,6 +284,7 @@ module Shumway.Timeline {
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         symbol.isAS2Object = true;
       }
+      symbol.frameScripts = data.frameScripts;
       var frames = data.frames;
       for (var i = 0; i < frames.length; i++) {
         var frameInfo = frames[i];
@@ -298,29 +300,6 @@ module Shumway.Timeline {
 
         //if (frame.startSounds) {
         //  startSoundRegistrations[frameNum] = frame.startSounds;
-        //}
-
-        //var frameScripts = { };
-        //if (!this._isAvm2Enabled) {
-        //  if (symbol.frameScripts) {
-        //    var data = symbol.frameScripts;
-        //    for (var i = 0; i < data.length; i += 2) {
-        //      var frameNum = data[i] + 1;
-        //      var actionsData = new AS2ActionsData(data[i + 1],
-        //        's' + symbol.id + 'f' + frameNum + 'i' +
-        //          (frameScripts[frameNum] ? frameScripts[frameNum].length : 0));
-        //      var script = (function(actionsData, loader) {
-        //        return function () {
-        //          var avm1Context = loader._avm1Context;
-        //          return executeActions(actionsData, avm1Context, this._getAS2Object());
-        //        };
-        //      })(actionsData, this);
-        //      if (!frameScripts[frameNum])
-        //        frameScripts[frameNum] = [script];
-        //      else
-        //        frameScripts[frameNum].push(script);
-        //    }
-        //  }
         //}
       }
       return symbol;
@@ -394,10 +373,7 @@ module Shumway.Timeline {
                 public visible: boolean = true,
                 public events: any [] = null,
                 public variableName: string = null) {
-      if (matrix && symbol instanceof TextSymbol) {
-        this.matrix = this.matrix.clone();
-        this.matrix.translate(-40, -40);
-      }
+
     }
 
     canBeAnimated(obj: flash.display.DisplayObject): boolean {
@@ -485,7 +461,7 @@ module Shumway.Timeline {
                 var fn = (function (actionsData, loaderInfo) {
                   return function() {
                     var avm1Context = loaderInfo._avm1Context;
-                    var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(this);
+                    var as2Object = Shumway.AVM1.getAS2Object(this);
                     return avm1Context.executeActions(actionsData, this.stage, as2Object);
                   };
                 })(actionsData, loaderInfo);

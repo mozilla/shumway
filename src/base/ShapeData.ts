@@ -135,7 +135,7 @@
  *
  */
 
-///<reference path='dataBuffer.ts' />
+///<reference path='references.ts' />
 module Shumway {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import ensureTypedArrayCapacity = Shumway.ArrayUtilities.ensureTypedArrayCapacity;

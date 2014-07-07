@@ -1,19 +1,7 @@
 #!inline console.time("Load Shared Dependencies");
 
-build/ts/utilities.js
-build/ts/dataBuffer.js
-build/ts/htmlparser.js
-build/ts/ShapeData.js
-build/ts/options.js
-build/ts/settings.js
-
-build/ts/metrics.js
-
-build/ts/player/remoting.js
-
-build/ts/tools/profiler/timelineFrame.js
-build/ts/tools/profiler/timelineBuffer.js
-build/ts/tools/mini/fps.js
+build/ts/base.js
+build/ts/tools.js
 
 #!inline console.timeEnd("Load Shared Dependencies");
 
@@ -22,28 +10,7 @@ build/ts/tools/mini/fps.js
 # src/gfx/filters/filters.js
 # src/gfx/filters/filters_cxform.js
 
-build/ts/gfx/module.js
-build/ts/gfx/utilities.js
-build/ts/gfx/options.js
-build/ts/gfx/geometry.js
-build/ts/gfx/regionAllocator.js
-build/ts/gfx/frame.js
-build/ts/gfx/frameContainer.js
-build/ts/gfx/stage.js
-build/ts/gfx/renderables.js
-build/ts/gfx/filters.js
-build/ts/gfx/gl/core.js
-build/ts/gfx/gl/glContext.js
-build/ts/gfx/gl/surface.js
-build/ts/gfx/gl/gl.js
-build/ts/gfx/gl/brush.js
-build/ts/gfx/2d/debug.js
-build/ts/gfx/2d/surface.js
-build/ts/gfx/2d/2d.js
-build/ts/gfx/easel.js
-#build/ts/gfx/glTests.js
-#build/ts/gfx/shapes.js
-
+build/ts/gfx.js
 build/ts/player/remotingGfx.js
 build/ts/player/easelHost.js
 

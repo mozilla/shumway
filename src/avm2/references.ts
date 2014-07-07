@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-///<reference path='../utilities.ts' />
-///<reference path='../metrics.ts' />
-///<reference path='../options.ts' />
-///<reference path='../settings.ts' />
-///<reference path='../tools/profiler/references.ts' />
-///<reference path='../dataBuffer.ts' />
+/// <reference path='../../build/ts/base.d.ts' />
+/// <reference path='../../build/ts/tools.d.ts' />
 
 ///<reference path='module.ts' />
 ///<reference path='errors.ts' />
@@ -27,13 +23,8 @@
 ///<reference path='bytecode.ts' />
 ///<reference path='options.ts' />
 ///<reference path='runtime.ts' />
-///<reference path='domain.ts' />
 ///<reference path='scope.ts' />
 ///<reference path='bindings.ts' />
-///<reference path='trampoline.ts' />
-///<reference path='interpreter.ts' />
-///<reference path='hacks.ts' />
-///<reference path='amf.ts' />
 
 ///<reference path='natives/int32Vector.ts' />
 ///<reference path='natives/uint32Vector.ts' />
@@ -47,12 +38,17 @@
 ///<reference path='natives/system.ts' />
 
 ///<reference path='compiler/verifier.ts' />
+///<reference path='compiler/c4/ir.ts' />
+///<reference path='compiler/c4/optimizer.ts' />
 ///<reference path='compiler/builder.ts' />
 ///<reference path='compiler/aot.ts' />
 ///<reference path='compiler/c4/ast.ts' />
-///<reference path='compiler/c4/ir.ts' />
 ///<reference path='compiler/c4/as.ir.ts' />
 ///<reference path='compiler/c4/looper.ts' />
-///<reference path='compiler/c4/optimizer.ts' />
 ///<reference path='compiler/c4/backend.ts' />
 
+///<reference path='domain.ts' />
+///<reference path='trampoline.ts' />
+///<reference path='interpreter.ts' />
+///<reference path='hacks.ts' />
+///<reference path='amf.ts' />

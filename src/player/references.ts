@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-///<reference path='../tools/profiler/references.ts' />
-///<reference path='../swf/references.ts' />
-///<reference path='../flash/references.ts' />
-///<reference path='../gfx/references.ts' />
+/// <reference path='../../build/ts/base.d.ts' />
+/// <reference path='../../build/ts/tools.d.ts' />
+/// <reference path='../../build/ts/swf.d.ts' />
+/// <reference path='../../build/ts/gfx.d.ts' />
+/// <reference path='../../build/ts/flash.d.ts' />
+
 ///<reference path='module.ts' />
 ///<reference path='options.ts' />
 ///<reference path='frameScheduler.ts' />
-///<reference path='remoting.ts' />
 ///<reference path='remotingPlayer.ts' />
 ///<reference path='remotingGfx.ts' />
 ///<reference path='player.ts' />
