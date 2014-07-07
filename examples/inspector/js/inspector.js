@@ -172,7 +172,7 @@ function executeFile(file, buffer, movieParams) {
           syncGFXOptions(easel.options);
           easel.stage.invalidatePaint();
         });
-
+        syncGFXOptions(easel.options);
         var player = new Shumway.Player.Test.TestPlayer();
         easelHost = new Shumway.Player.Test.TestEaselHost(easel);
         player.load(file);
@@ -349,6 +349,10 @@ function createEasel() {
   var backend = Shumway.GFX.backend.value | 0;
   _easel = new Easel(document.getElementById("stageContainer"), backend);
   return _easel;
+}
+
+function registerScratchCanvas(scratchCanvas) {
+  document.getElementById("scratchCanvasContainer").appendChild(scratchCanvas);
 }
 
 function registerInspectorAsset(id, symbolId, asset) {
