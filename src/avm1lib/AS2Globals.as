@@ -40,11 +40,14 @@ import flash.utils.getTimer;
 
 [native(cls="AS2Globals")]
 public dynamic class AS2Globals {
+  // TODO: change this when entering a domain.
+  public static var instance;
   public var _global;
 
   public var flash:Object;
 
   public function AS2Globals() {
+    AS2Globals.instance = this;
     this._global = this;
     this.flash = createFlashObject();
   }

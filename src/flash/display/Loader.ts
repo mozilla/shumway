@@ -428,7 +428,6 @@ module Shumway.AVM2.AS.flash.display {
       var as2Object = Shumway.AVM1.getAS2Object(topRoot);
       avm1Context.globals.asSetPublicProperty('_root', as2Object);
       avm1Context.globals.asSetPublicProperty('_level0', as2Object);
-      avm1Context.globals.asSetPublicProperty('_level1', as2Object);
 
       // transfer parameters
       var parameters = this._contentLoaderInfo._parameters;
