@@ -46,6 +46,7 @@ module Shumway.AVM2.AS.flash.ui {
             if (sibling._parent === object._parent && InteractiveObject.isType(sibling)) {
               object = sibling;
               i = j;
+              break;
             }
           }
         }
