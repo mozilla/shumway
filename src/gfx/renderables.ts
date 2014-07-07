@@ -279,7 +279,7 @@ module Shumway.GFX {
       enterTimeline("RenderableBitmap.drawFrame");
       var bounds = this.getBounds();
       var options = new Canvas2D.Canvas2DStageRendererOptions();
-      options.shapeCaching = true;
+      options.cacheShapes = true;
       var renderer = new Canvas2D.Canvas2DStageRenderer(this._canvas, null, options);
       renderer.renderFrame(source, clipRect || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");

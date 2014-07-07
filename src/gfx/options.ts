@@ -31,7 +31,7 @@ module Shumway.GFX {
   export var disableClipping = stageOptions.register(new Option("", "disableClipping", "boolean", false, "Disable clipping."));
   export var debugClipping = stageOptions.register(new Option("", "debugClipping", "boolean", false, "Disable clipping."));
 
-  export var backend = stageOptions.register(new Option("t", "backend", "number", 1, "Backends", {
+  export var backend = stageOptions.register(new Option("t", "backend", "number", 0, "Backends", {
     choices: {
       Canvas2D: 0,
       WebGL: 1,
@@ -87,5 +87,6 @@ module Shumway.GFX {
 
   export var snapToDevicePixels = canvas2DOptions.register(new Option("", "snapToDevicePixels", "boolean", false, ""));
   export var imageSmoothing = canvas2DOptions.register(new Option("", "imageSmoothing", "boolean", false, ""));
-  export var shapeCaching = canvas2DOptions.register(new Option("", "shapeCaching", "boolean", false, ""));
+  export var cacheShapes = canvas2DOptions.register(new Option("", "cacheShapes", "boolean", false, ""));
+  export var cacheShapesMaxSize = canvas2DOptions.register(new Option("", "cacheShapesMaxSize", "number", 256, "", {range: { min: 1, max: 1024, step: 1 }}));
 }

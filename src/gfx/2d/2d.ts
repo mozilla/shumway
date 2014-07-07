@@ -35,14 +35,10 @@ module Shumway.GFX.Canvas2D {
   }
 
   export class Canvas2DStageRendererOptions extends StageRendererOptions {
-    disable: boolean;
-    clipDirtyRegions: boolean;
-    clipCanvas: boolean;
-    cull: boolean;
-
-    snapToDevicePixels: boolean;
-    imageSmoothing: boolean;
-    shapeCaching: boolean;
+    snapToDevicePixels: boolean = true;
+    imageSmoothing: boolean = true;
+    cacheShapes: boolean = true;
+    cacheShapesMaxSize: number = 256;
   }
 
   export class Canvas2DStageRendererState {
@@ -74,40 +70,33 @@ module Shumway.GFX.Canvas2D {
       this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
 
-      Canvas2DStageRenderer._prepareSurfaceAllocators(1024, 1024);
+      Canvas2DStageRenderer._prepareSurfaceAllocators();
     }
 
-    private static _prepareSurfaceAllocators(w: number, h: number) {
+    private static _prepareSurfaceAllocators() {
       if (Canvas2DStageRenderer._surfaceRegionAllocator) {
         return;
       }
       Canvas2DStageRenderer._surfaceRegionAllocator = new SurfaceRegionAllocator.SimpleAllocator (
-        function () {
-          var scratchCanvas = document.createElement("canvas");
+        function (w: number, h: number) {
+          var canvas = document.createElement("canvas");
           if (typeof registerScratchCanvas !== "undefined") {
-            registerScratchCanvas(scratchCanvas);
+            registerScratchCanvas(canvas);
           }
-          scratchCanvas.width = w;
-          scratchCanvas.height = h;
+          var W = Math.max(1024, w);
+          var H = Math.max(1024, h);
+          canvas.width = W;
+          canvas.height = H;
+          var allocator = null;
+          if (w > 1024 || h > 1024) {
+            allocator = new RegionAllocator.GridAllocator(W, H, W, H);
+          } else {
+            allocator = new RegionAllocator.BucketAllocator(W, H);
+          }
           return new Canvas2DSurface (
-            scratchCanvas, new RegionAllocator.BucketAllocator(w, h)
+            canvas, allocator
           );
         }
-      );
-
-      var scratchCanvas = document.createElement("canvas");
-      if (typeof registerScratchCanvas !== "undefined") {
-        registerScratchCanvas(scratchCanvas);
-      }
-      scratchCanvas.width = 1024;
-      scratchCanvas.height = 1024;
-      Canvas2DStageRenderer._surfaceRegionAllocator.addSurface (
-        new Canvas2DSurface (
-          scratchCanvas, new RegionAllocator.GridAllocator (
-            1024, 1024,
-            1024, 1024
-          )
-        )
       );
     }
 
@@ -125,39 +114,12 @@ module Shumway.GFX.Canvas2D {
       var options = this._options;
 
       var lastDirtyRectangles: Rectangle[] = [];
-      if (false && stage.trackDirtyRegions) {
-        stage.gatherMarkedDirtyRegions(stage.matrix);
-        stage.dirtyRegion.gatherRegions(lastDirtyRectangles);
-        if (options.clipDirtyRegions) {
-          if (!lastDirtyRectangles.length) {
-            // Nothing is dirty, so skip rendering.
-            context.restore();
-            return;
-          }
-          if (options.clipCanvas) {
-            context.beginPath();
-            /**
-             * If we have overlapping clipping regions we don't want to use even-odd fill rules.
-             */
-            var savedFillRule = context.mozFillRule;
-            context.fillRule = context.mozFillRule = 'nonzero';
-            for (var i = 0; i < lastDirtyRectangles.length; i++) {
-              var rectangle = lastDirtyRectangles[i];
-              rectangle.expand(2, 2);
-              context.rect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
-            }
-            context.clip();
-            context.fillRule = context.mozFillRule = savedFillRule;
-          }
-        }
-      }
-
       var dirtyRectangles = lastDirtyRectangles.slice(0);
 
       context.globalAlpha = 1;
 
       var viewport = this._viewport;
-      this.renderFrame(stage, viewport, stage.matrix);
+      this.renderFrame(stage, viewport, stage.matrix, true);
 
       if (stage.trackDirtyRegions) {
         stage.dirtyRegion.clear();
@@ -173,9 +135,11 @@ module Shumway.GFX.Canvas2D {
       }
     }
 
-    public renderFrame(root: Frame,
-                       viewport: Rectangle,
-                       matrix: Matrix) {
+    public renderFrame (
+      root: Frame,
+      viewport: Rectangle,
+      matrix: Matrix,
+      clearRect: boolean = false) {
       var context = this.context;
       context.save();
       if (!this._options.paintViewport) {
@@ -183,7 +147,9 @@ module Shumway.GFX.Canvas2D {
         context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
         context.clip();
       }
-      context.clearRect(viewport.x, viewport.y, viewport.w, viewport.h);
+      if (clearRect) {
+        context.clearRect(viewport.x, viewport.y, viewport.w, viewport.h);
+      }
       this._renderFrame(context, root, matrix, viewport, new Canvas2DStageRendererState(this._options));
       context.restore();
     }
@@ -247,14 +213,14 @@ module Shumway.GFX.Canvas2D {
 
       if (!bounds.isEmpty() && state.options.paintRenderable) {
         var source = shape.source;
-        var maxCachedSize = 64;
+        var cacheShapesMaxSize = state.options.cacheShapesMaxSize;
         var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
-        if (state.options.shapeCaching &&
-            bounds.w * matrixScale <= maxCachedSize &&
-            bounds.h * matrixScale <= maxCachedSize) {
+        if (state.options.cacheShapes &&
+            bounds.w * matrixScale <= cacheShapesMaxSize &&
+            bounds.h * matrixScale <= cacheShapesMaxSize) {
           var mipMap: MipMap = source.properties["mipMap"];
           if (!mipMap) {
-            mipMap = source.properties["mipMap"] = new MipMap(source, Canvas2DStageRenderer._surfaceRegionAllocator, maxCachedSize);
+            mipMap = source.properties["mipMap"] = new MipMap(source, Canvas2DStageRenderer._surfaceRegionAllocator, cacheShapesMaxSize);
           }
           var mipMapLevel = mipMap.getLevel(matrix);
           var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);

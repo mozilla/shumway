@@ -340,20 +340,20 @@ module Shumway.GFX {
     }
 
     export class SimpleAllocator implements ISurfaceRegionAllocator {
-      private _createSurface: () => ISurface;
+      private _createSurface: (w: number, h: number) => ISurface;
       private _surfaces: ISurface [];
 
       public get surfaces(): ISurface [] {
         return this._surfaces;
       }
 
-      constructor(createSurface: () => ISurface) {
+      constructor(createSurface: (w: number, h: number) => ISurface) {
         this._createSurface = createSurface;
         this._surfaces = [];
       }
 
-      private _createNewSurface(): ISurface {
-        var surface = this._createSurface();
+      private _createNewSurface(w: number, h: number): ISurface {
+        var surface = this._createSurface(w, h);
         this._surfaces.push(surface);
         return surface;
       }
@@ -369,7 +369,7 @@ module Shumway.GFX {
             return region;
           }
         }
-        return this._createNewSurface().allocate(w, h);
+        return this._createNewSurface(w, h).allocate(w, h);
       }
 
       free(region: ISurfaceRegion) {
