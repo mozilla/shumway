@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
+import ASClass = Shumway.AVM2.AS.ASClass;
 declare module Shumway.AVM2.AS.avm1lib {
-  import ASClass = Shumway.AVM2.AS.ASClass;
   export class AS2Globals extends ASClass {}
   export class AS2Utils extends ASClass {}
   export class AS2MovieClip extends ASClass {}
@@ -37,4 +37,5 @@ declare module Shumway.AVM1 {
 
     globals: Shumway.AVM2.AS.avm1lib.AS2Globals;
   }
+  export class AS2Utils extends ASClass {}
 }
