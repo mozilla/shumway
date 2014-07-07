@@ -116,10 +116,6 @@ var asNextName = Shumway.AVM2.Runtime.asNextName;
 var asNextValue = Shumway.AVM2.Runtime.asNextValue;
 var asGetEnumerableKeys = Shumway.AVM2.Runtime.asGetEnumerableKeys;
 
-var initializeGlobalObject = Shumway.AVM2.Runtime.initializeGlobalObject;
-
-initializeGlobalObject(jsGlobal);
-
 var asTypeOf = Shumway.AVM2.Runtime.asTypeOf;
 var publicizeProperties = Shumway.AVM2.Runtime.publicizeProperties;
 var asGetSlot = Shumway.AVM2.Runtime.asGetSlot;
