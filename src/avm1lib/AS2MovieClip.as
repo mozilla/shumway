@@ -301,6 +301,16 @@ public dynamic class AS2MovieClip extends Object {
   public function set _lockroot(value) {
     throw 'Not implemented: set$_lockroot';
   }
+  // AS2 pretends that these two properties don't exist on MovieClip instances, but happily
+  // resolves them nevertheless.
+  // TODO: make invisible to `hasOwnProperty`.
+  public function get _root(): AS2MovieClip {
+    return AS2Globals.instance._root;
+  }
+  // TODO: make invisible to `hasOwnProperty`.
+  public function get _level0(): AS2MovieClip {
+    return AS2Globals.instance._level0;
+  }
   public function get menu() {
     return this._as3Object.contextMenu;
   }
