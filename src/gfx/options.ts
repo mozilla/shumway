@@ -87,4 +87,5 @@ module Shumway.GFX {
 
   export var snapToDevicePixels = canvas2DOptions.register(new Option("", "snapToDevicePixels", "boolean", false, ""));
   export var imageSmoothing = canvas2DOptions.register(new Option("", "imageSmoothing", "boolean", false, ""));
+  export var shapeCaching = canvas2DOptions.register(new Option("", "shapeCaching", "boolean", false, ""));
 }

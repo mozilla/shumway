@@ -1803,4 +1803,59 @@ module Shumway.GFX.Geometry {
       }
     }
   }
+
+  export class MipMapLevel {
+    constructor (
+      public surfaceRegion: ISurfaceRegion,
+      public scale: number
+    ) {
+      // ...
+    }
+  }
+  export class MipMap {
+    private _source: Renderable;
+    private _size: number;
+    private _levels: MipMapLevel [];
+    private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    constructor (
+      source: Renderable,
+      surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator,
+      size: number
+    ) {
+      this._source = source;
+      this._levels = [];
+      this._surfaceRegionAllocator = surfaceRegionAllocator;
+      this._size = size;
+    }
+    public render(context: CanvasRenderingContext2D) {
+
+    }
+    public getLevel(matrix: Matrix): MipMapLevel {
+      var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
+      var level = 0;
+      if (matrixScale !== 1) {
+        level = clamp(Math.round(Math.log(matrixScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      }
+      if (!(this._source.hasFlags(RenderableFlags.Scalable))) {
+        level = clamp(level, -MIN_CACHE_LEVELS, 0);
+      }
+      var scale = pow2(level);
+      var levelIndex = MIN_CACHE_LEVELS + level;
+      var mipLevel = this._levels[levelIndex];
+
+      if (!mipLevel) {
+        var bounds = this._source.getBounds();
+        var scaledBounds = bounds.clone();
+        scaledBounds.scale(scale, scale);
+        scaledBounds.snap();
+        var surfaceRegion = this._surfaceRegionAllocator.allocate(scaledBounds.w, scaledBounds.h);
+        var region = surfaceRegion.region;
+        mipLevel = this._levels[levelIndex] = new MipMapLevel(surfaceRegion, scale);
+        var surface = <Canvas2D.Canvas2DSurface>(mipLevel.surfaceRegion.surface);
+        surface.context.setTransform(scale, 0, 0, scale, region.x - scaledBounds.x, region.y - scaledBounds.y);
+        this._source.render(surface.context);
+      }
+      return mipLevel;
+    }
+  }
 }

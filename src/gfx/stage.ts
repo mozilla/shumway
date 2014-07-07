@@ -65,11 +65,6 @@ module Shumway.GFX {
     Skip         = 2,
 
     /**
-     * Only visit visible frames.
-     */
-    VisibleOnly  = 4,
-
-    /**
      * Visit front to back.
      */
     FrontToBack  = 8,

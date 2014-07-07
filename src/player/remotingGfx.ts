@@ -15,6 +15,7 @@
  */
 module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
+  import FrameFlags = Shumway.GFX.FrameFlags;
   import Shape = Shumway.GFX.Shape;
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
@@ -409,10 +410,10 @@ module Shumway.Remoting.GFX {
       head.insertBefore(document.createElement('style'), head.firstChild);
       var style = <CSSStyleSheet>document.styleSheets[0];
       style.insertRule(
-          '@font-face{' +
-          'font-family:swffont' + fontId + ';' +
-          'src:url(data:font/opentype;base64,' + Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' +
-          '}',
+        '@font-face{' +
+        'font-family:swffont' + fontId + ';' +
+        'src:url(data:font/opentype;base64,' + Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' +
+        '}',
         style.cssRules.length
       );
 
