@@ -178,7 +178,7 @@ module Shumway.AVM2.AS {
       M("flash.utils.Timer", "TimerClass", flash.utils.Timer),
       M("flash.utils.ByteArray", "ByteArrayClass", flash.utils.ByteArray),
 
-      M("avm1lib.AS2Utils", "AS2Utils", Shumway.AVM2.AS.avm1lib.AS2Utils),
+      M("avm1lib.AS2Utils", "AS2Utils", Shumway.AVM1.AS2Utils),
       M("avm1lib.AS2Broadcaster"),
       M("avm1lib.AS2Key"),
       M("avm1lib.AS2Mouse"),
