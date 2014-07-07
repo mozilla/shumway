@@ -1449,26 +1449,32 @@ module Shumway.AVM2.AS.flash.display {
      * not its children.
      */
     hitTestPoint(x: number, y: number, shapeFlag: boolean = false,
-                 ignoreChildren: boolean = false): boolean
+                 ignoreChildren: boolean = false, ignoreClipping: boolean = true): boolean
     {
       x = +x;
       y = +y;
       shapeFlag = !!shapeFlag;
       var point = new flash.geom.Point(x, y).toTwips();
       this._getInvertedConcatenatedMatrix().transformPointInPlace(point);
-      return this._containsPoint(point, shapeFlag, ignoreChildren);
+      return this._containsPoint(point, shapeFlag, ignoreChildren, ignoreClipping);
     }
 
     /**
      * Same as |hitTestPoint| but the point is in local coordinate space and in twips.
      */
     _containsPoint(point: flash.geom.Point, shapeFlag: boolean = false,
-                   ignoreChildren: boolean = false): boolean {
+                   ignoreChildren: boolean = false, ignoreClipping: boolean = true): boolean {
       if (!this._getContentBounds().contains(point.x, point.y)) {
         return false;
       }
       if (!shapeFlag) {
         return true;
+      }
+      if (this._mask) {
+        var maskPoint = this._mask._getInvertedMatrix().transformPoint(point);
+        if (!this._mask._containsPoint(maskPoint, shapeFlag, ignoreChildren, ignoreClipping)) {
+          return false;
+        }
       }
       /* TODO: Figure out if we need to test against the graphics path first and exit early instead of
        * going down the children list. Testing the path can be more expensive sometimes, more so than
@@ -1480,7 +1486,12 @@ module Shumway.AVM2.AS.flash.display {
           var child = children[i];
           childPoint.copyFrom(point);
           child._getInvertedMatrix().transformPointInPlace(childPoint);
-          if (child._containsPoint(childPoint, shapeFlag, ignoreChildren)) {
+          var result = child._containsPoint(childPoint, shapeFlag, ignoreChildren, ignoreClipping);
+          if (!ignoreClipping && child._clipDepth >= 0 && child._parent) {
+            if (!result) {
+              i = child._parent.getClipDepthIndex(child._clipDepth);
+            }
+          } else if (result) {
             return true;
           }
         }

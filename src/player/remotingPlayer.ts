@@ -146,7 +146,7 @@ module Shumway.Remoting.Player {
     writeClip(displayObject: DisplayObject) {
       if (displayObject._clipDepth >= 0 && displayObject._parent) {
         // Clips in GFX land don't use absolute clip depth numbers. Instead we need to encode
-        // the number of sibilings you want to clip. If childen are removed, GFX cilp values
+        // the number of siblings you want to clip. If children are removed, GFX clip values
         // need to be recomputed.
         var i = displayObject._parent.getChildIndex(displayObject);
         var j = displayObject._parent.getClipDepthIndex(displayObject._clipDepth);
