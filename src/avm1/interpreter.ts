@@ -14,49 +14,6 @@
  * limitations under the License.
  */
 
-declare module Shumway.AVM2.AS.avm1lib {
-  export class AS2Globals {
-    constructor();
-    getURL(url: string, target, method?: string);
-    nextFrame();
-    prevFrame();
-    gotoAndPlay(scene, frame?);
-    gotoAndStop(scene, frame?);
-    play();
-    stop();
-    toggleHighQuality();
-    stopAllSounds();
-    ifFrameLoaded(scene, frame?): boolean;
-    gotoLabel(label);
-    length(s): number;
-    substring(s: string, index: number, count: number): string;
-    mbsubstring(s: string, index: number, count: number): string;
-    int(obj): number;
-    chr(code: number): string;
-    mbchr(code: number): string;
-    ord(ch: string): number;
-    mbord(ch: string): number;
-    call(frame: number);
-    loadVariables(url: string, target, method);
-    loadMovie(url:string, target, method);
-    gotoAndPlay();
-    gotoAndStop();
-    getAS2Property(target, index: number);
-    setAS2Property(target, index:number, value);
-    duplicateMovieClip(target, newname: string, depth: number);
-    removeMovieClip(target);
-    startDrag(target: any, lock: any, left: any, top: any, right: any, bottom: any);
-    stopDrag(target?);
-    trace(msg);
-    getTimer();
-    random(max: number);
-    fscommand();
-  }
-  export class AS2MovieClip {
-    __lookupChild(path: string): AS2MovieClip;
-    __targetPath: string;
-  }
-}
 
 module Shumway.AVM1 {
   import Multiname = Shumway.AVM2.ABC.Multiname;

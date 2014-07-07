@@ -29,9 +29,6 @@ module Shumway.AVM2.AS.flash.display {
 
   import Bounds = Shumway.Bounds;
 
-  import AS2Context = Shumway.AVM1.AS2Context;
-  import getAS2Object = Shumway.AVM2.AS.avm1lib.getAS2Object;
-
   declare var SHUMWAY_ROOT: string;
   declare var LOADER_WORKER_PATH: string;
 
@@ -262,7 +259,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private _initAvm1(loaderInfo: LoaderInfo): Promise<any> {
       return AVM2.instance.loadAVM1().then(function() {
-        loaderInfo._avm1Context = AS2Context.create(loaderInfo.swfVersion);
+        loaderInfo._avm1Context = Shumway.AVM1.AS2Context.create(loaderInfo.swfVersion);
       });
     }
 
@@ -428,10 +425,9 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       var avm1Context = this._contentLoaderInfo._avm1Context;
-      var as2Object = getAS2Object(topRoot);
+      var as2Object = Shumway.AVM1.getAS2Object(topRoot);
       avm1Context.globals.asSetPublicProperty('_root', as2Object);
       avm1Context.globals.asSetPublicProperty('_level0', as2Object);
-      avm1Context.globals.asSetPublicProperty('_level1', as2Object);
 
       // transfer parameters
       var parameters = this._contentLoaderInfo._parameters;
@@ -458,7 +454,7 @@ module Shumway.AVM2.AS.flash.display {
             if (state.executed) return;
             state.executed = true;
             var avm1Context = loaderInfo._avm1Context;
-            var as2Object = getAS2Object(root);
+            var as2Object = Shumway.AVM1.getAS2Object(root);
             return avm1Context.executeActions(actionsData, root.stage, as2Object);
           }.bind(null, actionsData, spriteId, {executed: false}));
         }

@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-/// <reference path='../utilities.ts' />
-/// <reference path='../options.ts'/>
-/// <reference path='../settings.ts'/>
-/// <reference path='../tools/profiler/references.ts' />
-/// <reference path='../tools/mini/references.ts' />
-/// <reference path='../dataBuffer.ts' />
-/// <reference path='../ShapeData.ts' />
+/// <reference path='../../build/ts/base.d.ts' />
+/// <reference path='../../build/ts/tools.d.ts' />
 
 /// <reference path='module.ts' />
 /// <reference path='utilities.ts' />

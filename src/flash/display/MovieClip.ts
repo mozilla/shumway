@@ -24,7 +24,7 @@ module Shumway.AVM2.AS.flash.display {
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
   import events = flash.events;
-  import getAS2Object = Shumway.AVM2.AS.avm1lib.getAS2Object;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
 
   export class MovieClip extends flash.display.Sprite {
 
@@ -522,7 +522,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private _executeAS2FrameScripts() {
       var avm1Context = this.loaderInfo._avm1Context;
-      var as2Object = getAS2Object(this);
+      var as2Object = Shumway.AVM1.getAS2Object(this);
       var scripts: AVM1.AS2ActionsData[] = this._as2FrameScripts[this._currentFrame];
       release || assert(scripts && scripts.length);
       for (var i = 0; i < scripts.length; i++) {

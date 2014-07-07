@@ -55,7 +55,7 @@ module Shumway.AVM2.AS.avm1lib {
       }
       this._nativeAS3Object = nativeMovieClip;
       (<any> nativeMovieClip)._as2Object = this;
-      initDefaultListeners(this);
+      Shumway.AVM1.initDefaultListeners(this);
     }
     get _as3Object(): flash.display.MovieClip {
       return this._nativeAS3Object;
