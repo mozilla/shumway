@@ -225,6 +225,10 @@ module Shumway.GFX.Canvas2D {
           return VisitorFlags.Continue;
         }
 
+        if (!frame._hasFlags(FrameFlags.Visible)) {
+          return VisitorFlags.Skip;
+        }
+
         var bounds = frame.getBounds();
 
         if (state.ignoreMask !== frame && frame.mask && !state.clipRegion) {

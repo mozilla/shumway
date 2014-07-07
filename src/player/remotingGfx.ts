@@ -380,8 +380,7 @@ module Shumway.Remoting.GFX {
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
         frame.clip = input.readInt();
         frame.blendMode = input.readInt();
-        // TODO: Should make a proper flag for this.
-        input.readBoolean() ? 1 : 0;
+        frame._toggleFlags(FrameFlags.Visible, input.readBoolean());
         frame.pixelSnapping = <PixelSnapping>input.readInt();
         frame.smoothing = <Smoothing>input.readInt();
       }

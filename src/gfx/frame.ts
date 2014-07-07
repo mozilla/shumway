@@ -65,7 +65,9 @@ module Shumway.GFX {
     InvalidPaint                              = 0x0200,
 
     EnterClip                                 = 0x1000,
-    LeaveClip                                 = 0x2000
+    LeaveClip                                 = 0x2000,
+
+    Visible                                   = 0x4000
   }
 
   /**
@@ -168,7 +170,8 @@ module Shumway.GFX {
 
     constructor () {
       this._id = Frame._nextID ++;
-      this._flags = FrameFlags.InvalidPaint                       |
+      this._flags = FrameFlags.Visible                            |
+                    FrameFlags.InvalidPaint                       |
                     FrameFlags.InvalidBounds                      |
                     FrameFlags.InvalidConcatenatedMatrix          |
                     FrameFlags.InvalidInvertedConcatenatedMatrix  |
