@@ -169,16 +169,18 @@ module Shumway.GFX {
      * is freed it's pushed into the free list. It gets poped off the next time a region is allocated.
      */
     export class GridAllocator implements IRegionAllocator {
-      private _size: number;
+      private _sizeW: number;
+      private _sizeH: number;
       private _rows: number;
       private _columns: number;
       private _freeList: GridCell [];
       private _index: number;
       private _total: number;
-      constructor(w: number, h: number, size: number) {
-        this._columns = w / size | 0;
-        this._rows = h / size | 0;
-        this._size = size;
+      constructor(w: number, h: number, sizeW: number, sizeH: number) {
+        this._columns = w / sizeW | 0;
+        this._rows = h / sizeH | 0;
+        this._sizeW = sizeW;
+        this._sizeH = sizeH;
         this._freeList = [];
         this._index = 0;
         this._total = this._columns * this._rows;
@@ -187,8 +189,9 @@ module Shumway.GFX {
       allocate(w: number, h: number): Region {
         w = Math.ceil(w); h = Math.ceil(h);
         release || assert (w > 0 && h > 0);
-        var size = this._size;
-        if (w > size || h > size) {
+        var sizeW = this._sizeW;
+        var sizeH = this._sizeH;
+        if (w > sizeW || h > sizeH) {
           return null;
         }
         var freeList = this._freeList;
@@ -201,7 +204,7 @@ module Shumway.GFX {
         } else if (index < this._total) {
           var y = (index / this._columns) | 0;
           var x = index - (y * this._columns);
-          var cell = new GridCell(x * size, y * size, w, h);
+          var cell = new GridCell(x * sizeW, y * sizeH, w, h);
           cell.index = index;
           cell.allocator = this;
           cell.allocated = true;
@@ -298,7 +301,7 @@ module Shumway.GFX {
             }
             var bucketRegion = new Rectangle(0, this._filled, this._w, bucketHeight);
             this._buckets.push (
-              new Bucket(gridSize, bucketRegion, new GridAllocator(bucketRegion.w, bucketRegion.h, gridSize))
+              new Bucket(gridSize, bucketRegion, new GridAllocator(bucketRegion.w, bucketRegion.h, gridSize, gridSize))
             );
             this._filled += bucketHeight;
           }
@@ -319,6 +322,11 @@ module Shumway.GFX {
        * Used surfaces.
        */
       surfaces: ISurface [];
+
+      /**
+       * Adds a surface to the pool of allocation surfaces.
+       */
+      addSurface(surface: ISurface);
 
       /**
        * Allocates a 2D region.
@@ -348,6 +356,10 @@ module Shumway.GFX {
         var surface = this._createSurface();
         this._surfaces.push(surface);
         return surface;
+      }
+
+      addSurface(surface: ISurface) {
+        this._surfaces.push(surface);
       }
 
       allocate(w: number, h: number): ISurfaceRegion {

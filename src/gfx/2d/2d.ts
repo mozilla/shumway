@@ -60,7 +60,7 @@ module Shumway.GFX.Canvas2D {
     context: CanvasRenderingContext2D;
     count = 0;
 
-    private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    private static _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
     private _scratchCanvas: HTMLCanvasElement;
     private _scratchCanvasContext: CanvasRenderingContext2D;
 
@@ -74,19 +74,45 @@ module Shumway.GFX.Canvas2D {
       this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
 
-      this._surfaceRegionAllocator = new SurfaceRegionAllocator.SimpleAllocator (
+      Canvas2DStageRenderer._prepareSurfaceAllocators(1024, 1024);
+    }
+
+    private static _prepareSurfaceAllocators(w: number, h: number) {
+      if (Canvas2DStageRenderer._surfaceRegionAllocator) {
+        return;
+      }
+      Canvas2DStageRenderer._surfaceRegionAllocator = new SurfaceRegionAllocator.SimpleAllocator (
         function () {
           var scratchCanvas = document.createElement("canvas");
           if (typeof registerScratchCanvas !== "undefined") {
             registerScratchCanvas(scratchCanvas);
           }
-          scratchCanvas.width = canvas.width;
-          scratchCanvas.height = canvas.height;
+          scratchCanvas.width = w;
+          scratchCanvas.height = h;
           return new Canvas2DSurface (
-            scratchCanvas, new RegionAllocator.BucketAllocator(scratchCanvas.width, scratchCanvas.height)
+            scratchCanvas, new RegionAllocator.BucketAllocator(w, h)
           );
         }
       );
+
+      var scratchCanvas = document.createElement("canvas");
+      if (typeof registerScratchCanvas !== "undefined") {
+        registerScratchCanvas(scratchCanvas);
+      }
+      scratchCanvas.width = 1024;
+      scratchCanvas.height = 1024;
+      Canvas2DStageRenderer._surfaceRegionAllocator.addSurface (
+        new Canvas2DSurface (
+          scratchCanvas, new RegionAllocator.GridAllocator (
+            1024, 1024,
+            1024, 1024
+          )
+        )
+      );
+    }
+
+    public resize() {
+      // TODO: We need to resize all the scratch canvases and recreate allocators.
     }
 
     public render() {
@@ -184,7 +210,7 @@ module Shumway.GFX.Canvas2D {
       dx += clippedBoundsAABB.x - boundsAABB.x;
       dy += clippedBoundsAABB.y - boundsAABB.y;
 
-      var surfaceRegion = <Canvas2DSurfaceRegion>(this._surfaceRegionAllocator.allocate(clippedBoundsAABB.w, clippedBoundsAABB.h));
+      var surfaceRegion = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceRegionAllocator.allocate(clippedBoundsAABB.w, clippedBoundsAABB.h));
       var region = surfaceRegion.region;
 
       // Region bounds may be smaller than the allocated surface region.
@@ -206,8 +232,6 @@ module Shumway.GFX.Canvas2D {
       context.beginPath();
       context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
       context.clip();
-      // context.fillStyle = ColorStyle.randomStyle();
-      // context.fillRect(0, 0, 1000, 1000);
       this._renderFrame(context, frame, transform, surfaceRegionBounds, new Canvas2DStageRendererState(this._options));
       context.restore();
       return {
@@ -230,7 +254,7 @@ module Shumway.GFX.Canvas2D {
             bounds.h * matrixScale <= maxCachedSize) {
           var mipMap: MipMap = source.properties["mipMap"];
           if (!mipMap) {
-            mipMap = source.properties["mipMap"] = new MipMap(source, self._surfaceRegionAllocator, maxCachedSize);
+            mipMap = source.properties["mipMap"] = new MipMap(source, Canvas2DStageRenderer._surfaceRegionAllocator, maxCachedSize);
           }
           var mipMapLevel = mipMap.getLevel(matrix);
           var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);
