@@ -1852,8 +1852,14 @@ module Shumway.GFX.Geometry {
         var region = surfaceRegion.region;
         mipLevel = this._levels[levelIndex] = new MipMapLevel(surfaceRegion, scale);
         var surface = <Canvas2D.Canvas2DSurface>(mipLevel.surfaceRegion.surface);
-        surface.context.setTransform(scale, 0, 0, scale, region.x - scaledBounds.x, region.y - scaledBounds.y);
-        this._source.render(surface.context);
+        var context = surface.context;
+        context.save();
+        context.beginPath();
+        context.rect(region.x, region.y, region.w, region.h);
+        context.clip();
+        context.setTransform(scale, 0, 0, scale, region.x - scaledBounds.x, region.y - scaledBounds.y);
+        this._source.render(context);
+        context.restore();
       }
       return mipLevel;
     }

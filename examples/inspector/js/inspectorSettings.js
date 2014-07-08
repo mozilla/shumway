@@ -205,6 +205,7 @@ function syncGFXOptions(options) {
 
   options.snapToDevicePixels = GFX.snapToDevicePixels.value;
   options.imageSmoothing = GFX.imageSmoothing.value;
+  options.blending = GFX.blending.value;
   options.cacheShapes = GFX.cacheShapes.value;
   options.cacheShapesMaxSize = GFX.cacheShapesMaxSize.value;
 }
