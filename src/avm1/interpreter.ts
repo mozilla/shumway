@@ -1482,36 +1482,41 @@ module Shumway.AVM1 {
       var methodName = stack.pop();
       var obj = stack.pop();
       var args = avm1ReadFunctionArgs(stack);
-      var resolvedName, method, result;
 
       var sp = stack.length;
       stack.push(undefined);
 
-      // checking "if the name of the method is blank"
-      if (methodName !== null && methodName !== undefined &&
-        methodName !== '') {
-        resolvedName = as2ResolveProperty(obj, methodName);
-        if (resolvedName === null) {
-          throw new Error('Method ' + methodName + ' is not defined.');
-        }
-        if (obj === null || obj === undefined) {
-          throw new Error('Cannot call new using method ' + resolvedName + ' of ' + typeof obj);
-        }
-        method = obj.asGetPublicProperty(resolvedName);
-      } else {
-        if (obj === null || obj === undefined) {
-          throw new Error('Cannot call new using ' + typeof obj);
-        }
-        method = obj;
+      // AS2 simply ignores attempts to construct methods on non-existing objects.
+      if (isNullOrUndefined(obj)) {
+        return;
       }
-      if (isAvm2Class(obj)) {
-        result = construct(obj, args);
+
+      var ctor;
+
+      // Per spec, a missing or blank method name causes the container to be treated as
+      // a function to construct.
+      if (isNullOrUndefined(methodName) || methodName === '') {
+        ctor = obj;
       } else {
-        result = Object.create(as2GetPrototype(method) || as2GetPrototype(Object));
-        method.apply(result, args);
+        var resolvedName = as2ResolveProperty(obj, methodName);
+        ctor = obj.asGetPublicProperty(resolvedName);
       }
-      result.constructor = method;
+
+      // AS2 simply ignores attempts to invoke non-methods.
+      if (!(ctor instanceof Function)) {
+        return;
+      }
+
+      var result;
+      if (isAvm2Class(ctor)) {
+        result = construct(ctor, args);
+      } else {
+        result = Object.create(as2GetPrototype(ctor) || as2GetPrototype(Object));
+        ctor.apply(result, args);
+      }
+      result.constructor = ctor;
       stack[sp] = result;
+      release || assert(stack.length === sp + 1);
     }
     function avm1_0x40_ActionNewObject(ectx: ExecutionContext) {
       var stack = ectx.stack;
