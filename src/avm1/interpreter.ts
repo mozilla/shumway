@@ -348,7 +348,7 @@ module Shumway.AVM1 {
   }
 
   function isAvm2Class(obj): boolean {
-    return typeof obj === 'object' && obj !== null && 'instanceConstructor' in obj;
+    return obj instanceof Shumway.AVM2.AS.ASClass;
   }
 
   interface AS2Function {

@@ -78,15 +78,15 @@ public dynamic class AS2Globals {
   public function chr(number) {
     return String.fromCharCode(number);
   }
-  public var clearInterval:Function = clearInterval;
-  public var clearTimeout:Function = clearTimeout;
+  public var clearInterval:Function = flash.utils.clearInterval;
+  public var clearTimeout:Function = flash.utils.clearTimeout;
 
   public function duplicateMovieClip(target, newname, depth) {
     var nativeTarget = AS2Utils.resolveTarget(target);
     nativeTarget.duplicateMovieClip(newname, depth);
   }
 
-  public var fscommand:Function = fscommand;
+  public var fscommand:Function = flash.system.fscommand;
 
   public native function escape(str: String): String;
   public native function unescape(str: String): String;
@@ -96,7 +96,7 @@ public dynamic class AS2Globals {
     return nativeTarget[PropertiesIndexMap[index]];
   }
 
-  public var getTimer:Function = getTimer;
+  public var getTimer:Function = flash.utils.getTimer;
 
   public function getURL(url, target, method) {
     var request = new URLRequest(url);
@@ -360,12 +360,21 @@ public dynamic class AS2Globals {
   }
 
   // built-ins
-  public var NaN:Number = NaN;
+  public var NaN:Number = Number.NaN;
   public var Infinity:Number = Number.POSITIVE_INFINITY;
-  public var isFinite:Function = isFinite;
-  public var isNaN:Function = isNaN;
-  public var parseFloat:Function = parseFloat;
-  public var parseInt:Function = parseInt;
+
+  [native("isFinite")]
+  public native function isFinite(n:Number = void 0):Boolean;
+
+  [native("isNaN")]
+  public native function isNaN(n:Number = void 0):Boolean;
+
+  [native("parseFloat")]
+  public native function parseFloat(str:String = "NaN"):Number;
+
+  [native("parseInt")]
+  public native function parseInt(s:String = "NaN", radix = 0):Number;
+
   public var undefined:* = undefined;
   public var MovieClip:Class = AS2MovieClip;
   public var AsBroadcaster:Class = AS2Broadcaster;
