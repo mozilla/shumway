@@ -25,6 +25,7 @@ module Shumway.AVM1 {
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
   import Telemetry = Shumway.Telemetry;
+  import assert = Shumway.Debug.assert;
 
   declare var Proxy;
   declare class Error {
@@ -829,13 +830,6 @@ module Shumway.AVM1 {
 
       currentTarget.asSetPublicProperty(variableName, value);
     }
-    function avm1GetFunction(ectx: ExecutionContext, functionName: string) {
-      var fn = avm1GetVariable(ectx, functionName);
-      if (!(fn instanceof Function)) {
-        throw new Error('Function "' + functionName + '" is not found');
-      }
-      return fn;
-    }
     function avm1GetObjectByName(ectx: ExecutionContext, objectName: string) {
       var obj = avm1GetVariable(ectx, objectName);
       if (!(obj instanceof Object)) {
@@ -1318,9 +1312,13 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      var fn = avm1GetFunction(ectx, functionName);
-      var result = fn.apply(scope, args);
-      stack[sp] = result;
+      var fn = avm1GetVariable(ectx, functionName);
+      // AS2 simply ignores attempts to invoke non-functions.
+      if (!fn || !(fn instanceof Function)) {
+        return;
+      }
+      release || assert(stack.length === sp + 1);
+      stack[sp] = fn.apply(scope, args);
     }
     function avm1_0x52_ActionCallMethod(ectx: ExecutionContext) {
       var stack = ectx.stack;
