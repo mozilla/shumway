@@ -42,7 +42,7 @@ module Shumway.GFX {
 
   export module RegionAllocator {
 
-    export class Region extends Rectangle {
+    export class Region extends Geometry.Rectangle {
       /**
        * The allocator who allocated this region. Once this is assigned it will never
        * change, even if the region is freed.
