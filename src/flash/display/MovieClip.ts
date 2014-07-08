@@ -287,6 +287,9 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (currentFrame === nextFrame) {
+        // If nextFrame was > this._totalFrames, it has to be written back here, otherwise it'll
+        // just be incremented ever further.
+        this._nextFrame = nextFrame;
         return;
       }
 
@@ -308,6 +311,9 @@ module Shumway.AVM2.AS.flash.display {
       //}
 
       if (nextFrame > this.framesLoaded) {
+        // If nextFrame was > this._totalFrames, it has to be written back here, otherwise it'll
+        // just be incremented ever further.
+        this._nextFrame = nextFrame;
         // TODO
         return;
       }
