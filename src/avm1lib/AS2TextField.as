@@ -46,6 +46,12 @@ public dynamic class AS2TextField extends Object {
     return this._as3Object.autoSize;
   }
   public function set autoSize(value) {
+    // AS2 treats |true| as "LEFT" and |false| as "NONE".
+    if (value === true) {
+      value = "left";
+    } else if (value === false) {
+      value = "none";
+    }
     this._as3Object.autoSize = value;
   }
 
