@@ -138,6 +138,10 @@ module Shumway.AVM2.AS.flash.display {
       this._codeExecutionPromiseCapability = new PromiseCapability<void>();
     }
 
+    _constructFrame() {
+      this._constructChildren();
+    }
+
     // JS -> AS Bindings
 
     //uncaughtErrorEvents: flash.events.UncaughtErrorEvents;

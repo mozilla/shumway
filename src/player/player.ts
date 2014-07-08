@@ -312,10 +312,15 @@ module Shumway.Player {
         for (var i = 0; i < frameRateMultiplierOption.value; i++) {
           enterTimeline("eventLoop");
           if (initFrameOption.value) {
-            MovieClip.initFrame();
+            DisplayObject.initFrame();
           }
           if (constructFrameOption.value) {
-            MovieClip.constructFrame(playAllSymbolsOption.value);
+            DisplayObject.constructFrame();
+          }
+          if (!playAllSymbolsOption.value) {
+            MovieClip.executeAndExitFrame();
+          } else {
+            MovieClip.reset();
           }
           Loader.progress();
           leaveTimeline("eventLoop");
@@ -362,8 +367,8 @@ module Shumway.Player {
         });
 
         function show(symbol) {
+          flash.display.DisplayObject.reset();
           flash.display.MovieClip.reset();
-          flash.display.DisplayObjectContainer.reset();
           var symbolInstance = symbol.symbolClass.initializeFrom(symbol);
           symbol.symbolClass.instanceConstructorNoInitialize.call(symbolInstance);
           if (symbol instanceof Shumway.Timeline.BitmapSymbol) {

@@ -66,6 +66,10 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("Dummy Constructor: public flash.display.SimpleButton");
     }
 
+    _initFrame() {
+      this._updateButton();
+    }
+
     // JS -> AS Bindings
 
 

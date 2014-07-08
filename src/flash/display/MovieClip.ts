@@ -28,21 +28,21 @@ module Shumway.AVM2.AS.flash.display {
 
   export class MovieClip extends flash.display.Sprite {
 
-    private static _movieClipInstances: WeakList<MovieClip>;
     private static _callQueue: MovieClip [];
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       MovieClip.reset();
+
     };
+
     static reset() {
-      MovieClip._movieClipInstances = new WeakList<MovieClip>();
       MovieClip._callQueue = [];
     }
+
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.SpriteSymbol) {
       var self: MovieClip = this;
-      MovieClip._movieClipInstances.push(self);
 
       self._currentFrame = 0;
       self._totalFrames = 1;
@@ -82,33 +82,15 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["currentLabels"];
 
-    static initFrame(): void {
-      var timelineData = { instances: 0 };
-      enterTimeline("MovieClip.initFrame", timelineData);
-      MovieClip._movieClipInstances.forEach(function (value: MovieClip) {
-        if (value._totalFrames > 1 && value._hasFlags(DisplayObjectFlags.Constructed)) {
-          if (!value._stopped) {
-            value._nextFrame++;
-          }
-          value._advanceFrame();
-        }
-        timelineData.instances++;
-      });
-      DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
-      leaveTimeline();
-    }
-
-    static constructFrame(ignoreFrameScripts?) {
-      enterTimeline("MovieClip.constructFrame");
-      DisplayObjectContainer.constructChildren();
-      DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
+    static executeAndExitFrame() {
+      enterTimeline("MovieClip.executeFrame");
       var queue = MovieClip._callQueue;
       while (queue.length) {
         var instance = queue.shift();
         instance._allowFrameNavigation = false;
-        if (!ignoreFrameScripts) {
+        //if (!ignoreFrameScripts) {
           instance.callFrame(instance._currentFrame);
-        }
+        //}
         instance._allowFrameNavigation = true;
         if (instance._nextFrame !== instance._currentFrame) {
           instance._advanceFrame();
@@ -116,12 +98,25 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
-      leaveTimeline("constructFrame");
+      leaveTimeline();
     }
 
     constructor () {
       false && super();
       Sprite.instanceConstructorNoInitialize.call(this);
+    }
+
+    _initFrame() {
+      if (this._totalFrames > 1 && this._hasFlags(DisplayObjectFlags.Constructed)) {
+        if (!this._stopped) {
+          this._nextFrame++;
+        }
+        this._advanceFrame();
+      }
+    }
+
+    _constructFrame() {
+      this._constructChildren();
     }
 
     // JS -> AS Bindings
@@ -274,7 +269,8 @@ module Shumway.AVM2.AS.flash.display {
       if (this._allowFrameNavigation) { // TODO: also check if ActionScriptVersion < 3
         // TODO test inter-frame navigation behaviour for SWF versions < 10
         this._advanceFrame();
-        MovieClip.constructFrame();
+        DisplayObject.constructFrame();
+        MovieClip.executeAndExitFrame();
       }
     }
 

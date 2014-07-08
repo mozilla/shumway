@@ -61,6 +61,10 @@ module Shumway.AVM2.AS.flash.display {
       this._pixelSnapping = asCoerceString(pixelSnapping);
       this._smoothing = !!smoothing;
     }
+
+    _initFrame() { }
+
+    _constructFrame() { }
     
     // JS -> AS Bindings
     
