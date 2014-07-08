@@ -208,4 +208,5 @@ function syncGFXOptions(options) {
   options.blending = GFX.blending.value;
   options.cacheShapes = GFX.cacheShapes.value;
   options.cacheShapesMaxSize = GFX.cacheShapesMaxSize.value;
+  options.cacheShapesThreshold = GFX.cacheShapesThreshold.value;
 }

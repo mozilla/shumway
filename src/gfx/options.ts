@@ -90,4 +90,5 @@ module Shumway.GFX {
   export var blending = canvas2DOptions.register(new Option("", "blending", "boolean", true, ""));
   export var cacheShapes = canvas2DOptions.register(new Option("", "cacheShapes", "boolean", false, ""));
   export var cacheShapesMaxSize = canvas2DOptions.register(new Option("", "cacheShapesMaxSize", "number", 256, "", {range: { min: 1, max: 1024, step: 1 }}));
+  export var cacheShapesThreshold = canvas2DOptions.register(new Option("", "cacheShapesThreshold", "number", 256, "", {range: { min: 1, max: 1024, step: 1 }}));
 }

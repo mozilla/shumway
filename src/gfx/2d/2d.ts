@@ -236,7 +236,8 @@ module Shumway.GFX.Canvas2D {
         var renderCount = source.properties["renderCount"] || 0;
         var cacheShapesMaxSize = state.options.cacheShapesMaxSize;
         var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
-        if (!source.hasFlags(RenderableFlags.Dynamic) &&
+        if (!state.clipRegion &&
+            !source.hasFlags(RenderableFlags.Dynamic) &&
             state.options.cacheShapes &&
             renderCount > state.options.cacheShapesThreshold &&
             bounds.w * matrixScale <= cacheShapesMaxSize &&
