@@ -42,7 +42,6 @@ module Shumway.AVM2.AS.flash.text {
 
     _textContent: Shumway.TextContent;
 
-    // AS -> JS Bindings
     get text(): string {
       return this._textContent.plainText;
     }

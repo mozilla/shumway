@@ -15,6 +15,7 @@
  */
 module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
+  import FrameFlags = Shumway.GFX.FrameFlags;
   import Shape = Shumway.GFX.Shape;
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
@@ -22,11 +23,10 @@ module Shumway.Remoting.GFX {
   import RenderableText = Shumway.GFX.RenderableText;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
+  import ClipRectangle = Shumway.GFX.ClipRectangle;
   import ShapeData = Shumway.ShapeData;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Stage = Shumway.GFX.Stage;
-  import Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
-  import Canvas2DStageRendererState = Shumway.GFX.Canvas2DStageRendererState;
 
   import Smoothing = Shumway.GFX.Smoothing;
   import PixelSnapping = Shumway.GFX.PixelSnapping;
@@ -83,12 +83,13 @@ module Shumway.Remoting.GFX {
   }
 
   export class GFXChannelDeserializerContext {
-    root: FrameContainer;
+    root: ClipRectangle;
     _frames: Frame [];
     private _assets: Renderable [];
 
     constructor(root: FrameContainer) {
-      this.root = root;
+      this.root = new ClipRectangle(128, 128);
+      root.addChild(this.root);
       this._frames = [];
       this._assets = [];
     }
@@ -350,6 +351,7 @@ module Shumway.Remoting.GFX {
       }
       var color = this.input.readInt();
       var rectangle = this._readRectangle()
+      context.root.setBounds(rectangle);
     }
 
     private _readUpdateFrame() {
@@ -374,10 +376,8 @@ module Shumway.Remoting.GFX {
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
         frame.clip = input.readInt();
-        input.readInt();
-        // frame.blendMode = input.readInt();
-        // TODO: Should make a proper flag for this.
-        input.readBoolean() ? 1 : 0;
+        frame.blendMode = input.readInt();
+        frame._toggleFlags(FrameFlags.Visible, input.readBoolean());
         frame.pixelSnapping = <PixelSnapping>input.readInt();
         frame.smoothing = <Smoothing>input.readInt();
       }
@@ -404,10 +404,10 @@ module Shumway.Remoting.GFX {
       head.insertBefore(document.createElement('style'), head.firstChild);
       var style = <CSSStyleSheet>document.styleSheets[0];
       style.insertRule(
-          '@font-face{' +
-          'font-family:swffont' + fontId + ';' +
-          'src:url(data:font/opentype;base64,' + Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' +
-          '}',
+        '@font-face{' +
+        'font-family:swffont' + fontId + ';' +
+        'src:url(data:font/opentype;base64,' + Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' +
+        '}',
         style.cssRules.length
       );
     }

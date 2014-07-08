@@ -278,8 +278,10 @@ module Shumway.GFX {
       // TODO: Support colorMatrix and blendMode.
       enterTimeline("RenderableBitmap.drawFrame");
       var bounds = this.getBounds();
-      var renderer = new Canvas2DStageRenderer(this._canvas, null);
-      renderer.renderClippedFrame(source, clipRect || bounds, matrix);
+      var options = new Canvas2D.Canvas2DStageRendererOptions();
+      options.cacheShapes = true;
+      var renderer = new Canvas2D.Canvas2DStageRenderer(this._canvas, null, options);
+      renderer.renderFrame(source, clipRect || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
     }
 

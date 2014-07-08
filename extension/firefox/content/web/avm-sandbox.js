@@ -338,7 +338,7 @@ function parseSwf(url, movieParams, objectParams) {
 }
 
 function createEasel() {
-  Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
+  Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var canvas = document.createElement("canvas");
   canvas.style.backgroundColor = "#14171a";
   document.getElementById("stageContainer").appendChild(canvas);

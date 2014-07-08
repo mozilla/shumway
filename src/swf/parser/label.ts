@@ -33,12 +33,14 @@ module Shumway.SWF.Parser {
     var i = 0;
     var record;
     var codes;
+    var font;
+    var fontAttributes;
     while ((record = records[i++])) {
       if (record.eot) {
         break;
       }
       if (record.hasFont) {
-        var font = dictionary[record.fontId];
+        font = dictionary[record.fontId];
         release || assert(font, 'undefined font', 'label');
         codes = font.codes;
         dependencies.push(font.id);

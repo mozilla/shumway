@@ -65,11 +65,6 @@ module Shumway.GFX {
     Skip         = 2,
 
     /**
-     * Only visit visible frames.
-     */
-    VisibleOnly  = 4,
-
-    /**
      * Visit front to back.
      */
     FrontToBack  = 8,
@@ -236,13 +231,17 @@ module Shumway.GFX {
    */
   export class ClipRectangle extends FrameContainer {
     color: Color = Color.None;
-    bounds: Rectangle;
     constructor(w: number, h: number) {
       super();
-      this.bounds = new Rectangle(0, 0, w, h);
+      this._bounds = new Rectangle(0, 0, w, h);
     }
+
+    public setBounds(bounds: Rectangle) {
+      this._bounds.set(bounds);
+    }
+
     public getBounds(): Rectangle {
-      return this.bounds;
+      return this._bounds;
     }
   }
 

@@ -4,10 +4,10 @@ module Shumway.GFX {
   import Matrix = Geometry.Matrix;
   import Rectangle = Geometry.Rectangle;
 
-  import Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
-  import WebGLStageRenderer = Shumway.GFX.GL.WebGLStageRenderer;
-  import WebGLStageRendererOptions = Shumway.GFX.GL.WebGLStageRendererOptions;
-  import WebGLContext = Shumway.GFX.GL.WebGLContext;
+  import Canvas2DStageRenderer = Shumway.GFX.Canvas2D.Canvas2DStageRenderer;
+  import WebGLStageRenderer = Shumway.GFX.WebGL.WebGLStageRenderer;
+  import WebGLStageRendererOptions = Shumway.GFX.WebGL.WebGLStageRendererOptions;
+  import WebGLContext = Shumway.GFX.WebGL.WebGLContext;
   import FPS = Shumway.Tools.Mini.FPS;
 
   declare var GUI;
@@ -240,9 +240,9 @@ module Shumway.GFX {
         canvas.style.backgroundColor = "#14171a";
         container.appendChild(canvas);
         canvases.push(canvas);
-        var o = new Canvas2DStageRendererOptions();
+        var o = new Canvas2D.Canvas2DStageRendererOptions();
         options.push(o);
-        renderers.push(new Canvas2DStageRenderer(canvas, stage, o));
+        renderers.push(new Canvas2D.Canvas2DStageRenderer(canvas, stage, o));
       }
 
       function addWebGLBackend() {

@@ -172,7 +172,7 @@ function executeFile(file, buffer, movieParams) {
           syncGFXOptions(easel.options);
           easel.stage.invalidatePaint();
         });
-
+        syncGFXOptions(easel.options);
         var player = new Shumway.Player.Test.TestPlayer();
         easelHost = new Shumway.Player.Test.TestEaselHost(easel);
         player.load(file);
@@ -345,10 +345,14 @@ var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
 var _easel;
 
 function createEasel() {
-  Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
+  Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var backend = Shumway.GFX.backend.value | 0;
   _easel = new Easel(document.getElementById("stageContainer"), backend);
   return _easel;
+}
+
+function registerScratchCanvas(scratchCanvas) {
+  document.getElementById("scratchCanvasContainer").appendChild(scratchCanvas);
 }
 
 function registerInspectorAsset(id, symbolId, asset) {

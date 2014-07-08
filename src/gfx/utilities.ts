@@ -91,7 +91,7 @@ module Shumway {
     }
 
     /**
-     * Removes a node from teh front of the list.
+     * Removes a node from the front of the list.
      */
     pop(): T {
       if (!this._tail) {

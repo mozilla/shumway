@@ -14,10 +14,11 @@
   </style>
 </head>
 <body style="background-color: #333333;">
-  <script src="../utilities.js"></script>
-  <script src="geometry.js"></script>
-  <script src="references.js"></script>
-  <script src="regionAllocator.js"></script>
+  <script src="../../build/ts/utilities.js"></script>
+  <script src="../../build/ts/gfx/utilities.js"></script>
+  <script src="../../build/ts/gfx/geometry.js"></script>
+  <script src="../../build/ts/gfx/references.js"></script>
+  <script src="../../build/ts/gfx/regionAllocator.js"></script>
   <table>
     <tr>
       <td>
@@ -48,6 +49,8 @@
 
   <script>
     var Geometry = Shumway.GFX.Geometry;
+    var RegionAllocator = Shumway.GFX.RegionAllocator;
+    var SurfaceRegionAllocator = Shumway.GFX.SurfaceRegionAllocator;
     var a = document.getElementById("a").getContext("2d");
     var b = document.getElementById("b").getContext("2d");
 
@@ -59,8 +62,8 @@
   </script>
   <script>
     function testA() {
-      var compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
-      var grid = new Geometry.RegionAllocator.GridAllocator(W, H, 64);
+      var compact = new RegionAllocator.CompactAllocator(W, H);
+      var grid = new RegionAllocator.GridAllocator(W, H, 64);
 
       var cRegions = [];
       var gRegions = [];
@@ -72,7 +75,7 @@
           var h = (Math.random() * 16) | 0;
           var c = compact.allocate(w, h);
           if (!c) {
-            compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
+            compact = new RegionAllocator.CompactAllocator(W, H);
             c = compact.allocate(w, h);
             cRegions.length = 0;
             a.clearRect(0, 0, a.canvas.width, a.canvas.height);
@@ -89,7 +92,7 @@
           var h = (Math.random() * 16) | 0;
           var g = grid.allocate(w, h);
           if (!g) {
-            grid = new Geometry.RegionAllocator.GridAllocator(W, H, 16);
+            grid = new RegionAllocator.GridAllocator(W, H, 16);
             g = grid.allocate(w, h);
             gRegions.length = 0;
             b.clearRect(0, 0, b.canvas.width, b.canvas.height);
@@ -103,8 +106,8 @@
     }
 
     function testB() {
-      var compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
-      var grid = new Geometry.RegionAllocator.GridAllocator(W, H, 16);
+      var compact = new RegionAllocator.CompactAllocator(W, H);
+      var grid = new RegionAllocator.GridAllocator(W, H, 16);
 
       var cRegions = [];
       var gRegions = [];
@@ -124,7 +127,7 @@
             c = compact.allocate(w, h);
           }
           if (!c) {
-            compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
+            compact = new RegionAllocator.CompactAllocator(W, H);
             c = compact.allocate(w, h);
             a.clearRect(0, 0, a.canvas.width, a.canvas.height);
             cRegions.length = 0;
@@ -157,8 +160,8 @@
     }
 
     function testC() {
-      var compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
-      var grid = new Geometry.RegionAllocator.GridAllocator(W, H, 16);
+      var compact = new RegionAllocator.CompactAllocator(W, H);
+      var grid = new RegionAllocator.GridAllocator(W, H, 16);
 
       var cRegions = [];
       var gRegions = [];
@@ -179,7 +182,7 @@
             c = compact.allocate(w, h);
           }
           if (!c) {
-            compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
+            compact = new RegionAllocator.CompactAllocator(W, H);
             c = compact.allocate(w, h);
             a.clearRect(0, 0, a.canvas.width, a.canvas.height);
             cRegions.length = 0;
@@ -193,7 +196,7 @@
     }
 
     function testD() {
-      var bucketAllocator = new Geometry.RegionAllocator.BucketAllocator(W, H);
+      var bucketAllocator = new RegionAllocator.BucketAllocator(W, H);
       var bRegions = [];
 
       setInterval(function () {
@@ -206,7 +209,7 @@
           // w = h = i;
           var c = bucketAllocator.allocate(w, h);
           if (!c) {
-            bucketAllocator = new Geometry.RegionAllocator.BucketAllocator(W, H);
+            bucketAllocator = new RegionAllocator.BucketAllocator(W, H);
             c = bucketAllocator.allocate(w, h);
             a.clearRect(0, 0, a.canvas.width, a.canvas.height);
             bRegions.length = 0;
@@ -220,7 +223,7 @@
     }
 
     function testE() {
-      var bucketAllocator = new Geometry.RegionAllocator.BucketAllocator(W, H);
+      var bucketAllocator = new RegionAllocator.BucketAllocator(W, H);
 
       var tick = 0;
       setInterval(function () {

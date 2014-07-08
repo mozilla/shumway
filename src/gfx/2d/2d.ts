@@ -2,7 +2,7 @@
 
 
 
-module Shumway.GFX {
+module Shumway.GFX.Canvas2D {
 
   declare var FILTERS;
 
@@ -16,97 +16,14 @@ module Shumway.GFX {
   import TileCache = Shumway.GFX.Geometry.TileCache;
   import Tile = Shumway.GFX.Geometry.Tile;
   import OBB = Shumway.GFX.Geometry.OBB;
-  import GridAllocator = Shumway.GFX.Geometry.RegionAllocator.GridAllocator;
-  import GridCell = Shumway.GFX.Geometry.RegionAllocator.GridCell;
-  import Region = Shumway.GFX.Geometry.RegionAllocator.Region;
-  import IRegionAllocator = Shumway.GFX.Geometry.RegionAllocator.IRegionAllocator;
+  import MipMap = Shumway.GFX.Geometry.MipMap;
+
+  declare var registerScratchCanvas;
 
   export enum FillRule {
     NONZERO,
     EVENODD
   }
-
-  var originalSave = CanvasRenderingContext2D.prototype.save;
-  var originalClip = CanvasRenderingContext2D.prototype.clip;
-  var originalFill = CanvasRenderingContext2D.prototype.fill;
-  var originalStroke = CanvasRenderingContext2D.prototype.stroke;
-  var originalRestore = CanvasRenderingContext2D.prototype.restore;
-  var originalBeginPath = CanvasRenderingContext2D.prototype.beginPath;
-
-  function debugSave() {
-    if (this.stackDepth === undefined) {
-      this.stackDepth = 0;
-    }
-    if (this.clipStack === undefined) {
-      this.clipStack = [0];
-    } else {
-      this.clipStack.push(0);
-    }
-    this.stackDepth ++;
-    originalSave.call(this);
-  }
-
-  function debugRestore() {
-    this.stackDepth --;
-    this.clipStack.pop();
-    originalRestore.call(this);
-  }
-
-  function debugFill() {
-    assert(!this.buildingClippingRegionDepth);
-    originalFill.apply(this, arguments);
-  }
-
-  function debugStroke() {
-    assert(debugClipping.value || !this.buildingClippingRegionDepth);
-    originalStroke.apply(this, arguments);
-  }
-
-  function debugBeginPath() {
-    originalBeginPath.call(this);
-  }
-
-  function debugClip() {
-    if (this.clipStack === undefined) {
-      this.clipStack = [0];
-    }
-    this.clipStack[this.clipStack.length - 1] ++;
-    if (debugClipping.value) {
-      this.strokeStyle = ColorStyle.Pink;
-      this.stroke.apply(this, arguments);
-    } else {
-      originalClip.apply(this, arguments);
-    }
-  }
-
-  export function notifyReleaseChanged() {
-    if (release) {
-      CanvasRenderingContext2D.prototype.save = originalSave;
-      CanvasRenderingContext2D.prototype.clip = originalClip;
-      CanvasRenderingContext2D.prototype.fill = originalFill;
-      CanvasRenderingContext2D.prototype.stroke = originalStroke;
-      CanvasRenderingContext2D.prototype.restore = originalRestore;
-      CanvasRenderingContext2D.prototype.beginPath = originalBeginPath;
-    } else {
-      CanvasRenderingContext2D.prototype.save = debugSave;
-      CanvasRenderingContext2D.prototype.clip = debugClip;
-      CanvasRenderingContext2D.prototype.fill = debugFill;
-      CanvasRenderingContext2D.prototype.stroke = debugStroke;
-      CanvasRenderingContext2D.prototype.restore = debugRestore;
-      CanvasRenderingContext2D.prototype.beginPath = debugBeginPath;
-    }
-  }
-
-  CanvasRenderingContext2D.prototype.enterBuildingClippingRegion = function () {
-    if (!this.buildingClippingRegionDepth) {
-      this.buildingClippingRegionDepth = 0;
-    }
-    this.buildingClippingRegionDepth ++;
-  };
-
-  CanvasRenderingContext2D.prototype.leaveBuildingClippingRegion = function () {
-    this.buildingClippingRegionDepth --;
-  };
 
   function findIntersectingIndex(rectangle: Rectangle, others: Rectangle []): number {
     for (var i = 0; i < others.length; i++) {
@@ -118,19 +35,19 @@ module Shumway.GFX {
   }
 
   export class Canvas2DStageRendererOptions extends StageRendererOptions {
-    disable: boolean;
-    clipDirtyRegions: boolean;
-    clipCanvas: boolean;
-    cull: boolean;
-
-    snapToDevicePixels: boolean;
-    imageSmoothing: boolean;
+    snapToDevicePixels: boolean = true;
+    imageSmoothing: boolean = true;
+    blending: boolean = true;
+    cacheShapes: boolean = true;
+    cacheShapesMaxSize: number = 256;
+    cacheShapesThreshold: number = 16;
   }
 
   export class Canvas2DStageRendererState {
-    constructor(public options: Canvas2DStageRendererOptions,
-                public clipRegion: boolean = false,
-                public ignoreMask: Frame = null) {
+    constructor (
+      public options: Canvas2DStageRendererOptions,
+      public clipRegion: boolean = false,
+      public ignoreMask: Frame = null) {
       // ...
     }
   }
@@ -141,15 +58,70 @@ module Shumway.GFX {
     context: CanvasRenderingContext2D;
     count = 0;
 
+    private static _surfaceCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    private static _shapeCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+
+    private _scratchCanvas: HTMLCanvasElement;
+    private _scratchCanvasContext: CanvasRenderingContext2D;
+
     constructor(canvas: HTMLCanvasElement,
                 stage: Stage,
                 options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
       super(canvas, stage, options);
       var fillRule: FillRule = FillRule.NONZERO
       var context = this.context = canvas.getContext("2d");
-      this._viewport = new Rectangle(0, 0, context.canvas.width, context.canvas.height);
+      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
       this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
+
+      Canvas2DStageRenderer._prepareSurfaceAllocators();
+    }
+
+    private static _prepareSurfaceAllocators() {
+      if (Canvas2DStageRenderer._surfaceCache) {
+        return;
+      }
+      Canvas2DStageRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator (
+        function (w: number, h: number) {
+          var canvas = document.createElement("canvas");
+          if (typeof registerScratchCanvas !== "undefined") {
+            registerScratchCanvas(canvas);
+          }
+          var W = Math.max(1024, w);
+          var H = Math.max(1024, h);
+          canvas.width = W;
+          canvas.height = H;
+          var allocator = null;
+          if (w > 1024 || h > 1024) {
+            allocator = new RegionAllocator.GridAllocator(W, H, W, H);
+          } else {
+            allocator = new RegionAllocator.BucketAllocator(W, H);
+          }
+          return new Canvas2DSurface (
+            canvas, allocator
+          );
+        }
+      );
+
+      Canvas2DStageRenderer._shapeCache = new SurfaceRegionAllocator.SimpleAllocator (
+        function (w: number, h: number) {
+          var canvas = document.createElement("canvas");
+          if (typeof registerScratchCanvas !== "undefined") {
+            registerScratchCanvas(canvas);
+          }
+          var W = 1024, H = 1024;
+          canvas.width = W;
+          canvas.height = H;
+          var allocator = allocator = new RegionAllocator.CompactAllocator(W, H);
+          return new Canvas2DSurface (
+            canvas, allocator
+          );
+        }
+      );
+    }
+
+    public resize() {
+      // TODO: We need to resize all the scratch canvases and recreate allocators.
     }
 
     public render() {
@@ -157,45 +129,17 @@ module Shumway.GFX {
       var context = this.context;
 
       context.setTransform(1, 0, 0, 1, 0, 0);
-      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
       context.save();
       var options = this._options;
 
       var lastDirtyRectangles: Rectangle[] = [];
-      if (false && stage.trackDirtyRegions) {
-        stage.gatherMarkedDirtyRegions(stage.matrix);
-        stage.dirtyRegion.gatherRegions(lastDirtyRectangles);
-        if (options.clipDirtyRegions) {
-          if (!lastDirtyRectangles.length) {
-            // Nothing is dirty, so skip rendering.
-            context.restore();
-            return;
-          }
-          if (options.clipCanvas) {
-            context.beginPath();
-            /**
-             * If we have overlapping clipping regions we don't want to use even-odd fill rules.
-             */
-            var savedFillRule = context.mozFillRule;
-            context.fillRule = context.mozFillRule = 'nonzero';
-            for (var i = 0; i < lastDirtyRectangles.length; i++) {
-              var rectangle = lastDirtyRectangles[i];
-              rectangle.expand(2, 2);
-              context.rect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
-            }
-            context.clip();
-            context.fillRule = context.mozFillRule = savedFillRule;
-          }
-        }
-      }
-
       var dirtyRectangles = lastDirtyRectangles.slice(0);
 
       context.globalAlpha = 1;
 
       var viewport = this._viewport;
-      this.renderClippedFrame(stage, viewport, stage.matrix);
+      this.renderFrame(stage, viewport, stage.matrix, true);
 
       if (stage.trackDirtyRegions) {
         stage.dirtyRegion.clear();
@@ -211,12 +155,11 @@ module Shumway.GFX {
       }
     }
 
-    static clearContext(context: CanvasRenderingContext2D, rectangle: Rectangle) {
-      var canvas = context.canvas;
-      context.clearRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
-    }
-
-    renderClippedFrame(source: Frame, viewport: Rectangle, matrix: Matrix) {
+    public renderFrame (
+      root: Frame,
+      viewport: Rectangle,
+      matrix: Matrix,
+      clearRect: boolean = false) {
       var context = this.context;
       context.save();
       if (!this._options.paintViewport) {
@@ -224,22 +167,138 @@ module Shumway.GFX {
         context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
         context.clip();
       }
-      context.save();
-      this._renderFrame(context, source, matrix, viewport, new Canvas2DStageRendererState(this._options));
-      context.restore();
+      if (clearRect) {
+        context.clearRect(viewport.x, viewport.y, viewport.w, viewport.h);
+      }
+      this._renderFrame(context, root, matrix, viewport, new Canvas2DStageRendererState(this._options));
       context.restore();
     }
 
-    private _renderFrame(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState) {
-      var self = this;
+    /**
+     * Renders the frame into a temporary surface region in device coordinates clipped by the viewport.
+     */
+    private _renderToSurfaceRegion(frame: Frame, transform: Matrix, viewport: Rectangle): {
+        surfaceRegion: Canvas2DSurfaceRegion;
+        surfaceRegionBounds: Rectangle;
+        clippedBounds: Rectangle;
+      }
+    {
+      var bounds = frame.getBounds();
+      var boundsAABB = bounds.clone();
+      transform.transformRectangleAABB(boundsAABB);
+      boundsAABB.snap();
+      var dx = boundsAABB.x;
+      var dy = boundsAABB.y;
+      var clippedBoundsAABB = boundsAABB.clone();
+      clippedBoundsAABB.intersect(viewport);
+      clippedBoundsAABB.snap();
 
-      root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
+      dx += clippedBoundsAABB.x - boundsAABB.x;
+      dy += clippedBoundsAABB.y - boundsAABB.y;
+
+      var surfaceRegion = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceCache.allocate(clippedBoundsAABB.w, clippedBoundsAABB.h));
+      var region = surfaceRegion.region;
+
+      // Region bounds may be smaller than the allocated surface region.
+      var surfaceRegionBounds = new Rectangle(region.x, region.y, clippedBoundsAABB.w, clippedBoundsAABB.h);
+
+      var context = surfaceRegion.surface.context;
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      // Prepare region bounds for painting.
+      context.clearRect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
+      transform = transform.clone();
+
+      transform.translate (
+        surfaceRegionBounds.x - dx,
+        surfaceRegionBounds.y - dy
+      );
+
+      // Clip region bounds so we don't paint outside.
+      context.save();
+      context.beginPath();
+      context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
+      context.clip();
+      this._renderFrame(context, frame, transform, surfaceRegionBounds, new Canvas2DStageRendererState(this._options));
+      context.restore();
+      return {
+        surfaceRegion: surfaceRegion,
+        surfaceRegionBounds: surfaceRegionBounds,
+        clippedBounds: clippedBoundsAABB
+      };
+    }
+
+    private _renderShape(context: CanvasRenderingContext2D, shape: Shape, matrix: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState) {
+      var self = this;
+      var bounds = shape.getBounds();
+      if (!bounds.isEmpty() &&
+          state.options.paintRenderable) {
+        var source = shape.source;
+        var renderCount = source.properties["renderCount"] || 0;
+        var cacheShapesMaxSize = state.options.cacheShapesMaxSize;
+        var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
+        if (!state.clipRegion &&
+            !source.hasFlags(RenderableFlags.Dynamic) &&
+            state.options.cacheShapes &&
+            renderCount > state.options.cacheShapesThreshold &&
+            bounds.w * matrixScale <= cacheShapesMaxSize &&
+            bounds.h * matrixScale <= cacheShapesMaxSize) {
+          var mipMap: MipMap = source.properties["mipMap"];
+          if (!mipMap) {
+            mipMap = source.properties["mipMap"] = new MipMap(source, Canvas2DStageRenderer._shapeCache, cacheShapesMaxSize);
+          }
+          var mipMapLevel = mipMap.getLevel(matrix);
+          var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);
+          var region = mipMapLevelSurfaceRegion.region;
+          if (mipMapLevel) {
+            context.drawImage (
+              mipMapLevelSurfaceRegion.surface.canvas,
+              region.x, region.y,
+              region.w, region.h,
+              bounds.x, bounds.y,
+              bounds.w, bounds.h
+            );
+          }
+          if (state.options.paintFlashing) {
+            context.fillStyle = ColorStyle.Green;
+            context.globalAlpha = 0.5;
+            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          }
+        } else {
+          source.properties["renderCount"] = ++ renderCount;
+          source.render(context, null, state.clipRegion);
+          if (state.options.paintFlashing) {
+            context.fillStyle = ColorStyle.randomStyle();
+            context.globalAlpha = 0.1;
+            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          }
+        }
+      }
+    }
+
+    private _renderFrame (
+      context: CanvasRenderingContext2D,
+      root: Frame,
+      matrix: Matrix,
+      viewport: Rectangle,
+      state: Canvas2DStageRendererState,
+      skipRoot: boolean = false) {
+
+      var self = this;
+      root.visit(function visitFrame(frame: Frame, matrix?: Matrix, flags?: FrameFlags): VisitorFlags {
+        if (skipRoot && root === frame) {
+          return VisitorFlags.Continue;
+        }
+
+        if (!frame._hasFlags(FrameFlags.Visible)) {
+          return VisitorFlags.Skip;
+        }
+
         var bounds = frame.getBounds();
 
         if (state.ignoreMask !== frame && frame.mask && !state.clipRegion) {
           context.save();
           self._renderFrame(context, frame.mask, frame.mask.getConcatenatedMatrix(), viewport, new Canvas2DStageRendererState(state.options, true));
-          self._renderFrame(context, frame, transform, viewport, new Canvas2DStageRendererState(state.options, false, frame));
+          self._renderFrame(context, frame, matrix, viewport, new Canvas2DStageRendererState(state.options, false, frame));
           context.restore();
           return VisitorFlags.Skip;
         }
@@ -247,7 +306,7 @@ module Shumway.GFX {
         if (flags & FrameFlags.EnterClip) {
           context.save();
           context.enterBuildingClippingRegion();
-          self._renderFrame(context, frame, transform, viewport, new Canvas2DStageRendererState(state.options, true));
+          self._renderFrame(context, frame, matrix, viewport, new Canvas2DStageRendererState(state.options, true));
           context.leaveBuildingClippingRegion();
           return;
         } else if (flags & FrameFlags.LeaveClip) {
@@ -256,58 +315,75 @@ module Shumway.GFX {
         }
 
         // Return early if the bounds are not within the viewport.
-        if (!viewport.intersectsTransformedAABB(bounds, transform)) {
+        if (!viewport.intersectsTransformedAABB(bounds, matrix)) {
           return VisitorFlags.Skip;
         }
 
         if (frame.pixelSnapping === PixelSnapping.Always || state.options.snapToDevicePixels) {
-          transform.snap();
+          matrix.snap();
         }
 
         context.imageSmoothingEnabled =
           frame.smoothing === Smoothing.Always || state.options.imageSmoothing;
 
-        context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
+        context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
         context.globalAlpha = frame.getConcatenatedAlpha();
 
         if (flags & FrameFlags.IsMask && !state.clipRegion) {
           return VisitorFlags.Skip;
         }
 
-        var inverseTransform: Matrix = Matrix.createIdentity();
-        frame.getConcatenatedMatrix().inverse(inverseTransform);
-        var cullBounds = self._viewport.clone();
-        inverseTransform.transformRectangleAABB(cullBounds);
+        var boundsAABB = frame.getBounds().clone();
+        matrix.transformRectangleAABB(boundsAABB);
+        boundsAABB.snap();
 
-        var frameBoundsAABB = frame.getBounds().clone();
-        transform.transformRectangleAABB(frameBoundsAABB);
+        if (frame !== root && state.options.blending) {
+          context.globalCompositeOperation = self._getCompositeOperation(frame.blendMode);
+          if (frame.blendMode !== BlendMode.Normal) {
+            var result = self._renderToSurfaceRegion(frame, matrix, viewport);
+            var surfaceRegion = result.surfaceRegion;
+            var surfaceRegionBounds = result.surfaceRegionBounds;
+            var clippedBounds = result.clippedBounds;
+            var region = surfaceRegion.region;
+            context.setTransform(1, 0, 0, 1, 0, 0);
+            context.drawImage (
+              surfaceRegion.surface.canvas,
+              surfaceRegionBounds.x,
+              surfaceRegionBounds.y,
+              surfaceRegionBounds.w,
+              surfaceRegionBounds.h,
+              clippedBounds.x,
+              clippedBounds.y,
+              surfaceRegionBounds.w,
+              surfaceRegionBounds.h
+            );
+            surfaceRegion.surface.free(surfaceRegion);
+            return VisitorFlags.Skip;
+          }
+        }
+
         if (frame instanceof Shape) {
-          frame._previouslyRenderedAABB = frameBoundsAABB;
-          var shape = <Shape>frame;
-          var bounds = shape.getBounds().clone();
-          if (!bounds.isEmpty() && state.options.paintRenderable) {
-            shape.source.render(context, cullBounds, state.clipRegion);
-          }
-          if (state.options.paintFlashing) {
-            context.fillStyle = ColorStyle.randomStyle();
-            context.globalAlpha = 0.5;
-            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-          }
+          frame._previouslyRenderedAABB = boundsAABB;
+          self._renderShape(context, <Shape>frame, matrix, viewport, state);
+        } else if (frame instanceof ClipRectangle) {
+          context.save();
+          context.beginPath();
+          context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+          context.clip();
+          boundsAABB.intersect(viewport);
+          self._renderFrame(context, frame, matrix, boundsAABB, state, true);
+          context.restore();
+          return VisitorFlags.Skip;
         } else if (state.options.paintBounds && frame instanceof FrameContainer) {
           var bounds = frame.getBounds().clone();
           context.strokeStyle = ColorStyle.LightOrange;
           context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
-        } else if (frame instanceof ClipRectangle) {
-          context.fillStyle = frame.color.toCSSStyle();
-          var bounds = frame.getBounds();
-          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
         }
-
         return VisitorFlags.Continue;
-      }, transform, FrameFlags.Empty, VisitorFlags.Clips);
+      }, matrix, FrameFlags.Empty, VisitorFlags.Clips);
     }
 
-    private getCompositeOperation(blendMode: BlendMode): string {
+    private _getCompositeOperation(blendMode: BlendMode): string {
       // TODO:
 
       // These Flash blend modes have no canvas equivalent:
@@ -324,7 +400,6 @@ module Shumway.GFX {
       // - blendModeClass.LAYER [defines backdrop]
 
       var compositeOp: string = "source-over";
-
       switch (blendMode) {
         case BlendMode.Multiply:   compositeOp = "multiply";   break;
         case BlendMode.Screen:     compositeOp = "screen";     break;
@@ -334,9 +409,7 @@ module Shumway.GFX {
         case BlendMode.Overlay:    compositeOp = "overlay";    break;
         case BlendMode.HardLight:  compositeOp = "hard-light"; break;
       }
-
       return compositeOp;
     }
-
   }
 }

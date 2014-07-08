@@ -15,17 +15,19 @@
  */
 
 /// <reference path='references.ts'/>
-module Shumway.GFX.Geometry {
+module Shumway.GFX {
   import roundToMultipleOfPowerOfTwo = IntegerUtilities.roundToMultipleOfPowerOfTwo;
   import assert = Shumway.Debug.assert;
+  import Rectangle = Geometry.Rectangle;
+
 
   /**
    * Various 2D rectangular region allocators. These are used to manage
-   * areas of textures, 2D Canvases or WebGL textures. Each allocator
+   * areas of surfaces, 2D Canvases or WebGL surfaces. Each allocator
    * implements the |IRegionAllocator| interface and must provied two
    * methods to allocate and free regions.
    *
-   * CompactAllocator: Good for tightly packed texture atlases but becomes
+   * CompactAllocator: Good for tightly packed surface atlases but becomes
    * fragmented easily. Allocation / freeing cost is high and should only
    * be used for long lived regions.
    *
@@ -167,16 +169,18 @@ module Shumway.GFX.Geometry {
      * is freed it's pushed into the free list. It gets poped off the next time a region is allocated.
      */
     export class GridAllocator implements IRegionAllocator {
-      private _size: number;
+      private _sizeW: number;
+      private _sizeH: number;
       private _rows: number;
       private _columns: number;
       private _freeList: GridCell [];
       private _index: number;
       private _total: number;
-      constructor(w: number, h: number, size: number) {
-        this._columns = w / size | 0;
-        this._rows = h / size | 0;
-        this._size = size;
+      constructor(w: number, h: number, sizeW: number, sizeH: number) {
+        this._columns = w / sizeW | 0;
+        this._rows = h / sizeH | 0;
+        this._sizeW = sizeW;
+        this._sizeH = sizeH;
         this._freeList = [];
         this._index = 0;
         this._total = this._columns * this._rows;
@@ -185,8 +189,9 @@ module Shumway.GFX.Geometry {
       allocate(w: number, h: number): Region {
         w = Math.ceil(w); h = Math.ceil(h);
         release || assert (w > 0 && h > 0);
-        var size = this._size;
-        if (w > size || h > size) {
+        var sizeW = this._sizeW;
+        var sizeH = this._sizeH;
+        if (w > sizeW || h > sizeH) {
           return null;
         }
         var freeList = this._freeList;
@@ -199,7 +204,7 @@ module Shumway.GFX.Geometry {
         } else if (index < this._total) {
           var y = (index / this._columns) | 0;
           var x = index - (y * this._columns);
-          var cell = new GridCell(x * size, y * size, w, h);
+          var cell = new GridCell(x * sizeW, y * sizeH, w, h);
           cell.index = index;
           cell.allocator = this;
           cell.allocated = true;
@@ -296,7 +301,7 @@ module Shumway.GFX.Geometry {
             }
             var bucketRegion = new Rectangle(0, this._filled, this._w, bucketHeight);
             this._buckets.push (
-              new Bucket(gridSize, bucketRegion, new GridAllocator(bucketRegion.w, bucketRegion.h, gridSize))
+              new Bucket(gridSize, bucketRegion, new GridAllocator(bucketRegion.w, bucketRegion.h, gridSize, gridSize))
             );
             this._filled += bucketHeight;
           }
@@ -309,6 +314,67 @@ module Shumway.GFX.Geometry {
         region.region.allocator.free(region.region);
       }
     }
+  }
 
+  export module SurfaceRegionAllocator {
+    export interface ISurfaceRegionAllocator {
+      /**
+       * Used surfaces.
+       */
+      surfaces: ISurface [];
+
+      /**
+       * Adds a surface to the pool of allocation surfaces.
+       */
+      addSurface(surface: ISurface);
+
+      /**
+       * Allocates a 2D region.
+       */
+      allocate(w: number, h: number): ISurfaceRegion;
+
+      /**
+       * Frees the specified region.
+       */
+      free(region: ISurfaceRegion);
+    }
+
+    export class SimpleAllocator implements ISurfaceRegionAllocator {
+      private _createSurface: (w: number, h: number) => ISurface;
+      private _surfaces: ISurface [];
+
+      public get surfaces(): ISurface [] {
+        return this._surfaces;
+      }
+
+      constructor(createSurface: (w: number, h: number) => ISurface) {
+        this._createSurface = createSurface;
+        this._surfaces = [];
+      }
+
+      private _createNewSurface(w: number, h: number): ISurface {
+        var surface = this._createSurface(w, h);
+        this._surfaces.push(surface);
+        return surface;
+      }
+
+      addSurface(surface: ISurface) {
+        this._surfaces.push(surface);
+      }
+
+      allocate(w: number, h: number): ISurfaceRegion {
+        for (var i = 0; i < this._surfaces.length; i++) {
+          var region = this._surfaces[i].allocate(w, h);
+          if (region) {
+            return region;
+          }
+        }
+        return this._createNewSurface(w, h).allocate(w, h);
+      }
+
+      free(region: ISurfaceRegion) {
+
+      }
+    }
   }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway.GFX.GL {
+module Shumway.GFX.WebGL {
   import Color = Shumway.Color;
   import Point = Geometry.Point;
   import Matrix = Geometry.Matrix;
@@ -22,11 +22,11 @@ module Shumway.GFX.GL {
   import Rectangle = Geometry.Rectangle;
 
   export class WebGLBrush {
-    _target: WebGLTexture;
+    _target: WebGLSurface;
     _context: WebGLContext;
     _geometry: WebGLGeometry;
 
-    constructor(context: WebGLContext, geometry: WebGLGeometry, target: WebGLTexture) {
+    constructor(context: WebGLContext, geometry: WebGLGeometry, target: WebGLSurface) {
       this._target = target;
       this._context = context;
       this._geometry = geometry;
@@ -40,14 +40,14 @@ module Shumway.GFX.GL {
       Shumway.Debug.abstractMethod("flush");
     }
 
-    public set target(target: WebGLTexture) {
+    public set target(target: WebGLSurface) {
       if (this._target !== target) {
         this.flush();
       }
       this._target = target;
     }
 
-    public get target(): WebGLTexture {
+    public get target(): WebGLSurface {
       return this._target;
     }
   }
@@ -95,24 +95,24 @@ module Shumway.GFX.GL {
   export class WebGLCombinedBrush extends WebGLBrush {
     private static _tmpVertices: WebGLCombinedBrushVertex [] = Vertex.createEmptyVertices(WebGLCombinedBrushVertex, 4);
     private _program: WebGLProgram;
-    private _textures: WebGLTexture [];
+    private _surfaces: WebGLSurface [];
     private _colorMatrix: ColorMatrix;
     private _blendMode: BlendMode = BlendMode.Normal;
     private static _depth: number = 1;
-    constructor(context: WebGLContext, geometry: WebGLGeometry, target: WebGLTexture = null) {
+    constructor(context: WebGLContext, geometry: WebGLGeometry, target: WebGLSurface = null) {
       super(context, geometry, target);
       this._program = context.createProgramFromFiles("combined.vert", "combined.frag");
-      this._textures = [];
+      this._surfaces = [];
       WebGLCombinedBrushVertex.initializeAttributeList(this._context);
     }
 
     public reset() {
-      this._textures = [];
+      this._surfaces = [];
       this._geometry.reset();
     }
 
     public drawImage (
-      src: WebGLTextureRegion,
+      src: WebGLSurfaceRegion,
       dstRectangle: Rectangle,
       color: Color,
       colorMatrix: ColorMatrix,
@@ -120,7 +120,7 @@ module Shumway.GFX.GL {
       depth: number = 0,
       blendMode: BlendMode = BlendMode.Normal): boolean {
 
-      if (!src || !src.texture) {
+      if (!src || !src.surface) {
         return true;
       }
       dstRectangle = dstRectangle.clone();
@@ -134,17 +134,17 @@ module Shumway.GFX.GL {
         this.flush();
         this._blendMode = blendMode;
       }
-      var sampler = this._textures.indexOf(src.texture);
+      var sampler = this._surfaces.indexOf(src.surface);
       if (sampler < 0) {
-        if (this._textures.length === 8) {
+        if (this._surfaces.length === 8) {
           this.flush();
         }
-        this._textures.push(src.texture);
-        // if (this._textures.length > 8) {
+        this._surfaces.push(src.surface);
+        // if (this._surfaces.length > 8) {
         //   return false;
         //   notImplemented("Cannot handle more than 8 texture samplers.");
         // }
-        sampler = this._textures.length - 1;
+        sampler = this._surfaces.length - 1;
       }
       var tmpVertices = WebGLCombinedBrush._tmpVertices;
       var srcRectangle = src.region.clone();
@@ -152,7 +152,7 @@ module Shumway.GFX.GL {
       // TODO: This takes into the consideration the 1 pixel border added around tiles in the atlas. It should
       // probably be moved elsewhere.
       srcRectangle.offset(1, 1).resize(-2, -2);
-      srcRectangle.scale(1 / src.texture.w, 1 / src.texture.h);
+      srcRectangle.scale(1 / src.surface.w, 1 / src.surface.h);
       matrix.transformRectangle(dstRectangle, <Point[]><any>tmpVertices);
       for (var i = 0; i < 4; i++) {
         tmpVertices[i].z = depth;
@@ -212,9 +212,9 @@ module Shumway.GFX.GL {
         gl.uniform4fv(p.uniforms.uColorVector.location, this._colorMatrix.asWebGLVector());
       }
       // Bind textures.
-      for (var i = 0; i < this._textures.length; i++) {
+      for (var i = 0; i < this._surfaces.length; i++) {
         gl.activeTexture(gl.TEXTURE0 + i);
-        gl.bindTexture(gl.TEXTURE_2D, this._textures[i]);
+        gl.bindTexture(gl.TEXTURE_2D, this._surfaces[i].texture);
       }
       gl.uniform1iv(p.uniforms["uSampler[0]"].location, [0, 1, 2, 3, 4, 5, 6, 7]);
       // Bind vertex buffer.
@@ -241,25 +241,6 @@ module Shumway.GFX.GL {
       gl.drawElements(gl.TRIANGLES, g.triangleCount * 3, gl.UNSIGNED_SHORT, 0);
       this.reset();
       leaveTimeline("WebGLCombinedBrush.flush");
-    }
-  }
-
-  export class WebGLFilterBrush extends WebGLBrush {
-    private static _tmpVertices: WebGLCombinedBrushVertex [] = Vertex.createEmptyVertices(WebGLCombinedBrushVertex, 4);
-    private _program: WebGLProgram;
-    private _textures: WebGLTexture [];
-    constructor(context: WebGLContext, geometry: WebGLGeometry, target: WebGLTexture = null) {
-      super(context, geometry, target);
-      this._program = context.createProgramFromFiles("combined.vert", "combined.frag");
-      WebGLCombinedBrushVertex.initializeAttributeList(this._context);
-    }
-
-    public reset() {
-      this._geometry.reset();
-    }
-
-    public flush() {
-
     }
   }
 }

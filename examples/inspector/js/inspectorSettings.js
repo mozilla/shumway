@@ -40,7 +40,7 @@ for (var option in stateDefaults) {
 
 function setRelease(release) {
   window.release = release;
-  Shumway.GFX.notifyReleaseChanged();
+  Shumway.GFX.Canvas2D.notifyReleaseChanged();
 }
 
 setRelease(state.release);
@@ -187,10 +187,9 @@ function syncGFXOptions(options) {
   options.perspectiveCameraDistance = GFX.perspectiveCameraDistance.value;
 
   options.drawTiles = GFX.drawTiles.value;
-  options.drawTextures = GFX.drawTextures.value;
-  options.drawTexture = GFX.drawTexture.value;
+  options.drawSurfaces = GFX.drawSurfaces.value;
+  options.drawSurface = GFX.drawSurface.value;
   options.drawElements = GFX.drawElements.value;
-  options.ignoreViewport = GFX.ignoreViewport.value;
   options.clipDirtyRegions = GFX.clipDirtyRegions.value;
   options.clipCanvas = GFX.clipCanvas.value;
 
@@ -202,8 +201,12 @@ function syncGFXOptions(options) {
 
   options.cull = GFX.cull.value;
   options.compositeMask = GFX.compositeMask.value;
-  options.disableTextureUploads = GFX.disableTextureUploads.value;
+  options.disableSurfaceUploads = GFX.disableSurfaceUploads.value;
 
   options.snapToDevicePixels = GFX.snapToDevicePixels.value;
   options.imageSmoothing = GFX.imageSmoothing.value;
+  options.blending = GFX.blending.value;
+  options.cacheShapes = GFX.cacheShapes.value;
+  options.cacheShapesMaxSize = GFX.cacheShapesMaxSize.value;
+  options.cacheShapesThreshold = GFX.cacheShapesThreshold.value;
 }

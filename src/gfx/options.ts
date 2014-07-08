@@ -31,7 +31,7 @@ module Shumway.GFX {
   export var disableClipping = stageOptions.register(new Option("", "disableClipping", "boolean", false, "Disable clipping."));
   export var debugClipping = stageOptions.register(new Option("", "debugClipping", "boolean", false, "Disable clipping."));
 
-  export var backend = stageOptions.register(new Option("t", "backend", "number", 1, "Backends", {
+  export var backend = stageOptions.register(new Option("t", "backend", "number", 0, "Backends", {
     choices: {
       Canvas2D: 0,
       WebGL: 1,
@@ -50,10 +50,10 @@ module Shumway.GFX {
 
   export var drawTiles = webGLOptions.register(new Option("", "drawTiles", "boolean", false, "Draw WebGL Tiles"));
 
-  export var drawTextures = webGLOptions.register(new Option("", "drawTextures", "boolean", false, "Draw WebGL Textures."));
-  export var drawTexture = webGLOptions.register(new Option("", "drawTexture", "number", -1, "Draw WebGL Texture #"));
+  export var drawSurfaces = webGLOptions.register(new Option("", "drawSurfaces", "boolean", false, "Draw WebGL Surfaces."));
+  export var drawSurface = webGLOptions.register(new Option("", "drawSurface", "number", -1, "Draw WebGL Surface #"));
   export var drawElements = webGLOptions.register(new Option("", "drawElements", "boolean", true, "Actually call gl.drawElements. This is useful to test if the GPU is the bottleneck."));
-  export var disableTextureUploads = webGLOptions.register(new Option("", "disableTextureUploads", "boolean", false, "Disable texture uploads."));
+  export var disableSurfaceUploads = webGLOptions.register(new Option("", "disableSurfaceUploads", "boolean", false, "Disable surface uploads."));
 
   export var premultipliedAlpha = webGLOptions.register(new Option("", "premultipliedAlpha", "boolean", false, "Set the premultipliedAlpha flag on getContext()."));
   export var unpackPremultiplyAlpha = webGLOptions.register(new Option("", "unpackPremultiplyAlpha", "boolean", true, "Use UNPACK_PREMULTIPLY_ALPHA_WEBGL in pixelStorei."));
@@ -87,4 +87,8 @@ module Shumway.GFX {
 
   export var snapToDevicePixels = canvas2DOptions.register(new Option("", "snapToDevicePixels", "boolean", false, ""));
   export var imageSmoothing = canvas2DOptions.register(new Option("", "imageSmoothing", "boolean", false, ""));
+  export var blending = canvas2DOptions.register(new Option("", "blending", "boolean", true, ""));
+  export var cacheShapes = canvas2DOptions.register(new Option("", "cacheShapes", "boolean", false, ""));
+  export var cacheShapesMaxSize = canvas2DOptions.register(new Option("", "cacheShapesMaxSize", "number", 256, "", {range: { min: 1, max: 1024, step: 1 }}));
+  export var cacheShapesThreshold = canvas2DOptions.register(new Option("", "cacheShapesThreshold", "number", 256, "", {range: { min: 1, max: 1024, step: 1 }}));
 }

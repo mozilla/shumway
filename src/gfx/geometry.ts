@@ -1408,18 +1408,13 @@ module Shumway.GFX.Geometry {
     }
   }
 
-  export interface ITextureRegion {
-    texture: any;
-    region: Rectangle;
-  }
-
   export class Tile {
     x: number;
     y: number;
     index: number;
     scale: number;
     bounds: Rectangle;
-    cachedTextureRegion: ITextureRegion;
+    cachedSurfaceRegion: ISurfaceRegion;
     color: Shumway.Color;
     private _obb: OBB;
     private static corners = Point.createEmptyPoints(4);
@@ -1679,7 +1674,7 @@ module Shumway.GFX.Geometry {
         level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
       }
       var scale = pow2(level);
-      // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our texture caches ...
+      // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our surface caches ...
 
       if (this._source.hasFlags(RenderableFlags.Dynamic)) {
         // .. so try a lower scale level until it fits.
@@ -1720,14 +1715,14 @@ module Shumway.GFX.Geometry {
       query: Rectangle,
       transform: Matrix,
       scratchContext: CanvasRenderingContext2D,
-      cacheImageCallback: (old: ITextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ITextureRegion): Tile []  {
+      cacheImageCallback: (old: ISurfaceRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ISurfaceRegion): Tile []  {
       var scratchBounds = new Rectangle(0, 0, scratchContext.canvas.width, scratchContext.canvas.height);
       var tiles = this._getTilesAtScale(query, transform, scratchBounds);
       var uncachedTiles: Tile [];
       var source = this._source;
       for (var i = 0; i < tiles.length; i++) {
         var tile = tiles[i];
-        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || (source.hasFlags(RenderableFlags.Dynamic | RenderableFlags.Dirty))) {
+        if (!tile.cachedSurfaceRegion || !tile.cachedSurfaceRegion.surface || (source.hasFlags(RenderableFlags.Dynamic | RenderableFlags.Dirty))) {
           if (!uncachedTiles) {
             uncachedTiles = [];
           }
@@ -1762,7 +1757,7 @@ module Shumway.GFX.Geometry {
     private _cacheTiles (
       scratchContext: CanvasRenderingContext2D,
       uncachedTiles: Tile [],
-      cacheImageCallback: (old: ITextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ITextureRegion,
+      cacheImageCallback: (old: ISurfaceRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ISurfaceRegion,
       scratchBounds: Rectangle,
       maxRecursionDepth: number = 4) {
       release || assert (maxRecursionDepth > 0, "Infinite recursion is likely.");
@@ -1793,7 +1788,7 @@ module Shumway.GFX.Geometry {
           }
           remainingUncachedTiles.push(tile);
         }
-        tile.cachedTextureRegion = cacheImageCallback(tile.cachedTextureRegion, scratchContext, region);
+        tile.cachedSurfaceRegion = cacheImageCallback(tile.cachedSurfaceRegion, scratchContext, region);
       }
       if (remainingUncachedTiles) {
         // This is really dumb at the moment; if we have some tiles left over, partition the tile set in half and recurse.
@@ -1806,6 +1801,67 @@ module Shumway.GFX.Geometry {
           this._cacheTiles(scratchContext, remainingUncachedTiles, cacheImageCallback, scratchBounds, maxRecursionDepth - 1);
         }
       }
+    }
+  }
+
+  export class MipMapLevel {
+    constructor (
+      public surfaceRegion: ISurfaceRegion,
+      public scale: number
+    ) {
+      // ...
+    }
+  }
+  export class MipMap {
+    private _source: Renderable;
+    private _size: number;
+    private _levels: MipMapLevel [];
+    private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    constructor (
+      source: Renderable,
+      surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator,
+      size: number
+    ) {
+      this._source = source;
+      this._levels = [];
+      this._surfaceRegionAllocator = surfaceRegionAllocator;
+      this._size = size;
+    }
+    public render(context: CanvasRenderingContext2D) {
+
+    }
+    public getLevel(matrix: Matrix): MipMapLevel {
+      var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
+      var level = 0;
+      if (matrixScale !== 1) {
+        level = clamp(Math.round(Math.log(matrixScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      }
+      if (!(this._source.hasFlags(RenderableFlags.Scalable))) {
+        level = clamp(level, -MIN_CACHE_LEVELS, 0);
+      }
+      var scale = pow2(level);
+      var levelIndex = MIN_CACHE_LEVELS + level;
+      var mipLevel = this._levels[levelIndex];
+
+      if (!mipLevel) {
+        var bounds = this._source.getBounds();
+        var scaledBounds = bounds.clone();
+        scaledBounds.scale(scale, scale);
+        scaledBounds.snap();
+        var surfaceRegion = this._surfaceRegionAllocator.allocate(scaledBounds.w, scaledBounds.h);
+        var region = surfaceRegion.region;
+        mipLevel = this._levels[levelIndex] = new MipMapLevel(surfaceRegion, scale);
+        var surface = <Canvas2D.Canvas2DSurface>(mipLevel.surfaceRegion.surface);
+        var context = surface.context;
+        context.save();
+        context.beginPath();
+        context.rect(region.x, region.y, region.w, region.h);
+        context.clip();
+        context.setTransform(scale, 0, 0, scale, region.x - scaledBounds.x, region.y - scaledBounds.y);
+        this._source.render(context);
+        context.restore();
+      }
+      return mipLevel;
     }
   }
 }
