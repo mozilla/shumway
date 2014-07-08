@@ -289,6 +289,10 @@ module Shumway.AVM1 {
   }
 
   function as2ResolveProperty(obj, name: string): string {
+    // AS2 just ignores lookups on non-existant containers
+    if (isNullOrUndefined(obj)) {
+      return undefined;
+    }
     // checking if avm2 public property is present
     var avm2PublicName = Multiname.getPublicQualifiedName(name);
     if (avm2PublicName in obj) {
@@ -1326,34 +1330,50 @@ module Shumway.AVM1 {
       var methodName = stack.pop();
       var obj = stack.pop();
       var args = avm1ReadFunctionArgs(stack);
-      var target, resolvedName, result;
+      var target;
 
       var sp = stack.length;
       stack.push(undefined);
 
-      // checking "if the method name is blank or undefined"
-      if (methodName !== null && methodName !== undefined &&
-        methodName !== '') {
-        if (obj === null || obj === undefined) {
-          throw new Error('Cannot call method ' + methodName + ' of ' + typeof obj);
-        } else if (obj !== AS2_SUPER_STUB) {
-          target = Object(obj);
+      // Per spec, a missing or blank method name causes the container to be treated as
+      // a function to call.
+      if (isNullOrUndefined(methodName) || methodName === '') {
+        if (obj === AS2_SUPER_STUB) {
+          obj = avm1GetVariable(ectx, '__class').__super;
+          target = avm1GetVariable(ectx, 'this');
         } else {
-          target = as2GetPrototype(avm1GetVariable(ectx, '__class').__super);
-          obj = avm1GetVariable(ectx, 'this');
+          // For non-super calls, we call obj with itself as the target.
+          // TODO: ensure this is correct.
+          target = obj;
         }
-        resolvedName = as2ResolveProperty(target, methodName);
-        if (resolvedName === null) {
-          throw new Error('Method ' + methodName + ' is not defined.');
+        // AS2 simply ignores attempts to invoke non-functions.
+        if (obj instanceof Function) {
+          stack[sp] = obj.apply(target, args);
         }
-        result = target.asGetPublicProperty(resolvedName).apply(obj, args);
-      } else if (obj !== AS2_SUPER_STUB) {
-        result = obj.apply(obj, args);
-      } else {
-        result = avm1GetVariable(ectx, '__class').__super.apply(
-          avm1GetVariable(ectx, 'this'), args);
+        release || assert(stack.length === sp + 1);
+        return;
       }
-      stack[sp] = result;
+
+      // AS2 simply ignores attempts to invoke methods on non-existing objects.
+      if (isNullOrUndefined(obj)) {
+        return;
+      }
+
+      if (obj === AS2_SUPER_STUB) {
+        target = Object(as2GetPrototype(avm1GetVariable(ectx, '__class').__super));
+        obj = avm1GetVariable(ectx, 'this');
+      } else {
+        target = Object(obj);
+      }
+      var resolvedName = as2ResolveProperty(target, methodName);
+      var fn = target.asGetPublicProperty(resolvedName);
+
+      // AS2 simply ignores attempts to invoke non-methods.
+      if (!fn || !(fn instanceof Function)) {
+        return;
+      }
+      release || assert(stack.length === sp + 1);
+      stack[sp] = fn.apply(obj, args);
     }
     function avm1_0x88_ActionConstantPool(ectx: ExecutionContext, args: any[]) {
       var constantPool: any[] = args[0];
