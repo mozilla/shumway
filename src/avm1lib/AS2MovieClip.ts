@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations undxr the License.
  */
-// Class: AS2MovieClip
+
+///<reference path='references.ts' />
 module Shumway.AVM2.AS.avm1lib {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import AS2Context = Shumway.AVM1.AS2Context;
+  import getAS2Object = Shumway.AVM1.getAS2Object;
 
 
   export class AS2MovieClip extends ASNative {
@@ -75,14 +77,15 @@ module Shumway.AVM2.AS.avm1lib {
       var nativeAS3Object = <any> this._nativeAS3Object;
       nativeAS3Object._callFrame(frame);
     }
-    _insertChildAtDepth(mc: any, depth: any): any {
+    _insertChildAtDepth(mc: any, depth: any): AS2MovieClip {
       var nativeAS3Object = <flash.display.MovieClip> this._nativeAS3Object;
       nativeAS3Object.addChildAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
+      var as2mc = getAS2Object(mc);
       var name: string = mc.name;
       if (name) {
-        this.asSetPublicProperty(name, mc);
+        this.asSetPublicProperty(name, as2mc);
       }
-      return mc;
+      return as2mc;
     }
     _duplicate(name: any, depth: any, initObject: any): any {
       var nativeAS3Object = <any> this._nativeAS3Object;

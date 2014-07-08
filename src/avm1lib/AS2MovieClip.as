@@ -65,9 +65,8 @@ public dynamic class AS2MovieClip extends Object {
   private native function _constructSymbol(symbolId, name);
   public function attachMovie(symbolId, name, depth, initObject) {
     var mc = _constructSymbol(symbolId, name);
-    _insertChildAtDepth(mc, depth);
+    var as2mc = _insertChildAtDepth(mc, depth);
 
-    var as2mc = AS2Utils.getAS2Object(mc);
     for (var i in initObject) {
       as2mc[i] = initObject[i];
     }
@@ -107,18 +106,16 @@ public dynamic class AS2MovieClip extends Object {
   public function createEmptyMovieClip(name, depth) {
     var mc:MovieClip = new MovieClip();
     mc.name = name;
-    _insertChildAtDepth(mc, +depth);
-    return AS2Utils.getAS2Object(mc);
+    return _insertChildAtDepth(mc, depth);
   }
   public function createTextField(name, depth, x, y, width, height) {
     var text:TextField = new TextField();
     text.name = name;
-    text.x = +x;
-    text.y = +y;
-    text.width = +width;
-    text.height = +height;
-    _insertChildAtDepth(text, +depth);
-    return AS2Utils.getAS2Object(text);
+    text.x = x;
+    text.y = y;
+    text.width = width;
+    text.height = height;
+    return _insertChildAtDepth(text, depth);
   }
   public function get _currentframe() {
     return this._as3Object.currentFrame;
