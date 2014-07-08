@@ -81,7 +81,7 @@ module Shumway.Tools.Mini {
       }
     }
 
-    public tickAndRender() {
+    public tickAndRender(idle: boolean = false) {
       if (this._lastTime === 0) {
         this._lastTime = performance.now();
         return;
@@ -100,6 +100,7 @@ module Shumway.Tools.Mini {
 
       var r = (1000 / 60) / time;
       context.fillStyle = this._gradient[r * (this._gradient.length - 1) | 0];
+      context.globalAlpha = idle ? 0.2 : 1;
       var v = this._canvas.height * r | 0;
 
       context.clearRect(index * (w + wPadding), 0, w * 4, this._canvas.height);

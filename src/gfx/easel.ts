@@ -348,8 +348,8 @@ module Shumway.GFX {
       if (this.paused) {
         return;
       }
-      var shouldRender = this._stage.readyToRender();
-      if (shouldRender || forcePaint.value) {
+      var mustRender = this._stage.readyToRender() || forcePaint.value;
+      if (mustRender) {
         for (var i = 0; i < this._renderers.length; i++) {
           var renderer = this._renderers[i];
           if (this.viewport) {
@@ -361,9 +361,9 @@ module Shumway.GFX {
           enterTimeline("Render");
           renderer.render();
           leaveTimeline("Render");
-          this._fps.tickAndRender();
         }
       }
+      this._fps.tickAndRender(!mustRender);
     }
 
     public render() {
