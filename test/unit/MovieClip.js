@@ -1,8 +1,9 @@
 (function timelineTests() {
   var assert = Shumway.Debug.assert;
   var LoaderInfo = flash.display.LoaderInfo;
-  var MovieClip = flash.display.MovieClip;
+  var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  var MovieClip = flash.display.MovieClip;
   var SpriteSymbol = Shumway.Timeline.SpriteSymbol;
   var FrameDelta = Shumway.Timeline.FrameDelta;
 
@@ -102,7 +103,8 @@
       framesExecuted[0]++;
     });
     eq(framesExecuted[0], 0, "Just adding a script to the current frame doesn't run it");
-    MovieClip.constructFrame();
+    DisplayObject.constructFrame();
+    MovieClip.executeAndExitFrame();
     eq(framesExecuted[0], 1, "MovieClip.constructFrame() runs queued scripts");
     mc.addFrameScript(2, function(){
       framesExecuted[3]++;

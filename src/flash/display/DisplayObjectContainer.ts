@@ -29,37 +29,14 @@ module Shumway.AVM2.AS.flash.display {
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
     static bindings: string [] = null;
     static classSymbols: string [] = null;
-    private static _displayObjectContainerInstances: WeakList<DisplayObjectContainer>;
-
-    static classInitializer: any = function () {
-      DisplayObjectContainer.reset();
-    };
-
-    static reset() {
-      DisplayObjectContainer._displayObjectContainerInstances = new WeakList<DisplayObjectContainer>();
-    }
+    static classInitializer: any = null;
 
     static initializer: any = function () {
       var self: DisplayObjectContainer = this;
-      DisplayObjectContainer._displayObjectContainerInstances.push(self);
       self._tabChildren = true;
       self._mouseChildren = true;
       self._children = [];
     };
-
-    /**
-     * Notifies all instances of DisplayObjectContainer to call the constructors of new timeline
-     * children that were created in an earlier frame phase.
-     */
-    static constructChildren(): void {
-      var timelineData = { instances: 0 };
-      enterTimeline("DisplayObjectContainer.constructChildren", timelineData);
-      DisplayObjectContainer._displayObjectContainerInstances.forEach(function (value: DisplayObjectContainer) {
-        value._constructChildren();
-        timelineData.instances++;
-      });
-      leaveTimeline();
-    }
 
     constructor () {
       false && super();

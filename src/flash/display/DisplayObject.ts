@@ -26,6 +26,7 @@
 // Class: DisplayObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import abstractMethod = Shumway.Debug.abstractMethod;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
@@ -264,12 +265,21 @@ module Shumway.AVM2.AS.flash.display {
       return this._syncID++
     }
 
+    private static _instances: WeakList<DisplayObject>;
+
     // Called whenever the class is initialized.
-    static classInitializer: any = null;
+    static classInitializer: any = function () {
+      DisplayObject.reset();
+    };
+
+    static reset() {
+      DisplayObject._instances = new WeakList<DisplayObject>();
+    }
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.DisplaySymbol) {
       var self: DisplayObject = this;
+      DisplayObject._instances.push(self);
 
       self._id = flash.display.DisplayObject.getNextSyncID();
       self._displayObjectFlags = DisplayObjectFlags.Visible                            |
@@ -376,6 +386,35 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
+     * Notifies all instances of DisplayObject that the timeline advanced to a new frame.
+     */
+    static initFrame() {
+      var timelineData = { instances: 0 };
+      enterTimeline("DisplayObject.initFrame", timelineData);
+      DisplayObject._instances.forEach(function (value: DisplayObject) {
+        value._initFrame();
+        timelineData.instances++;
+      });
+      DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
+      leaveTimeline();
+    }
+
+    /**
+     * Notifies all instances of DisplayObject to call the constructors of new timeline children
+     * that were created in an earlier frame phase.
+     */
+    static constructFrame(): void {
+      var timelineData = { instances: 0 };
+      enterTimeline("DisplayObject.constructFrame", timelineData);
+      DisplayObject._instances.forEach(function (value: DisplayObject) {
+        value._constructFrame();
+        timelineData.instances++;
+      });
+      DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
+      leaveTimeline();
+    }
+
+    /**
      * Dispatches a frame event on all instances of DisplayObjects.
      */
     static _broadcastFrameEvent(type: string): void {
@@ -394,9 +433,17 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor () {
       false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize();
+      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
       this._addReference();
       this._setFlags(DisplayObjectFlags.Constructed);
+    }
+
+    _initFrame() {
+      abstractMethod("DisplayObject::_initFrame");
+    }
+
+    _constructFrame() {
+      abstractMethod("DisplayObject::_constructFrame");
     }
 
     _setFillAndLineBoundsFromWidthAndHeight(width: number, height: number) {
