@@ -1,7 +1,5 @@
 /// <reference path='../references.ts'/>
 
-
-
 module Shumway.GFX.Canvas2D {
 
   declare var FILTERS;
@@ -21,28 +19,45 @@ module Shumway.GFX.Canvas2D {
   declare var registerScratchCanvas;
 
   export enum FillRule {
-    NONZERO,
-    EVENODD
-  }
-
-  function findIntersectingIndex(rectangle: Rectangle, others: Rectangle []): number {
-    for (var i = 0; i < others.length; i++) {
-      if (others[i] && others[i].intersects(rectangle)) {
-        return i;
-      }
-    }
-    return -1;
+    NonZero,
+    EvenOdd
   }
 
   export class Canvas2DStageRendererOptions extends StageRendererOptions {
+    /**
+     * Whether to force snapping matrices to device pixels.
+     */
     snapToDevicePixels: boolean = true;
+
+    /**
+     * Whether to force image smoothing when drawing images.
+     */
     imageSmoothing: boolean = true;
+
+    /**
+     * Whether to enablel blending.
+     */
     blending: boolean = true;
+
+    /**
+     * Whether to cache shapes as images.
+     */
     cacheShapes: boolean = true;
+
+    /**
+     * Shapes above this size are not cached.
+     */
     cacheShapesMaxSize: number = 256;
+
+    /**
+     * Number of times a shape is rendered before it's elligible for caching.
+     */
     cacheShapesThreshold: number = 16;
   }
 
+  /**
+   * Rendering state threaded through rendering methods.
+   */
   export class Canvas2DStageRendererState {
     constructor (
       public options: Canvas2DStageRendererOptions,
@@ -56,43 +71,52 @@ module Shumway.GFX.Canvas2D {
     _options: Canvas2DStageRendererOptions;
     private _fillRule: string;
     context: CanvasRenderingContext2D;
-    count = 0;
 
+    private static _initializedCaches: boolean = false;
+
+    /**
+     * Allocates temporary regions for performing image operations.
+     */
     private static _surfaceCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+
+    /**
+     * Allocates shape cache regions.
+     */
     private static _shapeCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
 
-    private _scratchCanvas: HTMLCanvasElement;
-    private _scratchCanvasContext: CanvasRenderingContext2D;
-
-    constructor(canvas: HTMLCanvasElement,
-                stage: Stage,
-                options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
+    constructor (
+      canvas: HTMLCanvasElement,
+      stage: Stage,
+      options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
       super(canvas, stage, options);
-      var fillRule: FillRule = FillRule.NONZERO
+      var fillRule: FillRule = FillRule.NonZero
       var context = this.context = canvas.getContext("2d");
       this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
-      this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
+      this._fillRule = fillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
-
       Canvas2DStageRenderer._prepareSurfaceAllocators();
     }
 
     private static _prepareSurfaceAllocators() {
-      if (Canvas2DStageRenderer._surfaceCache) {
+      if (Canvas2DStageRenderer._initializedCaches) {
         return;
       }
+
       Canvas2DStageRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator (
         function (w: number, h: number) {
           var canvas = document.createElement("canvas");
           if (typeof registerScratchCanvas !== "undefined") {
             registerScratchCanvas(canvas);
           }
+          // Surface caches are at least this size.
           var W = Math.max(1024, w);
           var H = Math.max(1024, h);
           canvas.width = W;
           canvas.height = H;
           var allocator = null;
-          if (w > 1024 || h > 1024) {
+          if (w >= 1024 || h >= 1024) {
+            // The requested size is pretty large, so create a single grid allocator
+            // with there requested size. This will only hold one image.
             allocator = new RegionAllocator.GridAllocator(W, H, W, H);
           } else {
             allocator = new RegionAllocator.BucketAllocator(W, H);
@@ -112,12 +136,15 @@ module Shumway.GFX.Canvas2D {
           var W = 1024, H = 1024;
           canvas.width = W;
           canvas.height = H;
+          // Shape caches can be compact since regions are never freed explicitly.
           var allocator = allocator = new RegionAllocator.CompactAllocator(W, H);
           return new Canvas2DSurface (
             canvas, allocator
           );
         }
       );
+
+      Canvas2DStageRenderer._initializedCaches = true;
     }
 
     public resize() {
@@ -159,7 +186,8 @@ module Shumway.GFX.Canvas2D {
       root: Frame,
       viewport: Rectangle,
       matrix: Matrix,
-      clearRect: boolean = false) {
+      clearTargetBeforeRendering: boolean = false)
+    {
       var context = this.context;
       context.save();
       if (!this._options.paintViewport) {
@@ -167,7 +195,7 @@ module Shumway.GFX.Canvas2D {
         context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
         context.clip();
       }
-      if (clearRect) {
+      if (clearTargetBeforeRendering) {
         context.clearRect(viewport.x, viewport.y, viewport.w, viewport.h);
       }
       this._renderFrame(context, root, matrix, viewport, new Canvas2DStageRendererState(this._options));
