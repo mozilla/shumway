@@ -378,7 +378,8 @@ module Shumway.Timeline {
 
     canBeAnimated(obj: flash.display.DisplayObject): boolean {
       return obj._hasFlags(flash.display.DisplayObjectFlags.AnimatedByTimeline) &&
-        (!this.symbol || !this.symbol.dynamic || obj._symbol === this.symbol) &&
+        (!this.symbol || obj._symbol === this.symbol ||
+         (!this.symbol.dynamic && this.symbol.symbolClass.isType(obj))) &&
         (this.depth === obj._depth) &&
         (this.ratio === obj._ratio);
     }
