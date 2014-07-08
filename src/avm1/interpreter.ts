@@ -1523,7 +1523,9 @@ module Shumway.AVM1 {
       var name = stack.pop();
       var obj = stack.pop();
 
-      obj.asSetPublicProperty(name, value);
+      if (!isNullOrUndefined(obj)) {
+        obj.asSetPublicProperty(name, value);
+      }
     }
     function avm1_0x45_ActionTargetPath(ectx: ExecutionContext) {
       var stack = ectx.stack;
