@@ -254,7 +254,12 @@ module Shumway.AVM2.AS.flash.display {
    * since that's what the AS3 specifies.
    */
 
-  export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable, Shumway.IReferenceCountable, Shumway.Remoting.IRemotable {
+  export interface IAdvancable extends Shumway.IReferenceCountable {
+    _initFrame(): void;
+    _constructFrame(): void;
+  }
+
+  export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable, Shumway.Remoting.IRemotable {
 
     /**
      * Every displayObject is assigned an unique integer ID.
@@ -265,7 +270,7 @@ module Shumway.AVM2.AS.flash.display {
       return this._syncID++
     }
 
-    private static _instances: WeakList<DisplayObject>;
+    private static _advancableInstances: WeakList<IAdvancable>;
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
@@ -273,13 +278,16 @@ module Shumway.AVM2.AS.flash.display {
     };
 
     static reset() {
-      DisplayObject._instances = new WeakList<DisplayObject>();
+      DisplayObject._advancableInstances = new WeakList<IAdvancable>();
     }
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.DisplaySymbol) {
       var self: DisplayObject = this;
-      DisplayObject._instances.push(self);
+
+      if ('_initFrame' in self && '_constructFrame' in self) {
+        DisplayObject._advancableInstances.push(<any>self);
+      }
 
       self._id = flash.display.DisplayObject.getNextSyncID();
       self._displayObjectFlags = DisplayObjectFlags.Visible                            |
@@ -391,8 +399,8 @@ module Shumway.AVM2.AS.flash.display {
     static initFrame() {
       var timelineData = { instances: 0 };
       enterTimeline("DisplayObject.initFrame", timelineData);
-      DisplayObject._instances.forEach(function (value: DisplayObject) {
-        value._initFrame();
+      DisplayObject._advancableInstances.forEach(function (value: IAdvancable) {
+        (<IAdvancable>value)._initFrame();
         timelineData.instances++;
       });
       DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
@@ -406,8 +414,8 @@ module Shumway.AVM2.AS.flash.display {
     static constructFrame(): void {
       var timelineData = { instances: 0 };
       enterTimeline("DisplayObject.constructFrame", timelineData);
-      DisplayObject._instances.forEach(function (value: DisplayObject) {
-        value._constructFrame();
+      DisplayObject._advancableInstances.forEach(function (value: IAdvancable) {
+        (<IAdvancable>value)._constructFrame();
         timelineData.instances++;
       });
       DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
@@ -436,14 +444,6 @@ module Shumway.AVM2.AS.flash.display {
       events.EventDispatcher.instanceConstructorNoInitialize.call(this);
       this._addReference();
       this._setFlags(DisplayObjectFlags.Constructed);
-    }
-
-    _initFrame() {
-      abstractMethod("DisplayObject::_initFrame");
-    }
-
-    _constructFrame() {
-      abstractMethod("DisplayObject::_constructFrame");
     }
 
     _setFillAndLineBoundsFromWidthAndHeight(width: number, height: number) {
@@ -1467,10 +1467,10 @@ module Shumway.AVM2.AS.flash.display {
       } else if (flash.text.StaticText.isType(this)) {
         release || assert(symbol instanceof Shumway.Timeline.TextSymbol);
         var textSymbol = <Shumway.Timeline.TextSymbol>symbol;
-        this._setFillAndLineBoundsFromSymbol(textSymbol);
         (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
         this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
       }
+      this._setFillAndLineBoundsFromSymbol(symbol);
     }
 
     /**

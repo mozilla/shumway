@@ -23,23 +23,19 @@ module Shumway.AVM2.AS.flash.display {
 
     static classInitializer: any = null;
     static initializer: any = function (symbol: Shumway.Timeline.ShapeSymbol) {
-        var self: Shape = this;
-        self._graphics = null;
-        if (symbol) {
-          this._setStaticContentFromSymbol(symbol);
-          // TODO: Assert that the computed bounds of the graphics object in fact
-          // match those given by the symbol.
-        }
-      };
+      var self: Shape = this;
+      self._graphics = null;
+      if (symbol) {
+        this._setStaticContentFromSymbol(symbol);
+        // TODO: Assert that the computed bounds of the graphics object in fact
+        // match those given by the symbol.
+      }
+    };
 
-      constructor () {
+    constructor () {
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
     }
-
-    _initFrame() { }
-
-    _constructFrame() { }
 
     _canHaveGraphics(): boolean {
       return true;

@@ -36,10 +36,6 @@ module Shumway.AVM2.AS.flash.media {
       false && super();
       notImplemented("Dummy Constructor: public flash.media.Video");
     }
-
-    _initFrame() { }
-
-    _constructFrame() { }
     
     // JS -> AS Bindings
     

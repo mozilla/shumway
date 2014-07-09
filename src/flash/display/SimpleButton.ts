@@ -70,6 +70,8 @@ module Shumway.AVM2.AS.flash.display {
       this._updateButton();
     }
 
+    _constructFrame() { }
+
     // JS -> AS Bindings
 
 

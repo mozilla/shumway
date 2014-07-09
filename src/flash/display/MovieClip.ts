@@ -26,7 +26,7 @@ module Shumway.AVM2.AS.flash.display {
   import events = flash.events;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 
-  export class MovieClip extends flash.display.Sprite {
+  export class MovieClip extends flash.display.Sprite implements IAdvancable {
 
     private static _callQueue: MovieClip [];
 
