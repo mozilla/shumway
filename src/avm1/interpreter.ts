@@ -291,8 +291,10 @@ module Shumway.AVM1 {
   function as2ResolveProperty(obj, name: string): string {
     // AS2 just ignores lookups on non-existant containers
     if (isNullOrUndefined(obj)) {
-      return undefined;
+      warn("AVM1 warning: cannot look up member '" + name + "' on undefined object");
+      return null;
     }
+    obj = Object(obj);
     // checking if avm2 public property is present
     var avm2PublicName = Multiname.getPublicQualifiedName(name);
     if (avm2PublicName in obj) {
@@ -325,6 +327,12 @@ module Shumway.AVM1 {
   }
 
   function as2GetProperty(obj, name: string) {
+    // AS2 just ignores lookups on non-existant containers
+    if (isNullOrUndefined(obj)) {
+      warn("AVM1 warning: cannot get property '" + name + "' on undefined object");
+      return undefined;
+    }
+    obj = Object(obj);
     if (!obj.asHasProperty(undefined, name, 0) && isAS2MovieClip(obj)) {
       return (<Shumway.AVM2.AS.avm1lib.AS2MovieClip> obj).__lookupChild(name);
     }
@@ -1318,7 +1326,9 @@ module Shumway.AVM1 {
 
       var fn = avm1GetVariable(ectx, functionName);
       // AS2 simply ignores attempts to invoke non-functions.
-      if (!fn || !(fn instanceof Function)) {
+      if (!(fn instanceof Function)) {
+        warn("AVM1 warning: function '" + functionName +
+                                          (fn ? "' is not callable" : "' is undefined"));
         return;
       }
       release || assert(stack.length === sp + 1);
@@ -1335,6 +1345,12 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
+      // AS2 simply ignores attempts to invoke methods on non-existing objects.
+      if (isNullOrUndefined(obj)) {
+        warn("AVM1 warning: method '" + methodName + "' can't be called on undefined object");
+        return;
+      }
+
       // Per spec, a missing or blank method name causes the container to be treated as
       // a function to call.
       if (isNullOrUndefined(methodName) || methodName === '') {
@@ -1349,27 +1365,28 @@ module Shumway.AVM1 {
         // AS2 simply ignores attempts to invoke non-functions.
         if (obj instanceof Function) {
           stack[sp] = obj.apply(target, args);
+        } else {
+          warn("AVM1 warning: obj '" + obj + (obj ? "' is not callable" : "' is undefined"));
         }
         release || assert(stack.length === sp + 1);
         return;
       }
 
-      // AS2 simply ignores attempts to invoke methods on non-existing objects.
-      if (isNullOrUndefined(obj)) {
-        return;
-      }
-
       if (obj === AS2_SUPER_STUB) {
-        target = Object(as2GetPrototype(avm1GetVariable(ectx, '__class').__super));
+        target = as2GetPrototype(avm1GetVariable(ectx, '__class').__super);
         obj = avm1GetVariable(ectx, 'this');
       } else {
-        target = Object(obj);
+        target = obj;
       }
       var resolvedName = as2ResolveProperty(target, methodName);
       var fn = target.asGetPublicProperty(resolvedName);
 
       // AS2 simply ignores attempts to invoke non-methods.
-      if (!fn || !(fn instanceof Function)) {
+      if (!(fn instanceof Function)) {
+        warn("AVM1 warning: method '" + methodName + "' on object '" + obj +
+                                        (isNullOrUndefined(fn) ?
+                                                               "' is undefined" :
+                                                               "' is not callable"));
         return;
       }
       release || assert(stack.length === sp + 1);
@@ -1452,9 +1469,9 @@ module Shumway.AVM1 {
         // special case to track members
         stack.push(as2CreatePrototypeProxy(obj));
       } else {
-        var resolvedName = as2ResolveProperty(Object(obj), name);
+        var resolvedName = as2ResolveProperty(obj, name);
         stack.push(resolvedName === null ? undefined :
-          as2GetProperty(Object(obj), resolvedName));
+          as2GetProperty(obj, resolvedName));
       }
     }
     function avm1_0x42_ActionInitArray(ectx: ExecutionContext) {
@@ -1488,6 +1505,7 @@ module Shumway.AVM1 {
 
       // AS2 simply ignores attempts to construct methods on non-existing objects.
       if (isNullOrUndefined(obj)) {
+        warn("AVM1 warning: method '" + methodName + "' can't be constructed on undefined object");
         return;
       }
 
@@ -1504,6 +1522,8 @@ module Shumway.AVM1 {
 
       // AS2 simply ignores attempts to invoke non-methods.
       if (!(ctor instanceof Function)) {
+        warn("AVM1 warning: method '" + methodName + "' on object '" +
+                                        obj + "' is not constructible");
         return;
       }
 
@@ -1550,6 +1570,9 @@ module Shumway.AVM1 {
 
       if (!isNullOrUndefined(obj)) {
         obj.asSetPublicProperty(name, value);
+      } else {
+        // AS2 just ignores sets on non-existant containers
+        warn("AVM1 warning: cannot set member '" + name + "' on undefined object");
       }
     }
     function avm1_0x45_ActionTargetPath(ectx: ExecutionContext) {
@@ -1690,7 +1713,7 @@ module Shumway.AVM1 {
 
       var constr = stack.pop();
       var obj = stack.pop();
-      stack.push(as2InstanceOf(Object(obj), constr));
+      stack.push(as2InstanceOf(obj, constr));
     }
     function avm1_0x55_ActionEnumerate2(ectx: ExecutionContext) {
       var stack = ectx.stack;
