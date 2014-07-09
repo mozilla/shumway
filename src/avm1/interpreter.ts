@@ -20,6 +20,7 @@ module Shumway.AVM1 {
   import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
   import construct = Shumway.AVM2.Runtime.construct;
   import isNumeric = Shumway.isNumeric;
+  import isFunction = Shumway.isFunction;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Option = Shumway.Options.Option;
@@ -1356,7 +1357,7 @@ module Shumway.AVM1 {
           target = obj;
         }
         // AS2 simply ignores attempts to invoke non-functions.
-        if (obj instanceof Function) {
+        if (isFunction(obj)) {
           stack[sp] = obj.apply(target, args);
         } else {
           warn("AVM1 warning: obj '" + obj + (obj ? "' is not callable" : "' is undefined"));
@@ -1375,7 +1376,7 @@ module Shumway.AVM1 {
       var fn = target.asGetPublicProperty(resolvedName);
 
       // AS2 simply ignores attempts to invoke non-methods.
-      if (!(fn instanceof Function)) {
+      if (!isFunction(fn)) {
         warn("AVM1 warning: method '" + methodName + "' on object '" + obj +
                                         (isNullOrUndefined(fn) ?
                                                                "' is undefined" :
@@ -1518,7 +1519,7 @@ module Shumway.AVM1 {
       }
 
       // AS2 simply ignores attempts to invoke non-methods.
-      if (!(ctor instanceof Function)) {
+      if (!isFunction(ctor)) {
         warn("AVM1 warning: method '" + methodName + "' on object '" +
                                         obj + "' is not constructible");
         return;
@@ -1545,12 +1546,6 @@ module Shumway.AVM1 {
       stack.push(undefined);
 
       var obj = avm1GetVariable(ectx, objectName);
-      // AS2 simply ignores attempts to invoke non-functions.
-      if (!(obj instanceof Function)) {
-        warn("AVM1 warning: object '" + objectName +
-             (obj ? "' is not callable" : "' is undefined"));
-        return;
-      }
 
       var result = createBuiltinType(obj, args);
       if (typeof result === 'undefined') {
@@ -1558,6 +1553,13 @@ module Shumway.AVM1 {
         if (isAvm2Class(obj)) {
           result = construct(obj, args);
         } else {
+          // AS2 simply ignores attempts to invoke non-functions.
+          // We do this check here because AVM2 classes aren't functions but constructible.
+          if (!isFunction(obj)) {
+            warn("AVM1 warning: object '" + objectName +
+                                            (obj ? "' is not constructible" : "' is undefined"));
+            return;
+          }
           result = Object.create(as2GetPrototype(obj) || as2GetPrototype(Object));
           obj.apply(result, args);
         }
