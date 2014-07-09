@@ -2979,7 +2979,7 @@ module Shumway {
     GIF
   }
 
-  export class PromiseCapability<T> {
+  export class PromiseWrapper<T> {
     public promise: Promise<T>;
     public resolve: (result:T) => void;
     public reject: (reason) => void;

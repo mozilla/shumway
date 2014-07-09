@@ -380,8 +380,8 @@ module Shumway.Timeline {
       return obj._hasFlags(flash.display.DisplayObjectFlags.AnimatedByTimeline) &&
         (!this.symbol || obj._symbol === this.symbol ||
          (!this.symbol.dynamic && this.symbol.symbolClass.isType(obj))) &&
-        (this.depth === obj._depth) &&
-        (this.ratio === obj._ratio);
+        (this.depth === obj._depth);
+        // && (this.ratio === obj._ratio);
     }
   }
 
