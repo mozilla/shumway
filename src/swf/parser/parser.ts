@@ -88,8 +88,10 @@ module Shumway.SWF.Parser {
         tag = nextTag;
       }
       if ((tag && final) || (stream.pos >= stream.end)) {
-        tag.finalTag = true; // note: 'eot' is reserved by handlers
-        tags.push(tag);
+        if (tag) {
+          tag.finalTag = true; // note: 'eot' is reserved by handlers
+          tags.push(tag);
+        }
         if (onprogress) {
           context.bytesLoaded = context.bytesTotal;
           onprogress(context);
