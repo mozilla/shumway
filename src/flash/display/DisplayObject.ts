@@ -1463,15 +1463,14 @@ module Shumway.AVM2.AS.flash.display {
       if (this._canHaveGraphics()) {
         release || assert(symbol instanceof Shumway.Timeline.ShapeSymbol);
         this._graphics = (<Shumway.Timeline.ShapeSymbol>symbol).graphics;
-        this._invalidateFillAndLineBounds();
         this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
       } else if (flash.text.StaticText.isType(this)) {
         release || assert(symbol instanceof Shumway.Timeline.TextSymbol);
         var textSymbol = <Shumway.Timeline.TextSymbol>symbol;
-        this._setFillAndLineBoundsFromSymbol(textSymbol);
         (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
         this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
       }
+      this._setFillAndLineBoundsFromSymbol(symbol);
     }
 
     /**
