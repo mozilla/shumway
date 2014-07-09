@@ -39,7 +39,7 @@ module Shumway.AVM2.AS.flash.display {
     Complete    = 3
   }
 
-  export class Loader extends flash.display.DisplayObjectContainer {
+  export class Loader extends flash.display.DisplayObjectContainer implements IAdvancable {
 
     private static _rootLoader: Loader;
     private static _loadQueue: Loader [];
@@ -137,6 +137,8 @@ module Shumway.AVM2.AS.flash.display {
 
       this._codeExecutionPromiseCapability = new PromiseCapability<void>();
     }
+
+    _initFrame() { }
 
     _constructFrame() {
       this._constructChildren();

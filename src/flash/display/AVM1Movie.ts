@@ -35,10 +35,6 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.AVM1Movie");
     }
-
-    _initFrame() { }
-
-    _constructFrame() { }
     
     // JS -> AS Bindings
     

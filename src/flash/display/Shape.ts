@@ -37,10 +37,6 @@ module Shumway.AVM2.AS.flash.display {
       DisplayObject.instanceConstructorNoInitialize.call(this);
     }
 
-    _initFrame() { }
-
-    _constructFrame() { }
-
     _canHaveGraphics(): boolean {
       return true;
     }
