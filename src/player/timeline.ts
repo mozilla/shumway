@@ -377,11 +377,17 @@ module Shumway.Timeline {
     }
 
     canBeAnimated(obj: flash.display.DisplayObject): boolean {
-      return obj._hasFlags(flash.display.DisplayObjectFlags.AnimatedByTimeline) &&
-        (!this.symbol || obj._symbol === this.symbol ||
-         (!this.symbol.dynamic && this.symbol.symbolClass.isType(obj))) &&
-        (this.depth === obj._depth) &&
-        (this.ratio === obj._ratio);
+      if (!obj._hasFlags(flash.display.DisplayObjectFlags.AnimatedByTimeline)) {
+        return false;
+      }
+      if (obj._depth !== this.depth) {
+        return false;
+      }
+      var symbol = this.symbol;
+      if (symbol && obj._symbol !== symbol && (symbol.dynamic || !symbol.symbolClass.isType(obj))) {
+        return false;
+      }
+      return true;
     }
   }
 
