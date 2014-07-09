@@ -23,7 +23,7 @@ module Shumway.Settings {
 
   export function isStorageSupported() {
     try {
-      return window &&
+      return typeof window !== 'undefined' &&
              "localStorage" in window &&
              window["localStorage"] !== null;
     } catch (e) {
