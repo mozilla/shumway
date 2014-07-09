@@ -16,6 +16,7 @@
 // Class: NativeMenuItem
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NativeMenuItem extends flash.events.EventDispatcher {
     
@@ -33,23 +34,19 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.display.NativeMenuItem");
+      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      this._enabled = true;
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
-    // _enabled: boolean;
+
+    _enabled: boolean;
     get enabled(): boolean {
-      notImplemented("public flash.display.NativeMenuItem::get enabled"); return;
-      // return this._enabled;
+      somewhatImplemented("public flash.display.NativeMenuItem::get enabled");
+      return this._enabled;
     }
     set enabled(isSeparator: boolean) {
       isSeparator = !!isSeparator;
-      notImplemented("public flash.display.NativeMenuItem::set enabled"); return;
-      // this._enabled = isSeparator;
+      somewhatImplemented("public flash.display.NativeMenuItem::set enabled");
+      this._enabled = isSeparator;
     }
   }
 }
