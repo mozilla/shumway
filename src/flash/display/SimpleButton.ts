@@ -178,6 +178,20 @@ module Shumway.AVM2.AS.flash.display {
       // this._soundTransform = sndTransform;
     }
 
+    // TODO: introduce a DisplayObject#_containsGlobalPoint and override that here instead.
+    hitTestPoint(x: number, y: number, shapeFlag: boolean = false,
+                 ignoreChildren: boolean = false, ignoreClipping: boolean = true): boolean
+    {
+      x = +x;
+      y = +y;
+      shapeFlag = !!shapeFlag;
+      if (this.hitTestState) {
+        return this.hitTestState.hitTestPoint(x, y, shapeFlag, ignoreChildren, ignoreClipping);
+      } else {
+        return super.hitTestPoint(x, y, shapeFlag, ignoreChildren, ignoreClipping);
+      }
+    }
+
     _updateButton(): void {
       var state;
       if (this._mouseOver) {
