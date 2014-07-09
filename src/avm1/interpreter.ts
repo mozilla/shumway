@@ -1442,6 +1442,10 @@ module Shumway.AVM1 {
       var objectName = stack.pop();
       stack.push(null);
       var obj = avm1GetVariable(ectx, objectName);
+      // AS2 just ignores lookups on non-existant containers. We warned in GetVariable already.
+      if (isNullOrUndefined(obj)) {
+        return;
+      }
       as2Enumerate(obj, function (name) {
         stack.push(name);
       }, null);
@@ -1721,6 +1725,12 @@ module Shumway.AVM1 {
 
       var obj = stack.pop();
       stack.push(null);
+
+      // AS2 just ignores lookups on non-existant containers
+      if (isNullOrUndefined(obj)) {
+        warn("AVM1 warning: cannot iterate over undefined object");
+        return;
+      }
 
       as2Enumerate(obj, function (name) {
         stack.push(name);
