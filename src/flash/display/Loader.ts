@@ -141,6 +141,10 @@ module Shumway.AVM2.AS.flash.display {
       ]);
     }
 
+    _constructFrame() {
+      this._constructChildren();
+    }
+
     // JS -> AS Bindings
 
     //uncaughtErrorEvents: flash.events.UncaughtErrorEvents;

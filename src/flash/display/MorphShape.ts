@@ -45,6 +45,10 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
     }
+
+    _initFrame() { }
+
+    _constructFrame() { }
     
     // JS -> AS Bindings
     
