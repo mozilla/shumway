@@ -127,15 +127,18 @@ module Shumway.AVM2.AS.flash.display {
       this._contentLoaderInfo = new flash.display.LoaderInfo();
 
       this._worker = null;
-      this._startPromise = Promise.resolve();
-      this._lastPromise = this._startPromise;
       this._loadStatus = LoadStatus.Unloaded;
 
       this._contentLoaderInfo._loader = this;
 
       this._commitDataQueue = Promise.resolve();
 
-      this._codeExecutionPromiseCapability = new PromiseCapability<void>();
+      this._codeExecutionPromise = new PromiseWrapper<any>();
+      this._progressPromise = new PromiseWrapper<any>();
+      this._startPromise = Promise.all([
+        this._codeExecutionPromise.promise,
+        this._progressPromise.promise
+      ]);
     }
 
     _initFrame() { }
@@ -167,13 +170,25 @@ module Shumway.AVM2.AS.flash.display {
     // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
     private _worker: Worker;
-    private _startPromise: any;
-    private _lastPromise: any;
     private _loadStatus: LoadStatus;
 
     private _commitDataQueue: Promise<any>;
 
-    _codeExecutionPromiseCapability: PromiseCapability<void>;
+    /**
+     * Resolved when both |_progressPromise| and |_codeExecutionPromise| are resolved.
+     */
+    _startPromise: Promise<any>;
+
+    /**
+     * Resolved after the first progress event. This ensures that at least 64K of data have been
+     * parsed before playback begins.
+     */
+    private _progressPromise: PromiseWrapper<any>;
+
+    /**
+     * Resolved after AVM2 and AVM1 (if used) have been initialized.
+     */
+    private _codeExecutionPromise: PromiseWrapper<any>;
 
     private _commitData(data: any): void {
       this._commitDataQueue = this._commitDataQueue.then(
@@ -218,6 +233,7 @@ module Shumway.AVM2.AS.flash.display {
           if (this._loadStatus !== LoadStatus.Unloaded) {
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS, false,
                                                               false, bytesLoaded, bytesTotal));
+            this._progressPromise.resolve(undefined);
           }
           break;
         case 'complete':
@@ -385,7 +401,7 @@ module Shumway.AVM2.AS.flash.display {
           this._initAvm1Root(root);
         }
 
-        this._codeExecutionPromiseCapability.resolve(undefined);
+        this._codeExecutionPromise.resolve(undefined);
 
         root._loaderInfo = loaderInfo;
         this._content = root;
@@ -511,7 +527,6 @@ module Shumway.AVM2.AS.flash.display {
       this._content = null;
       this._contentLoaderInfo._loader = null;
       this._worker = null;
-      this._lastPromise = this._startPromise;
       this._loadStatus = LoadStatus.Unloaded;
       this.dispatchEvent(events.Event.getInstance(events.Event.UNLOAD));
     }
@@ -547,7 +562,7 @@ module Shumway.AVM2.AS.flash.display {
         worker = new ResourceLoader(window, false);
       }
       if (!loaderInfo._allowCodeExecution) {
-        this._codeExecutionPromiseCapability.reject('Disabled by _allowCodeExecution');
+        this._codeExecutionPromise.reject('Disabled by _allowCodeExecution');
       }
       var loader = this;
       //loader._worker = worker;

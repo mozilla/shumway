@@ -118,8 +118,8 @@ module Shumway.Player {
         this._playAllSymbols();
         loaderInfo._allowCodeExecution = false;
       } else {
-        var codeExecutionPromise = loader._codeExecutionPromiseCapability.promise;
-        codeExecutionPromise.then(function () {
+        var startPromise = loader._startPromise;
+        startPromise.then(function () {
           if (loaderInfo.actionScriptVersion === flash.display.ActionScriptVersion.ACTIONSCRIPT2) {
             var AS2Key = (<any>avm1lib).AS2Key;
             var AS2Mouse = (<any>avm1lib).AS2Mouse;

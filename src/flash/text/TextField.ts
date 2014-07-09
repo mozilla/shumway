@@ -230,22 +230,7 @@ module Shumway.AVM2.AS.flash.text {
       return this._autoSize;
     }
 
-    /**
-     * AS2 treats |true| as "LEFT" and |false| as "NONE".
-     *
-     * TODO: Check that the getter doesn't expect |TRUE| or |FALSE|.
-     */
-    private _checkAS2AutoSizeValue(value: any) {
-      if (value === true) {
-        return TextFieldAutoSize.LEFT;
-      } else if (value === false) {
-        return TextFieldAutoSize.NONE;
-      }
-      return value;
-    }
-
     set autoSize(value: string) {
-      value = this._checkAS2AutoSizeValue(value);
       value = asCoerceString(value);
       if (value === this._autoSize) {
         return;
