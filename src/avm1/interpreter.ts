@@ -842,13 +842,6 @@ module Shumway.AVM1 {
 
       currentTarget.asSetPublicProperty(variableName, value);
     }
-    function avm1GetObjectByName(ectx: ExecutionContext, objectName: string) {
-      var obj = avm1GetVariable(ectx, objectName);
-      if (!(obj instanceof Object)) {
-        throw new Error('Object "' + objectName + '" is not found');
-      }
-      return obj;
-    }
     function avm1ProcessWith(ectx: ExecutionContext, obj, withBlock) {
       var scopeContainer = ectx.scopeContainer;
       var constantPool = ectx.constantPool;
@@ -1448,7 +1441,7 @@ module Shumway.AVM1 {
 
       var objectName = stack.pop();
       stack.push(null);
-      var obj = avm1GetObjectByName(ectx, objectName);
+      var obj = avm1GetVariable(ectx, objectName);
       as2Enumerate(obj, function (name) {
         stack.push(name);
       }, null);
@@ -1542,11 +1535,18 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
 
       var objectName = stack.pop();
-      var obj = avm1GetObjectByName(ectx, objectName);
       var args = avm1ReadFunctionArgs(stack);
 
       var sp = stack.length;
       stack.push(undefined);
+
+      var obj = avm1GetVariable(ectx, objectName);
+      // AS2 simply ignores attempts to invoke non-functions.
+      if (!(obj instanceof Function)) {
+        warn("AVM1 warning: object '" + objectName +
+             (obj ? "' is not callable" : "' is undefined"));
+        return;
+      }
 
       var result = createBuiltinType(obj, args);
       if (typeof result === 'undefined') {
@@ -1559,6 +1559,7 @@ module Shumway.AVM1 {
         }
         result.constructor = obj;
       }
+      release || assert(stack.length === sp + 1);
       stack[sp] = result;
     }
     function avm1_0x4F_ActionSetMember(ectx: ExecutionContext) {
