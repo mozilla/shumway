@@ -52,7 +52,7 @@ module Shumway.AVM1 {
   var MAX_AVM1_STACK_LIMIT = 256;
 
   class AS2ScopeListItem {
-    constructor(public scope, public next?: AS2ScopeListItem) {
+    constructor(public scope, public next: AS2ScopeListItem) {
     }
     create(scope) {
       return new AS2ScopeListItem(scope, this);
@@ -717,7 +717,7 @@ module Shumway.AVM1 {
       }
       return false;
     }
-    function avm1ResolveVariableName(ectx: ExecutionContext, variableName: string, nonStrict?: boolean) {
+    function avm1ResolveVariableName(ectx: ExecutionContext, variableName: string, nonStrict: boolean) {
       var _global = ectx.global;
       var currentContext = ectx.context;
       var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
@@ -768,7 +768,7 @@ module Shumway.AVM1 {
         return scope.asGetPublicProperty(variableName);
       }
 
-      var target = avm1ResolveVariableName(ectx, variableName);
+      var target = avm1ResolveVariableName(ectx, variableName, false);
       if (target) {
         return target.obj.asGetPublicProperty(target.name);
       }
@@ -1811,7 +1811,7 @@ module Shumway.AVM1 {
     }
 
     function wrapAvm1Error(fn: Function): Function {
-      return function avm1ErrorWrapper(executionContext: ExecutionContext, args?: any[]) {
+      return function avm1ErrorWrapper(executionContext: ExecutionContext, args: any[]) {
         var currentContext: AS2ContextImpl;
         try {
           fn(executionContext, args);
