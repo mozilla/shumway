@@ -1138,7 +1138,7 @@ module Shumway.AVM2.AS.flash.display {
       var bounds = this._getTransformedBounds(this._parent, true);
       var contentBounds = this._getContentBounds(true);
       var angle = this._rotation / 180 * Math.PI;
-      var baseHeight = contentBounds.getBaseWidth(angle);
+      var baseHeight = contentBounds.getBaseHeight(angle);
       if (!baseHeight) {
         return;
       }
