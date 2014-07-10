@@ -50,6 +50,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         if (symbol.hitTestState) {
           self._hitTestState = DisplayObject.createAnimatedDisplayObject(symbol.hitTestState, true);
+          self._hitTestState._setFlags(DisplayObjectFlags.InvalidInvertedMatrix);
         }
       }
     };
@@ -178,18 +179,24 @@ module Shumway.AVM2.AS.flash.display {
       // this._soundTransform = sndTransform;
     }
 
-    // TODO: introduce a DisplayObject#_containsGlobalPoint and override that here instead.
-    hitTestPoint(x: number, y: number, shapeFlag: boolean = false,
-                 ignoreChildren: boolean = false, ignoreClipping: boolean = true): boolean
+    /**
+     * Override of DisplayObject#_containsGlobalPoint that applies the test on hitTestState if
+     * that is defined.
+     */
+    _containsGlobalPoint(x: number, y: number, shapeFlag: boolean,
+                 ignoreChildren: boolean, ignoreClipping: boolean): boolean
     {
-      x = +x;
-      y = +y;
-      shapeFlag = !!shapeFlag;
-      if (this.hitTestState) {
-        return this.hitTestState.hitTestPoint(x, y, shapeFlag, ignoreChildren, ignoreClipping);
-      } else {
-        return super.hitTestPoint(x, y, shapeFlag, ignoreChildren, ignoreClipping);
+      var matrix = this._getInvertedConcatenatedMatrix();
+      var localX = matrix.transformX(x, y);
+      var localY = matrix.transformY(x, y);
+      var target = this.hitTestState || this;
+      if (target !== this) {
+        matrix = target._getInvertedMatrix();
+        var tmpX = matrix.transformX(localX, localY);
+        localY = matrix.transformY(localX, localY);
+        localX = tmpX;
       }
+      return target._containsPoint(localX, localY, shapeFlag, ignoreChildren, ignoreClipping);
     }
 
     _updateButton(): void {
