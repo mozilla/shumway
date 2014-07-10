@@ -1507,16 +1507,23 @@ module Shumway.AVM2.AS.flash.display {
       shapeFlag = !!shapeFlag;
       ignoreChildren = !!ignoreChildren;
       ignoreClipping = !!ignoreClipping;
-      return this._containsGlobalPoint(x, y, shapeFlag, ignoreChildren, ignoreClipping);
-    }
-
-    _containsGlobalPoint(x: number, y: number, shapeFlag: boolean,
-                         ignoreChildren: boolean, ignoreClipping: boolean): boolean
-    {
       var matrix = this._getInvertedConcatenatedMatrix();
       var localX = matrix.transformX(x, y);
       var localY = matrix.transformY(x, y);
       return this._containsPoint(localX, localY, shapeFlag, ignoreChildren, ignoreClipping);
+    }
+
+    /**
+     * Returns true if the given global coordinates hit the shape of this object.
+     *
+     * Overridden in SimpleButton.
+     */
+    _isUnderMouse(x: number, y: number): boolean
+    {
+      var matrix = this._getInvertedConcatenatedMatrix();
+      var localX = matrix.transformX(x, y);
+      var localY = matrix.transformY(x, y);
+      return this._containsPoint(localX, localY, true, false, false);
     }
 
     /**

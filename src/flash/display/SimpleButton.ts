@@ -180,11 +180,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Override of DisplayObject#_containsGlobalPoint that applies the test on hitTestState if
+     * Override of DisplayObject#_isUnderMouse that applies the test on hitTestState if
      * that is defined.
      */
-    _containsGlobalPoint(x: number, y: number, shapeFlag: boolean,
-                 ignoreChildren: boolean, ignoreClipping: boolean): boolean
+    _isUnderMouse(x: number, y: number): boolean
     {
       var matrix = this._getInvertedConcatenatedMatrix();
       var localX = matrix.transformX(x, y);
@@ -196,7 +195,7 @@ module Shumway.AVM2.AS.flash.display {
         localY = matrix.transformY(localX, localY);
         localX = tmpX;
       }
-      return target._containsPoint(localX, localY, shapeFlag, ignoreChildren, ignoreClipping);
+      return target._containsPoint(localX, localY, true, false, false);
     }
 
     _updateButton(): void {

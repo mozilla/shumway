@@ -330,8 +330,7 @@ module Shumway.AVM2.AS.flash.display {
       this.visit(function (displayObject: flash.display.DisplayObject): VisitorFlags {
         var isUnderMouse = false;
         if (!Sprite.isType(displayObject) || !(<Sprite>displayObject).hitArea) {
-          isUnderMouse = displayObject._containsGlobalPoint(globalPoint.x * 20, globalPoint.y * 20,
-                                                            true, false, false);
+          isUnderMouse = displayObject._isUnderMouse(globalPoint.x * 20, globalPoint.y * 20);
         }
         if (isUnderMouse) {
           objectsUnderPoint.push(displayObject);
