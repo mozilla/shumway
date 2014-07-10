@@ -729,6 +729,7 @@ module Shumway.AVM2.AS.flash.display {
       this._scaleY = m.getScaleY();
       this._rotation = DisplayObject._clampRotation(matrix.getRotation() * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
+      this._setFlags(DisplayObjectFlags.InvalidInvertedMatrix);
       this._dirtyMatrix();
       this._invalidatePosition();
     }
@@ -1495,32 +1496,54 @@ module Shumway.AVM2.AS.flash.display {
      * the hit test should be on the actual pixels of the object |true| or just its bounding
      * box |false|. Use the |ignoreChildren| to only test the display object's graphics and
      * not its children.
+     *
+     * Note: shapeFlag and ignoreChildren are optional, but the type coercion will do the right
+     * thing for them, so we don't need to take the overhead from being explicit about that.
      */
-    hitTestPoint(x: number, y: number, shapeFlag: boolean = false,
-                 ignoreChildren: boolean = false, ignoreClipping: boolean = true): boolean
+    hitTestPoint(x: number, y: number, shapeFlag: boolean,
+                 ignoreChildren: boolean, ignoreClipping: boolean = true): boolean
     {
-      x = +x;
-      y = +y;
+      x = +x * 20|0;
+      y = +y * 20|0;
       shapeFlag = !!shapeFlag;
-      var point = new flash.geom.Point(x, y).toTwips();
-      this._getInvertedConcatenatedMatrix().transformPointInPlace(point);
-      return this._containsPoint(point, shapeFlag, ignoreChildren, ignoreClipping);
+      ignoreChildren = !!ignoreChildren;
+      ignoreClipping = !!ignoreClipping;
+      var matrix = this._getInvertedConcatenatedMatrix();
+      var localX = matrix.transformX(x, y);
+      var localY = matrix.transformY(x, y);
+      return this._containsPoint(localX, localY, shapeFlag, ignoreChildren, ignoreClipping);
+    }
+
+    /**
+     * Returns true if the given global coordinates hit the shape of this object.
+     *
+     * Overridden in SimpleButton.
+     */
+    _isUnderMouse(x: number, y: number): boolean
+    {
+      var matrix = this._getInvertedConcatenatedMatrix();
+      var localX = matrix.transformX(x, y);
+      var localY = matrix.transformY(x, y);
+      return this._containsPoint(localX, localY, true, false, false);
     }
 
     /**
      * Same as |hitTestPoint| but the point is in local coordinate space and in twips.
      */
-    _containsPoint(point: flash.geom.Point, shapeFlag: boolean = false,
-                   ignoreChildren: boolean = false, ignoreClipping: boolean = true): boolean {
-      if (!this._getContentBounds().contains(point.x, point.y)) {
+    _containsPoint(x: number, y: number, shapeFlag: boolean,
+                   ignoreChildren: boolean, ignoreClipping: boolean): boolean
+    {
+      if (!this._getContentBounds().contains(x, y)) {
         return false;
       }
       if (!shapeFlag) {
         return true;
       }
       if (this._mask) {
-        var maskPoint = this._mask._getInvertedMatrix().transformPoint(point);
-        if (!this._mask._containsPoint(maskPoint, shapeFlag, ignoreChildren, ignoreClipping)) {
+        var matrix = this._mask._getInvertedMatrix();
+        var maskX = matrix.transformX(x, y);
+        var maskY = matrix.transformX(x, y);
+        if (!this._mask._containsPoint(maskX, maskY, shapeFlag, ignoreChildren, ignoreClipping)) {
           return false;
         }
       }
@@ -1529,12 +1552,13 @@ module Shumway.AVM2.AS.flash.display {
        * testing the children. */
       if (!ignoreChildren && DisplayObjectContainer.isType(this)) {
         var children = (<DisplayObjectContainer>this)._children;
-        var childPoint = new geom.Point();
         for (var i = 0; i < children.length; i++) {
           var child = children[i];
-          childPoint.copyFrom(point);
-          child._getInvertedMatrix().transformPointInPlace(childPoint);
-          var result = child._containsPoint(childPoint, shapeFlag, ignoreChildren, ignoreClipping);
+          var matrix = child._getInvertedMatrix();
+          var childX = matrix.transformX(x, y);
+          var childY = matrix.transformX(x, y);
+          var result = child._containsPoint(childX, childY,
+                                            shapeFlag, ignoreChildren, ignoreClipping);
           if (!ignoreClipping && child._clipDepth >= 0 && child._parent) {
             if (!result) {
               i = child._parent.getClipDepthIndex(child._clipDepth);
@@ -1548,7 +1572,7 @@ module Shumway.AVM2.AS.flash.display {
       if (graphics) {
         // TODO: split this up into internal and external versions.
         // The external one must include strokes, the internal shouldn't do the argument validation.
-        return graphics._containsPoint(point.x, point.y, true);
+        return graphics._containsPoint(x, y, true);
       }
       return false;
     }
