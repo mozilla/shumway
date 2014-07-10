@@ -729,6 +729,7 @@ module Shumway.AVM2.AS.flash.display {
       this._scaleY = m.getScaleY();
       this._rotation = DisplayObject._clampRotation(matrix.getRotation() * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
+      this._setFlags(DisplayObjectFlags.InvalidInvertedMatrix);
       this._dirtyMatrix();
       this._invalidatePosition();
     }

@@ -50,7 +50,6 @@ module Shumway.AVM2.AS.flash.display {
         }
         if (symbol.hitTestState) {
           self._hitTestState = DisplayObject.createAnimatedDisplayObject(symbol.hitTestState, true);
-          self._hitTestState._setFlags(DisplayObjectFlags.InvalidInvertedMatrix);
         }
       }
     };
