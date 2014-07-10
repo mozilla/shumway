@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Class: URLStream
+/// <reference path='../references.ts'/>
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import FileLoadingService = Shumway.FileLoadingService;
   import throwError = Shumway.AVM2.Runtime.throwError;
 
-  declare var Stream;
+  import Stream = Shumway.SWF.Stream;
 
   export class URLStream extends flash.events.EventDispatcher implements flash.utils.IDataInput {
     
