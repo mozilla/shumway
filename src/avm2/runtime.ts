@@ -127,7 +127,6 @@ module Shumway.AVM2.Runtime {
   import propertyIsEnumerable = Shumway.ObjectUtilities.propertyIsEnumerable;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import createMap = Shumway.ObjectUtilities.createMap;
-  import cloneObject = Shumway.ObjectUtilities.cloneObject;
   import copyProperties = Shumway.ObjectUtilities.copyProperties;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import boxValue = Shumway.ObjectUtilities.boxValue;
