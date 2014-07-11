@@ -31,12 +31,12 @@ var AS2ButtonDefinition = (function () {
       instance: {
         _as3Object: {
           get: function () {
-            return this.$nativeObject;
+            return this._nativeAS3Object;
           }
         },
         _init: function init(nativeButton) {
-          Object.defineProperty(this, '$nativeObject', { value: nativeButton });
-          nativeButton.$as2Object = this;
+          Object.defineProperty(this, '_nativeAS3Object', { value: nativeButton });
+          nativeButton._as2Object = this;
           initDefaultListeners(this);
         },
       }

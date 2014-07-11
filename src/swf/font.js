@@ -19,6 +19,7 @@
 
 var nextFontId = 1;
 
+
 function maxPower2(num) {
   var maxPower = 0;
   var val = num;
@@ -44,19 +45,51 @@ function defineFont(tag, dictionary) {
   var glyphIndex = { };
   var ranges = [];
 
-  var glyphs = tag.glyphs;
-  var glyphCount = glyphs.length;
+  var glyphs;
+  var glyphCount;
+  var originalCode;
+  var generateAdvancement = tag['advance'] === undefined;
+  var correction = 0;
+  var isFont3 = (tag.code === 75);
+
+
+  if(generateAdvancement) tag.advance = [];
+
+  var maxCode = Math.max.apply(null,tag.codes) || 35;
 
   if (tag.codes) {
-    codes = codes.concat(tag.codes);
-    for (var i = 0, code; (code = codes[i]); ++i)
+    for (var i = 0, code; i<tag.codes.length; i++) {
+      var code = tag.codes[i];
+      if( code < 32 ) {
+        maxCode++;
+        if(maxCode == 8232) maxCode = 8240;
+        code = maxCode;
+      }
+
+      codes.push(code);
+
+
+
+    }
+  }
+
+  originalCode = codes.concat();
+
+  tag.glyphCount = tag.glyphs.length;
+  glyphs = tag.glyphs;
+  glyphCount = glyphs.length;
+
+  if (tag.codes) {
+    for (var i = 0, code; i<codes.length; i++) {
+      code=codes[i];
       glyphIndex[code] = i;
+    }
     codes.sort(function(a, b) {
       return a - b;
     });
     var i = 0;
     var code;
-    while ((code = codes[i++])) {
+    while (code = codes[i++]) {
       var start = code;
       var end = start;
       var indices = [i - 1];
@@ -79,44 +112,11 @@ function defineFont(tag, dictionary) {
     ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
   }
 
-  var resolution = tag.resolution || 1;
+  var resolution = tag.resolution || 20;
   var ascent = Math.ceil(tag.ascent / resolution) || 1024;
-  var descent = -Math.ceil(tag.descent / resolution) | 0;
-  var leading = (tag.leading / resolution) | 0;
-  tables['OS/2'] =
-    '\x00\x01' + // version
-    '\x00\x00' + // xAvgCharWidth
-    toString16(tag.bold ? 700 : 400) + // usWeightClass
-    '\x00\x05' + // usWidthClass
-    '\x00\x00' + // fstype
-    '\x00\x00' + // ySubscriptXSize
-    '\x00\x00' + // ySubscriptYSize
-    '\x00\x00' + // ySubscriptXOffset
-    '\x00\x00' + // ySubscriptYOffset
-    '\x00\x00' + // ySuperScriptXSize
-    '\x00\x00' + // ySuperScriptYSize
-    '\x00\x00' + // ySuperScriptXOffset
-    '\x00\x00' + // ySuperScriptYOffset
-    '\x00\x00' + // yStrikeoutSize
-    '\x00\x00' + // yStrikeoutPosition
-    '\x00\x00' + // sFamilyClass
-    '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + // panose
-    '\x00\x00\x00\x00' + // ulUnicodeRange1
-    '\x00\x00\x00\x00' + // ulUnicodeRange2
-    '\x00\x00\x00\x00' + // ulUnicodeRange3
-    '\x00\x00\x00\x00' + // ulUnicodeRange4
-    'ALF ' + // achVendID
-    toString16((tag.italic ? 0x01 : 0) | (tag.bold ? 0x20: 0)) + // fsSelection
-    toString16(codes[0]) + // usFirstCharIndex
-    toString16(codes[codes.length - 1]) + // usLastCharIndex
-    toString16(ascent) + // sTypoAscender
-    toString16(descent) + // sTypoDescender
-    toString16(leading) + // sTypoLineGap
-    toString16(ascent) + // usWinAscent
-    toString16(-descent) + // usWinDescent
-    '\x00\x00\x00\x00' + // ulCodePageRange1
-    '\x00\x00\x00\x00' // ulCodePageRange2
-  ;
+  var descent = -Math.ceil(tag.descent / resolution) || 0;
+  var leading = (tag.leading / resolution) || 0;
+  tables['OS/2'] ='';
 
   var startCount = '';
   var endCount = '';
@@ -174,9 +174,85 @@ function defineFont(tag, dictionary) {
   var maxContours = 0;
   var i = 0;
   var code;
-  while ((code = codes[i++])) {
+  var rawData = {};
+  while ( code = codes[i++] ) {
     var glyph = glyphs[glyphIndex[code]];
     var records = glyph.records;
+    var x = 0;
+    var y = 0;
+
+    var myFlags = '',
+        myEndpts = '',
+        endPoint = 0,
+        segments = [],
+        segmentIndex = -1;
+
+    for(j=0; j<records.length; j++) {
+      record = records[j];
+      if (record.type) {
+        if (record.isStraight) {
+            segments[segmentIndex].commands.push(2);
+            var dx = (record.deltaX || 0) / resolution;
+            var dy = -(record.deltaY || 0) / resolution;
+            x += dx;
+            y += dy;
+            segments[segmentIndex].data.push(x,y);
+            segments[segmentIndex].nodes.push(x,y);
+        } else {
+          segments[segmentIndex].commands.push(3);
+          var cx = record.controlDeltaX / resolution;
+          var cy = -record.controlDeltaY / resolution;
+          x += cx;
+          y += cy;
+          segments[segmentIndex].data.push(x,y);
+          var dx = record.anchorDeltaX / resolution;
+          var dy = -record.anchorDeltaY / resolution;
+          x += dx;
+          y += dy;
+          segments[segmentIndex].data.push(x,y);
+          segments[segmentIndex].nodes.push(x,y);
+        }
+      } else {
+        if (record.eos)
+          break;
+        if (record.move) {
+          segmentIndex++;
+          segments[segmentIndex] = { data:[], commands:[], nodes:[], xMin:0, xMax:0, yMin:0, yMax:0 };
+          segments[segmentIndex].commands.push(1);
+          var moveX = record.moveX / resolution;
+          var moveY = -record.moveY / resolution;
+          var dx = moveX - x;
+          var dy = moveY - y;
+          x = moveX;
+          y = moveY;
+          segments[segmentIndex].data.push(x,y);
+          segments[segmentIndex].nodes.push(x,y);
+        }
+      }
+
+      if(segmentIndex > -1 ) {
+        if(segments[segmentIndex].xMin > x) segments[segmentIndex].xMin = x;
+        if(segments[segmentIndex].yMin > y) segments[segmentIndex].yMin = y;
+        if(segments[segmentIndex].xMax < x) segments[segmentIndex].xMax = x;
+        if(segments[segmentIndex].yMax < y) segments[segmentIndex].yMax = y;
+      }
+    }
+
+    if(!isFont3) {
+      segments.sort(function(a,b){
+        return (b.xMax - b.xMin) * (b.yMax - b.yMin) - (a.xMax - a.xMin) * (a.yMax - a.yMin);
+      });
+    }
+
+    rawData[code] = segments;
+  }
+  var xTranslate = 0, yTranslate = 0;
+
+  i=0;
+  while ( code = codes[i++] ) {
+    var glyph = glyphs[glyphIndex[code]];
+    var records = glyph.records;
+    var segments = rawData[code];
     var numberOfContours = 1;
     var endPoint = 0;
     var endPtsOfContours = '';
@@ -189,86 +265,96 @@ function defineFont(tag, dictionary) {
     var xMax = -1024;
     var yMin = 1024;
     var yMax = -1024;
-    for (var j = 0, record; (record = records[j]); ++j) {
-      if (record.type) {
-        if (record.isStraight) {
-          if (record.isGeneral) {
-            flags += '\x01';
-            var dx = record.deltaX / resolution;
-            var dy = -record.deltaY / resolution;
-            xCoordinates += toString16(dx);
-            yCoordinates += toString16(dy);
-            x += dx;
-            y += dy;
-          } else if (record.isVertical) {
-            flags += '\x11';
-            var dy = -record.deltaY / resolution;
-            yCoordinates += toString16(dy);
-            y += dy;
-          } else {
-            flags += '\x21';
-            var dx = record.deltaX / resolution;
-            xCoordinates += toString16(dx);
-            x += dx;
-          }
-        } else {
-          flags += '\x00';
-          var cx = record.controlDeltaX / resolution;
-          var cy = -record.controlDeltaY / resolution;
-          xCoordinates += toString16(cx);
-          yCoordinates += toString16(cy);
-          flags += '\x01';
-          var dx = record.anchorDeltaX / resolution;
-          var dy = -record.anchorDeltaY / resolution;
-          xCoordinates += toString16(dx);
-          yCoordinates += toString16(dy);
-          ++endPoint;
-          x += cx + dx;
-          y += cy + dy;
-        }
 
-        if (x < xMin)
-          xMin = x;
-        if (x > xMax)
-          xMax = x;
-        if (y < yMin)
-          yMin = y;
-        if (y > yMax)
-          yMax = y;
-        ++endPoint;
-      } else {
-        if (record.eos)
-          break;
-        if (record.move) {
-          if (endPoint) {
-            ++numberOfContours;
-            endPtsOfContours += toString16(endPoint - 1);
-          }
-          flags += '\x01';
-          var moveX = record.moveX / resolution;
-          var moveY = -record.moveY / resolution;
-          var dx = moveX - x;
-          var dy = moveY - y;
-          xCoordinates += toString16(dx);
-          yCoordinates += toString16(dy);
-          x = moveX;
-          y = moveY;
-          if (endPoint > maxPoints)
-            maxPoints = endPoint;
+    var myFlags = '',
+        myEndpts = '',
+        endPoint = 0,
+        segmentIndex = -1;
 
-          if (x < xMin)
-            xMin = x;
-          if (x > xMax)
-            xMax = x;
-          if (y < yMin)
-            yMin = y;
-          if (y > yMax)
-            yMax = y;
-          ++endPoint;
-        }
-      }
+    var data=[],commands=[];
+
+    var flip = (isFont3) ? 1 : -1;
+
+    for(j=0;j<segments.length;j++){
+      data = data.concat(segments[j].data);
+      commands = commands.concat(segments[j].commands);
     }
-    endPtsOfContours += toString16((endPoint || 1) - 1);
+
+    x=0;y=0;
+    var nx=0,ny=0,
+        myXCoordinates='',
+        myYCoordinates='',
+        dataIndex = 0,
+        endPoint = 0,
+        numberOfContours = 1,
+        myEndpts = '';
+    for(j=0;j<commands.length;j++) {
+      var command = commands[j];
+      if( command === 1 ) {
+        if (endPoint) {
+          ++numberOfContours;
+          myEndpts += toString16(endPoint - 1);
+        }
+        nx = data[dataIndex++] + xTranslate;
+        ny = flip*data[dataIndex++] + yTranslate;
+        var dx = nx - x;
+        var dy = ny - y;
+        myFlags += '\x01';
+        myXCoordinates += toString16(dx);
+        myYCoordinates += toString16(dy);
+        x = nx;
+        y = ny;
+      } else if( command === 2 ){
+        nx = data[dataIndex++] + xTranslate;
+        ny = flip*data[dataIndex++] + yTranslate;
+        var dx = nx - x;
+        var dy = ny - y;
+        myFlags += '\x01';
+        myXCoordinates += toString16(dx);
+        myYCoordinates += toString16(dy);
+        x = nx;
+        y = ny;
+      } else if( command === 3 ){
+          nx = data[dataIndex++] + xTranslate;
+          ny = flip*data[dataIndex++] + yTranslate;
+          var cx = nx - x;
+          var cy = ny - y;
+          myFlags += '\x00';
+          myXCoordinates += toString16(cx);
+          myYCoordinates += toString16(cy);
+          x = nx;
+          y = ny;
+          endPoint++;
+
+          nx = data[dataIndex++] + xTranslate;
+          ny = flip*data[dataIndex++] + yTranslate;
+          var cx = nx - x;
+          var cy = ny - y;
+          myFlags += '\x01';
+          myXCoordinates += toString16(cx);
+          myYCoordinates += toString16(cy);
+          x = nx;
+          y = ny;
+      }
+      endPoint++;
+      if (endPoint > maxPoints)
+        maxPoints = endPoint;
+
+      if( xMin > x ) xMin = x;
+      if( yMin > y ) yMin = y;
+      if( xMax < x ) xMax = x;
+      if( yMax < y ) yMax = y;
+
+    }
+    myEndpts += toString16((endPoint || 1) - 1);
+
+    endPtsOfContours = myEndpts;
+    xCoordinates = myXCoordinates;
+    yCoordinates = myYCoordinates;
+    flags = myFlags;
+
+    yMax += yTranslate;
+
     if (!j) {
       xMin = xMax = yMin = yMax = 0;
       flags += '\x31';
@@ -298,9 +384,55 @@ function defineFont(tag, dictionary) {
       maxContours = numberOfContours;
     if (endPoint > maxPoints)
       maxPoints = endPoint;
+
+    if(generateAdvancement) {
+      tag.advance.push((xMax - xMin) * resolution * 1.3);
+    }
   }
   loca += toString16(offset / 2);
   tables['glyf'] = glyf;
+
+  if(!isFont3) {
+    var minYmin = Math.min.apply(null,yMins);
+    if(minYmin < 0) {
+      descent = descent || minYmin;
+    }
+  }
+
+  tables['OS/2'] =
+    '\x00\x01' + // version
+    '\x00\x00' + // xAvgCharWidth
+    toString16(tag.bold ? 700 : 400) + // usWeightClass
+    '\x00\x05' + // usWidthClass
+    '\x00\x00' + // fstype
+    '\x00\x00' + // ySubscriptXSize
+    '\x00\x00' + // ySubscriptYSize
+    '\x00\x00' + // ySubscriptXOffset
+    '\x00\x00' + // ySubscriptYOffset
+    '\x00\x00' + // ySuperScriptXSize
+    '\x00\x00' + // ySuperScriptYSize
+    '\x00\x00' + // ySuperScriptXOffset
+    '\x00\x00' + // ySuperScriptYOffset
+    '\x00\x00' + // yStrikeoutSize
+    '\x00\x00' + // yStrikeoutPosition
+    '\x00\x00' + // sFamilyClass
+    '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + // panose
+    '\x00\x00\x00\x00' + // ulUnicodeRange1
+    '\x00\x00\x00\x00' + // ulUnicodeRange2
+    '\x00\x00\x00\x00' + // ulUnicodeRange3
+    '\x00\x00\x00\x00' + // ulUnicodeRange4
+    'ALF ' + // achVendID
+    toString16((tag.italic ? 0x01 : 0) | (tag.bold ? 0x20: 0)) + // fsSelection
+    toString16(codes[0]) + // usFirstCharIndex
+    toString16(codes[codes.length - 1]) + // usLastCharIndex
+    toString16(ascent) + // sTypoAscender
+    toString16(descent) + // sTypoDescender
+    toString16(leading) + // sTypoLineGap
+    toString16(ascent) + // usWinAscent
+    toString16(-descent) + // usWinDescent
+    '\x00\x00\x00\x00' + // ulCodePageRange1
+    '\x00\x00\x00\x00' // ulCodePageRange2
+  ;
 
   tables['head'] =
     '\x00\x01\x00\x00' + // version
@@ -486,7 +618,7 @@ function defineFont(tag, dictionary) {
     id: tag.id,
     name: fontName,
     uniqueName: psName + uniqueId,
-    codes: codes,
+    codes: originalCode,
     metrics: metrics,
     bold: tag.bold === 1,
     italic: tag.italic === 1,

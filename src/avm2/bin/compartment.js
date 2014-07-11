@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-load(homePath + "src/avm2/global.js");
-load(homePath + "src/avm2/utilities.js");
+load(homePath + "src/global.js");
+load(homePath + "src/utilities.js");
 
 var homePath;
 var release;
@@ -24,7 +24,8 @@ assert(homePath, "Host compartment needs to initialize homePath.");
 
 load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/avm2Util.js");
-load(homePath + "src/avm2/options.js");
+load(homePath + "src/options.js");
+load(homePath + "src/settings.js");
 load(homePath + "src/avm2/metrics.js");
 
 var systemOptions = new OptionSet("System Options");

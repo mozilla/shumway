@@ -1,0 +1,112 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background-color: #333;
+}
+
+body {
+  font-size: 16px;
+  line-height: 22px;
+  color: #c3c3c3;
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+#tabzilla {
+  z-index: 2;
+}
+
+#main > header {
+  position: absolute;
+  z-index: 1;
+  top: 5px;
+  left: 5px;
+
+}
+
+#main > header > h1{
+  margin: 0;
+}
+
+#main > header > h1 > a {
+  display: block;
+  margin: 0;
+  width: 278px;
+  height: 62px;
+  background-image: url(img/shumway.png);
+  background-size: 278px 62px;
+  font-size: 0;
+  text-indent: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+#main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#content {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  -webkit-box-pack: center;
+  -moz-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+}
+​
+* { /* wtf? */ }
+
+#prev, #next {
+  display: none;
+  position: absolute;
+  top: 50%;
+  height: 36px;
+  width: 36px;
+  text-align: center;
+}
+#prev.active, #next.active {
+  display: block;
+}
+
+#prev {
+  left: 0;
+}
+#next {
+  right: 0;
+}
+
+#prev > a, #next > a {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+  background-image: url(img/arrows.png);
+  background-size: 72px 36px;
+  font-size: 0;
+  text-indent: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  margin-top: -17px;
+}
+#next > a {
+  background-position: -36px 0;
+}
+
+.not-found {
+  color: #e44d26;
+  font-size: 16px;
+  font-weight: bold;
+}

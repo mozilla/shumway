@@ -15,9 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Multiname, executeActions, Counter */
+/*global Multiname, Shumway, Counter */
 
 var SpriteDefinition = (function () {
+  var executeActions = Shumway.AVM1.executeActions;
+  var AS2ActionsData = Shumway.AVM1.AS2ActionsData;
+
   var def = {
     __class__: 'flash.display.Sprite',
 
@@ -155,7 +158,8 @@ var SpriteDefinition = (function () {
           }
 
           if (!loader._isAvm2Enabled) {
-            this._initAvm1Bindings(instance, name, displayListItem.events);
+            this._initAvm1Bindings(instance, name, displayListItem.events,
+                                   's' + props.symbolId + 'c');
             instance._dispatchEvent("init");
             instance._dispatchEvent("construct");
             instance._needLoadEvent = true;
@@ -222,7 +226,8 @@ var SpriteDefinition = (function () {
 
 
       if (!loader._isAvm2Enabled) {
-        parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events);
+        parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events,
+                                 's' + symbolInfo.symbolId + 'd');
         instance._dispatchEvent("init");
         instance._dispatchEvent("construct");
       }
@@ -246,7 +251,7 @@ var SpriteDefinition = (function () {
         this._getAS2Object().asSetPublicProperty(name, child._getAS2Object());
       }
     },
-    _initAvm1Bindings: function (instance, name, events) {
+    _initAvm1Bindings: function (instance, name, events, uniquePrefix) {
       var loader = this._loader;
       var avm1Context = loader._avm1Context;
       var symbolProps = instance.symbol;
@@ -264,26 +269,38 @@ var SpriteDefinition = (function () {
             break;
           }
           /*jshint -W083 */
-          var fn = function(actionBlock) {
-            return executeActions(actionBlock, avm1Context, this._getAS2Object());
-          }.bind(instance, event.actionsData);
+          var fn = function(actionsData) {
+            return executeActions(actionsData, avm1Context, this._getAS2Object());
+          }.bind(instance, new AS2ActionsData(event.actionsData, uniquePrefix + i));
           for (var eventName in event) {
             if (eventName.indexOf("on") !== 0 || !event[eventName])
               continue;
+
             var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
-            if (avm2EventName === 'enterFrame') {
-              avm2EventName = 'frameConstructed';
-            }
             var avm2EventTarget = instance;
-            if (avm2EventName === 'mouseDown' || avm2EventName === 'mouseUp' || avm2EventName === 'mouseMove') {
-              avm2EventTarget = this._stage;
+            switch (avm2EventName) {
+              case 'enterFrame':
+                avm2EventName = 'frameConstructed';
+                break;
+              case 'initialize':
+                avm2EventName = 'init';
+                break;
+              case 'mouseDown':
+              case 'mouseUp':
+              case 'mouseMove':
+                avm2EventTarget = this._stage;
+                break;
             }
+
             avm2EventTarget._addEventListener(avm2EventName, fn, false);
             eventsBound.push({name: avm2EventName, fn: fn, target: avm2EventTarget});
           }
         }
         if (eventsBound.length > 0) {
-          instance._addEventListener('removed', function (eventsBound) {
+          instance._addEventListener('removed', function (eventsBound, e) {
+            if (e._target !== this) { // 'removed' bubbles
+              return;
+            }
             for (var i = 0; i < eventsBound.length; i++) {
               eventsBound[i].target._removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
             }

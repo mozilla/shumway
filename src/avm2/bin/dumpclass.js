@@ -37,7 +37,8 @@ load("../../swf/label.js");
 load("../../swf/shape.js");
 load("../../swf/text.js");
 
-load("../options.js");
+load("../../options.js");
+
 load("../metrics.js");
 
 var Timer = metrics.Timer;

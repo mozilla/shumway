@@ -36,7 +36,7 @@ public dynamic class AS2MovieClip extends Object {
 
   public native function get _as3Object():MovieClip;
 
-  public function $lookupChild(id:String) {
+  public function __lookupChild(id:String) {
     if (id == '.') {
       return this;
     } else if (id == '..') {
@@ -45,7 +45,7 @@ public dynamic class AS2MovieClip extends Object {
       return AS2Utils.getAS2Object(this._as3Object.getChildByName(id));
     }
   }
-  public function get $targetPath() {
+  public function get __targetPath() {
     var target = this._target;
     var prefix = '_level0'; // TODO use needed level number here
     return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;

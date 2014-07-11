@@ -26,10 +26,11 @@ import flash.net.URLRequest;
 public dynamic class AS2MovieClipLoader extends Object {
   public function AS2MovieClipLoader() {
     AS2Broadcaster.initialize(this);
-    _as3Object = new Loader();
+    _setAS3Object(new Loader());
   }
-  public var _as3Object: Loader;
 
+  private native function get _as3Object(): Loader;
+  private native function _setAS3Object(nativeLoader: Loader);
   private native function get _bytesLoaded(): Number;
 
   public function loadClip(url: String, target: Object): Boolean {

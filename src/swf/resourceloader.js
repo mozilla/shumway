@@ -187,8 +187,10 @@ function defineSymbol(swfTag, symbols) {
       };
       break;
     case SWF_TAG_CODE_DEFINE_TEXT:
+      symbol = defineLabel(swfTag, symbols, 1 );
+      break;
     case SWF_TAG_CODE_DEFINE_TEXT2:
-      symbol = defineLabel(swfTag, symbols);
+      symbol = defineLabel(swfTag, symbols, -1 );
       break;
   }
 
