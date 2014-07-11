@@ -44,7 +44,7 @@ module Shumway.SWF.Parser {
         release || assert(font, 'undefined font', 'label');
         codes = font.codes;
         dependencies.push(font.id);
-        size = record.fontHeight / 20;
+        size = record.fontHeight > 160 ? record.fontHeight / 20 : record.fontHeight;
         face = 'swffont' + font.id;
       }
       if (record.hasColor) {
