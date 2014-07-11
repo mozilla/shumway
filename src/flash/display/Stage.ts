@@ -135,8 +135,9 @@ module Shumway.AVM2.AS.flash.display {
 
     set align(value: string) {
       value = asCoerceString(value);
-      release || assert (flash.display.StageAlign.toNumber(value) >= 0);
-      this._align = value;
+      var n = flash.display.StageAlign.toNumber(value);
+      release || assert (n >= 0);
+      this._align = flash.display.StageAlign.fromNumber(n);
     }
 
     get stageWidth(): number /*int*/ {

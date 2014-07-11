@@ -17,6 +17,15 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  enum StageAlignFlags {
+    None     = 0,
+    Top      = 1,
+    Bottom   = 2,
+    Left     = 4,
+    Right    = 8
+  }
+
   export class StageAlign extends ASNative {
     
     // Called whenever the class is initialized.
@@ -45,58 +54,45 @@ module Shumway.AVM2.AS.flash.display {
     static TOP_RIGHT: string = "TR";
     static BOTTOM_LEFT: string = "BL";
     static BOTTOM_RIGHT: string = "BR";
-    
-    
+
     // AS -> JS Bindings
 
     static fromNumber(n: number): string {
-      switch (n) {
-        case 0:
-          return '';
-        case 1:
-          return StageAlign.TOP;
-        case 2:
-          return StageAlign.LEFT;
-        case 3:
-          return StageAlign.BOTTOM;
-        case 4:
-          return StageAlign.RIGHT;
-        case 5:
-          return StageAlign.TOP_LEFT;
-        case 6:
-          return StageAlign.TOP_RIGHT;
-        case 7:
-          return StageAlign.BOTTOM_LEFT;
-        case 8:
-          return StageAlign.BOTTOM_RIGHT;
-        default:
-          return null;
+      if (n === 0) {
+        return "";
       }
+      var s = "";
+      if (n & StageAlignFlags.Top) {
+        s += "T";
+      }
+      if (n & StageAlignFlags.Bottom) {
+        s += "B";
+      }
+      if (n & StageAlignFlags.Left) {
+        s += "L";
+      }
+      if (n & StageAlignFlags.Right) {
+        s += "R";
+      }
+      return s;
     }
 
     static toNumber(value: string): number {
-      switch (value) {
-        case '':
-          return 0;
-        case StageAlign.TOP:
-          return 1;
-        case StageAlign.LEFT:
-          return 2;
-        case StageAlign.BOTTOM:
-          return 3;
-        case StageAlign.RIGHT:
-          return 4;
-        case StageAlign.TOP_LEFT:
-          return 5;
-        case StageAlign.TOP_RIGHT:
-          return 6;
-        case StageAlign.BOTTOM_LEFT:
-          return 7;
-        case StageAlign.BOTTOM_RIGHT:
-          return 8;
-        default:
-          return -1;
+      var n = 0;
+      value = value.toUpperCase();
+      if (value.indexOf("T") >= 0) {
+        n |= StageAlignFlags.Top;
       }
+      if (value.indexOf("B") >= 0) {
+        n |= StageAlignFlags.Bottom;
+      }
+      if (value.indexOf("L") >= 0) {
+        n |= StageAlignFlags.Left;
+      }
+      if (value.indexOf("R") >= 0) {
+        n |= StageAlignFlags.Right;
+      }
+      return n;
     }
   }
 }
