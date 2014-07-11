@@ -69,8 +69,7 @@ module Shumway.SWF.Parser {
       while ((entry = entries[j++])) {
         var code = codes[entry.glyphIndex];
         release || assert(code, 'undefined glyph', 'label');
-        text += code >= 32 && code != 34 && code != 92 ? String.fromCharCode(code) :
-                '\\u' + (code + 0x10000).toString(16).substring(1);
+        text += String.fromCharCode(code);
         coords.push(x, y);
         x += entry.advance;
       }
