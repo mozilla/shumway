@@ -300,7 +300,7 @@ module Shumway.Remoting.GFX {
       var matrix = this._readMatrix();
       var backgroundColor = input.readInt();
       var borderColor = input.readInt();
-      var autoSize = input.readBoolean();
+      var autoSize = input.readInt();
       var wordWrap = input.readBoolean();
       var plainText = this._popAsset();
       var textRunData = DataBuffer.FromPlainObject(this._popAsset());
@@ -323,8 +323,10 @@ module Shumway.Remoting.GFX {
         asset.reflow(autoSize, wordWrap);
       }
       if (this.output) {
-        this.output.writeInt(asset.textWidth);
-        this.output.writeInt(asset.textHeight);
+        var rect = asset.textRect;
+        this.output.writeInt(rect.w * 20);
+        this.output.writeInt(rect.h * 20);
+        this.output.writeInt(rect.x * 20);
         var lines = asset.lines;
         var numLines = lines.length;
         this.output.writeInt(numLines);

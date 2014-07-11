@@ -91,6 +91,7 @@ module Shumway.AVM2.AS.flash.text {
 
       if (symbol) {
         self._setFillAndLineBoundsFromSymbol(symbol);
+        self._textContent.bounds = this._lineBounds;
 
         self._defaultTextFormat.color = symbol.color;
         self._defaultTextFormat.size = (symbol.size / 20) | 0;
@@ -129,19 +130,25 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("Dummy Constructor: public flash.text.TextField");
     }
 
-    private _invalidateContent() {
-      if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
-        this._setFlags(DisplayObjectFlags.DirtyTextContent);
-        this._ensureLineMetrics();
-      }
+    _setFillAndLineBoundsFromWidthAndHeight(width: number, height: number) {
+      super._setFillAndLineBoundsFromWidthAndHeight(width, height);
+      this._textContent.bounds = this._lineBounds;
+      this._invalidateContent();
     }
 
-    _hasNonScalableContent() {
+    _canHaveTextContent(): boolean {
       return true;
     }
 
     _getTextContent(): Shumway.TextContent {
       return this._textContent;
+    }
+
+    private _invalidateContent() {
+      if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
+        this._setFlags(DisplayObjectFlags.DirtyTextContent);
+        this._ensureLineMetrics();
+      }
     }
 
     _textContent: Shumway.TextContent;
@@ -239,7 +246,7 @@ module Shumway.AVM2.AS.flash.text {
         throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
       }
       this._autoSize = value;
-      this._textContent.autoSize = value !== TextFieldAutoSize.NONE;
+      this._textContent.autoSize = TextFieldAutoSize.toNumber(value);
       this._invalidateContent();
     }
 
@@ -502,11 +509,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get textHeight(): number {
-      return this._textHeight;
+      return (this._textHeight / 20) | 0;
     }
 
     get textWidth(): number {
-      return this._textWidth;
+      return (this._textWidth / 20) | 0;
     }
 
     get thickness(): number {
@@ -555,25 +562,15 @@ module Shumway.AVM2.AS.flash.text {
       var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
       var lineMetricsData = serializer.syncDisplayObject(this, false);
       var textWidth = lineMetricsData.readInt();
-      if (!this._textContent.wordWrap) {
-        var width = (this._fillBounds.width / 20) | 0;
-        var diffX = 0;
-        switch (this._autoSize) {
-          case TextFieldAutoSize.LEFT:
-            break;
-          case TextFieldAutoSize.CENTER:
-            diffX = (width - textWidth) >> 1;
-            break;
-          case TextFieldAutoSize.RIGHT:
-            diffX = width - textWidth;
-            break;
-        }
-        this._matrix.tx += (diffX * 20) | 0;
-        this._invalidatePosition();
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
+      var textHeight = lineMetricsData.readInt();
+      var offsetX = lineMetricsData.readInt();
+      if (this._autoSize !== TextFieldAutoSize.NONE) {
+        this._fillBounds.xMin = this._lineBounds.xMin = offsetX;
+        this._fillBounds.xMax = this._lineBounds.xMax = offsetX + textWidth + 80;
+        this._fillBounds.yMax = this._lineBounds.yMax = this._lineBounds.yMin + textHeight + 80;
       }
       this._textWidth = textWidth;
-      this._textHeight = lineMetricsData.readInt();
+      this._textHeight = textHeight;
       this._numLines = lineMetricsData.readInt();
       this._lineMetricsData = lineMetricsData;
     }
@@ -672,22 +669,6 @@ module Shumway.AVM2.AS.flash.text {
     getImageReference(id: string): flash.display.DisplayObject {
       id = "" + id;
       notImplemented("public flash.text.TextField::getImageReference"); return;
-    }
-
-    _scaleToWidth(width: number) {
-      var bounds = this._getContentBounds();
-      this._setFillAndLineBoundsFromWidthAndHeight(width, bounds.height);
-      this._textContent.invalidateDimensions();
-      this._invalidateContent();
-      this._invalidatePosition();
-    }
-
-    _scaleToHeight(height: number) {
-      var bounds = this._getContentBounds();
-      this._setFillAndLineBoundsFromWidthAndHeight(bounds.width, height);
-      this._textContent.invalidateDimensions();
-      this._invalidateContent();
-      this._invalidatePosition();
     }
   }
 }
