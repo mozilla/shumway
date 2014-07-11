@@ -113,13 +113,13 @@ module Shumway.AVM2.AS.flash.text {
           self.background = true;
           self.border = true;
         }
-        self.autoSize = symbol.autoSize;
-        self.wordWrap = symbol.wordWrap;
         if (symbol.html) {
           self.htmlText = symbol.initialText;
         } else {
           self.text = symbol.initialText;
         }
+        self.wordWrap = symbol.wordWrap;
+        self.autoSize = symbol.autoSize;
       } else {
         self._setFillAndLineBoundsFromWidthAndHeight(100 * 20, 100 * 20);
       }
@@ -147,7 +147,9 @@ module Shumway.AVM2.AS.flash.text {
     private _invalidateContent() {
       if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
         this._setFlags(DisplayObjectFlags.DirtyTextContent);
-        this._ensureLineMetrics();
+        if (this._autoSize !== TextFieldAutoSize.NONE && this._autoSize !== TextFieldAutoSize.LEFT) {
+          this._ensureLineMetrics();
+        }
       }
     }
 
@@ -509,10 +511,12 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get textHeight(): number {
+      this._ensureLineMetrics();
       return (this._textHeight / 20) | 0;
     }
 
     get textWidth(): number {
+      this._ensureLineMetrics();
       return (this._textWidth / 20) | 0;
     }
 
@@ -605,6 +609,7 @@ module Shumway.AVM2.AS.flash.text {
       if (lineIndex < 0 || lineIndex > this._numLines - 1) {
         throwError('RangeError', Errors.ParamRangeError);
       }
+      this._ensureLineMetrics();
       var lineMetricsData = this._lineMetricsData;
       lineMetricsData.position = 12 + lineIndex * 20;
       var x = lineMetricsData.readInt();
