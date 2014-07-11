@@ -28,8 +28,8 @@ module Shumway.SWF.Parser {
     var size = 12;
     var face = 'Times Roman';
     var color = 0;
-    var x = bbox.xMin;
-    var y = bbox.yMin;
+    var x = 0;
+    var y = 0;
     var i = 0;
     var record;
     var codes;

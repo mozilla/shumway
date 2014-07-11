@@ -181,6 +181,7 @@ module Shumway.Timeline {
         symbol.symbolClass = flash.text.StaticText;
         if (tag.initialText) {
           var textContent = new Shumway.TextContent();
+          textContent.bounds = symbol.lineBounds;
           textContent.parseHtml(tag.initialText);
           textContent.matrix = flash.geom.Matrix.FromUntyped(data.matrix);
           textContent.coords = data.coords;
