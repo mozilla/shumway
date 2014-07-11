@@ -210,7 +210,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._parameters) {
         return Shumway.ObjectUtilities.cloneObject(this._parameters);
       }
-      return null;
+      return {};
     }
     _getUncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
       notImplemented("public flash.display.LoaderInfo::_getUncaughtErrorEvents"); return;
