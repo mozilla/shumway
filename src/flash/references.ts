@@ -87,7 +87,7 @@
 // ///<reference path='events/ThrottleEvent.ts' />
 // ///<reference path='events/ThrottleType.ts' />
 ///<reference path='events/TimerEvent.ts' />
-// ///<reference path='events/TouchEvent.ts' />
+///<reference path='events/TouchEvent.ts' />
 // ///<reference path='events/TransformGestureEvent.ts' />
 ///<reference path='events/UncaughtErrorEvent.ts' />
 ///<reference path='events/UncaughtErrorEvents.ts' />
@@ -391,8 +391,8 @@
 ///<reference path='ui/Mouse.ts' />
 // ///<reference path='ui/MouseCursor.ts' />
 ///<reference path='ui/MouseCursorData.ts' />
-// ///<reference path='ui/Multitouch.ts' />
-// ///<reference path='ui/MultitouchInputMode.ts' />
+///<reference path='ui/Multitouch.ts' />
+///<reference path='ui/MultitouchInputMode.ts' />
 
 // ///<reference path='utils/CompressionAlgorithm.ts' />
 ///<reference path='utils/Endian.ts' />

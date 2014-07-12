@@ -15,6 +15,7 @@
  */
 // Class: Multitouch
 module Shumway.AVM2.AS.flash.ui {
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Multitouch extends ASNative {
@@ -56,23 +57,28 @@ module Shumway.AVM2.AS.flash.ui {
       // this._inputMode = value;
     }
     get supportsTouchEvents(): boolean {
-      notImplemented("public flash.ui.Multitouch::get supportsTouchEvents"); return;
+      somewhatImplemented("public flash.ui.Multitouch::get supportsTouchEvents");
+      return false;
       // return this._supportsTouchEvents;
     }
     get supportsGestureEvents(): boolean {
-      notImplemented("public flash.ui.Multitouch::get supportsGestureEvents"); return;
+      somewhatImplemented("public flash.ui.Multitouch::get supportsGestureEvents");
+      return false;
       // return this._supportsGestureEvents;
     }
     get supportedGestures(): ASVector<any> {
-      notImplemented("public flash.ui.Multitouch::get supportedGestures"); return;
+      somewhatImplemented("public flash.ui.Multitouch::get supportedGestures");
+      return null;
       // return this._supportedGestures;
     }
     get maxTouchPoints(): number /*int*/ {
-      notImplemented("public flash.ui.Multitouch::get maxTouchPoints"); return;
+      somewhatImplemented("public flash.ui.Multitouch::get maxTouchPoints");
+      return 0;
       // return this._maxTouchPoints;
     }
     get mapTouchToMouse(): boolean {
-      notImplemented("public flash.ui.Multitouch::get mapTouchToMouse"); return;
+      somewhatImplemented("public flash.ui.Multitouch::get mapTouchToMouse");
+      return true;
       // return this._mapTouchToMouse;
     }
     set mapTouchToMouse(value: boolean) {

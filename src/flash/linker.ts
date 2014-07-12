@@ -133,6 +133,9 @@ module Shumway.AVM2.AS {
       M("flash.ui.GameInputDevice", "GameInputDeviceClass", flash.ui.GameInputDevice),
       M("flash.ui.GameInputFinger", "GameInputFingerClass", flash.ui.GameInputFinger),
       M("flash.ui.GameInputHand", "GameInputHandClass", flash.ui.GameInputHand),
+      M("flash.ui.Multitouch", "MultitouchClass", flash.ui.Multitouch),
+      M("flash.ui.MultitouchInputMode", "MultitouchInputModeClass", flash.ui.MultitouchInputMode),
+      M("flash.events.TouchEvent", "TouchEventClass", flash.events.TouchEvent),
 
       M("flash.text.Font", "FontClass", flash.text.Font),
       M("flash.text.TextField", "TextFieldClass", flash.text.TextField),
