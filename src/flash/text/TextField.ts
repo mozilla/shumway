@@ -152,9 +152,6 @@ module Shumway.AVM2.AS.flash.text {
     private _invalidateContent() {
       if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
         this._setFlags(DisplayObjectFlags.DirtyTextContent);
-        if (this._autoSize !== TextFieldAutoSize.NONE && this._autoSize !== TextFieldAutoSize.LEFT) {
-          this._ensureLineMetrics();
-        }
       }
     }
 
