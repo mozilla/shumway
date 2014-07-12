@@ -1330,7 +1330,12 @@ module Shumway.AVM2.Verifier {
             push(Type.String);
             break;
           case OP.astype:
-            notImplementedBC();
+            type = pop();
+            var asType = Type.fromName(this.multinames[bc.index], this.domain).instanceType();
+            if (asType.isSubtypeOf(type)) {
+              ti().noCoercionNeeded = true;
+            }
+            push(asType);
             break;
           case OP.astypelate:
             type = pop();
