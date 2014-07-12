@@ -39,12 +39,12 @@ if (!jsGlobal.performance.now) {
 }
 
 function log(message?: any, ...optionalParams: any[]): void {
-  jsGlobal.print(message);
+  jsGlobal.print.apply(jsGlobal, arguments);
 }
 
 function warn(message?: any, ...optionalParams: any[]): void {
   if (inBrowser) {
-    console.warn(message);
+    console.warn.apply(console, arguments);
   } else {
     jsGlobal.print(Shumway.IndentingWriter.RED + message + Shumway.IndentingWriter.ENDC);
   }
