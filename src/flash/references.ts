@@ -58,7 +58,7 @@
 ///<reference path='events/ErrorEvent.ts' />
 // ///<reference path='events/FocusEvent.ts' />
 // ///<reference path='events/FullScreenEvent.ts' />
-// ///<reference path='events/GameInputEvent.ts' />
+///<reference path='events/GameInputEvent.ts' />
 // ///<reference path='events/GeolocationEvent.ts' />
 ///<reference path='events/GestureEvent.ts' />
 // ///<reference path='events/GesturePhase.ts' />
@@ -87,7 +87,7 @@
 // ///<reference path='events/ThrottleEvent.ts' />
 // ///<reference path='events/ThrottleType.ts' />
 ///<reference path='events/TimerEvent.ts' />
-// ///<reference path='events/TouchEvent.ts' />
+///<reference path='events/TouchEvent.ts' />
 // ///<reference path='events/TransformGestureEvent.ts' />
 ///<reference path='events/UncaughtErrorEvent.ts' />
 ///<reference path='events/UncaughtErrorEvents.ts' />
@@ -379,20 +379,20 @@
 ///<reference path='ui/ContextMenuBuiltInItems.ts' />
 ///<reference path='ui/ContextMenuClipboardItems.ts' />
 ///<reference path='ui/ContextMenuItem.ts' />
-// ///<reference path='ui/GameInput.ts' />
-// ///<reference path='ui/GameInputControl.ts' />
-// ///<reference path='ui/GameInputControlType.ts' />
-// ///<reference path='ui/GameInputDevice.ts' />
-// ///<reference path='ui/GameInputFinger.ts' />
-// ///<reference path='ui/GameInputHand.ts' />
+///<reference path='ui/GameInput.ts' />
+///<reference path='ui/GameInputControl.ts' />
+///<reference path='ui/GameInputControlType.ts' />
+///<reference path='ui/GameInputDevice.ts' />
+///<reference path='ui/GameInputFinger.ts' />
+///<reference path='ui/GameInputHand.ts' />
 // ///<reference path='ui/KeyLocation.ts' />
 ///<reference path='ui/Keyboard.ts' />
 // ///<reference path='ui/KeyboardType.ts' />
 ///<reference path='ui/Mouse.ts' />
 // ///<reference path='ui/MouseCursor.ts' />
 ///<reference path='ui/MouseCursorData.ts' />
-// ///<reference path='ui/Multitouch.ts' />
-// ///<reference path='ui/MultitouchInputMode.ts' />
+///<reference path='ui/Multitouch.ts' />
+///<reference path='ui/MultitouchInputMode.ts' />
 
 // ///<reference path='utils/CompressionAlgorithm.ts' />
 ///<reference path='utils/Endian.ts' />
