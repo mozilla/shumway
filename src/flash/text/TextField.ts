@@ -339,13 +339,13 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get gridFitType(): string {
-      notImplemented("public flash.text.TextField::get gridFitType"); return;
-      // return this._gridFitType;
+      somewhatImplemented("public flash.text.TextField::get gridFitType");
+      return this._gridFitType;
     }
     set gridFitType(gridFitType: string) {
-      gridFitType = "" + gridFitType;
-      notImplemented("public flash.text.TextField::set gridFitType"); return;
-      // this._gridFitType = gridFitType;
+      gridFitType = asCoerceString(gridFitType);
+      somewhatImplemented("public flash.text.TextField::set gridFitType");
+      this._gridFitType = gridFitType;
     }
 
     get htmlText(): string {
