@@ -58,7 +58,7 @@
 ///<reference path='events/ErrorEvent.ts' />
 // ///<reference path='events/FocusEvent.ts' />
 // ///<reference path='events/FullScreenEvent.ts' />
-// ///<reference path='events/GameInputEvent.ts' />
+///<reference path='events/GameInputEvent.ts' />
 // ///<reference path='events/GeolocationEvent.ts' />
 ///<reference path='events/GestureEvent.ts' />
 // ///<reference path='events/GesturePhase.ts' />
@@ -379,12 +379,12 @@
 ///<reference path='ui/ContextMenuBuiltInItems.ts' />
 ///<reference path='ui/ContextMenuClipboardItems.ts' />
 ///<reference path='ui/ContextMenuItem.ts' />
-// ///<reference path='ui/GameInput.ts' />
-// ///<reference path='ui/GameInputControl.ts' />
-// ///<reference path='ui/GameInputControlType.ts' />
-// ///<reference path='ui/GameInputDevice.ts' />
-// ///<reference path='ui/GameInputFinger.ts' />
-// ///<reference path='ui/GameInputHand.ts' />
+///<reference path='ui/GameInput.ts' />
+///<reference path='ui/GameInputControl.ts' />
+///<reference path='ui/GameInputControlType.ts' />
+///<reference path='ui/GameInputDevice.ts' />
+///<reference path='ui/GameInputFinger.ts' />
+///<reference path='ui/GameInputHand.ts' />
 // ///<reference path='ui/KeyLocation.ts' />
 ///<reference path='ui/Keyboard.ts' />
 // ///<reference path='ui/KeyboardType.ts' />
