@@ -1377,10 +1377,10 @@ module Shumway.AVM1 {
 
       // AS2 simply ignores attempts to invoke non-methods.
       if (!isFunction(fn)) {
-        warn("AVM1 warning: method '" + methodName + "' on object '" + obj +
+        warn("AVM1 warning: method '" + methodName + "' on object", obj,
                                         (isNullOrUndefined(fn) ?
-                                                               "' is undefined" :
-                                                               "' is not callable"));
+                                                               "is undefined" :
+                                                               "is not callable"));
         return;
       }
       release || assert(stack.length === sp + 1);
@@ -1520,8 +1520,7 @@ module Shumway.AVM1 {
 
       // AS2 simply ignores attempts to invoke non-methods.
       if (!isFunction(ctor)) {
-        warn("AVM1 warning: method '" + methodName + "' on object '" +
-                                        obj + "' is not constructible");
+        warn("AVM1 warning: method '" + methodName + "' on object", obj, "is not constructible");
         return;
       }
 
