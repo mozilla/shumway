@@ -144,6 +144,11 @@ module Shumway.AVM2.AS.flash.text {
       return this._textContent;
     }
 
+    _getContentBounds(includeStrokes: boolean = true): Bounds {
+      this._ensureLineMetrics();
+      return super._getContentBounds(includeStrokes);
+    }
+
     private _invalidateContent() {
       if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
         this._setFlags(DisplayObjectFlags.DirtyTextContent);
@@ -558,7 +563,7 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("public flash.text.TextField::set useRichTextClipboard"); return;
       // this._useRichTextClipboard = value;
     }
- 
+
     private _ensureLineMetrics() {
       if (!this._hasFlags(DisplayObjectFlags.DirtyTextContent)) {
         return;
