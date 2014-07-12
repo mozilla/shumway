@@ -1158,7 +1158,9 @@ module Shumway.AVM2.Compiler {
             }
             if (emitAsType) {
               value = pop();
-              multiname = this.constantPool.multinames[bc.index];
+              var typeName = this.constantPool.multinames[bc.index];
+              multiname = new IR.ASMultiname(constant(typeName.namespaces), constant(typeName.name),
+                                             typeName.flags);
               type = this.getProperty(this.findProperty(multiname, false), multiname);
               push(this.call(globalProperty("asAsType"), null, [type, value]));
             }
