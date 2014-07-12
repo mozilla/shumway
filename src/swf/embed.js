@@ -32,6 +32,7 @@ SWF.embed = function(file, doc, container, options) {
   loaderInfo._parameters = options.movieParams;
   loaderInfo._url = options.url || (typeof file === 'string' ? file : null);
   loaderInfo._loaderURL = options.loaderURL || loaderInfo._url;
+  loaderInfo._disableAvm = options.disableAvm || false;
 
   loader._parent = stage;
   loader._stage = stage;

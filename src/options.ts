@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
+///<reference path='avm2/references.ts' />
 
 /**
  * Option and Argument Management
@@ -40,6 +40,9 @@
  */
 
 module Shumway.Options {
+  import isObject = Shumway.isObject;
+  import isNullOrUndefined = Shumway.isNullOrUndefined;
+
   export class Argument {
     shortName: string;
     longName: string;
@@ -159,22 +162,70 @@ module Shumway.Options {
   }
 
   export class OptionSet {
-    name: any;
+    name: string;
+    settings: any;
     options: any;
-    constructor(name) {
+    open: boolean = false;
+    constructor(name: string, settings: any = null) {
       this.name = name;
+      this.settings = settings || {};
       this.options = [];
     }
     public register(option) {
+      if (option instanceof OptionSet) {
+        // check for duplicate option sets (bail if found)
+        for (var i = 0; i < this.options.length; i++) {
+          var optionSet = this.options[i];
+          if (optionSet instanceof OptionSet && optionSet.name === option.name) {
+            return optionSet;
+          }
+        }
+      }
       this.options.push(option);
+      if (this.settings) {
+        if (option instanceof OptionSet) {
+          var optionSettings = this.settings[option.name];
+          if (isObject(optionSettings)) {
+            option.settings = optionSettings.settings;
+            option.open = optionSettings.open;
+          }
+        } else {
+          // build_bundle chokes on this:
+          // if (!isNullOrUndefined(this.settings[option.longName])) {
+          if (typeof this.settings[option.longName] !== "undefined") {
+            switch (option.type) {
+              case "boolean":
+                option.value = !!this.settings[option.longName];
+                break;
+              default:
+                option.value = this.settings[option.longName];
+                break;
+            }
+          }
+        }
+      }
       return option;
     }
-    public trace (writer) {
+    public trace(writer) {
       writer.enter(this.name + " {");
       this.options.forEach(function (option) {
         option.trace(writer);
       });
       writer.leave("}");
+    }
+    public getSettings() {
+      var settings = {};
+      this.options.forEach(function(option) {
+        if (option instanceof OptionSet) {
+          settings[option.name] = {
+            settings: option.getSettings(),
+            open: option.open
+          };
+        } else {
+          settings[option.longName] = option.value;
+        }
+      });
+      return settings;
     }
   }
 
@@ -185,13 +236,19 @@ module Shumway.Options {
     defaultValue: any;
     value: any;
     description: string;
-    constructor(shortName, longName, type, defaultValue, description) {
+    config: any;
+    // config:
+    //  { range: { min: 1, max: 5, step: 1 } }
+    //  { list: [ "item 1", "item 2", "item 3" ] }
+    //  { choices: { "choice 1": 1, "choice 2": 2, "choice 3": 3 } }
+    constructor(shortName, longName, type, defaultValue, description, config = null) {
       this.longName = longName;
       this.shortName = shortName;
       this.type = type;
       this.defaultValue = defaultValue;
       this.value = defaultValue;
       this.description = description;
+      this.config = config;
     }
     public parse (value) {
       this.value = value;

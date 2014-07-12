@@ -105,10 +105,10 @@ var TextFieldDefinition = (function () {
     },
 
     _getAS2Object: function () {
-      if (!this.$as2Object) {
+      if (!this._as2Object) {
         new avm1lib.AS2TextField(this);
       }
-      return this.$as2Object;
+      return this._as2Object;
     },
 
     replaceText: function(begin, end, str) {

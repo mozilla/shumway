@@ -57,7 +57,12 @@ function getPluginParams() {
     url: params.swf,
     movieParams: {},
     objectParams: {},
-    compilerSettings: {sysCompiler: true, appCompiler: true, verifier: true}
+    compilerSettings: {
+      sysCompiler: true,
+      appCompiler: true,
+      verifier: true,
+      forceHidpi: (typeof params.forceHidpi === "undefined") ? false : !!params.forceHidpi
+    }
   };
 }
 
@@ -127,6 +132,7 @@ function parseSwf(url, movieParams, objectParams, compilerSettings) {
   var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
 
   enableVerifier.value = compilerSettings.verifier;
+  forceHidpi.value = compilerSettings.forceHidpi;
 
   console.log("Compiler settings: " + JSON.stringify(compilerSettings));
   console.log("Parsing " + url + "...");

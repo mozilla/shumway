@@ -265,7 +265,7 @@ var MovieClipDefinition = (function () {
     _gotoFrame: function gotoFrame(frameNum, execute) {
       var enterFrame = frameNum !== this._currentFrame;
 
-      if (this._allowFrameNavigation || !this._loader._isAvm2Enabled) {
+      if (this._allowFrameNavigation || this._loader._isAvm1Enabled) {
         if (enterFrame) {
           this._updateDisplayList(frameNum);
           this._enterFrame(frameNum);
@@ -286,7 +286,7 @@ var MovieClipDefinition = (function () {
           return;
         }
 
-        if (enterFrame && (execute || !this._loader._isAvm2Enabled)) {
+        if (enterFrame && (execute || this._loader._isAvm1Enabled)) {
           this._callFrame(frameNum);
         }
 
@@ -443,7 +443,7 @@ var MovieClipDefinition = (function () {
     },
 
     _getAS2Object: function () {
-      if (!this.$as2Object) {
+      if (!this._as2Object) {
         if (this._avm1SymbolClass) {
           // hacking wrapper to pass/initialize AS2MovieClip with nativeObject before AS2 constructor is run
           var nativeObject = this, nativeObjectClass = this._avm1SymbolClass;
@@ -454,12 +454,12 @@ var MovieClipDefinition = (function () {
           constructWrapper.prototype = Object.create(nativeObjectClass.prototype);
           constructWrapper.instanceConstructor = constructWrapper;
           constructWrapper.debugName = 'avm1 <symbol constructor wrapper>';
-          construct(constructWrapper);
+          construct(constructWrapper, []);
         } else {
           new avm1lib.AS2MovieClip(this);
         }
       }
-      return this.$as2Object;
+      return this._as2Object;
     },
 
     get currentFrame() {

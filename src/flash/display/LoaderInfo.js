@@ -40,6 +40,7 @@ var LoaderInfoDefinition = (function () {
       this._url = null;
       this._width = null;
       this._uncaughtErrorEvents = null;
+      this._disableAvm = false;
     },
     __glue__: {
       native: {

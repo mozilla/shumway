@@ -21,11 +21,11 @@ package avm1lib {
 
   public dynamic class AS2Color
   {
-    var $target: Object;
+    private var __target: Object;
 
     public function AS2Color(target_mc)
     {
-      this.$target = AS2Utils.resolveTarget(target_mc);
+      this.__target = AS2Utils.resolveTarget(target_mc);
     }
     public function getRGB()
     {
@@ -34,7 +34,7 @@ package avm1lib {
     }
     public function getTransform()
     {
-      return this.$target._as3Object.transform.colorTransform;
+      return this.__target._as3Object.transform.colorTransform;
     }
     public function setRGB(offset)
     {
@@ -43,7 +43,7 @@ package avm1lib {
       this.setTransform(transform);
     }
     public function setTransform(transform) {
-      this.$target._as3Object.transform.colorTransform = transform;
+      this.__target._as3Object.transform.colorTransform = transform;
     }
   }
 }
