@@ -22,11 +22,12 @@ declare module Shumway.AVM2.AS.flash {
       numChildren: number;
 
       addChildAtDepth(child, depth: number);
+      getChildAt(depth: number): any;
     }
     class Loader {}
     class BitmapData extends ASNative {}
     class Bitmap extends ASNative {
-      constructor()
+      constructor();
     }
     class SimpleButton extends ASNative {}
   }

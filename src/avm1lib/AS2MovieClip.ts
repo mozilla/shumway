@@ -88,7 +88,7 @@ module Shumway.AVM2.AS.avm1lib {
       var nativeAS3Object = <any> this._nativeAS3Object;
       nativeAS3Object._callFrame(frame);
     }
-    _insertChildAtDepth(mc: any, depth: any): AS2MovieClip {
+    _insertChildAtDepth(mc: any, depth: number): AS2MovieClip {
       var nativeAS3Object = <flash.display.MovieClip> this._nativeAS3Object;
       nativeAS3Object.addChildAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
       // Bitmaps aren't reflected in AS2, so the rest here doesn't apply.
@@ -102,6 +102,33 @@ module Shumway.AVM2.AS.avm1lib {
       }
       return as2mc;
     }
+
+    getInstanceAtDepth(depth: number): AS2MovieClip {
+      var nativeObject = this._nativeAS3Object;
+      for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
+        var child = nativeObject.getChildAt(i);
+        if (child._depth === depth) {
+          // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
+          if (flash.display.Bitmap.isType(child)) {
+            return this;
+          }
+          return getAS2Object(child);
+        }
+      }
+      return null;
+    }
+    getNextHighestDepth() {
+      var nativeObject = this._nativeAS3Object;
+      var maxDepth = 0;
+      for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
+        var child = nativeObject.getChildAt(i);
+        if (child._depth > maxDepth) {
+          maxDepth = child._depth;
+        }
+      }
+      return maxDepth + 1;
+    }
+
     _duplicate(name: any, depth: any, initObject: any): any {
       var nativeAS3Object = <any> this._nativeAS3Object;
       nativeAS3Object._duplicate(name, depth, initObject);

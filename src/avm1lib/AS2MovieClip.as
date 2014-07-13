@@ -186,31 +186,9 @@ public dynamic class AS2MovieClip extends Object {
   public function getDepth() {
     return this._as3Object._depth;
   }
-  public function getInstanceAtDepth(depth) {
-    var nativeObject = this._as3Object;
-    for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-      var child = nativeObject.getChildAt(i);
-      if (child._depth === depth) {
-        // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
-        if (child is Bitmap) {
-          return this;
-        }
-        return child;
-      }
-    }
-    return null;
-  }
-  public function getNextHighestDepth() {
-    var nativeObject = this._as3Object;
-    var maxDepth = 0;
-    for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-      var child = nativeObject.getChildAt(i);
-      if (child._depth > maxDepth) {
-        maxDepth = child._depth;
-      }
-    }
-    return maxDepth + 1;
-  }
+  public native function getInstanceAtDepth(depth): AS2MovieClip;
+  public native function getNextHighestDepth(): int;
+
   public function getRect(bounds) {
     throw 'Not implemented: getRect';
   }
