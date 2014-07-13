@@ -16,26 +16,23 @@
 
 declare module Shumway.AVM2.AS.flash {
   module display {
-    class MovieClip {
-      static isType(instance: any): boolean;
-      static initializeFrom(symbol: any): MovieClip;
-      static instanceConstructorNoInitialize();
-
+    class MovieClip extends ASNative {
       _as2SymbolClass;
       _name: string;
       numChildren: number;
 
       addChildAtDepth(child, depth: number);
+      getChildAt(depth: number): any;
     }
     class Loader {}
-    class SimpleButton {
-      static isType(instance: any): boolean;
+    class BitmapData extends ASNative {}
+    class Bitmap extends ASNative {
+      constructor();
     }
+    class SimpleButton extends ASNative {}
   }
   module text {
-    class TextField {
-      static isType(instance: any): boolean;
-
+    class TextField extends ASNative {
       getLineMetrics(index: number);
 
       multiline: boolean;
@@ -46,6 +43,10 @@ declare module Shumway.AVM2.AS.flash {
       textHeight: number;
       defaultTextFormat: TextFormat;
     }
-    class TextFormat {}
+    class TextFormat extends ASNative {}
   }
+}
+
+declare module Shumway.Timeline {
+  class BitmapSymbol {}
 }

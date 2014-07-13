@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,17 +15,16 @@
  */
 
 package avm1lib {
-  import flash.system.Capabilities;
-  import flash.system.Security;
+import flash.display.BitmapData;
 
-  public class AS2System {
-    public static function get capabilities()
-    {
-      return flash.system.Capabilities;
-    }
-    public static function get security()
-    {
-      return flash.system.Security;
-    }
+[native(cls="AS2BitmapData")]
+public dynamic class AS2BitmapData extends BitmapData {
+  public function AS2BitmapData(width:int, height:int, transparent:Boolean = true,
+                                       fillColor:uint = 4294967295)
+  {
+    super(width, height, transparent, fillColor);
   }
+
+  public static native function loadBitmap(id: String): BitmapData;
+}
 }

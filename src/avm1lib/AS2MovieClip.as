@@ -1,7 +1,5 @@
-﻿/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-/*
- * Copyright 2013 Mozilla Foundation
+﻿/**
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package avm1lib {
+import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.Loader;
 import flash.display.MovieClip;
@@ -59,12 +59,13 @@ public dynamic class AS2MovieClip extends Object {
   public function attachAudio(id) {
     throw 'Not implemented: attachAudio';
   }
-  public function attachBitmap(bmp, depth, pixelSnapping, smoothing) {
-    throw 'Not implemented: attachBitmap';
-  }
-  private native function _constructSymbol(symbolId, name);
+  public native  function attachBitmap(bmp: AS2BitmapData, depth: int,
+                                       pixelSnapping: String = 'auto',
+                                       smoothing: Boolean = false): void;
+
+  private native function _constructMovieClipSymbol(symbolId, name);
   public function attachMovie(symbolId, name, depth, initObject) {
-    var mc = _constructSymbol(symbolId, name);
+    var mc = _constructMovieClipSymbol(symbolId, name);
     var as2mc = _insertChildAtDepth(mc, depth);
 
     for (var i in initObject) {
@@ -185,27 +186,9 @@ public dynamic class AS2MovieClip extends Object {
   public function getDepth() {
     return this._as3Object._depth;
   }
-  public function getInstanceAtDepth(depth) {
-    var nativeObject = this._as3Object;
-    for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-      var child = nativeObject.getChildAt(i);
-      if (child._depth === depth) {
-        return child;
-      }
-    }
-    return null;
-  }
-  public function getNextHighestDepth() {
-    var nativeObject = this._as3Object;
-    var maxDepth = 0;
-    for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-      var child = nativeObject.getChildAt(i);
-      if (child._depth > maxDepth) {
-        maxDepth = child._depth;
-      }
-    }
-    return maxDepth + 1;
-  }
+  public native function getInstanceAtDepth(depth): AS2MovieClip;
+  public native function getNextHighestDepth(): int;
+
   public function getRect(bounds) {
     throw 'Not implemented: getRect';
   }

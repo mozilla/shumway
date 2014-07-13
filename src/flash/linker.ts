@@ -194,6 +194,7 @@ module Shumway.AVM2.AS {
       M("avm1lib.AS2Key"),
       M("avm1lib.AS2Mouse"),
       M("avm1lib.AS2MovieClip", "AS2MovieClip", Shumway.AVM2.AS.avm1lib.AS2MovieClip),
+      M("avm1lib.AS2BitmapData", "AS2BitmapData", Shumway.AVM2.AS.avm1lib.AS2BitmapData),
       M("avm1lib.AS2Button", "AS2Button", Shumway.AVM2.AS.avm1lib.AS2Button),
       M("avm1lib.AS2Sound"),
       M("avm1lib.AS2TextField", "AS2TextField", Shumway.AVM2.AS.avm1lib.AS2TextField),

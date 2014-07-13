@@ -19,6 +19,7 @@ declare module Shumway.AVM2.AS.avm1lib {
   export class AS2Globals extends ASClass {}
   export class AS2Utils extends ASClass {}
   export class AS2MovieClip extends ASClass {}
+  export class AS2BitmapData extends ASClass {}
   export class AS2Button extends ASClass {}
   export class AS2TextField extends ASClass {}
   export class AS2MovieClipLoader extends ASClass {}
