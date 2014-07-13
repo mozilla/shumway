@@ -522,8 +522,7 @@ module Shumway.AVM2.AS.flash.display {
       greenMultiplier = greenMultiplier >>> 0;
       blueMultiplier = blueMultiplier >>> 0;
       alphaMultiplier = alphaMultiplier >>> 0;
-      notImplemented("public flash.display.BitmapData::merge");
-      return;
+      somewhatImplemented("public flash.display.BitmapData::merge");
     }
 
     noise(randomSeed:number /*int*/, low:number /*uint*/ = 0, high:number /*uint*/ = 255,
@@ -533,8 +532,7 @@ module Shumway.AVM2.AS.flash.display {
       high = high >>> 0;
       channelOptions = channelOptions >>> 0;
       grayScale = !!grayScale;
-      notImplemented("public flash.display.BitmapData::noise");
-      return;
+      somewhatImplemented("public flash.display.BitmapData::noise");
     }
 
     paletteMap(sourceBitmapData:flash.display.BitmapData, sourceRect:flash.geom.Rectangle,
@@ -547,8 +545,7 @@ module Shumway.AVM2.AS.flash.display {
       greenArray = greenArray;
       blueArray = blueArray;
       alphaArray = alphaArray;
-      notImplemented("public flash.display.BitmapData::paletteMap");
-      return;
+      somewhatImplemented("public flash.display.BitmapData::paletteMap");
     }
 
     perlinNoise(baseX:number, baseY:number, numOctaves:number /*uint*/, randomSeed:number /*int*/,
@@ -563,8 +560,7 @@ module Shumway.AVM2.AS.flash.display {
       channelOptions = channelOptions >>> 0;
       grayScale = !!grayScale;
       offsets = offsets;
-      notImplemented("public flash.display.BitmapData::perlinNoise");
-      return;
+      somewhatImplemented("public flash.display.BitmapData::perlinNoise");
     }
 
     pixelDissolve(sourceBitmapData:flash.display.BitmapData, sourceRect:flash.geom.Rectangle,
