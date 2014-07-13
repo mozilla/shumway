@@ -25,6 +25,9 @@ module Shumway.AVM2.AS.flash.display {
   import swap32 = Shumway.IntegerUtilities.swap32;
   import premultiplyARGB = Shumway.ColorUtilities.premultiplyARGB;
   import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
+  import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
+  import blendPremultipliedBGRA = Shumway.ColorUtilities.blendPremultipliedBGRA;
+  import ensureInverseSourceAlphaTable = Shumway.ColorUtilities.ensureInverseSourceAlphaTable;
 
   import Rectangle = flash.geom.Rectangle;
 
@@ -34,7 +37,9 @@ module Shumway.AVM2.AS.flash.display {
    * we don't have to do unecessary byte conversions.
    */
   export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
-    static classInitializer: any = null;
+    static classInitializer: any = function () {
+      ensureInverseSourceAlphaTable();
+    };
 
     _symbol: Shumway.Timeline.BitmapSymbol;
     static initializer: any = function (symbol: Shumway.Timeline.BitmapSymbol) {
@@ -286,21 +291,24 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Copies a rectangular region of pixels into the current bitmap data.
      */
-    copyPixels(sourceBitmapData: flash.display.BitmapData,
-               sourceRect: flash.geom.Rectangle,
-               destPoint: flash.geom.Point,
-               alphaBitmapData: flash.display.BitmapData = null,
-               alphaPoint: flash.geom.Point = null,
-               mergeAlpha: boolean = false): void
+    copyPixels (
+      sourceBitmapData: flash.display.BitmapData,
+      sourceRect: flash.geom.Rectangle,
+      destPoint: flash.geom.Point,
+      alphaBitmapData: flash.display.BitmapData = null,
+      alphaPoint: flash.geom.Point = null,
+      mergeAlpha: boolean = false): void
     {
       enterTimeline("BitmapData.copyPixels");
-      sourceBitmapData = sourceBitmapData; sourceRect = sourceRect; destPoint = destPoint; alphaBitmapData = alphaBitmapData; alphaPoint = alphaPoint; mergeAlpha = !!mergeAlpha;
-      // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of the source rect, however a width
-      // of |0.5| rounds down rather than up so we're not quite correct here.
+      mergeAlpha = !!mergeAlpha;
+
+      // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of
+      // the source rect, however a width of |0.5| rounds down rather than up so we're not
+      // quite correct here.
       var sR = sourceRect.clone().roundInPlace();
 
       // Remember the original source rect in case in case the intersection changes it.
-      var rR = sR.clone();
+      var oR = sR.clone();
       var sR = sR.intersectInPlace(sourceBitmapData._rect);
 
       // Clipped source rect is empty so there's nothing to do.
@@ -310,16 +318,16 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       // Compute source rect offsets (in case the source rect had negative x, y coordinates).
-      var oX = sR.x - rR.x;
-      var oY = sR.y - rR.y;
+      var oX = sR.x - oR.x;
+      var oY = sR.y - oR.y;
 
       // Compute the target rect taking into account the offsets and then clip it against the
       // target.
       var tR = new geom.Rectangle (
         destPoint.x | 0 + oX,
         destPoint.y | 0 + oY,
-        rR.width - oX,
-        rR.height - oY
+        oR.width - oX,
+        oR.height - oY
       );
 
       tR.intersectInPlace(this._rect);
@@ -343,15 +351,38 @@ module Shumway.AVM2.AS.flash.display {
         somewhatImplemented("public flash.display.BitmapData::copyPixels - Color Format Conversion");
       }
 
+      if (mergeAlpha && this._type !== ImageType.PremultipliedAlphaARGB) {
+        notImplemented("public flash.display.BitmapData::copyPixels - Merge Alpha");
+        return;
+      }
+
       // Finally do the copy. All the math above is needed just so we don't do any branches inside
       // this hot loop.
-      for (var y = 0; y < tH; y++) {
-        var sP = (sY + y) * sStride + sX;
-        var tP = (tY + y) * tStride + tX;
-        for (var x = 0; x < tW; x++) {
-          t[tP + x] = s[sP + x];
+
+      if (mergeAlpha) {
+        for (var y = 0; y < tH; y++) {
+          var sP = (sY + y) * sStride + sX;
+          var tP = (tY + y) * tStride + tX;
+          for (var x = 0; x < tW; x++) {
+            var spBGRA = s[sP + x];
+            if ((spBGRA & 0xFF) === 0xFF) {
+              // Opaque, just copy value over.
+              t[tP + x] = spBGRA;
+            } else {
+              t[tP + x] = blendPremultipliedBGRA(t[tP + x], spBGRA);
+            }
+          }
+        }
+      } else {
+        for (var y = 0; y < tH; y++) {
+          var sP = (sY + y) * sStride + sX;
+          var tP = (tY + y) * tStride + tX;
+          for (var x = 0; x < tW; x++) {
+            t[tP + x] = s[sP + x];
+          }
         }
       }
+
       this._isDirty = true;
       somewhatImplemented("public flash.display.BitmapData::copyPixels");
       leaveTimeline();

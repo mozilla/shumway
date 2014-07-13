@@ -189,7 +189,7 @@ module Shumway.GFX {
       this._colorMatrix = ColorMatrix.createIdentity();
       this._concatenatedColorMatrix = ColorMatrix.createIdentity();
 
-      this._smoothing = Smoothing.Always;
+      this._smoothing = Smoothing.Never;
       this._pixelSnapping = PixelSnapping.Never;
     }
 
