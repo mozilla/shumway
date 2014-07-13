@@ -443,22 +443,22 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get scrollH(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get scrollH"); return;
-      // return this._scrollH;
+      somewhatImplemented("public flash.text.TextField::get scrollH");
+      return this._scrollH;
     }
     set scrollH(value: number /*int*/) {
       value = value | 0;
-      notImplemented("public flash.text.TextField::set scrollH"); return;
-      // this._scrollH = value;
+      somewhatImplemented("public flash.text.TextField::set scrollH");
+      this._scrollH = value;
     }
     get scrollV(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get scrollV"); return;
-      // return this._scrollV;
+      somewhatImplemented("public flash.text.TextField::get scrollV");
+      return this._scrollV;
     }
     set scrollV(value: number /*int*/) {
       value = value | 0;
-      notImplemented("public flash.text.TextField::set scrollV"); return;
-      // this._scrollV = value;
+      somewhatImplemented("public flash.text.TextField::set scrollV");
+      this._scrollV = value;
     }
 
     get selectable(): boolean {

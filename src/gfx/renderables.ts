@@ -27,6 +27,7 @@ module Shumway.GFX {
   import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
   import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
   import assert = Shumway.Debug.assert;
+  import unexpected = Shumway.Debug.unexpected;
   import notImplemented = Shumway.Debug.notImplemented;
   import pushUnique = Shumway.ArrayUtilities.pushUnique;
   import indexOf = Shumway.ArrayUtilities.indexOf;
@@ -241,7 +242,7 @@ module Shumway.GFX {
           self.invalidatePaint();
         };
         image.onerror = function () {
-          throw "image error";
+          unexpected("Image loading error: " + ImageType[type]);
         };
       } else {
         var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);

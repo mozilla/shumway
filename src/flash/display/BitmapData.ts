@@ -25,6 +25,9 @@ module Shumway.AVM2.AS.flash.display {
   import swap32 = Shumway.IntegerUtilities.swap32;
   import premultiplyARGB = Shumway.ColorUtilities.premultiplyARGB;
   import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
+  import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
+  import blendPremultipliedBGRA = Shumway.ColorUtilities.blendPremultipliedBGRA;
+  import ensureInverseSourceAlphaTable = Shumway.ColorUtilities.ensureInverseSourceAlphaTable;
 
   import Rectangle = flash.geom.Rectangle;
 
@@ -34,19 +37,19 @@ module Shumway.AVM2.AS.flash.display {
    * we don't have to do unecessary byte conversions.
    */
   export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
-    static classInitializer:any = null;
+    static classInitializer: any = null;
 
-    _symbol:Shumway.Timeline.BitmapSymbol;
-    static initializer:any = function (symbol:Shumway.Timeline.BitmapSymbol) {
+    _symbol: Shumway.Timeline.BitmapSymbol;
+    static initializer: any = function (symbol: Shumway.Timeline.BitmapSymbol) {
       this._symbol = symbol;
     }
+    
+    static classSymbols: string [] = null; // [];
+    static instanceSymbols: string [] = null; // ["rect"];
 
-    static classSymbols:string [] = null; // [];
-    static instanceSymbols:string [] = null; // ["rect"];
-
-    static MAXIMUM_WIDTH:number = 8191;
-    static MAXIMUM_HEIGHT:number = 8191;
-    static MAXIMUM_DIMENSION:number = 16777215;
+    static MAXIMUM_WIDTH: number = 8191;
+    static MAXIMUM_HEIGHT: number = 8191;
+    static MAXIMUM_DIMENSION: number = 16777215;
 
     constructor(width:number /*int*/, height:number /*int*/, transparent:boolean = true,
                 fillColorARGB:number /*uint*/ = 4294967295)
@@ -92,53 +95,53 @@ module Shumway.AVM2.AS.flash.display {
       this._dataBuffer = DataBuffer.FromArrayBuffer(this._data.buffer);
       this._isDirty = true;
     }
+    
+    _transparent: boolean;
+    _rect: flash.geom.Rectangle;
 
-    _transparent:boolean;
-    _rect:flash.geom.Rectangle;
-
-    _id:number;
-    _fillColorBGRA:number;
-    _locked:boolean;
+    _id: number;
+    _fillColorBGRA: number;
+    _locked: boolean;
 
     /**
      * Image format stored in the |_data| buffer.
      */
-    _type:ImageType;
+    _type: ImageType;
 
     /**
      * Actual image bytes, this may be raw pixel data or compressed JPEG, PNG, GIF.
      */
-    _data:Uint8Array;
+    _data: Uint8Array;
 
     /**
      * Data buffer wrapped around the |_data| buffer.
      */
-    _dataBuffer:DataBuffer;
+    _dataBuffer: DataBuffer;
 
     /**
      * Int32Array view on |_data| useful when working with 4 bytes at a time. Endianess is
      * important here, so if |_type| is PremultipliedAlphaARGB as is usually the case for
      * bitmap data, then |_view| values are actually BGRA (on little-endian machines).
      */
-    _view:Int32Array;
+    _view: Int32Array;
 
     /**
      * Indicates whether this bitmap data's data buffer has changed since the last time it was synchronized.
      */
-    _isDirty:boolean;
+    _isDirty: boolean;
 
-    getDataBuffer():DataBuffer {
+    getDataBuffer(): DataBuffer {
       return this._dataBuffer;
     }
 
-    _getContentBounds():Bounds {
+    _getContentBounds(): Bounds {
       return Shumway.Bounds.FromRectangle(this._rect);
     }
 
     /**
      * TODO: Not tested.
      */
-    private _getPixelData(rect:flash.geom.Rectangle):Int32Array {
+    private _getPixelData(rect: flash.geom.Rectangle): Int32Array {
       var r = this.rect.intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
@@ -167,7 +170,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * TODO: Not tested.
      */
-    private _putPixelData(rect:flash.geom.Rectangle, input:Int32Array):void {
+    private _putPixelData(rect: flash.geom.Rectangle, input: Int32Array): void {
       var r = this.rect.intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
@@ -194,23 +197,23 @@ module Shumway.AVM2.AS.flash.display {
       this._isDirty = true;
     }
 
-    get width():number /*int*/ {
+    get width(): number /*int*/ {
       return this._rect.width;
     }
 
-    get height():number /*int*/ {
+    get height(): number /*int*/ {
       return this._rect.height;
     }
 
-    get rect():flash.geom.Rectangle {
+    get rect(): flash.geom.Rectangle {
       return this._rect.clone();
     }
 
-    get transparent():boolean {
+    get transparent(): boolean {
       return this._transparent;
     }
 
-    clone():flash.display.BitmapData {
+    clone(): flash.display.BitmapData {
       somewhatImplemented("public flash.display.BitmapData::clone");
       // This should be coping the buffer not the view.
       var bd = new BitmapData(this._rect.width, this._rect.height, this._transparent,
@@ -222,18 +225,16 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Returns an straight alpha RGB pixel value 0x00RRGGBB.
      */
-    getPixel(x:number /*int*/, y:number /*int*/):number /*uint*/ {
-      x = x | 0;
-      y = y | 0;
+    getPixel(x: number /*int*/, y: number /*int*/): number /*uint*/ {
+      x = x | 0; y = y | 0;
       return this.getPixel32(x, y) & 0x00ffffff;
     }
 
     /**
      * Returns an straight alpha ARGB pixel value 0xAARRGGBB.
      */
-    getPixel32(x:number /*int*/, y:number /*int*/):number /*uint*/ {
-      x = x | 0;
-      y = y | 0;
+    getPixel32(x: number /*int*/, y: number /*int*/): number /*uint*/ {
+      x = x | 0; y = y | 0;
       if (!this._rect.contains(x, y)) {
         return 0;
       }
@@ -243,10 +244,8 @@ module Shumway.AVM2.AS.flash.display {
       return uARGB >>> 0;
     }
 
-    setPixel(x:number /*int*/, y:number /*int*/, uARGB:number /*uint*/):void {
-      x = x | 0;
-      y = y | 0;
-      pARGB = pARGB | 0;
+    setPixel(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
+      x = x | 0; y = y | 0; uARGB = uARGB | 0;
       if (!this._rect.contains(x, y)) {
         return;
       }
@@ -258,9 +257,8 @@ module Shumway.AVM2.AS.flash.display {
       this._isDirty = true;
     }
 
-    setPixel32(x:number /*int*/, y:number /*int*/, uARGB:number /*uint*/):void {
-      x = x | 0;
-      y = y | 0;
+    setPixel32(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
+      x = x | 0; y = y | 0;
       if (!this._rect.contains(x, y)) {
         return;
       }
@@ -322,18 +320,15 @@ module Shumway.AVM2.AS.flash.display {
                mergeAlpha:boolean = false):void
     {
       enterTimeline("BitmapData.copyPixels");
-      sourceBitmapData = sourceBitmapData;
-      sourceRect = sourceRect;
-      destPoint = destPoint;
-      alphaBitmapData = alphaBitmapData;
-      alphaPoint = alphaPoint;
       mergeAlpha = !!mergeAlpha;
-      // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of the source rect, however a width
-      // of |0.5| rounds down rather than up so we're not quite correct here.
+
+      // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of
+      // the source rect, however a width of |0.5| rounds down rather than up so we're not
+      // quite correct here.
       var sR = sourceRect.clone().roundInPlace();
 
       // Remember the original source rect in case in case the intersection changes it.
-      var rR = sR.clone();
+      var oR = sR.clone();
       var sR = sR.intersectInPlace(sourceBitmapData._rect);
 
       // Clipped source rect is empty so there's nothing to do.
@@ -343,16 +338,16 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       // Compute source rect offsets (in case the source rect had negative x, y coordinates).
-      var oX = sR.x - rR.x;
-      var oY = sR.y - rR.y;
+      var oX = sR.x - oR.x;
+      var oY = sR.y - oR.y;
 
       // Compute the target rect taking into account the offsets and then clip it against the
       // target.
       var tR = new geom.Rectangle(
         destPoint.x | 0 + oX,
         destPoint.y | 0 + oY,
-        rR.width - oX,
-        rR.height - oY
+        oR.width - oX,
+        oR.height - oY
       );
 
       tR.intersectInPlace(this._rect);
@@ -376,22 +371,44 @@ module Shumway.AVM2.AS.flash.display {
         somewhatImplemented("public flash.display.BitmapData::copyPixels - Color Format Conversion");
       }
 
+      if (mergeAlpha && this._type !== ImageType.PremultipliedAlphaARGB) {
+        notImplemented("public flash.display.BitmapData::copyPixels - Merge Alpha");
+        return;
+      }
+
       // Finally do the copy. All the math above is needed just so we don't do any branches inside
       // this hot loop.
-      for (var y = 0; y < tH; y++) {
-        var sP = (sY + y) * sStride + sX;
-        var tP = (tY + y) * tStride + tX;
-        for (var x = 0; x < tW; x++) {
-          t[tP + x] = s[sP + x];
+
+      if (mergeAlpha) {
+        for (var y = 0; y < tH; y++) {
+          var sP = (sY + y) * sStride + sX;
+          var tP = (tY + y) * tStride + tX;
+          for (var x = 0; x < tW; x++) {
+            var spBGRA = s[sP + x];
+            if ((spBGRA & 0xFF) === 0xFF) {
+              // Opaque, just copy value over.
+              t[tP + x] = spBGRA;
+            } else {
+              t[tP + x] = blendPremultipliedBGRA(t[tP + x], spBGRA);
+            }
+          }
+        }
+      } else {
+        for (var y = 0; y < tH; y++) {
+          var sP = (sY + y) * sStride + sX;
+          var tP = (tY + y) * tStride + tX;
+          for (var x = 0; x < tW; x++) {
+            t[tP + x] = s[sP + x];
+          }
         }
       }
+
       this._isDirty = true;
       somewhatImplemented("public flash.display.BitmapData::copyPixels");
       leaveTimeline();
-      return;
     }
 
-    dispose():void {
+    dispose(): void {
       this._rect.setEmpty();
       this._view = null;
       this._isDirty = true;
@@ -401,7 +418,7 @@ module Shumway.AVM2.AS.flash.display {
          colorTransform:flash.geom.ColorTransform = null, blendMode:string = null,
          clipRect:flash.geom.Rectangle = null, smoothing:boolean = false):void {
       somewhatImplemented("public flash.display.BitmapData::draw");
-      var serializer:IBitmapDataSerializer = AVM2.instance.globals['Shumway.Player.Utils'];
+      var serializer : IBitmapDataSerializer = AVM2.instance.globals['Shumway.Player.Utils'];
       if (matrix) {
         matrix = matrix.clone().toTwipsInPlace();
       }
@@ -423,7 +440,7 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    fillRect(rect:flash.geom.Rectangle, uARGB:number /*uint*/):void {
+    fillRect(rect: flash.geom.Rectangle, uARGB: number /*uint*/): void {
       if (this._transparent) {
         var pARGB = premultiplyARGB(uARGB);
       } else {

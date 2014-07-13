@@ -84,7 +84,7 @@ module Shumway.Tools.Terminal {
     textMarginBottom: number;
     buffer: Buffer;
     showLineNumbers = true;
-    showLineTime = true;
+    showLineTime = false;
     showLineCounter = false;
 
     constructor(canvas: HTMLCanvasElement) {
