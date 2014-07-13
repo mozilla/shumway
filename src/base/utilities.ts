@@ -2819,6 +2819,41 @@ module Shumway {
       b = unpremultiplyTable[o + b];
       return a << 24 | r << 16 | g << 8 | b;
     }
+
+    var inverseSourceAlphaTable: Float64Array;
+
+    /**
+     * Computes all possible inverse source alpha values.
+     */
+    export function ensureInverseSourceAlphaTable() {
+      if (inverseSourceAlphaTable) {
+        return;
+      }
+      inverseSourceAlphaTable = new Float64Array(256);
+      for (var a = 0; a < 255; a++) {
+        inverseSourceAlphaTable[a] = 1 - a / 255;
+      }
+    }
+
+    export function blendPremultipliedBGRA(tpBGRA, spBGRA) {
+      var ta = (tpBGRA >>  0) & 0xff;
+      var tr = (tpBGRA >>  8) & 0xff;
+      var tg = (tpBGRA >> 16) & 0xff;
+      var tb = (tpBGRA >> 24) & 0xff;
+
+      var sa = (spBGRA >>  0) & 0xff;
+      var sr = (spBGRA >>  8) & 0xff;
+      var sg = (spBGRA >> 16) & 0xff;
+      var sb = (spBGRA >> 24) & 0xff;
+
+      // TODO: Clampling.
+      var inverseSourceAlpha = inverseSourceAlphaTable[sa];
+      var ta = sa + ta * inverseSourceAlpha;
+      var tr = sr + tr * inverseSourceAlpha;
+      var tg = sg + tg * inverseSourceAlpha;
+      var tb = sb + tb * inverseSourceAlpha;
+      return tb << 24 | tg << 16 | tr << 8 | ta;
+    }
   }
 
   export module Telemetry {
