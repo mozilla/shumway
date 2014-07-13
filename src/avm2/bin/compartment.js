@@ -24,19 +24,13 @@ load(tsBuildPath + "utilities.js");
 
 Shumway.Debug.assert(homePath, "Host compartment needs to initialize homePath.");
 
-load(tsBuildPath + "dataBuffer.js");
-load(tsBuildPath + "options.js");
-load(tsBuildPath + "settings.js");
-load(tsBuildPath + "metrics.js");
-load(tsBuildPath + "tools/profiler/timelineFrame.js");
-load(tsBuildPath + "tools/profiler/timelineBuffer.js");
+load(tsBuildPath + "/base.js");
+load(tsBuildPath + "/tools.js");
 
 var ArgumentParser = Shumway.Options.ArgumentParser;
 var Timer = new Shumway.Metrics.Timer();
 var Option = Shumway.Options.Option;
 var OptionSet = Shumway.Options.OptionSet;
-
-
 
 var systemOptions = new OptionSet("System Options");
 var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
@@ -45,55 +39,16 @@ Shumway.Settings = {
   shumwayOptions: shumwayOptions
 };
 
-load(tsBuildPath + "avm2/options.js");
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 
-Timer.start("Loading VM");
 
-load(tsBuildPath + "avm2/module.js");
-load(tsBuildPath + "avm2/errors.js");
-load(tsBuildPath + "avm2/parser.js");
-load(tsBuildPath + "avm2/bytecode.js");
-load(jsBuildPath + "avm2/disassembler.js");
-
-Timer.start("Loading Compiler");
-load(tsBuildPath + "avm2/compiler/verifier.js");
-load(tsBuildPath + "avm2/compiler/c4/ir.js");
-load(tsBuildPath + "avm2/compiler/c4/as.ir.js");
-load(tsBuildPath + "avm2/compiler/c4/ast.js");
-load(tsBuildPath + "avm2/compiler/c4/optimizer.js");
-load(tsBuildPath + "avm2/compiler/c4/looper.js");
-load(tsBuildPath + "avm2/compiler/c4/backend.js");
-load(tsBuildPath + "avm2/compiler/builder.js");
-Timer.stop();
-
-Timer.start("Loading Runtime");
-load(tsBuildPath + "avm2/trampoline.js");
-load(tsBuildPath + "avm2/bindings.js");
-load(tsBuildPath + "avm2/scope.js");
-
-load(tsBuildPath + "avm2/domain.js");
 load(jsBuildPath + "avm2/xregexp.js");
-load(tsBuildPath + "avm2/runtime.js");
+load(tsBuildPath + "avm2.js");
+load(jsBuildPath + "avm2/disassembler.js");
 load(jsBuildPath + "avm2/runtime-exports.js");
-load(tsBuildPath + "avm2/interpreter.js");
 
-load(tsBuildPath + "avm2/natives/int32Vector.js");
-load(tsBuildPath + "avm2/natives/uint32Vector.js");
-load(tsBuildPath + "avm2/natives/float64Vector.js");
-load(tsBuildPath + "avm2/native.js");
-load(tsBuildPath + "avm2/natives/GenericVector.js");
-load(tsBuildPath + "avm2/natives/dictionary.js");
-load(tsBuildPath + "avm2/natives/proxy.js");
-load(tsBuildPath + "avm2/natives/xml.js");
-load(tsBuildPath + "avm2/natives/system.js");
-load(tsBuildPath + "avm2/natives/byteArray.js");
-
-Timer.stop();
-Timer.stop();
-
-load(tsBuildPath + "avm2/compiler/aot.js");
+// load(tsBuildPath + "avm2/compiler/aot.js");
 
 function grabAbc(fileOrBuffer) {
   if (Shumway.isString(fileOrBuffer)) {

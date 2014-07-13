@@ -30,5 +30,31 @@ module Shumway.AVM2.AS.flash.text {
     static NONE: string = "none";
     static PIXEL: string = "pixel";
     static SUBPIXEL: string = "subpixel";
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return GridFitType.NONE;
+        case 1:
+          return GridFitType.PIXEL;
+        case 2:
+          return GridFitType.SUBPIXEL;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case GridFitType.NONE:
+          return 0;
+        case GridFitType.PIXEL:
+          return 1;
+        case GridFitType.SUBPIXEL:
+          return 2;
+        default:
+          return -1;
+      }
+    }
   }
 }

@@ -16,6 +16,7 @@
 // Class: TextField
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
@@ -344,6 +345,7 @@ module Shumway.AVM2.AS.flash.text {
     }
     set gridFitType(gridFitType: string) {
       gridFitType = asCoerceString(gridFitType);
+      release || assert (flash.text.GridFitType.toNumber(gridFitType) >= 0);
       somewhatImplemented("public flash.text.TextField::set gridFitType");
       this._gridFitType = gridFitType;
     }

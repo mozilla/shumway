@@ -120,4 +120,26 @@
     }
   });
 
+  unitTests.push(function align() {
+    var s = new Stage();
+    s.align = "1";
+    eq(s.align, "");
+    s.align = "TOP";
+    eq(s.align, "T");
+    s.align = "T";
+    eq(s.align, "T");
+    s.align = "B";
+    eq(s.align, "B");
+    s.align = "R";
+    eq(s.align, "R");
+    s.align = "L";
+    eq(s.align, "L");
+    s.align = "?";
+    eq(s.align, "");
+    s.align = "BOTTOM";
+    eq(s.align, "TB");
+    s.align = "12310B_TOP_RRRR";
+    eq(s.align, "TBR");
+  });
+
 })();

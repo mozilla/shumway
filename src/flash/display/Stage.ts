@@ -16,6 +16,7 @@
 // Class: Stage
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
@@ -132,10 +133,9 @@ module Shumway.AVM2.AS.flash.display {
 
     set align(value: string) {
       value = asCoerceString(value);
-      if (flash.display.StageAlign.toNumber(value) < 0) {
-        value = ''; // '' is the default for invalid values.
-      }
-      this._align = value;
+      var n = flash.display.StageAlign.toNumber(value);
+      release || assert (n >= 0);
+      this._align = flash.display.StageAlign.fromNumber(n);
     }
 
     get stageWidth(): number /*int*/ {

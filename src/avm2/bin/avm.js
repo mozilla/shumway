@@ -49,13 +49,8 @@ console = {
  * Load Bare AVM2 Dependencies
  */
 
-load(tsBuildPath + "/utilities.js");
-load(tsBuildPath + "/dataBuffer.js");
-load(tsBuildPath + "/options.js");
-load(tsBuildPath + "/settings.js");
-
-load(tsBuildPath + "tools/profiler/timelineFrame.js");
-load(tsBuildPath + "tools/profiler/timelineBuffer.js");
+load(tsBuildPath + "/base.js");
+load(tsBuildPath + "/tools.js");
 
 var IndentingWriter = Shumway.IndentingWriter;
 
@@ -70,8 +65,10 @@ var argumentParser = new ArgumentParser();
 var systemOptions = new OptionSet("System Options");
 var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
 
-load(tsBuildPath + "avm2/module.js");
-load(tsBuildPath + "avm2/options.js");
+load(jsBuildPath + "avm2/xregexp.js");
+load(tsBuildPath + "avm2.js");
+load(jsBuildPath + "avm2/disassembler.js");
+load(jsBuildPath + "avm2/runtime-exports.js");
 
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
@@ -85,11 +82,6 @@ var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 var releaseMode = shellOptions.register(new Option("r", "release", "boolean", false, "run in release mode (!release is the default)"));
-
-load(tsBuildPath + "metrics.js");
-load(tsBuildPath + "avm2/parser.js");
-load(tsBuildPath + "avm2/domain.js");
-load(tsBuildPath + "avm2/bytecode.js");
 
 var AbcFile = Shumway.AVM2.ABC.AbcFile;
 var AbcStream = Shumway.AVM2.ABC.AbcStream;
@@ -107,7 +99,6 @@ var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
 // var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
 var SecurityDomain = Shumway.AVM2.Runtime.SecurityDomain;
 
-load(jsBuildPath + "avm2/disassembler.js");
 // load(tsBuildPath + "avm2/stubs.js");
 
 var Timer = Shumway.Metrics.Timer;
@@ -186,32 +177,21 @@ for (var f = 0; f < files.length; f++) {
        * Load SWF Dependencies
        */
       SWF = {};
-      load(tsBuildPath + "swf/module.js");
-      load(tsBuildPath + "swf/inflate.js");
-      load(tsBuildPath + "swf/stream.js");
-      load(tsBuildPath + "swf/parser/bitmap.js");
-      load(tsBuildPath + "swf/parser/button.js");
-      load(tsBuildPath + "swf/parser/font.js");
-      load(tsBuildPath + "swf/parser/image.js");
-      load(tsBuildPath + "swf/parser/label.js");
-      load(tsBuildPath + "swf/parser/shape.js");
-      load(tsBuildPath + "swf/parser/sound.js");
-      load(tsBuildPath + "swf/parser/text.js");
-
-      load(tsBuildPath + "SWFTags.js");
-      load(tsBuildPath + "swf/parser/templates.js");
-      load(tsBuildPath + "swf/parser/handlers.js");
-      load(tsBuildPath + "swf/parser/parser.js");
-      
+      load(tsBuildPath + "swf.js");
     }
     var SWF_TAG_CODE_DO_ABC = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC;
+    var SWF_TAG_CODE_DO_ABC_ = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC_;
     Shumway.SWF.Parser.parse(snarf(file, "binary"), {
       oncomplete: function(result) {
+
         var tags = result.tags;
+
         var abcs = []; // Group SWF ABCs in their own array.
         for (var i = 0, n = tags.length; i < n; i++) {
           var tag = tags[i];
-          if (tag.code === SWF_TAG_CODE_DO_ABC) {
+          print(tag.code);
+          if (tag.code === SWF_TAG_CODE_DO_ABC ||
+              tag.code === SWF_TAG_CODE_DO_ABC_) {
             abcs.push(tag.data);
           }
         }
