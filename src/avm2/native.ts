@@ -1767,7 +1767,7 @@ module Shumway.AVM2.AS {
       }
       value = boxValue(value)
       if (ASClass.isType(value)) {
-        return value.getQualifiedClassName();
+        return (<ASClass> value).getQualifiedClassName();
       }
       return value.class.getQualifiedClassName();
     }
@@ -1889,8 +1889,8 @@ module Shumway.AVM2.AS {
           var interfacesVal = obj[publicName("interfaces")] = [];
           if (flags & DescribeTypeFlags.USE_ITRAITS) {
             for (var key in cls.implementedInterfaces) {
-              var ifaceName = (<any> cls.implementedInterfaces[key]).name; // ???
-              interfacesVal.push(unmangledQualifiedName(ifaceName));
+              var ifaceName = (<ASClass> cls.implementedInterfaces[key]).getQualifiedClassName();
+              interfacesVal.push(ifaceName);
             }
           }
         } else {

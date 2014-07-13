@@ -492,6 +492,9 @@ module Shumway.AVM2 {
           case OP.coerce_s:
             stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
             break;
+          case OP.astype:
+            stack[stack.length - 2] = asAsType(domain.getType(multinames[bc.index]), stack[stack.length - 1]);
+            break;
           case OP.astypelate:
             stack[stack.length - 2] = asAsType(stack.pop(), stack[stack.length - 1]);
             break;

@@ -180,6 +180,25 @@ module Shumway.AVM2.AS.flash.display {
       // this._soundTransform = sndTransform;
     }
 
+    /**
+     * Override of DisplayObject#_isUnderMouse that applies the test on hitTestState if
+     * that is defined.
+     */
+    _isUnderMouse(x: number, y: number): boolean
+    {
+      var matrix = this._getInvertedConcatenatedMatrix();
+      var localX = matrix.transformX(x, y);
+      var localY = matrix.transformY(x, y);
+      var target = this.hitTestState || this;
+      if (target !== this) {
+        matrix = target._getInvertedMatrix();
+        var tmpX = matrix.transformX(localX, localY);
+        localY = matrix.transformY(localX, localY);
+        localX = tmpX;
+      }
+      return target._containsPoint(localX, localY, true, false, false);
+    }
+
     _updateButton(): void {
       var state;
       if (this._mouseOver) {

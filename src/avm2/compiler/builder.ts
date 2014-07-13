@@ -88,6 +88,7 @@ module Shumway.AVM2.Compiler {
    */
   var emitCoerceNonPrimitive = false;
 
+  var emitAsType = true;
   var emitAsTypeLate = true;
 
   class State {
@@ -1147,6 +1148,22 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.convert_s:
             push(convertString(pop()));
+            break;
+          case OP.astype:
+            if (bc.ti && bc.ti.noCoercionNeeded) {
+              countTimeline("Compiler: NoCoercionNeeded");
+              break;
+            } else {
+              countTimeline("Compiler: CoercionNeeded");
+            }
+            if (emitAsType) {
+              value = pop();
+              var typeName = this.constantPool.multinames[bc.index];
+              multiname = new IR.ASMultiname(constant(typeName.namespaces), constant(typeName.name),
+                                             typeName.flags);
+              type = this.getProperty(this.findProperty(multiname, false), multiname);
+              push(this.call(globalProperty("asAsType"), null, [type, value]));
+            }
             break;
           case OP.astypelate:
             type = pop();

@@ -15,7 +15,6 @@
  */
 // Class: Stage
 module Shumway.AVM2.AS.flash.display {
-  import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
@@ -36,19 +35,15 @@ module Shumway.AVM2.AS.flash.display {
       this._stage = this;
       this._frameRate = 24;
       this._scaleMode = StageScaleMode.SHOW_ALL;
-      release || assert (this._scaleMode);
       this._align = "";
       this._stageWidth = 0;
       this._stageHeight = 0;
       this._showDefaultContextMenu = true;
       this._focus = null;
       this._colorCorrection = ColorCorrection.DEFAULT;
-      release || assert (this._colorCorrection);
       this._colorCorrectionSupport = ColorCorrectionSupport.DEFAULT_OFF;
-      release || assert (this._colorCorrectionSupport);
       this._stageFocusRect = true;
       this._quality = StageQuality.HIGH;
-      release || assert (this._quality);
       this._displayState = null;
       this._fullScreenSourceRect = null;
       this._mouseLock = false;
@@ -125,7 +120,9 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleMode(value: string) {
       value = asCoerceString(value);
-      release || assert (flash.display.StageScaleMode.toNumber(value) >= 0);
+      if (flash.display.StageScaleMode.toNumber(value) < 0) {
+        throwError("ArgumentError", Errors.InvalidEnumError, "scaleMode");
+      }
       this._scaleMode = value;
     }
 
@@ -194,12 +191,17 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get quality(): string {
-      return this._quality;
+      return this._quality.toUpperCase(); // Return value is always uppercase
     }
 
-    set quality(value: string) {
-      release || assert (flash.display.StageQuality.toNumber(value) >= 0);
-      this._quality = asCoerceString(value);
+    set quality(value: string)  {
+      // TODO: The *linear versions return just *, stripping the "linear" part
+      // Value is compared case-insensitively, and has default handling, so '' is ok.
+      value = (asCoerceString(value) || '').toLowerCase();
+      if (flash.display.StageQuality.toNumber(value) < 0) {
+        value = flash.display.StageQuality.HIGH;
+      }
+      this._quality = value;
     }
 
     get displayState(): string {
@@ -330,14 +332,8 @@ module Shumway.AVM2.AS.flash.display {
       var objectsUnderPoint: flash.display.DisplayObject [] = [];
       this.visit(function (displayObject: flash.display.DisplayObject): VisitorFlags {
         var isUnderMouse = false;
-        if (SimpleButton.isType(displayObject)) {
-          var simpleButton = <SimpleButton>displayObject;
-          if (simpleButton.hitTestState) {
-            var point = simpleButton.globalToLocal(globalPoint).toTwips();
-            isUnderMouse = simpleButton.hitTestState._containsPoint(point, true, false, false);
-          }
-        } else if (!Sprite.isType(displayObject) || !(<Sprite>displayObject).hitArea) {
-          isUnderMouse = displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true, false, false);
+        if (!Sprite.isType(displayObject) || !(<Sprite>displayObject).hitArea) {
+          isUnderMouse = displayObject._isUnderMouse(globalPoint.x * 20, globalPoint.y * 20);
         }
         if (isUnderMouse) {
           objectsUnderPoint.push(displayObject);

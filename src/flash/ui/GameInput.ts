@@ -15,8 +15,9 @@
  */
 // Class: GameInput
 module Shumway.AVM2.AS.flash.ui {
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import throwError = Shumway.AVM2.Runtime.throwError;
   export class GameInput extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -43,16 +44,20 @@ module Shumway.AVM2.AS.flash.ui {
     // static _numDevices: number /*int*/;
     // static _isSupported: boolean;
     get numDevices(): number /*int*/ {
-      notImplemented("public flash.ui.GameInput::get numDevices"); return;
+      somewhatImplemented("public flash.ui.GameInput::get numDevices");
+      return 0;
       // return this._numDevices;
     }
     get isSupported(): boolean {
-      notImplemented("public flash.ui.GameInput::get isSupported"); return;
-      // return this._isSupported;
+      somewhatImplemented("public flash.ui.GameInput::get isSupported");
+      return false;
     }
     static getDeviceAt(index: number /*int*/): flash.ui.GameInputDevice {
       index = index | 0;
-      notImplemented("public flash.ui.GameInput::static getDeviceAt"); return;
+
+      somewhatImplemented("public flash.ui.GameInput::static getDeviceAt");
+      throwError("RangeError", Errors.ParamRangeError, "index");
+      return null;
     }
     
   }
