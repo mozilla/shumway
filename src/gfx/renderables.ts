@@ -723,6 +723,7 @@ module Shumway.GFX {
     _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     properties: {[name: string]: any} = {};
 
+    private _textBounds: Rectangle;
     private _textRunData: DataBuffer;
     private _plainText: string;
     private _backgroundColor: number;
@@ -730,25 +731,26 @@ module Shumway.GFX {
     private _matrix: Shumway.GFX.Geometry.Matrix;
     private _coords: DataBuffer;
 
-    textWidth: number;
-    textHeight: number;
+    textRect: Rectangle;
     lines: TextLine[];
 
     constructor(bounds) {
       super(bounds);
+      this._textBounds = bounds.clone();
       this._textRunData = null;
       this._plainText = '';
       this._backgroundColor = 0;
       this._borderColor = 0;
       this._matrix = null;
       this._coords = null;
-      this.textWidth = 0;
-      this.textHeight = 0;
+      this.textRect = bounds.clone();
       this.lines = [];
     }
 
     setBounds(bounds): void {
-      this._bounds = bounds.clone();
+      this._bounds.copyFrom(bounds);
+      this._textBounds.copyFrom(bounds);
+      this.textRect.setElements(bounds.x + 2, bounds.y + 2, bounds.x - 2, bounds.x - 2);
     }
 
     setContent(plainText: string, textRunData: DataBuffer, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer): void {
@@ -756,8 +758,6 @@ module Shumway.GFX {
       this._plainText = plainText;
       this._matrix = matrix;
       this._coords = coords;
-      this.textWidth = 0;
-      this.textHeight = 0;
       this.lines = [];
     }
 
@@ -766,7 +766,7 @@ module Shumway.GFX {
       this._borderColor = borderColor;
     }
 
-    reflow(autoSize: boolean, wordWrap: boolean): void {
+    reflow(autoSize: number, wordWrap: boolean): void {
       var textRunData = this._textRunData;
 
       if (!textRunData) {
@@ -909,15 +909,29 @@ module Shumway.GFX {
         currentLine.addRun(font, fillStyle, text, underline);
       }
 
-      this.textWidth = maxWidth;
-      this.textHeight = baseLinePos;
+      var rect = this.textRect;
+      rect.w = maxWidth;
+      rect.h = baseLinePos;
 
       if (autoSize) {
         if (!wordWrap) {
-          availableWidth = this.textWidth;
-          bounds.w = availableWidth + 4;
+          availableWidth = maxWidth;
+          var width = bounds.w;
+          switch (autoSize) {
+            case 1: // CENTER
+              rect.x = (width - (availableWidth + 4)) >> 1;
+              break;
+            case 2: // LEFT
+              break;
+            case 3: // RIGHT
+              rect.x = width - (availableWidth + 4);
+              break;
+          }
+          this._textBounds.setElements(rect.x - 2, rect.y - 2, rect.w + 4, rect.h + 4);
         }
-        bounds.h = this.textHeight + 4;
+        bounds.h = baseLinePos + 4;
+      } else {
+        this._textBounds = bounds;
       }
 
       var numLines = lines.length;
@@ -936,6 +950,7 @@ module Shumway.GFX {
           }
         }
       }
+
       this.invalidatePaint()
       leaveTimeline("RenderableText.reflow");
     }
@@ -948,16 +963,16 @@ module Shumway.GFX {
       enterTimeline("RenderableText.render");
       context.save();
 
-      var bounds = this._bounds;
+      var rect = this._textBounds;
       if (this._backgroundColor) {
         context.fillStyle = ColorUtilities.rgbaToCSSStyle(this._backgroundColor);
-        context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        context.fillRect(rect.x, rect.y, rect.w, rect.h);
       }
       if (this._borderColor) {
         context.strokeStyle = ColorUtilities.rgbaToCSSStyle(this._borderColor);
         context.lineCap = 'square';
         context.lineWidth = 1;
-        context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        context.strokeRect(rect.x, rect.y, rect.w, rect.h);
       }
 
       if (this._coords) {
@@ -997,9 +1012,9 @@ module Shumway.GFX {
 
     private _renderLines(context: CanvasRenderingContext2D) {
       // TODO: Render bullet points.
-      var bounds = this._bounds;
+      var bounds = this._textBounds;
       context.beginPath();
-      context.rect(bounds.x + 2, bounds.y + 2, bounds.w - 4, bounds.h - 4);
+      context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
       context.clip();
       context.translate(bounds.x + 2, bounds.y + 2);
       var lines = this.lines;
