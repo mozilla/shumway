@@ -135,6 +135,9 @@ module Shumway.AVM1 {
     if (flash.text.TextField.isType(as3Object)) {
       return new Shumway.AVM2.AS.avm1lib.AS2TextField(as3Object);
     }
+    if (flash.display.BitmapData.isType(as3Object)) {
+      return new as3Object;
+    }
 
     return null;
   }

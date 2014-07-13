@@ -54,7 +54,9 @@ public dynamic class AS2Globals {
   private function createFlashObject():Object {
     return {
       _MovieClip: AS2MovieClip,
-      display: {},
+      display: {
+        BitmapData: AS2BitmapData
+      },
       external: {
         ExternalInterface: ExternalInterface
       },
