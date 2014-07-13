@@ -98,17 +98,17 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeTextContent(textContent: Shumway.TextContent, bounds: Bounds) {
+    writeTextContent(textContent: Shumway.TextContent) {
       if (textContent.flags & Shumway.TextContentFlags.Dirty) {
         writer && writer.writeLn("Sending TextContent: " + textContent._id);
         this.output.writeInt(MessageTag.UpdateTextContent);
         this.output.writeInt(textContent._id);
         this.output.writeInt(-1);
-        this.writeRectangle(bounds);
+        this.writeRectangle(textContent.bounds);
         this.writeMatrix(textContent.matrix || flash.geom.Matrix.FROZEN_IDENTITY_MATRIX);
         this.output.writeInt(textContent.backgroundColor);
         this.output.writeInt(textContent.borderColor);
-        this.output.writeBoolean(textContent.autoSize);
+        this.output.writeInt(textContent.autoSize);
         this.output.writeBoolean(textContent.wordWrap);
         this.pushAsset(textContent.plainText);
         this.pushAsset(textContent.textRunData.toPlainObject());
@@ -257,7 +257,7 @@ module Shumway.Remoting.Player {
       if (graphics) {
         this.writeGraphics(graphics);
       } else if (textContent) {
-        this.writeTextContent(textContent, displayObject._getContentBounds());
+        this.writeTextContent(textContent);
       } else if (bitmap) {
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);

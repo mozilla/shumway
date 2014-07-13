@@ -2445,8 +2445,16 @@ module Shumway {
       return this.xMax - this.xMin;
     }
 
+    set width(value: number) {
+      this.xMax = this.xMin + value;
+    }
+
     get height(): number {
       return this.yMax - this.yMin;
+    }
+
+    set height(value: number) {
+      this.yMax = this.yMin + value;
     }
 
     public getBaseWidth(angle: number): number {

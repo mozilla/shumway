@@ -28,8 +28,8 @@ module Shumway.SWF.Parser {
     var size = 12;
     var face = 'Times Roman';
     var color = 0;
-    var x = bbox.xMin;
-    var y = bbox.yMin;
+    var x = 0;
+    var y = 0;
     var i = 0;
     var record;
     var codes;
@@ -44,7 +44,7 @@ module Shumway.SWF.Parser {
         release || assert(font, 'undefined font', 'label');
         codes = font.codes;
         dependencies.push(font.id);
-        size = record.fontHeight / 20;
+        size = record.fontHeight > 160 ? record.fontHeight / 20 : record.fontHeight;
         face = 'swffont' + font.id;
       }
       if (record.hasColor) {
@@ -69,8 +69,7 @@ module Shumway.SWF.Parser {
       while ((entry = entries[j++])) {
         var code = codes[entry.glyphIndex];
         release || assert(code, 'undefined glyph', 'label');
-        text += code >= 32 && code != 34 && code != 92 ? String.fromCharCode(code) :
-                '\\u' + (code + 0x10000).toString(16).substring(1);
+        text += String.fromCharCode(code);
         coords.push(x, y);
         x += entry.advance;
       }

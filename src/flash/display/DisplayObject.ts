@@ -447,8 +447,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _setFillAndLineBoundsFromWidthAndHeight(width: number, height: number) {
-      this._fillBounds.setElements(0, 0, width, height);
-      this._lineBounds.setElements(0, 0, width, height);
+      this._fillBounds.width = width;
+      this._fillBounds.height = height;
+      this._lineBounds.width = width;
+      this._lineBounds.height = height;
       this._removeFlags(DisplayObjectFlags.InvalidLineBounds | DisplayObjectFlags.InvalidFillBounds);
       this._invalidateParentFillAndLineBounds();
     }
@@ -963,12 +965,21 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get x(): number {
-      return this._matrix.tx / 20;
+      var value = this._matrix.tx;
+      if (this._canHaveTextContent()) {
+        var bounds = this._getContentBounds();
+        value += bounds.xMin;
+      }
+      return value / 20;
     }
 
     set x(value: number) {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
+      if (this._canHaveTextContent()) {
+        var bounds = this._getContentBounds();
+        value -= bounds.xMin;
+      }
       if (value === this._matrix.tx) {
         return;
       }
@@ -1092,15 +1103,16 @@ module Shumway.AVM2.AS.flash.display {
     set width(value: number) {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
-      this._scaleToWidth(value);
-    }
-
-    _scaleToWidth(width: number) {
-      if (width < 0) {
+      if (value < 0) {
+        return;
+      }
+      var contentBounds = this._getContentBounds(true);
+      if (this._canHaveTextContent()) {
+        var bounds = this._getContentBounds();
+        this._setFillAndLineBoundsFromWidthAndHeight(value, contentBounds.height);
         return;
       }
       var bounds = this._getTransformedBounds(this._parent, true);
-      var contentBounds = this._getContentBounds(true);
       var angle = this._rotation / 180 * Math.PI;
       var baseWidth = contentBounds.getBaseWidth(angle);
       if (!baseWidth) {
@@ -1108,7 +1120,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       var baseHeight = contentBounds.getBaseHeight(angle);
       this._scaleY = bounds.height / baseHeight;
-      this._scaleX = width / baseWidth;
+      this._scaleX = value / baseWidth;
       this._invalidateMatrix();
       this._invalidatePosition();
     }
@@ -1129,22 +1141,23 @@ module Shumway.AVM2.AS.flash.display {
     set height(value: number) {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
-      this._scaleToHeight(value);
-    }
-
-    _scaleToHeight(height: number) {
-      if (height < 0) {
+      if (value < 0) {
+        return;
+      }
+      var contentBounds = this._getContentBounds(true);
+      if (this._canHaveTextContent()) {
+        var bounds = this._getContentBounds();
+        this._setFillAndLineBoundsFromWidthAndHeight(contentBounds.width, value);
         return;
       }
       var bounds = this._getTransformedBounds(this._parent, true);
-      var contentBounds = this._getContentBounds(true);
       var angle = this._rotation / 180 * Math.PI;
       var baseHeight = contentBounds.getBaseHeight(angle);
       if (!baseHeight) {
         return;
       }
       var baseWidth = contentBounds.getBaseWidth(angle);
-      this._scaleY = height / baseHeight;
+      this._scaleY = value / baseHeight;
       this._scaleX = bounds.width / baseWidth;
       this._invalidateMatrix();
       this._invalidatePosition();
@@ -1414,10 +1427,6 @@ module Shumway.AVM2.AS.flash.display {
       return null;
     }
 
-    _hasNonScalableContent(): boolean {
-      return false;
-    }
-
     /**
      * Only these objects can have graphics.
      */
@@ -1430,6 +1439,13 @@ module Shumway.AVM2.AS.flash.display {
      */
     _getGraphics(): flash.display.Graphics {
       return null;
+    }
+
+    /**
+     * Only these objects can have text content.
+     */
+    _canHaveTextContent(): boolean {
+      return false;
     }
 
     /**

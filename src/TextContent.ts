@@ -18,26 +18,28 @@ module Shumway {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
+  import Bounds = Shumway.Bounds;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import ColorUtilities = Shumway.ColorUtilities;
   import flash = Shumway.AVM2.AS.flash;
 
   export enum TextContentFlags {
     None            = 0x0000,
-    DirtyDimensions = 0x0001,
+    DirtyBounds     = 0x0001,
     DirtyContent    = 0x0002,
     DirtyStyle      = 0x0004,
     DirtyFlow       = 0x0008,
-    Dirty           = DirtyDimensions | DirtyContent | DirtyStyle | DirtyFlow
+    Dirty           = DirtyBounds | DirtyContent | DirtyStyle | DirtyFlow
   }
 
   export class TextContent implements Shumway.Remoting.IRemotable {
     _id: number;
 
+    private _bounds: Bounds;
     private _plainText: string;
     private _backgroundColor: number;
     private _borderColor: number;
-    private _autoSize: boolean;
+    private _autoSize: number;
     private _wordWrap: boolean;
 
     flags: number;
@@ -49,10 +51,11 @@ module Shumway {
 
     constructor(defaultTextFormat?: flash.text.TextFormat) {
       this._id = flash.display.DisplayObject.getNextSyncID();
+      this._bounds = new Bounds(0, 0, 0, 0);
       this._plainText = '';
       this._backgroundColor = 0;
       this._borderColor = 0;
-      this._autoSize = false;
+      this._autoSize = 0;
       this._wordWrap = false;
       this.flags = TextContentFlags.None;
       this.defaultTextFormat = defaultTextFormat || new flash.text.TextFormat();
@@ -236,11 +239,20 @@ module Shumway {
       this.flags |= TextContentFlags.DirtyContent;
     }
 
-    get autoSize(): boolean {
+    get bounds(): Bounds {
+      return this._bounds;
+    }
+
+    set bounds(bounds: Bounds) {
+      this._bounds.copyFrom(bounds);
+      this.flags |= TextContentFlags.DirtyBounds;
+    }
+
+    get autoSize(): number {
       return this._autoSize;
     }
 
-    set autoSize(value: boolean) {
+    set autoSize(value: number) {
       if (value === this._autoSize) {
         return;
       }
@@ -286,10 +298,6 @@ module Shumway {
       }
       this._borderColor = value;
       this.flags |= TextContentFlags.DirtyStyle;
-    }
-
-    invalidateDimensions() {
-      this.flags |= TextContentFlags.DirtyDimensions;
     }
 
     private _writeTextRun(textRun: flash.text.TextRun) {

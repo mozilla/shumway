@@ -92,6 +92,7 @@ module Shumway.AVM2.AS.flash.text {
 
       if (symbol) {
         self._setFillAndLineBoundsFromSymbol(symbol);
+        self._textContent.bounds = this._lineBounds;
 
         self._defaultTextFormat.color = symbol.color;
         self._defaultTextFormat.size = (symbol.size / 20) | 0;
@@ -113,13 +114,13 @@ module Shumway.AVM2.AS.flash.text {
           self.background = true;
           self.border = true;
         }
-        self.autoSize = symbol.autoSize;
-        self.wordWrap = symbol.wordWrap;
         if (symbol.html) {
           self.htmlText = symbol.initialText;
         } else {
           self.text = symbol.initialText;
         }
+        self.wordWrap = symbol.wordWrap;
+        self.autoSize = symbol.autoSize;
       } else {
         self._setFillAndLineBoundsFromWidthAndHeight(100 * 20, 100 * 20);
       }
@@ -130,19 +131,29 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("Dummy Constructor: public flash.text.TextField");
     }
 
-    private _invalidateContent() {
-      if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
-        this._setFlags(DisplayObjectFlags.DirtyTextContent);
-        this._ensureLineMetrics();
-      }
+    _setFillAndLineBoundsFromWidthAndHeight(width: number, height: number) {
+      super._setFillAndLineBoundsFromWidthAndHeight(width, height);
+      this._textContent.bounds = this._lineBounds;
+      this._invalidateContent();
     }
 
-    _hasNonScalableContent() {
+    _canHaveTextContent(): boolean {
       return true;
     }
 
     _getTextContent(): Shumway.TextContent {
       return this._textContent;
+    }
+
+    _getContentBounds(includeStrokes: boolean = true): Bounds {
+      this._ensureLineMetrics();
+      return super._getContentBounds(includeStrokes);
+    }
+
+    private _invalidateContent() {
+      if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
+        this._setFlags(DisplayObjectFlags.DirtyTextContent);
+      }
     }
 
     _textContent: Shumway.TextContent;
@@ -240,7 +251,7 @@ module Shumway.AVM2.AS.flash.text {
         throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
       }
       this._autoSize = value;
-      this._textContent.autoSize = value !== TextFieldAutoSize.NONE;
+      this._textContent.autoSize = TextFieldAutoSize.toNumber(value);
       this._invalidateContent();
     }
 
@@ -504,11 +515,13 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get textHeight(): number {
-      return this._textHeight;
+      this._ensureLineMetrics();
+      return (this._textHeight / 20) | 0;
     }
 
     get textWidth(): number {
-      return this._textWidth;
+      this._ensureLineMetrics();
+      return (this._textWidth / 20) | 0;
     }
 
     get thickness(): number {
@@ -549,7 +562,7 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("public flash.text.TextField::set useRichTextClipboard"); return;
       // this._useRichTextClipboard = value;
     }
- 
+
     private _ensureLineMetrics() {
       if (!this._hasFlags(DisplayObjectFlags.DirtyTextContent)) {
         return;
@@ -557,25 +570,15 @@ module Shumway.AVM2.AS.flash.text {
       var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
       var lineMetricsData = serializer.syncDisplayObject(this, false);
       var textWidth = lineMetricsData.readInt();
-      if (!this._textContent.wordWrap) {
-        var width = (this._fillBounds.width / 20) | 0;
-        var diffX = 0;
-        switch (this._autoSize) {
-          case TextFieldAutoSize.LEFT:
-            break;
-          case TextFieldAutoSize.CENTER:
-            diffX = (width - textWidth) >> 1;
-            break;
-          case TextFieldAutoSize.RIGHT:
-            diffX = width - textWidth;
-            break;
-        }
-        this._matrix.tx += (diffX * 20) | 0;
-        this._invalidatePosition();
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
+      var textHeight = lineMetricsData.readInt();
+      var offsetX = lineMetricsData.readInt();
+      if (this._autoSize !== TextFieldAutoSize.NONE) {
+        this._fillBounds.xMin = this._lineBounds.xMin = offsetX;
+        this._fillBounds.xMax = this._lineBounds.xMax = offsetX + textWidth + 80;
+        this._fillBounds.yMax = this._lineBounds.yMax = this._lineBounds.yMin + textHeight + 80;
       }
       this._textWidth = textWidth;
-      this._textHeight = lineMetricsData.readInt();
+      this._textHeight = textHeight;
       this._numLines = lineMetricsData.readInt();
       this._lineMetricsData = lineMetricsData;
     }
@@ -610,6 +613,7 @@ module Shumway.AVM2.AS.flash.text {
       if (lineIndex < 0 || lineIndex > this._numLines - 1) {
         throwError('RangeError', Errors.ParamRangeError);
       }
+      this._ensureLineMetrics();
       var lineMetricsData = this._lineMetricsData;
       lineMetricsData.position = 12 + lineIndex * 20;
       var x = lineMetricsData.readInt();
@@ -674,22 +678,6 @@ module Shumway.AVM2.AS.flash.text {
     getImageReference(id: string): flash.display.DisplayObject {
       id = "" + id;
       notImplemented("public flash.text.TextField::getImageReference"); return;
-    }
-
-    _scaleToWidth(width: number) {
-      var bounds = this._getContentBounds();
-      this._setFillAndLineBoundsFromWidthAndHeight(width, bounds.height);
-      this._textContent.invalidateDimensions();
-      this._invalidateContent();
-      this._invalidatePosition();
-    }
-
-    _scaleToHeight(height: number) {
-      var bounds = this._getContentBounds();
-      this._setFillAndLineBoundsFromWidthAndHeight(bounds.width, height);
-      this._textContent.invalidateDimensions();
-      this._invalidateContent();
-      this._invalidatePosition();
     }
   }
 }
