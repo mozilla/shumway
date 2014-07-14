@@ -236,6 +236,10 @@ limitations under the License.
     <!--<script src="../../src/avm2/vm.js"></script>-->
     <script> console.timeEnd("Load AVM2 Dependencies"); </script>
 
+    <!-- Load Emscripten Code -->
+    <script> console.time("Load Emscripten Code"); </script>
+    <script src="../../src/emscripten/filters.js"></script>
+    <script> console.timeEnd("Load Emscripten Code"); </script>
 
     <script> console.time("Load Compiled Code Cache"); </script>
     <!--<script src="../../src/avm2/bin/out.js"></script>-->

@@ -15,23 +15,40 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global colorFilter */
+/* global toNumber, isNullOrUndefined, throwError, Errors */
 
 var ColorMatrixFilterDefinition = (function () {
   return {
     __class__: "flash.filters.ColorMatrixFilter",
     initialize: function () {
-
-    },
-    _updateFilterBounds: function (bounds) {
-
+      this._matrix = [
+        1, 0, 0, 0, 0,
+        0, 1, 0, 0, 0,
+        0, 0, 1, 0, 0,
+        0, 0, 0, 1, 0
+      ];
     },
     __glue__: {
       native: {
         instance: {
           matrix: {
             get: function matrix() { return this._matrix; },
-            set: function matrix(value) { this._matrix = value; }
+            set: function matrix(value) {
+              if (!isNullOrUndefined(value)) {
+                var matrix = [
+                  0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0
+                ];
+                for (var i = 0, n = Math.min(value.length, 20); i < n; i++) {
+                  matrix[i] = toNumber(value[i]);
+                }
+                this._matrix = matrix;
+              } else {
+                throwError("TypeError", Errors.NullPointerError, "matrix");
+              }
+            }
           }
         }
       }

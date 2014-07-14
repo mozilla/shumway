@@ -145,6 +145,9 @@ var Demo = (function() {
       }
 
       this.ctxShapeTmp.putImageData(img, 0, 0);
+
+      this.stats.end();
+
       this.ctxShapeTmp.strokeStyle = "rgba(0, 0, 0, 0.2)";
       this.ctxShapeTmp.strokeRect(0, 0, this.canvasShapeTmp.width, this.canvasShapeTmp.height);
 
@@ -154,8 +157,6 @@ var Demo = (function() {
         (this.canvas.width - this.bounds.w) / 2 + this.filterBounds.x,
         (this.canvas.height - this.bounds.h) / 2 + this.filterBounds.y
       );
-
-      this.stats.end();
     },
 
     drawShape: function drawShape() {

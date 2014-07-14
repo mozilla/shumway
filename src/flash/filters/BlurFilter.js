@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global blurFilter */
+/* global clamp, Module, FILTERS */
 
 var BlurFilterDefinition = (function () {
   return {
@@ -23,30 +23,38 @@ var BlurFilterDefinition = (function () {
     initialize: function () {
 
     },
-    _updateFilterBounds: function (bounds) {
-      var bx = this._blurX * this._quality * 20;
-      var by = this._blurY * this._quality * 20;
-      bounds.xMin -= bx;
-      bounds.xMax += bx;
-      bounds.yMin -= by;
-      bounds.yMax += by;
+    _generateFilterBounds: function () {
+      var bounds = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
+      this._updateBlurBounds(bounds, true);
+      return bounds;
+    },
+    _applyFilter: function (imageData, width, height) {
+      var pimg = Module._malloc(imageData.length);
+      Module.HEAPU8.set(imageData, pimg);
+      FILTERS.preMultiplyAlpha(pimg, width, height);
+      FILTERS.blur(pimg,
+                   width, height,
+                   Math.round((this._blurX - 1) / 2),
+                   Math.round((this._blurY - 1) / 2),
+                   this._quality, 0);
+      FILTERS.unpreMultiplyAlpha(pimg, width, height);
+      imageData.set(Module.HEAPU8.subarray(pimg, pimg + imageData.length));
+      Module._free(pimg);
     },
     __glue__: {
       native: {
-        static: {
-        },
         instance: {
           blurX: {
             get: function blurX() { return this._blurX; },
-            set: function blurX(value) { this._blurX = value; }
+            set: function blurX(value) { this._blurX = clamp(value, 0, 255); }
           },
           blurY: {
             get: function blurY() { return this._blurY; },
-            set: function blurY(value) { this._blurY = value; }
+            set: function blurY(value) { this._blurY = clamp(value, 0, 255); }
           },
           quality: {
             get: function quality() { return this._quality; },
-            set: function quality(value) { this._quality = value; }
+            set: function quality(value) { this._quality = clamp(value, 0, 15); }
           }
         }
       }

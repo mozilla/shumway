@@ -81,6 +81,43 @@ var BitmapDataDefinition = (function () {
         }
       }
     },
+    applyFilter: function(sourceBitmapData, sourceRect, destPoint, filter) {
+      var rect = sourceRect.clone();
+      var b = filter._generateFilterBounds();
+      if (b) {
+        rect.left += b.xMin;
+        rect.top += b.yMin;
+        rect.right += b.xMax;
+        rect.bottom += b.yMax;
+      }
+      var rectClipped = rect.intersection(new flash.geom.Rectangle(0, 0, sourceBitmapData.width, sourceBitmapData.height));
+      if (rectClipped.width > 0 && rectClipped.height > 0) {
+        var canvas = document.createElement('canvas');
+        var ctx = canvas.getContext('2d');
+        var w = canvas.width = rect.width | 0;
+        var h = canvas.height = rect.height | 0;
+        var dx = rectClipped.x - rect.x;
+        var dy = rectClipped.y - rect.y;
+        ctx.drawImage(sourceBitmapData._drawable,
+                      rectClipped.x, rectClipped.y, rectClipped.width, rectClipped.height,
+                      dx, dy, rectClipped.width, rectClipped.height);
+        var img = ctx.getImageData(0, 0, w, h);
+        filter._applyFilter(img.data, w, h);
+        this._ctx.putImageData(img, rect.x + destPoint.x, rect.y + destPoint.y);
+        this._invalidate();
+      }
+    },
+    generateFilterRect: function(sourceRect, filter) {
+      var rect = sourceRect.clone();
+      var b = filter._generateFilterBounds();
+      if (b) {
+        rect.left += b.xMin;
+        rect.top += b.yMin;
+        rect.right += b.xMax;
+        rect.bottom += b.yMax;
+      }
+      return rect;
+    },
     dispose: function() {
       this._ctx = null;
       this._drawable.width = 0;
@@ -273,6 +310,8 @@ var BitmapDataDefinition = (function () {
     native: {
       instance: {
         ctor : def.ctor,
+        applyFilter: def.applyFilter,
+        generateFilterRect: def.generateFilterRect,
         fillRect : def.fillRect,
         dispose : def.dispose,
         getPixel : def.getPixel,

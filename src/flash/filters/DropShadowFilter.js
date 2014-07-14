@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global dropShadowFilter */
+/* global clamp */
 
 var DropShadowFilterDefinition = (function () {
   return {
@@ -23,43 +23,50 @@ var DropShadowFilterDefinition = (function () {
     initialize: function () {
 
     },
-    _updateFilterBounds: function (bounds) {
-      var a = this._angle * Math.PI / 180;
-      var dy = (Math.sin(a) * this._distance);
-      var dx = (Math.cos(a) * this._distance);
-      var bx = this._blurX * this._quality * 20;
-      var by = this._blurY * this._quality * 20;
-      bounds.xMin -= bx - (dx > 0 ? 0 : dx);
-      bounds.xMax += bx + Math.abs(dx);
-      bounds.yMin -= by - (dy > 0 ? 0 : dy);
-      bounds.yMax += by + Math.abs(dy);
+    _generateFilterBounds: function () {
+      if (this._inner) {
+        return null;
+      } else {
+        var bounds = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
+        this._updateBlurBounds(bounds);
+        if (this._distance !== 0) {
+          var a = this._angle * Math.PI / 180;
+          var dx = Math.cos(a) * this._distance;
+          var dy = Math.sin(a) * this._distance;
+          bounds.xMin -= (dx >= 0 ? 0 : Math.floor(dx));
+          bounds.xMax += Math.ceil(Math.abs(dx));
+          bounds.yMin -= (dy >= 0 ? 0 : Math.floor(dy));
+          bounds.yMax += Math.ceil(Math.abs(dy));
+        }
+        return bounds;
+      }
     },
     __glue__: {
       native: {
         instance: {
-          distance: {
-            get: function distance() { return this._distance; },
-            set: function distance(value) { this._distance = value; }
+          alpha: {
+            get: function alpha() { return this._alpha; },
+            set: function alpha(value) { this._alpha = clamp(value, 0, 1); }
           },
           angle: {
             get: function angle() { return this._angle; },
-            set: function angle(value) { this._angle = value; }
+            set: function angle(value) { this._angle = value % 360; }
+          },
+          blurX: {
+            get: function blurX() { return this._blurX; },
+            set: function blurX(value) { this._blurX = clamp(value, 0, 255); }
+          },
+          blurY: {
+            get: function blurY() { return this._blurY; },
+            set: function blurY(value) { this._blurY = clamp(value, 0, 255); }
           },
           color: {
             get: function color() { return this._color; },
             set: function color(value) { this._color = value; }
           },
-          alpha: {
-            get: function alpha() { return this._alpha; },
-            set: function alpha(value) { this._alpha = value; }
-          },
-          blurX: {
-            get: function blurX() { return this._blurX; },
-            set: function blurX(value) { this._blurX = value; }
-          },
-          blurY: {
-            get: function blurY() { return this._blurY; },
-            set: function blurY(value) { this._blurY = value; }
+          distance: {
+            get: function distance() { return this._distance; },
+            set: function distance(value) { this._distance = value; }
           },
           hideObject: {
             get: function hideObject() { return this._hideObject; },
@@ -75,11 +82,11 @@ var DropShadowFilterDefinition = (function () {
           },
           quality: {
             get: function quality() { return this._quality; },
-            set: function quality(value) { this._quality = value; }
+            set: function quality(value) { this._quality = clamp(value, 0, 15); }
           },
           strength: {
             get: function strength() { return this._strength; },
-            set: function strength(value) { this._strength = value; }
+            set: function strength(value) { this._strength = clamp(value, 0, 255); }
           }
         }
       }
