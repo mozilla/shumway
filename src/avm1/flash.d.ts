@@ -24,12 +24,19 @@ declare module Shumway.AVM2.AS.flash {
       addChildAtDepth(child, depth: number);
       getChildAt(depth: number): any;
     }
-    class Loader {}
+    class Loader extends ASNative {}
     class BitmapData extends ASNative {}
     class Bitmap extends ASNative {
       constructor();
     }
     class SimpleButton extends ASNative {}
+  }
+  module geom {
+    class ColorTransform extends ASNative {}
+    class Matrix extends ASNative {}
+    class Point extends ASNative {}
+    class Rectangle extends ASNative {}
+    class Transform extends ASNative {}
   }
   module text {
     class TextField extends ASNative {
