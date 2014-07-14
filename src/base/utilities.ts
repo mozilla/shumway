@@ -2843,6 +2843,19 @@ module Shumway {
       }
     }
 
+    /**
+     * The blending equation for unpremultiplied alpha is:
+     *
+     *   (src.rgb * src.a) + (dst.rgb * (1 - src.a))
+     *
+     * For premultiplied alpha src.rgb and dst.rgb are already
+     * premultiplied by alpha, so the equation becomes:
+     *
+     *   src.rgb + (dst.rgb * (1 - src.a))
+     *
+     * TODO: Not sure what to do about the dst.rgb which is
+     * premultiplied by its alpah, but this appears to work.
+     */
     export function blendPremultipliedBGRA(tpBGRA, spBGRA) {
       var ta = (tpBGRA >>  0) & 0xff;
       var tr = (tpBGRA >>  8) & 0xff;
