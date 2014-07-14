@@ -668,6 +668,7 @@ module Shumway.AVM1 {
         var savedIsActive = currentContext.isActive;
         var savedDefaultTarget = currentContext.defaultTarget;
         var savedCurrentTarget = currentContext.currentTarget;
+        var result;
         var caughtError;
         try {
           // switching contexts if called outside main thread
@@ -681,12 +682,10 @@ module Shumway.AVM1 {
           currentContext.defaultTarget = defaultTarget;
           currentContext.currentTarget = null;
           actionTracer.indent();
-          currentContext.stackDepth++;
-          if (currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
+          if (++currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
             throw new AS2CriticalError('long running script -- AVM1 recursion limit is reached');
           }
-          return interpretActions(actionsData, newScopeContainer,
-            constantPool, registers);
+          result = interpretActions(actionsData, newScopeContainer, constantPool, registers);
         } catch (e) {
           caughtError = e;
         }
@@ -700,6 +699,7 @@ module Shumway.AVM1 {
           // Note: this doesn't use `finally` because that's a no-go for performance.
           throw caughtError;
         }
+        return result;
       });
 
       ownerClass = fn;
