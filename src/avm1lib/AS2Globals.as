@@ -20,7 +20,10 @@ import flash.display.MovieClip;
 import flash.events.Event;
 import flash.external.ExternalInterface;
 import flash.geom.ColorTransform;
+import flash.geom.Matrix;
+import flash.geom.Point;
 import flash.geom.Rectangle;
+import flash.geom.Transform;
 import flash.media.Sound;
 import flash.media.SoundMixer;
 import flash.net.SharedObject;
@@ -61,7 +64,13 @@ public dynamic class AS2Globals {
         ExternalInterface: ExternalInterface
       },
       filters: {},
-      geom: {},
+      geom: {
+        ColorTransform: ColorTransform,
+        Matrix: Matrix,
+        Point: Point,
+        Rectangle: Rectangle,
+        Transform: Transform
+      },
       text: {}
     };
   }
@@ -321,7 +330,7 @@ public dynamic class AS2Globals {
   public function startDrag(target, lock, left, top, right, bottom) {
     var nativeTarget = AS2Utils.resolveTarget(target);
     nativeTarget.startDrag(lock, arguments.length < 3 ? null :
-      new flash.geom.Rectangle(left, top, right - left, bottom - top));
+      new Rectangle(left, top, right - left, bottom - top));
   }
   public function stop() {
     var nativeTarget = AS2Utils.resolveTarget();
@@ -392,9 +401,6 @@ public dynamic class AS2Globals {
   public var SharedObject:Class = SharedObject;
   public var ContextMenu:Class = ContextMenu;
   public var ContextMenuItem:Class = ContextMenuItem;
-  public var ColorTransform:Class = ColorTransform;
-  public var Point:Class = flash.geom.Point;
-  public var Rectangle:Class = Rectangle;
   public var TextFormat:Class = TextFormat;
 
   private static native function _addInternalClasses(proto:Object):void;
