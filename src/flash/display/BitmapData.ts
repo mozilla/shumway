@@ -43,7 +43,7 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: Shumway.Timeline.BitmapSymbol) {
       this._symbol = symbol;
     }
-    
+
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // ["rect"];
 
@@ -51,8 +51,8 @@ module Shumway.AVM2.AS.flash.display {
     static MAXIMUM_HEIGHT: number = 8191;
     static MAXIMUM_DIMENSION: number = 16777215;
 
-    constructor(width:number /*int*/, height:number /*int*/, transparent:boolean = true,
-                fillColorARGB:number /*uint*/ = 4294967295)
+    constructor(width: number /*int*/, height: number /*int*/, transparent: boolean = true,
+                fillColorARGB: number /*uint*/ = 4294967295)
     {
       width = width | 0;
       height = height | 0;
@@ -95,7 +95,7 @@ module Shumway.AVM2.AS.flash.display {
       this._dataBuffer = DataBuffer.FromArrayBuffer(this._data.buffer);
       this._isDirty = true;
     }
-    
+
     _transparent: boolean;
     _rect: flash.geom.Rectangle;
 
@@ -226,7 +226,8 @@ module Shumway.AVM2.AS.flash.display {
      * Returns an straight alpha RGB pixel value 0x00RRGGBB.
      */
     getPixel(x: number /*int*/, y: number /*int*/): number /*uint*/ {
-      x = x | 0; y = y | 0;
+      x = x | 0;
+      y = y | 0;
       return this.getPixel32(x, y) & 0x00ffffff;
     }
 
@@ -234,7 +235,8 @@ module Shumway.AVM2.AS.flash.display {
      * Returns an straight alpha ARGB pixel value 0xAARRGGBB.
      */
     getPixel32(x: number /*int*/, y: number /*int*/): number /*uint*/ {
-      x = x | 0; y = y | 0;
+      x = x | 0;
+      y = y | 0;
       if (!this._rect.contains(x, y)) {
         return 0;
       }
@@ -245,7 +247,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
-      x = x | 0; y = y | 0; uARGB = uARGB | 0;
+      x = x | 0;
+      y = y | 0;
+      uARGB = uARGB | 0;
       if (!this._rect.contains(x, y)) {
         return;
       }
@@ -258,7 +262,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     setPixel32(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
-      x = x | 0; y = y | 0;
+      x = x | 0;
+      y = y | 0;
       if (!this._rect.contains(x, y)) {
         return;
       }
@@ -274,8 +279,8 @@ module Shumway.AVM2.AS.flash.display {
       this._isDirty = true;
     }
 
-    applyFilter(sourceBitmapData:flash.display.BitmapData, sourceRect:flash.geom.Rectangle,
-                destPoint:flash.geom.Point, filter:flash.filters.BitmapFilter):void {
+    applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
+                destPoint: flash.geom.Point, filter: flash.filters.BitmapFilter): void {
       sourceBitmapData = sourceBitmapData;
       sourceRect = sourceRect;
       destPoint = destPoint;
@@ -284,22 +289,22 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    colorTransform(rect:flash.geom.Rectangle, colorTransform:flash.geom.ColorTransform):void {
+    colorTransform(rect: flash.geom.Rectangle, colorTransform: flash.geom.ColorTransform): void {
       rect = rect;
       colorTransform = colorTransform;
       somewhatImplemented("public flash.display.BitmapData::colorTransform");
       return;
     }
 
-    compare(otherBitmapData:flash.display.BitmapData):ASObject {
+    compare(otherBitmapData: flash.display.BitmapData): ASObject {
       otherBitmapData = otherBitmapData;
       notImplemented("public flash.display.BitmapData::compare");
       return;
     }
 
-    copyChannel(sourceBitmapData:flash.display.BitmapData, sourceRect:flash.geom.Rectangle,
-                destPoint:flash.geom.Point, sourceChannel:number /*uint*/, destChannel:number
-                /*uint*/):void {
+    copyChannel(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
+                destPoint: flash.geom.Point, sourceChannel: number /*uint*/, destChannel: number
+                /*uint*/): void {
       sourceBitmapData = sourceBitmapData;
       sourceRect = sourceRect;
       destPoint = destPoint;
@@ -312,12 +317,12 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Copies a rectangular region of pixels into the current bitmap data.
      */
-    copyPixels(sourceBitmapData:flash.display.BitmapData,
-               sourceRect:flash.geom.Rectangle,
-               destPoint:flash.geom.Point,
-               alphaBitmapData:flash.display.BitmapData = null,
-               alphaPoint:flash.geom.Point = null,
-               mergeAlpha:boolean = false):void
+    copyPixels(sourceBitmapData: flash.display.BitmapData,
+               sourceRect: flash.geom.Rectangle,
+               destPoint: flash.geom.Point,
+               alphaBitmapData: flash.display.BitmapData = null,
+               alphaPoint: flash.geom.Point = null,
+               mergeAlpha: boolean = false): void
     {
       enterTimeline("BitmapData.copyPixels");
       mergeAlpha = !!mergeAlpha;
@@ -414,21 +419,21 @@ module Shumway.AVM2.AS.flash.display {
       this._isDirty = true;
     }
 
-    draw(source:flash.display.IBitmapDrawable, matrix:flash.geom.Matrix = null,
-         colorTransform:flash.geom.ColorTransform = null, blendMode:string = null,
-         clipRect:flash.geom.Rectangle = null, smoothing:boolean = false):void {
+    draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null,
+         colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
+         clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
       somewhatImplemented("public flash.display.BitmapData::draw");
-      var serializer : IBitmapDataSerializer = AVM2.instance.globals['Shumway.Player.Utils'];
+      var serializer: IBitmapDataSerializer = AVM2.instance.globals['Shumway.Player.Utils'];
       if (matrix) {
         matrix = matrix.clone().toTwipsInPlace();
       }
       serializer.drawToBitmap(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }
 
-    drawWithQuality(source:flash.display.IBitmapDrawable, matrix:flash.geom.Matrix = null,
-                    colorTransform:flash.geom.ColorTransform = null, blendMode:string = null,
-                    clipRect:flash.geom.Rectangle = null, smoothing:boolean = false,
-                    quality:string = null):void {
+    drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null,
+                    colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
+                    clipRect: flash.geom.Rectangle = null, smoothing: boolean = false,
+                    quality: string = null): void {
       source = source;
       matrix = matrix;
       colorTransform = colorTransform;
@@ -467,7 +472,7 @@ module Shumway.AVM2.AS.flash.display {
       this._isDirty = true;
     }
 
-    floodFill(x:number /*int*/, y:number /*int*/, color:number /*uint*/):void {
+    floodFill(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
       x = x | 0;
       y = y | 0;
       color = color >>> 0;
@@ -475,16 +480,16 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    generateFilterRect(sourceRect:flash.geom.Rectangle,
-                       filter:flash.filters.BitmapFilter):flash.geom.Rectangle {
+    generateFilterRect(sourceRect: flash.geom.Rectangle,
+                       filter: flash.filters.BitmapFilter): flash.geom.Rectangle {
       sourceRect = sourceRect;
       filter = filter;
       notImplemented("public flash.display.BitmapData::generateFilterRect");
       return;
     }
 
-    getColorBoundsRect(mask:number /*uint*/, color:number /*uint*/,
-                       findColor:boolean = true):flash.geom.Rectangle {
+    getColorBoundsRect(mask: number /*uint*/, color: number /*uint*/,
+                       findColor: boolean = true): flash.geom.Rectangle {
       mask = mask >>> 0;
       color = color >>> 0;
       findColor = !!findColor;
@@ -492,13 +497,13 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    getPixels(rect:flash.geom.Rectangle):flash.utils.ByteArray {
+    getPixels(rect: flash.geom.Rectangle): flash.utils.ByteArray {
       var outputByteArray = new flash.utils.ByteArray();
       this.copyPixelsToByteArray(rect, outputByteArray);
       return outputByteArray;
     }
 
-    copyPixelsToByteArray(rect:flash.geom.Rectangle, data:flash.utils.ByteArray):void {
+    copyPixelsToByteArray(rect: flash.geom.Rectangle, data: flash.utils.ByteArray): void {
       var pixelData = this._getPixelData(rect);
       if (!pixelData) {
         return;
@@ -506,7 +511,7 @@ module Shumway.AVM2.AS.flash.display {
       data.writeRawBytes(new Uint8Array(pixelData));
     }
 
-    getVector(rect:flash.geom.Rectangle):Uint32Vector {
+    getVector(rect: flash.geom.Rectangle): Uint32Vector {
       var outputVector = new Uint32Vector(pixelData.length);
       var pixelData = this._getPixelData(rect);
       if (!pixelData) {
@@ -517,9 +522,10 @@ module Shumway.AVM2.AS.flash.display {
       return outputVector;
     }
 
-    hitTest(firstPoint:flash.geom.Point, firstAlphaThreshold:number /*uint*/, secondObject:ASObject,
-            secondBitmapDataPoint:flash.geom.Point = null,
-            secondAlphaThreshold:number /*uint*/ = 1):boolean {
+    hitTest(firstPoint: flash.geom.Point, firstAlphaThreshold: number /*uint*/,
+            secondObject: ASObject,
+            secondBitmapDataPoint: flash.geom.Point = null,
+            secondAlphaThreshold: number /*uint*/ = 1): boolean {
       firstPoint = firstPoint;
       firstAlphaThreshold = firstAlphaThreshold >>> 0;
       secondObject = secondObject;
@@ -529,9 +535,9 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    merge(sourceBitmapData:flash.display.BitmapData, sourceRect:flash.geom.Rectangle,
-          destPoint:flash.geom.Point, redMultiplier:number /*uint*/, greenMultiplier:number
-          /*uint*/, blueMultiplier:number /*uint*/, alphaMultiplier:number /*uint*/):void {
+    merge(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
+          destPoint: flash.geom.Point, redMultiplier: number /*uint*/, greenMultiplier: number
+          /*uint*/, blueMultiplier: number /*uint*/, alphaMultiplier: number /*uint*/): void {
       sourceBitmapData = sourceBitmapData;
       sourceRect = sourceRect;
       destPoint = destPoint;
@@ -542,8 +548,8 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.BitmapData::merge");
     }
 
-    noise(randomSeed:number /*int*/, low:number /*uint*/ = 0, high:number /*uint*/ = 255,
-          channelOptions:number /*uint*/ = 7, grayScale:boolean = false):void {
+    noise(randomSeed: number /*int*/, low: number /*uint*/ = 0, high: number /*uint*/ = 255,
+          channelOptions: number /*uint*/ = 7, grayScale: boolean = false): void {
       randomSeed = randomSeed | 0;
       low = low >>> 0;
       high = high >>> 0;
@@ -552,9 +558,9 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.BitmapData::noise");
     }
 
-    paletteMap(sourceBitmapData:flash.display.BitmapData, sourceRect:flash.geom.Rectangle,
-               destPoint:flash.geom.Point, redArray:any [] = null, greenArray:any [] = null,
-               blueArray:any [] = null, alphaArray:any [] = null):void {
+    paletteMap(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
+               destPoint: flash.geom.Point, redArray: any [] = null, greenArray: any [] = null,
+               blueArray: any [] = null, alphaArray: any [] = null): void {
       sourceBitmapData = sourceBitmapData;
       sourceRect = sourceRect;
       destPoint = destPoint;
@@ -565,9 +571,10 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.BitmapData::paletteMap");
     }
 
-    perlinNoise(baseX:number, baseY:number, numOctaves:number /*uint*/, randomSeed:number /*int*/,
-                stitch:boolean, fractalNoise:boolean, channelOptions:number /*uint*/ = 7,
-                grayScale:boolean = false, offsets:any [] = null):void {
+    perlinNoise(baseX: number, baseY: number, numOctaves: number /*uint*/, randomSeed: number
+                /*int*/,
+                stitch: boolean, fractalNoise: boolean, channelOptions: number /*uint*/ = 7,
+                grayScale: boolean = false, offsets: any [] = null): void {
       baseX = +baseX;
       baseY = +baseY;
       numOctaves = numOctaves >>> 0;
@@ -580,9 +587,9 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.BitmapData::perlinNoise");
     }
 
-    pixelDissolve(sourceBitmapData:flash.display.BitmapData, sourceRect:flash.geom.Rectangle,
-                  destPoint:flash.geom.Point, randomSeed:number /*int*/ = 0,
-                  numPixels:number /*int*/ = 0, fillColor:number /*uint*/ = 0):number /*int*/ {
+    pixelDissolve(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
+                  destPoint: flash.geom.Point, randomSeed: number /*int*/ = 0,
+                  numPixels: number /*int*/ = 0, fillColor: number /*uint*/ = 0): number /*int*/ {
       sourceBitmapData = sourceBitmapData;
       sourceRect = sourceRect;
       destPoint = destPoint;
@@ -593,25 +600,25 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    scroll(x:number /*int*/, y:number /*int*/):void {
+    scroll(x: number /*int*/, y: number /*int*/): void {
       x = x | 0;
       y = y | 0;
       notImplemented("public flash.display.BitmapData::scroll");
       return;
     }
 
-    setPixels(rect:flash.geom.Rectangle, inputByteArray:flash.utils.ByteArray):void {
+    setPixels(rect: flash.geom.Rectangle, inputByteArray: flash.utils.ByteArray): void {
       this._putPixelData(rect, new Int32Array(inputByteArray.readRawBytes()));
     }
 
-    setVector(rect:flash.geom.Rectangle, inputVector:Uint32Vector):void {
+    setVector(rect: flash.geom.Rectangle, inputVector: Uint32Vector): void {
       this._putPixelData(rect, inputVector._view());
     }
 
-    threshold(sourceBitmapData:flash.display.BitmapData, sourceRect:flash.geom.Rectangle,
-              destPoint:flash.geom.Point, operation:string, threshold:number /*uint*/,
-              color:number /*uint*/ = 0, mask:number /*uint*/ = 4294967295,
-              copySource:boolean = false):number /*uint*/ {
+    threshold(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
+              destPoint: flash.geom.Point, operation: string, threshold: number /*uint*/,
+              color: number /*uint*/ = 0, mask: number /*uint*/ = 4294967295,
+              copySource: boolean = false): number /*uint*/ {
       sourceBitmapData = sourceBitmapData;
       sourceRect = sourceRect;
       destPoint = destPoint;
@@ -624,23 +631,23 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    lock():void {
+    lock(): void {
       this._locked = true;
     }
 
-    unlock(changeRect:flash.geom.Rectangle = null):void {
+    unlock(changeRect: flash.geom.Rectangle = null): void {
       //changeRect = changeRect;
       this._locked = false;
     }
 
-    histogram(hRect:flash.geom.Rectangle = null):ASVector<any> {
+    histogram(hRect: flash.geom.Rectangle = null): ASVector<any> {
       hRect = hRect;
       notImplemented("public flash.display.BitmapData::histogram");
       return;
     }
 
-    encode(rect:flash.geom.Rectangle, compressor:ASObject,
-           byteArray:flash.utils.ByteArray = null):flash.utils.ByteArray {
+    encode(rect: flash.geom.Rectangle, compressor: ASObject,
+           byteArray: flash.utils.ByteArray = null): flash.utils.ByteArray {
       rect = rect;
       compressor = compressor;
       byteArray = byteArray;
@@ -650,8 +657,8 @@ module Shumway.AVM2.AS.flash.display {
   }
 
   export interface IBitmapDataSerializer {
-    drawToBitmap(bitmapData:flash.display.BitmapData, source:flash.display.IBitmapDrawable,
-                 matrix:flash.geom.Matrix, colorTransform:flash.geom.ColorTransform,
-                 blendMode:string, clipRect:flash.geom.Rectangle, smoothing:boolean);
+    drawToBitmap(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable,
+                 matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform,
+                 blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
   }
 }
