@@ -16,6 +16,10 @@
 
 package avm1lib {
 import flash.display.BitmapData;
+import flash.display.IBitmapDrawable;
+import flash.geom.ColorTransform;
+import flash.geom.Matrix;
+import flash.geom.Rectangle;
 
 [native(cls="AS2BitmapData")]
 public dynamic class AS2BitmapData extends BitmapData {
@@ -23,6 +27,18 @@ public dynamic class AS2BitmapData extends BitmapData {
                                        fillColor:uint = 4294967295)
   {
     super(width, height, transparent, fillColor);
+  }
+
+  public override function draw(source:IBitmapDrawable,
+                                matrix:Matrix = null,
+                                colorTransform:ColorTransform = null,
+                                blendMode:String = null, clipRect:Rectangle = null,
+                                smoothing:Boolean = false):void
+  {
+    if (source is AS2MovieClip) {
+      source = AS2MovieClip(source)._as3Object;
+    }
+    super.draw(source, matrix, colorTransform, blendMode, clipRect, smoothing);
   }
 
   public static native function loadBitmap(id: String): BitmapData;
