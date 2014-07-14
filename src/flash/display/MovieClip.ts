@@ -522,6 +522,33 @@ module Shumway.AVM2.AS.flash.display {
       scripts.push(actionsData);
     }
 
+    /**
+     * InitActionBlocks are executed once, before the children are initialized for a frame.
+     * That matches AS3's enterFrame event, so we can add an event listener that just bails
+     * as long as the target frame isn't reached, and executes the InitActionBlocks once it is.
+     *
+     * After that, the listener removes itself.
+     */
+    addAS2InitActionBlocks(frameIndex: number, actionsBlocks: {actionsData:Uint8Array}[]): void {
+      var self: MovieClip = this;
+      function listener (e) {
+        if (self._currentFrame !== frameIndex + 1) {
+          return;
+        }
+        self.removeEventListener('enterFrame', listener);
+
+        var avm1Context = self.loaderInfo._avm1Context;
+        var as2Object = Shumway.AVM1.getAS2Object(self);
+        var stage = self.stage;
+        for (var i = 0; i < actionsBlocks.length; i++) {
+          var actionsData = new AVM1.AS2ActionsData(actionsBlocks[i].actionsData,
+                                                    'f' + frameIndex + 'i' + i);
+          avm1Context.executeActions(actionsData, stage, as2Object);
+        }
+      }
+      this.addEventListener('enterFrame', listener);
+    }
+
     private _executeAS2FrameScripts() {
       var avm1Context = this.loaderInfo._avm1Context;
       var as2Object = Shumway.AVM1.getAS2Object(this);
