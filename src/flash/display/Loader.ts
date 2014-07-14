@@ -464,22 +464,8 @@ module Shumway.AVM2.AS.flash.display {
       var initActionBlocks: any[] = frameData.initActionBlocks;
       var actionBlocks: any[] = frameData.actionBlocks;
 
-      var loaderInfo = this._contentLoaderInfo;
       if (initActionBlocks) {
-        // HACK using symbol init actions as regular action blocks, the spec has a note
-        // "DoAction tag is not the same as specifying them in a DoInitAction tag"
-        for (var i = 0; i < initActionBlocks.length; i++) {
-          var spriteId = initActionBlocks[i].spriteId;
-          var actionsData = new AVM1.AS2ActionsData(initActionBlocks[i].actionsData,
-            'f' + frameIndex + 's' + spriteId + 'i' + i);
-          root.addFrameScript(frameIndex, function(actionsData, spriteId, state) {
-            if (state.executed) return;
-            state.executed = true;
-            var avm1Context = loaderInfo._avm1Context;
-            var as2Object = Shumway.AVM1.getAS2Object(root);
-            return avm1Context.executeActions(actionsData, root.stage, as2Object);
-          }.bind(null, actionsData, spriteId, {executed: false}));
-        }
+        root.addAS2InitActionBlocks(frameIndex, initActionBlocks);
       }
 
       if (actionBlocks) {

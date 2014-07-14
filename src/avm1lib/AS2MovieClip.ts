@@ -107,7 +107,8 @@ module Shumway.AVM2.AS.avm1lib {
       var nativeObject = this._nativeAS3Object;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
         var child = nativeObject.getChildAt(i);
-        if (child._depth === depth) {
+        // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
+        if (child && child._depth === depth) {
           // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
           if (flash.display.Bitmap.isType(child)) {
             return this;
