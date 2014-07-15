@@ -1075,6 +1075,18 @@ module Shumway {
       }
       return o;
     }
+
+    export function indexOfAny(s: string, chars: string [], position: number) {
+      var index = s.length;
+      for (var i = 0; i < chars.length; i++) {
+        var j = s.indexOf(chars[i], position);
+        if (j >= 0) {
+          index = Math.min(index, j);
+        }
+      }
+      return index === s.length ? -1 : index;
+    }
+
   }
 
   export module HashUtilities {
