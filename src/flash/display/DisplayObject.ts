@@ -873,6 +873,9 @@ module Shumway.AVM2.AS.flash.display {
 
     /**
      * Marks this object as having its matrix changed.
+     *
+     * Propagates flags both up- and (via invalidatePosition) downwards, so is quite costly.
+     * TODO: check if we can usefully combine all upwards-propagated flags here.
      */
     private _invalidateMatrix() {
       this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
@@ -880,6 +883,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._parent) {
         this._parent._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
       }
+      this._invalidatePosition();
     }
 
     /**
@@ -989,7 +993,6 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._scaleX = value;
       this._invalidateMatrix();
-      this._invalidatePosition();
     }
 
     get scaleY(): number {
@@ -1004,7 +1007,6 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._scaleY = value;
       this._invalidateMatrix();
-      this._invalidatePosition();
     }
 
     get scaleZ(): number {
@@ -1029,7 +1031,6 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._rotation = value;
       this._invalidateMatrix();
-      this._invalidatePosition();
     }
 
     get rotationX(): number {
@@ -1094,7 +1095,6 @@ module Shumway.AVM2.AS.flash.display {
       this._scaleY = bounds.height / baseHeight;
       this._scaleX = value / baseWidth;
       this._invalidateMatrix();
-      this._invalidatePosition();
     }
 
     /**
@@ -1132,7 +1132,6 @@ module Shumway.AVM2.AS.flash.display {
       this._scaleY = value / baseHeight;
       this._scaleX = bounds.width / baseWidth;
       this._invalidateMatrix();
-      this._invalidatePosition();
     }
 
     get mask(): DisplayObject {
