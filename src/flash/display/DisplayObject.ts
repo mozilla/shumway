@@ -783,7 +783,7 @@ module Shumway.AVM2.AS.flash.display {
       this._colorTransform.copyFrom(colorTransform);
       this._colorTransform.convertToFixedPoint();
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
-      this._dirtyColorTransform();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
     }
 
     /**
@@ -876,13 +876,6 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _dirtyMatrix() {
       this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
-    }
-
-    /**
-     * Sets the |DirtyColorTransform| flag.
-     */
-    private _dirtyColorTransform() {
-      this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
     }
 
     /**
