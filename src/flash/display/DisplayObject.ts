@@ -37,11 +37,6 @@ module Shumway.AVM2.AS.flash.display {
   import geom = flash.geom;
   import events = flash.events;
 
-  export enum Direction {
-    Upward     = 1,
-    Downward   = 2
-  }
-
   /*
    * Invalid Bits:
    *
@@ -469,7 +464,7 @@ module Shumway.AVM2.AS.flash.display {
     _setDirtyFlags(flags: DisplayObjectFlags) {
       this._displayObjectFlags |= flags;
       if (this._parent) {
-        this._parent._propagateFlags(DisplayObjectFlags.DirtyChildren, Direction.Upward);
+        this._parent._propagateFlagsUp(DisplayObjectFlags.DirtyChildren);
       }
     }
 
@@ -494,35 +489,26 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Propagates flags up and down the the display list. Flags propagation stops if the flags are
-     * already set.
+     * Propagates flags up the display list. Propagation stops if all flags are already set.
      */
-    _propagateFlags(flags: DisplayObjectFlags, direction: Direction) {
-      // Multiple flags can be passed here, stop propagation when all the flags are set.
+    _propagateFlagsUp(flags: DisplayObjectFlags) {
       if (this._hasFlags(flags)) {
         return;
       }
       this._setFlags(flags);
-
-      if (direction & Direction.Upward) {
-        var node = this._parent;
-        while (node) {
-          node._setFlags(flags);
-          node = node._parent;
-        }
+      var parent = this._parent;
+      if (parent) {
+        parent._propagateFlagsUp(flags);
       }
+    }
 
-      if (direction & Direction.Downward) {
-        if (DisplayObjectContainer.isType(this)) {
-          var children = (<DisplayObjectContainer>this)._children;
-          for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-            if (!child._hasFlags(flags)) {
-              child._propagateFlags(flags, Direction.Downward);
-            }
-          }
-        }
-      }
+    /**
+     * Propagates flags down the display list. Non-containers just set the flags on themselves.
+     *
+     * Overridden in DisplayObjectContainer.
+     */
+    _propagateFlagsDown(flags: DisplayObjectFlags) {
+      this._setFlags(flags);
     }
 
     // AS -> JS Bindings
@@ -782,7 +768,7 @@ module Shumway.AVM2.AS.flash.display {
     _setColorTransform(colorTransform: flash.geom.ColorTransform) {
       this._colorTransform.copyFrom(colorTransform);
       this._colorTransform.convertToFixedPoint();
-      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
+      this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedColorTransform);
       this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
     }
 
@@ -793,8 +779,8 @@ module Shumway.AVM2.AS.flash.display {
       /* TODO: We should only propagate this bit if the bounds are actually changed. We can do the
        * bounds computation eagerly if the number of children is low. If there are no changes in the
        * bounds we don't need to propagate the bit. */
-      this._propagateFlags(DisplayObjectFlags.InvalidLineBounds |
-                           DisplayObjectFlags.InvalidFillBounds, Direction.Upward);
+      this._propagateFlagsUp(DisplayObjectFlags.InvalidLineBounds |
+                             DisplayObjectFlags.InvalidFillBounds);
     }
 
     _invalidateParentFillAndLineBounds(): void {
@@ -887,9 +873,8 @@ module Shumway.AVM2.AS.flash.display {
      * Marks this object as having been moved in its parent display object.
      */
     _invalidatePosition() {
-      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix |
-                           DisplayObjectFlags.InvalidInvertedConcatenatedMatrix,
-                           Direction.Downward);
+      this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedMatrix |
+                               DisplayObjectFlags.InvalidInvertedConcatenatedMatrix);
       this._invalidateParentFillAndLineBounds();
     }
 
@@ -1226,7 +1211,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._colorTransform.alphaMultiplier = value;
       this._colorTransform.convertToFixedPoint();
-      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
+      this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedColorTransform);
       this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
     }
 
