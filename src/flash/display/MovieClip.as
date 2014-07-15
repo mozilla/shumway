@@ -17,7 +17,7 @@
 package flash.display {
 [native(cls='MovieClipClass')]
 public dynamic class MovieClip extends Sprite {
-  public function MovieClip() {}
+  public native function MovieClip();
   public native function get currentFrame():int;
   public native function get framesLoaded():int;
   public native function get totalFrames():int;
