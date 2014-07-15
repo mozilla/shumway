@@ -37,7 +37,10 @@ module Shumway.AVM2.AS.flash.display {
    * we don't have to do unecessary byte conversions.
    */
   export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
-    static classInitializer: any = null;
+
+    static classInitializer: any = function () {
+      ensureInverseSourceAlphaTable();
+    };
 
     _symbol: Shumway.Timeline.BitmapSymbol;
     static initializer: any = function (symbol: Shumway.Timeline.BitmapSymbol) {
