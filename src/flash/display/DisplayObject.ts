@@ -200,11 +200,6 @@ module Shumway.AVM2.AS.flash.display {
     DirtyMiscellaneousProperties              = 0x10000000,
 
     /**
-     * Display object has changed since the last time it was drawn.
-     */
-    DirtyPaint                                = 0x0080,
-
-    /**
      * All synchronizable properties are dirty.
      */
     Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyTextContent | DirtyBitmapData | DirtyColorTransform | DirtyMask | DirtyMiscellaneousProperties
@@ -789,7 +784,6 @@ module Shumway.AVM2.AS.flash.display {
       this._colorTransform.convertToFixedPoint();
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
       this._dirtyColorTransform();
-      this._invalidatePaint();
     }
 
     /**
@@ -870,13 +864,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Marks this object as needing to be repainted.
-     */
-    _invalidatePaint() {
-      this._propagateFlags(DisplayObjectFlags.DirtyPaint, Direction.Upward);
-    }
-
-    /**
      * Detaches this object from being animated by the timeline. This happens whenever a display
      * property of this object is changed by user code.
      */
@@ -951,7 +938,6 @@ module Shumway.AVM2.AS.flash.display {
         this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
       }
       // TODO: state.events
-      this._invalidatePaint();
     }
 
     /**
@@ -1265,7 +1251,6 @@ module Shumway.AVM2.AS.flash.display {
       this._colorTransform.alphaMultiplier = value;
       this._colorTransform.convertToFixedPoint();
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
-      this._invalidatePaint();
       this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
     }
 
@@ -1283,7 +1268,6 @@ module Shumway.AVM2.AS.flash.display {
         throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
       this._blendMode = value;
-      this._invalidatePaint();
       this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
@@ -1294,8 +1278,7 @@ module Shumway.AVM2.AS.flash.display {
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
       this._stopTimelineAnimation();
       this._scale9Grid = Bounds.FromRectangle(innerRectangle);
-      // VERIFY: Can we get away with only invalidating paint? Can mutating this property ever change the bounds?
-      this._invalidatePaint();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
     get cacheAsBitmap(): boolean {
@@ -1303,17 +1286,17 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set cacheAsBitmap(value: boolean) {
+      if (this._hasFlags(DisplayObjectFlags.CacheAsBitmap)) {
+        return;
+      }
       this._toggleFlags(DisplayObjectFlags.CacheAsBitmap, !!value);
-      // VERIFY: Can we get away with only invalidating paint? Can mutating this property ever change the bounds,
-      // maybe because of pixel snapping?
-      this._invalidatePaint();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
-    /*
+    /**
      * References to the internal |_filters| array and its BitmapFilter objects are never leaked outside of this
      * class. The get/set filters accessors always return deep clones of this array.
      */
-
     get filters(): flash.filters.BitmapFilter [] {
       return this._filters.map(function (x: flash.filters.BitmapFilter) {
         return x.clone();
@@ -1321,14 +1304,19 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set filters(value: flash.filters.BitmapFilter []) {
-      this._invalidatePaint();
+      var changed = false;
       if (isNullOrUndefined(value)) {
+        changed = this.filters.length > 0;
         this._filters.length = 0;
       } else {
         this._filters = value.map(function (x: flash.filters.BitmapFilter) {
           release || assert (flash.filters.BitmapFilter.isType(x));
           return x.clone();
         });
+        changed = true;
+      }
+      if (changed) {
+        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
       }
     }
 
