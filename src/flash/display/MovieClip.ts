@@ -374,6 +374,12 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _sceneForFrameIndex(frameIndex: number) : Scene {
       var scenes = this._scenes;
+      // A gotoAnd* might be invoked by script before the first advanceFrame call. In that case,
+      // _currentFrame is 0, which means this function is called with frameIndex being 0.
+      // We just return the first scene in that case.
+      if (frameIndex === 0) {
+        return scenes[0];
+      }
       for (var i = 0; i < scenes.length; i++) {
         var scene = scenes[i];
         if (scene.offset < frameIndex && scene.offset + scene.numFrames >= frameIndex) {
