@@ -727,7 +727,7 @@ module Shumway.AVM2.AS.flash.display {
       this._rotation = DisplayObject._clampRotation(matrix.getRotation() * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       this._setFlags(DisplayObjectFlags.InvalidInvertedMatrix);
-      this._dirtyMatrix();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
       this._invalidatePosition();
     }
 
@@ -872,17 +872,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Sets the |DirtyMatrix| flag.
-     */
-    private _dirtyMatrix() {
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
-    }
-
-    /**
      * Marks this object as having its matrix changed.
      */
     private _invalidateMatrix() {
-      this._dirtyMatrix();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
       this._setFlags(DisplayObjectFlags.InvalidMatrix | DisplayObjectFlags.InvalidInvertedMatrix);
       if (this._parent) {
         this._parent._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
@@ -965,7 +958,7 @@ module Shumway.AVM2.AS.flash.display {
       this._matrix.tx = value;
       this._invertedMatrix.tx = -value;
       this._invalidatePosition();
-      this._dirtyMatrix();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
     }
 
     get y(): number {
@@ -981,7 +974,7 @@ module Shumway.AVM2.AS.flash.display {
       this._matrix.ty = value;
       this._invertedMatrix.ty = -value;
       this._invalidatePosition();
-      this._dirtyMatrix();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
     }
 
     get scaleX(): number {
