@@ -174,7 +174,8 @@ module Shumway.Remoting.Player {
         hasRemotableChildren = displayObject._hasAnyFlags (
           DisplayObjectFlags.DirtyChildren     |
           DisplayObjectFlags.DirtyGraphics     |
-          DisplayObjectFlags.DirtyBitmapData
+          DisplayObjectFlags.DirtyBitmapData   |
+          DisplayObjectFlags.DirtyTextContent
         );
         hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
       }

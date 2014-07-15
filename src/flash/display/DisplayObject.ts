@@ -158,7 +158,8 @@ module Shumway.AVM2.AS.flash.display {
     DirtyMatrix                               = 0x100000,
 
     /**
-     * Indicates whether this display object's children list has changed since the last time it was synchronized.
+     * Indicates whether this display object's has dirty descendents. If this flag is not set then the subtree does not
+     * need to be synchronized.
      */
     DirtyChildren                             = 0x200000,
 
@@ -178,31 +179,28 @@ module Shumway.AVM2.AS.flash.display {
     DirtyBitmapData                           = 0x1000000,
 
     /**
-     * Indicates whether this display object's has dirty descendents. If this flag is not set then the subtree does not
-     * need to be synchronized.
-     */
-    DirtyChild                                = 0x2000000,
-
-    /**
      * Indicates whether this display object's color transform has changed since the last time it was synchronized.
      */
-    DirtyColorTransform                       = 0x4000000,
+    DirtyColorTransform                       = 0x2000000,
 
     /**
      * Indicates whether this display object's mask has changed since the last time it was synchronized.
      */
-    DirtyMask                                 = 0x8000000,
+    DirtyMask                                 = 0x4000000,
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
      * bits so we don't serialize as much.
      */
-    DirtyMiscellaneousProperties              = 0x10000000,
+    DirtyMiscellaneousProperties              = 0x8000000,
 
     /**
      * All synchronizable properties are dirty.
      */
-    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyTextContent | DirtyBitmapData | DirtyColorTransform | DirtyMask | DirtyMiscellaneousProperties
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyGraphics |
+                                                DirtyTextContent | DirtyBitmapData |
+                                                DirtyColorTransform | DirtyMask |
+                                                DirtyMiscellaneousProperties
   }
 
   /**
@@ -470,7 +468,9 @@ module Shumway.AVM2.AS.flash.display {
      */
     _setDirtyFlags(flags: DisplayObjectFlags) {
       this._displayObjectFlags |= flags;
-      this._dirty();
+      if (this._parent) {
+        this._parent._propagateFlags(DisplayObjectFlags.DirtyChildren, Direction.Upward);
+      }
     }
 
     _toggleFlags(flags: DisplayObjectFlags, on: boolean) {
@@ -880,9 +880,6 @@ module Shumway.AVM2.AS.flash.display {
     private _invalidateMatrix() {
       this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
       this._setFlags(DisplayObjectFlags.InvalidMatrix | DisplayObjectFlags.InvalidInvertedMatrix);
-      if (this._parent) {
-        this._parent._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
-      }
       this._invalidatePosition();
     }
 
@@ -894,12 +891,6 @@ module Shumway.AVM2.AS.flash.display {
                            DisplayObjectFlags.InvalidInvertedConcatenatedMatrix,
                            Direction.Downward);
       this._invalidateParentFillAndLineBounds();
-    }
-
-    _dirty() {
-      if (this._parent) {
-        this._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
-      }
     }
 
     /**
