@@ -56,6 +56,20 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
+     * Propagates flags down the display list. Propagation stops if all flags are already set.
+     */
+    _propagateFlagsDown(flags: DisplayObjectFlags) {
+      if (this._hasFlags(flags)) {
+        return;
+      }
+      this._setFlags(flags);
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        children[i]._propagateFlagsDown(flags);
+      }
+    }
+
+    /**
      * Calls the constructors of new children placed by timeline commands.
      */
     _constructChildren(): void {
