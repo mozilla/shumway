@@ -168,10 +168,7 @@ module Shumway.AVM2.Runtime {
   var vmNextInterpreterFunctionId = 1;
   var vmNextCompiledFunctionId = 1;
 
-  var totalFunctionCount = 0;
   var compiledFunctionCount = 0;
-  var compilationCount = 0;
-
   /**
    * Checks if the specified |object| is the prototype of a native JavaScript object.
    */
@@ -1491,13 +1488,13 @@ module Shumway.AVM2.Runtime {
       fnName += "$V";
     }
     if (!breakpoint) {
-      var breakAt = Shumway.AVM2.Compiler.breakAt.value;
-      if (breakAt && fnName.search(breakAt) >= 0) {
+      var breakFilter = Shumway.AVM2.Compiler.breakFilter.value;
+      if (breakFilter && fnName.search(breakFilter) >= 0) {
         breakpoint = true;
       }
     }
     var body = compilation.body;
-    if (compiledFunctionCount == functionBreak.value || breakpoint) {
+    if (breakpoint) {
       body = "{ debugger; \n" + body + "}";
     }
     if (!cached) {
@@ -1564,39 +1561,21 @@ module Shumway.AVM2.Runtime {
 
     ensureFunctionIsInitialized(mi);
 
-    totalFunctionCount ++;
-
     var useInterpreter = false;
     if ((mi.abc.applicationDomain.mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) && !forceCompile(mi)) {
       useInterpreter = true;
     }
 
-    if (compileOnly.value >= 0) {
-      if (Number(compileOnly.value) !== totalFunctionCount) {
-        log("Compile Only Skipping " + totalFunctionCount);
-        useInterpreter = true;
-      }
-    }
 
-    if (compileUntil.value >= 0) {
-      if (totalFunctionCount > 1000) {
-        log(Shumway.Debug.backtrace());
-        log(AVM2.getStackTrace());
-      }
-      if (totalFunctionCount > compileUntil.value) {
-        log("Compile Until Skipping " + totalFunctionCount);
-        useInterpreter = true;
-      }
+    var compileFilter = Shumway.AVM2.Compiler.compileFilter.value;
+    if (compileFilter && mi.name && Multiname.getQualifiedName(mi.name).search(compileFilter) < 0) {
+      useInterpreter = true;
     }
 
     if (useInterpreter) {
       mi.freeMethod = createInterpretedFunction(mi, scope, hasDynamicScope);
     } else {
       compiledFunctionCount++;
-      // console.info("Compiling: " + mi + " count: " + compiledFunctionCount);
-      if (compileOnly.value >= 0 || compileUntil.value >= 0) {
-        log("Compiling " + totalFunctionCount);
-      }
       mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint, mi.isInstanceInitializer);
     }
 

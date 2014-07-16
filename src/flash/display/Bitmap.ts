@@ -39,6 +39,8 @@ module Shumway.AVM2.AS.flash.display {
         if (symbolClass.isSubtypeOf(flash.display.Bitmap)) {
           symbolClass = flash.display.BitmapData;
         }
+        // TODO: I don't think BitmapData symbol objects can change, so they don't need back
+        // references to this Bitmap.
         self._bitmapData = symbolClass.initializeFrom(symbol);
         self._setFillAndLineBoundsFromWidthAndHeight(symbol.width * 20|0, symbol.height * 20|0);
       }
@@ -61,12 +63,7 @@ module Shumway.AVM2.AS.flash.display {
       this._pixelSnapping = asCoerceString(pixelSnapping);
       this._smoothing = !!smoothing;
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     _pixelSnapping: string;
     _smoothing: boolean;
     _bitmapData: flash.display.BitmapData;
@@ -95,6 +92,14 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set bitmapData(value: flash.display.BitmapData) {
+      if (this._bitmapData !== value) {
+        if (this._bitmapData) {
+          this._bitmapData._removeBitmapReferrer(this);
+        }
+        if (value) {
+          value._addBitmapReferrer(this);
+        }
+      }
       this._bitmapData = value;
       if (value) {
         this._setFillAndLineBoundsFromWidthAndHeight(value.width * 20|0, value.height * 20|0);

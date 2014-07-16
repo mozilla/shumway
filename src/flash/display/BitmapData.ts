@@ -28,6 +28,7 @@ module Shumway.AVM2.AS.flash.display {
   import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
   import blendPremultipliedBGRA = Shumway.ColorUtilities.blendPremultipliedBGRA;
   import ensureInverseSourceAlphaTable = Shumway.ColorUtilities.ensureInverseSourceAlphaTable;
+  import indexOf = Shumway.ArrayUtilities.indexOf;
 
   import Rectangle = flash.geom.Rectangle;
 
@@ -37,7 +38,10 @@ module Shumway.AVM2.AS.flash.display {
    * we don't have to do unecessary byte conversions.
    */
   export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
-    static classInitializer: any = null;
+
+    static classInitializer: any = function () {
+      ensureInverseSourceAlphaTable();
+    };
 
     _symbol: Shumway.Timeline.BitmapSymbol;
     static initializer: any = function (symbol: Shumway.Timeline.BitmapSymbol) {
@@ -69,6 +73,7 @@ module Shumway.AVM2.AS.flash.display {
       {
         throwError('ArgumentError', Errors.ArgumentError);
       }
+      this._bitmapReferrers = [];
       this._transparent = !!transparent;
       this._rect = new Rectangle(0, 0, width, height);
       this._fillColorBGRA = swap32(fillColorARGB); // Specified as ARGB but stored as BGRA.
@@ -93,7 +98,42 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       this._dataBuffer = DataBuffer.FromArrayBuffer(this._data.buffer);
+      this._invalidate();
+    }
+
+    /**
+     * Back references to Bitmaps that use this BitmapData. These objects need to be marked as dirty
+     * when this bitmap data becomes dirty.
+     */
+    private _bitmapReferrers: flash.display.Bitmap [];
+
+    _addBitmapReferrer(bitmap: flash.display.Bitmap) {
+      var index = indexOf(this._bitmapReferrers, bitmap);
+      release && assert(index < 0);
+      this._bitmapReferrers.push(bitmap);
+    }
+
+    _removeBitmapReferrer(bitmap: flash.display.Bitmap) {
+      var index = indexOf(this._bitmapReferrers, bitmap);
+      release && assert(index >= 0);
+      this._bitmapReferrers[index] = null;
+    }
+
+    /**
+     * Called whenever the contents of this bitmap data changes.
+     */
+    private _invalidate() {
+      if (this._isDirty) {
+        return;
+      }
       this._isDirty = true;
+      // TODO: We probably don't need to propagate any flags if |_locked| is true.
+      for (var i = 0; i < this._bitmapReferrers.length; i++) {
+        var bitmap = this._bitmapReferrers[i];
+        if (bitmap) {
+          bitmap._setDirtyFlags(DisplayObjectFlags.DirtyBitmapData);
+        }
+      }
     }
 
     _transparent: boolean;
@@ -194,7 +234,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         p += padding;
       }
-      this._isDirty = true;
+      this._invalidate();
     }
 
     get width(): number /*int*/ {
@@ -258,7 +298,7 @@ module Shumway.AVM2.AS.flash.display {
       uARGB = uARGB & 0x00ffffff | a << 24;
       var pARGB = premultiplyARGB(uARGB);
       this._view[i] = swap32(pARGB);
-      this._isDirty = true;
+      this._invalidate();
     }
 
     setPixel32(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
@@ -276,7 +316,7 @@ module Shumway.AVM2.AS.flash.display {
         var pARGB = uRGB | 0xff000000;
       }
       this._view[y * this._rect.width + x] = swap32(pARGB);
-      this._isDirty = true;
+      this._invalidate();
     }
 
     applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
@@ -327,6 +367,11 @@ module Shumway.AVM2.AS.flash.display {
       enterTimeline("BitmapData.copyPixels");
       mergeAlpha = !!mergeAlpha;
 
+      if (alphaBitmapData || alphaPoint) {
+        notImplemented("public flash.display.BitmapData::copyPixels - Alpha");
+        return;
+      }
+
       // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of
       // the source rect, however a width of |0.5| rounds down rather than up so we're not
       // quite correct here.
@@ -348,7 +393,7 @@ module Shumway.AVM2.AS.flash.display {
 
       // Compute the target rect taking into account the offsets and then clip it against the
       // target.
-      var tR = new geom.Rectangle(
+      var tR = new geom.Rectangle (
         destPoint.x | 0 + oX,
         destPoint.y | 0 + oY,
         oR.width - oX,
@@ -385,30 +430,46 @@ module Shumway.AVM2.AS.flash.display {
       // this hot loop.
 
       if (mergeAlpha) {
+        var sP = sY * sStride + sX;
+        var tP = tY * tStride + tX;
         for (var y = 0; y < tH; y++) {
-          var sP = (sY + y) * sStride + sX;
-          var tP = (tY + y) * tStride + tX;
           for (var x = 0; x < tW; x++) {
             var spBGRA = s[sP + x];
             if ((spBGRA & 0xFF) === 0xFF) {
-              // Opaque, just copy value over.
-              t[tP + x] = spBGRA;
+              t[tP + x] = spBGRA; // Opaque, just copy value over.
             } else {
               t[tP + x] = blendPremultipliedBGRA(t[tP + x], spBGRA);
             }
           }
+          sP += sStride;
+          tP += tStride;
         }
       } else {
-        for (var y = 0; y < tH; y++) {
-          var sP = (sY + y) * sStride + sX;
-          var tP = (tY + y) * tStride + tX;
-          for (var x = 0; x < tW; x++) {
-            t[tP + x] = s[sP + x];
+        var sP = sY * sStride + sX;
+        var tP = tY * tStride + tX;
+        if ((tW & 3) === 0) {
+          for (var y = 0; y < tH; y++) {
+            for (var x = 0; x < tW; x += 4) {
+              t[tP + x + 0] = s[sP + x + 0];
+              t[tP + x + 1] = s[sP + x + 1];
+              t[tP + x + 2] = s[sP + x + 2];
+              t[tP + x + 3] = s[sP + x + 3];
+            }
+            sP += sStride;
+            tP += tStride;
+          }
+        } else {
+          for (var y = 0; y < tH; y++) {
+            for (var x = 0; x < tW; x++) {
+              t[tP + x] = s[sP + x];
+            }
+            sP += sStride;
+            tP += tStride;
           }
         }
       }
 
-      this._isDirty = true;
+      this._invalidate();
       somewhatImplemented("public flash.display.BitmapData::copyPixels");
       leaveTimeline();
     }
@@ -416,7 +477,7 @@ module Shumway.AVM2.AS.flash.display {
     dispose(): void {
       this._rect.setEmpty();
       this._view = null;
-      this._isDirty = true;
+      this._invalidate();
     }
 
     draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null,
@@ -469,7 +530,7 @@ module Shumway.AVM2.AS.flash.display {
           view[offset + x] = pBGRA;
         }
       }
-      this._isDirty = true;
+      this._invalidate();
     }
 
     floodFill(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {

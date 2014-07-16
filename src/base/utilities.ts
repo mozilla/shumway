@@ -1075,6 +1075,18 @@ module Shumway {
       }
       return o;
     }
+
+    export function indexOfAny(s: string, chars: string [], position: number) {
+      var index = s.length;
+      for (var i = 0; i < chars.length; i++) {
+        var j = s.indexOf(chars[i], position);
+        if (j >= 0) {
+          index = Math.min(index, j);
+        }
+      }
+      return index === s.length ? -1 : index;
+    }
+
   }
 
   export module HashUtilities {
@@ -2843,6 +2855,19 @@ module Shumway {
       }
     }
 
+    /**
+     * The blending equation for unpremultiplied alpha is:
+     *
+     *   (src.rgb * src.a) + (dst.rgb * (1 - src.a))
+     *
+     * For premultiplied alpha src.rgb and dst.rgb are already
+     * premultiplied by alpha, so the equation becomes:
+     *
+     *   src.rgb + (dst.rgb * (1 - src.a))
+     *
+     * TODO: Not sure what to do about the dst.rgb which is
+     * premultiplied by its alpah, but this appears to work.
+     */
     export function blendPremultipliedBGRA(tpBGRA, spBGRA) {
       var ta = (tpBGRA >>  0) & 0xff;
       var tr = (tpBGRA >>  8) & 0xff;

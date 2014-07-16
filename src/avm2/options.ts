@@ -14,11 +14,6 @@ module Shumway.AVM2 {
     export var traceClasses = options.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
     export var traceDomain = options.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
     export var debuggerMode = options.register(new Option("db", "debuggerMode", "boolean", true, "enable debugger mode"));
-
-    export var functionBreak = new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #");
-    export var compileOnly = new Option("co", "compileOnly", "number", -1, "Compiles only function number");
-    export var compileUntil = new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number");
-
     export var globalMultinameAnalysis = options.register(new Option("ga", "globalMultinameAnalysis", "boolean", false, "Global multiname analysis."));
     export var codeCaching = options.register(new Option("cc", "codeCaching", "boolean", false, "Enable code caching."));
 
@@ -34,7 +29,8 @@ module Shumway.AVM2 {
   export module Compiler {
     export var options = avm2Options.register(new OptionSet("Compiler"));
     export var traceLevel = options.register(new Option("tc4", "tc4", "number", 0, "Compiler Trace Level"));
-    export var breakAt = options.register(new Option("", "breakAt", "string", "", "Set a break point at methods whose qualified name matches this string."));
+    export var breakFilter = options.register(new Option("", "break", "string", "", "Set a break point at methods whose qualified name matches this string pattern."));
+    export var compileFilter = options.register(new Option("", "compile", "string", "", "Only compile methods whose qualified name matches this string pattern."));
     export var enableDirtyLocals = options.register(new Option("dl", "dirtyLocals", "boolean", true, "Performe dirty local analysis to minimise PHI nodes."));
   }
 

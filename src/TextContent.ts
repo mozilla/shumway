@@ -32,6 +32,69 @@ module Shumway {
     Dirty           = DirtyBounds | DirtyContent | DirtyStyle | DirtyFlow
   }
 
+  var _decodeHTMLMap = {
+    lt:   '<',
+    gt:   '>',
+    amp:  '&',
+    quot: '"',
+    apos: "'"
+  };
+
+  /**
+   * Decodes strings of the format:
+   *
+   * &#0000;
+   * &#x0000;
+   * &#x0000;
+   * &amp;
+   * &lthello
+   *
+   * This is complete enough to handle encoded HTML produced by the Flash IDE.
+   */
+  function decodeHTML(s: string): string {
+    var r = "";
+    for (var i = 0; i < s.length; i++) {
+      var c = s.charAt(i);
+      if (c !== '&') {
+        r += c;
+      } else {
+        // Look for the first '&' or ';', both of these can terminate
+        // the current char code.
+        var j = StringUtilities.indexOfAny(s, ['&', ';'], i + 1);
+        if (j > 0) {
+          var v = s.substring(i + 1, j);
+          if (v.length > 1 && v.charAt(0) === "#") {
+            var n = 0;
+            if (v.length > 2 && v.charAt(1) === "x") {
+              n = parseInt(v.substring(1));
+            } else {
+              n = parseInt(v.substring(2), 16);
+            }
+            r += String.fromCharCode(n);
+          } else {
+            if (_decodeHTMLMap[v] !== undefined) {
+              r += _decodeHTMLMap[v];
+            } else {
+              Debug.unexpected(v);
+            }
+          }
+          i = j;
+        } else {
+          // Flash sometimes generates entities that don't have terminators,
+          // like &bthello. Strong bad sometimes encodes this that way.
+          for (var k in _decodeHTMLMap) {
+            if (s.indexOf(k, i + 1) === i + 1) {
+              r += _decodeHTMLMap[k];
+              i += k.length;
+              break;
+            }
+          }
+        }
+      }
+    }
+    return r;
+  }
+
   export class TextContent implements Shumway.Remoting.IRemotable {
     _id: number;
 
@@ -79,6 +142,7 @@ module Shumway {
       var handler: HTMLParserHandler;
       Shumway.HTMLParser(htmlText, handler = {
         chars: (text) => {
+          text = decodeHTML(text);
           plainText += text;
           endIndex += text.length;
           if (endIndex - beginIndex) {

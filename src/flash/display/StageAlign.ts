@@ -28,16 +28,9 @@ module Shumway.AVM2.AS.flash.display {
 
   export class StageAlign extends ASNative {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
@@ -54,8 +47,6 @@ module Shumway.AVM2.AS.flash.display {
     static TOP_RIGHT: string = "TR";
     static BOTTOM_LEFT: string = "BL";
     static BOTTOM_RIGHT: string = "BR";
-
-    // AS -> JS Bindings
 
     static fromNumber(n: number): string {
       if (n === 0) {
@@ -77,6 +68,11 @@ module Shumway.AVM2.AS.flash.display {
       return s;
     }
 
+    /**
+     * Looks like the Flash player just searches for the "T", "B", "L", "R" characters and
+     * maintains an internal bit field for alignment, for instance it's possible to set the
+     * alignment value "TBLR" even though there is no enum for it.
+     */
     static toNumber(value: string): number {
       var n = 0;
       value = value.toUpperCase();
