@@ -78,6 +78,37 @@ module.exports = function(grunt) {
         cmd: 'echo "SUCCESS: no lint errors"'
       }
     },
+    parallel: {
+      base: {
+        options: {
+          grunt: true
+        },
+        tasks: [
+          'exec:build_playerglobal',
+          'exec:build_avm1lib',
+          'exec:build_base_ts'
+        ]
+      },
+      tier2: {
+        options: {
+          grunt: true
+        },
+        tasks: [
+          'exec:build_gfx_ts',
+          'exec:build_swf_ts',
+          'exec:build_avm2_ts'
+        ]
+      },
+      natives: {
+        options: {
+          grunt: true
+        },
+        tasks: [
+          'exec:build_avm1_ts',
+          'exec:build_flash_ts'
+        ]
+      }
+    },
     watch: {
       web: {
         files: 'extension/firefox/**/*',
@@ -137,6 +168,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-exec');
+  grunt.loadNpmTasks('grunt-parallel');
 
   grunt.registerTask('lint', ['jshint:all', 'exec:lint_success']);
 
@@ -207,15 +239,10 @@ module.exports = function(grunt) {
   grunt.registerTask('avm1', ['exec:build_avm1_ts', 'exec:shell_test']);
   grunt.registerTask('shell-test', ['exec:shell_test']);
   grunt.registerTask('shu', [
-    'exec:build_playerglobal',
-    'exec:build_avm1lib',
-    'exec:build_base_ts',
+    'parallel:base',
     'exec:build_tools_ts',
-    'exec:build_gfx_ts',
-    'exec:build_swf_ts',
-    'exec:build_avm2_ts',
-    'exec:build_avm1_ts',
-    'exec:build_flash_ts',
+    'parallel:tier2',
+    'parallel:natives',
     'exec:build_player_ts',
     'bundles',
     'exec:shell_test'
