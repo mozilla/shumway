@@ -66,7 +66,10 @@ module Shumway.AVM2.AS.flash.display {
     };
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function() {
+      var self: Loader = this;
+      DisplayObject._advancableInstances.push(self);
+    };
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];

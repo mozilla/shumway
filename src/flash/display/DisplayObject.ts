@@ -258,7 +258,7 @@ module Shumway.AVM2.AS.flash.display {
       return this._syncID++
     }
 
-    private static _advancableInstances: WeakList<IAdvancable>;
+    static _advancableInstances: WeakList<IAdvancable>;
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
@@ -272,10 +272,6 @@ module Shumway.AVM2.AS.flash.display {
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.DisplaySymbol) {
       var self: DisplayObject = this;
-
-      if ('_initFrame' in self && '_constructFrame' in self) {
-        DisplayObject._advancableInstances.push(<any>self);
-      }
 
       self._id = flash.display.DisplayObject.getNextSyncID();
       self._displayObjectFlags = DisplayObjectFlags.Visible                            |
