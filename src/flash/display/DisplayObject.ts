@@ -37,11 +37,6 @@ module Shumway.AVM2.AS.flash.display {
   import geom = flash.geom;
   import events = flash.events;
 
-  export enum Direction {
-    Upward     = 1,
-    Downward   = 2
-  }
-
   /*
    * Invalid Bits:
    *
@@ -158,7 +153,8 @@ module Shumway.AVM2.AS.flash.display {
     DirtyMatrix                               = 0x100000,
 
     /**
-     * Indicates whether this display object's children list has changed since the last time it was synchronized.
+     * Indicates whether this display object's has dirty descendents. If this flag is not set then the subtree does not
+     * need to be synchronized.
      */
     DirtyChildren                             = 0x200000,
 
@@ -178,36 +174,28 @@ module Shumway.AVM2.AS.flash.display {
     DirtyBitmapData                           = 0x1000000,
 
     /**
-     * Indicates whether this display object's has dirty descendents. If this flag is not set then the subtree does not
-     * need to be synchronized.
-     */
-    DirtyChild                                = 0x2000000,
-
-    /**
      * Indicates whether this display object's color transform has changed since the last time it was synchronized.
      */
-    DirtyColorTransform                       = 0x4000000,
+    DirtyColorTransform                       = 0x2000000,
 
     /**
      * Indicates whether this display object's mask has changed since the last time it was synchronized.
      */
-    DirtyMask                                 = 0x8000000,
+    DirtyMask                                 = 0x4000000,
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
      * bits so we don't serialize as much.
      */
-    DirtyMiscellaneousProperties              = 0x10000000,
-
-    /**
-     * Display object has changed since the last time it was drawn.
-     */
-    DirtyPaint                                = 0x0080,
+    DirtyMiscellaneousProperties              = 0x8000000,
 
     /**
      * All synchronizable properties are dirty.
      */
-    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyTextContent | DirtyBitmapData | DirtyColorTransform | DirtyMask | DirtyMiscellaneousProperties
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyGraphics |
+                                                DirtyTextContent | DirtyBitmapData |
+                                                DirtyColorTransform | DirtyMask |
+                                                DirtyMiscellaneousProperties
   }
 
   /**
@@ -475,7 +463,9 @@ module Shumway.AVM2.AS.flash.display {
      */
     _setDirtyFlags(flags: DisplayObjectFlags) {
       this._displayObjectFlags |= flags;
-      this._dirty();
+      if (this._parent) {
+        this._parent._propagateFlagsUp(DisplayObjectFlags.DirtyChildren);
+      }
     }
 
     _toggleFlags(flags: DisplayObjectFlags, on: boolean) {
@@ -499,35 +489,26 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Propagates flags up and down the the display list. Flags propagation stops if the flags are
-     * already set.
+     * Propagates flags up the display list. Propagation stops if all flags are already set.
      */
-    _propagateFlags(flags: DisplayObjectFlags, direction: Direction) {
-      // Multiple flags can be passed here, stop propagation when all the flags are set.
+    _propagateFlagsUp(flags: DisplayObjectFlags) {
       if (this._hasFlags(flags)) {
         return;
       }
       this._setFlags(flags);
-
-      if (direction & Direction.Upward) {
-        var node = this._parent;
-        while (node) {
-          node._setFlags(flags);
-          node = node._parent;
-        }
+      var parent = this._parent;
+      if (parent) {
+        parent._propagateFlagsUp(flags);
       }
+    }
 
-      if (direction & Direction.Downward) {
-        if (DisplayObjectContainer.isType(this)) {
-          var children = (<DisplayObjectContainer>this)._children;
-          for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-            if (!child._hasFlags(flags)) {
-              child._propagateFlags(flags, Direction.Downward);
-            }
-          }
-        }
-      }
+    /**
+     * Propagates flags down the display list. Non-containers just set the flags on themselves.
+     *
+     * Overridden in DisplayObjectContainer.
+     */
+    _propagateFlagsDown(flags: DisplayObjectFlags) {
+      this._setFlags(flags);
     }
 
     // AS -> JS Bindings
@@ -732,7 +713,7 @@ module Shumway.AVM2.AS.flash.display {
       this._rotation = DisplayObject._clampRotation(matrix.getRotation() * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       this._setFlags(DisplayObjectFlags.InvalidInvertedMatrix);
-      this._dirtyMatrix();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
       this._invalidatePosition();
     }
 
@@ -787,9 +768,8 @@ module Shumway.AVM2.AS.flash.display {
     _setColorTransform(colorTransform: flash.geom.ColorTransform) {
       this._colorTransform.copyFrom(colorTransform);
       this._colorTransform.convertToFixedPoint();
-      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
-      this._dirtyColorTransform();
-      this._invalidatePaint();
+      this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedColorTransform);
+      this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
     }
 
     /**
@@ -799,8 +779,8 @@ module Shumway.AVM2.AS.flash.display {
       /* TODO: We should only propagate this bit if the bounds are actually changed. We can do the
        * bounds computation eagerly if the number of children is low. If there are no changes in the
        * bounds we don't need to propagate the bit. */
-      this._propagateFlags(DisplayObjectFlags.InvalidLineBounds |
-                           DisplayObjectFlags.InvalidFillBounds, Direction.Upward);
+      this._propagateFlagsUp(DisplayObjectFlags.InvalidLineBounds |
+                             DisplayObjectFlags.InvalidFillBounds);
     }
 
     _invalidateParentFillAndLineBounds(): void {
@@ -870,13 +850,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Marks this object as needing to be repainted.
-     */
-    _invalidatePaint() {
-      this._propagateFlags(DisplayObjectFlags.DirtyPaint, Direction.Upward);
-    }
-
-    /**
      * Detaches this object from being animated by the timeline. This happens whenever a display
      * property of this object is changed by user code.
      */
@@ -885,44 +858,24 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Sets the |DirtyMatrix| flag.
-     */
-    private _dirtyMatrix() {
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
-    }
-
-    /**
-     * Sets the |DirtyColorTransform| flag.
-     */
-    private _dirtyColorTransform() {
-      this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
-    }
-
-    /**
      * Marks this object as having its matrix changed.
+     *
+     * Propagates flags both up- and (via invalidatePosition) downwards, so is quite costly.
+     * TODO: check if we can usefully combine all upwards-propagated flags here.
      */
     private _invalidateMatrix() {
-      this._dirtyMatrix();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
       this._setFlags(DisplayObjectFlags.InvalidMatrix | DisplayObjectFlags.InvalidInvertedMatrix);
-      if (this._parent) {
-        this._parent._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
-      }
+      this._invalidatePosition();
     }
 
     /**
      * Marks this object as having been moved in its parent display object.
      */
     _invalidatePosition() {
-      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix |
-                           DisplayObjectFlags.InvalidInvertedConcatenatedMatrix,
-                           Direction.Downward);
+      this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedMatrix |
+                               DisplayObjectFlags.InvalidInvertedConcatenatedMatrix);
       this._invalidateParentFillAndLineBounds();
-    }
-
-    _dirty() {
-      if (this._parent) {
-        this._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
-      }
     }
 
     /**
@@ -951,7 +904,6 @@ module Shumway.AVM2.AS.flash.display {
         this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
       }
       // TODO: state.events
-      this._invalidatePaint();
     }
 
     /**
@@ -986,7 +938,7 @@ module Shumway.AVM2.AS.flash.display {
       this._matrix.tx = value;
       this._invertedMatrix.tx = -value;
       this._invalidatePosition();
-      this._dirtyMatrix();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
     }
 
     get y(): number {
@@ -1002,7 +954,7 @@ module Shumway.AVM2.AS.flash.display {
       this._matrix.ty = value;
       this._invertedMatrix.ty = -value;
       this._invalidatePosition();
-      this._dirtyMatrix();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
     }
 
     get scaleX(): number {
@@ -1017,7 +969,6 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._scaleX = value;
       this._invalidateMatrix();
-      this._invalidatePosition();
     }
 
     get scaleY(): number {
@@ -1032,7 +983,6 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._scaleY = value;
       this._invalidateMatrix();
-      this._invalidatePosition();
     }
 
     get scaleZ(): number {
@@ -1057,7 +1007,6 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._rotation = value;
       this._invalidateMatrix();
-      this._invalidatePosition();
     }
 
     get rotationX(): number {
@@ -1122,7 +1071,6 @@ module Shumway.AVM2.AS.flash.display {
       this._scaleY = bounds.height / baseHeight;
       this._scaleX = value / baseWidth;
       this._invalidateMatrix();
-      this._invalidatePosition();
     }
 
     /**
@@ -1160,7 +1108,6 @@ module Shumway.AVM2.AS.flash.display {
       this._scaleY = value / baseHeight;
       this._scaleX = bounds.width / baseWidth;
       this._invalidateMatrix();
-      this._invalidatePosition();
     }
 
     get mask(): DisplayObject {
@@ -1264,8 +1211,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._colorTransform.alphaMultiplier = value;
       this._colorTransform.convertToFixedPoint();
-      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
-      this._invalidatePaint();
+      this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedColorTransform);
       this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
     }
 
@@ -1283,7 +1229,6 @@ module Shumway.AVM2.AS.flash.display {
         throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
       this._blendMode = value;
-      this._invalidatePaint();
       this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
@@ -1294,8 +1239,7 @@ module Shumway.AVM2.AS.flash.display {
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
       this._stopTimelineAnimation();
       this._scale9Grid = Bounds.FromRectangle(innerRectangle);
-      // VERIFY: Can we get away with only invalidating paint? Can mutating this property ever change the bounds?
-      this._invalidatePaint();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
     get cacheAsBitmap(): boolean {
@@ -1303,17 +1247,17 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set cacheAsBitmap(value: boolean) {
+      if (this._hasFlags(DisplayObjectFlags.CacheAsBitmap)) {
+        return;
+      }
       this._toggleFlags(DisplayObjectFlags.CacheAsBitmap, !!value);
-      // VERIFY: Can we get away with only invalidating paint? Can mutating this property ever change the bounds,
-      // maybe because of pixel snapping?
-      this._invalidatePaint();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
-    /*
+    /**
      * References to the internal |_filters| array and its BitmapFilter objects are never leaked outside of this
      * class. The get/set filters accessors always return deep clones of this array.
      */
-
     get filters(): flash.filters.BitmapFilter [] {
       return this._filters.map(function (x: flash.filters.BitmapFilter) {
         return x.clone();
@@ -1321,14 +1265,19 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set filters(value: flash.filters.BitmapFilter []) {
-      this._invalidatePaint();
+      var changed = false;
       if (isNullOrUndefined(value)) {
+        changed = this.filters.length > 0;
         this._filters.length = 0;
       } else {
         this._filters = value.map(function (x: flash.filters.BitmapFilter) {
           release || assert (flash.filters.BitmapFilter.isType(x));
           return x.clone();
         });
+        changed = true;
+      }
+      if (changed) {
+        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
       }
     }
 
@@ -1558,7 +1507,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._mask) {
         var matrix = this._mask._getInvertedMatrix();
         var maskX = matrix.transformX(x, y);
-        var maskY = matrix.transformX(x, y);
+        var maskY = matrix.transformY(x, y);
         if (!this._mask._containsPoint(maskX, maskY, shapeFlag, ignoreChildren, ignoreClipping)) {
           return false;
         }
@@ -1572,7 +1521,7 @@ module Shumway.AVM2.AS.flash.display {
           var child = children[i];
           var matrix = child._getInvertedMatrix();
           var childX = matrix.transformX(x, y);
-          var childY = matrix.transformX(x, y);
+          var childY = matrix.transformY(x, y);
           var result = child._containsPoint(childX, childY,
                                             shapeFlag, ignoreChildren, ignoreClipping);
           if (!ignoreClipping && child._clipDepth >= 0 && child._parent) {

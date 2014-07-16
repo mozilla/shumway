@@ -282,34 +282,26 @@ module Shumway.GFX {
     }
 
     /**
-     * Propagates flags up and down the frame tree. Flags propagation stops if the flags are already set.
+     * Propagates flags up the frame tree. Propagation stops if all flags are already set.
      */
-    _propagateFlags(flags: FrameFlags, direction: Direction) {
-      // Multiple flags can be passed here, stop propagation when all the flags are set.
+    _propagateFlagsUp(flags: FrameFlags) {
       if (this._hasFlags(flags)) {
         return;
       }
       this._setFlags(flags);
-
-      if (direction & Direction.Upward) {
-        var node = this._parent;
-        while (node) {
-          node._setFlags(flags);
-          node = node._parent;
-        }
+      var parent = this._parent;
+      if (parent) {
+        parent._propagateFlagsUp(flags);
       }
+    }
 
-      if (direction & Direction.Downward) {
-        if (this instanceof FrameContainer) {
-          var children = (<FrameContainer>this)._children;
-          for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-            if (!child._hasFlags(flags)) {
-              child._propagateFlags(flags, Direction.Downward);
-            }
-          }
-        }
-      }
+    /**
+     * Propagates flags down the frame tree. Non-containers just set the flags on themselves.
+     *
+     * Overridden in FrameContainer.
+     */
+    _propagateFlagsDown(flags: FrameFlags) {
+      this._setFlags(flags);
     }
 
     /**
@@ -318,8 +310,8 @@ module Shumway.GFX {
      * removed from a frame container.
      */
     _invalidatePosition() {
-      this._propagateFlags(FrameFlags.InvalidConcatenatedMatrix | FrameFlags.InvalidInvertedConcatenatedMatrix,
-                           Direction.Downward);
+      this._propagateFlagsDown(FrameFlags.InvalidConcatenatedMatrix |
+                               FrameFlags.InvalidInvertedConcatenatedMatrix);
       if (this._parent) {
         this._parent._invalidateBounds();
       }
@@ -330,12 +322,12 @@ module Shumway.GFX {
      * Marks this frame as needing to be repainted.
      */
     public invalidatePaint() {
-      this._propagateFlags(FrameFlags.InvalidPaint, Direction.Upward);
+      this._propagateFlagsUp(FrameFlags.InvalidPaint);
     }
 
     private _invalidateParentPaint() {
       if (this._parent) {
-        this._parent._propagateFlags(FrameFlags.InvalidPaint, Direction.Upward);
+        this._parent._propagateFlagsUp(FrameFlags.InvalidPaint);
       }
     }
 
@@ -343,7 +335,7 @@ module Shumway.GFX {
       /* TODO: We should only propagate this bit if the bounds are actually changed. We can do the
        * bounds computation eagerly if the number of children is low. If there are no changes in the
        * bounds we don't need to propagate the bit. */
-      this._propagateFlags(FrameFlags.InvalidBounds, Direction.Upward);
+      this._propagateFlagsUp(FrameFlags.InvalidBounds);
     }
 
     get properties(): {[name: string]: any} {
@@ -404,7 +396,7 @@ module Shumway.GFX {
     set colorMatrix(value: ColorMatrix) {
       this.checkCapability(FrameCapabilityFlags.AllowColorMatrixWrite);
       this._colorMatrix = value;
-      this._propagateFlags(FrameFlags.InvalidConcatenatedColorMatrix, Direction.Downward);
+      this._propagateFlagsDown(FrameFlags.InvalidConcatenatedColorMatrix);
       this._invalidateParentPaint();
     }
 

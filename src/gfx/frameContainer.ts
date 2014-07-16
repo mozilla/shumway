@@ -76,6 +76,20 @@ module Shumway.GFX {
       this._children.length = 0;
     }
 
+    /**
+     * Propagates flags down the frame tree. Propagation stops if all flags are already set.
+     */
+    _propagateFlagsDown(flags: FrameFlags) {
+      if (this._hasFlags(flags)) {
+        return;
+      }
+      this._setFlags(flags);
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        children[i]._propagateFlagsDown(flags);
+      }
+    }
+
     public getBounds(): Rectangle {
       if (!this._hasFlags(FrameFlags.InvalidBounds)) {
         return this._bounds;
