@@ -1507,7 +1507,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._mask) {
         var matrix = this._mask._getInvertedMatrix();
         var maskX = matrix.transformX(x, y);
-        var maskY = matrix.transformX(x, y);
+        var maskY = matrix.transformY(x, y);
         if (!this._mask._containsPoint(maskX, maskY, shapeFlag, ignoreChildren, ignoreClipping)) {
           return false;
         }
@@ -1521,7 +1521,7 @@ module Shumway.AVM2.AS.flash.display {
           var child = children[i];
           var matrix = child._getInvertedMatrix();
           var childX = matrix.transformX(x, y);
-          var childY = matrix.transformX(x, y);
+          var childY = matrix.transformY(x, y);
           var result = child._containsPoint(childX, childY,
                                             shapeFlag, ignoreChildren, ignoreClipping);
           if (!ignoreClipping && child._clipDepth >= 0 && child._parent) {
