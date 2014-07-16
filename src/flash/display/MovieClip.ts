@@ -44,6 +44,8 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: Shumway.Timeline.SpriteSymbol) {
       var self: MovieClip = this;
 
+      DisplayObject._advancableInstances.push(self);
+
       self._currentFrame = 0;
       self._totalFrames = 1;
       self._trackAsMenu = false;
