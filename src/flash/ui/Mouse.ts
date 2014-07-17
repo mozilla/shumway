@@ -126,6 +126,7 @@ module Shumway.AVM2.AS.flash.ui {
             type = events.MouseEvent.RIGHT_MOUSE_DOWN;
             data.buttons = MouseButtonFlags.Right;
           }
+          target._mouseDown = true;
           break;
         case events.MouseEvent.MOUSE_UP:
           if (data.buttons & MouseButtonFlags.Left) {
@@ -137,6 +138,7 @@ module Shumway.AVM2.AS.flash.ui {
             type = events.MouseEvent.RIGHT_MOUSE_UP;
             data.buttons = MouseButtonFlags.Right;
           }
+          target._mouseDown = false;
           break;
         case events.MouseEvent.CLICK:
           if (!(data.buttons & MouseButtonFlags.Left)) {
@@ -162,6 +164,9 @@ module Shumway.AVM2.AS.flash.ui {
           }
           var commonAncestor = target.findNearestCommonAncestor(currentTarget);
           if (currentTarget && currentTarget !== stage) {
+            currentTarget._mouseOver = false;
+            // TODO: Support track as menu.
+            currentTarget._mouseDown = false;
             this._dispatchMouseEvent(currentTarget, events.MouseEvent.MOUSE_OUT, data, target);
             var nodeLeft = currentTarget;
             while (nodeLeft !== commonAncestor) {
@@ -177,6 +182,7 @@ module Shumway.AVM2.AS.flash.ui {
             this._dispatchMouseEvent(nodeEntered, events.MouseEvent.ROLL_OVER, data, currentTarget);
             nodeEntered = nodeEntered.parent;
           }
+          target._mouseOver = true;
           this._dispatchMouseEvent(target, events.MouseEvent.MOUSE_OVER, data, currentTarget);
           return;
       }

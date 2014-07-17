@@ -27,6 +27,8 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: Shumway.Timeline.ButtonSymbol) {
       var self: SimpleButton = this;
 
+      DisplayObject._advancableInstances.push(self);
+
       self._useHandCursor = true;
       self._enabled = true;
       self._trackAsMenu = false;
