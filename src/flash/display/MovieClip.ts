@@ -162,7 +162,7 @@ module Shumway.AVM2.AS.flash.display {
     private _boundExecuteAS2FrameScripts: () => void;
     private _as2FrameScripts: AVM1.AS2ActionsData[][];
 
-    private _buttonFrames: Object;
+    private _buttonFrames: Shumway.Map<number>;
     private _currentButtonState: string;
 
     get currentFrame(): number /*int*/ {
