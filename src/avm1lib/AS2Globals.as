@@ -156,7 +156,11 @@ public dynamic class AS2Globals {
     var nativeTarget = AS2Utils.resolveTarget();
     var frameNum = arguments.length < 2 ? arguments[0] : arguments[1];
     var framesLoaded = nativeTarget._framesloaded;
-    return frameNum < framesLoaded;
+    var totalFrames = nativeTarget._totalframes;
+    // The (0-based) requested frame index is clamped to (the 1-based) totalFrames value.
+    // I.e., asking if frame 20 is loaded in a timline with only 10 frames returns true if all
+    // frames have been loaded.
+    return Math.min(frameNum + 1, totalFrames) <= framesLoaded;
   }
 
   public function int(value: *): * {
