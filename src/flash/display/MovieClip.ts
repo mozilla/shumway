@@ -121,7 +121,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         if (state !== this._currentButtonState) {
           this.stop();
-          this._gotoFrame(state);
+          this._gotoFrame(state, null);
           this._currentButtonState = state;
           this._advanceFrame();
           return;
@@ -238,7 +238,7 @@ module Shumway.AVM2.AS.flash.display {
      * correct.
      * We might at some point do that by explicitly inlining this function using some build step.
      */
-    private _gotoFrame(frame: string, sceneName: string = null): void {
+    private _gotoFrame(frame: string, sceneName: string): void {
       var scene: Scene;
       if (sceneName !== null) {
         sceneName = asCoerceString(sceneName);
