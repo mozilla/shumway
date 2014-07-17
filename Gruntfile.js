@@ -107,6 +107,24 @@ module.exports = function(grunt) {
           'exec:build_avm1_ts',
           'exec:build_flash_ts'
         ]
+      },
+      avm1: {
+        options: {
+          grunt: true
+        },
+        tasks: [
+          'exec:build_avm1lib',
+          'exec:build_avm1_ts'
+        ]
+      },
+      flash: {
+        options: {
+          grunt: true
+        },
+        tasks: [
+          'exec:build_playerglobal',
+          'exec:build_flash_ts'
+        ]
       }
     },
     watch: {
@@ -227,16 +245,14 @@ module.exports = function(grunt) {
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
 
-  grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('base', ['exec:build_base_ts']);
-  grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
   grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:shell_test']);
-  grunt.registerTask('flash', ['exec:build_flash_ts', 'exec:shell_test']);
+  grunt.registerTask('flash', ['parallel:flash', 'exec:shell_test']);
+  grunt.registerTask('avm1', ['parallel:avm1', 'exec:shell_test']);
   grunt.registerTask('player', ['exec:build_player_ts', 'exec:shell_test']);
   grunt.registerTask('tools', ['exec:build_tools_ts']);
   grunt.registerTask('avm2', ['exec:build_avm2_ts', 'exec:shell_test']);
   grunt.registerTask('gfx', ['exec:build_gfx_ts']);
-  grunt.registerTask('avm1', ['exec:build_avm1_ts', 'exec:shell_test']);
   grunt.registerTask('shell-test', ['exec:shell_test']);
   grunt.registerTask('shu', [
     'parallel:base',
