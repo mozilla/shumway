@@ -44,6 +44,9 @@ module Shumway.SWF.Parser {
         release || assert(font, 'undefined font', 'label');
         codes = font.codes;
         dependencies.push(font.id);
+        // Font heights that are larger than 160 are encoded as twips, so a height
+        // value of 10 is actually larger than 160 (160 / 20 = 8). This is undocumented
+        // Flash behaviour.
         size = (record.fontHeight > 160 ? record.fontHeight / 20 : record.fontHeight) / font.resolution;
         face = 'swffont' + font.id;
       }

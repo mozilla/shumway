@@ -67,11 +67,11 @@ module Shumway.AVM2.AS.flash.display {
         width = this._symbol.width;
         height = this._symbol.height;
       }
-      if (width > BitmapData.MAXIMUM_WIDTH ||
-          height > BitmapData.MAXIMUM_HEIGHT ||
+      if (width > BitmapData.MAXIMUM_WIDTH || width <= 0 ||
+          height > BitmapData.MAXIMUM_HEIGHT || height <= 0 ||
           width * height > BitmapData.MAXIMUM_DIMENSION)
       {
-        throwError('ArgumentError', Errors.ArgumentError);
+        throwError('ArgumentError', Errors.InvalidBitmapData);
       }
       this._bitmapReferrers = [];
       this._transparent = !!transparent;

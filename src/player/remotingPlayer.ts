@@ -224,6 +224,8 @@ module Shumway.Remoting.Player {
           if (bitmap.bitmapData) {
             this.output.writeInt(1);
             this.output.writeInt(IDMask.Asset | bitmap.bitmapData._id);
+          } else {
+            this.output.writeInt(0);
           }
         } else {
           // Check if we have a graphics object and write that as a child first.

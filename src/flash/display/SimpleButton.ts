@@ -222,7 +222,7 @@ module Shumway.AVM2.AS.flash.display {
         this._children.length = 0;
       }
       this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
-      this._invalidateFillAndLineBounds();
+      this._invalidateFillAndLineBounds(true, true);
     }
   }
 }
