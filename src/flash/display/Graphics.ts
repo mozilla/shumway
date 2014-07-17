@@ -453,7 +453,7 @@ module Shumway.AVM2.AS.flash.display {
 
     _invalidateParent() {
       release || assert (this._parent, "Graphics instances must have a parent.");
-      this._parent._invalidateFillAndLineBounds();
+      this._parent._invalidateFillAndLineBounds(true, true);
     }
 
     _invalidate() {

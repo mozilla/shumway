@@ -52,7 +52,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _invalidateChildren() {
       this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
-      this._invalidateFillAndLineBounds();
+      this._invalidateFillAndLineBounds(true, true);
     }
 
     /**

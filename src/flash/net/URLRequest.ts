@@ -80,7 +80,7 @@ module Shumway.AVM2.AS.flash.net {
       value = asCoerceString(value);
       if (value !== 'get' && value !== 'GET' &&
           value !== 'post' && value !== 'POST') {
-        throwError('ArgumentError', Errors.ArgumentError);
+        throwError('ArgumentError', Errors.InvalidArgumentError);
       }
       this._method = value;
     }
@@ -96,7 +96,7 @@ module Shumway.AVM2.AS.flash.net {
     }
     set requestHeaders(value: any []) {
       if (!Array.isArray(value)) {
-        throwError('ArgumentError', Errors.ArgumentError);
+        throwError('ArgumentError', Errors.InvalidArgumentError, "value");
       }
       this._requestHeaders = value;
     }

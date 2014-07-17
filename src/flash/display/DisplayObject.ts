@@ -436,18 +436,20 @@ module Shumway.AVM2.AS.flash.display {
       this._lineBounds.width = width;
       this._lineBounds.height = height;
       this._removeFlags(DisplayObjectFlags.InvalidLineBounds | DisplayObjectFlags.InvalidFillBounds);
-      this._invalidateParentFillAndLineBounds();
+      this._invalidateParentFillAndLineBounds(true, true);
     }
 
     _setFillAndLineBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {
+      release || assert (symbol.fillBounds || symbol.lineBounds, "Fill or Line bounds are not defined in the symbol.");
       if (symbol.fillBounds) {
         this._fillBounds.copyFrom(symbol.fillBounds);
+        this._removeFlags(DisplayObjectFlags.InvalidFillBounds);
       }
       if (symbol.lineBounds) {
         this._lineBounds.copyFrom(symbol.lineBounds);
+        this._removeFlags(DisplayObjectFlags.InvalidLineBounds);
       }
-      this._removeFlags(DisplayObjectFlags.InvalidLineBounds | DisplayObjectFlags.InvalidFillBounds);
-      this._invalidateParentFillAndLineBounds();
+      this._invalidateParentFillAndLineBounds(!!symbol.fillBounds, !!symbol.lineBounds);
     }
 
     _setFlags(flags: DisplayObjectFlags) {
@@ -771,17 +773,17 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Invalidates the fill- and lineBounds of this display object along with all of its ancestors.
      */
-    _invalidateFillAndLineBounds(): void {
+    _invalidateFillAndLineBounds(fill: boolean, line: boolean): void {
       /* TODO: We should only propagate this bit if the bounds are actually changed. We can do the
        * bounds computation eagerly if the number of children is low. If there are no changes in the
        * bounds we don't need to propagate the bit. */
-      this._propagateFlagsUp(DisplayObjectFlags.InvalidLineBounds |
-                             DisplayObjectFlags.InvalidFillBounds);
+      this._propagateFlagsUp((line ? DisplayObjectFlags.InvalidLineBounds : 0) |
+                             (fill ? DisplayObjectFlags.InvalidFillBounds : 0));
     }
 
-    _invalidateParentFillAndLineBounds(): void {
+    _invalidateParentFillAndLineBounds(fill: boolean, line: boolean): void {
       if (this._parent) {
-        this._parent._invalidateFillAndLineBounds();
+        this._parent._invalidateFillAndLineBounds(fill, line);
       }
     }
 
@@ -871,7 +873,7 @@ module Shumway.AVM2.AS.flash.display {
     _invalidatePosition() {
       this._propagateFlagsDown(DisplayObjectFlags.InvalidConcatenatedMatrix |
                                DisplayObjectFlags.InvalidInvertedConcatenatedMatrix);
-      this._invalidateParentFillAndLineBounds();
+      this._invalidateParentFillAndLineBounds(true, true);
     }
 
     /**
@@ -1410,7 +1412,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._graphics = new flash.display.Graphics();
       this._graphics._setParent(this);
-      this._invalidateFillAndLineBounds();
+      this._invalidateFillAndLineBounds(true, true);
       this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
       return this._graphics;
     }
