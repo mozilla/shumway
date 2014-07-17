@@ -172,7 +172,7 @@ module Shumway.AVM2.AS.flash.net {
     readBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
       offset = offset >>> 0; length = length >>> 0;
       if (length < 0) {
-        throwError('ArgumentError', Errors.ArgumentError);
+        throwError('ArgumentError', Errors.InvalidArgumentError, "length");
       }
 
       var stream = this._stream;
@@ -229,7 +229,7 @@ module Shumway.AVM2.AS.flash.net {
     readUTFBytes(length: number /*uint*/): string {
       length = length >>> 0;
       if (length < 0) {
-        throwError('ArgumentError', Errors.ArgumentError);
+        throwError('ArgumentError', Errors.InvalidArgumentError, "length");
       }
 
       var stream = this._stream;
