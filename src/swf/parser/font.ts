@@ -46,12 +46,15 @@ module Shumway.SWF.Parser {
     var uniqueName = 'swf-font-' + tag.id;
     var fontName = tag.name || uniqueName;
 
+    var resolution = tag.resolution || 1;
+
     var font = {
       type: 'font',
       id: tag.id,
       name: fontName,
       bold: tag.bold === 1,
       italic: tag.italic === 1,
+      resolution: resolution,
       codes: null,
       metrics: null,
       data: null
@@ -104,7 +107,6 @@ module Shumway.SWF.Parser {
       ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
     }
 
-    var resolution = tag.resolution || 1;
     var ascent = Math.ceil(tag.ascent / resolution) || 1024;
     var descent = -Math.ceil(tag.descent / resolution) | 0;
     var leading = (tag.leading / resolution) | 0;
