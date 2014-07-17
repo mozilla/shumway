@@ -138,7 +138,7 @@ module Shumway.GFX {
     private _mask: Frame;
 
     /**
-     * The number of sibilings to clip in back-to-front order. If zero then this does not specify a clipping region.
+     * The number of sibilings to clip in back-to-front order. If |-1| then this does not specify a clipping region.
      */
     private _clip: number;
 
@@ -179,7 +179,7 @@ module Shumway.GFX {
 
       this._capability = FrameCapabilityFlags.AllowAllWrite;
       this._parent = null;
-      this._clip = 0;
+      this._clip = -1;
       this._blendMode = BlendMode.Normal;
       this._filters = [];
       this._mask = null;
@@ -581,7 +581,7 @@ module Shumway.GFX {
                   t.preMultiply(child.matrix);
                   transformStack.push(t);
                 }
-                if (child.clip > 0) {
+                if (child.clip >= 0) {
                   flagsStack.push(flags | FrameFlags.EnterClip);
                 } else {
                   flagsStack.push(flags);

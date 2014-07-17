@@ -185,7 +185,16 @@ module Shumway.AVM2.AS.flash.display {
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
-     * bits so we don't serialize as much.
+     * bits so we don't serialize as much:
+     *
+     * So far we only mark these properties here:
+     *
+     * blendMode,
+     * scale9Grid,
+     * cacheAsBitmap,
+     * filters,
+     * visible,
+     * clipDepth
      */
     DirtyMiscellaneousProperties              = 0x8000000,
 
@@ -888,7 +897,13 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._ratio = state.ratio;
       this._name = state.name;
-      this._clipDepth = state.clipDepth;
+      // TODO: Not sure what is happening here, but state.clipDepth can be -1 after
+      // |this._clipDepth| is set to a value larger than zero. This shouldnt' happen.
+      // Tobias?? sbemaild50.swf
+      if (this._clipDepth !== state.clipDepth && state.clipDepth >= 0) {
+        this._clipDepth = state.clipDepth;
+        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      }
       this._filters = state.filters;
       if (state.blendMode && state.blendMode !== this._blendMode) {
         this._blendMode = state.blendMode;
@@ -896,6 +911,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       if (state.cacheAsBitmap) {
         this._setFlags(flash.display.DisplayObjectFlags.CacheAsBitmap);
+        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
       }
       if (state.visible !== this._hasFlags(DisplayObjectFlags.Visible)) {
         this._toggleFlags(DisplayObjectFlags.Visible, state.visible);
