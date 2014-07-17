@@ -59,6 +59,9 @@ module Shumway.AVM2.AS.flash.display {
       self._stopped = false;
       self._allowFrameNavigation = true;
 
+      self._buttonFrames = Object.create(null);
+      self._currentButtonState = null;
+
       if (symbol) {
         self._totalFrames = symbol.numFrames;
         self._currentFrame = 1;
@@ -109,12 +112,27 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _initFrame() {
+      if (this.buttonMode) {
+        var state: string = null;
+        if (this._mouseOver) {
+          state = this._mouseDown ? '_down' : '_over';
+        } else if (this._currentButtonState !== null) {
+          state = '_up';
+        }
+        if (state !== this._currentButtonState) {
+          this.stop();
+          this._gotoFrame(state);
+          this._currentButtonState = state;
+          this._advanceFrame();
+          return;
+        }
+      }
       if (this._totalFrames > 1 && this._hasFlags(DisplayObjectFlags.Constructed)) {
         if (!this._stopped) {
           this._nextFrame++;
         }
-        this._advanceFrame();
       }
+      this._advanceFrame();
     }
 
     _constructFrame() {
@@ -143,6 +161,9 @@ module Shumway.AVM2.AS.flash.display {
     _as2SymbolClass;
     private _boundExecuteAS2FrameScripts: () => void;
     private _as2FrameScripts: AVM1.AS2ActionsData[][];
+
+    private _buttonFrames: Object;
+    private _currentButtonState: string;
 
     get currentFrame(): number /*int*/ {
       return this._currentFrame - this._sceneForFrameIndex(this._currentFrame).offset;
