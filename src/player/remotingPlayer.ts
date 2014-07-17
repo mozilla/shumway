@@ -150,9 +150,10 @@ module Shumway.Remoting.Player {
         // need to be recomputed.
         var i = displayObject._parent.getChildIndex(displayObject);
         var j = displayObject._parent.getClipDepthIndex(displayObject._clipDepth);
+        release || assert(j - i >= 0);
         this.output.writeInt(j - i);
       } else {
-        this.output.writeInt(0);
+        this.output.writeInt(-1);
       }
     }
 

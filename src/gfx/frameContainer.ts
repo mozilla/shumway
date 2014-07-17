@@ -126,7 +126,7 @@ module Shumway.GFX {
       var leaveClip = null;
       for (var i = 0; i < length; i++) {
         var child = this._children[i];
-        if (child.clip > 0) {
+        if (child.clip >= 0) {
           var clipLeaveIndex = i + child.clip;
           leaveClip = leaveClip || [];
           if (!leaveClip[clipLeaveIndex]) {
