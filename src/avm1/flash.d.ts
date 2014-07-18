@@ -16,7 +16,15 @@
 
 declare module Shumway.AVM2.AS.flash {
   module display {
-    class MovieClip extends ASNative {
+    class DisplayObject extends events.EventDispatcher {
+      stage: DisplayObject;
+      loaderInfo: {
+        _avm1Context: AVM1.AS2Context
+      };
+      _mouseOver: boolean;
+      _mouseDown: boolean;
+    }
+    class MovieClip extends DisplayObject {
       _as2SymbolClass;
       _name: string;
       numChildren: number;
@@ -24,12 +32,24 @@ declare module Shumway.AVM2.AS.flash {
       addChildAtDepth(child, depth: number);
       getChildAt(depth: number): any;
     }
-    class Loader extends ASNative {}
+    class Loader extends DisplayObject {}
     class BitmapData extends ASNative {}
-    class Bitmap extends ASNative {
+    class Bitmap extends DisplayObject {
       constructor();
     }
-    class SimpleButton extends ASNative {}
+    class SimpleButton extends DisplayObject {
+      _symbol: {
+        buttonActions: Shumway.Timeline.AVM1ButtonAction[]
+      }
+    }
+  }
+  module events {
+    class EventDispatcher extends ASNative {
+      public addEventListener(type: string, listener: (event: any) => void, useCapture?: boolean,
+                              priority?: number, useWeakReference?: boolean): void;
+      public removeEventListener(type: string, listener: (event: any) => void,
+                                 useCapture?: boolean): void;
+    }
   }
   module geom {
     class ColorTransform extends ASNative {}
@@ -55,5 +75,11 @@ declare module Shumway.AVM2.AS.flash {
 }
 
 declare module Shumway.Timeline {
+    class AVM1ButtonAction {
+      keyCode: number;
+      stateTransitionFlags: number;
+      actionsData: Uint8Array;
+      actionsBlock: AVM1.AS2ActionsData;
+    }
   class BitmapSymbol {}
 }

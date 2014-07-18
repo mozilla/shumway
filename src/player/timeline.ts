@@ -235,6 +235,7 @@ module Shumway.Timeline {
     overState: AnimationState = null;
     downState: AnimationState = null;
     hitTestState: AnimationState = null;
+    buttonActions: any[]; // Only relevant for AVM1, see AS2Button.
 
     constructor(id: number) {
       super(id, flash.display.SimpleButton);
@@ -244,6 +245,7 @@ module Shumway.Timeline {
       var symbol = new ButtonSymbol(data.id);
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         symbol.isAS2Object = true;
+        symbol.buttonActions = data.buttonActions;
       }
       var states = data.states;
       var character, matrix, colorTransform;
