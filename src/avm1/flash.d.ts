@@ -18,6 +18,7 @@ declare module Shumway.AVM2.AS.flash {
   module display {
     class DisplayObject extends events.EventDispatcher {
       stage: DisplayObject;
+      _parent: DisplayObject;
       loaderInfo: {
         _avm1Context: AVM1.AS2Context
       };
