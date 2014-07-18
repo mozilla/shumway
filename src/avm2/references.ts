@@ -32,6 +32,7 @@
 ///<reference path='native.ts' />
 ///<reference path='natives/GenericVector.ts' />
 ///<reference path='natives/xml.ts' />
+///<reference path='natives/describeType.ts' />
 ///<reference path='natives/dictionary.ts' />
 ///<reference path='natives/proxy.ts' />
 ///<reference path='natives/byteArray.ts' />
