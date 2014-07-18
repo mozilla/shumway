@@ -144,7 +144,7 @@ module Shumway.AVM2.AS.flash.display {
       ]);
     }
 
-    _initFrame() { }
+    _initFrame(advance: boolean) { }
 
     _constructFrame() {
       this._constructChildren();
