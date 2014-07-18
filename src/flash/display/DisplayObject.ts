@@ -252,7 +252,7 @@ module Shumway.AVM2.AS.flash.display {
    */
 
   export interface IAdvancable extends Shumway.IReferenceCountable {
-    _initFrame(): void;
+    _initFrame(advance: boolean): void;
     _constructFrame(): void;
   }
 
@@ -386,33 +386,59 @@ module Shumway.AVM2.AS.flash.display {
       return instance;
     }
 
-    /**
-     * Notifies all instances of DisplayObject that the timeline advanced to a new frame.
-     */
-    static initFrame() {
-      var timelineData = { instances: 0 };
-      enterTimeline("DisplayObject.initFrame", timelineData);
-      DisplayObject._advancableInstances.forEach(function (value: IAdvancable) {
-        (<IAdvancable>value)._initFrame();
-        timelineData.instances++;
-      });
-      DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
-      leaveTimeline();
-    }
+    private static _runScripts: boolean = true;
 
     /**
-     * Notifies all instances of DisplayObject to call the constructors of new timeline children
-     * that were created in an earlier frame phase.
+     * Runs one full turn of the frame events cycle.
+     *
+     * Frame navigation methods on MovieClip can trigger nested frame events cycles. These nested
+     * cycles do everything the outermost cycle does, except for broadcasting the ENTER_FRAME
+     * event.
+     *
+     * If runScripts is true, no events are dispatched and Movieclip frame scripts are run. This
+     * is true for nested cycles, too. (We keep static state for that.)
      */
-    static constructFrame(): void {
-      var timelineData = { instances: 0 };
-      enterTimeline("DisplayObject.constructFrame", timelineData);
+    static performFrameNavigation(mainLoop: boolean, runScripts: boolean) {
+      if (mainLoop) {
+        var timelineData = {instances: 0};
+        DisplayObject._runScripts = runScripts;
+        enterTimeline("DisplayObject.performFrameNavigation", timelineData);
+      } else {
+        runScripts = DisplayObject._runScripts;
+      }
+      // Step 1: Remove timeline objects that don't exist on new frame, update existing ones with
+      // new properties, and declare, but not create, new ones, update numChildren.
+      // NOTE: the Order Of Operations senocular article is wrong on this: timeline objects are
+      // removed from stage at the beginning of a frame, just as new objects are declared at that
+      // point.
+      // Also, changed properties of existing objects are updated here instead of during frame
+      // construction after ENTER_FRAME.
+      // Thus, all these can be done together.
+      DisplayObject._advancableInstances.forEach(function (value: IAdvancable) {
+        (<IAdvancable>value)._initFrame(mainLoop);
+      });
+      // Step 2: Dispatch ENTER_FRAME, only called in outermost invocation.
+      if (mainLoop && runScripts) {
+        DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
+      }
+      // Step 3: Create new timeline objects.
       DisplayObject._advancableInstances.forEach(function (value: IAdvancable) {
         (<IAdvancable>value)._constructFrame();
-        timelineData.instances++;
       });
-      DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
-      leaveTimeline();
+      // Step 4: Dispatch FRAME_CONSTRUCTED.
+      if (runScripts) {
+        DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
+        // Step 5: Run frame scripts
+        MovieClip.runFrameScripts();
+        // Step 6: Dispatch EXIT_FRAME.
+        DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
+      } else {
+        MovieClip.reset();
+      }
+      if (mainLoop) {
+        leaveTimeline();
+        DisplayObject._runScripts = true;
+      }
     }
 
     /**

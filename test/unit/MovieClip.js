@@ -103,9 +103,8 @@
       framesExecuted[0]++;
     });
     eq(framesExecuted[0], 0, "Just adding a script to the current frame doesn't run it");
-    DisplayObject.constructFrame();
-    MovieClip.executeAndExitFrame();
-    eq(framesExecuted[0], 1, "MovieClip.constructFrame() runs queued scripts");
+    MovieClip.runFrameScripts();
+    eq(framesExecuted[0], 1, "MovieClip.runFrameScripts() runs queued scripts");
     mc.addFrameScript(2, function(){
       framesExecuted[3]++;
     });

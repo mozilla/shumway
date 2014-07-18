@@ -87,19 +87,19 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["currentLabels"];
 
-    static executeAndExitFrame() {
+    static runFrameScripts() {
       enterTimeline("MovieClip.executeFrame");
-      var queue = MovieClip._callQueue;
-      while (queue.length) {
-        var instance = queue.shift();
+      var queue: MovieClip[] = MovieClip._callQueue.concat();
+      MovieClip._callQueue.length = 0;
+      for (var i = 0; i < queue.length; i++) {
+        var instance = queue[i];
+
         instance._allowFrameNavigation = false;
-        //if (!ignoreFrameScripts) {
-          instance.callFrame(instance._currentFrame);
-        //}
+        instance.callFrame(instance._currentFrame);
         instance._allowFrameNavigation = true;
+
         if (instance._nextFrame !== instance._currentFrame) {
-          instance._advanceFrame();
-          instance._constructChildren();
+          DisplayObject.performFrameNavigation(false, true);
         }
       }
       DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
@@ -111,8 +111,8 @@ module Shumway.AVM2.AS.flash.display {
       Sprite.instanceConstructorNoInitialize.call(this);
     }
 
-    _initFrame() {
-      if (this.buttonMode) {
+    _initFrame(advance: boolean) {
+      if (advance && this.buttonMode) {
         var state: string = null;
         if (this._mouseOver) {
           state = this._mouseDown ? '_down' : '_over';
@@ -127,8 +127,10 @@ module Shumway.AVM2.AS.flash.display {
           return;
         }
       }
-      if (this._totalFrames > 1 && this._hasFlags(DisplayObjectFlags.Constructed)) {
-        if (!this._stopped) {
+      if (advance) {
+        if (this._totalFrames > 1 && !this._stopped &&
+            this._hasFlags(DisplayObjectFlags.Constructed))
+        {
           this._nextFrame++;
         }
       }
@@ -291,9 +293,7 @@ module Shumway.AVM2.AS.flash.display {
 
       if (this._allowFrameNavigation) { // TODO: also check if ActionScriptVersion < 3
         // TODO test inter-frame navigation behaviour for SWF versions < 10
-        this._advanceFrame();
-        DisplayObject.constructFrame();
-        MovieClip.executeAndExitFrame();
+        DisplayObject.performFrameNavigation(false, true);
       }
     }
 
