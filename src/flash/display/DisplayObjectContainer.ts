@@ -97,7 +97,7 @@ module Shumway.AVM2.AS.flash.display {
         //}
 
         child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
-        if (this.stage) {
+        if (child.stage) {
           child.dispatchEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
         }
       }
