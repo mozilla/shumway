@@ -1240,7 +1240,7 @@ module Shumway.SWF.Parser {
       if (swfVersion > 6) {
         glyphCount = $.glyphCount = tmp;
       } else {
-        glyphCount = $.glyphCount = tmp & 0x7f;
+        glyphCount = $.glyphCount = tmp; // & 0x7f;
       }
       var $6 = $.entries = [];
       var $7 = glyphCount;
