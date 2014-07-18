@@ -1324,24 +1324,14 @@ module Shumway.SWF.Parser {
   }
 
   function buttonCondAction($bytes, $stream, $, swfVersion, tagCode) {
-    var buttonCondSize = readUi16($bytes, $stream);
-    var buttonConditions = readUi16($bytes, $stream);
-    $.idleToOverDown = buttonConditions >> 7 & 1;
-    $.outDownToIdle = buttonConditions >> 6 & 1;
-    $.outDownToOverDown = buttonConditions >> 5 & 1;
-    $.overDownToOutDown = buttonConditions >> 4 & 1;
-    $.overDownToOverUp = buttonConditions >> 3 & 1;
-    $.overUpToOverDown = buttonConditions >> 2 & 1;
-    $.overUpToIdle = buttonConditions >> 1 & 1;
-    $.idleToOverUp = buttonConditions & 1;
-    $.mouseEventFlags = buttonConditions & 511;
-    $.keyPress = buttonConditions >> 9 & 127;
-    $.overDownToIdle = buttonConditions >> 8 & 1;
-    if (!buttonCondSize) {
-      $.actionsData = readBinary($bytes, $stream, 0, false);
-    } else {
-      $.actionsData = readBinary($bytes, $stream, buttonCondSize - 4, false);
-    }
+    var tagSize = readUi16($bytes, $stream);
+    var conditions = readUi16($bytes, $stream);
+    // The 7 upper bits hold a key code the button should respond to.
+    $.keyCode = (conditions & 0xfe00) >> 9;
+    // The lower 9 bits hold state transition flags. See the enum in AS2Button for details.
+    $.stateTransitionFlags = conditions & 0x1ff;
+    // If no tagSize is given, pass `0` to readBinary.
+    $.actionsData = readBinary($bytes, $stream, (tagSize || 4) - 4, false);
   }
 
   function shape($bytes, $stream, $, swfVersion, tagCode) {

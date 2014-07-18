@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import ButtonSymbol = Shumway.Timeline.ButtonSymbol;
 
   export class SimpleButton extends flash.display.InteractiveObject {
 
@@ -24,7 +25,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.Timeline.ButtonSymbol) {
+    static initializer: any = function (symbol: ButtonSymbol) {
       var self: SimpleButton = this;
 
       DisplayObject._advancableInstances.push(self);
@@ -39,6 +40,8 @@ module Shumway.AVM2.AS.flash.display {
 
       self._currentState = null;
       self._children = [];
+
+      self._symbol = symbol;
 
       if (symbol) {
         if (symbol.upState) {
@@ -88,6 +91,8 @@ module Shumway.AVM2.AS.flash.display {
     private _hitTestState: flash.display.DisplayObject;
 
     private _currentState: flash.display.DisplayObject;
+
+    _symbol: ButtonSymbol;
 
     get useHandCursor(): boolean {
       return this._useHandCursor;
