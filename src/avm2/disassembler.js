@@ -284,6 +284,14 @@ function traceArray(writer, name, array, abc) {
   writer.leave("}");
 }
 
+var AbcFile = Shumway.AVM2.ABC.AbcFile;
+var ConstantPool = Shumway.AVM2.ABC.ConstantPool;
+var ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+var ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+var InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
+var MethodInfo = Shumway.AVM2.ABC.MethodInfo;
+var MetaDataInfo = Shumway.AVM2.ABC.MetaDataInfo;
+var Trait = Shumway.AVM2.ABC.Trait;
 AbcFile.prototype.trace = function trace(writer) {
   if (filter.value.indexOf("p") >= 0) {
     this.constantPool.trace(writer);

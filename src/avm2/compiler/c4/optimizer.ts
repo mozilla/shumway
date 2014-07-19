@@ -18,6 +18,7 @@
 module Shumway.AVM2.Compiler.IR {
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import top = Shumway.ArrayUtilities.top;
   import bitCount = Shumway.IntegerUtilities.bitCount;

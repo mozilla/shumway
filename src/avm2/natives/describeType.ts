@@ -17,6 +17,7 @@
 
 module Shumway.AVM2.AS {
   import assert = Shumway.Debug.assert;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
