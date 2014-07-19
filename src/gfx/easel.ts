@@ -60,7 +60,7 @@ module Shumway.GFX {
       if (this._keyCodes[32]) {
         easel.state = new DragState(easel.worldView, easel.getMousePosition(event, null), easel.worldView.matrix.clone());
       } else {
-        easel.state = new MouseDownState();
+        // easel.state = new MouseDownState();
       }
     }
 
