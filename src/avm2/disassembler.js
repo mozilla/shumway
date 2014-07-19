@@ -285,6 +285,8 @@ function traceArray(writer, name, array, abc) {
 }
 
 var AbcFile = Shumway.AVM2.ABC.AbcFile;
+var AbcStream = Shumway.AVM2.ABC.AbcStream;
+var Multiname = Shumway.AVM2.ABC.Multiname;
 var ConstantPool = Shumway.AVM2.ABC.ConstantPool;
 var ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
 var ClassInfo = Shumway.AVM2.ABC.ClassInfo;
