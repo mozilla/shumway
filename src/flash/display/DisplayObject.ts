@@ -141,11 +141,24 @@ module Shumway.AVM2.AS.flash.display {
     AnimatedByTimeline                        = 0x0800,
 
     /**
+     * MovieClip object has reached a frame with a frame script or ran a frame script that attached
+     * a new one to the current frame. To run the script, it has to be appended to the queue of
+     * scripts.
+     */
+    HasFrameScriptPending                     = 0x1000,
+
+    /**
+     * DisplayObjectContainer contains at least one descendant with the HasFrameScriptPending flag
+     * set.
+     */
+    ContainsFrameScriptPendingChildren        = 0x2000,
+
+    /**
      * Indicates whether this display object should be cached as a bitmap. The display object may be cached as bitmap even
      * if this flag is not set, depending on whether any filters are applied or if the bitmap is too large or we've run out
      * of memory.
      */
-    CacheAsBitmap                             = 0x1000,
+    CacheAsBitmap                             = 0x4000,
 
     /**
      * Indicates whether this display object's matrix has changed since the last time it was synchronized.
@@ -398,7 +411,9 @@ module Shumway.AVM2.AS.flash.display {
      * If runScripts is true, no events are dispatched and Movieclip frame scripts are run. This
      * is true for nested cycles, too. (We keep static state for that.)
      */
-    static performFrameNavigation(mainLoop: boolean, runScripts: boolean) {
+    static performFrameNavigation(stage: flash.display.Stage, mainLoop: boolean,
+                                  runScripts: boolean)
+    {
       if (mainLoop) {
         var timelineData = {instances: 0};
         DisplayObject._runScripts = runScripts;
@@ -429,6 +444,7 @@ module Shumway.AVM2.AS.flash.display {
       if (runScripts) {
         DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
         // Step 5: Run frame scripts
+        stage._enqueueFrameScripts();
         MovieClip.runFrameScripts();
         // Step 6: Dispatch EXIT_FRAME.
         DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
