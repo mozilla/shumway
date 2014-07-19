@@ -481,6 +481,17 @@ module Shumway.AVM2.AS.flash.display {
       this._setFlags(DisplayObjectFlags.Constructed);
     }
 
+    _setParent(parent: DisplayObjectContainer, depth: number) {
+      var oldParent = this._parent;
+      this._parent = parent;
+      this._depth = depth;
+      if (parent) {
+        this._addReference();
+      } else if (oldParent) {
+        this._removeReference();
+      }
+    }
+
     _setFillAndLineBoundsFromWidthAndHeight(width: number, height: number) {
       this._fillBounds.width = width;
       this._fillBounds.height = height;
