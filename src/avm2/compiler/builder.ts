@@ -20,7 +20,10 @@ module Shumway.AVM2.Compiler {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import Trait = Shumway.AVM2.ABC.Trait;
   import Info = Shumway.AVM2.ABC.Info;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
+  import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
+  import ConstantPool = Shumway.AVM2.ABC.ConstantPool;
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
   import popManyIntoVoid = Shumway.ArrayUtilities.popManyIntoVoid;

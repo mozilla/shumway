@@ -53,6 +53,7 @@
 
 module Shumway.AVM2.Compiler.IR {
   import assert = Shumway.Debug.assert;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
   import unexpected = Shumway.Debug.unexpected;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
 

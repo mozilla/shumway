@@ -17,6 +17,10 @@
 module Shumway.AVM2.Verifier {
 
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
+  import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+  import ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+  import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import Trait = Shumway.AVM2.ABC.Trait;
   import Info = Shumway.AVM2.ABC.Info;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;

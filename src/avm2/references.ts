@@ -19,7 +19,8 @@
 
 ///<reference path='module.ts' />
 ///<reference path='errors.ts' />
-///<reference path='parser.ts' />
+///<reference path='abc/stream.ts' />
+///<reference path='abc/parser.ts' />
 ///<reference path='bytecode.ts' />
 ///<reference path='options.ts' />
 ///<reference path='runtime.ts' />

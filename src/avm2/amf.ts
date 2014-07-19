@@ -16,6 +16,7 @@
 ///<reference path='references.ts' />
 
 module Shumway.AVM2 {
+  import Multiname = Shumway.AVM2.ABC.Multiname;
   import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
   import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
 

@@ -16,6 +16,7 @@ module Shumway.AVM2.Compiler {
   import Trait = Shumway.AVM2.ABC.Trait;
   import Info = Shumway.AVM2.ABC.Info;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
+  import ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
   import Scope = Shumway.AVM2.Runtime.Scope;
 
   import canCompile = Shumway.AVM2.Runtime.canCompile;
