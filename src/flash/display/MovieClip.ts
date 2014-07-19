@@ -111,6 +111,13 @@ module Shumway.AVM2.AS.flash.display {
       Sprite.instanceConstructorNoInitialize.call(this);
     }
 
+    _setParent(parent: DisplayObjectContainer, depth: number) {
+      super._setParent(parent, depth);
+      if (parent && this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
+        parent._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+      }
+    }
+
     _initFrame(advance: boolean) {
       if (advance && this.buttonMode) {
         var state: string = null;

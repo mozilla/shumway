@@ -180,10 +180,8 @@ module Shumway.AVM2.AS.flash.display {
         children[i]._index++;
       }
       children.splice(index, 0, child);
-      child._depth = -1;
+      child._setParent(this, -1);
       child._index = index;
-      child._parent = this;
-      child._addReference();
       child._invalidatePosition();
       child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
       // ADDED event handlers may remove the child from the stage, in such cases
@@ -227,8 +225,7 @@ module Shumway.AVM2.AS.flash.display {
           children[i]._index = i;
         }
       }
-      child._parent = this;
-      child._depth = depth;
+      child._setParent(this, depth);
       child._invalidatePosition();
       this._invalidateChildren();
     }
@@ -260,9 +257,8 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = children.length - 1; i >= index; i--) {
         children[i]._index--;
       }
-      child._depth = -1;
+      child._setParent(null, -1);
       child._index = -1;
-      child._parent = null;
       child._invalidatePosition();
       this._invalidateChildren();
       return child;
