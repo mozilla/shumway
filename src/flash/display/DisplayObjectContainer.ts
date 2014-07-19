@@ -103,6 +103,19 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
+    _enqueueFrameScripts() {
+      if (this._hasFlags(DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
+        this._removeFlags(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+        var children = this._children;
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          if (DisplayObjectContainer.isType(child)) {
+            (<DisplayObjectContainer>child)._enqueueFrameScripts();
+          }
+        }
+      }
+    }
+
     get numChildren(): number {
       return this._children.length;
     }
