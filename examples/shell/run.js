@@ -66,10 +66,7 @@ console.time("Load AVM1 Dependencies");
 load("../../build/ts/avm1.js");
 console.timeEnd("Load AVM1 Dependencies");
 
-load("../../build/ts/player/options.js");
-load("../../build/ts/player/remotingPlayer.js");
-load("../../build/ts/player/player.js");
-load("../../build/ts/player/avmLoader.js");
+load("../../build/ts/player-gfx.js");
 
 console.timeEnd("Load Player Dependencies");
 

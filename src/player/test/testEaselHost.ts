@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-///<reference path='../references.ts' />
 module Shumway.Player.Test {
   import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;

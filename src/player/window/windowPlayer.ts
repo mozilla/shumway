@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-///<reference path='../references.ts' />
 module Shumway.Player.Window {
   import Player = Shumway.Player.Player;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;

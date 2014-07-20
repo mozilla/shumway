@@ -24,13 +24,5 @@
 ///<reference path='options.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='remotingPlayer.ts' />
-///<reference path='remotingGfx.ts' />
 ///<reference path='player.ts' />
-///<reference path='easelHost.ts' />
 ///<reference path='avmLoader.ts' />
-
-///<reference path='window/windowEaselHost.ts' />
-///<reference path='window/windowPlayer.ts' />
-///<reference path='test/testEaselHost.ts' />
-///<reference path='test/testPlayer.ts' />
-///<reference path='test/fakeSyncWorker.ts' />

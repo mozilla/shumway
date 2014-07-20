@@ -105,7 +105,7 @@ function loadPackage(id) {
 }
 function loadEngine() {
   loadPackage('.parser');
-  loadPackage('.player');
+  loadPackage('.player-shell');
 }
 
 loadEngine();

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-/// <reference path='references.ts'/>
-
 module Shumway.Player {
   export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("Player");
 

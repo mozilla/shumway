@@ -57,7 +57,13 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'flash.js src/flash/references.ts'
       },
       build_player_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts/player src/player/references.ts'
+        cmd: commonArguments + 'player-gfx.js src/player/references-gfx.ts'
+      },
+      build_player_shell_ts: {
+        cmd: commonArguments + 'player-shell.js src/player/references-shell.ts'
+      },
+      build_shell_ts: {
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --removeComments --out build/ts/shell.js src/player/shell/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',
@@ -173,8 +179,13 @@ module.exports = function(grunt) {
       },
       player_ts: {
         files: ['src/flash/**/*.ts',
-        		'src/player/**/*.ts'],
+        		    'src/player/**/*.ts'],
         tasks: ['exec:build_player_ts']
+      },
+      player_shell_ts: {
+        files: ['src/flash/**/*.ts',
+                'src/player/shell/**/*.ts'],
+        tasks: ['exec:build_player_shell_ts']
       },
       tools_ts: {
         files: ['src/tools/**/*.ts'],
@@ -250,6 +261,8 @@ module.exports = function(grunt) {
   grunt.registerTask('flash', ['parallel:flash', 'exec:shell_test']);
   grunt.registerTask('avm1', ['parallel:avm1', 'exec:shell_test']);
   grunt.registerTask('player', ['exec:build_player_ts', 'exec:shell_test']);
+  grunt.registerTask('player-shell', ['exec:build_player_shell_ts']);
+  grunt.registerTask('shell', ['exec:build_shell_ts']);
   grunt.registerTask('tools', ['exec:build_tools_ts']);
   grunt.registerTask('avm2', ['exec:build_avm2_ts', 'exec:shell_test']);
   grunt.registerTask('gfx', ['exec:build_gfx_ts']);
@@ -260,6 +273,8 @@ module.exports = function(grunt) {
     'parallel:tier2',
     'parallel:natives',
     'exec:build_player_ts',
+    'exec:build_player_shell_ts',
+    'exec:build_shell_ts',
     'bundles',
     'exec:shell_test'
   ]);
