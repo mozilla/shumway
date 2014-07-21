@@ -47,10 +47,7 @@ var shumwayOptions = systemOptions.register(Shumway.Settings.shumwayOptions);
 var shellOptions = systemOptions.register(new Shumway.Options.OptionSet("Shell Options"));
 
 load(tsBuildPath + "/swf.js");
-load(jsBuildPath + "/avm2/xregexp.js");
 load(tsBuildPath + "/avm2.js");
-load(jsBuildPath + "/avm2/disassembler.js");
-load(jsBuildPath + "/avm2/runtime-exports.js");
 load(tsBuildPath + "/flash.js");
 load(tsBuildPath + "/avm1.js");
 load(tsBuildPath + "/gfx-base.js");

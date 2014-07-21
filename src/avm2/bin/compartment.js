@@ -40,6 +40,8 @@ var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boo
 
 load(tsBuildPath + "avm2.js");
 
+var AbcFile = Shumway.AVM2.ABC.AbcFile;
+
 // load(tsBuildPath + "avm2/compiler/aot.js");
 
 function grabAbc(fileOrBuffer) {
