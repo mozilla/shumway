@@ -66,7 +66,6 @@ var systemOptions = new OptionSet("System Options");
 var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
 
 load(tsBuildPath + "avm2.js");
-load(jsBuildPath + "avm2/runtime-exports.js");
 
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));

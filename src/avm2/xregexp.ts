@@ -1667,3 +1667,5 @@ module Shumway.AVM2 {
 
   }());
 }
+
+Shumway.AVM2.XRegExp.install({ natives: true });

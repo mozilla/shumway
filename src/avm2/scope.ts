@@ -221,3 +221,9 @@ module Shumway.AVM2.Runtime {
   }
 
 }
+
+/**
+ * Top level runtime definitinos used by compiler generated code.
+ */
+
+var Scope = Shumway.AVM2.Runtime.Scope;

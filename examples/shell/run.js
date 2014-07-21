@@ -46,13 +46,10 @@ console.timeEnd("Load Shared Dependencies");
 console.time("Load AVM2 Dependencies");
 load("../../build/ts/avm2.js");
 load("../../src/avm2/disassembler.js");
-load("../../src/avm2/runtime-exports.js");
 console.timeEnd("Load AVM2 Dependencies");
 
 console.time("Load Compiled Code Cache");
 console.timeEnd("Load Compiled Code Cache");
-
-load("../../build/ts/player/module.js");
 
 // Load Flash TS Dependencies
 console.time("Load Flash TS Dependencies");
@@ -65,7 +62,7 @@ console.time("Load AVM1 Dependencies");
 load("../../build/ts/avm1.js");
 console.timeEnd("Load AVM1 Dependencies");
 
-load("../../build/ts/player-gfx.js");
+load("../../build/ts/player.js");
 
 console.timeEnd("Load Player Dependencies");
 
