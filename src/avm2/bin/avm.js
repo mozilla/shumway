@@ -65,7 +65,6 @@ var argumentParser = new ArgumentParser();
 var systemOptions = new OptionSet("System Options");
 var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
 
-load(jsBuildPath + "avm2/xregexp.js");
 load(tsBuildPath + "avm2.js");
 load(jsBuildPath + "avm2/runtime-exports.js");
 

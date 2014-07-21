@@ -43,7 +43,6 @@ var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 
 
-load(jsBuildPath + "avm2/xregexp.js");
 load(tsBuildPath + "avm2.js");
 load(jsBuildPath + "avm2/disassembler.js");
 load(jsBuildPath + "avm2/runtime-exports.js");

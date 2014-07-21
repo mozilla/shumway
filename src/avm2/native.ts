@@ -58,7 +58,6 @@ module Shumway.AVM2.AS {
   import Float64Vector = Shumway.AVM2.AS.Float64Vector;
   import asCompare = Shumway.AVM2.Runtime.asCompare;
 
-  declare var XRegExp;
   declare var escape;
   declare var unescape;
   declare var isXMLName;

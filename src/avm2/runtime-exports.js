@@ -27,7 +27,7 @@ var VM_CALL_PROXY = Shumway.AVM2.Runtime.VM_CALL_PROXY;
 
 var originalStringReplace = String.prototype.replace;
 
-XRegExp.install({ natives: true });
+Shumway.AVM2.XRegExp.install({ natives: true });
 
 /* This is used to keep track if we're in a runtime context. For instance, proxies need to
  * know if a proxied operation is triggered by AS3 code or VM code.
