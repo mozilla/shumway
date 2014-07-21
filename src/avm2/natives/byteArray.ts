@@ -58,9 +58,6 @@ module Shumway.AVM2.AS {
     }
   }
 
-
-  declare var AMFUtils;
-
   export module flash.net {
     export class ObjectEncoding extends ASNative {
       public static AMF0 = 0;
