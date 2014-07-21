@@ -57,7 +57,7 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'flash.js src/flash/references.ts'
       },
       build_player_ts: {
-        cmd: commonArguments + 'player-gfx.js src/player/references.ts'
+        cmd: commonArguments + 'player.js src/player/references.ts'
       },
       build_player_shell_ts: {
         cmd: commonArguments + 'player-shell.js src/player/references-shell.ts'
