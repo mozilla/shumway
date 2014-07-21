@@ -13,7 +13,4 @@ build/ts/tools.js
 build/ts/gfx-base.js
 build/ts/gfx.js
 
-build/ts/player/remotingGfx.js
-build/ts/player/easelHost.js
-
 #!inline console.timeEnd("Load GFX Dependencies");

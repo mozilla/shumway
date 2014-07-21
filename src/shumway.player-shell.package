@@ -17,8 +17,6 @@ src/avm2/runtime-exports.js
 #!inline console.time("Load Compiled Code Cache");
 #!inline console.timeEnd("Load Compiled Code Cache");
 
-build/ts/player/module.js
-
 ## Load Flash TS Dependencies
 #!inline console.time("Load Flash TS Dependencies");
 build/ts/flash.js
@@ -29,7 +27,5 @@ build/ts/flash.js
 #!inline console.time("Load AVM1 Dependencies");
 build/ts/avm1.js
 #!inline console.timeEnd("Load AVM1 Dependencies");
-
-build/ts/player-shell.js
 
 #!inline console.timeEnd("Load Player Dependencies");
