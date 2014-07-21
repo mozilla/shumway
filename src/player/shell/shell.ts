@@ -22,24 +22,46 @@ declare var scriptArgs;
 declare var arguments;
 declare var load;
 declare var quit;
-declare var snarf;
+declare var read;
+declare var include;
 
 var homePath = "";
 var jsBuildPath = homePath + "src/";
 var tsBuildPath = homePath + "build/ts/";
 
+
+if (typeof load === "undefined") {
+  /* Trying to get Node.js to work. I've tried the V8 shell, but that has problems with reading arguments.
+   load = function (path: string) {
+    var fs = require("fs");
+    eval.call(global, fs.readFileSync(path) + "");
+  };
+  */
+}
+
 load(tsBuildPath + "/base.js");
 load(tsBuildPath + "/tools.js");
+
+var systemOptions = new Shumway.Options.OptionSet("System Options");
+var shumwayOptions = systemOptions.register(Shumway.Settings.shumwayOptions);
+var shellOptions = systemOptions.register(new Shumway.Options.OptionSet("Shell Options"));
+
 load(tsBuildPath + "/swf.js");
 load(jsBuildPath + "/avm2/xregexp.js");
 load(tsBuildPath + "/avm2.js");
+load(jsBuildPath + "/avm2/disassembler.js");
+load(jsBuildPath + "/avm2/runtime-exports.js");
 load(tsBuildPath + "/flash.js");
+load(tsBuildPath + "/avm1.js");
 load(tsBuildPath + "/player-shell.js");
 
 module Shumway.Player.Shell {
+  import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
   import ArgumentParser = Shumway.Options.ArgumentParser;
+
+  import Runtime = Shumway.AVM2.Runtime;
 
   class ShellPlayer extends Shumway.Player.Player {
 
@@ -48,16 +70,16 @@ module Shumway.Player.Shell {
   var writer = new IndentingWriter();
 
   export function main(commandLineArguments: string []) {
-    var systemOptions = new OptionSet("System Options");
-    var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
-    var shellOptions = systemOptions.register(new OptionSet("Shell Options"));
+    var parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
+    var releaseOption = shellOptions.register(new Option("r", "release", "boolean", false, "Release mode"));
+    var executeOption = shellOptions.register(new Option("x", "execute", "boolean", false, "Execute File(s)"));
 
     var argumentParser = new ArgumentParser();
     argumentParser.addBoundOptionSet(systemOptions);
 
     function printUsage() {
       writer.enter("Shumway Command Line Interface");
-      writer.writeLn("shell.js " + argumentParser.getUsage());
+      systemOptions.trace(writer);
       writer.leave("");
     }
 
@@ -69,7 +91,7 @@ module Shumway.Player.Shell {
 
     try {
       argumentParser.parse(commandLineArguments).filter(function (value, index, array) {
-        if (value.endsWith(".abc") || value.endsWith(".swf")) {
+        if (value.endsWith(".abc") || value.endsWith(".swf") || value.endsWith(".js")) {
           files.push(value);
         } else {
           return true;
@@ -80,25 +102,75 @@ module Shumway.Player.Shell {
       quit();
     }
 
-    files.forEach(x => runSWF(x));
+    release = releaseOption.value;
+
+    if (parseOption.value) {
+      files.forEach(x => parseSWF(x));
+    }
+
+    if (executeOption.value) {
+      initializeAVM2();
+      createABCs(files).forEach(function (abc: AbcFile) {
+        writer.writeLn("Execute: " + abc);
+        Runtime.AVM2.instance.systemDomain.executeAbc(abc);
+      });
+    }
   }
 
-  function runSWF(file: string) {
+  function createABCs(files: string []): AbcFile [] {
+    var abcs = [];
+    files.forEach(function (file) {
+      writer.writeLn(file);
+      if (file.endsWith(".abc")) {
+        abcs.push(new AbcFile(new Uint8Array(read(file, 'binary')), file));
+      } else {
+        Shumway.Debug.unexpected(file);
+      }
+    });
+    return abcs;
+  }
+
+  /**
+   * Parses a SWF's tags.
+   */
+  function parseSWF(file: string) {
     var SWF_TAG_CODE_DO_ABC = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC;
     var SWF_TAG_CODE_DO_ABC_ = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC_;
-    Shumway.SWF.Parser.parse(snarf(file, "binary"), {
+    Shumway.SWF.Parser.parse(read(file, "binary"), {
       oncomplete: function(result) {
         var tags = result.tags;
-        var abcs = []; // Group SWF ABCs in their own array.
         for (var i = 0, n = tags.length; i < n; i++) {
           var tag = tags[i];
-          writer.writeLn(tag.code);
-          if (tag.code === SWF_TAG_CODE_DO_ABC ||
-            tag.code === SWF_TAG_CODE_DO_ABC_) {
-            abcs.push(tag.data);
-          }
         }
+        writer.writeLn("Parsed: " + tags.length + " tags.");
       }
+    });
+  }
+
+  function createAVM2(builtinPath, libraryPathInfo) {
+    var buffer = read(builtinPath, 'binary');
+    Runtime.AVM2.initialize(Runtime.ExecutionMode.COMPILE, Runtime.ExecutionMode.COMPILE, null);
+    var avm2Instance = Runtime.AVM2.instance;
+    Shumway.AVM2.AS.linkNatives(avm2Instance);
+    avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
+
+    /*
+    console.time("Execute builtin.abc");
+    // Avoid loading more Abcs while the builtins are loaded
+    avm2.builtinsLoaded = false;
+    avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
+    avm2.builtinsLoaded = true;
+    console.timeEnd("Execute builtin.abc");
+    loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
+    */
+  }
+
+  function initializeAVM2() {
+    var avm2Root = homePath + "src/avm2/";
+    var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+    createAVM2(builtinPath, {
+      abcs: "build/playerglobal/playerglobal.abcs",
+      catalog: "build/playerglobal/playerglobal.json"
     });
   }
 }

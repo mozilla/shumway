@@ -156,6 +156,8 @@ module Shumway.AVM2.Runtime {
   export var VM_OPEN_SET_METHOD_PREFIX = "s";
   export var VM_OPEN_GET_METHOD_PREFIX = "g";
 
+  export var SAVED_SCOPE_NAME = "$SS";
+
   /**
    * Overriden AS3 methods (see hacks.js). This allows you to provide your own JS implementation
    * for AS3 methods.
@@ -1532,7 +1534,6 @@ module Shumway.AVM2.Runtime {
     fn.debugName = "Compiled Function #" + vmNextCompiledFunctionId++;
     return fn;
   }
-
 
   /**
    * Creates a function from the specified |methodInfo| that is bound to the given |scope|. If the

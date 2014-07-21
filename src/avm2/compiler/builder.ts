@@ -69,11 +69,6 @@ module Shumway.AVM2.Compiler {
   var writer = new IndentingWriter();
   var peepholeOptimizer = new IR.PeepholeOptimizer();
 
-  declare var SAVED_SCOPE_NAME;
-  declare var VM_OPEN_METHOD_PREFIX;
-  declare var VM_OPEN_SET_METHOD_PREFIX;
-  declare var VM_OPEN_GET_METHOD_PREFIX;
-
   /**
    * Use the 'typeof argument === "undefined" ? defaultValue : argument' pattern to
    * check for undefined arguments instead of the more correct arguments.length version.
@@ -668,7 +663,7 @@ module Shumway.AVM2.Compiler {
           } else {
             openQn = Multiname.getQualifiedName(ti.trait.name);
           }
-          openQn = VM_OPEN_METHOD_PREFIX + openQn;
+          openQn = Runtime.VM_OPEN_METHOD_PREFIX + openQn;
           return this.store(new IR.CallProperty(region, state.store, object, constant(openQn), args, IR.Flags.PRISTINE));
         } else if (ti.trait.isClass()) {
           var constructor = getCallableConstructorForType(ti.trait.name);
@@ -744,7 +739,7 @@ module Shumway.AVM2.Compiler {
       var region = this.region;
       var state = this.state;
       if (ti && ti.trait && ti.trait.isMethod() && ti.baseClass) {
-        var qn = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+        var qn = Runtime.VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
         var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
         return this.call(callee, object, args);
       }
@@ -756,7 +751,7 @@ module Shumway.AVM2.Compiler {
       var region = this.region;
       var state = this.state;
       if (ti && ti.trait && ti.trait.isGetter() && ti.baseClass) {
-        var qn = VM_OPEN_GET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+        var qn = Runtime.VM_OPEN_GET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
         var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
         return this.call(callee, object, []);
       }
@@ -768,7 +763,7 @@ module Shumway.AVM2.Compiler {
       var region = this.region;
       var state = this.state;
       if (ti && ti.trait && ti.trait.isSetter() && ti.baseClass) {
-        var qn = VM_OPEN_SET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+        var qn = Runtime.VM_OPEN_SET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
         var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
         return this.call(callee, object, [value]);
       }
@@ -1484,7 +1479,7 @@ module Shumway.AVM2.Compiler {
 
       state.store = new Projection(start, ProjectionType.STORE);
       if (this.hasDynamicScope) {
-        start.scope = new Parameter(start, 0, SAVED_SCOPE_NAME);
+        start.scope = new Parameter(start, 0, Runtime.SAVED_SCOPE_NAME);
       } else {
         start.scope = new Constant(this.scope);
       }
