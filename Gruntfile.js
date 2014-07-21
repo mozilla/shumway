@@ -100,7 +100,6 @@ module.exports = function(grunt) {
           grunt: true
         },
         tasks: [
-          'exec:build_gfx_base_ts',
           'exec:build_gfx_ts',
           'exec:build_swf_ts',
           'exec:build_avm2_ts'
@@ -270,6 +269,7 @@ module.exports = function(grunt) {
   grunt.registerTask('shu', [
     'parallel:base',
     'exec:build_tools_ts',
+    'exec:build_gfx_base_ts',
     'parallel:tier2',
     'parallel:natives',
     'exec:build_player_ts',
