@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='../references.ts' />
-
-
 
 /**
  * TypedArray Vector Template

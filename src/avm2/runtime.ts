@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
 
 import Namespace = Shumway.AVM2.ABC.Namespace;
 
