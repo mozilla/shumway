@@ -16,8 +16,6 @@
 ///<reference path='references.ts' />
 
 module Shumway.AVM2.Runtime {
-  declare var getTraitFunction;
-
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;

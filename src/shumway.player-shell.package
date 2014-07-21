@@ -30,6 +30,6 @@ build/ts/flash.js
 build/ts/avm1.js
 #!inline console.timeEnd("Load AVM1 Dependencies");
 
-build/ts/player-gfx.js
+build/ts/player-shell.js
 
 #!inline console.timeEnd("Load Player Dependencies");

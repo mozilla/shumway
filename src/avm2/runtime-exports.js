@@ -18,12 +18,6 @@ var VM_LENGTH = Shumway.AVM2.Runtime.VM_LENGTH;
 var VM_IS_PROXY = Shumway.AVM2.Runtime.VM_IS_PROXY;
 var VM_CALL_PROXY = Shumway.AVM2.Runtime.VM_CALL_PROXY;
 
-var VM_OPEN_METHOD_PREFIX = "m";
-var VM_OPEN_SET_METHOD_PREFIX = "s";
-var VM_OPEN_GET_METHOD_PREFIX = "g";
-
-var SAVED_SCOPE_NAME = "$SS";
-
 /**
  * ActionScript uses a slightly different syntax for regular expressions. Many of these features
  * are handled by the XRegExp library. Here we override the native RegExp.prototype methods with
@@ -79,8 +73,6 @@ var isClass = Shumway.AVM2.Runtime.isClass;
 var isTrampoline = Shumway.AVM2.Runtime.isTrampoline;
 var isMemoizer = Shumway.AVM2.Runtime.isMemoizer;
 
-
-var LazyInitializer = Shumway.AVM2.Runtime.LazyInitializer;
 
 var getNamespaceResolutionMap = Shumway.AVM2.Runtime.getNamespaceResolutionMap;
 var resolveMultinameProperty = Shumway.AVM2.Runtime.resolveMultinameProperty;

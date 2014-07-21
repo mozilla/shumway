@@ -17,6 +17,10 @@
 module Shumway.AVM2.Verifier {
 
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
+  import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+  import ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+  import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import Trait = Shumway.AVM2.ABC.Trait;
   import Info = Shumway.AVM2.ABC.Info;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
@@ -25,8 +29,6 @@ module Shumway.AVM2.Verifier {
   import popManyIntoVoid = Shumway.ArrayUtilities.popManyIntoVoid;
 
   import Scope = Shumway.AVM2.Runtime.Scope;
-
-  declare var LazyInitializer;
 
   export class VerifierError {
     name: string;
@@ -844,7 +846,7 @@ module Shumway.AVM2.Verifier {
             if (trait) {
               ti().scopeDepth = scope.length - i - 1;
               if (traitsType.isClassInfo() || traitsType.isScriptInfo()) {
-                ti().object = LazyInitializer.create(traitsType.info);
+                ti().object = Runtime.LazyInitializer.create(traitsType.info);
               }
               writer && writer.debugLn("findProperty(" + mn + ") -> " + traitsType);
               return traitsType;
@@ -857,7 +859,7 @@ module Shumway.AVM2.Verifier {
 
         var resolved = self.domain.findDefiningScript(mn.getConstantValue(), false);
         if (resolved) {
-          ti().object = LazyInitializer.create(resolved.script);
+          ti().object = Runtime.LazyInitializer.create(resolved.script);
           var type = Type.from(resolved.script, self.domain);
           writer && writer.debugLn("findProperty(" + mn + ") -> " + type);
           return type;
@@ -931,7 +933,7 @@ module Shumway.AVM2.Verifier {
             mn = popMultiname();
             object = pop();
             release || assert(object.super());
-            ti().baseClass = LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
+            ti().baseClass = Runtime.LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
             push(getProperty(object.super(), mn));
             break;
           case OP.setsuper:
@@ -939,7 +941,7 @@ module Shumway.AVM2.Verifier {
             mn = popMultiname();
             object = pop();
             release || assert(object.super());
-            ti().baseClass = LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
+            ti().baseClass = Runtime.LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
             setProperty(object.super(), mn, value);
             break;
           case OP.dxns:
@@ -1103,7 +1105,7 @@ module Shumway.AVM2.Verifier {
             object = pop();
             if (op === OP.callsuper || op === OP.callsupervoid) {
               object = this.thisType.super();
-              ti().baseClass = LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
+              ti().baseClass = Runtime.LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
             }
             type = getProperty(object, mn);
             if (op === OP.callpropvoid || op === OP.callsupervoid) {
@@ -1136,7 +1138,7 @@ module Shumway.AVM2.Verifier {
             if (this.thisType.isInstanceInfo() && this.thisType.super() === Type.Object) {
               ti().noCallSuperNeeded = true;
             } else {
-              ti().baseClass = LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
+              ti().baseClass = Runtime.LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
             }
             break;
           case OP.construct:
@@ -1227,7 +1229,7 @@ module Shumway.AVM2.Verifier {
             break;
           case OP.getglobalscope:
             push(globalScope);
-            ti().object = LazyInitializer.create(globalScope.asTraitsType().info);
+            ti().object = Runtime.LazyInitializer.create(globalScope.asTraitsType().info);
             break;
           case OP.getscopeobject:
             push(scope[bc.index]);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-module Shumway.Player {
-  export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("Player");
+/// <reference path='../../build/ts/base.d.ts' />
+/// <reference path='../../build/ts/tools.d.ts' />
+/// <reference path='../../build/ts/swf.d.ts' />
+/// <reference path='../../build/ts/gfx.d.ts' />
+/// <reference path='../../build/ts/flash.d.ts' />
 
-  export var writer = null; // release ? null : new IndentingWriter();
-
-  export function enterTimeline(name: string, data?: any) {
-    writer && writer.enter(name);
-    profile && timelineBuffer && timelineBuffer.enter(name, data);
-  }
-
-  export function leaveTimeline(name: string, data?: any) {
-    writer && writer.leave(name);
-    profile && timelineBuffer && timelineBuffer.leave(name, data);
-  }
-}
+///<reference path='module.ts' />
+///<reference path='options.ts' />
+///<reference path='frameScheduler.ts' />
+///<reference path='remotingPlayer.ts' />
+///<reference path='player.ts' />
+///<reference path='avmLoader.ts' />
