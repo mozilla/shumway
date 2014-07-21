@@ -85,12 +85,6 @@ interface Function {
 }
 
 module Shumway.AVM2.Runtime {
-
-  declare var XML;
-  declare var XMLList;
-
-  declare var Analysis;
-
   /**
    * Seals const traits. Technically we need to throw an exception if they are ever modified after
    * the static or instance constructor executes, but we can safely ignore this incompatibility.

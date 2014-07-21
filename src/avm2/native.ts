@@ -58,10 +58,6 @@ module Shumway.AVM2.AS {
   import Float64Vector = Shumway.AVM2.AS.Float64Vector;
   import asCompare = Shumway.AVM2.Runtime.asCompare;
 
-  declare var escape;
-  declare var unescape;
-  declare var isXMLName;
-
   var debug = false;
 
   function log(message?: any, ...optionalParams: any[]): void {
@@ -1748,7 +1744,7 @@ module Shumway.AVM2.AS {
     export var parseFloat: (string: string) => number = jsGlobal.parseFloat;
     export var escape: (x: any) => any = jsGlobal.escape;
     export var unescape: (x: any) => any = jsGlobal.unescape;
-    export var isXMLName: (x: any) => any = typeof (isXMLName) !== "undefined" ? isXMLName : function () {
+    export var isXMLName: (x: any) => any = typeof (isXMLName) !== "undefined" ? jsGlobal.isXMLName : function () {
       notImplemented("Chrome doesn't support isXMLName.");
     }
 

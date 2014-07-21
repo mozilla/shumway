@@ -261,7 +261,7 @@ module Shumway.AVM2.Runtime {
     return m;
   }
 
-  export function isTrampoline(fn) {
+  function isTrampoline(fn) {
     release || assert (fn && typeof fn === "function");
     return fn.isTrampoline;
   }

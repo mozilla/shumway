@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-var VM_LENGTH = Shumway.AVM2.Runtime.VM_LENGTH;
-var VM_IS_PROXY = Shumway.AVM2.Runtime.VM_IS_PROXY;
-var VM_CALL_PROXY = Shumway.AVM2.Runtime.VM_CALL_PROXY;
-
 /**
  * ActionScript uses a slightly different syntax for regular expressions. Many of these features
  * are handled by the XRegExp library. Here we override the native RegExp.prototype methods with
@@ -25,17 +21,7 @@ var VM_CALL_PROXY = Shumway.AVM2.Runtime.VM_CALL_PROXY;
  * match, replace and split.
  */
 
-var originalStringReplace = String.prototype.replace;
-
 Shumway.AVM2.XRegExp.install({ natives: true });
-
-/* This is used to keep track if we're in a runtime context. For instance, proxies need to
- * know if a proxied operation is triggered by AS3 code or VM code.
-*/
-
-var callWriter = new Shumway.IndentingWriter(false, function (str){
-  print(str);
-});
 
 /*
  * We pollute the JS global object with object constants used in compiled code.
@@ -70,11 +56,7 @@ function objectConstantName(object) {
 }
 
 var isClass = Shumway.AVM2.Runtime.isClass;
-var isTrampoline = Shumway.AVM2.Runtime.isTrampoline;
-var isMemoizer = Shumway.AVM2.Runtime.isMemoizer;
 
-
-var getNamespaceResolutionMap = Shumway.AVM2.Runtime.getNamespaceResolutionMap;
 var resolveMultinameProperty = Shumway.AVM2.Runtime.resolveMultinameProperty;
 var asGetPublicProperty = Shumway.AVM2.Runtime.asGetPublicProperty;
 var asGetProperty = Shumway.AVM2.Runtime.asGetProperty;
