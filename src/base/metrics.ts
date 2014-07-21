@@ -95,6 +95,9 @@ module Shumway.Metrics {
 
     private _enabled: boolean;
     private _counts: Map<number>;
+    get counts(): Map<number> {
+      return this._counts;
+    }
     constructor(enabled: boolean) {
       this._enabled = enabled;
       this.clear();

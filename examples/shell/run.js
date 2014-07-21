@@ -45,7 +45,6 @@ console.timeEnd("Load Shared Dependencies");
 
 console.time("Load AVM2 Dependencies");
 load("../../build/ts/avm2.js");
-load("../../src/avm2/disassembler.js");
 console.timeEnd("Load AVM2 Dependencies");
 
 console.time("Load Compiled Code Cache");

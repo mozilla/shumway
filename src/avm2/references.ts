@@ -21,6 +21,7 @@
 ///<reference path='errors.ts' />
 ///<reference path='abc/stream.ts' />
 ///<reference path='abc/parser.ts' />
+///<reference path='abc/disassembler.ts' />
 ///<reference path='bytecode.ts' />
 ///<reference path='options.ts' />
 ///<reference path='runtime.ts' />

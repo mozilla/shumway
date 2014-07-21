@@ -9,7 +9,6 @@ build/ts/tools.js
 
 #!inline console.time("Load AVM2 Dependencies");
 build/ts/avm2.js
-src/avm2/disassembler.js
 #!inline console.timeEnd("Load AVM2 Dependencies");
 
 #!inline console.time("Load Compiled Code Cache");
