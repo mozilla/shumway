@@ -1,5 +1,3 @@
-/// <reference path='../references.ts'/>
-
 module Shumway.GFX.Canvas2D {
 
   import assert = Shumway.Debug.assert;

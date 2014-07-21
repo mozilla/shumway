@@ -10,7 +10,9 @@ build/ts/tools.js
 # src/gfx/filters/filters.js
 # src/gfx/filters/filters_cxform.js
 
+build/ts/gfx-base.js
 build/ts/gfx.js
+
 build/ts/player/remotingGfx.js
 build/ts/player/easelHost.js
 

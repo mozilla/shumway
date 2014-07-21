@@ -5,4 +5,5 @@
 /// <reference path='../../build/ts/flash.d.ts' />
 /// <reference path='../../build/ts/player.d.ts' />
 
+///<reference path='module.ts' />
 ///<reference path='shell.ts' />

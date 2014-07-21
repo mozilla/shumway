@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-/// <reference path='references.ts'/>
 module Shumway.GFX {
   import Rectangle = Geometry.Rectangle;
   import Point = Geometry.Point;

@@ -24,3 +24,6 @@ src/flash/playerglobal-new.abc
 node_modules/
 
 build/
+src/flash/classes/*.abc
+src/flash/classes/*.cpp
+src/flash/classes/*.h
