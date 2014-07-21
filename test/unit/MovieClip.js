@@ -1,8 +1,8 @@
 (function timelineTests() {
   var assert = Shumway.Debug.assert;
   var LoaderInfo = flash.display.LoaderInfo;
-  var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  var Stage = flash.display.Stage;
   var MovieClip = flash.display.MovieClip;
   var SpriteSymbol = Shumway.Timeline.SpriteSymbol;
   var FrameDelta = Shumway.Timeline.FrameDelta;
@@ -23,13 +23,17 @@
   function createMovieClipWithFrames(numFrames) {
     assert(typeof numFrames === 'number');
     var loaderInfo = new LoaderInfo();
+    var stage = new Stage();
+    stage._stage = stage;
     var symbol = new SpriteSymbol(0);
     symbol.numFrames = numFrames;
     var frame = new FrameDelta(loaderInfo, []);
     for (var i = 0; i < numFrames; i++) {
       symbol.frames.push(frame);
     }
-    return createMovieClipFromSymbol(symbol);
+    var mc = createMovieClipFromSymbol(symbol);
+    stage.addChild(mc);
+    return mc;
   }
 
   function createMovieClipFromSymbol(symbol) {
@@ -103,6 +107,7 @@
       framesExecuted[0]++;
     });
     eq(framesExecuted[0], 0, "Just adding a script to the current frame doesn't run it");
+    mc.stage._enqueueFrameScripts();
     MovieClip.runFrameScripts();
     eq(framesExecuted[0], 1, "MovieClip.runFrameScripts() runs queued scripts");
     mc.addFrameScript(2, function(){

@@ -98,17 +98,24 @@ module Shumway.AVM2.AS.flash.display {
         instance.callFrame(instance._currentFrame);
         instance._allowFrameNavigation = true;
 
-        if (instance._nextFrame !== instance._currentFrame) {
-          DisplayObject.performFrameNavigation(false, true);
+        // Frame navigation is only triggered if the MovieClip is on stage.
+        if (instance._nextFrame !== instance._currentFrame && instance.stage) {
+          DisplayObject.performFrameNavigation(instance.stage, false, true);
         }
       }
-      DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
       leaveTimeline();
     }
 
     constructor () {
       false && super();
       Sprite.instanceConstructorNoInitialize.call(this);
+    }
+
+    _setParent(parent: DisplayObjectContainer, depth: number) {
+      super._setParent(parent, depth);
+      if (parent && this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
+        parent._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+      }
     }
 
     _initFrame(advance: boolean) {
@@ -139,6 +146,14 @@ module Shumway.AVM2.AS.flash.display {
 
     _constructFrame() {
       this._constructChildren();
+    }
+
+    _enqueueFrameScripts() {
+      if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
+        this._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
+        MovieClip._callQueue.push(this);
+      }
+      super._enqueueFrameScripts();
     }
 
     // JS -> AS Bindings
@@ -291,9 +306,10 @@ module Shumway.AVM2.AS.flash.display {
 
       this._nextFrame = frame;
 
-      if (this._allowFrameNavigation) { // TODO: also check if ActionScriptVersion < 3
+      // Frame navigation is only triggered if the MovieClip is on stage.
+      if (this._allowFrameNavigation && this.stage) { // TODO: also check if ActionScriptVersion < 3
         // TODO test inter-frame navigation behaviour for SWF versions < 10
-        DisplayObject.performFrameNavigation(false, true);
+        DisplayObject.performFrameNavigation(this.stage, false, true);
       }
     }
 
@@ -384,7 +400,8 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (this._frameScripts[nextFrame]) {
-        MovieClip._callQueue.push(this);
+        this._setFlags(DisplayObjectFlags.HasFrameScriptPending);
+        this._parent && this._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
       }
 
       this._currentFrame = this._nextFrame = nextFrame;
@@ -529,7 +546,8 @@ module Shumway.AVM2.AS.flash.display {
         }
         frameScripts[frameNum] = arguments[i + 1];
         if (frameNum === this._currentFrame) {
-          MovieClip._callQueue.push(this);
+          this._setFlags(DisplayObjectFlags.HasFrameScriptPending);
+          this._parent && this._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
         }
       }
     }
