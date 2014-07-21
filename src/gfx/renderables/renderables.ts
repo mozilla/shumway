@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-/// <reference path='references.ts'/>
 module Shumway.GFX {
   import Point = Geometry.Point;
   import Rectangle = Geometry.Rectangle;
@@ -278,6 +277,8 @@ module Shumway.GFX {
     drawFrame(source: Frame, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle): void {
       // TODO: Support colorMatrix and blendMode.
       enterTimeline("RenderableBitmap.drawFrame");
+      // TODO: Hack to be able to compile this as part of gfx-base.
+      var Canvas2D = (<any>GFX).Canvas2D;
       var bounds = this.getBounds();
       var options = new Canvas2D.Canvas2DStageRendererOptions();
       options.cacheShapes = true;

@@ -53,14 +53,14 @@ module.exports = function(grunt) {
       build_gfx_ts: {
         cmd: commonArguments + 'gfx.js src/gfx/references.ts'
       },
+      build_gfx_base_ts: {
+        cmd: commonArguments + 'gfx-base.js src/gfx/references-base.ts'
+      },
       build_flash_ts: {
         cmd: commonArguments + 'flash.js src/flash/references.ts'
       },
       build_player_ts: {
         cmd: commonArguments + 'player.js src/player/references.ts'
-      },
-      build_player_shell_ts: {
-        cmd: commonArguments + 'player-shell.js src/player/references-shell.ts'
       },
       build_shell_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --removeComments --out build/ts/shell.js src/shell/references.ts'
@@ -100,6 +100,7 @@ module.exports = function(grunt) {
           grunt: true
         },
         tasks: [
+          'exec:build_gfx_base_ts',
           'exec:build_gfx_ts',
           'exec:build_swf_ts',
           'exec:build_avm2_ts'
@@ -165,6 +166,10 @@ module.exports = function(grunt) {
                 'src/flash/**/*.ts'],
         tasks: ['exec:build_flash_ts']
       },
+      gfx_base_ts: {
+        files: ['src/gfx/**/*.ts'],
+        tasks: ['exec:build_gfx_base_ts']
+      },
       gfx_ts: {
         files: ['src/gfx/**/*.ts'],
         tasks: ['exec:build_gfx_ts']
@@ -181,11 +186,6 @@ module.exports = function(grunt) {
         files: ['src/flash/**/*.ts',
         		    'src/player/**/*.ts'],
         tasks: ['exec:build_player_ts']
-      },
-      player_shell_ts: {
-        files: ['src/flash/**/*.ts',
-                'src/player/shell/**/*.ts'],
-        tasks: ['exec:build_player_shell_ts']
       },
       tools_ts: {
         files: ['src/tools/**/*.ts'],
@@ -250,7 +250,7 @@ module.exports = function(grunt) {
   grunt.registerTask('watch-swf', ['exec:build_swf_ts', 'watch:swf_ts']);
   grunt.registerTask('watch-flash', ['exec:build_flash_ts', 'watch:flash_ts']);
   grunt.registerTask('watch-player', ['exec:build_player_ts', 'watch:player_ts']);
-  grunt.registerTask('watch-gfx', ['exec:build_gfx_ts', 'watch:gfx_ts']);
+  grunt.registerTask('watch-gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts', 'watch:gfx_ts']);
   grunt.registerTask('watch-tools', ['exec:build_tools_ts', 'watch:tools_ts']);
 
   // temporary make/python calls based on grunt-exec
@@ -261,11 +261,11 @@ module.exports = function(grunt) {
   grunt.registerTask('flash', ['parallel:flash', 'exec:shell_test']);
   grunt.registerTask('avm1', ['parallel:avm1', 'exec:shell_test']);
   grunt.registerTask('player', ['exec:build_player_ts', 'exec:shell_test']);
-  grunt.registerTask('player-shell', ['exec:build_player_shell_ts']);
   grunt.registerTask('shell', ['exec:build_shell_ts']);
   grunt.registerTask('tools', ['exec:build_tools_ts']);
   grunt.registerTask('avm2', ['exec:build_avm2_ts', 'exec:shell_test']);
-  grunt.registerTask('gfx', ['exec:build_gfx_ts']);
+  grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts']);
+  grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts']);
   grunt.registerTask('shell-test', ['exec:shell_test']);
   grunt.registerTask('shu', [
     'parallel:base',
@@ -273,7 +273,6 @@ module.exports = function(grunt) {
     'parallel:tier2',
     'parallel:natives',
     'exec:build_player_ts',
-    'exec:build_player_shell_ts',
     'exec:build_shell_ts',
     'bundles',
     'exec:shell_test'

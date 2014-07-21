@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-/// <reference path='references.ts'/>
 module Shumway.GFX.Geometry {
 
   import clamp = Shumway.NumberUtilities.clamp;
@@ -1819,6 +1818,7 @@ module Shumway.GFX.Geometry {
       // ...
     }
   }
+
   export class MipMap {
     private _source: Renderable;
     private _size: number;
@@ -1858,7 +1858,9 @@ module Shumway.GFX.Geometry {
         var surfaceRegion = this._surfaceRegionAllocator.allocate(scaledBounds.w, scaledBounds.h);
         var region = surfaceRegion.region;
         mipLevel = this._levels[levelIndex] = new MipMapLevel(surfaceRegion, scale);
-        var surface = <Canvas2D.Canvas2DSurface>(mipLevel.surfaceRegion.surface);
+        // TODO: Should cast to <Canvas2D.Canvas2DSurface> but this is not available in gfx-base. We should probably
+        // move this code outside of geometry.
+        var surface = <any>(mipLevel.surfaceRegion.surface);
         var context = surface.context;
         context.save();
         context.beginPath();

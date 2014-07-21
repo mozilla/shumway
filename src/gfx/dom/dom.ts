@@ -1,4 +1,3 @@
-/// <reference path='../references.ts'/>
 module Shumway.GFX {
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
   import Point = Shumway.GFX.Geometry.Point;

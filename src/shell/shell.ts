@@ -53,9 +53,10 @@ load(jsBuildPath + "/avm2/disassembler.js");
 load(jsBuildPath + "/avm2/runtime-exports.js");
 load(tsBuildPath + "/flash.js");
 load(tsBuildPath + "/avm1.js");
+load(tsBuildPath + "/gfx-base.js");
 load(tsBuildPath + "/player.js");
 
-module Shumway.Player.Shell {
+module Shumway.Shell {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
@@ -182,5 +183,5 @@ if (typeof console === "undefined") {
   } else {
     commandLineArguments = scriptArgs;
   }
-  Shumway.Player.Shell.main(commandLineArguments)
+  Shumway.Shell.main(commandLineArguments)
 }
