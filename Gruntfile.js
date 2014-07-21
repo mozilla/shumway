@@ -63,7 +63,7 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'player-shell.js src/player/references-shell.ts'
       },
       build_shell_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --removeComments --out build/ts/shell.js src/player/shell/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --removeComments --out build/ts/shell.js src/shell/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',

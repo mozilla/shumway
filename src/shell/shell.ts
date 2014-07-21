@@ -53,7 +53,7 @@ load(jsBuildPath + "/avm2/disassembler.js");
 load(jsBuildPath + "/avm2/runtime-exports.js");
 load(tsBuildPath + "/flash.js");
 load(tsBuildPath + "/avm1.js");
-load(tsBuildPath + "/player-shell.js");
+load(tsBuildPath + "/player.js");
 
 module Shumway.Player.Shell {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
