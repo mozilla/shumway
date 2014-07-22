@@ -64,6 +64,7 @@ console.time("Load AVM1 Dependencies");
 load("../../build/ts/avm1.js");
 console.timeEnd("Load AVM1 Dependencies");
 
+load("../../build/ts/gfx-base.js");
 load("../../build/ts/player.js");
 
 console.timeEnd("Load Player Dependencies");

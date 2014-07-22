@@ -52,26 +52,17 @@ module Shumway.Player.Test {
       var buffer: TimelineBuffer;
       switch (type) {
         case 'AVM2':
-          if (cmd === 'clear') {
-            Shumway.AVM2.timelineBuffer.reset();
-          } else {
-            buffer = Shumway.AVM2.timelineBuffer;
-          }
+          buffer = (<any>Shumway).AVM2.timelineBuffer;
           break;
         case 'Player':
-          if (cmd === 'clear') {
-            Shumway.Player.timelineBuffer.reset();
-          } else {
-            buffer = Shumway.Player.timelineBuffer;
-          }
+          buffer = (<any>Shumway).Player.timelineBuffer;
           break;
         case 'SWF':
-          if (cmd === 'clear') {
-            Shumway.SWF.timelineBuffer.reset();
-          } else {
-            buffer = Shumway.SWF.timelineBuffer;
-          }
+          buffer = (<any>Shumway).SWF.timelineBuffer;
           break;
+      }
+      if (cmd === 'clear' && buffer) {
+        buffer.reset();
       }
       return Promise.resolve(buffer);
     }

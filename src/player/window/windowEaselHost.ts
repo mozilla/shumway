@@ -35,7 +35,7 @@ module Shumway.Player.Window {
         this.onWindowMessage(e.data);
       }.bind(this));
       this._window.addEventListener('syncmessage', function (e) {
-        this.onWindowMessage(e.detail);
+        this.onWindowMessage(e.detail, false);
       }.bind(this));
     }
 
@@ -67,11 +67,17 @@ module Shumway.Player.Window {
       }.bind(this));
     }
 
-    private onWindowMessage(data) {
+    private onWindowMessage(data, async: boolean = true) {
       if (typeof data === 'object' && data !== null) {
         if (data.type === 'player') {
           var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
-          this.processUpdates(updates, data.assets);
+          if (async) {
+            this.processUpdates(updates, data.assets);
+          } else {
+            var output = new DataBuffer();
+            this.processUpdates(updates, data.assets, output);
+            data.result = output.toPlainObject();
+          }
         } else if (data.type === 'external') {
           this.processExternalCommand(data.command);
         } else if (data.type === 'timelineResponse' && data.timeline) {

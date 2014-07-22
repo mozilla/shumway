@@ -39,11 +39,16 @@ module Shumway.Player.Window {
       var message = {
         type: 'player',
         updates: bytes,
-        assets: assets
+        assets: assets,
+        result: undefined
       };
       var transferList = [bytes.buffer];
       if (!async) {
-        var result = this._parent.postSyncMessage(message, '*', transferList);
+        // TODO var result = this._parent.postSyncMessage(message, '*', transferList);
+        var event = this._parent.document.createEvent('CustomEvent');
+        event.initCustomEvent('syncmessage', false, false, message);
+        this._parent.dispatchEvent(event);
+        var result = message.result;
         return DataBuffer.FromPlainObject(result);
       }
       this._parent.postMessage(message, '*', transferList);
