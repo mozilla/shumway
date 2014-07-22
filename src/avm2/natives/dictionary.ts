@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='../references.ts' />
 
 module Shumway.AVM2.AS {
-  declare var checkArguments;
-
   import assert = Shumway.Debug.assert;
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;

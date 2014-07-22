@@ -20,10 +20,6 @@ var release;
 var jsBuildPath = homePath + "src/";
 var tsBuildPath = homePath + "build/ts/";
 
-load(tsBuildPath + "utilities.js");
-
-Shumway.Debug.assert(homePath, "Host compartment needs to initialize homePath.");
-
 load(tsBuildPath + "/base.js");
 load(tsBuildPath + "/tools.js");
 
@@ -42,11 +38,9 @@ Shumway.Settings = {
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 
-
-load(jsBuildPath + "avm2/xregexp.js");
 load(tsBuildPath + "avm2.js");
-load(jsBuildPath + "avm2/disassembler.js");
-load(jsBuildPath + "avm2/runtime-exports.js");
+
+var AbcFile = Shumway.AVM2.ABC.AbcFile;
 
 // load(tsBuildPath + "avm2/compiler/aot.js");
 

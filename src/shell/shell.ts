@@ -47,10 +47,7 @@ var shumwayOptions = systemOptions.register(Shumway.Settings.shumwayOptions);
 var shellOptions = systemOptions.register(new Shumway.Options.OptionSet("Shell Options"));
 
 load(tsBuildPath + "/swf.js");
-load(jsBuildPath + "/avm2/xregexp.js");
 load(tsBuildPath + "/avm2.js");
-load(jsBuildPath + "/avm2/disassembler.js");
-load(jsBuildPath + "/avm2/runtime-exports.js");
 load(tsBuildPath + "/flash.js");
 load(tsBuildPath + "/avm1.js");
 load(tsBuildPath + "/gfx-base.js");
@@ -106,46 +103,60 @@ module Shumway.Shell {
     release = releaseOption.value;
 
     if (parseOption.value) {
-      files.forEach(x => parseSWF(x));
+      files.forEach(function (file) {
+        var start = new Date();
+        writer.enter("Parsing: " + file);
+        parseFile(file, true);
+        var elapsed = <any>new Date() - <any>start;
+        writer.writeLn("Total Parse Time: " + (elapsed).toFixed(4));
+        writer.outdent();
+      });
     }
 
     if (executeOption.value) {
       initializeAVM2();
-      createABCs(files).forEach(function (abc: AbcFile) {
-        writer.writeLn("Execute: " + abc);
-        Runtime.AVM2.instance.systemDomain.executeAbc(abc);
-      });
     }
   }
 
-  function createABCs(files: string []): AbcFile [] {
-    var abcs = [];
-    files.forEach(function (file) {
-      writer.writeLn(file);
-      if (file.endsWith(".abc")) {
-        abcs.push(new AbcFile(new Uint8Array(read(file, 'binary')), file));
-      } else {
-        Shumway.Debug.unexpected(file);
-      }
-    });
-    return abcs;
+  function parseABCs(files: string []) {
+
   }
 
   /**
-   * Parses a SWF's tags.
+   * Parse File
    */
-  function parseSWF(file: string) {
-    var SWF_TAG_CODE_DO_ABC = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC;
-    var SWF_TAG_CODE_DO_ABC_ = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC_;
-    Shumway.SWF.Parser.parse(read(file, "binary"), {
-      oncomplete: function(result) {
-        var tags = result.tags;
-        for (var i = 0, n = tags.length; i < n; i++) {
-          var tag = tags[i];
-        }
-        writer.writeLn("Parsed: " + tags.length + " tags.");
+  function parseFile(file: string, verbose = false): ArrayBuffer [] {
+    function parseABC(buffer: ArrayBuffer) {
+      writer.writeLn("abc: " + buffer.byteLength + " bytes");
+      new AbcFile(new Uint8Array(buffer), "ABC");
+    }
+
+    var buffers = [];
+    if (file.endsWith(".swf")) {
+      var SWF_TAG_CODE_DO_ABC = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC;
+      var SWF_TAG_CODE_DO_ABC_ = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC_;
+      try {
+        Shumway.SWF.Parser.parse(read(file, "binary"), {
+          oncomplete: function(result) {
+            var tags = result.tags;
+            var counter = new Metrics.Counter(true);
+            for (var i = 0, n = tags.length; i < n; i++) {
+              var tag = tags[i];
+              counter.count(tag.code);
+              if (tag.code === SWF_TAG_CODE_DO_ABC || tag.code === SWF_TAG_CODE_DO_ABC_) {
+                parseABC(tag.data);
+              }
+            }
+            writer.writeLn("tags: " + counter.toStringSorted());
+          }
+        });
+      } catch (x) {
+        writer.redLn("Cannot parse: " + file + ", reason: " + x);
       }
-    });
+    } else if (file.endsWith(".abc")) {
+      parseABC(read(file, "binary"));
+    }
+    return buffers;
   }
 
   function createAVM2(builtinPath, libraryPathInfo) {

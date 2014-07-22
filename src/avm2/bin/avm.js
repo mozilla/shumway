@@ -65,9 +65,7 @@ var argumentParser = new ArgumentParser();
 var systemOptions = new OptionSet("System Options");
 var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
 
-load(jsBuildPath + "avm2/xregexp.js");
 load(tsBuildPath + "avm2.js");
-load(jsBuildPath + "avm2/runtime-exports.js");
 
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
@@ -81,8 +79,6 @@ var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 var releaseMode = shellOptions.register(new Option("r", "release", "boolean", false, "run in release mode (!release is the default)"));
-
-load(jsBuildPath + "avm2/disassembler.js");
 
 var AbcFile = Shumway.AVM2.ABC.AbcFile;
 var AbcStream = Shumway.AVM2.ABC.AbcStream;

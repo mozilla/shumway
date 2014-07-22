@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
 
 import Namespace = Shumway.AVM2.ABC.Namespace;
 
@@ -85,12 +84,6 @@ interface Function {
 }
 
 module Shumway.AVM2.Runtime {
-
-  declare var XML;
-  declare var XMLList;
-
-  declare var Analysis;
-
   /**
    * Seals const traits. Technically we need to throw an exception if they are ever modified after
    * the static or instance constructor executes, but we can safely ignore this incompatibility.
@@ -1789,3 +1782,31 @@ module Shumway.AVM2.Runtime {
 }
 
 import CC = Shumway.AVM2.Runtime.CODE_CACHE;
+
+/**
+ * Top level runtime definitinos used by compiler generated code.
+ */
+
+var HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
+
+var asCreateActivation = Shumway.AVM2.Runtime.asCreateActivation;
+var asIsInstanceOf = Shumway.AVM2.Runtime.asIsInstanceOf;
+var asIsType = Shumway.AVM2.Runtime.asIsType;
+var asAsType = Shumway.AVM2.Runtime.asAsType;
+var asTypeOf = Shumway.AVM2.Runtime.asTypeOf;
+var asCoerceByMultiname = Shumway.AVM2.Runtime.asCoerceByMultiname;
+var asCoerce = Shumway.AVM2.Runtime.asCoerce;
+var asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+var asCoerceInt = Shumway.AVM2.Runtime.asCoerceInt;
+var asCoerceUint = Shumway.AVM2.Runtime.asCoerceUint;
+var asCoerceNumber = Shumway.AVM2.Runtime.asCoerceNumber;
+var asCoerceBoolean = Shumway.AVM2.Runtime.asCoerceBoolean;
+var asCoerceObject = Shumway.AVM2.Runtime.asCoerceObject;
+var asCompare = Shumway.AVM2.Runtime.asCompare;
+var asAdd = Shumway.AVM2.Runtime.asAdd;
+
+var asGetSlot = Shumway.AVM2.Runtime.asGetSlot;
+var asSetSlot = Shumway.AVM2.Runtime.asSetSlot;
+var asHasNext2 = Shumway.AVM2.Runtime.asHasNext2;
+var getDescendants = Shumway.AVM2.Runtime.getDescendants;
+var checkFilter = Shumway.AVM2.Runtime.checkFilter;

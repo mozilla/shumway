@@ -95,6 +95,9 @@ module Shumway.Metrics {
 
     private _enabled: boolean;
     private _counts: Map<number>;
+    get counts(): Map<number> {
+      return this._counts;
+    }
     constructor(enabled: boolean) {
       this._enabled = enabled;
       this.clear();
@@ -123,7 +126,7 @@ module Shumway.Metrics {
         writer.writeLn(name + ": " + this._counts[name]);
       }
     }
-    public traceSorted(writer: IndentingWriter) {
+    public toStringSorted(): string {
       var pairs = [];
       for (var name in this._counts) {
         pairs.push([name, this._counts[name]]);
@@ -131,9 +134,27 @@ module Shumway.Metrics {
       pairs.sort(function (a, b) {
         return b[1] - a[1];
       });
-      pairs.forEach(function (pair) {
-        writer.writeLn(pair[0] + ": " + pair[1]);
+      return (pairs.map(function (pair) {
+        return (pair[0] + ": " + pair[1]);
+      }).join(", "));
+    }
+    public traceSorted(writer: IndentingWriter, inline = false) {
+      var pairs = [];
+      for (var name in this._counts) {
+        pairs.push([name, this._counts[name]]);
+      }
+      pairs.sort(function (a, b) {
+        return b[1] - a[1];
       });
+      if (inline) {
+        writer.writeLn(pairs.map(function (pair) {
+          return (pair[0] + ": " + pair[1]);
+        }).join(", "));
+      } else {
+        pairs.forEach(function (pair) {
+          writer.writeLn(pair[0] + ": " + pair[1]);
+        });
+      }
     }
   }
 

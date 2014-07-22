@@ -21,11 +21,13 @@
 ///<reference path='errors.ts' />
 ///<reference path='abc/stream.ts' />
 ///<reference path='abc/parser.ts' />
+///<reference path='abc/disassembler.ts' />
 ///<reference path='bytecode.ts' />
 ///<reference path='options.ts' />
 ///<reference path='runtime.ts' />
 ///<reference path='scope.ts' />
 ///<reference path='bindings.ts' />
+///<reference path='xregexp.ts' />
 
 ///<reference path='natives/int32Vector.ts' />
 ///<reference path='natives/uint32Vector.ts' />

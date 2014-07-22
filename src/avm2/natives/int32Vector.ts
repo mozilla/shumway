@@ -13,12 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='../references.ts' />
-
-/**
- * Check arguments and throw the appropriate errors.
- */
-var checkArguments = true;
 
 /**
  * TypedArray Vector Template
@@ -32,6 +26,11 @@ var checkArguments = true;
  */
 
 module Shumway.AVM2.AS {
+  /**
+   * Check arguments and throw the appropriate errors.
+   */
+  var checkArguments = true;
+
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;

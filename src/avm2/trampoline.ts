@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
 
 module Shumway.AVM2.Runtime {
   import Map = Shumway.Map;
@@ -261,7 +260,7 @@ module Shumway.AVM2.Runtime {
     return m;
   }
 
-  export function isTrampoline(fn) {
+  function isTrampoline(fn) {
     release || assert (fn && typeof fn === "function");
     return fn.isTrampoline;
   }

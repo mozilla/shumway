@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
 
 /**
  * Random collection of Hacks to get demos work, this file should be empty.

@@ -26,6 +26,40 @@ module Shumway.AVM2.Compiler {
   import createCompiledFunction = Shumway.AVM2.Runtime.createCompiledFunction;
   import LazyInitializer = Shumway.AVM2.Runtime.LazyInitializer;
 
+  /*
+   * We pollute the JS global object with object constants used in compiled code.
+   */
+
+  /* OLD objectConstantName code, proabbly don't need anymore.
+  var objectIDs = 0;
+  var OBJECT_NAME = "Object Name";
+
+  function objectConstantName(object) {
+    if (object.hash) {
+      return "$(" + object.hash + ")";
+    } else if (object instanceof LazyInitializer) {
+      return object.getName();
+    }
+    release || Shumway.Debug.assert(object);
+    if (object.hasOwnProperty(OBJECT_NAME)) {
+      return object[OBJECT_NAME];
+    }
+    var name, id = objectIDs++;
+    if (object instanceof Global) {
+      name = "$G" + id;
+    } else if (object instanceof Multiname) {
+      name = "$M" + id;
+    } else if (object instanceof Shumway.AVM2.AS.ASClass) {
+      name = "$C" + id;
+    } else {
+      name = "$O" + id;
+    }
+    Object.defineProperty(object, OBJECT_NAME, {value: name, writable: false, enumerable: false});
+    jsGlobal[name] = object;
+    return name;
+  }
+  */
+
   var hasUsedConstants = false;
   jsGlobal.objectConstantName = function (object) {
     if (object.hash) {
