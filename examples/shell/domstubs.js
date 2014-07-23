@@ -32,6 +32,33 @@ var setTimeout = function (fn) { microTasks.push(fn); };
 
 var self = this, window = this;
 
+// TODO remove document stub
+var document = {
+  createElementNS: function (ns, qname) {
+    if (qname !== 'svg') {
+      throw new Error('only supports svg and create SVGMatrix');
+    }
+    return {
+      createSVGMatrix: function () {
+        return {a: 0, b: 0, c: 0, d: 0, e: 0, f: 0};
+      }
+    };
+  },
+  createElement: function (name) {
+    if (name !== 'canvas') {
+      throw new Error('only supports canvas');
+    }
+    return {
+      getContext: function (type) {
+        if (type !== '2d') {
+          throw new Error('only supports canvas 2d');
+        }
+        return {};
+      }
+    }
+  }
+};
+
 var XMLHttpRequest = function () {};
 XMLHttpRequest.prototype = {
   open: function (method, url, async) {
