@@ -29,5 +29,8 @@
   }],
   "bugs": {
     "url": "https://github.com/mozilla/shumway/issues"
+  },
+  "scripts": {
+    "test": "grunt travis --verbose"
   }
 }
