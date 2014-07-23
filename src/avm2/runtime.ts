@@ -1812,3 +1812,5 @@ var getDescendants = Shumway.AVM2.Runtime.getDescendants;
 var checkFilter = Shumway.AVM2.Runtime.checkFilter;
 
 var sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
+
+var createFunction = Shumway.AVM2.Runtime.createFunction;
