@@ -1781,7 +1781,7 @@ module Shumway.AVM2.Runtime {
   }
 }
 
-import CC = Shumway.AVM2.Runtime.CODE_CACHE;
+import CC = Shumway.AVM2.Runtime.CODE_CACHE;----
 
 /**
  * Top level runtime definitinos used by compiler generated code.
