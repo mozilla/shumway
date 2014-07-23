@@ -31,8 +31,7 @@ module Shumway.AVM2.AS.flash.text {
                 bold: Object = null, italic: Object = null, underline: Object = null,
                 url: string = null, target: string = null, align: string = null,
                 leftMargin: Object = null, rightMargin: Object = null, indent: Object = null,
-                leading: Object = null)
-    {
+                leading: Object = null) {
       false && super();
       this.font = font;
       this.size = size;
@@ -140,7 +139,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set color(value: Object) {
-      this._color = +value|0;
+      this._color = +value | 0;
     }
 
     get display(): string {
@@ -267,9 +266,11 @@ module Shumway.AVM2.AS.flash.text {
      * - else, round the coerced value using half-even rounding
      */
     private static coerceNumber(value: any): any {
+      /* tslint:disable */
       if (value == undefined) {
         return null;
       }
+      /* tslint:enable */
       if (isNaN(value) || value > 0xfffffff) {
         return -0x80000000;
       }
@@ -281,7 +282,9 @@ module Shumway.AVM2.AS.flash.text {
      * they're stored as null.
      */
     private static coerceBoolean(value: any): any {
+      /* tslint:disable */
       return value == undefined ? null : !!value;
+      /* tslint:enable */
     }
 
     clone(): TextFormat {

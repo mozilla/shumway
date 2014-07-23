@@ -24,8 +24,7 @@ module Shumway.AVM2.AS.flash.text {
     static instanceSymbols: string [] = null; // ["beginIndex", "endIndex", "textFormat"];
 
     constructor(beginIndex: number /*int*/, endIndex: number /*int*/,
-                textFormat: flash.text.TextFormat)
-    {
+                textFormat: flash.text.TextFormat) {
       false && super();
       this._beginIndex = beginIndex | 0;
       this._endIndex = endIndex | 0;

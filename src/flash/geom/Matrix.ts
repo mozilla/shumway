@@ -229,7 +229,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public createBox(scaleX: number, scaleY: number, rotation: number = 0, tx: number = 0, ty: number = 0): void {
-      if (rotation != 0) {
+      if (rotation !== 0) {
         var u: number = Math.cos(rotation);
         var v: number = Math.sin(rotation);
         this.a =  u * scaleX;
@@ -252,7 +252,7 @@ module Shumway.AVM2.AS.flash.geom {
 
     public rotate(angle: number): void {
       angle = +angle;
-      if (angle != 0) {
+      if (angle !== 0) {
         var u: number   = Math.cos(angle);
         var v: number   = Math.sin(angle);
         var ta: number  = this.a;
@@ -364,14 +364,14 @@ module Shumway.AVM2.AS.flash.geom {
       var w = bounds.width;
       var h = bounds.height;
 
-      var x0 = (a * x + c * y + tx)|0;
-      var y0 = (b * x + d * y + ty)|0;
-      var x1 = (a * (x + w) + c * y + tx)|0;
-      var y1 = (b * (x + w) + d * y + ty)|0;
-      var x2 = (a * (x + w) + c * (y + h) + tx)|0;
-      var y2 = (b * (x + w) + d * (y + h) + ty)|0;
-      var x3 = (a * x + c * (y + h) + tx)|0;
-      var y3 = (b * x + d * (y + h) + ty)|0;
+      var x0 = (a * x + c * y + tx) | 0;
+      var y0 = (b * x + d * y + ty) | 0;
+      var x1 = (a * (x + w) + c * y + tx) | 0;
+      var y1 = (b * (x + w) + d * y + ty) | 0;
+      var x2 = (a * (x + w) + c * (y + h) + tx) | 0;
+      var y2 = (b * (x + w) + d * (y + h) + ty) | 0;
+      var x3 = (a * x + c * (y + h) + tx) | 0;
+      var y3 = (b * x + d * (y + h) + ty) | 0;
 
       var tmp = 0;
 
@@ -451,15 +451,15 @@ module Shumway.AVM2.AS.flash.geom {
 
     public copyRowTo(row: number, vector3D: Vector3D): void {
       row = row >>> 0;
-      if (row == 0) {
+      if (row === 0) {
         vector3D.x = this.a;
         vector3D.y = this.c;
         vector3D.z = this.tx;
-      } else if (row == 1) {
+      } else if (row === 1) {
         vector3D.x = this.b;
         vector3D.y = this.d;
         vector3D.z = this.ty;
-      } else if (row == 2) {
+      } else if (row === 2) {
         vector3D.x = 0;
         vector3D.y = 0;
         vector3D.z = 1;
@@ -468,15 +468,15 @@ module Shumway.AVM2.AS.flash.geom {
 
     public copyColumnTo(column: number, vector3D: Vector3D): void {
       column = column >>> 0;
-      if (column == 0) {
+      if (column === 0) {
         vector3D.x = this.a;
         vector3D.y = this.b;
         vector3D.z = 0;
-      } else if (column == 1) {
+      } else if (column === 1) {
         vector3D.x = this.c;
         vector3D.y = this.d;
         vector3D.z = 0;
-      } else if (column == 2) {
+      } else if (column === 2) {
         vector3D.x = this.tx;
         vector3D.y = this.ty;
         vector3D.z = 1;
@@ -485,11 +485,11 @@ module Shumway.AVM2.AS.flash.geom {
 
     public copyRowFrom(row: number, vector3D: Vector3D): void {
       row = row >>> 0;
-      if (row == 0) {
+      if (row === 0) {
         this.a  = vector3D.x;
         this.c  = vector3D.y;
         this.tx = vector3D.z;
-      } else if (row == 1) {
+      } else if (row === 1) {
         this.b  = vector3D.x;
         this.d  = vector3D.y;
         this.ty = vector3D.z;
@@ -498,11 +498,11 @@ module Shumway.AVM2.AS.flash.geom {
 
     public copyColumnFrom(column: number, vector3D: Vector3D): void {
       column = column >>> 0;
-      if (column == 0) {
+      if (column === 0) {
         this.a  = vector3D.x;
         this.c  = vector3D.y;
         this.tx = vector3D.z;
-      } else if (column == 1) {
+      } else if (column === 1) {
         this.b  = vector3D.x;
         this.d  = vector3D.y;
         this.ty = vector3D.z;
@@ -548,7 +548,7 @@ module Shumway.AVM2.AS.flash.geom {
 
     public toString(): string {
       return "(a=" + this.a + ", b=" + this.b + ", c=" + this.c + ", d=" + this.d +
-             ", tx=" + this.tx + ", ty=" +this.ty + ")";
+             ", tx=" + this.tx + ", ty=" + this.ty + ")";
     }
 
     // Keep in sync with static FromDataBuffer above!

@@ -50,7 +50,9 @@ module Shumway.AVM2.AS.flash.system {
           renderingTerminated = true;
           return;
         case 'debugger':
+          /* tslint:disable */
           debugger; // shumway breakpoint... for convinience
+          /* tslint:enable */
           return;
         default:
           // TODO ignoring all other fscommand

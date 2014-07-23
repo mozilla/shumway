@@ -31,10 +31,11 @@ module Shumway.AVM2.AS.flash.media {
   }
 
   function createAudioChannel(sampleRate, channels) {
-    if (WebAudioChannel.isSupported)
+    if (WebAudioChannel.isSupported) {
       return new WebAudioChannel(sampleRate, channels);
-    else
+    } else {
       error('PCM data playback is not supported by the browser');
+    }
   }
 
   // Resample sound using linear interpolation for Web Audio due to
@@ -44,7 +45,7 @@ module Shumway.AVM2.AS.flash.media {
     count: number;
   }
   class AudioResampler {
-    ondatarequested: (e: AudioResamplerData)=>void;
+    ondatarequested: (e: AudioResamplerData) => void;
     private _sourceRate: number;
     private _targetRate: number;
     private _tail: any[];
@@ -61,8 +62,9 @@ module Shumway.AVM2.AS.flash.media {
       var offset = this._sourceOffset;
       var needed = Math.ceil((count - 1) * k + offset) + 1;
       var sourceData = [];
-      for (var channel = 0; channel < channelsData.length; channel++)
+      for (var channel = 0; channel < channelsData.length; channel++) {
         sourceData.push(new Float32Array(needed));
+      }
       var e = { data: sourceData, count: needed };
       this.ondatarequested(e);
       for (var channel = 0; channel < channelsData.length; channel++) {
@@ -70,7 +72,7 @@ module Shumway.AVM2.AS.flash.media {
         var source = sourceData[channel];
         for (var j = 0; j < count; j++) {
           var i = j * k + offset;
-          var i1 = i|0, i2 = Math.ceil(i)|0;
+          var i1 = i | 0, i2 = Math.ceil(i) | 0;
           var source_i1 = i1 < 0 ? this._tail[channel] : source[i1];
           if (i1 === i2) {
             data[j] = source_i1;
@@ -93,7 +95,7 @@ module Shumway.AVM2.AS.flash.media {
     private _channels: number;
     private _sampleRate: number;
     private _source;
-    ondatarequested: (e)=>void;
+    ondatarequested: (e) => void;
 
     constructor(sampleRate, channels) {
       var context = WebAudioChannel._cachedContext;
@@ -106,7 +108,7 @@ module Shumway.AVM2.AS.flash.media {
 
       this._channels = channels;
       this._sampleRate = sampleRate;
-      if (this._contextSampleRate != sampleRate) {
+      if (this._contextSampleRate !== sampleRate) {
         this._resampler = new AudioResampler(sampleRate, this._contextSampleRate);
         this._resampler.ondatarequested = function (e: AudioResamplerData) {
           this.requestData(e.data, e.count);
@@ -119,8 +121,9 @@ module Shumway.AVM2.AS.flash.media {
       var self = this;
       source.onaudioprocess = function(e) {
         var channelsData = [];
-        for (var i = 0; i < self._channels; i++)
+        for (var i = 0; i < self._channels; i++) {
           channelsData.push(e.outputBuffer.getChannelData(i));
+        }
         var count = channelsData[0].length;
         if (self._resampler) {
           self._resampler.getData(channelsData, count);
@@ -142,8 +145,9 @@ module Shumway.AVM2.AS.flash.media {
       this.ondatarequested(e);
 
       for (var j = 0, p = 0; j < count; j++) {
-        for (var i = 0; i < channels; i++)
+        for (var i = 0; i < channels; i++) {
           channelsData[i][j] = buffer[p++];
+        }
       }
     }
     static isSupported() {
@@ -224,8 +228,9 @@ module Shumway.AVM2.AS.flash.media {
       }
     }
     _playSoundDataViaAudio(soundData, startTime, loops) {
-      if (!soundData.mimeType)
+      if (!soundData.mimeType) {
         return;
+      }
 
       this._registerWithSoundMixer();
       this._position = startTime;
@@ -233,7 +238,7 @@ module Shumway.AVM2.AS.flash.media {
       var lastCurrentTime = 0;
       var element = document.createElement('audio');
       if (!element.canPlayType(soundData.mimeType)) {
-        console.error('ERROR: \"' + soundData.mimeType +'\" ' +
+        console.error('ERROR: \"' + soundData.mimeType + '\" ' +
           'type playback is not supported by the browser');
         return;
       }
@@ -249,10 +254,12 @@ module Shumway.AVM2.AS.flash.media {
         var currentTime = element.currentTime;
         if (loops && lastCurrentTime > currentTime) {
           --loops;
-          if (!loops) // checks if we need to stop looping
+          if (!loops) { // checks if we need to stop looping
             element.loop = false;
-          if (currentTime < startTime / 1000)
+          }
+          if (currentTime < startTime / 1000) {
             element.currentTime = startTime / 1000;
+          }
         }
         self._position = (lastCurrentTime = currentTime) * 1000;
       });
@@ -294,7 +301,9 @@ module Shumway.AVM2.AS.flash.media {
           }
           left -= count;
           if (position >= end) {
-            if (!loops) break;
+            if (!loops) {
+              break;
+            }
             loops--;
             position = startPosition;
           }

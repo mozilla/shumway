@@ -25,8 +25,7 @@ module Shumway.AVM2.AS.flash.events {
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
-                theposition: number = 0, thedata: flash.utils.ByteArray = null)
-    {
+                theposition: number = 0, thedata: flash.utils.ByteArray = null) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.SampleDataEvent");
     }

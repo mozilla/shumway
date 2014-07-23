@@ -27,8 +27,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 latitude: number = 0, longitude: number = 0, altitude: number = 0,
                 hAccuracy: number = 0, vAccuracy: number = 0, speed: number = 0,
-                heading: number = 0, timestamp: number = 0)
-    {
+                heading: number = 0, timestamp: number = 0) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.GeolocationEvent");
     }

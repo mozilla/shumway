@@ -144,7 +144,9 @@ module Shumway.AVM2.AS.flash.display {
       ]);
     }
 
-    _initFrame(advance: boolean) { }
+    _initFrame(advance: boolean) {
+      // ...
+    }
 
     _constructFrame() {
       this._constructChildren();
@@ -432,7 +434,7 @@ module Shumway.AVM2.AS.flash.display {
       //}
     }
 
-    private _initAvm1Root(root:flash.display.DisplayObject) {
+    private _initAvm1Root(root: flash.display.DisplayObject) {
       // Finding movie top root
       var topRoot = root;
       var parent = this._parent;

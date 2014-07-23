@@ -129,7 +129,7 @@ module Shumway.AVM2.AS.flash.system {
       // return Capabilities._hasVideoEncoder;
     }
     static get isDebugger(): boolean {
-      somewhatImplemented("public flash.system.Capabilities::get isDebugger"); return;
+      somewhatImplemented("public flash.system.Capabilities::get isDebugger");
       return Capabilities._isDebugger;
     }
     static get localFileReadDisable(): boolean {
@@ -168,7 +168,7 @@ module Shumway.AVM2.AS.flash.system {
       // return Capabilities._cpuArchitecture;
     }
     static get playerType(): string {
-      somewhatImplemented("public flash.system.Capabilities::get playerType"); return;
+      somewhatImplemented("public flash.system.Capabilities::get playerType");
       return Capabilities._playerType;
     }
     static get serverString(): string {

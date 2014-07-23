@@ -25,8 +25,7 @@ module Shumway.AVM2.AS.flash.events {
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean, cancelable: boolean,
-                relatedObjectVal: flash.display.InteractiveObject, triggerTypeVal: string)
-    {
+                relatedObjectVal: flash.display.InteractiveObject, triggerTypeVal: string) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.SoftKeyboardEvent");
     }

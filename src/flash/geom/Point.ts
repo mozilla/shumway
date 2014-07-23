@@ -104,7 +104,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public normalize(thickness: number): void {
-      if (this.x != 0 || this.y != 0) {
+      if (this.x !== 0 || this.y !== 0) {
         var relativeThickness: number = +thickness / this.length;
         this.x *= relativeThickness;
         this.y *= relativeThickness;

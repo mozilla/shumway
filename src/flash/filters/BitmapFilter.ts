@@ -67,6 +67,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     _updateFilterBounds(bounds: Rectangle) {
+      // ...
     }
 
     _serialize(message: any) {
@@ -133,7 +134,7 @@ module Shumway.AVM2.AS.flash.filters {
       }
     }
 
-    static sanitizeColors(colors: number [], maxLen:number = 16): number [] {
+    static sanitizeColors(colors: number [], maxLen: number = 16): number [] {
       var arr: number [] = [];
       for (var i = 0, n = Math.min(colors.length, maxLen); i < n; i++) {
         arr[i] = (colors[i] >>> 0) & 0xffffff;
@@ -141,23 +142,23 @@ module Shumway.AVM2.AS.flash.filters {
       return arr;
     }
 
-    static sanitizeAlphas(alphas: number [], maxLen:number = 16, minLen: number = 0, value: number = 0): number [] {
+    static sanitizeAlphas(alphas: number [], maxLen: number = 16, minLen: number = 0, value: number = 0): number [] {
       var arr: number [] = [];
       for (var i = 0, n = Math.min(alphas.length, maxLen); i < n; i++) {
         arr[i] = NumberUtilities.clamp(+alphas[i], 0, 1);
       }
-      while(i < minLen) {
+      while (i < minLen) {
         arr[i++] = value;
       }
       return arr;
     }
 
-    static sanitizeRatios(ratios: number [], maxLen:number = 16, minLen: number = 0, value: number = 0): number [] {
+    static sanitizeRatios(ratios: number [], maxLen: number = 16, minLen: number = 0, value: number = 0): number [] {
       var arr: number [] = [];
       for (var i = 0, n = Math.min(ratios.length, maxLen); i < n; i++) {
         arr[i] = NumberUtilities.clamp(+ratios[i], 0, 255);
       }
-      while(i < minLen) {
+      while (i < minLen) {
         arr[i++] = value;
       }
       return arr;

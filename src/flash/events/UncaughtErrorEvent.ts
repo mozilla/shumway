@@ -25,8 +25,7 @@ module Shumway.AVM2.AS.flash.events {
     static instanceSymbols: string [] = null;
 
     constructor(type: string = "uncaughtError", bubbles: boolean = true, cancelable: boolean = true,
-                error_in: any = null)
-    {
+                error_in: any = null) {
       super(undefined, undefined, undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.UncaughtErrorEvent");
     }

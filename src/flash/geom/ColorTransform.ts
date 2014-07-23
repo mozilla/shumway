@@ -155,7 +155,7 @@ module Shumway.AVM2.AS.flash.geom {
       this.redMultiplier = this.greenMultiplier = this.blueMultiplier = 1;
     }
 
-    public concat(second:ColorTransform): void {
+    public concat(second: ColorTransform): void {
       this.redMultiplier *= second.redMultiplier;
       this.greenMultiplier *= second.greenMultiplier;
       this.blueMultiplier *= second.blueMultiplier;
@@ -166,7 +166,7 @@ module Shumway.AVM2.AS.flash.geom {
       this.alphaOffset += second.alphaOffset;
     }
 
-    public preMultiply(second:ColorTransform): void {
+    public preMultiply(second: ColorTransform): void {
       this.redOffset += second.redOffset * this.redMultiplier;
       this.greenOffset += second.greenOffset * this.greenMultiplier;
       this.blueOffset += second.blueOffset * this.blueMultiplier;

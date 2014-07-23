@@ -101,8 +101,7 @@ module Shumway.AVM2.AS.flash.ui {
       var currentTarget = this.currentTarget;
 
       if (globalPoint.x < 0 || globalPoint.x > stage.stageWidth ||
-          globalPoint.y < 0 || globalPoint.y > stage.stageHeight)
-      {
+          globalPoint.y < 0 || globalPoint.y > stage.stageHeight) {
         if (currentTarget) {
           this._dispatchMouseEvent(stage, events.MouseEvent.MOUSE_LEAVE, data);
         }

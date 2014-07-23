@@ -109,8 +109,7 @@ module Shumway.AVM2.AS.flash.display {
     function f(t) {
       return t * (dY + t * (bY + t * c3Y)) + y0 - y;
     }
-    function pointAt(t)
-    {
+    function pointAt(t) {
       if (t < 0) {
         t = 0;
       } else if (t > 1) {
@@ -240,8 +239,7 @@ module Shumway.AVM2.AS.flash.display {
       if (y2 * y20 < 2 * y1 * y10) {
         x2 = x1;
         y2 = y1;
-      }
-      else {
+      } else {
         b = (x1 - x0 ) / y10;
         c = (y10 - y21) / (y21 * y20);
         xm = x0 - b * y0 * (1 - c * y1);
@@ -258,8 +256,7 @@ module Shumway.AVM2.AS.flash.display {
         if (ym * y0 < 0) {
           x2 = xm;
           y2 = ym;
-        }
-        else {
+        } else {
           x0 = xm;
           y0 = ym;
           x2 = x1;
@@ -322,8 +319,7 @@ module Shumway.AVM2.AS.flash.display {
   {
     var curveStartsAfterY = fromY > y;
     if ((cpY > y) === curveStartsAfterY && (cp2Y > y) === curveStartsAfterY &&
-        (toY > y) === curveStartsAfterY)
-    {
+        (toY > y) === curveStartsAfterY) {
       return false;
     }
     if (fromX < x && cpX < x && cp2X < x && toX < x) {
@@ -331,7 +327,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     var crosses = false;
     var roots = cubicXAtY(fromX, fromY, cpX, cpY, cp2X, cp2Y, toX, toY, y);
-    for (var i = roots.length; i--;) {
+    for (var i = roots.length; i; i--) {
       if (roots[i] >= x) {
         crosses = !crosses;
       }
@@ -422,7 +418,7 @@ module Shumway.AVM2.AS.flash.display {
           this._bottomRightStrokeWidth = 2;
           break;
         default:
-          var half = Math.ceil(width * 0.5)|0;
+          var half = Math.ceil(width * 0.5) | 0;
           this._topLeftStrokeWidth = half;
           this._bottomRightStrokeWidth = half;
           break;
@@ -488,7 +484,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     beginFill(color: number /*uint*/, alpha: number = 1): void {
       color = color >>> 0 & 0xffffff;
-      alpha = Math.round(clamp(+alpha, -1, 1) * 0xff)|0;
+      alpha = Math.round(clamp(+alpha, -1, 1) * 0xff) | 0;
       this._graphicsData.beginFill((color << 8) | alpha);
       this._hasFills = true;
     }
@@ -529,7 +525,7 @@ module Shumway.AVM2.AS.flash.display {
       scaleMode = asCoerceString(scaleMode);
       caps = asCoerceString(caps);
       joints = asCoerceString(joints);
-      miterLimit = clamp(+miterLimit|0, 0, 0xff);
+      miterLimit = clamp(+miterLimit | 0, 0, 0xff);
 
       // Flash stops drawing strokes whenever a thickness is supplied that can't be coerced to a
       // number.
@@ -538,7 +534,7 @@ module Shumway.AVM2.AS.flash.display {
         this._graphicsData.endLine();
         return;
       }
-      thickness = clamp(+thickness, 0, 0xff) * 20|0;
+      thickness = clamp(+thickness, 0, 0xff) * 20 | 0;
       this._setStrokeWidth(thickness);
 
       // If `scaleMode` is invalid, "normal" is used.
@@ -580,10 +576,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     drawRect(x: number, y: number, width: number, height: number): void {
-      x = x * 20|0;
-      y = y * 20|0;
-      var x2 = x + (width * 20|0);
-      var y2 = y + (height * 20|0);
+      x = x * 20 | 0;
+      y = y * 20 | 0;
+      var x2 = x + (width * 20 | 0);
+      var y2 = y + (height * 20 | 0);
 
       if (x !== this._lastX || y !== this._lastY) {
         this._graphicsData.moveTo(x, y);
@@ -757,8 +753,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     moveTo(x: number, y: number): void {
-      x = x * 20|0;
-      y = y * 20|0;
+      x = x * 20 | 0;
+      y = y * 20 | 0;
 
       this._graphicsData.moveTo(x, y);
       // Don't use _applyLastCoordinates because that extends the bounds objects, too.
@@ -768,8 +764,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     lineTo(x: number, y: number): void {
-      x = x * 20|0;
-      y = y * 20|0;
+      x = x * 20 | 0;
+      y = y * 20 | 0;
 
       this._graphicsData.lineTo(x, y);
       this._applyLastCoordinates(x, y);
@@ -777,18 +773,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     curveTo(controlX: number, controlY: number, anchorX: number, anchorY: number): void {
-      controlX = controlX * 20|0;
-      controlY = controlY * 20|0;
-      anchorX = anchorX * 20|0;
-      anchorY = anchorY * 20|0;
+      controlX = controlX * 20 | 0;
+      controlY = controlY * 20 | 0;
+      anchorX = anchorX * 20 | 0;
+      anchorY = anchorY * 20 | 0;
 
       this._graphicsData.curveTo(controlX, controlY, anchorX, anchorY);
 
       if (controlX < this._lastX || controlX > anchorX) {
-        this._extendBoundsByX(quadraticBezierExtreme(this._lastX, controlX, anchorX)|0);
+        this._extendBoundsByX(quadraticBezierExtreme(this._lastX, controlX, anchorX) | 0);
       }
       if (controlY < this._lastY || controlY > anchorY) {
-        this._extendBoundsByY(quadraticBezierExtreme(this._lastY, controlY, anchorY)|0);
+        this._extendBoundsByY(quadraticBezierExtreme(this._lastY, controlY, anchorY) | 0);
       }
       this._applyLastCoordinates(anchorX, anchorY);
 
@@ -798,12 +794,12 @@ module Shumway.AVM2.AS.flash.display {
     cubicCurveTo(controlX1: number, controlY1: number, controlX2: number, controlY2: number,
                  anchorX: number, anchorY: number): void
     {
-      controlX1 = controlX1 * 20|0;
-      controlY1 = controlY1 * 20|0;
-      controlX2 = controlX2 * 20|0;
-      controlY2 = controlY2 * 20|0;
-      anchorX = anchorX * 20|0;
-      anchorY = anchorY * 20|0;
+      controlX1 = controlX1 * 20 | 0;
+      controlY1 = controlY1 * 20 | 0;
+      controlX2 = controlX2 * 20 | 0;
+      controlY2 = controlY2 * 20 | 0;
+      anchorX = anchorX * 20 | 0;
+      anchorY = anchorY * 20 | 0;
 
       this._graphicsData.cubicCurveTo(controlX1, controlY1, controlX2, controlY2, anchorX, anchorY);
 
@@ -813,14 +809,14 @@ module Shumway.AVM2.AS.flash.display {
       var fromY = this._lastY;
       if (controlX1 < fromX || controlX2 < fromX || controlX1 > anchorX || controlX2 > anchorX) {
         extremes = cubicBezierExtremes(fromX, controlX1, controlX2, anchorX);
-        for (i = extremes.length; i--;) {
-          this._extendBoundsByX(extremes[i]|0);
+        for (i = extremes.length; i; i--) {
+          this._extendBoundsByX(extremes[i] | 0);
         }
       }
       if (controlY1 < fromY || controlY2 < fromY || controlY1 > anchorY || controlY2 > anchorY) {
         extremes = cubicBezierExtremes(fromY, controlY1, controlY2, anchorY);
-        for (i = extremes.length; i--;) {
-          this._extendBoundsByY(extremes[i]|0);
+        for (i = extremes.length; i; i--) {
+          this._extendBoundsByY(extremes[i] | 0);
         }
       }
       this._applyLastCoordinates(anchorX, anchorY);
@@ -925,8 +921,7 @@ module Shumway.AVM2.AS.flash.display {
           case PathCommand.MoveTo:
             release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             if (formOpen && fillActive &&
-                rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
-            {
+                rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY)) {
               inside = !inside;
             }
             formOpen = true;
@@ -961,8 +956,7 @@ module Shumway.AVM2.AS.flash.display {
             toX = coordinates[coordinatesIndex++];
             toY = coordinates[coordinatesIndex++];
             if (fillActive &&
-                rayFullyCrossesCubicCurve(x, y, fromX, fromY, cpX, cpY, cp2X, cp2Y, toX, toY))
-            {
+                rayFullyCrossesCubicCurve(x, y, fromX, fromY, cpX, cpY, cp2X, cp2Y, toX, toY)) {
               inside = !inside;
             }
             break;
@@ -971,8 +965,7 @@ module Shumway.AVM2.AS.flash.display {
           case PathCommand.BeginBitmapFill:
           case PathCommand.EndFill:
             if (formOpen && fillActive &&
-                rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
-            {
+                rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY)) {
               inside = !inside;
             }
             formOpen = false;
@@ -995,8 +988,7 @@ module Shumway.AVM2.AS.flash.display {
       release || assert(commandIndex === commandsCount);
       release || assert(coordinatesIndex === data.coordinatesPosition);
       if (formOpen && fillActive &&
-          rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
-      {
+          rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY)) {
         inside = !inside;
       }
 //      leaveTimeline();
@@ -1060,8 +1052,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             // Eliminate based on bounds.
             if (maxX < fromX && maxX < toX || minX > fromX && minX > toX ||
-                maxY < fromY && maxY < toY || minY > fromY && minY > toY)
-            {
+                maxY < fromY && maxY < toY || minY > fromY && minY > toY) {
               break;
             }
             // Vertical and horizontal lines are a certain hit at this point
@@ -1084,8 +1075,7 @@ module Shumway.AVM2.AS.flash.display {
               break;
             }
             if (distanceSq(x, y, fromX + t * (toX - fromX),
-                           fromY + t * (toY - fromY)) <= halfWidthSq)
-            {
+                           fromY + t * (toY - fromY)) <= halfWidthSq) {
               return true;
             }
             break;
@@ -1104,14 +1094,12 @@ module Shumway.AVM2.AS.flash.display {
             // Eliminate based on bounds
             var extremeX = quadraticBezierExtreme(fromX, cpX, toX);
             if (maxX < fromX && maxX < extremeX && maxX < toX ||
-                minX > fromX && minX > extremeX && minX > toX)
-            {
+                minX > fromX && minX > extremeX && minX > toX) {
               break;
             }
             var extremeY = quadraticBezierExtreme(fromY, cpY, toY);
             if (maxY < fromY && maxY < extremeY && maxY < toY ||
-                minY > fromY && minY > extremeY && minY > toY)
-            {
+                minY > fromY && minY > extremeY && minY > toY) {
               break;
             }
             // So, this is very much not ideal, but I'll punt on proper curve
@@ -1147,25 +1135,23 @@ module Shumway.AVM2.AS.flash.display {
             toY = coordinates[coordinatesIndex++];
             // Eliminate based on bounds
             var extremesX = cubicBezierExtremes(fromX, cpX, cp2X, toX);
-            while(extremesX.length < 2) {
+            while (extremesX.length < 2) {
               extremesX.push(toX);
             }
             if (maxX < fromX && maxX < toX && maxX < extremesX[0] &&
                 maxX < extremesX[1] ||
                 minX > fromX && minX > toX && minX > extremesX[0] &&
-                minX > extremesX[1])
-            {
+                minX > extremesX[1]) {
               break;
             }
             var extremesY = cubicBezierExtremes(fromY, cpY, cp2Y, toY);
-            while(extremesY.length < 2) {
+            while (extremesY.length < 2) {
               extremesY.push(toY);
             }
             if (maxY < fromY && maxY < toY && maxY < extremesY[0] &&
                 maxY < extremesY[1] ||
                 minY > fromY && minY > toY && minY > extremesY[0] &&
-                minY > extremesY[1])
-            {
+                minY > extremesY[1]) {
               break;
             }
             // So, this is very much not ideal, but I'll punt on proper curve
@@ -1180,9 +1166,7 @@ module Shumway.AVM2.AS.flash.display {
               if (curveY < minY || curveY > maxY) {
                 continue;
               }
-              if ((x - curveX) * (x - curveX) + (y - curveY) * (y - curveY) <
-                  halfWidthSq)
-              {
+              if ((x - curveX) * (x - curveX) + (y - curveY) * (y - curveY) < halfWidthSq) {
                 return true;
               }
             }
@@ -1337,7 +1321,7 @@ module Shumway.AVM2.AS.flash.display {
         interpolation = InterpolationMethod.toNumber(InterpolationMethod.RGB);
       }
       // Focal point is scaled by 0xff, divided by 2, rounded and stored as a signed short.
-      focalPointRatio = clamp(+focalPointRatio, -1, 1) / 2 * 0xff|0;
+      focalPointRatio = clamp(+focalPointRatio, -1, 1) / 2 * 0xff | 0;
       this._graphicsData.beginGradient(pathCommand, colorsRGBA, coercedRatios, gradientType,
                                        matrix, spread, interpolation, focalPointRatio);
     }

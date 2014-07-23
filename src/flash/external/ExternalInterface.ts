@@ -59,8 +59,9 @@ module Shumway.AVM2.AS.flash.external {
     }
 
     static _initJS(): void {
-      if (ExternalInterface.initialized)
+      if (ExternalInterface.initialized) {
         return;
+      }
       Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.EXTERNAL_INTERFACE_FEATURE});
       ExternalInterface.initialized = true;
       ExternalInterfaceService.instance.initJS(ExternalInterface._callIn);

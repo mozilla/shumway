@@ -21,8 +21,7 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = null;
 
     constructor(width: number, height: number, textFieldWidth: number, textFieldHeight: number,
-                ascent: number, descent: number)
-    {
+                ascent: number, descent: number) {
       width = +width;
       height = +height;
       textFieldWidth = +textFieldWidth;

@@ -33,7 +33,7 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor (caption: string, separatorBefore: boolean = false,
                  enabled: boolean = true, visible: boolean = true) {
-      false && super()
+      false && super();
       caption = asCoerceString(caption); separatorBefore = !!separatorBefore; enabled = !!enabled; visible = !!visible;
       this._caption = caption ? caption : "";
       this._separatorBefore = separatorBefore;

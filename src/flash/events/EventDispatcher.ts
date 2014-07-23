@@ -23,8 +23,7 @@ module Shumway.AVM2.AS.flash.events {
   import assert = Shumway.Debug.assert;
 
   class EventListenerEntry {
-    constructor(public listener: EventHandler, public useCapture: boolean, public priority: number)
-    {
+    constructor(public listener: EventHandler, public useCapture: boolean, public priority: number) {
     }
   }
 
@@ -332,7 +331,7 @@ module Shumway.AVM2.AS.flash.events {
         throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
-      return this._hasTargetOrBubblingEventListener(type) || this._hasCaptureEventListener(type)
+      return this._hasTargetOrBubblingEventListener(type) || this._hasCaptureEventListener(type);
     }
 
     willTrigger(type: string): boolean {
@@ -379,7 +378,7 @@ module Shumway.AVM2.AS.flash.events {
         // Gather all parent display objects that have event listeners for this event type.
         while (node) {
           if (node.hasEventListener(type)) {
-            ancestors.push(node)
+            ancestors.push(node);
           }
           node = node._parent;
         }

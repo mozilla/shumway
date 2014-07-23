@@ -26,8 +26,7 @@ module Shumway.AVM2.AS.flash.events {
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 bitmap: flash.display.BitmapData = null, array: flash.utils.ByteArray = null,
-                vector: ASVector<any> = null)
-    {
+                vector: ASVector<any> = null) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.ShaderEvent");
     }

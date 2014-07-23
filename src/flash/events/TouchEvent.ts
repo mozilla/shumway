@@ -29,8 +29,7 @@ module Shumway.AVM2.AS.flash.events {
                 localX: number = NaN, localY: number = NaN, sizeX: number = NaN,
                 sizeY: number = NaN, pressure: number = NaN,
                 relatedObject: flash.display.InteractiveObject = null, ctrlKey: boolean = false,
-                altKey: boolean = false, shiftKey: boolean = false)
-    {
+                altKey: boolean = false, shiftKey: boolean = false) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.TouchEvent");
     }

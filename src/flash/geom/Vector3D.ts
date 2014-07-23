@@ -79,7 +79,7 @@ module Shumway.AVM2.AS.flash.geom {
     get lengthSquared(): number {
       return this.x * this.x +
              this.y * this.y +
-             this.z * this.z
+             this.z * this.z;
     }
 
     static angleBetween(a: Vector3D, b: Vector3D): number {
@@ -105,7 +105,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
     normalize(): number {
       var length = this.length;
-      if (length != 0) {
+      if (length !== 0) {
         this.x /= length;
         this.y /= length;
         this.z /= length;
@@ -145,7 +145,7 @@ module Shumway.AVM2.AS.flash.geom {
       return (this.x === toCompare.x)
           && (this.y === toCompare.y)
           && (this.z === toCompare.z)
-          && (!allFour || (this.w == toCompare.w));
+          && (!allFour || (this.w === toCompare.w));
     }
     nearEquals(toCompare: flash.geom.Vector3D, tolerance: number, allFour?: boolean): boolean {
       return (Math.abs(this.x - toCompare.x) < tolerance)

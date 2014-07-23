@@ -267,10 +267,10 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public equals(toCompare: Rectangle): boolean {
-      return this.x == toCompare.x
-        && this.y == toCompare.y
-        && this.width == toCompare.width
-        && this.height == toCompare.height;
+      return this.x === toCompare.x
+        && this.y === toCompare.y
+        && this.width === toCompare.width
+        && this.height === toCompare.height;
     }
 
     public copyFrom(sourceRect: Rectangle): void {

@@ -26,8 +26,7 @@ module Shumway.AVM2.AS.flash.events {
 
     constructor(type: string, bubbles: boolean = true, cancelable: boolean = false,
                 relatedObject: flash.display.InteractiveObject = null, shiftKey: boolean = false,
-                keyCode: number /*uint*/ = 0)
-    {
+                keyCode: number /*uint*/ = 0) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.FocusEvent");
     }

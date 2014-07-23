@@ -26,8 +26,7 @@ module Shumway.AVM2.AS.flash.events {
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 timestamp: number = 0, accelerationX: number = 0, accelerationY: number = 0,
-                accelerationZ: number = 0)
-    {
+                accelerationZ: number = 0) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.AccelerometerEvent");
     }
