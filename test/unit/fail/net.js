@@ -4,7 +4,7 @@
    */
 
   function log(message) {
-    console.info(message);
+    info(message);
   }
 
   unitTests.push(function URLVariablesTest() {

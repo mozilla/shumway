@@ -1810,3 +1810,5 @@ var asSetSlot = Shumway.AVM2.Runtime.asSetSlot;
 var asHasNext2 = Shumway.AVM2.Runtime.asHasNext2;
 var getDescendants = Shumway.AVM2.Runtime.getDescendants;
 var checkFilter = Shumway.AVM2.Runtime.checkFilter;
+
+var sliceArguments = Shumway.AVM2.Runtime.sliceArguments;

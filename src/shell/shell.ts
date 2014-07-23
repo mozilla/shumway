@@ -53,6 +53,13 @@ load(tsBuildPath + "/avm1.js");
 load(tsBuildPath + "/gfx-base.js");
 load(tsBuildPath + "/player.js");
 
+/**
+ * Global unitTests array, unit tests add themselves to this. The list may have numbers, these indicate the
+ * number of times to run the test following it. This makes it easy to disable test by pushing a zero in
+ * front.
+ */
+var unitTests = [];
+
 module Shumway.Shell {
   import assert = Shumway.Debug.assert;
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
@@ -75,6 +82,7 @@ module Shumway.Shell {
     var verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
     var releaseOption = shellOptions.register(new Option("r", "release", "boolean", false, "Release mode"));
     var executeOption = shellOptions.register(new Option("x", "execute", "boolean", false, "Execute File(s)"));
+    var playerGlobalOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
 
     var argumentParser = new ArgumentParser();
     argumentParser.addBoundOptionSet(systemOptions);
@@ -109,6 +117,8 @@ module Shumway.Shell {
     release = releaseOption.value;
     verbose = verboseOption.value;
 
+    Shumway.Unit.writer = new IndentingWriter(!verbose);
+
     if (parseOption.value) {
       files.forEach(function (file) {
         var start = dateNow();
@@ -121,12 +131,47 @@ module Shumway.Shell {
     }
 
     if (executeOption.value) {
-      initializeAVM2();
+      initializeAVM2(playerGlobalOption.value);
+      files.forEach(function (file) {
+        executeFile(file);
+      });
     }
   }
 
   function parseABCs(files: string []) {
 
+  }
+
+  function executeFile(file: string): boolean {
+    if (file.endsWith(".js")) {
+      executeUnitTest(file);
+    }
+    return true;
+  }
+
+  function executeUnitTest(file: string) {
+    writer.writeLn("Running Unit Test: " + file);
+    load(file);
+    while (unitTests.length) {
+      var test = unitTests.shift();
+      var repeat = 1;
+      if (typeof test === "number") {
+        repeat = test;
+        test = unitTests.shift();
+      }
+      if (verbose && test.name) {
+        writer.writeLn("Test: " + test.name);
+      }
+      try {
+        for (var i = 0; i < repeat; i++) {
+          test();
+        }
+      } catch (x) {
+        writer.redLn('Exception encountered while running ' + file + ':' + '(' + x + ')');
+        writer.redLns(x.stack);
+      }
+    }
+    writer.outdent();
   }
 
   /**
@@ -200,31 +245,46 @@ module Shumway.Shell {
     return true;
   }
 
-  function createAVM2(builtinPath, libraryPathInfo) {
+  function createAVM2(builtinPath, libraryPathInfo?) {
     var buffer = read(builtinPath, 'binary');
     Runtime.AVM2.initialize(Runtime.ExecutionMode.COMPILE, Runtime.ExecutionMode.COMPILE, null);
     var avm2Instance = Runtime.AVM2.instance;
     Shumway.AVM2.AS.linkNatives(avm2Instance);
     avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
-
-    /*
-    console.time("Execute builtin.abc");
-    // Avoid loading more Abcs while the builtins are loaded
-    avm2.builtinsLoaded = false;
-    avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
-    avm2.builtinsLoaded = true;
-    console.timeEnd("Execute builtin.abc");
-    loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
-    */
+    if (libraryPathInfo) {
+      loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
+    }
   }
 
-  function initializeAVM2() {
+  function initializeAVM2(loadPlayerglobal: boolean) {
     var avm2Root = homePath + "src/avm2/";
     var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-    createAVM2(builtinPath, {
+    createAVM2(builtinPath, loadPlayerglobal ? {
       abcs: "build/playerglobal/playerglobal.abcs",
       catalog: "build/playerglobal/playerglobal.json"
-    });
+    } : undefined);
+  }
+
+  function loadPlayerglobal(abcsPath, catalogPath) {
+    var playerglobal = Shumway.AVM2.Runtime.playerglobal = {
+      abcs: read(abcsPath, 'binary').buffer,
+      map: Object.create(null),
+      scripts: Object.create(null)
+    };
+    var catalog = JSON.parse(read(catalogPath));
+    for (var i = 0; i < catalog.length; i++) {
+      var abc = catalog[i];
+      playerglobal.scripts[abc.name] = abc;
+      if (typeof abc.defs === 'string') {
+        playerglobal.map[abc.defs] = abc.name;
+        writer.writeLn(abc.defs)
+      } else {
+        for (var j = 0; j < abc.defs.length; j++) {
+          var def = abc.defs[j];
+          playerglobal.map[def] = abc.name;
+        }
+      }
+    }
   }
 }
 

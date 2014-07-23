@@ -6,4 +6,5 @@
 /// <reference path='../../build/ts/player.d.ts' />
 
 ///<reference path='module.ts' />
+///<reference path='unit.ts' />
 ///<reference path='shell.ts' />
