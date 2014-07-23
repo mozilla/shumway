@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mozilla/shumway.svg?branch=nat)](https://travis-ci.org/mozilla/shumway)
+
 # Shumway
 
 Shumway is an HTML5 technology experiment that explores building a faithful
