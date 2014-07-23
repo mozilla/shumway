@@ -32,6 +32,10 @@ var setTimeout = function (fn) { microTasks.push(fn); };
 
 var self = this, window = this;
 
+var navigator = {
+  userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:4.0) Gecko/20100101 Firefox/4.0'
+};
+
 // TODO remove document stub
 var document = {
   createElementNS: function (ns, qname) {
