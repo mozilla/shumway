@@ -1648,6 +1648,17 @@ module Shumway {
       }
     }
 
+    redLns(str: string) {
+      this.colorLns(IndentingWriter.RED, str);
+    }
+
+    colorLns(color: string, str: string) {
+      var lines = str.split("\n");
+      for (var i = 0; i < lines.length; i++) {
+        this.colorLn(color, lines[i]);
+      }
+    }
+
     enter(str: string) {
       if (!this._suppressOutput) {
         this._out(this._padding + str);
