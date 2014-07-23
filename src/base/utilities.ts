@@ -18,6 +18,7 @@
 var jsGlobal = (function() { return this || (1, eval)('this'); })();
 var inBrowser = typeof console != "undefined";
 
+declare var putstr;
 // declare var print;
 // declare var console;
 // declare var performance;
@@ -1568,18 +1569,27 @@ module Shumway {
     public static GREEN = '\033[92m';
     public static RED = '\033[91m';
     public static ENDC = '\033[0m';
-    private static _consoleOutFn = inBrowser ? console.info.bind(console) : print;
+    private static _consoleOut = inBrowser ? console.info.bind(console) : print;
+    private static _consoleOutNoNewline = inBrowser ? console.info.bind(console) : putstr;
 
     private _tab: string;
     private _padding: string;
     private _suppressOutput: boolean;
     private _out: (s: string) => void;
+    private _outNoNewline: (s: string) => void;
 
-    constructor(suppressOutput: boolean = false, outFn?) {
+    constructor(suppressOutput: boolean = false, out?) {
       this._tab = "  ";
       this._padding = "";
       this._suppressOutput = suppressOutput;
-      this._out = outFn || IndentingWriter._consoleOutFn;
+      this._out = out || IndentingWriter._consoleOut;
+      this._outNoNewline = out || IndentingWriter._consoleOutNoNewline;
+    }
+
+    write(str: string = "", writePadding = false) {
+      if (!this._suppressOutput) {
+        this._outNoNewline((writePadding ? this._padding : "") + str);
+      }
     }
 
     writeLn(str: string = "") {
@@ -1635,6 +1645,17 @@ module Shumway {
         } else {
           this._out(this._padding + str);
         }
+      }
+    }
+
+    redLns(str: string) {
+      this.colorLns(IndentingWriter.RED, str);
+    }
+
+    colorLns(color: string, str: string) {
+      var lines = str.split("\n");
+      for (var i = 0; i < lines.length; i++) {
+        this.colorLn(color, lines[i]);
       }
     }
 

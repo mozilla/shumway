@@ -77,8 +77,8 @@ module.exports = function(grunt) {
         cmd: 'node compileabc -m ../src/avm1lib/avm1lib.manifest',
         cwd: 'utils/'
       },
-      shell_test: {
-        cmd: 'utils/jsshell/js test/harness/run-unit-test.js ' + (grunt.option('tests') || 'test/unit/shell-tests.js test/perf/shell-tests.js'),
+      gate: {
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -g -r test/unit/pass/*.js',
       },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
@@ -255,17 +255,17 @@ module.exports = function(grunt) {
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
 
-  grunt.registerTask('base', ['exec:build_base_ts']);
-  grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:shell_test']);
-  grunt.registerTask('flash', ['parallel:flash', 'exec:shell_test']);
-  grunt.registerTask('avm1', ['parallel:avm1', 'exec:shell_test']);
-  grunt.registerTask('player', ['exec:build_player_ts', 'exec:shell_test']);
-  grunt.registerTask('shell', ['exec:build_shell_ts']);
-  grunt.registerTask('tools', ['exec:build_tools_ts']);
-  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'exec:shell_test']);
+  grunt.registerTask('base', ['exec:build_base_ts', 'exec:gate']);
+  grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:gate']);
+  grunt.registerTask('flash', ['parallel:flash', 'exec:gate']);
+  grunt.registerTask('avm1', ['parallel:avm1', 'exec:gate']);
+  grunt.registerTask('player', ['exec:build_player_ts', 'exec:gate']);
+  grunt.registerTask('shell', ['exec:build_shell_ts', 'exec:gate']);
+  grunt.registerTask('tools', ['exec:build_tools_ts', 'exec:gate']);
+  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'exec:gate']);
   grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts']);
-  grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts']);
-  grunt.registerTask('shell-test', ['exec:shell_test']);
+  grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts', 'exec:gate']);
+  grunt.registerTask('gate', ['exec:gate']);
   grunt.registerTask('shu', [
     'parallel:base',
     'exec:build_tools_ts',
@@ -274,7 +274,7 @@ module.exports = function(grunt) {
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
-    'exec:shell_test'
+    'exec:gate'
   ]);
   grunt.registerTask('firefox', ['shu', 'exec:build_extension']);
 };

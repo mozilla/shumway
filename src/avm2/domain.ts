@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
 
 module Shumway.AVM2.Runtime {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
@@ -32,10 +31,6 @@ module Shumway.AVM2.Runtime {
   import assert = Shumway.Debug.assert;
   import IndentingWriter = Shumway.IndentingWriter;
 
-  declare var compileAbc;
-  declare var Promise;
-  declare var natives;
-  declare var avm2;
   declare var homePath;
   declare var snarf;
   declare var newGlobal;
@@ -219,7 +214,8 @@ module Shumway.AVM2.Runtime {
             map: Object.create(null),
             scripts: Object.create(null)
           };
-          var catalog = result[1];
+          // TODO: Clean this up, type it.
+          var catalog = <any>result[1];
           for (var i = 0; i < catalog.length; i++) {
             var abc = catalog[i];
             playerglobal.scripts[abc.name] = abc;

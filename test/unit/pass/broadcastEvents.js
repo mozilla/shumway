@@ -9,7 +9,7 @@
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
 
   function log(message) {
-    console.info(message);
+    info(message);
   }
 
   unitTests.push(function () {

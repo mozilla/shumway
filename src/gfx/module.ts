@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 module Shumway.GFX {
   export enum TraceLevel {
     None,

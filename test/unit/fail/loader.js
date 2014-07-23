@@ -7,7 +7,7 @@
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
 
   function log(message) {
-    console.info(message);
+    info(message);
   }
 
   for (var i = 0; i < 75; i++) {

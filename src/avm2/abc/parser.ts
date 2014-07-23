@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='../references.ts' />
 
 module Shumway.AVM2.ABC {
   import isString = Shumway.isString;
@@ -51,7 +50,7 @@ module Shumway.AVM2.ABC {
     methodInfo: MethodInfo;
     classInfo: ClassInfo;
     metadata: any;
-
+    public trace: (writer: IndentingWriter) => void;
     constructor(abc: AbcFile, stream: AbcStream, holder: Info) {
       var constantPool = abc.constantPool;
       var methods = abc.methods;
@@ -217,6 +216,7 @@ module Shumway.AVM2.ABC {
     index: number;
     hash: number;
     traits: any[];
+    public trace: (writer: IndentingWriter) => void;
     constructor(abc: AbcFile, index: number, hash: Hashes) {
       this.abc = abc;
       this.index = index;
@@ -523,7 +523,7 @@ module Shumway.AVM2.ABC {
     scripts: ScriptInfo [];
     env: any;
     applicationDomain: Shumway.AVM2.Runtime.ApplicationDomain;
-
+    public trace: (writer: IndentingWriter) => void;
     constructor(bytes: Uint8Array, name: string, hash: number = 0) {
       enterTimeline("Parse ABC");
       this.name = name;
@@ -1402,6 +1402,7 @@ module Shumway.AVM2.ABC {
   export class MetaDataInfo {
     public name: string;
     public value: {key: string; value: string []} [];
+    public trace: (writer: IndentingWriter) => void;
     constructor(abc: AbcFile, stream: AbcStream) {
       var strings = abc.constantPool.strings;
       var name = this.name = strings[stream.readU30()];
@@ -1514,7 +1515,7 @@ module Shumway.AVM2.ABC {
     multinames: Multiname [];
     namespaces: Namespace [];
     namespaceSets: Namespace [][];
-    positionAfterUTFStrings: number;
+    public trace: (writer: IndentingWriter) => void;
     constructor (stream: AbcStream, abc: AbcFile) {
       var n;
       // Parse Integers
@@ -1542,7 +1543,6 @@ module Shumway.AVM2.ABC {
       for (var i = 1; i < n; ++i) {
         strings.push(stream.readUTFString(stream.readU30()));
       }
-      this.positionAfterUTFStrings = stream.position;
       leaveTimeline();
 
       this.ints = ints;

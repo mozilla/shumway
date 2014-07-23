@@ -95,6 +95,10 @@ module Shumway.Metrics {
 
     private _enabled: boolean;
     private _counts: Map<number>;
+    private _times: Map<number>;
+    get counts(): Map<number> {
+      return this._counts;
+    }
     constructor(enabled: boolean) {
       this._enabled = enabled;
       this.clear();
@@ -104,18 +108,21 @@ module Shumway.Metrics {
     }
     public clear() {
       this._counts = ObjectUtilities.createMap<number>();
+      this._times = ObjectUtilities.createMap<number>();
     }
     public toJSON() {
       return {counts: this._counts};
     }
-    public count(name: string, increment: number = 1) {
+    public count(name: string, increment: number = 1, time: number = 0) {
       if (!this._enabled) {
         return;
       }
       if (this._counts[name] === undefined) {
         this._counts[name] = 0;
+        this._times[name] = 0;
       }
       this._counts[name] += increment;
+      this._times[name] += time;
       return this._counts[name];
     }
     public trace(writer: IndentingWriter) {
@@ -123,7 +130,7 @@ module Shumway.Metrics {
         writer.writeLn(name + ": " + this._counts[name]);
       }
     }
-    public traceSorted(writer: IndentingWriter) {
+    public toStringSorted(): string {
       var pairs = [];
       for (var name in this._counts) {
         pairs.push([name, this._counts[name]]);
@@ -131,9 +138,38 @@ module Shumway.Metrics {
       pairs.sort(function (a, b) {
         return b[1] - a[1];
       });
-      pairs.forEach(function (pair) {
-        writer.writeLn(pair[0] + ": " + pair[1]);
+      return (pairs.map(function (pair) {
+        return (pair[0] + ": " + pair[1]);
+      }).join(", "));
+    }
+    public traceSorted(writer: IndentingWriter, inline = false) {
+      var times = this._times;
+      var pairs = [];
+      for (var name in this._counts) {
+        pairs.push([name, this._counts[name]]);
+      }
+      pairs.sort(function (a, b) {
+        return b[1] - a[1];
       });
+      if (inline) {
+        writer.writeLn(pairs.map(function (pair) {
+          return (pair[0] + ": " + pair[1]);
+        }).join(", "));
+      } else {
+        pairs.forEach(function (pair) {
+          var name = pair[0];
+          var count = pair[1];
+          var time = times[name];
+          var line = name + ": " + count;
+          if (time) {
+            line += ", " + time.toFixed(4);
+            if (count > 1) {
+              line += " (" + (time / count).toFixed(4) + ")";
+            }
+          }
+          writer.writeLn(line);
+        });
+      }
     }
   }
 

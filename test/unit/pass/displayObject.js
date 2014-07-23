@@ -1,6 +1,6 @@
 function displayTests() {
   function log(message) {
-    console.info(message);
+    info(message);
   }
 
   var Random = Shumway.Random;
