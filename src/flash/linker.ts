@@ -52,7 +52,9 @@ module Shumway.AVM2.AS {
   declare var unescape;
   declare var AMFUtils;
 
+  /* tslint:disable */
   jsGlobal["flash"] = Shumway.AVM2.AS.flash;
+  /* tslint:enable */
 
   export function linkNatives(runtime: Shumway.AVM2.Runtime.AVM2) {
 
@@ -263,7 +265,9 @@ module Shumway.AVM2.AS {
                    'flash.net.URLRequest');
       }
       var session = FileLoadingService.instance.createSession();
-      session.onprogress = function () {};
+      session.onprogress = function () {
+        // ...
+      };
       session.open(request);
     });
 

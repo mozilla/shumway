@@ -29,8 +29,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = true, cancelable: boolean = false,
                 charCodeValue: number /*uint*/ = 0, keyCodeValue: number /*uint*/ = 0,
                 keyLocationValue: number /*uint*/ = 0, ctrlKeyValue: boolean = false,
-                altKeyValue: boolean = false, shiftKeyValue: boolean = false)
-    {
+                altKeyValue: boolean = false, shiftKeyValue: boolean = false) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.KeyboardEvent");
     }

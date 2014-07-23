@@ -24,8 +24,7 @@ module Shumway.AVM2.AS.flash.text {
     static instanceSymbolså: string [] = null; // ["x", "width", "height", "ascent", "descent", "leading"];
 
     constructor(x: number, width: number, height: number, ascent: number, descent: number,
-                leading: number)
-    {
+                leading: number) {
       false && super();
       notImplemented("Dummy Constructor: public flash.text.TextLineMetrics");
       x = +x;

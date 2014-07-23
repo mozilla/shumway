@@ -46,7 +46,7 @@ module Shumway.AVM2.AS.flash.display {
     _symbol: Shumway.Timeline.BitmapSymbol;
     static initializer: any = function (symbol: Shumway.Timeline.BitmapSymbol) {
       this._symbol = symbol;
-    }
+    };
 
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // ["rect"];
@@ -56,8 +56,7 @@ module Shumway.AVM2.AS.flash.display {
     static MAXIMUM_DIMENSION: number = 16777215;
 
     constructor(width: number /*int*/, height: number /*int*/, transparent: boolean = true,
-                fillColorARGB: number /*uint*/ = 4294967295)
-    {
+                fillColorARGB: number /*uint*/ = 4294967295) {
       width = width | 0;
       height = height | 0;
       fillColorARGB = fillColorARGB | 0;
@@ -69,8 +68,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       if (width > BitmapData.MAXIMUM_WIDTH || width <= 0 ||
           height > BitmapData.MAXIMUM_HEIGHT || height <= 0 ||
-          width * height > BitmapData.MAXIMUM_DIMENSION)
-      {
+          width * height > BitmapData.MAXIMUM_DIMENSION) {
         throwError('ArgumentError', Errors.InvalidBitmapData);
       }
       this._bitmapReferrers = [];
@@ -82,8 +80,7 @@ module Shumway.AVM2.AS.flash.display {
         this._type = this._symbol.type;
         if (this._type === ImageType.PremultipliedAlphaARGB ||
             this._type === ImageType.StraightAlphaARGB ||
-            this._type === ImageType.StraightAlphaRGBA)
-        {
+            this._type === ImageType.StraightAlphaRGBA) {
           this._view = new Int32Array(this._symbol.data.buffer);
         }
       } else {

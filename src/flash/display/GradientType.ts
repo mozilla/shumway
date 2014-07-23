@@ -42,7 +42,7 @@ module Shumway.AVM2.AS.flash.display {
         case Shumway.GradientType.Radial:
           return GradientType.RADIAL;
         default:
-          return null
+          return null;
       }
     }
 

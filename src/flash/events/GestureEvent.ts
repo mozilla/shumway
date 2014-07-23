@@ -27,8 +27,7 @@ module Shumway.AVM2.AS.flash.events {
 
     constructor(type: string, bubbles: boolean = true, cancelable: boolean = false,
                 phase: string = null, localX: number = 0, localY: number = 0,
-                ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false)
-    {
+                ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
       false && super(undefined, undefined, undefined);
       Event.instanceConstructorNoInitialize.call(this);
       this._phase = asCoerceString(phase);
@@ -105,8 +104,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     private NativeCtor(phase: string = null, localX: number = 0, localY: number = 0,
-                       ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false)
-    {
+                       ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
       this._phase = asCoerceString(phase);
       this._localX = +localX;
       this._localY = +localY;

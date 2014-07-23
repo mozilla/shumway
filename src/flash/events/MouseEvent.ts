@@ -29,8 +29,7 @@ module Shumway.AVM2.AS.flash.events {
                 localX: number = undefined, localY: number = undefined,
                 relatedObject: flash.display.InteractiveObject = null, ctrlKey: boolean = false,
                 altKey: boolean = false, shiftKey: boolean = false, buttonDown: boolean = false,
-                delta: number /*int*/ = 0)
-    {
+                delta: number /*int*/ = 0) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.MouseEvent");
     }

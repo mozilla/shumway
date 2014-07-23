@@ -26,8 +26,7 @@ module Shumway.AVM2.AS.flash.events {
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
-                text: string = "", id: number /*int*/ = 0)
-    {
+                text: string = "", id: number /*int*/ = 0) {
       super(undefined, undefined, undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.IOErrorEvent");
     }

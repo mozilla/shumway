@@ -44,7 +44,7 @@ module Shumway.AVM2.AS.flash.filters {
           0, 1, 0, 0, 0,
           0, 0, 1, 0, 0,
           0, 0, 0, 1, 0
-        ]
+        ];
       }
     }
 

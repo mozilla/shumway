@@ -25,8 +25,7 @@ module Shumway.AVM2.AS.flash.events {
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
-                netStream: flash.net.NetStream = null)
-    {
+                netStream: flash.net.NetStream = null) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.NetMonitorEvent");
     }

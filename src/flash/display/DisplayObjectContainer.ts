@@ -174,7 +174,7 @@ module Shumway.AVM2.AS.flash.display {
       if (child._parent) {
         child._parent.removeChild(child);
         // The children list could have been mutated as a result of |removeChild|.
-        index = clamp(index, 0, children.length)
+        index = clamp(index, 0, children.length);
       }
       for (var i = children.length - 1; i >= index; i--) {
         children[i]._index++;

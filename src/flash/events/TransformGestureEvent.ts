@@ -27,8 +27,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = true, cancelable: boolean = false,
                 phase: string = null, localX: number = 0, localY: number = 0, scaleX: number = 1,
                 scaleY: number = 1, rotation: number = 0, offsetX: number = 0, offsetY: number = 0,
-                ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false)
-    {
+                ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
       super(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
             undefined);
       notImplemented("Dummy Constructor: public flash.events.TransformGestureEvent");

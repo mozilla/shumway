@@ -42,7 +42,7 @@ module Shumway.AVM2.AS.flash.display {
         // TODO: I don't think BitmapData symbol objects can change, so they don't need back
         // references to this Bitmap.
         self._bitmapData = symbolClass.initializeFrom(symbol);
-        self._setFillAndLineBoundsFromWidthAndHeight(symbol.width * 20|0, symbol.height * 20|0);
+        self._setFillAndLineBoundsFromWidthAndHeight(symbol.width * 20 | 0, symbol.height * 20 | 0);
       }
     };
     
@@ -102,7 +102,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._bitmapData = value;
       if (value) {
-        this._setFillAndLineBoundsFromWidthAndHeight(value.width * 20|0, value.height * 20|0);
+        this._setFillAndLineBoundsFromWidthAndHeight(value.width * 20 | 0, value.height * 20 | 0);
       }
       this._invalidateParentFillAndLineBounds(true, true);
       this._setDirtyFlags(DisplayObjectFlags.DirtyBitmapData);

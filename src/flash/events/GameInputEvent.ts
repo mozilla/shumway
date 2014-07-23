@@ -25,8 +25,8 @@ module Shumway.AVM2.AS.flash.events {
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
-                device: flash.ui.GameInputDevice = null)
-    {super(undefined, undefined, undefined);
+                device: flash.ui.GameInputDevice = null) {
+      super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.GameInputEvent");
     }
 

@@ -26,8 +26,7 @@ module Shumway.AVM2.AS.flash.events {
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 mouseTarget: flash.display.InteractiveObject = null,
-                contextMenuOwner: flash.display.InteractiveObject = null)
-    {
+                contextMenuOwner: flash.display.InteractiveObject = null) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.ContextMenuEvent");
     }

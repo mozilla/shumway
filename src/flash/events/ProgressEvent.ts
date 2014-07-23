@@ -25,8 +25,7 @@ module Shumway.AVM2.AS.flash.events {
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
-                bytesLoaded: number = 0, bytesTotal: number = 0)
-    {
+                bytesLoaded: number = 0, bytesTotal: number = 0) {
       super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.ProgressEvent");
     }

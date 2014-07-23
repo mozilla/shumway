@@ -136,8 +136,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       if (advance) {
         if (this._totalFrames > 1 && !this._stopped &&
-            this._hasFlags(DisplayObjectFlags.Constructed))
-        {
+            this._hasFlags(DisplayObjectFlags.Constructed)) {
           this._nextFrame++;
         }
       }
@@ -276,7 +275,8 @@ module Shumway.AVM2.AS.flash.display {
 
       // Amazingly, the `frame` argument, while first coerced to string, is then interpreted as a
       // frame index even if a label with the same name exists.
-      var frameNum = parseInt(frame);
+      /* tslint:disable */
+      var frameNum = parseInt(frame, 10);
       if (<any>frameNum != frame) { // TypeScript doesn't like using `==` for number,string vars.
         var labels = scene.labels;
         for (var i = 0; i < labels.length; i++) {
@@ -290,7 +290,7 @@ module Shumway.AVM2.AS.flash.display {
           throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame, sceneName);
         }
       }
-
+      /* tslint:enable */
       this._gotoFrameAbs(scene.offset + frameNum);
     }
 
@@ -527,7 +527,7 @@ module Shumway.AVM2.AS.flash.display {
      *
      * Undocumented method used to implement the old timeline concept in AS3.
      */
-    addFrameScript(frameIndex: number, script: (any?)=>any /*, ...*/): void {
+    addFrameScript(frameIndex: number, script: (any?) => any /*, ...*/): void {
       if (!this._currentFrame) {
         return;
       }
@@ -540,7 +540,7 @@ module Shumway.AVM2.AS.flash.display {
       var frameScripts = this._frameScripts;
       var totalFrames = this._totalFrames;
       for (var i = 0; i < numArgs; i += 2) {
-        var frameNum = (arguments[i]|0) + 1;
+        var frameNum = (arguments[i] | 0) + 1;
         if (frameNum < 1 || frameNum > totalFrames) {
           continue;
         }
@@ -576,7 +576,7 @@ module Shumway.AVM2.AS.flash.display {
      *
      * After that, the listener removes itself.
      */
-    addAS2InitActionBlocks(frameIndex: number, actionsBlocks: {actionsData:Uint8Array}[]): void {
+    addAS2InitActionBlocks(frameIndex: number, actionsBlocks: {actionsData: Uint8Array} []): void {
       var self: MovieClip = this;
       function listener (e) {
         if (self._currentFrame !== frameIndex + 1) {

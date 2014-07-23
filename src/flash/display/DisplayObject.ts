@@ -277,7 +277,7 @@ module Shumway.AVM2.AS.flash.display {
     static _syncID = 0;
 
     static getNextSyncID() {
-      return this._syncID++
+      return this._syncID++;
     }
 
     static _advancableInstances: WeakList<IAdvancable>;
@@ -380,8 +380,7 @@ module Shumway.AVM2.AS.flash.display {
      * phase.
      */
     static createAnimatedDisplayObject(state: Shumway.Timeline.AnimationState,
-                                       callConstructor: boolean): DisplayObject
-    {
+                                       callConstructor: boolean): DisplayObject {
       var symbol = state.symbol;
       var symbolClass = symbol.symbolClass;
       var instance: DisplayObject;
@@ -412,8 +411,7 @@ module Shumway.AVM2.AS.flash.display {
      * is true for nested cycles, too. (We keep static state for that.)
      */
     static performFrameNavigation(stage: flash.display.Stage, mainLoop: boolean,
-                                  runScripts: boolean)
-    {
+                                  runScripts: boolean) {
       if (mainLoop) {
         var timelineData = {instances: 0};
         DisplayObject._runScripts = runScripts;
@@ -891,8 +889,7 @@ module Shumway.AVM2.AS.flash.display {
      * If the |targetCoordinateSpace| is |null| then assume the identity coordinate space.
      */
     private _getTransformedBounds(targetCoordinateSpace: DisplayObject,
-                                  includeStroke: boolean): Bounds
-    {
+                                  includeStroke: boolean): Bounds {
       var bounds = this._getContentBounds(includeStroke).clone();
       if (targetCoordinateSpace === this || bounds.isEmpty()) {
         return bounds;
@@ -1533,10 +1530,9 @@ module Shumway.AVM2.AS.flash.display {
      * thing for them, so we don't need to take the overhead from being explicit about that.
      */
     hitTestPoint(x: number, y: number, shapeFlag: boolean,
-                 ignoreChildren: boolean, ignoreClipping: boolean = true): boolean
-    {
-      x = +x * 20|0;
-      y = +y * 20|0;
+                 ignoreChildren: boolean, ignoreClipping: boolean = true): boolean {
+      x = +x * 20 | 0;
+      y = +y * 20 | 0;
       shapeFlag = !!shapeFlag;
       ignoreChildren = !!ignoreChildren;
       ignoreClipping = !!ignoreClipping;
