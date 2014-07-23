@@ -28,6 +28,12 @@ module.exports = function(grunt) {
       },
       all: ['src/flash/**/*.js', 'src/swf/*.js']
     },
+    tslint: {
+      options: {
+        configuration: grunt.file.readJSON("tslint.json")
+      },
+      all: ['src/flash/**/*.ts'] // TODO: Add more directories.
+    },
     exec: {
       build_web: {
         cmd: 'make -C web/ build'
@@ -193,12 +199,14 @@ module.exports = function(grunt) {
     }
   });
 
+  grunt.loadNpmTasks('grunt-tslint');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-exec');
   grunt.loadNpmTasks('grunt-parallel');
 
   grunt.registerTask('lint', ['jshint:all', 'exec:lint_success']);
+  grunt.registerTask('ts-lint', ['tslint:all', 'exec:lint_success']);
 
   grunt.registerTask('update-refs', function  () {
     var updateRefs = require('./utils/update-flash-refs.js').updateRefs;
@@ -284,7 +292,8 @@ module.exports = function(grunt) {
     'parallel:tier2',
     'parallel:natives',
     'exec:build_player_ts',
-    'exec:build_shell_ts'
+    'exec:build_shell_ts',
+    'tslint:all'
     // 'exec:gate'
   ]);
   grunt.registerTask('firefox', ['shu', 'exec:build_extension']);

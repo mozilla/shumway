@@ -3,6 +3,7 @@
   "version": "0.7.0",
   "devDependencies": {
     "grunt": "~0.4.2",
+    "grunt-tslint": "~0.4.2",
     "grunt-contrib-jshint": "~0.7.2",
     "grunt-exec": "~0.4.2",
     "grunt-contrib-watch": "~0.5.3",
