@@ -276,5 +276,16 @@ module.exports = function(grunt) {
     'exec:build_shell_ts',
     'exec:gate'
   ]);
+  grunt.registerTask('travis', [
+    // 'parallel:base',
+    'exec:build_base_ts',
+    'exec:build_tools_ts',
+    'exec:build_gfx_base_ts',
+    'parallel:tier2',
+    'parallel:natives',
+    'exec:build_player_ts',
+    'exec:build_shell_ts'
+    // 'exec:gate'
+  ]);
   grunt.registerTask('firefox', ['shu', 'exec:build_extension']);
 };
