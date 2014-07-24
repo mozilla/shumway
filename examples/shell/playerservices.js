@@ -80,6 +80,10 @@ Shumway.FileLoadingService.instance = {
     }
 
     var base = Shumway.FileLoadingService.instance.baseUrl || '';
+    if (base === url) {
+      return url;
+    }
+
     base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
     if (url.indexOf('/') === 0) {
       var m = /^[^:]+:\/\/[^\/]+/.exec(base);
