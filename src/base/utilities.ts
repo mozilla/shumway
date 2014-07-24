@@ -116,10 +116,10 @@ module Shumway {
   /**
    * The buffer length required to contain any unsigned 32-bit integer.
    */
-  /* @const */ export var UINT32_CHAR_BUFFER_LENGTH = 10; // "4294967295".length;
-  /* @const */ export var UINT32_MAX = 0xFFFFFFFF;
-  /* @const */ export var UINT32_MAX_DIV_10 = 0x19999999; // UINT32_MAX / 10;
-  /* @const */ export var UINT32_MAX_MOD_10 = 0x5; // UINT32_MAX % 10
+  /** @const */ export var UINT32_CHAR_BUFFER_LENGTH = 10; // "4294967295".length;
+  /** @const */ export var UINT32_MAX = 0xFFFFFFFF;
+  /** @const */ export var UINT32_MAX_DIV_10 = 0x19999999; // UINT32_MAX / 10;
+  /** @const */ export var UINT32_MAX_MOD_10 = 0x5; // UINT32_MAX % 10
 
   export function isString(value): boolean {
     return typeof value === "string";
