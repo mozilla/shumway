@@ -80,6 +80,12 @@ limitations under the License.
         background-color: black;
       }
 
+      #playerWindow {
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+
       @media screen and (max-width: 100px), screen and (max-height: 40px) {
         body.started #overlay {
           display: none;
@@ -89,6 +95,7 @@ limitations under the License.
   </head>
 
   <body contextmenu="shumwayMenu">
+    <iframe id="playerWindow" width="9" height="9" src=""></iframe>
     <div id="stageContainer"></div>
     <section>
       <div id="overlay">

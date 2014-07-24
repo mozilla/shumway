@@ -691,10 +691,7 @@ function activateShumwayScripts(window, preview) {
   }
 
   function initScripts() {
-    loadScripts(['resource://shumway/shumway.combined.js',
-                 'resource://shumway/fakeSyncWorker.js',
-                 'resource://shumway/testPlayer.js',
-                 'resource://shumway/testEaselHost.js',
+    loadScripts(['resource://shumway/shumway.gfx.js',
                  'resource://shumway/web/avm-sandbox.js'], function () {
       window.wrappedJSObject.runViewer();
     });

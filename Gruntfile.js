@@ -301,6 +301,7 @@ module.exports = function(grunt) {
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
+    'bundles',
     'exec:gate'
   ]);
   grunt.registerTask('closure', [

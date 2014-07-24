@@ -79,7 +79,7 @@ module Shumway.Player.Window {
             data.result = output.toPlainObject();
           }
         } else if (data.type === 'external') {
-          this.processExternalCommand(data.command);
+          this.processExternalCommand(data.request);
         } else if (data.type === 'timelineResponse' && data.timeline) {
           // Transform timeline into a Timeline object.
           data.timeline.__proto__ = TimelineBuffer.prototype;
