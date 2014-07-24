@@ -101,6 +101,10 @@ module.exports = function(grunt) {
           "build/ts/player.js"
         ].join(" ") + " > build/shumway.cc.js"
       },
+      spell: {
+        // TODO: Add more files.
+        cmd: 'node utils/spell/spell.js build/ts/player.js'
+      },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       }
@@ -312,7 +316,8 @@ module.exports = function(grunt) {
     'exec:build_player_ts',
     'exec:build_shell_ts',
     'tslint:all',
-    'exec:closure'
+    'exec:spell',
+    'exec:closure',
     // 'exec:gate'
   ]);
   grunt.registerTask('firefox', ['shu', 'exec:build_extension']);
