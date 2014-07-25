@@ -174,6 +174,50 @@ module Shumway.Shell {
     writer.outdent();
   }
 
+  function parseSymbol(tag, symbols) {
+    var symbol;
+    switch (tag.code) {
+      case SwfTag.CODE_DEFINE_BITS:
+      case SwfTag.CODE_DEFINE_BITS_JPEG2:
+      case SwfTag.CODE_DEFINE_BITS_JPEG3:
+      case SwfTag.CODE_DEFINE_BITS_JPEG4:
+      case SwfTag.CODE_JPEG_TABLES:
+        symbol = Shumway.SWF.Parser.defineImage(tag, symbols);
+        break;
+      case SwfTag.CODE_DEFINE_BITS_LOSSLESS:
+      case SwfTag.CODE_DEFINE_BITS_LOSSLESS2:
+        symbol = Shumway.SWF.Parser.defineBitmap(tag);
+        break;
+      case SwfTag.CODE_DEFINE_BUTTON:
+      case SwfTag.CODE_DEFINE_BUTTON2:
+        // symbol = Shumway.SWF.Parser.defineButton(tag, symbols);
+        break;
+      case SwfTag.CODE_DEFINE_EDIT_TEXT:
+        symbol = Shumway.SWF.Parser.defineText(tag, symbols);
+        break;
+      case SwfTag.CODE_DEFINE_FONT:
+      case SwfTag.CODE_DEFINE_FONT2:
+      case SwfTag.CODE_DEFINE_FONT3:
+      case SwfTag.CODE_DEFINE_FONT4:
+        symbol = Shumway.SWF.Parser.defineFont(tag, symbols);
+        break;
+      case SwfTag.CODE_DEFINE_MORPH_SHAPE:
+      case SwfTag.CODE_DEFINE_MORPH_SHAPE2:
+      case SwfTag.CODE_DEFINE_SHAPE:
+      case SwfTag.CODE_DEFINE_SHAPE2:
+      case SwfTag.CODE_DEFINE_SHAPE3:
+      case SwfTag.CODE_DEFINE_SHAPE4:
+        symbol = Shumway.SWF.Parser.defineShape(tag, symbols);
+        break;
+      case SwfTag.CODE_DEFINE_SOUND:
+        symbol = Shumway.SWF.Parser.defineSound(tag, symbols);
+        break;
+      default:
+        // TODO: Handle all cases here.
+        break;
+    }
+    symbols[tag.id] = symbol;
+  }
   /**
    * Parses file.
    */
@@ -198,30 +242,7 @@ module Shumway.Shell {
               if (tag.code === SWF_TAG_CODE_DO_ABC || tag.code === SWF_TAG_CODE_DO_ABC_) {
                 parseABC(tag.data);
               } else {
-                switch (tag.code) {
-                  case SwfTag.CODE_DEFINE_BITS:
-                  case SwfTag.CODE_DEFINE_BITS_JPEG2:
-                  case SwfTag.CODE_DEFINE_BITS_JPEG3:
-                  case SwfTag.CODE_DEFINE_BITS_JPEG4:
-                  case SwfTag.CODE_JPEG_TABLES:
-                    Shumway.SWF.Parser.defineImage(tag, symbols);
-                    break;
-                  case SwfTag.CODE_DEFINE_BITS_LOSSLESS:
-                  case SwfTag.CODE_DEFINE_BITS_LOSSLESS2:
-                    Shumway.SWF.Parser.defineBitmap(tag);
-                    break;
-                  case SwfTag.CODE_DEFINE_MORPH_SHAPE:
-                  case SwfTag.CODE_DEFINE_MORPH_SHAPE2:
-                  case SwfTag.CODE_DEFINE_SHAPE:
-                  case SwfTag.CODE_DEFINE_SHAPE2:
-                  case SwfTag.CODE_DEFINE_SHAPE3:
-                  case SwfTag.CODE_DEFINE_SHAPE4:
-                    Shumway.SWF.Parser.defineShape(tag, symbols);
-                    break;
-                  default:
-                    // TODO: Handle all cases here.
-                    break;
-                }
+                parseSymbol(tag, symbols);
               }
               counter.count(SwfTag[tag.code], 1, dateNow() - start);
             }
