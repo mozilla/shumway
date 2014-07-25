@@ -180,10 +180,8 @@ Shumway.FileLoadingService.instance = {
 };
 
 var traceMessages = '';
-window.print = function() {
-   return function(s) {
-     traceMessages += s + '\n';
-   };
+window.print = function(s) {
+  traceMessages += s + '\n';
 };
 
 function sendResponse(data) {
