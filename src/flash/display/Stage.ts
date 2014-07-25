@@ -50,7 +50,7 @@ module Shumway.AVM2.AS.flash.display {
       this._mouseLock = false;
       this._stageVideos = null; // TODO
       this._stage3Ds = null; // TODO
-      this._color = 0xFFFFFFFF;
+      this._colorARGB = 0xFFFFFFFF;
       this._fullScreenWidth = 0;
       this._fullScreenHeight = 0;
       this._wmodeGPU = false;
@@ -89,7 +89,7 @@ module Shumway.AVM2.AS.flash.display {
     private _mouseLock: boolean;
     private _stageVideos: ASVector<any>;
     private _stage3Ds: ASVector<any>;
-    private _color: number /*uint*/;
+    private _colorARGB: number /*uint*/;
     private _fullScreenWidth: number /*uint*/;
     private _fullScreenHeight: number /*uint*/;
     private _wmodeGPU: boolean;
@@ -242,11 +242,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get color(): number /*uint*/ {
-      return this._color;
+      return this._colorARGB;
     }
 
-    set color(color: number /*uint*/) {
-      this._color = color >>> 0;
+    set color(rgb: number /*uint*/) {
+      // Flash player forces the alpha channel to 0xff.
+      this._colorARGB = rgb | 0xff000000;
     }
 
     set alpha(alpha: number) {

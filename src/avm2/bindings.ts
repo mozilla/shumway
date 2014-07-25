@@ -461,20 +461,20 @@ module Shumway.AVM2.Runtime {
       var domain = ii.abc.applicationDomain;
       var interfaces = ii.interfaces;
 
-      var interface: Shumway.AVM2.AS.ASClass;
+      var _interface: Shumway.AVM2.AS.ASClass;
       // Collect all implemented interfaces.
       for (var i = 0; i < interfaces.length; i++) {
-        interface = domain.getProperty(interfaces[i], true, true);
+        _interface = domain.getProperty(interfaces[i], true, true);
         // This can be undefined if the interface is defined after a class that implements it is defined.
-        release || assert(interface);
-        copyProperties(this.implementedInterfaces, interface.interfaceBindings.implementedInterfaces);
-        this.implementedInterfaces[Multiname.getQualifiedName(interface.classInfo.instanceInfo.name)] = interface;
+        release || assert(_interface);
+        copyProperties(this.implementedInterfaces, _interface.interfaceBindings.implementedInterfaces);
+        this.implementedInterfaces[Multiname.getQualifiedName(_interface.classInfo.instanceInfo.name)] = _interface;
       }
 
       // Apply all interface bindings.
       for (var interfaceName in this.implementedInterfaces) {
-        interface = this.implementedInterfaces[interfaceName];
-        ib = interface.interfaceBindings;
+        _interface = this.implementedInterfaces[interfaceName];
+        ib = _interface.interfaceBindings;
         for (var interfaceKey in ib.map) {
           var interfaceBinding = ib.map[interfaceKey];
           if (ii.isInterface()) {

@@ -116,10 +116,10 @@ module Shumway {
   /**
    * The buffer length required to contain any unsigned 32-bit integer.
    */
-  /* @const */ export var UINT32_CHAR_BUFFER_LENGTH = 10; // "4294967295".length;
-  /* @const */ export var UINT32_MAX = 0xFFFFFFFF;
-  /* @const */ export var UINT32_MAX_DIV_10 = 0x19999999; // UINT32_MAX / 10;
-  /* @const */ export var UINT32_MAX_MOD_10 = 0x5; // UINT32_MAX % 10
+  /** @const */ export var UINT32_CHAR_BUFFER_LENGTH = 10; // "4294967295".length;
+  /** @const */ export var UINT32_MAX = 0xFFFFFFFF;
+  /** @const */ export var UINT32_MAX_DIV_10 = 0x19999999; // UINT32_MAX / 10;
+  /** @const */ export var UINT32_MAX_MOD_10 = 0x5; // UINT32_MAX % 10
 
   export function isString(value): boolean {
     return typeof value === "string";
@@ -2723,6 +2723,9 @@ module Shumway {
         (argb >> 24 & 0xFF) / 255
       );
     }
+    static FromRGBA(rgba: number) {
+      return Color.FromARGB(ColorUtilities.RGBAToARGB(rgba));
+    }
     public toRGBA() {
       return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255)
     }
@@ -2770,6 +2773,14 @@ module Shumway {
   }
 
   export module ColorUtilities {
+    export function RGBAToARGB(rgba: number): number {
+      return ((rgba >> 8) & 0x00ffffff) | ((rgba & 0xff) << 24);
+    }
+
+    export function ARGBToRGBA(argb: number): number {
+      return argb << 8 | ((argb >> 24) & 0xff);
+    }
+
     export function rgbaToCSSStyle(color: number): string {
       return 'rgba(' + (color >> 24 & 0xff) + ',' + (color >> 16 & 0xff) + ',' +
                   (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';
