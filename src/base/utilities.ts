@@ -2723,6 +2723,9 @@ module Shumway {
         (argb >> 24 & 0xFF) / 255
       );
     }
+    static FromRGBA(rgba: number) {
+      return Color.FromARGB(ColorUtilities.RGBAToARGB(rgba));
+    }
     public toRGBA() {
       return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255)
     }
@@ -2770,6 +2773,14 @@ module Shumway {
   }
 
   export module ColorUtilities {
+    export function RGBAToARGB(rgba: number): number {
+      return ((rgba >> 8) & 0x00ffffff) | ((rgba & 0xff) << 24);
+    }
+
+    export function ARGBToRGBA(argb: number): number {
+      return argb << 8 | ((argb >> 24) & 0xff);
+    }
+
     export function rgbaToCSSStyle(color: number): string {
       return 'rgba(' + (color >> 24 & 0xff) + ',' + (color >> 16 & 0xff) + ',' +
                   (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';

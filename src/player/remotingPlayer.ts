@@ -60,7 +60,7 @@ module Shumway.Remoting.Player {
       var serializer = this;
       this.output.writeInt(MessageTag.UpdateStage);
       this.output.writeInt(stage._id);
-      this.output.writeInt(0x00000000);
+      this.output.writeInt(stage.color);
       this.writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
     }
 
