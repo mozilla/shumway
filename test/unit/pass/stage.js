@@ -94,6 +94,9 @@
     eq(stage.y, 0, "y");
     eq(stage.displayContextInfo, null, "displayContextInfo");
     eq(stage.parent, null, "parent");
+
+    stage.color = 0x12345678;
+    eq(stage.color | 0,  0xff345678 | 0, "opaque");
   });
 
   unitTests.push(function stagePropertySetup() {
@@ -103,6 +106,7 @@
 
   unitTests.push(function displayListStateConsistency() {
     var tree = createDisplayObjectTree(10, 1024, 1024);
+    var fail = false;
     for (var i = 0; i < 1024; i++) {
       var element = tree.getRandomNode();
       if (DisplayObjectContainer.isType(element)) {
@@ -113,11 +117,13 @@
       }
       var stage = element.stage;
       var root = element.root;
-      check(stage);
-      eq(stage, stage.stage);
-      check(root);
-      eq(root, root.root);
+
+      if (!stage || stage !== stage.stage || !root || root !== root.root) {
+        fail = true;
+        break;
+      }
     }
+    check(!fail);
   });
 
   unitTests.push(function align() {

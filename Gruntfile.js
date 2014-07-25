@@ -86,7 +86,7 @@ module.exports = function(grunt) {
         cwd: 'utils/'
       },
       gate: {
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -g -r test/unit/pass/*.js',
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -g -v test/unit/pass/*.js'
       },
       closure: {
         // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
