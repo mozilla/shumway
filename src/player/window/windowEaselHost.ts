@@ -78,6 +78,8 @@ module Shumway.Player.Window {
             this.processUpdates(updates, data.assets, output);
             data.result = output.toPlainObject();
           }
+        } else if (data.type === 'frame') {
+          this.processFrame();
         } else if (data.type === 'external') {
           this.processExternalCommand(data.request);
         } else if (data.type === 'timelineResponse' && data.timeline) {

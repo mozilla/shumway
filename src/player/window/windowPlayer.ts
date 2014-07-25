@@ -64,6 +64,12 @@ module Shumway.Player.Window {
       this._parent.dispatchEvent(event);
     }
 
+    onFrameProcessed() {
+      this._parent.postMessage({
+        type: 'frame'
+      }, '*');
+    }
+
     private onWindowMessage(data) {
       if (typeof data === 'object' && data !== null) {
         switch (data.type) {

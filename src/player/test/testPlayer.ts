@@ -53,6 +53,12 @@ module Shumway.Player.Test {
       });
     }
 
+    onFrameProcessed() {
+      this._worker.postMessage({
+        type: 'frame'
+      });
+    }
+
     private _onWorkerMessage(e) {
       var data = e.data;
       if (typeof data !== 'object' || data === null) {

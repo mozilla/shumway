@@ -16,11 +16,20 @@
  * limitations under the License.
  */
 
-// turbo mode introduces intermittent failures in timeline and timeline_scene
-// tests since frames are not parsed fast enough for gotoAndPlay/gotoAndStop
-// turboMode.value = true;
+Shumway.dontSkipFramesOption.value = true;
 
-skipFrameDraw.value = false;
+var SHUMWAY_ROOT = "../../src/";
+
+var avm2Root = "../../src/avm2/";
+var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var shellAbcPath = avm2Root + "generated/shell/shell.abc";
+var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
+
+// different playerglobals can be used here
+var playerglobalInfo = {
+  abcs: "../../build/playerglobal/playerglobal.abcs",
+  catalog: "../../build/playerglobal/playerglobal.json"
+};
 
 function loadMovie(path, reportFrames) {
   var movieReadyResolve;
@@ -46,7 +55,10 @@ function loadMovie(path, reportFrames) {
     };
   }
 
-  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+  var sysMode = EXECUTION_MODE.COMPILE // EXECUTION_MODE.INTERPRET
+  var appMode = EXECUTION_MODE.COMPILE // EXECUTION_MODE.INTERPRET
+
+  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
     function loaded() { movieReadyResolve(); }
     function terminate() {
       ignoreAdanvances = true;
@@ -64,21 +76,26 @@ function loadMovie(path, reportFrames) {
       }
     }
 
-    Shumway.FileLoadingService.instance.baseUrl = path;
-    var BinaryFileReader = Shumway.BinaryFileReader;
-    new BinaryFileReader(path).readAll(null, function(buffer) {
-      if (!buffer) {
-        throw "Unable to open the file " + SWF_PATH + ": " + error;
-      }
-      SWF.embed(buffer, document, document.getElementById("stage"), {
-        url: path,
-        startPromise: movieReady,
-        onParsed: loaded,
-        onAfterFrame: onFrameCallback,
-        onTerminated: terminate
-      });
-    });
+    var easel = createEasel();
+    easelHost = new Shumway.Player.Test.TestEaselHost(easel);
+    easelHost.processFrame = onFrameCallback;
+
+    var player = new Shumway.Player.Test.TestPlayer();
+    player.load(path);
+    setTimeout(function () {
+      movieReadyResolve(); // startPromise
+      loaded(); // onParsed
+    }, 1000);
+
+    // terminate();
   });
+}
+
+function createEasel() {
+  Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
+  var backend = Shumway.GFX.backend.value | 0;
+  _easel = new Shumway.GFX.Easel(document.getElementById("stageContainer"), backend);
+  return _easel;
 }
 
 var unitTests = [];
@@ -174,8 +191,12 @@ function sendResponse(data) {
   }, '*');
 }
 
+function getCanvas() {
+  var canvasList = document.getElementsByTagName('canvas');
+  return canvasList[canvasList.length - 1]; // we need last one
+}
 function getCanvasData() {
-  var canvas = document.getElementsByTagName('canvas')[0];
+  var canvas = getCanvas();
   return canvas.toDataURL('image/png');
 }
 
@@ -183,7 +204,7 @@ var mouseOutside = true;
 
 function sendMouseEvent(type, x, y) {
   var isMouseMove = type == 'mousemove';
-  var canvas = document.getElementsByTagName('canvas')[0];
+  var canvas = getCanvas();
   var e = document.createEvent('MouseEvents');
   e.initMouseEvent(type, true, !isMouseMove,
                    document.defaultView, isMouseMove ? 0 : 1,

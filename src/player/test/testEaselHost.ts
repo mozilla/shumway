@@ -84,6 +84,9 @@ module Shumway.Player.Test {
             return output.toPlainObject();
           }
           break;
+        case 'frame':
+          this.processFrame();
+          break;
         case 'external':
           this.processExternalCommand(data.command);
           break;

@@ -48,6 +48,10 @@ module Shumway {
     new Shumway.Options.Option("", "Frame Rate Multiplier", "number", 1, "Play frames at a faster rate.", {range: { min: 1, max: 16, step: 1 }})
   );
 
+  export var dontSkipFramesOption = playerOptions.register (
+    new Shumway.Options.Option("", "Disables Frame Skipping", "boolean", false, "Play all frames, e.g. no skipping frame during throttle.")
+  );
+
   export var playAllSymbolsOption = playerOptions.register (
     new Shumway.Options.Option("", "Play Symbols", "boolean", false, "Plays all SWF symbols automatically.")
   );

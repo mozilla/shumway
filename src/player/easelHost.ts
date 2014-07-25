@@ -120,6 +120,9 @@ module Shumway {
       throw new Error('This command is not supported');
     }
 
+    processFrame() {
+    }
+
     onExernalCallback(request) {
       throw new Error('This method is abstract');
     }

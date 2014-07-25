@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+SHUMWAY_ROOT = "../../src/";
+
 document.createElement = (function () {
   var counter = Shumway.Metrics.Counter.instance;
   var nativeCreateElement = document.createElement;

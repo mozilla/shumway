@@ -278,12 +278,14 @@ module Shumway.Player {
      * Update the frame container with the latest changes from the display list.
      */
     private _pumpUpdates() {
-      if (this._shouldThrottleDownRendering()) {
-        return;
-      }
-      var timeSinceLastPump = performance.now() - this._lastPumpTime;
-      if (timeSinceLastPump < (1000 / pumpRateOption.value)) {
-        return;
+      if (!dontSkipFramesOption.value) {
+        if (this._shouldThrottleDownRendering()) {
+          return;
+        }
+        var timeSinceLastPump = performance.now() - this._lastPumpTime;
+        if (timeSinceLastPump < (1000 / pumpRateOption.value)) {
+          return;
+        }
       }
       enterTimeline("pump");
       if (pumpEnabledOption.value) {
@@ -303,11 +305,13 @@ module Shumway.Player {
       var stage = this._stage;
       var rootInitialized = false;
       var runFrameScripts = !playAllSymbolsOption.value;
+      var dontSkipFrames = dontSkipFramesOption.value;
       (function tick() {
         // TODO: change this to the mode described in http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
         self._frameTimeout = setTimeout(tick, 1000 / frameRateOption.value);
-        if (!frameEnabledOption.value && runFrameScripts ||
-            self._shouldThrottleDownFrameExecution())
+        if (!dontSkipFrames && (
+              !frameEnabledOption.value && runFrameScripts ||
+              self._shouldThrottleDownFrameExecution()))
         {
           return;
         }
@@ -324,6 +328,7 @@ module Shumway.Player {
           rootInitialized = true;
         }
         self._pumpUpdates();
+        self.onFrameProcessed();
       })();
     }
 
@@ -422,6 +427,10 @@ module Shumway.Player {
     }
 
     onExternalCommand(command) {
+      throw new Error('This method is abstract');
+    }
+
+    onFrameProcessed() {
       throw new Error('This method is abstract');
     }
 
