@@ -60,7 +60,7 @@ module Shumway.Remoting.Player {
       var serializer = this;
       this.output.writeInt(MessageTag.UpdateStage);
       this.output.writeInt(stage._id);
-      this.output.writeInt(0x00000000);
+      this.output.writeInt(stage.color);
       this.writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
     }
 
@@ -322,35 +322,35 @@ module Shumway.Remoting.Player {
 
     writeColorTransform(colorTransform: flash.geom.ColorTransform) {
       var output = this.output;
-      var rm = colorTransform.redMultiplier;
-      var gm = colorTransform.greenMultiplier;
-      var bm = colorTransform.blueMultiplier;
-      var am = colorTransform.alphaMultiplier;
-      var ro = colorTransform.redOffset;
-      var go = colorTransform.greenOffset;
-      var bo = colorTransform.blueOffset;
-      var ao = colorTransform.alphaOffset;
+      var rM = colorTransform.redMultiplier;
+      var gM = colorTransform.greenMultiplier;
+      var bM = colorTransform.blueMultiplier;
+      var aM = colorTransform.alphaMultiplier;
+      var rO = colorTransform.redOffset;
+      var gO = colorTransform.greenOffset;
+      var bO = colorTransform.blueOffset;
+      var aO = colorTransform.alphaOffset;
 
-      var identityOffset          = ro === go && go === bo && bo === ao && ao === 0;
-      var identityColorMultiplier = rm === gm && gm === bm && bm === 1;
+      var identityOffset          = rO === gO && gO === bO && bO === aO && aO === 0;
+      var identityColorMultiplier = rM === gM && gM === bM && bM === 1;
 
       if (identityOffset && identityColorMultiplier) {
-        if (am === 1) {
+        if (aM === 1) {
           output.writeInt(ColorTransformEncoding.Identity);
         } else {
           output.writeInt(ColorTransformEncoding.AlphaMultiplierOnly);
-          output.writeFloat(am);
+          output.writeFloat(aM);
         }
       } else {
         output.writeInt(ColorTransformEncoding.All);
-        output.writeFloat(rm);
-        output.writeFloat(gm);
-        output.writeFloat(bm);
-        output.writeFloat(am);
-        output.writeInt(ro);
-        output.writeInt(go);
-        output.writeInt(bo);
-        output.writeInt(ao);
+        output.writeFloat(rM);
+        output.writeFloat(gM);
+        output.writeFloat(bM);
+        output.writeFloat(aM);
+        output.writeInt(rO);
+        output.writeInt(gO);
+        output.writeInt(bO);
+        output.writeInt(aO);
       }
     }
 
@@ -400,14 +400,14 @@ module Shumway.Remoting.Player {
       var input = this.input;
       var typeId = input.readInt();
       var type = Shumway.Remoting.MouseEventNames[typeId];
-      var px = input.readFloat();
-      var py = input.readFloat();
+      var pX = input.readFloat();
+      var pY = input.readFloat();
       var buttons = input.readInt();
       var flags = input.readInt();
       return {
         kind: EventKind.Mouse,
         type: type,
-        point: new Point(px, py),
+        point: new Point(pX, pY),
         ctrlKey: !!(flags & KeyboardEventFlags.CtrlKey),
         altKey: !!(flags & KeyboardEventFlags.AltKey),
         shiftKey: !!(flags & KeyboardEventFlags.ShiftKey),

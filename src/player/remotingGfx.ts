@@ -354,6 +354,7 @@ module Shumway.Remoting.GFX {
       var color = this.input.readInt();
       var rectangle = this._readRectangle()
       context.root.setBounds(rectangle);
+      context.root.color = Color.FromARGB(color);
     }
 
     private _readUpdateFrame() {

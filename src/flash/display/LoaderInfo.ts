@@ -66,6 +66,8 @@ module Shumway.AVM2.AS.flash.display {
       this._allowCodeExecution = true;
       this._dictionary = [];
       this._avm1Context = null;
+
+      this._colorRGBA = 0xFFFFFFFF;
     }
 
     uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
@@ -103,6 +105,13 @@ module Shumway.AVM2.AS.flash.display {
      * Use this to ignore any user code.
      */
     _allowCodeExecution: boolean;
+
+    /**
+     * HACK: This is a hack because I don't know how to get access to the stage once I see a tag
+     * that sets the background color. Here we set it on the LoaderInfo, and then set it on the
+     * stage.
+     */
+    _colorRGBA: number;
 
     _dictionary: Shumway.Timeline.Symbol [];
     _avm1Context: Shumway.AVM1.AS2Context;

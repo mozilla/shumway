@@ -392,11 +392,17 @@ module Shumway.GFX.Canvas2D {
           frame._previouslyRenderedAABB = boundsAABB;
           self._renderShape(context, <Shape>frame, matrix, viewport, state);
         } else if (frame instanceof ClipRectangle) {
+          var clipRectangle = <ClipRectangle>frame;
           context.save();
           context.beginPath();
           context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
           context.clip();
           boundsAABB.intersect(viewport);
+
+          // Fill Background
+          context.fillStyle = clipRectangle.color.toCSSStyle();
+          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+
           self._renderFrame(context, frame, matrix, boundsAABB, state, true);
           context.restore();
           return VisitorFlags.Skip;

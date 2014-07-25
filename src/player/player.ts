@@ -137,6 +137,7 @@ module Shumway.Player {
           stage.frameRate = loaderInfo.frameRate;
           stage.stageWidth = loaderInfo.width;
           stage.stageHeight = loaderInfo.height;
+          stage.color = ColorUtilities.RGBAToARGB(loaderInfo._colorRGBA);
           stage.addChildAtDepth(root, 0);
           self._enterLoops();
         });

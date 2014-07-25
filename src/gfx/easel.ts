@@ -238,7 +238,7 @@ module Shumway.GFX {
       fpsCanvasContainer.style.position = "absolute";
       fpsCanvasContainer.style.top = "0";
       fpsCanvasContainer.style.width = "100%";
-      fpsCanvasContainer.style.height = "20px";
+      fpsCanvasContainer.style.height = "10px";
       this._fpsCanvas = document.createElement("canvas");
       fpsCanvasContainer.appendChild(this._fpsCanvas);
       container.appendChild(fpsCanvasContainer);

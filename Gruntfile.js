@@ -18,7 +18,9 @@
 
 module.exports = function(grunt) {
 
-  var commonArguments = 'node utils/typescript/tsc --target ES5 --sourcemap --removeComments -d --out build/ts/';
+  // Don't use `--removeComments` here beause it strips out closure annotations that are
+  // needed by the build system.
+  var commonArguments = 'node utils/typescript/tsc --target ES5 --sourcemap -d --out build/ts/';
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -69,7 +71,7 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'player.js src/player/references.ts'
       },
       build_shell_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --removeComments --out build/ts/shell.js src/shell/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',
@@ -84,7 +86,24 @@ module.exports = function(grunt) {
         cwd: 'utils/'
       },
       gate: {
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -g -r test/unit/pass/*.js',
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -g -v test/unit/pass/*.js'
+      },
+      closure: {
+        // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
+        cmd: 'java -jar utils/closure.jar --formatting PRETTY_PRINT --compilation_level SHUMWAY_OPTIMIZATIONS --language_in ECMASCRIPT5 ' + [
+          "build/ts/base.js",
+          "build/ts/tools.js",
+          "build/ts/avm2.js",
+          "build/ts/flash.js",
+          "build/ts/avm1.js",
+          "build/ts/gfx-base.js",
+          "build/ts/gfx.js",
+          "build/ts/player.js"
+        ].join(" ") + " > build/shumway.cc.js"
+      },
+      spell: {
+        // TODO: Add more files.
+        cmd: 'node utils/spell/spell.js build/ts/player.js'
       },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
@@ -285,6 +304,9 @@ module.exports = function(grunt) {
     'bundles',
     'exec:gate'
   ]);
+  grunt.registerTask('closure', [
+    'exec:closure'
+  ]);
   grunt.registerTask('travis', [
     // 'parallel:base',
     'exec:build_base_ts',
@@ -294,7 +316,9 @@ module.exports = function(grunt) {
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
-    'tslint:all'
+    'tslint:all',
+    'exec:spell',
+    'exec:closure',
     // 'exec:gate'
   ]);
   grunt.registerTask('firefox', ['shu', 'exec:build_extension']);

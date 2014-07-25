@@ -342,6 +342,11 @@ module Shumway.AVM2.AS.flash.display {
     private _commitFrame(data: any): void {
       var loaderInfo = this._contentLoaderInfo;
 
+      // HACK: Someone should figure out how to set the color on the stage better.
+      if (data.bgcolor !== undefined) {
+        loaderInfo._colorRGBA = data.bgcolor;
+      }
+
       if (data.symbolClasses) {
         var symbolClasses = data.symbolClasses;
         var appDomain = AVM2.instance.applicationDomain;
