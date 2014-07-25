@@ -210,6 +210,7 @@ module Shumway.GFX {
     private _options: StageRendererOptions [];
     private _canvases: HTMLCanvasElement [];
     private _renderers: StageRenderer [];
+    private _disableHidpi: boolean;
 
     private _state: State = new StartState();
     private _persistentState: State = new PersistentState();
@@ -224,7 +225,7 @@ module Shumway.GFX {
     private _fpsCanvas: HTMLCanvasElement;
     private _fps: FPS;
 
-    constructor(container: HTMLElement, backend: Backend) {
+    constructor(container: HTMLElement, backend: Backend, disableHidpi: boolean = false) {
       var stage = this._stage = new Stage(128, 128, true);
       this._worldView = new FrameContainer();
       this._worldViewOverlay = new FrameContainer();
@@ -232,7 +233,7 @@ module Shumway.GFX {
       this._stage.addChild(this._worldView);
       this._worldView.addChild(this._world);
       this._worldView.addChild(this._worldViewOverlay);
-
+      this._disableHidpi = disableHidpi;
 
       var fpsCanvasContainer = document.createElement("div");
       fpsCanvasContainer.style.position = "absolute";
@@ -425,7 +426,8 @@ module Shumway.GFX {
       var devicePixelRatio = window.devicePixelRatio || 1;
       var backingStoreRatio = 1;
       var ratio = 1;
-      if (devicePixelRatio !== backingStoreRatio) {
+      if (devicePixelRatio !== backingStoreRatio &&
+          !this._disableHidpi) {
         ratio = devicePixelRatio / backingStoreRatio;
       }
 

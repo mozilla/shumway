@@ -31,6 +31,8 @@ var playerglobalInfo = {
   catalog: "../../build/playerglobal/playerglobal.json"
 };
 
+var easel, easelHost, player;
+
 function loadMovie(path, reportFrames) {
   var movieReadyResolve;
   var movieReady = new Promise(function (resolve) {
@@ -40,7 +42,7 @@ function loadMovie(path, reportFrames) {
 
   var onFrameCallback = null;
   if (reportFrames) {
-    var i = 0, frame = 0;
+    var i = 0, frame = -1;
     onFrameCallback = function () {
       while (i < reportFrames.length && frame >= reportFrames[i]) {
         var snapshot = getCanvasData();
@@ -76,11 +78,11 @@ function loadMovie(path, reportFrames) {
       }
     }
 
-    var easel = createEasel();
+    easel = createEasel();
     easelHost = new Shumway.Player.Test.TestEaselHost(easel);
     easelHost.processFrame = onFrameCallback;
 
-    var player = new Shumway.Player.Test.TestPlayer();
+    player = new Shumway.Player.Test.TestPlayer();
     player.load(path);
     setTimeout(function () {
       movieReadyResolve(); // startPromise
@@ -94,8 +96,8 @@ function loadMovie(path, reportFrames) {
 function createEasel() {
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var backend = Shumway.GFX.backend.value | 0;
-  _easel = new Shumway.GFX.Easel(document.getElementById("stageContainer"), backend);
-  return _easel;
+  var easel = new Shumway.GFX.Easel(document.getElementById("stageContainer"), backend, true);
+  return easel;
 }
 
 var unitTests = [];
@@ -195,9 +197,19 @@ function getCanvas() {
   var canvasList = document.getElementsByTagName('canvas');
   return canvasList[canvasList.length - 1]; // we need last one
 }
+
+var tmpCanvas = document.createElement('canvas');
+
 function getCanvasData() {
   var canvas = getCanvas();
-  return canvas.toDataURL('image/png');
+
+  var bounds = easel._stage._bounds;
+  tmpCanvas.width = bounds.w;
+  tmpCanvas.height = bounds.h;
+  var ctx = tmpCanvas.getContext('2d');
+  ctx.drawImage(canvas, 0, 0);
+
+  return tmpCanvas.toDataURL('image/png');
 }
 
 var mouseOutside = true;
