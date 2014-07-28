@@ -79,7 +79,7 @@ module Shumway.SWF.Parser {
     var maxCode = Math.max.apply(null, tag.codes) || 35;
 
     if (tag.codes) {
-      for (var i = 0, code; i < tag.codes.length; i++) {
+      for (var i = 0; i < tag.codes.length; i++) {
         var code = tag.codes[i];
         if (code < 32) {
           maxCode++;
