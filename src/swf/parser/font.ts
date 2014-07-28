@@ -213,7 +213,6 @@ module Shumway.SWF.Parser {
             x += dx;
             y += dy;
             segments[segmentIndex].data.push(x, y);
-            segments[segmentIndex].nodes.push(x, y);
           } else {
             segments[segmentIndex].commands.push(3);
             var cx = record.controlDeltaX / resolution;
@@ -226,14 +225,14 @@ module Shumway.SWF.Parser {
             x += dx;
             y += dy;
             segments[segmentIndex].data.push(x, y);
-            segments[segmentIndex].nodes.push(x, y);
           }
         } else {
-          if (record.eos)
+          if (record.eos) {
             break;
+          }
           if (record.move) {
             segmentIndex++;
-            segments[segmentIndex] = { data: [], commands: [], nodes: [], xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
+            segments[segmentIndex] = { data: [], commands: [], xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
             segments[segmentIndex].commands.push(1);
             var moveX = record.moveX / resolution;
             var moveY = -record.moveY / resolution;
@@ -242,7 +241,6 @@ module Shumway.SWF.Parser {
             x = moveX;
             y = moveY;
             segments[segmentIndex].data.push(x, y);
-            segments[segmentIndex].nodes.push(x, y);
           }
         }
 
@@ -270,7 +268,6 @@ module Shumway.SWF.Parser {
 
       rawData[code] = segments;
     }
-    var xTranslate = 0, yTranslate = 0;
 
     i = 0;
     while (code = codes[i++]) {
@@ -322,8 +319,8 @@ module Shumway.SWF.Parser {
             ++numberOfContours;
             myEndpts += toString16(endPoint - 1);
           }
-          nx = data[dataIndex++] + xTranslate;
-          ny = flip * data[dataIndex++] + yTranslate;
+          nx = data[dataIndex++];
+          ny = flip * data[dataIndex++];
           var dx = nx - x;
           var dy = ny - y;
           myFlags += '\x01';
@@ -332,8 +329,8 @@ module Shumway.SWF.Parser {
           x = nx;
           y = ny;
         } else if (command === 2) {
-          nx = data[dataIndex++] + xTranslate;
-          ny = flip * data[dataIndex++] + yTranslate;
+          nx = data[dataIndex++];
+          ny = flip * data[dataIndex++];
           var dx = nx - x;
           var dy = ny - y;
           myFlags += '\x01';
@@ -342,8 +339,8 @@ module Shumway.SWF.Parser {
           x = nx;
           y = ny;
         } else if (command === 3) {
-          nx = data[dataIndex++] + xTranslate;
-          ny = flip * data[dataIndex++] + yTranslate;
+          nx = data[dataIndex++];
+          ny = flip * data[dataIndex++];
           var cx = nx - x;
           var cy = ny - y;
           myFlags += '\x00';
@@ -353,8 +350,8 @@ module Shumway.SWF.Parser {
           y = ny;
           endPoint++;
 
-          nx = data[dataIndex++] + xTranslate;
-          ny = flip * data[dataIndex++] + yTranslate;
+          nx = data[dataIndex++];
+          ny = flip * data[dataIndex++];
           var cx = nx - x;
           var cy = ny - y;
           myFlags += '\x01';
@@ -386,8 +383,6 @@ module Shumway.SWF.Parser {
       xCoordinates = myXCoordinates;
       yCoordinates = myYCoordinates;
       flags = myFlags;
-
-      yMax += yTranslate;
 
       if (!j) {
         xMin = xMax = yMin = yMax = 0;
