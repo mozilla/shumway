@@ -206,6 +206,10 @@ module Shumway.SWF.Parser {
       for (var j = 0; j < records.length; j++) {
         record = records[j];
         if (record.type) {
+          if (segmentIndex < 0) {
+            segmentIndex = 0;
+            segments[segmentIndex] = { data: [], commands: [], xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
+          }
           if (record.isStraight) {
             segments[segmentIndex].commands.push(2);
             var dx = (record.deltaX || 0) / resolution;
