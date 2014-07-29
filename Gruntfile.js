@@ -90,6 +90,12 @@ module.exports = function(grunt) {
       gate: {
         cmd: 'utils/jsshell/js build/ts/shell.js -x -g -v test/unit/pass/*.js'
       },
+      smoke_parse_database: {
+        cmd: 'find test/swf -name "*.swf" -exec utils/jsshell/js build/ts/shell.js -p -po -r {} + >> result'
+      },
+      smoke_parse: {
+        cmd: 'find test/swfs -name "*.swf" -exec utils/jsshell/js build/ts/shell.js -p -r {} +'
+      },
       closure: {
         // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
         cmd: 'java -jar utils/closure.jar --formatting PRETTY_PRINT --compilation_level SHUMWAY_OPTIMIZATIONS --language_in ECMASCRIPT5 ' + [
@@ -340,6 +346,9 @@ module.exports = function(grunt) {
     'exec:spell',
     'exec:closure',
     // 'exec:gate'
+  ]);
+  grunt.registerTask('smoke', [
+    'exec:smoke_parse'
   ]);
   grunt.registerTask('firefox', ['shu', 'exec:build_extension']);
 };
