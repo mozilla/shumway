@@ -146,10 +146,13 @@ module Shumway.Remoting.Player {
     writeClip(displayObject: DisplayObject) {
       if (displayObject._clipDepth >= 0 && displayObject._parent) {
         // Clips in GFX land don't use absolute clip depth numbers. Instead we need to encode
-        // the number of siblings you want to clip. If children are removed, GFX clip values
-        // need to be recomputed.
+        // the number of siblings you want to clip. If children are removed or added, GFX clip
+        // values need to be recomputed.
         var i = displayObject._parent.getChildIndex(displayObject);
         var j = displayObject._parent.getClipDepthIndex(displayObject._clipDepth);
+        for (var k = i + 1; k <= i; k++) {
+          // assert(displayObject._parent.getChildAt(k)._depth > displayObject._depth && displayObject._parent.getChildAt(k)._depth <= displayObject._clipDepth);
+        }
         release || assert(j - i >= 0);
         this.output.writeInt(j - i);
       } else {
@@ -185,11 +188,21 @@ module Shumway.Remoting.Player {
         bitmap = <Bitmap>displayObject;
       }
 
+      // Checks if the computed clip value needs to be written. This can happen if the clip depth value changes
+      // or if the parent's children list is mutated.
+      var hasClip = false;
+      if (displayObject._clipDepth >= 0) {
+        hasClip = displayObject._hasFlags(DisplayObjectFlags.DirtyClipDepth) ||
+                  displayObject._parent && displayObject._parent._hasFlags(DisplayObjectFlags.DirtyChildren);
+      }
+      hasClip = true;
+
       // Write Has Bits
       var hasBits = 0;
       hasBits |= hasMatrix                  ? MessageBits.HasMatrix                  : 0;
       hasBits |= hasColorTransform          ? MessageBits.HasColorTransform          : 0;
       hasBits |= hasMask                    ? MessageBits.HasMask                    : 0;
+      hasBits |= hasClip                    ? MessageBits.HasClip                    : 0;
       hasBits |= hasMiscellaneousProperties ? MessageBits.HasMiscellaneousProperties : 0;
       hasBits |= hasRemotableChildren       ? MessageBits.HasChildren                : 0;
       this.output.writeInt(hasBits);
@@ -204,8 +217,10 @@ module Shumway.Remoting.Player {
       if (hasMask) {
         this.output.writeInt(displayObject.mask ? displayObject.mask._id : -1);
       }
-      if (hasMiscellaneousProperties) {
+      if (hasClip) {
         this.writeClip(displayObject);
+      }
+      if (hasMiscellaneousProperties) {
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
         if (bitmap) {

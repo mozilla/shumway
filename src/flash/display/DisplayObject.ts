@@ -197,6 +197,11 @@ module Shumway.AVM2.AS.flash.display {
     DirtyMask                                 = 0x4000000,
 
     /**
+     * Indicates whether this display object's clip depth has changed since the last time it was synchronized.
+     */
+    DirtyClipDepth                            = 0x8000000,
+
+    /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
      * bits so we don't serialize as much:
      *
@@ -207,16 +212,15 @@ module Shumway.AVM2.AS.flash.display {
      * cacheAsBitmap,
      * filters,
      * visible,
-     * clipDepth
      */
-    DirtyMiscellaneousProperties              = 0x8000000,
+    DirtyMiscellaneousProperties              = 0x10000000,
 
     /**
      * All synchronizable properties are dirty.
      */
     Dirty                                     = DirtyMatrix | DirtyChildren | DirtyGraphics |
                                                 DirtyTextContent | DirtyBitmapData |
-                                                DirtyColorTransform | DirtyMask |
+                                                DirtyColorTransform | DirtyMask | DirtyClipDepth |
                                                 DirtyMiscellaneousProperties
   }
 
@@ -305,6 +309,7 @@ module Shumway.AVM2.AS.flash.display {
                                  DisplayObjectFlags.DirtyMatrix                        |
                                  DisplayObjectFlags.DirtyColorTransform                |
                                  DisplayObjectFlags.DirtyMask                          |
+                                 DisplayObjectFlags.DirtyClipDepth                          |
                                  DisplayObjectFlags.DirtyMiscellaneousProperties;
 
       self._root = null;
@@ -952,7 +957,7 @@ module Shumway.AVM2.AS.flash.display {
       // Tobias?? sbemaild50.swf
       if (this._clipDepth !== state.clipDepth && state.clipDepth >= 0) {
         this._clipDepth = state.clipDepth;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+        this._setDirtyFlags(DisplayObjectFlags.DirtyClipDepth);
       }
       this._filters = state.filters;
       if (state.blendMode && state.blendMode !== this._blendMode) {
