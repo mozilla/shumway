@@ -1117,21 +1117,34 @@ module Shumway.AVM2.ABC {
          * This is undocumented, looking at Tamarin source for this one.
          */
         case CONSTANT.TypeName:
-          var factoryTypeIndex = stream.readU32();
-          if (multinames[factoryTypeIndex]) {
+          // index into the multiname table
+          var factoryTypeIndex = stream.readU30();
+
+          // how many type parameters there are
+          var typeParameterCount = stream.readU30();
+          release || assert(typeParameterCount === 1); // should always be 1
+
+          // what type the parameter is
+          var typeParameterIndex = stream.readU30();
+
+          // if both dependencies were already parsed, use them
+          if (multinames[factoryTypeIndex] && multinames[typeParameterIndex]) {
             namespaces = multinames[factoryTypeIndex].namespaces;
             name = multinames[factoryTypeIndex].name;
+            var mn = new Multiname(namespaces, name, flags);
+            mn.typeParameter = multinames[typeParameterIndex];
+            return mn;
+
+          // otherwise return a dummy multiname to be patched later
+          } else {
+            var mn = new Multiname(null, null);
+            patchFactoryTypes.push({
+              multiname: mn,
+              factoryTypeIndex: factoryTypeIndex,
+              typeParameterIndex: typeParameterIndex
+            });
+            return mn;
           }
-          var typeParameterCount = stream.readU32();
-          release || assert(typeParameterCount === 1); // This is probably the number of type parameters.
-          var typeParameterIndex = stream.readU32();
-          release || assert (multinames[typeParameterIndex]);
-          var mn = new Multiname(namespaces, name, flags);
-          mn.typeParameter = multinames[typeParameterIndex];
-          if (!multinames[factoryTypeIndex]) {
-            patchFactoryTypes.push({multiname: mn, index: factoryTypeIndex});
-          }
-          return mn;
         default:
           Shumway.Debug.unexpected();
           break;
@@ -1838,12 +1851,15 @@ module Shumway.AVM2.ABC {
       for (var i = 1; i < n; ++i) {
         multinames.push(Multiname.parse(this, stream, multinames, patchFactoryTypes));
       }
-//    patchFactoryTypes.forEach(function (patch) {
-//      var multiname = multinames[patch.index];
-//      release || assert (multiname);
-//      patch.Multiname.name = Multiname.name;
-//      patch.Multiname.namespaces = Multiname.namespaces;
-//    });
+      patchFactoryTypes.forEach(function (patch) {
+        var factoryTypeMultiname = multinames[patch.factoryTypeIndex];
+        var typeParameterMultiname = multinames[patch.typeParameterIndex];
+        release || assert(factoryTypeMultiname && typeParameterMultiname);
+
+        patch.multiname.name = factoryTypeMultiname.name;
+        patch.multiname.namespaces = factoryTypeMultiname.namespaces;
+        patch.multiname.typeParameter = typeParameterMultiname;
+      });
       Timer.stop();
 
       this.multinames = multinames;
