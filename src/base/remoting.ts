@@ -45,7 +45,8 @@ module Shumway.Remoting {
     HasColorTransform           = 0x0008,
     HasClipRect                 = 0x0010,
     HasMiscellaneousProperties  = 0x0020,
-    HasMask                     = 0x0040
+    HasMask                     = 0x0040,
+    HasClip                     = 0x0080
   }
 
   export enum IDMask {

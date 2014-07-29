@@ -377,8 +377,10 @@ module Shumway.Remoting.GFX {
       if (hasBits & MessageBits.HasMask) {
         frame.mask = context._makeFrame(input.readInt());
       }
-      if (hasBits & MessageBits.HasMiscellaneousProperties) {
+      if (hasBits & MessageBits.HasClip) {
         frame.clip = input.readInt();
+      }
+      if (hasBits & MessageBits.HasMiscellaneousProperties) {
         frame.blendMode = input.readInt();
         frame._toggleFlags(FrameFlags.Visible, input.readBoolean());
         frame.pixelSnapping = <PixelSnapping>input.readInt();
