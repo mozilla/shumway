@@ -22,6 +22,8 @@ module.exports = function(grunt) {
   // needed by the build system.
   var commonArguments = 'node utils/typescript/tsc --target ES5 --sourcemap -d --out build/ts/';
 
+  var browserManifestFile = './resources/browser_manifests/browser_manifest.json';
+
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     jshint: {
@@ -263,14 +265,32 @@ module.exports = function(grunt) {
 
   grunt.registerTask('reftest', function () {
     var done = this.async();
-    grunt.util.spawn({cmd: 'make', args: ['reftest'], opts: { cwd: 'test', stdio: 'inherit'}}, function () {
+    grunt.util.spawn({
+      cmd: 'python',
+      args: ['test.py', '--reftest', '--browserManifestFile=' + browserManifestFile],
+      opts: { cwd: 'test', stdio: 'inherit'
+    }}, function () {
+      done();
+    });
+  });
+
+  grunt.registerTask('reftest-bundle', function () {
+    var done = this.async();
+    grunt.util.spawn({
+      cmd: 'python',
+      args: ['test.py', '--bundle', '--reftest', '--browserManifestFile=' + browserManifestFile],
+      opts: { cwd: 'test', stdio: 'inherit'
+      }}, function () {
       done();
     });
   });
 
   grunt.registerTask('makeref', function () {
     var done = this.async();
-    grunt.util.spawn({cmd: 'make', args: ['makeref'], opts: { cwd: 'test', stdio: 'inherit'}}, function () {
+    grunt.util.spawn({
+      cmd: 'python',
+      args: ['test.py', '-m', '--browserManifestFile=' + browserManifestFile],
+      opts: { cwd: 'test', stdio: 'inherit'}}, function () {
       done();
     });
   });

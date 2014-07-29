@@ -33,11 +33,9 @@ module Shumway.SWF.Parser {
     }
     return pow(2, maxPower);
   }
-
   function toString16(val) {
     return fromCharCode((val >> 8) & 0xff, val & 0xff);
   }
-
   function toString32(val) {
     return toString16(val >> 16) + toString16(val);
   }
@@ -58,32 +56,58 @@ module Shumway.SWF.Parser {
     };
 
     var glyphs = tag.glyphs;
-    var glyphCount = glyphs.length;
+    var glyphCount = tag.glyphCount = glyphs.length;
 
     if (!glyphCount) {
       return font;
     }
 
     var tables = { };
-    var codes: number[] = [];
-    var code: number;
-    var start: number;
-    var end: number;
+    var codes = [];
     var glyphIndex = { };
     var ranges = [];
-    var indices: number[];
+
+    var originalCode;
+    var generateAdvancement = !('advance' in tag);
+    var correction = 0;
+    var isFont3 = (tag.code === 75);
+
+    if (generateAdvancement) {
+      tag.advance = [];
+    }
+
+    var maxCode = Math.max.apply(null, tag.codes) || 35;
 
     if (tag.codes) {
-      codes = codes.concat(tag.codes);
-      for (var i = 0; (code = codes[i]); ++i)
+      for (var i = 0; i < tag.codes.length; i++) {
+        var code = tag.codes[i];
+        if (code < 32) {
+          maxCode++;
+          if (maxCode == 8232) {
+            maxCode = 8240;
+          }
+          code = maxCode;
+        }
+        codes.push(code);
+      }
+    }
+
+    originalCode = codes.concat();
+
+    if (tag.codes) {
+      for (var i = 0, code; i < codes.length; i++) {
+        code = codes[i];
         glyphIndex[code] = i;
+      }
       codes.sort(function (a, b) {
         return a - b;
       });
       var i = 0;
-      while ((code = codes[i++])) {
-        start = code;
-        end = start;
+      var code;
+      var indices;
+      while (code = codes[i++]) {
+        var start = code;
+        var end = start;
         indices = [i - 1];
         while ((code = codes[i]) && end + 1 === code) {
           ++end;
@@ -104,44 +128,11 @@ module Shumway.SWF.Parser {
       ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
     }
 
-    var resolution = tag.resolution || 1;
+    var resolution = tag.resolution || 20;
     var ascent = Math.ceil(tag.ascent / resolution) || 1024;
-    var descent = -Math.ceil(tag.descent / resolution) | 0;
-    var leading = (tag.leading / resolution) | 0;
-    tables['OS/2'] =
-    '\x00\x01' + // version
-    '\x00\x00' + // xAvgCharWidth
-    toString16(tag.bold ? 700 : 400) + // usWeightClass
-    '\x00\x05' + // usWidthClass
-    '\x00\x00' + // fstype
-    '\x00\x00' + // ySubscriptXSize
-    '\x00\x00' + // ySubscriptYSize
-    '\x00\x00' + // ySubscriptXOffset
-    '\x00\x00' + // ySubscriptYOffset
-    '\x00\x00' + // ySuperScriptXSize
-    '\x00\x00' + // ySuperScriptYSize
-    '\x00\x00' + // ySuperScriptXOffset
-    '\x00\x00' + // ySuperScriptYOffset
-    '\x00\x00' + // yStrikeoutSize
-    '\x00\x00' + // yStrikeoutPosition
-    '\x00\x00' + // sFamilyClass
-    '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + // panose
-    '\x00\x00\x00\x00' + // ulUnicodeRange1
-    '\x00\x00\x00\x00' + // ulUnicodeRange2
-    '\x00\x00\x00\x00' + // ulUnicodeRange3
-    '\x00\x00\x00\x00' + // ulUnicodeRange4
-    'ALF ' + // achVendID
-    toString16((tag.italic ? 0x01 : 0) | (tag.bold ? 0x20 : 0)) + // fsSelection
-    toString16(codes[0]) + // usFirstCharIndex
-    toString16(codes[codes.length - 1]) + // usLastCharIndex
-    toString16(ascent) + // sTypoAscender
-    toString16(descent) + // sTypoDescender
-    toString16(leading) + // sTypoLineGap
-    toString16(ascent) + // usWinAscent
-    toString16(-descent) + // usWinDescent
-    '\x00\x00\x00\x00' + // ulCodePageRange1
-    '\x00\x00\x00\x00' // ulCodePageRange2
-    ;
+    var descent = -Math.ceil(tag.descent / resolution) || 0;
+    var leading = (tag.leading / resolution) || 0;
+    tables['OS/2'] = '';
 
     var startCount = '';
     var endCount = '';
@@ -150,9 +141,9 @@ module Shumway.SWF.Parser {
     var i = 0;
     var range;
     while ((range = ranges[i++])) {
-      start = range[0];
-      end = range[1];
-      code = range[2][0];
+      var start = range[0];
+      var end = range[1];
+      var code = range[2][0];
       startCount += toString16(start);
       endCount += toString16(end);
       idDelta += toString16(((code - start) + 1) & 0xffff);
@@ -178,30 +169,115 @@ module Shumway.SWF.Parser {
         idRangeOffset
       ;
     tables['cmap'] =
-    '\x00\x00' + // version
-    '\x00\x01' +  // numTables
-    '\x00\x03' + // platformID
-    '\x00\x01' + // encodingID
-    '\x00\x00\x00\x0c' + // offset
-    '\x00\x04' + // format
-    toString16(format314.length + 4) + // length
-    format314
+      '\x00\x00' + // version
+      '\x00\x01' +  // numTables
+      '\x00\x03' + // platformID
+      '\x00\x01' + // encodingID
+      '\x00\x00\x00\x0c' + // offset
+      '\x00\x04' + // format
+      toString16(format314.length + 4) + // length
+      format314
     ;
 
     var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
     var loca = '\x00\x00';
     var offset = 16;
     var maxPoints = 0;
-    var allXMin = 1024;
-    var allXMax = -1024;
-    var allYMin = 1024;
-    var allYMax = -1024;
+    var xMins = [];
+    var xMaxs = [];
+    var yMins = [];
+    var yMaxs = [];
     var maxContours = 0;
     var i = 0;
-    code;
-    while ((code = codes[i++])) {
+    var code;
+    var rawData = {};
+    while (code = codes[i++]) {
       var glyph = glyphs[glyphIndex[code]];
       var records = glyph.records;
+      var x = 0;
+      var y = 0;
+
+      var myFlags = '';
+      var myEndpts = '';
+      var endPoint = 0;
+      var segments = [];
+      var segmentIndex = -1;
+
+      for (var j = 0; j < records.length; j++) {
+        record = records[j];
+        if (record.type) {
+          if (segmentIndex < 0) {
+            segmentIndex = 0;
+            segments[segmentIndex] = { data: [], commands: [], xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
+          }
+          if (record.isStraight) {
+            segments[segmentIndex].commands.push(2);
+            var dx = (record.deltaX || 0) / resolution;
+            var dy = -(record.deltaY || 0) / resolution;
+            x += dx;
+            y += dy;
+            segments[segmentIndex].data.push(x, y);
+          } else {
+            segments[segmentIndex].commands.push(3);
+            var cx = record.controlDeltaX / resolution;
+            var cy = -record.controlDeltaY / resolution;
+            x += cx;
+            y += cy;
+            segments[segmentIndex].data.push(x, y);
+            var dx = record.anchorDeltaX / resolution;
+            var dy = -record.anchorDeltaY / resolution;
+            x += dx;
+            y += dy;
+            segments[segmentIndex].data.push(x, y);
+          }
+        } else {
+          if (record.eos) {
+            break;
+          }
+          if (record.move) {
+            segmentIndex++;
+            segments[segmentIndex] = { data: [], commands: [], xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
+            segments[segmentIndex].commands.push(1);
+            var moveX = record.moveX / resolution;
+            var moveY = -record.moveY / resolution;
+            var dx = moveX - x;
+            var dy = moveY - y;
+            x = moveX;
+            y = moveY;
+            segments[segmentIndex].data.push(x, y);
+          }
+        }
+
+        if (segmentIndex > -1) {
+          if (segments[segmentIndex].xMin > x) {
+            segments[segmentIndex].xMin = x;
+          }
+          if (segments[segmentIndex].yMin > y) {
+            segments[segmentIndex].yMin = y;
+          }
+          if (segments[segmentIndex].xMax < x) {
+            segments[segmentIndex].xMax = x;
+          }
+          if (segments[segmentIndex].yMax < y) {
+            segments[segmentIndex].yMax = y;
+          }
+        }
+      }
+
+      if (!isFont3) {
+        segments.sort(function (a, b) {
+          return (b.xMax - b.xMin) * (b.yMax - b.yMin) - (a.xMax - a.xMin) * (a.yMax - a.yMin);
+        });
+      }
+
+      rawData[code] = segments;
+    }
+
+    i = 0;
+    while (code = codes[i++]) {
+      var glyph = glyphs[glyphIndex[code]];
+      var records = glyph.records;
+      segments = rawData[code];
       var numberOfContours = 1;
       var endPoint = 0;
       var endPtsOfContours = '';
@@ -214,170 +290,230 @@ module Shumway.SWF.Parser {
       var xMax = -1024;
       var yMin = 1024;
       var yMax = -1024;
-      for (var j = 0, record; (record = records[j]); ++j) {
-        if (record.type) {
-          if (record.isStraight) {
-            if (record.isGeneral) {
-              flags += '\x01';
-              var dx = record.deltaX / resolution;
-              var dy = -record.deltaY / resolution;
-              xCoordinates += toString16(dx);
-              yCoordinates += toString16(dy);
-              x += dx;
-              y += dy;
-            } else if (record.isVertical) {
-              flags += '\x11';
-              var dy = -record.deltaY / resolution;
-              yCoordinates += toString16(dy);
-              y += dy;
-            } else {
-              flags += '\x21';
-              var dx = record.deltaX / resolution;
-              xCoordinates += toString16(dx);
-              x += dx;
-            }
-          } else {
-            flags += '\x00';
-            var cx = record.controlDeltaX / resolution;
-            var cy = -record.controlDeltaY / resolution;
-            xCoordinates += toString16(cx);
-            yCoordinates += toString16(cy);
-            flags += '\x01';
-            var dx = record.anchorDeltaX / resolution;
-            var dy = -record.anchorDeltaY / resolution;
-            xCoordinates += toString16(dx);
-            yCoordinates += toString16(dy);
-            ++endPoint;
-            x += cx + dx;
-            y += cy + dy;
-          }
 
-          if (x < xMin)
-            xMin = x;
-          if (x > xMax)
-            xMax = x;
-          if (y < yMin)
-            yMin = y;
-          if (y > yMax)
-            yMax = y;
-          ++endPoint;
-        } else {
-          if (record.eos)
-            break;
-          if (record.move) {
-            if (endPoint) {
-              ++numberOfContours;
-              endPtsOfContours += toString16(endPoint - 1);
-            }
-            flags += '\x01';
-            var moveX = record.moveX / resolution;
-            var moveY = -record.moveY / resolution;
-            var dx = moveX - x;
-            var dy = moveY - y;
-            xCoordinates += toString16(dx);
-            yCoordinates += toString16(dy);
-            x = moveX;
-            y = moveY;
-            if (endPoint > maxPoints)
-              maxPoints = endPoint;
+      var myFlags = '';
+      var myEndpts = '';
+      var endPoint = 0;
+      var segmentIndex = -1;
 
-            if (x < xMin)
-              xMin = x;
-            if (x > xMax)
-              xMax = x;
-            if (y < yMin)
-              yMin = y;
-            if (y > yMax)
-              yMax = y;
-            ++endPoint;
+      var data = [];
+      var commands = [];
+
+      var flip = (isFont3) ? 1 : -1;
+
+      for (j = 0; j < segments.length; j++) {
+        data = data.concat(segments[j].data);
+        commands = commands.concat(segments[j].commands);
+      }
+
+      x = 0;
+      y = 0;
+      var nx = 0;
+      var ny = 0;
+      var myXCoordinates = '';
+      var myYCoordinates = '';
+      var dataIndex = 0;
+      var endPoint = 0;
+      var numberOfContours = 1;
+      var myEndpts = '';
+      for (j = 0; j < commands.length; j++) {
+        var command = commands[j];
+        if (command === 1) {
+          if (endPoint) {
+            ++numberOfContours;
+            myEndpts += toString16(endPoint - 1);
           }
+          nx = data[dataIndex++];
+          ny = flip * data[dataIndex++];
+          var dx = nx - x;
+          var dy = ny - y;
+          myFlags += '\x01';
+          myXCoordinates += toString16(dx);
+          myYCoordinates += toString16(dy);
+          x = nx;
+          y = ny;
+        } else if (command === 2) {
+          nx = data[dataIndex++];
+          ny = flip * data[dataIndex++];
+          var dx = nx - x;
+          var dy = ny - y;
+          myFlags += '\x01';
+          myXCoordinates += toString16(dx);
+          myYCoordinates += toString16(dy);
+          x = nx;
+          y = ny;
+        } else if (command === 3) {
+          nx = data[dataIndex++];
+          ny = flip * data[dataIndex++];
+          var cx = nx - x;
+          var cy = ny - y;
+          myFlags += '\x00';
+          myXCoordinates += toString16(cx);
+          myYCoordinates += toString16(cy);
+          x = nx;
+          y = ny;
+          endPoint++;
+
+          nx = data[dataIndex++];
+          ny = flip * data[dataIndex++];
+          var cx = nx - x;
+          var cy = ny - y;
+          myFlags += '\x01';
+          myXCoordinates += toString16(cx);
+          myYCoordinates += toString16(cy);
+          x = nx;
+          y = ny;
+        }
+        endPoint++;
+        if (endPoint > maxPoints) {
+          maxPoints = endPoint;
+        }
+        if (xMin > x) {
+          xMin = x;
+        }
+        if (yMin > y) {
+          yMin = y;
+        }
+        if (xMax < x) {
+          xMax = x;
+        }
+        if (yMax < y) {
+          yMax = y;
         }
       }
-      endPtsOfContours += toString16((endPoint || 1) - 1);
+      myEndpts += toString16((endPoint || 1) - 1);
+
+      endPtsOfContours = myEndpts;
+      xCoordinates = myXCoordinates;
+      yCoordinates = myYCoordinates;
+      flags = myFlags;
+
       if (!j) {
         xMin = xMax = yMin = yMax = 0;
         flags += '\x31';
       }
       var entry =
-          toString16(numberOfContours) +
-          toString16(xMin) +
-          toString16(yMin) +
-          toString16(xMax) +
-          toString16(yMax) +
-          endPtsOfContours +
-          '\x00\x00' + // instructionLength
-          flags +
-          xCoordinates +
-          yCoordinates
-        ;
-      if (entry.length & 1)
+        toString16(numberOfContours) +
+        toString16(xMin) +
+        toString16(yMin) +
+        toString16(xMax) +
+        toString16(yMax) +
+        endPtsOfContours +
+        '\x00\x00' + // instructionLength
+        flags +
+        xCoordinates +
+        yCoordinates
+      ;
+      if (entry.length & 1) {
         entry += '\x00';
+      }
       glyf += entry;
       loca += toString16(offset / 2);
       offset += entry.length;
-      allXMin = min(allXMin, xMin);
-      allXMax = max(allXMax, xMax);
-      allYMin = min(allYMin, yMin);
-      allYMax = max(allYMax, yMax);
-      if (numberOfContours > maxContours)
+      xMins.push(xMin);
+      xMaxs.push(xMax);
+      yMins.push(yMin);
+      yMaxs.push(yMax);
+      if (numberOfContours > maxContours) {
         maxContours = numberOfContours;
-      if (endPoint > maxPoints)
+      }
+      if (endPoint > maxPoints) {
         maxPoints = endPoint;
+      }
+      if (generateAdvancement) {
+        tag.advance.push((xMax - xMin) * resolution * 1.3);
+      }
     }
     loca += toString16(offset / 2);
     tables['glyf'] = glyf;
 
-    tables['head'] =
-    '\x00\x01\x00\x00' + // version
-    '\x00\x01\x00\x00' + // fontRevision
-    '\x00\x00\x00\x00' + // checkSumAdjustement
-    '\x5f\x0f\x3c\xf5' + // magicNumber
-    '\x00\x0b' + // flags
-    '\x04\x00' + // unitsPerEm
-    '\x00\x00\x00\x00' + toString32(Date.now()) + // created
-    '\x00\x00\x00\x00' + toString32(Date.now()) + // modified
-    toString16(allXMin) + // xMin
-    toString16(allYMin) + // yMin
-    toString16(allXMax) + // xMax
-    toString16(allYMax) + // yMax
-    toString16((tag.italic ? 2 : 0) | (tag.bold ? 1 : 0)) + // macStyle
-    '\x00\x08' + // lowestRecPPEM
-    '\x00\x02' + // fontDirectionHint
-    '\x00\x00' + // indexToLocFormat
-    '\x00\x00' // glyphDataFormat
-    ;
-
-    var advances = tag.advance;
-    var maxAdvance = 1024;
-    if (advances) {
-      maxAdvance = advances[0];
-      for (var j = 1; j < advances.length; j++) {
-        maxAdvance = max(maxAdvance, advances[j]);
+    if (!isFont3) {
+      var minYmin = Math.min.apply(null, yMins);
+      if (minYmin < 0) {
+        descent = descent || minYmin;
       }
     }
+
+    tables['OS/2'] =
+      '\x00\x01' + // version
+      '\x00\x00' + // xAvgCharWidth
+      toString16(tag.bold ? 700 : 400) + // usWeightClass
+      '\x00\x05' + // usWidthClass
+      '\x00\x00' + // fstype
+      '\x00\x00' + // ySubscriptXSize
+      '\x00\x00' + // ySubscriptYSize
+      '\x00\x00' + // ySubscriptXOffset
+      '\x00\x00' + // ySubscriptYOffset
+      '\x00\x00' + // ySuperScriptXSize
+      '\x00\x00' + // ySuperScriptYSize
+      '\x00\x00' + // ySuperScriptXOffset
+      '\x00\x00' + // ySuperScriptYOffset
+      '\x00\x00' + // yStrikeoutSize
+      '\x00\x00' + // yStrikeoutPosition
+      '\x00\x00' + // sFamilyClass
+      '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' + // panose
+      '\x00\x00\x00\x00' + // ulUnicodeRange1
+      '\x00\x00\x00\x00' + // ulUnicodeRange2
+      '\x00\x00\x00\x00' + // ulUnicodeRange3
+      '\x00\x00\x00\x00' + // ulUnicodeRange4
+      'ALF ' + // achVendID
+      toString16((tag.italic ? 0x01 : 0) | (tag.bold ? 0x20 : 0)) + // fsSelection
+      toString16(codes[0]) + // usFirstCharIndex
+      toString16(codes[codes.length - 1]) + // usLastCharIndex
+      toString16(ascent) + // sTypoAscender
+      toString16(descent) + // sTypoDescender
+      toString16(leading) + // sTypoLineGap
+      toString16(ascent) + // usWinAscent
+      toString16(-descent) + // usWinDescent
+      '\x00\x00\x00\x00' + // ulCodePageRange1
+      '\x00\x00\x00\x00' // ulCodePageRange2
+    ;
+
+    tables['head'] =
+      '\x00\x01\x00\x00' + // version
+      '\x00\x01\x00\x00' + // fontRevision
+      '\x00\x00\x00\x00' + // checkSumAdjustement
+      '\x5f\x0f\x3c\xf5' + // magicNumber
+      '\x00\x0b' + // flags
+      '\x04\x00' + // unitsPerEm
+      '\x00\x00\x00\x00' + toString32(Date.now()) + // created
+      '\x00\x00\x00\x00' + toString32(Date.now()) + // modified
+      toString16(min.apply(null, xMins)) + // xMin
+      toString16(min.apply(null, yMins)) + // yMin
+      toString16(max.apply(null, xMaxs)) + // xMax
+      toString16(max.apply(null, yMaxs)) + // yMax
+      toString16((tag.italic ? 2 : 0) | (tag.bold ? 1 : 0)) + // macStyle
+      '\x00\x08' + // lowestRecPPEM
+      '\x00\x02' + // fontDirectionHint
+      '\x00\x00' + // indexToLocFormat
+      '\x00\x00' // glyphDataFormat
+    ;
+
+    var advance = tag.advance;
     tables['hhea'] =
-    '\x00\x01\x00\x00' + // version
-    toString16(ascent) + // ascender
-    toString16(descent) + // descender
-    toString16(leading) + // lineGap
-    toString16(maxAdvance) + // advanceWidthMax
-    '\x00\x00' + // minLeftSidebearing
-    '\x00\x00' + // minRightSidebearing
-    '\x03\xb8' + // xMaxExtent
-    '\x00\x01' + // caretSlopeRise
-    '\x00\x00' + // caretSlopeRun
-    '\x00\x00' + // caretOffset
-    '\x00\x00' + // reserved
-    '\x00\x00' + // reserved
-    '\x00\x00' + // reserved
-    '\x00\x00' + // reserved
-    '\x00\x00' + // metricDataFormat
-    toString16(glyphCount + 1) // numberOfHMetrics
+      '\x00\x01\x00\x00' + // version
+      toString16(ascent) + // ascender
+      toString16(descent) + // descender
+      toString16(leading) + // lineGap
+      toString16(advance ? max.apply(null, advance) : 1024) + // advanceWidthMax
+      '\x00\x00' + // minLeftSidebearing
+      '\x00\x00' + // minRightSidebearing
+      '\x03\xb8' + // xMaxExtent
+      '\x00\x01' + // caretSlopeRise
+      '\x00\x00' + // caretSlopeRun
+      '\x00\x00' + // caretOffset
+      '\x00\x00' + // reserved
+      '\x00\x00' + // reserved
+      '\x00\x00' + // reserved
+      '\x00\x00' + // reserved
+      '\x00\x00' + // metricDataFormat
+      toString16(glyphCount + 1) // numberOfHMetrics
     ;
 
     var hmtx = '\x00\x00\x00\x00';
-    for (var i = 0; i < glyphCount; ++i)
-      hmtx += toString16(advances ? (advances[i] / resolution) : 1024) + '\x00\x00';
+    for (var i = 0; i < glyphCount; ++i) {
+      hmtx += toString16(advance ? (advance[i] / resolution) : 1024) + '\x00\x00';
+    }
     tables['hmtx'] = hmtx;
 
     if (tag.kerning) {
@@ -385,23 +521,23 @@ module Shumway.SWF.Parser {
       var nPairs = kerning.length;
       var searchRange = maxPower2(nPairs) * 2;
       var kern =
-          '\x00\x00' + // version
-          '\x00\x01' + // nTables
-          '\x00\x00' + // subtable version
-          toString16(14 + (nPairs * 6)) + // length
-          '\x00\x01' + // coverage
-          toString16(nPairs) +
-          toString16(searchRange) +
-          toString16(logE(nPairs) / logE(2)) + // entrySelector
-          toString16((2 * nPairs) - searchRange) // rangeShift
-        ;
+        '\x00\x00' + // version
+        '\x00\x01' + // nTables
+        '\x00\x00' + // subtable version
+        toString16(14 + (nPairs * 6)) + // length
+        '\x00\x01' + // coverage
+        toString16(nPairs) +
+        toString16(searchRange) +
+        toString16(logE(nPairs) / logE(2)) + // entrySelector
+        toString16((2 * nPairs) - searchRange) // rangeShift
+      ;
       var i = 0;
       var record;
       while ((record = kerning[i++])) {
         kern +=
-        toString16(glyphIndex[record.code1]) + // left
-        toString16(glyphIndex[record.code2]) + // right
-        toString16(record.adjustment) // value
+          toString16(glyphIndex[record.code1]) + // left
+          toString16(glyphIndex[record.code2]) + // right
+          toString16(record.adjustment) // value
         ;
       }
       tables['kern'] = kern;
@@ -410,35 +546,35 @@ module Shumway.SWF.Parser {
     tables['loca'] = loca;
 
     tables['maxp'] =
-    '\x00\x01\x00\x00' + // version
-    toString16(glyphCount + 1) + // numGlyphs
-    toString16(maxPoints) +
-    toString16(maxContours) +
-    '\x00\x00' + // maxCompositePoints
-    '\x00\x00' + // maxCompositeContours
-    '\x00\x00' + // maxZones
-    '\x00\x00' + // maxTwilightPoints
-    '\x00\x00' + // maxStorage
-    '\x00\x00' + // maxFunctionDefs
-    '\x00\x00' + // maxInstructionDefs
-    '\x00\x00' + // maxStackElements
-    '\x00\x00' + // maxSizeOfInstructions
-    '\x00\x00' + // maxComponentElements
-    '\x00\x00' // maxComponentDepth
+      '\x00\x01\x00\x00' + // version
+      toString16(glyphCount + 1) + // numGlyphs
+      toString16(maxPoints) +
+      toString16(maxContours) +
+      '\x00\x00' + // maxCompositePoints
+      '\x00\x00' + // maxCompositeContours
+      '\x00\x00' + // maxZones
+      '\x00\x00' + // maxTwilightPoints
+      '\x00\x00' + // maxStorage
+      '\x00\x00' + // maxFunctionDefs
+      '\x00\x00' + // maxInstructionDefs
+      '\x00\x00' + // maxStackElements
+      '\x00\x00' + // maxSizeOfInstructions
+      '\x00\x00' + // maxComponentElements
+      '\x00\x00' // maxComponentDepth
     ;
 
     var psName = fontName.replace(/ /g, '');
     var strings = [
-        tag.copyright || 'Original licence', // 0. Copyright
-        fontName, // 1. Font family
-        'Unknown', // 2. Font subfamily
-        uniqueName, // 3. Unique ID
-        fontName, // 4. Full font name
-        '1.0', // 5. Version
-        psName, // 6. Postscript name
-        'Unknown', // 7. Trademark
-        'Unknown', // 8. Manufacturer
-        'Unknown' // 9. Designer
+      tag.copyright || 'Original licence', // 0. Copyright
+      fontName, // 1. Font family
+      'Unknown', // 2. Font subfamily
+      uniqueName, // 3. Unique ID
+      fontName, // 4. Full font name
+      '1.0', // 5. Version
+      psName, // 6. Postscript name
+      'Unknown', // 7. Trademark
+      'Unknown', // 8. Manufacturer
+      'Unknown' // 9. Designer
     ];
     var count = strings.length;
     var name =
@@ -450,73 +586,76 @@ module Shumway.SWF.Parser {
     var str;
     while ((str = strings[i++])) {
       name +=
-      '\x00\x01' + // platformID
-      '\x00\x00' + // encodingID
-      '\x00\x00' + // languageID
-      toString16(i - 1) + // nameID
-      toString16(str.length) +
-      toString16(offset);
+        '\x00\x01' + // platformID
+        '\x00\x00' + // encodingID
+        '\x00\x00' + // languageID
+        toString16(i - 1) + // nameID
+        toString16(str.length) +
+        toString16(offset);
       offset += str.length;
     }
     tables['name'] = name + strings.join('');
 
     tables['post'] =
-    '\x00\x03\x00\x00' + // version
-    '\x00\x00\x00\x00' + // italicAngle
-    '\x00\x00' + // underlinePosition
-    '\x00\x00' + // underlineThickness
-    '\x00\x00\x00\x00' + // isFixedPitch
-    '\x00\x00\x00\x00' + // minMemType42
-    '\x00\x00\x00\x00' + // maxMemType42
-    '\x00\x00\x00\x00' + // minMemType1
-    '\x00\x00\x00\x00' // maxMemType1
+      '\x00\x03\x00\x00' + // version
+      '\x00\x00\x00\x00' + // italicAngle
+      '\x00\x00' + // underlinePosition
+      '\x00\x00' + // underlineThickness
+      '\x00\x00\x00\x00' + // isFixedPitch
+      '\x00\x00\x00\x00' + // minMemType42
+      '\x00\x00\x00\x00' + // maxMemType42
+      '\x00\x00\x00\x00' + // minMemType1
+      '\x00\x00\x00\x00' // maxMemType1
     ;
 
     var names = Object.keys(tables);
     var numTables = names.length;
     var header =
-        '\x00\x01\x00\x00' + // version
-        toString16(numTables) +
-        '\x00\x80' + // searchRange
-        '\x00\x03' + // entrySelector
-        '\x00\x20' // rangeShift
-      ;
-    var dataStr = '';
+      '\x00\x01\x00\x00' + // version
+      toString16(numTables) +
+      '\x00\x80' + // searchRange
+      '\x00\x03' + // entrySelector
+      '\x00\x20' // rangeShift
+    ;
+    var dataString = '';
     var offset = (numTables * 16) + header.length;
     var i = 0;
     while ((name = names[i++])) {
       var table = tables[name];
       var length = table.length;
-      header += name +
-                '\x00\x00\x00\x00' + // checkSum
-                toString32(offset) + toString32(length);
+      header +=
+        name +
+        '\x00\x00\x00\x00' + // checkSum
+        toString32(offset) +
+        toString32(length)
+      ;
       while (length & 3) {
         table += '\x00';
         ++length;
       }
-      dataStr += table;
-      while (offset & 3)
+      dataString += table;
+      while (offset & 3) {
         ++offset;
+      }
       offset += length;
     }
-    var otf = header + dataStr;
+    var otf = header + dataString;
     var unitPerEm = 1024;
     var metrics = {
       ascent: ascent / unitPerEm,
       descent: -descent / unitPerEm,
-      leading: leading / unitPerEm,
-      advances: advances
+      leading: leading / unitPerEm
     };
 
     // TODO: use a buffer to generate font data
-    var data = new Uint8Array(otf.length);
+    var dataBuffer = new Uint8Array(otf.length);
     for (var i = 0; i < otf.length; i++) {
-      data[i] = otf.charCodeAt(i) & 0xff;
+      dataBuffer[i] = otf.charCodeAt(i) & 0xff;
     }
 
     font.codes = codes;
     font.metrics = metrics;
-    font.data = data;
+    font.data = dataBuffer;
 
     return font;
   }
