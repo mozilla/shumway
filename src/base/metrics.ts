@@ -111,7 +111,10 @@ module Shumway.Metrics {
       this._times = ObjectUtilities.createMap<number>();
     }
     public toJSON() {
-      return {counts: this._counts};
+      return {
+        counts: this._counts,
+        times: this._times
+      };
     }
     public count(name: string, increment: number = 1, time: number = 0) {
       if (!this._enabled) {

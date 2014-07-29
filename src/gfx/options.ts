@@ -30,7 +30,7 @@ module Shumway.GFX {
   export var disableClipping = stageOptions.register(new Option("", "disableClipping", "boolean", false, "Disable clipping."));
   export var debugClipping = stageOptions.register(new Option("", "debugClipping", "boolean", false, "Disable clipping."));
 
-  export var backend = stageOptions.register(new Option("t", "backend", "number", 0, "Backends", {
+  export var backend = stageOptions.register(new Option("", "backend", "number", 0, "Backends", {
     choices: {
       Canvas2D: 0,
       WebGL: 1,

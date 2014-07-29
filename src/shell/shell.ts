@@ -79,6 +79,8 @@ module Shumway.Shell {
 
   export function main(commandLineArguments: string []) {
     var parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
+    var parseForDatabaseOption = shellOptions.register(new Option("po", "parseForDatabase", "boolean", false, "Parse File(s)"));
+    var disassembleOption = shellOptions.register(new Option("d", "disassemble", "boolean", false, "Disassemble File(s)"));
     var verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
     var releaseOption = shellOptions.register(new Option("r", "release", "boolean", false, "Release mode"));
     var executeOption = shellOptions.register(new Option("x", "execute", "boolean", false, "Execute File(s)"));
@@ -122,11 +124,15 @@ module Shumway.Shell {
     if (parseOption.value) {
       files.forEach(function (file) {
         var start = dateNow();
-        writer.enter("Parsing: " + file);
-        parseFile(file);
+        if (verbose) {
+          writer.enter("Parsing: " + file);
+        }
+        parseFile(file, parseForDatabaseOption.value);
         var elapsed = dateNow() - start;
-        verbose && writer.writeLn("Total Parse Time: " + (elapsed).toFixed(4));
-        writer.outdent();
+        if (verbose) {
+          verbose && writer.writeLn("Total Parse Time: " + (elapsed).toFixed(4));
+          writer.outdent();
+        }
       });
     }
 
@@ -135,21 +141,38 @@ module Shumway.Shell {
       files.forEach(function (file) {
         executeFile(file);
       });
+    } else if (disassembleOption.value) {
+      files.forEach(function (file) {
+        if (file.endsWith(".abc")) {
+          disassembleABCFile(file);
+        }
+      });
     }
   }
 
-  function parseABCs(files: string []) {
-
+  function disassembleABCFile(file: string) {
+    var buffer = read(file, "binary");
+    var abc = new AbcFile(new Uint8Array(buffer), file);
+    abc.trace(writer);
   }
 
   function executeFile(file: string): boolean {
     if (file.endsWith(".js")) {
-      executeUnitTest(file);
+      executeUnitTestFile(file);
+    } else if (file.endsWith(".abc")) {
+      executeABCFile(file);
     }
     return true;
   }
 
-  function executeUnitTest(file: string) {
+  function executeABCFile(file: string) {
+    writer.writeLn("Running ABC: " + file);
+    var buffer = read(file, "binary");
+    Runtime.AVM2.instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
+    writer.outdent();
+  }
+
+  function executeUnitTestFile(file: string) {
     writer.writeLn("Running Unit Test: " + file);
     load(file);
     while (unitTests.length) {
@@ -221,16 +244,20 @@ module Shumway.Shell {
   /**
    * Parses file.
    */
-  function parseFile(file: string): boolean {
+  function parseFile(file: string, parseForDatabase: boolean): boolean {
+    var fileName = file.replace(/^.*[\\\/]/, '');
     function parseABC(buffer: ArrayBuffer) {
       new AbcFile(new Uint8Array(buffer), "ABC");
     }
     var buffers = [];
     if (file.endsWith(".swf")) {
+      var fileNameWithoutExtension = fileName.substr(0, fileName.length - 4);
       var SWF_TAG_CODE_DO_ABC = SwfTag.CODE_DO_ABC;
       var SWF_TAG_CODE_DO_ABC_ = SwfTag.CODE_DO_ABC_;
       try {
-        Shumway.SWF.Parser.parse(read(file, "binary"), {
+        var buffer = read(file, "binary");
+        var startSWF = dateNow();
+        Shumway.SWF.Parser.parse(buffer, {
           oncomplete: function(result) {
             var symbols = {};
             var tags = result.tags;
@@ -238,15 +265,30 @@ module Shumway.Shell {
             for (var i = 0; i < tags.length; i++) {
               var tag = tags[i];
               assert(tag.code !== undefined);
-              var start = dateNow();
-              if (tag.code === SWF_TAG_CODE_DO_ABC || tag.code === SWF_TAG_CODE_DO_ABC_) {
-                parseABC(tag.data);
-              } else {
-                parseSymbol(tag, symbols);
+              var startTag = dateNow();
+              if (!parseForDatabase) {
+                if (tag.code === SWF_TAG_CODE_DO_ABC || tag.code === SWF_TAG_CODE_DO_ABC_) {
+                    parseABC(tag.data);
+                } else {
+                    parseSymbol(tag, symbols);
+                }
               }
-              counter.count(SwfTag[tag.code], 1, dateNow() - start);
+              var tagName = SwfTag[tag.code];
+              if (tagName) {
+                tagName = tagName.substring("CODE_".length);
+              } else {
+                tagName = "TAG" + tag.code;
+              }
+              counter.count(tagName, 1, dateNow() - startTag);
             }
-            if (verbose) {
+            if (parseForDatabase) {
+              writer.writeLn(JSON.stringify({
+                size: buffer.byteLength,
+                time: dateNow() - startSWF,
+                name: fileNameWithoutExtension,
+                tags: counter.toJSON()
+              }, null, 0));
+            } else if (verbose) {
               writer.enter("Tag Frequency:");
               counter.traceSorted(writer);
               writer.outdent();
