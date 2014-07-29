@@ -328,23 +328,6 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
-      //if (this._buttonMode && this._enabled) {
-      //  var buttonState = '_up';
-      //  if (this._mouseOver) {
-      //    buttonState = this._mouseDown ? '_down' : '_over';
-      //  }
-      //  var currentScene = scenes[this._sceneIndex];
-      //  var labels = currentScene.labels;
-      //  for (var j = 0; j < labels.length; j++) {
-      //    var label = labels[j];
-      //    if (label.name === buttonState) {
-      //      // this.stop();
-      //      nextFrame = offset + label.frame;
-      //      break;
-      //    }
-      //  }
-      //}
-
       if (nextFrame > this.framesLoaded) {
         // If nextFrame was > this._totalFrames, it has to be written back here, otherwise it'll
         // just be incremented ever further.
