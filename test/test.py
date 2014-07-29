@@ -100,7 +100,7 @@ MIMEs = {
     '.abcs': 'application/octet-stream',
     '.bin': 'application/octet-stream',
     '.txt': 'text/plain',
-
+    '.map': 'text/plain',
 }
 
 class State:

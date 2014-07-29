@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-Shumway.dontSkipFramesOption.value = true;
-
 var SHUMWAY_ROOT = "../../src/";
 
 var avm2Root = "../../src/avm2/";
@@ -34,6 +32,8 @@ var playerglobalInfo = {
 var easel, easelHost, player;
 
 function loadMovie(path, reportFrames) {
+  path = combineUrl(document.location.href, path);
+
   var movieReadyResolve;
   var movieReady = new Promise(function (resolve) {
     movieReadyResolve = resolve;
@@ -57,39 +57,81 @@ function loadMovie(path, reportFrames) {
     };
   }
 
-  var sysMode = EXECUTION_MODE.COMPILE // EXECUTION_MODE.INTERPRET
-  var appMode = EXECUTION_MODE.COMPILE // EXECUTION_MODE.INTERPRET
-
-  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
-    function loaded() { movieReadyResolve(); }
-    function terminate() {
-      ignoreAdanvances = true;
-      // cleaning up
-      if (!movieReady.resolved) { // movieReady needs to be resolved
-        movieReadyResolve();
-      }
-      if (advanceTimeout) { // invoke current timeout
-        clearTimeout(advanceTimeout);
-        advanceCallback();
-      }
-      // reports unreported frames
-      while (reportFrames && i < reportFrames.length) {
-        onFrameCallback();
-      }
-    }
-
-    easel = createEasel();
-    easelHost = new Shumway.Player.Test.TestEaselHost(easel);
-    easelHost.processFrame = onFrameCallback;
-
-    player = new Shumway.Player.Test.TestPlayer();
-    player.load(path);
+  function initialized() {
     setTimeout(function () {
       movieReadyResolve(); // startPromise
       loaded(); // onParsed
     }, 1000);
 
     // terminate();
+  }
+
+  easel = createEasel();
+
+  if (TEST_MODE === 'iframe') {
+    var flashParams = {
+      url: path,
+      baseUrl: path,
+      movieParams: {},
+      objectParams: {},
+      compilerSettings: {
+        sysCompiler: true,
+        appCompiler: true,
+        verifier: true
+      }
+    };
+    var playerElement = document.getElementById('playerWindow');
+    playerElement.src = 'slave-iframe.html';
+    playerElement.onload = function () {
+      var data = {
+        type: 'runSwf',
+        settings: Shumway.Settings.getSettings(),
+        flashParams: flashParams
+      };
+      var playerWindow = playerElement.contentWindow;
+      playerWindow.postMessage(data, '*');
+
+      easelHost = new Shumway.Player.Window.WindowEaselHost(easel, playerWindow, window);
+      easelHost.processFrame = onFrameCallback;
+      initialized();
+    };
+    return;
+  }
+
+  function loaded() { movieReadyResolve(); }
+  function terminate() {
+    ignoreAdanvances = true;
+    // cleaning up
+    if (!movieReady.resolved) { // movieReady needs to be resolved
+      movieReadyResolve();
+    }
+    if (advanceTimeout) { // invoke current timeout
+      clearTimeout(advanceTimeout);
+      advanceCallback();
+    }
+    // reports unreported frames
+    while (reportFrames && i < reportFrames.length) {
+      onFrameCallback();
+    }
+  }
+
+
+  Shumway.dontSkipFramesOption.value = true;
+
+  var sysMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
+  var appMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
+
+  Shumway.FileLoadingService.instance.baseUrl = path;
+
+  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
+
+    easelHost = new Shumway.Player.Test.TestEaselHost(easel);
+    easelHost.processFrame = onFrameCallback;
+
+    player = new Shumway.Player.Test.TestPlayer();
+    player.load(path);
+
+    initialized();
   });
 }
 
@@ -98,60 +140,6 @@ function createEasel() {
   var backend = Shumway.GFX.backend.value | 0;
   var easel = new Shumway.GFX.Easel(document.getElementById("stageContainer"), backend, true);
   return easel;
-}
-
-var unitTests = [];
-
-function loadScripts(files) {
-  function mergeTests(tests) {
-    return function (avm2) {
-      var lastTest = Promise.resolve();
-      tests.forEach(function (test) {
-        lastTest = lastTest.then(function () {
-          test(avm2);
-        });
-      });
-      return lastTest;
-    };
-  }
-
-  function next() {
-    if (unitTests.length < i) {
-      unitTests.push(function () {
-        throw new Error('Test was not found');
-      });
-    }
-    if (unitTests.length > i) {
-      unitTests.push(mergeTests(unitTests.splice(i - 1, unitTests.length - i + 1)));
-    }
-    if (i >= files.length) {
-      return runSanityTests(unitTests);
-    }
-    var script = document.createElement('script');
-    script.src = files[i++];
-    script.onload = next;
-    document.getElementsByTagName('head')[0].appendChild(script);
-  }
-
-  var i = 0;
-  next();
-}
-
-function runSanityTests(tests) {
-  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.COMPILE, EXECUTION_MODE.COMPILE, function (avm2) {
-    sendResponse();
-    var lastTestPromise = Promise.resolve();
-    var i = 0;
-    tests.forEach(function (test) {
-      lastTestPromise = lastTestPromise.then(function () {
-        test(avm2);
-      }).then(function () {
-        sendResponse({index: i++, failure: false});
-      }, function () {
-        sendResponse({index: i++, failure: true});
-      });
-    });
-  });
 }
 
 Shumway.Telemetry.instance = {
@@ -164,8 +152,7 @@ Shumway.FileLoadingService.instance = {
       open: function (request) {
         var self = this;
         var base = Shumway.FileLoadingService.instance.baseUrl || '';
-        base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-        var path = base ? base + request.url : request.url;
+        var path = combineUrl(base, request.url);
         console.log('FileLoadingService: loading ' + path);
         new Shumway.BinaryFileReader(path).readAsync(
           function (data, progress) {
@@ -225,6 +212,37 @@ function sendMouseEvent(type, x, y) {
 
 var advanceTimeout = null, ignoreAdanvances = false;
 
+// Combines two URLs. The baseUrl shall be absolute URL. If the url is an
+// absolute URL, it will be returned as is.
+function combineUrl(baseUrl, url) {
+  if (!url) {
+    return baseUrl;
+  }
+  if (/^[a-z][a-z0-9+\-.]*:/i.test(url)) {
+    return url;
+  }
+  var i;
+  if (url.charAt(0) == '/') {
+    // absolute path
+    i = baseUrl.indexOf('://');
+    if (url.charAt(1) === '/') {
+      ++i;
+    } else {
+      i = baseUrl.indexOf('/', i + 3);
+    }
+    return baseUrl.substring(0, i) + url;
+  } else {
+    // relative path
+    var pathLength = baseUrl.length;
+    i = baseUrl.lastIndexOf('#');
+    pathLength = i >= 0 ? i : pathLength;
+    i = baseUrl.lastIndexOf('?', pathLength);
+    pathLength = i >= 0 ? i : pathLength;
+    var prefixLength = baseUrl.lastIndexOf('/', pathLength);
+    return baseUrl.substring(0, prefixLength + 1) + url;
+  }
+}
+
 function advanceCallback() {
   advanceTimeout = null;
   sendResponse();
@@ -232,14 +250,20 @@ function advanceCallback() {
 
 window.addEventListener('message', function (e) {
   var data = e.data;
-  if (typeof data !== 'object' || data.type !== 'test-message')
+  if (typeof data !== 'object' || data === null) {
     return;
+  }
+
+  if (data.type === 'console-log') {
+    print(data.msg);
+  }
+
+  if (data.type !== 'test-message') {
+    return;
+  }
   switch (data.topic) {
   case 'load':
     loadMovie(data.path, data.reportFrames);
-    break;
-  case 'js':
-    loadScripts(data.files);
     break;
   case 'advance':
     if (ignoreAdanvances) {
