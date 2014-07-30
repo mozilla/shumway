@@ -188,14 +188,8 @@ module Shumway.Remoting.Player {
         bitmap = <Bitmap>displayObject;
       }
 
-      // Checks if the computed clip value needs to be written. This can happen if the clip depth value changes
-      // or if the parent's children list is mutated.
-      var hasClip = false;
-      if (displayObject._clipDepth >= 0) {
-        hasClip = displayObject._hasFlags(DisplayObjectFlags.DirtyClipDepth) ||
-                  displayObject._parent && displayObject._parent._hasFlags(DisplayObjectFlags.DirtyChildren);
-      }
-      hasClip = true;
+      // Checks if the computed clip value needs to be written.
+      var hasClip = displayObject._hasFlags(DisplayObjectFlags.DirtyClipDepth);
 
       // Write Has Bits
       var hasBits = 0;
@@ -263,6 +257,10 @@ module Shumway.Remoting.Player {
             for (var i = 0; i < children.length; i++) {
               writer && writer.writeLn("Reference DisplayObject: " + children[i].debugName());
               this.output.writeInt(children[i]._id);
+              // Make sure children with a clip depth are getting visited.
+              if (children[i]._clipDepth >= 0) {
+                children[i]._setFlags(DisplayObjectFlags.DirtyClipDepth);
+              }
             }
           }
         }
