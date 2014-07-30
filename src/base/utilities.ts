@@ -1247,6 +1247,8 @@ module Shumway {
     _removeReference();
   }
 
+  var useReferenceCounting = false;
+
   export class WeakList<T extends IReferenceCountable> {
     private _map: WeakMap<T, T>;
     private _list: T [];
@@ -1277,9 +1279,9 @@ module Shumway {
           netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
         }
         Components.utils.nondeterministicGetWeakMapKeys(this._map).forEach(function (value: T) {
-          //if (value._referenceCount !== 0) {
+          if (value._referenceCount !== 0) {
             callback(value);
-          //}
+          }
         });
         return;
       }
@@ -1287,21 +1289,29 @@ module Shumway {
       var zeroCount = 0;
       for (var i = 0; i < list.length; i++) {
         var value = list[i];
-        //if (value._referenceCount === 0) {
-        //  zeroCount++;
-        //} else {
+        if (useReferenceCounting && value._referenceCount === 0) {
+          zeroCount++;
+        } else {
           callback(value);
-        //}
+        }
       }
-      //if (zeroCount > 16 && zeroCount > (list.length >> 1)) {
-      //  var newList = [];
-      //  for (var i = 0; i < list.length; i++) {
-      //    if (list[i]._referenceCount > 0) {
-      //      newList.push(list[i]);
-      //    }
-      //  }
-      //  this._list = newList;
-      //}
+      if (zeroCount > 16 && zeroCount > (list.length >> 2)) {
+        var newList = [];
+        for (var i = 0; i < list.length; i++) {
+          if (list[i]._referenceCount > 0) {
+            newList.push(list[i]);
+          }
+        }
+        this._list = newList;
+      }
+    }
+    get length(): number {
+      if (this._map) {
+        // TODO: Implement this.
+        return -1;
+      } else {
+        return this._list.length;
+      }
     }
   }
 

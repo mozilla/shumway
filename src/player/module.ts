@@ -16,6 +16,7 @@
 
 module Shumway.Player {
   export var timelineBuffer = new Shumway.Tools.Profiler.TimelineBuffer("Player");
+  export var counter = new Shumway.Metrics.Counter(!release);
 
   export var writer = null; // release ? null : new IndentingWriter();
 

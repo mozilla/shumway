@@ -44,6 +44,10 @@ module Shumway {
     new Shumway.Options.Option("", "Frame Rate", "number", 60, "Override a movie's frame rate, set to -1 to use the movies default frame rate.", {range: { min: 1, max: 120, step: 1 }})
   );
 
+  export var traceCountersOption = playerOptions.register (
+    new Shumway.Options.Option("", "Trace Counters", "number", 0, "Trace counters every few frames.", {range: { min: 1, max: 120, step: 1 }})
+  );
+
   export var frameRateMultiplierOption = playerOptions.register (
     new Shumway.Options.Option("", "Frame Rate Multiplier", "number", 1, "Play frames at a faster rate.", {range: { min: 1, max: 16, step: 1 }})
   );

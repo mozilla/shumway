@@ -359,7 +359,7 @@ module Shumway.AVM2.AS.flash.display {
         release || assert (frame, "FrameDelta is not defined.");
         var stateAtDepth = frame.stateAtDepth;
         for (var depth in stateAtDepth) {
-          var child = this.getChildAtDepth(depth);
+          var child = this.getChildAtDepth(depth | 0);
           var state = stateAtDepth[depth];
           if (child) {
             if (state && state.canBeAnimated(child)) {
@@ -439,7 +439,6 @@ module Shumway.AVM2.AS.flash.display {
 
     private _removeAnimatedChild(child: flash.display.DisplayObject) {
       this.removeChild(child);
-      child._removeReference();
       if (child._name) {
         var mn = Multiname.getPublicQualifiedName(child._name);
         if (this[mn] === child) {
