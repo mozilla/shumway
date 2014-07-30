@@ -299,8 +299,6 @@ module Shumway.SWF.Parser {
       var data = [];
       var commands = [];
 
-      var flip = (isFont3) ? 1 : -1;
-
       for (j = 0; j < segments.length; j++) {
         data = data.concat(segments[j].data);
         commands = commands.concat(segments[j].commands);
@@ -324,7 +322,7 @@ module Shumway.SWF.Parser {
             myEndpts += toString16(endPoint - 1);
           }
           nx = data[dataIndex++];
-          ny = flip * data[dataIndex++];
+          ny = data[dataIndex++];
           var dx = nx - x;
           var dy = ny - y;
           myFlags += '\x01';
@@ -334,7 +332,7 @@ module Shumway.SWF.Parser {
           y = ny;
         } else if (command === 2) {
           nx = data[dataIndex++];
-          ny = flip * data[dataIndex++];
+          ny = data[dataIndex++];
           var dx = nx - x;
           var dy = ny - y;
           myFlags += '\x01';
@@ -344,7 +342,7 @@ module Shumway.SWF.Parser {
           y = ny;
         } else if (command === 3) {
           nx = data[dataIndex++];
-          ny = flip * data[dataIndex++];
+          ny = data[dataIndex++];
           var cx = nx - x;
           var cy = ny - y;
           myFlags += '\x00';
@@ -355,7 +353,7 @@ module Shumway.SWF.Parser {
           endPoint++;
 
           nx = data[dataIndex++];
-          ny = flip * data[dataIndex++];
+          ny = data[dataIndex++];
           var cx = nx - x;
           var cy = ny - y;
           myFlags += '\x01';
