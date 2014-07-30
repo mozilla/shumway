@@ -160,7 +160,6 @@ module Shumway.AVM2.AS.flash.events {
       if (!queue) {
         return;
       }
-      //timeline && timeline.enter(Shumway.Timeline.FramePhase[framePhase]);
       var nullCount = 0;
       for (var i = 0; i < queue.length; i++) {
         var target = queue[i];
@@ -181,7 +180,6 @@ module Shumway.AVM2.AS.flash.events {
         }
         this._queues[event.type] = compactedQueue;
       }
-      //timeline && timeline.leave(Shumway.Timeline.FramePhase[framePhase]);
     }
 
     getQueueLength(type: string) {
@@ -363,8 +361,12 @@ module Shumway.AVM2.AS.flash.events {
                    "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
       }
 
+      release || counter.count("EventDispatcher::dispatchEvent");
+
       var type = event._type;
       var target = this._target;
+
+      release || counter.count("EventDispatcher::dispatchEvent(" + type + ")");
 
       /**
        * 1. Capturing Phase

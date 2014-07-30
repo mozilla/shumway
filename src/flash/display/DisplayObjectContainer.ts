@@ -73,6 +73,8 @@ module Shumway.AVM2.AS.flash.display {
      * Calls the constructors of new children placed by timeline commands.
      */
     _constructChildren(): void {
+      release || counter.count("DisplayObjectContainer::_constructChildren");
+
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
@@ -152,6 +154,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
+      release || counter.count("DisplayObjectContainer::addChildAt");
+
       index = index | 0;
 
       release || assert (child._hasFlags(DisplayObjectFlags.Constructed), "Child is not fully constructed.");
@@ -200,6 +204,8 @@ module Shumway.AVM2.AS.flash.display {
      * other timeline object is found, the new child is added to the front(top) of all other children.
      */
     addChildAtDepth(child: flash.display.DisplayObject, depth: number /*int*/) {
+      release || counter.count("DisplayObjectContainer::addChildAtDepth");
+
       depth = depth | 0;
 
       var children = this._children;
@@ -235,6 +241,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     removeChildAt(index: number): DisplayObject {
+      release || counter.count("DisplayObjectContainer::removeChildAt");
+
       index = index | 0;
 
       var children = this._children;
@@ -380,6 +388,8 @@ module Shumway.AVM2.AS.flash.display {
      * bounds doesn't include the given point then we skip it and all of its children.
      */
     getObjectsUnderPoint(globalPoint: flash.geom.Point): DisplayObject [] {
+      release || counter.count("DisplayObjectContainer::getObjectsUnderPoint");
+
       var objectsUnderPoint: DisplayObject [] = [];
       this.visit(function (displayObject: DisplayObject): VisitorFlags {
         if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, false, true)) {
