@@ -351,5 +351,5 @@ module.exports = function(grunt) {
     'exec:smoke_parse'
   ]);
   grunt.registerTask('firefox', ['shu', 'exec:build_extension']);
-  grunt.registerTask('web', ['shu', 'firefox', 'exec:build_web']);
+  grunt.registerTask('web', ['shu', 'exec:build_extension', 'exec:build_web']);
 };
