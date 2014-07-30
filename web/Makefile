@@ -20,7 +20,7 @@ BUNDLE_DIR=../build/bundle
 EXTENSION_DIR=../build/firefox
 
 build: ensureoutputdir
-	cp -R $(SHUMWAY_ROOT)/LICENSE index.html main.css main.swf gallery images $(BUILD_DIR)/
+	cp -R $(SHUMWAY_ROOT)/LICENSE index.html main.css demo.swf gallery images $(BUILD_DIR)/
 	# Coping ABC files
 	mkdir -p $(BUILD_DIR)/src/avm2/generated/builtin
 	cp -R $(SHUMWAY_ROOT)/src/avm2/generated/builtin/*.abc $(BUILD_DIR)/src/avm2/generated/builtin/
