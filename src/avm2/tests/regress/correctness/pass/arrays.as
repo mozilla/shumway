@@ -104,13 +104,13 @@ package {
     trace(a);
   })();
 
-  (function () {
-    var a = {length: 10};
-    Array.prototype.push.call(a, "Hello");
-    trace(a[9]);
-    trace(a[10]);
-    trace(a[11]);
-  })();
+//  (function () {
+//    var a = {length: 10};
+//    Array.prototype.push.call(a, "Hello");
+//    trace(a[9]);
+//    trace(a[10]);
+//    trace(a[11]);
+//  })();
 
   trace("-- DONE --");
 }

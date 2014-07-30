@@ -26,12 +26,10 @@
  *
  */
 
-load($SHUMWAY_ROOT + "lib/DataView.js/DataView.js");
-load($SHUMWAY_ROOT + "lib/ByteArray.js");
-load($SHUMWAY_ROOT + "src/avm2/options.js");
-var Option = Shumway.Options.Option;
-var OptionSet = Shumway.Options.OptionSet;
-var coreOptions = new OptionSet("Core Options");
+load($SHUMWAY_ROOT + "src/global.js");
+load($SHUMWAY_ROOT + "src/utilities.js");
+load($SHUMWAY_ROOT + "src/options.js");
+load($SHUMWAY_ROOT + "src/settings.js");
 
 load($SHUMWAY_ROOT + "src/swf/Timeline.js");
 load($SHUMWAY_ROOT + "src/flash/util.js");
@@ -39,13 +37,14 @@ load($SHUMWAY_ROOT + "src/swf/swf.js");
 load($SHUMWAY_ROOT + "src/swf/inflate.js");
 load($SHUMWAY_ROOT + "src/swf/stream.js");
 
-load($SHUMWAY_ROOT + "src/swf/bitmap.js");
-load($SHUMWAY_ROOT + "src/swf/button.js");
-load($SHUMWAY_ROOT + "src/swf/font.js");
+load($SHUMWAY_ROOT + "build/ts/swf/utilities.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/bitmap.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/button.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/font.js");
 
 load($SHUMWAY_ROOT + "src/swf/image.js");
-load($SHUMWAY_ROOT + "src/swf/label.js");
-load($SHUMWAY_ROOT + "src/swf/shape.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/label.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/shape.js");
 load($SHUMWAY_ROOT + "src/swf/sound.js");
 load($SHUMWAY_ROOT + "src/swf/text.js");
 load($SHUMWAY_ROOT + "src/swf/mp3worker.js");
@@ -55,31 +54,18 @@ load($SHUMWAY_ROOT + "src/swf/handlers.js");
 load($SHUMWAY_ROOT + "src/swf/parser.js");
 load($SHUMWAY_ROOT + "src/swf/resourceloader.js");
 
-load($SHUMWAY_ROOT + "src/avm1/stream.js");
-load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
-
-
-load($SHUMWAY_ROOT + "src/avm2/global.js");
-load($SHUMWAY_ROOT + "src/avm2/utilities.js");
-
-var assert = Shumway.Debug.assert;
-
 load($SHUMWAY_ROOT + "src/avm2/settings.js");
-load($SHUMWAY_ROOT + "src/avm2/avm2Util.js");
-load($SHUMWAY_ROOT + "src/avm2/options.js");
-
-var ArgumentParser = Shumway.Options.ArgumentParser;
-var Option = Shumway.Options.Option;
-var OptionSet = Shumway.Options.OptionSet;
 
 load($SHUMWAY_ROOT + "src/avm2/metrics.js");
 
 var Timer = Shumway.Metrics.Timer;
 var Counter = new Shumway.Metrics.Counter(true);
 var FrameCounter = new Shumway.Metrics.Counter(true);
-var systemOptions = new OptionSet("System Options");
-var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
-var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+
+var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
+var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter"));
+var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter"));
+var traceLevel = avm2Options.register(new Option("t", "traceLevel", "number", 0, "trace level", { choices: { "off":0, "normal":1, "verbose":2 } }));
 
 window.print = function(s) {
   console.log(s);
@@ -136,8 +122,6 @@ var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
 var AVM2 = Shumway.AVM2.Runtime.AVM2;
 var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
 
-load($SHUMWAY_ROOT + "src/avm2/class.js");
-
 var Binding = Shumway.AVM2.Runtime.Binding;
 var Bindings = Shumway.AVM2.Runtime.Bindings;
 var ActivationBindings = Shumway.AVM2.Runtime.ActivationBindings;
@@ -165,6 +149,11 @@ load($SHUMWAY_ROOT + "src/avm2/interpreter.js");
 
 load($SHUMWAY_ROOT + "utils/builder/templates/avm2utils.js");
 
+load($SHUMWAY_ROOT + "src/avm1/stream.js");
+load($SHUMWAY_ROOT + "src/avm1/parser.js");
+load($SHUMWAY_ROOT + "src/avm1/analyze.js");
+load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
+
 // Manually add directories here, this doesn't get automatically updated by
 // make update-flash-refs.
 
@@ -181,5 +170,3 @@ load($SHUMWAY_ROOT + "src/flash/ui");
 load($SHUMWAY_ROOT + "src/flash/utils");
 load($SHUMWAY_ROOT + "src/flash/accessibility");
 load($SHUMWAY_ROOT + "src/avm1lib");
-
-load($SHUMWAY_ROOT + "src/flash/stubs.js");

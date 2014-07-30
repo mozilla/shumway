@@ -32,20 +32,23 @@ limitations under the License.
         background-color: transparent;
       }
 
-      #viewer {
+      #stageContainer {
         position:fixed !important;
         left:0;top:0;bottom:0;right:0;
         overflow: hidden;
       }
+
+      #playerWindow {
+        position:fixed !important;
+        right:0;top:0;width:0;height:0;
+      }
     </style>
-    <script src="viewer.js"></script>
-    <script src="../src/shumway.js"></script>
+    <script src="../../build/bundles/shumway.gfx.js"></script>
   </head>
 
   <body contextmenu="shumwayMenu">
-    <div id="viewer"></div>
-    <script>
-      runViewer();
-    </script>
+    <div id="stageContainer"></div>
+    <iframe id="playerWindow" src="viewer.player.html"></iframe>
+    <script src="viewer.js"></script>
   </body>
 </html>

@@ -18,42 +18,37 @@
 
 function configureMocks(remoteFile) {
   if (remoteFile.indexOf('jwplayer') >= 0) {
-    // Simulate FirefoxCom interface
-    var objId = "jwplayerObjectId";
-    $EXTENSION = true;
-    window.FirefoxCom = {
-      initJS: function (callIn) { this._callIn = callIn; },
-      request: function (type, data) {
-        switch (data.action) {
-          case 'register':
-            break; // do nothing atm
-          default:
-            throw new Error('Unexpected FirefoxCom.request(' + data.action + ')');
+    // Simulate ExternalInterfaceService
+    Shumway.ExternalInterfaceService.instance = {
+      enabled: true,
+      initJS: function (callback) {
+        this._callIn = callIn;
+      },
+      registerCallback: function (functionName) {
+        // do nothing atm
+      },
+      unregisterCallback: function (functionName) {
+        // do nothing atm
+      },
+      eval: function (expr) {
+        if (expr.indexOf('jwplayer.utils.tea.decrypt') >= 0) {
+          return "<string></string>";
+        } else if (expr.indexOf('jwplayer.embed.flash.getVars') >= 0) {
+          var base = document.location.href;
+          base = base.substring(0, base.lastIndexOf('inspector.html'));
+          return '<object><property id="aspectratio"><string>56.25%</string></property><property id="playlist"><array><property id="0"><object><property id="sources"><array><property id="0"><object><property id="file"><string>../videoplayer/big_buck_bunny.mp4</string></property><property id="default"><false/></property></object></property></array></property><property id="tracks"><array></array></property><property id="image"><string>../examples/image-loading/firefox.png</string></property><property id="title"><string>test</string></property></object></property></array></property><property id="id"><string>' + objId + '</string></property><property id="base"><string>' + base + '</string></property></object>';
+        } else if (expr.indexOf('jwplayer.playerReady') >= 0) {
+          // TODO client calls back jwAddEventListener, jwGetWidth/jwGetHeight
+          return "<undefined/>";
+        } else {
+          throw new Error('Unexpected ExternalInterfaceService::eval()');
         }
       },
-      requestSync: function (type, data) {
-        if (type === 'getBoolPref') return data.def;
-        switch (data.action) {
-          case 'eval':
-            var expr = data.expression;
-            if (expr.indexOf('jwplayer.utils.tea.decrypt') >= 0) {
-              return "<string></string>";
-            } else if (expr.indexOf('jwplayer.embed.flash.getVars') >= 0) {
-              var base = document.location.href;
-              base = base.substring(0, base.lastIndexOf('inspector.html'));
-              return '<object><property id="aspectratio"><string>56.25%</string></property><property id="playlist"><array><property id="0"><object><property id="sources"><array><property id="0"><object><property id="file"><string>../videoplayer/big_buck_bunny.mp4</string></property><property id="default"><false/></property></object></property></array></property><property id="tracks"><array></array></property><property id="image"><string>../examples/image-loading/firefox.png</string></property><property id="title"><string>test</string></property></object></property></array></property><property id="id"><string>' + objId + '</string></property><property id="base"><string>' + base + '</string></property></object>';
-            } else if (expr.indexOf('jwplayer.playerReady') >= 0) {
-              // TODO client calls back jwAddEventListener, jwGetWidth/jwGetHeight
-              return "<undefined/>";
-            } else {
-              throw new Error('Unexpected FirefoxCom.requestSync(eval)');
-            }
-            break;
-          case 'getId':
-            return objId;
-          default:
-            throw new Error('Unexpected FirefoxCom.requestSync(' + data.action + ')');
-        }
+      call: function (request) {
+        throw new Error('Unexpected ExternalInterfaceService::call()');
+      },
+      getId: function () {
+        return 'jwplayerObjectId';
       }
     };
   }

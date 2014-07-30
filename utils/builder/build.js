@@ -37,9 +37,10 @@ global.assert = function () { };
 global.release = false;
 
 var shumwayRoot = __dirname + "/../../";
-var amv2Root = shumwayRoot + "src/avm2/";
+var srcRoot = shumwayRoot + "src/";
+var amv2Root = srcRoot + "avm2/";
 
-var options = require(amv2Root + "options.js");
+var options = require(srcRoot + "options.js");
 
 var ArgumentParser = options.Shumway.Options.ArgumentParser;
 var Option = options.Shumway.Options.Option;

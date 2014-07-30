@@ -24,7 +24,7 @@ import flash.geom.Vector3D;
 
 [native(cls='DisplayObjectClass')]
 public class DisplayObject extends EventDispatcher implements IBitmapDrawable {
-  public function DisplayObject() {}
+  public native function DisplayObject()
   public native function get root():DisplayObject;
   public native function get stage():Stage;
   public native function get name():String;
@@ -93,19 +93,12 @@ public class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 
   public native function getRect(targetCoordinateSpace:DisplayObject):Rectangle;
 
-  public function hitTestObject(obj:DisplayObject):Boolean {
-    return _hitTest(false, 0, 0, false, obj);
-  }
+  public native function hitTestObject(obj:DisplayObject):Boolean;
 
-  public function hitTestPoint(x:Number, y:Number, shapeFlag:Boolean = false):Boolean {
-    return _hitTest(true, x, y, shapeFlag, null);
-  }
+  public native function hitTestPoint(x:Number, y:Number, shapeFlag:Boolean = false):Boolean;
 
   public native function globalToLocal3D(point:Point):Vector3D;
 
   public native function local3DToGlobal(point3d:Vector3D):Point;
-
-  private native function _hitTest(use_xy: Boolean, x: Number, y: Number, useShape: Boolean,
-                                   hitTestObject: DisplayObject): Boolean;
 }
 }

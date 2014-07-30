@@ -23,21 +23,27 @@ limitations under the License.
         background: #404040;
         margin: 0;
       }
+      #playerWindow {
+        position: absolute;
+        top: 0;
+        right: 0;
+      }
+
+      #stageContainer {
+        width: 1024px;
+        height: 1024px;
+      }
     </style>
 
+    <script src="../../build/bundles/shumway.gfx.js"></script>
+
     <script>
-      SHUMWAY_ROOT = "../../build/bundle/";
-      var playerglobalInfo = {
-          abcs: "../../build/playerglobal/playerglobal.abcs",
-          catalog: "../../build/playerglobal/playerglobal.json"
-      };
+      var TEST_MODE = 'iframe';
     </script>
-
-    <script src="../../build/bundle/shumway.js"></script>
-
     <script src="slave.js"></script>
   </head>
   <body>
-    <div id="stage"></div>
+    <iframe id="playerWindow" src="" width="9" height="9"></iframe>
+    <div id="stageContainer"></div>
   </body>
 </html>

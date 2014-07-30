@@ -1,19 +1,9 @@
-sanityTests.push(function runInspectorSanityTests(console, avm2) {
+unitTests.push(function runInspectorSanityTests(avm2) {
   function log(message) {
     console.info(message);
   }
-  var testNumber = 0;
-  function check(condition, test) {
-    test = test ? ": " + test : " #" + testNumber;
-    if (condition) {
-      console.info("PASS" + test)
-    } else {
-      console.error("FAIL" + test)
-    }
-    testNumber ++;
-  }
 
-  check (flash.events.Event.class.ADDED === "added", "Static Class Property");
+  check (flash.events.Event.ADDED === "added", "Static Class Property");
 
   (function checkRectangle() {
     log("--- flash.geom.Rectangle ---");
@@ -25,32 +15,12 @@ sanityTests.push(function runInspectorSanityTests(console, avm2) {
     check (!o.equals(new flash.geom.Rectangle(5, 20, 35, 45)), "Equals");
   })();
 
-  (function loadStubs() {
-    function loadStubFor(className) {
-      if (className.indexOf('avm1lib.') === 0) {
-        return; // skipping avm1lib classes
-      }
-      eval(className);
-    }
-    log("--- Load all defined stubs ---");
-    check (Stubs, "Has Stubs");
-    avm2.systemDomain.onMessage.register('classCreated', function (eventType, cls) {
-      console.info("Loaded: " + cls);
-    });
-    Stubs.getClassNames().forEach(loadStubFor);
-    log("--- Shouldn't reload stubs past this point ---");
-    Stubs.getClassNames().forEach(loadStubFor);
-  })();
+});
 
-  (function URLVariables() {
-    log("--- flash.net.URLVariables ---");
-    var f = new flash.net.URLVariables("fn=Gordon&ln=Shumway");
-    check (f.toString() === "fn=Gordon&ln=Shumway");
-    f.decode("fn=Mozilla&ln=Firefox");
-    log(f.toString());
-    check (f.toString() === "fn=Gordon&fn=Mozilla&ln=Shumway&ln=Firefox");
-    f = new flash.net.URLVariables();
-    f[Multiname.getPublicQualifiedName("x")] = 123;
-    check (f.toString() === "x=123");
-  })();
+
+unitTests.push(function runInspectorAsyncTest(avm2) {
+  console.info('Testing async test');
+  return new Promise(function (resolve) {
+    setTimeout(resolve);
+  });
 });

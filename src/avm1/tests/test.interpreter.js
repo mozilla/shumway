@@ -61,7 +61,7 @@ describe('AVM1 Interpreter (Tamarin acceptance tests)', function() {
     for (var i = 0; i < swfLength; i++)
       swfBytes[i] = swfData.charCodeAt(i) & 255;
     var actionsData = [], position = 0;
-    SWF.parse(swfBytes, { onprogress: function(result) {
+    Shumway.SWF.Parser.parse(swfBytes, { onprogress: function(result) {
       while (position < result.tags.length) {
         var tag = result.tags[position++];
         if ('actionsData' in tag)

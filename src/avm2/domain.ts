@@ -1,7 +1,5 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,60 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
 
 module Shumway.AVM2.Runtime {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import Hashes = Shumway.AVM2.ABC.Hashes;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
   import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
   import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+  import Callback = Shumway.Callback;
+  import Timer = Shumway.Metrics.Timer;
 
+  var counter = Shumway.Metrics.Counter.instance;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
+  import assert = Shumway.Debug.assert;
   import IndentingWriter = Shumway.IndentingWriter;
 
-  declare var getNative;
-  declare var createFunction;
-  declare var Timer;
-
-  declare var compileAbc;
-  declare var compileAbc;
-  declare var Promise;
-  declare var Callback;
-  declare var natives;
-  declare var Counter: Shumway.Metrics.Counter;
-  declare var Type;
-  declare var GlobalMultinameResolver;
-  declare var avm2;
   declare var homePath;
   declare var snarf;
   declare var newGlobal;
-
-  export enum EXECUTION_MODE {
-    INTERPRET   = 0x1,
-    COMPILE     = 0x2
-  }
-
 
   function createNewCompartment() {
     return newGlobal('new-compartment');
   }
 
   export function executeScript(script) {
+    enterTimeline("executeScript", { name: script.name });
     var abc = script.abc;
     release || assert(!script.executing && !script.executed);
     var global = new Global(script);
     if (abc.applicationDomain.allowNatives) {
-      global[Multiname.getPublicQualifiedName("unsafeJSNative")] = getNative;
+      global[Multiname.getPublicQualifiedName("unsafeJSNative")] = Shumway.AVM2.AS.getNative;
     }
     script.executing = true;
     var scope = new Scope(null, script.global);
     // XXX interpreted methods populate stack with every call, compiled don't
     // pushing current runtime to the stack, so Runtime.currentDomain is successful
-    createFunction(script.init, scope).call(script.global, false);
+    createFunction(script.init, scope, false).call(script.global, false);
     script.executed = true;
+    leaveTimeline();
   }
 
   export function ensureScriptIsExecuted(script, reason: string = "") {
@@ -86,8 +71,9 @@ module Shumway.AVM2.Runtime {
     ALL               = Glue.PUBLIC_PROPERTIES | Glue.PUBLIC_METHODS
   }
 
-  declare var playerglobalLoadedPromise;
-  declare var playerglobal;
+  // TODO we don't need them here?
+  export var playerglobalLoadedPromise;
+  export var playerglobal;
 
   function grabAbc(abcName: string): AbcFile {
     var entry = playerglobal.scripts[abcName];
@@ -122,8 +108,13 @@ module Shumway.AVM2.Runtime {
       xhr.open('GET', path);
       xhr.responseType = responseType;
       xhr.onload = function () {
-        if (xhr.response) {
-          resolve(xhr.response);
+        var response = xhr.response;
+        if (response) {
+          if (responseType === 'json' && xhr.responseType !== 'json') {
+            // some browsers (e.g. Safari) have no idea what json is
+            response = JSON.parse(response);
+          }
+          resolve(response);
         } else {
           reject('Unable to load ' + path + ': ' + xhr.statusText);
         }
@@ -136,24 +127,28 @@ module Shumway.AVM2.Runtime {
     public systemDomain: ApplicationDomain;
     public applicationDomain: ApplicationDomain;
     public findDefiningAbc: (mn: Multiname) => AbcFile;
-    public loadAVM1: boolean;
-    public isAVM1Loaded: boolean;
     public exception: any;
     public exceptions: any [];
+    public globals: Map<any>;
+    public builtinsLoaded: boolean;
+
+    private _loadAVM1: (next) => void;
+    private _loadAVM1Promise: Promise<void>;
 
     public static instance: AVM2;
-    public static initialize(sysMode: EXECUTION_MODE, appMode: EXECUTION_MODE, loadAVM1: boolean) {
-      assert (!AVM2.instance);
+    public static initialize(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: (next) => void = null) {
+      release || assert (!AVM2.instance);
       AVM2.instance = new AVM2(sysMode, appMode, loadAVM1);
     }
 
-    constructor(sysMode: EXECUTION_MODE, appMode: EXECUTION_MODE, loadAVM1: boolean) {
+    constructor(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: (next) => void) {
       // TODO: this will change when we implement security domains.
       this.systemDomain = new ApplicationDomain(this, null, sysMode, true);
       this.applicationDomain = new ApplicationDomain(this, this.systemDomain, appMode, false);
       this.findDefiningAbc = findDefiningAbc;
-      this.loadAVM1 = loadAVM1;
-      this.isAVM1Loaded = false;
+
+      this._loadAVM1 = loadAVM1;
+      this._loadAVM1Promise = null;
 
       /**
        * All runtime exceptions are boxed in this object to tag them as having
@@ -161,6 +156,8 @@ module Shumway.AVM2.Runtime {
        */
       this.exception = { value: undefined };
       this.exceptions = [];
+
+      this.globals = createEmptyObject();
     }
 
     // We sometimes need to know where we came from, such as in
@@ -183,7 +180,7 @@ module Shumway.AVM2.Runtime {
 
     public static currentDomain() {
       var abc = AVM2.currentAbc();
-      assert (abc && abc.applicationDomain,
+      release || assert (abc && abc.applicationDomain,
           "No domain environment was found on the stack, increase STACK_DEPTH or " +
           "make sure that a compiled / interpreted function is on the call stack.");
       return abc.applicationDomain;
@@ -191,6 +188,18 @@ module Shumway.AVM2.Runtime {
 
     public static isPlayerglobalLoaded() {
       return !!playerglobal;
+    }
+
+    public loadAVM1(): Promise<void> {
+      var loadAVM1Callback = this._loadAVM1;
+      release || assert(loadAVM1Callback);
+
+      if (!this._loadAVM1Promise) {
+        this._loadAVM1Promise = new Promise<void>(function (resolve) {
+          loadAVM1Callback(resolve);
+        });
+      }
+      return this._loadAVM1Promise;
     }
 
     public static loadPlayerglobal(abcsPath, catalogPath) {
@@ -205,7 +214,8 @@ module Shumway.AVM2.Runtime {
             map: Object.create(null),
             scripts: Object.create(null)
           };
-          var catalog = result[1];
+          // TODO: Clean this up, type it.
+          var catalog = <any>result[1];
           for (var i = 0; i < catalog.length; i++) {
             var abc = catalog[i];
             playerglobal.scripts[abc.name] = abc;
@@ -228,8 +238,9 @@ module Shumway.AVM2.Runtime {
       // REMOVEME
     }
 
-    public static getStackTrace() {
+    public static getStackTrace(): string {
       Shumway.Debug.notImplemented("getStackTrace");
+      return;
     }
   }
 
@@ -243,10 +254,10 @@ module Shumway.AVM2.Runtime {
     classInfoCache: any;
     base: ApplicationDomain;
     allowNatives: boolean;
-    mode: EXECUTION_MODE;
-    onMessage: any;
+    mode: ExecutionMode;
+    onMessage: Callback;
     system: any;
-    constructor(vm, base, mode, allowNatives) {
+    constructor(vm: AVM2, base: ApplicationDomain, mode: ExecutionMode, allowNatives: boolean) {
       release || assert (vm instanceof AVM2);
       release || assert (isNullOrUndefined(base) || base instanceof ApplicationDomain);
 
@@ -294,10 +305,10 @@ module Shumway.AVM2.Runtime {
       return {
         call: function ($this) {
           Array.prototype.shift.call(arguments);
-          return f.apply($this, arguments);
+          return f.asApply($this, arguments);
         },
         apply: function ($this, args) {
-          return f.apply($this, args);
+          return f.asApply($this, args);
         }
       };
     }
@@ -309,17 +320,6 @@ module Shumway.AVM2.Runtime {
         },
         apply: function ($this, args) {
           return asCoerce(type, args[0]);
-        }
-      };
-    }
-
-    static constructingCallable(instanceConstructor) {
-      return {
-        call: function (self) {
-          return new (Function.bind.apply(instanceConstructor, arguments));
-        },
-        apply: function (self, args) {
-          return new (Function.bind.apply(instanceConstructor, [self].concat(args)));
         }
       };
     }
@@ -344,13 +344,13 @@ module Shumway.AVM2.Runtime {
       return undefined;
     }
 
-    public getClass(simpleName) {
+    public getClass(simpleName): Shumway.AVM2.AS.ASClass {
       var cache = this.classCache;
       var c = cache[simpleName];
       if (!c) {
         c = cache[simpleName] = this.getProperty(Multiname.fromSimpleName(simpleName), true, true);
       }
-      release || assert(c instanceof Class);
+      release || assert(c instanceof Shumway.AVM2.AS.ASClass);
       return c;
     }
 
@@ -440,12 +440,6 @@ module Shumway.AVM2.Runtime {
       return undefined;
     }
 
-    public installNative(name, func) {
-      natives[name] = function() {
-        return func;
-      };
-    }
-
     /**
      * Find the first script that defines a multiname.
      *
@@ -465,7 +459,7 @@ module Shumway.AVM2.Runtime {
         }
       }
 
-      Counter.count("ApplicationDomain: findDefiningScript");
+      countTimeline("ApplicationDomain: findDefiningScript");
 
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {
@@ -504,32 +498,31 @@ module Shumway.AVM2.Runtime {
     }
 
     public compileAbc(abc, writer) {
-      compileAbc(abc, writer);
+      Shumway.AVM2.Compiler.compileAbc(abc, writer);
     }
 
-    public executeAbc(abc) {
+    public executeAbc(abc: AbcFile) {
       // console.time("Execute ABC: " + abc.name);
       this.loadAbc(abc);
       executeScript(abc.lastScript);
       // console.timeEnd("Execute ABC: " + abc.name);
     }
 
-    public loadAbc(abc) {
+    public loadAbc(abc: AbcFile) {
       if (Shumway.AVM2.Runtime.traceExecution.value) {
         log("Loading: " + abc.name);
       }
       abc.applicationDomain = this;
       GlobalMultinameResolver.loadAbc(abc);
       this.abcs.push(abc);
+
       if (!this.base) {
-        Type.initializeTypes(this);
+        AS.initialize(this);
+        Shumway.AVM2.Verifier.Type.initializeTypes(this);
       }
     }
 
     public broadcastMessage(type, message, origin) {
-      if (debug) {
-        Timer.start("broadcast: " + type);
-      }
       try {
         this.onMessage.notify1(type, {
           data: message,
@@ -537,21 +530,19 @@ module Shumway.AVM2.Runtime {
           source: this
         });
       } catch (e) {
+        var avm2 = AVM2.instance;
         avm2.exceptions.push({source: type, message: e.message,
           stack: e.stack});
         throw e;
-      }
-      if (debug) {
-        Timer.stop();
       }
     }
 
     public traceLoadedClasses(lastOnly) {
       var writer = new IndentingWriter();
       lastOnly || writer.enter("Loaded Classes And Interfaces");
-      var classes = lastOnly ? [this.loadedClasses.last()] : this.loadedClasses;
+      var classes = lastOnly ? [Shumway.ArrayUtilities.last(this.loadedClasses)] : this.loadedClasses;
       classes.forEach(function (cls) {
-        if (cls !== Class) {
+        if (cls !== Shumway.AVM2.AS.ASClass) {
           cls.trace(writer);
         }
       });
@@ -563,11 +554,11 @@ module Shumway.AVM2.Runtime {
     compartment: any;
     systemDomain: ApplicationDomain;
     applicationDomain: ApplicationDomain;
-    constructor () {
+    constructor (compartmentPath: string) {
       this.compartment = createNewCompartment();
       this.compartment.homePath = homePath;
       this.compartment.release = release;
-      this.compartment.eval(snarf("compartment.js"));
+      this.compartment.eval(snarf(compartmentPath));
     }
 
     public initializeShell(sysMode, appMode) {
@@ -586,4 +577,4 @@ module Shumway.AVM2.Runtime {
 var Glue = Shumway.AVM2.Runtime.Glue;
 import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
 import AVM2 = Shumway.AVM2.Runtime.AVM2;
-import EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+import EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;

@@ -16,13 +16,24 @@
  * limitations under the License.
  */
 
-// turbo mode introduces intermittent failures in timeline and timeline_scene
-// tests since frames are not parsed fast enough for gotoAndPlay/gotoAndStop
-// turboMode.value = true;
+var SHUMWAY_ROOT = "../../src/";
 
-skipFrameDraw.value = false;
+var avm2Root = "../../src/avm2/";
+var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var shellAbcPath = avm2Root + "generated/shell/shell.abc";
+var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
+
+// different playerglobals can be used here
+var playerglobalInfo = {
+  abcs: "../../build/playerglobal/playerglobal.abcs",
+  catalog: "../../build/playerglobal/playerglobal.json"
+};
+
+var easel, easelHost, player;
 
 function loadMovie(path, reportFrames) {
+  path = combineUrl(document.location.href, path);
+
   var movieReadyResolve;
   var movieReady = new Promise(function (resolve) {
     movieReadyResolve = resolve;
@@ -31,7 +42,7 @@ function loadMovie(path, reportFrames) {
 
   var onFrameCallback = null;
   if (reportFrames) {
-    var i = 0, frame = 0;
+    var i = 0, frame = -1;
     onFrameCallback = function () {
       while (i < reportFrames.length && frame >= reportFrames[i]) {
         var snapshot = getCanvasData();
@@ -46,101 +57,104 @@ function loadMovie(path, reportFrames) {
     };
   }
 
-  createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
-    function loaded() { movieReadyResolve(); }
-    function terminate() {
-      ignoreAdanvances = true;
-      // cleaning up
-      if (!movieReady.resolved) { // movieReady needs to be resolved
-        movieReadyResolve();
-      }
-      if (advanceTimeout) { // invoke current timeout
-        clearTimeout(advanceTimeout);
-        advanceCallback();
-      }
-      // reports unreported frames
-      while (reportFrames && i < reportFrames.length) {
-        onFrameCallback();
-      }
-    }
+  function initialized() {
+    setTimeout(function () {
+      movieReadyResolve(); // startPromise
+      loaded(); // onParsed
+    }, 1000);
 
-    FileLoadingService.baseUrl = path;
-    new BinaryFileReader(path).readAll(null, function(buffer) {
-      if (!buffer) {
-        throw "Unable to open the file " + SWF_PATH + ": " + error;
-      }
-      SWF.embed(buffer, document, document.getElementById("stage"), {
-        url: path,
-        startPromise: movieReady,
-        onParsed: loaded,
-        onAfterFrame: onFrameCallback,
-        onTerminated: terminate
-      });
-    });
-  });
-}
-
-var sanityTests = {
-  tests: [],
-  push: function () {
-    this.tests.push.apply(this.tests, arguments);
-    this.onload();
-  },
-  onload: null
-};
-
-function loadScripts(files) {
-  sanityTests.onload = next;
-
-  var i = 0;
-  function next() {
-    if (i >= files.length) {
-      return runSanityTests(sanityTests.tests);
-    }
-    var script = document.createElement('script');
-    script.src = files[i++];
-    document.getElementsByTagName('head')[0].appendChild(script);
+    // terminate();
   }
-  next();
-}
 
-function runSanityTests(tests) {
-  createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
-    sendResponse();
-    for (var i = 0; i < tests.length; i++) {
-      var failed = false;
-      try {
-        tests[i]({
-          info: function (m) {
-            console.info(m);
-          },
-          error: function (m) {
-            console.error(m);
-            failed = true;
-          }
-        }, avm2);
-      } catch (ex) {
-        failed = true;
+  easel = createEasel();
+
+  if (TEST_MODE === 'iframe') {
+    var flashParams = {
+      url: path,
+      baseUrl: path,
+      movieParams: {},
+      objectParams: {},
+      compilerSettings: {
+        sysCompiler: true,
+        appCompiler: true,
+        verifier: true
       }
-      sendResponse({index: i, failure: failed});
+    };
+    var playerElement = document.getElementById('playerWindow');
+    playerElement.src = 'slave-iframe.html';
+    playerElement.onload = function () {
+      var data = {
+        type: 'runSwf',
+        settings: Shumway.Settings.getSettings(),
+        flashParams: flashParams
+      };
+      var playerWindow = playerElement.contentWindow;
+      playerWindow.postMessage(data, '*');
+
+      easelHost = new Shumway.Player.Window.WindowEaselHost(easel, playerWindow, window);
+      easelHost.processFrame = onFrameCallback;
+      initialized();
+    };
+    return;
+  }
+
+  function loaded() { movieReadyResolve(); }
+  function terminate() {
+    ignoreAdanvances = true;
+    // cleaning up
+    if (!movieReady.resolved) { // movieReady needs to be resolved
+      movieReadyResolve();
     }
+    if (advanceTimeout) { // invoke current timeout
+      clearTimeout(advanceTimeout);
+      advanceCallback();
+    }
+    // reports unreported frames
+    while (reportFrames && i < reportFrames.length) {
+      onFrameCallback();
+    }
+  }
+
+
+  Shumway.dontSkipFramesOption.value = true;
+
+  var sysMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
+  var appMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
+
+  Shumway.FileLoadingService.instance.baseUrl = path;
+
+  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
+
+    easelHost = new Shumway.Player.Test.TestEaselHost(easel);
+    easelHost.processFrame = onFrameCallback;
+
+    player = new Shumway.Player.Test.TestPlayer();
+    player.load(path);
+
+    initialized();
   });
 }
 
-var TelemetryService = {
+function createEasel() {
+  Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
+  var backend = Shumway.GFX.backend.value | 0;
+  var easel = new Shumway.GFX.Easel(document.getElementById("stageContainer"), backend, true);
+  return easel;
+}
+
+Shumway.Telemetry.instance = {
   reportTelemetry: function (data) {}
 };
 
-var FileLoadingService = {
+Shumway.FileLoadingService.instance = {
   createSession: function () {
     return {
       open: function (request) {
         var self = this;
-        var base = FileLoadingService.baseUrl || '';
-        base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-        var path = base ? base + request.url : request.url;
+        var base = Shumway.FileLoadingService.instance.baseUrl || '';
+        var path = combineUrl(base, request.url);
         console.log('FileLoadingService: loading ' + path);
-        new BinaryFileReader(path).readAsync(
+        new Shumway.BinaryFileReader(path).readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },
@@ -153,10 +167,8 @@ var FileLoadingService = {
 };
 
 var traceMessages = '';
-natives.print = function() {
-   return function(s) {
-     traceMessages += s + '\n';
-   };
+window.print = function(s) {
+  traceMessages += s + '\n';
 };
 
 function sendResponse(data) {
@@ -166,16 +178,30 @@ function sendResponse(data) {
   }, '*');
 }
 
+function getCanvas() {
+  var canvasList = document.getElementsByTagName('canvas');
+  return canvasList[canvasList.length - 1]; // we need last one
+}
+
+var tmpCanvas = document.createElement('canvas');
+
 function getCanvasData() {
-  var canvas = document.getElementsByTagName('canvas')[0];
-  return canvas.toDataURL('image/png');
+  var canvas = getCanvas();
+
+  var bounds = easel._stage._bounds;
+  tmpCanvas.width = bounds.w;
+  tmpCanvas.height = bounds.h;
+  var ctx = tmpCanvas.getContext('2d');
+  ctx.drawImage(canvas, 0, 0);
+
+  return tmpCanvas.toDataURL('image/png');
 }
 
 var mouseOutside = true;
 
 function sendMouseEvent(type, x, y) {
   var isMouseMove = type == 'mousemove';
-  var canvas = document.getElementsByTagName('canvas')[0];
+  var canvas = getCanvas();
   var e = document.createEvent('MouseEvents');
   e.initMouseEvent(type, true, !isMouseMove,
                    document.defaultView, isMouseMove ? 0 : 1,
@@ -186,6 +212,37 @@ function sendMouseEvent(type, x, y) {
 
 var advanceTimeout = null, ignoreAdanvances = false;
 
+// Combines two URLs. The baseUrl shall be absolute URL. If the url is an
+// absolute URL, it will be returned as is.
+function combineUrl(baseUrl, url) {
+  if (!url) {
+    return baseUrl;
+  }
+  if (/^[a-z][a-z0-9+\-.]*:/i.test(url)) {
+    return url;
+  }
+  var i;
+  if (url.charAt(0) == '/') {
+    // absolute path
+    i = baseUrl.indexOf('://');
+    if (url.charAt(1) === '/') {
+      ++i;
+    } else {
+      i = baseUrl.indexOf('/', i + 3);
+    }
+    return baseUrl.substring(0, i) + url;
+  } else {
+    // relative path
+    var pathLength = baseUrl.length;
+    i = baseUrl.lastIndexOf('#');
+    pathLength = i >= 0 ? i : pathLength;
+    i = baseUrl.lastIndexOf('?', pathLength);
+    pathLength = i >= 0 ? i : pathLength;
+    var prefixLength = baseUrl.lastIndexOf('/', pathLength);
+    return baseUrl.substring(0, prefixLength + 1) + url;
+  }
+}
+
 function advanceCallback() {
   advanceTimeout = null;
   sendResponse();
@@ -193,14 +250,20 @@ function advanceCallback() {
 
 window.addEventListener('message', function (e) {
   var data = e.data;
-  if (typeof data !== 'object' || data.type !== 'test-message')
+  if (typeof data !== 'object' || data === null) {
     return;
+  }
+
+  if (data.type === 'console-log') {
+    print(data.msg);
+  }
+
+  if (data.type !== 'test-message') {
+    return;
+  }
   switch (data.topic) {
   case 'load':
     loadMovie(data.path, data.reportFrames);
-    break;
-  case 'js':
-    loadScripts(data.files);
     break;
   case 'advance':
     if (ignoreAdanvances) {

@@ -16,21 +16,7 @@
  * limitations under the License.
  */
 
-// IE10 has no console.time functions
-console.time || (console.time = console.timeEnd = function () {});
-console.profile || (console.profile = console.profileEnd = function () {});
-// Safari has no perfomance
-if (typeof performance === 'undefined') {
-  window.performance = { now: Date.now };
-}
-
-var SHUMWAY_ROOT = "../src/";
-
-var viewerPlayerglobalInfo = {
-  abcs: "../build/playerglobal/playerglobal.abcs",
-  catalog: "../build/playerglobal/playerglobal.json"
-};
-
+var release = true;
 
 function parseQueryString(qs) {
   if (!qs)
@@ -57,94 +43,48 @@ function getPluginParams() {
     url: params.swf,
     movieParams: {},
     objectParams: {},
-    compilerSettings: {sysCompiler: true, appCompiler: true, verifier: true}
+    compilerSettings: {
+      sysCompiler: true,
+      appCompiler: true,
+      verifier: true,
+      forceHidpi: (typeof params.forceHidpi === "undefined") ? false : !!params.forceHidpi
+    }
   };
 }
 
+var easelHost;
+
 function runViewer() {
   var flashParams = getPluginParams();
-  FileLoadingService.setBaseUrl(flashParams.baseUrl);
-
-  movieUrl = flashParams.url;
-  if (!movieUrl) {
+  if (!flashParams.url) {
     console.log("no movie url provided -- stopping here");
     return;
   }
 
-  var compilerSettings = flashParams.compilerSettings;
-  movieParams = flashParams.movieParams;
-  objectParams = flashParams.objectParams;
-  parseSwf(movieUrl, movieParams, objectParams, compilerSettings);
-}
+  var playerWindowIframe = document.getElementById("playerWindow");
+  playerWindowIframe.addEventListener('load', function () {
+    var playerWindow = playerWindowIframe.contentWindow;
 
-var movieUrl, movieParams, objectParams;
+    var easel = createEasel();
+    easelHost = new Shumway.Player.Window.WindowEaselHost(easel, playerWindow, window);
 
-var TelemetryService = {
-  reportTelemetry: function (data) {}
-};
-
-var FileLoadingService = {
-  createSession: function () {
-    return {
-      open: function (request) {
-        var self = this;
-        var path = FileLoadingService.resolveUrl(request.url);
-        console.log('FileLoadingService: loading ' + path);
-        new BinaryFileReader(path).readAsync(
-          function (data, progress) {
-            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
-          },
-          function (e) { self.onerror(e); },
-          self.onopen,
-          self.onclose);
-      }
+    var data = {
+      type: 'runSwf',
+      settings: Shumway.Settings.getSettings(),
+      flashParams: flashParams
     };
-  },
-  setBaseUrl: function (url) {
-    var a = document.createElement('a');
-    a.href = url || '#';
-    a.setAttribute('style', 'display: none;');
-    document.body.appendChild(a);
-    FileLoadingService.baseUrl = a.href;
-    document.body.removeChild(a);
-  },
-  resolveUrl: function (url) {
-    if (url.indexOf('://') >= 0) return url;
-
-    var base = FileLoadingService.baseUrl;
-    base = base.split(/[#?]/)[0];
-    base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-    if (url.indexOf('/') === 0) {
-      var m = /^[^:]+:\/\/[^\/]+/.exec(base);
-      if (m) base = m[0];
-    }
-    return base + url;
-  }
-};
-
-function parseSwf(url, movieParams, objectParams, compilerSettings) {
-  var enableVerifier = Shumway.AVM2.Runtime.enableVerifier;
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
-
-  enableVerifier.value = compilerSettings.verifier;
-
-  console.log("Compiler settings: " + JSON.stringify(compilerSettings));
-  console.log("Parsing " + url + "...");
-  function loaded() { }
-  function frame(e) {}
-
-  createAVM2(builtinPath, viewerPlayerglobalInfo, avm1Path,
-    compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
-    compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
-    function (avm2) {
-      console.time("Initialize Renderer");
-      SWF.embed(url, document, document.getElementById("viewer"), {
-         url: url,
-         movieParams: movieParams,
-         objectParams: objectParams,
-         onComplete: loaded,
-         onBeforeFrame: frame
-      });
+    playerWindow.postMessage(data,  '*');
   });
 }
 
+function createEasel() {
+  var Stage = Shumway.GFX.Stage;
+  var Easel = Shumway.GFX.Easel;
+  var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
+
+  Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
+  var backend = Shumway.GFX.backend.value | 0;
+  return new Easel(document.getElementById("stageContainer"), backend);
+}
+
+document.addEventListener("DOMContentLoaded", runViewer);

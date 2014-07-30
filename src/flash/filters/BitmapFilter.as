@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package flash.filters {
-public class BitmapFilter {
-  public function BitmapFilter() {}
-  public function clone(): BitmapFilter {
-    return null;
+package flash.filters
+{
+  [native(cls='BitmapFilterClass')]
+  public class BitmapFilter
+  {
+    public native function BitmapFilter();
+    public native function clone(): BitmapFilter;
   }
-}
 }

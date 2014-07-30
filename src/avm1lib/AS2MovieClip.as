@@ -1,7 +1,5 @@
-﻿/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-/*
- * Copyright 2013 Mozilla Foundation
+﻿/**
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package avm1lib {
+import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.Loader;
 import flash.display.MovieClip;
@@ -36,7 +36,7 @@ public dynamic class AS2MovieClip extends Object {
 
   public native function get _as3Object():MovieClip;
 
-  public function $lookupChild(id:String) {
+  public function __lookupChild(id:String) {
     if (id == '.') {
       return this;
     } else if (id == '..') {
@@ -45,7 +45,7 @@ public dynamic class AS2MovieClip extends Object {
       return AS2Utils.getAS2Object(this._as3Object.getChildByName(id));
     }
   }
-  public function get $targetPath() {
+  public function get __targetPath() {
     var target = this._target;
     var prefix = '_level0'; // TODO use needed level number here
     return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;
@@ -59,15 +59,15 @@ public dynamic class AS2MovieClip extends Object {
   public function attachAudio(id) {
     throw 'Not implemented: attachAudio';
   }
-  public function attachBitmap(bmp, depth, pixelSnapping, smoothing) {
-    throw 'Not implemented: attachBitmap';
-  }
-  private native function _constructSymbol(symbolId, name);
-  public function attachMovie(symbolId, name, depth, initObject) {
-    var mc = _constructSymbol(symbolId, name);
-    _insertChildAtDepth(mc, depth);
+  public native  function attachBitmap(bmp: AS2BitmapData, depth: int,
+                                       pixelSnapping: String = 'auto',
+                                       smoothing: Boolean = false): void;
 
-    var as2mc = AS2Utils.getAS2Object(mc);
+  private native function _constructMovieClipSymbol(symbolId, name);
+  public function attachMovie(symbolId, name, depth, initObject) {
+    var mc = _constructMovieClipSymbol(symbolId, name);
+    var as2mc = _insertChildAtDepth(mc, depth);
+
     for (var i in initObject) {
       as2mc[i] = initObject[i];
     }
@@ -107,18 +107,16 @@ public dynamic class AS2MovieClip extends Object {
   public function createEmptyMovieClip(name, depth) {
     var mc:MovieClip = new MovieClip();
     mc.name = name;
-    _insertChildAtDepth(mc, +depth);
-    return AS2Utils.getAS2Object(mc);
+    return _insertChildAtDepth(mc, depth);
   }
   public function createTextField(name, depth, x, y, width, height) {
     var text:TextField = new TextField();
     text.name = name;
-    text.x = +x;
-    text.y = +y;
-    text.width = +width;
-    text.height = +height;
-    _insertChildAtDepth(text, +depth);
-    return AS2Utils.getAS2Object(text);
+    text.x = x;
+    text.y = y;
+    text.width = width;
+    text.height = height;
+    return _insertChildAtDepth(text, depth);
   }
   public function get _currentframe() {
     return this._as3Object.currentFrame;
@@ -188,27 +186,9 @@ public dynamic class AS2MovieClip extends Object {
   public function getDepth() {
     return this._as3Object._depth;
   }
-  public function getInstanceAtDepth(depth) {
-    var nativeObject = this._as3Object;
-    for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-      var child = nativeObject.getChildAt(i);
-      if (child._depth === depth) {
-        return child;
-      }
-    }
-    return null;
-  }
-  public function getNextHighestDepth() {
-    var nativeObject = this._as3Object;
-    var maxDepth = 0;
-    for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-      var child = nativeObject.getChildAt(i);
-      if (child._depth > maxDepth) {
-        maxDepth = child._depth;
-      }
-    }
-    return maxDepth + 1;
-  }
+  public native function getInstanceAtDepth(depth): AS2MovieClip;
+  public native function getNextHighestDepth(): int;
+
   public function getRect(bounds) {
     throw 'Not implemented: getRect';
   }
@@ -300,6 +280,16 @@ public dynamic class AS2MovieClip extends Object {
   }
   public function set _lockroot(value) {
     throw 'Not implemented: set$_lockroot';
+  }
+  // AS2 pretends that these two properties don't exist on MovieClip instances, but happily
+  // resolves them nevertheless.
+  // TODO: make invisible to `hasOwnProperty`.
+  public function get _root(): AS2MovieClip {
+    return AS2Globals.instance._root;
+  }
+  // TODO: make invisible to `hasOwnProperty`.
+  public function get _level0(): AS2MovieClip {
+    return AS2Globals.instance._level0;
   }
   public function get menu() {
     return this._as3Object.contextMenu;

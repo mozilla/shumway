@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
 
 module Shumway.AVM2.Runtime {
   import Map = Shumway.Map;
@@ -24,6 +23,7 @@ module Shumway.AVM2.Runtime {
   import Trait = Shumway.AVM2.ABC.Trait;
   import IndentingWriter = Shumway.IndentingWriter;
   import createMap = Shumway.ObjectUtilities.createMap;
+  import assert = Shumway.Debug.assert;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
@@ -32,7 +32,8 @@ module Shumway.AVM2.Runtime {
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
 
   declare var callWriter: IndentingWriter;
-  declare var Counter: Shumway.Metrics.Counter;
+
+  var counter = Shumway.Metrics.Counter.instance;
 
   var vmNextTrampolineId = 1;
   var vmNextMemoizerId = 1;
@@ -183,19 +184,19 @@ module Shumway.AVM2.Runtime {
         if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
           log("Trampolining");
         }
-        Counter.count("Executing Trampoline");
+        countTimeline("Executing Trampoline");
         Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Trampoline: " + description);
         if (!target) {
           target = forward(trampoline);
           release || assert (target);
         }
-        return target.apply(this, arguments);
+        return target.asApply(this, arguments);
       };
       /**
        * Just triggers the trampoline without executing it.
        */
       trampoline.trigger = function trigger() {
-        Counter.count("Triggering Trampoline");
+        countTimeline("Triggering Trampoline");
         if (!target) {
           target = forward(trampoline);
           release || assert (target);
@@ -213,14 +214,14 @@ module Shumway.AVM2.Runtime {
 
   export function makeMemoizer(qn, target): IMemoizer {
     function memoizer() {
-      Counter.count("Runtime: Memoizing");
+      countTimeline("Runtime: Memoizing");
       // release || assert (!Object.prototype.hasOwnProperty.call(this, "class"), this);
       if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
         log("Memoizing: " + qn);
       }
       Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Memoizing: " + qn);
       if (isNativePrototype(this)) {
-        Counter.count("Runtime: Method Closures");
+        countTimeline("Runtime: Method Closures");
         return bindSafely(target.value, this);
       }
       if (isTrampoline(target.value)) {
@@ -231,8 +232,8 @@ module Shumway.AVM2.Runtime {
       }
       release || assert (!isTrampoline(target.value), "We should avoid binding trampolines.");
       var mc = null;
-      if (isClass(this)) {
-        Counter.count("Runtime: Static Method Closures");
+      if (this instanceof Shumway.AVM2.AS.ASClass) {
+        countTimeline("Runtime: Static Method Closures");
         mc = bindSafely(target.value, this);
         defineReadOnlyProperty(this, qn, mc);
         return mc;
@@ -240,10 +241,10 @@ module Shumway.AVM2.Runtime {
       if (Object.prototype.hasOwnProperty.call(this, qn)) {
         var pd = Object.getOwnPropertyDescriptor(this, qn);
         if (pd.get) {
-          Counter.count("Runtime: Method Closures");
+          countTimeline("Runtime: Method Closures");
           return bindSafely(target.value, this);
         }
-        Counter.count("Runtime: Unpatched Memoizer");
+        countTimeline("Runtime: Unpatched Memoizer");
         return this[qn];
       }
       mc = bindSafely(target.value, this);
@@ -253,13 +254,13 @@ module Shumway.AVM2.Runtime {
       return mc;
     }
     var m: IMemoizer = <IMemoizer><any>memoizer;
-    Counter.count("Runtime: Memoizers");
+    countTimeline("Runtime: Memoizers");
     m.isMemoizer = true;
     m.debugName = "Memoizer #" + vmNextMemoizerId++;
     return m;
   }
 
-  export function isTrampoline(fn) {
+  function isTrampoline(fn) {
     release || assert (fn && typeof fn === "function");
     return fn.isTrampoline;
   }

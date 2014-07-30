@@ -18,52 +18,11 @@ package flash.text {
 
 [native(cls='TextFormatClass')]
 public class TextFormat {
-  public function TextFormat(font: String = null, size: Object = null, color: Object = null,
+  public native function TextFormat(font: String = null, size: Object = null, color: Object = null,
                              bold: Object = null, italic: Object = null, underline: Object = null,
                              url: String = null, target: String = null, align: String = null,
                              leftMargin: Object = null, rightMargin: Object = null,
-                             indent: Object = null, leading: Object = null)
-  {
-    if (font != null) {
-      this.font = font;
-    }
-    if (size != null) {
-      this.size = size;
-    }
-    if (color != null) {
-      this.color = color;
-    }
-    if (bold != null) {
-      this.bold = bold;
-    }
-    if (italic != null) {
-      this.italic = italic;
-    }
-    if (underline != null) {
-      this.underline = underline;
-    }
-    if (url != null) {
-      this.url = url;
-    }
-    if (target != null) {
-      this.target = target;
-    }
-    if (align != null) {
-      this.align = align;
-    }
-    if (leftMargin != null) {
-      this.leftMargin = leftMargin;
-    }
-    if (rightMargin != null) {
-      this.rightMargin = rightMargin;
-    }
-    if (indent != null) {
-      this.indent = indent;
-    }
-    if (leading != null) {
-      this.leading = leading;
-    }
-  }
+                             indent: Object = null, leading: Object = null);
   public native function get align(): String;
   public native function set align(value: String): void;
   public native function get blockIndent(): Object;

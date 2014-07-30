@@ -31,7 +31,7 @@ check-system:
 	fi
 	echo "The environment is good"
 
-bootstrap: check-system install-libs install-utils build-playerglobal
+bootstrap: check-system install-libs install-utils build-libs build-playerglobal
 
 install-libs:
 	git submodule init
@@ -61,6 +61,9 @@ run-tamarin-sanity-tests:
 run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
 
+build-libs:
+	grunt avm2 avm1 stage
+
 build-playerglobal:
 	make -C utils/ build-playerglobal
 
@@ -82,7 +85,7 @@ FIREFOX_PATH ?= $(error ERROR: Specify FIREFOX_PATH)
 check-extension: build-extension
 	cd test/extension; python check.py -b "$(FIREFOX_PATH)"
 
-build-web: build-bundle build-extension
+build-web:
 	make -C web/ build
 
 MXMLC_FLAGS ?= -static-link-runtime-shared-libraries

@@ -17,7 +17,6 @@
  */
 
 // based on src/avm2/bin/dumpabc.js
-load("../../lib/DataView.js/DataView.js");
 
 this.self = this;
 load("../../src/swf/swf.js");
@@ -53,8 +52,6 @@ var console = {
     print(s);
   }
 };
-
-load("../../src/avm2/avm2Util.js");
 
 SWF.parse(snarf("bin/library.swf", "binary"), {
   oncomplete: function(result) {

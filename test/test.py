@@ -89,16 +89,18 @@ MIMEs = {
     '.xhtml': 'application/xhtml+xml',
     '.gif': 'image/gif',
     '.ico': 'image/x-icon',
+    '.jpg': 'image/jpeg',
     '.png': 'image/png',
     '.log': 'text/plain',
     '.properties': 'text/plain',
     '.stas': 'text/plain',
     '.trace': 'text/plain',
+    '.as': 'text/plain',
     '.abc': 'application/octet-stream',
     '.abcs': 'application/octet-stream',
     '.bin': 'application/octet-stream',
     '.txt': 'text/plain',
-
+    '.map': 'text/plain',
 }
 
 class State:
@@ -531,18 +533,33 @@ def checkStas(task, results, browser):
               State.traceLog = open(TRACELOG_FILE, 'w')
           traceLog = State.traceLog
 
-          traceLog.write('REFTEST TEST-UNEXPECTED-FAIL | ' + browser +'-'+ taskId +'-item'+ str(p + 1) + ' | trace\n')
-          traceLog.write('<<<<\n')
-          traceLog.write(snapshot['data1'].encode('utf-8'))
-          traceLog.write('====\n')
-          traceLog.write(snapshot['data2'].encode('utf-8'))
-          traceLog.write('>>>>\n')
+          traceLog.write('REFTEST TEST-UNEXPECTED-FAIL | ' + browser +'-'+ taskId +'-item'+ str(p + 1) + ' | ' + results[p].item + ' | trace\n')
+          traceLog.write(diffData(snapshot['data1'], snapshot['data2']))
 
           passed = False
           State.numStasFailures += 1
 
     if passed:
         print 'TEST-PASS | stas test', task['id'], '| in', browser
+
+def diffData(testData, refData):
+  try:
+    with open("refdata~", "wb") as f1:
+      f1.write(refData)
+    with open("testdata~", "wb") as f2:
+      f2.write(testData)
+    with open("diffresult~", "wb") as fresult:
+      process = subprocess.Popen(['diff', '-U', '2', 'refdata~', 'testdata~'], stdout = fresult)
+      process.wait()
+    with open("diffresult~", "rb") as fresult:
+      result = fresult.read()
+    os.remove("diffresult~")
+    os.remove("refdata~")
+    os.remove("testdata~")
+    return result
+
+  except:
+    return '<<<< reference\n' + refData.encode('utf-8') + '====\n' + testData.encode('utf-8') + '>>>> test\n';
 
 def checkSanity(task, results, browser):
     taskId = task['id']

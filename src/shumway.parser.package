@@ -1,0 +1,8 @@
+#!inline console.time("Load Parser Dependencies");
+build/ts/base.js
+build/ts/tools.js
+#!inline console.timeEnd("Load Parser Dependencies");
+
+#!inline console.time("Load SWF Parser");
+build/ts/swf.js
+#!inline console.timeEnd("Load SWF Parser");

@@ -1,7 +1,7 @@
 /* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
 /* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
 
 module Shumway.AVM2 {
   export var Errors = {
@@ -154,16 +153,16 @@ module Shumway.AVM2 {
   //  ScriptTerminatedError                : {code: 1503, message: "A script failed to exit after 30 seconds and was terminated."},
   //  EndOfFileError                       : {code: 1504, message: "End of file."},
   //  StringIndexOutOfBoundsError          : {code: 1505, message: "The string index %1 is out of bounds; must be in range %2 to %3."},
-  //  InvalidRangeError                    : {code: 1506, message: "The specified range is invalid."},
-  //  NullArgumentError                    : {code: 1507, message: "Argument %1 cannot be null."},
-  //  InvalidArgumentError                 : {code: 1508, message: "The value specified for argument %1 is invalid."},
+    InvalidRangeError                    : {code: 1506, message: "The specified range is invalid."},
+    NullArgumentError                    : {code: 1507, message: "Argument %1 cannot be null."},
+    InvalidArgumentError                 : {code: 1508, message: "The value specified for argument %1 is invalid."},
   //  ArrayFilterNonNullObjectError        : {code: 1510, message: "When the callback argument is a method of a class, the optional this argument must be null."},
     InvalidParamError                    : {code: 2004, message: "One of the parameters is invalid."},
     ParamRangeError                      : {code: 2006, message: "The supplied index is out of bounds."},
     NullPointerError                     : {code: 2007, message: "Parameter %1 must be non-null."},
     InvalidEnumError                     : {code: 2008, message: "Parameter %1 must be one of the accepted values."},
   //  CantInstantiateError                 : {code: 2012, message: "%1 class cannot be instantiated."},
-    ArgumentError                        : {code: 2015, message: "Invalid BitmapData."},
+  InvalidBitmapData                      : {code: 2015, message: "Invalid BitmapData."},
   //  EOFError                             : {code: 2030, message: "End of file was encountered."},
     CompressedDataError                  : {code: 2058, message: "There was an error decompressing the data."},
   //  EmptyStringError                     : {code: 2085, message: "Parameter %1 must be non-empty string."},
@@ -183,7 +182,7 @@ module Shumway.AVM2 {
      * Player Error Codes
      */
   //  NoSecurityContextError                                    : { code: 2000, message: "No active security context."},
-  //  TooFewArgumentsError                                      : { code: 2001, message: "Too few arguments were specified; got %1, %2 expected."},
+    TooFewArgumentsError                                      : { code: 2001, message: "Too few arguments were specified; got %1, %2 expected."},
   //  InvalidSocketError                                        : { code: 2002, message: "Operation attempted on invalid socket."},
   //  InvalidSocketPortError                                    : { code: 2003, message: "Invalid socket port number specified."},
   //  ParamTypeError                                            : { code: 2005, message: "Parameter %1 is of the incorrect type. Should be type %2."},
@@ -240,7 +239,7 @@ module Shumway.AVM2 {
   //  InvalidSoundError                                         : { code: 2068, message: "Invalid sound."},
   //  InvalidLoaderMethodError                                  : { code: 2069, message: "The Loader class does not implement this method."},
   //  StageOwnerSecurityError                                   : { code: 2070, message: "Security sandbox violation: caller %1 cannot access Stage owned by %2."},
-  //  InvalidStageMethodError                                   : { code: 2071, message: "The Stage class does not implement this property or method."},
+    InvalidStageMethodError                                   : { code: 2071, message: "The Stage class does not implement this property or method."},
   //  ProductManagerDiskError                                   : { code: 2073, message: "There was a problem saving the application to disk."},
   //  ProductManagerStageError                                  : { code: 2074, message: "The stage is too small to fit the download ui."},
   //  ProductManagerVerifyError                                 : { code: 2075, message: "The downloaded file is invalid."},
@@ -262,8 +261,8 @@ module Shumway.AVM2 {
   //  DecodeParamError                                          : { code: 2101, message: "The String passed to URLVariables.decode() must be a URL-encoded query string containing name/value pairs."},
   //  NotAnXMLChildError                                        : { code: 2102, message: "The before XMLNode parameter must be a child of the caller."},
   //  XMLRecursionError                                         : { code: 2103, message: "XML recursion failure: new child would create infinite loop."},
-  //  SceneNotFoundError                                        : { code: 2108, message: "Scene %1 was not found."},
-  //  FrameLabelNotFoundError                                   : { code: 2109, message: "Frame label %1 not found in scene %2."},
+    SceneNotFoundError                                        : { code: 2108, message: "Scene %1 was not found."},
+    FrameLabelNotFoundError                                   : { code: 2109, message: "Frame label %1 not found in scene %2."},
   //  DisableAVM1LoadingError                                   : { code: 2110, message: "The value of Security.disableAVM1Loading cannot be set unless the caller can access the stage and is in an ActionScript 3.0 SWF file."},
   //  AVM1LoadingError                                          : { code: 2111, message: "Security.disableAVM1Loading is true so the current load of the ActionScript 1.0/2.0 SWF file has been blocked."},
   //  ApplicationDomainSecurityError                            : { code: 2112, message: "Provided parameter LoaderContext.ApplicationDomain is from a disallowed domain."},
@@ -300,7 +299,7 @@ module Shumway.AVM2 {
   //  ForbiddenProtocolError                                    : { code: 2147, message: "Forbidden protocol in URL %1."},
   //  RemoteToLocalSecurityError                                : { code: 2148, message: "SWF file %1 cannot access local resource %2. Only local-with-filesystem and trusted local SWF files may access local resources."},
   //  FsCommandSecurityError                                    : { code: 2149, message: "Security sandbox violation: %1 cannot make fscommand calls to %2 (allowScriptAccess is %3)."},
-  //  CantAddParentError                                        : { code: 2150, message: "An object cannot be added as a child to one of it's children (or children's children, etc.)."},
+    CantAddParentError                                        : { code: 2150, message: "An object cannot be added as a child to one of it's children (or children's children, etc.)."},
   //  FullScreenSecurityError                                   : { code: 2151, message: "You cannot enter full screen mode when the settings dialog is visible."},
   //  FullScreenNotAllowedError                                 : { code: 2152, message: "Full screen mode is not allowed."},
   //  URLRequestInvalidHeader                                   : { code: 2153, message: "The URLRequest.requestHeaders array must contain only non-NULL URLRequestHeader objects."},
@@ -622,7 +621,7 @@ module Shumway.AVM2 {
   //  CubeMapSamplerMustUseMipmap                               : { code: 3704, message: "AGAL validation failed: Cube map samplers must enable mipmapping for %2 at token %3 of %1 program."}
   };
 
-  export function getErrorMessage(index) {
+  export function getErrorMessage(index: number): string {
     if (!Shumway.AVM2.Runtime.debuggerMode.value) {
       return "Error #" + index;
     }

@@ -16,7 +16,12 @@
  * limitations under the License.
  */
 
-Shumway.AVM2.Runtime.enableVerifier.value = true;
+var shumwayOptions = Shumway.Settings.shumwayOptions;
+var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
+var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
+var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
+
+//Shumway.AVM2.Runtime.enableVerifier.value = true;
 release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
@@ -28,108 +33,3 @@ var playerglobalInfo = {
   catalog: WEB_ROOT + "../build/playerglobal/playerglobal.json"
 };
 
-var BinaryFileReader = (function binaryFileReader() {
-  function constructor(url, responseType) {
-    this.url = url;
-    this.responseType = responseType || "arraybuffer";
-  }
-
-  constructor.prototype = {
-    readAll: function(progress, complete) {
-      var url = this.url;
-      var xhr = new XMLHttpRequest();
-      var async = true;
-      xhr.open("GET", this.url, async);
-      xhr.responseType = this.responseType;
-      if (progress) {
-        xhr.onprogress = function(event) {
-          progress(xhr.response, event.loaded, event.total);
-        };
-      }
-      xhr.onreadystatechange = function(event) {
-        if (xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0) {
-            unexpected("Path: " + url + " not found.");
-            complete(null, xhr.statusText);
-            return;
-          }
-          complete(xhr.response);
-        }
-      };
-      xhr.send(null);
-    },
-    readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
-      var xhr = new XMLHttpRequest({mozSystem:true});
-      var url = this.url;
-      xhr.open(this.method || "GET", url, true);
-      var isNotProgressive;
-      try {
-        xhr.responseType = 'moz-chunked-arraybuffer';
-        isNotProgressive = xhr.responseType !== 'moz-chunked-arraybuffer';
-      } catch (e) {
-        isNotProgressive = true;
-      }
-      if (isNotProgressive) {
-        xhr.responseType = 'arraybuffer';
-      }
-      xhr.onprogress = function (e) {
-        if (isNotProgressive) return;
-        ondata(new Uint8Array(xhr.response), { loaded: e.loaded, total: e.total });
-      };
-      xhr.onreadystatechange = function(event) {
-        if(xhr.readyState === 2 && onhttpstatus) {
-          onhttpstatus(url, xhr.status, xhr.getAllResponseHeaders());
-        }
-        if (xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0) {
-            onerror(xhr.statusText);
-          }
-          if (isNotProgressive) {
-            var buffer = xhr.response;
-            ondata(new Uint8Array(buffer), { loaded: buffer.byteLength, total: buffer.byteLength });
-          }
-          if (oncomplete) {
-            oncomplete();
-          }
-        } else if (xhr.readyState === 2 && onopen) {
-          onopen();
-        }
-      };
-      xhr.send(null);
-    }
-  };
-  return constructor;
-})();
-
-// avm2 must be global.
-var avm2;
-var sanityTests = [];
-
-function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
-  assert (builtinPath);
-  avm2 = new AVM2(sysMode, appMode, loadAVM1);
-  var builtinAbc, avm1Abc;
-
-  AVM2.loadPlayerglobal(libraryPath.abcs, libraryPath.catalog).then(function () {
-    new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-      builtinAbc = new AbcFile(new Uint8Array(buffer), "builtin.abc");
-      executeAbc();
-    });
-  });
-
-  function loadAVM1(next) {
-    new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
-      avm1Abc = new AbcFile(new Uint8Array(buffer), "avm1.abc");;
-      avm2.systemDomain.executeAbc(avm1Abc);
-      next();
-    });
-  }
-  function executeAbc() {
-    assert (builtinAbc);
-    avm2.builtinsLoaded = false;
-    avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
-    avm2.systemDomain.executeAbc(builtinAbc);
-    avm2.builtinsLoaded = true;
-    next(avm2);
-  }
-}

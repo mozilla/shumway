@@ -70,6 +70,9 @@ function loadBinary(path, callback) {
 }
 
 function createAVM2(libraryPath, next) {
+  var AVM2 = Shumway.AVM2.Runtime.AVM2;
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
+
   var sysMode = EXECUTION_MODE.COMPILE;
   var appMode = EXECUTION_MODE.COMPILE;
   enableC4.value = true;
@@ -79,9 +82,10 @@ function createAVM2(libraryPath, next) {
 
   function loadBuiltin() {
     loadBinary(BUILTIN_PATH, function (buffer) {
-      avm2 = new AVM2(sysMode, appMode);
+      var avm2 = new AVM2(sysMode, appMode);
+      AVM2.instance = avm2;
+
       console.time("Execute builtin.abc");
-      avm2.loadedAbcs = {};
       avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
       avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
       console.timeEnd("Execute builtin.abc");

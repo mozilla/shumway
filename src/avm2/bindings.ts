@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
 
 module Shumway.AVM2.Runtime {
-  declare var getTraitFunction;
-
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;
@@ -25,6 +22,7 @@ module Shumway.AVM2.Runtime {
   import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
   import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+  import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
 
   import Trait = Shumway.AVM2.ABC.Trait;
   import IndentingWriter = Shumway.IndentingWriter;
@@ -34,6 +32,7 @@ module Shumway.AVM2.Runtime {
   import copyProperties = Shumway.ObjectUtilities.copyProperties;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
+  import assert = Shumway.Debug.assert;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
@@ -41,6 +40,7 @@ module Shumway.AVM2.Runtime {
   import defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
   import makeForwardingGetter = Shumway.FunctionUtilities.makeForwardingGetter;
   import makeForwardingSetter = Shumway.FunctionUtilities.makeForwardingSetter;
+  import pushUnique = Shumway.ArrayUtilities.pushUnique;
 
   export class Binding {
     public trait: Trait;
@@ -139,19 +139,21 @@ module Shumway.AVM2.Runtime {
      * }
      *
      */
-    public applyTo(domain, object) {
-      release || assert (!hasOwnProperty(object, VM_SLOTS), "Already has VM_SLOTS.");
-      release || assert (!hasOwnProperty(object, VM_BINDINGS), "Already has VM_BINDINGS.");
-      release || assert (!hasOwnProperty(object, VM_OPEN_METHODS), "Already has VM_OPEN_METHODS.");
+    public applyTo(domain: ApplicationDomain, object, append: boolean = false) {
+      if (!append) {
+        release || assert(!hasOwnProperty(object, VM_SLOTS), "Already has VM_SLOTS.");
+        release || assert(!hasOwnProperty(object, VM_BINDINGS), "Already has VM_BINDINGS.");
+        release || assert(!hasOwnProperty(object, VM_OPEN_METHODS), "Already has VM_OPEN_METHODS.");
 
-      defineNonEnumerableProperty(object, VM_SLOTS, new SlotInfoMap());
-      defineNonEnumerableProperty(object, VM_BINDINGS, []);
-      defineNonEnumerableProperty(object, VM_OPEN_METHODS, createMap<Function>());
+        defineNonEnumerableProperty(object, VM_SLOTS, new SlotInfoMap());
+        defineNonEnumerableProperty(object, VM_BINDINGS, []);
+        defineNonEnumerableProperty(object, VM_OPEN_METHODS, createMap<Function>());
 
-      defineNonEnumerableProperty(object, "bindings", this);
-      defineNonEnumerableProperty(object, "resolutionMap", []);
+        defineNonEnumerableProperty(object, "bindings", this);
+        defineNonEnumerableProperty(object, "resolutionMap", []);
+      }
 
-      traitsWriter && traitsWriter.greenLn("Applying Traits");
+      traitsWriter && traitsWriter.greenLn("Applying Traits" + (append ? " (Append)" : ""));
 
       for (var key in this.map) {
         var binding = this.map[key];
@@ -169,11 +171,11 @@ module Shumway.AVM2.Runtime {
           if (key !== qn) {
             traitsWriter && traitsWriter.yellowLn("Binding Trait: " + key + " -> " + qn);
             defineNonEnumerableGetter(object, key, makeForwardingGetter(qn));
-            object.asBindings.pushUnique(key);
+            pushUnique(object.asBindings, key);
           } else {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
             defineNonEnumerableProperty(object, qn, defaultValue);
-            object.asBindings.pushUnique(qn);
+            pushUnique(object.asBindings, qn);
             var slotInfo = new SlotInfo(
               qn,
               trait.isConst(),
@@ -192,12 +194,14 @@ module Shumway.AVM2.Runtime {
           } else {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
           }
-          object.asBindings.pushUnique(key);
+          pushUnique(object.asBindings, key);
+          enterTimeline("applyMethodTrait");
           if (this instanceof ScriptBindings) {
             applyNonMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
           } else {
             applyMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
           }
+          leaveTimeline();
         }
       }
     }
@@ -210,7 +214,7 @@ module Shumway.AVM2.Runtime {
       release || assert (methodInfo.needsActivation());
       this.methodInfo = methodInfo;
       // ASC creates activation even if the method has no traits, weird.
-      // assert (methodInfo.traits.length);
+      // release || assert (methodInfo.traits.length);
 
       /**
        * Add activation traits.
@@ -305,7 +309,7 @@ module Shumway.AVM2.Runtime {
     parent: InstanceBindings;
     scope: any;
     natives: any;
-    implementedInterfaces: any;
+    implementedInterfaces: Shumway.Map<Shumway.AVM2.AS.ASClass>;
     constructor(parent, instanceInfo, scope, natives) {
       super();
       this.scope = scope;
@@ -457,19 +461,20 @@ module Shumway.AVM2.Runtime {
       var domain = ii.abc.applicationDomain;
       var interfaces = ii.interfaces;
 
+      var _interface: Shumway.AVM2.AS.ASClass;
       // Collect all implemented interfaces.
       for (var i = 0; i < interfaces.length; i++) {
-        var interface = domain.getProperty(interfaces[i], true, true);
+        _interface = domain.getProperty(interfaces[i], true, true);
         // This can be undefined if the interface is defined after a class that implements it is defined.
-        release || assert(interface);
-        copyProperties(this.implementedInterfaces, interface.interfaceBindings.implementedInterfaces);
-        this.implementedInterfaces[Multiname.getQualifiedName(interface.name)] = interface;
+        release || assert(_interface);
+        copyProperties(this.implementedInterfaces, _interface.interfaceBindings.implementedInterfaces);
+        this.implementedInterfaces[Multiname.getQualifiedName(_interface.classInfo.instanceInfo.name)] = _interface;
       }
 
       // Apply all interface bindings.
       for (var interfaceName in this.implementedInterfaces) {
-        var interface = this.implementedInterfaces[interfaceName];
-        ib = interface.interfaceBindings;
+        _interface = this.implementedInterfaces[interfaceName];
+        ib = _interface.interfaceBindings;
         for (var interfaceKey in ib.map) {
           var interfaceBinding = ib.map[interfaceKey];
           if (ii.isInterface()) {

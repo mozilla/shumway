@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
-
 
 module Shumway.AVM2.Runtime {
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -31,9 +29,12 @@ module Shumway.AVM2.Runtime {
   import defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
+  import assert = Shumway.Debug.assert;
 
   import boxValue = Shumway.ObjectUtilities.boxValue
-  declare var Counter;
+
+  var counter = Shumway.Metrics.Counter.instance;
+
   declare var jsGlobal;
 
   function makeCacheKey(namespaces: Namespace [], name: any, flags: number) {
@@ -130,22 +131,25 @@ module Shumway.AVM2.Runtime {
      *
      * Property lookups are cached in scopes but are not used when only looking at |scopesOnly|.
      */
-    public findScopeProperty(namespaces: Namespace [], name: any, flags: number, domain: any, strict: boolean, scopeOnly: boolean) {
-      Counter.count("findScopeProperty");
+    public findScopeProperty(namespaces: Namespace [], name: any, flags: number, method: MethodInfo, strict: boolean, scopeOnly: boolean) {
+      countTimeline("findScopeProperty");
       var object;
       var key = makeCacheKey(namespaces, name, flags);
       if (!scopeOnly && (object = this.cache[key])) {
         return object;
       }
-      if (this.object.asHasProperty(namespaces, name, flags, true)) {
+      // Scope lookups should not be trapped by proxies.
+      if (this.object.asHasPropertyInternal(namespaces, name, flags)) {
         return this.isWith ? this.object : (this.cache[key] = this.object);
       }
       if (this.parent) {
-        return (this.cache[key] = this.parent.findScopeProperty(namespaces, name, flags, domain, strict, scopeOnly));
+        return (this.cache[key] = this.parent.findScopeProperty(namespaces, name, flags, method, strict, scopeOnly));
       }
-      if (scopeOnly) return null;
+      if (scopeOnly) {
+        return null;
+      }
       // If we can't find the property look in the domain.
-      if ((object = domain.findDomainProperty(new Multiname(namespaces, name, flags), strict, true))) {
+      if ((object = method.abc.applicationDomain.findDomainProperty(new Multiname(namespaces, name, flags), strict, true))) {
         return object;
       }
       if (strict) {
@@ -198,11 +202,11 @@ module Shumway.AVM2.Runtime {
       }
     }
     if (!boundMethod) {
-      Counter.count("Bind Scope - Slow Path");
+      countTimeline("Bind Scope - Slow Path");
       boundMethod = function () {
         Array.prototype.unshift.call(arguments, scope);
         var global = (this === jsGlobal ? scope.global.object : this);
-        return fn.apply(global, arguments);
+        return fn.asApply(global, arguments);
       };
     }
     boundMethod.methodInfo = methodInfo;
@@ -215,3 +219,9 @@ module Shumway.AVM2.Runtime {
   }
 
 }
+
+/**
+ * Top level runtime definitinos used by compiler generated code.
+ */
+
+var Scope = Shumway.AVM2.Runtime.Scope;

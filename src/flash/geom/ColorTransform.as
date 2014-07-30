@@ -16,60 +16,30 @@
 
 package flash.geom {
 
+  [native(cls='ColorTransformClass')]
   public class ColorTransform {
 
-    public var redMultiplier:Number;
-    public var greenMultiplier:Number;
-    public var blueMultiplier:Number;
-    public var alphaMultiplier:Number;
-    public var redOffset:Number;
-    public var greenOffset:Number;
-    public var blueOffset:Number;
-    public var alphaOffset:Number;
+    public native function set redMultiplier(redMultiplier:Number);
+    public native function get redMultiplier():Number;
+    public native function set greenMultiplier(greenMultiplier:Number);
+    public native function get greenMultiplier():Number;
+    public native function set blueMultiplier(blueMultiplier:Number);
+    public native function get blueMultiplier():Number;
+    public native function set alphaMultiplier(alphaMultiplier:Number);
+    public native function get alphaMultiplier():Number;
+    public native function set redOffset(redOffset:Number);
+    public native function get redOffset():Number;
+    public native function set greenOffset(greenOffset:Number);
+    public native function get greenOffset():Number;
+    public native function set blueOffset(blueOffset:Number);
+    public native function get blueOffset():Number;
+    public native function set alphaOffset(alphaOffset:Number);
+    public native function get alphaOffset():Number;
 
-    public function ColorTransform(redMultiplier:Number = 1, greenMultiplier:Number = 1, blueMultiplier:Number = 1, alphaMultiplier:Number = 1, redOffset:Number = 0, greenOffset:Number = 0, blueOffset:Number = 0, alphaOffset:Number = 0) {
-      this.redMultiplier = redMultiplier;
-      this.greenMultiplier = greenMultiplier;
-      this.blueMultiplier = blueMultiplier;
-      this.alphaMultiplier = alphaMultiplier;
-      this.redOffset = redOffset;
-      this.greenOffset = greenOffset;
-      this.blueOffset = blueOffset;
-      this.alphaOffset = alphaOffset;
-    }
-
-    public function get color():uint {
-      return (redOffset << 16) | (greenOffset << 8) | blueOffset;
-    }
-
-    public function set color(newColor:uint):void {
-      redOffset = (newColor >> 16) & 0xff;
-      greenOffset = (newColor >> 8) & 0xff;
-      blueOffset = newColor & 0xff;
-      redMultiplier = greenMultiplier = blueMultiplier = 1;
-    }
-
-    public function concat(second:ColorTransform):void {
-      redMultiplier *= second.redMultiplier;
-      greenMultiplier *= second.greenMultiplier;
-      blueMultiplier *= second.blueMultiplier;
-      alphaMultiplier *= second.alphaMultiplier;
-      redOffset += second.redOffset;
-      greenOffset += second.greenOffset;
-      blueOffset += second.blueOffset;
-      alphaOffset += second.alphaOffset;
-    }
-
-    public function toString():String {
-      return "(redMultiplier=" + redMultiplier +
-             ", greenMultiplier=" + greenMultiplier +
-             ", blueMultiplier=" + blueMultiplier +
-             ", alphaMultiplier=" + alphaMultiplier +
-             ", redOffset=" + redOffset +
-             ", greenOffset=" + greenOffset +
-             ", blueOffset=" + blueOffset +
-             ", alphaOffset=" + alphaOffset +
-             ")";
-    }
+    public native function ColorTransform(redMultiplier:Number = 1, greenMultiplier:Number = 1, blueMultiplier:Number = 1, alphaMultiplier:Number = 1, redOffset:Number = 0, greenOffset:Number = 0, blueOffset:Number = 0, alphaOffset:Number = 0);
+    public native function get color():uint;
+    public native function set color(newColor:uint):void;
+    public native function concat(second:ColorTransform):void;
+    public native function toString():String;
   }
 }

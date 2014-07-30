@@ -1,7 +1,5 @@
-﻿/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-/*
- * Copyright 2013 Mozilla Foundation
+﻿/**
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package avm1lib {
   import avm1lib.AS2Utils;
   import flash.geom.ColorTransform;
 
   public dynamic class AS2Color
   {
-    var $target: Object;
+    private var __target: Object;
 
     public function AS2Color(target_mc)
     {
-      this.$target = AS2Utils.resolveTarget(target_mc);
+      this.__target = AS2Utils.resolveTarget(target_mc);
     }
     public function getRGB()
     {
@@ -34,7 +33,7 @@ package avm1lib {
     }
     public function getTransform()
     {
-      return this.$target._as3Object.transform.colorTransform;
+      return this.__target._as3Object.transform.colorTransform;
     }
     public function setRGB(offset)
     {
@@ -43,7 +42,7 @@ package avm1lib {
       this.setTransform(transform);
     }
     public function setTransform(transform) {
-      this.$target._as3Object.transform.colorTransform = transform;
+      this.__target._as3Object.transform.colorTransform = transform;
     }
   }
 }

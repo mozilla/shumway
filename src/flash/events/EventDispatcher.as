@@ -17,9 +17,7 @@
 package flash.events {
 [native(cls='EventDispatcherClass')]
 public class EventDispatcher implements IEventDispatcher {
-  public function EventDispatcher(target:IEventDispatcher = null) {
-    ctor(target);
-  }
+  public native function EventDispatcher(target:IEventDispatcher = null);
   public function toString():String {
     return Object.prototype.toString.call(this);
   }
@@ -30,10 +28,8 @@ public class EventDispatcher implements IEventDispatcher {
                                              useCapture:Boolean = false):void;
   public native function hasEventListener(type:String):Boolean;
   public native function willTrigger(type:String):Boolean;
-  public function dispatchEvent(event:Event):Boolean {
-    return dispatchEventFunction(event.target ? event.clone() : event);
-  }
-  private native function ctor(target: IEventDispatcher): void;
+  public native function dispatchEvent(event:Event):Boolean;
+  private native function eventDispatcher_ctor(target: IEventDispatcher): void;
   private native function dispatchEventFunction(event: Event): Boolean;
 }
 }

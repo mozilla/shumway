@@ -60,9 +60,7 @@ public class Event {
   public static const CHANNEL_STATE:String = "channelState";
   public static const WORKER_STATE:String = "workerState";
 
-  public function Event(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
-    ctor(type, bubbles, cancelable);
-  }
+  public native function Event(type:String, bubbles:Boolean = false, cancelable:Boolean = false)
 
   public native function get type():String;
 
@@ -94,7 +92,7 @@ public class Event {
   }
 
   public function toString():String {
-    return formatToString('Event', 'bubbles', 'cancelable', 'eventPhase');
+    return formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
   }
 
   public native function stopPropagation():void;
@@ -104,7 +102,5 @@ public class Event {
   public native function preventDefault():void;
 
   public native function isDefaultPrevented():Boolean;
-
-  private native function ctor(type:String, bubbles:Boolean, cancelable:Boolean):void;
 }
 }

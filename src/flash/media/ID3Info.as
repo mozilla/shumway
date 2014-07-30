@@ -15,6 +15,7 @@
  */
 
 package flash.media {
+[native(cls='ID3InfoClass')]
 public final dynamic class ID3Info {
   public function ID3Info() {}
   public var songName: String;
