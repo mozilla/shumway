@@ -387,8 +387,16 @@ module Shumway.Timeline {
         return false;
       }
       var symbol = this.symbol;
-      if (symbol && obj._symbol !== symbol && (symbol.dynamic || !symbol.symbolClass.isType(obj))) {
-        return false;
+      if (symbol && obj._symbol !== symbol) {
+        if (symbol.dynamic) {
+          return false;
+        }
+        if (obj._clipDepth !== this.clipDepth) {
+          return false;
+        }
+        if (!symbol.symbolClass.isType(obj)) {
+          return false;
+        }
       }
       return true;
     }
