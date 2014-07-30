@@ -21,15 +21,12 @@ import flash.utils.ByteArray;
 public final class ApplicationDomain {
   public static native function get currentDomain():ApplicationDomain;
   public static native function get MIN_DOMAIN_MEMORY_LENGTH():uint;
-  public function ApplicationDomain(parentDomain:ApplicationDomain = null) {
-    ctor(parentDomain);
-  }
+  public native function ApplicationDomain(parentDomain:ApplicationDomain = null);
   public native function get parentDomain():ApplicationDomain;
   public native function get domainMemory():ByteArray;
   public native function set domainMemory(mem:ByteArray);
   public native function getDefinition(name:String):Object;
   public native function hasDefinition(name:String):Boolean;
   public native function getQualifiedDefinitionNames():Vector;
-  private native function ctor(parentDomain:ApplicationDomain):void;
 }
 }

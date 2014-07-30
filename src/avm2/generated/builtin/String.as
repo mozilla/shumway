@@ -51,77 +51,59 @@ package
     // E262 {DontEnum, DontDelete, ReadOnly}
     public native function get length():uint;
 
-    [compat]
-    private native function _indexOf(s:String, i:int=0):int;
     AS3 native function indexOf(s:String="undefined", i:Number=0):int;
-    prototype.indexOf = unsafeJSNative("String.prototype.indexOf");
+    prototype.indexOf = unsafeJSNative("Original.String.prototype.indexOf");
 
-    [compat]
-    private native function _lastIndexOf(s:String, i:int=0x7fffffff):int;
     AS3 native function lastIndexOf(s:String="undefined", i:Number=0x7FFFFFFF):int;
-    prototype.lastIndexOf = unsafeJSNative("String.prototype.lastIndexOf");
+    prototype.lastIndexOf = unsafeJSNative("Original.String.prototype.lastIndexOf");
 
     AS3 native function charAt(i:Number=0):String;
-    prototype.charAt = unsafeJSNative("String.prototype.charAt");
+    prototype.charAt = unsafeJSNative("Original.String.prototype.charAt");
 
     AS3 native function charCodeAt(i:Number=0):Number;
-    prototype.charCodeAt = unsafeJSNative("String.prototype.charCodeAt");
+    prototype.charCodeAt = unsafeJSNative("Original.String.prototype.charCodeAt");
 
     AS3 native function concat(...args):String;
-    prototype.concat = unsafeJSNative("String.prototype.concat");
+    prototype.concat = unsafeJSNative("Original.String.prototype.concat");
 
     AS3 native function localeCompare(other:*=void 0):int;
-    prototype.localeCompare = unsafeJSNative("String.prototype.localeCompare");
+    prototype.localeCompare = unsafeJSNative("Original.String.prototype.localeCompare");
 
-    [compat]
-    private static native function _match(s:String, p):Array;
     AS3 native function match(p=void 0):Array;
-    prototype.match = unsafeJSNative("String.prototype.match");
+    prototype.match = unsafeJSNative("Original.String.prototype.match");
 
-    [compat]
-    private static native function _replace(s:String, p, repl):String;
     AS3 native function replace(p=void 0, repl=void 0):String;
-    prototype.replace = unsafeJSNative("String.prototype.replace");
+    prototype.replace = unsafeJSNative("Original.String.prototype.replace");
 
-    [compat]
-    private static native function _search(s:String, p):int;
     AS3 native function search(p=void 0):int;
-    prototype.search = unsafeJSNative("String.prototype.search");
+    prototype.search = unsafeJSNative("Original.String.prototype.search");
 
-    [compat]
-    private native function _slice(start:int=0, end:int=0x7fffffff):String;
     AS3 native function slice(start:Number=0, end:Number=0x7fffffff):String;
-    prototype.slice = unsafeJSNative("String.prototype.slice");
+    prototype.slice = unsafeJSNative("Original.String.prototype.slice");
 
-    [compat]
-    private static native function _split(s:String, delim, limit:uint):Array;
     AS3 native function split(delim=void 0, limit=0xffffffff):Array;
-    prototype.split = unsafeJSNative("String.prototype.split");
+    prototype.split = unsafeJSNative("Original.String.prototype.split");
 
-    [compat]
-    private native function _substring(start:int=0, end:int=0x7fffffff):String;
     AS3 native function substring(start:Number=0, end:Number=0x7fffffff):String;
-    prototype.substring = unsafeJSNative("String.prototype.substring");
+    prototype.substring = unsafeJSNative("Original.String.prototype.substring");
 
-    [compat]
-    private native function _substr(start:int=0, end:int=0x7fffffff):String;
     AS3 native function substr(start:Number=0, len:Number=0x7fffffff):String;
-    prototype.substr = unsafeJSNative("String.prototype.substr");
+    prototype.substr = unsafeJSNative("Original.String.prototype.substr");
 
     AS3 native function toLowerCase():String;
     AS3 native function toLocaleLowerCase():String;
-    prototype.toLowerCase = prototype.toLocaleLowerCase = unsafeJSNative("String.prototype.toLowerCase");
+    prototype.toLowerCase = prototype.toLocaleLowerCase = unsafeJSNative("Original.String.prototype.toLowerCase");
 
     AS3 native function toUpperCase():String;
     AS3 native function toLocaleUpperCase():String;
 
-    prototype.toUpperCase = prototype.toLocaleUpperCase = unsafeJSNative("String.prototype.toUpperCase");
+    prototype.toUpperCase = prototype.toLocaleUpperCase = unsafeJSNative("Original.String.prototype.toUpperCase");
 
     AS3 native function toString();
     AS3 native function valueOf();
 
-    prototype.toString = unsafeJSNative("String.prototype.toString");
-    prototype.valueOf = unsafeJSNative("String.prototype.valueOf");
+    prototype.toString = unsafeJSNative("Original.String.prototype.toString");
+    prototype.valueOf = unsafeJSNative("Original.String.prototype.valueOf");
 
     // Dummy constructor
     public function String(value = "") {}

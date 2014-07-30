@@ -21,7 +21,7 @@ import flash.ui.ContextMenu;
 
 [native(cls='InteractiveObjectClass')]
 public class InteractiveObject extends DisplayObject {
-  public function InteractiveObject() {}
+  public native function InteractiveObject()
   public native function get tabEnabled():Boolean;
   public native function set tabEnabled(enabled:Boolean):void;
   public native function get tabIndex():int;

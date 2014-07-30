@@ -8,11 +8,11 @@ package {
     var d = new Vector.<Object>();
 
     for each (var v in [a, d]) {
-      try { v.push(); } catch (e) { trace (e); }
-      try { v.push(0, 1); } catch (e) { trace (e); }
-      try { v.unshift(); } catch (e) { trace (e); }
-      try { v[-4] = 1;  } catch (e) { trace (e); }
-      try { v[5] = 1;  } catch (e) { trace (e); }
+      try { v.push(); } catch (e) { trace (e.toString()); }
+      try { v.push(0, 1); } catch (e) { trace (e.toString()); }
+      try { v.unshift(); } catch (e) { trace (e.toString()); }
+      try { v[-4] = 1;  } catch (e) { trace (e.toString()); }
+      try { v[5] = 1;  } catch (e) { trace (e.toString()); }
       trace("--");
     }
   }); // ();
@@ -24,13 +24,13 @@ package {
     var d = new Vector.<Object>(5, true);
 
     for each (var v in [a, d]) {
-      try { v.push(); } catch (e) { trace (e); }
-      try { v.pop(); } catch (e) { trace (e); }
-      try { v.push(0, 1); } catch (e) { trace (e); }
-      try { v.shift(); } catch (e) { trace (e); }
-      try { v.unshift(); } catch (e) { trace (e); }
-      try { v[-4] = 1;  } catch (e) { trace (e); }
-      try { v[5] = 1;  } catch (e) { trace (e); }
+      try { v.push(); } catch (e) { trace (e.toString()); }
+      try { v.pop(); } catch (e) { trace (e.toString()); }
+      try { v.push(0, 1); } catch (e) { trace (e.toString()); }
+      try { v.shift(); } catch (e) { trace (e.toString()); }
+      try { v.unshift(); } catch (e) { trace (e.toString()); }
+      try { v[-4] = 1;  } catch (e) { trace (e.toString()); }
+      try { v[5] = 1;  } catch (e) { trace (e.toString()); }
       trace("--");
     }
   }); // ();
@@ -41,10 +41,10 @@ package {
     var c = Vector.<Number>([1, 2, 3, 4, 5]);
     var d = Vector.<Object>([1, 2, 3, 4, 5]);
 
-    trace(a);
-    trace(b);
-    trace(c);
-    trace(d);
+    trace(a.toString());
+    trace(b.toString());
+    trace(c.toString());
+    trace(d.toString());
 
   })();
 

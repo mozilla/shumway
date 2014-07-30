@@ -20,15 +20,17 @@
  * Package file that includes all Shumway files needed by the Loader worker.
  */
 
-load($SHUMWAY_ROOT + "lib/DataView.js/DataView.js");
+load($SHUMWAY_ROOT + "build/ts/dataBuffer.js");
+load($SHUMWAY_ROOT + "build/ts/ShapeData.js");
 load($SHUMWAY_ROOT + "src/flash/util.js");
 load($SHUMWAY_ROOT + "src/swf/swf.js");
-load($SHUMWAY_ROOT + "src/swf/bitmap.js");
-load($SHUMWAY_ROOT + "src/swf/button.js");
-load($SHUMWAY_ROOT + "src/swf/font.js");
+load($SHUMWAY_ROOT + "build/ts/utilities.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/bitmap.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/button.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/font.js");
 load($SHUMWAY_ROOT + "src/swf/image.js");
-load($SHUMWAY_ROOT + "src/swf/label.js");
-load($SHUMWAY_ROOT + "src/swf/shape.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/label.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/shape.js");
 load($SHUMWAY_ROOT + "src/swf/sound.js");
 load($SHUMWAY_ROOT + "src/swf/text.js");
 

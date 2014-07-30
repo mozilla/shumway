@@ -18,6 +18,7 @@ package flash.net {
 import flash.utils.escapeMultiByte;
 import flash.utils.unescapeMultiByte;
 
+[native(cls='URLVariablesClass')]
 public dynamic class URLVariables {
   public function URLVariables(source:String = null) {
     if (source) {

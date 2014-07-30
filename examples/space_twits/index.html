@@ -18,7 +18,7 @@ var SHUMWAY_ROOT = "../../src/";
     <div id="viewer" style="width:400px; height:366px;"></div>
     <script>
       var compilerSettings = {sysCompiler: true, appCompiler: true, verifier: true};
-      FileLoadingService.setBaseUrl(document.location.href);
+      Shumway.FileLoadingService.instance.setBaseUrl(document.location.href);
 
       movieUrl = 'twits.swf';
       movieParams = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
 
 module Shumway.AVM2 {
 
-  import OP = Shumway.AVM2.ABC.OP;
   import Scope = Shumway.AVM2.Runtime.Scope;
   import asCoerceByMultiname = Shumway.AVM2.Runtime.asCoerceByMultiname;
   import asGetSlot = Shumway.AVM2.Runtime.asGetSlot;
   import asSetSlot = Shumway.AVM2.Runtime.asSetSlot;
-  import asHasNext2 = Shumway.AVM2.Runtime.asHasNext2;
   import asCoerce = Shumway.AVM2.Runtime.asCoerce;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import asAsType = Shumway.AVM2.Runtime.asAsType;
@@ -42,8 +39,10 @@ module Shumway.AVM2 {
   import popManyInto = Shumway.ArrayUtilities.popManyInto;
   import construct = Shumway.AVM2.Runtime.construct;
   import Multiname = Shumway.AVM2.ABC.Multiname;
+  import assert = Shumway.Debug.assert;
+  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
 
-  declare var Counter: Shumway.Metrics.Counter;
+  var counter = Shumway.Metrics.Counter.instance;
 
   /**
    * Helps the interpreter allocate fewer Scope objects.
@@ -111,7 +110,7 @@ module Shumway.AVM2 {
   export class Interpreter {
     public static interpretMethod($this, method, savedScope, methodArgs) {
       release || assert(method.analysis);
-      Counter.count("Interpret Method");
+      countTimeline("Interpret Method");
       var abc = method.abc;
       var ints = abc.constantPool.ints;
       var uints = abc.constantPool.uints;
@@ -137,7 +136,7 @@ module Shumway.AVM2 {
           value = parameter.value;
         }
         if (parameter.type && !parameter.type.isAnyName()) {
-          value = asCoerceByMultiname(domain, parameter.type, value);
+          value = asCoerceByMultiname(method, parameter.type, value);
         }
         locals.push(value);
       }
@@ -151,7 +150,7 @@ module Shumway.AVM2 {
       var bytecodes = method.analysis.bytecodes;
 
       var object, index, multiname, result, a, b, args = [], mn = Multiname.TEMPORARY;
-
+      var hasNext2Infos: HasNext2Info [] = [];
       interpretLabel:
       for (var pc = 0, end = bytecodes.length; pc < end; ) {
         try {
@@ -267,10 +266,15 @@ module Shumway.AVM2 {
             stack[stack.length - 1] = boxValue(stack[stack.length - 1]).asNextValue(index);
             break;
           case OP.hasnext2:
-            result = asHasNext2(locals[bc.object], locals[bc.index]);
-            locals[bc.object] = result.object;
-            locals[bc.index] = result.index;
-            stack.push(!!result.index);
+            var hasNext2Info = hasNext2Infos[pc] || (hasNext2Infos[pc] = new HasNext2Info(null, 0));
+            object = locals[bc.object];
+            index = locals[bc.index];
+            hasNext2Info.object = object;
+            hasNext2Info.index = index;
+            Object(object).asHasNext2(hasNext2Info);
+            locals[bc.object] = hasNext2Info.object;
+            locals[bc.index] = hasNext2Info.index;
+            stack.push(!!hasNext2Info.index);
             break;
           case OP.pushnull:
             stack.push(null);
@@ -323,7 +327,7 @@ module Shumway.AVM2 {
           case OP.call:
             popManyInto(stack, bc.argCount, args);
             object = stack.pop();
-            stack[stack.length - 1] = stack[stack.length - 1].apply(object, args);
+            stack[stack.length - 1] = stack[stack.length - 1].asApply(object, args);
             break;
           case OP.construct:
             popManyInto(stack, bc.argCount, args);
@@ -333,7 +337,7 @@ module Shumway.AVM2 {
             return;
           case OP.returnvalue:
             if (method.returnType) {
-              return asCoerceByMultiname(domain, method.returnType, stack.pop());
+              return asCoerceByMultiname(method, method.returnType, stack.pop());
             }
             return stack.pop();
           case OP.constructsuper:
@@ -376,7 +380,7 @@ module Shumway.AVM2 {
             break;
           case OP.applytype:
             popManyInto(stack, bc.argCount, args);
-            stack[stack.length - 1] = applyType(domain, stack[stack.length - 1], args);
+            stack[stack.length - 1] = applyType(method, stack[stack.length - 1], args);
             break;
           case OP.newobject:
             object = {};
@@ -413,13 +417,13 @@ module Shumway.AVM2 {
           case OP.findpropstrict:
             popNameInto(stack, multinames[bc.index], mn);
             stack.push(scopeStack.topScope().findScopeProperty (
-              mn.namespaces, mn.name, mn.flags, domain, op === OP.findpropstrict, false
+              mn.namespaces, mn.name, mn.flags, method, op === OP.findpropstrict, false
             ));
             break;
           case OP.getlex:
             multiname = multinames[bc.index];
             object = scopeStack.topScope().findScopeProperty (
-              multiname.namespaces, multiname.name, multiname.flags, domain, true, false
+              multiname.namespaces, multiname.name, multiname.flags, method, true, false
             );
             stack.push(object.asGetProperty(multiname.namespaces, multiname.name, multiname.flags));
             break;
@@ -486,6 +490,9 @@ module Shumway.AVM2 {
             /* NOP */ break;
           case OP.coerce_s:
             stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
+            break;
+          case OP.astype:
+            stack[stack.length - 2] = asAsType(domain.getType(multinames[bc.index]), stack[stack.length - 1]);
             break;
           case OP.astypelate:
             stack[stack.length - 2] = asAsType(stack.pop(), stack[stack.length - 1]);
@@ -618,12 +625,18 @@ module Shumway.AVM2 {
           case OP.setlocal3:
             locals[op - OP.setlocal0] = stack.pop();
             break;
+          case OP.dxns:
+            Shumway.AVM2.AS.ASXML.defaultNamespace = strings[bc.index];
+            break;
+          case OP.dxnslate:
+            Shumway.AVM2.AS.ASXML.defaultNamespace = stack.pop();
+            break;
           case OP.debug:
           case OP.debugline:
           case OP.debugfile:
             break;
           default:
-            Shumway.Debug.notImplemented(opcodeName(op));
+            Shumway.Debug.notImplemented(Shumway.AVM2.opcodeName(op));
           }
           pc++;
         } catch (e) {
@@ -636,7 +649,7 @@ module Shumway.AVM2 {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
               (!handler.typeName ||
-                domain.getType(handler.typeName).isInstance(e))) {
+                domain.getType(handler.typeName).isType(e))) {
               stack.length = 0;
               stack.push(e);
               scopeStack.clear();

@@ -68,7 +68,7 @@ package flash.utils
   public class ByteArray implements IDataInput2, IDataOutput2
   {
 
-    public function ByteArray(){}
+    public native function ByteArray();
 
     public native function readBytes(bytes:ByteArray,
                                      offset:uint=0,

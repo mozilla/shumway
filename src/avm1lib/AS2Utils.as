@@ -1,7 +1,5 @@
-﻿/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-/*
- * Copyright 2013 Mozilla Foundation
+﻿/**
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package avm1lib {
   import flash.display.MovieClip;
   import flash.display.Stage;
@@ -28,7 +27,7 @@ package avm1lib {
     public static native function get currentStage() : Stage;
 
     public static function getTarget(mc: Object) {
-      var nativeObject = mc.$nativeObject;
+      var nativeObject = mc._as3Object;
       if (nativeObject === nativeObject.root) {
         return '/';
       }
@@ -67,8 +66,8 @@ function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: Str
     },
     function setter(newHandler: Function) {
       if (!this._as3Object) { // prototype/class ?
-        var defaultListeners = this.$defaultListeners ||
-          (this.$defaultListeners = []);
+        var defaultListeners = this._as2DefaultListeners ||
+          (this._as2DefaultListeners = []);
         defaultListeners.push({setter: setter, value: newHandler});
         // see also initDefaultListeners()
         return;

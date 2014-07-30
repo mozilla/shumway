@@ -25,7 +25,7 @@ import flash.utils.ByteArray;
 [native(cls='LoaderInfoClass')]
 public class LoaderInfo extends EventDispatcher {
   public static native function getLoaderInfoByDefinition(object:Object):LoaderInfo;
-  public function LoaderInfo() {}
+  public native function LoaderInfo()
   public native function get loaderURL():String;
   public native function get url():String;
   public native function get isURLInaccessible():Boolean;
@@ -35,10 +35,7 @@ public class LoaderInfo extends EventDispatcher {
   public native function get swfVersion():uint;
   public native function get actionScriptVersion():uint;
   public native function get frameRate():Number;
-  public function get parameters():Object {
-    // Parameters have to be cloned, but our native implementation of _getArgs does that.
-    return _getArgs();
-  }
+  public native function get parameters():Object;
   public native function get width():int;;
   public native function get height():int;
   public native function get contentType():String;
@@ -61,7 +58,6 @@ public class LoaderInfo extends EventDispatcher {
     }
     return events;
   }
-  private native function _getArgs():Object;
   private native function _getUncaughtErrorEvents():UncaughtErrorEvents;
   private native function _setUncaughtErrorEvents(value:UncaughtErrorEvents):void;
   public override function dispatchEvent(event:Event):Boolean {

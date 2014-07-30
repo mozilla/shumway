@@ -17,17 +17,12 @@
 package flash.display {
 [native(cls='BitmapClass')]
 public class Bitmap extends DisplayObject {
-  public function Bitmap(bitmapData:BitmapData = null, pixelSnapping:String = "auto",
-                         smoothing:Boolean = false)
-  {
-    ctor(bitmapData, pixelSnapping, smoothing);
-  }
+  public native function Bitmap(bitmapData:BitmapData = null, pixelSnapping:String = "auto", smoothing:Boolean = false)
   public native function get pixelSnapping():String;
   public native function set pixelSnapping(value:String):void;
   public native function get smoothing():Boolean;
   public native function set smoothing(value:Boolean):void;
   public native function get bitmapData():BitmapData;
   public native function set bitmapData(value:BitmapData):void;
-  private native function ctor(bitmapData:BitmapData, pixelSnapping:String, smoothing:Boolean):void;
 }
 }

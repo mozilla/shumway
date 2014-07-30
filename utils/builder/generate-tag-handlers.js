@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-load("../../src/flash/util.js");
+load("../../src/swf/util.js");
 load("../../src/swf/types.js");
 load("../../src/swf/structs.js");
 load("../../src/swf/tags.js");

@@ -24,11 +24,7 @@ import flash.utils.ByteArray;
 
 [native(cls='BitmapDataClass')]
 public class BitmapData implements IBitmapDrawable {
-  public function BitmapData(width:int, height:int, transparent:Boolean = true,
-                             fillColor:uint = 4294967295)
-  {
-    ctor(width, height, transparent, fillColor);
-  }
+  public native function BitmapData(width:int, height:int, transparent:Boolean = true, fillColor:uint = 4294967295);
   public native function get width():int;
   public native function get height():int;
   public native function get transparent():Boolean;
@@ -94,6 +90,5 @@ public class BitmapData implements IBitmapDrawable {
   public native function histogram(hRect:Rectangle = null):Vector;
   public native function encode(rect:Rectangle, compressor:Object,
                                 byteArray:ByteArray = null):ByteArray;
-  private native function ctor(width:int, height:int, transparent:Boolean, fillColor:uint);
 }
 }

@@ -147,9 +147,9 @@ class Base:
     if sc:
       outf = os.path.splitext(files[-1])[0]
       args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-classpath", self.asc,
-              "macromedia.asc.embedding.ScriptCompiler", "-d", "-out", outf]
+              "macromedia.asc.embedding.ScriptCompiler", "-d", "-md", "-out", outf]
     else:
-      args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-jar", self.asc, "-d"]
+      args = ["java", "-ea", "-DAS3", "-DAVMPLUS", "-jar", self.asc, "-d", "-md"]
 
 
     if createSwf:
@@ -253,7 +253,7 @@ class Reg(Command):
       tests.append(os.path.abspath(args.src))
 
     for test in tests:
-      args = ["java", "-jar", self.asc, "-d", "-import", self.builtin_abc, "-in", "../tests/regress/harness.as", test]
+      args = ["java", "-jar", self.asc, "-d", "-md", "-import", self.builtin_abc, "-in", "../tests/regress/harness.as", test]
       subprocess.call(args)
 
 class BuildTests(Command):
@@ -264,7 +264,6 @@ class BuildTests(Command):
     return self.name
 
   def execute(self, args):
-    
     parser = argparse.ArgumentParser(description='Compiles all the source files in the test/ directory using the asc.jar compiler.')
     parser.add_argument('-force', action='store_true', help="force recompilation of all tests")
     args = parser.parse_args(args)
@@ -289,7 +288,7 @@ class BuildTests(Command):
               tests.append(asFile)
 
     for test in tests:
-      args = ["java", "-jar", self.asc, "-d", "-import", self.builtin_abc, test]
+      args = ["java", "-jar", self.asc, "-d", "-md", "-import", self.builtin_abc, test]
       print "Compiling " + test
       subprocess.call(args)
 
@@ -357,6 +356,10 @@ class Split(Command):
         type = tokens[1]
         name = tokens[2]
         print "Open " + dst + "/" + name
+        pathName = os.path.dirname(dst + "/" + name)
+        print "Path " + pathName
+        if not os.path.exists(pathName):
+          os.makedirs(pathName)
         file = open(dst + "/" + name, "w")
       elif line == ">>>":
         file.close()

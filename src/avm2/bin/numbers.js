@@ -36,10 +36,13 @@ var temp = require('temp');
 
 global.assert = function () { };
 global.release = false;
-var options = require("../options.js");
-var ArgumentParser = options.Shumway.Options.ArgumentParser;
-var Option = options.Shumway.Options.Option;
-var OptionSet = options.Shumway.Options.OptionSet;
+
+eval(fs.readFileSync('../../../build/ts/utilities.js').toString())
+eval(fs.readFileSync('../../../build/ts/options.js').toString())
+
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
 
 // Parse arguments
 var arguments = process.argv.slice(2);

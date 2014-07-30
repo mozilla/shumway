@@ -15,14 +15,15 @@
  */
 
 package flash.text {
+
+[native(cls='TextRunClass')]
 public class TextRun {
-  public function TextRun(beginIndex: int, endIndex: int, textFormat: TextFormat) {
-    this.beginIndex = beginIndex;
-    this.endIndex = endIndex;
-    this.textFormat = textFormat;
-  }
-  public var beginIndex: int;
-  public var endIndex: int;
-  public var textFormat: TextFormat;
+  public native function TextRun(beginIndex: int, endIndex: int, textFormat: TextFormat);
+  public native function get beginIndex(): int;
+  public native function set beginIndex(value: int): void;
+  public native function get endIndex(): int;
+  public native function set endIndex(value: int): void;
+  public native function get textFormat(): TextFormat;
+  public native function set textFormat(value: TextFormat): void;
 }
 }

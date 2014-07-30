@@ -1,7 +1,5 @@
-﻿/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-/*
- * Copyright 2013 Mozilla Foundation
+﻿/**
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package avm1lib {
 import flash.display.Stage;
 import flash.events.MouseEvent;
 
 public dynamic class AS2Mouse {
-  public static function $bind(stage:Stage) {
+  public static function __bind(stage:Stage) {
     stage.addEventListener('mousedown', function (e:flash.events.MouseEvent) {
       Object(AS2Mouse).broadcastMessage('onMouseDown');
     }, false);

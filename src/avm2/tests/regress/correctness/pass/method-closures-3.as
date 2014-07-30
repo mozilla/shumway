@@ -3,10 +3,14 @@ package {
     static function foo() {
       trace("F");
     }
+    function bar() {
+      trace("F");
+    }
   }
-  trace (A.foo === A.foo);
+  var a = new A();
   for (var i = 0; i < 10; i++) {
-    A.foo();
+    trace (A.foo === A.foo);
+    trace (a.bar === a.bar);
   }
   trace("-- DONE --");
 }

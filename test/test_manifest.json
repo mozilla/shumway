@@ -8,12 +8,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "sanity",
-       "filenames": [
-         "sanity/sanity.js"
-       ],
-       "type": "sanity"
-    },
     {  "id": "basic",
        "stas": "swfs/trace.stas",
        "filenames": [
@@ -95,7 +89,8 @@
        "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/timeline/timeline_as2_1.swf",
-         "swfs/timeline/timeline_as2_2.swf"
+         "swfs/timeline/timeline_as2_2.swf",
+         "swfs/timeline/timeline_as2_3.swf"
        ],
        "type": "stas"
     },

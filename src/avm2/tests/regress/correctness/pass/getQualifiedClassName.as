@@ -16,11 +16,23 @@ package avmplus {
   trace(getQualifiedClassName(A));
   trace(getQualifiedClassName(new A()));
 
-  var values = [1, -1, "1", "-1", true, false, NaN, Infinity, +Infinity, null, undefined, {}, [], Array, Object, Boolean, A];
+  var values = [new Number(1), new Number(12.23), 1, -1, "1", "-1", true, false, NaN, Infinity, +Infinity, null, undefined, {}, [], Array, Object, Boolean, A];
 
+  trace("getQualifiedClassName");
   values.forEach(function (v) {
     trace(getQualifiedClassName(v));
   });
+
+  trace("getQualifiedSuperclassName");
+  values.forEach(function (v) {
+    trace(getQualifiedSuperclassName(v));
+  });
+
+  trace("getDefinitionByName");
+  values.forEach(function (v) {
+    // trace(getDefinitionByName(getQualifiedClassName(v)));
+  });
+
 
   trace("--- DONE ---");
 }

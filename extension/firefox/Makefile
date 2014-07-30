@@ -15,15 +15,15 @@
 UTILS_HOME = ../../utils
 CLOSURE ?= $(UTILS_HOME)/cc.jar
 BUILD_DIR = ../../build/firefox
-GENERIC_DIR = ../../build/bundle
+GENERIC_DIR = ../../build/bundles
 
 # Just builds a ff extension
 
 VERSION_BASELINE=9c77cb929464c1bca343f4
-VERSION=0.8.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION=0.9.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
 VERSION_SHA=`git log --format="%h" -n 1`
 
-build: ensureoutputdir ../../build/playerglobal/playerglobal.abcs
+build: ensureoutputdir
 	# Coping extension files
 	echo "Creating extension verions: $(VERSION)"
 	cp -R ../../LICENSE content bootstrap.js $(BUILD_DIR)/

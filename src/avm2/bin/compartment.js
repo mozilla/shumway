@@ -14,72 +14,38 @@
  * limitations under the License.
  */
 
-load(homePath + "src/avm2/global.js");
-load(homePath + "src/avm2/utilities.js");
-
 var homePath;
 var release;
 
-assert(homePath, "Host compartment needs to initialize homePath.");
+var jsBuildPath = homePath + "src/";
+var tsBuildPath = homePath + "build/ts/";
 
-load(homePath + "src/avm2/settings.js");
-load(homePath + "src/avm2/avm2Util.js");
-load(homePath + "src/avm2/options.js");
-load(homePath + "src/avm2/metrics.js");
+load(tsBuildPath + "/base.js");
+load(tsBuildPath + "/tools.js");
+
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Timer = new Shumway.Metrics.Timer();
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
 
 var systemOptions = new OptionSet("System Options");
-var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
-var traceWarnings = systemOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
+var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
 
-Timer.start("Loading VM");
+Shumway.Settings = {
+  shumwayOptions: shumwayOptions
+};
 
-load(homePath + "src/avm2/constants.js");
-load(homePath + "src/avm2/errors.js");
-load(homePath + "src/avm2/opcodes.js");
-load(homePath + "src/avm2/parser.js");
-load(homePath + "src/avm2/disassembler.js");
-load(homePath + "src/avm2/analyze.js");
+var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
+var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 
-Timer.start("Loading Compiler");
-load(homePath + "src/avm2/compiler/lljs/src/estransform.js");
-load(homePath + "src/avm2/compiler/lljs/src/escodegen.js");
-load(homePath + "src/avm2/compiler/inferrer.js");
-load(homePath + "src/avm2/compiler/c4/ir.js");
-load(homePath + "src/avm2/compiler/c4/looper.js");
-load(homePath + "src/avm2/compiler/c4/transform.js");
-load(homePath + "src/avm2/compiler/c4/backend.js");
-load(homePath + "src/avm2/compiler/aot.js");
-load(homePath + "src/avm2/compiler/builder.js");
-Timer.stop();
+load(tsBuildPath + "avm2.js");
 
-Timer.start("Loading Runtime");
-load(homePath + "lib/ByteArray.js");
-load(homePath + "src/avm2/trampoline.js");
-load(homePath + "src/avm2/bindings.js");
-load(homePath + "src/avm2/scope.js");
+var AbcFile = Shumway.AVM2.ABC.AbcFile;
 
-var playerglobalLoadedPromise;
-var playerglobal;
-
-load(homePath + "src/avm2/domain.js");
-load(homePath + "src/avm2/class.js");
-load(homePath + "src/avm2/xregexp.js");
-load(homePath + "src/avm2/runtime.js");
-load(homePath + "src/avm2/runtime-exports.js");
-load(homePath + "src/avm2/interpreter.js");
-load(homePath + "src/avm2/viz.js");
-load(homePath + "src/avm2/xml.js");
-load(homePath + "src/avm2/vectors-numeric.js");
-load(homePath + "src/avm2/vectors-generic.js");
-load(homePath + "src/avm2/array.js");
-load(homePath + "src/avm2/proxy.js");
-load(homePath + "src/avm2/dictionary.js");
-load(homePath + "src/avm2/native.js");
-Timer.stop();
-Timer.stop();
+// load(tsBuildPath + "avm2/compiler/aot.js");
 
 function grabAbc(fileOrBuffer) {
-  if (isString(fileOrBuffer)) {
+  if (Shumway.isString(fileOrBuffer)) {
 //    var buffer = snarf(fileOrBuffer, "binary");
 //    for (var i = 0; i < 10; i++) {
 //      var start = performance.now();

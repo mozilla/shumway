@@ -19,11 +19,8 @@ import flash.events.EventDispatcher;
 
 [native(cls='FrameLabelClass')]
 public final class FrameLabel extends EventDispatcher {
-  public function FrameLabel(name:String, frame:int) {
-    ctor(name, frame);
-  }
+  public native function FrameLabel(name:String, frame:int);
   public native function get name():String;
   public native function get frame():int;
-  private native function ctor(name:String, frame:int):void;
 }
 }

@@ -1,0 +1,16 @@
+#!inline console.time("Load Shared Dependencies");
+
+build/ts/base.js
+build/ts/tools.js
+
+#!inline console.timeEnd("Load Shared Dependencies");
+
+#!inline console.time("Load GFX Dependencies");
+
+# src/gfx/filters/filters.js
+# src/gfx/filters/filters_cxform.js
+
+build/ts/gfx-base.js
+build/ts/gfx.js
+
+#!inline console.timeEnd("Load GFX Dependencies");

@@ -1,7 +1,5 @@
-﻿/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
-/*
- * Copyright 2013 Mozilla Foundation
+﻿/**
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package avm1lib {
 import flash.text.TextField;
 
@@ -46,6 +45,12 @@ public dynamic class AS2TextField extends Object {
     return this._as3Object.autoSize;
   }
   public function set autoSize(value) {
+    // AS2 treats |true| as "LEFT" and |false| as "NONE".
+    if (value === true) {
+      value = "left";
+    } else if (value === false) {
+      value = "none";
+    }
     this._as3Object.autoSize = value;
   }
 
