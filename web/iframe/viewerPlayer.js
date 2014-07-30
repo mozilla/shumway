@@ -17,11 +17,11 @@
  */
 
 var release = true;
-var SHUMWAY_ROOT = "../../src/";
+var SHUMWAY_ROOT = "../src/";
 
 var viewerPlayerglobalInfo = {
-  abcs: "../../build/playerglobal/playerglobal.abcs",
-  catalog: "../../build/playerglobal/playerglobal.json"
+  abcs: "../build/playerglobal/playerglobal.abcs",
+  catalog: "../build/playerglobal/playerglobal.json"
 };
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
