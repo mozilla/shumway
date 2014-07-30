@@ -82,6 +82,7 @@ module Shumway.AVM2.AS.flash.display {
           continue;
         }
         child.class.instanceConstructorNoInitialize.call(child);
+        child._removeReference();
         if (child._name) {
           this[Multiname.getPublicQualifiedName(child._name)] = child;
           //child._addReference();

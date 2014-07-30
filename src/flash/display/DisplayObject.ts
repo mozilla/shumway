@@ -1722,13 +1722,12 @@ module Shumway.AVM2.AS.flash.display {
 
     _addReference() {
       this._referenceCount++;
-//      this.debugTrace(0, "ADD REF ");
     }
 
     _removeReference() {
-      assert (this._referenceCount > 0);
+      // TODO: Uncomment this assertion once we're sure reference counting works correctly.
+      // assert (this._referenceCount > 0);
       this._referenceCount--;
-//      this.debugTrace(0, "REM REF ");
       if (this._referenceCount !== 0 || !this._children) {
         return;
       }
