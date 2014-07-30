@@ -85,7 +85,7 @@ FIREFOX_PATH ?= $(error ERROR: Specify FIREFOX_PATH)
 check-extension: build-extension
 	cd test/extension; python check.py -b "$(FIREFOX_PATH)"
 
-build-web: build-bundle build-extension
+build-web:
 	make -C web/ build
 
 MXMLC_FLAGS ?= -static-link-runtime-shared-libraries
