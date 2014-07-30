@@ -128,7 +128,7 @@ module Shumway.SWF.Parser {
       ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
     }
 
-    var resolution = tag.resolution || 20;
+    var resolution = tag.resolution || 1;
     var ascent = Math.ceil(tag.ascent / resolution) || 1024;
     var descent = -Math.ceil(tag.descent / resolution) || 0;
     var leading = (tag.leading / resolution) || 0;
