@@ -100,6 +100,11 @@ XMLHttpRequest.prototype = {
   }
 }
 
+window.screen = {
+  width: 1024,
+  height: 1024
+};
+
 var runMicroTaskQueue = function (duration) {
   var stopAt = Date.now() + duration;
   while (microTasks.length > 0 && Date.now() < stopAt) {
