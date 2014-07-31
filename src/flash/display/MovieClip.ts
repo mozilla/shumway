@@ -113,7 +113,9 @@ module Shumway.AVM2.AS.flash.display {
 
     _setParent(parent: DisplayObjectContainer, depth: number) {
       super._setParent(parent, depth);
-      if (parent && this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
+      if (parent && this._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
+                                      DisplayObjectFlags.ContainsFrameScriptPendingChildren))
+      {
         parent._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
       }
     }
