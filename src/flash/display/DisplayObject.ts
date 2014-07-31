@@ -297,6 +297,8 @@ module Shumway.AVM2.AS.flash.display {
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.DisplaySymbol) {
+      release || counter.count("DisplayObject::initializer");
+
       var self: DisplayObject = this;
 
       self._id = flash.display.DisplayObject.getNextSyncID();
@@ -309,7 +311,7 @@ module Shumway.AVM2.AS.flash.display {
                                  DisplayObjectFlags.DirtyMatrix                        |
                                  DisplayObjectFlags.DirtyColorTransform                |
                                  DisplayObjectFlags.DirtyMask                          |
-                                 DisplayObjectFlags.DirtyClipDepth                          |
+                                 DisplayObjectFlags.DirtyClipDepth                     |
                                  DisplayObjectFlags.DirtyMiscellaneousProperties;
 
       self._root = null;
@@ -424,6 +426,9 @@ module Shumway.AVM2.AS.flash.display {
       } else {
         runScripts = DisplayObject._runScripts;
       }
+
+      assert(DisplayObject._advancableInstances.length < 1024 * 16, "Too many advancable instances.");
+
       // Step 1: Remove timeline objects that don't exist on new frame, update existing ones with
       // new properties, and declare, but not create, new ones, update numChildren.
       // NOTE: the Order Of Operations senocular article is wrong on this: timeline objects are
@@ -490,7 +495,8 @@ module Shumway.AVM2.AS.flash.display {
       this._depth = depth;
       if (parent) {
         this._addReference();
-      } else if (oldParent) {
+      }
+      if (oldParent) {
         this._removeReference();
       }
     }
@@ -1697,10 +1703,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     public debugName(): string {
-      return this._id + " [" + this._depth + "]: " + this;
+      return this._id + " [" + this._depth + "]: (" + this._referenceCount + ") " + this;
     }
 
-    public debugTrace(maxDistance = 1024) {
+    public debugTrace(maxDistance = 1024, name = "") {
       var self = this;
       var writer = new IndentingWriter();
       this.visit(function (node) {
@@ -1708,7 +1714,7 @@ module Shumway.AVM2.AS.flash.display {
         if (distance > maxDistance) {
           return VisitorFlags.Skip;
         }
-        var prefix = Shumway.StringUtilities.multiple(" ", distance);
+        var prefix = name + Shumway.StringUtilities.multiple(" ", distance);
         writer.writeLn(prefix + node.debugName());
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
@@ -1719,7 +1725,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _removeReference() {
-      //assert (this._referenceCount > 0);
+      // TODO: Uncomment this assertion once we're sure reference counting works correctly.
+      // assert (this._referenceCount > 0);
       this._referenceCount--;
       if (this._referenceCount !== 0 || !this._children) {
         return;

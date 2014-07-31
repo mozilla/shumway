@@ -361,10 +361,7 @@ module Shumway.GFX {
     }
 
     private _render() {
-      if (this.paused) {
-        return;
-      }
-      var mustRender = this._stage.readyToRender() || forcePaint.value;
+      var mustRender = (this._stage.readyToRender() || forcePaint.value) && !this.paused;
       if (mustRender) {
         for (var i = 0; i < this._renderers.length; i++) {
           var renderer = this._renderers[i];

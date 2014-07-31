@@ -22,7 +22,7 @@ For an online demo, visit:
 
 ### Extension
 
-The Firefox extension is availble at http://mozilla.github.io/shumway/extension/firefox/shumway.xpi
+Install the Firefox extension: http://mozilla.github.io/shumway/extension/firefox/shumway.xpi
 
 This development extension should be quite stable but still might break from time to time.
 Also, note that the development extension is updated on every merge and by default Firefox will

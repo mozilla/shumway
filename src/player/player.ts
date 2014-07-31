@@ -18,8 +18,6 @@ module Shumway.Player {
   import assert = Shumway.Debug.assert;
   import flash = Shumway.AVM2.AS.flash;
   import Point = Shumway.AVM2.AS.flash.geom.Point;
-  import FrameContainer = Shumway.GFX.FrameContainer;
-  import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import avm1lib = Shumway.AVM2.AS.avm1lib;
@@ -53,6 +51,7 @@ module Shumway.Player {
     private _loaderInfo: flash.display.LoaderInfo;
     private _syncTimeout: number;
     private _frameTimeout: number;
+    private _framesPlayed: number = 0;
 
     private static _syncFrameRate = 60;
 
@@ -319,7 +318,14 @@ module Shumway.Player {
         stage.scaleX = stage.scaleY = stageScaleOption.value;
         for (var i = 0; i < frameRateMultiplierOption.value; i++) {
           enterTimeline("eventLoop");
+          var start = performance.now();
           DisplayObject.performFrameNavigation(stage, true, runFrameScripts);
+          counter.count("performFrameNavigation", 1, performance.now() - start);
+          self._framesPlayed ++;
+          if (traceCountersOption.value > 0 &&
+              (self._framesPlayed % traceCountersOption.value === 0)) {
+            self._traceCounters();
+          }
           Loader.progress();
           leaveTimeline("eventLoop");
         }
@@ -331,6 +337,16 @@ module Shumway.Player {
         self._pumpUpdates();
         self.onFrameProcessed();
       })();
+    }
+
+    private _traceCounters(): void {
+      console.info(Shumway.AVM2.counter.toStringSorted());
+      Shumway.AVM2.counter.clear();
+
+      console.info(Shumway.Player.counter.toStringSorted());
+      Shumway.Player.counter.clear();
+
+      console.info("advancableInstances: " + flash.display.DisplayObject._advancableInstances.length);
     }
 
     private _leaveEventLoop(): void {

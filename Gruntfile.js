@@ -89,6 +89,7 @@ module.exports = function(grunt) {
       },
       gate: {
         cmd: 'utils/jsshell/js build/ts/shell.js -x -g -v test/unit/pass/*.js'
+//        cmd: 'node build/ts/shell.js -x -g -v test/unit/pass/*.js'
       },
       smoke_parse_database: {
         cmd: 'find test/swf -name "*.swf" -exec utils/jsshell/js build/ts/shell.js -p -po -r {} + >> result'
@@ -241,7 +242,7 @@ module.exports = function(grunt) {
     updateRefs('test/harness/slave.html', {gfx: true, parser: true, player: true});
     updateRefs('examples/xlsimport/index.html', {gfx: true, parser: true, player: true});
     updateRefs('examples/inspector/inspector.player.html', {parser: true, player: true});
-    updateRefs('examples/shell/run.js', {parser: true, player: true});
+    updateRefs('src/shell/shell.ts', {parser: true, player: true, onlyIncludes: true});
     updateRefs('src/swf/worker.js', {parser: true});
   });
   grunt.registerTask('update-flash-refs', ['update-refs']); // TODO deprecated
@@ -351,4 +352,5 @@ module.exports = function(grunt) {
     'exec:smoke_parse'
   ]);
   grunt.registerTask('firefox', ['shu', 'exec:build_extension']);
+  grunt.registerTask('web', ['shu', 'exec:build_extension', 'exec:build_web']);
 };

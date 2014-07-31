@@ -17,17 +17,20 @@
  */
 
 var release = true;
-var SHUMWAY_ROOT = "../../src/";
+var SHUMWAY_ROOT = "../src/";
 
 var viewerPlayerglobalInfo = {
-  abcs: "../../build/playerglobal/playerglobal.abcs",
-  catalog: "../../build/playerglobal/playerglobal.json"
+  abcs: "../build/playerglobal/playerglobal.abcs",
+  catalog: "../build/playerglobal/playerglobal.json"
 };
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 
+window.print = function (msg) {
+  console.log(msg);
+};
 
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
