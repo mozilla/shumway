@@ -126,7 +126,7 @@ module Shumway.AVM2.AS.flash.display {
         } else if (this._currentButtonState !== null) {
           state = '_up';
         }
-        if (state !== this._currentButtonState) {
+        if (state !== this._currentButtonState && this._buttonFrames[state]) {
           this.stop();
           this._gotoFrame(state, null);
           this._currentButtonState = state;
