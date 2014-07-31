@@ -18,8 +18,6 @@ module Shumway.Player {
   import assert = Shumway.Debug.assert;
   import flash = Shumway.AVM2.AS.flash;
   import Point = Shumway.AVM2.AS.flash.geom.Point;
-  import FrameContainer = Shumway.GFX.FrameContainer;
-  import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import avm1lib = Shumway.AVM2.AS.avm1lib;

@@ -122,7 +122,7 @@ function runIFramePlayer(data) {
     playerWorker.postMessage(data, '*');
 
     var easel = createEasel();
-    easelHost = new Shumway.Player.Window.WindowEaselHost(easel, playerWorker, window);
+    easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWorker, window);
   });
 }
 
@@ -176,7 +176,7 @@ function executeFile(file, buffer, movieParams) {
         });
         syncGFXOptions(easel.options);
         var player = new Shumway.Player.Test.TestPlayer();
-        easelHost = new Shumway.Player.Test.TestEaselHost(easel);
+        easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
         player.load(file);
 
         // embedding.loader
