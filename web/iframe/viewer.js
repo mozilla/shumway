@@ -66,7 +66,7 @@ function runViewer() {
     var playerWindow = playerWindowIframe.contentWindow;
 
     var easel = createEasel();
-    easelHost = new Shumway.Player.Window.WindowEaselHost(easel, playerWindow, window);
+    easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
 
     var data = {
       type: 'runSwf',

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway {
+module Shumway.GFX {
   import Easel = Shumway.GFX.Easel;
   import FrameContainer = Shumway.GFX.FrameContainer;
   import Stage = Shumway.GFX.Stage;

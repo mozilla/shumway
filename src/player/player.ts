@@ -18,8 +18,6 @@ module Shumway.Player {
   import assert = Shumway.Debug.assert;
   import flash = Shumway.AVM2.AS.flash;
   import Point = Shumway.AVM2.AS.flash.geom.Point;
-  import FrameContainer = Shumway.GFX.FrameContainer;
-  import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import avm1lib = Shumway.AVM2.AS.avm1lib;
@@ -342,13 +340,13 @@ module Shumway.Player {
     }
 
     private _traceCounters(): void {
-      console.info(Shumway.AVM2.counter.toStringSorted());
+      console.log(Shumway.AVM2.counter.toStringSorted());
       Shumway.AVM2.counter.clear();
 
-      console.info(Shumway.Player.counter.toStringSorted());
+      console.log(Shumway.Player.counter.toStringSorted());
       Shumway.Player.counter.clear();
 
-      console.info("advancableInstances: " + flash.display.DisplayObject._advancableInstances.length);
+      console.log("advancableInstances: " + flash.display.DisplayObject._advancableInstances.length);
     }
 
     private _leaveEventLoop(): void {

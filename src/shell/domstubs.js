@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-var console = {
-  log: print,
-  info: print,
-  error: print,
-  warn: print,
-  time: function () {},
-  timeEnd: function () {}
-};
+if (typeof console === 'undefined') {
+  console = {
+    log: print,
+    info: print,
+    error: print,
+    warn: print,
+    time: function () {},
+    timeEnd: function () {}
+  };
+} else {
+  print = console.log;
+}
 
 var addEventListener = function (type) {
   // console.log('Add listener: ' + type);
@@ -76,7 +80,7 @@ XMLHttpRequest.prototype = {
       try {
         console.log('XHR: ' + this.url);
         var response = this.responseType === 'arraybuffer' ?
-          snarf(this.url, 'binary').buffer : snarf(this.url);
+          read(this.url, 'binary').buffer : read(this.url);
         if (this.responseType === 'json') {
           response = JSON.parse(response);
         }
@@ -95,6 +99,11 @@ XMLHttpRequest.prototype = {
     }.bind(this));
   }
 }
+
+window.screen = {
+  width: 1024,
+  height: 1024
+};
 
 var runMicroTaskQueue = function (duration) {
   var stopAt = Date.now() + duration;

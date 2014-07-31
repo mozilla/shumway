@@ -195,13 +195,16 @@ module Shumway.AVM2.AS.flash.display {
      * Override of DisplayObject#_isUnderMouse that applies the test on hitTestState if
      * that is defined.
      */
-    _isUnderMouse(x: number, y: number): boolean
-    {
+    _isUnderMouse(x: number, y: number): boolean {
+      var target = this.hitTestState;
+      if (!target) {
+        return false;
+      }
       var matrix = this._getInvertedConcatenatedMatrix();
       var localX = matrix.transformX(x, y);
       var localY = matrix.transformY(x, y);
-      var target = this.hitTestState || this;
-      if (target !== this) {
+      // As we observed by testing, the hitTestState's own matrix seems to be ignored if created from a symbol.
+      if (!this._symbol) {
         matrix = target._getInvertedMatrix();
         var tmpX = matrix.transformX(localX, localY);
         localY = matrix.transformY(localX, localY);

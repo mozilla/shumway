@@ -243,7 +243,7 @@ function parseSwf(url, movieParams, objectParams) {
   }
 
   var easel = createEasel();
-  easelHost = new Shumway.Player.Window.WindowEaselHost(easel, playerWindow, window);
+  easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
   easelHost.processExternalCommand = processExternalCommand;
 
   var data = {

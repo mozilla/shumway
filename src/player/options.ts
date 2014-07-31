@@ -45,7 +45,7 @@ module Shumway {
   );
 
   export var traceCountersOption = playerOptions.register (
-    new Shumway.Options.Option("", "Trace Counters", "number", 0, "Trace counters every few frames.", {range: { min: 1, max: 120, step: 1 }})
+    new Shumway.Options.Option("tc", "Trace Counters", "number", 0, "Trace counters every few frames.", {range: { min: 1, max: 120, step: 1 }})
   );
 
   export var frameRateMultiplierOption = playerOptions.register (
