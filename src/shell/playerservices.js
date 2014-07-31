@@ -27,7 +27,7 @@ var BinaryFileReader = (function binaryFileReader() {
       setTimeout(function () {
         console.log('Reading: ' + this.url);
         try {
-          complete(snarf(this.url, 'binary'));
+          complete(read(this.url, 'binary'));
         } catch (e) {
           complete(null, e.message);
         }
