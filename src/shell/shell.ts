@@ -84,6 +84,7 @@ module Shumway.Shell {
     var verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
     var releaseOption = shellOptions.register(new Option("r", "release", "boolean", false, "Release mode"));
     var executeOption = shellOptions.register(new Option("x", "execute", "boolean", false, "Execute File(s)"));
+    var symbolFilterOption = shellOptions.register(new Option("f", "filter", "string", "", "Symbol Filter"));
     var playerGlobalOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
 
     var argumentParser = new ArgumentParser();
@@ -124,14 +125,11 @@ module Shumway.Shell {
     if (parseOption.value) {
       files.forEach(function (file) {
         var start = dateNow();
-        if (verbose) {
-          writer.enter("Parsing: " + file);
-        }
-        parseFile(file, parseForDatabaseOption.value);
+        writer.writeLn("Parsing: " + file);
+        parseFile(file, parseForDatabaseOption.value, symbolFilterOption.value.split(","));
         var elapsed = dateNow() - start;
         if (verbose) {
           verbose && writer.writeLn("Total Parse Time: " + (elapsed).toFixed(4));
-          writer.outdent();
         }
       });
     }
@@ -241,10 +239,24 @@ module Shumway.Shell {
     }
     symbols[tag.id] = symbol;
   }
+
+  function ignoreTag(code, symbolFilters) {
+    if (symbolFilters[0].length === 0) {
+      return false;
+    }
+    for (var i = 0; i < symbolFilters.length; i++) {
+      var filterCode = SwfTag[symbolFilters[i]];
+      if (filterCode !== undefined && filterCode === code) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /**
    * Parses file.
    */
-  function parseFile(file: string, parseForDatabase: boolean): boolean {
+  function parseFile(file: string, parseForDatabase: boolean, symbolFilters: string []): boolean {
     var fileName = file.replace(/^.*[\\\/]/, '');
     function parseABC(buffer: ArrayBuffer) {
       new AbcFile(new Uint8Array(buffer), "ABC");
@@ -265,6 +277,9 @@ module Shumway.Shell {
             for (var i = 0; i < tags.length; i++) {
               var tag = tags[i];
               assert(tag.code !== undefined);
+              if (ignoreTag(tag.code, symbolFilters)) {
+                continue;
+              }
               var startTag = dateNow();
               if (!parseForDatabase) {
                 if (tag.code === SWF_TAG_CODE_DO_ABC || tag.code === SWF_TAG_CODE_DO_ABC_) {
@@ -296,8 +311,8 @@ module Shumway.Shell {
           }
         });
       } catch (x) {
+        writer.redLn("Cannot parse: " + file + ", reason: " + x);
         if (verbose) {
-          writer.redLn("Cannot parse: " + file + ", reason: " + x);
           writer.redLns(x.stack);
         }
         return false;

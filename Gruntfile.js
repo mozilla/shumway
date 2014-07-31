@@ -91,10 +91,16 @@ module.exports = function(grunt) {
         cmd: 'utils/jsshell/js build/ts/shell.js -x -g -v test/unit/pass/*.js'
       },
       smoke_parse_database: {
+        maxBuffer: Infinity,
         cmd: 'find test/swf -name "*.swf" -exec utils/jsshell/js build/ts/shell.js -p -po -r {} + >> result'
       },
       smoke_parse: {
-        cmd: 'find test/swfs -name "*.swf" -exec utils/jsshell/js build/ts/shell.js -p -r {} +'
+        maxBuffer: Infinity,
+        cmd: 'find test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r {}'
+      },
+      smoke_parse_images: {
+        maxBuffer: Infinity,
+        cmd: 'find test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r -f "CODE_DEFINE_BITS,CODE_DEFINE_BITS_JPEG2,CODE_DEFINE_BITS_JPEG3,CODE_DEFINE_BITS_JPEG4,CODE_JPEG_TABLES,CODE_DEFINE_BITS_LOSSLESS,CODE_DEFINE_BITS_LOSSLESS2" {}'
       },
       closure: {
         // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
