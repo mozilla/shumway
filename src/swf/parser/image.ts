@@ -21,21 +21,31 @@
 module Shumway.SWF.Parser {
   import assert = Shumway.Debug.assert;
 
-  function getUint16(buff, pos) {
-    return (buff[pos] << 8) | buff[pos + 1];
+  /**
+   * Reads the next two bytes at the specified position.
+   */
+  function readUint16(bytes: Uint8Array, position: number) {
+    return (bytes[position] << 8) | bytes[position + 1];
   }
 
-  export function parseJpegChunks(image: any, bytes) {
+  /**
+   * Parses JPEG chunks and reads image width and height information. JPEG data
+   * is SWFs is encoded in chunks and is not directly decodable by the JPEG
+   * parser.
+   */
+  export function parseJpegChunks(image: any, bytes:Uint8Array): Uint8Array [] {
     var i = 0;
     var n = bytes.length;
     var chunks = [];
     var code;
     do {
       var begin = i;
-      while (i < n && bytes[i] !== 0xff)
+      while (i < n && bytes[i] !== 0xff) {
         ++i;
-      while (i < n && bytes[i] === 0xff)
+      }
+      while (i < n && bytes[i] === 0xff) {
         ++i;
+      }
       code = bytes[i++];
       if (code === 0xda) {
         i = n;
@@ -43,10 +53,10 @@ module Shumway.SWF.Parser {
         i += 2;
         continue;
       } else if (code < 0xd0 || code > 0xd8) {
-        var length = getUint16(bytes, i);
+        var length = readUint16(bytes, i);
         if (code >= 0xc0 && code <= 0xc3) {
-          image.height = getUint16(bytes, i + 3);
-          image.width = getUint16(bytes, i + 5);
+          image.height = readUint16(bytes, i + 3);
+          image.width = readUint16(bytes, i + 5);
         }
         i += length;
       }
@@ -54,6 +64,24 @@ module Shumway.SWF.Parser {
     } while (i < n);
     release || assert(image.width && image.height, 'bad image', 'jpeg');
     return chunks;
+  }
+
+  /**
+   * Joins all the chunks in a larger byte array.
+   */
+  function joinChunks(chunks: Uint8Array []): Uint8Array {
+    var length = 0;
+    for (var i = 0; i < chunks.length; i++) {
+      length += chunks[i].length;
+    }
+    var bytes = new Uint8Array(length);
+    var offset = 0;
+    for (var i = 0; i < chunks.length; i++) {
+      var chunk = chunks[i];
+      bytes.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return bytes;
   }
 
   export interface ImageDefinition {
@@ -88,20 +116,18 @@ module Shumway.SWF.Parser {
       var alphaData = tag.alphaData;
       if (alphaData) {
         var jpegImage = new Shumway.JPEG.JpegImage();
-        jpegImage.parse(imgData);
-
-        var width = image.width = jpegImage.width;
-        var height = image.height = jpegImage.height;
+        jpegImage.parse(joinChunks(parseJpegChunks(image, imgData)));
+        release || assert(image.width === jpegImage.width);
+        release || assert(image.height === jpegImage.height);
+        var width = image.width;
+        var height = image.height;
         var length = width * height;
-        var symbolMaskBytes = createInflatedStream(alphaData, length).bytes;
+        var alphaMaskBytes = createInflatedStream(alphaData, length).bytes;
         var data = image.data = new Uint8ClampedArray(length * 4);
-
         jpegImage.copyToImageData(image);
-
         for (var i = 0, k = 3; i < length; i++, k += 4) {
-          data[k] = symbolMaskBytes[i];
+          data[k] = alphaMaskBytes[i];
         }
-
         image.mimeType = 'application/octet-stream';
         image.dataType = ImageType.StraightAlphaRGBA;
       } else {
@@ -116,18 +142,7 @@ module Shumway.SWF.Parser {
             chunks.unshift(header.slice(0, header.size - 2));
           }
         }
-        var length = 0;
-        for (var i = 0; i < chunks.length; i++) {
-          length += chunks[i].length;
-        }
-        var data = new Uint8Array(length);
-        var offset = 0;
-        for (var i = 0; i < chunks.length; i++) {
-          var chunk = chunks[i];
-          data.set(chunk, offset);
-          offset += chunk.length;
-        }
-        image.data = data;
+        image.data = joinChunks(chunks);
       }
     } else {
       image.data = imgData;
