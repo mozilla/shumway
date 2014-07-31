@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway.Player.Window {
+module Shumway.GFX.Window {
   import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 

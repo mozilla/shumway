@@ -30,11 +30,10 @@
 /// <reference path='easel.ts'/>
 /// <reference path='debug/tree.ts'/>
 
-/// <reference path='../player/remotingGfx.ts' />
-/// <reference path='../player/easelHost.ts' />
-/// <reference path='../player/window/windowEaselHost.ts' />
-/// <reference path='../player/test/testEaselHost.ts' />
-/// <reference path='../player/test/fakeSyncWorker.ts' />
+/// <reference path='remotingGfx.ts' />
+/// <reference path='easelHost.ts' />
+/// <reference path='window/windowEaselHost.ts' />
+/// <reference path='test/testEaselHost.ts' />
 
 interface WebGLActiveInfo {
   location: any;

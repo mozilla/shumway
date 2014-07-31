@@ -25,8 +25,6 @@ module Shumway.AVM2.AS.flash.text {
 
   import DisplayObjectFlags = flash.display.DisplayObjectFlags;
 
-  declare var easelHost;
-
   export class TextField extends flash.display.InteractiveObject {
 
     static classSymbols: string [] = null;

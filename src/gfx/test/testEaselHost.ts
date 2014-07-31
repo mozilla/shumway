@@ -14,7 +14,18 @@
  * limitations under the License.
  */
 
-module Shumway.Player.Test {
+declare module Shumway.Player.Test {
+  class FakeSyncWorker {
+    static instance: FakeSyncWorker;
+
+    addEventListener(type: string, listener: any, useCapture?: boolean): void;
+    removeEventListener(type: string, listener: any, useCapture?: boolean): void;
+    postMessage(message: any, ports?: any): void;
+    postSyncMessage(message: any, ports?: any): any;
+  }
+}
+
+module Shumway.GFX.Test {
   import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
