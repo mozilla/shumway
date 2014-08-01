@@ -42,6 +42,150 @@ module Shumway.GFX {
     profile && timelineBuffer && timelineBuffer.leave(name, data);
   }
 
+  /**
+   * Polyfill for missing |Path2D|. An instance of this class keeps a record of all drawing commands
+   * ever called on it.
+   */
+  class Path {
+    private _ops: string[];
+    private _args: number[];
+
+    /**
+     * Takes a |Path2D| instance and a 2d context to replay the recorded drawing commands.
+     */
+    static _apply(path: Path, context: CanvasRenderingContext2D) {
+      var ops = path._ops;
+      var args = path._args;
+      var i = 0;
+      var j = 0;
+      context.beginPath();
+      while (i < ops.length) {
+        switch (ops[i++]) {
+          case 'closePath':
+            context.closePath();
+            break;
+          case 'moveTo':
+            context.moveTo(args[j++], args[j++]);
+            break;
+          case 'lineTo':
+            context.lineTo(args[j++], args[j++]);
+            break;
+          case 'quadraticCurveTo':
+            context.quadraticCurveTo(args[j++], args[j++], args[j++], args[j++]);
+            break;
+          case 'bezierCurveTo':
+            context.bezierCurveTo(
+              args[j++], args[j++], args[j++], args[j++], args[j++], args[j++]
+            );
+            break;
+          case 'arcTo':
+            context.arcTo(args[j++], args[j++], args[j++], args[j++], args[j++]);
+            break;
+          case 'rect':
+            context.rect(args[j++], args[j++], args[j++], args[j++]);
+            break;
+          case 'arc':
+            context.arc(
+              args[j++], args[j++], args[j++], args[j++], args[j++], !!args[j++]
+            );
+            break;
+          case 'save':
+            context.save();
+            break;
+          case 'restore':
+            context.restore();
+            break;
+          case 'transform':
+            context.transform(
+              args[j++], args[j++], args[j++], args[j++], args[j++], args[j++]
+            );
+            break;
+        }
+      }
+    }
+
+    constructor(arg: any) {
+      this._ops = [];
+      this._args = [];
+      if (arg instanceof Path) {
+        this.addPath(arg);
+      }
+    }
+
+    /**
+     * Copies all drawing commands stored in |path|.
+     */
+    addPath(path: Path, transformation?: SVGMatrix) {
+      var ops = this._ops;
+      var args = this._args;
+      if (transformation) {
+        ops.push('save');
+        ops.push('transform');
+        args.push(
+          transformation.a,
+          transformation.b,
+          transformation.c,
+          transformation.d,
+          transformation.e,
+          transformation.f
+        );
+      }
+      ops.push.apply(ops, path._ops);
+      args.push.apply(args, path._args);
+      if (transformation) {
+        ops.push('restore');
+      }
+    }
+  }
+
+  if (typeof Path2D === 'undefined') {
+    /**
+     * Here we define all the path methods available on the |Path2D| polyfill. They simply store
+     * their function name and passed arguments.
+     */
+    [
+      ['closePath'],
+      ['moveTo', 2],
+      ['lineTo', 2],
+      ['quadraticCurveTo', 4],
+      ['bezierCurveTo', 6],
+      ['arcTo', 5],
+      ['rect', 4],
+      ['arc', 6]
+    ].forEach(function (info: any[]) {
+      var name = info[0];
+      var numArgs = info[1];
+      Path.prototype[name] = function (...args: number[]) {
+        this._ops.push(name);
+        for (var i = 0; i < numArgs; i++) {
+          this._args.push(args[i]);
+        }
+      };
+    });
+    /**
+     * We override all methods of |CanvasRenderingContext2D| that accept a |Path2D| object as one
+     * of its arguments, so that we can apply all recorded drawing commands before calling the
+     * original function.
+     */
+    [
+      'fill',
+      'stroke',
+      'clip',
+      'isPointInPath',
+      'isPointInStroke'
+    ].forEach(function (name: string) {
+      var original = CanvasRenderingContext2D.prototype[name];
+      CanvasRenderingContext2D.prototype[name] = function (...args: any[]) {
+        if (args[0] instanceof Path) {
+          Path._apply(args.shift(), this);
+        }
+        original.apply(this, args);
+      };
+    });
+    // Expose our pollyfill to the global object.
+    window['Path2D'] = Path;
+  }
+
   if (typeof CanvasPattern !== "undefined") {
     /**
      * Polyfill for missing |setTransform| on CanvasPattern and CanvasGradient. Firefox implements |CanvasPattern| in nightly
