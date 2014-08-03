@@ -53,6 +53,7 @@ module Shumway.Player {
     private _frameTimeout: number;
     private _framesPlayed: number = 0;
 
+    private _writer: IndentingWriter;
     private static _syncFrameRate = 60;
 
     private _mouseEventDispatcher: MouseEventDispatcher;
@@ -78,7 +79,7 @@ module Shumway.Player {
     constructor() {
       this._keyboardEventDispatcher = new KeyboardEventDispatcher();
       this._mouseEventDispatcher = new MouseEventDispatcher();
-
+      this._writer = new IndentingWriter();
       AVM2.instance.globals['Shumway.Player.Utils'] = this;
     }
 
@@ -322,9 +323,8 @@ module Shumway.Player {
           DisplayObject.performFrameNavigation(stage, true, runFrameScripts);
           counter.count("performFrameNavigation", 1, performance.now() - start);
           self._framesPlayed ++;
-          if (traceCountersOption.value > 0 &&
-              (self._framesPlayed % traceCountersOption.value === 0)) {
-            self._traceCounters();
+          if (tracePlayerOption.value > 0 && (self._framesPlayed % tracePlayerOption.value === 0)) {
+            self._tracePlayer();
           }
           Loader.progress();
           leaveTimeline("eventLoop");
@@ -339,14 +339,18 @@ module Shumway.Player {
       })();
     }
 
-    private _traceCounters(): void {
-      console.log(Shumway.AVM2.counter.toStringSorted());
+    private _tracePlayer(): void {
+      var writer = this._writer;
+      writer.enter("Frame: " + this._framesPlayed);
+
+      Shumway.AVM2.counter.traceSorted(writer, true);
       Shumway.AVM2.counter.clear();
 
-      console.log(Shumway.Player.counter.toStringSorted());
+      Shumway.Player.counter.traceSorted(writer, true);
       Shumway.Player.counter.clear();
 
-      console.log("advancableInstances: " + flash.display.DisplayObject._advancableInstances.length);
+      writer.writeLn("advancableInstances: " + flash.display.DisplayObject._advancableInstances.length);
+      writer.outdent();
     }
 
     private _leaveEventLoop(): void {

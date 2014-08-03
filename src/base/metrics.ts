@@ -133,7 +133,21 @@ module Shumway.Metrics {
         writer.writeLn(name + ": " + this._counts[name]);
       }
     }
+    private _pairToString(times, pair): string {
+      var name = pair[0];
+      var count = pair[1];
+      var time = times[name];
+      var line = name + ": " + count;
+      if (time) {
+        line += ", " + time.toFixed(4);
+        if (count > 1) {
+          line += " (" + (time / count).toFixed(4) + ")";
+        }
+      }
+      return line;
+    }
     public toStringSorted(): string {
+      var self = this;
       var times = this._times;
       var pairs = [];
       for (var name in this._counts) {
@@ -143,20 +157,11 @@ module Shumway.Metrics {
         return b[1] - a[1];
       });
       return (pairs.map(function (pair) {
-        var name = pair[0];
-        var count = pair[1];
-        var time = times[name];
-        var line = name + ": " + count;
-        if (time) {
-          line += ", " + time.toFixed(4);
-          if (count > 1) {
-            line += " (" + (time / count).toFixed(4) + ")";
-          }
-        }
-        return line;
+        return self._pairToString(times, pair);
       }).join(", "));
     }
     public traceSorted(writer: IndentingWriter, inline = false) {
+      var self = this;
       var times = this._times;
       var pairs = [];
       for (var name in this._counts) {
@@ -167,21 +172,11 @@ module Shumway.Metrics {
       });
       if (inline) {
         writer.writeLn(pairs.map(function (pair) {
-          return (pair[0] + ": " + pair[1]);
+          return self._pairToString(times, pair);
         }).join(", "));
       } else {
         pairs.forEach(function (pair) {
-          var name = pair[0];
-          var count = pair[1];
-          var time = times[name];
-          var line = name + ": " + count;
-          if (time) {
-            line += ", " + time.toFixed(4);
-            if (count > 1) {
-              line += " (" + (time / count).toFixed(4) + ")";
-            }
-          }
-          writer.writeLn(line);
+          writer.writeLn(self._pairToString(times, pair));
         });
       }
     }
