@@ -47,57 +47,59 @@ module Shumway.GFX {
    * ever called on it.
    */
   class Path {
-    private _ops: string[];
-    private _args: number[];
+    private _commands: Uint8Array;
+    private _commandPosition: number;
+    private _data: Float32Array;
+    private _dataPosition: number;
 
     /**
      * Takes a |Path2D| instance and a 2d context to replay the recorded drawing commands.
      */
     static _apply(path: Path, context: CanvasRenderingContext2D) {
-      var ops = path._ops;
-      var args = path._args;
+      var commands = path._commands;
+      var data = path._data;
       var i = 0;
       var j = 0;
       context.beginPath();
-      while (i < ops.length) {
-        switch (ops[i++]) {
-          case 'closePath':
+      while (i < commands.length) {
+        switch (commands[i++]) {
+          case PathCommand.closePath:
             context.closePath();
             break;
-          case 'moveTo':
-            context.moveTo(args[j++], args[j++]);
+          case PathCommand.moveTo:
+            context.moveTo(data[j++], data[j++]);
             break;
-          case 'lineTo':
-            context.lineTo(args[j++], args[j++]);
+          case PathCommand.lineTo:
+            context.lineTo(data[j++], data[j++]);
             break;
-          case 'quadraticCurveTo':
-            context.quadraticCurveTo(args[j++], args[j++], args[j++], args[j++]);
+          case PathCommand.quadraticCurveTo:
+            context.quadraticCurveTo(data[j++], data[j++], data[j++], data[j++]);
             break;
-          case 'bezierCurveTo':
+          case PathCommand.bezierCurveTo:
             context.bezierCurveTo(
-              args[j++], args[j++], args[j++], args[j++], args[j++], args[j++]
+              data[j++], data[j++], data[j++], data[j++], data[j++], data[j++]
             );
             break;
-          case 'arcTo':
-            context.arcTo(args[j++], args[j++], args[j++], args[j++], args[j++]);
+          case PathCommand.arcTo:
+            context.arcTo(data[j++], data[j++], data[j++], data[j++], data[j++]);
             break;
-          case 'rect':
-            context.rect(args[j++], args[j++], args[j++], args[j++]);
+          case PathCommand.rect:
+            context.rect(data[j++], data[j++], data[j++], data[j++]);
             break;
-          case 'arc':
+          case PathCommand.arc:
             context.arc(
-              args[j++], args[j++], args[j++], args[j++], args[j++], !!args[j++]
+              data[j++], data[j++], data[j++], data[j++], data[j++], !!data[j++]
             );
             break;
-          case 'save':
+          case PathCommand.save:
             context.save();
             break;
-          case 'restore':
+          case PathCommand.restore:
             context.restore();
             break;
-          case 'transform':
+          case PathCommand.transform:
             context.transform(
-              args[j++], args[j++], args[j++], args[j++], args[j++], args[j++]
+              data[j++], data[j++], data[j++], data[j++], data[j++], data[j++]
             );
             break;
         }
@@ -105,23 +107,87 @@ module Shumway.GFX {
     }
 
     constructor(arg: any) {
-      this._ops = [];
-      this._args = [];
+      this._commands = new Uint8Array(128);
+      this._commandPosition = 0;
+      this._data = new Float32Array(128);
+      this._dataPosition = 0;
       if (arg instanceof Path) {
         this.addPath(arg);
       }
+    }
+
+    private _writeCommand(command: number) {
+      var commands = this._commands;
+      if (this._commandPosition >= commands.length) {
+        commands = new Uint8Array(commands.length * 2);
+        commands.set(this._commands);
+        this._commands = commands;
+      }
+      commands[this._commandPosition++] = command;
+    }
+
+    private _writeData(a?: number, b?: number, c?: number, d?: number,
+                       e?: number, f?: number, g?: number, h?: number) {
+      var data = this._data;
+      if (this._dataPosition + arguments.length >= data.length) {
+        data = new Float32Array(data.length * 2);
+        data.set(this._data);
+        this._data = data;
+      }
+      for (var i = 0; i < arguments.length; i++) {
+        data[this._dataPosition++] = arguments[i];
+      }
+    }
+
+    closePath() {
+      this._writeCommand(PathCommand.closePath);
+    }
+
+    moveTo(x: number, y: number) {
+      this._writeCommand(PathCommand.moveTo);
+      this._writeData(x, y);
+    }
+
+    lineTo(x: number, y:number) {
+      this._writeCommand(PathCommand.lineTo);
+      this._writeData(x, y);
+    }
+
+    quadraticCurveTo(cpx: number, cpy: number, x: number, y: number) {
+      this._writeCommand(PathCommand.quadraticCurveTo);
+      this._writeData(cpx, cpy, x, y);
+    }
+
+    bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number) {
+      this._writeCommand(PathCommand.bezierCurveTo);
+      this._writeData(cp1x, cp1y, cp2x, cp2y, x, y);
+    }
+
+    arcTo(x1: number, y1: number, x2: number, y2: number, radiusX: number, radiusY: number, rotation: number) {
+      this._writeCommand(PathCommand.arcTo);
+      this._writeData(x1, y1, x2, y2, radiusX, radiusY, rotation);
+    }
+
+    rect(x: number, y: number, width: number, height: number) {
+      this._writeCommand(PathCommand.rect);
+      this._writeData(x, y, width, height);
+    }
+
+    arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise: boolean) {
+      this._writeCommand(PathCommand.arc);
+      this._writeData(x, y, radius, startAngle, endAngle, +anticlockwise);
     }
 
     /**
      * Copies all drawing commands stored in |path|.
      */
     addPath(path: Path, transformation?: SVGMatrix) {
-      var ops = this._ops;
-      var args = this._args;
+      var commands = this._commands;
+      var data = this._data;
       if (transformation) {
-        ops.push('save');
-        ops.push('transform');
-        args.push(
+        this._writeCommand(PathCommand.save);
+        this._writeCommand(PathCommand.transform);
+        this._writeData(
           transformation.a,
           transformation.b,
           transformation.c,
@@ -130,58 +196,82 @@ module Shumway.GFX {
           transformation.f
         );
       }
-      ops.push.apply(ops, path._ops);
-      args.push.apply(args, path._args);
+      for (var i = 0; i < path._commands.length; i++) {
+        this._writeCommand(path._commands[i]);
+      }
+      this._writeData.apply(this, path._data);
       if (transformation) {
-        ops.push('restore');
+        this._writeCommand(PathCommand.restore);
       }
     }
   }
 
-  if (typeof Path2D === 'undefined') {
-    /**
-     * Here we define all the path methods available on the |Path2D| polyfill. They simply store
-     * their function name and passed arguments.
-     */
-    [
-      ['closePath'],
-      ['moveTo', 2],
-      ['lineTo', 2],
-      ['quadraticCurveTo', 4],
-      ['bezierCurveTo', 6],
-      ['arcTo', 5],
-      ['rect', 4],
-      ['arc', 6]
-    ].forEach(function (info: any[]) {
-      var name = info[0];
-      var numArgs = info[1];
-      Path.prototype[name] = function (...args: number[]) {
-        this._ops.push(name);
-        for (var i = 0; i < numArgs; i++) {
-          this._args.push(args[i]);
-        }
-      };
-    });
+  enum PathCommand {
+    closePath = 1,
+    moveTo = 2,
+    lineTo = 3,
+    quadraticCurveTo = 4,
+    bezierCurveTo = 5,
+    arcTo = 6,
+    rect = 7,
+    arc = 8,
+    save = 9,
+    restore = 10,
+    transform = 11
+  }
+
+  if (typeof CanvasRenderingContext2D !== 'undefined' && typeof Path2D === 'undefined') {
     /**
      * We override all methods of |CanvasRenderingContext2D| that accept a |Path2D| object as one
      * of its arguments, so that we can apply all recorded drawing commands before calling the
      * original function.
      */
-    [
-      'fill',
-      'stroke',
-      'clip',
-      'isPointInPath',
-      'isPointInStroke'
-    ].forEach(function (name: string) {
-      var original = CanvasRenderingContext2D.prototype[name];
-      CanvasRenderingContext2D.prototype[name] = function (...args: any[]) {
-        if (args[0] instanceof Path) {
-          Path._apply(args.shift(), this);
+    var nativeFill = CanvasRenderingContext2D.prototype.fill;
+    CanvasRenderingContext2D.prototype.fill = <any>(function (path?: any, fillRule?: any) {
+      if (arguments.length) {
+        if (path instanceof Path) {
+          Path._apply(path, this);
+        } else {
+          fillRule = path;
         }
-        original.apply(this, args);
-      };
+      }
+      if (fillRule) {
+        nativeFill.call(this, fillRule);
+      } else {
+        nativeFill.call(this);
+      }
     });
+    var nativeStroke = CanvasRenderingContext2D.prototype.stroke;
+    CanvasRenderingContext2D.prototype.stroke = <any>(function (path?: any, fillRule?: any) {
+      if (arguments.length) {
+        if (path instanceof Path) {
+          Path._apply(path, this);
+        } else {
+          fillRule = path;
+        }
+      }
+      if (fillRule) {
+        nativeStroke.call(this, fillRule);
+      } else {
+        nativeStroke.call(this);
+      }
+    });
+    var nativeClip = CanvasRenderingContext2D.prototype.clip;
+    CanvasRenderingContext2D.prototype.clip = <any>(function (path?: any, fillRule?: any) {
+      if (arguments.length) {
+        if (path instanceof Path) {
+          Path._apply(path, this);
+        } else {
+          fillRule = path;
+        }
+      }
+      if (fillRule) {
+        nativeClip.call(this, fillRule);
+      } else {
+        nativeClip.call(this);
+      }
+    });
+
     // Expose our pollyfill to the global object.
     window['Path2D'] = Path;
   }
