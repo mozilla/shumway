@@ -1645,9 +1645,15 @@ module Shumway.AVM2.AS.flash.display {
      * Finds the furthest interactive ancestor (or self) to receive pointer events for this object.
      */
     public findFurthestInteractiveAncestorOrSelf(): InteractiveObject {
+      if (!this.visible) {
+        return null;
+      }
       var find = InteractiveObject.isType(this) ? <InteractiveObject>this : this._parent;
       var self = this._parent;
       while (self) {
+        if (!self.visible) {
+          return null;
+        }
         if (!self.mouseChildren) {
           find = self;
         }
