@@ -2931,6 +2931,56 @@ module Shumway {
     }
   }
 
+  /**
+   * Simple pool allocator for ArrayBuffers. This reduces memory usage in data structures
+   * that resize buffers.
+   */
+  export class ArrayBufferPool {
+    private _list: ArrayBuffer [];
+    private _maxSize: number;
+    private static _enabled = true;
+
+    /**
+     * Creates a pool that manages a pool of a |maxSize| number of array buffers.
+     */
+    constructor(maxSize: number = 32) {
+      this._list = [];
+      this._maxSize = maxSize;
+    }
+
+    /**
+     * Creates or reuses an existing array buffer that is at least the
+     * specified |length|.
+     */
+    public acquire(length: number): ArrayBuffer {
+      if (ArrayBufferPool._enabled) {
+        var list = this._list;
+        for (var i = 0; i < list.length; i++) {
+          var buffer = list[i];
+          if (buffer.byteLength >= length) {
+            list.splice(i, 1);
+            return buffer;
+          }
+        }
+      }
+      return new ArrayBuffer(length);
+    }
+
+    /**
+     * Releases an array buffer that is no longer needed back to the pool.
+     */
+    public release(buffer: ArrayBuffer) {
+      if (ArrayBufferPool._enabled) {
+        var list = this._list;
+        release || Debug.assert(ArrayUtilities.indexOf(list, buffer) < 0);
+        if (list.length === this._maxSize) {
+          list.shift();
+        }
+        list.push(buffer);
+      }
+    }
+  }
+
   export module Telemetry {
     export enum Feature {
       EXTERNAL_INTERFACE_FEATURE = 1,
