@@ -59,6 +59,10 @@ module Shumway.AVM2.AS.flash.display {
       return loader;
     }
 
+    static reset() {
+      Loader._rootLoader = null;
+    }
+
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       Loader._rootLoader = null;

@@ -105,10 +105,26 @@ window.screen = {
   height: 1024
 };
 
-var runMicroTaskQueue = function (duration) {
+/**
+ * Runs micro tasks for a certain |duration| and |count| whichever comes first. Optionally,
+ * if the |clear| option is specified, the micro task queue is cleared even if not all the
+ * tasks have been executed.
+ */
+var runMicroTaskQueue = function (duration, count, clear) {
+  var executedTasks = 0;
   var stopAt = Date.now() + duration;
-  while (microTasks.length > 0 && Date.now() < stopAt) {
+  while (microTasks.length > 0) {
+    if (duration > 0 && Date.now() >= stopAt) {
+      break;
+    }
+    if (count > 0 && executedTasks >= count) {
+      break;
+    }
     var task = microTasks.shift();
     task.call(this);
+    executedTasks ++;
+  }
+  if (clear) {
+    microTasks.length = 0;
   }
 };

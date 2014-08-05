@@ -95,6 +95,10 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r -po {} >> data.json.txt'
       },
+      smoke_play: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -x -md 1000 -v -tp 60 -v {}'
+      },
       smoke_parse: {
         maxBuffer: Infinity,
         cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r {}'
