@@ -170,7 +170,7 @@ module Shumway.GFX {
     }
 
     moveTo(x: number, y: number) {
-      this._writeCommand(PathCommand.MoveTo);s
+      this._writeCommand(PathCommand.MoveTo);
       this._writeData(x, y);
     }
 
