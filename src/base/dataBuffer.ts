@@ -117,11 +117,13 @@ module Shumway.ArrayUtilities {
     private _bitBuffer: number;
     private _bitLength: number;
 
+    private static _arrayBufferPool = new ArrayBufferPool();
+    
     constructor(initialSize: number = DataBuffer.INITIAL_SIZE) {
       this._buffer = new ArrayBuffer(initialSize);
       this._length = 0;
       this._position = 0;
-      this._cacheViews();
+      this._updateViews();
       this._littleEndian = false; // AS3 is bigEndian by default.
       this._bitBuffer = 0;
       this._bitLength = 0;
@@ -132,7 +134,7 @@ module Shumway.ArrayUtilities {
       dataBuffer._buffer = buffer;
       dataBuffer._length = length === -1 ? buffer.byteLength : length;
       dataBuffer._position = 0;
-      dataBuffer._cacheViews();
+      dataBuffer._updateViews();
       dataBuffer._littleEndian = false; // AS3 is bigEndian by default.
       dataBuffer._bitBuffer = 0;
       dataBuffer._bitLength = 0;
@@ -168,7 +170,7 @@ module Shumway.ArrayUtilities {
       }
     }
 
-    _cacheViews() {
+    private _updateViews() {
       this._i8View = new Int8Array(this._buffer);
       this._u8View = new Uint8Array(this._buffer);
       if ((this._buffer.byteLength & 0x3) === 0) {
@@ -181,18 +183,19 @@ module Shumway.ArrayUtilities {
       return new Uint8Array(this._buffer, 0, this._length);
     }
 
-    _ensureCapacity(length: number) {
+    private _ensureCapacity(length: number) {
       var currentBuffer = this._buffer;
       if (currentBuffer.byteLength < length) {
         var newLength = Math.max(currentBuffer.byteLength, 1);
         while (newLength < length) {
           newLength *= 2;
         }
-        var newBuffer = new ArrayBuffer(newLength);
+        var newBuffer = DataBuffer._arrayBufferPool.acquire(newLength);
         var curentView = this._i8View;
         this._buffer = newBuffer;
-        this._cacheViews();
+        this._updateViews();
         this._i8View.set(curentView);
+        DataBuffer._arrayBufferPool.release(currentBuffer);
       }
     }
 
