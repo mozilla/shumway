@@ -180,6 +180,10 @@ module Shumway.AVM2.Runtime {
 
     public static currentDomain() {
       var abc = AVM2.currentAbc();
+      // If we can't find an abc just default to the current system domain.
+      if (abc === null) {
+        return AVM2.instance.systemDomain;
+      }
       release || assert (abc && abc.applicationDomain,
           "No domain environment was found on the stack, increase STACK_DEPTH or " +
           "make sure that a compiled / interpreted function is on the call stack.");
