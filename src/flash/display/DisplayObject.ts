@@ -1563,7 +1563,7 @@ module Shumway.AVM2.AS.flash.display {
       var matrix = this._getInvertedConcatenatedMatrix();
       var localX = matrix.transformX(x, y);
       var localY = matrix.transformY(x, y);
-      return this._containsPoint(localX, localY, true, false, false);
+      return this._containsPoint(localX, localY, true, true, false);
     }
 
     /**
@@ -1645,9 +1645,15 @@ module Shumway.AVM2.AS.flash.display {
      * Finds the furthest interactive ancestor (or self) to receive pointer events for this object.
      */
     public findFurthestInteractiveAncestorOrSelf(): InteractiveObject {
+      if (!this.visible) {
+        return null;
+      }
       var find = InteractiveObject.isType(this) ? <InteractiveObject>this : this._parent;
       var self = this._parent;
       while (self) {
+        if (!self.visible) {
+          return null;
+        }
         if (!self.mouseChildren) {
           find = self;
         }

@@ -70,10 +70,13 @@ module Shumway.AVM2.AS.flash.display {
         }
         self._frames = symbol.frames;
 
-        if (symbol.isAS2Object && symbol.frameScripts) {
-          var data = symbol.frameScripts;
-          for (var i = 0; i < data.length; i += 2) {
-            self.addAS2FrameScript(data[i], data[i + 1]);
+        if (symbol.isAS2Object) {
+          this._mouseEnabled = false;
+          if (symbol.frameScripts) {
+            var data = symbol.frameScripts;
+            for (var i = 0; i < data.length; i += 2) {
+              self.addAS2FrameScript(data[i], data[i + 1]);
+            }
           }
         }
       } else {
