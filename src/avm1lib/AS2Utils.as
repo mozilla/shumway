@@ -72,6 +72,8 @@ function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: Str
         // see also initDefaultListeners()
         return;
       }
+      // AS2 MovieClips don't receive roll/release events by default until they set one of the following properties.
+      // This behaviour gets triggered whenever those properties are set, despite of the actual value they are set to.
       if (propertyName === 'onRelease' ||
           propertyName === 'onReleaseOutside' ||
           propertyName === 'onRollOut' ||
