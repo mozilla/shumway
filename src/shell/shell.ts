@@ -120,6 +120,7 @@ module Shumway.Shell {
   import Runtime = Shumway.AVM2.Runtime;
   import SwfTag = Shumway.SWF.Parser.SwfTag;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+  import flash = Shumway.AVM2.AS.flash;
 
   class ShellPlayer extends Shumway.Player.Player {
     onSendUpdates(updates:DataBuffer, assets:Array<DataBuffer>, async:boolean = true):DataBuffer {
@@ -135,16 +136,28 @@ module Shumway.Shell {
   var verbose = false;
   var writer = new IndentingWriter();
 
+  var parseOption: Option;
+  var parseForDatabaseOption: Option;
+  var disassembleOption: Option;
+  var verboseOption: Option;
+  var releaseOption: Option;
+  var executeOption: Option;
+  var symbolFilterOption: Option;
+  var microTaskDurationOption: Option;
+  var microTaskCountOption: Option;
+  var playerGlobalOption: Option;
+
   export function main(commandLineArguments: string []) {
-    var parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
-    var parseForDatabaseOption = shellOptions.register(new Option("po", "parseForDatabase", "boolean", false, "Parse File(s)"));
-    var disassembleOption = shellOptions.register(new Option("d", "disassemble", "boolean", false, "Disassemble File(s)"));
-    var verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
-    var releaseOption = shellOptions.register(new Option("r", "release", "boolean", false, "Release mode"));
-    var executeOption = shellOptions.register(new Option("x", "execute", "boolean", false, "Execute File(s)"));
-    var symbolFilterOption = shellOptions.register(new Option("f", "filter", "string", "", "Symbol Filter"));
-    var executeSWFOption = shellOptions.register(new Option("s", "swf", "number", 0, "Execute SWF for n-ms"));
-    var playerGlobalOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
+    parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
+    parseForDatabaseOption = shellOptions.register(new Option("po", "parseForDatabase", "boolean", false, "Parse File(s)"));
+    disassembleOption = shellOptions.register(new Option("d", "disassemble", "boolean", false, "Disassemble File(s)"));
+    verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
+    releaseOption = shellOptions.register(new Option("r", "release", "boolean", false, "Release mode"));
+    executeOption = shellOptions.register(new Option("x", "execute", "boolean", false, "Execute File(s)"));
+    symbolFilterOption = shellOptions.register(new Option("f", "filter", "string", "", "Symbol Filter"));
+    microTaskDurationOption = shellOptions.register(new Option("md", "duration", "number", 0, "Micro task duration."));
+    microTaskCountOption = shellOptions.register(new Option("mc", "count", "number", 0, "Micro task count."));
+    playerGlobalOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
 
     var argumentParser = new ArgumentParser();
     argumentParser.addBoundOptionSet(systemOptions);
@@ -194,12 +207,19 @@ module Shumway.Shell {
     }
 
     if (executeOption.value) {
-      initializeAVM2(playerGlobalOption.value);
+      var shouldLoadPlayerGlobal = playerGlobalOption.value;
+      if (!shouldLoadPlayerGlobal) {
+        // We need to load player globals if any swfs need to be executed.
+        files.forEach(file => {
+          if (file.endsWith(".swf")) {
+            shouldLoadPlayerGlobal = true;
+          }
+        });
+      }
+      initializeAVM2(shouldLoadPlayerGlobal);
       files.forEach(function (file) {
         executeFile(file);
       });
-    } else if (executeSWFOption.value) {
-      executeSWFFile(files[0], executeSWFOption.value);
     } else if (disassembleOption.value) {
       files.forEach(function (file) {
         if (file.endsWith(".abc")) {
@@ -220,32 +240,30 @@ module Shumway.Shell {
       executeUnitTestFile(file);
     } else if (file.endsWith(".abc")) {
       executeABCFile(file);
+    } else if (file.endsWith(".swf")) {
+      executeSWFFile(file, microTaskDurationOption.value, microTaskCountOption.value);
     }
     return true;
   }
 
-  function executeSWFFile(file: string, runDuration: number = 1000) {
-    var sysMode = Runtime.ExecutionMode.COMPILE;
-    var appMode = Runtime.ExecutionMode.COMPILE;
+  function executeSWFFile(file: string, runDuration: number, runCount: number) {
+    function runSWF(file: any) {
+      flash.display.Loader.reset();
+      flash.display.DisplayObject.reset();
+      flash.display.MovieClip.reset();
+      var player = new ShellPlayer();
+      player.load(file);
+    }
     var asyncLoading = true;
-    Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
-      function runSWF(file: any) {
-        var player = new ShellPlayer();
-        player.load(file);
-      }
-
-      if (asyncLoading) {
-        Shumway.FileLoadingService.instance.setBaseUrl(file);
-        runSWF(file);
-      } else {
-        Shumway.FileLoadingService.instance.setBaseUrl(file);
-        runSWF(read(file, 'binary'));
-      }
-    });
-
-    console.log('Running for ' + runDuration + 'ms...');
-    runMicroTaskQueue(runDuration);
-    console.log('Done.');
+    if (asyncLoading) {
+      Shumway.FileLoadingService.instance.setBaseUrl(file);
+      runSWF(file);
+    } else {
+      Shumway.FileLoadingService.instance.setBaseUrl(file);
+      runSWF(read(file, 'binary'));
+    }
+    console.info("Running: " + file);
+    runMicroTaskQueue(runDuration, runCount, true);
   }
 
   function executeABCFile(file: string) {
