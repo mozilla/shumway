@@ -72,7 +72,13 @@ function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: Str
         // see also initDefaultListeners()
         return;
       }
-
+      if (propertyName === 'onRelease' ||
+          propertyName === 'onReleaseOutside' ||
+          propertyName === 'onRollOut' ||
+          propertyName === 'onRollOver') {
+        this._as3Object.mouseEnabled = true;
+        this._as3Object.buttonMode = true;
+      }
       if (currentHandler === newHandler) {
         return;
       }
