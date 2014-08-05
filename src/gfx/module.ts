@@ -66,6 +66,8 @@ module Shumway.GFX {
     private _data: Float32Array;
     private _dataPosition: number;
 
+    private static _arrayBufferPool = new ArrayBufferPool();
+
     /**
      * Takes a |Path2D| instance and a 2d context to replay the recorded drawing commands.
      */
@@ -121,46 +123,57 @@ module Shumway.GFX {
     }
 
     constructor(arg: any) {
-      this._commands = new Uint8Array(128);
+      this._commands = new Uint8Array(Path._arrayBufferPool.acquire(4), 0, 4);
       this._commandPosition = 0;
-      this._data = new Float32Array(128);
+      this._data = new Float32Array(Path._arrayBufferPool.acquire(8 * 4), 0, 8);
       this._dataPosition = 0;
       if (arg instanceof Path) {
         this.addPath(arg);
       }
     }
 
+    private _resizeCommands(length: number) {
+      var newLength = Math.max(this._commandPosition + length, ((this._commands.length * 3) >> 1) + 1);
+      var commands = new Uint8Array(Path._arrayBufferPool.acquire(newLength), 0, newLength);
+      commands.set(this._commands);
+      Path._arrayBufferPool.release(this._commands.buffer);
+      this._commands = commands;
+    }
+
+    private _resizeData(length: number) {
+      var newLength = Math.max(this._dataPosition + length, ((this._data.length * 3) >> 1) + 1);
+      var data = new Float32Array(Path._arrayBufferPool.acquire(newLength * 4), 0, newLength);
+      data.set(this._data);
+      Path._arrayBufferPool.release(this._data.buffer);
+      this._data = data;
+    }
+
     private _writeCommand(command: number) {
-      var commands = this._commands;
-      if (this._commandPosition >= commands.length) {
-        commands = new Uint8Array(((commands.length * 3) >> 1) + 1);
-        commands.set(this._commands);
-        this._commands = commands;
+      if (this._commandPosition >= this._commands.length) {
+        this._resizeCommands(1);
       }
-      commands[this._commandPosition++] = command;
+      this._commands[this._commandPosition++] = command;
     }
 
     private _writeData(a: number, b: number, c?: number, d?: number, e?: number, f?: number, g?: number) {
-      var data = this._data;
       var argc = arguments.length;
-      if (this._dataPosition + argc >= data.length) {
-        data = new Float32Array(((data.length * 3) >> 1) + 1);
-        data.set(this._data);
-        this._data = data;
+      if (this._dataPosition + argc >= this._data.length) {
+        this._resizeData(argc);
       }
+      var data = this._data;
       var p = this._dataPosition;
       data[p] = a;
       data[p + 1] = b;
       if (argc > 2) {
         data[p + 2] = c;
         data[p + 3] = d;
-      }
-      if (argc > 4) {
-        data[p + 4] = e;
-        data[p + 5] = f;
-      }
-      if (argc > 5) {
-        data[p + 6] = g;
+        if (argc > 4) {
+          data[p + 4] = e;
+          data[p + 5] = f;
+          if (argc > 5) {
+            data[p + 6] = g;
+          }
+        }
       }
       this._dataPosition += argc;
     }
@@ -208,8 +221,6 @@ module Shumway.GFX {
      * Copies all drawing commands stored in |path|.
      */
     addPath(path: Path, transformation?: SVGMatrix) {
-      var commands = this._commands;
-      var data = this._data;
       if (transformation) {
         this._writeCommand(PathCommand.Save);
         this._writeCommand(PathCommand.Transform);
@@ -222,10 +233,19 @@ module Shumway.GFX {
           transformation.f
         );
       }
-      for (var i = 0; i < path._commands.length; i++) {
-        this._writeCommand(path._commands[i]);
+      var commands = path._commands;
+      if (this._commandPosition + commands.length >= this._commands.length) {
+        this._resizeCommands(commands.length);
       }
-      this._writeData.apply(this, path._data);
+      this._commands.set(commands, this._commandPosition);
+      this._commandPosition += commands.length;
+      var data = path._data;
+      if (this._dataPosition + data.length >= this._data.length) {
+        this._resizeCommands(commands.length);
+      }
+      this._resizeData(data.length);
+      this._data.set(data, this._dataPosition);
+      this._dataPosition += data.length;
       if (transformation) {
         this._writeCommand(PathCommand.Restore);
       }
