@@ -148,7 +148,7 @@ module Shumway.AVM2.AS {
         self._buffer = buffer;
         self._length = length;
         self._position = 0;
-        self._cacheViews();
+        self._updateViews();
         self._objectEncoding = ByteArray.defaultObjectEncoding;
         self._littleEndian = false; // AS3 is bigEndian by default.
         self._bitBuffer = 0;
@@ -184,7 +184,7 @@ module Shumway.AVM2.AS {
       private _bitBuffer: number;
       private _bitLength: number;
 
-      private _cacheViews: () => void;
+      private _updateViews: () => void;
 
       asGetNumericProperty: (name: number) => number;
       asSetNumericProperty: (name: number, value: number) => void;
