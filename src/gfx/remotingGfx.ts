@@ -252,7 +252,7 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = input.readInt();
       var symbolId = input.readInt();
-      var asset = context._getAsset(id);
+      var asset = <RenderableShape>context._getAsset(id);
       var bounds = this._readRectangle();
       var pathData = ShapeData.FromPlainObject(this._popAsset());
       var numTextures = input.readInt();
@@ -261,7 +261,9 @@ module Shumway.Remoting.GFX {
         var bitmapId = input.readInt();
         textures.push(context._getBitmapAsset(bitmapId));
       }
-      if (!asset) {
+      if (asset) {
+        asset.update(pathData, textures, bounds);
+      } else {
         var renderable = new RenderableShape(id, pathData, textures, bounds);
         for (var i = 0; i < textures.length; i++) {
           textures[i].addRenderableReferrer(renderable);
