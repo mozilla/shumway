@@ -567,9 +567,6 @@ module Shumway.AVM2.AS.flash.display {
     addAS2InitActionBlock(frameIndex: number, actionsBlock: {actionsData: Uint8Array}): void {
       var self: MovieClip = this;
       function listener (e) {
-        if (self._symbol && self._symbol.id === 6) {
-          debugger;
-        }
         if (self._currentFrame !== frameIndex + 1) {
           return;
         }
