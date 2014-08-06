@@ -1804,6 +1804,7 @@ var asCoerceBoolean = Shumway.AVM2.Runtime.asCoerceBoolean;
 var asCoerceObject = Shumway.AVM2.Runtime.asCoerceObject;
 var asCompare = Shumway.AVM2.Runtime.asCompare;
 var asAdd = Shumway.AVM2.Runtime.asAdd;
+var applyType = Shumway.AVM2.Runtime.applyType;
 
 var asGetSlot = Shumway.AVM2.Runtime.asGetSlot;
 var asSetSlot = Shumway.AVM2.Runtime.asSetSlot;
