@@ -17,7 +17,6 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
   import throwError = Shumway.AVM2.Runtime.throwError;
 
   export class URLRequest extends ASNative {
@@ -115,7 +114,7 @@ module Shumway.AVM2.AS.flash.net {
       obj.checkPolicyFile = this._checkPolicyFile;
       if (this._data) {
         obj.mimeType = this._contentType;
-        if (ByteArray.isType(this._data)) {
+        if (flash.utils.ByteArray.isType(this._data)) {
           obj.data = <ASObject><any>
             new Uint8Array((<any> this._data)._buffer, 0, (<any> this._data).length);
         } else {
