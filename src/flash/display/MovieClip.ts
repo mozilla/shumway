@@ -69,7 +69,6 @@ module Shumway.AVM2.AS.flash.display {
           self.addScene('', symbol.labels, 0, symbol.numFrames);
         }
         self._frames = symbol.frames;
-
         if (symbol.isAS2Object) {
           this._mouseEnabled = false;
           if (symbol.frameScripts) {
@@ -78,6 +77,9 @@ module Shumway.AVM2.AS.flash.display {
               self.addAS2FrameScript(data[i], data[i + 1]);
             }
           }
+        }
+        if (symbol.initActionBlock) {
+          this.addAS2InitActionBlock(0, symbol.initActionBlock);
         }
       } else {
         self.addScene('', [], 0, self._totalFrames);
@@ -558,13 +560,16 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * InitActionBlocks are executed once, before the children are initialized for a frame.
      * That matches AS3's enterFrame event, so we can add an event listener that just bails
-     * as long as the target frame isn't reached, and executes the InitActionBlocks once it is.
+     * as long as the target frame isn't reached, and executes the InitActionBlock once it is.
      *
      * After that, the listener removes itself.
      */
-    addAS2InitActionBlocks(frameIndex: number, actionsBlocks: {actionsData: Uint8Array} []): void {
+    addAS2InitActionBlock(frameIndex: number, actionsBlock: {actionsData: Uint8Array}): void {
       var self: MovieClip = this;
       function listener (e) {
+        if (self._symbol && self._symbol.id === 6) {
+          debugger;
+        }
         if (self._currentFrame !== frameIndex + 1) {
           return;
         }
@@ -573,11 +578,8 @@ module Shumway.AVM2.AS.flash.display {
         var avm1Context = self.loaderInfo._avm1Context;
         var as2Object = Shumway.AVM1.getAS2Object(self);
         var stage = self.stage;
-        for (var i = 0; i < actionsBlocks.length; i++) {
-          var actionsData = new AVM1.AS2ActionsData(actionsBlocks[i].actionsData,
-                                                    'f' + frameIndex + 'i' + i);
-          avm1Context.executeActions(actionsData, stage, as2Object);
-        }
+        var actionsData = new AVM1.AS2ActionsData(actionsBlock.actionsData, 'f' + frameIndex);
+        avm1Context.executeActions(actionsData, stage, as2Object);
       }
       this.addEventListener('enterFrame', listener);
     }
