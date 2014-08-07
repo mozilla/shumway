@@ -135,7 +135,8 @@ function domainMatches(host, pattern) {
 
 function fetchPolicyFile(url, cache, callback) {
   if (url in cache) {
-    return callback(cache[url]);
+    callback(cache[url]);
+    return;
   }
 
   log('Fetching policy file at ' + url);
@@ -157,7 +158,8 @@ function fetchPolicyFile(url, cache, callback) {
       var doc = xhr.responseXML;
       if (xhr.status !== 200 || !doc) {
         cache[url] = false;
-        return callback(null, 'Invalid HTTP status: ' + xhr.statusText);
+        callback(null, 'Invalid HTTP status: ' + xhr.statusText);
+        return;
       }
       // parsing params
       var params = doc.documentElement.childNodes;
@@ -303,7 +305,8 @@ ChromeActions.prototype = {
     // TODO flash cross-origin request
     if (url === this.url) {
       // allow downloading for the original file
-      return callback({success: true});
+      callback({success: true});
+      return;
     }
 
     // allows downloading from the same origin
@@ -317,7 +320,8 @@ ChromeActions.prototype = {
 
     if (parsedUrl && parsedBaseUrl &&
         parsedUrl.prePath === parsedBaseUrl.prePath) {
-      return callback({success: true});
+      callback({success: true});
+      return;
     }
 
     // additionally using internal whitelist
@@ -327,12 +331,14 @@ ChromeActions.prototype = {
         return domainMatches(parsedUrl.host, i);
       });
       if (whitelisted) {
-        return callback({success: true});
+        callback({success: true});
+        return;
       }
     }
 
     if (!checkPolicyFile || !parsedUrl || !parsedBaseUrl) {
-      return callback({success: false});
+      callback({success: false});
+      return;
     }
 
     // we can request crossdomain.xml
@@ -497,7 +503,7 @@ ChromeActions.prototype = {
   },
   externalCom: function (data) {
     if (!this.allowScriptAccess)
-      return;
+      return null;
 
     // TODO check security ?
     var parentWindow = this.window.parent.wrappedJSObject;
@@ -505,12 +511,12 @@ ChromeActions.prototype = {
     switch (data.action) {
     case 'init':
       if (this.externalComInitialized)
-        return;
+        return null;
 
       this.externalComInitialized = true;
       var eventTarget = this.window.document;
       initExternalCom(parentWindow, embedTag, eventTarget);
-      return;
+      return null;
     case 'getId':
       return embedTag.id;
     case 'eval':
@@ -522,6 +528,8 @@ ChromeActions.prototype = {
     case 'unregister':
       return embedTag.__flash__unregisterCallback(data.functionName);
     }
+
+    return null;
   },
   getWindowUrl: function() {
     return this.window.parent.wrappedJSObject.location + '';
@@ -565,6 +573,7 @@ RequestListener.prototype.receive = function(event) {
           // doc is no longer accessible because the requestor is already
           // gone. unloaded content cannot receive the response anyway.
         }
+        return false;
       };
     }
     actions[action].call(this.actions, data, response);
@@ -738,6 +747,8 @@ function initExternalCom(wrappedWindow, wrappedObject, targetDocument) {
       case 'undefined':
         return '<undefined/>';
       }
+
+      return null;
     };
     var sandbox = new Cu.Sandbox(wrappedWindow, {sandboxPrototype: wrappedWindow});
     wrappedWindow.__flash__eval = function (evalInSandbox, sandbox, expr) {
