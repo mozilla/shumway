@@ -466,6 +466,7 @@ module Shumway.SWF.Parser {
       $.resolution = 20;
     }
     var glyphCount = $.glyphCount = readUi16($bytes, $stream);
+    var startpos = $stream.pos;
     if (wideOffset) {
       var $0 = $.offsets = [];
       var $1 = glyphCount;
@@ -485,6 +486,13 @@ module Shumway.SWF.Parser {
     var $5 = glyphCount;
     while ($5--) {
       var $6 = {};
+      var dist = $.offsets[glyphCount-$5]+startpos-$stream.pos;
+      // when just one byte difference between two offsets, just read that and insert a eos record
+      if( dist === 1 ) {
+        readUi8($bytes,$stream);
+        $4.push({"records":[{"type":0,"eos":true,"hasNewStyles":0,"hasLineStyle":0,"hasFillStyle1":0,"hasFillStyle0":0,"move":0}]});
+        continue;
+      }
       shape($bytes, $stream, $6, swfVersion, tagCode);
       $4.push($6);
     }
