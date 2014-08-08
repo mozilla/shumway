@@ -334,12 +334,21 @@ module Shumway.Timeline {
   }
 
   export class SoundSymbol extends Symbol {
+    channels: number;
+    sampleRate: number;
+    pcm: Float32Array;
+    packaged;
+
     constructor(id: number) {
       super(id, flash.media.Sound);
     }
 
     static FromData(data: any): SoundSymbol {
       var symbol = new SoundSymbol(data.id);
+      symbol.channels = data.channels;
+      symbol.sampleRate = data.sampleRate;
+      symbol.pcm = data.pcm;
+      symbol.packaged = data.packaged;
       return symbol;
     }
   }

@@ -434,7 +434,7 @@ module Shumway.AVM2.AS.flash.display {
         }
 
         if (data.startSounds) {
-          //  rootMovie._registerStartSounds(frameIndex + 1, data.startSounds);
+          rootMovie._registerStartSounds(frameIndex + 1, data.startSounds);
         }
         if (data.soundStream) {
           rootMovie._initSoundStream(data.soundStream);
