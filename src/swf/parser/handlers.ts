@@ -537,6 +537,20 @@ module Shumway.SWF.Parser {
     return $;
   }
 
+  function defineFont4($bytes, $stream, $, swfVersion, tagCode) {
+    $ || ($ = {});
+    $.id = readUi16($bytes, $stream);
+    var reserved = readUb($bytes, $stream, 5);
+    var hasFontData = $.hasFontData = readUb($bytes, $stream, 1);
+    $.italic = readUb($bytes, $stream, 1);
+    $.bold = readUb($bytes, $stream, 1);
+    $.name = readString($bytes, $stream, 0);
+    if (hasFontData) {
+      $.data = readBinary($bytes, $stream, 0, false);
+    }
+    return $;
+  }
+
   function fileAttributes($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     var reserved = readUb($bytes, $stream, 1);
@@ -1427,7 +1441,7 @@ module Shumway.SWF.Parser {
     /* DefineFontName */                88: undefined,
     /* StartSound2 */                   89: startSound,
     /* DefineBitsJPEG4 */               90: defineImage,
-    /* DefineFont4 */                   91: undefined
+    /* DefineFont4 */                   91: defineFont4
   };
 
 
