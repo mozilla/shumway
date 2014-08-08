@@ -71,7 +71,7 @@ module Shumway.SWF.Parser {
       var entry;
       while ((entry = entries[j++])) {
         var code = codes[entry.glyphIndex];
-        release || assert(code, 'undefined glyph', 'label');
+        release || assert(code, 'undefined glyph ', 'label');
         text += String.fromCharCode(code);
         coords.push(x, y);
         x += entry.advance;
