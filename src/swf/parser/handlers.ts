@@ -1172,7 +1172,7 @@ module Shumway.SWF.Parser {
   function events($bytes, $stream, $, swfVersion, tagCode) {
     var flags = swfVersion >= 6 ? readUi32($bytes, $stream) : readUi16($bytes, $stream);
     var eoe = $.eoe = !flags;
-    var keyPress;
+    var keyPress = 0;
     $.onKeyUp = flags >> 7 & 1;
     $.onKeyDown = flags >> 6 & 1;
     $.onMouseUp = flags >> 5 & 1;
