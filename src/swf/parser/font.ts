@@ -67,7 +67,6 @@ module Shumway.SWF.Parser {
     var glyphIndex = { };
     var ranges = [];
 
-    var originalCode;
     var generateAdvancement = !('advance' in tag);
     var correction = 0;
     var isFont3 = (tag.code === 75);
@@ -76,27 +75,10 @@ module Shumway.SWF.Parser {
       tag.advance = [];
     }
 
-    var maxCode = Math.max.apply(null, tag.codes) || 35;
-
     if (tag.codes) {
-      for (var i = 0; i < tag.codes.length; i++) {
-        var code = tag.codes[i];
-        if (code < 32) {
-          maxCode++;
-          if (maxCode == 8232) {
-            maxCode = 8240;
-          }
-          code = maxCode;
-        }
+      for (var i = 0, code; i < tag.codes.length; i++) {
+        code = tag.codes[i];
         codes.push(code);
-      }
-    }
-
-    originalCode = codes.concat();
-
-    if (tag.codes) {
-      for (var i = 0, code; i < codes.length; i++) {
-        code = codes[i];
         glyphIndex[code] = i;
       }
       codes.sort(function (a, b) {
@@ -105,11 +87,11 @@ module Shumway.SWF.Parser {
       var i = 0;
       var code;
       var indices;
-      while (code = codes[i++]) {
+      while ((code = codes[i++]) !== undefined) {
         var start = code;
         var end = start;
         indices = [i - 1];
-        while ((code = codes[i]) && end + 1 === code) {
+        while (((code = codes[i]) !== undefined) && end + 1 === code) {
           ++end;
           indices.push(i);
           ++i;
@@ -191,7 +173,7 @@ module Shumway.SWF.Parser {
     var i = 0;
     var code;
     var rawData = {};
-    while (code = codes[i++]) {
+    while ((code = codes[i++]) !== undefined) {
       var glyph = glyphs[glyphIndex[code]];
       var records = glyph.records;
       var x = 0;
@@ -274,7 +256,7 @@ module Shumway.SWF.Parser {
     }
 
     i = 0;
-    while (code = codes[i++]) {
+    while ((code = codes[i++]) !== undefined) {
       var glyph = glyphs[glyphIndex[code]];
       var records = glyph.records;
       segments = rawData[code];
