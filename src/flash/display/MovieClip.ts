@@ -59,6 +59,8 @@ module Shumway.AVM2.AS.flash.display {
       self._stopped = false;
       self._allowFrameNavigation = true;
 
+      self._soundStream = null;
+
       self._buttonFrames = Object.create(null);
       self._currentButtonState = null;
 
@@ -183,6 +185,8 @@ module Shumway.AVM2.AS.flash.display {
     _as2SymbolClass;
     private _boundExecuteAS2FrameScripts: () => void;
     private _as2FrameScripts: AVM1.AS2ActionsData[][];
+
+    private _soundStream: MovieClipSoundStream;
 
     private _buttonFrames: Shumway.Map<number>;
     private _currentButtonState: string;
@@ -394,6 +398,8 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._currentFrame = this._nextFrame = nextFrame;
+
+      this._syncSounds(nextFrame);
     }
 
     /**
@@ -589,6 +595,24 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = 0; i < scripts.length; i++) {
         var actionsData = scripts[i];
         avm1Context.executeActions(actionsData, this.stage, as2Object);
+      }
+    }
+
+    get _isFullyLoaded(): boolean {
+      return this.framesLoaded >= this.totalFrames;
+    }
+
+    _initSoundStream(streamInfo: any) {
+      this._soundStream = new MovieClipSoundStream(streamInfo, this);
+    }
+
+    _addSoundStreamBlock(frameIndex: number, streamBlock: any) {
+      this._soundStream.appendBlock(frameIndex + 1, streamBlock);
+    }
+
+    private _syncSounds(frameIndex: number) {
+      if (this._soundStream) {
+        this._soundStream.playFrame(frameIndex + 1);
       }
     }
 
