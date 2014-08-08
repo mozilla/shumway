@@ -275,6 +275,7 @@ module Shumway.Timeline {
     labels: flash.display.FrameLabel[] = [];
     frameScripts: any[] = [];
     isRoot: boolean;
+    initActionBlock: {actionsData: Uint8Array} [] = null;
 
     constructor(id: number, isRoot: boolean = false) {
       super(id, flash.display.MovieClip);
@@ -333,12 +334,21 @@ module Shumway.Timeline {
   }
 
   export class SoundSymbol extends Symbol {
+    channels: number;
+    sampleRate: number;
+    pcm: Float32Array;
+    packaged;
+
     constructor(id: number) {
       super(id, flash.media.Sound);
     }
 
     static FromData(data: any): SoundSymbol {
       var symbol = new SoundSymbol(data.id);
+      symbol.channels = data.channels;
+      symbol.sampleRate = data.sampleRate;
+      symbol.pcm = data.pcm;
+      symbol.packaged = data.packaged;
       return symbol;
     }
   }

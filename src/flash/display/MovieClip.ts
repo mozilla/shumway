@@ -26,6 +26,82 @@ module Shumway.AVM2.AS.flash.display {
   import events = flash.events;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 
+  interface SoundClip {
+    channel?;
+    object: flash.media.Sound;
+  }
+
+  class MovieClipSoundsManager {
+    private _mc: MovieClip;
+    private _startSoundRegistrations: Map<any>;
+    private _soundStream: MovieClipSoundStream;
+    private _soundClips: Map<SoundClip>;
+
+    constructor(mc: MovieClip) {
+      this._mc = mc;
+      this._startSoundRegistrations = null;
+      this._soundStream = null;
+    }
+
+    registerStartSounds(frameNum: number, soundStartInfo) {
+      if (this._startSoundRegistrations === null) {
+        this._startSoundRegistrations = {};
+      }
+      this._startSoundRegistrations[frameNum] = soundStartInfo;
+    }
+
+    initSoundStream(streamInfo: any) {
+      this._soundStream = new MovieClipSoundStream(streamInfo, this._mc);
+    }
+
+    addSoundStreamBlock(frameNum: number, streamBlock: any) {
+      this._soundStream.appendBlock(frameNum, streamBlock);
+    }
+
+    private _startSounds(frameNum) {
+      var starts = this._startSoundRegistrations[frameNum];
+      if (starts) {
+        var sounds = this._soundClips || (this._soundClips = {});
+        var loaderInfo = this._mc.loaderInfo;
+        for (var i = 0; i < starts.length; i++) {
+          var start = starts[i];
+          var symbolId = start.soundId;
+          var info = start.soundInfo;
+          var sound: SoundClip = sounds[symbolId];
+          if (!sound) {
+            var symbolInfo: Timeline.SoundSymbol = <Timeline.SoundSymbol>loaderInfo.getSymbolById(symbolId);
+            if (!symbolInfo) {
+              continue;
+            }
+
+            var symbolClass = symbolInfo.symbolClass;
+            var soundObj = symbolClass.initializeFrom(symbolInfo);
+            symbolClass.instanceConstructorNoInitialize.call(soundObj);
+            sounds[symbolId] = sound = { object: soundObj };
+          }
+          if (sound.channel) {
+            sound.channel.stop();
+            sound.channel = null;
+          }
+          if (!info.stop) {
+            // TODO envelope, in/out point
+            var loops = info.hasLoops ? info.loopCount : 0;
+            sound.channel = sound.object.play(0, loops);
+          }
+        }
+      }
+    }
+
+    syncSounds(frameNum: number) {
+      if (this._startSoundRegistrations !== null) {
+        this._startSounds(frameNum);
+      }
+      if (this._soundStream) {
+        this._soundStream.playFrame(frameNum);
+      }
+    }
+  }
+
   export class MovieClip extends flash.display.Sprite implements IAdvancable {
 
     private static _callQueue: MovieClip [];
@@ -59,6 +135,8 @@ module Shumway.AVM2.AS.flash.display {
       self._stopped = false;
       self._allowFrameNavigation = true;
 
+      self._sounds = null;
+
       self._buttonFrames = Object.create(null);
       self._currentButtonState = null;
 
@@ -69,12 +147,17 @@ module Shumway.AVM2.AS.flash.display {
           self.addScene('', symbol.labels, 0, symbol.numFrames);
         }
         self._frames = symbol.frames;
-
-        if (symbol.isAS2Object && symbol.frameScripts) {
-          var data = symbol.frameScripts;
-          for (var i = 0; i < data.length; i += 2) {
-            self.addAS2FrameScript(data[i], data[i + 1]);
+        if (symbol.isAS2Object) {
+          this._mouseEnabled = false;
+          if (symbol.frameScripts) {
+            var data = symbol.frameScripts;
+            for (var i = 0; i < data.length; i += 2) {
+              self.addAS2FrameScript(data[i], data[i + 1]);
+            }
           }
+        }
+        if (symbol.initActionBlock) {
+          this.addAS2InitActionBlock(0, symbol.initActionBlock);
         }
       } else {
         self.addScene('', [], 0, self._totalFrames);
@@ -178,6 +261,8 @@ module Shumway.AVM2.AS.flash.display {
     _as2SymbolClass;
     private _boundExecuteAS2FrameScripts: () => void;
     private _as2FrameScripts: AVM1.AS2ActionsData[][];
+
+    private _sounds: MovieClipSoundsManager;
 
     private _buttonFrames: Shumway.Map<number>;
     private _currentButtonState: string;
@@ -389,6 +474,8 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._currentFrame = this._nextFrame = nextFrame;
+
+      this._syncSounds(nextFrame);
     }
 
     /**
@@ -555,11 +642,11 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * InitActionBlocks are executed once, before the children are initialized for a frame.
      * That matches AS3's enterFrame event, so we can add an event listener that just bails
-     * as long as the target frame isn't reached, and executes the InitActionBlocks once it is.
+     * as long as the target frame isn't reached, and executes the InitActionBlock once it is.
      *
      * After that, the listener removes itself.
      */
-    addAS2InitActionBlocks(frameIndex: number, actionsBlocks: {actionsData: Uint8Array} []): void {
+    addAS2InitActionBlock(frameIndex: number, actionsBlock: {actionsData: Uint8Array}): void {
       var self: MovieClip = this;
       function listener (e) {
         if (self._currentFrame !== frameIndex + 1) {
@@ -570,11 +657,8 @@ module Shumway.AVM2.AS.flash.display {
         var avm1Context = self.loaderInfo._avm1Context;
         var as2Object = Shumway.AVM1.getAS2Object(self);
         var stage = self.stage;
-        for (var i = 0; i < actionsBlocks.length; i++) {
-          var actionsData = new AVM1.AS2ActionsData(actionsBlocks[i].actionsData,
-                                                    'f' + frameIndex + 'i' + i);
-          avm1Context.executeActions(actionsData, stage, as2Object);
-        }
+        var actionsData = new AVM1.AS2ActionsData(actionsBlock.actionsData, 'f' + frameIndex);
+        avm1Context.executeActions(actionsData, stage, as2Object);
       }
       this.addEventListener('enterFrame', listener);
     }
@@ -587,6 +671,34 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = 0; i < scripts.length; i++) {
         var actionsData = scripts[i];
         avm1Context.executeActions(actionsData, this.stage, as2Object);
+      }
+    }
+
+    get _isFullyLoaded(): boolean {
+      return this.framesLoaded >= this.totalFrames;
+    }
+
+    _registerStartSounds(frameNum: number, soundStartInfo) {
+      if (this._sounds === null) {
+        this._sounds = new MovieClipSoundsManager(this);
+      }
+      this._sounds.registerStartSounds(frameNum, soundStartInfo);
+    }
+
+    _initSoundStream(streamInfo: any) {
+      if (this._sounds === null) {
+        this._sounds = new MovieClipSoundsManager(this);
+      }
+      this._sounds.initSoundStream(streamInfo);
+    }
+
+    _addSoundStreamBlock(frameIndex: number, streamBlock: any) {
+      this._sounds.addSoundStreamBlock(frameIndex + 1, streamBlock);
+    }
+
+    private _syncSounds(frameNum: number) {
+      if (this._sounds !== null) {
+        this._sounds.syncSounds(frameNum + 1);
       }
     }
 

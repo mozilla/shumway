@@ -123,6 +123,7 @@
 ///<reference path='display/Graphics.ts' />
 ///<reference path='display/Sprite.ts' />
 ///<reference path='display/MovieClip.ts' />
+///<reference path='display/MovieClipSoundStream.ts' />
 ///<reference path='display/Stage.ts' />
 
 ///<reference path='display/ActionScriptVersion.ts' />

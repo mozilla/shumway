@@ -89,27 +89,22 @@ module Shumway.SWF.Parser {
           code = maxCode;
         }
         codes.push(code);
-      }
-    }
-
-    originalCode = codes.concat();
-
-    if (tag.codes) {
-      for (var i = 0, code; i < codes.length; i++) {
-        code = codes[i];
         glyphIndex[code] = i;
       }
+
+      originalCode = codes.concat();
+
       codes.sort(function (a, b) {
         return a - b;
       });
       var i = 0;
       var code;
       var indices;
-      while (code = codes[i++]) {
+      while ((code = codes[i++]) !== undefined) {
         var start = code;
         var end = start;
         indices = [i - 1];
-        while ((code = codes[i]) && end + 1 === code) {
+        while (((code = codes[i]) !== undefined) && end + 1 === code) {
           ++end;
           indices.push(i);
           ++i;
@@ -126,9 +121,10 @@ module Shumway.SWF.Parser {
         indices.push(i);
       }
       ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
+      originalCode = codes.concat();
     }
 
-    var resolution = tag.resolution || 1;
+    var resolution = tag.resolution || 20;
     var ascent = Math.ceil(tag.ascent / resolution) || 1024;
     var descent = -Math.ceil(tag.descent / resolution) || 0;
     var leading = (tag.leading / resolution) || 0;
@@ -191,7 +187,7 @@ module Shumway.SWF.Parser {
     var i = 0;
     var code;
     var rawData = {};
-    while (code = codes[i++]) {
+    while ((code = codes[i++]) !== undefined) {
       var glyph = glyphs[glyphIndex[code]];
       var records = glyph.records;
       var x = 0;
@@ -274,7 +270,7 @@ module Shumway.SWF.Parser {
     }
 
     i = 0;
-    while (code = codes[i++]) {
+    while ((code = codes[i++]) !== undefined) {
       var glyph = glyphs[glyphIndex[code]];
       var records = glyph.records;
       segments = rawData[code];
@@ -651,7 +647,7 @@ module Shumway.SWF.Parser {
       dataBuffer[i] = otf.charCodeAt(i) & 0xff;
     }
 
-    font.codes = codes;
+    font.codes = originalCode;
     font.metrics = metrics;
     font.data = dataBuffer;
 

@@ -347,6 +347,13 @@ module Shumway.GFX {
       }
     }
 
+    update(pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
+      this._bounds = bounds;
+      this._pathData = pathData;
+      this._paths = null;
+      this._textures = textures;
+    }
+
     getBounds(): Shumway.GFX.Geometry.Rectangle {
       return this._bounds;
     }
