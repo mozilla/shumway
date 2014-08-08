@@ -301,6 +301,14 @@ module Shumway.Player {
       clearInterval(this._frameTimeout);
     }
 
+    private _getFrameInterval(): number {
+      var frameRate = frameRateOption.value;
+      if (frameRate < 0) {
+        frameRate = this._stage.frameRate;
+      }
+      return Math.floor(1000 / frameRate);
+    }
+
     private _enterEventLoop(): void {
       var self = this;
       var stage = this._stage;
@@ -309,7 +317,7 @@ module Shumway.Player {
       var dontSkipFrames = dontSkipFramesOption.value;
       (function tick() {
         // TODO: change this to the mode described in http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
-        self._frameTimeout = setTimeout(tick, 1000 / frameRateOption.value);
+        self._frameTimeout = setTimeout(tick, self._getFrameInterval());
         if (!dontSkipFrames && (
               !frameEnabledOption.value && runFrameScripts ||
               self._shouldThrottleDownFrameExecution()))
@@ -429,9 +437,9 @@ module Shumway.Player {
           if (playSymbolFrameDurationOption.value > 0) {
             frames = playSymbolFrameDurationOption.value;
           }
-          setTimeout(showNextSymbol, (1000 / frameRateOption.value) * frames);
+          setTimeout(showNextSymbol, self._getFrameInterval() * frames);
         }
-        setTimeout(showNextSymbol, 1000 / frameRateOption.value);
+        setTimeout(showNextSymbol, self._getFrameInterval());
       });
     }
 
