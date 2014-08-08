@@ -121,6 +121,7 @@ module Shumway.SWF.Parser {
         indices.push(i);
       }
       ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
+      originalCode = codes.concat();
     }
 
     var resolution = tag.resolution || 20;
