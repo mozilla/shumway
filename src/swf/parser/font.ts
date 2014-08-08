@@ -67,6 +67,7 @@ module Shumway.SWF.Parser {
     var glyphIndex = { };
     var ranges = [];
 
+    var originalCode;
     var generateAdvancement = !('advance' in tag);
     var correction = 0;
     var isFont3 = (tag.code === 75);
@@ -75,21 +76,23 @@ module Shumway.SWF.Parser {
       tag.advance = [];
     }
 
-    var maxCode = Math.max.apply(null,tag.codes) || 35;
+    var maxCode = Math.max.apply(null, tag.codes) || 35;
 
     if (tag.codes) {
-      for (var i = 0, code; i < tag.codes.length; i++) {
-        code = tag.codes[i];
+      for (var i = 0; i < tag.codes.length; i++) {
+        var code = tag.codes[i];
         if( code < 32 ) {
           maxCode++;
-          if(maxCode == 8232) maxCode = 8240;
+          if(maxCode == 8232) {
+            maxCode = 8240;
+          }
           code = maxCode;
         }
         codes.push(code);
         glyphIndex[code] = i;
       }
 
-      var originalCode = codes.concat();
+      originalCode = codes.concat();
 
       codes.sort(function (a, b) {
         return a - b;
