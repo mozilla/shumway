@@ -81,7 +81,7 @@ module Shumway.SWF.Parser {
     if (tag.codes) {
       for (var i = 0; i < tag.codes.length; i++) {
         var code = tag.codes[i];
-        if( code < 32 ) {
+        if (code < 32) {
           maxCode++;
           if(maxCode == 8232) {
             maxCode = 8240;
