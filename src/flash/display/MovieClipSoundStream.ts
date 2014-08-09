@@ -23,10 +23,21 @@ module Shumway.AVM2.AS.flash.display {
       sourceBuffer = mediaSource.addSourceBuffer(MP3_MIME_TYPE);
       soundStream.mediaSource = mediaSource;
       soundStream.sourceBuffer = sourceBuffer;
-      soundStream.rawFrames.forEach(function (data) {
-        sourceBuffer.appendBuffer(data);
+      // cannot issue multiple appendBuffer in a row, flattening frames into
+      // one array
+      var rawFramesLength = 0;
+      soundStream.rawFrames.forEach(function (frameData) {
+        rawFramesLength += frameData.length;
       });
-      delete soundStream.rawFrames;
+      if (rawFramesLength !== 0) {
+        var data = new Uint8Array(rawFramesLength), offset = 0;
+        soundStream.rawFrames.forEach(function (frameData) {
+          data.set(frameData, offset);
+          offset += frameData.length;
+        });
+        sourceBuffer.appendBuffer(data);
+      }
+      soundStream.rawFrames = null;
     } catch (e) {
       console.error('MediaSource mp3 playback is not supported: ' + e);
     }
