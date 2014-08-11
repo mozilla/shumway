@@ -1765,6 +1765,10 @@ module Shumway.AVM2.Runtime {
       return;
     }
   }
+
+  export function createName(namespaces: Namespace [], name: any) {
+    return new Multiname(namespaces, name);
+  }
 }
 
 import CC = Shumway.AVM2.Runtime.CODE_CACHE;
@@ -1801,3 +1805,4 @@ var checkFilter = Shumway.AVM2.Runtime.checkFilter;
 var sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
 var createFunction = Shumway.AVM2.Runtime.createFunction;
+var createName = Shumway.AVM2.Runtime.createName;

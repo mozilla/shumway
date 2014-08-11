@@ -142,6 +142,7 @@ module Shumway.Shell {
   var verboseOption: Option;
   var releaseOption: Option;
   var executeOption: Option;
+  var interpreterOption: Option;
   var symbolFilterOption: Option;
   var microTaskDurationOption: Option;
   var microTaskCountOption: Option;
@@ -154,6 +155,7 @@ module Shumway.Shell {
     verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
     releaseOption = shellOptions.register(new Option("r", "release", "boolean", false, "Release mode"));
     executeOption = shellOptions.register(new Option("x", "execute", "boolean", false, "Execute File(s)"));
+    interpreterOption = shellOptions.register(new Option("i", "interpreter", "boolean", false, "Interpreter Only"));
     symbolFilterOption = shellOptions.register(new Option("f", "filter", "string", "", "Symbol Filter"));
     microTaskDurationOption = shellOptions.register(new Option("md", "duration", "number", 0, "Micro task duration."));
     microTaskCountOption = shellOptions.register(new Option("mc", "count", "number", 0, "Micro task count."));
@@ -267,10 +269,14 @@ module Shumway.Shell {
   }
 
   function executeABCFile(file: string) {
-    writer.writeLn("Running ABC: " + file);
+    verboseOption.value && writer.writeLn("Running ABC: " + file);
     var buffer = read(file, "binary");
-    Runtime.AVM2.instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
-    writer.outdent();
+    try {
+      Runtime.AVM2.instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
+    } catch (x) {
+      writer.writeLns(x.stack);
+    }
+    verboseOption.value && writer.outdent();
   }
 
   function executeUnitTestFile(file: string) {
@@ -428,7 +434,8 @@ module Shumway.Shell {
 
   function createAVM2(builtinPath, libraryPathInfo?) {
     var buffer = read(builtinPath, 'binary');
-    Runtime.AVM2.initialize(Runtime.ExecutionMode.COMPILE, Runtime.ExecutionMode.COMPILE, null);
+    var mode = interpreterOption.value ? Runtime.ExecutionMode.INTERPRET : Runtime.ExecutionMode.COMPILE;
+    Runtime.AVM2.initialize(mode, mode, null);
     var avm2Instance = Runtime.AVM2.instance;
     Shumway.AVM2.AS.linkNatives(avm2Instance);
     avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
