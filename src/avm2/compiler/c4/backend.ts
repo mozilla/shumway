@@ -708,10 +708,25 @@ module Shumway.AVM2.Compiler.Backend {
   }
 
   export class Compilation {
+    static id: number = 0;
     constructor(public parameters: string [],
                 public body: string,
-                public constants: Object []) {
+                public constants: any []) {
       // ...
+    }
+
+    /**
+     * Object references are stored on the compilation object in a property called |constants|. Some of
+     * these constants are |LazyInitializer|s and the backend makes sure to emit a call to a function
+     * named |C| that resolves them.
+     */
+    public C(index: number) {
+      var value = this.constants[index];
+      // TODO: Avoid using |instanceof| here since this can be called quite frequently.
+      if (value instanceof Shumway.AVM2.Runtime.LazyInitializer) {
+        this.constants[index] = value.resolve();
+      }
+      return this.constants[index];
     }
   }
 
@@ -734,11 +749,13 @@ module Shumway.AVM2.Compiler.Backend {
       var name = cx.parameters[i] ? cx.parameters[i].name : "_" + i;
       parameters.push(id(name));
     }
+    var compilationId = Compilation.id ++;
+    var compilationGlobalPropertyName = "$$F" + compilationId;
     if (cx.constants.length) {
-      var argumentsCallee = new MemberExpression(new Identifier("arguments"), new Identifier("callee"), false);
-      var constants = new MemberExpression(argumentsCallee, new Identifier("constants"), false);
+      var compilation = new Identifier(compilationGlobalPropertyName);
+      var constants = new MemberExpression(compilation, new Identifier("constants"), false);
       code.body.unshift(variableDeclaration([
-        new VariableDeclarator(id("$F"), argumentsCallee),
+        new VariableDeclarator(id("$F"), compilation),
         new VariableDeclarator(id("$C"), constants)
       ]));
     }
@@ -753,7 +770,8 @@ module Shumway.AVM2.Compiler.Backend {
     enterTimeline("Serialize AST");
     var source = generateSource(code);
     leaveTimeline();
-    return new Compilation (
+    // Save compilation as a globa property name.
+    return jsGlobal[compilationGlobalPropertyName] = new Compilation (
       parameters.map(function (p) { return p.name; }),
       source,
       cx.constants

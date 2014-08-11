@@ -37,8 +37,7 @@ var temp = require('temp');
 global.assert = function () { };
 global.release = false;
 
-eval(fs.readFileSync('../../../build/ts/utilities.js').toString())
-eval(fs.readFileSync('../../../build/ts/options.js').toString())
+eval(fs.readFileSync(path.resolve(__dirname, '../../build/ts/base.js')).toString());
 
 var ArgumentParser = Shumway.Options.ArgumentParser;
 var Option = Shumway.Options.Option;
@@ -179,22 +178,15 @@ var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js";
 if (jsOptimazations.value) {
   commandPrefix += " --no-ion --no-ti";
 }
-commandPrefix += " " + (release.value ? "avm-release.js" : "avm.js");
+commandPrefix += " build/ts/shell.js";
 
-var commandSuffix = noMetrics.value ? "" : " -tm -tj -rel";
+var commandSuffix = release.value ? " -r" : "";
 if (configurationSet.value.indexOf("i") >= 0) {
   configurations.push({name: "shu-i", timeout: timeout.value, command: commandPrefix + " -x -i" + commandSuffix});
 }
 if (configurationSet.value.indexOf("c") >= 0) {
-  configurations.push({name: "shu-c", timeout: timeout.value, command: commandPrefix + " -x -c4" + commandSuffix});
+  configurations.push({name: "shu-c", timeout: timeout.value, command: commandPrefix + " -x" + commandSuffix});
 }
-if (configurationSet.value.indexOf("v") >= 0) {
-  configurations.push({name: "shu-v", timeout: timeout.value, command: commandPrefix + " -x -c4 -verify" + commandSuffix});
-}
-if (configurationSet.value.indexOf("r") >= 0) {
-  configurations.push({name: "shu-r", timeout: timeout.value, command: commandPrefix + " -x -c4 -verify -ra" + commandSuffix});
-}
-
 console.log(padRight("=== Configurations ", "=", 120));
 configurations.forEach(function (x) {
   console.log(padLeft(x.name, ' ', 10) + ", timeout: " + (x.timeout / 1000).toFixed(2) + ", command: " + x.command);

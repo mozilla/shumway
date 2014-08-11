@@ -1509,20 +1509,6 @@ module Shumway.AVM2.Runtime {
     // mi.freeMethod = new Function(parameters, body);
 
     var fn = cached || new Function("return " + fnSource)();
-    /**
-     * Object references are stored on the function object in a property called |constants|. Some of
-     * these constants are |LazyInitializer|s and the backend makes sure to emit a call to a function
-     * named |C| that resolves them.
-     */
-    defineNonEnumerableProperty(fn, "constants", compilation.constants);
-    defineNonEnumerableProperty(fn, "C", function (index: number) {
-      var value = this.constants[index];
-      // TODO: Avoid using |instanceof| here since this can be called quite frequently.
-      if (value instanceof LazyInitializer) {
-        this.constants[index] = value.resolve();
-      }
-      return this.constants[index];
-    });
 
     fn.debugName = "Compiled Function #" + vmNextCompiledFunctionId++;
     return fn;
@@ -1779,6 +1765,10 @@ module Shumway.AVM2.Runtime {
       return;
     }
   }
+
+  export function createName(namespaces: Namespace [], name: any) {
+    return new Multiname(namespaces, name);
+  }
 }
 
 import CC = Shumway.AVM2.Runtime.CODE_CACHE;
@@ -1815,3 +1805,4 @@ var checkFilter = Shumway.AVM2.Runtime.checkFilter;
 var sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
 var createFunction = Shumway.AVM2.Runtime.createFunction;
+var createName = Shumway.AVM2.Runtime.createName;
