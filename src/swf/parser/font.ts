@@ -124,7 +124,7 @@ module Shumway.SWF.Parser {
       originalCode = codes.concat();
     }
 
-    var resolution = tag.resolution || 20;
+    var resolution = tag.resolution || 1;
     var ascent = Math.ceil(tag.ascent / resolution) || 1024;
     var descent = -Math.ceil(tag.descent / resolution) || 0;
     var leading = (tag.leading / resolution) || 0;
