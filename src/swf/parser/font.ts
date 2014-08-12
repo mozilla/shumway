@@ -70,6 +70,7 @@ module Shumway.SWF.Parser {
     var originalCode;
     var generateAdvancement = !('advance' in tag);
     var correction = 0;
+    var isFont2 = (tag.code === 48);
     var isFont3 = (tag.code === 75);
 
     if (generateAdvancement) {
@@ -125,6 +126,10 @@ module Shumway.SWF.Parser {
     }
 
     var resolution = tag.resolution || 1;
+    if (isFont2 && !tag.hasLayout) {
+      // some DefineFont2 without layout using DefineFont3 resolution, why?
+      resolution = 20;
+    }
     var ascent = Math.ceil(tag.ascent / resolution) || 1024;
     var descent = -Math.ceil(tag.descent / resolution) || 0;
     var leading = (tag.leading / resolution) || 0;
