@@ -532,6 +532,8 @@ module Shumway.GFX {
   if (typeof CanvasRenderingContext2D !== 'undefined' && CanvasRenderingContext2D.prototype.globalColorMatrix === undefined) {
     var previousFill = CanvasRenderingContext2D.prototype.fill;
     var previousStroke = CanvasRenderingContext2D.prototype.stroke;
+    var previousFillText = CanvasRenderingContext2D.prototype.fillText;
+    var previousStrokeText = CanvasRenderingContext2D.prototype.strokeText;
 
     Object.defineProperty(CanvasRenderingContext2D.prototype, "globalColorMatrix", {
       get: function (): ColorMatrix {
@@ -584,6 +586,48 @@ module Shumway.GFX {
         previousStroke.call(this);
       } else if (arguments.length === 1) {
         previousStroke.call(this, a);
+      }
+      if (oldStrokeStyle) {
+        this.strokeStyle = oldStrokeStyle;
+      }
+    });
+
+    /**
+     * Same as |fill| above.
+     */
+    CanvasRenderingContext2D.prototype.fillText = <any>(function (text: string, x: number, y: number, maxWidth?: number) {
+      var oldFillStyle = null;
+      if (this._globalColorMatrix) {
+        oldFillStyle = this.fillStyle;
+        this.fillStyle = transformStyle(this, this.fillStyle, this._globalColorMatrix);
+      }
+      if (arguments.length === 3) {
+        previousFillText.call(this, text, x, y);
+      } else if (arguments.length === 4) {
+        previousFillText.call(this, text, x, y, maxWidth);
+      } else {
+        Debug.unexpected();
+      }
+      if (oldFillStyle) {
+        this.fillStyle = oldFillStyle;
+      }
+    });
+
+    /**
+     * Same as |fill| above.
+     */
+    CanvasRenderingContext2D.prototype.strokeText = <any>(function (text: string, x: number, y: number, maxWidth?: number) {
+      var oldStrokeStyle = null;
+      if (this._globalColorMatrix) {
+        oldStrokeStyle = this.strokeStyle;
+        this.strokeStyle = transformStyle(this, this.strokeStyle, this._globalColorMatrix);
+      }
+      if (arguments.length === 3) {
+        previousStrokeText.call(this, text, x, y);
+      } else if (arguments.length === 4) {
+        previousStrokeText.call(this, text, x, y, maxWidth);
+      } else {
+        Debug.unexpected();
       }
       if (oldStrokeStyle) {
         this.strokeStyle = oldStrokeStyle;

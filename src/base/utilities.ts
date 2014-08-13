@@ -2830,6 +2830,10 @@ module Shumway {
       return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(value);
     }
 
+    export function clampByte(value: number) {
+      return Math.max(0, Math.min(255, value));
+    }
+
     /**
      * Unpremultiplies the given |pARGB| color value.
      */
