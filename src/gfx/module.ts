@@ -14,6 +14,117 @@
  * limitations under the License.
  */
 
+interface CanvasRenderingContext2D {
+  globalColorMatrix: Shumway.GFX.ColorMatrix;
+}
+
+interface CanvasGradient {
+  _template: any;
+}
+
+var nativeAddColorStop = null;
+var nativeCreateLinearGradient = null;
+var nativeCreateRadialGradient = null;
+
+var polyfillColorTransform = true;
+
+function transformStyle(context: CanvasRenderingContext2D, style: any, colorMatrix: Shumway.GFX.ColorMatrix): string {
+  if (!polyfillColorTransform) {
+    return style;
+  }
+  if (typeof style === "string") {
+    var rgba = Shumway.ColorUtilities.cssStyleToRGBA(style);
+    return Shumway.ColorUtilities.rgbaToCSSStyle(colorMatrix.transformRGBA(rgba));
+  } else if (style instanceof CanvasGradient) {
+    if (style._template) {
+      return style._template.createCanvasGradient(context, colorMatrix);
+    }
+  }
+  return style;
+}
+
+
+if (polyfillColorTransform && typeof CanvasRenderingContext2D !== 'undefined') {
+  nativeAddColorStop = CanvasGradient.prototype.addColorStop;
+  nativeCreateLinearGradient = CanvasRenderingContext2D.prototype.createLinearGradient;
+  nativeCreateRadialGradient = CanvasRenderingContext2D.prototype.createRadialGradient;
+
+  CanvasRenderingContext2D.prototype.createLinearGradient = function (x0, y0, x1, y1) {
+    var gradient = new CanvasLinearGradient(x0, y0, x1, y1);
+    return gradient.createCanvasGradient(this, null);
+  };
+
+  CanvasRenderingContext2D.prototype.createRadialGradient = function (x0, y0, r0, x1, y1, r1) {
+    var gradient = new CanvasRadialGradient(x0, y0, r0, x1, y1, r1);
+    return gradient.createCanvasGradient(this, null);
+  };
+
+  CanvasGradient.prototype.addColorStop = function (offset: number, color: string) {
+    nativeAddColorStop.call(this, offset, color);
+    this._template.addColorStop(offset, color);
+  }
+}
+
+class ColorStop {
+  constructor (public offset: number, public color: string) {
+    // ...
+  }
+}
+
+class CanvasLinearGradient {
+  _transform: SVGMatrix;
+  constructor (
+    public x0: number, public y0: number,
+    public x1: number, public y1: number) {
+    // ...
+  }
+  colorStops: ColorStop [] = [];
+  addColorStop(offset: number, color: string) {
+    this.colorStops.push(new ColorStop(offset, color));
+  }
+  createCanvasGradient(context: CanvasRenderingContext2D, colorMatrix: Shumway.GFX.ColorMatrix): CanvasGradient {
+    var gradient = nativeCreateLinearGradient.call(context, this.x0, this.y0, this.x1, this.y1);
+    var colorStops = this.colorStops;
+    for (var i = 0; i < colorStops.length; i++) {
+      var colorStop = colorStops[i];
+      var offset = colorStop.offset;
+      var color = colorStop.color;
+      color = colorMatrix ? transformStyle(context, color, colorMatrix) : color;
+      nativeAddColorStop.call(gradient, offset, color);
+    }
+    gradient._template = this;
+    gradient._transform = this._transform;
+    return gradient;
+  }
+}
+
+class CanvasRadialGradient {
+  _transform: SVGMatrix;
+  constructor (
+    public x0: number, public y0: number, public r0: number,
+    public x1: number, public y1: number, public r1: number) {
+    // ...
+  }
+  colorStops: ColorStop [] = [];
+  addColorStop(offset: number, color: string) {
+    this.colorStops.push(new ColorStop(offset, color));
+  }
+  createCanvasGradient(context: CanvasRenderingContext2D, colorMatrix: Shumway.GFX.ColorMatrix): CanvasGradient {
+    var gradient = nativeCreateRadialGradient.call(context, this.x0, this.y0, this.r0, this.x1, this.y1, this.r1);
+    var colorStops = this.colorStops;
+    for (var i = 0; i < colorStops.length; i++) {
+      var colorStop = colorStops[i];
+      var offset = colorStop.offset;
+      var color = colorStop.color;
+      color = colorMatrix ? transformStyle(context, color, colorMatrix) : color;
+      nativeAddColorStop.call(gradient, offset, color);
+    }
+    gradient._template = this;
+    gradient._transform = this._transform;
+    return gradient;
+  }
+}
+
 module Shumway.GFX {
   export enum TraceLevel {
     None,
@@ -252,7 +363,9 @@ module Shumway.GFX {
     }
   }
 
-  if (typeof CanvasRenderingContext2D !== 'undefined' && typeof Path2D === 'undefined') {
+  // Polyfill |Path2D| if it is not defined or if its |addPath| method doesn't exist.
+  if (typeof CanvasRenderingContext2D !== 'undefined' &&
+      (typeof Path2D === 'undefined' || !Path2D.prototype.addPath)) {
     /**
      * We override all methods of |CanvasRenderingContext2D| that accept a |Path2D| object as one
      * of its arguments, so that we can apply all recorded drawing commands before calling the
@@ -310,28 +423,29 @@ module Shumway.GFX {
 
   if (typeof CanvasPattern !== "undefined") {
     /**
-     * Polyfill for missing |setTransform| on CanvasPattern and CanvasGradient. Firefox implements |CanvasPattern| in nightly
-     * but doesn't handle CanvasGradient yet.
+     * Polyfill |setTransform| on |CanvasPattern| and |CanvasGradient|. Firefox implements this for |CanvasPattern|
+     * in Nightly but doesn't for |CanvasGradient| yet.
      *
-     * Otherwise you'll have to fall back on this polyfill that depends on yet another canvas feature that
-     * is not implemented across all browsers, namely |Path2D.addPath|. You can get this working in Chrome
-     * if you enable experimental canvas features in |chrome://flags/|. In Firefox you'll have to wait for
+     * This polyfill uses |Path2D|, which is polyfilled above. You can get a native implementaiton of |Path2D| in
+     * Chrome if you enable experimental canvas features in |chrome://flags/|. In Firefox you'll have to wait for
      * https://bugzilla.mozilla.org/show_bug.cgi?id=985801 to land.
-     *
-     * You shuold at least be able to get a build of Firefox or Chrome where setTransform works. Eventually,
-     * we'll have to polyfill Path2D, we can work around the addPath limitation at that point.
      */
-    if (!CanvasPattern.prototype.setTransform &&
-        !CanvasGradient.prototype.setTransform &&
-        Path2D.prototype.addPath) {
-      CanvasPattern.prototype.setTransform  =
-      CanvasGradient.prototype.setTransform = function (matrix: SVGMatrix) {
+    if (Path2D.prototype.addPath) {
+      function setTransform(matrix: SVGMatrix) {
         this._transform = matrix;
-      };
-
+        if (this._template) {
+          this._template._transform = matrix;
+        }
+      }
+      if (!CanvasPattern.prototype.setTransform) {
+        CanvasPattern.prototype.setTransform = setTransform;
+      }
+      if (!CanvasGradient.prototype.setTransform) {
+        CanvasGradient.prototype.setTransform = setTransform;
+      }
       var originalFill = CanvasRenderingContext2D.prototype.fill;
       /**
-       * If the current fillStyle is a CanvasPattern that has a SVGMatrix transformed applied to it, we
+       * If the current fillStyle is a |CanvasPattern| or |CanvasGradient| that has a SVGMatrix transformed applied to it, we
        * first apply the pattern's transform to the current context and then draw the path with the
        * inverse fillStyle transform applied to it so that it is drawn in the expected original location.
        */
@@ -357,6 +471,46 @@ module Shumway.GFX {
         }
       });
     }
+  }
+
+  if (typeof CanvasRenderingContext2D !== 'undefined' &&
+      CanvasRenderingContext2D.prototype.globalColorMatrix === undefined) {
+    var previousFill = CanvasRenderingContext2D.prototype.fill;
+
+    Object.defineProperty(CanvasRenderingContext2D.prototype, "globalColorMatrix", {
+      get: function (): ColorMatrix {
+        if (!this._globalColorMatrix) {
+          this._globalColorMatrix = ColorMatrix.createIdentity();
+        }
+        return this._globalColorMatrix.clone();
+      },
+      set: function (matrix: ColorMatrix) {
+        if (!this._globalColorMatrix) {
+          this._globalColorMatrix = ColorMatrix.createIdentity();
+        }
+        this._globalColorMatrix.copyFrom(matrix);
+      },
+      enumerable: true,
+      configurable: true
+    });
+
+    CanvasRenderingContext2D.prototype.fill = <any>(function (a?: any, b?: any) {
+      var oldFillStyle = null;
+      if (this._globalColorMatrix) {
+        oldFillStyle = this.fillStyle;
+        this.fillStyle = transformStyle(this, this.fillStyle, this._globalColorMatrix);
+      }
+      if (arguments.length === 0) {
+        previousFill.call(this);
+      } else if (arguments.length === 1) {
+        previousFill.call(this, a);
+      } else if (arguments.length === 2) {
+        previousFill.call(this, a, b);
+      }
+      if (oldFillStyle) {
+        this.fillStyle = oldFillStyle;
+      }
+    });
   }
 }
 

@@ -482,7 +482,7 @@ module Shumway.GFX {
           release || assert (ancestor._hasFlags(FrameFlags.InvalidConcatenatedColorMatrix));
           // TODO: Premultiply here.
           m.multiply(ancestor._colorMatrix);
-          ancestor._concatenatedColorMatrix.set(m);
+          ancestor._concatenatedColorMatrix.copyFrom(m);
           ancestor._removeFlags(FrameFlags.InvalidConcatenatedColorMatrix);
         }
       }

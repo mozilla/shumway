@@ -2796,6 +2796,28 @@ module Shumway {
                   (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';
     }
 
+    export function cssStyleToRGBA(style: string) {
+      if (style[0] === "#") {
+        if (style.length === 7) {
+          var value = parseInt(style.substring(1), 16);
+          return (value << 8) | 0xff;
+        }
+      } else if (style[0] === "r") {
+        // We don't parse all types of rgba(....) color styles. We only handle the
+        // ones we generate ourselves.
+        var values = style.substring(5, style.length - 1).split(",");
+        var r = parseInt(values[0]);
+        var g = parseInt(values[1]);
+        var b = parseInt(values[2]);
+        var a = parseInt(values[3]);
+        return (r & 0xff) << 24 |
+               (g & 0xff) << 16 |
+               (b & 0xff) << 8  |
+               ((a * 255) & 0xff);
+      }
+      return 0xff0000ff; // Red
+    }
+
     export function hexToRGB(color: string): number {
       return parseInt(color.slice(1), 16);
     }

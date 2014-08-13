@@ -571,14 +571,8 @@ module Shumway.GFX {
       var focalPoint = styles.readShort() * 2 / 0xff;
       release || assert(focalPoint >= -1 && focalPoint <= 1);
       var transform = this._readMatrix(styles);
-      // This effectively applies the matrix to the line the gradient is drawn along:
-      var x1 = transform.tx - transform.a;
-      var y1 = transform.ty - transform.b;
-      var x2 = transform.tx + transform.a;
-      var y2 = transform.ty + transform.b;
-
       var gradient = gradientType === GradientType.Linear ?
-                     context.createLinearGradient(x1, y1, x2, y2) :
+                     context.createLinearGradient(-1, 0, 1, 0) :
                      context.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
       gradient.setTransform && gradient.setTransform(transform.toSVGMatrix());
       var colorStopsCount = styles.readUnsignedByte();
