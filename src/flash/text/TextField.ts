@@ -45,18 +45,6 @@ module Shumway.AVM2.AS.flash.text {
       self._bottomScrollV = 1;
       self._caretIndex = 0;
       self._condenseWhite = false;
-      self._defaultTextFormat = new flash.text.TextFormat(
-        'Times Roman',
-        12,
-        0,
-        false,
-        false,
-        false,
-        '',
-        '',
-        TextFormatAlign.LEFT
-      );
-
       self._embedFonts = false;
       self._gridFitType = GridFitType.PIXEL;
       self._htmlText = '';
@@ -85,21 +73,32 @@ module Shumway.AVM2.AS.flash.text {
       self._type = TextFieldType.DYNAMIC;
       self._useRichTextClipboard = false;
 
-      self._textContent = new Shumway.TextContent(self._defaultTextFormat);
+      var defaultTextFormat = new flash.text.TextFormat(
+        'Times Roman',
+        12,
+        0,
+        false,
+        false,
+        false,
+        '',
+        '',
+        TextFormatAlign.LEFT
+      );
+      self._textContent = new Shumway.TextContent(defaultTextFormat);
       self._lineMetricsData = null;
 
       if (symbol) {
         self._setFillAndLineBoundsFromSymbol(symbol);
         self._textContent.bounds = this._lineBounds;
 
-        self._defaultTextFormat.color = symbol.color;
-        self._defaultTextFormat.size = (symbol.size / 20) | 0;
-        self._defaultTextFormat.font = symbol.font;
-        self._defaultTextFormat.align = symbol.align;
-        self._defaultTextFormat.leftMargin = (symbol.leftMargin / 20) | 0;
-        self._defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
-        self._defaultTextFormat.indent = (symbol.indent / 20) | 0;
-        self._defaultTextFormat.leading = (symbol.leading / 20) | 0;
+        defaultTextFormat.color = symbol.color;
+        defaultTextFormat.size = (symbol.size / 20) | 0;
+        defaultTextFormat.font = symbol.font;
+        defaultTextFormat.align = symbol.align;
+        defaultTextFormat.leftMargin = (symbol.leftMargin / 20) | 0;
+        defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
+        defaultTextFormat.indent = (symbol.indent / 20) | 0;
+        defaultTextFormat.leading = (symbol.leading / 20) | 0;
 
         self._multiline = symbol.multiline;
         self._embedFonts = symbol.embedFonts;
@@ -184,7 +183,6 @@ module Shumway.AVM2.AS.flash.text {
     _bottomScrollV: number /*int*/;
     _caretIndex: number /*int*/;
     _condenseWhite: boolean;
-    _defaultTextFormat: flash.text.TextFormat;
     _embedFonts: boolean;
     _gridFitType: string;
     _htmlText: string;
@@ -332,12 +330,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get defaultTextFormat(): flash.text.TextFormat {
-      return this._defaultTextFormat;
+      return this._textContent.defaultTextFormat.clone();
     }
 
     set defaultTextFormat(format: flash.text.TextFormat) {
-      somewhatImplemented("public flash.text.TextField::set defaultTextFormat");
-      // this._defaultTextFormat = format;
+      this._textContent.defaultTextFormat.merge(format);
     }
 
     get embedFonts(): boolean {
@@ -368,12 +365,13 @@ module Shumway.AVM2.AS.flash.text {
       value = asCoerceString(value);
       // Flash resets the bold and italic flags when an html value is set on a text field created from a symbol.
       if (this._symbol) {
-        this._defaultTextFormat.bold = false;
-        this._defaultTextFormat.italic = false;
+        this._textContent.defaultTextFormat.bold = false;
+        this._textContent.defaultTextFormat.italic = false;
       }
       this._textContent.parseHtml(value, this._multiline);
       this._htmlText = value;
       this._invalidateContent();
+      this._ensureLineMetrics();
     }
 
     get length(): number /*int*/ {
@@ -502,10 +500,11 @@ module Shumway.AVM2.AS.flash.text {
       somewhatImplemented("public flash.text.TextField::set text");
       this._textContent.plainText = asCoerceString(value);
       this._invalidateContent();
+      this._ensureLineMetrics();
     }
 
     get textColor(): number /*uint*/ {
-      return this._textColor < 0 ? +this._defaultTextFormat.color : this._textColor;
+      return this._textColor < 0 ? +this._textContent.defaultTextFormat.color : this._textColor;
     }
 
     set textColor(value: number /*uint*/) {
