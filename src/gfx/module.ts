@@ -72,7 +72,7 @@ module Shumway.GFX {
         return style._template.createCanvasGradient(context, colorMatrix);
       }
     }
-    return style; // "#FF0080"
+    return style; // "#ff69b4"
   }
 
   /**
