@@ -22,10 +22,13 @@ module Shumway.SWF.Parser {
     var italic = false;
     if (tag.hasFont) {
       var font = dictionary[tag.fontId];
-      Shumway.Debug.assert(font, 'undefined font', 'label');
-      dependencies.push(font.id);
-      bold = font.bold;
-      italic = font.italic;
+      if (font) {
+        dependencies.push(font.id);
+        bold = font.bold;
+        italic = font.italic;
+      } else {
+        Shumway.Debug.warning("Font is not defined.");
+      }
     }
 
     var props = {
