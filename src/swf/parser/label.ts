@@ -75,8 +75,8 @@ module Shumway.SWF.Parser {
       }
       htmlText += '<font size="' + size + '" face="' + face + '"' +
                   ' color="#' + ('000000' + color.toString(16)).slice(-6) + '">' +
-                    text.replace(/[<>]/g, function(s: string) {
-                      return s === '<' ? '&lt;' : '&gt;';
+                    text.replace(/[<>&]/g, function(s: string) {
+                      return s === '<' ? '&lt;' : (s === '>' ? '&gt;' : '&amp;');
                     }) +
                   '</font>';
     }
