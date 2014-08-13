@@ -692,7 +692,7 @@ function activateShumwayScripts(window, preview) {
 
   function initScripts() {
     loadScripts(['resource://shumway/shumway.gfx.js',
-                 'resource://shumway/web/avm-sandbox.js'], function () {
+                 'resource://shumway/web/viewer.js'], function () {
       window.wrappedJSObject.runViewer();
     });
   }
