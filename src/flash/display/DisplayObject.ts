@@ -1572,7 +1572,7 @@ module Shumway.AVM2.AS.flash.display {
       var matrix = this._getInvertedConcatenatedMatrix();
       var localX = matrix.transformX(x, y);
       var localY = matrix.transformY(x, y);
-      return this._containsPoint(localX, localY, true, true, false);
+      return this._containsPoint(localX, localY, true, false, false);
     }
 
     /**
