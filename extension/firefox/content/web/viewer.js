@@ -265,7 +265,7 @@ function createEasel() {
   var Easel = Shumway.GFX.Easel;
   var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
 
-  Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
+  Shumway.GFX.WebGL.SHADER_ROOT = SHUMWAY_ROOT + "gfx/gl/shaders/";
   var backend = Shumway.GFX.backend.value | 0;
   return new Easel(document.getElementById("stageContainer"), backend);
 }

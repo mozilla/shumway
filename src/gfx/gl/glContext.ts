@@ -258,7 +258,7 @@ module Shumway.GFX.WebGL {
       var request = new XMLHttpRequest();
       request.open("GET", path, false);
       request.send();
-      release || assert (request.status === 200, "File : " + path + " not found.");
+      release || assert (request.status === 200 || request.status === 0, "File : " + path + " not found.");
       var shaderType;
       if (endsWith(path, ".vert")) {
         shaderType = gl.VERTEX_SHADER;

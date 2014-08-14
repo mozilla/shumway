@@ -31,6 +31,9 @@ build: ensureoutputdir
 	cp $(SHUMWAY_ROOT)/src/player/fakechannel.js $(BUILD_DIR)/src/player/
 	mkdir -p $(BUILD_DIR)/src/swf
 	cp $(SHUMWAY_ROOT)/src/swf/worker.js $(BUILD_DIR)/src/swf/
+	mkdir -p $(BUILD_DIR)/src/gfx/gl/shaders
+	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/*.frag $(BUILD_DIR)/src/gfx/gl/shaders/
+	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/*.vert $(BUILD_DIR)/src/gfx/gl/shaders/
 	# Coping generates JavaScript file
 	mkdir $(BUILD_DIR)/build
 	cp -R $(SHUMWAY_ROOT)/build/ts $(BUILD_DIR)/build/
