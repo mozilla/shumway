@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+interface CanvasRenderingContext2D {
+  globalColorMatrix: Shumway.GFX.ColorMatrix;
+}
+
+interface CanvasGradient {
+  _template: any;
+}
+
 module Shumway.GFX {
   export enum TraceLevel {
     None,
@@ -40,6 +48,129 @@ module Shumway.GFX {
 
   export function leaveTimeline(name?: string, data?: any) {
     profile && timelineBuffer && timelineBuffer.leave(name, data);
+  }
+
+  var nativeAddColorStop = null;
+  var nativeCreateLinearGradient = null;
+  var nativeCreateRadialGradient = null;
+
+  /**
+   * Transforms a fill or stroke style by the given color matrix.
+   */
+  function transformStyle(context: CanvasRenderingContext2D, style: any, colorMatrix: Shumway.GFX.ColorMatrix): string {
+    if (!polyfillColorTransform || !colorMatrix) {
+      return style;
+    }
+    if (typeof style === "string") {
+      // Parse CSS color styles and transform them.
+      var rgba = Shumway.ColorUtilities.cssStyleToRGBA(style);
+      return Shumway.ColorUtilities.rgbaToCSSStyle(colorMatrix.transformRGBA(rgba));
+    } else if (style instanceof CanvasGradient) {
+      if (style._template) {
+        // If gradient style has a template, construct a new gradient style from it whith
+        // its color stops transformed.
+        return style._template.createCanvasGradient(context, colorMatrix);
+      }
+    }
+    return style; // "#ff69b4"
+  }
+
+  /**
+   * Whether to polyfill color transforms. This adds a |globalColorMatrix| property on |CanvasRenderingContext2D|
+   * that is used to transform all stroke and fill styles before a drawing operation happens.
+   */
+  var polyfillColorTransform = true;
+
+  /**
+   * Gradients are opaque objects and their properties cannot be inspected. Here we hijack gradient style constructors
+   * and attach "template" objects on gradients so that we can keep track of their position attributes and color stops.
+   * Using these "template" objects, we can clone and transform gradients.
+   */
+  if (polyfillColorTransform && typeof CanvasRenderingContext2D !== 'undefined') {
+    nativeAddColorStop = CanvasGradient.prototype.addColorStop;
+    nativeCreateLinearGradient = CanvasRenderingContext2D.prototype.createLinearGradient;
+    nativeCreateRadialGradient = CanvasRenderingContext2D.prototype.createRadialGradient;
+
+    CanvasRenderingContext2D.prototype.createLinearGradient = function (x0: number, y0: number, x1: number, y1: number) {
+      var gradient = new CanvasLinearGradient(x0, y0, x1, y1);
+      return gradient.createCanvasGradient(this, null);
+    };
+
+    CanvasRenderingContext2D.prototype.createRadialGradient = function (x0: number, y0: number, r0: number, x1: number, y1: number, r1: number) {
+      var gradient = new CanvasRadialGradient(x0, y0, r0, x1, y1, r1);
+      return gradient.createCanvasGradient(this, null);
+    };
+
+    CanvasGradient.prototype.addColorStop = function (offset: number, color: string) {
+      nativeAddColorStop.call(this, offset, color);
+      this._template.addColorStop(offset, color);
+    }
+  }
+
+  class ColorStop {
+    constructor (public offset: number, public color: string) {
+      // ...
+    }
+  }
+
+  /**
+   * Template for linear gradients.
+   */
+  class CanvasLinearGradient {
+    _transform: SVGMatrix;
+    constructor (
+      public x0: number, public y0: number,
+      public x1: number, public y1: number) {
+      // ...
+    }
+    colorStops: ColorStop [] = [];
+    addColorStop(offset: number, color: string) {
+      this.colorStops.push(new ColorStop(offset, color));
+    }
+    createCanvasGradient(context: CanvasRenderingContext2D, colorMatrix: Shumway.GFX.ColorMatrix): CanvasGradient {
+      var gradient = nativeCreateLinearGradient.call(context, this.x0, this.y0, this.x1, this.y1);
+      var colorStops = this.colorStops;
+      for (var i = 0; i < colorStops.length; i++) {
+        var colorStop = colorStops[i];
+        var offset = colorStop.offset;
+        var color = colorStop.color;
+        color = colorMatrix ? transformStyle(context, color, colorMatrix) : color;
+        nativeAddColorStop.call(gradient, offset, color);
+      }
+      gradient._template = this;
+      gradient._transform = this._transform;
+      return gradient;
+    }
+  }
+
+  /**
+   * Template for radial gradients.
+   */
+  class CanvasRadialGradient {
+    _transform: SVGMatrix;
+    constructor (
+      public x0: number, public y0: number, public r0: number,
+      public x1: number, public y1: number, public r1: number) {
+      // ...
+    }
+    colorStops: ColorStop [] = [];
+    addColorStop(offset: number, color: string) {
+      this.colorStops.push(new ColorStop(offset, color));
+    }
+    createCanvasGradient(context: CanvasRenderingContext2D, colorMatrix: Shumway.GFX.ColorMatrix): CanvasGradient {
+      var gradient = nativeCreateRadialGradient.call(context, this.x0, this.y0, this.r0, this.x1, this.y1, this.r1);
+      var colorStops = this.colorStops;
+      for (var i = 0; i < colorStops.length; i++) {
+        var colorStop = colorStops[i];
+        var offset = colorStop.offset;
+        var color = colorStop.color;
+        color = colorMatrix ? transformStyle(context, color, colorMatrix) : color;
+        nativeAddColorStop.call(gradient, offset, color);
+      }
+      gradient._template = this;
+      gradient._transform = this._transform;
+      return gradient;
+    }
   }
 
   enum PathCommand {
@@ -218,7 +349,7 @@ module Shumway.GFX {
     }
 
     /**
-     * Copies all drawing commands stored in |path|.
+     * Copies and transforms all drawing commands stored in |path|.
      */
     addPath(path: Path, transformation?: SVGMatrix) {
       if (transformation) {
@@ -252,7 +383,9 @@ module Shumway.GFX {
     }
   }
 
-  if (typeof CanvasRenderingContext2D !== 'undefined' && typeof Path2D === 'undefined') {
+  // Polyfill |Path2D| if it is not defined or if its |addPath| method doesn't exist. This means that we
+  // always need to polyfill this in FF until addPath lands which sucks.
+  if (typeof CanvasRenderingContext2D !== 'undefined' && (typeof Path2D === 'undefined' || !Path2D.prototype.addPath)) {
     /**
      * We override all methods of |CanvasRenderingContext2D| that accept a |Path2D| object as one
      * of its arguments, so that we can apply all recorded drawing commands before calling the
@@ -310,40 +443,45 @@ module Shumway.GFX {
 
   if (typeof CanvasPattern !== "undefined") {
     /**
-     * Polyfill for missing |setTransform| on CanvasPattern and CanvasGradient. Firefox implements |CanvasPattern| in nightly
-     * but doesn't handle CanvasGradient yet.
+     * Polyfill |setTransform| on |CanvasPattern| and |CanvasGradient|. Firefox implements this for |CanvasPattern|
+     * in Nightly but doesn't for |CanvasGradient| yet.
      *
-     * Otherwise you'll have to fall back on this polyfill that depends on yet another canvas feature that
-     * is not implemented across all browsers, namely |Path2D.addPath|. You can get this working in Chrome
-     * if you enable experimental canvas features in |chrome://flags/|. In Firefox you'll have to wait for
+     * This polyfill uses |Path2D|, which is polyfilled above. You can get a native implementaiton of |Path2D| in
+     * Chrome if you enable experimental canvas features in |chrome://flags/|. In Firefox you'll have to wait for
      * https://bugzilla.mozilla.org/show_bug.cgi?id=985801 to land.
-     *
-     * You shuold at least be able to get a build of Firefox or Chrome where setTransform works. Eventually,
-     * we'll have to polyfill Path2D, we can work around the addPath limitation at that point.
      */
-    if (!CanvasPattern.prototype.setTransform &&
-        !CanvasGradient.prototype.setTransform &&
-        Path2D.prototype.addPath) {
-      CanvasPattern.prototype.setTransform  =
-      CanvasGradient.prototype.setTransform = function (matrix: SVGMatrix) {
+    if (Path2D.prototype.addPath) {
+      function setTransform(matrix: SVGMatrix) {
         this._transform = matrix;
-      };
-
+        if (this._template) {
+          this._template._transform = matrix;
+        }
+      }
+      if (!CanvasPattern.prototype.setTransform) {
+        CanvasPattern.prototype.setTransform = setTransform;
+      }
+      if (!CanvasGradient.prototype.setTransform) {
+        CanvasGradient.prototype.setTransform = setTransform;
+      }
       var originalFill = CanvasRenderingContext2D.prototype.fill;
+      var originalStroke = CanvasRenderingContext2D.prototype.stroke;
       /**
-       * If the current fillStyle is a CanvasPattern that has a SVGMatrix transformed applied to it, we
+       * If the current fillStyle is a |CanvasPattern| or |CanvasGradient| that has a SVGMatrix transformed applied to it, we
        * first apply the pattern's transform to the current context and then draw the path with the
        * inverse fillStyle transform applied to it so that it is drawn in the expected original location.
        */
       CanvasRenderingContext2D.prototype.fill = <any>(function fill(path: Path2D, fillRule?: string): void {
-        if ((this.fillStyle instanceof CanvasPattern || this.fillStyle instanceof CanvasGradient) &&
-            this.fillStyle._transform &&
-            path instanceof Path2D) {
+        var supportsStyle = this.fillStyle instanceof CanvasPattern || this.fillStyle instanceof CanvasGradient;
+        var hasStyleTransformation = !!this.fillStyle._transform;
+        if (supportsStyle && hasStyleTransformation && path instanceof Path2D) {
           var m = this.fillStyle._transform;
           var i = m.inverse();
+          // Transform the context by the style transform ...
           this.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+          // transform the path by the inverse of the style transform ...
           var transformedPath = new Path2D();
           transformedPath.addPath(path, i);
+          // draw the transformed path, which should render it in its original position but with a transformed style.
           originalFill.call(this, transformedPath, fillRule);
           this.transform(i.a, i.b, i.c, i.d, i.e, i.f);
           return;
@@ -356,7 +494,145 @@ module Shumway.GFX {
           originalFill.call(this, path, fillRule);
         }
       });
+
+      /**
+       * Same as for |fill| above.
+       */
+      CanvasRenderingContext2D.prototype.stroke = <any>(function fill(path: Path2D): void {
+        var supportsStyle = this.strokeStyle instanceof CanvasPattern || this.strokeStyle instanceof CanvasGradient;
+        var hasStyleTransformation = !!this.strokeStyle._transform;
+        if (supportsStyle && hasStyleTransformation && path instanceof Path2D) {
+          var m = this.strokeStyle._transform;
+          var i = m.inverse();
+          // Transform the context by the style transform ...
+          this.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+          // transform the path by the inverse of the style transform ...
+          var transformedPath = new Path2D();
+          transformedPath.addPath(path, i);
+          // draw the transformed path, which should render it in its original position but with a transformed style.
+          var oldLineWidth = this.lineWidth;
+          this.lineWidth *= (i.a + i.d) / 2; // Scale the lineWidth down since it will be scaled up by the current transform.
+          originalStroke.call(this, transformedPath);
+          this.transform(i.a, i.b, i.c, i.d, i.e, i.f);
+          this.lineWidth = oldLineWidth;
+          return;
+        }
+        if (arguments.length === 0) {
+          originalStroke.call(this);
+        } else if (arguments.length === 1) {
+          originalStroke.call(this, path);
+        }
+      });
     }
+  }
+
+  /**
+   * Polyfill |globalColorMatrix| on |CanvasRenderingContext2D|.
+   */
+  if (typeof CanvasRenderingContext2D !== 'undefined' && CanvasRenderingContext2D.prototype.globalColorMatrix === undefined) {
+    var previousFill = CanvasRenderingContext2D.prototype.fill;
+    var previousStroke = CanvasRenderingContext2D.prototype.stroke;
+    var previousFillText = CanvasRenderingContext2D.prototype.fillText;
+    var previousStrokeText = CanvasRenderingContext2D.prototype.strokeText;
+
+    Object.defineProperty(CanvasRenderingContext2D.prototype, "globalColorMatrix", {
+      get: function (): ColorMatrix {
+        if (!this._globalColorMatrix) {
+          this._globalColorMatrix = ColorMatrix.createIdentity();
+        }
+        return this._globalColorMatrix.clone();
+      },
+      set: function (matrix: ColorMatrix) {
+        if (!this._globalColorMatrix) {
+          this._globalColorMatrix = ColorMatrix.createIdentity();
+        }
+        this._globalColorMatrix.copyFrom(matrix);
+      },
+      enumerable: true,
+      configurable: true
+    });
+
+    /**
+     * Intercept calls to |fill| and transform fill style if a |globalColorMatrix| is set.
+     */
+    CanvasRenderingContext2D.prototype.fill = <any>(function (a?: any, b?: any) {
+      var oldFillStyle = null;
+      if (this._globalColorMatrix) {
+        oldFillStyle = this.fillStyle;
+        this.fillStyle = transformStyle(this, this.fillStyle, this._globalColorMatrix);
+      }
+      if (arguments.length === 0) {
+        previousFill.call(this);
+      } else if (arguments.length === 1) {
+        previousFill.call(this, a);
+      } else if (arguments.length === 2) {
+        previousFill.call(this, a, b);
+      }
+      if (oldFillStyle) {
+        this.fillStyle = oldFillStyle;
+      }
+    });
+
+    /**
+     * Same as |fill| above.
+     */
+    CanvasRenderingContext2D.prototype.stroke = <any>(function (a?: any, b?: any) {
+      var oldStrokeStyle = null;
+      if (this._globalColorMatrix) {
+        oldStrokeStyle = this.strokeStyle;
+        this.strokeStyle = transformStyle(this, this.strokeStyle, this._globalColorMatrix);
+      }
+      if (arguments.length === 0) {
+        previousStroke.call(this);
+      } else if (arguments.length === 1) {
+        previousStroke.call(this, a);
+      }
+      if (oldStrokeStyle) {
+        this.strokeStyle = oldStrokeStyle;
+      }
+    });
+
+    /**
+     * Same as |fill| above.
+     */
+    CanvasRenderingContext2D.prototype.fillText = <any>(function (text: string, x: number, y: number, maxWidth?: number) {
+      var oldFillStyle = null;
+      if (this._globalColorMatrix) {
+        oldFillStyle = this.fillStyle;
+        this.fillStyle = transformStyle(this, this.fillStyle, this._globalColorMatrix);
+      }
+      if (arguments.length === 3) {
+        previousFillText.call(this, text, x, y);
+      } else if (arguments.length === 4) {
+        previousFillText.call(this, text, x, y, maxWidth);
+      } else {
+        Debug.unexpected();
+      }
+      if (oldFillStyle) {
+        this.fillStyle = oldFillStyle;
+      }
+    });
+
+    /**
+     * Same as |fill| above.
+     */
+    CanvasRenderingContext2D.prototype.strokeText = <any>(function (text: string, x: number, y: number, maxWidth?: number) {
+      var oldStrokeStyle = null;
+      if (this._globalColorMatrix) {
+        oldStrokeStyle = this.strokeStyle;
+        this.strokeStyle = transformStyle(this, this.strokeStyle, this._globalColorMatrix);
+      }
+      if (arguments.length === 3) {
+        previousStrokeText.call(this, text, x, y);
+      } else if (arguments.length === 4) {
+        previousStrokeText.call(this, text, x, y, maxWidth);
+      } else {
+        Debug.unexpected();
+      }
+      if (oldStrokeStyle) {
+        this.strokeStyle = oldStrokeStyle;
+      }
+    });
   }
 }
 

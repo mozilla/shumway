@@ -19,6 +19,7 @@ module Shumway.GFX {
   import Point = Geometry.Point;
   import Matrix = Geometry.Matrix;
   import DirtyRegion = Geometry.DirtyRegion;
+  import clampByte = Shumway.ColorUtilities.clampByte;
 
   import assert = Shumway.Debug.assert;
 
@@ -105,7 +106,7 @@ module Shumway.GFX {
       return new ColorMatrix(this._m);
     }
 
-    public set(other: ColorMatrix) {
+    public copyFrom(other: ColorMatrix) {
       this._m.set(other._m);
     }
 
@@ -191,6 +192,21 @@ module Shumway.GFX {
         0, 0, 0, alphaMultiplier,
         redOffset, greenOffset, blueOffset, alphaOffset
       ]);
+    }
+
+    public transformRGBA(rgba: number) {
+      var r = (rgba >> 24) & 0xff;
+      var g = (rgba >> 16) & 0xff;
+      var b = (rgba >>  8) & 0xff;
+      var a = rgba & 0xff;
+
+      var m: Float32Array = this._m;
+      var R = clampByte(r * m[0]  + g * m[1]  + b * m[2]  + a * m[3]  + m[16]);
+      var G = clampByte(r * m[4]  + g * m[5]  + b * m[6]  + a * m[7]  + m[17]);
+      var B = clampByte(r * m[8]  + g * m[9]  + b * m[10] + a * m[11] + m[18]);
+      var A = clampByte(r * m[12] + g * m[13] + b * m[14] + a * m[15] + m[19]);
+
+      return R << 24 | G << 16 | B << 8 | A;
     }
 
     public multiply(other: ColorMatrix) {
