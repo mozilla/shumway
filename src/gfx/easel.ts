@@ -235,15 +235,19 @@ module Shumway.GFX {
       this._worldView.addChild(this._worldViewOverlay);
       this._disableHidpi = disableHidpi;
 
-      var fpsCanvasContainer = document.createElement("div");
-      fpsCanvasContainer.style.position = "absolute";
-      fpsCanvasContainer.style.top = "0";
-      fpsCanvasContainer.style.width = "100%";
-      fpsCanvasContainer.style.height = "10px";
-      this._fpsCanvas = document.createElement("canvas");
-      fpsCanvasContainer.appendChild(this._fpsCanvas);
-      container.appendChild(fpsCanvasContainer);
-      this._fps = new FPS(this._fpsCanvas);
+      if (hud.value) {
+        var fpsCanvasContainer = document.createElement("div");
+        fpsCanvasContainer.style.position = "absolute";
+        fpsCanvasContainer.style.top = "0";
+        fpsCanvasContainer.style.width = "100%";
+        fpsCanvasContainer.style.height = "10px";
+        this._fpsCanvas = document.createElement("canvas");
+        fpsCanvasContainer.appendChild(this._fpsCanvas);
+        container.appendChild(fpsCanvasContainer);
+        this._fps = new FPS(this._fpsCanvas);
+      } else {
+        this._fps = null;
+      }
 
       window.addEventListener('resize', this._deferredResizeHandler.bind(this), false);
 
@@ -376,7 +380,9 @@ module Shumway.GFX {
           leaveTimeline("Render");
         }
       }
-      this._fps.tickAndRender(!mustRender);
+      if (this._fps) {
+        this._fps.tickAndRender(!mustRender);
+      }
     }
 
     public render() {

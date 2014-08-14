@@ -231,8 +231,9 @@ function parseSwf(url, movieParams, objectParams) {
   // enableVerifier.value = compilerSettings.verifier;
 
   // init misc preferences
-  //turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
-  //hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});
+  var turboMode = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
+  Shumway.GFX.backend.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.webgl', def: false}) ? 1 : 0;
+  Shumway.GFX.hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});
   //forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
   //dummyAnimation.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false});
 
@@ -253,6 +254,7 @@ function parseSwf(url, movieParams, objectParams) {
       compilerSettings: compilerSettings,
       movieParams: movieParams,
       objectParams: objectParams,
+      turboMode: turboMode,
       url: url,
       baseUrl: url
     }
@@ -265,7 +267,7 @@ function createEasel() {
   var Easel = Shumway.GFX.Easel;
   var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
 
-  Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
+  Shumway.GFX.WebGL.SHADER_ROOT = SHUMWAY_ROOT + "gfx/gl/shaders/";
   var backend = Shumway.GFX.backend.value | 0;
   return new Easel(document.getElementById("stageContainer"), backend);
 }
