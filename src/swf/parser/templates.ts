@@ -130,28 +130,24 @@ module Shumway.SWF.Parser {
   }
 
   export function readString($bytes, $stream, length) {
-    var codes = [];
+    var codes: Uint8Array;
     var pos = $stream.pos;
     if (length) {
-      codes = slice.call($bytes, pos, pos += length);
+      codes = $bytes.subarray(pos, pos += length);
     } else {
       length = 0;
-      for (var code; (code = $bytes[pos++]); length++)
-        codes[length] = code;
+      for (var i = pos; $bytes[i]; i++) {
+        length++;
+      }
+      codes = $bytes.subarray(pos, pos += length);
+      pos++;
     }
     $stream.pos = pos;
-    var numChunks = length / 65536;
-    var str = '';
-    for (var i = 0; i < numChunks; ++i) {
-      var begin = i * 65536;
-      var end = begin + 65536;
-      var chunk = codes.slice(begin, end);
-      str += fromCharCode.apply(null, chunk);
-    }
+    var str = Shumway.StringUtilities.utf8encode(codes);
     if (str.indexOf('\0') >= 0) {
       str = str.split('\0').join('');
     }
-    return decodeURIComponent(escape(str));
+    return str;
   }
 
   export function readBinary($bytes, $stream, size, temporaryUsage: boolean): Uint8Array {

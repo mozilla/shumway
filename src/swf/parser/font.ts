@@ -52,11 +52,11 @@ module Shumway.SWF.Parser {
       italic: tag.italic === 1,
       codes: null,
       metrics: null,
-      data: null
+      data: tag.data
     };
 
     var glyphs = tag.glyphs;
-    var glyphCount = tag.glyphCount = glyphs.length;
+    var glyphCount = glyphs ? tag.glyphCount = glyphs.length : 0;
 
     if (!glyphCount) {
       return font;

@@ -326,5 +326,65 @@ module Shumway.AVM2.AS.flash.text {
              this._underline === other._underline &&
              this._url === other._url;
     }
+
+    public merge(other: TextFormat) {
+      if (other._align !== null) {
+        this._align = other._align;
+      }
+      if (other._blockIndent !== null) {
+        this._blockIndent = other._blockIndent;
+      }
+      if (other._bold !== null) {
+        this._bold = other._bold;
+      }
+      if (other._bullet !== null) {
+        this._bullet = other._bullet;
+      }
+      if (other._color !== null) {
+        this._color = other._color;
+      }
+      if (other._display !== null) {
+        this._display = other._display;
+      }
+      if (other._font !== null) {
+        this._font = other._font;
+      }
+      if (other._indent !== null) {
+        this._indent = other._indent;
+      }
+      if (other._italic !== null) {
+        this._italic = other._italic;
+      }
+      if (other._kerning !== null) {
+        this._kerning = other._kerning;
+      }
+      if (other._leading !== null) {
+        this._leading = other._leading;
+      }
+      if (other._leftMargin !== null) {
+        this._leftMargin = other._leftMargin;
+      }
+      if (other._letterSpacing !== null) {
+        this._letterSpacing = other._letterSpacing;
+      }
+      if (other._rightMargin !== null) {
+        this._rightMargin = other._rightMargin;
+      }
+      if (other._size !== null) {
+        this._size = other._size;
+      }
+      if (other._tabStops !== null) {
+        this._tabStops = other._tabStops;
+      }
+      if (other._target !== null) {
+        this._target = other._target;
+      }
+      if (other._underline !== null) {
+        this._underline = other._underline;
+      }
+      if (other._url === null) {
+        this._url = other._url;
+      }
+     }
   }
 }

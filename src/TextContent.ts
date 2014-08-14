@@ -291,9 +291,6 @@ module Shumway {
     }
 
     set plainText(value: string) {
-      if (value === this._plainText) {
-        return;
-      }
       this._plainText = value;
       this.textRuns.length = 0;
       var textRun = new flash.text.TextRun(0, value.length, this.defaultTextFormat);

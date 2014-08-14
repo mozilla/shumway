@@ -194,12 +194,15 @@ module Shumway.Timeline {
       if (tag.hasFont) {
         symbol.size = tag.fontHeight;
         var font = flash.text.Font.getBySymbolId(tag.fontId);
-        release || assert (font, "Font is not defined.");
-        symbol.font = font.fontName;
-        if (tag.fontClass) {
-          var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
-          symbol.fontClass = <flash.text.Font><any>
-            appDomain.getClass(tag.fontClass);
+        if (font) {
+          symbol.font = font.fontName;
+          if (tag.fontClass) {
+            var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
+            symbol.fontClass = <flash.text.Font><any>
+              appDomain.getClass(tag.fontClass);
+          }
+        } else {
+          Shumway.Debug.warning("Font is not defined.");
         }
       }
       if (tag.hasLayout) {

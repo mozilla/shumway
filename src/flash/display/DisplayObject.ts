@@ -1017,12 +1017,21 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get y(): number {
-      return this._matrix.ty / 20;
+      var value = this._matrix.ty;
+      if (this._canHaveTextContent()) {
+        var bounds = this._getContentBounds();
+        value += bounds.yMin;
+      }
+      return value / 20;
     }
 
     set y(value: number) {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
+      if (this._canHaveTextContent()) {
+        var bounds = this._getContentBounds();
+        value -= bounds.yMin;
+      }
       if (value === this._matrix.ty) {
         return;
       }
