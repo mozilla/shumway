@@ -194,7 +194,10 @@ module Shumway.Shell {
     release = releaseOption.value;
     verbose = verboseOption.value;
 
-    Shumway.Unit.writer = new IndentingWriter(!verbose);
+    if (!verbose) {
+      IndentingWriter.logLevel = Shumway.LogLevel.Error | Shumway.LogLevel.Warn;
+    }
+    Shumway.Unit.writer = new IndentingWriter();
 
     if (parseOption.value) {
       files.forEach(function (file) {
@@ -228,6 +231,11 @@ module Shumway.Shell {
           disassembleABCFile(file);
         }
       });
+    }
+
+    if (Shumway.Unit.everFailed) {
+      writer.errorLn('Some unit tests failed');
+      quit(1);
     }
   }
 
