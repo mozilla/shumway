@@ -191,10 +191,10 @@ module Shumway.GFX {
    * Polyfill for missing |Path2D|. An instance of this class keeps a record of all drawing commands
    * ever called on it.
    */
-  class Path {
+  export class Path {
     private _commands: Uint8Array;
     private _commandPosition: number;
-    private _data: Float32Array;
+    private _data: Float64Array;
     private _dataPosition: number;
 
     private static _arrayBufferPool = new ArrayBufferPool();
@@ -204,39 +204,36 @@ module Shumway.GFX {
      */
     static _apply(path: Path, context: CanvasRenderingContext2D) {
       var commands = path._commands;
-      var data = path._data;
+      var d = path._data;
       var i = 0;
       var j = 0;
       context.beginPath();
-      while (i < commands.length) {
+      var commandPosition = path._commandPosition;
+      while (i < commandPosition) {
         switch (commands[i++]) {
           case PathCommand.ClosePath:
             context.closePath();
             break;
           case PathCommand.MoveTo:
-            context.moveTo(data[j++], data[j++]);
+            context.moveTo(d[j++], d[j++]);
             break;
           case PathCommand.LineTo:
-            context.lineTo(data[j++], data[j++]);
+            context.lineTo(d[j++], d[j++]);
             break;
           case PathCommand.QuadraticCurveTo:
-            context.quadraticCurveTo(data[j++], data[j++], data[j++], data[j++]);
+            context.quadraticCurveTo(d[j++], d[j++], d[j++], d[j++]);
             break;
           case PathCommand.BezierCurveTo:
-            context.bezierCurveTo(
-              data[j++], data[j++], data[j++], data[j++], data[j++], data[j++]
-            );
+            context.bezierCurveTo(d[j++], d[j++], d[j++], d[j++], d[j++], d[j++]);
             break;
           case PathCommand.ArcTo:
-            context.arcTo(data[j++], data[j++], data[j++], data[j++], data[j++]);
+            context.arcTo(d[j++], d[j++], d[j++], d[j++], d[j++]);
             break;
           case PathCommand.Rect:
-            context.rect(data[j++], data[j++], data[j++], data[j++]);
+            context.rect(d[j++], d[j++], d[j++], d[j++]);
             break;
           case PathCommand.Arc:
-            context.arc(
-              data[j++], data[j++], data[j++], data[j++], data[j++], !!data[j++]
-            );
+            context.arc(d[j++], d[j++], d[j++], d[j++], d[j++], !!d[j++]);
             break;
           case PathCommand.Save:
             context.save();
@@ -245,43 +242,35 @@ module Shumway.GFX {
             context.restore();
             break;
           case PathCommand.Transform:
-            context.transform(
-              data[j++], data[j++], data[j++], data[j++], data[j++], data[j++]
-            );
+            context.transform(d[j++], d[j++], d[j++], d[j++], d[j++], d[j++]);
             break;
         }
       }
     }
 
     constructor(arg: any) {
-      this._commands = new Uint8Array(Path._arrayBufferPool.acquire(4), 0, 4);
+      this._commands = new Uint8Array(Path._arrayBufferPool.acquire(8), 0, 8);
       this._commandPosition = 0;
-      this._data = new Float32Array(Path._arrayBufferPool.acquire(8 * 4), 0, 8);
+
+      this._data = new Float64Array(Path._arrayBufferPool.acquire(8 * Float64Array.BYTES_PER_ELEMENT), 0, 8);
       this._dataPosition = 0;
+
       if (arg instanceof Path) {
         this.addPath(arg);
       }
     }
 
-    private _resizeCommands(length: number) {
-      var newLength = Math.max(this._commandPosition + length, ((this._commands.length * 3) >> 1) + 1);
-      var commands = new Uint8Array(Path._arrayBufferPool.acquire(newLength), 0, newLength);
-      commands.set(this._commands);
-      Path._arrayBufferPool.release(this._commands.buffer);
-      this._commands = commands;
+    private _ensureCommandCapacity(length: number) {
+      this._commands = Path._arrayBufferPool.ensureUint8ArrayLength(this._commands, length);
     }
 
-    private _resizeData(length: number) {
-      var newLength = Math.max(this._dataPosition + length, ((this._data.length * 3) >> 1) + 1);
-      var data = new Float32Array(Path._arrayBufferPool.acquire(newLength * 4), 0, newLength);
-      data.set(this._data);
-      Path._arrayBufferPool.release(this._data.buffer);
-      this._data = data;
+    private _ensureDataCapacity(length: number) {
+      this._data = Path._arrayBufferPool.ensureFloat64ArrayLength(this._data, length);
     }
 
     private _writeCommand(command: number) {
       if (this._commandPosition >= this._commands.length) {
-        this._resizeCommands(1);
+        this._ensureCommandCapacity(this._commandPosition + 1);
       }
       this._commands[this._commandPosition++] = command;
     }
@@ -289,7 +278,7 @@ module Shumway.GFX {
     private _writeData(a: number, b: number, c?: number, d?: number, e?: number, f?: number, g?: number) {
       var argc = arguments.length;
       if (this._dataPosition + argc >= this._data.length) {
-        this._resizeData(argc);
+        this._ensureDataCapacity(this._dataPosition + argc);
       }
       var data = this._data;
       var p = this._dataPosition;
@@ -333,9 +322,9 @@ module Shumway.GFX {
       this._writeData(cp1x, cp1y, cp2x, cp2y, x, y);
     }
 
-    arcTo(x1: number, y1: number, x2: number, y2: number, radiusX: number, radiusY: number, rotation: number) {
+    arcTo(x1: number, y1: number, x2: number, y2: number, radius: number) {
       this._writeCommand(PathCommand.ArcTo);
-      this._writeData(x1, y1, x2, y2, radiusX, radiusY, rotation);
+      this._writeData(x1, y1, x2, y2, radius);
     }
 
     rect(x: number, y: number, width: number, height: number) {
@@ -364,19 +353,31 @@ module Shumway.GFX {
           transformation.f
         );
       }
-      var commands = path._commands;
-      if (this._commandPosition + commands.length >= this._commands.length) {
-        this._resizeCommands(commands.length);
+
+      // Copy commands.
+      var newCommandPosition = this._commandPosition + path._commandPosition;
+      if (newCommandPosition >= this._commands.length) {
+        this._ensureCommandCapacity(newCommandPosition);
       }
-      this._commands.set(commands, this._commandPosition);
-      this._commandPosition += commands.length;
-      var data = path._data;
-      if (this._dataPosition + data.length >= this._data.length) {
-        this._resizeCommands(commands.length);
+      var commands = this._commands;
+      var pathCommands = path._commands;
+      for (var i = this._commandPosition, j = 0; i < newCommandPosition; i++) {
+        commands[i] = pathCommands[j++];
       }
-      this._resizeData(data.length);
-      this._data.set(data, this._dataPosition);
-      this._dataPosition += data.length;
+      this._commandPosition = newCommandPosition;
+
+      // Copy data.
+      var newDataPosition = this._dataPosition + path._dataPosition;
+      if (newDataPosition >= this._data.length) {
+        this._ensureDataCapacity(newDataPosition);
+      }
+      var data = this._data;
+      var pathData = path._data;
+      for (var i = this._dataPosition, j = 0; i < newDataPosition; i++) {
+        data[i] = pathData[j++];
+      }
+      this._dataPosition = newDataPosition;
+
       if (transformation) {
         this._writeCommand(PathCommand.Restore);
       }

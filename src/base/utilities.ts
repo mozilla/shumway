@@ -3005,6 +3005,34 @@ module Shumway {
         list.push(buffer);
       }
     }
+
+    /**
+     * Resizes a Uint8Array to have the given length.
+     */
+    public ensureUint8ArrayLength(array: Uint8Array, length: number): Uint8Array {
+      if (array.length >= length) {
+        return array;
+      }
+      var newLength = Math.max(array.length + length, ((array.length * 3) >> 1) + 1);
+      var newArray = new Uint8Array(this.acquire(newLength), 0, newLength);
+      newArray.set(array);
+      this.release(array.buffer);
+      return newArray;
+    }
+
+    /**
+     * Resizes a Float64Array to have the given length.
+     */
+    public ensureFloat64ArrayLength(array: Float64Array, length: number): Float64Array {
+      if (array.length >= length) {
+        return array;
+      }
+      var newLength = Math.max(array.length + length, ((array.length * 3) >> 1) + 1);
+      var newArray = new Float64Array(this.acquire(newLength * Float64Array.BYTES_PER_ELEMENT), 0, newLength);
+      newArray.set(array);
+      this.release(array.buffer);
+      return newArray;
+    }
   }
 
   export module Telemetry {
