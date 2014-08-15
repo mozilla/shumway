@@ -1573,12 +1573,25 @@ module Shumway {
     }
   }
 
+  export enum LogLevel {
+    Error = 0x1,
+    Warn = 0x2,
+    Debug = 0x4,
+    Log = 0x8,
+    Info = 0x10,
+    All = 0x1f
+  }
+
   export class IndentingWriter {
     public static PURPLE = '\033[94m';
     public static YELLOW = '\033[93m';
     public static GREEN = '\033[92m';
     public static RED = '\033[91m';
+    public static BOLD_RED = '\033[1;91m';
     public static ENDC = '\033[0m';
+
+    public static logLevel: LogLevel = LogLevel.All;
+
     private static _consoleOut = inBrowser ? console.info.bind(console) : print;
     private static _consoleOutNoNewline = inBrowser ? console.info.bind(console) : putstr;
 
@@ -1628,8 +1641,34 @@ module Shumway {
       }
     }
 
+    errorLn(str: string) {
+      if (IndentingWriter.logLevel & LogLevel.Error) {
+        this.boldRedLn(str);
+      }
+    }
+
+    warnLn(str: string) {
+      if (IndentingWriter.logLevel & LogLevel.Warn) {
+        this.yellowLn(str);
+      }
+    }
+
     debugLn(str: string) {
-      this.colorLn(IndentingWriter.PURPLE, str);
+      if (IndentingWriter.logLevel & LogLevel.Debug) {
+        this.purpleLn(str);
+      }
+    }
+
+    logLn(str: string) {
+      if (IndentingWriter.logLevel & LogLevel.Log) {
+        this.writeLn(str);
+      }
+    }
+
+    infoLn(str: string) {
+      if (IndentingWriter.logLevel & LogLevel.Info) {
+        this.writeLn(str);
+      }
     }
 
     yellowLn(str: string) {
@@ -1640,12 +1679,16 @@ module Shumway {
       this.colorLn(IndentingWriter.GREEN, str);
     }
 
+    boldRedLn(str: string) {
+      this.colorLn(IndentingWriter.BOLD_RED, str);
+    }
+
     redLn(str: string) {
       this.colorLn(IndentingWriter.RED, str);
     }
 
-    warnLn(str: string) {
-      this.yellowLn(str);
+    purpleLn(str: string) {
+      this.colorLn(IndentingWriter.PURPLE, str);
     }
 
     colorLn(color: string, str: string) {
