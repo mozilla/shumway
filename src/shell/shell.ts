@@ -202,7 +202,7 @@ module Shumway.Shell {
     if (parseOption.value) {
       files.forEach(function (file) {
         var start = dateNow();
-        writer.writeLn("Parsing: " + file);
+        writer.debugLn("Parsing: " + file);
         parseFile(file, parseForDatabaseOption.value, symbolFilterOption.value.split(","));
         var elapsed = dateNow() - start;
         if (verbose) {

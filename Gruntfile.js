@@ -102,7 +102,8 @@ module.exports = function(grunt) {
       },
       smoke_parse: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r {}'
+        cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r ' +
+             (grunt.option('verbose') ? '-v ' : '') + ' {}'
       },
       smoke_parse_images: {
         maxBuffer: Infinity,
