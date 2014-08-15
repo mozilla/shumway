@@ -23,7 +23,7 @@ module Shumway.Unit {
 
   export function fail(message) {
     everFailed = true;
-    writer.redLn(message);
+    writer.errorLn(message);
   }
 
   export function eqFloat(a, b, test, tolerance) {
@@ -31,9 +31,9 @@ module Shumway.Unit {
     test = description(test);
     var d = Math.abs(a - b);
     if (isNaN(d) || d >= tolerance) {
-      return fail("FAIL " + test + ". Got " + a + ", expected " + b + failedLocation());
+      return fail("FAIL" + test + ". Got " + a + ", expected " + b + failedLocation());
     }
-    writer.writeLn("PASS" + test);
+    writer.debugLn("PASS" + test);
   }
 
   export function neq(a, b, test) {
@@ -42,15 +42,15 @@ module Shumway.Unit {
       return fail("FAIL " + test + ". Got " + a + ", expected different (!==) value" +
         failedLocation());
     }
-    writer.writeLn("PASS" + test);
+    writer.debugLn("PASS" + test);
   }
 
   export function eq(a, b, test) {
     test = description(test);
     if (a !== b) {
-      return fail("FAIL " + test + ". Got " + a + ", expected " + b + failedLocation());
+      return fail("FAIL" + test + ". Got " + a + ", expected " + b + failedLocation());
     }
-    writer.writeLn("PASS" + test);
+    writer.debugLn("PASS" + test);
   }
 
   export function eqArray(a, b, test) {
@@ -73,7 +73,7 @@ module Shumway.Unit {
         }
       }
     }
-    writer.writeLn("PASS" + test);
+    writer.debugLn("PASS" + test);
   }
 
   export function structEq(a, b, test) {
@@ -102,16 +102,16 @@ module Shumway.Unit {
           ", b." + key + " = " + b[key] + failedLocation());
       }
     }
-    writer.writeLn("PASS" + test);
+    writer.debugLn("PASS" + test);
   }
 
   export function check(condition, test) {
     test = description(test);
     if (!condition) {
-      return fail("FAIL " + test + ". Got " + condition + ", expected truthy value" +
+      return fail("FAIL" + test + ". Got " + condition + ", expected truthy value" +
         failedLocation());
     }
-    writer.writeLn("PASS" + test);
+    writer.debugLn("PASS" + test);
   }
 
   export function assertThrowsInstanceOf(f, ctor, test) {
@@ -141,15 +141,15 @@ module Shumway.Unit {
   }
 
   export function info(s: string) {
-    writer.writeLn("INFO: " + s);
+    writer.infoLn("INFO: " + s);
   }
 
   export function warn(s: string) {
-    writer.writeLn("WARN: " + s);
+    writer.warnLn("WARN: " + s);
   }
 
   export function error(s: string) {
-    writer.writeLn("ERROR: " + s);
+    writer.errorLn("ERROR: " + s);
   }
 }
 

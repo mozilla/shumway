@@ -26,7 +26,7 @@ module Shumway.GFX {
   export var stageOptions = shumwayOptions.register(new OptionSet("Stage Renderer Options"));
   export var forcePaint = stageOptions.register(new Option("", "forcePaint", "boolean", false, "Force repainting."));
   export var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boolean", false, "Cull elements outside of the viewport."));
-  export var viewportLoupeDiameter = stageOptions.register(new Option("", "viewportLoupeDiameter", "number", 512, "Size of the viewport loupe.", {range: { min: 1, max: 1024, step: 1 }}));
+  export var viewportLoupeDiameter = stageOptions.register(new Option("", "viewportLoupeDiameter", "number", 256, "Size of the viewport loupe.", {range: { min: 1, max: 1024, step: 1 }}));
   export var disableClipping = stageOptions.register(new Option("", "disableClipping", "boolean", false, "Disable clipping."));
   export var debugClipping = stageOptions.register(new Option("", "debugClipping", "boolean", false, "Disable clipping."));
 

@@ -136,7 +136,7 @@ module Shumway.AVM2.AS.avm1lib {
     }
     _gotoLabel(label: any): any {
       var nativeAS3Object = <any> this._nativeAS3Object;
-      nativeAS3Object.gotoLabel(label);
+      nativeAS3Object._gotoFrame(label, null);
     }
   }
 }

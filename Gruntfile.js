@@ -88,7 +88,8 @@ module.exports = function(grunt) {
         cwd: 'utils/'
       },
       gate: {
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -g -v test/unit/pass/*.js'
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -g ' + (grunt.option('verbose') ? '-v ' : '') +
+                                                           (grunt.option('tests') || 'test/unit/pass/*.js')
 //        cmd: 'node build/ts/shell.js -x -g -v test/unit/pass/*.js'
       },
       smoke_parse_database: {
@@ -101,7 +102,8 @@ module.exports = function(grunt) {
       },
       smoke_parse: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r {}'
+        cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r ' +
+             (grunt.option('verbose') ? '-v ' : '') + ' {}'
       },
       smoke_parse_images: {
         maxBuffer: Infinity,
