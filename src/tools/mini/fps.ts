@@ -104,6 +104,7 @@ module Shumway.Tools.Mini {
         this._index = 0;
       }
 
+      context.globalAlpha = 1;
       context.fillStyle = "black";
       context.fillRect(textWidth + index * (w + wPadding), 0, w * 4, this._canvas.height);
 
@@ -114,9 +115,9 @@ module Shumway.Tools.Mini {
 
       context.fillRect(textWidth + index * (w + wPadding), 0, w, v);
       if (index % 16 === 0) {
+        context.globalAlpha = 1;
         context.fillStyle = "black";
         context.fillRect(0, 0, textWidth, this._canvas.height);
-        context.globalAlpha = 1;
         context.fillStyle = "white";
         context.font = "10px Arial";
         context.fillText((1000 / weightedTime).toFixed(0), 2, 8);
