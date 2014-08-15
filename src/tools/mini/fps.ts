@@ -21,6 +21,7 @@ module Shumway.Tools.Mini {
 
     private _index = 0;
     private _lastTime: number = 0;
+    private _lastWeightedTime = 0;
 
     private _gradient = [
       "#FF0000",  // Red
@@ -81,31 +82,48 @@ module Shumway.Tools.Mini {
       }
     }
 
+
     public tickAndRender(idle: boolean = false) {
       if (this._lastTime === 0) {
         this._lastTime = performance.now();
         return;
       }
 
-      var time = performance.now() - this._lastTime;
+      var elapsedTime = performance.now() - this._lastTime;
+      var weightRatio = 0.3;
+      var weightedTime = elapsedTime * (1 - weightRatio) + this._lastWeightedTime * weightRatio;
+
       var context = this._context;
       var w = 2 * this._ratio;
       var wPadding = 1;
-      var count = (this._canvas.width / (w + wPadding)) | 0;
+      var textWidth = 20;
+      var count = ((this._canvas.width - textWidth) / (w + wPadding)) | 0;
 
       var index = this._index ++;
       if (this._index > count) {
         this._index = 0;
       }
 
-      var r = (1000 / 60) / time;
+      context.fillStyle = "black";
+      context.fillRect(textWidth + index * (w + wPadding), 0, w * 4, this._canvas.height);
+
+      var r = (1000 / 60) / weightedTime;
       context.fillStyle = this._gradient[r * (this._gradient.length - 1) | 0];
       context.globalAlpha = idle ? 0.2 : 1;
       var v = this._canvas.height * r | 0;
 
-      context.clearRect(index * (w + wPadding), 0, w * 4, this._canvas.height);
-      context.fillRect(index * (w + wPadding), 0, w, v);
+      context.fillRect(textWidth + index * (w + wPadding), 0, w, v);
+      if (index % 16 === 0) {
+        context.fillStyle = "black";
+        context.fillRect(0, 0, textWidth, this._canvas.height);
+        context.globalAlpha = 1;
+        context.fillStyle = "white";
+        context.font = "10px Arial";
+        context.fillText((1000 / weightedTime).toFixed(0), 2, 8);
+      }
+
       this._lastTime = performance.now();
+      this._lastWeightedTime = weightedTime;
     }
   }
 }
