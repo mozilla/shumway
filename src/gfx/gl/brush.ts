@@ -201,11 +201,11 @@ module Shumway.GFX.WebGL {
       g.uploadBuffers();
       gl.useProgram(p);
       if (this._target) {
-        matrix = Matrix3D.create2DProjection(this._target.w, this._target.h, 2000)
-        matrix = Matrix3D.createMultiply(matrix, Matrix3D.createScale(1, -1, 1));
+        matrix = Matrix3D.create2DProjection(this._target.w, this._target.h, 2000);
+         matrix = Matrix3D.createMultiply(matrix, Matrix3D.createScale(1, -1, 1));
       } else {
-        matrix = this._context.modelViewProjectionMatrix
-      }
+        matrix = this._context.modelViewProjectionMatrix;
+       }
       gl.uniformMatrix4fv(p.uniforms.uTransformMatrix3D.location, false, matrix.asWebGLMatrix());
       if (this._colorMatrix) {
         gl.uniformMatrix4fv(p.uniforms.uColorMatrix.location, false, this._colorMatrix.asWebGLMatrix());

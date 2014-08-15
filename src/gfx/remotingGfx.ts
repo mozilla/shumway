@@ -309,7 +309,7 @@ module Shumway.Remoting.GFX {
       var coords = null;
       var numCoords = input.readInt();
       if (numCoords) {
-        coords = new DataBuffer(numCoords* 4);
+        coords = new DataBuffer(numCoords * 4);
         input.readBytes(coords, 0, numCoords * 4);
       }
       if (!asset) {
@@ -354,8 +354,8 @@ module Shumway.Remoting.GFX {
         context._frames[id] = context.root;
       }
       var color = this.input.readInt();
-      var rectangle = this._readRectangle()
-      context.root.setBounds(rectangle);
+      var rectangle = this._readRectangle();
+       context.root.setBounds(rectangle);
       context.root.color = Color.FromARGB(color);
     }
 

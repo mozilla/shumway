@@ -52,7 +52,7 @@ module Shumway.ArrayUtilities {
   function asCoerceString(x): string {
     if (typeof x === "string") {
       return x;
-    } else if (x == undefined) {
+    } else if (x === undefined) {
       return null;
     }
     return x + '';
@@ -555,7 +555,7 @@ module Shumway.ArrayUtilities {
         return;
       }
 
-      DataBuffer._codeLengthOrder = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]
+      DataBuffer._codeLengthOrder = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
       DataBuffer._distanceCodes = [];
       DataBuffer._distanceExtraBits = [];
 
@@ -574,7 +574,7 @@ module Shumway.ArrayUtilities {
       DataBuffer._lengthCodes = [];
       DataBuffer._lengthExtraBits = [];
       for (var i = 0, j = 0, code = 3; i < 29; ++i) {
-        DataBuffer._lengthCodes[i] = code - (i == 28 ? 1 : 0);
+        DataBuffer._lengthCodes[i] = code - (i === 28 ? 1 : 0);
         code += 1 << (DataBuffer._lengthExtraBits[i] = ~~(((j += (i > 4 ? 1 : 0)) / 4) % 6));
       }
 
@@ -592,8 +592,7 @@ module Shumway.ArrayUtilities {
       var codes = new Uint32Array(size);
       for (var code = 0, len = 1, skip = 2;
            len <= maxBits;
-           code <<= 1, ++len, skip <<= 1)
-      {
+           code <<= 1, ++len, skip <<= 1) {
         for (var val = 0; val < numLengths; ++val) {
           if (bitLengths[val] === len) {
             var lsb = 0;
@@ -657,7 +656,7 @@ module Shumway.ArrayUtilities {
           while (i < numCodes) {
             var j = 1;
             var sym = DataBuffer.readCode(input, codeLengthTable);
-            switch(sym){
+            switch (sym) {
               case 16:
                 j = readBits(input, 2) + 3;
                 sym = prev;

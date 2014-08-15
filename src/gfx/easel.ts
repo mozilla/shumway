@@ -80,7 +80,7 @@ module Shumway.GFX {
     }
 
     onMouseClick(easel: Easel, event: MouseEvent) {
-
+        //...
     }
 
     onKeyDown(easel: Easel, event: KeyboardEvent) {
@@ -113,11 +113,11 @@ module Shumway.GFX {
     }
 
     onMouseDown(easel: Easel, event: MouseEvent) {
-
+        //...
     }
 
     onMouseClick(easel: Easel, event: MouseEvent) {
-
+        //...
     }
 
     onKeyPress(easel: Easel, event: KeyboardEvent) {
@@ -289,7 +289,7 @@ module Shumway.GFX {
       }
 
       this._resizeHandler();
-      this._onMouseUp = this._onMouseUp.bind(this)
+      this._onMouseUp = this._onMouseUp.bind(this);
       this._onMouseDown = this._onMouseDown.bind(this);
       this._onMouseMove = this._onMouseMove.bind(this);
 
@@ -499,11 +499,11 @@ module Shumway.GFX {
     }
 
     private _onMouseUp(event) {
-
+        //...
     }
 
     private _onMouseMove(event) {
-
+        //...
     }
   }
 }

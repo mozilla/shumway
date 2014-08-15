@@ -133,10 +133,10 @@ module Shumway.Options {
       while (args.length) {
         var argString = args.shift();
         var argument = null, value = argString;
-        if (argString == '--') {
+        if (argString === '--') {
           leftoverArguments = leftoverArguments.concat(args);
           break;
-        } else if (argString.slice(0, 1) == '-' || argString.slice(0, 2) == '--') {
+        } else if (argString.slice(0, 1) === '-' || argString.slice(0, 2) === '--') {
           argument = nonPositionalArgumentMap[argString];
           // release || assert(argument, "Argument " + argString + " is unknown.");
           if (!argument) {

@@ -141,7 +141,7 @@ module Shumway.GFX.Geometry {
     inTriangle (a: Point, b: Point, c: Point) {
       var s = a.y * c.x - a.x * c.y + (c.y - a.y) * this.x + (a.x - c.x) * this.y;
       var t = a.x * b.y - a.y * b.x + (a.y - b.y) * this.x + (b.x - a.x) * this.y;
-      if ((s < 0) != (t < 0)) {
+      if ((s < 0) !== (t < 0)) {
         return false;
       }
       var T = -b.y * c.x + a.y * (c.x - b.x) + a.x * (b.y - c.y) + b.x * c.y;
@@ -485,8 +485,8 @@ module Shumway.GFX.Geometry {
      * Creates the maximum rectangle representable by signed 16 bit integers.
      */
     static createMaxI16() {
-      return new Rectangle(Numbers.MinI16, Numbers.MinI16, Numbers.MaxU16, Numbers.MaxU16)
-    }
+      return new Rectangle(Numbers.MinI16, Numbers.MinI16, Numbers.MaxU16, Numbers.MaxU16);
+     }
 
     getCorners (points: Point[]) {
       points[0].x = this.x;
@@ -1310,8 +1310,8 @@ module Shumway.GFX.Geometry {
 
       if (cell.region.contains(rectangle)) {
         if (cell.bounds.isEmpty()) {
-          cell.bounds.set(rectangle)
-        } else if (!cell.bounds.contains(rectangle)) {
+          cell.bounds.set(rectangle);
+         } else if (!cell.bounds.contains(rectangle)) {
           cell.bounds.union(rectangle);
         }
       } else {
@@ -1835,7 +1835,7 @@ module Shumway.GFX.Geometry {
       this._size = size;
     }
     public render(context: CanvasRenderingContext2D) {
-
+        //...
     }
     public getLevel(matrix: Matrix): MipMapLevel {
       var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());

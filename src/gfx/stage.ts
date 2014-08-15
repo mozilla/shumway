@@ -111,14 +111,14 @@ module Shumway.GFX {
     }
 
     public render() {
-
+        //...
     }
 
     /**
      * Notify renderer that the viewport has changed.
      */
     public resize() {
-
+        //...
     }
   }
 

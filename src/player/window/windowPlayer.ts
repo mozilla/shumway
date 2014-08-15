@@ -103,7 +103,7 @@ module Shumway.Player.Window {
                   break;
                 }
                 this._parent.postMessage({
-                  type:'timelineResponse',
+                  type: 'timelineResponse',
                   request: data.request,
                   timeline: Shumway.Player.timelineBuffer
                 }, '*');
@@ -114,7 +114,7 @@ module Shumway.Player.Window {
                   break;
                 }
                 this._parent.postMessage({
-                  type:'timelineResponse',
+                  type: 'timelineResponse',
                   request: data.request,
                   timeline: Shumway.SWF.timelineBuffer
                 }, '*');

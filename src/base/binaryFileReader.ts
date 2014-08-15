@@ -66,7 +66,7 @@ module Shumway {
       xhr.send(this.data || null);
     }
 
-    readAsync(ondata: (data: Uint8Array, progress:BinaryFileReaderProgressInfo) => void,
+    readAsync(ondata: (data: Uint8Array, progress: BinaryFileReaderProgressInfo) => void,
               onerror: (err: any) => void,
               onopen?: () => void,
               oncomplete?: () => void,
@@ -80,7 +80,9 @@ module Shumway {
         xhr.responseType = 'arraybuffer';
       }
       xhr.onprogress = function (e) {
-        if (isNotProgressive) return;
+        if (isNotProgressive) {
+            return;
+        }
         ondata(new Uint8Array(xhr.response), { loaded: e.loaded, total: e.total });
       };
       xhr.onreadystatechange = function (event) {

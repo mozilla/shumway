@@ -189,8 +189,8 @@ module Shumway {
     constructor(public commands: Uint8Array, public commandsPosition: number,
                 public coordinates: Int32Array, public coordinatesPosition: number,
                 public morphCoordinates: Int32Array,
-                public styles: ArrayBuffer, public stylesLength: number)
-    {}
+                public styles: ArrayBuffer, public stylesLength: number) {
+    }
   }
 
   enum DefaultSize {
@@ -282,7 +282,7 @@ module Shumway {
     lineStyle(thickness: number, color: number, pixelHinting: boolean,
               scaleMode: number, caps: number, joints: number, miterLimit: number): void
     {
-      release || assert(thickness === (thickness|0), thickness >= 0 && thickness <= 0xff * 20);
+      release || assert(thickness === (thickness | 0), thickness >= 0 && thickness <= 0xff * 20);
       this.ensurePathCapacities(2, 0);
       this.commands[this.commandsPosition++] = PathCommand.LineStyleSolid;
       this.coordinates[this.coordinatesPosition++] = thickness;
@@ -322,8 +322,8 @@ module Shumway {
      */
     beginGradient(pathCommand: PathCommand, colors: number[], ratios: number[],
                   gradientType: number, matrix: ShapeMatrix,
-                  spread: number, interpolation: number, focalPointRatio: number)
-    {
+                  spread: number, interpolation: number, focalPointRatio: number) {
+
       release || assert(pathCommand === PathCommand.BeginGradientFill ||
              pathCommand === PathCommand.LineStyleGradient);
 
@@ -331,7 +331,7 @@ module Shumway {
       this.commands[this.commandsPosition++] = pathCommand;
       var styles: DataBuffer = this.styles;
       styles.writeUnsignedByte(gradientType);
-      release || assert(focalPointRatio === (focalPointRatio|0));
+      release || assert(focalPointRatio === (focalPointRatio | 0));
       styles.writeShort(focalPointRatio);
 
       this._writeStyleMatrix(matrix);
@@ -407,8 +407,7 @@ module Shumway {
       return buffers;
     }
 
-    private _writeStyleMatrix(matrix: ShapeMatrix)
-    {
+    private _writeStyleMatrix(matrix: ShapeMatrix) {
       var styles: DataBuffer = this.styles;
       styles.writeFloat(matrix.a);
       styles.writeFloat(matrix.b);
@@ -418,8 +417,8 @@ module Shumway {
       styles.writeFloat(matrix.ty);
     }
 
-    private ensurePathCapacities(numCommands: number, numCoordinates: number)
-    {
+    private ensurePathCapacities(numCommands: number, numCoordinates: number) {
+
       // ensureTypedArrayCapacity will hopefully be inlined, in which case the field writes
       // will be optimized out.
       this.commands = ensureTypedArrayCapacity(this.commands, this.commandsPosition + numCommands);

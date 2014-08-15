@@ -239,10 +239,15 @@ module Shumway.Shell {
     }
   }
 
+<<<<<<< HEAD
   function disassembleABCFile(file: string) {
     var buffer = read(file, "binary");
     var abc = new AbcFile(new Uint8Array(buffer), file);
     abc.trace(writer);
+=======
+  function parseABCs(files: string []) {
+        //...
+>>>>>>> nat
   }
 
   function executeFile(file: string): boolean {
@@ -468,8 +473,8 @@ module Shumway.Shell {
       playerglobal.scripts[abc.name] = abc;
       if (typeof abc.defs === 'string') {
         playerglobal.map[abc.defs] = abc.name;
-        writer.writeLn(abc.defs)
-      } else {
+        writer.writeLn(abc.defs);
+       } else {
         for (var j = 0; j < abc.defs.length; j++) {
           var def = abc.defs[j];
           playerglobal.map[def] = abc.name;
@@ -493,4 +498,5 @@ if (typeof help === "function") {
   var commandLineArguments: string[] =
     Array.prototype.slice.call(process.argv, 2);
 }
+
 Shumway.Shell.main(commandLineArguments);

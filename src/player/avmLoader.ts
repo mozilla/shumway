@@ -32,7 +32,7 @@ module Shumway {
                              libraryPath: any, /* LibraryPathInfo | string */
                              avm1Path: string,
                              sysMode: ExecutionMode, appMode: ExecutionMode,
-                             next: (avm2: AVM2)=> void) {
+                             next: (avm2: AVM2) => void) {
     function loadAVM1(next) {
       new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
         avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), avm1Path));

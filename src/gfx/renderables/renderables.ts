@@ -142,7 +142,7 @@ module Shumway.GFX {
      * Region| indicates whether the shape's fills should be used as clip regions instead.
      */
     render(context: CanvasRenderingContext2D, cullBounds?: Shumway.GFX.Geometry.Rectangle, clipRegion?: boolean): void {
-
+        //...
     }
   }
 
@@ -229,8 +229,7 @@ module Shumway.GFX {
       var context = this._canvas.getContext("2d");
       if (type === ImageType.JPEG ||
           type === ImageType.PNG  ||
-          type === ImageType.GIF)
-      {
+          type === ImageType.GIF) {
         var self = this;
         self.setFlags(RenderableFlags.Loading);
         var image = new Image();
@@ -309,8 +308,7 @@ module Shumway.GFX {
 
   class StyledPath {
     path: Path2D;
-    constructor(public type: PathType, public style: any, public strokeProperties: StrokeProperties)
-    {
+    constructor(public type: PathType, public style: any, public strokeProperties: StrokeProperties) {
       this.path = new Path2D();
       release || assert ((type === PathType.Stroke) === !!strokeProperties);
     }
@@ -318,8 +316,8 @@ module Shumway.GFX {
 
   class StrokeProperties {
     constructor(public thickness: number, public capsStyle: string, public jointsStyle: string,
-                public miterLimit: number)
-    {}
+                public miterLimit: number) {
+    }
   }
 
   export class RenderableShape extends Renderable {
@@ -516,7 +514,7 @@ module Shumway.GFX {
             styles.position += 2;
             var capsStyle: string = RenderableShape.LINE_CAPS_STYLES[styles.readByte()];
             var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
-            var strokeProperties = new StrokeProperties(coordinates[coordinatesIndex++]/20,
+            var strokeProperties = new StrokeProperties(coordinates[coordinatesIndex++] / 20,
                                                         capsStyle, jointsStyle, styles.readByte());
             strokePath = this._createPath(PathType.Stroke, color, strokeProperties, x, y);
             break;
@@ -548,8 +546,7 @@ module Shumway.GFX {
     }
 
     private _createPath(type: PathType, style: any, strokeProperties: StrokeProperties,
-                        x: number, y: number): Path2D
-    {
+                        x: number, y: number): Path2D {
       var path = new StyledPath(type, style, strokeProperties);
       this._paths.push(path);
       path.path.moveTo(x, y);
@@ -715,8 +712,7 @@ module Shumway.GFX {
                 public fillStyle: string = '',
                 public text: string = '',
                 public width: number = 0,
-                public underline: boolean = false)
-    {
+                public underline: boolean = false) {
 
     }
   }
@@ -831,7 +827,7 @@ module Shumway.GFX {
 
         var size = textRunData.readInt();
         var fontId = textRunData.readInt();
-        var fontName:string;
+        var fontName: string;
         if (fontId) {
           fontName = 'swffont' + fontId;
         } else {
@@ -954,8 +950,8 @@ module Shumway.GFX {
         }
       }
 
-      this.invalidatePaint()
-      leaveTimeline("RenderableText.reflow");
+      this.invalidatePaint();
+       leaveTimeline("RenderableText.reflow");
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {

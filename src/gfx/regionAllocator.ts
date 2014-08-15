@@ -372,7 +372,7 @@ module Shumway.GFX {
       }
 
       free(region: ISurfaceRegion) {
-
+        //...
       }
     }
   }

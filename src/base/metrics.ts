@@ -103,7 +103,7 @@ module Shumway.Metrics {
       this._enabled = enabled;
       this.clear();
     }
-    public setEnabled(enabled:boolean) {
+    public setEnabled(enabled: boolean) {
       this._enabled = enabled;
     }
     public clear() {

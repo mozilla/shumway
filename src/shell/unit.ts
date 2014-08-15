@@ -55,10 +55,10 @@ module Shumway.Unit {
 
   export function eqArray(a, b, test) {
     test = description(test);
-    if (a == undefined && b) {
+    if (a === undefined && b) {
       return fail("FAIL" + test + " Null Array: a" + failedLocation());
     }
-    if (a && b == undefined) {
+    if (a && b === undefined) {
       return fail("FAIL" + test + " Null Array: b" + failedLocation());
     }
     if (a.length !== b.length) {
@@ -67,7 +67,7 @@ module Shumway.Unit {
     }
     for (var i = 0; i < a.length; i++) {
       if (a[i] !== b[i]) {
-        if (!(typeof a[i] == "number" && typeof b[i] == "number" && isNaN(a[i]) && isNaN(b[i]))) {
+        if (!(typeof a[i] === "number" && typeof b[i] === "number" && isNaN(a[i]) && isNaN(b[i]))) {
           return fail("FAIL" + test + " Array Element " + i + ": got " + a[i] + ", expected " +
             b[i] + failedLocation());
         }
@@ -78,11 +78,11 @@ module Shumway.Unit {
 
   export function structEq(a, b, test) {
     test = description(test);
-    if (a == undefined && b) {
+    if (a === undefined && b) {
       return fail("FAIL" + test + " Expected neither or both objects to be null/undefined, " +
         "but only `a` was" + failedLocation());
     }
-    if (a && b == undefined) {
+    if (a && b === undefined) {
       return fail("FAIL" + test + " Expected neither or both objects to be null/undefined, " +
         "but only `b` was" + failedLocation());
     }

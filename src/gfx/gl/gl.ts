@@ -345,7 +345,7 @@ module Shumway.GFX.WebGL {
           var surface = surfaces[options.drawSurface | 0];
           var src = new Rectangle(0, 0, surface.w, surface.h);
           var dst = src.clone();
-          while(dst.w > viewport.w) {
+          while (dst.w > viewport.w) {
             dst.scale(0.5, 0.5);
           }
           brush.drawImage(new WebGLSurfaceRegion(surface, <RegionAllocator.Region>src), dst, Color.White, null, matrix, 0.2);

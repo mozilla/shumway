@@ -16,7 +16,7 @@
 
 ///<reference path='references.ts' />
 var jsGlobal = (function() { return this || (1, eval)('this'); })();
-var inBrowser = typeof console != "undefined";
+var inBrowser = typeof console !== "undefined";
 
 declare var putstr;
 // declare var print;
@@ -96,7 +96,7 @@ declare var Uint8ClampedArray: {
   new (array: number[]): Uint8ClampedArray;
   new (buffer: ArrayBuffer, byteOffset?: number, length?: number): Uint8ClampedArray;
   BYTES_PER_ELEMENT: number;
-}
+};
 
 module Shumway {
 
@@ -228,7 +228,7 @@ module Shumway {
   }
 
   export function isNullOrUndefined(value) {
-    return value == undefined;
+    return value === undefined;
   }
 
   export module Debug {
@@ -354,11 +354,11 @@ module Shumway {
     }
 
     export function top(array: any []) {
-      return array.length && array[array.length - 1]
+      return array.length && array[array.length - 1];
     }
 
     export function last(array: any []) {
-      return array.length && array[array.length - 1]
+      return array.length && array[array.length - 1];
     }
 
     export function peek(array: any []) {
@@ -664,11 +664,11 @@ module Shumway {
       return Object.create(null);
     }
 
-    export function createMap<T>():Map<T> {
+    export function createMap<T>(): Map<T> {
       return Object.create(null);
     }
 
-    export function createArrayMap<T>():Map<T> {
+    export function createArrayMap<T>(): Map<T> {
       return <Map<T>><any>[];
     }
 
@@ -900,7 +900,9 @@ module Shumway {
           var validBits = 5;
           do {
             var mask = (currentPrefix >> 1) | 0x80;
-            if((b1 & mask) === currentPrefix) break;
+            if ((b1 & mask) === currentPrefix) {
+                break;
+             }
             currentPrefix = (currentPrefix >> 1) | 0x80;
             --validBits;
           } while (validBits >= 0);
@@ -914,7 +916,7 @@ module Shumway {
           var invalid = false;
           for (var i = 5; i >= validBits; --i) {
             var bi = bytes[j++];
-            if ((bi & 0xC0) != 0x80) {
+            if ((bi & 0xC0) !== 0x80) {
               // Invalid UTF8 character sequence
               invalid = true;
               break;
@@ -968,7 +970,7 @@ module Shumway {
       }
 
       // Deal with the remaining bytes and padding
-      if (byteRemainder == 1) {
+      if (byteRemainder === 1) {
         chunk = bytes[mainLength];
 
         a = (chunk & 252) >> 2; // 252 = (2^6 - 1) << 2
@@ -977,7 +979,7 @@ module Shumway {
         b = (chunk & 3) << 4; // 3 = 2^2 - 1
 
         base64 += encodings[a] + encodings[b] + '==';
-      } else if (byteRemainder == 2) {
+      } else if (byteRemainder === 2) {
         chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1];
 
         a = (chunk & 64512) >> 10; // 64512 = (2^6 - 1) << 10
@@ -993,7 +995,7 @@ module Shumway {
 
     export function escapeString(str: string) {
       if (str !== undefined) {
-        str = str.replace(/[^\w$]/gi,"$"); /* No dots, colons, dashes and /s */
+        str = str.replace(/[^\w$]/gi, "$"); /* No dots, colons, dashes and /s */
         if (/^\d/.test(str)) { /* No digits at the beginning */
           str = '$' + str;
         }
@@ -1137,7 +1139,7 @@ module Shumway {
       // chunking
       // TODO ArrayBuffer ?
       var w = new Int32Array(16);
-      for (i = 0; i < paddedLength;) {
+      for (i = 0; i < paddedLength; ) {
         for (j = 0; j < 16; ++j, i += 4) {
           w[j] = (padded[i] | (padded[i + 1] << 8) |
             (padded[i + 2] << 16) | (padded[i + 3] << 24));
@@ -1482,7 +1484,7 @@ module Shumway {
         // the shift by 0 fixes the sign on the high part
         // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
-      }
+      };
     }
 
     /**
@@ -1496,7 +1498,7 @@ module Shumway {
         i |= (i >> 8);
         i |= (i >> 16);
         return 32 - IntegerUtilities.ones(i);
-      }
+      };
     }
   }
 
@@ -2348,7 +2350,7 @@ module Shumway {
       var type = (shouldUseSingleWord ? <any>Uint32BitSet : <any>Uint32ArrayBitSet);
       return function () {
         return new type(length);
-      }
+      };
     }
   }
 
@@ -2455,10 +2457,10 @@ module Shumway {
     xMax: number;
     yMax: number;
     constructor (xMin: number, yMin: number, xMax: number, yMax: number) {
-      this.xMin = xMin|0;
-      this.yMin = yMin|0;
-      this.xMax = xMax|0;
-      this.yMax = yMax|0;
+      this.xMin = xMin | 0;
+      this.yMin = yMin | 0;
+      this.xMax = xMax | 0;
+      this.yMax = yMax | 0;
     }
 
     static FromUntyped (source: UntypedBounds): Bounds {
@@ -2466,8 +2468,8 @@ module Shumway {
     }
 
     static FromRectangle (source: ASRectangle): Bounds {
-      return new Bounds(source.x * 20|0, source.y * 20|0, (source.x + source.width) * 20|0,
-        (source.y + source.height) * 20|0);
+      return new Bounds(source.x * 20 | 0, source.y * 20 | 0, (source.x + source.width) * 20 | 0,
+        (source.y + source.height) * 20 | 0);
     }
 
     setElements (xMin: number, yMin: number, xMax: number, yMax: number): void {
@@ -2598,10 +2600,10 @@ module Shumway {
       Debug.assert(isInteger(yMin));
       Debug.assert(isInteger(xMax));
       Debug.assert(isInteger(yMax));
-      this._xMin = xMin|0;
-      this._yMin = yMin|0;
-      this._xMax = xMax|0;
-      this._yMax = yMax|0;
+      this._xMin = xMin | 0;
+      this._yMin = yMin | 0;
+      this._xMax = xMax | 0;
+      this._yMax = yMax | 0;
       this.assertValid();
     }
 
@@ -2610,8 +2612,8 @@ module Shumway {
     }
 
     static FromRectangle (source: ASRectangle): DebugBounds {
-      return new DebugBounds(source.x * 20|0, source.y * 20|0, (source.x + source.width) * 20|0,
-                        (source.y + source.height) * 20|0);
+      return new DebugBounds(source.x * 20 | 0, source.y * 20 | 0, (source.x + source.width) * 20 | 0,
+                        (source.y + source.height) * 20 | 0);
     }
 
     setElements (xMin: number, yMin: number, xMax: number, yMax: number): void {
@@ -2681,7 +2683,7 @@ module Shumway {
 
     set yMin(value: number) {
       Debug.assert(isInteger(value));
-      this._yMin = value|0;
+      this._yMin = value | 0;
       this.assertValid();
     }
 
@@ -2691,7 +2693,7 @@ module Shumway {
 
     set xMax(value: number) {
       Debug.assert(isInteger(value));
-      this._xMax = value|0;
+      this._xMax = value | 0;
       this.assertValid();
     }
 
@@ -2705,7 +2707,7 @@ module Shumway {
 
     set yMax(value: number) {
       Debug.assert(isInteger(value));
-      this._yMax = value|0;
+      this._yMax = value | 0;
       this.assertValid();
     }
 
@@ -2780,7 +2782,7 @@ module Shumway {
       return Color.FromARGB(ColorUtilities.RGBAToARGB(rgba));
     }
     public toRGBA() {
-      return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255)
+      return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255);
     }
     public toCSSStyle() {
       return ColorUtilities.rgbaToCSSStyle(this.toRGBA());
@@ -2815,7 +2817,9 @@ module Shumway {
       var rgb = getComputedStyle(span).backgroundColor;
       document.body.removeChild(span);
       var m = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(rgb);
-      if (!m) m = /^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/.exec(rgb);
+      if (!m) {
+          m = /^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/.exec(rgb);
+      }
       var result = new Color(0, 0, 0, 0);
       result.r = parseFloat(m[1]) / 255;
       result.g = parseFloat(m[2]) / 255;
@@ -3142,11 +3146,21 @@ module Shumway {
   export module ExternalInterfaceService {
     export var instance: IExternalInterfaceService = {
       enabled: false,
-      initJS(callback: (functionName: string, args: any[]) => any) { },
-      registerCallback(functionName: string) { },
-      unregisterCallback(functionName: string) { },
-      eval(expression: string): any { },
-      call(request: string): any { },
+      initJS(callback: (functionName: string, args: any[]) => any) {
+        //...
+      },
+      registerCallback(functionName: string) {
+        //...
+      },
+      unregisterCallback(functionName: string) {
+        //...
+      },
+      eval(expression: string): any {
+        //...
+      },
+      call(request: string): any {
+        //...
+      },
       getId(): string { return null; }
     };
   }
@@ -3238,7 +3252,7 @@ module Shumway {
 
   export class PromiseWrapper<T> {
     public promise: Promise<T>;
-    public resolve: (result:T) => void;
+    public resolve: (result: T) => void;
     public reject: (reason) => void;
 
     constructor() {
@@ -3629,7 +3643,7 @@ if (typeof exports !== "undefined") {
   });
 
   extendBuiltin(String.prototype, "trim", function () {
-    return this.replace(/^\s+|\s+$/g,"");
+    return this.replace(/^\s+|\s+$/g, "");
   });
 
   extendBuiltin(String.prototype, "endsWith", function (str) {

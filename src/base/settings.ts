@@ -31,25 +31,27 @@ module Shumway.Settings {
     }
   }
 
-  export function load(key:string = ROOT) {
-    var settings:any = {};
+  export function load(key: string = ROOT) {
+    var settings: any = {};
     if (isStorageSupported()) {
-      var lsValue:string = window.localStorage[key];
+      var lsValue: string = window.localStorage[key];
       if (lsValue) {
         try {
           settings = JSON.parse(lsValue);
         } catch (e) {
+            //...
         }
       }
     }
     return settings;
   }
 
-  export function save(settings:any = null, key:string = ROOT) {
+  export function save(settings: any = null, key: string = ROOT) {
     if (isStorageSupported()) {
       try {
         window.localStorage[key] = JSON.stringify(settings ? settings : shumwayOptions.getSettings());
       } catch (e) {
+          //...
       }
     }
   }

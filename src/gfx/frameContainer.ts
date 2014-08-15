@@ -63,7 +63,7 @@ module Shumway.GFX {
       this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
       if (child._parent === this) {
         var index = this._children.indexOf(child);
-        this.removeChildAt(index)
+        this.removeChildAt(index);
       }
     }
 

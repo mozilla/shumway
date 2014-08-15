@@ -121,6 +121,7 @@ module Shumway.GFX {
     }
 
     processFrame() {
+        //...
     }
 
     onExernalCallback(request) {

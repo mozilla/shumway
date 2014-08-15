@@ -67,7 +67,7 @@ module Shumway {
       } else if (node === this._head) {
         this._head = <T>(node.next);
         this._head.previous = null;
-      } else if (node == this._tail) {
+      } else if (node === this._tail) {
         this._tail = <T>(node.previous);
         this._tail.next = null;
       } else {

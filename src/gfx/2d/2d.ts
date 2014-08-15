@@ -66,126 +66,120 @@ module Shumway.GFX.Canvas2D {
   }
 
   export class Canvas2DStageRenderer extends StageRenderer {
-    _options: Canvas2DStageRendererOptions;
-    private _fillRule: string;
-    context: CanvasRenderingContext2D;
+      _options: Canvas2DStageRendererOptions;
+      private _fillRule: string;
+      context: CanvasRenderingContext2D;
 
-    private static _initializedCaches: boolean = false;
+      private static _initializedCaches: boolean = false;
 
-    /**
-     * Allocates temporary regions for performing image operations.
-     */
-    private static _surfaceCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+      /**
+       * Allocates temporary regions for performing image operations.
+       */
+      private static _surfaceCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
 
-    /**
-     * Allocates shape cache regions.
-     */
-    private static _shapeCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+      /**
+       * Allocates shape cache regions.
+       */
+      private static _shapeCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
 
-    constructor (
-      canvas: HTMLCanvasElement,
-      stage: Stage,
-      options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
-      super(canvas, stage, options);
-      var fillRule: FillRule = FillRule.NonZero
-      var context = this.context = canvas.getContext("2d");
-      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
-      this._fillRule = fillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
-      context.fillRule = context.mozFillRule = this._fillRule;
-      Canvas2DStageRenderer._prepareSurfaceAllocators();
-    }
+      constructor(canvas: HTMLCanvasElement, stage: Stage, options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
+          super(canvas, stage, options);
+          var fillRule: FillRule = FillRule.NonZero;
+          var context = this.context = canvas.getContext("2d");
+          this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
+          this._fillRule = fillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
+          context.fillRule = context.mozFillRule = this._fillRule;
 
-    private static _prepareSurfaceAllocators() {
-      if (Canvas2DStageRenderer._initializedCaches) {
-        return;
+          Canvas2DStageRenderer._prepareSurfaceAllocators();
       }
 
-      Canvas2DStageRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator (
-        function (w: number, h: number) {
-          var canvas = document.createElement("canvas");
-          if (typeof registerScratchCanvas !== "undefined") {
-            registerScratchCanvas(canvas);
+      private static _prepareSurfaceAllocators() {
+          if (Canvas2DStageRenderer._initializedCaches) {
+              return;
           }
-          // Surface caches are at least this size.
-          var W = Math.max(1024, w);
-          var H = Math.max(1024, h);
-          canvas.width = W;
-          canvas.height = H;
-          var allocator = null;
-          if (w >= 1024 || h >= 1024) {
-            // The requested size is pretty large, so create a single grid allocator
-            // with there requested size. This will only hold one image.
-            allocator = new RegionAllocator.GridAllocator(W, H, W, H);
-          } else {
-            allocator = new RegionAllocator.BucketAllocator(W, H);
-          }
-          return new Canvas2DSurface (
-            canvas, allocator
+
+          Canvas2DStageRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator(
+              function (w: number, h: number) {
+                  var canvas = document.createElement("canvas");
+                  if (typeof registerScratchCanvas !== "undefined") {
+                      registerScratchCanvas(canvas);
+                  }
+                  // Surface caches are at least this size.
+                  var W = Math.max(1024, w);
+                  var H = Math.max(1024, h);
+                  canvas.width = W;
+                  canvas.height = H;
+                  var allocator = null;
+                  if (w >= 1024 || h >= 1024) {
+                      // The requested size is pretty large, so create a single grid allocator
+                      // with there requested size. This will only hold one image.
+                      allocator = new RegionAllocator.GridAllocator(W, H, W, H);
+                  } else {
+                      allocator = new RegionAllocator.BucketAllocator(W, H);
+                  }
+                  return new Canvas2DSurface(
+                      canvas, allocator
+                  );
+              }
           );
-        }
-      );
 
-      Canvas2DStageRenderer._shapeCache = new SurfaceRegionAllocator.SimpleAllocator (
-        function (w: number, h: number) {
-          var canvas = document.createElement("canvas");
-          if (typeof registerScratchCanvas !== "undefined") {
-            registerScratchCanvas(canvas);
-          }
-          var W = 1024, H = 1024;
-          canvas.width = W;
-          canvas.height = H;
-          // Shape caches can be compact since regions are never freed explicitly.
-          var allocator = allocator = new RegionAllocator.CompactAllocator(W, H);
-          return new Canvas2DSurface (
-            canvas, allocator
+          Canvas2DStageRenderer._shapeCache = new SurfaceRegionAllocator.SimpleAllocator(
+              function (w: number, h: number) {
+                  var canvas = document.createElement("canvas");
+                  if (typeof registerScratchCanvas !== "undefined") {
+                      registerScratchCanvas(canvas);
+                  }
+                  var W = 1024, H = 1024;
+                  canvas.width = W;
+                  canvas.height = H;
+                  // Shape caches can be compact since regions are never freed explicitly.
+                  var allocator = allocator = new RegionAllocator.CompactAllocator(W, H);
+                  return new Canvas2DSurface(
+                      canvas, allocator
+                  );
+              }
           );
-        }
-      );
 
-      Canvas2DStageRenderer._initializedCaches = true;
-    }
-
-    public resize() {
-      // TODO: We need to resize all the scratch canvases and recreate allocators.
-    }
-
-    public render() {
-      var stage = this._stage;
-      var context = this.context;
-
-      context.setTransform(1, 0, 0, 1, 0, 0);
-
-      context.save();
-      var options = this._options;
-
-      var lastDirtyRectangles: Rectangle[] = [];
-      var dirtyRectangles = lastDirtyRectangles.slice(0);
-
-      context.globalAlpha = 1;
-
-      var viewport = this._viewport;
-      this.renderFrame(stage, viewport, stage.matrix, true);
-
-      if (stage.trackDirtyRegions) {
-        stage.dirtyRegion.clear();
+          Canvas2DStageRenderer._initializedCaches = true;
       }
 
-      context.restore();
-
-      if (options && options.paintViewport) {
-        context.beginPath();
-        context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
-        context.strokeStyle = "#FF4981";
-        context.stroke();
+      public resize() {
+          // TODO: We need to resize all the scratch canvases and recreate allocators.
       }
-    }
 
-    public renderFrame (
-      root: Frame,
-      viewport: Rectangle,
-      matrix: Matrix,
-      clearTargetBeforeRendering: boolean = false)
-    {
+      public render() {
+          var stage = this._stage;
+          var context = this.context;
+
+          context.setTransform(1, 0, 0, 1, 0, 0);
+
+          context.save();
+          var options = this._options;
+
+          var lastDirtyRectangles: Rectangle[] = [];
+          var dirtyRectangles = lastDirtyRectangles.slice(0);
+
+          context.globalAlpha = 1;
+
+          var viewport = this._viewport;
+          this.renderFrame(stage, viewport, stage.matrix, true);
+
+          if (stage.trackDirtyRegions) {
+              stage.dirtyRegion.clear();
+          }
+
+          context.restore();
+
+          if (options && options.paintViewport) {
+              context.beginPath();
+              context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+              context.strokeStyle = "#FF4981";
+              context.stroke();
+          }
+      }
+
+      public renderFrame(root: Frame, viewport: Rectangle, matrix: Matrix, clearTargetBeforeRendering: boolean = false) {
+
       var context = this.context;
       context.save();
       if (!this._options.paintViewport) {
