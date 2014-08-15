@@ -40,7 +40,7 @@ module Shumway.GFX.Canvas2D {
     /**
      * Whether to cache shapes as images.
      */
-    cacheShapes: boolean = true;
+    cacheShapes: boolean = false;
 
     /**
      * Shapes above this size are not cached.
