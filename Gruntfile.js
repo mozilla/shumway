@@ -355,7 +355,7 @@ module.exports = function(grunt) {
   grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts']);
   grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts', 'exec:gate']);
   grunt.registerTask('gate', ['exec:gate']);
-  grunt.registerTask('shu', [
+  grunt.registerTask('build', [
     'parallel:base',
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
@@ -363,7 +363,10 @@ module.exports = function(grunt) {
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
-    'bundles',
+    'bundles'
+  ]);
+  grunt.registerTask('shu', [
+    'build',
     'exec:gate'
   ]);
   grunt.registerTask('closure', [
@@ -386,6 +389,6 @@ module.exports = function(grunt) {
   grunt.registerTask('smoke', [
     'exec:smoke_parse'
   ]);
-  grunt.registerTask('firefox', ['shu', 'exec:build_extension']);
-  grunt.registerTask('web', ['shu', 'exec:build_extension', 'exec:build_web']);
+  grunt.registerTask('firefox', ['build', 'exec:build_extension']);
+  grunt.registerTask('web', ['build', 'exec:build_extension', 'exec:build_web']);
 };
