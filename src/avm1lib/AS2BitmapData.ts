@@ -33,8 +33,7 @@ module Shumway.AVM2.AS.avm1lib {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
-    constructor (bitmapData: flash.display.BitmapData, pixelSnapping: string, smoothing: boolean)
-    {
+    constructor (bitmapData: flash.display.BitmapData, pixelSnapping: string, smoothing: boolean) {
       false && super();
     }
 

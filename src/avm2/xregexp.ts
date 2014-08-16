@@ -511,8 +511,8 @@ module Shumway.AVM2 {
                   flags: nativ.replace.call(flags, /[^gimy]+/g, ''),
                   // `context.captureNames` has an item for each capturing group, even if unnamed
                   captures: context.hasNamedCapture ? context.captureNames : null
-              }
-          }
+              };
+    }
 
           key = patternCache[key];
           return augment(new RegExp(key.pattern, key.flags), key.captures, /*addProto*/ true);

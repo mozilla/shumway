@@ -489,7 +489,7 @@ module Shumway.AVM2.AS {
     }
 
     asHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
+      hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index);
     }
 
     _reverse: () => void;

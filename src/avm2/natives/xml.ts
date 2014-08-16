@@ -212,7 +212,7 @@ module Shumway.AVM2.AS {
   }
 
   // 10.2 ToXMLString
-  function toXMLString(node:any, ancestorNamespaces?: ASNamespace[], indentLevel?: number) {
+  function toXMLString(node: any, ancestorNamespaces?: ASNamespace[], indentLevel?: number) {
     if (node === null || node === undefined) {
       throw new TypeError();
     }
@@ -428,7 +428,7 @@ module Shumway.AVM2.AS {
       if (mn instanceof ASQName) {
         // Object - If the input argument is a QName object,
         // return the input argument.
-        return mn
+        return mn;
       }
       if (Multiname.isQName(mn)) {
         // ... same as above plus
@@ -847,7 +847,7 @@ module Shumway.AVM2.AS {
 
   export class ASNamespace extends ASObject {
     public static staticNatives: any [] = null;
-    public static instanceNatives: any [] = null
+    public static instanceNatives: any [] = null;
     public static instanceConstructor: any = ASNamespace;
 
     private _ns: Namespace;
@@ -945,7 +945,7 @@ module Shumway.AVM2.AS {
         // a. If Type(uriValue) is Object and uriValue.[[Class]] == "QName" and uriValue.uri is not null
         if (isObject(uriValue) && uriValue instanceof ASQName && (<ASQName>uriValue).uri !== null) {
           // i. Let n.uri = uriValue.uri
-          uri = uriValue.uri
+          uri = uriValue.uri;
         }
         // b. Else
         else {
@@ -1118,7 +1118,7 @@ module Shumway.AVM2.AS {
         namespace = namespace instanceof ASNamespace ? namespace :
           new ASNamespace(namespace);
         // b. Let q.uri = Namespace.uri
-        uri = namespace.uri
+        uri = namespace.uri;
           // NOTE implementations that preserve prefixes in qualified names may also set q.[[Prefix]] to Namespace.prefix
       }
       // 8. Return q

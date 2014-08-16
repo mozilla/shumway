@@ -41,7 +41,7 @@ module Shumway.AVM2.Runtime {
   export function getMethodOverrideKey(methodInfo) {
     var key;
     if (methodInfo.holder instanceof ClassInfo) {
-      key = "static " + methodInfo.holder.instanceInfo.name.getOriginalName() + "::" + methodInfo.name.getOriginalName()
+      key = "static " + methodInfo.holder.instanceInfo.name.getOriginalName() + "::" + methodInfo.name.getOriginalName();
     } else if (methodInfo.holder instanceof InstanceInfo) {
       key = methodInfo.holder.name.getOriginalName() + "::" + methodInfo.name.getOriginalName();
     } else {

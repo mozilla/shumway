@@ -127,7 +127,7 @@ module Shumway.AVM2.ABC {
 
   function traceOperand(operand, abc, code) {
     var value = 0;
-    switch(operand.size) {
+    switch (operand.size) {
       case "s08": value = code.readS8(); break;
       case "u08": value = code.readU8(); break;
       case "s16": value = code.readS16(); break;
@@ -137,7 +137,7 @@ module Shumway.AVM2.ABC {
       default: release || assert(false); break;
     }
     var description = "";
-    switch(operand.type) {
+    switch (operand.type) {
       case "": break;
       case "I": description = abc.constantPool.ints[value]; break;
       case "U": description = abc.constantPool.uints[value]; break;
@@ -223,7 +223,7 @@ module Shumway.AVM2.ABC {
     }
     writer.leave("}");
     writer.leave("}");
-  }
+  };
 
   var SourceTracer = (function () {
     function literal(value) {
@@ -675,7 +675,7 @@ module Shumway.AVM2.ABC {
 
       function readOperand(operand) {
         var value = 0;
-        switch(operand.size) {
+        switch (operand.size) {
           case "s08": value = code.readS8(); break;
           case "u08": value = code.readU8(); break;
           case "s16": value = code.readS16(); break;
@@ -685,7 +685,7 @@ module Shumway.AVM2.ABC {
           default: release || assert(false); break;
         }
         var description = "";
-        switch(operand.type) {
+        switch (operand.type) {
           case "": break;
           case "I": description = abc.constantPool.ints[value]; break;
           case "U": description = abc.constantPool.uints[value]; break;

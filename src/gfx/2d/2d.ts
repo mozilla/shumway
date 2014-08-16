@@ -66,28 +66,25 @@ module Shumway.GFX.Canvas2D {
   }
 
   export class Canvas2DStageRenderer extends StageRenderer {
-    _options: Canvas2DStageRendererOptions;
-    private _fillRule: string;
-    context: CanvasRenderingContext2D;
+    _options:Canvas2DStageRendererOptions;
+    private _fillRule:string;
+    context:CanvasRenderingContext2D;
 
-    private static _initializedCaches: boolean = false;
+    private static _initializedCaches:boolean = false;
 
     /**
      * Allocates temporary regions for performing image operations.
      */
-    private static _surfaceCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    private static _surfaceCache:SurfaceRegionAllocator.ISurfaceRegionAllocator;
 
     /**
      * Allocates shape cache regions.
      */
-    private static _shapeCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    private static _shapeCache:SurfaceRegionAllocator.ISurfaceRegionAllocator;
 
-    constructor (
-      canvas: HTMLCanvasElement,
-      stage: Stage,
-      options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
+    constructor(canvas:HTMLCanvasElement, stage:Stage, options:Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
       super(canvas, stage, options);
-      var fillRule: FillRule = FillRule.NonZero
+      var fillRule:FillRule = FillRule.NonZero
       var context = this.context = canvas.getContext("2d");
       this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
       this._fillRule = fillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
@@ -100,8 +97,8 @@ module Shumway.GFX.Canvas2D {
         return;
       }
 
-      Canvas2DStageRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator (
-        function (w: number, h: number) {
+      Canvas2DStageRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator(
+        function (w:number, h:number) {
           var canvas = document.createElement("canvas");
           if (typeof registerScratchCanvas !== "undefined") {
             registerScratchCanvas(canvas);
@@ -119,14 +116,14 @@ module Shumway.GFX.Canvas2D {
           } else {
             allocator = new RegionAllocator.BucketAllocator(W, H);
           }
-          return new Canvas2DSurface (
+          return new Canvas2DSurface(
             canvas, allocator
           );
         }
       );
 
-      Canvas2DStageRenderer._shapeCache = new SurfaceRegionAllocator.SimpleAllocator (
-        function (w: number, h: number) {
+      Canvas2DStageRenderer._shapeCache = new SurfaceRegionAllocator.SimpleAllocator(
+        function (w:number, h:number) {
           var canvas = document.createElement("canvas");
           if (typeof registerScratchCanvas !== "undefined") {
             registerScratchCanvas(canvas);
@@ -136,7 +133,7 @@ module Shumway.GFX.Canvas2D {
           canvas.height = H;
           // Shape caches can be compact since regions are never freed explicitly.
           var allocator = allocator = new RegionAllocator.CompactAllocator(W, H);
-          return new Canvas2DSurface (
+          return new Canvas2DSurface(
             canvas, allocator
           );
         }
@@ -158,7 +155,7 @@ module Shumway.GFX.Canvas2D {
       context.save();
       var options = this._options;
 
-      var lastDirtyRectangles: Rectangle[] = [];
+      var lastDirtyRectangles:Rectangle[] = [];
       var dirtyRectangles = lastDirtyRectangles.slice(0);
 
       context.globalAlpha = 1;
@@ -180,12 +177,7 @@ module Shumway.GFX.Canvas2D {
       }
     }
 
-    public renderFrame (
-      root: Frame,
-      viewport: Rectangle,
-      matrix: Matrix,
-      clearTargetBeforeRendering: boolean = false)
-    {
+    public renderFrame(root:Frame, viewport:Rectangle, matrix:Matrix, clearTargetBeforeRendering:boolean = false) {
       var context = this.context;
       context.save();
       if (!this._options.paintViewport) {

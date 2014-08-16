@@ -145,7 +145,7 @@ module Shumway.AVM1 {
 
   class AS2CriticalError extends Error  {
     constructor(message: string, public error?) {
-      super(message)
+      super(message);
     }
   }
 
@@ -235,7 +235,7 @@ module Shumway.AVM1 {
     if (!isFinite(result) || result === 0) {
       return result;
     }
-    return (result < 0 ? -1 : 1) * Math.abs(result)|0;
+    return (result < 0 ? -1 : 1) * Math.abs(result) | 0;
   }
 
   function as2ToInt32(value): number {
@@ -498,7 +498,7 @@ module Shumway.AVM1 {
     if (obj === Array) {
       // special case of array
       var result = args;
-      if (args.length == 1 && typeof args[0] === 'number') {
+      if (args.length === 1 && typeof args[0] === 'number') {
         result = [];
         result.length = args[0];
       }
@@ -546,7 +546,7 @@ module Shumway.AVM1 {
 
     function avm1ValidateArgsCount(numArgs: number, maxAmount: number) {
       if (isNaN(numArgs) || numArgs < 0 || numArgs > maxAmount ||
-        numArgs != (0|numArgs)) {
+        numArgs !== (0 | numArgs)) {
         throw new Error('Invalid number of arguments: ' + numArgs);
       }
     }
@@ -1011,7 +1011,7 @@ module Shumway.AVM1 {
 
       var a = as2ToNumber(stack.pop());
       var b = as2ToNumber(stack.pop());
-      var f = a == b;
+      var f = a === b;
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }
     function avm1_0x0F_ActionLess(ectx: ExecutionContext) {
@@ -1054,7 +1054,7 @@ module Shumway.AVM1 {
 
       var sa = as2ToString(stack.pop());
       var sb = as2ToString(stack.pop());
-      var f = sa == sb;
+      var f = sa === sb;
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }
     function avm1_0x14_ActionStringLength(ectx: ExecutionContext) {
@@ -1456,7 +1456,7 @@ module Shumway.AVM1 {
 
       var a = stack.pop();
       var b = stack.pop();
-      stack.push(a == b);
+      stack.push(a === b);
     }
     function avm1_0x4E_ActionGetMember(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -2411,7 +2411,9 @@ module Shumway.AVM1 {
 
       if (avm1DebuggerEnabled.value &&
           (Debugger.pause || Debugger.breakpoints[ir.dataId])) {
+        /* tslint:disable */
         debugger;
+        /* tslint:enable */
       }
 
       var position = 0;
@@ -2515,7 +2517,7 @@ module Shumway.AVM1 {
       if (avm1DebuggerEnabled.value) {
         fn += '/* Running ' + debugName + ' */ ' +
           'if (Shumway.AVM1.Debugger.pause || Shumway.AVM1.Debugger.breakpoints.' +
-          debugName + ') { debugger; }\n'
+          debugName + ') { debugger; }\n';
       }
       fn += 'while (!ectx.isEndOfActions) {\n' +
         'if (checkTimeAfter <= 0) { checkTimeAfter = ' + CHECK_AVM1_HANG_EVERY + '; checkTimeout(ectx); }\n' +
@@ -2527,7 +2529,7 @@ module Shumway.AVM1 {
           });
           fn += '  position = ' + b.jump + ';\n' +
                 '  checkTimeAfter -= ' + b.items.length + ';\n' +
-                '  break;\n'
+                '  break;\n';
         });
       fn += ' default: ectx.isEndOfActions = true; break;\n}\n}\n' +
         'return stack.pop();};';
@@ -2553,7 +2555,7 @@ module Shumway.AVM1 {
             var actionCode: number = parsedAction.actionCode;
             var actionName: string = parsedAction.actionName;
             var stackDump = [];
-            for(var q = 0; q < stack.length; q++) {
+            for (var q = 0; q < stack.length; q++) {
               var item = stack[q];
               stackDump.push(item && typeof item === 'object' ?
                 '[' + (item.constructor && item.constructor.name ? item.constructor.name : 'Object') + ']' : item);
@@ -2579,10 +2581,18 @@ module Shumway.AVM1 {
     )();
 
     private static nullTracer : ActionTracer = {
-      print: function(parsedAction: ParsedAction, stack: any[]) {},
-      indent: function() {},
-      unindent: function() {},
-      message: function(msg: string) {}
+      print: function(parsedAction: ParsedAction, stack: any[]) {
+        //...
+      },
+      indent: function() {
+        //...
+      },
+      unindent: function() {
+        //...
+      },
+      message: function(msg: string) {
+        //...
+      }
     };
 
     static get(): ActionTracer {

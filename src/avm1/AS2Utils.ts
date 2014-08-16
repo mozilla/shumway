@@ -22,13 +22,13 @@ module Shumway.AVM1 {
   export class AS2Utils extends ASNative {
 
     // Called whenever the class is initialized.
-    static classInitializer:any = null;
+    static classInitializer: any = null;
 
     // Called whenever an instance of the class is initialized.
-    static initializer:any = null;
+    static initializer: any = null;
 
     // List of static symbols to link.
-    static classSymbols: string [] = null;//["getAS2Object!"];
+    static classSymbols: string [] = null; //["getAS2Object!"];
 
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
@@ -44,7 +44,7 @@ module Shumway.AVM1 {
 
     // AS -> JS Bindings
     static addProperty(obj: ASObject, propertyName: string, getter: () => any,
-                       setter: (v:any) => any, enumerable:boolean = true): any
+                       setter: (v: any) => any, enumerable: boolean = true): any
     {
       obj.asDefinePublicProperty(propertyName, {
         get: getter,

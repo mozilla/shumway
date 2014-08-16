@@ -103,7 +103,7 @@ module Shumway.AVM2.Compiler.IR {
     compile: (cx) => void;
 
     visitInputs(visitor: NodeVisitor) {
-
+      //...
     }
 
     static startNumbering() {

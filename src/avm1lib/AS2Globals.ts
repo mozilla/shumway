@@ -75,7 +75,7 @@ module Shumway.AVM2.AS.avm1lib {
     clearInterval: ASFunction;
     clearTimeout: ASFunction;
     duplicateMovieClip: (target: any, newname: any, depth: any) => any;
-    fscommand: (...rest:any[]) => any;
+    fscommand: (...rest: any[]) => any;
     getAS2Property: (target: any, index: any) => any;
     getTimer: () => number;
     getURL: (url: any, target: any, method?: any) => any;

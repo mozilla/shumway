@@ -37,7 +37,9 @@ module Shumway.AVM1 {
   }
 
   export class ActionsDataAnalyzer {
-    constructor() {}
+    constructor() {
+      // ...
+    }
     analyze(parser: ActionsDataParser): AnalyzerResults {
       var actions: ActionCodeBlockItem[] = [];
       var labels: number[] = [0];
@@ -138,7 +140,7 @@ module Shumway.AVM1 {
           var item: ActionCodeBlockItem = actions[lastPosition];
           items.push(item);
           lastPosition = item.next;
-        } while(!processedLabels[lastPosition] && actions[lastPosition]);
+        } while (!processedLabels[lastPosition] && actions[lastPosition]);
 
         blocks.push({
           label: position,

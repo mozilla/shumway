@@ -148,8 +148,7 @@ module Shumway.AVM2.AS.avm1lib {
         }
         if ((action.keyCode < 32 &&
             AVM1KeyCodeMap[action.keyCode] === event.asGetPublicProperty('keyCode')) ||
-            action.keyCode === event.asGetPublicProperty('charCode'))
-        {
+            action.keyCode === event.asGetPublicProperty('charCode')) {
           this._runAction(action);
         }
       }
@@ -170,7 +169,8 @@ module Shumway.AVM2.AS.avm1lib {
       avm1Context.executeActions(action.actionsBlock, this._nativeAS3Object.stage,
                                  AVM1.AS2Utils.getAS2Object(this._nativeAS3Object._parent));
     }
-    get _as3Object(): flash.display.SimpleButton {
+
+    get_as3Object(): flash.display.SimpleButton {
       return this._nativeAS3Object;
     }
   }

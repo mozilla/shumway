@@ -2455,10 +2455,10 @@ module Shumway {
     xMax: number;
     yMax: number;
     constructor (xMin: number, yMin: number, xMax: number, yMax: number) {
-      this.xMin = xMin|0;
-      this.yMin = yMin|0;
-      this.xMax = xMax|0;
-      this.yMax = yMax|0;
+      this.xMin = xMin | 0;
+      this.yMin = yMin | 0;
+      this.xMax = xMax | 0;
+      this.yMax = yMax | 0;
     }
 
     static FromUntyped (source: UntypedBounds): Bounds {
@@ -2466,8 +2466,8 @@ module Shumway {
     }
 
     static FromRectangle (source: ASRectangle): Bounds {
-      return new Bounds(source.x * 20|0, source.y * 20|0, (source.x + source.width) * 20|0,
-        (source.y + source.height) * 20|0);
+      return new Bounds(source.x * 20 | 0, source.y * 20 | 0, (source.x + source.width) * 20 | 0,
+        (source.y + source.height) * 20 | 0);
     }
 
     setElements (xMin: number, yMin: number, xMax: number, yMax: number): void {

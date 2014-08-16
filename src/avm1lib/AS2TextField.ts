@@ -69,7 +69,7 @@ module Shumway.AVM2.AS.avm1lib {
       if (hasPath) {
         var targetPath = name.split(/[.:\/]/g);
         name = targetPath.pop();
-        if (targetPath[0] == '_root' || targetPath[0] === '') {
+        if (targetPath[0] === '_root' || targetPath[0] === '') {
           clip = getAS2Object(instance.root);
           targetPath.shift();
           if (targetPath[0] === '') {

@@ -31,7 +31,7 @@ module Shumway.AVM2.Runtime {
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
   import assert = Shumway.Debug.assert;
 
-  import boxValue = Shumway.ObjectUtilities.boxValue
+  import boxValue = Shumway.ObjectUtilities.boxValue;
 
   var counter = Shumway.Metrics.Counter.instance;
 

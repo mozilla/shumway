@@ -271,7 +271,7 @@ module Shumway.AVM2.Runtime {
         { object: openMethods,    name: qn },
         { object: object,         name: VM_OPEN_METHOD_PREFIX + qn }
       ];
-      tryInjectToStringAndValueOfForwarder(object, qn)
+      tryInjectToStringAndValueOfForwarder(object, qn);
     } else if (trait.isGetter() || trait.isSetter()) {
       var trampoline = makeTrampoline(function (self) {
         var fn = getTraitFunction(trait, scope, natives);
@@ -798,11 +798,11 @@ module Shumway.AVM2.Runtime {
     // the value is new'd
     if (x) {
       if (x.constructor === String) {
-        return "string"
+        return "string";
       } else if (x.constructor === Number) {
-        return "number"
+        return "number";
       } else if (x.constructor === Boolean) {
-        return "boolean"
+        return "boolean";
       } else if (x instanceof Shumway.AVM2.AS.ASXML ||
                  x instanceof Shumway.AVM2.AS.ASXMLList) {
         return "xml";

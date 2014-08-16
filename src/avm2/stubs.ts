@@ -182,7 +182,7 @@ module Shumway.AVM2 {
   function escapeTypeName(name) {
     switch (name) {
       case "Object":
-        return "ASObject"
+        return "ASObject";
       case "Array":
     }
   }
@@ -325,7 +325,7 @@ module Shumway.AVM2 {
     function jsBindings(traits, isClassTrait) {
       // Generate JS Bindings
 
-      var skip = {}
+      var skip = {};
       for (var i = 0; i < traits.length; i++) {
         var trait = traits[i];
         var name = trait.name.name;

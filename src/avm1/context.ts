@@ -30,17 +30,33 @@ module Shumway.AVM1 {
     public stage;
     public classes;
     public globals: avm1lib.AS2Globals;
-    constructor() {}
+    constructor() {
+      //...
+    }
 
     public static create: (swfVersion: number) => AS2Context;
 
-    public flushPendingScripts() {}
-    public addAsset(className: string, symbolProps) {}
-    public getAsset(className: string): any {}
-    public resolveTarget(target): any {}
-    public resolveLevel(level: number): any {}
-    public addToPendingScripts(fn) {}
+    public flushPendingScripts() {
+      //...
+    }
+    public addAsset(className: string, symbolProps) {
+      //...
+    }
+    public getAsset(className: string): any {
+      //...
+    }
+    public resolveTarget(target): any {
+      //...
+    }
+    public resolveLevel(level: number): any {
+      //...
+    }
+    public addToPendingScripts(fn) {
+      //...
+    }
 
-    public executeActions(actionsData: AS2ActionsData, stage, scopeObj) {}
+    public executeActions(actionsData: AS2ActionsData, stage, scopeObj) {
+      //...
+    }
   }
 }
