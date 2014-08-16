@@ -147,6 +147,7 @@ module Shumway.Shell {
   var microTaskDurationOption: Option;
   var microTaskCountOption: Option;
   var playerGlobalOption: Option;
+  var avm1Option: Option;
 
   export function main(commandLineArguments: string []) {
     parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
@@ -160,6 +161,7 @@ module Shumway.Shell {
     microTaskDurationOption = shellOptions.register(new Option("md", "duration", "number", 0, "Micro task duration."));
     microTaskCountOption = shellOptions.register(new Option("mc", "count", "number", 0, "Micro task count."));
     playerGlobalOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
+    avm1Option = shellOptions.register(new Option(null, "avm1lib", "boolean", false, "Load avm1lib"));
 
     var argumentParser = new ArgumentParser();
     argumentParser.addBoundOptionSet(systemOptions);
@@ -213,15 +215,17 @@ module Shumway.Shell {
 
     if (executeOption.value) {
       var shouldLoadPlayerGlobal = playerGlobalOption.value;
+      var shouldLoadAvm1 = false;
       if (!shouldLoadPlayerGlobal) {
         // We need to load player globals if any swfs need to be executed.
         files.forEach(file => {
           if (file.endsWith(".swf")) {
             shouldLoadPlayerGlobal = true;
+            shouldLoadAvm1 = avm1Option.value;
           }
         });
       }
-      initializeAVM2(shouldLoadPlayerGlobal);
+      initializeAVM2(shouldLoadPlayerGlobal, shouldLoadAvm1);
       files.forEach(function (file) {
         executeFile(file);
       });
@@ -440,7 +444,7 @@ module Shumway.Shell {
     return true;
   }
 
-  function createAVM2(builtinPath, libraryPathInfo?) {
+  function createAVM2(builtinPath, libraryPathInfo?, avm1Path?: string) {
     var buffer = read(builtinPath, 'binary');
     var mode = interpreterOption.value ? Runtime.ExecutionMode.INTERPRET : Runtime.ExecutionMode.COMPILE;
     Runtime.AVM2.initialize(mode, mode, null);
@@ -450,10 +454,22 @@ module Shumway.Shell {
     if (libraryPathInfo) {
       loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
     }
+    if (avm1Path) {
+      console.log('Loading AVM1: ' + avm1Path + '...');
+      buffer = read(avm1Path, 'binary');
+      Runtime.AVM2.instance.loadAVM1 = function () { return <any>Promise.resolve(); };
+      avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "avm1lib.abc"));
+    } else {
+      Runtime.AVM2.instance.loadAVM1 = function () {
+        console.error('avm1lib is required to run the SWF.');
+        return <any>Promise.reject();
+      };
+    }
   }
 
-  function initializeAVM2(loadPlayerglobal: boolean) {
-    createAVM2(builtinPath, loadPlayerglobal ? playerglobalInfo : undefined);
+  function initializeAVM2(loadPlayerglobal: boolean, loadAvm1: boolean) {
+    createAVM2(builtinPath, loadPlayerglobal ? playerglobalInfo : undefined,
+               loadAvm1 ? avm1Path : null);
   }
 
   function loadPlayerglobal(abcsPath, catalogPath) {
