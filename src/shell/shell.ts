@@ -148,6 +148,7 @@ module Shumway.Shell {
   var microTaskCountOption: Option;
   var playerGlobalOption: Option;
   var avm1Option: Option;
+  var porcelainOutputOption: Option;
 
   export function main(commandLineArguments: string []) {
     parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
@@ -162,6 +163,7 @@ module Shumway.Shell {
     microTaskCountOption = shellOptions.register(new Option("mc", "count", "number", 0, "Micro task count."));
     playerGlobalOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
     avm1Option = shellOptions.register(new Option(null, "avm1lib", "boolean", false, "Load avm1lib"));
+    porcelainOutputOption = shellOptions.register(new Option(null, "porcelain", "boolean", false, "Keeps outputs free from the debug messages."));
 
     var argumentParser = new ArgumentParser();
     argumentParser.addBoundOptionSet(systemOptions);
@@ -191,6 +193,10 @@ module Shumway.Shell {
     } catch (x) {
       writer.writeLn(x.message);
       quit();
+    }
+
+    if (porcelainOutputOption.value) {
+      console.info = console.log = console.warn = console.error = function () {};
     }
 
     release = releaseOption.value;
