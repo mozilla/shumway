@@ -117,6 +117,7 @@ function loadMovie(path, reportFrames) {
 
 
   Shumway.dontSkipFramesOption.value = true;
+  Shumway.frameRateOption.value = 60; // turbo mode
 
   var sysMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
   var appMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
@@ -136,6 +137,8 @@ function loadMovie(path, reportFrames) {
 }
 
 function createEasel() {
+  Shumway.GFX.hud.value = false;
+
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var backend = Shumway.GFX.backend.value | 0;
   var easel = new Shumway.GFX.Easel(document.getElementById("stageContainer"), backend, true);
