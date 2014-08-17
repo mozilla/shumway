@@ -353,7 +353,6 @@ module Shumway.GFX.Canvas2D {
           frame.smoothing === Smoothing.Always || state.options.imageSmoothing;
 
         context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-        context.globalAlpha = frame.getConcatenatedAlpha();
         context.globalColorMatrix = frame.getConcatenatedColorMatrix();
 
         if (flags & FrameFlags.IsMask && !state.clipRegion) {
