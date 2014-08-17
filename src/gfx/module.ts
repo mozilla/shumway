@@ -538,16 +538,21 @@ module Shumway.GFX {
 
     Object.defineProperty(CanvasRenderingContext2D.prototype, "globalColorMatrix", {
       get: function (): ColorMatrix {
-        if (!this._globalColorMatrix) {
-          this._globalColorMatrix = ColorMatrix.createIdentity();
+        if (this._globalColorMatrix) {
+          return this._globalColorMatrix.clone();
         }
-        return this._globalColorMatrix.clone();
+        return null;
       },
       set: function (matrix: ColorMatrix) {
-        if (!this._globalColorMatrix) {
-          this._globalColorMatrix = ColorMatrix.createIdentity();
+        if (!matrix) {
+          this._globalColorMatrix = null;
+          return;
         }
-        this._globalColorMatrix.copyFrom(matrix);
+        if (this._globalColorMatrix) {
+          this._globalColorMatrix.copyFrom(matrix);
+        } else {
+          this._globalColorMatrix = matrix.clone();
+        }
       },
       enumerable: true,
       configurable: true
