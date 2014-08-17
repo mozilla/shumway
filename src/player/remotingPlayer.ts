@@ -43,14 +43,44 @@ module Shumway.Remoting.Player {
 
   export class PlayerChannelSerializer {
     public output: IDataOutput;
-    public outputAssets: any[];
-
+    public outputAssets: any [];
     public phase: RemotingPhase = RemotingPhase.Objects;
+    public roots: DisplayObject [] = null;
+
+    begin(displayObject: DisplayObject) {
+      this.roots = [displayObject];
+    }
+
+    remoteObjects() {
+      this.phase = Remoting.RemotingPhase.Objects;
+      var roots = this.roots;
+      for (var i = 0; i < roots.length; i++) {
+        Shumway.Player.enterTimeline("remoting objects");
+        this.writeDisplayObject(roots[i]);
+        Shumway.Player.leaveTimeline("remoting objects");
+      }
+    }
+
+    remoteReferences() {
+      this.phase = Remoting.RemotingPhase.References;
+      var roots = this.roots;
+      for (var i = 0; i < roots.length; i++) {
+        Shumway.Player.enterTimeline("remoting references");
+        this.writeDisplayObject(roots[i]);
+        Shumway.Player.leaveTimeline("remoting references");
+      }
+    }
 
     writeDisplayObject(displayObject: DisplayObject) {
       var serializer = this;
+      var roots = this.roots;
       displayObject.visit(function (displayObject) {
         serializer.writeUpdateFrame(displayObject);
+        // Collect more roots?
+        if (roots && displayObject.mask) {
+          var root = displayObject.mask._findFurthestAncestorOrSelf();
+          Shumway.ArrayUtilities.pushUnique(roots, root)
+        }
         return VisitorFlags.Continue;
       }, VisitorFlags.Filter, DisplayObjectFlags.Dirty);
     }

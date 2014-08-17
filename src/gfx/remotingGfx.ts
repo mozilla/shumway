@@ -105,14 +105,16 @@ module Shumway.Remoting.GFX {
       if (id === -1) {
         return null;
       }
+      var frame = null;
       if (id & IDMask.Asset) {
         id &= ~IDMask.Asset;
-        var shape = new Shape(this._assets[id]);
-        this._assets[id].addFrameReferrer(shape);
-        return shape;
+        frame = new Shape(this._assets[id]);
+        this._assets[id].addFrameReferrer(frame);
       } else {
-        return this._frames[id];
+        frame = this._frames[id];
       }
+      release || assert (frame, "Frame ", frame, " of ", id, " has not been sent yet.");
+      return frame;
     }
 
     _getAsset(id: number): Renderable {
