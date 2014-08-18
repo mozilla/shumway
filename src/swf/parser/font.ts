@@ -287,9 +287,9 @@ module Shumway.SWF.Parser {
       var yCoordinates = '';
       var x = 0;
       var y = 0;
-      var xMin = 1024;
+      var xMin = 0;
       var xMax = -1024;
-      var yMin = 1024;
+      var yMin = 0;
       var yMax = -1024;
 
       var myFlags = '';
