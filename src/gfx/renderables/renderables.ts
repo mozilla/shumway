@@ -309,7 +309,8 @@ module Shumway.GFX {
 
   class StyledPath {
     path: Path2D;
-    constructor(public type: PathType, public style: any, public strokeProperties: StrokeProperties)
+    constructor(public type: PathType, public style: any, public smoothImage: boolean,
+                public strokeProperties: StrokeProperties)
     {
       this.path = new Path2D();
       release || assert ((type === PathType.Stroke) === !!strokeProperties);
@@ -388,6 +389,9 @@ module Shumway.GFX {
       enterTimeline("RenderableShape.render", this);
       for (var i = 0; i < paths.length; i++) {
         var path = paths[i];
+        context['mozImageSmoothingEnabled'] = context.msImageSmoothingEnabled =
+                                              context['imageSmoothingEnabled'] =
+                                              path.smoothImage;
         if (path.type === PathType.Fill) {
           context.fillStyle = path.style;
           clipRegion ? context.clip(path.path, 'evenodd') : context.fill(path.path, 'evenodd');
@@ -497,15 +501,16 @@ module Shumway.GFX {
             release || assert(styles.bytesAvailable >= 4);
             fillPath = this._createPath(PathType.Fill,
                                         ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt()),
-                                        null, x, y);
+                                        false, null, x, y);
             break;
           case PathCommand.BeginBitmapFill:
-            fillPath = this._createPath(PathType.Fill, this._readBitmap(styles, context),
+            var bitmapStyle = this._readBitmap(styles, context);
+            fillPath = this._createPath(PathType.Fill, bitmapStyle.style, bitmapStyle.smoothImage,
                                         null, x, y);
             break;
           case PathCommand.BeginGradientFill:
             fillPath = this._createPath(PathType.Fill, this._readGradient(styles, context),
-                                        null, x, y);
+                                        false, null, x, y);
             break;
           case PathCommand.EndFill:
             fillPath = null;
@@ -518,15 +523,16 @@ module Shumway.GFX {
             var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
             var strokeProperties = new StrokeProperties(coordinates[coordinatesIndex++]/20,
                                                         capsStyle, jointsStyle, styles.readByte());
-            strokePath = this._createPath(PathType.Stroke, color, strokeProperties, x, y);
+            strokePath = this._createPath(PathType.Stroke, color, false, strokeProperties, x, y);
             break;
           case PathCommand.LineStyleGradient:
             strokePath = this._createPath(PathType.StrokeFill, this._readGradient(styles, context),
-                                          null, x, y);
+                                          false, null, x, y);
             break;
           case PathCommand.LineStyleBitmap:
-            strokePath = this._createPath(PathType.StrokeFill, this._readBitmap(styles, context),
-                                          null, x, y);
+            var bitmapStyle = this._readBitmap(styles, context);
+            strokePath = this._createPath(PathType.StrokeFill, bitmapStyle.style,
+                                          bitmapStyle.smoothImage, null, x, y);
             break;
           case PathCommand.LineEnd:
             strokePath = null;
@@ -547,10 +553,10 @@ module Shumway.GFX {
       leaveTimeline("RenderableShape.deserializePaths");
     }
 
-    private _createPath(type: PathType, style: any, strokeProperties: StrokeProperties,
-                        x: number, y: number): Path2D
+    private _createPath(type: PathType, style: any, smoothImage: boolean,
+                        strokeProperties: StrokeProperties, x: number, y: number): Path2D
     {
-      var path = new StyledPath(type, style, strokeProperties);
+      var path = new StyledPath(type, style, smoothImage, strokeProperties);
       this._paths.push(path);
       path.path.moveTo(x, y);
       return path.path;
@@ -588,7 +594,10 @@ module Shumway.GFX {
       return gradient;
     }
 
-    private _readBitmap(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasPattern {
+    private _readBitmap(styles: DataBuffer,
+                        context: CanvasRenderingContext2D): {style: CanvasPattern;
+                                                             smoothImage: boolean}
+    {
       release || assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
       var textureIndex = styles.readUnsignedInt();
       var fillTransform: Matrix = this._readMatrix(styles);
@@ -598,10 +607,7 @@ module Shumway.GFX {
       release || assert(texture._canvas);
       var fillStyle: CanvasPattern = context.createPattern(texture._canvas, repeat);
       fillStyle.setTransform(fillTransform.toSVGMatrix());
-      // TODO: make it possible to set smoothing for fills but not strokes and vice-versa.
-      context['mozImageSmoothingEnabled'] = context.msImageSmoothingEnabled =
-                                            context['imageSmoothingEnabled'] = smooth;
-      return fillStyle;
+      return {style: fillStyle, smoothImage: smooth};
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {
