@@ -1,12 +1,4 @@
 [
-    {  "id": "events",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/events/priority.swf",
-         "swfs/events/propagation.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "basic",
        "stas": "swfs/trace.stas",
        "filenames": [
