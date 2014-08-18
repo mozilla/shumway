@@ -142,6 +142,9 @@ module.exports = function(grunt) {
       test_avm2: {
         cmd: 'node src/shell/numbers.js -i src/avm2/tests/regress/correctness/pass/ -j 8'
       },
+      tracetest: {
+        cmd: 'node test/trace_test_run.js'
+      }
     },
     parallel: {
       base: {
@@ -330,6 +333,8 @@ module.exports = function(grunt) {
       done();
     });
   });
+
+  grunt.registerTask('tracetest', ['exec:tracetest']);
 
   grunt.registerTask('watch-playerglobal', ['exec:build_playerglobal', 'watch:playerglobal']);
   grunt.registerTask('watch-base', ['exec:build_base_ts', 'watch:base']);
