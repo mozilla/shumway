@@ -9,6 +9,13 @@ var diffRefDataFile = './test/refdata~';
 var diffTestDataFile = './test/testdata~';
 var runDuration = 300;
 
+var GREEN = '\033[92m';
+var RED = '\033[91m';
+var ENDC = '\033[0m';
+
+var PASS_PREFIX = GREEN + "PASS: " + ENDC;
+var FAIL_PREFIX = RED + "FAIL: " + ENDC;
+
 function runSwf(path, callback) {
   var child = spawn(jsPath,
     [shellPath, '-x', path, '--avm1lib', '--duration', runDuration, '--porcelain'],
@@ -56,23 +63,23 @@ function saveDiff(path, expected, output, callback) {
 function runTest(path, callback) {
   runSwf(path, function (err, output) {
     if (err) {
-      console.log('FAIL: ' + path + ', error: ' + err);
+      console.log(FAIL_PREFIX + path + ', error: ' + err);
       callback(false);
       return;
     }
     var expected = fs.readFile(path + '.trace', function (err, content) {
       if (err) {
-        console.log('FAIL: ' + path + ', expected output is not available: ' + err);
+        console.log(FAIL_PREFIX + path + ', expected output is not available: ' + err);
         callback(false);
         return;
       }
       var expected = content.toString();
       var pass = expected === output;
       if (pass) {
-        console.log('PASS: ' + path);
+        console.log(PASS_PREFIX + path);
         callback(true);
       } else {
-        console.log('FAIL: ' + path + ', see trace.log');
+        console.log(FAIL_PREFIX + path + ', see trace.log');
         saveDiff(path, expected, output, function () {
           callback(false);
         });
