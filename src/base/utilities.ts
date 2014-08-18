@@ -2852,7 +2852,7 @@ module Shumway {
         var r = parseInt(values[0]);
         var g = parseInt(values[1]);
         var b = parseInt(values[2]);
-        var a = parseInt(values[3]);
+        var a = parseFloat(values[3]);
         return (r & 0xff) << 24 |
                (g & 0xff) << 16 |
                (b & 0xff) << 8  |

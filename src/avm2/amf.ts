@@ -27,7 +27,7 @@ module Shumway.AVM2 {
     NULL = 0x05,
     UNDEFINED = 0x06,
     REFERENCE = 0x07,
-    ECMA_ARRAY = 0x0,
+    ECMA_ARRAY = 0x08,
     OBJECT_END = 0x09,
     STRICT_ARRAY = 0x0A,
     DATE = 0x0B,

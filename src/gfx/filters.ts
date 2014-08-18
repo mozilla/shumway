@@ -163,14 +163,12 @@ module Shumway.GFX {
     }
 
     public isIdentity(): boolean {
-      var m: Float32Array = this._m;
-      return (
-        m[0]  == 1 && m[1]  == 0 && m[2]  == 0 && m[3]  == 0 &&
-        m[4]  == 0 && m[5]  == 1 && m[6]  == 0 && m[7]  == 0 &&
-        m[8]  == 0 && m[9]  == 0 && m[10] == 1 && m[11] == 0 &&
-        m[12] == 0 && m[13] == 0 && m[14] == 0 && m[15] == 1 &&
-        m[16] == 0 && m[17] == 0 && m[18] == 0 && m[19] == 0
-      );
+      var m = this._m;
+      return m[0]  == 1 && m[1]  == 0 && m[2]  == 0 && m[3]  == 0 &&
+             m[4]  == 0 && m[5]  == 1 && m[6]  == 0 && m[7]  == 0 &&
+             m[8]  == 0 && m[9]  == 0 && m[10] == 1 && m[11] == 0 &&
+             m[12] == 0 && m[13] == 0 && m[14] == 0 && m[15] == 1 &&
+             m[16] == 0 && m[17] == 0 && m[18] == 0 && m[19] == 0;
     }
 
     public static createIdentity(): ColorMatrix {
@@ -278,6 +276,15 @@ module Shumway.GFX {
 
     public get alphaMultiplier(): number {
       return this._m[15];
+    }
+
+    public hasOnlyAlphaMultiplier(): boolean {
+      var m = this._m;
+      return m[0]  == 1 && m[1]  == 0 && m[2]  == 0 && m[3]  == 0 &&
+             m[4]  == 0 && m[5]  == 1 && m[6]  == 0 && m[7]  == 0 &&
+             m[8]  == 0 && m[9]  == 0 && m[10] == 1 && m[11] == 0 &&
+             m[12] == 0 && m[13] == 0 && m[14] == 0 && m[16] == 0 &&
+             m[17] == 0 && m[18] == 0 && m[19] == 0;
     }
 
     public equals(other: ColorMatrix): boolean {

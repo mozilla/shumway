@@ -22,7 +22,15 @@ module.exports = function(grunt) {
   // needed by the build system.
   var commonArguments = 'node utils/typescript/tsc --target ES5 --sourcemap -d --out build/ts/';
 
-  var browserManifestFile = './resources/browser_manifests/browser_manifest.json';
+  var defaultBrowserManifestFile = './resources/browser_manifests/browser_manifest.json';
+  var defaultTestsManifestFile = 'test_manifest.json';
+
+  var parallelArgs = ['bundle', 'threads', 'sha1', 'rebuild', 'tests', 'bundle',
+                      'noPrompts'].filter(function (s) {
+    return grunt.option(s) !== undefined;
+  }).map(function (s) {
+    return '--' + s + '=' + grunt.option(s);
+  });
 
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
@@ -80,7 +88,9 @@ module.exports = function(grunt) {
         cwd: 'src/avm2/generated'
       },
       build_playerglobal: {
-        cmd: 'node build -t 9',
+        cmd: 'node build.js -t ' + (+grunt.option('threads') || 9) +
+                                   (grunt.option('sha1') ? ' -s' : '') +
+                                   (grunt.option('rebuild') ? ' -r' : ''),
         cwd: 'utils/playerglobal-builder'
       },
       build_avm1lib: {
@@ -132,16 +142,16 @@ module.exports = function(grunt) {
       test_avm2: {
         cmd: 'node src/shell/numbers.js -i src/avm2/tests/regress/correctness/pass/ -j 8'
       },
+      tracetest: {
+        cmd: 'node test/trace_test_run.js'
+      }
     },
     parallel: {
       base: {
-        options: {
-          grunt: true
-        },
         tasks: [
-          'exec:build_playerglobal',
-          'exec:build_avm1lib',
-          'exec:build_base_ts'
+          { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
+          { args: ['exec:build_avm1lib'].concat(parallelArgs), grunt: true },
+          { args: ['exec:build_base_ts'].concat(parallelArgs), grunt: true },
         ]
       },
       tier2: {
@@ -168,17 +178,14 @@ module.exports = function(grunt) {
           grunt: true
         },
         tasks: [
-          'exec:build_avm1lib',
-          'exec:build_avm1_ts'
+          { args: ['exec:build_avm1lib'].concat(parallelArgs), grunt: true },
+          { args: ['exec:build_avm1_ts'].concat(parallelArgs), grunt: true }
         ]
       },
       flash: {
-        options: {
-          grunt: true
-        },
         tasks: [
-          'exec:build_playerglobal',
-          'exec:build_flash_ts'
+          { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
+          { args: ['exec:build_flash_ts'].concat(parallelArgs), grunt: true }
         ]
       }
     },
@@ -248,8 +255,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-exec');
   grunt.loadNpmTasks('grunt-parallel');
 
-  grunt.registerTask('lint', ['jshint:all', 'exec:lint_success']);
-  grunt.registerTask('ts-lint', ['tslint:all', 'exec:lint_success']);
+  grunt.registerTask('lint', ['tslint:all', 'exec:lint_success']);
 
   grunt.registerTask('update-refs', function  () {
     var updateRefs = require('./utils/update-flash-refs.js').updateRefs;
@@ -280,36 +286,55 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('reftest', function () {
+    if (grunt.file.exists('test/tmp')) {
+      throw new Error('The test/tmp/ folder exists from the previous makeref attempt. ' +
+        'You may want to copy those images to test/refs/. Remove test/tmp/ to proceed with reftest.')
+    }
+    if (!grunt.option('browserManifestFile') && !grunt.file.exists('test', defaultBrowserManifestFile)) {
+      throw new Error('Browser manifest file is not found at test/' + defaultBrowserManifestFile + '. Create one using the examples at test/resources/browser_manifests/.');
+    }
+    var browserManifestFile = grunt.option('browserManifestFile') || defaultBrowserManifestFile;
+    var testManifestFile = grunt.option('manifestFile') || defaultTestsManifestFile;
     var done = this.async();
+    var params = [];
+    if (grunt.option('bundle')) {
+      params.push('--bundle');
+    }
+    if (grunt.option('noPrompts')) {
+      params.push('--noPrompts');
+    }
     grunt.util.spawn({
       cmd: 'python',
-      args: ['test.py', '--reftest', '--browserManifestFile=' + browserManifestFile],
+      args: ['test.py', '--reftest', '--browserManifestFile=' + browserManifestFile,
+             '--manifestFile=' + testManifestFile].concat(params),
       opts: { cwd: 'test', stdio: 'inherit'
     }}, function () {
       done();
     });
   });
 
-  grunt.registerTask('reftest-bundle', function () {
-    var done = this.async();
-    grunt.util.spawn({
-      cmd: 'python',
-      args: ['test.py', '--bundle', '--reftest', '--browserManifestFile=' + browserManifestFile],
-      opts: { cwd: 'test', stdio: 'inherit'
-      }}, function () {
-      done();
-    });
-  });
-
   grunt.registerTask('makeref', function () {
+    if (!grunt.option('browserManifestFile') && !grunt.file.exists('test', defaultBrowserManifestFile)) {
+      throw new Error('Browser manifest file is not found at test/' + defaultBrowserManifestFile + '. Create one using the examples at test/resources/browser_manifests/.');
+    }
+    var browserManifestFile = grunt.option('browserManifestFile') || defaultBrowserManifestFile;
     var done = this.async();
+    var params = [];
+    if (grunt.option('bundle')) {
+      params.push('--bundle');
+    }
+    if (grunt.option('noPrompts')) {
+      params.push('--noPrompts');
+    }
     grunt.util.spawn({
       cmd: 'python',
-      args: ['test.py', '-m', '--browserManifestFile=' + browserManifestFile],
+      args: ['test.py', '-m', '--browserManifestFile=' + browserManifestFile].concat(params),
       opts: { cwd: 'test', stdio: 'inherit'}}, function () {
       done();
     });
   });
+
+  grunt.registerTask('tracetest', ['exec:tracetest']);
 
   grunt.registerTask('watch-playerglobal', ['exec:build_playerglobal', 'watch:playerglobal']);
   grunt.registerTask('watch-base', ['exec:build_base_ts', 'watch:base']);
@@ -335,7 +360,7 @@ module.exports = function(grunt) {
   grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts']);
   grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts', 'exec:gate']);
   grunt.registerTask('gate', ['exec:gate']);
-  grunt.registerTask('shu', [
+  grunt.registerTask('build', [
     'parallel:base',
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
@@ -343,7 +368,10 @@ module.exports = function(grunt) {
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
-    'bundles',
+    'bundles'
+  ]);
+  grunt.registerTask('shu', [
+    'build',
     'exec:gate'
   ]);
   grunt.registerTask('closure', [
@@ -366,6 +394,6 @@ module.exports = function(grunt) {
   grunt.registerTask('smoke', [
     'exec:smoke_parse'
   ]);
-  grunt.registerTask('firefox', ['shu', 'exec:build_extension']);
-  grunt.registerTask('web', ['shu', 'exec:build_extension', 'exec:build_web']);
+  grunt.registerTask('firefox', ['build', 'exec:build_extension']);
+  grunt.registerTask('web', ['build', 'exec:build_extension', 'exec:build_web']);
 };

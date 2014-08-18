@@ -17,6 +17,7 @@
  */
 
 Shumway.dontSkipFramesOption.value = true;
+Shumway.frameRateOption.value = 60; // turbo mode
 
 var release = true;
 var SHUMWAY_ROOT = "../../src/";

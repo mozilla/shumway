@@ -353,8 +353,20 @@ module Shumway.GFX.Canvas2D {
           frame.smoothing === Smoothing.Always || state.options.imageSmoothing;
 
         context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-        context.globalAlpha = frame.getConcatenatedAlpha();
-        context.globalColorMatrix = frame.getConcatenatedColorMatrix();
+
+        var concatenatedColorMatrix = frame.getConcatenatedColorMatrix();
+
+
+        if (concatenatedColorMatrix.isIdentity()) {
+          context.globalAlpha = 1;
+          context.globalColorMatrix = null;
+        } else if (concatenatedColorMatrix.hasOnlyAlphaMultiplier()) {
+          context.globalAlpha = concatenatedColorMatrix.alphaMultiplier;
+          context.globalColorMatrix = null;
+        } else {
+          context.globalAlpha = 1;
+          context.globalColorMatrix = concatenatedColorMatrix;
+        }
 
         if (flags & FrameFlags.IsMask && !state.clipRegion) {
           return VisitorFlags.Skip;
