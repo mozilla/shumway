@@ -3,7 +3,7 @@ var spawn = require('child_process').spawn;
 
 var jsPath = './utils/jsshell/js';
 var shellPath = './build/ts/shell.js';
-var manifestFile = './test/test_manifest_trace.json';
+var defaultManifestFile = './test/test_manifest_trace.json';
 var traceFile = './test/trace.log';
 var diffRefDataFile = './test/refdata~';
 var diffTestDataFile = './test/testdata~';
@@ -15,6 +15,7 @@ var ENDC = '\033[0m';
 
 var PASS_PREFIX = GREEN + "PASS: " + ENDC;
 var FAIL_PREFIX = RED + "FAIL: " + ENDC;
+var manifestFile = null;
 
 function runSwf(path, callback) {
   var child = spawn(jsPath,
@@ -60,27 +61,28 @@ function saveDiff(path, expected, output, callback) {
   });
 }
 
-function runTest(path, callback) {
-  runSwf(path, function (err, output) {
+function runTest(test, callback) {
+  runSwf(test.path, function (err, output) {
+    var id = test.id + ' | ' + test.path;
     if (err) {
-      console.log(FAIL_PREFIX + path + ', error: ' + err);
+      console.log(FAIL_PREFIX  + id + ', error: ' + err);
       callback(false);
       return;
     }
-    var expected = fs.readFile(path + '.trace', function (err, content) {
+    var expected = fs.readFile(test.path + '.trace', function (err, content) {
       if (err) {
-        console.log(FAIL_PREFIX + path + ', expected output is not available: ' + err);
+        console.log(FAIL_PREFIX + id + ', expected output is not available: ' + err);
         callback(false);
         return;
       }
       var expected = content.toString();
       var pass = expected === output;
       if (pass) {
-        console.log(PASS_PREFIX + path);
+        console.log(PASS_PREFIX + id);
         callback(true);
       } else {
-        console.log(FAIL_PREFIX + path + ', see trace.log');
-        saveDiff(path, expected, output, function () {
+        console.log(FAIL_PREFIX + id + ', see trace.log');
+        saveDiff(test.path, expected, output, function () {
           callback(false);
         });
       }
@@ -91,16 +93,33 @@ function runTest(path, callback) {
 function main() {
   var commandLineArguments = Array.prototype.slice.call(process.argv, 2);
 
+  if (commandLineArguments[0] === '-m' ||
+      commandLineArguments[0] === '--manifestFile') {
+    manifestFile = commandLineArguments[1];
+    commandLineArguments.splice(0, 2);
+  } else if (commandLineArguments.length === 0) {
+    manifestFile = defaultManifestFile;
+  }
+
   var tests = [];
-  if (commandLineArguments.length > 0) {
-    Array.prototype.push.apply(tests, commandLineArguments);
-  } else {
-    console.log('Using ' + manifestFile);
+  if (manifestFile) {
+    console.log('Using manifest at ' + manifestFile + '...');
     var basePath = manifestFile.substring(0, manifestFile.lastIndexOf('/') + 1);
     JSON.parse(fs.readFileSync(manifestFile).toString()).forEach(function (group) {
       Array.prototype.push.apply(tests, group.filenames.map(function (filename) {
-        return basePath + filename;
+        return {
+          id: group.id,
+          path: filename[0] === '/' ? '.' + filename : basePath + filename
+        };
       }));
+    });
+  }
+  if (commandLineArguments.length > 0) {
+    commandLineArguments.forEach(function (filename) {
+      tests.push({
+        id: '-',
+        path: filename
+      })
     });
   }
 
