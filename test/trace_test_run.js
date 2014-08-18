@@ -9,6 +9,12 @@ var diffRefDataFile = './test/refdata~';
 var diffTestDataFile = './test/testdata~';
 var runDuration = 300;
 
+var GREEN = '\033[92m';
+var RED = '\033[91m';
+var ENDC = '\033[0m';
+
+var PASS_PREFIX = GREEN + "PASS: " + ENDC;
+var FAIL_PREFIX = RED + "FAIL: " + ENDC;
 var manifestFile = null;
 
 function runSwf(path, callback) {
@@ -59,23 +65,23 @@ function runTest(test, callback) {
   runSwf(test.path, function (err, output) {
     var id = test.id + ' | ' + test.path;
     if (err) {
-      console.log('FAIL: ' + id + ', error: ' + err);
+      console.log(FAIL_PREFIX  + id + ', error: ' + err);
       callback(false);
       return;
     }
     var expected = fs.readFile(test.path + '.trace', function (err, content) {
       if (err) {
-        console.log('FAIL: ' + id + ', expected output is not available: ' + err);
+        console.log(FAIL_PREFIX + id + ', expected output is not available: ' + err);
         callback(false);
         return;
       }
       var expected = content.toString();
       var pass = expected === output;
       if (pass) {
-        console.log('PASS: ' + id);
+        console.log(PASS_PREFIX + id);
         callback(true);
       } else {
-        console.log('FAIL: ' + id + ', see trace.log');
+        console.log(FAIL_PREFIX + id + ', see trace.log');
         saveDiff(test.path, expected, output, function () {
           callback(false);
         });
