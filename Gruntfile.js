@@ -144,6 +144,9 @@ module.exports = function(grunt) {
       },
       tracetest: {
         cmd: 'node test/trace_test_run.js'
+      },
+      tracetest_swfdec: {
+        cmd: 'node test/trace_test_run.js -m test/swfdec_test_manifest.json'
       }
     },
     parallel: {
@@ -335,6 +338,7 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('tracetest', ['exec:tracetest']);
+  grunt.registerTask('tracetest-swfdec', ['exec:tracetest_swfdec']);
 
   grunt.registerTask('watch-playerglobal', ['exec:build_playerglobal', 'watch:playerglobal']);
   grunt.registerTask('watch-base', ['exec:build_base_ts', 'watch:base']);
