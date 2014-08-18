@@ -663,6 +663,8 @@ module Shumway.AVM2.AS.flash.text {
       somewhatImplemented("public flash.text.TextField::replaceText");
       var plainText = this._textContent.plainText;
       this._textContent.plainText = plainText.substring(0, beginIndex) + newText + plainText.substring(endIndex);
+      this._invalidateContent();
+      this._ensureLineMetrics();
     }
     setSelection(beginIndex: number /*int*/, endIndex: number /*int*/): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
