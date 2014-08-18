@@ -208,16 +208,9 @@ module Shumway.Player {
         serializer.writeStage(<flash.display.Stage>displayObject);
       }
 
-      serializer.phase = Remoting.RemotingPhase.Objects;
-      enterTimeline("remoting objects");
-      serializer.writeDisplayObject(displayObject);
-      leaveTimeline("remoting objects");
-
-      serializer.phase = Remoting.RemotingPhase.References;
-      enterTimeline("remoting references");
-      serializer.writeDisplayObject(displayObject);
-      leaveTimeline("remoting references");
-
+      serializer.begin(displayObject);
+      serializer.remoteObjects();
+      serializer.remoteReferences();
       updates.writeInt(Remoting.MessageTag.EOF);
 
       enterTimeline("remoting assets");
@@ -251,15 +244,9 @@ module Shumway.Player {
       } else {
         var displayObject = <flash.display.DisplayObject>source;
 
-        serializer.phase = Remoting.RemotingPhase.Objects;
-        enterTimeline("drawToBitmap");
-        serializer.writeDisplayObject(displayObject);
-        leaveTimeline("drawToBitmap");
-
-        serializer.phase = Remoting.RemotingPhase.References;
-        enterTimeline("drawToBitmap 2");
-        serializer.writeDisplayObject(displayObject);
-        leaveTimeline("drawToBitmap 2");
+        serializer.begin(displayObject);
+        serializer.remoteObjects();
+        serializer.remoteReferences();
       }
 
       serializer.writeDrawToBitmap(bitmapData, source, matrix, colorTransform, blendMode, clipRect, smoothing);

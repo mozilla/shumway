@@ -695,6 +695,16 @@ module Shumway.AVM2.AS.flash.display {
       return null;
     }
 
+    _findFurthestAncestorOrSelf(): DisplayObject {
+      var node = this;
+      while (node) {
+        if (!node._parent) {
+          return node;
+        }
+        node = node._parent;
+      }
+    }
+
     /**
      * Tests if this display object is an ancestor of the specified display object.
      */
