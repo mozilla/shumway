@@ -33,7 +33,6 @@ module Shumway.AVM2.AS.flash.accessibility {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.accessibility.AccessibilityProperties");
     }
     
     // JS -> AS Bindings
