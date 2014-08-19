@@ -185,6 +185,10 @@ module Shumway.Remoting.GFX {
             data.drawToBitmap ++;
             this._readDrawToBitmap();
             break;
+          case MessageTag.RequestBitmapData:
+            data.drawToBitmap ++;
+            this._readRequestBitmapData();
+            break;
           default:
             release || assert(false, 'Unknown MessageReader tag: ' + tag);
             break;
@@ -450,6 +454,15 @@ module Shumway.Remoting.GFX {
       } else {
         target.drawFrame(source, matrix, colorMatrix, blendMode, clipRect);
       }
+    }
+
+    private _readRequestBitmapData() {
+      var input = this.input;
+      var output = this.output;
+      var context = this.context;
+      var id = input.readInt();
+      var renderableBitmap = context._getBitmapAsset(id);
+      renderableBitmap.readImageData(output);
     }
   }
 }

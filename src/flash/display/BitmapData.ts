@@ -25,6 +25,7 @@ module Shumway.AVM2.AS.flash.display {
   import swap32 = Shumway.IntegerUtilities.swap32;
   import premultiplyARGB = Shumway.ColorUtilities.premultiplyARGB;
   import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
+  import RGBAToARGB = Shumway.ColorUtilities.RGBAToARGB;
   import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
   import blendPremultipliedBGRA = Shumway.ColorUtilities.blendPremultipliedBGRA;
   import ensureInverseSourceAlphaTable = Shumway.ColorUtilities.ensureInverseSourceAlphaTable;
@@ -124,6 +125,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._isDirty = true;
+      this._isRemoteDirty = false;
       // TODO: We probably don't need to propagate any flags if |_locked| is true.
       for (var i = 0; i < this._bitmapReferrers.length; i++) {
         var bitmap = this._bitmapReferrers[i];
@@ -166,6 +168,12 @@ module Shumway.AVM2.AS.flash.display {
      * Indicates whether this bitmap data's data buffer has changed since the last time it was synchronized.
      */
     _isDirty: boolean;
+
+    /**
+     * Indicates whether this bitmap data's data buffer has changed on the remote end and needs to be read
+     * back before any pixel operations can be performed.
+     */
+    _isRemoteDirty: boolean;
 
     getDataBuffer(): DataBuffer {
       return this._dataBuffer;
@@ -277,10 +285,19 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return 0;
       }
-      release || assert(this._type === ImageType.PremultipliedAlphaARGB);
-      var pARGB = swap32(this._view[y * this._rect.width + x]);
-      var uARGB = unpremultiplyARGB(pARGB);
-      return uARGB >>> 0;
+      this._requestBitmapData();
+      var value = this._view[y * this._rect.width + x];
+      switch (this._type) {
+        case ImageType.PremultipliedAlphaARGB:
+          var pARGB = swap32(value);
+          var uARGB = unpremultiplyARGB(pARGB);
+          return uARGB >>> 0;
+        case ImageType.StraightAlphaRGBA:
+          return RGBAToARGB(swap32(value));
+        default:
+          Shumway.Debug.notImplemented(ImageType[this._type]);
+          return 0;
+      }
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
@@ -290,6 +307,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return;
       }
+      this._requestBitmapData();
       var i = y * this._rect.width + x;
       var a = this._view[i] & 0xff;
       uARGB = uARGB & 0x00ffffff | a << 24;
@@ -304,6 +322,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return;
       }
+      this._requestBitmapData();
       var a = uARGB >>> 24;
       var uRGB = uARGB & 0x00ffffff;
       if (this._transparent) {
@@ -486,6 +505,7 @@ module Shumway.AVM2.AS.flash.display {
         matrix = matrix.clone().toTwipsInPlace();
       }
       serializer.drawToBitmap(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
+      this._isRemoteDirty = true;
     }
 
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null,
@@ -712,6 +732,23 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.BitmapData::encode");
       return;
     }
+
+    /**
+     * Sends a synchronous message to the GFX remote requesting the latest image data. The remote image
+     * data is invalidated whenever a |BitmpaData.draw| call is made.
+     */
+    private _requestBitmapData() {
+      if (this._isRemoteDirty) {
+        var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        var data = serializer.requestBitmapData(this);
+        this._data = new Uint8Array(data.buffer);
+        this._type = ImageType.StraightAlphaRGBA;
+        this._view = new Int32Array(data.buffer);
+        this._isRemoteDirty = false;
+        this._isDirty = false;
+      }
+    }
+
   }
 
   export interface IBitmapDataSerializer {

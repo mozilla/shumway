@@ -397,6 +397,12 @@ module Shumway.Remoting.Player {
       }
     }
 
+    writeRequestBitmapData(bitmapData: BitmapData) {
+      writer && writer.writeLn("Sending BitmapData Request");
+      this.output.writeInt(MessageTag.RequestBitmapData);
+      this.output.writeInt(bitmapData._id);
+    }
+
     pushAsset(asset: any) {
       this.output.writeInt(this.outputAssets.length);
       this.outputAssets.push(asset);
