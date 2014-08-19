@@ -382,7 +382,7 @@ module Shumway.AVM2.AS.flash.text {
       if (other._underline !== null) {
         this._underline = other._underline;
       }
-      if (other._url === null) {
+      if (other._url !== null) {
         this._url = other._url;
       }
      }

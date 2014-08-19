@@ -1004,9 +1004,6 @@ module Shumway.GFX {
     }
 
     private _renderChars(context: CanvasRenderingContext2D) {
-      var bounds = this._textBounds;
-      context.beginPath();
-      context.translate(bounds.x + 2, bounds.y + 2);
       if (this._matrix) {
         var m = this._matrix;
         context.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
