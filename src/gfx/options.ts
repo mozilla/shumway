@@ -38,7 +38,7 @@ module Shumway.GFX {
     }
   }));
 
-  export var hud = stageOptions.register(new Option("", "hud", "boolean", true, "Enable HUD."));
+  export var hud = stageOptions.register(new Option("", "hud", "boolean", false, "Enable HUD."));
 
   var webGLOptions = stageOptions.register(new OptionSet("WebGL Options"));
   export var perspectiveCamera = webGLOptions.register(new Option("", "pc", "boolean", false, "Use perspective camera."));

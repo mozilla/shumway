@@ -23,6 +23,7 @@ function displayTests() {
   var Video = flash.media.Video;
   var Bitmap = flash.display.Bitmap;
   var Stage = flash.display.Stage;
+  var AccessibilityProperties = flash.accessibility.AccessibilityProperties;
 
   var identity = new Matrix();
   var scaleBy5 = new Matrix();
@@ -375,6 +376,14 @@ function displayTests() {
     s1.mask = s2;
     eq(s1.hitTestPoint(50, 50, true), false);
     eq(s1.hitTestPoint(150, 50, true), true);
+  });
+
+  unitTests.push(function () {
+    var a = new DisplayObject();
+    eq(a.accessibilityProperties, null);
+    var b = new AccessibilityProperties();
+    a.accessibilityProperties = b;
+    eq(a.accessibilityProperties, b);
   });
 
 }

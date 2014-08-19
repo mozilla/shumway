@@ -24,6 +24,7 @@ module Shumway.Player {
   import IExternalInterfaceService = Shumway.IExternalInterfaceService;
 
   import Event = flash.events.Event;
+  import BitmapData = flash.display.BitmapData;
   import DisplayObject = flash.display.DisplayObject;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   import EventDispatcher = flash.events.EventDispatcher;
@@ -220,6 +221,17 @@ module Shumway.Player {
       return output;
     }
 
+    public requestBitmapData(bitmapData: BitmapData): DataBuffer {
+      var output = new DataBuffer();
+      var assets = [];
+      var serializer = new Remoting.Player.PlayerChannelSerializer();
+      serializer.output = output;
+      serializer.outputAssets = assets;
+      serializer.writeRequestBitmapData(bitmapData);
+      output.writeInt(Remoting.MessageTag.EOF);
+      return this.onSendUpdates(output, assets, false);
+    }
+
     public registerFont(font: flash.text.Font) {
       var updates = new DataBuffer();
       var assets = [];
@@ -254,7 +266,7 @@ module Shumway.Player {
       updates.writeInt(Shumway.Remoting.MessageTag.EOF);
 
       enterTimeline("sendUpdates");
-      this.onSendUpdates(updates, assets);
+      this.onSendUpdates(updates, assets, false);
       leaveTimeline("sendUpdates");
     }
 
