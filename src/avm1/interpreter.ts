@@ -78,6 +78,9 @@ module Shumway.AVM1 {
       super();
       this.swfVersion = swfVersion;
       this.globals = new Shumway.AVM2.AS.avm1lib.AS2Globals();
+      if (swfVersion >= 8) {
+        this.globals.asSetPublicProperty("flash", AS2Utils.createFlashObject());
+      }
       this.initialScope = new AS2ScopeListItem(this.globals, null);
       this.assets = {};
       this.isActive = false;

@@ -29,6 +29,7 @@ module Shumway.AVM1 {
     public static instance: AS2Context = null;
     public stage;
     public classes;
+    public swfVersion: number;
     public globals: avm1lib.AS2Globals;
     constructor() {}
 

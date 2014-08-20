@@ -28,7 +28,7 @@ module Shumway.AVM1 {
     static initializer:any = null;
 
     // List of static symbols to link.
-    static classSymbols: string [] = null;//["getAS2Object!"];
+    static classSymbols: string [] = ["createFlashObject!"];//["getAS2Object!"];
 
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
@@ -40,7 +40,7 @@ module Shumway.AVM1 {
     // JS -> AS Bindings
     // static getTarget:(A:ASObject) => any;
     // static addEventHandlerProxy:(A:ASObject, B:string, C:string, D:ASFunction = null) => any;
-
+    static createFlashObject: () => any;
 
     // AS -> JS Bindings
     static addProperty(obj: ASObject, propertyName: string, getter: () => any,
@@ -65,6 +65,10 @@ module Shumway.AVM1 {
 
     static get currentStage(): any {
       return AS2Context.instance.stage;
+    }
+
+    static get swfVersion(): any {
+      return AS2Context.instance.swfVersion;
     }
 
     static getAS2Object(as3Object) {

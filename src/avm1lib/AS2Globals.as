@@ -18,10 +18,6 @@ package avm1lib {
 import flash.display.Loader;
 import flash.display.MovieClip;
 import flash.events.Event;
-import flash.external.ExternalInterface;
-import flash.geom.ColorTransform;
-import flash.geom.Matrix;
-import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.geom.Transform;
 import flash.media.Sound;
@@ -51,28 +47,6 @@ public dynamic class AS2Globals {
   public function AS2Globals() {
     AS2Globals.instance = this;
     this._global = this;
-    this.flash = createFlashObject();
-  }
-
-  private function createFlashObject():Object {
-    return {
-      _MovieClip: AS2MovieClip,
-      display: {
-        BitmapData: AS2BitmapData
-      },
-      external: {
-        ExternalInterface: ExternalInterface
-      },
-      filters: {},
-      geom: {
-        ColorTransform: ColorTransform,
-        Matrix: Matrix,
-        Point: Point,
-        Rectangle: Rectangle,
-        Transform: Transform
-      },
-      text: {}
-    };
   }
 
   public function $asfunction(link) {
