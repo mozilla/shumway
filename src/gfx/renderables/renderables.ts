@@ -259,6 +259,15 @@ module Shumway.GFX {
       leaveTimeline("RenderableBitmap.updateFromDataBuffer");
     }
 
+    /**
+     * Writes the image data into the given |output| data buffer.
+     */
+    public readImageData(output: DataBuffer) {
+      var context = this._canvas.getContext("2d");
+      var data = <Uint8Array>context.getImageData(0, 0, this._canvas.width, this._canvas.height).data;
+      output.writeRawBytes(data);
+    }
+
     constructor(canvas: HTMLCanvasElement, bounds: Rectangle) {
       super(bounds);
       this._canvas = canvas;
@@ -995,9 +1004,6 @@ module Shumway.GFX {
     }
 
     private _renderChars(context: CanvasRenderingContext2D) {
-      var bounds = this._textBounds;
-      context.beginPath();
-      context.translate(bounds.x + 2, bounds.y + 2);
       if (this._matrix) {
         var m = this._matrix;
         context.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);

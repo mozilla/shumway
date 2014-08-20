@@ -1582,7 +1582,7 @@ module Shumway.AVM2.AS.flash.display {
       var matrix = this._getInvertedConcatenatedMatrix();
       var localX = matrix.transformX(x, y);
       var localY = matrix.transformY(x, y);
-      return this._containsPoint(localX, localY, true, true, false);
+      return this._containsPoint(localX, localY, true, false, false);
     }
 
     /**
@@ -1762,6 +1762,15 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
+    get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
+      return this._accessibilityProperties;
+    }
+
+    set accessibilityProperties(value: flash.accessibility.AccessibilityProperties) {
+      // In Flash this does not do copying.
+      this._accessibilityProperties = value;
+    }
+
     // ---------------------------------------------------------------------------------------------------------------------------------------------
     // -- Stuff below we still need to port.                                                                                                      --
     // ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -1773,15 +1782,7 @@ module Shumway.AVM2.AS.flash.display {
       // this._blendShader = value;
     }
 
-     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
-     return this._accessibilityProperties;
-     }
 
-     set accessibilityProperties(value: flash.accessibility.AccessibilityProperties) {
-     value = value;
-     notImplemented("public DisplayObject::set accessibilityProperties"); return;
-     // this._accessibilityProperties = value;
-     }
    */
   }
 }

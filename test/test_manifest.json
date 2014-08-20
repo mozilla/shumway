@@ -1,4 +1,25 @@
 [
+    {  "id": "avm1 setInterval trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/setinterval/setinterval.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "avm1 setTimeout trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/settimeout/settimeout.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "flash_utils_Timer",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/flash_utils_Timer.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "button",
        "stas": "swfs/button.stas",
        "filenames": [
@@ -13,6 +34,13 @@
          "swfs/ZeroClipboardTest.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "flash_net_SharedObject trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/flash_net_SharedObject.swf"
+      ],
+      "type": "stas"
     },
     {  "id": "button-ref",
        "frames": [1],

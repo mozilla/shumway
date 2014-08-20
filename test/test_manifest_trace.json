@@ -1,13 +1,4 @@
 [
-    {  "id": "events",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/events/dispatch.swf",
-         "swfs/events/priority.swf",
-         "swfs/events/propagation.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "basic",
        "stas": "swfs/trace.stas",
        "filenames": [
@@ -51,13 +42,6 @@
        "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_utils_ByteArray.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_utils_Timer",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_utils_Timer.swf"
        ],
        "type": "stas"
     },
@@ -114,13 +98,6 @@
        "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_system_Capabilities.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_net_SharedObject trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_net_SharedObject.swf"
        ],
        "type": "stas"
     },
@@ -214,20 +191,6 @@
          "swfs/blendmode/blendmode_2.swf"
        ],
        "type": "stas"
-    },
-    {  "id": "avm1 setInterval trace",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/avm1/setinterval/setinterval.swf"
-      ],
-      "type": "stas"
-    },
-    {  "id": "avm1 setTimeout trace",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/avm1/settimeout/settimeout.swf"
-      ],
-      "type": "stas"
     },
     {  "id": "avm1 loadVariables trace",
       "stas": "swfs/trace.stas",
