@@ -98,7 +98,7 @@ module Shumway.AVM2.AS.flash.net {
     static get defaultObjectEncoding(): number /*uint*/ {
       return SharedObject._defaultObjectEncoding;
     }
-    set defaultObjectEncoding(version: number /*uint*/) {
+    static set defaultObjectEncoding(version: number /*uint*/) {
       version = version >>> 0;
       SharedObject._defaultObjectEncoding = version;
     }
