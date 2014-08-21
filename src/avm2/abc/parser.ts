@@ -976,6 +976,7 @@ module Shumway.AVM2.ABC {
     public typeParameter: Multiname;
     public qualifiedName: any;
     private _qualifiedNameCache: Map<Multiname>;
+    private static _publicQualifiedNameCache: Map<string> = Shumway.ObjectUtilities.createMap<string>();
 
     constructor(namespaces: Namespace [], name: string, flags: number = 0) {
       if (name !== undefined) {
@@ -1190,13 +1191,28 @@ module Shumway.AVM2.ABC {
     }
 
     public static getPublicQualifiedName(name): any {
+      var qname;
+      // _publicQualifiedNameCache is only used for string names -- number
+      // names are easy and object names are less common and also difficult to
+      // use as cache keys.
+      if (typeof name === "string") {
+        qname = Multiname._publicQualifiedNameCache[name];
+        if (qname) {
+          return qname;
+        }
+      }
+
       if (isNumeric(name)) {
         return toNumber(name);
       } else if (name !== null && isObject(name)) {
         return name;
       }
       // release || assert (isString(name) || isNullOrUndefined(name));
-      return Multiname.qualifyName(Namespace.PUBLIC, name);
+      qname = Multiname.qualifyName(Namespace.PUBLIC, name);
+      if (typeof name === "string") {
+        Multiname._publicQualifiedNameCache[name] = qname;
+      }
+      return qname;
     }
 
     public static isPublicQualifiedName(qn): boolean {
