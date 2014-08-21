@@ -233,8 +233,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageVideos(): any {
-      notImplemented("public flash.display.Stage::get stageVideos"); return;
-      // return this._stageVideos;
+      somewhatImplemented("public flash.display.Stage::get stageVideos");
+      return this._stageVideos;
     }
     get stage3Ds(): ASVector<any> {
       notImplemented("public flash.display.Stage::get stage3Ds"); return;
