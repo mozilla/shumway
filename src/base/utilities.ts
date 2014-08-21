@@ -203,14 +203,14 @@ module Shumway {
       return false;
     }
     var i = 0;
-    index = value.charCodeAt(i++) - CharacterCodes._0;
+    index = String.charCodeAt(value, i++) - CharacterCodes._0;
     if (index < 1 || index > 9) {
       return false;
     }
     var oldIndex = 0;
     var c = 0;
     while (i < length) {
-      c = value.charCodeAt(i++) - CharacterCodes._0;
+      c = String.charCodeAt(value, i++) - CharacterCodes._0;
       if (c < 0 || c > 9) {
         return false;
       }
@@ -849,14 +849,14 @@ module Shumway {
       var bytes = new Uint8Array(str.length * 4);
       var b = 0;
       for (var i = 0, j = str.length; i < j; i++) {
-        var code = str.charCodeAt(i);
+        var code = String.charCodeAt(str, i);
         if (code <= 0x7f) {
           bytes[b++] = code;
           continue;
         }
 
         if (0xD800 <= code && code <= 0xDBFF) {
-          var codeLow = str.charCodeAt(i + 1);
+          var codeLow = String.charCodeAt(str, i + 1);
           if (0xDC00 <= codeLow && codeLow <= 0xDFFF) {
             // convert only when both high and low surrogates are present
             code = ((code & 0x3FF) << 10) + (codeLow & 0x3FF) + 0x10000;
@@ -1032,7 +1032,7 @@ module Shumway {
     }
 
     export function fromEncoding(s) {
-      var c = s.charCodeAt(0);
+      var c = String.charCodeAt(s, 0);
       var e = 0;
       if (c >= 65 && c <= 90) {
         return c - 65;
