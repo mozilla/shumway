@@ -187,7 +187,7 @@ module Shumway.AVM2.Compiler {
 
     merge(control: Control, other: State) {
       release || assert (control);
-      release || assert (this.matches(other), this, " !== ", other);
+      release || assert (this.matches(other), this + " !== " + other);
       State.mergeValues(control, this.local, other.local);
       State.mergeValues(control, this.stack, other.stack);
       State.mergeValues(control, this.scope, other.scope);

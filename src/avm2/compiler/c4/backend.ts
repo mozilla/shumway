@@ -400,14 +400,14 @@ module Shumway.AVM2.Compiler.Backend {
 
   function compileValue(value, cx: Context, noVariable?) {
     release || assert (value);
-    release || assert (value.compile, "Implement |compile| for ", value, " (", value.nodeName + ")");
+    release || assert (value.compile, "Implement |compile| for " + value + " (" + value.nodeName + ")");
     release || assert (cx instanceof Context);
     release || assert (!isArray(value));
     if (noVariable || !value.variable) {
       var node = value.compile(cx);
       return node;
     }
-    release || assert (value.variable, "Value has no variable: ", value);
+    release || assert (value.variable, "Value has no variable: " + value);
     return id(value.variable.name);
   }
 

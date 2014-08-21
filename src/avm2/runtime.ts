@@ -1523,7 +1523,7 @@ module Shumway.AVM2.Runtime {
    * is used, the scope object is passed in every time.
    */
   export function createFunction(mi, scope, hasDynamicScope, breakpoint = false) {
-    release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
+    release || assert(!mi.isNative(), "Method should have a builtin: " + mi.name);
 
     if (mi.freeMethod) {
       if (hasDynamicScope) {

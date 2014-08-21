@@ -92,9 +92,9 @@ module Shumway.SWF {
 
   export function verifyDeflateHeader(bytes): void {
     var header = (bytes[0] << 8) | bytes[1];
-    release || assert((header & 0x0f00) === 0x0800, 'unknown compression method', 'inflate');
-    release || assert((header % 31) === 0, 'bad FCHECK', 'inflate');
-    release || assert(!(header & 0x20), 'FDICT bit set', 'inflate');
+    release || assert((header & 0x0f00) === 0x0800, 'inflate: unknown compression method');
+    release || assert((header % 31) === 0, 'inflate: bad FCHECK');
+    release || assert(!(header & 0x20), 'inflate: FDICT bit set');
   }
 
   export function createInflatedStream(bytes, outputLength: number) : Stream {
@@ -125,7 +125,7 @@ module Shumway.SWF {
         }
         var len = stream.getUint16(pos, true);
         var nlen = stream.getUint16(pos + 2, true);
-        release || assert((~nlen & 0xffff) === len, 'bad uncompressed block length', 'inflate');
+        release || assert((~nlen & 0xffff) === len, 'inflate: bad uncompressed block length');
         if (stream.end - pos < 4 + len) {
           throw InflateNoDataError;
         }
@@ -278,7 +278,7 @@ module Shumway.SWF {
     }
     var code = codeTable.codes[bitBuffer & ((1 << maxBits) - 1)];
     var len = code >> 16;
-    release || assert(len, 'bad encoding', 'inflate');
+    release || assert(len, 'inflate: bad encoding');
     stream.bitBuffer = bitBuffer >>> len;
     stream.bitLength = bitLength - len;
     return code & 0xffff;
