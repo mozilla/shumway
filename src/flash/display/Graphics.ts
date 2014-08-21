@@ -1169,7 +1169,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             break;
           case PathCommand.LineStyleSolid:
-            width = coordinates[++coordinatesIndex] * 20;
+            width = coordinates[coordinatesIndex++];
             halfWidth = width >> 2;
             halfWidthSq = halfWidth * halfWidth;
             minX = x - halfWidth;
