@@ -1024,10 +1024,6 @@ module Shumway.AVM2.AS.flash.display {
       var maxY = 0;
 
       // Description of serialization format can be found in ShapeData.
-      // Rough outline of the algorithm's mode of operation:
-      // from x,y an infinite ray to the right is "cast". All operations are then
-      // tested for intersections with this ray, where each intersection means
-      // switching between being outside and inside the shape.
       for (var commandIndex = 0; commandIndex < commandsCount; commandIndex++) {
         var command = commands[commandIndex];
         switch (command) {
