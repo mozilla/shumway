@@ -41,7 +41,7 @@ module Shumway.SWF.Parser {
       }
       if (record.hasFont) {
         font = dictionary[record.fontId];
-        release || assert(font, 'undefined font', 'label');
+        release || assert(font, 'undefined label font');
         codes = font.codes;
         dependencies.push(font.id);
         size = record.fontHeight / 20;
@@ -68,7 +68,7 @@ module Shumway.SWF.Parser {
       var entry;
       while ((entry = entries[j++])) {
         var code = codes[entry.glyphIndex];
-        release || assert(code, 'undefined glyph ', 'label');
+        release || assert(code, 'undefined label glyph');
         text += String.fromCharCode(code);
         coords.push(x, y);
         x += entry.advance;

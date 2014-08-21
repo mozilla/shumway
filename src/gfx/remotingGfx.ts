@@ -113,7 +113,7 @@ module Shumway.Remoting.GFX {
       } else {
         frame = this._frames[id];
       }
-      release || assert (frame, "Frame ", frame, " of ", id, " has not been sent yet.");
+      release || assert (frame, "Frame " + frame + " of " + id + " has not been sent yet.");
       return frame;
     }
 
@@ -401,7 +401,7 @@ module Shumway.Remoting.GFX {
         for (var i = 0; i < count; i++) {
           var childId = input.readInt();
           var child = context._makeFrame(childId);
-          release || assert (child, "Child ", childId, " of ", id, " has not been sent yet.");
+          release || assert (child, "Child " + childId + " of " + id + " has not been sent yet.");
           container.addChild(child);
         }
       }

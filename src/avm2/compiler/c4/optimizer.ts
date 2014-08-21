@@ -599,7 +599,7 @@ module Shumway.AVM2.Compiler.IR {
     }
 
     computeDominators(apply) {
-      release || assert (this.root.predecessors.length === 0, "Root node ", this.root, " must not have predecessors.");
+      release || assert (this.root.predecessors.length === 0, "Root node " + this.root + " must not have predecessors.");
 
       var dom = new Int32Array(this.blocks.length);
       for (var i = 0; i < dom.length; i++) {
@@ -1084,7 +1084,7 @@ module Shumway.AVM2.Compiler.IR {
       }
 
       function append(node) {
-        release || assert (!isScheduled(node), "Already scheduled ", node);
+        release || assert (!isScheduled(node), "Already scheduled " + node);
         scheduled[node.id] = true;
         release || assert (node.control, node);
         if (shouldFloat(node)) {
@@ -1157,7 +1157,7 @@ module Shumway.AVM2.Compiler.IR {
         if (node === dfg.start || node instanceof Region) {
           return;
         }
-        release || assert (node.control, "Node is not scheduled: ", node);
+        release || assert (node.control, "Node is not scheduled: " + node);
       });
     }
 

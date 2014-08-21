@@ -409,13 +409,13 @@ module Shumway.AVM2.Runtime {
         var oldBinding = object[key];
         if (oldBinding) {
           var oldTrait = oldBinding.trait;
-          release || assert (!oldTrait.isFinal(), "Cannot redefine a final trait: ", trait);
+          release || assert (!oldTrait.isFinal(), "Cannot redefine a final trait: " + trait);
           // TODO: Object.as has a trait named length, we need to remove this since
           // it doesn't appear in Tamarin.
           release || assert (trait.isOverride() || trait.name.getName() === "length",
-            "Overriding a trait that is not marked for override: ", trait);
+            "Overriding a trait that is not marked for override: " + trait);
         } else {
-          release || assert (!trait.isOverride(), "Trait marked override must override another trait: ", trait);
+          release || assert (!trait.isOverride(), "Trait marked override must override another trait: " + trait);
         }
         object[key] = binding;
       }

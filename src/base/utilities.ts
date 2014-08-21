@@ -247,14 +247,12 @@ module Shumway {
       throw new Error(message);
     }
 
-    export function assert(condition: any, ...args) {
+    export function assert(condition: any, message: any = "assertion failed") {
       if (condition === "") {     // avoid inadvertent false positive
         condition = true;
       }
       if (!condition) {
-        var message = Array.prototype.slice.call(arguments);
-        message.shift();
-        Debug.error(message.join(""));
+        Debug.error(message.toString());
       }
     }
 
