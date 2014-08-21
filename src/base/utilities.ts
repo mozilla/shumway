@@ -165,12 +165,23 @@ module Shumway {
   export function isNumeric(value: any): boolean {
     if (typeof value === "number") {
       return true;
-    } else if (typeof value === "string") {
-      return isIndex(value) || isNumericString(value);
-    } else {
-      // Debug.notImplemented(typeof value);
-      return false;
     }
+    if (typeof value === "string") {
+      // |value| is rarely numeric (it's usually an identifier), and the
+      // isIndex()/isNumericString() pair is slow and expensive, so we do a
+      // quick check for obvious non-numericalness first. Just checking if the
+      // first char is a 7-bit identifier char catches most cases.
+      var c = value.charCodeAt(0);
+      if ((65 <= c && c <= 90) ||     // 'A'..'Z'
+          (97 <= c && c <= 122) ||    // 'a'..'z'
+          (c === 36) ||               // '$'
+          (c === 95)) {               // '_'
+        return false;
+      }
+      return isIndex(value) || isNumericString(value);
+    }
+    // Debug.notImplemented(typeof value);
+    return false;
   }
 
   /**
