@@ -45,13 +45,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "flash_display_Stage trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_Stage.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "flash_display_DisplayObject trace",
        "stas": "swfs/trace.stas",
        "filenames": [
