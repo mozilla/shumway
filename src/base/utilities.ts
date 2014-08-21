@@ -31,6 +31,8 @@ declare var putstr;
 
 declare var dateNow: () => number;
 
+declare var dump: (message: string) => void;
+
 if (!jsGlobal.performance) {
   jsGlobal.performance = {};
 }
