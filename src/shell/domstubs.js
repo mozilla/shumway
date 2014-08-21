@@ -27,6 +27,10 @@ if (typeof console === 'undefined') {
   print = console.log;
 }
 
+var dump = function (message) {
+  putstr(message);
+}
+
 var addEventListener = function (type) {
   // console.log('Add listener: ' + type);
 };
