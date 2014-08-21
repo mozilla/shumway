@@ -17,6 +17,12 @@
 package avm1lib {
   import flash.display.MovieClip;
   import flash.display.Stage;
+  import flash.geom.ColorTransform;
+  import flash.geom.Transform;
+  import flash.geom.Matrix;
+  import flash.geom.Point;
+  import flash.geom.Rectangle;
+  import flash.external.ExternalInterface;
 
   [native(cls="AS2Utils")]
   public class AS2Utils {
@@ -25,6 +31,28 @@ package avm1lib {
     public static native function resolveTarget(target_mc:* = undefined) : MovieClip;
     public static native function resolveLevel(level: Number) : MovieClip;
     public static native function get currentStage() : Stage;
+    public static native function get swfVersion() : Number;
+
+    public static function createFlashObject():Object {
+      return {
+        _MovieClip: AS2MovieClip,
+        display: {
+          BitmapData: AS2BitmapData
+        },
+        external: {
+          ExternalInterface: ExternalInterface
+        },
+        filters: {},
+        geom: {
+          ColorTransform: ColorTransform,
+          Matrix: Matrix,
+          Point: Point,
+          Rectangle: Rectangle,
+          Transform: AS2Transform
+        },
+        text: {}
+      };
+    }
 
     public static function getTarget(mc: Object) {
       var nativeObject = mc._as3Object;

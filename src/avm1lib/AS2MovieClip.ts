@@ -20,7 +20,6 @@ module Shumway.AVM2.AS.avm1lib {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import construct = Shumway.AVM2.Runtime.construct;
   import AS2Context = Shumway.AVM1.AS2Context;
-  import getAS2Object = Shumway.AVM1.getAS2Object;
   import Bitmap = flash.display.Bitmap;
 
 
@@ -59,7 +58,7 @@ module Shumway.AVM2.AS.avm1lib {
       }
       this._nativeAS3Object = nativeMovieClip;
       (<any> nativeMovieClip)._as2Object = this;
-      Shumway.AVM1.initDefaultListeners(this);
+      initDefaultListeners(this);
     }
     get _as3Object(): flash.display.MovieClip {
       return this._nativeAS3Object;

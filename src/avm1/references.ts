@@ -21,8 +21,5 @@
 ///<reference path='analyze.ts' />
 ///<reference path='context.ts' />
 ///<reference path='interpreter.ts' />
-///<reference path='AS2Utils.ts' />
-
-///<reference path='flash.d.ts' />
 
 ///<reference path='../avm1lib/references.ts' />

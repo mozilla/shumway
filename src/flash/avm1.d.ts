@@ -23,10 +23,13 @@ declare module Shumway.AVM2.AS.avm1lib {
   export class AS2Button extends ASClass {}
   export class AS2TextField extends ASClass {}
   export class AS2MovieClipLoader extends ASClass {}
-}
-declare module Shumway.AVM1 {
-  export function getAS2Object(as3Object: any): any;
+  export class AS2Key extends ASClass {}
+  export class AS2Mouse extends ASClass {}
 
+  export function getAS2Object(as3Object: any): any;
+}
+
+declare module Shumway.AVM1 {
   export class AS2ActionsData {
     constructor(actionsBlock: Uint8Array, name: string);
   }
@@ -38,5 +41,4 @@ declare module Shumway.AVM1 {
 
     globals: Shumway.AVM2.AS.avm1lib.AS2Globals;
   }
-  export class AS2Utils extends ASClass {}
 }

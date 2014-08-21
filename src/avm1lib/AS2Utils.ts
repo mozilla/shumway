@@ -15,10 +15,12 @@
  */
 
 ///<reference path='references.ts' />
-import ASNative = Shumway.AVM2.AS.ASNative;
-import ASObject = Shumway.AVM2.AS.ASObject;
-import flash = Shumway.AVM2.AS.flash;
-module Shumway.AVM1 {
+module Shumway.AVM2.AS.avm1lib {
+  import ASNative = Shumway.AVM2.AS.ASNative;
+  import ASObject = Shumway.AVM2.AS.ASObject;
+  import flash = Shumway.AVM2.AS.flash;
+  import AS2Context = Shumway.AVM1.AS2Context;
+
   export class AS2Utils extends ASNative {
 
     // Called whenever the class is initialized.
@@ -28,7 +30,7 @@ module Shumway.AVM1 {
     static initializer:any = null;
 
     // List of static symbols to link.
-    static classSymbols: string [] = null;//["getAS2Object!"];
+    static classSymbols: string [] = ["createFlashObject!"];//["getAS2Object!"];
 
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
@@ -40,7 +42,7 @@ module Shumway.AVM1 {
     // JS -> AS Bindings
     // static getTarget:(A:ASObject) => any;
     // static addEventHandlerProxy:(A:ASObject, B:string, C:string, D:ASFunction = null) => any;
-
+    static createFlashObject: () => any;
 
     // AS -> JS Bindings
     static addProperty(obj: ASObject, propertyName: string, getter: () => any,
@@ -67,8 +69,12 @@ module Shumway.AVM1 {
       return AS2Context.instance.stage;
     }
 
+    static get swfVersion(): any {
+      return AS2Context.instance.swfVersion;
+    }
+
     static getAS2Object(as3Object) {
-      return AVM1.getAS2Object(as3Object);
+      return avm1lib.getAS2Object(as3Object);
     }
 
     static _installObjectMethods(): any {
@@ -113,6 +119,10 @@ module Shumway.AVM1 {
       var p = defaultListeners[i];
       p.asGetPublicProperty('setter').call(thisArg, p.value);
     }
+  }
+
+  export function createFlashObject() {
+    return AS2Utils.createFlashObject();
   }
 
   export function getAS2Object(as3Object) {

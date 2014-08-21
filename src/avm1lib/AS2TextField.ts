@@ -16,7 +16,6 @@
 // Class: AS2TextField
 module Shumway.AVM2.AS.avm1lib {
   import TextField = Shumway.AVM2.AS.flash.text.TextField;
-  import getAS2Object = Shumway.AVM1.getAS2Object;
 
   export class AS2TextField extends ASNative {
 
@@ -50,7 +49,7 @@ module Shumway.AVM2.AS.avm1lib {
     _init(nativeTextField: TextField): any {
       this._nativeAS3Object = nativeTextField;
       (<any> nativeTextField)._as2Object = this;
-      Shumway.AVM1.initDefaultListeners(this);
+      initDefaultListeners(this);
     }
     get _as3Object(): TextField {
       return this._nativeAS3Object;

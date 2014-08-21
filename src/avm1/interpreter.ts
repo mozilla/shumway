@@ -78,6 +78,10 @@ module Shumway.AVM1 {
       super();
       this.swfVersion = swfVersion;
       this.globals = new Shumway.AVM2.AS.avm1lib.AS2Globals();
+      if (swfVersion >= 8) {
+        this.globals.asSetPublicProperty("flash",
+          Shumway.AVM2.AS.avm1lib.createFlashObject());
+      }
       this.initialScope = new AS2ScopeListItem(this.globals, null);
       this.assets = {};
       this.isActive = false;
@@ -342,6 +346,23 @@ module Shumway.AVM1 {
 
   function as2GetPrototype(obj) {
     return obj && obj.asGetPublicProperty('prototype');
+  }
+
+  function as2Construct(ctor, args) {
+    var result;
+    if (isAvm2Class(ctor)) {
+      result = construct(ctor, args);
+    } else {
+      // AS2 simply ignores attempts to invoke non-methods.
+      if (!isFunction(ctor)) {
+        return undefined;
+      }
+
+      result = Object.create(as2GetPrototype(ctor) || as2GetPrototype(Object));
+      ctor.apply(result, args);
+    }
+    result.constructor = ctor;
+    return result;
   }
 
   function as2Enumerate(obj, fn, thisArg) {
@@ -1518,20 +1539,10 @@ module Shumway.AVM1 {
         ctor = obj.asGetPublicProperty(resolvedName);
       }
 
-      // AS2 simply ignores attempts to invoke non-methods.
-      if (!isFunction(ctor)) {
+      var result = as2Construct(ctor, args);
+      if (result === undefined) {
         warn("AVM1 warning: method '" + methodName + "' on object", obj, "is not constructible");
-        return;
       }
-
-      var result;
-      if (isAvm2Class(ctor)) {
-        result = construct(ctor, args);
-      } else {
-        result = Object.create(as2GetPrototype(ctor) || as2GetPrototype(Object));
-        ctor.apply(result, args);
-      }
-      result.constructor = ctor;
       stack[sp] = result;
       release || assert(stack.length === sp + 1);
     }
@@ -1547,22 +1558,13 @@ module Shumway.AVM1 {
       var obj = avm1GetVariable(ectx, objectName);
 
       var result = createBuiltinType(obj, args);
-      if (typeof result === 'undefined') {
+      if (result === undefined) {
         // obj in not a built-in type
-        if (isAvm2Class(obj)) {
-          result = construct(obj, args);
-        } else {
-          // AS2 simply ignores attempts to invoke non-functions.
-          // We do this check here because AVM2 classes aren't functions but constructible.
-          if (!isFunction(obj)) {
-            warn("AVM1 warning: object '" + objectName +
-                                            (obj ? "' is not constructible" : "' is undefined"));
-            return;
-          }
-          result = Object.create(as2GetPrototype(obj) || as2GetPrototype(Object));
-          obj.apply(result, args);
+        result = as2Construct(obj, args);
+        if (result === undefined) {
+          warn("AVM1 warning: object '" + objectName +
+               (obj ? "' is not constructible" : "' is undefined"));
         }
-        result.constructor = obj;
       }
       release || assert(stack.length === sp + 1);
       stack[sp] = result;
