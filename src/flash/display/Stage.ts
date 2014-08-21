@@ -48,7 +48,7 @@ module Shumway.AVM2.AS.flash.display {
       this._displayState = null;
       this._fullScreenSourceRect = null;
       this._mouseLock = false;
-      this._stageVideos = null; // TODO
+      this._stageVideos = new GenericVector(0, true, ASObject);
       this._stage3Ds = null; // TODO
       this._colorARGB = 0xFFFFFFFF;
       this._fullScreenWidth = 0;
@@ -143,7 +143,17 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set stageWidth(value: number /*int*/) {
-      this._stageWidth = (value * 20) | 0;
+      // While the setter doesn't change the stored value, it still coerces the `value` parameter.
+      // This is script-visible if the value is something like `{valueOf: function(){throw 1}}`.
+      value = value|0;
+    }
+
+    /**
+     * Non-AS3-available setter. In AS3, the `stageWidth` setter is silently ignored.
+     */
+    setStageWidth(value: number) {
+      release || assert ((value|0) === value);
+      this._stageWidth = value * 20|0;
     }
 
     get stageHeight(): number /*int*/ {
@@ -151,7 +161,17 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set stageHeight(value: number /*int*/) {
-      this._stageHeight = (value * 20) | 0;
+      // While the setter doesn't change the stored value, it still coerces the `value` parameter.
+      // This is script-visible if the value is something like `{valueOf: function(){throw 1}}`.
+      value = value|0;
+    }
+
+    /**
+     * Non-AS3-available setter. In AS3, the `stageHeight` setter is silently ignored.
+     */
+    setStageHeight(value: number) {
+      release || assert ((value|0) === value);
+      this._stageHeight = value * 20|0;
     }
 
     get showDefaultContextMenu(): boolean {
@@ -210,8 +230,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set displayState(value: string) {
-      //this._displayState = asCoerceString(value);
-      notImplemented("public flash.display.Stage::set displayState"); return;
+      somewhatImplemented("public flash.display.Stage::set displayState");
+      this._displayState = asCoerceString(value);
     }
 
     get fullScreenSourceRect(): flash.geom.Rectangle {

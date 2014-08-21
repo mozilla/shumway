@@ -61,8 +61,8 @@
       check(l.content, "We should have some content here.");
       check(l.content.root === l.content, "This should be the root.");
       check(DisplayObject.isType(l.content));
-      s.stageWidth = l.contentLoaderInfo.width;
-      s.stageHeight = l.contentLoaderInfo.height;
+      s.setStageWidth(l.contentLoaderInfo.width);
+      s.setStageHeight(l.contentLoaderInfo.height);
       s.frameRate = l.contentLoaderInfo.frameRate;
       s.addChild(l.content);
       check(s.frameRate);
