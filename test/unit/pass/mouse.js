@@ -12,8 +12,8 @@
   function createMouseDispatcher() {
     var s = new Stage();
     var m = new MouseEventDispatcher();
-    s.stageWidth = 550;
-    s.stageHeight = 400;
+    s.setStageWidth(550);
+    s.setStageHeight(400);
     m.stage = s;
     return m;
   }

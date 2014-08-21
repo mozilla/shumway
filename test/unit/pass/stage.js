@@ -2,6 +2,7 @@
   var Stage = flash.display.Stage;
   var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  var StageVideo = flash.media.StageVideo;
 
   function createDisplayObjectTree(depth, width, height) {
     var nodes = [];
@@ -31,6 +32,8 @@
 
   unitTests.push(function checkDefaults() {
     var stage = new Stage();
+    stage.setStageWidth(550);
+    stage.setStageHeight(450);
     eq(stage.root, stage, "root");
     check(stage.scaleMode === "showAll", "scaleMode");
     eq(stage.stage, stage, "stage");
@@ -58,10 +61,11 @@
     check(stage.blendMode === "normal", "blendMode");
     check(stage.transform, "transform");
     eq(stage.frameRate, 24, "frameRate");
+    stage.frameRate = 10;
+    eq(stage.frameRate, 10, "frameRate");
     //check(o.numChildren === 1, "numChildren");
     eq(stage.scale9Grid, null, "scale9Grid");
     //check(o.constructor === null, "constructor");
-    //check(o.stageWidth === 550, "stageWidth");
     eq(stage.color, 4294967295, "color");
     eq(stage.tabChildren, true, "tabChildren");
     //check(o.quality === "HIGH", "quality");
@@ -69,11 +73,17 @@
     //check(o.loaderInfo, "loaderInfo");
     eq(stage.focus, null, "focus");
     check(stage.colorCorrection === "default", "colorCorrection");
+    eq(stage.width, 0, "width");
+    eq(stage.stageWidth, 550, "stageWidth");
+    stage.stageWidth = 300;
+    eq(stage.stageWidth, 550, "stageWidth setter is ignored");
     eq(stage.height, 0, "height");
+    eq(stage.stageHeight, 450, "stageHeight");
+    stage.stageHeight = 300;
+    eq(stage.stageHeight, 450, "stageHeight setter is ignored");
     //check(o.name === null, "name");
     check(stage.colorCorrectionSupport === "defaultOff", "colorCorrectionSupport");
     eq(stage.showDefaultContextMenu, true, "showDefaultContextMenu");
-    eq(stage.width, 0, "width");
     //check(o.accessibilityProperties === null, "accessibilityProperties");
     check(stage.align === "", "align");
     eq(stage.displayState, null, "displayState");
@@ -81,9 +91,10 @@
     eq(stage.mouseLock, false, "mouseLock");
     eq(stage.stageFocusRect, true, "stageFocusRect");
     eq(stage.fullScreenWidth, 0, "fullScreenWidth");
-    eq(stage.z, 0, "z");
     eq(stage.fullScreenHeight, 0, "fullScreenHeight");
     eq(stage.x, 0, "x");
+    eq(stage.y, 0, "y");
+    eq(stage.z, 0, "z");
     check(stage.softKeyboardRect, "softKeyboardRect");
     eq(stage.wmodeGPU, false, "wmodeGPU");
     eq(stage.allowsFullScreen, false, "allowsFullScreen");
@@ -91,9 +102,10 @@
     eq(stage.contentsScaleFactor, 1, "contentsScaleFactor");
     eq(stage.alpha, 1, "alpha");
     //check(o.metaData === null, "metaData");
-    eq(stage.y, 0, "y");
     eq(stage.displayContextInfo, null, "displayContextInfo");
     eq(stage.parent, null, "parent");
+    // TODO: check that stage.stageVideos is of type Vector.<StageVideo>.
+    eq(stage.stageVideos.length, 0, "stageVideos");
 
     stage.color = 0x12345678;
     eq(stage.color | 0,  0xff345678 | 0, "opaque");

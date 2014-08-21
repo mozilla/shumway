@@ -50,7 +50,6 @@ module Shumway.AVM2.AS {
 
   declare var escape;
   declare var unescape;
-  declare var AMFUtils;
 
   /* tslint:disable */
   jsGlobal["flash"] = Shumway.AVM2.AS.flash;
@@ -281,8 +280,8 @@ module Shumway.AVM2.AS {
                                throwError('TypeError', Errors.NullPointerError, 'classObject');
                              }
 
-                             AMFUtils.aliasesCache.classes.set(classObject, aliasName);
-                             AMFUtils.aliasesCache.names[aliasName] = classObject;
+                             aliasesCache.classes.set(classObject, aliasName);
+                             aliasesCache.names[aliasName] = classObject;
                            });
 
     registerNativeFunction('Toplevel::getClassByAlias', function getClassByAlias(aliasName) {
@@ -290,7 +289,7 @@ module Shumway.AVM2.AS {
         throwError('TypeError', Errors.NullPointerError, 'aliasName');
       }
 
-      var classObject = AMFUtils.aliasesCache.names[aliasName];
+      var classObject = aliasesCache.names[aliasName];
       if (!classObject) {
         throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
       }

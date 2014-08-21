@@ -136,8 +136,8 @@ module Shumway.Player {
           var root = loader.content;
           stage._loaderInfo = loaderInfo;
           stage.frameRate = loaderInfo.frameRate;
-          stage.stageWidth = loaderInfo.width;
-          stage.stageHeight = loaderInfo.height;
+          stage.setStageWidth(loaderInfo.width);
+          stage.setStageHeight(loaderInfo.height);
           stage.color = ColorUtilities.RGBAToARGB(loaderInfo._colorRGBA);
           stage.addChildAtDepth(root, 0);
           self._enterLoops();
@@ -382,8 +382,8 @@ module Shumway.Player {
       });
 
       loaderInfo.addEventListener(flash.events.Event.COMPLETE, function onProgress() {
-        stage.stageWidth = 1024;
-        stage.stageHeight = 1024;
+        stage.setStageWidth(1024);
+        stage.setStageHeight(1024);
 
         var symbols = [];
         loaderInfo._dictionary.forEach(function (symbol, key) {
