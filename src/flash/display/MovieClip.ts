@@ -655,7 +655,7 @@ module Shumway.AVM2.AS.flash.display {
         self.removeEventListener('enterFrame', listener);
 
         var avm1Context = self.loaderInfo._avm1Context;
-        var as2Object = Shumway.AVM1.getAS2Object(self);
+        var as2Object = avm1lib.getAS2Object(self);
         var stage = self.stage;
         var actionsData = new AVM1.AS2ActionsData(actionsBlock.actionsData, 'f' + frameIndex);
         avm1Context.executeActions(actionsData, stage, as2Object);
@@ -665,7 +665,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private _executeAS2FrameScripts() {
       var avm1Context = this.loaderInfo._avm1Context;
-      var as2Object = Shumway.AVM1.getAS2Object(this);
+      var as2Object = avm1lib.getAS2Object(this);
       var scripts: AVM1.AS2ActionsData[] = this._as2FrameScripts[this._currentFrame];
       release || assert(scripts && scripts.length);
       for (var i = 0; i < scripts.length; i++) {

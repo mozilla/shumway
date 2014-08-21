@@ -15,10 +15,12 @@
  */
 
 ///<reference path='references.ts' />
-import ASNative = Shumway.AVM2.AS.ASNative;
-import ASObject = Shumway.AVM2.AS.ASObject;
-import flash = Shumway.AVM2.AS.flash;
-module Shumway.AVM1 {
+module Shumway.AVM2.AS.avm1lib {
+  import ASNative = Shumway.AVM2.AS.ASNative;
+  import ASObject = Shumway.AVM2.AS.ASObject;
+  import flash = Shumway.AVM2.AS.flash;
+  import AS2Context = Shumway.AVM1.AS2Context;
+
   export class AS2Utils extends ASNative {
 
     // Called whenever the class is initialized.
@@ -72,7 +74,7 @@ module Shumway.AVM1 {
     }
 
     static getAS2Object(as3Object) {
-      return AVM1.getAS2Object(as3Object);
+      return avm1lib.getAS2Object(as3Object);
     }
 
     static _installObjectMethods(): any {
@@ -117,6 +119,10 @@ module Shumway.AVM1 {
       var p = defaultListeners[i];
       p.asGetPublicProperty('setter').call(thisArg, p.value);
     }
+  }
+
+  export function createFlashObject() {
+    return AS2Utils.createFlashObject();
   }
 
   export function getAS2Object(as3Object) {

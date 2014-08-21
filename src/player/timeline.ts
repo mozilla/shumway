@@ -492,7 +492,7 @@ module Shumway.Timeline {
                 var fn = (function (actionsData, loaderInfo) {
                   return function() {
                     var avm1Context = loaderInfo._avm1Context;
-                    var as2Object = Shumway.AVM1.getAS2Object(this);
+                    var as2Object = Shumway.AVM2.AS.avm1lib.getAS2Object(this);
                     return avm1Context.executeActions(actionsData, this.stage, as2Object);
                   };
                 })(actionsData, loaderInfo);

@@ -16,7 +16,6 @@
 
 module Shumway.AVM1 {
   import assert = Shumway.Debug.assert;
-  import avm1lib =  Shumway.AVM2.AS.avm1lib;
 
   export class AS2ActionsData {
     public ir; // will cache compiled representation
@@ -30,7 +29,7 @@ module Shumway.AVM1 {
     public stage;
     public classes;
     public swfVersion: number;
-    public globals: avm1lib.AS2Globals;
+    public globals: Shumway.AVM2.AS.avm1lib.AS2Globals;
     constructor() {}
 
     public static create: (swfVersion: number) => AS2Context;

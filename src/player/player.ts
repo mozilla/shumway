@@ -122,8 +122,8 @@ module Shumway.Player {
         var startPromise = loader._startPromise;
         startPromise.then(function () {
           if (loaderInfo.actionScriptVersion === flash.display.ActionScriptVersion.ACTIONSCRIPT2) {
-            var AS2Key = (<any>avm1lib).AS2Key;
-            var AS2Mouse = (<any>avm1lib).AS2Mouse;
+            var AS2Key = avm1lib.AS2Key;
+            var AS2Mouse = avm1lib.AS2Mouse;
             AS2Key.asCallPublicProperty('__bind', [stage]);
             AS2Mouse.asCallPublicProperty('__bind', [stage]);
             var avm1Context = loaderInfo._avm1Context;

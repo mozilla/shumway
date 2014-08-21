@@ -69,7 +69,7 @@ module Shumway.AVM2.AS.avm1lib {
     // __as3Object: flash.display.SimpleButton;
     _init(nativeButton: flash.display.SimpleButton): any {
       this._nativeAS3Object = nativeButton;
-      Shumway.AVM1.initDefaultListeners(this);
+      initDefaultListeners(this);
       if (!nativeButton._symbol || !nativeButton._symbol.buttonActions) {
         return;
       }
@@ -168,7 +168,7 @@ module Shumway.AVM2.AS.avm1lib {
     private _runAction(action: ButtonAction) {
       var avm1Context = this._nativeAS3Object.loaderInfo._avm1Context;
       avm1Context.executeActions(action.actionsBlock, this._nativeAS3Object.stage,
-                                 AVM1.AS2Utils.getAS2Object(this._nativeAS3Object._parent));
+                                 getAS2Object(this._nativeAS3Object._parent));
     }
     get _as3Object(): flash.display.SimpleButton {
       return this._nativeAS3Object;
