@@ -47,7 +47,7 @@ module Shumway.AVM2.AS.avm1lib {
     // List of instance symbols to link.
     static instanceSymbols: string [] = ["_global!", "flash", "$asfunction", "call!", "chr!",
                                          "clearInterval!", "clearTimeout!", "duplicateMovieClip!",
-                                         "fscommand", "getAS2Property!", "getTimer!",
+                                         "fscommand!", "getAS2Property!", "getTimer!",
                                          "getURL!", "getVersion!", "gotoAndPlay!", "gotoAndStop!",
                                          "gotoLabel!", "ifFrameLoaded!", "int!", "length!", "loadMovie!",
                                          "loadMovieNum!", "loadVariables!", "mbchr!", "mblength!",

@@ -101,6 +101,9 @@ module Shumway.GFX.Test {
         case 'external':
           this.processExternalCommand(data.command);
           break;
+        case 'fscommand':
+          this.processFSCommand(data.command, data.args);
+          break;
       }
     }
 

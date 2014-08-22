@@ -35,8 +35,21 @@ var addEventListener = function (type) {
   // console.log('Add listener: ' + type);
 };
 
-var microTasks = [];
-var setTimeout = function (fn) { microTasks.push(fn); };
+var microTasks = [], taskId = 0;
+var setTimeout = function (fn) {
+  fn = fn.bind(null);
+  fn.id = ++taskId;
+  microTasks.push(fn);
+  return fn.id;
+};
+var clearTimeout = function (id) {
+  for (var i = 0; i < microTasks.length; i++) {
+    if (microTasks[i].id === id) {
+      microTasks.splice(i, 1);
+      return;
+    }
+  }
+};
 
 var self = this, window = this;
 
@@ -114,10 +127,12 @@ window.screen = {
  * if the |clear| option is specified, the micro task queue is cleared even if not all the
  * tasks have been executed.
  */
+var microTaskQueueStopped = false;
 var runMicroTaskQueue = function (duration, count, clear) {
+  microTaskQueueStopped = false;
   var executedTasks = 0;
   var stopAt = Date.now() + duration;
-  while (microTasks.length > 0) {
+  while (microTasks.length > 0 && !microTaskQueueStopped) {
     if (duration > 0 && Date.now() >= stopAt) {
       break;
     }
@@ -131,4 +146,9 @@ var runMicroTaskQueue = function (duration, count, clear) {
   if (clear) {
     microTasks.length = 0;
   }
+  microTaskQueueStopped = true;
+};
+
+var stopMicroTaskQueue = function () {
+  microTaskQueueStopped = true;
 };

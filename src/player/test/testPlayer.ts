@@ -53,6 +53,14 @@ module Shumway.Player.Test {
       });
     }
 
+    onFSCommand(command: string, args: string) {
+      this._worker.postMessage({
+        type: 'fscommand',
+        command: command,
+        args: args
+      });
+    }
+
     onFrameProcessed() {
       this._worker.postMessage({
         type: 'frame'

@@ -17,7 +17,6 @@
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  declare var renderingTerminated: boolean;
 
   export class FSCommand extends ASNative {
     
@@ -45,20 +44,20 @@ module Shumway.AVM2.AS.flash.system {
     static _fscommand(command: string, args: string): void {
       command = asCoerceString(command); args = asCoerceString(args);
       console.log('FSCommand: ' + command + '; ' + args);
-      switch (command.toLowerCase()) {
-        case 'quit':
-          renderingTerminated = true;
-          return;
-        case 'debugger':
-          /* tslint:disable */
-          debugger; // shumway breakpoint... for convinience
-          /* tslint:enable */
-          return;
-        default:
-          // TODO ignoring all other fscommand
-          break;
+      command = command.toLowerCase();
+      if (command === 'debugger') {
+        /* tslint:disable */
+        debugger; // shumway breakpoint... for convinience
+        /* tslint:enable */
+        return;
       }
+
+      var listener: IFSCommandListener = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      listener.executeFSCommand(command, args);
     }
-    
+  }
+
+  export interface IFSCommandListener {
+    executeFSCommand(command: string, args: string);
   }
 }

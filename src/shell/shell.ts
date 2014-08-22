@@ -41,7 +41,7 @@ var playerglobalInfo = {
  */
 var unitTests = [];
 
-declare var help, runMicroTaskQueue;
+declare var help, runMicroTaskQueue, stopMicroTaskQueue;
 
 declare var process, require, global;
 var isNode = typeof process === 'object';
@@ -60,7 +60,7 @@ if (isNode) {
   };
   var listOfGlobals = ['Shumway', 'document', 'window', 'release', 'jsGlobal',
     'profile', 'RegExp', 'XMLHttpRequest', 'setTimeout', 'addEventListener',
-    'navigator', 'runMicroTaskQueue', 'unitTests'];
+    'navigator', 'runMicroTaskQueue', 'stopMicroTaskQueue', 'unitTests'];
   load.header = listOfGlobals.map(function (s) {
     return s + ' = this.' + s;
   }).join(';') + ';\n';
@@ -127,6 +127,12 @@ module Shumway.Shell {
       var bytes = updates.getBytes();
       // console.log('Updates sent');
       return null;
+    }
+    onFSCommand(command: string, args: string) {
+      if (command === 'quit') {
+        // console.log('Player quit');
+        stopMicroTaskQueue();
+      }
     }
     onFrameProcessed() {
       // console.log('Frame');
