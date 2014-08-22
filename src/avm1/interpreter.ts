@@ -32,6 +32,9 @@ module Shumway.AVM1 {
   declare class Error {
     constructor(obj: string);
   }
+  declare class InternalError extends Error {
+    constructor(obj: string);
+  }
 
   import shumwayOptions = Shumway.Settings.shumwayOptions;
 
@@ -149,7 +152,7 @@ module Shumway.AVM1 {
 
   class AS2CriticalError extends Error  {
     constructor(message: string, public error?) {
-      super(message)
+      super(message);
     }
   }
 
@@ -348,6 +351,15 @@ module Shumway.AVM1 {
     return obj && obj.asGetPublicProperty('prototype');
   }
 
+  function as2CastError(ex) {
+    if (typeof InternalError !== 'undefined' &&
+        ex instanceof InternalError && ex.message === 'too much recursion') {
+      // HACK converting too much recursion into AS2CriticalError
+      return new AS2CriticalError('long running script -- AVM1 recursion limit is reached');
+    }
+    return ex;
+  }
+
   function as2Construct(ctor, args) {
     var result;
     if (isAvm2Class(ctor)) {
@@ -474,11 +486,11 @@ module Shumway.AVM1 {
       actionTracer.indent();
       interpretActions(actionsData, scopeContainer, [], []);
     } catch (e) {
-      if (e instanceof AS2CriticalError) {
-        console.error('Disabling AVM1 execution');
+      caughtError = as2CastError(e);
+      if (caughtError instanceof AS2CriticalError) {
         context.executionProhibited = true;
+        console.error('Disabling AVM1 execution');
       }
-      caughtError = e;
     }
     context.isActive = false;
     context.defaultTarget = null;
@@ -631,6 +643,10 @@ module Shumway.AVM1 {
 
       var ownerClass;
       var fn = (function() {
+        if (currentContext.executionProhibited) {
+          return; // no more avm1 execution, ever
+        }
+
         var newScopeContainer;
         var newScope = {};
 
@@ -1857,8 +1873,8 @@ module Shumway.AVM1 {
         } catch (e) {
           // handling AVM1 errors
           currentContext = executionContext.context;
-          if ((avm1ErrorsEnabled.value && !currentContext.isTryCatchListening) ||
-            e instanceof AS2CriticalError) {
+          e = as2CastError(e);
+          if (e instanceof AS2CriticalError) {
             throw e;
           }
           if (e instanceof AS2Error) {
@@ -1871,6 +1887,9 @@ module Shumway.AVM1 {
             if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
               throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
             }
+            console.log(typeof e);
+            console.log(Object.getPrototypeOf(e));
+            console.log(Object.getPrototypeOf(Object.getPrototypeOf(e)));
             console.error('AVM1 error: ' + e);
             var avm2 = Shumway.AVM2.Runtime.AVM2;
             avm2.instance.exceptions.push({source: 'avm1', message: e.message,
@@ -1883,7 +1902,7 @@ module Shumway.AVM1 {
 
     function generateActionCalls() {
       var wrap: Function;
-      if (avm1ErrorsEnabled.value) {
+      if (!avm1ErrorsEnabled.value) {
         wrap = wrapAvm1Error;
       } else {
         wrap = function (fn: Function) { return fn; };
@@ -2334,6 +2353,7 @@ module Shumway.AVM1 {
       } catch (e) {
         // handling AVM1 errors
         currentContext = executionContext.context;
+        e = as2CastError(e);
         if ((avm1ErrorsEnabled.value && !currentContext.isTryCatchListening) ||
           e instanceof AS2CriticalError) {
           throw e;
