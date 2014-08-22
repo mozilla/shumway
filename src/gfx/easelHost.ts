@@ -120,6 +120,9 @@ module Shumway.GFX {
       throw new Error('This command is not supported');
     }
 
+    processFSCommand(command: string, args: string) {
+    }
+
     processFrame() {
     }
 

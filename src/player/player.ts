@@ -39,6 +39,7 @@ module Shumway.Player {
   import FocusEventData = Shumway.Remoting.Player.FocusEventData;
 
   import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
+  import IFSCommandListener = flash.system.IFSCommandListener;
 
   /**
    * Shumway Player
@@ -46,12 +47,13 @@ module Shumway.Player {
    * This class brings everything together. Load the swf, runs the event loop and
    * synchronizes the frame tree with the display list.
    */
-  export class Player implements IBitmapDataSerializer {
+  export class Player implements IBitmapDataSerializer, IFSCommandListener {
     private _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
     private _syncTimeout: number;
     private _frameTimeout: number;
+    private _eventLoopIsRunning: boolean;
     private _framesPlayed: number = 0;
 
     private _writer: IndentingWriter;
@@ -270,6 +272,15 @@ module Shumway.Player {
       leaveTimeline("sendUpdates");
     }
 
+    public executeFSCommand(command: string, args: string) {
+      switch (command) {
+        case 'quit':
+          this._leaveEventLoop();
+          break;
+      }
+      this.onFSCommand(command, args);
+    }
+
     public requestRendering(): void {
       this._pumpDisplayListUpdates();
     }
@@ -314,6 +325,7 @@ module Shumway.Player {
       var rootInitialized = false;
       var runFrameScripts = !playAllSymbolsOption.value;
       var dontSkipFrames = dontSkipFramesOption.value;
+      this._eventLoopIsRunning = true;
       (function tick() {
         // TODO: change this to the mode described in http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
         self._frameTimeout = setTimeout(tick, self._getFrameInterval());
@@ -361,9 +373,9 @@ module Shumway.Player {
     }
 
     private _leaveEventLoop(): void {
-      release || assert (this._frameTimeout > -1);
-      clearInterval(this._frameTimeout);
-      this._frameTimeout = -1;
+      release || assert (this._eventLoopIsRunning);
+      clearTimeout(this._frameTimeout);
+      this._eventLoopIsRunning = false;
     }
 
     private _playAllSymbols() {
@@ -455,6 +467,10 @@ module Shumway.Player {
     }
 
     onExternalCommand(command) {
+      throw new Error('This method is abstract');
+    }
+
+    onFSCommand(command: string, args: string) {
       throw new Error('This method is abstract');
     }
 

@@ -64,6 +64,14 @@ module Shumway.Player.Window {
       this._parent.dispatchEvent(event);
     }
 
+    onFSCommand(command: string, args: string) {
+      this._parent.postMessage({
+        type: 'fscommand',
+        command: command,
+        args: args
+      }, '*');
+    }
+
     onFrameProcessed() {
       this._parent.postMessage({
         type: 'frame'

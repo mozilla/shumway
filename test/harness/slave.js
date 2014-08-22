@@ -92,7 +92,14 @@ function loadMovie(path, reportFrames) {
       playerWindow.postMessage(data, '*');
 
       easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
-      easelHost.processFrame = onFrameCallback;
+      if (onFrameCallback) {
+        easelHost.processFrame = onFrameCallback;
+      }
+      easelHost.processFSCommand = function (command) {
+        if (command === 'quit') {
+          terminate();
+        }
+      };
       initialized();
     };
     return;
@@ -127,7 +134,14 @@ function loadMovie(path, reportFrames) {
   Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
 
     easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
-    easelHost.processFrame = onFrameCallback;
+    if (onFrameCallback) {
+      easelHost.processFrame = onFrameCallback;
+    }
+    easelHost.processFSCommand = function (command) {
+      if (command === 'quit') {
+        terminate();
+      }
+    };
 
     player = new Shumway.Player.Test.TestPlayer();
     player.load(path);
