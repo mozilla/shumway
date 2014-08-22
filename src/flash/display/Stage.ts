@@ -145,15 +145,15 @@ module Shumway.AVM2.AS.flash.display {
     set stageWidth(value: number /*int*/) {
       // While the setter doesn't change the stored value, it still coerces the `value` parameter.
       // This is script-visible if the value is something like `{valueOf: function(){throw 1}}`.
-      value = value|0;
+      value = value | 0;
     }
 
     /**
      * Non-AS3-available setter. In AS3, the `stageWidth` setter is silently ignored.
      */
     setStageWidth(value: number) {
-      release || assert ((value|0) === value);
-      this._stageWidth = value * 20|0;
+      release || assert ((value | 0) === value);
+      this._stageWidth = (value * 20) | 0;
     }
 
     get stageHeight(): number /*int*/ {
@@ -163,15 +163,15 @@ module Shumway.AVM2.AS.flash.display {
     set stageHeight(value: number /*int*/) {
       // While the setter doesn't change the stored value, it still coerces the `value` parameter.
       // This is script-visible if the value is something like `{valueOf: function(){throw 1}}`.
-      value = value|0;
+      value = value | 0;
     }
 
     /**
      * Non-AS3-available setter. In AS3, the `stageHeight` setter is silently ignored.
      */
     setStageHeight(value: number) {
-      release || assert ((value|0) === value);
-      this._stageHeight = value * 20|0;
+      release || assert ((value | 0) === value);
+      this._stageHeight = (value * 20) | 0;
     }
 
     get showDefaultContextMenu(): boolean {
