@@ -77,8 +77,10 @@ module Shumway.SWF.Parser {
     var colorTableSize = roundToMultipleOfFour(colorTableLength * colorTableEntrySize);
 
     var dataSize = colorTableSize + ((width + padding) * height);
-    var stream = createInflatedStream(tag.bmpData, dataSize);
-    var bytes: Uint8Array = stream.bytes;
+
+    var inflate = new InflateSession(dataSize);
+    inflate.push(tag.bmpData);
+    var bytes: Uint8Array = inflate.toUint8Array();
 
     var view = new Uint32Array(width * height);
 
@@ -127,10 +129,10 @@ module Shumway.SWF.Parser {
 
     // Even without alpha, 24BPP is stored as 4 bytes, probably for alignment reasons.
     var dataSize = height * width * 4;
-    var stream = createInflatedStream(tag.bmpData, dataSize);
-    // Make sure we've deflated enough bytes.
-    stream.ensure(dataSize);
-    var bytes: Uint8Array = stream.bytes;
+
+    var inflate = new InflateSession(dataSize);
+    inflate.push(tag.bmpData);
+    var bytes: Uint8Array = inflate.toUint8Array();
     if (hasAlpha) {
       return bytes;
     }

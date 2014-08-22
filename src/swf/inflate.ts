@@ -97,20 +97,141 @@ module Shumway.SWF {
     release || assert(!(header & 0x20), 'inflate: FDICT bit set');
   }
 
-  export function createInflatedStream(bytes, outputLength: number) : Stream {
-    verifyDeflateHeader(bytes);
-    var stream = new Stream(bytes, 2);
-    var output: CompressionOutput = {
-      data: new Uint8Array(outputLength),
-      available: 0,
-      completed: false
-    };
-    var state: CompressionState = { header: null, distanceTable: null,
-      literalTable: null, sym: null, len: null, sym2: null };
-    do {
-      inflateBlock(stream, output, state);
-    } while (!output.completed && stream.pos < stream.end);
-    return new Stream(output.data, 0, output.available);
+  class HeadTailBuffer {
+    private _bufferSize: number;
+    private _buffer: Uint8Array;
+    private _pos: number;
+
+    constructor(defaultSize:number = 16) {
+      this._bufferSize = defaultSize;
+      this._buffer = new Uint8Array(this._bufferSize);
+      this._pos = 0;
+    }
+
+    push(data: Uint8Array, need?: number) {
+      var bufferLengthNeed = this._pos + data.length;
+      if (this._bufferSize < bufferLengthNeed) {
+        var newBufferSize = this._bufferSize;
+        while (newBufferSize < bufferLengthNeed) {
+          newBufferSize <<= 1;
+        }
+        var newBuffer = new Uint8Array(newBufferSize);
+        if (this._bufferSize > 0) {
+          newBuffer.set(this._buffer);
+        }
+        this._buffer = newBuffer;
+        this._bufferSize = newBufferSize;
+      }
+      this._buffer.set(data, this._pos);
+      this._pos += data.length;
+      if (need) {
+        return this._pos >= need;
+      }
+    }
+
+    getHead(size: number) {
+      return this._buffer.subarray(0, size);
+    }
+
+    getTail(offset: number) {
+      return this._buffer.subarray(offset, this._pos);
+    }
+
+    removeHead(size: number) {
+      var tail = this.getTail(size);
+      this._buffer = new Uint8Array(this._bufferSize);
+      this._buffer.set(tail);
+      this._pos = tail.length;
+    }
+
+    get arrayBuffer() {
+      return this._buffer.buffer;
+    }
+
+    get length() {
+      return this._pos;
+    }
+
+    getBytes(): Uint8Array {
+      return this._buffer.subarray(0, this._pos);
+    }
+
+    createStream() {
+      return new Stream(this.arrayBuffer, 0, this.length);
+    }
+  }
+
+  interface CompressedPipeState {
+    bitBuffer: number;
+    bitLength: number;
+    compression: CompressionState;
+  }
+
+  export class InflateSession {
+    private _length: number;
+    private _initialize: boolean;
+    private _buffer: HeadTailBuffer;
+    private _state: CompressedPipeState;
+    private _output: CompressionOutput;
+
+    public onData: (data: Uint8Array, start: number, end: number) => void;
+
+    constructor(length: number = 16) {
+      this._length = length;
+      this._initialize = true;
+      this._buffer = new HeadTailBuffer(8096);
+      this._state = { bitBuffer: 0, bitLength: 0, compression: {
+        header: null, distanceTable: null, literalTable: null,
+        sym: null, len: null, sym2: null } };
+      this._output = {
+        data: new Uint8Array(length),
+        available: 0,
+        completed: false
+      };
+      this._buffer = new HeadTailBuffer(8192);
+    }
+    public push(data: Uint8Array) {
+      var buffer = this._buffer;
+      if (this._initialize) {
+        if (!buffer.push(data, 2)) {
+          return;
+        }
+        var headerBytes = buffer.getHead(2);
+        verifyDeflateHeader(headerBytes);
+        buffer.removeHead(2);
+        this._initialize = false;
+      } else {
+        buffer.push(data);
+      }
+      var stream = buffer.createStream();
+      stream.bitBuffer = this._state.bitBuffer;
+      stream.bitLength = this._state.bitLength;
+      var output = this._output;
+      var lastAvailable = output.available;
+      try {
+        do {
+          inflateBlock(stream, output, this._state.compression);
+        } while (stream.pos < buffer.length && !output.completed);
+      } catch (e) {
+        this._state.bitBuffer = stream.bitBuffer;
+        this._state.bitLength = stream.bitLength;
+        if (e !== InflateNoDataError) {
+          throw e; // Re-throw non data errors.
+        }
+      }
+      this._state.bitBuffer = stream.bitBuffer;
+      this._state.bitLength = stream.bitLength;
+      buffer.removeHead(stream.pos);
+
+      // push data downstream
+      if (this.onData) {
+        this.onData(output.data, lastAvailable, output.available);
+      }
+    }
+
+    public toUint8Array(): Uint8Array {
+      return this._output.data;
+    }
   }
 
   export function inflateBlock(stream: Stream, output: CompressionOutput, state: CompressionState) {

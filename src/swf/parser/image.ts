@@ -113,7 +113,7 @@ module Shumway.SWF.Parser {
     var chunks;
 
     if (tag.mimeType === 'image/jpeg') {
-      var alphaData = tag.alphaData;
+      var alphaData: Uint8Array = <any>tag.alphaData;
       if (alphaData) {
         var jpegImage = new Shumway.JPEG.JpegImage();
         jpegImage.parse(joinChunks(parseJpegChunks(image, imgData)));
@@ -122,7 +122,9 @@ module Shumway.SWF.Parser {
         var width = image.width;
         var height = image.height;
         var length = width * height;
-        var alphaMaskBytes = createInflatedStream(alphaData, length).bytes;
+        var inflate = new InflateSession(length);
+        inflate.push(alphaData);
+        var alphaMaskBytes = inflate.toUint8Array();
         var data = image.data = new Uint8ClampedArray(length * 4);
         jpegImage.copyToImageData(image);
         for (var i = 0, k = 3; i < length; i++, k += 4) {
