@@ -275,27 +275,50 @@ module Shumway.GFX {
       this._commands[this._commandPosition++] = command;
     }
 
-    private _writeData(a: number, b: number, c?: number, d?: number, e?: number, f?: number, g?: number) {
-      var argc = arguments.length;
-      if (this._dataPosition + argc >= this._data.length) {
-        this._ensureDataCapacity(this._dataPosition + argc);
-      }
-      var data = this._data;
+    private _prewriteData(argc: number): number {
       var p = this._dataPosition;
-      data[p] = a;
-      data[p + 1] = b;
-      if (argc > 2) {
-        data[p + 2] = c;
-        data[p + 3] = d;
-        if (argc > 4) {
-          data[p + 4] = e;
-          data[p + 5] = f;
-          if (argc > 5) {
-            data[p + 6] = g;
-          }
-        }
-      }
       this._dataPosition += argc;
+      if (this._dataPosition >= this._data.length) {
+        this._ensureDataCapacity(this._dataPosition);
+      }
+      return p;
+    }
+
+    private _writeData2(d0: number, d1: number) {
+      var p = this._prewriteData(2);
+      var data = this._data;
+      data[p] = d0;
+      data[p + 1] = d1;
+    }
+
+    private _writeData4(d0: number, d1: number, d2: number, d3: number) {
+      var p = this._prewriteData(4);
+      var data = this._data;
+      data[p] = d0;
+      data[p + 1] = d1;
+      data[p + 2] = d2;
+      data[p + 3] = d3;
+    }
+
+    private _writeData5(d0: number, d1: number, d2: number, d3: number, d4: number) {
+      var p = this._prewriteData(5);
+      var data = this._data;
+      data[p] = d0;
+      data[p + 1] = d1;
+      data[p + 2] = d2;
+      data[p + 3] = d3;
+      data[p + 4] = d4;
+    }
+
+    private _writeData6(d0: number, d1: number, d2: number, d3: number, d4: number, d5: number) {
+      var p = this._prewriteData(6);
+      var data = this._data;
+      data[p] = d0;
+      data[p + 1] = d1;
+      data[p + 2] = d2;
+      data[p + 3] = d3;
+      data[p + 4] = d4;
+      data[p + 5] = d5;
     }
 
     closePath() {
@@ -304,37 +327,37 @@ module Shumway.GFX {
 
     moveTo(x: number, y: number) {
       this._writeCommand(PathCommand.MoveTo);
-      this._writeData(x, y);
+      this._writeData2(x, y);
     }
 
     lineTo(x: number, y:number) {
       this._writeCommand(PathCommand.LineTo);
-      this._writeData(x, y);
+      this._writeData2(x, y);
     }
 
     quadraticCurveTo(cpx: number, cpy: number, x: number, y: number) {
       this._writeCommand(PathCommand.QuadraticCurveTo);
-      this._writeData(cpx, cpy, x, y);
+      this._writeData4(cpx, cpy, x, y);
     }
 
     bezierCurveTo(cp1x: number, cp1y: number, cp2x: number, cp2y: number, x: number, y: number) {
       this._writeCommand(PathCommand.BezierCurveTo);
-      this._writeData(cp1x, cp1y, cp2x, cp2y, x, y);
+      this._writeData6(cp1x, cp1y, cp2x, cp2y, x, y);
     }
 
     arcTo(x1: number, y1: number, x2: number, y2: number, radius: number) {
       this._writeCommand(PathCommand.ArcTo);
-      this._writeData(x1, y1, x2, y2, radius);
+      this._writeData5(x1, y1, x2, y2, radius);
     }
 
     rect(x: number, y: number, width: number, height: number) {
       this._writeCommand(PathCommand.Rect);
-      this._writeData(x, y, width, height);
+      this._writeData4(x, y, width, height);
     }
 
     arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, anticlockwise: boolean) {
       this._writeCommand(PathCommand.Arc);
-      this._writeData(x, y, radius, startAngle, endAngle, +anticlockwise);
+      this._writeData6(x, y, radius, startAngle, endAngle, +anticlockwise);
     }
 
     /**
@@ -344,7 +367,7 @@ module Shumway.GFX {
       if (transformation) {
         this._writeCommand(PathCommand.Save);
         this._writeCommand(PathCommand.Transform);
-        this._writeData(
+        this._writeData6(
           transformation.a,
           transformation.b,
           transformation.c,
