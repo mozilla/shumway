@@ -2834,9 +2834,16 @@ module Shumway {
       return argb << 8 | ((argb >> 24) & 0xff);
     }
 
+    var _rgbaBuf = ['rgba(', 0, ',', 0, ',', 0, ',', 0, ')'];
+
+    // rgbaToCSSStyle() can be called thousands of times. Using |_rgbaBuf|
+    // avoids creating many intermediate strings.
     export function rgbaToCSSStyle(color: number): string {
-      return 'rgba(' + (color >> 24 & 0xff) + ',' + (color >> 16 & 0xff) + ',' +
-                  (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';
+      _rgbaBuf[1] = (color >> 24) & 0xff;
+      _rgbaBuf[3] = (color >> 16) & 0xff;
+      _rgbaBuf[5] = (color >> 8) & 0xff;
+      _rgbaBuf[7] = (color & 0xff) / 0xff;
+      return _rgbaBuf.join('');
     }
 
     export function cssStyleToRGBA(style: string) {
