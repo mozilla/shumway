@@ -191,67 +191,24 @@ module Shumway.SWF.Parser {
   }
 
   class CompressedPipe implements IPipe {
-    private _target: any;
-    private _length: number;
-    private _initialize: boolean;
-    private _buffer: HeadTailBuffer;
-    private _state: CompressedPipeState;
-    private _output: CompressionOutput;
+    private _inflate: InflateSession;
+    private _progressInfo: ProgressInfo;
 
     constructor (target, length: number) {
-      this._target = target;
-      this._length = length;
-      this._initialize = true;
-      this._buffer = new HeadTailBuffer(8096);
-      this._state = { bitBuffer: 0, bitLength: 0, compression: {
-        header: null, distanceTable: null, literalTable: null,
-        sym: null, len: null, sym2: null } };
-      this._output = {
-        data: new Uint8Array(length),
-        available: 0,
-        completed: false
-      };
+      this._inflate = new InflateSession(length);
+      this._inflate.onData = function (data: Uint8Array, start: number, end: number) {
+        target.push(data.subarray(start, end), this._progressInfo);
+      }.bind(this);
     }
 
     push(data: Uint8Array, progressInfo: ProgressInfo) {
-      var buffer = this._buffer;
-      if (this._initialize) {
-        if (!buffer.push(data, 2)) {
-          return;
-        }
-        var headerBytes = buffer.getHead(2);
-        verifyDeflateHeader(headerBytes);
-        buffer.removeHead(2);
-        this._initialize = false;
-      } else {
-        buffer.push(data);
-      }
-      var stream = buffer.createStream();
-      stream.bitBuffer = this._state.bitBuffer;
-      stream.bitLength = this._state.bitLength;
-      var output = this._output;
-      var lastAvailable = output.available;
-      try {
-        do {
-          inflateBlock(stream, output, this._state.compression);
-        } while (stream.pos < buffer.length && !output.completed);
-      } catch (e) {
-        this._state.bitBuffer = stream.bitBuffer;
-        this._state.bitLength = stream.bitLength;
-        if (e !== InflateNoDataError) {
-          throw e; // Re-throw non data errors.
-        }
-      }
-      this._state.bitBuffer = stream.bitBuffer;
-      this._state.bitLength = stream.bitLength;
-      buffer.removeHead(stream.pos);
-
-      // push data downstream
-      this._target.push(output.data.subarray(lastAvailable, output.available),
-        progressInfo);
+      this._progressInfo = progressInfo;
+      this._inflate.push(data);
     }
 
-    close() { }
+    close() {
+      this._inflate = null;
+    }
   }
 
   interface SwfInfo {

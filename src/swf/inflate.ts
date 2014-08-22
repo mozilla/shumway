@@ -173,6 +173,9 @@ module Shumway.SWF {
     private _buffer: HeadTailBuffer;
     private _state: CompressedPipeState;
     private _output: CompressionOutput;
+
+    public onData: (data: Uint8Array, start: number, end: number) => void;
+
     constructor(length: number = 16) {
       this._length = length;
       this._initialize = true;
@@ -221,7 +224,9 @@ module Shumway.SWF {
       buffer.removeHead(stream.pos);
 
       // push data downstream
-      // this._target.push(output.data.subarray(lastAvailable, output.available),
+      if (this.onData) {
+        this.onData(output.data, lastAvailable, output.available);
+      }
     }
 
     public toUint8Array(): Uint8Array {
