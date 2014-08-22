@@ -98,6 +98,11 @@ module Shumway.ArrayUtilities {
     }
   }
 
+  var bitMasks = new Uint32Array(33);
+  for (var i = 1, mask = 0; i <= 32; i++) {
+    bitMasks[i] = mask = (mask << 1) | 1;
+  }
+
   export class DataBuffer implements IDataInput, IDataOutput {
     private static _nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
 
@@ -530,6 +535,92 @@ module Shumway.ArrayUtilities {
       }
     }
 
+    readFixed(): number {
+      return this.readInt() / 65536;
+    }
+
+    readFixed8(): number {
+      return this.readShort() / 256;
+    }
+
+    readFloat16(): number {
+      var uint16 = this.readUnsignedShort();
+      var sign = uint16 >> 15 ? -1 : 1;
+      var exponent = (uint16 & 0x7c00) >> 10;
+      var fraction = uint16 & 0x03ff;
+      if (!exponent) {
+        return sign * Math.pow(2, -14) * (fraction / 1024);
+      }
+      if (exponent === 0x1f) {
+        return fraction ? NaN : sign * Infinity;
+      }
+      return sign * Math.pow(2, exponent - 15) * (1 + (fraction / 1024));
+    }
+
+    readEncodedU32(): number {
+      var value = this.readUnsignedByte();
+      if (!(value & 0x080)) {
+        return value;
+      }
+      value |= this.readUnsignedByte() << 7;
+      if (!(value & 0x4000)) {
+        return value;
+      }
+      value |= this.readUnsignedByte() << 14;
+      if (!(value & 0x200000)) {
+        return value;
+      }
+      value |= this.readUnsignedByte() << 21;
+      if (!(value & 0x10000000)) {
+        return value;
+      }
+      return value | (this.readUnsignedByte() << 28);
+    }
+
+    readBits(size: number): number {
+      return (this.readUnsignedBits(size) << (32 - size)) >> (32 - size);
+    }
+
+    readUnsignedBits(size: number): number {
+      var buffer = this._bitBuffer;
+      var length = this._bitLength;
+      while (size > length) {
+        buffer = (buffer << 8) | this.readUnsignedByte();
+        length += 8;
+      }
+      length -= size;
+      var value = (buffer >>> length) & bitMasks[size];
+      this._bitBuffer = buffer;
+      this._bitLength = length;
+      return value;
+    }
+
+    readFixedBits(size: number): number {
+      return this.readBits(size) / 65536;
+    }
+
+    readString(length?: number): string {
+      var position = this._position;
+      if (length) {
+        if (position + length > this._length) {
+          throwEOFError();
+        }
+        this._position += length;
+      } else {
+        length = 0;
+        for (var i = position; i < this._length && this._u8View[i]; i++) {
+          length++;
+        }
+        this._position += length + 1;
+      }
+      return utf8encode(new Int8Array(this._buffer, position, length));
+    }
+
+    align() {
+      this._bitBuffer = 0;
+      this._bitLength = 0;
+    }
+
     /*
      * Inflate / Deflate Support
      *
@@ -610,7 +701,7 @@ module Shumway.ArrayUtilities {
       return { codes: codes, maxBits: maxBits };
     }
 
-    private static readBits(input: DataBuffer, size: number) {
+    private static readBitsMSB(input: DataBuffer, size: number) {
       var buffer = input._bitBuffer;
       var bufflen = input._bitLength;
       while (size > bufflen) {
@@ -623,7 +714,7 @@ module Shumway.ArrayUtilities {
     }
 
     private static inflateBlock(input: DataBuffer, output: DataBuffer) {
-      var readBits = DataBuffer.readBits;
+      var readBits = DataBuffer.readBitsMSB;
       var header = readBits(input, 3);
       switch (header >> 1) {
         case 0:
@@ -688,7 +779,7 @@ module Shumway.ArrayUtilities {
     }
 
     static inflate(input: DataBuffer, output: DataBuffer, literalTable, distanceTable) {
-      var readBits = DataBuffer.readBits;
+      var readBits = DataBuffer.readBitsMSB;
       var readCode = DataBuffer.readCode;
       var lengthCodes = DataBuffer._lengthCodes;
       var lengthExtraBits = DataBuffer._lengthExtraBits;
