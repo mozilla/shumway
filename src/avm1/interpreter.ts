@@ -268,8 +268,7 @@ module Shumway.AVM1 {
       case 'movieclip':
         return (<Shumway.AVM2.AS.avm1lib.AS2MovieClip> value).__targetPath;
       case 'object':
-        var result = value.toString !== Function.prototype.toString ?
-          value.toString() : value;
+        var result = value.toString();
         if (typeof result === 'string') {
           return result;
         }
