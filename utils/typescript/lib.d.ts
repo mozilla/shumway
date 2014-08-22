@@ -432,6 +432,7 @@ declare var String: {
     (value?: any): string;
     prototype: String;
     fromCharCode(...codes: number[]): string;
+    charCodeAt(s: string, index: number): number;
 }
 
 interface Boolean {
