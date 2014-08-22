@@ -31,7 +31,7 @@ check-system:
 	fi
 	echo "The environment is good"
 
-bootstrap: check-system install-libs install-utils build-libs build-playerglobal
+bootstrap: check-system install-libs install-utils build-libs
 
 install-libs:
 	git submodule init
@@ -62,7 +62,7 @@ run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
 
 build-libs:
-	grunt avm2 avm1 stage
+	grunt shu
 
 build-playerglobal:
 	make -C utils/ build-playerglobal
