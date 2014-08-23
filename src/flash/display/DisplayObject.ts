@@ -285,6 +285,13 @@ module Shumway.AVM2.AS.flash.display {
       return this._syncID++;
     }
 
+    /**
+     * DisplayObject#name is set to an initial value of 'instanceN', where N is auto-incremented.
+     * This is true for all DisplayObjects except for Stage, so it happens in an overrideable
+     * method.
+     */
+    static _instanceID = 1;
+
     static _advancableInstances: WeakList<IAdvancable>;
 
     // Called whenever the class is initialized.
@@ -317,7 +324,7 @@ module Shumway.AVM2.AS.flash.display {
 
       self._root = null;
       self._stage = null;
-      self._name = null;
+      self._setInitialName();
       self._parent = null;
       self._mask = null;
 
@@ -488,6 +495,13 @@ module Shumway.AVM2.AS.flash.display {
       events.EventDispatcher.instanceConstructorNoInitialize.call(this);
       this._addReference();
       this._setFlags(DisplayObjectFlags.Constructed);
+    }
+
+    /**
+     * Sets the object's initial name to adhere to the 'instanceN' naming scheme.
+     */
+    _setInitialName() {
+      this._name = 'instance' + (flash.display.DisplayObject._instanceID++);
     }
 
     _setParent(parent: DisplayObjectContainer, depth: number) {
@@ -1279,7 +1293,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get name(): string {
-      return this._name ? this._name : "";
+      return this._name;
     }
 
     set name(value: string) {

@@ -53,6 +53,10 @@ module Shumway.AVM2.AS.flash.display {
         return Loader._rootLoader;
       }
       var loader = new flash.display.Loader();
+      // The root loader gets a default name, but it's not visible and hence the instance id must
+      // not be used up.
+      flash.display.DisplayObject._instanceID--;
+      // The root loaderInfo's `loader` property is always null.
       loader._contentLoaderInfo._loader = null;
       loader._loadStatus = LoadStatus.Opened;
       Loader._rootLoader = loader;
@@ -390,6 +394,10 @@ module Shumway.AVM2.AS.flash.display {
       var root = this._content;
       if (!root) {
         root = documentClass.initializeFrom(rootSymbol);
+        // The root object gets a default of 'rootN', which doesn't use up a DisplayObject instance
+        // ID.
+        flash.display.DisplayObject._instanceID--;
+        root._name = 'root1'; // TODO: make this increment for subsequent roots.
 
         if (MovieClip.isType(root)) {
           var mc = <MovieClip>root;
