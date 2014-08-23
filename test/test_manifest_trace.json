@@ -136,13 +136,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "zombo trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/ZombotronTest.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "timeline_scene",
        "stas": "swfs/trace.stas",
        "filenames": [
