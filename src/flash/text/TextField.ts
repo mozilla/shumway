@@ -89,7 +89,6 @@ module Shumway.AVM2.AS.flash.text {
 
       if (symbol) {
         self._setFillAndLineBoundsFromSymbol(symbol);
-        self._textContent.bounds = this._lineBounds;
 
         defaultTextFormat.color = symbol.color;
         defaultTextFormat.size = (symbol.size / 20) | 0;
@@ -126,6 +125,12 @@ module Shumway.AVM2.AS.flash.text {
     constructor() {
       super();
       notImplemented("Dummy Constructor: public flash.text.TextField");
+    }
+
+    _setFillAndLineBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {
+      super._setFillAndLineBoundsFromSymbol(symbol);
+      this._textContent.bounds = this._lineBounds;
+      this._invalidateContent();
     }
 
     _setFillAndLineBoundsFromWidthAndHeight(width: number, height: number) {
