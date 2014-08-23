@@ -1,4 +1,18 @@
 [
+    {  "id": "flash_net_URLRequest trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/flash_net_URLRequest.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "avm1 loadVariables trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/loadvariables/loadvariables.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "avm1 setInterval trace",
       "stas": "swfs/trace.stas",
       "filenames": [
