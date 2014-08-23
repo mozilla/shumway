@@ -337,13 +337,13 @@ function displayTests() {
     // eq(s.transform.matrix, null, "Make sure matrix is not null when no Z value is set.");
   });
 
-  unitTests.push(function () {
+  unitTests.push(function widthSettingOnNonParentedObject() {
     var s = new Shape();
     s._getContentBounds = function () {
       return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
     s.width = 50;
-    eq(s.width, 50, "Setting the width when the object is not added to a parent.");
+    eq(s.width, 50, "Width is applied correctly when the object is not added to a parent.");
   });
 
   function canHaveGraphics() {
@@ -365,7 +365,7 @@ function displayTests() {
   }
   unitTests.push(canHaveGraphics);
 
-  unitTests.push(function () {
+  unitTests.push(function hitTestMaskedObject() {
     var s1 = new Sprite();
     s1.graphics.beginFill(0xff0000);
     s1.graphics.drawRect(0, 0, 200, 100);
@@ -378,12 +378,23 @@ function displayTests() {
     eq(s1.hitTestPoint(150, 50, true), true);
   });
 
-  unitTests.push(function () {
+  unitTests.push(function accessibilityPropertiesAccessor() {
     var a = new DisplayObject();
     eq(a.accessibilityProperties, null);
     var b = new AccessibilityProperties();
     a.accessibilityProperties = b;
     eq(a.accessibilityProperties, b);
+  });
+
+  unitTests.push(function alphaAccessor() {
+    var a = new DisplayObject();
+    eq(a.alpha, 1);
+    a.alpha = 0.5;
+    eq(a.alpha, 0.5);
+    eq(a.transform.colorTransform.alphaMultiplier, 0.5);
+    a.alpha = 0.3;
+    eq(a.alpha, 0.296875);
+    eq(a.transform.colorTransform.alphaMultiplier, 0.296875);
   });
 
 }
