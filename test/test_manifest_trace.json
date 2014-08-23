@@ -38,13 +38,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "flash_utils_ByteArray",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_utils_ByteArray.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "flash_display_DisplayObjectContainer trace",
        "stas": "swfs/trace.stas",
        "filenames": [
