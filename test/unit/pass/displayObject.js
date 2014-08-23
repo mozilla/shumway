@@ -22,6 +22,7 @@ function displayTests() {
   var TextField = flash.text.TextField;
   var Video = flash.media.Video;
   var Bitmap = flash.display.Bitmap;
+  var Loader = flash.display.Loader;
   var Stage = flash.display.Stage;
   var AccessibilityProperties = flash.accessibility.AccessibilityProperties;
 
@@ -396,6 +397,19 @@ function displayTests() {
     eq(a.alpha, 0.296875);
     eq(a.transform.colorTransform.alphaMultiplier, 0.296875);
   });
+
+  unitTests.push(function defaultNames() {
+    DisplayObject._instanceID = 1;
+    eq(new Stage().name, null);
+    eq(new DisplayObject().name, 'instance1');
+    eq(new Sprite().name, 'instance2');
+    eq(new Shape().name, 'instance3');
+    eq(new MovieClip().name, 'instance4');
+    eq(new SimpleButton().name, 'instance5');
+    eq(new TextField().name, 'instance6');
+    eq(new Bitmap().name, 'instance7');
+    eq(new Loader().name, 'instance8');
+  })
 
 }
 displayTests();

@@ -148,6 +148,10 @@ module Shumway.AVM2.AS.flash.display {
       value = value | 0;
     }
 
+    _setInitialName() {
+      this._name = null;
+    }
+
     /**
      * Non-AS3-available setter. In AS3, the `stageWidth` setter is silently ignored.
      */
