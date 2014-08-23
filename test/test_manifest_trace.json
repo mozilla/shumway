@@ -38,13 +38,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "flash_utils_ByteArray",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_utils_ByteArray.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "flash_display_DisplayObjectContainer trace",
        "stas": "swfs/trace.stas",
        "filenames": [
@@ -84,13 +77,6 @@
        "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_system_Capabilities.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_net_URLRequest trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_net_URLRequest.swf"
        ],
        "type": "stas"
     },
@@ -177,12 +163,5 @@
          "swfs/blendmode/blendmode_2.swf"
        ],
        "type": "stas"
-    },
-    {  "id": "avm1 loadVariables trace",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/avm1/loadvariables/loadvariables.swf"
-      ],
-      "type": "stas"
     }
 ]

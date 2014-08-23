@@ -458,7 +458,7 @@ module Shumway.AVM2.Runtime {
       defineNonEnumerableProperty(self, "original_valueOf", self.valueOf);
       self.valueOf = forwardValueOf;
     } else if (resolved === Multiname.TO_STRING) {
-      defineNonEnumerableProperty(self, "toString", self.toString);
+      defineNonEnumerableProperty(self, "original_toString", self.toString);
       self.toString = forwardToString;
     }
   }
