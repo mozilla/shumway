@@ -206,6 +206,25 @@
     eq(c.getTimelineObjectAtDepth(2), null);
   });
 
+  unitTests.push(function getChildByName() {
+    var s1 = new Shape();
+    s1.name = 's1';
+    var s2 = new Shape();
+    s2.name = 's2';
+    var s3 = new Shape();
+    s3.name = 's3';
+    var c = new DisplayObjectContainer();
+
+    eq(c.getChildByName('foo'), null);
+
+    c.addChild(s1);
+    c.addChild(s2);
+    c.addChild(s3);
+    eq(c.getChildByName('s1'), s1);
+    eq(c.getChildByName('s2'), s2);
+    eq(c.getChildByName('s3'), s3);
+  });
+
   unitTests.push(function getObjectsUnderPoint() {
     Random.seed(0x12343);
 
