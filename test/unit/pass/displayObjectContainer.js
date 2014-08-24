@@ -48,7 +48,6 @@
     var s = new Shape();
     var c = new DisplayObjectContainer();
     var r = "";
-    var addedToStageEventWasTriggered = false;
     s.addEventListener(Event.ADDED_TO_STAGE, function () {
       r += "A";
     });
@@ -64,7 +63,6 @@
     var s = new Shape();
     var c = new DisplayObjectContainer();
     var r = "";
-    var addedToStageEventWasTriggered = false;
     s.addEventListener(Event.ADDED_TO_STAGE, function () {
       r += "A";
     });
@@ -145,32 +143,23 @@
     eq(r, "AA");
   });
 
-  unitTests.push(function () {
-    Random.seed(0x12343);
-    var s1 = new Shape();
-    var s2 = new Shape();
-    var c = new DisplayObjectContainer();
-    c.addTimelineObjectAtDepth(s1, 1);
-    c.addTimelineObjectAtDepth(s2, 2);
-    eq(c.getTimelineObjectAtDepth(1), s1);
-    eq(c.getTimelineObjectAtDepth(2), s2);
-    eq(c.getTimelineObjectAtDepth(3), null);
-    c.addChild(s1);
-    eq(c.getTimelineObjectAtDepth(1), null);
-    c.setChildIndex(s2, 1);
-    eq(c.getTimelineObjectAtDepth(2), null);
-  });
-
-  unitTests.push(function () {
-    Random.seed(0x12343);
+  unitTests.push(function timelineObjectHandling() {
     var s1 = new Shape();
     var s2 = new Shape();
     var s3 = new Shape();
     var c = new DisplayObjectContainer();
-    c.addTimelineObjectAtDepth(s2, 2);
-    c.addTimelineObjectAtDepth(s3, 3);
     c.addTimelineObjectAtDepth(s1, 1);
+    c.addTimelineObjectAtDepth(s3, 3);
+    c.addTimelineObjectAtDepth(s2, 2);
     eq(c.getChildIndex(s1), 0);
+    eq(c.getTimelineObjectAtDepth(1), s1);
+    eq(c.getTimelineObjectAtDepth(2), s2);
+    eq(c.getTimelineObjectAtDepth(3), s3);
+    eq(c.getTimelineObjectAtDepth(4), null);
+    c.addChild(s1);
+    eq(c.getTimelineObjectAtDepth(1), null);
+    c.setChildIndex(s2, 1);
+    eq(c.getTimelineObjectAtDepth(2), null);
   });
 
   unitTests.push(function getObjectsUnderPoint() {
