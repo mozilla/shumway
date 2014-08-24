@@ -483,13 +483,22 @@
     structEq(g._getContentBounds(true), {xMin: 477, xMax: 2610, yMin: 477, yMax: 2610},
              "curve extends line bounds correctly");
 
-    // Disabled because we return a yMax value of 2548. Will investigate later.
-//    g.clear();
-//    g.lineStyle(1);
-//    g.moveTo(30, 50);
-//    g.cubicCurveTo(60, -10, 180, 200, 150, 100);
-//    structEq(g._getContentBounds(false), {xMin: 600, xMax: 3095, yMin: 780, yMax: 2549},
-//             "cubic curve extends fill bounds correctly");
+    g.clear();
+    g.lineStyle(1);
+    g.moveTo(30, 50);
+    g.cubicCurveTo(60, -10, 180, 200, 150, 100);
+    structEq(g._getContentBounds(false), {xMin: 600, xMax: 3095, yMin: 780, yMax: 2549},
+             "cubic curve extends fill bounds correctly");
+    structEq(g._getContentBounds(true), {xMin: 590, xMax: 3105, yMin: 770, yMax: 2559},
+             "cubic curve extends line bounds correctly");
+
+    g.clear();
+    g.lineStyle(1);
+    g.cubicCurveTo(100, 50, -100, 100, 0, 150);
+    structEq(g._getContentBounds(false), {xMin: -577, xMax: 577, yMin: 0, yMax: 3000},
+             "cubic curve extends fill bounds correctly");
+    structEq(g._getContentBounds(true), {xMin: -587, xMax: 587, yMin: -10, yMax: 3010},
+             "cubic curve extends line bounds correctly");
   }
 
   function createGraphics() {
