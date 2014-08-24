@@ -11,27 +11,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "flash_filters_BlurFilter trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_filters_BlurFilter.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_filters_DropShadowFilter trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_filters_DropShadowFilter.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_filters_GlowFilter trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_filters_GlowFilter.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "flash_geom_Matrix3D trace",
        "stas": "swfs/trace.stas",
        "filenames": [
