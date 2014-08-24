@@ -168,11 +168,6 @@
       "swf": "/examples/graphics/various-strokes.swf",
       "type": "eq"
     },
-    {  "id": "graphics-bounding-boxes-ref",
-      "frames": [1],
-      "swf": "/examples/graphics/bounding-boxes.swf",
-      "type": "eq"
-    },
     {  "id": "textfield-align-ref",
       "frames": [1],
       "swf": "/examples/textfield/align.swf",
