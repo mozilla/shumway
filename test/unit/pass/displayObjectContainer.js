@@ -152,13 +152,13 @@
     var c = new DisplayObjectContainer();
     c.addTimelineObjectAtDepth(s1, 1);
     c.addTimelineObjectAtDepth(s2, 2);
-    eq(c.getChildAtDepth(1), s1);
-    eq(c.getChildAtDepth(2), s2);
-    eq(c.getChildAtDepth(3), null);
+    eq(c.getTimelineObjectAtDepth(1), s1);
+    eq(c.getTimelineObjectAtDepth(2), s2);
+    eq(c.getTimelineObjectAtDepth(3), null);
     c.addChild(s1);
-    eq(c.getChildAtDepth(1), null);
+    eq(c.getTimelineObjectAtDepth(1), null);
     c.setChildIndex(s2, 1);
-    eq(c.getChildAtDepth(2), null);
+    eq(c.getTimelineObjectAtDepth(2), null);
   });
 
   unitTests.push(function () {

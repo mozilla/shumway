@@ -329,7 +329,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Returns the timeline object that exists at the specified depth.
      */
-    getChildAtDepth(depth: number /*int*/): flash.display.DisplayObject {
+    getTimelineObjectAtDepth(depth: number /*int*/): flash.display.DisplayObject {
       depth = depth | 0;
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
