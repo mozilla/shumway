@@ -143,6 +143,50 @@
     eq(r, "AA");
   });
 
+  unitTests.push(function addAndGetAndRemoveChildAt() {
+    var s1 = new Shape();
+    var s2 = new Shape();
+    var s3 = new Shape();
+    var c = new DisplayObjectContainer();
+    var exceptionMessage = null;
+    try {
+      c.addChildAt(s1, 10);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'RangeError: Error #2006: The supplied index is out of bounds.');
+
+    exceptionMessage = null;
+    try {
+      c.getChildAt(10);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'RangeError: Error #2006: The supplied index is out of bounds.');
+
+    exceptionMessage = null;
+    try {
+      c.removeChildAt(10);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'RangeError: Error #2006: The supplied index is out of bounds.');
+
+    c.addChildAt(s1, 0);
+    eq(c.getChildAt(0), s1);
+    c.addChildAt(s2, 1);
+    eq(c.getChildAt(1), s2);
+    c.addChildAt(s3, 0);
+    eq(c.getChildAt(0), s3);
+    eq(c.getChildAt(1), s1);
+    eq(c.getChildAt(2), s2);
+    c.removeChildAt(0);
+    eq(c.getChildAt(0), s1);
+    eq(c.getChildAt(1), s2);
+    c.removeChildAt(1);
+    eq(c.getChildAt(0), s1);
+  });
+
   unitTests.push(function timelineObjectHandling() {
     var s1 = new Shape();
     var s2 = new Shape();
