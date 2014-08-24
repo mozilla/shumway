@@ -16,6 +16,7 @@
 // Class: Loader
 module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
+  import assertUnreachable = Shumway.Debug.assertUnreachable;
   import notImplemented = Shumway.Debug.notImplemented;
   import FileLoadingService = Shumway.FileLoadingService;
   import Telemetry = Shumway.Telemetry;
@@ -123,9 +124,11 @@ module Shumway.AVM2.AS.flash.display {
                                                                 false, false, bytesLoaded,
                                                                 bytesTotal));
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
-              queue.splice(i--, 0);
+              queue.splice(i--, 1);
             }
             break;
+          default:
+            assertUnreachable("Mustn't encounter unhandled status in Loader queue.");
         }
       }
     }
