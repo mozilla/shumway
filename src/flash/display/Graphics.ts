@@ -88,10 +88,10 @@ module Shumway.AVM2.AS.flash.display {
     var t2 = (fHead - fCenter ) / fTail;
     var result = [];
     if (t1 >= 0 && t1 <= 1) {
-      result.push(cubicBezier(from, cp, cp2, to, t1));
+      result.push(Math.round(cubicBezier(from, cp, cp2, to, t1)));
     }
     if (t2 >= 0 && t2 <= 1) {
-      result.push(cubicBezier(from, cp, cp2, to, t2));
+      result.push(Math.round(cubicBezier(from, cp, cp2, to, t2)));
     }
     return result;
   }
@@ -810,13 +810,13 @@ module Shumway.AVM2.AS.flash.display {
       var fromY = this._lastY;
       if (controlX1 < fromX || controlX2 < fromX || controlX1 > anchorX || controlX2 > anchorX) {
         extremes = cubicBezierExtremes(fromX, controlX1, controlX2, anchorX);
-        for (i = extremes.length; i; i--) {
+        for (i = extremes.length; i--;) {
           this._extendBoundsByX(extremes[i] | 0);
         }
       }
       if (controlY1 < fromY || controlY2 < fromY || controlY1 > anchorY || controlY2 > anchorY) {
         extremes = cubicBezierExtremes(fromY, controlY1, controlY2, anchorY);
-        for (i = extremes.length; i; i--) {
+        for (i = extremes.length; i--;) {
           this._extendBoundsByY(extremes[i] | 0);
         }
       }
