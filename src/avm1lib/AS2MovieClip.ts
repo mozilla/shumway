@@ -89,7 +89,7 @@ module Shumway.AVM2.AS.avm1lib {
     }
     _insertChildAtDepth(mc: any, depth: number): AS2MovieClip {
       var nativeAS3Object = <flash.display.MovieClip> this._nativeAS3Object;
-      nativeAS3Object.addChildAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
+      nativeAS3Object.addTimelineObjectAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
       // Bitmaps aren't reflected in AS2, so the rest here doesn't apply.
       if (flash.display.Bitmap.isType(mc)) {
         return null;

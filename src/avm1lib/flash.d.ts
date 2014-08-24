@@ -30,7 +30,7 @@ declare module Shumway.AVM2.AS.flash {
       _name: string;
       numChildren: number;
 
-      addChildAtDepth(child, depth: number);
+      addTimelineObjectAtDepth(child, depth: number);
       getChildAt(depth: number): any;
     }
     class Loader extends DisplayObject {}

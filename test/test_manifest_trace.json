@@ -11,76 +11,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "flash_display_DisplayObjectContainer trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_DisplayObjectContainer.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_display_Graphics trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_Graphics.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_system_System trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_system_System.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_system_Security trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_system_Security.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_system_SecurityDomain trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_system_SecurityDomain.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_system_Capabilities trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_system_Capabilities.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_display_Shape trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_Shape.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_filters_BlurFilter trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_filters_BlurFilter.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_filters_DropShadowFilter trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_filters_DropShadowFilter.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_filters_GlowFilter trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_filters_GlowFilter.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "flash_geom_Matrix3D trace",
        "stas": "swfs/trace.stas",
        "filenames": [
@@ -99,13 +29,6 @@
        "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_net_classes.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "flash_ui_ContextMenu trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_ui_ContextMenu.swf"
        ],
        "type": "stas"
     },
