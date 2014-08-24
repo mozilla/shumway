@@ -11,13 +11,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "flash_display_Shape trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_Shape.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "flash_filters_BlurFilter trace",
        "stas": "swfs/trace.stas",
        "filenames": [
