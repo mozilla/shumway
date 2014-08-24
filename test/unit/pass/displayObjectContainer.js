@@ -150,8 +150,8 @@
     var s1 = new Shape();
     var s2 = new Shape();
     var c = new DisplayObjectContainer();
-    c.addChildAtDepth(s1, 1);
-    c.addChildAtDepth(s2, 2);
+    c.addTimelineObjectAtDepth(s1, 1);
+    c.addTimelineObjectAtDepth(s2, 2);
     eq(c.getChildAtDepth(1), s1);
     eq(c.getChildAtDepth(2), s2);
     eq(c.getChildAtDepth(3), null);
@@ -167,9 +167,9 @@
     var s2 = new Shape();
     var s3 = new Shape();
     var c = new DisplayObjectContainer();
-    c.addChildAtDepth(s2, 2);
-    c.addChildAtDepth(s3, 3);
-    c.addChildAtDepth(s1, 1);
+    c.addTimelineObjectAtDepth(s2, 2);
+    c.addTimelineObjectAtDepth(s3, 3);
+    c.addTimelineObjectAtDepth(s1, 1);
     eq(c.getChildIndex(s1), 0);
   });
 

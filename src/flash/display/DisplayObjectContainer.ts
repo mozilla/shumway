@@ -203,9 +203,12 @@ module Shumway.AVM2.AS.flash.display {
      * Adds a timeline object to this container. The new child is added after the last object that
      * exists at a smaller depth, or before the first object that exists at a greater depth. If no
      * other timeline object is found, the new child is added to the front(top) of all other children.
+     *
+     * Note that this differs from `addChildAt` in that the depth isn't an index in the `children`
+     * array, and doesn't have to be in the dense range [0..children.length].
      */
-    addChildAtDepth(child: flash.display.DisplayObject, depth: number /*int*/) {
-      release || counter.count("DisplayObjectContainer::addChildAtDepth");
+    addTimelineObjectAtDepth(child: flash.display.DisplayObject, depth: number /*int*/) {
+      release || counter.count("DisplayObjectContainer::addTimelineObjectAtDepth");
 
       depth = depth | 0;
 

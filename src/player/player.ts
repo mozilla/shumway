@@ -141,7 +141,7 @@ module Shumway.Player {
           stage.setStageWidth(loaderInfo.width);
           stage.setStageHeight(loaderInfo.height);
           stage.color = ColorUtilities.RGBAToARGB(loaderInfo._colorRGBA);
-          stage.addChildAtDepth(root, 0);
+          stage.addTimelineObjectAtDepth(root, 0);
           self._enterLoops();
         });
       }
