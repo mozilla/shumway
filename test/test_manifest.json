@@ -112,12 +112,12 @@
       "type": "eq"
     },
     {  "id": "flex-bitmap-ref",
-      "frames": [0],
+      "frames": [1],
       "swf": "/examples/bitmap/flex-bitmap/flexbitmap.swf",
       "type": "eq"
     },
     {  "id": "non-smoothed-bitmap-ref",
-      "frames": [0],
+      "frames": [1],
       "swf": "/examples/bitmap/non-smoothed-bitmap/nonsmoothedbitmap.swf",
       "type": "eq"
     },

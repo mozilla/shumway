@@ -18,6 +18,11 @@
 
 module.exports = function(grunt) {
 
+  // work around a grunt bug where color output is written to non-tty output
+  if (!process.stdout.isTTY) {
+      grunt.option("color", false);
+  }
+
   // Don't use `--removeComments` here beause it strips out closure annotations that are
   // needed by the build system.
   var commonArguments = 'node utils/typescript/tsc --target ES5 --sourcemap -d --out build/ts/';
