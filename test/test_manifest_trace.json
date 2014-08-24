@@ -11,13 +11,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "flash_display_Graphics trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_display_Graphics.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "flash_system_System trace",
        "stas": "swfs/trace.stas",
        "filenames": [
