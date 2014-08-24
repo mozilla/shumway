@@ -32,13 +32,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "flash_ui_ContextMenu trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_ui_ContextMenu.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "blendmode_trace",
        "stas": "swfs/trace.stas",
        "filenames": [
