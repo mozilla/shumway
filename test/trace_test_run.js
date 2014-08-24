@@ -7,7 +7,7 @@ var defaultManifestFile = './test/test_manifest_trace.json';
 var traceFile = './test/trace.log';
 var diffRefDataFile = './test/refdata~';
 var diffTestDataFile = './test/testdata~';
-var runDuration = 300;
+var runDuration = 1000;
 
 var GREEN = '\033[92m';
 var RED = '\033[91m';
