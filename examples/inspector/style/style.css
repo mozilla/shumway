@@ -131,6 +131,14 @@ body.simple #stageContainer {
   display: inline-block;
 }
 
+#flashContainer {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  display: inline-block;
+  opacity: 0.5;
+}
+
 #panelContainer {
   display: block;
   position: absolute;
