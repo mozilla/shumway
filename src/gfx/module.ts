@@ -23,6 +23,8 @@ interface CanvasGradient {
 }
 
 module Shumway.GFX {
+  import assert = Shumway.Debug.assert;
+
   export enum TraceLevel {
     None,
     Brief,
@@ -275,8 +277,9 @@ module Shumway.GFX {
       this._commands[this._commandPosition++] = command;
     }
 
-    private _writeData(a: number, b: number, c?: number, d?: number, e?: number, f?: number, g?: number) {
+    private _writeData(a: number, b: number, c?: number, d?: number, e?: number, f?: number) {
       var argc = arguments.length;
+      release || assert(argc <= 6 && (argc % 2 === 0 || argc === 5));
       if (this._dataPosition + argc >= this._data.length) {
         this._ensureDataCapacity(this._dataPosition + argc);
       }
@@ -289,9 +292,8 @@ module Shumway.GFX {
         data[p + 3] = d;
         if (argc > 4) {
           data[p + 4] = e;
-          data[p + 5] = f;
-          if (argc > 5) {
-            data[p + 6] = g;
+          if (argc === 6) {
+            data[p + 5] = f;
           }
         }
       }
