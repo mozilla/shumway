@@ -34,40 +34,49 @@ var easel, easelHost, player;
 function loadMovie(path, reportFrames) {
   path = combineUrl(document.location.href, path);
 
-  var movieReadyResolve;
-  var movieReady = new Promise(function (resolve) {
-    movieReadyResolve = resolve;
-  });
-  movieReady.then(function() { sendResponse(); });
-
-  var onFrameCallback = null;
-  if (reportFrames) {
-    var i = 0, frame = -1;
-    onFrameCallback = function () {
-      while (i < reportFrames.length && frame >= reportFrames[i]) {
+  var expectedFrameIndex = 0, currentFrame = -1;
+  function onFrameCallback() {
+    if (currentFrame < 0) {
+      sendResponse();
+    }
+    if (reportFrames) {
+      while (expectedFrameIndex < reportFrames.length &&
+        currentFrame >= reportFrames[expectedFrameIndex]) {
         var snapshot = getCanvasData();
-        movieReady.then(sendResponse.bind(null, {
-          index: i,
-          frame: frame,
+        sendResponse({
+          index: expectedFrameIndex,
+          frame: currentFrame,
           snapshot: snapshot
-        }));
-        i++;
+        });
+        expectedFrameIndex++;
       }
-      frame++;
+    }
+    currentFrame++;
+  }
+
+  function initEaselHostCallbacks() {
+    easelHost.processFrame = onFrameCallback;
+    easelHost.processFSCommand = function (command) {
+      if (command === 'quit') {
+        terminate();
+      }
     };
   }
 
-  function initialized() {
-    setTimeout(function () {
-      movieReadyResolve(); // startPromise
-      loaded(); // onParsed
-    }, 1000);
-
-    // terminate();
+  function terminate() {
+    ignoreAdanvances = true;
+    // cleaning up
+    if (advanceTimeout) { // invoke current timeout
+      clearTimeout(advanceTimeout);
+      advanceCallback();
+    }
+    // reports unreported frames
+    while (reportFrames && i < reportFrames.length) {
+      onFrameCallback();
+    }
   }
 
   easel = createEasel();
-
   if (TEST_MODE === 'iframe') {
     var flashParams = {
       url: path,
@@ -92,62 +101,27 @@ function loadMovie(path, reportFrames) {
       playerWindow.postMessage(data, '*');
 
       easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
-      if (onFrameCallback) {
-        easelHost.processFrame = onFrameCallback;
-      }
-      easelHost.processFSCommand = function (command) {
-        if (command === 'quit') {
-          terminate();
-        }
-      };
-      initialized();
+      initEaselHostCallbacks();
     };
-    return;
+  } else {
+    // non-iframe mode
+    Shumway.dontSkipFramesOption.value = true;
+    Shumway.frameRateOption.value = 60; // turbo mode
+
+    var sysMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
+    var appMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
+
+    Shumway.FileLoadingService.instance.baseUrl = path;
+
+    Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
+      easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
+      initEaselHostCallbacks();
+
+      player = new Shumway.Player.Test.TestPlayer();
+      player.load(path);
+
+    });
   }
-
-  function loaded() { movieReadyResolve(); }
-  function terminate() {
-    ignoreAdanvances = true;
-    // cleaning up
-    if (!movieReady.resolved) { // movieReady needs to be resolved
-      movieReadyResolve();
-    }
-    if (advanceTimeout) { // invoke current timeout
-      clearTimeout(advanceTimeout);
-      advanceCallback();
-    }
-    // reports unreported frames
-    while (reportFrames && i < reportFrames.length) {
-      onFrameCallback();
-    }
-  }
-
-
-  Shumway.dontSkipFramesOption.value = true;
-  Shumway.frameRateOption.value = 60; // turbo mode
-
-  var sysMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
-  var appMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
-
-  Shumway.FileLoadingService.instance.baseUrl = path;
-
-  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
-
-    easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
-    if (onFrameCallback) {
-      easelHost.processFrame = onFrameCallback;
-    }
-    easelHost.processFSCommand = function (command) {
-      if (command === 'quit') {
-        terminate();
-      }
-    };
-
-    player = new Shumway.Player.Test.TestPlayer();
-    player.load(path);
-
-    initialized();
-  });
 }
 
 function createEasel() {

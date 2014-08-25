@@ -167,6 +167,7 @@ module Shumway.SWF {
         commitData({command: 'init', result: result});
       },
       onprogress: function (result) {
+        // sending progress events with 64K increments
         if (result.bytesLoaded - bytesLoaded >= 65536) {
           while (bytesLoaded < result.bytesLoaded) {
             if (bytesLoaded) {
@@ -284,7 +285,7 @@ module Shumway.SWF {
           }
         }
 
-        if (result.bytesLoaded === result.bytesTotal) {
+        if (result.bytesLoaded >= result.bytesTotal) {
           commitData({command: 'progress', result: {
             bytesLoaded: result.bytesLoaded,
             bytesTotal: result.bytesTotal

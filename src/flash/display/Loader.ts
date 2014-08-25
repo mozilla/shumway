@@ -145,7 +145,9 @@ module Shumway.AVM2.AS.flash.display {
 
       this._contentLoaderInfo._loader = this;
 
-      this._commitDataQueue = Promise.resolve();
+      this._initialDataLoaded = new PromiseWrapper<any>();
+      this._waitForInitialData = true;
+      this._commitDataQueue = this._initialDataLoaded.promise;
 
       this._codeExecutionPromise = new PromiseWrapper<any>();
       this._progressPromise = new PromiseWrapper<any>();
@@ -188,6 +190,8 @@ module Shumway.AVM2.AS.flash.display {
     private _worker: Worker;
     private _loadStatus: LoadStatus;
 
+    private _initialDataLoaded: PromiseWrapper<any>;
+    private _waitForInitialData: boolean;
     private _commitDataQueue: Promise<any>;
 
     /**
@@ -207,6 +211,16 @@ module Shumway.AVM2.AS.flash.display {
     private _codeExecutionPromise: PromiseWrapper<any>;
 
     private _commitData(data: any): void {
+      if (this._waitForInitialData) {
+        // 'progress' event usually fires after 64K, using this as a start to
+        // commit frame/symbols
+        var enoughData = data.command === 'progress' || data.command === 'error';
+        if (enoughData) {
+          this._waitForInitialData = false;
+          this._initialDataLoaded.resolve(undefined);
+        }
+      }
+
       this._commitDataQueue = this._commitDataQueue.then(
         this._commitQueuedData.bind(this, data));
     }
@@ -586,6 +600,9 @@ module Shumway.AVM2.AS.flash.display {
       if (!loaderInfo._allowCodeExecution) {
         this._codeExecutionPromise.reject('Disabled by _allowCodeExecution');
       }
+      if (!this._waitForInitialData) {
+        this._initialDataLoaded.resolve(undefined);
+      }
       var loader = this;
       //loader._worker = worker;
       worker.onmessage = function (e) {
@@ -616,6 +633,7 @@ module Shumway.AVM2.AS.flash.display {
         };
         session.open(request._toFileRequest());
       //} else {
+      //  this._initialDataLoaded.resolve(undefined);
       //  worker.postMessage(request);
       //}
       Loader._loadQueue.push(this);

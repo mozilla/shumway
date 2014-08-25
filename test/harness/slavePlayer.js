@@ -16,9 +16,6 @@
  * limitations under the License.
  */
 
-Shumway.dontSkipFramesOption.value = true;
-Shumway.frameRateOption.value = 60; // turbo mode
-
 var release = true;
 var SHUMWAY_ROOT = "../../src/";
 
@@ -116,6 +113,9 @@ function combineUrl(baseUrl, url) {
 function runSwfPlayer(flashParams) {
   var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
 
+  Shumway.dontSkipFramesOption.value = true;
+  Shumway.frameRateOption.value = 60; // turbo mode
+
   var compilerSettings = flashParams.compilerSettings;
   var sysMode = compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var appMode = compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
@@ -153,6 +153,7 @@ window.addEventListener('message', function onWindowMessage(e) {
   if (data.settings) {
     Shumway.Settings.setSettings(data.settings);
   }
+
   runSwfPlayer(data.flashParams);
   document.body.style.backgroundColor = 'green';
 });
