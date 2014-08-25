@@ -179,6 +179,29 @@ function executeFile(file, buffer, movieParams) {
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
         player.load(file);
 
+        if (false) {
+          var flashContent = document.createElement("div");
+          flashContent.id = 'flashContainer';
+          flashContent.innerHTML = '' +
+          '<object type="application/x-shockwave-flash" data="' + swfURL + '" width="100" height="100">' +
+            '<param name="quality" value="high" />'
+            '<param name="play" value="true" />' +
+            '<param name="loop" value="true" />' +
+            '<param name="wmode" value="opaque" />' +
+            '<param name="scale" value="noScale" />' +
+            '<param name="menu" value="true" />' +
+             '<param name="devicefont" value="false" />' +
+            '<param name="salign" value="" />' +
+            '<param name="allowScriptAccess" value="sameDomain" />' +
+          '</object>';
+          document.getElementById("stageContainer").appendChild(flashContent);
+
+          player._loader._contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE, function onProgress() {
+            flashContent.children[0].width = player._loader._contentLoaderInfo.width;
+            flashContent.children[0].height = player._loader._contentLoaderInfo.height;
+          });
+        }
+
         // embedding.loader
 
 //        SWF.embed(buffer || file, document, document.getElementById('stage'), {
