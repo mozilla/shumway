@@ -339,13 +339,13 @@ module Shumway.Player {
         for (var i = 0; i < frameRateMultiplierOption.value; i++) {
           enterTimeline("eventLoop");
           var start = performance.now();
+          Loader.progress();
           DisplayObject.performFrameNavigation(stage, true, runFrameScripts);
           counter.count("performFrameNavigation", 1, performance.now() - start);
           self._framesPlayed ++;
           if (tracePlayerOption.value > 0 && (self._framesPlayed % tracePlayerOption.value === 0)) {
             self._tracePlayer();
           }
-          Loader.progress();
           leaveTimeline("eventLoop");
         }
         if (rootInitialized) {
