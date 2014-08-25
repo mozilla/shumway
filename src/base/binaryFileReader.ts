@@ -73,6 +73,8 @@ module Shumway {
               onhttpstatus?: (location: string, status: string, responseHeaders: any) => void) {
       var xhr = new XMLHttpRequest({mozSystem: true});
       var url = this.url;
+      var loaded = 0;
+      var total = 0;
       xhr.open(this.method || "GET", url, true);
       xhr.responseType = 'moz-chunked-arraybuffer';
       var isNotProgressive = xhr.responseType !== 'moz-chunked-arraybuffer';
@@ -81,14 +83,22 @@ module Shumway {
       }
       xhr.onprogress = function (e) {
         if (isNotProgressive) return;
-        ondata(new Uint8Array(xhr.response), { loaded: e.loaded, total: e.total });
+        loaded = e.loaded;
+        total = e.total;
+        ondata(new Uint8Array(xhr.response), { loaded: loaded, total: total });
       };
       xhr.onreadystatechange = function (event) {
         if (xhr.readyState === 2 && onhttpstatus) {
           onhttpstatus(url, xhr.status, xhr.getAllResponseHeaders());
         }
         if (xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0 || xhr.response === null) {
+          // Failed loads can be detected through either the status code or the fact that nothing
+          // has been loaded.
+          // Note: Just checking that `xhr.response` is set doesn't work, as Firefox enables
+          // chunked loading, and in that mode `response` is only set in the `onprogress` handler.
+          if (xhr.status !== 200 && xhr.status !== 0 ||
+              xhr.response === null && (total === 0 || loaded !== total))
+          {
             onerror(xhr.statusText);
             return;
           }
