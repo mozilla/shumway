@@ -1142,7 +1142,7 @@ module Shumway.AVM2.ABC {
     }
 
     public static qualifyName(namespace, name): string {
-      return "$" + namespace.qualifiedName + name;
+      return Shumway.StringUtilities.concat3("$", namespace.qualifiedName, name);
     }
 
     public static stripPublicQualifier(qn): string {

@@ -239,9 +239,9 @@ module Shumway.AVM2.AS {
       var self = boxValue(this);
       if (self instanceof ASClass) {
         var cls: ASClass = <any>self;
-        return "[class " + cls.classInfo.instanceInfo.name.name + "]";
+        return Shumway.StringUtilities.concat3("[class ", cls.classInfo.instanceInfo.name.name, "]");
       }
-      return "[object " + self.class.classInfo.instanceInfo.name.name + "]";
+      return Shumway.StringUtilities.concat3("[object ", self.class.classInfo.instanceInfo.name.name, "]");
     }
   }
 
@@ -705,7 +705,7 @@ module Shumway.AVM2.AS {
     }
 
     public coerce(value: any): any {
-      log("Coercing " + value + " to " + this);
+      log(Shumway.StringUtilities.concat4("Coercing ", value, " to ", this));
       return value;
     }
 

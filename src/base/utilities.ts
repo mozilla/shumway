@@ -1099,6 +1099,96 @@ module Shumway {
       return index === s.length ? -1 : index;
     }
 
+    var _concat3array = new Array(3);
+    var _concat4array = new Array(4);
+    var _concat5array = new Array(5);
+    var _concat6array = new Array(6);
+    var _concat7array = new Array(7);
+    var _concat8array = new Array(8);
+    var _concat9array = new Array(9);
+
+    /**
+     * The concatN() functions concatenate multiple strings in a way that
+     * avoids creating intermediate strings, unlike String.prototype.concat().
+     *
+     * Note that these functions don't have identical behaviour to using '+',
+     * because they will ignore any arguments that are |undefined| or |null|.
+     * This usually doesn't matter.
+     */
+
+    export function concat3(s0: any, s1: any, s2: any) {
+        _concat3array[0] = s0;
+        _concat3array[1] = s1;
+        _concat3array[2] = s2;
+        return _concat3array.join('');
+    }
+
+    export function concat4(s0: any, s1: any, s2: any, s3: any) {
+        _concat4array[0] = s0;
+        _concat4array[1] = s1;
+        _concat4array[2] = s2;
+        _concat4array[3] = s3;
+        return _concat4array.join('');
+    }
+
+    export function concat5(s0: any, s1: any, s2: any, s3: any, s4: any) {
+        _concat5array[0] = s0;
+        _concat5array[1] = s1;
+        _concat5array[2] = s2;
+        _concat5array[3] = s3;
+        _concat5array[4] = s4;
+        return _concat5array.join('');
+    }
+
+    export function concat6(s0: any, s1: any, s2: any, s3: any, s4: any,
+                            s5: any) {
+        _concat6array[0] = s0;
+        _concat6array[1] = s1;
+        _concat6array[2] = s2;
+        _concat6array[3] = s3;
+        _concat6array[4] = s4;
+        _concat6array[5] = s5;
+        return _concat6array.join('');
+    }
+
+    export function concat7(s0: any, s1: any, s2: any, s3: any, s4: any,
+                            s5: any, s6: any) {
+        _concat7array[0] = s0;
+        _concat7array[1] = s1;
+        _concat7array[2] = s2;
+        _concat7array[3] = s3;
+        _concat7array[4] = s4;
+        _concat7array[5] = s5;
+        _concat7array[6] = s6;
+        return _concat7array.join('');
+    }
+
+    export function concat8(s0: any, s1: any, s2: any, s3: any, s4: any,
+                            s5: any, s6: any, s7: any) {
+        _concat8array[0] = s0;
+        _concat8array[1] = s1;
+        _concat8array[2] = s2;
+        _concat8array[3] = s3;
+        _concat8array[4] = s4;
+        _concat8array[5] = s5;
+        _concat8array[6] = s6;
+        _concat8array[7] = s7;
+        return _concat8array.join('');
+    }
+
+    export function concat9(s0: any, s1: any, s2: any, s3: any, s4: any,
+                            s5: any, s6: any, s7: any, s8: any) {
+        _concat9array[0] = s0;
+        _concat9array[1] = s1;
+        _concat9array[2] = s2;
+        _concat9array[3] = s3;
+        _concat9array[4] = s4;
+        _concat9array[5] = s5;
+        _concat9array[6] = s6;
+        _concat9array[7] = s7;
+        _concat9array[8] = s8;
+        return _concat9array.join('');
+    }
   }
 
   export module HashUtilities {
@@ -2846,8 +2936,7 @@ module Shumway {
     }
 
     export function rgbaToCSSStyle(color: number): string {
-      return 'rgba(' + (color >> 24 & 0xff) + ',' + (color >> 16 & 0xff) + ',' +
-                  (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';
+      return Shumway.StringUtilities.concat9('rgba(', color >> 24 & 0xff, ',', color >> 16 & 0xff, ',', color >> 8 & 0xff, ',', (color & 0xff) / 0xff, ')');
     }
 
     export function cssStyleToRGBA(style: string) {
