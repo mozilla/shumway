@@ -1,16 +1,7 @@
 [
-    {  "id": "basic",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/add.swf",
-        "swfs/targetPath1.swf"
-      ],
-      "type": "stas"
-    },
     {  "id": "timeline",
       "stas": "swfs/trace.stas",
       "filenames": [
-        "swfs/timeline/events/timeline_events_fp9.swf",
         "swfs/timeline/events/timeline_events_fp10.swf"
       ],
       "type": "stas"
@@ -19,23 +10,7 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/timeline/timeline_as2_1.swf",
-        "swfs/timeline/timeline_as2_2.swf",
-        "swfs/timeline/timeline_as2_3.swf",
-        "swfs/avm1timeline1.swf",
-        "swfs/avm1timeline2.swf"
-      ],
-      "type": "stas"
-    },
-    {  "id": "timeline_scene",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/timeline/scene/Scene_1_MainTimeline.swf",
-        "swfs/timeline/scene/Scene_2_MovieClipTimeline.swf",
-        "swfs/timeline/scene/Scene_3_GotoAndStop_LabelScene.swf",
-        "swfs/timeline/scene/Scene_4_GotoAndStop_FrameScene.swf",
-        "swfs/timeline/scene/Scene_5_GotoAndPlay_LabelScene.swf",
-        "swfs/timeline/scene/Scene_6_GotoAndPlay_FrameScene.swf",
-        "swfs/timeline/scene/Scene_7_NextPrevScene.swf"
+        "swfs/avm1timeline1.swf"
       ],
       "type": "stas"
     },
@@ -145,13 +120,6 @@
        "frames": [1],
        "swf": "swfs/flash_geom_ColorTransform.swf",
        "type": "eq"
-    },
-    {  "id": "3_joystick",
-       "stas": "swfs/3_joystick.stas",
-       "filenames": [
-         "swfs/3_joystick.swf"
-       ],
-       "type": "stas"
     },
     {  "id": "MaskTest",
        "frames": [1],

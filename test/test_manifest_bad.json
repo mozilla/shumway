@@ -1,0 +1,33 @@
+[
+  {  "id": "basic",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/add.swf",
+      "swfs/targetPath1.swf"
+    ],
+    "type": "stas"
+  },
+  {  "id": "timeline",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/timeline/events/timeline_events_fp9.swf"
+    ],
+    "type": "stas"
+  },
+  {  "id": "timeline_as2",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/timeline/timeline_as2_2.swf",
+      "swfs/timeline/timeline_as2_3.swf",
+      "swfs/avm1timeline2.swf"
+    ],
+    "type": "stas"
+  },
+  {  "id": "3_joystick",
+    "stas": "swfs/3_joystick.stas",
+    "filenames": [
+      "swfs/3_joystick.swf"
+    ],
+    "type": "stas"
+  }
+]
