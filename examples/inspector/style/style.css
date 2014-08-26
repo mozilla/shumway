@@ -135,8 +135,9 @@ body.simple #stageContainer {
   position: absolute;
   left: 0px;
   right: 0px;
-  display: inline-block;
-  opacity: 0.5;
+  display: none;
+  mix-blend-mode: difference;
+  opacity: 0.8;
 }
 
 #panelContainer {
