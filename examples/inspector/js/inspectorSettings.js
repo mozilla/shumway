@@ -28,6 +28,7 @@ var stateDefaults = {
   logToConsole: false,
   logToDebugPanel: true,
   logAssets: false,
+  overlayFlash: false,
   mute: false,
   release: false
 };
@@ -67,6 +68,7 @@ var GUI = (function () {
   inspectorOptions.add(state, "logAssets").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "overlayFlash").onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
@@ -104,6 +106,10 @@ var GUI = (function () {
   function saveInspectorOption(value) {
     if (this.property === "release") {
       setRelease(value);
+    }
+    if (this.property === 'overlayFlash') {
+      ensureFlashOverlay();
+      flashOverlay.style.display = value ? 'inline-block' : 'none';
     }
     state[this.property] = value;
     saveInspectorState();

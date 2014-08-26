@@ -112,6 +112,10 @@ function showOpenFileButton(show) {
   document.getElementById('debugInfoToolbarTabs').classList.toggle('active', !show);
 }
 
+var flashOverlay;
+var currentSWFUrl;
+var currentPlayer;
+
 var easelHost;
 function runIFramePlayer(data) {
   data.type = 'runSwf';
@@ -179,27 +183,10 @@ function executeFile(file, buffer, movieParams) {
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
         player.load(file);
 
-        if (false) {
-          var flashContent = document.createElement("div");
-          flashContent.id = 'flashContainer';
-          flashContent.innerHTML = '' +
-          '<object type="application/x-shockwave-flash" data="' + swfURL + '" width="100" height="100">' +
-            '<param name="quality" value="high" />'
-            '<param name="play" value="true" />' +
-            '<param name="loop" value="true" />' +
-            '<param name="wmode" value="opaque" />' +
-            '<param name="scale" value="noScale" />' +
-            '<param name="menu" value="true" />' +
-             '<param name="devicefont" value="false" />' +
-            '<param name="salign" value="" />' +
-            '<param name="allowScriptAccess" value="sameDomain" />' +
-          '</object>';
-          document.getElementById("stageContainer").appendChild(flashContent);
-
-          player._loader._contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE, function onProgress() {
-            flashContent.children[0].width = player._loader._contentLoaderInfo.width;
-            flashContent.children[0].height = player._loader._contentLoaderInfo.height;
-          });
+        currentSWFUrl = swfURL;
+        currentPlayer = player;
+        if (state.overlayFlash) {
+          ensureFlashOverlay();
         }
 
         // embedding.loader
@@ -243,6 +230,43 @@ function executeFile(file, buffer, movieParams) {
     Shumway.createAVM2(builtinPath, playerglobalInfo, null, sysMode, appMode, function (avm2) {
       executeUnitTests(file, avm2);
     });
+  }
+}
+
+function ensureFlashOverlay() {
+  if (flashOverlay) {
+    return;
+  }
+  flashOverlay = document.createElement("div");
+  flashOverlay.id = 'flashContainer';
+  flashOverlay.innerHTML =  '<object type="application/x-shockwave-flash" data="' + currentSWFUrl +
+                            '" width="100" height="100"><param name="quality" value="high" />' +
+                            '<param name="play" value="true" />' +
+                            '<param name="loop" value="true" />' +
+                            '<param name="wmode" value="opaque" />' +
+                            '<param name="scale" value="noScale" />' +
+                            '<param name="menu" value="true" />' +
+                            '<param name="devicefont" value="false" />' +
+                            '<param name="salign" value="" />' +
+                            '<param name="allowScriptAccess" value="sameDomain" />' +
+                            '<param name="shumwaymode" value="off" />' +
+                            '</object>';
+  document.getElementById("stageContainer").appendChild(flashOverlay);
+
+  maybeSetFlashOverlayDimensions();
+  currentPlayer._loader._contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE,
+                                                            maybeSetFlashOverlayDimensions);
+}
+function maybeSetFlashOverlayDimensions() {
+  if (!(currentPlayer._loader && currentPlayer._loader._contentLoaderInfo &&
+      currentPlayer._loader._contentLoaderInfo))
+  {
+    return;
+  }
+  flashOverlay.children[0].width = currentPlayer._loader._contentLoaderInfo.width;
+  flashOverlay.children[0].height = currentPlayer._loader._contentLoaderInfo.height;
+  if (state.overlayFlash) {
+    flashOverlay.style.display = 'inline-block';
   }
 }
 
