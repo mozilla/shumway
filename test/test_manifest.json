@@ -82,7 +82,7 @@
        "type": "eq"
     },
     {  "id": "bitmap-ref",
-      "frames": [1],
+      "frames": [20],
       "swf": "swfs/bitmapbuttons.swf",
       "type": "eq"
     },
