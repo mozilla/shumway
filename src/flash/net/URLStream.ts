@@ -29,11 +29,9 @@ module Shumway.AVM2.AS.flash.net {
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = function () {
-      this._dataBuffer = null;
+      this._buffer = new utils.ByteArray();
       this._writePosition = 0;
       this._connected = false;
-      this._littleEndian = false;
-      this._endian = 'bigEndian';
     };
     
     // List of static symbols to link.
@@ -50,7 +48,6 @@ module Shumway.AVM2.AS.flash.net {
     private _buffer: utils.ByteArray;
     private _writePosition: number;
     private _session;
-    private _littleEndian: boolean;
 
     // JS -> AS Bindings
     
@@ -58,11 +55,7 @@ module Shumway.AVM2.AS.flash.net {
     // AS -> JS Bindings
     
     private _connected: boolean;
-    // _objectEncoding: number /*uint*/;
-    private _endian: string;
     // _diskCacheEnabled: boolean;
-    // _position: number;
-    // _length: number;
     get connected(): boolean {
       return this._connected;
     }
@@ -70,38 +63,32 @@ module Shumway.AVM2.AS.flash.net {
       return this._buffer.length - this._buffer.position;
     }
     get objectEncoding(): number /*uint*/ {
-      notImplemented("public flash.net.URLStream::get objectEncoding"); return;
-      // return this._objectEncoding;
+      return this._buffer.objectEncoding;
     }
     set objectEncoding(version: number /*uint*/) {
       version = version >>> 0;
-      notImplemented("public flash.net.URLStream::set objectEncoding"); return;
-      // this._objectEncoding = version;
+      this._buffer.objectEncoding = version;
     }
     get endian(): string {
-      return this._endian;
+      return this._buffer.endian;
     }
     set endian(type: string) {
       type = asCoerceString(type);
-      this._endian = type;
-      this._littleEndian = type === 'littleEndian';
+      this._buffer.endian = type;
     }
     get diskCacheEnabled(): boolean {
       notImplemented("public flash.net.URLStream::get diskCacheEnabled"); return;
       // return this._diskCacheEnabled;
     }
     get position(): number {
-      notImplemented("public flash.net.URLStream::get position"); return;
-      // return this._position;
+      return this._buffer.position;
     }
     set position(offset: number) {
       offset = +offset;
-      notImplemented("public flash.net.URLStream::set position"); return;
-      // this._position = offset;
+      this._buffer.position = offset;
     }
     get length(): number {
-      notImplemented("public flash.net.URLStream::get length"); return;
-      // return this._length;
+      return this._buffer.length;
     }
     load(request: flash.net.URLRequest): void {
       var Event = flash.events.Event;
@@ -113,14 +100,6 @@ module Shumway.AVM2.AS.flash.net {
       var self = this;
       var initStream = true;
       session.onprogress = function (data, progressState) {
-        var length: number;
-        var buffer: ArrayBuffer;
-        if (initStream) {
-          initStream = false;
-          length = Math.max(progressState.bytesTotal, data.length);
-          self._buffer = new utils.ByteArray();
-        }
-
         var readPosition = self._buffer.position;
         self._buffer.position = self._writePosition;
         self._buffer.writeRawBytes(data);
@@ -132,10 +111,6 @@ module Shumway.AVM2.AS.flash.net {
       };
       session.onerror = function (error) {
         self._connected = false;
-        if (!self._buffer) {
-          // We need to have something to return in data
-          self._buffer = new utils.ByteArray();
-        }
         self.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR, false, false, error));
       };
       session.onopen = function () {
@@ -160,11 +135,6 @@ module Shumway.AVM2.AS.flash.net {
       };
       session.onclose = function () {
         self._connected = false;
-        if (!self._buffer) {
-          // We need to have something to return in data
-          self._buffer = new utils.ByteArray();
-        }
-
         self.dispatchEvent(new Event(Event.COMPLETE, false, false));
       };
       session.open(request._toFileRequest());
