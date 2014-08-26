@@ -144,6 +144,9 @@ module.exports = function(grunt) {
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       },
+      test_avm2_quick: {
+        cmd: 'node src/shell/numbers.js -i src/avm2/tests/regress/correctness/pass/ -c i -j 8'
+      },
       test_avm2: {
         cmd: 'node src/shell/numbers.js -i src/avm2/tests/regress/correctness/pass/ -j 8'
       },

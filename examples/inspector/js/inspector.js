@@ -156,7 +156,7 @@ function executeFile(file, buffer, movieParams) {
     libraryScripts = {};
     Shumway.createAVM2(builtinPath, shellAbcPath, null, sysMode, appMode, function (avm2) {
       function runAbc(file, buffer) {
-        avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
+        avm2.applicationDomain.executeAbc(new Shumway.AVM2.ABC.AbcFile(new Uint8Array(buffer), file));
       }
       if (!buffer) {
         new BinaryFileReader(file).readAll(null, function(buffer) {
