@@ -19,6 +19,7 @@ module Shumway.SWF.Parser {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import roundToMultipleOfFour = Shumway.IntegerUtilities.roundToMultipleOfFour;
+  import Inflate = Shumway.ArrayUtilities.Inflate;
 
   export enum BitmapFormat {
     /**
@@ -78,9 +79,7 @@ module Shumway.SWF.Parser {
 
     var dataSize = colorTableSize + ((width + padding) * height);
 
-    var inflate = new InflateSession(dataSize);
-    inflate.push(tag.bmpData);
-    var bytes: Uint8Array = inflate.toUint8Array();
+    var bytes: Uint8Array = Inflate.inflate(tag.bmpData, dataSize, true);
 
     var view = new Uint32Array(width * height);
 
@@ -130,9 +129,7 @@ module Shumway.SWF.Parser {
     // Even without alpha, 24BPP is stored as 4 bytes, probably for alignment reasons.
     var dataSize = height * width * 4;
 
-    var inflate = new InflateSession(dataSize);
-    inflate.push(tag.bmpData);
-    var bytes: Uint8Array = inflate.toUint8Array();
+    var bytes: Uint8Array = Inflate.inflate(tag.bmpData, dataSize, true);
     if (hasAlpha) {
       return bytes;
     }
