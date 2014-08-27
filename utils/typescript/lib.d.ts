@@ -1158,6 +1158,13 @@ interface ArrayBuffer {
       * Read-only. The length of the ArrayBuffer (in bytes).
       */
     byteLength: number;
+
+
+    /**
+     * Returns a new ArrayBuffer whose contents are a copy of this ArrayBuffer's bytes from begin, inclusive, up to end, exclusive.
+     * If either begin or end is negative, it refers to an index from the end of the array, as opposed to from the beginning.
+     */
+    slice: (begin?: number, end?: number) => ArrayBuffer;
 }
 
 declare var ArrayBuffer: {

@@ -348,7 +348,7 @@ module Shumway.AVM2.Runtime {
       return undefined;
     }
 
-    public getClass(simpleName): Shumway.AVM2.AS.ASClass {
+    public getClass(simpleName: string): Shumway.AVM2.AS.ASClass {
       var cache = this.classCache;
       var c = cache[simpleName];
       if (!c) {

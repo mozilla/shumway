@@ -144,8 +144,11 @@ module.exports = function(grunt) {
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       },
+      test_avm2_quick: {
+        cmd: 'node src/shell/numbers.js -i test/avm2/pass/ -c i -j 8'
+      },
       test_avm2: {
-        cmd: 'node src/shell/numbers.js -i src/avm2/tests/regress/correctness/pass/ -j 8'
+        cmd: 'node src/shell/numbers.js -i test/avm2/pass/ -j 8'
       },
       tracetest: {
         cmd: 'node test/trace_test_run.js'
@@ -402,6 +405,12 @@ module.exports = function(grunt) {
   ]);
   grunt.registerTask('smoke', [
     'exec:smoke_parse'
+  ]);
+  grunt.registerTask('test', [
+    'exec:gate',
+    'exec:test_avm2_quick',
+    'exec:tracetest',
+    // 'exec:tracetest_swfdec'
   ]);
   grunt.registerTask('firefox', ['build', 'exec:build_extension']);
   grunt.registerTask('web', ['build', 'exec:build_extension', 'exec:build_web']);

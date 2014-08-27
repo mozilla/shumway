@@ -32,7 +32,7 @@ module Shumway.AVM2.AS {
    * Creates a self patching getter that lazily constructs the class and memoizes
    * to the class's instance constructor.
    */
-  function makeStub(container, classSimpleName, shortName) {
+  function makeStub(container, classSimpleName: string, shortName: string) {
     Object.defineProperty(container, shortName, {
       get: function () {
         release || assert (Shumway.AVM2.Runtime.AVM2.instance, "AVM2 needs to be initialized.");
@@ -234,26 +234,27 @@ module Shumway.AVM2.AS {
     registerNativeFunction('FlashUtilScript::unescapeMultiByte', unescape);
 
     registerNativeFunction('FlashNetScript::navigateToURL',
-                           function navigateToURL(request, window_) {
-                             if (request === null || request === undefined) {
-                               throwError('TypeError', Errors.NullPointerError, 'request');
-                             }
-                             var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
-                             if (!RequestClass.isInstanceOf(request)) {
-                               throwError('TypeError', Errors.CheckTypeFailedError, request,
-                                          'flash.net.URLRequest');
-                             }
-                             var url = request.url;
-                             if (/^fscommand:/i.test(url)) {
-                               var fscommand = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain.getProperty(
-                                 Multiname.fromSimpleName('flash.system.fscommand'), true, true);
-                               fscommand.call(null, url.substring('fscommand:'.length), window_);
-                               return;
-                             }
-                             // TODO handle other methods than GET
-                             var targetWindow = window_ || '_parent'; // using parent as default target
-                             window.open(FileLoadingService.instance.resolveUrl(url), targetWindow);
-                           });
+      function navigateToURL(request, window_) {
+        if (request === null || request === undefined) {
+          throwError('TypeError', Errors.NullPointerError, 'request');
+        }
+        var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
+        if (!RequestClass.isInstanceOf(request)) {
+          throwError('TypeError', Errors.CheckTypeFailedError, request,
+                     'flash.net.URLRequest');
+        }
+        var url = request.url;
+        if (/^fscommand:/i.test(url)) {
+          var fscommand = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain.getProperty(
+            Multiname.fromSimpleName('flash.system.fscommand'), true, true);
+          fscommand.call(null, url.substring('fscommand:'.length), window_);
+          return;
+        }
+        // TODO handle other methods than GET
+        var targetWindow = window_ || '_parent'; // using parent as default target
+        window.open(FileLoadingService.instance.resolveUrl(url), targetWindow);
+      }
+    );
 
     registerNativeFunction('FlashNetScript::sendToURL', function sendToURL(request) {
       if (request === null || request === undefined) {

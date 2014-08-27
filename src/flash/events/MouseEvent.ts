@@ -23,7 +23,7 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
 
     static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
+    static instanceSymbols: string [] = ["clone!"];
 
     constructor(type: string, bubbles: boolean = true, cancelable: boolean = false,
                 localX: number = undefined, localY: number = undefined,

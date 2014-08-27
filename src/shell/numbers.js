@@ -178,7 +178,7 @@ var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js";
 if (jsOptimazations.value) {
   commandPrefix += " --no-ion --no-ti";
 }
-commandPrefix += " build/ts/shell.js";
+commandPrefix += " build/ts/shell.js -s";
 
 var commandSuffix = release.value ? " -r" : "";
 if (configurationSet.value.indexOf("i") >= 0) {
