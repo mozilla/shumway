@@ -17,12 +17,12 @@
 module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Scene extends ASNative {
-    
+
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
-    
+
     constructor (name: string, labels: FrameLabel[], offset: number, numFrames: number /*int*/) {
       false && super();
       this._name = asCoerceString(name);
@@ -55,6 +55,28 @@ module Shumway.AVM2.AS.flash.display {
     clone(): Scene {
       var labels = this._labels.map(function (label: FrameLabel) { return label.clone(); });
       return new Scene(this._name, labels, this.offset, this._numFrames);
+    }
+
+    getLabelByName(name: string): FrameLabel {
+      var labels = this._labels;
+      for (var i = 0; i < labels.length; i++) {
+        var label = labels[i];
+        if (label.name === name) {
+          return label;
+        }
+      }
+      return null;
+    }
+
+    getLabelByFrame(frame: number): FrameLabel {
+      var labels = this._labels;
+      for (var i = 0; i < labels.length; i++) {
+        var label = labels[i];
+        if (label.frame === frame) {
+          return label;
+        }
+      }
+      return null;
     }
   }
 }
