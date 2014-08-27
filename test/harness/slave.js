@@ -177,6 +177,9 @@ function getCanvas() {
 var tmpCanvas = document.createElement('canvas');
 
 function getCanvasData() {
+  // flush rendering buffers
+  easel.render();
+
   var canvas = getCanvas();
 
   var bounds = easel._stage._bounds;

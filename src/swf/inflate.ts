@@ -43,7 +43,6 @@ module Shumway.SWF {
     maxBits: number;
   }
 
-
   var codeLengthOrder = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
 
   var distanceCodes = [];
@@ -97,67 +96,80 @@ module Shumway.SWF {
     release || assert(!(header & 0x20), 'inflate: FDICT bit set');
   }
 
-  class HeadTailBuffer {
-    private _bufferSize: number;
+  class CompressedDataBuffer {
     private _buffer: Uint8Array;
-    private _pos: number;
+    private _bufferSize: number;
+    private _position: number;
 
-    constructor(defaultSize:number = 16) {
-      this._bufferSize = defaultSize;
-      this._buffer = new Uint8Array(this._bufferSize);
-      this._pos = 0;
+    public get bytes(): Uint8Array {
+      return this._buffer;
+    }
+    public get pos() : number {
+      return this._position;
+    }
+    public set pos(value: number) {
+      this._position = value;
+    }
+
+    get length() {
+      return this._bufferSize;
+    }
+
+    bitBuffer: number;
+    bitLength: number;
+
+    constructor(defaultSize: number = 16) {
+      this._buffer = new Uint8Array(defaultSize);
+      this._bufferSize = 0;
+      this._position = 0;
+      this.bitLength = 0;
+      this.bitBuffer = 0;
+    }
+
+    align() {
+      this.bitLength = 0;
+      this.bitBuffer = 0;
+    }
+
+    getUint16(pos: number): number {
+      return this.bytes[pos] | (this.bytes[pos + 1] << 8);
     }
 
     push(data: Uint8Array, need?: number) {
-      var bufferLengthNeed = this._pos + data.length;
-      if (this._bufferSize < bufferLengthNeed) {
-        var newBufferSize = this._bufferSize;
+      var bufferLength = this._buffer.length;
+      var bufferLengthNeed = this._bufferSize + data.length;
+      if (bufferLength < bufferLengthNeed) {
+        var newBufferSize = bufferLength;
         while (newBufferSize < bufferLengthNeed) {
           newBufferSize <<= 1;
         }
         var newBuffer = new Uint8Array(newBufferSize);
-        if (this._bufferSize > 0) {
+        if (bufferLength > 0) {
           newBuffer.set(this._buffer);
         }
         this._buffer = newBuffer;
-        this._bufferSize = newBufferSize;
       }
-      this._buffer.set(data, this._pos);
-      this._pos += data.length;
+      this._buffer.set(data, this._bufferSize);
+      this._bufferSize += data.length;
       if (need) {
-        return this._pos >= need;
+        return this._bufferSize >= need;
       }
     }
 
-    getHead(size: number) {
-      return this._buffer.subarray(0, size);
-    }
-
-    getTail(offset: number) {
-      return this._buffer.subarray(offset, this._pos);
+    spliceHead(size: number): Uint8Array {
+      var buffer = this._buffer;
+      var head = new Uint8Array(buffer.subarray(0, size));
+      var tail = buffer.subarray(size, this._bufferSize);
+      this._buffer.set(tail);
+      this._bufferSize = tail.length;
+      return head;
     }
 
     removeHead(size: number) {
-      var tail = this.getTail(size);
-      this._buffer = new Uint8Array(this._bufferSize);
+      var buffer = this._buffer;
+      var tail = buffer.subarray(size, this._bufferSize);
       this._buffer.set(tail);
-      this._pos = tail.length;
-    }
-
-    get arrayBuffer() {
-      return this._buffer.buffer;
-    }
-
-    get length() {
-      return this._pos;
-    }
-
-    getBytes(): Uint8Array {
-      return this._buffer.subarray(0, this._pos);
-    }
-
-    createStream() {
-      return new Stream(this.arrayBuffer, 0, this.length);
+      this._bufferSize = tail.length;
     }
   }
 
@@ -170,7 +182,7 @@ module Shumway.SWF {
   export class InflateSession {
     private _length: number;
     private _initialize: boolean;
-    private _buffer: HeadTailBuffer;
+    private _buffer: CompressedDataBuffer;
     private _state: CompressedPipeState;
     private _output: CompressionOutput;
 
@@ -179,7 +191,7 @@ module Shumway.SWF {
     constructor(length: number = 16) {
       this._length = length;
       this._initialize = true;
-      this._buffer = new HeadTailBuffer(8096);
+      this._buffer = new CompressedDataBuffer(8096);
       this._state = { bitBuffer: 0, bitLength: 0, compression: {
         header: null, distanceTable: null, literalTable: null,
         sym: null, len: null, sym2: null } };
@@ -188,7 +200,7 @@ module Shumway.SWF {
         available: 0,
         completed: false
       };
-      this._buffer = new HeadTailBuffer(8192);
+      this._buffer = new CompressedDataBuffer(8192);
     }
     public push(data: Uint8Array) {
       var buffer = this._buffer;
@@ -196,32 +208,31 @@ module Shumway.SWF {
         if (!buffer.push(data, 2)) {
           return;
         }
-        var headerBytes = buffer.getHead(2);
+        var headerBytes = buffer.spliceHead(2);
         verifyDeflateHeader(headerBytes);
-        buffer.removeHead(2);
         this._initialize = false;
       } else {
         buffer.push(data);
       }
-      var stream = buffer.createStream();
-      stream.bitBuffer = this._state.bitBuffer;
-      stream.bitLength = this._state.bitLength;
+
+      buffer.bitBuffer = this._state.bitBuffer;
+      buffer.bitLength = this._state.bitLength;
       var output = this._output;
       var lastAvailable = output.available;
       try {
         do {
-          inflateBlock(stream, output, this._state.compression);
-        } while (stream.pos < buffer.length && !output.completed);
+          inflateBlock(buffer, output, this._state.compression);
+        } while (buffer.pos < buffer.length && !output.completed);
       } catch (e) {
-        this._state.bitBuffer = stream.bitBuffer;
-        this._state.bitLength = stream.bitLength;
+        this._state.bitBuffer = buffer.bitBuffer;
+        this._state.bitLength = buffer.bitLength;
         if (e !== InflateNoDataError) {
           throw e; // Re-throw non data errors.
         }
       }
-      this._state.bitBuffer = stream.bitBuffer;
-      this._state.bitLength = stream.bitLength;
-      buffer.removeHead(stream.pos);
+      this._state.bitBuffer = buffer.bitBuffer;
+      this._state.bitLength = buffer.bitLength;
+      buffer.removeHead(buffer.pos);
 
       // push data downstream
       if (this.onData) {
@@ -234,30 +245,30 @@ module Shumway.SWF {
     }
   }
 
-  export function inflateBlock(stream: Stream, output: CompressionOutput, state: CompressionState) {
+  function inflateBlock(buffer: CompressedDataBuffer, output: CompressionOutput, state: CompressionState) {
     var header = state.header !== null ? state.header :
-      (state.header = readBits(stream.bytes, stream, 3));
+      (state.header = readBits(buffer.bytes, buffer, 3));
     switch (header >> 1) {
       case 0:
-        stream.align();
-        var pos = stream.pos;
-        if (stream.end - pos < 4) {
+        buffer.align();
+        var pos = buffer.pos;
+        if (buffer.length - pos < 4) {
           throw InflateNoDataError;
         }
-        var len = stream.getUint16(pos, true);
-        var nlen = stream.getUint16(pos + 2, true);
+        var len = buffer.getUint16(pos);
+        var nlen = buffer.getUint16(pos + 2);
         release || assert((~nlen & 0xffff) === len, 'inflate: bad uncompressed block length');
-        if (stream.end - pos < 4 + len) {
+        if (buffer.length - pos < 4 + len) {
           throw InflateNoDataError;
         }
         var begin = pos + 4;
-        var end = stream.pos = begin + len;
-        var sbytes = stream.bytes, dbytes = output.data;
+        var end = buffer.pos = begin + len;
+        var sbytes = buffer.bytes, dbytes = output.data;
         dbytes.set(sbytes.subarray(begin, end), output.available);
         output.available += len;
         break;
       case 1:
-        inflate(stream, output, fixedLiteralTable, fixedDistanceTable, state);
+        inflate(buffer, output, fixedLiteralTable, fixedDistanceTable, state);
         break;
       case 2:
         var distanceTable: HuffmanTable, literalTable: HuffmanTable;
@@ -265,37 +276,37 @@ module Shumway.SWF {
           distanceTable = state.distanceTable;
           literalTable = state.literalTable;
         } else {
-          var sbytes = stream.bytes;
-          var savedBufferPos = stream.pos;
-          var savedBitBuffer = stream.bitBuffer;
-          var savedBitLength = stream.bitLength;
+          var sbytes = buffer.bytes;
+          var savedBufferPos = buffer.pos;
+          var savedBitBuffer = buffer.bitBuffer;
+          var savedBitLength = buffer.bitLength;
           var bitLengths = [];
           var numLiteralCodes, numDistanceCodes;
           try {
-            numLiteralCodes = readBits(sbytes, stream, 5) + 257;
-            numDistanceCodes = readBits(sbytes, stream, 5) + 1;
+            numLiteralCodes = readBits(sbytes, buffer, 5) + 257;
+            numDistanceCodes = readBits(sbytes, buffer, 5) + 1;
             var numCodes = numLiteralCodes + numDistanceCodes;
-            var numLengthCodes = readBits(sbytes, stream, 4) + 4;
+            var numLengthCodes = readBits(sbytes, buffer, 4) + 4;
             for (var i = 0; i < 19; ++i)
-              bitLengths[codeLengthOrder[i]] = i < numLengthCodes ? readBits(sbytes, stream, 3) : 0;
+              bitLengths[codeLengthOrder[i]] = i < numLengthCodes ? readBits(sbytes, buffer, 3) : 0;
             var codeLengthTable = makeHuffmanTable(bitLengths);
             bitLengths = [];
             var i = 0;
             var prev = 0;
             while (i < numCodes) {
               var j = 1;
-              var sym = readCode(sbytes, stream, codeLengthTable);
+              var sym = readCode(sbytes, buffer, codeLengthTable);
               switch (sym) {
                 case 16:
-                  j = readBits(sbytes, stream, 2) + 3;
+                  j = readBits(sbytes, buffer, 2) + 3;
                   sym = prev;
                   break;
                 case 17:
-                  j = readBits(sbytes, stream, 3) + 3;
+                  j = readBits(sbytes, buffer, 3) + 3;
                   sym = 0;
                   break;
                 case 18:
-                  j = readBits(sbytes, stream, 7) + 11;
+                  j = readBits(sbytes, buffer, 7) + 11;
                   sym = 0;
                   break;
                 default:
@@ -305,15 +316,15 @@ module Shumway.SWF {
                 bitLengths[i++] = sym;
             }
           } catch (e) {
-            stream.pos = savedBufferPos;
-            stream.bitBuffer = savedBitBuffer;
-            stream.bitLength = savedBitLength;
+            buffer.pos = savedBufferPos;
+            buffer.bitBuffer = savedBitBuffer;
+            buffer.bitLength = savedBitLength;
             throw e;
           }
           distanceTable = state.distanceTable = makeHuffmanTable(bitLengths.splice(numLiteralCodes, numDistanceCodes));
           literalTable = state.literalTable = makeHuffmanTable(bitLengths);
         }
-        inflate(stream, output, literalTable, distanceTable, state);
+        inflate(buffer, output, literalTable, distanceTable, state);
         state.distanceTable = null;
         state.literalTable = null;
         break;
@@ -324,37 +335,37 @@ module Shumway.SWF {
     output.completed = !!(header & 1);
   }
 
-  function readBits(bytes: Uint8Array, stream: Stream, size: number): number {
-    var bitBuffer = stream.bitBuffer;
-    var bitLength = stream.bitLength;
+  function readBits(bytes: Uint8Array, buffer: CompressedDataBuffer, size: number): number {
+    var bitBuffer = buffer.bitBuffer;
+    var bitLength = buffer.bitLength;
     if (size > bitLength) {
-      var pos = stream.pos;
-      var end = stream.end;
+      var pos = buffer.pos;
+      var end = buffer.length;
       do {
         if (pos >= end) {
-          stream.pos = pos;
-          stream.bitBuffer = bitBuffer;
-          stream.bitLength = bitLength;
+          buffer.pos = pos;
+          buffer.bitBuffer = bitBuffer;
+          buffer.bitLength = bitLength;
           throw InflateNoDataError;
         }
         bitBuffer |= bytes[pos++] << bitLength;
         bitLength += 8;
       } while (size > bitLength);
-      stream.pos = pos;
+      buffer.pos = pos;
     }
-    stream.bitBuffer = bitBuffer >>> size;
-    stream.bitLength = bitLength - size;
+    buffer.bitBuffer = bitBuffer >>> size;
+    buffer.bitLength = bitLength - size;
     return bitBuffer & ((1 << size) - 1);
   }
 
-  function inflate(stream: Stream, output: CompressionOutput,
+  function inflate(buffer: CompressedDataBuffer, output: CompressionOutput,
                    literalTable, distanceTable,
                    state: CompressionState) {
     var pos = output.available;
     var dbytes = output.data;
-    var sbytes = stream.bytes;
+    var sbytes = buffer.bytes;
     var sym = state.sym !== null ? state.sym :
-      readCode(sbytes, stream, literalTable);
+      readCode(sbytes, buffer, literalTable);
     while (sym !== 256) {
       if (sym < 256) {
         dbytes[pos++] = sym;
@@ -362,10 +373,10 @@ module Shumway.SWF {
         state.sym = sym;
         sym -= 257;
         var len = state.len !== null ? state.len :
-          (state.len = lengthCodes[sym] + readBits(sbytes, stream, lengthExtraBits[sym]));
+          (state.len = lengthCodes[sym] + readBits(sbytes, buffer, lengthExtraBits[sym]));
         var sym2 = state.sym2 !== null ? state.sym2 :
-          (state.sym2 = readCode(sbytes, stream, distanceTable));
-        var distance = distanceCodes[sym2] + readBits(sbytes, stream, distanceExtraBits[sym2]);
+          (state.sym2 = readCode(sbytes, buffer, distanceTable));
+        var distance = distanceCodes[sym2] + readBits(sbytes, buffer, distanceExtraBits[sym2]);
         var i = pos - distance;
         while (len--)
           dbytes[pos++] = dbytes[i++];
@@ -374,34 +385,34 @@ module Shumway.SWF {
         state.sym = null;
       }
       output.available = pos;
-      sym = readCode(sbytes, stream, literalTable);
+      sym = readCode(sbytes, buffer, literalTable);
     }
   }
 
-  function readCode(bytes: Uint8Array, stream: Stream, codeTable): number {
-    var bitBuffer = stream.bitBuffer;
-    var bitLength = stream.bitLength;
+  function readCode(bytes: Uint8Array, buffer: CompressedDataBuffer, codeTable): number {
+    var bitBuffer = buffer.bitBuffer;
+    var bitLength = buffer.bitLength;
     var maxBits = codeTable.maxBits;
     if (maxBits > bitLength) {
-      var pos = stream.pos;
-      var end = stream.end;
+      var pos = buffer.pos;
+      var end = buffer.length;
       do {
         if (pos >= end) {
-          stream.pos = pos;
-          stream.bitBuffer = bitBuffer;
-          stream.bitLength = bitLength;
+          buffer.pos = pos;
+          buffer.bitBuffer = bitBuffer;
+          buffer.bitLength = bitLength;
           throw InflateNoDataError;
         }
         bitBuffer |= bytes[pos++] << bitLength;
         bitLength += 8;
       } while (maxBits > bitLength);
-      stream.pos = pos;
+      buffer.pos = pos;
     }
     var code = codeTable.codes[bitBuffer & ((1 << maxBits) - 1)];
     var len = code >> 16;
     release || assert(len, 'inflate: bad encoding');
-    stream.bitBuffer = bitBuffer >>> len;
-    stream.bitLength = bitLength - len;
+    buffer.bitBuffer = bitBuffer >>> len;
+    buffer.bitLength = bitLength - len;
     return code & 0xffff;
   }
 }
