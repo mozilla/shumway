@@ -162,19 +162,18 @@ try {
   process.exit();
 }
 
-if (!process.env.AVM) {
-  console.log("Set the AVM environment variable to the avmshell path.");
-  process.exit();
-}
+var DEFAULT_AVM_PATH = './utils/tamarin-redux/bin/avmshell';
+var DEFAULT_JS_PATH = './utils/jsshell/js';
+var DEFAULT_RUNS_PATH = './build/runs';
 
-var avmShell = {path: pathToOSCommand(process.env.AVM), options: []};
+var avmShell = {path: pathToOSCommand(process.env.AVM || DEFAULT_AVM_PATH), options: []};
 
 // Use -tm -tj to emit VM metrics in JSON format.
 var configurations = [
   {name: "avm", timeout: timeout.value, command: avmShell.path}
 ];
 
-var commandPrefix = pathToOSCommand(process.env.JSSHELL) || "js";
+var commandPrefix = pathToOSCommand(process.env.JSSHELL || DEFAULT_JS_PATH);
 if (jsOptimazations.value) {
   commandPrefix += " --no-ion --no-ti";
 }
@@ -392,8 +391,8 @@ function runNextTest () {
     if (--remainingJobs === 0) {
       var totalTime = (new Date() - totalStart);
       var final = {sha: sha, totalTime: totalTime, jobs: jobs.value, date: new Date(), configurations: configurations, results: results};
-      fs.mkdir("runs", function() {
-        var fileName = "runs/" + sha;
+      fs.mkdir(DEFAULT_RUNS_PATH, function() {
+        var fileName = DEFAULT_RUNS_PATH + "/" + sha;
         fileName += "." + configurationSet.value;
         fileName += (jobs.value > 1 ? ".parallel" : "");
         fileName += (!noMetrics.value ? ".metrics" : "");
