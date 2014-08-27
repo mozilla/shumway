@@ -130,6 +130,7 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [];
     public static traitsPrototype: Object;
     public static dynamicPrototype: Object;
+    public static typeScriptPrototype: Object;
     public static defaultValue: any = null;
     public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
     public static native_prototype: Object;
@@ -290,36 +291,44 @@ module Shumway.AVM2.AS {
 
     static configurePrototype(self: ASClass, baseClass: ASClass) {
       self.baseClass = baseClass;
-      self.dynamicPrototype = createObject(baseClass.dynamicPrototype);
-      if (self.instanceConstructor) {
-        self.traitsPrototype = self.instanceConstructor.prototype;
-        self.traitsPrototype.__proto__ = self.dynamicPrototype;
-      } else {
-        self.traitsPrototype = createObject(self.dynamicPrototype);
-      }
 
-      // TODO: Kind of a hack for now, this is to make all TS class instance members available in all
-      // classes, even though we change the prototypes. I think we need to guard against ASClassPrototype.
+      // Create a |dynamicPrototype| object and link it to the base class |dynamicPrototype|.
+      self.dynamicPrototype = createObject(baseClass.dynamicPrototype);
+
+      // Create a |traitsPrototype| object and link it to the class |dynamicPrototype|.
+      self.traitsPrototype = createObject(self.dynamicPrototype);
+
+      // Collect and copy all class instance members to the |traitsPrototype|. We copy properties
+      // from the most derived class to the base class, ignoring those that are already set.
+
       var traitsPrototype = self.traitsPrototype;
       var classes = [];
       while (self) {
         classes.push(self);
         self = self.baseClass;
       }
+
       for (var i = 0; i < classes.length; i++) {
-        var baseClassTraitsPrototype = classes[i].prototype;
-        for (var property in baseClassTraitsPrototype) {
-          if (i > 0 && property === "toString") {
-            continue;
-          }
-          if (hasOwnProperty(baseClassTraitsPrototype, property) &&
-              !hasOwnProperty(traitsPrototype, property)) {
-            var descriptor = Object.getOwnPropertyDescriptor(baseClassTraitsPrototype, property);
-            release || Debug.assert (descriptor);
-            try {
-              Object.defineProperty(traitsPrototype, property, descriptor);
-            } catch (e) {
-              // log("Can't define " + property);
+        var sources = [classes[i].typeScriptPrototype];
+        // Also look at |instanceNatives| if defined.
+        if (classes[i].instanceNatives) {
+          Shumway.ArrayUtilities.pushMany(sources, classes[i].instanceNatives);
+        }
+        for (var j = 0; j < sources.length; j++) {
+          var source = sources[j];
+          for (var property in source) {
+            // No idea why i'm doing this 'toString' check.
+            if (i > 0 && property === "toString") {
+              continue;
+            }
+            if (hasOwnProperty(source, property) && !hasOwnProperty(traitsPrototype, property)) {
+              var descriptor = Object.getOwnPropertyDescriptor(source, property);
+              release || Debug.assert (descriptor);
+              try {
+                Object.defineProperty(traitsPrototype, property, descriptor);
+              } catch (e) {
+                // log("Can't define " + property);
+              }
             }
           }
         }
@@ -332,6 +341,12 @@ module Shumway.AVM2.AS {
     static create(self: ASClass, baseClass: ASClass, instanceConstructor: any) {
       release || assert (!self.instanceConstructorNoInitialize, "This should not be set yet.");
       release || assert (!self.dynamicPrototype && !self.traitsPrototype, "These should not be set yet.");
+
+      /**
+       * Save TypeScript prototype object.
+       */
+      self.typeScriptPrototype = self.prototype;
+
       if (self.instanceConstructor && !isPrototypeWriteable(self.instanceConstructor)) {
         ASClass.configureBuiltinPrototype(self, baseClass);
       } else {
@@ -363,8 +378,11 @@ module Shumway.AVM2.AS {
        */
       defineNonEnumerableProperty(self.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), self);
 
+      /**
+       * If class defines a custom protocol, use that.
+       */
       if (self.protocol) {
-        Shumway.ObjectUtilities.copyOwnPropertyDescriptors(self.dynamicPrototype, self.protocol);
+        Shumway.ObjectUtilities.copyOwnPropertyDescriptors(self.traitsPrototype, self.protocol);
       }
     }
 
@@ -607,6 +625,11 @@ module Shumway.AVM2.AS {
     dynamicPrototype: Object;
 
     /**
+     * Original prototype object populated by TypeScript.
+     */
+    typeScriptPrototype: Object;
+
+    /**
      * Set of implemented interfaces.
      */
     implementedInterfaces: Shumway.Map<ASClass>;
@@ -820,8 +843,6 @@ module Shumway.AVM2.AS {
 
     trace(writer: IndentingWriter) {
       writer.enter("Class: " + this.classInfo);
-      // dumpObject(this);
-      writer.writeLn("baseClass: " + this);
       writer.writeLn("baseClass: " + (this.baseClass ? this.baseClass.classInfo.instanceInfo.name: null));
       writer.writeLn("instanceConstructor: " + this.instanceConstructor + " " + ASClass.labelObject(this.instanceConstructor));
       writer.writeLn("instanceConstructorNoInitialize: " + this.instanceConstructorNoInitialize + " " + ASClass.labelObject(this.instanceConstructorNoInitialize));
@@ -1534,6 +1555,12 @@ module Shumway.AVM2.AS {
     return cls;
   }
 
+  /**
+   * We need to patch up the prototypes of all classes that are created before the Class class is constructed.
+   * Here we store the classes that need to be patched.
+   */
+  var morphPatchList = [];
+
   export function createClass(classInfo: ClassInfo, baseClass: ASClass, scope: Scope) {
     var ci = classInfo;
     var ii = ci.instanceInfo;
@@ -1549,6 +1576,9 @@ module Shumway.AVM2.AS {
         Shumway.Debug.unexpected("No native class for " + ci.native.cls);
       }
       cls.morphIntoASClass(classInfo);
+      if (morphPatchList) {
+        morphPatchList.push(cls);
+      }
     } else {
       cls = new ASClass(classInfo);
     }
@@ -1582,7 +1612,16 @@ module Shumway.AVM2.AS {
     }
 
     ASClass.create(cls, baseClass, instanceConstructor);
-    cls.verify();
+    release || cls.verify();
+
+    // Once we see the Class class patch up the prototypes of all the classes
+    // that were constructed before, including this one.
+    if (classInfo.instanceInfo.name.name === "Class") {
+      for (var i = 0; i < morphPatchList.length; i++) {
+        morphPatchList[i].__proto__ = ASClass.prototype;
+      }
+      morphPatchList = null;
+    }
 
     enterTimeline("ClassBindings");
     cls.classBindings = new ClassBindings(classInfo, classScope, staticNatives);
@@ -1780,7 +1819,7 @@ module Shumway.AVM2.AS {
       return cls.baseClass.getQualifiedClassName();
     }
 
-    export function getDefinitionByName(name) {
+    export function getDefinitionByName(name: string) {
       var simpleName = String(name).replace("::", ".");
       return Shumway.AVM2.Runtime.AVM2.currentDomain().getClass(simpleName);
     }

@@ -723,10 +723,13 @@ module Shumway {
       }
     }
 
-    export function copyOwnPropertyDescriptors(object: Object, template: Object) {
+    export function copyOwnPropertyDescriptors(object: Object, template: Object, overwrite = true) {
       for (var property in template) {
         if (hasOwnProperty(template, property)) {
           var descriptor = Object.getOwnPropertyDescriptor(template, property);
+          if (!overwrite && hasOwnProperty(object, property)) {
+            continue
+          }
           release || Debug.assert (descriptor);
           try {
             Object.defineProperty(object, property, descriptor);

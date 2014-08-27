@@ -2017,7 +2017,8 @@ module Shumway.AVM2.AS {
     }
   }
 
-  function XML(kind?: ASXMLKind, uri?, name?, prefix?) {
+  function XML(kind?: ASXMLKind, uri?, name?, prefix?): void {
+    var self = Object.create(ASXML.prototype);
     if (kind === undefined) {
       kind = ASXMLKind.Text;
     }
@@ -2027,10 +2028,9 @@ module Shumway.AVM2.AS {
     if (name === undefined) {
       name = "";
     }
-    this.init(kind, uri, name, prefix);
+    self.init(kind, uri, name, prefix);
+    return self;
   }
-
-  XML.prototype = ASXML.prototype;
 
   export class ASXMLList extends ASNative {
     public static instanceConstructor: any = ASXMLList;
@@ -2382,11 +2382,12 @@ module Shumway.AVM2.AS {
     }
   }
 
-  function XMLList(targetObject?, targetProperty?) {
-    this._targetObject = targetObject ? targetObject : null;
-    this._targetProperty = targetProperty ? targetProperty : null;
-    this._children = [];
+  function XMLList(targetObject?, targetProperty?): void {
+    var self = Object.create(ASXMLList.prototype);
+    self._targetObject = targetObject ? targetObject : null;
+    self._targetProperty = targetProperty ? targetProperty : null;
+    self._children = [];
+    return self;
   }
 
-  XMLList.prototype = ASXMLList.prototype;
 }
