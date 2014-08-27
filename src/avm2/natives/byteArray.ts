@@ -33,6 +33,7 @@ module Shumway.AVM2.AS {
   import int32ToFloat = Shumway.IntegerUtilities.int32ToFloat;
 
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+  import assert = Shumway.Debug.assert;
 
   function throwEOFError() {
     notImplemented("throwEOFError");
@@ -120,30 +121,30 @@ module Shumway.AVM2.AS {
 
       static initializer = function (source: any) {
         var self: ByteArray = this;
-        var align = false;
-        var buffer, length;
+
+        // Unsafe reference to BinarySymbol, we don't want to create an unnecessary dependence just for
+        // this once use case.
+        var BinarySymbol = (<any>Shumway).Timeline.BinarySymbol;
+        release || assert (BinarySymbol);
+
+        var buffer: ArrayBuffer;
+        var length = 0;
         if (source) {
-          length = 'byteLength' in source ? source.byteLength : source.length;
-          align = (length & 0x7) !== 0;
           if (source instanceof ArrayBuffer) {
-            buffer = source;
-          } else if ('buffer' in source && source.buffer instanceof ArrayBuffer) {
-            buffer = align ? source.buffer : source.buffer.slice();
-          } else if (Array.isArray) {
-            buffer = align ? source : (new Uint8Array(source)).buffer;
+            buffer = source.slice();
+          } else if (Array.isArray(source)) {
+            buffer = new Uint8Array(buffer).buffer;
+          } else if (source instanceof BinarySymbol) {
+            buffer = new Uint8Array(source.buffer).buffer.slice();
+          } else if ('buffer' in source) {
+            release || assert (source.buffer instanceof ArrayBuffer);
+            buffer = source.buffer.slice();
+          } else {
+            Debug.unexpected("Source type.");
           }
-          // We have to make sure that the length of the buffer is a multiple of 8 or else
-          // constructing 64 bit views will fail.
-          if (align) {
-            length = (length + 7) & ~0x7;
-            var tmp = new ArrayBuffer(length);
-            // Copy into new buffer.
-            (new Uint8Array(tmp)).set(new Uint8Array(buffer));
-            buffer = tmp;
-          }
+          length = buffer.byteLength;
         } else {
           buffer = new ArrayBuffer(ByteArray.INITIAL_SIZE);
-          length = 0;
         }
         self._buffer = buffer;
         self._length = length;
