@@ -19,6 +19,7 @@
 ///<reference path='options.ts' />
 ///<reference path='settings.ts'/>
 ///<reference path='metrics.ts' />
+///<reference path='deflate.ts' />
 ///<reference path='dataBuffer.ts' />
 ///<reference path='ShapeData.ts' />
 ///<reference path='SWFTags.ts' />

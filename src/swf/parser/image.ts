@@ -20,6 +20,7 @@
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   import assert = Shumway.Debug.assert;
+  import Inflate = Shumway.ArrayUtilities.Inflate;
 
   /**
    * Reads the next two bytes at the specified position.
@@ -122,9 +123,9 @@ module Shumway.SWF.Parser {
         var width = image.width;
         var height = image.height;
         var length = width * height;
-        var inflate = new InflateSession(length);
-        inflate.push(alphaData);
-        var alphaMaskBytes = inflate.toUint8Array();
+
+        var alphaMaskBytes = Inflate.inflate(alphaData, length, true);
+
         var data = image.data = new Uint8ClampedArray(length * 4);
         jpegImage.copyToImageData(image);
         for (var i = 0, k = 3; i < length; i++, k += 4) {
