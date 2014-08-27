@@ -10,8 +10,8 @@
     eq(new Vector3D(2, 3, 5, 4).lengthSquared, 38);
     eq(new Vector3D(2, 3, 5, 4).clone().lengthSquared, 38);
 
-    eq(Vector3D.angleBetween(new Vector3D(2, 3, 5, 4), new Vector3D(5, -3, 5, 2)), 0.9895031360282126);
-    eq(Vector3D.distance(new Vector3D(2, 3, 5, 4), new Vector3D(5, -3, 5, 2)), 6.708203932499369);
+    eqFloat(Vector3D.angleBetween(new Vector3D(2, 3, 5, 4), new Vector3D(5, -3, 5, 2)), 0.9895031360282126, null, 1e-7);
+    eqFloat(Vector3D.distance(new Vector3D(2, 3, 5, 4), new Vector3D(5, -3, 5, 2)), 6.708203932499369, null, 1e-7);
     eq(new Vector3D(2, 3, 5, 4).dotProduct(new Vector3D(5, -3, 5, 2)), 26);
     eq(new Vector3D(2, 3, 5, 4).crossProduct(new Vector3D(5, -3, 5, 2)).lengthSquared, 1566);
     var v = new Vector3D(2, 3, 5, 4); v.normalize();
