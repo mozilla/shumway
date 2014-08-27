@@ -400,7 +400,7 @@ module Shumway.Timeline {
         return false;
       }
       var symbol = this.symbol;
-      if (symbol && obj._symbol !== symbol) {
+      if (symbol) {
         if (symbol.dynamic) {
           return false;
         }
