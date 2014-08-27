@@ -293,6 +293,7 @@ module Shumway.Timeline {
       }
       symbol.frameScripts = data.frameScripts;
       var frames = data.frames;
+      var frameNum = 1;
       for (var i = 0; i < frames.length; i++) {
         var frameInfo = frames[i];
         var frame = new FrameDelta(loaderInfo, frameInfo.commands);
@@ -301,13 +302,14 @@ module Shumway.Timeline {
           symbol.frames.push(frame);
         }
         if (frameInfo.labelName) {
-          var frameNum = i + 1;
           symbol.labels.push(new flash.display.FrameLabel(frameInfo.labelName, frameNum));
         }
 
         //if (frame.startSounds) {
         //  startSoundRegistrations[frameNum] = frame.startSounds;
         //}
+
+        frameNum += frameInfo.repeat;
       }
       return symbol;
     }

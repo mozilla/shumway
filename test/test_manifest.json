@@ -14,6 +14,19 @@
       ],
       "type": "stas"
     },
+    {  "id": "timeline_scene",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/timeline/scene/Scene_1_MainTimeline.swf",
+        "swfs/timeline/scene/Scene_2_MovieClipTimeline.swf",
+        "swfs/timeline/scene/Scene_3_GotoAndStop_LabelScene.swf",
+        "swfs/timeline/scene/Scene_4_GotoAndStop_FrameScene.swf",
+        "swfs/timeline/scene/Scene_5_GotoAndPlay_LabelScene.swf",
+        "swfs/timeline/scene/Scene_6_GotoAndPlay_FrameScene.swf",
+        "swfs/timeline/scene/Scene_7_NextPrevScene.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "flash_net_URLRequest trace",
       "stas": "swfs/trace.stas",
       "filenames": [
