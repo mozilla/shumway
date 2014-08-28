@@ -621,255 +621,25 @@ module Shumway.ArrayUtilities {
       this._bitLength = 0;
     }
 
-    /*
-     * Inflate / Deflate Support
-     *
-     * TODO: Perhaps this code should be moved outside of this class in the future. I couldn't take it out
-     * easily because it is tightly coupled with ByteArrays.
-     */
-
-    private static _codeLengthOrder = null;
-    private static _distanceCodes = null;
-    private static _distanceExtraBits = null;
-
-    private static _fixedLiteralTable = null;
-    private static _fixedDistanceTable = null;
-
-    private static _lengthCodes = null;
-    private static _lengthExtraBits = null;
-
-    /**
-     * Construct tables lazily only if needed in order to avoid startup cost.
-     */
-    private static _initializeTables() {
-      if (DataBuffer._codeLengthOrder) {
-        return;
-      }
-
-      DataBuffer._codeLengthOrder = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]
-      DataBuffer._distanceCodes = [];
-      DataBuffer._distanceExtraBits = [];
-
-      for (var i = 0, j = 0, code = 1; i < 30; ++i) {
-        DataBuffer._distanceCodes[i] = code;
-        code += 1 << (DataBuffer._distanceExtraBits[i] = ~~((j += (i > 2 ? 1 : 0)) / 2));
-      }
-
-      var bitLengths = [];
-      for (var i = 0; i < 32; ++i) {
-        bitLengths[i] = 5;
-      }
-
-      DataBuffer._fixedDistanceTable = DataBuffer._makeHuffmanTable(bitLengths);
-
-      DataBuffer._lengthCodes = [];
-      DataBuffer._lengthExtraBits = [];
-      for (var i = 0, j = 0, code = 3; i < 29; ++i) {
-        DataBuffer._lengthCodes[i] = code - (i == 28 ? 1 : 0);
-        code += 1 << (DataBuffer._lengthExtraBits[i] = ~~(((j += (i > 4 ? 1 : 0)) / 4) % 6));
-      }
-
-      for (var i = 0; i < 288; ++i) {
-        bitLengths[i] = i < 144 || i > 279 ? 8 : (i < 256 ? 9 : 7);
-      }
-
-      DataBuffer._fixedLiteralTable = DataBuffer._makeHuffmanTable(bitLengths);
-    }
-
-    private static _makeHuffmanTable(bitLengths: number []) {
-      var maxBits = Math.max.apply(null, bitLengths);
-      var numLengths = bitLengths.length;
-      var size = 1 << maxBits;
-      var codes = new Uint32Array(size);
-      for (var code = 0, len = 1, skip = 2;
-           len <= maxBits;
-           code <<= 1, ++len, skip <<= 1)
-      {
-        for (var val = 0; val < numLengths; ++val) {
-          if (bitLengths[val] === len) {
-            var lsb = 0;
-            for (var i = 0; i < len; ++i) {
-              lsb = (lsb * 2) + ((code >> i) & 1);
-            }
-            for (var i = lsb; i < size; i += skip) {
-              codes[i] = (len << 16) | val;
-            }
-            ++code;
-          }
-        }
-      }
-      return { codes: codes, maxBits: maxBits };
-    }
-
-    private static readBitsMSB(input: DataBuffer, size: number) {
-      var buffer = input._bitBuffer;
-      var bufflen = input._bitLength;
-      while (size > bufflen) {
-        buffer |= input.readUnsignedByte() << bufflen;
-        bufflen += 8;
-      }
-      input._bitBuffer = buffer >>> size;
-      input._bitLength = bufflen - size;
-      return buffer & ((1 << size) - 1);
-    }
-
-    private static inflateBlock(input: DataBuffer, output: DataBuffer) {
-      var readBits = DataBuffer.readBitsMSB;
-      var header = readBits(input, 3);
-      switch (header >> 1) {
-        case 0:
-          input._bitBuffer = input._bitLength = 0;
-          var len = input.readUnsignedShort();
-          var nlen = input.readUnsignedShort();
-          // release || assert((~nlen & 0xffff) === len, 'bad uncompressed block length', 'inflate');
-          if ((~nlen & 0xffff) !== len) {
-            throwCompressedDataError();
-          }
-          output.writeBytes(input, input.position, len);
-          input.position += len;
-          break;
-        case 1:
-          DataBuffer.inflate(input, output, DataBuffer._fixedLiteralTable, DataBuffer._fixedDistanceTable);
-          break;
-        case 2:
-          var bitLength = [];
-          var numLiteralCodes = readBits(input, 5) + 257;
-          var numDistanceCodes = readBits(input, 5) + 1;
-          var numCodes = numLiteralCodes + numDistanceCodes;
-          var numLengthCodes = readBits(input, 4) + 4;
-          for (var i = 0; i < 19; ++i) {
-            bitLength[DataBuffer._codeLengthOrder[i]] = i < numLengthCodes ?
-              readBits(input, 3) : 0;
-          }
-          var codeLengthTable = DataBuffer._makeHuffmanTable(bitLength);
-          bitLength = [];
-          var i = 0;
-          var prev = 0;
-          while (i < numCodes) {
-            var j = 1;
-            var sym = DataBuffer.readCode(input, codeLengthTable);
-            switch(sym){
-              case 16:
-                j = readBits(input, 2) + 3;
-                sym = prev;
-                break;
-              case 17:
-                j = readBits(input, 3) + 3;
-                sym = 0;
-                break;
-              case 18:
-                j = readBits(input, 7) + 11;
-                sym = 0;
-                break;
-              default:
-                prev = sym;
-            }
-            while (j--) {
-              bitLength[i++] = sym;
-            }
-          }
-          var distanceTable = DataBuffer._makeHuffmanTable(bitLength.splice(numLiteralCodes,
-            numDistanceCodes));
-          var literalTable = DataBuffer._makeHuffmanTable(bitLength);
-          DataBuffer.inflate(input, output, literalTable, distanceTable);
-          break;
-        default:
-          Shumway.Debug.unexpected('unknown block type: inflate');
-      }
-    }
-
-    static inflate(input: DataBuffer, output: DataBuffer, literalTable, distanceTable) {
-      var readBits = DataBuffer.readBitsMSB;
-      var readCode = DataBuffer.readCode;
-      var lengthCodes = DataBuffer._lengthCodes;
-      var lengthExtraBits = DataBuffer._lengthExtraBits;
-      var distanceCodes = DataBuffer._distanceCodes;
-      var distanceExtraBits = DataBuffer._distanceExtraBits;
-
-      var sym;
-      while ((sym = readCode(input, literalTable)) !== 256) {
-        if (sym < 256) {
-          output.writeUnsignedByte(sym);
-        } else {
-          sym -= 257;
-          var len = lengthCodes[sym] + readBits(input, lengthExtraBits[sym]);
-          sym = readCode(input, distanceTable);
-          var distance = distanceCodes[sym] + readBits(input, distanceExtraBits[sym]);
-          output.writeBytes(output, output.position - distance, len);
-        }
-      }
-    }
-
-    static readCode(input: DataBuffer, codeTable): number {
-      var buffer = input._bitBuffer;
-      var bitlen = input._bitLength;
-      var maxBits = codeTable.maxBits;
-      while (maxBits > bitlen) {
-        buffer |= input.readUnsignedByte() << bitlen;
-        bitlen += 8;
-      }
-      var code = codeTable.codes[buffer & ((1 << maxBits) - 1)];
-      var len = code >> 16;
-      //release || assert(len, 'bad encoding', 'inflate');
-      if (!len) {
-        throwCompressedDataError();
-      }
-      input._bitBuffer = buffer >>> len;
-      input._bitLength = bitlen - len;
-      return code & 0xffff;
-    }
-
-    static adler32(data, start, end): number {
-      var a = 1;
-      var b = 0;
-      for (var i = start; i < end; ++i) {
-        a = (a + (data[i] & 0xff)) % 65521;
-        b = (b + a) % 65521;
-      }
-      return (b << 16) | a;
-    }
-
     private _compress(algorithm: string): void {
       algorithm = asCoerceString(algorithm);
-      DataBuffer._initializeTables();
 
-      this._position = 0;
-      var output = new DataBuffer();
+      var deflate: Deflate;
       switch (algorithm) {
         case 'zlib':
-          output.writeUnsignedByte(0x78);
-          output.writeUnsignedByte(0x9C);
+          deflate = new Deflate(true);
+          break;
         case 'deflate':
-          output._littleEndian = true;
-
-          var len = this.length;
-
-          output._ensureCapacity(len + Math.ceil(len / 0xFFFF) * 5 + 4);
-
-          while (len > 0xFFFF) {
-            output.writeUnsignedByte(0x00);
-            output.writeUnsignedShort(0xFFFF);
-            output.writeUnsignedShort(0x0000);
-
-            output.writeBytes(this, this._position, 0xFFFF);
-            this._position += 0xFFFF;
-
-            len -= 0xFFFF;
-          }
-
-          output.writeUnsignedByte(0x00);
-          output.writeUnsignedShort(len);
-          output.writeUnsignedShort(~len & 0xffff);
-
-          output.writeBytes(this, this._position, len);
-
-          if (algorithm === 'zlib') {
-            output.writeUnsignedInt(DataBuffer.adler32(this._u8View, 0, this.length));
-          }
+          deflate = new Deflate(false);
           break;
         default:
           return;
       }
+
+      var output = new DataBuffer();
+      deflate.onData = output.writeRawBytes.bind(output);
+      deflate.push(this._u8View.subarray(0, this._length));
+      deflate.finish();
 
       this._ensureCapacity(output._u8View.length);
       this._u8View.set(output._u8View);
@@ -879,27 +649,24 @@ module Shumway.ArrayUtilities {
 
     private _uncompress(algorithm: string): void {
       algorithm = asCoerceString(algorithm);
-      DataBuffer._initializeTables();
 
-      var output = new DataBuffer();
+      var inflate: Inflate;
       switch (algorithm) {
         case 'zlib':
-          var header = this.readUnsignedShort();
-          if ((header & 0x0f00) !== 0x0800 ||
-            (header % 31) !== 0 ||
-            (header & 0x20)) {
-            throwCompressedDataError();
-          }
+          inflate = new Inflate(true);
+          break;
         case 'deflate':
-          var littleEndian = this._littleEndian;
-          this._littleEndian = true;
-          while (this._position < this.length - 6) {
-            DataBuffer.inflateBlock(this, output);
-          }
-          this._littleEndian = littleEndian;
+          inflate = new Inflate(false);
           break;
         default:
           return;
+      }
+
+      var output = new DataBuffer();
+      inflate.onData = output.writeRawBytes.bind(output);
+      inflate.push(this._u8View.subarray(0, this._length));
+      if (inflate.error) {
+        throwCompressedDataError();
       }
 
       this._ensureCapacity(output._u8View.length);

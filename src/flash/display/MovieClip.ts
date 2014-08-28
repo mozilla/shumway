@@ -299,14 +299,14 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get currentLabel(): string {
-      var label: FrameLabel = this._labelForFrame(this.currentFrame);
+      var label: FrameLabel = this._labelForFrame(this._currentFrame);
       return label ? label.name : null;
     }
 
     get currentFrameLabel(): string {
-      var currentFrame = this.currentFrame;
-      var label: FrameLabel = this._labelForFrame(currentFrame);
-      return label && label.frame === currentFrame ? label.name : null;
+      var scene = this._sceneForFrameIndex(this._currentFrame);
+      var label = scene.getLabelByFrame(this._currentFrame - scene.offset);
+      return label && label.name;
     }
 
     get enabled(): boolean {
@@ -364,17 +364,11 @@ module Shumway.AVM2.AS.flash.display {
       /* tslint:disable */
       var frameNum = parseInt(frame, 10);
       if (<any>frameNum != frame) { // TypeScript doesn't like using `==` for number,string vars.
-        var labels = scene.labels;
-        for (var i = 0; i < labels.length; i++) {
-          var label = labels[i];
-          if (label.name === frame) {
-            frameNum = label.frame;
-            break;
-          }
-        }
-        if (i === labels.length) {
+        var label = scene.getLabelByName(frame);
+        if (!label) {
           throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame, sceneName);
         }
+        frameNum = label.frame;
       }
       /* tslint:enable */
       this._gotoFrameAbs(scene.offset + frameNum);
@@ -707,7 +701,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     addFrameLabel(name: string, frame: number): void {
-      this._sceneForFrameIndex(frame)._labels.push(new flash.display.FrameLabel(name, frame));
+      var scene = this._sceneForFrameIndex(frame);
+      if (!scene.getLabelByName(name)) {
+        scene.labels.push(new flash.display.FrameLabel(name, frame - scene.offset));
+      }
     }
 
     prevScene(): void {
@@ -722,6 +719,9 @@ module Shumway.AVM2.AS.flash.display {
 
     nextScene(): void {
       var currentScene = this._sceneForFrameIndex(this._currentFrame);
+      if (currentScene.offset + currentScene.numFrames === this._totalFrames) {
+        return;
+      }
       this._gotoFrameAbs(currentScene.offset + currentScene.numFrames + 1);
     }
   }

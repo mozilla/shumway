@@ -18,6 +18,8 @@
 
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
+  import Inflate = Shumway.ArrayUtilities.Inflate;
+
   function readTags(context, stream, swfVersion, final, onprogress, onexception) {
     var tags = context.tags;
     var bytes = stream.bytes;
@@ -174,12 +176,6 @@ module Shumway.SWF.Parser {
     }
   }
 
-  interface CompressedPipeState {
-    bitBuffer: number;
-    bitLength: number;
-    compression: CompressionState;
-  }
-
   export interface ProgressInfo {
     bytesLoaded: number;
     bytesTotal: number;
@@ -191,13 +187,13 @@ module Shumway.SWF.Parser {
   }
 
   class CompressedPipe implements IPipe {
-    private _inflate: InflateSession;
+    private _inflate: Inflate;
     private _progressInfo: ProgressInfo;
 
-    constructor (target, length: number) {
-      this._inflate = new InflateSession(length);
-      this._inflate.onData = function (data: Uint8Array, start: number, end: number) {
-        target.push(data.subarray(start, end), this._progressInfo);
+    constructor (target) {
+      this._inflate = new Inflate(true);
+      this._inflate.onData = function (data: Uint8Array) {
+        target.push(data, this._progressInfo);
       }.bind(this);
     }
 
@@ -382,7 +378,7 @@ module Shumway.SWF.Parser {
 
       target = new BodyParser(swfVersion, bodyLength, options);
       if (compressed) {
-        target = new CompressedPipe(target, bodyLength);
+        target = new CompressedPipe(target);
       }
       target.push(buffer.getTail(8), progressInfo);
     }

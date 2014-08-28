@@ -35,6 +35,9 @@ function runSwf(path, callback) {
     if (code) {
       error = 'Exited with code: ' + code + '\n' + error;
     }
+    if (process.platform === 'win32') { // replacing CRLF
+      output = output.replace(/\r\n/g, '\n');
+    }
     callback(error || null, output);
   });
 }
