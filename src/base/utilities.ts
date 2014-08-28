@@ -1351,7 +1351,7 @@ module Shumway {
     _removeReference();
   }
 
-  var useReferenceCounting = false;
+  var useReferenceCounting = true;
 
   export class WeakList<T extends IReferenceCountable> {
     private _map: WeakMap<T, T>;
