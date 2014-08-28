@@ -268,7 +268,14 @@ module Shumway.AVM1 {
       case 'movieclip':
         return (<Shumway.AVM2.AS.avm1lib.AS2MovieClip> value).__targetPath;
       case 'object':
-        var result = value.toString();
+        if (typeof value === 'function' &&
+            value.asGetPublicProperty('toString') ===
+              AVM2.AS.ASFunction.traitsPrototype.asGetPublicProperty('toString')) {
+          // Printing AVM1 thing instead of 'function Function() {}' when
+          // native AS3 Function.prototype.toString is found.
+          return '[type Function]';
+        }
+        var result = value.asCallPublicProperty('toString', null);
         if (typeof result === 'string') {
           return result;
         }
