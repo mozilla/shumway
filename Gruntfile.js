@@ -155,6 +155,9 @@ module.exports = function(grunt) {
       },
       tracetest_swfdec: {
         cmd: 'node test/trace_test_run.js -m test/swfdec_test_manifest.json'
+      },
+      tracetest_fuzz: {
+        cmd: 'node test/trace_test_run.js -m test/test_manifest_fuzz.json'
       }
     },
     parallel: {

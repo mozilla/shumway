@@ -158,6 +158,8 @@ module Shumway.Shell {
   var avm1Option: Option;
   var porcelainOutputOption: Option;
 
+  var fuzzMillOption: Option;
+
   export function main(commandLineArguments: string []) {
     parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
     parseForDatabaseOption = shellOptions.register(new Option("po", "parseForDatabase", "boolean", false, "Parse File(s)"));
@@ -173,6 +175,8 @@ module Shumway.Shell {
     loadShellLibOption = shellOptions.register(new Option("s", "shell", "boolean", false, "Load Shell Global"));
     avm1Option = shellOptions.register(new Option(null, "avm1lib", "boolean", false, "Load avm1lib"));
     porcelainOutputOption = shellOptions.register(new Option(null, "porcelain", "boolean", false, "Keeps outputs free from the debug messages."));
+
+    fuzzMillOption = shellOptions.register(new Option(null, "fuzz", "string", "", "Generates random SWFs XML."));
 
     var argumentParser = new ArgumentParser();
     argumentParser.addBoundOptionSet(systemOptions);
@@ -214,6 +218,12 @@ module Shumway.Shell {
     if (!verbose) {
       IndentingWriter.logLevel = Shumway.LogLevel.Error | Shumway.LogLevel.Warn;
     }
+
+    if (fuzzMillOption.value) {
+      var fuzzer = new Shumway.Shell.Fuzz.Mill(new IndentingWriter(), fuzzMillOption.value);
+      fuzzer.fuzz();
+    }
+
     Shumway.Unit.writer = new IndentingWriter();
 
     if (parseOption.value) {
