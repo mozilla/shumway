@@ -2,7 +2,6 @@
   {  "id": "basic",
     "stas": "swfs/trace.stas",
     "filenames": [
-      "swfs/add.swf",
       "swfs/targetPath1.swf"
     ],
     "type": "stas"

@@ -2,6 +2,7 @@
     {  "id": "basic",
        "stas": "swfs/trace.stas",
        "filenames": [
+         "swfs/add.swf",
          "swfs/encoding1.swf",
          "swfs/fscommand1.swf",
          "swfs/local2global.swf",
