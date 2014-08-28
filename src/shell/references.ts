@@ -6,4 +6,5 @@
 
 ///<reference path='module.ts' />
 ///<reference path='unit.ts' />
+///<reference path='fuzz.ts' />
 ///<reference path='shell.ts' />
