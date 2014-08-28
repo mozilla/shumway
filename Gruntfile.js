@@ -326,8 +326,36 @@ module.exports = function(grunt) {
       cmd: 'python',
       args: ['test.py', '--reftest', '--browserManifestFile=' + browserManifestFile,
              '--manifestFile=' + testManifestFile].concat(params),
-      opts: { cwd: 'test', stdio: 'inherit'
-    }}, function () {
+      opts: { cwd: 'test', stdio: 'inherit' }
+    }, function () {
+      done();
+    });
+  });
+
+  grunt.registerTask('reftest-swfdec', function () {
+    if (grunt.file.exists('test/tmp')) {
+      throw new Error('The test/tmp/ folder exists from the previous makeref attempt. ' +
+        'You may want to copy those images to test/refs/. Remove test/tmp/ to proceed with reftest.')
+    }
+    if (!grunt.option('browserManifestFile') && !grunt.file.exists('test', defaultBrowserManifestFile)) {
+      throw new Error('Browser manifest file is not found at test/' + defaultBrowserManifestFile + '. Create one using the examples at test/resources/browser_manifests/.');
+    }
+    var browserManifestFile = grunt.option('browserManifestFile') || defaultBrowserManifestFile;
+    var testManifestFile = 'swfdec_reftest_manifest.json';
+    var done = this.async();
+    var params = [];
+    if (grunt.option('bundle')) {
+      params.push('--bundle');
+    }
+    if (grunt.option('noPrompts')) {
+      params.push('--noPrompts');
+    }
+    grunt.util.spawn({
+      cmd: 'python',
+      args: ['test.py', '--browserManifestFile=' + browserManifestFile,
+          '--manifestFile=' + testManifestFile].concat(params),
+      opts: { cwd: 'test', stdio: 'inherit' }
+    }, function () {
       done();
     });
   });
