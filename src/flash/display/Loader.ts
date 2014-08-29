@@ -509,12 +509,12 @@ module Shumway.AVM2.AS.flash.display {
         var loaderInfo = this._contentLoaderInfo;
         for (var i = 0; i < initActionBlocks.length; i++) {
           var actionBlock = initActionBlocks[i];
-          if (actionBlock.spriteId === 0) {
+//          if (actionBlock.spriteId === 0) {
             root.addAS2InitActionBlock(frameIndex, actionBlock);
-          } else {
-            var symbol = <Timeline.SpriteSymbol>loaderInfo.getSymbolById(actionBlock.spriteId);
-            symbol.initActionBlock = actionBlock;
-          }
+//          } else {
+//            var symbol = <Timeline.SpriteSymbol>loaderInfo.getSymbolById(actionBlock.spriteId);
+//            symbol.initActionBlock = actionBlock;
+//          }
         }
       }
 
