@@ -163,6 +163,13 @@ module.exports = function(grunt) {
       },
       tracetest_fuzz: {
         cmd: 'node test/trace_test_run.js -m test/test_manifest_fuzz.json'
+      },
+      instrument: {
+        cmd: function(path) {
+          var targetPath = path.replace(".swf", ".instrumented.swf");
+          console.info("Instrumenting " + path + " (" + targetPath + "), this may take a while if the file is large.");
+          return 'swfmill swf2xml ' + path + ' | xsltproc utils/instrument-swf.xslt - | swfmill xml2swf stdin ' + targetPath;
+        }
       }
     },
     parallel: {
