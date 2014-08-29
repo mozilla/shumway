@@ -8,8 +8,7 @@
   To use this script you must first install swfmill and xsltproc. A typical use of this
   script looks something like this:
 
-    swfmill swf2xml file.swf file.xml
-    xsltproc utils/instrument-swf.xslt file.xml | swfmill xml2swf stdin file.instrumented.swf
+    swfmill swf2xml file.swf | xsltproc utils/instrument-swf.xslt - | swfmill xml2swf stdin file.instrumented.swf
 
 -->
 
