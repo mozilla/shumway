@@ -414,6 +414,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private static _runScripts: boolean = true;
+    static _stage: Stage;
 
     /**
      * Runs one full turn of the frame events cycle.
@@ -425,8 +426,7 @@ module Shumway.AVM2.AS.flash.display {
      * If runScripts is true, no events are dispatched and Movieclip frame scripts are run. This
      * is true for nested cycles, too. (We keep static state for that.)
      */
-    static performFrameNavigation(stage: flash.display.Stage, mainLoop: boolean,
-                                  runScripts: boolean) {
+    static performFrameNavigation(mainLoop: boolean, runScripts: boolean) {
       if (mainLoop) {
         var timelineData = {instances: 0};
         DisplayObject._runScripts = runScripts;
@@ -445,22 +445,38 @@ module Shumway.AVM2.AS.flash.display {
       // Also, changed properties of existing objects are updated here instead of during frame
       // construction after ENTER_FRAME.
       // Thus, all these can be done together.
-      DisplayObject._advancableInstances.forEach(function (value: IAdvancable) {
-        (<IAdvancable>value)._initFrame(mainLoop);
+      DisplayObject._advancableInstances.forEach(function (value) {
+        value._initFrame(mainLoop);
       });
       // Step 2: Dispatch ENTER_FRAME, only called in outermost invocation.
       if (mainLoop && runScripts) {
         DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
       }
       // Step 3: Create new timeline objects.
-      DisplayObject._advancableInstances.forEach(function (value: IAdvancable) {
-        (<IAdvancable>value)._constructFrame();
+      DisplayObject._advancableInstances.forEach(function (value) {
+        value._constructFrame();
       });
       // Step 4: Dispatch FRAME_CONSTRUCTED.
       if (runScripts) {
         DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
         // Step 5: Run frame scripts
-        stage._enqueueFrameScripts();
+        // Flash seems to enqueue all frame scripts recursively, starting at the root of each
+        // independent object graph. That can be the stage or a container that isn't itself on
+        // stage, but has (grand-)children.
+        // The order in which these independent graphs are processed seems not to follow a
+        // specific system: in some testing scenarios all independent graphs are processes before
+        // the stage, in others the first-created such graph is processes *after* the stage, all
+        // others before the stage. There might be other permutations of this, but it seems
+        // doubtful anybody could reasonably rely on the exact details of all this.
+        // Of course, nothing guarantees that there isn't content that accidentally does, so it'd
+        // be nice to eventually get this right.
+        DisplayObject._advancableInstances.forEach(function (value) {
+          var container: any = value;
+          if (!container.parent) {
+            container._enqueueFrameScripts();
+          }
+        });
+        flash.display.DisplayObject._stage._enqueueFrameScripts();
         MovieClip.runFrameScripts();
         // Step 6: Dispatch EXIT_FRAME.
         DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
