@@ -181,9 +181,13 @@ module Shumway.AVM2.AS.flash.display {
         instance.callFrame(instance._currentFrame);
         instance._allowFrameNavigation = true;
 
-        // Frame navigation is only triggered if the MovieClip is on stage.
-        if (instance._nextFrame !== instance._currentFrame && instance.stage) {
-          DisplayObject.performFrameNavigation(instance.stage, false, true);
+        // If the destination frame isn't the same as before the `callFrame` operation, a frame
+        // navigation has happened inside the frame script. In that case, we didn't immediately
+        // run the full frame event cycle as described in `_gotoFrameAbs`. Instead, we have to do
+        // it here.
+        // TODO: does this also apply for fp9, or do we just do nothing there?
+        if (instance._nextFrame !== instance._currentFrame) {
+          DisplayObject.performFrameNavigation(false, true);
         }
       }
       leaveTimeline();
@@ -386,10 +390,13 @@ module Shumway.AVM2.AS.flash.display {
 
       this._nextFrame = frame;
 
-      // Frame navigation is only triggered if the MovieClip is on stage.
-      if (this._allowFrameNavigation && this.stage) { // TODO: also check if ActionScriptVersion < 3
-        // TODO test inter-frame navigation behaviour for SWF versions < 10
-        DisplayObject.performFrameNavigation(this.stage, false, true);
+      // Frame navigation in an individual timeline triggers an iteration of the whole
+      // frame navigation cycle in FP 10+. This includes broadcasting frame events to *all*
+      // display objects.
+      // TODO: only trigger for FP10+
+      // It only happens immediately if not triggered from under a frame script, though.
+      if (this._allowFrameNavigation) { // TODO: also check if ActionScriptVersion < 3
+        DisplayObject.performFrameNavigation(false, true);
       }
     }
 

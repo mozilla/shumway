@@ -339,11 +339,13 @@ module Shumway.Player {
         return;
       }
       this._stage.scaleX = this._stage.scaleY = stageScaleOption.value;
+      // The stage is required for frame event cycle processing.
+      DisplayObject._stage = this._stage;
       for (var i = 0; i < frameRateMultiplierOption.value; i++) {
         enterTimeline("eventLoop");
         var start = performance.now();
         Loader.progress();
-        DisplayObject.performFrameNavigation(this._stage, true, runFrameScripts);
+        DisplayObject.performFrameNavigation(true, runFrameScripts);
         counter.count("performFrameNavigation", 1, performance.now() - start);
         this._framesPlayed ++;
         if (tracePlayerOption.value > 0 && (this._framesPlayed % tracePlayerOption.value === 0)) {

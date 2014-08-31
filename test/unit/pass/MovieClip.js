@@ -1,6 +1,7 @@
 (function timelineTests() {
   var assert = Shumway.Debug.assert;
   var LoaderInfo = flash.display.LoaderInfo;
+  var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
   var Stage = flash.display.Stage;
   var MovieClip = flash.display.MovieClip;
@@ -24,6 +25,7 @@
     assert(typeof numFrames === 'number');
     var loaderInfo = new LoaderInfo();
     var stage = new Stage();
+    DisplayObject._stage = stage;
     stage._stage = stage;
     var symbol = new SpriteSymbol(0);
     symbol.numFrames = numFrames;
