@@ -54,6 +54,7 @@ module Shumway.Player {
     private _syncTimeout: number;
     private _frameTimeout: number;
     private _eventLoopIsRunning: boolean;
+    private _rootInitialized: boolean;
     private _framesPlayed: number = 0;
 
     private _writer: IndentingWriter;
@@ -320,42 +321,43 @@ module Shumway.Player {
     }
 
     private _enterEventLoop(): void {
-      var self = this;
-      var stage = this._stage;
-      var rootInitialized = false;
+      this._eventLoopIsRunning = true;
+      this._eventLoopTick = this._eventLoopTick.bind(this);
+      this._eventLoopTick();
+    }
+
+    private _eventLoopTick(): void {
       var runFrameScripts = !playAllSymbolsOption.value;
       var dontSkipFrames = dontSkipFramesOption.value;
-      this._eventLoopIsRunning = true;
-      (function tick() {
-        // TODO: change this to the mode described in http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
-        self._frameTimeout = setTimeout(tick, self._getFrameInterval());
-        if (!dontSkipFrames && (
-              !frameEnabledOption.value && runFrameScripts ||
-              self._shouldThrottleDownFrameExecution()))
-        {
-          return;
+      // TODO: change this to the mode described in
+      // http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
+      this._frameTimeout = setTimeout(this._eventLoopTick, this._getFrameInterval());
+      if (!dontSkipFrames && (
+        !frameEnabledOption.value && runFrameScripts ||
+        this._shouldThrottleDownFrameExecution()))
+      {
+        return;
+      }
+      this._stage.scaleX = this._stage.scaleY = stageScaleOption.value;
+      for (var i = 0; i < frameRateMultiplierOption.value; i++) {
+        enterTimeline("eventLoop");
+        var start = performance.now();
+        Loader.progress();
+        DisplayObject.performFrameNavigation(this._stage, true, runFrameScripts);
+        counter.count("performFrameNavigation", 1, performance.now() - start);
+        this._framesPlayed ++;
+        if (tracePlayerOption.value > 0 && (this._framesPlayed % tracePlayerOption.value === 0)) {
+          this._tracePlayer();
         }
-        stage.scaleX = stage.scaleY = stageScaleOption.value;
-        for (var i = 0; i < frameRateMultiplierOption.value; i++) {
-          enterTimeline("eventLoop");
-          var start = performance.now();
-          Loader.progress();
-          DisplayObject.performFrameNavigation(stage, true, runFrameScripts);
-          counter.count("performFrameNavigation", 1, performance.now() - start);
-          self._framesPlayed ++;
-          if (tracePlayerOption.value > 0 && (self._framesPlayed % tracePlayerOption.value === 0)) {
-            self._tracePlayer();
-          }
-          leaveTimeline("eventLoop");
-        }
-        if (rootInitialized) {
-          stage.render();
-        } else {
-          rootInitialized = true;
-        }
-        self._pumpUpdates();
-        self.onFrameProcessed();
-      })();
+        leaveTimeline("eventLoop");
+      }
+      if (this._rootInitialized) {
+        this._stage.render();
+      } else {
+        this._rootInitialized = true;
+      }
+      this._pumpUpdates();
+      this.onFrameProcessed();
     }
 
     private _tracePlayer(): void {
