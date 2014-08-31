@@ -172,8 +172,8 @@ module Shumway.AVM2.AS.flash.display {
 
     static runFrameScripts() {
       enterTimeline("MovieClip.executeFrame");
-      var queue: MovieClip[] = MovieClip._callQueue.concat();
-      MovieClip._callQueue.length = 0;
+      var queue: MovieClip[] = MovieClip._callQueue;
+      MovieClip._callQueue = [];
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
 
