@@ -582,12 +582,20 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.Loader::_setUncaughtErrorEvents"); return;
     }
 
-    _load(request: flash.net.URLRequest, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
+    _load(request: flash.net.URLRequest, checkPolicyFile: boolean,
+          applicationDomain: flash.system.ApplicationDomain,
+          securityDomain: flash.system.SecurityDomain,
+          requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject,
+          deblockingFilter: number, allowCodeExecution: boolean,
+          imageDecodingPolicy: string): void
+    {
+      // TODO: properly coerce object arguments to their types.
+      checkPolicyFile = !!checkPolicyFile;
+      deblockingFilter = +deblockingFilter;
+      allowCodeExecution = !!allowCodeExecution;
+      imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
       var loaderInfo = this._contentLoaderInfo;
-      //request = request; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
-      //if (flash.net.URLRequest.isType(request)) {
-        this._contentLoaderInfo._url = request.url;
-      //}
+      this._contentLoaderInfo._url = request.url;
       var worker;
       if (Loader.WORKERS_ENABLED) {
         var loaderPath = typeof LOADER_WORKER_PATH !== 'undefined' ?
@@ -639,9 +647,19 @@ module Shumway.AVM2.AS.flash.display {
       Loader._loadQueue.push(this);
     }
 
-    _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
-      bytes = bytes; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
-      notImplemented("public flash.display.Loader::_loadBytes"); return;
+    _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean,
+               applicationDomain: flash.system.ApplicationDomain,
+               securityDomain: flash.system.SecurityDomain,
+               requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject,
+               deblockingFilter: number, allowCodeExecution: boolean,
+               imageDecodingPolicy: string): void
+    {
+      // TODO: properly coerce object arguments to their types.
+      checkPolicyFile = !!checkPolicyFile;
+      deblockingFilter = +deblockingFilter;
+      allowCodeExecution = !!allowCodeExecution;
+      imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
+      notImplemented("public flash.display.Loader::_loadBytes");
     }
   }
 }
