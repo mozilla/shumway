@@ -1,0 +1,7 @@
+TODO: don't dispatch OPEN for loadBytes-loaded content
+loading progress 0 821 TODO: make sure this is dispatched twice before content is initialized
+from loadee: loaded
+loadee initialized, url relative to swf: /[[DYNAMIC]]/1
+loading progress 821 821 TODO: make sure this is dispatched twice before content is initialized
+loading complete
+bytes loaded: 821

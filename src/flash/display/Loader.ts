@@ -44,6 +44,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private static _rootLoader: Loader;
     private static _loadQueue: Loader [];
+    private static _embeddedContentLoadCount: number = 0;
 
     /**
      * Creates or returns the root Loader instance. The loader property of that instances LoaderInfo
@@ -594,12 +595,59 @@ module Shumway.AVM2.AS.flash.display {
       deblockingFilter = +deblockingFilter;
       allowCodeExecution = !!allowCodeExecution;
       imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
-      var loaderInfo = this._contentLoaderInfo;
       this._contentLoaderInfo._url = request.url;
+
+      var worker = this._createParsingWorker();
+
+      var loader = this;
+      var session = FileLoadingService.instance.createSession();
+      session.onprogress = function (data, progress) {
+        worker.postMessage({ data: data, progress: progress });
+      };
+      session.onerror = function (error) {
+        loader._commitData({ command: 'error', error: error });
+      };
+      session.onopen = function () {
+        worker.postMessage('pipe:');
+      };
+      session.onclose = function () {
+        worker.postMessage({ data: null });
+      };
+      session.open(request._toFileRequest());
+
+      Loader._loadQueue.push(this);
+    }
+
+    _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean,
+               applicationDomain: flash.system.ApplicationDomain,
+               securityDomain: flash.system.SecurityDomain,
+               requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject,
+               deblockingFilter: number, allowCodeExecution: boolean,
+               imageDecodingPolicy: string): void
+    {
+      // TODO: properly coerce object arguments to their types.
+      checkPolicyFile = !!checkPolicyFile;
+      deblockingFilter = +deblockingFilter;
+      allowCodeExecution = !!allowCodeExecution;
+      imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
+
+      this._contentLoaderInfo._url = this.loaderInfo._url + '/[[DYNAMIC]]/' +
+                                     (++Loader._embeddedContentLoadCount);
+      var worker = this._createParsingWorker();
+      Loader._loadQueue.push(this);
+      worker.postMessage('pipe:');
+      var buffer = bytes['bytes'];
+      var progress = {bytesLoaded: buffer.byteLength, bytesTotal: buffer.byteLength};
+      worker.postMessage({ data: buffer, progress:  progress});
+      worker.postMessage({ data: null });
+    }
+
+    private _createParsingWorker() {
+      var loaderInfo = this._contentLoaderInfo;
       var worker;
       if (Loader.WORKERS_ENABLED) {
         var loaderPath = typeof LOADER_WORKER_PATH !== 'undefined' ?
-          LOADER_WORKER_PATH : SHUMWAY_ROOT + Loader.LOADER_PATH;
+                         LOADER_WORKER_PATH : SHUMWAY_ROOT + Loader.LOADER_PATH;
         worker = new Worker(loaderPath);
       } else {
         var ResourceLoader = (<any>Shumway).SWF.ResourceLoader;
@@ -617,49 +665,15 @@ module Shumway.AVM2.AS.flash.display {
         if (e.data.type === 'exception') {
           console.log('error in parser: \n' + e.data.stack);
           AVM2.instance.exceptions.push({
-            source: 'parser',
-            message: e.data.message,
-            stack: e.data.stack
-          });
+                                          source: 'parser',
+                                          message: e.data.message,
+                                          stack: e.data.stack
+                                        });
         } else {
           loader._commitData(e.data);
         }
       };
-      //if (flash.net.URLRequest.class.isInstanceOf(request)) {
-        var session = FileLoadingService.instance.createSession();
-        session.onprogress = function (data, progress) {
-          worker.postMessage({ data: data, progress: progress });
-        };
-        session.onerror = function (error) {
-          loader._commitData({ command: 'error', error: error });
-        };
-        session.onopen = function () {
-          worker.postMessage('pipe:');
-        };
-        session.onclose = function () {
-          worker.postMessage({ data: null });
-        };
-        session.open(request._toFileRequest());
-      //} else {
-      //  this._initialDataLoaded.resolve(undefined);
-      //  worker.postMessage(request);
-      //}
-      Loader._loadQueue.push(this);
-    }
-
-    _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean,
-               applicationDomain: flash.system.ApplicationDomain,
-               securityDomain: flash.system.SecurityDomain,
-               requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject,
-               deblockingFilter: number, allowCodeExecution: boolean,
-               imageDecodingPolicy: string): void
-    {
-      // TODO: properly coerce object arguments to their types.
-      checkPolicyFile = !!checkPolicyFile;
-      deblockingFilter = +deblockingFilter;
-      allowCodeExecution = !!allowCodeExecution;
-      imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
-      notImplemented("public flash.display.Loader::_loadBytes");
+      return worker;
     }
   }
 }
