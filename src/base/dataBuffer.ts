@@ -125,6 +125,11 @@ module Shumway.ArrayUtilities {
     private static _arrayBufferPool = new ArrayBufferPool();
     
     constructor(initialSize: number = DataBuffer.INITIAL_SIZE) {
+      // If we're constructing a child class of DataBuffer (or ByteArray), buffer initialization
+      // has already happened at this point.
+      if (this._buffer) {
+        return;
+      }
       this._buffer = new ArrayBuffer(initialSize);
       this._length = 0;
       this._position = 0;
