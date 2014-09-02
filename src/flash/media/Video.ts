@@ -18,28 +18,27 @@ module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Video extends flash.display.DisplayObject {
-    
-    // Called whenever the class is initialized.
+    _isDirty: boolean;
+
+    _width: number;
+    _height: number;
+
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
     
     constructor (width: number /*int*/ = 320, height: number /*int*/ = 240) {
-      width = width | 0; height = height | 0;
       false && super();
-      notImplemented("Dummy Constructor: public flash.media.Video");
+      flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
+      this._width = width | 0;
+      this._height = height | 0;
+      this._isDirty = true;
     }
     
     // JS -> AS Bindings
-    
-    
+
+
     // AS -> JS Bindings
     
     // _deblocking: number /*int*/;
