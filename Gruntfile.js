@@ -62,6 +62,9 @@ module.exports = function(grunt) {
       build_extension: {
         cmd: 'make -C extension/firefox/ build'
       },
+      build_mozcentral: {
+        cmd: 'make -C extension/mozcentral/ build'
+      },
       build_base_ts: {
         cmd: commonArguments + 'base.js src/base/references.ts'
       },
@@ -452,6 +455,188 @@ module.exports = function(grunt) {
     'exec:tracetest',
     // 'exec:tracetest_swfdec'
   ]);
+  grunt.registerTask('mozcentralshu', [
+    'mozcentralbaseline',
+    'mozcentral',
+    'mozcentraldiff'
+  ]);
+  grunt.registerTask('mozcentralbaseline', function () {
+    if (!grunt.option('baseline')) {
+      throw new Error('--baseline parameter is not specified.');
+    }
+    var baseline = grunt.option('baseline');
+    var BASELINE_DIR = 'build/mozcentralbaseline';
+    grunt.file.delete(BASELINE_DIR, {force: true});
+    grunt.file.mkdir(BASELINE_DIR);
+    var done = this.async();
+    var gitClone = function () {
+      grunt.util.spawn({
+        cmd: 'git',
+        args: ['clone', '../..', '.'],
+        opts: { cwd: BASELINE_DIR, stdio: 'inherit'}}, function (error) {
+          if (error) {
+            done(error);
+            return;
+          }
+          gitCheckout();
+        });
+    };
+    var gitCheckout = function () {
+      grunt.util.spawn({
+        cmd: 'git',
+        args: ['checkout', baseline],
+        opts: { cwd: BASELINE_DIR, stdio: 'inherit'}}, function (error) {
+        if (error) {
+          done(error);
+          return;
+        }
+        bootstrap();
+      });
+    };
+    var bootstrap = function () {
+      grunt.util.spawn({
+        cmd: 'make',
+        args: ['link-utils', 'BASE=../..'],
+        opts: { cwd: BASELINE_DIR, stdio: 'inherit'}}, function (error) {
+        if (error) {
+          done(error);
+          return;
+        }
+        build();
+      });
+    };
+    var build = function () {
+      grunt.util.spawn({
+        grunt: true,
+        args: ['mozcentral'],
+        opts: { cwd: BASELINE_DIR, stdio: 'inherit'}}, function (error) {
+        if (error) {
+          done(error);
+          return;
+        }
+        done();
+      });
+    };
+
+    gitClone();
+  });
+  grunt.registerTask('mozcentraldiff', function () {
+    var BASELINE_BUILD_DIR = 'build/mozcentralbaseline/build/mozcentral';
+    if (!grunt.file.exists(BASELINE_BUILD_DIR)) {
+      throw new Error('mozcentralbaseline was not run.');
+    }
+    var NON_DELTA_BINARIES = [
+      'browser/extensions/shumway/content/avm2/generated/avm1lib/avm1lib.abc',
+      'browser/extensions/shumway/content/avm2/generated/builtin/builtin.abc',
+      'browser/extensions/shumway/content/playerglobal/playerglobal.abcs'
+    ];
+    var MOZCENTRAL_DIR = 'build/mozcentral';
+    var DIFF_DIR = 'build/mozcentraldiff';
+    grunt.file.delete(DIFF_DIR, {force: true});
+    grunt.file.mkdir(DIFF_DIR);
+    var done = this.async();
+    var rsync = function () {
+      grunt.util.spawn({
+        cmd: 'rsync',
+        args: ['-r'].concat(grunt.file.expand(BASELINE_BUILD_DIR + '/*'), [DIFF_DIR]),
+        opts: { stdio: 'inherit' }}, function (error) {
+        if (error) {
+          done(error);
+          return;
+        }
+        fixNonDelta(0);
+      });
+    };
+    // HACK to avoid 'delta' for 'GIT binary patch'
+    var fixNonDelta = function (index) {
+      if (index >= NON_DELTA_BINARIES.length) {
+        gitCommit();
+        return;
+      }
+      var nonDelta = NON_DELTA_BINARIES[index];
+      grunt.util.spawn({
+        cmd: 'diff',
+        args: [DIFF_DIR + '/' + nonDelta, MOZCENTRAL_DIR + '/' + nonDelta]
+      }, function (error, result, code) {
+        if (code === 2) {
+          // ... we need to truncate the file
+          grunt.file.write(DIFF_DIR + '/' + nonDelta, '');
+        } else if (error) {
+          console.log(code);
+          done(error);
+          return;
+        }
+        fixNonDelta(index + 1);
+      });
+    };
+    var gitCommit = function () {
+      grunt.util.spawn({
+        cmd: 'git',
+        args: ['init'],
+        opts: { cwd: DIFF_DIR, stdio: 'inherit'}}, function (error) {
+        if (error) {
+          done(error);
+          return;
+        }
+        grunt.util.spawn({
+          cmd: 'git',
+          args: ['add', '*'],
+          opts: { cwd: DIFF_DIR, stdio: 'inherit'}}, function (error) {
+          if (error) {
+            done(error);
+            return;
+          }
+          grunt.util.spawn({
+            cmd: 'git',
+            args: ['commit', '--message=baseline'],
+            opts: { cwd: DIFF_DIR, stdio: 'inherit'}}, function (error) {
+            if (error) {
+              done(error);
+              return;
+            }
+            refresh();
+          });
+        });
+      });
+    };
+    var refresh = function () {
+      grunt.util.spawn({
+        cmd: 'rsync',
+        args: ['-r', '--delete'].concat(grunt.file.expand(MOZCENTRAL_DIR + '/*'), [DIFF_DIR]),
+        opts: { stdio: 'inherit'}}, function (error) {
+        if (error) {
+          done(error);
+          return;
+        }
+        gitDiff();
+      });
+    };
+    var gitDiff = function () {
+      grunt.util.spawn({
+        cmd: 'git',
+        args: ['add', '--all'],
+        opts: { cwd: DIFF_DIR, stdio: 'inherit'}}, function (error) {
+        if (error) {
+          done(error);
+          return;
+        }
+        var diffOutput = require('fs').openSync('build/mozcentral.diff', 'w');
+        grunt.util.spawn({
+          cmd: 'git',
+          args: ['diff', '--binary', '--cached', '--unified=8'],
+          opts: { cwd: DIFF_DIR, stdio: [null, diffOutput, null]}}, function (error, result, code) {
+          if (error) {
+            done(error);
+            return;
+          }
+          done();
+        });
+      });
+    };
+
+    rsync();
+  });
   grunt.registerTask('firefox', ['build', 'exec:build_extension']);
+  grunt.registerTask('mozcentral', ['build', 'exec:build_mozcentral']);
   grunt.registerTask('web', ['build', 'exec:build_extension', 'exec:build_web']);
 };
