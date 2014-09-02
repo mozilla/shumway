@@ -40,10 +40,16 @@ module Shumway.AVM2.AS.flash.display {
     Complete    = 3
   }
 
+  enum LoadingType {
+    External    = 0,
+    Bytes       = 1
+  }
+
   export class Loader extends flash.display.DisplayObjectContainer implements IAdvancable {
 
     private static _rootLoader: Loader;
     private static _loadQueue: Loader [];
+    private static _embeddedContentLoadCount: number = 0;
 
     /**
      * Creates or returns the root Loader instance. The loader property of that instances LoaderInfo
@@ -102,21 +108,23 @@ module Shumway.AVM2.AS.flash.display {
         var bytesTotal = loaderInfo._bytesTotal;
         switch (instance._loadStatus) {
           case LoadStatus.Unloaded:
-            if (bytesTotal) {
+            if (!bytesTotal) {
+              break;
+            }
+            // OPEN is only dispatched when loading external resources, not for loadBytes.
+            if (instance._loadingType === LoadingType.External) {
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
-              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                                false, false, 0, bytesTotal));
-              instance._loadStatus = LoadStatus.Opened;
-            } else {
-              break;
             }
+            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                              false, false, 0, bytesTotal));
+            instance._loadStatus = LoadStatus.Opened;
           case LoadStatus.Opened:
-            if (instance._content && instance._content._hasFlags(DisplayObjectFlags.Constructed)) {
-              instance._loadStatus = LoadStatus.Initialized;
-              loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
-            } else {
+            if (!(instance._content &&
+                  instance._content._hasFlags(DisplayObjectFlags.Constructed))) {
               break;
             }
+            instance._loadStatus = LoadStatus.Initialized;
+            loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
           case LoadStatus.Initialized:
             if (bytesLoaded === bytesTotal) {
               instance._loadStatus = LoadStatus.Complete;
@@ -189,6 +197,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private _worker: Worker;
     private _loadStatus: LoadStatus;
+    private _loadingType: LoadingType;
 
     private _initialDataLoaded: PromiseWrapper<any>;
     private _waitForInitialData: boolean;
@@ -582,16 +591,73 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.Loader::_setUncaughtErrorEvents"); return;
     }
 
-    _load(request: flash.net.URLRequest, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
+    _load(request: flash.net.URLRequest, checkPolicyFile: boolean,
+          applicationDomain: flash.system.ApplicationDomain,
+          securityDomain: flash.system.SecurityDomain,
+          requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject,
+          deblockingFilter: number, allowCodeExecution: boolean,
+          imageDecodingPolicy: string): void
+    {
+      // TODO: properly coerce object arguments to their types.
+      checkPolicyFile = !!checkPolicyFile;
+      deblockingFilter = +deblockingFilter;
+      allowCodeExecution = !!allowCodeExecution;
+      imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
+      this._contentLoaderInfo._url = request.url;
+
+      this._loadingType = LoadingType.External;
+      var worker = this._createParsingWorker();
+
+      var loader = this;
+      var session = FileLoadingService.instance.createSession();
+      session.onprogress = function (data, progress) {
+        worker.postMessage({ data: data, progress: progress });
+      };
+      session.onerror = function (error) {
+        loader._commitData({ command: 'error', error: error });
+      };
+      session.onopen = function () {
+        worker.postMessage('pipe:');
+      };
+      session.onclose = function () {
+        worker.postMessage({ data: null });
+      };
+      session.open(request._toFileRequest());
+
+      Loader._loadQueue.push(this);
+    }
+
+    _loadBytes(data: flash.utils.ByteArray, checkPolicyFile: boolean,
+               applicationDomain: flash.system.ApplicationDomain,
+               securityDomain: flash.system.SecurityDomain,
+               requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject,
+               deblockingFilter: number, allowCodeExecution: boolean,
+               imageDecodingPolicy: string): void
+    {
+      // TODO: properly coerce object arguments to their types.
+      checkPolicyFile = !!checkPolicyFile;
+      deblockingFilter = +deblockingFilter;
+      allowCodeExecution = !!allowCodeExecution;
+      imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
+
+      this._contentLoaderInfo._url = this.loaderInfo._url + '/[[DYNAMIC]]/' +
+                                     (++Loader._embeddedContentLoadCount);
+      this._loadingType = LoadingType.Bytes;
+      var worker = this._createParsingWorker();
+      Loader._loadQueue.push(this);
+      worker.postMessage('pipe:');
+      var bytes = (<any>data).bytes;
+      var progress = {bytesLoaded: bytes.byteLength, bytesTotal: bytes.byteLength};
+      worker.postMessage({ data: bytes, progress:  progress});
+      worker.postMessage({ data: null });
+    }
+
+    private _createParsingWorker() {
       var loaderInfo = this._contentLoaderInfo;
-      //request = request; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
-      //if (flash.net.URLRequest.isType(request)) {
-        this._contentLoaderInfo._url = request.url;
-      //}
       var worker;
       if (Loader.WORKERS_ENABLED) {
         var loaderPath = typeof LOADER_WORKER_PATH !== 'undefined' ?
-          LOADER_WORKER_PATH : SHUMWAY_ROOT + Loader.LOADER_PATH;
+                         LOADER_WORKER_PATH : SHUMWAY_ROOT + Loader.LOADER_PATH;
         worker = new Worker(loaderPath);
       } else {
         var ResourceLoader = (<any>Shumway).SWF.ResourceLoader;
@@ -609,39 +675,15 @@ module Shumway.AVM2.AS.flash.display {
         if (e.data.type === 'exception') {
           console.log('error in parser: \n' + e.data.stack);
           AVM2.instance.exceptions.push({
-            source: 'parser',
-            message: e.data.message,
-            stack: e.data.stack
-          });
+                                          source: 'parser',
+                                          message: e.data.message,
+                                          stack: e.data.stack
+                                        });
         } else {
           loader._commitData(e.data);
         }
       };
-      //if (flash.net.URLRequest.class.isInstanceOf(request)) {
-        var session = FileLoadingService.instance.createSession();
-        session.onprogress = function (data, progress) {
-          worker.postMessage({ data: data, progress: progress });
-        };
-        session.onerror = function (error) {
-          loader._commitData({ command: 'error', error: error });
-        };
-        session.onopen = function () {
-          worker.postMessage('pipe:');
-        };
-        session.onclose = function () {
-          worker.postMessage({ data: null });
-        };
-        session.open(request._toFileRequest());
-      //} else {
-      //  this._initialDataLoaded.resolve(undefined);
-      //  worker.postMessage(request);
-      //}
-      Loader._loadQueue.push(this);
-    }
-
-    _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
-      bytes = bytes; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
-      notImplemented("public flash.display.Loader::_loadBytes"); return;
+      return worker;
     }
   }
 }
