@@ -29734,8 +29734,8 @@ var TypeScript;
             }
             return indentString;
         };
-        Indenter.indentStep = 4;
-        Indenter.indentStepString = "    ";
+        Indenter.indentStep = 2;
+        Indenter.indentStepString = "  ";
         Indenter.indentStrings = [];
         return Indenter;
     })();
