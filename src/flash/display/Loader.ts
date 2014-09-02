@@ -40,6 +40,11 @@ module Shumway.AVM2.AS.flash.display {
     Complete    = 3
   }
 
+  enum LoadingType {
+    External    = 0,
+    Bytes       = 1
+  }
+
   export class Loader extends flash.display.DisplayObjectContainer implements IAdvancable {
 
     private static _rootLoader: Loader;
@@ -103,21 +108,23 @@ module Shumway.AVM2.AS.flash.display {
         var bytesTotal = loaderInfo._bytesTotal;
         switch (instance._loadStatus) {
           case LoadStatus.Unloaded:
-            if (bytesTotal) {
+            if (!bytesTotal) {
+              break;
+            }
+            // OPEN is only dispatched when loading external resources, not for loadBytes.
+            if (instance._loadingType === LoadingType.External) {
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
-              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                                false, false, 0, bytesTotal));
-              instance._loadStatus = LoadStatus.Opened;
-            } else {
-              break;
             }
+            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                              false, false, 0, bytesTotal));
+            instance._loadStatus = LoadStatus.Opened;
           case LoadStatus.Opened:
-            if (instance._content && instance._content._hasFlags(DisplayObjectFlags.Constructed)) {
-              instance._loadStatus = LoadStatus.Initialized;
-              loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
-            } else {
+            if (!(instance._content &&
+                  instance._content._hasFlags(DisplayObjectFlags.Constructed))) {
               break;
             }
+            instance._loadStatus = LoadStatus.Initialized;
+            loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
           case LoadStatus.Initialized:
             if (bytesLoaded === bytesTotal) {
               instance._loadStatus = LoadStatus.Complete;
@@ -190,6 +197,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private _worker: Worker;
     private _loadStatus: LoadStatus;
+    private _loadingType: LoadingType;
 
     private _initialDataLoaded: PromiseWrapper<any>;
     private _waitForInitialData: boolean;
@@ -597,6 +605,7 @@ module Shumway.AVM2.AS.flash.display {
       imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
       this._contentLoaderInfo._url = request.url;
 
+      this._loadingType = LoadingType.External;
       var worker = this._createParsingWorker();
 
       var loader = this;
@@ -618,7 +627,7 @@ module Shumway.AVM2.AS.flash.display {
       Loader._loadQueue.push(this);
     }
 
-    _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean,
+    _loadBytes(data: flash.utils.ByteArray, checkPolicyFile: boolean,
                applicationDomain: flash.system.ApplicationDomain,
                securityDomain: flash.system.SecurityDomain,
                requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject,
@@ -633,12 +642,13 @@ module Shumway.AVM2.AS.flash.display {
 
       this._contentLoaderInfo._url = this.loaderInfo._url + '/[[DYNAMIC]]/' +
                                      (++Loader._embeddedContentLoadCount);
+      this._loadingType = LoadingType.Bytes;
       var worker = this._createParsingWorker();
       Loader._loadQueue.push(this);
       worker.postMessage('pipe:');
-      var buffer = bytes['bytes'];
-      var progress = {bytesLoaded: buffer.byteLength, bytesTotal: buffer.byteLength};
-      worker.postMessage({ data: buffer, progress:  progress});
+      var bytes = (<any>data).bytes;
+      var progress = {bytesLoaded: bytes.byteLength, bytesTotal: bytes.byteLength};
+      worker.postMessage({ data: bytes, progress:  progress});
       worker.postMessage({ data: null });
     }
 

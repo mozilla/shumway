@@ -16,7 +16,7 @@
 
 /**
  * Compiled with:
- * mxmlc test/swfs/as3-loader/LoaderLoadBytesTest.as -output test/swfs/as3-loader/LoaderLoadBytesTest.swf
+ * mxmlc test/swfs/as3-loader/LoaderLoadBytesTest.as -debug -output test/swfs/as3-loader/LoaderLoadBytesTest.swf
  */
 package {
 import flash.display.Loader;
@@ -30,6 +30,7 @@ public class LoaderLoadBytesTest extends Sprite {
   private static const BYTES:Class;
 
   private var _loader:Loader;
+  private var _progressDispatched: Boolean;
 
   public function LoaderLoadBytesTest() {
     _loader = new Loader();
@@ -45,6 +46,10 @@ public class LoaderLoadBytesTest extends Sprite {
   }
 
   private function loader_progress(event:ProgressEvent):void {
+    if (_progressDispatched) {
+      return;
+    }
+    _progressDispatched = true;
     trace("loading progress " + event.bytesLoaded + ' ' + event.bytesTotal +
           ' TODO: make sure this is dispatched twice before content is initialized');
   }
@@ -56,8 +61,7 @@ public class LoaderLoadBytesTest extends Sprite {
   }
 
   private function loader_complete(event:Event):void {
-    trace("loading complete");
-    trace('bytes loaded: ' + _loader.contentLoaderInfo.bytesLoaded);
+    trace("loading of " + _loader.contentLoaderInfo.bytesLoaded + " bytes complete");
     fscommand('quit');
   }
 }
