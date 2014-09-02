@@ -15,10 +15,6 @@
  */
 // Class: Loader
 
-module Shumway {
-  export declare var useParsingWorkerOption;
-}
-
 module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
@@ -57,8 +53,8 @@ module Shumway.AVM2.AS.flash.display {
     private static _embeddedContentLoadCount: number = 0;
 
     /**
-     * Creates or returns the root Loader instance. The loader property of that instances LoaderInfo
-     * object is always null. Also, no OPEN event ever gets dispatched.
+     * Creates or returns the root Loader instance. The loader property of that instance's
+     * LoaderInfo object is always null. Also, no OPEN event ever gets dispatched.
      */
     static getRootLoader(): Loader {
       if (Loader._rootLoader) {
@@ -661,7 +657,7 @@ module Shumway.AVM2.AS.flash.display {
       var loaderInfo = this._contentLoaderInfo;
       var worker;
       if (Loader.WORKERS_AVAILABLE &&
-          (!Shumway.useParsingWorkerOption || Shumway.useParsingWorkerOption.value)) {
+          (!(<any>Shumway).useParsingWorkerOption || (<any>Shumway).useParsingWorkerOption.value)) {
         var loaderPath = typeof LOADER_WORKER_PATH !== 'undefined' ?
                          LOADER_WORKER_PATH : SHUMWAY_ROOT + Loader.LOADER_PATH;
         worker = new Worker(loaderPath);
