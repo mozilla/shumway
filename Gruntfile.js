@@ -200,9 +200,6 @@ module.exports = function(grunt) {
         ]
       },
       avm1: {
-        options: {
-          grunt: true
-        },
         tasks: [
           { args: ['exec:build_avm1lib'].concat(parallelArgs), grunt: true },
           { args: ['exec:build_avm1_ts'].concat(parallelArgs), grunt: true }
