@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 // Class: Loader
+
+module Shumway {
+  export declare var useParsingWorkerOption;
+}
+
 module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
@@ -92,7 +97,7 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = ["load!"]; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
 
-    static WORKERS_ENABLED = typeof Worker !== 'undefined';
+    static WORKERS_AVAILABLE = typeof Worker !== 'undefined';
     static LOADER_PATH = 'swf/worker.js';
 
     /**
@@ -655,7 +660,8 @@ module Shumway.AVM2.AS.flash.display {
     private _createParsingWorker() {
       var loaderInfo = this._contentLoaderInfo;
       var worker;
-      if (Loader.WORKERS_ENABLED) {
+      if (Loader.WORKERS_AVAILABLE &&
+          (!Shumway.useParsingWorkerOption || Shumway.useParsingWorkerOption.value)) {
         var loaderPath = typeof LOADER_WORKER_PATH !== 'undefined' ?
                          LOADER_WORKER_PATH : SHUMWAY_ROOT + Loader.LOADER_PATH;
         worker = new Worker(loaderPath);
