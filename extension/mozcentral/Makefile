@@ -16,21 +16,24 @@ UTILS_HOME = ../../utils
 CLOSURE ?= $(UTILS_HOME)/cc.jar
 BUILD_DIR = ../../build/mozcentral
 BUILD_EXTENSION_DIR = $(BUILD_DIR)/browser/extensions/shumway
-GENERIC_DIR = ../../build/bundle_nonopt
+GENERIC_DIR = ../../build/bundles
 EXTENSION_SRC = ../firefox
 
 # Just builds a ff extension
 
 VERSION_BASELINE=9c77cb929464c1bca343f4
-VERSION=0.8.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION=0.9.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
 VERSION_SHA=`git log --format="%h" -n 1`
 
-build: ensureoutputdir build-bundle ../../build/playerglobal/playerglobal.abcs
+build: ensureoutputdir
 	# Coping extension files
 	echo "Creating mozcentral package verions: $(VERSION)"
 	mkdir -p $(BUILD_EXTENSION_DIR)
 	cp -R ../../LICENSE $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
 	cp -R browser $(BUILD_DIR)/
+	mkdir -p $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders
+	cp ../../src/gfx/gl/shaders/*.frag $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
+	cp ../../src/gfx/gl/shaders/*.vert $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
 	# Coping JavaScript content files
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/playerglobal
 	cp ../../build/playerglobal/playerglobal.json $(BUILD_EXTENSION_DIR)/content/playerglobal/
@@ -44,17 +47,10 @@ build: ensureoutputdir build-bundle ../../build/playerglobal/playerglobal.abcs
 	echo $(VERSION) > $(BUILD_EXTENSION_DIR)/content/version.txt
 	echo $(VERSION_SHA) >> $(BUILD_EXTENSION_DIR)/content/version.txt
 
-../../build/playerglobal/playerglobal.abcs:
-	make -C $(UTILS_HOME) build-playerglobal
-
-build-bundle:
-	$(MAKE) -C $(UTILS_HOME)/builder/ CLOSURE_BASIC_OPT= CLOSURE_ADV_OPT= BUILD_DIR=$(GENERIC_DIR)
-
 ensureoutputdir: clean
 	-mkdir -p $(BUILD_DIR)
 
 clean:
-	-rm -rf build
 	-rm -rf $(BUILD_DIR)
 
 PHONY: build clean ensureoutputdir
