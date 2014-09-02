@@ -197,6 +197,7 @@ module Shumway.AVM2.AS.flash.geom {
       if (b === 0 && c === 0) {
         var a = target.a = 1 / this.a;
         var d = target.d = 1 / this.d;
+        target.b = target.c = 0;
         target.tx = -a * tx;
         target.ty = -d * ty;
         return;
