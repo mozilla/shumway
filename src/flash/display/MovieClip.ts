@@ -156,9 +156,6 @@ module Shumway.AVM2.AS.flash.display {
             }
           }
         }
-        if (symbol.initActionBlock) {
-          this.addAS2InitActionBlock(0, symbol.initActionBlock);
-        }
       } else {
         self.addScene('', [], 0, self._totalFrames);
       }
@@ -647,7 +644,7 @@ module Shumway.AVM2.AS.flash.display {
      *
      * After that, the listener removes itself.
      */
-    addAS2InitActionBlock(frameIndex: number, actionsBlock: {actionsData: Uint8Array}): void {
+    addAS2InitActionBlocks(frameIndex: number, actionsBlocks: {actionsData: Uint8Array} []): void {
       var self: MovieClip = this;
       function listener (e) {
         if (self._currentFrame !== frameIndex + 1) {
@@ -658,8 +655,11 @@ module Shumway.AVM2.AS.flash.display {
         var avm1Context = self.loaderInfo._avm1Context;
         var as2Object = avm1lib.getAS2Object(self);
         var stage = self.stage;
-        var actionsData = new AVM1.AS2ActionsData(actionsBlock.actionsData, 'f' + frameIndex);
-        avm1Context.executeActions(actionsData, stage, as2Object);
+        for (var i = 0; i < actionsBlocks.length; i++) {
+          var actionsData = new AVM1.AS2ActionsData(actionsBlocks[i].actionsData,
+                                                    'f' + frameIndex + 'i' + i);
+          avm1Context.executeActions(actionsData, stage, as2Object);
+        }
       }
       this.addEventListener('enterFrame', listener);
     }
