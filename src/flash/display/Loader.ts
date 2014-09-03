@@ -19,6 +19,7 @@ module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import notImplemented = Shumway.Debug.notImplemented;
+  import throwError = Shumway.AVM2.Runtime.throwError;
   import FileLoadingService = Shumway.FileLoadingService;
   import Telemetry = Shumway.Telemetry;
 
@@ -28,6 +29,9 @@ module Shumway.AVM2.AS.flash.display {
 
   import events = flash.events;
   import ActionScriptVersion = flash.display.ActionScriptVersion;
+
+  import ApplicationDomain = flash.system.ApplicationDomain;
+  import LoaderContext = flash.system.LoaderContext;
 
   import Bounds = Shumway.Bounds;
 
@@ -91,7 +95,7 @@ module Shumway.AVM2.AS.flash.display {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["load!"]; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
+    static instanceSymbols: string [] = null; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
 
     static WORKERS_AVAILABLE = typeof Worker !== 'undefined';
     static LOADER_PATH = 'swf/worker.js';
@@ -556,8 +560,6 @@ module Shumway.AVM2.AS.flash.display {
       return this._contentLoaderInfo;
     }
 
-    load: (request: flash.net.URLRequest, context?: flash.system.LoaderContext) => void;
-
     _close(): void {
       if (this._worker && this._loadStatus === LoadStatus.Unloaded) {
         this._worker.terminate();
@@ -592,20 +594,10 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.Loader::_setUncaughtErrorEvents"); return;
     }
 
-    _load(request: flash.net.URLRequest, checkPolicyFile: boolean,
-          applicationDomain: flash.system.ApplicationDomain,
-          securityDomain: flash.system.SecurityDomain,
-          requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject,
-          deblockingFilter: number, allowCodeExecution: boolean,
-          imageDecodingPolicy: string): void
+    load(request: flash.net.URLRequest, context?: LoaderContext): void
     {
-      // TODO: properly coerce object arguments to their types.
-      checkPolicyFile = !!checkPolicyFile;
-      deblockingFilter = +deblockingFilter;
-      allowCodeExecution = !!allowCodeExecution;
-      imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
       this._contentLoaderInfo._url = request.url;
-
+      this._applyLoaderContext(context, request);
       this._loadingType = LoadingType.External;
       var worker = this._createParsingWorker();
 
@@ -628,29 +620,43 @@ module Shumway.AVM2.AS.flash.display {
       Loader._loadQueue.push(this);
     }
 
-    _loadBytes(data: flash.utils.ByteArray, checkPolicyFile: boolean,
-               applicationDomain: flash.system.ApplicationDomain,
-               securityDomain: flash.system.SecurityDomain,
-               requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject,
-               deblockingFilter: number, allowCodeExecution: boolean,
-               imageDecodingPolicy: string): void
+    loadBytes(data: flash.utils.ByteArray, context: LoaderContext): void
     {
       // TODO: properly coerce object arguments to their types.
-      checkPolicyFile = !!checkPolicyFile;
-      deblockingFilter = +deblockingFilter;
-      allowCodeExecution = !!allowCodeExecution;
-      imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
-
       this._contentLoaderInfo._url = this.loaderInfo._url + '/[[DYNAMIC]]/' +
                                      (++Loader._embeddedContentLoadCount);
+      this._applyLoaderContext(context, null);
       this._loadingType = LoadingType.Bytes;
       var worker = this._createParsingWorker();
+
       Loader._loadQueue.push(this);
       worker.postMessage('pipe:');
       var bytes = (<any>data).bytes;
       var progress = {bytesLoaded: bytes.byteLength, bytesTotal: bytes.byteLength};
       worker.postMessage({ data: bytes, progress:  progress});
       worker.postMessage({ data: null });
+    }
+
+    private _applyLoaderContext(context: LoaderContext, request: flash.net.URLRequest) {
+      var parameters = Object.create(null);
+      if (context && context.parameters) {
+        var contextParameters = context.parameters;
+        for (var key in contextParameters) {
+          var value = contextParameters[key];
+          if (!isString(value)) {
+            throwError('IllegalOperationError', Errors.ObjectWithStringsParamError,
+                       'LoaderContext.parameters');
+          }
+          parameters[key] = value;
+        }
+      } else {
+        // TODO: parse request URL parameters.
+      }
+      if (context && context.applicationDomain) {
+        this._contentLoaderInfo._applicationDomain =
+            new ApplicationDomain(ApplicationDomain.currentDomain);
+      }
+      this._contentLoaderInfo._parameters = parameters;
     }
 
     private _createParsingWorker() {
