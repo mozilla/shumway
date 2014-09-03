@@ -344,7 +344,7 @@ module Shumway.AVM2 {
   //  SecurityContentAccessDeniedError                          : { code: 2193, message: "Security sandbox violation: %1: %2 cannot access %3."},
   //  LoaderParamError                                          : { code: 2194, message: "Parameter %1 cannot be a Loader."},
   //  LoaderAsyncError                                          : { code: 2195, message: "Error thrown as Loader called %1."},
-  //  ObjectWithStringsParamError                               : { code: 2196, message: "Parameter %1 must be an Object with only String values."},
+    ObjectWithStringsParamError                               : { code: 2196, message: "Parameter %1 must be an Object with only String values."},
   //  SystemUpdaterPlayerNotSupportedError                      : { code: 2200, message: "The SystemUpdater class is not supported by this player."},
   //  SystemUpdaterOSNotSupportedError                          : { code: 2201, message: "The requested update type is not supported on this operating system."},
   //  SystemUpdaterBusy                                         : { code: 2202, message: "Only one SystemUpdater action is allowed at a time."},

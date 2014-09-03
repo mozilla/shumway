@@ -56,30 +56,8 @@ public class Loader extends DisplayObjectContainer {
   {
     Error.throwError(IllegalOperationError, 2069);
   }
-  public function load(request:URLRequest, context:LoaderContext = null):void {
-    context = sanitizeContext(context);
-    _load(request, context.checkPolicyFile, context.applicationDomain, context.securityDomain,
-          context.requestedContentParent, context.parameters,
-          _getJPEGLoaderContextdeblockingfilter(context), context.allowCodeImport,
-          context.imageDecodingPolicy);
-  }
-  private function sanitizeContext(context:LoaderContext):LoaderContext {
-    if (!context) {
-      context = new LoaderContext();
-    }
-    if (!context.applicationDomain) {
-      context.applicationDomain = new ApplicationDomain(ApplicationDomain.currentDomain);
-    }
-    context.parameters = cloneObject(context.parameters);
-    return context;
-  }
-  public function loadBytes(bytes:ByteArray, context:LoaderContext = null):void {
-    context = sanitizeContext(context);
-    _loadBytes(bytes, context.checkPolicyFile, context.applicationDomain, context.securityDomain,
-          context.requestedContentParent, context.parameters,
-          _getJPEGLoaderContextdeblockingfilter(context), context.allowCodeImport,
-          context.imageDecodingPolicy);
-  }
+  public native function load(request:URLRequest, context:LoaderContext = null): void;
+  public native function loadBytes(bytes:ByteArray, context:LoaderContext = null): void;
   public function close():void {
     _close();
   }
@@ -90,16 +68,6 @@ public class Loader extends DisplayObjectContainer {
     _unload(true, gc);
   }
 
-  private function cloneObject(obj:Object):Object {
-    if (!obj) {
-      return null;
-    }
-    var clone:Object = {};
-    for (var key:String in obj) {
-      clone[key] = obj[key];
-    }
-    return clone;
-  }
   private native function _close():void;
   private native function _unload(stopExecution:Boolean, gc:Boolean):void;
   private native function _getJPEGLoaderContextdeblockingfilter(context:LoaderContext):Number;
