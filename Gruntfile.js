@@ -301,7 +301,6 @@ module.exports = function(grunt) {
     packageRefs(['gfx'], outputDir + 'shumway.gfx.js');
     packageRefs(['player'], outputDir + 'shumway.player.js');
     packageRefs(['parser'], outputDir + 'shumway.parser.js');
-    packageRefs(['gfx', 'parser', 'player'], outputDir + 'shumway.combined.js');
   });
 
   grunt.registerTask('server', function () {
