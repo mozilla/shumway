@@ -26,8 +26,7 @@ module Shumway.AVM2.AS.flash.events {
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 info: ASObject = null) {
-      super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.NetStatusEvent");
+      false && super(undefined, undefined, undefined);
     }
 
     // JS -> AS Bindings

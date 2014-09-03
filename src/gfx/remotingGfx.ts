@@ -152,7 +152,7 @@ module Shumway.Remoting.GFX {
         updateTextContent: 0,
         updateFrame: 0,
         updateStage: 0,
-        updateVideo: 0,
+        updateNetStream: 0,
         registerFont: 0,
         drawToBitmap: 0
       };
@@ -183,9 +183,9 @@ module Shumway.Remoting.GFX {
             data.updateStage ++;
             this._readUpdateStage();
             break;
-          case MessageTag.UpdateVideo:
-            data.updateVideo ++;
-            this._readUpdateVideo();
+          case MessageTag.UpdateNetStream:
+            data.updateNetStream ++;
+            this._readUpdateNetStream();
             break;
           case MessageTag.RegisterFont:
             data.registerFont ++;
@@ -375,12 +375,13 @@ module Shumway.Remoting.GFX {
       context.root.color = Color.FromARGB(color);
     }
 
-    private _readUpdateVideo() {
+    private _readUpdateNetStream() {
       var context = this.context;
       var id = this.input.readInt();
       var asset = context._getVideoAsset(id);
+      var url = this.input.readUTF();
       if (!asset) {
-        asset = new RenderableVideo("a", new Rectangle(0, 0, 10, 10));
+        asset = new RenderableVideo(url, new Rectangle(0, 0, 960, 480));
         context._registerAsset(id, 0, asset);
       }
     }

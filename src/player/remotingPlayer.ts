@@ -20,6 +20,7 @@ module Shumway.Remoting.Player {
   import flash = Shumway.AVM2.AS.flash;
   import Stage = flash.display.Stage;
   import Graphics = flash.display.Graphics;
+  import NetStream = flash.net.NetStream;
   import display = flash.display;
   import Bitmap = flash.display.Bitmap;
   import BitmapData = flash.display.BitmapData;
@@ -116,12 +117,13 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeVideo(video: Video) {
-      if (video._isDirty) {
-        writer && writer.writeLn("Sending Video: " + video._id);
-        this.output.writeInt(MessageTag.UpdateVideo);
-        this.output.writeInt(video._id);
-        video._isDirty = false;
+    writeNetStream(netStream: NetStream) {
+      if (netStream._isDirty) {
+        writer && writer.writeLn("Sending NetStream: " + netStream._id);
+        this.output.writeInt(MessageTag.UpdateNetStream);
+        this.output.writeInt(netStream._id);
+        this.output.writeUTF(netStream._url);
+        netStream._isDirty = false;
       }
     }
 
@@ -224,11 +226,9 @@ module Shumway.Remoting.Player {
           DisplayObjectFlags.DirtyChildren     |
           DisplayObjectFlags.DirtyGraphics     |
           DisplayObjectFlags.DirtyBitmapData   |
+          DisplayObjectFlags.DirtyNetStream    |
           DisplayObjectFlags.DirtyTextContent
         );
-        if (video) {
-          hasRemotableChildren = true;
-        }
         hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
       }
       var bitmap: Bitmap = null;
@@ -286,9 +286,12 @@ module Shumway.Remoting.Player {
             this.output.writeInt(0);
           }
         } else if (video) {
-          writer && writer.writeLn("Reference Video: " + video._id);
-          this.output.writeInt(1);
-          this.output.writeInt(IDMask.Asset | video._id);
+          if (video._netStream) {
+            this.output.writeInt(1);
+            this.output.writeInt(IDMask.Asset | video._netStream._id);
+          } else {
+            this.output.writeInt(0);
+          }
         } else {
           // Check if we have a graphics object and write that as a child first.
           var count = (graphics || textContent) ? 1 : 0;
@@ -332,7 +335,9 @@ module Shumway.Remoting.Player {
           this.writeBitmapData(bitmap.bitmapData);
         }
       } else if (video) {
-        this.writeVideo(video);
+        if (video._netStream) {
+          this.writeNetStream(video._netStream);
+        }
       }
     }
 

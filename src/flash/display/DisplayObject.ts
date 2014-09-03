@@ -188,19 +188,24 @@ module Shumway.AVM2.AS.flash.display {
     DirtyBitmapData                           = 0x1000000,
 
     /**
+     * Indicates whether this display object's bitmap data has changed since the last time it was synchronized.
+     */
+    DirtyNetStream                            = 0x2000000,
+
+    /**
      * Indicates whether this display object's color transform has changed since the last time it was synchronized.
      */
-    DirtyColorTransform                       = 0x2000000,
+    DirtyColorTransform                       = 0x4000000,
 
     /**
      * Indicates whether this display object's mask has changed since the last time it was synchronized.
      */
-    DirtyMask                                 = 0x4000000,
+    DirtyMask                                 = 0x8000000,
 
     /**
      * Indicates whether this display object's clip depth has changed since the last time it was synchronized.
      */
-    DirtyClipDepth                            = 0x8000000,
+    DirtyClipDepth                            = 0x10000000,
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
@@ -214,13 +219,13 @@ module Shumway.AVM2.AS.flash.display {
      * filters,
      * visible,
      */
-    DirtyMiscellaneousProperties              = 0x10000000,
+    DirtyMiscellaneousProperties              = 0x20000000,
 
     /**
      * All synchronizable properties are dirty.
      */
     Dirty                                     = DirtyMatrix | DirtyChildren | DirtyGraphics |
-                                                DirtyTextContent | DirtyBitmapData |
+                                                DirtyTextContent | DirtyBitmapData | DirtyNetStream |
                                                 DirtyColorTransform | DirtyMask | DirtyClipDepth |
                                                 DirtyMiscellaneousProperties
   }

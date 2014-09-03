@@ -77,7 +77,7 @@ module Shumway.Remoting {
     UpdateBitmapData            = 102,
     UpdateTextContent           = 103,
     UpdateStage                 = 104,
-    UpdateVideo                 = 105,
+    UpdateNetStream             = 105,
     RequestBitmapData           = 106,
 
     RegisterFont                = 200,

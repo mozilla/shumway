@@ -18,73 +18,70 @@ module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Video extends flash.display.DisplayObject {
-    _isDirty: boolean;
-
-    _width: number;
-    _height: number;
-
     static classInitializer: any = null;
     static initializer: any = null;
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // [];
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
     
     constructor (width: number /*int*/ = 320, height: number /*int*/ = 240) {
       false && super();
       flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
       this._width = width | 0;
       this._height = height | 0;
-      this._isDirty = true;
     }
     
-    // JS -> AS Bindings
+    _deblocking: number;
+    _smoothing: boolean;
+    _videoWidth: number;
+    _videoHeight: number;
 
+    _netStream: flash.net.NetStream;
+    _camera: flash.media.Camera;
 
-    // AS -> JS Bindings
-    
-    // _deblocking: number /*int*/;
-    // _smoothing: boolean;
-    // _videoWidth: number /*int*/;
-    // _videoHeight: number /*int*/;
     get deblocking(): number /*int*/ {
-      notImplemented("public flash.media.Video::get deblocking"); return;
-      // return this._deblocking;
+      return this._deblocking;
     }
+
     set deblocking(value: number /*int*/) {
-      value = value | 0;
-      notImplemented("public flash.media.Video::set deblocking"); return;
-      // this._deblocking = value;
+      this._deblocking = value | 0;
     }
+
     get smoothing(): boolean {
-      notImplemented("public flash.media.Video::get smoothing"); return;
-      // return this._smoothing;
+      return this._smoothing;
     }
+
     set smoothing(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.media.Video::set smoothing"); return;
-      // this._smoothing = value;
+      this._smoothing = !!value;
     }
+
     get videoWidth(): number /*int*/ {
-      notImplemented("public flash.media.Video::get videoWidth"); return;
-      // return this._videoWidth;
+      return this._videoWidth;
     }
+
     get videoHeight(): number /*int*/ {
-      notImplemented("public flash.media.Video::get videoHeight"); return;
-      // return this._videoHeight;
+      return this._videoHeight;
     }
+
     clear(): void {
       notImplemented("public flash.media.Video::clear"); return;
     }
+
     attachNetStream(netStream: flash.net.NetStream): void {
-      netStream = netStream;
-      notImplemented("public flash.media.Video::attachNetStream"); return;
+      if (this._netStream === netStream) {
+        return;
+      }
+      if (this._netStream) {
+        netStream._videoReferrer = null;
+      }
+      this._netStream = netStream;
+      if (this._netStream) {
+        netStream._videoReferrer = this;
+      }
+      this._setDirtyFlags(flash.display.DisplayObjectFlags.DirtyNetStream);
     }
+
     attachCamera(camera: flash.media.Camera): void {
-      camera = camera;
       notImplemented("public flash.media.Video::attachCamera"); return;
-    }
-    ctor(width: number /*int*/, height: number /*int*/): void {
-      width = width | 0; height = height | 0;
-      notImplemented("public flash.media.Video::ctor"); return;
     }
   }
 }

@@ -163,6 +163,7 @@ module Shumway.GFX {
       super(bounds);
       this._video = document.createElement("video");
       this._video.src = url;
+      this._video.loop = true;
       this._video.play();
       RenderableVideo._renderableVideos.push(this);
     }
