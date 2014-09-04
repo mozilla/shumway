@@ -1819,9 +1819,13 @@ module Shumway.AVM2.AS {
       return cls.baseClass.getQualifiedClassName();
     }
 
-    export function getDefinitionByName(name: string) {
+    /**
+     * Returns the class with the specified name, or |null| if no such class exists.
+     */
+    export function getDefinitionByName(name: string): ASClass {
       var simpleName = String(name).replace("::", ".");
-      return Shumway.AVM2.Runtime.AVM2.currentDomain().getClass(simpleName);
+      var cls = Shumway.AVM2.Runtime.AVM2.currentDomain().getClass(simpleName, false);
+      return cls || null;
     }
 
     export function describeTypeJSON(value: any, flags: number) {

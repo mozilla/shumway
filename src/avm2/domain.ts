@@ -328,11 +328,11 @@ module Shumway.AVM2.Runtime {
       };
     }
 
-    public getType(multiname) {
+    public getType(multiname: Multiname) {
       return this.getProperty(multiname, true, true);
     }
 
-    public getProperty(multiname, strict, execute) {
+    public getProperty(multiname: Multiname, strict: boolean, execute: boolean) {
       var resolved = this.findDefiningScript(multiname, execute);
       if (resolved) {
         if (!resolved.script.executing) {
@@ -344,28 +344,20 @@ module Shumway.AVM2.Runtime {
       if (strict) {
         return Shumway.Debug.unexpected("Cannot find property " + multiname);
       }
-
       return undefined;
     }
 
-    public getClass(simpleName: string): Shumway.AVM2.AS.ASClass {
+    public getClass(simpleName: string, strict: boolean = true): Shumway.AVM2.AS.ASClass {
       var cache = this.classCache;
-      var c = cache[simpleName];
-      if (!c) {
-        c = cache[simpleName] = this.getProperty(Multiname.fromSimpleName(simpleName), true, true);
+      var cls = cache[simpleName];
+      if (!cls) {
+        cls = cache[simpleName] = this.getProperty(Multiname.fromSimpleName(simpleName), strict, true);
       }
-      release || assert(c instanceof Shumway.AVM2.AS.ASClass);
-      return c;
+      release || (cls && assert(cls instanceof Shumway.AVM2.AS.ASClass));
+      return cls;
     }
 
-    public findClass(simpleName) {
-      if (simpleName in this.classCache) {
-        return true;
-      }
-      return this.findDomainProperty(Multiname.fromSimpleName(simpleName), false, true);
-    }
-
-    public findDomainProperty(multiname, strict, execute) {
+    public findDomainProperty(multiname: Multiname, strict: boolean, execute: boolean) {
       if (Shumway.AVM2.Runtime.traceDomain.value) {
         log("ApplicationDomain.findDomainProperty: " + multiname);
       }
