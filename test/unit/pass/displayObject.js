@@ -255,8 +255,7 @@ function displayTests() {
       s.width = 10;
     }
     eq(s.width, 10, "Width should converge on 10");
-    // TODO: height mustn't really converge on 10: it stabilizes at 10.5 in Flash.
-    eq(s.height, 10, "Height should converge on 10");
+    eq(s.height, 10.05, "Height should converge on 10.05");
   });
 
   unitTests.push(function globalToLocalAndBack() {
@@ -409,7 +408,33 @@ function displayTests() {
     eq(new TextField().name, 'instance6');
     eq(new Bitmap().name, 'instance7');
     eq(new Loader().name, 'instance8');
-  })
+  });
 
+
+  unitTests.push(function precision() {
+    var s = 0;
+    var a = new Sprite();
+    a.graphics.drawRect(0, 0, 100, 100);
+    var pass = true;
+    for (var i = 0; i < 1000; i++) {
+      a.scaleX = s;
+      a.scaleY = s;
+      if (a.x !== Math.round(s / 20) * 20) {
+        pass = false;
+      }
+      if (a.y !== Math.round(s / 20) * 20) {
+        pass = false;
+      }
+      if (a.width !== Math.round(s * 100 * 20) / 20) {
+        pass = false;
+      }
+      if (a.height !== Math.round(s * 100 * 20) / 20) {
+        pass = false;
+      }
+      s += 0.0001;
+    }
+    check(pass);
+    // TODO: Check rounding behaviour of x and y.
+  });
 }
 displayTests();

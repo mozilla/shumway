@@ -638,7 +638,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _applyLoaderContext(context: LoaderContext, request: flash.net.URLRequest) {
-      var parameters = Object.create(null);
+      var parameters = {};
       if (context && context.parameters) {
         var contextParameters = context.parameters;
         for (var key in contextParameters) {

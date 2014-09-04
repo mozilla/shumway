@@ -1384,9 +1384,9 @@ module Shumway.AVM2.AS.flash.display {
      * class. The get/set filters accessors always return deep clones of this array.
      */
     get filters(): flash.filters.BitmapFilter [] {
-      return this._filters.map(function (x: flash.filters.BitmapFilter) {
+      return this._filters ? this._filters.map(function (x: flash.filters.BitmapFilter) {
         return x.clone();
-      });
+      }) : [];
     }
 
     set filters(value: flash.filters.BitmapFilter []) {
