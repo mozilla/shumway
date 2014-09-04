@@ -182,7 +182,7 @@ function updateRefs(filePath, options) {
 }
 module.exports.updateRefs = updateRefs;
 
-function packageRefs(includes, output) {
+function packageRefs(includes, output, license) {
   var refs = '';
   includes.forEach(function (manifest) {
     refs += '## Manifest ' + manifest + '\n' +
@@ -215,7 +215,7 @@ function packageRefs(includes, output) {
       return;
     }
   });
-  fs.writeFileSync(output, content);
+  fs.writeFileSync(output, license + content);
 }
 
 module.exports.packageRefs = packageRefs;
