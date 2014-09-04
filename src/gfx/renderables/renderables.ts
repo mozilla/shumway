@@ -153,6 +153,44 @@ module Shumway.GFX {
     }
   }
 
+  export class RenderableVideo extends Renderable {
+    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
+    private _video: HTMLVideoElement;
+    private _lastCurrentTime: number = 0;
+    static _renderableVideos: RenderableVideo [] = [];
+
+    constructor(url: string, bounds: Rectangle) {
+      super(bounds);
+      this._video = document.createElement("video");
+      this._video.src = url;
+      this._video.loop = true;
+      this._video.play();
+      RenderableVideo._renderableVideos.push(this);
+    }
+
+    public invalidatePaintCheck() {
+      if (this._lastCurrentTime !== this._video.currentTime) {
+        this.invalidatePaint();
+      }
+      this._lastCurrentTime = this._video.currentTime;
+    }
+
+    public static invalidateVideos() {
+      var renderables = RenderableVideo._renderableVideos;
+      for (var i = 0; i < renderables.length; i++) {
+        renderables[i].invalidatePaintCheck();
+      }
+    }
+
+    render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
+      enterTimeline("RenderableVideo.render");
+      if (this._video) {
+        context.drawImage(this._video, 0, 0);
+      }
+      leaveTimeline("RenderableVideo.render");
+    }
+  }
+
   export class RenderableBitmap extends Renderable {
     _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     properties: {[name: string]: any} = {};

@@ -24,9 +24,7 @@ import flash.utils.ByteArray;
 
 [native(cls="NetStreamClass")]
 public class NetStream extends EventDispatcher {
-  public function NetStream(connection:NetConnection, peerID:String = "connectToFMS") {
-    ctor(connection, peerID);
-  }
+  public native function NetStream(connection:NetConnection, peerID:String = "connectToFMS");
   public static const DIRECT_CONNECTIONS:String = "directConnections";
   public static const CONNECT_TO_FMS:String = "connectToFMS";
   public native function dispose():void;
@@ -192,7 +190,6 @@ public class NetStream extends EventDispatcher {
   public native function get videoStreamSettings():VideoStreamSettings;
   public native function set videoStreamSettings(settings:VideoStreamSettings):void;
 
-  private native function ctor(connection:NetConnection, peerID:String):void;
   private function call(... args):void {
     invokeWithArgsArray(202, args);
   }
