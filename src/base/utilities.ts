@@ -702,10 +702,8 @@ module Shumway {
     }
 
     export function cloneObject(object: Object): Object {
-      var clone = ObjectUtilities.createEmptyObject();
-      for (var property in object) {
-        clone[property] = object[property];
-      }
+      var clone = Object.create(Object.getPrototypeOf(object));
+      copyOwnProperties(clone, object);
       return clone;
     }
 
