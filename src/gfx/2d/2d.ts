@@ -65,6 +65,8 @@ module Shumway.GFX.Canvas2D {
     }
   }
 
+  var MAX_VIEWPORT = Rectangle.createMaxI16();
+
   export class Canvas2DStageRenderer extends StageRenderer {
     _options: Canvas2DStageRendererOptions;
     private _fillRule: string;
@@ -332,7 +334,7 @@ module Shumway.GFX.Canvas2D {
         if (flags & FrameFlags.EnterClip) {
           context.save();
           context.enterBuildingClippingRegion();
-          self._renderFrame(context, frame, matrix, viewport, new Canvas2DStageRendererState(state.options, true));
+          self._renderFrame(context, frame, matrix, MAX_VIEWPORT, new Canvas2DStageRendererState(state.options, true));
           context.leaveBuildingClippingRegion();
           return;
         } else if (flags & FrameFlags.LeaveClip) {
