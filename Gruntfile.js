@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -25,7 +23,7 @@ module.exports = function(grunt) {
 
   // Don't use `--removeComments` here beause it strips out closure annotations that are
   // needed by the build system.
-  var commonArguments = 'node utils/typescript/tsc --target ES5 --sourcemap -d --out build/ts/';
+  var commonArguments = 'node utils/typescript/tsc --target ES5 --removeComments --sourcemap -d --out build/ts/';
 
   var defaultBrowserManifestFile = './resources/browser_manifests/browser_manifest.json';
   var defaultTestsManifestFile = 'test_manifest.json';
@@ -298,9 +296,10 @@ module.exports = function(grunt) {
     var outputDir = 'build/bundles/';
     grunt.file.mkdir(outputDir);
     var packageRefs = require('./utils/update-flash-refs.js').packageRefs;
-    packageRefs(['gfx'], outputDir + 'shumway.gfx.js');
-    packageRefs(['player'], outputDir + 'shumway.player.js');
-    packageRefs(['parser'], outputDir + 'shumway.parser.js');
+    var license = grunt.file.read('./src/license.js');
+    packageRefs(['gfx'], outputDir + 'shumway.gfx.js', license);
+    packageRefs(['player'], outputDir + 'shumway.player.js', license);
+    packageRefs(['parser'], outputDir + 'shumway.parser.js', license);
   });
 
   grunt.registerTask('server', function () {

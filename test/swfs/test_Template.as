@@ -1,4 +1,3 @@
-/* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
    java -jar utils/asc.jar -import playerglobal.abc -swf Template,100,100,10 test/swfs/test_TemplateTest.as

@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -22,7 +20,7 @@ var FirefoxCom = (function FirefoxComClosure() {
     /**
      * Creates an event that the extension is listening for and will
      * synchronously respond to.
-     * NOTE: It is reccomended to use request() instead since one day we may not
+     * NOTE: It is recommended to use request() instead since one day we may not
      * be able to synchronously reply.
      * @param {String} action The action to trigger.
      * @param {String} data Optional data to send.
@@ -228,7 +226,6 @@ function processExternalCommand(command) {
 function parseSwf(url, movieParams, objectParams) {
   var compilerSettings = JSON.parse(
     FirefoxCom.requestSync('getCompilerSettings', null));
-  // enableVerifier.value = compilerSettings.verifier;
 
   // init misc preferences
   var turboMode = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
@@ -237,8 +234,8 @@ function parseSwf(url, movieParams, objectParams) {
   //forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
   //dummyAnimation.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false});
 
-  console.log("Compiler settings: " + JSON.stringify(compilerSettings));
-  console.log("Parsing " + url + "...");
+  console.info("Compiler settings: " + JSON.stringify(compilerSettings));
+  console.info("Parsing " + url + "...");
   function loaded() {
     FirefoxCom.request('endActivation', null);
   }
