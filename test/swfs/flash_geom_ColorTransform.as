@@ -1,5 +1,4 @@
-﻿/* -*- Mode: java; indent-tabs-mode: nil -*- */
-/*
+﻿/*
    Compiled with:
    node utils/compileabc.js --swf ColorTransformTest,100,100,60 -p test/swfs/flash_geom_ColorTransform.as
 */

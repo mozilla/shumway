@@ -1,4 +1,3 @@
-/* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
    java -jar utils/asc.jar -import playerglobal.abc -swf Matrix3DTest,100,100,10 test/swfs/flash_geom_Matrix3D.as

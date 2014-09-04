@@ -1,4 +1,3 @@
-/* -*- Mode: java; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 // Derived from tamarin-redux/test/acceptance/e4x/Expressions/e11_1_2.as
 
 var x1 =
