@@ -45,6 +45,7 @@ function runSwfPlayer(flashParams) {
   var movieUrl = flashParams.url;
 
   Shumway.frameRateOption.value = flashParams.turboMode ? 60 : -1;
+  Shumway.AVM2.Verifier.enabled.value = compilerSettings.verifier;
 
   Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
     function runSWF(file) {
