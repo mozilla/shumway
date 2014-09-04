@@ -46,6 +46,10 @@ module Shumway {
     new Shumway.Options.Option("tp", "Trace Player", "number", 0, "Trace player every n frames.", {range: { min: 0, max: 512, step: 1 }})
   );
 
+  export var traceMouseEventOption = playerOptions.register (
+    new Shumway.Options.Option("tme", "Trace Mouse Events", "boolean", false, "Trace mouse events.")
+  );
+
   export var frameRateMultiplierOption = playerOptions.register (
     new Shumway.Options.Option("", "Frame Rate Multiplier", "number", 1, "Play frames at a faster rate.", {range: { min: 1, max: 16, step: 1 }})
   );

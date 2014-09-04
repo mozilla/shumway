@@ -167,7 +167,10 @@ module Shumway.Player {
           break;
         case EventKind.Mouse:
           this._mouseEventDispatcher.stage = this._stage;
-          this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>event);
+          var target = this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>event);
+          if (traceMouseEventOption.value) {
+            this._writer.writeLn("Mouse Event: type: " + event.type + ", target: " + target + ", name: " + target._name);
+          }
           break;
         case EventKind.Focus:
           var focusType = (<FocusEventData>event).type;
