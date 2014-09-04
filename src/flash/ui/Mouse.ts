@@ -90,10 +90,13 @@ module Shumway.AVM2.AS.flash.ui {
       target.dispatchEvent(event);
     }
 
-    public handleMouseEvent(data: MouseEventAndPointData) {
+    /**
+     * Handles the mouse event and returns the target on which the event was dispatched.
+     */
+    public handleMouseEvent(data: MouseEventAndPointData): InteractiveObject {
       var stage = this.stage;
       if (!stage) {
-        return;
+        return stage;
       }
 
       var globalPoint = data.point;
@@ -106,7 +109,7 @@ module Shumway.AVM2.AS.flash.ui {
           this._dispatchMouseEvent(stage, events.MouseEvent.MOUSE_LEAVE, data);
         }
         this.currentTarget = null;
-        return;
+        return stage;
       }
 
       var target = this._findTarget(globalPoint) || stage;
@@ -183,10 +186,11 @@ module Shumway.AVM2.AS.flash.ui {
           }
           target._mouseOver = true;
           this._dispatchMouseEvent(target, events.MouseEvent.MOUSE_OVER, data, currentTarget);
-          return;
+          return target;
       }
       // TODO: handle MOUSE_WHEEL and MOUSE_RELEASE_OUTSIDE
       this._dispatchMouseEvent(target, type, data);
+      return target;
     }
   }
 
