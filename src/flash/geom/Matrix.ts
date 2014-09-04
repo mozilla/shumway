@@ -311,47 +311,6 @@ module Shumway.AVM2.AS.flash.geom {
       return point;
     }
 
-    transformRectAABB (rectangle: Rectangle): Rectangle {
-      var a  = this.a;
-      var b  = this.b;
-      var c  = this.c;
-      var d  = this.d;
-      var tx = this.tx;
-      var ty = this.ty;
-
-      var x = rectangle.x;
-      var y = rectangle.y;
-      var w = rectangle.width;
-      var h = rectangle.height;
-
-      var x0 = a * x + c * y + tx;
-      var y0 = b * x + d * y + ty;
-      var x1 = a * (x + w) + c * y + tx;
-      var y1 = b * (x + w) + d * y + ty;
-      var x2 = a * (x + w) + c * (y + h) + tx;
-      var y2 = b * (x + w) + d * (y + h) + ty;
-      var x3 = a * x + c * (y + h) + tx;
-      var y3 = b * x + d * (y + h) + ty;
-
-      var tmp = 0;
-
-      // Manual Min/Max is a lot faster than calling Math.min/max
-      // X Min-Max
-      if (x0 > x1) { tmp = x0; x0 = x1; x1 = tmp; }
-      if (x2 > x3) { tmp = x2; x2 = x3; x3 = tmp; }
-
-      rectangle.x = x0 < x2 ? x0 : x2;
-      rectangle.width = (x1 > x3 ? x1 : x3) - rectangle.x;
-
-      // Y Min-Max
-      if (y0 > y1) { tmp = y0; y0 = y1; y1 = tmp; }
-      if (y2 > y3) { tmp = y2; y2 = y3; y3 = tmp; }
-
-      rectangle.y = y0 < y2 ? y0 : y2;
-      rectangle.height = (y1 > y3 ? y1 : y3) - rectangle.y;
-      return rectangle;
-    }
-
     transformBounds(bounds: Bounds): void {
       var a  = this.a;
       var b  = this.b;
@@ -365,14 +324,14 @@ module Shumway.AVM2.AS.flash.geom {
       var w = bounds.width;
       var h = bounds.height;
 
-      var x0 = (a * x + c * y + tx) | 0;
-      var y0 = (b * x + d * y + ty) | 0;
-      var x1 = (a * (x + w) + c * y + tx) | 0;
-      var y1 = (b * (x + w) + d * y + ty) | 0;
-      var x2 = (a * (x + w) + c * (y + h) + tx) | 0;
-      var y2 = (b * (x + w) + d * (y + h) + ty) | 0;
-      var x3 = (a * x + c * (y + h) + tx) | 0;
-      var y3 = (b * x + d * (y + h) + ty) | 0;
+      var x0 = Math.round(a * x + c * y + tx);
+      var y0 = Math.round(b * x + d * y + ty);
+      var x1 = Math.round(a * (x + w) + c * y + tx);
+      var y1 = Math.round(b * (x + w) + d * y + ty);
+      var x2 = Math.round(a * (x + w) + c * (y + h) + tx);
+      var y2 = Math.round(b * (x + w) + d * (y + h) + ty);
+      var x3 = Math.round(a * x + c * (y + h) + tx);
+      var y3 = Math.round(b * x + d * (y + h) + ty);
 
       var tmp = 0;
 
