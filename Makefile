@@ -74,19 +74,11 @@ build-playerglobal-min:
 	make -C utils/ install-apparat
 	make -C utils/playerglobal build-min
 
-build-bundle:
-	grunt build-bundle
-
-build-extension: build-bundle
-	make -C extension/firefox/ build
-
-FIREFOX_PATH ?= $(error ERROR: Specify FIREFOX_PATH)
-
-check-extension: build-extension
-	cd test/extension; python check.py -b "$(FIREFOX_PATH)"
+build-extension:
+	grunt firefox
 
 build-web:
-	make -C web/ build
+	grunt web
 
 MXMLC_FLAGS ?= -static-link-runtime-shared-libraries
 MXMLC = ./utils/flex_sdk/bin/mxmlc $(MXMLC_FLAGS)
@@ -96,11 +88,8 @@ MXMLC = ./utils/flex_sdk/bin/mxmlc $(MXMLC_FLAGS)
 update-flash-refs:
 	grunt update-flash-refs
 
-test-avm1:
-	make -C src/avm1/tests/ test
-
 test-avm2:
-	make -C src/avm2/bin/ test-regress
+	grunt exec:test_avm2_quick
 
 reftest:
 	grunt reftest
@@ -109,7 +98,7 @@ makeref:
 	grunt makeref
 
 reftest-swfdec:
-	make -C test/ reftest-swfdec
+	grunt reftest-swfdec
 
 lint:
 	grunt lint
