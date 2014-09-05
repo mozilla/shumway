@@ -134,6 +134,9 @@ module Shumway.Player {
                                    avm1Context.flushPendingScripts.bind(avm1Context),
                                    false,
                                    Number.MAX_VALUE);
+            MovieClip.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
+          } else if (loaderInfo.swfVersion < 10) {
+            MovieClip.frameNavigationModel = flash.display.FrameNavigationModel.SWF9;
           }
 
           var root = loader.content;

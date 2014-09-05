@@ -2,7 +2,8 @@
     {  "id": "timeline",
       "stas": "swfs/trace.stas",
       "filenames": [
-        "swfs/timeline/events/timeline_events_fp10.swf"
+        "swfs/timeline/events/timeline_events_fp10.swf",
+        "swfs/timeline/events/timeline_events_fp9.swf"
       ],
       "type": "stas"
     },
@@ -10,7 +11,8 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/timeline/timeline_as2_1.swf",
-        "swfs/avm1timeline1.swf"
+        "swfs/avm1timeline1.swf",
+        "swfs/avm1timeline2.swf"
       ],
       "type": "stas"
     },
