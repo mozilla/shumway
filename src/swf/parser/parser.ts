@@ -362,8 +362,8 @@ module Shumway.SWF.Parser {
           };
           options.oncomplete && options.oncomplete(symbol);
         }
-        if (this.target !== undefined && this.target.close) {
-          this.target.close();
+        if (target !== undefined && target.close) {
+          target.close();
         }
       }
     };
@@ -387,22 +387,35 @@ module Shumway.SWF.Parser {
       var bufferPos = data.length;
 
       target = {
-        push: function (data) {
+        push: function (data: Uint8Array, progressInfo: ProgressInfo) {
           buffer.set(data, bufferPos);
           bufferPos += data.length;
         },
         close: function () {
-          var props = {};
+          var props: any = {};
           var chunks;
           if (type == 'image/jpeg') {
             chunks = parseJpegChunks(props, buffer);
           } else {
-            chunks = [buffer];
+            parsePngHeaders(props, buffer);
+            chunks = [buffer.subarray(0, bufferPos)];
           }
+          var length = 0, pos = 0;
+          chunks.forEach(function (chunk) {
+            length += chunk.byteLength;
+          });
+          var data = new Uint8Array(length);
+          chunks.forEach(function (chunk) {
+            data.set(chunk, pos);
+            pos += chunk.byteLength;
+          });
+          props.id = 0;
+          props.data = data;
+          props.mimeType = type;
           var symbol = {
+            command: 'image',
             type: 'image',
-            props: props,
-            data: new Blob(chunks, {type: type})
+            props: props
           };
           options.oncomplete && options.oncomplete(symbol);
         }

@@ -228,7 +228,9 @@ module Shumway.AVM2.AS.flash.display {
       if (this._waitForInitialData) {
         // 'progress' event usually fires after 64K, using this as a start to
         // commit frame/symbols
-        var enoughData = data.command === 'progress' || data.command === 'error';
+        var enoughData = data.command === 'progress' ||
+                         data.command === 'image' ||
+                         data.command === 'error';
         if (enoughData) {
           this._waitForInitialData = false;
           this._initialDataLoaded.resolve(undefined);
@@ -540,13 +542,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _commitImage(data: any): void {
-      var b = new BitmapData(data.width, data.height);
-      this._content = new Bitmap(b);
+      var symbol = Timeline.BitmapSymbol.FromData(data.props);
+      var b = flash.display.BitmapData.initializeFrom(symbol);
+      flash.display.BitmapData.instanceConstructorNoInitialize.call(b);
+
+      this._content = new flash.display.Bitmap(b);
       this.addTimelineObjectAtDepth(this._content, 0);
 
       var loaderInfo = this._contentLoaderInfo;
-      loaderInfo._width = data.width;
-      loaderInfo._height = data.height;
+      loaderInfo._width = symbol.width;
+      loaderInfo._height = symbol.height;
+
+      this._loadStatus = LoadStatus.Opened;
     }
 
     get content(): flash.display.DisplayObject {
