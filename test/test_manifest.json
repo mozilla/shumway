@@ -168,7 +168,7 @@
       "type": "stas"
     },
     {  "id": "defineFont2-test",
-       "frames": [20],
+       "frames": [60],
        "swf": "swfs/food.swf",
        "type": "eq"
     }
