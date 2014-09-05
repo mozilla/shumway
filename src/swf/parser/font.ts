@@ -52,7 +52,8 @@ module Shumway.SWF.Parser {
       italic: tag.italic === 1,
       codes: null,
       metrics: null,
-      data: tag.data
+      data: tag.data,
+      originalSize: false
     };
 
     var glyphs = tag.glyphs;
@@ -82,7 +83,7 @@ module Shumway.SWF.Parser {
     if (tag.codes) {
       for (var i = 0; i < tag.codes.length; i++) {
         var code = tag.codes[i];
-        if (code < 32) {
+        if (code < 32 || codes.indexOf(code) > -1) {
           maxCode++;
           if (maxCode == 8232) {
             maxCode = 8240;
@@ -129,6 +130,7 @@ module Shumway.SWF.Parser {
     if (isFont2 && !tag.hasLayout) {
       // some DefineFont2 without layout using DefineFont3 resolution, why?
       resolution = 20;
+      font.originalSize = true;
     }
     var ascent = Math.ceil(tag.ascent / resolution) || 1024;
     var descent = -Math.ceil(tag.descent / resolution) || 0;
