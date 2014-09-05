@@ -20,6 +20,7 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import checkParameterType = Shumway.AVM2.Runtime.checkParameterType;
   import clamp = Shumway.NumberUtilities.clamp;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 
@@ -151,10 +152,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     addChild(child: DisplayObject): DisplayObject {
+      checkParameterType(child, "child", flash.display.DisplayObject);
       return this.addChildAt(child, this._children.length);
     }
 
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
+      checkParameterType(child, "child", flash.display.DisplayObject);
       release || counter.count("DisplayObjectContainer::addChildAt");
 
       index = index | 0;
@@ -241,6 +244,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     removeChild(child: DisplayObject): DisplayObject {
+      checkParameterType(child, "child", flash.display.DisplayObject);
       return this.removeChildAt(this.getChildIndex(child));
     }
 
@@ -277,6 +281,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     getChildIndex(child: DisplayObject): number /*int*/ {
+      checkParameterType(child, "child", flash.display.DisplayObject);
       if (child._parent !== this) {
         throwError('ArgumentError', Errors.NotAChildError);
       }
@@ -285,7 +290,7 @@ module Shumway.AVM2.AS.flash.display {
 
     setChildIndex(child: DisplayObject, index: number /*int*/): void {
       index = index | 0;
-
+      checkParameterType(child, "child", flash.display.DisplayObject);
       var children = this._children;
       if (index < 0 || index > children.length) {
         throwError('RangeError', Errors.ParamRangeError);
@@ -417,6 +422,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     contains(child: DisplayObject): boolean {
+      checkParameterType(child, "child", flash.display.DisplayObject);
       return this._isAncestor(child);
     }
 
@@ -450,6 +456,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     swapChildren(child1: DisplayObject, child2: DisplayObject): void {
+      // Flash prints out 'child' for both non-null |child1| and |child2|.
+      checkParameterType(child1, "child", flash.display.DisplayObject);
+      checkParameterType(child2, "child", flash.display.DisplayObject);
       this.swapChildrenAt(this.getChildIndex(child1), this.getChildIndex(child2));
     }
 

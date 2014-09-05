@@ -860,6 +860,12 @@ module Shumway.AVM2.Runtime {
     }
   }
 
+  export function checkParameterType(argument: any, name: string, type: Shumway.AVM2.AS.ASClass) {
+    if (!argument) {
+      throwError('TypeError', Errors.NullPointerError, name);
+    }
+  }
+
   export function throwError(name, error, ...rest) {
     if (true) {
       var message = Shumway.AVM2.formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
