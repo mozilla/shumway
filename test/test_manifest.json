@@ -161,5 +161,10 @@
         "swfs/as3-loader/LoaderLoadBytesTest.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "defineFont2-test",
+       "frames": [1],
+       "swf": "swfs/food.swf",
+       "type": "eq"
     }
 ]
