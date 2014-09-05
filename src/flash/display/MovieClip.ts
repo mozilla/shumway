@@ -26,6 +26,15 @@ module Shumway.AVM2.AS.flash.display {
   import events = flash.events;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 
+  /**
+   * Controls how to behave on inter-frame navigation.
+   */
+  export enum FrameNavigationModel {
+    SWF1 = 1,
+    SWF9,
+    SWF10
+  }
+
   interface SoundClip {
     channel?;
     object: flash.media.Sound;
@@ -104,6 +113,8 @@ module Shumway.AVM2.AS.flash.display {
 
   export class MovieClip extends flash.display.Sprite implements IAdvancable {
 
+    static frameNavigationModel: FrameNavigationModel;
+
     private static _callQueue: MovieClip [];
 
     // Called whenever the class is initialized.
@@ -113,6 +124,7 @@ module Shumway.AVM2.AS.flash.display {
     };
 
     static reset() {
+      MovieClip.frameNavigationModel = FrameNavigationModel.SWF10;
       MovieClip._callQueue = [];
     }
 
@@ -156,9 +168,6 @@ module Shumway.AVM2.AS.flash.display {
             }
           }
         }
-        if (symbol.initActionBlock) {
-          this.addAS2InitActionBlock(0, symbol.initActionBlock);
-        }
       } else {
         self.addScene('', [], 0, self._totalFrames);
       }
@@ -177,17 +186,22 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
 
-        instance._allowFrameNavigation = false;
+        instance._allowFrameNavigation = MovieClip.frameNavigationModel === FrameNavigationModel.SWF1;
         instance.callFrame(instance._currentFrame);
         instance._allowFrameNavigation = true;
 
         // If the destination frame isn't the same as before the `callFrame` operation, a frame
         // navigation has happened inside the frame script. In that case, we didn't immediately
-        // run the full frame event cycle as described in `_gotoFrameAbs`. Instead, we have to do
-        // it here.
-        // TODO: does this also apply for fp9, or do we just do nothing there?
+        // run frame navigation as described in `_gotoFrameAbs`. Instead, we have to do it here.
         if (instance._nextFrame !== instance._currentFrame) {
-          DisplayObject.performFrameNavigation(false, true);
+          if (MovieClip.frameNavigationModel === FrameNavigationModel.SWF9) {
+            instance._advanceFrame();
+            instance._constructFrame();
+            instance._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
+            instance.callFrame(instance._currentFrame);
+          } else {
+            DisplayObject.performFrameNavigation(false, true);
+          }
         }
       }
       leaveTimeline();
@@ -207,22 +221,22 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _initFrame(advance: boolean) {
-      if (advance && this.buttonMode) {
-        var state: string = null;
-        if (this._mouseOver) {
-          state = this._mouseDown ? '_down' : '_over';
-        } else if (this._currentButtonState !== null) {
-          state = '_up';
-        }
-        if (state !== this._currentButtonState && this._buttonFrames[state]) {
-          this.stop();
-          this._gotoFrame(state, null);
-          this._currentButtonState = state;
-          this._advanceFrame();
-          return;
-        }
-      }
       if (advance) {
+        if (this.buttonMode) {
+          var state: string = null;
+          if (this._mouseOver) {
+            state = this._mouseDown ? '_down' : '_over';
+          } else if (this._currentButtonState !== null) {
+            state = '_up';
+          }
+          if (state !== this._currentButtonState && this._buttonFrames[state]) {
+            this.stop();
+            this._gotoFrame(state, null);
+            this._currentButtonState = state;
+            this._advanceFrame();
+            return;
+          }
+        }
         if (this._totalFrames > 1 && !this._stopped &&
             this._hasFlags(DisplayObjectFlags.Constructed)) {
           this._nextFrame++;
@@ -390,13 +404,19 @@ module Shumway.AVM2.AS.flash.display {
 
       this._nextFrame = frame;
 
-      // Frame navigation in an individual timeline triggers an iteration of the whole
-      // frame navigation cycle in FP 10+. This includes broadcasting frame events to *all*
-      // display objects.
-      // TODO: only trigger for FP10+
-      // It only happens immediately if not triggered from under a frame script, though.
-      if (this._allowFrameNavigation) { // TODO: also check if ActionScriptVersion < 3
-        DisplayObject.performFrameNavigation(false, true);
+      // Frame navigation only happens immediately if not triggered from under a frame script.
+      if (this._allowFrameNavigation) {
+        if (MovieClip.frameNavigationModel === FrameNavigationModel.SWF9) {
+          // In FP 9, the only thing that happens on inter-frame navigation is advancing the frame
+          // and constructing new timeline objects.
+          this._advanceFrame();
+          this._constructFrame();
+        } else {
+          // Frame navigation in an individual timeline triggers an iteration of the whole
+          // frame navigation cycle in FP 10+. This includes broadcasting frame events to *all*
+          // display objects.
+          DisplayObject.performFrameNavigation(false, true);
+        }
       }
     }
 
@@ -425,25 +445,35 @@ module Shumway.AVM2.AS.flash.display {
 
       var frames = this._frames;
       var startIndex = currentFrame;
+      var currentFrameDelta = frames[currentFrame - 1];
+
       if (nextFrame < currentFrame) {
         var frame = frames[0];
         release || assert (frame, "FrameDelta is not defined.");
-        var stateAtDepth = frame.stateAtDepth;
-        var children = this._children.slice();
-        for (var i = 0; i < children.length; i++) {
-          var child = children[i];
-          if (child._depth) {
-            var state = stateAtDepth[child._depth];
-            if (!state || !state.canBeAnimated(child)) {
-              this._removeAnimatedChild(child);
+        if (frame !== currentFrameDelta) {
+          var stateAtDepth = frame.stateAtDepth;
+          var children = this._children.slice();
+          for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (child._depth) {
+              var state = stateAtDepth[child._depth];
+              if (!state || !state.canBeAnimated(child)) {
+                this._removeAnimatedChild(child);
+              }
             }
           }
         }
         startIndex = 0;
+        currentFrameDelta = frame;
       }
+
       for (var i = startIndex; i < nextFrame; i++) {
         var frame = frames[i];
         release || assert (frame, "FrameDelta is not defined.");
+        if (frame === currentFrameDelta) {
+          continue;
+        }
+        currentFrameDelta = frame;
         var stateAtDepth = frame.stateAtDepth;
         for (var depth in stateAtDepth) {
           var child = this.getTimelineObjectAtDepth(depth | 0);
@@ -647,7 +677,7 @@ module Shumway.AVM2.AS.flash.display {
      *
      * After that, the listener removes itself.
      */
-    addAS2InitActionBlock(frameIndex: number, actionsBlock: {actionsData: Uint8Array}): void {
+    addAS2InitActionBlocks(frameIndex: number, actionsBlocks: {actionsData: Uint8Array} []): void {
       var self: MovieClip = this;
       function listener (e) {
         if (self._currentFrame !== frameIndex + 1) {
@@ -658,8 +688,11 @@ module Shumway.AVM2.AS.flash.display {
         var avm1Context = self.loaderInfo._avm1Context;
         var as2Object = avm1lib.getAS2Object(self);
         var stage = self.stage;
-        var actionsData = new AVM1.AS2ActionsData(actionsBlock.actionsData, 'f' + frameIndex);
-        avm1Context.executeActions(actionsData, stage, as2Object);
+        for (var i = 0; i < actionsBlocks.length; i++) {
+          var actionsData = new AVM1.AS2ActionsData(actionsBlocks[i].actionsData,
+                                                    'f' + frameIndex + 'i' + i);
+          avm1Context.executeActions(actionsData, stage, as2Object);
+        }
       }
       this.addEventListener('enterFrame', listener);
     }

@@ -2844,7 +2844,7 @@ module Shumway {
              "xMin: " + this._xMin + ", " +
              "xMin: " + this._yMin + ", " +
              "xMax: " + this._xMax + ", " +
-             "xMax: " + this._yMax +
+             "yMax: " + this._yMax +
              " }";
     }
 
