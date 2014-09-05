@@ -94,6 +94,11 @@
        "swf": "/examples/as3_tiger/tiger.swf",
        "type": "eq"
     },
+    {  "id": "image-loading",
+      "frames": [60],
+      "swf": "/examples/image-loading/image-loading.swf",
+      "type": "eq"
+    },
     {  "id": "bitmap-ref",
       "frames": [20],
       "swf": "swfs/bitmapbuttons.swf",

@@ -28,6 +28,14 @@ module Shumway.SWF.Parser {
   }
 
   /**
+   * Reads the next two bytes at the specified position.
+   */
+  function readInt32(bytes: Uint8Array, position: number) {
+    return (bytes[position] << 24) | (bytes[position + 1] << 16) |
+           (bytes[position + 2] << 8) | bytes[position + 3];
+  }
+
+  /**
    * Parses JPEG chunks and reads image width and height information. JPEG data
    * is SWFs is encoded in chunks and is not directly decodable by the JPEG
    * parser.
@@ -63,6 +71,21 @@ module Shumway.SWF.Parser {
     } while (i < n);
     release || assert(image.width && image.height, 'bad jpeg image');
     return chunks;
+  }
+
+  /**
+   * Extracts PNG width and height information.
+   */
+  export function parsePngHeaders(image: any, bytes: Uint8Array): void {
+    var ihdrOffset = 12;
+    if (bytes[ihdrOffset] !== 0x49 || bytes[ihdrOffset + 1] !== 0x48 ||
+        bytes[ihdrOffset + 2] !== 0x44 || bytes[ihdrOffset + 3] !== 0x52) {
+      return;
+    }
+    image.width = readInt32(bytes, ihdrOffset + 4);
+    image.height = readInt32(bytes, ihdrOffset + 8);
+    var type = bytes[ihdrOffset + 14];
+    image.hasAlpha = type === 4 || type === 6;
   }
 
   /**
