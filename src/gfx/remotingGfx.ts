@@ -20,6 +20,7 @@ module Shumway.Remoting.GFX {
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
   import RenderableBitmap = Shumway.GFX.RenderableBitmap;
+  import RenderableVideo = Shumway.GFX.RenderableVideo;
   import RenderableText = Shumway.GFX.RenderableText;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
@@ -125,6 +126,10 @@ module Shumway.Remoting.GFX {
       return <RenderableBitmap>this._assets[id];
     }
 
+    _getVideoAsset(id: number): RenderableVideo {
+      return <RenderableVideo>this._assets[id];
+    }
+
     _getTextAsset(id: number): RenderableText {
       return <RenderableText>this._assets[id];
     }
@@ -147,6 +152,7 @@ module Shumway.Remoting.GFX {
         updateTextContent: 0,
         updateFrame: 0,
         updateStage: 0,
+        updateNetStream: 0,
         registerFont: 0,
         drawToBitmap: 0
       };
@@ -176,6 +182,10 @@ module Shumway.Remoting.GFX {
           case MessageTag.UpdateStage:
             data.updateStage ++;
             this._readUpdateStage();
+            break;
+          case MessageTag.UpdateNetStream:
+            data.updateNetStream ++;
+            this._readUpdateNetStream();
             break;
           case MessageTag.RegisterFont:
             data.registerFont ++;
@@ -363,6 +373,17 @@ module Shumway.Remoting.GFX {
       var rectangle = this._readRectangle()
       context.root.setBounds(rectangle);
       context.root.color = Color.FromARGB(color);
+    }
+
+    private _readUpdateNetStream() {
+      var context = this.context;
+      var id = this.input.readInt();
+      var asset = context._getVideoAsset(id);
+      var url = this.input.readUTF();
+      if (!asset) {
+        asset = new RenderableVideo(url, new Rectangle(0, 0, 960, 480));
+        context._registerAsset(id, 0, asset);
+      }
     }
 
     private _readUpdateFrame() {

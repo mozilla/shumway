@@ -20,6 +20,7 @@ module Shumway.Remoting.Player {
   import flash = Shumway.AVM2.AS.flash;
   import Stage = flash.display.Stage;
   import Graphics = flash.display.Graphics;
+  import NetStream = flash.net.NetStream;
   import display = flash.display;
   import Bitmap = flash.display.Bitmap;
   import BitmapData = flash.display.BitmapData;
@@ -30,6 +31,7 @@ module Shumway.Remoting.Player {
   import BlendMode = flash.display.BlendMode;
   import PixelSnapping = flash.display.PixelSnapping;
   import VisitorFlags = flash.display.VisitorFlags;
+  import Video = flash.media.Video;
 
   import Point = flash.geom.Point;
   import Bounds = Shumway.Bounds;
@@ -112,6 +114,16 @@ module Shumway.Remoting.Player {
           this.output.writeInt(textures[i]._id);
         }
         graphics._isDirty = false;
+      }
+    }
+
+    writeNetStream(netStream: NetStream) {
+      if (netStream._isDirty) {
+        writer && writer.writeLn("Sending NetStream: " + netStream._id);
+        this.output.writeInt(MessageTag.UpdateNetStream);
+        this.output.writeInt(netStream._id);
+        this.output.writeUTF(netStream._url);
+        netStream._isDirty = false;
       }
     }
 
@@ -202,6 +214,11 @@ module Shumway.Remoting.Player {
       var hasColorTransform = displayObject._hasFlags(DisplayObjectFlags.DirtyColorTransform);
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
 
+      var video: Video = null;
+      if (flash.media.Video.isType(displayObject)) {
+        video = <Video>displayObject;
+      }
+
       // Check if any children need to be written. These are remoting children, not just display object children.
       var hasRemotableChildren = false;
       if (this.phase === RemotingPhase.References) {
@@ -209,6 +226,7 @@ module Shumway.Remoting.Player {
           DisplayObjectFlags.DirtyChildren     |
           DisplayObjectFlags.DirtyGraphics     |
           DisplayObjectFlags.DirtyBitmapData   |
+          DisplayObjectFlags.DirtyNetStream    |
           DisplayObjectFlags.DirtyTextContent
         );
         hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
@@ -267,6 +285,13 @@ module Shumway.Remoting.Player {
           } else {
             this.output.writeInt(0);
           }
+        } else if (video) {
+          if (video._netStream) {
+            this.output.writeInt(1);
+            this.output.writeInt(IDMask.Asset | video._netStream._id);
+          } else {
+            this.output.writeInt(0);
+          }
         } else {
           // Check if we have a graphics object and write that as a child first.
           var count = (graphics || textContent) ? 1 : 0;
@@ -308,6 +333,10 @@ module Shumway.Remoting.Player {
       } else if (bitmap) {
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);
+        }
+      } else if (video) {
+        if (video._netStream) {
+          this.writeNetStream(video._netStream);
         }
       }
     }

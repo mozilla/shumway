@@ -32,7 +32,8 @@ module Shumway.AVM2.AS.flash.net {
   declare var window;
 
   export class NetStream extends flash.events.EventDispatcher {
-    
+    _isDirty: boolean;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
@@ -44,12 +45,26 @@ module Shumway.AVM2.AS.flash.net {
     
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["attach", "close", "attachAudio", "attachCamera", "send", "bufferTime", "bufferTime", "maxPauseBufferTime", "maxPauseBufferTime", "backBufferTime", "backBufferTime", "inBufferSeek", "inBufferSeek", "backBufferLength", "step", "bufferTimeMax", "bufferTimeMax", "receiveAudio", "receiveVideo", "receiveVideoFPS", "pause", "resume", "togglePause", "seek", "publish", "time", "currentFPS", "bufferLength", "liveDelay", "bytesLoaded", "bytesTotal", "decodedFrames", "videoCodec", "audioCodec", "onPeerConnect", "call"];
-    
+
     constructor (connection: flash.net.NetConnection, peerID: string = "connectToFMS") {
-      peerID = asCoerceString(peerID);
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.NetStream");
+      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      this._connection = connection;
+      this._peerID = asCoerceString(peerID);
+      this._id = flash.display.DisplayObject.getNextSyncID();
+      this._isDirty = true;
     }
+
+    _connection: flash.net.NetConnection;
+    _peerID: string;
+
+    _id: number;
+
+    /**
+     * Only one video can be attached to this |NetStream| object. If we attach another video, then
+     * the previous attachement is lost. (Validated through experimentation.)
+     */
+    _videoReferrer: flash.media.Video;
 
     private _videoElement;
     private _videoReady;
@@ -136,10 +151,21 @@ module Shumway.AVM2.AS.flash.net {
     // _useHardwareDecoder: boolean;
     // _useJitterBuffer: boolean;
     // _videoStreamSettings: flash.media.VideoStreamSettings;
+
+    // Playing URL, temporary hack for proof of concept.
+    _url: string;
+
     dispose(): void {
       notImplemented("public flash.net.NetStream::dispose"); return;
     }
+
     play(url: string): void {
+      if (true) {
+        this._url = FileLoadingService.instance.resolveUrl(url);
+        somewhatImplemented("public flash.net.NetStream::play");
+        return;
+      }
+
       // (void) -> void ???
       url = asCoerceString(url);
       var isMediaSourceEnabled = USE_MEDIASOURCE_API;
