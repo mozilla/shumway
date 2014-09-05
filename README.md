@@ -29,6 +29,8 @@ Also, note that the development extension is updated on every merge and by defau
 auto-update extensions on a daily basis (you can change this through the 
 `extensions.update.interval` option in `about:config`, time is in seconds).
 
+To build the Firefox extension: use `grunt firefox`.
+
 ## Contributing
 
 ### Development
