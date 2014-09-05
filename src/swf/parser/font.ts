@@ -40,6 +40,64 @@ module Shumway.SWF.Parser {
     return toString16(val >> 16) + toString16(val);
   }
 
+  /**
+   * Heuristic to detect if DefineFont2 was scaled as Font3: scanning all
+   * x and y coordinates of the glyphs and if their bounding box dimensions
+   * greater than 5000 (that's more than enough for normal TrueType font),
+   * then the font coordinates were scaled by 20.
+   */
+  function isScaledFont2(glyphs) {
+    var xMin = 0, yMin = 0, xMax = 0, yMax = 0;
+    for (var i = 0; i < glyphs.length; i++) {
+      var glyph = glyphs[i];
+      if (!glyph) {
+        continue;
+      }
+      var records = glyph.records;
+      var record;
+      var x = 0;
+      var y = 0;
+
+      for (var j = 0; j < records.length; j++) {
+        record = records[j];
+        if (record.type) {
+          if (record.isStraight) {
+            x += (record.deltaX || 0);
+            y += -(record.deltaY || 0);
+          } else {
+            x += record.controlDeltaX;
+            y += -record.controlDeltaY;
+            x += record.anchorDeltaX;
+            y += -record.anchorDeltaY;
+          }
+        } else {
+          if (record.eos) {
+            break;
+          }
+          if (record.move) {
+            x = record.moveX;
+            y = -record.moveY;
+          }
+        }
+
+        if (xMin > x) {
+          xMin = x;
+        }
+        if (yMin > y) {
+          yMin = y;
+        }
+        if (xMax < x) {
+          xMax = x;
+        }
+        if (yMax < y) {
+          yMax = y;
+        }
+      }
+    }
+    var maxDimension = Math.max(xMax - xMin, yMax - yMin);
+    return maxDimension > 5000;
+  }
+
   export function defineFont(tag, dictionary) {
     var uniqueName = 'swf-font-' + tag.id;
     var fontName = tag.name || uniqueName;
@@ -127,7 +185,7 @@ module Shumway.SWF.Parser {
     }
 
     var resolution = tag.resolution || 1;
-    if (isFont2 && !tag.hasLayout) {
+    if (isFont2 && isScaledFont2(glyphs)) {
       // some DefineFont2 without layout using DefineFont3 resolution, why?
       resolution = 20;
       font.originalSize = true;
