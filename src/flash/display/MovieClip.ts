@@ -422,25 +422,35 @@ module Shumway.AVM2.AS.flash.display {
 
       var frames = this._frames;
       var startIndex = currentFrame;
+      var currentFrameDelta = frames[currentFrame - 1];
+
       if (nextFrame < currentFrame) {
         var frame = frames[0];
         release || assert (frame, "FrameDelta is not defined.");
-        var stateAtDepth = frame.stateAtDepth;
-        var children = this._children.slice();
-        for (var i = 0; i < children.length; i++) {
-          var child = children[i];
-          if (child._depth) {
-            var state = stateAtDepth[child._depth];
-            if (!state || !state.canBeAnimated(child)) {
-              this._removeAnimatedChild(child);
+        if (frame !== currentFrameDelta) {
+          var stateAtDepth = frame.stateAtDepth;
+          var children = this._children.slice();
+          for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (child._depth) {
+              var state = stateAtDepth[child._depth];
+              if (!state || !state.canBeAnimated(child)) {
+                this._removeAnimatedChild(child);
+              }
             }
           }
         }
         startIndex = 0;
+        currentFrameDelta = frame;
       }
+
       for (var i = startIndex; i < nextFrame; i++) {
         var frame = frames[i];
         release || assert (frame, "FrameDelta is not defined.");
+        if (frame === currentFrameDelta) {
+          continue;
+        }
+        currentFrameDelta = frame;
         var stateAtDepth = frame.stateAtDepth;
         for (var depth in stateAtDepth) {
           var child = this.getTimelineObjectAtDepth(depth | 0);
