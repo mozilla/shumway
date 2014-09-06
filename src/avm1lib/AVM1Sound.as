@@ -17,11 +17,11 @@
 package avm1lib {
 import flash.media.Sound;
 
-public dynamic class AS2Sound {
+public dynamic class AVM1Sound {
 
   private var _target: Object;
 
-  public function AS2Sound(target: Object) {
+  public function AVM1Sound(target: Object) {
     _init(target);
   }
 

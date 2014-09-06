@@ -375,7 +375,7 @@ public dynamic class AVM1Globals {
   public var Mouse:Class = AVM1Mouse;
   public var MovieClipLoader:Class = AVM1MovieClipLoader;
 
-  public var Sound:Class = AS2Sound;
+  public var Sound:Class = AVM1Sound;
   public var SharedObject:Class = SharedObject;
   public var ContextMenu:Class = ContextMenu;
   public var ContextMenuItem:Class = ContextMenuItem;
