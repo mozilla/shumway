@@ -17,11 +17,11 @@
 package avm1lib {
 import flash.display.SimpleButton;
 
-[native(cls="AS2Button")]
-public dynamic class AS2Button extends Object {
+[native(cls="AVM1Button")]
+public dynamic class AVM1Button extends Object {
   private native function _init(nativeButton:SimpleButton);
 
-  function AS2Button(nativeButton:SimpleButton) {
+  function AVM1Button(nativeButton:SimpleButton) {
     _init(nativeButton);
   }
 

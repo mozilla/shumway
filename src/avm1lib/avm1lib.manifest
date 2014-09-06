@@ -4,7 +4,7 @@
     "AVM1Utils.as",
     "AVM1Broadcaster.as",
     "AS2MovieClip.as",
-    "AS2Button.as",
+    "AVM1Button.as",
     "AVM1BitmapData.as",
     "AS2TextField.as",
     "AS2Key.as",
@@ -12,7 +12,7 @@
     "AS2Stage.as",
     "AS2System.as",
     "AS2Sound.as",
-    "AS2Color.as",
+    "AVM1Color.as",
     "AS2Transform.as",
     "AVM1Globals.as",
     "AS2MovieClipLoader.as"

@@ -238,7 +238,7 @@ module Shumway.Timeline {
     overState: AnimationState = null;
     downState: AnimationState = null;
     hitTestState: AnimationState = null;
-    buttonActions: any[]; // Only relevant for AVM1, see AS2Button.
+    buttonActions: any[]; // Only relevant for AVM1, see AVM1Button.
 
     constructor(id: number) {
       super(id, flash.display.SimpleButton);

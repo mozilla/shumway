@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations undxr the License.
  */
-// Class: AS2Button
+// Class: AVM1Button
 module Shumway.AVM2.AS.avm1lib {
   import ButtonAction = Shumway.Timeline.AVM1ButtonAction;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
@@ -37,7 +37,7 @@ module Shumway.AVM2.AS.avm1lib {
    */
   var AVM1KeyCodeMap = [-1, 37, 39, 36, 35, 45, 46, -1, 8, -1, -1, -1, -1, 13, 38, 40, 33, 34, 9, 27];
 
-  export class AS2Button extends ASNative {
+  export class AVM1Button extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;

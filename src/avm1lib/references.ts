@@ -1,7 +1,7 @@
 ///<reference path='flash.d.ts' />
 
 ///<reference path='AVM1Utils.ts' />
-///<reference path='AS2Button.ts' />
+///<reference path='AVM1Button.ts' />
 ///<reference path='AVM1Globals.ts' />
 ///<reference path='AS2MovieClip.ts' />
 ///<reference path='AS2MovieClipLoader.ts' />
