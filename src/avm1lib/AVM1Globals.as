@@ -371,7 +371,7 @@ public dynamic class AVM1Globals {
   public var Button:Class = AVM1Button;
   public var TextField:Class = AS2TextField;
   public var Color:Class = AVM1Color;
-  public var Key:Class = AS2Key;
+  public var Key:Class = AVM1Key;
   public var Mouse:Class = AS2Mouse;
   public var MovieClipLoader:Class = AS2MovieClipLoader;
 

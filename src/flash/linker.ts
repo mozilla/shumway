@@ -192,7 +192,7 @@ module Shumway.AVM2.AS {
 
       M("avm1lib.AVM1Utils", "AVM1Utils", Shumway.AVM2.AS.avm1lib.AVM1Utils),
       M("avm1lib.AVM1Broadcaster"),
-      M("avm1lib.AS2Key"),
+      M("avm1lib.AVM1Key"),
       M("avm1lib.AS2Mouse"),
       M("avm1lib.AS2MovieClip", "AS2MovieClip", Shumway.AVM2.AS.avm1lib.AS2MovieClip),
       M("avm1lib.AVM1BitmapData", "AVM1BitmapData", Shumway.AVM2.AS.avm1lib.AVM1BitmapData),

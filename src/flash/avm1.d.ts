@@ -23,7 +23,7 @@ declare module Shumway.AVM2.AS.avm1lib {
   export class AVM1Button extends ASClass {}
   export class AS2TextField extends ASClass {}
   export class AS2MovieClipLoader extends ASClass {}
-  export class AS2Key extends ASClass {}
+  export class AVM1Key extends ASClass {}
   export class AS2Mouse extends ASClass {}
 
   export function getAS2Object(as3Object: any): any;

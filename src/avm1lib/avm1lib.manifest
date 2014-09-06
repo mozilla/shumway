@@ -7,7 +7,7 @@
     "AVM1Button.as",
     "AVM1BitmapData.as",
     "AS2TextField.as",
-    "AS2Key.as",
+    "AVM1Key.as",
     "AS2Mouse.as",
     "AS2Stage.as",
     "AS2System.as",

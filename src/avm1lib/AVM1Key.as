@@ -18,7 +18,7 @@ package avm1lib {
 import flash.display.Stage;
 import flash.events.KeyboardEvent;
 
-public dynamic class AS2Key {
+public dynamic class AVM1Key {
   public const DOWN:int = 40;
   public const LEFT:int = 37;
   public const RIGHT:int = 39;
@@ -29,23 +29,23 @@ public dynamic class AS2Key {
 
   public static function __bind(stage:Stage) {
     stage.addEventListener('keyDown', function (e:KeyboardEvent) {
-      AS2Key.__lastKeyCode = e.keyCode;
-      AS2Key.__keyStates[e.keyCode] = 1;
-      Object(AS2Key).broadcastMessage('onKeyDown');
+      AVM1Key.__lastKeyCode = e.keyCode;
+      AVM1Key.__keyStates[e.keyCode] = 1;
+      Object(AVM1Key).broadcastMessage('onKeyDown');
     }, false);
     stage.addEventListener('keyUp', function (e:KeyboardEvent) {
-      AS2Key.__lastKeyCode = e.keyCode;
-      delete AS2Key.__keyStates[e.keyCode];
-      Object(AS2Key).broadcastMessage('onKeyUp');
+      AVM1Key.__lastKeyCode = e.keyCode;
+      delete AVM1Key.__keyStates[e.keyCode];
+      Object(AVM1Key).broadcastMessage('onKeyUp');
     }, false);
   }
 
   public static function isDown(code) {
-    return !!AS2Key.__keyStates[code];
+    return !!AVM1Key.__keyStates[code];
   }
 
   {
-    AVM1Broadcaster.initialize(Object(AS2Key));
+    AVM1Broadcaster.initialize(Object(AVM1Key));
   }
 }
 
