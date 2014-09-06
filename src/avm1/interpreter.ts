@@ -1272,7 +1272,7 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      stack[sp] = _global.getAS2Property(target, index);
+      stack[sp] = _global.getAVM1Property(target, index);
     }
     function avm1_0x23_ActionSetProperty(ectx: ExecutionContext) {
       var _global = ectx.global;
@@ -1281,7 +1281,7 @@ module Shumway.AVM1 {
       var value = stack.pop();
       var index = stack.pop();
       var target = stack.pop();
-      _global.setAS2Property(target, index, value);
+      _global.setAVM1Property(target, index, value);
     }
     function avm1_0x24_ActionCloneSprite(ectx: ExecutionContext) {
       var _global = ectx.global;

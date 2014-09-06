@@ -75,7 +75,7 @@ public dynamic class AVM1Globals {
   public native function escape(str: String): String;
   public native function unescape(str: String): String;
 
-  public function getAS2Property(target, index) {
+  public function getAVM1Property(target, index) {
     var nativeTarget = AVM1Utils.resolveTarget(target);
     return nativeTarget[PropertiesIndexMap[index]];
   }
@@ -287,7 +287,7 @@ public dynamic class AVM1Globals {
     args[1] |= 0;
     return flash.utils.setInterval.apply(null, args);
   }
-  public function setAS2Property(target, index, value) {
+  public function setAVM1Property(target, index, value) {
     var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget[PropertiesIndexMap[index]] = value;
   }

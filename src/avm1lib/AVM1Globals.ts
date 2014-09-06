@@ -47,14 +47,14 @@ module Shumway.AVM2.AS.avm1lib {
     // List of instance symbols to link.
     static instanceSymbols: string [] = ["_global!", "flash", "$asfunction", "call!", "chr!",
                                          "clearInterval!", "clearTimeout!", "duplicateMovieClip!",
-                                         "fscommand!", "getAS2Property!", "getTimer!",
+                                         "fscommand!", "getAVM1Property!", "getTimer!",
                                          "getURL!", "getVersion!", "gotoAndPlay!", "gotoAndStop!",
                                          "gotoLabel!", "ifFrameLoaded!", "int!", "length!", "loadMovie!",
                                          "loadMovieNum!", "loadVariables!", "mbchr!", "mblength!",
                                          "mbord!", "mbsubstring!", "nextFrame!", "nextScene!", "ord!",
                                          "play!", "prevFrame!", "prevScene!", "print!", "printAsBitmap!",
                                          "printAsBitmapNum!", "printNum!", "random!",
-                                         "removeMovieClip!", "setInterval!", "setAS2Property!",
+                                         "removeMovieClip!", "setInterval!", "setAVM1Property!",
                                          "setTimeout!", "showRedrawRegions!", "startDrag!", "stop!",
                                          "stopAllSounds!", "stopDrag!", "substring!", "targetPath!",
                                          "toggleHighQuality!", "unloadMovie!",
@@ -76,7 +76,7 @@ module Shumway.AVM2.AS.avm1lib {
     clearTimeout: ASFunction;
     duplicateMovieClip: (target: any, newname: any, depth: any) => any;
     fscommand: (...rest:any[]) => any;
-    getAS2Property: (target: any, index: any) => any;
+    getAVM1Property: (target: any, index: any) => any;
     getTimer: () => number;
     getURL: (url: any, target: any, method?: any) => any;
     getVersion: () => any;
@@ -106,7 +106,7 @@ module Shumway.AVM2.AS.avm1lib {
     random: (value: any) => any;
     removeMovieClip: (target: any) => any;
     setInterval: () => any;
-    setAS2Property: (target: any, index: any, value: any) => any;
+    setAVM1Property: (target: any, index: any, value: any) => any;
     setTimeout: () => any;
     showRedrawRegions: (enable: any, color: any) => any;
     startDrag: (target: any, lock: any, left: any, top: any, right: any, bottom: any) => any;
