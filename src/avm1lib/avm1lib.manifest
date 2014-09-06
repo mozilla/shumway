@@ -5,7 +5,7 @@
     "AS2Broadcaster.as",
     "AS2MovieClip.as",
     "AS2Button.as",
-    "AS2BitmapData.as",
+    "AVM1BitmapData.as",
     "AS2TextField.as",
     "AS2Key.as",
     "AS2Mouse.as",

@@ -64,7 +64,7 @@ module Shumway.AVM2.AS.avm1lib {
       return this._nativeAS3Object;
     }
 
-    attachBitmap(bmp: AS2BitmapData, depth: number,
+    attachBitmap(bmp: AVM1BitmapData, depth: number,
                  pixelSnapping: String = 'auto',
                  smoothing: Boolean = false): void
     {

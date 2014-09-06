@@ -19,7 +19,7 @@ module Shumway.AVM2.AS.avm1lib {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import AVM1Context = Shumway.AVM1.AVM1Context;
 
-  export class AS2BitmapData extends BitmapData {
+  export class AVM1BitmapData extends BitmapData {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -42,7 +42,7 @@ module Shumway.AVM2.AS.avm1lib {
       symbolId = asCoerceString(symbolId);
       var symbol = AVM1Context.instance.getAsset(symbolId);
       if (symbol instanceof Shumway.Timeline.BitmapSymbol) {
-        var bitmap = AS2BitmapData.initializeFrom(symbol);
+        var bitmap = AVM1BitmapData.initializeFrom(symbol);
         bitmap.class.instanceConstructorNoInitialize.call(bitmap);
         return bitmap;
       }

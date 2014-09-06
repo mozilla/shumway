@@ -59,7 +59,7 @@ public dynamic class AS2MovieClip extends Object {
   public function attachAudio(id) {
     throw 'Not implemented: attachAudio';
   }
-  public native  function attachBitmap(bmp: AS2BitmapData, depth: int,
+  public native  function attachBitmap(bmp: AVM1BitmapData, depth: int,
                                        pixelSnapping: String = 'auto',
                                        smoothing: Boolean = false): void;
 

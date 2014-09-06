@@ -37,7 +37,7 @@ package avm1lib {
       return {
         _MovieClip: AS2MovieClip,
         display: {
-          BitmapData: AS2BitmapData
+          BitmapData: AVM1BitmapData
         },
         external: {
           ExternalInterface: ExternalInterface
