@@ -1348,7 +1348,7 @@ module Shumway.SWF.Parser {
     var conditions = readUi16($bytes, $stream);
     // The 7 upper bits hold a key code the button should respond to.
     $.keyCode = (conditions & 0xfe00) >> 9;
-    // The lower 9 bits hold state transition flags. See the enum in AS2Button for details.
+    // The lower 9 bits hold state transition flags. See the enum in AVM1Button for details.
     $.stateTransitionFlags = conditions & 0x1ff;
     // If no tagSize is given, pass `0` to readBinary.
     $.actionsData = readBinary($bytes, $stream, (tagSize || 4) - 4, false);

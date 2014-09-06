@@ -19,9 +19,9 @@ module Shumway.AVM2.AS.avm1lib {
   import ASNative = Shumway.AVM2.AS.ASNative;
   import ASObject = Shumway.AVM2.AS.ASObject;
   import flash = Shumway.AVM2.AS.flash;
-  import AS2Context = Shumway.AVM1.AS2Context;
+  import AVM1Context = Shumway.AVM1.AVM1Context;
 
-  export class AS2Utils extends ASNative {
+  export class AVM1Utils extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer:any = null;
@@ -30,7 +30,7 @@ module Shumway.AVM2.AS.avm1lib {
     static initializer:any = null;
 
     // List of static symbols to link.
-    static classSymbols: string [] = ["createFlashObject!"];//["getAS2Object!"];
+    static classSymbols: string [] = ["createFlashObject!"];//["getAVM1Object!"];
 
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
@@ -57,31 +57,31 @@ module Shumway.AVM2.AS.avm1lib {
     }
 
     static resolveTarget(target_mc: any = undefined): any {
-      return AS2Context.instance.resolveTarget(target_mc);
+      return AVM1Context.instance.resolveTarget(target_mc);
     }
 
     static resolveLevel(level: number): any {
       level = +level;
-      return AS2Context.instance.resolveLevel(level);
+      return AVM1Context.instance.resolveLevel(level);
     }
 
     static get currentStage(): any {
-      return AS2Context.instance.stage;
+      return AVM1Context.instance.stage;
     }
 
     static get swfVersion(): any {
-      return AS2Context.instance.swfVersion;
+      return AVM1Context.instance.swfVersion;
     }
 
-    static getAS2Object(as3Object) {
-      return avm1lib.getAS2Object(as3Object);
+    static getAVM1Object(as3Object) {
+      return avm1lib.getAVM1Object(as3Object);
     }
 
     static _installObjectMethods(): any {
       var c = ASObject, p = c.asGetPublicProperty('prototype');
       c.asSetPublicProperty('registerClass', function registerClass(name, theClass) {
-        var classes = AS2Context.instance.classes ||
-          (AS2Context.instance.classes = {});
+        var classes = AVM1Context.instance.classes ||
+          (AVM1Context.instance.classes = {});
         classes[name] = theClass;
       });
       p.asDefinePublicProperty('addProperty', {
@@ -122,10 +122,10 @@ module Shumway.AVM2.AS.avm1lib {
   }
 
   export function createFlashObject() {
-    return AS2Utils.createFlashObject();
+    return AVM1Utils.createFlashObject();
   }
 
-  export function getAS2Object(as3Object) {
+  export function getAVM1Object(as3Object) {
     if (!as3Object) {
       return null;
     }
@@ -137,13 +137,13 @@ module Shumway.AVM2.AS.avm1lib {
         var ctor: any = <flash.display.MovieClip>as3Object._as2SymbolClass;
         return new ctor(as3Object);
       }
-      return new Shumway.AVM2.AS.avm1lib.AS2MovieClip(as3Object);
+      return new Shumway.AVM2.AS.avm1lib.AVM1MovieClip(as3Object);
     }
     if (flash.display.SimpleButton.isType(as3Object)) {
-      return new Shumway.AVM2.AS.avm1lib.AS2Button(as3Object);
+      return new Shumway.AVM2.AS.avm1lib.AVM1Button(as3Object);
     }
     if (flash.text.TextField.isType(as3Object)) {
-      return new Shumway.AVM2.AS.avm1lib.AS2TextField(as3Object);
+      return new Shumway.AVM2.AS.avm1lib.AVM1TextField(as3Object);
     }
     if (flash.display.BitmapData.isType(as3Object)) {
       return new as3Object;

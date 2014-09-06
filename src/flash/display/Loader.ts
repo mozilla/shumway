@@ -327,7 +327,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private _initAvm1(loaderInfo: LoaderInfo): Promise<any> {
       return AVM2.instance.loadAVM1().then(function() {
-        loaderInfo._avm1Context = Shumway.AVM1.AS2Context.create(loaderInfo.swfVersion);
+        loaderInfo._avm1Context = Shumway.AVM1.AVM1Context.create(loaderInfo.swfVersion);
       });
     }
 
@@ -504,7 +504,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       var avm1Context = this._contentLoaderInfo._avm1Context;
-      var as2Object = avm1lib.getAS2Object(topRoot);
+      var as2Object = avm1lib.getAVM1Object(topRoot);
       avm1Context.globals.asSetPublicProperty('_root', as2Object);
       avm1Context.globals.asSetPublicProperty('_level0', as2Object);
 
@@ -522,12 +522,12 @@ module Shumway.AVM2.AS.flash.display {
       var actionBlocks: any[] = frameData.actionBlocks;
 
       if (initActionBlocks) {
-        root.addAS2InitActionBlocks(frameIndex, initActionBlocks);
+        root.addAVM1InitActionBlocks(frameIndex, initActionBlocks);
       }
 
       if (actionBlocks) {
         for (var i = 0; i < actionBlocks.length; i++) {
-          root.addAS2FrameScript(frameIndex, actionBlocks[i]);
+          root.addAVM1FrameScript(frameIndex, actionBlocks[i]);
         }
       }
     }

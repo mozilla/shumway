@@ -1,21 +1,21 @@
 {
   "playerglobal": true,
   "files": [
-    "AS2Utils.as",
-    "AS2Broadcaster.as",
-    "AS2MovieClip.as",
-    "AS2Button.as",
-    "AS2BitmapData.as",
-    "AS2TextField.as",
-    "AS2Key.as",
-    "AS2Mouse.as",
-    "AS2Stage.as",
-    "AS2System.as",
-    "AS2Sound.as",
-    "AS2Color.as",
-    "AS2Transform.as",
-    "AS2Globals.as",
-    "AS2MovieClipLoader.as"
+    "AVM1Utils.as",
+    "AVM1Broadcaster.as",
+    "AVM1MovieClip.as",
+    "AVM1Button.as",
+    "AVM1BitmapData.as",
+    "AVM1TextField.as",
+    "AVM1Key.as",
+    "AVM1Mouse.as",
+    "AVM1Stage.as",
+    "AVM1System.as",
+    "AVM1Sound.as",
+    "AVM1Color.as",
+    "AVM1Transform.as",
+    "AVM1Globals.as",
+    "AVM1MovieClipLoader.as"
   ],
   "output": "../avm2/generated/avm1lib/avm1lib.abc"
 }

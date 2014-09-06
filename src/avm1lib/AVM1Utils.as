@@ -24,9 +24,9 @@ package avm1lib {
   import flash.geom.Rectangle;
   import flash.external.ExternalInterface;
 
-  [native(cls="AS2Utils")]
-  public class AS2Utils {
-    public static native function getAS2Object(nativeObject: Object) : Object;
+  [native(cls="AVM1Utils")]
+  public class AVM1Utils {
+    public static native function getAVM1Object(nativeObject: Object) : Object;
     public static native function addProperty(obj: Object, name: String, getter: Function, setter: Function, enumerable: Boolean = true);
     public static native function resolveTarget(target_mc:* = undefined) : MovieClip;
     public static native function resolveLevel(level: Number) : MovieClip;
@@ -35,9 +35,9 @@ package avm1lib {
 
     public static function createFlashObject():Object {
       return {
-        _MovieClip: AS2MovieClip,
+        _MovieClip: AVM1MovieClip,
         display: {
-          BitmapData: AS2BitmapData
+          BitmapData: AVM1BitmapData
         },
         external: {
           ExternalInterface: ExternalInterface
@@ -48,7 +48,7 @@ package avm1lib {
           Matrix: Matrix,
           Point: Point,
           Rectangle: Rectangle,
-          Transform: AS2Transform
+          Transform: AVM1Transform
         },
         text: {}
       };
@@ -80,15 +80,15 @@ package avm1lib {
   }
 }
 
-import avm1lib.AS2Utils;
+import avm1lib.AVM1Utils;
 
-AS2Utils;
+AVM1Utils;
 
 function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: String, argsConverter: Function)
 {
   var currentHandler: Function = null;
   var handlerRunner: Function = null;
-  AS2Utils.addProperty(obj, propertyName,
+  AVM1Utils.addProperty(obj, propertyName,
     function(): Function {
       return currentHandler;
     },
@@ -100,7 +100,7 @@ function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: Str
         // see also initDefaultListeners()
         return;
       }
-      // AS2 MovieClips don't receive roll/release events by default until they set one of the following properties.
+      // AVM1 MovieClips don't receive roll/release events by default until they set one of the following properties.
       // This behaviour gets triggered whenever those properties are set, despite of the actual value they are set to.
       if (propertyName === 'onRelease' ||
           propertyName === 'onReleaseOutside' ||

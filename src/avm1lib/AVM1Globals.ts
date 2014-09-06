@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations undxr the License.
  */
-// Class: AS2Globals
+// Class: AVM1Globals
 module Shumway.AVM2.AS.avm1lib {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Loader = Shumway.AVM2.AS.flash.display.Loader;
   import TextFormat = Shumway.AVM2.AS.flash.text.TextFormat;
-  import AS2Context = Shumway.AVM1.AS2Context;
+  import AVM1Context = Shumway.AVM1.AVM1Context;
   import Natives = Shumway.AVM2.AS.Natives;
 
-  export class AS2Globals extends ASNative {
+  export class AVM1Globals extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function () {
-      // The AS2 version of TextFormat has an additional method "getTextExtent".
-      // We install that here so we don't need to have a full AS2 version of
-      // TextFormat and take care to return that everywhere when in AS2 mode.
+      // The AVM1 version of TextFormat has an additional method "getTextExtent".
+      // We install that here so we don't need to have a full AVM1 version of
+      // TextFormat and take care to return that everywhere when in AVM1 mode.
       TextFormat.prototype.asDefinePublicProperty('getTextExtent', {
-        value: AS2TextFormat.prototype._as2GetTextExtent,
+        value: AVM1TextFormat.prototype._as2GetTextExtent,
         writable: false,
         enumerable: false,
         configurable: false
@@ -47,14 +47,14 @@ module Shumway.AVM2.AS.avm1lib {
     // List of instance symbols to link.
     static instanceSymbols: string [] = ["_global!", "flash", "$asfunction", "call!", "chr!",
                                          "clearInterval!", "clearTimeout!", "duplicateMovieClip!",
-                                         "fscommand!", "getAS2Property!", "getTimer!",
+                                         "fscommand!", "getAVM1Property!", "getTimer!",
                                          "getURL!", "getVersion!", "gotoAndPlay!", "gotoAndStop!",
                                          "gotoLabel!", "ifFrameLoaded!", "int!", "length!", "loadMovie!",
                                          "loadMovieNum!", "loadVariables!", "mbchr!", "mblength!",
                                          "mbord!", "mbsubstring!", "nextFrame!", "nextScene!", "ord!",
                                          "play!", "prevFrame!", "prevScene!", "print!", "printAsBitmap!",
                                          "printAsBitmapNum!", "printNum!", "random!",
-                                         "removeMovieClip!", "setInterval!", "setAS2Property!",
+                                         "removeMovieClip!", "setInterval!", "setAVM1Property!",
                                          "setTimeout!", "showRedrawRegions!", "startDrag!", "stop!",
                                          "stopAllSounds!", "stopDrag!", "substring!", "targetPath!",
                                          "toggleHighQuality!", "unloadMovie!",
@@ -62,7 +62,7 @@ module Shumway.AVM2.AS.avm1lib {
 
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public avm1lib.AS2Globals");
+      notImplemented("Dummy Constructor: public avm1lib.AVM1Globals");
     }
 
     // JS -> AS Bindings
@@ -76,7 +76,7 @@ module Shumway.AVM2.AS.avm1lib {
     clearTimeout: ASFunction;
     duplicateMovieClip: (target: any, newname: any, depth: any) => any;
     fscommand: (...rest:any[]) => any;
-    getAS2Property: (target: any, index: any) => any;
+    getAVM1Property: (target: any, index: any) => any;
     getTimer: () => number;
     getURL: (url: any, target: any, method?: any) => any;
     getVersion: () => any;
@@ -106,7 +106,7 @@ module Shumway.AVM2.AS.avm1lib {
     random: (value: any) => any;
     removeMovieClip: (target: any) => any;
     setInterval: () => any;
-    setAS2Property: (target: any, index: any, value: any) => any;
+    setAVM1Property: (target: any, index: any, value: any) => any;
     setTimeout: () => any;
     showRedrawRegions: (enable: any, color: any) => any;
     startDrag: (target: any, lock: any, left: any, top: any, right: any, bottom: any) => any;
@@ -140,13 +140,13 @@ module Shumway.AVM2.AS.avm1lib {
     }
     _addToPendingScripts(subject: ASObject, fn: ASFunction, args: any [] = null): any {
       release || assert(fn, 'invalid function in _addToPendingScripts');
-      AS2Context.instance.addToPendingScripts(function () {
+      AVM1Context.instance.addToPendingScripts(function () {
         (<Function><any> fn).apply(subject, args);
       });
     }
 
     /**
-     * AS2 escapes slightly more characters than JS's encodeURIComponent, and even more than
+     * AVM1 escapes slightly more characters than JS's encodeURIComponent, and even more than
      * the deprecated JS version of escape. That leaves no other option but to do manual post-
      * processing of the encoded result. :/
      *
@@ -177,7 +177,7 @@ module Shumway.AVM2.AS.avm1lib {
 
     _setLevel(level: number /*uint*/, loader: Loader): any {
       level = level >>> 0;
-      AS2Context.instance.stage._as2SetLevel(level, loader);
+      AVM1Context.instance.stage._as2SetLevel(level, loader);
     }
     trace(expression: any): any {
       Natives.print(expression);

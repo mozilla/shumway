@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations undxr the License.
  */
-// Class: AS2TextField
+// Class: AVM1TextField
 module Shumway.AVM2.AS.avm1lib {
   import TextField = Shumway.AVM2.AS.flash.text.TextField;
 
-  export class AS2TextField extends ASNative {
+  export class AVM1TextField extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -69,13 +69,13 @@ module Shumway.AVM2.AS.avm1lib {
         var targetPath = name.split(/[.:\/]/g);
         name = targetPath.pop();
         if (targetPath[0] == '_root' || targetPath[0] === '') {
-          clip = getAS2Object(instance.root);
+          clip = getAVM1Object(instance.root);
           targetPath.shift();
           if (targetPath[0] === '') {
             targetPath.shift();
           }
         } else {
-          clip = getAS2Object(instance._parent);
+          clip = getAVM1Object(instance._parent);
         }
         while (targetPath.length > 0) {
           var childName = targetPath.shift();
@@ -85,7 +85,7 @@ module Shumway.AVM2.AS.avm1lib {
           }
         }
       } else {
-        clip = getAS2Object(instance._parent);
+        clip = getAVM1Object(instance._parent);
       }
       if (!clip.asHasProperty(undefined, name, 0)) {
         clip.asSetPublicProperty(name, instance.text);
