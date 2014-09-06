@@ -18,7 +18,7 @@ package avm1lib {
   import flash.system.Capabilities;
   import flash.system.Security;
 
-  public class AS2System {
+  public class AVM1System {
     public static function get capabilities()
     {
       return flash.system.Capabilities;

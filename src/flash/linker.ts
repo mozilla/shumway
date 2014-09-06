@@ -200,7 +200,7 @@ module Shumway.AVM2.AS {
       M("avm1lib.AVM1Sound"),
       M("avm1lib.AS2TextField", "AS2TextField", Shumway.AVM2.AS.avm1lib.AS2TextField),
       M("avm1lib.AVM1Stage"),
-      M("avm1lib.AS2System"),
+      M("avm1lib.AVM1System"),
       M("avm1lib.AVM1Color"),
       M("avm1lib.AS2Transform"),
       M("avm1lib.AVM1Globals", "AVM1Globals", Shumway.AVM2.AS.avm1lib.AVM1Globals),
