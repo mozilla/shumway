@@ -135,6 +135,7 @@ module Shumway.GFX {
       var path = Frame._path;
       path.length = 0;
       while (node && node !== last) {
+        release || assert(node !== node._parent);
         path.push(node);
         node = node._parent;
       }
@@ -241,6 +242,7 @@ module Shumway.GFX {
         if (node._hasFlags(flags) === on) {
           return node;
         }
+        release || assert(node !== node._parent);
         node = node._parent;
       }
       return null;
@@ -255,6 +257,7 @@ module Shumway.GFX {
         if (node === this) {
           return true;
         }
+        release || assert(node !== node._parent);
         node = node._parent;
       }
       return false;
