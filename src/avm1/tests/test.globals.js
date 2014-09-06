@@ -31,9 +31,9 @@ describe('AVM1Globals', function() {
   })
 
   describe('#MovieClip()', function() {
-    it('should return the global AS2MovieClip constructor', function(){
+    it('should return the global AVM1MovieClip constructor', function(){
       var globals = new AVM1Globals(null);
-      expect(globals.MovieClip).to.be(AS2MovieClip);
+      expect(globals.MovieClip).to.be(AVM1MovieClip);
     })
   })
 

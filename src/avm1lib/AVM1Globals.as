@@ -364,7 +364,7 @@ public dynamic class AVM1Globals {
   public native function parseInt(s:String = "NaN", radix = 0):Number;
 
   public var undefined:* = undefined;
-  public var MovieClip:Class = AS2MovieClip;
+  public var MovieClip:Class = AVM1MovieClip;
   public var AsBroadcaster:Class = AVM1Broadcaster;
   public var System:Class = AS2System;
   public var Stage:Class = AS2Stage;
@@ -373,7 +373,7 @@ public dynamic class AVM1Globals {
   public var Color:Class = AVM1Color;
   public var Key:Class = AVM1Key;
   public var Mouse:Class = AVM1Mouse;
-  public var MovieClipLoader:Class = AS2MovieClipLoader;
+  public var MovieClipLoader:Class = AVM1MovieClipLoader;
 
   public var Sound:Class = AS2Sound;
   public var SharedObject:Class = SharedObject;

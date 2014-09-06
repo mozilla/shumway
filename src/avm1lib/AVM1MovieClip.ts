@@ -23,7 +23,7 @@ module Shumway.AVM2.AS.avm1lib {
   import Bitmap = flash.display.Bitmap;
 
 
-  export class AS2MovieClip extends ASNative {
+  export class AVM1MovieClip extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -87,7 +87,7 @@ module Shumway.AVM2.AS.avm1lib {
       var nativeAS3Object = <any> this._nativeAS3Object;
       nativeAS3Object._callFrame(frame);
     }
-    _insertChildAtDepth(mc: any, depth: number): AS2MovieClip {
+    _insertChildAtDepth(mc: any, depth: number): AVM1MovieClip {
       var nativeAS3Object = <flash.display.MovieClip> this._nativeAS3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
       // Bitmaps aren't reflected in AS2, so the rest here doesn't apply.
@@ -102,7 +102,7 @@ module Shumway.AVM2.AS.avm1lib {
       return as2mc;
     }
 
-    getInstanceAtDepth(depth: number): AS2MovieClip {
+    getInstanceAtDepth(depth: number): AVM1MovieClip {
       var nativeObject = this._nativeAS3Object;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
         var child = nativeObject.getChildAt(i);

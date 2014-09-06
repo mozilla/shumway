@@ -137,7 +137,7 @@ module Shumway.AVM2.AS.avm1lib {
         var ctor: any = <flash.display.MovieClip>as3Object._as2SymbolClass;
         return new ctor(as3Object);
       }
-      return new Shumway.AVM2.AS.avm1lib.AS2MovieClip(as3Object);
+      return new Shumway.AVM2.AS.avm1lib.AVM1MovieClip(as3Object);
     }
     if (flash.display.SimpleButton.isType(as3Object)) {
       return new Shumway.AVM2.AS.avm1lib.AVM1Button(as3Object);

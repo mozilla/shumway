@@ -156,9 +156,9 @@ module Shumway.AVM1 {
     }
   }
 
-  function isAS2MovieClip(obj): boolean {
+  function isAVM1MovieClip(obj): boolean {
     return typeof obj === 'object' && obj &&
-      obj instanceof Shumway.AVM2.AS.avm1lib.AS2MovieClip;
+      obj instanceof Shumway.AVM2.AS.avm1lib.AVM1MovieClip;
   }
 
   function as2GetType(v): string {
@@ -170,7 +170,7 @@ module Shumway.AVM1 {
     if (type === 'function') {
       return 'object';
     }
-    if (type === 'object' && isAS2MovieClip(v)) {
+    if (type === 'object' && isAVM1MovieClip(v)) {
       return 'movieclip';
     }
     return type;
@@ -266,7 +266,7 @@ module Shumway.AVM1 {
       case 'string':
         return value;
       case 'movieclip':
-        return (<Shumway.AVM2.AS.avm1lib.AS2MovieClip> value).__targetPath;
+        return (<Shumway.AVM2.AS.avm1lib.AVM1MovieClip> value).__targetPath;
       case 'object':
         if (typeof value === 'function' &&
             value.asGetPublicProperty('toString') ===
@@ -318,8 +318,8 @@ module Shumway.AVM1 {
       return null;
     }
 
-    if (isAS2MovieClip(obj)) {
-      var child = (<Shumway.AVM2.AS.avm1lib.AS2MovieClip> obj).__lookupChild(name);
+    if (isAVM1MovieClip(obj)) {
+      var child = (<Shumway.AVM2.AS.avm1lib.AVM1MovieClip> obj).__lookupChild(name);
       if (child) {
         return name;
       }
@@ -347,8 +347,8 @@ module Shumway.AVM1 {
       return undefined;
     }
     obj = Object(obj);
-    if (!obj.asHasProperty(undefined, name, 0) && isAS2MovieClip(obj)) {
-      return (<Shumway.AVM2.AS.avm1lib.AS2MovieClip> obj).__lookupChild(name);
+    if (!obj.asHasProperty(undefined, name, 0) && isAVM1MovieClip(obj)) {
+      return (<Shumway.AVM2.AS.avm1lib.AVM1MovieClip> obj).__lookupChild(name);
     }
     return obj.asGetPublicProperty(name);
   }
@@ -386,7 +386,7 @@ module Shumway.AVM1 {
   function as2Enumerate(obj, fn, thisArg) {
     forEachPublicProperty(obj, fn, thisArg);
 
-    if (!isAS2MovieClip(obj)) {
+    if (!isAVM1MovieClip(obj)) {
       return;
     }
     // if it's a movie listing the children as well
@@ -846,7 +846,7 @@ module Shumway.AVM1 {
       }
 
       // trying movie clip children (if object is a MovieClip)
-      var mc = isAS2MovieClip(currentTarget) &&
+      var mc = isAVM1MovieClip(currentTarget) &&
                currentTarget.__lookupChild(variableName);
       if (mc) {
         return mc;

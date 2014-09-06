@@ -29,7 +29,7 @@ public dynamic class AS2Transform
 {
   private var __target : Object;
 
-  public function AS2Transform(mc : AS2MovieClip) {
+  public function AS2Transform(mc : AVM1MovieClip) {
     this.__target = AVM1Utils.resolveTarget(mc);
   }
 

@@ -35,8 +35,8 @@ public dynamic class AVM1BitmapData extends BitmapData {
                                 blendMode:String = null, clipRect:Rectangle = null,
                                 smoothing:Boolean = false):void
   {
-    if (source is AS2MovieClip) {
-      source = AS2MovieClip(source)._as3Object;
+    if (source is AVM1MovieClip) {
+      source = AVM1MovieClip(source)._as3Object;
     }
     super.draw(source, matrix, colorTransform, blendMode, clipRect, smoothing);
   }

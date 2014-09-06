@@ -3,7 +3,7 @@
   "files": [
     "AVM1Utils.as",
     "AVM1Broadcaster.as",
-    "AS2MovieClip.as",
+    "AVM1MovieClip.as",
     "AVM1Button.as",
     "AVM1BitmapData.as",
     "AS2TextField.as",
@@ -15,7 +15,7 @@
     "AVM1Color.as",
     "AS2Transform.as",
     "AVM1Globals.as",
-    "AS2MovieClipLoader.as"
+    "AVM1MovieClipLoader.as"
   ],
   "output": "../avm2/generated/avm1lib/avm1lib.abc"
 }

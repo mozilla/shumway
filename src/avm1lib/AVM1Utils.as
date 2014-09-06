@@ -35,7 +35,7 @@ package avm1lib {
 
     public static function createFlashObject():Object {
       return {
-        _MovieClip: AS2MovieClip,
+        _MovieClip: AVM1MovieClip,
         display: {
           BitmapData: AVM1BitmapData
         },

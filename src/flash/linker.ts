@@ -194,7 +194,7 @@ module Shumway.AVM2.AS {
       M("avm1lib.AVM1Broadcaster"),
       M("avm1lib.AVM1Key"),
       M("avm1lib.AVM1Mouse"),
-      M("avm1lib.AS2MovieClip", "AS2MovieClip", Shumway.AVM2.AS.avm1lib.AS2MovieClip),
+      M("avm1lib.AVM1MovieClip", "AVM1MovieClip", Shumway.AVM2.AS.avm1lib.AVM1MovieClip),
       M("avm1lib.AVM1BitmapData", "AVM1BitmapData", Shumway.AVM2.AS.avm1lib.AVM1BitmapData),
       M("avm1lib.AVM1Button", "AVM1Button", Shumway.AVM2.AS.avm1lib.AVM1Button),
       M("avm1lib.AS2Sound"),
@@ -204,8 +204,8 @@ module Shumway.AVM2.AS {
       M("avm1lib.AVM1Color"),
       M("avm1lib.AS2Transform"),
       M("avm1lib.AVM1Globals", "AVM1Globals", Shumway.AVM2.AS.avm1lib.AVM1Globals),
-      M("avm1lib.AS2MovieClipLoader", "AS2MovieClipLoader",
-        Shumway.AVM2.AS.avm1lib.AS2MovieClipLoader),
+      M("avm1lib.AVM1MovieClipLoader", "AVM1MovieClipLoader",
+        Shumway.AVM2.AS.avm1lib.AVM1MovieClipLoader),
     ];
 
     symbols.forEach(function (s) {

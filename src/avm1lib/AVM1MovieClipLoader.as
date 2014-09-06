@@ -22,9 +22,9 @@ import flash.events.IOErrorEvent;
 import flash.events.ProgressEvent;
 import flash.net.URLRequest;
 
-[native(cls="AS2MovieClipLoader")]
-public dynamic class AS2MovieClipLoader extends Object {
-  public function AS2MovieClipLoader() {
+[native(cls="AVM1MovieClipLoader")]
+public dynamic class AVM1MovieClipLoader extends Object {
+  public function AVM1MovieClipLoader() {
     AVM1Broadcaster.initialize(this);
     _setAS3Object(new Loader());
   }

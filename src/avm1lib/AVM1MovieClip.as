@@ -26,11 +26,11 @@ import flash.net.URLRequest;
 import flash.net.navigateToURL;
 import flash.text.TextField;
 
-[native(cls="AS2MovieClip")]
-public dynamic class AS2MovieClip extends Object {
+[native(cls="AVM1MovieClip")]
+public dynamic class AVM1MovieClip extends Object {
   private native function _init(nativeMovieClip:MovieClip);
 
-  function AS2MovieClip(nativeMovieClip:MovieClip) {
+  function AVM1MovieClip(nativeMovieClip:MovieClip) {
     _init(nativeMovieClip);
   }
 
@@ -186,7 +186,7 @@ public dynamic class AS2MovieClip extends Object {
   public function getDepth() {
     return this._as3Object._depth;
   }
-  public native function getInstanceAtDepth(depth): AS2MovieClip;
+  public native function getInstanceAtDepth(depth): AVM1MovieClip;
   public native function getNextHighestDepth(): int;
 
   public function getRect(bounds) {
@@ -236,7 +236,7 @@ public dynamic class AS2MovieClip extends Object {
     throw 'Not implemented: set$hitArea';
   }
   public function hitTest(x, y, shapeFlag) {
-    if (x is AS2MovieClip) {
+    if (x is AVM1MovieClip) {
       return this._as3Object.hitTestObject(x._as3Object);
     } else {
       return this._as3Object.hitTestPoint(x, y, shapeFlag);
@@ -284,11 +284,11 @@ public dynamic class AS2MovieClip extends Object {
   // AS2 pretends that these two properties don't exist on MovieClip instances, but happily
   // resolves them nevertheless.
   // TODO: make invisible to `hasOwnProperty`.
-  public function get _root(): AS2MovieClip {
+  public function get _root(): AVM1MovieClip {
     return AVM1Globals.instance._root;
   }
   // TODO: make invisible to `hasOwnProperty`.
-  public function get _level0(): AS2MovieClip {
+  public function get _level0(): AVM1MovieClip {
     return AVM1Globals.instance._level0;
   }
   public function get menu() {

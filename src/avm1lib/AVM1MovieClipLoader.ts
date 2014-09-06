@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations undxr the License.
  */
-// Class: AS2MovieClipLoader
+// Class: AVM1MovieClipLoader
 module Shumway.AVM2.AS.avm1lib {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Loader = Shumway.AVM2.AS.flash.display.Loader;
 
-  export class AS2MovieClipLoader extends ASNative {
+  export class AVM1MovieClipLoader extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
