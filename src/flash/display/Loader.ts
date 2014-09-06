@@ -522,7 +522,7 @@ module Shumway.AVM2.AS.flash.display {
       var actionBlocks: any[] = frameData.actionBlocks;
 
       if (initActionBlocks) {
-        root.addAS2InitActionBlocks(frameIndex, initActionBlocks);
+        root.addAVM1InitActionBlocks(frameIndex, initActionBlocks);
       }
 
       if (actionBlocks) {
