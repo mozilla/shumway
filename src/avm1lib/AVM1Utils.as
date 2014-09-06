@@ -48,7 +48,7 @@ package avm1lib {
           Matrix: Matrix,
           Point: Point,
           Rectangle: Rectangle,
-          Transform: AS2Transform
+          Transform: AVM1Transform
         },
         text: {}
       };

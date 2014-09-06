@@ -13,7 +13,7 @@
     "AVM1System.as",
     "AVM1Sound.as",
     "AVM1Color.as",
-    "AS2Transform.as",
+    "AVM1Transform.as",
     "AVM1Globals.as",
     "AVM1MovieClipLoader.as"
   ],

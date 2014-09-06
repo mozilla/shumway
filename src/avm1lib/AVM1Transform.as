@@ -25,11 +25,11 @@ import flash.geom.Matrix;
 import flash.geom.Rectangle;
 import flash.geom.Rectangle;
 
-public dynamic class AS2Transform
+public dynamic class AVM1Transform
 {
   private var __target : Object;
 
-  public function AS2Transform(mc : AVM1MovieClip) {
+  public function AVM1Transform(mc : AVM1MovieClip) {
     this.__target = AVM1Utils.resolveTarget(mc);
   }
 
