@@ -107,7 +107,7 @@ module Shumway.AVM1 {
       if (!target) {
         target = currentTarget;
       } else if (typeof target === 'string') {
-        target = lookupAS2Children(target, currentTarget,
+        target = lookupAVM1Children(target, currentTarget,
           this.globals.asGetPublicProperty('_root'));
       }
       if (typeof target !== 'object' || target === null ||
@@ -510,7 +510,7 @@ module Shumway.AVM1 {
     }
   }
 
-  function lookupAS2Children(targetPath: string, defaultTarget, root) {
+  function lookupAVM1Children(targetPath: string, defaultTarget, root) {
     var path = targetPath.split(/[\/.]/g);
     if (path[path.length - 1] === '') {
       path.pop();
@@ -608,7 +608,7 @@ module Shumway.AVM1 {
       }
 
       try {
-        var currentTarget = lookupAS2Children(targetPath,
+        var currentTarget = lookupAVM1Children(targetPath,
           currentContext.currentTarget || currentContext.defaultTarget,
           _global.asGetPublicProperty('_root'));
         currentContext.currentTarget = currentTarget;
@@ -778,7 +778,7 @@ module Shumway.AVM1 {
       if (variableName.indexOf(':') >= 0) {
         // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
         var parts = variableName.split(':');
-        obj = lookupAS2Children(parts[0], currentTarget,
+        obj = lookupAVM1Children(parts[0], currentTarget,
           _global.asGetPublicProperty('_root'));
         if (!obj) {
           throw new Error(parts[0] + ' is undefined');
