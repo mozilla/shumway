@@ -18,15 +18,15 @@ module Shumway.AVM2.AS.avm1lib {
   import TextField = Shumway.AVM2.AS.flash.text.TextField;
   import TextFormat = Shumway.AVM2.AS.flash.text.TextFormat;
 
-  export class AS2TextFormat extends TextFormat {
+  export class AVM1TextFormat extends TextFormat {
     private static _measureTextField: TextField;
 
     _as2GetTextExtent(text: string, width?: number) {
-      var measureTextField = AS2TextFormat._measureTextField;
+      var measureTextField = AVM1TextFormat._measureTextField;
       if (!measureTextField) {
         measureTextField = new TextField();
         measureTextField.multiline = true;
-        AS2TextFormat._measureTextField = measureTextField;
+        AVM1TextFormat._measureTextField = measureTextField;
       }
       if (!isNaN(width) && width > 0) {
         measureTextField.width = width + 4;

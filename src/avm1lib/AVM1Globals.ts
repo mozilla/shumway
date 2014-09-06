@@ -34,7 +34,7 @@ module Shumway.AVM2.AS.avm1lib {
       // We install that here so we don't need to have a full AS2 version of
       // TextFormat and take care to return that everywhere when in AS2 mode.
       TextFormat.prototype.asDefinePublicProperty('getTextExtent', {
-        value: AS2TextFormat.prototype._as2GetTextExtent,
+        value: AVM1TextFormat.prototype._as2GetTextExtent,
         writable: false,
         enumerable: false,
         configurable: false
