@@ -404,7 +404,7 @@ module Shumway.AVM1 {
     return obj instanceof Shumway.AVM2.AS.ASClass;
   }
 
-  interface AS2Function {
+  interface AVM1Function {
     instanceConstructor: Function;
     debugName: string; // for AVM2 debugging
     name: string; // Function's name
@@ -447,15 +447,15 @@ module Shumway.AVM1 {
         if (desc) {
           if (typeof desc.value === 'function' &&
               '_setClass' in desc.value) {
-            (<AS2Function> desc.value)._setClass(obj);
+            (<AVM1Function> desc.value)._setClass(obj);
           }
           if (typeof desc.get === 'function' &&
               '_setClass' in desc.get) {
-            (<AS2Function> desc.get)._setClass(obj);
+            (<AVM1Function> desc.get)._setClass(obj);
           }
           if (typeof desc.set === 'function' &&
               '_setClass' in desc.set) {
-            (<AS2Function> desc.set)._setClass(obj);
+            (<AVM1Function> desc.set)._setClass(obj);
           }
         }
         return Object.defineProperty(prototype, name, desc);
@@ -746,7 +746,7 @@ module Shumway.AVM1 {
       });
 
       ownerClass = fn;
-      var fnObj: AS2Function = <AS2Function> <any> fn;
+      var fnObj: AVM1Function = <AVM1Function> <any> fn;
       fnObj._setClass = function (class_) {
         ownerClass = class_;
       };
