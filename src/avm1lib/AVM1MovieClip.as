@@ -40,9 +40,9 @@ public dynamic class AVM1MovieClip extends Object {
     if (id == '.') {
       return this;
     } else if (id == '..') {
-      return AVM1Utils.getAS2Object(this._as3Object.parent);
+      return AVM1Utils.getAVM1Object(this._as3Object.parent);
     } else {
-      return AVM1Utils.getAS2Object(this._as3Object.getChildByName(id));
+      return AVM1Utils.getAVM1Object(this._as3Object.getChildByName(id));
     }
   }
   public function get __targetPath() {
@@ -129,7 +129,7 @@ public dynamic class AVM1MovieClip extends Object {
   }
   private native function _duplicate(name, depth, initObject);
   public function duplicateMovieClip(name, depth, initObject) {
-    var newMovieClip = AVM1Utils.getAS2Object(_duplicate(name, +depth, initObject));
+    var newMovieClip = AVM1Utils.getAVM1Object(_duplicate(name, +depth, initObject));
     return newMovieClip;
   }
   public function get enabled() {
@@ -317,7 +317,7 @@ public dynamic class AVM1MovieClip extends Object {
   }
 
   public function get _parent() {
-    return AVM1Utils.getAS2Object(this._as3Object.parent);
+    return AVM1Utils.getAVM1Object(this._as3Object.parent);
   }
   public function set _parent(value) {
     throw 'Not implemented: set$_parent';

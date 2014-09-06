@@ -26,7 +26,7 @@ declare module Shumway.AVM2.AS.avm1lib {
   export class AVM1Key extends ASClass {}
   export class AVM1Mouse extends ASClass {}
 
-  export function getAS2Object(as3Object: any): any;
+  export function getAVM1Object(as3Object: any): any;
 }
 
 declare module Shumway.AVM1 {

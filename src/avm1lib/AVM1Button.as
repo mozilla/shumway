@@ -97,7 +97,7 @@ public dynamic class AVM1Button extends Object {
   }
 
   public function get _parent() {
-    return AVM1Utils.getAS2Object(this._as3Object.parent);
+    return AVM1Utils.getAVM1Object(this._as3Object.parent);
   }
   public function set _parent(value) {
     throw 'Not implemented: set$_parent';

@@ -30,7 +30,7 @@ module Shumway.AVM2.AS.avm1lib {
     static initializer:any = null;
 
     // List of static symbols to link.
-    static classSymbols: string [] = ["createFlashObject!"];//["getAS2Object!"];
+    static classSymbols: string [] = ["createFlashObject!"];//["getAVM1Object!"];
 
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
@@ -73,8 +73,8 @@ module Shumway.AVM2.AS.avm1lib {
       return AVM1Context.instance.swfVersion;
     }
 
-    static getAS2Object(as3Object) {
-      return avm1lib.getAS2Object(as3Object);
+    static getAVM1Object(as3Object) {
+      return avm1lib.getAVM1Object(as3Object);
     }
 
     static _installObjectMethods(): any {
@@ -125,7 +125,7 @@ module Shumway.AVM2.AS.avm1lib {
     return AVM1Utils.createFlashObject();
   }
 
-  export function getAS2Object(as3Object) {
+  export function getAVM1Object(as3Object) {
     if (!as3Object) {
       return null;
     }

@@ -89,7 +89,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _initAvm1Bindings(instance: DisplayObject, state: Shumway.Timeline.AnimationState) {
-      var instanceAS2Object = avm1lib.getAS2Object(instance);
+      var instanceAS2Object = avm1lib.getAVM1Object(instance);
       assert(instanceAS2Object);
 
       if (state.variableName) {
@@ -125,7 +125,7 @@ module Shumway.AVM2.AS.flash.display {
       // Only set the name property for display objects that have AS2
       // reflections. Some SWFs contain AS2 names for things like Shapes.
       if (state.name) {
-        var parentAS2Object = avm1lib.getAS2Object(this);
+        var parentAS2Object = avm1lib.getAVM1Object(this);
         parentAS2Object.asSetPublicProperty(state.name, instanceAS2Object);
       }
     }

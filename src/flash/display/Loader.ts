@@ -504,7 +504,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       var avm1Context = this._contentLoaderInfo._avm1Context;
-      var as2Object = avm1lib.getAS2Object(topRoot);
+      var as2Object = avm1lib.getAVM1Object(topRoot);
       avm1Context.globals.asSetPublicProperty('_root', as2Object);
       avm1Context.globals.asSetPublicProperty('_level0', as2Object);
 

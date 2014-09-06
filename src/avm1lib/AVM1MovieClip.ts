@@ -94,7 +94,7 @@ module Shumway.AVM2.AS.avm1lib {
       if (flash.display.Bitmap.isType(mc)) {
         return null;
       }
-      var as2mc = getAS2Object(mc);
+      var as2mc = getAVM1Object(mc);
       var name:string = mc.name;
       if (name) {
         this.asSetPublicProperty(name, as2mc);
@@ -112,7 +112,7 @@ module Shumway.AVM2.AS.avm1lib {
           if (flash.display.Bitmap.isType(child)) {
             return this;
           }
-          return getAS2Object(child);
+          return getAVM1Object(child);
         }
       }
       return null;

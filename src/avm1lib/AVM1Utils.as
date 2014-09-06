@@ -26,7 +26,7 @@ package avm1lib {
 
   [native(cls="AVM1Utils")]
   public class AVM1Utils {
-    public static native function getAS2Object(nativeObject: Object) : Object;
+    public static native function getAVM1Object(nativeObject: Object) : Object;
     public static native function addProperty(obj: Object, name: String, getter: Function, setter: Function, enumerable: Boolean = true);
     public static native function resolveTarget(target_mc:* = undefined) : MovieClip;
     public static native function resolveLevel(level: Number) : MovieClip;
