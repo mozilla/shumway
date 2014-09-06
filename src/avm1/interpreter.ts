@@ -146,7 +146,7 @@ module Shumway.AVM1 {
     return new AVM1ContextImpl(swfVersion);
   };
 
-  class AS2Error {
+  class AVM1Error {
     constructor(public error) {}
   }
 
@@ -911,7 +911,7 @@ module Shumway.AVM1 {
         interpretActions(tryBlock, scopeContainer, constantPool, registers);
       } catch (e) {
         currentContext.isTryCatchListening = savedTryCatchState;
-        if (!catchBlockFlag || !(e instanceof AS2Error)) {
+        if (!catchBlockFlag || !(e instanceof AVM1Error)) {
           caughtError = e;
         } else {
           if (typeof catchTarget === 'string') { // TODO catchIsRegisterFlag?
@@ -1851,7 +1851,7 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
 
       var obj = stack.pop();
-      throw new AS2Error(obj);
+      throw new AVM1Error(obj);
     }
     function avm1_0x2D_ActionFSCommand2(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1883,7 +1883,7 @@ module Shumway.AVM1 {
           if (e instanceof AS2CriticalError) {
             throw e;
           }
-          if (e instanceof AS2Error) {
+          if (e instanceof AVM1Error) {
             throw e;
           }
 
@@ -2364,7 +2364,7 @@ module Shumway.AVM1 {
           e instanceof AS2CriticalError) {
           throw e;
         }
-        if (e instanceof AS2Error) {
+        if (e instanceof AVM1Error) {
           throw e;
         }
 
