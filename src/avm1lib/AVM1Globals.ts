@@ -30,9 +30,9 @@ module Shumway.AVM2.AS.avm1lib {
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function () {
-      // The AS2 version of TextFormat has an additional method "getTextExtent".
-      // We install that here so we don't need to have a full AS2 version of
-      // TextFormat and take care to return that everywhere when in AS2 mode.
+      // The AVM1 version of TextFormat has an additional method "getTextExtent".
+      // We install that here so we don't need to have a full AVM1 version of
+      // TextFormat and take care to return that everywhere when in AVM1 mode.
       TextFormat.prototype.asDefinePublicProperty('getTextExtent', {
         value: AVM1TextFormat.prototype._as2GetTextExtent,
         writable: false,
@@ -146,7 +146,7 @@ module Shumway.AVM2.AS.avm1lib {
     }
 
     /**
-     * AS2 escapes slightly more characters than JS's encodeURIComponent, and even more than
+     * AVM1 escapes slightly more characters than JS's encodeURIComponent, and even more than
      * the deprecated JS version of escape. That leaves no other option but to do manual post-
      * processing of the encoded result. :/
      *

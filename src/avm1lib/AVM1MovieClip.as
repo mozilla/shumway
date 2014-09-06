@@ -281,7 +281,7 @@ public dynamic class AVM1MovieClip extends Object {
   public function set _lockroot(value) {
     throw 'Not implemented: set$_lockroot';
   }
-  // AS2 pretends that these two properties don't exist on MovieClip instances, but happily
+  // AVM1 pretends that these two properties don't exist on MovieClip instances, but happily
   // resolves them nevertheless.
   // TODO: make invisible to `hasOwnProperty`.
   public function get _root(): AVM1MovieClip {

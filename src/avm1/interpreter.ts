@@ -112,7 +112,7 @@ module Shumway.AVM1 {
       }
       if (typeof target !== 'object' || target === null ||
         !('_nativeAS3Object' in target)) {
-        throw new Error('Invalid AS2 target object: ' +
+        throw new Error('Invalid AVM1 target object: ' +
           Object.prototype.toString.call(target));
       }
 
@@ -303,7 +303,7 @@ module Shumway.AVM1 {
   }
 
   function as2ResolveProperty(obj, name: string): string {
-    // AS2 just ignores lookups on non-existant containers
+    // AVM1 just ignores lookups on non-existant containers
     if (isNullOrUndefined(obj)) {
       warn("AVM1 warning: cannot look up member '" + name + "' on undefined object");
       return null;
@@ -341,7 +341,7 @@ module Shumway.AVM1 {
   }
 
   function as2GetProperty(obj, name: string) {
-    // AS2 just ignores lookups on non-existant containers
+    // AVM1 just ignores lookups on non-existant containers
     if (isNullOrUndefined(obj)) {
       warn("AVM1 warning: cannot get property '" + name + "' on undefined object");
       return undefined;
@@ -371,7 +371,7 @@ module Shumway.AVM1 {
     if (isAvm2Class(ctor)) {
       result = construct(ctor, args);
     } else {
-      // AS2 simply ignores attempts to invoke non-methods.
+      // AVM1 simply ignores attempts to invoke non-methods.
       if (!isFunction(ctor)) {
         return undefined;
       }
@@ -1362,7 +1362,7 @@ module Shumway.AVM1 {
       stack.push(undefined);
 
       var fn = avm1GetVariable(ectx, functionName);
-      // AS2 simply ignores attempts to invoke non-functions.
+      // AVM1 simply ignores attempts to invoke non-functions.
       if (!(fn instanceof Function)) {
         warn("AVM1 warning: function '" + functionName +
                                           (fn ? "' is not callable" : "' is undefined"));
@@ -1382,7 +1382,7 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      // AS2 simply ignores attempts to invoke methods on non-existing objects.
+      // AVM1 simply ignores attempts to invoke methods on non-existing objects.
       if (isNullOrUndefined(obj)) {
         warn("AVM1 warning: method '" + methodName + "' can't be called on undefined object");
         return;
@@ -1399,7 +1399,7 @@ module Shumway.AVM1 {
           // TODO: ensure this is correct.
           target = obj;
         }
-        // AS2 simply ignores attempts to invoke non-functions.
+        // AVM1 simply ignores attempts to invoke non-functions.
         if (isFunction(obj)) {
           stack[sp] = obj.apply(target, args);
         } else {
@@ -1418,7 +1418,7 @@ module Shumway.AVM1 {
       var resolvedName = as2ResolveProperty(target, methodName);
       var fn = target.asGetPublicProperty(resolvedName);
 
-      // AS2 simply ignores attempts to invoke non-methods.
+      // AVM1 simply ignores attempts to invoke non-methods.
       if (!isFunction(fn)) {
         warn("AVM1 warning: method '" + methodName + "' on object", obj,
                                         (isNullOrUndefined(fn) ?
@@ -1486,7 +1486,7 @@ module Shumway.AVM1 {
       var objectName = stack.pop();
       stack.push(null);
       var obj = avm1GetVariable(ectx, objectName);
-      // AS2 just ignores lookups on non-existant containers. We warned in GetVariable already.
+      // AVM1 just ignores lookups on non-existant containers. We warned in GetVariable already.
       if (isNullOrUndefined(obj)) {
         return;
       }
@@ -1544,7 +1544,7 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      // AS2 simply ignores attempts to construct methods on non-existing objects.
+      // AVM1 simply ignores attempts to construct methods on non-existing objects.
       if (isNullOrUndefined(obj)) {
         warn("AVM1 warning: method '" + methodName + "' can't be constructed on undefined object");
         return;
@@ -1601,7 +1601,7 @@ module Shumway.AVM1 {
       if (!isNullOrUndefined(obj)) {
         obj.asSetPublicProperty(name, value);
       } else {
-        // AS2 just ignores sets on non-existant containers
+        // AVM1 just ignores sets on non-existant containers
         warn("AVM1 warning: cannot set member '" + name + "' on undefined object");
       }
     }
@@ -1751,7 +1751,7 @@ module Shumway.AVM1 {
       var obj = stack.pop();
       stack.push(null);
 
-      // AS2 just ignores lookups on non-existant containers
+      // AVM1 just ignores lookups on non-existant containers
       if (isNullOrUndefined(obj)) {
         warn("AVM1 warning: cannot iterate over undefined object");
         return;
