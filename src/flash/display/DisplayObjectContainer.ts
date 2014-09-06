@@ -156,6 +156,10 @@ module Shumway.AVM2.AS.flash.display {
       return this.addChildAt(child, this._children.length);
     }
 
+    /**
+     * Adds a child at a given index. The index must be within the range [0 ... children.length]. Note that this
+     * is different than the range setChildIndex expects.
+     */
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
       checkParameterType(child, "child", flash.display.DisplayObject);
       release || counter.count("DisplayObjectContainer::addChildAt");
@@ -175,7 +179,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (child._parent === this) {
-        this.setChildIndex(child, index);
+        this.setChildIndex(child, clamp(index, 0, children.length - 1));
         return child;
       }
 
@@ -288,12 +292,18 @@ module Shumway.AVM2.AS.flash.display {
       return child._index;
     }
 
+    /**
+     * Sets the index of a child. The index must be within the range [0 ... children.length - 1].
+     */
     setChildIndex(child: DisplayObject, index: number /*int*/): void {
       index = index | 0;
       checkParameterType(child, "child", flash.display.DisplayObject);
       var children = this._children;
-      if (index < 0 || index > children.length) {
+      if (index < 0 || index >= children.length) {
         throwError('RangeError', Errors.ParamRangeError);
+      }
+      if (child._parent !== this) {
+        throwError('ArgumentError', Errors.NotAChildError);
       }
       child._depth = -1;
       var currentIndex = this.getChildIndex(child);
