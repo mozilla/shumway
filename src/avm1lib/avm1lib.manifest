@@ -14,7 +14,7 @@
     "AS2Sound.as",
     "AS2Color.as",
     "AS2Transform.as",
-    "AS2Globals.as",
+    "AVM1Globals.as",
     "AS2MovieClipLoader.as"
   ],
   "output": "../avm2/generated/avm1lib/avm1lib.abc"

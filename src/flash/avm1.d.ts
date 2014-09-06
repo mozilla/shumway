@@ -16,7 +16,7 @@
 
 import ASClass = Shumway.AVM2.AS.ASClass;
 declare module Shumway.AVM2.AS.avm1lib {
-  export class AS2Globals extends ASClass {}
+  export class AVM1Globals extends ASClass {}
   export class AS2Utils extends ASClass {}
   export class AS2MovieClip extends ASClass {}
   export class AS2BitmapData extends ASClass {}
@@ -39,6 +39,6 @@ declare module Shumway.AVM1 {
     executeActions(actionsData: AVM1ActionsData, stage, scopeObj);
     flushPendingScripts();
 
-    globals: Shumway.AVM2.AS.avm1lib.AS2Globals;
+    globals: Shumway.AVM2.AS.avm1lib.AVM1Globals;
   }
 }

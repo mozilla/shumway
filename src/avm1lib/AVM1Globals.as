@@ -36,21 +36,21 @@ import flash.utils.clearInterval;
 import flash.utils.clearTimeout;
 import flash.utils.getTimer;
 
-[native(cls="AS2Globals")]
-public dynamic class AS2Globals {
+[native(cls="AVM1Globals")]
+public dynamic class AVM1Globals {
   // TODO: change this when entering a domain.
   public static var instance;
   public var _global;
 
   public var flash:Object;
 
-  public function AS2Globals() {
-    AS2Globals.instance = this;
+  public function AVM1Globals() {
+    AVM1Globals.instance = this;
     this._global = this;
   }
 
   public function $asfunction(link) {
-    notImplemented('AS2Globals.$asfunction');
+    notImplemented('AVM1Globals.$asfunction');
   }
 
   public native function ASSetPropFlags(obj, children, flags, allowFalse);
@@ -241,16 +241,16 @@ public dynamic class AS2Globals {
   }
   public function print(target, boundingBox) {
     // flash.printing.PrintJob
-    notImplemented('AS2Globals.print');
+    notImplemented('AVM1Globals.print');
   }
   public function printAsBitmap(target, boundingBox) {
-    notImplemented('AS2Globals.printAsBitmap');
+    notImplemented('AVM1Globals.printAsBitmap');
   }
   public function printAsBitmapNum(level, boundingBox) {
-    notImplemented('AS2Globals.printAsBitmapNum');
+    notImplemented('AVM1Globals.printAsBitmapNum');
   }
   public function printNum(level, bondingBox) {
-    notImplemented('AS2Globals.printNum');
+    notImplemented('AVM1Globals.printNum');
   }
   public function random(value) {
     return 0 | (Math.random() * (0 | value));
@@ -303,7 +303,7 @@ public dynamic class AS2Globals {
   }
   public function showRedrawRegions(enable, color) {
     // flash.profiler.showRedrawRegions.apply(null, arguments);
-    notImplemented('AS2Globals.showRedrawRegions');
+    notImplemented('AVM1Globals.showRedrawRegions');
   }
   public function startDrag(target, lock, left, top, right, bottom) {
     var nativeTarget = AS2Utils.resolveTarget(target);
@@ -330,7 +330,7 @@ public dynamic class AS2Globals {
   }
   public function toggleHighQuality() {
     // flash.display.Stage.quality
-    notImplemented('AS2Globals.toggleHighQuality');
+    notImplemented('AVM1Globals.toggleHighQuality');
   }
   public native function trace(expression);
 
@@ -344,7 +344,7 @@ public dynamic class AS2Globals {
   }
   public function updateAfterEvent() {
     // flash.events.TimerEvent.updateAfterEvent
-    notImplemented('AS2Globals.updateAfterEvent');
+    notImplemented('AVM1Globals.updateAfterEvent');
   }
 
   // built-ins

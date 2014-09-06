@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations undxr the License.
  */
-// Class: AS2Globals
+// Class: AVM1Globals
 module Shumway.AVM2.AS.avm1lib {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
@@ -23,7 +23,7 @@ module Shumway.AVM2.AS.avm1lib {
   import AVM1Context = Shumway.AVM1.AVM1Context;
   import Natives = Shumway.AVM2.AS.Natives;
 
-  export class AS2Globals extends ASNative {
+  export class AVM1Globals extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -62,7 +62,7 @@ module Shumway.AVM2.AS.avm1lib {
 
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public avm1lib.AS2Globals");
+      notImplemented("Dummy Constructor: public avm1lib.AVM1Globals");
     }
 
     // JS -> AS Bindings

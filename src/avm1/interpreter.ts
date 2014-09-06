@@ -80,7 +80,7 @@ module Shumway.AVM1 {
     constructor(swfVersion: number) {
       super();
       this.swfVersion = swfVersion;
-      this.globals = new Shumway.AVM2.AS.avm1lib.AS2Globals();
+      this.globals = new Shumway.AVM2.AS.avm1lib.AVM1Globals();
       if (swfVersion >= 8) {
         this.globals.asSetPublicProperty("flash",
           Shumway.AVM2.AS.avm1lib.createFlashObject());
@@ -571,7 +571,7 @@ module Shumway.AVM1 {
 
   interface ExecutionContext {
     context: AVM1ContextImpl;
-    global: Shumway.AVM2.AS.avm1lib.AS2Globals;
+    global: Shumway.AVM2.AS.avm1lib.AVM1Globals;
     scopeContainer: AS2ScopeListItem;
     scope: any;
     actionTracer: ActionTracer;

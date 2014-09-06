@@ -19,11 +19,11 @@ require('./domstubs.js');
 require('../classes.js');
 require('../globals.js');
 
-describe('AS2Globals', function() {
+describe('AVM1Globals', function() {
   describe('#ASSetPropFlags()', function() {
     // see more about the function http://www.flashguru.co.uk/assetpropflags
     it('should accept three arguments and object', function() {
-      var globals = new AS2Globals(null);
+      var globals = new AVM1Globals(null);
       var obj = {};
       globals.ASSetPropFlags(obj, null, 1);
       expect(true).to.be.ok();
@@ -32,21 +32,21 @@ describe('AS2Globals', function() {
 
   describe('#MovieClip()', function() {
     it('should return the global AS2MovieClip constructor', function(){
-      var globals = new AS2Globals(null);
+      var globals = new AVM1Globals(null);
       expect(globals.MovieClip).to.be(AS2MovieClip);
     })
   })
 
   describe('#_global', function() {
     it('should return itself', function() {
-      var globals = new AS2Globals(null);
+      var globals = new AVM1Globals(null);
       expect(globals._global).to.be(globals);
     })
   })
 
   describe('#int()', function() {
     it('should return int numbers', function() {
-      var globals = new AS2Globals(null);
+      var globals = new AVM1Globals(null);
       expect(globals.int(-12.3)).to.be(-12);
       expect(globals.int(12.3)).to.be(12);
       expect(globals.int(-11.7)).to.be(-11);
@@ -57,7 +57,7 @@ describe('AS2Globals', function() {
 
   describe('#random()', function() {
     it('should return different numbers', function() {
-      var globals = new AS2Globals(null);
+      var globals = new AVM1Globals(null);
       // using large enought range of the numbers to generate several outputs
       var maxInt = 500;
       var count = 10;

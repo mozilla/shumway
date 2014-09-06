@@ -285,11 +285,11 @@ public dynamic class AS2MovieClip extends Object {
   // resolves them nevertheless.
   // TODO: make invisible to `hasOwnProperty`.
   public function get _root(): AS2MovieClip {
-    return AS2Globals.instance._root;
+    return AVM1Globals.instance._root;
   }
   // TODO: make invisible to `hasOwnProperty`.
   public function get _level0(): AS2MovieClip {
-    return AS2Globals.instance._level0;
+    return AVM1Globals.instance._level0;
   }
   public function get menu() {
     return this._as3Object.contextMenu;

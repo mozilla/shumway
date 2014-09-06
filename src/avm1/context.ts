@@ -29,7 +29,7 @@ module Shumway.AVM1 {
     public stage;
     public classes;
     public swfVersion: number;
-    public globals: Shumway.AVM2.AS.avm1lib.AS2Globals;
+    public globals: Shumway.AVM2.AS.avm1lib.AVM1Globals;
     constructor() {}
 
     public static create: (swfVersion: number) => AVM1Context;

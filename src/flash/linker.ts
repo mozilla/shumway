@@ -203,7 +203,7 @@ module Shumway.AVM2.AS {
       M("avm1lib.AS2System"),
       M("avm1lib.AS2Color"),
       M("avm1lib.AS2Transform"),
-      M("avm1lib.AS2Globals", "AS2Globals", Shumway.AVM2.AS.avm1lib.AS2Globals),
+      M("avm1lib.AVM1Globals", "AVM1Globals", Shumway.AVM2.AS.avm1lib.AVM1Globals),
       M("avm1lib.AS2MovieClipLoader", "AS2MovieClipLoader",
         Shumway.AVM2.AS.avm1lib.AS2MovieClipLoader),
     ];
