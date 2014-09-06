@@ -19,7 +19,7 @@ package avm1lib {
   import avm1lib.AVM1Utils;
   import flash.display.Stage;
 
-  public dynamic class AS2Stage {
+  public dynamic class AVM1Stage {
     static function get $stage() : flash.display.Stage { return AVM1Utils.currentStage;  }
 
     public static function get align() { return $stage.align; }
@@ -42,7 +42,7 @@ package avm1lib {
     public static function get width() { return $stage.stageWidth; }
 
     {
-      AVM1Broadcaster.initialize(Object(AS2Stage));
+      AVM1Broadcaster.initialize(Object(AVM1Stage));
     }
   }
 }

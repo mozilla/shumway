@@ -71,20 +71,20 @@ describe('AS2Classes', function() {
   })
 })
 
-describe('AS2Stage', function() {
-  return; // XXX disables AS2Stage tests
+describe('AVM1Stage', function() {
+  return; // XXX disables AVM1Stage tests
 
   describe('#width', function() {
     it('should return stage width', function() {
       AVM1Context.instance = new AVM1Context(11, {width: 100, height: 50});
-      expect(AS2Stage.width).to.be(100);
+      expect(AVM1Stage.width).to.be(100);
     })
   })
 
   describe('#height', function() {
     it('should return stage height', function() {
       AVM1Context.instance = new AVM1Context(11, {width: 100, height: 50});
-      expect(AS2Stage.height).to.be(50);
+      expect(AVM1Stage.height).to.be(50);
     })
   })
 
@@ -94,11 +94,11 @@ describe('AS2Stage', function() {
       var listener = {
         onFullScreen: function(bFull) { track.push(bFull); }
       };
-      AS2Stage.addListener(listener);
-      AS2Stage.$dispatchEvent('onFullScreen', [true]);
-      AS2Stage.$dispatchEvent('onFullScreen', [false]);
-      AS2Stage.removeListener(listener);
-      AS2Stage.$dispatchEvent('onFullScreen');
+      AVM1Stage.addListener(listener);
+      AVM1Stage.$dispatchEvent('onFullScreen', [true]);
+      AVM1Stage.$dispatchEvent('onFullScreen', [false]);
+      AVM1Stage.removeListener(listener);
+      AVM1Stage.$dispatchEvent('onFullScreen');
       expect(track.join(',')).to.be('true,false');
     })
   })
@@ -109,10 +109,10 @@ describe('AS2Stage', function() {
       var listener = {
         onResize: function() { invoked++; }
       };
-      AS2Stage.addListener(listener);
-      AS2Stage.$dispatchEvent('onResize');
-      AS2Stage.removeListener(listener);
-      AS2Stage.$dispatchEvent('onResize');
+      AVM1Stage.addListener(listener);
+      AVM1Stage.$dispatchEvent('onResize');
+      AVM1Stage.removeListener(listener);
+      AVM1Stage.$dispatchEvent('onResize');
       expect(invoked).to.be(1);
     })
   })

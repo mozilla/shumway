@@ -367,7 +367,7 @@ public dynamic class AVM1Globals {
   public var MovieClip:Class = AVM1MovieClip;
   public var AsBroadcaster:Class = AVM1Broadcaster;
   public var System:Class = AS2System;
-  public var Stage:Class = AS2Stage;
+  public var Stage:Class = AVM1Stage;
   public var Button:Class = AVM1Button;
   public var TextField:Class = AS2TextField;
   public var Color:Class = AVM1Color;
