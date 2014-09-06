@@ -150,7 +150,7 @@ module Shumway.AVM1 {
     constructor(public error) {}
   }
 
-  class AS2CriticalError extends Error  {
+  class AVM1CriticalError extends Error  {
     constructor(message: string, public error?) {
       super(message);
     }
@@ -360,8 +360,8 @@ module Shumway.AVM1 {
   function as2CastError(ex) {
     if (typeof InternalError !== 'undefined' &&
         ex instanceof InternalError && ex.message === 'too much recursion') {
-      // HACK converting too much recursion into AS2CriticalError
-      return new AS2CriticalError('long running script -- AVM1 recursion limit is reached');
+      // HACK converting too much recursion into AVM1CriticalError
+      return new AVM1CriticalError('long running script -- AVM1 recursion limit is reached');
     }
     return ex;
   }
@@ -493,7 +493,7 @@ module Shumway.AVM1 {
       interpretActions(actionsData, scopeContainer, [], []);
     } catch (e) {
       caughtError = as2CastError(e);
-      if (caughtError instanceof AS2CriticalError) {
+      if (caughtError instanceof AVM1CriticalError) {
         context.executionProhibited = true;
         console.error('Disabling AVM1 execution');
       }
@@ -726,7 +726,7 @@ module Shumway.AVM1 {
           currentContext.currentTarget = null;
           actionTracer.indent();
           if (++currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
-            throw new AS2CriticalError('long running script -- AVM1 recursion limit is reached');
+            throw new AVM1CriticalError('long running script -- AVM1 recursion limit is reached');
           }
           result = interpretActions(actionsData, newScopeContainer, constantPool, registers);
         } catch (e) {
@@ -1880,7 +1880,7 @@ module Shumway.AVM1 {
           // handling AVM1 errors
           currentContext = executionContext.context;
           e = as2CastError(e);
-          if (e instanceof AS2CriticalError) {
+          if (e instanceof AVM1CriticalError) {
             throw e;
           }
           if (e instanceof AVM1Error) {
@@ -1891,7 +1891,7 @@ module Shumway.AVM1 {
 
           if (!executionContext.recoveringFromError) {
             if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
-              throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
+              throw new AVM1CriticalError('long running script -- AVM1 errors limit is reached');
             }
             console.log(typeof e);
             console.log(Object.getPrototypeOf(e));
@@ -2361,7 +2361,7 @@ module Shumway.AVM1 {
         currentContext = executionContext.context;
         e = as2CastError(e);
         if ((avm1ErrorsEnabled.value && !currentContext.isTryCatchListening) ||
-          e instanceof AS2CriticalError) {
+          e instanceof AVM1CriticalError) {
           throw e;
         }
         if (e instanceof AVM1Error) {
@@ -2372,7 +2372,7 @@ module Shumway.AVM1 {
 
         if (!executionContext.recoveringFromError) {
           if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
-            throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
+            throw new AVM1CriticalError('long running script -- AVM1 errors limit is reached');
           }
           console.error('AVM1 error: ' + e);
           var avm2 = Shumway.AVM2.Runtime.AVM2;
@@ -2448,7 +2448,7 @@ module Shumway.AVM1 {
       while (nextAction && !executionContext.isEndOfActions) {
         // let's check timeout/Date.now every some number of instructions
         if (instructionsExecuted++ % CHECK_AVM1_HANG_EVERY === 0 && Date.now() >= abortExecutionAt) {
-          throw new AS2CriticalError('long running script -- AVM1 instruction hang timeout');
+          throw new AVM1CriticalError('long running script -- AVM1 instruction hang timeout');
         }
 
         var shallBranch: boolean = interpretActionWithRecovery(executionContext, nextAction.action);
@@ -2528,7 +2528,7 @@ module Shumway.AVM1 {
     }
     private checkAvm1Timeout(ectx: ExecutionContext) {
       if (Date.now() >= ectx.context.abortExecutionAt) {
-        throw new AS2CriticalError('long running script -- AVM1 instruction hang timeout');
+        throw new AVM1CriticalError('long running script -- AVM1 instruction hang timeout');
       }
     }
     generate(ir: AnalyzerResults): Function {
