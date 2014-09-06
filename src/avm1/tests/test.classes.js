@@ -31,7 +31,7 @@ describe('Array', function() {
   })
 })
 
-describe('AS2Classes', function() {
+describe('AVM1Classes', function() {
   describe('#createBuiltinType()', function() {
     // see more about the function http://www.flashguru.co.uk/assetpropflags
     it('should create Array with not arguments', function() {
