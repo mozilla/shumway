@@ -18,19 +18,19 @@ package avm1lib {
 import flash.display.Stage;
 import flash.events.MouseEvent;
 
-public dynamic class AS2Mouse {
+public dynamic class AVM1Mouse {
   public static function __bind(stage:Stage) {
     stage.addEventListener('mousedown', function (e:flash.events.MouseEvent) {
-      Object(AS2Mouse).broadcastMessage('onMouseDown');
+      Object(AVM1Mouse).broadcastMessage('onMouseDown');
     }, false);
     stage.addEventListener('mousemove', function (e) {
-      Object(AS2Mouse).broadcastMessage('onMouseMove');
+      Object(AVM1Mouse).broadcastMessage('onMouseMove');
     }, false);
     stage.addEventListener('mouseout', function (e) {
-      Object(AS2Mouse).broadcastMessage('onMouseMove');
+      Object(AVM1Mouse).broadcastMessage('onMouseMove');
     }, false);
     stage.addEventListener('mouseup', function (e) {
-      Object(AS2Mouse).broadcastMessage('onMouseUp');
+      Object(AVM1Mouse).broadcastMessage('onMouseUp');
     }, false);
   }
   public static function hide() {
@@ -41,7 +41,7 @@ public dynamic class AS2Mouse {
   }
 
   {
-    AVM1Broadcaster.initialize(Object(AS2Mouse));
+    AVM1Broadcaster.initialize(Object(AVM1Mouse));
   }
 }
 }
