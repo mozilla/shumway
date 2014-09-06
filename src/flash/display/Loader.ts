@@ -527,7 +527,7 @@ module Shumway.AVM2.AS.flash.display {
 
       if (actionBlocks) {
         for (var i = 0; i < actionBlocks.length; i++) {
-          root.addAS2FrameScript(frameIndex, actionBlocks[i]);
+          root.addAVM1FrameScript(frameIndex, actionBlocks[i]);
         }
       }
     }

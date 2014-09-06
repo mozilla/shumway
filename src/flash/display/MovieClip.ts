@@ -164,7 +164,7 @@ module Shumway.AVM2.AS.flash.display {
           if (symbol.frameScripts) {
             var data = symbol.frameScripts;
             for (var i = 0; i < data.length; i += 2) {
-              self.addAS2FrameScript(data[i], data[i + 1]);
+              self.addAVM1FrameScript(data[i], data[i + 1]);
             }
           }
         }
@@ -277,7 +277,7 @@ module Shumway.AVM2.AS.flash.display {
     private _allowFrameNavigation: boolean;
 
     _as2SymbolClass;
-    private _boundExecuteAS2FrameScripts: () => void;
+    private _boundExecuteAVM1FrameScripts: () => void;
     private _as2FrameScripts: AVM1.AVM1ActionsData[][];
 
     private _sounds: MovieClipSoundsManager;
@@ -653,17 +653,17 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    addAS2FrameScript(frameIndex: number, actionsBlock: Uint8Array): void {
+    addAVM1FrameScript(frameIndex: number, actionsBlock: Uint8Array): void {
       var frameScripts = this._as2FrameScripts;
       if (!frameScripts) {
-        release || assert(!this._boundExecuteAS2FrameScripts);
-        this._boundExecuteAS2FrameScripts = this._executeAS2FrameScripts.bind(this);
+        release || assert(!this._boundExecuteAVM1FrameScripts);
+        this._boundExecuteAVM1FrameScripts = this._executeAVM1FrameScripts.bind(this);
         frameScripts = this._as2FrameScripts = [];
       }
       var scripts: AVM1.AVM1ActionsData[] = frameScripts[frameIndex + 1];
       if (!scripts) {
         scripts = frameScripts[frameIndex + 1] = [];
-        this.addFrameScript(frameIndex, this._boundExecuteAS2FrameScripts);
+        this.addFrameScript(frameIndex, this._boundExecuteAVM1FrameScripts);
       }
       var actionsData = new AVM1.AVM1ActionsData(actionsBlock,
                                                 'f' + frameIndex + 'i' + scripts.length);
@@ -697,7 +697,7 @@ module Shumway.AVM2.AS.flash.display {
       this.addEventListener('enterFrame', listener);
     }
 
-    private _executeAS2FrameScripts() {
+    private _executeAVM1FrameScripts() {
       var avm1Context = this.loaderInfo._avm1Context;
       var as2Object = avm1lib.getAVM1Object(this);
       var scripts: AVM1.AVM1ActionsData[] = this._as2FrameScripts[this._currentFrame];
