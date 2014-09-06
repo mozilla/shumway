@@ -25,7 +25,7 @@ import flash.net.URLRequest;
 [native(cls="AS2MovieClipLoader")]
 public dynamic class AS2MovieClipLoader extends Object {
   public function AS2MovieClipLoader() {
-    AS2Broadcaster.initialize(this);
+    AVM1Broadcaster.initialize(this);
     _setAS3Object(new Loader());
   }
 

@@ -41,7 +41,7 @@ public dynamic class AS2Mouse {
   }
 
   {
-    AS2Broadcaster.initialize(Object(AS2Mouse));
+    AVM1Broadcaster.initialize(Object(AS2Mouse));
   }
 }
 }

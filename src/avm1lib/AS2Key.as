@@ -45,7 +45,7 @@ public dynamic class AS2Key {
   }
 
   {
-    AS2Broadcaster.initialize(Object(AS2Key));
+    AVM1Broadcaster.initialize(Object(AS2Key));
   }
 }
 

@@ -15,7 +15,7 @@
  */
 
 package avm1lib {
-  import avm1lib.AS2Broadcaster;
+  import avm1lib.AVM1Broadcaster;
   import avm1lib.AVM1Utils;
   import flash.display.Stage;
 
@@ -42,7 +42,7 @@ package avm1lib {
     public static function get width() { return $stage.stageWidth; }
 
     {
-      AS2Broadcaster.initialize(Object(AS2Stage));
+      AVM1Broadcaster.initialize(Object(AS2Stage));
     }
   }
 }
