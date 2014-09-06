@@ -20,7 +20,7 @@ module Shumway.AVM2.AS.avm1lib {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Loader = Shumway.AVM2.AS.flash.display.Loader;
   import TextFormat = Shumway.AVM2.AS.flash.text.TextFormat;
-  import AS2Context = Shumway.AVM1.AS2Context;
+  import AVM1Context = Shumway.AVM1.AVM1Context;
   import Natives = Shumway.AVM2.AS.Natives;
 
   export class AS2Globals extends ASNative {
@@ -140,7 +140,7 @@ module Shumway.AVM2.AS.avm1lib {
     }
     _addToPendingScripts(subject: ASObject, fn: ASFunction, args: any [] = null): any {
       release || assert(fn, 'invalid function in _addToPendingScripts');
-      AS2Context.instance.addToPendingScripts(function () {
+      AVM1Context.instance.addToPendingScripts(function () {
         (<Function><any> fn).apply(subject, args);
       });
     }
@@ -177,7 +177,7 @@ module Shumway.AVM2.AS.avm1lib {
 
     _setLevel(level: number /*uint*/, loader: Loader): any {
       level = level >>> 0;
-      AS2Context.instance.stage._as2SetLevel(level, loader);
+      AVM1Context.instance.stage._as2SetLevel(level, loader);
     }
     trace(expression: any): any {
       Natives.print(expression);

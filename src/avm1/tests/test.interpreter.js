@@ -26,9 +26,9 @@ describe('AVM1 Interpreter', function() {
 
   describe('#executeActions()', function() {
     it('should do nothing', function() {
-      var as2Context = new AS2Context(11);
+      var AVM1Context = new AVM1Context(11);
       var scope = {};
-      executeActions(new Uint8Array([0]), as2Context, scope);
+      executeActions(new Uint8Array([0]), AVM1Context, scope);
     }),
 
     it('should execute square.swf code', function() {
@@ -42,9 +42,9 @@ describe('AVM1 Interpreter', function() {
       var actionsData = [142, 19, 0, 115, 113, 117, 97, 114, 101, 0, 1, 0, 2, 42, 0, 1, 118,
         97, 108, 0, 9, 0, 150, 4, 0, 4, 1, 4, 1, 12, 62, 150, 21, 0, 0, 115, 0, 7, 3, 0, 0,
         0, 7, 1, 0, 0, 0, 0, 115, 113, 117, 97, 114, 101, 0, 61, 60, 0];
-      var as2Context = new AS2Context(11);
+      var AVM1Context = new AVM1Context(11);
       var scope = {};
-      executeActions(new Uint8Array(actionsData), as2Context, scope);
+      executeActions(new Uint8Array(actionsData), AVM1Context, scope);
       expect(scope.s).to.be(9);
       expect('square' in scope).to.ok();
     })
@@ -88,12 +88,12 @@ describe('AVM1 Interpreter (Tamarin acceptance tests)', function() {
           var swfData = xhr.responseText;
           var actionsData = getActionsData(swfData);
           expect(actionsData.length > 0).to.be.ok(); // sanity check
-          var as2Context = new AS2Context(11);
+          var AVM1Context = new AVM1Context(11);
           var scope = {};
           for (var j = 0; j < actionsData.length; j++)
-            executeActions(actionsData[j], as2Context, scope);
-          expect('TestCaseResult' in as2Context.globals).to.be.ok();
-          var results = as2Context.globals.TestCaseResult;
+            executeActions(actionsData[j], AVM1Context, scope);
+          expect('TestCaseResult' in AVM1Context.globals).to.be.ok();
+          var results = AVM1Context.globals.TestCaseResult;
           var reason = '';
           if (results.failed) {
             var testCases = results.testCases;

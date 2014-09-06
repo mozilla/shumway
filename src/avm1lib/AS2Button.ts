@@ -80,7 +80,7 @@ module Shumway.AVM2.AS.avm1lib {
       for (var i = 0; i < actions.length; i++) {
         var action = actions[i];
         if (!action.actionsBlock) {
-          action.actionsBlock = new AVM1.AS2ActionsData(action.actionsData, 'i' + i);
+          action.actionsBlock = new AVM1.AVM1ActionsData(action.actionsData, 'i' + i);
         }
         if (action.keyCode) {
           requiredListeners['keyDown'] = this._keyDownHandler.bind(this);

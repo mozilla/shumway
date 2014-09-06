@@ -63,7 +63,7 @@ module Shumway.AVM1 {
     }
   }
 
-  class AS2ContextImpl extends AS2Context {
+  class AVM1ContextImpl extends AVM1Context {
     swfVersion: number;
     initialScope: AS2ScopeListItem;
     assets;
@@ -136,14 +136,14 @@ module Shumway.AVM1 {
       this.deferScriptExecution = false;
     }
 
-    executeActions(actionsData: AS2ActionsData, stage, scopeObj) {
+    executeActions(actionsData: AVM1ActionsData, stage, scopeObj) {
       this.stage = stage;
       executeActions(actionsData, this, scopeObj);
     }
   }
 
-  AS2Context.create = function (swfVersion: number): AS2Context {
-    return new AS2ContextImpl(swfVersion);
+  AVM1Context.create = function (swfVersion: number): AVM1Context {
+    return new AVM1ContextImpl(swfVersion);
   };
 
   class AS2Error {
@@ -181,7 +181,7 @@ module Shumway.AVM1 {
   }
 
   function as2GetCurrentSwfVersion() : number {
-    return (<AS2ContextImpl> AS2Context.instance).swfVersion;
+    return (<AVM1ContextImpl> AVM1Context.instance).swfVersion;
   }
 
   function as2ToAddPrimitive(value) {
@@ -469,8 +469,8 @@ module Shumway.AVM1 {
     });
   }
 
-  export function executeActions(actionsData: AS2ActionsData, as2Context: AS2Context, scope) {
-    var context = <AS2ContextImpl> as2Context;
+  export function executeActions(actionsData: AVM1ActionsData, as2Context: AVM1Context, scope) {
+    var context = <AVM1ContextImpl> as2Context;
     if (context.executionProhibited) {
       return; // no more avm1 for this context
     }
@@ -478,10 +478,10 @@ module Shumway.AVM1 {
     var actionTracer = ActionTracerFactory.get();
 
     var scopeContainer = context.initialScope.create(scope);
-    var savedContext = AS2Context.instance;
+    var savedContext = AVM1Context.instance;
     var caughtError;
     try {
-      AS2Context.instance = context;
+      AVM1Context.instance = context;
       context.isActive = true;
       context.abortExecutionAt = avm1TimeoutDisabled.value ? Number.MAX_VALUE :
         Date.now() + MAX_AVM1_HANG_TIMEOUT;
@@ -503,7 +503,7 @@ module Shumway.AVM1 {
     context.currentTarget = null;
     actionTracer.unindent();
     actionTracer.message('ActionScript Execution Stops');
-    AS2Context.instance = savedContext;
+    AVM1Context.instance = savedContext;
     if (caughtError) {
       // Note: this doesn't use `finally` because that's a no-go for performance.
       throw caughtError; // TODO shall we just ignore it?
@@ -570,7 +570,7 @@ module Shumway.AVM1 {
   var AS2_SUPER_STUB = {};
 
   interface ExecutionContext {
-    context: AS2ContextImpl;
+    context: AVM1ContextImpl;
     global: Shumway.AVM2.AS.avm1lib.AS2Globals;
     scopeContainer: AS2ScopeListItem;
     scope: any;
@@ -619,7 +619,7 @@ module Shumway.AVM1 {
     }
 
     function avm1DefineFunction(ectx: ExecutionContext,
-                                actionsData: AS2ActionsData,
+                                actionsData: AVM1ActionsData,
                                 functionName: string,
                                 parametersNames: string[],
                                 registersCount: number,
@@ -707,7 +707,7 @@ module Shumway.AVM1 {
           newScope.asSetPublicProperty(parametersNames[i], arguments[i]);
         }
 
-        var savedContext = AS2Context.instance;
+        var savedContext = AVM1Context.instance;
         var savedIsActive = currentContext.isActive;
         var savedDefaultTarget = currentContext.defaultTarget;
         var savedCurrentTarget = currentContext.currentTarget;
@@ -715,7 +715,7 @@ module Shumway.AVM1 {
         var caughtError;
         try {
           // switching contexts if called outside main thread
-          AS2Context.instance = currentContext;
+          AVM1Context.instance = currentContext;
           if (!savedIsActive) {
             currentContext.abortExecutionAt = avm1TimeoutDisabled.value ?
               Number.MAX_VALUE : Date.now() + MAX_AVM1_HANG_TIMEOUT;
@@ -737,7 +737,7 @@ module Shumway.AVM1 {
         currentContext.isActive = savedIsActive;
         currentContext.stackDepth--;
         actionTracer.unindent();
-        AS2Context.instance = savedContext;
+        AVM1Context.instance = savedContext;
         if (caughtError) {
           // Note: this doesn't use `finally` because that's a no-go for performance.
           throw caughtError;
@@ -1871,7 +1871,7 @@ module Shumway.AVM1 {
 
     function wrapAvm1Error(fn: Function): Function {
       return function avm1ErrorWrapper(executionContext: ExecutionContext, args: any[]) {
-        var currentContext: AS2ContextImpl;
+        var currentContext: AVM1ContextImpl;
         try {
           fn(executionContext, args);
 
@@ -2349,7 +2349,7 @@ module Shumway.AVM1 {
 
     function interpretActionWithRecovery(executionContext: ExecutionContext,
                                          parsedAction: ParsedAction): boolean {
-      var currentContext: AS2ContextImpl;
+      var currentContext: AVM1ContextImpl;
       var result;
       try {
         result = interpretAction(executionContext, parsedAction);
@@ -2384,8 +2384,8 @@ module Shumway.AVM1 {
       return result;
     }
 
-    function interpretActions(actionsData: AS2ActionsData, scopeContainer, constantPool, registers) {
-      var currentContext = <AS2ContextImpl> AS2Context.instance;
+    function interpretActions(actionsData: AVM1ActionsData, scopeContainer, constantPool, registers) {
+      var currentContext = <AVM1ContextImpl> AVM1Context.instance;
 
       if (!actionsData.ir) {
         var stream = new ActionsDataStream(actionsData.bytes, currentContext.swfVersion);
@@ -2487,7 +2487,7 @@ module Shumway.AVM1 {
             parts.push('constantPool[' + (<ParsedPushConstantAction> arg).constantIndex + ']' + hint);
           } else if (arg instanceof ParsedPushRegisterAction) {
             parts.push('registers[' + (<ParsedPushRegisterAction> arg).registerNumber + ']');
-          } else if (arg instanceof AS2ActionsData) {
+          } else if (arg instanceof AVM1ActionsData) {
             var resName = 'code_' + id + '_' + i;
             res[resName] = arg;
             parts.push('res.' + resName);

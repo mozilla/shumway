@@ -19,7 +19,7 @@ module Shumway.AVM2.AS.avm1lib {
   import ASNative = Shumway.AVM2.AS.ASNative;
   import ASObject = Shumway.AVM2.AS.ASObject;
   import flash = Shumway.AVM2.AS.flash;
-  import AS2Context = Shumway.AVM1.AS2Context;
+  import AVM1Context = Shumway.AVM1.AVM1Context;
 
   export class AS2Utils extends ASNative {
 
@@ -57,20 +57,20 @@ module Shumway.AVM2.AS.avm1lib {
     }
 
     static resolveTarget(target_mc: any = undefined): any {
-      return AS2Context.instance.resolveTarget(target_mc);
+      return AVM1Context.instance.resolveTarget(target_mc);
     }
 
     static resolveLevel(level: number): any {
       level = +level;
-      return AS2Context.instance.resolveLevel(level);
+      return AVM1Context.instance.resolveLevel(level);
     }
 
     static get currentStage(): any {
-      return AS2Context.instance.stage;
+      return AVM1Context.instance.stage;
     }
 
     static get swfVersion(): any {
-      return AS2Context.instance.swfVersion;
+      return AVM1Context.instance.swfVersion;
     }
 
     static getAS2Object(as3Object) {
@@ -80,8 +80,8 @@ module Shumway.AVM2.AS.avm1lib {
     static _installObjectMethods(): any {
       var c = ASObject, p = c.asGetPublicProperty('prototype');
       c.asSetPublicProperty('registerClass', function registerClass(name, theClass) {
-        var classes = AS2Context.instance.classes ||
-          (AS2Context.instance.classes = {});
+        var classes = AVM1Context.instance.classes ||
+          (AVM1Context.instance.classes = {});
         classes[name] = theClass;
       });
       p.asDefinePublicProperty('addProperty', {

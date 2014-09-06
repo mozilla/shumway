@@ -30,13 +30,13 @@ declare module Shumway.AVM2.AS.avm1lib {
 }
 
 declare module Shumway.AVM1 {
-  export class AS2ActionsData {
+  export class AVM1ActionsData {
     constructor(actionsBlock: Uint8Array, name: string);
   }
-  export class AS2Context {
-    static create(swfVersion: number): AS2Context;
+  export class AVM1Context {
+    static create(swfVersion: number): AVM1Context;
     addAsset(className: string, symbolProps);
-    executeActions(actionsData: AS2ActionsData, stage, scopeObj);
+    executeActions(actionsData: AVM1ActionsData, stage, scopeObj);
     flushPendingScripts();
 
     globals: Shumway.AVM2.AS.avm1lib.AS2Globals;

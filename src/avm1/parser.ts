@@ -292,7 +292,7 @@ module Shumway.AVM1 {
 
           var codeSize = stream.readUI16();
           nextPosition += codeSize;
-          var functionBody = new AS2ActionsData(stream.readBytes(codeSize),
+          var functionBody = new AVM1ActionsData(stream.readBytes(codeSize),
             this.dataId + '_f' + stream.position);
 
           args = [functionBody, functionName, functionParams];
@@ -300,7 +300,7 @@ module Shumway.AVM1 {
         case ActionCode.ActionWith:
           var codeSize = stream.readUI16();
           nextPosition += codeSize;
-          var withBody = new AS2ActionsData(stream.readBytes(codeSize),
+          var withBody = new AVM1ActionsData(stream.readBytes(codeSize),
             this.dataId + '_w' + stream.position);
           args = [withBody];
           break;
@@ -362,7 +362,7 @@ module Shumway.AVM1 {
 
           var codeSize = stream.readUI16();
           nextPosition += codeSize;
-          var functionBody = new AS2ActionsData(stream.readBytes(codeSize),
+          var functionBody = new AVM1ActionsData(stream.readBytes(codeSize),
             this.dataId + '_f' + stream.position);
 
           args = [functionBody, functionName, functionParams, registerCount,
@@ -380,11 +380,11 @@ module Shumway.AVM1 {
 
           nextPosition += trySize + catchSize + finallySize;
 
-          var tryBody = new AS2ActionsData(stream.readBytes(trySize),
+          var tryBody = new AVM1ActionsData(stream.readBytes(trySize),
             this.dataId + '_t' + stream.position);
-          var catchBody = new AS2ActionsData(stream.readBytes(catchSize),
+          var catchBody = new AVM1ActionsData(stream.readBytes(catchSize),
             this.dataId + '_c' + stream.position);
-          var finallyBody = new AS2ActionsData(stream.readBytes(finallySize),
+          var finallyBody = new AVM1ActionsData(stream.readBytes(finallySize),
             this.dataId + '_z' + stream.position);
 
           args = [catchIsRegisterFlag, catchTarget, tryBody,

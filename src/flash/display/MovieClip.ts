@@ -278,7 +278,7 @@ module Shumway.AVM2.AS.flash.display {
 
     _as2SymbolClass;
     private _boundExecuteAS2FrameScripts: () => void;
-    private _as2FrameScripts: AVM1.AS2ActionsData[][];
+    private _as2FrameScripts: AVM1.AVM1ActionsData[][];
 
     private _sounds: MovieClipSoundsManager;
 
@@ -660,12 +660,12 @@ module Shumway.AVM2.AS.flash.display {
         this._boundExecuteAS2FrameScripts = this._executeAS2FrameScripts.bind(this);
         frameScripts = this._as2FrameScripts = [];
       }
-      var scripts: AVM1.AS2ActionsData[] = frameScripts[frameIndex + 1];
+      var scripts: AVM1.AVM1ActionsData[] = frameScripts[frameIndex + 1];
       if (!scripts) {
         scripts = frameScripts[frameIndex + 1] = [];
         this.addFrameScript(frameIndex, this._boundExecuteAS2FrameScripts);
       }
-      var actionsData = new AVM1.AS2ActionsData(actionsBlock,
+      var actionsData = new AVM1.AVM1ActionsData(actionsBlock,
                                                 'f' + frameIndex + 'i' + scripts.length);
       scripts.push(actionsData);
     }
@@ -689,7 +689,7 @@ module Shumway.AVM2.AS.flash.display {
         var as2Object = avm1lib.getAS2Object(self);
         var stage = self.stage;
         for (var i = 0; i < actionsBlocks.length; i++) {
-          var actionsData = new AVM1.AS2ActionsData(actionsBlocks[i].actionsData,
+          var actionsData = new AVM1.AVM1ActionsData(actionsBlocks[i].actionsData,
                                                     'f' + frameIndex + 'i' + i);
           avm1Context.executeActions(actionsData, stage, as2Object);
         }
@@ -700,7 +700,7 @@ module Shumway.AVM2.AS.flash.display {
     private _executeAS2FrameScripts() {
       var avm1Context = this.loaderInfo._avm1Context;
       var as2Object = avm1lib.getAS2Object(this);
-      var scripts: AVM1.AS2ActionsData[] = this._as2FrameScripts[this._currentFrame];
+      var scripts: AVM1.AVM1ActionsData[] = this._as2FrameScripts[this._currentFrame];
       release || assert(scripts && scripts.length);
       for (var i = 0; i < scripts.length; i++) {
         var actionsData = scripts[i];

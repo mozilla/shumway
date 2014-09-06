@@ -488,7 +488,7 @@ module Shumway.Timeline {
                 if (swfEvent.eoe) {
                   break;
                 }
-                var actionsData = new AVM1.AS2ActionsData(swfEvent.actionsData,
+                var actionsData = new AVM1.AVM1ActionsData(swfEvent.actionsData,
                     's' + cmd.symbolId + 'e' + j);
                 var fn = (function (actionsData, loaderInfo) {
                   return function() {

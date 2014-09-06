@@ -327,7 +327,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private _initAvm1(loaderInfo: LoaderInfo): Promise<any> {
       return AVM2.instance.loadAVM1().then(function() {
-        loaderInfo._avm1Context = Shumway.AVM1.AS2Context.create(loaderInfo.swfVersion);
+        loaderInfo._avm1Context = Shumway.AVM1.AVM1Context.create(loaderInfo.swfVersion);
       });
     }
 

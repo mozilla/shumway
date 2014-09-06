@@ -76,14 +76,14 @@ describe('AS2Stage', function() {
 
   describe('#width', function() {
     it('should return stage width', function() {
-      AS2Context.instance = new AS2Context(11, {width: 100, height: 50});
+      AVM1Context.instance = new AVM1Context(11, {width: 100, height: 50});
       expect(AS2Stage.width).to.be(100);
     })
   })
 
   describe('#height', function() {
     it('should return stage height', function() {
-      AS2Context.instance = new AS2Context(11, {width: 100, height: 50});
+      AVM1Context.instance = new AVM1Context(11, {width: 100, height: 50});
       expect(AS2Stage.height).to.be(50);
     })
   })

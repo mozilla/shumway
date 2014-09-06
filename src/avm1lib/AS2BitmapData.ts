@@ -17,7 +17,7 @@
 module Shumway.AVM2.AS.avm1lib {
   import BitmapData = Shumway.AVM2.AS.flash.display.BitmapData;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import AS2Context = Shumway.AVM1.AS2Context;
+  import AVM1Context = Shumway.AVM1.AVM1Context;
 
   export class AS2BitmapData extends BitmapData {
 
@@ -40,7 +40,7 @@ module Shumway.AVM2.AS.avm1lib {
 
     static loadBitmap(symbolId: string): flash.display.BitmapData {
       symbolId = asCoerceString(symbolId);
-      var symbol = AS2Context.instance.getAsset(symbolId);
+      var symbol = AVM1Context.instance.getAsset(symbolId);
       if (symbol instanceof Shumway.Timeline.BitmapSymbol) {
         var bitmap = AS2BitmapData.initializeFrom(symbol);
         bitmap.class.instanceConstructorNoInitialize.call(bitmap);

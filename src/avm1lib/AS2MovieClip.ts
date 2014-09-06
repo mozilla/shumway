@@ -19,7 +19,7 @@ module Shumway.AVM2.AS.avm1lib {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import construct = Shumway.AVM2.Runtime.construct;
-  import AS2Context = Shumway.AVM1.AS2Context;
+  import AVM1Context = Shumway.AVM1.AVM1Context;
   import Bitmap = flash.display.Bitmap;
 
 
@@ -73,8 +73,8 @@ module Shumway.AVM2.AS.avm1lib {
     }
 
     _constructMovieClipSymbol(symbolId: string, name: string): flash.display.MovieClip {
-      var theClass = AS2Context.instance.classes && AS2Context.instance.classes[symbolId];
-      var symbol = AS2Context.instance.getAsset(symbolId);
+      var theClass = AVM1Context.instance.classes && AVM1Context.instance.classes[symbolId];
+      var symbol = AVM1Context.instance.getAsset(symbolId);
 
       var mc: flash.display.MovieClip = flash.display.MovieClip.initializeFrom(symbol);
       flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);

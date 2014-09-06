@@ -17,22 +17,22 @@
 module Shumway.AVM1 {
   import assert = Shumway.Debug.assert;
 
-  export class AS2ActionsData {
+  export class AVM1ActionsData {
     public ir; // will cache compiled representation
     constructor(public bytes: Uint8Array, public id: string) {
       release || assert(bytes instanceof Uint8Array);
     }
   }
 
-  export class AS2Context {
-    public static instance: AS2Context = null;
+  export class AVM1Context {
+    public static instance: AVM1Context = null;
     public stage;
     public classes;
     public swfVersion: number;
     public globals: Shumway.AVM2.AS.avm1lib.AS2Globals;
     constructor() {}
 
-    public static create: (swfVersion: number) => AS2Context;
+    public static create: (swfVersion: number) => AVM1Context;
 
     public flushPendingScripts() {}
     public addAsset(className: string, symbolProps) {}
@@ -41,6 +41,6 @@ module Shumway.AVM1 {
     public resolveLevel(level: number): any {}
     public addToPendingScripts(fn) {}
 
-    public executeActions(actionsData: AS2ActionsData, stage, scopeObj) {}
+    public executeActions(actionsData: AVM1ActionsData, stage, scopeObj) {}
   }
 }

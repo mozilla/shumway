@@ -20,7 +20,7 @@ declare module Shumway.AVM2.AS.flash {
       stage: DisplayObject;
       _parent: DisplayObject;
       loaderInfo: {
-        _avm1Context: AVM1.AS2Context
+        _avm1Context: AVM1.AVM1Context
       };
       _mouseOver: boolean;
       _mouseDown: boolean;
@@ -80,7 +80,7 @@ declare module Shumway.Timeline {
       keyCode: number;
       stateTransitionFlags: number;
       actionsData: Uint8Array;
-      actionsBlock: AVM1.AS2ActionsData;
+      actionsBlock: AVM1.AVM1ActionsData;
     }
   class BitmapSymbol {}
 }
