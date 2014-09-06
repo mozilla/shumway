@@ -16,29 +16,29 @@
 
 import ASClass = Shumway.AVM2.AS.ASClass;
 declare module Shumway.AVM2.AS.avm1lib {
-  export class AS2Globals extends ASClass {}
-  export class AS2Utils extends ASClass {}
-  export class AS2MovieClip extends ASClass {}
-  export class AS2BitmapData extends ASClass {}
-  export class AS2Button extends ASClass {}
-  export class AS2TextField extends ASClass {}
-  export class AS2MovieClipLoader extends ASClass {}
-  export class AS2Key extends ASClass {}
-  export class AS2Mouse extends ASClass {}
+  export class AVM1Globals extends ASClass {}
+  export class AVM1Utils extends ASClass {}
+  export class AVM1MovieClip extends ASClass {}
+  export class AVM1BitmapData extends ASClass {}
+  export class AVM1Button extends ASClass {}
+  export class AVM1TextField extends ASClass {}
+  export class AVM1MovieClipLoader extends ASClass {}
+  export class AVM1Key extends ASClass {}
+  export class AVM1Mouse extends ASClass {}
 
-  export function getAS2Object(as3Object: any): any;
+  export function getAVM1Object(as3Object: any): any;
 }
 
 declare module Shumway.AVM1 {
-  export class AS2ActionsData {
+  export class AVM1ActionsData {
     constructor(actionsBlock: Uint8Array, name: string);
   }
-  export class AS2Context {
-    static create(swfVersion: number): AS2Context;
+  export class AVM1Context {
+    static create(swfVersion: number): AVM1Context;
     addAsset(className: string, symbolProps);
-    executeActions(actionsData: AS2ActionsData, stage, scopeObj);
+    executeActions(actionsData: AVM1ActionsData, stage, scopeObj);
     flushPendingScripts();
 
-    globals: Shumway.AVM2.AS.avm1lib.AS2Globals;
+    globals: Shumway.AVM2.AS.avm1lib.AVM1Globals;
   }
 }

@@ -21,9 +21,9 @@ import flash.geom.ColorTransform;
 import flash.geom.Matrix;
 import flash.geom.Rectangle;
 
-[native(cls="AS2BitmapData")]
-public dynamic class AS2BitmapData extends BitmapData {
-  public function AS2BitmapData(width:int, height:int, transparent:Boolean = true,
+[native(cls="AVM1BitmapData")]
+public dynamic class AVM1BitmapData extends BitmapData {
+  public function AVM1BitmapData(width:int, height:int, transparent:Boolean = true,
                                        fillColor:uint = 4294967295)
   {
     super(width, height, transparent, fillColor);
@@ -35,8 +35,8 @@ public dynamic class AS2BitmapData extends BitmapData {
                                 blendMode:String = null, clipRect:Rectangle = null,
                                 smoothing:Boolean = false):void
   {
-    if (source is AS2MovieClip) {
-      source = AS2MovieClip(source)._as3Object;
+    if (source is AVM1MovieClip) {
+      source = AVM1MovieClip(source)._as3Object;
     }
     super.draw(source, matrix, colorTransform, blendMode, clipRect, smoothing);
   }

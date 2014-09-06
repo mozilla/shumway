@@ -15,16 +15,16 @@
  */
 
 package avm1lib {
-  import avm1lib.AS2Utils;
+  import avm1lib.AVM1Utils;
   import flash.geom.ColorTransform;
 
-  public dynamic class AS2Color
+  public dynamic class AVM1Color
   {
     private var __target: Object;
 
-    public function AS2Color(target_mc)
+    public function AVM1Color(target_mc)
     {
-      this.__target = AS2Utils.resolveTarget(target_mc);
+      this.__target = AVM1Utils.resolveTarget(target_mc);
     }
     public function getRGB()
     {

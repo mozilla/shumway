@@ -15,7 +15,7 @@
  */
 
 package avm1lib {
-  public class AS2Broadcaster {
+  public class AVM1Broadcaster {
     public static function initialize(obj: Object): void {
       obj._listeners = [];
       obj.broadcastMessage = _broadcastMessage;

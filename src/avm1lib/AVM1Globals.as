@@ -36,27 +36,27 @@ import flash.utils.clearInterval;
 import flash.utils.clearTimeout;
 import flash.utils.getTimer;
 
-[native(cls="AS2Globals")]
-public dynamic class AS2Globals {
+[native(cls="AVM1Globals")]
+public dynamic class AVM1Globals {
   // TODO: change this when entering a domain.
   public static var instance;
   public var _global;
 
   public var flash:Object;
 
-  public function AS2Globals() {
-    AS2Globals.instance = this;
+  public function AVM1Globals() {
+    AVM1Globals.instance = this;
     this._global = this;
   }
 
   public function $asfunction(link) {
-    notImplemented('AS2Globals.$asfunction');
+    notImplemented('AVM1Globals.$asfunction');
   }
 
   public native function ASSetPropFlags(obj, children, flags, allowFalse);
 
   public function call(frame) {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     nativeTarget._callFrame(frame);
   }
   public function chr(number) {
@@ -66,7 +66,7 @@ public dynamic class AS2Globals {
   public var clearTimeout:Function = flash.utils.clearTimeout;
 
   public function duplicateMovieClip(target, newname, depth) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget.duplicateMovieClip(newname, depth);
   }
 
@@ -75,8 +75,8 @@ public dynamic class AS2Globals {
   public native function escape(str: String): String;
   public native function unescape(str: String): String;
 
-  public function getAS2Property(target, index) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+  public function getAVM1Property(target, index) {
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     return nativeTarget[PropertiesIndexMap[index]];
   }
 
@@ -101,7 +101,7 @@ public dynamic class AS2Globals {
   private native function _addToPendingScripts(subject:Object, fn:Function, args:Array = null);
 
   public function gotoAndPlay(scene, frame) {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     if (arguments.length < 2) {
       _addToPendingScripts(nativeTarget, nativeTarget.gotoAndPlay, [arguments[0]]);
     } else {
@@ -110,7 +110,7 @@ public dynamic class AS2Globals {
   }
 
   public function gotoAndStop(scene, frame) {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     if (arguments.length < 2) {
       _addToPendingScripts(nativeTarget, nativeTarget.gotoAndStop, [arguments[0]]);
     } else {
@@ -119,7 +119,7 @@ public dynamic class AS2Globals {
   }
 
   public function gotoLabel(label) {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     _addToPendingScripts(nativeTarget, function (subject, label) {
       subject._gotoLabel(label);
     }, [nativeTarget, label]);
@@ -127,7 +127,7 @@ public dynamic class AS2Globals {
 
   public function ifFrameLoaded(scene, frame) {
     // ignoring scene parameter ?
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     var frameNum = arguments.length < 2 ? arguments[0] : arguments[1];
     var framesLoaded = nativeTarget._framesloaded;
     var totalFrames = nativeTarget._totalframes;
@@ -163,7 +163,7 @@ public dynamic class AS2Globals {
       }
       loader.load(request);
     } else {
-      var nativeTarget: flash.display.MovieClip = AS2Utils.resolveTarget(target);
+      var nativeTarget: flash.display.MovieClip = AVM1Utils.resolveTarget(target);
       nativeTarget.loadMovie(url, method);
     }
   }
@@ -185,7 +185,7 @@ public dynamic class AS2Globals {
     loader.load(request);
   }
   public function loadVariables(url: String, target: Object, method: String = ''): void {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     var request = new URLRequest(url);
     if (method) {
       request.method = method;
@@ -217,46 +217,46 @@ public dynamic class AS2Globals {
     return ('' + value).substr(index, count);
   }
   public function nextFrame() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     _addToPendingScripts(nativeTarget, nativeTarget.nextFrame);
   }
   public function nextScene() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     _addToPendingScripts(nativeTarget, nativeTarget.nextScene);
   }
   public function ord(character) {
     return ('' + character).charCodeAt(0); // ASCII only?
   }
   public function play() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     nativeTarget.play();
   }
   public function prevFrame() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     _addToPendingScripts(nativeTarget, nativeTarget.prevFrame);
   }
   public function prevScene() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     _addToPendingScripts(nativeTarget, nativeTarget.prevScene);
   }
   public function print(target, boundingBox) {
     // flash.printing.PrintJob
-    notImplemented('AS2Globals.print');
+    notImplemented('AVM1Globals.print');
   }
   public function printAsBitmap(target, boundingBox) {
-    notImplemented('AS2Globals.printAsBitmap');
+    notImplemented('AVM1Globals.printAsBitmap');
   }
   public function printAsBitmapNum(level, boundingBox) {
-    notImplemented('AS2Globals.printAsBitmapNum');
+    notImplemented('AVM1Globals.printAsBitmapNum');
   }
   public function printNum(level, bondingBox) {
-    notImplemented('AS2Globals.printNum');
+    notImplemented('AVM1Globals.printNum');
   }
   public function random(value) {
     return 0 | (Math.random() * (0 | value));
   }
   public function removeMovieClip(target) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget.removeMovieClip();
   }
   public function setInterval(): * {
@@ -287,8 +287,8 @@ public dynamic class AS2Globals {
     args[1] |= 0;
     return flash.utils.setInterval.apply(null, args);
   }
-  public function setAS2Property(target, index, value) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+  public function setAVM1Property(target, index, value) {
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget[PropertiesIndexMap[index]] = value;
   }
   public function setTimeout() {
@@ -303,48 +303,48 @@ public dynamic class AS2Globals {
   }
   public function showRedrawRegions(enable, color) {
     // flash.profiler.showRedrawRegions.apply(null, arguments);
-    notImplemented('AS2Globals.showRedrawRegions');
+    notImplemented('AVM1Globals.showRedrawRegions');
   }
   public function startDrag(target, lock, left, top, right, bottom) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget.startDrag(lock, arguments.length < 3 ? null :
       new Rectangle(left, top, right - left, bottom - top));
   }
   public function stop() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     nativeTarget.stop();
   }
   public function stopAllSounds() {
     SoundMixer.stopAll();
   }
   public function stopDrag(target) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget.stopDrag();
   }
   public function substring(value, index, count) {
     return mbsubstring(value, index, count); // ASCII Only?
   }
   public function targetPath(target) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     return nativeTarget._target;
   }
   public function toggleHighQuality() {
     // flash.display.Stage.quality
-    notImplemented('AS2Globals.toggleHighQuality');
+    notImplemented('AVM1Globals.toggleHighQuality');
   }
   public native function trace(expression);
 
   public function unloadMovie(target) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget.unloadMovie();
   }
   public function unloadMovieNum(level) {
-    var nativeTarget = AS2Utils.resolveLevel(level);
+    var nativeTarget = AVM1Utils.resolveLevel(level);
     nativeTarget.unloadMovie();
   }
   public function updateAfterEvent() {
     // flash.events.TimerEvent.updateAfterEvent
-    notImplemented('AS2Globals.updateAfterEvent');
+    notImplemented('AVM1Globals.updateAfterEvent');
   }
 
   // built-ins
@@ -364,18 +364,18 @@ public dynamic class AS2Globals {
   public native function parseInt(s:String = "NaN", radix = 0):Number;
 
   public var undefined:* = undefined;
-  public var MovieClip:Class = AS2MovieClip;
-  public var AsBroadcaster:Class = AS2Broadcaster;
-  public var System:Class = AS2System;
-  public var Stage:Class = AS2Stage;
-  public var Button:Class = AS2Button;
-  public var TextField:Class = AS2TextField;
-  public var Color:Class = AS2Color;
-  public var Key:Class = AS2Key;
-  public var Mouse:Class = AS2Mouse;
-  public var MovieClipLoader:Class = AS2MovieClipLoader;
+  public var MovieClip:Class = AVM1MovieClip;
+  public var AsBroadcaster:Class = AVM1Broadcaster;
+  public var System:Class = AVM1System;
+  public var Stage:Class = AVM1Stage;
+  public var Button:Class = AVM1Button;
+  public var TextField:Class = AVM1TextField;
+  public var Color:Class = AVM1Color;
+  public var Key:Class = AVM1Key;
+  public var Mouse:Class = AVM1Mouse;
+  public var MovieClipLoader:Class = AVM1MovieClipLoader;
 
-  public var Sound:Class = AS2Sound;
+  public var Sound:Class = AVM1Sound;
   public var SharedObject:Class = SharedObject;
   public var ContextMenu:Class = ContextMenu;
   public var ContextMenuItem:Class = ContextMenuItem;

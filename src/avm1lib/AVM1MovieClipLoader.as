@@ -22,10 +22,10 @@ import flash.events.IOErrorEvent;
 import flash.events.ProgressEvent;
 import flash.net.URLRequest;
 
-[native(cls="AS2MovieClipLoader")]
-public dynamic class AS2MovieClipLoader extends Object {
-  public function AS2MovieClipLoader() {
-    AS2Broadcaster.initialize(this);
+[native(cls="AVM1MovieClipLoader")]
+public dynamic class AVM1MovieClipLoader extends Object {
+  public function AVM1MovieClipLoader() {
+    AVM1Broadcaster.initialize(this);
     _setAS3Object(new Loader());
   }
 
@@ -36,8 +36,8 @@ public dynamic class AS2MovieClipLoader extends Object {
   public function loadClip(url: String, target: Object): Boolean {
     var nativeObject: Loader = this._as3Object;
     var nativeTarget: MovieClip = typeof target === 'number'
-                                  ? AS2Utils.resolveLevel(target as Number)
-                                  : AS2Utils.resolveTarget(target);
+                                  ? AVM1Utils.resolveLevel(target as Number)
+                                  : AVM1Utils.resolveTarget(target);
     nativeTarget._as3Object.addChild(nativeObject);
 
     nativeObject.contentLoaderInfo.addEventListener(Event.OPEN, openHandler);
@@ -53,8 +53,8 @@ public dynamic class AS2MovieClipLoader extends Object {
   public function unloadClip(target: Object): Boolean {
     var nativeObject: Loader = this._as3Object;
     var nativeTarget: MovieClip = typeof target === 'number'
-                                  ? AS2Utils.resolveLevel(target as Number)
-                                  : AS2Utils.resolveTarget(target);
+                                  ? AVM1Utils.resolveLevel(target as Number)
+                                  : AVM1Utils.resolveTarget(target);
     nativeTarget._as3Object.removeChild(nativeObject);
     // TODO: find out under which conditions unloading a clip can fail
     return true;

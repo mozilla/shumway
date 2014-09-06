@@ -15,7 +15,7 @@
  */
 
 package avm1lib {
-import avm1lib.AS2Utils;
+import avm1lib.AVM1Utils;
 
 import flash.geom.ColorTransform;
 
@@ -25,12 +25,12 @@ import flash.geom.Matrix;
 import flash.geom.Rectangle;
 import flash.geom.Rectangle;
 
-public dynamic class AS2Transform
+public dynamic class AVM1Transform
 {
   private var __target : Object;
 
-  public function AS2Transform(mc : AS2MovieClip) {
-    this.__target = AS2Utils.resolveTarget(mc);
+  public function AVM1Transform(mc : AVM1MovieClip) {
+    this.__target = AVM1Utils.resolveTarget(mc);
   }
 
   public function get matrix() : Object // was Matrix, changed to match setter

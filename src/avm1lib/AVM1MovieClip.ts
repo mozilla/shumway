@@ -19,11 +19,11 @@ module Shumway.AVM2.AS.avm1lib {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import construct = Shumway.AVM2.Runtime.construct;
-  import AS2Context = Shumway.AVM1.AS2Context;
+  import AVM1Context = Shumway.AVM1.AVM1Context;
   import Bitmap = flash.display.Bitmap;
 
 
-  export class AS2MovieClip extends ASNative {
+  export class AVM1MovieClip extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -64,7 +64,7 @@ module Shumway.AVM2.AS.avm1lib {
       return this._nativeAS3Object;
     }
 
-    attachBitmap(bmp: AS2BitmapData, depth: number,
+    attachBitmap(bmp: AVM1BitmapData, depth: number,
                  pixelSnapping: String = 'auto',
                  smoothing: Boolean = false): void
     {
@@ -73,8 +73,8 @@ module Shumway.AVM2.AS.avm1lib {
     }
 
     _constructMovieClipSymbol(symbolId: string, name: string): flash.display.MovieClip {
-      var theClass = AS2Context.instance.classes && AS2Context.instance.classes[symbolId];
-      var symbol = AS2Context.instance.getAsset(symbolId);
+      var theClass = AVM1Context.instance.classes && AVM1Context.instance.classes[symbolId];
+      var symbol = AVM1Context.instance.getAsset(symbolId);
 
       var mc: flash.display.MovieClip = flash.display.MovieClip.initializeFrom(symbol);
       flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
@@ -87,14 +87,14 @@ module Shumway.AVM2.AS.avm1lib {
       var nativeAS3Object = <any> this._nativeAS3Object;
       nativeAS3Object._callFrame(frame);
     }
-    _insertChildAtDepth(mc: any, depth: number): AS2MovieClip {
+    _insertChildAtDepth(mc: any, depth: number): AVM1MovieClip {
       var nativeAS3Object = <flash.display.MovieClip> this._nativeAS3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
-      // Bitmaps aren't reflected in AS2, so the rest here doesn't apply.
+      // Bitmaps aren't reflected in AVM1, so the rest here doesn't apply.
       if (flash.display.Bitmap.isType(mc)) {
         return null;
       }
-      var as2mc = getAS2Object(mc);
+      var as2mc = getAVM1Object(mc);
       var name:string = mc.name;
       if (name) {
         this.asSetPublicProperty(name, as2mc);
@@ -102,7 +102,7 @@ module Shumway.AVM2.AS.avm1lib {
       return as2mc;
     }
 
-    getInstanceAtDepth(depth: number): AS2MovieClip {
+    getInstanceAtDepth(depth: number): AVM1MovieClip {
       var nativeObject = this._nativeAS3Object;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
         var child = nativeObject.getChildAt(i);
@@ -112,7 +112,7 @@ module Shumway.AVM2.AS.avm1lib {
           if (flash.display.Bitmap.isType(child)) {
             return this;
           }
-          return getAS2Object(child);
+          return getAVM1Object(child);
         }
       }
       return null;

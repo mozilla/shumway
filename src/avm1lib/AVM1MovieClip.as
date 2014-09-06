@@ -26,11 +26,11 @@ import flash.net.URLRequest;
 import flash.net.navigateToURL;
 import flash.text.TextField;
 
-[native(cls="AS2MovieClip")]
-public dynamic class AS2MovieClip extends Object {
+[native(cls="AVM1MovieClip")]
+public dynamic class AVM1MovieClip extends Object {
   private native function _init(nativeMovieClip:MovieClip);
 
-  function AS2MovieClip(nativeMovieClip:MovieClip) {
+  function AVM1MovieClip(nativeMovieClip:MovieClip) {
     _init(nativeMovieClip);
   }
 
@@ -40,9 +40,9 @@ public dynamic class AS2MovieClip extends Object {
     if (id == '.') {
       return this;
     } else if (id == '..') {
-      return AS2Utils.getAS2Object(this._as3Object.parent);
+      return AVM1Utils.getAVM1Object(this._as3Object.parent);
     } else {
-      return AS2Utils.getAS2Object(this._as3Object.getChildByName(id));
+      return AVM1Utils.getAVM1Object(this._as3Object.getChildByName(id));
     }
   }
   public function get __targetPath() {
@@ -59,7 +59,7 @@ public dynamic class AS2MovieClip extends Object {
   public function attachAudio(id) {
     throw 'Not implemented: attachAudio';
   }
-  public native  function attachBitmap(bmp: AS2BitmapData, depth: int,
+  public native  function attachBitmap(bmp: AVM1BitmapData, depth: int,
                                        pixelSnapping: String = 'auto',
                                        smoothing: Boolean = false): void;
 
@@ -129,7 +129,7 @@ public dynamic class AS2MovieClip extends Object {
   }
   private native function _duplicate(name, depth, initObject);
   public function duplicateMovieClip(name, depth, initObject) {
-    var newMovieClip = AS2Utils.getAS2Object(_duplicate(name, +depth, initObject));
+    var newMovieClip = AVM1Utils.getAVM1Object(_duplicate(name, +depth, initObject));
     return newMovieClip;
   }
   public function get enabled() {
@@ -186,7 +186,7 @@ public dynamic class AS2MovieClip extends Object {
   public function getDepth() {
     return this._as3Object._depth;
   }
-  public native function getInstanceAtDepth(depth): AS2MovieClip;
+  public native function getInstanceAtDepth(depth): AVM1MovieClip;
   public native function getNextHighestDepth(): int;
 
   public function getRect(bounds) {
@@ -236,7 +236,7 @@ public dynamic class AS2MovieClip extends Object {
     throw 'Not implemented: set$hitArea';
   }
   public function hitTest(x, y, shapeFlag) {
-    if (x is AS2MovieClip) {
+    if (x is AVM1MovieClip) {
       return this._as3Object.hitTestObject(x._as3Object);
     } else {
       return this._as3Object.hitTestPoint(x, y, shapeFlag);
@@ -281,15 +281,15 @@ public dynamic class AS2MovieClip extends Object {
   public function set _lockroot(value) {
     throw 'Not implemented: set$_lockroot';
   }
-  // AS2 pretends that these two properties don't exist on MovieClip instances, but happily
+  // AVM1 pretends that these two properties don't exist on MovieClip instances, but happily
   // resolves them nevertheless.
   // TODO: make invisible to `hasOwnProperty`.
-  public function get _root(): AS2MovieClip {
-    return AS2Globals.instance._root;
+  public function get _root(): AVM1MovieClip {
+    return AVM1Globals.instance._root;
   }
   // TODO: make invisible to `hasOwnProperty`.
-  public function get _level0(): AS2MovieClip {
-    return AS2Globals.instance._level0;
+  public function get _level0(): AVM1MovieClip {
+    return AVM1Globals.instance._level0;
   }
   public function get menu() {
     return this._as3Object.contextMenu;
@@ -317,7 +317,7 @@ public dynamic class AS2MovieClip extends Object {
   }
 
   public function get _parent() {
-    return AS2Utils.getAS2Object(this._as3Object.parent);
+    return AVM1Utils.getAVM1Object(this._as3Object.parent);
   }
   public function set _parent(value) {
     throw 'Not implemented: set$_parent';
@@ -358,7 +358,7 @@ public dynamic class AS2MovieClip extends Object {
   }
   public function setMask(mc:Object) {
     var nativeObject = this._as3Object;
-    var mask = AS2Utils.resolveTarget(mc)._as3Object;
+    var mask = AVM1Utils.resolveTarget(mc)._as3Object;
     nativeObject.mask = mask;
   }
   public function get _soundbuftime() {
@@ -380,8 +380,8 @@ public dynamic class AS2MovieClip extends Object {
   public function swapDepths(target:Object) {
     var child1 = this._as3Object;
     var child2 = typeof target === 'number' ?
-      AS2Utils.resolveLevel(Number(target))._as3Object :
-      AS2Utils.resolveTarget(target)._as3Object;
+      AVM1Utils.resolveLevel(Number(target))._as3Object :
+      AVM1Utils.resolveTarget(target)._as3Object;
     if (child1.parent !== child2.parent) {
       return; // must be the same parent
     }
@@ -497,27 +497,27 @@ public dynamic class AS2MovieClip extends Object {
   }
 
   {
-    AS2Utils.addEventHandlerProxy(prototype, 'onData', 'data');
-    AS2Utils.addEventHandlerProxy(prototype, 'onDragOut', 'dragOut');
-    AS2Utils.addEventHandlerProxy(prototype, 'onDragOver', 'dragOver');
-    AS2Utils.addEventHandlerProxy(prototype, 'onEnterFrame', 'enterFrame');
-    AS2Utils.addEventHandlerProxy(prototype, 'onKeyDown', 'keyDown');
-    AS2Utils.addEventHandlerProxy(prototype, 'onKeyUp', 'keyUp');
-    AS2Utils.addEventHandlerProxy(prototype, 'onKillFocus', 'focusOut', function (e) {
+    AVM1Utils.addEventHandlerProxy(prototype, 'onData', 'data');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onDragOut', 'dragOut');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onDragOver', 'dragOver');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onEnterFrame', 'enterFrame');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onKeyDown', 'keyDown');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onKeyUp', 'keyUp');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onKillFocus', 'focusOut', function (e) {
       return [e.relatedObject];
     });
-    AS2Utils.addEventHandlerProxy(prototype, 'onLoad', 'load');
-    AS2Utils.addEventHandlerProxy(prototype, 'onMouseDown', 'mouseDown');
-    AS2Utils.addEventHandlerProxy(prototype, 'onMouseUp', 'mouseUp');
-    AS2Utils.addEventHandlerProxy(prototype, 'onPress', 'mouseDown');
-    AS2Utils.addEventHandlerProxy(prototype, 'onRelease', 'mouseUp');
-    AS2Utils.addEventHandlerProxy(prototype, 'onReleaseOutside', 'releaseOutside');
-    AS2Utils.addEventHandlerProxy(prototype, 'onRollOut', 'mouseOut');
-    AS2Utils.addEventHandlerProxy(prototype, 'onRollOver', 'mouseOver');
-    AS2Utils.addEventHandlerProxy(prototype, 'onSetFocus', 'focusIn', function (e) {
+    AVM1Utils.addEventHandlerProxy(prototype, 'onLoad', 'load');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onMouseDown', 'mouseDown');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onMouseUp', 'mouseUp');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onPress', 'mouseDown');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onRelease', 'mouseUp');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onReleaseOutside', 'releaseOutside');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onRollOut', 'mouseOut');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onRollOver', 'mouseOver');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onSetFocus', 'focusIn', function (e) {
       return [e.relatedObject];
     });
-    AS2Utils.addEventHandlerProxy(prototype, 'onUnload', 'unload');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onUnload', 'unload');
   }
 }
 }

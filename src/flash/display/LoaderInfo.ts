@@ -114,7 +114,7 @@ module Shumway.AVM2.AS.flash.display {
     _colorRGBA: number;
 
     _dictionary: Shumway.Timeline.Symbol [];
-    _avm1Context: Shumway.AVM1.AS2Context;
+    _avm1Context: Shumway.AVM1.AVM1Context;
 
     get loaderURL(): string {
       return this._loaderURL;
