@@ -246,7 +246,7 @@ public dynamic class AS2TextField extends Object {
   }
 
   public function get _target() {
-    return AS2Utils.getTarget(this);
+    return AVM1Utils.getTarget(this);
   }
 
   public function get text() {
@@ -350,22 +350,22 @@ public dynamic class AS2TextField extends Object {
 
 
   {
-    AS2Utils.addEventHandlerProxy(prototype, 'onDragOut', 'dragOut');
-    AS2Utils.addEventHandlerProxy(prototype, 'onDragOver', 'dragOver');
-    AS2Utils.addEventHandlerProxy(prototype, 'onKeyDown', 'keyDown');
-    AS2Utils.addEventHandlerProxy(prototype, 'onKeyUp', 'keyUp');
-    AS2Utils.addEventHandlerProxy(prototype, 'onKillFocus', 'focusOut', function (e) {
+    AVM1Utils.addEventHandlerProxy(prototype, 'onDragOut', 'dragOut');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onDragOver', 'dragOver');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onKeyDown', 'keyDown');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onKeyUp', 'keyUp');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onKillFocus', 'focusOut', function (e) {
       return [e.relatedObject];
     });
-    AS2Utils.addEventHandlerProxy(prototype, 'onLoad', 'load');
-    AS2Utils.addEventHandlerProxy(prototype, 'onMouseDown', 'mouseDown');
-    AS2Utils.addEventHandlerProxy(prototype, 'onMouseUp', 'mouseUp');
-    AS2Utils.addEventHandlerProxy(prototype, 'onPress', 'mouseDown');
-    AS2Utils.addEventHandlerProxy(prototype, 'onRelease', 'mouseUp');
-    AS2Utils.addEventHandlerProxy(prototype, 'onReleaseOutside', 'releaseOutside');
-    AS2Utils.addEventHandlerProxy(prototype, 'onRollOut', 'mouseOut');
-    AS2Utils.addEventHandlerProxy(prototype, 'onRollOver', 'mouseOver');
-    AS2Utils.addEventHandlerProxy(prototype, 'onSetFocus', 'focusIn', function (e) {
+    AVM1Utils.addEventHandlerProxy(prototype, 'onLoad', 'load');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onMouseDown', 'mouseDown');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onMouseUp', 'mouseUp');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onPress', 'mouseDown');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onRelease', 'mouseUp');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onReleaseOutside', 'releaseOutside');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onRollOut', 'mouseOut');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onRollOver', 'mouseOver');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onSetFocus', 'focusIn', function (e) {
       return [e.relatedObject];
     });
   }

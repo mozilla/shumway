@@ -16,11 +16,11 @@
 
 package avm1lib {
   import avm1lib.AS2Broadcaster;
-  import avm1lib.AS2Utils;
+  import avm1lib.AVM1Utils;
   import flash.display.Stage;
 
   public dynamic class AS2Stage {
-    static function get $stage() : flash.display.Stage { return AS2Utils.currentStage;  }
+    static function get $stage() : flash.display.Stage { return AVM1Utils.currentStage;  }
 
     public static function get align() { return $stage.align; }
     public static function set align(value) { $stage.align = value; }

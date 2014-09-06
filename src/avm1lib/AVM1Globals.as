@@ -56,7 +56,7 @@ public dynamic class AVM1Globals {
   public native function ASSetPropFlags(obj, children, flags, allowFalse);
 
   public function call(frame) {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     nativeTarget._callFrame(frame);
   }
   public function chr(number) {
@@ -66,7 +66,7 @@ public dynamic class AVM1Globals {
   public var clearTimeout:Function = flash.utils.clearTimeout;
 
   public function duplicateMovieClip(target, newname, depth) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget.duplicateMovieClip(newname, depth);
   }
 
@@ -76,7 +76,7 @@ public dynamic class AVM1Globals {
   public native function unescape(str: String): String;
 
   public function getAS2Property(target, index) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     return nativeTarget[PropertiesIndexMap[index]];
   }
 
@@ -101,7 +101,7 @@ public dynamic class AVM1Globals {
   private native function _addToPendingScripts(subject:Object, fn:Function, args:Array = null);
 
   public function gotoAndPlay(scene, frame) {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     if (arguments.length < 2) {
       _addToPendingScripts(nativeTarget, nativeTarget.gotoAndPlay, [arguments[0]]);
     } else {
@@ -110,7 +110,7 @@ public dynamic class AVM1Globals {
   }
 
   public function gotoAndStop(scene, frame) {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     if (arguments.length < 2) {
       _addToPendingScripts(nativeTarget, nativeTarget.gotoAndStop, [arguments[0]]);
     } else {
@@ -119,7 +119,7 @@ public dynamic class AVM1Globals {
   }
 
   public function gotoLabel(label) {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     _addToPendingScripts(nativeTarget, function (subject, label) {
       subject._gotoLabel(label);
     }, [nativeTarget, label]);
@@ -127,7 +127,7 @@ public dynamic class AVM1Globals {
 
   public function ifFrameLoaded(scene, frame) {
     // ignoring scene parameter ?
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     var frameNum = arguments.length < 2 ? arguments[0] : arguments[1];
     var framesLoaded = nativeTarget._framesloaded;
     var totalFrames = nativeTarget._totalframes;
@@ -163,7 +163,7 @@ public dynamic class AVM1Globals {
       }
       loader.load(request);
     } else {
-      var nativeTarget: flash.display.MovieClip = AS2Utils.resolveTarget(target);
+      var nativeTarget: flash.display.MovieClip = AVM1Utils.resolveTarget(target);
       nativeTarget.loadMovie(url, method);
     }
   }
@@ -185,7 +185,7 @@ public dynamic class AVM1Globals {
     loader.load(request);
   }
   public function loadVariables(url: String, target: Object, method: String = ''): void {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     var request = new URLRequest(url);
     if (method) {
       request.method = method;
@@ -217,26 +217,26 @@ public dynamic class AVM1Globals {
     return ('' + value).substr(index, count);
   }
   public function nextFrame() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     _addToPendingScripts(nativeTarget, nativeTarget.nextFrame);
   }
   public function nextScene() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     _addToPendingScripts(nativeTarget, nativeTarget.nextScene);
   }
   public function ord(character) {
     return ('' + character).charCodeAt(0); // ASCII only?
   }
   public function play() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     nativeTarget.play();
   }
   public function prevFrame() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     _addToPendingScripts(nativeTarget, nativeTarget.prevFrame);
   }
   public function prevScene() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     _addToPendingScripts(nativeTarget, nativeTarget.prevScene);
   }
   public function print(target, boundingBox) {
@@ -256,7 +256,7 @@ public dynamic class AVM1Globals {
     return 0 | (Math.random() * (0 | value));
   }
   public function removeMovieClip(target) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget.removeMovieClip();
   }
   public function setInterval(): * {
@@ -288,7 +288,7 @@ public dynamic class AVM1Globals {
     return flash.utils.setInterval.apply(null, args);
   }
   public function setAS2Property(target, index, value) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget[PropertiesIndexMap[index]] = value;
   }
   public function setTimeout() {
@@ -306,26 +306,26 @@ public dynamic class AVM1Globals {
     notImplemented('AVM1Globals.showRedrawRegions');
   }
   public function startDrag(target, lock, left, top, right, bottom) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget.startDrag(lock, arguments.length < 3 ? null :
       new Rectangle(left, top, right - left, bottom - top));
   }
   public function stop() {
-    var nativeTarget = AS2Utils.resolveTarget();
+    var nativeTarget = AVM1Utils.resolveTarget();
     nativeTarget.stop();
   }
   public function stopAllSounds() {
     SoundMixer.stopAll();
   }
   public function stopDrag(target) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget.stopDrag();
   }
   public function substring(value, index, count) {
     return mbsubstring(value, index, count); // ASCII Only?
   }
   public function targetPath(target) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     return nativeTarget._target;
   }
   public function toggleHighQuality() {
@@ -335,11 +335,11 @@ public dynamic class AVM1Globals {
   public native function trace(expression);
 
   public function unloadMovie(target) {
-    var nativeTarget = AS2Utils.resolveTarget(target);
+    var nativeTarget = AVM1Utils.resolveTarget(target);
     nativeTarget.unloadMovie();
   }
   public function unloadMovieNum(level) {
-    var nativeTarget = AS2Utils.resolveLevel(level);
+    var nativeTarget = AVM1Utils.resolveLevel(level);
     nativeTarget.unloadMovie();
   }
   public function updateAfterEvent() {

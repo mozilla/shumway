@@ -40,9 +40,9 @@ public dynamic class AS2MovieClip extends Object {
     if (id == '.') {
       return this;
     } else if (id == '..') {
-      return AS2Utils.getAS2Object(this._as3Object.parent);
+      return AVM1Utils.getAS2Object(this._as3Object.parent);
     } else {
-      return AS2Utils.getAS2Object(this._as3Object.getChildByName(id));
+      return AVM1Utils.getAS2Object(this._as3Object.getChildByName(id));
     }
   }
   public function get __targetPath() {
@@ -129,7 +129,7 @@ public dynamic class AS2MovieClip extends Object {
   }
   private native function _duplicate(name, depth, initObject);
   public function duplicateMovieClip(name, depth, initObject) {
-    var newMovieClip = AS2Utils.getAS2Object(_duplicate(name, +depth, initObject));
+    var newMovieClip = AVM1Utils.getAS2Object(_duplicate(name, +depth, initObject));
     return newMovieClip;
   }
   public function get enabled() {
@@ -317,7 +317,7 @@ public dynamic class AS2MovieClip extends Object {
   }
 
   public function get _parent() {
-    return AS2Utils.getAS2Object(this._as3Object.parent);
+    return AVM1Utils.getAS2Object(this._as3Object.parent);
   }
   public function set _parent(value) {
     throw 'Not implemented: set$_parent';
@@ -358,7 +358,7 @@ public dynamic class AS2MovieClip extends Object {
   }
   public function setMask(mc:Object) {
     var nativeObject = this._as3Object;
-    var mask = AS2Utils.resolveTarget(mc)._as3Object;
+    var mask = AVM1Utils.resolveTarget(mc)._as3Object;
     nativeObject.mask = mask;
   }
   public function get _soundbuftime() {
@@ -380,8 +380,8 @@ public dynamic class AS2MovieClip extends Object {
   public function swapDepths(target:Object) {
     var child1 = this._as3Object;
     var child2 = typeof target === 'number' ?
-      AS2Utils.resolveLevel(Number(target))._as3Object :
-      AS2Utils.resolveTarget(target)._as3Object;
+      AVM1Utils.resolveLevel(Number(target))._as3Object :
+      AVM1Utils.resolveTarget(target)._as3Object;
     if (child1.parent !== child2.parent) {
       return; // must be the same parent
     }
@@ -497,27 +497,27 @@ public dynamic class AS2MovieClip extends Object {
   }
 
   {
-    AS2Utils.addEventHandlerProxy(prototype, 'onData', 'data');
-    AS2Utils.addEventHandlerProxy(prototype, 'onDragOut', 'dragOut');
-    AS2Utils.addEventHandlerProxy(prototype, 'onDragOver', 'dragOver');
-    AS2Utils.addEventHandlerProxy(prototype, 'onEnterFrame', 'enterFrame');
-    AS2Utils.addEventHandlerProxy(prototype, 'onKeyDown', 'keyDown');
-    AS2Utils.addEventHandlerProxy(prototype, 'onKeyUp', 'keyUp');
-    AS2Utils.addEventHandlerProxy(prototype, 'onKillFocus', 'focusOut', function (e) {
+    AVM1Utils.addEventHandlerProxy(prototype, 'onData', 'data');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onDragOut', 'dragOut');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onDragOver', 'dragOver');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onEnterFrame', 'enterFrame');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onKeyDown', 'keyDown');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onKeyUp', 'keyUp');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onKillFocus', 'focusOut', function (e) {
       return [e.relatedObject];
     });
-    AS2Utils.addEventHandlerProxy(prototype, 'onLoad', 'load');
-    AS2Utils.addEventHandlerProxy(prototype, 'onMouseDown', 'mouseDown');
-    AS2Utils.addEventHandlerProxy(prototype, 'onMouseUp', 'mouseUp');
-    AS2Utils.addEventHandlerProxy(prototype, 'onPress', 'mouseDown');
-    AS2Utils.addEventHandlerProxy(prototype, 'onRelease', 'mouseUp');
-    AS2Utils.addEventHandlerProxy(prototype, 'onReleaseOutside', 'releaseOutside');
-    AS2Utils.addEventHandlerProxy(prototype, 'onRollOut', 'mouseOut');
-    AS2Utils.addEventHandlerProxy(prototype, 'onRollOver', 'mouseOver');
-    AS2Utils.addEventHandlerProxy(prototype, 'onSetFocus', 'focusIn', function (e) {
+    AVM1Utils.addEventHandlerProxy(prototype, 'onLoad', 'load');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onMouseDown', 'mouseDown');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onMouseUp', 'mouseUp');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onPress', 'mouseDown');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onRelease', 'mouseUp');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onReleaseOutside', 'releaseOutside');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onRollOut', 'mouseOut');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onRollOver', 'mouseOver');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onSetFocus', 'focusIn', function (e) {
       return [e.relatedObject];
     });
-    AS2Utils.addEventHandlerProxy(prototype, 'onUnload', 'unload');
+    AVM1Utils.addEventHandlerProxy(prototype, 'onUnload', 'unload');
   }
 }
 }

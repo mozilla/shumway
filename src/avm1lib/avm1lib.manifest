@@ -1,7 +1,7 @@
 {
   "playerglobal": true,
   "files": [
-    "AS2Utils.as",
+    "AVM1Utils.as",
     "AS2Broadcaster.as",
     "AS2MovieClip.as",
     "AS2Button.as",

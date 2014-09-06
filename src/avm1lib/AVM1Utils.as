@@ -24,8 +24,8 @@ package avm1lib {
   import flash.geom.Rectangle;
   import flash.external.ExternalInterface;
 
-  [native(cls="AS2Utils")]
-  public class AS2Utils {
+  [native(cls="AVM1Utils")]
+  public class AVM1Utils {
     public static native function getAS2Object(nativeObject: Object) : Object;
     public static native function addProperty(obj: Object, name: String, getter: Function, setter: Function, enumerable: Boolean = true);
     public static native function resolveTarget(target_mc:* = undefined) : MovieClip;
@@ -80,15 +80,15 @@ package avm1lib {
   }
 }
 
-import avm1lib.AS2Utils;
+import avm1lib.AVM1Utils;
 
-AS2Utils;
+AVM1Utils;
 
 function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: String, argsConverter: Function)
 {
   var currentHandler: Function = null;
   var handlerRunner: Function = null;
-  AS2Utils.addProperty(obj, propertyName,
+  AVM1Utils.addProperty(obj, propertyName,
     function(): Function {
       return currentHandler;
     },

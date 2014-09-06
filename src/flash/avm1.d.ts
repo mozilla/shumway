@@ -17,7 +17,7 @@
 import ASClass = Shumway.AVM2.AS.ASClass;
 declare module Shumway.AVM2.AS.avm1lib {
   export class AVM1Globals extends ASClass {}
-  export class AS2Utils extends ASClass {}
+  export class AVM1Utils extends ASClass {}
   export class AS2MovieClip extends ASClass {}
   export class AS2BitmapData extends ASClass {}
   export class AS2Button extends ASClass {}

@@ -21,7 +21,7 @@ module Shumway.AVM2.AS.avm1lib {
   import flash = Shumway.AVM2.AS.flash;
   import AVM1Context = Shumway.AVM1.AVM1Context;
 
-  export class AS2Utils extends ASNative {
+  export class AVM1Utils extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer:any = null;
@@ -122,7 +122,7 @@ module Shumway.AVM2.AS.avm1lib {
   }
 
   export function createFlashObject() {
-    return AS2Utils.createFlashObject();
+    return AVM1Utils.createFlashObject();
   }
 
   export function getAS2Object(as3Object) {
