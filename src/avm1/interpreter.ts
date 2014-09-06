@@ -567,7 +567,7 @@ module Shumway.AVM1 {
     return undefined;
   }
 
-  var AS2_SUPER_STUB = {};
+  var AVM1_SUPER_STUB = {};
 
   interface ExecutionContext {
     context: AVM1ContextImpl;
@@ -663,7 +663,7 @@ module Shumway.AVM1 {
           newScope.asSetPublicProperty('this', this);
         }
         if (!(suppressArguments & ArgumentAssignmentType.Super)) {
-          newScope.asSetPublicProperty('super', AS2_SUPER_STUB);
+          newScope.asSetPublicProperty('super', AVM1_SUPER_STUB);
         }
         newScope.asSetPublicProperty('__class', ownerClass);
         newScopeContainer = scopeContainer.create(newScope);
@@ -686,7 +686,7 @@ module Shumway.AVM1 {
                 registers[i] = arguments;
                 break;
               case ArgumentAssignmentType.Super:
-                registers[i] = AS2_SUPER_STUB;
+                registers[i] = AVM1_SUPER_STUB;
                 break;
               case ArgumentAssignmentType.Global:
                 registers[i] = _global;
@@ -1391,7 +1391,7 @@ module Shumway.AVM1 {
       // Per spec, a missing or blank method name causes the container to be treated as
       // a function to call.
       if (isNullOrUndefined(methodName) || methodName === '') {
-        if (obj === AS2_SUPER_STUB) {
+        if (obj === AVM1_SUPER_STUB) {
           obj = avm1GetVariable(ectx, '__class').__super;
           target = avm1GetVariable(ectx, 'this');
         } else {
@@ -1409,7 +1409,7 @@ module Shumway.AVM1 {
         return;
       }
 
-      if (obj === AS2_SUPER_STUB) {
+      if (obj === AVM1_SUPER_STUB) {
         target = as2GetPrototype(avm1GetVariable(ectx, '__class').__super);
         obj = avm1GetVariable(ectx, 'this');
       } else {
