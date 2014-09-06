@@ -55,17 +55,17 @@ module Shumway.AVM1 {
   var MAX_AVM1_ERRORS_LIMIT = 1000;
   var MAX_AVM1_STACK_LIMIT = 256;
 
-  class AS2ScopeListItem {
-    constructor(public scope, public next: AS2ScopeListItem) {
+  class AVM1ScopeListItem {
+    constructor(public scope, public next: AVM1ScopeListItem) {
     }
     create(scope) {
-      return new AS2ScopeListItem(scope, this);
+      return new AVM1ScopeListItem(scope, this);
     }
   }
 
   class AVM1ContextImpl extends AVM1Context {
     swfVersion: number;
-    initialScope: AS2ScopeListItem;
+    initialScope: AVM1ScopeListItem;
     assets;
     isActive: boolean;
     executionProhibited: boolean;
@@ -85,7 +85,7 @@ module Shumway.AVM1 {
         this.globals.asSetPublicProperty("flash",
           Shumway.AVM2.AS.avm1lib.createFlashObject());
       }
-      this.initialScope = new AS2ScopeListItem(this.globals, null);
+      this.initialScope = new AVM1ScopeListItem(this.globals, null);
       this.assets = {};
       this.isActive = false;
       this.executionProhibited = false;
@@ -572,7 +572,7 @@ module Shumway.AVM1 {
   interface ExecutionContext {
     context: AVM1ContextImpl;
     global: Shumway.AVM2.AS.avm1lib.AVM1Globals;
-    scopeContainer: AS2ScopeListItem;
+    scopeContainer: AVM1ScopeListItem;
     scope: any;
     actionTracer: ActionTracer;
     constantPool: any;
