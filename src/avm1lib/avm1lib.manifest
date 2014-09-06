@@ -6,7 +6,7 @@
     "AVM1MovieClip.as",
     "AVM1Button.as",
     "AVM1BitmapData.as",
-    "AS2TextField.as",
+    "AVM1TextField.as",
     "AVM1Key.as",
     "AVM1Mouse.as",
     "AVM1Stage.as",

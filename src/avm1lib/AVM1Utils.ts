@@ -143,7 +143,7 @@ module Shumway.AVM2.AS.avm1lib {
       return new Shumway.AVM2.AS.avm1lib.AVM1Button(as3Object);
     }
     if (flash.text.TextField.isType(as3Object)) {
-      return new Shumway.AVM2.AS.avm1lib.AS2TextField(as3Object);
+      return new Shumway.AVM2.AS.avm1lib.AVM1TextField(as3Object);
     }
     if (flash.display.BitmapData.isType(as3Object)) {
       return new as3Object;

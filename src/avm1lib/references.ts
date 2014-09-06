@@ -6,5 +6,5 @@
 ///<reference path='AVM1MovieClip.ts' />
 ///<reference path='AVM1MovieClipLoader.ts' />
 ///<reference path='AVM1BitmapData.ts' />
-///<reference path='AS2TextField.ts' />
+///<reference path='AVM1TextField.ts' />
 ///<reference path='AS2TextFormat.ts' />

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations undxr the License.
  */
-// Class: AS2TextField
+// Class: AVM1TextField
 module Shumway.AVM2.AS.avm1lib {
   import TextField = Shumway.AVM2.AS.flash.text.TextField;
 
-  export class AS2TextField extends ASNative {
+  export class AVM1TextField extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;

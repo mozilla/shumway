@@ -17,11 +17,11 @@
 package avm1lib {
 import flash.text.TextField;
 
-[native(cls="AS2TextField")]
-public dynamic class AS2TextField extends Object {
+[native(cls="AVM1TextField")]
+public dynamic class AVM1TextField extends Object {
   private native function _init(nativeTextField:TextField);
 
-  function AS2TextField(nativeTextField:TextField) {
+  function AVM1TextField(nativeTextField:TextField) {
     _init(nativeTextField);
   }
 

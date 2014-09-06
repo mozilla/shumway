@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations undxr the License.
  */
-// Class: AS2TextField
+// Class: AVM1TextField
 module Shumway.AVM2.AS.avm1lib {
   import TextField = Shumway.AVM2.AS.flash.text.TextField;
   import TextFormat = Shumway.AVM2.AS.flash.text.TextFormat;
