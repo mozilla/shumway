@@ -31,14 +31,14 @@ module Shumway.Timeline {
    */
   export class Symbol {
     id: number = -1;
-    isAS2Object: boolean;
+    isAVM1Object: boolean;
     symbolClass: Shumway.AVM2.AS.ASClass;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
       release || assert (isInteger(id));
       this.id = id;
       this.symbolClass = symbolClass;
-      this.isAS2Object = false;
+      this.isAVM1Object = false;
     }
   }
 
@@ -247,7 +247,7 @@ module Shumway.Timeline {
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ButtonSymbol {
       var symbol = new ButtonSymbol(data.id);
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-        symbol.isAS2Object = true;
+        symbol.isAVM1Object = true;
         symbol.buttonActions = data.buttonActions;
       }
       var states = data.states;
@@ -288,7 +288,7 @@ module Shumway.Timeline {
       var symbol = new SpriteSymbol(data.id);
       symbol.numFrames = data.frameCount;
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-        symbol.isAS2Object = true;
+        symbol.isAVM1Object = true;
       }
       symbol.frameScripts = data.frameScripts;
       var frames = data.frames;

@@ -159,7 +159,7 @@ module Shumway.AVM2.AS.flash.display {
           self.addScene('', symbol.labels, 0, symbol.numFrames);
         }
         self._frames = symbol.frames;
-        if (symbol.isAS2Object) {
+        if (symbol.isAVM1Object) {
           this._mouseEnabled = false;
           if (symbol.frameScripts) {
             var data = symbol.frameScripts;
@@ -492,7 +492,7 @@ module Shumway.AVM2.AS.flash.display {
           if (state && state.symbol) {
             var character = DisplayObject.createAnimatedDisplayObject(state, false);
             this.addTimelineObjectAtDepth(character, state.depth);
-            if (state.symbol.isAS2Object) {
+            if (state.symbol.isAVM1Object) {
               this._initAvm1Bindings(character, state);
             }
           }
