@@ -172,8 +172,7 @@ module Shumway.AVM1 {
       this.deferScriptExecution = false;
     }
 
-    executeActions(actionsData: AVM1ActionsData, stage, scopeObj) {
-      this.stage = stage;
+    executeActions(actionsData: AVM1ActionsData, scopeObj) {
       executeActions(actionsData, this, scopeObj);
     }
   }

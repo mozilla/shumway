@@ -167,8 +167,7 @@ module Shumway.AVM2.AS.avm1lib {
 
     private _runAction(action: ButtonAction) {
       var avm1Context = this._nativeAS3Object.loaderInfo._avm1Context;
-      avm1Context.executeActions(action.actionsBlock, this._nativeAS3Object.stage,
-                                 getAVM1Object(this._nativeAS3Object._parent));
+      avm1Context.executeActions(action.actionsBlock, getAVM1Object(this._nativeAS3Object._parent));
     }
     get _as3Object(): flash.display.SimpleButton {
       return this._nativeAS3Object;

@@ -113,7 +113,7 @@ module Shumway.AVM2.AS.flash.display {
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
           var child = children[i];
-          if (DisplayObjectContainer.isType(child)) {
+          if (DisplayObjectContainer.isType(child) || AVM1Movie.isType(child)) {
             (<DisplayObjectContainer>child)._enqueueFrameScripts();
           }
         }
