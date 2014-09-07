@@ -256,6 +256,8 @@ module Shumway {
     export function error(message: string) {
       if (!inBrowser) {
         warn(message + "\n\nStack Trace:\n" + Debug.backtrace());
+      } else {
+        warn(message);
       }
       throw new Error(message);
     }
@@ -276,7 +278,7 @@ module Shumway {
 
     export function assertNotImplemented(condition: boolean, message: string) {
       if (!condition) {
-        Debug.error("NotImplemented: " + message);
+        Debug.error("notImplemented: " + message);
       }
     }
 

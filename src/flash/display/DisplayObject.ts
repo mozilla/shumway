@@ -1670,6 +1670,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       return false;
     }
+
     get scrollRect(): flash.geom.Rectangle {
       return this._scrollRect ? this._scrollRect.clone() : null;
     }
@@ -1679,7 +1680,7 @@ module Shumway.AVM2.AS.flash.display {
       this._scrollRect = value ? value.clone() : null;
       /* TODO: Figure out how to deal with the bounds and hit testing when scroll rects are applied.
        * The Flash implementation appears to be broken. */
-      notImplemented("public DisplayObject::set scrollRect");
+      somewhatImplemented("public DisplayObject::set scrollRect");
       return;
     }
 

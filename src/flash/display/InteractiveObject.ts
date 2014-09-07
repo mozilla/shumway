@@ -59,7 +59,7 @@ module Shumway.AVM2.AS.flash.display {
     
     _tabEnabled: boolean;
     _tabIndex: number /*int*/;
-    _focusRect: ASObject;
+    _focusRect: any;
     _mouseEnabled: boolean;
     _doubleClickEnabled: boolean;
     _accessibilityImplementation: flash.accessibility.AccessibilityImplementation;
@@ -93,14 +93,16 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    get focusRect(): ASObject {
+    get focusRect(): any {
       return this._focusRect;
     }
 
-    set focusRect(focusRect: ASObject) {
-      focusRect = focusRect;
-      notImplemented("public flash.display.InteractiveObject::set focusRect"); return;
-      // this._focusRect = focusRect;
+    /**
+     * The given |focusRect| can be one of: |true|, |false| or |null|.
+     */
+    set focusRect(focusRect: any) {
+      somewhatImplemented("public flash.display.InteractiveObject::set focusRect");
+      this._focusRect = focusRect;
     }
 
     get mouseEnabled(): boolean {

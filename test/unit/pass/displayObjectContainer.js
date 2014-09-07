@@ -268,4 +268,29 @@
     eq(container.hitTestPoint(80, 0, true), false);
   });
 
+  unitTests.push(function setChildInex() {
+    var exceptionMessage = null;
+    var s = new Shape();
+    var c = new DisplayObjectContainer();
+    try {
+      c.setChildIndex(s, 0);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'RangeError: Error #2006: The supplied index is out of bounds.');
+  });
+
+  unitTests.push(function setChildInex() {
+    var exceptionMessage = null;
+    var s0 = new Shape();
+    var s1 = new Shape();
+    var c = new DisplayObjectContainer();
+    try {
+      c.addChild(s0);
+      c.setChildIndex(s1, 0);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'ArgumentError: Error #2025: The supplied DisplayObject must be a child of the caller.');
+  });
 })();
