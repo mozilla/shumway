@@ -464,7 +464,6 @@ module Shumway.AVM2.AS.flash.display {
           }
         }
         startIndex = 0;
-        currentFrameDelta = frame;
       }
 
       for (var i = startIndex; i < nextFrame; i++) {
