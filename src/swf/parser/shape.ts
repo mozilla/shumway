@@ -520,6 +520,19 @@ module Shumway.SWF.Parser {
       return this.endPoint === other.startPoint;
     }
 
+    startConnectsTo(other: PathSegment): boolean {
+      release || assert(other !== this);
+      return this.startPoint === other.startPoint;
+    }
+
+    flipDirection() {
+      var tempPoint = "";
+      tempPoint = this.startPoint;
+      this.startPoint = this.endPoint;
+      this.endPoint = tempPoint;
+      this.isReversed = !this.isReversed;
+    }
+
     serialize(shape: ShapeData, lastPosition: {x: number; y: number}) {
       if (this.isReversed) {
         this._serializeReversed(shape, lastPosition);
@@ -678,6 +691,11 @@ module Shumway.SWF.Parser {
       var current = start.prev;
       while (start) {
         while (current) {
+
+          if (current.startConnectsTo(start)) {
+            current.flipDirection();
+          }
+
           if (current.connectsTo(start)) {
             if (current.next !== start) {
               this.removeSegment(current);
@@ -687,6 +705,11 @@ module Shumway.SWF.Parser {
             current = start.prev;
             continue;
           }
+
+          if(current.startConnectsTo(end)) {
+            current.flipDirection();
+          }
+
           if (end.connectsTo(current)) {
             this.removeSegment(current);
             end.next = current;
