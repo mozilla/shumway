@@ -17,6 +17,7 @@
 
 module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
+  import warning = Shumway.Debug.warning;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import notImplemented = Shumway.Debug.notImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
@@ -394,9 +395,12 @@ module Shumway.AVM2.AS.flash.display {
         for (var i = 0; i < symbolClasses.length; i++) {
           var asset = symbolClasses[i];
           if (loaderInfo._allowCodeExecution) {
-            var symbolClass = appDomain.getClass(asset.className);
             var symbol = loaderInfo.getSymbolById(asset.symbolId);
-            release || assert (symbol, "Symbol is not defined.");
+            if (!symbol) {
+              warning ("Symbol " + asset.symbolId + " is not defined.");
+              continue;
+            }
+            var symbolClass = appDomain.getClass(asset.className);
             symbolClass.defaultInitializerArgument = symbol;
             symbol.symbolClass = symbolClass;
           }
@@ -408,7 +412,10 @@ module Shumway.AVM2.AS.flash.display {
         for (var i = 0; i < exports.length; i++) {
           var asset = exports[i];
           var symbol = loaderInfo.getSymbolById(asset.symbolId);
-          release || assert (symbol);
+          if (!symbol) {
+            warning ("Symbol " + asset.symbolId + " is not defined.");
+            continue;
+          }
           loaderInfo._avm1Context.addAsset(asset.className, symbol);
         }
       }

@@ -18,6 +18,7 @@ module Shumway.Timeline {
   import notImplemented = Shumway.Debug.notImplemented;
   import isInteger = Shumway.isInteger;
   import assert = Shumway.Debug.assert;
+  import warning = Shumway.Debug.warning;
   import abstractMethod = Shumway.Debug.abstractMethod;
   import Bounds = Shumway.Bounds;
   import ColorUtilities = Shumway.ColorUtilities;
@@ -202,7 +203,7 @@ module Shumway.Timeline {
               appDomain.getClass(tag.fontClass);
           }
         } else {
-          Shumway.Debug.warning("Font is not defined.");
+          warning("Font " + tag.fontId + " is not defined.");
         }
       }
       if (tag.hasLayout) {
@@ -450,7 +451,10 @@ module Shumway.Timeline {
             var events: any[] = null;
             if (cmd.symbolId) {
               symbol = <DisplaySymbol>loaderInfo.getSymbolById(cmd.symbolId);
-              release || assert (symbol, "Symbol is not defined.");
+              if (!symbol) {
+                warning("Symbol " + cmd.symbolId + " is not defined.");
+                continue;
+              }
             }
             if (cmd.flags & PlaceObjectFlags.HasMatrix) {
               matrix = flash.geom.Matrix.FromUntyped(cmd.matrix);

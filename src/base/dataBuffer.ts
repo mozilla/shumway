@@ -567,19 +567,19 @@ module Shumway.ArrayUtilities {
       if (!(value & 0x080)) {
         return value;
       }
-      value |= this.readUnsignedByte() << 7;
+      value = (value & 0x7f) | this.readUnsignedByte() << 7;
       if (!(value & 0x4000)) {
         return value;
       }
-      value |= this.readUnsignedByte() << 14;
+      value = (value & 0x3fff)| this.readUnsignedByte() << 14;
       if (!(value & 0x200000)) {
         return value;
       }
-      value |= this.readUnsignedByte() << 21;
+      value = (value & 0x1FFFFF) | this.readUnsignedByte() << 21;
       if (!(value & 0x10000000)) {
         return value;
       }
-      return value | (this.readUnsignedByte() << 28);
+      return (value & 0xFFFFFFF) | (this.readUnsignedByte() << 28);
     }
 
     readBits(size: number): number {

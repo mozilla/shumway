@@ -80,16 +80,16 @@ module Shumway.SWF.Parser {
     var val = $bytes[$stream.pos++];
     if (!(val & 0x080))
       return val;
-    val |= $bytes[$stream.pos++] << 7;
+    val = (val & 0x7f) | $bytes[$stream.pos++] << 7;
     if (!(val & 0x4000))
       return val;
-    val |= $bytes[$stream.pos++] << 14;
+    val = (val & 0x3fff) | $bytes[$stream.pos++] << 14;
     if (!(val & 0x200000))
       return val;
-    val |= $bytes[$stream.pos++] << 21;
+    val = (val & 0x1FFFFF) | $bytes[$stream.pos++] << 21;
     if (!(val & 0x10000000))
       return val;
-    return val | ($bytes[$stream.pos++] << 28);
+    return (val & 0xFFFFFFF) | ($bytes[$stream.pos++] << 28);
   }
 
   export function readBool($bytes, $stream) {
