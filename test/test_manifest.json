@@ -19,6 +19,7 @@
     {  "id": "timeline_scene",
       "stas": "swfs/trace.stas",
       "filenames": [
+        "swfs/timeline/scene/EncodedU32.swf",
         "swfs/timeline/scene/Scene_1_MainTimeline.swf",
         "swfs/timeline/scene/Scene_2_MovieClipTimeline.swf",
         "swfs/timeline/scene/Scene_3_GotoAndStop_LabelScene.swf",
