@@ -672,8 +672,9 @@ module Shumway.AVM2.AS.flash.text {
       this._ensureLineMetrics();
     }
     setSelection(beginIndex: number /*int*/, endIndex: number /*int*/): void {
-      beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextField::setSelection"); return;
+      somewhatImplemented("public flash.text.TextField::setSelection");
+      this._selectionBeginIndex = beginIndex | 0;
+      this._selectionEndIndex = endIndex | 0;
     }
     setTextFormat(format: flash.text.TextFormat, beginIndex: number /*int*/ = -1, endIndex: number /*int*/ = -1): void {
       format = format; beginIndex = beginIndex | 0; endIndex = endIndex | 0;
