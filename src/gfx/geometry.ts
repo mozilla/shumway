@@ -961,7 +961,7 @@ module Shumway.GFX.Geometry {
         this.ty + ")";
     }
 
-    public static createIdentity() {
+    public static createIdentity(): Matrix {
       return new Matrix(1, 0, 0, 1, 0, 0);
     }
 
