@@ -18,7 +18,14 @@
 module Shumway.SWF.Parser {
   import Inflate = Shumway.ArrayUtilities.Inflate;
 
-  function readTags(context, stream, swfVersion, final, onprogress, onexception) {
+  function readTags(context, stream, swfVersion, final, onprogress, onexception): boolean {
+    function rollback(): boolean {
+      // recovering the stream state
+      stream.pos = lastSuccessfulPosition;
+      context._readTag = tag;
+      return false;
+    }
+
     var tags = context.tags;
     var bytes = stream.bytes;
     var lastSuccessfulPosition;
@@ -31,11 +38,14 @@ module Shumway.SWF.Parser {
 
     try {
       while (stream.pos < stream.end) {
-        // this loop can be interrupted at any moment by StreamNoDataError
-        // exception, trying to recover data/position below when thrown
+        // this loop can be interrupted at any moment by `return rollback();`
+        // saving last data/position for the rollback method.
         lastSuccessfulPosition = stream.pos;
 
-        stream.ensure(2);
+        if (stream.pos + 2 > stream.end) {
+          return rollback();
+        }
+
         var tagCodeAndLength = readUi16(bytes, stream);
         if (!tagCodeAndLength) {
           // end of tags
@@ -46,7 +56,10 @@ module Shumway.SWF.Parser {
         var tagCode = tagCodeAndLength >> 6;
         var length = tagCodeAndLength & 0x3f;
         if (length === 0x3f) {
-          stream.ensure(4);
+          if (stream.pos + 4 > stream.end) {
+            return rollback();
+          }
+
           length = readUi32(bytes, stream);
         }
 
@@ -65,7 +78,10 @@ module Shumway.SWF.Parser {
           tag = null;
         }
 
-        stream.ensure(length);
+        if (stream.pos + length > stream.end) {
+          return rollback();
+        }
+
         var substream = stream.substream(stream.pos, stream.pos += length);
         var subbytes = substream.bytes;
         var nextTag: ISwfTagData = { code: tagCode };
@@ -75,7 +91,10 @@ module Shumway.SWF.Parser {
           nextTag.id = readUi16(subbytes, substream);
           nextTag.frameCount = readUi16(subbytes, substream);
           nextTag.tags = [];
-          readTags(nextTag, substream, swfVersion, true, null, null);
+          var isEnoughData = readTags(nextTag, substream, swfVersion, true, null, null);
+          if (!isEnoughData) {
+            Debug.error('Invalid SWF tag structure');
+          }
         } else if (tagCode === 1) {
           nextTag.repeat = 1;
         } else {
@@ -100,14 +119,10 @@ module Shumway.SWF.Parser {
         context._readTag = tag;
       }
     } catch (e) {
-      if (e !== StreamNoDataError) {
-        onexception && onexception(e);
-        throw e;
-      }
-      // recovering the stream state
-      stream.pos = lastSuccessfulPosition;
-      context._readTag = tag;
+      onexception && onexception(e);
+      throw e;
     }
+    return true;
   }
 
   class HeadTailBuffer {
@@ -272,7 +287,10 @@ module Shumway.SWF.Parser {
         var nextTagHeader = readUi16(bytes, stream);
         var FILE_ATTRIBUTES_LENGTH = 4;
         if (nextTagHeader == ((SwfTag.CODE_FILE_ATTRIBUTES << 6) | FILE_ATTRIBUTES_LENGTH)) {
-          stream.ensure(FILE_ATTRIBUTES_LENGTH);
+          if (stream.pos + FILE_ATTRIBUTES_LENGTH > stream.end) {
+            Debug.error('Not enough data.');
+          }
+
           var substream = stream.substream(stream.pos, stream.pos += FILE_ATTRIBUTES_LENGTH);
           var handler = tagHandler[SwfTag.CODE_FILE_ATTRIBUTES];
           var fileAttributesTag = {code: SwfTag.CODE_FILE_ATTRIBUTES};
