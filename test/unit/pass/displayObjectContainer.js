@@ -293,4 +293,17 @@
     }
     eq(exceptionMessage, 'ArgumentError: Error #2025: The supplied DisplayObject must be a child of the caller.');
   });
+
+  unitTests.push(function addChildWrongType() {
+    var exceptionMessage = null;
+    var s = "A";
+    var c = new DisplayObjectContainer();
+    try {
+      c.addChild(s);
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'TypeError: Error #1034: Type Coercion failed: cannot convert A to flash.display.DisplayObject.');
+  });
+
 })();

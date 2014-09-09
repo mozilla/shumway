@@ -31,6 +31,7 @@ module Shumway.AVM2.AS.flash.display {
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import checkNullParameter = Shumway.AVM2.Runtime.checkNullParameter;
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
 
@@ -1003,7 +1004,10 @@ module Shumway.AVM2.AS.flash.display {
         this._setColorTransform(state.colorTransform);
       }
       this._ratio = state.ratio;
-      this._name = state.name;
+      // Only some animation states have names, don't set the name if it is not defined.
+      if (state.name) {
+        this._name = state.name;
+      }
       // TODO: Not sure what is happening here, but state.clipDepth can be -1 after
       // |this._clipDepth| is set to a value larger than zero. This shouldnt' happen.
       // Tobias?? sbemaild50.swf
@@ -1318,6 +1322,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set name(value: string) {
+      checkNullParameter(value, "name");
       this._name = asCoerceString(value);
     }
 

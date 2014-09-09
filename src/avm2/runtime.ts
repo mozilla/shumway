@@ -860,9 +860,16 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  export function checkParameterType(argument: any, name: string, type: Shumway.AVM2.AS.ASClass) {
+  export function checkNullParameter(argument: any, name: string) {
     if (!argument) {
       throwError('TypeError', Errors.NullPointerError, name);
+    }
+  }
+
+  export function checkParameterType(argument: any, name: string, type: Shumway.AVM2.AS.ASClass) {
+    checkNullParameter(argument, name)
+    if (!type.isType(argument)) {
+      throwError('TypeError', Errors.CheckTypeFailedError, argument, type.classInfo.instanceInfo.name.getOriginalName());
     }
   }
 

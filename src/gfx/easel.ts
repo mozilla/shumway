@@ -52,6 +52,10 @@ module Shumway.GFX {
       easel.state = this;
     }
 
+    onMouseWheel(easel: Easel, event: WheelEvent) {
+      easel.state = this;
+    }
+
     onMouseClick(easel: Easel, event: MouseEvent) {
       easel.state = this;
     }
@@ -72,7 +76,7 @@ module Shumway.GFX {
   class StartState extends State {
     private _keyCodes: boolean [] = [];
     onMouseDown(easel: Easel, event: MouseEvent) {
-      if (this._keyCodes[32]) {
+      if (event.altKey) {
         easel.state = new DragState(easel.worldView, easel.getMousePosition(event, null), easel.worldView.matrix.clone());
       } else {
         // easel.state = new MouseDownState();
@@ -85,21 +89,22 @@ module Shumway.GFX {
 
     onKeyDown(easel: Easel, event: KeyboardEvent) {
       this._keyCodes[event.keyCode] = true;
-      this._updateCursor(easel);
     }
 
     onKeyUp(easel: Easel, event: KeyboardEvent) {
       this._keyCodes[event.keyCode] = false;
-      this._updateCursor(easel);
     }
+  }
 
-    private _updateCursor(easel: Easel) {
-      if (this._keyCodes[32]) {
-        easel.cursor = "move";
-      } else {
-        easel.cursor = "auto";
-      }
+  function normalizeWheelSpeed(event: any): number {
+    var normalized;
+    if (event.wheelDelta) {
+      normalized = (event.wheelDelta % 120 - 0) == -0 ? event.wheelDelta / 120 : event.wheelDelta / 12;
+    } else {
+      var rawAmmount = event.deltaY ? event.deltaY : event.detail;
+      normalized = -(rawAmmount % 3 ? rawAmmount * 10 : rawAmmount / 3);
     }
+    return normalized;
   }
 
   class PersistentState extends State {
@@ -118,6 +123,19 @@ module Shumway.GFX {
 
     onMouseClick(easel: Easel, event: MouseEvent) {
 
+    }
+
+    onMouseWheel(easel: Easel, event: WheelEvent) {
+      if (event.altKey) {
+        event.preventDefault();
+        var p = easel.getMousePosition(event, null);
+        var m = easel.worldView.matrix.clone();
+        var s = 1 + normalizeWheelSpeed(event) / 1000;
+        m.translate(-p.x, -p.y);
+        m.scale(s, s);
+        m.translate(p.x, p.y);
+        easel.worldView.matrix = m;
+      }
     }
 
     onKeyPress(easel: Easel, event: KeyboardEvent) {
@@ -304,6 +322,12 @@ module Shumway.GFX {
         var p = self.getMousePosition(event, self._world);
         self._state.onMouseMove(self, event);
         self._persistentState.onMouseMove(self, event);
+      }, false);
+
+      window.addEventListener("wheel", function (event: WheelEvent) {
+        var p = self.getMousePosition(event, self._world);
+        self._state.onMouseWheel(self, event);
+        self._persistentState.onMouseWheel(self, event);
       }, false);
 
       canvases.forEach(canvas => canvas.addEventListener("mousedown", function (event) {
