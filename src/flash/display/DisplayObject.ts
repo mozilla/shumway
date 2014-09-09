@@ -1004,6 +1004,7 @@ module Shumway.AVM2.AS.flash.display {
         this._setColorTransform(state.colorTransform);
       }
       this._ratio = state.ratio;
+      // Only some animation states have names, don't set the name if it is not defined.
       if (state.name) {
         this._name = state.name;
       }

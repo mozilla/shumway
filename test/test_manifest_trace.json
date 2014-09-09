@@ -47,5 +47,12 @@
          "swfs/blendmode/blendmode_2.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "timeline_name",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/timeline/timeline_name_0.swf"
+      ],
+      "type": "stas"
     }
 ]
