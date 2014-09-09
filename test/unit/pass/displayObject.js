@@ -436,5 +436,15 @@ function displayTests() {
     check(pass);
     // TODO: Check rounding behaviour of x and y.
   });
+
+  unitTests.push(function name() {
+    var o = new DisplayObject();
+    try {
+      o.name = null;
+    } catch (e) {
+      exceptionMessage = e.toString();
+    }
+    eq(exceptionMessage, 'TypeError: Error #2007: Parameter name must be non-null.');
+  });
 }
 displayTests();
