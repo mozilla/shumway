@@ -174,5 +174,12 @@
        "frames": [60],
        "swf": "swfs/food.swf",
        "type": "eq"
+    },
+    {  "id": "hit-test",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/hitTestStyleChange.swf"
+      ],
+      "type": "stas"
     }
 ]
