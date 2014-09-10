@@ -992,6 +992,17 @@ module Shumway.GFX.Geometry {
       }
       return false;
     }
+
+    public static createSVGMatrixFromArray(array: number []): SVGMatrix {
+      var matrix: SVGMatrix = Matrix._svg.createSVGMatrix();
+      matrix.a = array[0];
+      matrix.b = array[1];
+      matrix.c = array[2];
+      matrix.d = array[3];
+      matrix.e = array[4];
+      matrix.f = array[5];
+      return matrix;
+    }
   }
 
   /**

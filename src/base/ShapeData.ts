@@ -176,6 +176,13 @@ module Shumway {
     LinearRGB = 1
   }
 
+  export enum LineScaleMode {
+    None = 0,
+    Normal = 1,
+    Vertical = 2,
+    Horizontal = 3
+  }
+
   export interface ShapeMatrix {
     a: number;
     b: number;
@@ -280,7 +287,7 @@ module Shumway {
     }
 
     lineStyle(thickness: number, color: number, pixelHinting: boolean,
-              scaleMode: number, caps: number, joints: number, miterLimit: number): void
+              scaleMode: LineScaleMode, caps: number, joints: number, miterLimit: number): void
     {
       release || assert(thickness === (thickness|0), thickness >= 0 && thickness <= 0xff * 20);
       this.ensurePathCapacities(2, 0);

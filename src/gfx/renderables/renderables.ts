@@ -365,7 +365,8 @@ module Shumway.GFX {
   }
 
   class StrokeProperties {
-    constructor(public thickness: number, public capsStyle: string, public jointsStyle: string,
+    constructor(public thickness: number, public scaleMode: LineScaleMode,
+                public capsStyle: string, public jointsStyle: string,
                 public miterLimit: number)
     {}
   }
@@ -446,6 +447,7 @@ module Shumway.GFX {
         } else if (!clipRegion) {
           context.strokeStyle = path.style;
           if (path.strokeProperties) {
+            context.lineScaleMode = path.strokeProperties.scaleMode;
             context.lineWidth = path.strokeProperties.thickness;
             context.lineCap = path.strokeProperties.capsStyle;
             context.lineJoin = path.strokeProperties.jointsStyle;
@@ -564,12 +566,13 @@ module Shumway.GFX {
             break;
           case PathCommand.LineStyleSolid:
             var color = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
-            // Skip pixel hinting and scale mode for now.
-            styles.position += 2;
+            // Skip pixel hinting.
+            styles.position += 1;
+            var scaleMode: LineScaleMode = styles.readByte();
             var capsStyle: string = RenderableShape.LINE_CAPS_STYLES[styles.readByte()];
             var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
             var strokeProperties = new StrokeProperties(coordinates[coordinatesIndex++]/20,
-                                                        capsStyle, jointsStyle, styles.readByte());
+                                                        scaleMode, capsStyle, jointsStyle, styles.readByte());
             strokePath = this._createPath(PathType.Stroke, color, false, strokeProperties, x, y);
             break;
           case PathCommand.LineStyleGradient:
