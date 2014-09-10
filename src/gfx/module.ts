@@ -538,10 +538,10 @@ module Shumway.GFX {
   if (typeof CanvasRenderingContext2D !== 'undefined') {
 
     (function () {
-      var previousStroke = CanvasRenderingContext2D.prototype.stroke;
+      var originalStroke = CanvasRenderingContext2D.prototype.stroke;
 
       /**
-       * Looks like Flash doesn't go below this number.
+       * Flash does not go below this number.
        */
       var MIN_LINE_WIDTH = 1;
 
@@ -573,14 +573,24 @@ module Shumway.GFX {
       }
 
       /**
+       * There's an impedance mismatch between Flash's vector drawing model and that of Canvas2D[1]: Flash applies scaling
+       * of stroke widths once by (depending on settings for the shape) using the concatenated horizontal scaling, vertical
+       * scaling, or a geometric average of the two. The calculated width is then uniformly applied at every point on the
+       * stroke. Canvas2D, OTOH, calculates scaling for each point individually. I.e., horizontal line segments aren't
+       * affected by vertical scaling and vice versa, with non-axis-alined line segments being partly affected.
+       * Additionally, Flash draws all strokes with at least 1px on-stage width, whereas Canvas draws finer-in-appearance
+       * lines by interpolating colors accordingly. To fix both of these, we have to apply any transforms to the geometry
+       * only, not the stroke style. That's only possible by building the untransformed geometry in a Path2D and, each time
+       * we rasterize, adding that with the current concatenated transform applied to a temporary Path2D, which we then draw
+       * in global coordinate space.
+       *
        * This polyfills the |lineScaleMode| property on |CanvasRenderingContext2D|.
        */
-      CanvasRenderingContext2D.prototype.stroke = <any>(function (a?: any, b?: any) {
+      CanvasRenderingContext2D.prototype.stroke = <any>(function (path?: Path2D) {
         if (arguments.length === 0) {
-          previousStroke.call(this);
+          originalStroke.call(this);
         } else if (arguments.length === 1) {
           // Transform the path by the current transform ...
-          var path: Path2D = a;
           var transformedPath = new Path2D();
           var m = this.currentTransform;
           // Firefox doesn't have |currentTransform| so check for |mozCurrentTransform| instead.
@@ -590,8 +600,12 @@ module Shumway.GFX {
           transformedPath.addPath(path, m);
           var oldLineWidth = this.lineWidth;
           this.setTransform(1, 0, 0, 1, 0, 0);
-          var oldLineWidth = this.lineWidth;
-          // Figure out how we should scale the |lineWidth|. This is not quite how Flash does it but it's close.
+          // Figure out how we should scale the |lineWidth|. This is not quite how Flash does it but it's close enough. Flash
+          // documentation says that for |Vertica| or |Horizontal| scale modes the |lineWidth| is only scaled if the stroke
+          // is scaled in that direction. This is a bit strange if you scale in one direction and then rotate. The |lineWidth|
+          // will change with the angle of rotation, probably because the scaleX and scaleY properties change.
+          // If this code turns out to be incorrect in practice, we should look deeper into how |getScaleX| and |getScaleY| are
+          // computed.
           switch (this.lineScaleMode) {
             case LineScaleMode.None:
               break;
