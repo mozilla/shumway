@@ -189,7 +189,8 @@ module Shumway {
     constructor(public commands: Uint8Array, public commandsPosition: number,
                 public coordinates: Int32Array, public coordinatesPosition: number,
                 public morphCoordinates: Int32Array,
-                public styles: ArrayBuffer, public stylesLength: number)
+                public styles: ArrayBuffer, public stylesLength: number,
+                public hasFills: boolean, public hasLines: boolean)
     {}
   }
 
@@ -208,6 +209,8 @@ module Shumway {
     morphCoordinates: Int32Array;
     coordinatesPosition: number;
     styles: DataBuffer;
+    hasFills: boolean;
+    hasLines: boolean;
 
     constructor(initialize: boolean = true) {
       if (initialize) {
@@ -224,6 +227,8 @@ module Shumway {
       data.coordinatesPosition = source.coordinatesPosition;
       data.styles = DataBuffer.FromArrayBuffer(source.styles, source.stylesLength);
       data.styles.endian = 'auto';
+      data.hasFills = source.hasFills;
+      data.hasLines = source.hasLines;
       return data;
     }
 
@@ -267,6 +272,7 @@ module Shumway {
       this.ensurePathCapacities(1, 0);
       this.commands[this.commandsPosition++] = PathCommand.BeginSolidFill;
       this.styles.writeUnsignedInt(color);
+      this.hasFills = true;
     }
 
     endFill() {
@@ -293,6 +299,7 @@ module Shumway {
       styles.writeUnsignedByte(caps);
       styles.writeUnsignedByte(joints);
       styles.writeUnsignedByte(miterLimit);
+      this.hasLines = true;
     }
 
     /**
@@ -313,6 +320,7 @@ module Shumway {
       this._writeStyleMatrix(matrix);
       styles.writeBoolean(repeat);
       styles.writeBoolean(smooth);
+      this.hasFills = true;
     }
 
     /**
@@ -347,6 +355,7 @@ module Shumway {
 
       styles.writeUnsignedByte(spread);
       styles.writeUnsignedByte(interpolation);
+      this.hasFills = true;
     }
 
     writeCommandAndCoordinates(command: PathCommand, x: number, y: number) {
@@ -375,6 +384,7 @@ module Shumway {
       this.coordinates = new Int32Array(DefaultSize.Coordinates);
       this.styles = new DataBuffer(DefaultSize.Styles);
       this.styles.endian = 'auto';
+      this.hasFills = this.hasLines = false;
     }
 
     isEmpty() {
@@ -389,6 +399,8 @@ module Shumway {
       copy.coordinatesPosition = this.coordinatesPosition;
       copy.styles = new DataBuffer(this.styles.length);
       copy.styles.writeRawBytes(this.styles.bytes);
+      copy.hasFills = this.hasFills;
+      copy.hasLines = this.hasLines;
       return copy;
     }
 
@@ -396,7 +408,8 @@ module Shumway {
       return new PlainObjectShapeData(this.commands, this.commandsPosition,
                                       this.coordinates, this.coordinatesPosition,
                                       this.morphCoordinates,
-                                      this.styles.buffer, this.styles.length);
+                                      this.styles.buffer, this.styles.length,
+                                      this.hasFills, this.hasLines);
     }
 
     public get buffers(): ArrayBuffer[] {
