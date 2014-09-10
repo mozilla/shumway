@@ -24,10 +24,15 @@ module Shumway.AVM1 {
     }
   }
 
+  export interface AVM1ExportedSymbol {
+    symbolId: number;
+    symbolProps;
+    theClass;
+  }
+
   export class AVM1Context {
     public static instance: AVM1Context = null;
     public stage;
-    public classes;
     public swfVersion: number;
     public globals: Shumway.AVM2.AS.avm1lib.AVM1Globals;
     constructor() {}
@@ -35,8 +40,9 @@ module Shumway.AVM1 {
     public static create: (swfVersion: number) => AVM1Context;
 
     public flushPendingScripts() {}
-    public addAsset(className: string, symbolProps) {}
-    public getAsset(className: string): any {}
+    public addAsset(className: string, symbolId: number, symbolProps) {}
+    public registerClass(className: string, theClass) {}
+    public getAsset(className: string): AVM1ExportedSymbol { return undefined; }
     public resolveTarget(target): any {}
     public resolveLevel(level: number): any {}
     public addToPendingScripts(fn) {}

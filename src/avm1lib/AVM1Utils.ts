@@ -80,9 +80,7 @@ module Shumway.AVM2.AS.avm1lib {
     static _installObjectMethods(): any {
       var c = ASObject, p = c.asGetPublicProperty('prototype');
       c.asSetPublicProperty('registerClass', function registerClass(name, theClass) {
-        var classes = AVM1Context.instance.classes ||
-          (AVM1Context.instance.classes = {});
-        classes[name] = theClass;
+        AVM1Context.instance.registerClass(name, theClass);
       });
       p.asDefinePublicProperty('addProperty', {
         value: function addProperty(name, getter, setter) {

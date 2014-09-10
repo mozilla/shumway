@@ -73,12 +73,11 @@ module Shumway.AVM2.AS.avm1lib {
     }
 
     _constructMovieClipSymbol(symbolId: string, name: string): flash.display.MovieClip {
-      var theClass = AVM1Context.instance.classes && AVM1Context.instance.classes[symbolId];
       var symbol = AVM1Context.instance.getAsset(symbolId);
 
-      var mc: flash.display.MovieClip = flash.display.MovieClip.initializeFrom(symbol);
+      var mc: flash.display.MovieClip = flash.display.MovieClip.initializeFrom(symbol.symbolProps);
       flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
-      mc._as2SymbolClass = theClass;
+      mc._as2SymbolClass = symbol.theClass;
       mc._name = name;
 
       return mc;

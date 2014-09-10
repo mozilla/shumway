@@ -66,7 +66,6 @@ module Shumway.AVM1 {
   class AVM1ContextImpl extends AVM1Context {
     swfVersion: number;
     initialScope: AVM1ScopeListItem;
-    assets;
     isActive: boolean;
     executionProhibited: boolean;
     abortExecutionAt: number;
@@ -77,6 +76,11 @@ module Shumway.AVM1 {
     pendingScripts;
     defaultTarget;
     currentTarget;
+
+    private assets: Map<number>;
+    private assetsSymbols: Array<any>;
+    private assetsClasses: Array<any>;
+
     constructor(swfVersion: number) {
       super();
       this.swfVersion = swfVersion;
@@ -87,6 +91,8 @@ module Shumway.AVM1 {
       }
       this.initialScope = new AVM1ScopeListItem(this.globals, null);
       this.assets = {};
+      this.assetsSymbols = [];
+      this.assetsClasses = [];
       this.isActive = false;
       this.executionProhibited = false;
       this.abortExecutionAt = 0;
@@ -96,11 +102,32 @@ module Shumway.AVM1 {
       this.deferScriptExecution = true;
       this.pendingScripts = [];
     }
-    addAsset(className: string, symbolProps) {
-      this.assets[className] = symbolProps;
+    addAsset(className: string, symbolId: number, symbolProps) {
+      this.assets[className] = symbolId;
+      if (this.assetsSymbols[symbolId]) {
+        Debug.warning('Symbol ' + symbolId + ' was exported already under different name');
+      }
+      this.assetsSymbols[symbolId] = symbolProps;
+
     }
-    getAsset(className: string) : any {
-      return this.assets[className];
+    registerClass(className: string, theClass) {
+      var symbolId = this.assets[className];
+      if (symbolId === undefined) {
+        Debug.error('Cannot register ' + className + ' class for symbol');
+        return;
+      }
+      this.assetsClasses[symbolId] = theClass;
+    }
+    getAsset(className: string) : AVM1ExportedSymbol {
+      var symbolId = this.assets[className];
+      if (symbolId === undefined) {
+        return undefined;
+      }
+      return {
+        symbolId: symbolId,
+        symbolProps: this.assetsSymbols[symbolId],
+        theClass: this.assetsClasses[symbolId]
+      };
     }
     resolveTarget(target) : any {
       var currentTarget = this.currentTarget || this.defaultTarget;
