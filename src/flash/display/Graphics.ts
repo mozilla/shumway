@@ -349,7 +349,6 @@ module Shumway.AVM2.AS.flash.display {
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._graphicsData = new ShapeData();
       this._textures = [];
-      this._hasFills = this._hasLines = false;
       this._fillBounds = new Bounds(0x8000000, 0x8000000, 0x8000000, 0x8000000);
       this._lineBounds = new Bounds(0x8000000, 0x8000000, 0x8000000, 0x8000000);
       this._lastX = this._lastY = 0;
@@ -363,8 +362,6 @@ module Shumway.AVM2.AS.flash.display {
     static FromData(data: any): Graphics {
       var graphics: Graphics = new flash.display.Graphics();
       graphics._graphicsData = ShapeData.FromPlainObject(data.shape);
-      graphics._hasFills = data.hasFills;
-      graphics._hasLines = data.hasLines;
       if (data.lineBounds) {
         graphics._lineBounds.copyFrom(data.lineBounds);
         graphics._fillBounds.copyFrom(data.fillBounds || data.lineBounds);
@@ -386,8 +383,6 @@ module Shumway.AVM2.AS.flash.display {
     // AS -> JS Bindings
     private _graphicsData: ShapeData;
     private _textures: BitmapData[];
-    private _hasFills: boolean;
-    private _hasLines: boolean;
     private _lastX: number;
     private _lastY: number;
     private _boundsIncludeLastCoordinates: boolean;
@@ -487,7 +482,6 @@ module Shumway.AVM2.AS.flash.display {
       color = color >>> 0 & 0xffffff;
       alpha = Math.round(clamp(+alpha, -1, 1) * 0xff) | 0;
       this._graphicsData.beginFill((color << 8) | alpha);
-      this._hasFills = true;
     }
 
     beginGradientFill(type: string, colors: number[], alphas: number[], ratios: number[],
@@ -496,14 +490,12 @@ module Shumway.AVM2.AS.flash.display {
     {
       this._writeGradientStyle(PathCommand.BeginGradientFill, type, colors, alphas, ratios, matrix,
                               spreadMethod, interpolationMethod, focalPointRatio, false);
-      this._hasFills = true;
     }
 
     beginBitmapFill(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
                     repeat: boolean = true, smooth: boolean = false): void
     {
       this._writeBitmapStyle(PathCommand.BeginBitmapFill, bitmap, matrix, repeat, smooth, false);
-      this._hasFills = true;
     }
 
     endFill(): void {
@@ -558,7 +550,6 @@ module Shumway.AVM2.AS.flash.display {
 
       this._graphicsData.lineStyle(thickness, (color << 8) | alpha, pixelHinting,
                                    lineScaleMode, capsStyle, jointStyle, miterLimit);
-      this._hasLines = true;
     }
 
     lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [],
@@ -566,14 +557,15 @@ module Shumway.AVM2.AS.flash.display {
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
       this._writeGradientStyle(PathCommand.LineStyleGradient, type, colors, alphas, ratios, matrix,
-                              spreadMethod, interpolationMethod, focalPointRatio, !this._hasLines);
+                              spreadMethod, interpolationMethod, focalPointRatio,
+                              !this._graphicsData.hasLines);
     }
 
     lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
                     repeat: boolean = true, smooth: boolean = false): void
     {
       this._writeBitmapStyle(PathCommand.LineStyleBitmap, bitmap, matrix, repeat, smooth,
-                             !this._hasLines);
+                             !this._graphicsData.hasLines);
     }
 
     drawRect(x: number, y: number, width: number, height: number): void {
@@ -868,7 +860,7 @@ module Shumway.AVM2.AS.flash.display {
      * Tests if the specified point is within this graphics path.
      */
     _containsPoint(x: number, y: number, includeLines: boolean): boolean {
-      var hasLines = this._hasLines;
+      var hasLines = this._graphicsData.hasLines;
       if (!(includeLines && hasLines ? this._lineBounds : this._fillBounds).contains(x, y)) {
         return false;
       }
@@ -878,7 +870,7 @@ module Shumway.AVM2.AS.flash.display {
 
       // If we have any fills at all, tt's vastly more likely that the point is in a fill,
       // so test that first.
-      if (this._hasFills) {
+      if (this._graphicsData.hasFills) {
         containsPoint = this._fillContainsPoint(x, y);
       } else {
         release || assert(hasLines, "Can't have non-empty bounds without line or fill set.");

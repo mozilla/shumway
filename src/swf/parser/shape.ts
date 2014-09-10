@@ -409,8 +409,6 @@ module Shumway.SWF.Parser {
       lineBounds: tag.lineBounds,
       morphFillBounds: tag.fillBoundsMorph || null,
       morphLineBounds: tag.lineBoundsMorph || null,
-      hasFills: fillPaths.length > 0,
-      hasLines: linePaths.length > 0,
       shape: shape.toPlainObject(),
       transferables: shape.buffers,
       require: dependencies.length ? dependencies : null
