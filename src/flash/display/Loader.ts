@@ -416,7 +416,7 @@ module Shumway.AVM2.AS.flash.display {
             warning ("Symbol " + asset.symbolId + " is not defined.");
             continue;
           }
-          loaderInfo._avm1Context.addAsset(asset.className, symbol);
+          loaderInfo._avm1Context.addAsset(asset.className, asset.symbolId, symbol);
         }
       }
 

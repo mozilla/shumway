@@ -41,7 +41,7 @@ module Shumway.AVM2.AS.avm1lib {
     static loadBitmap(symbolId: string): flash.display.BitmapData {
       symbolId = asCoerceString(symbolId);
       var symbol = AVM1Context.instance.getAsset(symbolId);
-      if (symbol instanceof Shumway.Timeline.BitmapSymbol) {
+      if (symbol && symbol.symbolProps instanceof Shumway.Timeline.BitmapSymbol) {
         var bitmap = AVM1BitmapData.initializeFrom(symbol);
         bitmap.class.instanceConstructorNoInitialize.call(bitmap);
         return bitmap;

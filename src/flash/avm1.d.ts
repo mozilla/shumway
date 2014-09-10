@@ -35,7 +35,7 @@ declare module Shumway.AVM1 {
   }
   export class AVM1Context {
     static create(swfVersion: number): AVM1Context;
-    addAsset(className: string, symbolProps);
+    addAsset(className: string, symbolId: number, symbolProps);
     executeActions(actionsData: AVM1ActionsData, stage, scopeObj);
     flushPendingScripts();
 
