@@ -16,6 +16,7 @@
 
 interface CanvasRenderingContext2D {
   globalColorMatrix: Shumway.GFX.ColorMatrix;
+  lineScaleMode: Shumway.LineScaleMode;
 }
 
 interface CanvasGradient {
@@ -24,6 +25,7 @@ interface CanvasGradient {
 
 module Shumway.GFX {
   import assert = Shumway.Debug.assert;
+  import clamp = Shumway.NumberUtilities.clamp;
 
   export enum TraceLevel {
     None,
@@ -468,6 +470,7 @@ module Shumway.GFX {
       }
       var originalFill = CanvasRenderingContext2D.prototype.fill;
       var originalStroke = CanvasRenderingContext2D.prototype.stroke;
+
       /**
        * If the current fillStyle is a |CanvasPattern| or |CanvasGradient| that has a SVGMatrix transformed applied to it, we
        * first apply the pattern's transform to the current context and then draw the path with the
@@ -501,7 +504,7 @@ module Shumway.GFX {
       /**
        * Same as for |fill| above.
        */
-      CanvasRenderingContext2D.prototype.stroke = <any>(function fill(path: Path2D): void {
+      CanvasRenderingContext2D.prototype.stroke = <any>(function stroke(path: Path2D): void {
         var supportsStyle = this.strokeStyle instanceof CanvasPattern || this.strokeStyle instanceof CanvasGradient;
         var hasStyleTransformation = !!this.strokeStyle._transform;
         if (supportsStyle && hasStyleTransformation && path instanceof Path2D) {
@@ -527,6 +530,102 @@ module Shumway.GFX {
         }
       });
     }
+  }
+
+  /**
+   * Polyfill |lineScaleMode| on |CanvasRenderingContext2D|.
+   */
+  if (typeof CanvasRenderingContext2D !== 'undefined') {
+
+    (function () {
+      var originalStroke = CanvasRenderingContext2D.prototype.stroke;
+
+      /**
+       * Flash does not go below this number.
+       */
+      var MIN_LINE_WIDTH = 1;
+
+      /**
+       * Arbitrarily chosen large number.
+       */
+      var MAX_LINE_WIDTH = 1024;
+
+      function getDeterminant(matrix: SVGMatrix): number {
+        return matrix.a * matrix.d - matrix.b * matrix.c;
+      }
+
+      function getScaleX(matrix: SVGMatrix): number {
+        return matrix.a;
+        if (matrix.a === 1 && matrix.b === 0) {
+          return 1;
+        }
+        var result = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
+        return getDeterminant(matrix) < 0 ? -result : result;
+      }
+
+      function getScaleY(matrix: SVGMatrix): number {
+        return matrix.d;
+        if (matrix.c === 0 && matrix.d === 1) {
+          return 1;
+        }
+        var result = Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d);
+        return getDeterminant(matrix) < 0 ? -result : result;
+      }
+
+      /**
+       * There's an impedance mismatch between Flash's vector drawing model and that of Canvas2D[1]: Flash applies scaling
+       * of stroke widths once by (depending on settings for the shape) using the concatenated horizontal scaling, vertical
+       * scaling, or a geometric average of the two. The calculated width is then uniformly applied at every point on the
+       * stroke. Canvas2D, OTOH, calculates scaling for each point individually. I.e., horizontal line segments aren't
+       * affected by vertical scaling and vice versa, with non-axis-alined line segments being partly affected.
+       * Additionally, Flash draws all strokes with at least 1px on-stage width, whereas Canvas draws finer-in-appearance
+       * lines by interpolating colors accordingly. To fix both of these, we have to apply any transforms to the geometry
+       * only, not the stroke style. That's only possible by building the untransformed geometry in a Path2D and, each time
+       * we rasterize, adding that with the current concatenated transform applied to a temporary Path2D, which we then draw
+       * in global coordinate space.
+       *
+       * This polyfills the |lineScaleMode| property on |CanvasRenderingContext2D|.
+       */
+      CanvasRenderingContext2D.prototype.stroke = <any>(function (path?: Path2D) {
+        if (arguments.length === 0) {
+          originalStroke.call(this);
+        } else if (arguments.length === 1) {
+          // Transform the path by the current transform ...
+          var transformedPath = new Path2D();
+          var m = this.currentTransform;
+          // Firefox doesn't have |currentTransform| so check for |mozCurrentTransform| instead.
+          if (!m) {
+            m = Geometry.Matrix.createSVGMatrixFromArray(this.mozCurrentTransform);
+          }
+          transformedPath.addPath(path, m);
+          var oldLineWidth = this.lineWidth;
+          this.setTransform(1, 0, 0, 1, 0, 0);
+          // Figure out how we should scale the |lineWidth|. This is not quite how Flash does it but it's close enough. Flash
+          // documentation says that for |Vertica| or |Horizontal| scale modes the |lineWidth| is only scaled if the stroke
+          // is scaled in that direction. This is a bit strange if you scale in one direction and then rotate. The |lineWidth|
+          // will change with the angle of rotation, probably because the scaleX and scaleY properties change.
+          // If this code turns out to be incorrect in practice, we should look deeper into how |getScaleX| and |getScaleY| are
+          // computed.
+          switch (this.lineScaleMode) {
+            case LineScaleMode.None:
+              break;
+            case LineScaleMode.Normal:
+              this.lineWidth = clamp(oldLineWidth * (getScaleX(m) + getScaleY(m)) / 2, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+              break;
+            case LineScaleMode.Vertical:
+              this.lineWidth = clamp(oldLineWidth * getScaleY(m), MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+              break;
+            case LineScaleMode.Horizontal:
+              this.lineWidth = clamp(oldLineWidth * getScaleX(m), MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+              break;
+          }
+          // Stroke and restore the previous matrix.
+          originalStroke.call(this, transformedPath);
+          this.setTransform(m.a, m.b, m.c, m.d, m.e, m.f);
+          this.lineWidth = oldLineWidth;
+        }
+      });
+    })();
   }
 
   /**
