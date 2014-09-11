@@ -1459,11 +1459,12 @@ module Shumway {
 
   export module IntegerUtilities {
     var sharedBuffer = new ArrayBuffer(8);
-    var i8 = new Int8Array(sharedBuffer);
-    var i32 = new Int32Array(sharedBuffer);
-    var f32 = new Float32Array(sharedBuffer);
-    var f64 = new Float64Array(sharedBuffer);
-    var nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
+    export var i8 = new Int8Array(sharedBuffer);
+    export var u8 = new Uint8Array(sharedBuffer);
+    export var i32 = new Int32Array(sharedBuffer);
+    export var f32 = new Float32Array(sharedBuffer);
+    export var f64 = new Float64Array(sharedBuffer);
+    export var nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
 
     /**
      * Convert a float into 32 bits.
@@ -3244,7 +3245,7 @@ module Shumway {
 
   export module ExternalInterfaceService {
     export var instance: IExternalInterfaceService = {
-      enabled: false,
+      enabled: true,
       initJS(callback: (functionName: string, args: any[]) => any) { },
       registerCallback(functionName: string) { },
       unregisterCallback(functionName: string) { },
