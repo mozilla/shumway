@@ -129,6 +129,12 @@ module Shumway.SWF {
               break;
           }
         }
+        if (frames.length === 0) {
+          // We need at least one frame
+          frame.repeat = 1;
+          frame.commands = commands;
+          frames.push(frame);
+        }
         symbol = {
           type: 'sprite',
           id: swfTag.id,
