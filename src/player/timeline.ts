@@ -279,6 +279,8 @@ module Shumway.Timeline {
     labels: flash.display.FrameLabel[] = [];
     frameScripts: any[] = [];
     isRoot: boolean;
+    avm1Name: string;
+    avm1SymbolClass;
 
     constructor(id: number, isRoot: boolean = false) {
       super(id, flash.display.MovieClip);

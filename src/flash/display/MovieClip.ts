@@ -167,6 +167,9 @@ module Shumway.AVM2.AS.flash.display {
               self.addAVM1FrameScript(data[i], data[i + 1]);
             }
           }
+          if (symbol.avm1Name) {
+            this.name = symbol.avm1Name;
+          }
         }
       } else {
         self.addScene('', [], 0, self._totalFrames);
@@ -276,7 +279,6 @@ module Shumway.AVM2.AS.flash.display {
     private _trackAsMenu: boolean;
     private _allowFrameNavigation: boolean;
 
-    _as2SymbolClass;
     private _boundExecuteAVM1FrameScripts: () => void;
     private _as2FrameScripts: AVM1.AVM1ActionsData[][];
 
@@ -650,6 +652,11 @@ module Shumway.AVM2.AS.flash.display {
           this._parent && this._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
         }
       }
+    }
+
+    get _avm1SymbolClass(): any {
+      return (this._symbol &&
+              (<Timeline.SpriteSymbol>this._symbol).avm1SymbolClass) || null;
     }
 
     addAVM1FrameScript(frameIndex: number, actionsBlock: Uint8Array): void {
