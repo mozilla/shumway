@@ -593,13 +593,23 @@ module Shumway.GFX {
           // Transform the path by the current transform ...
           var transformedPath = new Path2D();
           var m = this.currentTransform;
+          var dontScale = false;
           // Firefox doesn't have |currentTransform| so check for |mozCurrentTransform| instead.
           if (!m) {
-            m = Geometry.Matrix.createSVGMatrixFromArray(this.mozCurrentTransform);
+            var mozM = this.mozCurrentTransform;
+            // Chrome doesn't have |currentTransform| so making it identity.
+            if (mozM) {
+              m = Geometry.Matrix.createSVGMatrixFromArray(mozM);
+            } else {
+              m = Geometry.Matrix.createIdentity();
+              dontScale = true;
+            }
           }
           transformedPath.addPath(path, m);
           var oldLineWidth = this.lineWidth;
-          this.setTransform(1, 0, 0, 1, 0, 0);
+          if (!dontScale) {
+            this.setTransform(1, 0, 0, 1, 0, 0);
+          }
           // Figure out how we should scale the |lineWidth|. This is not quite how Flash does it but it's close enough. Flash
           // documentation says that for |Vertica| or |Horizontal| scale modes the |lineWidth| is only scaled if the stroke
           // is scaled in that direction. This is a bit strange if you scale in one direction and then rotate. The |lineWidth|
@@ -621,7 +631,9 @@ module Shumway.GFX {
           }
           // Stroke and restore the previous matrix.
           originalStroke.call(this, transformedPath);
-          this.setTransform(m.a, m.b, m.c, m.d, m.e, m.f);
+          if (!dontScale) {
+            this.setTransform(m.a, m.b, m.c, m.d, m.e, m.f);
+          }
           this.lineWidth = oldLineWidth;
         }
       });
