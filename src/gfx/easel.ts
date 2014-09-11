@@ -52,7 +52,7 @@ module Shumway.GFX {
       easel.state = this;
     }
 
-    onMouseWheel(easel: Easel, event: WheelEvent) {
+    onMouseWheel(easel: Easel, event: any) {
       easel.state = this;
     }
 
@@ -125,12 +125,13 @@ module Shumway.GFX {
 
     }
 
-    onMouseWheel(easel: Easel, event: WheelEvent) {
+    onMouseWheel(easel: Easel, event: any) {
+      var ticks = (event.type === 'DOMMouseScroll') ? -event.detail : event.wheelDelta / 40;
       if (event.altKey) {
         event.preventDefault();
         var p = easel.getMousePosition(event, null);
         var m = easel.worldView.matrix.clone();
-        var s = 1 + normalizeWheelSpeed(event) / 1000;
+        var s = 1 + ticks / 1000;
         m.translate(-p.x, -p.y);
         m.scale(s, s);
         m.translate(p.x, p.y);
@@ -324,11 +325,14 @@ module Shumway.GFX {
         self._persistentState.onMouseMove(self, event);
       }, false);
 
-      window.addEventListener("wheel", function (event: WheelEvent) {
+      function handleMouseWheel(event: any) {
         var p = self.getMousePosition(event, self._world);
         self._state.onMouseWheel(self, event);
         self._persistentState.onMouseWheel(self, event);
-      }, false);
+      }
+
+      window.addEventListener('DOMMouseScroll', handleMouseWheel);
+      window.addEventListener("mousewheel", handleMouseWheel);
 
       canvases.forEach(canvas => canvas.addEventListener("mousedown", function (event) {
         self._state.onMouseDown(self, event);
