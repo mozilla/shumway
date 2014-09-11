@@ -3245,7 +3245,7 @@ module Shumway {
 
   export module ExternalInterfaceService {
     export var instance: IExternalInterfaceService = {
-      enabled: true,
+      enabled: false,
       initJS(callback: (functionName: string, args: any[]) => any) { },
       registerCallback(functionName: string) { },
       unregisterCallback(functionName: string) { },
