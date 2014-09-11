@@ -110,7 +110,7 @@ module Shumway.AVM2.AS.avm1lib {
       }
       var as2mc = getAVM1Object(mc);
       var name:string = mc.name;
-      if (name) {
+      if (name && this.asGetPublicProperty(name) === undefined) {
         this.asSetPublicProperty(name, as2mc);
       }
       return as2mc;
