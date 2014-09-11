@@ -47,6 +47,14 @@
       ],
       "type": "stas"
     },
+    {  "id": "haxe_as2_trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/haxe/flocons1.swf",
+        "swfs/avm1/haxe/flocons2.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "blendmode_trace",
        "stas": "swfs/trace.stas",
        "filenames": [
