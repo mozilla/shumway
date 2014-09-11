@@ -53,6 +53,9 @@ module Shumway.AVM2.AS.avm1lib {
 
     // __as3Object: flash.display.MovieClip;
     _init(nativeMovieClip: flash.display.MovieClip): any {
+      if (this._nativeAS3Object) {
+        return; // Movie clip was initialized
+      }
       if (!nativeMovieClip) {
         return; // delaying initialization, see also _constructSymbol
       }
@@ -60,6 +63,16 @@ module Shumway.AVM2.AS.avm1lib {
       (<any> nativeMovieClip)._as2Object = this;
       initDefaultListeners(this);
     }
+
+    static _initFromConstructor(ctor, nativeMovieClip: flash.display.MovieClip): flash.display.MovieClip {
+      var mc = Object.create(ctor.asGetPublicProperty('prototype'));
+      mc._nativeAS3Object = nativeMovieClip;
+      (<any>nativeMovieClip)._as2Object = mc;
+      initDefaultListeners(mc);
+      ctor.call(mc);
+      return mc;
+    }
+
     get _as3Object(): flash.display.MovieClip {
       return this._nativeAS3Object;
     }
@@ -75,10 +88,12 @@ module Shumway.AVM2.AS.avm1lib {
     _constructMovieClipSymbol(symbolId: string, name: string): flash.display.MovieClip {
       var symbol = AVM1Context.instance.getAsset(symbolId);
 
-      var mc: flash.display.MovieClip = flash.display.MovieClip.initializeFrom(symbol.symbolProps);
+      var props: Timeline.SpriteSymbol = Object.create(symbol.symbolProps);
+      props.avm1Name = name;
+      props.avm1SymbolClass = symbol.theClass;
+
+      var mc: flash.display.MovieClip = flash.display.MovieClip.initializeFrom(props);
       flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
-      mc._as2SymbolClass = symbol.theClass;
-      mc._name = name;
 
       return mc;
     }

@@ -83,4 +83,8 @@ declare module Shumway.Timeline {
       actionsBlock: AVM1.AVM1ActionsData;
     }
   class BitmapSymbol {}
+  class SpriteSymbol {
+    avm1Name: string;
+    avm1SymbolClass;
+  }
 }
