@@ -446,8 +446,9 @@ module Shumway.GFX {
           context.fillStyle = 'transparent';
         } else if (!clipRegion) {
           context.strokeStyle = path.style;
+          var lineScaleMode = LineScaleMode.Normal;
           if (path.strokeProperties) {
-            context.lineScaleMode = path.strokeProperties.scaleMode;
+            lineScaleMode = path.strokeProperties.scaleMode;
             context.lineWidth = path.strokeProperties.thickness;
             context.lineCap = path.strokeProperties.capsStyle;
             context.lineJoin = path.strokeProperties.jointsStyle;
@@ -467,7 +468,7 @@ module Shumway.GFX {
           if (isSpecialCaseWidth) {
             context.translate(0.5, 0.5);
           }
-          context.stroke(path.path);
+          context.flashStroke(path.path, lineScaleMode);
           if (isSpecialCaseWidth) {
             context.translate(-0.5, -0.5);
           }
