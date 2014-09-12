@@ -208,6 +208,7 @@ module Shumway.AVM2.AS.flash.display {
     private _initialDataLoaded: PromiseWrapper<any>;
     private _waitForInitialData: boolean;
     private _commitDataQueue: Promise<any>;
+    private _frameAssetsQueue: Array<Promise<any>>;
 
     /**
      * Resolved when both |_progressPromise| and |_codeExecutionPromise| are resolved.
@@ -305,7 +306,14 @@ module Shumway.AVM2.AS.flash.display {
           if (data.isSymbol) {
             this._commitAsset(data);
           } else if (data.type === 'frame') {
-            this._commitFrame(data);
+            if (this._frameAssetsQueue) {
+              suspendUntil = Promise.all(this._frameAssetsQueue).then(function () {
+                this._commitFrame(data);
+                this._frameAssetsQueue = null;
+              }.bind(this));
+            } else {
+              this._commitFrame(data);
+            }
           } else if (data.type === 'image') {
             this._commitImage(data);
           } else if (data.type === 'abc') {
@@ -369,6 +377,17 @@ module Shumway.AVM2.AS.flash.display {
           var font = flash.text.Font.initializeFrom(symbol);
           flash.text.Font.instanceConstructorNoInitialize.call(font);
           AVM2.instance.globals['Shumway.Player.Utils'].registerFont(font);
+
+          // For non-Firefox browsers, we have to wait until font is "loaded"
+          if (typeof navigator !== 'undefined' &&
+              navigator.userAgent.indexOf('Firefox') < 0) {
+            if (!this._frameAssetsQueue) {
+              this._frameAssetsQueue = [];
+            }
+            this._frameAssetsQueue.push(new Promise(function (resolve) {
+              setTimeout(resolve, 300 /* ms */);
+            }));
+          }
           break;
         case 'sound':
           symbol = Timeline.SoundSymbol.FromData(data);
