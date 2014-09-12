@@ -16,7 +16,7 @@
 
 interface CanvasRenderingContext2D {
   globalColorMatrix: Shumway.GFX.ColorMatrix;
-  lineScaleMode: Shumway.LineScaleMode;
+  flashStroke(path: Path2D, lineScaleMode: Shumway.LineScaleMode);
 }
 
 interface CanvasGradient {
@@ -532,14 +532,8 @@ module Shumway.GFX {
     }
   }
 
-  /**
-   * Polyfill |lineScaleMode| on |CanvasRenderingContext2D|.
-   */
   if (typeof CanvasRenderingContext2D !== 'undefined') {
-
     (function () {
-      var originalStroke = CanvasRenderingContext2D.prototype.stroke;
-
       /**
        * Flash does not go below this number.
        */
@@ -584,58 +578,51 @@ module Shumway.GFX {
        * we rasterize, adding that with the current concatenated transform applied to a temporary Path2D, which we then draw
        * in global coordinate space.
        *
-       * This polyfills the |lineScaleMode| property on |CanvasRenderingContext2D|.
+       * Implements Flash stroking behavior.
        */
-      CanvasRenderingContext2D.prototype.stroke = <any>(function (path?: Path2D) {
-        if (arguments.length === 0) {
-          originalStroke.call(this);
-        } else if (arguments.length === 1) {
-          // Transform the path by the current transform ...
-          var transformedPath = new Path2D();
-          var m = this.currentTransform;
-          var dontScale = false;
+      CanvasRenderingContext2D.prototype.flashStroke = (function (path: Path2D, lineScaleMode: LineScaleMode) {
+        var m = this.currentTransform;
+        if (!m) {
           // Firefox doesn't have |currentTransform| so check for |mozCurrentTransform| instead.
-          if (!m) {
-            var mozM = this.mozCurrentTransform;
-            // Chrome doesn't have |currentTransform| so making it identity.
-            if (mozM) {
-              m = Geometry.Matrix.createSVGMatrixFromArray(mozM);
-            } else {
-              m = Geometry.Matrix.createIdentity();
-              dontScale = true;
-            }
+          var mozCurrentTransform = this.mozCurrentTransform;
+          if (mozCurrentTransform) {
+            m = Geometry.Matrix.createSVGMatrixFromArray(mozCurrentTransform);
+          } else {
+            // Chrome doesn't have |currentTransform| yet, so fall back on normal stroking. |currentTransform| is available
+            // only if you enable experimental features.
+            this.stroke(path);
+            return;
           }
-          transformedPath.addPath(path, m);
-          var oldLineWidth = this.lineWidth;
-          if (!dontScale) {
-            this.setTransform(1, 0, 0, 1, 0, 0);
-          }
-          // Figure out how we should scale the |lineWidth|. This is not quite how Flash does it but it's close enough. Flash
-          // documentation says that for |Vertica| or |Horizontal| scale modes the |lineWidth| is only scaled if the stroke
-          // is scaled in that direction. This is a bit strange if you scale in one direction and then rotate. The |lineWidth|
-          // will change with the angle of rotation, probably because the scaleX and scaleY properties change.
-          // If this code turns out to be incorrect in practice, we should look deeper into how |getScaleX| and |getScaleY| are
-          // computed.
-          switch (this.lineScaleMode) {
-            case LineScaleMode.None:
-              break;
-            case LineScaleMode.Normal:
-              this.lineWidth = clamp(oldLineWidth * (getScaleX(m) + getScaleY(m)) / 2, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
-              break;
-            case LineScaleMode.Vertical:
-              this.lineWidth = clamp(oldLineWidth * getScaleY(m), MIN_LINE_WIDTH, MAX_LINE_WIDTH);
-              break;
-            case LineScaleMode.Horizontal:
-              this.lineWidth = clamp(oldLineWidth * getScaleX(m), MIN_LINE_WIDTH, MAX_LINE_WIDTH);
-              break;
-          }
-          // Stroke and restore the previous matrix.
-          originalStroke.call(this, transformedPath);
-          if (!dontScale) {
-            this.setTransform(m.a, m.b, m.c, m.d, m.e, m.f);
-          }
-          this.lineWidth = oldLineWidth;
         }
+
+        var transformedPath = new Path2D();
+        // Transform the path by the current transform ...
+        transformedPath.addPath(path, m);
+        var oldLineWidth = this.lineWidth;
+        this.setTransform(1, 0, 0, 1, 0, 0);
+        // Figure out how we should scale the |lineWidth|. This is not quite how Flash does it but it's close enough. Flash
+        // documentation says that for |Vertica| or |Horizontal| scale modes the |lineWidth| is only scaled if the stroke
+        // is scaled in that direction. This is a bit strange if you scale in one direction and then rotate. The |lineWidth|
+        // will change with the angle of rotation, probably because the scaleX and scaleY properties change.
+        // If this code turns out to be incorrect in practice, we should look deeper into how |getScaleX| and |getScaleY| are
+        // computed.
+        switch (lineScaleMode) {
+          case LineScaleMode.None:
+            break;
+          case LineScaleMode.Normal:
+            this.lineWidth = clamp(oldLineWidth * (getScaleX(m) + getScaleY(m)) / 2, MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+            break;
+          case LineScaleMode.Vertical:
+            this.lineWidth = clamp(oldLineWidth * getScaleY(m), MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+            break;
+          case LineScaleMode.Horizontal:
+            this.lineWidth = clamp(oldLineWidth * getScaleX(m), MIN_LINE_WIDTH, MAX_LINE_WIDTH);
+            break;
+        }
+        // Stroke and restore the previous matrix.
+        this.stroke(transformedPath);
+        this.setTransform(m.a, m.b, m.c, m.d, m.e, m.f);
+        this.lineWidth = oldLineWidth;
       });
     })();
   }
