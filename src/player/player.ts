@@ -111,7 +111,7 @@ module Shumway.Player {
       return !this._isPageVisible;
     }
 
-    public load(url: string) {
+    public load(url: string, buffer?: ArrayBuffer) {
       release || assert (!this._loader, "Can't load twice.");
       var self = this;
       var stage = this._stage = new flash.display.Stage();
@@ -147,7 +147,14 @@ module Shumway.Player {
           self._enterLoops();
         });
       }
-      this._loader.load(new flash.net.URLRequest(url));
+      if (buffer) {
+        var symbol = Shumway.Timeline.BinarySymbol.FromData({id: -1, data: buffer});
+        var byteArray = symbol.symbolClass.initializeFrom(symbol);
+        symbol.symbolClass.instanceConstructorNoInitialize.call(byteArray);
+        this._loader.loadBytes(byteArray);
+      } else {
+        this._loader.load(new flash.net.URLRequest(url));
+      }
     }
 
     public processEventUpdates(updates: DataBuffer) {
