@@ -566,44 +566,91 @@ module Shumway.GFX.Geometry {
   }
 
   export class Matrix {
-    a: number;
-    b: number;
-    c: number;
-    d: number;
-    tx: number;
-    ty: number;
+    private _data: Float64Array;
+
+    public set a(a: number) {
+      this._data[0] = a;
+    }
+
+    public get a(): number {
+      return this._data[0];
+    }
+
+    public set b(b: number) {
+      this._data[1] = b;
+    }
+
+    public get b(): number {
+      return this._data[1];
+    }
+
+    public set c(c: number) {
+      this._data[2] = c;
+    }
+
+    public get c(): number {
+      return this._data[2];
+    }
+
+    public set d(d: number) {
+      this._data[3] = d;
+    }
+
+    public get d(): number {
+      return this._data[3];
+    }
+
+    public set tx(tx: number) {
+      this._data[4] = tx;
+    }
+
+    public get tx(): number {
+      return this._data[4];
+    }
+
+    public set ty(ty: number) {
+      this._data[5] = ty;
+    }
+
+    public get ty(): number {
+      return this._data[5];
+    }
 
     private static _svg: any = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 
     constructor (a: number, b: number, c: number, d: number, tx: number, ty: number) {
+      this._data = new Float64Array(6);
       this.setElements(a, b, c, d, tx, ty);
     }
 
     setElements (a: number, b: number, c: number, d: number, tx: number, ty: number) {
-      this.a = a;
-      this.b = b;
-      this.c = c;
-      this.d = d;
-      this.tx = tx;
-      this.ty = ty;
+      var m = this._data;
+      m[0] = a;
+      m[1] = b;
+      m[2] = c;
+      m[3] = d;
+      m[4] = tx;
+      m[5] = ty;
     }
 
     set (other: Matrix) {
-      this.a = other.a;
-      this.b = other.b;
-      this.c = other.c;
-      this.d = other.d;
-      this.tx = other.tx;
-      this.ty = other.ty;
+      var m = this._data, n = other._data;
+      m[0] = n[0];
+      m[1] = n[1];
+      m[2] = n[2];
+      m[3] = n[3];
+      m[4] = n[4];
+      m[5] = n[5];
     }
 
     /**
      * Whether the transformed query rectangle is empty after this transform is applied to it.
      */
-    emptyArea(query: Rectangle): boolean {
+      emptyArea(query: Rectangle): boolean {
+      var m = this._data;
       // TODO: Work out the details here.
-      if (this.a === 0 || this.d === 0) {
-         return true;
+      if (m[0] === 0 || m[3] === 0) {
+        return true;
       }
       return false;
     }
@@ -611,46 +658,45 @@ module Shumway.GFX.Geometry {
     /**
      * Whether the area of transformed query rectangle is infinite after this transform is applied to it.
      */
-    infiniteArea(query: Rectangle): boolean {
+      infiniteArea(query: Rectangle): boolean {
+      var m = this._data;
       // TODO: Work out the details here.
-      if (Math.abs(this.a) === Infinity ||
-          Math.abs(this.d) === Infinity) {
+      if (Math.abs(m[0]) === Infinity ||
+        Math.abs(m[3]) === Infinity) {
         return true;
       }
       return false;
     }
 
     isEqual (other: Matrix) {
-      return this.a  === other.a  &&
-             this.b  === other.b  &&
-             this.c  === other.c  &&
-             this.d  === other.d  &&
-             this.tx === other.tx &&
-             this.ty === other.ty;
+      var m = this._data, n = other._data;
+      return m[0] === n[0] &&
+             m[1] === n[1] &&
+             m[2] === n[2] &&
+             m[3] === n[3] &&
+             m[4] === n[4] &&
+             m[5] === n[5];
     }
 
     clone (): Matrix {
-      return new Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);
+      var m = this._data;
+      return new Matrix(m[0], m[1], m[2], m[3], m[4], m[5]);
     }
 
     transform (a: number, b: number, c: number, d: number, tx: number, ty: number): Matrix  {
-      var _a = this.a, _b = this.b, _c = this.c, _d = this.d, _tx = this.tx, _ty = this.ty;
-      this.a =  _a * a + _c * b;
-      this.b =  _b * a + _d * b;
-      this.c =  _a * c + _c * d;
-      this.d =  _b * c + _d * d;
-      this.tx = _a * tx + _c * ty + _tx;
-      this.ty = _b * tx + _d * ty + _ty;
+      var m = this._data;
+      var _a = m[0], _b = m[1], _c = m[2], _d = m[3], _tx = m[4], _ty = m[5];
+      m[0] = _a * a + _c * b;
+      m[1] = _b * a + _d * b;
+      m[2] = _a * c + _c * d;
+      m[3] = _b * c + _d * d;
+      m[4] = _a * tx + _c * ty + _tx;
+      m[5] = _b * tx + _d * ty + _ty;
       return this;
     }
 
     transformRectangle (rectangle: Rectangle, points: Point[]) {
-      var a = this.a;
-      var b = this.b;
-      var c = this.c;
-      var d = this.d;
-      var tx = this.tx;
-      var ty = this.ty;
+      var m = this._data, a = m[0], b = m[1], c = m[2], d = m[3], tx = m[4], ty = m[5];
 
       var x = rectangle.x;
       var y = rectangle.y;
@@ -659,11 +705,11 @@ module Shumway.GFX.Geometry {
 
       /*
 
-      0---1
-      | / |
-      3---2
+       0---1
+       | / |
+       3---2
 
-      */
+       */
 
       points[0].x = a * x + c * y + tx;
       points[0].y = b * x + d * y + ty;
@@ -676,27 +722,23 @@ module Shumway.GFX.Geometry {
     }
 
     isTranslationOnly(): boolean {
-      if (this.a === 1 &&
-          this.b === 0 &&
-          this.c === 0 &&
-          this.d === 1) {
+      var m = this._data;
+      if (m[0] === 1 &&
+        m[1] === 0 &&
+        m[2] === 0 &&
+        m[3] === 1) {
         return true;
-      } else if (epsilonEquals(this.a, 1) &&
-                 epsilonEquals(this.b, 0) &&
-                 epsilonEquals(this.c, 0) &&
-                 epsilonEquals(this.d, 1)) {
+      } else if (epsilonEquals(m[0], 1) &&
+        epsilonEquals(m[1], 0) &&
+        epsilonEquals(m[2], 0) &&
+        epsilonEquals(m[3], 1)) {
         return true;
       }
       return false;
     }
 
     transformRectangleAABB (rectangle: Rectangle) {
-      var a  = this.a;
-      var b  = this.b;
-      var c  = this.c;
-      var d  = this.d;
-      var tx = this.tx;
-      var ty = this.ty;
+      var m = this._data, a = m[0], b = m[1], c = m[2], d = m[3], tx = m[4], ty = m[5];
 
       var x = rectangle.x;
       var y = rectangle.y;
@@ -742,12 +784,13 @@ module Shumway.GFX.Geometry {
     }
 
     scale (x: number, y: number): Matrix  {
-      this.a *= x;
-      this.b *= y;
-      this.c *= x;
-      this.d *= y;
-      this.tx *= x;
-      this.ty *= y;
+      var m = this._data;
+      m[0] *= x;
+      m[1] *= y;
+      m[2] *= x;
+      m[3] *= y;
+      m[4] *= x;
+      m[5] *= y;
       return this;
     }
 
@@ -759,96 +802,102 @@ module Shumway.GFX.Geometry {
     }
 
     rotate (angle: number): Matrix {
-      var a = this.a, b = this.b, c = this.c, d = this.d, tx = this.tx, ty = this.ty;
+      var m = this._data, a = m[0], b = m[1], c = m[2], d = m[3], tx = m[4], ty = m[5];
       var cos = Math.cos(angle);
       var sin = Math.sin(angle);
-      this.a  = cos * a  - sin * b;
-      this.b  = sin * a  + cos * b;
-      this.c  = cos * c  - sin * d;
-      this.d  = sin * c  + cos * d;
-      this.tx = cos * tx - sin * ty;
-      this.ty = sin * tx + cos * ty;
+      m[0] = cos * a  - sin * b;
+      m[1] = sin * a  + cos * b;
+      m[2] = cos * c  - sin * d;
+      m[3] = sin * c  + cos * d;
+      m[4] = cos * tx - sin * ty;
+      m[5] = sin * tx + cos * ty;
       return this;
     }
 
     concat (other: Matrix) {
-      var a  = this.a * other.a;
+      var m = this._data, n = other._data;
+      var a  = m[0] * n[0];
       var b  = 0.0;
       var c  = 0.0;
-      var d  = this.d  * other.d;
-      var tx = this.tx * other.a + other.tx;
-      var ty = this.ty * other.d + other.ty;
+      var d  = m[3] * n[3];
+      var tx = m[4] * n[0] + n[4];
+      var ty = m[5] * n[3] + n[5];
 
-      if (this.b !== 0.0 || this.c !== 0.0 || other.b !== 0.0 || other.c !== 0.0) {
-        a  += this.b * other.c;
-        d  += this.c * other.b;
-        b  += this.a * other.b + this.b * other.d;
-        c  += this.c * other.a + this.d * other.c;
-        tx += this.ty * other.c;
-        ty += this.tx * other.b;
+      if (m[1] !== 0.0 || m[2] !== 0.0 || n[1] !== 0.0 || n[2] !== 0.0) {
+        a  += m[1] * n[2];
+        d  += m[2] * n[1];
+        b  += m[0] * n[1] + m[1] * n[3];
+        c  += m[2] * n[0] + m[3] * n[2];
+        tx += m[5] * n[2];
+        ty += m[4] * n[1];
       }
 
-      this.a  = a;
-      this.b  = b;
-      this.c  = c;
-      this.d  = d;
-      this.tx = tx;
-      this.ty = ty;
+      m[0] = a;
+      m[1] = b;
+      m[2] = c;
+      m[3] = d;
+      m[4] = tx;
+      m[5] = ty;
     }
 
     /**
      * this = other * this
      */
     public preMultiply(other: Matrix): void {
-      var a  = other.a * this.a;
+      var m = this._data, n = other._data;
+      var a  = n[0] * m[0];
       var b  = 0.0;
       var c  = 0.0;
-      var d  = other.d  * this.d;
-      var tx = other.tx * this.a + this.tx;
-      var ty = other.ty * this.d + this.ty;
+      var d  = n[3] * m[3];
+      var tx = n[4] * m[0] + m[4];
+      var ty = n[5] * m[3] + m[5];
 
-      if (other.b !== 0.0 || other.c !== 0.0 || this.b !== 0.0 || this.c !== 0.0) {
-        a  += other.b  * this.c;
-        d  += other.c  * this.b;
-        b  += other.a  * this.b + other.b * this.d;
-        c  += other.c  * this.a + other.d * this.c;
-        tx += other.ty * this.c;
-        ty += other.tx * this.b;
+      if (n[1] !== 0.0 || n[2] !== 0.0 || m[1] !== 0.0 || m[2] !== 0.0) {
+        a  += n[1] * m[2];
+        d  += n[2] * m[1];
+        b  += n[0] * m[1] + n[1] * m[3];
+        c  += n[2] * m[0] + n[3] * m[2];
+        tx += n[5] * m[2];
+        ty += n[4] * m[1];
       }
 
-      this.a  = a;
-      this.b  = b;
-      this.c  = c;
-      this.d  = d;
-      this.tx = tx;
-      this.ty = ty;
+      m[0] = a;
+      m[1] = b;
+      m[2] = c;
+      m[3] = d;
+      m[4] = tx;
+      m[5] = ty;
     }
 
     translate (x: number, y: number): Matrix {
-      this.tx += x;
-      this.ty += y;
+      var m = this._data;
+      m[4] += x;
+      m[5] += y;
       return this;
     }
 
     setIdentity () {
-      this.a  = 1;
-      this.b  = 0;
-      this.c  = 0;
-      this.d  = 1;
-      this.tx = 0;
-      this.ty = 0;
+      var m = this._data;
+      m[0] = 1;
+      m[1] = 0;
+      m[2] = 0;
+      m[3] = 1;
+      m[4] = 0;
+      m[5] = 0;
     }
 
     isIdentity (): boolean {
-      return this.a === 1 && this.b  === 0 && this.c  === 0 &&
-             this.d === 1 && this.tx === 0 && this.ty === 0;
+      var m = this._data;
+      return m[0] === 1 && m[1] === 0 && m[2] === 0 &&
+             m[3] === 1 && m[4] === 0 && m[5] === 0;
     }
 
     transformPoint (point: Point) {
+      var m = this._data;
       var x = point.x;
       var y = point.y;
-      point.x = this.a * x + this.c * y + this.tx;
-      point.y = this.b * x + this.d * y + this.ty;
+      point.x = m[0] * x + m[2] * y + m[4];
+      point.y = m[1] * x + m[3] * y + m[5];
     }
 
     transformPoints (points: Point[]) {
@@ -858,65 +907,69 @@ module Shumway.GFX.Geometry {
     }
 
     deltaTransformPoint (point: Point) {
+      var m = this._data;
       var x = point.x;
       var y = point.y;
-      point.x = this.a * x + this.c * y;
-      point.y = this.b * x + this.d * y;
+      point.x = m[0] * x + m[2] * y;
+      point.y = m[1] * x + m[3] * y;
     }
 
     inverse (result: Matrix) {
-      var b  = this.b;
-      var c  = this.c;
-      var tx = this.tx;
-      var ty = this.ty;
+      var m = this._data, r = result._data;
+      var b  = m[1];
+      var c  = m[2];
+      var tx = m[4];
+      var ty = m[5];
       if (b === 0 && c === 0) {
-        var a = result.a = 1 / this.a;
-        var d = result.d = 1 / this.d;
-        result.b = 0;
-        result.c = 0;
-        result.tx = -a * tx;
-        result.ty = -d * ty;
+        var a = r[0] = 1 / m[0];
+        var d = r[3] = 1 / m[3];
+        r[1] = 0;
+        r[2] = 0;
+        r[4] = -a * tx;
+        r[5] = -d * ty;
       } else {
-        var a = this.a;
-        var d = this.d;
+        var a = m[0];
+        var d = m[3];
         var determinant = a * d - b * c;
         if (determinant === 0) {
           result.setIdentity();
           return;
         }
         determinant  = 1 / determinant;
-        result.a = d * determinant;
-        b = result.b = -b * determinant;
-        c = result.c = -c * determinant;
-        d = result.d =  a * determinant;
-        result.tx = -(result.a * tx + c * ty);
-        result.ty = -(b * tx + d * ty);
+        r[0] = d * determinant;
+        b = r[1] = -b * determinant;
+        c = r[2] = -c * determinant;
+        d = r[3] =  a * determinant;
+        r[4] = -(r[0] * tx + c * ty);
+        r[5] = -(b * tx + d * ty);
       }
       return;
     }
 
     getTranslateX(): number {
-      return this.tx;
+      return this._data[4];
     }
 
     getTranslateY(): number {
-      return this.tx;
+      return this._data[4];
     }
 
     getScaleX(): number {
-      if (this.a === 1 && this.b === 0) {
+      var m = this._data;
+      if (m[0] === 1 && m[1] === 0) {
         return 1;
       }
-      var result = Math.sqrt(this.a * this.a + this.b * this.b);
-      return this.a > 0 ? result : -result;
+      var result = Math.sqrt(m[0] * m[0] + m[1] * m[1]);
+      return m[0] > 0 ? result : -result;
     }
 
     getScaleY(): number {
-      if (this.c === 0 && this.d === 1) {
+      var m = this._data;
+      if (m[2] === 0 && m[3] === 1) {
         return 1;
       }
-      var result = Math.sqrt(this.c * this.c + this.d * this.d);
-      return this.d > 0 ? result : -result;
+      var result = Math.sqrt(m[2] * m[2] + m[3] * m[3]);
+      return m[3] > 0 ? result : -result;
     }
 
     getAbsoluteScaleX(): number {
@@ -928,66 +981,74 @@ module Shumway.GFX.Geometry {
     }
 
     getRotation(): number {
-      return Math.atan(this.b / this.a) * 180 / Math.PI;
+      var m = this._data;
+      return Math.atan(m[1] / m[0]) * 180 / Math.PI;
     }
 
     isScaleOrRotation(): boolean {
-      return Math.abs(this.a * this.c + this.b * this.d) < 0.01;
+      var m = this._data;
+      return Math.abs(m[0] * m[2] + m[1] * m[3]) < 0.01;
     }
 
     toString (): string {
+      var m = this._data;
       return "{" +
-        this.a  + ", " +
-        this.b  + ", " +
-        this.c  + ", " +
-        this.d  + ", " +
-        this.tx + ", " +
-        this.ty + "}";
+        m[0] + ", " +
+        m[1] + ", " +
+        m[2] + ", " +
+        m[3] + ", " +
+        m[4] + ", " +
+        m[5] + "}";
     }
 
     public toWebGLMatrix(): Float32Array {
+      var m = this._data;
       return new Float32Array([
-        this.a, this.b, 0, this.c, this.d, 0, this.tx, this.ty, 1
+        m[0], m[1], 0, m[2], m[3], 0, m[4], m[5], 1
       ]);
     }
 
     public toCSSTransform(): String {
+      var m = this._data;
       return "matrix(" +
-        this.a  + ", " +
-        this.b  + ", " +
-        this.c  + ", " +
-        this.d  + ", " +
-        this.tx + ", " +
-        this.ty + ")";
+        m[0] + ", " +
+        m[1] + ", " +
+        m[2] + ", " +
+        m[3] + ", " +
+        m[4] + ", " +
+        m[5] + ")";
     }
 
     public static createIdentity(): Matrix {
       return new Matrix(1, 0, 0, 1, 0, 0);
     }
 
-    static multiply = function (dst, src) {
-      dst.transform(src.a, src.b, src.c, src.d, src.tx, src.ty);
+    static multiply = function (dst: Matrix, src: Matrix) {
+      var n = src._data;
+      dst.transform(n[0], n[1], n[2], n[3], n[4], n[5]);
     };
 
     public toSVGMatrix(): SVGMatrix {
+      var m = this._data;
       var matrix: SVGMatrix = Matrix._svg.createSVGMatrix();
-      matrix.a = this.a;
-      matrix.b = this.b;
-      matrix.c = this.c;
-      matrix.d = this.d;
-      matrix.e = this.tx;
-      matrix.f = this.ty;
+      matrix.a = m[0];
+      matrix.b = m[1];
+      matrix.c = m[2];
+      matrix.d = m[3];
+      matrix.e = m[4];
+      matrix.f = m[5];
       return matrix;
     }
 
     public snap (): boolean {
+      var m = this._data;
       if (this.isTranslationOnly()) {
-        this.a = 1;
-        this.b = 0;
-        this.c = 0;
-        this.d = 1;
-        this.tx = Math.round(this.tx);
-        this.ty = Math.round(this.ty);
+        m[0] = 1;
+        m[1] = 0;
+        m[2] = 0;
+        m[3] = 1;
+        m[4] = Math.round(m[4]);
+        m[5] = Math.round(m[5]);
         return true;
       }
       return false;

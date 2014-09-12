@@ -105,6 +105,24 @@ module Shumway.Unit {
     writer.debugLn("PASS" + test);
   }
 
+  export function matrixEq(a, b, test) {
+    test = description(test);
+    if (a == undefined && b) {
+      return fail("FAIL" + test + " Expected neither or both objects to be null/undefined, " +
+        "but only `a` was" + failedLocation());
+    }
+    if (a && b == undefined) {
+      return fail("FAIL" + test + " Expected neither or both objects to be null/undefined, " +
+        "but only `b` was" + failedLocation());
+    }
+    if (a.a !== b.a || a.b !== b.b ||
+        a.c !== b.c || a.d !== b.d ||
+        a.tx !== b.tx || a.ty !== b.ty) {
+      return fail("FAIL" + test + " matices differ." + failedLocation());
+    }
+    writer.debugLn("PASS" + test);
+  }
+
   export function check(condition, test) {
     test = description(test);
     if (!condition) {
@@ -164,6 +182,7 @@ import neq = Shumway.Unit.neq;
 import eq = Shumway.Unit.eq;
 import eqArray = Shumway.Unit.eqArray;
 import structEq = Shumway.Unit.structEq;
+import matrixEq = Shumway.Unit.matrixEq;
 import assertThrowsInstanceOf = Shumway.Unit.assertThrowsInstanceOf;
 import info = Shumway.Unit.info;
 import warn = Shumway.Unit.warn;
