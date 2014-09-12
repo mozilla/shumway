@@ -17,7 +17,6 @@
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   import Inflate = Shumway.ArrayUtilities.Inflate;
-  import SwfTag = Shumway.SWF.Parser.SwfTag;
 
   function readTags(context, stream, swfVersion, final, onprogress, onexception): boolean {
     function rollback(): boolean {
@@ -91,31 +90,10 @@ module Shumway.SWF.Parser {
           nextTag.type = 'sprite';
           nextTag.id = readUi16(subbytes, substream);
           nextTag.frameCount = readUi16(subbytes, substream);
-          var controlTags = nextTag.tags = [];
+          nextTag.tags = [];
           var isEnoughData = readTags(nextTag, substream, swfVersion, true, null, null);
           if (!isEnoughData) {
             Debug.error('Invalid SWF tag structure');
-          }
-          // Even though invalid according to the SWF spec, some files have nested definition tags.
-          // We handle this case by adding all non-control tags of a sprite to the main-timeline's tag list.
-          for (var i = 0; i < controlTags.length; i++) {
-            switch (controlTags[i].code) {
-              case SwfTag.CODE_SHOW_FRAME:
-              case SwfTag.CODE_START_SOUND:
-              case SwfTag.CODE_PLACE_OBJECT:
-              case SwfTag.CODE_FRAME_LABEL:
-              case SwfTag.CODE_PLACE_OBJECT2:
-              case SwfTag.CODE_SOUND_STREAM_HEAD:
-              case SwfTag.CODE_REMOVE_OBJECT:
-              case SwfTag.CODE_SOUND_STREAM_HEAD2:
-              case SwfTag.CODE_REMOVE_OBJECT2:
-              case SwfTag.CODE_SOUND_STREAM_BLOCK:
-              case SwfTag.CODE_DO_ACTION:
-              case SwfTag.CODE_DO_INIT_ACTION:
-              case SwfTag.CODE_END:
-                continue;
-            }
-            tags.push(controlTags.splice(i, 1)[0]);
           }
         } else if (tagCode === 1) {
           nextTag.repeat = 1;
