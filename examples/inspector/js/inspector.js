@@ -78,21 +78,18 @@ function parseQueryString(qs) {
 }
 
 /**
- * You can also specify a remote file as a query string parameters, ?rfile=... to load it automatically
- * when the page loads.
+ * Files can either be specified via the GET param `rfile`, or by manually selecting a local file.
  */
-showOpenFileButton(true);
 if (remoteFile) {
-  showOpenFileButton(false);
   setTimeout(function () {
     executeFile(remoteFile, null, parseQueryString(window.location.search));
   });
-}
-if (yt) {
+} else if (yt) {
   requestYT(yt).then(function (config) {
-    showOpenFileButton(false);
     executeFile(config.url, null, config.args);
   });
+} else {
+  showOpenFileButton(true);
 }
 if (remoteFile) {
   configureMocks(remoteFile);
@@ -179,7 +176,7 @@ function executeFile(file, buffer, movieParams) {
         syncGFXOptions(easel.options);
         var player = new Shumway.Player.Test.TestPlayer();
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
-        player.load(file);
+        player.load(file, buffer);
 
         currentSWFUrl = swfURL;
         currentPlayer = player;
