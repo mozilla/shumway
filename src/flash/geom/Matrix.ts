@@ -21,31 +21,24 @@ module Shumway.AVM2.AS.flash.geom {
   import Bounds = Shumway.Bounds;
 
   export class Matrix extends ASNative {
-    
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["a", "b", "c", "d", "tx", "ty", "concat", "invert", "identity", "createBox", "createGradientBox", "rotate", "translate", "scale", "deltaTransformPoint", "transformPoint", "copyFrom", "setTo", "copyRowTo", "copyColumnTo", "copyRowFrom", "copyColumnFrom", "clone", "toString"];
 
     constructor (a: number = 1, b: number = 0, c: number = 0, d: number = 1, tx: number = 0, ty: number = 0) {
       false && super();
-      this.a  = +a;
-      this.b  = +b;
-      this.c  = +c;
-      this.d  = +d;
-      this.tx = +tx;
-      this.ty = +ty;
+      var m = this._data = new Float64Array(6);
+      m[0] = a;
+      m[1] = b;
+      m[2] = c;
+      m[3] = d;
+      m[4] = tx;
+      m[5] = ty;
     }
 
-    public static FromUntyped(obj: any): Matrix {
-      return new flash.geom.Matrix(obj.a, obj.b, obj.c, obj.d, obj.tx, obj.ty);
+    public static FromUntyped(object: any): Matrix {
+      return new flash.geom.Matrix(object.a, object.b, object.c, object.d, object.tx, object.ty);
     }
 
     // Keep in sync with writeExternal below!
@@ -55,134 +48,126 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public static FROZEN_IDENTITY_MATRIX: Matrix = Object.freeze(new Matrix());
+
     // Must only be used in cases where the members are fully initialized and then directly used.
     public static TEMP_MATRIX: Matrix = new Matrix();
 
-    public a: number;
-    public b: number;
-    public c: number;
-    public d: number;
-    public tx: number;
-    public ty: number;
-
-    public set native_a(a: number) {
-      this.a = +a;
+    // Matrix data is stored in a typed array, this has proven to be about 60% faster in Firefox and
+    // about the same speed in Chrome. At some point we may want to pool all these matrix objects, or
+    // share one large array buffer for matrix data.
+    _data: Float64Array;
+    
+    public set a(a: number) {
+      this._data[0] = a;
     }
 
-    public get native_a(): number {
-      return this.a;
+    public get a(): number {
+      return this._data[0];
     }
 
-    public set native_b(b: number) {
-      this.b = +b;
+    public set b(b: number) {
+      this._data[1] = b;
     }
 
-    public get native_b(): number {
-      return this.b;
+    public get b(): number {
+      return this._data[1];
     }
 
-    public set native_c(c: number) {
-      this.c = +c;
+    public set c(c: number) {
+      this._data[2] = c;
     }
 
-    public get native_c(): number {
-      return this.c;
+    public get c(): number {
+      return this._data[2];
     }
 
-    public set native_d(d: number) {
-      this.d = +d;
+    public set d(d: number) {
+      this._data[3] = d;
     }
 
-    public get native_d(): number {
-      return this.d;
+    public get d(): number {
+      return this._data[3];
     }
 
-    public set native_tx(tx: number) {
-      this.tx = +tx;
+    public set tx(tx: number) {
+      this._data[4] = tx;
     }
 
-    public get native_tx(): number {
-      return this.tx;
+    public get tx(): number {
+      return this._data[4];
     }
 
-    public set native_ty(ty: number) {
-      this.ty = +ty;
+    public set ty(ty: number) {
+      this._data[5] = ty;
     }
 
-    public get native_ty(): number {
-      return this.ty;
-    }
-
-    public Matrix(a: number = 1, b: number = 0, c: number = 0, d: number = 1, tx: number = 0, ty: number = 0) {
-      this.a  = a;
-      this.b  = b;
-      this.c  = c;
-      this.d  = d;
-      this.tx = tx;
-      this.ty = ty;
+    public get ty(): number {
+      return this._data[5];
     }
 
     /**
-     * this = this * m
+     * this = this * other
      */
-    public concat(m: Matrix): void {
-      var a =  this.a * m.a;
+    public concat(other: Matrix): void {
+      var m = this._data, n = other._data;
+      var a =  m[0] * n[0];
       var b =  0.0;
       var c =  0.0;
-      var d =  this.d * m.d;
-      var tx = this.tx * m.a + m.tx;
-      var ty = this.ty * m.d + m.ty;
+      var d =  m[3] * n[3];
+      var tx = m[4] * n[0] + n[4];
+      var ty = m[5] * n[3] + n[5];
 
-      if (this.b !== 0.0 || this.c !== 0.0 || m.b !== 0.0 || m.c !== 0.0) {
-        a  += this.b  * m.c;
-        d  += this.c  * m.b;
-        b  += this.a  * m.b + this.b * m.d;
-        c  += this.c  * m.a + this.d * m.c;
-        tx += this.ty * m.c;
-        ty += this.tx * m.b;
+      if (m[1] !== 0.0 || m[2] !== 0.0 || n[1] !== 0.0 || n[2] !== 0.0) {
+        a  += m[1] * n[2];
+        d  += m[2] * n[1];
+        b  += m[0] * n[1] + m[1] * n[3];
+        c  += m[2] * n[0] + m[3] * n[2];
+        tx += m[5] * n[2];
+        ty += m[4] * n[1];
       }
 
-      this.a  = a;
-      this.b  = b;
-      this.c  = c;
-      this.d  = d;
-      this.tx = tx;
-      this.ty = ty;
+      m[0] = a;
+      m[1] = b;
+      m[2] = c;
+      m[3] = d;
+      m[4] = tx;
+      m[5] = ty;
     }
 
     /**
-     * this = m * this
+     * this = other * this
      */
-    public preMultiply(m: Matrix): void {
-      this.preMultiplyInto(m, this);
+    public preMultiply(other: Matrix): void {
+      this.preMultiplyInto(other, this);
     }
 
     /**
      * target = m * this
      */
-    public preMultiplyInto(m: Matrix, target: Matrix): void {
-      var a =  m.a * this.a;
+    public preMultiplyInto(other: Matrix, target: Matrix): void {
+      var m = this._data, n = other._data, t = target._data;
+      var a =  n[0] * m[0];
       var b =  0.0;
       var c =  0.0;
-      var d =  m.d * this.d;
-      var tx = m.tx * this.a + this.tx;
-      var ty = m.ty * this.d + this.ty;
+      var d =  n[3] * m[3];
+      var tx = n[4] * m[0] + m[4];
+      var ty = n[5] * m[3] + m[5];
 
-      if (m.b !== 0.0 || m.c !== 0.0 || this.b !== 0.0 || this.c !== 0.0) {
-        a  += m.b  * this.c;
-        d  += m.c  * this.b;
-        b  += m.a  * this.b + m.b * this.d;
-        c  += m.c  * this.a + m.d * this.c;
-        tx += m.ty * this.c;
-        ty += m.tx * this.b;
+      if (n[1] !== 0.0 || n[2] !== 0.0 || m[1] !== 0.0 || m[2] !== 0.0) {
+        a  += n[1] * m[2];
+        d  += n[2] * m[1];
+        b  += n[0] * m[1] + n[1] * m[3];
+        c  += n[2] * m[0] + n[3] * m[2];
+        tx += n[5] * m[2];
+        ty += n[4] * m[1];
       }
 
-      target.a  = a;
-      target.b  = b;
-      target.c  = c;
-      target.d  = d;
-      target.tx = tx;
-      target.ty = ty;
+      t[0] = a;
+      t[1] = b;
+      t[2] = c;
+      t[3] = d;
+      t[4] = tx;
+      t[5] = ty;
     }
 
     public invert(): void {
@@ -190,20 +175,21 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public invertInto(target: Matrix): void {
-      var b  = this.b;
-      var c  = this.c;
-      var tx = this.tx;
-      var ty = this.ty;
+      var m = this._data, t = target._data;
+      var b  = m[1];
+      var c  = m[2];
+      var tx = m[4];
+      var ty = m[5];
       if (b === 0 && c === 0) {
-        var a = target.a = 1 / this.a;
-        var d = target.d = 1 / this.d;
-        target.b = target.c = 0;
-        target.tx = -a * tx;
-        target.ty = -d * ty;
+        var a = t[0] = 1 / m[0];
+        var d = t[3] = 1 / m[3];
+        t[1] = t[2] = 0;
+        t[4] = -a * tx;
+        t[5] = -d * ty;
         return;
       }
-      var a = this.a;
-      var d = this.d;
+      var a = m[0];
+      var d = m[3];
       var determinant = a * d - b * c;
       if (determinant === 0) {
         target.identity();
@@ -215,36 +201,38 @@ module Shumway.AVM2.AS.flash.geom {
        * two: 1/2, 1/4 ...
        */
       determinant = 1 / determinant;
-      var t = 0;
-      t = target.a =  d * determinant;
-      b = target.b = -b * determinant;
-      c = target.c = -c * determinant;
-      d = target.d =  a * determinant;
-      target.tx = -(t * tx + c * ty);
-      target.ty = -(b * tx + d * ty);
+      var k = 0;
+      k = t[0] =  d * determinant;
+      b = t[1] = -b * determinant;
+      c = t[2] = -c * determinant;
+      d = t[3] =  a * determinant;
+      t[4] = -(k * tx + c * ty);
+      t[5] = -(b * tx + d * ty);
     }
 
     public identity(): void {
-      this.a = this.d = 1;
-      this.b = this.c = this.tx = this.ty = 0;
+      var m = this._data;
+      m[0] = m[3] = 1;
+      m[1] = m[2] = m[4] = m[5] = 0;
     }
 
     public createBox(scaleX: number, scaleY: number, rotation: number = 0, tx: number = 0, ty: number = 0): void {
+      var m = this._data;
       if (rotation !== 0) {
-        var u: number = Math.cos(rotation);
-        var v: number = Math.sin(rotation);
-        this.a =  u * scaleX;
-        this.b =  v * scaleY;
-        this.c = -v * scaleX;
-        this.d =  u * scaleY;
+        var u = Math.cos(rotation);
+        var v = Math.sin(rotation);
+        m[0] =  u * scaleX;
+        m[1] =  v * scaleY;
+        m[2] = -v * scaleX;
+        m[3] =  u * scaleY;
       } else {
-        this.a = scaleX;
-        this.b = 0;
-        this.c = 0;
-        this.d = scaleY;
+        m[0] = scaleX;
+        m[1] = 0;
+        m[2] = 0;
+        m[3] = scaleY;
       }
-      this.tx = tx;
-      this.ty = ty;
+      m[4] = tx;
+      m[5] = ty;
     }
 
     public createGradientBox(width: number, height: number, rotation: number = 0, tx: number = 0, ty: number = 0): void {
@@ -254,70 +242,78 @@ module Shumway.AVM2.AS.flash.geom {
     public rotate(angle: number): void {
       angle = +angle;
       if (angle !== 0) {
-        var u: number   = Math.cos(angle);
-        var v: number   = Math.sin(angle);
-        var ta: number  = this.a;
-        var tb: number  = this.b;
-        var tc: number  = this.c;
-        var td: number  = this.d;
-        var ttx: number = this.tx;
-        var tty: number = this.ty;
-        this.a =  ta  * u - tb  * v;
-        this.b =  ta  * v + tb  * u;
-        this.c =  tc  * u - td  * v;
-        this.d =  tc  * v + td  * u;
-        this.tx = ttx * u - tty * v;
-        this.ty = ttx * v + tty * u;
+        var m = this._data;
+        var u = Math.cos(angle);
+        var v = Math.sin(angle);
+        var ta = m[0];
+        var tb = m[1];
+        var tc = m[2];
+        var td = m[3];
+        var ttx = m[4];
+        var tty = m[5];
+        m[0] = ta  * u - tb  * v;
+        m[1] = ta  * v + tb  * u;
+        m[2] = tc  * u - td  * v;
+        m[3] = tc  * v + td  * u;
+        m[4] = ttx * u - tty * v;
+        m[5] = ttx * v + tty * u;
       }
     }
 
     public translate(dx: number, dy: number): void {
-      this.tx += dx;
-      this.ty += dy;
+      var m = this._data;
+      m[4] += dx;
+      m[5] += dy;
     }
 
     public scale(sx: number, sy: number): void {
+      var m = this._data;
       if (sx !== 1) {
-        this.a  *= sx;
-        this.c  *= sx;
-        this.tx *= sx;
+        m[0] *= sx;
+        m[2] *= sx;
+        m[4] *= sx;
       }
       if (sy !== 1) {
-        this.b  *= sy;
-        this.d  *= sy;
-        this.ty *= sy;
+        m[1] *= sy;
+        m[3] *= sy;
+        m[5] *= sy;
       }
     }
 
     public deltaTransformPoint(point: Point): Point {
-      return new Point(this.a * point.x + this.c * point.y, this.b * point.x + this.d * point.y);
+      return new Point(this._data[0] * point.x + this._data[2] * point.y, this._data[1] * point.x + this._data[3] * point.y);
     }
 
     public transformX(x: number, y: number): number {
-      return this.a * x + this.c * y + this.tx;
+      var m = this._data;
+      return m[0] * x + m[2] * y + m[4];
     }
 
     public transformY(x: number, y: number): number {
-      return this.b * x + this.d * y + this.ty;
+      var m = this._data;
+      return m[1] * x + m[3] * y + m[5];
     }
 
     public transformPoint(point: Point): Point {
-      return new Point(this.a * point.x + this.c * point.y + this.tx, this.b * point.x + this.d * point.y + this.ty);
+      var m = this._data;
+      return new Point(m[0] * point.x + m[2] * point.y + m[4], m[1] * point.x + m[3] * point.y + m[5]);
     }
 
     public transformPointInPlace(point): Point {
-      point.setTo(this.a * point.x + this.c * point.y + this.tx,
-                  this.b * point.x + this.d * point.y + this.ty);
+      var m = this._data;
+      point.setTo(m[0] * point.x + m[2] * point.y + m[4],
+                  m[1] * point.x + m[3] * point.y + m[5]);
       return point;
     }
 
     transformBounds(bounds: Bounds): void {
-      var a  = this.a;
-      var b  = this.b;
-      var c  = this.c;
-      var d  = this.d;
-      var tx = this.tx;
-      var ty = this.ty;
+      var m = this._data;
+      var a  = m[0];
+      var b  = m[1];
+      var c  = m[2];
+      var d  = m[3];
+      var tx = m[4];
+      var ty = m[5];
 
       var x = bounds.xMin;
       var y = bounds.yMin;
@@ -352,19 +348,21 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     getScaleX(): number {
-      if (this.a === 1 && this.b === 0) {
+      var m = this._data;
+      if (m[0] === 1 && m[1] === 0) {
         return 1;
       }
-      return Math.sqrt(this.a * this.a + this.b * this.b);
+      return Math.sqrt(m[0] * m[0] + m[1] * m[1]);
     }
 
     getScaleY(): number {
-      if (this.c === 0 && this.d === 1) {
+      var m = this._data;
+      if (m[2] === 0 && m[3] === 1) {
         return 1;
       }
-      var result = Math.sqrt(this.c * this.c + this.d * this.d);
-      var det = this.a * this.d - this.b * this.c;
-      return det < 0 ? -result : result;
+      var result = Math.sqrt(m[2] * m[2] + m[3] * m[3]);
+      var determinant = m[0] * m[3] - m[1] * m[2];
+      return determinant < 0 ? -result : result;
     }
 
     getAbsoluteScaleX(): number {
@@ -376,49 +374,54 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public getRotation(): number {
-      return Math.atan2(this.b, this.a);
+      return Math.atan2(this._data[1], this._data[0]);
     }
 
-    public copyFrom(sourceMatrix: Matrix): void {
-      this.a  = sourceMatrix.a;
-      this.b  = sourceMatrix.b;
-      this.c  = sourceMatrix.c;
-      this.d  = sourceMatrix.d;
-      this.tx = sourceMatrix.tx;
-      this.ty = sourceMatrix.ty;
+    public copyFrom(other: Matrix): void {
+      var m = this._data, n = other._data;
+      m[0] = n[0];
+      m[1] = n[1];
+      m[2] = n[2];
+      m[3] = n[3];
+      m[4] = n[4];
+      m[5] = n[5];
     }
 
     public setTo(a: number, b: number, c: number, d: number, tx: number, ty: number): void {
-      this.a  = +a;
-      this.b  = +b;
-      this.c  = +c;
-      this.d  = +d;
-      this.tx = +tx;
-      this.ty = +ty;
+      var m = this._data;
+      m[0] = a;
+      m[1] = b;
+      m[2] = c;
+      m[3] = d;
+      m[4] = tx;
+      m[5] = ty;
     }
 
     public toTwipsInPlace(): Matrix {
-      this.tx = (this.tx * 20) | 0;
-      this.ty = (this.ty * 20) | 0;
+      var m = this._data;
+      m[4] = (m[4] * 20) | 0;
+      m[5] = (m[5] * 20) | 0;
       return this;
     }
 
     public toPixelsInPlace(): Matrix {
-      this.tx /= 20;
-      this.ty /= 20;
+      var m = this._data;
+      m[4] /= 20;
+      m[5] /= 20;
       return this;
     }
 
     public copyRowTo(row: number, vector3D: Vector3D): void {
+      var m = this._data;
       row = row >>> 0;
       if (row === 0) {
-        vector3D.x = this.a;
-        vector3D.y = this.c;
-        vector3D.z = this.tx;
+        vector3D.x = m[0];
+        vector3D.y = m[2];
+        vector3D.z = m[4];
       } else if (row === 1) {
-        vector3D.x = this.b;
-        vector3D.y = this.d;
-        vector3D.z = this.ty;
+        vector3D.x = m[1];
+        vector3D.y = m[3];
+        vector3D.z = m[5];
       } else if (row === 2) {
         vector3D.x = 0;
         vector3D.y = 0;
@@ -427,45 +430,48 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public copyColumnTo(column: number, vector3D: Vector3D): void {
+      var m = this._data;
       column = column >>> 0;
       if (column === 0) {
-        vector3D.x = this.a;
-        vector3D.y = this.b;
+        vector3D.x = m[0];
+        vector3D.y = m[1];
         vector3D.z = 0;
       } else if (column === 1) {
-        vector3D.x = this.c;
-        vector3D.y = this.d;
+        vector3D.x = m[2];
+        vector3D.y = m[3];
         vector3D.z = 0;
       } else if (column === 2) {
-        vector3D.x = this.tx;
-        vector3D.y = this.ty;
+        vector3D.x = m[4];
+        vector3D.y = m[5];
         vector3D.z = 1;
       }
     }
 
     public copyRowFrom(row: number, vector3D: Vector3D): void {
+      var m = this._data;
       row = row >>> 0;
       if (row === 0) {
-        this.a  = vector3D.x;
-        this.c  = vector3D.y;
-        this.tx = vector3D.z;
+        m[0] = vector3D.x;
+        m[2] = vector3D.y;
+        m[4] = vector3D.z;
       } else if (row === 1) {
-        this.b  = vector3D.x;
-        this.d  = vector3D.y;
-        this.ty = vector3D.z;
+        m[1] = vector3D.x;
+        m[3] = vector3D.y;
+        m[5] = vector3D.z;
       }
     }
 
     public copyColumnFrom(column: number, vector3D: Vector3D): void {
+      var m = this._data;
       column = column >>> 0;
       if (column === 0) {
-        this.a  = vector3D.x;
-        this.c  = vector3D.y;
-        this.tx = vector3D.z;
+        m[0] = vector3D.x;
+        m[2] = vector3D.y;
+        m[4] = vector3D.z;
       } else if (column === 1) {
-        this.b  = vector3D.x;
-        this.d  = vector3D.y;
-        this.ty = vector3D.z;
+        m[1] = vector3D.x;
+        m[3] = vector3D.y;
+        m[5] = vector3D.z;
       }
     }
 
@@ -473,11 +479,12 @@ module Shumway.AVM2.AS.flash.geom {
      * Updates the scale and skew componenets of the matrix.
      */
     public updateScaleAndRotation(scaleX: number, scaleY: number, rotation: number) {
+      var m = this._data;
       // The common case.
       if (rotation === 0 || rotation === 360) {
-        this.a = scaleX;
-        this.b = this.c = 0;
-        this.d = scaleY;
+        m[0] = scaleX;
+        m[1] = m[2] = 0;
+        m[3] = scaleY;
         return;
       }
       var u = 0, v = 0;
@@ -490,35 +497,38 @@ module Shumway.AVM2.AS.flash.geom {
           u = Math.cos(angle);
           v = Math.sin(angle);
       }
-      this.a =  u * scaleX;
-      this.b =  v * scaleX;
-      this.c = -v * scaleY;
-      this.d =  u * scaleY;
+      m[0] =  u * scaleX;
+      m[1] =  v * scaleX;
+      m[2] = -v * scaleY;
+      m[3] =  u * scaleY;
     }
 
     public clone(): Matrix {
-      return new flash.geom.Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);
+      var m = this._data;
+      return new flash.geom.Matrix(m[0], m[1], m[2], m[3], m[4], m[5]);
     }
 
     public equals(other: Matrix): boolean {
-      return this.a  === other.a  && this.b  === other.b &&
-             this.c  === other.c  && this.d  === other.d &&
-             this.tx === other.tx && this.ty === other.ty;
+      var m = this._data, n = other._data;
+      return m[0] === n[0] && m[1] === n[1] &&
+             m[2] === n[2] && m[3] === n[3] &&
+             m[4] === n[4] && m[5] === n[5];
     }
 
     public toString(): string {
-      return "(a=" + this.a + ", b=" + this.b + ", c=" + this.c + ", d=" + this.d +
-             ", tx=" + this.tx + ", ty=" + this.ty + ")";
+      var m = this._data;
+      return "(a=" + m[0] + ", b=" + m[1] + ", c=" + m[2] + ", d=" + m[3] + ", tx=" + m[4] + ", ty=" + m[5] + ")";
     }
 
     // Keep in sync with static FromDataBuffer above!
     public writeExternal(output: DataBuffer) {
-      output.writeFloat(this.a);
-      output.writeFloat(this.b);
-      output.writeFloat(this.c);
-      output.writeFloat(this.d);
-      output.writeFloat(this.tx);
-      output.writeFloat(this.ty);
+      var m = this._data;
+      output.writeFloat(m[0]);
+      output.writeFloat(m[1]);
+      output.writeFloat(m[2]);
+      output.writeFloat(m[3]);
+      output.writeFloat(m[4]);
+      output.writeFloat(m[5]);
     }
   }
 }
