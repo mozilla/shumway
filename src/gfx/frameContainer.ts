@@ -37,6 +37,7 @@ module Shumway.GFX {
     public addChild(child: Frame): Frame {
       this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
       if (child) {
+        release || assert(child !== this);
         child._parent = this;
         child._invalidatePosition();
       }
@@ -53,6 +54,7 @@ module Shumway.GFX {
         this._children.splice(index, 0, child);
       }
       if (child) {
+        release || assert(child !== this);
         child._parent = this;
         child._invalidatePosition();
       }
@@ -75,7 +77,7 @@ module Shumway.GFX {
       if (!child) {
         return;
       }
-      child._parent = undefined;
+      child._parent = null;
       child._invalidatePosition();
     }
 

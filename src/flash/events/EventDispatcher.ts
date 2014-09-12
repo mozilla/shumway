@@ -391,7 +391,7 @@ module Shumway.AVM2.AS.flash.events {
 
       if (arguments.length !== 1) {
         throwError("ArgumentError", Errors.WrongArgumentCountError,
-                   "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
+                   "flash.events::EventDispatcher/dispatchEvent()", 1, arguments.length);
       }
 
       release || counter.count("EventDispatcher::dispatchEvent");
