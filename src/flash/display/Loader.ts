@@ -625,11 +625,13 @@ module Shumway.AVM2.AS.flash.display {
       Loader._loadQueue.push(this);
     }
 
-    loadBytes(data: flash.utils.ByteArray, context: LoaderContext): void
+    loadBytes(data: flash.utils.ByteArray, context?: LoaderContext): void
     {
       // TODO: properly coerce object arguments to their types.
-      this._contentLoaderInfo._url = this.loaderInfo._url + '/[[DYNAMIC]]/' +
-                                     (++Loader._embeddedContentLoadCount);
+      // In case this is the initial root loader, we won't have a loaderInfo object. That should
+      // only happen in the inspector when a file is loaded from a Blob, though.
+      this._contentLoaderInfo._url = (this.loaderInfo ? this.loaderInfo._url : '') +
+                                     '/[[DYNAMIC]]/' + (++Loader._embeddedContentLoadCount);
       this._applyLoaderContext(context, null);
       this._loadingType = LoadingType.Bytes;
       var worker = this._createParsingWorker();
