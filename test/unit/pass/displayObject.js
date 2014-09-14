@@ -1,6 +1,6 @@
 function displayTests() {
   function log(message) {
-    info(message);
+    //info(message);
   }
 
   var Random = Shumway.Random;
@@ -366,12 +366,16 @@ function displayTests() {
   unitTests.push(canHaveGraphics);
 
   unitTests.push(function hitTestMaskedObject() {
+    var stage = new Stage();
     var s1 = new Sprite();
+    stage.addChild(s1);
     s1.graphics.beginFill(0xff0000);
     s1.graphics.drawRect(0, 0, 200, 100);
     var s2 = new Sprite();
+    stage.addChild(s2);
     s2.graphics.beginFill(0x00ff00);
-    s2.graphics.drawRect(100, 0, 100, 200);
+    s2.graphics.drawRect(0, 0, 200, 100);
+    s2.x = 100;
     eq(s1.hitTestPoint(50, 50, true), true);
     s1.mask = s2;
     eq(s1.hitTestPoint(50, 50, true), false);

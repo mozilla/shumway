@@ -228,7 +228,9 @@
   unitTests.push(function getObjectsUnderPoint() {
     Random.seed(0x12343);
 
+    var stage = new Stage();
     var container = new Sprite();
+    stage.addChild(container);
 
     var square1 = new Sprite();
     square1.graphics.beginFill(0xFFCC00);
