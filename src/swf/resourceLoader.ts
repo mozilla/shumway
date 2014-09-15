@@ -23,7 +23,7 @@ module Shumway.SWF {
     readAsArrayBuffer(request):ArrayBuffer;
   }
 
-  function defineSymbol(swfTag, symbols) {
+  function defineSymbol(swfTag, symbols, commitData) {
     var symbol;
 
     switch (swfTag.code) {
@@ -80,6 +80,18 @@ module Shumway.SWF {
         var soundStream = null;
         for (var i = 0, n = tags.length; i < n; i++) {
           var tag:any = tags[i];
+          if ('id' in tag) {
+            // According to Chapter 13 of the SWF format spec, no nested definition tags are
+            // allowed within DefineSprite. However, they're added to the symbol dictionary
+            // anyway, and some tools produce them. Notably swfmill.
+            // We essentially treat them as though they came before the current sprite. That
+            // should be ok because it doesn't make sense for them to rely on their parent being
+            // fully defined - so they don't have to come after it -, and any control tags within
+            // the parent will just pick them up the moment they're defined, just as always.
+            var symbol = defineSymbol(tag, symbols, commitData);
+            commitData(symbol, symbol.transferables);
+            continue;
+          }
           switch (tag.code) {
             case SwfTag.CODE_DO_ACTION:
               if (!frameScripts)
@@ -192,7 +204,7 @@ module Shumway.SWF {
         for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
           var tag = tags[tagsProcessed];
           if ('id' in tag) {
-            var symbol = defineSymbol(tag, symbols);
+            var symbol = defineSymbol(tag, symbols, commitData);
             commitData(symbol, symbol.transferables);
             continue;
           }
