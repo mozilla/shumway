@@ -961,6 +961,10 @@ module Shumway.AVM2.AS.flash.display {
                 rayIntersectsLine(x, y, fromX, fromY, formOpenX, formOpenY)) {
               inside = !inside;
             }
+            // If we close a sub-shape, we can return earlier if our point was inside of its path.
+            if (inside) {
+              return true;
+            }
             formOpen = false;
             fillActive = command !== PathCommand.EndFill;
             break;

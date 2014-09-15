@@ -15,23 +15,20 @@
  */
 
 function readFile(file) {
-  var reader = new FileReader();
-  if (file.name.endsWith(".abc") || file.name.endsWith(".swf")) {
-    reader.onload = function() {
-      executeFile(file.name, this.result);
-    }
-  } else {
+  if (!(file.name.endsWith(".abc") || file.name.endsWith(".swf"))) {
     throw new TypeError("unsupported format");
   }
+  var reader = new FileReader();
+  reader.onload = function () {
+    executeFile(file.name, this.result);
+  };
   reader.readAsArrayBuffer(file);
 }
 
 function loadScript(file, next) {
   var script = document.createElement('script');
   script.setAttribute('type', 'text/javascript');
-  script.onload = function () {
-    next && next();
-  };
+  script.onload = next || null;
   script.src = file;
   document.getElementsByTagName('head')[0].appendChild(script);
 }
