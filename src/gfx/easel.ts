@@ -140,7 +140,7 @@ module Shumway.GFX {
     }
 
     onKeyPress(easel: Easel, event: KeyboardEvent) {
-      if (event.keyCode === 112) { // P
+      if (event.keyCode === 112 || event.key === 'p') { // P
         this._paused = !this._paused;
       }
       if (this._keyCodes[83]) {  // S
@@ -259,7 +259,7 @@ module Shumway.GFX {
         fpsCanvasContainer.style.position = "absolute";
         fpsCanvasContainer.style.top = "0";
         fpsCanvasContainer.style.width = "100%";
-        fpsCanvasContainer.style.height = "10px";
+        fpsCanvasContainer.style.height = "16px";
         this._fpsCanvas = document.createElement("canvas");
         fpsCanvasContainer.appendChild(this._fpsCanvas);
         container.appendChild(fpsCanvasContainer);
