@@ -181,15 +181,20 @@ module Shumway.GFX {
       ]);
     }
 
-    public static fromMultipliersAndOffsets(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number,
-                                            redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number): ColorMatrix {
-      return new ColorMatrix ([
-        redMultiplier, 0, 0, 0,
-        0, greenMultiplier, 0, 0,
-        0, 0, blueMultiplier, 0,
-        0, 0, 0, alphaMultiplier,
-        redOffset, greenOffset, blueOffset, alphaOffset
-      ]);
+    public setMultipliersAndOffsets(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number,
+                                    redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number) {
+      var m: Float32Array = this._m;
+      for (var i = 0; i < m.length; i++) {
+        m[i] = 0;
+      }
+      m[0] = redMultiplier;
+      m[5] = greenMultiplier;
+      m[10] = blueMultiplier;
+      m[15] = blueMultiplier;
+      m[16] = redOffset;
+      m[17] = greenOffset;
+      m[18] = blueOffset;
+      m[19] = alphaOffset;
     }
 
     public transformRGBA(rgba: number) {

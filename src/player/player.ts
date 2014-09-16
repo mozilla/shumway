@@ -214,6 +214,7 @@ module Shumway.Player {
 
     public syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean = true): DataBuffer {
       var updates = new DataBuffer();
+      updates.endian = "auto";
       var assets = [];
       var serializer = new Remoting.Player.PlayerChannelSerializer();
       serializer.output = updates;
@@ -237,6 +238,7 @@ module Shumway.Player {
 
     public requestBitmapData(bitmapData: BitmapData): DataBuffer {
       var output = new DataBuffer();
+      output.endian = "auto";
       var assets = [];
       var serializer = new Remoting.Player.PlayerChannelSerializer();
       serializer.output = output;
@@ -248,6 +250,7 @@ module Shumway.Player {
 
     public registerFont(font: flash.text.Font) {
       var updates = new DataBuffer();
+      updates.endian = "auto";
       var assets = [];
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
       serializer.output = updates;
@@ -258,6 +261,7 @@ module Shumway.Player {
 
     public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
       var updates = new DataBuffer();
+      updates.endian = "auto";
       var assets = [];
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
       serializer.output = updates;

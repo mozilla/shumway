@@ -141,6 +141,21 @@ module Shumway.Remoting.GFX {
     output: DataBuffer;
     context: GFXChannelDeserializerContext;
 
+    /**
+     * Used to avoid extra allocation, don't ever leak a reference to this object.
+     */
+    private static _temporaryReadMatrix: Matrix = Matrix.createIdentity();
+
+    /**
+     * Used to avoid extra allocation, don't ever leak a reference to this object.
+     */
+    private static _temporaryReadRectangle: Rectangle = Rectangle.createEmpty();
+
+    /**
+     * Used to avoid extra allocation, don't ever leak a reference to this object.
+     */
+    private static _temporaryReadColorMatrix: ColorMatrix = ColorMatrix.createIdentity();
+
     public read() {
       var tag = 0;
       var input = this.input;
@@ -209,7 +224,8 @@ module Shumway.Remoting.GFX {
 
     private _readMatrix(): Matrix {
       var input = this.input;
-      return new Matrix (
+      var matrix = GFXChannelDeserializer._temporaryReadMatrix;
+      matrix.setElements (
         input.readFloat(),
         input.readFloat(),
         input.readFloat(),
@@ -217,20 +233,24 @@ module Shumway.Remoting.GFX {
         input.readFloat() / 20,
         input.readFloat() / 20
       );
+      return matrix;
     }
 
     private _readRectangle(): Rectangle {
       var input = this.input;
-      return new Rectangle (
+      var rectangle = GFXChannelDeserializer._temporaryReadRectangle;
+      rectangle.setElements (
         input.readInt() / 20,
         input.readInt() / 20,
         input.readInt() / 20,
         input.readInt() / 20
       );
+      return rectangle;
     }
 
     private _readColorMatrix(): ColorMatrix {
       var input = this.input;
+      var colorMatrix = GFXChannelDeserializer._temporaryReadColorMatrix;
       var rm = 1, gm = 1, bm = 1, am = 1;
       var ro = 0, go = 0, bo = 0, ao = 0;
       switch (input.readInt()) {
@@ -250,10 +270,11 @@ module Shumway.Remoting.GFX {
           ao = input.readInt();
           break;
       }
-      return ColorMatrix.fromMultipliersAndOffsets (
+      colorMatrix.setMultipliersAndOffsets (
         rm, gm, bm, am,
         ro, go, bo, ao
       );
+      return colorMatrix;
     }
 
     private _popAsset(): any {
@@ -325,7 +346,7 @@ module Shumway.Remoting.GFX {
       var coords = null;
       var numCoords = input.readInt();
       if (numCoords) {
-        coords = new DataBuffer(numCoords* 4);
+        coords = new DataBuffer(numCoords * 4);
         input.readBytes(coords, 0, numCoords * 4);
       }
       if (!asset) {
@@ -456,7 +477,7 @@ module Shumway.Remoting.GFX {
       var colorMatrix;
       var clipRect;
       if (hasBits & MessageBits.HasMatrix) {
-        matrix = this._readMatrix();
+        matrix = this._readMatrix().clone();
       } else {
         matrix = Matrix.createIdentity();
       }
