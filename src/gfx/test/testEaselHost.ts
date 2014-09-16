@@ -87,12 +87,10 @@ module Shumway.GFX.Test {
       switch (type) {
         case 'player':
           var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
-          updates.endian = "auto";
           if (async) {
             this.processUpdates(updates, data.assets);
           } else {
             var output = new DataBuffer();
-            output.endian = "auto";
             this.processUpdates(updates, data.assets, output);
             return output.toPlainObject();
           }

@@ -133,7 +133,7 @@ module Shumway.ArrayUtilities {
       this._length = 0;
       this._position = 0;
       this._updateViews();
-      this._littleEndian = false; // AS3 is bigEndian by default.
+      this._littleEndian = DataBuffer._nativeLittleEndian;
       this._bitBuffer = 0;
       this._bitLength = 0;
     }
@@ -144,7 +144,7 @@ module Shumway.ArrayUtilities {
       dataBuffer._length = length === -1 ? buffer.byteLength : length;
       dataBuffer._position = 0;
       dataBuffer._updateViews();
-      dataBuffer._littleEndian = false; // AS3 is bigEndian by default.
+      dataBuffer._littleEndian = DataBuffer._nativeLittleEndian;
       dataBuffer._bitBuffer = 0;
       dataBuffer._bitLength = 0;
       return dataBuffer;
@@ -399,7 +399,7 @@ module Shumway.ArrayUtilities {
     writeUnsignedInt(value: number /*uint*/): void {
       var position = this._position;
       this._ensureCapacity(position + 4);
-      if (this._littleEndian && (position & 0x3) === 0 && this._i32) {
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._i32) {
         this._i32[position >> 2] = value;
       } else {
         var u8 = this._u8;
@@ -425,7 +425,7 @@ module Shumway.ArrayUtilities {
     write4UnsignedInts(a: number, b: number, c: number, d: number): void {
       var position = this._position;
       this._ensureCapacity(position + 16);
-      if (this._littleEndian && (position & 0x3) === 0 && this._i32) {
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._i32) {
         this._i32[(position >> 2) + 0] = a;
         this._i32[(position >> 2) + 1] = b;
         this._i32[(position >> 2) + 2] = c;
@@ -446,7 +446,7 @@ module Shumway.ArrayUtilities {
     writeFloat(value: number): void {
       var position = this._position;
       this._ensureCapacity(position + 4);
-      if (this._littleEndian && (position & 0x3) === 0 && this._f32) {
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._f32) {
         this._f32[position >> 2] = value;
       } else {
         var u8 = this._u8;
@@ -474,7 +474,7 @@ module Shumway.ArrayUtilities {
     write6Floats(a: number, b: number, c: number, d: number, e: number, f: number): void {
       var position = this._position;
       this._ensureCapacity(position + 24);
-      if (this._littleEndian && (position & 0x3) === 0 && this._f32) {
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._f32) {
         this._f32[(position >> 2) + 0] = a;
         this._f32[(position >> 2) + 1] = b;
         this._f32[(position >> 2) + 2] = c;
