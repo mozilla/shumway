@@ -302,6 +302,8 @@ module Shumway.SWF {
               commands = [];
               frame = { type: 'frame' };
               break;
+            default:
+              Debug.warning('Dropped tag during parsing. Code: ' + tag.code);
           }
         }
 
