@@ -1,4 +1,240 @@
 [
+    {  "id": "acid",
+      "frames": [10],
+      "swf": "swfs/acid/acid.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmap-draw",
+      "frames": [1],
+      "swf": "swfs/acid/acid-bitmap-draw.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmap-fill-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-bitmap-fill-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmap-fill",
+      "frames": [1],
+      "swf": "swfs/acid/acid-bitmap-fill.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmapData-copyPixels",
+      "frames": [1, 5, 10],
+      "swf": "swfs/acid/acid-bitmapData-copyPixels.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmapData-draw",
+      "frames": [1],
+      "swf": "swfs/acid/acid-bitmapData-draw.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-bitmaps",
+      "frames": [1, 5, 10],
+      "swf": "swfs/acid/acid-bitmaps.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-blend-2",
+      "frames": [1, 5, 10],
+      "swf": "swfs/acid/acid-blend-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-blend",
+      "frames": [1, 5, 10],
+      "swf": "swfs/acid/acid-blend.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-buttons-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-buttons-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-buttons",
+      "frames": [1],
+      "swf": "swfs/acid/acid-buttons.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-chars",
+      "frames": [1],
+      "swf": "swfs/acid/acid-chars.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-child",
+      "frames": [1, 5, 10],
+      "swf": "swfs/acid/acid-child.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-click-0",
+      "frames": [1],
+      "swf": "swfs/acid/acid-click-0.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-clip-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-clip-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-clip-3",
+      "frames": [1, 10, 20],
+      "swf": "swfs/acid/acid-clip-3.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-clip-bug",
+      "frames": [1],
+      "swf": "swfs/acid/acid-clip-bug.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-clip",
+      "frames": [1],
+      "swf": "swfs/acid/acid-clip.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-color-0",
+      "frames": [1],
+      "swf": "swfs/acid/acid-color-0.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-color-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-color-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-color",
+      "frames": [1, 5, 10],
+      "swf": "swfs/acid/acid-color.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-gc",
+      "frames": [1],
+      "swf": "swfs/acid/acid-gc.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-gradient-0",
+      "frames": [1],
+      "swf": "swfs/acid/acid-gradient-0.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-gradient-1",
+      "frames": [1],
+      "swf": "swfs/acid/acid-gradient-1.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-gradient-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-gradient-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-gradient",
+      "frames": [1],
+      "swf": "swfs/acid/acid-gradient.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-image-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-image-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-image",
+      "frames": [1, 5, 10],
+      "swf": "swfs/acid/acid-image.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-large",
+      "frames": [1, 20],
+      "swf": "swfs/acid/acid-large.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-mask-0",
+      "frames": [1],
+      "swf": "swfs/acid/acid-mask-0.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-mask",
+      "frames": [1, 5, 10],
+      "swf": "swfs/acid/acid-mask.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-mouse-0",
+      "frames": [1],
+      "swf": "swfs/acid/acid-mouse-0.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-mouse",
+      "frames": [1],
+      "swf": "swfs/acid/acid-mouse.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-scale",
+      "frames": [1],
+      "swf": "swfs/acid/acid-scale.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-sh",
+      "frames": [1],
+      "swf": "swfs/acid/acid-sh.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-shapes-testing",
+      "frames": [1],
+      "swf": "swfs/acid/acid-shapes-testing.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-shapes",
+      "frames": [1],
+      "swf": "swfs/acid/acid-shapes.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-small",
+      "frames": [1],
+      "swf": "swfs/acid/acid-small.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-stroke-0",
+      "frames": [1],
+      "swf": "swfs/acid/acid-stroke-0.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-stroke-1",
+      "frames": [1],
+      "swf": "swfs/acid/acid-stroke-1.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-2",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text-2.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-3",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text-3.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-5",
+      "frames": [1, 5, 10],
+      "swf": "swfs/acid/acid-text-5.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-6",
+      "frames": [1, 10, 20],
+      "swf": "swfs/acid/acid-text-6.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-escape",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text-escape.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text-x",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text-x.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-text",
+      "frames": [1],
+      "swf": "swfs/acid/acid-text.swf",
+      "type": "eq"
+    },
+
     {  "id": "timeline",
       "stas": "swfs/trace.stas",
       "filenames": [
