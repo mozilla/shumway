@@ -116,6 +116,7 @@ module Shumway.ArrayUtilities {
     private _objectEncoding: number;
     private _u8: Uint8Array;
     private _i32: Int32Array;
+    private _f32: Float32Array;
 
     private _bitBuffer: number;
     private _bitLength: number;
@@ -132,7 +133,7 @@ module Shumway.ArrayUtilities {
       this._length = 0;
       this._position = 0;
       this._updateViews();
-      this._littleEndian = false; // AS3 is bigEndian by default.
+      this._littleEndian = DataBuffer._nativeLittleEndian;
       this._bitBuffer = 0;
       this._bitLength = 0;
     }
@@ -143,7 +144,7 @@ module Shumway.ArrayUtilities {
       dataBuffer._length = length === -1 ? buffer.byteLength : length;
       dataBuffer._position = 0;
       dataBuffer._updateViews();
-      dataBuffer._littleEndian = false; // AS3 is bigEndian by default.
+      dataBuffer._littleEndian = DataBuffer._nativeLittleEndian;
       dataBuffer._bitBuffer = 0;
       dataBuffer._bitLength = 0;
       return dataBuffer;
@@ -163,6 +164,7 @@ module Shumway.ArrayUtilities {
       this._u8 = new Uint8Array(this._buffer);
       if ((this._buffer.byteLength & 0x3) === 0) {
         this._i32 = new Int32Array(this._buffer);
+        this._f32 = new Float32Array(this._buffer);
       }
     }
 
@@ -262,25 +264,29 @@ module Shumway.ArrayUtilities {
     }
 
     readFloat(): number {
-      var u8 = this._u8;
       var position = this._position;
       if (position + 4 > this._length) {
         throwEOFError();
       }
-      var t8 = IntegerUtilities.u8;
-      if (this._littleEndian) {
-        t8[0] = u8[position + 0];
-        t8[1] = u8[position + 1];
-        t8[2] = u8[position + 2];
-        t8[3] = u8[position + 3];
-      } else {
-        t8[3] = u8[position + 0];
-        t8[2] = u8[position + 1];
-        t8[1] = u8[position + 2];
-        t8[0] = u8[position + 3];
-      }
       this._position = position + 4;
-      return IntegerUtilities.f32[0];
+      if (this._littleEndian && (position & 0x3) === 0 && this._f32) {
+        return this._f32[position >> 2];
+      } else {
+        var u8 = this._u8;
+        var t8 = IntegerUtilities.u8;
+        if (this._littleEndian) {
+          t8[0] = u8[position + 0];
+          t8[1] = u8[position + 1];
+          t8[2] = u8[position + 2];
+          t8[3] = u8[position + 3];
+        } else {
+          t8[3] = u8[position + 0];
+          t8[2] = u8[position + 1];
+          t8[1] = u8[position + 2];
+          t8[0] = u8[position + 3];
+        }
+        return IntegerUtilities.f32[0];
+      }
     }
 
     readDouble(): number {
@@ -386,20 +392,28 @@ module Shumway.ArrayUtilities {
       this.writeUnsignedInt(value);
     }
 
+    write4Ints(a: number, b: number, c: number, d: number): void {
+      this.write4UnsignedInts(a, b, c, d);
+    }
+
     writeUnsignedInt(value: number /*uint*/): void {
       var position = this._position;
       this._ensureCapacity(position + 4);
-      var u8 = this._u8;
-      if (this._littleEndian) {
-        u8[position + 0] = value;
-        u8[position + 1] = value >> 8;
-        u8[position + 2] = value >> 16;
-        u8[position + 3] = value >> 24;
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._i32) {
+        this._i32[position >> 2] = value;
       } else {
-        u8[position + 0] = value >> 24;
-        u8[position + 1] = value >> 16;
-        u8[position + 2] = value >> 8;
-        u8[position + 3] = value;
+        var u8 = this._u8;
+        if (this._littleEndian) {
+          u8[position + 0] = value;
+          u8[position + 1] = value >> 8;
+          u8[position + 2] = value >> 16;
+          u8[position + 3] = value >> 24;
+        } else {
+          u8[position + 0] = value >> 24;
+          u8[position + 1] = value >> 16;
+          u8[position + 2] = value >> 8;
+          u8[position + 3] = value;
+        }
       }
       position += 4;
       this._position = position;
@@ -408,27 +422,77 @@ module Shumway.ArrayUtilities {
       }
     }
 
+    write4UnsignedInts(a: number, b: number, c: number, d: number): void {
+      var position = this._position;
+      this._ensureCapacity(position + 16);
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._i32) {
+        this._i32[(position >> 2) + 0] = a;
+        this._i32[(position >> 2) + 1] = b;
+        this._i32[(position >> 2) + 2] = c;
+        this._i32[(position >> 2) + 3] = d;
+        position += 16;
+        this._position = position;
+        if (position > this._length) {
+          this._length = position;
+        }
+      } else {
+        this.writeUnsignedInt(a);
+        this.writeUnsignedInt(b);
+        this.writeUnsignedInt(c);
+        this.writeUnsignedInt(d);
+      }
+    }
+
     writeFloat(value: number): void {
       var position = this._position;
       this._ensureCapacity(position + 4);
-      var u8 = this._u8;
-      IntegerUtilities.f32[0] = value;
-      var t8 = IntegerUtilities.u8;
-      if (this._littleEndian) {
-        u8[position + 0] = t8[0];
-        u8[position + 1] = t8[1];
-        u8[position + 2] = t8[2];
-        u8[position + 3] = t8[3];
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._f32) {
+        this._f32[position >> 2] = value;
       } else {
-        u8[position + 0] = t8[3];
-        u8[position + 1] = t8[2];
-        u8[position + 2] = t8[1];
-        u8[position + 3] = t8[0];
+        var u8 = this._u8;
+        IntegerUtilities.f32[0] = value;
+        var t8 = IntegerUtilities.u8;
+        if (this._littleEndian) {
+          u8[position + 0] = t8[0];
+          u8[position + 1] = t8[1];
+          u8[position + 2] = t8[2];
+          u8[position + 3] = t8[3];
+        } else {
+          u8[position + 0] = t8[3];
+          u8[position + 1] = t8[2];
+          u8[position + 2] = t8[1];
+          u8[position + 3] = t8[0];
+        }
       }
       position += 4;
       this._position = position;
       if (position > this._length) {
         this._length = position;
+      }
+    }
+
+    write6Floats(a: number, b: number, c: number, d: number, e: number, f: number): void {
+      var position = this._position;
+      this._ensureCapacity(position + 24);
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._f32) {
+        this._f32[(position >> 2) + 0] = a;
+        this._f32[(position >> 2) + 1] = b;
+        this._f32[(position >> 2) + 2] = c;
+        this._f32[(position >> 2) + 3] = d;
+        this._f32[(position >> 2) + 4] = e;
+        this._f32[(position >> 2) + 5] = f;
+        position += 24;
+        this._position = position;
+        if (position > this._length) {
+          this._length = position;
+        }
+      } else {
+        this.writeFloat(a);
+        this.writeFloat(b);
+        this.writeFloat(c);
+        this.writeFloat(d);
+        this.writeFloat(e);
+        this.writeFloat(f);
       }
     }
 

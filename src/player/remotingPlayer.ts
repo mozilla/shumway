@@ -40,11 +40,12 @@ module Shumway.Remoting.Player {
 
   import IDataInput = Shumway.ArrayUtilities.IDataInput;
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import assert = Shumway.Debug.assert;
   import writer = Shumway.Player.writer;
 
   export class PlayerChannelSerializer {
-    public output: IDataOutput;
+    public output: DataBuffer;
     public outputAssets: any [];
     public phase: RemotingPhase = RemotingPhase.Objects;
     public roots: DisplayObject [] = null;
@@ -93,7 +94,7 @@ module Shumway.Remoting.Player {
       this.output.writeInt(MessageTag.UpdateStage);
       this.output.writeInt(stage._id);
       this.output.writeInt(stage.color);
-      this.writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
+      this._writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
     }
 
     writeGraphics(graphics: Graphics) {
@@ -107,7 +108,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(MessageTag.UpdateGraphics);
         this.output.writeInt(graphics._id);
         this.output.writeInt(-1);
-        this.writeRectangle(graphics._getContentBounds());
+        this._writeRectangle(graphics._getContentBounds());
         this.pushAsset(graphics.getGraphicsData().toPlainObject());
         this.output.writeInt(numTextures);
         for (var i = 0; i < numTextures; i++) {
@@ -133,7 +134,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(MessageTag.UpdateBitmapData);
         this.output.writeInt(bitmapData._id);
         this.output.writeInt(bitmapData._symbol ? bitmapData._symbol.id : -1);
-        this.writeRectangle(bitmapData._getContentBounds());
+        this._writeRectangle(bitmapData._getContentBounds());
         this.output.writeInt(bitmapData._type);
         this.pushAsset(bitmapData.getDataBuffer().toPlainObject());
         bitmapData._isDirty = false;
@@ -146,8 +147,8 @@ module Shumway.Remoting.Player {
         this.output.writeInt(MessageTag.UpdateTextContent);
         this.output.writeInt(textContent._id);
         this.output.writeInt(-1);
-        this.writeRectangle(textContent.bounds);
-        this.writeMatrix(textContent.matrix || flash.geom.Matrix.FROZEN_IDENTITY_MATRIX);
+        this._writeRectangle(textContent.bounds);
+        this._writeMatrix(textContent.matrix || flash.geom.Matrix.FROZEN_IDENTITY_MATRIX);
         this.output.writeInt(textContent.backgroundColor);
         this.output.writeInt(textContent.borderColor);
         this.output.writeInt(textContent.autoSize);
@@ -251,10 +252,10 @@ module Shumway.Remoting.Player {
 
       // Write Properties
       if (hasMatrix) {
-        this.writeMatrix(displayObject._getMatrix());
+        this._writeMatrix(displayObject._getMatrix());
       }
       if (hasColorTransform) {
-        this.writeColorTransform(displayObject._colorTransform);
+        this._writeColorTransform(displayObject._colorTransform);
       }
       if (hasMask) {
         this.output.writeInt(displayObject.mask ? displayObject.mask._id : -1);
@@ -361,38 +362,30 @@ module Shumway.Remoting.Player {
 
       this.output.writeInt(hasBits);
       if (matrix) {
-        this.writeMatrix(matrix);
+        this._writeMatrix(matrix);
       }
       if (colorTransform) {
-        this.writeColorTransform(colorTransform);
+        this._writeColorTransform(colorTransform);
       }
       if (clipRect) {
-        this.writeRectangle(Bounds.FromRectangle(clipRect));
+        this._writeRectangle(Bounds.FromRectangle(clipRect));
       }
       this.output.writeInt(BlendMode.toNumber(blendMode));
       this.output.writeBoolean(smoothing);
     }
 
-    writeMatrix(matrix: flash.geom.Matrix) {
+    private _writeMatrix(matrix: flash.geom.Matrix) {
       var output = this.output;
-      output.writeFloat(matrix.a);
-      output.writeFloat(matrix.b);
-      output.writeFloat(matrix.c);
-      output.writeFloat(matrix.d);
-      output.writeFloat(matrix.tx);
-      output.writeFloat(matrix.ty);
+      output.write6Floats(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
     }
 
-    writeRectangle(bounds: Bounds) {
+    private _writeRectangle(bounds: Bounds) {
       var output = this.output;
       // TODO: check if we should write bounds instead. Depends on what's more useful in GFX-land.
-      output.writeInt(bounds.xMin);
-      output.writeInt(bounds.yMin);
-      output.writeInt(bounds.width);
-      output.writeInt(bounds.height);
+      output.write4Ints(bounds.xMin, bounds.yMin, bounds.width, bounds.height);
     }
 
-    writeColorTransform(colorTransform: flash.geom.ColorTransform) {
+    private _writeColorTransform(colorTransform: flash.geom.ColorTransform) {
       var output = this.output;
       var rM = colorTransform.redMultiplier;
       var gM = colorTransform.greenMultiplier;

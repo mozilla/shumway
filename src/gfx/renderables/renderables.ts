@@ -801,22 +801,22 @@ module Shumway.GFX {
       this._plainText = '';
       this._backgroundColor = 0;
       this._borderColor = 0;
-      this._matrix = null;
+      this._matrix = Matrix.createIdentity();
       this._coords = null;
       this.textRect = bounds.clone();
       this.lines = [];
     }
 
     setBounds(bounds): void {
-      this._bounds.copyFrom(bounds);
-      this._textBounds.copyFrom(bounds);
+      this._bounds.set(bounds);
+      this._textBounds.set(bounds);
       this.textRect.setElements(bounds.x + 2, bounds.y + 2, bounds.x - 2, bounds.x - 2);
     }
 
     setContent(plainText: string, textRunData: DataBuffer, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer): void {
       this._textRunData = textRunData;
       this._plainText = plainText;
-      this._matrix = matrix;
+      this._matrix.set(matrix);
       this._coords = coords;
       this.lines = [];
     }

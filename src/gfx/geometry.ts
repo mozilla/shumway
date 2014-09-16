@@ -410,13 +410,6 @@ module Shumway.GFX.Geometry {
       return new Rectangle(this.x, this.y, this.w, this.h);
     }
 
-    copyFrom(source: Rectangle) {
-      this.x = source.x;
-      this.y = source.y;
-      this.w = source.w;
-      this.h = source.h;
-    }
-
     /**
      * Snaps the rectangle to pixel boundaries. The computed rectangle covers
      * the original rectangle.

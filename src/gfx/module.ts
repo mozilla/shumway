@@ -654,7 +654,7 @@ module Shumway.GFX {
           return;
         }
         if (this._globalColorMatrix) {
-          this._globalColorMatrix.copyFrom(matrix);
+          this._globalColorMatrix.set(matrix);
         } else {
           this._globalColorMatrix = matrix.clone();
         }

@@ -347,12 +347,18 @@ module Shumway.AVM2.AS.flash.geom {
       bounds.yMax = y1 > y3 ? y1 : y3;
     }
 
+    getDeterminant() {
+      var m = this._data;
+      return m[0] * m[3] - m[1] * m[2];
+    }
+
     getScaleX(): number {
       var m = this._data;
       if (m[0] === 1 && m[1] === 0) {
         return 1;
       }
-      return Math.sqrt(m[0] * m[0] + m[1] * m[1]);
+      var result = Math.sqrt(m[0] * m[0] + m[1] * m[1]);
+      return this.getDeterminant() < 0 ? -result : result;
     }
 
     getScaleY(): number {
@@ -361,8 +367,7 @@ module Shumway.AVM2.AS.flash.geom {
         return 1;
       }
       var result = Math.sqrt(m[2] * m[2] + m[3] * m[3]);
-      var determinant = m[0] * m[3] - m[1] * m[2];
-      return determinant < 0 ? -result : result;
+      return this.getDeterminant() < 0 ? -result : result;
     }
 
     getAbsoluteScaleX(): number {

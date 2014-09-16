@@ -90,7 +90,7 @@ module Shumway.Tools.Mini {
       }
 
       var elapsedTime = performance.now() - this._lastTime;
-      var weightRatio = 0.3;
+      var weightRatio = 0.9;
       var weightedTime = elapsedTime * (1 - weightRatio) + this._lastWeightedTime * weightRatio;
 
       var context = this._context;
@@ -110,7 +110,7 @@ module Shumway.Tools.Mini {
 
       var r = (1000 / 60) / weightedTime;
       context.fillStyle = this._gradient[r * (this._gradient.length - 1) | 0];
-      context.globalAlpha = idle ? 0.2 : 1;
+      context.globalAlpha = idle ? 0.5 : 1;
       var v = this._canvas.height * r | 0;
 
       context.fillRect(textWidth + index * (w + wPadding), 0, w, v);

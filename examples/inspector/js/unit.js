@@ -53,6 +53,24 @@ function eqArray(a, b, test) {
   console.info("PASS" + test);
 }
 
+function matrixEq(a, b, test) {
+  test = description(test);
+  if (a == undefined && b) {
+    return fail("FAIL" + test + " Expected neither or both objects to be null/undefined, " +
+      "but only `a` was" + failedLocation());
+  }
+  if (a && b == undefined) {
+    return fail("FAIL" + test + " Expected neither or both objects to be null/undefined, " +
+      "but only `b` was" + failedLocation());
+  }
+  if (a.a !== b.a || a.b !== b.b ||
+      a.c !== b.c || a.d !== b.d ||
+      a.tx !== b.tx || a.ty !== b.ty) {
+    return fail("FAIL" + test + " matices differ." + failedLocation());
+  }
+  console.info("PASS" + test);
+}
+
 function structEq(a, b, test) {
   test = description(test);
   if (a == undefined && b) {

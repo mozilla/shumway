@@ -1091,8 +1091,11 @@ module Shumway.AVM2.AS.flash.display {
       this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
     }
 
+    /**
+     * In Flash player, this always returns a positive number for some reason. This however, is not the case for scaleY.
+     */
     get scaleX(): number {
-      return this._scaleX;
+      return Math.abs(this._scaleX);
     }
 
     set scaleX(value: number) {

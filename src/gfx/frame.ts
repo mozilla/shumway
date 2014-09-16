@@ -413,7 +413,7 @@ module Shumway.GFX {
 
     set colorMatrix(value: ColorMatrix) {
       this.checkCapability(FrameCapabilityFlags.AllowColorMatrixWrite);
-      this._colorMatrix = value;
+      this._colorMatrix.set(value);
       this._propagateFlagsDown(FrameFlags.InvalidConcatenatedColorMatrix);
       this._invalidateParentPaint();
     }
@@ -485,7 +485,7 @@ module Shumway.GFX {
           release || assert (ancestor._hasFlags(FrameFlags.InvalidConcatenatedColorMatrix));
           // TODO: Premultiply here.
           m.multiply(ancestor._colorMatrix);
-          ancestor._concatenatedColorMatrix.copyFrom(m);
+          ancestor._concatenatedColorMatrix.set(m);
           ancestor._removeFlags(FrameFlags.InvalidConcatenatedColorMatrix);
         }
       }
