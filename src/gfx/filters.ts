@@ -106,7 +106,7 @@ module Shumway.GFX {
       return new ColorMatrix(this._m);
     }
 
-    public copyFrom(other: ColorMatrix) {
+    public set(other: ColorMatrix) {
       this._m.set(other._m);
     }
 
