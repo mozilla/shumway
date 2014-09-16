@@ -140,7 +140,7 @@ module Shumway.SWF {
               frame = { type: 'frame' };
               break;
             default:
-              Debug.warning('Dropped tag during parsing. Code: ' + tag.code + ', ID: ' + tag.id);
+              Debug.warning('Dropped tag during parsing. Code: ' + tag.code);
           }
         }
         if (frames.length === 0) {
@@ -162,7 +162,7 @@ module Shumway.SWF {
         symbol = Shumway.SWF.Parser.defineLabel(swfTag, symbols);
         break;
       default:
-        Debug.warning('Dropped tag during parsing. Code: ' + tag.code + ', ID: ' + tag.id);
+        Debug.warning('Dropped tag during parsing. Code: ' + tag.code);
     }
 
     if (!symbol) {
