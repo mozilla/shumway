@@ -155,6 +155,7 @@ module Shumway.Remoting.GFX {
      * Used to avoid extra allocation, don't ever leak a reference to this object.
      */
     private static _temporaryReadColorMatrix: ColorMatrix = ColorMatrix.createIdentity();
+    private static _temporaryReadColorMatrixIdentity: ColorMatrix = ColorMatrix.createIdentity();
 
     public read() {
       var tag = 0;
@@ -255,6 +256,7 @@ module Shumway.Remoting.GFX {
       var ro = 0, go = 0, bo = 0, ao = 0;
       switch (input.readInt()) {
         case ColorTransformEncoding.Identity:
+          return GFXChannelDeserializer._temporaryReadColorMatrixIdentity;
           break;
         case ColorTransformEncoding.AlphaMultiplierOnly:
           am = input.readFloat();

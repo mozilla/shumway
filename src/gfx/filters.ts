@@ -190,7 +190,7 @@ module Shumway.GFX {
       m[0] = redMultiplier;
       m[5] = greenMultiplier;
       m[10] = blueMultiplier;
-      m[15] = blueMultiplier;
+      m[15] = alphaMultiplier;
       m[16] = redOffset;
       m[17] = greenOffset;
       m[18] = blueOffset;
