@@ -424,5 +424,12 @@
         "swfs/hitTestStyleChange.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "image-loading",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/image-loading/image-loading.swf"
+      ],
+      "type": "stas"
     }
 ]

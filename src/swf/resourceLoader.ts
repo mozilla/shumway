@@ -186,6 +186,17 @@ module Shumway.SWF {
       onstart: function (result) {
         commitData({command: 'init', result: result});
       },
+      onimgprogress: function (bytesTotal) {
+        // image progress events are sent with 1K increments
+        while (bytesLoaded <= bytesTotal) {
+          commitData({command: 'progress', result: {
+            bytesLoaded: bytesLoaded,
+            bytesTotal: bytesTotal,
+            open: true
+          }});
+          bytesLoaded += Math.min(bytesTotal - bytesLoaded || 1024, 1024);
+        }
+      },
       onprogress: function (result) {
         // sending progress events with 64K increments
         if (result.bytesLoaded - bytesLoaded >= 65536) {
