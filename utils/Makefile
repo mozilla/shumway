@@ -99,6 +99,7 @@ $(CLOSURE_JAR):
 
 install-avmshell:
 	mkdir -p $(TAMARIN_HOME)/bin/shell
+	cp $(AVMSHELL_PREBUILD) $(TAMARIN_HOME)/bin
 	cp $(AVMSHELL_PREBUILD) $(TAMARIN_HOME)/bin/shell
 
 install-tamarin-src: $(TAMARIN_HOME)/configure.py
