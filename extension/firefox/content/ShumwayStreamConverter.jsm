@@ -472,25 +472,33 @@ ChromeActions.prototype = {
     }
   },
   reportIssue: function(exceptions) {
-    var base = "http://shumway-issue-reporter.paas.allizom.org/input?";
+    var urlTemplate = "https://bugzilla.mozilla.org/enter_bug.cgi?op_sys=All&priority=--" +
+                      "&rep_platform=All&target_milestone=---&version=Trunk&product=Firefox" +
+                      "&component=Shumway&short_desc=&comment={comment}" +
+                      "&bug_file_loc={url}";
     var windowUrl = this.window.parent.wrappedJSObject.location + '';
-    var params = 'url=' + encodeURIComponent(windowUrl);
-    params += '&swf=' + encodeURIComponent(this.url);
+    var url = urlTemplate.split('{url}').join(encodeURIComponent(windowUrl));
+    var params = {
+      swf: encodeURIComponent(this.url)
+    };
     getVersionInfo().then(function (versions) {
-      params += '&ffbuild=' + encodeURIComponent(versions.geckoMstone + ' (' +
-                                                 versions.geckoBuildID + ')');
-      params += '&shubuild=' + encodeURIComponent(versions.shumwayVersion);
+      params.versions = versions;
     }).then(function () {
-      var postDataStream = StringInputStream.
-                           createInstance(Ci.nsIStringInputStream);
-      postDataStream.data = 'exceptions=' + encodeURIComponent(exceptions);
-      var postData = MimeInputStream.createInstance(Ci.nsIMIMEInputStream);
-      postData.addHeader("Content-Type", "application/x-www-form-urlencoded");
-      postData.addContentLength = true;
-      postData.setData(postDataStream);
-      this.window.openDialog('chrome://browser/content', '_blank',
-                             'all,dialog=no', base + params, null, null,
-                             postData);
+      params.ffbuild = encodeURIComponent(params.versions.geckoMstone +
+                                          ' (' + params.versions.geckoBuildID + ')');
+      params.shubuild = encodeURIComponent(params.versions.shumwayVersion);
+      params.exceptions = encodeURIComponent(exceptions);
+      var comment = '%2B%2B%2B This bug was initially via the problem reporting functionality in ' +
+                    'Shumway %2B%2B%2B%0A%0A' +
+                    'Please add any further information that you deem helpful here:%0A%0A%0A' +
+                    '----------------------%0A%0A' +
+                    'Technical Information:%0A' +
+                    'Firefox version: ' + params.ffbuild + '%0A' +
+                    'Shumway version: ' + params.shubuild;
+      url = url.split('{comment}').join(comment);
+      //this.window.openDialog('chrome://browser/content', '_blank', 'all,dialog=no', url);
+      dump(111);
+      this.window.open(url);
     }.bind(this));
   },
   externalCom: function (data) {
