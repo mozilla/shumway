@@ -830,6 +830,14 @@ module Shumway {
   export module StringUtilities {
     import assert = Shumway.Debug.assert;
 
+    export function repeatString(c: string, n: number): string {
+      var s = "";
+      for (var i = 0; i < n; i++) {
+        s += c;
+      }
+      return s;
+    }
+
     export function memorySizeToString(value: number) {
       value |= 0;
       var K = 1024;
