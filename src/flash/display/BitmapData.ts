@@ -543,8 +543,12 @@ module Shumway.AVM2.AS.flash.display {
       release || assert(this._type === ImageType.PremultipliedAlphaARGB);
       var pBGRA = swap32(pARGB);
       var view = this._view;
+      var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
+      if (r.isEmpty()) {
+        return;
+      }
       // If we are filling the entire buffer, we can do a little better ~ 25% faster.
-      if (this._rect.equals(rect)) {
+      if (r.equals(this._rect)) {
         var length = view.length;
         // Unroll 4 iterations, ~ 5% faster.
         if ((length & 0x3) === 0) {
@@ -560,10 +564,6 @@ module Shumway.AVM2.AS.flash.display {
           }
         }
       } else {
-        var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
-        if (r.isEmpty()) {
-          return;
-        }
         var xMin = r.x;
         var xMax = r.x + r.width;
         var yMin = r.y;
