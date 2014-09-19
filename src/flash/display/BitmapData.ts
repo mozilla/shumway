@@ -175,14 +175,22 @@ module Shumway.AVM2.AS.flash.display {
      */
     _isRemoteDirty: boolean;
 
-    private static _temporaryRectangle: Rectangle = new flash.geom.Rectangle();
 
     /**
-     * Prevents allocation of rectangles.
+     * Pool of temporary rectangles that is used to prevent allocation. We don't need more than 3 for now.
      */
-    private _getTemporaryRectangleFrom(rect: Rectangle): Rectangle {
-      var r = BitmapData._temporaryRectangle;
-      r.copyFrom(rect);
+    private static _temporaryRectangles: Rectangle [] = [
+      new flash.geom.Rectangle(),
+      new flash.geom.Rectangle(),
+      new flash.geom.Rectangle()
+    ];
+
+    private _getTemporaryRectangleFrom(rect: Rectangle, index: number = 0): Rectangle {
+      release || assert (index >= 0 && index < BitmapData._temporaryRectangles.length);
+      var r = BitmapData._temporaryRectangles[index];
+      if (rect) {
+        r.copyFrom(rect);
+      }
       return r;
     }
 
@@ -391,7 +399,6 @@ module Shumway.AVM2.AS.flash.display {
                alphaPoint: flash.geom.Point = null,
                mergeAlpha: boolean = false): void
     {
-      enterTimeline("BitmapData.copyPixels");
       mergeAlpha = !!mergeAlpha;
 
       if (alphaBitmapData || alphaPoint) {
@@ -402,15 +409,14 @@ module Shumway.AVM2.AS.flash.display {
       // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of
       // the source rect, however a width of |0.5| rounds down rather than up so we're not
       // quite correct here.
-      var sR = sourceRect.clone().roundInPlace();
+      var sR = this._getTemporaryRectangleFrom(sourceRect, 0).roundInPlace();
 
       // Remember the original source rect in case in case the intersection changes it.
-      var oR = sR.clone();
+      var oR = this._getTemporaryRectangleFrom(sR, 1);
       var sR = sR.intersectInPlace(sourceBitmapData._rect);
 
       // Clipped source rect is empty so there's nothing to do.
       if (sR.isEmpty()) {
-        leaveTimeline();
         return;
       }
 
@@ -420,13 +426,13 @@ module Shumway.AVM2.AS.flash.display {
 
       // Compute the target rect taking into account the offsets and then clip it against the
       // target.
-      var tR = new geom.Rectangle (
+      var tR = this._getTemporaryRectangleFrom(null, 2);
+      tR.setTo (
         destPoint.x | 0 + oX,
         destPoint.y | 0 + oY,
         oR.width - oX,
         oR.height - oY
       );
-
       tR.intersectInPlace(this._rect);
 
       var sX = sR.x;
@@ -497,8 +503,6 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._invalidate();
-      somewhatImplemented("public flash.display.BitmapData::copyPixels");
-      leaveTimeline();
     }
 
     dispose(): void {
