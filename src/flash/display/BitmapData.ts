@@ -92,7 +92,7 @@ module Shumway.AVM2.AS.flash.display {
         if (alpha === 0 && transparent) {
           // No need to do an initial fill since this would all be zeros anyway.
         } else {
-          this.fillRect(this.rect, fillColorARGB);
+          this.fillRect(this._rect, fillColorARGB);
         }
       }
       this._dataBuffer = DataBuffer.FromArrayBuffer(this._data.buffer);
@@ -175,6 +175,17 @@ module Shumway.AVM2.AS.flash.display {
      */
     _isRemoteDirty: boolean;
 
+    private static _temporaryRectangle: Rectangle = new flash.geom.Rectangle();
+
+    /**
+     * Prevents allocation of rectangles.
+     */
+    private _getTemporaryRectangleFrom(rect: Rectangle): Rectangle {
+      var r = BitmapData._temporaryRectangle;
+      r.copyFrom(rect);
+      return r;
+    }
+
     getDataBuffer(): DataBuffer {
       return this._dataBuffer;
     }
@@ -187,7 +198,7 @@ module Shumway.AVM2.AS.flash.display {
      * TODO: Not tested.
      */
     private _getPixelData(rect: flash.geom.Rectangle): Int32Array {
-      var r = this.rect.intersectInPlace(rect);
+      var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
       }
@@ -216,7 +227,7 @@ module Shumway.AVM2.AS.flash.display {
      * TODO: Not tested.
      */
     private _putPixelData(rect: flash.geom.Rectangle, input: Int32Array): void {
-      var r = this.rect.intersectInPlace(rect);
+      var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
       }
@@ -531,20 +542,38 @@ module Shumway.AVM2.AS.flash.display {
       }
       release || assert(this._type === ImageType.PremultipliedAlphaARGB);
       var pBGRA = swap32(pARGB);
-      var r = this.rect.intersectInPlace(rect);
-      if (r.isEmpty()) {
-        return;
-      }
-      var xMin = r.x;
-      var xMax = r.x + r.width;
-      var yMin = r.y;
-      var yMax = r.y + r.height;
       var view = this._view;
-      var width = this._rect.width;
-      for (var y = yMin; y < yMax; y++) {
-        var offset = y * width;
-        for (var x = xMin; x < xMax; x++) {
-          view[offset + x] = pBGRA;
+      // If we are filling the entire buffer, we can do a little better ~ 25% faster.
+      if (this._rect.equals(rect)) {
+        var length = view.length;
+        // Unroll 4 iterations, ~ 5% faster.
+        if ((length & 0x3) === 0) {
+          for (var i = 0; i < length; i += 4) {
+            view[i + 0] = pBGRA;
+            view[i + 1] = pBGRA;
+            view[i + 2] = pBGRA;
+            view[i + 3] = pBGRA;
+          }
+        } else {
+          for (var i = 0; i < length; i++) {
+            view[i] = pBGRA;
+          }
+        }
+      } else {
+        var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
+        if (r.isEmpty()) {
+          return;
+        }
+        var xMin = r.x;
+        var xMax = r.x + r.width;
+        var yMin = r.y;
+        var yMax = r.y + r.height;
+        var width = this._rect.width;
+        for (var y = yMin; y < yMax; y++) {
+          var offset = y * width;
+          for (var x = xMin; x < xMax; x++) {
+            view[offset + x] = pBGRA;
+          }
         }
       }
       this._invalidate();
