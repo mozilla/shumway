@@ -385,7 +385,7 @@ module Shumway.AVM2.AS.flash.display {
               this._frameAssetsQueue = [];
             }
             this._frameAssetsQueue.push(new Promise(function (resolve) {
-              setTimeout(resolve, 300 /* ms */);
+              setTimeout(resolve, 400 /* ms */);
             }));
           }
           break;
