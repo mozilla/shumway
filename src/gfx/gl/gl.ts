@@ -104,7 +104,7 @@ module Shumway.GFX.WebGL {
       super(canvas, stage, options);
       var context = this._context = new WebGLContext(this._canvas, options);
 
-      this.resize();
+      this._updateSize();
 
       this._brush = new WebGLCombinedBrush(context, new WebGLGeometry(context));
       this._stencilBrush = new WebGLCombinedBrush(context, new WebGLGeometry(context));
@@ -138,6 +138,11 @@ module Shumway.GFX.WebGL {
     private _cachedTiles = [];
 
     public resize() {
+      this._updateSize();
+      this.render();
+    }
+
+    private _updateSize() {
       this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
       this._context._resize();
     }

@@ -89,7 +89,7 @@ module Shumway.GFX.Canvas2D {
       stage: Stage,
       options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
       super(canvas, stage, options);
-      var fillRule: FillRule = FillRule.NonZero
+      var fillRule: FillRule = FillRule.NonZero;
       var context = this.context = canvas.getContext("2d");
       this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
       this._fillRule = fillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
@@ -148,7 +148,11 @@ module Shumway.GFX.Canvas2D {
     }
 
     public resize() {
-      // TODO: We need to resize all the scratch canvases and recreate allocators.
+      var canvas = this._canvas, context = this.context;
+      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
+      context.fillRule = context.mozFillRule = this._fillRule;
+
+      this.render();
     }
 
     public render() {
