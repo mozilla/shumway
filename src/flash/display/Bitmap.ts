@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import assert = Shumway.Debug.assert;
   import throwError = Shumway.AVM2.Runtime.throwError;
   export class Bitmap extends flash.display.DisplayObject {
     
@@ -113,6 +114,13 @@ module Shumway.AVM2.AS.flash.display {
         return this._bitmapData._getContentBounds();
       }
       return new Bounds(0, 0, 0, 0);
+    }
+
+    _containsPointDirectly(x: number, y: number): boolean {
+      // If this override is reached, the content bounds have already been checked, which is all
+      // we need to do.
+      release || assert(this._getContentBounds().contains(x, y));
+      return true;
     }
   }
 }
