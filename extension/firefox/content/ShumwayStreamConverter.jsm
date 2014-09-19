@@ -745,11 +745,12 @@ function initExternalCom(wrappedWindow, wrappedObject, targetDocument) {
         return '<undefined/>';
       }
     };
-    var sandbox = new Cu.Sandbox(wrappedWindow, {sandboxPrototype: wrappedWindow});
-    wrappedWindow.__flash__eval = function (evalInSandbox, sandbox, expr) {
+    wrappedWindow.__flash__eval = function (expr) {
       this.console.log('__flash__eval: ' + expr);
-      return evalInSandbox(expr, sandbox);
-    }.bind(wrappedWindow, Cu.evalInSandbox, sandbox);
+      // allowScriptAccess protects page from unwanted swf scripts,
+      // we can execute script in the page context without restrictions.
+      return this.eval(expr);
+    }.bind(wrappedWindow);
     wrappedWindow.__flash__call = function (expr) {
       this.console.log('__flash__call (ignored): ' + expr);
     };
