@@ -68,6 +68,7 @@ module Shumway.AVM2.AS.flash.events {
         case Event.RENDER:
         case Event.ACTIVATE:
         case Event.DEACTIVATE:
+        case Event.AVM1_LOAD:
           return true;
       }
       return false;
@@ -129,6 +130,11 @@ module Shumway.AVM2.AS.flash.events {
     static TEXTURE_READY: string = "textureReady";
     static VIDEO_FRAME: string = "videoFrame";
     static SUSPEND: string = "suspend";
+
+    static AVM1_INIT: string = "initialize";
+    static AVM1_CONSTRUCT: string = "construct";
+    static AVM1_LOAD: string = "load";
+
 //    static CHANNEL_MESSAGE: string = "channelMessage";
 //    static CHANNEL_STATE: string = "channelState";
 //    static WORKER_STATE: string = "workerState";

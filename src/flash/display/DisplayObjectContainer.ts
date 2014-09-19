@@ -90,15 +90,10 @@ module Shumway.AVM2.AS.flash.display {
         }
         child._setFlags(DisplayObjectFlags.Constructed);
 
-        //if (!loader._isAvm2Enabled) {
-        //  this._initAvm1Bindings(instance, name, displayListItem.events,
-        //    's' + props.symbolId + 'c');
-        //  instance._dispatchEvent("init");
-        //  instance._dispatchEvent("construct");
-        //  instance._needLoadEvent = true;
-        //} else {
-        //  instance._dispatchEvent("load");
-        //}
+        if (child._symbol && child._symbol.isAVM1Object) {
+          child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_INIT));
+          child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_CONSTRUCT));
+        }
 
         child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
         if (child.stage) {
