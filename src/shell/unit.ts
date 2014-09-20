@@ -169,6 +169,58 @@ module Shumway.Unit {
   export function error(s: string) {
     writer.errorLn("ERROR: " + s);
   }
+
+  var maxVarianceTime = 1;
+  var minElapsedTime = 100;
+  var maxElapsedTime = 1000;
+
+  /**
+   * Measures several runs of a test case and tries to ensure that the test case is reasonably fast, yet still accurate.
+   */
+  export function checkTime(fn: any, test: string, threshold: number, iterations: number = 64) {
+    iterations = iterations || 0;
+    if (iterations < 5) {
+      writer.warnLn("Test doesn't have enough iterations to get meaningful timing results: " + test);
+    } else if (iterations > 1024) {
+      writer.warnLn("Test has too many iterations, increase the complexity of the test case: " + test);
+    }
+    var start = new Date();
+    var s = 0;
+    var elapsedTimes = [];
+    for (var i = 0; i < iterations; i++) {
+      var iterationStart = dateNow();
+      s += fn();
+      elapsedTimes.push(dateNow() - iterationStart);
+    }
+    var elapsed: number = (<any>new Date() - <any>start);
+    // Let's not make the test too short, or too long.
+    if (elapsed < minElapsedTime) {
+      writer.warnLn("Test doesn't run long enough (" + elapsed.toFixed(2) + " ms) to have meaningful timing results: " + test + ", must be at least " + minElapsedTime + " ms long.");
+    } else if (elapsed > maxElapsedTime) {
+      writer.warnLn("Test runs too long (" + elapsed.toFixed(2) + " ms), reduce the number of iterations: " + test + ", keep it below " + maxElapsedTime.toFixed(2) + " ms.");
+    }
+
+    var result =  Math.min.apply(null, elapsedTimes);
+    // Can we make the test smaller yet get the same result?
+    if (elapsed > 500 && result === Math.min.apply(null, elapsedTimes.slice(0, elapsedTimes.length / 2 | 0))) {
+      writer.warnLn("Test would have had the same result with half as many iterations.");
+    }
+    if (result > threshold) {
+      return fail("FAIL " + test + ". Got " + result.toFixed(2) + " ms, expected less than " + threshold.toFixed(2) + " ms" +
+        failedLocation());
+    }
+    var details = "Iterations: " + iterations + ", Elapsed: " + elapsed.toFixed(2) + " ms (" + result.toFixed(2) + " ms / Iteration)"
+    writer.debugLn("PASS " + test + " " + details);
+    var min =  Math.min.apply(null, elapsedTimes);
+    var max =  Math.max.apply(null, elapsedTimes);
+    var maxBarWidth = 32;
+    for (var i = 0; i < Math.min(elapsedTimes.length, 8); i++) {
+      var j = elapsedTimes.length - i - 1;
+      var time = (elapsedTimes[j] - min) / (max - min);
+      var ticks = Math.round(time * maxBarWidth);
+      writer.debugLn(String(j).padLeft(" ", 4) + ": =" + StringUtilities.repeatString("=", ticks) + " " + elapsedTimes[j].toFixed(2) + " ms");
+    }
+  }
 }
 
 /**
@@ -176,6 +228,7 @@ module Shumway.Unit {
  */
 
 import check = Shumway.Unit.check;
+import checkTime = Shumway.Unit.checkTime;
 import fail = Shumway.Unit.fail;
 import eqFloat = Shumway.Unit.eqFloat;
 import neq = Shumway.Unit.neq;

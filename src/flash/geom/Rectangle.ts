@@ -232,11 +232,38 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public intersectInPlace(clipRect: Rectangle): Rectangle {
-      var l: number = Math.max(this.x, clipRect.x);
-      var r: number = Math.min(this.right, clipRect.right);
+      var x0 = this.x;
+      var y0 = this.y;
+      var x1 = clipRect.x;
+      var y1 = clipRect.y;
+      var l = Math.max(x0, x1);
+      var r = Math.min(x0 + this.width, x1 + clipRect.width);
       if (l <= r) {
-        var t: number = Math.max(this.y, clipRect.y);
-        var b: number = Math.min(this.bottom, clipRect.bottom);
+        var t = Math.max(y0, y1);
+        var b = Math.min(y0 + this.height, y1 + clipRect.height);
+        if (t <= b) {
+          this.setTo(l, t, r - l, b - t);
+          return this;
+        }
+      }
+      this.setEmpty();
+      return this;
+    }
+
+    public intersectInPlaceInt32(clipRect: Rectangle): Rectangle {
+      var x0 = this.x | 0;
+      var y0 = this.y | 0;
+      var w0 = this.width | 0;
+      var h0 = this.height | 0;
+      var x1 = clipRect.x | 0;
+      var w1 = clipRect.width | 0;
+      var l = Math.max(x0, x1) | 0;
+      var r = Math.min(x0 + w0 | 0, x1 + w1 | 0) | 0;
+      if (l <= r) {
+        var y1 = clipRect.y | 0;
+        var h1 = clipRect.height | 0;
+        var t = Math.max(y0, y1) | 0;
+        var b = Math.min(y0 + h0 | 0, y1 + h1 | 0);
         if (t <= b) {
           this.setTo(l, t, r - l, b - t);
           return this;

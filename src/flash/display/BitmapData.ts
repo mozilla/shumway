@@ -92,7 +92,7 @@ module Shumway.AVM2.AS.flash.display {
         if (alpha === 0 && transparent) {
           // No need to do an initial fill since this would all be zeros anyway.
         } else {
-          this.fillRect(this.rect, fillColorARGB);
+          this.fillRect(this._rect, fillColorARGB);
         }
       }
       this._dataBuffer = DataBuffer.FromArrayBuffer(this._data.buffer);
@@ -175,6 +175,25 @@ module Shumway.AVM2.AS.flash.display {
      */
     _isRemoteDirty: boolean;
 
+
+    /**
+     * Pool of temporary rectangles that is used to prevent allocation. We don't need more than 3 for now.
+     */
+    private static _temporaryRectangles: Rectangle [] = [
+      new flash.geom.Rectangle(),
+      new flash.geom.Rectangle(),
+      new flash.geom.Rectangle()
+    ];
+
+    private _getTemporaryRectangleFrom(rect: Rectangle, index: number = 0): Rectangle {
+      release || assert (index >= 0 && index < BitmapData._temporaryRectangles.length);
+      var r = BitmapData._temporaryRectangles[index];
+      if (rect) {
+        r.copyFrom(rect);
+      }
+      return r;
+    }
+
     getDataBuffer(): DataBuffer {
       return this._dataBuffer;
     }
@@ -187,7 +206,7 @@ module Shumway.AVM2.AS.flash.display {
      * TODO: Not tested.
      */
     private _getPixelData(rect: flash.geom.Rectangle): Int32Array {
-      var r = this.rect.intersectInPlace(rect);
+      var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
       }
@@ -216,7 +235,7 @@ module Shumway.AVM2.AS.flash.display {
      * TODO: Not tested.
      */
     private _putPixelData(rect: flash.geom.Rectangle, input: Int32Array): void {
-      var r = this.rect.intersectInPlace(rect);
+      var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
       }
@@ -380,7 +399,6 @@ module Shumway.AVM2.AS.flash.display {
                alphaPoint: flash.geom.Point = null,
                mergeAlpha: boolean = false): void
     {
-      enterTimeline("BitmapData.copyPixels");
       mergeAlpha = !!mergeAlpha;
 
       if (alphaBitmapData || alphaPoint) {
@@ -391,41 +409,40 @@ module Shumway.AVM2.AS.flash.display {
       // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of
       // the source rect, however a width of |0.5| rounds down rather than up so we're not
       // quite correct here.
-      var sR = sourceRect.clone().roundInPlace();
+      var sR = this._getTemporaryRectangleFrom(sourceRect, 0).roundInPlace();
 
       // Remember the original source rect in case in case the intersection changes it.
-      var oR = sR.clone();
+      var oR = this._getTemporaryRectangleFrom(sR, 1);
       var sR = sR.intersectInPlace(sourceBitmapData._rect);
 
       // Clipped source rect is empty so there's nothing to do.
       if (sR.isEmpty()) {
-        leaveTimeline();
         return;
       }
 
       // Compute source rect offsets (in case the source rect had negative x, y coordinates).
-      var oX = sR.x - oR.x;
-      var oY = sR.y - oR.y;
+      var oX = sR.x - oR.x | 0;
+      var oY = sR.y - oR.y | 0;
 
       // Compute the target rect taking into account the offsets and then clip it against the
       // target.
-      var tR = new geom.Rectangle (
+      var tR = this._getTemporaryRectangleFrom(null, 2);
+      tR.setTo (
         destPoint.x | 0 + oX,
         destPoint.y | 0 + oY,
-        oR.width - oX,
-        oR.height - oY
+        oR.width - oX | 0,
+        oR.height - oY | 0
       );
+      tR.intersectInPlaceInt32(this._rect);
 
-      tR.intersectInPlace(this._rect);
+      var sX = sR.x | 0;
+      var sY = sR.y | 0;
 
-      var sX = sR.x;
-      var sY = sR.y;
+      var tX = tR.x | 0;
+      var tY = tR.y | 0;
 
-      var tX = tR.x;
-      var tY = tR.y;
-
-      var tW = tR.width;
-      var tH = tR.height;
+      var tW = tR.width | 0;
+      var tH = tR.height | 0;
 
       var sStride = sourceBitmapData._rect.width;
       var tStride = this._rect.width;
@@ -446,48 +463,46 @@ module Shumway.AVM2.AS.flash.display {
       // this hot loop.
 
       if (mergeAlpha) {
-        var sP = sY * sStride + sX;
-        var tP = tY * tStride + tX;
-        for (var y = 0; y < tH; y++) {
-          for (var x = 0; x < tW; x++) {
+        var sP = (sY * sStride + sX) | 0;
+        var tP = (tY * tStride + tX) | 0;
+        for (var y = 0; y < tH; y = y + 1 | 0) {
+          for (var x = 0; x < tW; x = x + 1 | 0) {
             var spBGRA = s[sP + x];
             if ((spBGRA & 0xFF) === 0xFF) {
-              t[tP + x] = spBGRA; // Opaque, just copy value over.
+              t[tP + x | 0] = spBGRA; // Opaque, just copy value over.
             } else {
-              t[tP + x] = blendPremultipliedBGRA(t[tP + x], spBGRA);
+              t[tP + x | 0] = blendPremultipliedBGRA(t[tP + x | 0], spBGRA);
             }
           }
-          sP += sStride;
-          tP += tStride;
+          sP = sP + sStride | 0;
+          tP = tP + tStride | 0;
         }
       } else {
-        var sP = sY * sStride + sX;
-        var tP = tY * tStride + tX;
+        var sP = (sY * sStride + sX) | 0;
+        var tP = (tY * tStride + tX) | 0;
         if ((tW & 3) === 0) {
-          for (var y = 0; y < tH; y++) {
-            for (var x = 0; x < tW; x += 4) {
-              t[tP + x + 0] = s[sP + x + 0];
-              t[tP + x + 1] = s[sP + x + 1];
-              t[tP + x + 2] = s[sP + x + 2];
-              t[tP + x + 3] = s[sP + x + 3];
+          for (var y = 0; y < tH; y = y + 1 | 0) {
+            for (var x = 0; x < tW; x = x + 4 | 0) {
+              t[(tP + x + 0) | 0] = s[(sP + x + 0) | 0];
+              t[(tP + x + 1) | 0] = s[(sP + x + 1) | 0];
+              t[(tP + x + 2) | 0] = s[(sP + x + 2) | 0];
+              t[(tP + x + 3) | 0] = s[(sP + x + 3) | 0];
             }
-            sP += sStride;
-            tP += tStride;
+            sP = sP + sStride | 0;
+            tP = tP + tStride | 0;
           }
         } else {
-          for (var y = 0; y < tH; y++) {
-            for (var x = 0; x < tW; x++) {
-              t[tP + x] = s[sP + x];
+          for (var y = 0; y < tH; y = y + 1 | 0) {
+            for (var x = 0; x < tW; x = x + 1 | 0) {
+              t[tP + x | 0] = s[sP + x | 0];
             }
-            sP += sStride;
-            tP += tStride;
+            sP = sP + sStride | 0;
+            tP = tP + tStride | 0;
           }
         }
       }
 
       this._invalidate();
-      somewhatImplemented("public flash.display.BitmapData::copyPixels");
-      leaveTimeline();
     }
 
     dispose(): void {
@@ -531,20 +546,38 @@ module Shumway.AVM2.AS.flash.display {
       }
       release || assert(this._type === ImageType.PremultipliedAlphaARGB);
       var pBGRA = swap32(pARGB);
-      var r = this.rect.intersectInPlace(rect);
+      var view = this._view;
+      var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
       }
-      var xMin = r.x;
-      var xMax = r.x + r.width;
-      var yMin = r.y;
-      var yMax = r.y + r.height;
-      var view = this._view;
-      var width = this._rect.width;
-      for (var y = yMin; y < yMax; y++) {
-        var offset = y * width;
-        for (var x = xMin; x < xMax; x++) {
-          view[offset + x] = pBGRA;
+      // If we are filling the entire buffer, we can do a little better ~ 25% faster.
+      if (r.equals(this._rect)) {
+        var length = view.length;
+        // Unroll 4 iterations, ~ 5% faster.
+        if ((length & 0x3) === 0) {
+          for (var i = 0; i < length; i = i + 4 | 0) {
+            view[i + 0 | 0] = pBGRA;
+            view[i + 1 | 0] = pBGRA;
+            view[i + 2 | 0] = pBGRA;
+            view[i + 3 | 0] = pBGRA;
+          }
+        } else {
+          for (var i = 0; i < length; i = i + 1 | 0) {
+            view[i] = pBGRA;
+          }
+        }
+      } else {
+        var xMin = r.x;
+        var xMax = r.x + r.width;
+        var yMin = r.y;
+        var yMax = r.y + r.height;
+        var width = this._rect.width;
+        for (var y = yMin; y < yMax; y = y + 1 | 0) {
+          var offset = y * width | 0;
+          for (var x = xMin; x < xMax; x = x + 1 | 0) {
+            view[offset + x | 0] = pBGRA;
+          }
         }
       }
       this._invalidate();
