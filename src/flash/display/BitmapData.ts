@@ -421,8 +421,8 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       // Compute source rect offsets (in case the source rect had negative x, y coordinates).
-      var oX = sR.x - oR.x;
-      var oY = sR.y - oR.y;
+      var oX = sR.x - oR.x | 0;
+      var oY = sR.y - oR.y | 0;
 
       // Compute the target rect taking into account the offsets and then clip it against the
       // target.
@@ -430,19 +430,19 @@ module Shumway.AVM2.AS.flash.display {
       tR.setTo (
         destPoint.x | 0 + oX,
         destPoint.y | 0 + oY,
-        oR.width - oX,
-        oR.height - oY
+        oR.width - oX | 0,
+        oR.height - oY | 0
       );
-      tR.intersectInPlace(this._rect);
+      tR.intersectInPlaceInt32(this._rect);
 
-      var sX = sR.x;
-      var sY = sR.y;
+      var sX = sR.x | 0;
+      var sY = sR.y | 0;
 
-      var tX = tR.x;
-      var tY = tR.y;
+      var tX = tR.x | 0;
+      var tY = tR.y | 0;
 
-      var tW = tR.width;
-      var tH = tR.height;
+      var tW = tR.width | 0;
+      var tH = tR.height | 0;
 
       var sStride = sourceBitmapData._rect.width;
       var tStride = this._rect.width;
@@ -463,41 +463,41 @@ module Shumway.AVM2.AS.flash.display {
       // this hot loop.
 
       if (mergeAlpha) {
-        var sP = sY * sStride + sX;
-        var tP = tY * tStride + tX;
-        for (var y = 0; y < tH; y++) {
-          for (var x = 0; x < tW; x++) {
+        var sP = (sY * sStride + sX) | 0;
+        var tP = (tY * tStride + tX) | 0;
+        for (var y = 0; y < tH; y = y + 1 | 0) {
+          for (var x = 0; x < tW; x = x + 1 | 0) {
             var spBGRA = s[sP + x];
             if ((spBGRA & 0xFF) === 0xFF) {
-              t[tP + x] = spBGRA; // Opaque, just copy value over.
+              t[tP + x | 0] = spBGRA; // Opaque, just copy value over.
             } else {
-              t[tP + x] = blendPremultipliedBGRA(t[tP + x], spBGRA);
+              t[tP + x | 0] = blendPremultipliedBGRA(t[tP + x | 0], spBGRA);
             }
           }
-          sP += sStride;
-          tP += tStride;
+          sP = sP + sStride | 0;
+          tP = tP + tStride | 0;
         }
       } else {
-        var sP = sY * sStride + sX;
-        var tP = tY * tStride + tX;
+        var sP = (sY * sStride + sX) | 0;
+        var tP = (tY * tStride + tX) | 0;
         if ((tW & 3) === 0) {
-          for (var y = 0; y < tH; y++) {
-            for (var x = 0; x < tW; x += 4) {
-              t[tP + x + 0] = s[sP + x + 0];
-              t[tP + x + 1] = s[sP + x + 1];
-              t[tP + x + 2] = s[sP + x + 2];
-              t[tP + x + 3] = s[sP + x + 3];
+          for (var y = 0; y < tH; y = y + 1 | 0) {
+            for (var x = 0; x < tW; x = x + 4 | 0) {
+              t[(tP + x + 0) | 0] = s[(sP + x + 0) | 0];
+              t[(tP + x + 1) | 0] = s[(sP + x + 1) | 0];
+              t[(tP + x + 2) | 0] = s[(sP + x + 2) | 0];
+              t[(tP + x + 3) | 0] = s[(sP + x + 3) | 0];
             }
-            sP += sStride;
-            tP += tStride;
+            sP = sP + sStride | 0;
+            tP = tP + tStride | 0;
           }
         } else {
-          for (var y = 0; y < tH; y++) {
-            for (var x = 0; x < tW; x++) {
-              t[tP + x] = s[sP + x];
+          for (var y = 0; y < tH; y = y + 1 | 0) {
+            for (var x = 0; x < tW; x = x + 1 | 0) {
+              t[tP + x | 0] = s[sP + x | 0];
             }
-            sP += sStride;
-            tP += tStride;
+            sP = sP + sStride | 0;
+            tP = tP + tStride | 0;
           }
         }
       }
@@ -556,14 +556,14 @@ module Shumway.AVM2.AS.flash.display {
         var length = view.length;
         // Unroll 4 iterations, ~ 5% faster.
         if ((length & 0x3) === 0) {
-          for (var i = 0; i < length; i += 4) {
-            view[i + 0] = pBGRA;
-            view[i + 1] = pBGRA;
-            view[i + 2] = pBGRA;
-            view[i + 3] = pBGRA;
+          for (var i = 0; i < length; i = i + 4 | 0) {
+            view[i + 0 | 0] = pBGRA;
+            view[i + 1 | 0] = pBGRA;
+            view[i + 2 | 0] = pBGRA;
+            view[i + 3 | 0] = pBGRA;
           }
         } else {
-          for (var i = 0; i < length; i++) {
+          for (var i = 0; i < length; i = i + 1 | 0) {
             view[i] = pBGRA;
           }
         }
@@ -573,10 +573,10 @@ module Shumway.AVM2.AS.flash.display {
         var yMin = r.y;
         var yMax = r.y + r.height;
         var width = this._rect.width;
-        for (var y = yMin; y < yMax; y++) {
-          var offset = y * width;
-          for (var x = xMin; x < xMax; x++) {
-            view[offset + x] = pBGRA;
+        for (var y = yMin; y < yMax; y = y + 1 | 0) {
+          var offset = y * width | 0;
+          for (var x = xMin; x < xMax; x = x + 1 | 0) {
+            view[offset + x | 0] = pBGRA;
           }
         }
       }
