@@ -500,14 +500,11 @@ module Shumway.AVM2.AS.flash.display {
           this._executeAvm1Actions(rootMovie, frameIndex, data);
         }
 
-        if (data.startSounds) {
-          rootMovie._registerStartSounds(frameIndex + 1, data.startSounds);
-        }
         if (data.soundStream) {
           rootMovie._initSoundStream(data.soundStream);
         }
         if (data.soundStreamBlock) {
-          rootMovie._addSoundStreamBlock(frameIndex, data.soundStreamBlock);
+          rootMovie._addSoundStreamBlock(frameIndex + 1, data.soundStreamBlock);
         }
       }
     }
