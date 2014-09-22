@@ -235,13 +235,6 @@
       "type": "eq"
     },
 
-    {  "id": "getObjectsUnderPoint",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/getobjectsunderpoint.swf"
-      ],
-      "type": "stas"
-    },
     {  "id": "timeline",
       "stas": "swfs/trace.stas",
       "filenames": [
