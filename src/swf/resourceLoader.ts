@@ -101,8 +101,7 @@ module Shumway.SWF {
               break;
             // case SwfTag.CODE_DO_INIT_ACTION: ??
             case SwfTag.CODE_START_SOUND:
-              var startSounds = frame.startSounds || (frame.startSounds = []);
-              startSounds.push(tag);
+              commands.push(tag);
               break;
             case SwfTag.CODE_SOUND_STREAM_HEAD:
               try {
@@ -245,10 +244,7 @@ module Shumway.SWF {
               initActionBlocks.push({spriteId: tag.spriteId, actionsData: tag.actionsData});
               break;
             case SwfTag.CODE_START_SOUND:
-              var startSounds = frame.startSounds;
-              if (!startSounds)
-                frame.startSounds = startSounds = [];
-              startSounds.push(tag);
+              commands.push(tag);
               break;
             case SwfTag.CODE_SOUND_STREAM_HEAD:
               try {

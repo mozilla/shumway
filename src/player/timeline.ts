@@ -23,6 +23,7 @@ module Shumway.Timeline {
   import Bounds = Shumway.Bounds;
   import ColorUtilities = Shumway.ColorUtilities;
   import flash = Shumway.AVM2.AS.flash;
+  import SwfTag = Shumway.SWF.Parser.SwfTag;
   import PlaceObjectFlags = Shumway.SWF.Parser.PlaceObjectFlags;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
@@ -307,10 +308,6 @@ module Shumway.Timeline {
           symbol.labels.push(new flash.display.FrameLabel(frameInfo.labelName, frameNum));
         }
 
-        //if (frame.startSounds) {
-        //  startSoundRegistrations[frameNum] = frame.startSounds;
-        //}
-
         frameNum += frameInfo.repeat;
       }
       return symbol;
@@ -419,22 +416,37 @@ module Shumway.Timeline {
     }
   }
 
+  export class SoundStart {
+    constructor(public soundId: number, public soundInfo) {
+    }
+  }
+
   /**
    * TODO document
    */
   export class FrameDelta {
     _stateAtDepth: Shumway.Map<AnimationState>;
+    _soundStarts: SoundStart[];
 
     get stateAtDepth() {
       return this._stateAtDepth || this._initialize();
     }
 
+    get soundStarts() {
+      if (this._soundStarts === undefined) {
+        this._initialize();
+      }
+      return this._soundStarts;
+    }
+
     constructor(private loaderInfo: flash.display.LoaderInfo, private commands: any []) {
       this._stateAtDepth = null;
+      this._soundStarts = undefined;
     }
 
     private _initialize(): Shumway.Map<AnimationState> {
       var states: Shumway.Map<AnimationState> = this._stateAtDepth = Object.create(null);
+      var soundStarts : SoundStart[] = null;
       var commands = this.commands;
       var loaderInfo = this.loaderInfo;
       for (var i = 0; i < commands.length; i++) {
@@ -444,6 +456,12 @@ module Shumway.Timeline {
           case 5: // SWF_TAG_CODE_REMOVE_OBJECT
           case 28: // SWF_TAG_CODE_REMOVE_OBJECT2
             states[depth] = null;
+            break;
+          case SwfTag.CODE_START_SOUND:
+            if (!soundStarts) {
+              soundStarts = [];
+            }
+            soundStarts.push(new SoundStart(cmd.soundId, cmd.soundInfo));
             break;
           default:
             var symbol: DisplaySymbol = null;
@@ -540,6 +558,7 @@ module Shumway.Timeline {
             break;
         }
       }
+      this._soundStarts = soundStarts;
       this.commands = null;
       return states;
     }
