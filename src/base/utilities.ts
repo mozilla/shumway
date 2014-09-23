@@ -3057,24 +3057,26 @@ module Shumway {
       var g = (pARGB >>  8) & 0xff;
       var r = (pARGB >> 16) & 0xff;
       var o = a << 8;
-      r = unpremultiplyTable[o + r];
-      g = unpremultiplyTable[o + g];
-      b = unpremultiplyTable[o + b];
+      var T = unpremultiplyTable;
+      r = T[o + r];
+      g = T[o + g];
+      b = T[o + b];
       return a << 24 | r << 16 | g << 8 | b;
     }
 
-    var inverseSourceAlphaTable: Float64Array;
+    var inverseAlphaTable: Uint8Array;
 
     /**
-     * Computes all possible inverse source alpha values.
+     * Computes all possible inverse alpha values, similar to the one above.
      */
-    export function ensureInverseSourceAlphaTable() {
-      if (inverseSourceAlphaTable) {
-        return;
-      }
-      inverseSourceAlphaTable = new Float64Array(256);
-      for (var a = 0; a < 255; a++) {
-        inverseSourceAlphaTable[a] = 1 - a / 255;
+    export function ensureInverseAlphaTable() {
+      if (!inverseAlphaTable) {
+        inverseAlphaTable = new Uint8Array(256 * 256);
+        for (var c = 0; c < 256; c++) {
+          for (var a = 0; a < 256; a++) {
+            inverseAlphaTable[(a << 8) + c] = c * (1 - a / 255);
+          }
+        }
       }
     }
 
@@ -3091,23 +3093,14 @@ module Shumway {
      * TODO: Not sure what to do about the dst.rgb which is
      * premultiplied by its alpah, but this appears to work.
      */
-    export function blendPremultipliedBGRA(tpBGRA, spBGRA) {
-      var ta = (tpBGRA >>  0) & 0xff;
-      var tr = (tpBGRA >>  8) & 0xff;
-      var tg = (tpBGRA >> 16) & 0xff;
-      var tb = (tpBGRA >> 24) & 0xff;
-
-      var sa = (spBGRA >>  0) & 0xff;
-      var sr = (spBGRA >>  8) & 0xff;
-      var sg = (spBGRA >> 16) & 0xff;
-      var sb = (spBGRA >> 24) & 0xff;
-
-      // TODO: Clampling.
-      var inverseSourceAlpha = inverseSourceAlphaTable[sa];
-      var ta = sa + ta * inverseSourceAlpha;
-      var tr = sr + tr * inverseSourceAlpha;
-      var tg = sg + tg * inverseSourceAlpha;
-      var tb = sb + tb * inverseSourceAlpha;
+    export function blendPremultipliedBGRA(tpBGRA: number, spBGRA: number) {
+      var sa = spBGRA & 0xff;
+      var o = sa << 8;
+      var T = inverseAlphaTable;
+      var ta = sa + T[o + (tpBGRA & 0xff)];
+      var tr = ((spBGRA >>  8) & 0xff) + T[o + ((tpBGRA >>  8) & 0xff) | 0];
+      var tg = ((spBGRA >> 16) & 0xff) + T[o + ((tpBGRA >> 16) & 0xff) | 0];
+      var tb = ((spBGRA >> 24) & 0xff) + T[o + ((tpBGRA >> 24) & 0xff) | 0];
       return tb << 24 | tg << 16 | tr << 8 | ta;
     }
   }

@@ -28,7 +28,7 @@ module Shumway.AVM2.AS.flash.display {
   import RGBAToARGB = Shumway.ColorUtilities.RGBAToARGB;
   import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
   import blendPremultipliedBGRA = Shumway.ColorUtilities.blendPremultipliedBGRA;
-  import ensureInverseSourceAlphaTable = Shumway.ColorUtilities.ensureInverseSourceAlphaTable;
+  import ensureInverseAlphaTable = Shumway.ColorUtilities.ensureInverseAlphaTable;
   import indexOf = Shumway.ArrayUtilities.indexOf;
 
   import Rectangle = flash.geom.Rectangle;
@@ -41,7 +41,7 @@ module Shumway.AVM2.AS.flash.display {
   export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
 
     static classInitializer: any = function () {
-      ensureInverseSourceAlphaTable();
+      ensureInverseAlphaTable();
     };
 
     _symbol: Shumway.Timeline.BitmapSymbol;

@@ -71,5 +71,19 @@
       }
     }, "BitmapData::copyPixels", 30 * scale, 32)
   });
+
+  unitTests.push(function () {
+    var a = new BitmapData(1024, 1024, true, 0xAABBCCDD);
+    var b = new BitmapData(1024, 1024, true, 0xAABBCCDD);
+    checkTime(function () {
+      var s = new Rectangle(0, 0, 0, 0);
+      var p = new Point(0, 0);
+      for (var i = 0; i < 2; i += 1) {
+        a.copyPixels(b, b.rect, new Point(0, 0), null, null, true);
+      }
+    }, "BitmapData::copyPixels(mergeAlpha = true)", 30 * scale, 8)
+  });
+
+
 })();
 
