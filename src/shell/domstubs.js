@@ -29,27 +29,27 @@ if (typeof console === 'undefined') {
 
 var dump = function (message) {
   putstr(message);
-}
+};
 
 var addEventListener = function (type) {
   // console.log('Add listener: ' + type);
 };
 
-var microTasks = [], taskId = 0;
-var setTimeout = function (fn) {
-  fn = fn.bind(null);
-  fn.id = ++taskId;
-  microTasks.push(fn);
-  return fn.id;
+var microTaskQueue = null;
+var setTimeout = function (fn, interval) {
+  var args = Array.prototype.slice.call(arguments, 2);
+  var task = microTaskQueue.scheduleInterval(fn, args, interval, false);
+  return task.id;
+};
+var setInterval = function (fn, interval) {
+  var args = Array.prototype.slice.call(arguments, 2);
+  var task = microTaskQueue.scheduleInterval(fn, args, interval, true);
+  return task.id;
 };
 var clearTimeout = function (id) {
-  for (var i = 0; i < microTasks.length; i++) {
-    if (microTasks[i].id === id) {
-      microTasks.splice(i, 1);
-      return;
-    }
-  }
+  microTaskQueue.remove(id);
 };
+var clearInterval = clearTimeout;
 
 var self = this, window = this;
 
@@ -120,35 +120,4 @@ XMLHttpRequest.prototype = {
 window.screen = {
   width: 1024,
   height: 1024
-};
-
-/**
- * Runs micro tasks for a certain |duration| and |count| whichever comes first. Optionally,
- * if the |clear| option is specified, the micro task queue is cleared even if not all the
- * tasks have been executed.
- */
-var microTaskQueueStopped = false;
-var runMicroTaskQueue = function (duration, count, clear) {
-  microTaskQueueStopped = false;
-  var executedTasks = 0;
-  var stopAt = Date.now() + duration;
-  while (microTasks.length > 0 && !microTaskQueueStopped) {
-    if (duration > 0 && Date.now() >= stopAt) {
-      break;
-    }
-    if (count > 0 && executedTasks >= count) {
-      break;
-    }
-    var task = microTasks.shift();
-    task.call(this);
-    executedTasks ++;
-  }
-  if (clear) {
-    microTasks.length = 0;
-  }
-  microTaskQueueStopped = true;
-};
-
-var stopMicroTaskQueue = function () {
-  microTaskQueueStopped = true;
 };
