@@ -42,7 +42,9 @@ var playerglobalInfo = {
  */
 var unitTests = [];
 
-declare var help, runMicroTaskQueue, stopMicroTaskQueue;
+declare var microTaskQueue: Shumway.Shell.MicroTasksQueue;
+
+declare var help;
 
 declare var process, require, global;
 var isNode = typeof process === 'object';
@@ -60,8 +62,9 @@ if (isNode) {
     fn.call(global);
   };
   var listOfGlobals = ['Shumway', 'document', 'window', 'release', 'jsGlobal',
-    'profile', 'RegExp', 'XMLHttpRequest', 'setTimeout', 'addEventListener',
-    'navigator', 'runMicroTaskQueue', 'stopMicroTaskQueue', 'unitTests'];
+    'profile', 'RegExp', 'XMLHttpRequest', 'addEventListener', 'navigator',
+    'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'unitTests',
+    'microTaskQueue'];
   load.header = listOfGlobals.map(function (s) {
     return s + ' = this.' + s;
   }).join(';') + ';\n';
@@ -132,7 +135,7 @@ module Shumway.Shell {
     onFSCommand(command: string, args: string) {
       if (command === 'quit') {
         // console.log('Player quit');
-        stopMicroTaskQueue();
+        microTaskQueue.stop();
       }
     }
     onFrameProcessed() {
@@ -207,6 +210,8 @@ module Shumway.Shell {
       writer.writeLn(x.message);
       quit();
     }
+
+    microTaskQueue = new Shumway.Shell.MicroTasksQueue();
 
     if (porcelainOutputOption.value) {
       console.info = console.log = console.warn = console.error = function () {};
@@ -302,7 +307,7 @@ module Shumway.Shell {
       runSWF(read(file, 'binary'));
     }
     console.info("Running: " + file);
-    runMicroTaskQueue(runDuration, runCount, true);
+    microTaskQueue.run(runDuration, runCount, true);
   }
 
   function executeABCFile(file: string) {
