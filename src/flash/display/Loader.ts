@@ -259,10 +259,6 @@ module Shumway.AVM2.AS.flash.display {
           loaderInfo._bytesLoaded = info.bytesLoaded;
           loaderInfo._bytesTotal = info.bytesTotal;
           loaderInfo._swfVersion = info.swfVersion;
-          if (!info.fileAttributes || !info.fileAttributes.doAbc) {
-            loaderInfo._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
-            suspendUntil = this._initAvm1(loaderInfo);
-          }
           loaderInfo._frameRate = info.frameRate;
           var bbox = info.bbox;
           loaderInfo._width = bbox.xMax - bbox.xMin;
@@ -271,6 +267,11 @@ module Shumway.AVM2.AS.flash.display {
           var rootSymbol = new Timeline.SpriteSymbol(0, true);
           rootSymbol.numFrames = info.frameCount;
           loaderInfo.registerSymbol(rootSymbol);
+
+          if (!info.fileAttributes || !info.fileAttributes.doAbc) {
+            loaderInfo._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
+            suspendUntil = this._initAvm1();
+          }
           break;
         case 'progress':
           var info = data.result;
@@ -339,9 +340,16 @@ module Shumway.AVM2.AS.flash.display {
       return suspendUntil;
     }
 
-    private _initAvm1(loaderInfo: LoaderInfo): Promise<any> {
+    private _initAvm1(): Promise<any> {
+      var contentLoaderInfo: LoaderInfo = this._contentLoaderInfo;
+      // Only the outermost AVM1 SWF gets an AVM1Context. SWFs loaded into it share that context.
+      if (this._loaderInfo && this._loaderInfo._avm1Context) {
+        contentLoaderInfo._avm1Context = this._loaderInfo._avm1Context;
+        return null;
+      }
       return AVM2.instance.loadAVM1().then(function() {
-        loaderInfo._avm1Context = Shumway.AVM1.AVM1Context.create(loaderInfo.swfVersion);
+        var swfVersion = contentLoaderInfo.swfVersion;
+        contentLoaderInfo._avm1Context = Shumway.AVM1.AVM1Context.create(swfVersion);
       });
     }
 
@@ -390,7 +398,7 @@ module Shumway.AVM2.AS.flash.display {
               this._frameAssetsQueue = [];
             }
             this._frameAssetsQueue.push(new Promise(function (resolve) {
-              setTimeout(resolve, 300 /* ms */);
+              setTimeout(resolve, 400 /* ms */);
             }));
           }
           break;
@@ -483,15 +491,21 @@ module Shumway.AVM2.AS.flash.display {
           }
         }
 
+        root._loaderInfo = loaderInfo;
         if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-          this._initAvm1Root(root);
+          root = this._content = this._initAvm1Root(root);
+        } else {
+          this._content = root;
         }
+        this.addTimelineObjectAtDepth(this._content, 0);
 
         this._codeExecutionPromise.resolve(undefined);
+      }
 
-        root._loaderInfo = loaderInfo;
-        this._content = root;
-        this.addTimelineObjectAtDepth(this._content, 0);
+      // For AVM1 SWFs directly loaded into AVM2 ones (or as the top-level SWF), unwrap the
+      // contained MovieClip here to correctly initialize frame data.
+      if (AVM1Movie.isType(root)) {
+        root = <AVM1Movie>root._children[0];
       }
 
       if (MovieClip.isType(root)) {
@@ -502,42 +516,44 @@ module Shumway.AVM2.AS.flash.display {
         }
 
         if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-          this._executeAvm1Actions(rootMovie, frameIndex, data);
+          avm1lib.getAVM1Object(root).addFrameActionBlocks(frameIndex, data);
         }
 
-        if (data.startSounds) {
-          rootMovie._registerStartSounds(frameIndex + 1, data.startSounds);
-        }
         if (data.soundStream) {
           rootMovie._initSoundStream(data.soundStream);
         }
         if (data.soundStreamBlock) {
-          rootMovie._addSoundStreamBlock(frameIndex, data.soundStreamBlock);
+          rootMovie._addSoundStreamBlock(frameIndex + 1, data.soundStreamBlock);
         }
       }
     }
 
+    /**
+     * For AVM1 SWFs that aren't loaded into other AVM1 SWFs, create an AVM1Movie container
+     * and wrap the root timeline into it. This associates the AVM1Context with this AVM1
+     * MovieClip tree, including potential nested SWFs.
+     */
     private _initAvm1Root(root: flash.display.DisplayObject) {
-      // Finding movie top root
-      var topRoot = root;
-      var parent = this._parent;
-      if (parent && parent !== this._stage) {
-        var parentLoader = parent.loaderInfo._loader;
-        while (parentLoader._parent && parentLoader._parent !== this._stage) {
-          parentLoader = parentLoader._parent.loaderInfo._loader;
-        }
-        if (parentLoader.loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-          notImplemented('AVM1Movie');
-          this._worker && this._worker.terminate();
-          return;
-        }
-        topRoot = parentLoader._content;
+      // Only create an AVM1Movie container for the outermost AVM1 SWF. Nested AVM1 SWFs just get
+      // their content added to the loading SWFs display list directly.
+      if (this._loaderInfo && this._loaderInfo._avm1Context) {
+        return root;
       }
 
+      var as2Object = avm1lib.getAVM1Object(root);
       var avm1Context = this._contentLoaderInfo._avm1Context;
-      var as2Object = avm1lib.getAVM1Object(topRoot);
+      avm1Context.root = as2Object;
+      as2Object.context = avm1Context;
+      root.addEventListener('frameConstructed',
+                            avm1Context.flushPendingScripts.bind(avm1Context),
+                            false,
+                            Number.MAX_VALUE);
       avm1Context.globals.asSetPublicProperty('_root', as2Object);
       avm1Context.globals.asSetPublicProperty('_level0', as2Object);
+
+      var avm1Movie = new flash.display.AVM1Movie();
+      avm1Movie.initializeContent(<MovieClip>root);
+      this._content = avm1Movie;
 
       // transfer parameters
       var parameters = this._contentLoaderInfo._parameters;
@@ -546,21 +562,8 @@ module Shumway.AVM2.AS.flash.display {
           as2Object[paramName] = parameters[paramName];
         }
       }
-    }
 
-    private _executeAvm1Actions(root: flash.display.MovieClip, frameIndex: number, frameData: any) {
-      var initActionBlocks: any[] = frameData.initActionBlocks;
-      var actionBlocks: any[] = frameData.actionBlocks;
-
-      if (initActionBlocks) {
-        root.addAVM1InitActionBlocks(frameIndex, initActionBlocks);
-      }
-
-      if (actionBlocks) {
-        for (var i = 0; i < actionBlocks.length; i++) {
-          root.addAVM1FrameScript(frameIndex, actionBlocks[i]);
-        }
-      }
+      return avm1Movie;
     }
 
     private _commitImage(data: any): void {

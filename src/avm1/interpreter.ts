@@ -40,7 +40,7 @@ module Shumway.AVM1 {
 
   var avm1Options = shumwayOptions.register(new OptionSet("AVM1"));
   export var avm1TraceEnabled = avm1Options.register(new Option("t1", "traceAvm1", "boolean", false, "trace AVM1 execution"));
-  export var avm1ErrorsEnabled = avm1Options.register(new Option("e1", "errorsAvm1", "boolean", false, "fail on AVM1 errors"));
+  export var avm1ErrorsEnabled = avm1Options.register(new Option("e1", "errorsAvm1", "boolean", false, "fail on AVM1 warnings and errors"));
   export var avm1TimeoutDisabled = avm1Options.register(new Option("ha1", "nohangAvm1", "boolean", false, "disable fail on AVM1 hang"));
   export var avm1CompilerEnabled = avm1Options.register(new Option("ca1", "compileAvm1", "boolean", true, "compiles AVM1 code"));
   export var avm1DebuggerEnabled = avm1Options.register(new Option("da1", "debugAvm1", "boolean", false, "allows AVM1 code debugging"));
@@ -49,6 +49,15 @@ module Shumway.AVM1 {
     pause: false,
     breakpoints: {}
   };
+
+  function avm1Warn(message?: any, ...optionalParams: any[]) {
+    if (avm1ErrorsEnabled.value) {
+      try {
+        throw new Error(message); // using throw as a way to break in browsers debugger
+      } catch (e) { /* ignoring since handled */ }
+    }
+    warn.apply(null, arguments);
+  }
 
   var MAX_AVM1_HANG_TIMEOUT = 1000;
   var CHECK_AVM1_HANG_EVERY = 1000;
@@ -163,8 +172,7 @@ module Shumway.AVM1 {
       this.deferScriptExecution = false;
     }
 
-    executeActions(actionsData: AVM1ActionsData, stage, scopeObj) {
-      this.stage = stage;
+    executeActions(actionsData: AVM1ActionsData, scopeObj) {
       executeActions(actionsData, this, scopeObj);
     }
   }
@@ -332,7 +340,7 @@ module Shumway.AVM1 {
   function as2ResolveProperty(obj, name: string): string {
     // AVM1 just ignores lookups on non-existant containers
     if (isNullOrUndefined(obj)) {
-      warn("AVM1 warning: cannot look up member '" + name + "' on undefined object");
+      avm1Warn("AVM1 warning: cannot look up member '" + name + "' on undefined object");
       return null;
     }
     obj = Object(obj);
@@ -370,7 +378,7 @@ module Shumway.AVM1 {
   function as2GetProperty(obj, name: string) {
     // AVM1 just ignores lookups on non-existant containers
     if (isNullOrUndefined(obj)) {
-      warn("AVM1 warning: cannot get property '" + name + "' on undefined object");
+      avm1Warn("AVM1 warning: cannot get property '" + name + "' on undefined object");
       return undefined;
     }
     obj = Object(obj);
@@ -1391,7 +1399,7 @@ module Shumway.AVM1 {
       var fn = avm1GetVariable(ectx, functionName);
       // AVM1 simply ignores attempts to invoke non-functions.
       if (!(fn instanceof Function)) {
-        warn("AVM1 warning: function '" + functionName +
+        avm1Warn("AVM1 warning: function '" + functionName +
                                           (fn ? "' is not callable" : "' is undefined"));
         return;
       }
@@ -1411,7 +1419,7 @@ module Shumway.AVM1 {
 
       // AVM1 simply ignores attempts to invoke methods on non-existing objects.
       if (isNullOrUndefined(obj)) {
-        warn("AVM1 warning: method '" + methodName + "' can't be called on undefined object");
+        avm1Warn("AVM1 warning: method '" + methodName + "' can't be called on undefined object");
         return;
       }
 
@@ -1430,7 +1438,7 @@ module Shumway.AVM1 {
         if (isFunction(obj)) {
           stack[sp] = obj.apply(target, args);
         } else {
-          warn("AVM1 warning: obj '" + obj + (obj ? "' is not callable" : "' is undefined"));
+          avm1Warn("AVM1 warning: obj '" + obj + (obj ? "' is not callable" : "' is undefined"));
         }
         release || assert(stack.length === sp + 1);
         return;
@@ -1447,7 +1455,7 @@ module Shumway.AVM1 {
 
       // AVM1 simply ignores attempts to invoke non-methods.
       if (!isFunction(fn)) {
-        warn("AVM1 warning: method '" + methodName + "' on object", obj,
+        avm1Warn("AVM1 warning: method '" + methodName + "' on object", obj,
                                         (isNullOrUndefined(fn) ?
                                                                "is undefined" :
                                                                "is not callable"));
@@ -1573,7 +1581,7 @@ module Shumway.AVM1 {
 
       // AVM1 simply ignores attempts to construct methods on non-existing objects.
       if (isNullOrUndefined(obj)) {
-        warn("AVM1 warning: method '" + methodName + "' can't be constructed on undefined object");
+        avm1Warn("AVM1 warning: method '" + methodName + "' can't be constructed on undefined object");
         return;
       }
 
@@ -1590,7 +1598,7 @@ module Shumway.AVM1 {
 
       var result = as2Construct(ctor, args);
       if (result === undefined) {
-        warn("AVM1 warning: method '" + methodName + "' on object", obj, "is not constructible");
+        avm1Warn("AVM1 warning: method '" + methodName + "' on object", obj, "is not constructible");
       }
       stack[sp] = result;
       release || assert(stack.length === sp + 1);
@@ -1611,7 +1619,7 @@ module Shumway.AVM1 {
         // obj in not a built-in type
         result = as2Construct(obj, args);
         if (result === undefined) {
-          warn("AVM1 warning: object '" + objectName +
+          avm1Warn("AVM1 warning: object '" + objectName +
                (obj ? "' is not constructible" : "' is undefined"));
         }
       }
@@ -1629,7 +1637,7 @@ module Shumway.AVM1 {
         obj.asSetPublicProperty(name, value);
       } else {
         // AVM1 just ignores sets on non-existant containers
-        warn("AVM1 warning: cannot set member '" + name + "' on undefined object");
+        avm1Warn("AVM1 warning: cannot set member '" + name + "' on undefined object");
       }
     }
     function avm1_0x45_ActionTargetPath(ectx: ExecutionContext) {
@@ -1780,7 +1788,7 @@ module Shumway.AVM1 {
 
       // AVM1 just ignores lookups on non-existant containers
       if (isNullOrUndefined(obj)) {
-        warn("AVM1 warning: cannot iterate over undefined object");
+        avm1Warn("AVM1 warning: cannot iterate over undefined object");
         return;
       }
 

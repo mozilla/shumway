@@ -207,5 +207,24 @@ module Shumway.AVM2.AS.flash.display {
       touchPointID = touchPointID | 0;
       notImplemented("public flash.display.Sprite::stopTouchDrag"); return;
     }
+
+    _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
+                   testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
+      if (testingType === HitTestingType.Mouse && this._hitArea && this._mouseEnabled) {
+        var result = this._hitArea._containsGlobalPoint(globalX, globalY,
+                                                        HitTestingType.HitTestShape, objects);
+        if (result === HitTestingResult.Shape) {
+          release || assert(objects.length === 0);
+          objects.push(this);
+        }
+        return result;
+      }
+      return super._containsPoint(globalX, globalY, localX, localY, testingType, objects);
+    }
+
+    _containsPointDirectly(x: number, y: number): boolean {
+      var graphics = this._getGraphics();
+      return !!graphics && graphics._containsPoint(x, y, true);
+    }
   }
 }

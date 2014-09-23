@@ -23,6 +23,7 @@ module Shumway.Timeline {
   import Bounds = Shumway.Bounds;
   import ColorUtilities = Shumway.ColorUtilities;
   import flash = Shumway.AVM2.AS.flash;
+  import SwfTag = Shumway.SWF.Parser.SwfTag;
   import PlaceObjectFlags = Shumway.SWF.Parser.PlaceObjectFlags;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
@@ -33,6 +34,7 @@ module Shumway.Timeline {
   export class Symbol {
     id: number = -1;
     isAVM1Object: boolean;
+    avm1Context: Shumway.AVM1.AVM1Context;
     symbolClass: Shumway.AVM2.AS.ASClass;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
@@ -292,6 +294,7 @@ module Shumway.Timeline {
       symbol.numFrames = data.frameCount;
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         symbol.isAVM1Object = true;
+        symbol.avm1Context = loaderInfo._avm1Context;
       }
       symbol.frameScripts = data.frameScripts;
       var frames = data.frames;
@@ -306,10 +309,6 @@ module Shumway.Timeline {
         if (frameInfo.labelName) {
           symbol.labels.push(new flash.display.FrameLabel(frameInfo.labelName, frameNum));
         }
-
-        //if (frame.startSounds) {
-        //  startSoundRegistrations[frameNum] = frame.startSounds;
-        //}
 
         frameNum += frameInfo.repeat;
       }
@@ -419,22 +418,37 @@ module Shumway.Timeline {
     }
   }
 
+  export class SoundStart {
+    constructor(public soundId: number, public soundInfo) {
+    }
+  }
+
   /**
    * TODO document
    */
   export class FrameDelta {
     _stateAtDepth: Shumway.Map<AnimationState>;
+    _soundStarts: SoundStart[];
 
     get stateAtDepth() {
       return this._stateAtDepth || this._initialize();
     }
 
+    get soundStarts() {
+      if (this._soundStarts === undefined) {
+        this._initialize();
+      }
+      return this._soundStarts;
+    }
+
     constructor(private loaderInfo: flash.display.LoaderInfo, private commands: any []) {
       this._stateAtDepth = null;
+      this._soundStarts = undefined;
     }
 
     private _initialize(): Shumway.Map<AnimationState> {
       var states: Shumway.Map<AnimationState> = this._stateAtDepth = Object.create(null);
+      var soundStarts : SoundStart[] = null;
       var commands = this.commands;
       var loaderInfo = this.loaderInfo;
       for (var i = 0; i < commands.length; i++) {
@@ -444,6 +458,12 @@ module Shumway.Timeline {
           case 5: // SWF_TAG_CODE_REMOVE_OBJECT
           case 28: // SWF_TAG_CODE_REMOVE_OBJECT2
             states[depth] = null;
+            break;
+          case SwfTag.CODE_START_SOUND:
+            if (!soundStarts) {
+              soundStarts = [];
+            }
+            soundStarts.push(new SoundStart(cmd.soundId, cmd.soundInfo));
             break;
           default:
             var symbol: DisplaySymbol = null;
@@ -495,12 +515,12 @@ module Shumway.Timeline {
                   break;
                 }
                 var actionsData = new AVM1.AVM1ActionsData(swfEvent.actionsData,
-                    's' + cmd.symbolId + 'e' + j);
+                                                           's' + cmd.symbolId + 'e' + j);
                 var fn = (function (actionsData, loaderInfo) {
                   return function() {
                     var avm1Context = loaderInfo._avm1Context;
-                    var as2Object = Shumway.AVM2.AS.avm1lib.getAVM1Object(this);
-                    return avm1Context.executeActions(actionsData, this.stage, as2Object);
+                    var avm1Object = Shumway.AVM2.AS.avm1lib.getAVM1Object(this);
+                    return avm1Context.executeActions(actionsData, avm1Object);
                   };
                 })(actionsData, loaderInfo);
                 var eventNames = [];
@@ -540,6 +560,7 @@ module Shumway.Timeline {
             break;
         }
       }
+      this._soundStarts = soundStarts;
       this.commands = null;
       return states;
     }

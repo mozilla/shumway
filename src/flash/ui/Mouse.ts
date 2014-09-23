@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import assert = Shumway.Debug.assert;
 
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import InteractiveObject = flash.display.InteractiveObject;
@@ -34,38 +35,13 @@ module Shumway.AVM2.AS.flash.ui {
      * Finds the interactive object on which the event is dispatched.
      */
     private _findTarget(point: flash.geom.Point): InteractiveObject {
-      var objects = this.stage.getObjectsUnderMouse(point);
-      var target: InteractiveObject;
-      var i = objects.length;
-      while (i--) {
-        var object = objects[i];
-        if (!flash.display.InteractiveObject.isType(object)) {
-          var j = i;
-          while (j--) {
-            var sibling = objects[j];
-            if (sibling._parent === object._parent && InteractiveObject.isType(sibling)) {
-              object = sibling;
-              i = j;
-              break;
-            }
-          }
-        }
-        target = object.findFurthestInteractiveAncestorOrSelf();
-        if (!target) {
-          continue;
-        }
-        if (target.mouseEnabled) {
-          break;
-        }
-        if (flash.display.Sprite.isType(target)) {
-          var hitTarget = (<flash.display.Sprite>target)._hitTarget;
-          if (hitTarget && hitTarget.mouseEnabled) {
-            target = hitTarget;
-            break;
-          }
-        }
-      }
-      return target;
+      var globalX = point.x * 20 | 0;
+      var globalY = point.y * 20 | 0;
+      var objects = [];
+      this.stage._containsGlobalPoint(globalX, globalY, flash.display.HitTestingType.Mouse,
+                                      objects);
+      release || assert(objects.length < 2);
+      return objects.length ? objects[0] : this.stage;
     }
 
     /**
@@ -112,7 +88,7 @@ module Shumway.AVM2.AS.flash.ui {
         return stage;
       }
 
-      var target = this._findTarget(globalPoint) || stage;
+      var target = this._findTarget(globalPoint);
       var type = flash.events.MouseEvent.typeFromDOMType(data.type);
       switch (type) {
         //case events.MouseEvent.MOUSE_OVER:

@@ -830,6 +830,14 @@ module Shumway {
   export module StringUtilities {
     import assert = Shumway.Debug.assert;
 
+    export function repeatString(c: string, n: number): string {
+      var s = "";
+      for (var i = 0; i < n; i++) {
+        s += c;
+      }
+      return s;
+    }
+
     export function memorySizeToString(value: number) {
       value |= 0;
       var K = 1024;
@@ -3049,24 +3057,26 @@ module Shumway {
       var g = (pARGB >>  8) & 0xff;
       var r = (pARGB >> 16) & 0xff;
       var o = a << 8;
-      r = unpremultiplyTable[o + r];
-      g = unpremultiplyTable[o + g];
-      b = unpremultiplyTable[o + b];
+      var T = unpremultiplyTable;
+      r = T[o + r];
+      g = T[o + g];
+      b = T[o + b];
       return a << 24 | r << 16 | g << 8 | b;
     }
 
-    var inverseSourceAlphaTable: Float64Array;
+    export var inverseAlphaTable: Uint8Array;
 
     /**
-     * Computes all possible inverse source alpha values.
+     * Computes all possible inverse alpha values, similar to the one above.
      */
-    export function ensureInverseSourceAlphaTable() {
-      if (inverseSourceAlphaTable) {
-        return;
-      }
-      inverseSourceAlphaTable = new Float64Array(256);
-      for (var a = 0; a < 255; a++) {
-        inverseSourceAlphaTable[a] = 1 - a / 255;
+    export function ensureInverseAlphaTable() {
+      if (!inverseAlphaTable) {
+        inverseAlphaTable = new Uint8Array(256 * 256);
+        for (var c = 0; c < 256; c++) {
+          for (var a = 0; a < 256; a++) {
+            inverseAlphaTable[(a << 8) + c] = c * (1 - a / 255);
+          }
+        }
       }
     }
 
@@ -3083,24 +3093,67 @@ module Shumway {
      * TODO: Not sure what to do about the dst.rgb which is
      * premultiplied by its alpah, but this appears to work.
      */
-    export function blendPremultipliedBGRA(tpBGRA, spBGRA) {
-      var ta = (tpBGRA >>  0) & 0xff;
-      var tr = (tpBGRA >>  8) & 0xff;
-      var tg = (tpBGRA >> 16) & 0xff;
-      var tb = (tpBGRA >> 24) & 0xff;
-
-      var sa = (spBGRA >>  0) & 0xff;
-      var sr = (spBGRA >>  8) & 0xff;
-      var sg = (spBGRA >> 16) & 0xff;
-      var sb = (spBGRA >> 24) & 0xff;
-
-      // TODO: Clampling.
-      var inverseSourceAlpha = inverseSourceAlphaTable[sa];
-      var ta = sa + ta * inverseSourceAlpha;
-      var tr = sr + tr * inverseSourceAlpha;
-      var tg = sg + tg * inverseSourceAlpha;
-      var tb = sb + tb * inverseSourceAlpha;
+    export function blendPremultipliedBGRA(tpBGRA: number, spBGRA: number) {
+      var sa = spBGRA & 0xff;
+      var o = sa << 8;
+      var T = inverseAlphaTable;
+      var ta = sa + T[o + (tpBGRA & 0xff)];
+      var tr = ((spBGRA >>  8) & 0xff) + T[o + ((tpBGRA >>  8) & 0xff) | 0];
+      var tg = ((spBGRA >> 16) & 0xff) + T[o + ((tpBGRA >> 16) & 0xff) | 0];
+      var tb = ((spBGRA >> 24) & 0xff) + T[o + ((tpBGRA >> 24) & 0xff) | 0];
       return tb << 24 | tg << 16 | tr << 8 | ta;
+    }
+
+    import swap32 = IntegerUtilities.swap32;
+    export function convertImage(sourceFormat: ImageType, targetFormat: ImageType, source: Int32Array, target: Int32Array) {
+      if (source !== target) {
+        release || Debug.assert(source.buffer !== target.buffer, "Can't handle overlapping views.");
+      }
+      var length = source.length;
+      if (sourceFormat === targetFormat) {
+        if (source === target) {
+          return;
+        }
+        for (var i = 0; i < length; i++) {
+          target[i] = source[i];
+        }
+        return;
+      }
+      // enterTimeline("convertImage", ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length));
+      if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
+          targetFormat === ImageType.StraightAlphaRGBA) {
+        Shumway.ColorUtilities.ensureUnpremultiplyTable();
+        for (var i = 0; i < length; i++) {
+          var pARGB = swap32(source[i]);
+          // TODO: Make sure this is inlined!
+          var uARGB = tableLookupUnpremultiplyARGB(pARGB);
+          var uABGR = (uARGB & 0xFF00FF00)  | // A_G_
+                      (uARGB >> 16) & 0xff  | // A_GR
+                      (uARGB & 0xff) << 16;   // ABGR
+          target[i] = uABGR;
+        }
+      } else if (sourceFormat === ImageType.StraightAlphaARGB &&
+                 targetFormat === ImageType.StraightAlphaRGBA) {
+        for (var i = 0; i < length; i++) {
+          target[i] = swap32(source[i]);
+        }
+      } else if (sourceFormat === ImageType.StraightAlphaRGBA &&
+                 targetFormat === ImageType.PremultipliedAlphaARGB) {
+        for (var i = 0; i < length; i++) {
+          var uABGR = source[i];
+          var uARGB = (uABGR & 0xFF00FF00)  | // A_G_
+                      (uABGR >> 16) & 0xff  | // A_GB
+                      (uABGR & 0xff) << 16;   // ARGR
+          target[i] = swap32(premultiplyARGB(uARGB));
+        }
+      } else {
+        Debug.somewhatImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
+        // Copy the buffer over for now, we should at least get some image output.
+        for (var i = 0; i < length; i++) {
+          target[i] = source[i];
+        }
+      }
+      // leaveTimeline("convertImage");
     }
   }
 

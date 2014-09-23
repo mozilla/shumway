@@ -266,6 +266,20 @@ module Shumway.AVM2.AS.flash.display {
     Filter       = 0x10
   }
 
+  export enum HitTestingType {
+    HitTestBounds,
+    HitTestBoundsAndMask,
+    HitTestShape,
+    Mouse,
+    ObjectsUnderPoint,
+  }
+
+  export enum HitTestingResult {
+    None,
+    Bounds,
+    Shape
+  }
+
   /*
    * Note: Private or protected functions are prefixed with "_" and *may* return objects that
    * should not be mutated. This is for performance reasons and it's up to you to make sure
@@ -528,10 +542,15 @@ module Shumway.AVM2.AS.flash.display {
 
     _setParent(parent: DisplayObjectContainer, depth: number) {
       var oldParent = this._parent;
+      release || assert(parent !== this);
       this._parent = parent;
       this._depth = depth;
       if (parent) {
         this._addReference();
+        if (parent && this._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
+                                        DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
+          parent._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+        }
       }
       if (oldParent) {
         this._removeReference();
@@ -667,14 +686,16 @@ module Shumway.AVM2.AS.flash.display {
     _lineBounds: Bounds;
 
     /*
-     * If larger than |-1| then this object acts like a mask for all objects between |_depth + 1| and |_clipDepth| inclusive. The
-     * swf experts say that Adobe tools only generate neatly nested clip segments.
+     * If larger than |-1| then this object acts like a mask for all objects between
+     * |_depth + 1| and |_clipDepth| inclusive. The swf experts say that Adobe tools only
+     * generate neatly nested clip segments.
      *
      * A: -------------[-------------------)---------------
      * B: -----------------[-------------)-----------------
      *    ----X----------Y--------Z-------------W----------
      *
-     * X is not clipped, Y is only clipped by A, Z by both A and B and finally W is not clipped at all.
+     * X is not clipped, Y is only clipped by A, Z by both A and B and finally W is not
+     * clipped at all.
      */
     _clipDepth: number;
 
@@ -926,16 +947,18 @@ module Shumway.AVM2.AS.flash.display {
         } else {
           bounds.setEmpty();
         }
-        if (DisplayObjectContainer.isType(this)) {
-          var container: DisplayObjectContainer = <DisplayObjectContainer>this;
-          var children = container._children;
-          for (var i = 0; i < children.length; i++) {
-            bounds.unionInPlace(children[i]._getTransformedBounds(this, includeStrokes));
-          }
-        }
+        this._getChildBounds(bounds, includeStrokes);
         this._removeFlags(invalidFlag);
       }
       return bounds;
+    }
+
+    /**
+     * Empty base case: DisplayObject cannot have children, but several distinct subclasses can.
+     * Overridden in DisplayObjectContainer, SimpleButton, and AVM1Movie.
+     */
+    _getChildBounds(bounds: Bounds, includeStrokes: boolean) {
+      // TSLint thinks empty methods are uncool. I think TSLint is uncool.
     }
 
     /**
@@ -946,8 +969,7 @@ module Shumway.AVM2.AS.flash.display {
      *
      * If the |targetCoordinateSpace| is |null| then assume the identity coordinate space.
      */
-    private _getTransformedBounds(targetCoordinateSpace: DisplayObject,
-                                  includeStroke: boolean): Bounds {
+    _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean): Bounds {
       var bounds = this._getContentBounds(includeStroke).clone();
       if (targetCoordinateSpace === this || bounds.isEmpty()) {
         return bounds;
@@ -1595,88 +1617,98 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * The |x| and |y| arguments are in global coordinates. The |shapeFlag| indicates whether
-     * the hit test should be on the actual pixels of the object |true| or just its bounding
-     * box |false|. Use the |ignoreChildren| to only test the display object's graphics and
-     * not its children.
+     * The |globalX| and |globalY| arguments are in global coordinates. The |shapeFlag| indicates
+     * whether the hit test should be on the actual shape of the object or just its bounding box.
      *
-     * Note: shapeFlag and ignoreChildren are optional, but the type coercion will do the right
-     * thing for them, so we don't need to take the overhead from being explicit about that.
+     * Note: shapeFlag is optional, but the type coercion will do the right thing for it, so we
+     * don't need to take the overhead from being explicit about that.
      */
-    hitTestPoint(x: number, y: number, shapeFlag: boolean,
-                 ignoreChildren: boolean, ignoreClipping: boolean = true): boolean {
-      x = +x * 20 | 0;
-      y = +y * 20 | 0;
+    hitTestPoint(globalX: number, globalY: number, shapeFlag: boolean): boolean {
+      globalX = +globalX * 20 | 0;
+      globalY = +globalY * 20 | 0;
       shapeFlag = !!shapeFlag;
-      ignoreChildren = !!ignoreChildren;
-      ignoreClipping = !!ignoreClipping;
-      var matrix = this._getInvertedConcatenatedMatrix();
-      var localX = matrix.transformX(x, y);
-      var localY = matrix.transformY(x, y);
-      return this._containsPoint(localX, localY, shapeFlag, ignoreChildren, ignoreClipping);
+      var testingType = shapeFlag ?
+                        HitTestingType.HitTestShape :
+                        HitTestingType.HitTestBounds;
+      return !!this._containsGlobalPoint(globalX, globalY, testingType, null);
     }
 
     /**
-     * Returns true if the given global coordinates hit the shape of this object.
+     * Internal implementation of all point intersection checks.
      *
-     * Overridden in SimpleButton.
+     * _containsPoint is used for
+     *  - mouse target finding
+     *  - getObjectsUnderPoint
+     *  - hitTestPoint
+     *
+     * Mouse target finding and getObjectsUnderPoint require checking against the exact shape,
+     * and making sure that the checked coordinates aren't hidden through masking or clipping.
+     *
+     * hitTestPoint never checks for clipping, and masking only for testingType HitTestShape.
+     *
+     * The `objects` object is used for collecting objects for `getObjectsUnderPoint`. If it is
+     * supplied, objects for which `_containsPointDirectly` is true are added to it.
+     *
+     * Overridden in DisplayObjectContainer and SimpleButton.
      */
-    _isUnderMouse(x: number, y: number): boolean
-    {
+    _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
+                   testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
+      var result = this._boundsAndMaskContainPoint(globalX, globalY, localX, localY, testingType);
+      // We're done if either we don't have a hit, or if we're only interested in matching bounds
+      // or bounds + mask. That is true for HitTestPoint without shapeFlag set.
+      if (result === HitTestingResult.None || testingType < HitTestingType.HitTestShape) {
+        return result;
+      }
+      var containsPoint = this._containsPointDirectly(localX, localY);
+      // For getObjectsUnderPoint, push all direct hits, for mouse target finding InteractiveObjects
+      // only.
+      if (containsPoint && objects &&
+          (testingType === HitTestingType.ObjectsUnderPoint ||
+           InteractiveObject.isType(this) && (<InteractiveObject>this)._mouseEnabled)) {
+        objects.push(this);
+      }
+      return containsPoint ? HitTestingResult.Shape : result;
+    }
+
+    _containsGlobalPoint(globalX: number, globalY: number,
+                         testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
       var matrix = this._getInvertedConcatenatedMatrix();
-      var localX = matrix.transformX(x, y);
-      var localY = matrix.transformY(x, y);
-      return this._containsPoint(localX, localY, true, false, false);
+      var localX = matrix.transformX(globalX, globalY);
+      var localY = matrix.transformY(globalX, globalY);
+      return this._containsPoint(globalX, globalY, localX, localY, testingType, objects);
     }
 
     /**
-     * Same as |hitTestPoint| but the point is in local coordinate space and in twips.
+     * Fast check if a point can intersect the receiver object. Returns true if the point is
+     * - visible
+     * - within the receiver's bounds
+     * - for testingType values other than HitTestBounds, intersects with the a mask, if set.
+     *
+     * Note that the callers are expected to have both local and global coordinates available
+     * anyway, so _boundsAndMaskContainPoint takes both to avoid recalculating them.
      */
-    _containsPoint(x: number, y: number, shapeFlag: boolean,
-                   ignoreChildren: boolean, ignoreClipping: boolean): boolean
-    {
-      if (!this._getContentBounds().contains(x, y)) {
-        return false;
+    _boundsAndMaskContainPoint(globalX: number, globalY: number, localX: number, localY: number,
+                               testingType: HitTestingType): HitTestingResult {
+      if (!this._hasFlags(DisplayObjectFlags.Visible) ||
+          !this._getContentBounds().contains(localX, localY)) {
+        return HitTestingResult.None;
       }
-      if (!shapeFlag) {
-        return true;
+      if (testingType === HitTestingType.HitTestBounds || !this._mask) {
+        return HitTestingResult.Bounds;
       }
-      if (this._mask) {
-        var matrix = this._mask._getInvertedMatrix();
-        var maskX = matrix.transformX(x, y);
-        var maskY = matrix.transformY(x, y);
-        if (!this._mask._containsPoint(maskX, maskY, shapeFlag, ignoreChildren, ignoreClipping)) {
-          return false;
-        }
-      }
-      /* TODO: Figure out if we need to test against the graphics path first and exit early instead of
-       * going down the children list. Testing the path can be more expensive sometimes, more so than
-       * testing the children. */
-      if (!ignoreChildren && DisplayObjectContainer.isType(this)) {
-        var children = (<DisplayObjectContainer>this)._children;
-        for (var i = 0; i < children.length; i++) {
-          var child = children[i];
-          var matrix = child._getInvertedMatrix();
-          var childX = matrix.transformX(x, y);
-          var childY = matrix.transformY(x, y);
-          var result = child._containsPoint(childX, childY,
-                                            shapeFlag, ignoreChildren, ignoreClipping);
-          if (!ignoreClipping && child._clipDepth >= 0 && child._parent) {
-            if (!result) {
-              i = child._parent.getClipDepthIndex(child._clipDepth);
-            }
-          } else if (result) {
-            return true;
-          }
-        }
-      }
+      return this._mask._containsGlobalPoint(globalX, globalY,
+                                             HitTestingType.HitTestBoundsAndMask, null);
+    }
+
+    /**
+     * Tests if the receiver's own visual content intersects with the given point.
+     * In the base implementation, this just returns false, because not all DisplayObjects can
+     * ever match.
+     * Overridden in Shape, Sprite, Bitmap, Video, and TextField.
+     */
+    _containsPointDirectly(localX: number, localY: number): boolean {
       var graphics = this._getGraphics();
-      if (graphics) {
-        // TODO: split this up into internal and external versions.
-        // The external one must include strokes, the internal shouldn't do the argument validation.
-        return graphics._containsPoint(x, y, true);
-      }
-      return false;
+      return !!graphics && graphics._containsPoint(localX, localY, true);
     }
 
     get scrollRect(): flash.geom.Rectangle {
@@ -1703,27 +1735,6 @@ module Shumway.AVM2.AS.flash.display {
     set opaqueBackground(value: any) {
       release || assert (value === null || Shumway.isInteger(value));
       this._opaqueBackground = value;
-    }
-
-    /**
-     * Finds the furthest interactive ancestor (or self) to receive pointer events for this object.
-     */
-    public findFurthestInteractiveAncestorOrSelf(): InteractiveObject {
-      if (!this.visible) {
-        return null;
-      }
-      var find = InteractiveObject.isType(this) ? <InteractiveObject>this : this._parent;
-      var self = this._parent;
-      while (self) {
-        if (!self.visible) {
-          return null;
-        }
-        if (!self.mouseChildren) {
-          find = self;
-        }
-        self = self._parent;
-      }
-      return find;
     }
 
     /**

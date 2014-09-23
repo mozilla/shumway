@@ -160,15 +160,17 @@ module Shumway.AVM2.AS.flash.display {
         }
         self._frames = symbol.frames;
         if (symbol.isAVM1Object) {
-          this._mouseEnabled = false;
+          self._mouseEnabled = false;
           if (symbol.frameScripts) {
+            var avm1MovieClip = avm1lib.getAVM1Object(this);
+            avm1MovieClip.context = symbol.avm1Context;
             var data = symbol.frameScripts;
             for (var i = 0; i < data.length; i += 2) {
-              self.addAVM1FrameScript(data[i], data[i + 1]);
+              avm1MovieClip.addFrameScript(data[i], data[i + 1]);
             }
           }
           if (symbol.avm1Name) {
-            this.name = symbol.avm1Name;
+            self.name = symbol.avm1Name;
           }
         }
       } else {
@@ -213,14 +215,6 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       Sprite.instanceConstructorNoInitialize.call(this);
-    }
-
-    _setParent(parent: DisplayObjectContainer, depth: number) {
-      super._setParent(parent, depth);
-      if (parent && this._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
-                                      DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
-        parent._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
-      }
     }
 
     _initFrame(advance: boolean) {
@@ -278,9 +272,6 @@ module Shumway.AVM2.AS.flash.display {
 
     private _trackAsMenu: boolean;
     private _allowFrameNavigation: boolean;
-
-    private _boundExecuteAVM1FrameScripts: () => void;
-    private _as2FrameScripts: AVM1.AVM1ActionsData[][];
 
     private _sounds: MovieClipSoundsManager;
 
@@ -498,6 +489,10 @@ module Shumway.AVM2.AS.flash.display {
             }
           }
         }
+        var soundStarts = frame.soundStarts;
+        if (soundStarts) {
+          this._registerStartSounds(i + 1, soundStarts);
+        }
       }
 
       if (this._frameScripts[nextFrame]) {
@@ -659,61 +654,6 @@ module Shumway.AVM2.AS.flash.display {
               (<Timeline.SpriteSymbol>this._symbol).avm1SymbolClass) || null;
     }
 
-    addAVM1FrameScript(frameIndex: number, actionsBlock: Uint8Array): void {
-      var frameScripts = this._as2FrameScripts;
-      if (!frameScripts) {
-        release || assert(!this._boundExecuteAVM1FrameScripts);
-        this._boundExecuteAVM1FrameScripts = this._executeAVM1FrameScripts.bind(this);
-        frameScripts = this._as2FrameScripts = [];
-      }
-      var scripts: AVM1.AVM1ActionsData[] = frameScripts[frameIndex + 1];
-      if (!scripts) {
-        scripts = frameScripts[frameIndex + 1] = [];
-        this.addFrameScript(frameIndex, this._boundExecuteAVM1FrameScripts);
-      }
-      var actionsData = new AVM1.AVM1ActionsData(actionsBlock,
-                                                'f' + frameIndex + 'i' + scripts.length);
-      scripts.push(actionsData);
-    }
-
-    /**
-     * AVM1 InitActionBlocks are executed once, before the children are initialized for a frame.
-     * That matches AS3's enterFrame event, so we can add an event listener that just bails
-     * as long as the target frame isn't reached, and executes the InitActionBlock once it is.
-     *
-     * After that, the listener removes itself.
-     */
-    addAVM1InitActionBlocks(frameIndex: number, actionsBlocks: {actionsData: Uint8Array} []): void {
-      var self: MovieClip = this;
-      function listener (e) {
-        if (self._currentFrame !== frameIndex + 1) {
-          return;
-        }
-        self.removeEventListener('enterFrame', listener);
-
-        var avm1Context = self.loaderInfo._avm1Context;
-        var as2Object = avm1lib.getAVM1Object(self);
-        var stage = self.stage;
-        for (var i = 0; i < actionsBlocks.length; i++) {
-          var actionsData = new AVM1.AVM1ActionsData(actionsBlocks[i].actionsData,
-                                                    'f' + frameIndex + 'i' + i);
-          avm1Context.executeActions(actionsData, stage, as2Object);
-        }
-      }
-      this.addEventListener('enterFrame', listener);
-    }
-
-    private _executeAVM1FrameScripts() {
-      var avm1Context = this.loaderInfo._avm1Context;
-      var as2Object = avm1lib.getAVM1Object(this);
-      var scripts: AVM1.AVM1ActionsData[] = this._as2FrameScripts[this._currentFrame];
-      release || assert(scripts && scripts.length);
-      for (var i = 0; i < scripts.length; i++) {
-        var actionsData = scripts[i];
-        avm1Context.executeActions(actionsData, this.stage, as2Object);
-      }
-    }
-
     get _isFullyLoaded(): boolean {
       return this.framesLoaded >= this.totalFrames;
     }
@@ -732,13 +672,13 @@ module Shumway.AVM2.AS.flash.display {
       this._sounds.initSoundStream(streamInfo);
     }
 
-    _addSoundStreamBlock(frameIndex: number, streamBlock: any) {
-      this._sounds.addSoundStreamBlock(frameIndex + 1, streamBlock);
+    _addSoundStreamBlock(frameNum: number, streamBlock: any) {
+      this._sounds.addSoundStreamBlock(frameNum, streamBlock);
     }
 
     private _syncSounds(frameNum: number) {
       if (this._sounds !== null) {
-        this._sounds.syncSounds(frameNum + 1);
+        this._sounds.syncSounds(frameNum);
       }
     }
 

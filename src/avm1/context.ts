@@ -17,6 +17,9 @@
 module Shumway.AVM1 {
   import assert = Shumway.Debug.assert;
 
+  import AVM1MovieClip = Shumway.AVM2.AS.avm1lib.AVM1MovieClip;
+  import AVM1Globals = Shumway.AVM2.AS.avm1lib.AVM1Globals;
+
   export class AVM1ActionsData {
     public ir; // will cache compiled representation
     constructor(public bytes: Uint8Array, public id: string) {
@@ -32,10 +35,14 @@ module Shumway.AVM1 {
 
   export class AVM1Context {
     public static instance: AVM1Context = null;
-    public stage;
+    public root: AVM1MovieClip;
     public swfVersion: number;
-    public globals: Shumway.AVM2.AS.avm1lib.AVM1Globals;
-    constructor() {}
+    public globals: AVM1Globals;
+    constructor() {
+      this.root = null;
+      this.swfVersion = 0;
+      this.globals = null;
+    }
 
     public static create: (swfVersion: number) => AVM1Context;
 
@@ -47,6 +54,6 @@ module Shumway.AVM1 {
     public resolveLevel(level: number): any {}
     public addToPendingScripts(fn) {}
 
-    public executeActions(actionsData: AVM1ActionsData, stage, scopeObj) {}
+    public executeActions(actionsData: AVM1ActionsData, scopeObj) {}
   }
 }

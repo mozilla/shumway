@@ -481,7 +481,12 @@ module Shumway.GFX {
         var hasStyleTransformation = !!this.fillStyle._transform;
         if (supportsStyle && hasStyleTransformation && path instanceof Path2D) {
           var m = this.fillStyle._transform;
-          var i = m.inverse();
+          var i;
+          try {
+            i = m.inverse();
+          } catch (e) {
+            i = m = Geometry.Matrix.createIdentitySVGMatrix();
+          }
           // Transform the context by the style transform ...
           this.transform(m.a, m.b, m.c, m.d, m.e, m.f);
           // transform the path by the inverse of the style transform ...

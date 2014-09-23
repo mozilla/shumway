@@ -1,4 +1,9 @@
 [
+    {  "id": "acid-platformer",
+      "frames": [10],
+      "swf": "swfs/acid/acid-platformer.swf",
+      "type": "eq"
+    },
     {  "id": "acid",
       "frames": [10],
       "swf": "swfs/acid/acid.swf",
@@ -130,7 +135,7 @@
       "type": "eq"
     },
     {  "id": "acid-image-2",
-      "frames": [1],
+      "frames": [10],
       "swf": "swfs/acid/acid-image-2.swf",
       "type": "eq"
     },
@@ -413,6 +418,13 @@
       "filenames": [
         "swfs/as3-loader/LoaderTest.swf",
         "swfs/as3-loader/LoaderLoadBytesTest.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "AVM1Movie",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1movie/AVM1MovieTest.swf"
       ],
       "type": "stas"
     },

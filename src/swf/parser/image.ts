@@ -167,9 +167,12 @@ module Shumway.SWF.Parser {
           }
         }
         image.data = joinChunks(chunks);
+        image.dataType = ImageType.JPEG;
       }
     } else {
+      parsePngHeaders(image, imgData);
       image.data = imgData;
+      image.dataType = ImageType.PNG;
     }
     leaveTimeline();
     return image;

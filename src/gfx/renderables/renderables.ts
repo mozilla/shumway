@@ -195,46 +195,9 @@ module Shumway.GFX {
     _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     properties: {[name: string]: any} = {};
     _canvas: HTMLCanvasElement;
+    _context: CanvasRenderingContext2D;
+    _imageData: ImageData;
     private fillStyle: ColorStyle;
-
-    private static _convertImage(sourceFormat: ImageType, targetFormat: ImageType, source: Int32Array, target: Int32Array) {
-      if (source !== target) {
-        release || assert (source.buffer !== target.buffer, "Can't handle overlapping views.");
-      }
-      if (sourceFormat === targetFormat) {
-        if (source === target) {
-          return;
-        }
-        var length = source.length;
-        for (var i = 0; i < length; i++) {
-          target[i] = source[i];
-        }
-        return;
-      }
-      enterTimeline("convertImage", ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length));
-      if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
-          targetFormat === ImageType.StraightAlphaRGBA) {
-        Shumway.ColorUtilities.ensureUnpremultiplyTable();
-        var length = source.length;
-        for (var i = 0; i < length; i++) {
-          var pARGB = swap32(source[i]);
-          // TODO: Make sure this is inlined!
-          var uARGB = tableLookupUnpremultiplyARGB(pARGB);
-          var uABGR = (uARGB & 0xFF00FF00)  | // A_G_
-                      (uARGB >> 16) & 0xff  | // A_GR
-                      (uARGB & 0xff) << 16;   // ABGR
-          target[i] = uABGR;
-        }
-      } else if (sourceFormat === ImageType.StraightAlphaARGB &&
-                 targetFormat === ImageType.StraightAlphaRGBA) {
-        for (var i = 0; i < length; i++) {
-          target[i] = swap32(source[i]);
-        }
-      } else {
-        notImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
-      }
-      leaveTimeline("convertImage");
-    }
 
     public static FromDataBuffer(type: ImageType, dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
       enterTimeline("RenderableBitmap.FromDataBuffer");
@@ -264,7 +227,6 @@ module Shumway.GFX {
         return;
       }
       enterTimeline("RenderableBitmap.updateFromDataBuffer", this);
-      var context = this._canvas.getContext("2d");
       if (type === ImageType.JPEG ||
           type === ImageType.PNG  ||
           type === ImageType.GIF)
@@ -274,7 +236,7 @@ module Shumway.GFX {
         var image = new Image();
         image.src = URL.createObjectURL(dataBuffer.toBlob());
         image.onload = function () {
-          context.drawImage(image, 0, 0);
+          self._context.drawImage(image, 0, 0);
           self.removeFlags(RenderableFlags.Loading);
           self.invalidatePaint();
         };
@@ -282,15 +244,16 @@ module Shumway.GFX {
           unexpected("Image loading error: " + ImageType[type]);
         };
       } else {
-        var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
-        RenderableBitmap._convertImage (
-          type,
-          ImageType.StraightAlphaRGBA,
-          new Int32Array(dataBuffer.buffer),
-          new Int32Array(imageData.data.buffer)
-        );
+        if (imageConvertOption.value) {
+          ColorUtilities.convertImage (
+            type,
+            ImageType.StraightAlphaRGBA,
+            new Int32Array(dataBuffer.buffer),
+            new Int32Array(this._imageData.data.buffer)
+          );
+        }
         enterTimeline("putImageData");
-        context.putImageData(imageData, 0, 0);
+        this._context.putImageData(this._imageData, 0, 0);
         leaveTimeline("putImageData");
       }
       this.invalidatePaint();
@@ -301,14 +264,15 @@ module Shumway.GFX {
      * Writes the image data into the given |output| data buffer.
      */
     public readImageData(output: DataBuffer) {
-      var context = this._canvas.getContext("2d");
-      var data = <Uint8Array>context.getImageData(0, 0, this._canvas.width, this._canvas.height).data;
+      var data = <Uint8Array>this._context.getImageData(0, 0, this._canvas.width, this._canvas.height).data;
       output.writeRawBytes(data);
     }
 
     constructor(canvas: HTMLCanvasElement, bounds: Rectangle) {
       super(bounds);
       this._canvas = canvas;
+      this._context = this._canvas.getContext("2d");
+      this._imageData = this._context.createImageData(this._bounds.w, this._bounds.h);
     }
 
     render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {

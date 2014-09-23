@@ -22,7 +22,8 @@ module Shumway.GFX {
   import shumwayOptions = Shumway.Settings.shumwayOptions;
 
   var rendererOptions = shumwayOptions.register(new OptionSet("Renderer Options"));
-  export var imageUpdateOption = rendererOptions.register(new Option("", "imageUpdate", "boolean", true, "Enable image conversion."));
+  export var imageUpdateOption = rendererOptions.register(new Option("", "imageUpdate", "boolean", true, "Enable image updating."));
+  export var imageConvertOption = rendererOptions.register(new Option("", "imageConvert", "boolean", true, "Enable image conversion."));
   export var stageOptions = shumwayOptions.register(new OptionSet("Stage Renderer Options"));
   export var forcePaint = stageOptions.register(new Option("", "forcePaint", "boolean", false, "Force repainting."));
   export var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boolean", false, "Cull elements outside of the viewport."));

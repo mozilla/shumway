@@ -1047,6 +1047,10 @@ module Shumway.GFX.Geometry {
       return false;
     }
 
+    public static createIdentitySVGMatrix(): SVGMatrix {
+      return Matrix._svg.createSVGMatrix();
+    }
+
     public static createSVGMatrixFromArray(array: number []): SVGMatrix {
       var matrix: SVGMatrix = Matrix._svg.createSVGMatrix();
       matrix.a = array[0];

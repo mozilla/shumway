@@ -317,8 +317,10 @@ module Shumway.Shell {
   }
 
   function executeUnitTestFile(file: string) {
-    writer.writeLn("Running Unit Test: " + file);
+    writer.writeLn("Running test file: " + file + " ...");
+    var start = dateNow();
     load(file);
+    var testCount = 0;
     while (unitTests.length) {
       var test = unitTests.shift();
       var repeat = 1;
@@ -329,6 +331,7 @@ module Shumway.Shell {
       if (verbose && test.name) {
         writer.writeLn("Test: " + test.name);
       }
+      testCount += repeat;
       try {
         for (var i = 0; i < repeat; i++) {
           test();
@@ -338,6 +341,7 @@ module Shumway.Shell {
         writer.redLns(x.stack);
       }
     }
+    writer.writeLn("Completed " + testCount + " test" + (testCount > 1 ? "s" : "") + " in " + (dateNow() - start).toFixed(2) + " ms.");
     writer.outdent();
   }
 

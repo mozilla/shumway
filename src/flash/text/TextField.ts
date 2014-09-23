@@ -152,6 +152,13 @@ module Shumway.AVM2.AS.flash.text {
       return super._getContentBounds(includeStrokes);
     }
 
+    _containsPointDirectly(x: number, y: number): boolean {
+      // If this override is reached, the content bounds have already been checked, which is all
+      // we need to do.
+      release || assert(this._getContentBounds().contains(x, y));
+      return true;
+    }
+
     private _invalidateContent() {
       if (this._textContent.flags & Shumway.TextContentFlags.Dirty) {
         this._setFlags(DisplayObjectFlags.DirtyTextContent);

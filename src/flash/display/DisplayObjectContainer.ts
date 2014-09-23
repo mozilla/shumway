@@ -108,7 +108,7 @@ module Shumway.AVM2.AS.flash.display {
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
           var child = children[i];
-          if (DisplayObjectContainer.isType(child)) {
+          if (DisplayObjectContainer.isType(child) || AVM1Movie.isType(child)) {
             (<DisplayObjectContainer>child)._enqueueFrameScripts();
           }
         }
@@ -398,27 +398,138 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Gets the objects under the specified point by walking the children of this display list. If a child's
-     * bounds doesn't include the given point then we skip it and all of its children.
+     * Override of DisplayObject#_containsPoint that takes children into consideration.
+     */
+    _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
+                   testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
+      // First, test bounds and mask at most.
+      var fastTest = Math.min(testingType, HitTestingType.HitTestBoundsAndMask);
+      var result = this._boundsAndMaskContainPoint(globalX, globalY, localX, localY, fastTest);
+      // Same as in the DisplayObject base case, we're done if we don't have a hit or are only
+      // looking for bounds + mask checks.
+      if (result === HitTestingResult.None || testingType < HitTestingType.HitTestShape) {
+        return result;
+      }
+
+      var anyChildHit = false;
+      var children = this._getUnclippedChildren(testingType, globalX, globalY);
+      for (var i = children ? children.length : 0; i--; ) {
+        var child = children[i];
+        result = child._containsGlobalPoint(globalX, globalY, testingType, objects);
+        if (result !== HitTestingResult.Shape) {
+          continue;
+        }
+        // For hit testing, a single match suffices.
+        if (testingType < HitTestingType.Mouse) {
+          return result;
+        }
+        anyChildHit = true;
+        if (testingType === HitTestingType.ObjectsUnderPoint) {
+          continue;
+        }
+        release || assert(testingType === HitTestingType.Mouse);
+        release || assert(objects.length <= 1);
+        // If this object itself is mouse-disabled, we have to ensure that no nested object is
+        // returned as a result.
+        if (!this._mouseEnabled) {
+          objects.length = 0;
+          return result;
+        }
+        // If this container disables mouseChildren, any matched child establish the container as
+        // the match.
+        if (!this._mouseChildren) {
+          objects[0] = this;
+        }
+        if (objects.length !== 0) {
+          release || assert(InteractiveObject.isType(objects[0]));
+          return HitTestingResult.Shape;
+        }
+      }
+
+      // We need to always test the container itself for getObjectsUnderPoint.
+      // Otherwise, it's only required if no child (interactive or not) was hit.
+      if (anyChildHit && testingType !== HitTestingType.ObjectsUnderPoint) {
+        if (testingType === HitTestingType.Mouse && objects.length === 0) {
+          objects[0] = this;
+        }
+        return HitTestingResult.Shape;
+      }
+      var selfHit = this._containsPointDirectly(localX, localY);
+      if (selfHit && (testingType === HitTestingType.ObjectsUnderPoint ||
+                      objects && this._mouseEnabled)) {
+        objects.push(this);
+      }
+      return anyChildHit || selfHit ? HitTestingResult.Shape : HitTestingResult.None;
+    }
+
+    private _getUnclippedChildren(testingType, globalX, globalY) {
+      // Clipping masks complicate hit testing: for mouse target finding, where performance is
+      // most important, we want to test highest children first, then go down. OTOH, we want to
+      // test clipping masks before the elements they clip, potentially saving costly tests against
+      // lots of elements. However, clipping masks affect siblings with higher child indices, so
+      // by going top-to-bottom, we discover them after the clipped content. To get around that,
+      // we iterate over the children once and detect any clipping masks. If we find at least one,
+      // we copy all the non-clipped elements into a new array, over which we then iterate without
+      // having to test clipping.
+      // Note: if speed is an issue, we could set a flag on containers that have at least one
+      // clipping mask and do this step only if that flag is set.
+      var children = this._children;
+      if (!children) {
+        return null;
+      }
+      var unclippedChildren: DisplayObject[]; // Lazily created.
+      for (var i = 0; children && i < children.length; i++) {
+        var child = children[i];
+        if (child._clipDepth !== -1) {
+          if (!unclippedChildren) {
+            unclippedChildren = [];
+          }
+          // Clipping masks are simply ignored for HitTestPoint purposes.
+          if (testingType === HitTestingType.HitTestShape) {
+            continue;
+          }
+          release || assert(testingType >= HitTestingType.Mouse);
+          // If the point isn't contained in the clipping mask, we can skip all the clipped objects.
+          var containsPoint = child._containsGlobalPoint(globalX, globalY, testingType, null);
+          if (!containsPoint) {
+            i = this.getClipDepthIndex(child._clipDepth);
+          }
+          continue;
+        }
+        if (unclippedChildren) {
+          unclippedChildren.push(child);
+        }
+      }
+      return unclippedChildren || children;
+    }
+
+    /**
+     * Override of DisplayObject#_getChildBounds that union all childrens's
+     * bounds into the bounds.
+     */
+    _getChildBounds(bounds: Bounds, includeStrokes: boolean) {
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        bounds.unionInPlace(children[i]._getTransformedBounds(this, includeStrokes));
+      }
+    }
+
+    /**
+     * Returns an array of all leaf objects under the given point in global coordinates.
+     * A leaf node in this context is an object that itself contains visual content, so it can be
+     * any of Shape, Sprite, MovieClip, Bitmap, Video, and TextField.
+     * Note that, while the Flash documentation makes it sound like it doesn't, the result also
+     * contains the receiver object if that matches the criteria above.
      */
     getObjectsUnderPoint(globalPoint: flash.geom.Point): DisplayObject [] {
       release || counter.count("DisplayObjectContainer::getObjectsUnderPoint");
 
-      var objectsUnderPoint: DisplayObject [] = [];
-      this.visit(function (displayObject: DisplayObject): VisitorFlags {
-        if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, false, true)) {
-          // Only include the objects whose shape is under the specified point.
-          if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true, true)) {
-            objectsUnderPoint.push(displayObject);
-            displayObject._addReference();
-          }
-        } else {
-          // TODO: Exclude inaccessible objects, not sure what these are.
-          return VisitorFlags.Skip;
-        }
-        return VisitorFlags.Continue;
-      }, VisitorFlags.None);
-      return objectsUnderPoint;
+      var globalX = globalPoint.x * 20 | 0;
+      var globalY = globalPoint.y * 20 | 0;
+      var objects = [];
+      this._containsGlobalPoint(globalX, globalY, HitTestingType.ObjectsUnderPoint, objects);
+      // getObjectsUnderPoint returns results in exactly the opposite order we collect them in.
+      return objects.reverse();
     }
 
     areInaccessibleObjectsUnderPoint(point: flash.geom.Point): boolean {
