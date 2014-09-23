@@ -165,7 +165,10 @@ module Shumway.AVM2.Runtime {
             if (trait.hasDefaultValue) {
               defaultValue = trait.value;
             } else if (trait.typeName) {
-              defaultValue = domain.findClassInfo(trait.typeName).defaultValue;
+              var classInfo = domain.findClassInfo(trait.typeName);
+              if (classInfo) {
+                defaultValue = classInfo.defaultValue;
+              }
             }
           }
           if (key !== qn) {
@@ -439,7 +442,7 @@ module Shumway.AVM2.Runtime {
         if (trait.isProtected()) {
           // Overwrite protected traits.
           ib = this.parent;
-          while (ib) {
+          while (ib && ib.instanceInfo.protectedNs) {
             protectedName = Multiname.getQualifiedName(new Multiname([ib.instanceInfo.protectedNs], trait.name.getName()));
             protectedKey = Binding.getKey(protectedName, trait);
             overwriteProtectedBinding(map, protectedKey, binding);

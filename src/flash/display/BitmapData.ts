@@ -77,12 +77,12 @@ module Shumway.AVM2.AS.flash.display {
       this._rect = new Rectangle(0, 0, width, height);
       this._fillColorBGRA = swap32(fillColorARGB); // Specified as ARGB but stored as BGRA.
       if (this._symbol) {
-        this._data = new Uint8Array(this._symbol.data.buffer);
+        this._data = new Uint8Array(this._symbol.data);
         this._type = this._symbol.type;
         if (this._type === ImageType.PremultipliedAlphaARGB ||
             this._type === ImageType.StraightAlphaARGB ||
             this._type === ImageType.StraightAlphaRGBA) {
-          this._view = new Int32Array(this._symbol.data.buffer);
+          this._view = new Int32Array(this._symbol.data);
         }
       } else {
         this._data = new Uint8Array(width * height * 4);
@@ -304,7 +304,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return 0;
       }
-      this._requestBitmapData();
+      this._ensureBitmapData();
       var value = this._view[y * this._rect.width + x];
       switch (this._type) {
         case ImageType.PremultipliedAlphaARGB:
@@ -326,7 +326,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return;
       }
-      this._requestBitmapData();
+      this._ensureBitmapData();
       var i = y * this._rect.width + x;
       var a = this._view[i] & 0xff;
       uARGB = uARGB & 0x00ffffff | a << 24;
@@ -341,7 +341,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return;
       }
-      this._requestBitmapData();
+      this._ensureBitmapData();
       var a = uARGB >>> 24;
       var uRGB = uARGB & 0x00ffffff;
       if (this._transparent) {
@@ -447,6 +447,9 @@ module Shumway.AVM2.AS.flash.display {
       var sStride = sourceBitmapData._rect.width;
       var tStride = this._rect.width;
 
+      this._ensureBitmapData();
+      sourceBitmapData._ensureBitmapData();
+
       var s = sourceBitmapData._view;
       var t = this._view;
 
@@ -546,11 +549,12 @@ module Shumway.AVM2.AS.flash.display {
       }
       release || assert(this._type === ImageType.PremultipliedAlphaARGB);
       var pBGRA = swap32(pARGB);
-      var view = this._view;
       var r = this._getTemporaryRectangleFrom(this._rect).intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
       }
+      this._ensureBitmapData();
+      var view = this._view;
       // If we are filling the entire buffer, we can do a little better ~ 25% faster.
       if (r.equals(this._rect)) {
         var length = view.length;
@@ -767,10 +771,14 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Sends a synchronous message to the GFX remote requesting the latest image data. The remote image
-     * data is invalidated whenever a |BitmpaData.draw| call is made.
+     * Ensures that we have the most up-to-date version of the bitmap data. If a call to |BitmpaData.draw|
+     * call was made since the last time this method was called, then we need to send a synchronous message
+     * to the GFX remote requesting the latest image data.
+     *
+     * Here we also normalize the image format to |ImageType.StraightAlphaRGBA|. We only need the normalized
+     * pixel data for pixel operations, so we defer image decoding as late as possible.
      */
-    private _requestBitmapData() {
+    private _ensureBitmapData() {
       if (this._isRemoteDirty) {
         var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
         var data = serializer.requestBitmapData(this);
@@ -780,9 +788,39 @@ module Shumway.AVM2.AS.flash.display {
         this._isRemoteDirty = false;
         this._isDirty = false;
       }
+
+      switch (this._type) {
+        case ImageType.PNG:
+        case ImageType.JPEG:
+        case ImageType.GIF:
+          Shumway.Debug.somewhatImplemented("Image conversion " + ImageType[this._type] + " -> " + ImageType[ImageType.PremultipliedAlphaARGB]);
+          break;
+      }
+
+      // Let's not crash, so fill in a random color.
+      if (this._type !== ImageType.PremultipliedAlphaARGB) {
+        this._data = new Uint8Array(this._rect.width * this._rect.height * 4);
+        this._view = new Int32Array(this._data.buffer);
+        this._type = ImageType.PremultipliedAlphaARGB;
+        this._fillWithDebugData();
+      }
     }
 
+    private _fillWithDebugData() {
+      var view = this._view;
+      var length = view.length;
+      var pBGRA = swap32(0xFFFF69B4);
+      var w = this._rect.width;
+      var h = this._rect.height;
+      var i = 0;
+      for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
+          view[i++] = swap32(premultiplyARGB(0xAA << 24 | (y & 0xFF) << 16 | (x & 0xFF) << 8 | 0xFF));
+        }
+      }
+    }
   }
+
 
   export interface IBitmapDataSerializer {
     drawToBitmap(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable,
