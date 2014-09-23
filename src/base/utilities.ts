@@ -3103,6 +3103,58 @@ module Shumway {
       var tb = ((spBGRA >> 24) & 0xff) + T[o + ((tpBGRA >> 24) & 0xff) | 0];
       return tb << 24 | tg << 16 | tr << 8 | ta;
     }
+
+    import swap32 = IntegerUtilities.swap32;
+    export function convertImage(sourceFormat: ImageType, targetFormat: ImageType, source: Int32Array, target: Int32Array) {
+      if (source !== target) {
+        release || Debug.assert(source.buffer !== target.buffer, "Can't handle overlapping views.");
+      }
+      var length = source.length;
+      if (sourceFormat === targetFormat) {
+        if (source === target) {
+          return;
+        }
+        for (var i = 0; i < length; i++) {
+          target[i] = source[i];
+        }
+        return;
+      }
+      // enterTimeline("convertImage", ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length));
+      if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
+          targetFormat === ImageType.StraightAlphaRGBA) {
+        Shumway.ColorUtilities.ensureUnpremultiplyTable();
+        for (var i = 0; i < length; i++) {
+          var pARGB = swap32(source[i]);
+          // TODO: Make sure this is inlined!
+          var uARGB = tableLookupUnpremultiplyARGB(pARGB);
+          var uABGR = (uARGB & 0xFF00FF00)  | // A_G_
+                      (uARGB >> 16) & 0xff  | // A_GR
+                      (uARGB & 0xff) << 16;   // ABGR
+          target[i] = uABGR;
+        }
+      } else if (sourceFormat === ImageType.StraightAlphaARGB &&
+                 targetFormat === ImageType.StraightAlphaRGBA) {
+        for (var i = 0; i < length; i++) {
+          target[i] = swap32(source[i]);
+        }
+      } else if (sourceFormat === ImageType.StraightAlphaRGBA &&
+                 targetFormat === ImageType.PremultipliedAlphaARGB) {
+        for (var i = 0; i < length; i++) {
+          var uABGR = source[i];
+          var uARGB = (uABGR & 0xFF00FF00)  | // A_G_
+                      (uABGR >> 16) & 0xff  | // A_GB
+                      (uABGR & 0xff) << 16;   // ARGR
+          target[i] = swap32(premultiplyARGB(uARGB));
+        }
+      } else {
+        Debug.somewhatImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
+        // Copy the buffer over for now, we should at least get some image output.
+        for (var i = 0; i < length; i++) {
+          target[i] = source[i];
+        }
+      }
+      // leaveTimeline("convertImage");
+    }
   }
 
   /**

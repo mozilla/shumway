@@ -82,7 +82,7 @@ module Shumway.AVM2.AS.flash.display {
         if (this._type === ImageType.PremultipliedAlphaARGB ||
             this._type === ImageType.StraightAlphaARGB ||
             this._type === ImageType.StraightAlphaRGBA) {
-          this._view = new Int32Array(this._symbol.data);
+          this._view = new Int32Array(this._data.buffer);
         }
       } else {
         this._data = new Uint8Array(width * height * 4);
@@ -779,12 +779,14 @@ module Shumway.AVM2.AS.flash.display {
      * pixel data for pixel operations, so we defer image decoding as late as possible.
      */
     private _ensureBitmapData() {
+      var oldData = this._data;
+
       if (this._isRemoteDirty) {
         var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
         var data = serializer.requestBitmapData(this);
-        this._data = new Uint8Array(data.buffer);
+        this._data = new Uint8Array(data.getBytes());
         this._type = ImageType.StraightAlphaRGBA;
-        this._view = new Int32Array(data.buffer);
+        this._view = new Int32Array(this._data.buffer);
         this._isRemoteDirty = false;
         this._isDirty = false;
       }
@@ -795,6 +797,15 @@ module Shumway.AVM2.AS.flash.display {
         case ImageType.GIF:
           Shumway.Debug.somewhatImplemented("Image conversion " + ImageType[this._type] + " -> " + ImageType[ImageType.PremultipliedAlphaARGB]);
           break;
+        default:
+          if (this._type !== ImageType.PremultipliedAlphaARGB) {
+            var tempData = new Uint8Array(this._rect.width * this._rect.height * 4);
+            var tempView = new Int32Array(tempData.buffer);
+            ColorUtilities.convertImage(this._type, ImageType.PremultipliedAlphaARGB, this._view, tempView);
+            this._data = tempData;
+            this._view = tempView;
+            this._type = ImageType.PremultipliedAlphaARGB;
+          }
       }
 
       // Let's not crash, so fill in a random color.
@@ -803,6 +814,10 @@ module Shumway.AVM2.AS.flash.display {
         this._view = new Int32Array(this._data.buffer);
         this._type = ImageType.PremultipliedAlphaARGB;
         this._fillWithDebugData();
+      }
+
+      if (oldData !== this._data) {
+        this._dataBuffer = DataBuffer.FromArrayBuffer(this._data.buffer);
       }
     }
 
