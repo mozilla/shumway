@@ -1,4 +1,9 @@
 [
+    {  "id": "acid-platformer",
+      "frames": [10],
+      "swf": "swfs/acid/acid-platformer.swf",
+      "type": "eq"
+    },
     {  "id": "acid",
       "frames": [10],
       "swf": "swfs/acid/acid.swf",

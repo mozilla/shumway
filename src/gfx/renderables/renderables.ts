@@ -199,45 +199,6 @@ module Shumway.GFX {
     _imageData: ImageData;
     private fillStyle: ColorStyle;
 
-    private static _convertImage(sourceFormat: ImageType, targetFormat: ImageType, source: Int32Array, target: Int32Array) {
-      if (source !== target) {
-        release || assert (source.buffer !== target.buffer, "Can't handle overlapping views.");
-      }
-      if (sourceFormat === targetFormat) {
-        if (source === target) {
-          return;
-        }
-        var length = source.length;
-        for (var i = 0; i < length; i++) {
-          target[i] = source[i];
-        }
-        return;
-      }
-      enterTimeline("convertImage", ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length));
-      if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
-          targetFormat === ImageType.StraightAlphaRGBA) {
-        Shumway.ColorUtilities.ensureUnpremultiplyTable();
-        var length = source.length;
-        for (var i = 0; i < length; i++) {
-          var pARGB = swap32(source[i]);
-          // TODO: Make sure this is inlined!
-          var uARGB = tableLookupUnpremultiplyARGB(pARGB);
-          var uABGR = (uARGB & 0xFF00FF00)  | // A_G_
-                      (uARGB >> 16) & 0xff  | // A_GR
-                      (uARGB & 0xff) << 16;   // ABGR
-          target[i] = uABGR;
-        }
-      } else if (sourceFormat === ImageType.StraightAlphaARGB &&
-                 targetFormat === ImageType.StraightAlphaRGBA) {
-        for (var i = 0; i < length; i++) {
-          target[i] = swap32(source[i]);
-        }
-      } else {
-        notImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
-      }
-      leaveTimeline("convertImage");
-    }
-
     public static FromDataBuffer(type: ImageType, dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
       enterTimeline("RenderableBitmap.FromDataBuffer");
       var canvas = document.createElement("canvas");
@@ -284,7 +245,7 @@ module Shumway.GFX {
         };
       } else {
         if (imageConvertOption.value) {
-          RenderableBitmap._convertImage (
+          ColorUtilities.convertImage (
             type,
             ImageType.StraightAlphaRGBA,
             new Int32Array(dataBuffer.buffer),
