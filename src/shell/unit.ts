@@ -177,11 +177,11 @@ module Shumway.Unit {
   /**
    * Measures several runs of a test case and tries to ensure that the test case is reasonably fast, yet still accurate.
    */
-  export function checkTime(fn: any, test: string, threshold: number, iterations: number = 64) {
+  export function checkTime(fn: any, test: string, threshold: number, iterations: number = 64, help = true) {
     iterations = iterations || 0;
-    if (iterations < 5) {
+    if (help && iterations < 5) {
       writer.warnLn("Test doesn't have enough iterations to get meaningful timing results: " + test);
-    } else if (iterations > 1024) {
+    } else if (help && iterations > 1024) {
       writer.warnLn("Test has too many iterations, increase the complexity of the test case: " + test);
     }
     var start = new Date();
@@ -194,15 +194,15 @@ module Shumway.Unit {
     }
     var elapsed: number = (<any>new Date() - <any>start);
     // Let's not make the test too short, or too long.
-    if (elapsed < minElapsedTime) {
+    if (help && elapsed < minElapsedTime) {
       writer.warnLn("Test doesn't run long enough (" + elapsed.toFixed(2) + " ms) to have meaningful timing results: " + test + ", must be at least " + minElapsedTime + " ms long.");
-    } else if (elapsed > maxElapsedTime) {
+    } else if (help && elapsed > maxElapsedTime) {
       writer.warnLn("Test runs too long (" + elapsed.toFixed(2) + " ms), reduce the number of iterations: " + test + ", keep it below " + maxElapsedTime.toFixed(2) + " ms.");
     }
 
     var result =  Math.min.apply(null, elapsedTimes);
     // Can we make the test smaller yet get the same result?
-    if (elapsed > 500 && result === Math.min.apply(null, elapsedTimes.slice(0, elapsedTimes.length / 2 | 0))) {
+    if (help && elapsed > 500 && result === Math.min.apply(null, elapsedTimes.slice(0, elapsedTimes.length / 2 | 0))) {
       writer.warnLn("Test would have had the same result with half as many iterations.");
     }
     if (result > threshold) {

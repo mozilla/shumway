@@ -56,8 +56,8 @@
   });
 
   unitTests.push(function () {
-    var a = new BitmapData(2048, 2048);
-    var b = new BitmapData(2048, 2048);
+    var a = new BitmapData(2048, 2048, true, 0xAABBCCDD);
+    var b = new BitmapData(2048, 2048, true, 0xBBCCDDEE);
     var w = 32, h = 32;
     checkTime(function () {
       var s = new Rectangle(0, 0, 0, 0);
@@ -74,7 +74,7 @@
 
   unitTests.push(function () {
     var a = new BitmapData(1024, 1024, true, 0xAABBCCDD);
-    var b = new BitmapData(1024, 1024, true, 0xAABBCCDD);
+    var b = new BitmapData(1024, 1024, true, 0xBBCCDDEE);
     checkTime(function () {
       var s = new Rectangle(0, 0, 0, 0);
       var p = new Point(0, 0);
@@ -82,6 +82,19 @@
         a.copyPixels(b, b.rect, new Point(0, 0), null, null, true);
       }
     }, "BitmapData::copyPixels(mergeAlpha = true)", 30 * scale, 8)
+  });
+
+  unitTests.push(function () {
+    var a = new BitmapData(640, 480, true, 0xAABBCCDD);
+    var b = new BitmapData(640, 480, true, 0xAABBCCDD);
+    var r = new Rectangle(0, 0, 640, 480);
+    checkTime(function () {
+      var p = new Point(0, 0);
+      for (var i = 0; i < 1024; i ++) {
+        b.fillRect(r, 0xAABBCCDD);
+        a.copyPixels(b, r, p, null, null, true);
+      }
+    }, "BitmapData::copyPixels() w/ same fill should be really fast.", 1 * scale, 8, false);
   });
 
 

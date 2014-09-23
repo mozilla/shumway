@@ -3064,7 +3064,7 @@ module Shumway {
       return a << 24 | r << 16 | g << 8 | b;
     }
 
-    var inverseAlphaTable: Uint8Array;
+    export var inverseAlphaTable: Uint8Array;
 
     /**
      * Computes all possible inverse alpha values, similar to the one above.

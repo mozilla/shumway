@@ -75,7 +75,6 @@ module Shumway.AVM2.AS.flash.display {
       this._bitmapReferrers = [];
       this._transparent = !!transparent;
       this._rect = new Rectangle(0, 0, width, height);
-      this._fillColorBGRA = swap32(fillColorARGB); // Specified as ARGB but stored as BGRA.
       if (this._symbol) {
         this._data = new Uint8Array(this._symbol.data);
         this._type = this._symbol.type;
@@ -84,6 +83,7 @@ module Shumway.AVM2.AS.flash.display {
             this._type === ImageType.StraightAlphaRGBA) {
           this._view = new Int32Array(this._data.buffer);
         }
+        this._solidFillColorPBGRA = null;
       } else {
         this._data = new Uint8Array(width * height * 4);
         this._view = new Int32Array(this._data.buffer);
@@ -91,6 +91,7 @@ module Shumway.AVM2.AS.flash.display {
         var alpha = fillColorARGB >> 24;
         if (alpha === 0 && transparent) {
           // No need to do an initial fill since this would all be zeros anyway.
+          this._solidFillColorPBGRA = 0;
         } else {
           this.fillRect(this._rect, fillColorARGB);
         }
@@ -139,7 +140,6 @@ module Shumway.AVM2.AS.flash.display {
     _rect: flash.geom.Rectangle;
 
     _id: number;
-    _fillColorBGRA: number;
     _locked: boolean;
 
     /**
@@ -175,6 +175,12 @@ module Shumway.AVM2.AS.flash.display {
      */
     _isRemoteDirty: boolean;
 
+
+    /**
+     * If non-null then this value indicates that the bitmap is filled with a solid color. This is useful
+     * for optimizations.
+     */
+    _solidFillColorPBGRA: any; // any | number;
 
     /**
      * Pool of temporary rectangles that is used to prevent allocation. We don't need more than 3 for now.
@@ -281,7 +287,7 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.BitmapData::clone");
       // This should be coping the buffer not the view.
       var bd = new BitmapData(this._rect.width, this._rect.height, this._transparent,
-                              this._fillColorBGRA);
+                              this._solidFillColorPBGRA);
       bd._view.set(this._view);
       return bd;
     }
@@ -333,6 +339,7 @@ module Shumway.AVM2.AS.flash.display {
       var pARGB = premultiplyARGB(uARGB);
       this._view[i] = swap32(pARGB);
       this._invalidate();
+      this._solidFillColorPBGRA = null;
     }
 
     setPixel32(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
@@ -352,6 +359,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._view[y * this._rect.width + x] = swap32(pARGB);
       this._invalidate();
+      this._solidFillColorPBGRA = null;
     }
 
     applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle,
@@ -462,24 +470,24 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
+      // No reason to copy pixels since since both source and target are the same solid fill, regardless
+      // of alpha blending. (TODO: I think the math works out for mergeAlpha also.)
+      if (this._solidFillColorPBGRA !== null &&
+          this._solidFillColorPBGRA === sourceBitmapData._solidFillColorPBGRA) {
+        return;
+      }
+
+      // Source has a solid fill but is fully opaque, we can get away without alpha blending here.
+      if (sourceBitmapData._solidFillColorPBGRA !== null &&
+          (sourceBitmapData._solidFillColorPBGRA & 0xFF) === 0xFF) {
+        mergeAlpha = false;
+      }
+
       // Finally do the copy. All the math above is needed just so we don't do any branches inside
       // this hot loop.
 
       if (mergeAlpha) {
-        var sP = (sY * sStride + sX) | 0;
-        var tP = (tY * tStride + tX) | 0;
-        for (var y = 0; y < tH; y = y + 1 | 0) {
-          for (var x = 0; x < tW; x = x + 1 | 0) {
-            var spBGRA = s[sP + x];
-            if ((spBGRA & 0xFF) === 0xFF) {
-              t[tP + x | 0] = spBGRA; // Opaque, just copy value over.
-            } else {
-              t[tP + x | 0] = blendPremultipliedBGRA(t[tP + x | 0], spBGRA);
-            }
-          }
-          sP = sP + sStride | 0;
-          tP = tP + tStride | 0;
-        }
+        this._copyPixelsAndMergeAlpha(s, sX, sY, sStride, t, tX, tY, tStride, tW, tH);
       } else {
         var sP = (sY * sStride + sX) | 0;
         var tP = (tY * tStride + tX) | 0;
@@ -505,7 +513,27 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
 
+      this._solidFillColorPBGRA = null;
       this._invalidate();
+    }
+
+    private _copyPixelsAndMergeAlpha(s: Int32Array, sX: number, sY: number, sStride: number,
+                                     t: Int32Array, tX: number, tY: number, tStride: number, tW: number, tH: number) {
+      var sP = (sY * sStride + sX) | 0;
+      var tP = (tY * tStride + tX) | 0;
+      for (var y = 0; y < tH; y = y + 1 | 0) {
+        for (var x = 0; x < tW; x = x + 1 | 0) {
+          var spBGRA = s[sP + x];
+          if ((spBGRA & 0xFF) === 0xFF) {
+            t[tP + x | 0] = spBGRA; // Opaque, just copy value over.
+          } else {
+            // This better be inlined !! I've tried to manually inline it but it's only a ~10% faster.
+            t[tP + x | 0] = blendPremultipliedBGRA(t[tP + x | 0], spBGRA);
+          }
+        }
+        sP = sP + sStride | 0;
+        tP = tP + tStride | 0;
+      }
     }
 
     dispose(): void {
@@ -554,6 +582,10 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._ensureBitmapData();
+      // Filling with the same color?
+      if (this._solidFillColorPBGRA === pBGRA) {
+        return;
+      }
       var view = this._view;
       // If we are filling the entire buffer, we can do a little better ~ 25% faster.
       if (r.equals(this._rect)) {
@@ -571,6 +603,7 @@ module Shumway.AVM2.AS.flash.display {
             view[i] = pBGRA;
           }
         }
+        this._solidFillColorPBGRA = pBGRA;
       } else {
         var xMin = r.x;
         var xMax = r.x + r.width;
@@ -583,6 +616,7 @@ module Shumway.AVM2.AS.flash.display {
             view[offset + x | 0] = pBGRA;
           }
         }
+        this._solidFillColorPBGRA = null;
       }
       this._invalidate();
     }
@@ -789,6 +823,7 @@ module Shumway.AVM2.AS.flash.display {
         this._view = new Int32Array(this._data.buffer);
         this._isRemoteDirty = false;
         this._isDirty = false;
+        this._solidFillColorPBGRA = null;
       }
 
       switch (this._type) {
@@ -805,6 +840,7 @@ module Shumway.AVM2.AS.flash.display {
             this._data = tempData;
             this._view = tempView;
             this._type = ImageType.PremultipliedAlphaARGB;
+            this._solidFillColorPBGRA = null;
           }
       }
 
@@ -814,6 +850,7 @@ module Shumway.AVM2.AS.flash.display {
         this._view = new Int32Array(this._data.buffer);
         this._type = ImageType.PremultipliedAlphaARGB;
         this._fillWithDebugData();
+        this._solidFillColorPBGRA = null;
       }
 
       if (oldData !== this._data) {
