@@ -195,6 +195,8 @@ module Shumway.GFX {
     _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     properties: {[name: string]: any} = {};
     _canvas: HTMLCanvasElement;
+    _context: CanvasRenderingContext2D;
+    _imageData: ImageData;
     private fillStyle: ColorStyle;
 
     private static _convertImage(sourceFormat: ImageType, targetFormat: ImageType, source: Int32Array, target: Int32Array) {
@@ -264,7 +266,6 @@ module Shumway.GFX {
         return;
       }
       enterTimeline("RenderableBitmap.updateFromDataBuffer", this);
-      var context = this._canvas.getContext("2d");
       if (type === ImageType.JPEG ||
           type === ImageType.PNG  ||
           type === ImageType.GIF)
@@ -274,7 +275,7 @@ module Shumway.GFX {
         var image = new Image();
         image.src = URL.createObjectURL(dataBuffer.toBlob());
         image.onload = function () {
-          context.drawImage(image, 0, 0);
+          self._context.drawImage(image, 0, 0);
           self.removeFlags(RenderableFlags.Loading);
           self.invalidatePaint();
         };
@@ -282,15 +283,16 @@ module Shumway.GFX {
           unexpected("Image loading error: " + ImageType[type]);
         };
       } else {
-        var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
-        RenderableBitmap._convertImage (
-          type,
-          ImageType.StraightAlphaRGBA,
-          new Int32Array(dataBuffer.buffer),
-          new Int32Array(imageData.data.buffer)
-        );
+        if (imageConvertOption.value) {
+          RenderableBitmap._convertImage (
+            type,
+            ImageType.StraightAlphaRGBA,
+            new Int32Array(dataBuffer.buffer),
+            new Int32Array(this._imageData.data.buffer)
+          );
+        }
         enterTimeline("putImageData");
-        context.putImageData(imageData, 0, 0);
+        this._context.putImageData(this._imageData, 0, 0);
         leaveTimeline("putImageData");
       }
       this.invalidatePaint();
@@ -301,14 +303,15 @@ module Shumway.GFX {
      * Writes the image data into the given |output| data buffer.
      */
     public readImageData(output: DataBuffer) {
-      var context = this._canvas.getContext("2d");
-      var data = <Uint8Array>context.getImageData(0, 0, this._canvas.width, this._canvas.height).data;
+      var data = <Uint8Array>this._context.getImageData(0, 0, this._canvas.width, this._canvas.height).data;
       output.writeRawBytes(data);
     }
 
     constructor(canvas: HTMLCanvasElement, bounds: Rectangle) {
       super(bounds);
       this._canvas = canvas;
+      this._context = this._canvas.getContext("2d");
+      this._imageData = this._context.createImageData(this._bounds.w, this._bounds.h);
     }
 
     render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
