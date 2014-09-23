@@ -78,6 +78,7 @@ module Shumway.AVM2.AS {
       M("flash.display.NativeMenuItem", "MenuItemClass", flash.display.NativeMenuItem),
       M("flash.display.FrameLabel", "FrameLabelClass", flash.display.FrameLabel),
       M("flash.display.Scene", "SceneClass", flash.display.Scene),
+      M("flash.display.AVM1Movie", "AVM1MovieClass", flash.display.AVM1Movie),
 //    M("flash.display.Shader", "ShaderClass", flash.display.Shader),
 //    M("flash.display.ShaderData", "ShaderDataClass", flash.display.ShaderData),
 

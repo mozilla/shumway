@@ -29,11 +29,14 @@ declare module Shumway.AVM2.AS.flash {
       _as2SymbolClass;
       _name: string;
       numChildren: number;
+      currentFrame: number;
 
       addTimelineObjectAtDepth(child, depth: number);
+      addFrameScript(frameIndex: number, script: (any?) => any /*, ...*/): void;
       getChildAt(depth: number): any;
     }
     class Loader extends DisplayObject {}
+    class AVM1Movie extends DisplayObject {}
     class BitmapData extends ASNative {}
     class Bitmap extends DisplayObject {
       constructor();

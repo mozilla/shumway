@@ -66,7 +66,7 @@ module Shumway.AVM2.AS.avm1lib {
     }
 
     static get currentStage(): any {
-      return AVM1Context.instance.stage;
+      return avm1lib.getAVM1Object(AVM1Context.instance.root._nativeAS3Object.stage);
     }
 
     static get swfVersion(): any {

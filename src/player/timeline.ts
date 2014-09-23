@@ -34,6 +34,7 @@ module Shumway.Timeline {
   export class Symbol {
     id: number = -1;
     isAVM1Object: boolean;
+    avm1Context: Shumway.AVM1.AVM1Context;
     symbolClass: Shumway.AVM2.AS.ASClass;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
@@ -293,6 +294,7 @@ module Shumway.Timeline {
       symbol.numFrames = data.frameCount;
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         symbol.isAVM1Object = true;
+        symbol.avm1Context = loaderInfo._avm1Context;
       }
       symbol.frameScripts = data.frameScripts;
       var frames = data.frames;
@@ -513,12 +515,12 @@ module Shumway.Timeline {
                   break;
                 }
                 var actionsData = new AVM1.AVM1ActionsData(swfEvent.actionsData,
-                    's' + cmd.symbolId + 'e' + j);
+                                                           's' + cmd.symbolId + 'e' + j);
                 var fn = (function (actionsData, loaderInfo) {
                   return function() {
                     var avm1Context = loaderInfo._avm1Context;
-                    var as2Object = Shumway.AVM2.AS.avm1lib.getAVM1Object(this);
-                    return avm1Context.executeActions(actionsData, this.stage, as2Object);
+                    var avm1Object = Shumway.AVM2.AS.avm1lib.getAVM1Object(this);
+                    return avm1Context.executeActions(actionsData, avm1Object);
                   };
                 })(actionsData, loaderInfo);
                 var eventNames = [];

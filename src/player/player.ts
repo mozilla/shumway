@@ -127,11 +127,6 @@ module Shumway.Player {
           if (loaderInfo.actionScriptVersion === flash.display.ActionScriptVersion.ACTIONSCRIPT2) {
             avm1lib.AVM1Key.asCallPublicProperty('__bind', [stage]);
             avm1lib.AVM1Mouse.asCallPublicProperty('__bind', [stage]);
-            var avm1Context = loaderInfo._avm1Context;
-            stage.addEventListener('frameConstructed',
-                                   avm1Context.flushPendingScripts.bind(avm1Context),
-                                   false,
-                                   Number.MAX_VALUE);
             MovieClip.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
           } else if (loaderInfo.swfVersion < 10) {
             MovieClip.frameNavigationModel = flash.display.FrameNavigationModel.SWF9;

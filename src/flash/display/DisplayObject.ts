@@ -542,10 +542,15 @@ module Shumway.AVM2.AS.flash.display {
 
     _setParent(parent: DisplayObjectContainer, depth: number) {
       var oldParent = this._parent;
+      release || assert(parent !== this);
       this._parent = parent;
       this._depth = depth;
       if (parent) {
         this._addReference();
+        if (parent && this._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
+                                        DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
+          parent._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+        }
       }
       if (oldParent) {
         this._removeReference();

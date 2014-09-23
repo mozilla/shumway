@@ -16,9 +16,12 @@
 
 ///<reference path='references.ts' />
 module Shumway.AVM2.AS.avm1lib {
+  import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
+
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import construct = Shumway.AVM2.Runtime.construct;
+
   import AVM1Context = Shumway.AVM1.AVM1Context;
   import Bitmap = flash.display.Bitmap;
 
@@ -40,9 +43,16 @@ module Shumway.AVM2.AS.avm1lib {
     constructor (nativeMovieClip: flash.display.MovieClip) {
       false && super();
       this._nativeAS3Object = nativeMovieClip;
+      this._frameScripts = null;
+      this._boundExecuteFrameScripts = null;
     }
 
-    private _nativeAS3Object: flash.display.MovieClip;
+    _nativeAS3Object: flash.display.MovieClip;
+
+    private _context: AVM1Context;
+
+    private _boundExecuteFrameScripts: () => void;
+    private _frameScripts: AVM1.AVM1ActionsData[][];
 
     // JS -> AS Bindings
 
@@ -51,10 +61,9 @@ module Shumway.AVM2.AS.avm1lib {
 
     // AS -> JS Bindings
 
-    // __as3Object: flash.display.MovieClip;
     _init(nativeMovieClip: flash.display.MovieClip): any {
       if (this._nativeAS3Object) {
-        return; // Movie clip was initialized
+        return; // MovieClip is already initialized.
       }
       if (!nativeMovieClip) {
         return; // delaying initialization, see also _constructSymbol
@@ -63,6 +72,12 @@ module Shumway.AVM2.AS.avm1lib {
       (<any> nativeMovieClip)._as2Object = this;
       initDefaultListeners(this);
     }
+
+    set context(value: AVM1Context) {
+      release || assert(!this._context);
+      this._context = value;
+    }
+
 
     static _initFromConstructor(ctor, nativeMovieClip: flash.display.MovieClip): flash.display.MovieClip {
       var mc = Object.create(ctor.asGetPublicProperty('prototype'));
@@ -97,6 +112,77 @@ module Shumway.AVM2.AS.avm1lib {
 
       return mc;
     }
+
+    addFrameActionBlocks(frameIndex: number, frameData: any) {
+      var initActionBlocks: any[] = frameData.initActionBlocks;
+      var actionBlocks: any[] = frameData.actionBlocks;
+
+      if (initActionBlocks) {
+        this._addInitActionBlocks(frameIndex, initActionBlocks);
+      }
+
+      if (actionBlocks) {
+        for (var i = 0; i < actionBlocks.length; i++) {
+          this.addFrameScript(frameIndex, actionBlocks[i]);
+        }
+      }
+    }
+
+    addFrameScript(frameIndex: number, actionsBlock: Uint8Array): void {
+      var frameScripts = this._frameScripts;
+      if (!frameScripts) {
+        release || assert(!this._boundExecuteFrameScripts);
+        this._boundExecuteFrameScripts = this._executeFrameScripts.bind(this);
+        frameScripts = this._frameScripts = [];
+      }
+      var scripts: AVM1.AVM1ActionsData[] = frameScripts[frameIndex + 1];
+      if (!scripts) {
+        scripts = frameScripts[frameIndex + 1] = [];
+        this._nativeAS3Object.addFrameScript(frameIndex, this._boundExecuteFrameScripts);
+      }
+      var actionsData = new AVM1.AVM1ActionsData(actionsBlock,
+                                                 'f' + frameIndex + 'i' + scripts.length);
+      scripts.push(actionsData);
+    }
+
+    /**
+     * AVM1 InitActionBlocks are executed once, before the children are initialized for a frame.
+     * That matches AS3's enterFrame event, so we can add an event listener that just bails
+     * as long as the target frame isn't reached, and executes the InitActionBlock once it is.
+     *
+     * After that, the listener removes itself.
+     */
+    private _addInitActionBlocks(frameIndex: number,
+                                 actionsBlocks: {actionsData: Uint8Array} []): void
+    {
+      var avm2MovieClip = this._nativeAS3Object;
+      var self = this;
+      function listener (e) {
+        if (avm2MovieClip.currentFrame !== frameIndex + 1) {
+          return;
+        }
+        avm2MovieClip.removeEventListener('enterFrame', listener);
+
+        var avm1Context = self._context;
+        for (var i = 0; i < actionsBlocks.length; i++) {
+          var actionsData = new AVM1.AVM1ActionsData(actionsBlocks[i].actionsData,
+                                                     'f' + frameIndex + 'i' + i);
+          avm1Context.executeActions(actionsData, self);
+        }
+      }
+      avm2MovieClip.addEventListener('enterFrame', listener);
+    }
+
+    private _executeFrameScripts() {
+      var context = this._context;
+      var scripts: AVM1.AVM1ActionsData[] = this._frameScripts[this._nativeAS3Object.currentFrame];
+      release || assert(scripts && scripts.length);
+      for (var i = 0; i < scripts.length; i++) {
+        var actionsData = scripts[i];
+        context.executeActions(actionsData, this);
+      }
+    }
+
     _callFrame(frame: any): any {
       var nativeAS3Object = <any> this._nativeAS3Object;
       nativeAS3Object._callFrame(frame);

@@ -317,7 +317,9 @@ public dynamic class AVM1MovieClip extends Object {
   }
 
   public function get _parent() {
-    return AVM1Utils.getAVM1Object(this._as3Object.parent);
+    var parent:Object = AVM1Utils.getAVM1Object(this._as3Object.parent);
+    // In AVM1, the _parent property is `undefined`, not `null` if the element has no parent.
+    return parent || undefined;
   }
   public function set _parent(value) {
     throw 'Not implemented: set$_parent';

@@ -177,7 +177,8 @@ module Shumway.AVM2.AS.avm1lib {
 
     _setLevel(level: number /*uint*/, loader: Loader): any {
       level = level >>> 0;
-      AVM1Context.instance.stage._as2SetLevel(level, loader);
+      // TODO: re-enable support for loading AVM1 content into levels. See bug 1035166.
+      //AVM1Context.instance.stage._as2SetLevel(level, loader);
     }
     trace(expression: any): any {
       Natives.print(expression);
