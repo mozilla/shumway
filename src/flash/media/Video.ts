@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import assert = Shumway.Debug.assert;
   export class Video extends flash.display.DisplayObject {
     static classInitializer: any = null;
     static initializer: any = null;
@@ -60,6 +61,13 @@ module Shumway.AVM2.AS.flash.media {
 
     get videoHeight(): number /*int*/ {
       return this._videoHeight;
+    }
+
+    _containsPointDirectly(x: number, y: number): boolean {
+      // If this override is reached, the content bounds have already been checked, which is all
+      // we need to do.
+      release || assert(this._getContentBounds().contains(x, y));
+      return true;
     }
 
     clear(): void {

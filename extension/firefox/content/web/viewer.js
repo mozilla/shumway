@@ -144,12 +144,10 @@ function runViewer() {
     fallbackMenu.removeAttribute('hidden');
     fallbackMenu.addEventListener('click', fallback);
   }
-  var showURLMenu = document.getElementById('showURLMenu');
-  showURLMenu.addEventListener('click', showURL);
-  var inspectorMenu = document.getElementById('inspectorMenu');
-  inspectorMenu.addEventListener('click', showInInspector);
-  var reportMenu = document.getElementById('reportMenu');
-  reportMenu.addEventListener('click', reportIssue);
+  document.getElementById('showURLMenu').addEventListener('click', showURL);
+  document.getElementById('inspectorMenu').addEventListener('click', showInInspector);
+  document.getElementById('reportMenu').addEventListener('click', reportIssue);
+  document.getElementById('aboutMenu').addEventListener('click', showAbout);
 }
 
 function showURL() {
@@ -166,23 +164,28 @@ function showInInspector() {
 }
 
 function reportIssue() {
-  var duplicatesMap = Object.create(null);
-  var prunedExceptions = [];
-  avm2.exceptions.forEach(function(e) {
-    var ident = e.source + e.message + e.stack;
-    var entry = duplicatesMap[ident];
-    if (!entry) {
-      entry = duplicatesMap[ident] = {
-        source: e.source,
-        message: e.message,
-        stack: e.stack,
-        count: 0
-      };
-      prunedExceptions.push(entry);
-    }
-    entry.count++;
-  });
-  FirefoxCom.requestSync('reportIssue', JSON.stringify(prunedExceptions));
+  //var duplicatesMap = Object.create(null);
+  //var prunedExceptions = [];
+  //avm2.exceptions.forEach(function(e) {
+  //  var ident = e.source + e.message + e.stack;
+  //  var entry = duplicatesMap[ident];
+  //  if (!entry) {
+  //    entry = duplicatesMap[ident] = {
+  //      source: e.source,
+  //      message: e.message,
+  //      stack: e.stack,
+  //      count: 0
+  //    };
+  //    prunedExceptions.push(entry);
+  //  }
+  //  entry.count++;
+  //});
+  //FirefoxCom.requestSync('reportIssue', JSON.stringify(prunedExceptions));
+  FirefoxCom.requestSync('reportIssue');
+}
+
+function showAbout() {
+  window.open('http://areweflashyet.com/');
 }
 
 var movieUrl, movieParams, objectParams;

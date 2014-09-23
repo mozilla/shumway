@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import assert = Shumway.Debug.assert;
   import ButtonSymbol = Shumway.Timeline.ButtonSymbol;
 
   export class SimpleButton extends flash.display.InteractiveObject {
@@ -192,25 +193,52 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Override of DisplayObject#_isUnderMouse that applies the test on hitTestState if
+     * Override of DisplayObject#_containsPoint that applies the test on hitTestState if
      * that is defined.
      */
-    _isUnderMouse(x: number, y: number): boolean {
+    _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
+                   testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
       var target = this.hitTestState;
       if (!target) {
-        return false;
+        return HitTestingResult.None;
       }
-      var matrix = this._getInvertedConcatenatedMatrix();
-      var localX = matrix.transformX(x, y);
-      var localY = matrix.transformY(x, y);
-      // As we observed by testing, the hitTestState's own matrix seems to be ignored if created from a symbol.
+      // For hit test states that weren't created from timeline symbols, apply potential transforms.
+      // For timeline-created states, that doesn't seem to happen. (Which makes sense: in the IDE
+      // you can create layers within Buttons. When exported for AVM2, all layers for each frame
+      // get packaged together into a container. It makes sense for that container to not have a
+      // transform.
       if (!this._symbol) {
-        matrix = target._getInvertedMatrix();
+        var matrix = target._getInvertedMatrix();
         var tmpX = matrix.transformX(localX, localY);
         localY = matrix.transformY(localX, localY);
         localX = tmpX;
       }
-      return target._containsPoint(localX, localY, true, false, false);
+      var result = target._containsPoint(globalX, globalY, localX, localY, testingType, objects);
+      // For mouse target finding, SimpleButtons always return themselves as the hit.
+      if (result !== HitTestingResult.None && testingType === HitTestingType.Mouse &&
+          objects && this._mouseEnabled) {
+        objects[0] = this;
+        release || assert(objects.length === 1);
+      }
+      return result;
+    }
+
+    /**
+     * Override of DisplayObject#_getChildBounds that retrieves the current hitTestState's bounds.
+     */
+    _getChildBounds(bounds: Bounds, includeStrokes: boolean) {
+      var target = this.hitTestState;
+      if (!target) {
+        return;
+      }
+      var childBounds = target._getContentBounds(includeStrokes).clone();
+      // Always apply the SimpleButton's matrix.
+      this._getConcatenatedMatrix().transformBounds(childBounds);
+      // For non-timeline-created buttons, also apply the hit test state's transform.
+      if (!this._symbol) {
+        target._getMatrix().transformBounds(bounds);
+      }
+      bounds.unionInPlace(childBounds);
     }
 
     _updateButton(): void {

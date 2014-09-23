@@ -498,6 +498,10 @@ module Shumway.AVM2.AS.flash.display {
             }
           }
         }
+        var soundStarts = frame.soundStarts;
+        if (soundStarts) {
+          this._registerStartSounds(i + 1, soundStarts);
+        }
       }
 
       if (this._frameScripts[nextFrame]) {
@@ -732,13 +736,13 @@ module Shumway.AVM2.AS.flash.display {
       this._sounds.initSoundStream(streamInfo);
     }
 
-    _addSoundStreamBlock(frameIndex: number, streamBlock: any) {
-      this._sounds.addSoundStreamBlock(frameIndex + 1, streamBlock);
+    _addSoundStreamBlock(frameNum: number, streamBlock: any) {
+      this._sounds.addSoundStreamBlock(frameNum, streamBlock);
     }
 
     private _syncSounds(frameNum: number) {
       if (this._sounds !== null) {
-        this._sounds.syncSounds(frameNum + 1);
+        this._sounds.syncSounds(frameNum);
       }
     }
 

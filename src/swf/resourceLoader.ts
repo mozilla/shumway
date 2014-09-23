@@ -101,8 +101,7 @@ module Shumway.SWF {
               break;
             // case SwfTag.CODE_DO_INIT_ACTION: ??
             case SwfTag.CODE_START_SOUND:
-              var startSounds = frame.startSounds || (frame.startSounds = []);
-              startSounds.push(tag);
+              commands.push(tag);
               break;
             case SwfTag.CODE_SOUND_STREAM_HEAD:
               try {
@@ -140,7 +139,7 @@ module Shumway.SWF {
               frame = { type: 'frame' };
               break;
             default:
-              Debug.warning('Dropped tag during parsing. Code: ' + tag.code + ', ID: ' + tag.id);
+              Debug.warning('Dropped tag during parsing. Code: ' + tag.code);
           }
         }
         if (frames.length === 0) {
@@ -162,7 +161,7 @@ module Shumway.SWF {
         symbol = Shumway.SWF.Parser.defineLabel(swfTag, symbols);
         break;
       default:
-        Debug.warning('Dropped tag during parsing. Code: ' + tag.code + ', ID: ' + tag.id);
+        Debug.warning('Dropped tag during parsing. Code: ' + tag.code);
     }
 
     if (!symbol) {
@@ -245,10 +244,7 @@ module Shumway.SWF {
               initActionBlocks.push({spriteId: tag.spriteId, actionsData: tag.actionsData});
               break;
             case SwfTag.CODE_START_SOUND:
-              var startSounds = frame.startSounds;
-              if (!startSounds)
-                frame.startSounds = startSounds = [];
-              startSounds.push(tag);
+              commands.push(tag);
               break;
             case SwfTag.CODE_SOUND_STREAM_HEAD:
               try {
@@ -302,6 +298,8 @@ module Shumway.SWF {
               commands = [];
               frame = { type: 'frame' };
               break;
+            default:
+              Debug.warning('Dropped tag during parsing. Code: ' + tag.code);
           }
         }
 

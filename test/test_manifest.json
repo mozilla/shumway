@@ -130,7 +130,7 @@
       "type": "eq"
     },
     {  "id": "acid-image-2",
-      "frames": [1],
+      "frames": [10],
       "swf": "swfs/acid/acid-image-2.swf",
       "type": "eq"
     },

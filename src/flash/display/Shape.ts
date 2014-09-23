@@ -27,7 +27,7 @@ module Shumway.AVM2.AS.flash.display {
       self._graphics = null;
       if (symbol) {
         this._setStaticContentFromSymbol(symbol);
-        // TODO: Assert that the computed bounds of the graphics object in fact
+        // TODO: Check what do do if the computed bounds of the graphics object don't
         // match those given by the symbol.
       }
     };
@@ -47,6 +47,11 @@ module Shumway.AVM2.AS.flash.display {
 
     get graphics(): flash.display.Graphics {
       return this._ensureGraphics();
+    }
+
+    _containsPointDirectly(x: number, y: number): boolean {
+      var graphics = this._getGraphics();
+      return !!graphics && graphics._containsPoint(x, y, true);
     }
   }
 }
