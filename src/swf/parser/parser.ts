@@ -438,6 +438,8 @@ module Shumway.SWF.Parser {
           options.oncomplete && options.oncomplete(symbol);
         }
       };
+
+      options.onimgprogress(bytesTotal);
     }
 
     return pipe;
