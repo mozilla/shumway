@@ -13,7 +13,7 @@
 # limitations under the License.
 
 UTILS_HOME = ../../utils
-CLOSURE ?= $(UTILS_HOME)/cc.jar
+CLOSURE ?= $(UTILS_HOME)/closure.jar
 BUILD_DIR = ../../build/firefox
 GENERIC_DIR = ../../build/bundles
 
@@ -41,8 +41,8 @@ build: ensureoutputdir
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/content/avm2/generated/builtin/
 	mkdir -p $(BUILD_DIR)/content/avm2/generated/avm1lib
 	cp ../../src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/content/avm2/generated/avm1lib/
-	# Coping shumway.js files
-	cp $(GENERIC_DIR)/shumway*.js $(BUILD_DIR)/content/
+	# Coping and optimizing shumway.js files
+	$(foreach f, $(wildcard $(GENERIC_DIR)/shumway*.js), java -jar $(CLOSURE) --formatting PRETTY_PRINT --warning_level QUIET --compilation_level SHUMWAY_OPTIMIZATIONS --language_in ECMASCRIPT5 $(f) > $(BUILD_DIR)/content/$(notdir $(f));)
 	echo $(VERSION) > $(BUILD_DIR)/content/version.txt
 	echo $(VERSION_SHA) >> $(BUILD_DIR)/content/version.txt
 	echo "extension" >> $(BUILD_DIR)/content/version.txt

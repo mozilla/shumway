@@ -143,8 +143,10 @@ module Shumway.AVM2.AS.flash.display {
                                                                 false, false, bytesLoaded,
                                                                 bytesTotal));
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
-              queue.splice(i--, 1);
             }
+            break;
+          case LoadStatus.Complete:
+            queue.splice(i--, 1);
             break;
           default:
             assertUnreachable("Mustn't encounter unhandled status in Loader queue.");
@@ -283,6 +285,9 @@ module Shumway.AVM2.AS.flash.display {
             loaderInfo._bytesTotal = bytesTotal;
           } else {
             release || assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes should not change.");
+          }
+          if (info.open && this._loadStatus === LoadStatus.Unloaded) {
+            this._loadStatus = LoadStatus.Opened;
           }
           if (this._loadStatus !== LoadStatus.Unloaded) {
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS, false,
@@ -578,7 +583,10 @@ module Shumway.AVM2.AS.flash.display {
       loaderInfo._width = symbol.width;
       loaderInfo._height = symbol.height;
 
-      this._loadStatus = LoadStatus.Opened;
+      // Complete load process manually here to avoid any additional progress events to be fired.
+      loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
+      loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
+      this._loadStatus = LoadStatus.Complete;
     }
 
     get content(): flash.display.DisplayObject {
