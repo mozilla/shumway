@@ -226,7 +226,7 @@ module Shumway.GFX {
       if (!imageUpdateOption.value) {
         return;
       }
-      enterTimeline("RenderableBitmap.updateFromDataBuffer", this);
+      enterTimeline("RenderableBitmap.updateFromDataBuffer", {length: dataBuffer.length});
       if (type === ImageType.JPEG ||
           type === ImageType.PNG  ||
           type === ImageType.GIF)
@@ -245,12 +245,14 @@ module Shumway.GFX {
         };
       } else {
         if (imageConvertOption.value) {
+          enterTimeline("ColorUtilities.convertImage");
           ColorUtilities.convertImage (
             type,
             ImageType.StraightAlphaRGBA,
             new Int32Array(dataBuffer.buffer),
             new Int32Array(this._imageData.data.buffer)
           );
+          leaveTimeline("ColorUtilities.convertImage");
         }
         enterTimeline("putImageData");
         this._context.putImageData(this._imageData, 0, 0);
