@@ -1,9 +1,4 @@
 [
-    {  "id": "acid-platformer",
-      "frames": [10],
-      "swf": "swfs/acid/acid-platformer.swf",
-      "type": "eq"
-    },
     {  "id": "acid",
       "frames": [10],
       "swf": "swfs/acid/acid.swf",
@@ -42,11 +37,6 @@
     {  "id": "acid-blend-2",
       "frames": [1, 5, 10],
       "swf": "swfs/acid/acid-blend-2.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-blend",
-      "frames": [1, 5, 10],
-      "swf": "swfs/acid/acid-blend.swf",
       "type": "eq"
     },
     {  "id": "acid-buttons-2",
@@ -139,11 +129,6 @@
       "swf": "swfs/acid/acid-image-2.swf",
       "type": "eq"
     },
-    {  "id": "acid-image",
-      "frames": [1, 5, 10],
-      "swf": "swfs/acid/acid-image.swf",
-      "type": "eq"
-    },
     {  "id": "acid-large",
       "frames": [1, 20],
       "swf": "swfs/acid/acid-large.swf",
@@ -212,11 +197,6 @@
     {  "id": "acid-text-3",
       "frames": [1],
       "swf": "swfs/acid/acid-text-3.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-text-5",
-      "frames": [1, 5, 10],
-      "swf": "swfs/acid/acid-text-5.swf",
       "type": "eq"
     },
     {  "id": "acid-text-6",
@@ -397,13 +377,6 @@
       ],
       "type": "stas"
     },
-    {  "id": "AVM1Movie",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/avm1movie/AVM1MovieTest.swf"
-      ],
-      "type": "stas"
-    },
     {  "id": "defineFont2-test",
        "frames": [60],
        "swf": "swfs/food.swf",
@@ -413,13 +386,6 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/hitTestStyleChange.swf"
-      ],
-      "type": "stas"
-    },
-    {  "id": "image-loading",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/image-loading/image-loading.swf"
       ],
       "type": "stas"
     }
