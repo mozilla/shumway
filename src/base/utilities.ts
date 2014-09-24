@@ -3064,22 +3064,6 @@ module Shumway {
       return a << 24 | r << 16 | g << 8 | b;
     }
 
-    export var inverseAlphaTable: Uint8Array;
-
-    /**
-     * Computes all possible inverse alpha values, similar to the one above.
-     */
-    export function ensureInverseAlphaTable() {
-      if (!inverseAlphaTable) {
-        inverseAlphaTable = new Uint8Array(256 * 256);
-        for (var c = 0; c < 256; c++) {
-          for (var a = 0; a < 256; a++) {
-            inverseAlphaTable[(a << 8) + c] = c * (1 - a / 255);
-          }
-        }
-      }
-    }
-
     /**
      * The blending equation for unpremultiplied alpha is:
      *
@@ -3092,16 +3076,20 @@ module Shumway {
      *
      * TODO: Not sure what to do about the dst.rgb which is
      * premultiplied by its alpah, but this appears to work.
+     *
+     * We use the "double blend trick" (http://stereopsis.com/doubleblend.html) to
+     * compute GA and BR without unpacking them.
      */
     export function blendPremultipliedBGRA(tpBGRA: number, spBGRA: number) {
-      var sa = spBGRA & 0xff;
-      var o = sa << 8;
-      var T = inverseAlphaTable;
-      var ta = sa + T[o + (tpBGRA & 0xff)];
-      var tr = ((spBGRA >>  8) & 0xff) + T[o + ((tpBGRA >>  8) & 0xff) | 0];
-      var tg = ((spBGRA >> 16) & 0xff) + T[o + ((tpBGRA >> 16) & 0xff) | 0];
-      var tb = ((spBGRA >> 24) & 0xff) + T[o + ((tpBGRA >> 24) & 0xff) | 0];
-      return tb << 24 | tg << 16 | tr << 8 | ta;
+      var sA  = spBGRA & 0xff;
+      var sGA = spBGRA      & 0x00ff00ff;
+      var sBR = spBGRA >> 8 & 0x00ff00ff;
+      var tGA = tpBGRA      & 0x00ff00ff;
+      var tBR = tpBGRA >> 8 & 0x00ff00ff;
+      var A  = 256 - sA;
+      tGA = Math.imul(tGA, A) >> 8;
+      tBR = Math.imul(tBR, A) >> 8;
+      return ((sBR + tBR & 0x00ff00ff) << 8) | (sGA + tGA & 0x00ff00ff);
     }
 
     import swap32 = IntegerUtilities.swap32;

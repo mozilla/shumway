@@ -28,7 +28,6 @@ module Shumway.AVM2.AS.flash.display {
   import RGBAToARGB = Shumway.ColorUtilities.RGBAToARGB;
   import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
   import blendPremultipliedBGRA = Shumway.ColorUtilities.blendPremultipliedBGRA;
-  import ensureInverseAlphaTable = Shumway.ColorUtilities.ensureInverseAlphaTable;
   import indexOf = Shumway.ArrayUtilities.indexOf;
 
   import Rectangle = flash.geom.Rectangle;
@@ -41,7 +40,7 @@ module Shumway.AVM2.AS.flash.display {
   export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
 
     static classInitializer: any = function () {
-      ensureInverseAlphaTable();
+
     };
 
     _symbol: Shumway.Timeline.BitmapSymbol;
@@ -523,12 +522,29 @@ module Shumway.AVM2.AS.flash.display {
       var tP = (tY * tStride + tX) | 0;
       for (var y = 0; y < tH; y = y + 1 | 0) {
         for (var x = 0; x < tW; x = x + 1 | 0) {
-          var spBGRA = s[sP + x];
-          if ((spBGRA & 0xFF) === 0xFF) {
+          var spBGRA = s[sP + x | 0];
+          var sA = spBGRA & 0xff;
+          // Optimize for the case where the source pixel is fully opaque or transparent. This
+          // pays off if the source image has many such pixels but slows down the normal case.
+          if (sA === 0xff) {
             t[tP + x | 0] = spBGRA; // Opaque, just copy value over.
+          } else if (sA === 0) {
+            // Transparent, don't do anything.
           } else {
-            // This better be inlined !! I've tried to manually inline it but it's only a ~10% faster.
-            t[tP + x | 0] = blendPremultipliedBGRA(t[tP + x | 0], spBGRA);
+            // Compute the blending equation: src.rgb + (dst.rgb * (1 - src.a)). The trick here
+            // is to compute GA and BR at the same time without pulling apart each channel.
+            // We use the "double blend trick" (http://stereopsis.com/doubleblend.html) to
+            // compute GA and BR without unpacking them.
+            var sGA = spBGRA      & 0x00ff00ff;
+            var sBR = spBGRA >> 8 & 0x00ff00ff;
+            var tpBGRA = t[tP + x | 0];
+            var tGA = tpBGRA      & 0x00ff00ff;
+            var tBR = tpBGRA >> 8 & 0x00ff00ff;
+            var A = 256 - sA;
+            tGA = Math.imul(tGA, A) >> 8;
+            tBR = Math.imul(tBR, A) >> 8;
+            // TODO: Not sure if target alpha is computed correctly.
+            t[tP + x | 0] = ((sBR + tBR & 0x00ff00ff) << 8) | (sGA + tGA & 0x00ff00ff);
           }
         }
         sP = sP + sStride | 0;

@@ -78,7 +78,7 @@
     checkTime(function () {
       var s = new Rectangle(0, 0, 0, 0);
       var p = new Point(0, 0);
-      for (var i = 0; i < 2; i += 1) {
+      for (var i = 0; i < 5; i += 1) {
         a.copyPixels(b, b.rect, new Point(0, 0), null, null, true);
       }
     }, "BitmapData::copyPixels(mergeAlpha = true)", 30 * scale, 8)
