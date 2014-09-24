@@ -18,7 +18,10 @@ import ASClass = Shumway.AVM2.AS.ASClass;
 declare module Shumway.AVM2.AS.avm1lib {
   export class AVM1Globals extends ASClass {}
   export class AVM1Utils extends ASClass {}
-  export class AVM1MovieClip extends ASClass {}
+  export class AVM1MovieClip extends ASClass {
+    _nativeAS3Object: Shumway.AVM2.AS.flash.display.MovieClip;
+    context: Shumway.AVM1.AVM1Context;
+  }
   export class AVM1BitmapData extends ASClass {}
   export class AVM1Button extends ASClass {}
   export class AVM1TextField extends ASClass {}
@@ -36,9 +39,10 @@ declare module Shumway.AVM1 {
   export class AVM1Context {
     static create(swfVersion: number): AVM1Context;
     addAsset(className: string, symbolId: number, symbolProps);
-    executeActions(actionsData: AVM1ActionsData, stage, scopeObj);
+    executeActions(actionsData: AVM1ActionsData, scopeObj);
     flushPendingScripts();
 
     globals: Shumway.AVM2.AS.avm1lib.AVM1Globals;
+    root: Shumway.AVM2.AS.avm1lib.AVM1MovieClip;
   }
 }
