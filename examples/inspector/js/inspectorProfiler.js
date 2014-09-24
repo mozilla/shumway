@@ -35,7 +35,7 @@ var profiler = (function() {
 
     var self = this;
     window.addEventListener("keypress", function (event) {
-      if (event.keyCode === 114) { // R
+      if (event.altKey && event.keyCode === 114) { // Alt + R
         self._onStartStopClick();
       }
     }, false);
