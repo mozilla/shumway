@@ -3047,11 +3047,13 @@ module Shumway {
       }
     }
 
-    export function tableLookupUnpremultiplyARGB(pARGB) {
+    export function tableLookupUnpremultiplyARGB(pARGB): number {
       pARGB = pARGB | 0;
       var a = (pARGB >> 24) & 0xff;
       if (a === 0) {
         return 0;
+      } else if (a === 0xff) {
+        return pARGB;
       }
       var b = (pARGB >>  0) & 0xff;
       var g = (pARGB >>  8) & 0xff;
@@ -3112,13 +3114,23 @@ module Shumway {
           targetFormat === ImageType.StraightAlphaRGBA) {
         Shumway.ColorUtilities.ensureUnpremultiplyTable();
         for (var i = 0; i < length; i++) {
-          var pARGB = swap32(source[i]);
-          // TODO: Make sure this is inlined!
-          var uARGB = tableLookupUnpremultiplyARGB(pARGB);
-          var uABGR = (uARGB & 0xFF00FF00)  | // A_G_
-                      (uARGB >> 16) & 0xff  | // A_GR
-                      (uARGB & 0xff) << 16;   // ABGR
-          target[i] = uABGR;
+          var pBGRA = source[i];
+          var a = pBGRA & 0xff;
+          if (a === 0) {
+            target[i] = 0;
+          } else if (a === 0xff) {
+            target[i] = (pBGRA & 0xff) << 24 | ((pBGRA >> 8) & 0x00ffffff);
+          } else {
+            var b = (pBGRA >> 24) & 0xff;
+            var g = (pBGRA >> 16) & 0xff;
+            var r = (pBGRA >>  8) & 0xff;
+            var o = a << 8;
+            var T = unpremultiplyTable;
+            r = T[o + r];
+            g = T[o + g];
+            b = T[o + b];
+            target[i] = a << 24 | b << 16 | g << 8 | r;
+          }
         }
       } else if (sourceFormat === ImageType.StraightAlphaARGB &&
                  targetFormat === ImageType.StraightAlphaRGBA) {
