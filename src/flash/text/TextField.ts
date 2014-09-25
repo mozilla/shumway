@@ -181,8 +181,11 @@ module Shumway.AVM2.AS.flash.text {
     static isFontCompatible(fontName: string, fontStyle: string): boolean {
       fontName = asCoerceString(fontName);
       fontStyle = asCoerceString(fontStyle);
-      somewhatImplemented("flash.text.TextField.isFontCompatible");
-      return true;
+      var font = Font.getByName(fontName);
+      if (!font) {
+        return false;
+      }
+      return font.fontStyle === fontStyle;
     }
 
     _alwaysShowSelection: boolean;
