@@ -1,3 +1,4 @@
 ref/
 tmp/
+test_snapshots/
 *.log
