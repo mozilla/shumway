@@ -31,6 +31,7 @@ const FIREFOX_ID = '{ec8030f7-c20a-464f-9b0e-13a3a9e97384}';
 const SEAMONKEY_ID = '{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}';
 
 const MAX_CLIPBOARD_DATA_SIZE = 8000;
+const MAX_USER_INPUT_TIMEOUT = 250; // ms
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
@@ -256,6 +257,7 @@ function ChromeActions(url, window, document) {
   this.document = document;
   this.externalComInitialized = false;
   this.allowScriptAccess = false;
+  this.lastUserInput = 0;
   this.crossdomainRequestsCache = Object.create(null);
   this.telemetry = {
     startTime: Date.now(),
@@ -416,9 +418,10 @@ ChromeActions.prototype = {
     fallbackToNativePlugin(this.window, !automatic, automatic);
   },
   setClipboard: function (data) {
+    // We don't trust our Shumway non-privileged code just yet to verify the
+    // user input -- using monitorUserInput function below to track that.
     if (typeof data !== 'string' ||
-        data.length > MAX_CLIPBOARD_DATA_SIZE ||
-        !this.document.hasFocus()) {
+        (Date.now() - this.lastUserInput) > MAX_USER_INPUT_TIMEOUT) {
       return;
     }
     // TODO other security checks?
@@ -533,6 +536,23 @@ ChromeActions.prototype = {
     return this.window.parent.wrappedJSObject.location + '';
   }
 };
+
+function monitorUserInput(actions) {
+  function notifyUserInput() {
+    var win = actions.window;
+    var winUtils = win.QueryInterface(Components.interfaces.nsIInterfaceRequestor).
+                       getInterface(Components.interfaces.nsIDOMWindowUtils);
+    if (winUtils.isHandlingUserInput) {
+      actions.lastUserInput = Date.now();
+    }
+  }
+
+  var document = actions.document;
+  document.addEventListener('mousedown', notifyUserInput, false);
+  document.addEventListener('mouseup', notifyUserInput, false);
+  document.addEventListener('keydown', notifyUserInput, false);
+  document.addEventListener('keyup', notifyUserInput, false);
+}
 
 // Event listener to trigger chrome privedged code.
 function RequestListener(actions) {
@@ -998,6 +1018,7 @@ ShumwayStreamConverterBase.prototype = {
         domWindow.addEventListener('shumway.message', function(event) {
           requestListener.receive(event);
         }, false, true);
+        monitorUserInput(actions);
 
         listener.onStopRequest(aRequest, context, statusCode);
       }
