@@ -54,7 +54,7 @@ function parseOptions() {
     .describe('reftest', 'Automatically start reftest showing comparison ' +
       'test failures, if there are any.')
     .describe('port', 'The port the HTTP server should listen on.')
-    .default('port', 8000)
+    .default('port', 8080)
     .describe('statsFile', 'The file where to store stats.')
     .describe('statsDelay', 'The amount of time in milliseconds the browser ' +
       'should wait before starting stats.')
