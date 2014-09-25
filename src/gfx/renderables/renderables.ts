@@ -935,6 +935,12 @@ module Shumway.GFX {
         currentLine.addRun(font, fillStyle, text, underline);
       }
 
+      // Append an additional empty line if we find a line break character at the end of the text.
+      var endCharacter = plainText[plainText.length - 1];
+      if (endCharacter === '\r' || endCharacter === '\n') {
+        lines.push(currentLine);
+      }
+
       var rect = this.textRect;
       rect.w = maxWidth;
       rect.h = baseLinePos;

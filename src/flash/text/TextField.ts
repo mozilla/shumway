@@ -621,8 +621,10 @@ module Shumway.AVM2.AS.flash.text {
       }
       this._ensureLineMetrics();
       var lineMetricsData = this._lineMetricsData;
-      lineMetricsData.position = 12 + lineIndex * 20;
-      var x = lineMetricsData.readInt();
+      lineMetricsData.position = 16 + lineIndex * 20;
+      // The lines left position includes the gutter widths (it should also include the the margin
+      // and indent, which we don't support yet).
+      var x = lineMetricsData.readInt() + this._lineBounds.xMin + 2;
       var width = lineMetricsData.readInt();
       var ascent = lineMetricsData.readInt();
       var descent = lineMetricsData.readInt();
