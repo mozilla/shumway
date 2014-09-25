@@ -89,9 +89,7 @@ function setupServices() {
   };
 
   Shumway.FileLoadingService.instance = {
-    get baseUrl() {
-      return movieUrl;
-    },
+    baseUrl: null,
     nextSessionId: 1, // 0 - is reserved
     sessions: [],
     createSession: function () {
