@@ -20,6 +20,10 @@ function postData(path, data) {
   xhr.send(data);
 }
 
+function postInfoMessage(message) {
+  postData('/info', JSON.stringify({message: message}));
+}
+
 function execManifest(path, bundle) {
   function exec(manifest) {
     var i = 0;
@@ -116,5 +120,6 @@ var browser = getQueryVariable("browser");
 var path = getQueryVariable("path");
 var bundle = getQueryVariable("bundle") === "true";
 
+postInfoMessage('Browser \'' + browser + '\': ' + navigator.userAgent);
 execManifest(manifestFile, bundle);
 
