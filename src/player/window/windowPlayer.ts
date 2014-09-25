@@ -27,11 +27,11 @@ module Shumway.Player.Window {
       this._window = window;
       this._parent = parent || window.parent;
       this._window.addEventListener('message', function (e) {
-        this.onWindowMessage(e.data);
+        this.onWindowMessage(e.data, true);
       }.bind(this));
-      //this._window.addEventListener('syncmessage', function (e) {
-      //  this.onWindowMessage(e.detail);
-      //}.bind(this));
+      this._window.addEventListener('syncmessage', function (e) {
+        this.onWindowMessage(e.detail, false);
+      }.bind(this));
     }
 
     onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true): DataBuffer {
@@ -78,7 +78,7 @@ module Shumway.Player.Window {
       }, '*');
     }
 
-    private onWindowMessage(data) {
+    private onWindowMessage(data, async) {
       if (typeof data === 'object' && data !== null) {
         switch (data.type) {
           case 'gfx':
