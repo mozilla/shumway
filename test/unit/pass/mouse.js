@@ -257,8 +257,8 @@
 
     c.dispatchEvent(evt);
     eq(evt.target, null);
-    eq(evt.getStageX(), 0);
-    eq(evt.getStageY(), 0);
+    eq(evt.stageX, 0);
+    eq(evt.stageY, 0);
     eq(evt.movementX, 0);
     eq(evt.movementY, 0);
 
@@ -267,14 +267,14 @@
       eventWasTriggered = true;
       eq(e.localX, 50);
       eq(e.localY, 25);
-      eq(e.getStageX(), 150);
-      eq(e.getStageY(), 75);
+      eq(e.stageX, 150);
+      eq(e.stageY, 75);
       e.localX = 0;
       e.localY = 0;
       eq(e.localX, 0);
       eq(e.localY, 0);
-      eq(e.getStageX(), 100);
-      eq(e.getStageY(), 50);
+      eq(e.stageX, 100);
+      eq(e.stageY, 50);
     });
     c.dispatchEvent(evt);
     check(eventWasTriggered);

@@ -307,7 +307,7 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('server', function () {
-    var WebServer = require('./utils/webserver.js').WebServer;
+    var WebServer = require('./test/webserver.js').WebServer;
     var done = this.async();
     var server = new WebServer();
     server.start();
@@ -332,8 +332,8 @@ module.exports = function(grunt) {
       params.push('--noPrompts');
     }
     grunt.util.spawn({
-      cmd: 'python',
-      args: ['test.py', '--reftest', '--browserManifestFile=' + browserManifestFile,
+      cmd: 'node',
+      args: ['test.js', '--reftest', '--browserManifestFile=' + browserManifestFile,
              '--manifestFile=' + testManifestFile].concat(params),
       opts: { cwd: 'test', stdio: 'inherit' }
     }, function () {
@@ -360,8 +360,8 @@ module.exports = function(grunt) {
       params.push('--noPrompts');
     }
     grunt.util.spawn({
-      cmd: 'python',
-      args: ['test.py', '--browserManifestFile=' + browserManifestFile,
+      cmd: 'node',
+      args: ['test.js', '--browserManifestFile=' + browserManifestFile,
           '--manifestFile=' + testManifestFile].concat(params),
       opts: { cwd: 'test', stdio: 'inherit' }
     }, function () {
@@ -383,8 +383,8 @@ module.exports = function(grunt) {
       params.push('--noPrompts');
     }
     grunt.util.spawn({
-      cmd: 'python',
-      args: ['test.py', '-m', '--browserManifestFile=' + browserManifestFile].concat(params),
+      cmd: 'node',
+      args: ['test.js', '-m', '--browserManifestFile=' + browserManifestFile].concat(params),
       opts: { cwd: 'test', stdio: 'inherit'}}, function () {
       done();
     });
