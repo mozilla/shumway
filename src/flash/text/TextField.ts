@@ -232,7 +232,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set alwaysShowSelection(value: boolean) {
-      somewhatImplemented("public flash.text.TextField::set alwaysShowSelection");
       this._alwaysShowSelection = !!value;
     }
 
@@ -241,7 +240,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set antiAliasType(antiAliasType: string) {
-      somewhatImplemented("public flash.text.TextField::set antiAliasType");
       antiAliasType = asCoerceString(antiAliasType);
       if (AntiAliasType.toNumber(antiAliasType) < 0) {
         throwError("ArgumentError", Errors.InvalidParamError, "antiAliasType");
@@ -361,13 +359,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get gridFitType(): string {
-      somewhatImplemented("public flash.text.TextField::get gridFitType");
       return this._gridFitType;
     }
     set gridFitType(gridFitType: string) {
       gridFitType = asCoerceString(gridFitType);
       release || assert (flash.text.GridFitType.toNumber(gridFitType) >= 0);
-      somewhatImplemented("public flash.text.TextField::set gridFitType");
       this._gridFitType = gridFitType;
     }
 
@@ -376,7 +372,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set htmlText(value: string) {
-      somewhatImplemented("public flash.text.TextField::set htmlText");
       value = asCoerceString(value);
       // Flash resets the bold and italic flags when an html value is set on a text field created from a symbol.
       if (this._symbol) {
@@ -512,7 +507,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set text(value: string) {
-      somewhatImplemented("public flash.text.TextField::set text");
       this._textContent.plainText = asCoerceString(value);
       this._invalidateContent();
       this._ensureLineMetrics();
