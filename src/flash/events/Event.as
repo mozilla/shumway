@@ -74,26 +74,11 @@ public class Event {
 
   public native function get eventPhase():uint;
 
-  public function formatToString(className:String, ...args):String {
-    var str = '[' + className;
-    for (var i:uint = 0; i < args.length; i++) {
-      var field:String = args[i];
-      var value:Object = this[field];
-      if (value is String) {
-        value = '"' + value + '"';
-      }
-      str += ' ' + field + '=' + value;
-    }
-    return str + ']';
-  }
+  public native function formatToString(className:String, ...args):String;
 
-  public function clone():Event {
-    return new Event(type, bubbles, cancelable);
-  }
+  public native function clone():Event;
 
-  public function toString():String {
-    return formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
-  }
+  public native function toString():String;
 
   public native function stopPropagation():void;
 
