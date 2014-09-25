@@ -205,6 +205,9 @@ window.addEventListener("message", function handlerMessage(e) {
     case 'reportTelemetry':
       FirefoxCom.request('reportTelemetry', args.data, null);
       break;
+    case 'setClipboard':
+      FirefoxCom.request('setClipboard', args.data, null);
+      break;
   }
 }, true);
 

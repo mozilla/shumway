@@ -3308,6 +3308,14 @@ module Shumway {
     };
   }
 
+  export class ClipboardService {
+    public static instance: ClipboardService = null;
+
+    public setClipboard(data: string): void {
+      Debug.abstractMethod("public ClipboardService::setClipboard");
+    }
+  }
+
   export class Callback {
     private _queues: any;
     constructor () {
