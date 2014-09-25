@@ -36,31 +36,14 @@
     }
 
     function displayImage(id, url, div) {
-      return new Promise(function (resolve, reject) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', url);
-        xhr.responseType = 'text';
-        xhr.onload = function () {
-          var src = xhr.response;
-          var a = document.createElement('a');
-          a.href = src;
-          a.title = id;
-          var img = document.createElement('img');
-          img.src = src;
-          img.width = 96;
-          a.appendChild(img);
-          div.appendChild(a);
-          resolve();
-        };
-        xhr.onerror = function () {
-          var span = document.createElement('span');
-          span.title = 'Failed ' + id + ': ' + xhr.error;
-          span.textContent = id;
-          div.appendChild(span);
-          resolve();
-        };
-        xhr.send(null);
-      });
+      var a = document.createElement('a');
+      a.href = url;
+      a.title = id;
+      var img = document.createElement('img');
+      img.src = url;
+      img.width = 96;
+      a.appendChild(img);
+      div.appendChild(a);
     }
 
     function displayConfigImage(name, baseUrl, count, div) {
@@ -74,8 +57,8 @@
 
       var promise = Promise.resolve(undefined);
       for (var i = 1; i <= count; i++) {
-        var base = baseUrl + '/' + i;
-        promise = promise.then(displayImage.bind(null, i, base, images));
+        var imageUrl = baseUrl + '/' + i + '.png';
+        displayImage(i, imageUrl, images);
       }
       return promise;
     }
@@ -108,7 +91,7 @@
     }).join(',') + '}') : {};
 
     var platform = navigator.userAgent.indexOf('Mac OS') >= 0 ? 'darwin' :
-            navigator.userAgent.indexOf('Windows NT') >= 0 ? 'win32' : 'linux2';
+            navigator.userAgent.indexOf('Windows NT') >= 0 ? 'win32' : 'linux';
 
     var refsBase = '../ref/' + (queryParams.platform || platform);
     var refsConfigs;

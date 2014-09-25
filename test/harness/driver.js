@@ -25,11 +25,15 @@ function execManifest(path, bundle) {
     var i = 0;
     function next() {
       if (i >= manifest.length) {
-        postData('/tellMeToQuit?path=' + escape(path));
+        postData('/tellMeToQuit?browser=' + escape(browser));
         return;
       }
       var test = manifest[i++];
-      postData('/progress?browser=' + escape(browser) + '&id=' + escape(test.id));
+      postData('/progress', JSON.stringify({
+        browser: browser,
+        id: test.id
+      }));
+
 
       TestContext._slavePath = bundle ? 'harness/slave-bundle.html' :
                                         'harness/slave.html';
@@ -61,22 +65,6 @@ function execManifest(path, bundle) {
         break;
       case 'eq':
         execEq(test.swf, test.frames,
-          function (itemNumber, itemsCount, item, result) {
-            postData('/result', JSON.stringify({
-              browser: browser,
-              id: test.id,
-              failure: result.failure,
-              item: item,
-              numItems: itemsCount,
-              snapshot: result.snapshot
-            }));
-            if (itemNumber + 1 == itemsCount) { // last item
-              next();
-            }
-        });
-        break;
-      case 'sanity':
-        execSanity(test.filenames,
           function (itemNumber, itemsCount, item, result) {
             postData('/result', JSON.stringify({
               browser: browser,
