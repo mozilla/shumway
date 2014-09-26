@@ -43,6 +43,7 @@ module Shumway.AVM2.AS.flash.display {
       this._url = '';
       this._isURLInaccessible = false;
       this._bytesLoaded = 0;
+      this._bytesLoadedChanged = false;
       this._bytesTotal = 0;
       this._applicationDomain = null;
       this._swfVersion = 9;
@@ -81,6 +82,7 @@ module Shumway.AVM2.AS.flash.display {
     _url: string;
     _isURLInaccessible: boolean;
     _bytesLoaded: number /*uint*/;
+    _bytesLoadedChanged: boolean;
     _bytesTotal: number /*uint*/;
     _applicationDomain: flash.system.ApplicationDomain;
     _swfVersion: number /*uint*/;
@@ -130,6 +132,13 @@ module Shumway.AVM2.AS.flash.display {
 
     get bytesLoaded(): number /*uint*/ {
       return this._bytesLoaded;
+    }
+    set bytesLoaded(value: number /*uint*/) {
+      if (value === this._bytesLoaded) {
+        return;
+      }
+      this._bytesLoaded = value;
+      this._bytesLoadedChanged = true;
     }
 
     get bytesTotal(): number /*uint*/ {
