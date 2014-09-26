@@ -40,7 +40,7 @@ module Shumway.AVM2.AS.flash.display {
   export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
 
     static classInitializer: any = function () {
-
+      // ...
     };
 
     _symbol: Shumway.Timeline.BitmapSymbol;

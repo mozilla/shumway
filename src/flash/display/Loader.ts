@@ -157,7 +157,7 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
 
-      this._writer = new IndentingWriter()
+      this._writer = new IndentingWriter();
       this._content = null;
       this._contentLoaderInfo = new flash.display.LoaderInfo();
 
@@ -239,7 +239,7 @@ module Shumway.AVM2.AS.flash.display {
     private _describeData(data: any): string {
       var keyValueParis = [];
       for (var k in data) {
-        keyValueParis.push(k + ":" + StringUtilities.toSafeString(data[k]))
+        keyValueParis.push(k + ":" + StringUtilities.toSafeString(data[k]));
       }
       return "{" + keyValueParis.join(", ") + "}";
     }
