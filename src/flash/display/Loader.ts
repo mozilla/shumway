@@ -101,11 +101,14 @@ module Shumway.AVM2.AS.flash.display {
     static WORKERS_AVAILABLE = typeof Worker !== 'undefined';
     static LOADER_PATH = 'swf/worker.js';
 
+    private static _commitFrameQueue: {loader: Loader; data: any}[] = [];
+
     /**
      * Handles the load status and dispatches progress events. This gets manually triggered in the
      * event loop to ensure the correct order of operations.
      */
     static progress() {
+      Loader.FlushCommittedFrames();
       var queue = Loader._loadQueue;
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
@@ -147,6 +150,14 @@ module Shumway.AVM2.AS.flash.display {
             assertUnreachable("Mustn't encounter unhandled status in Loader queue.");
         }
       }
+    }
+
+    private static FlushCommittedFrames() {
+      var frames = Loader._commitFrameQueue;
+      for (var i = 0; i < frames.length; i++) {
+        frames[i].loader._commitFrame(frames[i].data);
+      }
+      frames.length = 0;
     }
 
     constructor () {
@@ -313,12 +324,13 @@ module Shumway.AVM2.AS.flash.display {
             this._commitAsset(data);
           } else if (data.type === 'frame') {
             if (this._frameAssetsQueue) {
+              var self = this;
               suspendUntil = Promise.all(this._frameAssetsQueue).then(function () {
-                this._commitFrame(data);
-                this._frameAssetsQueue = null;
+                self._enqueueFrame(data);
+                self._frameAssetsQueue = null;
               }.bind(this));
             } else {
-              this._commitFrame(data);
+              this._enqueueFrame(data);
             }
           } else if (data.type === 'image') {
             this._commitImage(data);
@@ -413,7 +425,28 @@ module Shumway.AVM2.AS.flash.display {
       loaderInfo.registerSymbol(symbol);
     }
 
-    private _commitFrame(data: any): void {
+    /**
+     * Enqueues a frame for addition to the target Sprite/MovieClip.
+     *
+     * Frames aren't immediately committed because doing so also enqueues execution of
+     * constructors of any contained timeline children. In order to preserve the correct
+     * order of their execution relative to when Loader events are dispatched and the
+     * frame event cycle is run, we just enqueue them here.
+     *
+     * The only exception is the first frame of the main root's timeline. That is committed
+     * immediately as it triggers all code execution in the first place: the event loop
+     * isn't run before.
+     */
+    private _enqueueFrame(data: any): void {
+      if (this === Loader.getRootLoader()) {
+        this._commitFrame(data);
+        this._codeExecutionPromise.resolve(undefined);
+      } else {
+        Loader._commitFrameQueue.push({loader: this, data: data});
+      }
+    }
+
+    private _commitFrame(data: any) {
       var loaderInfo = this._contentLoaderInfo;
 
       // HACK: Someone should figure out how to set the color on the stage better.
@@ -498,8 +531,6 @@ module Shumway.AVM2.AS.flash.display {
           this._content = root;
         }
         this.addTimelineObjectAtDepth(this._content, 0);
-
-        this._codeExecutionPromise.resolve(undefined);
       }
 
       // For AVM1 SWFs directly loaded into AVM2 ones (or as the top-level SWF), unwrap the
