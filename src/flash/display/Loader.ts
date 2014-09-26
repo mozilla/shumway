@@ -124,10 +124,19 @@ module Shumway.AVM2.AS.flash.display {
             if (instance._loadingType === LoadingType.External) {
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
             }
+
+            // The first time any progress is made at all, a progress event with bytesLoaded = 0
+            // is dispatched.
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
                                                               false, false, 0, bytesTotal));
             instance._loadStatus = LoadStatus.Opened;
           case LoadStatus.Opened:
+            if (loaderInfo._bytesLoadedChanged) {
+              loaderInfo._bytesLoadedChanged = false;
+              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                                false, false, bytesLoaded,
+                                                                bytesTotal));
+            }
             if (!(instance._content &&
                   instance._content._hasFlags(DisplayObjectFlags.Constructed))) {
               break;
@@ -137,9 +146,6 @@ module Shumway.AVM2.AS.flash.display {
           case LoadStatus.Initialized:
             if (bytesLoaded === bytesTotal) {
               instance._loadStatus = LoadStatus.Complete;
-              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                                false, false, bytesLoaded,
-                                                                bytesTotal));
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
             }
             break;
@@ -264,7 +270,7 @@ module Shumway.AVM2.AS.flash.display {
         case 'init':
           var info = data.result;
 
-          loaderInfo._bytesLoaded = info.bytesLoaded;
+          loaderInfo.bytesLoaded = info.bytesLoaded;
           loaderInfo._bytesTotal = info.bytesTotal;
           loaderInfo._swfVersion = info.swfVersion;
           loaderInfo._frameRate = info.frameRate;
@@ -286,7 +292,7 @@ module Shumway.AVM2.AS.flash.display {
           var bytesLoaded = info.bytesLoaded;
           var bytesTotal = info.bytesTotal;
           release || assert (bytesLoaded <= bytesTotal, "Loaded bytes should not exceed total bytes.");
-          loaderInfo._bytesLoaded = bytesLoaded;
+          loaderInfo.bytesLoaded = bytesLoaded;
           if (!loaderInfo._bytesTotal) {
             loaderInfo._bytesTotal = bytesTotal;
           } else {
