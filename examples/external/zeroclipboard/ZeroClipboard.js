@@ -1561,6 +1561,11 @@
         }
       }
     }
+    if (_navigator.userAgent.indexOf('Firefox') >= 0) {
+      // Dirty hacking to make Shumway work
+      hasFlash = true;
+      flashVersion = '11.0.0.0';
+    } else
     if (_navigator.plugins && _navigator.plugins.length) {
       plugin = _navigator.plugins["Shockwave Flash"];
       inspectPlugin(plugin);
