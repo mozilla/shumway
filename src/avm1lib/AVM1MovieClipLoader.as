@@ -33,11 +33,14 @@ public dynamic class AVM1MovieClipLoader extends Object {
   private native function _setAS3Object(nativeLoader: Loader);
   private native function get _bytesLoaded(): Number;
 
+  private var _target: MovieClip;
+
   public function loadClip(url: String, target: Object): Boolean {
     var nativeObject: Loader = this._as3Object;
     var nativeTarget: MovieClip = typeof target === 'number'
                                   ? AVM1Utils.resolveLevel(target as Number)
                                   : AVM1Utils.resolveTarget(target);
+    _target = nativeTarget;
     nativeTarget._as3Object.addChild(nativeObject);
 
     nativeObject.contentLoaderInfo.addEventListener(Event.OPEN, openHandler);
@@ -65,19 +68,19 @@ public dynamic class AVM1MovieClipLoader extends Object {
   }
 
   private function openHandler(event: Event): void {
-    this.broadcastMessage('onLoadStart', event.target);
+    this.broadcastMessage('onLoadStart', _target);
   }
   private function progressHandler(event: ProgressEvent): void {
-    this.broadcastMessage('onLoadProgress', event.target, event.bytesLoaded, event.bytesTotal);
+    this.broadcastMessage('onLoadProgress', _target, event.bytesLoaded, event.bytesTotal);
   }
   private function ioErrorHandler(event: IOErrorEvent): void {
-    this.broadcastMessage('onLoadError', event.target, event.errorID, 501);
+    this.broadcastMessage('onLoadError', _target, event.errorID, 501);
   }
   private function completeHandler(event: Event): void {
-    this.broadcastMessage('onLoadComplete', event.target);
+    this.broadcastMessage('onLoadComplete', _target);
   }
   private function initHandler(event: Event): void {
-    this.broadcastMessage('onLoadInit', event.target);
+    this.broadcastMessage('onLoadInit', _target);
   }
 }
 }
