@@ -262,7 +262,7 @@ module Shumway.AVM2.AS.flash.display {
 
       var nextPromise = this._commitDataQueue.then(this._commitQueuedData.bind(this, data));
       if (traceLoaderOption.value) {
-        this._writer.writeTimeLn("Making " + nextPromise + " -> " + this._commitDataQueue + ", for: " + this._describeData(data));
+        this._writer.writeTimeLn("Making for: " + this._describeData(data));
       }
       this._commitDataQueue = nextPromise;
     }
@@ -419,13 +419,7 @@ module Shumway.AVM2.AS.flash.display {
               this._frameAssetsQueue = [];
             }
             this._frameAssetsQueue.push(new Promise(function (resolve) {
-              getPlayer().decodeImage(bitmapSymbol.data, bitmapSymbol.type, function (decodeImageResponseData: any) {
-                bitmapSymbol.data = decodeImageResponseData.data;
-                bitmapSymbol.type = decodeImageResponseData.type;
-                bitmapSymbol.width = decodeImageResponseData.width;
-                bitmapSymbol.height = decodeImageResponseData.height;
-                resolve(undefined);
-              });
+              getPlayer().decodeImage(bitmapSymbol, resolve);
             }));
           }
           break;

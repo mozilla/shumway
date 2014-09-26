@@ -3745,14 +3745,6 @@ module Shumway {
   global.Promise = Promise;
 })();
 
-var _nextPromiseId = 0;
-Promise.prototype.toString = function () {
-  if (this._id === undefined) {
-    this._id = _nextPromiseId++;
-  }
-  return "Promise " + this._id;
-}
-
 declare var exports;
 if (typeof exports !== "undefined") {
   exports["Shumway"] = Shumway;

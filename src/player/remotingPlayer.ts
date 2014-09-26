@@ -443,12 +443,6 @@ module Shumway.Remoting.Player {
 
   }
 
-  export enum EventKind {
-    Focus,
-    Mouse,
-    Keyboard
-  }
-
   export interface DecodeImageResponseData {
     promiseId: number;
     type: ImageType;

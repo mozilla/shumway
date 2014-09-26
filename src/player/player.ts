@@ -63,7 +63,24 @@ module Shumway.Player {
 
     private _mouseEventDispatcher: MouseEventDispatcher;
     private _keyboardEventDispatcher: KeyboardEventDispatcher;
-    private _promises: PromiseWrapper<any> [] = [];
+
+    /**
+     * Used to request things from the GFX remote.
+     */
+    private _pendingPromises: PromiseWrapper<any> [] = [];
+
+    /**
+     * Returns an id that can be remoted to GFX.
+     */
+    private _getNextAvailablePromiseId(): number {
+      var length = this._pendingPromises.length;
+      for (var i = 0; i < length; i++) {
+        if (!this._pendingPromises[i]) {
+          return i;
+        }
+      }
+      return length;
+    }
 
     public externalCallback: (functionName: string, args: any[]) => any = null;
 
@@ -156,7 +173,6 @@ module Shumway.Player {
 
     public processUpdates(updates: DataBuffer, assets: any []) {
       var deserializer = new Remoting.Player.PlayerChannelDeserializer();
-      var EventKind = Remoting.Player.EventKind;
       var FocusEventType = Remoting.FocusEventType;
 
       deserializer.input = updates;
@@ -201,9 +217,11 @@ module Shumway.Player {
           break;
         case MessageTag.DecodeImageResponse:
           var decodeImageResponseData = <Shumway.Remoting.Player.DecodeImageResponseData>message;
-          var decodeImagePromise = this._promises[decodeImageResponseData.promiseId];
+          var promiseId = decodeImageResponseData.promiseId;
+          var decodeImagePromise = this._pendingPromises[promiseId];
           release || assert(decodeImagePromise, "We should be resolving an unresolved decode image promise at this point.");
           decodeImagePromise.resolve(message);
+          this._pendingPromises[promiseId] = null;
           break;
       }
     }
@@ -250,32 +268,35 @@ module Shumway.Player {
       return this.onSendUpdates(output, assets, false);
     }
 
-    private _getNextAvailablePromiseId(): number {
-      var length = this._promises.length;
-      for (var i = 0; i < length; i++) {
-        if (!this._promises[i]) {
-          return i;
-        }
-      }
-      return length;
-    }
-
     /**
-     * Decodes an image asynchronously.
+     * Decodes an image asynchronously and updates the values in the specified |bitmapSymbol| once the
+     * decoded image data is available. The |resolve| callback is called once the data is available.
+     *
+     * We send a |MessageTag.DecodeImage| message to the GFX backend which then decodes the image asynchronously,
+     * and sends us back a |MessageTag.DecodeImageResponse| with the available data.
+     *
+     * TODO: Make sure we get called back if an error occurs while decoding the image.
      */
-    public decodeImage(data: Uint8Array, type: ImageType, ondecoded: (decodeImageResponseData: Shumway.Remoting.Player.DecodeImageResponseData) => void) {
+    public decodeImage(bitmapSymbol: Shumway.Timeline.BitmapSymbol, resolve: (result) => void) {
+      release || assert (bitmapSymbol.type === ImageType.PNG ||
+                         bitmapSymbol.type === ImageType.GIF ||
+                         bitmapSymbol.type === ImageType.JPEG, "No need to decode any other image formats.");
       var output = new DataBuffer();
       var assets = [];
       var serializer = new Remoting.Player.PlayerChannelSerializer();
       serializer.output = output;
       serializer.outputAssets = assets;
       var promiseId = this._getNextAvailablePromiseId();
-      serializer.writeDecodeImage(promiseId, type, data);
+      serializer.writeDecodeImage(promiseId, bitmapSymbol.type, bitmapSymbol.data);
       output.writeInt(Remoting.MessageTag.EOF);
       this.onSendUpdates(output, assets);
-      var promiseWrapper = this._promises[promiseId] = new PromiseWrapper<any>();
-      promiseWrapper.promise.then(function (value) {
-        ondecoded(value);
+      var promiseWrapper = this._pendingPromises[promiseId] = new PromiseWrapper<any>();
+      promiseWrapper.promise.then(function (decodeImageResponseData: Shumway.Remoting.Player.DecodeImageResponseData) {
+        bitmapSymbol.data = decodeImageResponseData.data;
+        bitmapSymbol.type = decodeImageResponseData.type;
+        bitmapSymbol.width = decodeImageResponseData.width;
+        bitmapSymbol.height = decodeImageResponseData.height;
+        resolve(undefined);
       });
     }
 

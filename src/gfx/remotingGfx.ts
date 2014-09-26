@@ -172,6 +172,9 @@ module Shumway.Remoting.GFX {
         self._context.drawImage(image, 0, 0);
         oncomplete(self._context.getImageData(0, 0, image.width, image.height));
       };
+      image.onerror = function () {
+        oncomplete(null);
+      };
     }
   }
 
@@ -568,7 +571,11 @@ module Shumway.Remoting.GFX {
         var assets = [];
         serializer.output = buffer;
         serializer.outputAssets = assets;
-        serializer.writeDecodeImageResponse(promiseId, ImageType.StraightAlphaRGBA, imageData.data, imageData.width, imageData.height);
+        if (imageData) {
+          serializer.writeDecodeImageResponse(promiseId, ImageType.StraightAlphaRGBA, imageData.data, imageData.width, imageData.height);
+        } else {
+          serializer.writeDecodeImageResponse(promiseId, ImageType.None, null, 0, 0);
+        }
         self.context._easelHost.onSendUpdates(buffer, assets);
       });
     }
