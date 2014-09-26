@@ -766,7 +766,7 @@ module Shumway {
         descriptor.set = value;
       }
       Object.defineProperty(obj, name, descriptor);
-  }
+    }
 
     export function defineNonEnumerableGetter(obj, name, getter) {
       Object.defineProperty(obj, name, { get: getter,
@@ -851,12 +851,18 @@ module Shumway {
       }
     }
 
+    /**
+     * Returns a reasonably sized description of the |value|, to be used for debugging purposes.
+     */
     export function toSafeString(value) {
       if (typeof value === "string") {
         return "\"" + value + "\"";
       }
       if (typeof value === "number" || typeof value === "boolean") {
         return String(value);
+      }
+      if (value instanceof Array) {
+        return "[] " + value.length;
       }
       return typeof value;
     }
@@ -1731,6 +1737,12 @@ module Shumway {
     writeLn(str: string = "") {
       if (!this._suppressOutput) {
         this._out(this._padding + str);
+      }
+    }
+
+    writeTimeLn(str: string = "") {
+      if (!this._suppressOutput) {
+        this._out(this._padding + performance.now().toFixed(2) + " " + str);
       }
     }
 
@@ -3732,6 +3744,14 @@ module Shumway {
 
   global.Promise = Promise;
 })();
+
+var _nextPromiseId = 0;
+Promise.prototype.toString = function () {
+  if (this._id === undefined) {
+    this._id = _nextPromiseId++;
+  }
+  return "Promise " + this._id;
+}
 
 declare var exports;
 if (typeof exports !== "undefined") {

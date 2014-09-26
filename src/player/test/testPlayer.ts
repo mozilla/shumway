@@ -75,7 +75,7 @@ module Shumway.Player.Test {
       switch (data.type) {
         case 'gfx':
           var updates = DataBuffer.FromArrayBuffer(e.data.updates.buffer);
-          this.processEventUpdates(updates);
+          this.processUpdates(updates, e.data.assets);
           break;
         case 'externalCallback':
           this.processExternalCallback(data.request);

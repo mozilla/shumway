@@ -40,6 +40,7 @@ module Shumway.Player {
 
   import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
   import IFSCommandListener = flash.system.IFSCommandListener;
+  import MessageTag = Shumway.Remoting.MessageTag;
 
   /**
    * Shumway Player
@@ -62,6 +63,7 @@ module Shumway.Player {
 
     private _mouseEventDispatcher: MouseEventDispatcher;
     private _keyboardEventDispatcher: KeyboardEventDispatcher;
+    private _promises: PromiseWrapper<any> [] = [];
 
     public externalCallback: (functionName: string, args: any[]) => any = null;
 
@@ -152,31 +154,32 @@ module Shumway.Player {
       }
     }
 
-    public processEventUpdates(updates: DataBuffer) {
+    public processUpdates(updates: DataBuffer, assets: any []) {
       var deserializer = new Remoting.Player.PlayerChannelDeserializer();
       var EventKind = Remoting.Player.EventKind;
       var FocusEventType = Remoting.FocusEventType;
 
       deserializer.input = updates;
+      deserializer.inputAssets = assets;
 
-      var event = deserializer.readEvent();
-      switch (<Remoting.Player.EventKind>(event.kind)) {
-        case EventKind.Keyboard:
+      var message = deserializer.read();
+      switch (message.tag) {
+        case MessageTag.KeyboardEvent:
           // If the stage doesn't have a focus then dispatch events on the stage
           // directly.
           var target = this._stage.focus ? this._stage.focus : this._stage;
           this._keyboardEventDispatcher.target = target;
-          this._keyboardEventDispatcher.dispatchKeyboardEvent(<KeyboardEventData>event);
+          this._keyboardEventDispatcher.dispatchKeyboardEvent(<KeyboardEventData>message);
           break;
-        case EventKind.Mouse:
+        case MessageTag.MouseEvent:
           this._mouseEventDispatcher.stage = this._stage;
-          var target = this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>event);
+          var target = this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>message);
           if (traceMouseEventOption.value) {
-            this._writer.writeLn("Mouse Event: type: " + event.type + ", target: " + target + ", name: " + target._name);
+            this._writer.writeLn("Mouse Event: type: " + message.type + ", target: " + target + ", name: " + target._name);
           }
           break;
-        case EventKind.Focus:
-          var focusType = (<FocusEventData>event).type;
+        case MessageTag.FocusEvent:
+          var focusType = (<FocusEventData>message).type;
           switch (focusType) {
             case FocusEventType.DocumentHidden:
               this._isPageVisible = false;
@@ -195,6 +198,12 @@ module Shumway.Player {
               this._hasFocus = true;
               break;
           }
+          break;
+        case MessageTag.DecodeImageResponse:
+          var decodeImageResponseData = <Shumway.Remoting.Player.DecodeImageResponseData>message;
+          var decodeImagePromise = this._promises[decodeImageResponseData.promiseId];
+          release || assert(decodeImagePromise, "We should be resolving an unresolved decode image promise at this point.");
+          decodeImagePromise.resolve(message);
           break;
       }
     }
@@ -239,6 +248,35 @@ module Shumway.Player {
       serializer.writeRequestBitmapData(bitmapData);
       output.writeInt(Remoting.MessageTag.EOF);
       return this.onSendUpdates(output, assets, false);
+    }
+
+    private _getNextAvailablePromiseId(): number {
+      var length = this._promises.length;
+      for (var i = 0; i < length; i++) {
+        if (!this._promises[i]) {
+          return i;
+        }
+      }
+      return length;
+    }
+
+    /**
+     * Decodes an image asynchronously.
+     */
+    public decodeImage(data: Uint8Array, type: ImageType, ondecoded: (decodeImageResponseData: Shumway.Remoting.Player.DecodeImageResponseData) => void) {
+      var output = new DataBuffer();
+      var assets = [];
+      var serializer = new Remoting.Player.PlayerChannelSerializer();
+      serializer.output = output;
+      serializer.outputAssets = assets;
+      var promiseId = this._getNextAvailablePromiseId();
+      serializer.writeDecodeImage(promiseId, type, data);
+      output.writeInt(Remoting.MessageTag.EOF);
+      this.onSendUpdates(output, assets);
+      var promiseWrapper = this._promises[promiseId] = new PromiseWrapper<any>();
+      promiseWrapper.promise.then(function (value) {
+        ondecoded(value);
+      });
     }
 
     public registerFont(font: flash.text.Font) {

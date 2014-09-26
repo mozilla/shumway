@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Class: Loader
-
 module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import warning = Shumway.Debug.warning;
@@ -51,11 +49,17 @@ module Shumway.AVM2.AS.flash.display {
     Bytes       = 1
   }
 
+  function getPlayer(): any {
+    return AVM2.instance.globals['Shumway.Player.Utils'];
+  }
+
   export class Loader extends flash.display.DisplayObjectContainer implements IAdvancable {
 
     private static _rootLoader: Loader;
     private static _loadQueue: Loader [];
     private static _embeddedContentLoadCount: number = 0;
+
+    private _writer: IndentingWriter;
 
     /**
      * Creates or returns the root Loader instance. The loader property of that instance's
@@ -153,6 +157,7 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
 
+      this._writer = new IndentingWriter()
       this._content = null;
       this._contentLoaderInfo = new flash.display.LoaderInfo();
 
@@ -228,6 +233,20 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _codeExecutionPromise: PromiseWrapper<any>;
 
+    /**
+     * No way of knowing what's in |data|, so do a best effort to print out some meaninfgul debug info.
+     */
+    private _describeData(data: any): string {
+      var keyValueParis = [];
+      for (var k in data) {
+        keyValueParis.push(k + ":" + StringUtilities.toSafeString(data[k]))
+      }
+      return "{" + keyValueParis.join(", ") + "}";
+    }
+
+    /**
+     * Chain a promise for |data| to the previous promise.
+     */
     private _commitData(data: any): void {
       if (this._waitForInitialData) {
         // 'progress' event usually fires after 64K, using this as a start to
@@ -241,14 +260,27 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
 
-      this._commitDataQueue = this._commitDataQueue.then(
-        this._commitQueuedData.bind(this, data));
+      var nextPromise = this._commitDataQueue.then(this._commitQueuedData.bind(this, data));
+      if (traceLoaderOption.value) {
+        this._writer.writeTimeLn("Making " + nextPromise + " -> " + this._commitDataQueue + ", for: " + this._describeData(data));
+      }
+      this._commitDataQueue = nextPromise;
     }
 
+    /**
+     * Returns a promise for the requested |data|. Some of these resolve right away, returning |null|
+     * others return a promise that is suspended until some other thing is resolved, like font loading
+     * or image decoding.
+     */
     private _commitQueuedData(data: any): Promise<any> {
       var loaderInfo = this._contentLoaderInfo;
       var command = data.command;
       var suspendUntil: Promise<any> = null;
+
+      if (traceLoaderOption.value) {
+        this._writer.writeTimeLn("Executing Promise: " + this._describeData(data));
+      }
+
       switch (command) {
         case 'init':
           var info = data.result;
@@ -268,6 +300,9 @@ module Shumway.AVM2.AS.flash.display {
           if (!info.fileAttributes || !info.fileAttributes.doAbc) {
             loaderInfo._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
             suspendUntil = this._initAvm1();
+            if (traceLoaderOption.value) {
+              this._writer.writeTimeLn("Suspending until AVM1 is initialized.");
+            }
           }
           break;
         case 'progress':
@@ -288,6 +323,9 @@ module Shumway.AVM2.AS.flash.display {
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS, false,
                                                               false, bytesLoaded, bytesTotal));
             this._progressPromise.resolve(undefined);
+            if (traceLoaderOption.value) {
+              this._writer.writeTimeLn("Resolving progress promise.");
+            }
           }
           break;
         case 'complete':
@@ -297,9 +335,6 @@ module Shumway.AVM2.AS.flash.display {
 
           this._worker && this._worker.terminate();
           break;
-        //case 'empty':
-        //  this._lastPromise = Promise.resolve();
-        //  break;
         case 'error':
           this._contentLoaderInfo.dispatchEvent(new events.IOErrorEvent(
                                                     events.IOErrorEvent.IO_ERROR));
@@ -313,6 +348,9 @@ module Shumway.AVM2.AS.flash.display {
             this._commitAsset(data);
           } else if (data.type === 'frame') {
             if (this._frameAssetsQueue) {
+              if (traceLoaderOption.value) {
+                this._writer.writeTimeLn("Suspending frame execution until all of its assets are resolved.");
+              }
               suspendUntil = Promise.all(this._frameAssetsQueue).then(function () {
                 this._commitFrame(data);
                 this._frameAssetsQueue = null;
@@ -373,7 +411,23 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.MorphShapeSymbol.FromData(data, loaderInfo);
           break;
         case 'image':
-          symbol = Timeline.BitmapSymbol.FromData(data);
+          var bitmapSymbol = symbol = Timeline.BitmapSymbol.FromData(data);
+          if (bitmapSymbol.type === ImageType.PNG ||
+              bitmapSymbol.type === ImageType.GIF ||
+              bitmapSymbol.type === ImageType.JPEG) {
+            if (!this._frameAssetsQueue) {
+              this._frameAssetsQueue = [];
+            }
+            this._frameAssetsQueue.push(new Promise(function (resolve) {
+              getPlayer().decodeImage(bitmapSymbol.data, bitmapSymbol.type, function (decodeImageResponseData: any) {
+                bitmapSymbol.data = decodeImageResponseData.data;
+                bitmapSymbol.type = decodeImageResponseData.type;
+                bitmapSymbol.width = decodeImageResponseData.width;
+                bitmapSymbol.height = decodeImageResponseData.height;
+                resolve(undefined);
+              });
+            }));
+          }
           break;
         case 'label':
         case 'text':
@@ -389,7 +443,7 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.FontSymbol.FromData(data);
           var font = flash.text.Font.initializeFrom(symbol);
           flash.text.Font.instanceConstructorNoInitialize.call(font);
-          AVM2.instance.globals['Shumway.Player.Utils'].registerFont(font);
+          getPlayer().registerFont(font);
 
           // For non-Firefox browsers, we have to wait until font is "loaded"
           if (typeof navigator !== 'undefined' &&

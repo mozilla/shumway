@@ -84,7 +84,7 @@ module Shumway.Player.Window {
           case 'gfx':
             var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
             var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
-            this.processEventUpdates(updates);
+            this.processUpdates(updates, data.assets);
             break;
           case 'externalCallback':
             this.processExternalCallback(data.request);

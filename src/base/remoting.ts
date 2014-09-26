@@ -80,6 +80,9 @@ module Shumway.Remoting {
     UpdateNetStream             = 105,
     RequestBitmapData           = 106,
 
+    DecodeImage                 = 107,
+    DecodeImageResponse         = 108,
+
     RegisterFont                = 200,
     DrawToBitmap                = 201,
 
