@@ -79,10 +79,17 @@ function setupServices() {
     }
   };
 
+  Shumway.ClipboardService.instance = {
+    setClipboard: function (data) {
+      window.parent.postMessage({
+        callback: 'setClipboard',
+        data: data
+      }, '*');
+    }
+  };
+
   Shumway.FileLoadingService.instance = {
-    get baseUrl() {
-      return movieUrl;
-    },
+    baseUrl: null,
     nextSessionId: 1, // 0 - is reserved
     sessions: [],
     createSession: function () {
