@@ -416,40 +416,46 @@ module Shumway.AVM2.AS.flash.display {
       // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of
       // the source rect, however a width of |0.5| rounds down rather than up so we're not
       // quite correct here.
-      var sR = this._getTemporaryRectangleFrom(sourceRect, 0).roundInPlace();
+      var sRect = this._getTemporaryRectangleFrom(sourceRect, 0).roundInPlace();
 
-      // Remember the original source rect in case in case the intersection changes it.
-      var oR = this._getTemporaryRectangleFrom(sR, 1);
-      var sR = sR.intersectInPlace(sourceBitmapData._rect);
+      var tBRect = this._rect;
+      var sBRect = sourceBitmapData._rect;
 
-      // Clipped source rect is empty so there's nothing to do.
-      if (sR.isEmpty()) {
+      // Clip sRect against SBRect.
+      var sL = Math.max(sRect.x, 0);
+      var sT = Math.max(sRect.y, 0);
+      var sR = Math.min(sRect.x + sRect.width, sBRect.width);
+      var sB = Math.min(sRect.y + sRect.height, sBRect.height);
+
+      // Compute source rect offsets (in case the source rect had negative x, y coordinates).
+      var oX = sL - sRect.x ;
+      var oY = sT - sRect.y;
+
+      var tL = destPoint.x | 0 + oX;
+      var tT = destPoint.y | 0 + oY;
+
+      if (tL < 0) {
+        sL -= tL;
+        tL = 0;
+      }
+
+      if (tT < 0) {
+        sT -= tT;
+        tT = 0;
+      }
+
+      var tW = Math.min(sR - sL, tBRect.width - tL);
+      var tH = Math.min(sB - sT, tBRect.height - tT);
+
+      if (tW <= 0 || tH <= 0) {
         return;
       }
 
-      // Compute source rect offsets (in case the source rect had negative x, y coordinates).
-      var oX = sR.x - oR.x | 0;
-      var oY = sR.y - oR.y | 0;
+      var sX = sL;
+      var sY = sT;
 
-      // Compute the target rect taking into account the offsets and then clip it against the
-      // target.
-      var tR = this._getTemporaryRectangleFrom(null, 2);
-      tR.setTo (
-        destPoint.x | 0 + oX,
-        destPoint.y | 0 + oY,
-        oR.width - oX | 0,
-        oR.height - oY | 0
-      );
-      tR.intersectInPlaceInt32(this._rect);
-
-      var sX = sR.x | 0;
-      var sY = sR.y | 0;
-
-      var tX = tR.x | 0;
-      var tY = tR.y | 0;
-
-      var tW = tR.width | 0;
-      var tH = tR.height | 0;
+      var tX = tL;
+      var tY = tT;
 
       var sStride = sourceBitmapData._rect.width;
       var tStride = this._rect.width;
