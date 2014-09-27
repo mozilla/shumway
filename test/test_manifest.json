@@ -209,7 +209,18 @@
       "swf": "swfs/acid/acid-text.swf",
       "type": "eq"
     },
-
+    {  "id": "acid-textfield",
+      "frames": [1],
+      "swf": "swfs/acid/acid-textfield.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-textfield-stas",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/acid/acid-textfield.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "getObjectsUnderPoint",
       "stas": "swfs/trace.stas",
       "filenames": [
