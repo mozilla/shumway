@@ -101,6 +101,8 @@ module Shumway.AVM2.AS.flash.display {
     static WORKERS_AVAILABLE = typeof Worker !== 'undefined';
     static LOADER_PATH = 'swf/worker.js';
 
+    static runtimeStartTime: number = 0;
+
     private static _commitFrameQueue: {loader: Loader; data: any}[] = [];
 
     /**
@@ -445,6 +447,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _enqueueFrame(data: any): void {
       if (this === Loader.getRootLoader()) {
+        Loader.runtimeStartTime = Date.now();
         this._commitFrame(data);
         this._codeExecutionPromise.resolve(undefined);
       } else {
