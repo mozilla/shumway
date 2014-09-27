@@ -683,10 +683,33 @@ module Shumway.AVM2.AS.flash.text {
       this._selectionBeginIndex = beginIndex | 0;
       this._selectionEndIndex = endIndex | 0;
     }
+
     setTextFormat(format: flash.text.TextFormat, beginIndex: number /*int*/ = -1, endIndex: number /*int*/ = -1): void {
       format = format; beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      somewhatImplemented("public flash.text.TextField::setTextFormat"); return;
+      var plainText = this._textContent.plainText;
+      var maxIndex = plainText.length;
+      if (beginIndex < 0) {
+        beginIndex = 0;
+        if (endIndex < 0) {
+          endIndex = maxIndex;
+        }
+      } else {
+        if (endIndex < 0) {
+          endIndex = beginIndex + 1;
+        }
+      }
+      if (beginIndex > maxIndex || endIndex > maxIndex) {
+        throwError('RangeError', Errors.ParamRangeError);
+      }
+      if (endIndex <= beginIndex) {
+        return;
+      }
+      var subText = plainText.substring(beginIndex, endIndex);
+      this._textContent.replaceText(beginIndex, endIndex, subText, format);
+      this._invalidateContent();
+      this._ensureLineMetrics();
     }
+
     getImageReference(id: string): flash.display.DisplayObject {
       id = "" + id;
       notImplemented("public flash.text.TextField::getImageReference"); return;

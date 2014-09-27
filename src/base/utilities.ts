@@ -2991,7 +2991,7 @@ module Shumway {
     }
 
     export function rgbToHex(color: number): string {
-      return '#' + ('000000' + color.toString(16)).slice(-6);
+      return '#' + ('000000' + (color >>> 0).toString(16)).slice(-6);
     }
 
     export function isValidHexColor(value: any): boolean {
