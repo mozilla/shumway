@@ -325,8 +325,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get bottomScrollV(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get bottomScrollV"); return;
-      // return this._bottomScrollV;
+      return this._bottomScrollV;
     }
     get caretIndex(): number /*int*/ {
       notImplemented("public flash.text.TextField::get caretIndex"); return;
@@ -334,7 +333,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get condenseWhite(): boolean {
-      somewhatImplemented("public flash.text.TextField::get condenseWhite");
       return this._condenseWhite;
     }
 
@@ -472,7 +470,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set selectable(value: boolean) {
-      somewhatImplemented("public flash.text.TextField::set selectable");
       this._selectable = !!value;
     }
 
@@ -694,6 +691,7 @@ module Shumway.AVM2.AS.flash.text {
     getRawText(): string {
       notImplemented("public flash.text.TextField::getRawText"); return;
     }
+
     replaceSelectedText(value: string): void {
       value = "" + value;
       this.replaceText(this._selectionBeginIndex, this._selectionEndIndex, value);
@@ -708,8 +706,8 @@ module Shumway.AVM2.AS.flash.text {
       this._invalidateContent();
       this._ensureLineMetrics();
     }
+
     setSelection(beginIndex: number /*int*/, endIndex: number /*int*/): void {
-      somewhatImplemented("public flash.text.TextField::setSelection");
       this._selectionBeginIndex = beginIndex | 0;
       this._selectionEndIndex = endIndex | 0;
     }
@@ -741,7 +739,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     getImageReference(id: string): flash.display.DisplayObject {
-      id = "" + id;
+      //id = "" + id;
       notImplemented("public flash.text.TextField::getImageReference"); return;
     }
   }
