@@ -696,8 +696,9 @@ module Shumway.AVM2.AS.flash.text {
     }
     replaceSelectedText(value: string): void {
       value = "" + value;
-      notImplemented("public flash.text.TextField::replaceSelectedText"); return;
+      this.replaceText(this._selectionBeginIndex, this._selectionEndIndex, value);
     }
+
     replaceText(beginIndex: number /*int*/, endIndex: number /*int*/, newText: string): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; newText = "" + newText;
       if (beginIndex < 0 || endIndex < 0) {
