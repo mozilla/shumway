@@ -1132,26 +1132,10 @@ module Shumway.AVM2.AS {
     static CACHE_NUMERIC_COMPARATORS = true;
     static numericComparatorCache = createEmptyObject();
 
-    private static _pop(o: any): any {
-      return o.pop();
-    }
-    private static _reverse(o: any): any {
-      return o.reverse();
-    }
-    private static _concat(o: any, args: any []): any [] {
-      return o.concat.apply(o, args);
-    }
-    private static _shift(o: any): any {
-      return o.shift();
-    }
-    private static _slice(o: any, A: number, B: number): any [] {
-      A = +A; B = +B;
-      return o.slice(A, B);
-    }
-    private static _unshift(o: any, args: any []): number /*uint*/ {
-      return o.unshift.apply(o, args);
-    }
     private static _splice(o: any, args: any []): any [] {
+      if (args.length === 0) {
+        return undefined;
+      }
       return o.splice.apply(o, args);
     }
     private static _sort(o: any, args: any []): any {
@@ -1201,14 +1185,6 @@ module Shumway.AVM2.AS {
       }
       return o;
     }
-    private static _indexOf(o: any, searchElement: any, fromIndex: number /*int*/): number /*int*/ {
-      fromIndex = fromIndex | 0;
-      return o.indexOf(searchElement, fromIndex);
-    }
-    private static _lastIndexOf(o: any, searchElement: any, fromIndex: number /*int*/ = 0): number /*int*/ {
-      fromIndex = fromIndex | 0;
-      return o.lastIndexOf(searchElement, fromIndex);
-    }
     private static _every(o: any, callback: Function, thisObject: any): boolean {
       for (var i = 0; i < o.length; i++) {
         if (callback.call(thisObject, o[i], i, o) !== true) {
@@ -1225,15 +1201,6 @@ module Shumway.AVM2.AS {
         }
       }
       return result;
-    }
-    private static _forEach(o: any, callback: Function, thisObject: any): void {
-      return o.forEach(callback, thisObject);
-    }
-    private static _map(o: any, callback: Function, thisObject: any): any [] {
-      return o.map(callback, thisObject);
-    }
-    private static _some(o: any, callback: Function, thisObject: any): boolean {
-      return o.some(callback, thisObject);
     }
     get native_length(): number /*uint*/ {
       return (<any>this).length;
