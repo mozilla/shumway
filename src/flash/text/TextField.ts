@@ -645,9 +645,38 @@ module Shumway.AVM2.AS.flash.text {
       charIndex = charIndex | 0;
       notImplemented("public flash.text.TextField::getParagraphLength"); return;
     }
+
     getTextFormat(beginIndex: number /*int*/ = -1, endIndex: number /*int*/ = -1): flash.text.TextFormat {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextField::getTextFormat"); return;
+      var plainText = this._textContent.plainText;
+      var maxIndex = plainText.length;
+      if (beginIndex < 0) {
+        beginIndex = 0;
+        if (endIndex < 0) {
+          endIndex = maxIndex;
+        }
+      } else {
+        if (endIndex < 0) {
+          endIndex = beginIndex + 1;
+        }
+      }
+      if (endIndex <= beginIndex || endIndex > maxIndex) {
+        throwError('RangeError', Errors.ParamRangeError);
+      }
+      var format: TextFormat;
+      var textRuns = this._textContent.textRuns;
+      for (var i = 0; i < textRuns.length; i++) {
+        var run = textRuns[i];
+        if (beginIndex >= run.beginIndex && beginIndex < run.endIndex ||
+            endIndex > run.beginIndex && endIndex <= run.endIndex) {
+          if (format) {
+            format.intersect(run.textFormat);
+          } else {
+            format = run.textFormat.clone();
+          }
+        }
+      }
+      return format;
     }
 
     getTextRuns(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): any [] {
