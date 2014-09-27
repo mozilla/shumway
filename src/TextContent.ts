@@ -410,5 +410,77 @@ module Shumway {
       //textRunData.writeInt(textFormat.tabStops);
       textRunData.writeBoolean(!!textFormat.underline);
     }
+
+    replaceText(beginIndex: number, endIndex: number, newText: string, format?: flash.text.TextFormat) {
+      if (endIndex < beginIndex) {
+        return;
+      }
+
+      var defaultTextFormat = this.defaultTextFormat;
+      var newFormat = defaultTextFormat;
+      if (format) {
+        newFormat = newFormat.clone();
+        newFormat.merge(format);
+      }
+
+      var plainText = this._plainText;
+      if (beginIndex <= 0 && endIndex >= plainText.length) {
+        if (format) {
+          this.defaultTextFormat = newFormat;
+          this.plainText = newText;
+          this.defaultTextFormat = defaultTextFormat;
+        } else {
+          this.plainText = newText;
+        }
+        return;
+      }
+
+      var textRuns = this.textRuns;
+      var newEndIndex = beginIndex + newText.length;
+
+      if (beginIndex >= plainText.length) {
+        this._plainText += newText;
+        var run = new flash.text.TextRun(beginIndex, newEndIndex, newFormat);
+        textRuns.push(run);
+        this._writeTextRun(run);
+        this.flags |= TextContentFlags.DirtyContent;
+        return;
+      }
+
+      var newTextRuns: flash.text.TextRun[] = [];
+      var shift = newEndIndex - endIndex;
+      for (var i = 0; i < textRuns.length; i++) {
+        var run = textRuns[i];
+        if (beginIndex <= run.beginIndex && endIndex >= run.endIndex) {
+          continue;
+        }
+        if (beginIndex > run.beginIndex && endIndex < run.endIndex) {
+          run.endIndex += shift;
+        } else if (beginIndex > run.beginIndex && beginIndex <= run.endIndex) {
+          run.endIndex = beginIndex;
+        } else if (endIndex >= run.beginIndex && endIndex < run.endIndex) {
+          if (i === 0 || format) {
+            newTextRuns.push(
+              new flash.text.TextRun(beginIndex, newEndIndex, newFormat)
+            );
+            run.beginIndex =  newEndIndex;
+          } else {
+            run.beginIndex = beginIndex;
+            run.endIndex += shift;
+          }
+        } else if (endIndex < run.beginIndex) {
+          run.beginIndex += shift;
+          run.endIndex += shift;
+        }
+        newTextRuns.push(run);
+      }
+      this._plainText = plainText.substring(0, beginIndex) + newText + plainText.substring(endIndex);
+      this.textRuns = newTextRuns;
+      this.textRunData.clear();
+      for (var i = 0; i < newTextRuns.length; i++) {
+        this._writeTextRun(newTextRuns[i]);
+      }
+      this.flags |= TextContentFlags.DirtyContent;
+    }
   }
 }
