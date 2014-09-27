@@ -80,7 +80,13 @@ public dynamic class AVM1MovieClipLoader extends Object {
     this.broadcastMessage('onLoadComplete', _target);
   }
   private function initHandler(event: Event): void {
+    // MovieClipLoader's init event is dispatched after all frame scripts of the AVM1 instance
+    // have run for one additional iteration.
+    _as3Object.addEventListener(Event.EXIT_FRAME, self_exitFrame);
+  }
+  private function self_exitFrame(event: Event): void {
     this.broadcastMessage('onLoadInit', _target);
+    _as3Object.removeEventListener(Event.EXIT_FRAME, self_exitFrame);
   }
 }
 }
