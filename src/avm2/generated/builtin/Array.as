@@ -25,25 +25,7 @@ public dynamic class Array extends Object
   public static const length:int = 1
 
   // ECMA 15.4.2.2
-  public function Array(...args)
-  {
-    var n:uint = args.length
-    if (n == 1 && (args[0] is Number))
-    {
-      var dlen:Number = args[0];
-      var ulen:uint = dlen
-      if (ulen != dlen)
-        Error.throwError( RangeError, 1005 /*kArrayIndexNotIntegerError*/, dlen );
-      length = ulen;
-    }
-    else
-    {
-      // FIXME why not just return args?
-      length = n
-      for (var i:uint=0; i < n; i++)
-        this[i] = args[i]
-    }
-  }
+  public native function Array(...args);
 
   /**
    15.4.4.5 Array.prototype.join (separator)
