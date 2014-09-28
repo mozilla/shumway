@@ -179,7 +179,7 @@ module Shumway.AVM2.AS {
      */
     every(callback, thisObject) {
       for (var i = 0; i < this._length; i++) {
-        if (!callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
+        if (!callback.call(thisObject, this._buffer[this._offset + i], i, this)) {
           return false;
         }
       }
@@ -194,8 +194,8 @@ module Shumway.AVM2.AS {
     filter(callback, thisObject) {
       var v = new Uint32Vector();
       for (var i = 0; i < this._length; i++) {
-        if (callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
-          v.push(this.asGetNumericProperty(i));
+        if (callback.call(thisObject, this._buffer[this._offset + i], i, this)) {
+          v.push(this._buffer[this._offset + i]);
         }
       }
       return v;
@@ -208,7 +208,7 @@ module Shumway.AVM2.AS {
         throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       for (var i = 0; i < this._length; i++) {
-        if (callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
+        if (callback.call(thisObject, this._buffer[this._offset + i], i, this)) {
           return true;
         }
       }
@@ -217,7 +217,7 @@ module Shumway.AVM2.AS {
 
     forEach(callback, thisObject) {
       for (var i = 0; i < this._length; i++) {
-        callback.call(thisObject, this.asGetNumericProperty(i), i, this);
+        callback.call(thisObject, this._buffer[this._offset + i], i, this);
       }
     }
 
@@ -239,7 +239,7 @@ module Shumway.AVM2.AS {
       }
       var v = new Uint32Vector();
       for (var i = 0; i < this._length; i++) {
-        v.push(callback.call(thisObject, this.asGetNumericProperty(i), i, this));
+        v.push(callback.call(thisObject, this._buffer[this._offset + i], i, this));
       }
       return v;
     }
@@ -259,6 +259,7 @@ module Shumway.AVM2.AS {
       }
       this._length--;
       return this._buffer[this._offset + this._length];
+      // TODO: should we potentially reallocate to a smaller buffer here?
     }
 
     reverse() {
