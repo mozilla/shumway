@@ -818,6 +818,7 @@ module Shumway {
     /**
      * Attaches a property to the bound function so we can detect when if it
      * ever gets rebound.
+     * TODO: find out why we need this, maybe remove it.
      */
     export function bindSafely(fn: Function, object: Object) {
       release || Debug.assert (!fn.boundTo && object);

@@ -1598,7 +1598,8 @@ module Shumway.AVM2.AS {
     leaveTimeline();
 
     enterTimeline("InstanceBindings");
-    cls.instanceBindings = new InstanceBindings(baseClass ? baseClass.instanceBindings : null, ii, classScope, instanceNatives);
+    cls.instanceBindings = new InstanceBindings(baseClass ? baseClass.instanceBindings : null,
+                                                ii, classScope, instanceNatives);
     if (cls.instanceConstructor) {
       enterTimeline("applyTo");
       cls.instanceBindings.applyTo(domain, cls.traitsPrototype);
