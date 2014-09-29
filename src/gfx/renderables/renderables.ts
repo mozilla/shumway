@@ -756,6 +756,8 @@ module Shumway.GFX {
     private _borderColor: number;
     private _matrix: Shumway.GFX.Geometry.Matrix;
     private _coords: DataBuffer;
+    private _scrollV: number;
+    private _scrollH: number;
 
     textRect: Rectangle;
     lines: TextLine[];
@@ -769,6 +771,8 @@ module Shumway.GFX {
       this._borderColor = 0;
       this._matrix = Matrix.createIdentity();
       this._coords = null;
+      this._scrollV = 1;
+      this._scrollH = 0;
       this.textRect = bounds.clone();
       this.lines = [];
     }
@@ -787,9 +791,11 @@ module Shumway.GFX {
       this.lines = [];
     }
 
-    setStyle(backgroundColor: number, borderColor: number): void {
+    setStyle(backgroundColor: number, borderColor: number, scrollV: number, scrollH: number): void {
       this._backgroundColor = backgroundColor;
       this._borderColor = borderColor;
+      this._scrollV = scrollV;
+      this._scrollH = scrollH;
     }
 
     reflow(autoSize: number, wordWrap: boolean): void {
@@ -1046,14 +1052,26 @@ module Shumway.GFX {
       // TODO: Render bullet points.
       var bounds = this._textBounds;
       context.beginPath();
-      context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+      context.rect(bounds.x + 2, bounds.y + 2, bounds.w - 4, bounds.h - 4);
       context.clip();
-      context.translate(bounds.x + 2, bounds.y + 2);
+      context.translate((bounds.x - this._scrollH) + 2, bounds.y + 2);
       var lines = this.lines;
+      var scrollV = this._scrollV;
+      var scrollY = 0;
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
         var x = line.x;
         var y = line.y;
+        if (i + 1 < scrollV) {
+          scrollY = y + line.descent + line.leading;
+          continue;
+        }
+        y -= scrollY;
+        // Flash skips rendering lines that are not fully visible in height (except of the very
+        // first line in the scroll view).
+        if ((i + 1) - scrollV && y > bounds.h) {
+          break;
+        }
         var runs = line.runs;
         for (var j = 0; j < runs.length; j++) {
           var run = runs[j];

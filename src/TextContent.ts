@@ -104,6 +104,8 @@ module Shumway {
     private _borderColor: number;
     private _autoSize: number;
     private _wordWrap: boolean;
+    private _scrollV: number;
+    private _scrollH: number;
 
     flags: number;
     defaultTextFormat: flash.text.TextFormat;
@@ -120,6 +122,8 @@ module Shumway {
       this._borderColor = 0;
       this._autoSize = 0;
       this._wordWrap = false;
+      this._scrollV = 1;
+      this._scrollH = 0;
       this.flags = TextContentFlags.None;
       this.defaultTextFormat = defaultTextFormat || new flash.text.TextFormat();
       this.textRuns = [];
@@ -332,6 +336,34 @@ module Shumway {
         return;
       }
       this._wordWrap = value;
+      if (this._plainText) {
+        this.flags |= TextContentFlags.DirtyFlow;
+      }
+    }
+
+    get scrollV(): number {
+      return this._scrollV;
+    }
+
+    set scrollV(value: number) {
+      if (value === this._scrollV) {
+        return;
+      }
+      this._scrollV = value;
+      if (this._plainText) {
+        this.flags |= TextContentFlags.DirtyFlow;
+      }
+    }
+
+    get scrollH(): number {
+      return this._scrollH;
+    }
+
+    set scrollH(value: number) {
+      if (value === this._scrollH) {
+        return;
+      }
+      this._scrollH = value;
       if (this._plainText) {
         this.flags |= TextContentFlags.DirtyFlow;
       }

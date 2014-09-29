@@ -391,6 +391,8 @@ module Shumway.Remoting.GFX {
       var borderColor = input.readInt();
       var autoSize = input.readInt();
       var wordWrap = input.readBoolean();
+      var scrollV = input.readInt();
+      var scrollH = input.readInt();
       var plainText = this._readAsset();
       var textRunData = DataBuffer.FromPlainObject(this._readAsset());
       var coords = null;
@@ -402,13 +404,13 @@ module Shumway.Remoting.GFX {
       if (!asset) {
         asset = new RenderableText(bounds);
         asset.setContent(plainText, textRunData, matrix, coords);
-        asset.setStyle(backgroundColor, borderColor);
+        asset.setStyle(backgroundColor, borderColor, scrollV, scrollH);
         asset.reflow(autoSize, wordWrap);
         context._registerAsset(id, symbolId, asset);
       } else {
         asset.setBounds(bounds);
         asset.setContent(plainText, textRunData, matrix, coords);
-        asset.setStyle(backgroundColor, borderColor);
+        asset.setStyle(backgroundColor, borderColor, scrollV, scrollH);
         asset.reflow(autoSize, wordWrap);
       }
       if (this.output) {

@@ -58,8 +58,6 @@ module Shumway.AVM2.AS.flash.text {
       self._numLines = 1;
       self._displayAsPassword = false;
       self._restrict = null;
-      self._scrollH = 0;
-      self._scrollV = 1;
       self._selectable = true;
       self._selectedText = '';
       self._selectionBeginIndex = 0;
@@ -447,22 +445,25 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get scrollH(): number /*int*/ {
-      somewhatImplemented("public flash.text.TextField::get scrollH");
-      return this._scrollH;
+      return this._textContent.scrollH;
     }
+
     set scrollH(value: number /*int*/) {
       value = value | 0;
-      somewhatImplemented("public flash.text.TextField::set scrollH");
-      this._scrollH = value;
+      this._ensureLineMetrics();
+      this._textContent.scrollH = clamp(Math.abs(value), 0, this._maxScrollH);
+      this._invalidateContent();
     }
+
     get scrollV(): number /*int*/ {
-      somewhatImplemented("public flash.text.TextField::get scrollV");
-      return this._scrollV;
+      return this._textContent.scrollV;
     }
+
     set scrollV(value: number /*int*/) {
       value = value | 0;
-      somewhatImplemented("public flash.text.TextField::set scrollV");
-      this._scrollV = value;
+      this._ensureLineMetrics();
+      this._textContent.scrollV = clamp(value, 1, this._maxScrollV);
+      this._invalidateContent();
     }
 
     get selectable(): boolean {
@@ -575,15 +576,42 @@ module Shumway.AVM2.AS.flash.text {
       var textWidth = lineMetricsData.readInt();
       var textHeight = lineMetricsData.readInt();
       var offsetX = lineMetricsData.readInt();
+      var bounds = this._fillBounds;
       if (this._autoSize !== TextFieldAutoSize.NONE) {
-        this._fillBounds.xMin = this._lineBounds.xMin = offsetX;
-        this._fillBounds.xMax = this._lineBounds.xMax = offsetX + textWidth + 80;
-        this._fillBounds.yMax = this._lineBounds.yMax = this._lineBounds.yMin + textHeight + 80;
+        bounds.xMin = bounds.xMin = offsetX;
+        bounds.xMax = bounds.xMax = offsetX + textWidth + 80;
+        bounds.yMax = bounds.yMax = bounds.yMin + textHeight + 80;
       }
       this._textWidth = textWidth;
       this._textHeight = textHeight;
       this._numLines = lineMetricsData.readInt();
       this._lineMetricsData = lineMetricsData;
+      if (this._textHeight > bounds.height) {
+        var maxScrollV = 1;
+        var bottomScrollV = 1;
+        lineMetricsData.position = 16;
+        var y = 0;
+        for (var i = 0; i < this._numLines; i++) {
+          lineMetricsData.position += 8;
+          var ascent = lineMetricsData.readInt();
+          var descent = lineMetricsData.readInt();
+          var leading = lineMetricsData.readInt();
+          var height = ascent + descent + leading;
+          if (y > bounds.height / 20) {
+            maxScrollV++;
+          } else {
+            bottomScrollV++;
+          }
+          y += height;
+        }
+        this._maxScrollV = maxScrollV;
+        this._bottomScrollV = bottomScrollV;
+      }
+      if (this._textWidth > bounds.width) {
+        this._maxScrollH = (((this._textWidth + 80) - bounds.width) / 20) | 0;
+      } else {
+        this._maxScrollH = 0;
+      }
     }
 
     getCharBoundaries(charIndex: number /*int*/): flash.geom.Rectangle {

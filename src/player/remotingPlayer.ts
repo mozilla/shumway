@@ -156,6 +156,8 @@ module Shumway.Remoting.Player {
         this.output.writeInt(textContent.borderColor);
         this.output.writeInt(textContent.autoSize);
         this.output.writeBoolean(textContent.wordWrap);
+        this.output.writeInt(textContent.scrollV);
+        this.output.writeInt(textContent.scrollH);
         this._writeAsset(textContent.plainText);
         this._writeAsset(textContent.textRunData.toPlainObject());
         var coords = textContent.coords;
