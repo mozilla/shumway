@@ -1171,6 +1171,7 @@ module Shumway.AVM2.Runtime {
       }
       return target.asLazyInitializer = new LazyInitializer(target);
     }
+    private _isLazyInitializer: boolean = true;
     constructor (target: Object) {
       release || assert (!target.asLazyInitializer);
       this._target = target;

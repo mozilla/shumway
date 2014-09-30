@@ -723,7 +723,7 @@ module Shumway.AVM2.Compiler.Backend {
     public C(index: number) {
       var value = this.constants[index];
       // TODO: Avoid using |instanceof| here since this can be called quite frequently.
-      if (value instanceof Shumway.AVM2.Runtime.LazyInitializer) {
+      if (value._isLazyInitializer) {
         this.constants[index] = value.resolve();
       }
       return this.constants[index];
