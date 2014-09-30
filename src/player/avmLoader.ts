@@ -30,7 +30,7 @@ module Shumway {
                              libraryPath: any, /* LibraryPathInfo | string */
                              avm1Path: string,
                              sysMode: ExecutionMode, appMode: ExecutionMode,
-                             next: (avm2: AVM2)=> void) {
+                             next: (avm2: AVM2) => void) {
     function loadAVM1(next) {
       new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
         avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), avm1Path));
@@ -47,7 +47,6 @@ module Shumway {
       console.time("Execute builtin.abc");
       // Avoid loading more Abcs while the builtins are loaded
       avm2.builtinsLoaded = false;
-      // avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
       avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
       avm2.builtinsLoaded = true;
       console.timeEnd("Execute builtin.abc");
