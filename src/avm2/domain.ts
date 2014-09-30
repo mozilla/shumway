@@ -243,8 +243,8 @@ module Shumway.AVM2.Runtime {
     }
 
     public static getStackTrace(): string {
-      Shumway.Debug.notImplemented("getStackTrace");
-      return;
+      Shumway.Debug.somewhatImplemented("getStackTrace");
+      return Shumway.Debug.backtrace();
     }
   }
 
