@@ -1557,7 +1557,7 @@ module Shumway.AVM2.AS {
       release || assert (isNativeClass);
       instanceConstructor = cls;
     } else {
-      instanceConstructor = createFunction(ii.init, classScope, false);
+      instanceConstructor = createFunction(ii.init, classScope, false, false);
     }
 
     /**

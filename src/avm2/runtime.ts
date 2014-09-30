@@ -1525,7 +1525,7 @@ module Shumway.AVM2.Runtime {
    * compiler bakes it in as a constant which should be much more efficient. If the interpreter
    * is used, the scope object is passed in every time.
    */
-  export function createFunction(mi, scope, hasDynamicScope, breakpoint = false) {
+  export function createFunction(mi, scope, hasDynamicScope, breakpoint) {
     release || assert(!mi.isNative(), "Method should have a builtin: " + mi.name);
 
     if (mi.freeMethod) {
