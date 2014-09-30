@@ -173,21 +173,24 @@ module Shumway.AVM2.Runtime {
    * callback is only executed the first time the trampoline is executed and its result is cached in
    * the trampoline closure.
    */
-  export function makeTrampoline(forward: Function, parameterLength: number, description?: string): ITrampoline {
-    release || assert (forward && typeof forward === "function");
+  export function makeTrampoline(trait: Trait, scope: Scope, natives: any,
+                                 patchTargets: IPatchTarget[], parameterLength: number,
+                                 description: string): ITrampoline {
     return (function trampolineContext() {
       var target = null;
       /**
        * Triggers the trampoline and executes it.
        */
       var trampoline: ITrampoline = <ITrampoline><any>function execute() {
-        if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
-          log("Trampolining");
-        }
         countTimeline("Executing Trampoline");
-        Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Trampoline: " + description);
+        if (!release && Shumway.AVM2.Runtime.traceExecution.value >= 1) {
+          callWriter.writeLn("Trampoline: " + description);
+          Shumway.AVM2.Runtime.traceExecution.value >= 3 && log("Trampolining");
+        }
         if (!target) {
-          target = forward(trampoline);
+          target = getTraitFunction(trait, scope, natives);
+          patch(patchTargets, target);
+          trait = scope = natives = patchTargets = null;
           release || assert (target);
         }
         return target.asApply(this, arguments);
@@ -198,7 +201,9 @@ module Shumway.AVM2.Runtime {
       trampoline.trigger = function trigger() {
         countTimeline("Triggering Trampoline");
         if (!target) {
-          target = forward(trampoline);
+          target = getTraitFunction(trait, scope, natives);
+          patch(patchTargets, target);
+          trait = scope = natives = patchTargets = null;
           release || assert (target);
         }
       };
