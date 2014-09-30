@@ -184,7 +184,10 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (child._parent) {
-        child._parent.removeChild(child);
+        // Loader overrides removeChildAt to throw an exception. We still want to use it, so we
+        // always call the original version here.
+        DisplayObjectContainer.prototype.removeChildAt.call(child._parent,
+                                                            child._parent.getChildIndex(child));
         // The children list could have been mutated as a result of |removeChild|.
         index = clamp(index, 0, children.length);
       }

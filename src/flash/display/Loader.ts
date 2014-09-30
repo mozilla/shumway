@@ -100,7 +100,7 @@ module Shumway.AVM2.AS.flash.display {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
+    static instanceSymbols: string [] = null;
 
     static WORKERS_AVAILABLE = typeof Worker !== 'undefined';
     static LOADER_PATH = 'swf/worker.js';
@@ -205,21 +205,30 @@ module Shumway.AVM2.AS.flash.display {
       this._constructChildren();
     }
 
-    // JS -> AS Bindings
+    addChild(child: DisplayObject): DisplayObject {
+      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      return null;
+    }
 
-    //uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
-    //addChild: (child: flash.display.DisplayObject) => flash.display.DisplayObject;
-    //addChildAt: (child: flash.display.DisplayObject, index: number /*int*/) => flash.display.DisplayObject;
-    //removeChild: (child: flash.display.DisplayObject) => flash.display.DisplayObject;
-    //removeChildAt: (index: number /*int*/) => flash.display.DisplayObject;
-    //setChildIndex: (child: flash.display.DisplayObject, index: number /*int*/) => void;
-    //load: (request: flash.net.URLRequest, context: flash.system.LoaderContext = null) => void;
-    //sanitizeContext: (context: flash.system.LoaderContext) => flash.system.LoaderContext;
-    //loadBytes: (bytes: flash.utils.ByteArray, context: flash.system.LoaderContext = null) => void;
-    //close: () => void;
-    //unload: () => void;
-    //unloadAndStop: (gc: boolean = true) => void;
-    //cloneObject: (obj: ASObject) => ASObject;
+    addChildAt(child: DisplayObject, index: number): DisplayObject {
+      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      return null;
+    }
+
+    removeChild(child: DisplayObject): DisplayObject {
+      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      return null;
+    }
+
+    removeChildAt(index: number): DisplayObject {
+      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      return null;
+    }
+
+    setChildIndex(child: DisplayObject, index: number): void
+    {
+      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+    }
 
     // AS -> JS Bindings
 
@@ -683,7 +692,7 @@ module Shumway.AVM2.AS.flash.display {
       return this._contentLoaderInfo;
     }
 
-    _close(): void {
+    close(): void {
       if (this._worker && this._loadStatus === LoadStatus.Unloaded) {
         this._worker.terminate();
         this._worker = null;
@@ -691,7 +700,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _unload(stopExecution: boolean, gc: boolean): void {
-      stopExecution = !!stopExecution; gc = !!gc;
       if (this._loadStatus < LoadStatus.Initialized) {
         return;
       }
@@ -701,6 +709,12 @@ module Shumway.AVM2.AS.flash.display {
       this._loadStatus = LoadStatus.Unloaded;
       this.dispatchEvent(events.Event.getInstance(events.Event.UNLOAD));
     }
+    unload() {
+      this._unload(false, false);
+    }
+    unloadAndStop(gc: boolean) {
+      this._unload(true, !!gc);
+    }
 
     _getJPEGLoaderContextdeblockingfilter(context: flash.system.LoaderContext): number {
       if (flash.system.JPEGLoaderContext.isType(context)) {
@@ -709,16 +723,11 @@ module Shumway.AVM2.AS.flash.display {
       return 0.0;
     }
 
-    _getUncaughtErrorEvents(): events.UncaughtErrorEvents {
-      notImplemented("public flash.display.Loader::_getUncaughtErrorEvents"); return;
-    }
-    _setUncaughtErrorEvents(value: events.UncaughtErrorEvents): void {
-      value = value;
-      notImplemented("public flash.display.Loader::_setUncaughtErrorEvents"); return;
+    getUncaughtErrorEvents(): events.UncaughtErrorEvents {
+      notImplemented("public flash.display.Loader::get UncaughtErrorEvents"); return;
     }
 
-    load(request: flash.net.URLRequest, context?: LoaderContext): void
-    {
+    load(request: flash.net.URLRequest, context?: LoaderContext): void {
       this._contentLoaderInfo._url = request.url;
       this._applyLoaderContext(context, request);
       this._loadingType = LoadingType.External;
