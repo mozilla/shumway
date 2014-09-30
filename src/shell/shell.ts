@@ -91,6 +91,8 @@ load("build/ts/swf.js");
 
 load("build/ts/avm2.js");
 
+// DUP: load("build/ts/swf.js");
+
 load("build/ts/flash.js");
 
 load("build/ts/avm1.js");

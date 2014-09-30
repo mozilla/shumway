@@ -11,6 +11,10 @@ build/ts/tools.js
 build/ts/avm2.js
 #!inline console.timeEnd("Load AVM2 Dependencies");
 
+#!inline console.time("Load SWF Parser");
+build/ts/swf.js
+#!inline console.timeEnd("Load SWF Parser");
+
 #!inline console.time("Load Compiled Code Cache");
 #!inline console.timeEnd("Load Compiled Code Cache");
 
