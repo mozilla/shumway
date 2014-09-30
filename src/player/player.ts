@@ -409,10 +409,10 @@ module Shumway.Player {
       for (var i = 0; i < frameRateMultiplierOption.value; i++) {
         enterTimeline("eventLoop");
         var start = performance.now();
-        Loader.progress();
         DisplayObject.performFrameNavigation(true, runFrameScripts);
         counter.count("performFrameNavigation", 1, performance.now() - start);
-        this._framesPlayed ++;
+        this._framesPlayed++;
+        Loader.progress();
         if (tracePlayerOption.value > 0 && (this._framesPlayed % tracePlayerOption.value === 0)) {
           this._tracePlayer();
         }

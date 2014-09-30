@@ -156,7 +156,7 @@ module Shumway.AVM2.Runtime {
       traitsWriter && traitsWriter.greenLn("Applying Traits" + (append ? " (Append)" : ""));
 
       for (var key in this.map) {
-        var binding = this.map[key];
+        var binding: Binding = this.map[key];
         var trait = binding.trait;
         var qn = Multiname.getQualifiedName(trait.name);
         if (trait.isSlot() || trait.isConst() || trait.isClass()) {
@@ -198,10 +198,11 @@ module Shumway.AVM2.Runtime {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
           }
           pushUnique(object.asBindings, key);
-          enterTimeline("applyMethodTrait");
           if (this instanceof ScriptBindings) {
+            enterTimeline("applyNonMemoizedMethodTrait");
             applyNonMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
           } else {
+            enterTimeline("applyMemoizedMethodTrait");
             applyMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
           }
           leaveTimeline();
