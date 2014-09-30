@@ -19,6 +19,7 @@
 
 ///<reference path='../htmlparser.ts' />
 ///<reference path='../TextContent.ts' />
+///<reference path='options.ts' />
 
 ///<reference path='geom/Matrix.ts' />
 ///<reference path='geom/Matrix3D.ts' />

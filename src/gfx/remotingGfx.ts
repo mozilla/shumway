@@ -44,7 +44,8 @@ module Shumway.Remoting.GFX {
   declare var registerInspectorAsset;
 
   export class GFXChannelSerializer {
-    output: IDataOutput;
+    public output: IDataOutput;
+    public outputAssets: any [];
 
     public writeMouseEvent(event: MouseEvent, point: Point) {
       var output = this.output;
@@ -81,6 +82,21 @@ module Shumway.Remoting.GFX {
       output.writeInt(MessageTag.FocusEvent);
       output.writeInt(type);
     }
+
+    public writeDecodeImageResponse(promiseId: number, type: ImageType, data: Uint8Array, width: number, height: number) {
+      var output = this.output;
+      output.writeInt(MessageTag.DecodeImageResponse);
+      output.writeInt(promiseId);
+      output.writeInt(type);
+      this._writeAsset(data);
+      output.writeInt(width);
+      output.writeInt(height);
+    }
+
+    private _writeAsset(asset: any) {
+      this.output.writeInt(this.outputAssets.length);
+      this.outputAssets.push(asset);
+    }
   }
 
   export class GFXChannelDeserializerContext {
@@ -88,11 +104,19 @@ module Shumway.Remoting.GFX {
     _frames: Frame [];
     private _assets: Renderable [];
 
-    constructor(root: FrameContainer) {
+    _easelHost: Shumway.GFX.EaselHost;
+    private _canvas: HTMLCanvasElement;
+    private _context: CanvasRenderingContext2D;
+
+    constructor(easelHost: Shumway.GFX.EaselHost, root: FrameContainer) {
       this.root = new ClipRectangle(128, 128);
       root.addChild(this.root);
       this._frames = [];
       this._assets = [];
+
+      this._easelHost = easelHost;
+      this._canvas = document.createElement("canvas");
+      this._context = this._canvas.getContext("2d");
     }
 
     _registerAsset(id: number, symbolId: number, asset: Renderable) {
@@ -133,6 +157,25 @@ module Shumway.Remoting.GFX {
     _getTextAsset(id: number): RenderableText {
       return <RenderableText>this._assets[id];
     }
+
+    /**
+     * Decodes some raw image data and calls |oncomplete| with the decoded pixel data
+     * once the image is loaded.
+     */
+    _decodeImage(data: Uint8Array, oncomplete: (imageData: ImageData) => void) {
+      var image = new Image();
+      var self = this;
+      image.src = URL.createObjectURL(new Blob([data]));
+      image.onload = function () {
+        self._canvas.width = image.width;
+        self._canvas.height = image.height;
+        self._context.drawImage(image, 0, 0);
+        oncomplete(self._context.getImageData(0, 0, image.width, image.height));
+      };
+      image.onerror = function () {
+        oncomplete(null);
+      };
+    }
   }
 
   export class GFXChannelDeserializer {
@@ -170,7 +213,8 @@ module Shumway.Remoting.GFX {
         updateStage: 0,
         updateNetStream: 0,
         registerFont: 0,
-        drawToBitmap: 0
+        drawToBitmap: 0,
+        decodeImage: 0
       };
       Shumway.GFX.enterTimeline("GFXChannelDeserializer.read", data);
       while (input.bytesAvailable > 0) {
@@ -214,6 +258,10 @@ module Shumway.Remoting.GFX {
           case MessageTag.RequestBitmapData:
             data.drawToBitmap ++;
             this._readRequestBitmapData();
+            break;
+          case MessageTag.DecodeImage:
+            data.decodeImage ++;
+            this._readDecodeImage();
             break;
           default:
             release || assert(false, 'Unknown MessageReader tag: ' + tag);
@@ -279,7 +327,7 @@ module Shumway.Remoting.GFX {
       return colorMatrix;
     }
 
-    private _popAsset(): any {
+    private _readAsset(): any {
       var assetId = this.input.readInt();
       var asset = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
@@ -293,7 +341,7 @@ module Shumway.Remoting.GFX {
       var symbolId = input.readInt();
       var asset = <RenderableShape>context._getAsset(id);
       var bounds = this._readRectangle();
-      var pathData = ShapeData.FromPlainObject(this._popAsset());
+      var pathData = ShapeData.FromPlainObject(this._readAsset());
       var numTextures = input.readInt();
       var textures = [];
       for (var i = 0; i < numTextures; i++) {
@@ -319,7 +367,7 @@ module Shumway.Remoting.GFX {
       var asset = context._getBitmapAsset(id);
       var bounds = this._readRectangle();
       var type: ImageType = input.readInt();
-      var dataBuffer = DataBuffer.FromPlainObject(this._popAsset());
+      var dataBuffer = DataBuffer.FromPlainObject(this._readAsset());
       if (!asset) {
         asset = RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds);
         context._registerAsset(id, symbolId, asset);
@@ -343,8 +391,8 @@ module Shumway.Remoting.GFX {
       var borderColor = input.readInt();
       var autoSize = input.readInt();
       var wordWrap = input.readBoolean();
-      var plainText = this._popAsset();
-      var textRunData = DataBuffer.FromPlainObject(this._popAsset());
+      var plainText = this._readAsset();
+      var textRunData = DataBuffer.FromPlainObject(this._readAsset());
       var coords = null;
       var numCoords = input.readInt();
       if (numCoords) {
@@ -456,7 +504,7 @@ module Shumway.Remoting.GFX {
       var fontId = input.readInt();
       var bold = input.readBoolean();
       var italic = input.readBoolean();
-      var data = this._popAsset();
+      var data = this._readAsset();
       var head = document.head;
       head.insertBefore(document.createElement('style'), head.firstChild);
       var style = <CSSStyleSheet>document.styleSheets[0];
@@ -507,6 +555,29 @@ module Shumway.Remoting.GFX {
       var id = input.readInt();
       var renderableBitmap = context._getBitmapAsset(id);
       renderableBitmap.readImageData(output);
+    }
+
+    private _readDecodeImage() {
+      var input = this.input;
+      var output = this.output;
+      var context = this.context;
+      var promiseId = input.readInt();
+      var type = <ImageType>input.readInt();
+      var data = this._readAsset();
+      var self = this;
+      this.context._decodeImage(data, function (imageData: ImageData) {
+        var buffer = new DataBuffer();
+        var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
+        var assets = [];
+        serializer.output = buffer;
+        serializer.outputAssets = assets;
+        if (imageData) {
+          serializer.writeDecodeImageResponse(promiseId, ImageType.StraightAlphaRGBA, imageData.data, imageData.width, imageData.height);
+        } else {
+          serializer.writeDecodeImageResponse(promiseId, ImageType.None, null, 0, 0);
+        }
+        self.context._easelHost.onSendUpdates(buffer, assets);
+      });
     }
   }
 }

@@ -40,6 +40,7 @@ module Shumway.Player {
 
   import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
   import IFSCommandListener = flash.system.IFSCommandListener;
+  import MessageTag = Shumway.Remoting.MessageTag;
 
   /**
    * Shumway Player
@@ -62,6 +63,24 @@ module Shumway.Player {
 
     private _mouseEventDispatcher: MouseEventDispatcher;
     private _keyboardEventDispatcher: KeyboardEventDispatcher;
+
+    /**
+     * Used to request things from the GFX remote.
+     */
+    private _pendingPromises: PromiseWrapper<any> [] = [];
+
+    /**
+     * Returns an id that can be remoted to GFX.
+     */
+    private _getNextAvailablePromiseId(): number {
+      var length = this._pendingPromises.length;
+      for (var i = 0; i < length; i++) {
+        if (!this._pendingPromises[i]) {
+          return i;
+        }
+      }
+      return length;
+    }
 
     public externalCallback: (functionName: string, args: any[]) => any = null;
 
@@ -152,31 +171,31 @@ module Shumway.Player {
       }
     }
 
-    public processEventUpdates(updates: DataBuffer) {
+    public processUpdates(updates: DataBuffer, assets: any []) {
       var deserializer = new Remoting.Player.PlayerChannelDeserializer();
-      var EventKind = Remoting.Player.EventKind;
       var FocusEventType = Remoting.FocusEventType;
 
       deserializer.input = updates;
+      deserializer.inputAssets = assets;
 
-      var event = deserializer.readEvent();
-      switch (<Remoting.Player.EventKind>(event.kind)) {
-        case EventKind.Keyboard:
+      var message = deserializer.read();
+      switch (message.tag) {
+        case MessageTag.KeyboardEvent:
           // If the stage doesn't have a focus then dispatch events on the stage
           // directly.
           var target = this._stage.focus ? this._stage.focus : this._stage;
           this._keyboardEventDispatcher.target = target;
-          this._keyboardEventDispatcher.dispatchKeyboardEvent(<KeyboardEventData>event);
+          this._keyboardEventDispatcher.dispatchKeyboardEvent(<KeyboardEventData>message);
           break;
-        case EventKind.Mouse:
+        case MessageTag.MouseEvent:
           this._mouseEventDispatcher.stage = this._stage;
-          var target = this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>event);
+          var target = this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>message);
           if (traceMouseEventOption.value) {
-            this._writer.writeLn("Mouse Event: type: " + event.type + ", target: " + target + ", name: " + target._name);
+            this._writer.writeLn("Mouse Event: type: " + message.type + ", target: " + target + ", name: " + target._name);
           }
           break;
-        case EventKind.Focus:
-          var focusType = (<FocusEventData>event).type;
+        case MessageTag.FocusEvent:
+          var focusType = (<FocusEventData>message).type;
           switch (focusType) {
             case FocusEventType.DocumentHidden:
               this._isPageVisible = false;
@@ -195,6 +214,14 @@ module Shumway.Player {
               this._hasFocus = true;
               break;
           }
+          break;
+        case MessageTag.DecodeImageResponse:
+          var decodeImageResponseData = <Shumway.Remoting.Player.DecodeImageResponseData>message;
+          var promiseId = decodeImageResponseData.promiseId;
+          var decodeImagePromise = this._pendingPromises[promiseId];
+          release || assert(decodeImagePromise, "We should be resolving an unresolved decode image promise at this point.");
+          decodeImagePromise.resolve(message);
+          this._pendingPromises[promiseId] = null;
           break;
       }
     }
@@ -239,6 +266,38 @@ module Shumway.Player {
       serializer.writeRequestBitmapData(bitmapData);
       output.writeInt(Remoting.MessageTag.EOF);
       return this.onSendUpdates(output, assets, false);
+    }
+
+    /**
+     * Decodes an image asynchronously and updates the values in the specified |bitmapSymbol| once the
+     * decoded image data is available. The |resolve| callback is called once the data is available.
+     *
+     * We send a |MessageTag.DecodeImage| message to the GFX backend which then decodes the image asynchronously,
+     * and sends us back a |MessageTag.DecodeImageResponse| with the available data.
+     *
+     * TODO: Make sure we get called back if an error occurs while decoding the image.
+     */
+    public decodeImage(bitmapSymbol: Shumway.Timeline.BitmapSymbol, resolve: (result) => void) {
+      release || assert (bitmapSymbol.type === ImageType.PNG ||
+                         bitmapSymbol.type === ImageType.GIF ||
+                         bitmapSymbol.type === ImageType.JPEG, "No need to decode any other image formats.");
+      var output = new DataBuffer();
+      var assets = [];
+      var serializer = new Remoting.Player.PlayerChannelSerializer();
+      serializer.output = output;
+      serializer.outputAssets = assets;
+      var promiseId = this._getNextAvailablePromiseId();
+      serializer.writeDecodeImage(promiseId, bitmapSymbol.type, bitmapSymbol.data);
+      output.writeInt(Remoting.MessageTag.EOF);
+      this.onSendUpdates(output, assets);
+      var promiseWrapper = this._pendingPromises[promiseId] = new PromiseWrapper<any>();
+      promiseWrapper.promise.then(function (decodeImageResponseData: Shumway.Remoting.Player.DecodeImageResponseData) {
+        bitmapSymbol.data = decodeImageResponseData.data;
+        bitmapSymbol.type = decodeImageResponseData.type;
+        bitmapSymbol.width = decodeImageResponseData.width;
+        bitmapSymbol.height = decodeImageResponseData.height;
+        resolve(undefined);
+      });
     }
 
     public registerFont(font: flash.text.Font) {
