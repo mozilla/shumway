@@ -19,11 +19,6 @@
       "swf": "swfs/acid/acid-bitmap-fill.swf",
       "type": "eq"
     },
-    {  "id": "acid-bitmapData-copyPixels",
-      "frames": [1, 5, 10],
-      "swf": "swfs/acid/acid-bitmapData-copyPixels.swf",
-      "type": "eq"
-    },
     {  "id": "acid-bitmapData-draw",
       "frames": [1],
       "swf": "swfs/acid/acid-bitmapData-draw.swf",
