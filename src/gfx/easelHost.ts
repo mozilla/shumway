@@ -33,8 +33,9 @@ module Shumway.GFX {
     constructor(easel: Easel) {
       this._easel = easel;
       var frameContainer = easel.world;
+      var transparent = easel.transparent;
       this._frameContainer = frameContainer;
-      this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._frameContainer);
+      this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._frameContainer, transparent);
 
       this._addEventListeners();
     }

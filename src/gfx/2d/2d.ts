@@ -51,6 +51,11 @@ module Shumway.GFX.Canvas2D {
      * Number of times a shape is rendered before it's elligible for caching.
      */
     cacheShapesThreshold: number = 16;
+
+    /**
+     * Enables alpha layer for the canvas context.
+     */
+    alpha: boolean = false;
   }
 
   /**
@@ -90,7 +95,7 @@ module Shumway.GFX.Canvas2D {
       options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
       super(canvas, stage, options);
       var fillRule: FillRule = FillRule.NonZero;
-      var context = this.context = canvas.getContext("2d");
+      var context = this.context = canvas.getContext("2d", {alpha: options.alpha});
       this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
       this._fillRule = fillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
@@ -418,9 +423,11 @@ module Shumway.GFX.Canvas2D {
           context.clip();
           boundsAABB.intersect(viewport);
 
-          // Fill Background
-          context.fillStyle = clipRectangle.color.toCSSStyle();
-          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          if (!frame._hasFlags(FrameFlags.Transparent)) {
+            // Fill Background
+            context.fillStyle = clipRectangle.color.toCSSStyle();
+            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          }
 
           self._renderFrame(context, frame, matrix, boundsAABB, state, true);
           context.restore();

@@ -82,7 +82,8 @@ module Shumway.GFX {
     EnterClip                                 = 0x1000,
     LeaveClip                                 = 0x2000,
 
-    Visible                                   = 0x4000
+    Visible                                   = 0x4000,
+    Transparent                               = 0x8000,
   }
 
   /**
