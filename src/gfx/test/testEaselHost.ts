@@ -93,14 +93,16 @@ module Shumway.GFX.Test {
           } else {
             var output = new DataBuffer();
             this.processUpdates(updates, data.assets, output);
-            return output.toPlainObject();
+            e.result = output.toPlainObject();
+            e.handled = true;
           }
           break;
         case 'frame':
           this.processFrame();
           break;
         case 'external':
-          this.processExternalCommand(data.command);
+          e.result = this.processExternalCommand(data.command);
+          e.handled = true;
           break;
         case 'fscommand':
           this.processFSCommand(data.command, data.args);
