@@ -60,15 +60,21 @@ module Shumway.Player.Test {
     }
 
     postSyncMessage(message: any, ports?: any): any {
-      var listener = this._onsyncmessageListeners[0];
-      if (listener) {
-        var ev = { data: message };
+      var result;
+      this._onsyncmessageListeners.some(function (listener) {
+        var ev = { data: message, result: undefined, handled: false };
         if (typeof listener === 'function') {
-          return listener(ev);
+          listener(ev);
         } else {
-          return listener.handleEvent(ev);
+          listener.handleEvent(ev);
         }
-      }
+        if (!ev.handled) {
+          return false;
+        }
+        result = ev.result;
+        return true;
+      });
+      return result;
     }
   }
 }

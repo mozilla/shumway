@@ -79,6 +79,7 @@ module Shumway.Player.Test {
           break;
         case 'externalCallback':
           this.processExternalCallback(data.request);
+          e.handled = true;
           return;
       }
     }
