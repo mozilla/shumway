@@ -45,7 +45,7 @@ module Shumway.Player {
   /**
    * Shumway Player
    *
-   * This class brings everything together. Load the swf, runs the event loop and
+   * This class brings everything together. Loads the swf, runs the event loop and
    * synchronizes the frame tree with the display list.
    */
   export class Player implements IBitmapDataSerializer, IFSCommandListener {
@@ -59,8 +59,6 @@ module Shumway.Player {
     private _framesPlayed: number = 0;
 
     private _writer: IndentingWriter;
-    private static _syncFrameRate = 60;
-
     private _mouseEventDispatcher: MouseEventDispatcher;
     private _keyboardEventDispatcher: KeyboardEventDispatcher;
 

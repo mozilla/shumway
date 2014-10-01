@@ -162,6 +162,9 @@ module Shumway.AVM2.AS.flash.media {
         channel: channel,
         startTime: startTime
       });
+      if (disableAudioOption.value) {
+        return channel;
+      }
       if (this._soundData) {
         if (PLAY_USING_AUDIO_TAG) {
           channel._playSoundDataViaAudio(this._soundData, startTime, loops);
