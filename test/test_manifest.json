@@ -221,6 +221,18 @@
       ],
       "type": "stas"
     },
+    {  "id": "acid-textfield-scroll",
+      "frames": [1],
+      "swf": "swfs/acid/acid-textfield-scroll.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-textfield-scroll-stas",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/acid/acid-textfield-scroll.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "getObjectsUnderPoint",
       "stas": "swfs/trace.stas",
       "filenames": [
