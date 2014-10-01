@@ -398,10 +398,12 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get maxScrollH(): number /*int*/ {
+      this._ensureLineMetrics();
       return this._maxScrollH;
     }
 
     get maxScrollV(): number /*int*/ {
+      this._ensureLineMetrics();
       return this._maxScrollV;
     }
 
