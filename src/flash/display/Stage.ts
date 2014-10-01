@@ -178,6 +178,14 @@ module Shumway.AVM2.AS.flash.display {
       this._stageHeight = (value * 20) | 0;
     }
 
+    /**
+     * Almost the same as color setter, except it preserves alpha channel.
+     * @param value
+     */
+    setStageColor(value: number) {
+      this._colorARGB = value;
+    }
+
     get showDefaultContextMenu(): boolean {
       return this._showDefaultContextMenu;
     }

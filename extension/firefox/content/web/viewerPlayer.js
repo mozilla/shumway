@@ -48,6 +48,7 @@ function runSwfPlayer(flashParams) {
   Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
     function runSWF(file) {
       var player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
+      player.defaultStageColor = flashParams.bgcolor;
 
       Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
 
@@ -175,7 +176,11 @@ window.addEventListener('message', function onWindowMessage(e) {
       }
       setupServices();
       runSwfPlayer(data.flashParams);
+
       document.body.style.backgroundColor = 'green';
+      window.parent.postMessage({
+        callback: 'started'
+      }, '*');
       break;
   }
 }, true);

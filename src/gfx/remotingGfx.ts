@@ -108,8 +108,11 @@ module Shumway.Remoting.GFX {
     private _canvas: HTMLCanvasElement;
     private _context: CanvasRenderingContext2D;
 
-    constructor(easelHost: Shumway.GFX.EaselHost, root: FrameContainer) {
+    constructor(easelHost: Shumway.GFX.EaselHost, root: FrameContainer, transparent: boolean) {
       this.root = new ClipRectangle(128, 128);
+      if (transparent) {
+        this.root._setFlags(FrameFlags.Transparent);
+      }
       root.addChild(this.root);
       this._frames = [];
       this._assets = [];

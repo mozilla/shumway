@@ -83,6 +83,11 @@ module Shumway.Player {
     public externalCallback: (functionName: string, args: any[]) => any = null;
 
     /**
+     * If set, overrides SWF file background color.
+     */
+    public defaultStageColor: number;
+
+    /**
      * Time since the last time we've synchronized the display list.
      */
     private _lastPumpTime = 0;
@@ -149,12 +154,14 @@ module Shumway.Player {
             MovieClip.frameNavigationModel = flash.display.FrameNavigationModel.SWF9;
           }
 
+          var bgcolor = self.defaultStageColor !== undefined ? self.defaultStageColor : loaderInfo._colorRGBA;
+
           var root = loader.content;
           stage._loaderInfo = loaderInfo;
           stage.frameRate = loaderInfo.frameRate;
           stage.setStageWidth(loaderInfo.width);
           stage.setStageHeight(loaderInfo.height);
-          stage.color = ColorUtilities.RGBAToARGB(loaderInfo._colorRGBA);
+          stage.setStageColor(ColorUtilities.RGBAToARGB(bgcolor));
           stage.addTimelineObjectAtDepth(root, 0);
           self._enterLoops();
         });
