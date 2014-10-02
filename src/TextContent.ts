@@ -449,6 +449,9 @@ module Shumway {
       }
 
       var defaultTextFormat = this.defaultTextFormat;
+
+      // A text format used for new text runs will have unset properties merged
+      // in from the default text format.
       var newFormat = defaultTextFormat;
       if (format) {
         newFormat = newFormat.clone();
@@ -456,10 +459,14 @@ module Shumway {
       }
 
       var plainText = this._plainText;
+
+      // If replacing the whole text, just regenerate runs by setting plainText.
       if (beginIndex <= 0 && endIndex >= plainText.length) {
         if (format) {
+          // Temporarily set the passed text format as default.
           this.defaultTextFormat = newFormat;
           this.plainText = newText;
+          // Restore the original default when finished.
           this.defaultTextFormat = defaultTextFormat;
         } else {
           this.plainText = newText;
@@ -470,6 +477,8 @@ module Shumway {
       var textRuns = this.textRuns;
       var newEndIndex = beginIndex + newText.length;
 
+      // When appending text, we can simply add a new text run without changing
+      // any existing ones.
       if (beginIndex >= plainText.length) {
         this._plainText += newText;
         var run = new flash.text.TextRun(beginIndex, newEndIndex, newFormat);
@@ -483,24 +492,43 @@ module Shumway {
       var shift = newEndIndex - endIndex;
       for (var i = 0; i < textRuns.length; i++) {
         var run = textRuns[i];
-        if (beginIndex <= run.beginIndex && endIndex >= run.endIndex) {
+        // Skip all following steps (including adding the current run to the
+        // new list of runs) if the inserted text will entirely span over the
+        // current run.
+        if (beginIndex <= run.beginIndex && newEndIndex >= run.endIndex) {
           continue;
         }
-        if (beginIndex > run.beginIndex && endIndex < run.endIndex) {
-          run.endIndex += shift;
+        if (beginIndex > run.beginIndex && newEndIndex < run.endIndex) {
+          // The current run completely fits the new text.
+          if (format) {
+            // If a text format was passed, split up the current run and insert
+            // a new one.
+            var tmp = run.endIndex;
+            run.endIndex = beginIndex;
+            newTextRuns.push(run);
+            newTextRuns.push(
+              new flash.text.TextRun(beginIndex, newEndIndex, newFormat)
+            );
+            run = new flash.text.TextRun(newEndIndex, tmp, run.textFormat.clone());
+          }
         } else if (beginIndex > run.beginIndex && beginIndex <= run.endIndex) {
+          // Run is intersecting on the left. Adjust its length.
           run.endIndex = beginIndex;
-        } else if (endIndex >= run.beginIndex && endIndex < run.endIndex) {
+        } else if (newEndIndex >= run.beginIndex && newEndIndex < run.endIndex) {
+          // If text is added to the beginning, or a text format was passed, a
+          // new run needs to be inserted.
           if (i === 0 || format) {
             newTextRuns.push(
               new flash.text.TextRun(beginIndex, newEndIndex, newFormat)
             );
-            run.beginIndex =  newEndIndex;
+            run.beginIndex = newEndIndex;
           } else {
+            // Otherwise make the current run span over the inserted text.
             run.beginIndex = beginIndex;
             run.endIndex += shift;
           }
-        } else if (endIndex < run.beginIndex) {
+        } else if (newEndIndex < run.beginIndex) {
+          // No intersection, shift entire run to the right.
           run.beginIndex += shift;
           run.endIndex += shift;
         }
@@ -508,6 +536,7 @@ module Shumway {
       }
       this._plainText = plainText.substring(0, beginIndex) + newText + plainText.substring(endIndex);
       this.textRuns = newTextRuns;
+      // Clear text run data and re-serialize all runs.
       this.textRunData.clear();
       for (var i = 0; i < newTextRuns.length; i++) {
         this._writeTextRun(newTextRuns[i]);
