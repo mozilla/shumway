@@ -766,7 +766,7 @@ module Shumway {
         descriptor.set = value;
       }
       Object.defineProperty(obj, name, descriptor);
-  }
+    }
 
     export function defineNonEnumerableGetter(obj, name, getter) {
       Object.defineProperty(obj, name, { get: getter,
@@ -818,6 +818,7 @@ module Shumway {
     /**
      * Attaches a property to the bound function so we can detect when if it
      * ever gets rebound.
+     * TODO: find out why we need this, maybe remove it.
      */
     export function bindSafely(fn: Function, object: Object) {
       release || Debug.assert (!fn.boundTo && object);
@@ -851,12 +852,18 @@ module Shumway {
       }
     }
 
+    /**
+     * Returns a reasonably sized description of the |value|, to be used for debugging purposes.
+     */
     export function toSafeString(value) {
       if (typeof value === "string") {
         return "\"" + value + "\"";
       }
       if (typeof value === "number" || typeof value === "boolean") {
         return String(value);
+      }
+      if (value instanceof Array) {
+        return "[] " + value.length;
       }
       return typeof value;
     }
@@ -1731,6 +1738,12 @@ module Shumway {
     writeLn(str: string = "") {
       if (!this._suppressOutput) {
         this._out(this._padding + str);
+      }
+    }
+
+    writeTimeLn(str: string = "") {
+      if (!this._suppressOutput) {
+        this._out(this._padding + performance.now().toFixed(2) + " " + str);
       }
     }
 
@@ -3047,11 +3060,13 @@ module Shumway {
       }
     }
 
-    export function tableLookupUnpremultiplyARGB(pARGB) {
+    export function tableLookupUnpremultiplyARGB(pARGB): number {
       pARGB = pARGB | 0;
       var a = (pARGB >> 24) & 0xff;
       if (a === 0) {
         return 0;
+      } else if (a === 0xff) {
+        return pARGB;
       }
       var b = (pARGB >>  0) & 0xff;
       var g = (pARGB >>  8) & 0xff;
@@ -3062,22 +3077,6 @@ module Shumway {
       g = T[o + g];
       b = T[o + b];
       return a << 24 | r << 16 | g << 8 | b;
-    }
-
-    export var inverseAlphaTable: Uint8Array;
-
-    /**
-     * Computes all possible inverse alpha values, similar to the one above.
-     */
-    export function ensureInverseAlphaTable() {
-      if (!inverseAlphaTable) {
-        inverseAlphaTable = new Uint8Array(256 * 256);
-        for (var c = 0; c < 256; c++) {
-          for (var a = 0; a < 256; a++) {
-            inverseAlphaTable[(a << 8) + c] = c * (1 - a / 255);
-          }
-        }
-      }
     }
 
     /**
@@ -3092,16 +3091,20 @@ module Shumway {
      *
      * TODO: Not sure what to do about the dst.rgb which is
      * premultiplied by its alpah, but this appears to work.
+     *
+     * We use the "double blend trick" (http://stereopsis.com/doubleblend.html) to
+     * compute GA and BR without unpacking them.
      */
     export function blendPremultipliedBGRA(tpBGRA: number, spBGRA: number) {
-      var sa = spBGRA & 0xff;
-      var o = sa << 8;
-      var T = inverseAlphaTable;
-      var ta = sa + T[o + (tpBGRA & 0xff)];
-      var tr = ((spBGRA >>  8) & 0xff) + T[o + ((tpBGRA >>  8) & 0xff) | 0];
-      var tg = ((spBGRA >> 16) & 0xff) + T[o + ((tpBGRA >> 16) & 0xff) | 0];
-      var tb = ((spBGRA >> 24) & 0xff) + T[o + ((tpBGRA >> 24) & 0xff) | 0];
-      return tb << 24 | tg << 16 | tr << 8 | ta;
+      var sA  = spBGRA & 0xff;
+      var sGA = spBGRA      & 0x00ff00ff;
+      var sBR = spBGRA >> 8 & 0x00ff00ff;
+      var tGA = tpBGRA      & 0x00ff00ff;
+      var tBR = tpBGRA >> 8 & 0x00ff00ff;
+      var A  = 256 - sA;
+      tGA = Math.imul(tGA, A) >> 8;
+      tBR = Math.imul(tBR, A) >> 8;
+      return ((sBR + tBR & 0x00ff00ff) << 8) | (sGA + tGA & 0x00ff00ff);
     }
 
     import swap32 = IntegerUtilities.swap32;
@@ -3124,13 +3127,23 @@ module Shumway {
           targetFormat === ImageType.StraightAlphaRGBA) {
         Shumway.ColorUtilities.ensureUnpremultiplyTable();
         for (var i = 0; i < length; i++) {
-          var pARGB = swap32(source[i]);
-          // TODO: Make sure this is inlined!
-          var uARGB = tableLookupUnpremultiplyARGB(pARGB);
-          var uABGR = (uARGB & 0xFF00FF00)  | // A_G_
-                      (uARGB >> 16) & 0xff  | // A_GR
-                      (uARGB & 0xff) << 16;   // ABGR
-          target[i] = uABGR;
+          var pBGRA = source[i];
+          var a = pBGRA & 0xff;
+          if (a === 0) {
+            target[i] = 0;
+          } else if (a === 0xff) {
+            target[i] = (pBGRA & 0xff) << 24 | ((pBGRA >> 8) & 0x00ffffff);
+          } else {
+            var b = (pBGRA >> 24) & 0xff;
+            var g = (pBGRA >> 16) & 0xff;
+            var r = (pBGRA >>  8) & 0xff;
+            var o = a << 8;
+            var T = unpremultiplyTable;
+            r = T[o + r];
+            g = T[o + g];
+            b = T[o + b];
+            target[i] = a << 24 | b << 16 | g << 8 | r;
+          }
         }
       } else if (sourceFormat === ImageType.StraightAlphaARGB &&
                  targetFormat === ImageType.StraightAlphaRGBA) {
@@ -3306,6 +3319,14 @@ module Shumway {
       call(request: string): any { },
       getId(): string { return null; }
     };
+  }
+
+  export class ClipboardService {
+    public static instance: ClipboardService = null;
+
+    public setClipboard(data: string): void {
+      Debug.abstractMethod("public ClipboardService::setClipboard");
+    }
   }
 
   export class Callback {

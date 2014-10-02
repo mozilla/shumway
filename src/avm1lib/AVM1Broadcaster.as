@@ -25,8 +25,7 @@ package avm1lib {
   }
 }
 
-function _broadcastMessage(eventName: String): void {
-  var args: Array = Array.prototype.slice.call(arguments, 1);
+function _broadcastMessage(eventName: String, ...args): void {
   var listeners: Array = this._listeners;
   for (var i: int = 0; i < listeners.length; i++) {
     var listener: Object = listeners[i];

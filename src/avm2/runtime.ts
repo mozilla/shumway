@@ -212,32 +212,29 @@ module Shumway.AVM2.Runtime {
   export function applyNonMemoizedMethodTrait(qn: string, trait: Trait, object: Object, scope, natives) {
     release || assert (scope);
     if (trait.isMethod()) {
-      var trampoline = makeTrampoline(function (self) {
-        var fn = getTraitFunction(trait, scope, natives);
-        patch(self.patchTargets, fn);
-        return fn;
-      }, trait.methodInfo.parameters.length);
-      trampoline.patchTargets = [
+      var patchTargets = <IPatchTarget[]>[
         { object: object, name: qn },
         { object: object, name: VM_OPEN_METHOD_PREFIX + qn }
       ];
+      var trampoline = makeTrampoline(trait, scope, natives, patchTargets,
+                                      trait.methodInfo.parameters.length, '');
       var closure = bindSafely(trampoline, object);
       defineReadOnlyProperty(closure, VM_LENGTH, trampoline.asLength);
       defineReadOnlyProperty(closure, Multiname.getPublicQualifiedName("prototype"), null);
       defineNonEnumerableProperty(object, qn, closure);
       defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, closure);
     } else if (trait.isGetter() || trait.isSetter()) {
-      var trampoline = makeTrampoline(function (self) {
-        var fn = getTraitFunction(trait, scope, natives);
-        patch(self.patchTargets, fn);
-        return fn;
-      }, trait.isSetter() ? 1 : 0);
-      if (trait.isGetter()) {
-        trampoline.patchTargets = [{ object: object, get: qn }];
+      var patchTargets: IPatchTarget[] = <IPatchTarget[]>[{ object: object}];
+      var argsCount = 0;
+      var isGetter = trait.isGetter();
+      if (isGetter) {
+        patchTargets[0]['get'] = qn;
       } else {
-        trampoline.patchTargets = [{ object: object, set: qn }];
+        patchTargets[0]['set'] = qn;
+        argsCount = 1;
       }
-      defineNonEnumerableGetterOrSetter(object, qn, trampoline, trait.isGetter());
+      var trampoline = makeTrampoline(trait, scope, natives, patchTargets, argsCount, '');
+      defineNonEnumerableGetterOrSetter(object, qn, trampoline, isGetter);
     } else {
       Shumway.Debug.unexpected(trait);
     }
@@ -250,15 +247,17 @@ module Shumway.AVM2.Runtime {
       // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
       // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
       // target value for subsequent memoizations.
-      var memoizerTarget = { value: null };
-      var trampoline = makeTrampoline(function (self) {
-        var fn = getTraitFunction(trait, scope, natives);
-        patch(self.patchTargets, fn);
-        return fn;
-      }, trait.methodInfo.parameters.length, String(trait.name));
+      var memoizerTarget = { value: <ITrampoline>null };
+      var openMethods = object.asOpenMethods;
+      var patchTargets = <IPatchTarget[]>[
+        { object: memoizerTarget, name: "value"},
+        { object: openMethods,    name: qn },
+        { object: object,         name: VM_OPEN_METHOD_PREFIX + qn }
+      ];
+      var trampoline = makeTrampoline(trait, scope, natives, patchTargets,
+                                      trait.methodInfo.parameters.length, String(trait.name));
 
       memoizerTarget.value = trampoline;
-      var openMethods = object.asOpenMethods;
       openMethods[qn] = trampoline;
       defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, trampoline);
       // TODO: We make the |memoizeMethodClosure| configurable since it may be
@@ -266,32 +265,23 @@ module Shumway.AVM2.Runtime {
 
       defineNonEnumerableGetter(object, qn, makeMemoizer(qn, memoizerTarget));
 
-      trampoline.patchTargets = <IPatchTarget[]>[
-        { object: memoizerTarget, name: "value"},
-        { object: openMethods,    name: qn },
-        { object: object,         name: VM_OPEN_METHOD_PREFIX + qn }
-      ];
       tryInjectToStringAndValueOfForwarder(object, qn)
-    } else if (trait.isGetter() || trait.isSetter()) {
-      var trampoline = makeTrampoline(function (self) {
-        var fn = getTraitFunction(trait, scope, natives);
-        patch(self.patchTargets, fn);
-        return fn;
-      }, 0, String(trait.name));
-      if (trait.isGetter()) {
-        defineNonEnumerableProperty(object, VM_OPEN_GET_METHOD_PREFIX + qn, trampoline);
-        trampoline.patchTargets = [
-          <IPatchTarget>{ object: object, get: qn },
-          { object: object, name: VM_OPEN_GET_METHOD_PREFIX + qn }
-        ];
-      } else {
-        defineNonEnumerableProperty(object, VM_OPEN_SET_METHOD_PREFIX + qn, trampoline);
-        trampoline.patchTargets = [
-          <IPatchTarget>{ object: object, set: qn },
-          { object: object, name: VM_OPEN_SET_METHOD_PREFIX + qn }
-        ];
-      }
-      defineNonEnumerableGetterOrSetter(object, qn, trampoline, trait.isGetter());
+    } else if (trait.isGetter()) {
+      var patchTargets = <IPatchTarget[]>[
+        {object: object, get: qn},
+        {object: object, name: VM_OPEN_GET_METHOD_PREFIX + qn}
+      ];
+      var trampoline = makeTrampoline(trait, scope, natives, patchTargets, 0, String(trait.name));
+      defineNonEnumerableProperty(object, VM_OPEN_GET_METHOD_PREFIX + qn, trampoline);
+      defineNonEnumerableGetterOrSetter(object, qn, trampoline, true);
+    } else if (trait.isSetter()) {
+      var patchTargets = <IPatchTarget[]>[
+        {object: object, set: qn},
+        {object: object, name: VM_OPEN_SET_METHOD_PREFIX + qn}
+      ];
+      var trampoline = makeTrampoline(trait, scope, natives, patchTargets, 0, String(trait.name));
+      defineNonEnumerableProperty(object, VM_OPEN_SET_METHOD_PREFIX + qn, trampoline);
+      defineNonEnumerableGetterOrSetter(object, qn, trampoline, false);
     }
   }
 
@@ -1181,6 +1171,7 @@ module Shumway.AVM2.Runtime {
       }
       return target.asLazyInitializer = new LazyInitializer(target);
     }
+    private _isLazyInitializer: boolean = true;
     constructor (target: Object) {
       release || assert (!target.asLazyInitializer);
       this._target = target;
@@ -1535,7 +1526,7 @@ module Shumway.AVM2.Runtime {
    * compiler bakes it in as a constant which should be much more efficient. If the interpreter
    * is used, the scope object is passed in every time.
    */
-  export function createFunction(mi, scope, hasDynamicScope, breakpoint = false) {
+  export function createFunction(mi, scope, hasDynamicScope, breakpoint) {
     release || assert(!mi.isNative(), "Method should have a builtin: " + mi.name);
 
     if (mi.freeMethod) {

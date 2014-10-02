@@ -33,13 +33,14 @@ module Shumway.GFX {
     constructor(easel: Easel) {
       this._easel = easel;
       var frameContainer = easel.world;
+      var transparent = easel.transparent;
       this._frameContainer = frameContainer;
-      this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this._frameContainer);
+      this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._frameContainer, transparent);
 
       this._addEventListeners();
     }
 
-    onSendEventUpdates(update: DataBuffer) {
+    onSendUpdates(update: DataBuffer, assets: Array<DataBuffer>) {
       throw new Error('This method is abstract');
     }
 
@@ -55,7 +56,7 @@ module Shumway.GFX {
       var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
       serializer.output = buffer;
       serializer.writeMouseEvent(event, point);
-      this.onSendEventUpdates(buffer);
+      this.onSendUpdates(buffer, []);
     }
 
     private _keyboardEventListener(event: KeyboardEvent) {
@@ -63,7 +64,7 @@ module Shumway.GFX {
       var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
       serializer.output = buffer;
       serializer.writeKeyboardEvent(event);
-      this.onSendEventUpdates(buffer);
+      this.onSendUpdates(buffer, []);
     }
 
     _addEventListeners() {
@@ -85,7 +86,7 @@ module Shumway.GFX {
       var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
       serializer.output = buffer;
       serializer.writeFocusEvent(type);
-      this.onSendEventUpdates(buffer);
+      this.onSendUpdates(buffer, []);
     }
 
     private _addFocusEventListeners() {

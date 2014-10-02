@@ -85,7 +85,7 @@ module Shumway.AVM2.Compiler {
     var globalScope = new Scope(null, script);
     var domain = script.abc.applicationDomain;
     var closures = [];
-    compileMethod(script.init, writer, globalScope, closures);
+    compileMethod(script.init, writer, globalScope, closures, false);
     script.traits.forEach(function (trait: Trait) {
       if (trait.isClass()) {
         var inheritance = [];
@@ -112,7 +112,7 @@ module Shumway.AVM2.Compiler {
     });
   }
 
-  function compileMethod(methodInfo, writer, scope, closures, hasDynamicScope = false) {
+  function compileMethod(methodInfo, writer, scope, closures, hasDynamicScope) {
     if (canCompile(methodInfo)) {
       ensureFunctionIsInitialized(methodInfo);
       try {
@@ -162,7 +162,7 @@ module Shumway.AVM2.Compiler {
     if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
       if (trait.methodInfo.hasBody) {
         writer.writeLn("// " + trait);
-        compileMethod(trait.methodInfo, writer, scope, closures);
+        compileMethod(trait.methodInfo, writer, scope, closures, false);
       }
     }
   }
@@ -174,9 +174,9 @@ module Shumway.AVM2.Compiler {
   }
 
   function compileClass(classInfo, writer, scope, closures) {
-    compileMethod(classInfo.init, writer, scope, closures);
+    compileMethod(classInfo.init, writer, scope, closures, false);
     compileTraits(classInfo.traits, writer, scope, closures);
-    compileMethod(classInfo.instanceInfo.init, writer, scope, closures);
+    compileMethod(classInfo.instanceInfo.init, writer, scope, closures, false);
     compileTraits(classInfo.instanceInfo.traits, writer, scope, closures);
   }
 }

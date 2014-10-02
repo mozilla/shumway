@@ -1445,7 +1445,7 @@ module Shumway.AVM2.Compiler {
       this.scope = scope;
       this.methodInfo = methodInfo;
       this.hasDynamicScope = hasDynamicScope;
-      this.traceBuilder = Shumway.AVM2.Compiler.traceLevel.value > 2;
+      this.traceBuilder = Shumway.AVM2.Compiler.traceLevel.value > 3;
       this.createFunctionCallee = globalProperty("createFunction");
       this.stopPoints = [];
       this.bytecodes = this.methodInfo.analysis.bytecodes;
@@ -1651,8 +1651,13 @@ module Shumway.AVM2.Compiler {
         leaveTimeline();
       }
 
-      var traceSource = Shumway.AVM2.Compiler.traceLevel.value > 0;
-      var traceIR = Shumway.AVM2.Compiler.traceLevel.value > 1;
+      var traceTiming = Shumway.AVM2.Compiler.traceLevel.value > 0;
+      var traceSource = Shumway.AVM2.Compiler.traceLevel.value > 1;
+      var traceIR = Shumway.AVM2.Compiler.traceLevel.value > 2;
+
+      if (traceTiming) {
+        var startTime = window.performance.now();
+      }
 
       enterTimeline("Build IR");
       Node.startNumbering();
@@ -1689,6 +1694,12 @@ module Shumway.AVM2.Compiler {
       traceSource && writer.writeLn(result.body);
       Node.stopNumbering();
       leaveTimeline();
+
+      if (traceTiming) {
+        var name = methodInfo.name ? 'function ' + methodInfo.name : 'anonymous function';
+        writer.writeLn('Compiled ' + name + ' in ' +
+                       (window.performance.now() - startTime).toPrecision(2) + 'ms');
+      }
 
       return result;
     }

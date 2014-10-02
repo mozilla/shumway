@@ -346,7 +346,8 @@ module Shumway.SWF.Parser {
         var magic3 = bytes[2];
 
         // check for SWF
-        if ((magic1 === 70 || magic1 === 67) && magic2 === 87 && magic3 === 83) {
+        if (magic2 === 87 && magic3 === 83) {
+          Shumway.Debug.assert (magic1 === 70 || magic1 === 67, "Unsupported compression format: " + (magic1 === 90 ? "LZMA" : String(magic1)));
           var swfVersion = bytes[3];
           var compressed = magic1 === 67;
           parseSWF(compressed, swfVersion, progressInfo);
@@ -380,7 +381,7 @@ module Shumway.SWF.Parser {
           };
           options.oncomplete && options.oncomplete(symbol);
         }
-        if (target !== undefined && target.close) {
+        if (target && target.close) {
           target.close();
         }
       }

@@ -18,50 +18,14 @@ public dynamic class Array extends Object
   public static const NUMERIC:uint = 16;
 
   // E262 {DontEnum, DontDelete}
-  public native function get length():uint
-  public native function set length(newLength:uint)
-
-  // Assigns this.length = newLength if latter fits; otherwise
-  // throws exception or assigns altLength (SWF version dependent).
-  //
-  // It is responsibility of caller to provide an appropriate
-  // altLength.  Old behavior used altLength == uint(newLength),
-  // but it is better to clamp rather than wrap in such cases.
-  // More discussion on Bugzilla 658677, 661330, and 681399.
-  private function set_length(newLength:*, altLength:uint)
-  {
-    if (newLength is uint)
-      this.length = newLength;
-    else if (bugzilla(661330))
-      Error.throwError( RangeError, 2108, // kInvalidArrayLengthError
-          newLength );
-    else
-      this.length = altLength;
-  }
+  public native function get length():uint;
+  public native function set length(newLength:uint);
 
   // Array.length = 1 per ES3
   public static const length:int = 1
 
   // ECMA 15.4.2.2
-  public function Array(...args)
-  {
-    var n:uint = args.length
-    if (n == 1 && (args[0] is Number))
-    {
-      var dlen:Number = args[0];
-      var ulen:uint = dlen
-      if (ulen != dlen)
-        Error.throwError( RangeError, 1005 /*kArrayIndexNotIntegerError*/, dlen );
-      length = ulen;
-    }
-    else
-    {
-      // FIXME why not just return args?
-      length = n
-      for (var i:uint=0; i < n; i++)
-        this[i] = args[i]
-    }
-  }
+  public native function Array(...args);
 
   /**
    15.4.4.5 Array.prototype.join (separator)
@@ -86,30 +50,10 @@ public dynamic class Array extends Object
    16. Go to step 10.
    */
 
-  private static function _join(o, sep):String
-  {
-    var s:String = (sep === undefined) ? "," : String(sep)
-    var out:String = ""
-    for (var i:uint = 0, n:uint=uint(o.length); i < n; i++)
-    {
-      var x = o[i]
-      if (x != null)
-        out += x
-      if (i+1 < n)
-        out += s
-    }
-    return out
-  }
-  AS3 function join(sep=void 0):String
-  {
-    return _join(this, sep)
-  }
-  prototype.join = function(sep=void 0):String
-  {
-    return _join(this, sep)
-  }
+  native AS3 function join(sep=void 0):String;
+  prototype.join = unsafeJSNative("Original.Array.prototype.join");
 
-  AS3 native function pop()
+  AS3 native function pop();
   prototype.pop = unsafeJSNative("Original.Array.prototype.pop");
 
   /**
@@ -184,45 +128,18 @@ public dynamic class Array extends Object
   AS3 native function push(...args):uint
   prototype.push = unsafeJSNative("Original.Array.prototype.push");
 
-  private static native function _reverse(o)
-  AS3 function reverse():Array
-  {
-    return _reverse(this)  // return will cast to Array
-  }
-  prototype.reverse = function()
-  {
-    return _reverse(this)
-  }
+  native AS3 function reverse():Array;
+  prototype.reverse = unsafeJSNative("Original.Array.prototype.reverse");
 
-  private static native function _concat(o, args:Array):Array
-  AS3 function concat(...args):Array
-  {
-    return _concat(this, args)
-  }
-  prototype.concat = function(...args):Array
-  {
-    return _concat(this, args)
-  }
+  native AS3 function concat(...args):Array;
+  prototype.concat = unsafeJSNative("Original.Array.prototype.concat");
 
-  private static native function _shift(o)
-  AS3 function shift()
-  {
-    return _shift(this)
-  }
-  prototype.shift = function()
-  {
-    return _shift(this)
-  }
+  native AS3 function shift();
+  prototype.shift = unsafeJSNative("Original.Array.prototype.shift");
 
   private static native function _slice(o, A:Number, B:Number):Array
-  AS3 function slice(A=0, B=0xffffffff):Array
-  {
-    return _slice(this, Number(A), Number(B))
-  }
-  prototype.slice = function(A=0, B=0xffffffff):Array
-  {
-    return _slice(this, Number(A), Number(B))
-  }
+  native AS3 function slice(A=0, B=0xffffffff):Array;
+  prototype.slice = unsafeJSNative("Original.Array.prototype.slice");
 
   /**
    15.4.4.13 Array.prototype.unshift ( [ item1 [ , item2 [ , ... ] ] ] )
@@ -258,48 +175,18 @@ public dynamic class Array extends Object
    be transferred to other kinds of objects for use as a method. Whether the unshift function can be applied successfully to a
    host object is implementation-dependent.
    */
-  private static native function _unshift(o, args:Array):uint
-  native AS3 function unshift(...args):uint
-  prototype.unshift = function(...args):uint
-  {
-    if (this is Array)
-      return _unshift(this, args);
-    var len:uint = uint(this.length)
-    var argc:uint = args.length
-    var k:uint
-    for (k=len; k > 0; )
-    {
-      k--
-      var d:uint = k+argc
-      if (k in this)
-        this[d] = this[k]
-      else
-        delete this[d]
-    }
-
-    for (var i:uint = 0; i < argc; i++)
-      this[k++] = args[i]
-
-    len += argc
-    this.length = len
-    return len
-  }
+  native AS3 function unshift(...args):uint;
+  prototype.unshift = unsafeJSNative("Original.Array.prototype.unshift");
 
   private static native function _splice(o, args:Array):Array
 
   // splice with zero args returns undefined. All other cases return Array.
   AS3 function splice(...args)
   {
-    if (!args.length)
-      return undefined;
-
-    return _splice(this, args)
+    return _splice(this, args);
   }
   prototype.splice = function(...args)
   {
-    if (!args.length)
-      return undefined;
-
     return _splice(this, args)
   }
 
@@ -330,25 +217,11 @@ public dynamic class Array extends Object
   //
   // These all work on generic objects (array like objects) as well as arrays
 
-  private static native function _indexOf (o, searchElement, fromIndex:int):int;
-  AS3 function indexOf(searchElement, fromIndex=0):int
-  {
-    return _indexOf (this, searchElement, int(fromIndex));
-  }
-  prototype.indexOf = function(searchElement, fromIndex=0):int
-  {
-    return _indexOf (this, searchElement, int(fromIndex));
-  }
+  native AS3 function indexOf(searchElement, fromIndex=0):int;
+  prototype.indexOf = unsafeJSNative("Original.Array.prototype.indexOf");
 
-  private static native function _lastIndexOf (o, searchElement, fromIndex:int=0):int;
-  AS3 function lastIndexOf(searchElement, fromIndex=0x7fffffff):int
-  {
-    return _lastIndexOf (this, searchElement, int(fromIndex));
-  }
-  prototype.lastIndexOf = function(searchElement, fromIndex=0x7fffffff):int
-  {
-    return _lastIndexOf (this, searchElement, int(fromIndex));
-  }
+  native AS3 function lastIndexOf(searchElement, fromIndex=0x7fffffff):int;
+  prototype.lastIndexOf = unsafeJSNative("Original.Array.prototype.lastIndexOf");
 
   // Returns true if every element in this array satisfies the provided testing function.
   private static native function _every(o, callback:Function, thisObject):Boolean;
@@ -373,37 +246,16 @@ public dynamic class Array extends Object
   }
 
   // Calls a function for each element in the array.
-  private static native function _forEach(o, callback:Function, thisObject):void;
-  AS3 function forEach(callback:Function, thisObject=null):void
-  {
-    _forEach (this, callback, thisObject);
-  }
-  prototype.forEach = function(callback:Function, thisObject=null):void
-  {
-    _forEach (this, callback, thisObject);
-  }
+  native AS3 function forEach(callback:Function, thisObject=null):void;
+  prototype.forEach = unsafeJSNative("Original.Array.prototype.forEach");
 
   // Creates a new array with the results of calling a provided function on every element in this array.
-  private native static function _map(o, callback:Function, thisObject):Array;
-  AS3 function map(callback:Function, thisObject=null):Array
-  {
-    return _map (this, callback, thisObject);
-  }
-  prototype.map = function(callback:Function, thisObject=null):Array
-  {
-    return _map (this, callback, thisObject);
-  }
+  native AS3 function map(callback:Function, thisObject=null):Array;
+  prototype.map = unsafeJSNative("Original.Array.prototype.map");
 
   // Returns true if at least one element in this array satisfies the provided testing function.
-  private static native function _some(o, callback:Function, thisObject):Boolean;
-  AS3 function some(callback:Function, thisObject=null):Boolean
-  {
-    return _some (this, callback, thisObject);
-  }
-  prototype.some = function(callback:Function, thisObject=null):Boolean
-  {
-    return _some (this, callback, thisObject);
-  }
+  native AS3 function some(callback:Function, thisObject=null):Boolean;
+  prototype.some = unsafeJSNative("Original.Array.prototype.some");
 
   _dontEnumPrototype(prototype);
 }

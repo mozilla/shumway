@@ -27,7 +27,7 @@ module Shumway.Player.Test {
       // TODO this is temporary worker to test postMessage tranfers
       this._worker = Shumway.Player.Test.FakeSyncWorker.instance;
       this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
-      //this._worker.addEventListener('syncmessage', this._onWorkerMessage.bind(this));
+      this._worker.addEventListener('syncmessage', this._onSyncWorkerMessage.bind(this));
     }
 
     public onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true): DataBuffer {
@@ -75,12 +75,17 @@ module Shumway.Player.Test {
       switch (data.type) {
         case 'gfx':
           var updates = DataBuffer.FromArrayBuffer(e.data.updates.buffer);
-          this.processEventUpdates(updates);
+          this.processUpdates(updates, e.data.assets);
           break;
         case 'externalCallback':
           this.processExternalCallback(data.request);
+          e.handled = true;
           return;
       }
+    }
+
+    private _onSyncWorkerMessage(e) {
+      return this._onWorkerMessage(e);
     }
   }
 }

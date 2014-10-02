@@ -322,7 +322,7 @@ module Shumway.AVM2 {
             scopeStack.push(boxValue(stack.pop()), false);
             break;
           case OP.newfunction:
-            stack.push(createFunction(methods[bc.index], scopeStack.topScope(), true));
+            stack.push(createFunction(methods[bc.index], scopeStack.topScope(), true, false));
             break;
           case OP.call:
             popManyInto(stack, bc.argCount, args);

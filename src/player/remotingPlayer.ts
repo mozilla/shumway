@@ -45,6 +45,9 @@ module Shumway.Remoting.Player {
   import writer = Shumway.Player.writer;
 
   export class PlayerChannelSerializer {
+    /**
+     * Output buffer that the serializer writes to.
+     */
     public output: DataBuffer;
     public outputAssets: any [];
     public phase: RemotingPhase = RemotingPhase.Objects;
@@ -109,7 +112,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(graphics._id);
         this.output.writeInt(-1);
         this._writeRectangle(graphics._getContentBounds());
-        this.pushAsset(graphics.getGraphicsData().toPlainObject());
+        this._writeAsset(graphics.getGraphicsData().toPlainObject());
         this.output.writeInt(numTextures);
         for (var i = 0; i < numTextures; i++) {
           this.output.writeInt(textures[i]._id);
@@ -136,7 +139,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(bitmapData._symbol ? bitmapData._symbol.id : -1);
         this._writeRectangle(bitmapData._getContentBounds());
         this.output.writeInt(bitmapData._type);
-        this.pushAsset(bitmapData.getDataBuffer().toPlainObject());
+        this._writeAsset(bitmapData.getDataBuffer().toPlainObject());
         bitmapData._isDirty = false;
       }
     }
@@ -153,8 +156,8 @@ module Shumway.Remoting.Player {
         this.output.writeInt(textContent.borderColor);
         this.output.writeInt(textContent.autoSize);
         this.output.writeBoolean(textContent.wordWrap);
-        this.pushAsset(textContent.plainText);
-        this.pushAsset(textContent.textRunData.toPlainObject());
+        this._writeAsset(textContent.plainText);
+        this._writeAsset(textContent.textRunData.toPlainObject());
         var coords = textContent.coords;
         if (coords) {
           var numCoords = coords.length;
@@ -179,7 +182,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(font._id);
         this.output.writeBoolean(symbol.bold);
         this.output.writeBoolean(symbol.italic);
-        this.pushAsset(symbol.data);
+        this._writeAsset(symbol.data);
       }
     }
 
@@ -385,6 +388,11 @@ module Shumway.Remoting.Player {
       output.write4Ints(bounds.xMin, bounds.yMin, bounds.width, bounds.height);
     }
 
+    private _writeAsset(asset: any) {
+      this.output.writeInt(this.outputAssets.length);
+      this.outputAssets.push(asset);
+    }
+
     private _writeColorTransform(colorTransform: flash.geom.ColorTransform) {
       var output = this.output;
       var rM = colorTransform.redMultiplier;
@@ -425,16 +433,22 @@ module Shumway.Remoting.Player {
       this.output.writeInt(bitmapData._id);
     }
 
-    pushAsset(asset: any) {
-      this.output.writeInt(this.outputAssets.length);
-      this.outputAssets.push(asset);
+    writeDecodeImage(promiseId: number, type: ImageType, data: Uint8Array) {
+      writer && writer.writeLn("Sending DecodeImage");
+      this.output.writeInt(MessageTag.DecodeImage);
+      this.output.writeInt(promiseId);
+      this.output.writeInt(type);
+      this._writeAsset(data);
     }
+
   }
 
-  export enum EventKind {
-    Focus,
-    Mouse,
-    Keyboard
+  export interface DecodeImageResponseData {
+    promiseId: number;
+    type: ImageType;
+    data: Uint8Array;
+    width: number;
+    height: number;
   }
 
   export interface FocusEventData {
@@ -443,8 +457,16 @@ module Shumway.Remoting.Player {
 
   export class PlayerChannelDeserializer {
     input: IDataInput;
+    inputAssets: any[];
 
-    public readEvent(): any {
+    private _readAsset(): any {
+      var assetId = this.input.readInt();
+      var asset = this.inputAssets[assetId];
+      this.inputAssets[assetId] = null;
+      return asset;
+    }
+
+    public read(): any {
       var input = this.input;
       var tag = input.readInt();
       switch (<MessageTag>tag) {
@@ -454,15 +476,34 @@ module Shumway.Remoting.Player {
           return this._readKeyboardEvent();
         case MessageTag.FocusEvent:
           return this._readFocusEvent();
+        case MessageTag.DecodeImageResponse:
+          return this._readDecodeImageResponse();
       }
       release || assert(false, 'Unknown MessageReader tag: ' + tag);
+    }
+
+    private _readDecodeImageResponse(): DecodeImageResponseData {
+      var input = this.input;
+      var promiseId = input.readInt();
+      var type = input.readInt();
+      var data = this._readAsset();
+      var width = input.readInt();
+      var height = input.readInt();
+      return {
+        tag: MessageTag.DecodeImageResponse,
+        promiseId: promiseId,
+        type: type,
+        data: data,
+        width: width,
+        height: height
+      };
     }
 
     private _readFocusEvent(): FocusEventData {
       var input = this.input;
       var typeId = input.readInt();
       return {
-        kind: EventKind.Focus,
+        tag: MessageTag.FocusEvent,
         type: <FocusEventType>typeId
       }
     }
@@ -476,7 +517,7 @@ module Shumway.Remoting.Player {
       var buttons = input.readInt();
       var flags = input.readInt();
       return {
-        kind: EventKind.Mouse,
+        tag: MessageTag.MouseEvent,
         type: type,
         point: new Point(pX, pY),
         ctrlKey: !!(flags & KeyboardEventFlags.CtrlKey),
@@ -495,7 +536,7 @@ module Shumway.Remoting.Player {
       var location = input.readInt();
       var flags = input.readInt();
       return {
-        kind: EventKind.Keyboard,
+        tag: MessageTag.KeyboardEvent,
         type: type,
         keyCode: keyCode,
         charCode: charCode,

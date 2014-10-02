@@ -46,14 +46,8 @@ public class GestureEvent extends Event {
   public native function get stageX(): Number;
   public native function get stageY(): Number;
 
-  public override function clone(): Event {
-    return new GestureEvent(type, bubbles, cancelable, phase, localX, localY, ctrlKey, altKey,
-                            shiftKey);
-  }
-  public override function toString(): String {
-    return formatToString('GestureEvent', 'type', 'bubbles', 'cancelable', 'eventPhase', 'localX',
-                          'localY', 'ctrlKey', 'altKey', 'shiftKey');
-  }
+  public native override function clone(): Event;
+  public native override function toString(): String;
   public native function updateAfterEvent(): void;
 
   private native function NativeCtor(phase: String = null,

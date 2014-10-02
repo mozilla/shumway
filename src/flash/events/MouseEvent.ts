@@ -23,7 +23,7 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
 
     static classSymbols: string [] = null;
-    static instanceSymbols: string [] = ["clone!"];
+    static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = true, cancelable: boolean = false,
                 localX: number = undefined, localY: number = undefined,
@@ -88,20 +88,28 @@ module Shumway.AVM2.AS.flash.events {
           // return MouseEvent.CONTEXT_MENU;
       }
     }
-    clone: () => flash.events.Event;
 
     // AS -> JS Bindings
     private _localX: number;
     private _localY: number;
     private _movementX: number;
     private _movementY: number;
-
+    private _delta: number;
     private _position: flash.geom.Point;
+
+    private _ctrlKey: boolean;
+    private _altKey: boolean;
+    private _shiftKey: boolean;
+
+    private _buttonDown: boolean;
+
+    private _relatedObject: flash.display.InteractiveObject;
+    private _isRelatedObjectInaccessible: boolean;
+
 
     get localX(): number {
       return (this._localX / 20) | 0;
     }
-
     set localX(value: number) {
       this._localX = (value * 20) | 0;
     }
@@ -109,16 +117,28 @@ module Shumway.AVM2.AS.flash.events {
     get localY(): number {
       return (this._localY / 20) | 0;
     }
-
     set localY(value: number) {
       this._localY = (value * 20) | 0;
+    }
+
+    public get stageX(): Number {
+      if (isNaN(this.localX + this.localY)) {
+        return Number.NaN;
+      }
+      return (this._getGlobalPoint().x / 20) | 0;
+    }
+
+    public get stageY(): Number {
+      if (isNaN(this.localX + this.localY)) {
+        return Number.NaN;
+      }
+      return (this._getGlobalPoint().y / 20) | 0;
     }
 
     get movementX(): number {
       somewhatImplemented("public flash.events.MouseEvent::set movementX");
       return this._movementX || 0;
     }
-
     set movementX(value: number) {
       this._movementX = +value;
     }
@@ -127,9 +147,57 @@ module Shumway.AVM2.AS.flash.events {
       somewhatImplemented("public flash.events.MouseEvent::set movementY");
       return this._movementY || 0;
     }
-
     set movementY(value: number) {
       this._movementY = +value;
+    }
+
+    public get delta(): number {
+      return this._delta;
+    }
+    public set delta(value: number) {
+      this._delta = value;
+    }
+
+    public get ctrlKey(): boolean {
+      return this._ctrlKey;
+    }
+    public set ctrlKey(value: boolean) {
+      this._ctrlKey = value;
+    }
+
+    public get altKey(): boolean {
+      return this._altKey;
+    }
+    public set altKey(value: boolean) {
+      this._altKey = value;
+    }
+
+    public get shiftKey(): boolean {
+      return this._shiftKey;
+    }
+    public set shiftKey(value: boolean) {
+      this._shiftKey = value;
+    }
+
+    public get buttonDown(): boolean {
+      return this._buttonDown;
+    }
+    public set buttonDown(value: boolean) {
+      this._buttonDown = value;
+    }
+
+    public get relatedObject(): flash.display.InteractiveObject {
+      return this._relatedObject;
+    }
+    public set relatedObject(value: flash.display.InteractiveObject) {
+      this._relatedObject = value;
+    }
+
+    public get isRelatedObjectInaccessible(): boolean {
+      return this._isRelatedObjectInaccessible;
+    }
+    public set isRelatedObjectInaccessible(value: boolean) {
+      this._isRelatedObjectInaccessible = value;
     }
 
     updateAfterEvent(): void {
@@ -151,12 +219,17 @@ module Shumway.AVM2.AS.flash.events {
       return point;
     }
 
-    getStageX(): number {
-      return (this._getGlobalPoint().x / 20) | 0;
+    clone(): Event {
+      return new flash.events.MouseEvent(this.type, this.bubbles, this.cancelable,
+                                         this.localX, this.localY, this.relatedObject,
+                                         this.ctrlKey, this.altKey, this.shiftKey,
+                                         this.buttonDown, this.delta);
     }
 
-    getStageY(): number {
-      return (this._getGlobalPoint().y / 20) | 0;
+    toString(): string {
+      return this.formatToString('MouseEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                                 'localX', "localY", 'relatedObject', 'ctrlKey', 'altKey',
+                                 'shiftKey', 'buttonDown', 'delta');
     }
   }
 }

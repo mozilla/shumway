@@ -13,8 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// Class: Loader
-
 module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import warning = Shumway.Debug.warning;
@@ -51,11 +49,17 @@ module Shumway.AVM2.AS.flash.display {
     Bytes       = 1
   }
 
+  function getPlayer(): any {
+    return AVM2.instance.globals['Shumway.Player.Utils'];
+  }
+
   export class Loader extends flash.display.DisplayObjectContainer implements IAdvancable {
 
     private static _rootLoader: Loader;
     private static _loadQueue: Loader [];
     private static _embeddedContentLoadCount: number = 0;
+
+    private _writer: IndentingWriter;
 
     /**
      * Creates or returns the root Loader instance. The loader property of that instance's
@@ -101,11 +105,16 @@ module Shumway.AVM2.AS.flash.display {
     static WORKERS_AVAILABLE = typeof Worker !== 'undefined';
     static LOADER_PATH = 'swf/worker.js';
 
+    static runtimeStartTime: number = 0;
+
+    private static _commitFrameQueue: {loader: Loader; data: any}[] = [];
+
     /**
      * Handles the load status and dispatches progress events. This gets manually triggered in the
      * event loop to ensure the correct order of operations.
      */
     static progress() {
+      Loader.FlushCommittedFrames();
       var queue = Loader._loadQueue;
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
@@ -121,10 +130,19 @@ module Shumway.AVM2.AS.flash.display {
             if (instance._loadingType === LoadingType.External) {
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
             }
+
+            // The first time any progress is made at all, a progress event with bytesLoaded = 0
+            // is dispatched.
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
                                                               false, false, 0, bytesTotal));
             instance._loadStatus = LoadStatus.Opened;
           case LoadStatus.Opened:
+            if (loaderInfo._bytesLoadedChanged) {
+              loaderInfo._bytesLoadedChanged = false;
+              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                                false, false, bytesLoaded,
+                                                                bytesTotal));
+            }
             if (!(instance._content &&
                   instance._content._hasFlags(DisplayObjectFlags.Constructed))) {
               break;
@@ -139,9 +157,6 @@ module Shumway.AVM2.AS.flash.display {
           case LoadStatus.Initialized:
             if (bytesLoaded === bytesTotal) {
               instance._loadStatus = LoadStatus.Complete;
-              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                                false, false, bytesLoaded,
-                                                                bytesTotal));
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
             }
             break;
@@ -154,10 +169,19 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
+    private static FlushCommittedFrames() {
+      var frames = Loader._commitFrameQueue;
+      for (var i = 0; i < frames.length; i++) {
+        frames[i].loader._commitFrame(frames[i].data);
+      }
+      frames.length = 0;
+    }
+
     constructor () {
       false && super();
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
 
+      this._writer = new IndentingWriter();
       this._content = null;
       this._contentLoaderInfo = new flash.display.LoaderInfo();
 
@@ -233,6 +257,20 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _codeExecutionPromise: PromiseWrapper<any>;
 
+    /**
+     * No way of knowing what's in |data|, so do a best effort to print out some meaninfgul debug info.
+     */
+    private _describeData(data: any): string {
+      var keyValueParis = [];
+      for (var k in data) {
+        keyValueParis.push(k + ":" + StringUtilities.toSafeString(data[k]));
+      }
+      return "{" + keyValueParis.join(", ") + "}";
+    }
+
+    /**
+     * Chain a promise for |data| to the previous promise.
+     */
     private _commitData(data: any): void {
       if (this._waitForInitialData) {
         // 'progress' event usually fires after 64K, using this as a start to
@@ -246,19 +284,32 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
 
-      this._commitDataQueue = this._commitDataQueue.then(
-        this._commitQueuedData.bind(this, data));
+      var nextPromise = this._commitDataQueue.then(this._commitQueuedData.bind(this, data));
+      if (traceLoaderOption.value) {
+        this._writer.writeTimeLn("Making for: " + this._describeData(data));
+      }
+      this._commitDataQueue = nextPromise;
     }
 
+    /**
+     * Returns a promise for the requested |data|. Some of these resolve right away, returning |null|
+     * others return a promise that is suspended until some other thing is resolved, like font loading
+     * or image decoding.
+     */
     private _commitQueuedData(data: any): Promise<any> {
       var loaderInfo = this._contentLoaderInfo;
       var command = data.command;
       var suspendUntil: Promise<any> = null;
+
+      if (traceLoaderOption.value) {
+        this._writer.writeTimeLn("Executing Promise: " + this._describeData(data));
+      }
+
       switch (command) {
         case 'init':
           var info = data.result;
 
-          loaderInfo._bytesLoaded = info.bytesLoaded;
+          loaderInfo.bytesLoaded = info.bytesLoaded;
           loaderInfo._bytesTotal = info.bytesTotal;
           loaderInfo._swfVersion = info.swfVersion;
           loaderInfo._frameRate = info.frameRate;
@@ -273,6 +324,9 @@ module Shumway.AVM2.AS.flash.display {
           if (!info.fileAttributes || !info.fileAttributes.doAbc) {
             loaderInfo._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
             suspendUntil = this._initAvm1();
+            if (traceLoaderOption.value) {
+              this._writer.writeTimeLn("Suspending until AVM1 is initialized.");
+            }
           }
           break;
         case 'progress':
@@ -280,7 +334,7 @@ module Shumway.AVM2.AS.flash.display {
           var bytesLoaded = info.bytesLoaded;
           var bytesTotal = info.bytesTotal;
           release || assert (bytesLoaded <= bytesTotal, "Loaded bytes should not exceed total bytes.");
-          loaderInfo._bytesLoaded = bytesLoaded;
+          loaderInfo.bytesLoaded = bytesLoaded;
           if (!loaderInfo._bytesTotal) {
             loaderInfo._bytesTotal = bytesTotal;
           } else {
@@ -293,6 +347,9 @@ module Shumway.AVM2.AS.flash.display {
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS, false,
                                                               false, bytesLoaded, bytesTotal));
             this._progressPromise.resolve(undefined);
+            if (traceLoaderOption.value) {
+              this._writer.writeTimeLn("Resolving progress promise.");
+            }
           }
           break;
         case 'complete':
@@ -302,9 +359,6 @@ module Shumway.AVM2.AS.flash.display {
 
           this._worker && this._worker.terminate();
           break;
-        //case 'empty':
-        //  this._lastPromise = Promise.resolve();
-        //  break;
         case 'error':
           this._contentLoaderInfo.dispatchEvent(new events.IOErrorEvent(
                                                     events.IOErrorEvent.IO_ERROR));
@@ -318,12 +372,16 @@ module Shumway.AVM2.AS.flash.display {
             this._commitAsset(data);
           } else if (data.type === 'frame') {
             if (this._frameAssetsQueue) {
+              if (traceLoaderOption.value) {
+                this._writer.writeTimeLn("Suspending frame execution until all of its assets are resolved.");
+              }
+              var self = this;
               suspendUntil = Promise.all(this._frameAssetsQueue).then(function () {
-                this._commitFrame(data);
-                this._frameAssetsQueue = null;
+                self._enqueueFrame(data);
+                self._frameAssetsQueue = null;
               }.bind(this));
             } else {
-              this._commitFrame(data);
+              this._enqueueFrame(data);
             }
           } else if (data.type === 'image') {
             this._commitImage(data);
@@ -378,7 +436,17 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.MorphShapeSymbol.FromData(data, loaderInfo);
           break;
         case 'image':
-          symbol = Timeline.BitmapSymbol.FromData(data);
+          var bitmapSymbol = symbol = Timeline.BitmapSymbol.FromData(data);
+          if (bitmapSymbol.type === ImageType.PNG ||
+              bitmapSymbol.type === ImageType.GIF ||
+              bitmapSymbol.type === ImageType.JPEG) {
+            if (!this._frameAssetsQueue) {
+              this._frameAssetsQueue = [];
+            }
+            this._frameAssetsQueue.push(new Promise(function (resolve) {
+              getPlayer().decodeImage(bitmapSymbol, resolve);
+            }));
+          }
           break;
         case 'label':
         case 'text':
@@ -394,7 +462,7 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.FontSymbol.FromData(data);
           var font = flash.text.Font.initializeFrom(symbol);
           flash.text.Font.instanceConstructorNoInitialize.call(font);
-          AVM2.instance.globals['Shumway.Player.Utils'].registerFont(font);
+          getPlayer().registerFont(font);
 
           // For non-Firefox browsers, we have to wait until font is "loaded"
           if (typeof navigator !== 'undefined' &&
@@ -418,7 +486,29 @@ module Shumway.AVM2.AS.flash.display {
       loaderInfo.registerSymbol(symbol);
     }
 
-    private _commitFrame(data: any): void {
+    /**
+     * Enqueues a frame for addition to the target Sprite/MovieClip.
+     *
+     * Frames aren't immediately committed because doing so also enqueues execution of
+     * constructors of any contained timeline children. In order to preserve the correct
+     * order of their execution relative to when Loader events are dispatched and the
+     * frame event cycle is run, we just enqueue them here.
+     *
+     * The only exception is the first frame of the main root's timeline. That is committed
+     * immediately as it triggers all code execution in the first place: the event loop
+     * isn't run before.
+     */
+    private _enqueueFrame(data: any): void {
+      if (this === Loader.getRootLoader()) {
+        Loader.runtimeStartTime = Date.now();
+        this._commitFrame(data);
+        this._codeExecutionPromise.resolve(undefined);
+      } else {
+        Loader._commitFrameQueue.push({loader: this, data: data});
+      }
+    }
+
+    private _commitFrame(data: any) {
       var loaderInfo = this._contentLoaderInfo;
 
       // HACK: Someone should figure out how to set the color on the stage better.
@@ -503,8 +593,6 @@ module Shumway.AVM2.AS.flash.display {
           this._content = root;
         }
         this.addTimelineObjectAtDepth(this._content, 0);
-
-        this._codeExecutionPromise.resolve(undefined);
       }
 
       // For AVM1 SWFs directly loaded into AVM2 ones (or as the top-level SWF), unwrap the

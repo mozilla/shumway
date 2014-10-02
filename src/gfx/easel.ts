@@ -236,6 +236,7 @@ module Shumway.GFX {
 
     public paused: boolean = false;
     public viewport: Rectangle = null;
+    public transparent: boolean;
 
     private _selectedFrames: Frame [] = [];
 
@@ -244,7 +245,9 @@ module Shumway.GFX {
     private _fpsCanvas: HTMLCanvasElement;
     private _fps: FPS;
 
-    constructor(container: HTMLElement, backend: Backend, disableHidpi: boolean = false) {
+    constructor(container: HTMLElement, backend: Backend,
+                disableHidpi: boolean = false,
+                bgcolor: number = undefined) {
       var stage = this._stage = new Stage(128, 128, true);
       this._worldView = new FrameContainer();
       this._worldViewOverlay = new FrameContainer();
@@ -274,19 +277,27 @@ module Shumway.GFX {
       var canvases = this._canvases = [];
       var renderers = this._renderers = [];
 
+      var transparent = bgcolor === 0;
+      this.transparent = transparent;
+
+      var cssBackgroundColor = bgcolor === undefined ? "#14171a" :
+                               bgcolor === 0 ? 'transparent' :
+                               Shumway.ColorUtilities.rgbaToCSSStyle(bgcolor);
+
       function addCanvas2DBackend() {
         var canvas = document.createElement("canvas");
-        canvas.style.backgroundColor = "#14171a";
+        canvas.style.backgroundColor = cssBackgroundColor;
         container.appendChild(canvas);
         canvases.push(canvas);
         var o = new Canvas2D.Canvas2DStageRendererOptions();
+        o.alpha = transparent;
         options.push(o);
         renderers.push(new Canvas2D.Canvas2DStageRenderer(canvas, stage, o));
       }
 
       function addWebGLBackend() {
         var canvas = document.createElement("canvas");
-        canvas.style.backgroundColor = "#14171a";
+        canvas.style.backgroundColor = cssBackgroundColor;
         container.appendChild(canvas);
         canvases.push(canvas);
         var o = new WebGLStageRendererOptions();

@@ -29,7 +29,7 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
 
     static classSymbols: string [] = null;
-    static instanceSymbols: string [] = ["clone!"];
+    static instanceSymbols: string [] = null;
 
     static getInstance(type: string, bubbles: boolean = false, cancelable: boolean = false): Event {
       var instance = Event._instances[type];
@@ -139,9 +139,6 @@ module Shumway.AVM2.AS.flash.events {
 //    static CHANNEL_STATE: string = "channelState";
 //    static WORKER_STATE: string = "workerState";
 
-    formatToString: (className: string) => string;
-    clone: () => flash.events.Event;
-
     // AS -> JS Bindings
 
     _type: string;
@@ -205,6 +202,27 @@ module Shumway.AVM2.AS.flash.events {
 
     isBroadcastEvent(): boolean {
       return !!this._isBroadcastEvent;
+    }
+
+    clone(): Event {
+      return new Event(this._type, this._bubbles, this._cancelable);
+    }
+
+    toString(): string {
+      return this.formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
+    }
+
+    formatToString(className: string, ...args: string[]): string {
+      var str = '[' + className;
+      for (var i: number = 0; i < args.length; i++) {
+        var field = args[i];
+        var value: Object = this.asGetPublicProperty(field);
+        if (typeof value === 'string') {
+          value = '"' + value + '"';
+        }
+        str += ' ' + field + '=' + value;
+      }
+      return str + ']';
     }
   }
 }

@@ -1,9 +1,4 @@
 [
-    {  "id": "acid-platformer",
-      "frames": [10],
-      "swf": "swfs/acid/acid-platformer.swf",
-      "type": "eq"
-    },
     {  "id": "acid",
       "frames": [10],
       "swf": "swfs/acid/acid.swf",
@@ -24,11 +19,6 @@
       "swf": "swfs/acid/acid-bitmap-fill.swf",
       "type": "eq"
     },
-    {  "id": "acid-bitmapData-copyPixels",
-      "frames": [1, 5, 10],
-      "swf": "swfs/acid/acid-bitmapData-copyPixels.swf",
-      "type": "eq"
-    },
     {  "id": "acid-bitmapData-draw",
       "frames": [1],
       "swf": "swfs/acid/acid-bitmapData-draw.swf",
@@ -37,16 +27,6 @@
     {  "id": "acid-bitmaps",
       "frames": [1, 5, 10],
       "swf": "swfs/acid/acid-bitmaps.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-blend-2",
-      "frames": [1, 5, 10],
-      "swf": "swfs/acid/acid-blend-2.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-blend",
-      "frames": [1, 5, 10],
-      "swf": "swfs/acid/acid-blend.swf",
       "type": "eq"
     },
     {  "id": "acid-buttons-2",
@@ -139,11 +119,6 @@
       "swf": "swfs/acid/acid-image-2.swf",
       "type": "eq"
     },
-    {  "id": "acid-image",
-      "frames": [1, 5, 10],
-      "swf": "swfs/acid/acid-image.swf",
-      "type": "eq"
-    },
     {  "id": "acid-large",
       "frames": [1, 20],
       "swf": "swfs/acid/acid-large.swf",
@@ -214,11 +189,6 @@
       "swf": "swfs/acid/acid-text-3.swf",
       "type": "eq"
     },
-    {  "id": "acid-text-5",
-      "frames": [1, 5, 10],
-      "swf": "swfs/acid/acid-text-5.swf",
-      "type": "eq"
-    },
     {  "id": "acid-text-6",
       "frames": [1, 10, 20],
       "swf": "swfs/acid/acid-text-6.swf",
@@ -240,6 +210,13 @@
       "type": "eq"
     },
 
+    {  "id": "getObjectsUnderPoint",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/getobjectsunderpoint.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "timeline",
       "stas": "swfs/trace.stas",
       "filenames": [
@@ -400,10 +377,10 @@
       ],
       "type": "stas"
     },
-    {  "id": "AVM1Movie",
+    {  "id": "avm1-moviecliploader",
       "stas": "swfs/trace.stas",
       "filenames": [
-        "swfs/avm1movie/AVM1MovieTest.swf"
+        "swfs/avm1/moviecliploader/loader.swf"
       ],
       "type": "stas"
     },
@@ -416,13 +393,6 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/hitTestStyleChange.swf"
-      ],
-      "type": "stas"
-    },
-    {  "id": "image-loading",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/image-loading/image-loading.swf"
       ],
       "type": "stas"
     }

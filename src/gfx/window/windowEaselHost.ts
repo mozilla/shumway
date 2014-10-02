@@ -39,11 +39,12 @@ module Shumway.GFX.Window {
       }.bind(this));
     }
 
-    onSendEventUpdates(updates: DataBuffer) {
+    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
       var bytes = updates.getBytes();
       this._playerWindow.postMessage({
         type: 'gfx',
-        updates: bytes
+        updates: bytes,
+        assets: assets
       }, '*', [bytes.buffer]);
     }
 

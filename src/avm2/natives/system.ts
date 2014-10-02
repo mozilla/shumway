@@ -64,7 +64,11 @@ module Shumway.AVM2.AS {
 
       static setClipboard(string: string): void {
         string = asCoerceString(string);
-        notImplemented("public flash.system.System::static setClipboard"); return;
+        if (ClipboardService.instance === null) {
+          notImplemented("public flash.system.System::setClipboard");
+          return;
+        }
+        ClipboardService.instance.setClipboard(string);
       }
 
       static get totalMemoryNumber(): number {

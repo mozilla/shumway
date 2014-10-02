@@ -24,11 +24,15 @@ limitations under the License.
       body {
         margin: 0;
         overflow: hidden;
-        background-color: rgba(0, 0, 0, 0.78);
+        background-color: transparent;
       }
 
       body.started {
         background-color: transparent;
+      }
+
+      body.started iframe {
+        display: none;
       }
 
       #stageContainer {
