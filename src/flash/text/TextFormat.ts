@@ -346,7 +346,7 @@ module Shumway.AVM2.AS.flash.text {
       if (other._display !== null) {
         this._display = other._display;
       }
-      if (other._font !== null) {
+      if (other._font) {
         this._font = other._font;
       }
       if (other._indent !== null) {
@@ -376,13 +376,13 @@ module Shumway.AVM2.AS.flash.text {
       if (other._tabStops !== null) {
         this._tabStops = other._tabStops;
       }
-      if (other._target !== null) {
+      if (other._target) {
         this._target = other._target;
       }
       if (other._underline !== null) {
         this._underline = other._underline;
       }
-      if (other._url !== null) {
+      if (other._url) {
         this._url = other._url;
       }
     }
