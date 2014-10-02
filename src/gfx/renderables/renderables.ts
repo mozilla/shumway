@@ -1062,13 +1062,14 @@ module Shumway.GFX {
         var line = lines[i];
         var x = line.x;
         var y = line.y;
+        // Skip lines until we are within the scroll view.
         if (i + 1 < scrollV) {
           scrollY = y + line.descent + line.leading;
           continue;
         }
         y -= scrollY;
         // Flash skips rendering lines that are not fully visible in height (except of the very
-        // first line in the scroll view).
+        // first line within the scroll view).
         if ((i + 1) - scrollV && y > bounds.h) {
           break;
         }

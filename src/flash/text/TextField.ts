@@ -322,9 +322,11 @@ module Shumway.AVM2.AS.flash.text {
       }
     }
 
+    // Returns bottommost line that is currently visible.
     get bottomScrollV(): number /*int*/ {
       return this._bottomScrollV;
     }
+
     get caretIndex(): number /*int*/ {
       notImplemented("public flash.text.TextField::get caretIndex"); return;
       // return this._caretIndex;
@@ -357,6 +359,7 @@ module Shumway.AVM2.AS.flash.text {
     get gridFitType(): string {
       return this._gridFitType;
     }
+
     set gridFitType(gridFitType: string) {
       gridFitType = asCoerceString(gridFitType);
       release || assert (flash.text.GridFitType.toNumber(gridFitType) >= 0);
@@ -446,6 +449,7 @@ module Shumway.AVM2.AS.flash.text {
       this._restrict = asCoerceString(value);
     }
 
+    // Returns the current vertical scrolling position in lines.
     get scrollH(): number /*int*/ {
       return this._textContent.scrollH;
     }
@@ -457,6 +461,7 @@ module Shumway.AVM2.AS.flash.text {
       this._invalidateContent();
     }
 
+    // Returns the current horizontal scrolling position in pixels.
     get scrollV(): number /*int*/ {
       return this._textContent.scrollV;
     }
@@ -500,6 +505,7 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("public flash.text.TextField::get styleSheet"); return;
       // return this._styleSheet;
     }
+
     set styleSheet(value: flash.text.StyleSheet) {
       value = value;
       notImplemented("public flash.text.TextField::set styleSheet"); return;
