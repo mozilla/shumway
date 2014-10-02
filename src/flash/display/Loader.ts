@@ -149,6 +149,11 @@ module Shumway.AVM2.AS.flash.display {
             }
             instance._loadStatus = LoadStatus.Initialized;
             loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
+            if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+              events.EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(
+                events.Event.getBroadcastInstance(events.Event.AVM1_LOAD)
+              );
+            }
           case LoadStatus.Initialized:
             if (bytesLoaded === bytesTotal) {
               instance._loadStatus = LoadStatus.Complete;
