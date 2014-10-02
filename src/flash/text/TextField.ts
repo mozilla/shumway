@@ -476,6 +476,10 @@ module Shumway.AVM2.AS.flash.text {
       this._selectable = !!value;
     }
 
+    get selectedText(): string {
+      return this._textContent.plainText.substring(this._selectionBeginIndex, this._selectionEndIndex);
+    }
+
     get selectionBeginIndex(): number /*int*/ {
       return this._selectionBeginIndex;
     }
@@ -614,6 +618,11 @@ module Shumway.AVM2.AS.flash.text {
       } else {
         this._maxScrollH = 0;
       }
+    }
+
+    appendText(newText: string) {
+      var beginIndex = this._textContent.plainText.length;
+      this.replaceText(beginIndex, beginIndex, newText);
     }
 
     getCharBoundaries(charIndex: number /*int*/): flash.geom.Rectangle {
