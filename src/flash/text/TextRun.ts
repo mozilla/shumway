@@ -16,6 +16,7 @@
 // Class: TextRun
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+
   export class TextRun extends ASNative {
 
     static classInitializer: any = null;
@@ -62,7 +63,15 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     clone(): TextRun {
-      return new flash.text.TextRun(this.beginIndex, this.endIndex, this.textFormat);
+      return new flash.text.TextRun(this.beginIndex, this.endIndex, this.textFormat.clone());
+    }
+
+    containsIndex(index: number): boolean {
+      return index >= this._beginIndex && index < this._endIndex;
+    }
+
+    intersects(beginIndex: number, endIndex: number): boolean {
+      return Math.max(this._beginIndex, beginIndex) < Math.min(this._endIndex, endIndex);
     }
   }
 }

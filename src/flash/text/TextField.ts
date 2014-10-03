@@ -627,8 +627,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     appendText(newText: string) {
-      var beginIndex = this._textContent.plainText.length;
-      this.replaceText(beginIndex, beginIndex, newText);
+      this._textContent.appendText(asCoerceString(newText));
     }
 
     getCharBoundaries(charIndex: number /*int*/): flash.geom.Rectangle {
@@ -688,6 +687,10 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("public flash.text.TextField::getParagraphLength"); return;
     }
 
+    /**
+     * Returns a TextFormat object that contains the intersection of formatting information for the
+     * range of text between |beginIndex| and |endIndex|.
+     */
     getTextFormat(beginIndex: number /*int*/ = -1, endIndex: number /*int*/ = -1): flash.text.TextFormat {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
       var plainText = this._textContent.plainText;
@@ -709,8 +712,7 @@ module Shumway.AVM2.AS.flash.text {
       var textRuns = this._textContent.textRuns;
       for (var i = 0; i < textRuns.length; i++) {
         var run = textRuns[i];
-        if (beginIndex >= run.beginIndex && beginIndex < run.endIndex ||
-            endIndex > run.beginIndex && endIndex <= run.endIndex) {
+        if (run.intersects(beginIndex, endIndex)) {
           if (format) {
             format.intersect(run.textFormat);
           } else {

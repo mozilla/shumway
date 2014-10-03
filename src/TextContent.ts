@@ -283,11 +283,7 @@ module Shumway {
       });
 
       this._plainText = plainText;
-      this.textRunData.clear();
-      for (var i = 0; i < textRuns.length; i++) {
-        this._writeTextRun(textRuns[i]);
-      }
-      this.flags |= TextContentFlags.DirtyContent;
+      this._serializeTextRuns();
     }
 
     get plainText(): string {
@@ -299,9 +295,7 @@ module Shumway {
       this.textRuns.length = 0;
       var textRun = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
       this.textRuns[0] = textRun;
-      this.textRunData.clear();
-      this._writeTextRun(textRun);
-      this.flags |= TextContentFlags.DirtyContent;
+      this._serializeTextRuns();
     }
 
     get bounds(): Bounds {
@@ -393,6 +387,15 @@ module Shumway {
       this.flags |= TextContentFlags.DirtyStyle;
     }
 
+    private _serializeTextRuns() {
+      var textRuns = this.textRuns;
+      this.textRunData.clear();
+      for (var i = 0; i < textRuns.length; i++) {
+        this._writeTextRun(textRuns[i]);
+      }
+      this.flags |= TextContentFlags.DirtyContent;
+    }
+
     private _writeTextRun(textRun: flash.text.TextRun) {
       var textRunData = this.textRunData;
 
@@ -443,22 +446,65 @@ module Shumway {
       textRunData.writeBoolean(!!textFormat.underline);
     }
 
+    appendText(newText: string, format?: flash.text.TextFormat) {
+      if (!format) {
+        format = this.defaultTextFormat;
+      }
+      var plainText = this._plainText;
+      var newRun = new flash.text.TextRun(plainText.length, plainText.length + newText.length, format);
+      this._plainText = plainText + newText;
+      this.textRuns.push(newRun);
+      this._writeTextRun(newRun);
+    }
+
+    prependText(newText: string, format?: flash.text.TextFormat) {
+      if (!format) {
+        format = this.defaultTextFormat;
+      }
+      var plainText = this._plainText;
+      this._plainText = newText + plainText;
+      var textRuns = this.textRuns;
+      var shift = newText.length;
+      for (var i = 0; i < textRuns.length; i++) {
+        var run = textRuns[i];
+        run.beginIndex += shift;
+        run.endIndex += shift;
+      }
+      textRuns.unshift(
+        new flash.text.TextRun(0, shift, format)
+      );
+      this._serializeTextRuns();
+    }
+
     replaceText(beginIndex: number, endIndex: number, newText: string, format?: flash.text.TextFormat) {
-      if (endIndex < beginIndex) {
+      if (endIndex < beginIndex || !newText) {
+        return;
+      }
+
+      if (endIndex === 0) {
+        // Insert text at the beginning.
+        this.prependText(newText, format);
+        return;
+      }
+
+      var plainText = this._plainText;
+
+      // When inserting text to the end, we can simply add a new text run without changing any
+      // existing ones.
+      if (beginIndex >= plainText.length) {
+        this.appendText(newText, format);
         return;
       }
 
       var defaultTextFormat = this.defaultTextFormat;
 
-      // A text format used for new text runs will have unset properties merged
-      // in from the default text format.
+      // A text format used for new text runs will have unset properties merged in from the default
+      // text format.
       var newFormat = defaultTextFormat;
       if (format) {
         newFormat = newFormat.clone();
         newFormat.merge(format);
       }
-
-      var plainText = this._plainText;
 
       // If replacing the whole text, just regenerate runs by setting plainText.
       if (beginIndex <= 0 && endIndex >= plainText.length) {
@@ -475,73 +521,57 @@ module Shumway {
       }
 
       var textRuns = this.textRuns;
-      var newEndIndex = beginIndex + newText.length;
-
-      // When appending text, we can simply add a new text run without changing
-      // any existing ones.
-      if (beginIndex >= plainText.length) {
-        this._plainText += newText;
-        var run = new flash.text.TextRun(beginIndex, newEndIndex, newFormat);
-        textRuns.push(run);
-        this._writeTextRun(run);
-        this.flags |= TextContentFlags.DirtyContent;
-        return;
-      }
-
       var newTextRuns: flash.text.TextRun[] = [];
+      var newEndIndex = beginIndex + newText.length;
       var shift = newEndIndex - endIndex;
       for (var i = 0; i < textRuns.length; i++) {
         var run = textRuns[i];
-        // Skip all following steps (including adding the current run to the
-        // new list of runs) if the inserted text will entirely span over the
-        // current run.
-        if (beginIndex <= run.beginIndex && newEndIndex >= run.endIndex) {
-          continue;
-        }
-        if (beginIndex > run.beginIndex && newEndIndex < run.endIndex) {
-          // The current run completely fits the new text.
-          if (format) {
-            // If a text format was passed, split up the current run and insert
-            // a new one.
-            var tmp = run.endIndex;
-            run.endIndex = beginIndex;
-            newTextRuns.push(run);
-            newTextRuns.push(
-              new flash.text.TextRun(beginIndex, newEndIndex, newFormat)
-            );
-            run = new flash.text.TextRun(newEndIndex, tmp, run.textFormat.clone());
+        if (beginIndex < run.endIndex) {
+          // Skip all following steps (including adding the current run to the new list of runs) if
+          // the inserted text overlaps the current run.
+          if (beginIndex <= run.beginIndex && newEndIndex >= run.endIndex) {
+            continue;
           }
-        } else if (beginIndex > run.beginIndex && beginIndex <= run.endIndex) {
-          // Run is intersecting on the left. Adjust its length.
-          run.endIndex = beginIndex;
-        } else if (newEndIndex >= run.beginIndex && newEndIndex < run.endIndex) {
-          // If text is added to the beginning, or a text format was passed, a
-          // new run needs to be inserted.
-          if (i === 0 || format) {
-            newTextRuns.push(
-              new flash.text.TextRun(beginIndex, newEndIndex, newFormat)
-            );
-            run.beginIndex = newEndIndex;
+          var containsBeginIndex = run.containsIndex(beginIndex);
+          var containsEndIndex = run.containsIndex(endIndex);
+          if (containsBeginIndex && containsEndIndex) {
+            // The current run spans over the inserted text.
+            if (format) {
+              // Split up the current run.
+              var clone = run.clone();
+              clone.endIndex = beginIndex;
+              newTextRuns.push(clone);
+              i--;
+              run.beginIndex = beginIndex;
+              continue;
+            }
+          } else if (containsBeginIndex) {
+            // Run is intersecting on the left. Adjust its length.
+            run.endIndex = beginIndex;
+          } else if (containsEndIndex) {
+            // If a a text format was passed, a new run needs to be inserted.
+            if (format) {
+              newTextRuns.push(
+                new flash.text.TextRun(beginIndex, newEndIndex, newFormat)
+              );
+              run.beginIndex = newEndIndex;
+            } else {
+              // Otherwise make the current run span over the inserted text.
+              run.beginIndex = beginIndex;
+              run.endIndex += shift;
+            }
           } else {
-            // Otherwise make the current run span over the inserted text.
-            run.beginIndex = beginIndex;
+            // No intersection, shift entire run to the right.
+            run.beginIndex += shift;
             run.endIndex += shift;
           }
-        } else if (newEndIndex < run.beginIndex) {
-          // No intersection, shift entire run to the right.
-          run.beginIndex += shift;
-          run.endIndex += shift;
         }
         newTextRuns.push(run);
       }
+
       this._plainText = plainText.substring(0, beginIndex) + newText + plainText.substring(endIndex);
       this.textRuns = newTextRuns;
-      // Clear text run data and re-serialize all runs.
-      this.textRunData.clear();
-      for (var i = 0; i < newTextRuns.length; i++) {
-        this._writeTextRun(newTextRuns[i]);
-      }
-      this.flags |= TextContentFlags.DirtyContent;
+      this._serializeTextRuns();
     }
   }
 }
