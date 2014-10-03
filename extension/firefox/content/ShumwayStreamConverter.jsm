@@ -212,13 +212,15 @@ function isShumwayEnabledFor(actions) {
 function getVersionInfo() {
   var deferred = Promise.defer();
   var versionInfo = {
-    geckoMstone : 'unknown',
+    version: 'unknown',
     geckoBuildID: 'unknown',
     shumwayVersion: 'unknown'
   };
   try {
-    versionInfo.geckoMstone = Services.prefs.getCharPref('gecko.mstone');
-    versionInfo.geckoBuildID = Services.prefs.getCharPref('gecko.buildID');
+    var appInfo = Components.classes["@mozilla.org/xre/app-info;1"]
+        .getService(Components.interfaces.nsIXULAppInfo);
+    versionInfo.geckoVersion = appInfo.version;
+    versionInfo.geckoBuildID = appInfo.appBuildID;
   } catch (e) {
     log('Error encountered while getting platform version info:', e);
   }
@@ -487,20 +489,15 @@ ChromeActions.prototype = {
     getVersionInfo().then(function (versions) {
       params.versions = versions;
     }).then(function () {
-      params.ffbuild = encodeURIComponent(params.versions.geckoMstone +
-                                          ' (' + params.versions.geckoBuildID + ')');
-      params.shubuild = encodeURIComponent(params.versions.shumwayVersion);
-      params.exceptions = encodeURIComponent(exceptions);
-      var comment = '%2B%2B%2B This bug was initially via the problem reporting functionality in ' +
-                    'Shumway %2B%2B%2B%0A%0A' +
-                    'Please add any further information that you deem helpful here:%0A%0A%0A' +
-                    '----------------------%0A%0A' +
-                    'Technical Information:%0A' +
-                    'Firefox version: ' + params.ffbuild + '%0A' +
-                    'Shumway version: ' + params.shubuild;
-      url = url.split('{comment}').join(comment);
-      //this.window.openDialog('chrome://browser/content', '_blank', 'all,dialog=no', url);
-      dump(111);
+      var ffbuild = params.versions.geckoVersion + ' (' + params.versions.geckoBuildID + ')';
+      //params.exceptions = encodeURIComponent(exceptions);
+      var comment = '+++ Initially filed via the problem reporting functionality in Shumway +++\n' +
+                    'Please add any further information that you deem helpful here:\n\n\n\n' +
+                    '----------------------\n\n' +
+                    'Technical Information:\n' +
+                    'Firefox version: ' + ffbuild + '\n' +
+                    'Shumway version: ' + params.versions.shumwayVersion;
+      url = url.split('{comment}').join(encodeURIComponent(comment));
       this.window.open(url);
     }.bind(this));
   },
