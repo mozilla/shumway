@@ -606,7 +606,7 @@ module.exports = function(grunt) {
     var refresh = function () {
       grunt.util.spawn({
         cmd: 'rsync',
-        args: ['-r', '--delete'].concat(grunt.file.expand(MOZCENTRAL_DIR + '/*'), [DIFF_DIR]),
+        args: ['-rc', '--delete'].concat(grunt.file.expand(MOZCENTRAL_DIR + '/*'), [DIFF_DIR]),
         opts: { stdio: 'inherit'}}, function (error) {
         if (error) {
           done(error);
