@@ -121,6 +121,23 @@ module Shumway.GFX {
       for (var i = 0; i < renderables.length; i++) {
         renderables[i].invalidatePaint();
       }
+      var listeners = this._invalidatePaintEventListeners;
+      if (listeners) {
+        for (var i = 0; i < listeners.length; i++) {
+          listeners[i](this);
+        }
+      }
+    }
+
+    private _invalidatePaintEventListeners: {(renderable: Renderable): void} [] = null;
+
+    public addInvalidatePaintEventListener(listener: (renderable: Renderable) => void) {
+      if (!this._invalidatePaintEventListeners) {
+        this._invalidatePaintEventListeners = [];
+      }
+      var index = indexOf(this._invalidatePaintEventListeners, listener);
+      release && assert(index < 0);
+      this._invalidatePaintEventListeners.push(listener);
     }
 
     _bounds: Rectangle;
@@ -294,7 +311,6 @@ module Shumway.GFX {
       var Canvas2D = (<any>GFX).Canvas2D;
       var bounds = this.getBounds();
       var options = new Canvas2D.Canvas2DStageRendererOptions();
-      options.cacheShapes = true;
       var renderer = new Canvas2D.Canvas2DStageRenderer(this._canvas, null, options);
       renderer.renderFrame(source, clipRect || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
@@ -367,6 +383,7 @@ module Shumway.GFX {
       this._pathData = pathData;
       this._paths = null;
       this._textures = textures;
+      this.invalidatePaint();
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
@@ -1085,72 +1102,6 @@ module Shumway.GFX {
       context.textBaseline = "top";
       context.fillStyle = "white";
       context.fillText(this.text, 0, 0);
-      context.restore();
-    }
-  }
-
-  export class Grid extends Renderable {
-    _flags: RenderableFlags = RenderableFlags.Dirty | RenderableFlags.Scalable | RenderableFlags.Tileable;
-    properties: {[name: string]: any} = {};
-
-    constructor() {
-      super(Rectangle.createMaxI16());
-    }
-
-    render (context: CanvasRenderingContext2D, cullBounds?: Rectangle) {
-      context.save();
-
-      var gridBounds = cullBounds || this.getBounds();
-
-      context.fillStyle = ColorStyle.VeryDark;
-      context.fillRect(gridBounds.x, gridBounds.y, gridBounds.w, gridBounds.h);
-
-      function gridPath(level) {
-        var vStart = Math.floor(gridBounds.x / level) * level;
-        var vEnd   = Math.ceil((gridBounds.x + gridBounds.w) / level) * level;
-
-        for (var x = vStart; x < vEnd; x += level) {
-          context.moveTo(x + 0.5, gridBounds.y);
-          context.lineTo(x + 0.5, gridBounds.y + gridBounds.h);
-        }
-
-        var hStart = Math.floor(gridBounds.y / level) * level;
-        var hEnd   = Math.ceil((gridBounds.y + gridBounds.h) / level) * level;
-
-        for (var y = hStart; y < hEnd; y += level) {
-          context.moveTo(gridBounds.x, y + 0.5);
-          context.lineTo(gridBounds.x + gridBounds.w, y + 0.5);
-        }
-      }
-
-      context.beginPath();
-      gridPath(100);
-      context.lineWidth = 1;
-      context.strokeStyle = ColorStyle.Dark;
-      context.stroke();
-
-      context.beginPath();
-      gridPath(500);
-      context.lineWidth = 1;
-      context.strokeStyle = ColorStyle.TabToolbar;
-      context.stroke();
-
-      context.beginPath();
-      gridPath(1000);
-      context.lineWidth = 3;
-      context.strokeStyle = ColorStyle.Toolbars;
-      context.stroke();
-
-      var MAX = 1024 * 1024;
-      context.lineWidth = 3;
-      context.beginPath();
-      context.moveTo(-MAX, 0.5);
-      context.lineTo(MAX , 0.5);
-      context.moveTo(0.5, -MAX);
-      context.lineTo(0.5, MAX);
-      context.strokeStyle = ColorStyle.Orange;
-      context.stroke();
-
       context.restore();
     }
   }

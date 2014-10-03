@@ -405,39 +405,44 @@ function registerInspectorAsset(id, symbolId, asset) {
   }
   var li = document.createElement("li");
   var div = document.createElement("div");
-  var bounds = asset.getBounds();
-  var details = asset.constructor.name + ": " + id + " (" + symbolId + "), bounds: " + bounds;
-  var canvas = null;
-  var renderTime = 0;
-  if (asset instanceof Shumway.GFX.RenderableBitmap) {
-    canvas = asset._canvas;
-  } else {
-    canvas = document.createElement("canvas");
-    canvas.width = bounds.w;
-    canvas.height = bounds.h;
-    var context = canvas.getContext("2d");
-    context.translate(-bounds.x, -bounds.y);
-    // Draw axis if not at origin.
-    if (bounds.x !== 0 || bounds.y !== 0) {
-      context.beginPath();
-      context.lineWidth = 2;
-      context.strokeStyle = "white";
-      context.moveTo(-4, 0); context.lineTo(4, 0);
-      context.moveTo( 0,-4); context.lineTo(0, 4);
-      context.stroke();
+
+  function refreshAsset(renderable) {
+    var bounds = renderable.getBounds();
+    var details = renderable.constructor.name + ": " + id + " (" + symbolId + "), bounds: " + bounds;
+    var canvas = null;
+    var renderTime = 0;
+    if (renderable instanceof Shumway.GFX.RenderableBitmap) {
+      canvas = renderable._canvas;
+    } else {
+      canvas = document.createElement("canvas");
+      canvas.width = bounds.w;
+      canvas.height = bounds.h;
+      var context = canvas.getContext("2d");
+      context.translate(-bounds.x, -bounds.y);
+      // Draw axis if not at origin.
+      if (bounds.x !== 0 || bounds.y !== 0) {
+        context.beginPath();
+        context.lineWidth = 2;
+        context.strokeStyle = "white";
+        context.moveTo(-4, 0); context.lineTo(4, 0);
+        context.moveTo( 0,-4); context.lineTo(0, 4);
+        context.stroke();
+      }
+      var start = performance.now();
+      renderable.render(context);
+      renderTime = (performance.now() - start);
     }
-    var start = performance.now();
-    asset.render(context);
-    renderTime = (performance.now() - start)
+    if (renderable instanceof Shumway.GFX.RenderableText) {
+      details += ", text: " + renderable._plainText;
+    }
+    if (renderTime) {
+      details += " (" + renderTime.toFixed(3) + " ms)";
+    }
+    div.innerHTML = details + "<br>";
+    div.appendChild(canvas);
   }
-  if (asset instanceof Shumway.GFX.RenderableText) {
-    details += ", text: " + asset._plainText;
-  }
-  if (renderTime) {
-    details += " (" + renderTime.toFixed(3) + " ms)";
-  }
-  div.innerHTML = details
+  refreshAsset(asset);
+  asset.addInvalidatePaintEventListener(refreshAsset);
   li.appendChild(div);
-  li.appendChild(canvas);
   document.getElementById("assetList").appendChild(li);
 }
