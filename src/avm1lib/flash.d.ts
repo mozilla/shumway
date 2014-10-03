@@ -22,8 +22,10 @@ declare module Shumway.AVM2.AS.flash {
       loaderInfo: {
         _avm1Context: AVM1.AVM1Context
       };
+      name: string;
       _mouseOver: boolean;
       _mouseDown: boolean;
+      _children: DisplayObject [];
     }
     class MovieClip extends DisplayObject {
       _as2SymbolClass;
