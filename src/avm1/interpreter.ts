@@ -64,6 +64,52 @@ module Shumway.AVM1 {
   var MAX_AVM1_ERRORS_LIMIT = 1000;
   var MAX_AVM1_STACK_LIMIT = 256;
 
+  var as2IdentifiersDictionary = [
+    "addCallback", "addListener", "addProperty", "addRequestHeader",
+    "AsBroadcaster", "attachAudio", "attachMovie", "attachSound", "attachVideo",
+    "beginFill", "beginGradientFill", "blendMode", "blockIndent",
+    "broadcastMessage", "cacheAsBitmap", "CASEINSENSITIVE", "charAt",
+    "charCodeAt", "checkPolicyFile", "clearInterval", "clearRequestHeaders",
+    "concat", "createEmptyMovieClip", "curveTo", "DESCENDING", "displayState",
+    "duplicateMovieClip", "E", "endFill", "exactSettings", "fromCharCode",
+    "fullScreenSourceRect", "getBounds", "getBytesLoaded", "getBytesTotal",
+    "getDate", "getDay", "getDepth", "getDepth", "getDuration", "getFullYear",
+    "getHours", "getLocal", "getMilliseconds", "getMinutes", "getMonth",
+    "getNewTextFormat", "getPan", "getPosition", "getRGB", "getSeconds",
+    "getSize", "getTextFormat", "getTime", "getTimezoneOffset", "getTransform",
+    "getUTCDate", "getUTCDay", "getUTCFullYear", "getUTCHours",
+    "getUTCMilliseconds", "getUTCMinutes", "getUTCMonth", "getUTCSeconds",
+    "getUTCYear", "getVolume", "getYear", "globalToLocal", "gotoAndPlay",
+    "gotoAndStop", "hasAccessibility", "hasAudio", "hasAudioEncoder",
+    "hasEmbeddedVideo", "hasIME", "hasMP3", "hasOwnProperty", "hasPrinting",
+    "hasScreenBroadcast", "hasScreenPlayback", "hasStreamingAudio",
+    "hasStreamingVideo", "hasVideoEncoder", "hitTest", "indexOf", "isActive",
+    "isDebugger", "isFinite", "isNaN", "isPropertyEnumerable", "isPrototypeOf",
+    "lastIndexOf", "leftMargin", "letterSpacing", "lineStyle", "lineTo", "LN10",
+    "LN10E", "LN2", "LN2E", "loadSound", "localFileReadDisable", "localToGlobal",
+    "MAX_VALUE", "MIN_VALUE", "moveTo", "NaN", "NEGATIVE_INFINITY", "nextFrame",
+    "NUMERIC", "onChanged", "onData", "onDragOut", "onDragOver", "onEnterFrame",
+    "onFullScreen", "onKeyDown", "onKeyUp", "onKillFocus", "onLoad",
+    "onMouseDown", "onMouseMove", "onMouseUp", "onPress", "onRelease",
+    "onReleaseOutside", "onResize", "onResize", "onRollOut", "onRollOver",
+    "onScroller", "onSetFocus", "onStatus", "onSync", "onUnload", "parseFloat",
+    "parseInt", "PI", "pixelAspectRatio", "playerType", "POSITIVE_INFINITY",
+    "prevFrame", "registerClass", "removeListener", "removeMovieClip",
+    "removeTextField", "replaceSel", "RETURNINDEXEDARRAY", "rightMargin",
+    "scale9Grid", "scaleMode", "screenColor", "screenDPI", "screenResolutionX",
+    "screenResolutionY", "serverString", "setClipboard", "setDate", "setDuration",
+    "setFps", "setFullYear", "setHours", "setInterval", "setMask",
+    "setMilliseconds", "setMinutes", "setMonth", "setNewTextFormat", "setPan",
+    "setPosition", "setRGB", "setSeconds", "setTextFormat", "setTime",
+    "setTimeout", "setTransform", "setTransform", "setUTCDate", "setUTCFullYear",
+    "setUTCHours", "setUTCMilliseconds", "setUTCMinutes", "setUTCMonth",
+    "setUTCSeconds", "setVolume", "setYear", "showMenu", "showRedrawRegions",
+    "sortOn", "SQRT1_2", "SQRT2", "startDrag", "stopDrag", "swapDepths",
+    "tabEnabled", "tabIndex", "tabIndex", "tabStops", "toLowerCase", "toString",
+    "toUpperCase", "trackAsMenu", "UNIQUESORT", "updateAfterEvent",
+    "updateProperties", "useCodepage", "useHandCursor", "UTC", "valueOf"];
+  var as2IdentifiersCaseMap: Map<string> = null;
+
   class AVM1ScopeListItem {
     constructor(public scope, public next: AVM1ScopeListItem) {
     }
@@ -337,7 +383,7 @@ module Shumway.AVM1 {
     return false;
   }
 
-  function as2ResolveProperty(obj, name: string): string {
+  function as2ResolveProperty(obj, name: string, normalize: boolean): string {
     // AVM1 just ignores lookups on non-existant containers
     if (isNullOrUndefined(obj)) {
       avm1Warn("AVM1 warning: cannot look up member '" + name + "' on undefined object");
@@ -357,14 +403,32 @@ module Shumway.AVM1 {
       return null;
     }
 
-    var foundName = null;
+    // First checking all lowercase property.
     var lowerCaseName = name.toLowerCase();
+    if (obj.asHasProperty(undefined, lowerCaseName, 0)) {
+      return lowerCaseName;
+    }
+
+    // Checking the dictionary of the well-known normalized names.
+    if (as2IdentifiersCaseMap === null) {
+      as2IdentifiersCaseMap = Object.create(null);
+      as2IdentifiersDictionary.forEach(function (key) {
+        as2IdentifiersCaseMap[key.toLowerCase()] = key;
+      });
+    }
+    var normalizedName = as2IdentifiersCaseMap[lowerCaseName] || null;
+    if (normalizedName && obj.asHasProperty(undefined, normalizedName, 0)) {
+      return normalizedName;
+    }
+
+    // Just enumerating through existing properties.
+    var foundName = null;
     as2Enumerate(obj, function (name) {
       if (name.toLowerCase() === lowerCaseName) {
         foundName = name;
       }
     }, null);
-    return foundName;
+    return foundName || (normalize ? normalizedName : null);
   }
 
   function as2GetProperty(obj, name: string) {
@@ -812,7 +876,7 @@ module Shumway.AVM1 {
         return null; // local variable
       }
 
-      var resolvedName = as2ResolveProperty(obj, name);
+      var resolvedName = as2ResolveProperty(obj, name, false);
       var resolved = resolvedName !== null;
       if (resolved || nonStrict) {
         return { obj: obj, name: resolvedName || name, resolved: resolved };
@@ -837,11 +901,11 @@ module Shumway.AVM1 {
       }
 
       var resolvedName;
-      if ((resolvedName = as2ResolveProperty(scope, variableName))) {
+      if ((resolvedName = as2ResolveProperty(scope, variableName, false))) {
         return scope.asGetPublicProperty(resolvedName);
       }
       for (var p = scopeContainer; p; p = p.next) {
-        resolvedName = as2ResolveProperty(p.scope, variableName);
+        resolvedName = as2ResolveProperty(p.scope, variableName, false);
         if (resolvedName !== null) {
           return p.scope.asGetPublicProperty(resolvedName);
         }
@@ -882,7 +946,7 @@ module Shumway.AVM1 {
       }
 
       for (var p = scopeContainer; p.next; p = p.next) { // excluding globals
-        var resolvedName = as2ResolveProperty(p.scope, variableName);
+        var resolvedName = as2ResolveProperty(p.scope, variableName, false);
         if (resolvedName !== null) {
           p.scope.asSetPublicProperty(resolvedName, value);
           return;
@@ -1420,7 +1484,7 @@ module Shumway.AVM1 {
       } else {
         target = obj;
       }
-      var resolvedName = as2ResolveProperty(target, methodName);
+      var resolvedName = as2ResolveProperty(target, methodName, false);
       var fn = target.asGetPublicProperty(resolvedName);
 
       // AVM1 simply ignores attempts to invoke non-methods.
@@ -1515,7 +1579,7 @@ module Shumway.AVM1 {
         // special case to track members
         stack.push(as2CreatePrototypeProxy(obj));
       } else {
-        var resolvedName = as2ResolveProperty(obj, name);
+        var resolvedName = as2ResolveProperty(obj, name, false);
         stack.push(resolvedName === null ? undefined :
           as2GetProperty(obj, resolvedName));
       }
@@ -1562,7 +1626,7 @@ module Shumway.AVM1 {
       if (isNullOrUndefined(methodName) || methodName === '') {
         ctor = obj;
       } else {
-        var resolvedName = as2ResolveProperty(obj, methodName);
+        var resolvedName = as2ResolveProperty(obj, methodName, false);
         ctor = obj.asGetPublicProperty(resolvedName);
       }
 
@@ -1603,12 +1667,14 @@ module Shumway.AVM1 {
       var name = stack.pop();
       var obj = stack.pop();
 
-      if (!isNullOrUndefined(obj)) {
-        obj.asSetPublicProperty(name, value);
-      } else {
+      if (isNullOrUndefined(obj)) {
         // AVM1 just ignores sets on non-existant containers
         avm1Warn("AVM1 warning: cannot set member '" + name + "' on undefined object");
+        return;
       }
+
+      var resolvedName = as2ResolveProperty(obj, name, true);
+      obj.asSetPublicProperty(resolvedName === null ? name : resolvedName, value);
     }
     function avm1_0x45_ActionTargetPath(ectx: ExecutionContext) {
       var stack = ectx.stack;
