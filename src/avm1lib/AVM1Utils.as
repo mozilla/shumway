@@ -22,7 +22,6 @@ package avm1lib {
   import flash.geom.Matrix;
   import flash.geom.Point;
   import flash.geom.Rectangle;
-  import flash.external.ExternalInterface;
 
   [native(cls="AVM1Utils")]
   public class AVM1Utils {
@@ -40,7 +39,7 @@ package avm1lib {
           BitmapData: AVM1BitmapData
         },
         external: {
-          ExternalInterface: ExternalInterface
+          ExternalInterface: AVM1ExternalInterface
         },
         filters: {},
         geom: {
