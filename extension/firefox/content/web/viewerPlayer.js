@@ -153,6 +153,15 @@ function setupServices() {
         if (m) base = m[0];
       }
       return base + url;
+    },
+    navigateTo: function (url, target) {
+      window.parent.postMessage({
+        callback: 'navigateTo',
+        data: {
+          url: this.resolveUrl(url),
+          target: target
+        }
+      }, '*');
     }
   };
 }

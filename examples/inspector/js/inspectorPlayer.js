@@ -92,6 +92,9 @@ Shumway.FileLoadingService.instance = {
       if (m) base = m[0];
     }
     return base + url;
+  },
+  navigateTo: function (url, target) {
+    window.parent.open(this.resolveUrl(url), target || '_blank');
   }
 };
 

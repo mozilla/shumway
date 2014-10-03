@@ -3293,6 +3293,7 @@ module Shumway {
     createSession(): FileLoadingSession;
     setBaseUrl(url: string);
     resolveUrl(url: string): string;
+    navigateTo(url: string, target: string);
   }
 
   export module FileLoadingService {
