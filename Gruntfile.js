@@ -23,7 +23,9 @@ module.exports = function(grunt) {
 
   // Don't use `--removeComments` here beause it strips out closure annotations that are
   // needed by the build system.
-  var commonArguments = 'node utils/typescript/tsc --target ES5 --removeComments --sourcemap -d --out build/ts/';
+  var commonArguments = 'node utils/typescript/tsc --shumwayMode --target ES5 --removeComments --sourcemap -d --out build/ts/';
+
+  var closureCommand = 'java -jar utils/closure.jar --formatting PRETTY_PRINT --compilation_level SHUMWAY_OPTIMIZATIONS --language_in ECMASCRIPT5 ';
 
   var defaultBrowserManifestFile = './resources/browser_manifests/browser_manifest.json';
   var defaultTestsManifestFile = 'test_manifest.json';
@@ -91,7 +93,7 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'player.js src/player/references.ts'
       },
       build_shell_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
+        cmd: 'node utils/typescript/tsc --shumwayMode --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',
@@ -136,7 +138,7 @@ module.exports = function(grunt) {
       },
       closure: {
         // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
-        cmd: 'java -jar utils/closure.jar --formatting PRETTY_PRINT --compilation_level SHUMWAY_OPTIMIZATIONS --language_in ECMASCRIPT5 ' + [
+        cmd: closureCommand + [
           "build/ts/base.js",
           "build/ts/tools.js",
           "build/ts/avm2.js",
@@ -146,6 +148,17 @@ module.exports = function(grunt) {
           "build/ts/gfx.js",
           "build/ts/player.js"
         ].join(" ") + " > build/shumway.cc.js"
+      },
+      "closure-all": {
+        // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
+        cmd: closureCommand + ' build/ts/base.js > build/ts/base.cc.js && ' +
+             closureCommand + ' build/ts/tools.js > build/ts/tools.cc.js && ' +
+             closureCommand + ' build/ts/avm2.js > build/ts/avm2.cc.js && ' +
+             closureCommand + ' build/ts/flash.js > build/ts/flash.cc.js && ' +
+             closureCommand + ' build/ts/avm1.js > build/ts/avm1.cc.js && ' +
+             closureCommand + ' build/ts/gfx-base.js > build/ts/gfx-base.cc.js && ' +
+             closureCommand + ' build/ts/gfx.js > build/ts/gfx.cc.js && ' +
+             closureCommand + ' build/ts/player.js > build/ts/player.cc.js'
       },
       spell: {
         // TODO: Add more files.
@@ -435,6 +448,9 @@ module.exports = function(grunt) {
   ]);
   grunt.registerTask('closure', [
     'exec:closure'
+  ]);
+  grunt.registerTask('closure-all', [
+    'exec:closure-all'
   ]);
   grunt.registerTask('travis', [
     // 'parallel:base',
