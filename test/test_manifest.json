@@ -258,6 +258,13 @@
       ],
       "type": "stas"
     },
+    {  "id": "avm1basic",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/lookup/avm1-childlookup.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "flash_net_URLRequest trace",
       "stas": "swfs/trace.stas",
       "filenames": [

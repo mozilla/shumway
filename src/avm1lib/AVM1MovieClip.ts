@@ -21,10 +21,21 @@ module Shumway.AVM2.AS.avm1lib {
 
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import construct = Shumway.AVM2.Runtime.construct;
+  import Multiname = Shumway.AVM2.ABC.Multiname;
+  import Namespace = Shumway.AVM2.ABC.Namespace;
+  import resolveMultinameProperty = Shumway.AVM2.Runtime.resolveMultinameProperty;
 
   import AVM1Context = Shumway.AVM1.AVM1Context;
   import Bitmap = flash.display.Bitmap;
 
+  var _asGetProperty = Object.prototype.asGetProperty;
+  var _asSetProperty = Object.prototype.asSetProperty;
+  var _asCallProperty = Object.prototype.asCallProperty;
+  var _asHasProperty = Object.prototype.asHasProperty;
+  var _asHasOwnProperty = Object.prototype.asHasOwnProperty;
+  var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
+  var _asDeleteProperty = Object.prototype.asDeleteProperty;
+  var _asGetEnumerableKeys = Object.prototype.asGetEnumerableKeys;
 
   export class AVM1MovieClip extends ASNative {
 
@@ -78,6 +89,41 @@ module Shumway.AVM2.AS.avm1lib {
       this._context = value;
     }
 
+    public asGetProperty(namespaces: Namespace [], name: any, flags: number) {
+      if (_asHasProperty.call(this, namespaces, name, flags)) {
+        return _asGetProperty.call(this, namespaces, name, flags);
+      }
+      var resolved = resolveMultinameProperty(namespaces, name, flags);
+      if (Multiname.isPublicQualifiedName(resolved)) {
+        return this.__lookupChild(Multiname.getNameFromPublicQualifiedName(resolved));
+      }
+      return undefined;
+    }
+
+    public asHasProperty(namespaces: Namespace [], name: any, flags: number) {
+      if (_asHasProperty.call(this, namespaces, name, flags)) {
+        return true;
+      }
+      var resolved = resolveMultinameProperty(namespaces, name, flags);
+      if (Multiname.isPublicQualifiedName(resolved)) {
+        return !!this.__lookupChild(Multiname.getNameFromPublicQualifiedName(resolved));
+      }
+      return false;
+    }
+
+    public asGetEnumerableKeys() {
+      var keys = _asGetEnumerableKeys.call(this);
+      // if it's a movie listing the children as well
+      var as3MovieClip = this._nativeAS3Object;
+      for (var i = 0, length = as3MovieClip._children.length; i < length; i++) {
+        var child = as3MovieClip._children[i];
+        var name = child.name;
+        if (!_asHasProperty.call(this, undefined, name, 0)) {
+          keys.push(Multiname.getPublicQualifiedName(name));
+        }
+      }
+      return keys;
+    }
 
     static _initFromConstructor(ctor, nativeMovieClip: flash.display.MovieClip): flash.display.MovieClip {
       var mc = Object.create(ctor.asGetPublicProperty('prototype'));
@@ -195,10 +241,6 @@ module Shumway.AVM2.AS.avm1lib {
         return null;
       }
       var as2mc = getAVM1Object(mc);
-      var name:string = mc.name;
-      if (name && this.asGetPublicProperty(name) === undefined) {
-        this.asSetPublicProperty(name, as2mc);
-      }
       return as2mc;
     }
 

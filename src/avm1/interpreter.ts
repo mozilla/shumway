@@ -345,19 +345,11 @@ module Shumway.AVM1 {
     }
     obj = Object(obj);
     // checking if avm2 public property is present
-    var avm2PublicName = Multiname.getPublicQualifiedName(name);
-    if (avm2PublicName in obj) {
+    if (obj.asHasProperty(undefined, name, 0)) {
       return name;
     }
     if (isNumeric(name)) {
       return null;
-    }
-
-    if (isAVM1MovieClip(obj)) {
-      var child = (<Shumway.AVM2.AS.avm1lib.AVM1MovieClip> obj).__lookupChild(name);
-      if (child) {
-        return name;
-      }
     }
 
     // versions 6 and below ignore identifier case
@@ -382,9 +374,6 @@ module Shumway.AVM1 {
       return undefined;
     }
     obj = Object(obj);
-    if (!obj.asHasProperty(undefined, name, 0) && isAVM1MovieClip(obj)) {
-      return (<Shumway.AVM2.AS.avm1lib.AVM1MovieClip> obj).__lookupChild(name);
-    }
     return obj.asGetPublicProperty(name);
   }
 
@@ -420,19 +409,6 @@ module Shumway.AVM1 {
 
   function as2Enumerate(obj, fn, thisArg) {
     forEachPublicProperty(obj, fn, thisArg);
-
-    if (!isAVM1MovieClip(obj)) {
-      return;
-    }
-    // if it's a movie listing the children as well
-    var as3MovieClip = obj._nativeAS3Object;
-    for (var i = 0, length = as3MovieClip._children.length; i < length; i++) {
-      var child = as3MovieClip._children[i];
-      var name = child.name;
-      if (!obj.asHasProperty(undefined, name, 0)) {
-        fn.call(thisArg, name);
-      }
-    }
   }
 
   function isAvm2Class(obj): boolean {
@@ -880,12 +856,6 @@ module Shumway.AVM1 {
         return currentTarget;
       }
 
-      // trying movie clip children (if object is a MovieClip)
-      var mc = isAVM1MovieClip(currentTarget) &&
-               currentTarget.__lookupChild(variableName);
-      if (mc) {
-        return mc;
-      }
       return undefined;
     }
     function avm1SetVariable(ectx: ExecutionContext, variableName: string, value) {
