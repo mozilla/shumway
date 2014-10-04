@@ -293,8 +293,10 @@ module Shumway {
     set plainText(value: string) {
       this._plainText = value;
       this.textRuns.length = 0;
-      var textRun = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
-      this.textRuns[0] = textRun;
+      if (value) {
+        var textRun = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
+        this.textRuns[0] = textRun;
+      }
       this._serializeTextRuns();
     }
 
