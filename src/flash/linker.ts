@@ -251,8 +251,7 @@ module Shumway.AVM2.AS {
           return;
         }
         // TODO handle other methods than GET
-        var targetWindow = window_ || '_parent'; // using parent as default target
-        window.open(FileLoadingService.instance.resolveUrl(url), targetWindow);
+        FileLoadingService.instance.navigateTo(url, window_);
       }
     );
 

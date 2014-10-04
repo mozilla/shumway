@@ -94,7 +94,7 @@ module Shumway.AVM2.AS.avm1lib {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
       var resolved = resolveMultinameProperty(namespaces, name, flags);
-      if (Multiname.isPublicQualifiedName(resolved)) {
+      if (Multiname.isPublicQualifiedName(resolved) && this._nativeAS3Object) {
         return this.__lookupChild(Multiname.getNameFromPublicQualifiedName(resolved));
       }
       return undefined;
@@ -105,7 +105,7 @@ module Shumway.AVM2.AS.avm1lib {
         return true;
       }
       var resolved = resolveMultinameProperty(namespaces, name, flags);
-      if (Multiname.isPublicQualifiedName(resolved)) {
+      if (Multiname.isPublicQualifiedName(resolved) && this._nativeAS3Object) {
         return !!this.__lookupChild(Multiname.getNameFromPublicQualifiedName(resolved));
       }
       return false;
@@ -115,6 +115,10 @@ module Shumway.AVM2.AS.avm1lib {
       var keys = _asGetEnumerableKeys.call(this);
       // if it's a movie listing the children as well
       var as3MovieClip = this._nativeAS3Object;
+      if (!as3MovieClip) {
+        return keys; // not initialized yet
+      }
+
       for (var i = 0, length = as3MovieClip._children.length; i < length; i++) {
         var child = as3MovieClip._children[i];
         var name = child.name;

@@ -287,6 +287,13 @@
        ],
        "type": "stas"
     },
+    {  "id": "avm1-rollover",
+      "stas": "swfs/avm1/rollover/avm1-rollover.stas",
+      "filenames": [
+        "swfs/avm1/rollover/avm1-rollover.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "ZeroClipboardTest",
        "stas": "swfs/ZeroClipboardTest.stas",
        "filenames": [
