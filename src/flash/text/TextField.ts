@@ -58,8 +58,6 @@ module Shumway.AVM2.AS.flash.text {
       self._numLines = 1;
       self._displayAsPassword = false;
       self._restrict = null;
-      self._scrollH = 0;
-      self._scrollV = 1;
       self._selectable = true;
       self._selectedText = '';
       self._selectionBeginIndex = 0;
@@ -181,8 +179,11 @@ module Shumway.AVM2.AS.flash.text {
     static isFontCompatible(fontName: string, fontStyle: string): boolean {
       fontName = asCoerceString(fontName);
       fontStyle = asCoerceString(fontStyle);
-      somewhatImplemented("flash.text.TextField.isFontCompatible");
-      return true;
+      var font = Font.getByName(fontName);
+      if (!font) {
+        return false;
+      }
+      return font.fontStyle === fontStyle;
     }
 
     _alwaysShowSelection: boolean;
@@ -229,7 +230,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set alwaysShowSelection(value: boolean) {
-      somewhatImplemented("public flash.text.TextField::set alwaysShowSelection");
       this._alwaysShowSelection = !!value;
     }
 
@@ -238,7 +238,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set antiAliasType(antiAliasType: string) {
-      somewhatImplemented("public flash.text.TextField::set antiAliasType");
       antiAliasType = asCoerceString(antiAliasType);
       if (AntiAliasType.toNumber(antiAliasType) < 0) {
         throwError("ArgumentError", Errors.InvalidParamError, "antiAliasType");
@@ -323,17 +322,17 @@ module Shumway.AVM2.AS.flash.text {
       }
     }
 
+    // Returns bottommost line that is currently visible.
     get bottomScrollV(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get bottomScrollV"); return;
-      // return this._bottomScrollV;
+      return this._bottomScrollV;
     }
+
     get caretIndex(): number /*int*/ {
       notImplemented("public flash.text.TextField::get caretIndex"); return;
       // return this._caretIndex;
     }
 
     get condenseWhite(): boolean {
-      somewhatImplemented("public flash.text.TextField::get condenseWhite");
       return this._condenseWhite;
     }
 
@@ -358,13 +357,12 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get gridFitType(): string {
-      somewhatImplemented("public flash.text.TextField::get gridFitType");
       return this._gridFitType;
     }
+
     set gridFitType(gridFitType: string) {
       gridFitType = asCoerceString(gridFitType);
       release || assert (flash.text.GridFitType.toNumber(gridFitType) >= 0);
-      somewhatImplemented("public flash.text.TextField::set gridFitType");
       this._gridFitType = gridFitType;
     }
 
@@ -373,7 +371,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set htmlText(value: string) {
-      somewhatImplemented("public flash.text.TextField::set htmlText");
       value = asCoerceString(value);
       // Flash resets the bold and italic flags when an html value is set on a text field created from a symbol.
       if (this._symbol) {
@@ -404,10 +401,12 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get maxScrollH(): number /*int*/ {
+      this._ensureLineMetrics();
       return this._maxScrollH;
     }
 
     get maxScrollV(): number /*int*/ {
+      this._ensureLineMetrics();
       return this._maxScrollV;
     }
 
@@ -450,23 +449,28 @@ module Shumway.AVM2.AS.flash.text {
       this._restrict = asCoerceString(value);
     }
 
+    // Returns the current vertical scrolling position in lines.
     get scrollH(): number /*int*/ {
-      somewhatImplemented("public flash.text.TextField::get scrollH");
-      return this._scrollH;
+      return this._textContent.scrollH;
     }
+
     set scrollH(value: number /*int*/) {
       value = value | 0;
-      somewhatImplemented("public flash.text.TextField::set scrollH");
-      this._scrollH = value;
+      this._ensureLineMetrics();
+      this._textContent.scrollH = clamp(Math.abs(value), 0, this._maxScrollH);
+      this._invalidateContent();
     }
+
+    // Returns the current horizontal scrolling position in pixels.
     get scrollV(): number /*int*/ {
-      somewhatImplemented("public flash.text.TextField::get scrollV");
-      return this._scrollV;
+      return this._textContent.scrollV;
     }
+
     set scrollV(value: number /*int*/) {
       value = value | 0;
-      somewhatImplemented("public flash.text.TextField::set scrollV");
-      this._scrollV = value;
+      this._ensureLineMetrics();
+      this._textContent.scrollV = clamp(value, 1, this._maxScrollV);
+      this._invalidateContent();
     }
 
     get selectable(): boolean {
@@ -474,8 +478,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set selectable(value: boolean) {
-      somewhatImplemented("public flash.text.TextField::set selectable");
       this._selectable = !!value;
+    }
+
+    get selectedText(): string {
+      return this._textContent.plainText.substring(this._selectionBeginIndex, this._selectionEndIndex);
     }
 
     get selectionBeginIndex(): number /*int*/ {
@@ -498,6 +505,7 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("public flash.text.TextField::get styleSheet"); return;
       // return this._styleSheet;
     }
+
     set styleSheet(value: flash.text.StyleSheet) {
       value = value;
       notImplemented("public flash.text.TextField::set styleSheet"); return;
@@ -509,7 +517,6 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set text(value: string) {
-      somewhatImplemented("public flash.text.TextField::set text");
       this._textContent.plainText = asCoerceString(value);
       this._invalidateContent();
       this._ensureLineMetrics();
@@ -581,15 +588,46 @@ module Shumway.AVM2.AS.flash.text {
       var textWidth = lineMetricsData.readInt();
       var textHeight = lineMetricsData.readInt();
       var offsetX = lineMetricsData.readInt();
+      var bounds = this._fillBounds;
       if (this._autoSize !== TextFieldAutoSize.NONE) {
-        this._fillBounds.xMin = this._lineBounds.xMin = offsetX;
-        this._fillBounds.xMax = this._lineBounds.xMax = offsetX + textWidth + 80;
-        this._fillBounds.yMax = this._lineBounds.yMax = this._lineBounds.yMin + textHeight + 80;
+        bounds.xMin = bounds.xMin = offsetX;
+        bounds.xMax = bounds.xMax = offsetX + textWidth + 80;
+        bounds.yMax = bounds.yMax = bounds.yMin + textHeight + 80;
       }
       this._textWidth = textWidth;
       this._textHeight = textHeight;
       this._numLines = lineMetricsData.readInt();
       this._lineMetricsData = lineMetricsData;
+      if (this._textHeight > bounds.height) {
+        var maxScrollV = 1;
+        var bottomScrollV = 1;
+        lineMetricsData.position = 16;
+        var y = 0;
+        for (var i = 0; i < this._numLines; i++) {
+          lineMetricsData.position += 8;
+          var ascent = lineMetricsData.readInt();
+          var descent = lineMetricsData.readInt();
+          var leading = lineMetricsData.readInt();
+          var height = ascent + descent + leading;
+          if (y > bounds.height / 20) {
+            maxScrollV++;
+          } else {
+            bottomScrollV++;
+          }
+          y += height;
+        }
+        this._maxScrollV = maxScrollV;
+        this._bottomScrollV = bottomScrollV;
+      }
+      if (this._textWidth > bounds.width) {
+        this._maxScrollH = (((this._textWidth + 80) - bounds.width) / 20) | 0;
+      } else {
+        this._maxScrollH = 0;
+      }
+    }
+
+    appendText(newText: string) {
+      this._textContent.appendText(asCoerceString(newText));
     }
 
     getCharBoundaries(charIndex: number /*int*/): flash.geom.Rectangle {
@@ -624,8 +662,10 @@ module Shumway.AVM2.AS.flash.text {
       }
       this._ensureLineMetrics();
       var lineMetricsData = this._lineMetricsData;
-      lineMetricsData.position = 12 + lineIndex * 20;
-      var x = lineMetricsData.readInt();
+      lineMetricsData.position = 16 + lineIndex * 20;
+      // The lines left position includes the gutter widths (it should also include the the margin
+      // and indent, which we don't support yet).
+      var x = lineMetricsData.readInt() + this._lineBounds.xMin + 2;
       var width = lineMetricsData.readInt();
       var ascent = lineMetricsData.readInt();
       var descent = lineMetricsData.readInt();
@@ -646,9 +686,41 @@ module Shumway.AVM2.AS.flash.text {
       charIndex = charIndex | 0;
       notImplemented("public flash.text.TextField::getParagraphLength"); return;
     }
+
+    /**
+     * Returns a TextFormat object that contains the intersection of formatting information for the
+     * range of text between |beginIndex| and |endIndex|.
+     */
     getTextFormat(beginIndex: number /*int*/ = -1, endIndex: number /*int*/ = -1): flash.text.TextFormat {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextField::getTextFormat"); return;
+      var plainText = this._textContent.plainText;
+      var maxIndex = plainText.length;
+      if (beginIndex < 0) {
+        beginIndex = 0;
+        if (endIndex < 0) {
+          endIndex = maxIndex;
+        }
+      } else {
+        if (endIndex < 0) {
+          endIndex = beginIndex + 1;
+        }
+      }
+      if (endIndex <= beginIndex || endIndex > maxIndex) {
+        throwError('RangeError', Errors.ParamRangeError);
+      }
+      var format: TextFormat;
+      var textRuns = this._textContent.textRuns;
+      for (var i = 0; i < textRuns.length; i++) {
+        var run = textRuns[i];
+        if (run.intersects(beginIndex, endIndex)) {
+          if (format) {
+            format.intersect(run.textFormat);
+          } else {
+            format = run.textFormat.clone();
+          }
+        }
+      }
+      return format;
     }
 
     getTextRuns(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): any [] {
@@ -666,29 +738,55 @@ module Shumway.AVM2.AS.flash.text {
     getRawText(): string {
       notImplemented("public flash.text.TextField::getRawText"); return;
     }
+
     replaceSelectedText(value: string): void {
       value = "" + value;
-      notImplemented("public flash.text.TextField::replaceSelectedText"); return;
+      this.replaceText(this._selectionBeginIndex, this._selectionEndIndex, value);
     }
+
     replaceText(beginIndex: number /*int*/, endIndex: number /*int*/, newText: string): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; newText = "" + newText;
-      somewhatImplemented("public flash.text.TextField::replaceText");
-      var plainText = this._textContent.plainText;
-      this._textContent.plainText = plainText.substring(0, beginIndex) + newText + plainText.substring(endIndex);
+      if (beginIndex < 0 || endIndex < 0) {
+        return;
+      }
+      this._textContent.replaceText(beginIndex, endIndex, newText);
       this._invalidateContent();
       this._ensureLineMetrics();
     }
+
     setSelection(beginIndex: number /*int*/, endIndex: number /*int*/): void {
-      somewhatImplemented("public flash.text.TextField::setSelection");
       this._selectionBeginIndex = beginIndex | 0;
       this._selectionEndIndex = endIndex | 0;
     }
+
     setTextFormat(format: flash.text.TextFormat, beginIndex: number /*int*/ = -1, endIndex: number /*int*/ = -1): void {
       format = format; beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      somewhatImplemented("public flash.text.TextField::setTextFormat"); return;
+      var plainText = this._textContent.plainText;
+      var maxIndex = plainText.length;
+      if (beginIndex < 0) {
+        beginIndex = 0;
+        if (endIndex < 0) {
+          endIndex = maxIndex;
+        }
+      } else {
+        if (endIndex < 0) {
+          endIndex = beginIndex + 1;
+        }
+      }
+      if (beginIndex > maxIndex || endIndex > maxIndex) {
+        throwError('RangeError', Errors.ParamRangeError);
+      }
+      if (endIndex <= beginIndex) {
+        return;
+      }
+      var subText = plainText.substring(beginIndex, endIndex);
+      this._textContent.replaceText(beginIndex, endIndex, subText, format);
+      this._invalidateContent();
+      this._ensureLineMetrics();
     }
+
     getImageReference(id: string): flash.display.DisplayObject {
-      id = "" + id;
+      //id = "" + id;
       notImplemented("public flash.text.TextField::getImageReference"); return;
     }
   }

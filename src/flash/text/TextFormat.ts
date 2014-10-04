@@ -346,7 +346,7 @@ module Shumway.AVM2.AS.flash.text {
       if (other._display !== null) {
         this._display = other._display;
       }
-      if (other._font !== null) {
+      if (other._font) {
         this._font = other._font;
       }
       if (other._indent !== null) {
@@ -376,15 +376,75 @@ module Shumway.AVM2.AS.flash.text {
       if (other._tabStops !== null) {
         this._tabStops = other._tabStops;
       }
-      if (other._target !== null) {
+      if (other._target) {
         this._target = other._target;
       }
       if (other._underline !== null) {
         this._underline = other._underline;
       }
-      if (other._url !== null) {
+      if (other._url) {
         this._url = other._url;
       }
-     }
+    }
+
+    public intersect(other: TextFormat) {
+      if (other._align !== this._align) {
+        this._align = null;
+      }
+      if (other._blockIndent !== this._blockIndent) {
+        this._blockIndent = null;
+      }
+      if (other._bold !== this._bold) {
+        this._bold = null;
+      }
+      if (other._bullet !== this._bullet) {
+        this._bullet = null;
+      }
+      if (other._color !== this._color) {
+        this._color = null;
+      }
+      if (other._display !== this._display) {
+        this._display = null;
+      }
+      if (other._font !== this._font) {
+        this._font = null;
+      }
+      if (other._indent !== this._indent) {
+        this._indent = null;
+      }
+      if (other._italic !== this._italic) {
+        this._italic = null;
+      }
+      if (other._kerning !== this._kerning) {
+        this._kerning = null;
+      }
+      if (other._leading !== this._leading) {
+        this._leading = null;
+      }
+      if (other._leftMargin !== this._leftMargin) {
+        this._leftMargin = null;
+      }
+      if (other._letterSpacing !== this._letterSpacing) {
+        this._letterSpacing = null;
+      }
+      if (other._rightMargin !== this._rightMargin) {
+        this._rightMargin = null;
+      }
+      if (other._size !== this._size) {
+        this._size = null;
+      }
+      if (other._tabStops !== this._tabStops) {
+        this._tabStops = null;
+      }
+      if (other._target !== this._target) {
+        this._target = null;
+      }
+      if (other._underline !== this._underline) {
+        this._underline = null;
+      }
+      if (other._url !== this._url) {
+        this._url = null;
+      }
+    }
   }
 }

@@ -70,9 +70,7 @@ public class TextField extends InteractiveObject {
   public native function set scrollV(value: int): void;
   public native function get selectable(): Boolean;
   public native function set selectable(value: Boolean): void;
-  public function get selectedText(): String {
-    return text.substring(selectionBeginIndex, selectionEndIndex);
-  }
+  public native function get selectedText(): String;
   public native function get selectionBeginIndex(): int;
   public native function get selectionEndIndex(): int;
   public native function get sharpness(): Number;
@@ -93,10 +91,7 @@ public class TextField extends InteractiveObject {
   public native function set wordWrap(value: Boolean): void;
   public native function get useRichTextClipboard(): Boolean;
   public native function set useRichTextClipboard(value: Boolean): void;
-  public function appendText(newText: String): void {
-    var beginIndex: uint = text.length;
-    replaceText(beginIndex, beginIndex, newText);
-  }
+  public native function appendText(newText: String): void;
   public native function getCharBoundaries(charIndex: int): Rectangle;
   public native function getCharIndexAtPoint(x: Number, y: Number): int;
   public native function getFirstCharInParagraph(charIndex: int): int;

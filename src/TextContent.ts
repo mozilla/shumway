@@ -104,6 +104,8 @@ module Shumway {
     private _borderColor: number;
     private _autoSize: number;
     private _wordWrap: boolean;
+    private _scrollV: number;
+    private _scrollH: number;
 
     flags: number;
     defaultTextFormat: flash.text.TextFormat;
@@ -120,6 +122,8 @@ module Shumway {
       this._borderColor = 0;
       this._autoSize = 0;
       this._wordWrap = false;
+      this._scrollV = 1;
+      this._scrollH = 0;
       this.flags = TextContentFlags.None;
       this.defaultTextFormat = defaultTextFormat || new flash.text.TextFormat();
       this.textRuns = [];
@@ -279,11 +283,7 @@ module Shumway {
       });
 
       this._plainText = plainText;
-      this.textRunData.clear();
-      for (var i = 0; i < textRuns.length; i++) {
-        this._writeTextRun(textRuns[i]);
-      }
-      this.flags |= TextContentFlags.DirtyContent;
+      this._serializeTextRuns();
     }
 
     get plainText(): string {
@@ -295,9 +295,7 @@ module Shumway {
       this.textRuns.length = 0;
       var textRun = new flash.text.TextRun(0, value.length, this.defaultTextFormat);
       this.textRuns[0] = textRun;
-      this.textRunData.clear();
-      this._writeTextRun(textRun);
-      this.flags |= TextContentFlags.DirtyContent;
+      this._serializeTextRuns();
     }
 
     get bounds(): Bounds {
@@ -337,6 +335,34 @@ module Shumway {
       }
     }
 
+    get scrollV(): number {
+      return this._scrollV;
+    }
+
+    set scrollV(value: number) {
+      if (value === this._scrollV) {
+        return;
+      }
+      this._scrollV = value;
+      if (this._plainText) {
+        this.flags |= TextContentFlags.DirtyFlow;
+      }
+    }
+
+    get scrollH(): number {
+      return this._scrollH;
+    }
+
+    set scrollH(value: number) {
+      if (value === this._scrollH) {
+        return;
+      }
+      this._scrollH = value;
+      if (this._plainText) {
+        this.flags |= TextContentFlags.DirtyFlow;
+      }
+    }
+
     get backgroundColor(): number {
       return this._backgroundColor;
     }
@@ -359,6 +385,15 @@ module Shumway {
       }
       this._borderColor = value;
       this.flags |= TextContentFlags.DirtyStyle;
+    }
+
+    private _serializeTextRuns() {
+      var textRuns = this.textRuns;
+      this.textRunData.clear();
+      for (var i = 0; i < textRuns.length; i++) {
+        this._writeTextRun(textRuns[i]);
+      }
+      this.flags |= TextContentFlags.DirtyContent;
     }
 
     private _writeTextRun(textRun: flash.text.TextRun) {
@@ -409,6 +444,134 @@ module Shumway {
       textRunData.writeInt(+textFormat.rightMargin);
       //textRunData.writeInt(textFormat.tabStops);
       textRunData.writeBoolean(!!textFormat.underline);
+    }
+
+    appendText(newText: string, format?: flash.text.TextFormat) {
+      if (!format) {
+        format = this.defaultTextFormat;
+      }
+      var plainText = this._plainText;
+      var newRun = new flash.text.TextRun(plainText.length, plainText.length + newText.length, format);
+      this._plainText = plainText + newText;
+      this.textRuns.push(newRun);
+      this._writeTextRun(newRun);
+    }
+
+    prependText(newText: string, format?: flash.text.TextFormat) {
+      if (!format) {
+        format = this.defaultTextFormat;
+      }
+      var plainText = this._plainText;
+      this._plainText = newText + plainText;
+      var textRuns = this.textRuns;
+      var shift = newText.length;
+      for (var i = 0; i < textRuns.length; i++) {
+        var run = textRuns[i];
+        run.beginIndex += shift;
+        run.endIndex += shift;
+      }
+      textRuns.unshift(
+        new flash.text.TextRun(0, shift, format)
+      );
+      this._serializeTextRuns();
+    }
+
+    replaceText(beginIndex: number, endIndex: number, newText: string, format?: flash.text.TextFormat) {
+      if (endIndex < beginIndex || !newText) {
+        return;
+      }
+
+      if (endIndex === 0) {
+        // Insert text at the beginning.
+        this.prependText(newText, format);
+        return;
+      }
+
+      var plainText = this._plainText;
+
+      // When inserting text to the end, we can simply add a new text run without changing any
+      // existing ones.
+      if (beginIndex >= plainText.length) {
+        this.appendText(newText, format);
+        return;
+      }
+
+      var defaultTextFormat = this.defaultTextFormat;
+
+      // A text format used for new text runs will have unset properties merged in from the default
+      // text format.
+      var newFormat = defaultTextFormat;
+      if (format) {
+        newFormat = newFormat.clone();
+        newFormat.merge(format);
+      }
+
+      // If replacing the whole text, just regenerate runs by setting plainText.
+      if (beginIndex <= 0 && endIndex >= plainText.length) {
+        if (format) {
+          // Temporarily set the passed text format as default.
+          this.defaultTextFormat = newFormat;
+          this.plainText = newText;
+          // Restore the original default when finished.
+          this.defaultTextFormat = defaultTextFormat;
+        } else {
+          this.plainText = newText;
+        }
+        return;
+      }
+
+      var textRuns = this.textRuns;
+      var newTextRuns: flash.text.TextRun[] = [];
+      var newEndIndex = beginIndex + newText.length;
+      var shift = newEndIndex - endIndex;
+      for (var i = 0; i < textRuns.length; i++) {
+        var run = textRuns[i];
+        if (beginIndex < run.endIndex) {
+          // Skip all following steps (including adding the current run to the new list of runs) if
+          // the inserted text overlaps the current run.
+          if (beginIndex <= run.beginIndex && newEndIndex >= run.endIndex) {
+            continue;
+          }
+          var containsBeginIndex = run.containsIndex(beginIndex);
+          var containsEndIndex = run.containsIndex(endIndex);
+          if (containsBeginIndex && containsEndIndex) {
+            // The current run spans over the inserted text.
+            if (format) {
+              // Split up the current run.
+              var clone = run.clone();
+              clone.endIndex = beginIndex;
+              newTextRuns.push(clone);
+              i--;
+              run.beginIndex = beginIndex;
+              continue;
+            }
+          } else if (containsBeginIndex) {
+            // Run is intersecting on the left. Adjust its length.
+            run.endIndex = beginIndex;
+          } else if (containsEndIndex) {
+            // If a a text format was passed, a new run needs to be inserted.
+            if (format) {
+              newTextRuns.push(
+                new flash.text.TextRun(beginIndex, newEndIndex, newFormat)
+              );
+              run.beginIndex = newEndIndex;
+            } else {
+              // Otherwise make the current run span over the inserted text.
+              run.beginIndex = beginIndex;
+              run.endIndex += shift;
+            }
+          } else {
+            // No intersection, shift entire run to the right.
+            run.beginIndex += shift;
+            run.endIndex += shift;
+          }
+        }
+        newTextRuns.push(run);
+      }
+
+      this._plainText = plainText.substring(0, beginIndex) + newText + plainText.substring(endIndex);
+      this.textRuns = newTextRuns;
+      this._serializeTextRuns();
     }
   }
 }
