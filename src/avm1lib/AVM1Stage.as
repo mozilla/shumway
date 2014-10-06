@@ -20,26 +20,24 @@ package avm1lib {
   import flash.display.Stage;
 
   public dynamic class AVM1Stage {
-    static function get $stage() : flash.display.Stage { return AVM1Utils.currentStage;  }
+    public static function get align() { return AVM1Utils.currentStage.align; }
+    public static function set align(value) { AVM1Utils.currentStage.align = value; }
 
-    public static function get align() { return $stage.align; }
-    public static function set align(value) { $stage.align = value; }
+    public static function get displayState() { return AVM1Utils.currentStage.displayState; }
+    public static function set displayState(value) { AVM1Utils.currentStage.displayState = value; }
 
-    public static function get displayState() { return $stage.displayState; }
-    public static function set displayState(value) { $stage.displayState = value; }
+    public static function get fullScreenSourceRect() { return AVM1Utils.currentStage.fullScreenSourceRect; }
+    public static function set fullScreenSourceRect(value) { AVM1Utils.currentStage.fullScreenSourceRect = value; }
 
-    public static function get fullScreenSourceRect() { return $stage.fullScreenSourceRect; }
-    public static function set fullScreenSourceRect(value) { $stage.fullScreenSourceRect = value; }
+    public static function get height() { return AVM1Utils.currentStage.stageHeight; }
 
-    public static function get height() { return $stage.stageHeight; }
+    public static function get scaleMode() { return AVM1Utils.currentStage.scaleMode; }
+    public static function set scaleMode(value) { AVM1Utils.currentStage.scaleMode = value; }
 
-    public static function get scaleMode() { return $stage.scaleMode; }
-    public static function set scaleMode(value) { $stage.scaleMode = value; }
+    public static function get showMenu() { return AVM1Utils.currentStage.showDefaultContextMenu; }
+    public static function set showMenu(value) { AVM1Utils.currentStage.showDefaultContextMenu = value; }
 
-    public static function get showMenu() { return $stage.showDefaultContextMenu; }
-    public static function set showMenu(value) { $stage.showDefaultContextMenu = value; }
-
-    public static function get width() { return $stage.stageWidth; }
+    public static function get width() { return AVM1Utils.currentStage.stageWidth; }
 
     {
       AVM1Broadcaster.initialize(Object(AVM1Stage));
