@@ -352,7 +352,7 @@ module Shumway.AVM2.AS.flash.display {
       this._fillBounds = new Bounds(0x8000000, 0x8000000, 0x8000000, 0x8000000);
       this._lineBounds = new Bounds(0x8000000, 0x8000000, 0x8000000, 0x8000000);
       this._lastX = this._lastY = 0;
-      this._boundsIncludeLastCoordinates = false;
+      this._boundsIncludeLastCoordinates = true;
       this._parent = null;
 
       this._topLeftStrokeWidth = this._bottomRightStrokeWidth = 0;
