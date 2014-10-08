@@ -3608,7 +3608,7 @@ module Shumway {
   }
 
   function createDeferredConstructionFunctions(): any {
-    var fn = function (resolve, reject) {
+    var fn: any = function (resolve, reject) {
       fn.resolve = resolve;
       fn.reject = reject;
     };

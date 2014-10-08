@@ -23,7 +23,7 @@ module.exports = function(grunt) {
 
   // Don't use `--removeComments` here beause it strips out closure annotations that are
   // needed by the build system.
-  var commonArguments = 'node utils/typescript/tsc --shumwayMode --target ES5 --removeComments --sourcemap -d --out build/ts/';
+  var commonArguments = 'node utils/typescript/tsc --target ES5 --removeComments --sourcemap -d --out build/ts/';
 
   var closureCommand = 'java -jar utils/closure.jar --formatting PRETTY_PRINT --compilation_level SHUMWAY_OPTIMIZATIONS --language_in ECMASCRIPT5 ';
 
@@ -93,7 +93,7 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'player.js src/player/references.ts'
       },
       build_shell_ts: {
-        cmd: 'node utils/typescript/tsc --shumwayMode --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',

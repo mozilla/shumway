@@ -55,8 +55,7 @@ module Shumway.AVM2.Compiler.Backend {
   import Operator = IR.Operator;
   import Projection = IR.Projection;
 
-  var Looper = Shumway.AVM2.Compiler.Looper;
-  var Control = Looper.Control;
+  var Control = Shumway.AVM2.Compiler.Looper.Control;
 
   import ControlNode = Looper.Control.ControlNode;
   import last = Shumway.ArrayUtilities.last;
