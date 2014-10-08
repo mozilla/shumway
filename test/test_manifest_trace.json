@@ -8,7 +8,8 @@
          "swfs/local2global.swf",
          "swfs/movieinfo1.swf",
          "swfs/stream1.swf",
-         "swfs/stroke1.swf"
+         "swfs/stroke1.swf",
+         "swfs/avm1/scope/avm1-scope-1.swf"
        ],
        "type": "stas"
     },

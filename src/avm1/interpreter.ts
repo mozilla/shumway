@@ -113,8 +113,20 @@ module Shumway.AVM1 {
   class AVM1ScopeListItem {
     constructor(public scope, public next: AVM1ScopeListItem) {
     }
+
     create(scope) {
       return new AVM1ScopeListItem(scope, this);
+    }
+  }
+
+  class AVM1FunctionClosure extends Shumway.AVM2.AS.ASObject {
+    constructor() {
+      super();
+      this.asSetPublicProperty('toString', this.toString);
+    }
+
+    toString(): string {
+      return <string><any>this;
     }
   }
 
@@ -464,7 +476,7 @@ module Shumway.AVM1 {
         return undefined;
       }
 
-      result = Object.create(as2GetPrototype(ctor) || as2GetPrototype(Object));
+      result = Object.create(as2GetPrototype(ctor) || as2GetPrototype(AVM1Object));
       ctor.apply(result, args);
     }
     result.constructor = ctor;
@@ -607,6 +619,8 @@ module Shumway.AVM1 {
     return obj;
   }
 
+  class AVM1Object extends Shumway.AVM2.AS.ASObject {
+  }
 
   function createBuiltinType(obj, args: any[]) {
     if (obj === Array) {
@@ -637,7 +651,7 @@ module Shumway.AVM1 {
       }
     }
     if (obj === Object) {
-      return {};
+      return new AVM1Object();
     }
     return undefined;
   }
@@ -692,6 +706,9 @@ module Shumway.AVM1 {
         throw e;
       }
     }
+    function isGlobalObject(obj) {
+      return obj === this;
+    }
 
     function avm1DefineFunction(ectx: ExecutionContext,
                                 actionsData: AVM1ActionsData,
@@ -729,13 +746,14 @@ module Shumway.AVM1 {
         }
 
         var newScopeContainer;
-        var newScope = {};
+        var newScope: any = new AVM1FunctionClosure();
+        var thisArg = isGlobalObject(this) ? scope : this;
 
         if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
           newScope.asSetPublicProperty('arguments', arguments);
         }
         if (!(suppressArguments & ArgumentAssignmentType.This)) {
-          newScope.asSetPublicProperty('this', this);
+          newScope.asSetPublicProperty('this', thisArg);
         }
         if (!(suppressArguments & ArgumentAssignmentType.Super)) {
           newScope.asSetPublicProperty('super', AVM1_SUPER_STUB);
@@ -755,7 +773,7 @@ module Shumway.AVM1 {
                 registers[i] = arguments[registerAllocation.index];
                 break;
               case ArgumentAssignmentType.This:
-                registers[i] = this;
+                registers[i] = thisArg;
                 break;
               case ArgumentAssignmentType.Arguments:
                 registers[i] = arguments;
@@ -1405,7 +1423,7 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
 
       var value = stack.pop();
-      _global.trace(value);
+      _global.trace(as2ToString(value));
     }
     function avm1_0x34_ActionGetTime(ectx: ExecutionContext) {
       var _global = ectx.global;
@@ -1422,7 +1440,6 @@ module Shumway.AVM1 {
     // SWF 5
     function avm1_0x3D_ActionCallFunction(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var scope = ectx.scope;
 
       var functionName = stack.pop();
       var args = avm1ReadFunctionArgs(stack);
@@ -1438,7 +1455,7 @@ module Shumway.AVM1 {
         return;
       }
       release || assert(stack.length === sp + 1);
-      stack[sp] = fn.apply(scope, args);
+      stack[sp] = fn.apply(null, args);
     }
     function avm1_0x52_ActionCallMethod(ectx: ExecutionContext) {
       var stack = ectx.stack;

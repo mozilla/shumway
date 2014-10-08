@@ -383,6 +383,10 @@ public dynamic class AVM1Globals {
 
   private static native function _addInternalClasses(proto:Object):void;
 
+  public function toString() {
+    return '[type Object]';
+  }
+
   {
     // Initializing all global objects/classes
     var classes = [Object, Function, Array, Number, Math, Boolean, Date, RegExp, String];
