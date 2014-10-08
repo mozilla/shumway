@@ -831,6 +831,12 @@ module Shumway.GFX.Geometry {
       m[3] = d;
       m[4] = tx;
       m[5] = ty;
+      
+      return this;
+    }
+
+    concatClone (other: Matrix): Matrix {
+      return this.clone().concat(other);
     }
 
     /**

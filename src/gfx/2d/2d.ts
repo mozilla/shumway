@@ -334,7 +334,13 @@ module Shumway.GFX.Canvas2D {
 
         if (state.ignoreMask !== frame && frame.mask && !state.clipRegion) {
           context.save();
-          self._renderFrame(context, frame.mask, frame.mask.getConcatenatedMatrix(), viewport, new Canvas2DStageRendererState(state.options, true));
+          var maskMatrix = frame.mask.getConcatenatedMatrix();
+          // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
+          // we still have to factor in the stage's matrix, which includes pixel density scaling.
+          if (!frame.mask.parent) {
+            maskMatrix = maskMatrix.concatClone(self._stage.getConcatenatedMatrix());
+          }
+          self._renderFrame(context, frame.mask, maskMatrix, viewport, new Canvas2DStageRendererState(state.options, true));
           self._renderFrame(context, frame, matrix, viewport, new Canvas2DStageRendererState(state.options, false, frame));
           context.restore();
           return VisitorFlags.Skip;
