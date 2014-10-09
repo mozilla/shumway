@@ -165,7 +165,7 @@ module Shumway.AVM2.AS {
       } else {
         addBase = true;
       }
-      if (flags & DescribeTypeFlags.HIDE_OBJECT && cls === ASObject) {
+      if (flags & DescribeTypeFlags.HIDE_OBJECT && cls === <any>ASObject) {
         break;
       }
       if (flags & DescribeTypeFlags.USE_ITRAITS || !describingClass) {

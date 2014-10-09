@@ -238,5 +238,5 @@ import structEq = Shumway.Unit.structEq;
 import matrixEq = Shumway.Unit.matrixEq;
 import assertThrowsInstanceOf = Shumway.Unit.assertThrowsInstanceOf;
 import info = Shumway.Unit.info;
-import warn = Shumway.Unit.warn;
+// import warn = Shumway.Unit.warn;
 import error = Shumway.Unit.error;

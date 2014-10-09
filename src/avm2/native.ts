@@ -770,7 +770,7 @@ module Shumway.AVM2.AS {
         Shumway.ArrayUtilities.pushMany(instanceNatives, self.instanceNatives);
       }
 
-      if (self === ASObject) {
+      if (self === <any>ASObject) {
         release || assert (!self.baseClass, "ASObject should have no base class.");
       } else {
         release || assert (self.baseClass, self.classInfo.instanceInfo.name + " has no base class.");
@@ -779,7 +779,7 @@ module Shumway.AVM2.AS {
 
       release || assert (self.traitsPrototype === self.instanceConstructor.prototype, "The traitsPrototype is not set correctly.");
 
-      if (self !== ASObject) {
+      if (self !== <any>ASObject) {
         if (ASObject.staticNatives === self.staticNatives) {
           writer && writer.warnLn("Template does not override its staticNatives, possibly a bug.");
         }
@@ -1608,7 +1608,7 @@ module Shumway.AVM2.AS {
 
     cls.implementedInterfaces = cls.instanceBindings.implementedInterfaces;
 
-    if (cls === ASClass) {
+    if (cls === <any>ASClass) {
       cls.instanceBindings.applyTo(domain, ASObject, true);
     } else if (ASClass.instanceBindings) {
       ASClass.instanceBindings.applyTo(domain, cls, true);
