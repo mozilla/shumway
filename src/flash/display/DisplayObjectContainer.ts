@@ -483,7 +483,7 @@ module Shumway.AVM2.AS.flash.display {
         var child = children[i];
         if (child._clipDepth !== -1) {
           if (!unclippedChildren) {
-            unclippedChildren = [];
+            unclippedChildren = children.slice(0, i);
           }
           // Clipping masks are simply ignored for HitTestPoint purposes.
           if (testingType === HitTestingType.HitTestShape) {
