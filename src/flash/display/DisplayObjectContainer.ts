@@ -405,9 +405,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
                    testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
-      // First, test bounds and mask at most.
-      var fastTest = Math.min(testingType, HitTestingType.HitTestBoundsAndMask);
-      var result = this._boundsAndMaskContainPoint(globalX, globalY, localX, localY, fastTest);
+      var result = this._boundsAndMaskContainPoint(globalX, globalY, localX, localY, testingType);
       // Same as in the DisplayObject base case, we're done if we don't have a hit or are only
       // looking for bounds + mask checks.
       if (result === HitTestingResult.None || testingType < HitTestingType.HitTestShape) {

@@ -1679,17 +1679,19 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Fast check if a point can intersect the receiver object. Returns true if the point is
-     * - visible
-     * - within the receiver's bounds
-     * - for testingType values other than HitTestBounds, intersects with the a mask, if set.
+     * Fast check if a point can intersect the receiver object. Returns true if
+     * - the object is visible OR hit testing is performed for one of the `hitTest{Point,Object}`
+     *   methods.
+     * - the point is within the receiver's bounds
+     * - for testingType values other than HitTestBounds, the point intersects with the a mask,
+     *   if the object has one.
      *
      * Note that the callers are expected to have both local and global coordinates available
      * anyway, so _boundsAndMaskContainPoint takes both to avoid recalculating them.
      */
     _boundsAndMaskContainPoint(globalX: number, globalY: number, localX: number, localY: number,
                                testingType: HitTestingType): HitTestingResult {
-      if (!this._hasFlags(DisplayObjectFlags.Visible) ||
+      if (testingType >= HitTestingType.Mouse && !this._hasFlags(DisplayObjectFlags.Visible) ||
           !this._getContentBounds().contains(localX, localY)) {
         return HitTestingResult.None;
       }
