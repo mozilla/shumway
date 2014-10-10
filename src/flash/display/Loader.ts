@@ -415,8 +415,8 @@ module Shumway.AVM2.AS.flash.display {
     private _initAvm1(): Promise<any> {
       var contentLoaderInfo: LoaderInfo = this._contentLoaderInfo;
       // Only the outermost AVM1 SWF gets an AVM1Context. SWFs loaded into it share that context.
-      if (this._loaderInfo && this._loaderInfo._avm1Context) {
-        contentLoaderInfo._avm1Context = this._loaderInfo._avm1Context;
+      if (this.loaderInfo && this.loaderInfo._avm1Context) {
+        contentLoaderInfo._avm1Context = this.loaderInfo._avm1Context;
         return null;
       }
       return AVM2.instance.loadAVM1().then(function() {
@@ -636,13 +636,15 @@ module Shumway.AVM2.AS.flash.display {
      * MovieClip tree, including potential nested SWFs.
      */
     private _initAvm1Root(root: flash.display.DisplayObject) {
+      var as2Object = avm1lib.getAVM1Object(root);
+
       // Only create an AVM1Movie container for the outermost AVM1 SWF. Nested AVM1 SWFs just get
       // their content added to the loading SWFs display list directly.
-      if (this._loaderInfo && this._loaderInfo._avm1Context) {
+      if (this.loaderInfo && this.loaderInfo._avm1Context) {
+        as2Object.context = this.loaderInfo._avm1Context;
         return root;
       }
 
-      var as2Object = avm1lib.getAVM1Object(root);
       var avm1Context = this._contentLoaderInfo._avm1Context;
       avm1Context.root = as2Object;
       as2Object.context = avm1Context;
