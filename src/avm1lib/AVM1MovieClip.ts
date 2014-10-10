@@ -89,9 +89,27 @@ module Shumway.AVM2.AS.avm1lib {
       this._context = value;
     }
 
+    private _resolveLevelNProperty(name): AVM1MovieClip {
+      if (name === '_root' || name === '_level0') {
+        return AVM1Context.instance.resolveLevel(0);
+      } else if (name.indexOf('_level') === 0) {
+        var level = name.substring(6), levelNum = level | 0;
+        if (levelNum > 0 && level == levelNum) {
+          return AVM1Context.instance.resolveLevel(levelNum);
+        }
+      }
+      return null;
+    }
+
     public asGetProperty(namespaces: Namespace [], name: any, flags: number) {
       if (_asHasProperty.call(this, namespaces, name, flags)) {
         return _asGetProperty.call(this, namespaces, name, flags);
+      }
+      if (name[0] === '_') {
+        var level = this._resolveLevelNProperty(name);
+        if (level) {
+          return level;
+        }
       }
       var resolved = resolveMultinameProperty(namespaces, name, flags);
       if (Multiname.isPublicQualifiedName(resolved) && this._nativeAS3Object) {
@@ -103,6 +121,12 @@ module Shumway.AVM2.AS.avm1lib {
     public asHasProperty(namespaces: Namespace [], name: any, flags: number) {
       if (_asHasProperty.call(this, namespaces, name, flags)) {
         return true;
+      }
+      if (name[0] === '_') {
+        var level = this._resolveLevelNProperty(name);
+        if (level) {
+          return true;
+        }
       }
       var resolved = resolveMultinameProperty(namespaces, name, flags);
       if (Multiname.isPublicQualifiedName(resolved) && this._nativeAS3Object) {

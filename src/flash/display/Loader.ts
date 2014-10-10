@@ -652,8 +652,6 @@ module Shumway.AVM2.AS.flash.display {
                             avm1Context.flushPendingScripts.bind(avm1Context),
                             false,
                             Number.MAX_VALUE);
-      avm1Context.globals.asSetPublicProperty('_root', as2Object);
-      avm1Context.globals.asSetPublicProperty('_level0', as2Object);
 
       var avm1Movie = new flash.display.AVM1Movie();
       avm1Movie.initializeContent(<MovieClip>root);

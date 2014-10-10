@@ -281,16 +281,6 @@ public dynamic class AVM1MovieClip extends Object {
   public function set _lockroot(value) {
     throw 'Not implemented: set$_lockroot';
   }
-  // AVM1 pretends that these two properties don't exist on MovieClip instances, but happily
-  // resolves them nevertheless.
-  // TODO: make invisible to `hasOwnProperty`.
-  public function get _root(): AVM1MovieClip {
-    return AVM1Globals.instance._root;
-  }
-  // TODO: make invisible to `hasOwnProperty`.
-  public function get _level0(): AVM1MovieClip {
-    return AVM1Globals.instance._level0;
-  }
   public function get menu() {
     return this._as3Object.contextMenu;
   }
