@@ -66,10 +66,25 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
 
-    constructor (upState: flash.display.DisplayObject = null, overState: flash.display.DisplayObject = null, downState: flash.display.DisplayObject = null, hitTestState: flash.display.DisplayObject = null) {
-      upState = upState; overState = overState; downState = downState; hitTestState = hitTestState;
+    constructor(upState: flash.display.DisplayObject = null,
+                overState: flash.display.DisplayObject = null,
+                downState: flash.display.DisplayObject = null,
+                hitTestState: flash.display.DisplayObject = null) {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.SimpleButton");
+      InteractiveObject.instanceConstructorNoInitialize.call(this);
+      if (upState) {
+        this.upState = upState;
+      }
+      if (overState) {
+        this.overState = overState;
+      }
+      if (downState) {
+        this.downState = downState;
+      }
+      if (hitTestState) {
+        this.hitTestState = hitTestState;
+      }
+      this._updateButton();
     }
 
     _initFrame(advance: boolean) {
