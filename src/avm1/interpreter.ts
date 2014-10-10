@@ -203,7 +203,7 @@ module Shumway.AVM1 {
         target = currentTarget;
       } else if (typeof target === 'string') {
         target = lookupAVM1Children(target, currentTarget,
-          this.globals.asGetPublicProperty('_root'));
+          this.resolveLevel(0));
       }
       if (typeof target !== 'object' || target === null ||
         !('_nativeAS3Object' in target)) {
@@ -214,7 +214,12 @@ module Shumway.AVM1 {
       return target;
     }
     resolveLevel(level: number) : any {
-      return this.resolveTarget(this.globals['_level' + level]);
+      // TODO levels 1, 2, etc.
+      // TODO _lockroot
+      if (level === 0) {
+        return this.root;
+      }
+      return undefined;
     }
     addToPendingScripts(fn: Function) {
       if (!this.deferScriptExecution) {
@@ -700,7 +705,7 @@ module Shumway.AVM1 {
       try {
         var currentTarget = lookupAVM1Children(targetPath,
           currentContext.currentTarget || currentContext.defaultTarget,
-          _global.asGetPublicProperty('_root'));
+          currentContext.resolveLevel(0));
         currentContext.currentTarget = currentTarget;
       } catch (e) {
         currentContext.currentTarget = null;
@@ -792,7 +797,7 @@ module Shumway.AVM1 {
                 registers[i] = scope.asGetPublicProperty('_parent');
                 break;
               case ArgumentAssignmentType.Root:
-                registers[i] = _global.asGetPublicProperty('_root');
+                registers[i] = currentContext.resolveLevel(0);
                 break;
             }
           }
@@ -876,7 +881,7 @@ module Shumway.AVM1 {
         // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
         var parts = variableName.split(':');
         obj = lookupAVM1Children(parts[0], currentTarget,
-          _global.asGetPublicProperty('_root'));
+          currentContext.resolveLevel(0));
         if (!obj) {
           throw new Error(parts[0] + ' is undefined');
         }
