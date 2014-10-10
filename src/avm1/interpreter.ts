@@ -2605,6 +2605,8 @@ module Shumway.AVM1 {
                  '  ectx.constantPool = constantPool;\n';
         case ActionCode.ActionPush:
           return '  stack.push(' + this.convertArgs(item.action.args, id, res) + ');\n';
+        case ActionCode.ActionStoreRegister:
+          return '  registers[' + item.action.args[0] + '] = stack[stack.length - 1];\n';
         case ActionCode.ActionWaitForFrame:
         case ActionCode.ActionWaitForFrame2:
           return '  if (calls.' + item.action.actionName + '(ectx,[' +
