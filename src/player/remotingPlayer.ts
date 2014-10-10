@@ -270,6 +270,7 @@ module Shumway.Remoting.Player {
       }
       if (hasMiscellaneousProperties) {
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
+        this._writeFilters(displayObject.filters);
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
         if (bitmap) {
           this.output.writeInt(PixelSnapping.toNumber(bitmap.pixelSnapping));
@@ -393,6 +394,43 @@ module Shumway.Remoting.Player {
     private _writeAsset(asset: any) {
       this.output.writeInt(this.outputAssets.length);
       this.outputAssets.push(asset);
+    }
+
+    private _writeFilters(filters: flash.filters.BitmapFilter []) {
+      var count = 0;
+      for (var i = 0; i < filters.length; i++) {
+        if (flash.filters.BlurFilter.isType(filters[i]) ||
+            flash.filters.DropShadowFilter.isType(filters[i])) {
+          count ++;
+        } else {
+          Shumway.Debug.somewhatImplemented(filters[i].toString());
+        }
+      }
+      this.output.writeInt(count);
+      for (var i = 0; i < filters.length; i++) {
+        var filter = filters[i];
+        if (flash.filters.BlurFilter.isType(filter)) {
+          var blurFilter = <flash.filters.BlurFilter>filter;
+          this.output.writeInt(FilterType.Blur);
+          this.output.writeFloat(blurFilter.blurX);
+          this.output.writeFloat(blurFilter.blurY);
+          this.output.writeInt(blurFilter.quality);
+        } else if (flash.filters.DropShadowFilter.isType(filter)) {
+          var dropShadowFilter = <flash.filters.DropShadowFilter>filter;
+          this.output.writeInt(FilterType.DropShadow);
+          this.output.writeFloat(dropShadowFilter.alpha);
+          this.output.writeFloat(dropShadowFilter.angle);
+          this.output.writeFloat(dropShadowFilter.blurX);
+          this.output.writeFloat(dropShadowFilter.blurY);
+          this.output.writeInt(dropShadowFilter.color);
+          this.output.writeFloat(dropShadowFilter.distance);
+          this.output.writeBoolean(dropShadowFilter.hideObject);
+          this.output.writeBoolean(dropShadowFilter.inner);
+          this.output.writeBoolean(dropShadowFilter.knockout);
+          this.output.writeInt(dropShadowFilter.quality);
+          this.output.writeFloat(dropShadowFilter.strength);
+        }
+      }
     }
 
     private _writeColorTransform(colorTransform: flash.geom.ColorTransform) {

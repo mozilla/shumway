@@ -15,6 +15,8 @@
  */
 module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
+  import BlurFilter = Shumway.GFX.BlurFilter;
+  import DropshadowFilter = Shumway.GFX.DropshadowFilter;
   import FrameFlags = Shumway.GFX.FrameFlags;
   import Shape = Shumway.GFX.Shape;
   import Renderable = Shumway.GFX.Renderable;
@@ -462,6 +464,45 @@ module Shumway.Remoting.GFX {
       }
     }
 
+    private _readFilters(frame: Frame) {
+      var input = this.input;
+      var count = input.readInt();
+      var filters = [];
+      if (count) {
+        for (var i = 0; i < count; i++) {
+          var type: FilterType = input.readInt();
+          switch (type) {
+            case FilterType.Blur:
+              filters.push(new BlurFilter (
+                input.readFloat(), // blurX
+                input.readFloat(), // blurY
+                input.readInt()    // quality
+              ));
+              break;
+            case FilterType.DropShadow:
+              filters.push(new DropshadowFilter (
+                input.readFloat(),   // alpha
+                input.readFloat(),   // angle
+                input.readFloat(),   // blurX
+                input.readFloat(),   // blurY
+                input.readInt(),     // color
+                input.readFloat(),   // distance
+                input.readBoolean(), // hideObject
+                input.readBoolean(), // inner
+                input.readBoolean(), // knockout
+                input.readInt(),     // quality
+                input.readFloat()    // strength
+              ));
+              break;
+            default:
+              Shumway.Debug.somewhatImplemented(FilterType[type]);
+              break;
+          }
+        }
+      }
+      frame.filters = filters;
+    }
+
     private _readUpdateFrame() {
       var input = this.input;
       var context = this.context;
@@ -487,6 +528,7 @@ module Shumway.Remoting.GFX {
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
         frame.blendMode = input.readInt();
+        this._readFilters(frame);
         frame._toggleFlags(FrameFlags.Visible, input.readBoolean());
         frame.pixelSnapping = <PixelSnapping>input.readInt();
         frame.smoothing = <Smoothing>input.readInt();

@@ -1,4 +1,9 @@
 [
+    { "id": "acid-filter",
+      "frames": [1],
+      "swf": "swfs/acid/acid-filter.swf",
+      "type": "eq"
+    },
     {  "id": "acid",
       "frames": [10],
       "swf": "swfs/acid/acid.swf",

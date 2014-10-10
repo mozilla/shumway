@@ -361,7 +361,7 @@ module Shumway.AVM2.AS.flash.display {
       self._height = 0;
       self._opaqueBackground = null;
       self._scrollRect = null;
-      self._filters = [];
+      self._filters = null;
       self._blendMode = BlendMode.NORMAL;
       release || assert (self._blendMode);
       self._scale9Grid = null;
@@ -1037,7 +1037,9 @@ module Shumway.AVM2.AS.flash.display {
         this._clipDepth = state.clipDepth;
         this._setDirtyFlags(DisplayObjectFlags.DirtyClipDepth);
       }
-      this._filters = state.filters;
+      if (state.filters) {
+        this.filters = state.filters;
+      }
       if (state.blendMode && state.blendMode !== this._blendMode) {
         this._blendMode = state.blendMode;
         this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
@@ -1403,7 +1405,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get cacheAsBitmap(): boolean {
-      return this._filters.length > 0 || this._hasFlags(DisplayObjectFlags.CacheAsBitmap);
+      return (this._filters && this._filters.length > 0) || this._hasFlags(DisplayObjectFlags.CacheAsBitmap);
     }
 
     set cacheAsBitmap(value: boolean) {
@@ -1425,6 +1427,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set filters(value: flash.filters.BitmapFilter []) {
+      if (!this._filters) {
+        this._filters = [];
+      }
       var changed = false;
       if (isNullOrUndefined(value)) {
         changed = this.filters.length > 0;
