@@ -50,6 +50,13 @@
     "swf": "swfs/acid/acid-text-5.swf",
     "type": "eq"
   },
+  {  "id": "avm1-moviecliploader",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/avm1/moviecliploader/loader.swf"
+    ],
+    "type": "stas"
+  },
   {  "id": "image-loading",
     "stas": "swfs/trace.stas",
     "filenames": [

@@ -414,13 +414,6 @@
       ],
       "type": "stas"
     },
-    {  "id": "avm1-moviecliploader",
-      "stas": "swfs/trace.stas",
-      "filenames": [
-        "swfs/avm1/moviecliploader/loader.swf"
-      ],
-      "type": "stas"
-    },
     {  "id": "defineFont2-test",
        "frames": [60],
        "swf": "swfs/food.swf",
