@@ -15,6 +15,7 @@
  */
 
 interface CanvasRenderingContext2D {
+  filter: string;
   globalColorMatrix: Shumway.GFX.ColorMatrix;
   flashStroke(path: Path2D, lineScaleMode: Shumway.LineScaleMode);
 }

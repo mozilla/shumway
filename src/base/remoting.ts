@@ -91,6 +91,11 @@ module Shumway.Remoting {
     FocusEvent                  = 302
   }
 
+  export enum FilterType {
+    Blur,
+    DropShadow
+  }
+
   /**
    * Dictates how color transforms are encoded. The majority of color transforms are
    * either identity or only modify the alpha multiplier, so we can encode these more
