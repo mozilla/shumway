@@ -23,6 +23,7 @@ module Shumway.AVM1 {
   import isFunction = Shumway.isFunction;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
   import Telemetry = Shumway.Telemetry;
@@ -748,9 +749,11 @@ module Shumway.AVM1 {
         var newScopeContainer;
         var newScope: any = new AVM1FunctionClosure();
         var thisArg = isGlobalObject(this) ? scope : this;
+        var argumentsClone;
 
         if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
-          newScope.asSetPublicProperty('arguments', arguments);
+          argumentsClone = sliceArguments(arguments, 0);
+          newScope.asSetPublicProperty('arguments', argumentsClone);
         }
         if (!(suppressArguments & ArgumentAssignmentType.This)) {
           newScope.asSetPublicProperty('this', thisArg);
@@ -776,7 +779,8 @@ module Shumway.AVM1 {
                 registers[i] = thisArg;
                 break;
               case ArgumentAssignmentType.Arguments:
-                registers[i] = arguments;
+                argumentsClone = argumentsClone || sliceArguments(arguments, 0);
+                registers[i] = argumentsClone;
                 break;
               case ArgumentAssignmentType.Super:
                 registers[i] = AVM1_SUPER_STUB;
