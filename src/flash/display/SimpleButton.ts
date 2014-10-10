@@ -202,17 +202,10 @@ module Shumway.AVM2.AS.flash.display {
       if (!target) {
         return HitTestingResult.None;
       }
-      // For hit test states that weren't created from timeline symbols, apply potential transforms.
-      // For timeline-created states, that doesn't seem to happen. (Which makes sense: in the IDE
-      // you can create layers within Buttons. When exported for AVM2, all layers for each frame
-      // get packaged together into a container. It makes sense for that container to not have a
-      // transform.
-      if (!this._symbol) {
-        var matrix = target._getInvertedMatrix();
-        var tmpX = matrix.transformX(localX, localY);
-        localY = matrix.transformY(localX, localY);
-        localX = tmpX;
-      }
+      var matrix = target._getInvertedMatrix();
+      var tmpX = matrix.transformX(localX, localY);
+      localY = matrix.transformY(localX, localY);
+      localX = tmpX;
       var result = target._containsPoint(globalX, globalY, localX, localY, testingType, objects);
       // For mouse target finding, SimpleButtons always return themselves as the hit.
       if (result !== HitTestingResult.None && testingType === HitTestingType.Mouse &&
@@ -231,14 +224,10 @@ module Shumway.AVM2.AS.flash.display {
       if (!target) {
         return;
       }
-      var childBounds = target._getContentBounds(includeStrokes).clone();
-      // Always apply the SimpleButton's matrix.
-      this._getConcatenatedMatrix().transformBounds(childBounds);
-      // For non-timeline-created buttons, also apply the hit test state's transform.
-      if (!this._symbol) {
-        target._getMatrix().transformBounds(bounds);
-      }
-      bounds.unionInPlace(childBounds);
+      bounds.unionInPlace(target._getContentBounds(includeStrokes));
+      // Apply the SimpleButton's and the target's matrix.
+      this._getConcatenatedMatrix().transformBounds(bounds);
+      target._getMatrix().transformBounds(bounds);
     }
 
     _updateButton(): void {
