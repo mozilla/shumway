@@ -397,7 +397,16 @@ module Shumway.Remoting.Player {
     }
 
     private _writeFilters(filters: flash.filters.BitmapFilter []) {
-      this.output.writeInt(filters.length);
+      var count = 0;
+      for (var i = 0; i < filters.length; i++) {
+        if (flash.filters.BlurFilter.isType(filters[i]) ||
+            flash.filters.DropShadowFilter.isType(filters[i])) {
+          count ++;
+        } else {
+          Shumway.Debug.somewhatImplemented(filters[i].toString());
+        }
+      }
+      this.output.writeInt(count);
       for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
         if (flash.filters.BlurFilter.isType(filter)) {
@@ -415,9 +424,11 @@ module Shumway.Remoting.Player {
           this.output.writeFloat(dropShadowFilter.blurY);
           this.output.writeInt(dropShadowFilter.color);
           this.output.writeFloat(dropShadowFilter.distance);
+          this.output.writeBoolean(dropShadowFilter.hideObject);
+          this.output.writeBoolean(dropShadowFilter.inner);
+          this.output.writeBoolean(dropShadowFilter.knockout);
           this.output.writeInt(dropShadowFilter.quality);
-        } else {
-          Shumway.Debug.somewhatImplemented(filter.toString());
+          this.output.writeFloat(dropShadowFilter.strength);
         }
       }
     }

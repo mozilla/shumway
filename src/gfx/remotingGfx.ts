@@ -474,25 +474,28 @@ module Shumway.Remoting.GFX {
           switch (type) {
             case FilterType.Blur:
               filters.push(new BlurFilter (
-                input.readFloat(),
-                input.readFloat(),
-                input.readInt()
+                input.readFloat(), // blurX
+                input.readFloat(), // blurY
+                input.readInt()    // quality
               ));
               break;
             case FilterType.DropShadow:
               filters.push(new DropshadowFilter (
-                input.readFloat(),
-                input.readFloat(),
-                input.readFloat(),
-                input.readFloat(),
-                input.readInt(),
-                input.readFloat(),
-                true,
-                true,
-                true,
-                input.readInt(),
-                0
+                input.readFloat(),   // alpha
+                input.readFloat(),   // angle
+                input.readFloat(),   // blurX
+                input.readFloat(),   // blurY
+                input.readInt(),     // color
+                input.readFloat(),   // distance
+                input.readBoolean(), // hideObject
+                input.readBoolean(), // inner
+                input.readBoolean(), // knockout
+                input.readInt(),     // quality
+                input.readFloat()    // strength
               ));
+              break;
+            default:
+              Shumway.Debug.somewhatImplemented(FilterType[type]);
               break;
           }
         }

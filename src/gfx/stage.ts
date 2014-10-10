@@ -99,11 +99,14 @@ module Shumway.GFX {
     _options: StageRendererOptions;
     _canvas: HTMLCanvasElement;
     _stage: Stage;
+    _devicePixelRatio: number;
+
     constructor(canvas: HTMLCanvasElement, stage: Stage, options: StageRendererOptions) {
       this._canvas = canvas;
       this._stage = stage;
       this._options = options;
       this._viewport = Rectangle.createSquare(1024);
+      this._devicePixelRatio = 1;
     }
 
     set viewport (viewport: Rectangle) {

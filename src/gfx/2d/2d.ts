@@ -73,30 +73,6 @@ module Shumway.GFX.Canvas2D {
     }
   }
 
-  function applyFilters(context: CanvasRenderingContext2D, filters: Filter []) {
-    removeFilters(context);
-    for (var i = 0; i < filters.length; i++) {
-      var filter = filters[i];
-      if (filter instanceof BlurFilter) {
-        var blurFilter = <BlurFilter>filter;
-        Canvas2DStageRenderer._svgBlurFilter.setAttribute("stdDeviation",blurFilter.blurX + " " + blurFilter.blurY);
-        context.filter = "url(#svgBlurFilter)";
-      } else if (filter instanceof DropshadowFilter) {
-        var dropshadowFilter = <DropshadowFilter>filter;
-        Canvas2DStageRenderer._svgDropshadowFilterBlur.setAttribute("stdDeviation",
-          dropshadowFilter.blurX + " " + dropshadowFilter.blurY
-        );
-        Canvas2DStageRenderer._svgDropshadowFilterOffset.setAttribute("dx", String(Math.cos(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * 2));
-        Canvas2DStageRenderer._svgDropshadowFilterOffset.setAttribute("dy", String(Math.sin(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * 2));
-        context.filter = "url(#svgDropShadowFilter)";
-      }
-    }
-  }
-
-  function removeFilters(context: CanvasRenderingContext2D) {
-    context.filter = "";
-  }
-
   var MAX_VIEWPORT = Rectangle.createMaxI16();
 
   export class Canvas2DStageRenderer extends StageRenderer {
@@ -125,7 +101,10 @@ module Shumway.GFX.Canvas2D {
      * Reusable dropshadow filter SVG element.
      */
     static _svgDropshadowFilterBlur: Element;
+    static _svgDropshadowFilterFlood: Element;
     static _svgDropshadowFilterOffset: Element;
+
+    static _svgFiltersAreSupported = !!Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "filter");
 
     constructor (
       canvas: HTMLCanvasElement,
@@ -138,7 +117,6 @@ module Shumway.GFX.Canvas2D {
       this._fillRule = fillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
       Canvas2DStageRenderer._prepareSurfaceAllocators();
-      Canvas2DStageRenderer._prepareSVGFilters();
     }
 
     /**
@@ -155,11 +133,11 @@ module Shumway.GFX.Canvas2D {
 
       var filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
       filter.setAttribute("id","svgBlurFilter");
-      var gaussianFilter = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
-      gaussianFilter.setAttribute("stdDeviation","0 0");
-      filter.appendChild(gaussianFilter);
+      var feGaussianFilter = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
+      feGaussianFilter.setAttribute("stdDeviation","0 0");
+      filter.appendChild(feGaussianFilter);
       defs.appendChild(filter);
-      Canvas2DStageRenderer._svgBlurFilter = gaussianFilter;
+      Canvas2DStageRenderer._svgBlurFilter = feGaussianFilter;
 
       var filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
       filter.setAttribute("id","svgDropShadowFilter");
@@ -176,14 +154,15 @@ module Shumway.GFX.Canvas2D {
       filter.appendChild(feOffset);
       Canvas2DStageRenderer._svgDropshadowFilterOffset = feOffset;
 
-//      var feFlood = document.createElementNS("http://www.w3.org/2000/svg", "feFlood");
-//      feFlood.setAttribute("flood-color","rgba(0,0,0,0.5)");
-//      filter.appendChild(feFlood);
-//
-//      var feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
-//      feComposite.setAttribute("in2","offsetblur");
-//      feComposite.setAttribute("operator","in");
-//      filter.appendChild(feComposite);
+      var feFlood = document.createElementNS("http://www.w3.org/2000/svg", "feFlood");
+      feFlood.setAttribute("flood-color","rgba(0,0,0,1)");
+      filter.appendChild(feFlood);
+      Canvas2DStageRenderer._svgDropshadowFilterFlood = feFlood;
+
+      var feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
+      feComposite.setAttribute("in2","offsetblur");
+      feComposite.setAttribute("operator","in");
+      filter.appendChild(feComposite);
 
       var feMerge = document.createElementNS("http://www.w3.org/2000/svg", "feMerge");
       var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
@@ -192,12 +171,47 @@ module Shumway.GFX.Canvas2D {
       var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
       feMergeNode.setAttribute("in","SourceGraphic");
       feMerge.appendChild(feMergeNode);
-
       filter.appendChild(feMerge);
 
       defs.appendChild(filter);
       svg.appendChild(defs);
       document.documentElement.appendChild(svg);
+    }
+
+    /**
+     * This doesn't currently allow you to specify multiple filters. Only the last one is used.
+     * To support multiple filters, we need to group them in SVG nodes.
+     */
+    static _applyFilters(ratio: number, context: CanvasRenderingContext2D, filters: Filter []) {
+      Canvas2DStageRenderer._prepareSVGFilters();
+      Canvas2DStageRenderer._removeFilters(context);
+      for (var i = 0; i < filters.length; i++) {
+        var filter = filters[i];
+        if (filter instanceof BlurFilter) {
+          var blurFilter = <BlurFilter>filter;
+          Canvas2DStageRenderer._svgBlurFilter.setAttribute("stdDeviation",
+            blurFilter.blurX * ratio + " " +
+              blurFilter.blurY * ratio);
+          context.filter = "url(#svgBlurFilter)";
+        } else if (filter instanceof DropshadowFilter) {
+          var dropshadowFilter = <DropshadowFilter>filter;
+          Canvas2DStageRenderer._svgDropshadowFilterBlur.setAttribute("stdDeviation",
+            dropshadowFilter.blurX * ratio + " " +
+              dropshadowFilter.blurY * ratio
+          );
+          Canvas2DStageRenderer._svgDropshadowFilterOffset.setAttribute("dx",
+            String(Math.cos(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * ratio));
+          Canvas2DStageRenderer._svgDropshadowFilterOffset.setAttribute("dy",
+            String(Math.sin(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * ratio));
+          Canvas2DStageRenderer._svgDropshadowFilterFlood.setAttribute("flood-color",
+            ColorUtilities.rgbaToCSSStyle(((dropshadowFilter.color << 8) | Math.round(255 * dropshadowFilter.alpha))));
+          context.filter = "url(#svgDropShadowFilter)";
+        }
+      }
+    }
+
+    static _removeFilters(context: CanvasRenderingContext2D) {
+      context.filter = "";
     }
 
     private static _prepareSurfaceAllocators() {
@@ -254,7 +268,7 @@ module Shumway.GFX.Canvas2D {
       var canvas = this._canvas, context = this.context;
       this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
       context.fillRule = context.mozFillRule = this._fillRule;
-
+      this._devicePixelRatio = window.devicePixelRatio || 1;
       this.render();
     }
 
@@ -491,10 +505,15 @@ module Shumway.GFX.Canvas2D {
         matrix.transformRectangleAABB(boundsAABB);
         boundsAABB.snap();
 
-        if (frame !== root && (state.options.blending || state.options.filters)) {
+        var shouldApplyFilters = Canvas2DStageRenderer._svgFiltersAreSupported && state.options.filters;
+
+        // Do we need to draw to a temporary surface?
+        if (frame !== root && (state.options.blending || shouldApplyFilters)) {
           context.globalCompositeOperation = self._getCompositeOperation(frame.blendMode);
           if (frame.blendMode !== BlendMode.Normal || frame.filters.length) {
-            applyFilters(context, frame.filters);
+            if (shouldApplyFilters) {
+              Canvas2DStageRenderer._applyFilters(self._devicePixelRatio, context, frame.filters);
+            }
             var result = self._renderToSurfaceRegion(frame, matrix, viewport);
             var surfaceRegion = result.surfaceRegion;
             var surfaceRegionBounds = result.surfaceRegionBounds;
@@ -512,7 +531,7 @@ module Shumway.GFX.Canvas2D {
               surfaceRegionBounds.w,
               surfaceRegionBounds.h
             );
-            removeFilters(context);
+            Canvas2DStageRenderer._removeFilters(context);
             surfaceRegion.surface.free(surfaceRegion);
             return VisitorFlags.Skip;
           }

@@ -86,22 +86,6 @@ module Shumway.AVM2.AS.flash.filters {
       }
     }
 
-    _serialize(message) {
-      message.ensureAdditionalCapacity(48);
-      message.writeIntUnsafe(0);
-      message.writeFloatUnsafe(this._alpha);
-      message.writeFloatUnsafe(this._angle);
-      message.writeFloatUnsafe(this._blurX);
-      message.writeFloatUnsafe(this._blurY);
-      message.writeIntUnsafe(this._color);
-      message.writeFloatUnsafe(this._distance);
-      message.writeIntUnsafe(this._hideObject);
-      message.writeIntUnsafe(this._inner);
-      message.writeIntUnsafe(this._knockout);
-      message.writeIntUnsafe(this._quality);
-      message.writeFloatUnsafe(this._strength);
-    }
-
     // JS -> AS Bindings
 
     // AS -> JS Bindings
