@@ -67,19 +67,6 @@ module Shumway.AVM2.AS.flash.filters {
       BitmapFilter._updateBlurBounds(bounds, this._blurX, this._blurY, this._quality);
     }
 
-    _serialize(message) {
-      message.ensureAdditionalCapacity(36);
-      message.writeIntUnsafe(2);
-      message.writeFloatUnsafe(this._alpha);
-      message.writeFloatUnsafe(this._blurX);
-      message.writeFloatUnsafe(this._blurY);
-      message.writeIntUnsafe(this._color);
-      message.writeIntUnsafe(this._inner);
-      message.writeIntUnsafe(this._knockout);
-      message.writeIntUnsafe(this._quality);
-      message.writeFloatUnsafe(this._strength);
-    }
-
     // JS -> AS Bindings
 
     // AS -> JS Bindings
