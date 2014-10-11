@@ -303,9 +303,5 @@ module Shumway.AVM2.AS.avm1lib {
       var nativeAS3Object = <any> this._nativeAS3Object;
       nativeAS3Object._duplicate(name, depth, initObject);
     }
-    _gotoLabel(label: any): any {
-      var nativeAS3Object = <any> this._nativeAS3Object;
-      nativeAS3Object._gotoFrame(label, null);
-    }
   }
 }

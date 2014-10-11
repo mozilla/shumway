@@ -118,13 +118,6 @@ public dynamic class AVM1Globals {
     }
   }
 
-  public function gotoLabel(label) {
-    var nativeTarget = AVM1Utils.resolveTarget();
-    _addToPendingScripts(nativeTarget, function (subject, label) {
-      subject._gotoLabel(label);
-    }, [nativeTarget, label]);
-  }
-
   public function ifFrameLoaded(scene, frame) {
     // ignoring scene parameter ?
     var nativeTarget = AVM1Utils.resolveTarget();

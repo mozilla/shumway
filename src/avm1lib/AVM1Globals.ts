@@ -82,7 +82,6 @@ module Shumway.AVM2.AS.avm1lib {
     getVersion: () => any;
     gotoAndPlay: (scene: any, frame?: any) => any;
     gotoAndStop: (scene: any, frame?: any) => any;
-    gotoLabel: (label: any) => any;
     ifFrameLoaded: (scene: any, frame?: any) => any;
     int: (value: any) => any;
     length: (expression: any) => number;
@@ -141,7 +140,11 @@ module Shumway.AVM2.AS.avm1lib {
     _addToPendingScripts(subject: ASObject, fn: ASFunction, args: any [] = null): any {
       release || assert(fn, 'invalid function in _addToPendingScripts');
       AVM1Context.instance.addToPendingScripts(function () {
-        (<Function><any> fn).apply(subject, args);
+        try {
+          (<Function><any> fn).apply(subject, args);
+        } catch (ex) {
+          console.error('AVM1 pending script error: ' + ex.message);
+        }
       });
     }
 

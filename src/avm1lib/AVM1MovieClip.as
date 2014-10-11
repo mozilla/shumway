@@ -217,7 +217,6 @@ public dynamic class AVM1MovieClip extends Object {
   public function gotoAndStop(frame) {
     return this._as3Object.gotoAndStop(frame);
   }
-  public native function _gotoLabel(label);
   public function get _height() {
     return this._as3Object.height;
   }
