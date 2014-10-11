@@ -145,7 +145,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set upState(value: flash.display.DisplayObject) {
-      //value = value;
       var old = this._upState;
       if (value._parent) {
         value._parent.removeChild(value);
@@ -161,7 +160,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set overState(value: flash.display.DisplayObject) {
-      //value = value;
       var old = this._overState;
       if (value._parent) {
         value._parent.removeChild(value);
@@ -177,7 +175,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set downState(value: flash.display.DisplayObject) {
-      //value = value;
       var old = this._downState;
       if (value._parent) {
         value._parent.removeChild(value);
@@ -193,7 +190,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set hitTestState(value: flash.display.DisplayObject) {
-      //value = value;
       this._hitTestState = value;
     }
 
@@ -213,15 +209,14 @@ module Shumway.AVM2.AS.flash.display {
      */
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
                    testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
-      var target = this.hitTestState;
+      var target = testingType === HitTestingType.Mouse ? this._hitTestState : this._currentState;
       if (!target) {
         return HitTestingResult.None;
       }
-      var matrix = target._getInvertedMatrix();
-      var tmpX = matrix.transformX(localX, localY);
-      localY = matrix.transformY(localX, localY);
-      localX = tmpX;
-      var result = target._containsPoint(globalX, globalY, localX, localY, testingType, objects);
+      // Hit testing relies on being able to get combined transforms and all that, so, a parent.
+      target._parent = <any>this;
+      var result = target._containsGlobalPoint(globalX, globalY, testingType, objects);
+      target._parent = null;
       // For mouse target finding, SimpleButtons always return themselves as the hit.
       if (result !== HitTestingResult.None && testingType === HitTestingType.Mouse &&
           objects && this._mouseEnabled) {
@@ -235,14 +230,23 @@ module Shumway.AVM2.AS.flash.display {
      * Override of DisplayObject#_getChildBounds that retrieves the current hitTestState's bounds.
      */
     _getChildBounds(bounds: Bounds, includeStrokes: boolean) {
-      var target = this.hitTestState;
-      if (!target) {
+      if (!this._currentState) {
         return;
       }
-      bounds.unionInPlace(target._getContentBounds(includeStrokes));
-      // Apply the SimpleButton's and the target's matrix.
-      this._getConcatenatedMatrix().transformBounds(bounds);
-      target._getMatrix().transformBounds(bounds);
+      this._currentState._parent = <any>this;
+      bounds.unionInPlace(this._currentState._getTransformedBounds(this, includeStrokes));
+      this._currentState._parent = null;
+    }
+
+    _propagateFlagsDown(flags: DisplayObjectFlags) {
+      if (this._hasFlags(flags)) {
+        return;
+      }
+      this._setFlags(flags);
+      this._upState && this._upState._propagateFlagsDown(flags);
+      this._overState && this._overState._propagateFlagsDown(flags);
+      this._downState && this._downState._propagateFlagsDown(flags);
+      this._hitTestState && this._hitTestState._propagateFlagsDown(flags);
     }
 
     _updateButton(): void {
