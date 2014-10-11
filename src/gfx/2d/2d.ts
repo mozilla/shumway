@@ -185,24 +185,45 @@ module Shumway.GFX.Canvas2D {
     static _applyFilters(ratio: number, context: CanvasRenderingContext2D, filters: Filter []) {
       Canvas2DStageRenderer._prepareSVGFilters();
       Canvas2DStageRenderer._removeFilters(context);
+      var scale = ratio;
+      /**
+       * Scale blur radius for each quality level. The scale constants were gathered
+       * experimentally.
+       */
+      function getBlurScale(quality: number) {
+        var blurScale = ratio / 2; // For some reason we always have to scale by 1/2 first.
+        switch (quality) {
+          case 0:
+            return 0;
+          case 1:
+            return blurScale / 2.7;
+          case 2:
+            return blurScale / 1.28;
+          case 3:
+          default:
+            return blurScale;
+        }
+      }
       for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
         if (filter instanceof BlurFilter) {
           var blurFilter = <BlurFilter>filter;
+          var blurScale = getBlurScale(blurFilter.quality);
           Canvas2DStageRenderer._svgBlurFilter.setAttribute("stdDeviation",
-            blurFilter.blurX * ratio + " " +
-              blurFilter.blurY * ratio);
+            blurFilter.blurX * blurScale + " " +
+            blurFilter.blurY * blurScale);
           context.filter = "url(#svgBlurFilter)";
         } else if (filter instanceof DropshadowFilter) {
           var dropshadowFilter = <DropshadowFilter>filter;
+          var blurScale = getBlurScale(dropshadowFilter.quality);
           Canvas2DStageRenderer._svgDropshadowFilterBlur.setAttribute("stdDeviation",
-            dropshadowFilter.blurX * ratio + " " +
-              dropshadowFilter.blurY * ratio
+            dropshadowFilter.blurX * blurScale + " " +
+            dropshadowFilter.blurY * blurScale
           );
           Canvas2DStageRenderer._svgDropshadowFilterOffset.setAttribute("dx",
-            String(Math.cos(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * ratio));
+            String(Math.cos(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
           Canvas2DStageRenderer._svgDropshadowFilterOffset.setAttribute("dy",
-            String(Math.sin(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * ratio));
+            String(Math.sin(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
           Canvas2DStageRenderer._svgDropshadowFilterFlood.setAttribute("flood-color",
             ColorUtilities.rgbaToCSSStyle(((dropshadowFilter.color << 8) | Math.round(255 * dropshadowFilter.alpha))));
           context.filter = "url(#svgDropShadowFilter)";
