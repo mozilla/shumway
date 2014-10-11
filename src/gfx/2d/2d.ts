@@ -587,31 +587,42 @@ module Shumway.GFX.Canvas2D {
       }, matrix, FrameFlags.Empty, VisitorFlags.Clips);
     }
 
+    /**
+     * Match up FLash blend modes with Canvas blend operations:
+     *
+     * See: http://kaourantin.net/2005/09/some-word-on-blend-modes-in-flash.html
+     */
     private _getCompositeOperation(blendMode: BlendMode): string {
       // TODO:
 
       // These Flash blend modes have no canvas equivalent:
-      // - blendModeClass.SUBTRACT
-      // - blendModeClass.INVERT
-      // - blendModeClass.SHADER
-      // - blendModeClass.ADD
+      // - BlendMode.Subtract
+      // - BlendMode.Invert
+      // - BlendMode.Shader
+      // - BlendMode.Add is similar to BlendMode.Screen
 
       // These blend modes are actually Porter-Duff compositing operators.
-      // The backdrop is the nearest parent with blendMode set to LAYER.
+      // The backdrop is the nearest parent with blendMode set to layer.
       // When there is no LAYER parent, they are ignored (treated as NORMAL).
-      // - blendModeClass.ALPHA (destination-in)
-      // - blendModeClass.ERASE (destination-out)
-      // - blendModeClass.LAYER [defines backdrop]
+      // - BlendMode.Alpha (destination-in)
+      // - BlendMode.Erase (destination-out)
+      // - BlendMode.Layer [defines backdrop]
 
       var compositeOp: string = "source-over";
       switch (blendMode) {
+        case BlendMode.Normal:
+        case BlendMode.Layer:
+          return compositeOp;
         case BlendMode.Multiply:   compositeOp = "multiply";   break;
+        case BlendMode.Add:
         case BlendMode.Screen:     compositeOp = "screen";     break;
         case BlendMode.Lighten:    compositeOp = "lighten";    break;
         case BlendMode.Darken:     compositeOp = "darken";     break;
         case BlendMode.Difference: compositeOp = "difference"; break;
         case BlendMode.Overlay:    compositeOp = "overlay";    break;
         case BlendMode.HardLight:  compositeOp = "hard-light"; break;
+        default:
+          Shumway.Debug.somewhatImplemented("Blend Mode: " + BlendMode[blendMode]);
       }
       return compositeOp;
     }
