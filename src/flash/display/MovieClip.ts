@@ -375,7 +375,12 @@ module Shumway.AVM2.AS.flash.display {
       /* tslint:disable */
       var frameNum = parseInt(frame, 10);
       if (<any>frameNum != frame) { // TypeScript doesn't like using `==` for number,string vars.
-        var label = scene.getLabelByName(frame);
+        var legacyMode = MovieClip.frameNavigationModel === FrameNavigationModel.SWF1 ||
+                         MovieClip.frameNavigationModel === FrameNavigationModel.SWF9;
+        var label = scene.getLabelByName(frame, legacyMode);
+        if (!label && legacyMode) {
+          return; // noop for SWF9 and below
+        }
         if (!label) {
           throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame, sceneName);
         }
@@ -688,7 +693,7 @@ module Shumway.AVM2.AS.flash.display {
 
     addFrameLabel(name: string, frame: number): void {
       var scene = this._sceneForFrameIndex(frame);
-      if (!scene.getLabelByName(name)) {
+      if (!scene.getLabelByName(name, false)) {
         scene.labels.push(new flash.display.FrameLabel(name, frame - scene.offset));
       }
     }

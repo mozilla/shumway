@@ -57,11 +57,14 @@ module Shumway.AVM2.AS.flash.display {
       return new Scene(this._name, labels, this.offset, this._numFrames);
     }
 
-    getLabelByName(name: string): FrameLabel {
+    getLabelByName(name: string, ignoreCase: boolean): FrameLabel {
+      if (ignoreCase) {
+        name = name.toLowerCase();
+      }
       var labels = this._labels;
       for (var i = 0; i < labels.length; i++) {
         var label = labels[i];
-        if (label.name === name) {
+        if (ignoreCase ? label.name.toLowerCase() === name : label.name === name) {
           return label;
         }
       }

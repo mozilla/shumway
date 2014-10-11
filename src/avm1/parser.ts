@@ -205,7 +205,15 @@ module Shumway.AVM1 {
           break;
         case ActionCode.ActionGoToLabel:
           var label = stream.readString();
-          args = [label];
+          var nextActionCode = stream.readUI8();
+          var play = false;
+          if (nextActionCode !== 0x06 && nextActionCode !== 0x07) {
+            stream.position--;
+          } else {
+            nextPosition++;
+            play = nextActionCode === 0x06;
+          }
+          args = [label, play];
           break;
         case ActionCode.ActionPush:
           var type, value;

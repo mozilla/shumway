@@ -1091,7 +1091,12 @@ module Shumway.AVM1 {
       var _global = ectx.global;
 
       var label: string = args[0];
-      _global.gotoLabel(label);
+      var play: boolean = args[1];
+      if (play) {
+        _global.gotoAndPlay(label);
+      } else {
+        _global.gotoAndStop(label);
+      }
     }
     // SWF 4 actions
     function avm1_0x96_ActionPush(ectx: ExecutionContext, args: any[]) {
