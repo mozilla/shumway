@@ -232,7 +232,9 @@ module Shumway.GFX.Canvas2D {
     }
 
     static _removeFilters(context: CanvasRenderingContext2D) {
-      context.filter = "";
+      // For some reason, setting this to the default empty string "" does
+      // not work, it expects "none".
+      context.filter = "none";
     }
 
     private static _prepareSurfaceAllocators() {
