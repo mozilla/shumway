@@ -400,7 +400,8 @@ module Shumway.Remoting.Player {
       var count = 0;
       for (var i = 0; i < filters.length; i++) {
         if (flash.filters.BlurFilter.isType(filters[i]) ||
-            flash.filters.DropShadowFilter.isType(filters[i])) {
+            flash.filters.DropShadowFilter.isType(filters[i]) ||
+            flash.filters.GlowFilter.isType(filters[i])) {
           count ++;
         } else {
           Shumway.Debug.somewhatImplemented(filters[i].toString());
@@ -429,6 +430,20 @@ module Shumway.Remoting.Player {
           this.output.writeBoolean(dropShadowFilter.knockout);
           this.output.writeInt(dropShadowFilter.quality);
           this.output.writeFloat(dropShadowFilter.strength);
+        } else if (flash.filters.GlowFilter.isType(filter)) {
+          var glowFilter = <flash.filters.GlowFilter>filter;
+          this.output.writeInt(FilterType.DropShadow);
+          this.output.writeFloat(glowFilter.alpha);
+          this.output.writeFloat(0); // angle
+          this.output.writeFloat(glowFilter.blurX);
+          this.output.writeFloat(glowFilter.blurY);
+          this.output.writeInt(glowFilter.color);
+          this.output.writeFloat(0); // distance
+          this.output.writeBoolean(false); // hideObject
+          this.output.writeBoolean(glowFilter.inner);
+          this.output.writeBoolean(glowFilter.knockout);
+          this.output.writeInt(glowFilter.quality);
+          this.output.writeFloat(glowFilter.strength);
         }
       }
     }
