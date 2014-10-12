@@ -104,6 +104,11 @@ module Shumway.GFX.Canvas2D {
     static _svgDropshadowFilterFlood: Element;
     static _svgDropshadowFilterOffset: Element;
 
+    /**
+     * Reusable colormatrix filter SVG element.
+     */
+    static _svgColorMatrixFilter: Element;
+
     static _svgFiltersAreSupported = !!Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "filter");
 
     constructor (
@@ -131,51 +136,69 @@ module Shumway.GFX.Canvas2D {
       var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       var defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
 
-      var filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-      filter.setAttribute("id","svgBlurFilter");
+      // Blur Filter
+      var blurFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+      blurFilter.setAttribute("id", "svgBlurFilter");
       var feGaussianFilter = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
-      feGaussianFilter.setAttribute("stdDeviation","0 0");
-      filter.appendChild(feGaussianFilter);
-      defs.appendChild(filter);
+      feGaussianFilter.setAttribute("stdDeviation", "0 0");
+      blurFilter.appendChild(feGaussianFilter);
+      defs.appendChild(blurFilter);
       Canvas2DStageRenderer._svgBlurFilter = feGaussianFilter;
 
-      var filter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-      filter.setAttribute("id","svgDropShadowFilter");
+      // Drop Shadow Filter
+      var dropShadowFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+      dropShadowFilter.setAttribute("id", "svgDropShadowFilter");
       var feGaussianFilter = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
-      feGaussianFilter.setAttribute("in","SourceAlpha");
+      feGaussianFilter.setAttribute("in", "SourceAlpha");
       feGaussianFilter.setAttribute("stdDeviation", "3");
-      filter.appendChild(feGaussianFilter);
+      dropShadowFilter.appendChild(feGaussianFilter);
       Canvas2DStageRenderer._svgDropshadowFilterBlur = feGaussianFilter;
 
       var feOffset = document.createElementNS("http://www.w3.org/2000/svg", "feOffset");
-      feOffset.setAttribute("dx","0");
-      feOffset.setAttribute("dy","0");
+      feOffset.setAttribute("dx", "0");
+      feOffset.setAttribute("dy", "0");
       feOffset.setAttribute("result", "offsetblur");
-      filter.appendChild(feOffset);
+      dropShadowFilter.appendChild(feOffset);
       Canvas2DStageRenderer._svgDropshadowFilterOffset = feOffset;
 
       var feFlood = document.createElementNS("http://www.w3.org/2000/svg", "feFlood");
-      feFlood.setAttribute("flood-color","rgba(0,0,0,1)");
-      filter.appendChild(feFlood);
+      feFlood.setAttribute("flood-color", "rgba(0,0,0,1)");
+      dropShadowFilter.appendChild(feFlood);
       Canvas2DStageRenderer._svgDropshadowFilterFlood = feFlood;
 
       var feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
-      feComposite.setAttribute("in2","offsetblur");
-      feComposite.setAttribute("operator","in");
-      filter.appendChild(feComposite);
+      feComposite.setAttribute("in2", "offsetblur");
+      feComposite.setAttribute("operator", "in");
+      dropShadowFilter.appendChild(feComposite);
 
       var feMerge = document.createElementNS("http://www.w3.org/2000/svg", "feMerge");
       var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
       feMerge.appendChild(feMergeNode);
 
       var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
-      feMergeNode.setAttribute("in","SourceGraphic");
+      feMergeNode.setAttribute("in", "SourceGraphic");
       feMerge.appendChild(feMergeNode);
-      filter.appendChild(feMerge);
+      dropShadowFilter.appendChild(feMerge);
+      defs.appendChild(dropShadowFilter);
 
-      defs.appendChild(filter);
+      var colorMatrixFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
+      colorMatrixFilter.setAttribute("id", "svgColorMatrixFilter");
+      var feColorMatrix = document.createElementNS("http://www.w3.org/2000/svg", "feColorMatrix");
+      // Color interpolation in linear RGB doesn't seem to match Flash's results.
+      feColorMatrix.setAttribute("color-interpolation-filters", "sRGB");
+      feColorMatrix.setAttribute("in", "SourceGraphic");
+      feColorMatrix.setAttribute("type", "matrix");
+      colorMatrixFilter.appendChild(feColorMatrix);
+      defs.appendChild(colorMatrixFilter);
+      Canvas2DStageRenderer._svgColorMatrixFilter = feColorMatrix;
       svg.appendChild(defs);
       document.documentElement.appendChild(svg);
+    }
+
+    static _applyColorMatrixFilter(context: CanvasRenderingContext2D, colorMatrix: ColorMatrix) {
+      Canvas2DStageRenderer._prepareSVGFilters();
+      Canvas2DStageRenderer._svgColorMatrixFilter.setAttribute("values", colorMatrix.toSVGFilterMatrix());
+      context.filter = "url(#svgColorMatrixFilter)";
     }
 
     /**
@@ -447,6 +470,25 @@ module Shumway.GFX.Canvas2D {
       }
     }
 
+    private _applyColorMatrix(context: CanvasRenderingContext2D, colorMatrix: ColorMatrix, state: Canvas2DStageRendererState) {
+      Canvas2DStageRenderer._removeFilters(context);
+      if (colorMatrix.isIdentity()) {
+        context.globalAlpha = 1;
+        context.globalColorMatrix = null;
+      } else if (colorMatrix.hasOnlyAlphaMultiplier()) {
+        context.globalAlpha = colorMatrix.alphaMultiplier;
+        context.globalColorMatrix = null;
+      } else {
+        context.globalAlpha = 1;
+        if (Canvas2DStageRenderer._svgFiltersAreSupported && state.options.filters) {
+          Canvas2DStageRenderer._applyColorMatrixFilter(context, colorMatrix);
+          context.globalColorMatrix = null;
+        } else {
+          context.globalColorMatrix = colorMatrix;
+        }
+      }
+    }
+
     private _renderFrame (
       context: CanvasRenderingContext2D,
       root: Frame,
@@ -506,19 +548,7 @@ module Shumway.GFX.Canvas2D {
 
         context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
 
-        var concatenatedColorMatrix = frame.getConcatenatedColorMatrix();
-
-
-        if (concatenatedColorMatrix.isIdentity()) {
-          context.globalAlpha = 1;
-          context.globalColorMatrix = null;
-        } else if (concatenatedColorMatrix.hasOnlyAlphaMultiplier()) {
-          context.globalAlpha = concatenatedColorMatrix.alphaMultiplier;
-          context.globalColorMatrix = null;
-        } else {
-          context.globalAlpha = 1;
-          context.globalColorMatrix = concatenatedColorMatrix;
-        }
+        self._applyColorMatrix(context, frame.getConcatenatedColorMatrix(), state);
 
         if (flags & FrameFlags.IsMask && !state.clipRegion) {
           return VisitorFlags.Skip;

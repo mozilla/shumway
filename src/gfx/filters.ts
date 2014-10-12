@@ -122,46 +122,6 @@ module Shumway.GFX {
       return this._m.subarray(16, 20);
     }
 
-    public getColorMatrix(): Float32Array {
-      var t: Float32Array = new Float32Array(20);
-      var m: Float32Array = this._m;
-      t[0] = m[0];
-      t[1] = m[4];
-      t[2] = m[8];
-      t[3] = m[12];
-      t[4] = m[16] * 255;
-      t[5] = m[1];
-      t[6] = m[5];
-      t[7] = m[9];
-      t[8] = m[13];
-      t[9] = m[17] * 255;
-      t[10] = m[2];
-      t[11] = m[6];
-      t[12] = m[10];
-      t[13] = m[14];
-      t[14] = m[18] * 255;
-      t[15] = m[3];
-      t[16] = m[7];
-      t[17] = m[11];
-      t[18] = m[15];
-      t[19] = m[19] * 255;
-      return t;
-    }
-
-    public getColorTransform(): Float32Array {
-      var t: Float32Array = new Float32Array(8);
-      var m: Float32Array = this._m;
-      t[0] = m[0];
-      t[1] = m[5];
-      t[2] = m[10];
-      t[3] = m[15];
-      t[4] = m[16] * 255;
-      t[5] = m[17] * 255;
-      t[6] = m[18] * 255;
-      t[7] = m[19] * 255;
-      return t;
-    }
-
     public isIdentity(): boolean {
       var m = this._m;
       return m[0]  == 1 && m[1]  == 0 && m[2]  == 0 && m[3]  == 0 &&
@@ -191,10 +151,10 @@ module Shumway.GFX {
       m[5] = greenMultiplier;
       m[10] = blueMultiplier;
       m[15] = alphaMultiplier;
-      m[16] = redOffset;
-      m[17] = greenOffset;
-      m[18] = blueOffset;
-      m[19] = alphaOffset;
+      m[16] = redOffset / 255;
+      m[17] = greenOffset / 255;
+      m[18] = blueOffset / 255;
+      m[19] = alphaOffset / 255;
     }
 
     public transformRGBA(rgba: number) {
@@ -204,10 +164,10 @@ module Shumway.GFX {
       var a = rgba & 0xff;
 
       var m: Float32Array = this._m;
-      var R = clampByte(r * m[0]  + g * m[1]  + b * m[2]  + a * m[3]  + m[16]);
-      var G = clampByte(r * m[4]  + g * m[5]  + b * m[6]  + a * m[7]  + m[17]);
-      var B = clampByte(r * m[8]  + g * m[9]  + b * m[10] + a * m[11] + m[18]);
-      var A = clampByte(r * m[12] + g * m[13] + b * m[14] + a * m[15] + m[19]);
+      var R = clampByte(r * m[0]  + g * m[1]  + b * m[2]  + a * m[3]  + m[16] * 255);
+      var G = clampByte(r * m[4]  + g * m[5]  + b * m[6]  + a * m[7]  + m[17] * 255);
+      var B = clampByte(r * m[8]  + g * m[9]  + b * m[10] + a * m[11] + m[18] * 255);
+      var A = clampByte(r * m[12] + g * m[13] + b * m[14] + a * m[15] + m[19] * 255);
 
       return R << 24 | G << 16 | B << 8 | A;
     }
@@ -306,5 +266,12 @@ module Shumway.GFX {
       return true;
     }
 
+    public toSVGFilterMatrix(): string {
+      var m = this._m;
+      return [m[0], m[4], m[8],  m[12], m[16],
+              m[1], m[5], m[9],  m[13], m[17],
+              m[2], m[6], m[10], m[14], m[18],
+              m[3], m[7], m[11], m[15], m[19]].join(" ");
+    }
   }
 }

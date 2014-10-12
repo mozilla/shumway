@@ -40,24 +40,21 @@ module Shumway.AVM2.AS.flash.media {
 
     private static _masterVolume = 1;
     private static _registeredChannels: SoundChannel[] = [];
-
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    // static _bufferTime: number /*int*/;
+    private static _bufferTime = 0;
     static _soundTransform: flash.media.SoundTransform;
     // static _audioPlaybackMode: string;
     // static _useSpeakerphoneForVoice: boolean;
+
     static get bufferTime(): number /*int*/ {
-      notImplemented("public flash.media.SoundMixer::get bufferTime"); return;
-      // return SoundMixer._bufferTime;
+      notImplemented("public flash.media.SoundMixer::get bufferTime");
+      return SoundMixer._bufferTime;
     }
+    
     static set bufferTime(bufferTime: number /*int*/) {
-      bufferTime = bufferTime | 0;
-      notImplemented("public flash.media.SoundMixer::set bufferTime"); return;
-      // SoundMixer._bufferTime = bufferTime;
+      somewhatImplemented("public flash.media.SoundMixer::set bufferTime");
+      SoundMixer._bufferTime = bufferTime | 0;
     }
+
     static get soundTransform(): flash.media.SoundTransform {
       somewhatImplemented("public flash.media.SoundMixer::get soundTransform");
       return isNullOrUndefined(SoundMixer._soundTransform) ?

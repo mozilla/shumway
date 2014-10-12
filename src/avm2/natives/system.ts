@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export module flash.system {
@@ -102,12 +103,18 @@ module Shumway.AVM2.AS {
         return "1.0 Shumway - Mozilla Research";
       }
 
+      /**
+       * Only available in debugger player.
+       */
       static pause(): void {
-        notImplemented("public flash.system.System::static pause"); return;
+        somewhatImplemented("public flash.system.System::static pause"); return;
       }
 
+      /**
+       * Only available in debugger player.
+       */
       static resume(): void {
-        notImplemented("public flash.system.System::static resume"); return;
+        somewhatImplemented("public flash.system.System::static resume"); return;
       }
 
       static exit(code: number /*uint*/): void {
