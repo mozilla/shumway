@@ -46,14 +46,15 @@ module Shumway.AVM2.AS.flash.media {
     // static _useSpeakerphoneForVoice: boolean;
 
     static get bufferTime(): number /*int*/ {
-      notImplemented("public flash.media.SoundMixer::get bufferTime"); return;
+      notImplemented("public flash.media.SoundMixer::get bufferTime");
       return SoundMixer._bufferTime;
     }
+    
     static set bufferTime(bufferTime: number /*int*/) {
-      somewhatImplemented("public flash.media.SoundMixer::set bufferTime"); return;
+      somewhatImplemented("public flash.media.SoundMixer::set bufferTime");
       SoundMixer._bufferTime = bufferTime | 0;
     }
-    
+
     static get soundTransform(): flash.media.SoundTransform {
       somewhatImplemented("public flash.media.SoundMixer::get soundTransform");
       return isNullOrUndefined(SoundMixer._soundTransform) ?
