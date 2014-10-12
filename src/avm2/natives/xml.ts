@@ -491,7 +491,7 @@ module Shumway.AVM2.AS {
   }
 
   // 13.1.2.1 isXMLName ( value )
-  function isXMLName(v) {
+  export function isXMLName(v) {
     try {
       var qn = new ASQName(v);
     } catch (e) {
