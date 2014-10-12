@@ -26,21 +26,9 @@ module Shumway.ArrayUtilities {
   import floatToInt32 = Shumway.IntegerUtilities.floatToInt32;
   import int32ToFloat = Shumway.IntegerUtilities.int32ToFloat;
 
-  function throwRangeError() {
-    notImplemented("throwRangeError");
-    // var error = Errors.ParamRangeError;
-    // Runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
-  }
-
-  function throwCompressedDataError() {
-    notImplemented("throwCompressedDataError");
-//    var error = Errors.CompressedDataError;
-//    Runtime.throwErrorFromVM("CompressedDataError", getErrorMessage(error.code), error.code);
-  }
-
   function checkRange(x: number, min: number, max: number) {
     if (x !== clamp(x, min, max)) {
-      throwRangeError();
+      throwError('RangeError', Errors.ParamRangeError);
     }
   }
 
@@ -347,6 +335,9 @@ module Shumway.ArrayUtilities {
     }
 
     writeBytes(bytes: DataBuffer, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
+      if (isNullOrUndefined(bytes)) {
+        throwError('TypeError', Errors.NullPointerError, 'bytes');
+      }
       if (arguments.length < 2) {
         offset = 0;
       }
@@ -782,7 +773,7 @@ module Shumway.ArrayUtilities {
       inflate.onData = output.writeRawBytes.bind(output);
       inflate.push(this._u8.subarray(0, this._length));
       if (inflate.error) {
-        throwCompressedDataError();
+        throwError('IOError', Errors.CompressedDataError);
       }
 
       this._ensureCapacity(output._u8.length);
