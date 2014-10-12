@@ -875,7 +875,7 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  export function throwErrorFromVM(domain, errorClass, message, id) {
+  function throwErrorFromVM(domain, errorClass, message, id) {
     var error = new (domain.getClass(errorClass)).instanceConstructor(message, id);
     throw error;
   }
@@ -1741,7 +1741,7 @@ module Shumway.AVM2.Runtime {
               return value;
             },
             set: function () {
-              throwErrorFromVM(AVM2.currentDomain(), "ReferenceError", "Illegal write to read-only property " + qn + ".", 0);
+              throwError('ReferenceError', Errors.ConstWriteError, qn);
             }
           });
         })(qn, value);

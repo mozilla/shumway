@@ -90,7 +90,7 @@ module Shumway.AVM2 {
   //  AlreadyBoundError                    : {code: 1071, message: "Function %1 has already been bound to %2."},
   //  ZeroDispIdError                      : {code: 1072, message: "Disp_id 0 is illegal."},
   //  DuplicateDispIdError                 : {code: 1073, message: "Non-override method %1 replaced because of duplicate disp_id %2."},
-  //  ConstWriteError                      : {code: 1074, message: "Illegal write to read-only property %1 on %2."},
+    ConstWriteError                      : {code: 1074, message: "Illegal write to read-only property %1 on %2."},
   //  MathNotFunctionError                 : {code: 1075, message: "Math is not a function."},
   //  MathNotConstructorError              : {code: 1076, message: "Math is not a constructor."},
   //  WriteOnlyError                       : {code: 1077, message: "Illegal read of write-only property %1 on %2."},
