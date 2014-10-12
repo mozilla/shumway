@@ -1748,9 +1748,7 @@ module Shumway.AVM2.AS {
     export var parseFloat: (string: string) => number = jsGlobal.parseFloat;
     export var escape: (x: any) => any = jsGlobal.escape;
     export var unescape: (x: any) => any = jsGlobal.unescape;
-    export var isXMLName: (x: any) => any = typeof (isXMLName) !== "undefined" ? jsGlobal.isXMLName : function () {
-      notImplemented("Chrome doesn't support isXMLName.");
-    }
+    export var isXMLName: (x: any) => any = Shumway.AVM2.AS.isXMLName;
 
     /**
      * Returns the fully qualified class name of an object.

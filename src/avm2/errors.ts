@@ -160,8 +160,8 @@ module Shumway.AVM2 {
     NullPointerError                     : {code: 2007, message: "Parameter %1 must be non-null."},
     InvalidEnumError                     : {code: 2008, message: "Parameter %1 must be one of the accepted values."},
   //  CantInstantiateError                 : {code: 2012, message: "%1 class cannot be instantiated."},
-  InvalidBitmapData                      : {code: 2015, message: "Invalid BitmapData."},
-  //  EOFError                             : {code: 2030, message: "End of file was encountered."},
+    InvalidBitmapData                    : {code: 2015, message: "Invalid BitmapData."},
+    EOFError                             : {code: 2030, message: "End of file was encountered.", fqn: 'flash.errors.EOFError'},
     CompressedDataError                  : {code: 2058, message: "There was an error decompressing the data."},
   //  EmptyStringError                     : {code: 2085, message: "Parameter %1 must be non-empty string."},
   //  ProxyGetPropertyError                : {code: 2088, message: "The Proxy class does not implement getProperty. It must be overridden by a subclass."},
@@ -633,7 +633,7 @@ module Shumway.AVM2 {
 
   export function formatErrorMessage(error, ...args) {
     var message = error.message;
-    Array.prototype.slice.call(arguments, 1).forEach(function (x, i) {
+    args.forEach(function (x, i) {
       message = message.replace("%" + (i + 1), x);
     });
     return "Error #" + error.code + ": " + message;
@@ -656,7 +656,8 @@ module Shumway.AVM2 {
   }
 }
 
-import Errors = Shumway.AVM2.Errors;
+// Errors is used in dataBuffer.ts, which is compiled way before this. Gotta break the cycle.
+Errors = Shumway.AVM2.Errors;
 import getErrorMessage = Shumway.AVM2.getErrorMessage;
 import formatErrorMessage = Shumway.AVM2.formatErrorMessage;
 import translateErrorMessage = Shumway.AVM2.translateErrorMessage;

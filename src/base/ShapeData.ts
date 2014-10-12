@@ -147,17 +147,17 @@ module Shumway {
    */
   export enum PathCommand {
     BeginSolidFill = 1,
-    BeginGradientFill,
-    BeginBitmapFill,
-    EndFill,
-    LineStyleSolid,
-    LineStyleGradient,
-    LineStyleBitmap,
-    LineEnd,
-    MoveTo,
-    LineTo,
-    CurveTo,
-    CubicCurveTo,
+    BeginGradientFill = 2,
+    BeginBitmapFill = 3,
+    EndFill = 4,
+    LineStyleSolid = 5,
+    LineStyleGradient = 6,
+    LineStyleBitmap = 7,
+    LineEnd = 8,
+    MoveTo = 9,
+    LineTo = 10,
+    CurveTo = 11,
+    CubicCurveTo = 12,
   }
 
   export enum GradientType {

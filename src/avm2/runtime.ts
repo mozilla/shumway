@@ -865,6 +865,9 @@ module Shumway.AVM2.Runtime {
 
   export function throwError(name, error, ...rest) {
     if (true) {
+      if (error.fqn) {
+        name = error.fqn;
+      }
       var message = Shumway.AVM2.formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
       throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
     } else {
@@ -1775,6 +1778,7 @@ module Shumway.AVM2.Runtime {
   }
 }
 
+var throwError = Shumway.AVM2.Runtime.throwError;
 import CC = Shumway.AVM2.Runtime.CODE_CACHE;
 
 /**

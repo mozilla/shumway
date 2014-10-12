@@ -26,11 +26,6 @@ module Shumway.ArrayUtilities {
   import floatToInt32 = Shumway.IntegerUtilities.floatToInt32;
   import int32ToFloat = Shumway.IntegerUtilities.int32ToFloat;
 
-  function throwEOFError() {
-    notImplemented("throwEOFError");
-    // Runtime.throwErrorFromVM(AVM2.currentDomain(), "flash.errors.EOFError", "End of file was encountered.");
-  }
-
   function throwRangeError() {
     notImplemented("throwRangeError");
     // var error = Errors.ParamRangeError;
@@ -203,7 +198,7 @@ module Shumway.ArrayUtilities {
 
     readUnsignedByte(): number /*uint*/ {
       if (this._position + 1 > this._length) {
-        throwEOFError();
+        throwError('EOFError', Errors.EOFError);
       }
       return this._u8[this._position++];
     }
@@ -217,7 +212,7 @@ module Shumway.ArrayUtilities {
         length = this._length - position;
       }
       if (position + length > this._length) {
-        throwEOFError();
+        throwError('EOFError', Errors.EOFError);
       }
       if (bytes.length < offset + length) {
         bytes._ensureCapacity(offset + length);
@@ -235,7 +230,7 @@ module Shumway.ArrayUtilities {
       var u8 = this._u8;
       var position = this._position;
       if (position + 2 > this._length) {
-        throwEOFError();
+        throwError('EOFError', Errors.EOFError);
       }
       var a = u8[position + 0];
       var b = u8[position + 1];
@@ -247,7 +242,7 @@ module Shumway.ArrayUtilities {
       var u8 = this._u8;
       var position = this._position;
       if (position + 4 > this._length) {
-        throwEOFError();
+        throwError('EOFError', Errors.EOFError);
       }
       var a = u8[position + 0];
       var b = u8[position + 1];
@@ -266,7 +261,7 @@ module Shumway.ArrayUtilities {
     readFloat(): number {
       var position = this._position;
       if (position + 4 > this._length) {
-        throwEOFError();
+        throwError('EOFError', Errors.EOFError);
       }
       this._position = position + 4;
       if (this._littleEndian && (position & 0x3) === 0 && this._f32) {
@@ -293,7 +288,7 @@ module Shumway.ArrayUtilities {
       var u8 = this._u8;
       var position = this._position;
       if (position + 8 > this._length) {
-        throwEOFError();
+        throwError('EOFError', Errors.EOFError);
       }
       var t8 = IntegerUtilities.u8;
       if (this._littleEndian) {
@@ -553,7 +548,7 @@ module Shumway.ArrayUtilities {
       length = length >>> 0;
       var pos = this._position;
       if (pos + length > this._length) {
-        throwEOFError();
+        throwError('EOFError', Errors.EOFError);
       }
       this._position += length;
       return utf8encode(new Int8Array(this._buffer, pos, length));
@@ -724,7 +719,7 @@ module Shumway.ArrayUtilities {
       var position = this._position;
       if (length) {
         if (position + length > this._length) {
-          throwEOFError();
+          throwError('EOFError', Errors.EOFError);
         }
         this._position += length;
       } else {
