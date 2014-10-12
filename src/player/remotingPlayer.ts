@@ -191,17 +191,21 @@ module Shumway.Remoting.Player {
     /**
      * Writes the number of display objects this display object clips.
      */
-    writeClip(displayObject: DisplayObject) {
+    writeClippedObjectsCount(displayObject: DisplayObject) {
       if (displayObject._clipDepth >= 0 && displayObject._parent) {
         // Clips in GFX land don't use absolute clip depth numbers. Instead we need to encode
         // the number of siblings you want to clip. If children are removed or added, GFX clip
         // values need to be recomputed.
         var i = displayObject._parent.getChildIndex(displayObject);
         var j = displayObject._parent.getClipDepthIndex(displayObject._clipDepth);
+        // An invalid SWF can contain a clipping mask that doesn't clip anything, but pretends to.
+        if (j - i < 0) {
+          this.output.writeInt(-1);
+          return;
+        }
         for (var k = i + 1; k <= i; k++) {
           // assert(displayObject._parent.getChildAt(k)._depth > displayObject._depth && displayObject._parent.getChildAt(k)._depth <= displayObject._clipDepth);
         }
-        release || assert(j - i >= 0);
         this.output.writeInt(j - i);
       } else {
         this.output.writeInt(-1);
@@ -266,7 +270,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(displayObject.mask ? displayObject.mask._id : -1);
       }
       if (hasClip) {
-        this.writeClip(displayObject);
+        this.writeClippedObjectsCount(displayObject);
       }
       if (hasMiscellaneousProperties) {
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));

@@ -491,7 +491,10 @@ module Shumway.AVM2.AS.flash.display {
           }
           release || assert(testingType >= HitTestingType.Mouse);
           // If the point isn't contained in the clipping mask, we can skip all the clipped objects.
-          var containsPoint = child._containsGlobalPoint(globalX, globalY, testingType, null);
+          // We pass HitTestShape here because we never want to collect hit objects, which the
+          // higher testing types would attempt to do.
+          var containsPoint = child._containsGlobalPoint(globalX, globalY,
+                                                         HitTestingType.HitTestShape, null);
           if (!containsPoint) {
             i = this.getClipDepthIndex(child._clipDepth);
           }
