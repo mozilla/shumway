@@ -31,7 +31,6 @@ module Shumway.AVM2 {
   export enum OP {
     bkpt               = 0x01,
     nop                = 0x02,
-    throw              = 0x03,
     getsuper           = 0x04,
     setsuper           = 0x05,
     dxns               = 0x06,
@@ -162,7 +161,6 @@ module Shumway.AVM2 {
     inclocal           = 0x92,
     decrement          = 0x93,
     declocal           = 0x94,
-    typeof             = 0x95,
     not                = 0x96,
     bitnot             = 0x97,
     add                = 0xA0,
@@ -182,10 +180,8 @@ module Shumway.AVM2 {
     lessequals         = 0xAE,
     greaterthan        = 0xAF,
     greaterequals      = 0xB0,
-    instanceof         = 0xB1,
     istype             = 0xB2,
     istypelate         = 0xB3,
-    in                 = 0xB4,
     increment_i        = 0xC0,
     decrement_i        = 0xC1,
     inclocal_i         = 0xC2,
@@ -207,7 +203,12 @@ module Shumway.AVM2 {
     debugline          = 0xF0,
     debugfile          = 0xF1,
     bkptline           = 0xF2,
-    timestamp          = 0xF3
+    timestamp          = 0xF3,
+    // TODO: move these to their correct places in the list once IntelliJ doesn't show them as syntax errors.
+    throw              = 0x03,
+    typeof             = 0x95,
+    instanceof         = 0xB1,
+    in                 = 0xB4,
   }
 
   export interface OpcodeOperandDescription {
