@@ -15,14 +15,11 @@
  */
 
 module Shumway.AVM2.AS {
-  import assertNotImplemented = Shumway.Debug.assertNotImplemented;
-  import notImplemented = Shumway.Debug.notImplemented;
   import unexpected = Shumway.Debug.unexpected;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import Multiname = Shumway.AVM2.ABC.Multiname;
-  import throwError = Shumway.AVM2.Runtime.throwError;
 
   import utf8decode = Shumway.StringUtilities.utf8decode;
   import utf8encode = Shumway.StringUtilities.utf8encode;
@@ -34,29 +31,6 @@ module Shumway.AVM2.AS {
 
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import assert = Shumway.Debug.assert;
-
-  function throwEOFError() {
-    notImplemented("throwEOFError");
-    // Runtime.throwErrorFromVM(AVM2.currentDomain(), "flash.errors.EOFError", "End of file was encountered.");
-  }
-
-  function throwRangeError() {
-    notImplemented("throwEOFError");
-    // var error = Errors.ParamRangeError;
-    // Runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
-  }
-
-  function throwCompressedDataError() {
-    notImplemented("throwEOFError");
-//    var error = Errors.CompressedDataError;
-//    Runtime.throwErrorFromVM("CompressedDataError", getErrorMessage(error.code), error.code);
-  }
-
-  function checkRange(x: number, min: number, max: number) {
-    if (x !== clamp(x, min, max)) {
-      throwRangeError();
-    }
-  }
 
   export module flash.net {
     export class ObjectEncoding extends ASNative {

@@ -25,3 +25,6 @@
 ///<reference path='SWFTags.ts' />
 ///<reference path='binaryFileReader.ts' />
 ///<reference path='remoting.ts' />
+
+var throwError: (name: any, error: any, ...rest: any[]) => void;
+var Errors: any;
