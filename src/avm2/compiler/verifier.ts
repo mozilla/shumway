@@ -747,7 +747,7 @@ module Shumway.AVM2.Verifier {
       }
 
       function notImplementedBC() {
-        notImplemented(String(bc));
+        notImplemented('Bytecode not implemented in verifier: ' + bc);
       }
 
       function popMultiname(): Type {

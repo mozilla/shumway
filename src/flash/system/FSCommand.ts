@@ -47,7 +47,7 @@ module Shumway.AVM2.AS.flash.system {
       command = command.toLowerCase();
       if (command === 'debugger') {
         /* tslint:disable */
-        debugger; // shumway breakpoint... for convinience
+        debugger;
         /* tslint:enable */
         return;
       }

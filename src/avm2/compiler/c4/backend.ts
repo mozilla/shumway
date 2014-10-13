@@ -303,7 +303,7 @@ module Shumway.AVM2.Compiler.Backend {
     }
 
     compileLabelSwitch(node) {
-      var statement = null;
+      var statement: IfStatement = null;
       var labelName = id(this.label.name);
 
       function compileLabelTest(labelID) {

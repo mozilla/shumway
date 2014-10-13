@@ -16,6 +16,7 @@
 
 module Shumway.Player {
   import assert = Shumway.Debug.assert;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import flash = Shumway.AVM2.AS.flash;
   import Point = Shumway.AVM2.AS.flash.geom.Point;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
@@ -348,6 +349,8 @@ module Shumway.Player {
         case 'quit':
           this._leaveEventLoop();
           break;
+        default:
+          somewhatImplemented('FSCommand ' + command);
       }
       this.onFSCommand(command, args);
     }
