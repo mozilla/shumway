@@ -16,6 +16,7 @@
 // Class: TouchEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TouchEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
                 relatedObject: flash.display.InteractiveObject = null, ctrlKey: boolean = false,
                 altKey: boolean = false, shiftKey: boolean = false) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.TouchEvent");
+      dummyConstructor("public flash.events.TouchEvent");
     }
 
     // JS -> AS Bindings

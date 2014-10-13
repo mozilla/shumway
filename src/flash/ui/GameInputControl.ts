@@ -16,6 +16,7 @@
 // Class: GameInputControl
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GameInputControl extends flash.events.EventDispatcher {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.ui.GameInputControl");
+      dummyConstructor("public flash.ui.GameInputControl");
     }
     
     // JS -> AS Bindings

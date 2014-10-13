@@ -16,6 +16,7 @@
 // Class: AuthorizedFeaturesLoader
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class AuthorizedFeaturesLoader extends flash.events.EventDispatcher {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.system {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.system.AuthorizedFeaturesLoader");
+      dummyConstructor("public flash.system.AuthorizedFeaturesLoader");
     }
     
     // JS -> AS Bindings

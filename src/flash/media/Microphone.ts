@@ -16,6 +16,7 @@
 // Class: Microphone
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Microphone extends flash.events.EventDispatcher {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.media.Microphone");
+      dummyConstructor("public flash.media.Microphone");
     }
     
     // JS -> AS Bindings

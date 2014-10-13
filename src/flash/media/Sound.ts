@@ -16,6 +16,7 @@
 // Class: Sound
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Telemetry = Shumway.Telemetry;
@@ -101,7 +102,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor (stream: flash.net.URLRequest = null, context: flash.media.SoundLoaderContext = null) {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.media.Sound");
+      dummyConstructor("public flash.media.Sound");
     }
 
     private _playQueue: any[];

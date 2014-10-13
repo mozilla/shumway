@@ -16,6 +16,7 @@
 // Class: ShaderEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class ShaderEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -28,7 +29,7 @@ module Shumway.AVM2.AS.flash.events {
                 bitmap: flash.display.BitmapData = null, array: flash.utils.ByteArray = null,
                 vector: ASVector<any> = null) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.ShaderEvent");
+      dummyConstructor("public flash.events.ShaderEvent");
     }
 
     // JS -> AS Bindings

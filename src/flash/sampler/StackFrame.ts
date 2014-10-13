@@ -16,6 +16,7 @@
 // Class: StackFrame
 module Shumway.AVM2.AS.flash.sampler {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class StackFrame extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.sampler {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.sampler.StackFrame");
+      dummyConstructor("public flash.sampler.StackFrame");
     }
     
     // JS -> AS Bindings

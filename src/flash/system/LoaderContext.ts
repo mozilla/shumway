@@ -16,6 +16,7 @@
 // Class: LoaderContext
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class LoaderContext extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.system {
     constructor (checkPolicyFile: boolean = false, applicationDomain: flash.system.ApplicationDomain = null, securityDomain: flash.system.SecurityDomain = null) {
       checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain;
       false && super();
-      notImplemented("Dummy Constructor: public flash.system.LoaderContext");
+      dummyConstructor("public flash.system.LoaderContext");
     }
     
     // JS -> AS Bindings

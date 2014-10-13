@@ -16,6 +16,7 @@
 // Class: SoundCodec
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class SoundCodec extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.media.SoundCodec");
+      dummyConstructor("public flash.media.SoundCodec");
     }
     
     // JS -> AS Bindings

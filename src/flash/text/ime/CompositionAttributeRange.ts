@@ -16,6 +16,7 @@
 // Class: CompositionAttributeRange
 module Shumway.AVM2.AS.flash.text.ime {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class CompositionAttributeRange extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.text.ime {
     constructor (relativeStart: number /*int*/, relativeEnd: number /*int*/, selected: boolean, converted: boolean) {
       relativeStart = relativeStart | 0; relativeEnd = relativeEnd | 0; selected = !!selected; converted = !!converted;
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.ime.CompositionAttributeRange");
+      dummyConstructor("public flash.text.ime.CompositionAttributeRange");
     }
     
     // JS -> AS Bindings

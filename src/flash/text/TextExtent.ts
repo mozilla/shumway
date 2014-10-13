@@ -16,6 +16,7 @@
 // Class: TextExtent
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextExtent extends ASNative {
     static initializer: any = null;
@@ -29,7 +30,7 @@ module Shumway.AVM2.AS.flash.text {
       ascent = +ascent;
       descent = +descent;
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.TextExtent");
+      dummyConstructor("public flash.text.TextExtent");
     }
 
     // Static   JS -> AS Bindings

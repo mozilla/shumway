@@ -16,6 +16,7 @@
 // Class: SoftKeyboardEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class SoftKeyboardEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -27,7 +28,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean, cancelable: boolean,
                 relatedObjectVal: flash.display.InteractiveObject, triggerTypeVal: string) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.SoftKeyboardEvent");
+      dummyConstructor("public flash.events.SoftKeyboardEvent");
     }
 
     // JS -> AS Bindings

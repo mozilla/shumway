@@ -16,6 +16,7 @@
 // Class: ObjectInput
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ObjectInput extends ASNative implements flash.utils.IDataInput {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.utils {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: packageInternal flash.utils.ObjectInput");
+      dummyConstructor("packageInternal flash.utils.ObjectInput");
     }
     
     // JS -> AS Bindings

@@ -16,6 +16,7 @@
 // Class: ContextMenu
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ContextMenu extends flash.display.NativeMenu {
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.ui.ContextMenu");
+      dummyConstructor("public flash.ui.ContextMenu");
     }
     
     // JS -> AS Bindings

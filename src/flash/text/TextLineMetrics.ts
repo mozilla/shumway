@@ -16,6 +16,7 @@
 // Class: TextLineMetrics
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TextLineMetrics extends ASNative {
 
     static classInitializer: any = null;
@@ -26,7 +27,7 @@ module Shumway.AVM2.AS.flash.text {
     constructor(x: number, width: number, height: number, ascent: number, descent: number,
                 leading: number) {
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.TextLineMetrics");
+      dummyConstructor("public flash.text.TextLineMetrics");
       x = +x;
       width = +width;
       height = +height;

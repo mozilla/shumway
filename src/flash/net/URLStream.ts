@@ -16,6 +16,7 @@
 /// <reference path='../references.ts'/>
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import FileLoadingService = Shumway.FileLoadingService;
   import throwError = Shumway.AVM2.Runtime.throwError;
@@ -42,7 +43,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.URLStream");
+      dummyConstructor("public flash.net.URLStream");
     }
 
     private _buffer: utils.ByteArray;

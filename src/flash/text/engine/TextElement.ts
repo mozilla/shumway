@@ -16,6 +16,7 @@
 // Class: TextElement
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextElement extends flash.text.engine.ContentElement {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     constructor (text: string = null, elementFormat: flash.text.engine.ElementFormat = null, eventMirror: flash.events.EventDispatcher = null, textRotation: string = "rotate0") {
       text = asCoerceString(text); elementFormat = elementFormat; eventMirror = eventMirror; textRotation = asCoerceString(textRotation);
       false && super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.text.engine.TextElement");
+      dummyConstructor("public flash.text.engine.TextElement");
     }
     
     // JS -> AS Bindings

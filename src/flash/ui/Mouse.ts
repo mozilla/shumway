@@ -16,6 +16,7 @@
 // Class: Mouse
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assert = Shumway.Debug.assert;
 
@@ -204,7 +205,7 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.ui.Mouse");
+      dummyConstructor("public flash.ui.Mouse");
     }
     
     // JS -> AS Bindings

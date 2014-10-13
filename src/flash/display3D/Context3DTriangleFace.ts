@@ -16,6 +16,7 @@
 // Class: Context3DTriangleFace
 module Shumway.AVM2.AS.flash.display3D {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Context3DTriangleFace extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.display3D {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display3D.Context3DTriangleFace");
+      dummyConstructor("public flash.display3D.Context3DTriangleFace");
     }
     
     // JS -> AS Bindings

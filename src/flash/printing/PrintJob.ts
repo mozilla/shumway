@@ -16,6 +16,7 @@
 // Class: PrintJob
 module Shumway.AVM2.AS.flash.printing {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class PrintJob extends flash.events.EventDispatcher {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.printing {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.printing.PrintJob");
+      dummyConstructor("public flash.printing.PrintJob");
     }
     
     // JS -> AS Bindings

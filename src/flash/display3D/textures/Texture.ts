@@ -16,6 +16,7 @@
 // Class: Texture
 module Shumway.AVM2.AS.flash.display3D.textures {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Texture extends flash.display3D.textures.TextureBase {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.display3D.textures {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display3D.textures.Texture");
+      dummyConstructor("public flash.display3D.textures.Texture");
     }
     
     // JS -> AS Bindings

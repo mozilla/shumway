@@ -16,6 +16,7 @@
 // Class: InterpolationMethod
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import GradientInterpolationMethod = Shumway.GradientInterpolationMethod;
   export class InterpolationMethod extends ASNative {
     
@@ -26,7 +27,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.InterpolationMethod");
+      dummyConstructor("public flash.display.InterpolationMethod");
     }
     
     // JS -> AS Bindings

@@ -16,6 +16,7 @@
 // Class: Accessibility
 module Shumway.AVM2.AS.flash.accessibility {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
@@ -35,7 +36,7 @@ module Shumway.AVM2.AS.flash.accessibility {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.accessibility.Accessibility");
+      dummyConstructor("public flash.accessibility.Accessibility");
     }
     
     // JS -> AS Bindings

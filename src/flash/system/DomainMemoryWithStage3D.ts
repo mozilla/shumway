@@ -16,6 +16,7 @@
 // Class: DomainMemoryWithStage3D
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DomainMemoryWithStage3D extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.system {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: packageInternal flash.system.DomainMemoryWithStage3D");
+      dummyConstructor("packageInternal flash.system.DomainMemoryWithStage3D");
     }
     
     // JS -> AS Bindings

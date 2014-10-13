@@ -16,6 +16,7 @@
 // Class: DateTimeNameStyle
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DateTimeNameStyle extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.globalization {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.globalization.DateTimeNameStyle");
+      dummyConstructor("public flash.globalization.DateTimeNameStyle");
     }
     
     // JS -> AS Bindings

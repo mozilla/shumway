@@ -16,6 +16,7 @@
 // Class: SetIntervalTimer
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class SetIntervalTimer extends flash.utils.Timer {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.utils {
     constructor (closure: ASFunction, delay: number, repeats: boolean, rest: any []) {
       closure = closure; delay = +delay; repeats = !!repeats; rest = rest;
       false && super(undefined, undefined);
-      notImplemented("Dummy Constructor: packageInternal flash.utils.SetIntervalTimer");
+      dummyConstructor("packageInternal flash.utils.SetIntervalTimer");
     }
     
     // JS -> AS Bindings

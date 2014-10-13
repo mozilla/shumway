@@ -16,6 +16,7 @@
 // Class: FSCommand
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class FSCommand extends ASNative {
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.system {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: packageInternal flash.system.FSCommand");
+      dummyConstructor("packageInternal flash.system.FSCommand");
     }
     
     // JS -> AS Bindings

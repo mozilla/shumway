@@ -16,6 +16,7 @@
 // Class: H264VideoStreamSettings
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class H264VideoStreamSettings extends flash.media.VideoStreamSettings {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.media.H264VideoStreamSettings");
+      dummyConstructor("public flash.media.H264VideoStreamSettings");
     }
     
     // JS -> AS Bindings

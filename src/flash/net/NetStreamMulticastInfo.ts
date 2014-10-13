@@ -16,6 +16,7 @@
 // Class: NetStreamMulticastInfo
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetStreamMulticastInfo extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.net {
     constructor (sendDataBytesPerSecond: number, sendControlBytesPerSecond: number, receiveDataBytesPerSecond: number, receiveControlBytesPerSecond: number, bytesPushedToPeers: number, fragmentsPushedToPeers: number, bytesRequestedByPeers: number, fragmentsRequestedByPeers: number, bytesPushedFromPeers: number, fragmentsPushedFromPeers: number, bytesRequestedFromPeers: number, fragmentsRequestedFromPeers: number, sendControlBytesPerSecondToServer: number, receiveDataBytesPerSecondFromServer: number, bytesReceivedFromServer: number, fragmentsReceivedFromServer: number, receiveDataBytesPerSecondFromIPMulticast: number, bytesReceivedFromIPMulticast: number, fragmentsReceivedFromIPMulticast: number) {
       sendDataBytesPerSecond = +sendDataBytesPerSecond; sendControlBytesPerSecond = +sendControlBytesPerSecond; receiveDataBytesPerSecond = +receiveDataBytesPerSecond; receiveControlBytesPerSecond = +receiveControlBytesPerSecond; bytesPushedToPeers = +bytesPushedToPeers; fragmentsPushedToPeers = +fragmentsPushedToPeers; bytesRequestedByPeers = +bytesRequestedByPeers; fragmentsRequestedByPeers = +fragmentsRequestedByPeers; bytesPushedFromPeers = +bytesPushedFromPeers; fragmentsPushedFromPeers = +fragmentsPushedFromPeers; bytesRequestedFromPeers = +bytesRequestedFromPeers; fragmentsRequestedFromPeers = +fragmentsRequestedFromPeers; sendControlBytesPerSecondToServer = +sendControlBytesPerSecondToServer; receiveDataBytesPerSecondFromServer = +receiveDataBytesPerSecondFromServer; bytesReceivedFromServer = +bytesReceivedFromServer; fragmentsReceivedFromServer = +fragmentsReceivedFromServer; receiveDataBytesPerSecondFromIPMulticast = +receiveDataBytesPerSecondFromIPMulticast; bytesReceivedFromIPMulticast = +bytesReceivedFromIPMulticast; fragmentsReceivedFromIPMulticast = +fragmentsReceivedFromIPMulticast;
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.NetStreamMulticastInfo");
+      dummyConstructor("public flash.net.NetStreamMulticastInfo");
     }
     
     // JS -> AS Bindings

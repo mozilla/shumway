@@ -16,6 +16,7 @@
 // Class: LocaleID
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class LocaleID extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.globalization {
     constructor (name: string) {
       name = asCoerceString(name);
       false && super();
-      notImplemented("Dummy Constructor: public flash.globalization.LocaleID");
+      dummyConstructor("public flash.globalization.LocaleID");
     }
     
     // JS -> AS Bindings

@@ -16,6 +16,7 @@
 // Class: AsyncErrorEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class AsyncErrorEvent extends flash.events.ErrorEvent {
 
     static classInitializer: any = null;
@@ -27,7 +28,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 text: string = "", error: ASError = null) {
       super(undefined, undefined, undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.AsyncErrorEvent");
+      dummyConstructor("public flash.events.AsyncErrorEvent");
     }
 
     // JS -> AS Bindings

@@ -16,6 +16,7 @@
 // Class: ObjectOutput
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ObjectOutput extends ASNative implements flash.utils.IDataOutput {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.utils {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: packageInternal flash.utils.ObjectOutput");
+      dummyConstructor("packageInternal flash.utils.ObjectOutput");
     }
     
     // JS -> AS Bindings

@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Multitouch extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.ui.Multitouch");
+      dummyConstructor("public flash.ui.Multitouch");
     }
     
     // JS -> AS Bindings

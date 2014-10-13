@@ -16,6 +16,7 @@
 // Class: GroupSpecifier
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GroupSpecifier extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.net {
     constructor (name: string) {
       name = asCoerceString(name);
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.GroupSpecifier");
+      dummyConstructor("public flash.net.GroupSpecifier");
     }
     
     // JS -> AS Bindings
