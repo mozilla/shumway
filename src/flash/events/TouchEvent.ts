@@ -53,7 +53,7 @@ module Shumway.AVM2.AS.flash.events {
     static PROXIMITY_ROLL_OVER: string = "proximityRollOver";
 
     updateAfterEvent(): void {
-      notImplemented("public flash.events.TouchEvent::updateAfterEvent");
+      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
     }
   }
 }

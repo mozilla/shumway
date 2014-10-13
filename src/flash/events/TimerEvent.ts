@@ -35,8 +35,7 @@ module Shumway.AVM2.AS.flash.events {
     static TIMER_COMPLETE: string = "timerComplete";
 
     updateAfterEvent(): void {
-      notImplemented("public flash.events.TimerEvent::updateAfterEvent");
-      return;
+      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
     }
   }
 }
