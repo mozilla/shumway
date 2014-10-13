@@ -4173,24 +4173,6 @@
     ]
   },
   {
-    "name": "flash/utils/ObjectInput",
-    "defs": [
-      "flash.utils:ObjectInput"
-    ],
-    "files": [
-      "flash/utils/ObjectInput.as"
-    ]
-  },
-  {
-    "name": "flash/utils/ObjectOutput",
-    "defs": [
-      "flash.utils:ObjectOutput"
-    ],
-    "files": [
-      "flash/utils/ObjectOutput.as"
-    ]
-  },
-  {
     "name": "flash/utils/Timer",
     "defs": [
       "flash.utils:Timer"
