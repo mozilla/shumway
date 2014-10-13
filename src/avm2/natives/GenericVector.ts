@@ -227,8 +227,18 @@ module Shumway.AVM2.AS {
       return this._buffer.pop();
     }
 
+    concat() {
+      // TODO: need to type check the arguments, but isType doesn't exist.
+      var buffers = [];
+      for (var i = 0; i < arguments.length; i++) {
+        buffers.push(this._coerce(arguments[i])._buffer);
+      }
+      return this._buffer.concat.apply(this._buffer, buffers);
+    }
+
     reverse() {
       this._buffer.reverse();
+      return this;
     }
 
     sort(comparator) {
@@ -240,7 +250,7 @@ module Shumway.AVM2.AS {
       return this._buffer[i];
     }
 
-    _coerce(v) {
+    _coerce(v): GenericVector {
       if (this._type) {
         return this._type.coerce(v);
       } else if (v === undefined) {
@@ -346,12 +356,10 @@ module Shumway.AVM2.AS {
       hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
     }
 
-    _reverse: () => void;
     _filter: (callback: Function, thisObject: any) => any;
     _map: (callback: Function, thisObject: any) => any;
   }
 
-  GenericVector.prototype._reverse = GenericVector.prototype.reverse;
   GenericVector.prototype._filter = GenericVector.prototype.filter;
   GenericVector.prototype._map = GenericVector.prototype.map;
 }

@@ -16,6 +16,7 @@
 // Class: URLLoader
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class URLLoader extends flash.events.EventDispatcher {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor (request: flash.net.URLRequest = null) {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.URLLoader");
+      dummyConstructor("public flash.net.URLLoader");
     }
     
     // JS -> AS Bindings

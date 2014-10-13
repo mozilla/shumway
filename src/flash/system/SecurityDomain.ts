@@ -16,6 +16,7 @@
 // Class: SecurityDomain
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class SecurityDomain extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.system {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.system.SecurityDomain");
+      dummyConstructor("public flash.system.SecurityDomain");
     }
     
     // JS -> AS Bindings

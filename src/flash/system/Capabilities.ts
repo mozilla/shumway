@@ -16,6 +16,7 @@
 // Class: Capabilities
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
@@ -38,7 +39,7 @@ module Shumway.AVM2.AS.flash.system {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.system.Capabilities");
+      dummyConstructor("public flash.system.Capabilities");
     }
     
     // JS -> AS Bindings

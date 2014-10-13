@@ -16,6 +16,7 @@
 // Class: SoundTransform
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   export class SoundTransform extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.media {
     constructor (vol: number = 1, panning: number = 0) {
       vol = +vol; panning = +panning;
       false && super();
-      notImplemented("Dummy Constructor: public flash.media.SoundTransform");
+      dummyConstructor("public flash.media.SoundTransform");
     }
 
     private _volume: number;

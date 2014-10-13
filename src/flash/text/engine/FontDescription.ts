@@ -16,6 +16,7 @@
 // Class: FontDescription
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class FontDescription extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     constructor (fontName: string = "_serif", fontWeight: string = "normal", fontPosture: string = "normal", fontLookup: string = "device", renderingMode: string = "cff", cffHinting: string = "horizontalStem") {
       fontName = asCoerceString(fontName); fontWeight = asCoerceString(fontWeight); fontPosture = asCoerceString(fontPosture); fontLookup = asCoerceString(fontLookup); renderingMode = asCoerceString(renderingMode); cffHinting = asCoerceString(cffHinting);
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.engine.FontDescription");
+      dummyConstructor("public flash.text.engine.FontDescription");
     }
     
     // JS -> AS Bindings

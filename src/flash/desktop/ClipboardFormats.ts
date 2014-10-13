@@ -16,6 +16,7 @@
 // Class: ClipboardFormats
 module Shumway.AVM2.AS.flash.desktop {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ClipboardFormats extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.desktop {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.desktop.ClipboardFormats");
+      dummyConstructor("public flash.desktop.ClipboardFormats");
     }
     
     // JS -> AS Bindings

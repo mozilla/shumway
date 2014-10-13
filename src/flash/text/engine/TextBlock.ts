@@ -16,6 +16,7 @@
 // Class: TextBlock
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextBlock extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     constructor (content: flash.text.engine.ContentElement = null, tabStops: ASVector<any /* flash.text.engine.TabStop */> = null, textJustifier: flash.text.engine.TextJustifier = null, lineRotation: string = "rotate0", baselineZero: string = "roman", bidiLevel: number /*int*/ = 0, applyNonLinearFontScaling: boolean = true, baselineFontDescription: flash.text.engine.FontDescription = null, baselineFontSize: number = 12) {
       content = content; tabStops = tabStops; textJustifier = textJustifier; lineRotation = asCoerceString(lineRotation); baselineZero = asCoerceString(baselineZero); bidiLevel = bidiLevel | 0; applyNonLinearFontScaling = !!applyNonLinearFontScaling; baselineFontDescription = baselineFontDescription; baselineFontSize = +baselineFontSize;
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.engine.TextBlock");
+      dummyConstructor("public flash.text.engine.TextBlock");
     }
     
     // JS -> AS Bindings

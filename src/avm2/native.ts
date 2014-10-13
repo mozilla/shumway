@@ -38,7 +38,6 @@ module Shumway.AVM2.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
-  var _notImplemented = notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assert = Shumway.Debug.assert;
   import createFunction = Shumway.AVM2.Runtime.createFunction;
@@ -1720,10 +1719,6 @@ module Shumway.AVM2.AS {
 
     export function print(...args: any []) {
       jsGlobal.print.apply(null, args);
-    }
-
-    export function notImplemented(v: any) {
-      _notImplemented(v);
     }
 
     export function debugBreak(v: any) {

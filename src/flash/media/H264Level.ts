@@ -16,6 +16,7 @@
 // Class: H264Level
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class H264Level extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.media.H264Level");
+      dummyConstructor("public flash.media.H264Level");
     }
     
     // JS -> AS Bindings

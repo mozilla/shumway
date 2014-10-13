@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.events {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
 
   export class KeyboardEvent extends flash.events.Event {
 
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
                 keyLocationValue: number /*uint*/ = 0, ctrlKeyValue: boolean = false,
                 altKeyValue: boolean = false, shiftKeyValue: boolean = false) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.KeyboardEvent");
+      dummyConstructor("public flash.events.KeyboardEvent");
     }
 
     // JS -> AS Bindings

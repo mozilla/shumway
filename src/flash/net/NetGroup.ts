@@ -16,6 +16,7 @@
 // Class: NetGroup
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetGroup extends flash.events.EventDispatcher {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.net {
     constructor (connection: flash.net.NetConnection, groupspec: string) {
       connection = connection; groupspec = asCoerceString(groupspec);
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.NetGroup");
+      dummyConstructor("public flash.net.NetGroup");
     }
     
     // JS -> AS Bindings

@@ -16,6 +16,7 @@
 // Class: TextBaseline
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextBaseline extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.engine.TextBaseline");
+      dummyConstructor("public flash.text.engine.TextBaseline");
     }
     
     // JS -> AS Bindings

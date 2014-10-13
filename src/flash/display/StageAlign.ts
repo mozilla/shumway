@@ -16,6 +16,7 @@
 // Class: StageAlign
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   enum StageAlignFlags {
@@ -35,7 +36,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.StageAlign");
+      dummyConstructor("public flash.display.StageAlign");
     }
     
     // JS -> AS Bindings

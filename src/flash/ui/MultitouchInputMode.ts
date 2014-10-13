@@ -16,6 +16,7 @@
 // Class: MultitouchInputMode
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class MultitouchInputMode extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.ui.MultitouchInputMode");
+      dummyConstructor("public flash.ui.MultitouchInputMode");
     }
     
     // JS -> AS Bindings

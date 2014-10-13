@@ -16,6 +16,7 @@
 // Class: GraphicsTrianglePath
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GraphicsTrianglePath extends ASNative implements IGraphicsPath, IGraphicsData {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor (vertices: ASVector<number> = null, indices: ASVector<number /*int*/> = null, uvtData: ASVector<number> = null, culling: string = "none") {
       vertices = vertices; indices = indices; uvtData = uvtData; culling = asCoerceString(culling);
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.GraphicsTrianglePath");
+      dummyConstructor("public flash.display.GraphicsTrianglePath");
     }
     
     // JS -> AS Bindings

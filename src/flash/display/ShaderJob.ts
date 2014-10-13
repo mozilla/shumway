@@ -16,6 +16,7 @@
 // Class: ShaderJob
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ShaderJob extends flash.events.EventDispatcher {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor (shader: flash.display.Shader = null, target: ASObject = null, width: number /*int*/ = 0, height: number /*int*/ = 0) {
       shader = shader; target = target; width = width | 0; height = height | 0;
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.display.ShaderJob");
+      dummyConstructor("public flash.display.ShaderJob");
     }
     
     // JS -> AS Bindings

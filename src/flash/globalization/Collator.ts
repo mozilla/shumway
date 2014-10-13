@@ -16,6 +16,7 @@
 // Class: Collator
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Collator extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.globalization {
     constructor (requestedLocaleIDName: string, initialMode: string = "sorting") {
       requestedLocaleIDName = asCoerceString(requestedLocaleIDName); initialMode = asCoerceString(initialMode);
       false && super();
-      notImplemented("Dummy Constructor: public flash.globalization.Collator");
+      dummyConstructor("public flash.globalization.Collator");
     }
     
     // JS -> AS Bindings

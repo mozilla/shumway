@@ -167,7 +167,29 @@ module Shumway.AVM2.AS {
     }
 
     concat() {
-      notImplemented("Int32Vector.concat");
+      var length = this._length;
+      for (var i = 0; i < arguments.length; i++) {
+        var vector: Int32Vector = arguments[i];
+        if (!(vector._buffer instanceof Int32Array)) {
+          throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
+                     '__AS3__.vec.Vector.<int>');
+        }
+        length += vector._length;
+      }
+      var result = new Int32Vector(length);
+      var buffer = result._buffer;
+      buffer.set(this._buffer);
+      var offset = this._length;
+      for (var i = 0; i < arguments.length; i++) {
+        var vector: Int32Vector = arguments[i];
+        if (offset + vector._buffer.length < vector._buffer.length) {
+          buffer.set(vector._buffer, offset);
+        } else {
+          buffer.set(vector._buffer.subarray(0, vector._length), offset);
+        }
+        offset += vector._length;
+      }
+      return result;
     }
 
     /**
@@ -271,6 +293,7 @@ module Shumway.AVM2.AS {
         l ++;
         r --;
       }
+      return this;
     }
 
     static _sort(a) {
@@ -491,12 +514,10 @@ module Shumway.AVM2.AS {
       hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
     }
 
-    _reverse: () => void;
     _filter: (callback: Function, thisObject: any) => any;
     _map: (callback: Function, thisObject: any) => any;
   }
 
-  Int32Vector.prototype._reverse = Int32Vector.prototype.reverse;
   Int32Vector.prototype._filter = Int32Vector.prototype.filter;
   Int32Vector.prototype._map = Int32Vector.prototype.map;
 }

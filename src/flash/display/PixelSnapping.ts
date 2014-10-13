@@ -16,6 +16,7 @@
 // Class: PixelSnapping
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class PixelSnapping extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.PixelSnapping");
+      dummyConstructor("public flash.display.PixelSnapping");
     }
     
     // JS -> AS Bindings

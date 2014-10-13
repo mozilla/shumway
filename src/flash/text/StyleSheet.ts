@@ -16,6 +16,7 @@
 // Class: StyleSheet
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class StyleSheet extends flash.events.EventDispatcher {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.text {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.text.StyleSheet");
+      dummyConstructor("public flash.text.StyleSheet");
     }
     
     // JS -> AS Bindings

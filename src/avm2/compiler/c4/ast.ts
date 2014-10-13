@@ -20,6 +20,7 @@
  */
 module Shumway.AVM2.Compiler.AST {
   import notImplemented = Shumway.Debug.notImplemented;
+  import assertUnreachable = Shumway.Debug.assertUnreachable;
   // The top part of this file is copied from escodegen.
 
   var json = false;
@@ -285,7 +286,7 @@ module Shumway.AVM2.Compiler.AST {
     if (typeof value === 'boolean') {
       return value ? 'true' : 'false';
     }
-    notImplemented(value);
+    assertUnreachable(value);
   }
 
   function nodesToSource(nodes: Node [], precedence: number, separator?: string) {
@@ -311,33 +312,38 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class Node {
-    type: string;
+    type = 'Node';
 
     toSource(precedence: number) : string {
-      notImplemented(this.type);
+      assertUnreachable('toSource called on abstract base class Node with type ' + this.type);
       return "";
     }
   }
 
   export class Statement extends Node {
+    type = 'Statement'; 
 
   }
 
   export class Expression extends Node {
+    type = 'Expression'; 
 
   }
 
   export class Program extends Node {
+    type = 'Program'; 
     constructor (public body: Node []) {
       super();
     }
   }
 
   export class EmptyStatement extends Statement {
+    type = 'EmptyStatement'; 
 
   }
 
   export class BlockStatement extends Statement {
+    type = 'BlockStatement'; 
     end: IR.Node;
     constructor (public body: Statement []) {
       super();
@@ -348,6 +354,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class ExpressionStatement extends Statement {
+    type = 'ExpressionStatement'; 
     constructor (public expression: Expression) {
       super();
     }
@@ -357,6 +364,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class IfStatement extends Statement {
+    type = 'IfStatement'; 
     constructor (public test: Expression, public consequent: Statement, public alternate: Statement) {
       super();
     }
@@ -370,12 +378,14 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class LabeledStatement extends Statement {
+    type = 'LabeledStatement'; 
     constructor (public label: Identifier, public body: Statement) {
       super();
     }
   }
 
   export class BreakStatement extends Statement {
+    type = 'BreakStatement'; 
     constructor (public label: Identifier) {
       super();
     }
@@ -389,6 +399,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class ContinueStatement extends Statement {
+    type = 'ContinueStatement'; 
     constructor (public label: Identifier) {
       super();
     }
@@ -402,12 +413,14 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class WithStatement extends Statement {
+    type = 'WithStatement'; 
     constructor (public object: Expression, public body: Statement) {
       super();
     }
   }
 
   export class SwitchStatement extends Statement {
+    type = 'SwitchStatement'; 
     constructor (public discriminant: Expression, public cases: SwitchCase [], public lexical: boolean) {
       super();
     }
@@ -417,6 +430,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class ReturnStatement extends Statement {
+    type = 'ReturnStatement'; 
     constructor (public argument: Expression) {
       super();
     }
@@ -430,6 +444,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class ThrowStatement extends Statement {
+    type = 'ThrowStatement'; 
     constructor (public argument: Expression) {
       super();
     }
@@ -439,12 +454,14 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class TryStatement extends Statement {
+    type = 'TryStatement'; 
     constructor (public block: BlockStatement, public handlers:  CatchClause, public guardedHandlers: CatchClause [], public finalizer: BlockStatement) {
       super();
     }
   }
 
   export class WhileStatement extends Statement {
+    type = 'WhileStatement'; 
     constructor (public test: Expression, public body: Statement) {
       super();
     }
@@ -454,36 +471,43 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class DoWhileStatement extends Statement {
+    type = 'DoWhileStatement'; 
     constructor (public body: Statement, public test: Expression) {
       super();
     }
   }
 
   export class ForStatement extends Statement {
+    type = 'ForStatement'; 
     constructor (public init: Node, public test: Expression, public update: Expression, public body: Statement) {
       super();
     }
   }
 
   export class ForInStatement extends Statement {
+    type = 'ForInStatement'; 
     constructor (public left: Node, public right: Expression, public body: Statement, public each: boolean) {
       super();
     }
   }
 
   export class DebuggerStatement extends Statement {
+    type = 'DebuggerStatement'; 
   }
 
   export class Declaration extends Statement {
+    type = 'Declaration'; 
   }
 
   export class FunctionDeclaration extends Declaration {
+    type = 'FunctionDeclaration'; 
     constructor (public id: Identifier, public params: Node[], public defaults: Expression[], public rest: Identifier, public body: BlockStatement, public generator: boolean, public expression: boolean) {
       super();
     }
   }
 
   export class VariableDeclaration extends Declaration {
+    type = 'VariableDeclaration'; 
     constructor (public declarations: VariableDeclarator[], public kind: string) {
       super();
     }
@@ -493,6 +517,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class VariableDeclarator extends Node {
+    type = 'VariableDeclarator'; 
     constructor (public id: Node, public init?: Node) {
       super();
     }
@@ -506,6 +531,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class Identifier extends Expression {
+    type = 'Identifier'; 
     constructor (public name: string) {
       super();
     }
@@ -515,6 +541,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class Literal extends Expression {
+    type = 'Literal'; 
     constructor (public value: any) {
       super();
     }
@@ -524,12 +551,14 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class ThisExpression extends Expression {
+    type = 'ThisExpression'; 
     toSource(precedence: number) : string {
       return "this";
     }
   }
 
   export class ArrayExpression extends Expression {
+    type = 'ArrayExpression'; 
     constructor (public elements: Expression []) {
       super();
     }
@@ -539,6 +568,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class ObjectExpression extends Expression {
+    type = 'ObjectExpression'; 
     constructor (public properties: Property []) {
       super();
     }
@@ -548,18 +578,21 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class FunctionExpression extends Expression {
+    type = 'FunctionExpression'; 
     constructor (public id: Identifier, public params: Node[], public defaults: Expression [], public rest:  Identifier, public body: BlockStatement, public generator: boolean, public expression: boolean) {
       super();
     }
   }
 
   export class SequenceExpression extends Expression {
+    type = 'SequenceExpression'; 
     constructor (public expressions: Expression []) {
       super();
     }
   }
 
   export class UnaryExpression extends Expression {
+    type = 'UnaryExpression'; 
     constructor (public operator: string, public prefix: boolean, public argument: Expression) {
       super();
     }
@@ -573,6 +606,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class BinaryExpression extends Expression {
+    type = 'BinaryExpression'; 
     constructor (public operator: string, public left: Expression, public right: Expression) {
       super();
     }
@@ -584,6 +618,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class AssignmentExpression extends Expression {
+    type = 'AssignmentExpression'; 
     constructor (public operator: string, public left: Expression, public right: Expression) {
       super();
     }
@@ -594,18 +629,21 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class UpdateExpression extends Expression {
+    type = 'UpdateExpression'; 
     constructor (public operator: string, public argument: Expression, public prefix: boolean) {
       super();
     }
   }
 
   export class LogicalExpression extends BinaryExpression {
+    type = 'LogicalExpression'; 
     constructor (operator: string, left: Expression, right: Expression) {
       super(operator, left, right);
     }
   }
 
   export class ConditionalExpression extends Expression {
+    type = 'ConditionalExpression'; 
     constructor (public test: Expression, public consequent: Expression, public alternate: Expression) {
       super();
     }
@@ -615,6 +653,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class NewExpression extends Expression {
+    type = 'NewExpression'; 
     arguments: Expression [];
     constructor (public callee: Expression, _arguments: Expression []) {
       super();
@@ -626,6 +665,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class CallExpression extends Expression {
+    type = 'CallExpression'; 
     arguments: Expression [];
     constructor (public callee: Expression, _arguments: Expression []) {
       super();
@@ -637,6 +677,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class MemberExpression extends Expression {
+    type = 'MemberExpression'; 
     constructor (public object: Expression, public property: Node, public computed: boolean) {
       super();
     }
@@ -656,6 +697,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class Property extends Node {
+    type = 'Property'; 
     constructor (public key: Node, public value: Expression, public kind: string) {
       super();
     }
@@ -665,6 +707,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class SwitchCase extends Node {
+    type = 'SwitchCase'; 
     constructor (public test: Expression, public consequent: Statement []) {
       super();
     }
@@ -675,53 +718,9 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class CatchClause extends Node {
+    type = 'CatchClause'; 
     constructor (public param: Node, public guard: Expression, public body: BlockStatement) {
       super();
     }
   }
-
-  Node.prototype.type = "Node";
-  Program.prototype.type = "Program";
-  Statement.prototype.type = "Statement";
-  EmptyStatement.prototype.type = "EmptyStatement";
-  BlockStatement.prototype.type = "BlockStatement";
-  ExpressionStatement.prototype.type = "ExpressionStatement";
-  IfStatement.prototype.type = "IfStatement";
-  LabeledStatement.prototype.type = "LabeledStatement";
-  BreakStatement.prototype.type = "BreakStatement";
-  ContinueStatement.prototype.type = "ContinueStatement";
-  WithStatement.prototype.type = "WithStatement";
-  SwitchStatement.prototype.type = "SwitchStatement";
-  ReturnStatement.prototype.type = "ReturnStatement";
-  ThrowStatement.prototype.type = "ThrowStatement";
-  TryStatement.prototype.type = "TryStatement";
-  WhileStatement.prototype.type = "WhileStatement";
-  DoWhileStatement.prototype.type = "DoWhileStatement";
-  ForStatement.prototype.type = "ForStatement";
-  ForInStatement.prototype.type = "ForInStatement";
-  DebuggerStatement.prototype.type = "DebuggerStatement";
-  Declaration.prototype.type = "Declaration";
-  FunctionDeclaration.prototype.type = "FunctionDeclaration";
-  VariableDeclaration.prototype.type = "VariableDeclaration";
-  VariableDeclarator.prototype.type = "VariableDeclarator";
-  Expression.prototype.type = "Expression";
-  Identifier.prototype.type = "Identifier";
-  Literal.prototype.type = "Literal";
-  ThisExpression.prototype.type = "ThisExpression";
-  ArrayExpression.prototype.type = "ArrayExpression";
-  ObjectExpression.prototype.type = "ObjectExpression";
-  FunctionExpression.prototype.type = "FunctionExpression";
-  SequenceExpression.prototype.type = "SequenceExpression";
-  UnaryExpression.prototype.type = "UnaryExpression";
-  BinaryExpression.prototype.type = "BinaryExpression";
-  AssignmentExpression.prototype.type = "AssignmentExpression";
-  UpdateExpression.prototype.type = "UpdateExpression";
-  LogicalExpression.prototype.type = "LogicalExpression";
-  ConditionalExpression.prototype.type = "ConditionalExpression";
-  NewExpression.prototype.type = "NewExpression";
-  CallExpression.prototype.type = "CallExpression";
-  MemberExpression.prototype.type = "MemberExpression";
-  Property.prototype.type = "Property";
-  SwitchCase.prototype.type = "SwitchCase";
-  CatchClause.prototype.type = "CatchClause";
 }

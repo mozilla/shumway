@@ -16,6 +16,7 @@
 // Class: CurrencyParseResult
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class CurrencyParseResult extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.globalization {
     constructor (value: number = NaN, symbol: string = "") {
       value = +value; symbol = asCoerceString(symbol);
       false && super();
-      notImplemented("Dummy Constructor: public flash.globalization.CurrencyParseResult");
+      dummyConstructor("public flash.globalization.CurrencyParseResult");
     }
     
     // JS -> AS Bindings

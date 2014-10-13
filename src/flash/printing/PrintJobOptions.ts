@@ -16,6 +16,7 @@
 // Class: PrintJobOptions
 module Shumway.AVM2.AS.flash.printing {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class PrintJobOptions extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.printing {
     constructor (printAsBitmap: boolean = false) {
       printAsBitmap = !!printAsBitmap;
       false && super();
-      notImplemented("Dummy Constructor: public flash.printing.PrintJobOptions");
+      dummyConstructor("public flash.printing.PrintJobOptions");
     }
     
     // JS -> AS Bindings

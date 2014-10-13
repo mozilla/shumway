@@ -162,7 +162,7 @@ prototype.join = function(separator=void 0) {
 }
 
 prototype.concat = function(...items) {
-    return castToThisType(this)._concat(items);
+    return castToThisType(this).AS3::concat.apply(this, items);
 }
 private static native function _every(o, callback:Function, thisObject):Boolean;
 prototype.every = function(checker, thisObj=void 0) : Boolean {

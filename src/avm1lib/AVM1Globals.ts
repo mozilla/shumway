@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.avm1lib {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Loader = Shumway.AVM2.AS.flash.display.Loader;
   import TextFormat = Shumway.AVM2.AS.flash.text.TextFormat;
@@ -62,7 +63,7 @@ module Shumway.AVM2.AS.avm1lib {
 
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public avm1lib.AVM1Globals");
+      dummyConstructor("public flash.accessibility.Accessibility");
     }
 
     // JS -> AS Bindings

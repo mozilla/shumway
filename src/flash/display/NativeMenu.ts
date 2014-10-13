@@ -16,6 +16,7 @@
 // Class: NativeMenu
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NativeMenu extends flash.events.EventDispatcher {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.display.NativeMenu");
+      dummyConstructor("public flash.display.NativeMenu");
     }
     
     // JS -> AS Bindings

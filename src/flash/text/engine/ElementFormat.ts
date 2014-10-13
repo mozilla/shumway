@@ -16,6 +16,7 @@
 // Class: ElementFormat
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ElementFormat extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     constructor (fontDescription: flash.text.engine.FontDescription = null, fontSize: number = 12, color: number /*uint*/ = 0, alpha: number = 1, textRotation: string = "auto", dominantBaseline: string = "roman", alignmentBaseline: string = "useDominantBaseline", baselineShift: number = 0, kerning: string = "on", trackingRight: number = 0, trackingLeft: number = 0, locale: string = "en", breakOpportunity: string = "auto", digitCase: string = "default", digitWidth: string = "default", ligatureLevel: string = "common", typographicCase: string = "default") {
       fontDescription = fontDescription; fontSize = +fontSize; color = color >>> 0; alpha = +alpha; textRotation = asCoerceString(textRotation); dominantBaseline = asCoerceString(dominantBaseline); alignmentBaseline = asCoerceString(alignmentBaseline); baselineShift = +baselineShift; kerning = asCoerceString(kerning); trackingRight = +trackingRight; trackingLeft = +trackingLeft; locale = asCoerceString(locale); breakOpportunity = asCoerceString(breakOpportunity); digitCase = asCoerceString(digitCase); digitWidth = asCoerceString(digitWidth); ligatureLevel = asCoerceString(ligatureLevel); typographicCase = asCoerceString(typographicCase);
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.engine.ElementFormat");
+      dummyConstructor("public flash.text.engine.ElementFormat");
     }
     
     // JS -> AS Bindings

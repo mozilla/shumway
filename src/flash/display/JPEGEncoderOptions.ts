@@ -16,6 +16,7 @@
 // Class: JPEGEncoderOptions
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class JPEGEncoderOptions extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor (quality: number /*uint*/ = 80) {
       quality = quality >>> 0;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.JPEGEncoderOptions");
+      dummyConstructor("public flash.display.JPEGEncoderOptions");
     }
     
     // JS -> AS Bindings

@@ -98,9 +98,7 @@ package __AS3__.vec
     // Methods with the specific type in their sig.  Can't be in the impl file since it doesn't
     // know what "type" vector this is (int, uint, Number, Object)
     // Most of these just call generic versions in impl, but some small ones are implemented here.
-    AS3 function concat(...items) : Vector$object {
-      return _concat(items);
-    }
+    AS3 native function concat(...items) : Vector$object;
 
     AS3 function filter(checker : Function, thisObj: Object=null): Vector$object {
       return _filter(checker, thisObj);
@@ -108,10 +106,7 @@ package __AS3__.vec
 
     AS3 native function pop();
 
-    AS3 function reverse() : Vector$object {
-      this._reverse();
-      return this;
-    }
+    AS3 native function reverse() : Vector$object;
 
     AS3 native function shift():*;
 
@@ -205,9 +200,7 @@ package __AS3__.vec
     // Methods with the specific type in their sig.  Can't be in the impl file since it doesn't
     // know what "type" vector this is (int, uint, Number, Object)
     // Most of these just call generic versions in impl, but some small ones are implemented here.
-    AS3 function concat(...items) : Vector$int {
-      return _concat(items);
-    }
+    AS3 native function concat(...items) : Vector$int;
 
     AS3 function filter(checker:Function, thisObj: Object=null): Vector$int {
       return _filter(checker, thisObj);
@@ -215,10 +208,7 @@ package __AS3__.vec
 
     AS3 native function pop(): int ;
 
-    AS3 function reverse() : Vector$int {
-      this._reverse();
-      return this;
-    }
+    AS3 native function reverse() : Vector$int;
     AS3 native function shift():int;
 
     AS3 function slice(start:Number=0, end:Number=0x7fffffff): Vector$int {
@@ -311,9 +301,7 @@ package __AS3__.vec
     // Methods with the specific type in their sig.  Can't be in the impl file since it doesn't
     // know what "type" vector this is (int, uint, Number, Object)
     // Most of these just call generic versions in impl, but some small ones are implemented here.
-    AS3 function concat(...items) : Vector$uint {
-      return _concat(items);
-    }
+    AS3 native function concat(...items) : Vector$uint;
 
     AS3 function filter(checker:Function, thisObj: Object=null): Vector$uint {
       return _filter(checker, thisObj);
@@ -321,10 +309,7 @@ package __AS3__.vec
 
     AS3 native function pop(): uint ;
 
-    AS3 function reverse() : Vector$uint {
-      this._reverse();
-      return this;
-    }
+    AS3 native function reverse() : Vector$uint;
 
     AS3 native function shift():uint;
 
@@ -417,9 +402,7 @@ package __AS3__.vec
     // Methods with the specific type in their sig.  Can't be in the impl file since it doesn't
     // know what "type" vector this is (int, uint, Number, Object)
     // Most of these just call generic versions in impl, but some small ones are implemented here.
-    AS3 function concat(...items) : Vector$double {
-      return _concat(items);
-    }
+    AS3 native function concat(...items) : Vector$double;
 
     AS3 function filter(checker:Function, thisObj: Object=null): Vector$double {
       return _filter(checker, thisObj);
@@ -427,10 +410,7 @@ package __AS3__.vec
 
     AS3 native function pop(): Number ;
 
-    AS3 function reverse() : Vector$double {
-      this._reverse();
-      return this;
-    }
+    AS3 native function reverse() : Vector$double;
 
     AS3 native function shift():Number;
 

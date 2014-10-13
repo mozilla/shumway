@@ -16,6 +16,7 @@
 // Class: Timer
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class Timer extends flash.events.EventDispatcher {
@@ -32,7 +33,7 @@ module Shumway.AVM2.AS.flash.utils {
 
     constructor (delay: number, repeatCount: number /*int*/ = 0) {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.utils.Timer");
+      dummyConstructor("public flash.utils.Timer");
     }
     
     // JS -> AS Bindings

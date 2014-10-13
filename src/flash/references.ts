@@ -401,8 +401,6 @@
 ///<reference path='utils/IDataInput2.ts' />
 ///<reference path='utils/IDataOutput2.ts' />
 ///<reference path='utils/IExternalizable.ts' />
-///<reference path='utils/ObjectInput.ts' />
-///<reference path='utils/ObjectOutput.ts' />
 ///<reference path='utils/Timer.ts' />
 ///<reference path='utils/SetIntervalTimer.ts' />
 

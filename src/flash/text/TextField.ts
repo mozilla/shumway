@@ -16,6 +16,7 @@
 // Class: TextField
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
@@ -122,7 +123,7 @@ module Shumway.AVM2.AS.flash.text {
 
     constructor() {
       super();
-      notImplemented("Dummy Constructor: public flash.text.TextField");
+      dummyConstructor("public flash.text.TextField");
     }
 
     _setFillAndLineBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {

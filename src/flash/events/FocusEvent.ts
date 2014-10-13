@@ -16,6 +16,7 @@
 // Class: FocusEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class FocusEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -28,7 +29,7 @@ module Shumway.AVM2.AS.flash.events {
                 relatedObject: flash.display.InteractiveObject = null, shiftKey: boolean = false,
                 keyCode: number /*uint*/ = 0) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.FocusEvent");
+      dummyConstructor("public flash.events.FocusEvent");
     }
 
     // JS -> AS Bindings

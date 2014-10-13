@@ -16,6 +16,7 @@
 // Class: IOErrorEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class IOErrorEvent extends flash.events.ErrorEvent {
 
@@ -28,7 +29,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 text: string = "", id: number /*int*/ = 0) {
       super(undefined, undefined, undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.IOErrorEvent");
+      dummyConstructor("public flash.events.IOErrorEvent");
     }
 
     // JS -> AS Bindings

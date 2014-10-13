@@ -16,6 +16,7 @@
 // Class: TouchEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TouchEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
                 relatedObject: flash.display.InteractiveObject = null, ctrlKey: boolean = false,
                 altKey: boolean = false, shiftKey: boolean = false) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.TouchEvent");
+      dummyConstructor("public flash.events.TouchEvent");
     }
 
     // JS -> AS Bindings
@@ -52,7 +53,7 @@ module Shumway.AVM2.AS.flash.events {
     static PROXIMITY_ROLL_OVER: string = "proximityRollOver";
 
     updateAfterEvent(): void {
-      notImplemented("public flash.events.TouchEvent::updateAfterEvent");
+      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
     }
   }
 }

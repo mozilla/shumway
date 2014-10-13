@@ -16,6 +16,7 @@
 // Class: EastAsianJustifier
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class EastAsianJustifier extends flash.text.engine.TextJustifier {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     constructor (locale: string = "ja", lineJustification: string = "allButLast", justificationStyle: string = "pushInKinsoku") {
       locale = asCoerceString(locale); lineJustification = asCoerceString(lineJustification); justificationStyle = asCoerceString(justificationStyle);
       false && super(undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.text.engine.EastAsianJustifier");
+      dummyConstructor("public flash.text.engine.EastAsianJustifier");
     }
     
     // JS -> AS Bindings

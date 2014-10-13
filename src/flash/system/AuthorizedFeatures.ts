@@ -16,6 +16,7 @@
 // Class: AuthorizedFeatures
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class AuthorizedFeatures extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.system {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.system.AuthorizedFeatures");
+      dummyConstructor("public flash.system.AuthorizedFeatures");
     }
     
     // JS -> AS Bindings

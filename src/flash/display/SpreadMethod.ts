@@ -16,6 +16,7 @@
 // Class: SpreadMethod
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import GradientSpreadMethod = Shumway.GradientSpreadMethod;
   export class SpreadMethod extends ASNative {
     
@@ -26,7 +27,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.SpreadMethod");
+      dummyConstructor("public flash.display.SpreadMethod");
     }
     
     // JS -> AS Bindings

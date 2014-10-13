@@ -16,6 +16,7 @@
 // Class: SystemUpdaterType
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class SystemUpdaterType extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.system {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.system.SystemUpdaterType");
+      dummyConstructor("public flash.system.SystemUpdaterType");
     }
     
     // JS -> AS Bindings

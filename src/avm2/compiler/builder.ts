@@ -24,6 +24,7 @@ module Shumway.AVM2.Compiler {
   import ConstantPool = Shumway.AVM2.ABC.ConstantPool;
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
+  import assertUnreachable = Shumway.Debug.assertUnreachable;
   import popManyIntoVoid = Shumway.ArrayUtilities.popManyIntoVoid;
   import top = Shumway.ArrayUtilities.top;
   import unique = Shumway.ArrayUtilities.unique;
@@ -299,7 +300,7 @@ module Shumway.AVM2.Compiler {
       case OP.not:            return Operator.FALSE;
       case OP.bitnot:         return Operator.BITWISE_NOT;
       default:
-        notImplemented(String(op));
+        assertUnreachable('Invalid operator op: ' + op);
     }
   }
 

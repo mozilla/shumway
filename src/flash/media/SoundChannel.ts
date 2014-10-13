@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.media {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import error = Shumway.Debug.error;
@@ -183,7 +184,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.media.SoundChannel");
+      dummyConstructor("public flash.media.SoundChannel");
     }
 
     _element;

@@ -16,6 +16,7 @@
 // Class: ShaderFilter
 module Shumway.AVM2.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ShaderFilter extends flash.filters.BitmapFilter {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.filters {
     constructor (shader: flash.display.Shader = null) {
       shader = shader;
       false && super();
-      notImplemented("Dummy Constructor: public flash.filters.ShaderFilter");
+      dummyConstructor("public flash.filters.ShaderFilter");
     }
     
     // JS -> AS Bindings

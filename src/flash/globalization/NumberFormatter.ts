@@ -16,6 +16,7 @@
 // Class: NumberFormatter
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NumberFormatter extends ASNative {
     
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.globalization {
     constructor (requestedLocaleIDName: string) {
       requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
       false && super();
-      notImplemented("Dummy Constructor: public flash.globalization.NumberFormatter");
+      dummyConstructor("public flash.globalization.NumberFormatter");
     }
     
     // JS -> AS Bindings

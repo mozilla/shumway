@@ -16,6 +16,7 @@
 // Class: TextSnapshot
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextSnapshot extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.text {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.text.TextSnapshot");
+      dummyConstructor("public flash.text.TextSnapshot");
     }
     
     // JS -> AS Bindings

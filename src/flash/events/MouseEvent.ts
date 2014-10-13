@@ -16,6 +16,7 @@
 // Class: MouseEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   export class MouseEvent extends flash.events.Event {
 
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
                 altKey: boolean = false, shiftKey: boolean = false, buttonDown: boolean = false,
                 delta: number /*int*/ = 0) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.MouseEvent");
+      dummyConstructor("public flash.events.MouseEvent");
     }
 
     // JS -> AS Bindings

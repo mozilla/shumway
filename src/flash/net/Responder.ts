@@ -16,6 +16,7 @@
 // Class: Responder
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
 
   export class Responder extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor (result: ASFunction, status: ASFunction = null) {
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.Responder");
+      dummyConstructor("public flash.net.Responder");
     }
 
     private _result: ASFunction;

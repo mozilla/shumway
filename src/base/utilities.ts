@@ -295,8 +295,12 @@ module Shumway {
       release || Debug.assert(false, "Not Implemented " + message);
     }
 
+    export function dummyConstructor(message: string) {
+      release || Debug.assert(false, "Dummy Constructor: " + message);
+    }
+
     export function abstractMethod(message: string) {
-      Debug.assert(false, "Abstract Method " + message);
+      release || Debug.assert(false, "Abstract Method " + message);
     }
 
     var somewhatImplementedCache = {};

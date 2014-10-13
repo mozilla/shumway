@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.events {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   export class GestureEvent extends flash.events.Event {
 
@@ -30,7 +31,7 @@ module Shumway.AVM2.AS.flash.events {
                 phase: string = null, localX: number = 0, localY: number = 0,
                 ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.GestureEvent");
+      dummyConstructor("public flash.events.GestureEvent");
     }
 
     // JS -> AS Bindings

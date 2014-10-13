@@ -16,6 +16,7 @@
 // Class: TextEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TextEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -27,7 +28,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 text: string = "") {
       super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.TextEvent");
+      dummyConstructor("public flash.events.TextEvent");
     }
 
     // JS -> AS Bindings

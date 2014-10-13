@@ -16,6 +16,7 @@
 // Class: ShaderPrecision
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ShaderPrecision extends ASNative {
     
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.ShaderPrecision");
+      dummyConstructor("public flash.display.ShaderPrecision");
     }
     
     // JS -> AS Bindings

@@ -16,6 +16,7 @@
 // Class: ExternalInterface
 module Shumway.AVM2.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Telemetry = Shumway.Telemetry;
@@ -38,7 +39,7 @@ module Shumway.AVM2.AS.flash.external {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.external.ExternalInterface");
+      dummyConstructor("public flash.external.ExternalInterface");
     }
     
     // JS -> AS Bindings

@@ -16,6 +16,7 @@
 // Class: IMEEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class IMEEvent extends flash.events.TextEvent {
 
     static classInitializer: any = null;
@@ -27,7 +28,7 @@ module Shumway.AVM2.AS.flash.events {
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 text: string = "", imeClient: flash.text.ime.IIMEClient = null) {
       super(undefined, undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.IMEEvent");
+      dummyConstructor("public flash.events.IMEEvent");
     }
 
     // JS -> AS Bindings
