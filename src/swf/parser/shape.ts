@@ -279,6 +279,7 @@ module Shumway.SWF.Parser {
     var shape: ShapeData = new ShapeData();
     if (isMorph) {
       shape.morphCoordinates = new Int32Array(shape.coordinates.length);
+      shape.morphStyles = new DataBuffer(16);
     }
     for (i = 0; i < allPaths.length; i++) {
       allPaths[i].serialize(shape);

@@ -596,7 +596,6 @@ module Shumway.GFX {
     }
 
     private _deserializeMorphPaths(data: ShapeData, context: CanvasRenderingContext2D): void {
-      release || assert(!this._paths);
       enterTimeline("RenderableShape.deserializeMorphPaths");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
@@ -636,48 +635,48 @@ module Shumway.GFX {
               strokePath && strokePath.lineTo(formOpenX, formOpenY);
             }
             formOpen = true;
-            x = formOpenX = morph(coordinates[coordinatesIndex++],
+            x = formOpenX = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
-            y = formOpenY = morph(coordinates[coordinatesIndex++],
+            y = formOpenY = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
             fillPath && fillPath.moveTo(x, y);
             strokePath && strokePath.moveTo(x, y);
             break;
           case PathCommand.LineTo:
             release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
-            x = morph(coordinates[coordinatesIndex++],
+            x = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
-            y = morph(coordinates[coordinatesIndex++],
+            y = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
             fillPath && fillPath.lineTo(x, y);
             strokePath && strokePath.lineTo(x, y);
             break;
           case PathCommand.CurveTo:
             release || assert(coordinatesIndex <= data.coordinatesPosition - 4);
-            cpX = morph(coordinates[coordinatesIndex++],
+            cpX = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
-            cpY = morph(coordinates[coordinatesIndex++],
+            cpY = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
-            x = morph(coordinates[coordinatesIndex++],
+            x = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
-            y = morph(coordinates[coordinatesIndex++],
+            y = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
             fillPath && fillPath.quadraticCurveTo(cpX, cpY, x, y);
             strokePath && strokePath.quadraticCurveTo(cpX, cpY, x, y);
             break;
           case PathCommand.CubicCurveTo:
             release || assert(coordinatesIndex <= data.coordinatesPosition - 6);
-            cpX = morph(coordinates[coordinatesIndex++],
+            cpX = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
-            cpY = morph(coordinates[coordinatesIndex++],
+            cpY = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
-            var cpX2 = morph(coordinates[coordinatesIndex++],
+            var cpX2 = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
-            var cpY2 = morph(coordinates[coordinatesIndex++],
+            var cpY2 = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
-            x = morph(coordinates[coordinatesIndex++],
+            x = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
-            y = morph(coordinates[coordinatesIndex++],
+            y = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
             fillPath && fillPath.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
             strokePath && strokePath.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
@@ -686,7 +685,7 @@ module Shumway.GFX {
             release || assert(styles.bytesAvailable >= 4);
             fillPath = this._createPath(PathType.Fill,
               ColorUtilities.rgbaToCSSStyle(
-                morph(styles.readUnsignedInt(), styles.readUnsignedInt(), ratio)
+                morph(styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio)
               ),
               false, null, x, y);
             break;
@@ -704,6 +703,8 @@ module Shumway.GFX {
             fillPath = null;
             break;
           case PathCommand.LineStyleSolid:
+            var width = morph(coordinates[coordinatesIndex],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
             var color = ColorUtilities.rgbaToCSSStyle(
               morph(styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio)
             );
@@ -712,8 +713,8 @@ module Shumway.GFX {
             var scaleMode: LineScaleMode = styles.readByte();
             var capsStyle: string = RenderableShape.LINE_CAPS_STYLES[styles.readByte()];
             var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
-            var strokeProperties = new StrokeProperties(coordinates[coordinatesIndex++]/20,
-              scaleMode, capsStyle, jointsStyle, styles.readByte());
+            var strokeProperties = new StrokeProperties(
+              width, scaleMode, capsStyle, jointsStyle, styles.readByte());
             strokePath = this._createPath(PathType.Stroke, color, false, strokeProperties, x, y);
             break;
           case PathCommand.LineStyleGradient:
