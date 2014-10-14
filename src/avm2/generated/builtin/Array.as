@@ -137,7 +137,6 @@ public dynamic class Array extends Object
   native AS3 function shift();
   prototype.shift = unsafeJSNative("Original.Array.prototype.shift");
 
-  private static native function _slice(o, A:Number, B:Number):Array
   native AS3 function slice(A=0, B=0xffffffff):Array;
   prototype.slice = unsafeJSNative("Original.Array.prototype.slice");
 

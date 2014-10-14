@@ -112,8 +112,6 @@ AS3 function map(mapper:Function, thisObj:Object=null) {
 
 AS3 native function push(...items:Array): uint;
 
-private native function _reverse() : void;
-
 AS3 function some(checker, thisObj: Object=null): Boolean {
     return _some(this, checker, thisObj is Object ? thisObj : null);
 }
