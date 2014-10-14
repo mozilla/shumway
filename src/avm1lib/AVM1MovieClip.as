@@ -225,6 +225,9 @@ public dynamic class AVM1MovieClip extends Object {
     return this._as3Object.height;
   }
   public function set _height(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.height = value;
   }
   public function get _highquality() {
@@ -458,12 +461,18 @@ public dynamic class AVM1MovieClip extends Object {
     return this._as3Object.width;
   }
   public function set _width(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.width = value;
   }
   public function get _x() {
     return this._as3Object.x;
   }
   public function set _x(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.x = value;
   }
   public function get _xmouse() {
@@ -473,12 +482,18 @@ public dynamic class AVM1MovieClip extends Object {
     return this._as3Object.scaleX * 100;
   }
   public function set _xscale(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.scaleX = value / 100;
   }
   public function get _y() {
     return this._as3Object.y;
   }
   public function set _y(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.y = value;
   }
   public function get _ymouse() {
@@ -488,6 +503,9 @@ public dynamic class AVM1MovieClip extends Object {
     return this._as3Object.scaleY * 100;
   }
   public function set _yscale(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.scaleY = value / 100;
   }
 
