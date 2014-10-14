@@ -66,6 +66,10 @@ public dynamic class AVM1MovieClip extends Object {
   private native function _constructMovieClipSymbol(symbolId, name);
   public function attachMovie(symbolId, name, depth, initObject) {
     var mc = _constructMovieClipSymbol(symbolId, name);
+    if (!mc) {
+      return undefined;
+    }
+
     var as2mc = _insertChildAtDepth(mc, depth);
 
     for (var i in initObject) {
