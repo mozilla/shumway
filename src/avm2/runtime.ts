@@ -206,83 +206,63 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  /**
-   * Applies a method trait that doesn't need a memoizer.
-   */
-  export function applyNonMemoizedMethodTrait(qn: string, trait: Trait, object: Object, scope, natives) {
-    release || assert (scope);
-    if (trait.isMethod()) {
-      var patchTargets = <IPatchTarget[]>[
-        { object: object, name: qn },
-        { object: object, name: VM_OPEN_METHOD_PREFIX + qn }
-      ];
-      var trampoline = makeTrampoline(trait, scope, natives, patchTargets,
-                                      trait.methodInfo.parameters.length, '');
-      var closure = bindSafely(trampoline, object);
-      defineReadOnlyProperty(closure, VM_LENGTH, trampoline.asLength);
-      defineReadOnlyProperty(closure, Multiname.getPublicQualifiedName("prototype"), null);
-      defineNonEnumerableProperty(object, qn, closure);
-      defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, closure);
-    } else if (trait.isGetter() || trait.isSetter()) {
-      var patchTargets: IPatchTarget[] = <IPatchTarget[]>[{ object: object}];
-      var argsCount = 0;
-      var isGetter = trait.isGetter();
-      if (isGetter) {
-        patchTargets[0]['get'] = qn;
-      } else {
-        patchTargets[0]['set'] = qn;
-        argsCount = 1;
-      }
-      var trampoline = makeTrampoline(trait, scope, natives, patchTargets, argsCount, '');
-      defineNonEnumerableGetterOrSetter(object, qn, trampoline, isGetter);
+  export function applyMethodTrait(qn: string, object: Object, binding: Binding,
+                                   isScriptBinding: boolean) {
+    enterTimeline("applyMethodTrait");
+    var trait = binding.trait;
+    release || assert (trait);
+    var isMethod = trait.isMethod();
+    var isGetter = trait.isGetter();
+    var prefix = isMethod ? VM_OPEN_METHOD_PREFIX : isGetter ?
+                                                    VM_OPEN_GET_METHOD_PREFIX :
+                                                    VM_OPEN_SET_METHOD_PREFIX;
+    var traitFunction;
+    var patchTargets: IPatchTarget[];
+    if (trait.methodInfo.isNative()) {
+      traitFunction = getTraitFunction(trait, binding.scope, binding.natives);
     } else {
-      Shumway.Debug.unexpected(trait);
+      patchTargets = [{object: object, name: prefix + qn}];
+      traitFunction = makeTrampoline(trait, binding.scope, binding.natives, patchTargets,
+                                     isMethod ? trait.methodInfo.parameters.length : 0,
+                                     String(trait.name));
+      if (isMethod) {
+        patchTargets.push({object: object.asOpenMethods, name: qn});
+      } else {
+        var accessorPatchTarget: IPatchTarget = {object: object};
+        if (isGetter) {
+          accessorPatchTarget.get = qn;
+        } else {
+          accessorPatchTarget.set = qn;
+        }
+        patchTargets.push(accessorPatchTarget);
+      }
     }
-  }
 
-  export function applyMemoizedMethodTrait(qn: string, trait: Trait, object: Object, scope, natives) {
-    release || assert (scope, trait);
-
-    if (trait.isMethod()) {
-      // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
-      // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
-      // target value for subsequent memoizations.
-      var memoizerTarget = { value: <ITrampoline>null };
-      var openMethods = object.asOpenMethods;
-      var patchTargets = <IPatchTarget[]>[
-        { object: memoizerTarget, name: "value"},
-        { object: openMethods,    name: qn },
-        { object: object,         name: VM_OPEN_METHOD_PREFIX + qn }
-      ];
-      var trampoline = makeTrampoline(trait, scope, natives, patchTargets,
-                                      trait.methodInfo.parameters.length, String(trait.name));
-
-      memoizerTarget.value = trampoline;
-      openMethods[qn] = trampoline;
-      defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, trampoline);
-      // TODO: We make the |memoizeMethodClosure| configurable since it may be
-      // overridden by a derived class. Only do this non final classes.
-
-      defineNonEnumerableGetter(object, qn, makeMemoizer(qn, memoizerTarget));
-
-      tryInjectToStringAndValueOfForwarder(object, qn)
-    } else if (trait.isGetter()) {
-      var patchTargets = <IPatchTarget[]>[
-        {object: object, get: qn},
-        {object: object, name: VM_OPEN_GET_METHOD_PREFIX + qn}
-      ];
-      var trampoline = makeTrampoline(trait, scope, natives, patchTargets, 0, String(trait.name));
-      defineNonEnumerableProperty(object, VM_OPEN_GET_METHOD_PREFIX + qn, trampoline);
-      defineNonEnumerableGetterOrSetter(object, qn, trampoline, true);
-    } else if (trait.isSetter()) {
-      var patchTargets = <IPatchTarget[]>[
-        {object: object, set: qn},
-        {object: object, name: VM_OPEN_SET_METHOD_PREFIX + qn}
-      ];
-      var trampoline = makeTrampoline(trait, scope, natives, patchTargets, 0, String(trait.name));
-      defineNonEnumerableProperty(object, VM_OPEN_SET_METHOD_PREFIX + qn, trampoline);
-      defineNonEnumerableGetterOrSetter(object, qn, trampoline, false);
+    defineNonEnumerableProperty(object, prefix + qn, traitFunction);
+    if (isMethod) {
+      object.asOpenMethods[qn] = traitFunction;
+      if (isScriptBinding) {
+        // For non-native methods, patch the target of the memoizer using a temporary |target|
+        // object that is visible to both the trampoline and the memoizer. The trampoline closes
+        // over it and patches the target value while the memoizer uses the target value for
+        // subsequent memoizations.
+        var memoizerTarget = {value: traitFunction};
+        patchTargets && patchTargets.push({object: memoizerTarget, name: "value"});
+        defineNonEnumerableGetter(object, qn, makeMemoizer(qn, memoizerTarget));
+        tryInjectToStringAndValueOfForwarder(object, qn);
+      } else {
+        defineNonEnumerableProperty(object, qn, traitFunction);
+      }
+    } else {
+      defineNonEnumerableGetterOrSetter(object, qn, traitFunction, isGetter);
+      // For instance accessors, we have to install a version of the getter/setter that can be
+      // used with Function#call in order to be able to have super.propName work in the right
+      // scope.
+      if (isScriptBinding) {
+        defineNonEnumerableProperty(object, prefix + qn, traitFunction);
+      }
     }
+    leaveTimeline();
   }
 
   /**
@@ -1615,6 +1595,9 @@ module Shumway.AVM2.Runtime {
     var fn;
 
     if (mi.isNative()) {
+      if (traceExecution.value >= 2) {
+        log("Retrieving Native For Trait: " + trait.holder + " " + trait);
+      }
       var md = trait.metadata;
       if (md && md.native) {
         var nativeName = md.native.value[0].value;
@@ -1623,8 +1606,6 @@ module Shumway.AVM2.Runtime {
         fn = Shumway.AVM2.AS.getMethodOrAccessorNative(trait, natives);
       }
       if (!fn) {
-        Shumway.Debug.warning("No native method for: " + trait.kindName() + " " +
-          mi.holder + "::" + Multiname.getQualifiedName(mi.name) + ", make sure you've got the static keyword for static methods.");
         return (function (mi) {
           return function () {
             Shumway.Debug.warning("Calling undefined native method: " + trait.kindName() +

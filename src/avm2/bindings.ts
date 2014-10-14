@@ -198,14 +198,7 @@ module Shumway.AVM2.Runtime {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
           }
           pushUnique(object.asBindings, key);
-          if (this instanceof ScriptBindings) {
-            enterTimeline("applyNonMemoizedMethodTrait");
-            applyNonMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
-          } else {
-            enterTimeline("applyMemoizedMethodTrait");
-            applyMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
-          }
-          leaveTimeline();
+          applyMethodTrait(key, object, binding, !(this instanceof ScriptBindings));
         }
       }
     }
