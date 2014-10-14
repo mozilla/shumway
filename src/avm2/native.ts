@@ -1129,38 +1129,112 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Array];
     public static instanceNatives: any [] = [Array.prototype];
 
+    static classInitializer: any = function() {
+      var proto = Array.prototype;
+      defineNonEnumerableProperty(proto, '$Bgjoin', Array.prototype.join);
+      // Same as join, see Array.as in Tamarin repository.
+      defineNonEnumerableProperty(proto, '$BgtoString', Array.prototype.join);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', ASArray.prototype.toLocaleString);
+
+      defineNonEnumerableProperty(proto, '$Bgpop', Array.prototype.pop);
+      defineNonEnumerableProperty(proto, '$Bgpush', Array.prototype.push);
+
+      defineNonEnumerableProperty(proto, '$Bgreverse', Array.prototype.reverse);
+      defineNonEnumerableProperty(proto, '$Bgconcat', Array.prototype.concat);
+      defineNonEnumerableProperty(proto, '$Bgsplice', ASArray.prototype.splice);
+      defineNonEnumerableProperty(proto, '$Bgslice', Array.prototype.slice);
+
+      defineNonEnumerableProperty(proto, '$Bgshift', Array.prototype.shift);
+      defineNonEnumerableProperty(proto, '$Bgunshift', Array.prototype.unshift);
+
+      defineNonEnumerableProperty(proto, '$BgindexOf', Array.prototype.indexOf);
+      defineNonEnumerableProperty(proto, '$BglastIndexOf', Array.prototype.lastIndexOf);
+
+      defineNonEnumerableProperty(proto, '$BgforEach', Array.prototype.forEach);
+      defineNonEnumerableProperty(proto, '$Bgmap', Array.prototype.map);
+      defineNonEnumerableProperty(proto, '$Bgfilter', Array.prototype.filter);
+      defineNonEnumerableProperty(proto, '$Bgsome', Array.prototype.some);
+      defineNonEnumerableProperty(proto, '$Bgevery', ASArray.prototype.every);
+
+      defineNonEnumerableProperty(proto, '$Bgsort', ASArray.prototype.sort);
+      defineNonEnumerableProperty(proto, '$BgsortOn', ASArray.prototype.sortOn);
+    };
+
     static CACHE_NUMERIC_COMPARATORS = true;
     static numericComparatorCache = createEmptyObject();
 
-    private static _splice(o: any, args: any []): any [] {
-      if (args.length === 0) {
+    toLocaleString(): string {
+      var a: ASArray = ASArray.coerce(this);
+
+      var out: string = "";
+      for (var i = 0, n = (<any>a).length; i < n; i++) {
+        var val = a[i];
+        if (val !== null && val !== undefined) {
+          out += val.toLocaleString();
+        }
+        if (i + 1 < n) {
+          out += ",";
+        }
+      }
+      return out;
+    }
+    splice(): any[] {
+      var o = this;
+      if (arguments.length === 0) {
         return undefined;
       }
-      return o.splice.apply(o, args);
+      return o.splice.apply(o, arguments);
     }
-    private static _sort(o: any, args: any []): any {
-      if (args.length === 0) {
+
+    every(callback: Function, thisObject: any): boolean {
+      var o = <any>this;
+      for (var i = 0; i < o.length; i++) {
+        if (callback.call(thisObject, o[i], i, o) !== true) {
+          return false;
+        }
+      }
+      return false;
+    }
+
+    filter(callback: Function, thisObject: any): any [] {
+      var o = <any>this;
+      var result = [];
+      for (var i = 0; i < o.length; i++) {
+        if (callback.call(thisObject, o[i], i, o) === true) {
+          result.push(o[i]);
+        }
+      }
+      return result;
+    }
+
+    sort(): any {
+      var o = <any>this;
+      if (arguments.length === 0) {
         return o.sort();
       }
       var compareFunction, options = 0;
-      if (args[0] instanceof Function) {
-        compareFunction = args[0];
-      } else if (isNumber(args[0])) {
-        options = args[0];
+      if (arguments[0] instanceof Function) {
+        compareFunction = arguments[0];
+      } else if (isNumber(arguments[0])) {
+        options = arguments[0];
       }
-      if (isNumber(args[1])) {
-        options = args[1];
+      if (isNumber(arguments[1])) {
+        options = arguments[1];
       }
       o.sort(function (a, b) {
         return Runtime.asCompare(a, b, options, compareFunction);
       });
       return o;
     }
-    private static _sortOn(o: any, names: any, options: any): any {
+
+    sortOn(names: any, options: any): any {
+      var o = <any>this;
       if (isString(names)) {
         names = [names];
       }
-      if (isNumber(options)) {
+      if (isNullOrUndefined(options)) {
+        options = [];
+      } else if (isNumber(options)) {
         options = [options];
       }
       for (var i = names.length - 1; i >= 0; i--) {
@@ -1185,23 +1259,7 @@ module Shumway.AVM2.AS {
       }
       return o;
     }
-    private static _every(o: any, callback: Function, thisObject: any): boolean {
-      for (var i = 0; i < o.length; i++) {
-        if (callback.call(thisObject, o[i], i, o) !== true) {
-          return false;
-        }
-      }
-      return false;
-    }
-    private static _filter(o: any, callback: Function, thisObject: any): any [] {
-      var result = [];
-      for (var i = 0; i < o.length; i++) {
-        if (callback.call(thisObject, o[i], i, o) === true) {
-          result.push(o[i]);
-        }
-      }
-      return result;
-    }
+
     get native_length(): number /*uint*/ {
       return (<any>this).length;
     }

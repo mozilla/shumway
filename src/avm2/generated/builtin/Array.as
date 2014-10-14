@@ -51,64 +51,8 @@ public dynamic class Array extends Object
    */
 
   native AS3 function join(sep=void 0):String;
-  prototype.join = unsafeJSNative("Original.Array.prototype.join");
 
   AS3 native function pop();
-  prototype.pop = unsafeJSNative("Original.Array.prototype.pop");
-
-  /**
-   15.4.4.2 Array.prototype.toString ( )
-   The result of calling this function is the same as if the built-in join method were invoked for this object with no
-   argument.
-   The toString function is not generic; it throws a TypeError exception if its this value is not an Array object.
-   Therefore, it cannot be transferred to other kinds of objects for use as a method.
-   */
-
-  prototype.toString = unsafeJSNative("Original.Array.prototype.toString");
-
-  /**
-   15.4.4.3 Array.prototype.toLocaleString ( )
-   The elements of the array are converted to strings using their toLocaleString methods, and these strings are
-   then concatenated, separated by occurrences of a separator string that has been derived in an implementationdefined
-   locale-specific way. The result of calling this function is intended to be analogous to the result of
-   toString, except that the result of this function is intended to be locale-specific.
-   The result is calculated as follows:
-   1. Call the [[Get]] method of this object with argument "length".
-   2. Call ToUint32(Result(1)).
-   3. Let separator be the list-separator string appropriate for the host environment's current locale (this is derived in
-   an implementation-defined way).
-   4. Call ToString(separator).
-   5. If Result(2) is zero, return the empty string.
-   6. Call the [[Get]] method of this object with argument "0".
-   7. If Result(6) is undefined or null, use the empty string; otherwise, call ToObject(Result(6)).toLocaleString().
-   8. Let R be Result(7).
-   9. Let k be 1.
-   10. If k equals Result(2), return R.
-   11. Let S be a string value produced by concatenating R and Result(4).
-   12. Call the [[Get]] method of this object with argument ToString(k).
-   13. If Result(12) is undefined or null, use the empty string; otherwise, call ToObject(Result(12)).toLocaleString().
-   14. Let R be a string value produced by concatenating S and Result(13).
-   15. Increase k by 1.
-   16. Go to step 10.
-   The toLocaleString function is not generic; it throws a TypeError exception if its this value is not an Array
-   object. Therefore, it cannot be transferred to other kinds of objects for use as a method.
-   */
-
-  prototype.toLocaleString = function():String
-  {
-    var a:Array = this // TypeError if not compatible
-
-    var out:String = ""
-    for (var i:uint = 0, n:uint=a.length; i < n; i++)
-    {
-      var x = a[i]
-      if (x != null)
-        out += x.toLocaleString()
-      if (i+1 < n)
-        out += ","
-    }
-    return out
-  }
 
   /**
    When the push method is called with zero or more arguments item1, item2, etc., the following steps are taken:
@@ -126,19 +70,14 @@ public dynamic class Array extends Object
    is implementation-dependent.
    */
   AS3 native function push(...args):uint
-  prototype.push = unsafeJSNative("Original.Array.prototype.push");
 
   native AS3 function reverse():Array;
-  prototype.reverse = unsafeJSNative("Original.Array.prototype.reverse");
 
   native AS3 function concat(...args):Array;
-  prototype.concat = unsafeJSNative("Original.Array.prototype.concat");
 
   native AS3 function shift();
-  prototype.shift = unsafeJSNative("Original.Array.prototype.shift");
 
   native AS3 function slice(A=0, B=0xffffffff):Array;
-  prototype.slice = unsafeJSNative("Original.Array.prototype.slice");
 
   /**
    15.4.4.13 Array.prototype.unshift ( [ item1 [ , item2 [ , ... ] ] ] )
@@ -175,41 +114,14 @@ public dynamic class Array extends Object
    host object is implementation-dependent.
    */
   native AS3 function unshift(...args):uint;
-  prototype.unshift = unsafeJSNative("Original.Array.prototype.unshift");
-
-  private static native function _splice(o, args:Array):Array
 
   // splice with zero args returns undefined. All other cases return Array.
-  AS3 function splice(...args)
-  {
-    return _splice(this, args);
-  }
-  prototype.splice = function(...args)
-  {
-    return _splice(this, args)
-  }
+  native AS3 function splice(...args): Array;
 
   // sort can return an Array or a Number (unique sort option)
-  private static native function _sort(o, args:Array)
-  AS3 function sort(...args)
-  {
-    return _sort (this, args);
-  }
-  prototype.sort = function(...args)
-  {
-    return _sort (this, args);
-  }
+  native AS3 function sort(...args);
 
-  private static native function _sortOn(o, names, options)
-  AS3 function sortOn(names, options=0, ...ignored)
-  {
-    // this is our own addition so we don't have to make names be optional
-    return _sortOn(this, names, options);
-  }
-  prototype.sortOn = function(names, options=0, ...ignored)
-  {
-    return _sortOn(this, names, options)
-  }
+  native AS3 function sortOn(names, options=0, ...ignored);
 
   // Array extensions that are in Mozilla...
   // http://developer.mozilla.org/en/docs/Core_JavaScript_1.5_Reference:Global_Objects:Array
@@ -217,45 +129,21 @@ public dynamic class Array extends Object
   // These all work on generic objects (array like objects) as well as arrays
 
   native AS3 function indexOf(searchElement, fromIndex=0):int;
-  prototype.indexOf = unsafeJSNative("Original.Array.prototype.indexOf");
-
   native AS3 function lastIndexOf(searchElement, fromIndex=0x7fffffff):int;
-  prototype.lastIndexOf = unsafeJSNative("Original.Array.prototype.lastIndexOf");
 
   // Returns true if every element in this array satisfies the provided testing function.
-  private static native function _every(o, callback:Function, thisObject):Boolean;
-  AS3 function every(callback:Function, thisObject=null):Boolean
-  {
-    return _every (this, callback, thisObject);
-  }
-  prototype.every = function(callback:Function, thisObject=null):Boolean
-  {
-    return _every (this, callback, thisObject);
-  }
+  native AS3 function every(callback:Function, thisObject=null):Boolean;
 
   // Creates a new array with all elements that pass the test implemented by the provided function.
-  private static native function _filter(o, callback:Function, thisObject):Array;
-  AS3 function filter(callback:Function, thisObject=null):Array
-  {
-    return _filter (this, callback, thisObject);
-  }
-  prototype.filter = function(callback:Function, thisObject=null):Array
-  {
-    return _filter (this, callback, thisObject);
-  }
+  native AS3 function filter(callback:Function, thisObject=null):Array;
 
   // Calls a function for each element in the array.
   native AS3 function forEach(callback:Function, thisObject=null):void;
-  prototype.forEach = unsafeJSNative("Original.Array.prototype.forEach");
 
   // Creates a new array with the results of calling a provided function on every element in this array.
   native AS3 function map(callback:Function, thisObject=null):Array;
-  prototype.map = unsafeJSNative("Original.Array.prototype.map");
 
   // Returns true if at least one element in this array satisfies the provided testing function.
   native AS3 function some(callback:Function, thisObject=null):Boolean;
-  prototype.some = unsafeJSNative("Original.Array.prototype.some");
-
-  _dontEnumPrototype(prototype);
 }
 }
