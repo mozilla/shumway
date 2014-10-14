@@ -105,7 +105,7 @@ module Shumway.AVM2.AS.avm1lib {
       if (_asHasProperty.call(this, namespaces, name, flags)) {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
-      if (name[0] === '_') {
+      if (typeof name === 'string' && name[0] === '_') {
         var level = this._resolveLevelNProperty(name);
         if (level) {
           return level;
@@ -122,7 +122,7 @@ module Shumway.AVM2.AS.avm1lib {
       if (_asHasProperty.call(this, namespaces, name, flags)) {
         return true;
       }
-      if (name[0] === '_') {
+      if (typeof name === 'string' && name[0] === '_') {
         var level = this._resolveLevelNProperty(name);
         if (level) {
           return true;
