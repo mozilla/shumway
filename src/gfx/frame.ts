@@ -116,18 +116,18 @@ module Shumway.GFX {
    * Capability flags are not yet implemented. The idea is to force some constraits on frames so that algorithms
    * can run more effectively.
    *
-   *
    */
   export class Frame {
-    /**
-     * For debugging only.
-     */
-    public color: Color;
 
     /**
      * Used as a temporary array to avoid allocations.
      */
     private static _path: Frame[] = [];
+
+    /**
+     * Give each frame a unique id number.
+     */
+    private static _nextID: number = 0;
 
     /*
      * Return's a list of ancestors excluding the |last|, the return list is reused.
@@ -148,7 +148,7 @@ module Shumway.GFX {
     private _matrix: Matrix;
     private _concatenatedMatrix: Matrix;
     private _invertedConcatenatedMatrix: Matrix;
-    private _filters: Filter[];
+    private _filters: Filter [];
     private _colorMatrix: ColorMatrix;
     private _concatenatedColorMatrix: ColorMatrix;
     private _properties: {[name: string]: any};
@@ -159,29 +159,32 @@ module Shumway.GFX {
      */
     private _clip: number;
 
-    private _flags: FrameFlags;
-    private _capability: FrameCapabilityFlags;
-
     /**
      * Stage location where the frame was previously drawn. This is used to compute dirty regions and
      * is updated every time the frame is rendered.
      */
-    _previouslyRenderedAABB: Rectangle;
+    private _previouslyRenderedAABB: Rectangle;
+    private _flags: FrameFlags;
+    private _smoothing: Smoothing;
+    private _pixelSnapping: PixelSnapping;
+    private _id: number;
 
-    _parent: Frame;
+    protected _parent: Frame;
+    protected _capability: FrameCapabilityFlags;
 
-    get parent(): Frame {
+    public set previouslyRenderedAABB(rectange: Rectangle) {
+      this._previouslyRenderedAABB = rectange;
+    }
+
+    public get previouslyRenderedAABB(): Rectangle {
+      return this._previouslyRenderedAABB;
+    }
+
+    public get parent(): Frame {
       return this._parent;
     }
 
-    _smoothing: Smoothing;
-    _pixelSnapping: PixelSnapping;
-
-    public ignoreMaskAlpha: boolean;
-
-    private static _nextID: number = 0;
-    private _id: number;
-    get id(): number {
+    public get id(): number {
       return this._id;
     }
 
@@ -210,19 +213,19 @@ module Shumway.GFX {
       this._pixelSnapping = PixelSnapping.Never;
     }
 
-    _setFlags(flags: FrameFlags) {
+    public setFlags(flags: FrameFlags) {
       this._flags |= flags;
     }
 
-    _removeFlags(flags: FrameFlags) {
+    protected _removeFlags(flags: FrameFlags) {
       this._flags &= ~flags;
     }
 
-    _hasFlags(flags: FrameFlags): boolean {
+    public hasFlags(flags: FrameFlags): boolean {
       return (this._flags & flags) === flags;
     }
 
-    _toggleFlags(flags: FrameFlags, on: boolean) {
+    public toggleFlags(flags: FrameFlags, on: boolean) {
       if (on) {
         this._flags |= flags;
       } else {
@@ -230,7 +233,7 @@ module Shumway.GFX {
       }
     }
 
-    _hasAnyFlags(flags: FrameFlags): boolean {
+    protected _hasAnyFlags(flags: FrameFlags): boolean {
       return !!(this._flags & flags);
     }
 
@@ -240,7 +243,7 @@ module Shumway.GFX {
     private _findClosestAncestor(flags: FrameFlags, on: boolean): Frame {
       var node = this;
       while (node) {
-        if (node._hasFlags(flags) === on) {
+        if (node.hasFlags(flags) === on) {
           return node;
         }
         release || assert(node !== node._parent);
@@ -252,7 +255,7 @@ module Shumway.GFX {
     /**
      * Tests if this frame is an ancestor of the specified frame.
      */
-    _isAncestor(child: Frame): boolean {
+    private _isAncestor(child: Frame): boolean {
       var node = child;
       while (node) {
         if (node === this) {
@@ -266,28 +269,21 @@ module Shumway.GFX {
 
     /**
      * Propagates capabilities up and down the frame tree.
-     *
      * TODO: Make this non-recursive.
      */
-    public setCapability(capability: FrameCapabilityFlags, on: boolean = true, direction: Direction = Direction.None) {
+    protected _setCapability(capability: FrameCapabilityFlags, on: boolean = true, direction: Direction = Direction.None) {
       if (on) {
         this._capability |= capability;
       } else {
         this._capability &= ~capability;
       }
       if (direction === Direction.Upward && this._parent) {
-        this._parent.setCapability(capability, on, direction);
-      } else if (direction === Direction.Downward && this instanceof FrameContainer) {
-        var frameContainer = <FrameContainer>this;
-        var children = frameContainer._children;
-        for (var i = 0; i < children.length; i++) {
-          children[i].setCapability(capability, on, direction);
-        }
+        this._parent._setCapability(capability, on, direction);
       }
     }
 
-    public removeCapability(capability: FrameCapabilityFlags) {
-      this.setCapability(capability, false);
+    private _removeCapability(capability: FrameCapabilityFlags) {
+      this._setCapability(capability, false);
     }
 
     public hasCapability(capability: FrameCapabilityFlags) {
@@ -303,11 +299,11 @@ module Shumway.GFX {
     /**
      * Propagates flags up the frame tree. Propagation stops if all flags are already set.
      */
-    _propagateFlagsUp(flags: FrameFlags) {
-      if (this._hasFlags(flags)) {
+    protected _propagateFlagsUp(flags: FrameFlags) {
+      if (this.hasFlags(flags)) {
         return;
       }
-      this._setFlags(flags);
+      this.setFlags(flags);
       var parent = this._parent;
       if (parent) {
         parent._propagateFlagsUp(flags);
@@ -319,8 +315,8 @@ module Shumway.GFX {
      *
      * Overridden in FrameContainer.
      */
-    _propagateFlagsDown(flags: FrameFlags) {
-      this._setFlags(flags);
+    protected _propagateFlagsDown(flags: FrameFlags) {
+      this.setFlags(flags);
     }
 
     /**
@@ -328,7 +324,7 @@ module Shumway.GFX {
      * of a frame changes in the frame tree. For instance, its matrix has been mutated or it has been added or
      * removed from a frame container.
      */
-    _invalidatePosition() {
+    protected _invalidatePosition() {
       this._propagateFlagsDown(FrameFlags.InvalidConcatenatedMatrix |
                                FrameFlags.InvalidInvertedConcatenatedMatrix);
       if (this._parent) {
@@ -357,73 +353,73 @@ module Shumway.GFX {
       this._propagateFlagsUp(FrameFlags.InvalidBounds);
     }
 
-    get properties(): {[name: string]: any} {
+    public get properties(): {[name: string]: any} {
       return this._properties || (this._properties = Object.create(null));
     }
 
-    get x(): number {
+    public get x(): number {
       return this._matrix.tx;
     }
 
-    set x(value: number) {
+    public set x(value: number) {
       this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._matrix.tx = value;
       this._invalidatePosition();
     }
 
-    get y(): number {
+    public get y(): number {
       return this._matrix.ty;
     }
 
-    set y(value: number) {
+    public set y(value: number) {
       this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._matrix.ty = value;
       this._invalidatePosition();
     }
 
-    get matrix(): Matrix {
+    public get matrix(): Matrix {
       return this._matrix;
     }
 
-    set matrix(value: Matrix) {
+    public set matrix(value: Matrix) {
       this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._matrix.set(value);
       this._invalidatePosition();
     }
 
-    set blendMode(value: BlendMode) {
+    public set blendMode(value: BlendMode) {
       value = value | 0;
       this.checkCapability(FrameCapabilityFlags.AllowBlendModeWrite);
       this._blendMode = value;
       this._invalidateParentPaint();
     }
 
-    get blendMode(): BlendMode {
+    public get blendMode(): BlendMode {
       return this._blendMode;
     }
 
-    set filters(value: Filter[]) {
+    public set filters(value: Filter[]) {
       this.checkCapability(FrameCapabilityFlags.AllowFiltersWrite);
       this._filters = value;
       this._invalidateParentPaint();
     }
 
-    get filters(): Filter[] {
+    public get filters(): Filter[] {
       return this._filters;
     }
 
-    set colorMatrix(value: ColorMatrix) {
+    public set colorMatrix(value: ColorMatrix) {
       this.checkCapability(FrameCapabilityFlags.AllowColorMatrixWrite);
       this._colorMatrix.set(value);
       this._propagateFlagsDown(FrameFlags.InvalidConcatenatedColorMatrix);
       this._invalidateParentPaint();
     }
 
-    get colorMatrix(): ColorMatrix {
+    public get colorMatrix(): ColorMatrix {
       return this._colorMatrix;
     }
 
-    set mask(value: Frame) {
+    public set mask(value: Frame) {
       this.checkCapability(FrameCapabilityFlags.AllowMaskWrite);
       if (this._mask && this._mask !== value) {
         this._mask._removeFlags(FrameFlags.IsMask);
@@ -432,22 +428,22 @@ module Shumway.GFX {
       if (this._mask) {
         // TODO: Check if this assertion makes sense.
         // release || assert (!this._mask._hasFlags(FrameFlags.IsMask));
-        this._mask._setFlags(FrameFlags.IsMask);
+        this._mask.setFlags(FrameFlags.IsMask);
         this._mask.invalidate();
       }
       this.invalidate();
     }
 
-    get mask() {
+    public get mask() {
       return this._mask;
     }
 
-    set clip(value: number) {
+    public set clip(value: number) {
       this.checkCapability(FrameCapabilityFlags.AllowClipWrite);
       this._clip = value;
     }
 
-    get clip(): number {
+    public get clip(): number {
       return this._clip;
     }
 
@@ -456,7 +452,7 @@ module Shumway.GFX {
       return null;
     }
 
-    gatherPreviousDirtyRegions() {
+    public gatherPreviousDirtyRegions() {
       var stage = this.stage;
       if (!stage.trackDirtyRegions) {
         return;
@@ -472,18 +468,18 @@ module Shumway.GFX {
       });
     }
 
-    getConcatenatedColorMatrix(): ColorMatrix {
+    public getConcatenatedColorMatrix(): ColorMatrix {
       if (!this._parent) {
         return this._colorMatrix;
       }
       // Compute the concatenated color transforms for this node and all of its ancestors.
-      if (this._hasFlags(FrameFlags.InvalidConcatenatedColorMatrix)) {
+      if (this.hasFlags(FrameFlags.InvalidConcatenatedColorMatrix)) {
         var ancestor = this._findClosestAncestor(FrameFlags.InvalidConcatenatedColorMatrix, false);
         var path = Frame._getAncestors(this, ancestor);
         var m = ancestor ? ancestor._concatenatedColorMatrix.clone() : ColorMatrix.createIdentity();
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
-          release || assert (ancestor._hasFlags(FrameFlags.InvalidConcatenatedColorMatrix));
+          release || assert (ancestor.hasFlags(FrameFlags.InvalidConcatenatedColorMatrix));
           // TODO: Premultiply here.
           m.multiply(ancestor._colorMatrix);
           ancestor._concatenatedColorMatrix.set(m);
@@ -493,7 +489,7 @@ module Shumway.GFX {
       return this._concatenatedColorMatrix;
     }
 
-    getConcatenatedAlpha(ancestor: Frame = null): number {
+    public getConcatenatedAlpha(ancestor: Frame = null): number {
       var frame = this;
       var alpha = 1;
       while (frame && frame !== ancestor) {
@@ -503,7 +499,7 @@ module Shumway.GFX {
       return alpha;
     }
 
-    get stage(): Stage {
+    public get stage(): Stage {
       var frame = this;
       while (frame._parent) {
         frame = frame._parent;
@@ -516,13 +512,13 @@ module Shumway.GFX {
 
     public getConcatenatedMatrix(): Matrix {
       // Compute the concatenated transforms for this node and all of its ancestors.
-      if (this._hasFlags(FrameFlags.InvalidConcatenatedMatrix)) {
+      if (this.hasFlags(FrameFlags.InvalidConcatenatedMatrix)) {
         var ancestor = this._findClosestAncestor(FrameFlags.InvalidConcatenatedMatrix, false);
         var path = Frame._getAncestors(this, ancestor);
         var m = ancestor ? ancestor._concatenatedMatrix.clone() : Matrix.createIdentity();
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
-          release || assert (ancestor._hasFlags(FrameFlags.InvalidConcatenatedMatrix));
+          release || assert (ancestor.hasFlags(FrameFlags.InvalidConcatenatedMatrix));
           m.preMultiply(ancestor._matrix);
           ancestor._concatenatedMatrix.set(m);
           ancestor._removeFlags(FrameFlags.InvalidConcatenatedMatrix);
@@ -532,7 +528,7 @@ module Shumway.GFX {
     }
 
     private _getInvertedConcatenatedMatrix(): Matrix {
-      if (this._hasFlags(FrameFlags.InvalidInvertedConcatenatedMatrix)) {
+      if (this.hasFlags(FrameFlags.InvalidInvertedConcatenatedMatrix)) {
         if (!this._invertedConcatenatedMatrix) {
           this._invertedConcatenatedMatrix = Matrix.createIdentity();
         }
@@ -543,8 +539,8 @@ module Shumway.GFX {
       return this._invertedConcatenatedMatrix;
     }
 
-    invalidate() {
-      this._setFlags(FrameFlags.Dirty);
+    public invalidate() {
+      this.setFlags(FrameFlags.Dirty);
     }
 
     public visit(visitor: (Frame, Matrix?, FrameFlags?) => VisitorFlags,
@@ -572,7 +568,8 @@ module Shumway.GFX {
         if (result === VisitorFlags.Continue) {
           if (frame instanceof FrameContainer) {
             frameContainer = <FrameContainer>frame;
-            var length = frameContainer._children.length;
+            var children = frameContainer.children;
+            var length = children.length;
             if (visitorFlags & VisitorFlags.Clips && !disableClipping.value) {
               var leaveClip: Frame [][] = frameContainer.gatherLeaveClipEvents();
 
@@ -592,7 +589,7 @@ module Shumway.GFX {
                     }
                   }
                 }
-                var child = frameContainer._children[i];
+                var child = children[i];
                 release || assert(child);
                 frameStack.push(child);
                 if (calculateTransform) {
@@ -608,7 +605,7 @@ module Shumway.GFX {
               }
             } else {
               for (var i = 0; i < length; i++) {
-                var child = frameContainer._children[frontToBack ? i : length - 1 - i];
+                var child = children[frontToBack ? i : length - 1 - i];
                 if (!child) {
                   continue;
                 }
@@ -638,21 +635,21 @@ module Shumway.GFX {
       return depth;
     }
 
-    set smoothing(value: Smoothing) {
+    public set smoothing(value: Smoothing) {
       this._smoothing = value;
       this.invalidate();
     }
 
-    get smoothing(): Smoothing {
+    public get smoothing(): Smoothing {
       return this._smoothing;
     }
 
-    set pixelSnapping(value: PixelSnapping) {
+    public set pixelSnapping(value: PixelSnapping) {
       this._pixelSnapping = value;
       this.invalidate();
     }
 
-    get pixelSnapping(): PixelSnapping {
+    public get pixelSnapping(): PixelSnapping {
       return this._pixelSnapping;
     }
 

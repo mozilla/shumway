@@ -503,7 +503,7 @@ module Shumway.GFX.Canvas2D {
           return VisitorFlags.Continue;
         }
 
-        if (!frame._hasFlags(FrameFlags.Visible)) {
+        if (!frame.hasFlags(FrameFlags.Visible)) {
           return VisitorFlags.Skip;
         }
 
@@ -591,7 +591,7 @@ module Shumway.GFX.Canvas2D {
         }
 
         if (frame instanceof Shape) {
-          frame._previouslyRenderedAABB = boundsAABB;
+          frame.previouslyRenderedAABB = boundsAABB;
           self._renderShape(context, <Shape>frame, matrix, viewport, state);
         } else if (frame instanceof ClipRectangle) {
           var clipRectangle = <ClipRectangle>frame;
@@ -601,7 +601,7 @@ module Shumway.GFX.Canvas2D {
           context.clip();
           boundsAABB.intersect(viewport);
 
-          if (!frame._hasFlags(FrameFlags.Transparent)) {
+          if (!frame.hasFlags(FrameFlags.Transparent)) {
             // Fill Background
             context.fillStyle = clipRectangle.color.toCSSStyle();
             context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);

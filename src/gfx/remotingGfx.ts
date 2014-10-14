@@ -113,7 +113,7 @@ module Shumway.Remoting.GFX {
     constructor(easelHost: Shumway.GFX.EaselHost, root: FrameContainer, transparent: boolean) {
       this.root = new ClipRectangle(128, 128);
       if (transparent) {
-        this.root._setFlags(FrameFlags.Transparent);
+        this.root.setFlags(FrameFlags.Transparent);
       }
       root.addChild(this.root);
       this._frames = [];
@@ -529,7 +529,7 @@ module Shumway.Remoting.GFX {
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
         frame.blendMode = input.readInt();
         this._readFilters(frame);
-        frame._toggleFlags(FrameFlags.Visible, input.readBoolean());
+        frame.toggleFlags(FrameFlags.Visible, input.readBoolean());
         frame.pixelSnapping = <PixelSnapping>input.readInt();
         frame.smoothing = <Smoothing>input.readInt();
       }

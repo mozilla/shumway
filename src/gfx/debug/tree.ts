@@ -57,9 +57,9 @@ module Shumway.GFX {
       var maxX = 0;
       function visit(frame: Frame) {
         var isFrameContainer = frame instanceof FrameContainer;
-        if (frame._hasFlags(FrameFlags.InvalidPaint)) {
+        if (frame.hasFlags(FrameFlags.InvalidPaint)) {
           context.fillStyle = "red";
-        } else if (frame._hasFlags(FrameFlags.InvalidConcatenatedMatrix)) {
+        } else if (frame.hasFlags(FrameFlags.InvalidConcatenatedMatrix)) {
           context.fillStyle = "blue";
         } else {
           context.fillStyle = "white";
@@ -70,7 +70,7 @@ module Shumway.GFX {
           x += t + 2;
           maxX = Math.max(maxX, x + w);
           var frameContainer = <FrameContainer>frame;
-          var children = frameContainer._children;
+          var children = frameContainer.children;
           for (var i = 0; i < children.length; i++) {
             visit(children[i]);
             if (i < children.length - 1) {

@@ -276,10 +276,7 @@ module Shumway.GFX.WebGL {
 
         if (frame instanceof FrameContainer) {
           if (frame instanceof ClipRectangle || options.paintBounds) {
-            if (!frame.color) {
-              frame.color = Color.randomColor(0.3);
-            }
-            brush.fillRectangle(bounds, frame.color, matrix, depth);
+            brush.fillRectangle(bounds, Color.randomColor(0.3), matrix, depth);
           }
 //          if (frame !== root && frame.blendMode !== BlendMode.Normal) {
 //            // self._renderFrameLayer(frame, matrix, brush);

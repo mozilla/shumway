@@ -325,7 +325,7 @@ module Shumway.Remoting.Player {
               this.output.writeInt(children[i]._id);
               // Make sure children with a clip depth are getting visited.
               if (children[i]._clipDepth >= 0) {
-                children[i]._setFlags(DisplayObjectFlags.DirtyClipDepth);
+                children[i].setFlags(DisplayObjectFlags.DirtyClipDepth);
               }
             }
           }

@@ -27,8 +27,13 @@ module Shumway.GFX {
   import assert = Shumway.Debug.assert;
 
   export class FrameContainer extends Frame {
-    _children: Frame [];
-    _bounds: Rectangle;
+    protected _children: Frame [];
+    protected _bounds: Rectangle;
+
+    public get children(): Frame [] {
+      return this._children;
+    }
+
     constructor() {
       super();
       this._children = [];
@@ -93,14 +98,30 @@ module Shumway.GFX {
       this._children.length = 0;
     }
 
+    protected _setCapability(capability: FrameCapabilityFlags, on: boolean = true, direction: Direction = Direction.None) {
+      if (on) {
+        this._capability |= capability;
+      } else {
+        this._capability &= ~capability;
+      }
+      if (direction === Direction.Upward && this._parent) {
+        this._parent._setCapability(capability, on, direction);
+      } else if (direction === Direction.Downward) {
+        var children = this._children;;
+        for (var i = 0; i < children.length; i++) {
+          children[i]._setCapability(capability, on, direction);
+        }
+      }
+    }
+
     /**
      * Propagates flags down the frame tree. Propagation stops if all flags are already set.
      */
-    _propagateFlagsDown(flags: FrameFlags) {
-      if (this._hasFlags(flags)) {
+    protected _propagateFlagsDown(flags: FrameFlags) {
+      if (this.hasFlags(flags)) {
         return;
       }
-      this._setFlags(flags);
+      this.setFlags(flags);
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         children[i]._propagateFlagsDown(flags);
@@ -108,7 +129,7 @@ module Shumway.GFX {
     }
 
     public getBounds(): Rectangle {
-      if (!this._hasFlags(FrameFlags.InvalidBounds)) {
+      if (!this.hasFlags(FrameFlags.InvalidBounds)) {
         return this._bounds;
       }
       var bounds = Rectangle.createEmpty();

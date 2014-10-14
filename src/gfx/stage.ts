@@ -137,7 +137,7 @@ module Shumway.GFX {
       this.h = h;
       this.dirtyRegion = new DirtyRegion(w, h);
       this.trackDirtyRegions = trackDirtyRegions;
-      this._setFlags(FrameFlags.Dirty);
+      this.setFlags(FrameFlags.Dirty);
     }
 
     /**
@@ -146,13 +146,13 @@ module Shumway.GFX {
      * is any code that needs to check if rendering is about to happen.
      */
     readyToRender(clearFlags = true): boolean {
-      if (!this._hasFlags(FrameFlags.InvalidPaint)) {
+      if (!this.hasFlags(FrameFlags.InvalidPaint)) {
         return false;
       } else if (clearFlags) {
         enterTimeline("readyToRender");
         this.visit(function (frame: Frame): VisitorFlags {
-          if (frame._hasFlags(FrameFlags.InvalidPaint)) {
-            frame._toggleFlags(FrameFlags.InvalidPaint, false);
+          if (frame.hasFlags(FrameFlags.InvalidPaint)) {
+            frame.toggleFlags(FrameFlags.InvalidPaint, false);
             return VisitorFlags.Continue;
           } else {
             return VisitorFlags.Skip;
@@ -175,9 +175,9 @@ module Shumway.GFX {
           var rectangle = frame.getBounds().clone();
           transform.transformRectangleAABB(rectangle);
           self.dirtyRegion.addDirtyRectangle(rectangle);
-          if (frame._previouslyRenderedAABB) {
+          if (frame.previouslyRenderedAABB) {
             // Add last render position to dirty list.
-            self.dirtyRegion.addDirtyRectangle(frame._previouslyRenderedAABB);
+            self.dirtyRegion.addDirtyRectangle(frame.previouslyRenderedAABB);
           }
         }
         return VisitorFlags.Continue;
@@ -204,7 +204,7 @@ module Shumway.GFX {
         }
         var rectangle = frame.getBounds().clone();
         transform.transformRectangleAABB(rectangle);
-        if (frame._hasFlags(FrameFlags.Dirty)) {
+        if (frame.hasFlags(FrameFlags.Dirty)) {
           if (currentLayer) {
             layers.push(currentLayer);
           }

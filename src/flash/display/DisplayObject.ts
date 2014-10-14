@@ -1404,6 +1404,9 @@ module Shumway.AVM2.AS.flash.display {
       this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
+    /**
+     * This is always true if a filter is applied.
+     */
     get cacheAsBitmap(): boolean {
       return (this._filters && this._filters.length > 0) || this._hasFlags(DisplayObjectFlags.CacheAsBitmap);
     }
