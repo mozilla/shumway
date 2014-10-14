@@ -171,8 +171,8 @@ module Shumway.AVM2.Runtime {
     return Object.prototype.hasOwnProperty.call(object, VM_NATIVE_PROTOTYPE_FLAG);
   }
 
-  var traitsWriter: IndentingWriter = null; // new IndentingWriter();
-  var callWriter: IndentingWriter = new IndentingWriter();
+  export var traitsWriter: IndentingWriter = null; // new IndentingWriter();
+  export var callWriter: IndentingWriter = release ? null : new IndentingWriter();
 
   export interface IPatchTarget {
     object: Object;

@@ -31,8 +31,6 @@ module Shumway.AVM2.Runtime {
 
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
 
-  declare var callWriter: IndentingWriter;
-
   var counter = Shumway.Metrics.Counter.instance;
 
   var vmNextTrampolineId = 1;
