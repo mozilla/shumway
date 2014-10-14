@@ -1531,6 +1531,21 @@ module Shumway.AVM2.AS.flash.display {
       return p.toPixels();
     }
 
+    globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
+      notImplemented("public DisplayObject::globalToLocal3D");
+      return null;
+    }
+
+    localToGlobal3D(point: flash.geom.Point): flash.geom.Vector3D {
+      notImplemented("public DisplayObject::localToGlobal3D");
+      return null;
+    }
+
+    local3DToGlobal(point3d: flash.geom.Vector3D): flash.geom.Point {
+      notImplemented("public DisplayObject::local3DToGlobal");
+      return null;
+    }
+
     /**
      * Tree visitor that lets you skip nodes or return early.
      */
@@ -1877,18 +1892,8 @@ module Shumway.AVM2.AS.flash.display {
       this._accessibilityProperties = value;
     }
 
-    // ---------------------------------------------------------------------------------------------------------------------------------------------
-    // -- Stuff below we still need to port.                                                                                                      --
-    // ---------------------------------------------------------------------------------------------------------------------------------------------
-
-    /*
-    set blendShader(value: flash.display.Shader) {
-      value = value;
-      notImplemented("public DisplayObject::set blendShader"); return;
-      // this._blendShader = value;
+    set blendShader(value: any /* flash.display.Shader */) {
+      notImplemented("public DisplayObject::set blendShader");
     }
-
-
-   */
   }
 }
