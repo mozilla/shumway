@@ -527,6 +527,7 @@ module Shumway.Remoting.GFX {
         frame.clip = input.readInt();
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
+        frame.ratio = input.readInt();
         frame.blendMode = input.readInt();
         this._readFilters(frame);
         frame._toggleFlags(FrameFlags.Visible, input.readBoolean());

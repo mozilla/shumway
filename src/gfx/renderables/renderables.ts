@@ -353,6 +353,10 @@ module Shumway.GFX {
     {}
   }
 
+  function morph(start: number, end: number, ratio: number): number {
+    return start + (end - start) * ratio;
+  }
+
   export class RenderableShape extends Renderable {
     _flags: RenderableFlags = RenderableFlags.Dirty     |
                               RenderableFlags.Scalable  |
@@ -411,7 +415,12 @@ module Shumway.GFX {
 
       var data = this._pathData;
       if (data) {
-        this._deserializePaths(data, context);
+        if (data.morphCoordinates) {
+          this._deserializeMorphPaths(data, context);
+        } else {
+          this._deserializePaths(data, context);
+          this._pathData = null;
+        }
       }
 
       var paths = this._paths;
@@ -583,8 +592,161 @@ module Shumway.GFX {
         fillPath.lineTo(formOpenX, formOpenY);
         strokePath && strokePath.lineTo(formOpenX, formOpenY);
       }
-      this._pathData = null;
       leaveTimeline("RenderableShape.deserializePaths");
+    }
+
+    private _deserializeMorphPaths(data: ShapeData, context: CanvasRenderingContext2D): void {
+      release || assert(!this._paths);
+      enterTimeline("RenderableShape.deserializeMorphPaths");
+      // TODO: Optimize path handling to use only one path if possible.
+      // If both line and fill style are set at the same time, we don't need to duplicate the
+      // geometry.
+      this._paths = [];
+
+      var fillPath: Path2D = null;
+      var strokePath: Path2D = null;
+
+      // We have to alway store the last position because Flash keeps the drawing cursor where it
+      // was when changing fill or line style, whereas Canvas forgets it on beginning a new path.
+      var x = 0;
+      var y = 0;
+      var cpX: number;
+      var cpY: number;
+      var formOpen = false;
+      var formOpenX = 0;
+      var formOpenY = 0;
+      var commands = data.commands;
+      var coordinates = data.coordinates;
+      var morphCoordinates = data.morphCoordinates;
+      var styles = data.styles;
+      var morphStyles = data.morphStyles;
+      var ratio = 0;
+      styles.position = 0;
+      morphStyles.position = 0;
+      var coordinatesIndex = 0;
+      var commandsCount = data.commandsPosition;
+      // Description of serialization format can be found in flash.display.Graphics.
+      for (var commandIndex = 0; commandIndex < commandsCount; commandIndex++) {
+        var command = commands[commandIndex];
+        switch (command) {
+          case PathCommand.MoveTo:
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            if (formOpen && fillPath) {
+              fillPath.lineTo(formOpenX, formOpenY);
+              strokePath && strokePath.lineTo(formOpenX, formOpenY);
+            }
+            formOpen = true;
+            x = formOpenX = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            y = formOpenY = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            fillPath && fillPath.moveTo(x, y);
+            strokePath && strokePath.moveTo(x, y);
+            break;
+          case PathCommand.LineTo:
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            x = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            y = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            fillPath && fillPath.lineTo(x, y);
+            strokePath && strokePath.lineTo(x, y);
+            break;
+          case PathCommand.CurveTo:
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 4);
+            cpX = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            cpY = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            x = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            y = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            fillPath && fillPath.quadraticCurveTo(cpX, cpY, x, y);
+            strokePath && strokePath.quadraticCurveTo(cpX, cpY, x, y);
+            break;
+          case PathCommand.CubicCurveTo:
+            release || assert(coordinatesIndex <= data.coordinatesPosition - 6);
+            cpX = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            cpY = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            var cpX2 = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            var cpY2 = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            x = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            y = morph(coordinates[coordinatesIndex++],
+              morphCoordinates[coordinatesIndex++], ratio) / 20;
+            fillPath && fillPath.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
+            strokePath && strokePath.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
+            break;
+          case PathCommand.BeginSolidFill:
+            release || assert(styles.bytesAvailable >= 4);
+            fillPath = this._createPath(PathType.Fill,
+              ColorUtilities.rgbaToCSSStyle(
+                morph(styles.readUnsignedInt(), styles.readUnsignedInt(), ratio)
+              ),
+              false, null, x, y);
+            break;
+          case PathCommand.BeginBitmapFill:
+            var bitmapStyle = this._readMorphBitmap(styles, morphStyles, ratio, context);
+            fillPath = this._createPath(PathType.Fill, bitmapStyle.style, bitmapStyle.smoothImage,
+              null, x, y);
+            break;
+          case PathCommand.BeginGradientFill:
+            var gradientStyle = this._readMorphGradient(styles, morphStyles, ratio, context);
+            fillPath = this._createPath(PathType.Fill, gradientStyle,
+              false, null, x, y);
+            break;
+          case PathCommand.EndFill:
+            fillPath = null;
+            break;
+          case PathCommand.LineStyleSolid:
+            var color = ColorUtilities.rgbaToCSSStyle(
+              morph(styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio)
+            );
+            // Skip pixel hinting.
+            styles.position += 1;
+            var scaleMode: LineScaleMode = styles.readByte();
+            var capsStyle: string = RenderableShape.LINE_CAPS_STYLES[styles.readByte()];
+            var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
+            var strokeProperties = new StrokeProperties(coordinates[coordinatesIndex++]/20,
+              scaleMode, capsStyle, jointsStyle, styles.readByte());
+            strokePath = this._createPath(PathType.Stroke, color, false, strokeProperties, x, y);
+            break;
+          case PathCommand.LineStyleGradient:
+            var gradientStyle = this._readMorphGradient(styles, morphStyles, ratio, context);
+            strokePath = this._createPath(PathType.StrokeFill, gradientStyle,
+              false, null, x, y);
+            break;
+          case PathCommand.LineStyleBitmap:
+            var bitmapStyle = this._readMorphBitmap(styles, morphStyles, ratio, context);
+            strokePath = this._createPath(PathType.StrokeFill, bitmapStyle.style,
+              bitmapStyle.smoothImage, null, x, y);
+            break;
+          case PathCommand.LineEnd:
+            strokePath = null;
+            break;
+          default:
+            release || assertUnreachable('Invalid command ' + command + ' encountered at index' +
+              commandIndex + ' of ' + commandsCount);
+        }
+      }
+      release || assert(styles.bytesAvailable === 0);
+      release || assert(commandIndex === commandsCount);
+      release || assert(coordinatesIndex === data.coordinatesPosition);
+      if (formOpen && fillPath) {
+        fillPath.lineTo(formOpenX, formOpenY);
+        strokePath && strokePath.lineTo(formOpenX, formOpenY);
+      }
+      leaveTimeline("RenderableShape.deserializeMorphPaths");
+    }
+
+    private _renderMorph(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle,
+                         clipRegion: boolean = false) {
+
     }
 
     private _createPath(type: PathType, style: any, smoothImage: boolean,
@@ -600,6 +762,17 @@ module Shumway.GFX {
       return new Matrix (
         data.readFloat(), data.readFloat(), data.readFloat(),
         data.readFloat(), data.readFloat(), data.readFloat()
+      );
+    }
+
+    private _readMorphMatrix(data: DataBuffer, morphData: DataBuffer, ratio: number): Matrix {
+      return new Matrix (
+        morph(data.readFloat(), morphData.readFloat(), ratio),
+        morph(data.readFloat(), morphData.readFloat(), ratio),
+        morph(data.readFloat(), morphData.readFloat(), ratio),
+        morph(data.readFloat(), morphData.readFloat(), ratio),
+        morph(data.readFloat(), morphData.readFloat(), ratio),
+        morph(data.readFloat(), morphData.readFloat(), ratio)
       );
     }
 
@@ -628,6 +801,37 @@ module Shumway.GFX {
       return gradient;
     }
 
+    private _readMorphGradient(styles: DataBuffer, morphStyles: DataBuffer, ratio: number,
+                               context: CanvasRenderingContext2D): CanvasGradient {
+      // Assert at least one color stop.
+      release || assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
+        1 + 1 + 4 + 1 + 1);
+      var gradientType = styles.readUnsignedByte();
+      var focalPoint = styles.readShort() * 2 / 0xff;
+      release || assert(focalPoint >= -1 && focalPoint <= 1);
+      var transform = this._readMorphMatrix(styles, morphStyles, ratio);
+      var gradient = gradientType === GradientType.Linear ?
+        context.createLinearGradient(-1, 0, 1, 0) :
+        context.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
+      gradient.setTransform && gradient.setTransform(transform.toSVGMatrix());
+      var colorStopsCount = styles.readUnsignedByte();
+      for (var i = 0; i < colorStopsCount; i++) {
+        var ratio = morph(
+            styles.readUnsignedByte() / 0xff, morphStyles.readUnsignedByte() / 0xff, ratio
+        );
+        var color = morph(
+          styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio
+        );
+        var cssColor = ColorUtilities.rgbaToCSSStyle(color);
+        gradient.addColorStop(ratio, cssColor);
+      }
+
+      // Skip spread and interpolation modes for now.
+      styles.position += 2;
+
+      return gradient;
+    }
+
     private _readBitmap(styles: DataBuffer,
                         context: CanvasRenderingContext2D): {style: CanvasPattern;
                                                              smoothImage: boolean}
@@ -635,6 +839,22 @@ module Shumway.GFX {
       release || assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
       var textureIndex = styles.readUnsignedInt();
       var fillTransform: Matrix = this._readMatrix(styles);
+      var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
+      var smooth = styles.readBoolean();
+      var texture = this._textures[textureIndex];
+      release || assert(texture._canvas);
+      var fillStyle: CanvasPattern = context.createPattern(texture._canvas, repeat);
+      fillStyle.setTransform(fillTransform.toSVGMatrix());
+      return {style: fillStyle, smoothImage: smooth};
+    }
+
+    private _readMorphBitmap(styles: DataBuffer, morphStyles: DataBuffer, ratio: number,
+                             context: CanvasRenderingContext2D): {style: CanvasPattern;
+      smoothImage: boolean}
+    {
+      release || assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
+      var textureIndex = styles.readUnsignedInt();
+      var fillTransform: Matrix = this._readMorphMatrix(styles, morphStyles, ratio);
       var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
       var smooth = styles.readBoolean();
       var texture = this._textures[textureIndex];

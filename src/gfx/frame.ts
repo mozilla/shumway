@@ -94,13 +94,15 @@ module Shumway.GFX {
 
     AllowMatrixWrite            = 1,
     AllowColorMatrixWrite       = 2,
-    AllowBlendModeWrite         = 4,
-    AllowFiltersWrite           = 8,
-    AllowMaskWrite              = 16,
-    AllowChildrenWrite          = 32,
-    AllowClipWrite              = 64,
+    AllowRatioWrite             = 4,
+    AllowBlendModeWrite         = 8,
+    AllowFiltersWrite           = 16,
+    AllowMaskWrite              = 32,
+    AllowChildrenWrite          = 64,
+    AllowClipWrite              = 128,
     AllowAllWrite               = AllowMatrixWrite      |
                                   AllowColorMatrixWrite |
+                                  AllowRatioWrite       |
                                   AllowBlendModeWrite   |
                                   AllowFiltersWrite     |
                                   AllowMaskWrite        |
@@ -144,6 +146,7 @@ module Shumway.GFX {
       return path;
     }
 
+    private _ratio: number;
     private _blendMode: BlendMode;
     private _matrix: Matrix;
     private _concatenatedMatrix: Matrix;
@@ -197,6 +200,7 @@ module Shumway.GFX {
       this._capability = FrameCapabilityFlags.AllowAllWrite;
       this._parent = null;
       this._clip = -1;
+      this._ratio = 0;
       this._blendMode = BlendMode.Normal;
       this._filters = [];
       this._mask = null;
@@ -389,6 +393,17 @@ module Shumway.GFX {
       this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._matrix.set(value);
       this._invalidatePosition();
+    }
+
+    set ratio(value: number) {
+      value = value | 0;
+      this.checkCapability(FrameCapabilityFlags.AllowRatioWrite);
+      this._ratio = value;
+      //this._invalidateParentPaint();
+    }
+
+    get ratio(): number {
+      return this._ratio;
     }
 
     set blendMode(value: BlendMode) {
