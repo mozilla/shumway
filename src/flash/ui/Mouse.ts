@@ -215,20 +215,20 @@ module Shumway.AVM2.AS.flash.ui {
     // static _supportsCursor: boolean;
     // static _cursor: string;
     // static _supportsNativeCursor: boolean;
-    get supportsCursor(): boolean {
+    static get supportsCursor(): boolean {
       notImplemented("public flash.ui.Mouse::get supportsCursor"); return;
       // return this._supportsCursor;
     }
-    get cursor(): string {
+    static get cursor(): string {
       notImplemented("public flash.ui.Mouse::get cursor"); return;
       // return this._cursor;
     }
-    set cursor(value: string) {
+    static set cursor(value: string) {
       value = asCoerceString(value);
       notImplemented("public flash.ui.Mouse::set cursor"); return;
       // this._cursor = value;
     }
-    get supportsNativeCursor(): boolean {
+    static get supportsNativeCursor(): boolean {
       notImplemented("public flash.ui.Mouse::get supportsNativeCursor"); return;
       // return this._supportsNativeCursor;
     }
