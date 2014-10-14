@@ -337,7 +337,7 @@ module Shumway {
       this.commands[this.commandsPosition++] = pathCommand;
       var styles: DataBuffer = this.styles;
       styles.writeUnsignedInt(bitmapId);
-      this._writeStyleMatrix(matrix);
+      this._writeStyleMatrix(matrix, false);
       styles.writeBoolean(repeat);
       styles.writeBoolean(smooth);
       this.hasFills = true;
@@ -365,7 +365,7 @@ module Shumway {
       styles.writeUnsignedByte(gradientType);
       release || assert(focalPointRatio === (focalPointRatio|0));
       styles.writeShort(focalPointRatio);
-      this._writeStyleMatrix(matrix);
+      this._writeStyleMatrix(matrix, false);
       var colorStops = colors.length;
       styles.writeByte(colorStops);
       for (var i = 0; i < colorStops; i++) {
@@ -454,7 +454,7 @@ module Shumway {
       return buffers;
     }
 
-    private _writeStyleMatrix(matrix: ShapeMatrix, isMorph: boolean = false)
+    private _writeStyleMatrix(matrix: ShapeMatrix, isMorph: boolean)
     {
       var styles: DataBuffer = isMorph ? this.morphStyles : this.styles;
       styles.writeFloat(matrix.a);
