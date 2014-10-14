@@ -286,7 +286,7 @@ module Shumway.SWF.Parser {
     return shape;
   }
 
-  interface Style {
+  interface ShapeStyle {
     type: number;
 
     fillType?: number;
@@ -311,14 +311,13 @@ module Shumway.SWF.Parser {
     repeat?: boolean;
     smooth?: boolean;
 
-    morph: Style
+    morph: ShapeStyle
   }
 
   var IDENTITY_MATRIX: ShapeMatrix = {a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0};
   function processStyle(style, isLineStyle: boolean, isMorph: boolean,
-                        dictionary, dependencies): Style {
-    var processedStyle: Style = style;
-    debugger;
+                        dictionary, dependencies): ShapeStyle {
+    var processedStyle: ShapeStyle = style;
     if (isMorph) {
       processedStyle.morph = processMorphStyle(style, isLineStyle, dictionary, dependencies);
     }
@@ -397,8 +396,8 @@ module Shumway.SWF.Parser {
     return processedStyle;
   }
 
-  function processMorphStyle(style, isLineStyle: boolean, dictionary, dependencies): Style {
-    var morphStyle: Style = Object.create(style);
+  function processMorphStyle(style, isLineStyle: boolean, dictionary, dependencies): ShapeStyle {
+    var morphStyle: ShapeStyle = Object.create(style);
     if (isLineStyle) {
       if (!style.color && style.hasFill) {
         var fillStyle = processMorphStyle(style.fillStyle, false, dictionary, dependencies);
@@ -919,7 +918,7 @@ module Shumway.SWF.Parser {
     }
   }
 
-  function writeLineStyle(style: Style, shape: ShapeData): void {
+  function writeLineStyle(style: ShapeStyle, shape: ShapeData): void {
     // No scaling == 0, normal == 1, vertical only == 2, horizontal only == 3.
     var scaleMode = style.noHscale ?
                     (style.noVscale ? 0 : 2) :
@@ -931,13 +930,13 @@ module Shumway.SWF.Parser {
                     style.jointStyle, style.miterLimit);
   }
 
-  function writeMorphLineStyle(style: Style, shape: ShapeData): void {
+  function writeMorphLineStyle(style: ShapeStyle, shape: ShapeData): void {
     // TODO: Figure out how to handle startCapsStyle
     var thickness = clamp(style.width, 0, 0xff * 20)|0;
     shape.writeMorphLineStyle(thickness, style.color);
   }
 
-  function writeGradient(style: Style, shape: ShapeData): void {
+  function writeGradient(style: ShapeStyle, shape: ShapeData): void {
     var gradientType = style.type === FillType.LinearGradient ?
                        GradientType.Linear :
                        GradientType.Radial;
@@ -946,16 +945,16 @@ module Shumway.SWF.Parser {
                         style.interpolationMode, style.focalPoint|0);
   }
 
-  function writeMorphGradient(style: Style, shape: ShapeData) {
+  function writeMorphGradient(style: ShapeStyle, shape: ShapeData) {
     shape.writeMorphGradient(style.colors, style.ratios, style.transform);
   }
 
-  function writeBitmap(style: Style, shape: ShapeData): void {
+  function writeBitmap(style: ShapeStyle, shape: ShapeData): void {
     shape.beginBitmap(PathCommand.BeginBitmapFill, style.bitmapIndex, style.transform,
                       style.repeat, style.smooth);
   }
 
-  function writeMorphBitmap(style: Style, shape: ShapeData) {
+  function writeMorphBitmap(style: ShapeStyle, shape: ShapeData) {
     shape.writeMorphBitmap(style.transform);
   }
 }

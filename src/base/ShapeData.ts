@@ -439,10 +439,9 @@ module Shumway {
     toPlainObject(): PlainObjectShapeData {
       return new PlainObjectShapeData(this.commands, this.commandsPosition,
                                       this.coordinates, this.coordinatesPosition,
-                                      this.morphCoordinates,
-                                      this.styles.buffer, this.morphStyles.buffer,
-                                      this.styles.length,
-                                      this.hasFills, this.hasLines);
+                                      this.morphCoordinates, this.styles.buffer,
+                                      this.morphStyles && this.morphStyles.buffer,
+                                      this.styles.length, this.hasFills, this.hasLines);
     }
 
     public get buffers(): ArrayBuffer[] {
