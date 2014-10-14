@@ -40,6 +40,7 @@ module Shumway.AVM2.AS {
   import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assert = Shumway.Debug.assert;
+  import assertUnreachable = Shumway.Debug.assertUnreachable;
   import createFunction = Shumway.AVM2.Runtime.createFunction;
   import Runtime = Shumway.AVM2.Runtime;
   import IndentingWriter = Shumway.IndentingWriter;
@@ -727,7 +728,7 @@ module Shumway.AVM2.AS {
     }
 
     public coerce(value: any): any {
-      log(Shumway.StringUtilities.concat4("Coercing ", value, " to ", this));
+      debug && log(Shumway.StringUtilities.concat4("Coercing ", value, " to ", this));
       return value;
     }
 
@@ -1635,7 +1636,7 @@ module Shumway.AVM2.AS {
    */
   export function getMethodOrAccessorNative(trait: Trait, natives: Object []): any {
     var name = escapeNativeName(Multiname.getName(trait.name));
-    log("getMethodOrAccessorNative(" + name + ")");
+    debug && log("getMethodOrAccessorNative(" + name + ")");
     for (var i = 0; i < natives.length; i++) {
       var native = natives[i];
       var fullName = name;
@@ -1667,7 +1668,10 @@ module Shumway.AVM2.AS {
         return value;
       }
     }
-    log("Cannot find " + trait + " in natives.");
+    Shumway.Debug.warning("No native method for: " + trait.kindName() + " " +
+                          trait.methodInfo.holder + "::" + Multiname.getQualifiedName(trait.name) +
+                          ", make sure you've got the static keyword for static methods.");
+    //release || assertUnreachable("Cannot find " + trait + " in natives.");
     return null;
   }
 
@@ -1743,7 +1747,8 @@ module Shumway.AVM2.AS {
     export var parseFloat: (string: string) => number = jsGlobal.parseFloat;
     export var escape: (x: any) => any = jsGlobal.escape;
     export var unescape: (x: any) => any = jsGlobal.unescape;
-    export var isXMLName: (x: any) => any = Shumway.AVM2.AS.isXMLName;
+    export var isXMLName: (x: any) => boolean;
+    export var notImplemented: (x: any) => void = Shumway.Debug.notImplemented;
 
     /**
      * Returns the fully qualified class name of an object.
@@ -1797,7 +1802,7 @@ module Shumway.AVM2.AS {
    * Searchs for natives using a string path "a.b.c...".
    */
   export function getNative(path: string): Function {
-    log("getNative(" + path + ")");
+    debug && log("getNative(" + path + ")");
     var chain = path.split(".");
     var v = Natives;
     for (var i = 0, j = chain.length; i < j; i++) {

@@ -295,7 +295,5 @@ module Shumway.AVM2.AS {
       }
       return classObject;
     });
-
-    registerNativeFunction('isFinite', isFinite);
   }
 }

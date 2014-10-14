@@ -501,6 +501,8 @@ module Shumway.AVM2.AS {
     return true;
   }
 
+  Shumway.AVM2.AS.Natives.isXMLName = isXMLName;
+
   function XMLParser() {
     function parseXml(s, sink) {
       var i = 0, scopes: any [] = [{
