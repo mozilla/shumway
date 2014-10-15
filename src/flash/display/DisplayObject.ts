@@ -991,6 +991,7 @@ module Shumway.AVM2.AS.flash.display {
      * property of this object is changed by user code.
      */
     private _stopTimelineAnimation() {
+      this._removeFlags(DisplayObjectFlags.OwnedByTimeline);
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
 
