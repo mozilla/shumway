@@ -28,7 +28,8 @@ Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 
 let Ph = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
-let registerOverlayPreview = 'registerPlayPreviewMimeType' in Ph;
+let canRegisterOverlayPreview = 'registerPlayPreviewMimeType' in Ph;
+let canRegisterFakePlugin = 'createFakePlugin' in Ph;
 
 function getBoolPref(pref, def) {
   try {
@@ -86,7 +87,16 @@ function startup(aData, aReason) {
   converterFactory.register(ShumwayStreamConverter);
   overlayConverterFactory.register(ShumwayStreamOverlayConverter);
 
-  if (registerOverlayPreview) {
+  if (canRegisterFakePlugin) {
+    var fake = Ph.createFakePlugin("chrome://shumway/content/object.html");
+    fake.addMimeType("application/x-shockwave-flash", "Shumway", "swf");
+    fake.niceName = "Fake Shockwave Flash";
+    fake.description = "Shockwave Flash 11.0 r0";
+    fake.version = "11.0.0";
+    fake.name = "Shockwave Flash";
+    fake.supersedeExisting = false;
+    fake.enabledState = Components.interfaces.nsIPluginTag.STATE_ENABLED;
+  } else if (canRegisterOverlayPreview) {
     var ignoreCTP = getBoolPref('shumway.ignoreCTP', false);
     Ph.registerPlayPreviewMimeType('application/x-shockwave-flash', ignoreCTP);
   }
@@ -104,8 +114,11 @@ function shutdown(aData, aReason) {
   converterFactory.unregister();
   overlayConverterFactory.unregister();
 
-  if (registerOverlayPreview)
+  if (canRegisterFakePlugin) {
+    log('TODO remove fake Shockwave plugin');
+  } else if (canRegisterOverlayPreview) {
     Ph.unregisterPlayPreviewMimeType('application/x-shockwave-flash');
+  }
 
   // Unload the converter
   Cu.unload(ShumwayStreamConverterUrl);

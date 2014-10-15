@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <style>
+    html, body { margin: 0; padding: 0; }
+  </style>
+  <body>
+    <script>
+      var embedElement = frameElement;
+      if (embedElement &&
+          embedElement.tagName === 'EMBED' &&
+          embedElement.src) {
+        var src = embedElement.src;
+        var obj = document.createElement('OBJECT');
+        obj.width = embedElement.width;
+        obj.height = embedElement.height;
+        obj.data = src;
+        obj.type = "application/x-shockwave-flash";
+        // TODO parameters
+        document.body.appendChild(obj);
+      }
+    </script>
+  </body>
+</html>
