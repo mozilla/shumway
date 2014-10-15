@@ -530,6 +530,7 @@ module Shumway.Remoting.GFX {
         frame.blendMode = input.readInt();
         this._readFilters(frame);
         frame.toggleFlags(FrameFlags.Visible, input.readBoolean());
+        frame.toggleFlags(FrameFlags.CacheAsBitmap, input.readBoolean());
         frame.pixelSnapping = <PixelSnapping>input.readInt();
         frame.smoothing = <Smoothing>input.readInt();
       }

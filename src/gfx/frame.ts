@@ -45,45 +45,50 @@ module Shumway.GFX {
   }
 
   export enum FrameFlags {
-    Empty                                     = 0x0000,
-    Dirty                                     = 0x0001,
-    IsMask                                    = 0x0002,
-    IgnoreMask                                = 0x0008,
-    IgnoreQuery                               = 0x0010,
+    Empty                                     = 0x00000,
+    Dirty                                     = 0x00001,
+    IsMask                                    = 0x00002,
+    IgnoreMask                                = 0x00008,
+    IgnoreQuery                               = 0x00010,
 
     /**
      * Frame has invalid bounds because one of its children's bounds have been mutated.
      */
-    InvalidBounds                             = 0x0020,
+    InvalidBounds                             = 0x00020,
 
     /**
      * Frame has an invalid concatenated matrix because its matrix or one of its ancestor's matrices has been mutated.
      */
-    InvalidConcatenatedMatrix                 = 0x0040,
+    InvalidConcatenatedMatrix                 = 0x00040,
 
     /**
      * Frame has an invalid inverted concatenated matrix because its matrix or one of its ancestor's matrices has been
      * mutated. We don't always need to compute the inverted matrix. This is why we use a sepearete invalid flag for it
      * and don't roll it under the |InvalidConcatenatedMatrix| flag.
      */
-    InvalidInvertedConcatenatedMatrix         = 0x0080,
+    InvalidInvertedConcatenatedMatrix         = 0x00080,
 
     /**
      * Frame has an invalid concatenated color transform because its color transform or one of its ancestor's color
      * transforms has been mutated.
      */
-    InvalidConcatenatedColorMatrix            = 0x0100,
+    InvalidConcatenatedColorMatrix            = 0x00100,
 
     /**
      * Frame has invalid contents and needs to be repainted, this bit is culled by the viewport.
      */
-    InvalidPaint                              = 0x0200,
+    InvalidPaint                              = 0x00200,
 
-    EnterClip                                 = 0x1000,
-    LeaveClip                                 = 0x2000,
+    EnterClip                                 = 0x01000,
+    LeaveClip                                 = 0x02000,
 
-    Visible                                   = 0x4000,
-    Transparent                               = 0x8000,
+    Visible                                   = 0x04000,
+    Transparent                               = 0x08000,
+
+    /**
+     * Frame should be cached as a bitmap. This causes masks to behave differently, so it's more than just an optimization.
+     */
+    CacheAsBitmap                        = 0x10000
   }
 
   /**

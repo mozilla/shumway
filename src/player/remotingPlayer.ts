@@ -276,6 +276,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
         this._writeFilters(displayObject.filters);
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
+        this.output.writeBoolean(displayObject.cacheAsBitmap);
         if (bitmap) {
           this.output.writeInt(PixelSnapping.toNumber(bitmap.pixelSnapping));
           this.output.writeInt(bitmap.smoothing ? 1 : 0);
@@ -325,7 +326,7 @@ module Shumway.Remoting.Player {
               this.output.writeInt(children[i]._id);
               // Make sure children with a clip depth are getting visited.
               if (children[i]._clipDepth >= 0) {
-                children[i].setFlags(DisplayObjectFlags.DirtyClipDepth);
+                children[i]._setFlags(DisplayObjectFlags.DirtyClipDepth);
               }
             }
           }

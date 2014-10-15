@@ -5,8 +5,17 @@ module Shumway.GFX.Canvas2D {
   export class Canvas2DSurfaceRegion implements ISurfaceRegion {
     constructor (
       public surface: Canvas2DSurface,
-      public region: RegionAllocator.Region) {
+      public region: RegionAllocator.Region
+    ) {
       // ...
+    }
+
+    public free() {
+      this.surface.free(this)
+    }
+
+    public draw(target: Canvas2DSurfaceRegion, x: number, y: number) {
+
     }
   }
 

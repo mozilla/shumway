@@ -68,15 +68,43 @@ module Shumway.GFX.Canvas2D {
     constructor (
       public options: Canvas2DStageRendererOptions,
       public clipRegion: boolean = false,
-      public ignoreMask: Frame = null) {
+      public ignoreMask: Frame = null
+      ) {
       // ...
     }
   }
 
   var MAX_VIEWPORT = Rectangle.createMaxI16();
 
+//  class FrameRenderTarget {
+//    constructor (
+//      public surfaceRegion: Canvas2DSurfaceRegion,
+//      public surfaceRegionBounds: Rectangle,
+//      public clippedBounds: Rectangle) {
+//      // ...
+//    }
+//
+//    free() {
+//      this.surfaceRegion.surface.free(this.surfaceRegion);
+//    }
+//
+//    render(context: CanvasRenderingContext2D, x: number, y: number) {
+//      context.drawImage (
+//        this.surfaceRegion.surface.canvas,
+//        this.surfaceRegionBounds.x,
+//        this.surfaceRegionBounds.y,
+//        this.surfaceRegionBounds.w,
+//        this.surfaceRegionBounds.h,
+//        x,
+//        y,
+//        this.surfaceRegionBounds.w,
+//        this.surfaceRegionBounds.h
+//      );
+//    }
+//  }
+
   export class Canvas2DStageRenderer extends StageRenderer {
-    _options: Canvas2DStageRendererOptions;
+    protected _options: Canvas2DStageRendererOptions;
     private _fillRule: string;
     context: CanvasRenderingContext2D;
 
@@ -372,24 +400,15 @@ module Shumway.GFX.Canvas2D {
     /**
      * Renders the frame into a temporary surface region in device coordinates clipped by the viewport.
      */
-    private _renderToSurfaceRegion(frame: Frame, transform: Matrix, viewport: Rectangle): {
-        surfaceRegion: Canvas2DSurfaceRegion;
-        surfaceRegionBounds: Rectangle;
-        clippedBounds: Rectangle;
-      }
-    {
+    private _renderFrameToSurfaceRegion(frame: Frame, matrix: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState): Canvas2DSurfaceRegion {
       var bounds = frame.getBounds();
       var boundsAABB = bounds.clone();
-      transform.transformRectangleAABB(boundsAABB);
+      matrix.transformRectangleAABB(boundsAABB);
       boundsAABB.snap();
-      var dx = boundsAABB.x;
-      var dy = boundsAABB.y;
+
       var clippedBoundsAABB = boundsAABB.clone();
       clippedBoundsAABB.intersect(viewport);
       clippedBoundsAABB.snap();
-
-      dx += clippedBoundsAABB.x - boundsAABB.x;
-      dy += clippedBoundsAABB.y - boundsAABB.y;
 
       var surfaceRegion = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceCache.allocate(clippedBoundsAABB.w, clippedBoundsAABB.h));
       var region = surfaceRegion.region;
@@ -401,11 +420,11 @@ module Shumway.GFX.Canvas2D {
       context.setTransform(1, 0, 0, 1, 0, 0);
       // Prepare region bounds for painting.
       context.clearRect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
-      transform = transform.clone();
+      matrix = matrix.clone();
 
-      transform.translate (
-        surfaceRegionBounds.x - dx,
-        surfaceRegionBounds.y - dy
+      matrix.translate (
+        surfaceRegionBounds.x - clippedBoundsAABB.x,
+        surfaceRegionBounds.y - clippedBoundsAABB.y
       );
 
       // Clip region bounds so we don't paint outside.
@@ -413,13 +432,14 @@ module Shumway.GFX.Canvas2D {
       context.beginPath();
       context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
       context.clip();
-      this._renderFrame(context, frame, transform, surfaceRegionBounds, new Canvas2DStageRendererState(this._options));
+      this._renderFrame(context, frame, matrix, surfaceRegionBounds, state);
       context.restore();
-      return {
-        surfaceRegion: surfaceRegion,
-        surfaceRegionBounds: surfaceRegionBounds,
-        clippedBounds: clippedBoundsAABB
-      };
+      return surfaceRegion;
+//      return new FrameRenderTarget (
+//        surfaceRegion,
+//        surfaceRegionBounds,
+//        clippedBoundsAABB
+//      );
     }
 
     private _renderShape(context: CanvasRenderingContext2D, shape: Shape, matrix: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState) {
@@ -489,6 +509,70 @@ module Shumway.GFX.Canvas2D {
       }
     }
 
+    /*
+    private _renderFrameWithMask (
+      context: CanvasRenderingContext2D,
+      frame: Frame,
+      matrix: Matrix,
+      viewport: Rectangle,
+      state: Canvas2DStageRendererState) {
+      var maskMatrix = frame.mask.getConcatenatedMatrix();
+      // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
+      // we still have to factor in the stage's matrix, which includes pixel density scaling.
+      if (!frame.mask.parent) {
+        maskMatrix = maskMatrix.concatClone(this._stage.getConcatenatedMatrix());
+      }
+      // this._renderFrame(context, frame.mask, maskMatrix, viewport, new Canvas2DStageRendererState(state.options, true));
+      // this._renderFrame(context, frame, matrix, viewport, new Canvas2DStageRendererState(state.options, false, frame));
+
+      var frameBoundsAABB = frame.getBounds().clone();
+      matrix.transformRectangleAABB(frameBoundsAABB);
+
+      var maskBoundsAABB = frame.mask.getBounds().clone();
+      maskMatrix.transformRectangleAABB(maskBoundsAABB);
+
+      var resultAABB = frameBoundsAABB;
+      resultAABB.intersect(maskBoundsAABB);
+      resultAABB.intersect(viewport);
+      resultAABB.snap();
+
+      var f = this._renderFrameToSurfaceRegion(frame, matrix, resultAABB, new Canvas2DStageRendererState(state.options, false, frame));
+      var m = this._renderFrameToSurfaceRegion(frame.mask, maskMatrix, resultAABB, new Canvas2DStageRendererState(state.options, false, null));
+
+      var b = f.surfaceRegionBounds.clone();
+      var t = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceCache.allocate(resultAABB.w, resultAABB.h));
+      var tContext = t.surface.context;
+
+//      tContext.fillStyle = "red";
+//      tContext.fillRect(t.region.x, t.region.y, resultAABB.w, resultAABB.h);
+      tContext.clearRect(t.region.x, t.region.y, resultAABB.w, resultAABB.h);
+
+      tContext.globalCompositeOperation = "source-over";
+      tContext.setTransform(1, 0, 0, 1, 0, 0);
+
+      f.render(tContext, t.region.x, t.region.y);
+      tContext.globalCompositeOperation = "destination-in";
+      m.render(tContext, t.region.x, t.region.y);
+      m.free();
+      f.free();
+
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.drawImage (
+        t.surface.canvas,
+        t.region.x,
+        t.region.y,
+        resultAABB.w,
+        resultAABB.h,
+        resultAABB.x,
+        resultAABB.y,
+        resultAABB.w,
+        resultAABB.h
+      );
+
+      t.surface.free(t);
+    }
+    */
+
     private _renderFrame (
       context: CanvasRenderingContext2D,
       root: Frame,
@@ -511,14 +595,7 @@ module Shumway.GFX.Canvas2D {
 
         if (state.ignoreMask !== frame && frame.mask && !state.clipRegion) {
           context.save();
-          var maskMatrix = frame.mask.getConcatenatedMatrix();
-          // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
-          // we still have to factor in the stage's matrix, which includes pixel density scaling.
-          if (!frame.mask.parent) {
-            maskMatrix = maskMatrix.concatClone(self._stage.getConcatenatedMatrix());
-          }
-          self._renderFrame(context, frame.mask, maskMatrix, viewport, new Canvas2DStageRendererState(state.options, true));
-          self._renderFrame(context, frame, matrix, viewport, new Canvas2DStageRendererState(state.options, false, frame));
+          // self._renderFrameWithMask(context, frame, matrix, viewport, state);
           context.restore();
           return VisitorFlags.Skip;
         }
@@ -567,10 +644,11 @@ module Shumway.GFX.Canvas2D {
             if (shouldApplyFilters) {
               Canvas2DStageRenderer._applyFilters(self._devicePixelRatio, context, frame.filters);
             }
-            var result = self._renderToSurfaceRegion(frame, matrix, viewport);
-            var surfaceRegion = result.surfaceRegion;
-            var surfaceRegionBounds = result.surfaceRegionBounds;
-            var clippedBounds = result.clippedBounds;
+            var target = self._renderFrameToSurfaceRegion(frame, matrix, viewport, new Canvas2DStageRendererState(self._options));
+            /*
+            var surfaceRegion = target.surfaceRegion;
+            var surfaceRegionBounds = target.surfaceRegionBounds;
+            var clippedBounds = target.clippedBounds;
             var region = surfaceRegion.region;
             context.setTransform(1, 0, 0, 1, 0, 0);
             context.drawImage (
@@ -584,8 +662,10 @@ module Shumway.GFX.Canvas2D {
               surfaceRegionBounds.w,
               surfaceRegionBounds.h
             );
+
             Canvas2DStageRenderer._removeFilters(context);
             surfaceRegion.surface.free(surfaceRegion);
+            */
             return VisitorFlags.Skip;
           }
         }
