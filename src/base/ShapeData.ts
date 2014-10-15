@@ -310,6 +310,7 @@ module Shumway {
       this.commands[this.commandsPosition++] = PathCommand.LineStyleSolid;
       this.coordinates[this.coordinatesPosition++] = thickness;
       var styles: DataBuffer = this.styles;
+      styles.writeUnsignedInt(color);
       styles.writeBoolean(pixelHinting);
       styles.writeUnsignedByte(scaleMode);
       styles.writeUnsignedByte(caps);
