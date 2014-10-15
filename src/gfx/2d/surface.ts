@@ -180,9 +180,12 @@ module Shumway.GFX.Canvas2D {
   }
 
   export class Canvas2DSurfaceRegion implements ISurfaceRegion {
+
     constructor (
       public surface: Canvas2DSurface,
-      public region: RegionAllocator.Region
+      public region: RegionAllocator.Region,
+      public w: number,
+      public h: number
     ) {
       // ...
     }
@@ -191,8 +194,19 @@ module Shumway.GFX.Canvas2D {
       this.surface.free(this)
     }
 
-    public draw(target: Canvas2DSurfaceRegion, x: number, y: number) {
-
+    public draw(source: Canvas2DSurfaceRegion, x: number, y: number) {
+      this.context.setTransform(1, 0, 0, 1, 0, 0);
+      this.context.drawImage (
+        source.surface.canvas,
+        source.region.x,
+        source.region.y,
+        source.w,
+        source.h,
+        x,
+        y,
+        source.w,
+        source.h
+      );
     }
 
     get context(): CanvasRenderingContext2D {
@@ -234,7 +248,7 @@ module Shumway.GFX.Canvas2D {
     allocate(w: number, h: number): Canvas2DSurfaceRegion {
       var region = this._regionAllocator.allocate(w, h);
       if (region) {
-        return new Canvas2DSurfaceRegion(this, region);
+        return new Canvas2DSurfaceRegion(this, region, w, h);
       }
       return null;
     }

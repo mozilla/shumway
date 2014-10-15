@@ -16,6 +16,8 @@ module Shumway.GFX.Canvas2D {
 
   declare var registerScratchCanvas;
 
+  var writer = new IndentingWriter();
+
   export enum FillRule {
     NonZero,
     EvenOdd
@@ -147,7 +149,8 @@ module Shumway.GFX.Canvas2D {
       this._fillRule = defaultFillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
       this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
       this._target = new Canvas2DSurfaceRegion(new Canvas2DSurface(canvas),
-                                               new RegionAllocator.Region(0, 0, canvas.width, canvas.height));
+                                               new RegionAllocator.Region(0, 0, canvas.width, canvas.height),
+                                               canvas.width, canvas.height);
       this._devicePixelRatio = window.devicePixelRatio || 1;
       Canvas2DStageRenderer._prepareSurfaceAllocators();
     }
@@ -165,6 +168,7 @@ module Shumway.GFX.Canvas2D {
         return;
       }
 
+      var minSurfaceSize = 2048;
       Canvas2DStageRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator (
         function (w: number, h: number) {
           var canvas = document.createElement("canvas");
@@ -172,13 +176,13 @@ module Shumway.GFX.Canvas2D {
             registerScratchCanvas(canvas);
           }
           // Surface caches are at least this size.
-          var W = Math.max(1024, w);
-          var H = Math.max(1024, h);
+          var W = Math.max(minSurfaceSize, w);
+          var H = Math.max(minSurfaceSize, h);
           canvas.width = W;
           canvas.height = H;
           var allocator = null;
-          if (w >= 1024 || h >= 1024) {
-            // The requested size is pretty large, so create a single grid allocator
+          if (w >= 1024 / 2 || h >= 1024 / 2) {
+            // The requested size is very large, so create a single grid allocator
             // with there requested size. This will only hold one image.
             allocator = new RegionAllocator.GridAllocator(W, H, W, H);
           } else {
@@ -241,33 +245,37 @@ module Shumway.GFX.Canvas2D {
         target.context.rect(clip.x, clip.y, clip.w, clip.h);
         target.context.clip();
       }
-      this._renderFrame(target.context, frame, matrix, clip, new State(this._options));
+      this._renderFrame(target, frame, matrix, clip, new State(this._options));
       target.context.restore();
     }
+
 
     /**
      * Renders the frame into a temporary surface region in device coordinates clipped by the viewport.
      */
-    private _renderFrameToSurfaceRegion(frame: Frame, matrix: Matrix, viewport: Rectangle, state: State): Canvas2DSurfaceRegion {
+    private _renderFrameToSurfaceRegion(frame: Frame, matrix: Matrix, clip: Rectangle, clippedBoundsAABB: Rectangle, state: State): Canvas2DSurfaceRegion {
       var bounds = frame.getBounds();
       var boundsAABB = bounds.clone();
       matrix.transformRectangleAABB(boundsAABB);
       boundsAABB.snap();
 
-      var clippedBoundsAABB = boundsAABB.clone();
-      clippedBoundsAABB.intersect(viewport);
+      if (clippedBoundsAABB) {
+        clippedBoundsAABB.set(boundsAABB);
+      } else {
+        clippedBoundsAABB = boundsAABB.clone();
+      }
+      clippedBoundsAABB.intersect(clip);
       clippedBoundsAABB.snap();
 
-      var surfaceRegion = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceCache.allocate(clippedBoundsAABB.w, clippedBoundsAABB.h));
-      var region = surfaceRegion.region;
+      var target = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceCache.allocate(clippedBoundsAABB.w, clippedBoundsAABB.h));
+      var region = target.region;
 
       // Region bounds may be smaller than the allocated surface region.
       var surfaceRegionBounds = new Rectangle(region.x, region.y, clippedBoundsAABB.w, clippedBoundsAABB.h);
 
-      var context = surfaceRegion.surface.context;
-      context.setTransform(1, 0, 0, 1, 0, 0);
+      target.context.setTransform(1, 0, 0, 1, 0, 0);
       // Prepare region bounds for painting.
-      context.clearRect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
+      target.context.clearRect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
       matrix = matrix.clone();
 
       matrix.translate (
@@ -276,18 +284,13 @@ module Shumway.GFX.Canvas2D {
       );
 
       // Clip region bounds so we don't paint outside.
-      context.save();
-      context.beginPath();
-      context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
-      context.clip();
-      this._renderFrame(context, frame, matrix, surfaceRegionBounds, state);
-      context.restore();
-      return surfaceRegion;
-//      return new FrameRenderTarget (
-//        surfaceRegion,
-//        surfaceRegionBounds,
-//        clippedBoundsAABB
-//      );
+      target.context.save();
+      target.context.beginPath();
+      target.context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
+      target.context.clip();
+      this._renderFrame(target, frame, matrix, surfaceRegionBounds, state);
+      target.context.restore();
+      return target;
     }
 
     private _renderShape(context: CanvasRenderingContext2D, shape: Shape, matrix: Matrix, clip: Rectangle, state: State) {
@@ -403,12 +406,14 @@ module Shumway.GFX.Canvas2D {
     */
 
     private _renderFrame (
-      context: CanvasRenderingContext2D,
+      target: Canvas2DSurfaceRegion,
       root: Frame,
       matrix: Matrix,
       clip: Rectangle,
       state: State,
       skipRoot: boolean = false) {
+
+      var clippedBoundsAABB = Rectangle.createEmpty();
 
       var self = this;
       root.visit(function visitFrame(frame: Frame, matrix?: Matrix, flags?: FrameFlags): VisitorFlags {
@@ -423,20 +428,20 @@ module Shumway.GFX.Canvas2D {
         var bounds = frame.getBounds();
 
         if (state.ignoreMask !== frame && frame.mask && !state.clipRegion) {
-          context.save();
+          target.context.save();
           // self._renderFrameWithMask(context, frame, matrix, viewport, state);
-          context.restore();
+          target.context.restore();
           return VisitorFlags.Skip;
         }
 
         if (flags & FrameFlags.EnterClip) {
-          context.save();
-          context.enterBuildingClippingRegion();
-          self._renderFrame(context, frame, matrix, MAX_VIEWPORT, new State(state.options, true));
-          context.leaveBuildingClippingRegion();
+          target.context.save();
+          target.context.enterBuildingClippingRegion();
+          self._renderFrame(target, frame, matrix, MAX_VIEWPORT, new State(state.options, true));
+          target.context.leaveBuildingClippingRegion();
           return;
         } else if (flags & FrameFlags.LeaveClip) {
-          context.restore();
+          target.context.restore();
           return;
         }
 
@@ -449,12 +454,12 @@ module Shumway.GFX.Canvas2D {
           matrix.snap();
         }
 
-        context.imageSmoothingEnabled =
+        target.context.imageSmoothingEnabled =
           frame.smoothing === Smoothing.Always || state.options.imageSmoothing;
 
-        context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+        target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
 
-        Filters._applyColorMatrix(context, frame.getConcatenatedColorMatrix(), state);
+        Filters._applyColorMatrix(target.context, frame.getConcatenatedColorMatrix(), state);
 
         if (flags & FrameFlags.IsMask && !state.clipRegion) {
           return VisitorFlags.Skip;
@@ -468,12 +473,13 @@ module Shumway.GFX.Canvas2D {
 
         // Do we need to draw to a temporary surface?
         if (frame !== root && (state.options.blending || shouldApplyFilters)) {
-          context.globalCompositeOperation = getCompositeOperation(frame.blendMode);
+          target.context.globalCompositeOperation = getCompositeOperation(frame.blendMode);
           if (frame.blendMode !== BlendMode.Normal || frame.filters.length) {
             if (shouldApplyFilters) {
-              Filters._applyFilters(self._devicePixelRatio, context, frame.filters);
+              Filters._applyFilters(self._devicePixelRatio, target.context, frame.filters);
             }
-            var target = self._renderFrameToSurfaceRegion(frame, matrix, clip, new State(self._options));
+            var tmp = self._renderFrameToSurfaceRegion(frame, matrix, clip, clippedBoundsAABB, new State(self._options));
+            self._target.draw(tmp, clippedBoundsAABB.x, clippedBoundsAABB.y);
             /*
             var surfaceRegion = target.surfaceRegion;
             var surfaceRegionBounds = target.surfaceRegionBounds;
@@ -495,34 +501,35 @@ module Shumway.GFX.Canvas2D {
             Canvas2DStageRenderer._removeFilters(context);
             surfaceRegion.surface.free(surfaceRegion);
             */
+            tmp.free();
             return VisitorFlags.Skip;
           }
         }
 
         if (frame instanceof Shape) {
           frame.previouslyRenderedAABB = boundsAABB;
-          self._renderShape(context, <Shape>frame, matrix, clip, state);
+          self._renderShape(target.context, <Shape>frame, matrix, clip, state);
         } else if (frame instanceof ClipRectangle) {
           var clipRectangle = <ClipRectangle>frame;
-          context.save();
-          context.beginPath();
-          context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-          context.clip();
+          target.context.save();
+          target.context.beginPath();
+          target.context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+          target.context.clip();
           boundsAABB.intersect(clip);
 
           if (!frame.hasFlags(FrameFlags.Transparent)) {
             // Fill Background
-            context.fillStyle = clipRectangle.color.toCSSStyle();
-            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+            target.context.fillStyle = clipRectangle.color.toCSSStyle();
+            target.context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
           }
 
-          self._renderFrame(context, frame, matrix, boundsAABB, state, true);
-          context.restore();
+          self._renderFrame(target, frame, matrix, boundsAABB, state, true);
+          target.context.restore();
           return VisitorFlags.Skip;
         } else if (state.options.paintBounds && frame instanceof FrameContainer) {
           var bounds = frame.getBounds().clone();
-          context.strokeStyle = ColorStyle.LightOrange;
-          context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          target.context.strokeStyle = ColorStyle.LightOrange;
+          target.context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
         }
         return VisitorFlags.Continue;
       }, matrix, FrameFlags.Empty, VisitorFlags.Clips);

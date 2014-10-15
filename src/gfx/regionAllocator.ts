@@ -290,7 +290,7 @@ module Shumway.GFX {
               // a new bucket that can fit the requested size. So give up.
               return null;
             }
-            var gridSize = roundToMultipleOfPowerOfTwo(size, 2);
+            var gridSize = roundToMultipleOfPowerOfTwo(size, 8);
             var bucketHeight = gridSize * 2;
             if (bucketHeight > remainingSpace) {
               bucketHeight = remainingSpace;
