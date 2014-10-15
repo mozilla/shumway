@@ -2071,10 +2071,10 @@ module Shumway.AVM2.AS {
       return xl;
     }
 
-    hasOwnProperty(P: any = undefined): boolean {
+    native_hasOwnProperty(P: any = undefined): boolean {
       notImplemented("public.XMLList::hasOwnProperty"); return;
     }
-    propertyIsEnumerable(P: any = undefined): boolean {
+    native_propertyIsEnumerable(P: any = undefined): boolean {
 
       notImplemented("public.XMLList::propertyIsEnumerable"); return;
     }
