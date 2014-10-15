@@ -357,6 +357,13 @@ module Shumway.GFX {
     return start + (end - start) * ratio;
   }
 
+  function morphColor(start: number, end: number, ratio: number): number {
+    return morph(start >> 24 & 0xff, end >> 24 & 0xff, ratio) << 24 |
+           morph(start >> 16 & 0xff, end >> 16 & 0xff, ratio) << 16 |
+           morph(start >> 8 & 0xff, end >> 8 & 0xff, ratio) << 8 |
+           morph(start & 0xff, end & 0xff, ratio);
+  }
+
   export class RenderableShape extends Renderable {
     _flags: RenderableFlags = RenderableFlags.Dirty     |
                               RenderableFlags.Scalable  |
@@ -705,7 +712,7 @@ module Shumway.GFX {
             release || assert(styles.bytesAvailable >= 4);
             fillPath = this._createPath(PathType.Fill,
               ColorUtilities.rgbaToCSSStyle(
-                morph(styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio)
+                morphColor(styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio)
               ),
               false, null, x, y);
             break;
@@ -726,7 +733,7 @@ module Shumway.GFX {
             var width = morph(coordinates[coordinatesIndex],
               morphCoordinates[coordinatesIndex++], ratio) / 20;
             var color = ColorUtilities.rgbaToCSSStyle(
-              morph(styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio)
+              morphColor(styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio)
             );
             // Skip pixel hinting.
             styles.position += 1;
@@ -840,7 +847,7 @@ module Shumway.GFX {
         var ratio = morph(
             styles.readUnsignedByte() / 0xff, morphStyles.readUnsignedByte() / 0xff, ratio
         );
-        var color = morph(
+        var color = morphColor(
           styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio
         );
         var cssColor = ColorUtilities.rgbaToCSSStyle(color);
