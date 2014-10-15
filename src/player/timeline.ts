@@ -416,6 +416,15 @@ module Shumway.Timeline {
       }
       return true;
     }
+
+    canBeReused(obj: flash.display.DisplayObject): boolean {
+      var symbol = this.symbol;
+      if (symbol && symbol === obj._symbol &&
+          obj._hasFlags(flash.display.DisplayObjectFlags.OwnedByTimeline)) {
+        return true;
+      }
+      return false;
+    }
   }
 
   export class SoundStart {
