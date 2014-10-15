@@ -15,45 +15,27 @@
  */
 // Class: MorphShape
 module Shumway.AVM2.AS.flash.display {
-  import Bounds = Shumway.Bounds;
+  import assert = Shumway.Debug.assert;
+
   export class MorphShape extends flash.display.DisplayObject {
+    static classSymbols: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
 
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.MorphShapeSymbol) {
       var self: MorphShape = this;
+      self._graphics = null;
       if (symbol) {
-        self._graphics = symbol.graphics;
-        self.morphFillBounds = symbol.morphFillBounds;
-        self.morphLineBounds = symbol.morphLineBounds;
-      } else {
-        self._graphics = new flash.display.Graphics();
-        self.morphFillBounds = null;
-        self.morphLineBounds = null;
+        this._setStaticContentFromSymbol(symbol);
+        // TODO: Check what do do if the computed bounds of the graphics object don't
+        // match those given by the symbol.
       }
     };
-
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
     }
-
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-
-    _graphics: flash.display.Graphics;
-    morphFillBounds: Bounds;
-    morphLineBounds: Bounds;
 
     _canHaveGraphics(): boolean {
       return true;
@@ -65,6 +47,11 @@ module Shumway.AVM2.AS.flash.display {
 
     get graphics(): flash.display.Graphics {
       return this._ensureGraphics();
+    }
+
+    _containsPointDirectly(x: number, y: number): boolean {
+      var graphics = this._getGraphics();
+      return !!graphics && graphics._containsPoint(x, y, true);
     }
   }
 }

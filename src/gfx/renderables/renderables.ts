@@ -442,11 +442,11 @@ module Shumway.GFX {
 
       var data = this._pathData;
       if (data) {
-        if (data.morphCoordinates) {
-          this._deserializeMorphPaths(data, context);
-        } else {
+        if (!data.morphCoordinates) {
           this._deserializePaths(data, context);
           this._pathData = null;
+        } else {
+          this._deserializeMorphPaths(data, context);
         }
       }
 

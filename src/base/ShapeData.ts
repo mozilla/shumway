@@ -194,10 +194,10 @@ module Shumway {
 
   export class PlainObjectShapeData {
     constructor(public commands: Uint8Array, public commandsPosition: number,
-                public coordinates: Int32Array, public coordinatesPosition: number,
-                public morphCoordinates: Int32Array,
-                public styles: ArrayBuffer, public morphStyles: ArrayBuffer,
-                public stylesLength: number,
+                public coordinates: Int32Array, public morphCoordinates: Int32Array,
+                public coordinatesPosition: number,
+                public styles: ArrayBuffer, public stylesLength: number,
+                public morphStyles: ArrayBuffer, public morphStylesLength: number,
                 public hasFills: boolean, public hasLines: boolean)
     {}
   }
@@ -237,7 +237,8 @@ module Shumway {
       data.styles = DataBuffer.FromArrayBuffer(source.styles, source.stylesLength);
       data.styles.endian = 'auto';
       if (source.morphStyles) {
-        data.morphStyles = DataBuffer.FromArrayBuffer(source.styles, source.stylesLength);
+        data.morphStyles = DataBuffer.FromArrayBuffer(
+          source.morphStyles, source.morphStylesLength);
         data.morphStyles.endian = 'auto';
       }
       data.hasFills = source.hasFills;
@@ -432,6 +433,10 @@ module Shumway {
       copy.coordinatesPosition = this.coordinatesPosition;
       copy.styles = new DataBuffer(this.styles.length);
       copy.styles.writeRawBytes(this.styles.bytes);
+      if (this.morphStyles) {
+        copy.morphStyles = new DataBuffer(this.morphStyles.length);
+        copy.morphStyles.writeRawBytes(this.morphStyles.bytes);
+      }
       copy.hasFills = this.hasFills;
       copy.hasLines = this.hasLines;
       return copy;
@@ -439,16 +444,20 @@ module Shumway {
 
     toPlainObject(): PlainObjectShapeData {
       return new PlainObjectShapeData(this.commands, this.commandsPosition,
-                                      this.coordinates, this.coordinatesPosition,
-                                      this.morphCoordinates, this.styles.buffer,
+                                      this.coordinates, this.morphCoordinates,
+                                      this.coordinatesPosition,
+                                      this.styles.buffer, this.styles.length,
                                       this.morphStyles && this.morphStyles.buffer,
-                                      this.styles.length, this.hasFills, this.hasLines);
+                                      this.morphStyles ? this.morphStyles.length : 0,
+                                      this.hasFills, this.hasLines);
     }
 
     public get buffers(): ArrayBuffer[] {
       var buffers = [this.commands.buffer, this.coordinates.buffer, this.styles.buffer];
       if (this.morphCoordinates) {
         buffers.push(this.morphCoordinates.buffer);
+      }
+      if (this.morphStyles) {
         buffers.push(this.morphStyles.buffer);
       }
       return buffers;
