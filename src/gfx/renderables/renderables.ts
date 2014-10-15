@@ -844,14 +844,14 @@ module Shumway.GFX {
       gradient.setTransform && gradient.setTransform(transform.toSVGMatrix());
       var colorStopsCount = styles.readUnsignedByte();
       for (var i = 0; i < colorStopsCount; i++) {
-        var ratio = morph(
+        var stop = morph(
             styles.readUnsignedByte() / 0xff, morphStyles.readUnsignedByte() / 0xff, ratio
         );
         var color = morphColor(
           styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio
         );
         var cssColor = ColorUtilities.rgbaToCSSStyle(color);
-        gradient.addColorStop(ratio, cssColor);
+        gradient.addColorStop(stop, cssColor);
       }
 
       // Skip spread and interpolation modes for now.
