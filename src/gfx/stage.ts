@@ -95,11 +95,11 @@ module Shumway.GFX {
   }
 
   export class StageRenderer {
-    _viewport: Rectangle;
+    protected _viewport: Rectangle;
     protected _options: StageRendererOptions;
-    _canvas: HTMLCanvasElement;
-    _stage: Stage;
-    _devicePixelRatio: number;
+    protected _canvas: HTMLCanvasElement;
+    protected _stage: Stage;
+    protected _devicePixelRatio: number;
 
     constructor(canvas: HTMLCanvasElement, stage: Stage, options: StageRendererOptions) {
       this._canvas = canvas;

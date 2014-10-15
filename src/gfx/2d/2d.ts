@@ -12,11 +12,53 @@ module Shumway.GFX.Canvas2D {
   import OBB = Shumway.GFX.Geometry.OBB;
   import MipMap = Shumway.GFX.Geometry.MipMap;
 
+  import ISurfaceRegionAllocator = SurfaceRegionAllocator.ISurfaceRegionAllocator;
+
   declare var registerScratchCanvas;
 
   export enum FillRule {
     NonZero,
     EvenOdd
+  }
+
+  /**
+   * Match up FLash blend modes with Canvas blend operations:
+   *
+   * See: http://kaourantin.net/2005/09/some-word-on-blend-modes-in-flash.html
+   */
+  function getCompositeOperation(blendMode: BlendMode): string {
+    // TODO:
+
+    // These Flash blend modes have no canvas equivalent:
+    // - BlendMode.Subtract
+    // - BlendMode.Invert
+    // - BlendMode.Shader
+    // - BlendMode.Add is similar to BlendMode.Screen
+
+    // These blend modes are actually Porter-Duff compositing operators.
+    // The backdrop is the nearest parent with blendMode set to layer.
+    // When there is no LAYER parent, they are ignored (treated as NORMAL).
+    // - BlendMode.Alpha (destination-in)
+    // - BlendMode.Erase (destination-out)
+    // - BlendMode.Layer [defines backdrop]
+
+    var compositeOp: string = "source-over";
+    switch (blendMode) {
+      case BlendMode.Normal:
+      case BlendMode.Layer:
+        return compositeOp;
+      case BlendMode.Multiply:   compositeOp = "multiply";   break;
+      case BlendMode.Add:
+      case BlendMode.Screen:     compositeOp = "screen";     break;
+      case BlendMode.Lighten:    compositeOp = "lighten";    break;
+      case BlendMode.Darken:     compositeOp = "darken";     break;
+      case BlendMode.Difference: compositeOp = "difference"; break;
+      case BlendMode.Overlay:    compositeOp = "overlay";    break;
+      case BlendMode.HardLight:  compositeOp = "hard-light"; break;
+      default:
+        Shumway.Debug.somewhatImplemented("Blend Mode: " + BlendMode[blendMode]);
+    }
+    return compositeOp;
   }
 
   export class Canvas2DStageRendererOptions extends StageRendererOptions {
@@ -64,7 +106,7 @@ module Shumway.GFX.Canvas2D {
   /**
    * Rendering state threaded through rendering methods.
    */
-  export class Canvas2DStageRendererState {
+  export class State {
     constructor (
       public options: Canvas2DStageRendererOptions,
       public clipRegion: boolean = false,
@@ -76,216 +118,46 @@ module Shumway.GFX.Canvas2D {
 
   var MAX_VIEWPORT = Rectangle.createMaxI16();
 
-//  class FrameRenderTarget {
-//    constructor (
-//      public surfaceRegion: Canvas2DSurfaceRegion,
-//      public surfaceRegionBounds: Rectangle,
-//      public clippedBounds: Rectangle) {
-//      // ...
-//    }
-//
-//    free() {
-//      this.surfaceRegion.surface.free(this.surfaceRegion);
-//    }
-//
-//    render(context: CanvasRenderingContext2D, x: number, y: number) {
-//      context.drawImage (
-//        this.surfaceRegion.surface.canvas,
-//        this.surfaceRegionBounds.x,
-//        this.surfaceRegionBounds.y,
-//        this.surfaceRegionBounds.w,
-//        this.surfaceRegionBounds.h,
-//        x,
-//        y,
-//        this.surfaceRegionBounds.w,
-//        this.surfaceRegionBounds.h
-//      );
-//    }
-//  }
-
   export class Canvas2DStageRenderer extends StageRenderer {
     protected _options: Canvas2DStageRendererOptions;
     private _fillRule: string;
     context: CanvasRenderingContext2D;
+
+    private _target: Canvas2DSurfaceRegion;
 
     private static _initializedCaches: boolean = false;
 
     /**
      * Allocates temporary regions for performing image operations.
      */
-    private static _surfaceCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    private static _surfaceCache: ISurfaceRegionAllocator;
 
     /**
      * Allocates shape cache regions.
      */
-    private static _shapeCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    private static _shapeCache: ISurfaceRegionAllocator;
 
-    /**
-     * Reusable blur filter SVG element.
-     */
-    static _svgBlurFilter: Element;
-
-    /**
-     * Reusable dropshadow filter SVG element.
-     */
-    static _svgDropshadowFilterBlur: Element;
-    static _svgDropshadowFilterFlood: Element;
-    static _svgDropshadowFilterOffset: Element;
-
-    /**
-     * Reusable colormatrix filter SVG element.
-     */
-    static _svgColorMatrixFilter: Element;
-
-    static _svgFiltersAreSupported = !!Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "filter");
 
     constructor (
       canvas: HTMLCanvasElement,
       stage: Stage,
       options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
       super(canvas, stage, options);
-      var fillRule: FillRule = FillRule.NonZero;
-      var context = this.context = canvas.getContext("2d", {alpha: options.alpha});
+      var defaultFillRule = FillRule.NonZero;
+      this._fillRule = defaultFillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
       this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
-      this._fillRule = fillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
-      context.fillRule = context.mozFillRule = this._fillRule;
+      this._target = new Canvas2DSurfaceRegion(new Canvas2DSurface(canvas),
+                                               new RegionAllocator.Region(0, 0, canvas.width, canvas.height));
+      this._devicePixelRatio = window.devicePixelRatio || 1;
       Canvas2DStageRenderer._prepareSurfaceAllocators();
     }
 
-    /**
-     * Creates an SVG element and defines filters that are referenced in |canvas.filter| properties. We cannot
-     * inline CSS filters because they don't expose independent blurX and blurY properties.
-     * This only works in Firefox, and you have to set the 'canvas.filters.enabled' equal to |true|.
-     */
-    private static _prepareSVGFilters() {
-      if (Canvas2DStageRenderer._svgBlurFilter) {
-        return;
-      }
-      var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      var defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-
-      // Blur Filter
-      var blurFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-      blurFilter.setAttribute("id", "svgBlurFilter");
-      var feGaussianFilter = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
-      feGaussianFilter.setAttribute("stdDeviation", "0 0");
-      blurFilter.appendChild(feGaussianFilter);
-      defs.appendChild(blurFilter);
-      Canvas2DStageRenderer._svgBlurFilter = feGaussianFilter;
-
-      // Drop Shadow Filter
-      var dropShadowFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-      dropShadowFilter.setAttribute("id", "svgDropShadowFilter");
-      var feGaussianFilter = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
-      feGaussianFilter.setAttribute("in", "SourceAlpha");
-      feGaussianFilter.setAttribute("stdDeviation", "3");
-      dropShadowFilter.appendChild(feGaussianFilter);
-      Canvas2DStageRenderer._svgDropshadowFilterBlur = feGaussianFilter;
-
-      var feOffset = document.createElementNS("http://www.w3.org/2000/svg", "feOffset");
-      feOffset.setAttribute("dx", "0");
-      feOffset.setAttribute("dy", "0");
-      feOffset.setAttribute("result", "offsetblur");
-      dropShadowFilter.appendChild(feOffset);
-      Canvas2DStageRenderer._svgDropshadowFilterOffset = feOffset;
-
-      var feFlood = document.createElementNS("http://www.w3.org/2000/svg", "feFlood");
-      feFlood.setAttribute("flood-color", "rgba(0,0,0,1)");
-      dropShadowFilter.appendChild(feFlood);
-      Canvas2DStageRenderer._svgDropshadowFilterFlood = feFlood;
-
-      var feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
-      feComposite.setAttribute("in2", "offsetblur");
-      feComposite.setAttribute("operator", "in");
-      dropShadowFilter.appendChild(feComposite);
-
-      var feMerge = document.createElementNS("http://www.w3.org/2000/svg", "feMerge");
-      var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
-      feMerge.appendChild(feMergeNode);
-
-      var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
-      feMergeNode.setAttribute("in", "SourceGraphic");
-      feMerge.appendChild(feMergeNode);
-      dropShadowFilter.appendChild(feMerge);
-      defs.appendChild(dropShadowFilter);
-
-      var colorMatrixFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-      colorMatrixFilter.setAttribute("id", "svgColorMatrixFilter");
-      var feColorMatrix = document.createElementNS("http://www.w3.org/2000/svg", "feColorMatrix");
-      // Color interpolation in linear RGB doesn't seem to match Flash's results.
-      feColorMatrix.setAttribute("color-interpolation-filters", "sRGB");
-      feColorMatrix.setAttribute("in", "SourceGraphic");
-      feColorMatrix.setAttribute("type", "matrix");
-      colorMatrixFilter.appendChild(feColorMatrix);
-      defs.appendChild(colorMatrixFilter);
-      Canvas2DStageRenderer._svgColorMatrixFilter = feColorMatrix;
-      svg.appendChild(defs);
-      document.documentElement.appendChild(svg);
-    }
-
-    static _applyColorMatrixFilter(context: CanvasRenderingContext2D, colorMatrix: ColorMatrix) {
-      Canvas2DStageRenderer._prepareSVGFilters();
-      Canvas2DStageRenderer._svgColorMatrixFilter.setAttribute("values", colorMatrix.toSVGFilterMatrix());
-      context.filter = "url(#svgColorMatrixFilter)";
-    }
-
-    /**
-     * This doesn't currently allow you to specify multiple filters. Only the last one is used.
-     * To support multiple filters, we need to group them in SVG nodes.
-     */
-    static _applyFilters(ratio: number, context: CanvasRenderingContext2D, filters: Filter []) {
-      Canvas2DStageRenderer._prepareSVGFilters();
-      Canvas2DStageRenderer._removeFilters(context);
-      var scale = ratio;
-      /**
-       * Scale blur radius for each quality level. The scale constants were gathered
-       * experimentally.
-       */
-      function getBlurScale(quality: number) {
-        var blurScale = ratio / 2; // For some reason we always have to scale by 1/2 first.
-        switch (quality) {
-          case 0:
-            return 0;
-          case 1:
-            return blurScale / 2.7;
-          case 2:
-            return blurScale / 1.28;
-          case 3:
-          default:
-            return blurScale;
-        }
-      }
-      for (var i = 0; i < filters.length; i++) {
-        var filter = filters[i];
-        if (filter instanceof BlurFilter) {
-          var blurFilter = <BlurFilter>filter;
-          var blurScale = getBlurScale(blurFilter.quality);
-          Canvas2DStageRenderer._svgBlurFilter.setAttribute("stdDeviation",
-            blurFilter.blurX * blurScale + " " +
-            blurFilter.blurY * blurScale);
-          context.filter = "url(#svgBlurFilter)";
-        } else if (filter instanceof DropshadowFilter) {
-          var dropshadowFilter = <DropshadowFilter>filter;
-          var blurScale = getBlurScale(dropshadowFilter.quality);
-          Canvas2DStageRenderer._svgDropshadowFilterBlur.setAttribute("stdDeviation",
-            dropshadowFilter.blurX * blurScale + " " +
-            dropshadowFilter.blurY * blurScale
-          );
-          Canvas2DStageRenderer._svgDropshadowFilterOffset.setAttribute("dx",
-            String(Math.cos(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
-          Canvas2DStageRenderer._svgDropshadowFilterOffset.setAttribute("dy",
-            String(Math.sin(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
-          Canvas2DStageRenderer._svgDropshadowFilterFlood.setAttribute("flood-color",
-            ColorUtilities.rgbaToCSSStyle(((dropshadowFilter.color << 8) | Math.round(255 * dropshadowFilter.alpha))));
-          context.filter = "url(#svgDropShadowFilter)";
-        }
-      }
-    }
-
-    static _removeFilters(context: CanvasRenderingContext2D) {
-      // For some reason, setting this to the default empty string "" does
-      // not work, it expects "none".
-      context.filter = "none";
+    public resize() {
+      var canvas = this._canvas;
+      var context = this._target.surface.context;
+      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
+      this._target.region.set(this._viewport);
+      this._devicePixelRatio = window.devicePixelRatio || 1;
     }
 
     private static _prepareSurfaceAllocators() {
@@ -338,69 +210,45 @@ module Shumway.GFX.Canvas2D {
       Canvas2DStageRenderer._initializedCaches = true;
     }
 
-    public resize() {
-      var canvas = this._canvas, context = this.context;
-      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
-      context.fillRule = context.mozFillRule = this._fillRule;
-      this._devicePixelRatio = window.devicePixelRatio || 1;
-      this.render();
-    }
-
     public render() {
       var stage = this._stage;
-      var context = this.context;
-
-      context.setTransform(1, 0, 0, 1, 0, 0);
-
-      context.save();
+      var target = this._target;
       var options = this._options;
-
-      var lastDirtyRectangles: Rectangle[] = [];
-      var dirtyRectangles = lastDirtyRectangles.slice(0);
-
-      context.globalAlpha = 1;
-
       var viewport = this._viewport;
-      this.renderFrame(stage, viewport, stage.matrix, true);
 
-      if (stage.trackDirtyRegions) {
-        stage.dirtyRegion.clear();
-      }
+      target.resetTransform();
+      target.context.save();
 
-      context.restore();
+      target.context.globalAlpha = 1;
+      target.clear(viewport);
+
+      this.renderFrame(stage, viewport, stage.matrix);
+      target.context.restore();
 
       if (options && options.paintViewport) {
-        context.beginPath();
-        context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
-        context.strokeStyle = "#FF4981";
-        context.stroke();
+        target.context.beginPath();
+        target.context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+        target.context.strokeStyle = "#FF4981";
+        target.context.stroke();
       }
     }
 
-    public renderFrame (
-      root: Frame,
-      viewport: Rectangle,
-      matrix: Matrix,
-      clearTargetBeforeRendering: boolean = false)
-    {
-      var context = this.context;
-      context.save();
+    public renderFrame(frame: Frame, clip: Rectangle, matrix: Matrix) {
+      var target = this._target;
+      target.context.save();
       if (!this._options.paintViewport) {
-        context.beginPath();
-        context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
-        context.clip();
+        target.context.beginPath();
+        target.context.rect(clip.x, clip.y, clip.w, clip.h);
+        target.context.clip();
       }
-      if (clearTargetBeforeRendering) {
-        context.clearRect(viewport.x, viewport.y, viewport.w, viewport.h);
-      }
-      this._renderFrame(context, root, matrix, viewport, new Canvas2DStageRendererState(this._options));
-      context.restore();
+      this._renderFrame(target.context, frame, matrix, clip, new State(this._options));
+      target.context.restore();
     }
 
     /**
      * Renders the frame into a temporary surface region in device coordinates clipped by the viewport.
      */
-    private _renderFrameToSurfaceRegion(frame: Frame, matrix: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState): Canvas2DSurfaceRegion {
+    private _renderFrameToSurfaceRegion(frame: Frame, matrix: Matrix, viewport: Rectangle, state: State): Canvas2DSurfaceRegion {
       var bounds = frame.getBounds();
       var boundsAABB = bounds.clone();
       matrix.transformRectangleAABB(boundsAABB);
@@ -442,7 +290,7 @@ module Shumway.GFX.Canvas2D {
 //      );
     }
 
-    private _renderShape(context: CanvasRenderingContext2D, shape: Shape, matrix: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState) {
+    private _renderShape(context: CanvasRenderingContext2D, shape: Shape, matrix: Matrix, clip: Rectangle, state: State) {
       var self = this;
       var bounds = shape.getBounds();
       if (!bounds.isEmpty() &&
@@ -486,25 +334,6 @@ module Shumway.GFX.Canvas2D {
             context.globalAlpha = 0.1;
             context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
           }
-        }
-      }
-    }
-
-    private _applyColorMatrix(context: CanvasRenderingContext2D, colorMatrix: ColorMatrix, state: Canvas2DStageRendererState) {
-      Canvas2DStageRenderer._removeFilters(context);
-      if (colorMatrix.isIdentity()) {
-        context.globalAlpha = 1;
-        context.globalColorMatrix = null;
-      } else if (colorMatrix.hasOnlyAlphaMultiplier()) {
-        context.globalAlpha = colorMatrix.alphaMultiplier;
-        context.globalColorMatrix = null;
-      } else {
-        context.globalAlpha = 1;
-        if (Canvas2DStageRenderer._svgFiltersAreSupported && state.options.filters) {
-          Canvas2DStageRenderer._applyColorMatrixFilter(context, colorMatrix);
-          context.globalColorMatrix = null;
-        } else {
-          context.globalColorMatrix = colorMatrix;
         }
       }
     }
@@ -577,8 +406,8 @@ module Shumway.GFX.Canvas2D {
       context: CanvasRenderingContext2D,
       root: Frame,
       matrix: Matrix,
-      viewport: Rectangle,
-      state: Canvas2DStageRendererState,
+      clip: Rectangle,
+      state: State,
       skipRoot: boolean = false) {
 
       var self = this;
@@ -603,7 +432,7 @@ module Shumway.GFX.Canvas2D {
         if (flags & FrameFlags.EnterClip) {
           context.save();
           context.enterBuildingClippingRegion();
-          self._renderFrame(context, frame, matrix, MAX_VIEWPORT, new Canvas2DStageRendererState(state.options, true));
+          self._renderFrame(context, frame, matrix, MAX_VIEWPORT, new State(state.options, true));
           context.leaveBuildingClippingRegion();
           return;
         } else if (flags & FrameFlags.LeaveClip) {
@@ -612,7 +441,7 @@ module Shumway.GFX.Canvas2D {
         }
 
         // Return early if the bounds are not within the viewport.
-        if (!viewport.intersectsTransformedAABB(bounds, matrix)) {
+        if (!clip.intersectsTransformedAABB(bounds, matrix)) {
           return VisitorFlags.Skip;
         }
 
@@ -625,7 +454,7 @@ module Shumway.GFX.Canvas2D {
 
         context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
 
-        self._applyColorMatrix(context, frame.getConcatenatedColorMatrix(), state);
+        Filters._applyColorMatrix(context, frame.getConcatenatedColorMatrix(), state);
 
         if (flags & FrameFlags.IsMask && !state.clipRegion) {
           return VisitorFlags.Skip;
@@ -635,16 +464,16 @@ module Shumway.GFX.Canvas2D {
         matrix.transformRectangleAABB(boundsAABB);
         boundsAABB.snap();
 
-        var shouldApplyFilters = Canvas2DStageRenderer._svgFiltersAreSupported && state.options.filters;
+        var shouldApplyFilters = Filters._svgFiltersAreSupported && state.options.filters;
 
         // Do we need to draw to a temporary surface?
         if (frame !== root && (state.options.blending || shouldApplyFilters)) {
-          context.globalCompositeOperation = self._getCompositeOperation(frame.blendMode);
+          context.globalCompositeOperation = getCompositeOperation(frame.blendMode);
           if (frame.blendMode !== BlendMode.Normal || frame.filters.length) {
             if (shouldApplyFilters) {
-              Canvas2DStageRenderer._applyFilters(self._devicePixelRatio, context, frame.filters);
+              Filters._applyFilters(self._devicePixelRatio, context, frame.filters);
             }
-            var target = self._renderFrameToSurfaceRegion(frame, matrix, viewport, new Canvas2DStageRendererState(self._options));
+            var target = self._renderFrameToSurfaceRegion(frame, matrix, clip, new State(self._options));
             /*
             var surfaceRegion = target.surfaceRegion;
             var surfaceRegionBounds = target.surfaceRegionBounds;
@@ -672,14 +501,14 @@ module Shumway.GFX.Canvas2D {
 
         if (frame instanceof Shape) {
           frame.previouslyRenderedAABB = boundsAABB;
-          self._renderShape(context, <Shape>frame, matrix, viewport, state);
+          self._renderShape(context, <Shape>frame, matrix, clip, state);
         } else if (frame instanceof ClipRectangle) {
           var clipRectangle = <ClipRectangle>frame;
           context.save();
           context.beginPath();
           context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
           context.clip();
-          boundsAABB.intersect(viewport);
+          boundsAABB.intersect(clip);
 
           if (!frame.hasFlags(FrameFlags.Transparent)) {
             // Fill Background
@@ -697,46 +526,6 @@ module Shumway.GFX.Canvas2D {
         }
         return VisitorFlags.Continue;
       }, matrix, FrameFlags.Empty, VisitorFlags.Clips);
-    }
-
-    /**
-     * Match up FLash blend modes with Canvas blend operations:
-     *
-     * See: http://kaourantin.net/2005/09/some-word-on-blend-modes-in-flash.html
-     */
-    private _getCompositeOperation(blendMode: BlendMode): string {
-      // TODO:
-
-      // These Flash blend modes have no canvas equivalent:
-      // - BlendMode.Subtract
-      // - BlendMode.Invert
-      // - BlendMode.Shader
-      // - BlendMode.Add is similar to BlendMode.Screen
-
-      // These blend modes are actually Porter-Duff compositing operators.
-      // The backdrop is the nearest parent with blendMode set to layer.
-      // When there is no LAYER parent, they are ignored (treated as NORMAL).
-      // - BlendMode.Alpha (destination-in)
-      // - BlendMode.Erase (destination-out)
-      // - BlendMode.Layer [defines backdrop]
-
-      var compositeOp: string = "source-over";
-      switch (blendMode) {
-        case BlendMode.Normal:
-        case BlendMode.Layer:
-          return compositeOp;
-        case BlendMode.Multiply:   compositeOp = "multiply";   break;
-        case BlendMode.Add:
-        case BlendMode.Screen:     compositeOp = "screen";     break;
-        case BlendMode.Lighten:    compositeOp = "lighten";    break;
-        case BlendMode.Darken:     compositeOp = "darken";     break;
-        case BlendMode.Difference: compositeOp = "difference"; break;
-        case BlendMode.Overlay:    compositeOp = "overlay";    break;
-        case BlendMode.HardLight:  compositeOp = "hard-light"; break;
-        default:
-          Shumway.Debug.somewhatImplemented("Blend Mode: " + BlendMode[blendMode]);
-      }
-      return compositeOp;
     }
   }
 }
