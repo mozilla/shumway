@@ -368,6 +368,9 @@ module Shumway.GFX {
     private _pathData: ShapeData;
     private _paths: StyledPath[];
     private _textures: RenderableBitmap[];
+    private _ratio: number;
+
+    private _snaphots: RenderableShape[];
 
     private static LINE_CAPS_STYLES = ['round', 'butt', 'square'];
     private static LINE_JOINTS_STYLES = ['round', 'bevel', 'miter'];
@@ -377,6 +380,8 @@ module Shumway.GFX {
       this._id = id;
       this._pathData = pathData;
       this._textures = textures;
+      this._ratio = 0;
+      this._snaphots = [];
       if (textures.length) {
         this.setFlags(RenderableFlags.Dynamic);
       }
@@ -392,6 +397,21 @@ module Shumway.GFX {
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
       return this._bounds;
+    }
+
+    morph(ratio: number): RenderableShape {
+      //release || assert(this._ratio === 0);
+      if (ratio === 0 || !this._pathData || !this._pathData.morphCoordinates) {
+        return this;
+      }
+      var shape = this._snaphots[ratio];
+      if (!shape) {
+        shape = new RenderableShape(this._id, this._pathData, this._textures, this._bounds);
+        shape._ratio = ratio;
+        shape._snaphots = this._snaphots;
+        this._snaphots[ratio] = shape;
+      }
+      return shape;
     }
 
     /**
@@ -619,7 +639,7 @@ module Shumway.GFX {
       var morphCoordinates = data.morphCoordinates;
       var styles = data.styles;
       var morphStyles = data.morphStyles;
-      var ratio = 0;
+      var ratio = this._ratio;
       styles.position = 0;
       morphStyles.position = 0;
       var coordinatesIndex = 0;

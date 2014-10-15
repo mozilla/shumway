@@ -527,7 +527,13 @@ module Shumway.Remoting.GFX {
         frame.clip = input.readInt();
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
-        frame.ratio = input.readInt();
+        var ratio = input.readInt()/ 0xffff;
+        /* <hack> */
+        var shape = frame._children[0];
+        if (shape && ratio > 0 && shape._source._ratio !== ratio) {
+          shape._source = shape._source.morph(ratio);
+        }
+        /* </hack> */
         frame.blendMode = input.readInt();
         this._readFilters(frame);
         frame._toggleFlags(FrameFlags.Visible, input.readBoolean());
