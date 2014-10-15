@@ -1714,11 +1714,10 @@ module Shumway.AVM2.AS.flash.display {
      * Tests if the receiver's own visual content intersects with the given point.
      * In the base implementation, this just returns false, because not all DisplayObjects can
      * ever match.
-     * Overridden in Shape, Sprite, Bitmap, Video, and TextField.
+     * Overridden in Shape, MorphShape, Sprite, Bitmap, Video, and TextField.
      */
     _containsPointDirectly(localX: number, localY: number): boolean {
-      var graphics = this._getGraphics();
-      return !!graphics && graphics._containsPoint(localX, localY, true);
+      return false;
     }
 
     get scrollRect(): flash.geom.Rectangle {
