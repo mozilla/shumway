@@ -121,15 +121,6 @@ module Shumway.AVM2.AS.flash.display {
           }.bind(instance, eventsBound), false);
         }
       }
-
-      // Only set the name property for display objects that have AVM1
-      // reflections. Some SWFs contain AVM1 names for things like Shapes.
-      if (state.name) {
-        var parentAVM1Object = avm1lib.getAVM1Object(this);
-        if (parentAVM1Object.asGetPublicProperty(state.name) === undefined) {
-          parentAVM1Object.asSetPublicProperty(state.name, instanceAVM1);
-        }
-      }
     }
 
     _canHaveGraphics(): boolean {
