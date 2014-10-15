@@ -107,7 +107,8 @@ module Shumway.AVM2.AS.flash.display {
             var eventName = eventNames[j];
             var avm2EventTarget = instance;
             if (eventName === 'mouseDown' || eventName === 'mouseUp' || eventName === 'mouseMove') {
-              avm2EventTarget = instance.stage;
+              // FIXME regressed, avm1 mouse events shall be received all the time.
+              // avm2EventTarget = instance.stage;
             }
             avm2EventTarget.addEventListener(eventName, fn, false);
             eventsBound.push({eventName: eventName, fn: fn, target: avm2EventTarget});
