@@ -2617,10 +2617,14 @@ module Shumway {
     }
 
     unionInPlace (other: Bounds): void {
-      this.xMin = Math.min(this.xMin, other.xMin);
-      this.yMin = Math.min(this.yMin, other.yMin);
-      this.xMax = Math.max(this.xMax, other.xMax);
-      this.yMax = Math.max(this.yMax, other.yMax);
+      if (this.xMin | this.yMin | this.xMax | this.yMax) {
+        this.xMin = Math.min(this.xMin, other.xMin);
+        this.yMin = Math.min(this.yMin, other.yMin);
+        this.xMax = Math.max(this.xMax, other.xMax);
+        this.yMax = Math.max(this.yMax, other.yMax);
+      } else {
+        this.copyFrom(other);
+      }
     }
 
     extendByPoint (x: number, y: number): void {
