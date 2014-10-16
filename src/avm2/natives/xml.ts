@@ -2092,6 +2092,9 @@ module Shumway.AVM2.AS {
       // 13.5.4.4 XMLList.prototype.child ( propertyName )
       return this.getProperty('*', false, false);
     }
+    descendants(): ASXMLList {
+      notImplemented("public.XMLList::descendants"); return;
+    }
     comments(): ASXMLList {
       // 13.5.4.6 XMLList.prototype.comments ( )
       var xl = new XMLList(this);
