@@ -198,6 +198,8 @@ module Shumway.GFX {
         if (freeList.length > 0) {
           var cell = freeList.pop();
           release || assert (cell.allocated === false);
+          cell.w = w;
+          cell.h = h;
           cell.allocated = true;
           return cell;
         } else if (index < this._total) {

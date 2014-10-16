@@ -179,6 +179,48 @@ module Shumway.GFX.Canvas2D {
     }
   }
 
+  /**
+   * Match up FLash blend modes with Canvas blend operations:
+   *
+   * See: http://kaourantin.net/2005/09/some-word-on-blend-modes-in-flash.html
+   */
+  function getCompositeOperation(blendMode: BlendMode): string {
+    // TODO:
+
+    // These Flash blend modes have no canvas equivalent:
+    // - BlendMode.Subtract
+    // - BlendMode.Invert
+    // - BlendMode.Shader
+    // - BlendMode.Add is similar to BlendMode.Screen
+
+    // These blend modes are actually Porter-Duff compositing operators.
+    // The backdrop is the nearest parent with blendMode set to layer.
+    // When there is no LAYER parent, they are ignored (treated as NORMAL).
+    // - BlendMode.Alpha (destination-in)
+    // - BlendMode.Erase (destination-out)
+    // - BlendMode.Layer [defines backdrop]
+
+    var compositeOp: string = "source-over";
+    switch (blendMode) {
+      case BlendMode.Normal:
+      case BlendMode.Layer:
+        return compositeOp;
+      case BlendMode.Multiply:   compositeOp = "multiply";        break;
+      case BlendMode.Add:
+      case BlendMode.Screen:     compositeOp = "screen";          break;
+      case BlendMode.Lighten:    compositeOp = "lighten";         break;
+      case BlendMode.Darken:     compositeOp = "darken";          break;
+      case BlendMode.Difference: compositeOp = "difference";      break;
+      case BlendMode.Overlay:    compositeOp = "overlay";         break;
+      case BlendMode.HardLight:  compositeOp = "hard-light";      break;
+      case BlendMode.Alpha:      compositeOp = "destination-in";  break;
+      case BlendMode.Erase:      compositeOp = "destination-out"; break;
+      default:
+        Shumway.Debug.somewhatImplemented("Blend Mode: " + BlendMode[blendMode]);
+    }
+    return compositeOp;
+  }
+
   export class Canvas2DSurfaceRegion implements ISurfaceRegion {
 
     constructor (
@@ -194,18 +236,22 @@ module Shumway.GFX.Canvas2D {
       this.surface.free(this)
     }
 
-    public draw(source: Canvas2DSurfaceRegion, x: number, y: number) {
+    public set blendMode(value: BlendMode) {
+      this.context.globalCompositeOperation = getCompositeOperation(value);
+    }
+
+    public draw(source: Canvas2DSurfaceRegion, x: number, y: number, w: number, h: number) {
       this.context.setTransform(1, 0, 0, 1, 0, 0);
       this.context.drawImage (
         source.surface.canvas,
         source.region.x,
         source.region.y,
-        source.w,
-        source.h,
+        w,
+        h,
         x,
         y,
-        source.w,
-        source.h
+        w,
+        h
       );
     }
 
