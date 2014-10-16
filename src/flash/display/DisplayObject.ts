@@ -945,7 +945,7 @@ module Shumway.AVM2.AS.flash.display {
         if (graphics) {
           bounds.copyFrom(graphics._getContentBounds(includeStrokes));
         } else {
-          bounds.setEmpty();
+          bounds.setToSentinels();
         }
         this._getChildBounds(bounds, includeStrokes);
         this._removeFlags(invalidFlag);
