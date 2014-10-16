@@ -1853,7 +1853,7 @@ module Shumway.GFX.Geometry {
       scratchContext.translate(-sourceBounds.x, -sourceBounds.y);
       profile && timelineBuffer && timelineBuffer.enter("renderTiles");
       traceLevel >= TraceLevel.Verbose && writer && writer.writeLn("Rendering Tiles: " + uncachedTileBounds);
-      this._source.render(scratchContext);
+      this._source.render(scratchContext, 0);
       scratchContext.restore();
       profile && timelineBuffer && timelineBuffer.leave("renderTiles");
 
@@ -1942,7 +1942,7 @@ module Shumway.GFX.Geometry {
         context.rect(region.x, region.y, region.w, region.h);
         context.clip();
         context.setTransform(scale, 0, 0, scale, region.x - scaledBounds.x, region.y - scaledBounds.y);
-        this._source.render(context);
+        this._source.render(context, 0);
         context.restore();
       }
       return mipLevel;

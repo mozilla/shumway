@@ -155,16 +155,15 @@ module Shumway.GFX {
 
     /**
      * Render source content in the specified |context|. If specified, the rectangular |cullBounds| can be used to cull parts of the shape
-     * for better performance. If specified, |
-     * Region| indicates whether the shape's fills should be used as clip regions instead.
+     * for better performance. If specified, |Region| indicates whether the shape's fills should be used as clip regions instead.
      */
-    render(context: CanvasRenderingContext2D, cullBounds?: Shumway.GFX.Geometry.Rectangle, clipRegion?: boolean): void {
+    render(context: CanvasRenderingContext2D, ratio: number, cullBounds?: Shumway.GFX.Geometry.Rectangle, clipRegion?: boolean): void {
 
     }
   }
 
   export class CustomRenderable extends Renderable {
-    constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, cullBounds: Shumway.GFX.Geometry.Rectangle) => void) {
+    constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, ratio: number, cullBounds: Shumway.GFX.Geometry.Rectangle) => void) {
       super(bounds);
       this.render = render;
     }
@@ -199,7 +198,7 @@ module Shumway.GFX {
       }
     }
 
-    render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
+    render(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle): void {
       enterTimeline("RenderableVideo.render");
       if (this._video) {
         context.drawImage(this._video, 0, 0);
@@ -294,7 +293,7 @@ module Shumway.GFX {
       this._imageData = this._context.createImageData(this._bounds.w, this._bounds.h);
     }
 
-    render(context: CanvasRenderingContext2D, cullBounds: Rectangle): void {
+    render(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle): void {
       enterTimeline("RenderableBitmap.render");
       if (this._canvas) {
         context.drawImage(this._canvas, 0, 0);
@@ -375,9 +374,6 @@ module Shumway.GFX {
     private _pathData: ShapeData;
     private _paths: StyledPath[];
     private _textures: RenderableBitmap[];
-    private _ratio: number;
-
-    private _snaphots: RenderableShape[];
 
     private static LINE_CAPS_STYLES = ['round', 'butt', 'square'];
     private static LINE_JOINTS_STYLES = ['round', 'bevel', 'miter'];
@@ -387,8 +383,6 @@ module Shumway.GFX {
       this._id = id;
       this._pathData = pathData;
       this._textures = textures;
-      this._ratio = 0;
-      this._snaphots = [];
       if (textures.length) {
         this.setFlags(RenderableFlags.Dynamic);
       }
@@ -406,28 +400,13 @@ module Shumway.GFX {
       return this._bounds;
     }
 
-    morph(ratio: number): RenderableShape {
-      //release || assert(this._ratio === 0);
-      if (ratio === 0 || !this._pathData || !this._pathData.morphCoordinates) {
-        return this;
-      }
-      var shape = this._snaphots[ratio];
-      if (!shape) {
-        shape = new RenderableShape(this._id, this._pathData, this._textures, this._bounds);
-        shape._ratio = ratio;
-        shape._snaphots = this._snaphots;
-        this._snaphots[ratio] = shape;
-      }
-      return shape;
-    }
-
     /**
      * If |clipRegion| is |true| then we must call |clip| instead of |fill|. We also cannot call
      * |save| or |restore| because those functions reset the current clipping region. It looks
      * like Flash ignores strokes when clipping so we can also ignore stroke paths when computing
      * the clip region.
      */
-    render(context: CanvasRenderingContext2D, cullBounds: Rectangle,
+    render(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle,
            clipRegion: boolean = false): void
     {
       context.fillStyle = context.strokeStyle = 'transparent';
@@ -446,7 +425,7 @@ module Shumway.GFX {
           this._deserializePaths(data, context);
           this._pathData = null;
         } else {
-          this._deserializeMorphPaths(data, context);
+          this._deserializeMorphPaths(data, context, ratio);
         }
       }
 
@@ -622,7 +601,7 @@ module Shumway.GFX {
       leaveTimeline("RenderableShape.deserializePaths");
     }
 
-    private _deserializeMorphPaths(data: ShapeData, context: CanvasRenderingContext2D): void {
+    private _deserializeMorphPaths(data: ShapeData, context: CanvasRenderingContext2D, ratio: number): void {
       enterTimeline("RenderableShape.deserializeMorphPaths");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
@@ -646,7 +625,6 @@ module Shumway.GFX {
       var morphCoordinates = data.morphCoordinates;
       var styles = data.styles;
       var morphStyles = data.morphStyles;
-      var ratio = this._ratio;
       styles.position = 0;
       morphStyles.position = 0;
       var coordinatesIndex = 0;
@@ -1370,7 +1348,7 @@ module Shumway.GFX {
       super(new Rectangle(0, 0, w, h));
     }
 
-    render (context: CanvasRenderingContext2D, cullBounds?: Rectangle) {
+    render (context: CanvasRenderingContext2D, ratio: number, cullBounds?: Rectangle) {
       context.save();
       context.textBaseline = "top";
       context.fillStyle = "white";

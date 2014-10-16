@@ -507,12 +507,12 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
+      var ratio = 0;
       writer && writer.writeLn("Receiving UpdateFrame: " + id);
       var frame = context._frames[id];
       if (!frame) {
         frame = context._frames[id] = new FrameContainer();
       }
-
       var hasBits = input.readInt();
       if (hasBits & MessageBits.HasMatrix) {
         frame.matrix = this._readMatrix();
@@ -527,13 +527,7 @@ module Shumway.Remoting.GFX {
         frame.clip = input.readInt();
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
-        var ratio = input.readInt()/ 0xffff;
-        /* <hack> */
-        var shape = frame._children[0];
-        if (shape && ratio > 0 && shape._source._ratio !== ratio) {
-          shape._source = shape._source.morph(ratio);
-        }
-        /* </hack> */
+        ratio = input.readInt() / 0xffff;
         frame.blendMode = input.readInt();
         this._readFilters(frame);
         frame._toggleFlags(FrameFlags.Visible, input.readBoolean());
@@ -549,6 +543,13 @@ module Shumway.Remoting.GFX {
           var child = context._makeFrame(childId);
           release || assert (child, "Child " + childId + " of " + id + " has not been sent yet.");
           container.addChild(child);
+        }
+      }
+      if (ratio) {
+        var container = <FrameContainer>frame;
+        var child = container._children[0];
+        if (child instanceof Shape) {
+          (<Shape>child).ratio = ratio;
         }
       }
     }
