@@ -156,11 +156,16 @@ module Shumway.AVM2.AS.flash.display {
     ContainsFrameScriptPendingChildren        = 0x2000,
 
     /**
+     * Indicates whether this display object is a MorphShape or contains at least one descendant that is.
+     */
+    ContainsMorph                             = 0x4000,
+
+    /**
      * Indicates whether this display object should be cached as a bitmap. The display object may be cached as bitmap even
      * if this flag is not set, depending on whether any filters are applied or if the bitmap is too large or we've run out
      * of memory.
      */
-    CacheAsBitmap                             = 0x4000,
+    CacheAsBitmap                             = 0x8000,
 
     /**
      * Indicates whether this display object's matrix has changed since the last time it was synchronized.
@@ -228,7 +233,12 @@ module Shumway.AVM2.AS.flash.display {
     Dirty                                     = DirtyMatrix | DirtyChildren | DirtyGraphics |
                                                 DirtyTextContent | DirtyBitmapData | DirtyNetStream |
                                                 DirtyColorTransform | DirtyMask | DirtyClipDepth |
-                                                DirtyMiscellaneousProperties
+                                                DirtyMiscellaneousProperties,
+
+    /**
+     * Masks flags that need to be propagated up when this display object gets added to a parent.
+     */
+    Bubbling                                  = ContainsFrameScriptPendingChildren | ContainsMorph
   }
 
   /**
@@ -547,9 +557,15 @@ module Shumway.AVM2.AS.flash.display {
       this._depth = depth;
       if (parent) {
         this._addReference();
-        if (parent && this._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
-                                        DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
-          parent._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+        var bubblingFlags = DisplayObjectFlags.None;
+        if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
+          bubblingFlags |= DisplayObjectFlags.ContainsFrameScriptPendingChildren;
+        }
+        if (this._hasAnyFlags(DisplayObjectFlags.Bubbling)) {
+          bubblingFlags |= this._displayObjectFlags & DisplayObjectFlags.Bubbling;
+        }
+        if (bubblingFlags) {
+          parent._propagateFlagsUp(bubblingFlags);
         }
       }
       if (oldParent) {

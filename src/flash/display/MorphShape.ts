@@ -30,6 +30,7 @@ module Shumway.AVM2.AS.flash.display {
         // TODO: Check what do do if the computed bounds of the graphics object don't
         // match those given by the symbol.
       }
+      this._setFlags(DisplayObjectFlags.ContainsMorph);
     };
     
     constructor () {
