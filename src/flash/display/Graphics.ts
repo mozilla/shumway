@@ -861,7 +861,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     _containsPoint(x: number, y: number, includeLines: boolean, ratio: number): boolean {
       var hasLines = this._graphicsData.hasLines;
-      if (!(includeLines && hasLines ? this._lineBounds : this._fillBounds).contains(x, y)) {
+      if (!ratio && !(includeLines && hasLines ? this._lineBounds : this._fillBounds).contains(x, y)) {
         return false;
       }
 

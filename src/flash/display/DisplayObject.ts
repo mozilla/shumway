@@ -1715,6 +1715,11 @@ module Shumway.AVM2.AS.flash.display {
      */
     _boundsAndMaskContainPoint(globalX: number, globalY: number, localX: number, localY: number,
                                testingType: HitTestingType): HitTestingResult {
+      if (testingType >= HitTestingType.HitTestBoundsAndMask &&
+          this._hasFlags(DisplayObjectFlags.ContainsMorph))
+      {
+        return HitTestingResult.Bounds;
+      }
       if (testingType >= HitTestingType.Mouse && !this._hasFlags(DisplayObjectFlags.Visible) ||
           !this._getContentBounds().contains(localX, localY)) {
         return HitTestingResult.None;
