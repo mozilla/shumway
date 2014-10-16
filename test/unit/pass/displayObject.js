@@ -153,6 +153,29 @@ function displayTests() {
     eqFloat(s.height, 141.4, "Should also affect the height: " + s.height);
   });
 
+  function matrixToString(m) {
+    return "a=" + m.a.toFixed(4) +
+      ", b=" + m.b.toFixed(4) +
+      ", c=" + m.c.toFixed(4) +
+      ", d=" + m.d.toFixed(4) +
+      ", tx=" + m.tx.toFixed(4) +
+      ", ty=" + m.ty.toFixed(4);
+  }
+
+  unitTests.push(function skew() {
+    var s = new Shape();
+    s.transform.matrix = new Matrix(1, 0, -0.70709228515625, 0.70709228515625, 150, 150);
+
+    s.rotation = 45;
+    eq(matrixToString(s.transform.matrix), "a=0.7071, b=0.7071, c=-1.0000, d=0.0000, tx=150.0000, ty=150.0000");
+
+    s.scaleX = 0.5;
+    eq(matrixToString(s.transform.matrix), "a=0.3536, b=0.3536, c=-1.0000, d=0.0000, tx=150.0000, ty=150.0000");
+
+    s.rotation = 90;
+    eq(matrixToString(s.transform.matrix), "a=0.0000, b=0.5000, c=-0.7071, d=-0.7071, tx=150.0000, ty=150.0000");
+  });
+
   unitTests.push(function widthAppliedToRotatedObject() {
     var s = new Shape();
     s.x = 200;
