@@ -321,7 +321,7 @@ module Shumway {
     }
 
     writeMorphLineStyle(thickness: number, color: number) {
-      this.morphCoordinates[this.coordinatesPosition++] = thickness;
+      this.morphCoordinates[this.coordinatesPosition - 1] = thickness;
       this.morphStyles.writeUnsignedInt(color);
     }
 

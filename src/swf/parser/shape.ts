@@ -400,6 +400,7 @@ module Shumway.SWF.Parser {
   function processMorphStyle(style, isLineStyle: boolean, dictionary, dependencies): ShapeStyle {
     var morphStyle: ShapeStyle = Object.create(style);
     if (isLineStyle) {
+      morphStyle.width = style.widthMorph;
       if (!style.color && style.hasFill) {
         var fillStyle = processMorphStyle(style.fillStyle, false, dictionary, dependencies);
         morphStyle.transform = fillStyle.transform;
