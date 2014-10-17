@@ -327,7 +327,7 @@ module Shumway.SWF.Parser {
       if (!style.color && style.hasFill) {
         var fillStyle = processStyle(style.fillStyle, false, false,
                                      dictionary, dependencies);
-        shapeStyle.fillType = fillStyle.type;
+        shapeStyle.type = fillStyle.type;
         shapeStyle.transform = fillStyle.transform;
         shapeStyle.colors = fillStyle.colors;
         shapeStyle.ratios = fillStyle.ratios;
@@ -338,7 +338,7 @@ module Shumway.SWF.Parser {
         style.fillStyle = null;
         return shapeStyle;
       } else {
-        shapeStyle.fillType = FillType.Solid;
+        shapeStyle.type = FillType.Solid;
         return shapeStyle;
       }
     }

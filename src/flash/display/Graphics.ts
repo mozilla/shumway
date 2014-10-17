@@ -466,7 +466,7 @@ module Shumway.AVM2.AS.flash.display {
       this._fillBounds.setToSentinels();
       this._lineBounds.setToSentinels();
       this._lastX = this._lastY = 0;
-      this._boundsIncludeLastCoordinates = true;
+      this._boundsIncludeLastCoordinates = false;
       this._invalidate();
     }
 
