@@ -70,8 +70,6 @@ public class Proxy
     Error.throwError(IllegalOperationError, 2107 /* kProxyNextValueError */);
     return null; // unreachable
   }
-
-  flash_proxy native function isAttribute(name:*):Boolean;
 }
 
 }
