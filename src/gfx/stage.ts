@@ -94,7 +94,7 @@ module Shumway.GFX {
     SVG = 4
   }
 
-  export class StageRenderer {
+  export class StageRenderer extends NodeVisitor {
     protected _viewport: Rectangle;
     protected _options: StageRendererOptions;
     protected _canvas: HTMLCanvasElement;
@@ -102,6 +102,7 @@ module Shumway.GFX {
     protected _devicePixelRatio: number;
 
     constructor(canvas: HTMLCanvasElement, stage: Stage, options: StageRendererOptions) {
+      super();
       this._canvas = canvas;
       this._stage = stage;
       this._options = options;
@@ -125,7 +126,7 @@ module Shumway.GFX {
     }
   }
 
-  export class Stage extends FrameContainer {
+  export class Stage extends TransformGroup {
     public trackDirtyRegions: boolean;
     public dirtyRegion: DirtyRegion;
     public w: number;
@@ -133,11 +134,12 @@ module Shumway.GFX {
 
     constructor(w: number, h: number, trackDirtyRegions: boolean = false) {
       super();
+      this._type = NodeType.Stage;
       this.w = w;
       this.h = h;
       this.dirtyRegion = new DirtyRegion(w, h);
       this.trackDirtyRegions = trackDirtyRegions;
-      this.setFlags(FrameFlags.Dirty);
+      this.setFlags(NodeFlags.Dirty);
     }
 
     /**
@@ -146,28 +148,29 @@ module Shumway.GFX {
      * is any code that needs to check if rendering is about to happen.
      */
     readyToRender(clearFlags = true): boolean {
-      if (!this.hasFlags(FrameFlags.InvalidPaint)) {
-        return false;
-      } else if (clearFlags) {
-        enterTimeline("readyToRender");
-        this.visit(function (frame: Frame): VisitorFlags {
-          if (frame.hasFlags(FrameFlags.InvalidPaint)) {
-            frame.toggleFlags(FrameFlags.InvalidPaint, false);
-            return VisitorFlags.Continue;
-          } else {
-            return VisitorFlags.Skip;
-          }
-        });
-        leaveTimeline();
-      }
+//      if (!this.hasFlags(NodeFlags.InvalidPaint)) {
+//        return false;
+//      } else if (clearFlags) {
+//        enterTimeline("readyToRender");
+//        this.visit(function (frame: Frame): VisitorFlags {
+//          if (frame.hasFlags(FrameFlags.InvalidPaint)) {
+//            frame.toggleFlags(FrameFlags.InvalidPaint, false);
+//            return VisitorFlags.Continue;
+//          } else {
+//            return VisitorFlags.Skip;
+//          }
+//        });
+//        leaveTimeline();
+//      }
       return true;
     }
 
+    /*
     gatherMarkedDirtyRegions(transform: Matrix) {
       var self = this;
       // Find all invalid frames.
-      this.visit(function (frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
-        frame._removeFlags(FrameFlags.Dirty);
+      this.visit(function (frame: Node, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
+        frame.removeFlags(NodeFlags.Dirty);
         if (frame instanceof FrameContainer) {
           return VisitorFlags.Continue;
         }
@@ -226,6 +229,7 @@ module Shumway.GFX {
 
       return layers;
     }
+    */
   }
 
   /**
@@ -247,7 +251,7 @@ module Shumway.GFX {
     }
   }
 
-  export class Shape extends Frame {
+  export class Shape2 extends Frame {
     private _source: Renderable;
 
     get source(): Renderable {

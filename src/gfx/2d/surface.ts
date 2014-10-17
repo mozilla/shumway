@@ -159,7 +159,7 @@ module Shumway.GFX.Canvas2D {
       context.filter = "none";
     }
 
-    static _applyColorMatrix(context: CanvasRenderingContext2D, colorMatrix: ColorMatrix, state: State) {
+    static _applyColorMatrix(context: CanvasRenderingContext2D, colorMatrix: ColorMatrix) {
       Filters._removeFilters(context);
       if (colorMatrix.isIdentity()) {
         context.globalAlpha = 1;
@@ -169,7 +169,7 @@ module Shumway.GFX.Canvas2D {
         context.globalColorMatrix = null;
       } else {
         context.globalAlpha = 1;
-        if (Filters._svgFiltersAreSupported && state.options.filters) {
+        if (Filters._svgFiltersAreSupported && true) {
           Filters._applyColorMatrixFilter(context, colorMatrix);
           context.globalColorMatrix = null;
         } else {

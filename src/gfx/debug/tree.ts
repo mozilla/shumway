@@ -37,7 +37,7 @@ module Shumway.GFX {
       context.clearRect(0, 0, this._stage.w, this._stage.h);
       context.scale(1, 1);
       if (this._options.layout === Layout.Simple) {
-        this._renderFrameSimple(this.context, this._stage, Matrix.createIdentity(), this._viewport, []);
+        this._renderNodeSimple(this.context, this._stage, Matrix.createIdentity(), this._viewport, []);
       }
       context.restore();
     }
@@ -47,7 +47,7 @@ module Shumway.GFX {
       context.clearRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
     }
 
-    _renderFrameSimple(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, clipRectangle: Rectangle, cullRectanglesAABB: Rectangle []) {
+    _renderNodeSimple(context: CanvasRenderingContext2D, root: Node, transform: Matrix, clipRectangle: Rectangle, cullRectanglesAABB: Rectangle []) {
       var self = this;
       context.save();
       context.fillStyle = "white";
@@ -55,22 +55,22 @@ module Shumway.GFX {
       var w = 6, h = 2, hPadding = 1, wColPadding = 8;
       var colX = 0;
       var maxX = 0;
-      function visit(frame: Frame) {
-        var isFrameContainer = frame instanceof FrameContainer;
-        if (frame.hasFlags(FrameFlags.InvalidPaint)) {
+      function visit(node: Node) {
+        var isGroup = node instanceof Group;
+        if (node.hasFlags(NodeFlags.InvalidPaint)) {
           context.fillStyle = "red";
-        } else if (frame.hasFlags(FrameFlags.InvalidConcatenatedMatrix)) {
+        } else if (node.hasFlags(NodeFlags.InvalidConcatenatedMatrix)) {
           context.fillStyle = "blue";
         } else {
           context.fillStyle = "white";
         }
-        var t = isFrameContainer ? 2 : w;
+        var t = isGroup ? 2 : w;
         context.fillRect(x, y, t, h);
-        if (isFrameContainer) {
+        if (isGroup) {
           x += t + 2;
           maxX = Math.max(maxX, x + w);
-          var frameContainer = <FrameContainer>frame;
-          var children = frameContainer.children;
+          var group = <Group>node;
+          var children = group.getChildren(false);
           for (var i = 0; i < children.length; i++) {
             visit(children[i]);
             if (i < children.length - 1) {

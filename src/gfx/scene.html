@@ -40,7 +40,7 @@
     </tr>
     <tr>
       <td>
-        <div id="container" style="width: 1024px; height: 512px"></div>
+        <div id="container" style="width: 512px; height: 512px"></div>
       </td>
     </tr>
     <tr>
@@ -58,11 +58,12 @@
 
     var easel = new Easel(container, Backend.Canvas2D)
     var stage = easel.stage;
+    var world = easel.world;
 
     function tick() {
-      stage.children.forEach(function (child) {
-        child.x += child.dx;
-        child.y += child.dy;
+      world.getChildren().forEach(function (child) {
+        // child.x += child.dx;
+        // child.y += child.dy;
       })
       requestAnimationFrame(tick);
     }
@@ -77,14 +78,14 @@
     }
 
     function test() {
-      for (var i = 0; i < 100; i++) {
-        var shape = new Shape(makeRectangle(64, 64));
+      for (var i = 0; i < 10000; i++) {
+        var shape = new Shape(makeRectangle(4, 4));
         // shape.blendMode = BlendMode.Difference;
         shape.dx = Math.random() - 0.5;
         shape.dy = Math.random() - 0.5;
-        stage.addChild(shape);
-        shape.x = stage.w / 4;
-        shape.y = stage.h / 4;
+        world.addChild(shape);
+        shape.getTransformGroup().x = Math.random() * stage.w / 2;
+        shape.getTransformGroup().y = Math.random() * stage.h / 2;
       }
     }
 

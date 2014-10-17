@@ -88,7 +88,7 @@ module Shumway.GFX {
     /**
      * Frame should be cached as a bitmap. This causes masks to behave differently, so it's more than just an optimization.
      */
-    CacheAsBitmap                        = 0x10000
+    CacheAsBitmap                             = 0x10000
   }
 
   /**
@@ -505,6 +505,7 @@ module Shumway.GFX {
     }
 
     public get stage(): Stage {
+      /*
       var frame = this;
       while (frame._parent) {
         frame = frame._parent;
@@ -512,6 +513,7 @@ module Shumway.GFX {
       if (frame instanceof Stage) {
         return <Stage>frame;
       }
+      */
       return null;
     }
 
@@ -658,62 +660,380 @@ module Shumway.GFX {
       return this._pixelSnapping;
     }
 
-    /**
-     * Returns a list of frames whose bounds intersect the query point. The frames
-     * are returned front to back. By default, only the first frame that intersects
-     * the query point is returned, unless the |multiple| argument is specified.
-     */
-    public queryFramesByPoint(query: Point, multiple: boolean = false, includeFrameContainers: boolean = false): Frame [] {
-      var inverseTransform: Matrix = Matrix.createIdentity();
-      var local = Point.createEmpty();
-      var frames = [];
-      this.visit(function (frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
-        if (flags & FrameFlags.IgnoreQuery) {
-          return VisitorFlags.Skip;
-        }
-        transform.inverse(inverseTransform);
-        local.set(query);
-        inverseTransform.transformPoint(local);
-        if (frame.getBounds().containsPoint(local)) {
-          if (frame instanceof FrameContainer) {
-            if (includeFrameContainers) {
-              frames.push(frame);
-              if (!multiple) {
-                return VisitorFlags.Stop;
-              }
-            }
-            return VisitorFlags.Continue;
-          } else {
-            frames.push(frame);
-            if (!multiple) {
-              return VisitorFlags.Stop;
-            }
-          }
-          return VisitorFlags.Continue;
-        } else {
-          return VisitorFlags.Skip;
-        }
-      }, Matrix.createIdentity(), FrameFlags.Empty);
+//    /**
+//     * Returns a list of frames whose bounds intersect the query point. The frames
+//     * are returned front to back. By default, only the first frame that intersects
+//     * the query point is returned, unless the |multiple| argument is specified.
+//     */
+//    public queryFramesByPoint(query: Point, multiple: boolean = false, includeFrameContainers: boolean = false): Frame [] {
+//      var inverseTransform: Matrix = Matrix.createIdentity();
+//      var local = Point.createEmpty();
+//      var frames = [];
+//      this.visit(function (frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
+//        if (flags & FrameFlags.IgnoreQuery) {
+//          return VisitorFlags.Skip;
+//        }
+//        transform.inverse(inverseTransform);
+//        local.set(query);
+//        inverseTransform.transformPoint(local);
+//        if (frame.getBounds().containsPoint(local)) {
+//          if (frame instanceof FrameContainer) {
+//            if (includeFrameContainers) {
+//              frames.push(frame);
+//              if (!multiple) {
+//                return VisitorFlags.Stop;
+//              }
+//            }
+//            return VisitorFlags.Continue;
+//          } else {
+//            frames.push(frame);
+//            if (!multiple) {
+//              return VisitorFlags.Stop;
+//            }
+//          }
+//          return VisitorFlags.Continue;
+//        } else {
+//          return VisitorFlags.Skip;
+//        }
+//      }, Matrix.createIdentity(), FrameFlags.Empty);
+//
+//      /*
+//       *  We can't simply do a back to front traversal here because the order in which we
+//       *  visit frame containers would make it hard to compute the correct front-to-back
+//       *  order.
+//       *
+//       *       A
+//       *      / \
+//       *     /   \
+//       *    B     E
+//       *   / \   / \
+//       *  C   D F   G
+//       *
+//       *  The front-to-back order is [A, E, G, F, B, D, C], if G and D are both hit, then the hit order
+//       *  would be computed as [A, E, G, B, D] when clearly it should be [G, E, D, B, A]. If we walk
+//       *  the tree in back-to-front order [A, B, C, D, E, F, G] the hit order becomes [A, B, D, E, G]
+//       *  which we can simply reverse.
+//       */
+//      frames.reverse();
+//      return frames;
+//    }
+  }
 
-      /*
-       *  We can't simply do a back to front traversal here because the order in which we
-       *  visit frame containers would make it hard to compute the correct front-to-back
-       *  order.
-       *
-       *       A
-       *      / \
-       *     /   \
-       *    B     E
-       *   / \   / \
-       *  C   D F   G
-       *
-       *  The front-to-back order is [A, E, G, F, B, D, C], if G and D are both hit, then the hit order
-       *  would be computed as [A, E, G, B, D] when clearly it should be [G, E, D, B, A]. If we walk
-       *  the tree in back-to-front order [A, B, C, D, E, F, G] the hit order becomes [A, B, D, E, G]
-       *  which we can simply reverse.
-       */
-      frames.reverse();
-      return frames;
+  export enum NodeCapabilityFlags {
+    None                        = 0,
+
+    AllowMatrixWrite            = 1,
+    AllowColorMatrixWrite       = 2,
+    AllowBlendModeWrite         = 4,
+    AllowFiltersWrite           = 8,
+    AllowMaskWrite              = 16,
+    AllowChildrenWrite          = 32,
+    AllowClipWrite              = 64,
+    AllowAllWrite               = AllowMatrixWrite      |
+                                  AllowColorMatrixWrite |
+                                  AllowBlendModeWrite   |
+                                  AllowFiltersWrite     |
+                                  AllowMaskWrite        |
+                                  AllowChildrenWrite    |
+                                  AllowClipWrite
+  }
+
+  export enum NodeFlags {
+    None                                      = 0x00000,
+    Dirty                                     = 0x00001,
+    InvalidPaint                              = 0x00002,
+    InvalidConcatenatedMatrix                 = 0x00004 // Delete
+  }
+
+  /**
+   * Faster way of doing type and subtype checks, also nice for switching.
+   */
+  export enum NodeType {
+    Node                   = 0x0001,
+     Shape                 = 0x0002 | Node,
+     Group                 = 0x0004 | Node,
+      TransformGroup       = 0x0008 | Group,
+       Stage               = 0x0010 | TransformGroup,
+     State                 = 0x0020 | Node
+  }
+
+  export class NodeVisitor {
+    visitNode(node: Node, state: State) {
+      // ...
+    }
+
+    visitGroup(node: Group, state: State) {
+      this.visitNode(node, state);
+    }
+
+    visitTransformGroup(node: TransformGroup, state: State) {
+      this.visitGroup(node, state);
+    }
+
+    visitStage(node: Stage, state: State) {
+      this.visitTransformGroup(node, state);
+    }
+
+    visitShape(node: Shape, state: State) {
+      this.visitNode(node, state);
+    }
+
+    visitState(node: State, state: State) {
+      this.visitNode(node, state);
+    }
+  }
+
+  /**
+   * Base class of all nodes in the scene graph.
+   */
+  export class Node {
+    private static _nextId: number = 0;
+
+    protected _id: number;
+    protected _type: NodeType;
+    protected _flags: NodeFlags;
+    protected _index: number;
+    protected _parent: Node;
+    protected _capability: NodeCapabilityFlags;
+
+    constructor() {
+      this._id = Node._nextId ++;
+      this._type = NodeType.Node;
+      this._flags = NodeFlags.None;
+      this._index = -1;
+      this._parent = null;
+      this._capability = NodeCapabilityFlags.None;
+    }
+
+    public getBounds(clone: boolean = false): Rectangle {
+      throw Shumway.Debug.abstractMethod("Node::getBounds");
+    }
+
+    public clone(): Node {
+      throw Shumway.Debug.abstractMethod("Node::clone");
+    }
+
+    public setFlags(flags: NodeFlags) {
+      this._flags |= flags;
+    }
+
+    public hasFlags(flags: NodeFlags): boolean {
+      return (this._flags & flags) === flags;
+    }
+
+    protected removeFlags(flags: NodeFlags) {
+      this._flags &= ~flags;
+    }
+
+    public hasCapability(capability: NodeCapabilityFlags) {
+      return this._capability & capability;
+    }
+
+    public isAncestor(node: Node): boolean {
+      while (node) {
+        if (node === this) {
+          return true;
+        }
+        release || assert(node !== node._parent);
+        node = node._parent;
+      }
+      return false;
+    }
+
+    public isType(type: NodeType): boolean {
+      return this._type === type;
+    }
+
+    public isTypeOf(type: NodeType): boolean {
+      return (this._type & type) === type;
+    }
+
+    public getTransformGroup(): TransformGroup {
+      var node = this, last = null;
+      // Look for the first |TransformGroup| ancestor that is older than the
+      while (!node.isTypeOf(NodeType.TransformGroup)) {
+        var parent = <Group>node._parent;
+        if (parent === null) {
+          // We cannot create a transform group for the root node.
+          return null;
+        } else if (!parent.isTypeOf(NodeType.TransformGroup)) {
+          // Insert a transform group between the node and the parent.
+          var transformGroup = new TransformGroup();
+          parent.uncheckedAddChildAt(transformGroup, node._index);
+          transformGroup.uncheckedAddChild(node)
+          return transformGroup;
+        }
+        node = node._parent;
+      }
+      return <TransformGroup>node;
+    }
+
+    public getConcatenatedMatrix(clone: boolean = false): Matrix {
+      return Matrix.createIdentity();
+    }
+
+    public visit(visitor: NodeVisitor, state: State) {
+      switch (this._type) {
+        case NodeType.Node:
+          visitor.visitNode(this, state);
+          break;
+        case NodeType.Group:
+          visitor.visitGroup(<Group>this, state);
+          break;
+        case NodeType.TransformGroup:
+          visitor.visitTransformGroup(<TransformGroup>this, state);
+          break;
+        case NodeType.Stage:
+          visitor.visitStage(<Stage>this, state);
+          break;
+        case NodeType.Shape:
+          visitor.visitShape(<Shape>this, state);
+          break;
+        case NodeType.State:
+          visitor.visitState(<State>this, state);
+          break;
+        default:
+          Debug.unexpectedCase();
+      }
+    }
+
+    public toString() {
+      return NodeType[this._type] + " " + this._id;
+    }
+  }
+
+  /**
+   * Nodes that contain other nodes. All nodes have back references to the groups
+   * they belong to, forming a tree structure.
+   */
+  export class Group extends Node {
+    protected _children: Node [];
+
+    constructor() {
+      super();
+      this._type = NodeType.Group;
+      this._children = [];
+    }
+
+    public getChildren(clone: boolean = false): Node [] {
+      if (clone) {
+        return this._children.slice(0);
+      }
+      return this._children;
+    }
+
+    public addChild(node: Node) {
+      release || assert(node, "Cannot add null nodes.");
+      release || assert(!node._parent, "Node is already has a parent elsewhere.");
+      release || assert(!node.isAncestor(this), "Cycles are not allowed.");
+      this.uncheckedAddChild(node);
+    }
+
+    uncheckedAddChild(node: Node) {
+      node._parent = this;
+      node._index = this._children.length;
+      this._children.push(node);
+    }
+
+    public addChildAt(node: Node, index: number) {
+      release || assert(node, "Cannot set null nodes.");
+      release || assert(!node._parent, "Node is already has a parent elsewhere.");
+      release || assert(!node.isAncestor(this), "Cycles are not allowed.");
+      release || assert(index >= 0 && index < this._children.length, "Out of range.");
+      this.uncheckedAddChildAt(node, index);
+    }
+
+    uncheckedAddChildAt(node: Node, index: number) {
+      var previous = this._children[index];
+      previous._index = -1;
+      previous._parent = null;
+      node._index = index;
+      node._parent = this;
+      this._children[index] = node;
+    }
+  }
+
+  /**
+   * Nodes with transformations: matrix, color matrix, etc.
+   */
+  export class TransformGroup extends Group {
+    protected _matrix: Matrix;
+    protected _colorMatrix: ColorMatrix;
+
+    constructor() {
+      super();
+      this._type = NodeType.TransformGroup;
+      this._matrix = Matrix.createIdentity();
+      this._colorMatrix = ColorMatrix.createIdentity();
+    }
+
+    public get x(): number {
+      return this._matrix.tx;
+    }
+
+    public set x(value: number) {
+      this._matrix.tx = value;
+    }
+
+    public get y(): number {
+      return this._matrix.ty;
+    }
+
+    public set y(value: number) {
+      this._matrix.ty = value;
+    }
+
+    public setMatrix(value: Matrix) {
+      this._matrix.set(value);
+    }
+
+    public getMatrix(clone: boolean = false): Matrix {
+      if (clone) {
+        return this._matrix.clone();
+      }
+      return this._matrix;
+    }
+  }
+
+  /**
+   * Nodes that cache transformation state. These are used to thread state when traversing
+   * the scene graph. Since they keep track of rendering state, they might as well become
+   * scene graph nodes.
+   *
+   * TODO: Maybe we should be extending TransformGroup, but what to do about the child
+   * pointer that doesn't point back to us.
+   */
+  export class State extends Node {
+    protected _matrix: Matrix;
+    protected _colorMatrix: ColorMatrix;
+    protected _child: Node;
+
+    public setChild(child: Node) {
+      this._child = child;
+    }
+
+    constructor() {
+      super();
+      this._type = NodeType.State;
+    }
+  }
+
+  export class Shape extends Node {
+    private _source: Renderable;
+
+    get source(): Renderable {
+      return this._source;
+    }
+
+    constructor(source: Renderable) {
+      super();
+      release || assert(source);
+      this._source = source;
+      this._type = NodeType.Shape;
+    }
+
+    public getBounds(): Rectangle {
+      return this.source.getBounds();
     }
   }
 }

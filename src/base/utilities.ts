@@ -317,6 +317,10 @@ module Shumway {
       Debug.assert(false, "Unexpected: " + message);
     }
 
+    export function unexpectedCase(message?: any) {
+      Debug.assert(false, "Unexpected Case: " + message);
+    }
+
     export function untested(message?: any) {
       Debug.warning("Congratulations, you've found a code path for which we haven't found a test case. Please submit the test case: " + message);
     }

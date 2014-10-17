@@ -27,15 +27,15 @@ module Shumway.GFX {
     private static _keyboardEvents = Shumway.Remoting.KeyboardEventNames;
 
     private _easel: Easel;
-    private _frameContainer: FrameContainer;
+    private _group: Group;
     private _context: Shumway.Remoting.GFX.GFXChannelDeserializerContext;
 
     constructor(easel: Easel) {
       this._easel = easel;
-      var frameContainer = easel.world;
+      var group = easel.world;
       var transparent = easel.transparent;
-      this._frameContainer = frameContainer;
-      this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._frameContainer, transparent);
+      this._group = group;
+      // this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._group, transparent);
 
       this._addEventListeners();
     }

@@ -292,7 +292,7 @@ module Shumway.GFX.WebGL {
             }
             return VisitorFlags.Skip;
           }
-          var shape = <Shape>frame;
+          var shape = <Shape2>frame;
           var bounds = shape.source.getBounds();
           if (!bounds.isEmpty()) {
             var source = shape.source;
@@ -395,7 +395,7 @@ module Shumway.GFX.WebGL {
       var viewport = this._viewport;
 
       enterTimeline("_renderFrame");
-      this._renderFrame(stage, stage.matrix, brush, viewport, 0);
+      // this._renderFrame(stage, stage.matrix, brush, viewport, 0);
       leaveTimeline();
 
       brush.flush();
