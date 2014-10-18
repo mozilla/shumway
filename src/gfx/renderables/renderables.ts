@@ -329,13 +329,13 @@ module Shumway.GFX {
     }
   }
 
-  enum PathType {
+  export enum PathType {
     Fill,
     Stroke,
     StrokeFill /* Doesn't define thickness, caps and joints. */
   }
 
-  class StyledPath {
+  export class StyledPath {
     path: Path2D;
     constructor(public type: PathType, public style: any, public smoothImage: boolean,
                 public strokeProperties: StrokeProperties)
@@ -345,7 +345,7 @@ module Shumway.GFX {
     }
   }
 
-  class StrokeProperties {
+  export class StrokeProperties {
     constructor(public thickness: number, public scaleMode: LineScaleMode,
                 public capsStyle: string, public jointsStyle: string,
                 public miterLimit: number)
@@ -369,14 +369,15 @@ module Shumway.GFX {
                               RenderableFlags.Tileable;
     properties: {[name: string]: any} = {};
 
-    private _id: number;
     private fillStyle: ColorStyle;
-    private _pathData: ShapeData;
-    private _paths: StyledPath[];
-    private _textures: RenderableBitmap[];
 
-    private static LINE_CAPS_STYLES = ['round', 'butt', 'square'];
-    private static LINE_JOINTS_STYLES = ['round', 'bevel', 'miter'];
+    protected _id: number;
+    protected _pathData: ShapeData;
+    protected _paths: StyledPath[];
+    protected _textures: RenderableBitmap[];
+
+    protected static LINE_CAPS_STYLES = ['round', 'butt', 'square'];
+    protected static LINE_JOINTS_STYLES = ['round', 'bevel', 'miter'];
 
     constructor(id: number, pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
       super(bounds);
@@ -421,12 +422,7 @@ module Shumway.GFX {
 
       var data = this._pathData;
       if (data) {
-        if (!data.morphCoordinates) {
-          this._deserializePaths(data, context);
-          this._pathData = null;
-        } else {
-          this._deserializeMorphPaths(data, context, ratio);
-        }
+        this._deserializePaths(data, context, ratio);
       }
 
       var paths = this._paths;
@@ -476,7 +472,7 @@ module Shumway.GFX {
       leaveTimeline("RenderableShape.render");
     }
 
-    private _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D): void {
+    protected _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D, ratio: number): void {
       release || assert(!this._paths);
       enterTimeline("RenderableShape.deserializePaths");
       // TODO: Optimize path handling to use only one path if possible.
@@ -598,11 +594,93 @@ module Shumway.GFX {
         fillPath.lineTo(formOpenX, formOpenY);
         strokePath && strokePath.lineTo(formOpenX, formOpenY);
       }
+      this._pathData = null;
       leaveTimeline("RenderableShape.deserializePaths");
     }
 
-    private _deserializeMorphPaths(data: ShapeData, context: CanvasRenderingContext2D, ratio: number): void {
-      enterTimeline("RenderableShape.deserializeMorphPaths");
+    protected _createPath(type: PathType, style: any, smoothImage: boolean,
+                        strokeProperties: StrokeProperties, x: number, y: number): Path2D
+    {
+      var path = new StyledPath(type, style, smoothImage, strokeProperties);
+      this._paths.push(path);
+      path.path.moveTo(x, y);
+      return path.path;
+    }
+
+    private _readMatrix(data: DataBuffer): Matrix {
+      return new Matrix (
+        data.readFloat(), data.readFloat(), data.readFloat(),
+        data.readFloat(), data.readFloat(), data.readFloat()
+      );
+    }
+
+    private _readGradient(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasGradient {
+      // Assert at least one color stop.
+      release || assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
+                                                 1 + 1 + 4 + 1 + 1);
+      var gradientType = styles.readUnsignedByte();
+      var focalPoint = styles.readShort() * 2 / 0xff;
+      release || assert(focalPoint >= -1 && focalPoint <= 1);
+      var transform = this._readMatrix(styles);
+      var gradient = gradientType === GradientType.Linear ?
+                     context.createLinearGradient(-1, 0, 1, 0) :
+                     context.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
+      gradient.setTransform && gradient.setTransform(transform.toSVGMatrix());
+      var colorStopsCount = styles.readUnsignedByte();
+      for (var i = 0; i < colorStopsCount; i++) {
+        var ratio = styles.readUnsignedByte() / 0xff;
+        var cssColor = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
+        gradient.addColorStop(ratio, cssColor);
+      }
+
+      // Skip spread and interpolation modes for now.
+      styles.position += 2;
+
+      return gradient;
+    }
+
+    private _readBitmap(styles: DataBuffer,
+                        context: CanvasRenderingContext2D): {style: CanvasPattern;
+                                                             smoothImage: boolean}
+    {
+      release || assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
+      var textureIndex = styles.readUnsignedInt();
+      var fillTransform: Matrix = this._readMatrix(styles);
+      var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
+      var smooth = styles.readBoolean();
+      var texture = this._textures[textureIndex];
+      release || assert(texture._canvas);
+      var fillStyle: CanvasPattern = context.createPattern(texture._canvas, repeat);
+      fillStyle.setTransform(fillTransform.toSVGMatrix());
+      return {style: fillStyle, smoothImage: smooth};
+    }
+
+    protected _renderFallback(context: CanvasRenderingContext2D) {
+      if (!this.fillStyle) {
+        this.fillStyle = Shumway.ColorStyle.randomStyle();
+      }
+      var bounds = this._bounds;
+      context.save();
+      context.beginPath();
+      context.lineWidth = 2;
+      context.fillStyle = this.fillStyle;
+      context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+//      context.textBaseline = "top";
+//      context.fillStyle = "white";
+//      context.fillText(String(id), bounds.x, bounds.y);
+      context.restore();
+    }
+
+  }
+
+  export class RenderableMorphShape extends RenderableShape {
+    _flags: RenderableFlags = RenderableFlags.Dynamic   |
+                              RenderableFlags.Dirty     |
+                              RenderableFlags.Scalable  |
+                              RenderableFlags.Tileable;
+
+    protected _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D, ratio: number): void {
+      enterTimeline("RenderableMorphShape.deserializePaths");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
       // geometry.
@@ -747,28 +825,7 @@ module Shumway.GFX {
         fillPath.lineTo(formOpenX, formOpenY);
         strokePath && strokePath.lineTo(formOpenX, formOpenY);
       }
-      leaveTimeline("RenderableShape.deserializeMorphPaths");
-    }
-
-    private _renderMorph(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle,
-                         clipRegion: boolean = false) {
-
-    }
-
-    private _createPath(type: PathType, style: any, smoothImage: boolean,
-                        strokeProperties: StrokeProperties, x: number, y: number): Path2D
-    {
-      var path = new StyledPath(type, style, smoothImage, strokeProperties);
-      this._paths.push(path);
-      path.path.moveTo(x, y);
-      return path.path;
-    }
-
-    private _readMatrix(data: DataBuffer): Matrix {
-      return new Matrix (
-        data.readFloat(), data.readFloat(), data.readFloat(),
-        data.readFloat(), data.readFloat(), data.readFloat()
-      );
+      leaveTimeline("RenderableMorphShape.deserializPaths");
     }
 
     private _readMorphMatrix(data: DataBuffer, morphData: DataBuffer, ratio: number): Matrix {
@@ -780,31 +837,6 @@ module Shumway.GFX {
         morph(data.readFloat(), morphData.readFloat(), ratio),
         morph(data.readFloat(), morphData.readFloat(), ratio)
       );
-    }
-
-    private _readGradient(styles: DataBuffer, context: CanvasRenderingContext2D): CanvasGradient {
-      // Assert at least one color stop.
-      release || assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
-                                                 1 + 1 + 4 + 1 + 1);
-      var gradientType = styles.readUnsignedByte();
-      var focalPoint = styles.readShort() * 2 / 0xff;
-      release || assert(focalPoint >= -1 && focalPoint <= 1);
-      var transform = this._readMatrix(styles);
-      var gradient = gradientType === GradientType.Linear ?
-                     context.createLinearGradient(-1, 0, 1, 0) :
-                     context.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
-      gradient.setTransform && gradient.setTransform(transform.toSVGMatrix());
-      var colorStopsCount = styles.readUnsignedByte();
-      for (var i = 0; i < colorStopsCount; i++) {
-        var ratio = styles.readUnsignedByte() / 0xff;
-        var cssColor = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
-        gradient.addColorStop(ratio, cssColor);
-      }
-
-      // Skip spread and interpolation modes for now.
-      styles.position += 2;
-
-      return gradient;
     }
 
     private _readMorphGradient(styles: DataBuffer, morphStyles: DataBuffer, ratio: number,
@@ -838,22 +870,6 @@ module Shumway.GFX {
       return gradient;
     }
 
-    private _readBitmap(styles: DataBuffer,
-                        context: CanvasRenderingContext2D): {style: CanvasPattern;
-                                                             smoothImage: boolean}
-    {
-      release || assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
-      var textureIndex = styles.readUnsignedInt();
-      var fillTransform: Matrix = this._readMatrix(styles);
-      var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
-      var smooth = styles.readBoolean();
-      var texture = this._textures[textureIndex];
-      release || assert(texture._canvas);
-      var fillStyle: CanvasPattern = context.createPattern(texture._canvas, repeat);
-      fillStyle.setTransform(fillTransform.toSVGMatrix());
-      return {style: fillStyle, smoothImage: smooth};
-    }
-
     private _readMorphBitmap(styles: DataBuffer, morphStyles: DataBuffer, ratio: number,
                              context: CanvasRenderingContext2D): {style: CanvasPattern;
       smoothImage: boolean}
@@ -868,22 +884,6 @@ module Shumway.GFX {
       var fillStyle: CanvasPattern = context.createPattern(texture._canvas, repeat);
       fillStyle.setTransform(fillTransform.toSVGMatrix());
       return {style: fillStyle, smoothImage: smooth};
-    }
-
-    private _renderFallback(context: CanvasRenderingContext2D) {
-      if (!this.fillStyle) {
-        this.fillStyle = Shumway.ColorStyle.randomStyle();
-      }
-      var bounds = this._bounds;
-      context.save();
-      context.beginPath();
-      context.lineWidth = 2;
-      context.fillStyle = this.fillStyle;
-      context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-//      context.textBaseline = "top";
-//      context.fillStyle = "white";
-//      context.fillText(String(id), bounds.x, bounds.y);
-      context.restore();
     }
 
   }

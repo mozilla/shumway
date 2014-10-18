@@ -21,6 +21,7 @@ module Shumway.Remoting.GFX {
   import Shape = Shumway.GFX.Shape;
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
+  import RenderableMorphShape = Shumway.GFX.RenderableMorphShape;
   import RenderableBitmap = Shumway.GFX.RenderableBitmap;
   import RenderableVideo = Shumway.GFX.RenderableVideo;
   import RenderableText = Shumway.GFX.RenderableText;
@@ -356,7 +357,12 @@ module Shumway.Remoting.GFX {
       if (asset) {
         asset.update(pathData, textures, bounds);
       } else {
-        var renderable = new RenderableShape(id, pathData, textures, bounds);
+        var renderable: RenderableShape;
+        if (pathData.morphCoordinates) {
+          renderable = new RenderableMorphShape(id, pathData, textures, bounds);
+        } else {
+          renderable = new RenderableShape(id, pathData, textures, bounds);
+        }
         for (var i = 0; i < textures.length; i++) {
           textures[i].addRenderableReferrer(renderable);
         }
