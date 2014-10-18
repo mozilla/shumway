@@ -558,11 +558,22 @@ module Shumway.GFX.Geometry {
     }
   }
 
+  /**
+   * Used to write fast paths for common matrix types.
+   */
+  export enum MatrixType {
+    Unknown           = 0x0000,
+    Identity          = 0x0001,
+    Translation       = 0x0002
+  }
+
   export class Matrix {
     private _data: Float64Array;
+    private _type: MatrixType;
 
     public set a(a: number) {
       this._data[0] = a;
+      this._type = MatrixType.Unknown;
     }
 
     public get a(): number {
@@ -571,6 +582,7 @@ module Shumway.GFX.Geometry {
 
     public set b(b: number) {
       this._data[1] = b;
+      this._type = MatrixType.Unknown;
     }
 
     public get b(): number {
@@ -579,6 +591,7 @@ module Shumway.GFX.Geometry {
 
     public set c(c: number) {
       this._data[2] = c;
+      this._type = MatrixType.Unknown;
     }
 
     public get c(): number {
@@ -587,6 +600,7 @@ module Shumway.GFX.Geometry {
 
     public set d(d: number) {
       this._data[3] = d;
+      this._type = MatrixType.Unknown;
     }
 
     public get d(): number {
@@ -595,6 +609,9 @@ module Shumway.GFX.Geometry {
 
     public set tx(tx: number) {
       this._data[4] = tx;
+      if (this._type === MatrixType.Identity) {
+        this._type = MatrixType.Translation;
+      }
     }
 
     public get tx(): number {
@@ -603,6 +620,9 @@ module Shumway.GFX.Geometry {
 
     public set ty(ty: number) {
       this._data[5] = ty;
+      if (this._type === MatrixType.Identity) {
+        this._type = MatrixType.Translation;
+      }
     }
 
     public get ty(): number {
@@ -613,6 +633,7 @@ module Shumway.GFX.Geometry {
 
     constructor (a: number, b: number, c: number, d: number, tx: number, ty: number) {
       this._data = new Float64Array(6);
+      this._type = MatrixType.Unknown;
       this.setElements(a, b, c, d, tx, ty);
     }
 
@@ -624,6 +645,7 @@ module Shumway.GFX.Geometry {
       m[3] = d;
       m[4] = tx;
       m[5] = ty;
+      this._type = MatrixType.Unknown;
     }
 
     set (other: Matrix) {
@@ -634,12 +656,13 @@ module Shumway.GFX.Geometry {
       m[3] = n[3];
       m[4] = n[4];
       m[5] = n[5];
+      this._type = other._type;
     }
 
     /**
      * Whether the transformed query rectangle is empty after this transform is applied to it.
      */
-      emptyArea(query: Rectangle): boolean {
+    emptyArea(query: Rectangle): boolean {
       var m = this._data;
       // TODO: Work out the details here.
       if (m[0] === 0 || m[3] === 0) {
@@ -651,17 +674,20 @@ module Shumway.GFX.Geometry {
     /**
      * Whether the area of transformed query rectangle is infinite after this transform is applied to it.
      */
-      infiniteArea(query: Rectangle): boolean {
+    infiniteArea(query: Rectangle): boolean {
       var m = this._data;
       // TODO: Work out the details here.
       if (Math.abs(m[0]) === Infinity ||
-        Math.abs(m[3]) === Infinity) {
+          Math.abs(m[3]) === Infinity) {
         return true;
       }
       return false;
     }
 
     isEqual (other: Matrix) {
+      if (this._type === MatrixType.Identity && other._type === MatrixType.Identity) {
+        return true;
+      }
       var m = this._data, n = other._data;
       return m[0] === n[0] &&
              m[1] === n[1] &&
@@ -673,7 +699,9 @@ module Shumway.GFX.Geometry {
 
     clone (): Matrix {
       var m = this._data;
-      return new Matrix(m[0], m[1], m[2], m[3], m[4], m[5]);
+      var matrix = new Matrix(m[0], m[1], m[2], m[3], m[4], m[5]);
+      matrix._type = this._type;
+      return matrix;
     }
 
     transform (a: number, b: number, c: number, d: number, tx: number, ty: number): Matrix  {
@@ -685,6 +713,7 @@ module Shumway.GFX.Geometry {
       m[3] = _b * c + _d * d;
       m[4] = _a * tx + _c * ty + _tx;
       m[5] = _b * tx + _d * ty + _ty;
+      this._type = MatrixType.Unknown;
       return this;
     }
 
@@ -715,22 +744,35 @@ module Shumway.GFX.Geometry {
     }
 
     isTranslationOnly(): boolean {
+      if (this._type === MatrixType.Translation) {
+        return true;
+      }
       var m = this._data;
       if (m[0] === 1 &&
-        m[1] === 0 &&
-        m[2] === 0 &&
-        m[3] === 1) {
+          m[1] === 0 &&
+          m[2] === 0 &&
+          m[3] === 1) {
+        this._type === MatrixType.Translation;
         return true;
       } else if (epsilonEquals(m[0], 1) &&
         epsilonEquals(m[1], 0) &&
         epsilonEquals(m[2], 0) &&
         epsilonEquals(m[3], 1)) {
+        this._type === MatrixType.Translation;
         return true;
       }
       return false;
     }
 
     transformRectangleAABB (rectangle: Rectangle) {
+      if (this._type === MatrixType.Identity) {
+        return;
+      } else if (this._type === MatrixType.Translation) {
+        rectangle.x += m[4];
+        rectangle.y += m[5];
+        return;
+      }
+
       var m = this._data, a = m[0], b = m[1], c = m[2], d = m[3], tx = m[4], ty = m[5];
 
       var x = rectangle.x;
@@ -784,6 +826,7 @@ module Shumway.GFX.Geometry {
       m[3] *= y;
       m[4] *= x;
       m[5] *= y;
+      this._type = MatrixType.Unknown;
       return this;
     }
 
@@ -804,10 +847,15 @@ module Shumway.GFX.Geometry {
       m[3] = sin * c  + cos * d;
       m[4] = cos * tx - sin * ty;
       m[5] = sin * tx + cos * ty;
+      this._type = MatrixType.Unknown;
       return this;
     }
 
     concat (other: Matrix) {
+      if (other._type === MatrixType.Identity) {
+        return;
+      }
+
       var m = this._data, n = other._data;
       var a  = m[0] * n[0];
       var b  = 0.0;
@@ -831,7 +879,8 @@ module Shumway.GFX.Geometry {
       m[3] = d;
       m[4] = tx;
       m[5] = ty;
-      
+
+      this._type = MatrixType.Unknown;
       return this;
     }
 
@@ -844,6 +893,15 @@ module Shumway.GFX.Geometry {
      */
     public preMultiply(other: Matrix): void {
       var m = this._data, n = other._data;
+      if (other._type === MatrixType.Identity) {
+        return;
+      } else if (other._type === MatrixType.Translation) {
+        if (this._type & (MatrixType.Identity | MatrixType.Translation)) {
+          m[4] += n[4];
+          m[5] += n[5];
+          return;
+        }
+      }
       var a  = n[0] * m[0];
       var b  = 0.0;
       var c  = 0.0;
@@ -866,12 +924,16 @@ module Shumway.GFX.Geometry {
       m[3] = d;
       m[4] = tx;
       m[5] = ty;
+      this._type = MatrixType.Unknown;
     }
 
     translate (x: number, y: number): Matrix {
       var m = this._data;
       m[4] += x;
       m[5] += y;
+      if (this._type === MatrixType.Identity) {
+        this._type = MatrixType.Translation;
+      }
       return this;
     }
 
@@ -883,15 +945,22 @@ module Shumway.GFX.Geometry {
       m[3] = 1;
       m[4] = 0;
       m[5] = 0;
+      this._type = MatrixType.Identity;
     }
 
     isIdentity (): boolean {
+      if (this._type === MatrixType.Identity) {
+        return true;
+      }
       var m = this._data;
       return m[0] === 1 && m[1] === 0 && m[2] === 0 &&
              m[3] === 1 && m[4] === 0 && m[5] === 0;
     }
 
     transformPoint (point: Point) {
+      if (this._type === MatrixType.Identity) {
+        return;
+      }
       var m = this._data;
       var x = point.x;
       var y = point.y;
@@ -900,12 +969,18 @@ module Shumway.GFX.Geometry {
     }
 
     transformPoints (points: Point[]) {
+      if (this._type === MatrixType.Identity) {
+        return;
+      }
       for (var i = 0; i < points.length; i++) {
         this.transformPoint(points[i]);
       }
     }
 
     deltaTransformPoint (point: Point) {
+      if (this._type === MatrixType.Identity) {
+        return;
+      }
       var m = this._data;
       var x = point.x;
       var y = point.y;
@@ -914,6 +989,12 @@ module Shumway.GFX.Geometry {
     }
 
     inverse (result: Matrix) {
+      if (this._type === MatrixType.Identity) {
+        result.setIdentity();
+        return;
+      } else if (this._type === MatrixType.Translation) {
+        // TODO: Fast path here.
+      }
       var m = this._data, r = result._data;
       var b  = m[1];
       var c  = m[2];
@@ -1019,7 +1100,9 @@ module Shumway.GFX.Geometry {
     }
 
     public static createIdentity(): Matrix {
-      return new Matrix(1, 0, 0, 1, 0, 0);
+      var matrix = new Matrix(1, 0, 0, 1, 0, 0);
+      matrix._type = MatrixType.Identity;
+      return matrix;
     }
 
     static multiply = function (dst: Matrix, src: Matrix) {
@@ -1048,6 +1131,7 @@ module Shumway.GFX.Geometry {
         m[3] = 1;
         m[4] = Math.round(m[4]);
         m[5] = Math.round(m[5]);
+        this._type = MatrixType.Translation;
         return true;
       }
       return false;
