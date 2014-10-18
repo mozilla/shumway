@@ -486,22 +486,6 @@ module Shumway.SWF.Parser {
                                     dictionary, dependencies);
     var shape = convertRecordsToShapeData(tag.records, fillPaths, linePaths,
                                           dictionary, dependencies, tag.recordsMorph || null);
-
-
-    //if (tag.lineBoundsMorph) {
-    //  var lineBounds: Bounds = tag.lineBounds = Bounds.FromUntyped(tag.lineBounds);
-    //  var lineBoundsMorph = tag.lineBoundsMorph;
-    //  lineBounds.extendByPoint(lineBoundsMorph.xMin, lineBoundsMorph.yMin);
-    //  lineBounds.extendByPoint(lineBoundsMorph.xMax, lineBoundsMorph.yMax);
-    //  var fillBoundsMorph = tag.fillBoundsMorph;
-    //  if (fillBoundsMorph) {
-    //    var fillBounds: Bounds = tag.fillBounds = tag.fillBounds ?
-    //                                              Bounds.FromUntyped(tag.fillBounds) :
-    //                                              null;
-    //    fillBounds.extendByPoint(fillBoundsMorph.xMin, fillBoundsMorph.yMin);
-    //    fillBounds.extendByPoint(fillBoundsMorph.xMax, fillBoundsMorph.yMax);
-    //  }
-    //}
     return {
       type: tag.isMorph ? 'morphshape' : 'shape',
       id: tag.id,
