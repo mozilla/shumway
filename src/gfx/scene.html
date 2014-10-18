@@ -22,9 +22,12 @@
 <script src="../../build/ts/gfx.js"></script>
 <script> console.timeEnd("Load GFX Dependencies"); </script>
 <script>
+  var release = true;
+  var Node = Shumway.GFX.Node;
   var Rectangle = Shumway.GFX.Geometry.Rectangle;
   var Stage = Shumway.GFX.Stage;
   var Shape = Shumway.GFX.Shape;
+  var Group = Shumway.GFX.Group;
   var CustomRenderable = Shumway.GFX.CustomRenderable;
   var Canvas2DStageRenderer = Shumway.GFX.Canvas2D.Canvas2DStageRenderer;
   var Easel = Shumway.GFX.Easel;
@@ -51,9 +54,15 @@
   </table>
   <br>
   <button onclick="test()">Do</button>
-
   <button onclick="garbage()">Garbage</button>
+  <div id="log"></div>
   <script>
+    var logElement = document.getElementById("log");
+
+    function log(s) {
+      logElement.innerHTML += s + "<br>"
+    }
+
     var container = document.getElementById("container");
 
     var easel = new Easel(container, Backend.Canvas2D)
@@ -65,7 +74,7 @@
         // child.x += child.dx;
         // child.y += child.dy;
       })
-      requestAnimationFrame(tick);
+//      requestAnimationFrame(tick);
     }
 
     tick();
@@ -77,16 +86,31 @@
       });
     }
 
-    function test() {
-      for (var i = 0; i < 10000; i++) {
+    function makeNode(depth, branch) {
+      if (depth === 0) {
         var shape = new Shape(makeRectangle(4, 4));
-        // shape.blendMode = BlendMode.Difference;
         shape.dx = Math.random() - 0.5;
         shape.dy = Math.random() - 0.5;
-        world.addChild(shape);
-        shape.getTransformGroup().x = Math.random() * stage.w / 2;
-        shape.getTransformGroup().y = Math.random() * stage.h / 2;
+        return shape;
+      } else {
+        var group = new Group();
+        for (var i = 0; i < branch; i++) {
+          var node = makeNode(depth - 1, branch);
+          group.addChild(node);
+          node.getTransform().x = Math.random();
+          node.getTransform().y = Math.random();
+        }
+        return group;
       }
+    }
+
+    function test() {
+      var count = 10;
+      var depth = 12;
+      for (var i = 0; i < count; i++) {
+        world.addChild(makeNode(depth, 2));
+      }
+      log("Next Node ID: " + Node._nextId);
     }
 
     function garbage() {

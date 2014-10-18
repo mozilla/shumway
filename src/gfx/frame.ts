@@ -752,9 +752,9 @@ module Shumway.GFX {
     Node                   = 0x0001,
      Shape                 = 0x0002 | Node,
      Group                 = 0x0004 | Node,
-      TransformGroup       = 0x0008 | Group,
-       Stage               = 0x0010 | TransformGroup,
-     State                 = 0x0020 | Node
+      Stage                = 0x0008 | Group,
+     Unary                 = 0x0010 | Node,
+      Transform            = 0x0020 | Unary
   }
 
   export class NodeVisitor {
@@ -762,24 +762,29 @@ module Shumway.GFX {
       // ...
     }
 
-    visitGroup(node: Group, state: State) {
-      this.visitNode(node, state);
-    }
-
-    visitTransformGroup(node: TransformGroup, state: State) {
-      this.visitGroup(node, state);
-    }
-
-    visitStage(node: Stage, state: State) {
-      this.visitTransformGroup(node, state);
-    }
-
     visitShape(node: Shape, state: State) {
       this.visitNode(node, state);
     }
 
-    visitState(node: State, state: State) {
+    visitGroup(node: Group, state: State) {
       this.visitNode(node, state);
+      var children = node.getChildren();
+      for (var i = 0; i < children.length; i++) {
+        children[i].visit(this, state);
+      }
+    }
+
+    visitStage(node: Stage, state: State) {
+      this.visitGroup(node, state);
+    }
+
+    visitUnary(node: Unary, state: State) {
+      this.visitNode(node, state);
+      node.getChild().visit(this, state);
+    }
+
+    visitTransform(node: Transform, state: State) {
+      this.visitUnary(node, state);
     }
   }
 
@@ -848,24 +853,24 @@ module Shumway.GFX {
       return (this._type & type) === type;
     }
 
-    public getTransformGroup(): TransformGroup {
+    public getTransform(): Transform {
       var node = this, last = null;
-      // Look for the first |TransformGroup| ancestor that is older than the
-      while (!node.isTypeOf(NodeType.TransformGroup)) {
+      // Look for the first |Transform| ancestor.
+      while (!node.isTypeOf(NodeType.Transform)) {
         var parent = <Group>node._parent;
         if (parent === null) {
           // We cannot create a transform group for the root node.
           return null;
-        } else if (!parent.isTypeOf(NodeType.TransformGroup)) {
+        } else if (!parent.isTypeOf(NodeType.Transform)) {
           // Insert a transform group between the node and the parent.
-          var transformGroup = new TransformGroup();
-          parent.uncheckedAddChildAt(transformGroup, node._index);
-          transformGroup.uncheckedAddChild(node)
-          return transformGroup;
+          var transform = new Transform();
+          parent.uncheckedAddChildAt(transform, node._index);
+          transform.setChild(node)
+          return transform;
         }
         node = node._parent;
       }
-      return <TransformGroup>node;
+      return <Transform>node;
     }
 
     public getConcatenatedMatrix(clone: boolean = false): Matrix {
@@ -880,17 +885,14 @@ module Shumway.GFX {
         case NodeType.Group:
           visitor.visitGroup(<Group>this, state);
           break;
-        case NodeType.TransformGroup:
-          visitor.visitTransformGroup(<TransformGroup>this, state);
+        case NodeType.Transform:
+          visitor.visitTransform(<Transform>this, state);
           break;
         case NodeType.Stage:
           visitor.visitStage(<Stage>this, state);
           break;
         case NodeType.Shape:
           visitor.visitShape(<Shape>this, state);
-          break;
-        case NodeType.State:
-          visitor.visitState(<State>this, state);
           break;
         default:
           Debug.unexpectedCase();
@@ -953,18 +955,45 @@ module Shumway.GFX {
     }
   }
 
+  export class Unary extends Node {
+    protected _child: Node;
+
+    constructor() {
+      super();
+      this._child = null;
+    }
+
+    public getChild(): Node {
+      return this._child;
+    }
+
+    public setChild(node: Node) {
+      release || assert(node, "Cannot add null nodes.");
+      release || assert(!node._parent, "Node is already has a parent elsewhere.");
+      release || assert(!node.isAncestor(this), "Cycles are not allowed.");
+      this.uncheckedSetChild(node);
+    }
+
+    uncheckedSetChild(node: Node) {
+      node._parent = this;
+      node._index = 0;
+      this._child = node;
+    }
+  }
+
   /**
    * Nodes with transformations: matrix, color matrix, etc.
    */
-  export class TransformGroup extends Group {
+  export class Transform extends Unary {
+
     protected _matrix: Matrix;
     protected _colorMatrix: ColorMatrix;
 
     constructor() {
       super();
-      this._type = NodeType.TransformGroup;
+      this._type = NodeType.Transform;
       this._matrix = Matrix.createIdentity();
-      this._colorMatrix = ColorMatrix.createIdentity();
+      this._colorMatrix = null;
     }
 
     public get x(): number {
@@ -993,28 +1022,30 @@ module Shumway.GFX {
       }
       return this._matrix;
     }
+
+    public hasColorMatrix() {
+      return this._colorMatrix !== null;
+    }
+
+    public getColorMatrix(clone: boolean = false): ColorMatrix {
+      if (this._colorMatrix === null) {
+        this._colorMatrix = ColorMatrix.createIdentity();
+      }
+      if (clone) {
+        return this._colorMatrix.clone();
+      }
+      return this._colorMatrix;
+    }
   }
 
   /**
    * Nodes that cache transformation state. These are used to thread state when traversing
    * the scene graph. Since they keep track of rendering state, they might as well become
    * scene graph nodes.
-   *
-   * TODO: Maybe we should be extending TransformGroup, but what to do about the child
-   * pointer that doesn't point back to us.
    */
-  export class State extends Node {
-    protected _matrix: Matrix;
-    protected _colorMatrix: ColorMatrix;
-    protected _child: Node;
-
-    public setChild(child: Node) {
-      this._child = child;
-    }
-
+  export class State {
     constructor() {
-      super();
-      this._type = NodeType.State;
+
     }
   }
 

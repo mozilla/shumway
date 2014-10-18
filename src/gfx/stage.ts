@@ -126,7 +126,7 @@ module Shumway.GFX {
     }
   }
 
-  export class Stage extends TransformGroup {
+  export class Stage extends Group {
     public trackDirtyRegions: boolean;
     public dirtyRegion: DirtyRegion;
     public w: number;

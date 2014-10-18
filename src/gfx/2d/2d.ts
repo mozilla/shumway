@@ -88,32 +88,23 @@ module Shumway.GFX.Canvas2D {
   var MAX_VIEWPORT = Rectangle.createMaxI16();
 
   export class RenderState extends State {
-    public clipRegion: boolean; // Remove me.
+    private static _dirtyStack: RenderState [] = [];
 
-    public matrix = Matrix.createIdentity();
-    public colorMatrix = ColorMatrix.createIdentity();
+    clip: Rectangle = Rectangle.createEmpty();
+    target: Canvas2DSurfaceRegion = null;
+    matrix: Matrix = Matrix.createIdentity();
+    colorMatrix: ColorMatrix = ColorMatrix.createIdentity();
+    private _dirty: boolean;
 
-    public target: Canvas2DSurfaceRegion;
-    public clip: Rectangle;
-    public options: Canvas2DStageRendererOptions;
 
-    constructor (
-      target: Canvas2DSurfaceRegion,
-      clip: Rectangle,
-      matrix: Matrix,
-      colorMatrix: ColorMatrix,
-      options: Canvas2DStageRendererOptions
-    ) {
+    options: Canvas2DStageRendererOptions;
+    clipRegion: boolean; // Remove me.
+
+    constructor(target: Canvas2DSurfaceRegion, clip: Rectangle) {
       super();
+      this._dirty = false;
+      this.clip.set(clip);
       this.target = target;
-      this.clip = clip;
-      this.options = options;
-      this.matrix = matrix;
-      this.colorMatrix = colorMatrix;
-    }
-
-    public clone(): RenderState {
-      return new RenderState(this.target, this.clip.clone(), this.matrix.clone(), this.colorMatrix.clone(), this.options);
     }
 
     public getMatrix(clone: boolean = false): Matrix {
@@ -121,6 +112,47 @@ module Shumway.GFX.Canvas2D {
         return this.matrix.clone();
       }
       return this.matrix;
+    }
+
+    set (state: RenderState) {
+      this.clip.set(state.clip);
+      this.target = state.target;
+      this.matrix.set(state.matrix);
+      this.colorMatrix.set(state.colorMatrix);
+    }
+
+    public clone(): RenderState {
+      var state: RenderState = this.acquire();
+      if (!state) {
+        state = new RenderState(this.target, this.clip);
+      }
+      state.set(this);
+      return state;
+    }
+
+    acquire(): RenderState {
+      var dirtyStack = RenderState._dirtyStack;
+      var state = null;
+      if (dirtyStack.length) {
+        state = dirtyStack.pop();
+        state._dirty = false;
+      }
+      return state;
+    }
+
+    free() {
+      release || assert (!this._dirty)
+      RenderState._dirtyStack.push(this);
+      this._dirty = true;
+    }
+
+    transform(node: Transform) {
+      var state = this.clone();
+      state.matrix.preMultiply(node.getMatrix());
+      if (node.hasColorMatrix()) {
+        state.colorMatrix.multiply(node.getColorMatrix());
+      }
+      return state;
     }
   }
 
@@ -143,6 +175,7 @@ module Shumway.GFX.Canvas2D {
      */
     private static _shapeCache: ISurfaceRegionAllocator;
 
+    private _visited: number = 0;
 
     constructor (
       canvas: HTMLCanvasElement,
@@ -228,7 +261,7 @@ module Shumway.GFX.Canvas2D {
       target.context.save();
 
       target.context.globalAlpha = 1;
-      target.clear(viewport);
+      // target.clear(viewport);
 
       this.renderNode(stage, viewport);
       target.context.restore();
@@ -258,31 +291,23 @@ module Shumway.GFX.Canvas2D {
       node: Node,
       clip: Rectangle
     ) {
-      node.visit(this, new RenderState(target, clip, Matrix.createIdentity(), ColorMatrix.createIdentity(), this._options));
+      this._visited = 0;
+      node.visit(this, new RenderState(target, clip));
+      console.info("Visited: " + this._visited);
     }
 
     visitNode(node: Node, state: RenderState) {
-      console.info("Render: " + node);
+      this._visited ++;
     }
 
-    visitGroup(node: TransformGroup, state: RenderState) {
-      var children = node.getChildren();
-      for (var i = 0; i < children.length; i++) {
-        children[i].visit(this, state);
-      }
-    }
-
-    visitTransformGroup(node: TransformGroup, state: RenderState) {
-      var children = node.getChildren();
-      for (var i = 0; i < children.length; i++) {
-        var s = state.clone();
-        s.matrix.preMultiply(node.getMatrix());
-        children[i].visit(this, s);
-      }
+    visitTransform(node: Transform, state: RenderState) {
+      state = state.transform(node);
+      node.getChild().visit(this, state);
+      state.free();
     }
 
     visitShape(node: Shape, state: RenderState) {
-      var matrix = state.getMatrix();
+      // var matrix = state.getMatrix();
       // state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
       // this._renderShape(node, state)
     }
