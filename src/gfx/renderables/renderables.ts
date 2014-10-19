@@ -370,10 +370,10 @@ module Shumway.GFX {
     properties: {[name: string]: any} = {};
 
     private fillStyle: ColorStyle;
+    private _paths: StyledPath[];
 
     protected _id: number;
     protected _pathData: ShapeData;
-    protected _paths: StyledPath[];
     protected _textures: RenderableBitmap[];
 
     protected static LINE_CAPS_STYLES = ['round', 'butt', 'square'];
@@ -420,12 +420,7 @@ module Shumway.GFX {
         }
       }
 
-      var data = this._pathData;
-      if (data) {
-        this._deserializePaths(data, context, ratio);
-      }
-
-      var paths = this._paths;
+      var paths = this._deserializePaths(this._pathData, context, ratio);
       release || assert(paths);
 
       enterTimeline("RenderableShape.render", this);
@@ -472,13 +467,18 @@ module Shumway.GFX {
       leaveTimeline("RenderableShape.render");
     }
 
-    protected _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D, ratio: number): void {
-      release || assert(!this._paths);
+    protected _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D, ratio: number): StyledPath[] {
+      release || assert(data ? !this._pathData : this._pathData);
       enterTimeline("RenderableShape.deserializePaths");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
       // geometry.
-      this._paths = [];
+
+      if (this._paths) {
+        return this._paths;
+      }
+
+      var paths = this._paths = [];
 
       var fillPath: Path2D = null;
       var strokePath: Path2D = null;
@@ -596,9 +596,11 @@ module Shumway.GFX {
       }
       this._pathData = null;
       leaveTimeline("RenderableShape.deserializePaths");
+
+      return paths;
     }
 
-    protected _createPath(type: PathType, style: any, smoothImage: boolean,
+    private _createPath(type: PathType, style: any, smoothImage: boolean,
                         strokeProperties: StrokeProperties, x: number, y: number): Path2D
     {
       var path = new StyledPath(type, style, smoothImage, strokeProperties);
@@ -679,12 +681,19 @@ module Shumway.GFX {
                               RenderableFlags.Scalable  |
                               RenderableFlags.Tileable;
 
-    protected _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D, ratio: number): void {
+    private _morphPaths: { [key: number]: StyledPath[] } = Object.create(null);
+
+    protected _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D, ratio: number): StyledPath[] {
       enterTimeline("RenderableMorphShape.deserializePaths");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
       // geometry.
-      this._paths = [];
+
+      if (this._morphPaths[ratio]) {
+        return this._morphPaths[ratio];
+      }
+
+      var paths = this._morphPaths[ratio] = [];
 
       var fillPath: Path2D = null;
       var strokePath: Path2D = null;
@@ -766,7 +775,7 @@ module Shumway.GFX {
             break;
           case PathCommand.BeginSolidFill:
             release || assert(styles.bytesAvailable >= 4);
-            fillPath = this._createPath(PathType.Fill,
+            fillPath = this._createMorphPath(PathType.Fill, ratio,
               ColorUtilities.rgbaToCSSStyle(
                 morphColor(styles.readUnsignedInt(), morphStyles.readUnsignedInt(), ratio)
               ),
@@ -774,12 +783,12 @@ module Shumway.GFX {
             break;
           case PathCommand.BeginBitmapFill:
             var bitmapStyle = this._readMorphBitmap(styles, morphStyles, ratio, context);
-            fillPath = this._createPath(PathType.Fill, bitmapStyle.style, bitmapStyle.smoothImage,
+            fillPath = this._createMorphPath(PathType.Fill, ratio, bitmapStyle.style, bitmapStyle.smoothImage,
               null, x, y);
             break;
           case PathCommand.BeginGradientFill:
             var gradientStyle = this._readMorphGradient(styles, morphStyles, ratio, context);
-            fillPath = this._createPath(PathType.Fill, gradientStyle,
+            fillPath = this._createMorphPath(PathType.Fill, ratio, gradientStyle,
               false, null, x, y);
             break;
           case PathCommand.EndFill:
@@ -798,16 +807,16 @@ module Shumway.GFX {
             var jointsStyle: string = RenderableShape.LINE_JOINTS_STYLES[styles.readByte()];
             var strokeProperties = new StrokeProperties(
               width, scaleMode, capsStyle, jointsStyle, styles.readByte());
-            strokePath = this._createPath(PathType.Stroke, color, false, strokeProperties, x, y);
+            strokePath = this._createMorphPath(PathType.Stroke, ratio, color, false, strokeProperties, x, y);
             break;
           case PathCommand.LineStyleGradient:
             var gradientStyle = this._readMorphGradient(styles, morphStyles, ratio, context);
-            strokePath = this._createPath(PathType.StrokeFill, gradientStyle,
+            strokePath = this._createMorphPath(PathType.StrokeFill, ratio, gradientStyle,
               false, null, x, y);
             break;
           case PathCommand.LineStyleBitmap:
             var bitmapStyle = this._readMorphBitmap(styles, morphStyles, ratio, context);
-            strokePath = this._createPath(PathType.StrokeFill, bitmapStyle.style,
+            strokePath = this._createMorphPath(PathType.StrokeFill, ratio, bitmapStyle.style,
               bitmapStyle.smoothImage, null, x, y);
             break;
           case PathCommand.LineEnd:
@@ -826,6 +835,17 @@ module Shumway.GFX {
         strokePath && strokePath.lineTo(formOpenX, formOpenY);
       }
       leaveTimeline("RenderableMorphShape.deserializPaths");
+
+      return paths;
+    }
+
+    private _createMorphPath(type: PathType, ratio: number, style: any, smoothImage: boolean,
+                             strokeProperties: StrokeProperties, x: number, y: number): Path2D
+    {
+      var path = new StyledPath(type, style, smoothImage, strokeProperties);
+      this._morphPaths[ratio].push(path);
+      path.path.moveTo(x, y);
+      return path.path;
     }
 
     private _readMorphMatrix(data: DataBuffer, morphData: DataBuffer, ratio: number): Matrix {
