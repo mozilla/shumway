@@ -20,6 +20,31 @@ module Shumway.AVM2.AS.flash.geom {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Bounds = Shumway.Bounds;
 
+  var PI = Math.PI;
+  var HalfPI = PI / 2;
+  var PacPI = PI + HalfPI;
+  var TwoPI = PI * 2;
+
+  function cos(angle: number): number {
+    switch (angle) {
+      case HalfPI: case -PacPI: return 0;
+      case PI: case -PI: return -1;
+      case PacPI: case -HalfPI: return 0;
+      default:
+        return Math.cos(angle);
+    }
+  }
+
+  function sin(angle: number): number {
+    switch (angle) {
+      case HalfPI: case -PacPI: return 1;
+      case PI: case -PI: return 0;
+      case PacPI: case -HalfPI: return -1;
+      default:
+        return Math.sin(angle);
+    }
+  }
+
   export class Matrix extends ASNative {
     static classInitializer: any = null;
     static initializer: any = null;
@@ -219,8 +244,8 @@ module Shumway.AVM2.AS.flash.geom {
     public createBox(scaleX: number, scaleY: number, rotation: number = 0, tx: number = 0, ty: number = 0): void {
       var m = this._data;
       if (rotation !== 0) {
-        var u = Math.cos(rotation);
-        var v = Math.sin(rotation);
+        var u = cos(rotation);
+        var v = sin(rotation);
         m[0] =  u * scaleX;
         m[1] =  v * scaleY;
         m[2] = -v * scaleX;
@@ -243,8 +268,8 @@ module Shumway.AVM2.AS.flash.geom {
       angle = +angle;
       if (angle !== 0) {
         var m = this._data;
-        var u = Math.cos(angle);
-        var v = Math.sin(angle);
+        var u = cos(angle);
+        var v = sin(angle);
         var ta = m[0];
         var tb = m[1];
         var tc = m[2];
@@ -378,7 +403,11 @@ module Shumway.AVM2.AS.flash.geom {
       return Math.abs(this.getScaleY());
     }
 
-    public getRotation(): number {
+    public getSkewX(): number {
+      return Math.atan2(this._data[3], this._data[2]) - (Math.PI / 2);
+    }
+
+    public getSkewY(): number {
       return Math.atan2(this._data[1], this._data[0]);
     }
 
@@ -483,29 +512,28 @@ module Shumway.AVM2.AS.flash.geom {
     /**
      * Updates the scale and skew componenets of the matrix.
      */
-    public updateScaleAndRotation(scaleX: number, scaleY: number, rotation: number) {
+    public updateScaleAndRotation(scaleX: number, scaleY: number, skewX: number, skewY: number) {
       var m = this._data;
+
       // The common case.
-      if (rotation === 0 || rotation === 360) {
+      if ((skewX === 0 || skewX === TwoPI) && (skewY === 0 || skewY === TwoPI)) {
         m[0] = scaleX;
         m[1] = m[2] = 0;
         m[3] = scaleY;
         return;
       }
-      var u = 0, v = 0;
-      switch (rotation) {
-        case  90: case -270: u =  0, v =  1; break;
-        case 180: case -180: u = -1, v =  0; break;
-        case 270: case  -90: u =  0, v = -1; break;
-        default:
-          var angle = rotation / 180 * Math.PI;
-          u = Math.cos(angle);
-          v = Math.sin(angle);
+
+      var u = cos(skewX);
+      var v = sin(skewX);
+      if (skewX === skewY) {
+        m[0] = u * scaleX;
+        m[1] = v * scaleX;
+      } else {
+        m[0] = cos(skewY) * scaleX;
+        m[1] = sin(skewY) * scaleX;
       }
-      m[0] =  u * scaleX;
-      m[1] =  v * scaleX;
       m[2] = -v * scaleY;
-      m[3] =  u * scaleY;
+      m[3] = u * scaleY;
     }
 
     public clone(): Matrix {

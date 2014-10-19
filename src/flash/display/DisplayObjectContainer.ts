@@ -336,6 +336,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       child._addReference();
+      child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
       return child;
     }
 
@@ -393,6 +394,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         if (child.name === name) {
           child._addReference();
+          child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
           return child;
         }
       }

@@ -15,12 +15,12 @@
       "type": "eq"
     },
     {  "id": "acid-bitmap-fill-2",
-      "frames": [1],
+      "frames": [20],
       "swf": "swfs/acid/acid-bitmap-fill-2.swf",
       "type": "eq"
     },
     {  "id": "acid-bitmap-fill",
-      "frames": [1],
+      "frames": [20],
       "swf": "swfs/acid/acid-bitmap-fill.swf",
       "type": "eq"
     },

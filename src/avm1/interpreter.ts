@@ -1516,7 +1516,7 @@ module Shumway.AVM1 {
         target = obj;
       }
       var resolvedName = as2ResolveProperty(target, methodName, false);
-      var fn = target.asGetPublicProperty(resolvedName);
+      var fn = resolvedName && target.asGetPublicProperty(resolvedName);
 
       // AVM1 simply ignores attempts to invoke non-methods.
       if (!isFunction(fn)) {

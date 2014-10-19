@@ -112,6 +112,9 @@ public dynamic class AVM1TextField extends Object {
     return this._as3Object.height;
   }
   public function set _height(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.height = value;
   }
 
@@ -302,6 +305,9 @@ public dynamic class AVM1TextField extends Object {
     return this._as3Object.width;
   }
   public function set _width(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.width = value;
   }
 
@@ -316,6 +322,9 @@ public dynamic class AVM1TextField extends Object {
     return this._as3Object.x;
   }
   public function set _x(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.x = value;
   }
 
@@ -327,6 +336,9 @@ public dynamic class AVM1TextField extends Object {
     return this._as3Object.scaleX;
   }
   public function set _xscale(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.scaleX = value;
   }
 
@@ -334,6 +346,9 @@ public dynamic class AVM1TextField extends Object {
     return this._as3Object.y;
   }
   public function set _y(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.y = value;
   }
 
@@ -345,6 +360,9 @@ public dynamic class AVM1TextField extends Object {
     return this._as3Object.scaleY;
   }
   public function set _yscale(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.scaleY = value;
   }
 

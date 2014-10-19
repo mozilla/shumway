@@ -361,6 +361,8 @@ module Shumway.AVM2.AS.flash.display {
       self._z = 0;
       self._scaleX = 1;
       self._scaleY = 1;
+      self._skewX = 0;
+      self._skewY = 0;
       self._scaleZ = 1;
       self._rotation = 0;
       self._rotationX = 0;
@@ -670,6 +672,9 @@ module Shumway.AVM2.AS.flash.display {
     _scaleX: number;
     _scaleY: number;
 
+    _skewX: number;
+    _skewY: number;
+
     _z: number;
     _scaleZ: number;
     _rotation: number;
@@ -863,7 +868,9 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._scaleX = m.getScaleX();
       this._scaleY = m.getScaleY();
-      this._rotation = DisplayObject._clampRotation(matrix.getRotation() * 180 / Math.PI);
+      this._skewX = matrix.getSkewX();
+      this._skewY = matrix.getSkewY();
+      this._rotation = DisplayObject._clampRotation(this._skewY * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       this._setFlags(DisplayObjectFlags.InvalidInvertedMatrix);
       this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
@@ -875,7 +882,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     _getMatrix() {
       if (this._hasFlags(DisplayObjectFlags.InvalidMatrix)) {
-        this._matrix.updateScaleAndRotation(this._scaleX, this._scaleY, this._rotation);
+        this._matrix.updateScaleAndRotation(this._scaleX, this._scaleY, this._skewX, this._skewY);
         this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       }
       return this._matrix;
@@ -1007,6 +1014,7 @@ module Shumway.AVM2.AS.flash.display {
      * property of this object is changed by user code.
      */
     private _stopTimelineAnimation() {
+      this._removeFlags(DisplayObjectFlags.OwnedByTimeline);
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
 
@@ -1185,6 +1193,10 @@ module Shumway.AVM2.AS.flash.display {
       if (value === this._rotation) {
         return;
       }
+      var delta = value - this._rotation;
+      var angle = delta / 180 * Math.PI;
+      this._skewX += angle;
+      this._skewY += angle;
       this._rotation = value;
       this._invalidateMatrix();
     }

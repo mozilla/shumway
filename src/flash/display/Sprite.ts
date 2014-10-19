@@ -107,7 +107,8 @@ module Shumway.AVM2.AS.flash.display {
             var eventName = eventNames[j];
             var avm2EventTarget = instance;
             if (eventName === 'mouseDown' || eventName === 'mouseUp' || eventName === 'mouseMove') {
-              avm2EventTarget = instance.stage;
+              // FIXME regressed, avm1 mouse events shall be received all the time.
+              // avm2EventTarget = instance.stage;
             }
             avm2EventTarget.addEventListener(eventName, fn, false);
             eventsBound.push({eventName: eventName, fn: fn, target: avm2EventTarget});
@@ -119,15 +120,6 @@ module Shumway.AVM2.AS.flash.display {
               eventsBound[i].target.removeEventListener(eventsBound[i].eventName, eventsBound[i].fn, false);
             }
           }.bind(instance, eventsBound), false);
-        }
-      }
-
-      // Only set the name property for display objects that have AVM1
-      // reflections. Some SWFs contain AVM1 names for things like Shapes.
-      if (state.name) {
-        var parentAVM1Object = avm1lib.getAVM1Object(this);
-        if (parentAVM1Object.asGetPublicProperty(state.name) === undefined) {
-          parentAVM1Object.asSetPublicProperty(state.name, instanceAVM1);
         }
       }
     }

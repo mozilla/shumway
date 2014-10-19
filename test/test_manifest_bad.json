@@ -57,6 +57,11 @@
     ],
     "type": "stas"
   },
+  {  "id": "MaskTest-2",
+    "frames": [1],
+    "swf": "swfs/MaskTest-2.swf",
+    "type": "eq"
+  },
   {  "id": "image-loading",
     "stas": "swfs/trace.stas",
     "filenames": [

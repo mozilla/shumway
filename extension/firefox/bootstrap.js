@@ -87,7 +87,7 @@ function startup(aData, aReason) {
   overlayConverterFactory.register(ShumwayStreamOverlayConverter);
 
   if (registerOverlayPreview) {
-    var ignoreCTP = getBoolPref('shumway.ignoreCTP', false);
+    var ignoreCTP = getBoolPref('shumway.ignoreCTP', true);
     Ph.registerPlayPreviewMimeType('application/x-shockwave-flash', ignoreCTP);
   }
 }
