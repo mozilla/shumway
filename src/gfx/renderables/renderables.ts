@@ -468,7 +468,7 @@ module Shumway.GFX {
     }
 
     protected _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D, ratio: number): StyledPath[] {
-      release || assert(data ? !this._pathData : this._pathData);
+      release || assert(data ? !this._paths : this._paths);
       enterTimeline("RenderableShape.deserializePaths");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
