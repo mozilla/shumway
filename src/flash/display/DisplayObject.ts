@@ -156,11 +156,16 @@ module Shumway.AVM2.AS.flash.display {
     ContainsFrameScriptPendingChildren        = 0x2000,
 
     /**
+     * Indicates whether this display object is a MorphShape or contains at least one descendant that is.
+     */
+    ContainsMorph                             = 0x4000,
+
+    /**
      * Indicates whether this display object should be cached as a bitmap. The display object may be cached as bitmap even
      * if this flag is not set, depending on whether any filters are applied or if the bitmap is too large or we've run out
      * of memory.
      */
-    CacheAsBitmap                             = 0x4000,
+    CacheAsBitmap                             = 0x8000,
 
     /**
      * Indicates whether this display object's matrix has changed since the last time it was synchronized.
@@ -228,7 +233,12 @@ module Shumway.AVM2.AS.flash.display {
     Dirty                                     = DirtyMatrix | DirtyChildren | DirtyGraphics |
                                                 DirtyTextContent | DirtyBitmapData | DirtyNetStream |
                                                 DirtyColorTransform | DirtyMask | DirtyClipDepth |
-                                                DirtyMiscellaneousProperties
+                                                DirtyMiscellaneousProperties,
+
+    /**
+     * Masks flags that need to be propagated up when this display object gets added to a parent.
+     */
+    Bubbling                                  = ContainsFrameScriptPendingChildren | ContainsMorph
   }
 
   /**
@@ -549,9 +559,15 @@ module Shumway.AVM2.AS.flash.display {
       this._depth = depth;
       if (parent) {
         this._addReference();
-        if (parent && this._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
-                                        DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
-          parent._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+        var bubblingFlags = DisplayObjectFlags.None;
+        if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
+          bubblingFlags |= DisplayObjectFlags.ContainsFrameScriptPendingChildren;
+        }
+        if (this._hasAnyFlags(DisplayObjectFlags.Bubbling)) {
+          bubblingFlags |= this._displayObjectFlags & DisplayObjectFlags.Bubbling;
+        }
+        if (bubblingFlags) {
+          parent._propagateFlagsUp(bubblingFlags);
         }
       }
       if (oldParent) {
@@ -952,7 +968,7 @@ module Shumway.AVM2.AS.flash.display {
         if (graphics) {
           bounds.copyFrom(graphics._getContentBounds(includeStrokes));
         } else {
-          bounds.setEmpty();
+          bounds.setToSentinels();
         }
         this._getChildBounds(bounds, includeStrokes);
         this._removeFlags(invalidFlag);
@@ -1033,7 +1049,10 @@ module Shumway.AVM2.AS.flash.display {
       if (state.colorTransform) {
         this._setColorTransform(state.colorTransform);
       }
-      this._ratio = state.ratio;
+      if (state.ratio !== this._ratio) {
+        this._ratio = state.ratio;
+        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      }
       // Only some animation states have names, don't set the name if it is not defined.
       if (state.name) {
         this._name = state.name;
@@ -1708,6 +1727,15 @@ module Shumway.AVM2.AS.flash.display {
      */
     _boundsAndMaskContainPoint(globalX: number, globalY: number, localX: number, localY: number,
                                testingType: HitTestingType): HitTestingResult {
+      if (testingType >= HitTestingType.HitTestBoundsAndMask &&
+          this._hasFlags(DisplayObjectFlags.ContainsMorph)) {
+        // If this display object is a MorphShape or contains at least one descendant that is, then
+        // bailing out too early might lead to a wrong hit test result, since the reported bounds
+        // of MorphShapes are always the one of their start shapes and don't take the current morph
+        // ratio into account. We have to make sure we always hit test MorphShape instances on
+        // graphics level.
+        return HitTestingResult.Bounds;
+      }
       if (testingType >= HitTestingType.Mouse && !this._hasFlags(DisplayObjectFlags.Visible) ||
           !this._getContentBounds().contains(localX, localY)) {
         return HitTestingResult.None;
@@ -1723,11 +1751,10 @@ module Shumway.AVM2.AS.flash.display {
      * Tests if the receiver's own visual content intersects with the given point.
      * In the base implementation, this just returns false, because not all DisplayObjects can
      * ever match.
-     * Overridden in Shape, Sprite, Bitmap, Video, and TextField.
+     * Overridden in Shape, MorphShape, Sprite, Bitmap, Video, and TextField.
      */
     _containsPointDirectly(localX: number, localY: number): boolean {
-      var graphics = this._getGraphics();
-      return !!graphics && graphics._containsPoint(localX, localY, true);
+      return false;
     }
 
     get scrollRect(): flash.geom.Rectangle {

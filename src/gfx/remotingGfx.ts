@@ -21,6 +21,7 @@ module Shumway.Remoting.GFX {
   import Shape = Shumway.GFX.Shape;
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
+  import RenderableMorphShape = Shumway.GFX.RenderableMorphShape;
   import RenderableBitmap = Shumway.GFX.RenderableBitmap;
   import RenderableVideo = Shumway.GFX.RenderableVideo;
   import RenderableText = Shumway.GFX.RenderableText;
@@ -356,7 +357,12 @@ module Shumway.Remoting.GFX {
       if (asset) {
         asset.update(pathData, textures, bounds);
       } else {
-        var renderable = new RenderableShape(id, pathData, textures, bounds);
+        var renderable: RenderableShape;
+        if (pathData.morphCoordinates) {
+          renderable = new RenderableMorphShape(id, pathData, textures, bounds);
+        } else {
+          renderable = new RenderableShape(id, pathData, textures, bounds);
+        }
         for (var i = 0; i < textures.length; i++) {
           textures[i].addRenderableReferrer(renderable);
         }
@@ -507,12 +513,12 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
+      var ratio = 0;
       writer && writer.writeLn("Receiving UpdateFrame: " + id);
       var frame = context._frames[id];
       if (!frame) {
         frame = context._frames[id] = new FrameContainer();
       }
-
       var hasBits = input.readInt();
       if (hasBits & MessageBits.HasMatrix) {
         frame.matrix = this._readMatrix();
@@ -527,6 +533,7 @@ module Shumway.Remoting.GFX {
         frame.clip = input.readInt();
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
+        ratio = input.readInt() / 0xffff;
         frame.blendMode = input.readInt();
         this._readFilters(frame);
         frame._toggleFlags(FrameFlags.Visible, input.readBoolean());
@@ -542,6 +549,13 @@ module Shumway.Remoting.GFX {
           var child = context._makeFrame(childId);
           release || assert (child, "Child " + childId + " of " + id + " has not been sent yet.");
           container.addChild(child);
+        }
+      }
+      if (ratio) {
+        var container = <FrameContainer>frame;
+        var child = container._children[0];
+        if (child instanceof Shape) {
+          (<Shape>child).ratio = ratio;
         }
       }
     }

@@ -2617,10 +2617,8 @@ module Shumway {
     }
 
     unionInPlace (other: Bounds): void {
-      this.xMin = Math.min(this.xMin, other.xMin);
-      this.yMin = Math.min(this.yMin, other.yMin);
-      this.xMax = Math.max(this.xMax, other.xMax);
-      this.yMax = Math.max(this.yMax, other.yMax);
+      this.extendByPoint(other.xMin, other.yMin);
+      this.extendByPoint(other.xMax, other.yMax);
     }
 
     extendByPoint (x: number, y: number): void {
@@ -2760,11 +2758,9 @@ module Shumway {
              y < this.yMin !== y < this.yMax;
     }
 
-    unionWith (other: DebugBounds): void {
-      this._xMin = Math.min(this._xMin, other._xMin);
-      this._yMin = Math.min(this._yMin, other._yMin);
-      this._xMax = Math.max(this._xMax, other._xMax);
-      this._yMax = Math.max(this._yMax, other._yMax);
+    unionInPlace (other: DebugBounds): void {
+      this.extendByPoint(other.xMin, other.yMin);
+      this.extendByPoint(other.xMax, other.yMax);
     }
 
     extendByPoint (x: number, y: number): void {

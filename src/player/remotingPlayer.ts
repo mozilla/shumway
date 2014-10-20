@@ -273,6 +273,7 @@ module Shumway.Remoting.Player {
         this.writeClippedObjectsCount(displayObject);
       }
       if (hasMiscellaneousProperties) {
+        this.output.writeInt(displayObject._ratio);
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
         this._writeFilters(displayObject.filters);
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));

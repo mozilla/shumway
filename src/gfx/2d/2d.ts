@@ -436,7 +436,8 @@ module Shumway.GFX.Canvas2D {
             state.options.cacheShapes &&
             renderCount > state.options.cacheShapesThreshold &&
             bounds.w * matrixScale <= cacheShapesMaxSize &&
-            bounds.h * matrixScale <= cacheShapesMaxSize) {
+            bounds.h * matrixScale <= cacheShapesMaxSize)
+        {
           var mipMap: MipMap = source.properties["mipMap"];
           if (!mipMap) {
             mipMap = source.properties["mipMap"] = new MipMap(source, Canvas2DStageRenderer._shapeCache, cacheShapesMaxSize);
@@ -460,7 +461,7 @@ module Shumway.GFX.Canvas2D {
           }
         } else {
           source.properties["renderCount"] = ++ renderCount;
-          source.render(context, null, state.clipRegion);
+          source.render(context, shape.ratio, null, state.clipRegion);
           if (state.options.paintFlashing) {
             context.fillStyle = ColorStyle.randomStyle();
             context.globalAlpha = 0.1;

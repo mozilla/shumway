@@ -216,7 +216,7 @@ module Shumway.AVM2.AS.flash.display {
 
     _containsPointDirectly(x: number, y: number): boolean {
       var graphics = this._getGraphics();
-      return !!graphics && graphics._containsPoint(x, y, true);
+      return !!graphics && graphics._containsPoint(x, y, true, 0);
     }
   }
 }
