@@ -191,6 +191,12 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
 
+        if (instance._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
+          instance._removeFlags(DisplayObjectFlags.NeedsLoadEvent);
+          instance.dispatchEvent(events.Event.getInstance(events.Event.AVM1_LOAD));
+          continue;
+        }
+
         instance._allowFrameNavigation = MovieClip.frameNavigationModel === FrameNavigationModel.SWF1;
         instance.callFrame(instance._currentFrame);
         instance._allowFrameNavigation = true;
@@ -247,6 +253,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _enqueueFrameScripts() {
+      if (this._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
+        MovieClip._callQueue.push(this);
+      }
       if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
         this._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
         MovieClip._callQueue.push(this);

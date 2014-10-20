@@ -68,7 +68,6 @@ module Shumway.AVM2.AS.flash.events {
         case Event.RENDER:
         case Event.ACTIVATE:
         case Event.DEACTIVATE:
-        case Event.AVM1_LOAD:
           return true;
       }
       return false;

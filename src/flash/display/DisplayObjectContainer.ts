@@ -93,6 +93,7 @@ module Shumway.AVM2.AS.flash.display {
         if (child._symbol && child._symbol.isAVM1Object) {
           child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_INIT));
           child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_CONSTRUCT));
+          child._setFlags(DisplayObjectFlags.NeedsLoadEvent);
         }
 
         child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
