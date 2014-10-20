@@ -22,8 +22,10 @@
 <script src="../../build/ts/gfx.js"></script>
 <script> console.timeEnd("Load GFX Dependencies"); </script>
 <script>
-  var release = true;
+  var release = false;
   var Node = Shumway.GFX.Node;
+  var NodeVisitor = Shumway.GFX.NodeVisitor;
+  var Matrix = Shumway.GFX.Geometry.Matrix;
   var Rectangle = Shumway.GFX.Geometry.Rectangle;
   var Stage = Shumway.GFX.Stage;
   var Shape = Shumway.GFX.Shape;
@@ -48,19 +50,29 @@
     </tr>
     <tr>
       <td>
-        <div id="aResults"></div>
+
       </td>
     </tr>
   </table>
   <br>
   <button onclick="test()">Do</button>
+  <button onclick="test2()">Shapes</button>
   <button onclick="garbage()">Garbage</button>
   <div id="log"></div>
+  <div id="scratch"></div>
   <script>
     var logElement = document.getElementById("log");
+    var scratchElement = document.getElementById("scratch");
+
 
     function log(s) {
       logElement.innerHTML += s + "<br>"
+    }
+
+    function dumpLine(line) {
+      if (typeof dump !== "undefined") {
+        dump(line + "\n");
+      }
     }
 
     var container = document.getElementById("container");
@@ -69,36 +81,70 @@
     var stage = easel.stage;
     var world = easel.world;
 
+    var lastTick = performance.now();
     function tick() {
-      world.getChildren().forEach(function (child) {
-        // child.x += child.dx;
-        // child.y += child.dy;
-      })
-//      requestAnimationFrame(tick);
+      world.visit(Object.create(NodeVisitor.prototype, {
+        visitTransform: {
+          value: function (node) {
+            node.x += node.dx;
+            node.y += node.dy;
+          }
+        }
+      }));
+      var thisTick = performance.now();
+      if (typeof dump !== "undefined") {
+        var elapsed = (thisTick - lastTick);
+        dumpLine("elapsedTime: " + Shumway.StringUtilities.repeatString("=", elapsed | 0) + " " + (elapsed).toFixed(2));
+        dumpLine("Matrix: " + Matrix.allocationCount + ", " + "Rectangle: " + Rectangle.allocationCount);
+        Matrix.allocationCount = Rectangle.allocationCount = 0;
+      }
+      lastTick = thisTick;
+      requestAnimationFrame(tick);
     }
 
     tick();
 
-    function makeRectangle(w, h) {
+    function makeCircle(w, h) {
+      var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
       return new CustomRenderable(new Rectangle(0, 0, w, h), function (context) {
-        context.fillStyle = "red";
+        context.fillStyle = color;
+        context.beginPath();
+        context.arc(w / 2, h / 2, w / 2, 0, 2 * Math.PI);
+        context.fill();
+      });
+    }
+
+    function makeRenderable2(w, h) {
+      var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
+      return new CustomRenderable(new Rectangle(0, 0, w, h), function (context) {
+        context.fillStyle = color;
         context.fillRect(0, 0, w, h);
       });
     }
 
-    function makeNode(depth, branch) {
+    function makeNode(depth, branch, w, h) {
       if (depth === 0) {
-        var shape = new Shape(makeRectangle(4, 4));
-        shape.dx = Math.random() - 0.5;
-        shape.dy = Math.random() - 0.5;
-        return shape;
+        return new Shape(makeCircle(w, h));
       } else {
         var group = new Group();
         for (var i = 0; i < branch; i++) {
-          var node = makeNode(depth - 1, branch);
+          var node = makeNode(depth - 1, branch, w, h);
           group.addChild(node);
-          node.getTransform().x = Math.random();
-          node.getTransform().y = Math.random();
+          node.getTransform().x = Math.random() * 128;
+          node.getTransform().y = Math.random() * 128;
+//          node.getTransform().dx = 10 * (Math.random() - 0.5) / depth;
+//          node.getTransform().dy = 10 * (Math.random() - 0.5) / depth;
+
+          node.getTransform().dx = (Math.random()) * 5;
+          node.getTransform().dy = (Math.random()) * 5;
+
+          // node.getLayer().blendMode = BlendMode.Normal;
+          // node.getLayer().mask = new Shape(makeRenderable2(32, 32));
+
+//          node.getLayer().mask._parent = node.getLayer(); // HACK
+
+          // node.getLayer().mask.getTransform().x = 10;
+
         }
         return group;
       }
@@ -106,11 +152,32 @@
 
     function test() {
       var count = 10;
-      var depth = 12;
+      var depth = 8;
       for (var i = 0; i < count; i++) {
-        world.addChild(makeNode(depth, 2));
+        world.addChild(makeNode(depth, 2, 2, 2));
       }
       log("Next Node ID: " + Node._nextId);
+    }
+
+    function test2() {
+      var count = 10;
+      var depth = 1;
+      for (var i = 0; i < count; i++) {
+        var node = makeNode(depth, 4, 64, 64);
+        world.addChild(node);
+      }
+      log("Next Node ID: " + Node._nextId);
+    }
+
+
+    function test2() {
+      var a = new Shape(makeCircle(64, 64));
+      var t = a.getTransform();
+      t.x = 100;
+      t.y = 100;
+      t.dx = 1;
+      t.dy = 1;
+      world.addChild(t);
     }
 
     function garbage() {
@@ -119,6 +186,10 @@
           new Array(1024);
         }
       });
+    }
+
+    function registerScratchCanvas(canvas) {
+      scratchElement.appendChild(canvas);
     }
   </script>
 </body>

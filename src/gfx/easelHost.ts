@@ -35,7 +35,7 @@ module Shumway.GFX {
       var group = easel.world;
       var transparent = easel.transparent;
       this._group = group;
-      // this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._group, transparent);
+      this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._group, transparent);
 
       this._addEventListeners();
     }

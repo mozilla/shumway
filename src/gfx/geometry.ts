@@ -255,15 +255,20 @@ module Shumway.GFX.Geometry {
   }
 
   export class Rectangle {
+    static allocationCount = 0;
+
     x: number;
     y: number;
     w: number;
     h: number;
 
-    private static _temporary = Rectangle.createEmpty();
+    private static _temporary = new Rectangle(0, 0, 0, 0);
+
+    private static _dirtyStack: Rectangle [] = [];
 
     constructor (x: number, y: number, w: number, h: number) {
       this.setElements(x, y, w, h);
+      Rectangle.allocationCount ++;
     }
 
     setElements (x: number, y: number, w: number, h: number) {
@@ -407,7 +412,23 @@ module Shumway.GFX.Geometry {
     }
 
     clone (): Rectangle {
-      return new Rectangle(this.x, this.y, this.w, this.h);
+      var rectangle: Rectangle = Rectangle.allocate();
+      rectangle.set(this);
+      return rectangle;
+    }
+
+    static allocate(): Rectangle {
+      var dirtyStack = Rectangle._dirtyStack;
+      var state = null;
+      if (dirtyStack.length) {
+        return dirtyStack.pop();
+      } else {
+        return new Rectangle(0xDEAD, 0xBEEF, 0xDEAD, 0xBEEF);
+      }
+    }
+
+    free() {
+      Rectangle._dirtyStack.push(this);
     }
 
     /**
@@ -467,7 +488,9 @@ module Shumway.GFX.Geometry {
     }
 
     static createEmpty(): Rectangle {
-      return new Rectangle(0, 0, 0, 0);
+      var rectangle = Rectangle.allocate();
+      rectangle.setEmpty();
+      return rectangle;
     }
 
     static createSquare(size: number): Rectangle {
@@ -568,8 +591,12 @@ module Shumway.GFX.Geometry {
   }
 
   export class Matrix {
+    static allocationCount = 0;
+
     private _data: Float64Array;
     private _type: MatrixType;
+
+    private static _dirtyStack: Matrix [] = [];
 
     public set a(a: number) {
       this._data[0] = a;
@@ -635,6 +662,7 @@ module Shumway.GFX.Geometry {
       this._data = new Float64Array(6);
       this._type = MatrixType.Unknown;
       this.setElements(a, b, c, d, tx, ty);
+      Matrix.allocationCount ++;
     }
 
     setElements (a: number, b: number, c: number, d: number, tx: number, ty: number) {
@@ -698,10 +726,23 @@ module Shumway.GFX.Geometry {
     }
 
     clone (): Matrix {
-      var m = this._data;
-      var matrix = new Matrix(m[0], m[1], m[2], m[3], m[4], m[5]);
-      matrix._type = this._type;
+      var matrix = Matrix.allocate();
+      matrix.set(this);
       return matrix;
+    }
+
+    static allocate(): Matrix {
+      var dirtyStack = Matrix._dirtyStack;
+      var matrix = null;
+      if (dirtyStack.length) {
+        return dirtyStack.pop();
+      } else {
+        return new Matrix(0xDEAD, 0xDEAD, 0xDEAD, 0xDEAD, 0xDEAD, 0xDEAD);
+      }
+    }
+
+    free() {
+      Matrix._dirtyStack.push(this);
     }
 
     transform (a: number, b: number, c: number, d: number, tx: number, ty: number): Matrix  {
@@ -765,6 +806,7 @@ module Shumway.GFX.Geometry {
     }
 
     transformRectangleAABB (rectangle: Rectangle) {
+      var m = this._data;
       if (this._type === MatrixType.Identity) {
         return;
       } else if (this._type === MatrixType.Translation) {
@@ -773,8 +815,7 @@ module Shumway.GFX.Geometry {
         return;
       }
 
-      var m = this._data, a = m[0], b = m[1], c = m[2], d = m[3], tx = m[4], ty = m[5];
-
+      var a = m[0], b = m[1], c = m[2], d = m[3], tx = m[4], ty = m[5];
       var x = rectangle.x;
       var y = rectangle.y;
       var w = rectangle.w;
@@ -893,14 +934,14 @@ module Shumway.GFX.Geometry {
      */
     public preMultiply(other: Matrix): void {
       var m = this._data, n = other._data;
-      if (other._type === MatrixType.Identity) {
+      if (other._type === MatrixType.Translation &&
+          (this._type & (MatrixType.Identity | MatrixType.Translation))) {
+        m[4] += n[4];
+        m[5] += n[5];
+        this._type = MatrixType.Translation;
         return;
-      } else if (other._type === MatrixType.Translation) {
-        if (this._type & (MatrixType.Identity | MatrixType.Translation)) {
-          m[4] += n[4];
-          m[5] += n[5];
-          return;
-        }
+      } else if (other._type === MatrixType.Identity) {
+        return;
       }
       var a  = n[0] * m[0];
       var b  = 0.0;
@@ -1100,8 +1141,8 @@ module Shumway.GFX.Geometry {
     }
 
     public static createIdentity(): Matrix {
-      var matrix = new Matrix(1, 0, 0, 1, 0, 0);
-      matrix._type = MatrixType.Identity;
+      var matrix = Matrix.allocate();
+      matrix.setIdentity();
       return matrix;
     }
 

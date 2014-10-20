@@ -18,7 +18,9 @@ module Shumway.Remoting.GFX {
   import BlurFilter = Shumway.GFX.BlurFilter;
   import DropshadowFilter = Shumway.GFX.DropshadowFilter;
   import FrameFlags = Shumway.GFX.FrameFlags;
+  import NodeFlags = Shumway.GFX.NodeFlags;
   import Shape = Shumway.GFX.Shape;
+  import Group = Shumway.GFX.Group;
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
   import RenderableBitmap = Shumway.GFX.RenderableBitmap;
@@ -27,6 +29,8 @@ module Shumway.Remoting.GFX {
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
   import ClipRectangle = Shumway.GFX.ClipRectangle;
+  import Node = Shumway.GFX.Node;
+  import Clip = Shumway.GFX.Clip;
   import ShapeData = Shumway.ShapeData;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Stage = Shumway.GFX.Stage;
@@ -42,6 +46,7 @@ module Shumway.Remoting.GFX {
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
   import assert = Shumway.Debug.assert;
   var writer = null; // release ? null : new IndentingWriter();
+//  var writer = new IndentingWriter();
 
   declare var registerInspectorAsset;
 
@@ -102,21 +107,24 @@ module Shumway.Remoting.GFX {
   }
 
   export class GFXChannelDeserializerContext {
-    root: ClipRectangle;
-    _frames: Frame [];
+    root: Node;
+    clip: Clip;
+    _nodes: Node [];
     private _assets: Renderable [];
 
     _easelHost: Shumway.GFX.EaselHost;
     private _canvas: HTMLCanvasElement;
     private _context: CanvasRenderingContext2D;
 
-    constructor(easelHost: Shumway.GFX.EaselHost, root: FrameContainer, transparent: boolean) {
-      this.root = new ClipRectangle(128, 128);
+    constructor(easelHost: Shumway.GFX.EaselHost, root: Group, transparent: boolean) {
+      this.clip = new Clip(128, 128);
+      this.root = this.clip.child = new Group();
+
       if (transparent) {
-        this.root.setFlags(FrameFlags.Transparent);
+        this.root.setFlags(NodeFlags.Transparent);
       }
-      root.addChild(this.root);
-      this._frames = [];
+      root.addChild(this.clip);
+      this._nodes = [];
       this._assets = [];
 
       this._easelHost = easelHost;
@@ -131,20 +139,20 @@ module Shumway.Remoting.GFX {
       this._assets[id] = asset;
     }
 
-    _makeFrame(id: number): Frame {
+    _makeFrame(id: number): Node {
       if (id === -1) {
         return null;
       }
-      var frame = null;
+      var node = null;
       if (id & IDMask.Asset) {
         id &= ~IDMask.Asset;
-        frame = new Shape(this._assets[id]);
-        this._assets[id].addFrameReferrer(frame);
+        node = new Shape(this._assets[id]);
+        this._assets[id].addNodeReferrer(node);
       } else {
-        frame = this._frames[id];
+        node = this._nodes[id];
       }
-      release || assert (frame, "Frame " + frame + " of " + id + " has not been sent yet.");
-      return frame;
+      release || assert (node, "Node " + node + " of " + id + " has not been sent yet.");
+      return node;
     }
 
     _getAsset(id: number): Renderable {
@@ -280,7 +288,7 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var matrix = GFXChannelDeserializer._temporaryReadMatrix;
       matrix.setElements (
-        input.readFloat(),
+        input.  readFloat(),
         input.readFloat(),
         input.readFloat(),
         input.readFloat(),
@@ -444,13 +452,13 @@ module Shumway.Remoting.GFX {
     private _readUpdateStage() {
       var context = this.context;
       var id = this.input.readInt();
-      if (!context._frames[id]) {
-        context._frames[id] = context.root;
+      if (!context._nodes[id]) {
+        context._nodes[id] = context.root;
       }
       var color = this.input.readInt();
       var rectangle = this._readRectangle()
-      context.root.setBounds(rectangle);
-      context.root.color = Color.FromARGB(color);
+      context.clip.setBounds(rectangle);
+      context.clip.color = Color.FromARGB(color);
     }
 
     private _readUpdateNetStream() {
@@ -464,7 +472,7 @@ module Shumway.Remoting.GFX {
       }
     }
 
-    private _readFilters(frame: Frame) {
+    private _readFilters(node: Node) {
       var input = this.input;
       var count = input.readInt();
       var filters = [];
@@ -500,7 +508,7 @@ module Shumway.Remoting.GFX {
           }
         }
       }
-      frame.filters = filters;
+      // frame.getLayer().filters = filters;
     }
 
     private _readUpdateFrame() {
@@ -508,41 +516,44 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = input.readInt();
       writer && writer.writeLn("Receiving UpdateFrame: " + id);
-      var frame = context._frames[id];
-      if (!frame) {
-        frame = context._frames[id] = new FrameContainer();
+      var node = context._nodes[id];
+      if (!node) {
+        node = context._nodes[id] = new Group();
       }
-
       var hasBits = input.readInt();
       if (hasBits & MessageBits.HasMatrix) {
-        frame.matrix = this._readMatrix();
+        node.getTransform().setMatrix(this._readMatrix());
       }
       if (hasBits & MessageBits.HasColorTransform) {
-        frame.colorMatrix = this._readColorMatrix();
+        node.getTransform().setColorMatrix(this._readColorMatrix());
       }
       if (hasBits & MessageBits.HasMask) {
-        frame.mask = context._makeFrame(input.readInt());
+        // frame.getLayer().mask = context._makeFrame(input.readInt());
+        context._makeFrame(input.readInt());
       }
       if (hasBits & MessageBits.HasClip) {
-        frame.clip = input.readInt();
+        node.clip = input.readInt();
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
-        frame.blendMode = input.readInt();
-        this._readFilters(frame);
-        frame.toggleFlags(FrameFlags.Visible, input.readBoolean());
-        frame.toggleFlags(FrameFlags.CacheAsBitmap, input.readBoolean());
-        frame.pixelSnapping = <PixelSnapping>input.readInt();
-        frame.smoothing = <Smoothing>input.readInt();
+        // frame.getLayer().blendMode = input.readInt();
+        input.readInt();
+        this._readFilters(node);
+        node.toggleFlags(NodeFlags.Visible, input.readBoolean());
+        node.toggleFlags(NodeFlags.CacheAsBitmap, input.readBoolean());
+//        frame.pixelSnapping = <PixelSnapping>input.readInt();
+//        frame.smoothing = <Smoothing>input.readInt();
+        input.readInt();
+        input.readInt();
       }
       if (hasBits & MessageBits.HasChildren) {
         var count = input.readInt();
-        var container = <FrameContainer>frame;
+        var container = <Group>node;
         container.clearChildren();
         for (var i = 0; i < count; i++) {
           var childId = input.readInt();
           var child = context._makeFrame(childId);
           release || assert (child, "Child " + childId + " of " + id + " has not been sent yet.");
-          container.addChild(child);
+          container.addChild(child.getBranch());
         }
       }
     }
@@ -590,9 +601,10 @@ module Shumway.Remoting.GFX {
       var target = context._getBitmapAsset(targetId);
       var source = context._makeFrame(sourceId);
       if (!target) {
-        context._registerAsset(targetId, -1, RenderableBitmap.FromFrame(source, matrix, colorMatrix, blendMode, clipRect));
+        context._registerAsset(targetId, -1, RenderableBitmap.FromNode(source, matrix, colorMatrix, blendMode, clipRect));
       } else {
-        target.drawFrame(source, matrix, colorMatrix, blendMode, clipRect);
+        Debug.notImplemented("x");
+        // target.drawFrame(source, matrix, colorMatrix, blendMode, clipRect);
       }
     }
 

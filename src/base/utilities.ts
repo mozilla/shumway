@@ -33,6 +33,12 @@ declare var dateNow: () => number;
 
 declare var dump: (message: string) => void;
 
+function dumpLine(line: string) {
+  if (typeof dump !== "undefined") {
+    dump(line + "\n");
+  }
+}
+
 if (!jsGlobal.performance) {
   jsGlobal.performance = {};
 }

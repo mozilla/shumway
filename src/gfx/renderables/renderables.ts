@@ -90,18 +90,18 @@ module Shumway.GFX {
     /**
      * Back reference to frames that use this renderable.
      */
-    private _frameReferrers: Frame [] = [];
+    private _nodeReferrers: Node [] = [];
 
     /**
      * Back reference to renderables that use this renderable.
      */
     private _renderableReferrers: Renderable [] = [];
 
-    public addFrameReferrer(frame: Frame) {
+    public addNodeReferrer(frame: Node) {
       release && assert(frame);
-      var index = indexOf(this._frameReferrers, frame);
+      var index = indexOf(this._nodeReferrers, frame);
       release && assert(index < 0);
-      this._frameReferrers.push(frame);
+      this._nodeReferrers.push(frame);
     }
 
     public addRenderableReferrer(renderable: Renderable) {
@@ -113,7 +113,7 @@ module Shumway.GFX {
 
     public invalidatePaint() {
       this.setFlags(RenderableFlags.Dirty);
-      var frames = this._frameReferrers;
+      var frames = this._nodeReferrers;
       for (var i = 0; i < frames.length; i++) {
         frames[i].invalidatePaint();
       }
@@ -227,14 +227,14 @@ module Shumway.GFX {
       return renderableBitmap;
     }
 
-    public static FromFrame(source: Frame, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle) {
+    public static FromNode(source: Node, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle) {
       enterTimeline("RenderableBitmap.FromFrame");
       var canvas = document.createElement("canvas");
       var bounds = source.getBounds();
       canvas.width = bounds.w;
       canvas.height = bounds.h;
       var renderableBitmap = new RenderableBitmap(canvas, bounds);
-      renderableBitmap.drawFrame(source, matrix, colorMatrix, blendMode, clipRect);
+      renderableBitmap.drawNode(source, matrix, colorMatrix, blendMode, clipRect);
       leaveTimeline("RenderableBitmap.FromFrame");
       return renderableBitmap;
     }
@@ -304,7 +304,7 @@ module Shumway.GFX {
       leaveTimeline("RenderableBitmap.render");
     }
 
-    drawFrame(source: Frame, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle): void {
+    drawNode(source: Node, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle): void {
       // TODO: Support colorMatrix and blendMode.
       enterTimeline("RenderableBitmap.drawFrame");
       // TODO: Hack to be able to compile this as part of gfx-base.
@@ -312,7 +312,8 @@ module Shumway.GFX {
       var bounds = this.getBounds();
       var options = new Canvas2D.Canvas2DStageRendererOptions();
       var renderer = new Canvas2D.Canvas2DStageRenderer(this._canvas, null, options);
-      renderer.renderFrame(source, clipRect || bounds, matrix);
+      Debug.notImplemented("x");
+      // renderer.renderNode(source, clipRect || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
     }
 

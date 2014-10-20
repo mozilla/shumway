@@ -65,11 +65,15 @@ module Shumway.GFX.Canvas2D {
     alpha: boolean = false;
   }
 
-  enum RenderFlags {
+  export enum RenderFlags {
     None                = 0x00,
     IgnoreFirstFrame    = 0x01,
     RenderMask          = 0x02,
-    IgnoreMask          = 0x04
+    IgnoreMask          = 0x04,
+    PaintRenderable     = 0x08,
+    CacheShapes         = 0x10,
+    PaintFlashing       = 0x20,
+    PaintBounds         = 0x40
   }
 
   /**
@@ -94,6 +98,10 @@ module Shumway.GFX.Canvas2D {
     target: Canvas2DSurfaceRegion = null;
     matrix: Matrix = Matrix.createIdentity();
     colorMatrix: ColorMatrix = ColorMatrix.createIdentity();
+    flags: RenderFlags = RenderFlags.None;
+    cacheShapesMaxSize: number = 256;
+    cacheShapesThreshold: number = 256;
+
     private _dirty: boolean;
 
 
@@ -107,22 +115,18 @@ module Shumway.GFX.Canvas2D {
       this.target = target;
     }
 
-    public getMatrix(clone: boolean = false): Matrix {
-      if (clone) {
-        return this.matrix.clone();
-      }
-      return this.matrix;
-    }
-
     set (state: RenderState) {
       this.clip.set(state.clip);
       this.target = state.target;
       this.matrix.set(state.matrix);
       this.colorMatrix.set(state.colorMatrix);
+      this.flags = state.flags;
+      this.cacheShapesMaxSize = state.cacheShapesMaxSize;
+      this.cacheShapesThreshold = state.cacheShapesThreshold;
     }
 
     public clone(): RenderState {
-      var state: RenderState = this.acquire();
+      var state: RenderState = RenderState.allocate();
       if (!state) {
         state = new RenderState(this.target, this.clip);
       }
@@ -130,7 +134,7 @@ module Shumway.GFX.Canvas2D {
       return state;
     }
 
-    acquire(): RenderState {
+    static allocate(): RenderState {
       var dirtyStack = RenderState._dirtyStack;
       var state = null;
       if (dirtyStack.length) {
@@ -146,7 +150,7 @@ module Shumway.GFX.Canvas2D {
       this._dirty = true;
     }
 
-    transform(node: Transform) {
+    transform(node: Transform): RenderState {
       var state = this.clone();
       state.matrix.preMultiply(node.getMatrix());
       if (node.hasColorMatrix()) {
@@ -257,13 +261,19 @@ module Shumway.GFX.Canvas2D {
       var options = this._options;
       var viewport = this._viewport;
 
+      // stage.visit(new TracingNodeVisitor(new IndentingWriter()), null);
+
       target.resetTransform();
       target.context.save();
-
       target.context.globalAlpha = 1;
-      // target.clear(viewport);
+      target.clear(viewport);
 
-      this.renderNode(stage, viewport);
+      if (!options.paintViewport) {
+        target.context.beginPath();
+        target.context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+        target.context.clip();
+      }
+      this._renderNodeToTarget(target, stage, viewport);
       target.context.restore();
 
       if (options && options.paintViewport) {
@@ -274,56 +284,119 @@ module Shumway.GFX.Canvas2D {
       }
     }
 
-    public renderNode(node: Node, clip: Rectangle) {
-      var target = this._target;
-      target.context.save();
-      if (!this._options.paintViewport) {
-        target.context.beginPath();
-        target.context.rect(clip.x, clip.y, clip.w, clip.h);
-        target.context.clip();
-      }
-      this._renderNode(target, node, clip);
-      target.context.restore();
+
+    visitTransform(node: Transform, state: RenderState) {
+      state = state.transform(node);
+      node.child.visit(this, state);
+      state.free();
     }
 
-    private _renderNode (
+    visitGroup(node: Group, state: RenderState) {
+      var bounds = node.getBounds();
+
+      if (state.flags & RenderFlags.PaintBounds) {
+        var matrix = state.matrix;
+        var context = state.target.context;
+        context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+        context.strokeStyle = ColorStyle.LightOrange;
+        context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+      }
+
+      if (state.clip.intersectsTransformedAABB(bounds, state.matrix)) {
+        super.visitGroup(node, state);
+      }
+    }
+
+    visitShape(node: Shape, state: RenderState) {
+      var matrix = state.matrix;
+      if (!(state.flags & RenderFlags.PaintRenderable)) {
+        return;
+      }
+      if (state.clip.intersectsTransformedAABB(node.getBounds(), state.matrix)) {
+        state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+
+        Filters._applyColorMatrix(state.target.context, state.colorMatrix);
+
+        this._renderShape(node, state)
+      }
+    }
+
+    visitLayer(node: Layer, state: RenderState) {
+      var mask = node.mask;
+      if (!mask) {
+        var clipResult = Rectangle.createEmpty();
+        var target = this._renderNodeToTemporarySurface(node.child, state, clipResult);
+        var matrix = state.matrix;
+        state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+        state.target.blendMode = node.blendMode;
+        state.target.draw(target, clipResult.x, clipResult.y, clipResult.w, clipResult.h);
+        target.free();
+      } else {
+        var maskMatrix = mask.getConcatenatedMatrix();
+        // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
+        // we still have to factor in the stage's matrix, which includes pixel density scaling.
+        if (!mask.parent) {
+          maskMatrix = maskMatrix.concatClone(this._stage.getConcatenatedMatrix());
+        }
+
+        var aAABB = node.getBounds().clone();
+        state.matrix.transformRectangleAABB(aAABB);
+        aAABB.snap();
+
+        var bAABB = node.mask.getBounds().clone();
+        maskMatrix.transformRectangleAABB(bAABB);
+        bAABB.snap();
+
+        var clip = state.clip.clone();
+        clip.intersect(aAABB);
+        clip.intersect(bAABB);
+        clip.snap();
+
+        // The masked area is empty, so nothing to do here.
+        if (clip.isEmpty()) {
+          return;
+        }
+
+        var clipResult = Rectangle.createEmpty();
+        var a = this._renderNodeToTemporarySurface(node.child, state, clip);
+        var b = this._renderNodeToTemporarySurface(node.mask, state, clip);
+
+        a.blendMode = BlendMode.Normal;
+        a.draw(b, 0, 0, clip.w, clip.h);
+        a.blendMode = BlendMode.Normal; // TODO: Stack of blend modes? to avoid this kind of mess?
+
+        var matrix = state.matrix;
+        state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+        state.target.blendMode = node.blendMode;
+        state.target.draw(a, clip.x, clip.y, clip.w, clip.h);
+
+        b.free();
+        a.free();
+      }
+    }
+
+    private _renderNodeToTarget (
       target: Canvas2DSurfaceRegion,
       node: Node,
       clip: Rectangle
     ) {
       this._visited = 0;
-      node.visit(this, new RenderState(target, clip));
-      console.info("Visited: " + this._visited);
+      var state = new RenderState(target, clip);
+      if (this._options.paintRenderable) {
+        state.flags |= RenderFlags.PaintRenderable;
+      }
+      if (this._options.paintBounds) {
+        state.flags |= RenderFlags.PaintBounds;
+      }
+      if (this._options.paintFlashing) {
+        state.flags |= RenderFlags.PaintFlashing;
+      }
+      node.visit(this, state);
+      dumpLine("Visited: " + this._visited);
     }
 
-    visitNode(node: Node, state: RenderState) {
-      this._visited ++;
-    }
-
-    visitTransform(node: Transform, state: RenderState) {
-      state = state.transform(node);
-      node.getChild().visit(this, state);
-      state.free();
-    }
-
-    visitShape(node: Shape, state: RenderState) {
-      // var matrix = state.getMatrix();
-      // state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-      // this._renderShape(node, state)
-    }
-
-    /**
-     * Renders the frame into a temporary surface region in device coordinates clipped by the viewport.
-     */
-    /*
-    private _renderNodeToSurfaceRegion (
-      node: Node,
-      matrix: Matrix,
-      clip: Rectangle,
-      clipResult: Rectangle,
-      state: State,
-      renderFlags: RenderFlags = RenderFlags.None
-    ): Canvas2DSurfaceRegion {
+    private _renderNodeToTemporarySurface(node: Node, state: RenderState, clipResult: Rectangle): Canvas2DSurfaceRegion {
+      var matrix = state.matrix;
       var bounds = node.getBounds();
       var boundsAABB = bounds.clone();
       matrix.transformRectangleAABB(boundsAABB);
@@ -334,7 +407,7 @@ module Shumway.GFX.Canvas2D {
       } else {
         clipResult = boundsAABB.clone();
       }
-      clipResult.intersect(clip);
+      clipResult.intersect(state.clip);
       clipResult.snap();
 
       var target = this._allocateSurface(clipResult.w, clipResult.h);
@@ -354,34 +427,38 @@ module Shumway.GFX.Canvas2D {
 
       // Clip region bounds so we don't paint outside.
       target.context.save();
-      target.context.beginPath();
-      target.context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
-      target.context.clip();
-      target.blendMode = BlendMode.Normal;
-      this._renderNode(target, node, matrix, surfaceRegionBounds, state, renderFlags);
+
+      // We can't do this becuse we could be clipping some other temporary region in the same context.
+//      target.context.beginPath();
+//      target.context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
+//      target.context.clip();
+
+      state = state.clone();
+      state.target = target;
+      state.matrix = matrix;
+      state.clip = surfaceRegionBounds;
+      node.visit(this, state);
+      state.free();
       target.context.restore();
       return target;
     }
-    */
 
     private _renderShape(shape: Shape, state: RenderState) {
       var context = state.target.context;
-      var matrix = state.getMatrix();
+      var matrix = state.matrix;
       var clip = state.clip;
-    // private _renderShape(context: CanvasRenderingContext2D, shape: Shape, matrix: Matrix, clip: Rectangle, state: RenderState) {
 
       var self = this;
       var bounds = shape.getBounds();
-      if (!bounds.isEmpty() &&
-          state.options.paintRenderable) {
+      if (!bounds.isEmpty()) {
         var source = shape.source;
         var renderCount = source.properties["renderCount"] || 0;
-        var cacheShapesMaxSize = state.options.cacheShapesMaxSize;
+        var cacheShapesMaxSize = state.cacheShapesMaxSize;
         var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
         if (!state.clipRegion &&
             !source.hasFlags(RenderableFlags.Dynamic) &&
-            state.options.cacheShapes &&
-            renderCount > state.options.cacheShapesThreshold &&
+            (state.flags & RenderFlags.CacheShapes) &&
+            renderCount > state.cacheShapesThreshold &&
             bounds.w * matrixScale <= cacheShapesMaxSize &&
             bounds.h * matrixScale <= cacheShapesMaxSize) {
           var mipMap: MipMap = source.properties["mipMap"];
@@ -400,7 +477,7 @@ module Shumway.GFX.Canvas2D {
               bounds.w, bounds.h
             );
           }
-          if (state.options.paintFlashing) {
+          if (state.flags & RenderFlags.PaintFlashing) {
             context.fillStyle = ColorStyle.Green;
             context.globalAlpha = 0.5;
             context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
@@ -408,7 +485,7 @@ module Shumway.GFX.Canvas2D {
         } else {
           source.properties["renderCount"] = ++ renderCount;
           source.render(context, null, state.clipRegion);
-          if (state.options.paintFlashing) {
+          if (state.flags & RenderFlags.PaintFlashing) {
             context.fillStyle = ColorStyle.randomStyle();
             context.globalAlpha = 0.1;
             context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
@@ -421,6 +498,9 @@ module Shumway.GFX.Canvas2D {
     private _allocateSurface(w: number, h: number): Canvas2DSurfaceRegion {
       var surface = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceCache.allocate(w, h))
       surface.fill("#FF4981");
+
+//      var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
+//      surface.fill(color);
       return surface;
     }
 
@@ -478,7 +558,9 @@ module Shumway.GFX.Canvas2D {
       a.free();
 
     }
+    */
 
+    /*
     private _renderNode (
       target: Canvas2DSurfaceRegion,
       root: Node,

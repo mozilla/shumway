@@ -77,7 +77,7 @@ module Shumway.GFX {
     private _keyCodes: boolean [] = [];
     onMouseDown(easel: Easel, event: MouseEvent) {
       if (event.altKey) {
-        easel.state = new DragState(easel.worldView, easel.getMousePosition(event, null), easel.worldView.getTransformGroup().getMatrix(true));
+        easel.state = new DragState(easel.worldView, easel.getMousePosition(event, null), easel.worldView.getTransform().getMatrix(true));
       } else {
         // easel.state = new MouseDownState();
       }
@@ -130,12 +130,12 @@ module Shumway.GFX {
       if (event.altKey) {
         event.preventDefault();
         var p = easel.getMousePosition(event, null);
-        var m = easel.worldView.getTransformGroup().getMatrix(true);
+        var m = easel.worldView.getTransform().getMatrix(true);
         var s = 1 + ticks / 1000;
         m.translate(-p.x, -p.y);
         m.scale(s, s);
         m.translate(p.x, p.y);
-        easel.worldView.getTransformGroup().setMatrix(m);
+        easel.worldView.getTransform().setMatrix(m);
       }
     }
 
@@ -188,7 +188,7 @@ module Shumway.GFX {
       }
       var node = easel.queryNodeUnderMouse(event);
       if (node && node.hasCapability(NodeCapabilityFlags.AllowMatrixWrite)) {
-        easel.state = new DragState(node, easel.getMousePosition(event, null), node.getTransformGroup().getMatrix(true));
+        easel.state = new DragState(node, easel.getMousePosition(event, null), node.getTransform().getMatrix(true));
       }
     }
 
@@ -212,7 +212,7 @@ module Shumway.GFX {
       event.preventDefault();
       var p = easel.getMousePosition(event, null);
       p.sub(this._startPosition);
-      this._target.getTransformGroup().setMatrix(this._startMatrix.clone().translate(p.x, p.y));
+      this._target.getTransform().setMatrix(this._startMatrix.clone().translate(p.x, p.y));
       easel.state = this;
     }
     onMouseUp(easel: Easel, event: MouseEvent) {
@@ -259,9 +259,9 @@ module Shumway.GFX {
 
       if (hud.value) {
         var fpsCanvasContainer = document.createElement("div");
-        fpsCanvasContainer.style.position = "absolute";
-        fpsCanvasContainer.style.bottom = "0";
-        fpsCanvasContainer.style.width = "100%";
+        // fpsCanvasContainer.style.position = "relative";
+        // fpsCanvasContainer.style.bottom = "0";
+        // fpsCanvasContainer.style.width = "100%";
         fpsCanvasContainer.style.height = "16px";
         this._fpsCanvas = document.createElement("canvas");
         fpsCanvasContainer.appendChild(this._fpsCanvas);
@@ -492,7 +492,7 @@ module Shumway.GFX {
         this._stage.h = canvas.height;
         this._renderers[i].resize();
       }
-      this._stage.getTransformGroup().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));
+      // this._stage.getTransform().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));
     }
 
     resize() {

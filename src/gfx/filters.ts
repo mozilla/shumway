@@ -103,14 +103,16 @@ module Shumway.GFX {
     private _data: Float32Array;
     private _type: ColorMatrixType;
 
-    constructor (data: any, type: ColorMatrixType = ColorMatrixType.Unknown) {
+    constructor (data: any) {
       release || assert (data.length === 20);
       this._data = new Float32Array(data);
-      this._type = type;
+      this._type = ColorMatrixType.Unknown;
     }
 
     public clone(): ColorMatrix {
-      return new ColorMatrix(this._data);
+      var colorMatrix = new ColorMatrix(this._data);
+      colorMatrix._type = this._type;
+      return colorMatrix;
     }
 
     public set(other: ColorMatrix) {
@@ -143,13 +145,15 @@ module Shumway.GFX {
     }
 
     public static createIdentity(): ColorMatrix {
-      return new ColorMatrix ([
+      var colorMatrix = new ColorMatrix ([
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1,
         0, 0, 0, 0
-      ], ColorMatrixType.Identity);
+      ]);
+      colorMatrix._type = ColorMatrixType.Identity;
+      return colorMatrix;
     }
 
     public setMultipliersAndOffsets(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number,
@@ -166,6 +170,7 @@ module Shumway.GFX {
       m[17] = greenOffset / 255;
       m[18] = blueOffset / 255;
       m[19] = alphaOffset / 255;
+      this._type = ColorMatrixType.Unknown;
     }
 
     public transformRGBA(rgba: number) {
@@ -251,6 +256,7 @@ module Shumway.GFX {
       a[4 * 4 + 1] = a01 * b40 + a11 * b41 + a21 * b42 + a31 * b43 + a41;
       a[4 * 4 + 2] = a02 * b40 + a12 * b41 + a22 * b42 + a32 * b43 + a42;
       a[4 * 4 + 3] = a03 * b40 + a13 * b41 + a23 * b42 + a33 * b43 + a43;
+      this._type = ColorMatrixType.Unknown;
     }
 
     public get alphaMultiplier(): number {
