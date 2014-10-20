@@ -1729,6 +1729,11 @@ module Shumway.AVM2.AS.flash.display {
                                testingType: HitTestingType): HitTestingResult {
       if (testingType >= HitTestingType.HitTestBoundsAndMask &&
           this._hasFlags(DisplayObjectFlags.ContainsMorph)) {
+        // If this display object is a MorphShape or contains at least one descendant that is, then
+        // bailing out too early might lead to a wrong hit test result, since the reported bounds
+        // of MorphShapes are always the one of their start shapes and don't take the current morph
+        // ratio into account. We have to make sure we always hit test MorphShape instances on
+        // graphics level.
         return HitTestingResult.Bounds;
       }
       if (testingType >= HitTestingType.Mouse && !this._hasFlags(DisplayObjectFlags.Visible) ||
