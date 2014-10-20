@@ -330,8 +330,8 @@ module Shumway.AVM2.AS.flash.display {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
-      var child = children[index];
-      if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
+      var child = this._lookupChildByIndex(index);
+      if (!child) {
         return null;
       }
 
@@ -386,6 +386,33 @@ module Shumway.AVM2.AS.flash.display {
     getChildByName(name: string): DisplayObject {
       name = asCoerceString(name);
 
+      var child = this._lookupChildByName(name);
+      if (child) {
+        child._addReference();
+        child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
+        return child;
+      }
+
+      return null;
+    }
+
+    /**
+     * Returns the child display object instance that exists at given index without creating a
+     * reference nor taking ownership.
+     */
+    _lookupChildByIndex(index: number): DisplayObject {
+      var child = this._children[index];
+      if (child && child._hasFlags(DisplayObjectFlags.Constructed)) {
+        return child;
+      }
+      return null;
+    }
+
+    /**
+     * Returns the child display object that exists with given name without creating a reference
+     * nor taking ownership.
+     */
+    _lookupChildByName(name: string): DisplayObject {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
@@ -393,8 +420,6 @@ module Shumway.AVM2.AS.flash.display {
           continue;
         }
         if (child.name === name) {
-          child._addReference();
-          child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
           return child;
         }
       }

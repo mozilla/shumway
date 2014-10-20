@@ -15,6 +15,7 @@
  */
 
 package avm1lib {
+import flash.display.DisplayObject;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.Loader;
@@ -35,6 +36,7 @@ public dynamic class AVM1MovieClip extends Object {
   }
 
   public native function get _as3Object():MovieClip;
+  private native function _lookupChildByName(name:String):DisplayObject;
 
   public function __lookupChild(id:String) {
     if (id == '.') {
@@ -42,7 +44,7 @@ public dynamic class AVM1MovieClip extends Object {
     } else if (id == '..') {
       return AVM1Utils.getAVM1Object(this._as3Object.parent);
     } else {
-      return AVM1Utils.getAVM1Object(this._as3Object.getChildByName(id));
+      return AVM1Utils.getAVM1Object(_lookupChildByName(id));
     }
   }
   public function get __targetPath() {
