@@ -304,7 +304,7 @@ module Shumway.GFX {
       leaveTimeline("RenderableBitmap.render");
     }
 
-    drawNode(source: Node, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle): void {
+    drawNode(source: Node, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clip: Rectangle): void {
       // TODO: Support colorMatrix and blendMode.
       enterTimeline("RenderableBitmap.drawFrame");
       // TODO: Hack to be able to compile this as part of gfx-base.
@@ -312,8 +312,7 @@ module Shumway.GFX {
       var bounds = this.getBounds();
       var options = new Canvas2D.Canvas2DStageRendererOptions();
       var renderer = new Canvas2D.Canvas2DStageRenderer(this._canvas, null, options);
-      Debug.notImplemented("x");
-      // renderer.renderNode(source, clipRect || bounds, matrix);
+      renderer.renderNode(source, clip || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
     }
 

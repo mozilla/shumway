@@ -100,7 +100,7 @@ module Shumway.GFX.Canvas2D {
     colorMatrix: ColorMatrix = ColorMatrix.createIdentity();
     flags: RenderFlags = RenderFlags.None;
     cacheShapesMaxSize: number = 256;
-    cacheShapesThreshold: number = 256;
+    cacheShapesThreshold: number = 16;
 
     private _dirty: boolean;
 
@@ -284,6 +284,11 @@ module Shumway.GFX.Canvas2D {
       }
     }
 
+    public renderNode(node: Node, clip: Rectangle, matrix: Matrix) {
+      var state = new RenderState(this._target, clip);
+      state.matrix.set(matrix);
+      node.visit(this, state);
+    }
 
     visitTransform(node: Transform, state: RenderState) {
       state = state.transform(node);
@@ -314,9 +319,7 @@ module Shumway.GFX.Canvas2D {
       }
       if (state.clip.intersectsTransformedAABB(node.getBounds(), state.matrix)) {
         state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-
         Filters._applyColorMatrix(state.target.context, state.colorMatrix);
-
         this._renderShape(node, state)
       }
     }
@@ -324,13 +327,20 @@ module Shumway.GFX.Canvas2D {
     visitLayer(node: Layer, state: RenderState) {
       var mask = node.mask;
       if (!mask) {
-        var clipResult = Rectangle.createEmpty();
-        var target = this._renderNodeToTemporarySurface(node.child, state, clipResult);
-        var matrix = state.matrix;
-        state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-        state.target.blendMode = node.blendMode;
-        state.target.draw(target, clipResult.x, clipResult.y, clipResult.w, clipResult.h);
-        target.free();
+        if (node.blendMode === BlendMode.Normal) {
+          node.child.visit(this, state);
+        } else {
+          var clipResult = Rectangle.createEmpty();
+          var target = this._renderNodeToTemporarySurface(node.child, state, clipResult);
+          if (target) {
+            var matrix = state.matrix;
+            state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+            state.target.blendMode = node.blendMode;
+            // state.target.context.globalAlpha = 1;
+            state.target.draw(target, clipResult.x, clipResult.y, clipResult.w, clipResult.h);
+            target.free();
+          }
+        }
       } else {
         var maskMatrix = mask.getConcatenatedMatrix();
         // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
@@ -391,6 +401,9 @@ module Shumway.GFX.Canvas2D {
       if (this._options.paintFlashing) {
         state.flags |= RenderFlags.PaintFlashing;
       }
+      if (this._options.cacheShapes) {
+        state.flags |= RenderFlags.CacheShapes;
+      }
       node.visit(this, state);
       dumpLine("Visited: " + this._visited);
     }
@@ -409,6 +422,10 @@ module Shumway.GFX.Canvas2D {
       }
       clipResult.intersect(state.clip);
       clipResult.snap();
+
+      if (clipResult.isEmpty()) {
+        return null;
+      }
 
       var target = this._allocateSurface(clipResult.w, clipResult.h);
       var region = target.region;

@@ -29,6 +29,7 @@ module Shumway.Remoting.GFX {
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
   import ClipRectangle = Shumway.GFX.ClipRectangle;
+  import BlendMode = Shumway.GFX.BlendMode;
   import Node = Shumway.GFX.Node;
   import Clip = Shumway.GFX.Clip;
   import ShapeData = Shumway.ShapeData;
@@ -507,8 +508,8 @@ module Shumway.Remoting.GFX {
               break;
           }
         }
+        node.getLayer().filters = filters;
       }
-      // frame.getLayer().filters = filters;
     }
 
     private _readUpdateFrame() {
@@ -535,8 +536,10 @@ module Shumway.Remoting.GFX {
         node.clip = input.readInt();
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
-        // frame.getLayer().blendMode = input.readInt();
-        input.readInt();
+        var blendMode = input.readInt();
+        if (blendMode !== BlendMode.Normal) {
+          node.getLayer().blendMode = blendMode;
+        }
         this._readFilters(node);
         node.toggleFlags(NodeFlags.Visible, input.readBoolean());
         node.toggleFlags(NodeFlags.CacheAsBitmap, input.readBoolean());
@@ -603,8 +606,7 @@ module Shumway.Remoting.GFX {
       if (!target) {
         context._registerAsset(targetId, -1, RenderableBitmap.FromNode(source, matrix, colorMatrix, blendMode, clipRect));
       } else {
-        Debug.notImplemented("x");
-        // target.drawFrame(source, matrix, colorMatrix, blendMode, clipRect);
+        target.drawNode(source, matrix, colorMatrix, blendMode, clipRect);
       }
     }
 
