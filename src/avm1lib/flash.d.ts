@@ -26,16 +26,25 @@ declare module Shumway.AVM2.AS.flash {
       _mouseOver: boolean;
       _mouseDown: boolean;
       _children: DisplayObject [];
+      _depth: number;
     }
-    class MovieClip extends DisplayObject {
+    class DisplayObjectContainer extends DisplayObject {
       _as2SymbolClass;
       _name: string;
       numChildren: number;
       currentFrame: number;
 
       addTimelineObjectAtDepth(child, depth: number);
+      _lookupChildByIndex(index: number): DisplayObject;
+      _lookupChildByName(name: string): DisplayObject;
+    }
+    class MovieClip extends DisplayObjectContainer {
+      _as2SymbolClass;
+      _name: string;
+      numChildren: number;
+      currentFrame: number;
+
       addFrameScript(frameIndex: number, script: (any?) => any /*, ...*/): void;
-      getChildAt(depth: number): any;
     }
     class Loader extends DisplayObject {}
     class AVM1Movie extends DisplayObject {}
