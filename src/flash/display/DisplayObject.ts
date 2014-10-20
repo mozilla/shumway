@@ -129,43 +129,48 @@ module Shumway.AVM2.AS.flash.display {
     Destroyed                                 = 0x0200,
 
     /**
+     * Indicates wether an AVM1 load event needs to be dispatched on this display object.
+     */
+    NeedsLoadEvent                            = 0x0400,
+
+    /**
      * Display object is owned by the timeline, meaning that it is under the control of the timeline and that a reference
      * to this object has not leaked into AS3 code via the DisplayObjectContainer methods |getChildAt|,  |getChildByName|
      * or through the execution of the symbol class constructor.
      */
-    OwnedByTimeline                           = 0x0400,
+    OwnedByTimeline                           = 0x0800,
 
     /**
      * Display object is animated by the timeline. It may no longer be owned by the timeline (|OwnedByTimeline|) but it
      * is still animated by it. If AS3 code mutates any property on the display object, this flag is cleared and further
      * timeline mutations are ignored.
      */
-    AnimatedByTimeline                        = 0x0800,
+    AnimatedByTimeline                        = 0x1000,
 
     /**
      * MovieClip object has reached a frame with a frame script or ran a frame script that attached
      * a new one to the current frame. To run the script, it has to be appended to the queue of
      * scripts.
      */
-    HasFrameScriptPending                     = 0x1000,
+    HasFrameScriptPending                     = 0x2000,
 
     /**
      * DisplayObjectContainer contains at least one descendant with the HasFrameScriptPending flag
      * set.
      */
-    ContainsFrameScriptPendingChildren        = 0x2000,
+    ContainsFrameScriptPendingChildren        = 0x4000,
 
     /**
      * Indicates whether this display object is a MorphShape or contains at least one descendant that is.
      */
-    ContainsMorph                             = 0x4000,
+    ContainsMorph                             = 0x8000,
 
     /**
      * Indicates whether this display object should be cached as a bitmap. The display object may be cached as bitmap even
      * if this flag is not set, depending on whether any filters are applied or if the bitmap is too large or we've run out
      * of memory.
      */
-    CacheAsBitmap                             = 0x8000,
+    CacheAsBitmap                             = 0x010000,
 
     /**
      * Indicates whether this display object's matrix has changed since the last time it was synchronized.
