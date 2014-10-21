@@ -358,8 +358,10 @@ public dynamic class AVM1MovieClip extends Object {
   }
   public function setMask(mc:Object) {
     var nativeObject = this._as3Object;
-    var mask = AVM1Utils.resolveTarget(mc)._as3Object;
-    nativeObject.mask = mask;
+    var mask = AVM1Utils.resolveMovieClip(mc);
+    if (mask) {
+      nativeObject.mask = mask._as3Object;
+    }
   }
   public function get _soundbuftime() {
     throw 'Not implemented: get$_soundbuftime';
