@@ -1315,7 +1315,6 @@ module Shumway.AVM2.AS.flash.display {
      * Sets the mask for this display object. This does not affect the bounds.
      */
     set mask(value: DisplayObject) {
-      this._stopTimelineAnimation();
       if (this._mask === value || value === this) {
         return;
       }
@@ -1486,7 +1485,6 @@ module Shumway.AVM2.AS.flash.display {
      * Marks this display object as visible / invisible. This does not affect the bounds.
      */
     set visible(value: boolean) {
-      this._stopTimelineAnimation();
       value = !!value;
       if (value === this._hasFlags(DisplayObjectFlags.Visible)) {
         return;
