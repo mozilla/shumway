@@ -186,7 +186,8 @@ function fetchPolicyFile(url, cache, callback) {
 
 function isShumwayEnabledFor(actions) {
   // disabled for PrivateBrowsing windows
-  if (PrivateBrowsingUtils.isWindowPrivate(actions.window)) {
+  if (PrivateBrowsingUtils.isWindowPrivate(actions.window) &&
+      !getBoolPref('shumway.enableForPrivate', false)) {
     return false;
   }
   // disabled if embed tag specifies shumwaymode (for testing purpose)
