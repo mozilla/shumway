@@ -58,6 +58,10 @@
   <button onclick="test()">Do</button>
   <button onclick="test2()">Shapes</button>
   <button onclick="garbage()">Garbage</button>
+  <button onclick='toggle("cacheShapes")'>Cache Shapes</button>
+  <button onclick='toggle("imageSmoothing")'>Image Smoothing</button>
+  <button onclick='toggle("snapToDevicePixels")'>Snap Pixels</button>
+
   <div id="log"></div>
   <div id="scratch"></div>
   <script>
@@ -75,19 +79,27 @@
       }
     }
 
+    function toggle(s) {
+      easel.toggleOption(s);
+    }
+
     var container = document.getElementById("container");
 
     var easel = new Easel(container, Backend.Canvas2D)
     var stage = easel.stage;
     var world = easel.world;
 
+
+
     var lastTick = performance.now();
     function tick() {
       world.visit(Object.create(NodeVisitor.prototype, {
-        visitTransform: {
+        visitNode: {
           value: function (node) {
-            node.x += node.dx;
-            node.y += node.dy;
+            if (node.dx !== undefined) {
+              node.getTransform().x += node.dx;
+              node.getTransform().y += node.dy;
+            }
           }
         }
       }));
@@ -107,10 +119,13 @@
     function makeCircle(w, h) {
       var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
       return new CustomRenderable(new Rectangle(0, 0, w, h), function (context) {
+        context.save();
         context.fillStyle = color;
         context.beginPath();
-        context.arc(w / 2, h / 2, w / 2, 0, 2 * Math.PI);
+          context.scale(0.9, 0.9);
+          context.arc(w / 2, h / 2, w / 2, 0, 2 * Math.PI);
         context.fill();
+        context.restore();
       });
     }
 
@@ -130,21 +145,16 @@
         for (var i = 0; i < branch; i++) {
           var node = makeNode(depth - 1, branch, w, h);
           group.addChild(node);
-          node.getTransform().x = Math.random() * 128;
-          node.getTransform().y = Math.random() * 128;
-//          node.getTransform().dx = 10 * (Math.random() - 0.5) / depth;
-//          node.getTransform().dy = 10 * (Math.random() - 0.5) / depth;
+          node.getTransform().x = Math.random() * 64;
+          node.getTransform().y = Math.random() * 64;
 
-          node.getTransform().dx = (Math.random()) * 5;
-          node.getTransform().dy = (Math.random()) * 5;
+          node.dx = (Math.random() - 0.5) * 3;
+          node.dy = (Math.random() - 0.5) * 3;
 
           // node.getLayer().blendMode = BlendMode.Normal;
           // node.getLayer().mask = new Shape(makeRenderable2(32, 32));
 
 //          node.getLayer().mask._parent = node.getLayer(); // HACK
-
-          // node.getLayer().mask.getTransform().x = 10;
-
         }
         return group;
       }
@@ -152,12 +162,14 @@
 
     function test() {
       var count = 10;
-      var depth = 8;
+      var depth = 11;
       for (var i = 0; i < count; i++) {
         world.addChild(makeNode(depth, 2, 2, 2));
       }
       log("Next Node ID: " + Node._nextId);
     }
+
+    // test();
 
     function test2() {
       var count = 10;
@@ -171,13 +183,17 @@
 
 
     function test2() {
-      var a = new Shape(makeCircle(64, 64));
-      var t = a.getTransform();
-      t.x = 100;
-      t.y = 100;
-      t.dx = 1;
-      t.dy = 1;
-      world.addChild(t);
+      for (var i = 0; i < 1000; i++) {
+        var s = Math.random() * 64;
+        var a = new Shape(makeCircle(s, s));
+        var t = a.getTransform();
+        t.x = Math.random() * 512;
+        t.y = Math.random() * 512;
+        t.dx = Math.random() - 0.5;
+        t.dy = Math.random() - 0.5;
+        world.addChild(a);
+      }
+      log("Next Node ID: " + Node._nextId);
     }
 
     function garbage() {
@@ -189,7 +205,7 @@
     }
 
     function registerScratchCanvas(canvas) {
-      scratchElement.appendChild(canvas);
+      // scratchElement.appendChild(canvas);
     }
   </script>
 </body>

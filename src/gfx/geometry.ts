@@ -328,6 +328,8 @@ module Shumway.GFX.Geometry {
       if (this.isEmpty()) {
         this.set(other);
         return;
+      } else if (other.isEmpty()) {
+        return;
       }
       var x = this.x, y = this.y;
       if (this.x > other.x) {

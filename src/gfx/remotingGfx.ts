@@ -31,7 +31,7 @@ module Shumway.Remoting.GFX {
   import ClipRectangle = Shumway.GFX.ClipRectangle;
   import BlendMode = Shumway.GFX.BlendMode;
   import Node = Shumway.GFX.Node;
-  import Clip = Shumway.GFX.Clip;
+  import Scissor = Shumway.GFX.Scissor;
   import ShapeData = Shumway.ShapeData;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Stage = Shumway.GFX.Stage;
@@ -108,8 +108,7 @@ module Shumway.Remoting.GFX {
   }
 
   export class GFXChannelDeserializerContext {
-    root: Node;
-    clip: Clip;
+    scissor: Scissor;
     _nodes: Node [];
     private _assets: Renderable [];
 
@@ -118,13 +117,11 @@ module Shumway.Remoting.GFX {
     private _context: CanvasRenderingContext2D;
 
     constructor(easelHost: Shumway.GFX.EaselHost, root: Group, transparent: boolean) {
-      this.clip = new Clip(128, 128);
-      this.root = this.clip.child = new Group();
-
+      this.scissor = new Scissor(128, 128);
       if (transparent) {
-        this.root.setFlags(NodeFlags.Transparent);
+        this.scissor.setFlags(NodeFlags.Transparent);
       }
-      root.addChild(this.clip);
+      root.addChild(this.scissor);
       this._nodes = [];
       this._assets = [];
 
@@ -140,7 +137,7 @@ module Shumway.Remoting.GFX {
       this._assets[id] = asset;
     }
 
-    _makeFrame(id: number): Node {
+    _makeNode(id: number): Node {
       if (id === -1) {
         return null;
       }
@@ -454,12 +451,12 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = this.input.readInt();
       if (!context._nodes[id]) {
-        context._nodes[id] = context.root;
+        context._nodes[id] = context.scissor;
       }
       var color = this.input.readInt();
       var rectangle = this._readRectangle()
-      context.clip.setBounds(rectangle);
-      context.clip.color = Color.FromARGB(color);
+      context.scissor.setBounds(rectangle);
+      context.scissor.color = Color.FromARGB(color);
     }
 
     private _readUpdateNetStream() {
@@ -529,8 +526,10 @@ module Shumway.Remoting.GFX {
         node.getTransform().setColorMatrix(this._readColorMatrix());
       }
       if (hasBits & MessageBits.HasMask) {
-        // frame.getLayer().mask = context._makeFrame(input.readInt());
-        context._makeFrame(input.readInt());
+        var maskId = input.readInt();
+        if (maskId >= 0) {
+          node.getLayer().mask = context._makeNode(maskId);
+        }
       }
       if (hasBits & MessageBits.HasClip) {
         node.clip = input.readInt();
@@ -554,9 +553,9 @@ module Shumway.Remoting.GFX {
         container.clearChildren();
         for (var i = 0; i < count; i++) {
           var childId = input.readInt();
-          var child = context._makeFrame(childId);
+          var child = context._makeNode(childId);
           release || assert (child, "Child " + childId + " of " + id + " has not been sent yet.");
-          container.addChild(child.getBranch());
+          container.addChild(child);
         }
       }
     }
@@ -602,7 +601,7 @@ module Shumway.Remoting.GFX {
       var blendMode = input.readInt();
       input.readBoolean(); // Smoothing
       var target = context._getBitmapAsset(targetId);
-      var source = context._makeFrame(sourceId);
+      var source = context._makeNode(sourceId);
       if (!target) {
         context._registerAsset(targetId, -1, RenderableBitmap.FromNode(source, matrix, colorMatrix, blendMode, clipRect));
       } else {

@@ -187,7 +187,7 @@ module Shumway.GFX {
         return;
       }
       var node = easel.queryNodeUnderMouse(event);
-      if (node && node.hasCapability(NodeCapabilityFlags.AllowMatrixWrite)) {
+      if (node) {
         easel.state = new DragState(node, easel.getMousePosition(event, null), node.getTransform().getMatrix(true));
       }
     }
@@ -492,7 +492,7 @@ module Shumway.GFX {
         this._stage.h = canvas.height;
         this._renderers[i].resize();
       }
-      // this._stage.getTransform().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));
+      this._worldView.getTransform().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));
     }
 
     resize() {
@@ -507,10 +507,8 @@ module Shumway.GFX {
 
     selectNodeUnderMouse(event: MouseEvent) {
       var frame = this.queryNodeUnderMouse(event);
-      if (frame && frame.hasCapability(NodeCapabilityFlags.AllowMatrixWrite)) {
+      if (frame) {
         this._selectedNodes.push(frame);
-      } else {
-        this._selectedNodes = [];
       }
       this._render();
     }
@@ -525,7 +523,7 @@ module Shumway.GFX {
         return p;
       }
       var m = Matrix.createIdentity();
-      coordinateSpace.getConcatenatedMatrix().inverse(m);
+      coordinateSpace.getTransform().getConcatenatedMatrix().inverse(m);
       m.transformPoint(p);
       return p;
     }

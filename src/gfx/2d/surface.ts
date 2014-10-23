@@ -3,6 +3,10 @@ module Shumway.GFX.Canvas2D {
 
   import assert = Shumway.Debug.assert;
 
+  declare var registerScratchCanvas;
+
+  var isFirefox = navigator.userAgent.indexOf('Firefox') != -1;
+
   export class Filters {
     /**
      * Reusable blur filter SVG element.
@@ -221,7 +225,33 @@ module Shumway.GFX.Canvas2D {
     return compositeOp;
   }
 
+  /**
+   * Some blend modes are super slow in FF and depend on the size of the
+   * target canvas, 512px appears to be the largest canvas size that is
+   * not very slow.
+   */
+  function isBlendModeSlow(blendMode: BlendMode) {
+    if (!isFirefox) {
+      return false;
+    }
+    switch (blendMode) {
+      case BlendMode.Alpha:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   export class Canvas2DSurfaceRegion implements ISurfaceRegion {
+
+    /**
+     * Draw image is really slow if the soruce and destination are the same. We use
+     * a temporary canvas for all such copy operations.
+     */
+    private static _copyCanvasContext: CanvasRenderingContext2D;
+    private static _blendCanvasContext: CanvasRenderingContext2D;
+
+    private _blendMode: BlendMode = BlendMode.Normal;
 
     constructor (
       public surface: Canvas2DSurface,
@@ -237,22 +267,87 @@ module Shumway.GFX.Canvas2D {
     }
 
     public set blendMode(value: BlendMode) {
-      this.context.globalCompositeOperation = getCompositeOperation(value);
+      if (this._blendMode !== value) {
+        this._blendMode = value;
+        this.context.globalCompositeOperation = getCompositeOperation(value);
+      }
     }
 
+    private static _ensureCopyCanvasSize(w: number, h: number) {
+      var canvas;
+      if (!Canvas2DSurfaceRegion._copyCanvasContext) {
+        canvas = document.createElement("canvas");
+        registerScratchCanvas(canvas);
+        canvas.width = 512;
+        canvas.height = 512;
+        Canvas2DSurfaceRegion._copyCanvasContext = canvas.getContext("2d");
+      } else {
+        canvas = Canvas2DSurfaceRegion._copyCanvasContext.canvas;
+        if (canvas.width < w || canvas.height < h) {
+          canvas.width = IntegerUtilities.nearestPowerOfTwo(w);
+          canvas.height = IntegerUtilities.nearestPowerOfTwo(h);
+        }
+      }
+    }
+
+    private static _ensureBlendCanvasSize(w: number, h: number) {
+      var canvas;
+      if (!Canvas2DSurfaceRegion._blendCanvasContext) {
+        canvas = document.createElement("canvas");
+        registerScratchCanvas(canvas);
+        canvas.width = 256;
+        canvas.height = 256;
+        Canvas2DSurfaceRegion._blendCanvasContext = canvas.getContext("2d");
+      } else {
+        canvas = Canvas2DSurfaceRegion._blendCanvasContext.canvas;
+        if (canvas.width < w || canvas.height < h) {
+          canvas.width = w;
+          canvas.height = h;
+        }
+      }
+    }
+    
     public draw(source: Canvas2DSurfaceRegion, x: number, y: number, w: number, h: number) {
       this.context.setTransform(1, 0, 0, 1, 0, 0);
-      this.context.drawImage (
-        source.surface.canvas,
-        source.region.x,
-        source.region.y,
-        w,
-        h,
-        x,
-        y,
-        w,
-        h
-      );
+      var sourceCanvas, sx = 0, sy = 0;
+      // Handle copying from and to the same canvas.
+      if (source.context.canvas === this.context.canvas) {
+        Canvas2DSurfaceRegion._ensureCopyCanvasSize(w, h);
+        var copyContext = Canvas2DSurfaceRegion._copyCanvasContext;
+        copyContext.clearRect(0, 0, w, h);
+        copyContext.drawImage(
+          source.surface.canvas,
+          source.region.x, source.region.y, w, h,
+          0, 0, w, h
+        );
+        sourceCanvas = copyContext.canvas;
+        sx = 0;
+        sy = 0;
+      } else {
+        sourceCanvas = source.surface.canvas;
+        sx = source.region.x;
+        sy = source.region.y;
+      }
+      var canvas = this.context.canvas;
+      if (!isBlendModeSlow(this._blendMode) || Math.max(canvas.width, canvas.height) < 512) {
+        this.context.drawImage(sourceCanvas, sx, sy, w, h, x, y, w, h);
+      } else {
+        // Bend time and space just so we can blend faster. Copy the destination
+        // to a temporary canvas, blend into it, and then copy it back to the original
+        // position.
+        Canvas2DSurfaceRegion._ensureBlendCanvasSize(w, h);
+        var blendContext = Canvas2DSurfaceRegion._blendCanvasContext;
+        blendContext.clearRect(0, 0, w, h);
+        blendContext.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);
+        blendContext.drawImage(this.context.canvas, x, y, w, h, 0, 0, w, h);
+        blendContext.globalCompositeOperation = getCompositeOperation(this._blendMode);
+        blendContext.drawImage(sourceCanvas, sx, sy, w, h, 0, 0, w, h);
+        var lastBlendMode = this._blendMode;
+        this.blendMode = BlendMode.Normal;
+        this.context.clearRect(x, y, w, h);
+        this.context.drawImage(blendContext.canvas, 0, 0, w, h, x, y, w, h);
+        this.blendMode = lastBlendMode;
+      }
     }
 
     get context(): CanvasRenderingContext2D {
