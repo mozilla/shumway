@@ -136,6 +136,7 @@ module Shumway.AVM2.AS.flash.display {
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
                                                               false, false, 0, bytesTotal));
             instance._loadStatus = LoadStatus.Opened;
+            // Fallthrough
           case LoadStatus.Opened:
             if (loaderInfo._bytesLoadedChanged) {
               loaderInfo._bytesLoadedChanged = false;
@@ -149,6 +150,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             instance._loadStatus = LoadStatus.Initialized;
             loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
+            // Fallthrough
           case LoadStatus.Initialized:
             if (bytesLoaded === bytesTotal) {
               instance._loadStatus = LoadStatus.Complete;
@@ -504,9 +506,16 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _enqueueFrame(data: any): void {
       if (this === Loader.getRootLoader()) {
-        Loader.runtimeStartTime = Date.now();
+        var isFirstFrame = !this._content;
         this._commitFrame(data);
-        this._codeExecutionPromise.resolve(undefined);
+
+        // TODO: the comment above says that only the root's first frame is committed eagerly.
+        // That, however, breaks content that has something like `nextFrame()` in its first frame.
+        // It's not entirely clear how to fix this issue, really.
+        if (isFirstFrame) {
+          Loader.runtimeStartTime = Date.now();
+          this._codeExecutionPromise.resolve(undefined);
+        }
       } else {
         Loader._commitFrameQueue.push({loader: this, data: data});
       }
