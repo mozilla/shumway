@@ -118,6 +118,23 @@ module Shumway.Remoting {
     All                    = 2
   }
 
+  export enum VideoPlaybackEvent {
+    Initialized = 0,
+    PlayStart = 1,
+    PlayStop = 2,
+    BufferFull = 3,
+    Progress = 4,
+    BufferEmpty = 5,
+    Error = 6,
+    Metadata = 7
+  }
+
+  export enum VideoControlEvent {
+    Pause = 1,
+    Seek = 2,
+    GetTime = 3,
+    GetBufferLength = 4
+  }
 
   export var MouseEventNames: string[] = [
     'click',

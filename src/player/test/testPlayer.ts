@@ -18,6 +18,8 @@ module Shumway.Player.Test {
   import Player = Shumway.Player.Player;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
+  import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
+
   export class TestPlayer extends Player {
     private _worker;
 
@@ -61,6 +63,15 @@ module Shumway.Player.Test {
       });
     }
 
+    onVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
+      return this._worker.postSyncMessage({
+        type: 'videoControl',
+        id: id,
+        eventType: eventType,
+        data: data
+      });
+    }
+
     onFrameProcessed() {
       this._worker.postMessage({
         type: 'frame'
@@ -80,6 +91,9 @@ module Shumway.Player.Test {
         case 'externalCallback':
           this.processExternalCallback(data.request);
           e.handled = true;
+          return;
+        case 'videoPlayback':
+          this.processVideoEvent(data.id, data.eventType, data.data);
           return;
       }
     }

@@ -24,6 +24,7 @@ module Shumway.Remoting.GFX {
   import RenderableMorphShape = Shumway.GFX.RenderableMorphShape;
   import RenderableBitmap = Shumway.GFX.RenderableBitmap;
   import RenderableVideo = Shumway.GFX.RenderableVideo;
+  import IVideoPlaybackEventSerializer = Shumway.GFX.IVideoPlaybackEventSerializer;
   import RenderableText = Shumway.GFX.RenderableText;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
@@ -102,7 +103,7 @@ module Shumway.Remoting.GFX {
     }
   }
 
-  export class GFXChannelDeserializerContext {
+  export class GFXChannelDeserializerContext implements IVideoPlaybackEventSerializer {
     root: ClipRectangle;
     _frames: Frame [];
     private _assets: Renderable [];
@@ -182,6 +183,11 @@ module Shumway.Remoting.GFX {
         oncomplete(null);
       };
     }
+
+    public sendVideoPlaybackEvent(assetId: number, eventType: VideoPlaybackEvent, data: any): void {
+      this._easelHost.sendVideoPlaybackEvent(assetId, eventType, data);
+    }
+
   }
 
   export class GFXChannelDeserializer {
@@ -465,7 +471,7 @@ module Shumway.Remoting.GFX {
       var asset = context._getVideoAsset(id);
       var url = this.input.readUTF();
       if (!asset) {
-        asset = new RenderableVideo(url, new Rectangle(0, 0, 960, 480));
+        asset = new RenderableVideo(url, new Rectangle(0, 0, 960, 480), id, context);
         context._registerAsset(id, 0, asset);
       }
     }

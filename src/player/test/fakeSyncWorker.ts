@@ -63,13 +63,17 @@ module Shumway.Player.Test {
       var result;
       this._onsyncmessageListeners.some(function (listener) {
         var ev = { data: message, result: undefined, handled: false };
-        if (typeof listener === 'function') {
-          listener(ev);
-        } else {
-          listener.handleEvent(ev);
-        }
-        if (!ev.handled) {
-          return false;
+        try {
+          if (typeof listener === 'function') {
+            listener(ev);
+          } else {
+            listener.handleEvent(ev);
+          }
+          if (!ev.handled) {
+            return false;
+          }
+        } catch (ex) {
+          Debug.warning('Failure at postSyncMessage: ' + ex.message);
         }
         result = ev.result;
         return true;

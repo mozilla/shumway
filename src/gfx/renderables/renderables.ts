@@ -30,6 +30,8 @@ module Shumway.GFX {
   import notImplemented = Shumway.Debug.notImplemented;
   import pushUnique = Shumway.ArrayUtilities.pushUnique;
   import indexOf = Shumway.ArrayUtilities.indexOf;
+  import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
+  import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
 
   export enum RenderableFlags {
     None          = 0,
@@ -169,19 +171,116 @@ module Shumway.GFX {
     }
   }
 
+  export interface IVideoPlaybackEventSerializer {
+    sendVideoPlaybackEvent(assetId: number, eventType: VideoPlaybackEvent, data: any): void;
+  }
+
   export class RenderableVideo extends Renderable {
     _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     private _video: HTMLVideoElement;
+    private _videoEventHandler: (e:Event)=>void;
+    private _assetId: number;
+    private _eventSerializer: IVideoPlaybackEventSerializer;
     private _lastCurrentTime: number = 0;
     static _renderableVideos: RenderableVideo [] = [];
 
-    constructor(url: string, bounds: Rectangle) {
+    constructor(url: string, bounds: Rectangle, assetId: number, eventSerializer: IVideoPlaybackEventSerializer) {
       super(bounds);
-      this._video = document.createElement("video");
-      this._video.src = url;
-      this._video.loop = true;
-      this._video.play();
+
+      this._assetId = assetId;
+      this._eventSerializer = eventSerializer;
+
+      var element: HTMLVideoElement = document.createElement('video');
+      var elementEventHandler = this._handleVideoEvent.bind(this);
+      element.preload = 'metadata'; // for mobile devices
+      element.src = url;
+      // element.loop = true;
+      element.addEventListener("play", elementEventHandler);
+      element.addEventListener("ended", elementEventHandler);
+      element.addEventListener("loadeddata", elementEventHandler);
+      element.addEventListener("progress", elementEventHandler);
+      element.addEventListener("waiting", elementEventHandler);
+      element.addEventListener("loadedmetadata", elementEventHandler);
+      element.addEventListener("error", elementEventHandler);
+      element.play();
+
+      this._video = element;
+      this._videoEventHandler = elementEventHandler;
+
       RenderableVideo._renderableVideos.push(this);
+
+      this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
+    }
+
+    private _handleVideoEvent(evt: Event) {
+      var type: VideoPlaybackEvent;
+      var data: any = null;
+      var element: HTMLVideoElement = this._video;
+      switch (evt.type) {
+        case "play":
+          type = VideoPlaybackEvent.PlayStart;
+          break;
+        case "ended":
+          type = VideoPlaybackEvent.PlayStop;
+          break;
+        case "loadeddata":
+          type = VideoPlaybackEvent.BufferFull;
+          break;
+        case "progress":
+          type = VideoPlaybackEvent.Progress;
+          break;
+        case "waiting":
+          type = VideoPlaybackEvent.BufferEmpty;
+          break;
+        case "loadedmetadata":
+          type = VideoPlaybackEvent.Metadata;
+          data = {
+            videoWidth: element.videoWidth,
+            videoHeight: element.videoHeight,
+            duration: element.duration
+          };
+          break;
+        case "error":
+          type = VideoPlaybackEvent.Error;
+          data = {
+            code: element.error.code
+          };
+          break;
+        default:
+          return; // unhandled event
+      }
+      this._notifyNetStream(type, data);
+    }
+
+    private _notifyNetStream(eventType: VideoPlaybackEvent, data: any): void {
+      this._eventSerializer.sendVideoPlaybackEvent(this._assetId, eventType, data);
+    }
+
+    processControlRequest(type: VideoControlEvent, data: any): any {
+      var videoElement = this._video;
+      switch (type) {
+        case VideoControlEvent.Pause:
+          if (videoElement) {
+            if (data.paused && !videoElement.paused) {
+              videoElement.pause();
+            } else if (!data.paused && videoElement.paused) {
+              videoElement.play();
+            }
+            if (!isNaN(data.time)) {
+              videoElement.currentTime = data.time;
+            }
+          }
+          return;
+        case VideoControlEvent.Seek:
+          if (videoElement && !videoElement.paused) {
+            videoElement.currentTime = data.time;
+          }
+          return;
+        case VideoControlEvent.GetTime:
+          return videoElement ? videoElement.currentTime : 0;
+        case VideoControlEvent.GetBufferLength:
+          return videoElement ? videoElement.duration : 0;
+      }
     }
 
     public invalidatePaintCheck() {

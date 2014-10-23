@@ -20,10 +20,12 @@ module Shumway.AVM2.AS.flash.net {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
   import NetStatusEvent = Shumway.AVM2.AS.flash.events.NetStatusEvent;
-  import URLRequest = Shumway.AVM2.AS.flash.net.URLRequest;
-  import URLStream = Shumway.AVM2.AS.flash.net.URLStream;
-  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
+  import net = Shumway.AVM2.AS.flash.net;
+  import utils = Shumway.AVM2.AS.flash.utils;
   import FileLoadingService = Shumway.FileLoadingService;
+  import AVM2 = Shumway.AVM2.Runtime.AVM2;
+  import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
+  import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
 
   var USE_MEDIASOURCE_API = false;
   declare var MediaSource;
@@ -53,6 +55,18 @@ module Shumway.AVM2.AS.flash.net {
       this._peerID = asCoerceString(peerID);
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._isDirty = true;
+
+      this._contentTypeHint = null;
+      this._mediaSource = null;
+      this._checkPolicyFile = true;
+
+      this._videoReady = new PromiseWrapper<any>();
+      this._videoMetadataReady = new PromiseWrapper<any>();
+      this._videoState = {
+        started: false,
+        buffer: 'empty',
+        bufferTime: 0.1
+      };
     }
 
     _connection: flash.net.NetConnection;
@@ -66,13 +80,13 @@ module Shumway.AVM2.AS.flash.net {
      */
     _videoReferrer: flash.media.Video;
 
-    private _videoElement;
-    private _videoReady;
-    private _videoMetadataReady;
+    private _videoReady: PromiseWrapper<any>;
+    private _videoMetadataReady: PromiseWrapper<any>;
     private _videoState;
     private _mediaSource;
     private _contentTypeHint;
     private _mediaSourceBuffer;
+    private _mediaSourceBufferLock: Promise<any>;
     
     // JS -> AS Bindings
     static DIRECT_CONNECTIONS: string = "directConnections";
@@ -160,14 +174,12 @@ module Shumway.AVM2.AS.flash.net {
     }
 
     play(url: string): void {
-      if (true) {
-        this._url = FileLoadingService.instance.resolveUrl(url);
-        somewhatImplemented("public flash.net.NetStream::play");
-        return;
-      }
-
       // (void) -> void ???
       url = asCoerceString(url);
+
+      var service: IVideoElementService = AVM2.instance.globals['Shumway.Player.Utils'];
+      service.registerEventListener(this._id, this.processVideoEvent.bind(this));
+
       var isMediaSourceEnabled = USE_MEDIASOURCE_API;
       if (isMediaSourceEnabled && typeof MediaSource === 'undefined') {
         console.warn('MediaSource API is not enabled, falling back to regular playback');
@@ -175,7 +187,7 @@ module Shumway.AVM2.AS.flash.net {
       }
       if (!isMediaSourceEnabled) {
         somewhatImplemented("public flash.net.NetStream::play");
-        this._createVideoElement(FileLoadingService.instance.resolveUrl(url));
+        this._url = FileLoadingService.instance.resolveUrl(url);
         return;
       }
 
@@ -186,15 +198,17 @@ module Shumway.AVM2.AS.flash.net {
       mediaSource.addEventListener('sourceend', function(e) {
         this._mediaSource = null;
       }.bind(this));
-      this._createVideoElement(URL.createObjectURL(mediaSource));
 
       if (!url) {
+        this._url = null;
         return;
       }
 
-      var request = new URLRequest(url);
+      this._url = URL.createObjectURL(mediaSource);
+
+      var request = new net.URLRequest(url);
       request._checkPolicyFile = this._checkPolicyFile;
-      var stream = new URLStream();
+      var stream = new net.URLStream();
       stream.addEventListener('httpStatus', function (e) {
         var responseHeaders = e.asGetPublicProperty('responseHeaders');
         var contentTypeHeader = responseHeaders.filter(function (h) {
@@ -208,7 +222,7 @@ module Shumway.AVM2.AS.flash.net {
       }.bind(this));
       stream.addEventListener('progress', function (e) {
         var available = stream.bytesAvailable;
-        var data = new ByteArray();
+        var data = new utils.ByteArray();
         stream.readBytes(data, 0, available);
         this.appendBytes(data);
       }.bind(this));
@@ -372,19 +386,42 @@ module Shumway.AVM2.AS.flash.net {
     appendBytes(bytes: flash.utils.ByteArray): void {
       if (this._mediaSource) {
         if (!this._mediaSourceBuffer) {
-          this._mediaSourceBuffer = this._mediaSource.addSourceBuffer(this._contentTypeHint);
+          var contentType = this._contentTypeHint || this._detectContentType(bytes);
+          this._mediaSourceBufferLock = Promise.resolve(undefined);
+          this._mediaSourceBuffer = this._mediaSource.addSourceBuffer(contentType);
+          this._mediaSourceBuffer.mode = 'sequence';
         }
-        this._mediaSourceBuffer.appendBuffer(new Uint8Array((<any> bytes)._buffer, 0, bytes.length));
+        var chunk = new Uint8Array((<any> bytes)._buffer, 0, bytes.length);
+        var buffer = this._mediaSourceBuffer;
+        var netStream = this;
+        this._mediaSourceBufferLock = this._mediaSourceBufferLock.then(function () {
+          buffer.appendBuffer(chunk);
+          return new Promise(function (resolve) {
+            buffer.addEventListener('update', function updateHandler() {
+              buffer.removeEventListener('update', updateHandler);
+              resolve();
+              // netStream._notifyVideoControl(VideoControlEvent.Pause, {paused: false, time: NaN});
+            });
+          });
+        });
       }
 
       somewhatImplemented("public flash.net.NetStream::appendBytes");
     }
     appendBytesAction(netStreamAppendBytesAction: string): void {
       netStreamAppendBytesAction = asCoerceString(netStreamAppendBytesAction);
-      if (netStreamAppendBytesAction === 'endSequence' && this._mediaSource) {
-        this._mediaSource.endOfStream();
+      if (netStreamAppendBytesAction === 'endSequence') {
+        this._mediaSourceBufferLock.then(function () {
+          if (this._mediaSource) {
+            this._mediaSource.endOfStream();
+          }
+        }.bind(this));
       }
       somewhatImplemented("public flash.net.NetStream::appendBytesAction");
+    }
+    private _detectContentType(bytes: flash.utils.ByteArray): string {
+      // TODO check bytes for content type
+      return 'video/mp4;codecs=\"avc1.4D4041\"';
     }
     get useHardwareDecoder(): boolean {
       notImplemented("public flash.net.NetStream::get useHardwareDecoder"); return;
@@ -413,33 +450,6 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.NetStream::set videoStreamSettings"); return;
       // this._videoStreamSettings = settings;
     }
-    ctor(connection: flash.net.NetConnection, peerID: string): void {
-      peerID = asCoerceString(peerID);
-      somewhatImplemented("public flash.net.NetStream::ctor");
-      this._contentTypeHint = null;
-      this._mediaSource = null;
-      this._checkPolicyFile = true;
-      this._videoElement = null;
-      var videoReadyResolve, videoReadyReject;
-      this._videoReady = new Promise(function (resolve, reject) {
-        videoReadyResolve = resolve;
-        videoReadyReject = reject;
-      });
-      this._videoReady.resolve = videoReadyResolve;
-      this._videoReady.reject = videoReadyReject;
-      var videoMetadataReadyResolve, videoMetadataReadyReject;
-      this._videoMetadataReady = new Promise(function (resolve, reject) {
-        videoMetadataReadyResolve = resolve;
-        videoMetadataReadyReject = reject;
-      });
-      this._videoMetadataReady.resolve = videoMetadataReadyResolve;
-      this._videoMetadataReady.reject = videoMetadataReadyReject;
-      this._videoState = {
-        started: false,
-        buffer: 'empty',
-        bufferTime: 0.1
-      };
-    }
     invoke(index: number /*uint*/): any {
       index = index >>> 0;
       return this._invoke(index, Array.prototype.slice.call(arguments, 1));
@@ -451,7 +461,6 @@ module Shumway.AVM2.AS.flash.net {
 
     private _invoke(index: number, args: any[]): any {
       var simulated = false, result;
-      var videoElement = this._videoElement;
       switch (index) {
         case 4: // set bufferTime
           this._videoState.bufferTime = args[0];
@@ -461,25 +470,21 @@ module Shumway.AVM2.AS.flash.net {
           switch (args[1]) {
             case 'pause':
               simulated = true;
-              if (videoElement) {
-                if (args[3] !== false && !videoElement.paused) {
-                  videoElement.pause();
-                } else if (args[3] !== true && videoElement.paused) {
-                  videoElement.play();
-                }
-                videoElement.currentTime = args[4] / 1000;
-              }
+              this._notifyVideoControl(VideoControlEvent.Pause, {
+                paused: !!args[3],
+                time: args[4] / 1000
+              });
               break;
             case 'seek':
               simulated = true;
-              if (videoElement && !videoElement.paused) {
-                videoElement.currentTime = args[3] / 1000;
-              }
+              this._notifyVideoControl(VideoControlEvent.Seek, {
+                time: args[3] / 1000
+              });
               break;
           }
           break;
         case 300: // time
-          result = videoElement ? videoElement.currentTime : 0;
+          result = this._notifyVideoControl(VideoControlEvent.GetTime, null);
           simulated = true;
           break;
         case 302: // get bufferTime
@@ -487,7 +492,7 @@ module Shumway.AVM2.AS.flash.net {
           simulated = true;
           break;
         case 303: // get bufferLength
-          result = videoElement ? videoElement.duration : 0;
+          result = this._notifyVideoControl(VideoControlEvent.GetBufferLength, null);
           simulated = true;
           break;
         case 305: // get bytesLoaded
@@ -505,75 +510,68 @@ module Shumway.AVM2.AS.flash.net {
         "NetStream._invoke (" + index + ")");
       return result;
     }
-    private _createVideoElement(url: string) {
-      function notifyPlayStart(e) {
-        if (netStream._videoState.started) {
-          return;
-        }
-        netStream._videoState.started = true;
-        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
-          false, false, wrapJSObject({code: "NetStream.Play.Start", level: "status"})));
-      }
-      function notifyPlayStop(e) {
-        netStream._videoState.started = false;
-        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
-          false, false, wrapJSObject({code: "NetStream.Play.Stop", level: "status"})));
-      }
-      function notifyBufferFull(e) {
-        netStream._videoState.buffer = 'full';
-        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
-          false, false, wrapJSObject({code: "NetStream.Buffer.Full", level: "status"})));
-      }
-      function notifyProgress(e) {
-        netStream._videoState.buffer = 'progress';
-      }
-      function notifyBufferEmpty(e) {
-        netStream._videoState.buffer = 'empty';
-        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
-          false, false, wrapJSObject({code: "NetStream.Buffer.Empty", level: "status"})));
-      }
-      function notifyError(e) {
-        var code = e.target.error.code === 4 ? "NetStream.Play.NoSupportedTrackFound" :
-          e.target.error.code === 3 ? "NetStream.Play.FileStructureInvalid" : "NetStream.Play.StreamNotFound";
-        netStream.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
-          false, false, wrapJSObject({code: code, level: "error"})));
-      }
-      function notifyMetadata(e) {
-        netStream._videoMetadataReady.resolve({
-          videoWidth: element.videoWidth,
-          videoHeight: element.videoHeight
-        });
-        if (netStream._client) {
-          var data = {};
-          data.asSetPublicProperty('width', element.videoWidth);
-          data.asSetPublicProperty('height', element.videoHeight);
-          data.asSetPublicProperty('duration', element.duration);
-          netStream._client.asCallPublicProperty('onMetaData', [data]);
-        }
-      }
 
-      var netStream = this;
-
-      // HACK Firefox/Mac does not support mp4 yet, using something playable
-      if (/\.mp4$/i.test(url) &&
-        /Intel Mac OS X.*?Firefox\/\d+/.test(window.navigator.userAgent)) {
-        url = 'http://videos-cdn.mozilla.net/brand/Mozilla_2011_Story.webm';
-      }
-
-      var element = document.createElement('video');
-      element.preload = 'metadata'; // for mobile devices
-      element.src = url;
-      element.addEventListener("play", notifyPlayStart);
-      element.addEventListener("ended", notifyPlayStop);
-      element.addEventListener("loadeddata", notifyBufferFull);
-      element.addEventListener("progress", notifyProgress);
-      element.addEventListener("waiting", notifyBufferEmpty);
-      element.addEventListener("loadedmetadata", notifyMetadata);
-      element.addEventListener("error", notifyError);
-      element.play();
-
-      this._videoElement = element;
-      this._videoReady.resolve(element);
+    private _notifyVideoControl(eventType: VideoControlEvent, data: any): any {
+      var service: IVideoElementService = AVM2.instance.globals['Shumway.Player.Utils'];
+      return service.notifyVideoControl(this._id, eventType, data);
     }
+
+    processVideoEvent(eventType: VideoPlaybackEvent, data: any): void {
+      switch (eventType) {
+        case VideoPlaybackEvent.Initialized:
+          this._videoReady.resolve(undefined);
+          break;
+        case VideoPlaybackEvent.PlayStart:
+          if (this._videoState.started) {
+            break;
+          }
+          this._videoState.started = true;
+          this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Play.Start", level: "status"})));
+          break;
+        case VideoPlaybackEvent.PlayStop:
+          this._videoState.started = false;
+          this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Play.Stop", level: "status"})));
+          break;
+        case VideoPlaybackEvent.BufferFull:
+          this._videoState.buffer = 'full';
+          this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Buffer.Full", level: "status"})));
+          break;
+        case VideoPlaybackEvent.Progress:
+          this._videoState.buffer = 'progress';
+          break;
+        case VideoPlaybackEvent.BufferEmpty:
+          this._videoState.buffer = 'empty';
+          this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Buffer.Empty", level: "status"})));
+          break;
+        case VideoPlaybackEvent.Error:
+          var code = data.code === 4 ? "NetStream.Play.NoSupportedTrackFound" :
+              data.code === 3 ? "NetStream.Play.FileStructureInvalid" : "NetStream.Play.StreamNotFound";
+          this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: code, level: "error"})));
+          break;
+        case VideoPlaybackEvent.Metadata:
+          this._videoMetadataReady.resolve({
+            videoWidth: data.videoWidth,
+            videoHeight: data.videoHeight
+          });
+          if (this._client) {
+            var metadata = {};
+            metadata.asSetPublicProperty('width', data.videoWidth);
+            metadata.asSetPublicProperty('height', data.videoHeight);
+            metadata.asSetPublicProperty('duration', data.duration);
+            this._client.asCallPublicProperty('onMetaData', [metadata]);
+          }
+          break;
+      }
+    }
+  }
+
+  export interface IVideoElementService {
+    registerEventListener(id: number, listener: (eventType: VideoPlaybackEvent, data: any) => void);
+    notifyVideoControl(id: number, eventType: VideoControlEvent, data: any): any;
   }
 }
