@@ -339,23 +339,25 @@ module Shumway.AVM2.AS.flash.display {
           var info = data.result;
           var bytesLoaded = info.bytesLoaded;
           var bytesTotal = info.bytesTotal;
-          release || assert (bytesLoaded <= bytesTotal, "Loaded bytes should not exceed total bytes.");
-          loaderInfo.bytesLoaded = bytesLoaded;
+          release || assert (bytesLoaded <= bytesTotal, "Loaded bytes must not exceed total bytes.");
           if (!loaderInfo._bytesTotal) {
             loaderInfo._bytesTotal = bytesTotal;
           } else {
-            release || assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes should not change.");
+            release || assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes must not change.");
           }
-          if (info.open && this._loadStatus === LoadStatus.Unloaded) {
-            this._loadStatus = LoadStatus.Opened;
+          // Content code might rely on specific values for bytesLoaded to assume embedded assets
+          // to be available. Hence, we delay updating the value until we can guarantee availability
+          // of decoded data for all preceding bytes.
+          if (this._frameAssetsQueue) {
+            suspendUntil = Promise.all(this._frameAssetsQueue).then(function () {
+              loaderInfo.bytesLoaded = bytesLoaded;
+            });
+          } else {
+            loaderInfo.bytesLoaded = bytesLoaded;
           }
-          if (this._loadStatus !== LoadStatus.Unloaded) {
-            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS, false,
-                                                              false, bytesLoaded, bytesTotal));
-            this._progressPromise.resolve(undefined);
-            if (traceLoaderOption.value) {
-              this._writer.writeTimeLn("Resolving progress promise.");
-            }
+          this._progressPromise.resolve(undefined);
+          if (traceLoaderOption.value) {
+            this._writer.writeTimeLn("Resolving progress promise.");
           }
           break;
         case 'complete':
