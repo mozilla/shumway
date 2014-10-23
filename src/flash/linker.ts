@@ -244,6 +244,9 @@ module Shumway.AVM2.AS {
                      'flash.net.URLRequest');
         }
         var url = request.url;
+        if (isNullOrUndefined(url)) {
+          throwError('TypeError', Errors.NullPointerError, 'url');
+        }
         if (/^fscommand:/i.test(url)) {
           var fscommand = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain.getProperty(
             Multiname.fromSimpleName('flash.system.fscommand'), true, true);
