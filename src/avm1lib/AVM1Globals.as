@@ -83,7 +83,7 @@ public dynamic class AVM1Globals {
   public var getTimer:Function = flash.utils.getTimer;
 
   public function getURL(url, target, method) {
-    var request = new URLRequest(url);
+    var request = new URLRequest(String(url));
     if (method) {
       request.method = method;
     }
