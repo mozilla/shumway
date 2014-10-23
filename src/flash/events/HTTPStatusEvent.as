@@ -15,6 +15,7 @@
  */
 
 package flash.events {
+[native(cls='HTTPStatusEventClass')]
 public class HTTPStatusEvent extends Event {
   public static const HTTP_STATUS:String = "httpStatus";
   public static const HTTP_RESPONSE_STATUS:String = "httpResponseStatus";

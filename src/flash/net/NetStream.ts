@@ -19,7 +19,7 @@ module Shumway.AVM2.AS.flash.net {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
-  import NetStatusEvent = Shumway.AVM2.AS.flash.events.NetStatusEvent;
+  import events = Shumway.AVM2.AS.flash.events;
   import net = Shumway.AVM2.AS.flash.net;
   import utils = Shumway.AVM2.AS.flash.utils;
   import FileLoadingService = Shumway.FileLoadingService;
@@ -526,17 +526,17 @@ module Shumway.AVM2.AS.flash.net {
             break;
           }
           this._videoState.started = true;
-          this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Play.Start", level: "status"})));
           break;
         case VideoPlaybackEvent.PlayStop:
           this._videoState.started = false;
-          this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Play.Stop", level: "status"})));
           break;
         case VideoPlaybackEvent.BufferFull:
           this._videoState.buffer = 'full';
-          this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Buffer.Full", level: "status"})));
           break;
         case VideoPlaybackEvent.Progress:
@@ -544,13 +544,13 @@ module Shumway.AVM2.AS.flash.net {
           break;
         case VideoPlaybackEvent.BufferEmpty:
           this._videoState.buffer = 'empty';
-          this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Buffer.Empty", level: "status"})));
           break;
         case VideoPlaybackEvent.Error:
           var code = data.code === 4 ? "NetStream.Play.NoSupportedTrackFound" :
               data.code === 3 ? "NetStream.Play.FileStructureInvalid" : "NetStream.Play.StreamNotFound";
-          this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: code, level: "error"})));
           break;
         case VideoPlaybackEvent.Metadata:

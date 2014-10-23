@@ -21,7 +21,7 @@ module Shumway.AVM2.AS.flash.net {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
   import Telemetry = Shumway.Telemetry;
-  import NetStatusEvent = Shumway.AVM2.AS.flash.events.NetStatusEvent;
+  import events = Shumway.AVM2.AS.flash.events;
 
   export class NetConnection extends flash.events.EventDispatcher {
     
@@ -85,11 +85,11 @@ module Shumway.AVM2.AS.flash.net {
       this._uri = command;
       if (!command) {
         this._connected = true;
-        this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+        this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
           false, false,
           wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
       } else {
-        this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+        this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
           false, false,
           wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Failed'})));
       }
