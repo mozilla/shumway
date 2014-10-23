@@ -385,22 +385,28 @@ module Shumway.AVM2.AS.flash.display {
               suspendUntil = Promise.all(this._frameAssetsQueue).then(function () {
                 self._enqueueFrame(data);
                 self._frameAssetsQueue = null;
-              }.bind(this));
+              });
             } else {
               this._enqueueFrame(data);
             }
           } else if (data.type === 'image') {
             this._commitImage(data);
           } else if (data.type === 'abc') {
-            var appDomain = AVM2.instance.applicationDomain;
-            var abc = new AbcFile(data.data, data.name);
-            if (data.flags) {
-              // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
-              // immediately.
-              appDomain.loadAbc(abc);
-            } else {
-              if (loaderInfo._allowCodeExecution) {
-                appDomain.executeAbc(abc);
+            if (loaderInfo._allowCodeExecution) {
+              var appDomain = AVM2.instance.applicationDomain;
+              var abc = new AbcFile(data.data, data.name);
+              if (data.flags) {
+                // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
+                // immediately.
+                appDomain.loadAbc(abc);
+              } else {
+                if (this._frameAssetsQueue) {
+                  suspendUntil = Promise.all(this._frameAssetsQueue).then(function () {
+                    appDomain.executeAbc(abc);
+                  });
+                } else {
+                  appDomain.executeAbc(abc);
+                }
               }
             }
           }
