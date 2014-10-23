@@ -299,8 +299,11 @@ module Shumway.GFX {
 
     render(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle): void {
       enterTimeline("RenderableVideo.render");
-      if (this._video) {
-        context.drawImage(this._video, 0, 0);
+      var videoElement = this._video;
+      if (videoElement && videoElement.videoWidth > 0) {
+        context.drawImage(videoElement,
+          0, 0, videoElement.videoWidth, videoElement.videoHeight,
+          0, 0, this._bounds.w, this._bounds.h);
       }
       leaveTimeline("RenderableVideo.render");
     }

@@ -469,9 +469,10 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = this.input.readInt();
       var asset = context._getVideoAsset(id);
+      var rectangle = this._readRectangle();
       var url = this.input.readUTF();
       if (!asset) {
-        asset = new RenderableVideo(url, new Rectangle(0, 0, 960, 480), id, context);
+        asset = new RenderableVideo(url, rectangle, id, context);
         context._registerAsset(id, 0, asset);
       }
     }
