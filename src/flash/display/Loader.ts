@@ -234,7 +234,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private _content: flash.display.DisplayObject;
     private _contentLoaderInfo: flash.display.LoaderInfo;
-    // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+    _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
     private _worker: Worker;
     private _loadStatus: LoadStatus;
@@ -723,8 +723,8 @@ module Shumway.AVM2.AS.flash.display {
       return 0.0;
     }
 
-    getUncaughtErrorEvents(): events.UncaughtErrorEvents {
-      notImplemented("public flash.display.Loader::get UncaughtErrorEvents"); return;
+    get uncaughtErrorEvents(): events.UncaughtErrorEvents {
+      return this._uncaughtErrorEvents;
     }
 
     load(request: flash.net.URLRequest, context?: LoaderContext): void {

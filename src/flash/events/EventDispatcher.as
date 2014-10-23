@@ -29,7 +29,5 @@ public class EventDispatcher implements IEventDispatcher {
   public native function hasEventListener(type:String):Boolean;
   public native function willTrigger(type:String):Boolean;
   public native function dispatchEvent(event:Event):Boolean;
-  private native function eventDispatcher_ctor(target: IEventDispatcher): void;
-  private native function dispatchEventFunction(event: Event): Boolean;
 }
 }

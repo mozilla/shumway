@@ -30,7 +30,7 @@ public final class BlendMode {
   public static const HARDLIGHT:String = "hardlight";
   public static const ALPHA:String = "alpha";
   public static const ERASE:String = "erase";
-  public static const SHADER:String = "shader";
+//  public static const SHADER:String = "shader";
   public function BlendMode() {}
 }
 }

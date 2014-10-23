@@ -15,6 +15,7 @@
  */
 
 module Shumway.AVM2.AS {
+  import notImplemented = Shumway.Debug.notImplemented;
   import unexpected = Shumway.Debug.unexpected;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
@@ -37,6 +38,14 @@ module Shumway.AVM2.AS {
       public static AMF0 = 0;
       public static AMF3 = 3;
       public static DEFAULT = ObjectEncoding.AMF3;
+
+      static get dynamicPropertyWriter(): any /* flash.net.IDynamicPropertyWriter */ {
+        notImplemented("public flash.net.ObjectEncoding::get dynamicPropertyWriter");
+        return null;
+      }
+      static set dynamicPropertyWriter(value: any /* flash.net.IDynamicPropertyWriter */) {
+        notImplemented("public flash.net.ObjectEncoding::set dynamicPropertyWriter");
+      }
     }
   }
 

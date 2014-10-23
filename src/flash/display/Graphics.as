@@ -28,7 +28,7 @@ public final class Graphics {
                                            focalPointRatio:Number = 0):void;
   public native function beginBitmapFill(bitmap:BitmapData, matrix:Matrix = null,
                                          repeat:Boolean = true, smooth:Boolean = false):void;
-  public native function beginShaderFill(shader:Shader, matrix:Matrix = null):void;
+//  public native function beginShaderFill(shader:Shader, matrix:Matrix = null):void;
   public native function lineGradientStyle(type:String, colors:Array, alphas:Array, ratios:Array,
                                            matrix:Matrix = null, spreadMethod:String = "pad",
                                            interpolationMethod:String = "rgb",
@@ -56,7 +56,7 @@ public final class Graphics {
   public native function copyFrom(sourceGraphics:Graphics):void;
   public native function lineBitmapStyle(bitmap:BitmapData, matrix:Matrix = null,
                                          repeat:Boolean = true, smooth:Boolean = false):void;
-  public native function lineShaderStyle(shader:Shader, matrix:Matrix = null):void;
+//  public native function lineShaderStyle(shader:Shader, matrix:Matrix = null):void;
   public native function drawPath(commands:Vector, data:Vector, winding:String = "evenOdd"):void;
   public native function drawTriangles(vertices:Vector, indices:Vector = null,
                                        uvtData:Vector = null, culling:String = "none"):void;

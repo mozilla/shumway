@@ -83,7 +83,7 @@ public class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 
   public native function set accessibilityProperties(value:AccessibilityProperties):void;
 
-  public native function set blendShader(value:Shader):void;
+//  public native function set blendShader(value:Shader):void;
 
   public native function globalToLocal(point:Point):Point;
 

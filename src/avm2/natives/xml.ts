@@ -501,6 +501,8 @@ module Shumway.AVM2.AS {
     return true;
   }
 
+  Shumway.AVM2.AS.Natives.isXMLName = isXMLName;
+
   function XMLParser() {
     function parseXml(s, sink) {
       var i = 0, scopes: any [] = [{
@@ -2069,10 +2071,10 @@ module Shumway.AVM2.AS {
       return xl;
     }
 
-    hasOwnProperty(P: any = undefined): boolean {
+    native_hasOwnProperty(P: any = undefined): boolean {
       notImplemented("public.XMLList::hasOwnProperty"); return;
     }
-    propertyIsEnumerable(P: any = undefined): boolean {
+    native_propertyIsEnumerable(P: any = undefined): boolean {
 
       notImplemented("public.XMLList::propertyIsEnumerable"); return;
     }
@@ -2089,6 +2091,9 @@ module Shumway.AVM2.AS {
     children(): ASXMLList {
       // 13.5.4.4 XMLList.prototype.child ( propertyName )
       return this.getProperty('*', false, false);
+    }
+    descendants(): ASXMLList {
+      notImplemented("public.XMLList::descendants"); return;
     }
     comments(): ASXMLList {
       // 13.5.4.6 XMLList.prototype.comments ( )
