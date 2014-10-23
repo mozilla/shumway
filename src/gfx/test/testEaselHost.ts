@@ -32,6 +32,8 @@ module Shumway.GFX.Test {
   import CircularBuffer = Shumway.CircularBuffer;
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
+  import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
+
   export class TestEaselHost extends EaselHost {
     private _worker;
 
@@ -57,6 +59,15 @@ module Shumway.GFX.Test {
       this._worker.postSyncMessage({
         type: 'externalCallback',
         request: request
+      });
+    }
+
+    onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
+      this._worker.postMessage({
+        type: 'videoPlayback',
+        id: id,
+        eventType: eventType,
+        data: data
       });
     }
 
@@ -102,6 +113,10 @@ module Shumway.GFX.Test {
           break;
         case 'external':
           e.result = this.processExternalCommand(data.command);
+          e.handled = true;
+          break;
+        case 'videoControl':
+          e.result = this.processVideoControl(data.id, data.eventType, data.data);
           e.handled = true;
           break;
         case 'fscommand':

@@ -121,11 +121,12 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeNetStream(netStream: NetStream) {
+    writeNetStream(netStream: NetStream, bounds: Bounds) {
       if (netStream._isDirty) {
         writer && writer.writeLn("Sending NetStream: " + netStream._id);
         this.output.writeInt(MessageTag.UpdateNetStream);
         this.output.writeInt(netStream._id);
+        this._writeRectangle(bounds);
         this.output.writeUTF(netStream._url);
         netStream._isDirty = false;
       }
@@ -348,7 +349,7 @@ module Shumway.Remoting.Player {
         }
       } else if (video) {
         if (video._netStream) {
-          this.writeNetStream(video._netStream);
+          this.writeNetStream(video._netStream, video._getContentBounds());
         }
       }
     }

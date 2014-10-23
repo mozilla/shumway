@@ -15,6 +15,7 @@
  */
 
 package flash.events {
+[native(cls='NetStatusEventClass')]
 public class NetStatusEvent extends Event {
   public static const NET_STATUS:String = "netStatus";
   private var _info:Object;

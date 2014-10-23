@@ -41,7 +41,10 @@ module Shumway.Player {
 
   import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
   import IFSCommandListener = flash.system.IFSCommandListener;
+  import IVideoElementService = flash.net.IVideoElementService;
   import MessageTag = Shumway.Remoting.MessageTag;
+  import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
+  import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
 
   /**
    * Shumway Player
@@ -49,7 +52,7 @@ module Shumway.Player {
    * This class brings everything together. Loads the swf, runs the event loop and
    * synchronizes the frame tree with the display list.
    */
-  export class Player implements IBitmapDataSerializer, IFSCommandListener {
+  export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService {
     private _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
@@ -62,6 +65,7 @@ module Shumway.Player {
     private _writer: IndentingWriter;
     private _mouseEventDispatcher: MouseEventDispatcher;
     private _keyboardEventDispatcher: KeyboardEventDispatcher;
+    private _videoEventListeners: {(eventType: VideoPlaybackEvent, data: any):void}[] = [];
 
     /**
      * Used to request things from the GFX remote.
@@ -344,6 +348,14 @@ module Shumway.Player {
       leaveTimeline("sendUpdates");
     }
 
+    public registerEventListener(id: number, listener: (eventType: VideoPlaybackEvent, data: any)=>void) {
+      this._videoEventListeners[id] = listener;
+    }
+
+    public notifyVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
+      this.onVideoControl(id, eventType, data);
+    }
+
     public executeFSCommand(command: string, args: string) {
       switch (command) {
         case 'quit':
@@ -543,11 +555,21 @@ module Shumway.Player {
       }
     }
 
+    public processVideoEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
+      var listener = this._videoEventListeners[id];
+      Debug.assert(listener, 'Video event listener is not found');
+      listener(eventType, data);
+    }
+
     onExternalCommand(command) {
       throw new Error('This method is abstract');
     }
 
     onFSCommand(command: string, args: string) {
+      throw new Error('This method is abstract');
+    }
+
+    onVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
       throw new Error('This method is abstract');
     }
 

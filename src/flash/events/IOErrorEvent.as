@@ -15,6 +15,7 @@
  */
 
 package flash.events {
+[native(cls='IOErrorEventClass')]
 public class IOErrorEvent extends ErrorEvent {
   public static const IO_ERROR:String = "ioError";
   public static const NETWORK_ERROR:String = "networkError";
