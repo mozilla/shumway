@@ -38,7 +38,7 @@ module Shumway {
     amp:  '&',
     quot: '"',
     apos: "'",
-    nbsp: " "
+    nbsp: "\u00A0"
   };
 
   /**
