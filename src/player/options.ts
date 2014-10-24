@@ -77,8 +77,4 @@ module Shumway {
   export var stageScaleOption = playerOptions.register (
     new Shumway.Options.Option("", "Stage Scale", "number", 1, "Scales the symbols.", {range: { min: 0.1, max: 16, step: 0.01 }})
   );
-
-  export var useParsingWorkerOption = playerOptions.register (
-    new Shumway.Options.Option("useWorker", "Use Parsing Worker", "boolean", true, "Determines whether to spawn a DOM worker thread for parsing")
-  );
 }

@@ -568,21 +568,9 @@ module Shumway.Remoting.GFX {
     }
 
     private _readRegisterFont() {
-      var input = this.input;
-      var fontId = input.readInt();
-      var bold = input.readBoolean();
-      var italic = input.readBoolean();
+      var fontId = this.input.readInt();
       var data = this._readAsset();
-      var head = document.head;
-      head.insertBefore(document.createElement('style'), head.firstChild);
-      var style = <CSSStyleSheet>document.styleSheets[0];
-      style.insertRule(
-        '@font-face{' +
-        'font-family:swffont' + fontId + ';' +
-        'src:url(data:font/opentype;base64,' + Shumway.StringUtilities.base64ArrayBuffer(data.buffer) + ')' +
-        '}',
-        style.cssRules.length
-      );
+      Shumway.registerCSSFont(fontId, data);
     }
 
     private _readDrawToBitmap() {

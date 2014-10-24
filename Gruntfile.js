@@ -301,12 +301,11 @@ module.exports = function(grunt) {
 
   grunt.registerTask('update-refs', function  () {
     var updateRefs = require('./utils/update-flash-refs.js').updateRefs;
-    updateRefs('examples/inspector/inspector.html', {gfx: true, parser: true, player: true});
-    updateRefs('test/harness/slave.html', {gfx: true, parser: true, player: true});
-    updateRefs('examples/xlsimport/index.html', {gfx: true, parser: true, player: true});
-    updateRefs('examples/inspector/inspector.player.html', {parser: true, player: true});
-    updateRefs('src/shell/shell.ts', {parser: true, player: true, onlyIncludes: true});
-    updateRefs('src/swf/worker.js', {parser: true});
+    updateRefs('examples/inspector/inspector.html', {gfx: true, player: true});
+    updateRefs('test/harness/slave.html', {gfx: true, player: true});
+    updateRefs('examples/xlsimport/index.html', {gfx: true, player: true});
+    updateRefs('examples/inspector/inspector.player.html', {player: true});
+    updateRefs('src/shell/shell.ts', {player: true, onlyIncludes: true});
   });
   grunt.registerTask('update-flash-refs', ['update-refs']); // TODO deprecated
 
@@ -317,7 +316,6 @@ module.exports = function(grunt) {
     var license = grunt.file.read('./src/license.js');
     packageRefs(['gfx'], outputDir + 'shumway.gfx.js', license);
     packageRefs(['player'], outputDir + 'shumway.player.js', license);
-    packageRefs(['parser'], outputDir + 'shumway.parser.js', license);
   });
 
   grunt.registerTask('server', function () {
