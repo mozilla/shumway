@@ -131,7 +131,7 @@ module Shumway.Remoting.Player {
         var textures = graphics.getUsedTextures();
         var numTextures = textures.length;
         for (var i = 0; i < numTextures; i++) {
-          this.writeBitmapData(textures[i]);
+          textures[i] && this.writeBitmapData(textures[i]);
         }
         this.output.writeInt(MessageTag.UpdateGraphics);
         this.output.writeInt(graphics._id);
@@ -140,7 +140,7 @@ module Shumway.Remoting.Player {
         this._writeAsset(graphics.getGraphicsData().toPlainObject());
         this.output.writeInt(numTextures);
         for (var i = 0; i < numTextures; i++) {
-          this.output.writeInt(textures[i]._id);
+          this.output.writeInt(textures[i] ? textures[i]._id : -1);
         }
         graphics._isDirty = false;
       }
@@ -197,20 +197,6 @@ module Shumway.Remoting.Player {
           this.output.writeInt(0);
         }
         textContent.flags &= ~Shumway.TextContentFlags.Dirty
-      }
-    }
-
-    writeFont(font: flash.text.Font) {
-      // Device fonts can be skipped, they obviously should exist on the device.
-      if (font.fontType === 'embedded') {
-        writer && writer.writeLn("Sending Font: " + font._id);
-        var symbol = font._symbol;
-        release || assert(symbol);
-        this.output.writeInt(MessageTag.RegisterFont);
-        this.output.writeInt(font._id);
-        this.output.writeBoolean(symbol.bold);
-        this.output.writeBoolean(symbol.italic);
-        this._writeAsset(symbol.data);
       }
     }
 

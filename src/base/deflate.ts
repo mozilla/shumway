@@ -76,7 +76,7 @@ module Shumway.ArrayUtilities {
     }
 
     constructor(verifyHeader: boolean) {
-      this._buffer = new Uint8Array(1024);
+      this._buffer = null;
       this._bufferSize = 0;
       this._bufferPosition = 0;
       this._bitBuffer = 0;
@@ -103,13 +103,19 @@ module Shumway.ArrayUtilities {
         areTablesInitialized = true;
       }
     }
-    public push(data: Uint8Array) {
-      if (this._buffer.length < this._bufferSize + data.length) {
-        var newBuffer = new Uint8Array(this._bufferSize + data.length);
-        newBuffer.set(this._buffer);
-        this._buffer = newBuffer;
+    public push(data: Uint8Array, takeOwnership: boolean = false) {
+      if (takeOwnership && this._bufferSize === 0) {
+        this._buffer = data;
+      } else {
+        if (!this._buffer || this._buffer.length < this._bufferSize + data.length) {
+          var newBuffer = new Uint8Array(this._bufferSize + data.length);
+          if (this._buffer) {
+            newBuffer.set(this._buffer);
+          }
+          this._buffer = newBuffer;
+        }
+        this._buffer.set(data, this._bufferSize);
       }
-      this._buffer.set(data, this._bufferSize);
       this._bufferSize += data.length;
       this._bufferPosition = 0;
 
@@ -153,15 +159,23 @@ module Shumway.ArrayUtilities {
         }
         if (this._windowPosition >= WINDOW_SHIFT_POSITION) {
           // shift window
-          this._window.set(this._window.subarray(this._windowPosition - WINDOW_SIZE,
-            this._windowPosition));
+          if ('copyWithin' in this._buffer) {
+            this._window['copyWithin'](0, this._windowPosition - WINDOW_SIZE, this._windowPosition);
+          } else {
+            this._window.set(this._window.subarray(this._windowPosition - WINDOW_SIZE,
+                                                   this._windowPosition));
+          }
           this._windowPosition = WINDOW_SIZE;
         }
       } while (!incomplete && this._bufferPosition < this._bufferSize);
 
       if (this._bufferPosition < this._bufferSize) {
         // shift buffer
-        this._buffer.set(this._buffer.subarray(this._bufferPosition, this._bufferSize));
+        if ('copyWithin' in this._buffer) {
+          this._buffer['copyWithin'](0, this._bufferPosition, this._bufferSize);
+        } else {
+          this._buffer.set(this._buffer.subarray(this._bufferPosition, this._bufferSize));
+        }
         this._bufferSize -= this._bufferPosition;
       } else {
         this._bufferSize = 0;
@@ -189,6 +203,7 @@ module Shumway.ArrayUtilities {
       } else {
         this._state = InflateState.INIT;
       }
+      return false;
     }
     private _decodeInitState(): boolean {
       if (this._isFinalBlock) {

@@ -36,15 +36,14 @@ module Shumway.AVM1 {
   export class AVM1Context {
     public static instance: AVM1Context = null;
     public root: AVM1MovieClip;
-    public swfVersion: number;
+    public loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo;
     public globals: AVM1Globals;
     constructor() {
       this.root = null;
-      this.swfVersion = 0;
       this.globals = null;
     }
 
-    public static create: (swfVersion: number) => AVM1Context;
+    public static create: (loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo) => AVM1Context;
 
     public flushPendingScripts() {}
     public addAsset(className: string, symbolId: number, symbolProps) {}

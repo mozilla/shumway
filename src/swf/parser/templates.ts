@@ -147,17 +147,4 @@ module Shumway.SWF.Parser {
     }
     return str;
   }
-
-  export function readBinary($bytes, $stream, size, temporaryUsage: boolean): Uint8Array {
-    if (!size) {
-      size = $stream.end - $stream.pos;
-    }
-    var subArray = $bytes.subarray($stream.pos, $stream.pos = ($stream.pos + size));
-    if (temporaryUsage) {
-      return subArray;
-    }
-    var result = new Uint8Array(size);
-    result.set(subArray);
-    return result;
-  }
 }

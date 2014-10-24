@@ -98,7 +98,7 @@ module Shumway.SWF.Parser {
     return maxDimension > 5000;
   }
 
-  export function defineFont(tag, dictionary) {
+  export function defineFont(tag) {
     var uniqueName = 'swf-font-' + tag.id;
     var fontName = tag.name || uniqueName;
 

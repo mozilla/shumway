@@ -37,13 +37,12 @@ module Shumway.SWF.Parser {
 
   /**
    * Parses JPEG chunks and reads image width and height information. JPEG data
-   * is SWFs is encoded in chunks and is not directly decodable by the JPEG
-   * parser.
+   * in SWFs is encoded in chunks and not directly decodable by the JPEG parser.
    */
-  export function parseJpegChunks(image: any, bytes:Uint8Array): Uint8Array [] {
+  export function parseJpegChunks(image: any, bytes:Uint8Array,
+                                  chunks: Uint8Array[]): Uint8Array [] {
     var i = 0;
     var n = bytes.length;
-    var chunks = [];
     var code;
     do {
       var begin = i;
@@ -69,7 +68,9 @@ module Shumway.SWF.Parser {
       }
       chunks.push(bytes.subarray(begin, i));
     } while (i < n);
-    release || assert(image.width && image.height, 'bad jpeg image');
+    if (!release && !(image.width && image.height)) {
+      Debug.warning('bad jpeg image');
+    }
     return chunks;
   }
 
@@ -114,6 +115,7 @@ module Shumway.SWF.Parser {
     mimeType: string;
     data: Uint8Array;
     dataType?: ImageType;
+    image: any; // For some reason, tsc doesn't like us using the DOM Image definition here.
   }
 
   export interface DefineImageTag {
@@ -121,10 +123,10 @@ module Shumway.SWF.Parser {
     imgData: Uint8Array;
     mimeType: string;
     alphaData: boolean;
-    incomplete: boolean;
+    jpegTables: Uint8Array;
   }
 
-  export function defineImage(tag: DefineImageTag, dictionary: any): ImageDefinition {
+  export function defineImage(tag: DefineImageTag): ImageDefinition {
     enterTimeline("defineImage");
     var image: any = {
       type: 'image',
@@ -132,13 +134,12 @@ module Shumway.SWF.Parser {
       mimeType: tag.mimeType
     };
     var imgData = tag.imgData;
-    var chunks;
 
     if (tag.mimeType === 'image/jpeg') {
       var alphaData: Uint8Array = <any>tag.alphaData;
       if (alphaData) {
         var jpegImage = new Shumway.JPEG.JpegImage();
-        jpegImage.parse(joinChunks(parseJpegChunks(image, imgData)));
+        jpegImage.parse(joinChunks(parseJpegChunks(image, imgData, [])));
         release || assert(image.width === jpegImage.width);
         release || assert(image.height === jpegImage.height);
         var width = image.width;
@@ -155,17 +156,16 @@ module Shumway.SWF.Parser {
         image.mimeType = 'application/octet-stream';
         image.dataType = ImageType.StraightAlphaRGBA;
       } else {
-        chunks = parseJpegChunks(image, imgData);
-
-        if (tag.incomplete) {
-          var tables = dictionary[0];
-          release || assert(tables, 'missing jpeg tables');
-          var header = tables.data;
-          if (header && header.size) {
-            chunks[0] = chunks[0].subarray(2);
-            chunks.unshift(header.slice(0, header.size - 2));
-          }
+        var chunks = [];
+        if (tag.jpegTables) {
+          chunks.push(tag.jpegTables);
         }
+        parseJpegChunks(image, imgData, chunks);
+
+        if (tag.jpegTables && tag.jpegTables.byteLength > 0) {
+          chunks[1] = chunks[1].subarray(2);
+        }
+
         image.data = joinChunks(chunks);
         image.dataType = ImageType.JPEG;
       }

@@ -436,8 +436,8 @@ module Shumway.AVM2.AS.flash.events {
       if (keepPropagating) {
         var list = this._getListenersForType(false, type);
         if (list) {
-          keepPropagating = EventDispatcher.callListeners(this._getListeners(false)[type], event,
-                                                          target, target, EventPhase.AT_TARGET);
+          keepPropagating = EventDispatcher.callListeners(list, event, target, target,
+                                                          EventPhase.AT_TARGET);
         }
       }
 

@@ -42,11 +42,10 @@ module Shumway.AVM2.AS.flash.display {
         if (symbol.isRoot) {
           self._root = self;
         }
-        if (symbol.numFrames) {
-          release || assert (symbol.frames.length >= 1, "Sprites have at least one frame.");
-          var frame = symbol.frames[0];
-          release || assert (frame, "Initial frame is not defined.");
-          self._initializeChildren(frame);
+        if (symbol.numFrames && symbol.frames.length > 0) {
+          // For a SWF's root symbol, all frames are added after initialization, with
+          // _initializeChildren called after the first frame is added.
+          self._initializeChildren(symbol.frames[0]);
         }
       }
     };
@@ -75,51 +74,24 @@ module Shumway.AVM2.AS.flash.display {
 
     _hitTarget: flash.display.Sprite;
 
-    private _initializeChildren(frame: Timeline.FrameDelta): void {
-      for (var depth in frame.stateAtDepth) {
-        var state = frame.stateAtDepth[depth];
-        if (state) {
-          var character = DisplayObject.createAnimatedDisplayObject(state, false);
-          this.addTimelineObjectAtDepth(character, state.depth);
-          if (state.symbol.isAVM1Object) {
-            this._initAvm1Bindings(character, state);
-          }
-        }
+    _addFrame(frameInfo: any) {
+      var frames = (<Timeline.SpriteSymbol><any>this._symbol).frames;
+      frames.push(frameInfo.frameDelta);
+      if (frames.length === 1) {
+        this._initializeChildren(frames[0]);
       }
     }
 
-    _initAvm1Bindings(instance: DisplayObject, state: Shumway.Timeline.AnimationState) {
-      var instanceAVM1 = avm1lib.getAVM1Object(instance);
-      assert(instanceAVM1);
-
-      if (state.variableName) {
-        instanceAVM1.asSetPublicProperty('variable', state.variableName);
-      }
-
-      var events = state.events;
-      if (events) {
-        var eventsBound = [];
-        for (var i = 0; i < events.length; i++) {
-          var event = events[i];
-          var eventNames = event.eventNames;
-          var fn = event.handler.bind(instance);
-          for (var j = 0; j < eventNames.length; j++) {
-            var eventName = eventNames[j];
-            var avm2EventTarget = instance;
-            if (eventName === 'mouseDown' || eventName === 'mouseUp' || eventName === 'mouseMove') {
-              // FIXME regressed, avm1 mouse events shall be received all the time.
-              // avm2EventTarget = instance.stage;
-            }
-            avm2EventTarget.addEventListener(eventName, fn, false);
-            eventsBound.push({eventName: eventName, fn: fn, target: avm2EventTarget});
+    _initializeChildren(frame: Timeline.FrameDelta): void {
+      var states = frame.stateAtDepth;
+      for (var depth in states) {
+        var state = states[depth];
+        if (state) {
+          var character = this.createAnimatedDisplayObject(state, false);
+          this.addTimelineObjectAtDepth(character, state.depth);
+          if (state.symbol.isAVM1Object) {
+            avm1lib.initializeAVM1Object(character, state);
           }
-        }
-        if (eventsBound.length > 0) {
-          instance.addEventListener('removed', function (eventsBound) {
-            for (var i = 0; i < eventsBound.length; i++) {
-              eventsBound[i].target.removeEventListener(eventsBound[i].eventName, eventsBound[i].fn, false);
-            }
-          }.bind(instance, eventsBound), false);
         }
       }
     }

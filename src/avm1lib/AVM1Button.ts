@@ -70,13 +70,13 @@ module Shumway.AVM2.AS.avm1lib {
     _init(nativeButton: flash.display.SimpleButton): any {
       this._nativeAS3Object = nativeButton;
       initDefaultListeners(this);
-      if (!nativeButton._symbol || !nativeButton._symbol.buttonActions) {
+      if (!nativeButton._symbol || !nativeButton._symbol.data.buttonActions) {
         return;
       }
       this._nativeAS3Object.addEventListener('addedToStage', this._addListeners.bind(this));
       this._nativeAS3Object.addEventListener('removedFromStage', this._removeListeners.bind(this));
       var requiredListeners = this._requiredListeners = Object.create(null);
-      var actions = this._actions = nativeButton._symbol.buttonActions;
+      var actions = this._actions = nativeButton._symbol.data.buttonActions;
       for (var i = 0; i < actions.length; i++) {
         var action = actions[i];
         if (!action.actionsBlock) {

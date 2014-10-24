@@ -86,6 +86,7 @@ module Shumway.AVM2.AS.flash.display {
     private sourceBuffer;
     private rawFrames: Array<any>;
 
+    private decode: (block: Uint8Array) => SWF.Parser.DecodedSound;
     private decoderPosition: number;
     private decoderSession: MP3DecoderSession;
 
@@ -94,8 +95,9 @@ module Shumway.AVM2.AS.flash.display {
     private expectedFrame: number;
     private waitFor: number;
 
-    public constructor(streamInfo: any, movieClip: MovieClip) {
+    public constructor(streamInfo: SWF.Parser.SoundStream, movieClip: MovieClip) {
       this.movieClip = movieClip;
+      this.decode = streamInfo.decode;
       this.data = {
         sampleRate: streamInfo.sampleRate,
         channels: streamInfo.channels
@@ -110,7 +112,8 @@ module Shumway.AVM2.AS.flash.display {
         syncTime(element, movieClip);
         if (element.canPlayType(MP3_MIME_TYPE)) {
           this.element = element;
-          if (typeof MediaSource !== 'undefined') {
+          if (typeof MediaSource !== 'undefined' &&
+              (<any>MediaSource).isTypeSupported(MP3_MIME_TYPE)) {
             var mediaSource = new MediaSource();
             mediaSource.addEventListener('sourceopen',
               openMediaSource.bind(null, this, mediaSource));
@@ -140,27 +143,26 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    public appendBlock(frameNum: number, streamBlock: any) {
+    public appendBlock(frameNum: number, streamBlock: Uint8Array) {
+      var decodedBlock = this.decode(streamBlock);
       var streamPosition = this.position;
-      this.seekIndex[frameNum] = streamPosition +
-        streamBlock.seek * this.data.channels;
-      this.position = streamPosition +
-        streamBlock.samplesCount * this.data.channels;
+      this.seekIndex[frameNum] = streamPosition + decodedBlock.seek * this.data.channels;
+      this.position = streamPosition + decodedBlock.samplesCount * this.data.channels;
 
       if (this.sourceBuffer) {
-        this.sourceBuffer.appendBuffer(streamBlock.data);
+        this.sourceBuffer.appendBuffer(decodedBlock.data);
         return;
       }
       if (this.rawFrames) {
-        this.rawFrames.push(streamBlock.data);
+        this.rawFrames.push(decodedBlock.data);
         return;
       }
 
       var decoderSession = this.decoderSession;
       if (decoderSession) {
-        decoderSession.pushAsync(streamBlock.data);
+        decoderSession.pushAsync(decodedBlock.data);
       } else {
-        this.data.pcm.set(streamBlock.pcm, streamPosition);
+        this.data.pcm.set(decodedBlock.pcm, streamPosition);
       }
     }
 

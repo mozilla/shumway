@@ -18,8 +18,14 @@ if (typeof console === 'undefined') {
   console = {
     log: print,
     info: print,
-    error: print,
-    warn: print,
+    warn: function() {
+      print(Shumway.IndentingWriter.RED + [].join.call(arguments, ', ') +
+            Shumway.IndentingWriter.ENDC);
+    },
+    error: function() {
+      print(Shumway.IndentingWriter.BOLD_RED + [].join.call(arguments, ', ') +
+            Shumway.IndentingWriter.ENDC + '\nstack:\n' + (new Error().stack));
+    },
     time: function () {},
     timeEnd: function () {}
   };
@@ -83,6 +89,28 @@ var document = {
     }
   }
 };
+
+var Image = function () {};
+
+Image.prototype = {
+
+}
+
+var URL = function () {};
+
+URL.prototype = {
+
+}
+
+URL.createObjectURL = function createObjectURL() {
+  return "";
+};
+
+var Blob = function () {};
+
+Blob.prototype = {
+
+}
 
 var XMLHttpRequest = function () {};
 XMLHttpRequest.prototype = {

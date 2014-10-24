@@ -233,6 +233,20 @@ module Shumway.Tools.Profiler {
       }
       visit(this);
     }
+
+    public trace(writer: IndentingWriter) {
+      var s = (this.kind ? this.kind.name + ": " : "Profile: ") +
+              (this.endTime - this.startTime).toFixed(2);
+      if (this.children && this.children.length) {
+        writer.enter(s);
+        for (var i = 0; i < this.children.length; i++) {
+          this.children[i].trace(writer);
+        }
+        writer.outdent();
+      } else {
+        writer.writeLn(s);
+      }
+    }
   }
 
   export class TimelineBufferSnapshot extends TimelineFrame {

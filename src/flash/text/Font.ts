@@ -594,7 +594,8 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = function (symbol: Shumway.Timeline.FontSymbol) {
       var self: Font = this;
 
-      self._id = flash.display.DisplayObject.getNextSyncID();
+      // TODO: give fonts proper inter-SWF IDs, so multiple SWFs' fonts don't collide.
+      self._id = symbol.data.id;
 
       self._fontName = null;
       self._fontFamily = null;
@@ -631,12 +632,16 @@ module Shumway.AVM2.AS.flash.text {
         }
 
         // Font symbols without any glyphs describe device fonts.
-        self._fontType = symbol.data ? FontType.EMBEDDED : FontType.DEVICE;
+        self._fontType = metrics ? FontType.EMBEDDED : FontType.DEVICE;
 
-        if (!Font._fontsBySymbolId[symbol.id]) {
-          Font._fontsBySymbolId[symbol.id] = self;
-          Font._fontsByName[symbol.name.toLowerCase()] = self;
-          Font._fontsByName['swffont' + symbol.id] = self;
+        var fontProp = Object.getOwnPropertyDescriptor(Font._fontsBySymbolId, symbol.id + '');
+        // Define mapping or replace lazy getter with value.
+        if (!fontProp || !fontProp.value) {
+          Object.defineProperty(Font._fontsBySymbolId, symbol.id + '', {value: self});
+          Object.defineProperty(Font._fontsByName, symbol.name.toLowerCase(), {value: self});
+          if (self._fontType === FontType.EMBEDDED) {
+            Object.defineProperty(Font._fontsByName, 'swffont' + symbol.id, {value: self});
+          }
         }
       }
     };
@@ -735,6 +740,25 @@ module Shumway.AVM2.AS.flash.text {
 
     static registerFont(font: ASClass): void {
       somewhatImplemented('Font.registerFont');
+    }
+
+    /**
+     * Registers an embedded font as available in the system without it being decoded.
+     *
+     * Firefox decodes fonts synchronously, allowing us to do the decoding upon first actual use.
+     * All we need to do here is let the system know about the family name and ID, so that both
+     * TextFields/Labels referring to the font's symbol ID as well as HTML text specifying a font
+     * face can resolve the font.
+     */
+    static registerLazyFont(fontMapping: {name: string; id: number},
+                            loaderInfo: flash.display.LoaderInfo): void {
+      var resolverProp = {
+        get: loaderInfo.getSymbolById.bind(loaderInfo, fontMapping.id),
+        configurable: true
+      };
+      Object.defineProperty(Font._fontsByName, fontMapping.name.toLowerCase(), resolverProp);
+      Object.defineProperty(Font._fontsByName, 'swffont' + fontMapping.id, resolverProp);
+      Object.defineProperty(Font._fontsBySymbolId, fontMapping.id + '', resolverProp);
     }
 
     get fontName(): string {

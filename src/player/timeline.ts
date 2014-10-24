@@ -25,23 +25,40 @@ module Shumway.Timeline {
   import flash = Shumway.AVM2.AS.flash;
   import SwfTag = Shumway.SWF.Parser.SwfTag;
   import PlaceObjectFlags = Shumway.SWF.Parser.PlaceObjectFlags;
+  import SoundStream = Shumway.SWF.Parser.SoundStream;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
+  export interface SymbolData {id: number; className: string}
   /**
    * TODO document
    */
   export class Symbol {
-    id: number = -1;
+    data: any;
     isAVM1Object: boolean;
     avm1Context: Shumway.AVM1.AVM1Context;
     symbolClass: Shumway.AVM2.AS.ASClass;
 
-    constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
-      release || assert (isInteger(id));
-      this.id = id;
-      this.symbolClass = symbolClass;
+    constructor(data: SymbolData, symbolDefaultClass: Shumway.AVM2.AS.ASClass) {
+      release || assert (isInteger(data.id));
+      this.data = data;
+      if (data.className) {
+        var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
+        try {
+          var symbolClass = appDomain.getClass(data.className);
+          this.symbolClass = symbolClass;
+        } catch (e) {
+          warning ("Symbol " + data.id + " bound to non-existing class " + data.className);
+          this.symbolClass = symbolDefaultClass;
+        }
+      } else {
+        this.symbolClass = symbolDefaultClass;
+      }
       this.isAVM1Object = false;
+    }
+
+    get id(): number {
+      return this.data.id;
     }
   }
 
@@ -51,8 +68,8 @@ module Shumway.Timeline {
     scale9Grid: Bounds;
     dynamic: boolean;
 
-    constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass, dynamic: boolean = true) {
-      super(id, symbolClass);
+    constructor(data: SymbolData, symbolClass: Shumway.AVM2.AS.ASClass, dynamic: boolean) {
+      super(data, symbolClass);
       this.dynamic = dynamic;
     }
 
@@ -68,15 +85,15 @@ module Shumway.Timeline {
   export class ShapeSymbol extends DisplaySymbol {
     graphics: flash.display.Graphics = null;
 
-    constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass = flash.display.Shape) {
-      super(id, symbolClass, false);
+    constructor(data: SymbolData, symbolClass: Shumway.AVM2.AS.ASClass) {
+      super(data, symbolClass, false);
     }
 
-    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
-      var symbol = new ShapeSymbol(data.id);
+    static FromData(data: SymbolData, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
+      var symbol = new ShapeSymbol(data, flash.display.Shape);
       symbol._setBoundsFromData(data);
       symbol.graphics = flash.display.Graphics.FromData(data);
-      symbol.processRequires(data.require, loaderInfo);
+      symbol.processRequires((<any>data).require, loaderInfo);
       return symbol;
     }
 
@@ -87,6 +104,12 @@ module Shumway.Timeline {
       var textures = this.graphics.getUsedTextures();
       for (var i = 0; i < dependencies.length; i++) {
         var symbol = <BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
+        if (!symbol) {
+          warning("Bitmap symbol " + dependencies[i] + " required by shape, but not defined.");
+          textures.push(null);
+          // TODO: handle null-textures from invalid SWFs correctly.
+          continue;
+        }
         textures.push(symbol.getSharedInstance());
       }
     }
@@ -95,12 +118,12 @@ module Shumway.Timeline {
   export class MorphShapeSymbol extends ShapeSymbol {
     morphFillBounds: Bounds;
     morphLineBounds: Bounds;
-    constructor(id: number) {
-      super(id, flash.display.MorphShape);
+    constructor(data: SymbolData) {
+      super(data, flash.display.MorphShape);
     }
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): MorphShapeSymbol {
-      var symbol = new MorphShapeSymbol(data.id);
+      var symbol = new MorphShapeSymbol(data);
       symbol._setBoundsFromData(data);
       symbol.graphics = flash.display.Graphics.FromData(data);
       symbol.processRequires(data.require, loaderInfo);
@@ -113,19 +136,21 @@ module Shumway.Timeline {
   export class BitmapSymbol extends DisplaySymbol {
     width: number;
     height: number;
+    image: any; // Image, but tsc doesn't like that.
     data: Uint8Array;
     type: ImageType;
 
     private sharedInstance: flash.display.BitmapData;
 
-    constructor(id: number) {
-      super(id, flash.display.BitmapData);
+    constructor(data: SymbolData) {
+      super(data, flash.display.BitmapData, false);
     }
 
     static FromData(data: any): BitmapSymbol {
-      var symbol = new BitmapSymbol(data.id);
+      var symbol = new BitmapSymbol(data);
       symbol.width = data.width;
       symbol.height = data.height;
+      symbol.image = data.image;
       symbol.data = data.data;
       switch (data.mimeType) {
         case "application/octet-stream":
@@ -180,12 +205,12 @@ module Shumway.Timeline {
     variableName: string = null;
     textContent: Shumway.TextContent = null;
 
-    constructor(id: number) {
-      super(id, flash.text.TextField);
+    constructor(data: SymbolData) {
+      super(data, flash.text.TextField, true);
     }
 
-    static FromTextData(data: any): TextSymbol {
-      var symbol = new TextSymbol(data.id);
+    static FromTextData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
+      var symbol = new TextSymbol(data);
       symbol._setBoundsFromData(data);
       var tag = data.tag;
       if (data.static) {
@@ -205,13 +230,14 @@ module Shumway.Timeline {
       }
       if (tag.hasFont) {
         symbol.size = tag.fontHeight;
+        // Requesting the font symbol guarantees that it's loaded and initialized.
+        var fontSymbol = loaderInfo.getSymbolById(tag.fontId);
         var font = flash.text.Font.getBySymbolId(tag.fontId);
-        if (font) {
+        if (fontSymbol && font) {
           symbol.font = font.fontName;
           if (tag.fontClass) {
             var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
-            symbol.fontClass = <flash.text.Font><any>
-              appDomain.getClass(tag.fontClass);
+            symbol.fontClass = <flash.text.Font><any>appDomain.getClass(tag.fontClass);
           }
         } else {
           warning("Font " + tag.fontId + " is not defined.");
@@ -243,42 +269,115 @@ module Shumway.Timeline {
       symbol.variableName = tag.variableName;
       return symbol;
     }
+
+    /**
+     * Turns raw DefineLabel tag data into an object that's consumable as a text symbol and then
+     * passes that into `FromTextData`, returning the resulting TextSymbol.
+     *
+     * This has to be done outside the SWF parser because it relies on any used fonts being
+     * available as symbols, which isn't the case in the SWF parser.
+     */
+    static FromLabelData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
+      var bounds = data.fillBounds;
+      var records = data.records;
+      var coords = data.coords = [];
+      var htmlText = '';
+      var size = 12;
+      var face = 'Times Roman';
+      var color = 0;
+      var x = 0;
+      var y = 0;
+      var codes: number[];
+      for (var i = 0; i < records.length; i++) {
+        var record = records[i];
+        if (record.eot) {
+          break;
+        }
+        if (record.hasFont) {
+          var font = <FontSymbol>loaderInfo.getSymbolById(record.fontId);
+          font || Debug.warning('Label ' + data.id + 'refers to undefined font symbol ' +
+                                record.fontId);
+          codes = font.codes;
+          size = record.fontHeight;
+          if (!font.originalSize) {
+            size /= 20;
+          }
+          face = 'swffont' + record.fontId;
+        }
+        if (record.hasColor) {
+          color = record.color >>> 8;
+        }
+        if (record.hasMoveX) {
+          x = record.moveX;
+          if (x < bounds.xMin) {
+            bounds.xMin = x;
+          }
+        }
+        if (record.hasMoveY) {
+          y = record.moveY;
+          if (y < bounds.yMin) {
+            bounds.yMin = y;
+          }
+        }
+        var text = '';
+        var entries = record.entries;
+        var j = 0;
+        var entry;
+        while ((entry = entries[j++])) {
+          var code = codes[entry.glyphIndex];
+          release || assert(code, 'undefined label glyph');
+          var char = String.fromCharCode(code);
+          text += charEscapeMap[char] || char;
+          coords.push(x, y);
+          x += entry.advance;
+        }
+        htmlText += '<font size="' + size + '" face="' + face + '"' + ' color="#' +
+                     ('000000' + color.toString(16)).slice(-6) + '">' + text + '</font>';
+      }
+      data.tag.initialText = htmlText;
+      return TextSymbol.FromTextData(data, loaderInfo);
+    }
   }
+
+  var charEscapeMap = {'<': '&lt;', '>': '&gt;', '&' : '&amp;'};
 
   export class ButtonSymbol extends DisplaySymbol {
     upState: AnimationState = null;
     overState: AnimationState = null;
     downState: AnimationState = null;
     hitTestState: AnimationState = null;
-    buttonActions: any[]; // Only relevant for AVM1, see AVM1Button.
+    loaderInfo: flash.display.LoaderInfo;
 
-    constructor(id: number) {
-      super(id, flash.display.SimpleButton);
+    constructor(data: SymbolData, loaderInfo: flash.display.LoaderInfo) {
+      super(data, flash.display.SimpleButton, false);
+      this.loaderInfo = loaderInfo;
     }
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ButtonSymbol {
-      var symbol = new ButtonSymbol(data.id);
+      var symbol = new ButtonSymbol(data, loaderInfo);
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         symbol.isAVM1Object = true;
-        symbol.buttonActions = data.buttonActions;
       }
       var states = data.states;
-      var character, matrix, colorTransform;
+      var character: SpriteSymbol = null;
+      var matrix: flash.geom.Matrix = null;
+      var colorTransform: flash.geom.ColorTransform = null;
+      var cmd;
       for (var stateName in states) {
         var commands = states[stateName];
         if (commands.length === 1) {
-          var cmd = commands[0];
-          character = loaderInfo.getSymbolById(cmd.symbolId);
+          cmd = commands[0];
           matrix = flash.geom.Matrix.FromUntyped(cmd.matrix);
           if (cmd.cxform) {
             colorTransform = flash.geom.ColorTransform.FromCXForm(cmd.cxform);
           }
         } else {
-          character = new Timeline.SpriteSymbol(-1);
+          cmd = {symbolId: -1};
+          character = new Timeline.SpriteSymbol({id: -1, className: null}, loaderInfo);
           character.frames.push(new FrameDelta(loaderInfo, commands));
         }
-        symbol[stateName + 'State'] =
-          new Timeline.AnimationState(character, 0, matrix, colorTransform);
+        symbol[stateName + 'State'] = new Timeline.AnimationState(cmd.symbolId, character, 0,
+                                                                  matrix, colorTransform);
       }
       return symbol;
     }
@@ -292,34 +391,37 @@ module Shumway.Timeline {
     isRoot: boolean;
     avm1Name: string;
     avm1SymbolClass;
+    loaderInfo: flash.display.LoaderInfo;
 
-    constructor(id: number, isRoot: boolean = false) {
-      super(id, flash.display.MovieClip);
-      this.isRoot = isRoot;
+    constructor(data: SymbolData, loaderInfo: flash.display.LoaderInfo) {
+      super(data, flash.display.MovieClip, true);
+      this.loaderInfo = loaderInfo;
     }
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): SpriteSymbol {
-      var symbol = new SpriteSymbol(data.id);
+      var symbol = new SpriteSymbol(data, loaderInfo);
       symbol.numFrames = data.frameCount;
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         symbol.isAVM1Object = true;
         symbol.avm1Context = loaderInfo._avm1Context;
       }
-      symbol.frameScripts = data.frameScripts;
+      symbol.frameScripts = [];
       var frames = data.frames;
-      var frameNum = 1;
       for (var i = 0; i < frames.length; i++) {
-        var frameInfo = frames[i];
-        var frame = new FrameDelta(loaderInfo, frameInfo.commands);
-        var repeat = frameInfo.repeat;
+        var frameInfo;
+        frameInfo = loaderInfo.getFrame(data, i);
+        if (frameInfo.actionBlocks) {
+          symbol.frameScripts.push(i);
+          symbol.frameScripts.push.apply(symbol.frameScripts, frameInfo.actionBlocks);
+        }
+        if (frameInfo.labelName) {
+          symbol.labels.push(new flash.display.FrameLabel(frameInfo.labelName, i + 1));
+        }
+        var frame = frameInfo.frameDelta;
+        var repeat = frameInfo.repeat || 1;
         while (repeat--) {
           symbol.frames.push(frame);
         }
-        if (frameInfo.labelName) {
-          symbol.labels.push(new flash.display.FrameLabel(frameInfo.labelName, frameNum));
-        }
-
-        frameNum += frameInfo.repeat;
       }
       return symbol;
     }
@@ -327,22 +429,27 @@ module Shumway.Timeline {
 
   // TODO: move this, and the other symbol classes, into better-suited files.
   export class FontSymbol extends Symbol {
-    name: string = "";
-    bold: boolean = false;
-    italic: boolean = false;
-    data: Uint8Array;
+    name: string;
+    id: number;
+    bold: boolean;
+    italic: boolean;
+    codes: number[];
+    originalSize: boolean;
     metrics: any;
 
-    constructor(id: number) {
-      super(id, flash.text.Font);
+    constructor(data: SymbolData) {
+      super(data, flash.text.Font);
     }
 
     static FromData(data: any): FontSymbol {
-      var symbol = new FontSymbol(data.id);
+      var symbol = new FontSymbol(data);
       symbol.name = data.name;
+      // No need to keep the original data baggage around.
+      symbol.data = {id: data.id};
       symbol.bold = data.bold;
       symbol.italic = data.italic;
-      symbol.data = data.data;
+      symbol.originalSize = data.originalSize;
+      symbol.codes = data.codes;
       symbol.metrics = data.metrics;
       return symbol;
     }
@@ -354,12 +461,12 @@ module Shumway.Timeline {
     pcm: Float32Array;
     packaged;
 
-    constructor(id: number) {
-      super(id, flash.media.Sound);
+    constructor(data: SymbolData) {
+      super(data, flash.media.Sound);
     }
 
     static FromData(data: any): SoundSymbol {
-      var symbol = new SoundSymbol(data.id);
+      var symbol = new SoundSymbol(data);
       symbol.channels = data.channels;
       symbol.sampleRate = data.sampleRate;
       symbol.pcm = data.pcm;
@@ -372,12 +479,12 @@ module Shumway.Timeline {
     buffer: Uint8Array;
     byteLength: number;
 
-    constructor(id: number) {
-      super(id, flash.utils.ByteArray);
+    constructor(data: SymbolData) {
+      super(data, flash.utils.ByteArray);
     }
 
     static FromData(data: any): BinarySymbol {
-      var symbol = new BinarySymbol(data.id);
+      var symbol = new BinarySymbol(data);
       symbol.buffer = data.data;
       symbol.byteLength = data.data.byteLength;
       return symbol;
@@ -388,7 +495,8 @@ module Shumway.Timeline {
    * TODO document
    */
   export class AnimationState {
-    constructor(public symbol: DisplaySymbol = null,
+    constructor(public symbolId: number,
+                public symbol: DisplaySymbol = null,
                 public depth: number = 0,
                 public matrix: flash.geom.Matrix = null,
                 public colorTransform: flash.geom.ColorTransform = null,
@@ -445,50 +553,81 @@ module Shumway.Timeline {
    * TODO document
    */
   export class FrameDelta {
-    _stateAtDepth: Shumway.Map<AnimationState>;
-    _soundStarts: SoundStart[];
+    private _stateAtDepth: Shumway.Map<AnimationState>;
+    private _soundStarts: SoundStart[];
+    private _soundStreamHead: SoundStream;
+    private _soundStreamBlock: {data: Uint8Array};
 
     get stateAtDepth() {
       return this._stateAtDepth || this._initialize();
     }
 
     get soundStarts() {
-      if (this._soundStarts === undefined) {
+      if (this.commands) {
         this._initialize();
       }
       return this._soundStarts;
     }
 
+    // TODO: refactor streaming sound support to delay sound parsing until needed.
+    // These two fields aren't used for now, but will perhaps be helpful in the above.
+    get soundStreamHead() {
+      if (this.commands) {
+        this._initialize();
+      }
+      return this._soundStreamHead;
+    }
+
+    get soundStreamBlock() {
+      if (this.commands) {
+        this._initialize();
+      }
+      return this._soundStreamBlock;
+    }
+
     constructor(private loaderInfo: flash.display.LoaderInfo, private commands: any []) {
       this._stateAtDepth = null;
-      this._soundStarts = undefined;
+      this._soundStarts = null;
+      this._soundStreamHead = null;
+      this._soundStreamBlock = null;
     }
 
     private _initialize(): Shumway.Map<AnimationState> {
       var states: Shumway.Map<AnimationState> = this._stateAtDepth = Object.create(null);
-      var soundStarts : SoundStart[] = null;
       var commands = this.commands;
+      if (!commands) {
+        return states;
+      }
       var loaderInfo = this.loaderInfo;
       for (var i = 0; i < commands.length; i++) {
-        var cmd = commands[i];
+        var cmd = 'depth' in commands[i] ?
+                  commands[i] :
+                  <any>loaderInfo._file.getParsedTag(commands[i]);
         var depth = cmd.depth;
         switch (cmd.code) {
-          case 5: // SWF_TAG_CODE_REMOVE_OBJECT
-          case 28: // SWF_TAG_CODE_REMOVE_OBJECT2
+          case SwfTag.CODE_REMOVE_OBJECT:
+          case SwfTag.CODE_REMOVE_OBJECT2:
             states[depth] = null;
             break;
           case SwfTag.CODE_START_SOUND:
-            if (!soundStarts) {
-              soundStarts = [];
-            }
+            var soundStarts = this._soundStarts || (this._soundStarts = []);
             soundStarts.push(new SoundStart(cmd.soundId, cmd.soundInfo));
             break;
-          default:
+          case SwfTag.CODE_SOUND_STREAM_HEAD:
+          case SwfTag.CODE_SOUND_STREAM_HEAD2:
+            this._soundStreamHead = SoundStream.FromTag(cmd);
+            break;
+          case SwfTag.CODE_SOUND_STREAM_BLOCK:
+            this._soundStreamBlock = cmd;
+            break;
+          case SwfTag.CODE_PLACE_OBJECT:
+          case SwfTag.CODE_PLACE_OBJECT2:
+          case SwfTag.CODE_PLACE_OBJECT3:
             var symbol: DisplaySymbol = null;
             var matrix: flash.geom.Matrix = null;
             var colorTransform: flash.geom.ColorTransform = null;
             var filters: flash.filters.BitmapFilter[] = null;
-            var events: any[] = null;
+            var events: any[] = loaderInfo._allowCodeExecution ? cmd.events : 0;
             if (cmd.symbolId) {
               symbol = <DisplaySymbol>loaderInfo.getSymbolById(cmd.symbolId);
               if (!symbol) {
@@ -522,44 +661,8 @@ module Shumway.Timeline {
                 filters.push(filter);
               }
             }
-            if ((cmd.flags & PlaceObjectFlags.HasClipActions) &&
-                loaderInfo._allowCodeExecution &&
-                loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-              var swfEvents = cmd.events;
-              events = [];
-              for (var j = 0; j < swfEvents.length; j++) {
-                var swfEvent = swfEvents[j];
-                if (swfEvent.eoe) {
-                  break;
-                }
-                var actionsData = new AVM1.AVM1ActionsData(swfEvent.actionsData,
-                                                           's' + cmd.symbolId + 'e' + j);
-                var fn = (function (actionsData, loaderInfo) {
-                  return function() {
-                    var avm1Context = loaderInfo._avm1Context;
-                    var avm1Object = Shumway.AVM2.AS.avm1lib.getAVM1Object(this);
-                    return avm1Context.executeActions(actionsData, avm1Object);
-                  };
-                })(actionsData, loaderInfo);
-                var eventNames = [];
-                for (var eventName in swfEvent) {
-                  if (eventName.indexOf("on") !== 0 || !swfEvent[eventName]) {
-                    continue;
-                  }
-                  var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
-                  if (avm2EventName === 'enterFrame') {
-                    avm2EventName = 'frameConstructed';
-                  }
-                  eventNames.push(avm2EventName);
-                }
-                events.push({
-                  eventNames: eventNames,
-                  handler: fn,
-                  keyPress: swfEvent.keyPress
-                });
-              }
-            }
             var state = new Timeline.AnimationState (
+              cmd.symbolId,
               symbol,
               depth,
               matrix,
@@ -576,9 +679,11 @@ module Shumway.Timeline {
             );
             states[depth] = state;
             break;
+          default:
+            console.warn("Unhandled timeline control tag: " + cmd.code + ": " + SwfTag[cmd.code]);
         }
+
       }
-      this._soundStarts = soundStarts;
       this.commands = null;
       return states;
     }

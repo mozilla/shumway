@@ -17,8 +17,11 @@
 /// <reference path='../../build/ts/base.d.ts' />
 /// <reference path='../../build/ts/tools.d.ts' />
 
-///<reference path='module.ts'/>
 ///<reference path='parser/references.ts' />
+///<reference path='module.ts'/>
+///<reference path='options.ts'/>
 ///<reference path='jpeg.ts' />
 ///<reference path='stream.ts' />
+///<reference path='SWFFile.ts' />
+///<reference path='ImageFile.ts' />
 ///<reference path='FileLoader.ts' />

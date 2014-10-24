@@ -86,6 +86,12 @@ module Shumway.ArrayUtilities {
     bitMasks[i] = mask = (mask << 1) | 1;
   }
 
+  enum TypedArrayViewFlags {
+    U8  = 1,
+    I32 = 2,
+    F32 = 4
+  }
+
   export class DataBuffer implements IDataInput, IDataOutput {
     private static _nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
 
@@ -115,7 +121,7 @@ module Shumway.ArrayUtilities {
       this._buffer = new ArrayBuffer(initialSize);
       this._length = 0;
       this._position = 0;
-      this._updateViews();
+      this._resetViews();
       this._littleEndian = DataBuffer._nativeLittleEndian;
       this._bitBuffer = 0;
       this._bitLength = 0;
@@ -126,7 +132,7 @@ module Shumway.ArrayUtilities {
       dataBuffer._buffer = buffer;
       dataBuffer._length = length === -1 ? buffer.byteLength : length;
       dataBuffer._position = 0;
-      dataBuffer._updateViews();
+      dataBuffer._resetViews();
       dataBuffer._littleEndian = DataBuffer._nativeLittleEndian;
       dataBuffer._bitBuffer = 0;
       dataBuffer._bitLength = 0;
@@ -143,11 +149,28 @@ module Shumway.ArrayUtilities {
       return new PlainObjectDataBuffer(this._buffer, this._length, this._littleEndian);
     }
 
-    private _updateViews() {
+    /**
+     * By default, we only have a byte view. All other views are |null|.
+     */
+    private _resetViews() {
       this._u8 = new Uint8Array(this._buffer);
+      this._i32 = null;
+      this._f32 = null;
+    }
+
+    /**
+     * We don't want to eagerly allocate views if we won't ever need them. You must call this method
+     * before using a view of a certain type to make sure it's available. Once a view is allocated,
+     * it is not re-allocated unless the view becomes |null| as a result of a call to |resetViews|.
+     */
+    private _requestViews(flags: TypedArrayViewFlags) {
       if ((this._buffer.byteLength & 0x3) === 0) {
-        this._i32 = new Int32Array(this._buffer);
-        this._f32 = new Float32Array(this._buffer);
+        if (this._i32 === null && flags & TypedArrayViewFlags.I32) {
+          this._i32 = new Int32Array(this._buffer);
+        }
+        if (this._f32 === null && flags & TypedArrayViewFlags.F32) {
+          this._f32 = new Float32Array(this._buffer);
+        }
       }
     }
 
@@ -165,7 +188,7 @@ module Shumway.ArrayUtilities {
         var newBuffer = DataBuffer._arrayBufferPool.acquire(newLength);
         var curentView = this._u8;
         this._buffer = newBuffer;
-        this._updateViews();
+        this._resetViews();
         this._u8.set(curentView);
         DataBuffer._arrayBufferPool.release(currentBuffer);
       }
@@ -252,6 +275,7 @@ module Shumway.ArrayUtilities {
         throwError('EOFError', Errors.EOFError);
       }
       this._position = position + 4;
+      this._requestViews(TypedArrayViewFlags.F32);
       if (this._littleEndian && (position & 0x3) === 0 && this._f32) {
         return this._f32[position >> 2];
       } else {
@@ -378,6 +402,10 @@ module Shumway.ArrayUtilities {
       this.writeUnsignedInt(value);
     }
 
+    write2Ints(a: number, b: number): void {
+      this.write2UnsignedInts(a, b);
+    }
+
     write4Ints(a: number, b: number, c: number, d: number): void {
       this.write4UnsignedInts(a, b, c, d);
     }
@@ -385,6 +413,7 @@ module Shumway.ArrayUtilities {
     writeUnsignedInt(value: number /*uint*/): void {
       var position = this._position;
       this._ensureCapacity(position + 4);
+      this._requestViews(TypedArrayViewFlags.I32);
       if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._i32) {
         this._i32[position >> 2] = value;
       } else {
@@ -408,9 +437,28 @@ module Shumway.ArrayUtilities {
       }
     }
 
+    write2UnsignedInts(a: number, b: number): void {
+      var position = this._position;
+      this._ensureCapacity(position + 8);
+      this._requestViews(TypedArrayViewFlags.I32);
+      if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._i32) {
+        this._i32[(position >> 2) + 0] = a;
+        this._i32[(position >> 2) + 1] = b;
+        position += 8;
+        this._position = position;
+        if (position > this._length) {
+          this._length = position;
+        }
+      } else {
+        this.writeUnsignedInt(a);
+        this.writeUnsignedInt(b);
+      }
+    }
+
     write4UnsignedInts(a: number, b: number, c: number, d: number): void {
       var position = this._position;
       this._ensureCapacity(position + 16);
+      this._requestViews(TypedArrayViewFlags.I32);
       if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._i32) {
         this._i32[(position >> 2) + 0] = a;
         this._i32[(position >> 2) + 1] = b;
@@ -432,6 +480,7 @@ module Shumway.ArrayUtilities {
     writeFloat(value: number): void {
       var position = this._position;
       this._ensureCapacity(position + 4);
+      this._requestViews(TypedArrayViewFlags.F32);
       if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._f32) {
         this._f32[position >> 2] = value;
       } else {
@@ -460,6 +509,7 @@ module Shumway.ArrayUtilities {
     write6Floats(a: number, b: number, c: number, d: number, e: number, f: number): void {
       var position = this._position;
       this._ensureCapacity(position + 24);
+      this._requestViews(TypedArrayViewFlags.F32);
       if (this._littleEndian === DataBuffer._nativeLittleEndian && (position & 0x3) === 0 && this._f32) {
         this._f32[(position >> 2) + 0] = a;
         this._f32[(position >> 2) + 1] = b;
@@ -577,6 +627,7 @@ module Shumway.ArrayUtilities {
     }
 
     get ints(): Int32Array {
+      this._requestViews(TypedArrayViewFlags.I32);
       return this._i32;
     }
 

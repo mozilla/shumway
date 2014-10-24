@@ -67,10 +67,7 @@ package avm1lib {
       return path;
     }
 
-    public static function addEventHandlerProxy(obj: Object, propertyName: String, eventName: String, argsConverter: Function = null)
-    {
-      _addEventHandlerProxy(obj, propertyName, eventName, argsConverter);
-    }
+    public static native function addEventHandlerProxy(obj: Object, propertyName: String, eventName: String, argsConverter: Function = null);
 
     private static native function _installObjectMethods();
 
@@ -78,55 +75,4 @@ package avm1lib {
       _installObjectMethods();
     }
   }
-}
-
-import avm1lib.AVM1Utils;
-
-AVM1Utils;
-
-function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: String, argsConverter: Function)
-{
-  var currentHandler: Function = null;
-  var handlerRunner: Function = null;
-  AVM1Utils.addProperty(obj, propertyName,
-    function(): Function {
-      return currentHandler;
-    },
-    function setter(newHandler: Function) {
-      if (!this._as3Object) { // prototype/class ?
-        var defaultListeners = this._as2DefaultListeners ||
-          (this._as2DefaultListeners = []);
-        defaultListeners.push({setter: setter, value: newHandler});
-        // see also initDefaultListeners()
-        return;
-      }
-      // AVM1 MovieClips don't receive roll/release events by default until they set one of the following properties.
-      // This behaviour gets triggered whenever those properties are set, despite of the actual value they are set to.
-      if (propertyName === 'onRelease' ||
-          propertyName === 'onReleaseOutside' ||
-          propertyName === 'onRollOut' ||
-          propertyName === 'onRollOver') {
-        this._as3Object.mouseEnabled = true;
-        this._as3Object.buttonMode = true;
-      }
-      if (currentHandler === newHandler) {
-        return;
-      }
-      if (currentHandler != null) {
-        this._as3Object.removeEventListener(eventName, handlerRunner);
-      }
-      currentHandler = newHandler;
-      if (currentHandler != null) {
-        handlerRunner = (function (obj: Object, handler: Function) {
-          return function handlerRunner() {
-            var args = argsConverter != null ? argsConverter(arguments) : null;
-            return handler.apply(obj, args);
-          };
-        })(this, currentHandler);
-        this._as3Object.addEventListener(eventName, handlerRunner);
-      } else {
-        handlerRunner = null;
-      }
-    },
-    false);
 }

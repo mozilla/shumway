@@ -47,6 +47,10 @@ declare module Shumway.AVM2.AS.flash {
       addFrameScript(frameIndex: number, script: (any?) => any /*, ...*/): void;
     }
     class Loader extends DisplayObject {}
+    class LoaderInfo {
+      swfVersion: number;
+      getSymbolById(id: number): any;
+    }
     class AVM1Movie extends DisplayObject {}
     class BitmapData extends ASNative {}
     class Bitmap extends DisplayObject {
@@ -54,7 +58,7 @@ declare module Shumway.AVM2.AS.flash {
     }
     class SimpleButton extends DisplayObject {
       _symbol: {
-        buttonActions: Shumway.Timeline.AVM1ButtonAction[]
+        data: {buttonActions: Shumway.Timeline.AVM1ButtonAction[]}
       }
     }
   }

@@ -135,7 +135,6 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     get movementX(): number {
-      somewhatImplemented("public flash.events.MouseEvent::set movementX");
       return this._movementX || 0;
     }
     set movementX(value: number) {
@@ -143,7 +142,6 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     get movementY(): number {
-      somewhatImplemented("public flash.events.MouseEvent::set movementY");
       return this._movementY || 0;
     }
     set movementY(value: number) {

@@ -27,17 +27,20 @@ module Shumway.Player.Test {
       return FakeSyncWorker._singelton;
     }
 
-    private _worker: Worker;
+    //private _worker: Worker;
+    private _onmessageListeners: any[];
     private _onsyncmessageListeners: any[];
 
     constructor() {
-      this._worker = new Worker(FakeSyncWorker.WORKER_PATH);
+      //this._worker = new Worker(FakeSyncWorker.WORKER_PATH);
+      this._onmessageListeners = [];
       this._onsyncmessageListeners = [];
     }
 
     addEventListener(type: string, listener: any, useCapture?: boolean): void {
+      release || Debug.assert(type === 'syncmessage' || type === 'message');
       if (type !== 'syncmessage') {
-        this._worker.addEventListener(type, listener, useCapture);
+        this._onmessageListeners.push(listener);
       } else {
         this._onsyncmessageListeners.push(listener);
       }
@@ -51,12 +54,32 @@ module Shumway.Player.Test {
         }
         return;
       }
-      this._worker.removeEventListener(type, listener, useCapture);
-
+      var i = this._onmessageListeners.indexOf(listener);
+      if (i >= 0) {
+        this._onmessageListeners.splice(i, 1);
+      }
     }
 
-    postMessage(message: any, ports?: any): void {
-      this._worker.postMessage(message, ports);
+    postMessage(message: any, ports?: any): any {
+      var result;
+      this._onmessageListeners.some(function (listener) {
+        var ev = { data: message, result: undefined, handled: false };
+        try {
+          if (typeof listener === 'function') {
+            listener(ev);
+          } else {
+            listener.handleEvent(ev);
+          }
+          if (!ev.handled) {
+            return false;
+          }
+        } catch (ex) {
+          Debug.warning('Failure at postMessage: ' + ex.message);
+        }
+        result = ev.result;
+        return true;
+      });
+      return result;
     }
 
     postSyncMessage(message: any, ports?: any): any {
