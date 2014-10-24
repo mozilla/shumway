@@ -568,7 +568,10 @@ module Shumway.Remoting.GFX {
     }
 
     private _readRegisterFont() {
-      var fontId = this.input.readInt();
+      var input = this.input;
+      var fontId = input.readInt();
+      var bold = input.readBoolean();
+      var italic = input.readBoolean();
       var data = this._readAsset();
       Shumway.registerCSSFont(fontId, data);
     }
