@@ -1145,7 +1145,7 @@ module Shumway.GFX {
     setBounds(bounds): void {
       this._bounds.set(bounds);
       this._textBounds.set(bounds);
-      this.textRect.setElements(bounds.x + 2, bounds.y + 2, bounds.x - 2, bounds.x - 2);
+      this.textRect.setElements(bounds.x + 2, bounds.y + 2, bounds.w - 2, bounds.h - 2);
     }
 
     setContent(plainText: string, textRunData: DataBuffer, matrix: Shumway.GFX.Geometry.Matrix, coords: DataBuffer): void {
