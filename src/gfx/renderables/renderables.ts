@@ -352,7 +352,7 @@ module Shumway.GFX {
         var self = this;
         self.setFlags(RenderableFlags.Loading);
         var image = new Image();
-        image.src = URL.createObjectURL(dataBuffer.toBlob());
+        image.src = URL.createObjectURL(dataBuffer.toBlob(getMIMETypeForImageType(type)));
         image.onload = function () {
           self._context.drawImage(image, 0, 0);
           self.removeFlags(RenderableFlags.Loading);

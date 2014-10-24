@@ -171,10 +171,10 @@ module Shumway.Remoting.GFX {
      * Decodes some raw image data and calls |oncomplete| with the decoded pixel data
      * once the image is loaded.
      */
-    _decodeImage(data: Uint8Array, oncomplete: (imageData: ImageData) => void) {
+    _decodeImage(type: ImageType, data: Uint8Array, oncomplete: (imageData: ImageData) => void) {
       var image = new Image();
       var self = this;
-      image.src = URL.createObjectURL(new Blob([data]));
+      image.src = URL.createObjectURL(new Blob([data], {type: getMIMETypeForImageType(type)}));
       image.onload = function () {
         self._canvas.width = image.width;
         self._canvas.height = image.height;
@@ -644,7 +644,7 @@ module Shumway.Remoting.GFX {
       var type = <ImageType>input.readInt();
       var data = this._readAsset();
       var self = this;
-      this.context._decodeImage(data, function (imageData: ImageData) {
+      this.context._decodeImage(type, data, function (imageData: ImageData) {
         var buffer = new DataBuffer();
         var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
         var assets = [];

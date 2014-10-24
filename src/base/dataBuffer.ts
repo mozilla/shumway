@@ -610,8 +610,8 @@ module Shumway.ArrayUtilities {
       return utf8encode(new Int8Array(this._buffer, 0, this._length));
     }
 
-    toBlob(): Blob {
-      return new Blob([new Int8Array(this._buffer, this._position, this._length)]);
+    toBlob(type: string): Blob {
+      return new Blob([new Int8Array(this._buffer, this._position, this._length)], {type: type});
     }
 
     writeMultiByte(value: string, charSet: string): void {

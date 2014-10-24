@@ -3462,6 +3462,15 @@ module Shumway {
     GIF
   }
 
+  export function getMIMETypeForImageType(type: ImageType): string {
+    switch (type) {
+      case ImageType.JPEG: return "image/jpeg";
+      case ImageType.PNG: return "image/png";
+      case ImageType.GIF: return "image/gif";
+      default: return "text/plain";
+    }
+  }
+
   export class PromiseWrapper<T> {
     public promise: Promise<T>;
     public resolve: (result:T) => void;

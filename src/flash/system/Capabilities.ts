@@ -182,9 +182,13 @@ module Shumway.AVM2.AS.flash.system {
     static get version(): string {
       return Capabilities._version;
     }
+
+    /**
+     * This can be "color", "gray" or "bw" for black and white. I don't know when you'd have anything
+     * other than "color".
+     */
     static get screenColor(): string {
-      notImplemented("public flash.system.Capabilities::get screenColor"); return;
-      // return Capabilities._screenColor;
+      return "color";
     }
     static get pixelAspectRatio(): number {
       notImplemented("public flash.system.Capabilities::get pixelAspectRatio"); return;
