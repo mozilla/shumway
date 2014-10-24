@@ -425,7 +425,7 @@ module Shumway.GFX.Geometry {
       if (dirtyStack.length) {
         return dirtyStack.pop();
       } else {
-        return new Rectangle(0xDEAD, 0xBEEF, 0xDEAD, 0xBEEF);
+        return new Rectangle(12345, 67890, 12345, 67890);
       }
     }
 
@@ -739,7 +739,7 @@ module Shumway.GFX.Geometry {
       if (dirtyStack.length) {
         return dirtyStack.pop();
       } else {
-        return new Matrix(0xDEAD, 0xDEAD, 0xDEAD, 0xDEAD, 0xDEAD, 0xDEAD);
+        return new Matrix(12345, 12345, 12345, 12345, 12345, 12345);
       }
     }
 

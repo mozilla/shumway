@@ -158,7 +158,7 @@ module Shumway.GFX {
      * for better performance. If specified, |
      * Region| indicates whether the shape's fills should be used as clip regions instead.
      */
-    render(context: CanvasRenderingContext2D, cullBounds?: Shumway.GFX.Geometry.Rectangle, clipRegion?: boolean, stencil?: boolean): void {
+    render(context: CanvasRenderingContext2D, cullBounds?: Shumway.GFX.Geometry.Rectangle, paintClip?: boolean, paintpaintStencil?: boolean): void {
 
     }
   }
@@ -391,17 +391,17 @@ module Shumway.GFX {
     }
 
     /**
-     * If |clipRegion| is |true| then we must call |clip| instead of |fill|. We also cannot call
+     * If |paintClip| is |true| then we must call |clip| instead of |fill|. We also cannot call
      * |save| or |restore| because those functions reset the current clipping region. It looks
      * like Flash ignores strokes when clipping so we can also ignore stroke paths when computing
      * the clip region.
      *
-     * If |stencil| is |true| then we most not create any alpha values, and also not paint any strokes.
+     * If |paintStencil| is |true| then we most not create any alpha values, and also not paint any strokes.
      */
     render(context: CanvasRenderingContext2D, cullBounds: Rectangle,
-           clipRegion: boolean = false, stencil: boolean = false): void
+           paintClip: boolean = false, paintStencil: boolean = false): void
     {
-      var stencilStyle = '#FF4981';
+      var paintStencilStyle = '#FF4981';
       context.fillStyle = context.strokeStyle = 'transparent';
 
       // Wait to deserialize paths until all textures have been loaded.
@@ -427,10 +427,10 @@ module Shumway.GFX {
                                               context['imageSmoothingEnabled'] =
                                               path.smoothImage;
         if (path.type === PathType.Fill) {
-          context.fillStyle = stencil ? stencilStyle : path.style;
-          clipRegion ? context.clip(path.path, 'evenodd') : context.fill(path.path, 'evenodd');
+          context.fillStyle = paintStencil ? paintStencilStyle : path.style;
+          paintClip ? context.clip(path.path, 'evenodd') : context.fill(path.path, 'evenodd');
           context.fillStyle = 'transparent';
-        } else if (!clipRegion && !stencil) {
+        } else if (!paintClip && !paintStencil) {
           context.strokeStyle = path.style;
           var lineScaleMode = LineScaleMode.Normal;
           if (path.strokeProperties) {

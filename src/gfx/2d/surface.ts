@@ -226,14 +226,9 @@ module Shumway.GFX.Canvas2D {
   }
 
   /**
-   * Some blend modes are super slow in FF and depend on the size of the
-   * target canvas, 512px appears to be the largest canvas size that is
-   * not very slow.
+   * Clip target? Some blend modes like destination-in that affect all target pixels are very slow otherwise.
    */
-  function isBlendModeSlow(blendMode: BlendMode) {
-    if (!isFirefox) {
-      return false;
-    }
+  function blendModeShouldClip(blendMode: BlendMode) {
     switch (blendMode) {
       case BlendMode.Alpha:
         return true;
@@ -249,7 +244,6 @@ module Shumway.GFX.Canvas2D {
      * a temporary canvas for all such copy operations.
      */
     private static _copyCanvasContext: CanvasRenderingContext2D;
-    private static _blendCanvasContext: CanvasRenderingContext2D;
 
     private _blendMode: BlendMode = BlendMode.Normal;
 
@@ -290,23 +284,6 @@ module Shumway.GFX.Canvas2D {
       }
     }
 
-    private static _ensureBlendCanvasSize(w: number, h: number) {
-      var canvas;
-      if (!Canvas2DSurfaceRegion._blendCanvasContext) {
-        canvas = document.createElement("canvas");
-        registerScratchCanvas(canvas);
-        canvas.width = 256;
-        canvas.height = 256;
-        Canvas2DSurfaceRegion._blendCanvasContext = canvas.getContext("2d");
-      } else {
-        canvas = Canvas2DSurfaceRegion._blendCanvasContext.canvas;
-        if (canvas.width < w || canvas.height < h) {
-          canvas.width = w;
-          canvas.height = h;
-        }
-      }
-    }
-    
     public draw(source: Canvas2DSurfaceRegion, x: number, y: number, w: number, h: number) {
       this.context.setTransform(1, 0, 0, 1, 0, 0);
       var sourceCanvas, sx = 0, sy = 0;
@@ -329,24 +306,16 @@ module Shumway.GFX.Canvas2D {
         sy = source.region.y;
       }
       var canvas = this.context.canvas;
-      if (!isBlendModeSlow(this._blendMode) || Math.max(canvas.width, canvas.height) < 512) {
-        this.context.drawImage(sourceCanvas, sx, sy, w, h, x, y, w, h);
-      } else {
-        // Bend time and space just so we can blend faster. Copy the destination
-        // to a temporary canvas, blend into it, and then copy it back to the original
-        // position.
-        Canvas2DSurfaceRegion._ensureBlendCanvasSize(w, h);
-        var blendContext = Canvas2DSurfaceRegion._blendCanvasContext;
-        blendContext.clearRect(0, 0, w, h);
-        blendContext.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);
-        blendContext.drawImage(this.context.canvas, x, y, w, h, 0, 0, w, h);
-        blendContext.globalCompositeOperation = getCompositeOperation(this._blendMode);
-        blendContext.drawImage(sourceCanvas, sx, sy, w, h, 0, 0, w, h);
-        var lastBlendMode = this._blendMode;
-        this.blendMode = BlendMode.Normal;
-        this.context.clearRect(x, y, w, h);
-        this.context.drawImage(blendContext.canvas, 0, 0, w, h, x, y, w, h);
-        this.blendMode = lastBlendMode;
+      var clip = blendModeShouldClip(this._blendMode);
+      if (clip) {
+        this.context.save();
+        this.context.beginPath();
+        this.context.rect(x, y, w, h);
+        this.context.clip();
+      }
+      this.context.drawImage(sourceCanvas, sx, sy, w, h, x, y, w, h);
+      if (clip) {
+        this.context.restore();
       }
     }
 

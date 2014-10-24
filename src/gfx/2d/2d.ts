@@ -71,7 +71,8 @@ module Shumway.GFX.Canvas2D {
     RenderMask          = 0x0002,
     IgnoreMask          = 0x0004,
     PaintStencil        = 0x0008,
-    PaintRenderable     = 0x0010,
+    PaintClip           = 0x0010,
+    PaintRenderable     = 0x0020,
 
     CacheShapes         = 0x0100,
     PaintFlashing       = 0x0200,
@@ -317,11 +318,27 @@ module Shumway.GFX.Canvas2D {
         state.free();
       } else {
         if (state.clip.intersectsTransformedAABB(bounds, state.matrix)) {
+          var clips = null;
           var children = node.getChildren();
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
             var childState = state.transform(child.getTransform());
-            children[i].visit(this, childState);
+            if (child.clip >= 0) {
+              clips = clips || new Uint8Array(children.length);
+              clips[child.clip + i] ++;
+              var clipState = childState.clone();
+              clipState.flags |= RenderFlags.PaintClip;
+              state.target.context.save();
+              child.visit(this, clipState);
+              clipState.free();
+            } else {
+              child.visit(this, childState);
+            }
+            if (clips && clips[i] > 0) {
+              while (clips[i]--) {
+                state.target.context.restore();
+              }
+            }
             childState.free();
           }
         }
@@ -381,57 +398,68 @@ module Shumway.GFX.Canvas2D {
         }
         clip.free();
       } else {
-        var maskMatrix = mask.getTransform().getConcatenatedMatrix(true);
-        // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
-        // we still have to factor in the stage's matrix, which includes pixel density scaling.
-        if (!mask.parent) {
-          maskMatrix = maskMatrix.concatClone(this._stage.getTransform().getConcatenatedMatrix());
-        }
-
-        var aAABB = node.getBounds().clone();
-        state.matrix.transformRectangleAABB(aAABB);
-        aAABB.snap();
-
-        var bAABB = mask.getBounds().clone();
-        maskMatrix.transformRectangleAABB(bAABB);
-        bAABB.snap();
-
-        var clip = state.clip.clone();
-        clip.intersect(aAABB);
-        clip.intersect(bAABB);
-        clip.snap();
-
-        // The masked area is empty, so nothing to do here.
-        if (clip.isEmpty()) {
-          return;
-        }
-
-        var aState = state.clone();
-        aState.clip.set(clip);
-        var a = this._renderNodeToTemporarySurface(node, aState, Rectangle.createEmpty());
-        aState.free();
-
-        var bState = state.clone();
-        bState.clip.set(clip);
-        bState.matrix = maskMatrix;
-        bState.flags |= RenderFlags.IgnoreMask;
-        if (!node.hasFlags(NodeFlags.CacheAsBitmap) || !mask.hasFlags(NodeFlags.CacheAsBitmap)) {
-          bState.flags |= RenderFlags.PaintStencil;
-        }
-        var b = this._renderNodeToTemporarySurface(mask, bState, Rectangle.createEmpty());
-        bState.free();
-
-        a.blendMode = BlendMode.Alpha;
-        a.draw(b, 0, 0, clip.w, clip.h);
-        a.blendMode = BlendMode.Normal; // TODO: Stack of blend modes? to avoid this kind of mess?
-
-        var matrix = state.matrix;
-        state.target.blendMode = layer.blendMode;
-        state.target.draw(a, clip.x, clip.y, clip.w, clip.h);
-
-        b.free();
-        a.free();
+        var paintStencil = !node.hasFlags(NodeFlags.CacheAsBitmap) || !mask.hasFlags(NodeFlags.CacheAsBitmap);
+        this._renderNodeWithMask(node, mask, layer.blendMode, paintStencil, state);
       }
+    }
+
+    _renderNodeWithMask(node: Node, mask: Node, blendMode: BlendMode, stencil: boolean, state: RenderState) {
+      var maskMatrix = mask.getTransform().getConcatenatedMatrix(true);
+      // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
+      // we still have to factor in the stage's matrix, which includes pixel density scaling.
+      if (!mask.parent) {
+        maskMatrix = maskMatrix.concatClone(this._stage.getTransform().getConcatenatedMatrix());
+      }
+
+      var aAABB = node.getBounds().clone();
+      state.matrix.transformRectangleAABB(aAABB);
+      aAABB.snap();
+      if (aAABB.isEmpty()) {
+        return;
+      }
+
+      var bAABB = mask.getBounds().clone();
+      maskMatrix.transformRectangleAABB(bAABB);
+      bAABB.snap();
+      if (bAABB.isEmpty()) {
+        return;
+      }
+
+      var clip = state.clip.clone();
+      clip.intersect(aAABB);
+      clip.intersect(bAABB);
+      clip.snap();
+
+      // The masked area is empty, so nothing to do here.
+      if (clip.isEmpty()) {
+        return;
+      }
+
+      var aState = state.clone();
+      aState.clip.set(clip);
+      var a = this._renderNodeToTemporarySurface(node, aState, Rectangle.createEmpty());
+      aState.free();
+
+      var bState = state.clone();
+      bState.clip.set(clip);
+      bState.matrix = maskMatrix;
+      bState.flags |= RenderFlags.IgnoreMask;
+      if (stencil) {
+        bState.flags |= RenderFlags.PaintStencil;
+      }
+      var b = this._renderNodeToTemporarySurface(mask, bState, Rectangle.createEmpty());
+      bState.free();
+
+      a.blendMode = BlendMode.Alpha;
+      a.draw(b, 0, 0, clip.w, clip.h);
+      a.blendMode = BlendMode.Normal; // TODO: Stack of blend modes? to avoid this kind of mess?
+
+      var matrix = state.matrix;
+      state.target.blendMode = blendMode;
+      state.target.draw(a, clip.x, clip.y, clip.w, clip.h);
+
+      b.free();
+      a.free();
     }
 
     private _renderStageToTarget (
@@ -441,7 +469,7 @@ module Shumway.GFX.Canvas2D {
     ) {
       this._visited = 0;
       var state = new RenderState(target, clip);
-      
+
       if (this._options.paintRenderable) {
         state.flags |= RenderFlags.PaintRenderable;
       }
@@ -517,7 +545,8 @@ module Shumway.GFX.Canvas2D {
       var context = state.target.context;
       var matrix = state.matrix;
       var clip = state.clip;
-
+      var paintClip = !!(state.flags & RenderFlags.PaintClip);
+      var paintStencil = !!(state.flags & RenderFlags.PaintStencil);
       var self = this;
       var bounds = shape.getBounds();
       if (!bounds.isEmpty()) {
@@ -525,8 +554,9 @@ module Shumway.GFX.Canvas2D {
         var renderCount = source.properties["renderCount"] || 0;
         var cacheShapesMaxSize = state.cacheShapesMaxSize;
         var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
-        if (state.colorMatrix.isIdentity() &&
-            !state.clipRegion &&
+        if (!paintStencil &&
+            !paintClip &&
+            state.colorMatrix.isIdentity() &&
             !source.hasFlags(RenderableFlags.Dynamic) &&
             (state.flags & RenderFlags.CacheShapes) &&
             renderCount > state.cacheShapesThreshold &&
@@ -557,7 +587,7 @@ module Shumway.GFX.Canvas2D {
           }
         } else {
           source.properties["renderCount"] = ++ renderCount;
-          source.render(context, null, state.clipRegion, !!(state.flags & RenderFlags.PaintStencil));
+          source.render(context, null, paintClip, paintStencil);
           if (state.flags & RenderFlags.PaintFlashing) {
             context.fillStyle = ColorStyle.randomStyle();
             context.globalAlpha = 0.1;
