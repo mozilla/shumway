@@ -239,7 +239,7 @@
       "type": "stas"
     },
     {  "id": "acid-morph",
-      "frames": [60],
+      "frames": [1, 15, 30],
       "swf": "swfs/acid/acid-morph.swf",
       "type": "eq"
     },
