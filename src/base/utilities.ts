@@ -2560,6 +2560,43 @@ module Shumway {
       return ColorStyle._randomStyleCache[(ColorStyle._nextStyle ++) % ColorStyle._randomStyleCache.length];
     }
 
+    private static _gradient = [
+      "#FF0000",  // Red
+      "#FF1100",
+      "#FF2300",
+      "#FF3400",
+      "#FF4600",
+      "#FF5700",
+      "#FF6900",
+      "#FF7B00",
+      "#FF8C00",
+      "#FF9E00",
+      "#FFAF00",
+      "#FFC100",
+      "#FFD300",
+      "#FFE400",
+      "#FFF600",
+      "#F7FF00",
+      "#E5FF00",
+      "#D4FF00",
+      "#C2FF00",
+      "#B0FF00",
+      "#9FFF00",
+      "#8DFF00",
+      "#7CFF00",
+      "#6AFF00",
+      "#58FF00",
+      "#47FF00",
+      "#35FF00",
+      "#24FF00",
+      "#12FF00",
+      "#00FF00"   // Green
+    ];
+
+    static gradientColor(value) {
+      return ColorStyle._gradient[ColorStyle._gradient.length * NumberUtilities.clamp(value, 0, 1) | 0];
+    }
+
     static contrastStyle(rgb: string): string {
       // http://www.w3.org/TR/AERT#color-contrast
       var c = parseInt(rgb.substr(1), 16);

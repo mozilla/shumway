@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 module Shumway.GFX {
   import Rectangle = Geometry.Rectangle;
   import Point = Geometry.Point;
@@ -25,22 +26,6 @@ module Shumway.GFX {
   import OBB = Geometry.OBB;
   import assert = Shumway.Debug.assert;
 
-  export enum BlendMode {
-    Normal     = 1,
-    Layer      = 2,
-    Multiply   = 3,
-    Screen     = 4,
-    Lighten    = 5,
-    Darken     = 6,
-    Difference = 7,
-    Add        = 8,
-    Subtract   = 9,
-    Invert     = 10,
-    Alpha      = 11,
-    Erase      = 12,
-    Overlay    = 13,
-    HardLight  = 14
-  }
 
   /**
    * Controls how the visitor walks the display tree.
@@ -230,44 +215,5 @@ module Shumway.GFX {
       return layers;
     }
     */
-  }
-
-  /**
-   * A frame container that clips everything outside of its bounds.
-   */
-  export class ClipRectangle extends FrameContainer {
-    color: Color = Color.None;
-    constructor(w: number, h: number) {
-      super();
-      this._bounds = new Rectangle(0, 0, w, h);
-    }
-
-    public setBounds(bounds: Rectangle) {
-      this._bounds.set(bounds);
-    }
-
-    public getBounds(): Rectangle {
-      return this._bounds;
-    }
-  }
-
-  export class Shape2 extends Frame {
-    private _source: Renderable;
-    ratio: number;
-
-    get source(): Renderable {
-      return this._source;
-    }
-
-    constructor(source: Renderable) {
-      super();
-      release || assert(source);
-      this._source = source;
-      this.ratio = 0;
-    }
-
-    public getBounds(): Rectangle {
-      return this.source.getBounds();
-    }
   }
 }

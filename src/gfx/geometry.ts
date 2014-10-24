@@ -1032,13 +1032,16 @@ module Shumway.GFX.Geometry {
     }
 
     inverse (result: Matrix) {
+      var m = this._data, r = result._data;
       if (this._type === MatrixType.Identity) {
         result.setIdentity();
         return;
       } else if (this._type === MatrixType.Translation) {
-        // TODO: Fast path here.
+        result.setIdentity();
+        result[4] = -m[4];
+        result[5] = -m[5];
+        return;
       }
-      var m = this._data, r = result._data;
       var b  = m[1];
       var c  = m[2];
       var tx = m[4];
@@ -1066,6 +1069,7 @@ module Shumway.GFX.Geometry {
         r[4] = -(r[0] * tx + c * ty);
         r[5] = -(b * tx + d * ty);
       }
+      result._type = MatrixType.Unknown;
       return;
     }
 

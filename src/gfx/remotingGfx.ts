@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 module Shumway.Remoting.GFX {
-  import Frame = Shumway.GFX.Frame;
   import BlurFilter = Shumway.GFX.BlurFilter;
   import DropshadowFilter = Shumway.GFX.DropshadowFilter;
-  import FrameFlags = Shumway.GFX.FrameFlags;
   import NodeFlags = Shumway.GFX.NodeFlags;
   import Shape = Shumway.GFX.Shape;
   import Group = Shumway.GFX.Group;
@@ -29,8 +27,6 @@ module Shumway.Remoting.GFX {
   import IVideoPlaybackEventSerializer = Shumway.GFX.IVideoPlaybackEventSerializer;
   import RenderableText = Shumway.GFX.RenderableText;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
-  import FrameContainer = Shumway.GFX.FrameContainer;
-  import ClipRectangle = Shumway.GFX.ClipRectangle;
   import BlendMode = Shumway.GFX.BlendMode;
   import Node = Shumway.GFX.Node;
   import Scissor = Shumway.GFX.Scissor;

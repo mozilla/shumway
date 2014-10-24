@@ -79,7 +79,7 @@ module Shumway.GFX {
       if (event.altKey) {
         easel.state = new DragState(easel.worldView, easel.getMousePosition(event, null), easel.worldView.getTransform().getMatrix(true));
       } else {
-        // easel.state = new MouseDownState();
+//        easel.state = new MouseDownState();
       }
     }
 
@@ -224,7 +224,6 @@ module Shumway.GFX {
     private _stage: Stage;
     private _world: Group;
     private _worldView: Group;
-    private _worldViewOverlay: Group;
 
     private _options: StageRendererOptions [];
     private _canvases: HTMLCanvasElement [];
@@ -250,11 +249,9 @@ module Shumway.GFX {
                 bgcolor: number = undefined) {
       var stage = this._stage = new Stage(128, 128, true);
       this._worldView = new Group();
-      this._worldViewOverlay = new Group();
       this._world = new Group();
       this._stage.addChild(this._worldView);
       this._worldView.addChild(this._world);
-      this._worldView.addChild(this._worldViewOverlay);
       this._disableHidpi = disableHidpi;
 
       if (hud.value) {
@@ -331,13 +328,11 @@ module Shumway.GFX {
       }, false);
 
       window.addEventListener("mousemove", function (event) {
-        var p = self.getMousePosition(event, self._world);
         self._state.onMouseMove(self, event);
         self._persistentState.onMouseMove(self, event);
       }, false);
 
       function handleMouseWheel(event: any) {
-        var p = self.getMousePosition(event, self._world);
         self._state.onMouseWheel(self, event);
         self._persistentState.onMouseWheel(self, event);
       }
@@ -436,10 +431,6 @@ module Shumway.GFX {
       return this._worldView;
     }
 
-    get worldOverlay(): Group {
-      return this._worldViewOverlay;
-    }
-
     get stage(): Stage {
       return this._stage;
     }
@@ -500,9 +491,7 @@ module Shumway.GFX {
     }
 
     queryNodeUnderMouse(event: MouseEvent): Node {
-      // var nodes = this.stage.queryNodeByPoint(this.getMousePosition(event, null), true, true);
-      // return nodes.length > 0 ? nodes[0] : null;
-      return null;
+      return this._world;
     }
 
     selectNodeUnderMouse(event: MouseEvent) {

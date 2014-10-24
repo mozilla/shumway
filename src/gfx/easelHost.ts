@@ -16,7 +16,6 @@
 
 module Shumway.GFX {
   import Easel = Shumway.GFX.Easel;
-  import FrameContainer = Shumway.GFX.FrameContainer;
   import Stage = Shumway.GFX.Stage;
   import Point = Shumway.GFX.Geometry.Point;
 
