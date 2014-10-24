@@ -146,7 +146,6 @@ var everFailed = false;
 var testNumber = 0;
 
 function readDirectoryListing(path, next) {
-  assert (path.endsWith("/"));
   var files = [];
   var directories = [];
   var xhr = new XMLHttpRequest({mozSystem:true});

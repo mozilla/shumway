@@ -84,6 +84,11 @@ module Shumway.AVM2.AS.avm1lib {
       initDefaultListeners(this);
     }
 
+    _lookupChildByName(name: string): flash.display.DisplayObject {
+      name = asCoerceString(name);
+      return (<flash.display.DisplayObjectContainer>this._nativeAS3Object)._lookupChildByName(name);
+    }
+
     set context(value: AVM1Context) {
       release || assert(!this._context);
       this._context = value;
@@ -95,7 +100,7 @@ module Shumway.AVM2.AS.avm1lib {
       } else if (name.indexOf('_level') === 0) {
         var level = name.substring(6), levelNum = level | 0;
         if (levelNum > 0 && level == levelNum) {
-          return AVM1Context.instance.resolveLevel(levelNum);
+          return AVM1Context.instance.resolveLevel(levelNum)
         }
       }
       return null;
@@ -176,6 +181,9 @@ module Shumway.AVM2.AS.avm1lib {
 
     _constructMovieClipSymbol(symbolId: string, name: string): flash.display.MovieClip {
       var symbol = AVM1Context.instance.getAsset(symbolId);
+      if (!symbol) {
+        return undefined;
+      }
 
       var props: Timeline.SpriteSymbol = Object.create(symbol.symbolProps);
       props.avm1Name = name;
@@ -275,7 +283,7 @@ module Shumway.AVM2.AS.avm1lib {
     getInstanceAtDepth(depth: number): AVM1MovieClip {
       var nativeObject = this._nativeAS3Object;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-        var child = nativeObject.getChildAt(i);
+        var child = nativeObject._lookupChildByIndex(i);
         // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
         if (child && child._depth === depth) {
           // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
@@ -291,7 +299,7 @@ module Shumway.AVM2.AS.avm1lib {
       var nativeObject = this._nativeAS3Object;
       var maxDepth = 0;
       for (var i = 0, numChildren = nativeObject.numChildren; i < numChildren; i++) {
-        var child = nativeObject.getChildAt(i);
+        var child = nativeObject._lookupChildByIndex(i);
         if (child._depth > maxDepth) {
           maxDepth = child._depth;
         }

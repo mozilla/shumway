@@ -129,38 +129,48 @@ module Shumway.AVM2.AS.flash.display {
     Destroyed                                 = 0x0200,
 
     /**
+     * Indicates wether an AVM1 load event needs to be dispatched on this display object.
+     */
+    NeedsLoadEvent                            = 0x0400,
+
+    /**
      * Display object is owned by the timeline, meaning that it is under the control of the timeline and that a reference
      * to this object has not leaked into AS3 code via the DisplayObjectContainer methods |getChildAt|,  |getChildByName|
      * or through the execution of the symbol class constructor.
      */
-    OwnedByTimeline                           = 0x0400,
+    OwnedByTimeline                           = 0x0800,
 
     /**
      * Display object is animated by the timeline. It may no longer be owned by the timeline (|OwnedByTimeline|) but it
      * is still animated by it. If AS3 code mutates any property on the display object, this flag is cleared and further
      * timeline mutations are ignored.
      */
-    AnimatedByTimeline                        = 0x0800,
+    AnimatedByTimeline                        = 0x1000,
 
     /**
      * MovieClip object has reached a frame with a frame script or ran a frame script that attached
      * a new one to the current frame. To run the script, it has to be appended to the queue of
      * scripts.
      */
-    HasFrameScriptPending                     = 0x1000,
+    HasFrameScriptPending                     = 0x2000,
 
     /**
      * DisplayObjectContainer contains at least one descendant with the HasFrameScriptPending flag
      * set.
      */
-    ContainsFrameScriptPendingChildren        = 0x2000,
+    ContainsFrameScriptPendingChildren        = 0x4000,
+
+    /**
+     * Indicates whether this display object is a MorphShape or contains at least one descendant that is.
+     */
+    ContainsMorph                             = 0x8000,
 
     /**
      * Indicates whether this display object should be cached as a bitmap. The display object may be cached as bitmap even
      * if this flag is not set, depending on whether any filters are applied or if the bitmap is too large or we've run out
      * of memory.
      */
-    CacheAsBitmap                             = 0x4000,
+    CacheAsBitmap                             = 0x010000,
 
     /**
      * Indicates whether this display object's matrix has changed since the last time it was synchronized.
@@ -228,7 +238,12 @@ module Shumway.AVM2.AS.flash.display {
     Dirty                                     = DirtyMatrix | DirtyChildren | DirtyGraphics |
                                                 DirtyTextContent | DirtyBitmapData | DirtyNetStream |
                                                 DirtyColorTransform | DirtyMask | DirtyClipDepth |
-                                                DirtyMiscellaneousProperties
+                                                DirtyMiscellaneousProperties,
+
+    /**
+     * Masks flags that need to be propagated up when this display object gets added to a parent.
+     */
+    Bubbling                                  = ContainsFrameScriptPendingChildren | ContainsMorph
   }
 
   /**
@@ -351,6 +366,8 @@ module Shumway.AVM2.AS.flash.display {
       self._z = 0;
       self._scaleX = 1;
       self._scaleY = 1;
+      self._skewX = 0;
+      self._skewY = 0;
       self._scaleZ = 1;
       self._rotation = 0;
       self._rotationX = 0;
@@ -547,9 +564,15 @@ module Shumway.AVM2.AS.flash.display {
       this._depth = depth;
       if (parent) {
         this._addReference();
-        if (parent && this._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
-                                        DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
-          parent._propagateFlagsUp(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+        var bubblingFlags = DisplayObjectFlags.None;
+        if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
+          bubblingFlags |= DisplayObjectFlags.ContainsFrameScriptPendingChildren;
+        }
+        if (this._hasAnyFlags(DisplayObjectFlags.Bubbling)) {
+          bubblingFlags |= this._displayObjectFlags & DisplayObjectFlags.Bubbling;
+        }
+        if (bubblingFlags) {
+          parent._propagateFlagsUp(bubblingFlags);
         }
       }
       if (oldParent) {
@@ -653,6 +676,9 @@ module Shumway.AVM2.AS.flash.display {
      */
     _scaleX: number;
     _scaleY: number;
+
+    _skewX: number;
+    _skewY: number;
 
     _z: number;
     _scaleZ: number;
@@ -847,7 +873,9 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._scaleX = m.getScaleX();
       this._scaleY = m.getScaleY();
-      this._rotation = DisplayObject._clampRotation(matrix.getRotation() * 180 / Math.PI);
+      this._skewX = matrix.getSkewX();
+      this._skewY = matrix.getSkewY();
+      this._rotation = DisplayObject._clampRotation(this._skewY * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       this._setFlags(DisplayObjectFlags.InvalidInvertedMatrix);
       this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
@@ -859,7 +887,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     _getMatrix() {
       if (this._hasFlags(DisplayObjectFlags.InvalidMatrix)) {
-        this._matrix.updateScaleAndRotation(this._scaleX, this._scaleY, this._rotation);
+        this._matrix.updateScaleAndRotation(this._scaleX, this._scaleY, this._skewX, this._skewY);
         this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       }
       return this._matrix;
@@ -945,7 +973,7 @@ module Shumway.AVM2.AS.flash.display {
         if (graphics) {
           bounds.copyFrom(graphics._getContentBounds(includeStrokes));
         } else {
-          bounds.setEmpty();
+          bounds.setToSentinels();
         }
         this._getChildBounds(bounds, includeStrokes);
         this._removeFlags(invalidFlag);
@@ -991,6 +1019,7 @@ module Shumway.AVM2.AS.flash.display {
      * property of this object is changed by user code.
      */
     private _stopTimelineAnimation() {
+      this._removeFlags(DisplayObjectFlags.OwnedByTimeline);
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
 
@@ -1025,7 +1054,10 @@ module Shumway.AVM2.AS.flash.display {
       if (state.colorTransform) {
         this._setColorTransform(state.colorTransform);
       }
-      this._ratio = state.ratio;
+      if (state.ratio !== this._ratio) {
+        this._ratio = state.ratio;
+        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      }
       // Only some animation states have names, don't set the name if it is not defined.
       if (state.name) {
         this._name = state.name;
@@ -1166,6 +1198,10 @@ module Shumway.AVM2.AS.flash.display {
       if (value === this._rotation) {
         return;
       }
+      var delta = value - this._rotation;
+      var angle = delta / 180 * Math.PI;
+      this._skewX += angle;
+      this._skewY += angle;
       this._rotation = value;
       this._invalidateMatrix();
     }
@@ -1279,7 +1315,6 @@ module Shumway.AVM2.AS.flash.display {
      * Sets the mask for this display object. This does not affect the bounds.
      */
     set mask(value: DisplayObject) {
-      this._stopTimelineAnimation();
       if (this._mask === value || value === this) {
         return;
       }
@@ -1453,7 +1488,6 @@ module Shumway.AVM2.AS.flash.display {
      * Marks this display object as visible / invisible. This does not affect the bounds.
      */
     set visible(value: boolean) {
-      this._stopTimelineAnimation();
       value = !!value;
       if (value === this._hasFlags(DisplayObjectFlags.Visible)) {
         return;
@@ -1498,6 +1532,21 @@ module Shumway.AVM2.AS.flash.display {
       var m = this._getConcatenatedMatrix();
       var p = m.transformPointInPlace(point.clone().toTwips()).round();
       return p.toPixels();
+    }
+
+    globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
+      notImplemented("public DisplayObject::globalToLocal3D");
+      return null;
+    }
+
+    localToGlobal3D(point: flash.geom.Point): flash.geom.Vector3D {
+      notImplemented("public DisplayObject::localToGlobal3D");
+      return null;
+    }
+
+    local3DToGlobal(point3d: flash.geom.Vector3D): flash.geom.Point {
+      notImplemented("public DisplayObject::local3DToGlobal");
+      return null;
     }
 
     /**
@@ -1699,6 +1748,15 @@ module Shumway.AVM2.AS.flash.display {
      */
     _boundsAndMaskContainPoint(globalX: number, globalY: number, localX: number, localY: number,
                                testingType: HitTestingType): HitTestingResult {
+      if (testingType >= HitTestingType.HitTestBoundsAndMask &&
+          this._hasFlags(DisplayObjectFlags.ContainsMorph)) {
+        // If this display object is a MorphShape or contains at least one descendant that is, then
+        // bailing out too early might lead to a wrong hit test result, since the reported bounds
+        // of MorphShapes are always the one of their start shapes and don't take the current morph
+        // ratio into account. We have to make sure we always hit test MorphShape instances on
+        // graphics level.
+        return HitTestingResult.Bounds;
+      }
       if (testingType >= HitTestingType.Mouse && !this._hasFlags(DisplayObjectFlags.Visible) ||
           !this._getContentBounds().contains(localX, localY)) {
         return HitTestingResult.None;
@@ -1714,11 +1772,10 @@ module Shumway.AVM2.AS.flash.display {
      * Tests if the receiver's own visual content intersects with the given point.
      * In the base implementation, this just returns false, because not all DisplayObjects can
      * ever match.
-     * Overridden in Shape, Sprite, Bitmap, Video, and TextField.
+     * Overridden in Shape, MorphShape, Sprite, Bitmap, Video, and TextField.
      */
     _containsPointDirectly(localX: number, localY: number): boolean {
-      var graphics = this._getGraphics();
-      return !!graphics && graphics._containsPoint(localX, localY, true);
+      return false;
     }
 
     get scrollRect(): flash.geom.Rectangle {
@@ -1838,18 +1895,8 @@ module Shumway.AVM2.AS.flash.display {
       this._accessibilityProperties = value;
     }
 
-    // ---------------------------------------------------------------------------------------------------------------------------------------------
-    // -- Stuff below we still need to port.                                                                                                      --
-    // ---------------------------------------------------------------------------------------------------------------------------------------------
-
-    /*
-    set blendShader(value: flash.display.Shader) {
-      value = value;
-      notImplemented("public DisplayObject::set blendShader"); return;
-      // this._blendShader = value;
+    set blendShader(value: any /* flash.display.Shader */) {
+      notImplemented("public DisplayObject::set blendShader");
     }
-
-
-   */
   }
 }

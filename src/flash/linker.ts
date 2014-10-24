@@ -109,15 +109,15 @@ module Shumway.AVM2.AS {
 
       M("flash.events.EventDispatcher", "EventDispatcherClass", flash.events.EventDispatcher),
       M("flash.events.Event", "EventClass", flash.events.Event),
-      M("flash.events.IOErrorEvent"),
+      M("flash.events.IOErrorEvent", "IOErrorEventClass", flash.events.IOErrorEvent),
       M("flash.events.KeyboardEvent", "KeyboardEventClass", flash.events.KeyboardEvent),
       M("flash.events.MouseEvent", "MouseEventClass", flash.events.MouseEvent),
       M("flash.events.GestureEvent", "GestureEventClass", flash.events.GestureEvent),
       M("flash.events.TextEvent", "TextEventClass", flash.events.TextEvent),
       M("flash.events.TimerEvent", "TimerEventClass", flash.events.TimerEvent),
       M("flash.events.ProgressEvent", "ProgressEventClass", flash.events.ProgressEvent),
-      M("flash.events.NetStatusEvent"),
-      M("flash.events.HTTPStatusEvent"),
+      M("flash.events.NetStatusEvent", "NetStatusEventClass", flash.events.NetStatusEvent),
+      M("flash.events.HTTPStatusEvent", "HTTPStatusEventClass", flash.events.HTTPStatusEvent),
 
       M("flash.external.ExternalInterface", "ExternalInterfaceClass",
         flash.external.ExternalInterface),
@@ -244,6 +244,9 @@ module Shumway.AVM2.AS {
                      'flash.net.URLRequest');
         }
         var url = request.url;
+        if (isNullOrUndefined(url)) {
+          throwError('TypeError', Errors.NullPointerError, 'url');
+        }
         if (/^fscommand:/i.test(url)) {
           var fscommand = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain.getProperty(
             Multiname.fromSimpleName('flash.system.fscommand'), true, true);
@@ -295,7 +298,5 @@ module Shumway.AVM2.AS {
       }
       return classObject;
     });
-
-    registerNativeFunction('isFinite', isFinite);
   }
 }

@@ -21,6 +21,8 @@ module Shumway.GFX {
   import Point = Shumway.GFX.Geometry.Point;
 
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+  import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
+  import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
 
   export class EaselHost {
     private static _mouseEvents = Shumway.Remoting.MouseEventNames;
@@ -121,6 +123,11 @@ module Shumway.GFX {
       throw new Error('This command is not supported');
     }
 
+    processVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
+      var asset = this._context._getVideoAsset(id);
+      return (<RenderableVideo>asset).processControlRequest(eventType, data);
+    }
+
     processFSCommand(command: string, args: string) {
     }
 
@@ -141,6 +148,14 @@ module Shumway.GFX {
         throw new Error(request.error);
       }
       return request.result;
+    }
+
+    onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
+      throw new Error('This method is abstract');
+    }
+
+    sendVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
+      this.onVideoPlaybackEvent(id, eventType, data);
     }
   }
 }

@@ -136,6 +136,7 @@ module Shumway.AVM2.AS.flash.display {
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
                                                               false, false, 0, bytesTotal));
             instance._loadStatus = LoadStatus.Opened;
+            // Fallthrough
           case LoadStatus.Opened:
             if (loaderInfo._bytesLoadedChanged) {
               loaderInfo._bytesLoadedChanged = false;
@@ -149,11 +150,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             instance._loadStatus = LoadStatus.Initialized;
             loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
-            if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-              events.EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(
-                events.Event.getBroadcastInstance(events.Event.AVM1_LOAD)
-              );
-            }
+            // Fallthrough
           case LoadStatus.Initialized:
             if (bytesLoaded === bytesTotal) {
               instance._loadStatus = LoadStatus.Complete;
@@ -239,7 +236,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private _content: flash.display.DisplayObject;
     private _contentLoaderInfo: flash.display.LoaderInfo;
-    // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+    _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
     private _worker: Worker;
     private _loadStatus: LoadStatus;
@@ -342,23 +339,25 @@ module Shumway.AVM2.AS.flash.display {
           var info = data.result;
           var bytesLoaded = info.bytesLoaded;
           var bytesTotal = info.bytesTotal;
-          release || assert (bytesLoaded <= bytesTotal, "Loaded bytes should not exceed total bytes.");
-          loaderInfo.bytesLoaded = bytesLoaded;
+          release || assert (bytesLoaded <= bytesTotal, "Loaded bytes must not exceed total bytes.");
           if (!loaderInfo._bytesTotal) {
             loaderInfo._bytesTotal = bytesTotal;
           } else {
-            release || assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes should not change.");
+            release || assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes must not change.");
           }
-          if (info.open && this._loadStatus === LoadStatus.Unloaded) {
-            this._loadStatus = LoadStatus.Opened;
+          // Content code might rely on specific values for bytesLoaded to assume embedded assets
+          // to be available. Hence, we delay updating the value until we can guarantee availability
+          // of decoded data for all preceding bytes.
+          if (this._frameAssetsQueue) {
+            suspendUntil = Promise.all(this._frameAssetsQueue).then(function () {
+              loaderInfo.bytesLoaded = bytesLoaded;
+            });
+          } else {
+            loaderInfo.bytesLoaded = bytesLoaded;
           }
-          if (this._loadStatus !== LoadStatus.Unloaded) {
-            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS, false,
-                                                              false, bytesLoaded, bytesTotal));
-            this._progressPromise.resolve(undefined);
-            if (traceLoaderOption.value) {
-              this._writer.writeTimeLn("Resolving progress promise.");
-            }
+          this._progressPromise.resolve(undefined);
+          if (traceLoaderOption.value) {
+            this._writer.writeTimeLn("Resolving progress promise.");
           }
           break;
         case 'complete':
@@ -388,22 +387,28 @@ module Shumway.AVM2.AS.flash.display {
               suspendUntil = Promise.all(this._frameAssetsQueue).then(function () {
                 self._enqueueFrame(data);
                 self._frameAssetsQueue = null;
-              }.bind(this));
+              });
             } else {
               this._enqueueFrame(data);
             }
           } else if (data.type === 'image') {
             this._commitImage(data);
           } else if (data.type === 'abc') {
-            var appDomain = AVM2.instance.applicationDomain;
-            var abc = new AbcFile(data.data, data.name);
-            if (data.flags) {
-              // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
-              // immediately.
-              appDomain.loadAbc(abc);
-            } else {
-              if (loaderInfo._allowCodeExecution) {
-                appDomain.executeAbc(abc);
+            if (loaderInfo._allowCodeExecution) {
+              var appDomain = AVM2.instance.applicationDomain;
+              var abc = new AbcFile(data.data, data.name);
+              if (data.flags) {
+                // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
+                // immediately.
+                appDomain.loadAbc(abc);
+              } else {
+                if (this._frameAssetsQueue) {
+                  suspendUntil = Promise.all(this._frameAssetsQueue).then(function () {
+                    appDomain.executeAbc(abc);
+                  });
+                } else {
+                  appDomain.executeAbc(abc);
+                }
               }
             }
           }
@@ -509,9 +514,16 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _enqueueFrame(data: any): void {
       if (this === Loader.getRootLoader()) {
-        Loader.runtimeStartTime = Date.now();
+        var isFirstFrame = !this._content;
         this._commitFrame(data);
-        this._codeExecutionPromise.resolve(undefined);
+
+        // TODO: the comment above says that only the root's first frame is committed eagerly.
+        // That, however, breaks content that has something like `nextFrame()` in its first frame.
+        // It's not entirely clear how to fix this issue, really.
+        if (isFirstFrame) {
+          Loader.runtimeStartTime = Date.now();
+          this._codeExecutionPromise.resolve(undefined);
+        }
       } else {
         Loader._commitFrameQueue.push({loader: this, data: data});
       }
@@ -728,8 +740,8 @@ module Shumway.AVM2.AS.flash.display {
       return 0.0;
     }
 
-    getUncaughtErrorEvents(): events.UncaughtErrorEvents {
-      notImplemented("public flash.display.Loader::get UncaughtErrorEvents"); return;
+    get uncaughtErrorEvents(): events.UncaughtErrorEvents {
+      return this._uncaughtErrorEvents;
     }
 
     load(request: flash.net.URLRequest, context?: LoaderContext): void {

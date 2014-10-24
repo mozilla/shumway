@@ -60,6 +60,11 @@ module Shumway.AVM2.AS.avm1lib {
       return AVM1Context.instance.resolveTarget(target_mc);
     }
 
+    // Temporary solution as suggested by Yury. Will be refactored soon.
+    static resolveMovieClip(target: any = undefined): any {
+      return target ? AVM1Context.instance.resolveTarget(target) : undefined;
+    }
+
     static resolveLevel(level: number): any {
       level = +level;
       return AVM1Context.instance.resolveLevel(level);

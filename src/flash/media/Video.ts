@@ -27,8 +27,9 @@ module Shumway.AVM2.AS.flash.media {
     constructor (width: number /*int*/ = 320, height: number /*int*/ = 240) {
       false && super();
       flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
-      this._width = width | 0;
-      this._height = height | 0;
+      width |= 0;
+      height |= 0;
+      this._setFillAndLineBoundsFromWidthAndHeight(width * 20, height * 20);
     }
     
     _deblocking: number;

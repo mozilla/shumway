@@ -194,9 +194,10 @@ module Shumway {
 
   export class PlainObjectShapeData {
     constructor(public commands: Uint8Array, public commandsPosition: number,
-                public coordinates: Int32Array, public coordinatesPosition: number,
-                public morphCoordinates: Int32Array,
+                public coordinates: Int32Array, public morphCoordinates: Int32Array,
+                public coordinatesPosition: number,
                 public styles: ArrayBuffer, public stylesLength: number,
+                public morphStyles: ArrayBuffer, public morphStylesLength: number,
                 public hasFills: boolean, public hasLines: boolean)
     {}
   }
@@ -216,6 +217,7 @@ module Shumway {
     morphCoordinates: Int32Array;
     coordinatesPosition: number;
     styles: DataBuffer;
+    morphStyles: DataBuffer;
     hasFills: boolean;
     hasLines: boolean;
 
@@ -234,6 +236,11 @@ module Shumway {
       data.coordinatesPosition = source.coordinatesPosition;
       data.styles = DataBuffer.FromArrayBuffer(source.styles, source.stylesLength);
       data.styles.endian = 'auto';
+      if (source.morphStyles) {
+        data.morphStyles = DataBuffer.FromArrayBuffer(
+          source.morphStyles, source.morphStylesLength);
+        data.morphStyles.endian = 'auto';
+      }
       data.hasFills = source.hasFills;
       data.hasLines = source.hasLines;
       return data;
@@ -282,6 +289,10 @@ module Shumway {
       this.hasFills = true;
     }
 
+    writeMorphFill(color: number) {
+      this.morphStyles.writeUnsignedInt(color);
+    }
+
     endFill() {
       this.ensurePathCapacities(1, 0);
       this.commands[this.commandsPosition++] = PathCommand.EndFill;
@@ -309,6 +320,11 @@ module Shumway {
       this.hasLines = true;
     }
 
+    writeMorphLineStyle(thickness: number, color: number) {
+      this.morphCoordinates[this.coordinatesPosition - 1] = thickness;
+      this.morphStyles.writeUnsignedInt(color);
+    }
+
     /**
      * Bitmaps are specified the same for fills and strokes, so we only need to serialize them
      * once. The Parameter `pathCommand` is treated as the actual command to serialize, and must
@@ -319,15 +335,18 @@ module Shumway {
     {
       release || assert(pathCommand === PathCommand.BeginBitmapFill ||
              pathCommand === PathCommand.LineStyleBitmap);
-
       this.ensurePathCapacities(1, 0);
       this.commands[this.commandsPosition++] = pathCommand;
       var styles: DataBuffer = this.styles;
       styles.writeUnsignedInt(bitmapId);
-      this._writeStyleMatrix(matrix);
+      this._writeStyleMatrix(matrix, false);
       styles.writeBoolean(repeat);
       styles.writeBoolean(smooth);
       this.hasFills = true;
+    }
+
+    writeMorphBitmap(matrix: ShapeMatrix) {
+      this._writeStyleMatrix(matrix, true);
     }
 
     /**
@@ -348,9 +367,7 @@ module Shumway {
       styles.writeUnsignedByte(gradientType);
       release || assert(focalPointRatio === (focalPointRatio|0));
       styles.writeShort(focalPointRatio);
-
-      this._writeStyleMatrix(matrix);
-
+      this._writeStyleMatrix(matrix, false);
       var colorStops = colors.length;
       styles.writeByte(colorStops);
       for (var i = 0; i < colorStops; i++) {
@@ -359,10 +376,20 @@ module Shumway {
         // Colors are coerced to uint32, with the highest byte stripped.
         styles.writeUnsignedInt(colors[i]);
       }
-
       styles.writeUnsignedByte(spread);
       styles.writeUnsignedByte(interpolation);
       this.hasFills = true;
+    }
+
+    writeMorphGradient(colors: number[], ratios: number[], matrix: ShapeMatrix) {
+      this._writeStyleMatrix(matrix, true);
+      var styles: DataBuffer = this.morphStyles;
+      for (var i = 0; i < colors.length; i++) {
+        // Ratio must be valid, otherwise we'd have bailed above.
+        styles.writeUnsignedByte(ratios[i]);
+        // Colors are coerced to uint32, with the highest byte stripped.
+        styles.writeUnsignedInt(colors[i]);
+      }
     }
 
     writeCommandAndCoordinates(command: PathCommand, x: number, y: number) {
@@ -406,6 +433,10 @@ module Shumway {
       copy.coordinatesPosition = this.coordinatesPosition;
       copy.styles = new DataBuffer(this.styles.length);
       copy.styles.writeRawBytes(this.styles.bytes);
+      if (this.morphStyles) {
+        copy.morphStyles = new DataBuffer(this.morphStyles.length);
+        copy.morphStyles.writeRawBytes(this.morphStyles.bytes);
+      }
       copy.hasFills = this.hasFills;
       copy.hasLines = this.hasLines;
       return copy;
@@ -413,9 +444,11 @@ module Shumway {
 
     toPlainObject(): PlainObjectShapeData {
       return new PlainObjectShapeData(this.commands, this.commandsPosition,
-                                      this.coordinates, this.coordinatesPosition,
-                                      this.morphCoordinates,
+                                      this.coordinates, this.morphCoordinates,
+                                      this.coordinatesPosition,
                                       this.styles.buffer, this.styles.length,
+                                      this.morphStyles && this.morphStyles.buffer,
+                                      this.morphStyles ? this.morphStyles.length : 0,
                                       this.hasFills, this.hasLines);
     }
 
@@ -424,12 +457,15 @@ module Shumway {
       if (this.morphCoordinates) {
         buffers.push(this.morphCoordinates.buffer);
       }
+      if (this.morphStyles) {
+        buffers.push(this.morphStyles.buffer);
+      }
       return buffers;
     }
 
-    private _writeStyleMatrix(matrix: ShapeMatrix)
+    private _writeStyleMatrix(matrix: ShapeMatrix, isMorph: boolean)
     {
-      var styles: DataBuffer = this.styles;
+      var styles: DataBuffer = isMorph ? this.morphStyles : this.styles;
       styles.writeFloat(matrix.a);
       styles.writeFloat(matrix.b);
       styles.writeFloat(matrix.c);

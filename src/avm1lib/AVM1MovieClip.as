@@ -15,6 +15,7 @@
  */
 
 package avm1lib {
+import flash.display.DisplayObject;
 import flash.display.Bitmap;
 import flash.display.BitmapData;
 import flash.display.Loader;
@@ -35,6 +36,7 @@ public dynamic class AVM1MovieClip extends Object {
   }
 
   public native function get _as3Object():MovieClip;
+  private native function _lookupChildByName(name:String):DisplayObject;
 
   public function __lookupChild(id:String) {
     if (id == '.') {
@@ -42,7 +44,7 @@ public dynamic class AVM1MovieClip extends Object {
     } else if (id == '..') {
       return AVM1Utils.getAVM1Object(this._as3Object.parent);
     } else {
-      return AVM1Utils.getAVM1Object(this._as3Object.getChildByName(id));
+      return AVM1Utils.getAVM1Object(_lookupChildByName(id));
     }
   }
   public function get __targetPath() {
@@ -66,6 +68,10 @@ public dynamic class AVM1MovieClip extends Object {
   private native function _constructMovieClipSymbol(symbolId, name);
   public function attachMovie(symbolId, name, depth, initObject) {
     var mc = _constructMovieClipSymbol(symbolId, name);
+    if (!mc) {
+      return undefined;
+    }
+
     var as2mc = _insertChildAtDepth(mc, depth);
 
     for (var i in initObject) {
@@ -221,6 +227,9 @@ public dynamic class AVM1MovieClip extends Object {
     return this._as3Object.height;
   }
   public function set _height(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.height = value;
   }
   public function get _highquality() {
@@ -349,8 +358,10 @@ public dynamic class AVM1MovieClip extends Object {
   }
   public function setMask(mc:Object) {
     var nativeObject = this._as3Object;
-    var mask = AVM1Utils.resolveTarget(mc)._as3Object;
-    nativeObject.mask = mask;
+    var mask = AVM1Utils.resolveMovieClip(mc);
+    if (mask) {
+      nativeObject.mask = mask._as3Object;
+    }
   }
   public function get _soundbuftime() {
     throw 'Not implemented: get$_soundbuftime';
@@ -454,12 +465,18 @@ public dynamic class AVM1MovieClip extends Object {
     return this._as3Object.width;
   }
   public function set _width(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.width = value;
   }
   public function get _x() {
     return this._as3Object.x;
   }
   public function set _x(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.x = value;
   }
   public function get _xmouse() {
@@ -469,12 +486,18 @@ public dynamic class AVM1MovieClip extends Object {
     return this._as3Object.scaleX * 100;
   }
   public function set _xscale(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.scaleX = value / 100;
   }
   public function get _y() {
     return this._as3Object.y;
   }
   public function set _y(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.y = value;
   }
   public function get _ymouse() {
@@ -484,6 +507,9 @@ public dynamic class AVM1MovieClip extends Object {
     return this._as3Object.scaleY * 100;
   }
   public function set _yscale(value) {
+    if (isNaN(value)) {
+      return;
+    }
     this._as3Object.scaleY = value / 100;
   }
 

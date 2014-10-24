@@ -31,8 +31,6 @@ module Shumway.AVM2.Runtime {
 
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
 
-  declare var callWriter: IndentingWriter;
-
   var counter = Shumway.Metrics.Counter.instance;
 
   var vmNextTrampolineId = 1;
@@ -93,10 +91,10 @@ module Shumway.AVM2.Runtime {
    * as well, but under a different name |m'|. Whenever we want to avoid creating a method closure, we just
    * access the |m'| property on the object. The expression |a.m()| is compiled by Shumway to |a.m'()|.
    *
-   * Memoizers are installed whenever traits are applied which happens when a class is created. At this point
-   * we don't actually have the function |m| available, it hasn't been compiled yet. We only want to compile the
-   * code that is executed and thus we defer compilation until |m| is actually called. To do this, we create a
-   * trampoline that compiles |m| before executing it.
+   * Memoizers are installed whenever traits are applied which happens when a class is created. For AS3-implemented
+   * traits, we don't actually have the function |m| available at this point; it hasn't been compiled yet.
+   * We only want to compile code that is executed and thus we defer compilation until |m| is actually called.
+   * To do this, we create a trampoline that compiles |m| before executing it.
    *
    * Tm = function trampoline() {
    *   return compile(m).apply(this, arguments);
@@ -129,12 +127,8 @@ module Shumway.AVM2.Runtime {
    *   }
    * }();
    *
-   * This doesn't guarantee that the trampoline won't be called again, an unpatched reference to the trampoline
-   * could have leaked somewhere.
-   *
-   * In fact, the memoizer first has to memoize the trampoline. When the trampoline is executed it needs to patch
-   * the memoizer so that the next time around it memoizes |Fm| instead of the trampoline. The trampoline also has
-   * to patch |m'| with |Fm|, as well as |m| on the instance with a bound |Fm|.
+   * To guarantee that no unpatched references to the trampoline leak, memoizers resolve the trampoline before
+   * memoizing the target function.
    *
    * Class inheritance further complicates this picture. Suppose we extend class |A| and call the |m| method on an
    * instance of |B|.
@@ -152,7 +146,7 @@ module Shumway.AVM2.Runtime {
    * the copied trampoline |Ta| which will patch |A.instance.prototype.m'| and not |m'| in |B|s instance prototype.
    *
    * To solve this we keep track of where trampolines are copied and then patching these locations. We store copy
-   * locations in the trampoline function object themselves.
+   * locations in the trampoline function objects themselves.
    *
    */
 

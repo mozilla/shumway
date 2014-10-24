@@ -859,9 +859,9 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Tests if the specified point is within this graphics path.
      */
-    _containsPoint(x: number, y: number, includeLines: boolean): boolean {
+    _containsPoint(x: number, y: number, includeLines: boolean, ratio: number): boolean {
       var hasLines = this._graphicsData.hasLines;
-      if (!(includeLines && hasLines ? this._lineBounds : this._fillBounds).contains(x, y)) {
+      if (!ratio && !(includeLines && hasLines ? this._lineBounds : this._fillBounds).contains(x, y)) {
         return false;
       }
 
@@ -871,27 +871,26 @@ module Shumway.AVM2.AS.flash.display {
       // If we have any fills at all, tt's vastly more likely that the point is in a fill,
       // so test that first.
       if (this._graphicsData.hasFills) {
-        containsPoint = this._fillContainsPoint(x, y);
+        containsPoint = this._fillContainsPoint(x, y, ratio);
       } else {
         release || assert(hasLines, "Can't have non-empty bounds without line or fill set.");
       }
       if (!containsPoint && includeLines) {
-        containsPoint = this._linesContainsPoint(x, y);
+        containsPoint = this._linesContainsPoint(x, y, ratio);
       }
 //      leaveTimeline();
       return containsPoint;
     }
 
-
-    private _fillContainsPoint(x: number, y: number): boolean {
+    private _fillContainsPoint(x: number, y: number, ratio: number): boolean {
 //      enterTimeline("Graphics._fillContainsPoint");
 
       var data = this._graphicsData;
       var commands = data.commands;
       var commandsCount = data.commandsPosition;
       var coordinates = data.coordinates;
+      var morphCoordinates = data.morphCoordinates;
       var coordinatesIndex = 0;
-
       var fromX = 0;
       var fromY = 0;
       var toX = 0;
@@ -920,12 +919,20 @@ module Shumway.AVM2.AS.flash.display {
             formOpen = true;
             fromX = formOpenX = coordinates[coordinatesIndex++];
             fromY = formOpenY = coordinates[coordinatesIndex++];
+            if (ratio) {
+              fromX = formOpenX += (morphCoordinates[coordinatesIndex - 2] - formOpenX) * ratio;
+              fromY = formOpenY += (morphCoordinates[coordinatesIndex - 2] - formOpenY) * ratio;
+            }
             // Continue outer loop.
             continue;
           case PathCommand.LineTo:
             release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             toX = coordinates[coordinatesIndex++];
             toY = coordinates[coordinatesIndex++];
+            if (ratio) {
+              toX += (morphCoordinates[coordinatesIndex - 2] - toX) * ratio;
+              toY += (morphCoordinates[coordinatesIndex - 1] - toY) * ratio;
+            }
             if (fillActive && rayIntersectsLine(x, y, fromX, fromY, toX, toY)) {
               inside = !inside;
             }
@@ -936,6 +943,12 @@ module Shumway.AVM2.AS.flash.display {
             cpY = coordinates[coordinatesIndex++];
             toX = coordinates[coordinatesIndex++];
             toY = coordinates[coordinatesIndex++];
+            if (ratio) {
+              cpX += (morphCoordinates[coordinatesIndex - 4] - cpX) * ratio;
+              cpY += (morphCoordinates[coordinatesIndex - 3] - cpY) * ratio;
+              toX += (morphCoordinates[coordinatesIndex - 2] - toX) * ratio;
+              toY += (morphCoordinates[coordinatesIndex - 1] - toY) * ratio;
+            }
             if (fillActive && rayFullyCrossesCurve(x, y, fromX, fromY, cpX, cpY, toX, toY)) {
               inside = !inside;
             }
@@ -948,6 +961,14 @@ module Shumway.AVM2.AS.flash.display {
             var cp2Y = coordinates[coordinatesIndex++];
             toX = coordinates[coordinatesIndex++];
             toY = coordinates[coordinatesIndex++];
+            if (ratio) {
+              cpX += (morphCoordinates[coordinatesIndex - 6] - cpX) * ratio;
+              cpY += (morphCoordinates[coordinatesIndex - 5] - cpY) * ratio;
+              cp2X += (morphCoordinates[coordinatesIndex - 4] - cp2X) * ratio;
+              cp2Y += (morphCoordinates[coordinatesIndex - 3] - cp2Y) * ratio;
+              toX += (morphCoordinates[coordinatesIndex - 2] - toX) * ratio;
+              toY += (morphCoordinates[coordinatesIndex - 1] - toY) * ratio;
+            }
             if (fillActive &&
                 rayFullyCrossesCubicCurve(x, y, fromX, fromY, cpX, cpY, cp2X, cp2Y, toX, toY)) {
               inside = !inside;
@@ -992,15 +1013,15 @@ module Shumway.AVM2.AS.flash.display {
       return inside;
     }
 
-    private _linesContainsPoint(x: number, y: number): boolean {
+    private _linesContainsPoint(x: number, y: number, ratio: number): boolean {
 //      enterTimeline("Graphics._lineContainsPoint");
 
       var data = this._graphicsData;
       var commands = data.commands;
       var commandsCount = data.commandsPosition;
       var coordinates = data.coordinates;
+      var morphCoordinates = data.morphCoordinates;
       var coordinatesIndex = 0;
-
       var fromX = 0;
       var fromY = 0;
       var toX = 0;
@@ -1027,18 +1048,29 @@ module Shumway.AVM2.AS.flash.display {
             release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             fromX = coordinates[coordinatesIndex++];
             fromY = coordinates[coordinatesIndex++];
+            if (ratio) {
+              fromX += (morphCoordinates[coordinatesIndex - 2] - fromX) * ratio;
+              fromY += (morphCoordinates[coordinatesIndex - 1] - fromY) * ratio;
+            }
             // Continue outer loop.
             continue;
           case PathCommand.LineTo:
             release || assert(coordinatesIndex <= data.coordinatesPosition - 2);
             if (width === 0) {
               fromX = coordinates[coordinatesIndex++];
-              fromX = coordinates[coordinatesIndex++];
+              fromY = coordinates[coordinatesIndex++];
+              if (ratio) {
+                fromX += (morphCoordinates[coordinatesIndex - 2] - fromX) * ratio;
+                fromY += (morphCoordinates[coordinatesIndex - 1] - fromY) * ratio;
+              }
               continue;
             }
             toX = coordinates[coordinatesIndex++];
             toY = coordinates[coordinatesIndex++];
-
+            if (ratio) {
+              toX += (morphCoordinates[coordinatesIndex - 2] - toX) * ratio;
+              toY += (morphCoordinates[coordinatesIndex - 1] - toY) * ratio;
+            }
             // Lines with length == 0 aren't rendered.
             if (fromX === toX && fromY === toY) {
               break;
@@ -1077,13 +1109,23 @@ module Shumway.AVM2.AS.flash.display {
             if (width === 0) {
               coordinatesIndex += 2;
               fromX = coordinates[coordinatesIndex++];
-              fromX = coordinates[coordinatesIndex++];
+              fromY = coordinates[coordinatesIndex++];
+              if (ratio) {
+                fromX += (morphCoordinates[coordinatesIndex - 2] - fromX) * ratio;
+                fromY += (morphCoordinates[coordinatesIndex - 1] - fromY) * ratio;
+              }
               continue;
             }
             cpX = coordinates[coordinatesIndex++];
             cpY = coordinates[coordinatesIndex++];
             toX = coordinates[coordinatesIndex++];
             toY = coordinates[coordinatesIndex++];
+            if (ratio) {
+              cpX += (morphCoordinates[coordinatesIndex - 4] - cpX) * ratio;
+              cpY += (morphCoordinates[coordinatesIndex - 3] - cpY) * ratio;
+              toX += (morphCoordinates[coordinatesIndex - 2] - toX) * ratio;
+              toY += (morphCoordinates[coordinatesIndex - 1] - toY) * ratio;
+            }
             // Eliminate based on bounds
             var extremeX = quadraticBezierExtreme(fromX, cpX, toX);
             if (maxX < fromX && maxX < extremeX && maxX < toX ||
@@ -1118,6 +1160,10 @@ module Shumway.AVM2.AS.flash.display {
               coordinatesIndex += 4;
               fromX = coordinates[coordinatesIndex++];
               fromX = coordinates[coordinatesIndex++];
+              if (ratio) {
+                fromX += (morphCoordinates[coordinatesIndex - 2] - fromX) * ratio;
+                fromY += (morphCoordinates[coordinatesIndex - 1] - fromY) * ratio;
+              }
               continue;
             }
             cpX = coordinates[coordinatesIndex++];
@@ -1126,6 +1172,14 @@ module Shumway.AVM2.AS.flash.display {
             var cp2Y = coordinates[coordinatesIndex++];
             toX = coordinates[coordinatesIndex++];
             toY = coordinates[coordinatesIndex++];
+            if (ratio) {
+              cpX += (morphCoordinates[coordinatesIndex - 6] - cpX) * ratio;
+              cpY += (morphCoordinates[coordinatesIndex - 5] - cpY) * ratio;
+              cp2X += (morphCoordinates[coordinatesIndex - 4] - cp2X) * ratio;
+              cp2Y += (morphCoordinates[coordinatesIndex - 3] - cp2Y) * ratio;
+              toX += (morphCoordinates[coordinatesIndex - 2] - toX) * ratio;
+              toY += (morphCoordinates[coordinatesIndex - 1] - toY) * ratio;
+            }
             // Eliminate based on bounds
             var extremesX = cubicBezierExtremes(fromX, cpX, cp2X, toX);
             while (extremesX.length < 2) {
@@ -1166,6 +1220,9 @@ module Shumway.AVM2.AS.flash.display {
             break;
           case PathCommand.LineStyleSolid:
             width = coordinates[coordinatesIndex++];
+            if (ratio) {
+              width += (morphCoordinates[coordinatesIndex - 1] - width) * ratio;
+            }
             halfWidth = width >> 2;
             halfWidthSq = halfWidth * halfWidth;
             minX = x - halfWidth;

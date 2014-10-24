@@ -253,6 +253,7 @@ module Shumway.GFX {
 
   export class Shape2 extends Frame {
     private _source: Renderable;
+    ratio: number;
 
     get source(): Renderable {
       return this._source;
@@ -262,6 +263,7 @@ module Shumway.GFX {
       super();
       release || assert(source);
       this._source = source;
+      this.ratio = 0;
     }
 
     public getBounds(): Rectangle {

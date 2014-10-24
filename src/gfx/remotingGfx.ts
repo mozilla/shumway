@@ -23,8 +23,10 @@ module Shumway.Remoting.GFX {
   import Group = Shumway.GFX.Group;
   import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
+  import RenderableMorphShape = Shumway.GFX.RenderableMorphShape;
   import RenderableBitmap = Shumway.GFX.RenderableBitmap;
   import RenderableVideo = Shumway.GFX.RenderableVideo;
+  import IVideoPlaybackEventSerializer = Shumway.GFX.IVideoPlaybackEventSerializer;
   import RenderableText = Shumway.GFX.RenderableText;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
@@ -107,7 +109,7 @@ module Shumway.Remoting.GFX {
     }
   }
 
-  export class GFXChannelDeserializerContext {
+  export class GFXChannelDeserializerContext implements IVideoPlaybackEventSerializer {
     scissor: Scissor;
     _nodes: Node [];
     private _assets: Renderable [];
@@ -187,6 +189,11 @@ module Shumway.Remoting.GFX {
         oncomplete(null);
       };
     }
+
+    public sendVideoPlaybackEvent(assetId: number, eventType: VideoPlaybackEvent, data: any): void {
+      this._easelHost.sendVideoPlaybackEvent(assetId, eventType, data);
+    }
+
   }
 
   export class GFXChannelDeserializer {
@@ -362,7 +369,12 @@ module Shumway.Remoting.GFX {
       if (asset) {
         asset.update(pathData, textures, bounds);
       } else {
-        var renderable = new RenderableShape(id, pathData, textures, bounds);
+        var renderable: RenderableShape;
+        if (pathData.morphCoordinates) {
+          renderable = new RenderableMorphShape(id, pathData, textures, bounds);
+        } else {
+          renderable = new RenderableShape(id, pathData, textures, bounds);
+        }
         for (var i = 0; i < textures.length; i++) {
           textures[i].addRenderableReferrer(renderable);
         }
@@ -463,9 +475,10 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = this.input.readInt();
       var asset = context._getVideoAsset(id);
+      var rectangle = this._readRectangle();
       var url = this.input.readUTF();
       if (!asset) {
-        asset = new RenderableVideo(url, new Rectangle(0, 0, 960, 480));
+        asset = new RenderableVideo(url, rectangle, id, context);
         context._registerAsset(id, 0, asset);
       }
     }
@@ -513,6 +526,7 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
+      var ratio = 0;
       writer && writer.writeLn("Receiving UpdateFrame: " + id);
       var node = context._nodes[id];
       if (!node) {
@@ -535,6 +549,7 @@ module Shumway.Remoting.GFX {
         node.clip = input.readInt();
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
+        ratio = input.readInt() / 0xffff;
         var blendMode = input.readInt();
         if (blendMode !== BlendMode.Normal) {
           node.getLayer().blendMode = blendMode;
@@ -556,6 +571,13 @@ module Shumway.Remoting.GFX {
           var child = context._makeNode(childId);
           release || assert (child, "Child " + childId + " of " + id + " has not been sent yet.");
           container.addChild(child);
+        }
+      }
+      if (ratio) {
+        var group = <Group>node;
+        var child = group.getChildren()[0];
+        if (child instanceof Shape) {
+          child.ratio = ratio;
         }
       }
     }

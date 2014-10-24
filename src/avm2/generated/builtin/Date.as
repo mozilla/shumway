@@ -48,14 +48,6 @@ package
     public native static function UTC(year, month, date=1, hours=0, minutes=0, seconds=0, ms=0, ... rest):Number;
 
     AS3 native function valueOf():Number;
-
-    [compat]
-    private native function _toString(index:int):String;
-    [compat]
-    private native function _setTime(value:Number):Number;
-    [compat]
-    private native function _get(index:int):Number;
-
     AS3 native function setTime(t=void 0):Number;
 
     prototype.setTime = unsafeJSNative("Date.prototype.setTime");
@@ -87,36 +79,6 @@ package
     AS3 native function getMilliseconds():Number;
     AS3 native function getTimezoneOffset():Number;
     AS3 native function getTime():Number;
-
-    [compat]
-    private native function _setFullYear(...rest):Number;
-    [compat]
-    private native function _setMonth(...rest):Number;
-    [compat]
-    private native function _setDate(...rest):Number;
-    [compat]
-    private native function _setHours(...rest):Number;
-    [compat]
-    private native function _setMinutes(...rest):Number;
-    [compat]
-    private native function _setSeconds(...rest):Number;
-    [compat]
-    private native function _setMilliseconds(...rest):Number;
-
-    [compat]
-    private native function _setUTCFullYear(...rest0):Number;
-    [compat]
-    private native function _setUTCMonth(...rest):Number;
-    [compat]
-    private native function _setUTCDate(...rest):Number;
-    [compat]
-    private native function _setUTCHours(...rest):Number;
-    [compat]
-    private native function _setUTCMinutes(...rest):Number;
-    [compat]
-    private native function _setUTCSeconds(...rest):Number;
-    [compat]
-    private native function _setUTCMilliseconds(...rest):Number;
 
     AS3 native function setFullYear(year=void 0, month=void 0, date=void 0):Number;
     AS3 native function setMonth(month=void 0, date=void 0):Number;

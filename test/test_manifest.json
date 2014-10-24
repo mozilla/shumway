@@ -15,12 +15,12 @@
       "type": "eq"
     },
     {  "id": "acid-bitmap-fill-2",
-      "frames": [1],
+      "frames": [20],
       "swf": "swfs/acid/acid-bitmap-fill-2.swf",
       "type": "eq"
     },
     {  "id": "acid-bitmap-fill",
-      "frames": [1],
+      "frames": [20],
       "swf": "swfs/acid/acid-bitmap-fill.swf",
       "type": "eq"
     },
@@ -235,6 +235,18 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/acid/acid-textfield-scroll.swf"
+      ],
+      "type": "stas"
+    },
+    {  "id": "acid-morph",
+      "frames": [60],
+      "swf": "swfs/acid/acid-morph.swf",
+      "type": "eq"
+    },
+    {  "id": "acid-morph-stas",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/acid/acid-morph.swf"
       ],
       "type": "stas"
     },

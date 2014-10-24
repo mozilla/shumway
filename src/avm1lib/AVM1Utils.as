@@ -28,6 +28,7 @@ package avm1lib {
     public static native function getAVM1Object(nativeObject: Object) : Object;
     public static native function addProperty(obj: Object, name: String, getter: Function, setter: Function, enumerable: Boolean = true);
     public static native function resolveTarget(target_mc:* = undefined) : MovieClip;
+    public static native function resolveMovieClip(target_mc:* = undefined) : MovieClip;
     public static native function resolveLevel(level: Number) : MovieClip;
     public static native function get currentStage() : Stage;
     public static native function get swfVersion() : Number;

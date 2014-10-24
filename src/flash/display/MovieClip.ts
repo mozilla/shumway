@@ -191,6 +191,12 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
 
+        if (instance._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
+          instance._removeFlags(DisplayObjectFlags.NeedsLoadEvent);
+          instance.dispatchEvent(events.Event.getInstance(events.Event.AVM1_LOAD));
+          continue;
+        }
+
         instance._allowFrameNavigation = MovieClip.frameNavigationModel === FrameNavigationModel.SWF1;
         instance.callFrame(instance._currentFrame);
         instance._allowFrameNavigation = true;
@@ -247,6 +253,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _enqueueFrameScripts() {
+      if (this._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
+        MovieClip._callQueue.push(this);
+      }
       if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
         this._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
         MovieClip._callQueue.push(this);
@@ -453,9 +462,15 @@ module Shumway.AVM2.AS.flash.display {
           var children = this._children.slice();
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
-            if (child._depth) {
-              var state = stateAtDepth[child._depth];
-              if (!state || !state.canBeAnimated(child)) {
+            var childDepth = child._depth;
+            if (childDepth) {
+              // We need to scan all past states to check if we can keep the child.
+              var state: Timeline.AnimationState = undefined;
+              for (var j = nextFrame - 1; j >= 0 && !state; j--) {
+                state = frames[j].stateAtDepth[childDepth];
+              }
+              if (!state ||
+                  !(state.canBeReused(child) || state.canBeAnimated(child))) {
                 this._removeAnimatedChild(child);
               }
             }
@@ -482,6 +497,9 @@ module Shumway.AVM2.AS.flash.display {
                 child._setStaticContentFromSymbol(state.symbol);
               }
               child._animate(state);
+              continue;
+            }
+            if (state && state.canBeReused(child)) {
               continue;
             }
             this._removeAnimatedChild(child);

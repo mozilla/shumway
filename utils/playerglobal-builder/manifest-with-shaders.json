@@ -231,6 +231,7 @@
       "flash.geom:Point",
       "flash.display:LoaderInfo",
       "flash.geom:Rectangle",
+      "flash.display:Shader",
       "flash.geom:Vector3D",
       "flash.display:DisplayObjectContainer",
       "flash.display:Stage",
@@ -313,6 +314,8 @@
       "flash.display:GraphicsPath",
       "flash.display:GraphicsSolidFill",
       "flash.display:IGraphicsFill",
+      "flash.display:Shader",
+      "flash.display:GraphicsShaderFill",
       "flash.display:BitmapData",
       "flash.display:GraphicsTrianglePath",
       "flash.display:IGraphicsPath",
@@ -404,6 +407,21 @@
     ],
     "files": [
       "flash/display/GraphicsPathWinding.as"
+    ]
+  },
+  {
+    "name": "flash/display/GraphicsShaderFill",
+    "defs": [
+      "flash.display:GraphicsShaderFill"
+    ],
+    "files": [
+      "flash/display/GraphicsShaderFill.as"
+    ],
+    "refs": [
+      "flash.display:IGraphicsData",
+      "flash.display:IGraphicsFill",
+      "flash.geom:Matrix",
+      "flash.display:Shader"
     ]
   },
   {
@@ -702,6 +720,79 @@
     ],
     "files": [
       "flash/display/Scene.as"
+    ]
+  },
+  {
+    "name": "flash/display/Shader",
+    "defs": [
+      "flash.display:Shader"
+    ],
+    "files": [
+      "flash/display/Shader.as"
+    ],
+    "refs": [
+      "flash.display:ShaderData"
+    ]
+  },
+  {
+    "name": "flash/display/ShaderData",
+    "defs": [
+      "flash.display:ShaderData"
+    ],
+    "files": [
+      "flash/display/ShaderData.as"
+    ]
+  },
+  {
+    "name": "flash/display/ShaderInput",
+    "defs": [
+      "flash.display:ShaderInput"
+    ],
+    "files": [
+      "flash/display/ShaderInput.as"
+    ]
+  },
+  {
+    "name": "flash/display/ShaderJob",
+    "defs": [
+      "flash.display:ShaderJob"
+    ],
+    "files": [
+      "flash/display/ShaderJob.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.display:Shader",
+      "flash.events:ShaderEvent"
+    ]
+  },
+  {
+    "name": "flash/display/ShaderParameter",
+    "defs": [
+      "flash.display:ShaderParameter"
+    ],
+    "files": [
+      "flash/display/ShaderParameter.as"
+    ]
+  },
+  {
+    "name": "flash/display/ShaderParameterType",
+    "defs": [
+      "flash.display:ShaderParameterType"
+    ],
+    "files": [
+      "flash/display/ShaderParameterType.as"
+    ]
+  },
+  {
+    "name": "flash/display/ShaderPrecision",
+    "defs": [
+      "flash.display:ShaderPrecision"
+    ],
+    "files": [
+      "flash/display/ShaderPrecision.as"
     ]
   },
   {
@@ -1267,6 +1358,21 @@
     ]
   },
   {
+    "name": "flash/events/ShaderEvent",
+    "defs": [
+      "flash.events:ShaderEvent"
+    ],
+    "files": [
+      "flash/events/ShaderEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
+    ],
+    "refs": [
+      "flash.display:BitmapData"
+    ]
+  },
+  {
     "name": "flash/events/SoftKeyboardEvent",
     "defs": [
       "flash.events:SoftKeyboardEvent"
@@ -1717,6 +1823,22 @@
     ],
     "inherits": [
       "flash.filters:BitmapFilter"
+    ]
+  },
+  {
+    "name": "flash/filters/ShaderFilter",
+    "defs": [
+      "flash.filters:ShaderFilter"
+    ],
+    "files": [
+      "flash/filters/ShaderFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
+    ],
+    "refs": [
+      "flash.geom:Rectangle",
+      "flash.display:Shader"
     ]
   },
   {
