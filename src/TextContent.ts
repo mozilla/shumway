@@ -415,7 +415,7 @@ module Shumway {
         textRunData.writeInt(font._id);
       } else {
         textRunData.writeInt(0);
-        textRunData.writeUTF(flash.text.Font.resolveFontName(font.fontName));
+        textRunData.writeUTF(font._fontFamily);
       }
       textRunData.writeInt(font.ascent * size);
       textRunData.writeInt(font.descent * size);
