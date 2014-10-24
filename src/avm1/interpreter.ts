@@ -465,7 +465,7 @@ module Shumway.AVM1 {
 
   function as2CastError(ex) {
     if (typeof InternalError !== 'undefined' &&
-        ex instanceof InternalError && ex.message === 'too much recursion') {
+        ex instanceof InternalError && (<any>ex).message === 'too much recursion') {
       // HACK converting too much recursion into AVM1CriticalError
       return new AVM1CriticalError('long running script -- AVM1 recursion limit is reached');
     }

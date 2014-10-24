@@ -835,7 +835,7 @@ module Shumway.AVM2.AS {
         o.labelId = ASClass.labelCounter ++;
       }
       if (o instanceof Function) {
-        return "Function [#" + o.labelId + "]";
+        return "Function [#" + (<any>o).labelId + "]";
       }
       return "Object [#" + o.labelId + "]";
     }

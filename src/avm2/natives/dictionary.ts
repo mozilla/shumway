@@ -89,7 +89,7 @@ module Shumway.AVM2.AS {
         }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
-          return this.primitiveMap[key];
+          return this.primitiveMap[<any>key];
         }
         return this.map.get(Object(name));
       }
@@ -100,7 +100,7 @@ module Shumway.AVM2.AS {
         }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
-          this.primitiveMap[key] = value;
+          this.primitiveMap[<any>key] = value;
           return;
         }
         this.map.set(Object(name), value);
@@ -120,7 +120,7 @@ module Shumway.AVM2.AS {
         }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
-          return key in this.primitiveMap;
+          return <any>key in this.primitiveMap;
         }
         return this.map.has(Object(name));
       }
@@ -131,7 +131,7 @@ module Shumway.AVM2.AS {
         }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
-          delete this.primitiveMap[key];
+          delete this.primitiveMap[<any>key];
         }
         this.map.delete(Object(name));
         var i;

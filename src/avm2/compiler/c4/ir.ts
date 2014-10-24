@@ -149,7 +149,7 @@ module Shumway.AVM2.Compiler.IR {
           }
         }
         if (v instanceof Array) {
-          count += v.replace(oldInput, newInput);
+          count += (<any>v).replace(oldInput, newInput);
         }
       }
       return count;
