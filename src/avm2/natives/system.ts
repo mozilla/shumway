@@ -60,6 +60,8 @@ module Shumway.AVM2.AS {
     }
 
     export class System extends ASNative {
+      private static _useCodePage: boolean = false;
+
       static get ime(): flash.system.IME {
         notImplemented("public flash.system.System::get ime"); return;
       }
@@ -89,12 +91,11 @@ module Shumway.AVM2.AS {
       }
 
       static get useCodePage(): boolean {
-        notImplemented("public flash.system.System::get useCodePage"); return;
+        return System._useCodePage;
       }
 
       static set useCodePage(value: boolean) {
-        value = !!value;
-        notImplemented("public flash.system.System::set useCodePage"); return;
+        System._useCodePage = !!value;
       }
 
       static get vmVersion(): string {
