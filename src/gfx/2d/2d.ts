@@ -16,7 +16,7 @@ module Shumway.GFX.Canvas2D {
 
   declare var registerScratchCanvas;
 
-  var writer = new IndentingWriter();
+  var writer = new IndentingWriter(false, dumpLine);
 
   export enum FillRule {
     NonZero,
@@ -148,6 +148,51 @@ module Shumway.GFX.Canvas2D {
       }
       return state;
     }
+
+    public hasFlags(flags: RenderFlags): boolean {
+      return (this.flags & flags) === flags;
+    }
+
+    public removeFlags(flags: RenderFlags) {
+      this.flags &= ~flags;
+    }
+
+    public toggleFlags(flags: RenderFlags, on: boolean) {
+      if (on) {
+        this.flags |= flags;
+      } else {
+        this.flags &= ~flags;
+      }
+    }
+  }
+
+  export class FrameInfo {
+    private _count: number = 0;
+    private _enterTime: number;
+
+    shapes: number = 0;
+    groups: number = 0;
+
+    enter() {
+      if (!writer) {
+        return;
+      }
+      writer.enter("> Frame: " + (this._count ++));
+      this._enterTime = performance.now();
+
+      this.shapes = 0;
+      this.groups = 0;
+    }
+
+    leave() {
+      if (!writer) {
+        return;
+      }
+      writer.writeLn("Shapes: " + this.shapes + ", Groups: " + this.groups);
+      writer.writeLn("Elapsed: " + (performance.now() - this._enterTime).toFixed(2));
+      writer.writeLn("Rectangle: " + Rectangle.allocationCount + ", Matrix: " + Matrix.allocationCount);
+      writer.leave("<");
+    }
   }
 
   export class Canvas2DStageRenderer extends StageRenderer {
@@ -170,6 +215,8 @@ module Shumway.GFX.Canvas2D {
     private static _shapeCache: ISurfaceRegionAllocator;
 
     private _visited: number = 0;
+
+    private _frameInfo = new FrameInfo();
 
     private _fontSize: number = 0;
 
@@ -261,11 +308,9 @@ module Shumway.GFX.Canvas2D {
       target.context.globalAlpha = 1;
       target.clear(viewport);
 
-      if (!options.paintViewport) {
-        target.context.beginPath();
-        target.context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
-        target.context.clip();
-      }
+      target.context.beginPath();
+      target.context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+      target.context.clip();
 
       this._renderStageToTarget(target, stage, viewport);
 
@@ -285,11 +330,15 @@ module Shumway.GFX.Canvas2D {
 
     public renderNode(node: Node, clip: Rectangle, matrix: Matrix) {
       var state = new RenderState(this._target, clip);
+      state.flags = RenderFlags.PaintRenderable | RenderFlags.CacheShapes;
       state.matrix.set(matrix);
       node.visit(this, state);
     }
 
     visitGroup(node: Group, state: RenderState) {
+
+      this._frameInfo.groups ++;
+
       var bounds = node.getBounds();
 
       if (state.flags & RenderFlags.PaintBounds) {
@@ -321,12 +370,13 @@ module Shumway.GFX.Canvas2D {
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
             var childState = state.transform(child.getTransform());
+            childState.toggleFlags(RenderFlags.ImageSmoothing, child.hasFlags(NodeFlags.ImageSmoothing));
             if (child.clip >= 0) {
               clips = clips || new Uint8Array(children.length);
               clips[child.clip + i] ++;
               var clipState = childState.clone();
-              clipState.flags |= RenderFlags.PaintClip;
               state.target.context.save();
+              clipState.flags |= RenderFlags.PaintClip;
               child.visit(this, clipState);
               clipState.free();
             } else {
@@ -468,7 +518,6 @@ module Shumway.GFX.Canvas2D {
       node: Node,
       clip: Rectangle
     ) {
-      this._visited = 0;
       Rectangle.allocationCount = Matrix.allocationCount = 0;
       var state = new RenderState(target, clip);
 
@@ -491,8 +540,11 @@ module Shumway.GFX.Canvas2D {
         state.flags |= RenderFlags.PixelSnapping;
       }
 
+      this._frameInfo.enter();
+
       node.visit(this, state);
-      dumpLine("Rectangle: " + Rectangle.allocationCount + ", Matrix: " + Matrix.allocationCount);
+
+      this._frameInfo.leave();
     }
 
     private _renderNodeToTemporarySurface(node: Node, state: RenderState, clip: Rectangle): Canvas2DSurfaceRegion {
@@ -554,55 +606,61 @@ module Shumway.GFX.Canvas2D {
       var bounds = shape.getBounds();
 
       var paintStart = 0;
+
       if (paintFlashing) {
         paintStart = performance.now();
       }
-      if (!bounds.isEmpty()) {
-        var source = shape.source;
-        var renderCount = source.properties["renderCount"] || 0;
-        var cacheShapesMaxSize = state.cacheShapesMaxSize;
-        var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
-        if (!paintStencil &&
-            !paintClip &&
-            state.colorMatrix.isIdentity() &&
-            !source.hasFlags(RenderableFlags.Dynamic) &&
-            (state.flags & RenderFlags.CacheShapes) &&
-            renderCount > state.cacheShapesThreshold &&
-            bounds.w * matrixScale <= cacheShapesMaxSize &&
-            bounds.h * matrixScale <= cacheShapesMaxSize)
-        {
-          var mipMap: MipMap = source.properties["mipMap"];
-          if (!mipMap) {
-            mipMap = source.properties["mipMap"] = new MipMap(source, Canvas2DStageRenderer._shapeCache, cacheShapesMaxSize);
-          }
-          var mipMapLevel = mipMap.getLevel(matrix);
-          var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);
-          var region = mipMapLevelSurfaceRegion.region;
-          if (mipMapLevel) {
-            context.imageSmoothingEnabled =
-            context.mozImageSmoothingEnabled = !!(state.flags & RenderFlags.ImageSmoothing);
-            context.drawImage (
-              mipMapLevelSurfaceRegion.surface.canvas,
-              region.x, region.y,
-              region.w, region.h,
-              bounds.x, bounds.y,
-              bounds.w, bounds.h
-            );
-          }
-          if (paintFlashing) {
-            context.fillStyle = ColorStyle.gradientColor(0.1 / elapsed);
-            context.globalAlpha = 0.2 * Math.random();
-            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-          }
-        } else {
-          source.properties["renderCount"] = ++ renderCount;
-          source.render(context, shape.ratio, null, paintClip, paintStencil);
-          if (paintFlashing) {
-            var elapsed = performance.now() - paintStart;
-            context.fillStyle = ColorStyle.gradientColor(0.1 / elapsed);
-            context.globalAlpha = 0.3 + 0.1 * Math.random();
-            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-          }
+
+      if (bounds.isEmpty()) {
+        return;
+      }
+
+      this._frameInfo.shapes ++;
+
+      context.imageSmoothingEnabled = context.mozImageSmoothingEnabled = state.hasFlags(RenderFlags.ImageSmoothing);
+
+      var source = shape.source;
+      var renderCount = source.properties["renderCount"] || 0;
+      var cacheShapesMaxSize = state.cacheShapesMaxSize;
+      var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
+      if (!paintStencil &&
+          !paintClip &&
+          state.colorMatrix.isIdentity() &&
+          !source.hasFlags(RenderableFlags.Dynamic) &&
+          (state.flags & RenderFlags.CacheShapes) &&
+          renderCount > state.cacheShapesThreshold &&
+          bounds.w * matrixScale <= cacheShapesMaxSize &&
+          bounds.h * matrixScale <= cacheShapesMaxSize)
+      {
+        var mipMap: MipMap = source.properties["mipMap"];
+        if (!mipMap) {
+          mipMap = source.properties["mipMap"] = new MipMap(source, Canvas2DStageRenderer._shapeCache, cacheShapesMaxSize);
+        }
+        var mipMapLevel = mipMap.getLevel(matrix);
+        var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);
+        var region = mipMapLevelSurfaceRegion.region;
+        if (mipMapLevel) {
+          context.drawImage (
+            mipMapLevelSurfaceRegion.surface.canvas,
+            region.x, region.y,
+            region.w, region.h,
+            bounds.x, bounds.y,
+            bounds.w, bounds.h
+          );
+        }
+        if (paintFlashing) {
+          context.fillStyle = ColorStyle.gradientColor(0.1 / elapsed);
+          context.globalAlpha = 0.2 * Math.random();
+          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        }
+      } else {
+        source.properties["renderCount"] = ++ renderCount;
+        source.render(context, shape.ratio, null, paintClip, paintStencil);
+        if (paintFlashing) {
+          var elapsed = performance.now() - paintStart;
+          context.fillStyle = ColorStyle.gradientColor(0.1 / elapsed);
+          context.globalAlpha = 0.3 + 0.1 * Math.random();
+          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
         }
       }
     }

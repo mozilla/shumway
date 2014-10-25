@@ -34,9 +34,6 @@ module Shumway.Remoting.GFX {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Stage = Shumway.GFX.Stage;
 
-  import Smoothing = Shumway.GFX.Smoothing;
-  import PixelSnapping = Shumway.GFX.PixelSnapping;
-
   import Point = Shumway.GFX.Geometry.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
@@ -553,10 +550,8 @@ module Shumway.Remoting.GFX {
         this._readFilters(node);
         node.toggleFlags(NodeFlags.Visible, input.readBoolean());
         node.toggleFlags(NodeFlags.CacheAsBitmap, input.readBoolean());
-//        frame.pixelSnapping = <PixelSnapping>input.readInt();
-//        frame.smoothing = <Smoothing>input.readInt();
-        input.readInt();
-        input.readInt();
+        node.toggleFlags(NodeFlags.PixelSnapping, !!input.readInt());
+        node.toggleFlags(NodeFlags.ImageSmoothing, !!input.readInt());
       }
       if (hasBits & MessageBits.HasChildren) {
         var count = input.readInt();

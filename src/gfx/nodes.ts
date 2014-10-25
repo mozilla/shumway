@@ -27,17 +27,6 @@ module Shumway.GFX {
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
 
-  export enum PixelSnapping {
-    Never      = 0,
-    Always     = 1,
-    Auto       = 2
-  }
-
-  export enum Smoothing {
-    Never      = 0,
-    Always     = 1
-  }
-
   export enum BlendMode {
     Normal     = 1,
     Layer      = 2,
@@ -78,12 +67,14 @@ module Shumway.GFX {
                                         InvalidConcatenatedMatrix |
                                         Visible,
 
+    CacheAsBitmap                     = 0x20000,
+    PixelSnapping                     = 0x40000,
+    ImageSmoothing                    = 0x80000,
+
     // Delete These
     Dirty                             = 0x00010,
     InvalidPaint                      = 0x00020,
     Transparent                       = 0x08000,
-
-    CacheAsBitmap                     = 0x20000
   }
 
   /**
