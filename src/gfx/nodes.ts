@@ -49,16 +49,21 @@ module Shumway.GFX {
     BoundsAutoCompute                 = 0x00002,
     IsMask                            = 0x00004,
 
+    Dirty                             = 0x00010,
+
     InvalidBounds                     = 0x00100,
 
     InvalidConcatenatedMatrix         = 0x00200,
     InvalidConcatenatedColorMatrix    = 0x00400,
 
-    ParentOnChildAddedOrRemoved       = InvalidBounds,
-    ParentOnChildMoved                = InvalidBounds,
+    UpOnAddedOrRemoved                = InvalidBounds | Dirty,
+    UpOnMoved                         = InvalidBounds | Dirty,
 
-    ChildOnChildAddedOrRemoved        = InvalidConcatenatedMatrix | InvalidConcatenatedColorMatrix,
-    ChildOnChildMoved                 = InvalidConcatenatedMatrix | InvalidConcatenatedColorMatrix,
+    DownOnAddedOrRemoved              = InvalidConcatenatedMatrix | InvalidConcatenatedColorMatrix,
+    DownOnMoved                       = InvalidConcatenatedMatrix | InvalidConcatenatedColorMatrix,
+
+    UpOnColorMatrixChanged            = Dirty,
+    DownOnColorMatrixChanged          = InvalidConcatenatedColorMatrix,
 
     Visible                           = 0x10000,
 
@@ -72,7 +77,6 @@ module Shumway.GFX {
     ImageSmoothing                    = 0x80000,
 
     // Delete These
-    Dirty                             = 0x00010,
     InvalidPaint                      = 0x00020,
     Transparent                       = 0x08000,
   }
@@ -114,6 +118,19 @@ module Shumway.GFX {
 
     visitScissor(node: Scissor, state: State) {
       this.visitGroup(node, state);
+    }
+  }
+
+  /**
+   * Helper visitor that checks and resets the dirty bit.
+   */
+  export class DirtyNodeVisitor extends NodeVisitor {
+    public isDirty = true;
+    visitNode(node: Node, state: State) {
+      if (node.hasFlags(NodeFlags.Dirty)) {
+        this.isDirty = true;
+      }
+      node.toggleFlags(NodeFlags.Dirty, false);
     }
   }
 
@@ -398,8 +415,8 @@ module Shumway.GFX {
       node._parent = this;
       node._index = this._children.length;
       this._children.push(node);
-      this._propagateFlagsUp(NodeFlags.ParentOnChildAddedOrRemoved);
-      node._propagateFlagsDown(NodeFlags.ChildOnChildAddedOrRemoved);
+      this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
+      node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
     }
 
     public setChildAt(node: Node, index: number) {
@@ -414,12 +431,12 @@ module Shumway.GFX {
       var last = this._children[index];
       last._index = -1;
       last._parent = null;
-      last._propagateFlagsDown(NodeFlags.ChildOnChildAddedOrRemoved);
+      last._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
       node._index = index;
       node._parent = this;
       this._children[index] = node;
-      this._propagateFlagsUp(NodeFlags.ParentOnChildAddedOrRemoved);
-      node._propagateFlagsDown(NodeFlags.ChildOnChildAddedOrRemoved);
+      this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
+      node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
     }
 
     public clearChildren() {
@@ -428,7 +445,7 @@ module Shumway.GFX {
         if (child) {
           child._index = -1;
           child._parent = null;
-          child._propagateFlagsDown(NodeFlags.ChildOnChildAddedOrRemoved);
+          child._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
         }
       }
       this._children.length = 0;
@@ -492,8 +509,8 @@ module Shumway.GFX {
 
     public set x(value: number) {
       this._matrix.tx = value;
-      this._node._propagateFlagsUp(NodeFlags.ParentOnChildMoved);
-      this._node._propagateFlagsDown(NodeFlags.ChildOnChildMoved);
+      this._node._propagateFlagsUp(NodeFlags.UpOnMoved);
+      this._node._propagateFlagsDown(NodeFlags.DownOnMoved);
     }
 
     public get y(): number {
@@ -502,19 +519,20 @@ module Shumway.GFX {
 
     public set y(value: number) {
       this._matrix.ty = value;
-      this._node._propagateFlagsUp(NodeFlags.ParentOnChildMoved);
-      this._node._propagateFlagsDown(NodeFlags.ChildOnChildMoved);
+      this._node._propagateFlagsUp(NodeFlags.UpOnMoved);
+      this._node._propagateFlagsDown(NodeFlags.DownOnMoved);
     }
 
     public setMatrix(value: Matrix) {
       this._matrix.set(value);
-      this._node._propagateFlagsUp(NodeFlags.ParentOnChildMoved);
-      this._node._propagateFlagsDown(NodeFlags.ChildOnChildMoved);
+      this._node._propagateFlagsUp(NodeFlags.UpOnMoved);
+      this._node._propagateFlagsDown(NodeFlags.DownOnMoved);
     }
 
     public setColorMatrix(value: ColorMatrix) {
       this._colorMatrix.set(value);
-      this._node._propagateFlagsDown(NodeFlags.InvalidConcatenatedColorMatrix);
+      this._node._propagateFlagsUp(NodeFlags.UpOnColorMatrixChanged);
+      this._node._propagateFlagsDown(NodeFlags.DownOnColorMatrixChanged);
     }
 
     public getMatrix(clone: boolean = false): Matrix {

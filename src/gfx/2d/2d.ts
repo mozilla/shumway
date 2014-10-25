@@ -170,10 +170,11 @@ module Shumway.GFX.Canvas2D {
     private _count: number = 0;
     private _enterTime: number;
 
-    shapes: number = 0;
-    groups: number = 0;
+    shapes = 0;
+    groups = 0;
+    culledNodes = 0;
 
-    enter() {
+    enter(state: RenderState) {
       if (!writer) {
         return;
       }
@@ -182,13 +183,14 @@ module Shumway.GFX.Canvas2D {
 
       this.shapes = 0;
       this.groups = 0;
+      this.culledNodes = 0;
     }
 
     leave() {
       if (!writer) {
         return;
       }
-      writer.writeLn("Shapes: " + this.shapes + ", Groups: " + this.groups);
+      writer.writeLn("Shapes: " + this.shapes + ", Groups: " + this.groups + ", Culled Nodes: " + this.culledNodes);
       writer.writeLn("Elapsed: " + (performance.now() - this._enterTime).toFixed(2));
       writer.writeLn("Rectangle: " + Rectangle.allocationCount + ", Matrix: " + Matrix.allocationCount);
       writer.leave("<");
@@ -217,6 +219,8 @@ module Shumway.GFX.Canvas2D {
     private _visited: number = 0;
 
     private _frameInfo = new FrameInfo();
+
+    private _dirtyVisitor = new DirtyNodeVisitor();
 
     private _fontSize: number = 0;
 
@@ -300,6 +304,14 @@ module Shumway.GFX.Canvas2D {
       var target = this._target;
       var options = this._options;
       var viewport = this._viewport;
+
+
+      this._dirtyVisitor.isDirty = false;
+      stage.visit(this._dirtyVisitor, null);
+
+      if (!this._dirtyVisitor.isDirty) {
+        return;
+      }
 
       // stage.visit(new TracingNodeVisitor(new IndentingWriter()), null);
 
@@ -389,6 +401,8 @@ module Shumway.GFX.Canvas2D {
             }
             childState.free();
           }
+        } else {
+          this._frameInfo.culledNodes ++;
         }
       }
     }
@@ -397,6 +411,7 @@ module Shumway.GFX.Canvas2D {
       var context = state.target.context;
       var bounds = node.getBounds(true);
       state.matrix.transformRectangleAABB(bounds);
+      bounds.intersect(state.clip);
       state.target.resetTransform();
       // context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
       // context.clip();
@@ -425,9 +440,13 @@ module Shumway.GFX.Canvas2D {
           matrix = matrix.clone();
           matrix.snap();
         }
+        var context = state.target.context;
         state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-        Filters._applyColorMatrix(state.target.context, state.colorMatrix);
-        this._renderShape(node, state)
+        Filters._applyColorMatrix(context, state.colorMatrix);
+        // Only paint if it is visible.
+        if (context.globalAlpha > 0) {
+          this._renderShape(node, state)
+        }
         if (state.flags & RenderFlags.PixelSnapping) {
           matrix.free();
         }
@@ -540,7 +559,7 @@ module Shumway.GFX.Canvas2D {
         state.flags |= RenderFlags.PixelSnapping;
       }
 
-      this._frameInfo.enter();
+      this._frameInfo.enter(state);
 
       node.visit(this, state);
 
@@ -588,7 +607,7 @@ module Shumway.GFX.Canvas2D {
       state = state.clone();
       state.target = target;
       state.matrix = matrix;
-      state.clip = surfaceRegionBounds;
+      state.clip.set(surfaceRegionBounds);
       node.visit(this, state);
       state.free();
       target.context.restore();
@@ -598,7 +617,6 @@ module Shumway.GFX.Canvas2D {
     private _renderShape(shape: Shape, state: RenderState) {
       var context = state.target.context;
       var matrix = state.matrix;
-      var clip = state.clip;
       var paintClip = !!(state.flags & RenderFlags.PaintClip);
       var paintStencil = !!(state.flags & RenderFlags.PaintStencil);
       var paintFlashing = !!(state.flags & RenderFlags.PaintFlashing);
