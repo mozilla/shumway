@@ -673,7 +673,7 @@ module Shumway.AVM2.AS.flash.text {
       if (symbol) {
         self._symbol = symbol;
         self._fontName = symbol.name;
-        self._fontFamily = symbol.name;
+        self._fontFamily = Font.resolveFontName(symbol.name);
         if (symbol.bold) {
           if (symbol.italic) {
             self._fontStyle = FontStyle.BOLD_ITALIC;
@@ -743,13 +743,13 @@ module Shumway.AVM2.AS.flash.text {
       if (!font) {
         var font = new Font();
         font._fontName = name;
-        font._fontFamily = name;
+        font._fontFamily = Font.resolveFontName(name);
         font._fontStyle = FontStyle.REGULAR;
         font._fontType = FontType.DEVICE;
         this._fontsByName[name] = font;
       }
       if (font._fontType === FontType.DEVICE) {
-        var metrics = Font._getFontMetrics(name);
+        var metrics = Font._getFontMetrics(font._fontFamily);
         if (!metrics) {
           Shumway.Debug.warning(
             'Font metrics for "' + name + '" unknown. Fallback to default.');
