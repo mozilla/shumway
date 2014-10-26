@@ -67,6 +67,8 @@ module Shumway.GFX {
 
     Visible                           = 0x10000,
 
+    UpOnInvalidate                    = InvalidBounds | Dirty,
+
     Default                           = BoundsAutoCompute |
                                         InvalidBounds |
                                         InvalidConcatenatedMatrix |
@@ -375,8 +377,8 @@ module Shumway.GFX {
       }
     }
 
-    public invalidatePaint() {
-      Debug.somewhatImplemented("invalidatePaint");
+    public invalidate() {
+      this._propagateFlagsUp(NodeFlags.UpOnInvalidate);
     }
 
     public toString() {

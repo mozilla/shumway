@@ -113,17 +113,17 @@ module Shumway.GFX {
       this._renderableReferrers.push(renderable);
     }
 
-    public invalidatePaint() {
+    public invalidate() {
       this.setFlags(RenderableFlags.Dirty);
-      var frames = this._nodeReferrers;
-      for (var i = 0; i < frames.length; i++) {
-        frames[i].invalidatePaint();
+      var nodes = this._nodeReferrers;
+      for (var i = 0; i < nodes.length; i++) {
+        nodes[i].invalidate();
       }
       var renderables = this._renderableReferrers;
       for (var i = 0; i < renderables.length; i++) {
-        renderables[i].invalidatePaint();
+        renderables[i].invalidate();
       }
-      var listeners = this._invalidatePaintEventListeners;
+      var listeners = this._invalidateEventListeners;
       if (listeners) {
         for (var i = 0; i < listeners.length; i++) {
           listeners[i](this);
@@ -131,15 +131,15 @@ module Shumway.GFX {
       }
     }
 
-    private _invalidatePaintEventListeners: {(renderable: Renderable): void} [] = null;
+    private _invalidateEventListeners: {(renderable: Renderable): void} [] = null;
 
-    public addInvalidatePaintEventListener(listener: (renderable: Renderable) => void) {
-      if (!this._invalidatePaintEventListeners) {
-        this._invalidatePaintEventListeners = [];
+    public addinvalidateEventListener(listener: (renderable: Renderable) => void) {
+      if (!this._invalidateEventListeners) {
+        this._invalidateEventListeners = [];
       }
-      var index = indexOf(this._invalidatePaintEventListeners, listener);
+      var index = indexOf(this._invalidateEventListeners, listener);
       release && assert(index < 0);
-      this._invalidatePaintEventListeners.push(listener);
+      this._invalidateEventListeners.push(listener);
     }
 
     _bounds: Rectangle;
@@ -283,9 +283,9 @@ module Shumway.GFX {
       }
     }
 
-    public invalidatePaintCheck() {
+    public invalidateCheck() {
       if (this._lastCurrentTime !== this._video.currentTime) {
-        this.invalidatePaint();
+        this.invalidate();
       }
       this._lastCurrentTime = this._video.currentTime;
     }
@@ -293,7 +293,7 @@ module Shumway.GFX {
     public static invalidateVideos() {
       var renderables = RenderableVideo._renderableVideos;
       for (var i = 0; i < renderables.length; i++) {
-        renderables[i].invalidatePaintCheck();
+        renderables[i].invalidateCheck();
       }
     }
 
@@ -356,7 +356,7 @@ module Shumway.GFX {
         image.onload = function () {
           self._context.drawImage(image, 0, 0);
           self.removeFlags(RenderableFlags.Loading);
-          self.invalidatePaint();
+          self.invalidate();
         };
         image.onerror = function () {
           unexpected("Image loading error: " + ImageType[type]);
@@ -376,7 +376,7 @@ module Shumway.GFX {
         this._context.putImageData(this._imageData, 0, 0);
         leaveTimeline("putImageData");
       }
-      this.invalidatePaint();
+      this.invalidate();
       leaveTimeline("RenderableBitmap.updateFromDataBuffer");
     }
 
@@ -496,7 +496,7 @@ module Shumway.GFX {
       this._pathData = pathData;
       this._paths = null;
       this._textures = textures;
-      this.invalidatePaint();
+      this.invalidate();
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
@@ -1357,7 +1357,7 @@ module Shumway.GFX {
         }
       }
 
-      this.invalidatePaint()
+      this.invalidate()
       leaveTimeline("RenderableText.reflow");
     }
 
