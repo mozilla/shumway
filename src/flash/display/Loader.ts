@@ -477,6 +477,11 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.FontSymbol.FromData(data);
           var font = flash.text.Font.initializeFrom(symbol);
           flash.text.Font.instanceConstructorNoInitialize.call(font);
+
+          if (font.fontType === flash.text.FontType.DEVICE) {
+            break;
+          }
+
           getPlayer().registerFont(font);
 
           // For non-Firefox browsers, we have to wait until font is "loaded"
