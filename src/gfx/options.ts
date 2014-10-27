@@ -85,10 +85,11 @@ module Shumway.GFX {
   export var clipDirtyRegions = canvas2DOptions.register(new Option("", "clipDirtyRegions", "boolean", false, "Clip dirty regions."));
   export var clipCanvas = canvas2DOptions.register(new Option("", "clipCanvas", "boolean", false, "Clip Regions."));
   export var cull = canvas2DOptions.register(new Option("", "cull", "boolean", false, "Enable culling."));
-  export var compositeMask = canvas2DOptions.register(new Option("", "compositeMask", "boolean", false, "Composite Mask."));
+
 
   export var snapToDevicePixels = canvas2DOptions.register(new Option("", "snapToDevicePixels", "boolean", false, ""));
   export var imageSmoothing = canvas2DOptions.register(new Option("", "imageSmoothing", "boolean", false, ""));
+  export var masking = canvas2DOptions.register(new Option("", "masking", "boolean", true, "Composite Mask."));
   export var blending = canvas2DOptions.register(new Option("", "blending", "boolean", true, ""));
   export var filters = canvas2DOptions.register(new Option("", "filters", "boolean", true, ""));
   export var cacheShapes = canvas2DOptions.register(new Option("", "cacheShapes", "boolean", false, ""));

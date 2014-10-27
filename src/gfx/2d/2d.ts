@@ -40,6 +40,11 @@ module Shumway.GFX.Canvas2D {
     blending: boolean = true;
 
     /**
+     * Whether to enable masking.
+     */
+    masking: boolean = true;
+
+    /**
      * Whether to enable filters.
      */
     filters: boolean = true;
@@ -220,8 +225,6 @@ module Shumway.GFX.Canvas2D {
 
     private _frameInfo = new FrameInfo();
 
-    private _dirtyVisitor = new DirtyNodeVisitor();
-
     private _fontSize: number = 0;
 
     constructor (
@@ -305,14 +308,6 @@ module Shumway.GFX.Canvas2D {
       var options = this._options;
       var viewport = this._viewport;
 
-
-      this._dirtyVisitor.isDirty = false;
-      stage.visit(this._dirtyVisitor, null);
-
-      if (!this._dirtyVisitor.isDirty) {
-        return;
-      }
-
       // stage.visit(new TracingNodeVisitor(new IndentingWriter()), null);
 
       target.resetTransform();
@@ -369,8 +364,10 @@ module Shumway.GFX.Canvas2D {
         return;
       }
 
+
       if (!(state.flags & RenderFlags.IgnoreNextLayer) &&
-          (node.getLayer().blendMode !== BlendMode.Normal || node.getLayer().mask)) {
+          (node.getLayer().blendMode !== BlendMode.Normal || node.getLayer().mask) &&
+          this._options.blending) {
         state = state.clone();
         state.flags |= RenderFlags.IgnoreNextLayer;
         this.renderLayer(node, state);

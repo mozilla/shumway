@@ -133,7 +133,7 @@ module Shumway.GFX {
 
     private _invalidateEventListeners: {(renderable: Renderable): void} [] = null;
 
-    public addinvalidateEventListener(listener: (renderable: Renderable) => void) {
+    public addInvalidateEventListener(listener: (renderable: Renderable) => void) {
       if (!this._invalidateEventListeners) {
         this._invalidateEventListeners = [];
       }

@@ -117,6 +117,8 @@ module Shumway.GFX {
     public w: number;
     public h: number;
 
+    private _dirtyVisitor: DirtyNodeVisitor = new DirtyNodeVisitor();
+
     constructor(w: number, h: number, trackDirtyRegions: boolean = false) {
       super();
       this._type = NodeType.Stage;
@@ -132,22 +134,13 @@ module Shumway.GFX {
      * true if rendering should commence. Flag clearing is made optional here in case there
      * is any code that needs to check if rendering is about to happen.
      */
-    readyToRender(clearFlags = true): boolean {
-//      if (!this.hasFlags(NodeFlags.InvalidPaint)) {
-//        return false;
-//      } else if (clearFlags) {
-//        enterTimeline("readyToRender");
-//        this.visit(function (frame: Frame): VisitorFlags {
-//          if (frame.hasFlags(FrameFlags.InvalidPaint)) {
-//            frame.toggleFlags(FrameFlags.InvalidPaint, false);
-//            return VisitorFlags.Continue;
-//          } else {
-//            return VisitorFlags.Skip;
-//          }
-//        });
-//        leaveTimeline();
-//      }
-      return true;
+    readyToRender(): boolean {
+      this._dirtyVisitor.isDirty = false;
+      this.visit(this._dirtyVisitor, null);
+      if (this._dirtyVisitor.isDirty) {
+        return true;
+      }
+      return false;
     }
 
     /*

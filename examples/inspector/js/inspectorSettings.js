@@ -204,7 +204,7 @@ function syncGFXOptions(options) {
   options.destinationBlendFactor = GFX.destinationBlendFactor.value;
 
   options.cull = GFX.cull.value;
-  options.compositeMask = GFX.compositeMask.value;
+  options.masking = GFX.masking.value;
   options.disableSurfaceUploads = GFX.disableSurfaceUploads.value;
 
   options.snapToDevicePixels = GFX.snapToDevicePixels.value;

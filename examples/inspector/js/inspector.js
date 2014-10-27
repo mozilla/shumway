@@ -171,7 +171,7 @@ function executeFile(file, buffer, movieParams) {
 
         document.addEventListener('shumwayOptionsChanged', function () {
           syncGFXOptions(easel.options);
-          easel.stage.invalidatePaint();
+          easel.stage.invalidate();
         });
         syncGFXOptions(easel.options);
         var player = new Shumway.Player.Test.TestPlayer();
@@ -445,7 +445,7 @@ function registerInspectorAsset(id, symbolId, asset) {
     div.appendChild(canvas);
   }
   refreshAsset(asset);
-  asset.addInvalidatePaintEventListener(refreshAsset);
+  asset.addInvalidateEventListener(refreshAsset);
   li.appendChild(div);
   document.getElementById("assetList").appendChild(li);
 }

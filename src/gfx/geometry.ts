@@ -894,9 +894,9 @@ module Shumway.GFX.Geometry {
       return this;
     }
 
-    concat (other: Matrix) {
+    concat (other: Matrix): Matrix {
       if (other._type === MatrixType.Identity) {
-        return;
+        return this;
       }
 
       var m = this._data, n = other._data;

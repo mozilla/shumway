@@ -645,6 +645,7 @@ module Shumway.GFX {
       if (this._mask) {
         this._mask.setFlags(NodeFlags.IsMask);
       }
+      // TODO: Keep track of masked object so we can propagate flags up.
     }
 
 //    protected _propagateFlagsDown(flags: NodeFlags) {
