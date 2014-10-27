@@ -3347,6 +3347,23 @@ module Shumway {
     export var instance: IFileLoadingService;
   }
 
+  export function registerCSSFont(id: number, buffer: ArrayBuffer) {
+    if (!inBrowser) {
+      console.warn('Cannot register CSS font outside the browser');
+      return;
+    }
+    var head = document.head;
+    head.insertBefore(document.createElement('style'), head.firstChild);
+    var style = <CSSStyleSheet>document.styleSheets[0];
+    style.insertRule(
+      '@font-face{' +
+      'font-family:swffont' + id + ';' +
+      'src:url(data:font/opentype;base64,' +
+      Shumway.StringUtilities.base64ArrayBuffer(buffer) + ')' + '}',
+      style.cssRules.length
+    );
+  }
+
   export interface IExternalInterfaceService {
     enabled: boolean;
     initJS(callback: (functionName: string, args: any[]) => any);

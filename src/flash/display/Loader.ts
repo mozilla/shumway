@@ -19,10 +19,11 @@ module Shumway.AVM2.AS.flash.display {
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import notImplemented = Shumway.Debug.notImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
-  import FileLoadingService = Shumway.FileLoadingService;
   import Telemetry = Shumway.Telemetry;
 
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
+  import FileLoader = Shumway.FileLoader;
+  import ILoadListener = Shumway.ILoadListener;
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
@@ -53,7 +54,8 @@ module Shumway.AVM2.AS.flash.display {
     return AVM2.instance.globals['Shumway.Player.Utils'];
   }
 
-  export class Loader extends flash.display.DisplayObjectContainer implements IAdvancable {
+  export class Loader extends flash.display.DisplayObjectContainer
+                      implements IAdvancable, ILoadListener {
 
     private static _rootLoader: Loader;
     private static _loadQueue: Loader [];
@@ -182,7 +184,7 @@ module Shumway.AVM2.AS.flash.display {
       this._content = null;
       this._contentLoaderInfo = new flash.display.LoaderInfo();
 
-      this._worker = null;
+      this._fileLoader = null;
       this._loadStatus = LoadStatus.Unloaded;
 
       this._contentLoaderInfo._loader = this;
@@ -227,8 +229,7 @@ module Shumway.AVM2.AS.flash.display {
       return null;
     }
 
-    setChildIndex(child: DisplayObject, index: number): void
-    {
+    setChildIndex(child: DisplayObject, index: number): void {
       throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
     }
 
@@ -238,7 +239,7 @@ module Shumway.AVM2.AS.flash.display {
     private _contentLoaderInfo: flash.display.LoaderInfo;
     _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
-    private _worker: Worker;
+    private _fileLoader: FileLoader;
     private _loadStatus: LoadStatus;
     private _loadingType: LoadingType;
 
@@ -365,7 +366,7 @@ module Shumway.AVM2.AS.flash.display {
             Telemetry.instance.reportTelemetry(data.stats);
           }
 
-          this._worker && this._worker.terminate();
+          this._fileLoader = null;
           break;
         case 'error':
           this._contentLoaderInfo.dispatchEvent(new events.IOErrorEvent(
@@ -476,6 +477,11 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.FontSymbol.FromData(data);
           var font = flash.text.Font.initializeFrom(symbol);
           flash.text.Font.instanceConstructorNoInitialize.call(font);
+
+          if (font.fontType === flash.text.FontType.DEVICE) {
+            break;
+          }
+
           getPlayer().registerFont(font);
 
           // For non-Firefox browsers, we have to wait until font is "loaded"
@@ -710,19 +716,20 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     close(): void {
-      if (this._worker && this._loadStatus === LoadStatus.Unloaded) {
-        this._worker.terminate();
-        this._worker = null;
+      if (!this._fileLoader) {
+        return;
       }
+      this._fileLoader.abortLoad();
+      this._fileLoader = null;
     }
 
     _unload(stopExecution: boolean, gc: boolean): void {
       if (this._loadStatus < LoadStatus.Initialized) {
         return;
       }
+      this.close();
       this._content = null;
       this._contentLoaderInfo._loader = null;
-      this._worker = null;
       this._loadStatus = LoadStatus.Unloaded;
       this.dispatchEvent(events.Event.getInstance(events.Event.UNLOAD));
     }
@@ -748,25 +755,33 @@ module Shumway.AVM2.AS.flash.display {
       this._contentLoaderInfo._url = request.url;
       this._applyLoaderContext(context, request);
       this._loadingType = LoadingType.External;
-      var worker = this._createParsingWorker();
-
-      var loader = this;
-      var session = FileLoadingService.instance.createSession();
-      session.onprogress = function (data, progress) {
-        worker.postMessage({ data: data, progress: progress });
-      };
-      session.onerror = function (error) {
-        loader._commitData({ command: 'error', error: error });
-      };
-      session.onopen = function () {
-        worker.postMessage('pipe:');
-      };
-      session.onclose = function () {
-        worker.postMessage({ data: null });
-      };
-      session.open(request._toFileRequest());
+      this.close();
+      this._fileLoader = new FileLoader(this);
+      this._fileLoader.loadFile(request._toFileRequest());
 
       Loader._loadQueue.push(this);
+
+      if (this === Loader.getRootLoader()) {
+        if (!this._contentLoaderInfo._allowCodeExecution) {
+          this._codeExecutionPromise.reject('Disabled by _allowCodeExecution');
+        }
+        if (!this._waitForInitialData) {
+          this._initialDataLoaded.resolve(undefined);
+        }
+      }
+    }
+
+    onLoadOpen() {
+      // Go away, TSLint.
+    }
+    onLoadProgress(data) {
+      this._commitData(data);
+    }
+    onLoadComplete() {
+      // Go away, TSLint.
+    }
+    onLoadError() {
+      // Go away, TSLint.
     }
 
     loadBytes(data: flash.utils.ByteArray, context?: LoaderContext): void
@@ -778,14 +793,11 @@ module Shumway.AVM2.AS.flash.display {
                                      '/[[DYNAMIC]]/' + (++Loader._embeddedContentLoadCount);
       this._applyLoaderContext(context, null);
       this._loadingType = LoadingType.Bytes;
-      var worker = this._createParsingWorker();
+      this.close();
+      this._fileLoader = new FileLoader(this);
+      this._fileLoader.loadBytes((<any>data).bytes);
 
       Loader._loadQueue.push(this);
-      worker.postMessage('pipe:');
-      var bytes = (<any>data).bytes;
-      var progress = {bytesLoaded: bytes.byteLength, bytesTotal: bytes.byteLength};
-      worker.postMessage({ data: bytes, progress:  progress});
-      worker.postMessage({ data: null });
     }
 
     private _applyLoaderContext(context: LoaderContext, request: flash.net.URLRequest) {
@@ -808,41 +820,6 @@ module Shumway.AVM2.AS.flash.display {
             new ApplicationDomain(ApplicationDomain.currentDomain);
       }
       this._contentLoaderInfo._parameters = parameters;
-    }
-
-    private _createParsingWorker() {
-      var loaderInfo = this._contentLoaderInfo;
-      var worker;
-      if (Loader.WORKERS_AVAILABLE &&
-          (!(<any>Shumway).useParsingWorkerOption || (<any>Shumway).useParsingWorkerOption.value)) {
-        var loaderPath = typeof LOADER_WORKER_PATH !== 'undefined' ?
-                         LOADER_WORKER_PATH : SHUMWAY_ROOT + Loader.LOADER_PATH;
-        worker = new Worker(loaderPath);
-      } else {
-        var ResourceLoader = (<any>Shumway).SWF.ResourceLoader;
-        worker = new ResourceLoader(window, false);
-      }
-      if (!loaderInfo._allowCodeExecution) {
-        this._codeExecutionPromise.reject('Disabled by _allowCodeExecution');
-      }
-      if (!this._waitForInitialData) {
-        this._initialDataLoaded.resolve(undefined);
-      }
-      var loader = this;
-      //loader._worker = worker;
-      worker.onmessage = function (e) {
-        if (e.data.type === 'exception') {
-          console.log('error in parser: \n' + e.data.stack);
-          AVM2.instance.exceptions.push({
-                                          source: 'parser',
-                                          message: e.data.message,
-                                          stack: e.data.stack
-                                        });
-        } else {
-          loader._commitData(e.data);
-        }
-      };
-      return worker;
     }
   }
 }

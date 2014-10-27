@@ -31,6 +31,8 @@ module Shumway.AVM2.AS.flash.text {
     static DEVICE_FONT_METRICS_LINUX: Object;
     static DEVICE_FONT_METRICS_MAC: Object;
 
+    static DEFAULT_FONT_NAME = 'times roman';
+
     static classInitializer: any = function () {
       Font._fonts = [];
       Font._fontsBySymbolId = Shumway.ObjectUtilities.createMap<Font>();
@@ -659,6 +661,7 @@ module Shumway.AVM2.AS.flash.text {
       self._id = flash.display.DisplayObject.getNextSyncID();
 
       self._fontName = null;
+      self._fontFamily = null;
       self._fontStyle = null;
       self._fontType = null;
 
@@ -670,6 +673,7 @@ module Shumway.AVM2.AS.flash.text {
       if (symbol) {
         self._symbol = symbol;
         self._fontName = symbol.name;
+        self._fontFamily = Font.resolveFontName(symbol.name);
         if (symbol.bold) {
           if (symbol.italic) {
             self._fontStyle = FontStyle.BOLD_ITALIC;
@@ -692,9 +696,12 @@ module Shumway.AVM2.AS.flash.text {
 
         // Font symbols without any glyphs describe device fonts.
         self._fontType = symbol.data ? FontType.EMBEDDED : FontType.DEVICE;
-        Font._fontsBySymbolId[symbol.id] = self;
-        Font._fontsByName[symbol.name.toLowerCase()] = self;
-        Font._fontsByName['swffont' + symbol.id] = self;
+
+        if (!Font._fontsBySymbolId[symbol.id]) {
+          Font._fontsBySymbolId[symbol.id] = self;
+          Font._fontsByName[symbol.name.toLowerCase()] = self;
+          Font._fontsByName['swffont' + symbol.id] = self;
+        }
       }
     };
 
@@ -739,27 +746,33 @@ module Shumway.AVM2.AS.flash.text {
       if (!font) {
         var font = new Font();
         font._fontName = name;
+        font._fontFamily = Font.resolveFontName(name);
         font._fontStyle = FontStyle.REGULAR;
         font._fontType = FontType.DEVICE;
         this._fontsByName[name] = font;
       }
       if (font._fontType === FontType.DEVICE) {
-        var metrics = Font._getFontMetrics(name);
-        if (metrics) {
-          font.ascent = metrics[0];
-          font.descent = metrics[1];
-          font.leading = metrics[2];
+        var metrics = Font._getFontMetrics(font._fontFamily);
+        if (!metrics) {
+          Shumway.Debug.warning(
+            'Font metrics for "' + name + '" unknown. Fallback to default.');
+          metrics = Font._getFontMetrics(Font.DEFAULT_FONT_NAME);
+          font._fontFamily = Font.DEFAULT_FONT_NAME;
         }
+        font.ascent = metrics[0];
+        font.descent = metrics[1];
+        font.leading = metrics[2];
       }
       return font;
     }
 
     static getDefaultFont(): Font {
-      return Font.getByName('times roman');
+      return Font.getByName(Font.DEFAULT_FONT_NAME);
     }
 
     // JS -> AS Bindings
     private _fontName: string;
+    _fontFamily: string;
     private _fontStyle: string;
     private _fontType: string;
 

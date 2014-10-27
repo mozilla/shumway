@@ -166,9 +166,6 @@ function updateRefs(filePath, options) {
   if (options.gfx) {
     updateFn(filePath, path.join(packageFilesBase, '/shumway.gfx.package'), 'gfx', onlyIncludes);
   }
-  if (options.parser) {
-    updateFn(filePath, path.join(packageFilesBase, '/shumway.parser.package'), 'parser', onlyIncludes);
-  }
   if (options.player) {
     updateFn(filePath, path.join(packageFilesBase, '/shumway.player.package'), 'player', onlyIncludes);
   }

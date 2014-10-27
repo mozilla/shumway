@@ -311,6 +311,9 @@ module Shumway.Player {
     }
 
     public registerFont(font: flash.text.Font) {
+      // We register the font immediately and also send it over to the GFX process. That's required
+      // to have metrics for measuring text dimensions on the player side, too.
+      Shumway.registerCSSFont(font._id, font._symbol.data.buffer);
       var updates = new DataBuffer();
       var assets = [];
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();

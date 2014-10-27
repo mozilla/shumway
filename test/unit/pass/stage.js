@@ -2,9 +2,8 @@
   var Stage = flash.display.Stage;
   var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
-  var StageVideo = flash.media.StageVideo;
 
-  function createDisplayObjectTree(depth, width, height) {
+  function createDisplayObjectTree(depth) {
     var nodes = [];
     Shumway.Random.seed(0x12343);
     function make(parent, count, depth) {
@@ -117,9 +116,9 @@
   });
 
   unitTests.push(function displayListStateConsistency() {
-    var tree = createDisplayObjectTree(10, 1024, 1024);
+    var tree = createDisplayObjectTree(10);
     var fail = false;
-    for (var i = 0; i < 1024; i++) {
+    for (var i = 0; i < 50; i++) {
       var element = tree.getRandomNode();
       if (DisplayObjectContainer.isType(element)) {
         var otherElement = tree.getRandomNode();
