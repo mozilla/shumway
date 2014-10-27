@@ -715,13 +715,8 @@ function activateShumwayScripts(window, preview) {
   }
 
   function initScripts() {
-    loadScripts(['resource://shumway/shumway.gfx.js',
-                 'resource://shumway/web/viewer.js'], function () {
-      window.wrappedJSObject.runViewer();
-    });
+    window.wrappedJSObject.runViewer();
   }
-
-  window.wrappedJSObject.SHUMWAY_ROOT = "resource://shumway/";
 
   if (window.document.readyState === "interactive" ||
       window.document.readyState === "complete") {
@@ -966,7 +961,7 @@ ShumwayStreamConverterBase.prototype = {
     // Create a new channel that loads the viewer as a resource.
     var viewerUrl = isSimpleMode ?
                     'resource://shumway/web/simple.html' :
-                    'resource://shumway/web/viewer.html';
+                    'resource://shumway/web/viewer.wrapper.html';
     var channel = Services.io.newChannel(viewerUrl, null, null);
 
     var converter = this;
