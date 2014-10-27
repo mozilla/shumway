@@ -40,6 +40,11 @@ module Shumway.GFX.Canvas2D {
     blending: boolean = true;
 
     /**
+     * Whether to enable debugging of layers.
+     */
+    debugLayers: boolean = false;
+
+    /**
      * Whether to enable masking.
      */
     masking: boolean = true;
@@ -313,6 +318,11 @@ module Shumway.GFX.Canvas2D {
       target.resetTransform();
       target.context.save();
       target.context.globalAlpha = 1;
+
+      if (this._options.debugLayers) {
+        target.context.globalAlpha = 0.5;
+      }
+
       target.clear(viewport);
 
       target.context.beginPath();
@@ -439,7 +449,9 @@ module Shumway.GFX.Canvas2D {
         }
         var context = state.target.context;
         state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-        Filters._applyColorMatrix(context, state.colorMatrix);
+        if (!this._options.debugLayers) {
+          Filters._applyColorMatrix(context, state.colorMatrix);
+        }
         // Only paint if it is visible.
         if (context.globalAlpha > 0) {
           this._renderShape(node, state)
@@ -458,9 +470,8 @@ module Shumway.GFX.Canvas2D {
         var target = this._renderNodeToTemporarySurface(node, state, clip);
         if (target) {
           var matrix = state.matrix;
-          state.target.blendMode = layer.blendMode;
           // state.target.context.globalAlpha = 1;
-          state.target.draw(target, clip.x, clip.y, clip.w, clip.h);
+          state.target.draw(target, clip.x, clip.y, clip.w, clip.h, layer.blendMode);
           target.free();
         }
         clip.free();
@@ -517,13 +528,10 @@ module Shumway.GFX.Canvas2D {
       var b = this._renderNodeToTemporarySurface(mask, bState, Rectangle.createEmpty());
       bState.free();
 
-      a.blendMode = BlendMode.Alpha;
-      a.draw(b, 0, 0, clip.w, clip.h);
-      a.blendMode = BlendMode.Normal; // TODO: Stack of blend modes? to avoid this kind of mess?
+      a.draw(b, 0, 0, clip.w, clip.h, BlendMode.Alpha);
 
       var matrix = state.matrix;
-      state.target.blendMode = blendMode;
-      state.target.draw(a, clip.x, clip.y, clip.w, clip.h);
+      state.target.draw(a, clip.x, clip.y, clip.w, clip.h, blendMode);
 
       b.free();
       a.free();

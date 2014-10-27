@@ -245,8 +245,6 @@ module Shumway.GFX.Canvas2D {
      */
     private static _copyCanvasContext: CanvasRenderingContext2D;
 
-    private _blendMode: BlendMode = BlendMode.Normal;
-
     constructor (
       public surface: Canvas2DSurface,
       public region: RegionAllocator.Region,
@@ -258,13 +256,6 @@ module Shumway.GFX.Canvas2D {
 
     public free() {
       this.surface.free(this)
-    }
-
-    public set blendMode(value: BlendMode) {
-      if (this._blendMode !== value) {
-        this._blendMode = value;
-        this.context.globalCompositeOperation = getCompositeOperation(value);
-      }
     }
 
     private static _ensureCopyCanvasSize(w: number, h: number) {
@@ -284,7 +275,7 @@ module Shumway.GFX.Canvas2D {
       }
     }
 
-    public draw(source: Canvas2DSurfaceRegion, x: number, y: number, w: number, h: number) {
+    public draw(source: Canvas2DSurfaceRegion, x: number, y: number, w: number, h: number, blendMode: BlendMode) {
       this.context.setTransform(1, 0, 0, 1, 0, 0);
       var sourceCanvas, sx = 0, sy = 0;
       // Handle copying from and to the same canvas.
@@ -306,14 +297,17 @@ module Shumway.GFX.Canvas2D {
         sy = source.region.y;
       }
       var canvas = this.context.canvas;
-      var clip = blendModeShouldClip(this._blendMode);
+      var clip = blendModeShouldClip(blendMode);
       if (clip) {
         this.context.save();
         this.context.beginPath();
         this.context.rect(x, y, w, h);
         this.context.clip();
       }
+      this.context.globalCompositeOperation = getCompositeOperation(blendMode);
       this.context.drawImage(sourceCanvas, sx, sy, w, h, x, y, w, h);
+      this.context.globalCompositeOperation = getCompositeOperation(BlendMode.Normal);
+
       if (clip) {
         this.context.restore();
       }

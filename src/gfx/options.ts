@@ -91,6 +91,7 @@ module Shumway.GFX {
   export var imageSmoothing = canvas2DOptions.register(new Option("", "imageSmoothing", "boolean", false, ""));
   export var masking = canvas2DOptions.register(new Option("", "masking", "boolean", true, "Composite Mask."));
   export var blending = canvas2DOptions.register(new Option("", "blending", "boolean", true, ""));
+  export var debugLayers = canvas2DOptions.register(new Option("", "debugLayers", "boolean", false, ""));
   export var filters = canvas2DOptions.register(new Option("", "filters", "boolean", true, ""));
   export var cacheShapes = canvas2DOptions.register(new Option("", "cacheShapes", "boolean", false, ""));
   export var cacheShapesMaxSize = canvas2DOptions.register(new Option("", "cacheShapesMaxSize", "number", 256, "", {range: { min: 1, max: 1024, step: 1 }}));
