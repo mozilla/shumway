@@ -261,6 +261,7 @@ module Shumway.AVM2.AS.flash.text {
       this._autoSize = value;
       this._textContent.autoSize = TextFieldAutoSize.toNumber(value);
       this._invalidateContent();
+      this._ensureLineMetrics();
     }
 
     get background(): boolean {
