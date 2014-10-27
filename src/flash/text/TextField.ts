@@ -261,6 +261,7 @@ module Shumway.AVM2.AS.flash.text {
       this._autoSize = value;
       this._textContent.autoSize = TextFieldAutoSize.toNumber(value);
       this._invalidateContent();
+      this._ensureLineMetrics();
     }
 
     get background(): boolean {
@@ -589,7 +590,7 @@ module Shumway.AVM2.AS.flash.text {
       var textWidth = lineMetricsData.readInt();
       var textHeight = lineMetricsData.readInt();
       var offsetX = lineMetricsData.readInt();
-      var bounds = this._fillBounds;
+      var bounds = this._lineBounds;
       if (this._autoSize !== TextFieldAutoSize.NONE) {
         bounds.xMin = bounds.xMin = offsetX;
         bounds.xMax = bounds.xMax = offsetX + textWidth + 80;
