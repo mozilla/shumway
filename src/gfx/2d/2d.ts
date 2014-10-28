@@ -420,8 +420,12 @@ module Shumway.GFX.Canvas2D {
       state.matrix.transformRectangleAABB(bounds);
       bounds.intersect(state.clip);
       state.target.resetTransform();
-      // context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-      // context.clip();
+
+      context.save();
+      context.beginPath();
+      context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+      context.clip();
+
       // Fill background
       if (!node.hasFlags(NodeFlags.Transparent)) {
         if (state.flags & RenderFlags.PaintRenderable) {
@@ -434,6 +438,7 @@ module Shumway.GFX.Canvas2D {
       this.visitGroup(node, state);
       state.free();
       bounds.free();
+      context.restore();
     }
 
 

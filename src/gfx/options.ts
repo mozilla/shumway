@@ -39,7 +39,7 @@ module Shumway.GFX {
     }
   }));
 
-  export var hud = stageOptions.register(new Option("", "hud", "boolean", false, "Enable HUD."));
+  export var hud = stageOptions.register(new Option("", "hud", "boolean", true, "Enable HUD."));
 
   var webGLOptions = stageOptions.register(new OptionSet("WebGL Options"));
   export var perspectiveCamera = webGLOptions.register(new Option("", "pc", "boolean", false, "Use perspective camera."));
@@ -92,8 +92,8 @@ module Shumway.GFX {
   export var masking = canvas2DOptions.register(new Option("", "masking", "boolean", true, "Composite Mask."));
   export var blending = canvas2DOptions.register(new Option("", "blending", "boolean", true, ""));
   export var debugLayers = canvas2DOptions.register(new Option("", "debugLayers", "boolean", false, ""));
-  export var filters = canvas2DOptions.register(new Option("", "filters", "boolean", true, ""));
-  export var cacheShapes = canvas2DOptions.register(new Option("", "cacheShapes", "boolean", false, ""));
+  export var filters = canvas2DOptions.register(new Option("", "filters", "boolean", false, ""));
+  export var cacheShapes = canvas2DOptions.register(new Option("", "cacheShapes", "boolean", true, ""));
   export var cacheShapesMaxSize = canvas2DOptions.register(new Option("", "cacheShapesMaxSize", "number", 256, "", {range: { min: 1, max: 1024, step: 1 }}));
   export var cacheShapesThreshold = canvas2DOptions.register(new Option("", "cacheShapesThreshold", "number", 256, "", {range: { min: 1, max: 1024, step: 1 }}));
 }

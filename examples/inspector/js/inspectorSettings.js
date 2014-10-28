@@ -21,14 +21,14 @@ var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
 var stateDefaults = {
   folderOpen: true,
   debugPanelId: "settingsContainer",
-  profileStartup: true,
+  profileStartup: false,
   profileStartupDuration: 10000,
   logToConsole: false,
-  logToDebugPanel: true,
+  logToDebugPanel: false,
   logAssets: false,
   overlayFlash: false,
   mute: false,
-  release: false
+  release: true
 };
 
 for (var option in stateDefaults) {
@@ -203,13 +203,14 @@ function syncGFXOptions(options) {
   options.sourceBlendFactor = GFX.sourceBlendFactor.value;
   options.destinationBlendFactor = GFX.destinationBlendFactor.value;
 
-  options.cull = GFX.cull.value;
   options.masking = GFX.masking.value;
   options.disableSurfaceUploads = GFX.disableSurfaceUploads.value;
 
   options.snapToDevicePixels = GFX.snapToDevicePixels.value;
   options.imageSmoothing = GFX.imageSmoothing.value;
   options.blending = GFX.blending.value;
+  options.debugLayers = GFX.debugLayers.value;
+
   options.filters = GFX.filters.value;
   options.cacheShapes = GFX.cacheShapes.value;
   options.cacheShapesMaxSize = GFX.cacheShapesMaxSize.value;

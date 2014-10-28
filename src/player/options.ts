@@ -35,11 +35,11 @@ module Shumway {
   );
 
   export var pumpRateOption = playerOptions.register (
-    new Shumway.Options.Option("", "Pump Rate", "number", 80, "Number of times / second that the display list is synchronized.", {range: { min: 1, max: 120, step: 1 }})
+    new Shumway.Options.Option("", "Pump Rate", "number", 60, "Number of times / second that the display list is synchronized.", {range: { min: 1, max: 120, step: 1 }})
   );
 
   export var frameRateOption = playerOptions.register (
-    new Shumway.Options.Option("", "Frame Rate", "number", -1, "Override a movie's frame rate, set to -1 to use the movies default frame rate.", {range: { min: -1, max: 120, step: 1 }})
+    new Shumway.Options.Option("", "Frame Rate", "number", 60, "Override a movie's frame rate, set to -1 to use the movies default frame rate.", {range: { min: -1, max: 120, step: 1 }})
   );
 
   export var tracePlayerOption = playerOptions.register (
