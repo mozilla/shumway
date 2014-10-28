@@ -19,13 +19,14 @@ var promise = new Promise(function (resolve, reject) {
   onLoaded = resolve;
 });
 viewer.addEventListener('load', function () {
-  onLoaded();
+  onLoaded(false);
+});
+viewer.addEventListener('mozbrowserloadend', function () {
+  onLoaded(true);
 });
 
 function runViewer() {
-  // var frameLoader = viewer.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader;
-
-  promise.then(function () {
+  function handler() {
     var childDocument = viewer.contentWindow.document;
     childDocument.addEventListener('shumway.message', function (e0) {
       var e = document.createEvent('CustomEvent');
@@ -40,8 +41,8 @@ function runViewer() {
     }, false);
     document.addEventListener('shumway.remote', function (e0) {
       var e = childDocument.createEvent('CustomEvent');
-      e.initCustomEvent('shumway.message', true, false,
-        {functionName: e0.detail.functionName, args: e0.detail.args});
+      e.initCustomEvent('shumway.remote', true, false,
+        {functionName: e0.detail.functionName, args: e0.detail.args, result: undefined});
       childDocument.dispatchEvent(e);
       e0.detail.result = e.detail.result;
     }, false);
@@ -55,5 +56,54 @@ function runViewer() {
     });
 
     viewer.contentWindow.wrappedJSObject.runViewer();
+  }
+
+  function handlerOOP() {
+    var frameLoader = viewer.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader;
+    var messageManager = frameLoader.messageManager;
+    messageManager.loadFrameScript('chrome://shumway/content/content.js', false);
+
+    var externalInterface;
+
+    messageManager.addMessageListener('shumway@research.mozilla.org:running', function (message) {
+      externalInterface = message.objects.externalInterface;
+    });
+
+    messageManager.addMessageListener('shumway@research.mozilla.org:message', function (message) {
+      var e = document.createEvent('CustomEvent');
+      e.initCustomEvent('shumway.message', true, false,
+        {action: message.data.action, data: message.data.data, sync: message.data.sync});
+      if (message.data.callback) {
+        e.detail.callback = true;
+        e.detail.cookie = message.data.cookie;
+      }
+      document.dispatchEvent(e);
+      return e.detail.response;
+    });
+
+    document.addEventListener('shumway.remote', function (e0) {
+      e0.detail.result = externalInterface.callback(e0.detail.functionName, e0.detail.args);
+    }, false);
+
+    window.addEventListener("message", function handlerMessage(e) {
+      var args = e.data;
+      switch (args.callback) {
+        case 'loadFile':
+          messageManager.sendAsyncMessage('shumway@research.mozilla.org:loadFile', args);
+          break;
+      }
+    });
+
+    messageManager.sendAsyncMessage('shumway@research.mozilla.org:init', {});
+  }
+
+  promise.then(function (oop) {
+    if (oop) {
+      console.log('Shumway: start OOP');
+      handlerOOP();
+    } else {
+      console.log('Shumway: start normal');
+      handler();
+    }
   });
 }
