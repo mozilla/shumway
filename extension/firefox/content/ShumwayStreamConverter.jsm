@@ -715,13 +715,8 @@ function activateShumwayScripts(window, preview) {
   }
 
   function initScripts() {
-    loadScripts(['resource://shumway/shumway.gfx.js',
-                 'resource://shumway/web/viewer.js'], function () {
-      window.wrappedJSObject.runViewer();
-    });
+    window.wrappedJSObject.runViewer();
   }
-
-  window.wrappedJSObject.SHUMWAY_ROOT = "resource://shumway/";
 
   if (window.document.readyState === "interactive" ||
       window.document.readyState === "complete") {
@@ -963,10 +958,8 @@ ShumwayStreamConverterBase.prototype = {
     var isSimpleMode = originalURI.spec === EXPECTED_PLAYPREVIEW_URI_PREFIX &&
                        getBoolPref('shumway.simpleMode', false);
 
-    // Create a new channel that loads the viewer as a resource.
-    var viewerUrl = isSimpleMode ?
-                    'resource://shumway/web/simple.html' :
-                    'resource://shumway/web/viewer.html';
+    // Create a new channel that loads the viewer as a chrome resource.
+    var viewerUrl = 'chrome://shumway/content/viewer.wrapper.html';
     var channel = Services.io.newChannel(viewerUrl, null, null);
 
     var converter = this;
@@ -1026,12 +1019,10 @@ ShumwayStreamConverterBase.prototype = {
     channel.originalURI = aRequest.URI;
     channel.loadGroup = aRequest.loadGroup;
 
-    // We can use resource principal when data is fetched by the chrome
-    // e.g. useful for NoScript
+    // We can use all powerful principal.
     var securityManager = Cc['@mozilla.org/scriptsecuritymanager;1']
                           .getService(Ci.nsIScriptSecurityManager);
-    var uri = Services.io.newURI(viewerUrl, null, null);
-    var resourcePrincipal = securityManager.getNoAppCodebasePrincipal(uri);
+    var resourcePrincipal = securityManager.getSystemPrincipal();
     aRequest.owner = resourcePrincipal;
     channel.asyncOpen(proxy, aContext);
   },

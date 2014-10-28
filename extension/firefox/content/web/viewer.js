@@ -82,6 +82,8 @@ window.print = function(msg) {
   console.log(msg);
 };
 
+var SHUMWAY_ROOT = "resource://shumway/";
+
 var viewerPlayerglobalInfo = {
   abcs: SHUMWAY_ROOT + "playerglobal/playerglobal.abcs",
   catalog: SHUMWAY_ROOT + "playerglobal/playerglobal.json"
