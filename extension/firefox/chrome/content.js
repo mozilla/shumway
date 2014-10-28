@@ -17,33 +17,59 @@
 Components.utils.import('resource://gre/modules/Services.jsm');
 
 var externalInterfaceWrapper = {
-  callback: function (functionName, args) {
-    var e = content.document.createEvent('CustomEvent');
-    e.initCustomEvent('shumway.remote', true, false,
-      {functionName: functionName, args: args, result: undefined});
-    content.document.dispatchEvent(e);
-    return e.detail.result;
+  callback: function (call) {
+    if (!shumwayComAdapter.onExternalCallback) {
+      return undefined;
+    }
+    return shumwayComAdapter.onExternalCallback(
+      Components.utils.cloneInto(JSON.parse(call), content));
   }
 };
 
-addMessageListener('shumway@research.mozilla.org:init', function (message) {
-  sendAsyncMessage('shumway@research.mozilla.org:running', {}, {
+var shumwayComAdapter;
+
+function sendMessage(action, data, sync, callbackCookie) {
+  var detail = {action: action, data: data, sync: sync};
+  if (callbackCookie !== undefined) {
+    detail.callback = true;
+    detail.cookie = callbackCookie;
+  }
+  if (!sync) {
+    sendAsyncMessage('Shumway:message', detail);
+    return;
+  }
+  var result = sendSyncMessage('Shumway:message', detail);
+  return Components.utils.cloneInto(result, content);
+}
+
+addMessageListener('Shumway:init', function (message) {
+  sendAsyncMessage('Shumway:running', {}, {
     externalInterface: externalInterfaceWrapper
   });
+
+  shumwayComAdapter = Components.utils.createObjectIn(content, {defineAs: 'ShumwayCom'});
+  Components.utils.exportFunction(sendMessage, shumwayComAdapter, {defineAs: 'sendMessage'});
+  Object.defineProperties(shumwayComAdapter, {
+    onLoadFileCallback: { value: null, writable: true },
+    onExternalCallback: { value: null, writable: true },
+    onMessageCallback: { value: null, writable: true }
+  });
+  Components.utils.makeObjectPropsNormal(shumwayComAdapter);
+
   content.wrappedJSObject.runViewer();
 });
 
-content.document.addEventListener('shumway.message', function (e0) {
-  var detail =
-    {action: e0.detail.action, data: e0.detail.data, sync: e0.detail.sync};
-  if (detail.callback) {
-    detail.callback = true;
-    detail.cookie = e0.detail.cookie;
+addMessageListener('Shumway:loadFile', function (message) {
+  if (!shumwayComAdapter.onLoadFileCallback) {
+    return;
   }
-  var result = sendSyncMessage('shumway@research.mozilla.org:message', detail);
-  e0.detail.response = result[0];
-}, false, true);
+  shumwayComAdapter.onLoadFileCallback(Components.utils.cloneInto(message.data, content));
+});
 
-addMessageListener('shumway@research.mozilla.org:loadFile', function (message) {
-  content.postMessage(message.data, '*');
+addMessageListener('Shumway:messageCallback', function (message) {
+  if (!shumwayComAdapter.onMessageCallback) {
+    return;
+  }
+  shumwayComAdapter.onMessageCallback(message.data.cookie,
+    Components.utils.cloneInto(message.data.response, content));
 });
