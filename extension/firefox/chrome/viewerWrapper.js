@@ -19,13 +19,17 @@ var promise = new Promise(function (resolve, reject) {
   onLoaded = resolve;
 });
 viewer.addEventListener('load', function () {
-  onLoaded();
+  onLoaded(false);
+});
+viewer.addEventListener('mozbrowserloadend', function () {
+  onLoaded(true);
 });
 
 function runViewer() {
-  // var frameLoader = viewer.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader;
+  var frameLoader = viewer.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader;
+  console.log(frameLoader);
 
-  promise.then(function () {
+  function handler() {
     var childDocument = viewer.contentWindow.document;
     childDocument.addEventListener('shumway.message', function (e0) {
       var e = document.createEvent('CustomEvent');
@@ -55,5 +59,48 @@ function runViewer() {
     });
 
     viewer.contentWindow.wrappedJSObject.runViewer();
+  }
+
+  function handlerOOP() {
+    var messageManager = frameLoader.messageManager;
+    console.log(messageManager);
+    messageManager.loadFrameScript('chrome://shumway/content/content.js', false);
+
+    messageManager.addMessageListener('shumway@research.mozilla.org:message', function (message) {
+      var e = document.createEvent('CustomEvent');
+      e.initCustomEvent('shumway.message', true, false,
+        {action: message.data.action, data: message.data.data, sync: message.data.sync});
+      if (message.data.callback) {
+        e.detail.callback = true;
+        e.detail.cookie = message.data.cookie;
+      }
+      document.dispatchEvent(e);
+      return e.detail.response;
+    });
+
+    document.addEventListener('shumway.remote', function (e0) {
+      // TODO CPOW
+    }, false);
+
+    window.addEventListener("message", function handlerMessage(e) {
+      var args = e.data;
+      switch (args.callback) {
+        case 'loadFile':
+          messageManager.sendAsyncMessage('shumway@research.mozilla.org:loadFile', args);
+          break;
+      }
+    });
+
+    messageManager.sendAsyncMessage('shumway@research.mozilla.org:init', {});
+  }
+
+  promise.then(function (oop) {
+    if (oop) {
+      console.log('Shumway: start OOP');
+      handlerOOP();
+    } else {
+      console.log('Shumway: start normal');
+      handler();
+    }
   });
 }
