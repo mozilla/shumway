@@ -26,7 +26,7 @@ VERSION_SHA=`git log --format="%h" -n 1`
 build: ensureoutputdir
 	# Coping extension files
 	echo "Creating extension verions: $(VERSION)"
-	cp -R ../../LICENSE content bootstrap.js $(BUILD_DIR)/
+	cp -R ../../LICENSE content chrome bootstrap.js chrome.manifest $(BUILD_DIR)/
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > $(BUILD_DIR)/install.rdf
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
 	# Coping WebGL shaders
