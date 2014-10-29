@@ -10,13 +10,82 @@ module Shumway.GFX.Canvas2D {
   import TileCache = Shumway.GFX.Geometry.TileCache;
   import Tile = Shumway.GFX.Geometry.Tile;
   import OBB = Shumway.GFX.Geometry.OBB;
-  import MipMap = Shumway.GFX.Geometry.MipMap;
+  import clamp = Shumway.NumberUtilities.clamp;
+  import pow2 = Shumway.NumberUtilities.pow2;
+  import epsilonEquals = Shumway.NumberUtilities.epsilonEquals;
 
   import ISurfaceRegionAllocator = SurfaceRegionAllocator.ISurfaceRegionAllocator;
 
   declare var registerScratchCanvas;
 
   var writer = new IndentingWriter(false, dumpLine);
+
+  var MIN_CACHE_LEVELS = 5;
+  var MAX_CACHE_LEVELS = 3;
+
+  export class MipMapLevel {
+    constructor (
+      public surfaceRegion: ISurfaceRegion,
+      public scale: number
+      ) {
+      // ...
+    }
+  }
+
+  export class MipMap {
+    private _source: Node;
+    private _size: number;
+    private _levels: MipMapLevel [];
+    private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    constructor (
+      source: Node,
+      surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator,
+      size: number
+      ) {
+      this._source = source;
+      this._levels = [];
+      this._surfaceRegionAllocator = surfaceRegionAllocator;
+      this._size = size;
+    }
+    public render(renderer: Canvas2DStageRenderer) {
+
+    }
+    public getLevel(matrix: Matrix): MipMapLevel {
+      var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
+      var level = 0;
+      if (matrixScale !== 1) {
+        level = clamp(Math.round(Math.log(matrixScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      }
+      if (!(this._source.hasFlags(NodeFlags.Scalable))) {
+        level = clamp(level, -MIN_CACHE_LEVELS, 0);
+      }
+      var scale = pow2(level);
+      var levelIndex = MIN_CACHE_LEVELS + level;
+      var mipLevel = this._levels[levelIndex];
+
+      if (!mipLevel) {
+        var bounds = this._source.getBounds();
+        var scaledBounds = bounds.clone();
+        scaledBounds.scale(scale, scale);
+        scaledBounds.snap();
+        var surfaceRegion = this._surfaceRegionAllocator.allocate(scaledBounds.w, scaledBounds.h);
+        var region = surfaceRegion.region;
+        mipLevel = this._levels[levelIndex] = new MipMapLevel(surfaceRegion, scale);
+        // TODO: Should cast to <Canvas2D.Canvas2DSurface> but this is not available in gfx-base. We should probably
+        // move this code outside of geometry.
+        var surface = <any>(mipLevel.surfaceRegion.surface);
+        var context = surface.context;
+        context.save();
+        context.beginPath();
+        context.rect(region.x, region.y, region.w, region.h);
+        context.clip();
+        context.setTransform(scale, 0, 0, scale, region.x - scaledBounds.x, region.y - scaledBounds.y);
+        // this._source.render(context, 0);
+        context.restore();
+      }
+      return mipLevel;
+    }
+  }
 
   export enum FillRule {
     NonZero,
@@ -374,13 +443,12 @@ module Shumway.GFX.Canvas2D {
         return;
       }
 
-
       if (!(state.flags & RenderFlags.IgnoreNextLayer) &&
           (node.getLayer().blendMode !== BlendMode.Normal || node.getLayer().mask) &&
           this._options.blending) {
         state = state.clone();
         state.flags |= RenderFlags.IgnoreNextLayer;
-        this.renderLayer(node, state);
+        this._renderLayer(node, state);
         state.free();
       } else {
         if (state.clip.intersectsTransformedAABB(bounds, state.matrix)) {
@@ -441,52 +509,51 @@ module Shumway.GFX.Canvas2D {
       context.restore();
     }
 
-
     visitShape(node: Shape, state: RenderState) {
       if (!(state.flags & RenderFlags.PaintRenderable)) {
         return;
       }
-      if (state.clip.intersectsTransformedAABB(node.getBounds(), state.matrix)) {
-        var matrix = state.matrix;
-        if (state.flags & RenderFlags.PixelSnapping) {
-          matrix = matrix.clone();
-          matrix.snap();
-        }
-        var context = state.target.context;
-        state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-        if (!this._options.debugLayers) {
-          Filters._applyColorMatrix(context, state.colorMatrix);
-        }
-        // Only paint if it is visible.
-        if (context.globalAlpha > 0) {
-          this._renderShape(node, state)
-        }
-        if (state.flags & RenderFlags.PixelSnapping) {
-          matrix.free();
-        }
+      if (!state.clip.intersectsTransformedAABB(node.getBounds(), state.matrix)) {
+        return;
+      }
+      var matrix = state.matrix;
+      if (state.flags & RenderFlags.PixelSnapping) {
+        matrix = matrix.clone();
+        matrix.snap();
+      }
+      var context = state.target.context;
+      state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+      if (!this._options.debugLayers) {
+        Filters._applyColorMatrix(context, state.colorMatrix);
+      }
+      // Only paint if it is visible.
+      if (context.globalAlpha > 0) {
+        this._renderShape(node, state)
+      }
+      if (state.flags & RenderFlags.PixelSnapping) {
+        matrix.free();
       }
     }
 
-    renderLayer(node: Node, state: RenderState) {
+    _renderLayer(node: Node, state: RenderState) {
       var layer = node.getLayer();
       var mask = layer.mask;
       if (!mask) {
         var clip = Rectangle.allocate();
-        var target = this._renderNodeToTemporarySurface(node, state, clip);
+        var target = this._renderToTemporarySurface(node, state, clip);
         if (target) {
           var matrix = state.matrix;
-          // state.target.context.globalAlpha = 1;
           state.target.draw(target, clip.x, clip.y, clip.w, clip.h, layer.blendMode);
           target.free();
         }
         clip.free();
       } else {
         var paintStencil = !node.hasFlags(NodeFlags.CacheAsBitmap) || !mask.hasFlags(NodeFlags.CacheAsBitmap);
-        this._renderNodeWithMask(node, mask, layer.blendMode, paintStencil, state);
+        this._renderWithMask(node, mask, layer.blendMode, paintStencil, state);
       }
     }
 
-    _renderNodeWithMask(node: Node, mask: Node, blendMode: BlendMode, stencil: boolean, state: RenderState) {
+    _renderWithMask(node: Node, mask: Node, blendMode: BlendMode, stencil: boolean, state: RenderState) {
       var maskMatrix = mask.getTransform().getConcatenatedMatrix(true);
       // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
       // we still have to factor in the stage's matrix, which includes pixel density scaling.
@@ -520,7 +587,7 @@ module Shumway.GFX.Canvas2D {
 
       var aState = state.clone();
       aState.clip.set(clip);
-      var a = this._renderNodeToTemporarySurface(node, aState, Rectangle.createEmpty());
+      var a = this._renderToTemporarySurface(node, aState, Rectangle.createEmpty());
       aState.free();
 
       var bState = state.clone();
@@ -530,7 +597,7 @@ module Shumway.GFX.Canvas2D {
       if (stencil) {
         bState.flags |= RenderFlags.PaintStencil;
       }
-      var b = this._renderNodeToTemporarySurface(mask, bState, Rectangle.createEmpty());
+      var b = this._renderToTemporarySurface(mask, bState, Rectangle.createEmpty());
       bState.free();
 
       a.draw(b, 0, 0, clip.w, clip.h, BlendMode.Alpha);
@@ -576,7 +643,7 @@ module Shumway.GFX.Canvas2D {
       this._frameInfo.leave();
     }
 
-    private _renderNodeToTemporarySurface(node: Node, state: RenderState, clip: Rectangle): Canvas2DSurfaceRegion {
+    private _renderToTemporarySurface(node: Node, state: RenderState, clip: Rectangle): Canvas2DSurfaceRegion {
       var matrix = state.matrix;
       var bounds = node.getBounds();
       var boundsAABB = bounds.clone();
@@ -625,22 +692,20 @@ module Shumway.GFX.Canvas2D {
     }
 
     private _renderShape(shape: Shape, state: RenderState) {
-      var context = state.target.context;
+      var bounds = shape.getBounds();
       var matrix = state.matrix;
+      var context = state.target.context;
       var paintClip = !!(state.flags & RenderFlags.PaintClip);
       var paintStencil = !!(state.flags & RenderFlags.PaintStencil);
       var paintFlashing = !!(state.flags & RenderFlags.PaintFlashing);
-      var self = this;
-      var bounds = shape.getBounds();
-
-      var paintStart = 0;
-
-      if (paintFlashing) {
-        paintStart = performance.now();
-      }
 
       if (bounds.isEmpty()) {
         return;
+      }
+
+      var paintStart = 0;
+      if (paintFlashing) {
+        paintStart = performance.now();
       }
 
       this._frameInfo.shapes ++;
@@ -651,7 +716,8 @@ module Shumway.GFX.Canvas2D {
       var renderCount = source.properties["renderCount"] || 0;
       var cacheShapesMaxSize = state.cacheShapesMaxSize;
       var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
-      if (!paintStencil &&
+
+      if (false && !paintStencil &&
           !paintClip &&
           state.colorMatrix.isIdentity() &&
           !source.hasFlags(RenderableFlags.Dynamic) &&

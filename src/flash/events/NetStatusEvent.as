@@ -23,20 +23,14 @@ public class NetStatusEvent extends Event {
                                  info:Object = null)
   {
     super(type, bubbles, cancelable);
-    _info = info;
+    this.info = info;
   }
-  public function get info():Object {
-    return _info;
-  }
-  public function set info(value:Object):void {
-    _info = value;
-  }
-  public override function clone():Event {
-    return new NetStatusEvent(type, bubbles, cancelable, info);
-  }
-  public override function toString():String {
-    return formatToString('NetStatusEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
-                          'info');
-  }
+
+  public native function get info():Object;
+  public native function set info(value:Object):void;
+
+  public native override function clone():Event;
+  public native override function toString():String;
+
 }
 }

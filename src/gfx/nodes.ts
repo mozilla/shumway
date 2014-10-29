@@ -74,6 +74,8 @@ module Shumway.GFX {
                                         InvalidConcatenatedMatrix |
                                         Visible,
 
+    Scalable                          = 0x100000,
+
     CacheAsBitmap                     = 0x20000,
     PixelSnapping                     = 0x40000,
     ImageSmoothing                    = 0x80000,
@@ -192,6 +194,11 @@ module Shumway.GFX {
     protected _transform: Transform;
 
     /**
+     * Property bag used to attach dynamic properties to this object.
+     */
+    protected _properties: {[name: string]: any};
+
+    /**
      * Bounds of the scene graph object. Bounds are computed automatically for non-leaf nodes
      * that have the |NodeFlags.BoundsAutoCompute| flag set.
      */
@@ -206,6 +213,11 @@ module Shumway.GFX {
       this._bounds = null;
       this._layer = null;
       this._transform = null;
+      this._properties = null;
+    }
+
+    public get properties(): {[name: string]: any} {
+      return this._properties || (this._properties = {});
     }
 
     public get clip(): number {
