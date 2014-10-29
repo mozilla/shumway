@@ -46,7 +46,7 @@ module Shumway.AVM2.AS.flash.net {
     static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["attach", "close", "attachAudio", "attachCamera", "send", "bufferTime", "bufferTime", "maxPauseBufferTime", "maxPauseBufferTime", "backBufferTime", "backBufferTime", "inBufferSeek", "inBufferSeek", "backBufferLength", "step", "bufferTimeMax", "bufferTimeMax", "receiveAudio", "receiveVideo", "receiveVideoFPS", "pause", "resume", "togglePause", "seek", "publish", "time", "currentFPS", "bufferLength", "liveDelay", "bytesLoaded", "bytesTotal", "decodedFrames", "videoCodec", "audioCodec", "onPeerConnect", "call"];
+    static instanceSymbols: string [] = null; // ["attach", "close", "attachAudio", "attachCamera", "send", "bufferTime", "bufferTime", "maxPauseBufferTime", "maxPauseBufferTime", "backBufferTime", "backBufferTime", "backBufferLength", "step", "bufferTimeMax", "bufferTimeMax", "receiveAudio", "receiveVideo", "receiveVideoFPS", "pause", "resume", "togglePause", "seek", "publish", "time", "currentFPS", "bufferLength", "liveDelay", "bytesLoaded", "bytesTotal", "decodedFrames", "videoCodec", "audioCodec", "onPeerConnect", "call"];
 
     constructor (connection: flash.net.NetConnection, peerID: string = "connectToFMS") {
       false && super(undefined);
@@ -100,7 +100,6 @@ module Shumway.AVM2.AS.flash.net {
     bufferTime: number;
     maxPauseBufferTime: number;
     backBufferTime: number;
-    inBufferSeek: boolean;
     backBufferLength: number;
     step: (frames: number /*int*/) => void;
     bufferTimeMax: number;
@@ -129,7 +128,7 @@ module Shumway.AVM2.AS.flash.net {
     // _bufferTime: number;
     // _maxPauseBufferTime: number;
     // _backBufferTime: number;
-    // _inBufferSeek: boolean;
+    _inBufferSeek: boolean;
     // _backBufferLength: number;
     // _bufferTimeMax: number;
     // _info: flash.net.NetStreamInfo;
@@ -457,6 +456,14 @@ module Shumway.AVM2.AS.flash.net {
     invokeWithArgsArray(index: number /*uint*/, p_arguments: any []): any {
       index = index >>> 0; p_arguments = p_arguments;
       return this._invoke.call(this, index, p_arguments);
+    }
+
+    get inBufferSeek(): boolean {
+      return this._inBufferSeek;
+    }
+
+    set inBufferSeek(value: boolean) {
+      this._inBufferSeek = !!value;
     }
 
     private _invoke(index: number, args: any[]): any {

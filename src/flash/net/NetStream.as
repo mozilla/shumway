@@ -63,13 +63,11 @@ public class NetStream extends EventDispatcher {
   public function set backBufferTime(backBufferTime:Number):void {
     notImplemented("backBufferTime");
   }
-  public function get inBufferSeek():Boolean {
-    notImplemented("inBufferSeek");
-    return false;
-  }
-  public function set inBufferSeek(value:Boolean):void {
-    notImplemented("inBufferSeek");
-  }
+
+  public native function get inBufferSeek():Boolean;
+
+  public native function set inBufferSeek(value:Boolean):void;
+
   public function get backBufferLength():Number {
     notImplemented("backBufferLength");
     return -1;
