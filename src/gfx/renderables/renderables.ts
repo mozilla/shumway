@@ -1056,17 +1056,19 @@ module Shumway.GFX {
           var wordWidth = measureContext.measureText(chunk).width | 0;
           if (wordWidth > spaceLeft) {
             do {
-              currentLine.runs.push(run);
-              currentLine.width += run.width;
-              run = new TextRun(run.font, run.fillStyle, '', 0, run.underline);
-              var newLine = new TextLine();
-              newLine.y = (currentLine.y + currentLine.descent + currentLine.leading + currentLine.ascent) | 0;
-              newLine.ascent = currentLine.ascent;
-              newLine.descent = currentLine.descent;
-              newLine.leading = currentLine.leading;
-              newLine.align = currentLine.align;
-              lines.push(newLine);
-              currentLine = newLine;
+              if (run.text) {
+                currentLine.runs.push(run);
+                currentLine.width += run.width;
+                run = new TextRun(run.font, run.fillStyle, '', 0, run.underline);
+                var newLine = new TextLine();
+                newLine.y = (currentLine.y + currentLine.descent + currentLine.leading + currentLine.ascent) | 0;
+                newLine.ascent = currentLine.ascent;
+                newLine.descent = currentLine.descent;
+                newLine.leading = currentLine.leading;
+                newLine.align = currentLine.align;
+                lines.push(newLine);
+                currentLine = newLine;
+              }
               spaceLeft = maxWidth - wordWidth;
               if (spaceLeft < 0) {
                 var k = chunk.length;
