@@ -187,7 +187,7 @@ module Shumway.GFX {
     protected _type: NodeType;
     protected _flags: NodeFlags;
     protected _index: number;
-    protected _parent: Node;
+    protected _parent: Group;
     protected _clip: number = -1;
 
     protected _layer: Layer;
@@ -419,13 +419,11 @@ module Shumway.GFX {
     }
 
     public addChild(node: Node) {
-      release || assert(node, "Cannot add null nodes.");
-      release || assert(!node._parent, "Node is already has a parent elsewhere.");
-      release || assert(!node.isAncestor(this), "Cycles are not allowed.");
-      this.uncheckedAddChild(node);
-    }
-
-    uncheckedAddChild(node: Node) {
+      release || assert(node);
+      release || assert(!node.isAncestor(this));
+      if (node._parent) {
+        node._parent.removeChildAt(node._index);
+      }
       node._parent = this;
       node._index = this._children.length;
       this._children.push(node);
@@ -433,19 +431,28 @@ module Shumway.GFX {
       node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
     }
 
-    public setChildAt(node: Node, index: number) {
-      release || assert(node, "Cannot set null nodes.");
-      release || assert(!node._parent, "Node is already has a parent elsewhere.");
-      release || assert(!node.isAncestor(this), "Cycles are not allowed.");
-      release || assert(index >= 0 && index < this._children.length, "Out of range.");
-      this.uncheckedSetChildAt(node, index);
+    public removeChildAt(index: number) {
+      release || assert(index >= 0 && index < this._children.length);
+      var node = this._children[index];
+      release || assert(index === node._index);
+      this._children.splice(index, 1);
+      node._index = -1;
+      node._parent = null;
+      this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
+      node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
     }
 
-    uncheckedSetChildAt(node: Node, index: number) {
+    public setChildAt(node: Node, index: number) {
+      release || assert(node);
+      release || assert(!node.isAncestor(this));
+      release || assert(index >= 0 && index < this._children.length);
       var last = this._children[index];
       last._index = -1;
       last._parent = null;
       last._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
+      if (node._parent) {
+        node._parent.removeChildAt(node._index);
+      }
       node._index = index;
       node._parent = this;
       this._children[index] = node;
@@ -463,6 +470,7 @@ module Shumway.GFX {
         }
       }
       this._children.length = 0;
+      this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
     }
 
     _propagateFlagsDown(flags: NodeFlags) {
