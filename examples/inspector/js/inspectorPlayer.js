@@ -108,6 +108,7 @@ function runSwfPlayer(data) {
   Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
     function runSWF(file) {
       var player = new Shumway.Player.Window.WindowPlayer(window);
+      player.movieParams = movieParams;
       player.load(file);
     }
     file = Shumway.FileLoadingService.instance.setBaseUrl(file);

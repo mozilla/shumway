@@ -17,6 +17,7 @@
 package flash.system {
 import flash.display.DisplayObjectContainer;
 
+[native(cls='LoaderContextClass')]
 public class LoaderContext {
   public function LoaderContext(checkPolicyFile:Boolean = false,
                                 applicationDomain:ApplicationDomain = null,

@@ -93,6 +93,11 @@ module Shumway.Player {
     public defaultStageColor: number;
 
     /**
+     * Movie parameters, such as flashvars.
+     */
+    public movieParams: Map<string>;
+
+    /**
      * Time since the last time we've synchronized the display list.
      */
     private _lastPumpTime = 0;
@@ -171,14 +176,27 @@ module Shumway.Player {
           self._enterLoops();
         });
       }
+      var context = this.createLoaderContext();
       if (buffer) {
         var symbol = Shumway.Timeline.BinarySymbol.FromData({id: -1, data: buffer});
         var byteArray = symbol.symbolClass.initializeFrom(symbol);
         symbol.symbolClass.instanceConstructorNoInitialize.call(byteArray);
-        this._loader.loadBytes(byteArray);
+        this._loader.loadBytes(byteArray, context);
       } else {
-        this._loader.load(new flash.net.URLRequest(url));
+        this._loader.load(new flash.net.URLRequest(url), context);
       }
+    }
+
+    private createLoaderContext() : flash.system.LoaderContext {
+      var loaderContext = new flash.system.LoaderContext();
+      if (this.movieParams) {
+        var parameters: any = {};
+        for (var i in this.movieParams) {
+          parameters.asSetPublicProperty(i, this.movieParams[i]);
+        }
+        loaderContext.parameters = <Shumway.AVM2.AS.ASObject>parameters;
+      }
+      return loaderContext;
     }
 
     public processUpdates(updates: DataBuffer, assets: any []) {
