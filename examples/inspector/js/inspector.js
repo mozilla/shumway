@@ -36,6 +36,7 @@ var simpleMode = getQueryVariable("simpleMode") === "true";
 var pauseExecution = getQueryVariable("paused") === "true";
 var remoteFile = getQueryVariable("rfile");
 var yt = getQueryVariable('yt');
+var movieParams = parseQueryString(getQueryVariable('flashvars'));
 
 //var swfController = new SWFController(timeline, pauseExecution);
 
@@ -82,7 +83,7 @@ function parseQueryString(qs) {
  */
 if (remoteFile) {
   setTimeout(function () {
-    executeFile(remoteFile, null, parseQueryString(window.location.search));
+    executeFile(remoteFile, null, movieParams);
   });
 } else if (yt) {
   requestYT(yt).then(function (config) {
@@ -175,6 +176,8 @@ function executeFile(file, buffer, movieParams) {
         });
         syncGFXOptions(easel.options);
         var player = new Shumway.Player.Test.TestPlayer();
+        player.movieParams = movieParams;
+
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
         player.load(file, buffer);
 
