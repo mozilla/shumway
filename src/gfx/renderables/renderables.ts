@@ -150,10 +150,10 @@ module Shumway.GFX {
       this._bounds = bounds.clone();
     }
 
-    /**
-     * Bounds of the source content. This should never change.
-     */
-    getBounds (): Rectangle {
+    getBounds(clone: boolean = false): Rectangle {
+      if (clone) {
+        return this._bounds.clone();
+      }
       return this._bounds;
     }
 
@@ -498,7 +498,7 @@ module Shumway.GFX {
     }
 
     update(pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
-      this._bounds = bounds;
+      this._bounds.set(bounds);
       this._pathData = pathData;
       this._paths = null;
       this._textures = textures;

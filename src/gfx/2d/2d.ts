@@ -313,7 +313,7 @@ module Shumway.GFX.Canvas2D {
                                                new RegionAllocator.Region(0, 0, canvas.width, canvas.height),
                                                canvas.width, canvas.height);
       this._devicePixelRatio = window.devicePixelRatio || 1;
-      this._fontSize = 12 * this._devicePixelRatio;
+      this._fontSize = 10 * this._devicePixelRatio;
       Canvas2DStageRenderer._prepareSurfaceAllocators();
     }
 
@@ -427,14 +427,6 @@ module Shumway.GFX.Canvas2D {
 
       var bounds = node.getBounds();
 
-      if (state.flags & RenderFlags.PaintBounds) {
-        var matrix = state.matrix;
-        var context = state.target.context;
-        context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-        context.strokeStyle = ColorStyle.LightOrange;
-        context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
-      }
-
       if (node.hasFlags(NodeFlags.IsMask) && !(state.flags & RenderFlags.IgnoreMask)) {
         return;
       }
@@ -480,6 +472,32 @@ module Shumway.GFX.Canvas2D {
           this._frameInfo.culledNodes ++;
         }
       }
+
+      this._renderDebugInfo(node, state);
+    }
+
+    _renderDebugInfo(node: Node, state: RenderState) {
+      var context = state.target.context;
+      var bounds = node.getBounds(true);
+
+      /*
+      state.matrix.transformRectangleAABB(bounds);
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.fillStyle = "red";
+      context.textAlign = "left";
+      context.textBaseline = "top";
+      context.font = this._fontSize + "px Arial";
+      context.fillText(String((<any>node)._id), bounds.x + 2, bounds.y + 2);
+      bounds.free();
+      */
+
+      if (state.flags & RenderFlags.PaintBounds) {
+        var matrix = state.matrix;
+        bounds = node.getBounds();
+        context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+        context.strokeStyle = ColorStyle.LightOrange;
+        context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+      }
     }
 
     visitScissor(node: Scissor, state: RenderState) {
@@ -489,10 +507,10 @@ module Shumway.GFX.Canvas2D {
       bounds.intersect(state.clip);
       state.target.resetTransform();
 
-      context.save();
-      context.beginPath();
-      context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-      context.clip();
+//      context.save();
+//      context.beginPath();
+//      context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
+//      context.clip();
 
       // Fill background
       if (!node.hasFlags(NodeFlags.Transparent)) {
@@ -506,7 +524,7 @@ module Shumway.GFX.Canvas2D {
       this.visitGroup(node, state);
       state.free();
       bounds.free();
-      context.restore();
+//      context.restore();
     }
 
     visitShape(node: Shape, state: RenderState) {
