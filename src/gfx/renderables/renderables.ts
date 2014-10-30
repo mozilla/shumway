@@ -33,6 +33,8 @@ module Shumway.GFX {
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
 
+  declare var registerInspectorAsset;
+
   export enum RenderableFlags {
     None          = 0,
 
@@ -209,6 +211,10 @@ module Shumway.GFX {
 
       RenderableVideo._renderableVideos.push(this);
 
+      if (typeof registerInspectorAsset !== "undefined") {
+        registerInspectorAsset(-1, -1, this);
+      }
+
       this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
     }
 
@@ -283,17 +289,17 @@ module Shumway.GFX {
       }
     }
 
-    public invalidateCheck() {
+    public checkForUpdate() {
       if (this._lastCurrentTime !== this._video.currentTime) {
         this.invalidate();
       }
       this._lastCurrentTime = this._video.currentTime;
     }
 
-    public static invalidateVideos() {
+    public static checkForVideoUpdates() {
       var renderables = RenderableVideo._renderableVideos;
       for (var i = 0; i < renderables.length; i++) {
-        renderables[i].invalidateCheck();
+        renderables[i].checkForUpdate();
       }
     }
 

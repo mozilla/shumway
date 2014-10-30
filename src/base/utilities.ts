@@ -252,11 +252,12 @@ module Shumway {
 
   export module Debug {
     export function backtrace() {
-      try {
-        throw new Error();
-      } catch (e) {
-        return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
-      }
+      return "Uncomment Debug.backtrace();";
+//      try {
+//        throw new Error();
+//      } catch (e) {
+//        return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
+//      }
     }
 
     export function error(message: string) {
@@ -1732,7 +1733,7 @@ module Shumway {
     private _tab: string;
     private _padding: string;
     private _suppressOutput: boolean;
-    private _out: (s: string) => void;
+    private _out: (s: string, o?: any) => void;
     private _outNoNewline: (s: string) => void;
 
     constructor(suppressOutput: boolean = false, out?) {
@@ -1752,6 +1753,12 @@ module Shumway {
     writeLn(str: string = "") {
       if (!this._suppressOutput) {
         this._out(this._padding + str);
+      }
+    }
+
+    writeObject(str: string = "", object?: Object) {
+      if (!this._suppressOutput) {
+        this._out(this._padding + str, object);
       }
     }
 

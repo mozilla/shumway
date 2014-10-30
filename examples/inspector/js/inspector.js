@@ -414,6 +414,13 @@ function registerInspectorAsset(id, symbolId, asset) {
     var details = renderable.constructor.name + ": " + id + " (" + symbolId + "), bounds: " + bounds;
     var canvas = null;
     var renderTime = 0;
+    if (renderable instanceof Shumway.GFX.RenderableVideo) {
+      if (!renderable.isRegistered) {
+        renderable.isRegistered = true;
+        div.appendChild(renderable._video);
+      }
+      return;
+    }
     if (renderable instanceof Shumway.GFX.RenderableBitmap) {
       canvas = renderable._canvas;
     } else {

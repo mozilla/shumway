@@ -399,6 +399,7 @@ module Shumway.GFX {
     }
 
     private _render() {
+      RenderableVideo.checkForVideoUpdates();
       var mustRender = (this._stage.readyToRender() || forcePaint.value) && !this.paused;
       if (mustRender) {
         for (var i = 0; i < this._renderers.length; i++) {

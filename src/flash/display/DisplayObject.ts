@@ -1863,7 +1863,7 @@ module Shumway.AVM2.AS.flash.display {
           return VisitorFlags.Skip;
         }
         var prefix = name + Shumway.StringUtilities.multiple(" ", distance);
-        writer.writeLn(prefix + node.debugName());
+        writer.writeObject(prefix + node.debugName() + ", bounds: " + node.getBounds(null).toString(), { "...": { value: node} });
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
     }

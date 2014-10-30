@@ -726,27 +726,27 @@ module Shumway.GFX.Canvas2D {
           bounds.w * matrixScale <= cacheShapesMaxSize &&
           bounds.h * matrixScale <= cacheShapesMaxSize)
       {
-        var mipMap: MipMap = source.properties["mipMap"];
-        if (!mipMap) {
-          mipMap = source.properties["mipMap"] = new MipMap(source, Canvas2DStageRenderer._shapeCache, cacheShapesMaxSize);
-        }
-        var mipMapLevel = mipMap.getLevel(matrix);
-        var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);
-        var region = mipMapLevelSurfaceRegion.region;
-        if (mipMapLevel) {
-          context.drawImage (
-            mipMapLevelSurfaceRegion.surface.canvas,
-            region.x, region.y,
-            region.w, region.h,
-            bounds.x, bounds.y,
-            bounds.w, bounds.h
-          );
-        }
-        if (paintFlashing) {
-          context.fillStyle = ColorStyle.gradientColor(0.1 / elapsed);
-          context.globalAlpha = 0.2 * Math.random();
-          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-        }
+//        var mipMap: MipMap = source.properties["mipMap"];
+//        if (!mipMap) {
+//          mipMap = source.properties["mipMap"] = new MipMap(source, Canvas2DStageRenderer._shapeCache, cacheShapesMaxSize);
+//        }
+//        var mipMapLevel = mipMap.getLevel(matrix);
+//        var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);
+//        var region = mipMapLevelSurfaceRegion.region;
+//        if (mipMapLevel) {
+//          context.drawImage (
+//            mipMapLevelSurfaceRegion.surface.canvas,
+//            region.x, region.y,
+//            region.w, region.h,
+//            bounds.x, bounds.y,
+//            bounds.w, bounds.h
+//          );
+//        }
+//        if (paintFlashing) {
+//          context.fillStyle = ColorStyle.gradientColor(0.1 / elapsed);
+//          context.globalAlpha = 0.2 * Math.random();
+//          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+//        }
       } else {
         source.properties["renderCount"] = ++ renderCount;
         source.render(context, shape.ratio, null, paintClip, paintStencil);
