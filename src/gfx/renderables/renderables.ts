@@ -1367,10 +1367,6 @@ module Shumway.GFX {
       leaveTimeline("RenderableText.reflow");
     }
 
-    getBounds(): Shumway.GFX.Geometry.Rectangle {
-      return this._bounds;
-    }
-
     render(context: CanvasRenderingContext2D): void {
       enterTimeline("RenderableText.render");
       context.save();
@@ -1455,6 +1451,8 @@ module Shumway.GFX {
           if (run.underline) {
             context.fillRect(x, (y + (line.descent / 2)) | 0, run.width, 1);
           }
+          context.textAlign = "left";
+          context.textBaseline = "alphabetic";
           context.fillText(run.text, x, y);
           x += run.width;
         }

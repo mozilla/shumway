@@ -286,7 +286,7 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var matrix = GFXChannelDeserializer._temporaryReadMatrix;
       matrix.setElements (
-        input.  readFloat(),
+        input.readFloat(),
         input.readFloat(),
         input.readFloat(),
         input.readFloat(),

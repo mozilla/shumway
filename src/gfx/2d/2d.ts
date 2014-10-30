@@ -480,16 +480,14 @@ module Shumway.GFX.Canvas2D {
       var context = state.target.context;
       var bounds = node.getBounds(true);
 
-      /*
       state.matrix.transformRectangleAABB(bounds);
       context.setTransform(1, 0, 0, 1, 0, 0);
-      context.fillStyle = "red";
-      context.textAlign = "left";
-      context.textBaseline = "top";
+      context.fillStyle = "orange";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
       context.font = this._fontSize + "px Arial";
-      context.fillText(String((<any>node)._id), bounds.x + 2, bounds.y + 2);
+      context.fillText(String((<any>node)._id), bounds.x + bounds.w / 2, bounds.y + bounds.h / 2);
       bounds.free();
-      */
 
       if (state.flags & RenderFlags.PaintBounds) {
         var matrix = state.matrix;
