@@ -202,21 +202,29 @@ module Shumway.AVM2.AS.flash.display {
 
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
                    testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
-      if (testingType === HitTestingType.Mouse && this._hitArea && this._mouseEnabled) {
-        var result = this._hitArea._containsGlobalPoint(globalX, globalY,
-                                                        HitTestingType.HitTestShape, objects);
-        if (result === HitTestingResult.Shape) {
-          release || assert(objects.length === 0);
-          objects.push(this);
-        }
+      var result = this._boundsAndMaskContainPoint(globalX, globalY, localX, localY, testingType);
+      if (!result && testingType === HitTestingType.Mouse && this._hitArea && this._mouseEnabled) {
+        var matrix = this._hitArea._getInvertedConcatenatedMatrix();
+        var hitAreaLocalX = matrix.transformX(globalX, globalY);
+        var hitAreaLocalY = matrix.transformY(globalX, globalY);
+        result = this._hitArea._boundsAndMaskContainPoint(globalX, globalY,
+                                                          hitAreaLocalX, hitAreaLocalY,
+                                                          testingType);
+      }
+      if (result === HitTestingResult.None || testingType < HitTestingType.HitTestShape) {
         return result;
       }
-      return super._containsPoint(globalX, globalY, localX, localY, testingType, objects);
+      return this._containsPointImpl(globalX, globalY, localX, localY, testingType, objects, true);
     }
 
-    _containsPointDirectly(x: number, y: number): boolean {
+    _containsPointDirectly(localX: number, localY: number,
+                           globalX: number, globalY: number): boolean {
+      if (this._hitArea) {
+        return !!this._hitArea._containsGlobalPoint(globalX, globalY,
+                                                    HitTestingType.HitTestShape, null);
+      }
       var graphics = this._getGraphics();
-      return !!graphics && graphics._containsPoint(x, y, true, 0);
+      return !!graphics && graphics._containsPoint(localX, localY, true, 0);
     }
   }
 }
