@@ -812,8 +812,6 @@ module Shumway.AVM2.AS.flash.display {
           }
           parameters[key] = value;
         }
-      } else {
-        // TODO: parse request URL parameters.
       }
       if (context && context.applicationDomain) {
         this._contentLoaderInfo._applicationDomain =

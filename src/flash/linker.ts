@@ -185,6 +185,7 @@ module Shumway.AVM2.AS {
       M("flash.system.SecurityDomain", "SecurityDomainClass", flash.system.SecurityDomain),
       M("flash.system.ApplicationDomain", "ApplicationDomainClass", flash.system.ApplicationDomain),
       M("flash.system.JPEGLoaderContext", "JPEGLoaderContextClass", flash.system.JPEGLoaderContext),
+      M("flash.system.LoaderContext", "LoaderContextClass", flash.system.LoaderContext),
 
       M("flash.accessibility.Accessibility", "AccessibilityClass",
         flash.accessibility.Accessibility),

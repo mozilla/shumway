@@ -49,6 +49,7 @@ function runSwfPlayer(flashParams) {
     function runSWF(file) {
       var player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
       player.defaultStageColor = flashParams.bgcolor;
+      player.movieParams = flashParams.movieParams;
 
       Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
 
