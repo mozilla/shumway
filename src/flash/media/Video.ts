@@ -66,10 +66,11 @@ module Shumway.AVM2.AS.flash.media {
       return this._videoHeight;
     }
 
-    _containsPointDirectly(x: number, y: number): boolean {
+    _containsPointDirectly(localX: number, localY: number,
+                           globalX: number, globalY: number): boolean {
       // If this override is reached, the content bounds have already been checked, which is all
       // we need to do.
-      release || assert(this._getContentBounds().contains(x, y));
+      release || assert(this._getContentBounds().contains(localX, localY));
       return true;
     }
 

@@ -1716,7 +1716,7 @@ module Shumway.AVM2.AS.flash.display {
       if (result === HitTestingResult.None || testingType < HitTestingType.HitTestShape) {
         return result;
       }
-      var containsPoint = this._containsPointDirectly(localX, localY);
+      var containsPoint = this._containsPointDirectly(localX, localY, globalX, globalY);
       // For getObjectsUnderPoint, push all direct hits, for mouse target finding InteractiveObjects
       // only.
       if (containsPoint && objects &&
@@ -1774,7 +1774,8 @@ module Shumway.AVM2.AS.flash.display {
      * ever match.
      * Overridden in Shape, MorphShape, Sprite, Bitmap, Video, and TextField.
      */
-    _containsPointDirectly(localX: number, localY: number): boolean {
+    _containsPointDirectly(localX: number, localY: number,
+                           globalX: number, globalY: number): boolean {
       return false;
     }
 
