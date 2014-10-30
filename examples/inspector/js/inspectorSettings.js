@@ -27,6 +27,7 @@ var stateDefaults = {
   logToDebugPanel: true,
   logAssets: false,
   overlayFlash: false,
+  useIFramePlayer: false,
   mute: false,
   release: false
 };
@@ -67,6 +68,7 @@ var GUI = (function () {
   inspectorOptions.add(state, "profileStartup").onChange(saveInspectorOption);
   inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
   inspectorOptions.add(state, "overlayFlash").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "useIFramePlayer").onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
