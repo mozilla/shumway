@@ -391,7 +391,7 @@
 ///<reference path='ui/Keyboard.ts' />
 // ///<reference path='ui/KeyboardType.ts' />
 ///<reference path='ui/Mouse.ts' />
-// ///<reference path='ui/MouseCursor.ts' />
+///<reference path='ui/MouseCursor.ts' />
 ///<reference path='ui/MouseCursorData.ts' />
 ///<reference path='ui/Multitouch.ts' />
 ///<reference path='ui/MultitouchInputMode.ts' />

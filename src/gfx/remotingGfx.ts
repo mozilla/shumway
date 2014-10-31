@@ -472,6 +472,9 @@ module Shumway.Remoting.GFX {
       var align = this.input.readInt();
       var scaleMode = this.input.readInt();
       context._setStageScaleAndAlign(scaleMode, align, rectangle.w, rectangle.h);
+      var currentMouseTarget = this.input.readInt();
+      var cursor = this.input.readInt();
+      context._easelHost.cursor = Shumway.UI.toCSSCursor(cursor);
     }
 
     private _readUpdateNetStream() {
