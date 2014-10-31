@@ -479,20 +479,20 @@ module Shumway.GFX {
         var cw = parent.clientWidth;
         var ch = (parent.clientHeight) / this._canvases.length;
 
-        if (ratio > 1) {
-          canvas.width = cw * ratio;
-          canvas.height = ch * ratio;
+        if (ratio !== 1) {
+          canvas.width = Math.ceil(cw * ratio);
+          canvas.height = Math.ceil(ch * ratio);
           canvas.style.width = cw + 'px';
           canvas.style.height = ch + 'px';
         } else {
           canvas.width = cw;
           canvas.height = ch;
         }
-        this._stage.w = canvas.width;
-        this._stage.h = canvas.height;
+        if (i === 0) {
+          this._stage.setSizeAndPixelRatio(canvas.width, canvas.height, ratio);
+        }
         this._renderers[i].resize();
       }
-      this._stage.matrix.set(new Matrix(ratio, 0, 0, ratio, 0, 0));
     }
 
     resize() {

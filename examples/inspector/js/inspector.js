@@ -37,6 +37,8 @@ var pauseExecution = getQueryVariable("paused") === "true";
 var remoteFile = getQueryVariable("rfile");
 var yt = getQueryVariable('yt');
 var movieParams = parseQueryString(getQueryVariable('flashvars'));
+var stageAlign = getQueryVariable('salign') || getQueryVariable('align');
+var stageScale = getQueryVariable('scale');
 
 //var swfController = new SWFController(timeline, pauseExecution);
 
@@ -143,7 +145,8 @@ function executeFile(file, buffer, movieParams) {
     var swfURL = Shumway.FileLoadingService.instance.setBaseUrl(file);
     var loaderURL = getQueryVariable("loaderURL") || swfURL;
     runIFramePlayer({sysMode: sysMode, appMode: appMode, loaderURL: loaderURL,
-      movieParams: movieParams, file: file, asyncLoading: asyncLoading});
+      movieParams: movieParams, file: file, asyncLoading: asyncLoading,
+      stageAlign: stageAlign, stageScale: stageScale});
     return;
   }
 
@@ -186,6 +189,8 @@ function executeFile(file, buffer, movieParams) {
         syncGFXOptions(easel.options);
         var player = new Shumway.Player.Test.TestPlayer();
         player.movieParams = movieParams;
+        player.stageAlign = stageAlign;
+        player.stageScale = stageScale;
 
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
         player.load(file, buffer);

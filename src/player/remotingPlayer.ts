@@ -98,6 +98,8 @@ module Shumway.Remoting.Player {
       this.output.writeInt(stage._id);
       this.output.writeInt(stage.color);
       this._writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
+      this.output.writeInt(flash.display.StageAlign.toNumber(stage.align));
+      this.output.writeInt(flash.display.StageScaleMode.toNumber(stage.scaleMode));
     }
 
     writeGraphics(graphics: Graphics) {

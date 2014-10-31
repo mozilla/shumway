@@ -136,6 +136,21 @@ module Shumway.Remoting {
     GetBufferLength = 4
   }
 
+  export enum StageScaleModeId {
+    ShowAll = 0,
+    ExactFit = 1,
+    NoBorder = 2,
+    NoScale = 4
+  }
+
+  export enum StageAlignFlags {
+    None     = 0,
+    Top      = 1,
+    Bottom   = 2,
+    Left     = 4,
+    Right    = 8
+  }
+
   export var MouseEventNames: string[] = [
     'click',
     'dblclick',

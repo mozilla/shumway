@@ -50,6 +50,8 @@ function runSwfPlayer(flashParams) {
       var player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = flashParams.movieParams;
+      player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';
+      player.stageScale = (objectParams && objectParams.scale) || 'showall';
 
       Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
 
