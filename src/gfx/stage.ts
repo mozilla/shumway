@@ -25,6 +25,9 @@ module Shumway.GFX {
   import OBB = Geometry.OBB;
   import assert = Shumway.Debug.assert;
 
+  import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
+  import StageScaleModeId = Shumway.Remoting.StageScaleModeId;
+
   export enum BlendMode {
     Normal     = 1,
     Layer      = 2,
@@ -128,13 +131,31 @@ module Shumway.GFX {
   export class Stage extends FrameContainer {
     public trackDirtyRegions: boolean;
     public dirtyRegion: DirtyRegion;
+
     public w: number;
     public h: number;
+    public pixelRatio: number;
+    public scaleMode: StageScaleModeId;
+    public align: StageAlignFlags;
+    public targetWidth: number;
+    public targetHeight: number;
+
+    // Using these constants initially -- they don't require knowing bounds.
+    // Notice that this default values are different from ActionScript object values.
+    private static DEFAULT_SCALE = StageScaleModeId.NoScale;
+    private static DEFAULT_ALIGN = StageAlignFlags.Left | StageAlignFlags.Top;
 
     constructor(w: number, h: number, trackDirtyRegions: boolean = false) {
       super();
       this.w = w;
       this.h = h;
+      this.pixelRatio = 1.0;
+      this.scaleMode = Stage.DEFAULT_SCALE;
+      this.align = Stage.DEFAULT_ALIGN;
+      this.targetWidth = 0;
+      this.targetHeight = 0;
+      this._updateMatrix();
+
       this.dirtyRegion = new DirtyRegion(w, h);
       this.trackDirtyRegions = trackDirtyRegions;
       this._setFlags(FrameFlags.Dirty);
@@ -225,6 +246,76 @@ module Shumway.GFX {
       }
 
       return layers;
+    }
+
+    setSizeAndPixelRatio(w: number, h: number, ratio: number) {
+      if (this.w !== w || this.h !== h || this.pixelRatio !== ratio) {
+        this.w = w;
+        this.h = h;
+        this.pixelRatio = ratio;
+        this._updateMatrix();
+      }
+    }
+
+    setScaleAndAlign(scaleMode: StageScaleModeId, align: StageAlignFlags, targetWidth: number, targetHeight: number) {
+      if (this.scaleMode !== scaleMode || this.align !== align ||
+          this.targetWidth !== targetWidth || this.targetHeight !== targetHeight) {
+        this.scaleMode = scaleMode;
+        this.align = align;
+        this.targetWidth = targetWidth;
+        this.targetHeight = targetHeight;
+        this._updateMatrix();
+      }
+    }
+
+    private _updateMatrix() {
+      if (this.scaleMode === Stage.DEFAULT_SCALE && this.align === Stage.DEFAULT_ALIGN) {
+        // Shortcut and also guard to avoid using targetWidth/targetHeight.
+        // ThetargetWidth/targetHeight normally set in setScaleAndAlign call.
+        this.matrix.set(new Matrix(this.pixelRatio, 0, 0, this.pixelRatio, 0, 0));
+        return;
+      }
+
+      Debug.assert(this.targetWidth > 0 && this.targetHeight > 0);
+      var widthScale = this.w / this.targetWidth;
+      var heightScale = this.h / this.targetHeight;
+      var scaleX, scaleY;
+      switch (this.scaleMode) {
+        case StageScaleModeId.NoBorder:
+          scaleX = scaleY = Math.max(widthScale, heightScale);
+          break;
+        case StageScaleModeId.NoScale:
+          scaleX = scaleY = this.pixelRatio;
+          break;
+        case StageScaleModeId.ExactFit:
+          scaleX = widthScale;
+          scaleY = heightScale;
+          break;
+        // case StageScaleModeId.ShowAll:
+        default:
+          scaleX = scaleY = Math.min(widthScale, heightScale);
+          break;
+      }
+
+      var offsetX;
+      if ((this.align & StageAlignFlags.Left)) {
+        offsetX = 0;
+      } else if ((this.align & StageAlignFlags.Right)) {
+        offsetX = this.w - this.targetWidth * scaleX;
+      } else {
+        offsetX = (this.w - this.targetWidth * scaleX) / 2;
+      }
+
+      var offsetY;
+      if ((this.align & StageAlignFlags.Top)) {
+        offsetY = 0;
+      } else if ((this.align & StageAlignFlags.Bottom)) {
+        offsetY = this.h - this.targetHeight * scaleY;
+      } else {
+        offsetY = (this.h - this.targetHeight * scaleY) / 2;
+      }
+
+      this.matrix.set(new Matrix(scaleX, 0, 0, scaleY, offsetX, offsetY));
     }
   }
 

@@ -98,6 +98,16 @@ module Shumway.Player {
     public movieParams: Map<string>;
 
     /**
+     * Initial stage alignment: l|r|t|tr|tl.
+     */
+    public stageAlign: string;
+
+    /**
+     * Initial stage scaling: showall|noborder|exactfit|noscale.
+     */
+    public stageScale: string;
+
+    /**
      * Time since the last time we've synchronized the display list.
      */
     private _lastPumpTime = 0;
@@ -168,6 +178,8 @@ module Shumway.Player {
 
           var root = loader.content;
           stage._loaderInfo = loaderInfo;
+          stage.align = self.stageAlign || '';
+          stage.scaleMode = self.stageScale || 'showall';
           stage.frameRate = loaderInfo.frameRate;
           stage.setStageWidth(loaderInfo.width);
           stage.setStageHeight(loaderInfo.height);
