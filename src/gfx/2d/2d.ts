@@ -477,25 +477,36 @@ module Shumway.GFX.Canvas2D {
     }
 
     _renderDebugInfo(node: Node, state: RenderState) {
+      if (!(state.flags & RenderFlags.PaintBounds)) {
+        return;
+      }
+
       var context = state.target.context;
       var bounds = node.getBounds(true);
+      var style = node.properties["style"];
+      if (!style) {
+        style = node.properties["style"] = ColorStyle.randomStyle();
+      }
+
+      context.fillStyle = style;
+      context.strokeStyle = style;
 
       state.matrix.transformRectangleAABB(bounds);
       context.setTransform(1, 0, 0, 1, 0, 0);
-      context.fillStyle = "orange";
       context.textAlign = "center";
       context.textBaseline = "middle";
       context.font = this._fontSize + "px Arial";
-      context.fillText(String((<any>node)._id), bounds.x + bounds.w / 2, bounds.y + bounds.h / 2);
+      var debugText = node.id + "\n" +
+        node.getBounds().w.toFixed(2) + "x" +
+        node.getBounds().h.toFixed(2);
+      context.fillText(debugText, bounds.x + bounds.w / 2, bounds.y + bounds.h / 2);
       bounds.free();
 
-      if (state.flags & RenderFlags.PaintBounds) {
-        var matrix = state.matrix;
-        bounds = node.getBounds();
-        context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-        context.strokeStyle = ColorStyle.LightOrange;
-        context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
-      }
+      var matrix = state.matrix;
+      bounds = node.getBounds();
+      context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+      context.lineWidth = 1 / matrix.getScale();
+      context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
     }
 
     visitScissor(node: Scissor, state: RenderState) {
@@ -736,7 +747,7 @@ module Shumway.GFX.Canvas2D {
       if (false && !paintStencil &&
           !paintClip &&
           state.colorMatrix.isIdentity() &&
-          !source.hasFlags(RenderableFlags.Dynamic) &&
+          !source.hasFlags(NodeFlags.Dynamic) &&
           (state.flags & RenderFlags.CacheShapes) &&
           renderCount > state.cacheShapesThreshold &&
           bounds.w * matrixScale <= cacheShapesMaxSize &&

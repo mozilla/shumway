@@ -134,8 +134,8 @@ module Shumway.GFX.Geometry {
       return new Point(this.x, this.y);
     }
 
-    toString () {
-      return "{x: " + this.x + ", y: " + this.y + "}";
+    toString (digits: number = 2) {
+      return "{x: " + this.x.toFixed(digits) + ", y: " + this.y.toFixed(digits) + "}";
     }
 
     inTriangle (a: Point, b: Point, c: Point) {
@@ -237,8 +237,8 @@ module Shumway.GFX.Geometry {
       return new Point3D(this.x, this.y, this.z);
     }
 
-    toString () {
-      return "{x: " + this.x + ", y: " + this.y + ", z: " + this.z + "}";
+    toString (digits: number = 2) {
+      return "{x: " + this.x.toFixed(digits) + ", y: " + this.y.toFixed(digits) + ", z: " + this.z.toFixed(digits) + "}";
     }
 
     static createEmpty(): Point3D {
@@ -421,7 +421,6 @@ module Shumway.GFX.Geometry {
 
     static allocate(): Rectangle {
       var dirtyStack = Rectangle._dirtyStack;
-      var state = null;
       if (dirtyStack.length) {
         return dirtyStack.pop();
       } else {
@@ -480,12 +479,12 @@ module Shumway.GFX.Geometry {
       return new Rectangle(0, 0, this.w, this.h);
     }
 
-    toString(): string {
+    toString(digits: number = 2): string {
       return "{" +
-        this.x + ", " +
-        this.y + ", " +
-        this.w + ", " +
-        this.h +
+        this.x.toFixed(digits) + ", " +
+        this.y.toFixed(digits) + ", " +
+        this.w.toFixed(digits) + ", " +
+        this.h.toFixed(digits) +
       "}";
     }
 
@@ -1099,6 +1098,10 @@ module Shumway.GFX.Geometry {
       return m[3] > 0 ? result : -result;
     }
 
+    getScale(): number {
+      return (this.getScaleX() + this.getScaleY()) / 2;
+    }
+
     getAbsoluteScaleX(): number {
       return Math.abs(this.getScaleX());
     }
@@ -1117,15 +1120,15 @@ module Shumway.GFX.Geometry {
       return Math.abs(m[0] * m[2] + m[1] * m[3]) < 0.01;
     }
 
-    toString (): string {
+    toString (digits: number = 2): string {
       var m = this._data;
       return "{" +
-        m[0] + ", " +
-        m[1] + ", " +
-        m[2] + ", " +
-        m[3] + ", " +
-        m[4] + ", " +
-        m[5] + "}";
+        m[0].toFixed(digits) + ", " +
+        m[1].toFixed(digits) + ", " +
+        m[2].toFixed(digits) + ", " +
+        m[3].toFixed(digits) + ", " +
+        m[4].toFixed(digits) + ", " +
+        m[5].toFixed(digits) + "}";
     }
 
     public toWebGLMatrix(): Float32Array {
@@ -1888,7 +1891,7 @@ module Shumway.GFX.Geometry {
       var scale = pow2(level);
       // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our surface caches ...
 
-      if (this._source.hasFlags(RenderableFlags.Dynamic)) {
+      if (this._source.hasFlags(NodeFlags.Dynamic)) {
         // .. so try a lower scale level until it fits.
         while (true) {
           scale = pow2(level);
@@ -1901,7 +1904,7 @@ module Shumway.GFX.Geometry {
       }
       // If the source is not scalable don't cache any tiles at a higher scale factor. However, it may still make
       // sense to cache at a lower scale factor in case we need to evict larger cached images.
-      if (!(this._source.hasFlags(RenderableFlags.Scalable))) {
+      if (!(this._source.hasFlags(NodeFlags.Scalable))) {
         level = clamp(level, -MIN_CACHE_LEVELS, 0);
       }
       var scale = pow2(level);
@@ -1911,8 +1914,8 @@ module Shumway.GFX.Geometry {
         var bounds = this._source.getBounds().getAbsoluteBounds();
         var scaledBounds = bounds.clone().scale(scale, scale);
         var tileW, tileH;
-        if (this._source.hasFlags(RenderableFlags.Dynamic) ||
-            !this._source.hasFlags(RenderableFlags.Tileable) || Math.max(scaledBounds.w, scaledBounds.h) <= this._minUntiledSize) {
+        if (this._source.hasFlags(NodeFlags.Dynamic) ||
+            !this._source.hasFlags(NodeFlags.Tileable) || Math.max(scaledBounds.w, scaledBounds.h) <= this._minUntiledSize) {
           tileW = scaledBounds.w;
           tileH = scaledBounds.h;
         } else {
@@ -1934,7 +1937,7 @@ module Shumway.GFX.Geometry {
       var source = this._source;
       for (var i = 0; i < tiles.length; i++) {
         var tile = tiles[i];
-        if (!tile.cachedSurfaceRegion || !tile.cachedSurfaceRegion.surface || (source.hasFlags(RenderableFlags.Dynamic | RenderableFlags.Dirty))) {
+        if (!tile.cachedSurfaceRegion || !tile.cachedSurfaceRegion.surface || (source.hasFlags(NodeFlags.Dynamic | NodeFlags.Dirty))) {
           if (!uncachedTiles) {
             uncachedTiles = [];
           }
@@ -1944,7 +1947,7 @@ module Shumway.GFX.Geometry {
       if (uncachedTiles) {
         this._cacheTiles(scratchContext, uncachedTiles, cacheImageCallback, scratchBounds);
       }
-      source.removeFlags(RenderableFlags.Dirty);
+      source.removeFlags(NodeFlags.Dirty);
       return tiles;
     }
 

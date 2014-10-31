@@ -74,11 +74,30 @@ module Shumway.GFX {
                                         InvalidConcatenatedMatrix |
                                         Visible,
 
-    Scalable                          = 0x100000,
-
     CacheAsBitmap                     = 0x20000,
     PixelSnapping                     = 0x40000,
     ImageSmoothing                    = 0x80000,
+
+    /**
+     * Whether source has dynamic content.
+     */
+    Dynamic                           = 0x100000,
+
+    /**
+     * Whether the source's content can be scaled and drawn at a higher resolution.
+     */
+    Scalable                          = 0x200000,
+
+    /**
+     * Whether the source's content should be tiled.
+     */
+    Tileable                          = 0x400000,
+
+    /**
+     * Whether the source's content is loading and thus not available yet. Once loading
+     * is complete this flag is cleared and the |Dirty| flag is set.
+     */
+    Loading                           = 0x800000,
 
     // Delete These
     InvalidPaint                      = 0x00020,
@@ -93,7 +112,8 @@ module Shumway.GFX {
       Shape                = 0x0003, // 0x0002 | Node,
       Group                = 0x0005, // 0x0004 | Node,
         Stage              = 0x000D, // 0x0008 | Group
-        Scissor            = 0x0015  // 0x0010 | Group
+        Scissor            = 0x0015,  // 0x0010 | Group,
+      Renderable           = 0x0021  // 0x0020 | Node
   }
 
   /**
@@ -122,6 +142,10 @@ module Shumway.GFX {
 
     visitScissor(node: Scissor, state: State) {
       this.visitGroup(node, state);
+    }
+
+    visitRenderable(node: Renderable, state: State) {
+      this.visitNode(node, state);
     }
   }
 
@@ -184,6 +208,11 @@ module Shumway.GFX {
     private static _path: Node [] = [];
 
     protected _id: number;
+
+    public get id(): number {
+      return this._id;
+    }
+
     protected _type: NodeType;
     protected _flags: NodeFlags;
     protected _index: number;
@@ -384,6 +413,9 @@ module Shumway.GFX {
         case NodeType.Scissor:
           visitor.visitScissor(<Scissor>this, state);
           break;
+        case NodeType.Renderable:
+          visitor.visitRenderable(<Renderable>this, state);
+          break;
         default:
           Debug.unexpectedCase();
       }
@@ -393,8 +425,12 @@ module Shumway.GFX {
       this._propagateFlagsUp(NodeFlags.UpOnInvalidate);
     }
 
-    public toString() {
-      return NodeType[this._type] + " " + this._id;
+    public toString(bounds: boolean = false): string {
+      var s = NodeType[this._type] + " " + this._id;
+      if (bounds) {
+        s += " " + this._bounds.toString();
+      }
+      return s;
     }
   }
 
@@ -667,16 +703,6 @@ module Shumway.GFX {
       }
       // TODO: Keep track of masked object so we can propagate flags up.
     }
-
-//    protected _propagateFlagsDown(flags: NodeFlags) {
-//      this.setFlags(flags);
-//      if (this._child) {
-//        this._child._propagateFlagsDown(flags);
-//      }
-//      if (this._mask) {
-//        this._mask._propagateFlagsDown(flags);
-//      }
-//    }
 
     public toString() {
       return BlendMode[this._blendMode];

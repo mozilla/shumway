@@ -35,61 +35,10 @@ module Shumway.GFX {
 
   declare var registerInspectorAsset;
 
-  export enum RenderableFlags {
-    None          = 0,
-
-    /**
-     * Whether source has dynamic content.
-     */
-    Dynamic       = 1,
-
-    /**
-     * Whether the source's dynamic content has changed. This is only defined if |isDynamic| is true.
-     */
-    Dirty         = 2,
-
-    /**
-     * Whether the source's content can be scaled and drawn at a higher resolution.
-     */
-    Scalable      = 4,
-
-    /**
-     * Whether the source's content should be tiled.
-     */
-    Tileable      = 8,
-
-    /**
-     * Whether the source's content is loading and thus not available yet. Once loading
-     * is complete this flag is cleared and the |Dirty| flag is set.
-     */
-    Loading  = 16
-  }
-
   /**
    * Represents some source renderable content.
    */
-  export class Renderable {
-    /**
-     * Flags
-     */
-    _flags: RenderableFlags = RenderableFlags.None;
-
-    setFlags(flags: RenderableFlags) {
-      this._flags |= flags;
-    }
-
-    hasFlags(flags: RenderableFlags): boolean {
-      return (this._flags & flags) === flags;
-    }
-
-    removeFlags(flags: RenderableFlags) {
-      this._flags &= ~flags;
-    }
-
-    /**
-     * Property bag used to attach dynamic properties to this object.
-     */
-    properties: {[name: string]: any} = {};
+  export class Renderable extends Node {
 
     /**
      * Back reference to frames that use this renderable.
@@ -116,7 +65,7 @@ module Shumway.GFX {
     }
 
     public invalidate() {
-      this.setFlags(RenderableFlags.Dirty);
+      this.setFlags(NodeFlags.Dirty);
       var nodes = this._nodeReferrers;
       for (var i = 0; i < nodes.length; i++) {
         nodes[i].invalidate();
@@ -144,17 +93,14 @@ module Shumway.GFX {
       this._invalidateEventListeners.push(listener);
     }
 
-    _bounds: Rectangle;
 
-    constructor(bounds: Rectangle) {
-      this._bounds = bounds.clone();
+    getBounds(): Shumway.GFX.Geometry.Rectangle {
+      return this._bounds;
     }
 
-    getBounds(clone: boolean = false): Rectangle {
-      if (clone) {
-        return this._bounds.clone();
-      }
-      return this._bounds;
+    constructor() {
+      super();
+      this._flags &= ~NodeFlags.BoundsAutoCompute;
     }
 
     /**
@@ -168,7 +114,8 @@ module Shumway.GFX {
 
   export class CustomRenderable extends Renderable {
     constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, ratio: number, cullBounds: Shumway.GFX.Geometry.Rectangle) => void) {
-      super(bounds);
+      super();
+      this.setBounds(bounds);
       this.render = render;
     }
   }
@@ -178,7 +125,7 @@ module Shumway.GFX {
   }
 
   export class RenderableVideo extends Renderable {
-    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
+    _flags = NodeFlags.Dynamic | NodeFlags.Dirty;
     private _video: HTMLVideoElement;
     private _videoEventHandler: (e:Event)=>void;
     private _assetId: number;
@@ -187,7 +134,9 @@ module Shumway.GFX {
     static _renderableVideos: RenderableVideo [] = [];
 
     constructor(url: string, bounds: Rectangle, assetId: number, eventSerializer: IVideoPlaybackEventSerializer) {
-      super(bounds);
+      super();
+
+      this.setBounds(bounds);
 
       this._assetId = assetId;
       this._eventSerializer = eventSerializer;
@@ -316,7 +265,7 @@ module Shumway.GFX {
   }
 
   export class RenderableBitmap extends Renderable {
-    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
+    _flags = NodeFlags.Dynamic | NodeFlags.Dirty;
     properties: {[name: string]: any} = {};
     _canvas: HTMLCanvasElement;
     _context: CanvasRenderingContext2D;
@@ -356,12 +305,12 @@ module Shumway.GFX {
           type === ImageType.GIF)
       {
         var self = this;
-        self.setFlags(RenderableFlags.Loading);
+        self.setFlags(NodeFlags.Loading);
         var image = new Image();
         image.src = URL.createObjectURL(dataBuffer.toBlob(getMIMETypeForImageType(type)));
         image.onload = function () {
           self._context.drawImage(image, 0, 0);
-          self.removeFlags(RenderableFlags.Loading);
+          self.removeFlags(NodeFlags.Loading);
           self.invalidate();
         };
         image.onerror = function () {
@@ -395,7 +344,8 @@ module Shumway.GFX {
     }
 
     constructor(canvas: HTMLCanvasElement, bounds: Rectangle) {
-      super(bounds);
+      super();
+      this.setBounds(bounds);
       this._canvas = canvas;
       this._context = this._canvas.getContext("2d");
       this._imageData = this._context.createImageData(this._bounds.w, this._bounds.h);
@@ -472,9 +422,9 @@ module Shumway.GFX {
   }
 
   export class RenderableShape extends Renderable {
-    _flags: RenderableFlags = RenderableFlags.Dirty     |
-                              RenderableFlags.Scalable  |
-                              RenderableFlags.Tileable;
+    _flags: NodeFlags = NodeFlags.Dirty     |
+                              NodeFlags.Scalable  |
+                              NodeFlags.Tileable;
     properties: {[name: string]: any} = {};
 
     private fillStyle: ColorStyle;
@@ -488,12 +438,13 @@ module Shumway.GFX {
     protected static LINE_JOINTS_STYLES = ['round', 'bevel', 'miter'];
 
     constructor(id: number, pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
-      super(bounds);
+      super();
+      this.setBounds(bounds);
       this._id = id;
       this._pathData = pathData;
       this._textures = textures;
       if (textures.length) {
-        this.setFlags(RenderableFlags.Dynamic);
+        this.setFlags(NodeFlags.Dynamic);
       }
     }
 
@@ -503,10 +454,6 @@ module Shumway.GFX {
       this._paths = null;
       this._textures = textures;
       this.invalidate();
-    }
-
-    getBounds(): Shumway.GFX.Geometry.Rectangle {
-      return this._bounds;
     }
 
     /**
@@ -526,7 +473,7 @@ module Shumway.GFX {
       // Wait to deserialize paths until all textures have been loaded.
       var textures = this._textures;
       for (var i = 0; i < textures.length; i++) {
-        if (textures[i].hasFlags(RenderableFlags.Loading)) {
+        if (textures[i].hasFlags(NodeFlags.Loading)) {
           return;
         }
       }
@@ -787,10 +734,10 @@ module Shumway.GFX {
   }
 
   export class RenderableMorphShape extends RenderableShape {
-    _flags: RenderableFlags = RenderableFlags.Dynamic   |
-                              RenderableFlags.Dirty     |
-                              RenderableFlags.Scalable  |
-                              RenderableFlags.Tileable;
+    _flags: NodeFlags = NodeFlags.Dynamic   |
+                              NodeFlags.Dirty     |
+                              NodeFlags.Scalable  |
+                              NodeFlags.Tileable;
 
     private _morphPaths: { [key: number]: StyledPath[] } = Object.create(null);
 
@@ -1120,7 +1067,7 @@ module Shumway.GFX {
 
   export class RenderableText extends Renderable {
 
-    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
+    _flags = NodeFlags.Dynamic | NodeFlags.Dirty;
     properties: {[name: string]: any} = {};
 
     private _textBounds: Rectangle;
@@ -1137,7 +1084,7 @@ module Shumway.GFX {
     lines: TextLine[];
 
     constructor(bounds) {
-      super(bounds);
+      super();
       this._textBounds = bounds.clone();
       this._textRunData = null;
       this._plainText = '';
@@ -1149,10 +1096,11 @@ module Shumway.GFX {
       this._scrollH = 0;
       this.textRect = bounds.clone();
       this.lines = [];
+      this.setBounds(bounds);
     }
 
     setBounds(bounds): void {
-      this._bounds.set(bounds);
+      super.setBounds(bounds);
       this._textBounds.set(bounds);
       this.textRect.setElements(bounds.x + 2, bounds.y + 2, bounds.w - 2, bounds.h - 2);
     }
@@ -1461,7 +1409,7 @@ module Shumway.GFX {
   }
 
   export class Label extends Renderable {
-    _flags: RenderableFlags = RenderableFlags.Dynamic | RenderableFlags.Scalable;
+    _flags: NodeFlags = NodeFlags.Dynamic | NodeFlags.Scalable;
     properties: {[name: string]: any} = {};
     private _text: string;
 
@@ -1474,7 +1422,8 @@ module Shumway.GFX {
     }
 
     constructor(w: number, h: number) {
-      super(new Rectangle(0, 0, w, h));
+      super();
+      this.setBounds(new Rectangle(0, 0, w, h));
     }
 
     render (context: CanvasRenderingContext2D, ratio: number, cullBounds?: Rectangle) {
