@@ -459,9 +459,12 @@ module Shumway.Remoting.GFX {
         context._nodes[id] = context.scissor;
       }
       var color = this.input.readInt();
-      var rectangle = this._readRectangle()
+      var rectangle = this._readRectangle();
+      var currentMouseTarget = this.input.readInt();
+      var cursor = this.input.readInt();
       context.scissor.setBounds(rectangle);
       context.scissor.color = Color.FromARGB(color);
+      context._easelHost.cursor = Shumway.UI.toCSSCursor(cursor);
     }
 
     private _readUpdateNetStream() {

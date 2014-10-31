@@ -273,7 +273,7 @@ module Shumway.Player {
       serializer.outputAssets = assets;
 
       if (flash.display.Stage.isType(displayObject)) {
-        serializer.writeStage(<flash.display.Stage>displayObject);
+        serializer.writeStage(<flash.display.Stage>displayObject, this._mouseEventDispatcher.currentTarget);
       }
 
       serializer.begin(displayObject);
