@@ -2604,7 +2604,7 @@ module Shumway.AVM1 {
       }
       return parts.join(',');
     }
-    private convertAction(item: ActionCodeBlockItem, id: number, res): string {
+    private convertAction(item: ActionCodeBlockItem, id: number, res, indexInBlock: number): string {
       switch (item.action.actionCode) {
         case ActionCode.ActionJump:
         case ActionCode.ActionReturn:
@@ -2620,9 +2620,11 @@ module Shumway.AVM1 {
         case ActionCode.ActionWaitForFrame:
         case ActionCode.ActionWaitForFrame2:
           return '  if (calls.' + item.action.actionName + '(ectx,[' +
-            this.convertArgs(item.action.args, id, res) + '])) { position = ' + item.conditionalJumpTo + '; break; }\n';
+            this.convertArgs(item.action.args, id, res) + '])) { position = ' + item.conditionalJumpTo + '; ' +
+            'checkTimeAfter -= ' + (indexInBlock + 1) + '; break; }\n';
         case ActionCode.ActionIf:
-          return '  if (!!stack.pop()) { position = ' + item.conditionalJumpTo + '; break; }\n';
+          return '  if (!!stack.pop()) { position = ' + item.conditionalJumpTo + '; ' +
+            'checkTimeAfter -= ' + (indexInBlock + 1) + '; break; }\n';
         default:
           var result = '  calls.' + item.action.actionName + '(ectx' +
             (item.action.args ? ',[' + this.convertArgs(item.action.args, id, res) + ']' : '') +
@@ -2654,8 +2656,8 @@ module Shumway.AVM1 {
         'switch(position) {\n';
         blocks.forEach((b: ActionCodeBlock) => {
           fn += ' case ' + b.label + ':\n';
-          b.items.forEach((item: ActionCodeBlockItem) => {
-            fn += this.convertAction(item, uniqueId++, res);
+          b.items.forEach((item: ActionCodeBlockItem, index: number) => {
+            fn += this.convertAction(item, uniqueId++, res, index);
           });
           fn += '  position = ' + b.jump + ';\n' +
                 '  checkTimeAfter -= ' + b.items.length + ';\n' +
