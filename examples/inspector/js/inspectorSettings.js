@@ -59,6 +59,7 @@ var GUI = (function () {
 
   var gui = new dat.GUI({ autoPlace: false, width: 300 });
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
+  gui.add({ "Stage Scale Test": stageScaleTest }, "Stage Scale Test");
 
   var inspectorOptions = gui.addFolder("Inspector Options");
   inspectorOptions.add(state, "release").onChange(saveInspectorOption);
@@ -95,6 +96,29 @@ var GUI = (function () {
   function resetOptions() {
     delete window.localStorage[Shumway.Settings.ROOT];
     delete window.localStorage[LC_KEY_INSPECTOR_SETTINGS];
+  }
+
+  function stageScaleTest() {
+    var ticks = 1500;
+    var s = 0;
+    function tick() {
+      s += 0.01;
+      if (ticks > 1000) {
+        var w = 512 * (Math.abs(Math.sin(s)));
+        var h = w;
+      } else if (ticks > 500) {
+        var w = 512 * (Math.abs(Math.sin(s)));
+        var h = 200;
+      } else {
+        var w = 200;
+        var h = 512 * (Math.abs(Math.sin(s)));
+      }
+      currentStage.setBounds(new Shumway.GFX.Geometry.Rectangle(0, 0, w, h));
+      if (ticks --) {
+        setTimeout(tick, 16);
+      }
+    }
+    tick();
   }
 
   function notifyOptionsChanged() {

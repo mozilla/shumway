@@ -419,6 +419,12 @@ function registerScratchCanvas(scratchCanvas) {
   document.getElementById("scratchCanvasContainer").appendChild(scratchCanvas);
 }
 
+var currentStage = null;
+
+function registerInspectorStage(stage) {
+  currentStage = stage;
+}
+
 function registerInspectorAsset(id, symbolId, asset) {
   if (!state.logAssets) {
     return;

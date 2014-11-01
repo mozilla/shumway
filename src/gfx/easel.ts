@@ -453,7 +453,7 @@ module Shumway.GFX {
 
     private _deferredResizeHandler()  {
       clearTimeout(this._deferredResizeHandlerTimeout);
-      this._deferredResizeHandlerTimeout = setTimeout(this._resizeHandler.bind(this), 1000);
+      this._deferredResizeHandlerTimeout = setTimeout(this._resizeHandler.bind(this), 30);
     }
 
     public getRatio(): number {

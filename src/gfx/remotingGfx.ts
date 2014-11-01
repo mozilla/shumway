@@ -48,6 +48,7 @@ module Shumway.Remoting.GFX {
 //  var writer = new IndentingWriter();
 
   declare var registerInspectorAsset;
+  declare var registerInspectorStage;
 
   export class GFXChannelSerializer {
     public output: IDataOutput;
@@ -116,6 +117,9 @@ module Shumway.Remoting.GFX {
 
     constructor(easelHost: Shumway.GFX.EaselHost, root: Group, transparent: boolean) {
       var stage = this.stage = new Stage(128, 512);
+      if (typeof registerInspectorStage !== "undefined") {
+        registerInspectorStage(stage)
+      }
       function updateStageBounds(node) {
         var stageBounds = node.getBounds(true);
         // Easel stage is the root stage and is not scaled, our stage is so
@@ -474,6 +478,7 @@ module Shumway.Remoting.GFX {
       }
       var color = this.input.readInt();
       var bounds = this._readRectangle();
+      // TODO: Need to updateContentMatrix on stage here.
       context.stage.content.setBounds(bounds);
       context.stage.color = Color.FromARGB(color);
       context.stage.align = this.input.readInt();

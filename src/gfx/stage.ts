@@ -143,11 +143,12 @@ module Shumway.GFX {
       this.trackDirtyRegions = trackDirtyRegions;
       this.setFlags(NodeFlags.Dirty);
       this.setBounds(new Rectangle(0, 0, w, h));
-      this._updateContentMatrix();
+      this.updateContentMatrix();
     }
 
     public setBounds(value: Rectangle) {
       super.setBounds(value);
+      this.updateContentMatrix();
       this._dispatchEvent(NodeEventType.OnStageBoundsChanged);
     }
 
@@ -175,7 +176,7 @@ module Shumway.GFX {
 
     public set align(value: StageAlignFlags) {
       this._align = value;
-      this._updateContentMatrix();
+      this.updateContentMatrix();
     }
 
     public get scaleMode(): StageScaleMode {
@@ -184,10 +185,10 @@ module Shumway.GFX {
 
     public set scaleMode(value: StageScaleMode) {
       this._scaleMode = value;
-      this._updateContentMatrix();
+      this.updateContentMatrix();
     }
 
-    private _updateContentMatrix() {
+    public updateContentMatrix() {
       if (this._scaleMode === Stage.DEFAULT_SCALE && this._align === Stage.DEFAULT_ALIGN) {
         // Shortcut and also guard to avoid using targetWidth/targetHeight.
         // ThetargetWidth/targetHeight normally set in setScaleAndAlign call.
