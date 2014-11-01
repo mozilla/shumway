@@ -159,7 +159,7 @@ module Shumway.Remoting.GFX {
       if (id & IDMask.Asset) {
         id &= ~IDMask.Asset;
         node = new Shape(this._assets[id]);
-        this._assets[id].addNodeReferrer(node);
+        this._assets[id].addParent(node);
       } else {
         node = this._nodes[id];
       }
@@ -387,7 +387,7 @@ module Shumway.Remoting.GFX {
           renderable = new RenderableShape(id, pathData, textures, bounds);
         }
         for (var i = 0; i < textures.length; i++) {
-          textures[i].addRenderableReferrer(renderable);
+          textures[i].addRenderableParent(renderable);
         }
         context._registerAsset(id, symbolId, renderable);
       }

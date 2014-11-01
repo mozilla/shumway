@@ -41,36 +41,36 @@ module Shumway.GFX {
   export class Renderable extends Node {
 
     /**
-     * Back reference to frames that use this renderable.
+     * Back reference to nodes that use this renderable.
      */
-    private _nodeReferrers: Node [] = [];
+    private _parents: Node [] = [];
 
     /**
      * Back reference to renderables that use this renderable.
      */
-    private _renderableReferrers: Renderable [] = [];
+    private _renderableParents: Renderable [] = [];
 
-    public addNodeReferrer(frame: Node) {
+    public addParent(frame: Node) {
       release && assert(frame);
-      var index = indexOf(this._nodeReferrers, frame);
+      var index = indexOf(this._parents, frame);
       release && assert(index < 0);
-      this._nodeReferrers.push(frame);
+      this._parents.push(frame);
     }
 
-    public addRenderableReferrer(renderable: Renderable) {
+    public addRenderableParent(renderable: Renderable) {
       release && assert(renderable);
-      var index = indexOf(this._renderableReferrers, renderable);
+      var index = indexOf(this._renderableParents, renderable);
       release && assert(index < 0);
-      this._renderableReferrers.push(renderable);
+      this._renderableParents.push(renderable);
     }
 
     public invalidate() {
       this.setFlags(NodeFlags.Dirty);
-      var nodes = this._nodeReferrers;
+      var nodes = this._parents;
       for (var i = 0; i < nodes.length; i++) {
         nodes[i].invalidate();
       }
-      var renderables = this._renderableReferrers;
+      var renderables = this._renderableParents;
       for (var i = 0; i < renderables.length; i++) {
         renderables[i].invalidate();
       }
@@ -103,6 +103,15 @@ module Shumway.GFX {
 
     public getChildren(clone: boolean = false): Node [] {
       return null;
+    }
+
+    _propagateFlagsUp(flags: NodeFlags) {
+      if (flags === NodeFlags.None || this.hasFlags(flags)) {
+        return;
+      }
+      for (var i = 0; i < this._parents.length; i++) {
+        this._parents[i]._propagateFlagsUp(flags);
+      }
     }
 
     constructor() {
@@ -456,7 +465,7 @@ module Shumway.GFX {
     }
 
     update(pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
-      this._bounds.set(bounds);
+      this.setBounds(bounds);
       this._pathData = pathData;
       this._paths = null;
       this._textures = textures;

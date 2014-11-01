@@ -77,7 +77,7 @@ module Shumway.GFX {
         }
 
         if (node instanceof Renderable) {
-          l = l + " [" + (<any>node)._nodeReferrers.length + "]";
+          l = l + " [" + (<any>node)._parents.length + "]";
         }
 
         var t = context.measureText(l).width;
