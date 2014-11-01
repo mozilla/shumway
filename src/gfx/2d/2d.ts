@@ -492,14 +492,18 @@ module Shumway.GFX.Canvas2D {
       context.strokeStyle = style;
 
       state.matrix.transformRectangleAABB(bounds);
+
+
       context.setTransform(1, 0, 0, 1, 0, 0);
-      context.textAlign = "center";
-      context.textBaseline = "middle";
-      context.font = this._fontSize + "px Arial";
-      var debugText = "" + node.id; // + "\n" +
-        // node.getBounds().w.toFixed(2) + "x" +
-        // node.getBounds().h.toFixed(2);
-      context.fillText(debugText, bounds.x + bounds.w / 2, bounds.y + bounds.h / 2);
+      if (bounds.w > 32 && bounds.h > 32) {
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.font = this._fontSize + "px Arial";
+        var debugText = "" + node.id; // + "\n" +
+          // node.getBounds().w.toFixed(2) + "x" +
+          // node.getBounds().h.toFixed(2);
+        context.fillText(debugText, bounds.x + bounds.w / 2, bounds.y + bounds.h / 2);
+      }
       bounds.free();
 
       var matrix = state.matrix;
@@ -537,9 +541,6 @@ module Shumway.GFX.Canvas2D {
     }
 
     visitShape(node: Shape, state: RenderState) {
-      if (!(state.flags & RenderFlags.PaintRenderable)) {
-        return;
-      }
       if (!state.clip.intersectsTransformedAABB(node.getBounds(), state.matrix)) {
         return;
       }
@@ -549,7 +550,6 @@ module Shumway.GFX.Canvas2D {
         matrix.snap();
       }
       var context = state.target.context;
-      state.target.context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
       if (!this._options.debugLayers) {
         Filters._applyColorMatrix(context, state.colorMatrix);
       }
@@ -730,6 +730,16 @@ module Shumway.GFX.Canvas2D {
         return;
       }
 
+      this._renderDebugInfo(shape, state);
+      this._renderDebugInfo(shape.source, state);
+
+      if (!(state.flags & RenderFlags.PaintRenderable)) {
+        return;
+      }
+
+      context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+
+      var source = shape.source;
       var paintStart = 0;
       if (paintFlashing) {
         paintStart = performance.now();
@@ -739,7 +749,6 @@ module Shumway.GFX.Canvas2D {
 
       context.imageSmoothingEnabled = context.mozImageSmoothingEnabled = state.hasFlags(RenderFlags.ImageSmoothing);
 
-      var source = shape.source;
       var renderCount = source.properties["renderCount"] || 0;
       var cacheShapesMaxSize = state.cacheShapesMaxSize;
       var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());

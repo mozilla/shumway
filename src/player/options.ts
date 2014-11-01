@@ -91,7 +91,7 @@ module Shumway {
   );
 
   export var stageScaleModeOption = playerOptions.register (
-    new Shumway.Options.Option("", "Stage Scale Mode", "number", -1, "Stage scaling mode.", { choices: {
+    new Shumway.Options.Option("", "Stage Scale Mode", "number", StageScaleMode.NoScale, "Stage scaling mode.", { choices: {
       "Movie": -1,
       "ShowAll": StageScaleMode.ShowAll,
       "ExactFit": StageScaleMode.ExactFit,

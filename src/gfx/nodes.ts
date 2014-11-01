@@ -282,6 +282,10 @@ module Shumway.GFX {
       return this._parent;
     }
 
+    public getChildren(clone: boolean = false): Node [] {
+      throw Shumway.Debug.abstractMethod("Node::getBounds");
+    }
+
     public getBounds(clone: boolean = false): Rectangle {
       throw Shumway.Debug.abstractMethod("Node::getBounds");
     }
@@ -771,6 +775,10 @@ module Shumway.GFX {
 
     _propagateFlagsDown(flags: NodeFlags) {
       this.setFlags(flags);
+    }
+
+    public getChildren(clone: boolean = false): Node[] {
+      return [this._source];
     }
   }
 }

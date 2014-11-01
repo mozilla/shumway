@@ -94,8 +94,15 @@ module Shumway.GFX {
     }
 
 
-    getBounds(): Shumway.GFX.Geometry.Rectangle {
+    getBounds(clone: boolean = false): Shumway.GFX.Geometry.Rectangle {
+      if (clone) {
+        return this._bounds.clone();
+      }
       return this._bounds;
+    }
+
+    public getChildren(clone: boolean = false): Node [] {
+      return null;
     }
 
     constructor() {
