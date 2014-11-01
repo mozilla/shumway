@@ -192,6 +192,7 @@ module Shumway.AVM2.AS.flash.ui {
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       this._currentPosition = new flash.geom.Point();
+      this._cursor = MouseCursor.AUTO;
     };
     
     // Called whenever an instance of the class is initialized.
@@ -212,25 +213,25 @@ module Shumway.AVM2.AS.flash.ui {
     
     
     // AS -> JS Bindings
-    // static _supportsCursor: boolean;
-    // static _cursor: string;
-    // static _supportsNativeCursor: boolean;
+    //static _supportsCursor: boolean;
+    static _cursor: string;
+    //static _supportsNativeCursor: boolean;
+
     static get supportsCursor(): boolean {
-      notImplemented("public flash.ui.Mouse::get supportsCursor"); return;
-      // return this._supportsCursor;
+      return true;
     }
     static get cursor(): string {
-      notImplemented("public flash.ui.Mouse::get cursor"); return;
-      // return this._cursor;
+      return this._cursor;
     }
     static set cursor(value: string) {
       value = asCoerceString(value);
-      notImplemented("public flash.ui.Mouse::set cursor"); return;
-      // this._cursor = value;
+      if (MouseCursor.toNumber(value) < 0) {
+        throwError("ArgumentError", Errors.InvalidParamError, "cursor");
+      }
+      this._cursor = value;
     }
     static get supportsNativeCursor(): boolean {
-      notImplemented("public flash.ui.Mouse::get supportsNativeCursor"); return;
-      // return this._supportsNativeCursor;
+      return true;
     }
     static hide(): void {
       somewhatImplemented("public flash.ui.Mouse::static hide"); return;

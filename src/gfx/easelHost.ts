@@ -58,6 +58,10 @@ module Shumway.GFX {
       this._content = value;
     }
 
+    set cursor(cursor: string) {
+      this._easel.cursor = cursor;
+    }
+
     private _mouseEventListener(event: MouseEvent) {
       // var position = this._easel.getMouseWorldPosition(event);
       var position = this._easel.getMousePosition(event, this._content);

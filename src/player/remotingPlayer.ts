@@ -27,7 +27,6 @@ module Shumway.Remoting.Player {
   import DisplayObject = flash.display.DisplayObject;
   import DisplayObjectFlags = flash.display.DisplayObjectFlags;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
-  import SimpleButton = flash.display.SimpleButton;
   import BlendMode = flash.display.BlendMode;
   import PixelSnapping = flash.display.PixelSnapping;
   import VisitorFlags = flash.display.VisitorFlags;
@@ -37,6 +36,7 @@ module Shumway.Remoting.Player {
   import Bounds = Shumway.Bounds;
   import KeyboardEventData = flash.ui.KeyboardEventData;
   import MouseEventAndPointData = flash.ui.MouseEventAndPointData;
+  import MouseCursor = flash.ui.MouseCursor;
 
   import IDataInput = Shumway.ArrayUtilities.IDataInput;
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
@@ -91,7 +91,7 @@ module Shumway.Remoting.Player {
       }, VisitorFlags.Filter, DisplayObjectFlags.Dirty);
     }
 
-    writeStage(stage: Stage) {
+    writeStage(stage: Stage, currentMouseTarget: flash.display.InteractiveObject) {
       writer && writer.writeLn("Sending Stage");
       var serializer = this;
       this.output.writeInt(MessageTag.UpdateStage);
@@ -110,6 +110,22 @@ module Shumway.Remoting.Player {
       } else {
         this.output.writeInt(stageScaleModeOption.value);
       }
+
+      var cursor = flash.ui.Mouse.cursor;
+      if (currentMouseTarget) {
+        this.output.writeInt(currentMouseTarget._id);
+        if (cursor === MouseCursor.AUTO &&
+            (flash.display.SimpleButton.isType(currentMouseTarget) ||
+             (flash.display.Sprite.isType(currentMouseTarget) &&
+             (<flash.display.Sprite>currentMouseTarget).buttonMode)
+            ) &&
+            (<any>currentMouseTarget).useHandCursor) {
+            cursor = MouseCursor.BUTTON;
+        }
+      } else {
+        this.output.writeInt(-1);
+      }
+      this.output.writeInt(MouseCursor.toNumber(cursor));
     }
 
     writeGraphics(graphics: Graphics) {

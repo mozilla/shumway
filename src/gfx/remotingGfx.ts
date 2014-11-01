@@ -483,6 +483,9 @@ module Shumway.Remoting.GFX {
       context.stage.color = Color.FromARGB(color);
       context.stage.align = this.input.readInt();
       context.stage.scaleMode = this.input.readInt();
+      var currentMouseTarget = this.input.readInt();
+      var cursor = this.input.readInt();
+      context._easelHost.cursor = Shumway.UI.toCSSCursor(cursor);
     }
 
     private _readUpdateNetStream() {
