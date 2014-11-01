@@ -17,6 +17,8 @@
 module Shumway {
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
+  import StageScaleMode = Shumway.Remoting.StageScaleMode;
+  import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
 
   import shumwayOptions = Shumway.Settings.shumwayOptions;
 
@@ -74,7 +76,28 @@ module Shumway {
     new Shumway.Options.Option("", "Play Symbol Count", "number", -1, "Select symbol count.", {range: { min: 0, max: 20000, step: 1 }})
   );
 
-  export var stageScaleOption = playerOptions.register (
-    new Shumway.Options.Option("", "Stage Scale", "number", 1, "Scales the symbols.", {range: { min: 0.1, max: 16, step: 0.01 }})
+  export var stageAlignOption = playerOptions.register (
+    new Shumway.Options.Option("", "Stage Align", "number", StageAlignFlags.TopLeft, "Stage alignment.", { choices: {
+      "Movie": -1,
+      "Top": StageAlignFlags.Top,
+      "Left": StageAlignFlags.Left,
+      "Bottom": StageAlignFlags.Bottom,
+      "Right": StageAlignFlags.Right,
+      "Top Left": StageAlignFlags.TopLeft,
+      "Bottom Left": StageAlignFlags.BottomLeft,
+      "Bottom Right": StageAlignFlags.BottomRight,
+      "Top Right": StageAlignFlags.TopRight
+    }})
   );
+
+  export var stageScaleModeOption = playerOptions.register (
+    new Shumway.Options.Option("", "Stage Scale Mode", "number", -1, "Stage scaling mode.", { choices: {
+      "Movie": -1,
+      "ShowAll": StageScaleMode.ShowAll,
+      "ExactFit": StageScaleMode.ExactFit,
+      "NoBorder": StageScaleMode.NoBorder,
+      "NoScale": StageScaleMode.NoScale
+    }})
+  );
+
 }

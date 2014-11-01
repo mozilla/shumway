@@ -118,7 +118,7 @@ module Shumway.Remoting.GFX {
     constructor(easelHost: Shumway.GFX.EaselHost, root: Group, transparent: boolean) {
       var stage = this.stage = new Stage(128, 512);
       if (typeof registerInspectorStage !== "undefined") {
-        registerInspectorStage(stage)
+        registerInspectorStage(stage);
       }
       function updateStageBounds(node) {
         var stageBounds = node.getBounds(true);

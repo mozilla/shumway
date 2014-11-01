@@ -459,7 +459,6 @@ module Shumway.Player {
       {
         return;
       }
-      this._stage.scaleX = this._stage.scaleY = stageScaleOption.value;
       // The stage is required for frame event cycle processing.
       DisplayObject._stage = this._stage;
       for (var i = 0; i < frameRateMultiplierOption.value; i++) {
