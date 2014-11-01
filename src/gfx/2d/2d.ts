@@ -496,9 +496,9 @@ module Shumway.GFX.Canvas2D {
       context.textAlign = "center";
       context.textBaseline = "middle";
       context.font = this._fontSize + "px Arial";
-      var debugText = node.id + "\n" +
-        node.getBounds().w.toFixed(2) + "x" +
-        node.getBounds().h.toFixed(2);
+      var debugText = "" + node.id; // + "\n" +
+        // node.getBounds().w.toFixed(2) + "x" +
+        // node.getBounds().h.toFixed(2);
       context.fillText(debugText, bounds.x + bounds.w / 2, bounds.y + bounds.h / 2);
       bounds.free();
 
@@ -509,7 +509,7 @@ module Shumway.GFX.Canvas2D {
       context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
     }
 
-    visitScissor(node: Scissor, state: RenderState) {
+    visitStage(node: Stage, state: RenderState) {
       var context = state.target.context;
       var bounds = node.getBounds(true);
       state.matrix.transformRectangleAABB(bounds);
@@ -522,7 +522,7 @@ module Shumway.GFX.Canvas2D {
 //      context.clip();
 
       // Fill background
-      if (!node.hasFlags(NodeFlags.Transparent)) {
+      if (!node.hasFlags(NodeFlags.Transparent) && node.color) {
         if (state.flags & RenderFlags.PaintRenderable) {
           context.fillStyle = node.color.toCSSStyle();
           context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);

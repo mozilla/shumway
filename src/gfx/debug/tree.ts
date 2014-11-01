@@ -34,7 +34,7 @@ module Shumway.GFX {
     public render() {
       var context = this.context;
       context.save();
-      context.clearRect(0, 0, this._stage.w, this._stage.h);
+      // context.clearRect(0, 0, this._stage.w, this._stage.h);
       context.scale(1, 1);
       if (this._options.layout === Layout.Simple) {
         this._renderNodeSimple(this.context, this._stage, Matrix.createIdentity(), this._viewport, []);

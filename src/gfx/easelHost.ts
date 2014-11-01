@@ -30,27 +30,37 @@ module Shumway.GFX {
     private _easel: Easel;
     private _group: Group;
     private _context: Shumway.Remoting.GFX.GFXChannelDeserializerContext;
+    private _content: Group;
 
     constructor(easel: Easel) {
       this._easel = easel;
       var group = easel.world;
       var transparent = easel.transparent;
       this._group = group;
+      this._content = null;
       this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._group, transparent);
-
       this._addEventListeners();
     }
 
-    onSendUpdates(update: DataBuffer, assets: Array<DataBuffer>) {
+    onSendUpdates(update: DataBuffer, asssets: Array<DataBuffer>) {
       throw new Error('This method is abstract');
+    }
+
+    get easel(): Easel {
+      return this._easel;
     }
 
     get stage(): Stage {
       return this._easel.stage;
     }
 
+    set content(value: Group) {
+      this._content = value;
+    }
+
     private _mouseEventListener(event: MouseEvent) {
-      var position = this._easel.getMouseWorldPosition(event);
+      // var position = this._easel.getMouseWorldPosition(event);
+      var position = this._easel.getMousePosition(event, this._content);
       var point = new Point(position.x, position.y);
 
       var buffer = new DataBuffer();

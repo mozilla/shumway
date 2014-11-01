@@ -456,32 +456,35 @@ module Shumway.GFX {
       this._deferredResizeHandlerTimeout = setTimeout(this._resizeHandler.bind(this), 1000);
     }
 
-    private _resizeHandler() {
+    public getRatio(): number {
       var devicePixelRatio = window.devicePixelRatio || 1;
       var backingStoreRatio = 1;
       var ratio = 1;
       if (devicePixelRatio !== backingStoreRatio &&
-          !this._disableHidpi) {
+        !this._disableHidpi) {
         ratio = devicePixelRatio / backingStoreRatio;
       }
+      return ratio;
+    }
+
+    private _resizeHandler() {
+      var ratio = this.getRatio();
 
       for (var i = 0; i < this._canvases.length; i++) {
         var canvas = this._canvases[i];
         var parent = canvas.parentElement;
         var cw = parent.clientWidth;
         var ch = (parent.clientHeight) / this._canvases.length;
-
-        if (ratio > 1) {
-          canvas.width = cw * ratio;
-          canvas.height = ch * ratio;
+        if (ratio !== 1) {
+          canvas.width = Math.ceil(cw * ratio);
+          canvas.height = Math.ceil(ch * ratio);
           canvas.style.width = cw + 'px';
           canvas.style.height = ch + 'px';
         } else {
           canvas.width = cw;
           canvas.height = ch;
         }
-        this._stage.w = canvas.width;
-        this._stage.h = canvas.height;
+        this._stage.setBounds(new Rectangle(0, 0, canvas.width, canvas.height));
         this._renderers[i].resize();
       }
       this._worldView.getTransform().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));

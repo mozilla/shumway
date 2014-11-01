@@ -37,6 +37,8 @@ var pauseExecution = getQueryVariable("paused") === "true";
 var remoteFile = getQueryVariable("rfile");
 var yt = getQueryVariable('yt');
 var movieParams = parseQueryString(getQueryVariable('flashvars'));
+var stageAlign = getQueryVariable('salign') || getQueryVariable('align');
+var stageScale = getQueryVariable('scale');
 
 //var swfController = new SWFController(timeline, pauseExecution);
 
@@ -116,7 +118,16 @@ var easelHost;
 function runIFramePlayer(data) {
   data.type = 'runSwf';
   data.settings = Shumway.Settings.getSettings();
-  var playerWorkerIFrame = document.getElementById('playerWorker');
+
+  var container = document.createElement('div');
+  container.setAttribute('style', 'position:absolute; top:0; left: 0; width: 9; height:9');
+  document.body.appendChild(container);
+
+  var playerWorkerIFrame = document.createElement('iframe');
+  playerWorkerIFrame.id = 'playerWorker';
+  playerWorkerIFrame.width = 3;
+  playerWorkerIFrame.height = 3;
+  playerWorkerIFrame.src = "inspector.player.html";
   playerWorkerIFrame.addEventListener('load', function () {
     var playerWorker = playerWorkerIFrame.contentWindow;
     playerWorker.postMessage(data, '*');
@@ -124,17 +135,18 @@ function runIFramePlayer(data) {
     var easel = createEasel();
     easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWorker, window);
   });
+  container.appendChild(playerWorkerIFrame);
 }
 
 function executeFile(file, buffer, movieParams) {
   var filename = file.split('?')[0].split('#')[0];
 
-  var isFramePlayerEnabled = !!document.getElementById('playerWorker');
-  if (isFramePlayerEnabled && filename.endsWith(".swf")) {
+  if (state.useIFramePlayer && filename.endsWith(".swf")) {
     var swfURL = Shumway.FileLoadingService.instance.setBaseUrl(file);
     var loaderURL = getQueryVariable("loaderURL") || swfURL;
     runIFramePlayer({sysMode: sysMode, appMode: appMode, loaderURL: loaderURL,
-      movieParams: movieParams, file: file, asyncLoading: asyncLoading});
+      movieParams: movieParams, file: file, asyncLoading: asyncLoading,
+      stageAlign: stageAlign, stageScale: stageScale});
     return;
   }
 
@@ -177,6 +189,8 @@ function executeFile(file, buffer, movieParams) {
         syncGFXOptions(easel.options);
         var player = new Shumway.Player.Test.TestPlayer();
         player.movieParams = movieParams;
+        player.stageAlign = stageAlign;
+        player.stageScale = stageScale;
 
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
         player.load(file, buffer);

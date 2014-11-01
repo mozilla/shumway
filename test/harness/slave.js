@@ -116,6 +116,8 @@ function loadMovie(path, reportFrames) {
       initEaselHostCallbacks();
 
       player = new Shumway.Player.Test.TestPlayer();
+      player.stageAlign = 'tl';
+      player.stageScale = 'noscale';
       player.load(path);
 
     });

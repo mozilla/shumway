@@ -26,6 +26,8 @@ module Shumway.GFX {
   import OBB = Geometry.OBB;
   import assert = Shumway.Debug.assert;
 
+  import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
+  import StageScaleMode = Shumway.Remoting.StageScaleMode;
 
   /**
    * Controls how the visitor walks the display tree.
@@ -114,19 +116,43 @@ module Shumway.GFX {
   export class Stage extends Group {
     public trackDirtyRegions: boolean;
     public dirtyRegion: DirtyRegion;
-    public w: number;
-    public h: number;
+
+    private _align: StageAlignFlags;
+    private _scaleMode: StageScaleMode;
+    private _content: Group;
+
+    public color: Color;
+
+    // Using these constants initially -- they don't require knowing bounds.
+    // Notice that this default values are different from ActionScript object values.
+    private static DEFAULT_SCALE = StageScaleMode.NoScale;
+    private static DEFAULT_ALIGN = StageAlignFlags.Left | StageAlignFlags.Top;
 
     private _dirtyVisitor: DirtyNodeVisitor = new DirtyNodeVisitor();
 
     constructor(w: number, h: number, trackDirtyRegions: boolean = false) {
       super();
+      this._flags &= ~NodeFlags.BoundsAutoCompute;
       this._type = NodeType.Stage;
-      this.w = w;
-      this.h = h;
+      this._scaleMode = Stage.DEFAULT_SCALE;
+      this._align = Stage.DEFAULT_ALIGN;
+      this._content = new Group();
+      this._content._flags &= ~NodeFlags.BoundsAutoCompute;
+      this.addChild(this._content);
       this.dirtyRegion = new DirtyRegion(w, h);
       this.trackDirtyRegions = trackDirtyRegions;
       this.setFlags(NodeFlags.Dirty);
+      this.setBounds(new Rectangle(0, 0, w, h));
+      this._updateContentMatrix();
+    }
+
+    public setBounds(value: Rectangle) {
+      super.setBounds(value);
+      this._dispatchEvent(NodeEventType.OnStageBoundsChanged);
+    }
+
+    public get content(): Group {
+      return this._content;
     }
 
     /**
@@ -143,70 +169,75 @@ module Shumway.GFX {
       return false;
     }
 
-    /*
-    gatherMarkedDirtyRegions(transform: Matrix) {
-      var self = this;
-      // Find all invalid frames.
-      this.visit(function (frame: Node, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
-        frame.removeFlags(NodeFlags.Dirty);
-        if (frame instanceof FrameContainer) {
-          return VisitorFlags.Continue;
-        }
-        if (flags & FrameFlags.Dirty) {
-          var rectangle = frame.getBounds().clone();
-          transform.transformRectangleAABB(rectangle);
-          self.dirtyRegion.addDirtyRectangle(rectangle);
-          if (frame.previouslyRenderedAABB) {
-            // Add last render position to dirty list.
-            self.dirtyRegion.addDirtyRectangle(frame.previouslyRenderedAABB);
-          }
-        }
-        return VisitorFlags.Continue;
-      }, transform, FrameFlags.Empty);
+    public get align(): StageAlignFlags {
+      return this._align;
     }
 
-    gatherFrames() {
-      var frames = [];
-      this.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
-        if (!(frame instanceof FrameContainer)) {
-          frames.push(frame);
-        }
-        return VisitorFlags.Continue;
-      }, this.matrix);
-      return frames;
+    public set align(value: StageAlignFlags) {
+      this._align = value;
+      this._updateContentMatrix();
     }
 
-    gatherLayers() {
-      var layers = [];
-      var currentLayer;
-      this.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
-        if (frame instanceof FrameContainer) {
-          return VisitorFlags.Continue;
-        }
-        var rectangle = frame.getBounds().clone();
-        transform.transformRectangleAABB(rectangle);
-        if (frame.hasFlags(FrameFlags.Dirty)) {
-          if (currentLayer) {
-            layers.push(currentLayer);
-          }
-          layers.push(rectangle.clone());
-          currentLayer = null;
-        } else {
-          if (!currentLayer) {
-            currentLayer = rectangle.clone();
-          } else {
-            currentLayer.union(rectangle);
-          }
-        }
-        return VisitorFlags.Continue;
-      }, this.matrix);
+    public get scaleMode(): StageScaleMode {
+      return this._scaleMode;
+    }
 
-      if (currentLayer) {
-        layers.push(currentLayer);
+    public set scaleMode(value: StageScaleMode) {
+      this._scaleMode = value;
+      this._updateContentMatrix();
+    }
+
+    private _updateContentMatrix() {
+      if (this._scaleMode === Stage.DEFAULT_SCALE && this._align === Stage.DEFAULT_ALIGN) {
+        // Shortcut and also guard to avoid using targetWidth/targetHeight.
+        // ThetargetWidth/targetHeight normally set in setScaleAndAlign call.
+        this._content.getTransform().setMatrix(new Matrix(1, 0, 0, 1, 0, 0));
+        return;
       }
 
-      return layers;
+      var bounds = this.getBounds();
+      var contentBounds = this._content.getBounds();
+
+      // Debug.assert(this.targetWidth > 0 && this.targetHeight > 0);
+      var wScale = bounds.w / contentBounds.w;
+      var hScale = bounds.h / contentBounds.h;
+      var scaleX, scaleY;
+      switch (this._scaleMode) {
+        case StageScaleMode.NoBorder:
+          scaleX = scaleY = Math.max(wScale, hScale);
+          break;
+        case StageScaleMode.NoScale:
+          scaleX = scaleY = 1;
+          break;
+        case StageScaleMode.ExactFit:
+          scaleX = wScale;
+          scaleY = hScale;
+          break;
+        // case StageScaleMode.ShowAll:
+        default:
+          scaleX = scaleY = Math.min(wScale, hScale);
+          break;
+      }
+
+      var offsetX;
+      if ((this._align & StageAlignFlags.Left)) {
+        offsetX = 0;
+      } else if ((this._align & StageAlignFlags.Right)) {
+        offsetX = bounds.w - contentBounds.w * scaleX;
+      } else {
+        offsetX = (bounds.w - contentBounds.w * scaleX) / 2;
+      }
+
+      var offsetY;
+      if ((this._align & StageAlignFlags.Top)) {
+        offsetY = 0;
+      } else if ((this._align & StageAlignFlags.Bottom)) {
+        offsetY = bounds.h - contentBounds.h * scaleY;
+      } else {
+        offsetY = (bounds.h - contentBounds.h * scaleY) / 2;
+      }
+
+      this._content.getTransform().setMatrix(new Matrix(scaleX, 0, 0, scaleY, offsetX, offsetY));
     }
-    */
   }
 }

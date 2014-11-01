@@ -29,14 +29,17 @@ module Shumway.Remoting.GFX {
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import BlendMode = Shumway.GFX.BlendMode;
   import Node = Shumway.GFX.Node;
-  import Scissor = Shumway.GFX.Scissor;
   import ShapeData = Shumway.ShapeData;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Stage = Shumway.GFX.Stage;
+  import NodeEventType = Shumway.GFX.NodeEventType;
 
   import Point = Shumway.GFX.Geometry.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
+
+  import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
+  import StageScaleModeId = Shumway.Remoting.StageScaleMode;
 
   import IDataInput = Shumway.ArrayUtilities.IDataInput;
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
@@ -103,7 +106,7 @@ module Shumway.Remoting.GFX {
   }
 
   export class GFXChannelDeserializerContext implements IVideoPlaybackEventSerializer {
-    scissor: Scissor;
+    stage: Stage;
     _nodes: Node [];
     private _assets: Renderable [];
 
@@ -112,11 +115,23 @@ module Shumway.Remoting.GFX {
     private _context: CanvasRenderingContext2D;
 
     constructor(easelHost: Shumway.GFX.EaselHost, root: Group, transparent: boolean) {
-      this.scissor = new Scissor(128, 128);
-      if (transparent) {
-        this.scissor.setFlags(NodeFlags.Transparent);
+      var stage = this.stage = new Stage(128, 512);
+      function updateStageBounds(node) {
+        var stageBounds = node.getBounds(true);
+        // Easel stage is the root stage and is not scaled, our stage is so
+        // we need to scale down.
+        var ratio = easelHost.easel.getRatio();
+        stageBounds.scale(1 / ratio, 1 / ratio);
+        stageBounds.snap();
+        stage.setBounds(stageBounds);
       }
-      root.addChild(this.scissor);
+      updateStageBounds(easelHost.stage);
+      easelHost.stage.addEventListener(NodeEventType.OnStageBoundsChanged, updateStageBounds);
+      easelHost.content = stage.content;
+      if (transparent) {
+        this.stage.setFlags(NodeFlags.Transparent);
+      }
+      root.addChild(this.stage);
       this._nodes = [];
       this._assets = [];
 
@@ -186,7 +201,6 @@ module Shumway.Remoting.GFX {
     public sendVideoPlaybackEvent(assetId: number, eventType: VideoPlaybackEvent, data: any): void {
       this._easelHost.sendVideoPlaybackEvent(assetId, eventType, data);
     }
-
   }
 
   export class GFXChannelDeserializer {
@@ -456,12 +470,14 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = this.input.readInt();
       if (!context._nodes[id]) {
-        context._nodes[id] = context.scissor;
+        context._nodes[id] = context.stage.content;
       }
       var color = this.input.readInt();
-      var rectangle = this._readRectangle()
-      context.scissor.setBounds(rectangle);
-      context.scissor.color = Color.FromARGB(color);
+      var bounds = this._readRectangle();
+      context.stage.content.setBounds(bounds);
+      context.stage.color = Color.FromARGB(color);
+      context.stage.align = this.input.readInt();
+      context.stage.scaleMode = this.input.readInt();
     }
 
     private _readUpdateNetStream() {

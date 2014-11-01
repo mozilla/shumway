@@ -98,6 +98,16 @@ module Shumway.Player {
     public movieParams: Map<string>;
 
     /**
+     * Initial stage alignment: l|r|t|tr|tl.
+     */
+    public stageAlign: string;
+
+    /**
+     * Initial stage scaling: showall|noborder|exactfit|noscale.
+     */
+    public stageScale: string;
+
+    /**
      * Time since the last time we've synchronized the display list.
      */
     private _lastPumpTime = 0;
@@ -168,6 +178,8 @@ module Shumway.Player {
 
           var root = loader.content;
           stage._loaderInfo = loaderInfo;
+          stage.align = self.stageAlign || '';
+          stage.scaleMode = self.stageScale || 'showall';
           stage.frameRate = loaderInfo.frameRate;
           stage.setStageWidth(loaderInfo.width);
           stage.setStageHeight(loaderInfo.height);
@@ -220,9 +232,9 @@ module Shumway.Player {
           var target = this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>message);
           if (traceMouseEventOption.value) {
             this._writer.writeLn("Mouse Event: type: " + message.type + ", point: " + message.point + ", target: " + target + (target ? ", name: " + target._name : ""));
-          }
-          if (message.type === "click" && target) {
-            target.debugTrace();
+            if (message.type === "click" && target) {
+              target.debugTrace();
+            }
           }
           break;
         case MessageTag.FocusEvent:

@@ -112,8 +112,12 @@ module Shumway.GFX {
       Shape                = 0x0003, // 0x0002 | Node,
       Group                = 0x0005, // 0x0004 | Node,
         Stage              = 0x000D, // 0x0008 | Group
-        Scissor            = 0x0015,  // 0x0010 | Group,
       Renderable           = 0x0021  // 0x0020 | Node
+  }
+
+  export enum NodeEventType {
+    None                        = 0x0000,
+    OnStageBoundsChanged        = 0x0001
   }
 
   /**
@@ -137,10 +141,6 @@ module Shumway.GFX {
     }
 
     visitStage(node: Stage, state: State) {
-      this.visitGroup(node, state);
-    }
-
-    visitScissor(node: Scissor, state: State) {
       this.visitGroup(node, state);
     }
 
@@ -190,10 +190,6 @@ module Shumway.GFX {
     visitStage(node: Stage, state: State) {
       this.visitGroup(node, state);
     }
-
-    visitScissor(node: Scissor, state: State) {
-      this.visitGroup(node, state);
-    }
   }
 
   /**
@@ -221,6 +217,31 @@ module Shumway.GFX {
 
     protected _layer: Layer;
     protected _transform: Transform;
+
+    protected _eventListeners: {
+      type: NodeEventType;
+      listener: (node: Node, type?: NodeEventType) => void;
+    } [] = null;
+
+    public addEventListener(type: NodeEventType, listener: (node: Node, type?: NodeEventType) => void) {
+      if (!this._eventListeners) {
+        this._eventListeners = [];
+      }
+      this._eventListeners.push({type: type, listener: listener});
+    }
+
+    protected _dispatchEvent(type: NodeEventType) {
+      if (!this._eventListeners) {
+        return;
+      }
+      var listeners = this._eventListeners;
+      for (var i = 0; i < listeners.length; i++) {
+        var listener = listeners[i];
+        if (listener.type === type) {
+          listener.listener(this, type);
+        }
+      }
+    }
 
     /**
      * Property bag used to attach dynamic properties to this object.
@@ -300,8 +321,11 @@ module Shumway.GFX {
      * Propagates flags up the tree. Propagation stops if all flags are already set.
      */
     _propagateFlagsUp(flags: NodeFlags) {
-      if (this.hasFlags(flags)) {
+      if (flags === NodeFlags.None || this.hasFlags(flags)) {
         return;
+      }
+      if (!this.hasFlags(NodeFlags.BoundsAutoCompute)) {
+        flags &= ~NodeFlags.InvalidBounds;
       }
       this.setFlags(flags);
       var parent = this._parent;
@@ -409,9 +433,6 @@ module Shumway.GFX {
           break;
         case NodeType.Shape:
           visitor.visitShape(<Shape>this, state);
-          break;
-        case NodeType.Scissor:
-          visitor.visitScissor(<Scissor>this, state);
           break;
         case NodeType.Renderable:
           visitor.visitRenderable(<Renderable>this, state);
@@ -750,26 +771,6 @@ module Shumway.GFX {
 
     _propagateFlagsDown(flags: NodeFlags) {
       this.setFlags(flags);
-    }
-  }
-
-  /**
-   * Scissor node that clips everything outside of its bounds.
-   */
-  export class Scissor extends Group {
-    color: Color = Color.None;
-    constructor(w: number, h: number) {
-      super();
-      this._bounds = new Rectangle(0, 0, w, h);
-      this._flags &= ~NodeFlags.BoundsAutoCompute;
-      this._type = NodeType.Scissor;
-    }
-
-    public getBounds(clone: boolean = false): Rectangle {
-      if (clone) {
-        return this._bounds.clone();
-      }
-      return this._bounds;
     }
   }
 }
