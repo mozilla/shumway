@@ -148,7 +148,12 @@ module Shumway.Remoting {
     Top      = 1,
     Bottom   = 2,
     Left     = 4,
-    Right    = 8
+    Right    = 8,
+
+    TopLeft       = Top | Left,
+    BottomLeft    = Bottom | Left,
+    BottomRight   = Bottom | Right,
+    TopRight      = Top | Right
   }
 
   export var MouseEventNames: string[] = [
