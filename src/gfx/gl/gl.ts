@@ -41,7 +41,6 @@ module Shumway.GFX.WebGL {
   import Filter = Shumway.GFX.Filter;
   import BlurFilter = Shumway.GFX.BlurFilter;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
-  import VisitorFlags = Shumway.GFX.VisitorFlags;
 
   import TileCache = Geometry.TileCache;
   import Tile = Geometry.Tile;
