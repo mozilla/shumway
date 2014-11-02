@@ -117,6 +117,7 @@ module Shumway.GFX {
     constructor() {
       super();
       this._flags &= ~NodeFlags.BoundsAutoCompute;
+      this._type = NodeType.Renderable;
     }
 
     /**
@@ -439,8 +440,9 @@ module Shumway.GFX {
 
   export class RenderableShape extends Renderable {
     _flags: NodeFlags = NodeFlags.Dirty     |
-                              NodeFlags.Scalable  |
-                              NodeFlags.Tileable;
+                        NodeFlags.Scalable  |
+                        NodeFlags.Tileable;
+
     properties: {[name: string]: any} = {};
 
     private fillStyle: ColorStyle;
@@ -469,6 +471,7 @@ module Shumway.GFX {
       this._pathData = pathData;
       this._paths = null;
       this._textures = textures;
+      this.setFlags(NodeFlags.Dynamic);
       this.invalidate();
     }
 
