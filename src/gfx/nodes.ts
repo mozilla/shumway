@@ -46,36 +46,99 @@ module Shumway.GFX {
 
   export enum NodeFlags {
     None                              = 0x00000,
+
+    /**
+     * Whether this node's bounding box is automatically computed from its children. If this
+     * flag is |false| then this node's bounding box can only be set via |setBounds|.
+     */
     BoundsAutoCompute                 = 0x00002,
+
+    /**
+     * Whether this node acts as a mask for another node.
+     */
     IsMask                            = 0x00004,
 
+    /**
+     * Whether this node needs to be repainted.
+     */
     Dirty                             = 0x00010,
 
+    /**
+     * Whether this node's bounds is invalid and needs to be recomputed. Only nodes that have the
+     * |BoundsAutoCompute| flag set can have this flag set.
+     */
     InvalidBounds                     = 0x00100,
 
+    /**
+     * Whether this node's concatenated matrix is invalid. This happens whenever a node's ancestor
+     * is moved in the node tree.
+     */
     InvalidConcatenatedMatrix         = 0x00200,
+
+    /**
+     * Same as above, but for colors.
+     */
     InvalidConcatenatedColorMatrix    = 0x00400,
 
+    /**
+     * Flags to propagate upwards when a node is added or removed from a group.
+     */
     UpOnAddedOrRemoved                = InvalidBounds | Dirty,
+
+    /**
+     * Flags to propagate upwards when a node is moved.
+     */
     UpOnMoved                         = InvalidBounds | Dirty,
 
+    /**
+     * Flags to propagate downwards when a mode is added or removed from a group.
+     */
     DownOnAddedOrRemoved              = InvalidConcatenatedMatrix | InvalidConcatenatedColorMatrix,
+
+    /**
+     * Flags to propagate downwards when a node is moved.
+     */
     DownOnMoved                       = InvalidConcatenatedMatrix | InvalidConcatenatedColorMatrix,
 
+    /**
+     * Flags to propagate upwards when a node's color matrix is changed.
+     */
     UpOnColorMatrixChanged            = Dirty,
+
+    /**
+     * Flags to propagate downwards when a node's color matrix is changed.
+     */
     DownOnColorMatrixChanged          = InvalidConcatenatedColorMatrix,
 
     Visible                           = 0x10000,
 
+    /**
+     * Flags to propagate upwards when a node is invalidated.
+     */
     UpOnInvalidate                    = InvalidBounds | Dirty,
 
+    /**
+     * Default node flags, however not all node types use these defaults.
+     */
     Default                           = BoundsAutoCompute |
                                         InvalidBounds |
                                         InvalidConcatenatedMatrix |
                                         Visible,
 
+    /**
+     * Whether this node is marked to be cached as a bitmap. This isn't just a performance optimization,
+     * but also affects the way masking is performed.
+     */
     CacheAsBitmap                     = 0x20000,
+
+    /**
+     * Whether this node's contents should be drawn snapped to pixel boundaries.
+     */
     PixelSnapping                     = 0x40000,
+
+    /**
+     * Whether this node's contents should use higher quality image smoothing.
+     */
     ImageSmoothing                    = 0x80000,
 
     /**
@@ -114,13 +177,17 @@ module Shumway.GFX {
       Renderable           = 0x0021  // 0x0020 | Node
   }
 
+  /**
+   * Basic event types. Not much here.
+   */
   export enum NodeEventType {
     None                        = 0x0000,
     OnStageBoundsChanged        = 0x0001
   }
 
   /**
-   * Basic node visitor.
+   * Basic node visitor. Inherit from this if you want a more sophisticated visitor, for instance all
+   * renderers extends this class.
    */
   export class NodeVisitor {
     visitNode(node: Node, state: State) {
@@ -149,7 +216,8 @@ module Shumway.GFX {
   }
 
   /**
-   * Helper visitor that checks and resets the dirty bit.
+   * Helper visitor that checks and resets the dirty bit. If the root node is dirty, then we have to repaint
+   * the entire node tree.
    */
   export class DirtyNodeVisitor extends NodeVisitor {
     public isDirty = true;
@@ -161,6 +229,9 @@ module Shumway.GFX {
     }
   }
 
+  /**
+   * Debugging visitor.
+   */
   export class TracingNodeVisitor extends NodeVisitor {
     constructor(public writer: IndentingWriter) {
       super();
@@ -195,12 +266,15 @@ module Shumway.GFX {
    * Base class of all nodes in the scene graph.
    */
   export class Node {
-    private static _nextId: number = 0;
-
     /**
-     * Used as a temporary array to avoid allocations.
+     * Temporary array of nodes to avoid allocations.
      */
     private static _path: Node [] = [];
+
+    /**
+     * Used to give nodes unique ids.
+     */
+    private static _nextId: number = 0;
 
     protected _id: number;
 
@@ -208,26 +282,45 @@ module Shumway.GFX {
       return this._id;
     }
 
+    /**
+     * Keep track of node type directly on the node so we don't have to use |instanceof| for type checks.
+     */
     protected _type: NodeType;
+
+    /**
+     * All sorts of flags.
+     */
     protected _flags: NodeFlags;
+
+    /**
+     * Index of this node in its parent's children list.
+     */
     protected _index: number;
+
+    /**
+     * Parent node. This is |null| for the root node and for |Renderables| which have more than one parent.
+     */
     protected _parent: Group;
+
+    /**
+     * Number of sibillings to clip.
+     */
     protected _clip: number = -1;
 
+    /**
+     * Layer info: blend modes, filters and such.
+     */
     protected _layer: Layer;
+
+    /**
+     * Transform info: matrix, color matrix. Null transform is the identity.
+     */
     protected _transform: Transform;
 
     protected _eventListeners: {
       type: NodeEventType;
       listener: (node: Node, type?: NodeEventType) => void;
     } [] = null;
-
-    public addEventListener(type: NodeEventType, listener: (node: Node, type?: NodeEventType) => void) {
-      if (!this._eventListeners) {
-        this._eventListeners = [];
-      }
-      this._eventListeners.push({type: type, listener: listener});
-    }
 
     protected _dispatchEvent(type: NodeEventType) {
       if (!this._eventListeners) {
@@ -243,9 +336,23 @@ module Shumway.GFX {
     }
 
     /**
+     * Adds an event listener.
+     */
+    public addEventListener(type: NodeEventType, listener: (node: Node, type?: NodeEventType) => void) {
+      if (!this._eventListeners) {
+        this._eventListeners = [];
+      }
+      this._eventListeners.push({type: type, listener: listener});
+    }
+
+    /**
      * Property bag used to attach dynamic properties to this object.
      */
     protected _properties: {[name: string]: any};
+
+    public get properties(): {[name: string]: any} {
+      return this._properties || (this._properties = {});
+    }
 
     /**
      * Bounds of the scene graph object. Bounds are computed automatically for non-leaf nodes
@@ -265,10 +372,6 @@ module Shumway.GFX {
       this._properties = null;
     }
 
-    public get properties(): {[name: string]: any} {
-      return this._properties || (this._properties = {});
-    }
-
     public get clip(): number {
       return this._clip;
     }
@@ -281,14 +384,20 @@ module Shumway.GFX {
       return this._parent;
     }
 
+    /**
+     * This shouldn't be used on any hot path becuse it allocates.
+     */
     public getChildren(clone: boolean = false): Node [] {
-      throw Shumway.Debug.abstractMethod("Node::getBounds");
+      throw Shumway.Debug.abstractMethod("Node::getChildren");
     }
 
     public getBounds(clone: boolean = false): Rectangle {
       throw Shumway.Debug.abstractMethod("Node::getBounds");
     }
 
+    /**
+     * Can only be set on nodes without the |NodeFlags.BoundsAutoCompute| flag set.
+     */
     public setBounds(value: Rectangle) {
       release || assert(!(this._flags & NodeFlags.BoundsAutoCompute));
       var bounds = this._bounds || (this._bounds = Rectangle.createEmpty());
@@ -355,7 +464,7 @@ module Shumway.GFX {
       return false;
     }
 
-    /*
+    /**
      * Return's a list of ancestors excluding the |last|, the return list is reused.
      */
     static _getAncestors(node: Node, last: Node): Node [] {
@@ -385,14 +494,16 @@ module Shumway.GFX {
       return null;
     }
 
-    uncheckedSetChildAt(node: Node, index: number) {
-      throw Shumway.Debug.abstractMethod("Node::uncheckedSetChildAt");
-    }
-
+    /**
+     * Type check.
+     */
     public isType(type: NodeType): boolean {
       return this._type === type;
     }
 
+    /**
+     * Subtype check.
+     */
     public isTypeOf(type: NodeType): boolean {
       return (this._type & type) === type;
     }
@@ -423,6 +534,9 @@ module Shumway.GFX {
 //      return Matrix.createIdentity();
 //    }
 
+    /**
+     * Dispatch on node types.
+     */
     public visit(visitor: NodeVisitor, state: State) {
       switch (this._type) {
         case NodeType.Node:
@@ -459,8 +573,7 @@ module Shumway.GFX {
   }
 
   /**
-   * Nodes that contain other nodes. All nodes have back references to the groups
-   * they belong to, forming a tree structure.
+   * Nodes that contain other nodes.
    */
   export class Group extends Node {
     protected _children: Node [];
@@ -478,6 +591,10 @@ module Shumway.GFX {
       return this._children;
     }
 
+    /**
+     * Adds a node and remove's it from its previous location if it has a parent and propagates
+     * flags accordingly.
+     */
     public addChild(node: Node) {
       release || assert(node);
       release || assert(!node.isAncestor(this));
@@ -491,6 +608,9 @@ module Shumway.GFX {
       node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
     }
 
+    /**
+     * Removes a child at the given index and propagates flags accordingly.
+     */
     public removeChildAt(index: number) {
       release || assert(index >= 0 && index < this._children.length);
       var node = this._children[index];
@@ -502,6 +622,10 @@ module Shumway.GFX {
       node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
     }
 
+    /**
+     * Sets a child at a given index and removes it from its previsou location, and
+     * of course propagates flags accordingly.
+     */
     public setChildAt(node: Node, index: number) {
       release || assert(node);
       release || assert(!node.isAncestor(this));
@@ -533,6 +657,9 @@ module Shumway.GFX {
       this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
     }
 
+    /**
+     * Override and propagate flags to all children.
+     */
     _propagateFlagsDown(flags: NodeFlags) {
       if (this.hasFlags(flags)) {
         return;
@@ -544,6 +671,9 @@ module Shumway.GFX {
       }
     }
 
+    /**
+     * Takes the inion of all child bounds and caches the bounds locally.
+     */
     public getBounds(clone: boolean = false): Rectangle {
       var bounds = this._bounds || (this._bounds = Rectangle.createEmpty());
       if (this.hasFlags(NodeFlags.InvalidBounds)) {
@@ -567,22 +697,41 @@ module Shumway.GFX {
   }
 
   /**
-   * Nodes with transformations: matrix, color matrix, etc.
+   * Transform associated with a node. This helps to reduce the size of nodes.
    */
   export class Transform {
 
+    /**
+     * Node that this transform belongs to.
+     */
     protected _node: Node;
+
+    /**
+     * Transform matrix.
+     */
     protected _matrix: Matrix;
+
+    /**
+     * Transform color matrix.
+     */
     protected _colorMatrix: ColorMatrix;
+
+    /**
+     * Concatenated matrix. This is not frequently used.
+     */
     protected _concatenatedMatrix: Matrix;
+
+    /**
+     * Concatenated color matrix. This is not frequently used.
+     */
     protected _concatenatedColorMatrix: ColorMatrix;
 
     constructor(node: Node) {
       this._node = node;
-      this._matrix = Matrix.createIdentity();
-      this._colorMatrix = ColorMatrix.createIdentity();
-      this._concatenatedMatrix = Matrix.createIdentity();
-      this._concatenatedColorMatrix = ColorMatrix.createIdentity();
+      this._matrix = Matrix.createIdentity(); // MEMORY: Lazify construction.
+      this._colorMatrix = ColorMatrix.createIdentity(); // MEMORY: Lazify construction.
+      this._concatenatedMatrix = Matrix.createIdentity(); // MEMORY: Lazify construction.
+      this._concatenatedColorMatrix = ColorMatrix.createIdentity(); // MEMORY: Lazify construction.
     }
 
     public get x(): number {
@@ -605,6 +754,9 @@ module Shumway.GFX {
       this._node._propagateFlagsDown(NodeFlags.DownOnMoved);
     }
 
+    /**
+     * Set a node's transform matrix. You should never mutate the matrix object directly.
+     */
     public setMatrix(value: Matrix) {
       this._matrix.set(value);
       this._node._propagateFlagsUp(NodeFlags.UpOnMoved);
@@ -638,8 +790,11 @@ module Shumway.GFX {
       return this._colorMatrix;
     }
 
+    /**
+     * Compute the concatenated transforms for this node and all of its ancestors since we're already doing
+     * all the work.
+     */
     public getConcatenatedMatrix(clone: boolean = false): Matrix {
-      // Compute the concatenated transforms for this node and all of its ancestors.
       if (this._node.hasFlags(NodeFlags.InvalidConcatenatedMatrix)) {
         var ancestor = this._node._findClosestAncestor(NodeFlags.InvalidConcatenatedMatrix, false);
         var path = Node._getAncestors(this._node, ancestor);
@@ -685,6 +840,9 @@ module Shumway.GFX {
     }
   }
 
+  /**
+   * Layer information associated with a node. This helps to reduce the size of nodes.
+   */
   export class Layer {
     protected _node: Node;
     protected _blendMode: BlendMode;
@@ -744,6 +902,9 @@ module Shumway.GFX {
     }
   }
 
+  /**
+   * Shapes are instantiations of Renderables.
+   */
   export class Shape extends Node {
     private _source: Renderable;
     public ratio: number;
@@ -785,7 +946,6 @@ module Shumway.GFX {
   import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
   import StageScaleMode = Shumway.Remoting.StageScaleMode;
 
-
   function getRandomIntInclusive(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
@@ -800,12 +960,15 @@ module Shumway.GFX {
 
   export enum Backend {
     Canvas2D = 0,
-    WebGL = 1,
+    WebGL = 1, // Soon
     Both = 2,
-    DOM = 3,
-    SVG = 4
+    DOM = 3, // Someday
+    SVG = 4 // Someday
   }
 
+  /**
+   * Base class for all renderers.
+   */
   export class StageRenderer extends NodeVisitor {
     protected _viewport: Rectangle;
     protected _options: StageRendererOptions;
@@ -827,23 +990,35 @@ module Shumway.GFX {
     }
 
     public render() {
-
+      throw Shumway.Debug.abstractMethod("StageRenderer::render");
     }
 
     /**
      * Notify renderer that the viewport has changed.
      */
     public resize() {
-
+      throw Shumway.Debug.abstractMethod("StageRenderer::resize");
     }
   }
 
+  /**
+   * Node container that handles Flash style alignment and scale modes.
+   */
   export class Stage extends Group {
-    public trackDirtyRegions: boolean;
-    public dirtyRegion: DirtyRegion;
+    private _trackDirtyRegions: boolean;
+
+    /**
+     * This is supposed to keep track of dirty regions.
+     */
+    private _dirtyRegion: DirtyRegion;
 
     private _align: StageAlignFlags;
     private _scaleMode: StageScaleMode;
+
+    /**
+     * All stage content is added to his child node. This is so what we can set the align and scale
+     * transform to all stage descendants but not affect the stage itself.
+     */
     private _content: Group;
 
     public color: Color;
@@ -864,16 +1039,16 @@ module Shumway.GFX {
       this._content = new Group();
       this._content._flags &= ~NodeFlags.BoundsAutoCompute;
       this.addChild(this._content);
-      this.dirtyRegion = new DirtyRegion(w, h);
-      this.trackDirtyRegions = trackDirtyRegions;
+      this._dirtyRegion = new DirtyRegion(w, h);
+      this._trackDirtyRegions = trackDirtyRegions;
       this.setFlags(NodeFlags.Dirty);
       this.setBounds(new Rectangle(0, 0, w, h));
-      this.updateContentMatrix();
+      this._updateContentMatrix();
     }
 
     public setBounds(value: Rectangle) {
       super.setBounds(value);
-      this.updateContentMatrix();
+      this._updateContentMatrix();
       this._dispatchEvent(NodeEventType.OnStageBoundsChanged);
     }
 
@@ -886,7 +1061,7 @@ module Shumway.GFX {
      * true if rendering should commence. Flag clearing is made optional here in case there
      * is any code that needs to check if rendering is about to happen.
      */
-      readyToRender(): boolean {
+    readyToRender(): boolean {
       this._dirtyVisitor.isDirty = false;
       this.visit(this._dirtyVisitor, null);
       if (this._dirtyVisitor.isDirty) {
@@ -901,7 +1076,7 @@ module Shumway.GFX {
 
     public set align(value: StageAlignFlags) {
       this._align = value;
-      this.updateContentMatrix();
+      this._updateContentMatrix();
     }
 
     public get scaleMode(): StageScaleMode {
@@ -910,10 +1085,13 @@ module Shumway.GFX {
 
     public set scaleMode(value: StageScaleMode) {
       this._scaleMode = value;
-      this.updateContentMatrix();
+      this._updateContentMatrix();
     }
 
-    public updateContentMatrix() {
+    /**
+     * Figure out what the content transform shuold be given the current align and scale modes.
+     */
+    private _updateContentMatrix() {
       if (this._scaleMode === Stage.DEFAULT_SCALE && this._align === Stage.DEFAULT_ALIGN) {
         // Shortcut and also guard to avoid using targetWidth/targetHeight.
         // ThetargetWidth/targetHeight normally set in setScaleAndAlign call.
