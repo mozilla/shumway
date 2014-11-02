@@ -504,7 +504,11 @@ module Shumway.GFX.Geometry {
      * Creates the maximum rectangle representable by signed 16 bit integers.
      */
     static createMaxI16() {
-      return new Rectangle(Numbers.MinI16, Numbers.MinI16, Numbers.MaxU16, Numbers.MaxU16)
+      return new Rectangle(Numbers.MinI16, Numbers.MinI16, Numbers.MaxU16, Numbers.MaxU16);
+    }
+
+    setMaxI16() {
+      this.setElements(Numbers.MinI16, Numbers.MinI16, Numbers.MaxU16, Numbers.MaxU16)
     }
 
     getCorners (points: Point[]) {

@@ -79,6 +79,7 @@ module Shumway {
   export var stageAlignOption = playerOptions.register (
     new Shumway.Options.Option("", "Stage Align", "number", StageAlignFlags.TopLeft, "Stage alignment.", { choices: {
       "Movie": -1,
+      "None": StageAlignFlags.None,
       "Top": StageAlignFlags.Top,
       "Left": StageAlignFlags.Left,
       "Bottom": StageAlignFlags.Bottom,

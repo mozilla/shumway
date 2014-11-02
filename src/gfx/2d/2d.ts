@@ -489,7 +489,6 @@ module Shumway.GFX.Canvas2D {
     }
 
     visitGroup(node: Group, state: RenderState) {
-
       this._frameInfo.groups ++;
 
       var bounds = node.getBounds();
@@ -518,9 +517,17 @@ module Shumway.GFX.Canvas2D {
             var childState = state.transform(child.getTransform());
             childState.toggleFlags(RenderFlags.ImageSmoothing, child.hasFlags(NodeFlags.ImageSmoothing));
             if (child.clip >= 0) {
-              clips = clips || new Uint8Array(children.length);
+              clips = clips || new Uint8Array(children.length); // MEMORY: Don't allocate here.
               clips[child.clip + i] ++;
               var clipState = childState.clone();
+              /*
+               * We can't cull the clip because clips outside of the viewport still need to act
+               * as clipping masks. For now we just expand the cull bounds, but a better approach
+               * would be to cull the clipped nodes and skip creating the clipping region
+               * alltogether. For this we would need to keep track of the bounds of the current
+               * clipping region.
+               */
+              clipState.clip.setMaxI16();
               state.target.context.save();
               clipState.flags |= RenderFlags.PaintClip;
               child.visit(this, clipState);
