@@ -29,7 +29,7 @@ var registerAddonHistogram = Telemetry.registerAddonHistogram;
 try {
   // Swapping arguments of the registerAddonHistogram for older Firefox versions.
   // See https://bugzilla.mozilla.org/show_bug.cgi?id=1069953.
-  if (parseInt(Services.appinfo.platformVersion) < 34) {
+  if (parseInt(Services.appinfo.platformVersion) < 36) {
     registerAddonHistogram = function (p1, p2, p3, p4, p5, p6) {
       return Telemetry.registerAddonHistogram(p1, p2, p4, p5, p6, p3);
     };
