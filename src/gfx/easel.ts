@@ -152,6 +152,9 @@ module Shumway.GFX {
       if (this._keyCodes[66]) { // B
         easel.toggleOption("paintBounds");
       }
+      if (this._keyCodes[68]) { // D
+        easel.toggleOption("paintDirtyRegion");
+      }
       if (this._keyCodes[70]) { // F
         easel.toggleOption("paintFlashing");
       }

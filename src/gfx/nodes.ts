@@ -76,9 +76,15 @@ module Shumway.GFX {
     InvalidConcatenatedMatrix         = 0x00200,
 
     /**
+     * Whether this node's inverted concatenated matrix is invalid. This happens whenever a node's ancestor
+     * is moved in the node tree.
+     */
+    InvalidInvertedConcatenatedMatrix = 0x00400,
+
+    /**
      * Same as above, but for colors.
      */
-    InvalidConcatenatedColorMatrix    = 0x00400,
+    InvalidConcatenatedColorMatrix    = 0x00800,
 
     /**
      * Flags to propagate upwards when a node is added or removed from a group.
@@ -93,12 +99,12 @@ module Shumway.GFX {
     /**
      * Flags to propagate downwards when a mode is added or removed from a group.
      */
-    DownOnAddedOrRemoved              = InvalidConcatenatedMatrix | InvalidConcatenatedColorMatrix,
+    DownOnAddedOrRemoved              = InvalidConcatenatedMatrix | InvalidInvertedConcatenatedMatrix | InvalidConcatenatedColorMatrix,
 
     /**
      * Flags to propagate downwards when a node is moved.
      */
-    DownOnMoved                       = InvalidConcatenatedMatrix | InvalidConcatenatedColorMatrix,
+    DownOnMoved                       = InvalidConcatenatedMatrix | InvalidInvertedConcatenatedMatrix | InvalidConcatenatedColorMatrix,
 
     /**
      * Flags to propagate upwards when a node's color matrix is changed.
@@ -123,6 +129,7 @@ module Shumway.GFX {
     Default                           = BoundsAutoCompute |
                                         InvalidBounds |
                                         InvalidConcatenatedMatrix |
+                                        InvalidInvertedConcatenatedMatrix |
                                         Visible,
 
     /**
@@ -216,12 +223,86 @@ module Shumway.GFX {
   }
 
   /**
+   * Nodes that cache transformation state. These are used to thread state when traversing
+   * the scene graph. Since they keep track of rendering state, they might as well become
+   * scene graph nodes.
+   */
+  export class State {
+    constructor() {
+
+    }
+  }
+
+  export class MatrixState extends State {
+    private static _dirtyStack: MatrixState [] = [];
+
+    matrix: Matrix = Matrix.createIdentity();
+
+    constructor() {
+      super();
+    }
+
+    transform(transform: Transform): MatrixState {
+      var state = this.clone();
+      state.matrix.preMultiply(transform.getMatrix());
+      return state;
+    }
+
+    static allocate(): MatrixState {
+      var dirtyStack = MatrixState._dirtyStack;
+      var state = null;
+      if (dirtyStack.length) {
+        state = dirtyStack.pop();
+      }
+      return state;
+    }
+
+    public clone(): MatrixState {
+      var state = MatrixState.allocate();
+      if (!state) {
+        state = new MatrixState();
+      }
+      state.set(this);
+      return state;
+    }
+
+    set (state: MatrixState) {
+      this.matrix.set(state.matrix);
+    }
+
+    free() {
+      MatrixState._dirtyStack.push(this);
+    }
+  }
+
+  /**
    * Helper visitor that checks and resets the dirty bit. If the root node is dirty, then we have to repaint
    * the entire node tree.
    */
   export class DirtyNodeVisitor extends NodeVisitor {
     public isDirty = true;
-    visitNode(node: Node, state: State) {
+    private _dirtyRegion: DirtyRegion;
+
+    start(node: Group, dirtyRegion: DirtyRegion) {
+      this._dirtyRegion = dirtyRegion;
+      var state = new MatrixState();
+      state.matrix.setIdentity();
+      node.visit(this, state);
+      state.free();
+    }
+
+    visitGroup(node: Group, state: MatrixState) {
+      var children = node.getChildren();
+      this.visitNode(node, state);
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        var childState = state.transform(child.getTransform());
+        child.visit(this, childState);
+        childState.free();
+      }
+    }
+
+    visitNode(node: Node, state: MatrixState) {
       if (node.hasFlags(NodeFlags.Dirty)) {
         this.isDirty = true;
       }
@@ -384,6 +465,54 @@ module Shumway.GFX {
       return this._parent;
     }
 
+    public getTransformedBounds(target: Node): Rectangle {
+      var bounds = this.getBounds(true);
+      if (target === this || bounds.isEmpty()) {
+        // Nop.
+      } else {
+        var m = this.getTransform().getConcatenatedMatrix();
+        if (target) {
+          var t = target.getTransform().getInvertedConcatenatedMatrix(true);
+          t.preMultiply(m);
+          t.transformRectangleAABB(bounds);
+          t.free();
+        } else {
+          m.transformRectangleAABB(bounds);
+        }
+      }
+      return bounds;
+    }
+
+    _markCurrentBoundsAsDirtyRegion() {
+      return;
+      /*
+      var stage = this.getStage();
+      if (!stage) {
+        return;
+      }
+      var bounds = this.getTransformedBounds(stage);
+      stage.dirtyRegion.addDirtyRectangle(bounds);
+      */
+    }
+
+    public getStage(withDirtyRegion: boolean = true): Stage {
+      var node = this._parent;
+      while (node) {
+        if (node.isType(NodeType.Stage)) {
+          var stage = <Stage>node;
+          if (withDirtyRegion) {
+            if (stage.dirtyRegion) {
+              return stage;
+            }
+          } else {
+            return stage;
+          }
+        }
+        node = node._parent;
+      }
+      return null;
+    }
+
     /**
      * This shouldn't be used on any hot path becuse it allocates.
      */
@@ -415,6 +544,10 @@ module Shumway.GFX {
 
     public hasFlags(flags: NodeFlags): boolean {
       return (this._flags & flags) === flags;
+    }
+
+    public hasAnyFlags(flags: NodeFlags): boolean {
+      return !!(this._flags & flags);
     }
 
     public removeFlags(flags: NodeFlags) {
@@ -508,6 +641,23 @@ module Shumway.GFX {
       return (this._type & type) === type;
     }
 
+    public isLeaf(): boolean {
+      return this.isType(NodeType.Renderable) || this.isType(NodeType.Shape);
+    }
+
+    public isLinear(): boolean {
+      if (this.isLeaf()) {
+        return true;
+      }
+      if (this.isType(NodeType.Group)) {
+        var children = (<any>this)._children;
+        if (children.length === 1 && children[0].isLinear()) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     public getTransformMatrix(clone: boolean = false): Matrix {
       return this.getTransform().getMatrix(clone);
     }
@@ -560,6 +710,7 @@ module Shumway.GFX {
     }
 
     public invalidate() {
+      this._markCurrentBoundsAsDirtyRegion();
       this._propagateFlagsUp(NodeFlags.UpOnInvalidate);
     }
 
@@ -606,6 +757,7 @@ module Shumway.GFX {
       this._children.push(node);
       this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
       node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
+      node._markCurrentBoundsAsDirtyRegion();
     }
 
     /**
@@ -615,6 +767,7 @@ module Shumway.GFX {
       release || assert(index >= 0 && index < this._children.length);
       var node = this._children[index];
       release || assert(index === node._index);
+      node._markCurrentBoundsAsDirtyRegion();
       this._children.splice(index, 1);
       node._index = -1;
       node._parent = null;
@@ -622,31 +775,10 @@ module Shumway.GFX {
       node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
     }
 
-    /**
-     * Sets a child at a given index and removes it from its previsou location, and
-     * of course propagates flags accordingly.
-     */
-    public setChildAt(node: Node, index: number) {
-      release || assert(node);
-      release || assert(!node.isAncestor(this));
-      release || assert(index >= 0 && index < this._children.length);
-      var last = this._children[index];
-      last._index = -1;
-      last._parent = null;
-      last._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
-      if (node._parent) {
-        node._parent.removeChildAt(node._index);
-      }
-      node._index = index;
-      node._parent = this;
-      this._children[index] = node;
-      this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
-      node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
-    }
-
     public clearChildren() {
       for (var i = 0; i < this._children.length; i++) {
         var child = this._children[i];
+        child._markCurrentBoundsAsDirtyRegion();
         if (child) {
           child._index = -1;
           child._parent = null;
@@ -722,6 +854,11 @@ module Shumway.GFX {
     protected _concatenatedMatrix: Matrix;
 
     /**
+     * Inverted concatenated matrix. This is not frequently used.
+     */
+    protected _invertedConcatenatedMatrix: Matrix;
+
+    /**
      * Concatenated color matrix. This is not frequently used.
      */
     protected _concatenatedColorMatrix: ColorMatrix;
@@ -731,36 +868,42 @@ module Shumway.GFX {
       this._matrix = Matrix.createIdentity(); // MEMORY: Lazify construction.
       this._colorMatrix = ColorMatrix.createIdentity(); // MEMORY: Lazify construction.
       this._concatenatedMatrix = Matrix.createIdentity(); // MEMORY: Lazify construction.
+      this._invertedConcatenatedMatrix = Matrix.createIdentity(); // MEMORY: Lazify construction.
       this._concatenatedColorMatrix = ColorMatrix.createIdentity(); // MEMORY: Lazify construction.
     }
 
-    public get x(): number {
-      return this._matrix.tx;
-    }
-
-    public set x(value: number) {
-      this._matrix.tx = value;
-      this._node._propagateFlagsUp(NodeFlags.UpOnMoved);
-      this._node._propagateFlagsDown(NodeFlags.DownOnMoved);
-    }
-
-    public get y(): number {
-      return this._matrix.ty;
-    }
-
-    public set y(value: number) {
-      this._matrix.ty = value;
-      this._node._propagateFlagsUp(NodeFlags.UpOnMoved);
-      this._node._propagateFlagsDown(NodeFlags.DownOnMoved);
-    }
+//    public get x(): number {
+//      return this._matrix.tx;
+//    }
+//
+//    public set x(value: number) {
+//      this._matrix.tx = value;
+//      this._node._propagateFlagsUp(NodeFlags.UpOnMoved);
+//      this._node._propagateFlagsDown(NodeFlags.DownOnMoved);
+//    }
+//
+//    public get y(): number {
+//      return this._matrix.ty;
+//    }
+//
+//    public set y(value: number) {
+//      this._matrix.ty = value;
+//      this._node._propagateFlagsUp(NodeFlags.UpOnMoved);
+//      this._node._propagateFlagsDown(NodeFlags.DownOnMoved);
+//    }
 
     /**
      * Set a node's transform matrix. You should never mutate the matrix object directly.
      */
     public setMatrix(value: Matrix) {
+      if (this._matrix.isEqual(value)) {
+        return;
+      }
+      this._node._markCurrentBoundsAsDirtyRegion();
       this._matrix.set(value);
       this._node._propagateFlagsUp(NodeFlags.UpOnMoved);
       this._node._propagateFlagsDown(NodeFlags.DownOnMoved);
+      this._node._markCurrentBoundsAsDirtyRegion();
     }
 
     public setColorMatrix(value: ColorMatrix) {
@@ -812,6 +955,17 @@ module Shumway.GFX {
         return this._concatenatedMatrix.clone();
       }
       return this._concatenatedMatrix;
+    }
+
+    public getInvertedConcatenatedMatrix(clone: boolean = false): Matrix {
+      if (this._node.hasFlags(NodeFlags.InvalidInvertedConcatenatedMatrix)) {
+        this.getConcatenatedMatrix().inverse(this._invertedConcatenatedMatrix);
+        this._node.removeFlags(NodeFlags.InvalidInvertedConcatenatedMatrix);
+      }
+      if (clone) {
+        return this._invertedConcatenatedMatrix.clone();
+      }
+      return this._invertedConcatenatedMatrix;
     }
 
 //    public getConcatenatedColorMatrix(clone: boolean = false): ColorMatrix {
@@ -892,17 +1046,6 @@ module Shumway.GFX {
   }
 
   /**
-   * Nodes that cache transformation state. These are used to thread state when traversing
-   * the scene graph. Since they keep track of rendering state, they might as well become
-   * scene graph nodes.
-   */
-  export class State {
-    constructor() {
-
-    }
-  }
-
-  /**
    * Shapes are instantiations of Renderables.
    */
   export class Shape extends Node {
@@ -954,6 +1097,7 @@ module Shumway.GFX {
     debug: boolean = false;
     paintRenderable: boolean = true;
     paintBounds: boolean = false;
+    paintDirtyRegion: boolean = false;
     paintFlashing: boolean = false;
     paintViewport: boolean = false;
   }
@@ -1005,12 +1149,14 @@ module Shumway.GFX {
    * Node container that handles Flash style alignment and scale modes.
    */
   export class Stage extends Group {
-    private _trackDirtyRegions: boolean;
-
     /**
      * This is supposed to keep track of dirty regions.
      */
     private _dirtyRegion: DirtyRegion;
+
+    public get dirtyRegion(): DirtyRegion {
+      return this._dirtyRegion;
+    }
 
     private _align: StageAlignFlags;
     private _scaleMode: StageScaleMode;
@@ -1030,7 +1176,7 @@ module Shumway.GFX {
 
     private _dirtyVisitor: DirtyNodeVisitor = new DirtyNodeVisitor();
 
-    constructor(w: number, h: number, trackDirtyRegions: boolean = false) {
+    constructor(w: number, h: number, trackDirtyRegion: boolean = false) {
       super();
       this._flags &= ~NodeFlags.BoundsAutoCompute;
       this._type = NodeType.Stage;
@@ -1039,10 +1185,14 @@ module Shumway.GFX {
       this._content = new Group();
       this._content._flags &= ~NodeFlags.BoundsAutoCompute;
       this.addChild(this._content);
-      this._dirtyRegion = new DirtyRegion(w, h);
-      this._trackDirtyRegions = trackDirtyRegions;
       this.setFlags(NodeFlags.Dirty);
       this.setBounds(new Rectangle(0, 0, w, h));
+      if (trackDirtyRegion) {
+        this._dirtyRegion = new DirtyRegion(w, h);
+        this._dirtyRegion.addDirtyRectangle(new Rectangle(0, 0, w, h));
+      } else {
+        this._dirtyRegion = null;
+      }
       this._updateContentMatrix();
     }
 
@@ -1050,6 +1200,10 @@ module Shumway.GFX {
       super.setBounds(value);
       this._updateContentMatrix();
       this._dispatchEvent(NodeEventType.OnStageBoundsChanged);
+      if (this._dirtyRegion) {
+        this._dirtyRegion = new DirtyRegion(value.w, value.h);
+        this._dirtyRegion.addDirtyRectangle(value);
+      }
     }
 
     public get content(): Group {
@@ -1062,8 +1216,7 @@ module Shumway.GFX {
      * is any code that needs to check if rendering is about to happen.
      */
     readyToRender(): boolean {
-      this._dirtyVisitor.isDirty = false;
-      this.visit(this._dirtyVisitor, null);
+      this._dirtyVisitor.start(this, this._dirtyRegion);
       if (this._dirtyVisitor.isDirty) {
         return true;
       }
