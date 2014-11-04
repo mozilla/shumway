@@ -102,6 +102,9 @@ module Shumway.Player.Window {
           case 'externalCallback':
             this.processExternalCallback(data.request);
             break;
+          case 'videoPlayback':
+            this.processVideoEvent(data.id, data.eventType, data.data);
+            break;
           case 'options':
             Shumway.Settings.setSettings(data.settings);
             break;
@@ -139,9 +142,6 @@ module Shumway.Player.Window {
                   request: data.request,
                   timeline: Shumway.SWF.timelineBuffer
                 }, '*');
-                break;
-              case 'videoPlayback':
-                this.processVideoEvent(data.id, data.eventType, data.data);
                 break;
             }
             break;
