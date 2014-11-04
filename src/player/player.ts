@@ -181,8 +181,8 @@ module Shumway.Player {
           stage.align = self.stageAlign || '';
           stage.scaleMode = self.stageScale || 'showall';
           stage.frameRate = loaderInfo.frameRate;
-          stage.setStageWidth(loaderInfo.width);
-          stage.setStageHeight(loaderInfo.height);
+          stage.setStageWidth(loaderInfo.parameters.asGetPublicProperty("width") || loaderInfo.width);
+          stage.setStageHeight(loaderInfo.parameters.asGetPublicProperty("height") || loaderInfo.height);
           stage.setStageColor(ColorUtilities.RGBAToARGB(bgcolor));
           stage.addTimelineObjectAtDepth(root, 0);
           self._enterLoops();
