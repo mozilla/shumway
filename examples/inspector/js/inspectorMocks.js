@@ -20,7 +20,7 @@ function configureMocks(remoteFile) {
     Shumway.ExternalInterfaceService.instance = {
       enabled: true,
       initJS: function (callback) {
-        this._callIn = callIn;
+        this._callIn = callback;
       },
       registerCallback: function (functionName) {
         // do nothing atm
@@ -50,13 +50,15 @@ function configureMocks(remoteFile) {
       }
     };
   } else if (remoteFile.indexOf('fbplayer') >= 0) {
-    movieParams = parseQueryString('params=%7B%22autoplay%22%3Afalse%2C%22auto_hd%22%3Afalse%2C%22autoplay_reason%22%3A%22unknown%22%2C%22autoplay_setting%22%3Anull%2C%22autorewind%22%3Atrue%2C%22click_to_snowlift%22%3Afalse%2C%22default_hd%22%3Afalse%2C%22dtsg%22%3A%22AQH6LF5fTL6c%22%2C%22inline_player%22%3Afalse%2C%22lsd%22%3Anull%2C%22min_progress_update%22%3A300%2C%22pixel_ratio%22%3A1%2C%22player_origin%22%3A%22videos%22%2C%22preload%22%3Atrue%2C%22source%22%3A%22permalink%22%2C%22start_index%22%3A0%2C%22start_muted%22%3Afalse%2C%22stream_type%22%3A%22stream%22%2C%22use_spotlight%22%3Afalse%2C%22video_data%22%3A%5B%7B%22hd_src%22%3A%22https%3A%5C%2F%5C%2Fscontent-a.xx.fbcdn.net%5C%2Fhvideo-xpa1%5C%2Fv%5C%2Ft43.1792-2%5C%2F10436241_10203041199485852_6431747_n.mp4%3Foh%3D4f6d8a41ebbdf59ec7ab379ccaac4567%26oe%3D5451CA60%22%2C%22is_hds%22%3Afalse%2C%22is_hls%22%3Afalse%2C%22index%22%3A0%2C%22rotation%22%3A0%2C%22sd_src%22%3A%22https%3A%5C%2F%5C%2Fscontent-a.xx.fbcdn.net%5C%2Fhvideo-xpa1%5C%2Fv%5C%2Ft42.1790-2%5C%2F10444060_10203041199365849_1689130192_n.mp4%3Foh%3D9ae7b7404f3dac70fbea5b4cf77fb615%26oe%3D5451C6BF%22%2C%22thumbnail_src%22%3A%22https%3A%5C%2F%5C%2Ffbcdn-vthumb-a.akamaihd.net%5C%2Fhvthumb-ak-xfa1%5C%2Fv%5C%2Ft15.0-10%5C%2F10417359_10203041199885862_10203041192085667_5833_2664_b.jpg%3Foh%3Df720e2ca25f52eb3b6f061d2a955a144%26oe%3D54DED0FB%26__gda__%3D1424429528_1ef762bd199ea157504e29eeca0a0e74%22%2C%22thumbnail_height%22%3A368%2C%22thumbnail_width%22%3A640%2C%22video_duration%22%3A46%2C%22video_id%22%3A%2210203041192085667%22%2C%22subtitles_src%22%3Anull%7D%5D%2C%22show_captions_default%22%3Afalse%2C%22persistent_volume%22%3Atrue%2C%22buffer_length%22%3A0.1%7D&amp;width=720&amp;height=414&amp;user=653138652&amp;log=no&amp;div_id=id_5451a046cce3a4c34236425&amp;swf_id=swf_id_5451a046cce3a4c34236425&amp;browser=Firefox+36.0&amp;tracking_domain=https%3A%2F%2Fpixel.facebook.com&amp;post_form_id=&amp;string_table=https%3A%2F%2Fs-static.ak.facebook.com%2Fflash_strings.php%2Ft98238%2Fen_US');
+    if (typeof movieParams !== 'undefined') {
+      movieParams = parseQueryString('params=%7B%22autoplay%22%3Afalse%2C%22auto_hd%22%3Afalse%2C%22autoplay_reason%22%3A%22unknown%22%2C%22autoplay_setting%22%3Anull%2C%22autorewind%22%3Atrue%2C%22click_to_snowlift%22%3Afalse%2C%22default_hd%22%3Atrue%2C%22dtsg%22%3A%22AQHAaDPILvk6%22%2C%22inline_player%22%3Afalse%2C%22lsd%22%3A%22AVqO5O2q%22%2C%22min_progress_update%22%3A300%2C%22pixel_ratio%22%3A1%2C%22player_origin%22%3A%22unknown%22%2C%22preload%22%3Atrue%2C%22source%22%3A%22pages_finch_main_video%22%2C%22start_index%22%3A0%2C%22start_muted%22%3Afalse%2C%22stream_type%22%3A%22stream%22%2C%22use_spotlight%22%3Afalse%2C%22video_data%22%3A%5B%7B%22hd_src%22%3A%22https%3A%5C%2F%5C%2Fscontent-a-dfw.xx.fbcdn.net%5C%2Fhvideo-xfp1%5C%2Fv%5C%2Ft43.1792-2%5C%2F10415065_10152618486916749_250288972_n.mp4%3Frl%3D1500%26vabr%3D613%26oh%3Dcfd8e5c4f7abe83320445e8a2f86fd1f%26oe%3D54593A25%22%2C%22is_hds%22%3Afalse%2C%22is_hls%22%3Afalse%2C%22index%22%3A0%2C%22rotation%22%3A0%2C%22sd_src%22%3A%22https%3A%5C%2F%5C%2Ffbcdn-video-e-a.akamaihd.net%5C%2Fhvideo-ak-xap1%5C%2Fv%5C%2Ft42.1790-2%5C%2F10670298_10152618486896749_730473924_n.mp4%3Frl%3D8000%26vabr%3D205%26oh%3D0a30099860823d10823b6118057060d8%26oe%3D54594032%26__gda__%3D1415133759_57ed72a4d09b58e51697d2fc7dbd4393%22%2C%22thumbnail_src%22%3A%22https%3A%5C%2F%5C%2Ffbcdn-vthumb-a.akamaihd.net%5C%2Fhvthumb-ak-xpa1%5C%2Fv%5C%2Ft15.0-10%5C%2F10483887_10152618487021749_10152618483876749_1090_2136_b.jpg%3Foh%3De461101bb7d2f50bcbe1fa62c9dd10d1%26oe%3D54E0CA27%26__gda__%3D1425070352_e47e1115fdc2be94b59199ea8d2b21b7%22%2C%22thumbnail_height%22%3A720%2C%22thumbnail_width%22%3A1280%2C%22video_duration%22%3A100%2C%22video_id%22%3A%2210152618483876749%22%2C%22subtitles_src%22%3Anull%7D%5D%2C%22show_captions_default%22%3Afalse%2C%22persistent_volume%22%3Atrue%2C%22buffer_length%22%3A0.1%7D&width=1280&height=720&user=0&log=no&div_id=id_54591e71bc6022263222388&swf_id=swf_id_54591e71bc6022263222388&browser=Chrome+38.0.2125.111&tracking_domain=https%3A%2F%2Fpixel.facebook.com&post_form_id=&string_table=https%3A%2F%2Fs-static.ak.facebook.com%2Fflash_strings.php%2Ft98272%2Fen_US');
+    }
 
     // Simulate ExternalInterfaceService
     Shumway.ExternalInterfaceService.instance = {
       enabled: true,
       initJS: function (callback) {
-        this._callIn = callIn;
+        this._callIn = callback;
       },
       registerCallback: function (functionName) {
         // do nothing atm

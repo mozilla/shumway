@@ -107,6 +107,7 @@ function runSwfPlayer(data) {
   var stageAlign = data.stageAlign;
   var stageScale = data.stageScale;
   var file = data.file;
+  configureMocks(file);
   Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
     function runSWF(file) {
       var player = new Shumway.Player.Window.WindowPlayer(window);
