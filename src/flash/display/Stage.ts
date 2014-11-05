@@ -242,8 +242,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set displayState(value: string) {
-      somewhatImplemented("public flash.display.Stage::set displayState");
-      this._displayState = asCoerceString(value);
+      value = asCoerceString(value);
+      // TODO: This should only be allowed if the embedding page allows full screen mode.
+      if (flash.display.StageDisplayState.toNumber(value) < 0) {
+        value = flash.display.StageDisplayState.NORMAL;
+      }
+      this._displayState = value;
     }
 
     get fullScreenSourceRect(): flash.geom.Rectangle {

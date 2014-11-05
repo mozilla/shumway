@@ -62,6 +62,10 @@ module Shumway.GFX {
       this._easel.cursor = cursor;
     }
 
+    requestFullscreen() {
+      this._easel.requestFullscreen();
+    }
+
     private _mouseEventListener(event: MouseEvent) {
       // var position = this._easel.getMouseWorldPosition(event);
       var position = this._easel.getMousePosition(event, this._content);
