@@ -842,6 +842,11 @@ ShumwayStreamConverterBase.prototype = {
       }
 
       if (isOverlay) {
+        // HACK for facebook, CSS embed tag rescaling
+        for (var child = window.frameElement; child !== element; child = child.parentNode) {
+          child.setAttribute('style', 'max-width: 100%; max-height: 100%');
+        }
+
         // Checking if overlay is a proper PlayPreview overlay.
         for (var i = 0; i < element.children.length; i++) {
           if (element.children[i] === containerElement) {
