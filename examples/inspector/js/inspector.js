@@ -116,9 +116,6 @@ var currentPlayer;
 
 var easelHost;
 function runIFramePlayer(data) {
-  data.type = 'runSwf';
-  data.settings = Shumway.Settings.getSettings();
-
   var container = document.createElement('div');
   container.setAttribute('style', 'position:absolute; top:0; left: 0; width: 9; height:9');
   document.body.appendChild(container);
@@ -129,10 +126,15 @@ function runIFramePlayer(data) {
   playerWorkerIFrame.height = 3;
   playerWorkerIFrame.src = "inspector.player.html";
   playerWorkerIFrame.addEventListener('load', function () {
+    var easel = createEasel();
+
+    data.type = 'runSwf';
+    data.settings = Shumway.Settings.getSettings();
+    data.displayParams = easel.getDisplayParameters();
+
     var playerWorker = playerWorkerIFrame.contentWindow;
     playerWorker.postMessage(data, '*');
 
-    var easel = createEasel();
     easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWorker, window);
   });
   container.appendChild(playerWorkerIFrame);
@@ -191,6 +193,7 @@ function executeFile(file, buffer, movieParams) {
         player.movieParams = movieParams;
         player.stageAlign = stageAlign;
         player.stageScale = stageScale;
+        player.displayParams = easel.getDisplayParameters();
 
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
         player.load(file, buffer);

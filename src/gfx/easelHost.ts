@@ -22,6 +22,7 @@ module Shumway.GFX {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
+  import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
   export class EaselHost {
     private static _mouseEvents = Shumway.Remoting.MouseEventNames;
@@ -94,6 +95,8 @@ module Shumway.GFX {
         window.addEventListener(keyboardEvents[i], keyboardEventListener);
       }
       this._addFocusEventListeners();
+
+      this._easel.addEventListener('resize', this._resizeEventListener.bind(this));
     }
 
     private _sendFocusEvent(type: Shumway.Remoting.FocusEventType) {
@@ -117,6 +120,14 @@ module Shumway.GFX {
       window.addEventListener('blur', function(event) {
         self._sendFocusEvent(Shumway.Remoting.FocusEventType.WindowBlur);
       });
+    }
+
+    private _resizeEventListener() {
+      this.onDisplayParameters(this._easel.getDisplayParameters());
+    }
+
+    onDisplayParameters(params: DisplayParameters) {
+      throw new Error('This method is abstract');
     }
 
     processUpdates(updates: DataBuffer, assets: Array<DataBuffer>, output: DataBuffer = null) {

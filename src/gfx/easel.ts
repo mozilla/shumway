@@ -25,6 +25,8 @@ module Shumway.GFX {
   import WebGLContext = Shumway.GFX.WebGL.WebGLContext;
   import FPS = Shumway.Tools.Mini.FPS;
 
+  import DisplayParameters = Shumway.Remoting.DisplayParameters;
+
   declare var GUI;
 
   export interface IState {
@@ -443,6 +445,18 @@ module Shumway.GFX {
       return this._options[0];
     }
 
+    getDisplayParameters(): DisplayParameters {
+      var firstCanvas = this._canvases[0];
+      var ratio = this.getRatio();
+      return {
+        canvasWidth: firstCanvas.width / ratio,
+        canvasHeight: firstCanvas.height / ratio,
+        pixelRatio: ratio,
+        screenWidth: window.screen ? window.screen.width : 640,
+        screenHeight: window.screen ? window.screen.height : 480
+      };
+    }
+
     public toggleOption(name: string) {
       for (var i = 0; i < this._options.length; i++) {
         var option = this._options[i];
@@ -491,6 +505,8 @@ module Shumway.GFX {
         this._renderers[i].resize();
       }
       this._worldView.getTransform().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));
+
+      this._dispatchEvent('resize');
     }
 
     resize() {

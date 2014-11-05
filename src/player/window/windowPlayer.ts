@@ -105,6 +105,9 @@ module Shumway.Player.Window {
           case 'videoPlayback':
             this.processVideoEvent(data.id, data.eventType, data.data);
             break;
+          case 'displayParameters':
+            this.processDisplayParameters(data.params);
+            break;
           case 'options':
             Shumway.Settings.setSettings(data.settings);
             break;

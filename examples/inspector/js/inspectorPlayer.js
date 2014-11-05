@@ -106,6 +106,7 @@ function runSwfPlayer(data) {
   var movieParams = data.movieParams;
   var stageAlign = data.stageAlign;
   var stageScale = data.stageScale;
+  var displayParams = data.displayParams;
   var file = data.file;
   configureMocks(file);
   Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
@@ -114,6 +115,7 @@ function runSwfPlayer(data) {
       player.movieParams = movieParams;
       player.stageAlign = stageAlign;
       player.stageScale = stageScale;
+      player.displayParams = displayParams;
       player.load(file);
     }
     file = Shumway.FileLoadingService.instance.setBaseUrl(file);

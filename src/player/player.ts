@@ -46,6 +46,8 @@ module Shumway.Player {
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
 
+  import DisplayParameters = Shumway.Remoting.DisplayParameters;
+
   /**
    * Shumway Player
    *
@@ -106,6 +108,11 @@ module Shumway.Player {
      * Initial stage scaling: showall|noborder|exactfit|noscale.
      */
     public stageScale: string;
+
+    /**
+     * Initial display parameters.
+     */
+    public displayParams: DisplayParameters;
 
     /**
      * Time since the last time we've synchronized the display list.
@@ -181,10 +188,15 @@ module Shumway.Player {
           stage.align = self.stageAlign || '';
           stage.scaleMode = self.stageScale || 'showall';
           stage.frameRate = loaderInfo.frameRate;
-          stage.setStageWidth(loaderInfo.parameters.asGetPublicProperty("width") || loaderInfo.width);
-          stage.setStageHeight(loaderInfo.parameters.asGetPublicProperty("height") || loaderInfo.height);
+          stage.setStageWidth(loaderInfo.width);
+          stage.setStageHeight(loaderInfo.height);
           stage.setStageColor(ColorUtilities.RGBAToARGB(bgcolor));
           stage.addTimelineObjectAtDepth(root, 0);
+
+          if (self.displayParams) {
+            self.processDisplayParameters(self.displayParams);
+          }
+
           self._enterLoops();
         });
       }
@@ -594,6 +606,10 @@ module Shumway.Player {
       var listener = this._videoEventListeners[id];
       Debug.assert(listener, 'Video event listener is not found');
       listener(eventType, data);
+    }
+
+    public processDisplayParameters(params: DisplayParameters) {
+      this._stage.setCanvasSize(params.canvasWidth, params.canvasHeight, params.pixelRatio);
     }
 
     onExternalCommand(command) {
