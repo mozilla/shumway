@@ -159,7 +159,7 @@ module Shumway.AVM2.AS.flash.display {
      * Non-AS3-available setter. In AS3, the `stageWidth` setter is silently ignored.
      */
     setStageWidth(value: number) {
-      release || assert ((value | 0) === value);
+      release || assert ((value | 0) == value);
       this._stageWidth = (value * 20) | 0;
     }
 
@@ -178,7 +178,7 @@ module Shumway.AVM2.AS.flash.display {
      * Non-AS3-available setter. In AS3, the `stageHeight` setter is silently ignored.
      */
     setStageHeight(value: number) {
-      release || assert ((value | 0) === value);
+      release || assert ((value | 0) == value);
       this._stageHeight = (value * 20) | 0;
     }
 
