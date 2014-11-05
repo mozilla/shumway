@@ -1042,9 +1042,13 @@ module Shumway.GFX.Geometry {
         result.setIdentity();
         return;
       } else if (this._type === MatrixType.Translation) {
-        result.setIdentity();
-        result[4] = -m[4];
-        result[5] = -m[5];
+        r[0] = 1;
+        r[1] = 0;
+        r[2] = 0;
+        r[3] = 1;
+        r[4] = -m[4];
+        r[5] = -m[5];
+        result._type = MatrixType.Translation;
         return;
       }
       var b  = m[1];

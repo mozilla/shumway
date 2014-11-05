@@ -248,6 +248,7 @@ module Shumway.GFX {
     private _eventListeners: Shumway.Map<any []> = Shumway.ObjectUtilities.createEmptyObject();
     private _fpsCanvas: HTMLCanvasElement;
     private _fps: FPS;
+    private _fullScreen: boolean = false;
 
     constructor(container: HTMLElement, backend: Backend,
                 disableHidpi: boolean = false,
@@ -401,6 +402,23 @@ module Shumway.GFX {
 
     set cursor(cursor: string) {
       this._canvases.forEach(x => x.style.cursor = cursor);
+    }
+
+
+    requestFullscreen() {
+      if (this._fullScreen) {
+        return;
+      }
+      this._fullScreen = true;
+      var canvas: any = this._canvases[0];
+      if (canvas.requestFullscreen) {
+        canvas.requestFullscreen();
+      } else if (canvas.mozRequestFullScreen) {
+        canvas.mozRequestFullScreen();
+      } else if (canvas.webkitRequestFullscreen) {
+        canvas.webkitRequestFullscreen();
+      }
+      alert("Fullscreen mode is not yet supported by Shumway for security reasons.");
     }
 
     private _render() {
