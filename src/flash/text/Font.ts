@@ -31,7 +31,9 @@ module Shumway.AVM2.AS.flash.text {
     static DEVICE_FONT_METRICS_LINUX: Object;
     static DEVICE_FONT_METRICS_MAC: Object;
 
-    static DEFAULT_FONT_NAME = 'times roman';
+    static DEFAULT_FONT_SANS = 'sans-serif';
+    static DEFAULT_FONT_SERIF = 'serif';
+    static DEFAULT_FONT_TYPEWRITER = 'monospace';
 
     static classInitializer: any = function () {
       Font._fonts = [];
@@ -646,8 +648,14 @@ module Shumway.AVM2.AS.flash.text {
         var userAgent = self.navigator.userAgent;
         if (userAgent.indexOf("Windows") > -1) {
           this._deviceFontMetrics = Font.DEVICE_FONT_METRICS_WIN;
+          this.DEFAULT_FONT_SANS = 'times new roman';
+          this.DEFAULT_FONT_SERIF = 'arial';
+          this.DEFAULT_FONT_TYPEWRITER = 'courier new';
         } else if (/(Macintosh|iPad|iPhone|iPod|Android)/.test(userAgent)) {
           this._deviceFontMetrics = this.DEVICE_FONT_METRICS_MAC;
+          this.DEFAULT_FONT_SANS = 'helvetica';
+          this.DEFAULT_FONT_SERIF = 'times roman';
+          this.DEFAULT_FONT_TYPEWRITER = 'courier';
         } else {
           this._deviceFontMetrics = this.DEVICE_FONT_METRICS_LINUX;
         }
@@ -657,11 +665,11 @@ module Shumway.AVM2.AS.flash.text {
 
     static resolveFontName(name: string) {
       if (name === '_sans') {
-        return 'sans-serif';
+        return Font.DEFAULT_FONT_SANS;
       } else if (name === '_serif') {
-        return 'serif';
+        return Font.DEFAULT_FONT_SERIF;
       } else if (name === '_typewriter') {
-        return 'monospace';
+        return Font.DEFAULT_FONT_TYPEWRITER;
       }
       return name;
     }
@@ -690,8 +698,8 @@ module Shumway.AVM2.AS.flash.text {
         if (!metrics) {
           Shumway.Debug.warning(
             'Font metrics for "' + name + '" unknown. Fallback to default.');
-          metrics = Font._getFontMetrics(Font.DEFAULT_FONT_NAME);
-          font._fontFamily = Font.DEFAULT_FONT_NAME;
+          metrics = Font._getFontMetrics(Font.DEFAULT_FONT_SANS);
+          font._fontFamily = Font.DEFAULT_FONT_SANS;
         }
         font.ascent = metrics[0];
         font.descent = metrics[1];
@@ -701,7 +709,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     static getDefaultFont(): Font {
-      return Font.getByName(Font.DEFAULT_FONT_NAME);
+      return Font.getByName(Font.DEFAULT_FONT_SANS);
     }
 
     // JS -> AS Bindings
