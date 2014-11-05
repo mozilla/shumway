@@ -97,9 +97,6 @@ module Shumway.AVM2.AS.flash.ui {
       }
 
       switch (type) {
-        //case events.MouseEvent.MOUSE_OVER:
-        //case events.MouseEvent.MOUSE_OUT:
-        //  return;
         case events.MouseEvent.MOUSE_DOWN:
           if (data.buttons & MouseButtonFlags.Left) {
             data.buttons = MouseButtonFlags.Left;
