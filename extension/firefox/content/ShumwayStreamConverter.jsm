@@ -420,18 +420,41 @@ ChromeActions.prototype = {
     automatic = !!automatic;
     fallbackToNativePlugin(this.window, !automatic, automatic);
   },
-  setClipboard: function (data) {
+  isUserInputInProgress: function () {
+    if (!getBoolPref('shumway.userInputSecurity', true)) {
+      return true;
+    }
+
     // We don't trust our Shumway non-privileged code just yet to verify the
     // user input -- using monitorUserInput function below to track that.
-    if (typeof data !== 'string' ||
-        (Date.now() - this.lastUserInput) > MAX_USER_INPUT_TIMEOUT) {
-      return;
+    if ((Date.now() - this.lastUserInput) > MAX_USER_INPUT_TIMEOUT) {
+      return false;
     }
     // TODO other security checks?
+    return true;
+  },
+  setClipboard: function (data) {
+    if (typeof data !== 'string' || !this.isUserInputInProgress()) {
+      return;
+    }
 
     let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"]
                       .getService(Ci.nsIClipboardHelper);
     clipboard.copyString(data);
+  },
+  setFullscreen: function (enabled) {
+    enabled = !!enabled;
+
+    if (!this.isUserInputInProgress()) {
+      return;
+    }
+
+    var target = this.embedTag || this.document.body;
+    if (enabled) {
+      target.mozRequestFullScreen();
+    } else {
+      target.ownerDocument.mozCancelFullScreen();
+    }
   },
   endActivation: function () {
     if (ActivationQueue.currentNonActive === this) {
@@ -546,10 +569,10 @@ function monitorUserInput(actions) {
   }
 
   var document = actions.document;
-  document.addEventListener('mousedown', notifyUserInput, false);
-  document.addEventListener('mouseup', notifyUserInput, false);
-  document.addEventListener('keydown', notifyUserInput, false);
-  document.addEventListener('keyup', notifyUserInput, false);
+  document.addEventListener('mousedown', notifyUserInput, true);
+  document.addEventListener('mouseup', notifyUserInput, true);
+  document.addEventListener('keydown', notifyUserInput, true);
+  document.addEventListener('keyup', notifyUserInput, true);
 }
 
 // Event listener to trigger chrome privedged code.

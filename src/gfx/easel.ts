@@ -404,23 +404,6 @@ module Shumway.GFX {
       this._canvases.forEach(x => x.style.cursor = cursor);
     }
 
-
-    requestFullscreen() {
-      if (this._fullScreen) {
-        return;
-      }
-      this._fullScreen = true;
-      var canvas: any = this._canvases[0];
-      if (canvas.requestFullscreen) {
-        canvas.requestFullscreen();
-      } else if (canvas.mozRequestFullScreen) {
-        canvas.mozRequestFullScreen();
-      } else if (canvas.webkitRequestFullscreen) {
-        canvas.webkitRequestFullscreen();
-      }
-      alert("Fullscreen mode is not yet supported by Shumway for security reasons.");
-    }
-
     private _render() {
       RenderableVideo.checkForVideoUpdates();
       var mustRender = (this._stage.readyToRender() || forcePaint.value) && !this.paused;

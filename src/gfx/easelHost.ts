@@ -32,6 +32,7 @@ module Shumway.GFX {
     private _group: Group;
     private _context: Shumway.Remoting.GFX.GFXChannelDeserializerContext;
     private _content: Group;
+    private _fullscreen: boolean;
 
     constructor(easel: Easel) {
       this._easel = easel;
@@ -39,6 +40,7 @@ module Shumway.GFX {
       var transparent = easel.transparent;
       this._group = group;
       this._content = null;
+      this._fullscreen = false;
       this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._group, transparent);
       this._addEventListeners();
     }
@@ -63,8 +65,16 @@ module Shumway.GFX {
       this._easel.cursor = cursor;
     }
 
-    requestFullscreen() {
-      this._easel.requestFullscreen();
+    set fullscreen(value: boolean) {
+      if (this._fullscreen !== value) {
+        this._fullscreen = value;
+        // TODO refactor to have a normal two-way communication service/api
+        // HACK for now
+        var firefoxCom = (<any>window).FirefoxCom;
+        if (firefoxCom) {
+          firefoxCom.request('setFullscreen', value, null);
+        }
+      }
     }
 
     private _mouseEventListener(event: MouseEvent) {

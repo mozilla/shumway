@@ -487,9 +487,7 @@ module Shumway.Remoting.GFX {
       var currentMouseTarget = this.input.readInt();
       var cursor = this.input.readInt();
       context._easelHost.cursor = Shumway.UI.toCSSCursor(cursor);
-      if (displayState === 0) {
-        context._easelHost.requestFullscreen();
-      }
+      context._easelHost.fullscreen = displayState === 0 || displayState === 1;
     }
 
     private _readUpdateNetStream() {
