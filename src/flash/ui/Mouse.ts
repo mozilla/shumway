@@ -79,18 +79,23 @@ module Shumway.AVM2.AS.flash.ui {
       var globalPoint = data.point;
       flash.ui.Mouse.updateCurrentPosition(globalPoint);
       var currentTarget = this.currentTarget;
+      var target: InteractiveObject = null;
 
-      if (globalPoint.x < 0 || globalPoint.x > stage.stageWidth ||
-          globalPoint.y < 0 || globalPoint.y > stage.stageHeight) {
-        if (currentTarget) {
-          this._dispatchMouseEvent(stage, events.MouseEvent.MOUSE_LEAVE, data);
+      var type = flash.events.MouseEvent.typeFromDOMType(data.type);
+
+      if (globalPoint.x >= 0 && globalPoint.x < stage.stageWidth &&
+          globalPoint.y >= 0 && globalPoint.y < stage.stageHeight) {
+        target = this._findTarget(globalPoint);
+      } else {
+        if (!currentTarget) {
+          return stage;
         }
-        this.currentTarget = null;
-        return stage;
+        this._dispatchMouseEvent(stage, events.MouseEvent.MOUSE_LEAVE, data);
+        if (type !== events.MouseEvent.MOUSE_MOVE) {
+          return stage;
+        }
       }
 
-      var target = this._findTarget(globalPoint);
-      var type = flash.events.MouseEvent.typeFromDOMType(data.type);
       switch (type) {
         //case events.MouseEvent.MOUSE_OVER:
         //case events.MouseEvent.MOUSE_OUT:
@@ -141,7 +146,7 @@ module Shumway.AVM2.AS.flash.ui {
           if (target === currentTarget) {
             break;
           }
-          var commonAncestor = target.findNearestCommonAncestor(currentTarget);
+          var commonAncestor = target ? target.findNearestCommonAncestor(currentTarget) : stage;
           if (currentTarget && currentTarget !== stage) {
             currentTarget._mouseOver = false;
             // TODO: Support track as menu.
@@ -152,6 +157,9 @@ module Shumway.AVM2.AS.flash.ui {
               this._dispatchMouseEvent(nodeLeft, events.MouseEvent.ROLL_OUT, data, target);
               nodeLeft = nodeLeft.parent;
             }
+          }
+          if (!target) {
+            return stage;
           }
           if (target === stage) {
             break;
