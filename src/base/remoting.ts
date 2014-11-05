@@ -184,4 +184,12 @@ module Shumway.Remoting {
     WindowBlur,
     WindowFocus
   }
+
+  export interface DisplayParameters {
+    canvasWidth: number;
+    canvasHeight: number;
+    pixelRatio: number;
+    screenWidth: number;
+    screenHeight: number;
+  }
 }

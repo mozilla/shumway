@@ -100,6 +100,8 @@ module Shumway.AVM2.AS.flash.display {
     private _displayContextInfo: string;
 
     private _timeout: number;
+    private _canvasWidth: number;
+    private _canvasHeight: number;
 
     /**
      * The |invalidate| function was called on the stage. This flag indicates that
@@ -139,7 +141,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageWidth(): number /*int*/ {
-      return (this._stageWidth / 20) | 0;
+      return this.scaleMode !== StageScaleMode.NO_SCALE ?
+        (this._stageWidth / 20) | 0 : this._canvasWidth;
     }
 
     set stageWidth(value: number /*int*/) {
@@ -161,7 +164,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageHeight(): number /*int*/ {
-      return (this._stageHeight / 20) | 0;
+      return this.scaleMode !== StageScaleMode.NO_SCALE ?
+        (this._stageHeight / 20) | 0 : this._canvasHeight;
     }
 
     set stageHeight(value: number /*int*/) {
@@ -184,6 +188,13 @@ module Shumway.AVM2.AS.flash.display {
      */
     setStageColor(value: number) {
       this._colorARGB = value;
+    }
+
+    setCanvasSize(width: number, height: number, pixelRatio: number) {
+      this._canvasWidth = width;
+      this._canvasHeight = height;
+      this._contentsScaleFactor = pixelRatio;
+      // TODO 'resize' event when NO_SCALE set
     }
 
     get showDefaultContextMenu(): boolean {

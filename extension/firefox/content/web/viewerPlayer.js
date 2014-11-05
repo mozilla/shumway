@@ -38,7 +38,6 @@ function runSwfPlayer(flashParams) {
   var appMode = compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var asyncLoading = true;
   var baseUrl = flashParams.baseUrl;
-  var movieParams = flashParams.movieParams;
   var objectParams = flashParams.objectParams;
   var movieUrl = flashParams.url;
 
@@ -52,6 +51,7 @@ function runSwfPlayer(flashParams) {
       player.movieParams = flashParams.movieParams;
       player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';
       player.stageScale = (objectParams && objectParams.scale) || 'showall';
+      player.displayParams = flashParams.displayParams;
 
       Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
 

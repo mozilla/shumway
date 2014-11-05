@@ -33,6 +33,7 @@ module Shumway.GFX.Test {
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
+  import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
   export class TestEaselHost extends EaselHost {
     private _worker;
@@ -59,6 +60,13 @@ module Shumway.GFX.Test {
       this._worker.postSyncMessage({
         type: 'externalCallback',
         request: request
+      });
+    }
+
+    onDisplayParameters(params: DisplayParameters) {
+      this._worker.postMessage({
+        type: 'displayParameters',
+        params: params
       });
     }
 
