@@ -163,6 +163,10 @@ module Shumway.GFX {
 
     processVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
       var asset = this._context._getVideoAsset(id);
+      if (!asset) {
+        // TODO fix async/sync NetStream creation
+        return undefined;
+      }
       return (<RenderableVideo>asset).processControlRequest(eventType, data);
     }
 

@@ -401,7 +401,7 @@ module Shumway.Player {
     }
 
     public notifyVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
-      this.onVideoControl(id, eventType, data);
+      return this.onVideoControl(id, eventType, data);
     }
 
     public executeFSCommand(command: string, args: string) {
