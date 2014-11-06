@@ -80,9 +80,11 @@ module Shumway.Player.Window {
         type: 'videoControl',
         id: id,
         eventType: eventType,
-        data: data
+        data: data,
+        result: undefined
       });
       this._parent.dispatchEvent(event);
+      return event.detail.result;
     }
 
     onFrameProcessed() {
