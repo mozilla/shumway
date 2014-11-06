@@ -116,13 +116,19 @@ module Shumway.Remoting.Player {
       var cursor = flash.ui.Mouse.cursor;
       if (currentMouseTarget) {
         this.output.writeInt(currentMouseTarget._id);
-        if (cursor === MouseCursor.AUTO &&
-            (flash.display.SimpleButton.isType(currentMouseTarget) ||
-             (flash.display.Sprite.isType(currentMouseTarget) &&
-             (<flash.display.Sprite>currentMouseTarget).buttonMode)
-            ) &&
-            (<any>currentMouseTarget).useHandCursor) {
-            cursor = MouseCursor.BUTTON;
+        if (cursor === MouseCursor.AUTO) {
+          var node = currentMouseTarget;
+          do {
+            if (flash.display.SimpleButton.isType(node) ||
+                (flash.display.Sprite.isType(node) &&
+                 (<flash.display.Sprite>node).buttonMode) &&
+                 (<any>currentMouseTarget).useHandCursor)
+            {
+              cursor = MouseCursor.BUTTON;
+              break;
+            }
+            node = node._parent;
+          } while (node !== stage);
         }
       } else {
         this.output.writeInt(-1);

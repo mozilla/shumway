@@ -170,7 +170,7 @@ module Shumway.GFX {
       element.addEventListener("waiting", elementEventHandler);
       element.addEventListener("loadedmetadata", elementEventHandler);
       element.addEventListener("error", elementEventHandler);
-      element.play();
+      // element.play();
 
       this._video = element;
       this._videoEventHandler = elementEventHandler;
