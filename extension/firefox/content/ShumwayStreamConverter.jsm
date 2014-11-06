@@ -426,11 +426,30 @@ ChromeActions.prototype = {
     automatic = !!automatic;
     fallbackToNativePlugin(this.window, !automatic, automatic);
   },
-  setClipboard: function (data) {
+  userInput: function() {
+    var win = this.window;
+    var winUtils = win.QueryInterface(Components.interfaces.nsIInterfaceRequestor).
+                       getInterface(Components.interfaces.nsIDOMWindowUtils);
+    if (winUtils.isHandlingUserInput) {
+      this.lastUserInput = Date.now();
+    }
+  },
+  isUserInputInProgress: function () {
+    // TODO userInput does not work for OOP
+    if (!getBoolPref('shumway.userInputSecurity', true)) {
+      return true;
+    }
+
     // We don't trust our Shumway non-privileged code just yet to verify the
-    // user input -- using monitorUserInput function below to track that.
-    if (typeof data !== 'string' ||
-        (Date.now() - this.lastUserInput) > MAX_USER_INPUT_TIMEOUT) {
+    // user input -- using userInput function above to track that.
+    if ((Date.now() - this.lastUserInput) > MAX_USER_INPUT_TIMEOUT) {
+      return false;
+    }
+    // TODO other security checks?
+    return true;
+  },
+  setClipboard: function (data) {
+    if (typeof data !== 'string' || !this.isUserInputInProgress()) {
       return;
     }
     // TODO other security checks?
@@ -540,23 +559,6 @@ ChromeActions.prototype = {
   }
 };
 
-function monitorUserInput(actions) {
-  function notifyUserInput() {
-    var win = actions.window;
-    var winUtils = win.QueryInterface(Components.interfaces.nsIInterfaceRequestor).
-                       getInterface(Components.interfaces.nsIDOMWindowUtils);
-    if (winUtils.isHandlingUserInput) {
-      actions.lastUserInput = Date.now();
-    }
-  }
-
-  var document = actions.document;
-  document.addEventListener('mousedown', notifyUserInput, false);
-  document.addEventListener('mouseup', notifyUserInput, false);
-  document.addEventListener('keydown', notifyUserInput, false);
-  document.addEventListener('keyup', notifyUserInput, false);
-}
-
 // Event listener to trigger chrome privedged code.
 function RequestListener(actions) {
   this.actions = actions;
@@ -573,7 +575,7 @@ RequestListener.prototype.receive = function(detail) {
   }
   if (sync) {
     var response = actions[action].call(this.actions, data);
-    return JSON.stringify(response);
+    return response === undefined ? undefined : JSON.stringify(response);
   }
 
   var responseCallback;
@@ -583,7 +585,7 @@ RequestListener.prototype.receive = function(detail) {
       var win = actions.window;
       if (win.wrappedJSObject.onMessageCallback) {
         win.wrappedJSObject.onMessageCallback({
-          response: JSON.stringify(response),
+          response: response === undefined ? undefined : JSON.stringify(response),
           cookie: cookie
         });
       }
@@ -712,7 +714,9 @@ function activateShumwayScripts(window, requestListener) {
   }
 
   function initScripts() {
-    window.wrappedJSObject.notifyShumwayMessage = requestListener.receive.bind(requestListener);
+    window.wrappedJSObject.notifyShumwayMessage = function () {
+      return requestListener.receive.apply(requestListener, arguments);
+    };
     window.wrappedJSObject.runViewer();
   }
 
@@ -997,8 +1001,6 @@ ShumwayStreamConverterBase.prototype = {
           activateShumwayScripts(domWindow, requestListener);
         }.bind(actions, domWindow, requestListener);
         ActivationQueue.enqueue(actions);
-
-        monitorUserInput(actions);
 
         listener.onStopRequest(aRequest, context, statusCode);
       }
