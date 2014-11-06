@@ -128,7 +128,7 @@ module Shumway.Remoting.Player {
               break;
             }
             node = node._parent;
-          } while (node !== stage);
+          } while (node && node !== stage);
         }
       } else {
         this.output.writeInt(-1);
