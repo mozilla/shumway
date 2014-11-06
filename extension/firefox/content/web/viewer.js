@@ -28,7 +28,7 @@ var FirefoxCom = (function FirefoxComClosure() {
      */
     requestSync: function(action, data) {
       var result = String(ShumwayCom.sendMessage(action, data, true, undefined));
-      return result ? JSON.parse(result) : undefined;
+      return result !== 'undefined' ? JSON.parse(result) : undefined;
     },
     /**
      * Creates an event that the extension is listening for and will
@@ -56,7 +56,7 @@ var FirefoxCom = (function FirefoxComClosure() {
         return;
       }
       delete this._requestCallbacks[cookie];
-      callback(response ? JSON.parse(response) : undefined);
+      callback(response !== 'undefined' ? JSON.parse(response) : undefined);
     },
     _nextRequestId: 1,
     _requestCallbacks: Object.create(null),
@@ -68,6 +68,15 @@ var FirefoxCom = (function FirefoxComClosure() {
     }
   };
 })();
+
+function notifyUserInput() {
+  ShumwayCom.sendMessage('userInput', null, true, undefined);
+}
+
+document.addEventListener('mousedown', notifyUserInput, true);
+document.addEventListener('mouseup', notifyUserInput, true);
+document.addEventListener('keydown', notifyUserInput, true);
+document.addEventListener('keyup', notifyUserInput, true);
 
 function fallback() {
   FirefoxCom.requestSync('fallback', null)
