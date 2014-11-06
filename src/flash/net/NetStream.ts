@@ -26,6 +26,7 @@ module Shumway.AVM2.AS.flash.net {
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
+  import ISoundSource = flash.media.ISoundSource;
 
   var USE_MEDIASOURCE_API = false;
   declare var MediaSource;
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.net {
   declare var Promise;
   declare var window;
 
-  export class NetStream extends flash.events.EventDispatcher {
+  export class NetStream extends flash.events.EventDispatcher implements ISoundSource {
     _isDirty: boolean;
 
     // Called whenever the class is initialized.
@@ -55,6 +56,7 @@ module Shumway.AVM2.AS.flash.net {
       this._peerID = asCoerceString(peerID);
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._isDirty = true;
+      this._soundTransform = new flash.media.SoundTransform();
 
       this._contentTypeHint = null;
       this._mediaSource = null;
@@ -173,6 +175,8 @@ module Shumway.AVM2.AS.flash.net {
     }
 
     play(url: string): void {
+      flash.media.SoundMixer._registerSoundSource(this);
+
       // (void) -> void ???
       url = asCoerceString(url);
 
@@ -246,8 +250,8 @@ module Shumway.AVM2.AS.flash.net {
       return this._soundTransform;
     }
     set soundTransform(sndTransform: flash.media.SoundTransform) {
-      somewhatImplemented("public flash.net.NetStream::set soundTransform");
       this._soundTransform = sndTransform;
+      flash.media.SoundMixer._updateSoundSource(this);
     }
     get checkPolicyFile(): boolean {
       return this._checkPolicyFile;
@@ -527,6 +531,8 @@ module Shumway.AVM2.AS.flash.net {
       switch (eventType) {
         case VideoPlaybackEvent.Initialized:
           this._videoReady.resolve(undefined);
+
+          flash.media.SoundMixer._updateSoundSource(this);
           break;
         case VideoPlaybackEvent.PlayStart:
           if (this._videoState.started) {
@@ -540,6 +546,8 @@ module Shumway.AVM2.AS.flash.net {
           this._videoState.started = false;
           this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Play.Stop", level: "status"})));
+
+          flash.media.SoundMixer._unregisterSoundSource(this);
           break;
         case VideoPlaybackEvent.BufferFull:
           this._videoState.buffer = 'full';
@@ -574,6 +582,16 @@ module Shumway.AVM2.AS.flash.net {
           }
           break;
       }
+    }
+
+    stopSound() {
+      this.pause();
+    }
+
+    updateSoundLevels(volume: number) {
+      this._notifyVideoControl(VideoControlEvent.SetSoundLevels, {
+        volume: volume
+      });
     }
   }
 

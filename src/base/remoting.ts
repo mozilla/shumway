@@ -133,7 +133,8 @@ module Shumway.Remoting {
     Pause = 1,
     Seek = 2,
     GetTime = 3,
-    GetBufferLength = 4
+    GetBufferLength = 4,
+    SetSoundLevels = 5
   }
 
   export enum StageScaleMode {

@@ -252,6 +252,11 @@ module Shumway.GFX {
           return videoElement ? videoElement.currentTime : 0;
         case VideoControlEvent.GetBufferLength:
           return videoElement ? videoElement.duration : 0;
+        case VideoControlEvent.SetSoundLevels:
+          if (videoElement) {
+            videoElement.volume = data.volume;
+          }
+          return;
       }
     }
 
