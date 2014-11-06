@@ -86,11 +86,8 @@ module Shumway.Timeline {
       }
       var textures = this.graphics.getUsedTextures();
       for (var i = 0; i < dependencies.length; i++) {
-        var bitmap = <BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
-        release || assert(bitmap, "Bitmap symbol is not defined.");
-        var bitmapData = bitmap.symbolClass.initializeFrom(bitmap);
-        bitmap.symbolClass.instanceConstructorNoInitialize.call(bitmapData);
-        textures.push(bitmapData);
+        var symbol = <BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
+        textures.push(symbol.getSharedInstance());
       }
     }
   }
@@ -118,6 +115,9 @@ module Shumway.Timeline {
     height: number;
     data: Uint8Array;
     type: ImageType;
+
+    private sharedInstance: flash.display.BitmapData;
+
     constructor(id: number) {
       super(id, flash.display.BitmapData);
     }
@@ -144,6 +144,15 @@ module Shumway.Timeline {
           notImplemented(data.mimeType);
       }
       return symbol;
+    }
+
+    getSharedInstance() {
+      return this.sharedInstance || this.createSharedInstance();
+    }
+    createSharedInstance() {
+      this.sharedInstance = this.symbolClass.initializeFrom(this);
+      this.symbolClass.instanceConstructorNoInitialize.call(this.sharedInstance);
+      return this.sharedInstance;
     }
   }
 
