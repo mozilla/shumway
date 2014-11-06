@@ -433,11 +433,20 @@ module Shumway.AVM2.AS.flash.display {
      */
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
                    testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
-      var result = this._boundsAndMaskContainPoint(globalX, globalY, localX, localY, testingType);
-      // Same as in the DisplayObject base case, we're done if we don't have a hit or are only
-      // looking for bounds + mask checks.
-      if (result === HitTestingResult.None || testingType < HitTestingType.HitTestShape) {
-        return result;
+      return this._containsPointImpl(globalX, globalY, localX, localY, testingType, objects, false);
+    }
+
+    _containsPointImpl(globalX: number, globalY: number, localX: number, localY: number,
+                               testingType: HitTestingType, objects: DisplayObject[],
+                               skipBoundsCheck: boolean): HitTestingResult {
+      var result: HitTestingResult;
+      if (!skipBoundsCheck) {
+        result = this._boundsAndMaskContainPoint(globalX, globalY, localX, localY, testingType);
+        // Same as in the DisplayObject base case, we're done if we don't have a hit or are only
+        // looking for bounds + mask checks.
+        if (result === HitTestingResult.None || testingType < HitTestingType.HitTestShape) {
+          return result;
+        }
       }
 
       var anyChildHit = false;
@@ -483,7 +492,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         return HitTestingResult.Shape;
       }
-      var selfHit = this._containsPointDirectly(localX, localY);
+      var selfHit = this._containsPointDirectly(localX, localY, globalX, globalY);
       if (selfHit && (testingType === HitTestingType.ObjectsUnderPoint ||
                       objects && this._mouseEnabled)) {
         objects.push(this);

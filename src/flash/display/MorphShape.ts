@@ -50,9 +50,10 @@ module Shumway.AVM2.AS.flash.display {
       return this._ensureGraphics();
     }
 
-    _containsPointDirectly(x: number, y: number): boolean {
+    _containsPointDirectly(localX: number, localY: number,
+                           globalX: number, globalY: number): boolean {
       var graphics = this._getGraphics();
-      return !!graphics && graphics._containsPoint(x, y, true, this._ratio / 0xffff);
+      return !!graphics && graphics._containsPoint(localX, localY, true, this._ratio / 0xffff);
     }
   }
 }

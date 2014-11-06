@@ -18,6 +18,8 @@ module Shumway.Player.Window {
   import Player = Shumway.Player.Player;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
+  import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
+
   export class WindowPlayer extends Player {
     private _window;
     private _parent;
@@ -70,6 +72,17 @@ module Shumway.Player.Window {
         command: command,
         args: args
       }, '*');
+    }
+
+    onVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
+      var event = this._parent.document.createEvent('CustomEvent');
+      event.initCustomEvent('syncmessage', false, false, {
+        type: 'videoControl',
+        id: id,
+        eventType: eventType,
+        data: data
+      });
+      this._parent.dispatchEvent(event);
     }
 
     onFrameProcessed() {
@@ -126,6 +139,9 @@ module Shumway.Player.Window {
                   request: data.request,
                   timeline: Shumway.SWF.timelineBuffer
                 }, '*');
+                break;
+              case 'videoPlayback':
+                this.processVideoEvent(data.id, data.eventType, data.data);
                 break;
             }
             break;

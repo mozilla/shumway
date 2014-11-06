@@ -40,6 +40,9 @@ module Shumway.Remoting.GFX {
   import Matrix = Shumway.GFX.Geometry.Matrix;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
 
+  import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
+  import StageScaleModeId = Shumway.Remoting.StageScaleModeId;
+
   import IDataInput = Shumway.ArrayUtilities.IDataInput;
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
   import assert = Shumway.Debug.assert;
@@ -165,6 +168,10 @@ module Shumway.Remoting.GFX {
       return <RenderableText>this._assets[id];
     }
 
+    _setStageScaleAndAlign(scaleMode: StageScaleModeId, align: StageAlignFlags, stageWidth: number, stageHeight: number) {
+      this._easelHost.stage.setScaleAndAlign(scaleMode, align, stageWidth, stageHeight);
+    }
+
     /**
      * Decodes some raw image data and calls |oncomplete| with the decoded pixel data
      * once the image is loaded.
@@ -187,7 +194,6 @@ module Shumway.Remoting.GFX {
     public sendVideoPlaybackEvent(assetId: number, eventType: VideoPlaybackEvent, data: any): void {
       this._easelHost.sendVideoPlaybackEvent(assetId, eventType, data);
     }
-
   }
 
   export class GFXChannelDeserializer {
@@ -460,9 +466,15 @@ module Shumway.Remoting.GFX {
         context._frames[id] = context.root;
       }
       var color = this.input.readInt();
-      var rectangle = this._readRectangle()
+      var rectangle = this._readRectangle();
       context.root.setBounds(rectangle);
       context.root.color = Color.FromARGB(color);
+      var align = this.input.readInt();
+      var scaleMode = this.input.readInt();
+      context._setStageScaleAndAlign(scaleMode, align, rectangle.w, rectangle.h);
+      var currentMouseTarget = this.input.readInt();
+      var cursor = this.input.readInt();
+      context._easelHost.cursor = Shumway.UI.toCSSCursor(cursor);
     }
 
     private _readUpdateNetStream() {

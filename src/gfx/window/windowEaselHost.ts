@@ -21,6 +21,8 @@ module Shumway.GFX.Window {
   import CircularBuffer = Shumway.CircularBuffer;
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
+  import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
+
   export class WindowEaselHost extends EaselHost {
     private _timelineRequests: Map<(data) => void>;
     private _window;
@@ -57,6 +59,17 @@ module Shumway.GFX.Window {
       this._playerWindow.dispatchEvent(event);
     }
 
+    onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
+      var event = this._playerWindow.document.createEvent('CustomEvent');
+      event.initCustomEvent('syncmessage', false, false, {
+        type: 'videoPlayback',
+        id: id,
+        eventType: eventType,
+        data: data
+      });
+      this._playerWindow.dispatchEvent(event);
+    }
+
     public requestTimeline(type: string, cmd: string): Promise<TimelineBuffer> {
       return new Promise(function (resolve) {
         this._timelineRequests[type] = resolve;
@@ -83,6 +96,8 @@ module Shumway.GFX.Window {
           this.processFrame();
         } else if (data.type === 'external') {
           this.processExternalCommand(data.request);
+        } else if (data.type === 'videoControl') {
+          data.result = this.processVideoControl(data.id, data.eventType, data.data);
         } else if (data.type === 'fscommand') {
           this.processFSCommand(data.command, data.args);
         } else if (data.type === 'timelineResponse' && data.timeline) {

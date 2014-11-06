@@ -18,6 +18,8 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import StageScaleModeId = Shumway.Remoting.StageScaleModeId;
+
   export class StageScaleMode extends ASNative {
     
     // Called whenever the class is initialized.
@@ -42,19 +44,23 @@ module Shumway.AVM2.AS.flash.display {
     static EXACT_FIT: string = "exactFit";
     static NO_BORDER: string = "noBorder";
     static NO_SCALE: string = "noScale";
-    
-    
+
+    static SHOW_ALL_LOWERCASE: string = "showall";
+    static EXACT_FIT_LOWERCASE: string = "exactfit";
+    static NO_BORDER_LOWERCASE: string = "noborder";
+    static NO_SCALE_LOWERCASE: string = "noscale";
+
     // AS -> JS Bindings
 
     static fromNumber(n: number): string {
       switch (n) {
-        case 0:
+        case StageScaleModeId.ShowAll:
           return StageScaleMode.SHOW_ALL;
-        case 1:
+        case StageScaleModeId.ExactFit:
           return StageScaleMode.EXACT_FIT;
-        case 2:
+        case StageScaleModeId.NoBorder:
           return StageScaleMode.NO_BORDER;
-        case 4:
+        case StageScaleModeId.NoScale:
           return StageScaleMode.NO_SCALE;
         default:
           return null;
@@ -62,15 +68,15 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     static toNumber(value: string): number {
-      switch (value) {
-        case StageScaleMode.SHOW_ALL:
-          return 0;
-        case StageScaleMode.EXACT_FIT:
-          return 1;
-        case StageScaleMode.NO_BORDER:
-          return 2;
-        case StageScaleMode.NO_SCALE:
-          return 3;
+      switch (value.toLowerCase()) {
+        case StageScaleMode.SHOW_ALL_LOWERCASE:
+          return StageScaleModeId.ShowAll;
+        case StageScaleMode.EXACT_FIT_LOWERCASE:
+          return StageScaleModeId.ExactFit;
+        case StageScaleMode.NO_BORDER_LOWERCASE:
+          return StageScaleModeId.NoBorder;
+        case StageScaleMode.NO_SCALE_LOWERCASE:
+          return StageScaleModeId.NoScale;
         default:
           return -1;
       }
