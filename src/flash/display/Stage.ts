@@ -194,7 +194,10 @@ module Shumway.AVM2.AS.flash.display {
       this._canvasWidth = width;
       this._canvasHeight = height;
       this._contentsScaleFactor = pixelRatio;
-      // TODO 'resize' event when NO_SCALE set
+
+      if (this.scaleMode === StageScaleMode.NO_SCALE) {
+        this.dispatchEvent(flash.events.Event.getInstance(flash.events.Event.RESIZE));
+      }
     }
 
     get showDefaultContextMenu(): boolean {
