@@ -234,12 +234,15 @@ module Shumway.GFX {
         case VideoControlEvent.Pause:
           if (videoElement) {
             if (data.paused && !videoElement.paused) {
+              if (!isNaN(data.time)) {
+                videoElement.currentTime = data.time;
+              }
               videoElement.pause();
             } else if (!data.paused && videoElement.paused) {
               videoElement.play();
-            }
-            if (!isNaN(data.time)) {
-              videoElement.currentTime = data.time;
+              if (!isNaN(data.time)) {
+                videoElement.currentTime = data.time;
+              }
             }
           }
           return;
@@ -252,6 +255,11 @@ module Shumway.GFX {
           return videoElement ? videoElement.currentTime : 0;
         case VideoControlEvent.GetBufferLength:
           return videoElement ? videoElement.duration : 0;
+        case VideoControlEvent.SetSoundLevels:
+          if (videoElement) {
+            videoElement.volume = data.volume;
+          }
+          return;
       }
     }
 
