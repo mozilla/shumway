@@ -75,30 +75,4 @@ module Shumway {
   export var playSymbolCountOption = playerOptions.register (
     new Shumway.Options.Option("", "Play Symbol Count", "number", -1, "Select symbol count.", {range: { min: 0, max: 20000, step: 1 }})
   );
-
-  export var stageAlignOption = playerOptions.register (
-    new Shumway.Options.Option("", "Stage Align", "number", -1, "Stage alignment.", { choices: {
-      "Movie": -1,
-      "None": StageAlignFlags.None,
-      "Top": StageAlignFlags.Top,
-      "Left": StageAlignFlags.Left,
-      "Bottom": StageAlignFlags.Bottom,
-      "Right": StageAlignFlags.Right,
-      "Top Left": StageAlignFlags.TopLeft,
-      "Bottom Left": StageAlignFlags.BottomLeft,
-      "Bottom Right": StageAlignFlags.BottomRight,
-      "Top Right": StageAlignFlags.TopRight
-    }})
-  );
-
-  export var stageScaleModeOption = playerOptions.register (
-    new Shumway.Options.Option("", "Stage Scale Mode", "number", -1, "Stage scaling mode.", { choices: {
-      "Movie": -1,
-      "ShowAll": StageScaleMode.ShowAll,
-      "ExactFit": StageScaleMode.ExactFit,
-      "NoBorder": StageScaleMode.NoBorder,
-      "NoScale": StageScaleMode.NoScale
-    }})
-  );
-
 }

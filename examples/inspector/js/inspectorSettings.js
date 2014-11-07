@@ -29,7 +29,11 @@ var stateDefaults = {
   overlayFlash: false,
   useIFramePlayer: false,
   mute: false,
-  release: true
+  release: true,
+  salign: 'tl',
+  scale: 'noscale',
+  width: -1,
+  height: -1
 };
 
 for (var option in stateDefaults) {
@@ -53,6 +57,22 @@ function saveInspectorState() {
   Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
 }
 
+function resizeCanvas() {
+  var stageContainer = document.getElementById('stageContainer');
+  var width = state.width, height = state.height;
+  if (width < 0 || height < 0) {
+    stageContainer.style.width = '';
+    stageContainer.style.height = '';
+  } else {
+    stageContainer.style.width = width + 'px';
+    stageContainer.style.height = height + 'px';
+  }
+  var ev = document.createEvent('Event');
+  ev.initEvent('resize', true, true);
+  window.dispatchEvent(ev);
+}
+resizeCanvas();
+
 var GUI = (function () {
   var Option = Shumway.Options.Option;
   var OptionSet = Shumway.Options.OptionSet;
@@ -70,6 +90,25 @@ var GUI = (function () {
   inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
   inspectorOptions.add(state, "overlayFlash").onChange(saveInspectorOption);
   inspectorOptions.add(state, "useIFramePlayer").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "scale").options({
+    "ShowAll": 'showall',
+    "ExactFit": 'exactfit',
+    "NoBorder": 'noborder',
+    "NoScale": 'noscale'
+  }).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "salign").options({
+    "None": '',
+    "Top": 't',
+    "Left": 'l',
+    "Bottom": 'b',
+    "Right": 'r',
+    "Top Left": 'tl',
+    "Bottom Left": 'bl',
+    "Bottom Right": 'br',
+    "Top Right": 'tr'
+  }).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "width", -1, 2000, 1).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "height", -1, 2000, 1).onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
@@ -134,6 +173,9 @@ var GUI = (function () {
     if (this.property === 'overlayFlash') {
       ensureFlashOverlay();
       flashOverlay.style.display = value ? 'inline-block' : 'none';
+    }
+    if (this.property === 'width' || this.property === 'height') {
+      resizeCanvas();
     }
     state[this.property] = value;
     saveInspectorState();

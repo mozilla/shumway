@@ -98,19 +98,8 @@ module Shumway.Remoting.Player {
       this.output.writeInt(stage._id);
       this.output.writeInt(stage.color);
       this._writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
-
-      if (stageAlignOption.value === -1) {
-        this.output.writeInt(flash.display.StageAlign.toNumber(stage.align));
-      } else {
-        this.output.writeInt(stageAlignOption.value);
-      }
-
-      if (stageScaleModeOption.value === -1) {
-        this.output.writeInt(flash.display.StageScaleMode.toNumber(stage.scaleMode));
-      } else {
-        this.output.writeInt(stageScaleModeOption.value);
-      }
-
+      this.output.writeInt(flash.display.StageAlign.toNumber(stage.align));
+      this.output.writeInt(flash.display.StageScaleMode.toNumber(stage.scaleMode));
       this.output.writeInt(flash.display.StageDisplayState.toNumber(stage.displayState));
 
       var cursor = flash.ui.Mouse.cursor;
