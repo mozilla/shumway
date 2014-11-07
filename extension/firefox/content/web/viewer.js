@@ -216,9 +216,7 @@ window.addEventListener("message", function handlerMessage(e) {
       FirefoxCom.request('setClipboard', args.data, null);
       break;
     case 'navigateTo':
-      var targetWindow = args.data.target || '_parent'; // using parent as default target
-      var url = args.data.url;
-      window.open(url, targetWindow);
+      FirefoxCom.request('navigateTo', args.data, null);
       break;
     case 'started':
       document.body.classList.add('started');

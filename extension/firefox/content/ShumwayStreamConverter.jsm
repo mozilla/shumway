@@ -422,6 +422,11 @@ ChromeActions.prototype = {
       }
     });
   },
+  navigateTo: function (data) {
+    var embedTag = this.embedTag.wrappedJSObject;
+    var window = embedTag ? embedTag.ownerDocument.defaultView : this.window;
+    window.open(data.url, data.target || '_self');
+  },
   fallback: function(automatic) {
     automatic = !!automatic;
     fallbackToNativePlugin(this.window, !automatic, automatic);
