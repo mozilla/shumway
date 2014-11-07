@@ -507,12 +507,11 @@ module Shumway.AVM2.AS.flash.net {
           simulated = true;
           break;
         case 305: // get bytesLoaded
-          result = this._videoState.buffer === 'full' ? 100 :
-            this._videoState.buffer === 'progress' ? 50 : 0;
+          result = this._notifyVideoControl(VideoControlEvent.GetBytesLoaded, null);
           simulated = true;
           break;
         case 306: // get bytesTotal
-          result = 100;
+          result = this._notifyVideoControl(VideoControlEvent.GetBytesTotal, null);
           simulated = true;
           break;
       }
@@ -567,6 +566,10 @@ module Shumway.AVM2.AS.flash.net {
               data.code === 3 ? "NetStream.Play.FileStructureInvalid" : "NetStream.Play.StreamNotFound";
           this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: code, level: "error"})));
+          break;
+        case VideoPlaybackEvent.Seeking:
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Seek.Notify", level: "status"})));
           break;
         case VideoPlaybackEvent.Metadata:
           this._videoMetadataReady.resolve({
