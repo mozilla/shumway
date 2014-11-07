@@ -278,11 +278,11 @@ ChromeActions.prototype = {
     return getBoolPref(data.pref, data.def);
   },
   getCompilerSettings: function getCompilerSettings() {
-    return JSON.stringify({
+    return {
       appCompiler: getBoolPref('shumway.appCompiler', true),
       sysCompiler: getBoolPref('shumway.sysCompiler', false),
       verifier: getBoolPref('shumway.verifier', true)
-    });
+    };
   },
   addProfilerMarker: function (marker) {
     if ('nsIProfiler' in Ci) {
@@ -291,14 +291,14 @@ ChromeActions.prototype = {
     }
   },
   getPluginParams: function getPluginParams() {
-    return JSON.stringify({
+    return {
       url: this.url,
       baseUrl : this.baseUrl,
       movieParams: this.movieParams,
       objectParams: this.objectParams,
       isOverlay: this.isOverlay,
       isPausedAtStart: this.isPausedAtStart
-     });
+     };
   },
   _canDownloadFile: function canDownloadFile(data, callback) {
     var url = data.url, checkPolicyFile = data.checkPolicyFile;
@@ -355,6 +355,13 @@ ChromeActions.prototype = {
     }.bind(this));
   },
   loadFile: function loadFile(data) {
+    function notifyLoadFileListener(data) {
+      if (!win.wrappedJSObject.onLoadFileCallback) {
+        return;
+      }
+      win.wrappedJSObject.onLoadFileCallback(data);
+    }
+
     var url = data.url;
     var checkPolicyFile = data.checkPolicyFile;
     var sessionId = data.sessionId;
@@ -384,8 +391,8 @@ ChromeActions.prototype = {
       xhr.onprogress = function (e) {
         var position = e.loaded;
         var data = new Uint8Array(xhr.response);
-        win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "progress",
-                         array: data, loaded: e.loaded, total: e.total}, "*");
+        notifyLoadFileListener({callback:"loadFile", sessionId: sessionId,
+             topic: "progress", array: data, loaded: e.loaded, total: e.total});
         lastPosition = position;
         if (limit && e.total >= limit) {
           xhr.abort();
@@ -394,16 +401,15 @@ ChromeActions.prototype = {
       xhr.onreadystatechange = function(event) {
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
-            win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "error",
-                             error: xhr.statusText}, "*");
+            notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "error", error: xhr.statusText});
           }
-          win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "close"}, "*");
+          notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "close"});
         }
       };
       if (mimeType)
         xhr.setRequestHeader("Content-Type", mimeType);
       xhr.send(postData);
-      win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "open"}, "*");
+      notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "open"});
     };
 
     this._canDownloadFile({url: url, checkPolicyFile: checkPolicyFile}, function (data) {
@@ -411,20 +417,44 @@ ChromeActions.prototype = {
         performXHR();
       } else {
         log("data access id prohibited to " + url + " from " + baseUrl);
-        win.postMessage({callback:"loadFile", sessionId: sessionId, topic: "error",
-          error: "only original swf file or file from the same origin loading supported"}, "*");
+        notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "error",
+          error: "only original swf file or file from the same origin loading supported"});
       }
     });
+  },
+  navigateTo: function (data) {
+    var embedTag = this.embedTag.wrappedJSObject;
+    var window = embedTag ? embedTag.ownerDocument.defaultView : this.window;
+    window.open(data.url, data.target || '_self');
   },
   fallback: function(automatic) {
     automatic = !!automatic;
     fallbackToNativePlugin(this.window, !automatic, automatic);
   },
-  setClipboard: function (data) {
+  userInput: function() {
+    var win = this.window;
+    var winUtils = win.QueryInterface(Components.interfaces.nsIInterfaceRequestor).
+                       getInterface(Components.interfaces.nsIDOMWindowUtils);
+    if (winUtils.isHandlingUserInput) {
+      this.lastUserInput = Date.now();
+    }
+  },
+  isUserInputInProgress: function () {
+    // TODO userInput does not work for OOP
+    if (!getBoolPref('shumway.userInputSecurity', true)) {
+      return true;
+    }
+
     // We don't trust our Shumway non-privileged code just yet to verify the
-    // user input -- using monitorUserInput function below to track that.
-    if (typeof data !== 'string' ||
-        (Date.now() - this.lastUserInput) > MAX_USER_INPUT_TIMEOUT) {
+    // user input -- using userInput function above to track that.
+    if ((Date.now() - this.lastUserInput) > MAX_USER_INPUT_TIMEOUT) {
+      return false;
+    }
+    // TODO other security checks?
+    return true;
+  },
+  setClipboard: function (data) {
+    if (typeof data !== 'string' || !this.isUserInputInProgress()) {
       return;
     }
     // TODO other security checks?
@@ -515,8 +545,7 @@ ChromeActions.prototype = {
         return;
 
       this.externalComInitialized = true;
-      var eventTarget = this.window.document;
-      initExternalCom(parentWindow, embedTag, eventTarget);
+      initExternalCom(parentWindow, embedTag, this.window);
       return;
     case 'getId':
       return embedTag.id;
@@ -535,33 +564,15 @@ ChromeActions.prototype = {
   }
 };
 
-function monitorUserInput(actions) {
-  function notifyUserInput() {
-    var win = actions.window;
-    var winUtils = win.QueryInterface(Components.interfaces.nsIInterfaceRequestor).
-                       getInterface(Components.interfaces.nsIDOMWindowUtils);
-    if (winUtils.isHandlingUserInput) {
-      actions.lastUserInput = Date.now();
-    }
-  }
-
-  var document = actions.document;
-  document.addEventListener('mousedown', notifyUserInput, false);
-  document.addEventListener('mouseup', notifyUserInput, false);
-  document.addEventListener('keydown', notifyUserInput, false);
-  document.addEventListener('keyup', notifyUserInput, false);
-}
-
 // Event listener to trigger chrome privedged code.
 function RequestListener(actions) {
   this.actions = actions;
 }
 // Receive an event and synchronously or asynchronously responds.
-RequestListener.prototype.receive = function(event) {
-  var message = event.target;
-  var action = event.detail.action;
-  var data = event.detail.data;
-  var sync = event.detail.sync;
+RequestListener.prototype.receive = function(detail) {
+  var action = detail.action;
+  var data = detail.data;
+  var sync = detail.sync;
   var actions = this.actions;
   if (!(action in actions)) {
     log('Unknown action: ' + action);
@@ -569,30 +580,23 @@ RequestListener.prototype.receive = function(event) {
   }
   if (sync) {
     var response = actions[action].call(this.actions, data);
-    event.detail.response = response;
-  } else {
-    var response;
-    if (event.detail.callback) {
-      var cookie = event.detail.cookie;
-      response = function sendResponse(response) {
-        var doc = actions.document;
-        try {
-          var listener = doc.createEvent('CustomEvent');
-          listener.initCustomEvent('shumway.response', true, false,
-                                   makeContentReadable({
-                                     response: response,
-                                     cookie: cookie
-                                   }, doc.defaultView));
-
-          return message.dispatchEvent(listener);
-        } catch (e) {
-          // doc is no longer accessible because the requestor is already
-          // gone. unloaded content cannot receive the response anyway.
-        }
-      };
-    }
-    actions[action].call(this.actions, data, response);
+    return response === undefined ? undefined : JSON.stringify(response);
   }
+
+  var responseCallback;
+  if (detail.callback) {
+    var cookie = detail.cookie;
+    response = function sendResponse(response) {
+      var win = actions.window;
+      if (win.wrappedJSObject.onMessageCallback) {
+        win.wrappedJSObject.onMessageCallback({
+          response: response === undefined ? undefined : JSON.stringify(response),
+          cookie: cookie
+        });
+      }
+    };
+  }
+  actions[action].call(this.actions, data, responseCallback);
 };
 
 var ActivationQueue = {
@@ -694,7 +698,7 @@ var ActivationQueue = {
   }
 };
 
-function activateShumwayScripts(window, preview) {
+function activateShumwayScripts(window, requestListener) {
   function loadScripts(scripts, callback) {
     function loadScript(i) {
       if (i >= scripts.length) {
@@ -715,13 +719,11 @@ function activateShumwayScripts(window, preview) {
   }
 
   function initScripts() {
-    loadScripts(['resource://shumway/shumway.gfx.js',
-                 'resource://shumway/web/viewer.js'], function () {
-      window.wrappedJSObject.runViewer();
-    });
+    window.wrappedJSObject.notifyShumwayMessage = function () {
+      return requestListener.receive.apply(requestListener, arguments);
+    };
+    window.wrappedJSObject.runViewer();
   }
-
-  window.wrappedJSObject.SHUMWAY_ROOT = "resource://shumway/";
 
   if (window.document.readyState === "interactive" ||
       window.document.readyState === "complete") {
@@ -731,7 +733,7 @@ function activateShumwayScripts(window, preview) {
   }
 }
 
-function initExternalCom(wrappedWindow, wrappedObject, targetDocument) {
+function initExternalCom(wrappedWindow, wrappedObject, targetWindow) {
   if (!wrappedWindow.__flash__initialized) {
     wrappedWindow.__flash__initialized = true;
     wrappedWindow.__flash__toXML = function __flash__toXML(obj) {
@@ -778,14 +780,11 @@ function initExternalCom(wrappedWindow, wrappedObject, targetDocument) {
     this[functionName] = function () {
       var args = Array.prototype.slice.call(arguments, 0);
       wrappedWindow.console.log('__flash__callIn: ' + functionName);
-      var e = targetDocument.createEvent('CustomEvent');
-      e.initCustomEvent('shumway.remote', true, false, makeContentReadable({
-        functionName: functionName,
-        args: args,
-        result: undefined
-      }, targetDocument.defaultView));
-      targetDocument.dispatchEvent(e);
-      return e.detail.result;
+      var result;
+      if (targetWindow.wrappedJSObject.onExternalCallback) {
+        result = targetWindow.wrappedJSObject.onExternalCallback({functionName: functionName, args: args});
+      }
+      return result;
     };
   };
   wrappedObject.__flash__unregisterCallback = function (functionName) {
@@ -959,14 +958,8 @@ ShumwayStreamConverterBase.prototype = {
 
     var originalURI = aRequest.URI;
 
-    // checking if the plug-in shall be run in simple mode
-    var isSimpleMode = originalURI.spec === EXPECTED_PLAYPREVIEW_URI_PREFIX &&
-                       getBoolPref('shumway.simpleMode', false);
-
-    // Create a new channel that loads the viewer as a resource.
-    var viewerUrl = isSimpleMode ?
-                    'resource://shumway/web/simple.html' :
-                    'resource://shumway/web/viewer.html';
+    // Create a new channel that loads the viewer as a chrome resource.
+    var viewerUrl = 'chrome://shumway/content/viewer.wrapper.html';
     var channel = Services.io.newChannel(viewerUrl, null, null);
 
     var converter = this;
@@ -1006,17 +999,13 @@ ShumwayStreamConverterBase.prototype = {
           ShumwayTelemetry.onPageIndex(0);
         }
 
-        actions.activationCallback = function(domWindow, isSimpleMode) {
-          delete this.activationCallback;
-          activateShumwayScripts(domWindow, isSimpleMode);
-        }.bind(actions, domWindow, isSimpleMode);
-        ActivationQueue.enqueue(actions);
-
         let requestListener = new RequestListener(actions);
-        domWindow.addEventListener('shumway.message', function(event) {
-          requestListener.receive(event);
-        }, false, true);
-        monitorUserInput(actions);
+
+        actions.activationCallback = function(domWindow, requestListener) {
+          delete this.activationCallback;
+          activateShumwayScripts(domWindow, requestListener);
+        }.bind(actions, domWindow, requestListener);
+        ActivationQueue.enqueue(actions);
 
         listener.onStopRequest(aRequest, context, statusCode);
       }
@@ -1026,12 +1015,10 @@ ShumwayStreamConverterBase.prototype = {
     channel.originalURI = aRequest.URI;
     channel.loadGroup = aRequest.loadGroup;
 
-    // We can use resource principal when data is fetched by the chrome
-    // e.g. useful for NoScript
+    // We can use all powerful principal.
     var securityManager = Cc['@mozilla.org/scriptsecuritymanager;1']
                           .getService(Ci.nsIScriptSecurityManager);
-    var uri = Services.io.newURI(viewerUrl, null, null);
-    var resourcePrincipal = securityManager.getNoAppCodebasePrincipal(uri);
+    var resourcePrincipal = securityManager.getSystemPrincipal();
     aRequest.owner = resourcePrincipal;
     channel.asyncOpen(proxy, aContext);
   },

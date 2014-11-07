@@ -27,11 +27,8 @@ var FirefoxCom = (function FirefoxComClosure() {
      * @return {*} The response.
      */
     requestSync: function(action, data) {
-      var e = document.createEvent('CustomEvent');
-      e.initCustomEvent('shumway.message', true, false,
-        {action: action, data: data, sync: true});
-      document.dispatchEvent(e);
-      return e.detail.response;
+      var result = String(ShumwayCom.sendMessage(action, data, true, undefined));
+      return result !== 'undefined' ? JSON.parse(result) : undefined;
     },
     /**
      * Creates an event that the extension is listening for and will
@@ -42,37 +39,44 @@ var FirefoxCom = (function FirefoxComClosure() {
      * with one data argument.
      */
     request: function(action, data, callback) {
-      var e = document.createEvent('CustomEvent');
-      e.initCustomEvent('shumway.message', true, false,
-        {action: action, data: data, sync: false});
+      var cookie = undefined;
       if (callback) {
-        if ('nextId' in FirefoxCom.request) {
-          FirefoxCom.request.nextId = 1;
+        cookie = "requestId" + (this._nextRequestId++);
+
+        if (!ShumwayCom.onMessageCallback) {
+          ShumwayCom.onMessageCallback = this._notifyMessageCallback.bind(this);
         }
-        var cookie = "requestId" + (FirefoxCom.request.nextId++);
-        e.detail.cookie = cookie;
-        e.detail.callback = true;
-
-        document.addEventListener('shumway.response', function listener(event) {
-          if (cookie !== event.detail.cookie)
-            return;
-
-          document.removeEventListener('shumway.response', listener, false);
-
-          var response = event.detail.response;
-          return callback(response);
-        }, false);
+        this._requestCallbacks[cookie] = callback;
       }
-      return document.dispatchEvent(e);
+      ShumwayCom.sendMessage(action, data, false, cookie);
     },
+    _notifyMessageCallback: function (cookie, response) {
+      var callback = this._requestCallbacks[cookie];
+      if (!callback) {
+        return;
+      }
+      delete this._requestCallbacks[cookie];
+      callback(response !== 'undefined' ? JSON.parse(response) : undefined);
+    },
+    _nextRequestId: 1,
+    _requestCallbacks: Object.create(null),
     initJS: function (callback) {
       FirefoxCom.request('externalCom', {action: 'init'});
-      document.addEventListener('shumway.remote', function (e) {
-        e.detail.result = callback(e.detail.functionName, e.detail.args);
-      }, false);
+      ShumwayCom.onExternalCallback = function (call) {
+        return callback(call.functionName, call.args);
+      };
     }
   };
 })();
+
+function notifyUserInput() {
+  ShumwayCom.sendMessage('userInput', null, true, undefined);
+}
+
+document.addEventListener('mousedown', notifyUserInput, true);
+document.addEventListener('mouseup', notifyUserInput, true);
+document.addEventListener('keydown', notifyUserInput, true);
+document.addEventListener('keyup', notifyUserInput, true);
 
 function fallback() {
   FirefoxCom.requestSync('fallback', null)
@@ -81,6 +85,8 @@ function fallback() {
 window.print = function(msg) {
   console.log(msg);
 };
+
+var SHUMWAY_ROOT = "resource://shumway/";
 
 var viewerPlayerglobalInfo = {
   abcs: SHUMWAY_ROOT + "playerglobal/playerglobal.abcs",
@@ -101,7 +107,14 @@ var playerWindowLoaded = new Promise(function(resolve) {
 });
 
 function runViewer() {
-  var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
+  ShumwayCom.onLoadFileCallback = function (data) {
+    playerWindow.postMessage({
+      type: "loadFileResponse",
+      args: data
+    }, '*');
+  };
+
+  var flashParams = FirefoxCom.requestSync('getPluginParams', null);
 
   movieUrl = flashParams.url;
   if (!movieUrl) {
@@ -193,12 +206,6 @@ var movieUrl, movieParams, objectParams;
 window.addEventListener("message", function handlerMessage(e) {
   var args = e.data;
   switch (args.callback) {
-    case 'loadFile':
-      playerWindow.postMessage({
-        type: "loadFileResponse",
-        args: args
-      }, '*');
-      break;
     case 'loadFileRequest':
       FirefoxCom.request('loadFile', args.data, null);
       break;
@@ -209,9 +216,7 @@ window.addEventListener("message", function handlerMessage(e) {
       FirefoxCom.request('setClipboard', args.data, null);
       break;
     case 'navigateTo':
-      var targetWindow = args.data.target || '_parent'; // using parent as default target
-      var url = args.data.url;
-      window.open(url, targetWindow);
+      FirefoxCom.request('navigateTo', args.data, null);
       break;
     case 'started':
       document.body.classList.add('started');
@@ -238,8 +243,7 @@ function processExternalCommand(command) {
 }
 
 function parseSwf(url, movieParams, objectParams) {
-  var compilerSettings = JSON.parse(
-    FirefoxCom.requestSync('getCompilerSettings', null));
+  var compilerSettings = FirefoxCom.requestSync('getCompilerSettings', null);
 
   // init misc preferences
   var turboMode = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
