@@ -25,11 +25,29 @@ module Shumway.AVM2.AS.flash.events {
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
-                info: ASObject = null) {
+                info: Object = null) {
       false && super(undefined, undefined, undefined);
+    }
+
+    private _info: Object;
+
+    get info(): Object {
+      return this._info;
+    }
+
+    set info(value: Object) {
+      this._info = value;
     }
 
     // JS -> AS Bindings
     public static NET_STATUS: string = "netStatus";
+
+    clone(): Event {
+      return new flash.events.NetStatusEvent(this.type, this.bubbles, this.cancelable, this.info);
+    }
+
+    toString(): string {
+      return this.formatToString('NetStatusEvent', 'type', 'bubbles', 'cancelable', 'eventPhase', 'info');
+    }
   }
 }

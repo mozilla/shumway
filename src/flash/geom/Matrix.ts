@@ -167,7 +167,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     /**
-     * target = m * this
+     * target = other * this
      */
     public preMultiplyInto(other: Matrix, target: Matrix): void {
       var m = this._data, n = other._data, t = target._data;

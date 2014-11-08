@@ -126,17 +126,21 @@ module Shumway.Remoting {
     Progress = 4,
     BufferEmpty = 5,
     Error = 6,
-    Metadata = 7
+    Metadata = 7,
+    Seeking = 8
   }
 
   export enum VideoControlEvent {
     Pause = 1,
     Seek = 2,
     GetTime = 3,
-    GetBufferLength = 4
+    GetBufferLength = 4,
+    SetSoundLevels = 5,
+    GetBytesLoaded = 6,
+    GetBytesTotal = 7
   }
 
-  export enum StageScaleModeId {
+  export enum StageScaleMode {
     ShowAll = 0,
     ExactFit = 1,
     NoBorder = 2,
@@ -148,7 +152,12 @@ module Shumway.Remoting {
     Top      = 1,
     Bottom   = 2,
     Left     = 4,
-    Right    = 8
+    Right    = 8,
+
+    TopLeft       = Top | Left,
+    BottomLeft    = Bottom | Left,
+    BottomRight   = Bottom | Right,
+    TopRight      = Top | Right
   }
 
   export var MouseEventNames: string[] = [
@@ -156,9 +165,9 @@ module Shumway.Remoting {
     'dblclick',
     'mousedown',
     'mousemove',
-    'mouseup'
-    //'mouseover',
-    //'mouseout'
+    'mouseup',
+    'mouseover',
+    'mouseout'
   ];
 
   export var KeyboardEventNames: string[] = [
@@ -178,5 +187,13 @@ module Shumway.Remoting {
     DocumentVisible,
     WindowBlur,
     WindowFocus
+  }
+
+  export interface DisplayParameters {
+    canvasWidth: number;
+    canvasHeight: number;
+    pixelRatio: number;
+    screenWidth: number;
+    screenHeight: number;
   }
 }

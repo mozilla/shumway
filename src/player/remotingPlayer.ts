@@ -100,16 +100,24 @@ module Shumway.Remoting.Player {
       this._writeRectangle(new Bounds(0, 0, stage.stageWidth * 20, stage.stageHeight * 20));
       this.output.writeInt(flash.display.StageAlign.toNumber(stage.align));
       this.output.writeInt(flash.display.StageScaleMode.toNumber(stage.scaleMode));
+      this.output.writeInt(flash.display.StageDisplayState.toNumber(stage.displayState));
+
       var cursor = flash.ui.Mouse.cursor;
       if (currentMouseTarget) {
         this.output.writeInt(currentMouseTarget._id);
-        if (cursor === MouseCursor.AUTO &&
-            (flash.display.SimpleButton.isType(currentMouseTarget) ||
-             (flash.display.Sprite.isType(currentMouseTarget) &&
-             (<flash.display.Sprite>currentMouseTarget).buttonMode)
-            ) &&
-            (<any>currentMouseTarget).useHandCursor) {
-            cursor = MouseCursor.BUTTON;
+        if (cursor === MouseCursor.AUTO) {
+          var node = currentMouseTarget;
+          do {
+            if (flash.display.SimpleButton.isType(node) ||
+                (flash.display.Sprite.isType(node) &&
+                 (<flash.display.Sprite>node).buttonMode) &&
+                 (<any>currentMouseTarget).useHandCursor)
+            {
+              cursor = MouseCursor.BUTTON;
+              break;
+            }
+            node = node._parent;
+          } while (node && node !== stage);
         }
       } else {
         this.output.writeInt(-1);
@@ -295,6 +303,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
         this._writeFilters(displayObject.filters);
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
+        this.output.writeBoolean(displayObject.cacheAsBitmap);
         if (bitmap) {
           this.output.writeInt(PixelSnapping.toNumber(bitmap.pixelSnapping));
           this.output.writeInt(bitmap.smoothing ? 1 : 0);

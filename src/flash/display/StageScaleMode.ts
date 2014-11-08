@@ -18,7 +18,6 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import StageScaleModeId = Shumway.Remoting.StageScaleModeId;
 
   export class StageScaleMode extends ASNative {
     
@@ -54,13 +53,13 @@ module Shumway.AVM2.AS.flash.display {
 
     static fromNumber(n: number): string {
       switch (n) {
-        case StageScaleModeId.ShowAll:
+        case Remoting.StageScaleMode.ShowAll:
           return StageScaleMode.SHOW_ALL;
-        case StageScaleModeId.ExactFit:
+        case Remoting.StageScaleMode.ExactFit:
           return StageScaleMode.EXACT_FIT;
-        case StageScaleModeId.NoBorder:
+        case Remoting.StageScaleMode.NoBorder:
           return StageScaleMode.NO_BORDER;
-        case StageScaleModeId.NoScale:
+        case Remoting.StageScaleMode.NoScale:
           return StageScaleMode.NO_SCALE;
         default:
           return null;
@@ -70,13 +69,13 @@ module Shumway.AVM2.AS.flash.display {
     static toNumber(value: string): number {
       switch (value.toLowerCase()) {
         case StageScaleMode.SHOW_ALL_LOWERCASE:
-          return StageScaleModeId.ShowAll;
+          return Remoting.StageScaleMode.ShowAll;
         case StageScaleMode.EXACT_FIT_LOWERCASE:
-          return StageScaleModeId.ExactFit;
+          return Remoting.StageScaleMode.ExactFit;
         case StageScaleMode.NO_BORDER_LOWERCASE:
-          return StageScaleModeId.NoBorder;
+          return Remoting.StageScaleMode.NoBorder;
         case StageScaleMode.NO_SCALE_LOWERCASE:
-          return StageScaleModeId.NoScale;
+          return Remoting.StageScaleMode.NoScale;
         default:
           return -1;
       }

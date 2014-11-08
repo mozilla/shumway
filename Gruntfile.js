@@ -119,6 +119,11 @@ module.exports = function(grunt) {
                (grunt.option('verbose') ? '-v ' : '') +
           (grunt.option('tests') || expandFilePattern('test/perf/pass/*.js'))
       },
+      "gfx-test": {
+        cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
+               (grunt.option('verbose') ? '-v ' : '') +
+          (grunt.option('tests') || expandFilePattern('test/gfx/pass/*.js'))
+      },
       smoke_parse_database: {
         maxBuffer: Infinity,
         cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r -po {} >> data.json.txt'
@@ -430,6 +435,7 @@ module.exports = function(grunt) {
   grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts', 'exec:gate']);
   grunt.registerTask('gate', ['exec:gate']);
   grunt.registerTask('perf', ['exec:perf']);
+  grunt.registerTask('gfx-test', ['exec:gfx-test']);
   grunt.registerTask('build', [
     'parallel:base',
     'exec:build_tools_ts',

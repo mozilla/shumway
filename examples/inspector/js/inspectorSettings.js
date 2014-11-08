@@ -21,15 +21,19 @@ var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
 var stateDefaults = {
   folderOpen: true,
   debugPanelId: "settingsContainer",
-  profileStartup: true,
+  profileStartup: false,
   profileStartupDuration: 10000,
   logToConsole: false,
-  logToDebugPanel: true,
+  logToDebugPanel: false,
   logAssets: false,
   overlayFlash: false,
   useIFramePlayer: false,
   mute: false,
-  release: false
+  release: true,
+  salign: 'tl',
+  scale: 'noscale',
+  width: -1,
+  height: -1
 };
 
 for (var option in stateDefaults) {
@@ -53,12 +57,29 @@ function saveInspectorState() {
   Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
 }
 
+function resizeCanvas() {
+  var stageContainer = document.getElementById('stageContainer');
+  var width = state.width, height = state.height;
+  if (width < 0 || height < 0) {
+    stageContainer.style.width = '';
+    stageContainer.style.height = '';
+  } else {
+    stageContainer.style.width = width + 'px';
+    stageContainer.style.height = height + 'px';
+  }
+  var ev = document.createEvent('Event');
+  ev.initEvent('resize', true, true);
+  window.dispatchEvent(ev);
+}
+resizeCanvas();
+
 var GUI = (function () {
   var Option = Shumway.Options.Option;
   var OptionSet = Shumway.Options.OptionSet;
 
   var gui = new dat.GUI({ autoPlace: false, width: 300 });
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
+  gui.add({ "Stage Scale Test": stageScaleTest }, "Stage Scale Test");
 
   var inspectorOptions = gui.addFolder("Inspector Options");
   inspectorOptions.add(state, "release").onChange(saveInspectorOption);
@@ -69,6 +90,25 @@ var GUI = (function () {
   inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
   inspectorOptions.add(state, "overlayFlash").onChange(saveInspectorOption);
   inspectorOptions.add(state, "useIFramePlayer").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "scale").options({
+    "ShowAll": 'showall',
+    "ExactFit": 'exactfit',
+    "NoBorder": 'noborder',
+    "NoScale": 'noscale'
+  }).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "salign").options({
+    "None": '',
+    "Top": 't',
+    "Left": 'l',
+    "Bottom": 'b',
+    "Right": 'r',
+    "Top Left": 'tl',
+    "Bottom Left": 'bl',
+    "Bottom Right": 'br',
+    "Top Right": 'tr'
+  }).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "width", -1, 2000, 1).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "height", -1, 2000, 1).onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
@@ -97,6 +137,29 @@ var GUI = (function () {
     delete window.localStorage[LC_KEY_INSPECTOR_SETTINGS];
   }
 
+  function stageScaleTest() {
+    var ticks = 1500;
+    var s = 0;
+    function tick() {
+      s += 0.01;
+      if (ticks > 1000) {
+        var w = 512 * (Math.abs(Math.sin(s)));
+        var h = w;
+      } else if (ticks > 500) {
+        var w = 512 * (Math.abs(Math.sin(s)));
+        var h = 200;
+      } else {
+        var w = 200;
+        var h = 512 * (Math.abs(Math.sin(s)));
+      }
+      currentStage.setBounds(new Shumway.GFX.Geometry.Rectangle(0, 0, w, h));
+      if (ticks --) {
+        setTimeout(tick, 16);
+      }
+    }
+    tick();
+  }
+
   function notifyOptionsChanged() {
     var event = document.createEvent('CustomEvent');
     event.initCustomEvent('shumwayOptionsChanged', false, false, null);
@@ -110,6 +173,9 @@ var GUI = (function () {
     if (this.property === 'overlayFlash') {
       ensureFlashOverlay();
       flashOverlay.style.display = value ? 'inline-block' : 'none';
+    }
+    if (this.property === 'width' || this.property === 'height') {
+      resizeCanvas();
     }
     state[this.property] = value;
     saveInspectorState();
@@ -205,13 +271,14 @@ function syncGFXOptions(options) {
   options.sourceBlendFactor = GFX.sourceBlendFactor.value;
   options.destinationBlendFactor = GFX.destinationBlendFactor.value;
 
-  options.cull = GFX.cull.value;
-  options.compositeMask = GFX.compositeMask.value;
+  options.masking = GFX.masking.value;
   options.disableSurfaceUploads = GFX.disableSurfaceUploads.value;
 
   options.snapToDevicePixels = GFX.snapToDevicePixels.value;
   options.imageSmoothing = GFX.imageSmoothing.value;
   options.blending = GFX.blending.value;
+  options.debugLayers = GFX.debugLayers.value;
+
   options.filters = GFX.filters.value;
   options.cacheShapes = GFX.cacheShapes.value;
   options.cacheShapesMaxSize = GFX.cacheShapesMaxSize.value;

@@ -22,6 +22,7 @@ module Shumway.GFX.Window {
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
+  import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
   export class WindowEaselHost extends EaselHost {
     private _timelineRequests: Map<(data) => void>;
@@ -57,6 +58,13 @@ module Shumway.GFX.Window {
         request: request
       });
       this._playerWindow.dispatchEvent(event);
+    }
+
+    onDisplayParameters(params: DisplayParameters) {
+      this._playerWindow.postMessage({
+        type: 'displayParameters',
+        params: params
+      }, '*');
     }
 
     onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {

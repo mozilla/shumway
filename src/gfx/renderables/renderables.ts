@@ -33,97 +33,48 @@ module Shumway.GFX {
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
 
-  export enum RenderableFlags {
-    None          = 0,
-
-    /**
-     * Whether source has dynamic content.
-     */
-    Dynamic       = 1,
-
-    /**
-     * Whether the source's dynamic content has changed. This is only defined if |isDynamic| is true.
-     */
-    Dirty         = 2,
-
-    /**
-     * Whether the source's content can be scaled and drawn at a higher resolution.
-     */
-    Scalable      = 4,
-
-    /**
-     * Whether the source's content should be tiled.
-     */
-    Tileable      = 8,
-
-    /**
-     * Whether the source's content is loading and thus not available yet. Once loading
-     * is complete this flag is cleared and the |Dirty| flag is set.
-     */
-    Loading  = 16
-  }
+  declare var registerInspectorAsset;
 
   /**
    * Represents some source renderable content.
    */
-  export class Renderable {
-    /**
-     * Flags
-     */
-    _flags: RenderableFlags = RenderableFlags.None;
-
-    setFlags(flags: RenderableFlags) {
-      this._flags |= flags;
-    }
-
-    hasFlags(flags: RenderableFlags): boolean {
-      return (this._flags & flags) === flags;
-    }
-
-    removeFlags(flags: RenderableFlags) {
-      this._flags &= ~flags;
-    }
+  export class Renderable extends Node {
 
     /**
-     * Property bag used to attach dynamic properties to this object.
+     * Back reference to nodes that use this renderable.
      */
-    properties: {[name: string]: any} = {};
-
-    /**
-     * Back reference to frames that use this renderable.
-     */
-    private _frameReferrers: Frame [] = [];
+    private _parents: Node [] = [];
 
     /**
      * Back reference to renderables that use this renderable.
      */
-    private _renderableReferrers: Renderable [] = [];
+    private _renderableParents: Renderable [] = [];
 
-    public addFrameReferrer(frame: Frame) {
+    public addParent(frame: Node) {
       release && assert(frame);
-      var index = indexOf(this._frameReferrers, frame);
+      var index = indexOf(this._parents, frame);
       release && assert(index < 0);
-      this._frameReferrers.push(frame);
+      this._parents.push(frame);
     }
 
-    public addRenderableReferrer(renderable: Renderable) {
+    public addRenderableParent(renderable: Renderable) {
       release && assert(renderable);
-      var index = indexOf(this._renderableReferrers, renderable);
+      var index = indexOf(this._renderableParents, renderable);
       release && assert(index < 0);
-      this._renderableReferrers.push(renderable);
+      this._renderableParents.push(renderable);
     }
 
-    public invalidatePaint() {
-      this.setFlags(RenderableFlags.Dirty);
-      var frames = this._frameReferrers;
-      for (var i = 0; i < frames.length; i++) {
-        frames[i].invalidatePaint();
+    public invalidate() {
+      this.setFlags(NodeFlags.Dirty);
+      var nodes = this._parents;
+      for (var i = 0; i < nodes.length; i++) {
+        nodes[i].invalidate();
       }
-      var renderables = this._renderableReferrers;
+      var renderables = this._renderableParents;
       for (var i = 0; i < renderables.length; i++) {
-        renderables[i].invalidatePaint();
+        renderables[i].invalidate();
       }
-      var listeners = this._invalidatePaintEventListeners;
+      var listeners = this._invalidateEventListeners;
       if (listeners) {
         for (var i = 0; i < listeners.length; i++) {
           listeners[i](this);
@@ -131,42 +82,57 @@ module Shumway.GFX {
       }
     }
 
-    private _invalidatePaintEventListeners: {(renderable: Renderable): void} [] = null;
+    private _invalidateEventListeners: {(renderable: Renderable): void} [] = null;
 
-    public addInvalidatePaintEventListener(listener: (renderable: Renderable) => void) {
-      if (!this._invalidatePaintEventListeners) {
-        this._invalidatePaintEventListeners = [];
+    public addInvalidateEventListener(listener: (renderable: Renderable) => void) {
+      if (!this._invalidateEventListeners) {
+        this._invalidateEventListeners = [];
       }
-      var index = indexOf(this._invalidatePaintEventListeners, listener);
+      var index = indexOf(this._invalidateEventListeners, listener);
       release && assert(index < 0);
-      this._invalidatePaintEventListeners.push(listener);
+      this._invalidateEventListeners.push(listener);
     }
 
-    _bounds: Rectangle;
 
-    constructor(bounds: Rectangle) {
-      this._bounds = bounds.clone();
-    }
-
-    /**
-     * Bounds of the source content. This should never change.
-     */
-    getBounds (): Rectangle {
+    getBounds(clone: boolean = false): Shumway.GFX.Geometry.Rectangle {
+      if (clone) {
+        return this._bounds.clone();
+      }
       return this._bounds;
+    }
+
+    public getChildren(clone: boolean = false): Node [] {
+      return null;
+    }
+
+    _propagateFlagsUp(flags: NodeFlags) {
+      if (flags === NodeFlags.None || this.hasFlags(flags)) {
+        return;
+      }
+      for (var i = 0; i < this._parents.length; i++) {
+        this._parents[i]._propagateFlagsUp(flags);
+      }
+    }
+
+    constructor() {
+      super();
+      this._flags &= ~NodeFlags.BoundsAutoCompute;
+      this._type = NodeType.Renderable;
     }
 
     /**
      * Render source content in the specified |context|. If specified, the rectangular |cullBounds| can be used to cull parts of the shape
      * for better performance. If specified, |Region| indicates whether the shape's fills should be used as clip regions instead.
      */
-    render(context: CanvasRenderingContext2D, ratio: number, cullBounds?: Shumway.GFX.Geometry.Rectangle, clipRegion?: boolean): void {
+    render(context: CanvasRenderingContext2D, ratio: number, cullBounds?: Shumway.GFX.Geometry.Rectangle, paintClip?: boolean, paintpaintStencil?: boolean): void {
 
     }
   }
 
   export class CustomRenderable extends Renderable {
     constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, ratio: number, cullBounds: Shumway.GFX.Geometry.Rectangle) => void) {
-      super(bounds);
+      super();
+      this.setBounds(bounds);
       this.render = render;
     }
   }
@@ -176,16 +142,19 @@ module Shumway.GFX {
   }
 
   export class RenderableVideo extends Renderable {
-    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
+    _flags = NodeFlags.Dynamic | NodeFlags.Dirty;
     private _video: HTMLVideoElement;
     private _videoEventHandler: (e:Event)=>void;
     private _assetId: number;
     private _eventSerializer: IVideoPlaybackEventSerializer;
     private _lastCurrentTime: number = 0;
+    private _seekHappens: boolean = false;
     static _renderableVideos: RenderableVideo [] = [];
 
     constructor(url: string, bounds: Rectangle, assetId: number, eventSerializer: IVideoPlaybackEventSerializer) {
-      super(bounds);
+      super();
+
+      this.setBounds(bounds);
 
       this._assetId = assetId;
       this._eventSerializer = eventSerializer;
@@ -202,12 +171,16 @@ module Shumway.GFX {
       element.addEventListener("waiting", elementEventHandler);
       element.addEventListener("loadedmetadata", elementEventHandler);
       element.addEventListener("error", elementEventHandler);
-      element.play();
+      element.addEventListener("seeking", elementEventHandler);
 
       this._video = element;
       this._videoEventHandler = elementEventHandler;
 
       RenderableVideo._renderableVideos.push(this);
+
+      if (typeof registerInspectorAsset !== "undefined") {
+        registerInspectorAsset(-1, -1, this);
+      }
 
       this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
     }
@@ -246,6 +219,10 @@ module Shumway.GFX {
             code: element.error.code
           };
           break;
+        case "seeking":
+          type = VideoPlaybackEvent.Seeking;
+          this._seekHappens = true;
+          break;
         default:
           return; // unhandled event
       }
@@ -258,21 +235,30 @@ module Shumway.GFX {
 
     processControlRequest(type: VideoControlEvent, data: any): any {
       var videoElement = this._video;
+      var ESTIMATED_VIDEO_SECOND_SIZE: number = 500;
       switch (type) {
         case VideoControlEvent.Pause:
           if (videoElement) {
             if (data.paused && !videoElement.paused) {
+              if (!isNaN(data.time)) {
+                videoElement.currentTime = data.time;
+              }
               videoElement.pause();
             } else if (!data.paused && videoElement.paused) {
               videoElement.play();
-            }
-            if (!isNaN(data.time)) {
-              videoElement.currentTime = data.time;
+              if (!isNaN(data.time)) {
+                videoElement.currentTime = data.time;
+              }
+
+              if (this._seekHappens) {
+                this._seekHappens = true;
+                this._notifyNetStream(VideoPlaybackEvent.BufferFull, null);
+              }
             }
           }
           return;
         case VideoControlEvent.Seek:
-          if (videoElement && !videoElement.paused) {
+          if (videoElement) {
             videoElement.currentTime = data.time;
           }
           return;
@@ -280,20 +266,40 @@ module Shumway.GFX {
           return videoElement ? videoElement.currentTime : 0;
         case VideoControlEvent.GetBufferLength:
           return videoElement ? videoElement.duration : 0;
+        case VideoControlEvent.SetSoundLevels:
+          if (videoElement) {
+            videoElement.volume = data.volume;
+          }
+          return;
+        case VideoControlEvent.GetBytesLoaded:
+          if (!videoElement) {
+            return 0;
+          }
+          var bufferedTill: number = -1;
+          if (videoElement.buffered) {
+            for (var i = 0; i < videoElement.buffered.length; i++) {
+              bufferedTill = Math.max(bufferedTill, videoElement.buffered.end(i));
+            }
+          } else {
+            bufferedTill = videoElement.duration;
+          }
+          return Math.round(bufferedTill * ESTIMATED_VIDEO_SECOND_SIZE);
+        case VideoControlEvent.GetBytesTotal:
+          return videoElement ? Math.round(videoElement.duration * ESTIMATED_VIDEO_SECOND_SIZE) : 0;
       }
     }
 
-    public invalidatePaintCheck() {
+    public checkForUpdate() {
       if (this._lastCurrentTime !== this._video.currentTime) {
-        this.invalidatePaint();
+        this.invalidate();
       }
       this._lastCurrentTime = this._video.currentTime;
     }
 
-    public static invalidateVideos() {
+    public static checkForVideoUpdates() {
       var renderables = RenderableVideo._renderableVideos;
       for (var i = 0; i < renderables.length; i++) {
-        renderables[i].invalidatePaintCheck();
+        renderables[i].checkForUpdate();
       }
     }
 
@@ -310,7 +316,7 @@ module Shumway.GFX {
   }
 
   export class RenderableBitmap extends Renderable {
-    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
+    _flags = NodeFlags.Dynamic | NodeFlags.Dirty;
     properties: {[name: string]: any} = {};
     _canvas: HTMLCanvasElement;
     _context: CanvasRenderingContext2D;
@@ -328,14 +334,14 @@ module Shumway.GFX {
       return renderableBitmap;
     }
 
-    public static FromFrame(source: Frame, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle) {
+    public static FromNode(source: Node, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle) {
       enterTimeline("RenderableBitmap.FromFrame");
       var canvas = document.createElement("canvas");
       var bounds = source.getBounds();
       canvas.width = bounds.w;
       canvas.height = bounds.h;
       var renderableBitmap = new RenderableBitmap(canvas, bounds);
-      renderableBitmap.drawFrame(source, matrix, colorMatrix, blendMode, clipRect);
+      renderableBitmap.drawNode(source, matrix, colorMatrix, blendMode, clipRect);
       leaveTimeline("RenderableBitmap.FromFrame");
       return renderableBitmap;
     }
@@ -350,13 +356,13 @@ module Shumway.GFX {
           type === ImageType.GIF)
       {
         var self = this;
-        self.setFlags(RenderableFlags.Loading);
+        self.setFlags(NodeFlags.Loading);
         var image = new Image();
-        image.src = URL.createObjectURL(dataBuffer.toBlob());
+        image.src = URL.createObjectURL(dataBuffer.toBlob(getMIMETypeForImageType(type)));
         image.onload = function () {
           self._context.drawImage(image, 0, 0);
-          self.removeFlags(RenderableFlags.Loading);
-          self.invalidatePaint();
+          self.removeFlags(NodeFlags.Loading);
+          self.invalidate();
         };
         image.onerror = function () {
           unexpected("Image loading error: " + ImageType[type]);
@@ -376,7 +382,7 @@ module Shumway.GFX {
         this._context.putImageData(this._imageData, 0, 0);
         leaveTimeline("putImageData");
       }
-      this.invalidatePaint();
+      this.invalidate();
       leaveTimeline("RenderableBitmap.updateFromDataBuffer");
     }
 
@@ -389,7 +395,8 @@ module Shumway.GFX {
     }
 
     constructor(canvas: HTMLCanvasElement, bounds: Rectangle) {
-      super(bounds);
+      super();
+      this.setBounds(bounds);
       this._canvas = canvas;
       this._context = this._canvas.getContext("2d");
       this._imageData = this._context.createImageData(this._bounds.w, this._bounds.h);
@@ -405,7 +412,7 @@ module Shumway.GFX {
       leaveTimeline("RenderableBitmap.render");
     }
 
-    drawFrame(source: Frame, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle): void {
+    drawNode(source: Node, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clip: Rectangle): void {
       // TODO: Support colorMatrix and blendMode.
       enterTimeline("RenderableBitmap.drawFrame");
       // TODO: Hack to be able to compile this as part of gfx-base.
@@ -413,7 +420,7 @@ module Shumway.GFX {
       var bounds = this.getBounds();
       var options = new Canvas2D.Canvas2DStageRendererOptions();
       var renderer = new Canvas2D.Canvas2DStageRenderer(this._canvas, null, options);
-      renderer.renderFrame(source, clipRect || bounds, matrix);
+      renderer.renderNode(source, clip || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
     }
 
@@ -466,9 +473,10 @@ module Shumway.GFX {
   }
 
   export class RenderableShape extends Renderable {
-    _flags: RenderableFlags = RenderableFlags.Dirty     |
-                              RenderableFlags.Scalable  |
-                              RenderableFlags.Tileable;
+    _flags: NodeFlags = NodeFlags.Dirty     |
+                        NodeFlags.Scalable  |
+                        NodeFlags.Tileable;
+
     properties: {[name: string]: any} = {};
 
     private fillStyle: ColorStyle;
@@ -482,42 +490,43 @@ module Shumway.GFX {
     protected static LINE_JOINTS_STYLES = ['round', 'bevel', 'miter'];
 
     constructor(id: number, pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
-      super(bounds);
+      super();
+      this.setBounds(bounds);
       this._id = id;
       this._pathData = pathData;
       this._textures = textures;
       if (textures.length) {
-        this.setFlags(RenderableFlags.Dynamic);
+        this.setFlags(NodeFlags.Dynamic);
       }
     }
 
     update(pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
-      this._bounds = bounds;
+      this.setBounds(bounds);
       this._pathData = pathData;
       this._paths = null;
       this._textures = textures;
-      this.invalidatePaint();
-    }
-
-    getBounds(): Shumway.GFX.Geometry.Rectangle {
-      return this._bounds;
+      this.setFlags(NodeFlags.Dynamic);
+      this.invalidate();
     }
 
     /**
-     * If |clipRegion| is |true| then we must call |clip| instead of |fill|. We also cannot call
+     * If |paintClip| is |true| then we must call |clip| instead of |fill|. We also cannot call
      * |save| or |restore| because those functions reset the current clipping region. It looks
      * like Flash ignores strokes when clipping so we can also ignore stroke paths when computing
      * the clip region.
+     *
+     * If |paintStencil| is |true| then we most not create any alpha values, and also not paint any strokes.
      */
     render(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle,
-           clipRegion: boolean = false): void
+           paintClip: boolean = false, paintStencil: boolean = false): void
     {
+      var paintStencilStyle = '#FF4981';
       context.fillStyle = context.strokeStyle = 'transparent';
 
       // Wait to deserialize paths until all textures have been loaded.
       var textures = this._textures;
       for (var i = 0; i < textures.length; i++) {
-        if (textures[i].hasFlags(RenderableFlags.Loading)) {
+        if (textures[i].hasFlags(NodeFlags.Loading)) {
           return;
         }
       }
@@ -532,10 +541,10 @@ module Shumway.GFX {
                                               context['imageSmoothingEnabled'] =
                                               path.smoothImage;
         if (path.type === PathType.Fill) {
-          context.fillStyle = path.style;
-          clipRegion ? context.clip(path.path, 'evenodd') : context.fill(path.path, 'evenodd');
+          context.fillStyle = paintStencil ? paintStencilStyle : path.style;
+          paintClip ? context.clip(path.path, 'evenodd') : context.fill(path.path, 'evenodd');
           context.fillStyle = 'transparent';
-        } else if (!clipRegion) {
+        } else if (!paintClip && !paintStencil) {
           context.strokeStyle = path.style;
           var lineScaleMode = LineScaleMode.Normal;
           if (path.strokeProperties) {
@@ -778,10 +787,10 @@ module Shumway.GFX {
   }
 
   export class RenderableMorphShape extends RenderableShape {
-    _flags: RenderableFlags = RenderableFlags.Dynamic   |
-                              RenderableFlags.Dirty     |
-                              RenderableFlags.Scalable  |
-                              RenderableFlags.Tileable;
+    _flags: NodeFlags = NodeFlags.Dynamic   |
+                              NodeFlags.Dirty     |
+                              NodeFlags.Scalable  |
+                              NodeFlags.Tileable;
 
     private _morphPaths: { [key: number]: StyledPath[] } = Object.create(null);
 
@@ -1113,7 +1122,7 @@ module Shumway.GFX {
 
   export class RenderableText extends Renderable {
 
-    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
+    _flags = NodeFlags.Dynamic | NodeFlags.Dirty;
     properties: {[name: string]: any} = {};
 
     private _textBounds: Rectangle;
@@ -1130,7 +1139,7 @@ module Shumway.GFX {
     lines: TextLine[];
 
     constructor(bounds) {
-      super(bounds);
+      super();
       this._textBounds = bounds.clone();
       this._textRunData = null;
       this._plainText = '';
@@ -1142,10 +1151,11 @@ module Shumway.GFX {
       this._scrollH = 0;
       this.textRect = bounds.clone();
       this.lines = [];
+      this.setBounds(bounds);
     }
 
     setBounds(bounds): void {
-      this._bounds.set(bounds);
+      super.setBounds(bounds);
       this._textBounds.set(bounds);
       this.textRect.setElements(bounds.x + 2, bounds.y + 2, bounds.w - 2, bounds.h - 2);
     }
@@ -1356,12 +1366,8 @@ module Shumway.GFX {
         }
       }
 
-      this.invalidatePaint()
+      this.invalidate()
       leaveTimeline("RenderableText.reflow");
-    }
-
-    getBounds(): Shumway.GFX.Geometry.Rectangle {
-      return this._bounds;
     }
 
     render(context: CanvasRenderingContext2D): void {
@@ -1448,6 +1454,8 @@ module Shumway.GFX {
           if (run.underline) {
             context.fillRect(x, (y + (line.descent / 2)) | 0, run.width, 1);
           }
+          context.textAlign = "left";
+          context.textBaseline = "alphabetic";
           context.fillText(run.text, x, y);
           x += run.width;
         }
@@ -1456,7 +1464,7 @@ module Shumway.GFX {
   }
 
   export class Label extends Renderable {
-    _flags: RenderableFlags = RenderableFlags.Dynamic | RenderableFlags.Scalable;
+    _flags: NodeFlags = NodeFlags.Dynamic | NodeFlags.Scalable;
     properties: {[name: string]: any} = {};
     private _text: string;
 
@@ -1469,7 +1477,8 @@ module Shumway.GFX {
     }
 
     constructor(w: number, h: number) {
-      super(new Rectangle(0, 0, w, h));
+      super();
+      this.setBounds(new Rectangle(0, 0, w, h));
     }
 
     render (context: CanvasRenderingContext2D, ratio: number, cullBounds?: Rectangle) {

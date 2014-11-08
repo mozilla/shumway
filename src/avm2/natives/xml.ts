@@ -1225,7 +1225,7 @@ module Shumway.AVM2.AS {
 
     private _kind: ASXMLKind;
 
-    private _children: ASXML [];
+    _children: ASXML [];
     private _value: any;
 
     constructor (value: any = undefined) {
@@ -2045,7 +2045,7 @@ module Shumway.AVM2.AS {
       return toXMLList(value);
     };
 
-    private _children: ASXML [];
+    _children: ASXML [];
     constructor (value: any = undefined) {
       false && super();
 

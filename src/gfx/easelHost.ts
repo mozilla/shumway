@@ -16,46 +16,70 @@
 
 module Shumway.GFX {
   import Easel = Shumway.GFX.Easel;
-  import FrameContainer = Shumway.GFX.FrameContainer;
   import Stage = Shumway.GFX.Stage;
   import Point = Shumway.GFX.Geometry.Point;
 
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
+  import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
   export class EaselHost {
     private static _mouseEvents = Shumway.Remoting.MouseEventNames;
     private static _keyboardEvents = Shumway.Remoting.KeyboardEventNames;
 
     private _easel: Easel;
-    private _frameContainer: FrameContainer;
+    private _group: Group;
     private _context: Shumway.Remoting.GFX.GFXChannelDeserializerContext;
+    private _content: Group;
+    private _fullscreen: boolean;
 
     constructor(easel: Easel) {
       this._easel = easel;
-      var frameContainer = easel.world;
+      var group = easel.world;
       var transparent = easel.transparent;
-      this._frameContainer = frameContainer;
-      this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._frameContainer, transparent);
-
+      this._group = group;
+      this._content = null;
+      this._fullscreen = false;
+      this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this, this._group, transparent);
       this._addEventListeners();
     }
 
-    onSendUpdates(update: DataBuffer, assets: Array<DataBuffer>) {
+    onSendUpdates(update: DataBuffer, asssets: Array<DataBuffer>) {
       throw new Error('This method is abstract');
+    }
+
+    get easel(): Easel {
+      return this._easel;
     }
 
     get stage(): Stage {
       return this._easel.stage;
     }
 
+    set content(value: Group) {
+      this._content = value;
+    }
+
     set cursor(cursor: string) {
       this._easel.cursor = cursor;
     }
 
+    set fullscreen(value: boolean) {
+      if (this._fullscreen !== value) {
+        this._fullscreen = value;
+        // TODO refactor to have a normal two-way communication service/api
+        // HACK for now
+        var firefoxCom = (<any>window).FirefoxCom;
+        if (firefoxCom) {
+          firefoxCom.request('setFullscreen', value, null);
+        }
+      }
+    }
+
     private _mouseEventListener(event: MouseEvent) {
-      var position = this._easel.getMouseWorldPosition(event);
+      // var position = this._easel.getMouseWorldPosition(event);
+      var position = this._easel.getMousePosition(event, this._content);
       var point = new Point(position.x, position.y);
 
       var buffer = new DataBuffer();
@@ -85,6 +109,8 @@ module Shumway.GFX {
         window.addEventListener(keyboardEvents[i], keyboardEventListener);
       }
       this._addFocusEventListeners();
+
+      this._easel.addEventListener('resize', this._resizeEventListener.bind(this));
     }
 
     private _sendFocusEvent(type: Shumway.Remoting.FocusEventType) {
@@ -110,6 +136,14 @@ module Shumway.GFX {
       });
     }
 
+    private _resizeEventListener() {
+      this.onDisplayParameters(this._easel.getDisplayParameters());
+    }
+
+    onDisplayParameters(params: DisplayParameters) {
+      throw new Error('This method is abstract');
+    }
+
     processUpdates(updates: DataBuffer, assets: Array<DataBuffer>, output: DataBuffer = null) {
       var deserializer = new Shumway.Remoting.GFX.GFXChannelDeserializer();
       deserializer.input = updates;
@@ -129,6 +163,10 @@ module Shumway.GFX {
 
     processVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
       var asset = this._context._getVideoAsset(id);
+      if (!asset) {
+        // TODO fix async/sync NetStream creation
+        return undefined;
+      }
       return (<RenderableVideo>asset).processControlRequest(eventType, data);
     }
 

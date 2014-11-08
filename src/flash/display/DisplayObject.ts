@@ -1439,6 +1439,9 @@ module Shumway.AVM2.AS.flash.display {
       this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
+    /**
+     * This is always true if a filter is applied.
+     */
     get cacheAsBitmap(): boolean {
       return (this._filters && this._filters.length > 0) || this._hasFlags(DisplayObjectFlags.CacheAsBitmap);
     }
@@ -1861,7 +1864,7 @@ module Shumway.AVM2.AS.flash.display {
           return VisitorFlags.Skip;
         }
         var prefix = name + Shumway.StringUtilities.multiple(" ", distance);
-        writer.writeLn(prefix + node.debugName());
+        writer.writeObject(prefix + node.debugName() + ", bounds: " + node.getBounds(null).toString(), { "...": { value: node} });
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
     }

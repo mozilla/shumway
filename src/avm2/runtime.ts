@@ -936,7 +936,9 @@ module Shumway.AVM2.Runtime {
   }
 
   export function asCoerceObject(x) {
-    if (x == undefined) {
+    if (x instanceof Boolean) {
+      return x.valueOf();
+    } else if (x == undefined) {
       return null;
     }
     if (typeof x === 'string' || typeof x === 'number') {

@@ -10,9 +10,89 @@ module Shumway.GFX.Canvas2D {
   import TileCache = Shumway.GFX.Geometry.TileCache;
   import Tile = Shumway.GFX.Geometry.Tile;
   import OBB = Shumway.GFX.Geometry.OBB;
-  import MipMap = Shumway.GFX.Geometry.MipMap;
+  import clamp = Shumway.NumberUtilities.clamp;
+  import pow2 = Shumway.NumberUtilities.pow2;
+  import epsilonEquals = Shumway.NumberUtilities.epsilonEquals;
+
+  import ISurfaceRegionAllocator = SurfaceRegionAllocator.ISurfaceRegionAllocator;
 
   declare var registerScratchCanvas;
+
+  var writer = new IndentingWriter(false, dumpLine);
+
+  var MIN_CACHE_LEVELS = 5;
+  var MAX_CACHE_LEVELS = 3;
+
+  export class MipMapLevel {
+    constructor (
+      public surfaceRegion: ISurfaceRegion,
+      public scale: number
+      ) {
+      // ...
+    }
+  }
+
+  export class MipMap {
+    private _node: Node;
+    private _size: number;
+    private _levels: MipMapLevel [];
+    private _renderer: Canvas2DStageRenderer;
+    private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    constructor (
+      renderer: Canvas2DStageRenderer,
+      node: Node,
+      surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator,
+      size: number
+      ) {
+      this._node = node;
+      this._levels = [];
+      this._surfaceRegionAllocator = surfaceRegionAllocator;
+      this._size = size;
+      this._renderer = renderer;
+    }
+    public getLevel(matrix: Matrix): MipMapLevel {
+      var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
+      var level = 0;
+      if (matrixScale !== 1) {
+        level = clamp(Math.round(Math.log(matrixScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      }
+      if (!(this._node.hasFlags(NodeFlags.Scalable))) {
+        level = clamp(level, -MIN_CACHE_LEVELS, 0);
+      }
+      var scale = pow2(level);
+      var levelIndex = MIN_CACHE_LEVELS + level;
+      var mipLevel = this._levels[levelIndex];
+
+      if (!mipLevel) {
+        var bounds = this._node.getBounds();
+        var scaledBounds = bounds.clone();
+        scaledBounds.scale(scale, scale);
+        scaledBounds.snap();
+        var surfaceRegion: Canvas2DSurfaceRegion = <any>this._surfaceRegionAllocator.allocate(scaledBounds.w, scaledBounds.h);
+        // surfaceRegion.fill(ColorStyle.randomStyle());
+        var region = surfaceRegion.region;
+        mipLevel = this._levels[levelIndex] = new MipMapLevel(surfaceRegion, scale);
+        var surface = <Canvas2D.Canvas2DSurface>(mipLevel.surfaceRegion.surface);
+        var context = surface.context;
+
+//        context.save();
+//        context.beginPath();
+//        context.rect(region.x, region.y, region.w, region.h);
+//        context.clip();
+//        context.setTransform(scale, 0, 0, scale, region.x - scaledBounds.x, region.y - scaledBounds.y);
+
+        var state = new RenderState(surfaceRegion);
+        state.clip.set(region);
+        state.matrix.setElements(scale, 0, 0, scale, region.x - scaledBounds.x, region.y - scaledBounds.y);
+        state.flags |= RenderFlags.IgnoreNextRenderWithCache;
+        this._renderer.renderNodeWithState(this._node, state);
+        state.free();
+
+        // context.restore();
+      }
+      return mipLevel;
+    }
+  }
 
   export enum FillRule {
     NonZero,
@@ -34,6 +114,16 @@ module Shumway.GFX.Canvas2D {
      * Whether to enable blending.
      */
     blending: boolean = true;
+
+    /**
+     * Whether to enable debugging of layers.
+     */
+    debugLayers: boolean = false;
+
+    /**
+     * Whether to enable masking.
+     */
+    masking: boolean = true;
 
     /**
      * Whether to enable filters.
@@ -61,203 +151,188 @@ module Shumway.GFX.Canvas2D {
     alpha: boolean = false;
   }
 
-  /**
-   * Rendering state threaded through rendering methods.
-   */
-  export class Canvas2DStageRendererState {
-    constructor (
-      public options: Canvas2DStageRendererOptions,
-      public clipRegion: boolean = false,
-      public ignoreMask: Frame = null) {
-      // ...
-    }
+  export enum RenderFlags {
+    None                        = 0x0000,
+    IgnoreNextLayer             = 0x0001,
+    RenderMask                  = 0x0002,
+    IgnoreMask                  = 0x0004,
+    PaintStencil                = 0x0008,
+    PaintClip                   = 0x0010,
+    IgnoreRenderable            = 0x0020,
+    IgnoreNextRenderWithCache   = 0x0040,
+
+    CacheShapes                 = 0x0100,
+    PaintFlashing               = 0x0200,
+    PaintBounds                 = 0x0400,
+    PaintDirtyRegion            = 0x0800,
+    ImageSmoothing              = 0x1000,
+    PixelSnapping               = 0x2000
   }
 
   var MAX_VIEWPORT = Rectangle.createMaxI16();
 
+  /**
+   * Render state.
+   */
+  export class RenderState extends State {
+
+    static allocationCount = 0;
+
+    private static _dirtyStack: RenderState [] = [];
+
+    clip: Rectangle = Rectangle.createEmpty();
+    clipList: Rectangle [] = [];
+    flags: RenderFlags = RenderFlags.None;
+    target: Canvas2DSurfaceRegion = null;
+    matrix: Matrix = Matrix.createIdentity();
+    colorMatrix: ColorMatrix = ColorMatrix.createIdentity();
+
+    options: Canvas2DStageRendererOptions;
+
+    constructor(target: Canvas2DSurfaceRegion) {
+      super();
+      RenderState.allocationCount ++;
+      this.target = target;
+    }
+
+    set (state: RenderState) {
+      this.clip.set(state.clip);
+      this.target = state.target;
+      this.matrix.set(state.matrix);
+      this.colorMatrix.set(state.colorMatrix);
+      this.flags = state.flags;
+      ArrayUtilities.copyFrom(this.clipList, state.clipList);
+    }
+
+    public clone(): RenderState {
+      var state: RenderState = RenderState.allocate();
+      if (!state) {
+        state = new RenderState(this.target);
+      }
+      state.set(this);
+      return state;
+    }
+
+    static allocate(): RenderState {
+      var dirtyStack = RenderState._dirtyStack;
+      var state = null;
+      if (dirtyStack.length) {
+        state = dirtyStack.pop();
+      }
+      return state;
+    }
+
+    free() {
+      RenderState._dirtyStack.push(this);
+    }
+
+    transform(transform: Transform): RenderState {
+      var state = this.clone();
+      state.matrix.preMultiply(transform.getMatrix());
+      if (transform.hasColorMatrix()) {
+        state.colorMatrix.multiply(transform.getColorMatrix());
+      }
+      return state;
+    }
+
+    public hasFlags(flags: RenderFlags): boolean {
+      return (this.flags & flags) === flags;
+    }
+
+    public removeFlags(flags: RenderFlags) {
+      this.flags &= ~flags;
+    }
+
+    public toggleFlags(flags: RenderFlags, on: boolean) {
+      if (on) {
+        this.flags |= flags;
+      } else {
+        this.flags &= ~flags;
+      }
+    }
+  }
+
+  /**
+   * Stats for each rendered frame.
+   */
+  export class FrameInfo {
+    private _count: number = 0;
+    private _enterTime: number;
+
+    shapes = 0;
+    groups = 0;
+    culledNodes = 0;
+
+    enter(state: RenderState) {
+      if (!writer) {
+        return;
+      }
+      writer.enter("> Frame: " + (this._count ++));
+      this._enterTime = performance.now();
+
+      this.shapes = 0;
+      this.groups = 0;
+      this.culledNodes = 0;
+    }
+
+    leave() {
+      if (!writer) {
+        return;
+      }
+      writer.writeLn("Shapes: " + this.shapes + ", Groups: " + this.groups + ", Culled Nodes: " + this.culledNodes);
+      writer.writeLn("Elapsed: " + (performance.now() - this._enterTime).toFixed(2));
+      writer.writeLn("Rectangle: " + Rectangle.allocationCount + ", Matrix: " + Matrix.allocationCount + ", State: " + RenderState.allocationCount);
+      writer.leave("<");
+    }
+  }
+
   export class Canvas2DStageRenderer extends StageRenderer {
-    _options: Canvas2DStageRendererOptions;
+    protected _options: Canvas2DStageRendererOptions;
     private _fillRule: string;
     context: CanvasRenderingContext2D;
+
+    private _target: Canvas2DSurfaceRegion;
 
     private static _initializedCaches: boolean = false;
 
     /**
      * Allocates temporary regions for performing image operations.
      */
-    private static _surfaceCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    private static _surfaceCache: ISurfaceRegionAllocator;
 
     /**
      * Allocates shape cache regions.
      */
-    private static _shapeCache: SurfaceRegionAllocator.ISurfaceRegionAllocator;
+    private static _shapeCache: ISurfaceRegionAllocator;
 
-    /**
-     * Reusable blur filter SVG element.
-     */
-    static _svgBlurFilter: Element;
+    private _visited: number = 0;
 
-    /**
-     * Reusable dropshadow filter SVG element.
-     */
-    static _svgDropshadowFilterBlur: Element;
-    static _svgDropshadowFilterFlood: Element;
-    static _svgDropshadowFilterOffset: Element;
+    private _frameInfo = new FrameInfo();
 
-    /**
-     * Reusable colormatrix filter SVG element.
-     */
-    static _svgColorMatrixFilter: Element;
-
-    static _svgFiltersAreSupported = !!Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, "filter");
+    private _fontSize: number = 0;
 
     constructor (
       canvas: HTMLCanvasElement,
       stage: Stage,
       options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
       super(canvas, stage, options);
-      var fillRule: FillRule = FillRule.NonZero;
-      var context = this.context = canvas.getContext("2d", {alpha: options.alpha});
+      var defaultFillRule = FillRule.NonZero;
+      this._fillRule = defaultFillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
       this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
-      this._fillRule = fillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
-      context.fillRule = context.mozFillRule = this._fillRule;
+      this._target = new Canvas2DSurfaceRegion(new Canvas2DSurface(canvas),
+                                               new RegionAllocator.Region(0, 0, canvas.width, canvas.height),
+                                               canvas.width, canvas.height);
+      this._devicePixelRatio = window.devicePixelRatio || 1;
+      this._fontSize = 10 * this._devicePixelRatio;
       Canvas2DStageRenderer._prepareSurfaceAllocators();
     }
 
-    /**
-     * Creates an SVG element and defines filters that are referenced in |canvas.filter| properties. We cannot
-     * inline CSS filters because they don't expose independent blurX and blurY properties.
-     * This only works in Firefox, and you have to set the 'canvas.filters.enabled' equal to |true|.
-     */
-    private static _prepareSVGFilters() {
-      if (Canvas2DStageRenderer._svgBlurFilter) {
-        return;
-      }
-      var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-      var defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-
-      // Blur Filter
-      var blurFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-      blurFilter.setAttribute("id", "svgBlurFilter");
-      var feGaussianFilter = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
-      feGaussianFilter.setAttribute("stdDeviation", "0 0");
-      blurFilter.appendChild(feGaussianFilter);
-      defs.appendChild(blurFilter);
-      Canvas2DStageRenderer._svgBlurFilter = feGaussianFilter;
-
-      // Drop Shadow Filter
-      var dropShadowFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-      dropShadowFilter.setAttribute("id", "svgDropShadowFilter");
-      var feGaussianFilter = document.createElementNS("http://www.w3.org/2000/svg", "feGaussianBlur");
-      feGaussianFilter.setAttribute("in", "SourceAlpha");
-      feGaussianFilter.setAttribute("stdDeviation", "3");
-      dropShadowFilter.appendChild(feGaussianFilter);
-      Canvas2DStageRenderer._svgDropshadowFilterBlur = feGaussianFilter;
-
-      var feOffset = document.createElementNS("http://www.w3.org/2000/svg", "feOffset");
-      feOffset.setAttribute("dx", "0");
-      feOffset.setAttribute("dy", "0");
-      feOffset.setAttribute("result", "offsetblur");
-      dropShadowFilter.appendChild(feOffset);
-      Canvas2DStageRenderer._svgDropshadowFilterOffset = feOffset;
-
-      var feFlood = document.createElementNS("http://www.w3.org/2000/svg", "feFlood");
-      feFlood.setAttribute("flood-color", "rgba(0,0,0,1)");
-      dropShadowFilter.appendChild(feFlood);
-      Canvas2DStageRenderer._svgDropshadowFilterFlood = feFlood;
-
-      var feComposite = document.createElementNS("http://www.w3.org/2000/svg", "feComposite");
-      feComposite.setAttribute("in2", "offsetblur");
-      feComposite.setAttribute("operator", "in");
-      dropShadowFilter.appendChild(feComposite);
-
-      var feMerge = document.createElementNS("http://www.w3.org/2000/svg", "feMerge");
-      var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
-      feMerge.appendChild(feMergeNode);
-
-      var feMergeNode = document.createElementNS("http://www.w3.org/2000/svg", "feMergeNode");
-      feMergeNode.setAttribute("in", "SourceGraphic");
-      feMerge.appendChild(feMergeNode);
-      dropShadowFilter.appendChild(feMerge);
-      defs.appendChild(dropShadowFilter);
-
-      var colorMatrixFilter = document.createElementNS("http://www.w3.org/2000/svg", "filter");
-      colorMatrixFilter.setAttribute("id", "svgColorMatrixFilter");
-      var feColorMatrix = document.createElementNS("http://www.w3.org/2000/svg", "feColorMatrix");
-      // Color interpolation in linear RGB doesn't seem to match Flash's results.
-      feColorMatrix.setAttribute("color-interpolation-filters", "sRGB");
-      feColorMatrix.setAttribute("in", "SourceGraphic");
-      feColorMatrix.setAttribute("type", "matrix");
-      colorMatrixFilter.appendChild(feColorMatrix);
-      defs.appendChild(colorMatrixFilter);
-      Canvas2DStageRenderer._svgColorMatrixFilter = feColorMatrix;
-      svg.appendChild(defs);
-      document.documentElement.appendChild(svg);
-    }
-
-    static _applyColorMatrixFilter(context: CanvasRenderingContext2D, colorMatrix: ColorMatrix) {
-      Canvas2DStageRenderer._prepareSVGFilters();
-      Canvas2DStageRenderer._svgColorMatrixFilter.setAttribute("values", colorMatrix.toSVGFilterMatrix());
-      context.filter = "url(#svgColorMatrixFilter)";
-    }
-
-    /**
-     * This doesn't currently allow you to specify multiple filters. Only the last one is used.
-     * To support multiple filters, we need to group them in SVG nodes.
-     */
-    static _applyFilters(ratio: number, context: CanvasRenderingContext2D, filters: Filter []) {
-      Canvas2DStageRenderer._prepareSVGFilters();
-      Canvas2DStageRenderer._removeFilters(context);
-      var scale = ratio;
-      /**
-       * Scale blur radius for each quality level. The scale constants were gathered
-       * experimentally.
-       */
-      function getBlurScale(quality: number) {
-        var blurScale = ratio / 2; // For some reason we always have to scale by 1/2 first.
-        switch (quality) {
-          case 0:
-            return 0;
-          case 1:
-            return blurScale / 2.7;
-          case 2:
-            return blurScale / 1.28;
-          case 3:
-          default:
-            return blurScale;
-        }
-      }
-      for (var i = 0; i < filters.length; i++) {
-        var filter = filters[i];
-        if (filter instanceof BlurFilter) {
-          var blurFilter = <BlurFilter>filter;
-          var blurScale = getBlurScale(blurFilter.quality);
-          Canvas2DStageRenderer._svgBlurFilter.setAttribute("stdDeviation",
-            blurFilter.blurX * blurScale + " " +
-            blurFilter.blurY * blurScale);
-          context.filter = "url(#svgBlurFilter)";
-        } else if (filter instanceof DropshadowFilter) {
-          var dropshadowFilter = <DropshadowFilter>filter;
-          var blurScale = getBlurScale(dropshadowFilter.quality);
-          Canvas2DStageRenderer._svgDropshadowFilterBlur.setAttribute("stdDeviation",
-            dropshadowFilter.blurX * blurScale + " " +
-            dropshadowFilter.blurY * blurScale
-          );
-          Canvas2DStageRenderer._svgDropshadowFilterOffset.setAttribute("dx",
-            String(Math.cos(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
-          Canvas2DStageRenderer._svgDropshadowFilterOffset.setAttribute("dy",
-            String(Math.sin(dropshadowFilter.angle * Math.PI / 180) * dropshadowFilter.distance * scale));
-          Canvas2DStageRenderer._svgDropshadowFilterFlood.setAttribute("flood-color",
-            ColorUtilities.rgbaToCSSStyle(((dropshadowFilter.color << 8) | Math.round(255 * dropshadowFilter.alpha))));
-          context.filter = "url(#svgDropShadowFilter)";
-        }
-      }
-    }
-
-    static _removeFilters(context: CanvasRenderingContext2D) {
-      // For some reason, setting this to the default empty string "" does
-      // not work, it expects "none".
-      context.filter = "none";
+    public resize() {
+      var canvas = this._canvas;
+      var context = this._target.surface.context;
+      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
+      this._target.region.set(this._viewport);
+      this._devicePixelRatio = window.devicePixelRatio || 1;
     }
 
     private static _prepareSurfaceAllocators() {
@@ -265,6 +340,7 @@ module Shumway.GFX.Canvas2D {
         return;
       }
 
+      var minSurfaceSize = 1024;
       Canvas2DStageRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator (
         function (w: number, h: number) {
           var canvas = document.createElement("canvas");
@@ -272,13 +348,13 @@ module Shumway.GFX.Canvas2D {
             registerScratchCanvas(canvas);
           }
           // Surface caches are at least this size.
-          var W = Math.max(1024, w);
-          var H = Math.max(1024, h);
+          var W = Math.max(minSurfaceSize, w);
+          var H = Math.max(minSurfaceSize, h);
           canvas.width = W;
           canvas.height = H;
           var allocator = null;
-          if (w >= 1024 || h >= 1024) {
-            // The requested size is pretty large, so create a single grid allocator
+          if (w >= 1024 / 2 || h >= 1024 / 2) {
+            // The requested size is very large, so create a single grid allocator
             // with there requested size. This will only hold one image.
             allocator = new RegionAllocator.GridAllocator(W, H, W, H);
           } else {
@@ -296,7 +372,7 @@ module Shumway.GFX.Canvas2D {
           if (typeof registerScratchCanvas !== "undefined") {
             registerScratchCanvas(canvas);
           }
-          var W = 1024, H = 1024;
+          var W = minSurfaceSize, H = minSurfaceSize;
           canvas.width = W;
           canvas.height = H;
           // Shape caches can be compact since regions are never freed explicitly.
@@ -310,354 +386,515 @@ module Shumway.GFX.Canvas2D {
       Canvas2DStageRenderer._initializedCaches = true;
     }
 
-    public resize() {
-      var canvas = this._canvas, context = this.context;
-      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
-      context.fillRule = context.mozFillRule = this._fillRule;
-      this._devicePixelRatio = window.devicePixelRatio || 1;
-      this.render();
-    }
-
+    /**
+     * Main render function.
+     */
     public render() {
       var stage = this._stage;
-      var context = this.context;
+      var target = this._target;
+      var options = this._options;
+      var viewport = this._viewport;
+
+      // stage.visit(new TracingNodeVisitor(new IndentingWriter()), null);
+
+      target.reset();
+      target.context.save();
+
+      target.context.beginPath();
+      target.context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+      target.context.clip();
+
+      this._renderStageToTarget(target, stage, viewport);
+
+      target.reset();
+
+      if (options.paintViewport) {
+        target.context.beginPath();
+        target.context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
+        target.context.strokeStyle = "#FF4981";
+        target.context.lineWidth = 2;
+        target.context.stroke();
+      }
+
+      target.context.restore();
+    }
+
+    public renderNode(node: Node, clip: Rectangle, matrix: Matrix) {
+      var state = new RenderState(this._target);
+      state.clip.set(clip);
+      state.flags = RenderFlags.CacheShapes;
+      state.matrix.set(matrix);
+      node.visit(this, state);
+      state.free();
+    }
+
+    public renderNodeWithState(node: Node, state: RenderState) {
+      node.visit(this, state);
+    }
+
+    private _renderWithCache(node: Node, state: RenderState): boolean {
+      var matrix = state.matrix;
+      var bounds = node.getBounds();
+      if (bounds.isEmpty()) {
+        return false;
+      }
+
+      var cacheShapesMaxSize = this._options.cacheShapesMaxSize;
+      var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
+
+      // var renderCount = node.properties["renderCount"] || 0;
+
+      var renderCount = 100;
+
+      var paintClip = !!(state.flags & RenderFlags.PaintClip);
+      var paintStencil = !!(state.flags & RenderFlags.PaintStencil);
+      var paintFlashing = !!(state.flags & RenderFlags.PaintFlashing);
+
+      if (!state.hasFlags(RenderFlags.CacheShapes)) {
+        return;
+      }
+
+      if (paintStencil || paintClip || !state.colorMatrix.isIdentity() ||
+          node.hasFlags(NodeFlags.Dynamic)) {
+        return false;
+      }
+
+      if (renderCount < this._options.cacheShapesThreshold ||
+          bounds.w * matrixScale > cacheShapesMaxSize ||
+          bounds.h * matrixScale > cacheShapesMaxSize) {
+        return false;
+      }
+
+      var mipMap: MipMap = node.properties["mipMap"];
+      if (!mipMap) {
+        mipMap = node.properties["mipMap"] = new MipMap(this, node, Canvas2DStageRenderer._shapeCache, cacheShapesMaxSize);
+      }
+      var mipMapLevel = mipMap.getLevel(matrix);
+      var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);
+      var region = mipMapLevelSurfaceRegion.region;
+      if (mipMapLevel) {
+        var context = state.target.context;
+        context.imageSmoothingEnabled = context.mozImageSmoothingEnabled = true;
+        context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+        context.drawImage (
+          mipMapLevelSurfaceRegion.surface.canvas,
+          region.x, region.y,
+          region.w, region.h,
+          bounds.x, bounds.y,
+          bounds.w, bounds.h
+        );
+        return true;
+      }
+      return false;
+    }
+
+    private _intersectsClipList(node: Node, state: RenderState): boolean {
+      var boundsAABB = node.getBounds(true);
+      var intersects = false;
+      state.matrix.transformRectangleAABB(boundsAABB);
+      if (state.clip.intersects(boundsAABB)) {
+        intersects = true;
+      }
+      var list = state.clipList;
+      if (intersects && list.length) {
+        intersects = false;
+        for (var i = 0; i < list.length; i++) {
+          if (boundsAABB.intersects(list[i])) {
+            intersects = true;
+            break;
+          }
+        }
+      }
+      boundsAABB.free();
+      return intersects;
+    }
+
+    visitGroup(node: Group, state: RenderState) {
+      this._frameInfo.groups ++;
+
+      var bounds = node.getBounds();
+
+      if (node.hasFlags(NodeFlags.IsMask) && !(state.flags & RenderFlags.IgnoreMask)) {
+        return;
+      }
+
+      if (!node.hasFlags(NodeFlags.Visible)) {
+        return;
+      }
+
+      if (!(state.flags & RenderFlags.IgnoreNextLayer) &&
+          (node.getLayer().blendMode !== BlendMode.Normal || node.getLayer().mask) &&
+          this._options.blending) {
+        state = state.clone();
+        state.flags |= RenderFlags.IgnoreNextLayer;
+        this._renderLayer(node, state);
+        state.free();
+      } else {
+        if (this._intersectsClipList(node, state)) {
+          var clips = null;
+          var children = node.getChildren();
+          for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            var childState = state.transform(child.getTransform());
+            childState.toggleFlags(RenderFlags.ImageSmoothing, child.hasFlags(NodeFlags.ImageSmoothing));
+            if (child.clip >= 0) {
+              clips = clips || new Uint8Array(children.length); // MEMORY: Don't allocate here.
+              clips[child.clip + i] ++;
+              var clipState = childState.clone();
+              /*
+               * We can't cull the clip because clips outside of the viewport still need to act
+               * as clipping masks. For now we just expand the cull bounds, but a better approach
+               * would be to cull the clipped nodes and skip creating the clipping region
+               * alltogether. For this we would need to keep track of the bounds of the current
+               * clipping region.
+               */
+              // clipState.clip.set(MAX_VIEWPORT);
+              state.target.context.save();
+              clipState.flags |= RenderFlags.PaintClip;
+              child.visit(this, clipState);
+              clipState.free();
+            } else {
+              child.visit(this, childState);
+            }
+            if (clips && clips[i] > 0) {
+              while (clips[i]--) {
+                state.target.context.restore();
+              }
+            }
+            childState.free();
+          }
+        } else {
+          this._frameInfo.culledNodes ++;
+        }
+      }
+
+      this._renderDebugInfo(node, state);
+    }
+
+    _renderDebugInfo(node: Node, state: RenderState) {
+      if (!(state.flags & RenderFlags.PaintBounds)) {
+        return;
+      }
+
+      var context = state.target.context;
+      var bounds = node.getBounds(true);
+      var style = node.properties["style"];
+      if (!style) {
+        style = node.properties["style"] = ColorStyle.randomStyle();
+      }
+
+      context.fillStyle = style;
+      context.strokeStyle = style;
+
+      state.matrix.transformRectangleAABB(bounds);
 
       context.setTransform(1, 0, 0, 1, 0, 0);
+      if (bounds.w > 32 && bounds.h > 32) {
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.font = this._fontSize + "px Arial";
+        var debugText = "" + node.id; // + "\n" +
+          // node.getBounds().w.toFixed(2) + "x" +
+          // node.getBounds().h.toFixed(2);
+        context.fillText(debugText, bounds.x + bounds.w / 2, bounds.y + bounds.h / 2);
+      }
+      bounds.free();
 
-      context.save();
-      var options = this._options;
+      var matrix = state.matrix;
+      bounds = node.getBounds();
+      context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+      context.lineWidth = 1 / matrix.getScale();
+      context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+    }
 
-      var lastDirtyRectangles: Rectangle[] = [];
-      var dirtyRectangles = lastDirtyRectangles.slice(0);
+    visitStage(node: Stage, state: RenderState) {
+      var context = state.target.context;
+      var bounds = node.getBounds(true);
+      state.matrix.transformRectangleAABB(bounds);
+      bounds.intersect(state.clip);
+      state.target.reset();
 
-      context.globalAlpha = 1;
-
-      var viewport = this._viewport;
-      this.renderFrame(stage, viewport, stage.matrix, true);
-
-      if (stage.trackDirtyRegions) {
-        stage.dirtyRegion.clear();
+      state = state.clone();
+      if (false && node.dirtyRegion) {
+        state.clipList.length = 0;
+        node.dirtyRegion.gatherOptimizedRegions(state.clipList);
+        context.save();
+        if (state.clipList.length) {
+          context.beginPath();
+          for (var i = 0; i < state.clipList.length; i++) {
+            var clip = state.clipList[i];
+            context.rect(clip.x, clip.y, clip.w, clip.h);
+          }
+          context.clip();
+        } else {
+          context.restore();
+          state.free();
+          return;
+        }
       }
 
-      context.restore();
+      state.target.clear(state.clip);
 
-      if (options && options.paintViewport) {
-        context.beginPath();
-        context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
-        context.strokeStyle = "#FF4981";
-        context.stroke();
+      // Fill background
+      if (!node.hasFlags(NodeFlags.Transparent) && node.color) {
+        if (!(state.flags & RenderFlags.IgnoreRenderable)) {
+          context.fillStyle = node.color.toCSSStyle();
+          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        }
+      }
+
+      this.visitGroup(node, state);
+
+      if (node.dirtyRegion) {
+        context.restore();
+        state.target.reset();
+        context.globalAlpha = 0.4;
+        if (state.hasFlags(RenderFlags.PaintDirtyRegion)) {
+          node.dirtyRegion.render(state.target.context);
+        }
+        node.dirtyRegion.clear();
+      }
+
+      state.free();
+    }
+
+    visitShape(node: Shape, state: RenderState) {
+      if (!this._intersectsClipList(node, state)) {
+        return;
+      }
+      var matrix = state.matrix;
+      if (state.flags & RenderFlags.PixelSnapping) {
+        matrix = matrix.clone();
+        matrix.snap();
+      }
+      var context = state.target.context;
+      Filters._applyColorMatrix(context, state.colorMatrix);
+      // Only paint if it is visible.
+      if (context.globalAlpha > 0) {
+        this.visitRenderable(node.source, state, node.ratio);
+      }
+      if (state.flags & RenderFlags.PixelSnapping) {
+        matrix.free();
       }
     }
 
-    public renderFrame (
-      root: Frame,
-      viewport: Rectangle,
-      matrix: Matrix,
-      clearTargetBeforeRendering: boolean = false)
-    {
-      var context = this.context;
-      context.save();
-      if (!this._options.paintViewport) {
-        context.beginPath();
-        context.rect(viewport.x, viewport.y, viewport.w, viewport.h);
-        context.clip();
+    visitRenderable(node: Renderable, state: RenderState, ratio?: number) {
+      var bounds = node.getBounds();
+      var matrix = state.matrix;
+      var context = state.target.context;
+      var paintClip = !!(state.flags & RenderFlags.PaintClip);
+      var paintStencil = !!(state.flags & RenderFlags.PaintStencil);
+      var paintFlashing = !!(state.flags & RenderFlags.PaintFlashing);
+
+      if (bounds.isEmpty()) {
+        return;
       }
-      if (clearTargetBeforeRendering) {
-        context.clearRect(viewport.x, viewport.y, viewport.w, viewport.h);
+
+      if (state.flags & RenderFlags.IgnoreRenderable) {
+        return;
       }
-      this._renderFrame(context, root, matrix, viewport, new Canvas2DStageRendererState(this._options));
-      context.restore();
+
+      if (state.hasFlags(RenderFlags.IgnoreNextRenderWithCache)) {
+        state.removeFlags(RenderFlags.IgnoreNextRenderWithCache);
+      } else {
+        if (this._renderWithCache(node, state)) {
+          return;
+        }
+      }
+
+      context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+
+      var paintStart = 0;
+      if (paintFlashing) {
+        paintStart = performance.now();
+      }
+
+      this._frameInfo.shapes ++;
+
+      context.imageSmoothingEnabled = context.mozImageSmoothingEnabled = state.hasFlags(RenderFlags.ImageSmoothing);
+
+      var renderCount = node.properties["renderCount"] || 0;
+      var cacheShapesMaxSize = this._options.cacheShapesMaxSize;
+      var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
+
+      node.properties["renderCount"] = ++ renderCount;
+      node.render(context, ratio, null, paintClip, paintStencil);
+      if (paintFlashing) {
+        var elapsed = performance.now() - paintStart;
+        context.fillStyle = ColorStyle.gradientColor(0.1 / elapsed);
+        context.globalAlpha = 0.3 + 0.1 * Math.random();
+        context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+      }
     }
 
-    /**
-     * Renders the frame into a temporary surface region in device coordinates clipped by the viewport.
-     */
-    private _renderToSurfaceRegion(frame: Frame, transform: Matrix, viewport: Rectangle): {
-        surfaceRegion: Canvas2DSurfaceRegion;
-        surfaceRegionBounds: Rectangle;
-        clippedBounds: Rectangle;
+    _renderLayer(node: Node, state: RenderState) {
+      var layer = node.getLayer();
+      var mask = layer.mask;
+      if (!mask) {
+        var clip = Rectangle.allocate();
+        var target = this._renderToTemporarySurface(node, state, clip);
+        if (target) {
+          var matrix = state.matrix;
+          state.target.draw(target, clip.x, clip.y, clip.w, clip.h, layer.blendMode);
+          target.free();
+        }
+        clip.free();
+      } else {
+        var paintStencil = !node.hasFlags(NodeFlags.CacheAsBitmap) || !mask.hasFlags(NodeFlags.CacheAsBitmap);
+        this._renderWithMask(node, mask, layer.blendMode, paintStencil, state);
       }
-    {
-      var bounds = frame.getBounds();
+    }
+
+    _renderWithMask(node: Node, mask: Node, blendMode: BlendMode, stencil: boolean, state: RenderState) {
+      var maskMatrix = mask.getTransform().getConcatenatedMatrix(true);
+      // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
+      // we still have to factor in the stage's matrix, which includes pixel density scaling.
+      if (!mask.parent) {
+        maskMatrix = maskMatrix.concatClone(this._stage.getTransform().getConcatenatedMatrix());
+      }
+
+      var aAABB = node.getBounds().clone();
+      state.matrix.transformRectangleAABB(aAABB);
+      aAABB.snap();
+      if (aAABB.isEmpty()) {
+        return;
+      }
+
+      var bAABB = mask.getBounds().clone();
+      maskMatrix.transformRectangleAABB(bAABB);
+      bAABB.snap();
+      if (bAABB.isEmpty()) {
+        return;
+      }
+
+      var clip = state.clip.clone();
+      clip.intersect(aAABB);
+      clip.intersect(bAABB);
+      clip.snap();
+
+      // The masked area is empty, so nothing to do here.
+      if (clip.isEmpty()) {
+        return;
+      }
+
+      var aState = state.clone();
+      aState.clip.set(clip);
+      var a = this._renderToTemporarySurface(node, aState, Rectangle.createEmpty());
+      aState.free();
+
+      var bState = state.clone();
+      bState.clip.set(clip);
+      bState.matrix = maskMatrix;
+      bState.flags |= RenderFlags.IgnoreMask;
+      if (stencil) {
+        bState.flags |= RenderFlags.PaintStencil;
+      }
+      var b = this._renderToTemporarySurface(mask, bState, Rectangle.createEmpty());
+      bState.free();
+
+      a.draw(b, 0, 0, clip.w, clip.h, BlendMode.Alpha);
+
+      var matrix = state.matrix;
+      state.target.draw(a, clip.x, clip.y, clip.w, clip.h, blendMode);
+
+      b.free();
+      a.free();
+    }
+
+    private _renderStageToTarget (
+      target: Canvas2DSurfaceRegion,
+      node: Node,
+      clip: Rectangle
+    ) {
+
+      Rectangle.allocationCount = Matrix.allocationCount = RenderState.allocationCount = 0;
+
+      var state = new RenderState(target);
+      state.clip.set(clip);
+
+      if (!this._options.paintRenderable) {
+        state.flags |= RenderFlags.IgnoreRenderable;
+      }
+      if (this._options.paintBounds) {
+        state.flags |= RenderFlags.PaintBounds;
+      }
+      if (this._options.paintDirtyRegion) {
+        state.flags |= RenderFlags.PaintDirtyRegion;
+      }
+      if (this._options.paintFlashing) {
+        state.flags |= RenderFlags.PaintFlashing;
+      }
+      if (this._options.cacheShapes) {
+        state.flags |= RenderFlags.CacheShapes;
+      }
+      if (this._options.imageSmoothing) {
+        state.flags |= RenderFlags.ImageSmoothing;
+      }
+      if (this._options.snapToDevicePixels) {
+        state.flags |= RenderFlags.PixelSnapping;
+      }
+
+      this._frameInfo.enter(state);
+
+      node.visit(this, state);
+
+      this._frameInfo.leave();
+    }
+
+    private _renderToTemporarySurface(node: Node, state: RenderState, clip: Rectangle): Canvas2DSurfaceRegion {
+      var matrix = state.matrix;
+      var bounds = node.getBounds();
       var boundsAABB = bounds.clone();
-      transform.transformRectangleAABB(boundsAABB);
+      matrix.transformRectangleAABB(boundsAABB);
       boundsAABB.snap();
-      var dx = boundsAABB.x;
-      var dy = boundsAABB.y;
-      var clippedBoundsAABB = boundsAABB.clone();
-      clippedBoundsAABB.intersect(viewport);
-      clippedBoundsAABB.snap();
 
-      dx += clippedBoundsAABB.x - boundsAABB.x;
-      dy += clippedBoundsAABB.y - boundsAABB.y;
+      clip.set(boundsAABB);
+      clip.intersect(state.clip);
+      clip.snap();
 
-      var surfaceRegion = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceCache.allocate(clippedBoundsAABB.w, clippedBoundsAABB.h));
-      var region = surfaceRegion.region;
+      if (clip.isEmpty()) {
+        return null;
+      }
+
+      var target = this._allocateSurface(clip.w, clip.h);
+      var region = target.region;
 
       // Region bounds may be smaller than the allocated surface region.
-      var surfaceRegionBounds = new Rectangle(region.x, region.y, clippedBoundsAABB.w, clippedBoundsAABB.h);
+      var surfaceRegionBounds = new Rectangle(region.x, region.y, clip.w, clip.h);
 
-      var context = surfaceRegion.surface.context;
-      context.setTransform(1, 0, 0, 1, 0, 0);
-      // Prepare region bounds for painting.
-      context.clearRect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
-      transform = transform.clone();
+      target.context.setTransform(1, 0, 0, 1, 0, 0);
+      target.clear();
+      matrix = matrix.clone();
 
-      transform.translate (
-        surfaceRegionBounds.x - dx,
-        surfaceRegionBounds.y - dy
+      matrix.translate (
+        surfaceRegionBounds.x - clip.x,
+        surfaceRegionBounds.y - clip.y
       );
 
       // Clip region bounds so we don't paint outside.
-      context.save();
-      context.beginPath();
-      context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
-      context.clip();
-      this._renderFrame(context, frame, transform, surfaceRegionBounds, new Canvas2DStageRendererState(this._options));
-      context.restore();
-      return {
-        surfaceRegion: surfaceRegion,
-        surfaceRegionBounds: surfaceRegionBounds,
-        clippedBounds: clippedBoundsAABB
-      };
+      target.context.save();
+
+      // We can't do this becuse we could be clipping some other temporary region in the same context.
+      // target.context.beginPath();
+      // target.context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
+      // target.context.clip();
+
+      state = state.clone();
+      state.target = target;
+      state.matrix = matrix;
+      state.clip.set(surfaceRegionBounds);
+      node.visit(this, state);
+      state.free();
+      target.context.restore();
+      return target;
     }
 
-    private _renderShape(context: CanvasRenderingContext2D, shape: Shape, matrix: Matrix, viewport: Rectangle, state: Canvas2DStageRendererState) {
-      var self = this;
-      var bounds = shape.getBounds();
-      if (!bounds.isEmpty() &&
-          state.options.paintRenderable) {
-        var source = shape.source;
-        var renderCount = source.properties["renderCount"] || 0;
-        var cacheShapesMaxSize = state.options.cacheShapesMaxSize;
-        var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
-        if (!state.clipRegion &&
-            !source.hasFlags(RenderableFlags.Dynamic) &&
-            state.options.cacheShapes &&
-            renderCount > state.options.cacheShapesThreshold &&
-            bounds.w * matrixScale <= cacheShapesMaxSize &&
-            bounds.h * matrixScale <= cacheShapesMaxSize)
-        {
-          var mipMap: MipMap = source.properties["mipMap"];
-          if (!mipMap) {
-            mipMap = source.properties["mipMap"] = new MipMap(source, Canvas2DStageRenderer._shapeCache, cacheShapesMaxSize);
-          }
-          var mipMapLevel = mipMap.getLevel(matrix);
-          var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);
-          var region = mipMapLevelSurfaceRegion.region;
-          if (mipMapLevel) {
-            context.drawImage (
-              mipMapLevelSurfaceRegion.surface.canvas,
-              region.x, region.y,
-              region.w, region.h,
-              bounds.x, bounds.y,
-              bounds.w, bounds.h
-            );
-          }
-          if (state.options.paintFlashing) {
-            context.fillStyle = ColorStyle.Green;
-            context.globalAlpha = 0.5;
-            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-          }
-        } else {
-          source.properties["renderCount"] = ++ renderCount;
-          source.render(context, shape.ratio, null, state.clipRegion);
-          if (state.options.paintFlashing) {
-            context.fillStyle = ColorStyle.randomStyle();
-            context.globalAlpha = 0.1;
-            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-          }
-        }
-      }
-    }
-
-    private _applyColorMatrix(context: CanvasRenderingContext2D, colorMatrix: ColorMatrix, state: Canvas2DStageRendererState) {
-      Canvas2DStageRenderer._removeFilters(context);
-      if (colorMatrix.isIdentity()) {
-        context.globalAlpha = 1;
-        context.globalColorMatrix = null;
-      } else if (colorMatrix.hasOnlyAlphaMultiplier()) {
-        context.globalAlpha = colorMatrix.alphaMultiplier;
-        context.globalColorMatrix = null;
-      } else {
-        context.globalAlpha = 1;
-        if (Canvas2DStageRenderer._svgFiltersAreSupported && state.options.filters) {
-          Canvas2DStageRenderer._applyColorMatrixFilter(context, colorMatrix);
-          context.globalColorMatrix = null;
-        } else {
-          context.globalColorMatrix = colorMatrix;
-        }
-      }
-    }
-
-    private _renderFrame (
-      context: CanvasRenderingContext2D,
-      root: Frame,
-      matrix: Matrix,
-      viewport: Rectangle,
-      state: Canvas2DStageRendererState,
-      skipRoot: boolean = false) {
-
-      var self = this;
-      root.visit(function visitFrame(frame: Frame, matrix?: Matrix, flags?: FrameFlags): VisitorFlags {
-        if (skipRoot && root === frame) {
-          return VisitorFlags.Continue;
-        }
-
-        if (!frame._hasFlags(FrameFlags.Visible)) {
-          return VisitorFlags.Skip;
-        }
-
-        var bounds = frame.getBounds();
-
-        if (state.ignoreMask !== frame && frame.mask && !state.clipRegion) {
-          context.save();
-          var maskMatrix = frame.mask.getConcatenatedMatrix();
-          // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
-          // we still have to factor in the stage's matrix, which includes pixel density scaling.
-          if (!frame.mask.parent) {
-            maskMatrix = maskMatrix.concatClone(self._stage.getConcatenatedMatrix());
-          }
-          self._renderFrame(context, frame.mask, maskMatrix, viewport, new Canvas2DStageRendererState(state.options, true));
-          self._renderFrame(context, frame, matrix, viewport, new Canvas2DStageRendererState(state.options, false, frame));
-          context.restore();
-          return VisitorFlags.Skip;
-        }
-
-        if (flags & FrameFlags.EnterClip) {
-          context.save();
-          context.enterBuildingClippingRegion();
-          self._renderFrame(context, frame, matrix, MAX_VIEWPORT, new Canvas2DStageRendererState(state.options, true));
-          context.leaveBuildingClippingRegion();
-          return;
-        } else if (flags & FrameFlags.LeaveClip) {
-          context.restore();
-          return;
-        }
-
-        // Return early if the bounds are not within the viewport.
-        if (!viewport.intersectsTransformedAABB(bounds, matrix)) {
-          return VisitorFlags.Skip;
-        }
-
-        if (frame.pixelSnapping === PixelSnapping.Always || state.options.snapToDevicePixels) {
-          matrix.snap();
-        }
-
-        context.imageSmoothingEnabled =
-          frame.smoothing === Smoothing.Always || state.options.imageSmoothing;
-
-        context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-
-        self._applyColorMatrix(context, frame.getConcatenatedColorMatrix(), state);
-
-        if (flags & FrameFlags.IsMask && !state.clipRegion) {
-          return VisitorFlags.Skip;
-        }
-
-        var boundsAABB = frame.getBounds().clone();
-        matrix.transformRectangleAABB(boundsAABB);
-        boundsAABB.snap();
-
-        var shouldApplyFilters = Canvas2DStageRenderer._svgFiltersAreSupported && state.options.filters;
-
-        // Do we need to draw to a temporary surface?
-        if (frame !== root && (state.options.blending || shouldApplyFilters)) {
-          context.globalCompositeOperation = self._getCompositeOperation(frame.blendMode);
-          if (frame.blendMode !== BlendMode.Normal || frame.filters.length) {
-            if (shouldApplyFilters) {
-              Canvas2DStageRenderer._applyFilters(self._devicePixelRatio, context, frame.filters);
-            }
-            var result = self._renderToSurfaceRegion(frame, matrix, viewport);
-            var surfaceRegion = result.surfaceRegion;
-            var surfaceRegionBounds = result.surfaceRegionBounds;
-            var clippedBounds = result.clippedBounds;
-            var region = surfaceRegion.region;
-            context.setTransform(1, 0, 0, 1, 0, 0);
-            context.drawImage (
-              surfaceRegion.surface.canvas,
-              surfaceRegionBounds.x,
-              surfaceRegionBounds.y,
-              surfaceRegionBounds.w,
-              surfaceRegionBounds.h,
-              clippedBounds.x,
-              clippedBounds.y,
-              surfaceRegionBounds.w,
-              surfaceRegionBounds.h
-            );
-            Canvas2DStageRenderer._removeFilters(context);
-            surfaceRegion.surface.free(surfaceRegion);
-            return VisitorFlags.Skip;
-          }
-        }
-
-        if (frame instanceof Shape) {
-          frame._previouslyRenderedAABB = boundsAABB;
-          self._renderShape(context, <Shape>frame, matrix, viewport, state);
-        } else if (frame instanceof ClipRectangle) {
-          var clipRectangle = <ClipRectangle>frame;
-          context.save();
-          context.beginPath();
-          context.rect(bounds.x, bounds.y, bounds.w, bounds.h);
-          context.clip();
-          boundsAABB.intersect(viewport);
-
-          if (!frame._hasFlags(FrameFlags.Transparent)) {
-            // Fill Background
-            context.fillStyle = clipRectangle.color.toCSSStyle();
-            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-          }
-
-          self._renderFrame(context, frame, matrix, boundsAABB, state, true);
-          context.restore();
-          return VisitorFlags.Skip;
-        } else if (state.options.paintBounds && frame instanceof FrameContainer) {
-          var bounds = frame.getBounds().clone();
-          context.strokeStyle = ColorStyle.LightOrange;
-          context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
-        }
-        return VisitorFlags.Continue;
-      }, matrix, FrameFlags.Empty, VisitorFlags.Clips);
-    }
-
-    /**
-     * Match up FLash blend modes with Canvas blend operations:
-     *
-     * See: http://kaourantin.net/2005/09/some-word-on-blend-modes-in-flash.html
-     */
-    private _getCompositeOperation(blendMode: BlendMode): string {
-      // TODO:
-
-      // These Flash blend modes have no canvas equivalent:
-      // - BlendMode.Subtract
-      // - BlendMode.Invert
-      // - BlendMode.Shader
-      // - BlendMode.Add is similar to BlendMode.Screen
-
-      // These blend modes are actually Porter-Duff compositing operators.
-      // The backdrop is the nearest parent with blendMode set to layer.
-      // When there is no LAYER parent, they are ignored (treated as NORMAL).
-      // - BlendMode.Alpha (destination-in)
-      // - BlendMode.Erase (destination-out)
-      // - BlendMode.Layer [defines backdrop]
-
-      var compositeOp: string = "source-over";
-      switch (blendMode) {
-        case BlendMode.Normal:
-        case BlendMode.Layer:
-          return compositeOp;
-        case BlendMode.Multiply:   compositeOp = "multiply";   break;
-        case BlendMode.Add:
-        case BlendMode.Screen:     compositeOp = "screen";     break;
-        case BlendMode.Lighten:    compositeOp = "lighten";    break;
-        case BlendMode.Darken:     compositeOp = "darken";     break;
-        case BlendMode.Difference: compositeOp = "difference"; break;
-        case BlendMode.Overlay:    compositeOp = "overlay";    break;
-        case BlendMode.HardLight:  compositeOp = "hard-light"; break;
-        default:
-          Shumway.Debug.somewhatImplemented("Blend Mode: " + BlendMode[blendMode]);
-      }
-      return compositeOp;
+    private _allocateSurface(w: number, h: number): Canvas2DSurfaceRegion {
+      var surface = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceCache.allocate(w, h))
+      surface.fill("#FF4981");
+      // var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
+      // surface.fill(color);
+      return surface;
     }
   }
 }

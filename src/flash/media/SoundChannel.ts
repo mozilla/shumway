@@ -117,6 +117,10 @@ module Shumway.AVM2.AS.flash.media {
       }
     }
 
+    set setVolume(value: number) {
+      // TODO set volume on this._source via gain node
+    }
+
     start() {
       var source = this._context.createScriptProcessor(2048, 0, this._channels);
       var self = this;
@@ -156,7 +160,7 @@ module Shumway.AVM2.AS.flash.media {
     }
   }
 
-  export class SoundChannel extends flash.events.EventDispatcher {
+  export class SoundChannel extends flash.events.EventDispatcher implements ISoundSource {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -220,11 +224,13 @@ module Shumway.AVM2.AS.flash.media {
     }
     stop(): void {
       if (this._element) {
-        this._unregisterWithSoundMixer();
+        SoundMixer._unregisterSoundSource(this);
+
         this._element.pause();
       }
       if (this._audioChannel) {
-        this._unregisterWithSoundMixer();
+        SoundMixer._unregisterSoundSource(this);
+
         this._audioChannel.stop();
       }
     }
@@ -233,7 +239,8 @@ module Shumway.AVM2.AS.flash.media {
         return;
       }
 
-      this._registerWithSoundMixer();
+      SoundMixer._registerSoundSource(this);
+
       this._position = startTime;
       var self = this;
       var lastCurrentTime = 0;
@@ -265,17 +272,20 @@ module Shumway.AVM2.AS.flash.media {
         self._position = (lastCurrentTime = currentTime) * 1000;
       });
       element.addEventListener("ended", function ended() {
-        self._unregisterWithSoundMixer();
+        SoundMixer._unregisterSoundSource(this);
+
         self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
         self._element = null;
       });
       this._element = element;
-      this._applySoundTransform();
+
+      SoundMixer._updateSoundSource(this);
     }
     _playSoundDataViaChannel(soundData, startTime, loops) {
       release || assert(soundData.pcm, 'no pcm data found');
 
-      this._registerWithSoundMixer();
+      SoundMixer._registerSoundSource(this);
+
       var self = this;
       var startPosition = Math.round(startTime / 1000 * soundData.sampleRate) *
         soundData.channels;
@@ -286,7 +296,8 @@ module Shumway.AVM2.AS.flash.media {
         var end = soundData.end;
         if (position >= end && soundData.completed) {
           // end of buffer
-          self._unregisterWithSoundMixer();
+          SoundMixer._unregisterSoundSource(this);
+
           self._audioChannel.stop();
           self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
           return;
@@ -313,27 +324,19 @@ module Shumway.AVM2.AS.flash.media {
         self._position = position / soundData.sampleRate / soundData.channels * 1000;
       };
       this._audioChannel.start();
-      this._applySoundTransform();
+
+      SoundMixer._updateSoundSource(this);
     }
-    _applySoundTransform() {
-      // TODO: apply pan
-      var volume = this._soundTransform.volume;
-      if (SoundMixer._soundTransform) {
-        volume *= SoundMixer._soundTransform.volume;
-      }
-      volume *= SoundMixer._getMasterVolume();
+    stopSound() {
+      this.stop();
+    }
+    updateSoundLevels(volume: number) {
       if (this._element) {
         this._element.volume = volume <= 0 ? 0 : volume >= 1.0 ? 1.0 : volume;
       }
       if (this._audioChannel) {
-        // TODO
+        this._audioChannel.setVolume(volume);
       }
-    }
-    _registerWithSoundMixer() {
-      SoundMixer._registerChannel(this);
-    }
-    _unregisterWithSoundMixer() {
-      SoundMixer._unregisterChannel(this);
     }
   }
 }

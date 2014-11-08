@@ -1342,7 +1342,9 @@ module Shumway.AVM2.Verifier {
           case OP.astypelate:
             type = pop();
             pop();
-            if (type.isTraitsType()) {
+            if (type === Type.Class) {
+              push(type)
+            } else if (type.isTraitsType()) {
               push(type.instanceType());
             } else {
               push(Type.Any);

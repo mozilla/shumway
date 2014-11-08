@@ -65,7 +65,7 @@ module Shumway.AVM2.Compiler {
     if (object.hash) {
       return "$(" + object.hash + ")";
     } else if (object instanceof LazyInitializer) {
-      return object.getName();
+      return (<any>object).getName();
     } else {
       hasUsedConstants = true;
     }

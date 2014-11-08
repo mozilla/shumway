@@ -80,9 +80,11 @@ module Shumway.Player.Window {
         type: 'videoControl',
         id: id,
         eventType: eventType,
-        data: data
+        data: data,
+        result: undefined
       });
       this._parent.dispatchEvent(event);
+      return event.detail.result;
     }
 
     onFrameProcessed() {
@@ -101,6 +103,12 @@ module Shumway.Player.Window {
             break;
           case 'externalCallback':
             this.processExternalCallback(data.request);
+            break;
+          case 'videoPlayback':
+            this.processVideoEvent(data.id, data.eventType, data.data);
+            break;
+          case 'displayParameters':
+            this.processDisplayParameters(data.params);
             break;
           case 'options':
             Shumway.Settings.setSettings(data.settings);
@@ -139,9 +147,6 @@ module Shumway.Player.Window {
                   request: data.request,
                   timeline: Shumway.SWF.timelineBuffer
                 }, '*');
-                break;
-              case 'videoPlayback':
-                this.processVideoEvent(data.id, data.eventType, data.data);
                 break;
             }
             break;

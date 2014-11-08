@@ -1058,7 +1058,7 @@ module Shumway.AVM2.Compiler.IR {
       for (var i = 0; i < roots.length; i++) {
         var root = roots[i];
         if (root instanceof Phi) {
-          var block = root.control.block;
+          var block = (<any>root.control).block;
           (block.phis || (block.phis = [])).push(root);
         }
         if (root.control) {

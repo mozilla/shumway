@@ -95,6 +95,9 @@ module Shumway.Player.Test {
         case 'videoPlayback':
           this.processVideoEvent(data.id, data.eventType, data.data);
           return;
+        case 'displayParameters':
+          this.processDisplayParameters(data.params);
+          break;
       }
     }
 

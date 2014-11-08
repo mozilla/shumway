@@ -46,6 +46,8 @@ module Shumway.Player {
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
 
+  import DisplayParameters = Shumway.Remoting.DisplayParameters;
+
   /**
    * Shumway Player
    *
@@ -106,6 +108,11 @@ module Shumway.Player {
      * Initial stage scaling: showall|noborder|exactfit|noscale.
      */
     public stageScale: string;
+
+    /**
+     * Initial display parameters.
+     */
+    public displayParams: DisplayParameters;
 
     /**
      * Time since the last time we've synchronized the display list.
@@ -185,6 +192,11 @@ module Shumway.Player {
           stage.setStageHeight(loaderInfo.height);
           stage.setStageColor(ColorUtilities.RGBAToARGB(bgcolor));
           stage.addTimelineObjectAtDepth(root, 0);
+
+          if (self.displayParams) {
+            self.processDisplayParameters(self.displayParams);
+          }
+
           self._enterLoops();
         });
       }
@@ -231,7 +243,10 @@ module Shumway.Player {
           this._mouseEventDispatcher.stage = this._stage;
           var target = this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>message);
           if (traceMouseEventOption.value) {
-            this._writer.writeLn("Mouse Event: type: " + message.type + ", target: " + target + ", name: " + target._name);
+            this._writer.writeLn("Mouse Event: type: " + message.type + ", point: " + message.point + ", target: " + target + (target ? ", name: " + target._name : ""));
+            if (message.type === "click" && target) {
+              target.debugTrace();
+            }
           }
           break;
         case MessageTag.FocusEvent:
@@ -386,7 +401,7 @@ module Shumway.Player {
     }
 
     public notifyVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
-      this.onVideoControl(id, eventType, data);
+      return this.onVideoControl(id, eventType, data);
     }
 
     public executeFSCommand(command: string, args: string) {
@@ -456,7 +471,6 @@ module Shumway.Player {
       {
         return;
       }
-      this._stage.scaleX = this._stage.scaleY = stageScaleOption.value;
       // The stage is required for frame event cycle processing.
       DisplayObject._stage = this._stage;
       for (var i = 0; i < frameRateMultiplierOption.value; i++) {
@@ -592,6 +606,10 @@ module Shumway.Player {
       var listener = this._videoEventListeners[id];
       Debug.assert(listener, 'Video event listener is not found');
       listener(eventType, data);
+    }
+
+    public processDisplayParameters(params: DisplayParameters) {
+      this._stage.setCanvasSize(params.canvasWidth, params.canvasHeight, params.pixelRatio);
     }
 
     onExternalCommand(command) {

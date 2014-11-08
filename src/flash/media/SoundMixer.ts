@@ -20,6 +20,12 @@ module Shumway.AVM2.AS.flash.media {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
+  export interface ISoundSource {
+    soundTransform: flash.media.SoundTransform;
+    updateSoundLevels(volume: number);
+    stopSound();
+  }
+
   export class SoundMixer extends ASNative {
     
     // Called whenever the class is initialized.
@@ -40,7 +46,7 @@ module Shumway.AVM2.AS.flash.media {
     }
 
     private static _masterVolume = 1;
-    private static _registeredChannels: SoundChannel[] = [];
+    private static _registeredSoundSources: ISoundSource[] = [];
     private static _bufferTime = 0;
     static _soundTransform: flash.media.SoundTransform;
     // static _audioPlaybackMode: string;
@@ -66,9 +72,7 @@ module Shumway.AVM2.AS.flash.media {
       somewhatImplemented("public flash.media.SoundMixer::set soundTransform");
       SoundMixer._soundTransform = isNullOrUndefined(sndTransform) ?
         new flash.media.SoundTransform() : sndTransform;
-      SoundMixer._registeredChannels.forEach(function (channel) {
-        channel._applySoundTransform();
-      });
+      SoundMixer._updateAllSoundSources();
     }
     static get audioPlaybackMode(): string {
       notImplemented("public flash.media.SoundMixer::get audioPlaybackMode"); return;
@@ -89,10 +93,10 @@ module Shumway.AVM2.AS.flash.media {
       // SoundMixer._useSpeakerphoneForVoice = value;
     }
     static stopAll(): void {
-      SoundMixer._registeredChannels.forEach(function (channel) {
-        channel.stop();
+      SoundMixer._registeredSoundSources.forEach(function (channel) {
+        channel.stopSound();
       });
-      SoundMixer._registeredChannels = [];
+      SoundMixer._registeredSoundSources = [];
     }
     static computeSpectrum(outputArray: flash.utils.ByteArray, FFTMode: boolean = false, stretchFactor: number /*int*/ = 0): void {
       FFTMode = !!FFTMode; stretchFactor = stretchFactor | 0;
@@ -113,18 +117,27 @@ module Shumway.AVM2.AS.flash.media {
     static _setMasterVolume(volume) {
       volume = +volume;
       SoundMixer._masterVolume = volume;
-      SoundMixer._registeredChannels.forEach(function (channel) {
-        channel._applySoundTransform();
-      });
+      SoundMixer._updateAllSoundSources();
     }
-    static _registerChannel(channel: SoundChannel) {
-      SoundMixer._registeredChannels.push(channel);
+    static _registerSoundSource(source: ISoundSource) {
+      SoundMixer._registeredSoundSources.push(source);
     }
-    static _unregisterChannel(channel: SoundChannel) {
-      var index =  SoundMixer._registeredChannels.indexOf(channel);
+    static _unregisterSoundSource(source: ISoundSource) {
+      var index =  SoundMixer._registeredSoundSources.indexOf(source);
       if (index >= 0) {
-        SoundMixer._registeredChannels.splice(index, 1);
+        SoundMixer._registeredSoundSources.splice(index, 1);
       }
+    }
+    static _updateSoundSource(source: ISoundSource) {
+      var volume = source.soundTransform.volume;
+      if (SoundMixer._soundTransform) {
+        volume *= SoundMixer._soundTransform.volume;
+      }
+      volume *= SoundMixer._getMasterVolume();
+      source.updateSoundLevels(volume);
+    }
+    static _updateAllSoundSources() {
+      SoundMixer._registeredSoundSources.forEach(SoundMixer._updateSoundSource);
     }
   }
 }

@@ -17,6 +17,8 @@
 module Shumway {
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
+  import StageScaleMode = Shumway.Remoting.StageScaleMode;
+  import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
 
   import shumwayOptions = Shumway.Settings.shumwayOptions;
 
@@ -35,11 +37,11 @@ module Shumway {
   );
 
   export var pumpRateOption = playerOptions.register (
-    new Shumway.Options.Option("", "Pump Rate", "number", 80, "Number of times / second that the display list is synchronized.", {range: { min: 1, max: 120, step: 1 }})
+    new Shumway.Options.Option("", "Pump Rate", "number", 60, "Number of times / second that the display list is synchronized.", {range: { min: 1, max: 120, step: 1 }})
   );
 
   export var frameRateOption = playerOptions.register (
-    new Shumway.Options.Option("", "Frame Rate", "number", -1, "Override a movie's frame rate, set to -1 to use the movies default frame rate.", {range: { min: -1, max: 120, step: 1 }})
+    new Shumway.Options.Option("", "Frame Rate", "number", 60, "Override a movie's frame rate, set to -1 to use the movies default frame rate.", {range: { min: -1, max: 120, step: 1 }})
   );
 
   export var tracePlayerOption = playerOptions.register (
@@ -72,9 +74,5 @@ module Shumway {
 
   export var playSymbolCountOption = playerOptions.register (
     new Shumway.Options.Option("", "Play Symbol Count", "number", -1, "Select symbol count.", {range: { min: 0, max: 20000, step: 1 }})
-  );
-
-  export var stageScaleOption = playerOptions.register (
-    new Shumway.Options.Option("", "Stage Scale", "number", 1, "Scales the symbols.", {range: { min: 0.1, max: 16, step: 0.01 }})
   );
 }

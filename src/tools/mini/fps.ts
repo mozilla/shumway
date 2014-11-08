@@ -119,8 +119,8 @@ module Shumway.Tools.Mini {
         context.fillStyle = "black";
         context.fillRect(0, 0, textWidth, this._canvas.height);
         context.fillStyle = "white";
-        context.font = "10px Arial";
-        context.fillText((1000 / weightedTime).toFixed(0), 2, 8);
+        context.font = (this._ratio * 10) + "px Arial";
+        context.fillText((1000 / weightedTime).toFixed(0), 2 * this._ratio, 8 * this._ratio);
       }
 
       this._lastTime = performance.now();

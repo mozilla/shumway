@@ -22,9 +22,7 @@
 /// <reference path='options.ts'/>
 /// <reference path='geometry.ts'/>
 /// <reference path='regionAllocator.ts'/>
-/// <reference path='frame.ts'/>
-/// <reference path='frameContainer.ts'/>
-/// <reference path='stage.ts'/>
+/// <reference path='nodes.ts'/>
 /// <reference path='renderables/renderables.ts'/>
 /// <reference path='filters.ts'/>
 

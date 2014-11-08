@@ -94,36 +94,49 @@ module Shumway.GFX {
     }
   }
 
-  export class ColorMatrix {
-    private _m: Float32Array;
+  export enum ColorMatrixType {
+    Unknown            = 0x0000,
+    Identity           = 0x0001
+  }
 
-    constructor (m: any) {
-      release || assert (m.length === 20);
-      this._m = new Float32Array(m);
+  export class ColorMatrix {
+    private _data: Float32Array;
+    private _type: ColorMatrixType;
+
+    constructor (data: any) {
+      release || assert (data.length === 20);
+      this._data = new Float32Array(data);
+      this._type = ColorMatrixType.Unknown;
     }
 
     public clone(): ColorMatrix {
-      return new ColorMatrix(this._m);
+      var colorMatrix = new ColorMatrix(this._data);
+      colorMatrix._type = this._type;
+      return colorMatrix;
     }
 
     public set(other: ColorMatrix) {
-      this._m.set(other._m);
+      this._data.set(other._data);
+      this._type = other._type;
     }
 
     public toWebGLMatrix(): Float32Array {
-      return new Float32Array(this._m);
+      return new Float32Array(this._data);
     }
 
     public asWebGLMatrix(): Float32Array {
-      return this._m.subarray(0, 16);
+      return this._data.subarray(0, 16);
     }
 
     public asWebGLVector(): Float32Array {
-      return this._m.subarray(16, 20);
+      return this._data.subarray(16, 20);
     }
 
     public isIdentity(): boolean {
-      var m = this._m;
+      if (this._type & ColorMatrixType.Identity) {
+        return true;
+      }
+      var m = this._data;
       return m[0]  == 1 && m[1]  == 0 && m[2]  == 0 && m[3]  == 0 &&
              m[4]  == 0 && m[5]  == 1 && m[6]  == 0 && m[7]  == 0 &&
              m[8]  == 0 && m[9]  == 0 && m[10] == 1 && m[11] == 0 &&
@@ -132,18 +145,20 @@ module Shumway.GFX {
     }
 
     public static createIdentity(): ColorMatrix {
-      return new ColorMatrix ([
+      var colorMatrix = new ColorMatrix ([
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
         0, 0, 0, 1,
         0, 0, 0, 0
       ]);
+      colorMatrix._type = ColorMatrixType.Identity;
+      return colorMatrix;
     }
 
     public setMultipliersAndOffsets(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number,
                                     redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number) {
-      var m: Float32Array = this._m;
+      var m: Float32Array = this._data;
       for (var i = 0; i < m.length; i++) {
         m[i] = 0;
       }
@@ -155,6 +170,7 @@ module Shumway.GFX {
       m[17] = greenOffset / 255;
       m[18] = blueOffset / 255;
       m[19] = alphaOffset / 255;
+      this._type = ColorMatrixType.Unknown;
     }
 
     public transformRGBA(rgba: number) {
@@ -163,7 +179,7 @@ module Shumway.GFX {
       var b = (rgba >>  8) & 0xff;
       var a = rgba & 0xff;
 
-      var m: Float32Array = this._m;
+      var m: Float32Array = this._data;
       var R = clampByte(r * m[0]  + g * m[1]  + b * m[2]  + a * m[3]  + m[16] * 255);
       var G = clampByte(r * m[4]  + g * m[5]  + b * m[6]  + a * m[7]  + m[17] * 255);
       var B = clampByte(r * m[8]  + g * m[9]  + b * m[10] + a * m[11] + m[18] * 255);
@@ -173,7 +189,10 @@ module Shumway.GFX {
     }
 
     public multiply(other: ColorMatrix) {
-      var a = this._m, b = other._m;
+      if (other._type & ColorMatrixType.Identity) {
+        return;
+      }
+      var a = this._data, b = other._data;
       var a00 = a[0 * 4 + 0];
       var a01 = a[0 * 4 + 1];
       var a02 = a[0 * 4 + 2];
@@ -237,14 +256,15 @@ module Shumway.GFX {
       a[4 * 4 + 1] = a01 * b40 + a11 * b41 + a21 * b42 + a31 * b43 + a41;
       a[4 * 4 + 2] = a02 * b40 + a12 * b41 + a22 * b42 + a32 * b43 + a42;
       a[4 * 4 + 3] = a03 * b40 + a13 * b41 + a23 * b42 + a33 * b43 + a43;
+      this._type = ColorMatrixType.Unknown;
     }
 
     public get alphaMultiplier(): number {
-      return this._m[15];
+      return this._data[15];
     }
 
     public hasOnlyAlphaMultiplier(): boolean {
-      var m = this._m;
+      var m = this._data;
       return m[0]  == 1 && m[1]  == 0 && m[2]  == 0 && m[3]  == 0 &&
              m[4]  == 0 && m[5]  == 1 && m[6]  == 0 && m[7]  == 0 &&
              m[8]  == 0 && m[9]  == 0 && m[10] == 1 && m[11] == 0 &&
@@ -255,9 +275,11 @@ module Shumway.GFX {
     public equals(other: ColorMatrix): boolean {
       if (!other) {
         return false;
+      } else if (this._type === other._type && this._type === ColorMatrixType.Identity) {
+        return true;
       }
-      var a = this._m;
-      var b = other._m;
+      var a = this._data;
+      var b = other._data;
       for (var i = 0; i < 20; i++) {
         if (Math.abs(a[i] - b[i]) > 0.001) {
           return false;
@@ -267,7 +289,7 @@ module Shumway.GFX {
     }
 
     public toSVGFilterMatrix(): string {
-      var m = this._m;
+      var m = this._data;
       return [m[0], m[4], m[8],  m[12], m[16],
               m[1], m[5], m[9],  m[13], m[17],
               m[2], m[6], m[10], m[14], m[18],

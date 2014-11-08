@@ -37,8 +37,6 @@ var pauseExecution = getQueryVariable("paused") === "true";
 var remoteFile = getQueryVariable("rfile");
 var yt = getQueryVariable('yt');
 var movieParams = parseQueryString(getQueryVariable('flashvars'));
-var stageAlign = getQueryVariable('salign') || getQueryVariable('align');
-var stageScale = getQueryVariable('scale');
 
 //var swfController = new SWFController(timeline, pauseExecution);
 
@@ -116,9 +114,6 @@ var currentPlayer;
 
 var easelHost;
 function runIFramePlayer(data) {
-  data.type = 'runSwf';
-  data.settings = Shumway.Settings.getSettings();
-
   var container = document.createElement('div');
   container.setAttribute('style', 'position:absolute; top:0; left: 0; width: 9; height:9');
   document.body.appendChild(container);
@@ -129,10 +124,15 @@ function runIFramePlayer(data) {
   playerWorkerIFrame.height = 3;
   playerWorkerIFrame.src = "inspector.player.html";
   playerWorkerIFrame.addEventListener('load', function () {
+    var easel = createEasel();
+
+    data.type = 'runSwf';
+    data.settings = Shumway.Settings.getSettings();
+    data.displayParams = easel.getDisplayParameters();
+
     var playerWorker = playerWorkerIFrame.contentWindow;
     playerWorker.postMessage(data, '*');
 
-    var easel = createEasel();
     easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWorker, window);
   });
   container.appendChild(playerWorkerIFrame);
@@ -146,7 +146,7 @@ function executeFile(file, buffer, movieParams) {
     var loaderURL = getQueryVariable("loaderURL") || swfURL;
     runIFramePlayer({sysMode: sysMode, appMode: appMode, loaderURL: loaderURL,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
-      stageAlign: stageAlign, stageScale: stageScale});
+      stageAlign: state.salign, stageScale: state.scale});
     return;
   }
 
@@ -184,13 +184,14 @@ function executeFile(file, buffer, movieParams) {
 
         document.addEventListener('shumwayOptionsChanged', function () {
           syncGFXOptions(easel.options);
-          easel.stage.invalidatePaint();
+          easel.stage.invalidate();
         });
         syncGFXOptions(easel.options);
         var player = new Shumway.Player.Test.TestPlayer();
         player.movieParams = movieParams;
-        player.stageAlign = stageAlign;
-        player.stageScale = stageScale;
+        player.stageAlign = state.salign;
+        player.stageScale = state.scale;
+        player.displayParams = easel.getDisplayParameters();
 
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
         player.load(file, buffer);
@@ -256,41 +257,31 @@ function ensureFlashOverlay() {
                             '<param name="play" value="true" />' +
                             '<param name="loop" value="true" />' +
                             '<param name="wmode" value="opaque" />' +
-                            '<param name="scale" value="noScale" />' +
+                            '<param name="scale" value="' + state.scale + '" />' +
                             '<param name="menu" value="true" />' +
                             '<param name="devicefont" value="false" />' +
-                            '<param name="salign" value="" />' +
+                            '<param name="salign" value="' + state.salign + '" />' +
                             '<param name="allowScriptAccess" value="sameDomain" />' +
                             '<param name="shumwaymode" value="off" />' +
                             '</object>';
   document.getElementById("stageContainer").appendChild(flashOverlay);
 
   maybeSetFlashOverlayDimensions();
-  currentPlayer._loader._contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE,
-                                                            maybeSetFlashOverlayDimensions);
 }
 function maybeSetFlashOverlayDimensions() {
-  if (!(currentPlayer._loader && currentPlayer._loader._contentLoaderInfo &&
-      currentPlayer._loader._contentLoaderInfo))
-  {
+  var canvas = document.getElementById("stageContainer").getElementsByTagName('canvas')[0];
+  if (!canvas || !flashOverlay) {
     return;
   }
-  flashOverlay.children[0].width = currentPlayer._loader._contentLoaderInfo.width;
-  flashOverlay.children[0].height = currentPlayer._loader._contentLoaderInfo.height;
+  flashOverlay.children[0].width = canvas.offsetWidth;
+  flashOverlay.children[0].height = canvas.offsetHeight;
   if (state.overlayFlash) {
     flashOverlay.style.display = 'inline-block';
   }
 }
-
-(function setStageSize() {
-  var stageSize = getQueryVariable("size");
-  if (stageSize && /^\d+x\d+$/.test(stageSize)) {
-    var dims = stageSize.split('x');
-    var stage = document.getElementById('stage');
-    stage.style.width = dims[0] + "px";
-    stage.style.height = dims[1] + "px";
-  }
-})();
+window.addEventListener('resize', function () {
+  setTimeout(maybeSetFlashOverlayDimensions, 0);
+}, false);
 
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
@@ -419,6 +410,12 @@ function registerScratchCanvas(scratchCanvas) {
   document.getElementById("scratchCanvasContainer").appendChild(scratchCanvas);
 }
 
+var currentStage = null;
+
+function registerInspectorStage(stage) {
+  currentStage = stage;
+}
+
 function registerInspectorAsset(id, symbolId, asset) {
   if (!state.logAssets) {
     return;
@@ -431,6 +428,13 @@ function registerInspectorAsset(id, symbolId, asset) {
     var details = renderable.constructor.name + ": " + id + " (" + symbolId + "), bounds: " + bounds;
     var canvas = null;
     var renderTime = 0;
+    if (renderable instanceof Shumway.GFX.RenderableVideo) {
+      if (!renderable.isRegistered) {
+        renderable.isRegistered = true;
+        div.appendChild(renderable._video);
+      }
+      return;
+    }
     if (renderable instanceof Shumway.GFX.RenderableBitmap) {
       canvas = renderable._canvas;
     } else {
@@ -462,7 +466,7 @@ function registerInspectorAsset(id, symbolId, asset) {
     div.appendChild(canvas);
   }
   refreshAsset(asset);
-  asset.addInvalidatePaintEventListener(refreshAsset);
+  asset.addInvalidateEventListener(refreshAsset);
   li.appendChild(div);
   document.getElementById("assetList").appendChild(li);
 }

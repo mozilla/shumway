@@ -457,11 +457,24 @@ ChromeActions.prototype = {
     if (typeof data !== 'string' || !this.isUserInputInProgress()) {
       return;
     }
-    // TODO other security checks?
 
     let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"]
                       .getService(Ci.nsIClipboardHelper);
     clipboard.copyString(data);
+  },
+  setFullscreen: function (enabled) {
+    enabled = !!enabled;
+
+    if (!this.isUserInputInProgress()) {
+      return;
+    }
+
+    var target = this.embedTag || this.document.body;
+    if (enabled) {
+      target.mozRequestFullScreen();
+    } else {
+      target.ownerDocument.mozCancelFullScreen();
+    }
   },
   endActivation: function () {
     if (ActivationQueue.currentNonActive === this) {
@@ -846,6 +859,11 @@ ShumwayStreamConverterBase.prototype = {
       }
 
       if (isOverlay) {
+        // HACK for facebook, CSS embed tag rescaling
+        for (var child = window.frameElement; child !== element; child = child.parentNode) {
+          child.setAttribute('style', 'max-width: 100%; max-height: 100%');
+        }
+
         // Checking if overlay is a proper PlayPreview overlay.
         for (var i = 0; i < element.children.length; i++) {
           if (element.children[i] === containerElement) {

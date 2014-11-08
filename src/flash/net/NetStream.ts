@@ -26,6 +26,7 @@ module Shumway.AVM2.AS.flash.net {
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
+  import ISoundSource = flash.media.ISoundSource;
 
   var USE_MEDIASOURCE_API = false;
   declare var MediaSource;
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.net {
   declare var Promise;
   declare var window;
 
-  export class NetStream extends flash.events.EventDispatcher {
+  export class NetStream extends flash.events.EventDispatcher implements ISoundSource {
     _isDirty: boolean;
 
     // Called whenever the class is initialized.
@@ -46,7 +47,7 @@ module Shumway.AVM2.AS.flash.net {
     static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["attach", "close", "attachAudio", "attachCamera", "send", "bufferTime", "bufferTime", "maxPauseBufferTime", "maxPauseBufferTime", "backBufferTime", "backBufferTime", "inBufferSeek", "inBufferSeek", "backBufferLength", "step", "bufferTimeMax", "bufferTimeMax", "receiveAudio", "receiveVideo", "receiveVideoFPS", "pause", "resume", "togglePause", "seek", "publish", "time", "currentFPS", "bufferLength", "liveDelay", "bytesLoaded", "bytesTotal", "decodedFrames", "videoCodec", "audioCodec", "onPeerConnect", "call"];
+    static instanceSymbols: string [] = null; // ["attach", "close", "attachAudio", "attachCamera", "send", "bufferTime", "bufferTime", "maxPauseBufferTime", "maxPauseBufferTime", "backBufferTime", "backBufferTime", "backBufferLength", "step", "bufferTimeMax", "bufferTimeMax", "receiveAudio", "receiveVideo", "receiveVideoFPS", "pause", "resume", "togglePause", "seek", "publish", "time", "currentFPS", "bufferLength", "liveDelay", "bytesLoaded", "bytesTotal", "decodedFrames", "videoCodec", "audioCodec", "onPeerConnect", "call"];
 
     constructor (connection: flash.net.NetConnection, peerID: string = "connectToFMS") {
       false && super(undefined);
@@ -55,6 +56,7 @@ module Shumway.AVM2.AS.flash.net {
       this._peerID = asCoerceString(peerID);
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._isDirty = true;
+      this._soundTransform = new flash.media.SoundTransform();
 
       this._contentTypeHint = null;
       this._mediaSource = null;
@@ -100,7 +102,6 @@ module Shumway.AVM2.AS.flash.net {
     bufferTime: number;
     maxPauseBufferTime: number;
     backBufferTime: number;
-    inBufferSeek: boolean;
     backBufferLength: number;
     step: (frames: number /*int*/) => void;
     bufferTimeMax: number;
@@ -129,7 +130,7 @@ module Shumway.AVM2.AS.flash.net {
     // _bufferTime: number;
     // _maxPauseBufferTime: number;
     // _backBufferTime: number;
-    // _inBufferSeek: boolean;
+    _inBufferSeek: boolean;
     // _backBufferLength: number;
     // _bufferTimeMax: number;
     // _info: flash.net.NetStreamInfo;
@@ -174,6 +175,8 @@ module Shumway.AVM2.AS.flash.net {
     }
 
     play(url: string): void {
+      flash.media.SoundMixer._registerSoundSource(this);
+
       // (void) -> void ???
       url = asCoerceString(url);
 
@@ -247,8 +250,8 @@ module Shumway.AVM2.AS.flash.net {
       return this._soundTransform;
     }
     set soundTransform(sndTransform: flash.media.SoundTransform) {
-      somewhatImplemented("public flash.net.NetStream::set soundTransform");
       this._soundTransform = sndTransform;
+      flash.media.SoundMixer._updateSoundSource(this);
     }
     get checkPolicyFile(): boolean {
       return this._checkPolicyFile;
@@ -459,6 +462,14 @@ module Shumway.AVM2.AS.flash.net {
       return this._invoke.call(this, index, p_arguments);
     }
 
+    get inBufferSeek(): boolean {
+      return this._inBufferSeek;
+    }
+
+    set inBufferSeek(value: boolean) {
+      this._inBufferSeek = !!value;
+    }
+
     private _invoke(index: number, args: any[]): any {
       var simulated = false, result;
       switch (index) {
@@ -496,12 +507,11 @@ module Shumway.AVM2.AS.flash.net {
           simulated = true;
           break;
         case 305: // get bytesLoaded
-          result = this._videoState.buffer === 'full' ? 100 :
-            this._videoState.buffer === 'progress' ? 50 : 0;
+          result = this._notifyVideoControl(VideoControlEvent.GetBytesLoaded, null);
           simulated = true;
           break;
         case 306: // get bytesTotal
-          result = 100;
+          result = this._notifyVideoControl(VideoControlEvent.GetBytesTotal, null);
           simulated = true;
           break;
       }
@@ -520,6 +530,8 @@ module Shumway.AVM2.AS.flash.net {
       switch (eventType) {
         case VideoPlaybackEvent.Initialized:
           this._videoReady.resolve(undefined);
+
+          flash.media.SoundMixer._updateSoundSource(this);
           break;
         case VideoPlaybackEvent.PlayStart:
           if (this._videoState.started) {
@@ -533,6 +545,8 @@ module Shumway.AVM2.AS.flash.net {
           this._videoState.started = false;
           this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Play.Stop", level: "status"})));
+
+          flash.media.SoundMixer._unregisterSoundSource(this);
           break;
         case VideoPlaybackEvent.BufferFull:
           this._videoState.buffer = 'full';
@@ -553,6 +567,10 @@ module Shumway.AVM2.AS.flash.net {
           this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: code, level: "error"})));
           break;
+        case VideoPlaybackEvent.Seeking:
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Seek.Notify", level: "status"})));
+          break;
         case VideoPlaybackEvent.Metadata:
           this._videoMetadataReady.resolve({
             videoWidth: data.videoWidth,
@@ -567,6 +585,16 @@ module Shumway.AVM2.AS.flash.net {
           }
           break;
       }
+    }
+
+    stopSound() {
+      this.pause();
+    }
+
+    updateSoundLevels(volume: number) {
+      this._notifyVideoControl(VideoControlEvent.SetSoundLevels, {
+        volume: volume
+      });
     }
   }
 

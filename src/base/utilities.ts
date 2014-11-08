@@ -33,6 +33,12 @@ declare var dateNow: () => number;
 
 declare var dump: (message: string) => void;
 
+function dumpLine(line: string) {
+  if (typeof dump !== "undefined") {
+    dump(line + "\n");
+  }
+}
+
 if (!jsGlobal.performance) {
   jsGlobal.performance = {};
 }
@@ -246,11 +252,12 @@ module Shumway {
 
   export module Debug {
     export function backtrace() {
-      try {
-        throw new Error();
-      } catch (e) {
-        return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
-      }
+      return "Uncomment Debug.backtrace();";
+//      try {
+//        throw new Error();
+//      } catch (e) {
+//        return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
+//      }
     }
 
     export function error(message: string) {
@@ -315,6 +322,10 @@ module Shumway {
 
     export function unexpected(message?: any) {
       Debug.assert(false, "Unexpected: " + message);
+    }
+
+    export function unexpectedCase(message?: any) {
+      Debug.assert(false, "Unexpected Case: " + message);
     }
 
     export function untested(message?: any) {
@@ -1722,7 +1733,7 @@ module Shumway {
     private _tab: string;
     private _padding: string;
     private _suppressOutput: boolean;
-    private _out: (s: string) => void;
+    private _out: (s: string, o?: any) => void;
     private _outNoNewline: (s: string) => void;
 
     constructor(suppressOutput: boolean = false, out?) {
@@ -1742,6 +1753,12 @@ module Shumway {
     writeLn(str: string = "") {
       if (!this._suppressOutput) {
         this._out(this._padding + str);
+      }
+    }
+
+    writeObject(str: string = "", object?: Object) {
+      if (!this._suppressOutput) {
+        this._out(this._padding + str, object);
       }
     }
 
@@ -2548,6 +2565,43 @@ module Shumway {
         ];
       }
       return ColorStyle._randomStyleCache[(ColorStyle._nextStyle ++) % ColorStyle._randomStyleCache.length];
+    }
+
+    private static _gradient = [
+      "#FF0000",  // Red
+      "#FF1100",
+      "#FF2300",
+      "#FF3400",
+      "#FF4600",
+      "#FF5700",
+      "#FF6900",
+      "#FF7B00",
+      "#FF8C00",
+      "#FF9E00",
+      "#FFAF00",
+      "#FFC100",
+      "#FFD300",
+      "#FFE400",
+      "#FFF600",
+      "#F7FF00",
+      "#E5FF00",
+      "#D4FF00",
+      "#C2FF00",
+      "#B0FF00",
+      "#9FFF00",
+      "#8DFF00",
+      "#7CFF00",
+      "#6AFF00",
+      "#58FF00",
+      "#47FF00",
+      "#35FF00",
+      "#24FF00",
+      "#12FF00",
+      "#00FF00"   // Green
+    ];
+
+    static gradientColor(value) {
+      return ColorStyle._gradient[ColorStyle._gradient.length * NumberUtilities.clamp(value, 0, 1) | 0];
     }
 
     static contrastStyle(rgb: string): string {
@@ -3430,6 +3484,15 @@ module Shumway {
     JPEG,
     PNG,
     GIF
+  }
+
+  export function getMIMETypeForImageType(type: ImageType): string {
+    switch (type) {
+      case ImageType.JPEG: return "image/jpeg";
+      case ImageType.PNG: return "image/png";
+      case ImageType.GIF: return "image/gif";
+      default: return "text/plain";
+    }
   }
 
   export module UI {

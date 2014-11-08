@@ -836,7 +836,7 @@ module Shumway.AVM2.AS {
         o.labelId = ASClass.labelCounter ++;
       }
       if (o instanceof Function) {
-        return "Function [#" + o.labelId + "]";
+        return "Function [#" + (<any>o).labelId + "]";
       }
       return "Object [#" + o.labelId + "]";
     }
@@ -1079,12 +1079,11 @@ module Shumway.AVM2.AS {
       }
     }
 
-    search(re) {
-      if (re === void 0) {
-        return -1;
-      } else {
+    search(re): number {
+      if (re instanceof RegExp) {
         return this.search(re);
       }
+      return (<string><any>this).indexOf(asCoerceString(re));
     }
 
     toUpperCase() {
