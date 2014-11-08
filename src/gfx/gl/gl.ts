@@ -97,10 +97,12 @@ module Shumway.GFX.WebGL {
     private _uploadCanvasContext: CanvasRenderingContext2D;
     private _clipStack: Node [];
 
-    constructor(canvas: HTMLCanvasElement,
+    private _canvas: HTMLCanvasElement;
+
+    constructor(container: HTMLDivElement,
                 stage: Stage,
                 options: WebGLStageRendererOptions = new WebGLStageRendererOptions()) {
-      super(canvas, stage, options);
+      super(container, stage, options);
       var context = this._context = new WebGLContext(this._canvas, options);
 
       this._updateSize();

@@ -289,6 +289,7 @@ module Shumway.GFX.Canvas2D {
   export class Canvas2DStageRenderer extends StageRenderer {
     protected _options: Canvas2DStageRendererOptions;
     private _fillRule: string;
+    private _canvas: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
 
     private _target: Canvas2DSurfaceRegion;
@@ -311,28 +312,75 @@ module Shumway.GFX.Canvas2D {
 
     private _fontSize: number = 0;
 
+    private _layers: HTMLDivElement [] = [];
+
     constructor (
-      canvas: HTMLCanvasElement,
+      container: HTMLDivElement | HTMLCanvasElement,
       stage: Stage,
       options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
-      super(canvas, stage, options);
+      super(container, stage, options);
       var defaultFillRule = FillRule.NonZero;
       this._fillRule = defaultFillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
-      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
-      this._target = new Canvas2DSurfaceRegion(new Canvas2DSurface(canvas),
-                                               new RegionAllocator.Region(0, 0, canvas.width, canvas.height),
-                                               canvas.width, canvas.height);
-      this._devicePixelRatio = window.devicePixelRatio || 1;
-      this._fontSize = 10 * this._devicePixelRatio;
+
+      if (container instanceof HTMLCanvasElement) {
+        this._canvas = container;
+        this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
+      } else {
+        this._addLayer("Background Layer");
+        var canvasLayer = this._addLayer("Canvas Layer");
+        this._canvas = document.createElement("canvas");
+        canvasLayer.appendChild(this._canvas);
+        this._viewport = new Rectangle(0, 0, container.scrollWidth, container.scrollHeight);
+        this._updateSize();
+        var self = this;
+        stage.addEventListener(NodeEventType.OnStageBoundsChanged, function () {
+          self._updateSize();
+        });
+      }
       Canvas2DStageRenderer._prepareSurfaceAllocators();
     }
 
-    public resize() {
+    private _addLayer(name: string): HTMLDivElement {
+      var div = document.createElement("div");
+      div.style.position = "absolute";
+      div.style.overflow = "hidden";
+      div.style.width = "100%";
+      div.style.height = "100%";
+      this._container.appendChild(div);
+      this._layers.push(div);
+      return div;
+    }
+
+    private get _backgroundVideoLayer(): HTMLDivElement {
+      return this._layers[0];
+    }
+
+    private _updateSize() {
+      var stageBounds = this._stage.getBounds(true);
+      stageBounds.snap();
+
+      var ratio = this._devicePixelRatio = window.devicePixelRatio || 1;
+      var w = (stageBounds.w / ratio) + 'px';
+      var h = (stageBounds.h / ratio) + 'px';
+      for (var i = 0; i < this._layers.length; i++) {
+        var layer = this._layers[i];
+        layer.style.width = w;
+        layer.style.height = h;
+      }
       var canvas = this._canvas;
-      var context = this._target.surface.context;
-      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
-      this._target.region.set(this._viewport);
-      this._devicePixelRatio = window.devicePixelRatio || 1;
+      canvas.width = stageBounds.w;
+      canvas.height = stageBounds.h;
+      console.info("Resizing: " + stageBounds.w + " " + stageBounds.h);
+      canvas.style.position = "absolute";
+      canvas.style.width = w;
+      canvas.style.height = h;
+      this._target = new Canvas2DSurfaceRegion (
+        new Canvas2DSurface(this._canvas),
+        new RegionAllocator.Region(0, 0, stageBounds.w, stageBounds.h),
+        stageBounds.w, stageBounds.h
+      );
+
+      this._fontSize = 10 * this._devicePixelRatio;
     }
 
     private static _prepareSurfaceAllocators() {
@@ -638,8 +686,7 @@ module Shumway.GFX.Canvas2D {
       // Fill background
       if (!node.hasFlags(NodeFlags.Transparent) && node.color) {
         if (!(state.flags & RenderFlags.IgnoreRenderable)) {
-          context.fillStyle = node.color.toCSSStyle();
-          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          this._container.style.backgroundColor = node.color.toCSSStyle();
         }
       }
 
@@ -670,12 +717,29 @@ module Shumway.GFX.Canvas2D {
       var context = state.target.context;
       Filters._applyColorMatrix(context, state.colorMatrix);
       // Only paint if it is visible.
-      if (context.globalAlpha > 0) {
+      if (node.source instanceof RenderableVideo) {
+        this.visitRenderableVideo(<RenderableVideo>node.source, state);
+      } else if (context.globalAlpha > 0) {
         this.visitRenderable(node.source, state, node.ratio);
       }
       if (state.flags & RenderFlags.PixelSnapping) {
         matrix.free();
       }
+    }
+
+    visitRenderableVideo(node: RenderableVideo, state: RenderState) {
+      var ratio = this._devicePixelRatio;
+      var matrix = state.matrix.clone();
+      matrix.scale(1 / ratio, 1 / ratio);
+      var cssTransform = matrix.toCSSTransform();
+      node.video.style.transformOrigin = "0 0";
+      var bounds = node.getBounds();
+      node.video.style.width = bounds.w + "px";
+      node.video.style.height = bounds.h + "px";
+      node.video.style.transform = cssTransform;
+      console.info(cssTransform);
+      this._backgroundVideoLayer.appendChild(node.video);
+      matrix.free();
     }
 
     visitRenderable(node: Renderable, state: RenderState, ratio?: number) {

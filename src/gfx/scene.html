@@ -7,8 +7,25 @@
       color: white;
       font: 12px Consolas, "Liberation Mono", Courier, monospace;
     }
-    canvas {
-      background-color: #1a2633;
+
+    #container {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 100px;
+      overflow: hidden;
+      background-color: "red";
+    }
+
+    #other {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0px;
+      height: 100px;
+      overflow: scroll;
+      background-color: "red";
     }
   </style>
 </head>
@@ -37,34 +54,20 @@
   var BlendMode = Shumway.GFX.BlendMode;
 </script>
 <body style="background-color: #333333;">
-  <table>
-    <tr>
-      <td>
-        A (1024 x 1024)
-      </td>
-    </tr>
-    <tr>
-      <td>
-        <div id="container" style="width: 512px; height: 512px"></div>
-      </td>
-    </tr>
-    <tr>
-      <td>
+  <div id="container" ></div>
+  <div id="other" >
+    <button onclick="test()">Do</button>
+    <button onclick="test2()">Shapes</button>
+    <button onclick="test3()">Change Stage</button>
+    <button onclick="garbage()">Garbage</button>
+    <button onclick='toggle("cacheShapes")'>Cache Shapes</button>
+    <button onclick='toggle("imageSmoothing")'>Image Smoothing</button>
+    <button onclick='toggle("snapToDevicePixels")'>Snap Pixels</button>
+    <div id="log"></div>
+    <div id="scratch"></div>
+  </div>
 
-      </td>
-    </tr>
-  </table>
-  <br>
-  <button onclick="test()">Do</button>
-  <button onclick="test2()">Shapes</button>
-  <button onclick="garbage()">Garbage</button>
-  <button onclick='toggle("cacheShapes")'>Cache Shapes</button>
-  <button onclick='toggle("imageSmoothing")'>Image Smoothing</button>
-  <button onclick='toggle("snapToDevicePixels")'>Snap Pixels</button>
-
-  <div id="log"></div>
-  <div id="scratch"></div>
-  <script>
+    <script>
     var logElement = document.getElementById("log");
     var scratchElement = document.getElementById("scratch");
 
@@ -148,8 +151,8 @@
           node.getTransform().x = Math.random() * 64;
           node.getTransform().y = Math.random() * 64;
 
-          node.dx = (Math.random() - 0.5) * 3;
-          node.dy = (Math.random() - 0.5) * 3;
+//          node.dx = (Math.random() - 0.5) * 3;
+//          node.dy = (Math.random() - 0.5) * 3;
 
           // node.getLayer().blendMode = BlendMode.Normal;
           // node.getLayer().mask = new Shape(makeRenderable2(32, 32));
@@ -183,7 +186,15 @@
 
 
     function test2() {
-      for (var i = 0; i < 1000; i++) {
+      var video = new Shumway.GFX.RenderableVideo("http://vjs.zencdn.net/v/oceans.mp4", new Rectangle(0, 0, 512, 512), 0, {
+        sendVideoPlaybackEvent: function () { }
+      });
+      video._video.muted = true;
+      video._video.play();
+
+      world.addChild(new Shape(video));
+
+      for (var i = 0; i < 10; i++) {
         var s = Math.random() * 64;
         var a = new Shape(makeCircle(s, s));
         var t = a.getTransform();
@@ -193,6 +204,7 @@
         t.dy = Math.random() - 0.5;
         world.addChild(a);
       }
+
       log("Next Node ID: " + Node._nextId);
     }
 
@@ -206,6 +218,11 @@
 
     function registerScratchCanvas(canvas) {
       // scratchElement.appendChild(canvas);
+    }
+
+    function test3() {
+      stage.setBounds(new Rectangle(0, 0, Math.random() * 512, Math.random() * 512));
+      log("Next Node ID: " + Node._nextId);
     }
   </script>
 </body>

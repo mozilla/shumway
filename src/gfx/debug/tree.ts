@@ -19,25 +19,38 @@ module Shumway.GFX {
 
   export class TreeStageRenderer extends StageRenderer {
     _options: TreeStageRendererOptions;
-    context: CanvasRenderingContext2D;
+    _canvas: HTMLCanvasElement;
+    _context: CanvasRenderingContext2D;
     _viewport: Rectangle;
     layout: any;
 
-    constructor(canvas: HTMLCanvasElement,
+    constructor(container: HTMLDivElement,
                 stage: Stage,
                 options: TreeStageRendererOptions = new TreeStageRendererOptions()) {
-      super(canvas, stage, options);
-      this.context = canvas.getContext("2d");
-      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
+      super(container, stage, options);
+      this._canvas = document.createElement("canvas");
+      this._canvas.width = this.width;
+      this._canvas.height = this.height;
+      this._context = this._canvas.getContext("2d");
+      this._viewport = new Rectangle(0, 0, this.width, this.height);
     }
 
+
+    get width(): number {
+      return this._container.offsetWidth;
+    }
+
+    get height(): number {
+      return this._container.offsetHeight;
+    }
+    
     public render() {
-      var context = this.context;
+      var context = this._context;
       context.save();
-      context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+      context.clearRect(0, 0, this.width, this.height);
       context.scale(1, 1);
       if (this._options.layout === Layout.Simple) {
-        this._renderNodeSimple(this.context, this._stage, Matrix.createIdentity(), this._viewport, []);
+        this._renderNodeSimple(this._context, this._stage, Matrix.createIdentity(), this._viewport, []);
       }
       context.restore();
     }

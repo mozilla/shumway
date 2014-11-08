@@ -1148,7 +1148,7 @@ module Shumway.GFX.Geometry {
       ]);
     }
 
-    public toCSSTransform(): String {
+    public toCSSTransform(): string {
       var m = this._data;
       return "matrix(" +
         m[0] + ", " +

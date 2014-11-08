@@ -185,6 +185,10 @@ module Shumway.GFX {
       this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
     }
 
+    public get video(): HTMLVideoElement {
+      return this._video;
+    }
+
     private _handleVideoEvent(evt: Event) {
       var type: VideoPlaybackEvent;
       var data: any = null;

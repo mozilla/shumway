@@ -1114,15 +1114,23 @@ module Shumway.GFX {
    * Base class for all renderers.
    */
   export class StageRenderer extends NodeVisitor {
+    /**
+     * Anything outside of the viewport is not guaranteed to be rendered.
+     */
     protected _viewport: Rectangle;
     protected _options: StageRendererOptions;
-    protected _canvas: HTMLCanvasElement;
+
+    /**
+     * Container in which we are rendering. This can be either a canvas or a div element.
+     */
+    protected _container: HTMLDivElement | HTMLCanvasElement;
+
     protected _stage: Stage;
     protected _devicePixelRatio: number;
 
-    constructor(canvas: HTMLCanvasElement, stage: Stage, options: StageRendererOptions) {
+    constructor(container: HTMLDivElement | HTMLCanvasElement, stage: Stage, options: StageRendererOptions) {
       super();
-      this._canvas = canvas;
+      this._container = container;
       this._stage = stage;
       this._options = options;
       this._viewport = Rectangle.createSquare(1024);

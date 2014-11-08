@@ -231,8 +231,8 @@ module Shumway.GFX {
     private _worldView: Group;
 
     private _options: StageRendererOptions [];
-    private _canvases: HTMLCanvasElement [];
-    private _renderers: StageRenderer [];
+    private _container: HTMLElement;
+    private _renderer: StageRenderer;
     private _disableHidpi: boolean;
 
     private _state: UIState = new StartState();
@@ -250,10 +250,12 @@ module Shumway.GFX {
     private _fps: FPS;
     private _fullScreen: boolean = false;
 
-    constructor(container: HTMLElement, backend: Backend,
+    constructor(container: HTMLDivElement, backend: Backend,
                 disableHidpi: boolean = false,
                 bgcolor: number = undefined) {
-      var stage = this._stage = new Stage(128, 128, true);
+
+      this._container = container;
+      this._stage = new Stage(512, 512, true);
       this._worldView = new Group();
       this._world = new Group();
       this._stage.addChild(this._worldView);
@@ -277,8 +279,6 @@ module Shumway.GFX {
       window.addEventListener('resize', this._deferredResizeHandler.bind(this), false);
 
       var options = this._options = [];
-      var canvases = this._canvases = [];
-      var renderers = this._renderers = [];
 
       var transparent = bgcolor === 0;
       this.transparent = transparent;
@@ -287,39 +287,10 @@ module Shumway.GFX {
                                bgcolor === 0 ? 'transparent' :
                                Shumway.ColorUtilities.rgbaToCSSStyle(bgcolor);
 
-      function addCanvas2DBackend() {
-        var canvas = document.createElement("canvas");
-        canvas.style.backgroundColor = cssBackgroundColor;
-        container.appendChild(canvas);
-        canvases.push(canvas);
-        var o = new Canvas2D.Canvas2DStageRendererOptions();
-        o.alpha = transparent;
-        options.push(o);
-        renderers.push(new Canvas2D.Canvas2DStageRenderer(canvas, stage, o));
-      }
-
-      function addWebGLBackend() {
-        var canvas = document.createElement("canvas");
-        canvas.style.backgroundColor = cssBackgroundColor;
-        container.appendChild(canvas);
-        canvases.push(canvas);
-        var o = new WebGLStageRendererOptions();
-        options.push(o);
-        renderers.push(new WebGLStageRenderer(canvas, stage, o));
-      }
-
-      switch (backend) {
-        case Backend.Canvas2D:
-          addCanvas2DBackend();
-          break;
-        case Backend.WebGL:
-          addWebGLBackend();
-          break;
-        case Backend.Both:
-          addCanvas2DBackend();
-          addWebGLBackend();
-          break;
-      }
+      var o = new Canvas2D.Canvas2DStageRendererOptions();
+      o.alpha = transparent;
+      options.push(o);
+      this._renderer = new Canvas2D.Canvas2DStageRenderer(container, this._stage, o);
 
       this._resizeHandler();
       this._onMouseUp = this._onMouseUp.bind(this)
@@ -346,9 +317,9 @@ module Shumway.GFX {
       window.addEventListener('DOMMouseScroll', handleMouseWheel);
       window.addEventListener("mousewheel", handleMouseWheel);
 
-      canvases.forEach(canvas => canvas.addEventListener("mousedown", function (event) {
+      container.addEventListener("mousedown", function (event) {
         self._state.onMouseDown(self, event);
-      }, false));
+      });
 
       window.addEventListener("keydown", function (event) {
         self._state.onKeyDown(self, event);
@@ -401,25 +372,23 @@ module Shumway.GFX {
     }
 
     set cursor(cursor: string) {
-      this._canvases.forEach(x => x.style.cursor = cursor);
+      this._container.style.cursor = cursor;
     }
 
     private _render() {
       RenderableVideo.checkForVideoUpdates();
       var mustRender = (this._stage.readyToRender() || forcePaint.value) && !this.paused;
       if (mustRender) {
-        for (var i = 0; i < this._renderers.length; i++) {
-          var renderer = this._renderers[i];
-          if (this.viewport) {
-            renderer.viewport = this.viewport;
-          } else {
-            renderer.viewport = new Rectangle(0, 0, this._canvases[i].width, this._canvases[i].height);
-          }
-          this._dispatchEvent("render");
-          enterTimeline("Render");
-          renderer.render();
-          leaveTimeline("Render");
+        var renderer = this._renderer;
+        if (this.viewport) {
+          renderer.viewport = this.viewport;
+        } else {
+          renderer.viewport = this._stage.getBounds();
         }
+        this._dispatchEvent("render");
+        enterTimeline("Render");
+        renderer.render();
+        leaveTimeline("Render");
       }
       if (this._fps) {
         this._fps.tickAndRender(!mustRender);
@@ -447,11 +416,11 @@ module Shumway.GFX {
     }
 
     getDisplayParameters(): DisplayParameters {
-      var firstCanvas = this._canvases[0];
+      var container = this._container;
       var ratio = this.getRatio();
       return {
-        canvasWidth: firstCanvas.width / ratio,
-        canvasHeight: firstCanvas.height / ratio,
+        canvasWidth: container.offsetWidth / ratio,
+        canvasHeight: container.offsetHeight / ratio,
         pixelRatio: ratio,
         screenWidth: window.screen ? window.screen.width : 640,
         screenHeight: window.screen ? window.screen.height : 480
@@ -487,26 +456,24 @@ module Shumway.GFX {
 
     private _resizeHandler() {
       var ratio = this.getRatio();
+      var sw = Math.ceil(this._container.scrollWidth * ratio);
+      var sh = Math.ceil(this._container.scrollHeight * ratio);
 
-      for (var i = 0; i < this._canvases.length; i++) {
-        var canvas = this._canvases[i];
-        var parent = canvas.parentElement;
-        var cw = parent.clientWidth;
-        var ch = (parent.clientHeight) / this._canvases.length;
-        if (ratio !== 1) {
-          canvas.width = Math.ceil(cw * ratio);
-          canvas.height = Math.ceil(ch * ratio);
-          canvas.style.width = cw + 'px';
-          canvas.style.height = ch + 'px';
-        } else {
-          canvas.width = cw;
-          canvas.height = ch;
-        }
-        this._stage.setBounds(new Rectangle(0, 0, canvas.width, canvas.height));
-        this._renderers[i].resize();
-      }
+//      if (ratio !== 1) {
+//        canvas.width = Math.ceil(sw * ratio);
+//        canvas.height = Math.ceil(sh * ratio);
+//        canvas.style.width = sw + 'px';
+//        canvas.style.height = sh + 'px';
+//      } else {
+//        canvas.width = sw;
+//        canvas.height = sh;
+//      }
+
+      this._stage.setBounds(new Rectangle(0, 0, sw, sh));
+
+      // this._renderer.resize();
+
       this._worldView.getTransform().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));
-
       this._dispatchEvent('resize');
     }
 
@@ -527,10 +494,10 @@ module Shumway.GFX {
     }
 
     getMousePosition(event: MouseEvent, coordinateSpace: Node): Point {
-      var canvas = this._canvases[0];
-      var bRect = canvas.getBoundingClientRect();
-      var x = (event.clientX - bRect.left) * (canvas.width / bRect.width);
-      var y = (event.clientY - bRect.top) * (canvas.height / bRect.height);
+      var container = this._container;
+      var bRect = container.getBoundingClientRect();
+      var x = (event.clientX - bRect.left) * (container.scrollWidth / bRect.width);
+      var y = (event.clientY - bRect.top) * (container.scrollHeight / bRect.height);
       var p = new Point(x, y);
       if (!coordinateSpace) {
         return p;
@@ -546,7 +513,7 @@ module Shumway.GFX {
     }
 
     private _onMouseDown(event) {
-      this._renderers.forEach(renderer => renderer.render());
+      // this._renderers.forEach(renderer => renderer.render());
     }
 
     private _onMouseUp(event) {
