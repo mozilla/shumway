@@ -699,7 +699,9 @@ module Shumway.AVM2.AS.flash.display {
       loaderInfo._height = symbol.height;
 
       // Complete load process manually here to avoid any additional progress events to be fired.
+      this._loadStatus = LoadStatus.Initialized;
       loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
+      this._loadStatus = LoadStatus.Complete;
       loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
       this._loadStatus = LoadStatus.Complete;
     }
