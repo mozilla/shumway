@@ -38,7 +38,7 @@ module Shumway.GFX.WebGL {
 
     public gl: WebGLRenderingContext;
     private _canvas: HTMLCanvasElement;
-    private _options: WebGLStageRendererOptions;
+    private _options: WebGLRendererOptions;
     private _w: number;
     private _h: number;
     private _programCache: {};
@@ -64,7 +64,7 @@ module Shumway.GFX.WebGL {
 
     private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
 
-    constructor (canvas: HTMLCanvasElement, options: WebGLStageRendererOptions) {
+    constructor (canvas: HTMLCanvasElement, options: WebGLRendererOptions) {
       this._canvas = canvas;
       this._options = options;
       this.gl = <WebGLRenderingContext> (

@@ -36,10 +36,10 @@ module Shumway.GFX.Canvas2D {
     private _node: Node;
     private _size: number;
     private _levels: MipMapLevel [];
-    private _renderer: Canvas2DStageRenderer;
+    private _renderer: Canvas2DRenderer;
     private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
     constructor (
-      renderer: Canvas2DStageRenderer,
+      renderer: Canvas2DRenderer,
       node: Node,
       surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator,
       size: number
@@ -99,7 +99,7 @@ module Shumway.GFX.Canvas2D {
     EvenOdd
   }
 
-  export class Canvas2DStageRendererOptions extends StageRendererOptions {
+  export class Canvas2DRendererOptions extends RendererOptions {
     /**
      * Whether to force snapping matrices to device pixels.
      */
@@ -187,7 +187,7 @@ module Shumway.GFX.Canvas2D {
     matrix: Matrix = Matrix.createIdentity();
     colorMatrix: ColorMatrix = ColorMatrix.createIdentity();
 
-    options: Canvas2DStageRendererOptions;
+    options: Canvas2DRendererOptions;
 
     constructor(target: Canvas2DSurfaceRegion) {
       super();
@@ -286,8 +286,8 @@ module Shumway.GFX.Canvas2D {
     }
   }
 
-  export class Canvas2DStageRenderer extends StageRenderer {
-    protected _options: Canvas2DStageRendererOptions;
+  export class Canvas2DRenderer extends Renderer {
+    protected _options: Canvas2DRendererOptions;
     private _fillRule: string;
     private _canvas: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
@@ -317,7 +317,7 @@ module Shumway.GFX.Canvas2D {
     constructor (
       container: HTMLDivElement | HTMLCanvasElement,
       stage: Stage,
-      options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
+      options: Canvas2DRendererOptions = new Canvas2DRendererOptions()) {
       super(container, stage, options);
       var defaultFillRule = FillRule.NonZero;
       this._fillRule = defaultFillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
@@ -337,7 +337,7 @@ module Shumway.GFX.Canvas2D {
           self._updateSize();
         });
       }
-      Canvas2DStageRenderer._prepareSurfaceAllocators();
+      Canvas2DRenderer._prepareSurfaceAllocators();
     }
 
     private _addLayer(name: string): HTMLDivElement {
@@ -384,12 +384,12 @@ module Shumway.GFX.Canvas2D {
     }
 
     private static _prepareSurfaceAllocators() {
-      if (Canvas2DStageRenderer._initializedCaches) {
+      if (Canvas2DRenderer._initializedCaches) {
         return;
       }
 
       var minSurfaceSize = 1024;
-      Canvas2DStageRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator (
+      Canvas2DRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator (
         function (w: number, h: number) {
           var canvas = document.createElement("canvas");
           if (typeof registerScratchCanvas !== "undefined") {
@@ -414,7 +414,7 @@ module Shumway.GFX.Canvas2D {
         }
       );
 
-      Canvas2DStageRenderer._shapeCache = new SurfaceRegionAllocator.SimpleAllocator (
+      Canvas2DRenderer._shapeCache = new SurfaceRegionAllocator.SimpleAllocator (
         function (w: number, h: number) {
           var canvas = document.createElement("canvas");
           if (typeof registerScratchCanvas !== "undefined") {
@@ -431,7 +431,7 @@ module Shumway.GFX.Canvas2D {
         }
       );
 
-      Canvas2DStageRenderer._initializedCaches = true;
+      Canvas2DRenderer._initializedCaches = true;
     }
 
     /**
@@ -515,7 +515,7 @@ module Shumway.GFX.Canvas2D {
 
       var mipMap: MipMap = node.properties["mipMap"];
       if (!mipMap) {
-        mipMap = node.properties["mipMap"] = new MipMap(this, node, Canvas2DStageRenderer._shapeCache, cacheShapesMaxSize);
+        mipMap = node.properties["mipMap"] = new MipMap(this, node, Canvas2DRenderer._shapeCache, cacheShapesMaxSize);
       }
       var mipMapLevel = mipMap.getLevel(matrix);
       var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);
@@ -954,7 +954,7 @@ module Shumway.GFX.Canvas2D {
     }
 
     private _allocateSurface(w: number, h: number): Canvas2DSurfaceRegion {
-      var surface = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceCache.allocate(w, h))
+      var surface = <Canvas2DSurfaceRegion>(Canvas2DRenderer._surfaceCache.allocate(w, h))
       surface.fill("#FF4981");
       // var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
       // surface.fill(color);

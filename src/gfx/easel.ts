@@ -19,9 +19,9 @@ module Shumway.GFX {
   import Matrix = Geometry.Matrix;
   import Rectangle = Geometry.Rectangle;
 
-  import Canvas2DStageRenderer = Shumway.GFX.Canvas2D.Canvas2DStageRenderer;
-  import WebGLStageRenderer = Shumway.GFX.WebGL.WebGLStageRenderer;
-  import WebGLStageRendererOptions = Shumway.GFX.WebGL.WebGLStageRendererOptions;
+  import Canvas2DRenderer = Shumway.GFX.Canvas2D.Canvas2DRenderer;
+  import WebGLRenderer = Shumway.GFX.WebGL.WebGLRenderer;
+  import WebGLRendererOptions = Shumway.GFX.WebGL.WebGLRendererOptions;
   import WebGLContext = Shumway.GFX.WebGL.WebGLContext;
   import FPS = Shumway.Tools.Mini.FPS;
 
@@ -230,9 +230,9 @@ module Shumway.GFX {
     private _world: Group;
     private _worldView: Group;
 
-    private _options: StageRendererOptions [];
+    private _options: RendererOptions [];
     private _container: HTMLElement;
-    private _renderer: StageRenderer;
+    private _renderer: Renderer;
     private _disableHidpi: boolean;
 
     private _state: UIState = new StartState();
@@ -287,10 +287,10 @@ module Shumway.GFX {
                                bgcolor === 0 ? 'transparent' :
                                Shumway.ColorUtilities.rgbaToCSSStyle(bgcolor);
 
-      var o = new Canvas2D.Canvas2DStageRendererOptions();
+      var o = new Canvas2D.Canvas2DRendererOptions();
       o.alpha = transparent;
       options.push(o);
-      this._renderer = new Canvas2D.Canvas2DStageRenderer(container, this._stage, o);
+      this._renderer = new Canvas2D.Canvas2DRenderer(container, this._stage, o);
 
       this._resizeHandler();
       this._onMouseUp = this._onMouseUp.bind(this)

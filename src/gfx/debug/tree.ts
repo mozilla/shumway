@@ -13,12 +13,12 @@ module Shumway.GFX {
     Simple
   }
 
-  export class TreeStageRendererOptions extends StageRendererOptions {
+  export class TreeRendererOptions extends RendererOptions {
     layout: Layout = Layout.Simple;
   }
 
-  export class TreeStageRenderer extends StageRenderer {
-    _options: TreeStageRendererOptions;
+  export class TreeRenderer extends Renderer {
+    _options: TreeRendererOptions;
     _canvas: HTMLCanvasElement;
     _context: CanvasRenderingContext2D;
     _viewport: Rectangle;
@@ -26,7 +26,7 @@ module Shumway.GFX {
 
     constructor(container: HTMLDivElement,
                 stage: Stage,
-                options: TreeStageRendererOptions = new TreeStageRendererOptions()) {
+                options: TreeRendererOptions = new TreeRendererOptions()) {
       super(container, stage, options);
       this._canvas = document.createElement("canvas");
       this._canvas.width = this.width;
@@ -43,7 +43,7 @@ module Shumway.GFX {
     get height(): number {
       return this._container.offsetHeight;
     }
-    
+
     public render() {
       var context = this._context;
       context.save();

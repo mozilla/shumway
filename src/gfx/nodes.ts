@@ -1093,7 +1093,7 @@ module Shumway.GFX {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  export class StageRendererOptions {
+  export class RendererOptions {
     debug: boolean = false;
     paintRenderable: boolean = true;
     paintBounds: boolean = false;
@@ -1113,12 +1113,12 @@ module Shumway.GFX {
   /**
    * Base class for all renderers.
    */
-  export class StageRenderer extends NodeVisitor {
+  export class Renderer extends NodeVisitor {
     /**
      * Anything outside of the viewport is not guaranteed to be rendered.
      */
     protected _viewport: Rectangle;
-    protected _options: StageRendererOptions;
+    protected _options: RendererOptions;
 
     /**
      * Container in which we are rendering. This can be either a canvas or a div element.
@@ -1128,7 +1128,7 @@ module Shumway.GFX {
     protected _stage: Stage;
     protected _devicePixelRatio: number;
 
-    constructor(container: HTMLDivElement | HTMLCanvasElement, stage: Stage, options: StageRendererOptions) {
+    constructor(container: HTMLDivElement | HTMLCanvasElement, stage: Stage, options: RendererOptions) {
       super();
       this._container = container;
       this._stage = stage;
@@ -1142,14 +1142,14 @@ module Shumway.GFX {
     }
 
     public render() {
-      throw Shumway.Debug.abstractMethod("StageRenderer::render");
+      throw Shumway.Debug.abstractMethod("Renderer::render");
     }
 
     /**
      * Notify renderer that the viewport has changed.
      */
     public resize() {
-      throw Shumway.Debug.abstractMethod("StageRenderer::resize");
+      throw Shumway.Debug.abstractMethod("Renderer::resize");
     }
   }
 
