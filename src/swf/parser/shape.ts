@@ -929,7 +929,7 @@ module Shumway.SWF.Parser {
                        GradientType.Radial;
     shape.beginGradient(command, style.colors, style.ratios,
                         gradientType, style.transform, style.spreadMethod,
-                        style.interpolationMode, style.focalPoint|0);
+                        style.interpolationMode, style.focalPoint / 2 | 0);
   }
 
   function writeMorphGradient(style: ShapeStyle, shape: ShapeData) {
