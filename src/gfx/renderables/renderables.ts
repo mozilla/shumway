@@ -148,6 +148,7 @@ module Shumway.GFX {
     private _assetId: number;
     private _eventSerializer: IVideoPlaybackEventSerializer;
     private _lastCurrentTime: number = 0;
+    private _seekHappens: boolean = false;
     static _renderableVideos: RenderableVideo [] = [];
 
     constructor(url: string, bounds: Rectangle, assetId: number, eventSerializer: IVideoPlaybackEventSerializer) {
@@ -170,7 +171,7 @@ module Shumway.GFX {
       element.addEventListener("waiting", elementEventHandler);
       element.addEventListener("loadedmetadata", elementEventHandler);
       element.addEventListener("error", elementEventHandler);
-      // element.play();
+      element.addEventListener("seeking", elementEventHandler);
 
       this._video = element;
       this._videoEventHandler = elementEventHandler;
@@ -218,6 +219,10 @@ module Shumway.GFX {
             code: element.error.code
           };
           break;
+        case "seeking":
+          type = VideoPlaybackEvent.Seeking;
+          this._seekHappens = true;
+          break;
         default:
           return; // unhandled event
       }
@@ -230,6 +235,7 @@ module Shumway.GFX {
 
     processControlRequest(type: VideoControlEvent, data: any): any {
       var videoElement = this._video;
+      var ESTIMATED_VIDEO_SECOND_SIZE: number = 500;
       switch (type) {
         case VideoControlEvent.Pause:
           if (videoElement) {
@@ -243,11 +249,16 @@ module Shumway.GFX {
               if (!isNaN(data.time)) {
                 videoElement.currentTime = data.time;
               }
+
+              if (this._seekHappens) {
+                this._seekHappens = true;
+                this._notifyNetStream(VideoPlaybackEvent.BufferFull, null);
+              }
             }
           }
           return;
         case VideoControlEvent.Seek:
-          if (videoElement && !videoElement.paused) {
+          if (videoElement) {
             videoElement.currentTime = data.time;
           }
           return;
@@ -260,6 +271,21 @@ module Shumway.GFX {
             videoElement.volume = data.volume;
           }
           return;
+        case VideoControlEvent.GetBytesLoaded:
+          if (!videoElement) {
+            return 0;
+          }
+          var bufferedTill: number = -1;
+          if (videoElement.buffered) {
+            for (var i = 0; i < videoElement.buffered.length; i++) {
+              bufferedTill = Math.max(bufferedTill, videoElement.buffered.end(i));
+            }
+          } else {
+            bufferedTill = videoElement.duration;
+          }
+          return Math.round(bufferedTill * ESTIMATED_VIDEO_SECOND_SIZE);
+        case VideoControlEvent.GetBytesTotal:
+          return videoElement ? Math.round(videoElement.duration * ESTIMATED_VIDEO_SECOND_SIZE) : 0;
       }
     }
 

@@ -37,8 +37,6 @@ var pauseExecution = getQueryVariable("paused") === "true";
 var remoteFile = getQueryVariable("rfile");
 var yt = getQueryVariable('yt');
 var movieParams = parseQueryString(getQueryVariable('flashvars'));
-var stageAlign = getQueryVariable('salign') || getQueryVariable('align');
-var stageScale = getQueryVariable('scale');
 
 //var swfController = new SWFController(timeline, pauseExecution);
 
@@ -148,7 +146,7 @@ function executeFile(file, buffer, movieParams) {
     var loaderURL = getQueryVariable("loaderURL") || swfURL;
     runIFramePlayer({sysMode: sysMode, appMode: appMode, loaderURL: loaderURL,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
-      stageAlign: stageAlign, stageScale: stageScale});
+      stageAlign: state.salign, stageScale: state.scale});
     return;
   }
 
@@ -191,8 +189,8 @@ function executeFile(file, buffer, movieParams) {
         syncGFXOptions(easel.options);
         var player = new Shumway.Player.Test.TestPlayer();
         player.movieParams = movieParams;
-        player.stageAlign = stageAlign;
-        player.stageScale = stageScale;
+        player.stageAlign = state.salign;
+        player.stageScale = state.scale;
         player.displayParams = easel.getDisplayParameters();
 
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
@@ -259,41 +257,31 @@ function ensureFlashOverlay() {
                             '<param name="play" value="true" />' +
                             '<param name="loop" value="true" />' +
                             '<param name="wmode" value="opaque" />' +
-                            '<param name="scale" value="noScale" />' +
+                            '<param name="scale" value="' + state.scale + '" />' +
                             '<param name="menu" value="true" />' +
                             '<param name="devicefont" value="false" />' +
-                            '<param name="salign" value="" />' +
+                            '<param name="salign" value="' + state.salign + '" />' +
                             '<param name="allowScriptAccess" value="sameDomain" />' +
                             '<param name="shumwaymode" value="off" />' +
                             '</object>';
   document.getElementById("stageContainer").appendChild(flashOverlay);
 
   maybeSetFlashOverlayDimensions();
-  currentPlayer._loader._contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE,
-                                                            maybeSetFlashOverlayDimensions);
 }
 function maybeSetFlashOverlayDimensions() {
-  if (!(currentPlayer._loader && currentPlayer._loader._contentLoaderInfo &&
-      currentPlayer._loader._contentLoaderInfo))
-  {
+  var canvas = document.getElementById("stageContainer").getElementsByTagName('canvas')[0];
+  if (!canvas || !flashOverlay) {
     return;
   }
-  flashOverlay.children[0].width = currentPlayer._loader._contentLoaderInfo.width;
-  flashOverlay.children[0].height = currentPlayer._loader._contentLoaderInfo.height;
+  flashOverlay.children[0].width = canvas.offsetWidth;
+  flashOverlay.children[0].height = canvas.offsetHeight;
   if (state.overlayFlash) {
     flashOverlay.style.display = 'inline-block';
   }
 }
-
-(function setStageSize() {
-  var stageSize = getQueryVariable("size");
-  if (stageSize && /^\d+x\d+$/.test(stageSize)) {
-    var dims = stageSize.split('x');
-    var stage = document.getElementById('stage');
-    stage.style.width = dims[0] + "px";
-    stage.style.height = dims[1] + "px";
-  }
-})();
+window.addEventListener('resize', function () {
+  setTimeout(maybeSetFlashOverlayDimensions, 0);
+}, false);
 
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }

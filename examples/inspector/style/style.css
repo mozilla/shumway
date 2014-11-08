@@ -129,12 +129,13 @@ body.simple #stageContainer {
   left: 0px;
   right: 0px;
   display: inline-block;
+  overflow: visible;
 }
 
 #flashContainer {
   position: absolute;
   left: 0px;
-  right: 0px;
+  top: 0px;
   display: none;
   mix-blend-mode: difference;
   opacity: 0.8;

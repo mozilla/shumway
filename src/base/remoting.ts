@@ -126,7 +126,8 @@ module Shumway.Remoting {
     Progress = 4,
     BufferEmpty = 5,
     Error = 6,
-    Metadata = 7
+    Metadata = 7,
+    Seeking = 8
   }
 
   export enum VideoControlEvent {
@@ -134,7 +135,9 @@ module Shumway.Remoting {
     Seek = 2,
     GetTime = 3,
     GetBufferLength = 4,
-    SetSoundLevels = 5
+    SetSoundLevels = 5,
+    GetBytesLoaded = 6,
+    GetBytesTotal = 7
   }
 
   export enum StageScaleMode {
