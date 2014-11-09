@@ -262,7 +262,9 @@ module Shumway.GFX.Canvas2D {
       var canvas;
       if (!Canvas2DSurfaceRegion._copyCanvasContext) {
         canvas = document.createElement("canvas");
-        registerScratchCanvas(canvas);
+        if (typeof registerScratchCanvas !== "undefined") {
+          registerScratchCanvas(canvas);
+        }
         canvas.width = 512;
         canvas.height = 512;
         Canvas2DSurfaceRegion._copyCanvasContext = canvas.getContext("2d");

@@ -118,6 +118,7 @@ function loadMovie(path, reportFrames) {
       player = new Shumway.Player.Test.TestPlayer();
       player.stageAlign = 'tl';
       player.stageScale = 'noscale';
+      player.displayParams = easel.getDisplayParameters();
       player.load(path);
 
     });
@@ -182,7 +183,10 @@ function getCanvasData() {
 
   var canvas = getCanvas();
 
-  var bounds = easel._stage._bounds;
+  var world = easel._world;
+  var stage = world.getChildren()[0];
+  var content = stage.getChildren()[0];
+  var bounds = content.getBounds();
   tmpCanvas.width = bounds.w;
   tmpCanvas.height = bounds.h;
   var ctx = tmpCanvas.getContext('2d');
