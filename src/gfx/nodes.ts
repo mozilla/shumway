@@ -1115,17 +1115,19 @@ module Shumway.GFX {
    */
   export class Renderer extends NodeVisitor {
     /**
-     * Anything outside of the viewport is not guaranteed to be rendered.
+     * Everything is clipped by the viewport.
      */
     protected _viewport: Rectangle;
+
     protected _options: RendererOptions;
 
     /**
-     * Container in which we are rendering. This can be either a canvas or a div element.
+     * We can render either into a canvas element or into a div element.
      */
     protected _container: HTMLDivElement | HTMLCanvasElement;
 
     protected _stage: Stage;
+
     protected _devicePixelRatio: number;
 
     constructor(container: HTMLDivElement | HTMLCanvasElement, stage: Stage, options: RendererOptions) {

@@ -288,8 +288,6 @@ module Shumway.GFX.Canvas2D {
 
   export class Canvas2DRenderer extends Renderer {
     protected _options: Canvas2DRendererOptions;
-    private _fillRule: string;
-    private _canvas: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
 
     private _target: Canvas2DSurfaceRegion;
@@ -312,31 +310,34 @@ module Shumway.GFX.Canvas2D {
 
     private _fontSize: number = 0;
 
+    /**
+     * Stack of rendering layers. Stage video lives at the bottom of this stack.
+     */
     private _layers: HTMLDivElement [] = [];
 
     constructor (
       container: HTMLDivElement | HTMLCanvasElement,
       stage: Stage,
-      options: Canvas2DRendererOptions = new Canvas2DRendererOptions()) {
+      options: Canvas2DRendererOptions = new Canvas2DRendererOptions())
+    {
       super(container, stage, options);
-      var defaultFillRule = FillRule.NonZero;
-      this._fillRule = defaultFillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
-
       if (container instanceof HTMLCanvasElement) {
-        this._canvas = container;
-        this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
+        var canvas = container;
+        this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
+        this._target = this._createTarget(canvas);
       } else {
         this._addLayer("Background Layer");
         var canvasLayer = this._addLayer("Canvas Layer");
-        this._canvas = document.createElement("canvas");
-        canvasLayer.appendChild(this._canvas);
+        var canvas = document.createElement("canvas");
+        canvasLayer.appendChild(canvas);
         this._viewport = new Rectangle(0, 0, container.scrollWidth, container.scrollHeight);
-        this._updateSize();
         var self = this;
         stage.addEventListener(NodeEventType.OnStageBoundsChanged, function () {
-          self._updateSize();
+          self._onStageBoundsChanged(canvas);
         });
+        this._onStageBoundsChanged(canvas);
       }
+
       Canvas2DRenderer._prepareSurfaceAllocators();
     }
 
@@ -355,7 +356,18 @@ module Shumway.GFX.Canvas2D {
       return this._layers[0];
     }
 
-    private _updateSize() {
+    private _createTarget(canvas: HTMLCanvasElement) {
+      return new Canvas2DSurfaceRegion (
+        new Canvas2DSurface(canvas),
+        new RegionAllocator.Region(0, 0, canvas.width, canvas.height),
+        canvas.width, canvas.height
+      );
+    }
+
+    /**
+     * If the stage bounds have changed, we have to resize all of our layers, canvases and more ...
+     */
+    private _onStageBoundsChanged(canvas: HTMLCanvasElement) {
       var stageBounds = this._stage.getBounds(true);
       stageBounds.snap();
 
@@ -367,19 +379,12 @@ module Shumway.GFX.Canvas2D {
         layer.style.width = w;
         layer.style.height = h;
       }
-      var canvas = this._canvas;
       canvas.width = stageBounds.w;
       canvas.height = stageBounds.h;
-      console.info("Resizing: " + stageBounds.w + " " + stageBounds.h);
       canvas.style.position = "absolute";
       canvas.style.width = w;
       canvas.style.height = h;
-      this._target = new Canvas2DSurfaceRegion (
-        new Canvas2DSurface(this._canvas),
-        new RegionAllocator.Region(0, 0, stageBounds.w, stageBounds.h),
-        stageBounds.w, stageBounds.h
-      );
-
+      this._target = this._createTarget(canvas);
       this._fontSize = 10 * this._devicePixelRatio;
     }
 
@@ -490,10 +495,7 @@ module Shumway.GFX.Canvas2D {
       var cacheShapesMaxSize = this._options.cacheShapesMaxSize;
       var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
 
-      // var renderCount = node.properties["renderCount"] || 0;
-
       var renderCount = 100;
-
       var paintClip = !!(state.flags & RenderFlags.PaintClip);
       var paintStencil = !!(state.flags & RenderFlags.PaintStencil);
       var paintFlashing = !!(state.flags & RenderFlags.PaintFlashing);
@@ -727,6 +729,11 @@ module Shumway.GFX.Canvas2D {
       }
     }
 
+    /**
+     * We don't actually draw the video like normal renderables, although we could.
+     * Instead, we add the video element underneeth the canvas at layer zero and set
+     * the appropriate css transform to move it into place.
+     */
     visitRenderableVideo(node: RenderableVideo, state: RenderState) {
       var ratio = this._devicePixelRatio;
       var matrix = state.matrix.clone();
