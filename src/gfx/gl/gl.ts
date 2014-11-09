@@ -51,7 +51,7 @@ module Shumway.GFX.WebGL {
   import radianToDegrees = Geometry.radianToDegrees;
   import degreesToRadian = Geometry.degreesToRadian;
 
-  export class WebGLStageRendererOptions extends StageRendererOptions {
+  export class WebGLRendererOptions extends RendererOptions {
     maxSurfaces: number = 8;
     maxSurfaceSize: number = 2048 * 2;
     perspectiveCamera: boolean;
@@ -80,8 +80,8 @@ module Shumway.GFX.WebGL {
     destinationBlendFactor: WebGLBlendFactor = WebGLBlendFactor.ONE_MINUS_SRC_ALPHA;
   }
 
-  export class WebGLStageRenderer extends StageRenderer {
-    _options: WebGLStageRendererOptions;
+  export class WebGLRenderer extends Renderer {
+    _options: WebGLRendererOptions;
     _context: WebGLContext;
 
     private _brush: WebGLCombinedBrush;
@@ -97,10 +97,12 @@ module Shumway.GFX.WebGL {
     private _uploadCanvasContext: CanvasRenderingContext2D;
     private _clipStack: Node [];
 
-    constructor(canvas: HTMLCanvasElement,
+    private _canvas: HTMLCanvasElement;
+
+    constructor(container: HTMLDivElement,
                 stage: Stage,
-                options: WebGLStageRendererOptions = new WebGLStageRendererOptions()) {
-      super(canvas, stage, options);
+                options: WebGLRendererOptions = new WebGLRendererOptions()) {
+      super(container, stage, options);
       var context = this._context = new WebGLContext(this._canvas, options);
 
       this._updateSize();

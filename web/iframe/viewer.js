@@ -78,7 +78,7 @@ function runViewer() {
 function createEasel() {
   var Stage = Shumway.GFX.Stage;
   var Easel = Shumway.GFX.Easel;
-  var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
+  var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
 
   Shumway.GFX.WebGL.SHADER_ROOT = "../src/gfx/gl/shaders/";
   var backend = Shumway.GFX.backend.value | 0;

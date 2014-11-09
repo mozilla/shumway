@@ -1093,7 +1093,7 @@ module Shumway.GFX {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
-  export class StageRendererOptions {
+  export class RendererOptions {
     debug: boolean = false;
     paintRenderable: boolean = true;
     paintBounds: boolean = false;
@@ -1113,16 +1113,26 @@ module Shumway.GFX {
   /**
    * Base class for all renderers.
    */
-  export class StageRenderer extends NodeVisitor {
+  export class Renderer extends NodeVisitor {
+    /**
+     * Everything is clipped by the viewport.
+     */
     protected _viewport: Rectangle;
-    protected _options: StageRendererOptions;
-    protected _canvas: HTMLCanvasElement;
+
+    protected _options: RendererOptions;
+
+    /**
+     * We can render either into a canvas element or into a div element.
+     */
+    protected _container: HTMLDivElement | HTMLCanvasElement;
+
     protected _stage: Stage;
+
     protected _devicePixelRatio: number;
 
-    constructor(canvas: HTMLCanvasElement, stage: Stage, options: StageRendererOptions) {
+    constructor(container: HTMLDivElement | HTMLCanvasElement, stage: Stage, options: RendererOptions) {
       super();
-      this._canvas = canvas;
+      this._container = container;
       this._stage = stage;
       this._options = options;
       this._viewport = Rectangle.createSquare(1024);
@@ -1134,14 +1144,14 @@ module Shumway.GFX {
     }
 
     public render() {
-      throw Shumway.Debug.abstractMethod("StageRenderer::render");
+      throw Shumway.Debug.abstractMethod("Renderer::render");
     }
 
     /**
      * Notify renderer that the viewport has changed.
      */
     public resize() {
-      throw Shumway.Debug.abstractMethod("StageRenderer::resize");
+      throw Shumway.Debug.abstractMethod("Renderer::resize");
     }
   }
 

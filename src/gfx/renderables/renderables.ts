@@ -185,6 +185,10 @@ module Shumway.GFX {
       this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
     }
 
+    public get video(): HTMLVideoElement {
+      return this._video;
+    }
+
     private _handleVideoEvent(evt: Event) {
       var type: VideoPlaybackEvent;
       var data: any = null;
@@ -418,8 +422,8 @@ module Shumway.GFX {
       // TODO: Hack to be able to compile this as part of gfx-base.
       var Canvas2D = (<any>GFX).Canvas2D;
       var bounds = this.getBounds();
-      var options = new Canvas2D.Canvas2DStageRendererOptions();
-      var renderer = new Canvas2D.Canvas2DStageRenderer(this._canvas, null, options);
+      var options = new Canvas2D.Canvas2DRendererOptions();
+      var renderer = new Canvas2D.Canvas2DRenderer(this._canvas, null, options);
       renderer.renderNode(source, clip || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
     }

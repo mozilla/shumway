@@ -2,7 +2,7 @@ var displayListCanvas = document.getElementById("displayList");
 
 document.getElementById("viewDisplayList").addEventListener("click", function () {
   resizeDisplayList();
-  var displayListTreeView = new Shumway.GFX.TreeStageRenderer(displayListCanvas, _easel.stage);
+  var displayListTreeView = new Shumway.GFX.TreeRenderer(displayListCanvas, _easel.stage);
   _easel.addEventListener("render", function () {
     displayListTreeView.render();
   });

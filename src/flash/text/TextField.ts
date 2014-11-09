@@ -520,7 +520,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set text(value: string) {
-      this._textContent.plainText = asCoerceString(value);
+      value = asCoerceString(value);
+      if (value === this._textContent.plainText) {
+        return;
+      }
+      this._textContent.plainText = value;
       this._invalidateContent();
       this._ensureLineMetrics();
     }

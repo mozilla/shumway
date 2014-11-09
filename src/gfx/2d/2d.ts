@@ -36,10 +36,10 @@ module Shumway.GFX.Canvas2D {
     private _node: Node;
     private _size: number;
     private _levels: MipMapLevel [];
-    private _renderer: Canvas2DStageRenderer;
+    private _renderer: Canvas2DRenderer;
     private _surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator;
     constructor (
-      renderer: Canvas2DStageRenderer,
+      renderer: Canvas2DRenderer,
       node: Node,
       surfaceRegionAllocator: SurfaceRegionAllocator.ISurfaceRegionAllocator,
       size: number
@@ -99,7 +99,7 @@ module Shumway.GFX.Canvas2D {
     EvenOdd
   }
 
-  export class Canvas2DStageRendererOptions extends StageRendererOptions {
+  export class Canvas2DRendererOptions extends RendererOptions {
     /**
      * Whether to force snapping matrices to device pixels.
      */
@@ -187,7 +187,7 @@ module Shumway.GFX.Canvas2D {
     matrix: Matrix = Matrix.createIdentity();
     colorMatrix: ColorMatrix = ColorMatrix.createIdentity();
 
-    options: Canvas2DStageRendererOptions;
+    options: Canvas2DRendererOptions;
 
     constructor(target: Canvas2DSurfaceRegion) {
       super();
@@ -286,9 +286,8 @@ module Shumway.GFX.Canvas2D {
     }
   }
 
-  export class Canvas2DStageRenderer extends StageRenderer {
-    protected _options: Canvas2DStageRendererOptions;
-    private _fillRule: string;
+  export class Canvas2DRenderer extends Renderer {
+    protected _options: Canvas2DRendererOptions;
     context: CanvasRenderingContext2D;
 
     private _target: Canvas2DSurfaceRegion;
@@ -311,37 +310,91 @@ module Shumway.GFX.Canvas2D {
 
     private _fontSize: number = 0;
 
+    /**
+     * Stack of rendering layers. Stage video lives at the bottom of this stack.
+     */
+    private _layers: HTMLDivElement [] = [];
+
     constructor (
-      canvas: HTMLCanvasElement,
+      container: HTMLDivElement | HTMLCanvasElement,
       stage: Stage,
-      options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
-      super(canvas, stage, options);
-      var defaultFillRule = FillRule.NonZero;
-      this._fillRule = defaultFillRule === FillRule.EvenOdd ? 'evenodd' : 'nonzero';
-      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
-      this._target = new Canvas2DSurfaceRegion(new Canvas2DSurface(canvas),
-                                               new RegionAllocator.Region(0, 0, canvas.width, canvas.height),
-                                               canvas.width, canvas.height);
-      this._devicePixelRatio = window.devicePixelRatio || 1;
-      this._fontSize = 10 * this._devicePixelRatio;
-      Canvas2DStageRenderer._prepareSurfaceAllocators();
+      options: Canvas2DRendererOptions = new Canvas2DRendererOptions())
+    {
+      super(container, stage, options);
+      if (container instanceof HTMLCanvasElement) {
+        var canvas = container;
+        this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
+        this._target = this._createTarget(canvas);
+      } else {
+        this._addLayer("Background Layer");
+        var canvasLayer = this._addLayer("Canvas Layer");
+        var canvas = document.createElement("canvas");
+        canvasLayer.appendChild(canvas);
+        this._viewport = new Rectangle(0, 0, container.scrollWidth, container.scrollHeight);
+        var self = this;
+        stage.addEventListener(NodeEventType.OnStageBoundsChanged, function () {
+          self._onStageBoundsChanged(canvas);
+        });
+        this._onStageBoundsChanged(canvas);
+      }
+
+      Canvas2DRenderer._prepareSurfaceAllocators();
     }
 
-    public resize() {
-      var canvas = this._canvas;
-      var context = this._target.surface.context;
-      this._viewport = new Rectangle(0, 0, canvas.width, canvas.height);
-      this._target.region.set(this._viewport);
-      this._devicePixelRatio = window.devicePixelRatio || 1;
+    private _addLayer(name: string): HTMLDivElement {
+      var div = document.createElement("div");
+      div.style.position = "absolute";
+      div.style.overflow = "hidden";
+      div.style.width = "100%";
+      div.style.height = "100%";
+      this._container.appendChild(div);
+      this._layers.push(div);
+      return div;
+    }
+
+    private get _backgroundVideoLayer(): HTMLDivElement {
+      return this._layers[0];
+    }
+
+    private _createTarget(canvas: HTMLCanvasElement) {
+      return new Canvas2DSurfaceRegion (
+        new Canvas2DSurface(canvas),
+        new RegionAllocator.Region(0, 0, canvas.width, canvas.height),
+        canvas.width, canvas.height
+      );
+    }
+
+    /**
+     * If the stage bounds have changed, we have to resize all of our layers, canvases and more ...
+     */
+    private _onStageBoundsChanged(canvas: HTMLCanvasElement) {
+      var stageBounds = this._stage.getBounds(true);
+      stageBounds.snap();
+
+      var ratio = this._devicePixelRatio = window.devicePixelRatio || 1;
+      var w = (stageBounds.w / ratio) + 'px';
+      var h = (stageBounds.h / ratio) + 'px';
+      for (var i = 0; i < this._layers.length; i++) {
+        var layer = this._layers[i];
+        layer.style.width = w;
+        layer.style.height = h;
+      }
+      canvas.width = stageBounds.w;
+      canvas.height = stageBounds.h;
+      canvas.style.position = "absolute";
+      canvas.style.width = w;
+      canvas.style.height = h;
+      this._target = this._createTarget(canvas);
+      this._fontSize = 10 * this._devicePixelRatio;
     }
 
     private static _prepareSurfaceAllocators() {
-      if (Canvas2DStageRenderer._initializedCaches) {
+      if (Canvas2DRenderer._initializedCaches) {
         return;
       }
 
       var minSurfaceSize = 1024;
-      Canvas2DStageRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator (
+      Canvas2DRenderer._surfaceCache = new SurfaceRegionAllocator.SimpleAllocator (
         function (w: number, h: number) {
           var canvas = document.createElement("canvas");
           if (typeof registerScratchCanvas !== "undefined") {
@@ -366,7 +419,7 @@ module Shumway.GFX.Canvas2D {
         }
       );
 
-      Canvas2DStageRenderer._shapeCache = new SurfaceRegionAllocator.SimpleAllocator (
+      Canvas2DRenderer._shapeCache = new SurfaceRegionAllocator.SimpleAllocator (
         function (w: number, h: number) {
           var canvas = document.createElement("canvas");
           if (typeof registerScratchCanvas !== "undefined") {
@@ -383,7 +436,7 @@ module Shumway.GFX.Canvas2D {
         }
       );
 
-      Canvas2DStageRenderer._initializedCaches = true;
+      Canvas2DRenderer._initializedCaches = true;
     }
 
     /**
@@ -442,10 +495,7 @@ module Shumway.GFX.Canvas2D {
       var cacheShapesMaxSize = this._options.cacheShapesMaxSize;
       var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
 
-      // var renderCount = node.properties["renderCount"] || 0;
-
       var renderCount = 100;
-
       var paintClip = !!(state.flags & RenderFlags.PaintClip);
       var paintStencil = !!(state.flags & RenderFlags.PaintStencil);
       var paintFlashing = !!(state.flags & RenderFlags.PaintFlashing);
@@ -467,7 +517,7 @@ module Shumway.GFX.Canvas2D {
 
       var mipMap: MipMap = node.properties["mipMap"];
       if (!mipMap) {
-        mipMap = node.properties["mipMap"] = new MipMap(this, node, Canvas2DStageRenderer._shapeCache, cacheShapesMaxSize);
+        mipMap = node.properties["mipMap"] = new MipMap(this, node, Canvas2DRenderer._shapeCache, cacheShapesMaxSize);
       }
       var mipMapLevel = mipMap.getLevel(matrix);
       var mipMapLevelSurfaceRegion = <Canvas2DSurfaceRegion>(mipMapLevel.surfaceRegion);
@@ -638,8 +688,7 @@ module Shumway.GFX.Canvas2D {
       // Fill background
       if (!node.hasFlags(NodeFlags.Transparent) && node.color) {
         if (!(state.flags & RenderFlags.IgnoreRenderable)) {
-          context.fillStyle = node.color.toCSSStyle();
-          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          this._container.style.backgroundColor = node.color.toCSSStyle();
         }
       }
 
@@ -670,12 +719,34 @@ module Shumway.GFX.Canvas2D {
       var context = state.target.context;
       Filters._applyColorMatrix(context, state.colorMatrix);
       // Only paint if it is visible.
-      if (context.globalAlpha > 0) {
+      if (node.source instanceof RenderableVideo) {
+        this.visitRenderableVideo(<RenderableVideo>node.source, state);
+      } else if (context.globalAlpha > 0) {
         this.visitRenderable(node.source, state, node.ratio);
       }
       if (state.flags & RenderFlags.PixelSnapping) {
         matrix.free();
       }
+    }
+
+    /**
+     * We don't actually draw the video like normal renderables, although we could.
+     * Instead, we add the video element underneeth the canvas at layer zero and set
+     * the appropriate css transform to move it into place.
+     */
+    visitRenderableVideo(node: RenderableVideo, state: RenderState) {
+      var ratio = this._devicePixelRatio;
+      var matrix = state.matrix.clone();
+      matrix.scale(1 / ratio, 1 / ratio);
+      var cssTransform = matrix.toCSSTransform();
+      node.video.style.transformOrigin = "0 0";
+      var bounds = node.getBounds();
+      node.video.style.width = bounds.w + "px";
+      node.video.style.height = bounds.h + "px";
+      node.video.style.transform = cssTransform;
+      console.info(cssTransform);
+      this._backgroundVideoLayer.appendChild(node.video);
+      matrix.free();
     }
 
     visitRenderable(node: Renderable, state: RenderState, ratio?: number) {
@@ -890,7 +961,7 @@ module Shumway.GFX.Canvas2D {
     }
 
     private _allocateSurface(w: number, h: number): Canvas2DSurfaceRegion {
-      var surface = <Canvas2DSurfaceRegion>(Canvas2DStageRenderer._surfaceCache.allocate(w, h))
+      var surface = <Canvas2DSurfaceRegion>(Canvas2DRenderer._surfaceCache.allocate(w, h))
       surface.fill("#FF4981");
       // var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
       // surface.fill(color);
