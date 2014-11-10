@@ -29,7 +29,7 @@ build: ensureoutputdir
 	# Coping extension files
 	echo "Creating mozcentral package verions: $(VERSION)"
 	mkdir -p $(BUILD_EXTENSION_DIR)
-	cp -R ../../LICENSE $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
+	cp -R ../../LICENSE $(EXTENSION_SRC)/chrome $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
 	cp -R browser $(BUILD_DIR)/
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders
 	cp ../../src/gfx/gl/shaders/*.frag $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
