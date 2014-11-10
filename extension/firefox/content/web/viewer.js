@@ -247,7 +247,6 @@ function parseSwf(url, movieParams, objectParams) {
 
   // init misc preferences
   var turboMode = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
-  Shumway.GFX.backend.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.webgl', def: false}) ? 1 : 0;
   Shumway.GFX.hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});
   //forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
   //dummyAnimation.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false});
@@ -258,19 +257,19 @@ function parseSwf(url, movieParams, objectParams) {
     FirefoxCom.request('endActivation', null);
   }
 
-  var bgcolor;
+  var backgroundColor;
   if (objectParams) {
     var m;
     if (objectParams.bgcolor && (m = /#([0-9A-F]{6})/i.exec(objectParams.bgcolor))) {
       var hexColor = parseInt(m[1], 16);
-      bgcolor = hexColor << 8 | 0xff;
+      backgroundColor = hexColor << 8 | 0xff;
     }
     if (objectParams.wmode === 'transparent') {
-      bgcolor = 0;
+      backgroundColor = 0;
     }
   }
 
-  var easel = createEasel(bgcolor);
+  var easel = createEasel(backgroundColor);
   easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
   easelHost.processExternalCommand = processExternalCommand;
 
@@ -284,7 +283,7 @@ function parseSwf(url, movieParams, objectParams) {
       objectParams: objectParams,
       displayParams: displayParams,
       turboMode: turboMode,
-      bgcolor: bgcolor,
+      bgcolor: backgroundColor,
       url: url,
       baseUrl: url
     }
@@ -292,12 +291,11 @@ function parseSwf(url, movieParams, objectParams) {
   playerWindow.postMessage(data,  '*');
 }
 
-function createEasel(bgcolor) {
+function createEasel(backgroundColor) {
   var Stage = Shumway.GFX.Stage;
   var Easel = Shumway.GFX.Easel;
   var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
 
   Shumway.GFX.WebGL.SHADER_ROOT = SHUMWAY_ROOT + "gfx/gl/shaders/";
-  var backend = Shumway.GFX.backend.value | 0;
-  return new Easel(document.getElementById("easelContainer"), backend, false, bgcolor);
+  return new Easel(document.getElementById("easelContainer"), false, backgroundColor);
 }
