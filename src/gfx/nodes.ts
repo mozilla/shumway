@@ -1226,6 +1226,7 @@ module Shumway.GFX {
      * is any code that needs to check if rendering is about to happen.
      */
     readyToRender(): boolean {
+      this._dirtyVisitor.isDirty = false;
       this._dirtyVisitor.start(this, this._dirtyRegion);
       if (this._dirtyVisitor.isDirty) {
         return true;

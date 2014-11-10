@@ -264,12 +264,12 @@ function ensureFlashOverlay() {
                             '<param name="allowScriptAccess" value="sameDomain" />' +
                             '<param name="shumwaymode" value="off" />' +
                             '</object>';
-  document.getElementById("stageContainer").appendChild(flashOverlay);
+  document.getElementById("easelContainer").appendChild(flashOverlay);
 
   maybeSetFlashOverlayDimensions();
 }
 function maybeSetFlashOverlayDimensions() {
-  var canvas = document.getElementById("stageContainer").getElementsByTagName('canvas')[0];
+  var canvas = document.getElementById("easelContainer").getElementsByTagName('canvas')[0];
   if (!canvas || !flashOverlay) {
     return;
   }
@@ -397,13 +397,12 @@ HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
 var Stage = Shumway.GFX.Stage;
 var Easel = Shumway.GFX.Easel;
 var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
-var _easel;
+var currentEasel;
 
 function createEasel() {
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
-  var backend = Shumway.GFX.backend.value | 0;
-  _easel = new Easel(document.getElementById("stageContainer"), backend);
-  return _easel;
+  currentEasel = new Easel(document.getElementById("easelContainer"));
+  return currentEasel;
 }
 
 function registerScratchCanvas(scratchCanvas) {

@@ -744,7 +744,6 @@ module Shumway.GFX.Canvas2D {
       node.video.style.width = bounds.w + "px";
       node.video.style.height = bounds.h + "px";
       node.video.style.transform = cssTransform;
-      console.info(cssTransform);
       this._backgroundVideoLayer.appendChild(node.video);
       matrix.free();
     }
