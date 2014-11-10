@@ -106,44 +106,66 @@ module Shumway.Tools.Mini {
       return this._container.clientHeight;
     }
 
-    public tickAndRender(idle: boolean = false) {
+    public tickAndRender(idle: boolean = false, renderTime: number = 0) {
       if (this._lastTime === 0) {
         this._lastTime = performance.now();
         return;
       }
 
       var elapsedTime = performance.now() - this._lastTime;
-      var weightRatio = 0.9;
+      var weightRatio = 0; // Use ratio here if you want smoothing.
       var weightedTime = elapsedTime * (1 - weightRatio) + this._lastWeightedTime * weightRatio;
 
       var context = this._context;
       var w = 2 * this._ratio;
       var wPadding = 1;
-      var textWidth = 20;
-      var count = ((this._canvas.width - textWidth) / (w + wPadding)) | 0;
+      var fontSize = 8;
+      var tickOffset = this._ratio * 30;
+      var webkitPerformance: any = performance;
+      if (webkitPerformance.memory) {
+        tickOffset += this._ratio * 30;
+      }
+
+      var count = ((this._canvas.width - tickOffset) / (w + wPadding)) | 0;
 
       var index = this._index ++;
       if (this._index > count) {
         this._index = 0;
       }
 
+      var canvasHeight = this._canvas.height;
       context.globalAlpha = 1;
       context.fillStyle = "black";
-      context.fillRect(textWidth + index * (w + wPadding), 0, w * 4, this._canvas.height);
+      context.fillRect(tickOffset + index * (w + wPadding), 0, w * 4, this._canvas.height);
 
-      var r = (1000 / 60) / weightedTime;
+      var r = Math.min((1000 / 60) / weightedTime, 1);
       context.fillStyle = this._gradient[r * (this._gradient.length - 1) | 0];
       context.globalAlpha = idle ? 0.5 : 1;
-      var v = this._canvas.height * r | 0;
+      var v = canvasHeight / 2 * r | 0;
+      context.fillRect(tickOffset + index * (w + wPadding), 0, w, v);
 
-      context.fillRect(textWidth + index * (w + wPadding), 0, w, v);
+      if (renderTime) {
+        r = Math.min((1000 / 240) / renderTime, 1);
+        context.fillStyle = this._gradient[r * (this._gradient.length - 1) | 0];
+        var v = canvasHeight / 2 * r | 0;
+        context.fillRect(tickOffset + index * (w + wPadding), canvasHeight - v, w, v);
+      }
+
       if (index % 16 === 0) {
         context.globalAlpha = 1;
         context.fillStyle = "black";
-        context.fillRect(0, 0, textWidth, this._canvas.height);
+        context.fillRect(0, 0, tickOffset, this._canvas.height);
         context.fillStyle = "white";
-        context.font = (this._ratio * 10) + "px Arial";
-        context.fillText((1000 / weightedTime).toFixed(0), 2 * this._ratio, 8 * this._ratio);
+        context.font = (this._ratio * fontSize) + "px Arial";
+        context.textBaseline = "middle";
+        var s = (1000 / weightedTime).toFixed(0);
+        if (renderTime) {
+          s += " " + renderTime.toFixed(0);
+        }
+        if (webkitPerformance.memory) {
+          s += " " + (webkitPerformance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2);
+        }
+        context.fillText(s, 2 * this._ratio, this._containerHeight / 2 * this._ratio);
       }
 
       this._lastTime = performance.now();

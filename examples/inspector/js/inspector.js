@@ -397,12 +397,12 @@ HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
 var Stage = Shumway.GFX.Stage;
 var Easel = Shumway.GFX.Easel;
 var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
-var _easel;
+var currentEasel;
 
 function createEasel() {
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
-  _easel = new Easel(document.getElementById("easelContainer"));
-  return _easel;
+  currentEasel = new Easel(document.getElementById("easelContainer"));
+  return currentEasel;
 }
 
 function registerScratchCanvas(scratchCanvas) {

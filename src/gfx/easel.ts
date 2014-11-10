@@ -299,7 +299,7 @@ module Shumway.GFX {
         var fpsContainer = document.createElement("div");
         fpsContainer.style.position = "absolute";
         fpsContainer.style.width = "100%";
-        fpsContainer.style.height = "16px";
+        fpsContainer.style.height = "20px";
         fpsContainer.style.pointerEvents = "none";
         hudContainer.appendChild(fpsContainer);
         container.appendChild(hudContainer);
@@ -430,6 +430,7 @@ module Shumway.GFX {
     private _render() {
       RenderableVideo.checkForVideoUpdates();
       var mustRender = (this._stage.readyToRender() || forcePaint.value) && !this.paused;
+      var renderTime = 0;
       if (mustRender) {
         var renderer = this._renderer;
         if (this.viewport) {
@@ -439,11 +440,14 @@ module Shumway.GFX {
         }
         this._dispatchEvent("render");
         enterTimeline("Render");
+        renderTime = performance.now();
         renderer.render();
+        renderTime = performance.now() - renderTime;
         leaveTimeline("Render");
+
       }
       if (this._fps) {
-        this._fps.tickAndRender(!mustRender);
+        this._fps.tickAndRender(!mustRender, renderTime);
       }
     }
 

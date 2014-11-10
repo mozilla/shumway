@@ -21,7 +21,6 @@ module Shumway.GFX {
     _options: TreeRendererOptions;
     _canvas: HTMLCanvasElement;
     _context: CanvasRenderingContext2D;
-    _viewport: Rectangle;
     layout: any;
 
     constructor(container: HTMLDivElement,
@@ -29,44 +28,80 @@ module Shumway.GFX {
                 options: TreeRendererOptions = new TreeRendererOptions()) {
       super(container, stage, options);
       this._canvas = document.createElement("canvas");
-      this._canvas.width = this.width;
-      this._canvas.height = this.height;
+      this._container.appendChild(this._canvas);
       this._context = this._canvas.getContext("2d");
-      this._viewport = new Rectangle(0, 0, this.width, this.height);
+      this._listenForContainerSizeChanges();
     }
 
-
-    get width(): number {
-      return this._container.offsetWidth;
+    private _listenForContainerSizeChanges() {
+      var pollInterval = 10;
+      var w = this._containerWidth;
+      var h = this._containerHeight;
+      this._onContainerSizeChanged();
+      var self = this;
+      setInterval(function () {
+        if (w !== self._containerWidth || h !== self._containerHeight) {
+          self._onContainerSizeChanged();
+          w = self._containerWidth;
+          h = self._containerHeight;
+        }
+      }, pollInterval);
     }
 
-    get height(): number {
-      return this._container.offsetHeight;
+    private _getRatio(): number {
+      var devicePixelRatio = window.devicePixelRatio || 1;
+      var backingStoreRatio = 1;
+      var ratio = 1;
+      if (devicePixelRatio !== backingStoreRatio) {
+        ratio = devicePixelRatio / backingStoreRatio;
+      }
+      return ratio;
+    }
+
+    private _onContainerSizeChanged() {
+      var ratio = this._getRatio();
+      var w = Math.ceil(this._containerWidth * ratio);
+      var h = Math.ceil(this._containerHeight * ratio);
+      var canvas = this._canvas;
+      if (ratio > 0) {
+        canvas.width = w * ratio;
+        canvas.height = h * ratio;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+      } else {
+        canvas.width = w;
+        canvas.height = h;
+      }
+    }
+
+    private get _containerWidth(): number {
+      return this._container.clientWidth;
+    }
+
+    private get _containerHeight(): number {
+      return this._container.clientHeight;
     }
 
     public render() {
       var context = this._context;
       context.save();
-      context.clearRect(0, 0, this.width, this.height);
+
+      context.clearRect(0, 0, this._canvas.width, this._canvas.height);
       context.scale(1, 1);
       if (this._options.layout === Layout.Simple) {
-        this._renderNodeSimple(this._context, this._stage, Matrix.createIdentity(), this._viewport, []);
+        this._renderNodeSimple(this._context, this._stage, Matrix.createIdentity());
       }
       context.restore();
     }
 
-    static clearContext(context: CanvasRenderingContext2D, rectangle: Rectangle) {
-      var canvas = context.canvas;
-      context.clearRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
-    }
-
-    _renderNodeSimple(context: CanvasRenderingContext2D, root: Node, transform: Matrix, clipRectangle: Rectangle, cullRectanglesAABB: Rectangle []) {
+    _renderNodeSimple(context: CanvasRenderingContext2D, root: Node, transform: Matrix) {
       var self = this;
       context.save();
-      context.font = "12px Arial";
+      var fontHeight = 16;
+      context.font = fontHeight + "px Arial";
       context.fillStyle = "white";
       var x = 0, y = 0;
-      var w = 20, h = 12, hPadding = 2, wColPadding = 8;
+      var w = 20, h = fontHeight, hPadding = 2, wColPadding = 8;
       var colX = 0;
       var maxX = 0;
       function visit(node: Node) {
