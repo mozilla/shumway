@@ -264,12 +264,12 @@ function ensureFlashOverlay() {
                             '<param name="allowScriptAccess" value="sameDomain" />' +
                             '<param name="shumwaymode" value="off" />' +
                             '</object>';
-  document.getElementById("stageContainer").appendChild(flashOverlay);
+  document.getElementById("easelContainer").appendChild(flashOverlay);
 
   maybeSetFlashOverlayDimensions();
 }
 function maybeSetFlashOverlayDimensions() {
-  var canvas = document.getElementById("stageContainer").getElementsByTagName('canvas')[0];
+  var canvas = document.getElementById("easelContainer").getElementsByTagName('canvas')[0];
   if (!canvas || !flashOverlay) {
     return;
   }
@@ -401,8 +401,7 @@ var _easel;
 
 function createEasel() {
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
-  var backend = Shumway.GFX.backend.value | 0;
-  _easel = new Easel(document.getElementById("stageContainer"), backend);
+  _easel = new Easel(document.getElementById("easelContainer"));
   return _easel;
 }
 

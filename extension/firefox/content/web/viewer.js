@@ -299,5 +299,5 @@ function createEasel(bgcolor) {
 
   Shumway.GFX.WebGL.SHADER_ROOT = SHUMWAY_ROOT + "gfx/gl/shaders/";
   var backend = Shumway.GFX.backend.value | 0;
-  return new Easel(document.getElementById("stageContainer"), backend, false, bgcolor);
+  return new Easel(document.getElementById("easelContainer"), backend, false, bgcolor);
 }

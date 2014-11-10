@@ -19,7 +19,7 @@ body.simple {
 body.simple > div {
   display: none;
 }
-body.simple #stageContainer {
+body.simple #easelContainer {
   display: block;
 }
 
@@ -122,7 +122,7 @@ body.simple #stageContainer {
   display: inline-block;
 }
 
-#stageContainer {
+#easelContainer {
   position: absolute;
   top: 32px;
   bottom: 32px;
@@ -373,20 +373,20 @@ body.hideDebugInfoPanels #profilerContainer {
 
 @media only screen and (max-width: 2560px) {
   #panelContainer { width: 450px; }
-  #stageContainer { right: 450px; }
+  #easelContainer { right: 450px; }
 }
 
 @media only screen and (max-width: 1280px) {
   #panelContainer { width: 350px; }
-  #stageContainer { right: 350px; }
+  #easelContainer { right: 350px; }
 }
 
 @media only screen and (max-width: 1024px) {
   #panelContainer { width: 250px; }
-  #stageContainer { right: 250px; }
+  #easelContainer { right: 250px; }
 }
 
 @media only screen and (max-width: 512px) {
   #panelContainer { display: none !important; }
-  #stageContainer { right: 0; }
+  #easelContainer { right: 0; }
 }

@@ -130,7 +130,7 @@ function createEasel() {
 
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var backend = Shumway.GFX.backend.value | 0;
-  var easel = new Shumway.GFX.Easel(document.getElementById("stageContainer"), backend, true);
+  var easel = new Shumway.GFX.Easel(document.getElementById("easelContainer"), backend, true);
   return easel;
 }
 

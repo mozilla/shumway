@@ -57,21 +57,22 @@ function saveInspectorState() {
   Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
 }
 
-function resizeCanvas() {
-  var stageContainer = document.getElementById('stageContainer');
+function resizeEaselContainer() {
+  var easelContainer = document.getElementById('easelContainer');
   var width = state.width, height = state.height;
-  if (width < 0 || height < 0) {
-    stageContainer.style.width = '';
-    stageContainer.style.height = '';
+  if (width < 0) {
+    easelContainer.style.width = '';
   } else {
-    stageContainer.style.width = width + 'px';
-    stageContainer.style.height = height + 'px';
+    easelContainer.style.width = width + 'px';
   }
-  var ev = document.createEvent('Event');
-  ev.initEvent('resize', true, true);
-  window.dispatchEvent(ev);
+  if (height < 0) {
+    easelContainer.style.height = '';
+  } else {
+    easelContainer.style.height = height + 'px';
+  }
 }
-resizeCanvas();
+
+resizeEaselContainer();
 
 var GUI = (function () {
   var Option = Shumway.Options.Option;
@@ -107,8 +108,8 @@ var GUI = (function () {
     "Bottom Right": 'br',
     "Top Right": 'tr'
   }).onChange(saveInspectorOption);
-  inspectorOptions.add(state, "width", -1, 2000, 1).onChange(saveInspectorOption);
-  inspectorOptions.add(state, "height", -1, 2000, 1).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "width", -1, 4096, 1).onChange(saveInspectorOption);
+  inspectorOptions.add(state, "height", -1, 4096, 1).onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
@@ -138,21 +139,26 @@ var GUI = (function () {
   }
 
   function stageScaleTest() {
-    var ticks = 1500;
+    var ticks = 2000;
     var s = 0;
+    var easelContainer = document.getElementById('easelContainer');
     function tick() {
       s += 0.01;
-      if (ticks > 1000) {
+      if (ticks > 1500) {
         var w = 512 * (Math.abs(Math.sin(s)));
         var h = w;
-      } else if (ticks > 500) {
+      } else if (ticks > 1000) {
         var w = 512 * (Math.abs(Math.sin(s)));
         var h = 200;
-      } else {
+      } else if (ticks > 500) {
         var w = 200;
         var h = 512 * (Math.abs(Math.sin(s)));
+      } else {
+        var w = Math.random() * 1024 | 0;
+        var h = Math.random() * 1024 | 0;
       }
-      currentStage.setBounds(new Shumway.GFX.Geometry.Rectangle(0, 0, w, h));
+      easelContainer.style.width = w + 'px';
+      easelContainer.style.height = h + 'px';
       if (ticks --) {
         setTimeout(tick, 16);
       }
@@ -175,7 +181,7 @@ var GUI = (function () {
       flashOverlay.style.display = value ? 'inline-block' : 'none';
     }
     if (this.property === 'width' || this.property === 'height') {
-      resizeCanvas();
+      resizeEaselContainer();
     }
     state[this.property] = value;
     saveInspectorState();

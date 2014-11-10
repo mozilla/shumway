@@ -15,6 +15,7 @@
  */
 
 module Shumway.GFX {
+  import assert = Shumway.Debug.assert;
   import Point = Geometry.Point;
   import Matrix = Geometry.Matrix;
   import Rectangle = Geometry.Rectangle;
@@ -226,15 +227,33 @@ module Shumway.GFX {
   }
 
   export class Easel {
+
+    /**
+     * Root stage node.
+     */
     private _stage: Stage;
-    private _world: Group;
+
+    /**
+     * Node that holds the view transformation. This us used for zooming and panning in the easel.
+     */
     private _worldView: Group;
 
-    private _options: RendererOptions [];
-    private _container: HTMLElement;
-    private _renderer: Renderer;
-    private _disableHidpi: boolean;
+    /**
+     * Node that holds the rest of the content in the display tree.
+     */
+    private _world: Group;
 
+    private _options: Canvas2D.Canvas2DRendererOptions;
+
+    /**
+     * Container div element that is managed by this easel. If the dimensions of this element change, then the dimensions of the root
+     * stage also change.
+     */
+    private _container: HTMLDivElement;
+
+    private _renderer: Renderer;
+
+    private _disableHiDPI: boolean;
     private _state: UIState = new StartState();
     private _persistentState: UIState = new PersistentState();
 
@@ -244,55 +263,63 @@ module Shumway.GFX {
 
     private _selectedNodes: Node [] = [];
 
-    private _deferredResizeHandlerTimeout: number;
     private _eventListeners: Shumway.Map<any []> = Shumway.ObjectUtilities.createEmptyObject();
-    private _fpsCanvas: HTMLCanvasElement;
     private _fps: FPS;
     private _fullScreen: boolean = false;
 
-    constructor(container: HTMLDivElement, backend: Backend,
-                disableHidpi: boolean = false,
-                bgcolor: number = undefined) {
-
+    constructor(
+      container: HTMLDivElement,
+      disableHiDPI: boolean = false,
+      backgroundColor: number = undefined
+    ) {
+      release && assert(container && container.children.length === 0, "Easel container must be empty.");
       this._container = container;
       this._stage = new Stage(512, 512, true);
       this._worldView = new Group();
       this._world = new Group();
       this._stage.addChild(this._worldView);
       this._worldView.addChild(this._world);
-      this._disableHidpi = disableHidpi;
+      this._disableHiDPI = disableHiDPI;
 
+      // Create stage container.
+      var stageContainer = document.createElement("div");
+      stageContainer.style.position = "absolute";
+      stageContainer.style.width = "100%";
+      stageContainer.style.height = "100%";
+      container.appendChild(stageContainer);
+
+      // Create hud container, that lives on top of the stage.
       if (hud.value) {
-        var fpsCanvasContainer = document.createElement("div");
-        // fpsCanvasContainer.style.position = "relative";
-        // fpsCanvasContainer.style.bottom = "0";
-        // fpsCanvasContainer.style.width = "100%";
-        fpsCanvasContainer.style.height = "16px";
-        this._fpsCanvas = document.createElement("canvas");
-        fpsCanvasContainer.appendChild(this._fpsCanvas);
-        container.appendChild(fpsCanvasContainer);
-        this._fps = new FPS(this._fpsCanvas);
+        var hudContainer = document.createElement("div");
+        hudContainer.style.position = "absolute";
+        hudContainer.style.width = "100%";
+        hudContainer.style.height = "100%";
+        hudContainer.style.pointerEvents = "none";
+        hudContainer.style.opacity = "0.7";
+        var fpsContainer = document.createElement("div");
+        fpsContainer.style.position = "absolute";
+        fpsContainer.style.width = "100%";
+        fpsContainer.style.height = "16px";
+        fpsContainer.style.pointerEvents = "none";
+        hudContainer.appendChild(fpsContainer);
+        container.appendChild(hudContainer);
+        this._fps = new FPS(fpsContainer);
       } else {
         this._fps = null;
       }
 
-      window.addEventListener('resize', this._deferredResizeHandler.bind(this), false);
-
-      var options = this._options = [];
-
-      var transparent = bgcolor === 0;
+      var transparent = backgroundColor === 0;
       this.transparent = transparent;
 
-      var cssBackgroundColor = bgcolor === undefined ? "#14171a" :
-                               bgcolor === 0 ? 'transparent' :
-                               Shumway.ColorUtilities.rgbaToCSSStyle(bgcolor);
+      var cssBackgroundColor = backgroundColor === undefined ? "#14171a" :
+                               backgroundColor === 0 ? 'transparent' :
+                               Shumway.ColorUtilities.rgbaToCSSStyle(backgroundColor);
 
-      var o = new Canvas2D.Canvas2DRendererOptions();
-      o.alpha = transparent;
-      options.push(o);
-      this._renderer = new Canvas2D.Canvas2DRenderer(container, this._stage, o);
+      this._options = new Canvas2D.Canvas2DRendererOptions();
+      this._options.alpha = transparent;
 
-      this._resizeHandler();
+      this._renderer = new Canvas2D.Canvas2DRenderer(stageContainer, this._stage, this._options);
+      this._listenForContainerSizeChanges();
       this._onMouseUp = this._onMouseUp.bind(this)
       this._onMouseDown = this._onMouseDown.bind(this);
       this._onMouseMove = this._onMouseMove.bind(this);
@@ -337,6 +364,31 @@ module Shumway.GFX {
       }, false);
 
       this._enterRenderLoop();
+    }
+
+    private _listenForContainerSizeChanges() {
+      var pollInterval = 10;
+      var w = this._containerWidth;
+      var h = this._containerHeight;
+      this._onContainerSizeChanged();
+      var self = this;
+      setInterval(function () {
+        if (w !== self._containerWidth || h !== self._containerHeight) {
+          self._onContainerSizeChanged();
+          w = self._containerWidth;
+          h = self._containerHeight;
+        }
+      }, pollInterval);
+    }
+
+    private _onContainerSizeChanged() {
+      var ratio = this.getRatio();
+      var sw = Math.ceil(this._containerWidth * ratio);
+      var sh = Math.ceil(this._containerHeight * ratio);
+
+      this._stage.setBounds(new Rectangle(0, 0, sw, sh));
+      this._worldView.getTransform().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));
+      this._dispatchEvent('resize');
     }
 
     /**
@@ -412,7 +464,7 @@ module Shumway.GFX {
     }
 
     get options() {
-      return this._options[0];
+      return this._options;
     }
 
     getDisplayParameters(): DisplayParameters {
@@ -428,19 +480,12 @@ module Shumway.GFX {
     }
 
     public toggleOption(name: string) {
-      for (var i = 0; i < this._options.length; i++) {
-        var option = this._options[i];
-        option[name] = !option[name];
-      }
+      var option = this._options;
+      option[name] = !option[name];
     }
 
     public getOption(name: string) {
-      return this._options[0][name];
-    }
-
-    private _deferredResizeHandler()  {
-      clearTimeout(this._deferredResizeHandlerTimeout);
-      this._deferredResizeHandlerTimeout = setTimeout(this._resizeHandler.bind(this), 30);
+      return this._options[name];
     }
 
     public getRatio(): number {
@@ -448,37 +493,18 @@ module Shumway.GFX {
       var backingStoreRatio = 1;
       var ratio = 1;
       if (devicePixelRatio !== backingStoreRatio &&
-        !this._disableHidpi) {
+        !this._disableHiDPI) {
         ratio = devicePixelRatio / backingStoreRatio;
       }
       return ratio;
     }
 
-    private _resizeHandler() {
-      var ratio = this.getRatio();
-      var sw = Math.ceil(this._container.scrollWidth * ratio);
-      var sh = Math.ceil(this._container.scrollHeight * ratio);
-
-//      if (ratio !== 1) {
-//        canvas.width = Math.ceil(sw * ratio);
-//        canvas.height = Math.ceil(sh * ratio);
-//        canvas.style.width = sw + 'px';
-//        canvas.style.height = sh + 'px';
-//      } else {
-//        canvas.width = sw;
-//        canvas.height = sh;
-//      }
-
-      this._stage.setBounds(new Rectangle(0, 0, sw, sh));
-
-      // this._renderer.resize();
-
-      this._worldView.getTransform().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));
-      this._dispatchEvent('resize');
+    private get _containerWidth(): number {
+      return this._container.clientWidth;
     }
 
-    resize() {
-      this._resizeHandler();
+    private get _containerHeight(): number {
+      return this._container.clientHeight;
     }
 
     queryNodeUnderMouse(event: MouseEvent): Node {
@@ -496,8 +522,9 @@ module Shumway.GFX {
     getMousePosition(event: MouseEvent, coordinateSpace: Node): Point {
       var container = this._container;
       var bRect = container.getBoundingClientRect();
-      var x = (event.clientX - bRect.left) * (container.scrollWidth / bRect.width);
-      var y = (event.clientY - bRect.top) * (container.scrollHeight / bRect.height);
+      var ratio = this.getRatio();
+      var x = ratio * (event.clientX - bRect.left) * (container.scrollWidth / bRect.width);
+      var y = ratio * (event.clientY - bRect.top) * (container.scrollHeight / bRect.height);
       var p = new Point(x, y);
       if (!coordinateSpace) {
         return p;

@@ -15,6 +15,7 @@
  */
 module Shumway.Tools.Mini {
   export class FPS {
+    private _container: HTMLDivElement;
     private _canvas: HTMLCanvasElement;
     private _context: CanvasRenderingContext2D;
     private _ratio: number;
@@ -56,17 +57,32 @@ module Shumway.Tools.Mini {
       "#00FF00"   // Green
     ];
 
-    constructor(canvas: HTMLCanvasElement) {
-      this._canvas = canvas;
-      this._context = canvas.getContext("2d");
-      window.addEventListener('resize', this._resizeHandler.bind(this), false);
-      this._resizeHandler();
+    constructor(container: HTMLDivElement) {
+      this._container = container;
+      this._canvas = document.createElement("canvas");
+      this._container.appendChild(this._canvas);
+      this._context = this._canvas.getContext("2d");
+      this._listenForContainerSizeChanges();
     }
 
-    private _resizeHandler() {
-      var parent = this._canvas.parentElement;
-      var cw = parent.clientWidth;
-      var ch = parent.clientHeight - 1;
+    private _listenForContainerSizeChanges() {
+      var pollInterval = 10;
+      var w = this._containerWidth;
+      var h = this._containerHeight;
+      this._onContainerSizeChanged();
+      var self = this;
+      setInterval(function () {
+        if (w !== self._containerWidth || h !== self._containerHeight) {
+          self._onContainerSizeChanged();
+          w = self._containerWidth;
+          h = self._containerHeight;
+        }
+      }, pollInterval);
+    }
+
+    private _onContainerSizeChanged() {
+      var cw = this._containerWidth;
+      var ch = this._containerHeight;
       var devicePixelRatio = window.devicePixelRatio || 1;
       var backingStoreRatio = 1;
       if (devicePixelRatio !== backingStoreRatio) {
@@ -82,6 +98,13 @@ module Shumway.Tools.Mini {
       }
     }
 
+    private get _containerWidth(): number {
+      return this._container.clientWidth;
+    }
+
+    private get _containerHeight(): number {
+      return this._container.clientHeight;
+    }
 
     public tickAndRender(idle: boolean = false) {
       if (this._lastTime === 0) {
