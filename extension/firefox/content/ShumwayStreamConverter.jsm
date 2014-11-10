@@ -184,9 +184,16 @@ function fetchPolicyFile(url, cache, callback) {
   xhr.send(null);
 }
 
+function isContentWindowPrivate(win) {
+  if (!('isContentWindowPrivate' in PrivateBrowsingUtils)) {
+    return PrivateBrowsingUtils.isWindowPrivate(win);
+  }
+  return PrivateBrowsingUtils.isContentWindowPrivate(win);
+}
+
 function isShumwayEnabledFor(actions) {
   // disabled for PrivateBrowsing windows
-  if (PrivateBrowsingUtils.isWindowPrivate(actions.window) &&
+  if (isContentWindowPrivate(actions.window) &&
       !getBoolPref('shumway.enableForPrivate', false)) {
     return false;
   }

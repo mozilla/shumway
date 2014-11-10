@@ -17,60 +17,27 @@
 'use strict';
 
 const RESOURCE_NAME = 'shumway';
-const EXT_PREFIX = 'shumway@research.mozilla.org';
 
 let Cc = Components.classes;
 let Ci = Components.interfaces;
 let Cm = Components.manager;
 let Cu = Components.utils;
 
-Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
-
-let Ph = Cc["@mozilla.org/plugin/host;1"].getService(Ci.nsIPluginHost);
-let registerOverlayPreview = 'registerPlayPreviewMimeType' in Ph;
-
-function getBoolPref(pref, def) {
-  try {
-    return Services.prefs.getBoolPref(pref);
-  } catch (ex) {
-    return def;
-  }
-}
-
-function log(str) {
-  dump(str + '\n');
-}
-
-// Register/unregister a constructor as a factory.
-function Factory() {}
-Factory.prototype = {
-  register: function register(targetConstructor) {
-    var proto = targetConstructor.prototype;
-    this._classID = proto.classID;
-
-    var factory = XPCOMUtils._getFactory(targetConstructor);
-    this._factory = factory;
-
-    var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-    registrar.registerFactory(proto.classID, proto.classDescription,
-                              proto.contractID, factory);
-  },
-
-  unregister: function unregister() {
-    var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-    registrar.unregisterFactory(this._classID, this._factory);
-  }
-};
-
-let converterFactory = new Factory();
-let overlayConverterFactory = new Factory();
-
-let ShumwayStreamConverterUrl = null;
 
 // As of Firefox 13 bootstrapped add-ons don't support automatic registering and
 // unregistering of resource urls and components/contracts. Until then we do
 // it programatically. See ManifestDirective ManifestParser.cpp for support.
+
+let shumwayRegistarURL = null;
+let isE10sEnabled = true;
+
+
+let isEnabledListener = {
+  receiveMessage: function(message) {
+    return true; // always enabled for the extension
+  }
+};
 
 function startup(aData, aReason) {
   // Setup the resource url.
@@ -80,36 +47,51 @@ function startup(aData, aReason) {
   var aliasURI = ioService.newURI('content/', 'UTF-8', aData.resourceURI);
   resProt.setSubstitution(RESOURCE_NAME, aliasURI);
 
-  // Load the component and register it.
-  ShumwayStreamConverterUrl = aliasURI.spec + 'ShumwayStreamConverter.jsm';
-  Cu.import(ShumwayStreamConverterUrl);
-  converterFactory.register(ShumwayStreamConverter);
-  overlayConverterFactory.register(ShumwayStreamOverlayConverter);
-
-  if (registerOverlayPreview) {
-    var ignoreCTP = getBoolPref('shumway.ignoreCTP', true);
-    Ph.registerPlayPreviewMimeType('application/x-shockwave-flash', ignoreCTP);
+  if (isE10sEnabled) {
+    try {
+      Cc["@mozilla.org/parentprocessmessagemanager;1"]
+        .getService(Ci.nsIMessageBroadcaster)
+        .addMessageListener('Shumway:Chrome:isEnabled', isEnabledListener);
+      Cc['@mozilla.org/globalmessagemanager;1']
+        .getService(Ci.nsIFrameScriptLoader)
+        .loadFrameScript('chrome://shumway/content/bootstrap-content.js', true);
+    } catch (ex) {
+      // Some issues with registering child bootstrap script.
+      isE10sEnabled = false;
+    }
   }
+
+  shumwayRegistarURL = aliasURI.spec + 'ShumwayRegistar.jsm';
+  Cu.import(shumwayRegistarURL);
+  ShumwayRegistar.register();
 }
 
 function shutdown(aData, aReason) {
   if (aReason == APP_SHUTDOWN)
     return;
+
   var ioService = Services.io;
   var resProt = ioService.getProtocolHandler('resource')
                   .QueryInterface(Ci.nsIResProtocolHandler);
   // Remove the resource url.
   resProt.setSubstitution(RESOURCE_NAME, null);
-  // Remove the contract/component.
-  converterFactory.unregister();
-  overlayConverterFactory.unregister();
 
-  if (registerOverlayPreview)
-    Ph.unregisterPlayPreviewMimeType('application/x-shockwave-flash');
+  ShumwayRegistar.unregister();
+  Cu.unload(shumwayRegistarURL);
+  shumwayRegistarURL = null;
 
-  // Unload the converter
-  Cu.unload(ShumwayStreamConverterUrl);
-  ShumwayStreamConverterUrl = null;
+  if (isE10sEnabled) {
+    Cc["@mozilla.org/parentprocessmessagemanager;1"]
+      .getService(Ci.nsIMessageBroadcaster)
+      .removeMessageListener('Shumway:Chrome:isEnabled', isEnabledListener);
+    Cc['@mozilla.org/globalmessagemanager;1']
+      .getService(Ci.nsIFrameMessageManager)
+      .broadcastAsyncMessage('Shumway:Child:shutdown');
+    Cc['@mozilla.org/globalmessagemanager;1']
+      .getService(Ci.nsIFrameScriptLoader)
+      .removeDelayedFrameScript('chrome://shumway/content/bootstrap-content.js');
+
+  }
 }
 
 function install(aData, aReason) {
