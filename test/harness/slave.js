@@ -178,19 +178,7 @@ var tmpCanvas = document.createElement('canvas');
 function getCanvasData() {
   // flush rendering buffers
   easel.render();
-
-  var canvas = getCanvas();
-
-  var world = easel._world;
-  var stage = world.getChildren()[0];
-  var content = stage.getChildren()[0];
-  var bounds = content.getBounds();
-  tmpCanvas.width = bounds.w;
-  tmpCanvas.height = bounds.h;
-  var ctx = tmpCanvas.getContext('2d');
-  ctx.drawImage(canvas, 0, 0);
-
-  return tmpCanvas.toDataURL('image/png');
+  return easel.screenShot(null, true).dataURL;
 }
 
 var mouseOutside = true;
