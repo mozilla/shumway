@@ -386,6 +386,7 @@ module Shumway.GFX {
       var sh = Math.ceil(this._containerHeight * ratio);
 
       this._stage.setBounds(new Rectangle(0, 0, sw, sh));
+      this._stage.content.setBounds(new Rectangle(0, 0, sw, sh));
       this._worldView.getTransform().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));
       this._dispatchEvent('resize');
     }
