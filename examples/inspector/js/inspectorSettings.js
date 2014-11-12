@@ -81,6 +81,7 @@ var GUI = (function () {
   var gui = new dat.GUI({ autoPlace: false, width: 300 });
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
   gui.add({ "Stage Scale Test": stageScaleTest }, "Stage Scale Test");
+  gui.add({ "Take Screen Shot": screenShot }, "Take Screen Shot");
 
   var inspectorOptions = gui.addFolder("Inspector Options");
   inspectorOptions.add(state, "release").onChange(saveInspectorOption);
@@ -164,6 +165,12 @@ var GUI = (function () {
       }
     }
     tick();
+  }
+
+  function screenShot() {
+    var screenShot = currentEasel.screenShot(undefined, true);
+    var w = window.open(screenShot.dataURL, 'screenShot', 'height=' + screenShot.w + ', width=' + screenShot.h);
+    w.document.title = 'Shumway Screen Shot';
   }
 
   function notifyOptionsChanged() {
