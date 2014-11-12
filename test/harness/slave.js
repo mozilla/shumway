@@ -126,7 +126,7 @@ function loadMovie(path, reportFrames) {
 }
 
 function createEasel() {
-  Shumway.GFX.hud.value = false;
+  Shumway.GFX.hud.value = true;
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var easel = new Shumway.GFX.Easel(document.getElementById("easelContainer"), true);
   return easel;

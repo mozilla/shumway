@@ -277,7 +277,6 @@ module Shumway.GFX {
       this._stage = new Stage(512, 512, true);
       this._worldView = this._stage.content;
       this._world = new Group();
-      this._stage.addChild(this._worldView);
       this._worldView.addChild(this._world);
       this._disableHiDPI = disableHiDPI;
 
