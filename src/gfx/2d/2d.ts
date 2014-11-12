@@ -966,5 +966,29 @@ module Shumway.GFX.Canvas2D {
       // surface.fill(color);
       return surface;
     }
+
+    public screenShot(bounds: Rectangle, stageContent: boolean): ScreenShot {
+      if (stageContent) {
+        // HACK: Weird way to get to the real content, but oh well...
+        var contentStage = <Stage>this._stage.content.groupChild.child;
+        assert (contentStage instanceof Stage);
+        bounds = contentStage.content.getBounds(true);
+        // Figure out the device bounds.
+        contentStage.content.getTransform().getConcatenatedMatrix().transformRectangleAABB(bounds);
+        // If it's zoomed in, clip by the viewport.
+        bounds.intersect(this._viewport);
+      }
+      if (!bounds) {
+        bounds = new Rectangle(0, 0, this._target.w, this._target.h);
+      }
+      var canvas = document.createElement("canvas");
+      canvas.width = bounds.w;
+      canvas.height = bounds.h;
+      var context = canvas.getContext("2d");
+      context.fillStyle = this._container.style.backgroundColor;
+      context.fillRect(0, 0, bounds.w, bounds.h);
+      context.drawImage(this._target.context.canvas, bounds.x, bounds.y, bounds.w, bounds.h, 0, 0, bounds.w, bounds.h);
+      return new ScreenShot(canvas.toDataURL('image/png'), bounds.w, bounds.h);
+    }
   }
 }

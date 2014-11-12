@@ -761,4 +761,10 @@ module Shumway.GFX {
     surface: ISurface;
     region: RegionAllocator.Region;
   }
+
+  export class ScreenShot {
+    constructor(public dataURL: string, public w: number, public h: number) {
+      // ...
+    }
+  }
 }

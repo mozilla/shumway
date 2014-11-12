@@ -275,9 +275,8 @@ module Shumway.GFX {
       release && assert(container && container.children.length === 0, "Easel container must be empty.");
       this._container = container;
       this._stage = new Stage(512, 512, true);
-      this._worldView = new Group();
+      this._worldView = this._stage.content;
       this._world = new Group();
-      this._stage.addChild(this._worldView);
       this._worldView.addChild(this._world);
       this._disableHiDPI = disableHiDPI;
 
@@ -387,6 +386,7 @@ module Shumway.GFX {
       var sh = Math.ceil(this._containerHeight * ratio);
 
       this._stage.setBounds(new Rectangle(0, 0, sw, sh));
+      this._stage.content.setBounds(new Rectangle(0, 0, sw, sh));
       this._worldView.getTransform().setMatrix(new Matrix(ratio, 0, 0, ratio, 0, 0));
       this._dispatchEvent('resize');
     }
@@ -553,6 +553,10 @@ module Shumway.GFX {
 
     private _onMouseMove(event) {
 
+    }
+
+    public screenShot(bounds: Rectangle, stageContent: boolean): ScreenShot {
+      return this._renderer.screenShot(bounds, stageContent);
     }
   }
 }

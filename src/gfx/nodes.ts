@@ -742,6 +742,22 @@ module Shumway.GFX {
       return this._children;
     }
 
+    public childAt(index: number): Node {
+      release || assert(index >= 0 && index < this._children.length);
+      return this._children[index];
+    }
+
+    public get child(): Node {
+      release || assert(this._children.length === 1);
+      return this._children[0];
+    }
+
+    public get groupChild(): Group {
+      release || assert(this._children.length === 1);
+      release || assert(this._children[0] instanceof Group);
+      return <Group>this._children[0];
+    }
+
     /**
      * Adds a node and remove's it from its previous location if it has a parent and propagates
      * flags accordingly.
@@ -1152,6 +1168,14 @@ module Shumway.GFX {
      */
     public resize() {
       throw Shumway.Debug.abstractMethod("Renderer::resize");
+    }
+
+    /**
+     * Captures a rectangular region of the easel as a dataURL as specified by |bounds|. |stageContent| indicates if the bounds
+     * should be computed by looking at the bounds of the content of the easel rather than the easel itself.
+     */
+    public screenShot(bounds: Rectangle, stageContent: boolean): ScreenShot {
+      throw Shumway.Debug.abstractMethod("Renderer::screenShot");
     }
   }
 
