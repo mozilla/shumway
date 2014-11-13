@@ -31,9 +31,9 @@ module Shumway.AVM2.AS.flash.text {
     static DEVICE_FONT_METRICS_LINUX: Object;
     static DEVICE_FONT_METRICS_MAC: Object;
 
-    static DEFAULT_FONT_SANS = 'sans-serif';
-    static DEFAULT_FONT_SERIF = 'serif';
-    static DEFAULT_FONT_TYPEWRITER = 'monospace';
+    static DEFAULT_FONT_SANS = 'Times New Roman';
+    static DEFAULT_FONT_SERIF = 'Arial';
+    static DEFAULT_FONT_TYPEWRITER = 'Courier New';
 
     static classInitializer: any = function () {
       Font._fonts = [];
@@ -601,14 +601,11 @@ module Shumway.AVM2.AS.flash.text {
         var userAgent = self.navigator.userAgent;
         if (userAgent.indexOf("Windows") > -1) {
           this._deviceFontMetrics = Font.DEVICE_FONT_METRICS_WIN;
-          this.DEFAULT_FONT_SANS = 'times new roman';
-          this.DEFAULT_FONT_SERIF = 'arial';
-          this.DEFAULT_FONT_TYPEWRITER = 'courier new';
         } else if (/(Macintosh|iPad|iPhone|iPod|Android)/.test(userAgent)) {
           this._deviceFontMetrics = this.DEVICE_FONT_METRICS_MAC;
-          this.DEFAULT_FONT_SANS = 'helvetica';
-          this.DEFAULT_FONT_SERIF = 'times roman';
-          this.DEFAULT_FONT_TYPEWRITER = 'courier';
+          this.DEFAULT_FONT_SANS = 'Helvetica';
+          this.DEFAULT_FONT_SERIF = 'Times Roman';
+          this.DEFAULT_FONT_TYPEWRITER = 'Courier';
         } else {
           this._deviceFontMetrics = this.DEVICE_FONT_METRICS_LINUX;
         }
