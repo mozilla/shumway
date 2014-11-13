@@ -48,7 +48,7 @@ module Shumway.AVM2.AS.flash.text {
         "angsanaupc": [0.9229, 0.2393, 0],
         "aparajita": [0.7568, 0.4248, 0],
         "arabic typesetting": [0.7007, 0.4375, 0.0088],
-        "arabic transparent": [0.8496,0.3262,0],
+        "arabic transparent": [0.8496, 0.3262, 0],
         "arial": [1.1006, 0.3096, 0],
         "arial baltic": [1.1006, 0.3096, 0],
         "arial black": [1.1006, 0.3096, 0],
