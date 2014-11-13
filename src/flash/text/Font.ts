@@ -633,7 +633,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     static getByName(name: string): Font {
-      name = name.toLowerCase();
+      name = this.resolveFontName(name).toLowerCase();
       var font = this._fontsByName[name];
       if (!font) {
         var font = new Font();
