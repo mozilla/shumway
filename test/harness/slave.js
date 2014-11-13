@@ -118,7 +118,7 @@ function loadMovie(path, reportFrames) {
       player = new Shumway.Player.Test.TestPlayer();
       player.stageAlign = 'tl';
       player.stageScale = 'noscale';
-      player.displayParams = easel.getDisplayParameters();
+      player.displayParameters = easel.getDisplayParameters();
       player.load(path);
 
     });

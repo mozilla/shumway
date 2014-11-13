@@ -128,7 +128,7 @@ function runIFramePlayer(data) {
 
     data.type = 'runSwf';
     data.settings = Shumway.Settings.getSettings();
-    data.displayParams = easel.getDisplayParameters();
+    data.displayParameters = easel.getDisplayParameters();
 
     var playerWorker = playerWorkerIFrame.contentWindow;
     playerWorker.postMessage(data, '*');
@@ -191,7 +191,7 @@ function executeFile(file, buffer, movieParams) {
         player.movieParams = movieParams;
         player.stageAlign = state.salign;
         player.stageScale = state.scale;
-        player.displayParams = easel.getDisplayParameters();
+        player.displayParameters = easel.getDisplayParameters();
 
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
         player.load(file, buffer);

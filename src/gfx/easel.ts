@@ -472,11 +472,10 @@ module Shumway.GFX {
     }
 
     getDisplayParameters(): DisplayParameters {
-      var container = this._container;
       var ratio = this.getRatio();
       return {
-        canvasWidth: container.offsetWidth / ratio,
-        canvasHeight: container.offsetHeight / ratio,
+        stageWidth: this._containerWidth,
+        stageHeight: this._containerHeight,
         pixelRatio: ratio,
         screenWidth: window.screen ? window.screen.width : 640,
         screenHeight: window.screen ? window.screen.height : 480

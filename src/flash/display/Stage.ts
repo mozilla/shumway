@@ -61,6 +61,8 @@ module Shumway.AVM2.AS.flash.display {
       this._displayContextInfo = null;
 
       this._timeout = -1;
+      this._stageContainerWidth = -1;
+      this._stageContainerHeight = -1;
 
       /**
        * Indicates if a Render event was requested by calling the |invalid| function.
@@ -100,8 +102,9 @@ module Shumway.AVM2.AS.flash.display {
     private _displayContextInfo: string;
 
     private _timeout: number;
-    private _canvasWidth: number;
-    private _canvasHeight: number;
+
+    private _stageContainerWidth: number;
+    private _stageContainerHeight: number;
 
     /**
      * The |invalidate| function was called on the stage. This flag indicates that
@@ -141,8 +144,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageWidth(): number /*int*/ {
-      return this.scaleMode !== StageScaleMode.NO_SCALE ?
-        (this._stageWidth / 20) | 0 : this._canvasWidth;
+      if (this.scaleMode !== StageScaleMode.NO_SCALE) {
+        return this._stageWidth / 20 | 0;
+      }
+      release || assert (this._stageContainerWidth >= 0);
+      return this._stageContainerWidth;
     }
 
     set stageWidth(value: number /*int*/) {
@@ -164,8 +170,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageHeight(): number /*int*/ {
-      return this.scaleMode !== StageScaleMode.NO_SCALE ?
-        (this._stageHeight / 20) | 0 : this._canvasHeight;
+      if (this.scaleMode !== StageScaleMode.NO_SCALE) {
+        return this._stageHeight / 20 | 0;
+      }
+      release || assert (this._stageContainerHeight >= 0);
+      return this._stageContainerHeight;
     }
 
     set stageHeight(value: number /*int*/) {
@@ -190,13 +199,20 @@ module Shumway.AVM2.AS.flash.display {
       this._colorARGB = value;
     }
 
-    setCanvasSize(width: number, height: number, pixelRatio: number) {
-      this._canvasWidth = width;
-      this._canvasHeight = height;
+    /**
+     * Non-AS3-available setter. Notifies the stage that the dimensions of the stage container have changed.
+     */
+    setStageContainerSize(width: number, height: number, pixelRatio: number) {
+      // Flash doesn't fire a resize event if the pixel ratio has changed, but it needs to be set if
+      // a resize event gets dispatched as a result of a size change.
       this._contentsScaleFactor = pixelRatio;
-
-      if (this.scaleMode === StageScaleMode.NO_SCALE) {
-        this.dispatchEvent(flash.events.Event.getInstance(flash.events.Event.RESIZE));
+      var sizeHasChanged = this._stageContainerWidth !== width || this._stageContainerHeight !== height;
+      if (sizeHasChanged) {
+        this._stageContainerWidth = width;
+        this._stageContainerHeight = height;
+        if (this.scaleMode === StageScaleMode.NO_SCALE) {
+          this.dispatchEvent(flash.events.Event.getInstance(flash.events.Event.RESIZE));
+        }
       }
     }
 
