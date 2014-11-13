@@ -190,8 +190,8 @@ module Shumway.Remoting {
   }
 
   export interface DisplayParameters {
-    canvasWidth: number;
-    canvasHeight: number;
+    stageWidth: number;
+    stageHeight: number;
     pixelRatio: number;
     screenWidth: number;
     screenHeight: number;

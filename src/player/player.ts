@@ -112,7 +112,7 @@ module Shumway.Player {
     /**
      * Initial display parameters.
      */
-    public displayParams: DisplayParameters;
+    public displayParameters: DisplayParameters;
 
     /**
      * Time since the last time we've synchronized the display list.
@@ -193,8 +193,8 @@ module Shumway.Player {
           stage.setStageColor(ColorUtilities.RGBAToARGB(bgcolor));
           stage.addTimelineObjectAtDepth(root, 0);
 
-          if (self.displayParams) {
-            self.processDisplayParameters(self.displayParams);
+          if (self.displayParameters) {
+            self.processDisplayParameters(self.displayParameters);
           }
 
           self._enterLoops();
@@ -608,8 +608,8 @@ module Shumway.Player {
       listener(eventType, data);
     }
 
-    public processDisplayParameters(params: DisplayParameters) {
-      this._stage.setCanvasSize(params.canvasWidth, params.canvasHeight, params.pixelRatio);
+    public processDisplayParameters(displayParameters: DisplayParameters) {
+      this._stage.setStageContainerSize(displayParameters.stageWidth, displayParameters.stageHeight, displayParameters.pixelRatio);
     }
 
     onExternalCommand(command) {

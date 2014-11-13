@@ -273,7 +273,7 @@ function parseSwf(url, movieParams, objectParams) {
   easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
   easelHost.processExternalCommand = processExternalCommand;
 
-  var displayParams = easel.getDisplayParameters();
+  var displayParameters = easel.getDisplayParameters();
   var data = {
     type: 'runSwf',
     settings: Shumway.Settings.getSettings(),
@@ -281,7 +281,7 @@ function parseSwf(url, movieParams, objectParams) {
       compilerSettings: compilerSettings,
       movieParams: movieParams,
       objectParams: objectParams,
-      displayParams: displayParams,
+      displayParameters: displayParameters,
       turboMode: turboMode,
       bgcolor: backgroundColor,
       url: url,

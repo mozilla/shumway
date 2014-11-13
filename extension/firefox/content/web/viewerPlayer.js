@@ -51,7 +51,7 @@ function runSwfPlayer(flashParams) {
       player.movieParams = flashParams.movieParams;
       player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';
       player.stageScale = (objectParams && objectParams.scale) || 'showall';
-      player.displayParams = flashParams.displayParams;
+      player.displayParameters = flashParams.displayParameters;
 
       Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
 
