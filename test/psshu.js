@@ -86,6 +86,10 @@ function syncProcesses(state, procs, level) {
   Array.prototype.push.apply(state, newStates);
 }
 
+function printTime(time) {
+  return Math.floor(time / 60) + ':' + (100 + (time % 60)).toFixed(1).substr(1);
+}
+
 function printProcess(procState, delta) {
   var result = [];
   var descendants = [];
@@ -105,7 +109,7 @@ function printProcess(procState, delta) {
     totalTimeDelta += item.currentTime - item.previousTime;
   });
   result.push(procState.name + '(' + procState.pid+ ') ' +
-    totalTime.toFixed(1) + 'sec ' + (totalTimeDelta * 100 / delta).toFixed(2) + '% ' +
+    printTime(totalTime) + ' ' + (totalTimeDelta * 100 / delta).toFixed(2) + '% ' +
     (totalMemory / 1000000).toFixed(1) + 'M');
   if (childrenDetails) {
     descendants.forEach(function (item) {
@@ -114,7 +118,7 @@ function printProcess(procState, delta) {
         indent += '. ';
       }
       result.push(indent + item.name + '(' + item.pid + (item.active ? '' : ',inactive') + ') ' +
-        (item.currentTime - item.startTime).toFixed(1) + 'sec ' +
+        printTime(item.currentTime - item.startTime) + ' ' +
         ((item.currentTime - item.previousTime) * 100 / delta).toFixed(2) + '% ' +
         (item.currentMemory / 1000000).toFixed(1) + 'M');
     });
@@ -155,13 +159,31 @@ function syncStats(procs) {
 
 var filter;
 function updateProcessStats() {
+  function parsePSLine(line) {
+    var i = 0, j, result = [];
+    while (i < line.length && result.length < 4) {
+      while (line[i] === ' ') {
+        i++;
+      }
+      j = i;
+      while (i < line.length && line[i] !== ' ') {
+        i++;
+      }
+      result.push(line.substring(j, i));
+    }
+    if (result.length < 4 || result[0] === 'PID') {
+      return null;
+    }
+    result.push(line.substring(i).trim());
+    return result;
+  }
+
   var cmd = 'ps -xwwo pid,ppid,time,rss,ucomm';
   exec(cmd, function (error, stdout, stderr) {
     // Parse ps output.
     var lines = stdout.split('\n').map(function (line) {
-      var cells = (' ' + line).split(/\s+/g, 6);
-      cells.shift();
-      if (cells.length < 5 || cells[0] === 'PID') {
+      var cells = parsePSLine(line);
+      if (!cells) {
         return { pid: -1, parentid: -1 }; // marking as invalid entry
       }
       var timeParts = cells[2].split(':');
