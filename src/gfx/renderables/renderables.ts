@@ -51,16 +51,16 @@ module Shumway.GFX {
     private _renderableParents: Renderable [] = [];
 
     public addParent(frame: Node) {
-      release && assert(frame);
+      release || assert(frame);
       var index = indexOf(this._parents, frame);
-      release && assert(index < 0);
+      release || assert(index < 0);
       this._parents.push(frame);
     }
 
     public addRenderableParent(renderable: Renderable) {
-      release && assert(renderable);
+      release || assert(renderable);
       var index = indexOf(this._renderableParents, renderable);
-      release && assert(index < 0);
+      release || assert(index < 0);
       this._renderableParents.push(renderable);
     }
 
@@ -89,7 +89,7 @@ module Shumway.GFX {
         this._invalidateEventListeners = [];
       }
       var index = indexOf(this._invalidateEventListeners, listener);
-      release && assert(index < 0);
+      release || assert(index < 0);
       this._invalidateEventListeners.push(listener);
     }
 

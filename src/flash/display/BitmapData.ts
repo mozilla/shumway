@@ -107,13 +107,13 @@ module Shumway.AVM2.AS.flash.display {
 
     _addBitmapReferrer(bitmap: flash.display.Bitmap) {
       var index = indexOf(this._bitmapReferrers, bitmap);
-      release && assert(index < 0);
+      release || assert(index < 0);
       this._bitmapReferrers.push(bitmap);
     }
 
     _removeBitmapReferrer(bitmap: flash.display.Bitmap) {
       var index = indexOf(this._bitmapReferrers, bitmap);
-      release && assert(index >= 0);
+      release || assert(index >= 0);
       this._bitmapReferrers[index] = null;
     }
 

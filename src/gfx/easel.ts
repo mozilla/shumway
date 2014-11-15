@@ -272,7 +272,7 @@ module Shumway.GFX {
       disableHiDPI: boolean = false,
       backgroundColor: number = undefined
     ) {
-      release && assert(container && container.children.length === 0, "Easel container must be empty.");
+      release || assert(container && container.children.length === 0, "Easel container must be empty.");
       this._container = container;
       this._stage = new Stage(512, 512, true);
       this._worldView = this._stage.content;
