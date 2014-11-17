@@ -393,9 +393,9 @@ module Shumway.AVM1 {
     var x2 = as2ToPrimitive(x);
     var y2 = as2ToPrimitive(y);
     if (typeof x2 === 'string' && typeof y2 === 'string') {
-      return x2 < y2;
     } else {
-      return as2ToNumber(x2) < as2ToNumber(y2);
+      var xn = as2ToNumber(x2), yn = as2ToNumber(y2);
+      return isNaN(xn) || isNaN(yn) ? undefined : xn < yn;
     }
   }
 
@@ -1443,7 +1443,8 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
 
       var value = stack.pop();
-      _global.trace(as2ToString(value));
+      // undefined is always 'undefined' for trace (even for SWF6).
+      _global.trace(value === undefined ? 'undefined' : as2ToString(value));
     }
     function avm1_0x34_ActionGetTime(ectx: ExecutionContext) {
       var _global = ectx.global;
