@@ -1773,7 +1773,7 @@ module Shumway.AVM2.AS {
     }
 
     export function print(...args: any []) {
-      jsGlobal.print.apply(null, args);
+      console.log.apply(console, args);
     }
 
     export function debugBreak(v: any) {
