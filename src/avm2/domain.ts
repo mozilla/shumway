@@ -131,6 +131,7 @@ module Shumway.AVM2.Runtime {
     public exceptions: any [];
     public globals: Map<any>;
     public builtinsLoaded: boolean;
+    public avm1Loaded: boolean;
 
     private _loadAVM1: (next) => void;
     private _loadAVM1Promise: Promise<void>;
@@ -149,6 +150,7 @@ module Shumway.AVM2.Runtime {
 
       this._loadAVM1 = loadAVM1;
       this._loadAVM1Promise = null;
+      this.avm1Loaded = false;
 
       /**
        * All runtime exceptions are boxed in this object to tag them as having
@@ -198,10 +200,14 @@ module Shumway.AVM2.Runtime {
       var loadAVM1Callback = this._loadAVM1;
       release || assert(loadAVM1Callback);
 
+      var self = this;
       if (!this._loadAVM1Promise) {
         this._loadAVM1Promise = new Promise<void>(function (resolve) {
           loadAVM1Callback(resolve);
         });
+        this._loadAVM1Promise.then(function () {
+          self.avm1Loaded = true;
+        })
       }
       return this._loadAVM1Promise;
     }

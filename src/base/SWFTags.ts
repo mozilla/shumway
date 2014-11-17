@@ -63,12 +63,12 @@ module Shumway.SWF.Parser {
     CODE_DEFINE_BEHAVIOUR                  = 44,
     CODE_SOUND_STREAM_HEAD2                = 45,
     CODE_DEFINE_MORPH_SHAPE                = 46,
-    CODE_FRAME_TAG                         = 47,
+    CODE_GENERATE_FRAME                    = 47,
     CODE_DEFINE_FONT2                      = 48,
     CODE_GEN_COMMAND                       = 49,
-    CODE_DEFINE_COMMAND_OBJ                = 50,
+    CODE_DEFINE_COMMAND_OBJECT             = 50,
     CODE_CHARACTER_SET                     = 51,
-    CODE_FONT_REF                          = 52,
+    CODE_EXTERNAL_FONT                     = 52,
     CODE_DEFINE_FUNCTION                   = 53,
     CODE_PLACE_FUNCTION                    = 54,
     CODE_GEN_TAG_OBJECTS                   = 55,
@@ -88,7 +88,7 @@ module Shumway.SWF.Parser {
     CODE_FILE_ATTRIBUTES                   = 69,
     CODE_PLACE_OBJECT3                     = 70,
     CODE_IMPORT_ASSETS2                    = 71,
-    CODE_DO_ABC_                           = 72,
+    CODE_DO_ABC_DEFINE                     = 72,
     CODE_DEFINE_FONT_ALIGN_ZONES           = 73,
     CODE_CSM_TEXT_SETTINGS                 = 74,
     CODE_DEFINE_FONT3                      = 75,
@@ -110,32 +110,97 @@ module Shumway.SWF.Parser {
     CODE_DEFINE_FONT4                      = 91
   }
 
-  export enum PlaceObjectFlags {
-    Reserved          = 0x800,
-    OpaqueBackground  = 0x400,
-    HasVisible        = 0x200,
-    HasImage          = 0x100,
-    HasClassName      = 0x800,
-    HasCacheAsBitmap  = 0x400,
-    HasBlendMode      = 0x200,
-    HasFilterList     = 0x100,
-    HasClipActions    = 0x080,
-    HasClipDepth      = 0x040,
-    HasName           = 0x020,
-    HasRatio          = 0x010,
-    HasColorTransform = 0x008,
-    HasMatrix         = 0x004,
-    HasCharacter      = 0x002,
-    Move              = 0x001
+  export enum DefinitionTags {
+    CODE_DEFINE_SHAPE                      = 2,
+    CODE_DEFINE_BITS                       = 6,
+    CODE_DEFINE_BUTTON                     = 7,
+    CODE_DEFINE_FONT                       = 10,
+    CODE_DEFINE_TEXT                       = 11,
+    CODE_DEFINE_SOUND                      = 14,
+    CODE_DEFINE_BITS_LOSSLESS              = 20,
+    CODE_DEFINE_BITS_JPEG2                 = 21,
+    CODE_DEFINE_SHAPE2                     = 22,
+    CODE_DEFINE_SHAPE3                     = 32,
+    CODE_DEFINE_TEXT2                      = 33,
+    CODE_DEFINE_BUTTON2                    = 34,
+    CODE_DEFINE_BITS_JPEG3                 = 35,
+    CODE_DEFINE_BITS_LOSSLESS2             = 36,
+    CODE_DEFINE_EDIT_TEXT                  = 37,
+    CODE_DEFINE_SPRITE                     = 39,
+    CODE_DEFINE_MORPH_SHAPE                = 46,
+    CODE_DEFINE_FONT2                      = 48,
+    CODE_DEFINE_VIDEO_STREAM               = 60,
+    CODE_DEFINE_FONT3                      = 75,
+    CODE_DEFINE_SHAPE4                     = 83,
+    CODE_DEFINE_MORPH_SHAPE2               = 84,
+    CODE_DEFINE_BINARY_DATA                = 87,
+    CODE_DEFINE_BITS_JPEG4                 = 90,
+    CODE_DEFINE_FONT4                      = 91
   }
 
-  export interface ISwfTagData {
-    code: SwfTag;
-    type?: string;
-    id?: number;
-    frameCount?: number;
-    repeat?: number;
-    tags?: Array<ISwfTagData>;
-    finalTag?: boolean;
+  export enum ImageDefinitionTags {
+    CODE_DEFINE_BITS                       = 6,
+    CODE_DEFINE_BITS_JPEG2                 = 21,
+    CODE_DEFINE_BITS_JPEG3                 = 35,
+    CODE_DEFINE_BITS_JPEG4                 = 90
+  }
+
+  export enum FontDefinitionTags {
+    CODE_DEFINE_FONT                       = 10,
+    CODE_DEFINE_FONT2                      = 48,
+    CODE_DEFINE_FONT3                      = 75,
+    CODE_DEFINE_FONT4                      = 91
+  }
+
+  export enum ControlTags {
+    CODE_PLACE_OBJECT                      = 4,
+    CODE_PLACE_OBJECT2                     = 26,
+    CODE_PLACE_OBJECT3                     = 70,
+    CODE_REMOVE_OBJECT                     = 5,
+    CODE_REMOVE_OBJECT2                    = 28,
+    CODE_START_SOUND                       = 15,
+    CODE_START_SOUND2                      = 89,
+    CODE_VIDEO_FRAME                       = 61,
+  }
+
+  export enum PlaceObjectFlags {
+    Move              = 0x0001,
+    HasCharacter      = 0x0002,
+    HasMatrix         = 0x0004,
+    HasColorTransform = 0x0008,
+    HasRatio          = 0x0010,
+    HasName           = 0x0020,
+    HasClipDepth      = 0x0040,
+    HasClipActions    = 0x0080,
+    HasFilterList     = 0x0100,
+    HasBlendMode      = 0x0200,
+    HasCacheAsBitmap  = 0x0400,
+    HasClassName      = 0x0800,
+    HasImage          = 0x1000,
+    HasVisible        = 0x2000,
+    OpaqueBackground  = 0x4000,
+    Reserved          = 0x8000
+  }
+  
+  export enum AVM1ClipEvents {
+    Load =            0x00001,
+    EnterFrame =      0x00002,
+    Unload =          0x00004,
+    MouseMove =       0x00008,
+    MouseDown =       0x00010,
+    MouseUp =         0x00020,
+    KeyDown =         0x00040,
+    KeyUp =           0x00080,
+    Data =            0x00100,
+    Initialize =      0x00200,
+    Press =           0x00400,
+    Release =         0x00800,
+    ReleaseOutside =  0x01000,
+    RollOver =        0x02000,
+    RollOut =         0x04000,
+    DragOver =        0x08000,
+    DragOut =         0x10000,
+    KeyPress =        0x20000,
+    Construct =       0x40000
   }
 }

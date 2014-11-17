@@ -27,7 +27,7 @@
     var stage = new Stage();
     DisplayObject._stage = stage;
     stage._stage = stage;
-    var symbol = new SpriteSymbol(0);
+    var symbol = new SpriteSymbol({id: 0});
     symbol.numFrames = numFrames;
     var frame = new FrameDelta(loaderInfo, []);
     for (var i = 0; i < numFrames; i++) {

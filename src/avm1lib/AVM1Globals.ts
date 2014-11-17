@@ -159,7 +159,7 @@ module Shumway.AVM2.AS.avm1lib {
      */
     escape(str: string): string {
       var result = encodeURIComponent(str);
-      return result.replace(/\!|'|\(|\)|\*|-|\.|_|~/g, function(char: string): string {
+      return result.replace(/!|'|\(|\)|\*|-|\.|_|~/g, function(char: string): string {
         switch (char) {
           case '*':
             return '%2A';

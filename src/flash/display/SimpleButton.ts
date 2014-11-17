@@ -46,16 +46,16 @@ module Shumway.AVM2.AS.flash.display {
 
       if (symbol) {
         if (symbol.upState) {
-          self._upState = DisplayObject.createAnimatedDisplayObject(symbol.upState, true);
+          self._upState = self.createAnimatedDisplayObject(symbol.upState, true);
         }
         if (symbol.overState) {
-          self._overState = DisplayObject.createAnimatedDisplayObject(symbol.overState, true);
+          self._overState = self.createAnimatedDisplayObject(symbol.overState, true);
         }
         if (symbol.downState) {
-          self._downState = DisplayObject.createAnimatedDisplayObject(symbol.downState, true);
+          self._downState = self.createAnimatedDisplayObject(symbol.downState, true);
         }
         if (symbol.hitTestState) {
-          self._hitTestState = DisplayObject.createAnimatedDisplayObject(symbol.hitTestState, true);
+          self._hitTestState = self.createAnimatedDisplayObject(symbol.hitTestState, true);
         }
       }
     };

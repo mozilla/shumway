@@ -276,10 +276,6 @@ module Shumway.Remoting.GFX {
             data.updateNetStream ++;
             this._readUpdateNetStream();
             break;
-          case MessageTag.RegisterFont:
-            data.registerFont ++;
-            this._readRegisterFont();
-            break;
           case MessageTag.DrawToBitmap:
             data.drawToBitmap ++;
             this._readDrawToBitmap();
@@ -387,7 +383,7 @@ module Shumway.Remoting.GFX {
           renderable = new RenderableShape(id, pathData, textures, bounds);
         }
         for (var i = 0; i < textures.length; i++) {
-          textures[i].addRenderableParent(renderable);
+          textures[i] && textures[i].addRenderableParent(renderable);
         }
         context._registerAsset(id, symbolId, renderable);
       }
@@ -597,15 +593,6 @@ module Shumway.Remoting.GFX {
           child.ratio = ratio;
         }
       }
-    }
-
-    private _readRegisterFont() {
-      var input = this.input;
-      var fontId = input.readInt();
-      var bold = input.readBoolean();
-      var italic = input.readBoolean();
-      var data = this._readAsset();
-      Shumway.registerCSSFont(fontId, data);
     }
 
     private _readDrawToBitmap() {

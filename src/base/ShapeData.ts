@@ -466,12 +466,7 @@ module Shumway {
     private _writeStyleMatrix(matrix: ShapeMatrix, isMorph: boolean)
     {
       var styles: DataBuffer = isMorph ? this.morphStyles : this.styles;
-      styles.writeFloat(matrix.a);
-      styles.writeFloat(matrix.b);
-      styles.writeFloat(matrix.c);
-      styles.writeFloat(matrix.d);
-      styles.writeFloat(matrix.tx);
-      styles.writeFloat(matrix.ty);
+      styles.write6Floats(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
     }
 
     private ensurePathCapacities(numCommands: number, numCoordinates: number)

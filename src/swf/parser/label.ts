@@ -16,91 +16,23 @@
 
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
-  import assert = Shumway.Debug.assert;
-  import ColorUtilities = Shumway.ColorUtilities;
-
-  export function defineLabel(tag: any, dictionary: any) {
-    var records = tag.records;
-    var bbox = tag.bbox;
-    var htmlText = '';
-    var coords = [];
-    var dependencies = [];
-    var size = 12;
-    var face = 'Times Roman';
-    var color = 0;
-    var x = 0;
-    var y = 0;
-    var i = 0;
-    var record;
-    var codes;
-    var font;
-    var fontAttributes;
-    while ((record = records[i++])) {
-      if (record.eot) {
-        break;
-      }
-      if (record.hasFont) {
-        font = dictionary[record.fontId];
-        release || assert(font, 'undefined label font');
-        codes = font.codes;
-        dependencies.push(font.id);
-        size = record.fontHeight;
-        if (!font.originalSize) {
-          size = size / 20;
-        }
-        face = 'swffont' + font.id;
-      }
-      if (record.hasColor) {
-        color = record.color >>> 8;
-      }
-      if (record.hasMoveX) {
-        x = record.moveX;
-        if (x < bbox.xMin) {
-          bbox.xMin = x;
-        }
-      }
-      if (record.hasMoveY) {
-        y = record.moveY;
-        if (y < bbox.yMin) {
-          bbox.yMin = y;
-        }
-      }
-      var text = '';
-      var entries = record.entries;
-      var j = 0;
-      var entry;
-      while ((entry = entries[j++])) {
-        var code = codes[entry.glyphIndex];
-        release || assert(code, 'undefined label glyph');
-        text += String.fromCharCode(code);
-        coords.push(x, y);
-        x += entry.advance;
-      }
-      htmlText += '<font size="' + size + '" face="' + face + '"' +
-                  ' color="#' + ('000000' + color.toString(16)).slice(-6) + '">' +
-                    text.replace(/[<>&]/g, function(s: string) {
-                      return s === '<' ? '&lt;' : (s === '>' ? '&gt;' : '&amp;');
-                    }) +
-                  '</font>';
-    }
+  export function defineLabel(tag: any) {
     var label = {
-      type: 'text',
+      type: 'label',
       id: tag.id,
-      fillBounds: bbox,
+      fillBounds: tag.bbox,
       matrix: tag.matrix,
       tag: {
         hasText: true,
-        initialText: htmlText,
+        initialText: '',
         html: true,
         readonly: true
       },
-      coords: coords,
+      records: tag.records,
+      coords: null,
       static: true,
       require: null
     };
-    if (dependencies.length) {
-      label.require = dependencies;
-    }
     return label;
   }
 }

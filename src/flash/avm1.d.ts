@@ -30,6 +30,7 @@ declare module Shumway.AVM2.AS.avm1lib {
   export class AVM1Mouse extends ASClass {}
 
   export function getAVM1Object(as3Object: any): any;
+  export function initializeAVM1Object(as3Object: any, state: Shumway.Timeline.AnimationState): any;
 }
 
 declare module Shumway.AVM1 {
@@ -37,7 +38,7 @@ declare module Shumway.AVM1 {
     constructor(actionsBlock: Uint8Array, name: string);
   }
   export class AVM1Context {
-    static create(swfVersion: number): AVM1Context;
+    static create(loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo): AVM1Context;
     addAsset(className: string, symbolId: number, symbolProps);
     executeActions(actionsData: AVM1ActionsData, scopeObj);
     flushPendingScripts();

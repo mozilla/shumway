@@ -1,4 +1,19 @@
 [
+    {  "id": "acid-bitmapData-copyPixels",
+       "frames": [1],
+       "swf": "swfs/acid/acid-bitmapData-copyPixels.swf",
+       "type": "eq"
+    },
+    {  "id": "acid-blend",
+       "frames": [1, 5, 10],
+       "swf": "swfs/acid/acid-blend.swf",
+       "type": "eq"
+    },
+    {  "id": "acid-image",
+       "frames": [1, 5, 10],
+       "swf": "swfs/acid/acid-image.swf",
+       "type": "eq"
+    },
     { "id": "acid-filter",
       "frames": [1],
       "swf": "swfs/acid/acid-filter.swf",
@@ -327,6 +342,13 @@
        ],
        "type": "stas"
     },
+    {  "id": "avm1-nested-button",
+       "stas": "swfs/avm1/nested-button/nested-button-click.stas",
+       "filenames": [
+         "swfs/avm1/nested-button/nested-button-click.swf"
+       ],
+       "type": "stas"
+    },
     {  "id": "avm1-rollover",
       "stas": "swfs/avm1/rollover/avm1-rollover.stas",
       "filenames": [
@@ -382,6 +404,13 @@
        "frames": [1, 5, 10],
        "swf": "/examples/pac/pac.swf",
        "type": "eq"
+    },
+    {  "id": "3_joystick",
+       "stas": "swfs/3_joystick.stas",
+       "filenames": [
+         "swfs/3_joystick.swf"
+       ],
+       "type": "stas"
     },
     {  "id": "race-ref",
        "frames": [20, 30],

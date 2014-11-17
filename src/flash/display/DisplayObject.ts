@@ -431,9 +431,14 @@ module Shumway.AVM2.AS.flash.display {
      * Calling its constructor is optional at this point, since that can happen in a later frame
      * phase.
      */
-    static createAnimatedDisplayObject(state: Shumway.Timeline.AnimationState,
-                                       callConstructor: boolean): DisplayObject {
+    createAnimatedDisplayObject(state: Shumway.Timeline.AnimationState,
+                                callConstructor: boolean): DisplayObject {
       var symbol = state.symbol;
+      if (!symbol) {
+        var ownSymbol = <Timeline.SpriteSymbol>this._symbol;
+        symbol = <Timeline.DisplaySymbol>ownSymbol.loaderInfo.getSymbolById(state.symbolId);
+        state.symbol = symbol;
+      }
       var symbolClass = symbol.symbolClass;
       var instance: DisplayObject;
       if (symbolClass.isSubtypeOf(flash.display.BitmapData)) {

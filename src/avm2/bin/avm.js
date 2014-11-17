@@ -175,7 +175,7 @@ for (var f = 0; f < files.length; f++) {
       load(tsBuildPath + "swf.js");
     }
     var SWF_TAG_CODE_DO_ABC = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC;
-    var SWF_TAG_CODE_DO_ABC_ = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC_;
+    var SWF_TAG_CODE_DO_ABC_ = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC_DEFINE;
     Shumway.SWF.Parser.parse(snarf(file, "binary"), {
       oncomplete: function(result) {
 

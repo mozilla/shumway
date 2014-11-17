@@ -16,7 +16,8 @@
 
 ///<reference path='references.ts' />
 var jsGlobal = (function() { return this || (1, eval)('this'); })();
-var inBrowser = typeof console != "undefined";
+// Our polyfills for some DOM things make testing this slightly more onerous than it ought to be.
+var inBrowser = typeof window !=='undefined' && 'document' in window && 'plugins' in window.document;
 
 declare var putstr;
 // declare var print;
@@ -47,17 +48,8 @@ if (!jsGlobal.performance.now) {
   jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
 }
 
-function log(message?: any, ...optionalParams: any[]): void {
-  jsGlobal.print.apply(jsGlobal, arguments);
-}
-
-function warn(message?: any, ...optionalParams: any[]): void {
-  if (inBrowser) {
-    console.warn.apply(console, arguments);
-  } else {
-    jsGlobal.print(Shumway.IndentingWriter.RED + message + Shumway.IndentingWriter.ENDC);
-  }
-}
+var log = console.log.bind(console);
+var warn = console.warn.bind(console);
 
 interface String {
   padRight(c: string, n: number): string;
@@ -261,11 +253,7 @@ module Shumway {
     }
 
     export function error(message: string) {
-      if (!inBrowser) {
-        warn(message + "\n\nStack Trace:\n" + Debug.backtrace());
-      } else {
-        warn(message);
-      }
+      console.error(message);
       throw new Error(message);
     }
 
@@ -274,7 +262,12 @@ module Shumway {
         condition = true;
       }
       if (!condition) {
-        Debug.error(message.toString());
+        if (typeof console !== 'undefined' && 'assert' in console) {
+          console.assert(false, message);
+          throw new Error(message);
+        } else {
+          Debug.error(message.toString());
+        }
       }
     }
 
@@ -289,8 +282,8 @@ module Shumway {
       }
     }
 
-    export function warning(message: string) {
-      release || warn(message);
+    export function warning(...messages: any[]) {
+      release || warn.apply(window, messages);
     }
 
     export function notUsed(message: string) {
@@ -326,10 +319,6 @@ module Shumway {
 
     export function unexpectedCase(message?: any) {
       Debug.assert(false, "Unexpected Case: " + message);
-    }
-
-    export function untested(message?: any) {
-      Debug.warning("Congratulations, you've found a code path for which we haven't found a test case. Please submit the test case: " + message);
     }
   }
 
@@ -1727,8 +1716,8 @@ module Shumway {
 
     public static logLevel: LogLevel = LogLevel.All;
 
-    private static _consoleOut = inBrowser ? console.info.bind(console) : print;
-    private static _consoleOutNoNewline = inBrowser ? console.info.bind(console) : putstr;
+    private static _consoleOut = console.info.bind(console);
+    private static _consoleOutNoNewline = console.info.bind(console);
 
     private _tab: string;
     private _padding: string;
@@ -3354,21 +3343,30 @@ module Shumway {
     export var instance: IFileLoadingService;
   }
 
-  export function registerCSSFont(id: number, buffer: ArrayBuffer) {
+  export function registerCSSFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
     if (!inBrowser) {
-      console.warn('Cannot register CSS font outside the browser');
+      Debug.warning('Cannot register CSS font outside the browser');
       return;
     }
     var head = document.head;
     head.insertBefore(document.createElement('style'), head.firstChild);
     var style = <CSSStyleSheet>document.styleSheets[0];
-    style.insertRule(
-      '@font-face{' +
-      'font-family:swffont' + id + ';' +
-      'src:url(data:font/opentype;base64,' +
-      Shumway.StringUtilities.base64ArrayBuffer(buffer) + ')' + '}',
-      style.cssRules.length
-    );
+    var rule = '@font-face{font-family:swffont' + id + ';src:url(data:font/opentype;base64,' +
+               Shumway.StringUtilities.base64ArrayBuffer(buffer) + ')' + '}';
+    style.insertRule(rule, style.cssRules.length);
+    // In at least Chrome, the browser only decodes a font once it's used in the page at all.
+    // Because it still does so asynchronously, we create a with some text using the font, take
+    // some measurement from it (which will turn out wrong because the font isn't yet available),
+    // and then remove the node again. Then, magic happens. After a bit of time for said magic to
+    // take hold, the font is available for actual use on canvas.
+    if (forceFontInit) {
+      var node = document.createElement('div');
+      node.style.fontFamily = 'swffont' + id;
+      node.innerHTML = 'hello';
+      document.body.appendChild(node);
+      var dummyHeight = node.clientHeight;
+      document.body.removeChild(node);
+    }
   }
 
   export interface IExternalInterfaceService {
@@ -3522,6 +3520,10 @@ module Shumway {
     public promise: Promise<T>;
     public resolve: (result:T) => void;
     public reject: (reason) => void;
+
+    then(onFulfilled, onRejected) {
+      return this.promise.then(onFulfilled, onRejected);
+    }
 
     constructor() {
       this.promise = new Promise<T>(function (resolve, reject) {

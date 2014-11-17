@@ -378,7 +378,7 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.Stage::isFocusInaccessible"); return;
     }
     requireOwnerPermissions(): void {
-      somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
+      // TODO: implement requireOwnerPermissions
     }
 
     render(): void {

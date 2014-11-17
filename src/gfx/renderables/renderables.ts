@@ -51,16 +51,16 @@ module Shumway.GFX {
     private _renderableParents: Renderable [] = [];
 
     public addParent(frame: Node) {
-      release && assert(frame);
+      release || assert(frame);
       var index = indexOf(this._parents, frame);
-      release && assert(index < 0);
+      release || assert(index < 0);
       this._parents.push(frame);
     }
 
     public addRenderableParent(renderable: Renderable) {
-      release && assert(renderable);
+      release || assert(renderable);
       var index = indexOf(this._renderableParents, renderable);
-      release && assert(index < 0);
+      release || assert(index < 0);
       this._renderableParents.push(renderable);
     }
 
@@ -89,7 +89,7 @@ module Shumway.GFX {
         this._invalidateEventListeners = [];
       }
       var index = indexOf(this._invalidateEventListeners, listener);
-      release && assert(index < 0);
+      release || assert(index < 0);
       this._invalidateEventListeners.push(listener);
     }
 
@@ -530,7 +530,7 @@ module Shumway.GFX {
       // Wait to deserialize paths until all textures have been loaded.
       var textures = this._textures;
       for (var i = 0; i < textures.length; i++) {
-        if (textures[i].hasFlags(NodeFlags.Loading)) {
+        if (textures[i] && textures[i].hasFlags(NodeFlags.Loading)) {
           return;
         }
       }
@@ -582,7 +582,8 @@ module Shumway.GFX {
       leaveTimeline("RenderableShape.render");
     }
 
-    protected _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D, ratio: number): StyledPath[] {
+    protected _deserializePaths(data: ShapeData, context: CanvasRenderingContext2D,
+                                ratio: number): StyledPath[] {
       release || assert(data ? !this._paths : this._paths);
       enterTimeline("RenderableShape.deserializePaths");
       // TODO: Optimize path handling to use only one path if possible.
@@ -766,9 +767,17 @@ module Shumway.GFX {
       var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
       var smooth = styles.readBoolean();
       var texture = this._textures[textureIndex];
-      release || assert(texture._canvas);
-      var fillStyle: CanvasPattern = context.createPattern(texture._canvas, repeat);
-      fillStyle.setTransform(fillTransform.toSVGMatrix());
+      var fillStyle: CanvasPattern;
+      if (texture) {
+        fillStyle = context.createPattern(texture._canvas, repeat);
+        fillStyle.setTransform(fillTransform.toSVGMatrix());
+      } else {
+        // TODO: Wire up initially-missing textures that become available later.
+        // An invalid SWF can have shape fills refer to images that occur later in the SWF. In that
+        // case, the image only becomes available once that frame is actually reached. Before that
+        // the fill isn't drawn; it is drawn once the image becomes available, though.
+        fillStyle = null;
+      }
       return {style: fillStyle, smoothImage: smooth};
     }
 

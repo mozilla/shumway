@@ -63,8 +63,10 @@ module Shumway.AVM2.AS.flash.display {
       this._soundStream = new MovieClipSoundStream(streamInfo, this._mc);
     }
 
-    addSoundStreamBlock(frameNum: number, streamBlock: any) {
-      this._soundStream.appendBlock(frameNum, streamBlock);
+    addSoundStreamBlock(frameNum: number, streamBlock: Uint8Array) {
+      if (this._soundStream) {
+        this._soundStream.appendBlock(frameNum, streamBlock);
+      }
     }
 
     private _startSounds(frameNum) {
@@ -160,7 +162,6 @@ module Shumway.AVM2.AS.flash.display {
         }
         self._frames = symbol.frames;
         if (symbol.isAVM1Object) {
-          self._mouseEnabled = false;
           if (symbol.frameScripts) {
             var avm1MovieClip = avm1lib.getAVM1Object(this);
             avm1MovieClip.context = symbol.avm1Context;
@@ -221,6 +222,36 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       Sprite.instanceConstructorNoInitialize.call(this);
+    }
+
+    _addFrame(frameInfo: any) {
+      var spriteSymbol = <Timeline.SpriteSymbol><any>this._symbol;
+      var frames = spriteSymbol.frames;
+      frames.push(frameInfo.frameDelta);
+      if (frameInfo.labelName) {
+        // Frame indices are 1-based, so use frames.length after pushing the frame.
+        this.addFrameLabel(frameInfo.labelName, frames.length);
+      }
+      if (frameInfo.soundStreamHead) {
+        this._initSoundStream(frameInfo.soundStreamHead);
+      }
+      if (frameInfo.soundStreamBlock) {
+        // Frame indices are 1-based, so use frames.length after pushing the frame.
+        this._addSoundStreamBlock(frames.length, frameInfo.soundStreamBlock);
+      }
+      if (spriteSymbol.isAVM1Object) {
+        avm1lib.getAVM1Object(this).addFrameActionBlocks(frames.length - 1, frameInfo);
+        if (frameInfo.exports) {
+          var exports = frameInfo.exports;
+          for (var i = 0; i < exports.length; i++) {
+            var asset = exports[i];
+            spriteSymbol.avm1Context.addAsset(asset.className, asset.symbolId, null);
+          }
+        }
+      }
+      if (frames.length === 1) {
+        this._initializeChildren(frames[0]);
+      }
     }
 
     _initFrame(advance: boolean) {
@@ -387,10 +418,10 @@ module Shumway.AVM2.AS.flash.display {
         var legacyMode = MovieClip.frameNavigationModel === FrameNavigationModel.SWF1 ||
                          MovieClip.frameNavigationModel === FrameNavigationModel.SWF9;
         var label = scene.getLabelByName(frame, legacyMode);
-        if (!label && legacyMode) {
-          return; // noop for SWF9 and below
-        }
         if (!label) {
+          if (legacyMode) {
+            return; // noop for SWF9 and below
+          }
           throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame, sceneName);
         }
         frameNum = label.frame;
@@ -465,7 +496,7 @@ module Shumway.AVM2.AS.flash.display {
             var childDepth = child._depth;
             if (childDepth) {
               // We need to scan all past states to check if we can keep the child.
-              var state: Timeline.AnimationState = undefined;
+              var state: Timeline.AnimationState;
               for (var j = nextFrame - 1; j >= 0 && !state; j--) {
                 state = frames[j].stateAtDepth[childDepth];
               }
@@ -490,6 +521,11 @@ module Shumway.AVM2.AS.flash.display {
         for (var depth in stateAtDepth) {
           var child = this.getTimelineObjectAtDepth(depth | 0);
           var state = stateAtDepth[depth];
+          // Eagerly create the symbol here, because it's needed in the canBeAnimated check below.
+          if (state && state.symbolId > -1 && !state.symbol) {
+            var ownSymbol = <Timeline.SpriteSymbol>this._symbol;
+            state.symbol = <Timeline.DisplaySymbol>ownSymbol.loaderInfo.getSymbolById(state.symbolId);
+          }
           if (child) {
             if (state && state.canBeAnimated(child)) {
               if (state.symbol && !state.symbol.dynamic) {
@@ -504,11 +540,11 @@ module Shumway.AVM2.AS.flash.display {
             }
             this._removeAnimatedChild(child);
           }
-          if (state && state.symbol) {
-            var character = DisplayObject.createAnimatedDisplayObject(state, false);
+          if (state && state.symbolId > -1) {
+            var character = this.createAnimatedDisplayObject(state, false);
             this.addTimelineObjectAtDepth(character, state.depth);
             if (state.symbol.isAVM1Object) {
-              this._initAvm1Bindings(character, state);
+              avm1lib.initializeAVM1Object(character, state);
             }
           }
         }

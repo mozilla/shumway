@@ -17,8 +17,6 @@
 module Shumway {
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
-  import StageScaleMode = Shumway.Remoting.StageScaleMode;
-  import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
 
   import shumwayOptions = Shumway.Settings.shumwayOptions;
 

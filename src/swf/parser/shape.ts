@@ -83,7 +83,7 @@ module Shumway.SWF.Parser {
    * http://wahlers.com.br/claus/blog/hacking-swf-1-shapes-in-flash/ for details.
    */
   function convertRecordsToShapeData(records, fillPaths: SegmentedPath[],
-                                     linePaths: SegmentedPath[], dictionary, dependencies,
+                                     linePaths: SegmentedPath[], dependencies: number[],
                                      recordsMorph): ShapeData
   {
     var isMorph = recordsMorph !== null;
@@ -124,9 +124,9 @@ module Shumway.SWF.Parser {
             allPaths = [];
           }
           push.apply(allPaths, fillPaths);
-          fillPaths = createPathsList(record.fillStyles, false, isMorph, dictionary, dependencies);
+          fillPaths = createPathsList(record.fillStyles, false, isMorph, dependencies);
           push.apply(allPaths, linePaths);
-          linePaths = createPathsList(record.lineStyles, true, isMorph, dictionary, dependencies);
+          linePaths = createPathsList(record.lineStyles, true, isMorph, dependencies);
           if (defaultPath) {
             allPaths.push(defaultPath);
             defaultPath = null;
@@ -190,8 +190,7 @@ module Shumway.SWF.Parser {
         if (!segment) {
           if (!defaultPath) {
             var style = {color: {red: 0, green: 0, blue: 0, alpha: 0}, width: 20};
-            defaultPath = new SegmentedPath(null, processStyle(style, true, isMorph,
-                                                               dictionary, dependencies));
+            defaultPath = new SegmentedPath(null, processStyle(style, true, isMorph, dependencies));
           }
           segment = PathSegment.FromDefaults(isMorph);
           defaultPath.addSegment(segment);
@@ -317,16 +316,15 @@ module Shumway.SWF.Parser {
 
   var IDENTITY_MATRIX: ShapeMatrix = {a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0};
   function processStyle(style, isLineStyle: boolean, isMorph: boolean,
-                        dictionary, dependencies): ShapeStyle {
+                        dependencies: number[]): ShapeStyle {
     var shapeStyle: ShapeStyle = style;
     if (isMorph) {
-      shapeStyle.morph = processMorphStyle(style, isLineStyle, dictionary, dependencies);
+      shapeStyle.morph = processMorphStyle(style, isLineStyle, dependencies);
     }
     if (isLineStyle) {
       shapeStyle.miterLimit = (style.miterLimitFactor || 1.5) * 2;
       if (!style.color && style.hasFill) {
-        var fillStyle = processStyle(style.fillStyle, false, false,
-                                     dictionary, dependencies);
+        var fillStyle = processStyle(style.fillStyle, false, false, dependencies);
         shapeStyle.type = fillStyle.type;
         shapeStyle.transform = fillStyle.transform;
         shapeStyle.colors = fillStyle.colors;
@@ -368,16 +366,12 @@ module Shumway.SWF.Parser {
                        style.type !== FillType.NonsmoothedClippedBitmap;
         shapeStyle.repeat = style.type !== FillType.ClippedBitmap &&
                        style.type !== FillType.NonsmoothedClippedBitmap;
-        if (dictionary[style.bitmapId]) {
-          shapeStyle.bitmapIndex = dependencies.length;
-          dependencies.push(style.bitmapId);
-          scale = 0.05;
-        } else {
-          shapeStyle.bitmapIndex = -1;
-        }
+        shapeStyle.bitmapIndex = dependencies.length;
+        dependencies.push(style.bitmapId);
+        scale = 0.05;
         break;
       default:
-        release || assertUnreachable('shape parser encountered invalid fill style');
+        Debug.warning('shape parser encountered invalid fill style ' + style.type);
     }
     if (!style.matrix) {
       shapeStyle.transform = IDENTITY_MATRIX;
@@ -397,12 +391,12 @@ module Shumway.SWF.Parser {
     return shapeStyle;
   }
 
-  function processMorphStyle(style, isLineStyle: boolean, dictionary, dependencies): ShapeStyle {
+  function processMorphStyle(style, isLineStyle: boolean, dependencies: number[]): ShapeStyle {
     var morphStyle: ShapeStyle = Object.create(style);
     if (isLineStyle) {
       morphStyle.width = style.widthMorph;
       if (!style.color && style.hasFill) {
-        var fillStyle = processMorphStyle(style.fillStyle, false, dictionary, dependencies);
+        var fillStyle = processMorphStyle(style.fillStyle, false, dependencies);
         morphStyle.transform = fillStyle.transform;
         morphStyle.colors = fillStyle.colors;
         morphStyle.ratios = fillStyle.ratios;
@@ -464,11 +458,11 @@ module Shumway.SWF.Parser {
    * all the paths for a certain fill or line style.
    */
   function createPathsList(styles: any[], isLineStyle: boolean, isMorph: boolean,
-                           dictionary: any, dependencies: any): SegmentedPath[]
+                           dependencies: number[]): SegmentedPath[]
   {
     var paths: SegmentedPath[] = [];
     for (var i = 0; i < styles.length; i++) {
-      var style = processStyle(styles[i], isLineStyle, isMorph, dictionary, dependencies);
+      var style = processStyle(styles[i], isLineStyle, isMorph, dependencies);
       if (!isLineStyle) {
         paths[i] = new SegmentedPath(style, null);
       } else {
@@ -478,14 +472,12 @@ module Shumway.SWF.Parser {
     return paths;
   }
 
-  export function defineShape(tag, dictionary) {
+  export function defineShape(tag) {
     var dependencies = [];
-    var fillPaths = createPathsList(tag.fillStyles, false, !!tag.recordsMorph,
-                                    dictionary, dependencies);
-    var linePaths = createPathsList(tag.lineStyles, true, !!tag.recordsMorph,
-                                    dictionary, dependencies);
+    var fillPaths = createPathsList(tag.fillStyles, false, !!tag.recordsMorph, dependencies);
+    var linePaths = createPathsList(tag.lineStyles, true, !!tag.recordsMorph, dependencies);
     var shape = convertRecordsToShapeData(tag.records, fillPaths, linePaths,
-                                          dictionary, dependencies, tag.recordsMorph || null);
+                                          dependencies, tag.recordsMorph || null);
     return {
       type: tag.isMorph ? 'morphshape' : 'shape',
       id: tag.id,
@@ -526,44 +518,34 @@ module Shumway.SWF.Parser {
 
     moveTo(x: number, y: number) {
       this.commands.writeUnsignedByte(PathCommand.MoveTo);
-      this.data.writeInt(x);
-      this.data.writeInt(y);
+      this.data.write2Ints(x, y);
     }
 
     morphMoveTo(x: number, y: number, mx: number, my: number) {
       this.moveTo(x, y);
-      this.morphData.writeInt(mx);
-      this.morphData.writeInt(my);
+      this.morphData.write2Ints(mx, my);
     }
 
     lineTo(x: number, y: number) {
       this.commands.writeUnsignedByte(PathCommand.LineTo);
-      this.data.writeInt(x);
-      this.data.writeInt(y);
+      this.data.write2Ints(x, y);
     }
 
     morphLineTo(x: number, y: number, mx: number, my: number) {
       this.lineTo(x, y);
-      this.morphData.writeInt(mx);
-      this.morphData.writeInt(my);
+      this.morphData.write2Ints(mx, my);
     }
 
     curveTo(cpx: number, cpy: number, x: number, y: number) {
       this.commands.writeUnsignedByte(PathCommand.CurveTo);
-      this.data.writeInt(cpx);
-      this.data.writeInt(cpy);
-      this.data.writeInt(x);
-      this.data.writeInt(y);
+      this.data.write4Ints(cpx, cpy, x, y);
     }
 
     morphCurveTo(cpx: number, cpy: number, x: number, y: number,
             mcpx: number, mcpy: number, mx: number, my: number)
     {
       this.curveTo(cpx, cpy, x, y);
-      this.morphData.writeInt(mcpx);
-      this.morphData.writeInt(mcpy);
-      this.morphData.writeInt(mx);
-      this.morphData.writeInt(my);
+      this.morphData.write4Ints(mcpx, mcpy, mx, my);
     }
 
     /**
@@ -843,7 +825,6 @@ module Shumway.SWF.Parser {
           case FillType.RepeatingBitmap:
           case FillType.NonsmoothedClippedBitmap:
           case FillType.NonsmoothedRepeatingBitmap:
-            release || assert(style.bitmapIndex > -1);
             writeBitmap(PathCommand.BeginBitmapFill, style, shape);
             if (morph) {
               writeMorphBitmap(morph, shape);
@@ -877,7 +858,6 @@ module Shumway.SWF.Parser {
           case FillType.RepeatingBitmap:
           case FillType.NonsmoothedClippedBitmap:
           case FillType.NonsmoothedRepeatingBitmap:
-            release || assert(style.bitmapIndex > -1);
             writeLineStyle(style, shape);
             writeBitmap(PathCommand.LineStyleBitmap, style, shape);
             if (morph) {
@@ -937,8 +917,7 @@ module Shumway.SWF.Parser {
   }
 
   function writeBitmap(command: PathCommand, style: ShapeStyle, shape: ShapeData): void {
-    shape.beginBitmap(command, style.bitmapIndex, style.transform,
-                      style.repeat, style.smooth);
+    shape.beginBitmap(command, style.bitmapIndex, style.transform, style.repeat, style.smooth);
   }
 
   function writeMorphBitmap(style: ShapeStyle, shape: ShapeData) {

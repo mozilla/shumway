@@ -126,20 +126,20 @@ module.exports = function(grunt) {
       },
       smoke_parse_database: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r -po {} >> data.json.txt'
+        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r -po {} >> data.json.txt'
       },
       smoke_play: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -x -md 1000 -v -tp 60 -v {}'
+        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -x -md 1000 -v -tp 60 -v {}'
       },
       smoke_parse: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r ' +
+        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r ' +
              (grunt.option('verbose') ? '-v ' : '') + ' {}'
       },
       smoke_parse_images: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/swf -name "*.swf" | parallel -X -N100 utils/jsshell/js build/ts/shell.js -p -r -f "CODE_DEFINE_BITS,CODE_DEFINE_BITS_JPEG2,CODE_DEFINE_BITS_JPEG3,CODE_DEFINE_BITS_JPEG4,CODE_JPEG_TABLES,CODE_DEFINE_BITS_LOSSLESS,CODE_DEFINE_BITS_LOSSLESS2" {}'
+        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r -f "CODE_DEFINE_BITS,CODE_DEFINE_BITS_JPEG2,CODE_DEFINE_BITS_JPEG3,CODE_DEFINE_BITS_JPEG4,CODE_JPEG_TABLES,CODE_DEFINE_BITS_LOSSLESS,CODE_DEFINE_BITS_LOSSLESS2" {}'
       },
       closure: {
         // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.

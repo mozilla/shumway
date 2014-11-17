@@ -75,6 +75,13 @@ module Shumway.AVM2.AS.flash.display {
       this._transparent = !!transparent;
       this._rect = new Rectangle(0, 0, width, height);
       if (this._symbol) {
+        //var canvas: HTMLCanvasElement = document.createElement('canvas');
+        //canvas.width = width;
+        //canvas.height = height;
+        //var context = canvas.getContext('2d');
+        //context.drawImage(this._symbol.image, 0, 0);
+        //this._symbol.data = new Uint8Array(context.getImageData(0, 0, width, height).data;
+        //this._symbol.image = null;
         this._data = new Uint8Array(this._symbol.data);
         this._type = this._symbol.type;
         if (this._type === ImageType.PremultipliedAlphaARGB ||
@@ -107,13 +114,13 @@ module Shumway.AVM2.AS.flash.display {
 
     _addBitmapReferrer(bitmap: flash.display.Bitmap) {
       var index = indexOf(this._bitmapReferrers, bitmap);
-      release && assert(index < 0);
+      release || assert(index < 0);
       this._bitmapReferrers.push(bitmap);
     }
 
     _removeBitmapReferrer(bitmap: flash.display.Bitmap) {
       var index = indexOf(this._bitmapReferrers, bitmap);
-      release && assert(index >= 0);
+      release || assert(index >= 0);
       this._bitmapReferrers[index] = null;
     }
 

@@ -176,9 +176,8 @@ module Shumway.SWF.Parser {
     return null;
   }
 
-  export function defineBitmap(tag: any): ImageDefinition {
+  export function defineBitmap(tag: any): {definition: ImageDefinition; type: string} {
     enterTimeline("defineBitmap");
-    var bmpData = tag.bmpData;
     var data: Uint32Array;
     var type = ImageType.None;
     switch (tag.format) {
@@ -199,13 +198,17 @@ module Shumway.SWF.Parser {
     }
     leaveTimeline();
     return {
-      type: 'image',
-      id: tag.id,
-      width: tag.width,
-      height: tag.height,
-      mimeType: 'application/octet-stream',
-      data: data,
-      dataType: type
+      definition: {
+        type: 'image',
+        id: tag.id,
+        width: tag.width,
+        height: tag.height,
+        mimeType: 'application/octet-stream',
+        data: data,
+        dataType: type,
+        image: null
+      },
+      type: 'image'
     };
   }
 }

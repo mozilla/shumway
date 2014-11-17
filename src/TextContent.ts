@@ -411,10 +411,11 @@ module Shumway {
       textRunData.writeInt(size);
 
       var font = flash.text.Font.getByName(textFormat.font) || flash.text.Font.getDefaultFont();
+      // TODO: ensure that font serialization really isn't required and clean this up.
+      textRunData.writeInt(0);
       if (font.fontType === flash.text.FontType.EMBEDDED) {
-        textRunData.writeInt(font._id);
+        textRunData.writeUTF('swffont' + font._id);
       } else {
-        textRunData.writeInt(0);
         textRunData.writeUTF(font._fontFamily);
       }
       textRunData.writeInt(font.ascent * size);
