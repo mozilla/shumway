@@ -31,8 +31,8 @@ module Shumway.AVM2.AS.flash.text {
     static DEVICE_FONT_METRICS_LINUX: Object;
     static DEVICE_FONT_METRICS_MAC: Object;
 
-    static DEFAULT_FONT_SANS = 'Times New Roman';
-    static DEFAULT_FONT_SERIF = 'Arial';
+    static DEFAULT_FONT_SANS = 'Arial';
+    static DEFAULT_FONT_SERIF = 'Times New Roman';
     static DEFAULT_FONT_TYPEWRITER = 'Courier New';
 
     static classInitializer: any = function () {
@@ -530,10 +530,28 @@ module Shumway.AVM2.AS.flash.text {
         "kacstscreen": [0.7813, 0.293, 0.0288],
         "pothana2000": [0.88, 0.84, 0],
         "lohit tamil": [0.8451, 0.096, 0.2401],
-        "kacstbook": [0.7813, 0.293, 0.0288]
+        "kacstbook": [0.7813, 0.293, 0.0288],
+        "sans": [1, 0.25, 0],
+        "times": [0.939, 0.2358, 0],
+        "monospace": [1, 0.5, 0]
       };
       Font.DEVICE_FONT_METRICS_MAC.__proto__ = Font.DEVICE_FONT_METRICS_WIN;
       Font.DEVICE_FONT_METRICS_LINUX.__proto__ = Font.DEVICE_FONT_METRICS_MAC;
+
+      var userAgent = self.navigator.userAgent;
+      if (userAgent.indexOf("Windows") > -1) {
+        Font._deviceFontMetrics = Font.DEVICE_FONT_METRICS_WIN;
+      } else if (/(Macintosh|iPad|iPhone|iPod|Android)/.test(userAgent)) {
+        Font._deviceFontMetrics = this.DEVICE_FONT_METRICS_MAC;
+        Font.DEFAULT_FONT_SANS = /Mac OS X 10\.10/.test(userAgent) ? 'Helvetica Neue' : 'Helvetica';
+        Font.DEFAULT_FONT_SERIF = 'Times Roman';
+        Font.DEFAULT_FONT_TYPEWRITER = 'Courier';
+      } else {
+        Font._deviceFontMetrics = this.DEVICE_FONT_METRICS_LINUX;
+        Font.DEFAULT_FONT_SANS = 'Sans';
+        Font.DEFAULT_FONT_SERIF = 'Times';
+        Font.DEFAULT_FONT_TYPEWRITER = 'Monospace';
+      }
     };
 
     static classSymbols: string [] = null;
@@ -597,19 +615,6 @@ module Shumway.AVM2.AS.flash.text {
     private static _deviceFontMetrics: Object;
 
     private static _getFontMetrics(name: string) {
-      if (!this._deviceFontMetrics) {
-        var userAgent = self.navigator.userAgent;
-        if (userAgent.indexOf("Windows") > -1) {
-          this._deviceFontMetrics = Font.DEVICE_FONT_METRICS_WIN;
-        } else if (/(Macintosh|iPad|iPhone|iPod|Android)/.test(userAgent)) {
-          this._deviceFontMetrics = this.DEVICE_FONT_METRICS_MAC;
-          this.DEFAULT_FONT_SANS = 'Helvetica';
-          this.DEFAULT_FONT_SERIF = 'Times Roman';
-          this.DEFAULT_FONT_TYPEWRITER = 'Courier';
-        } else {
-          this._deviceFontMetrics = this.DEVICE_FONT_METRICS_LINUX;
-        }
-      }
       return this._deviceFontMetrics[Font.resolveFontName(name)];
     }
 
@@ -633,18 +638,18 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     static getByName(name: string): Font {
-      name = this.resolveFontName(name).toLowerCase();
-      var font = this._fontsByName[name];
+      var key = name.toLowerCase();
+      var font = this._fontsByName[key];
       if (!font) {
         var font = new Font();
         font._fontName = name;
-        font._fontFamily = Font.resolveFontName(name);
+        font._fontFamily = Font.resolveFontName(key);
         font._fontStyle = FontStyle.REGULAR;
         font._fontType = FontType.DEVICE;
-        this._fontsByName[name] = font;
+        this._fontsByName[key] = font;
       }
       if (font._fontType === FontType.DEVICE) {
-        var metrics = Font._getFontMetrics(font._fontFamily);
+        var metrics = Font._getFontMetrics(font._fontFamily.toLowerCase());
         if (!metrics) {
           Shumway.Debug.warning(
             'Font metrics for "' + name + '" unknown. Fallback to default.');

@@ -73,7 +73,7 @@ module Shumway.AVM2.AS.flash.text {
       self._useRichTextClipboard = false;
 
       var defaultTextFormat = new flash.text.TextFormat(
-        Font.DEFAULT_FONT_SANS,
+        Font.DEFAULT_FONT_SERIF,
         12,
         0,
         false,
