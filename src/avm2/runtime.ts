@@ -1058,7 +1058,7 @@ module Shumway.AVM2.Runtime {
       "Float64Array"
     ].forEach(function (name) {
         if (!(name in global)) {
-          log(name + ' was not found in globals');
+          console.warn(name + ' was not found in globals');
           return;
         }
         defineNonEnumerableProperty(global[name].prototype, "asGetNumericProperty", asGetNumericProperty);
@@ -1357,7 +1357,7 @@ module Shumway.AVM2.Runtime {
     }
     var cacheInfo = CODE_CACHE[methodInfo.abc.hash];
     if (!cacheInfo) {
-      warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
+      console.warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
       countTimeline("Code Cache ABC Miss");
       return;
     }
@@ -1376,13 +1376,13 @@ module Shumway.AVM2.Runtime {
         countTimeline("Code Cache Query On Initializer");
       } else {
         countTimeline("Code Cache MISS ON OTHER");
-        warn("Shouldn't MISS: " + methodInfo + " " + methodInfo.debugName);
+        console.warn("Shouldn't MISS: " + methodInfo + " " + methodInfo.debugName);
       }
-      // warn("Cannot Find Code Cache For Method, name: " + methodInfo);
+      // console.warn("Cannot Find Code Cache For Method, name: " + methodInfo);
       countTimeline("Code Cache Miss");
       return;
     }
-    log("Linking CC: " + methodInfo);
+    console.log("Linking CC: " + methodInfo);
     countTimeline("Code Cache Hit");
     return method;
   }
@@ -1485,14 +1485,16 @@ module Shumway.AVM2.Runtime {
       var fnSource = "function " + fnName + " (" + compilation.parameters.join(", ") + ") " + body;
     }
 
-    if (traceFunctions.value > 1) {
-      mi.trace(new IndentingWriter(), mi.abc);
-    }
-    mi.debugTrace = function () {
-      mi.trace(new IndentingWriter(), mi.abc);
-    };
-    if (traceFunctions.value > 0) {
-      log(fnSource);
+    if (!release) {
+      if (traceFunctions.value > 1) {
+        mi.trace(new IndentingWriter(), mi.abc);
+      }
+      mi.debugTrace = function () {
+        mi.trace(new IndentingWriter(), mi.abc);
+      };
+      if (traceFunctions.value > 0) {
+        console.log(fnSource);
+      }
     }
     // mi.freeMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
     // mi.freeMethod = new Function(parameters, body);
@@ -1597,8 +1599,8 @@ module Shumway.AVM2.Runtime {
     var fn;
 
     if (mi.isNative()) {
-      if (traceExecution.value >= 2) {
-        log("Retrieving Native For Trait: " + trait.holder + " " + trait);
+      if (!release && traceExecution.value >= 2) {
+        console.log("Retrieving Native For Trait: " + trait.holder + " " + trait);
       }
       var md = trait.metadata;
       if (md && md.native) {
@@ -1617,14 +1619,14 @@ module Shumway.AVM2.Runtime {
         })(mi);
       }
     } else {
-      if (traceExecution.value >= 2) {
-        log("Creating Function For Trait: " + trait.holder + " " + trait);
+      if (!release && traceExecution.value >= 2) {
+        console.log("Creating Function For Trait: " + trait.holder + " " + trait);
       }
       fn = createFunction(mi, scope, false, false);
       release || assert (fn);
     }
-    if (traceExecution.value >= 3) {
-      log("Made Function: " + Multiname.getQualifiedName(mi.name));
+    if (!release && traceExecution.value >= 3) {
+      console.log("Made Function: " + Multiname.getQualifiedName(mi.name));
     }
     return fn;
   }
@@ -1658,8 +1660,8 @@ module Shumway.AVM2.Runtime {
 
     enterTimeline("createClass", { className: className, classInfo: classInfo });
 
-    if (traceExecution.value) {
-      log("Creating " + (ii.isInterface() ? "Interface" : "Class") + ": " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
+    if (!release && traceExecution.value) {
+      console.log("Creating " + (ii.isInterface() ? "Interface" : "Class") + ": " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
     }
 
     var cls: Shumway.AVM2.AS.ASClass;
@@ -1689,14 +1691,14 @@ module Shumway.AVM2.Runtime {
     classInfo.classObject = cls;
 
     // Run the static initializer.
-    if (traceExecution.value) {
-      log("Running " + (ii.isInterface() ? "Interface" : "Class") + ": " + className + " Static Constructor");
+    if (!release && traceExecution.value) {
+      console.log("Running " + (ii.isInterface() ? "Interface" : "Class") + ": " + className + " Static Constructor");
     }
     enterTimeline("staticInitializer");
     createFunction(classInfo.init, scope, false, false).call(cls);
     leaveTimeline();
-    if (traceExecution.value) {
-      log("Done With Static Constructor");
+    if (!release && traceExecution.value) {
+      console.log("Done With Static Constructor");
     }
 
     // Seal constant traits in the class object.

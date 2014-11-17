@@ -56,7 +56,7 @@
     }
     // TODO: turn this into a check once it passes.
     if (!perfect) {
-      warn("Premultiplication was mostly okay, but not perfect.");
+      console.warn("Premultiplication was mostly okay, but not perfect.");
     }
   });
 
