@@ -58,12 +58,6 @@ module Shumway.AVM2.AS {
 
   var debug = false;
 
-  function log(message?: any, ...optionalParams: any[]): void {
-    if (debug) {
-      jsGlobal.print(message);
-    }
-  }
-
   var writer = debug ? new IndentingWriter() : null;
 
   /**
@@ -327,7 +321,7 @@ module Shumway.AVM2.AS {
               try {
                 Object.defineProperty(traitsPrototype, property, descriptor);
               } catch (e) {
-                // log("Can't define " + property);
+                // console.log("Can't define " + property);
               }
             }
           }
@@ -728,7 +722,7 @@ module Shumway.AVM2.AS {
     }
 
     public coerce(value: any): any {
-      debug && log(Shumway.StringUtilities.concat4("Coercing ", value, " to ", this));
+      debug && console.log(Shumway.StringUtilities.concat4("Coercing ", value, " to ", this));
       return value;
     }
 
@@ -1693,7 +1687,7 @@ module Shumway.AVM2.AS {
    */
   export function getMethodOrAccessorNative(trait: Trait, natives: Object []): any {
     var name = escapeNativeName(Multiname.getName(trait.name));
-    debug && log("getMethodOrAccessorNative(" + name + ")");
+    debug && console.log("getMethodOrAccessorNative(" + name + ")");
     for (var i = 0; i < natives.length; i++) {
       var native = natives[i];
       var fullName = name;
@@ -1859,7 +1853,7 @@ module Shumway.AVM2.AS {
    * Searchs for natives using a string path "a.b.c...".
    */
   export function getNative(path: string): Function {
-    debug && log("getNative(" + path + ")");
+    debug && console.log("getNative(" + path + ")");
     var chain = path.split(".");
     var v = Natives;
     for (var i = 0, j = chain.length; i < j; i++) {

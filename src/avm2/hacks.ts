@@ -27,7 +27,7 @@ module Shumway.AVM2.Runtime {
   };
 
   VM_METHOD_OVERRIDES["com.midasplayer.debug.DebugLog::trace"] = function (msg) {
-    log(msg);
+    console.log(msg);
   };
 
   VM_METHOD_OVERRIDES["com.midasplayer.engine.comm.DebugGameComm::getGameData"] = function () {

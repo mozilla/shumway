@@ -112,7 +112,7 @@ module Shumway.AVM2.AS.avm1lib {
             somewhatImplemented('AVM1 drag trackAsMenu over/out button actions');
             break;
           default:
-            warn('Unknown AVM1 button action type: ' + action.stateTransitionFlags);
+            console.warn('Unknown AVM1 button action type: ' + action.stateTransitionFlags);
             continue;
         }
         requiredListeners[type] = this._mouseEventHandler.bind(this, action.stateTransitionFlags);

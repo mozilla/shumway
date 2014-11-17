@@ -59,7 +59,7 @@ module Shumway.AVM2.Runtime {
   export function ensureScriptIsExecuted(script, reason: string = "") {
     if (!script.executed && !script.executing) {
       if (Shumway.AVM2.Runtime.traceExecution.value >= 2) {
-        log("Executing Script For: " + reason);
+        console.log("Executing Script For: " + reason);
       }
       executeScript(script);
     }
@@ -365,7 +365,7 @@ module Shumway.AVM2.Runtime {
 
     public findDomainProperty(multiname: Multiname, strict: boolean, execute: boolean) {
       if (Shumway.AVM2.Runtime.traceDomain.value) {
-        log("ApplicationDomain.findDomainProperty: " + multiname);
+        console.log("ApplicationDomain.findDomainProperty: " + multiname);
       }
       var resolved = this.findDefiningScript(multiname, execute);
       if (resolved) {
@@ -512,7 +512,7 @@ module Shumway.AVM2.Runtime {
 
     public loadAbc(abc: AbcFile) {
       if (Shumway.AVM2.Runtime.traceExecution.value) {
-        log("Loading: " + abc.name);
+        console.log("Loading: " + abc.name);
       }
       abc.applicationDomain = this;
       GlobalMultinameResolver.loadAbc(abc);
