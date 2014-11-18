@@ -32,7 +32,7 @@ module Shumway.AVM2.AS.flash.net {
       this._data = null;
       this._digest = null;
       this._contentType = 'application/x-www-form-urlencoded';
-      this._requestHeaders = null;
+      this._requestHeaders = [];
       this._checkPolicyFile = true;
     };
     
@@ -43,9 +43,8 @@ module Shumway.AVM2.AS.flash.net {
     static bindings: string [] = null;
     
     constructor (url: string = null) {
-      url = asCoerceString(url);
       false && super();
-      dummyConstructor("public flash.net.URLRequest");
+      this._url = asCoerceString(url);
     }
 
     _checkPolicyFile: boolean;
