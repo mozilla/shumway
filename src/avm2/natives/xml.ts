@@ -59,6 +59,8 @@ module Shumway.AVM2.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
+  import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
+
   var _asGetProperty = Object.prototype.asGetProperty;
   var _asSetProperty = Object.prototype.asSetProperty;
   var _asCallProperty = Object.prototype.asCallProperty;
@@ -849,8 +851,12 @@ module Shumway.AVM2.AS {
 
   export class ASNamespace extends ASObject {
     public static staticNatives: any [] = null;
-    public static instanceNatives: any [] = null
+    public static instanceNatives: any [] = null;
     public static instanceConstructor: any = ASNamespace;
+    static classInitializer: any = function() {
+      var proto: any = ASNamespace.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
+    }
 
     private _ns: Namespace;
 
@@ -989,6 +995,20 @@ module Shumway.AVM2.AS {
     }
 
     get uri(): string {
+      return this._ns.uri;
+    }
+
+    toString() {
+      if (this === ASNamespace.prototype) {
+        return '';
+      }
+      return this._ns.uri;
+    }
+
+    valueOf() {
+      if (this === ASNamespace.prototype) {
+        return '';
+      }
       return this._ns.uri;
     }
 

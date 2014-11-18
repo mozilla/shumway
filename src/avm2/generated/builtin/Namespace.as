@@ -51,30 +51,11 @@ package
     // E357 {DontDelete, ReadOnly}
     public native function get uri():String;
 
-    AS3 function valueOf():String { return uri }
+    AS3 native function valueOf():String;
 
-    prototype.valueOf = function():String
-    {
-      if (this === prototype) return ""
-      var n:Namespace = this
-      return n.uri;
-    };
-
-    AS3 function toString():String
-    {
-      return uri
-    }
-
-    prototype.toString = function ():String
-    {
-      if (this === prototype) return ""
-      var n:Namespace = this
-      return n.AS3::toString();
-    };
+    AS3 native function toString():String;
 
     // Dummy constructor function
-    public function Namespace(prefix = void 0, uri = void 0 ) {}
-
-    _dontEnumPrototype(prototype);
+    public native function Namespace(prefix = void 0, uri = void 0 );
   }
 }
