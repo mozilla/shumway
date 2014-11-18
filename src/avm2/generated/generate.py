@@ -45,7 +45,7 @@ import sys
 
 def compile_abc(target, files, deps=None, configs=None):
     asc_jar = os.environ.get('ASC', os.path.realpath('../../../utils/asc.jar'))
-    javacmd = ['java', '-ea', '-DAS3', '-DAVMPLUS', '-classpath', asc_jar, 'macromedia.asc.embedding.ScriptCompiler', '-builtin', '-d']
+    javacmd = ['java', '-ea', '-DAS3', '-DAVMPLUS', '-classpath', asc_jar, 'macromedia.asc.embedding.ScriptCompiler', '-builtin']
     if deps:
         javacmd.extend("../%s/%s.abc" % (dep, dep) for dep in deps)
     javacmd.extend(['-out', target])
