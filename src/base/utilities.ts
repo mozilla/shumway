@@ -48,6 +48,8 @@ if (!jsGlobal.performance.now) {
   jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
 }
 
+var START_TIME = performance.now();
+
 interface String {
   padRight(c: string, n: number): string;
   padLeft(c: string, n: number): string;
