@@ -20,7 +20,6 @@ var jsGlobal = (function() { return this || (1, eval)('this'); })();
 var inBrowser = typeof window !=='undefined' && 'document' in window && 'plugins' in window.document;
 
 declare var putstr;
-// declare var print;
 // declare var console;
 // declare var performance;
 // declare var XMLHttpRequest;

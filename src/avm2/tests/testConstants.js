@@ -41,11 +41,11 @@ var constants = abc.constantPool;
 
 for(var i = 0; i < strings.length; i++) {
     if (strings[i] !== constants.strings[i+1])
-        print("String constant " + strings[i] + " failed");
+        console.log("String constant " + strings[i] + " failed");
 }
 
 for(var i = 0; i < doubles.length; i++) {
     if (doubles[i] !== constants.doubles[i+1])
-        print("Double constant " + doubles[i] + " failed");
+        console.log("Double constant " + doubles[i] + " failed");
 }
 
