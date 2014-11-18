@@ -64,7 +64,7 @@ function saveDiff(path, expected, output, callback) {
   });
 }
 
-function runTest(test, callback) {
+function runTest(test, thread, callback) {
   runSwf(test.path, function (err, output) {
     var id = test.id + ' | ' + test.path;
     if (err) {
@@ -79,12 +79,13 @@ function runTest(test, callback) {
         return;
       }
       var expected = content.toString();
+      var threadId = threads < 2 ? '' : ' (' + thread + ')';
       var pass = expected === output;
       if (pass) {
-        console.log(PASS_PREFIX + id);
+        console.log(PASS_PREFIX + id + threadId);
         callback(true);
       } else {
-        console.log(FAIL_PREFIX + id + ', see trace.log');
+        console.log(FAIL_PREFIX + id + threadId + ', see trace.log');
         saveDiff(test.path, expected, output, function () {
           callback(false);
         });
@@ -93,8 +94,20 @@ function runTest(test, callback) {
   })
 }
 
+var threads = 1;
+var availableThreads = [];
+
 function main() {
   var commandLineArguments = Array.prototype.slice.call(process.argv, 2);
+
+  if (commandLineArguments[0] === '-j' ||
+    commandLineArguments[0] === '--threads') {
+    commandLineArguments.shift();
+    threads = parseInt(commandLineArguments.shift(), 10) || 1;
+  }
+  for (var i = 0; i < threads; i++) {
+    availableThreads.push(i + 1);
+  }
 
   if (commandLineArguments[0] === '-m' ||
       commandLineArguments[0] === '--manifestFile') {
@@ -137,7 +150,7 @@ function main() {
 
   var testIndex = 0, success = true;
   (function next() {
-    if (testIndex >= tests.length) {
+    if (testIndex >= tests.length && availableThreads.length === threads) {
       if (success) {
         console.log('SUCCESS: All trace tests pass.');
         process.exit(0);
@@ -146,13 +159,19 @@ function main() {
       }
       return;
     }
+    if (testIndex >= tests.length || availableThreads.length === 0) {
+      return;
+    }
     var swf = tests[testIndex++];
-    runTest(swf, function (pass) {
+    var thread = availableThreads.shift();
+    runTest(swf, thread, function (pass) {
       if (!pass) {
         success = false;
       }
+      availableThreads.push(thread);
       next();
     });
+    next();
   })();
 }
 
