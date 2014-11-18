@@ -179,7 +179,7 @@ module Shumway.AVM2.Runtime {
         countTimeline("Executing Trampoline");
         if (!release && Shumway.AVM2.Runtime.traceExecution.value >= 1) {
           callWriter.writeLn("Trampoline: " + description);
-          Shumway.AVM2.Runtime.traceExecution.value >= 3 && log("Trampolining");
+          Shumway.AVM2.Runtime.traceExecution.value >= 3 && console.log("Trampolining");
         }
         if (!target) {
           target = getTraitFunction(trait, scope, natives);
@@ -215,8 +215,8 @@ module Shumway.AVM2.Runtime {
     function memoizer() {
       countTimeline("Runtime: Memoizing");
       // release || assert (!Object.prototype.hasOwnProperty.call(this, "class"), this);
-      if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
-        log("Memoizing: " + qn);
+      if (!release && Shumway.AVM2.Runtime.traceExecution.value >= 3) {
+        console.log("Memoizing: " + qn);
       }
       Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Memoizing: " + qn);
       if (isNativePrototype(this)) {

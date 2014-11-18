@@ -2,16 +2,24 @@
     {  "id": "basic",
        "stas": "swfs/trace.stas",
        "filenames": [
-         "swfs/add.swf",
          "swfs/encoding1.swf",
          "swfs/fscommand1.swf",
          "swfs/local2global.swf",
          "swfs/movieinfo1.swf",
          "swfs/stream1.swf",
-         "swfs/stroke1.swf",
-         "swfs/avm1/scope/avm1-scope-1.swf"
+         "swfs/stroke1.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "avm1core",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/add.swf",
+        "swfs/avm1/undefined/undefined-swf6.swf",
+        "swfs/avm1/undefined/undefined-swf7.swf",
+        "swfs/avm1/scope/avm1-scope-1.swf"
+      ],
+      "type": "stas"
     },
     {  "id": "hittesting as3",
       "stas": "swfs/trace.stas",

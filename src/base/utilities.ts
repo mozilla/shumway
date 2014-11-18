@@ -48,9 +48,6 @@ if (!jsGlobal.performance.now) {
   jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
 }
 
-var log = console.log.bind(console);
-var warn = console.warn.bind(console);
-
 interface String {
   padRight(c: string, n: number): string;
   padLeft(c: string, n: number): string;
@@ -283,7 +280,7 @@ module Shumway {
     }
 
     export function warning(...messages: any[]) {
-      release || warn.apply(window, messages);
+      release || console.warn.apply(console, messages);
     }
 
     export function notUsed(message: string) {
@@ -291,7 +288,6 @@ module Shumway {
     }
 
     export function notImplemented(message: string) {
-      log("release: " + release);
       release || Debug.assert(false, "Not Implemented " + message);
     }
 
@@ -738,7 +734,7 @@ module Shumway {
           try {
             Object.defineProperty(object, property, descriptor);
           } catch (e) {
-            // log("Can't define " + property);
+            // console.log("Can't define " + property);
           }
         }
       }
