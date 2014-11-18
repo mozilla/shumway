@@ -1123,34 +1123,35 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [Array.prototype];
 
     static classInitializer: any = function() {
-      var proto = Array.prototype;
-      defineNonEnumerableProperty(proto, '$Bgjoin', Array.prototype.join);
+      var proto: any = Array.prototype;
+      var asProto = ASArray.prototype;
+      defineNonEnumerableProperty(proto, '$Bgjoin', proto.join);
       // Same as join, see Array.as in Tamarin repository.
-      defineNonEnumerableProperty(proto, '$BgtoString', Array.prototype.join);
-      defineNonEnumerableProperty(proto, '$BgtoLocaleString', ASArray.prototype.toLocaleString);
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.join);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', asProto.toLocaleString);
 
-      defineNonEnumerableProperty(proto, '$Bgpop', Array.prototype.pop);
-      defineNonEnumerableProperty(proto, '$Bgpush', Array.prototype.push);
+      defineNonEnumerableProperty(proto, '$Bgpop', proto.pop);
+      defineNonEnumerableProperty(proto, '$Bgpush', proto.push);
 
-      defineNonEnumerableProperty(proto, '$Bgreverse', Array.prototype.reverse);
-      defineNonEnumerableProperty(proto, '$Bgconcat', Array.prototype.concat);
-      defineNonEnumerableProperty(proto, '$Bgsplice', ASArray.prototype.splice);
-      defineNonEnumerableProperty(proto, '$Bgslice', Array.prototype.slice);
+      defineNonEnumerableProperty(proto, '$Bgreverse', proto.reverse);
+      defineNonEnumerableProperty(proto, '$Bgconcat', proto.concat);
+      defineNonEnumerableProperty(proto, '$Bgsplice', asProto.splice);
+      defineNonEnumerableProperty(proto, '$Bgslice', proto.slice);
 
-      defineNonEnumerableProperty(proto, '$Bgshift', Array.prototype.shift);
-      defineNonEnumerableProperty(proto, '$Bgunshift', Array.prototype.unshift);
+      defineNonEnumerableProperty(proto, '$Bgshift', proto.shift);
+      defineNonEnumerableProperty(proto, '$Bgunshift', proto.unshift);
 
-      defineNonEnumerableProperty(proto, '$BgindexOf', Array.prototype.indexOf);
-      defineNonEnumerableProperty(proto, '$BglastIndexOf', Array.prototype.lastIndexOf);
+      defineNonEnumerableProperty(proto, '$BgindexOf', proto.indexOf);
+      defineNonEnumerableProperty(proto, '$BglastIndexOf', proto.lastIndexOf);
 
-      defineNonEnumerableProperty(proto, '$BgforEach', Array.prototype.forEach);
-      defineNonEnumerableProperty(proto, '$Bgmap', Array.prototype.map);
-      defineNonEnumerableProperty(proto, '$Bgfilter', Array.prototype.filter);
-      defineNonEnumerableProperty(proto, '$Bgsome', Array.prototype.some);
-      defineNonEnumerableProperty(proto, '$Bgevery', ASArray.prototype.every);
+      defineNonEnumerableProperty(proto, '$BgforEach', proto.forEach);
+      defineNonEnumerableProperty(proto, '$Bgmap', proto.map);
+      defineNonEnumerableProperty(proto, '$Bgfilter', proto.filter);
+      defineNonEnumerableProperty(proto, '$Bgsome', proto.some);
+      defineNonEnumerableProperty(proto, '$Bgevery', asProto.every);
 
-      defineNonEnumerableProperty(proto, '$Bgsort', ASArray.prototype.sort);
-      defineNonEnumerableProperty(proto, '$BgsortOn', ASArray.prototype.sortOn);
+      defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
+      defineNonEnumerableProperty(proto, '$BgsortOn', asProto.sortOn);
     };
 
     static CACHE_NUMERIC_COMPARATORS = true;
