@@ -1530,6 +1530,10 @@ module Shumway.AVM2.Runtime {
       return fn;
     }
 
+    if ((fn = checkCommonMethodPatterns(mi))) {
+      return fn;
+    }
+
     ensureFunctionIsInitialized(mi);
 
     var useInterpreter = false;
