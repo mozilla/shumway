@@ -211,7 +211,6 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor () {
       false && super();
-      dummyConstructor("public flash.ui.Mouse");
     }
     
     // JS -> AS Bindings
