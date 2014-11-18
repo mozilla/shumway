@@ -36,46 +36,59 @@ module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import clamp = Shumway.NumberUtilities.clamp;
   import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
   import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
-  export class Float64Vector {
+  export class Float64Vector extends ASVector<ASInt> {
     static EXTRA_CAPACITY = 4;
     static INITIAL_CAPACITY = 10;
     static DEFAULT_VALUE = 0;
 
-    static CASEINSENSITIVE = 1;
     static DESCENDING = 2;
     static UNIQUESORT = 4;
     static RETURNINDEXEDARRAY = 8;
-    static NUMERIC = 16;
 
-    static defaultCompareFunction(a, b) {
-      return String(a).localeCompare(String(b));
-    }
+    public static instanceConstructor: any = Float64Vector;
+    public static staticNatives: any [] = [Float64Vector];
+    public static instanceNatives: any [] = [Float64Vector.prototype];
+    public static callableConstructor: any = Float64Vector.callable;
 
-    static compare(a, b, options, compareFunction) {
-      release || assertNotImplemented (!(options & Float64Vector.CASEINSENSITIVE), "CASEINSENSITIVE");
-      release || assertNotImplemented (!(options & Float64Vector.UNIQUESORT), "UNIQUESORT");
-      release || assertNotImplemented (!(options & Float64Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
-      var result = 0;
-      if (!compareFunction) {
-        compareFunction = Float64Vector.defaultCompareFunction;
-      }
-      if (options & Float64Vector.NUMERIC) {
-        a = toNumber(a);
-        b = toNumber(b);
-        result = a < b ? -1 : (a > b ? 1 : 0);
-      } else {
-        result = compareFunction(a, b);
-      }
-      if (options & Float64Vector.DESCENDING) {
-        result *= -1;
-      }
-      return result;
+    static classInitializer: any = function() {
+      var proto: any = Float64Vector.prototype;
+      defineNonEnumerableProperty(proto, '$Bgjoin', proto.join);
+      // Same as join, see VectorImpl.as in Tamarin repository.
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.join);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', proto.toLocaleString);
+
+      defineNonEnumerableProperty(proto, '$Bgpop', proto.pop);
+      defineNonEnumerableProperty(proto, '$Bgpush', proto.push);
+
+      defineNonEnumerableProperty(proto, '$Bgreverse', proto.reverse);
+      defineNonEnumerableProperty(proto, '$Bgconcat', proto.concat);
+      defineNonEnumerableProperty(proto, '$Bgsplice', proto.splice);
+      defineNonEnumerableProperty(proto, '$Bgslice', proto.slice);
+
+      defineNonEnumerableProperty(proto, '$Bgshift', proto.shift);
+      defineNonEnumerableProperty(proto, '$Bgunshift', proto.unshift);
+
+      defineNonEnumerableProperty(proto, '$BgindexOf', proto.indexOf);
+      defineNonEnumerableProperty(proto, '$BglastIndexOf', proto.lastIndexOf);
+
+      defineNonEnumerableProperty(proto, '$BgforEach', proto.forEach);
+      defineNonEnumerableProperty(proto, '$Bgmap', proto.map);
+      defineNonEnumerableProperty(proto, '$Bgfilter', proto.filter);
+      defineNonEnumerableProperty(proto, '$Bgsome', proto.some);
+      defineNonEnumerableProperty(proto, '$Bgevery', proto.every);
+
+      defineNonEnumerableProperty(proto, '$Bgsort', proto.sort);
+    };
+
+    newThisType(): Float64Vector {
+      return new Float64Vector();
     }
 
     private _fixed: boolean;
@@ -84,6 +97,7 @@ module Shumway.AVM2.AS {
     private _offset: number;
 
     constructor (length: number = 0, fixed: boolean = false) {
+      false && super();
       length = length >>> 0; fixed = !!fixed;
       this._fixed = fixed;
       this._buffer = new Float64Array(Math.max(Float64Vector.INITIAL_CAPACITY, length + Float64Vector.EXTRA_CAPACITY));
@@ -129,6 +143,17 @@ module Shumway.AVM2.AS {
     }
 
     toString() {
+      var str = "";
+      for (var i = 0; i < this._length; i++) {
+        str += this._buffer[this._offset + i];
+        if (i < this._length - 1) {
+          str += ",";
+        }
+      }
+      return str;
+    }
+
+    toLocaleString(){
       var str = "";
       for (var i = 0; i < this._length; i++) {
         str += this._buffer[this._offset + i];
@@ -243,16 +268,65 @@ module Shumway.AVM2.AS {
       }
     }
 
-    join(sep) {
-      notImplemented("Float64Vector.join");
+    join(separator: string = ',') {
+      var limit = this.length;
+      var buffer = this._buffer;
+      var offset = this._offset;
+      var result = "";
+      for (var i = 0; i < limit - 1; i++) {
+        result += buffer[offset + i] + separator;
+      }
+      if (limit > 0) {
+        result += buffer[offset + limit - 1];
+      }
+      return result;
     }
 
-    indexOf(searchElement, fromIndex) {
-      notImplemented("Float64Vector.indexOf");
+    indexOf(searchElement, fromIndex = 0) {
+      var length = this._length;
+      var start = fromIndex|0;
+      if (start < 0) {
+        start = start + length;
+        if (start < 0) {
+          start = 0;
+        }
+      } else if (start >= length) {
+        return -1;
+      }
+      var buffer = this._buffer;
+      var length = this._length;
+      var offset = this._offset;
+      start += offset;
+      var end = offset + length;
+      for (var i = start; i < end; i++) {
+        if (buffer[i] === searchElement) {
+          return i - offset;
+        }
+      }
+      return -1;
     }
 
-    lastIndexOf(searchElement, fromIndex) {
-      notImplemented("Float64Vector.lastIndexOf");
+    lastIndexOf(searchElement, fromIndex = 0x7fffffff) {
+      var length = this._length;
+      var start = fromIndex|0;
+      if (start < 0) {
+        start = start + length;
+        if (start < 0) {
+          return -1;
+        }
+      } else if (start >= length) {
+        start = length;
+      }
+      var buffer = this._buffer;
+      var offset = this._offset;
+      start += offset;
+      var end = offset;
+      for (var i = start; i-- > end;) {
+        if (buffer[i] === searchElement) {
+          return i - offset;
+        }
+      }
+      return -1;
     }
 
     map(callback, thisObject) {
@@ -298,120 +372,21 @@ module Shumway.AVM2.AS {
       return this;
     }
 
-    static _sort(a) {
-      var stack = [];
-      var sp = -1;
-      var l = 0;
-      var r = a.length - 1;
-      var i, j, swap, temp;
-      while (true) {
-        if (r - l <= 100) {
-          for (j = l + 1; j <= r; j++) {
-            swap = a[j];
-            i = j - 1;
-            while (i >= l && a[i] > swap) {
-              a[i + 1] = a[i--];
-            }
-            a[i + 1] = swap;
-          }
-          if (sp == -1) {
-            break;
-          }
-          r = stack[sp--];
-          l = stack[sp--];
-        } else {
-          var median = l + r >> 1;
-          i = l + 1;
-          j = r;
-          swap = a[median];
-          a[median] = a[i];
-          a[i] = swap;
-          if (a[l] > a[r]) {
-            swap = a[l];
-            a[l] = a[r];
-            a[r] = swap;
-          }
-          if (a[i] > a[r]) {
-            swap = a[i];
-            a[i] = a[r];
-            a[r] = swap;
-          }
-          if (a[l] > a[i]) {
-            swap = a[l];
-            a[l] = a[i];
-            a[i] = swap;
-          }
-          temp = a[i];
-          while (true) {
-            do {
-              i++;
-            } while (a[i] < temp);
-            do {
-              j--;
-            } while (a[j] > temp);
-            if (j < i) {
-              break;
-            }
-            swap = a[i];
-            a[i] = a[j];
-            a[j] = swap;
-          }
-          a[l + 1] = a[j];
-          a[j] = temp;
-          if (r - i + 1 >= j - l) {
-            stack[++sp] = i;
-            stack[++sp] = r;
-            r = j - 1;
-          } else {
-            stack[++sp] = l;
-            stack[++sp] = j - 1;
-            l = i;
-          }
-        }
-      }
-      return a;
-    }
-
-    _sortNumeric(descending) {
-      Float64Vector._sort(this._view());
-      if (descending) {
-        this.reverse();
-      }
-    }
-
-    sort() {
+    sort(sortBehavior?: any) {
       if (arguments.length === 0) {
         return Array.prototype.sort.call(this._view());
       }
-      var compareFunction, options = 0;
-      if (arguments[0] instanceof Function) {
-        compareFunction = arguments[0];
-      } else if (isNumber(arguments[0])) {
-        options = arguments[0];
+      if (sortBehavior instanceof Function) {
+        return Array.prototype.sort.call(this._view(), sortBehavior);
+      } else {
+        var options = sortBehavior|0;
+        release || assertNotImplemented (!(options & Float64Vector.UNIQUESORT), "UNIQUESORT");
+        release || assertNotImplemented (!(options & Float64Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+        if (options & Float64Vector.DESCENDING) {
+          return Array.prototype.sort.call(this._view(), (a, b) => b - a);
+        }
+        return Array.prototype.sort.call(this._view(), (a, b) => a - b);
       }
-      if (isNumber(arguments[1])) {
-        options = arguments[1];
-      }
-      if (options & Float64Vector.NUMERIC) {
-        return this._sortNumeric(options & Float64Vector.DESCENDING);
-      }
-      Array.prototype.sort.call(this._view(), function (a, b) {
-        return Float64Vector.compare(a, b, options, compareFunction);
-      });
-    }
-
-    asGetNumericProperty(i) {
-      checkArguments && asCheckVectorGetNumericProperty(i, this._length);
-      return this._buffer[this._offset + i];
-    }
-
-    asSetNumericProperty(i, v) {
-      checkArguments && asCheckVectorSetNumericProperty(i, this._length, this._fixed);
-      if (i === this._length) {
-        this._ensureCapacity(this._length + 1);
-        this._length ++;
-      }
-      this._buffer[this._offset + i] = v;
     }
 
     shift() {
@@ -421,17 +396,6 @@ module Shumway.AVM2.AS {
       }
       this._length--;
       return this._buffer[this._offset++];
-    }
-
-    _checkFixed() {
-      if (this._fixed) {
-        throwError("RangeError", Errors.VectorFixedError);
-      }
-    }
-
-    _slide(distance) {
-      this._buffer.set(this._view(), this._offset + distance);
-      this._offset += distance;
     }
 
     unshift() {
@@ -448,12 +412,47 @@ module Shumway.AVM2.AS {
       }
     }
 
-    asHasProperty(namespaces, name, flags) {
-      if (Float64Vector.prototype === this || !isNumeric(name)) {
-        return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
+    slice(start = 0, end = 0x7fffffff) {
+      var buffer = this._buffer;
+      var length = this._length;
+      var first = Math.min(Math.max(start, 0), length);
+      var last = Math.min(Math.max(end, first), length);
+      var result = new Float64Vector(last - first, this.fixed);
+      result._buffer.set(buffer.subarray(this._offset + first, this._offset + last),
+                         result._offset);
+      return result;
+    }
+
+    splice(start: number, deleteCount_: number /*, ...items: number[] */) {
+      var buffer = this._buffer;
+      var length = this._length;
+      var first = Math.min(Math.max(start, 0), length);
+      var startOffset = this._offset + first;
+
+      var deleteCount = Math.min(Math.max(deleteCount_, 0), length - first);
+      var insertCount = arguments.length - 2;
+      var deletedItems;
+
+      var result = new Float64Vector(deleteCount, this.fixed);
+      if (deleteCount > 0) {
+        deletedItems = buffer.subarray(startOffset, startOffset + deleteCount);
+        result._buffer.set(deletedItems, result._offset);
       }
-      var index = toNumber(name);
-      return index >= 0 && index < this._length;
+      this._ensureCapacity(length - deleteCount + insertCount);
+      var right = startOffset + deleteCount;
+      var slice = buffer.subarray(right, length);
+      buffer.set(slice, startOffset + insertCount);
+      this._length += insertCount - deleteCount;
+      for (var i = 0; i < insertCount; i++) {
+        buffer[startOffset + i] = arguments[i + 2];
+      }
+
+      return result;
+    }
+
+    _slide(distance) {
+      this._buffer.set(this._view(), this._offset + distance);
+      this._offset += distance;
     }
 
     get length() {
@@ -479,21 +478,32 @@ module Shumway.AVM2.AS {
       return this._fixed;
     }
 
-    /**
-     * Delete |deleteCount| elements starting at |index| then insert |insertCount| elements
-     * from |args| object starting at |offset|.
-     */
-    _spliceHelper(index, insertCount, deleteCount, args, offset) {
-      insertCount = clamp(insertCount, 0, args.length - offset);
-      deleteCount = clamp(deleteCount, 0, this._length - index);
-      this._ensureCapacity(this._length - deleteCount + insertCount);
-      var right = this._offset + index + deleteCount;
-      var slice = this._buffer.subarray(right, right + this._length - index - deleteCount);
-      this._buffer.set(slice, this._offset + index + insertCount);
-      this._length += insertCount - deleteCount;
-      for (var i = 0; i < insertCount; i++) {
-        this._buffer[this._offset + index + i] = args.asGetNumericProperty(offset + i);
+    _checkFixed() {
+      if (this._fixed) {
+        throwError("RangeError", Errors.VectorFixedError);
       }
+    }
+
+    asGetNumericProperty(i) {
+      checkArguments && asCheckVectorGetNumericProperty(i, this._length);
+      return this._buffer[this._offset + i];
+    }
+
+    asSetNumericProperty(i, v) {
+      checkArguments && asCheckVectorSetNumericProperty(i, this._length, this._fixed);
+      if (i === this._length) {
+        this._ensureCapacity(this._length + 1);
+        this._length ++;
+      }
+      this._buffer[this._offset + i] = v;
+    }
+
+    asHasProperty(namespaces, name, flags) {
+      if (Float64Vector.prototype === this || !isNumeric(name)) {
+        return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
+      }
+      var index = toNumber(name);
+      return index >= 0 && index < this._length;
     }
 
     asNextName(index: number): any {
@@ -515,12 +525,6 @@ module Shumway.AVM2.AS {
     asHasNext2(hasNext2Info: HasNext2Info) {
       hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
     }
-
-    _filter: (callback: Function, thisObject: any) => any;
-    _map: (callback: Function, thisObject: any) => any;
   }
-
-  Float64Vector.prototype._filter = Float64Vector.prototype.filter;
-  Float64Vector.prototype._map = Float64Vector.prototype.map;
 }
 

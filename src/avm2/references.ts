@@ -29,11 +29,11 @@
 ///<reference path='bindings.ts' />
 ///<reference path='xregexp.ts' />
 
+///<reference path='native.ts' />
+///<reference path='natives/GenericVector.ts' />
 ///<reference path='natives/int32Vector.ts' />
 ///<reference path='natives/uint32Vector.ts' />
 ///<reference path='natives/float64Vector.ts' />
-///<reference path='native.ts' />
-///<reference path='natives/GenericVector.ts' />
 ///<reference path='natives/xml.ts' />
 ///<reference path='natives/describeType.ts' />
 ///<reference path='natives/dictionary.ts' />

@@ -24,13 +24,12 @@ module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
   import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
   import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
-
-  import arraySort = Shumway.AVM2.AS.arraySort;
 
   export class GenericVector extends ASVector<Object> {
 
@@ -39,6 +38,44 @@ module Shumway.AVM2.AS {
     static UNIQUESORT = 4;
     static RETURNINDEXEDARRAY = 8;
     static NUMERIC = 16;
+
+    public static instanceConstructor: any = GenericVector;
+    public static staticNatives: any [] = [GenericVector];
+    public static instanceNatives: any [] = [GenericVector.prototype];
+
+    static classInitializer: any = function() {
+      var proto: any = GenericVector.prototype;
+      defineNonEnumerableProperty(proto, '$Bgjoin', proto.join);
+      // Same as join, see VectorImpl.as in Tamarin repository.
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.join);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', proto.toLocaleString);
+
+      defineNonEnumerableProperty(proto, '$Bgpop', proto.pop);
+      defineNonEnumerableProperty(proto, '$Bgpush', proto.push);
+
+      defineNonEnumerableProperty(proto, '$Bgreverse', proto.reverse);
+      defineNonEnumerableProperty(proto, '$Bgconcat', proto.concat);
+      defineNonEnumerableProperty(proto, '$Bgsplice', proto.splice);
+      defineNonEnumerableProperty(proto, '$Bgslice', proto.slice);
+
+      defineNonEnumerableProperty(proto, '$Bgshift', proto.shift);
+      defineNonEnumerableProperty(proto, '$Bgunshift', proto.unshift);
+
+      defineNonEnumerableProperty(proto, '$BgindexOf', proto.indexOf);
+      defineNonEnumerableProperty(proto, '$BglastIndexOf', proto.lastIndexOf);
+
+      defineNonEnumerableProperty(proto, '$BgforEach', proto.forEach);
+      defineNonEnumerableProperty(proto, '$Bgmap', proto.map);
+      defineNonEnumerableProperty(proto, '$Bgfilter', proto.filter);
+      defineNonEnumerableProperty(proto, '$Bgsome', proto.some);
+      defineNonEnumerableProperty(proto, '$Bgevery', proto.every);
+
+      defineNonEnumerableProperty(proto, '$Bgsort', proto.sort);
+    }
+
+    newThisType(): GenericVector {
+      return new GenericVector();
+    }
 
     static defaultCompareFunction(a, b) {
       return String(a).localeCompare(String(b));
@@ -65,30 +102,12 @@ module Shumway.AVM2.AS {
       return result;
     }
 
-    public static instanceConstructor: any = GenericVector;
-    public static staticNatives: any [] = [GenericVector];
-    public static instanceNatives: any [] = [GenericVector.prototype, ASVector.prototype];
-
-    private static _every(o: any, callback: Function, thisObject: any): boolean {
-      return o.every(callback, thisObject);
-    }
-
-    private static _forEach(o: any, callback: Function, thisObject: any): void {
-      return o.forEach(callback, thisObject);
-    }
-
-    private static _some(o: any, callback: Function, thisObject: any): boolean {
-      return o.some(callback, thisObject);
-    }
-
-    private static _sort: (o: any, args: any []) => any = arraySort;
-
     private _fixed: boolean;
     private _buffer: any [];
     private _type: ASClass;
     private _defaultValue: any;
 
-    constructor (length: number /*uint*/, fixed: boolean, type: ASClass) {
+    constructor (length: number /*uint*/ = 0, fixed: boolean = false, type: ASClass = ASObject) {
       false && super();
       length = length >>> 0; fixed = !!fixed;
       this._fixed = !!fixed;
@@ -149,6 +168,48 @@ module Shumway.AVM2.AS {
       return str;
     }
 
+    toLocaleString() {
+      var str = "";
+      for (var i = 0; i < this._buffer.length; i++) {
+        str += this._buffer[i].asCallPublicProperty('toLocaleString');
+        if (i < this._buffer.length - 1) {
+          str += ",";
+        }
+      }
+      return str;
+    }
+
+    sort(sortBehavior?: any) {
+      if (arguments.length === 0) {
+        return this._buffer.sort();
+      }
+      if (sortBehavior instanceof Function) {
+        return this._buffer.sort(<(a: any, b: any) => number>sortBehavior);
+      } else {
+        var options = sortBehavior|0;
+        release || assertNotImplemented (!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
+        release || assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+        if (options && GenericVector.NUMERIC) {
+          if (options & GenericVector.DESCENDING) {
+            return this._buffer.sort((a, b) => asCoerceNumber(b) - asCoerceNumber(a));
+          }
+          return this._buffer.sort((a, b) => asCoerceNumber(a) - asCoerceNumber(b));
+        }
+        if (options && GenericVector.CASEINSENSITIVE) {
+          if (options & GenericVector.DESCENDING) {
+            return this._buffer.sort((a, b) => <any>asCoerceString(b).toLowerCase() -
+                                               <any>asCoerceString(a).toLowerCase());
+          }
+          return this._buffer.sort((a, b) => <any>asCoerceString(a).toLowerCase() -
+                                             <any>asCoerceString(b).toLowerCase());
+        }
+        if (options & GenericVector.DESCENDING) {
+          return this._buffer.sort((a, b) => b - a);
+        }
+        return this._buffer.sort();
+      }
+    }
+
     /**
      * Executes a |callback| function with three arguments: element, index, the vector itself as well
      * as passing the |thisObject| as |this| for each of the elements in the vector. If any of the
@@ -201,6 +262,27 @@ module Shumway.AVM2.AS {
       }
     }
 
+    join(separator: string = ',') {
+      var buffer = this._buffer;
+      var limit = this._buffer.length;
+      var result = "";
+      for (var i = 0; i < limit - 1; i++) {
+        result += buffer[i] + separator;
+      }
+      if (limit > 0) {
+        result += buffer[limit - 1];
+      }
+      return result;
+    }
+
+    indexOf(searchElement, fromIndex = 0) {
+      return this._buffer.indexOf(searchElement, fromIndex);
+    }
+
+    lastIndexOf(searchElement, fromIndex = 0x7fffffff) {
+      return this._buffer.lastIndexOf(searchElement, fromIndex);
+    }
+
     map(callback, thisObject) {
       if (!isFunction(callback)) {
         throwError("ArgumentError", Errors.CheckTypeFailedError);
@@ -241,27 +323,13 @@ module Shumway.AVM2.AS {
       return this;
     }
 
-    sort(comparator) {
-      return this._buffer.sort(comparator);
-    }
-
-    asGetNumericProperty(i) {
-      checkArguments && asCheckVectorGetNumericProperty(i, this._buffer.length);
-      return this._buffer[i];
-    }
-
-    _coerce(v): GenericVector {
+    _coerce(v) {
       if (this._type) {
         return this._type.coerce(v);
       } else if (v === undefined) {
         return null;
       }
       return v;
-    }
-
-    asSetNumericProperty(i, v) {
-      checkArguments && asCheckVectorSetNumericProperty(i, this._buffer.length, this._fixed);
-      this._buffer[i] = this._coerce(v);
     }
 
     shift() {
@@ -272,22 +340,43 @@ module Shumway.AVM2.AS {
       return this._buffer.shift();
     }
 
-    _checkFixed() {
-      if (this._fixed) {
-        throwError("RangeError", Errors.VectorFixedError);
-      }
-    }
-
     unshift() {
       if (!arguments.length) {
         return;
       }
       this._checkFixed();
-      var items = [];
       for (var i = 0; i < arguments.length; i++) {
-        items.push(this._coerce(arguments[i]));
+        this._buffer.unshift(this._coerce(arguments[i]));
       }
-      this._buffer.unshift.apply(this._buffer, items);
+    }
+
+    slice(start = 0, end = 0x7fffffff) {
+      var buffer = this._buffer;
+      var length = buffer.length;
+      var first = Math.min(Math.max(start, 0), length);
+      var last = Math.min(Math.max(end, first), length);
+      var result = new GenericVector(last - first, this.fixed, this._type);
+      result._buffer = buffer.slice(first, last);
+      return result;
+    }
+
+    splice(start: number, deleteCount_: number /*, ...items */) {
+      var buffer = this._buffer;
+      var length = buffer.length;
+      var first = Math.min(Math.max(start, 0), length);
+
+      var deleteCount = Math.min(Math.max(deleteCount_, 0), length - first);
+      var insertCount = arguments.length - 2;
+      if (deleteCount !== insertCount) {
+        this._checkFixed();
+      }
+      var items = [first, deleteCount];
+      for (var i = 2; i < insertCount + 2; i++) {
+        items[i] = this._coerce(arguments[i]);
+      }
+      var result = new GenericVector(deleteCount, this.fixed, this._type);
+      result._buffer = buffer.splice.apply(buffer, items);
+      return result;
     }
 
     get length(): number {
@@ -314,18 +403,10 @@ module Shumway.AVM2.AS {
       return this._fixed;
     }
 
-    /**
-     * Delete |deleteCount| elements starting at |index| then insert |insertCount| elements
-     * from |args| object starting at |offset|.
-     */
-    _spliceHelper(index, insertCount, deleteCount, args, offset) {
-      insertCount = clamp(insertCount, 0, args.length - offset);
-      deleteCount = clamp(deleteCount, 0, this._buffer.length - index);
-      var items = [];
-      for (var i = 0; i < insertCount; i++) {
-        items.push(this._coerce(args.asGetNumericProperty(offset + i)));
+    _checkFixed() {
+      if (this._fixed) {
+        throwError("RangeError", Errors.VectorFixedError);
       }
-      this._buffer.splice.apply(this._buffer, [index, deleteCount].concat(items));
     }
 
     asNextName(index: number): any {
@@ -352,14 +433,18 @@ module Shumway.AVM2.AS {
       return index >= 0 && index < this._buffer.length;
     }
 
+    asGetNumericProperty(i) {
+      checkArguments && asCheckVectorGetNumericProperty(i, this._buffer.length);
+      return this._buffer[i];
+    }
+
+    asSetNumericProperty(i, v) {
+      checkArguments && asCheckVectorSetNumericProperty(i, this._buffer.length, this._fixed);
+      this._buffer[i] = this._coerce(v);
+    }
+
     asHasNext2(hasNext2Info: HasNext2Info) {
       hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
     }
-
-    _filter: (callback: Function, thisObject: any) => any;
-    _map: (callback: Function, thisObject: any) => any;
   }
-
-  GenericVector.prototype._filter = GenericVector.prototype.filter;
-  GenericVector.prototype._map = GenericVector.prototype.map;
 }

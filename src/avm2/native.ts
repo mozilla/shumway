@@ -1273,58 +1273,6 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASIntVector extends ASVector<ASInt> {
-    public static instanceConstructor: any = Int32Vector;
-    public static staticNatives: any [] = [Int32Vector];
-    public static instanceNatives: any [] = [Int32Vector.prototype, ASVector.prototype];
-    public static callableConstructor: any = Int32Vector.callable;
-
-    private static _every(o: any, callback: Function, thisObject: any): boolean {
-      return o.every(callback, thisObject);
-    }
-    private static _forEach(o: any, callback: Function, thisObject: any): void {
-      return o.forEach(callback, thisObject);
-    }
-    private static _some(o: any, callback: Function, thisObject: any): boolean {
-      return o.some(callback, thisObject);
-    }
-    private static _sort: (o: any, args: any []) => any = arraySort;
-  }
-
-  export class ASUIntVector extends ASVector<ASUint>{
-    public static instanceConstructor: any = Uint32Vector;
-    public static staticNatives: any [] = [Uint32Vector];
-    public static instanceNatives: any [] = [Uint32Vector.prototype, ASVector.prototype];
-    public static callableConstructor: any = Uint32Vector.callable;
-    private static _every(o: any, callback: Function, thisObject: any): boolean {
-      return o.every(callback, thisObject);
-    }
-    private static _forEach(o: any, callback: Function, thisObject: any): void {
-      return o.forEach(callback, thisObject);
-    }
-    private static _some(o: any, callback: Function, thisObject: any): boolean {
-      return o.some(callback, thisObject);
-    }
-    private static _sort: (o: any, args: any []) => any = arraySort;
-  }
-
-  export class ASDoubleVector extends ASVector<ASNumber> {
-    public static instanceConstructor: any = Float64Vector;
-    public static staticNatives: any [] = [Float64Vector];
-    public static instanceNatives: any [] = [Float64Vector.prototype, ASVector.prototype];
-    public static callableConstructor: any = Float64Vector.callable;
-    private static _every(o: any, callback: Function, thisObject: any): boolean {
-      return o.every(callback, thisObject);
-    }
-    private static _forEach(o: any, callback: Function, thisObject: any): void {
-      return o.forEach(callback, thisObject);
-    }
-    private static _some(o: any, callback: Function, thisObject: any): boolean {
-      return o.some(callback, thisObject);
-    }
-    private static _sort: (o: any, args: any []) => any = arraySort;
-  }
-
   export class ASJSON extends ASObject {
     public static instanceConstructor: any = ASJSON;
     public static staticNatives: any [] = null;
@@ -1503,10 +1451,10 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["StringClass"]              = ASString;
     builtinNativeClasses["ArrayClass"]               = ASArray;
     builtinNativeClasses["VectorClass"]              = ASVector;
-    builtinNativeClasses["ObjectVectorClass"]        = GenericVector;
-    builtinNativeClasses["IntVectorClass"]           = ASIntVector;
-    builtinNativeClasses["UIntVectorClass"]          = ASUIntVector;
-    builtinNativeClasses["DoubleVectorClass"]        = ASDoubleVector;
+    builtinNativeClasses["ObjectVectorClass"]        = AS.GenericVector;
+    builtinNativeClasses["IntVectorClass"]           = AS.Int32Vector;
+    builtinNativeClasses["UIntVectorClass"]          = AS.Uint32Vector;
+    builtinNativeClasses["DoubleVectorClass"]        = AS.Float64Vector;
     builtinNativeClasses["JSONClass"]                = ASJSON;
     builtinNativeClasses["XMLClass"]                 = ASXML;
     builtinNativeClasses["XMLListClass"]             = ASXMLList;
