@@ -42,10 +42,12 @@ function runSwf(path, callback) {
   });
 }
 
-function saveDiff(path, expected, output, callback) {
-  fs.writeFileSync(diffRefDataFile, expected);
-  fs.writeFileSync(diffTestDataFile, output);
-  var child = spawn('diff', ['-U', '2', diffRefDataFile, diffTestDataFile], {
+function saveDiff(path, id, expected, output, callback) {
+  var refFile = diffRefDataFile.replace(/~$/, '.' + id + '.~');
+  var testFile = diffTestDataFile.replace(/~$/, '.' + id + '.~');
+  fs.writeFileSync(refFile, expected);
+  fs.writeFileSync(testFile, output);
+  var child = spawn('diff', ['-U', '2', refFile, testFile], {
     stdio: ['ignore', 'pipe', 'ignore']
   });
   var result = '';
@@ -53,8 +55,8 @@ function saveDiff(path, expected, output, callback) {
     result += data;
   });
   child.on('close', function (code) {
-    fs.unlinkSync(diffRefDataFile);
-    fs.unlinkSync(diffTestDataFile);
+    fs.unlinkSync(refFile);
+    fs.unlinkSync(testFile);
 
     fs.appendFile(traceFile,
         'REFTEST TEST-UNEXPECTED-FAIL | ' + path + '\n' + result, callback);
@@ -86,7 +88,7 @@ function runTest(test, thread, callback) {
         callback(true);
       } else {
         console.log(FAIL_PREFIX + id + threadId + ', see trace.log');
-        saveDiff(test.path, expected, output, function () {
+        saveDiff(test.path, thread, expected, output, function () {
           callback(false);
         });
       }
