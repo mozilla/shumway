@@ -51,58 +51,34 @@ package __AS3__.vec
     {
     }
 
-    // Private helper methods.  These allow most of the implementation to be abstracted into
-    // a file that is included from the implementation of the different Vector types.
-    private static function castToThisType(item) : Vector$object {
-      return item;
-    }
+    public native function get length():uint;
+    public native function set length(value:uint);
 
-    private native function newThisType() : Vector$object;
+    public native function set fixed(f:Boolean);
+    public native function get fixed():Boolean;
 
-    // Bugzilla 573452, Type-specialized Vector methods: specialize Push.
-    //
-    // NOTE SIX ALMOST-DUPLICATED COPIES OF THIS FUNCTION IN THE FILE.
+    native AS3 function toString() : String;
 
-    prototype.push = function (...args) // rest args are efficient
-    {
-      // Type check - Vector methods are not generic.
-      castToThisType(this);
+    native AS3 function toLocaleString() : String;
 
-      // making it type specialized, otherwise compiler treats 'this' as untyped
-      var v:Vector$object = this;
+    native AS3 function join(separator: String=","): String;
 
-      // FP 10.1 throws this error specifically, the setting of the element in the
-      // loop below will generate error 1125 instead.
-      if (v.fixed)
-        Error.throwError(RangeError, 1126);
+    native AS3 function every(checker:Function, thisObj: Object=null): Boolean;
 
-      // The loop is correct because Tamarin (as of June 2010) has a 4GB object limit.
-      // Thus at most 1G elements can be accommodated in a Vector, and the index never
-      // wraps around.
-      var n:uint = v.length;
-      var i:uint=0;
-      var argc:uint=args.length;
-      while (i < argc)
-      {
-        v[n] = args[i];
-        i++;
-        n++;
-      }
-      v.length = n;
-      return n;
-    }
+    native AS3 function forEach(eacher:Function, thisObj: Object=null): void;
 
-    // Include most of the vector implementation.
-    include "VectorImpl.as";
+    native AS3 function map(mapper:Function, thisObj:Object=null);
+
+    AS3 native function push(...items:Array): uint;
+
+    native AS3 function some(checker, thisObj: Object=null): Boolean;
 
     // Methods with the specific type in their sig.  Can't be in the impl file since it doesn't
     // know what "type" vector this is (int, uint, Number, Object)
     // Most of these just call generic versions in impl, but some small ones are implemented here.
     AS3 native function concat(...items) : Vector$object;
 
-    AS3 function filter(checker : Function, thisObj: Object=null): Vector$object {
-      return _filter(checker, thisObj);
-    }
+    AS3 native function filter(checker : Function, thisObj: Object=null): Vector$object;
 
     AS3 native function pop();
 
@@ -110,138 +86,65 @@ package __AS3__.vec
 
     AS3 native function shift():*;
 
-    AS3 function slice(start:Number=0, end:Number=0x7fffffff): Vector$object {
-      return this._slice(start, end);
-    }
+    AS3 native function slice(start:Number=0, end:Number=0x7fffffff): Vector$object;
 
-    AS3 function sort(comparefn): Vector$object {
-      var a : Array = [comparefn];
-      _sort(this, a);
-      return this;
-    }
-    AS3 function splice(start: Number, deleteCount: Number, ...items): Vector$object {
-      return this._splice(start, deleteCount, items);
-    }
+    AS3 native function sort(sortBehavior: *): Vector$object;
+    AS3 native function splice(start: Number, deleteCount: Number, ...items): Vector$object;
 
-    AS3 function indexOf(value:Object, from:Number=0): Number {
-      var start:uint = clamp( from, length );
-      for ( var i:uint=start, limit:uint=length ; i < limit ; i++ )
-        if (this[i] === value)
-          return i;
-      return -1;
-    }
+    AS3 native function indexOf(value:Object, from:Number=0): Number;
 
-    AS3 function lastIndexOf(value:Object, from: Number=0x7fffffff): Number {
-      var start:uint = clamp( from, length );
-      if( start == length )
-        --start;
-      for ( var i:int=start ; i >= 0 ; i-- ) {
-        if (this[i] === value)
-          return i;
-      }
-      return -1;
-    }
+    AS3 native function lastIndexOf(value:Object, from: Number=0x7fffffff): Number;
 
   }
 
   [native(cls="IntVectorClass")]
   dynamic final class Vector$int
   {
+    public native function Vector$int(length:uint=0, fixed:Boolean=false);
 
-    // Dummy constructor -- actual code is in construct()
-    public function Vector$int(length:uint=0, fixed:Boolean=false)
-    {
-    }
+    public native function get length():uint;
+    public native function set length(value:uint);
 
-    // Private helper methods.  These allow most of the implementation to be abstracted into
-    // a file that is included from the implementation of the different Vector types.
-    private static function castToThisType(item) : Vector$int {
-      return item;
-    }
+    public native function set fixed(f:Boolean);
+    public native function get fixed():Boolean;
 
-    private native function newThisType() : Vector$int;
+    native AS3 function toString() : String;
 
-    // Bugzilla 573452, Type-specialized Vector methods: specialize Push.
-    //
-    // NOTE SIX ALMOST-DUPLICATED COPIES OF THIS FUNCTION IN THE FILE.
+    native AS3 function toLocaleString() : String;
 
-    prototype.push = function (...args)  // rest args are efficient
-    {
-      // Type check - Vector methods are not generic.
-      castToThisType(this);
+    native AS3 function join(separator: String=","): String;
 
-      // making it type specialized, otherwise compiler treats 'this' as untyped
-      var v:Vector$int = this;
+    native AS3 function every(checker:Function, thisObj: Object=null): Boolean;
 
-      // FP 10.1 throws this error specifically, the setting of the element in the
-      // loop below will generate error 1125 instead.
-      if (v.fixed)
-        Error.throwError(RangeError, 1126);
+    native AS3 function forEach(eacher:Function, thisObj: Object=null): void;
 
-      // The loop is correct because Tamarin (as of June 2010) has a 4GB object limit.
-      // Thus at most 1G elements can be accommodated in a Vector, and the index never
-      // wraps around.
-      var n:uint = v.length;
-      var i:uint=0;
-      var argc:uint=args.length;
-      while (i < argc)
-      {
-        v[n] = args[i];
-        i++;
-        n++;
-      }
-      v.length = n;
-      return n;
-    }
+    native AS3 function map(mapper:Function, thisObj:Object=null);
 
-    // Include most of the vector implementation.
-    include "VectorImpl.as";
+    AS3 native function push(...items:Array): uint;
+
+    native AS3 function some(checker, thisObj: Object=null): Boolean;
 
     // Methods with the specific type in their sig.  Can't be in the impl file since it doesn't
     // know what "type" vector this is (int, uint, Number, Object)
     // Most of these just call generic versions in impl, but some small ones are implemented here.
     AS3 native function concat(...items) : Vector$int;
 
-    AS3 function filter(checker:Function, thisObj: Object=null): Vector$int {
-      return _filter(checker, thisObj);
-    }
+    native AS3 function filter(checker:Function, thisObj: Object=null): Vector$int;
 
     AS3 native function pop(): int ;
 
     AS3 native function reverse() : Vector$int;
     AS3 native function shift():int;
 
-    AS3 function slice(start:Number=0, end:Number=0x7fffffff): Vector$int {
-      return this._slice(start, end);
-    }
+    AS3 native function slice(start:Number=0, end:Number=0x7fffffff): Vector$int;
 
-    AS3 function sort(comparefn): Vector$int {
-      var a : Array = [comparefn];
-      _sort(this, a);
-      return this;
-    }
-    AS3 function splice(start: Number, deleteCount: Number, ...items): Vector$int {
-      return this._splice(start, deleteCount, items);
-    }
+    AS3 native function sort(sortBehavior: *): Vector$int;
 
-    AS3 function indexOf(value:int, from:Number=0): Number {
-      var start:uint = clamp( from, length );
-      for ( var i:uint=start, limit:uint=length ; i < limit ; i++ )
-        if (this[i] === value)
-          return i;
-      return -1;
-    }
+    AS3 native function splice(start: Number, deleteCount: Number, ...items): Vector$int;
 
-    AS3 function lastIndexOf(value:int, from: Number=0x7fffffff): Number {
-      var start:uint = clamp( from, length );
-      if( start == length )
-        --start;
-      for ( var i:int=start ; i >= 0 ; i-- ) {
-        if (this[i] === value)
-          return i;
-      }
-      return -1;
-    }
+    AS3 native function indexOf(value:int, from:Number=0): Number;
+
+    AS3 native function lastIndexOf(value:int, from: Number=0x7fffffff): Number;
 
   }
 
@@ -250,62 +153,36 @@ package __AS3__.vec
   dynamic final class Vector$uint
   {
     // Dummy constructor -- actual code is in construct()
-    public function Vector$uint(length:uint=0, fixed:Boolean=false)
-    {
-    }
+    public native function Vector$uint(length:uint=0, fixed:Boolean=false);
 
-    // Private helper methods.  These allow most of the implementation to be abstracted into
-    // a file that is included from the implementation of the different Vector types.
-    private static function castToThisType(item) : Vector$uint {
-      return item;
-    }
+    public native function get length():uint;
+    public native function set length(value:uint);
 
-    private native function newThisType() : Vector$uint;
+    public native function set fixed(f:Boolean);
+    public native function get fixed():Boolean;
 
-    // Bugzilla 573452, Type-specialized Vector methods: specialize Push.
-    //
-    // NOTE SIX ALMOST-DUPLICATED COPIES OF THIS FUNCTION IN THE FILE.
+    native AS3 function toString() : String;
 
-    prototype.push = function (...args)  // rest args are efficient
-    {
-      // Type check - Vector methods are not generic.
-      castToThisType(this);
+    native AS3 function toLocaleString() : String;
 
-      // making it type specialized, otherwise compiler treats 'this' as untyped
-      var v:Vector$uint = this;
+    native AS3 function join(separator: String=","): String;
 
-      // FP 10.1 throws this error specifically, the setting of the element in the
-      // loop below will generate error 1125 instead.
-      if (v.fixed)
-        Error.throwError(RangeError, 1126);
+    native AS3 function every(checker:Function, thisObj: Object=null): Boolean;
 
-      // The loop is correct because Tamarin (as of June 2010) has a 4GB object limit.
-      // Thus at most 1G elements can be accommodated in a Vector, and the index never
-      // wraps around.
-      var n:uint = v.length;
-      var i:uint=0;
-      var argc:uint=args.length;
-      while (i < argc)
-      {
-        v[n] = args[i];
-        i++;
-        n++;
-      }
-      v.length = n;
-      return n;
-    }
+    native AS3 function forEach(eacher:Function, thisObj: Object=null): void;
 
-    // Include most of the vector implementation.
-    include "VectorImpl.as";
+    native AS3 function map(mapper:Function, thisObj:Object=null);
+
+    AS3 native function push(...items:Array): uint;
+
+    native AS3 function some(checker, thisObj: Object=null): Boolean;
 
     // Methods with the specific type in their sig.  Can't be in the impl file since it doesn't
     // know what "type" vector this is (int, uint, Number, Object)
     // Most of these just call generic versions in impl, but some small ones are implemented here.
     AS3 native function concat(...items) : Vector$uint;
 
-    AS3 function filter(checker:Function, thisObj: Object=null): Vector$uint {
-      return _filter(checker, thisObj);
-    }
+    native AS3 function filter(checker:Function, thisObj: Object=null): Vector$uint;
 
     AS3 native function pop(): uint ;
 
@@ -313,37 +190,15 @@ package __AS3__.vec
 
     AS3 native function shift():uint;
 
-    AS3 function slice(start:Number=0, end:Number=0x7fffffff): Vector$uint {
-      return this._slice(start, end);
-    }
+    AS3 native function slice(start:Number=0, end:Number=0x7fffffff): Vector$uint;
 
-    AS3 function sort(comparefn): Vector$uint {
-      var a : Array = [comparefn];
-      _sort(this, a);
-      return this;
-    }
-    AS3 function splice(start: Number, deleteCount: Number, ...items): Vector$uint {
-      return this._splice(start, deleteCount, items);
-    }
+    AS3 native function sort(sortBehavior: *): Vector$uint;
 
-    AS3 function indexOf(value:uint, from:Number=0): Number {
-      var start:uint = clamp( from, length );
-      for ( var i:uint=start, limit:uint=length ; i < limit ; i++ )
-        if (this[i] === value)
-          return i;
-      return -1;
-    }
+    AS3 native function splice(start: Number, deleteCount: Number, ...items): Vector$uint;
 
-    AS3 function lastIndexOf(value:uint, from: Number=0x7fffffff): Number {
-      var start:uint = clamp( from, length );
-      if( start == length )
-        --start;
-      for ( var i:int=start ; i >= 0 ; i-- ) {
-        if (this[i] === value)
-          return i;
-      }
-      return -1;
-    }
+    AS3 native function indexOf(value:uint, from:Number=0): Number;
+
+    AS3 native function lastIndexOf(value:uint, from: Number=0x7fffffff): Number;
 
   }
 
@@ -351,62 +206,36 @@ package __AS3__.vec
   dynamic final class Vector$double
   {
     // Dummy constructor -- actual code is in construct()
-    public function Vector$double(length:uint=0, fixed:Boolean=false)
-    {
-    }
+    public native function Vector$double(length:uint=0, fixed:Boolean=false);
 
-    // Private helper methods.  These allow most of the implementation to be abstracted into
-    // a file that is included from the implementation of the different Vector types.
-    private static function castToThisType(item) : Vector$double {
-      return item;
-    }
+    public native function get length():uint;
+    public native function set length(value:uint);
 
-    private native function newThisType() : Vector$double;
+    public native function set fixed(f:Boolean);
+    public native function get fixed():Boolean;
 
-    // Bugzilla 573452, Type-specialized Vector methods: specialize Push.
-    //
-    // NOTE SIX ALMOST-DUPLICATED COPIES OF THIS FUNCTION IN THE FILE.
+    native AS3 function toString() : String;
 
-    prototype.push = function (...args)  // rest args are efficient
-    {
-      // Type check - Vector methods are not generic.
-      castToThisType(this);
+    native AS3 function toLocaleString() : String;
 
-      // making it type specialized, otherwise compiler treats 'this' as untyped
-      var v:Vector$double = this;
+    native AS3 function join(separator: String=","): String;
 
-      // FP 10.1 throws this error specifically, the setting of the element in the
-      // loop below will generate error 1125 instead.
-      if (v.fixed)
-        Error.throwError(RangeError, 1126);
+    native AS3 function every(checker:Function, thisObj: Object=null): Boolean;
 
-      // The loop is correct because Tamarin (as of June 2010) has a 4GB object limit.
-      // Thus at most 1G elements can be accommodated in a Vector, and the index never
-      // wraps around.
-      var n:uint = v.length;
-      var i:uint=0;
-      var argc:uint=args.length;
-      while (i < argc)
-      {
-        v[n] = args[i];
-        i++;
-        n++;
-      }
-      v.length = n;
-      return n;
-    }
+    native AS3 function forEach(eacher:Function, thisObj: Object=null): void;
 
-    // Include most of the vector implementation.
-    include "VectorImpl.as";
+    native AS3 function map(mapper:Function, thisObj:Object=null);
+
+    AS3 native function push(...items:Array): uint;
+
+    native AS3 function some(checker, thisObj: Object=null): Boolean;
 
     // Methods with the specific type in their sig.  Can't be in the impl file since it doesn't
     // know what "type" vector this is (int, uint, Number, Object)
     // Most of these just call generic versions in impl, but some small ones are implemented here.
     AS3 native function concat(...items) : Vector$double;
 
-    AS3 function filter(checker:Function, thisObj: Object=null): Vector$double {
-      return _filter(checker, thisObj);
-    }
+    native AS3 function filter(checker:Function, thisObj: Object=null): Vector$double;
 
     AS3 native function pop(): Number ;
 
@@ -414,37 +243,15 @@ package __AS3__.vec
 
     AS3 native function shift():Number;
 
-    AS3 function slice(start:Number=0, end:Number=0x7fffffff): Vector$double {
-      return this._slice(start, end);
-    }
+    AS3 native function slice(start:Number=0, end:Number=0x7fffffff): Vector$double;
 
-    AS3 function sort(comparefn): Vector$double {
-      var a : Array = [comparefn];
-      _sort(this, a);
-      return this;
-    }
-    AS3 function splice(start: Number, deleteCount: Number, ...items): Vector$double {
-      return this._splice(start, deleteCount, items);
-    }
+    AS3 native function sort(sortBehavior: *): Vector$double;
 
-    AS3 function indexOf(value:Number, from:Number=0): Number {
-      var start:uint = clamp( from, length );
-      for ( var i:uint=start, limit:uint=length ; i < limit ; i++ )
-        if (this[i] === value)
-          return i;
-      return -1;
-    }
+    AS3 native function splice(start: Number, deleteCount: Number, ...items): Vector$double
 
-    AS3 function lastIndexOf(value:Number, from: Number=0x7fffffff): Number {
-      var start:uint = clamp( from, length );
-      if( start == length )
-        --start;
-      for ( var i:int=start ; i >= 0 ; i-- ) {
-        if (this[i] === value)
-          return i;
-      }
-      return -1;
-    }
+    AS3 native function indexOf(value:Number, from:Number=0): Number;
+
+    AS3 native function lastIndexOf(value:Number, from: Number=0x7fffffff): Number;
   }
 
 }

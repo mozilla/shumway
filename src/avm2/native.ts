@@ -1123,34 +1123,35 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [Array.prototype];
 
     static classInitializer: any = function() {
-      var proto = Array.prototype;
-      defineNonEnumerableProperty(proto, '$Bgjoin', Array.prototype.join);
+      var proto: any = Array.prototype;
+      var asProto = ASArray.prototype;
+      defineNonEnumerableProperty(proto, '$Bgjoin', proto.join);
       // Same as join, see Array.as in Tamarin repository.
-      defineNonEnumerableProperty(proto, '$BgtoString', Array.prototype.join);
-      defineNonEnumerableProperty(proto, '$BgtoLocaleString', ASArray.prototype.toLocaleString);
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.join);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', asProto.toLocaleString);
 
-      defineNonEnumerableProperty(proto, '$Bgpop', Array.prototype.pop);
-      defineNonEnumerableProperty(proto, '$Bgpush', Array.prototype.push);
+      defineNonEnumerableProperty(proto, '$Bgpop', proto.pop);
+      defineNonEnumerableProperty(proto, '$Bgpush', proto.push);
 
-      defineNonEnumerableProperty(proto, '$Bgreverse', Array.prototype.reverse);
-      defineNonEnumerableProperty(proto, '$Bgconcat', Array.prototype.concat);
-      defineNonEnumerableProperty(proto, '$Bgsplice', ASArray.prototype.splice);
-      defineNonEnumerableProperty(proto, '$Bgslice', Array.prototype.slice);
+      defineNonEnumerableProperty(proto, '$Bgreverse', proto.reverse);
+      defineNonEnumerableProperty(proto, '$Bgconcat', proto.concat);
+      defineNonEnumerableProperty(proto, '$Bgsplice', asProto.splice);
+      defineNonEnumerableProperty(proto, '$Bgslice', proto.slice);
 
-      defineNonEnumerableProperty(proto, '$Bgshift', Array.prototype.shift);
-      defineNonEnumerableProperty(proto, '$Bgunshift', Array.prototype.unshift);
+      defineNonEnumerableProperty(proto, '$Bgshift', proto.shift);
+      defineNonEnumerableProperty(proto, '$Bgunshift', proto.unshift);
 
-      defineNonEnumerableProperty(proto, '$BgindexOf', Array.prototype.indexOf);
-      defineNonEnumerableProperty(proto, '$BglastIndexOf', Array.prototype.lastIndexOf);
+      defineNonEnumerableProperty(proto, '$BgindexOf', proto.indexOf);
+      defineNonEnumerableProperty(proto, '$BglastIndexOf', proto.lastIndexOf);
 
-      defineNonEnumerableProperty(proto, '$BgforEach', Array.prototype.forEach);
-      defineNonEnumerableProperty(proto, '$Bgmap', Array.prototype.map);
-      defineNonEnumerableProperty(proto, '$Bgfilter', Array.prototype.filter);
-      defineNonEnumerableProperty(proto, '$Bgsome', Array.prototype.some);
-      defineNonEnumerableProperty(proto, '$Bgevery', ASArray.prototype.every);
+      defineNonEnumerableProperty(proto, '$BgforEach', proto.forEach);
+      defineNonEnumerableProperty(proto, '$Bgmap', proto.map);
+      defineNonEnumerableProperty(proto, '$Bgfilter', proto.filter);
+      defineNonEnumerableProperty(proto, '$Bgsome', proto.some);
+      defineNonEnumerableProperty(proto, '$Bgevery', asProto.every);
 
-      defineNonEnumerableProperty(proto, '$Bgsort', ASArray.prototype.sort);
-      defineNonEnumerableProperty(proto, '$BgsortOn', ASArray.prototype.sortOn);
+      defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
+      defineNonEnumerableProperty(proto, '$BgsortOn', asProto.sortOn);
     };
 
     static CACHE_NUMERIC_COMPARATORS = true;
@@ -1270,58 +1271,6 @@ module Shumway.AVM2.AS {
     newThisType(): ASVector<T> {
       return new this.class.instanceConstructor();
     }
-  }
-
-  export class ASIntVector extends ASVector<ASInt> {
-    public static instanceConstructor: any = Int32Vector;
-    public static staticNatives: any [] = [Int32Vector];
-    public static instanceNatives: any [] = [Int32Vector.prototype, ASVector.prototype];
-    public static callableConstructor: any = Int32Vector.callable;
-
-    private static _every(o: any, callback: Function, thisObject: any): boolean {
-      return o.every(callback, thisObject);
-    }
-    private static _forEach(o: any, callback: Function, thisObject: any): void {
-      return o.forEach(callback, thisObject);
-    }
-    private static _some(o: any, callback: Function, thisObject: any): boolean {
-      return o.some(callback, thisObject);
-    }
-    private static _sort: (o: any, args: any []) => any = arraySort;
-  }
-
-  export class ASUIntVector extends ASVector<ASUint>{
-    public static instanceConstructor: any = Uint32Vector;
-    public static staticNatives: any [] = [Uint32Vector];
-    public static instanceNatives: any [] = [Uint32Vector.prototype, ASVector.prototype];
-    public static callableConstructor: any = Uint32Vector.callable;
-    private static _every(o: any, callback: Function, thisObject: any): boolean {
-      return o.every(callback, thisObject);
-    }
-    private static _forEach(o: any, callback: Function, thisObject: any): void {
-      return o.forEach(callback, thisObject);
-    }
-    private static _some(o: any, callback: Function, thisObject: any): boolean {
-      return o.some(callback, thisObject);
-    }
-    private static _sort: (o: any, args: any []) => any = arraySort;
-  }
-
-  export class ASDoubleVector extends ASVector<ASNumber> {
-    public static instanceConstructor: any = Float64Vector;
-    public static staticNatives: any [] = [Float64Vector];
-    public static instanceNatives: any [] = [Float64Vector.prototype, ASVector.prototype];
-    public static callableConstructor: any = Float64Vector.callable;
-    private static _every(o: any, callback: Function, thisObject: any): boolean {
-      return o.every(callback, thisObject);
-    }
-    private static _forEach(o: any, callback: Function, thisObject: any): void {
-      return o.forEach(callback, thisObject);
-    }
-    private static _some(o: any, callback: Function, thisObject: any): boolean {
-      return o.some(callback, thisObject);
-    }
-    private static _sort: (o: any, args: any []) => any = arraySort;
   }
 
   export class ASJSON extends ASObject {
@@ -1502,10 +1451,10 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["StringClass"]              = ASString;
     builtinNativeClasses["ArrayClass"]               = ASArray;
     builtinNativeClasses["VectorClass"]              = ASVector;
-    builtinNativeClasses["ObjectVectorClass"]        = GenericVector;
-    builtinNativeClasses["IntVectorClass"]           = ASIntVector;
-    builtinNativeClasses["UIntVectorClass"]          = ASUIntVector;
-    builtinNativeClasses["DoubleVectorClass"]        = ASDoubleVector;
+    builtinNativeClasses["ObjectVectorClass"]        = AS.GenericVector;
+    builtinNativeClasses["IntVectorClass"]           = AS.Int32Vector;
+    builtinNativeClasses["UIntVectorClass"]          = AS.Uint32Vector;
+    builtinNativeClasses["DoubleVectorClass"]        = AS.Float64Vector;
     builtinNativeClasses["JSONClass"]                = ASJSON;
     builtinNativeClasses["XMLClass"]                 = ASXML;
     builtinNativeClasses["XMLListClass"]             = ASXMLList;

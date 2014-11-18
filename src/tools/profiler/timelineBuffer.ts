@@ -49,7 +49,7 @@ module Shumway.Tools.Profiler {
 
     constructor(name: string = "", startTime?: number) {
       this.name = name || "";
-      this._startTime = isNullOrUndefined(startTime) ? performance.now() : startTime;
+      this._startTime = isNullOrUndefined(startTime) ? jsGlobal.START_TIME : startTime;
     }
 
     getKind(kind: number): TimelineItemKind {
