@@ -180,13 +180,15 @@ module.exports = function(grunt) {
                                       ' -j ' + (+grunt.option('threads') || 9)
       },
       tracetest: {
-        cmd: 'node test/trace_test_run.js'
+        cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 9)
       },
       tracetest_swfdec: {
-        cmd: 'node test/trace_test_run.js -m test/swfdec_test_manifest.json'
+        cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 9) +
+                                        ' -m test/swfdec_test_manifest.json'
       },
       tracetest_fuzz: {
-        cmd: 'node test/trace_test_run.js -m test/test_manifest_fuzz.json'
+        cmd: 'node test/trace_test_run.js -j ' + (+grunt.option('threads') || 9) +
+                                        ' -m test/test_manifest_fuzz.json'
       },
       instrument: {
         cmd: function(path) {
