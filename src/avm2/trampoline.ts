@@ -19,6 +19,7 @@ module Shumway.AVM2.Runtime {
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+  import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
   import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import Trait = Shumway.AVM2.ABC.Trait;
   import IndentingWriter = Shumway.IndentingWriter;
@@ -48,7 +49,7 @@ module Shumway.AVM2.Runtime {
     return key;
   }
 
-  export function checkMethodOverrides(methodInfo) {
+  export function checkMethodOverrides(methodInfo: MethodInfo) {
     if (methodInfo.name) {
       var key = getMethodOverrideKey(methodInfo);
       if (key in VM_METHOD_OVERRIDES) {
@@ -56,6 +57,44 @@ module Shumway.AVM2.Runtime {
         return VM_METHOD_OVERRIDES[key];
       }
     }
+  }
+
+  var patterns = [
+    [208, 48, 71],
+    [208, 48, 208, 73, 0, 71]
+  ];
+
+  /**
+   * Checks for common method patterns.
+   */
+  export function checkCommonMethodPatterns(methodInfo: MethodInfo) {
+    if (methodInfo.code) {
+      if (ArrayUtilities.equals(methodInfo.code, patterns[0])) {
+        return function () {
+          // 1     getlocal0
+          // 2     pushscope
+          // 3     returnvoid
+        };
+      } else if (ArrayUtilities.equals(methodInfo.code, patterns[1])) {
+        if (methodInfo.holder instanceof InstanceInfo) {
+          var instanceInfo = <InstanceInfo>methodInfo.holder;
+          if (Multiname.getQualifiedName(instanceInfo.superName) === Multiname.Object) {
+            return function () {
+              // 1     getlocal0
+              // 2     pushscope
+              // 3     getlocal0
+              // 4     constructsuper      argCount:0
+              // 6     returnvoid
+            };
+          }
+        }
+      } else if (methodInfo.code.length < 10) {
+        // TODO: Add more here as needed.
+        // methodInfo.trace(new IndentingWriter());
+        // console.info(Array.prototype.join.call(methodInfo.code, ", "));
+      }
+    }
+    return null;
   }
 
   /*

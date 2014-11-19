@@ -264,10 +264,12 @@ module Shumway.GFX.Canvas2D {
     culledNodes = 0;
 
     enter(state: RenderState) {
+      Shumway.GFX.enterTimeline("Frame", {frame: this._count});
+      this._count ++;
       if (!writer) {
         return;
       }
-      writer.enter("> Frame: " + (this._count ++));
+      writer.enter("> Frame: " + this._count);
       this._enterTime = performance.now();
 
       this.shapes = 0;
@@ -276,6 +278,7 @@ module Shumway.GFX.Canvas2D {
     }
 
     leave() {
+      Shumway.GFX.leaveTimeline("Frame");
       if (!writer) {
         return;
       }

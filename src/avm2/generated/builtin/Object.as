@@ -41,15 +41,7 @@ public dynamic class Object
 
   // Delay proto functions until class Function is initialized.
   [API(CONFIG::VM_INTERNAL)]
-  public static function _init() {
-    prototype.hasOwnProperty = unsafeJSNative("ASObject.prototype.native_hasOwnProperty");
-    prototype.propertyIsEnumerable = unsafeJSNative("ASObject.prototype.native_propertyIsEnumerable");
-    prototype.setPropertyIsEnumerable = unsafeJSNative("ASObject.prototype.setPropertyIsEnumerable")
-    prototype.isPrototypeOf = unsafeJSNative("ASObject.prototype.native_isPrototypeOf")
-    prototype.toString = prototype.toLocaleString = unsafeJSNative("ASObject.prototype.toString");
-    prototype.valueOf = prototype.toLocaleString = unsafeJSNative("ASObject.prototype.valueOf");
-    _dontEnumPrototype(prototype);
-  }
+  public native static function _init();
 }
 
   // dont create proto functions until after class Function is initialized

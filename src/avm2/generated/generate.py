@@ -45,7 +45,7 @@ import sys
 
 def compile_abc(target, files, deps=None, configs=None):
     asc_jar = os.environ.get('ASC', os.path.realpath('../../../utils/asc.jar'))
-    javacmd = ['java', '-ea', '-DAS3', '-DAVMPLUS', '-classpath', asc_jar, 'macromedia.asc.embedding.ScriptCompiler', '-builtin', '-d']
+    javacmd = ['java', '-ea', '-DAS3', '-DAVMPLUS', '-classpath', asc_jar, 'macromedia.asc.embedding.ScriptCompiler', '-builtin']
     if deps:
         javacmd.extend("../%s/%s.abc" % (dep, dep) for dep in deps)
     javacmd.extend(['-out', target])
@@ -61,7 +61,7 @@ def main():
         # Build without float suppot by default
         configs = ['-config', 'CONFIG::VMCFG_FLOAT=false']
 
-    compile_abc("builtin", ["builtin.as", "Math.as", "Error.as", "Date.as", "RegExp.as", "IDataInput.as", "IDataOutput.as", "ByteArray.as", "Proxy.as", "XML.as", "Dictionary.as"], configs=configs)
+    compile_abc("builtin", ["builtin.as", "Vector.as", "DescribeType.as", "JSON.as", "Math.as", "Error.as", "Date.as", "RegExp.as", "IDataInput.as", "IDataOutput.as", "ByteArray.as", "Proxy.as", "XML.as", "Dictionary.as"], configs=configs)
     compile_abc("shell", ["Capabilities.as", "Domain.as", "System.as"], deps=["builtin"], configs=configs)
     compile_abc("avmplus", ["avmplus.as"], deps=["builtin"], configs=configs)
 

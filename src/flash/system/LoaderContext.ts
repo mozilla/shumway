@@ -33,9 +33,11 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = ["checkPolicyFile!", "applicationDomain!", "securityDomain!", "allowCodeImport!", "requestedContentParent!", "parameters!", "imageDecodingPolicy!"];
     
     constructor (checkPolicyFile: boolean = false, applicationDomain: flash.system.ApplicationDomain = null, securityDomain: flash.system.SecurityDomain = null) {
-      checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain;
       false && super();
-      dummyConstructor("public flash.system.LoaderContext");
+      this.checkPolicyFile = checkPolicyFile;
+      this.applicationDomain = applicationDomain;
+      this.securityDomain = securityDomain;
+      this.imageDecodingPolicy = flash.system.ImageDecodingPolicy.ON_DEMAND;
     }
     
     // JS -> AS Bindings

@@ -390,6 +390,18 @@ module Shumway {
       return -1;
     }
 
+    export function equals<T>(a: T [], b: T []): boolean{
+      if (a.length !== b.length) {
+        return false;
+      }
+      for (var i = 0; i < a.length; i++) {
+        if (a[i] !== b[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     export function pushUnique<T>(array: T [], value: T): number {
       for (var i = 0, j = array.length; i < j; i++) {
         if (array[i] === value) {

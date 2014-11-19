@@ -1513,7 +1513,7 @@ module Shumway.AVM2.Runtime {
    * compiler bakes it in as a constant which should be much more efficient. If the interpreter
    * is used, the scope object is passed in every time.
    */
-  export function createFunction(mi, scope, hasDynamicScope, breakpoint) {
+  export function createFunction(mi, scope, hasDynamicScope, breakpoint, useInterpreter = false) {
     release || assert(!mi.isNative(), "Method should have a builtin: " + mi.name);
 
     if (mi.freeMethod) {
@@ -1530,13 +1530,15 @@ module Shumway.AVM2.Runtime {
       return fn;
     }
 
+    if ((fn = checkCommonMethodPatterns(mi))) {
+      return fn;
+    }
+
     ensureFunctionIsInitialized(mi);
 
-    var useInterpreter = false;
     if ((mi.abc.applicationDomain.mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) && !forceCompile(mi)) {
       useInterpreter = true;
     }
-
 
     var compileFilter = Shumway.AVM2.Compiler.compileFilter.value;
     if (compileFilter && mi.name && Multiname.getQualifiedName(mi.name).search(compileFilter) < 0) {
@@ -1695,7 +1697,7 @@ module Shumway.AVM2.Runtime {
       console.log("Running " + (ii.isInterface() ? "Interface" : "Class") + ": " + className + " Static Constructor");
     }
     enterTimeline("staticInitializer");
-    createFunction(classInfo.init, scope, false, false).call(cls);
+    createFunction(classInfo.init, scope, false, false, true).call(cls);
     leaveTimeline();
     if (!release && traceExecution.value) {
       console.log("Done With Static Constructor");
