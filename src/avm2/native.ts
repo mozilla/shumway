@@ -904,6 +904,10 @@ module Shumway.AVM2.AS {
 
     asCall: (self?, ...args: any []) => any;
     asApply: (self?, args?: any []) => any;
+
+    toString() {
+      return "function Function() {}";
+    }
   }
 
   export class ASBoolean extends ASObject {
@@ -1699,6 +1703,7 @@ module Shumway.AVM2.AS {
     export var Number = jsGlobal.Number;
     export var Date = jsGlobal.Date;
     export var ASObject = Shumway.AVM2.AS.ASObject;
+    export var ASFunction = Shumway.AVM2.AS.ASFunction;
 
     function makeOriginalPrototype(constructor: Function) {
       var o = { prototype: createEmptyObject() }
