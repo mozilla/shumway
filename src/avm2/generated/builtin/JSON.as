@@ -20,7 +20,7 @@
 package
 {
 
-//    include "api-versions.as";
+    include "api-versions.as";
 
     CONFIG const NO_VMCFG_FLOAT = !CONFIG::VMCFG_FLOAT;
 
