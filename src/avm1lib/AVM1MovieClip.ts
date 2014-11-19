@@ -159,8 +159,16 @@ module Shumway.AVM2.AS.avm1lib {
     }
 
     static _initFromConstructor(ctor, nativeMovieClip: flash.display.MovieClip): flash.display.MovieClip {
-      var mc = Object.create(ctor.asGetPublicProperty('prototype'));
-      mc._nativeAS3Object = nativeMovieClip;
+      var mc: any = {
+        _nativeAS3Object: nativeMovieClip
+      };
+      mc.asSetPublicProperty('__proto__', ctor.asGetPublicProperty('prototype'));
+      mc.asDefinePublicProperty('__constructor__', {
+        value: ctor,
+        writable: true,
+        enumerable: false,
+        configurable: false
+      });
       (<any>nativeMovieClip)._as2Object = mc;
       initDefaultListeners(mc);
       ctor.call(mc);

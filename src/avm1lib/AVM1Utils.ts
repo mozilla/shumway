@@ -110,6 +110,38 @@ module Shumway.AVM2.AS.avm1lib {
         enumerable: false,
         configurable: false
       });
+      // TODO move this initialization closer to the interpreter
+      Object.defineProperty(p, '__proto__avm1', {
+        value: null,
+        writable: true,
+        enumerable: false
+      });
+      p.asDefinePublicProperty('__proto__', {
+        get: function () {
+          return this.__proto__avm1;
+        },
+        set: function (proto) {
+          if (proto === this.__proto__avm1) {
+            return;
+          }
+          if (!proto) {
+            this.__proto__avm1 = null;
+            return;
+          }
+
+          // checking for circular references
+          var p = proto;
+          while (p) {
+            if (p === this) {
+              return; // potencial loop found
+            }
+            p = p.__proto__avm1;
+          }
+          this.__proto__avm1 = proto;
+        },
+        enumerable: false,
+        configurable: false
+      });
     }
 
     static addEventHandlerProxy(obj: ASObject, propertyName: string, eventName: string,
