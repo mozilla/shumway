@@ -67,6 +67,8 @@ dynamic public class Function
 [native(cls="MethodClosureClass", gc="exact", instance="MethodClosure", methods="auto", construct="instance")]
 final class MethodClosure extends Function
 {
+  public native function MethodClosure();
+
   override public function get prototype()
   {
     return null

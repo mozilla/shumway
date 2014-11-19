@@ -200,6 +200,16 @@ module Shumway.AVM2.AS {
       }
     }
 
+    static _init() {
+      this.dynamicPrototype.asSetPublicProperty("hasOwnProperty", ASObject.prototype.native_hasOwnProperty);
+      this.dynamicPrototype.asSetPublicProperty("propertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
+      this.dynamicPrototype.asSetPublicProperty("setPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
+      this.dynamicPrototype.asSetPublicProperty("isPrototypeOf", ASObject.prototype.native_isPrototypeOf);
+      this.dynamicPrototype.asSetPublicProperty("toString", ASObject.prototype.toString);
+      this.dynamicPrototype.asSetPublicProperty("valueOf", ASObject.prototype.valueOf);
+      ASObject._dontEnumPrototype(this.dynamicPrototype);
+    }
+
     // Hack to make the TypeScript compiler find the original Object.defineProperty.
     static defineProperty = Object.defineProperty;
 
