@@ -19,15 +19,9 @@ import flash.display.DisplayObjectContainer;
 
 [native(cls='LoaderContextClass')]
 public class LoaderContext {
-  public function LoaderContext(checkPolicyFile:Boolean = false,
+  public native function LoaderContext(checkPolicyFile:Boolean = false,
                                 applicationDomain:ApplicationDomain = null,
-                                securityDomain:SecurityDomain = null)
-  {
-    this.checkPolicyFile = checkPolicyFile;
-    this.applicationDomain = applicationDomain;
-    this.securityDomain = securityDomain;
-    this.imageDecodingPolicy = ImageDecodingPolicy.ON_DEMAND;
-  }
+                                securityDomain:SecurityDomain = null);
   public var checkPolicyFile:Boolean;
   public var applicationDomain:ApplicationDomain;
   public var securityDomain:SecurityDomain;
