@@ -991,12 +991,18 @@ module Shumway.AVM2.AS.flash.text {
     static registerLazyFont(fontMapping: {name: string; id: number},
                             loaderInfo: flash.display.LoaderInfo): void {
       var resolverProp = {
-        get: loaderInfo.getSymbolById.bind(loaderInfo, fontMapping.id),
+        get: Font.resolveLazyFont.bind(Font, loaderInfo, fontMapping.id),
         configurable: true
       };
       Object.defineProperty(Font._fontsByName, fontMapping.name.toLowerCase(), resolverProp);
       Object.defineProperty(Font._fontsByName, 'swffont' + fontMapping.id, resolverProp);
       Object.defineProperty(Font._fontsBySymbolId, fontMapping.id + '', resolverProp);
+    }
+
+    static resolveLazyFont(loaderInfo: flash.display.LoaderInfo, id: number) {
+      // Force font resolution and installation in _fontsByName and _fontsBySymbolId.
+      loaderInfo.getSymbolById(id);
+      return Font._fontsBySymbolId[id];
     }
 
     get fontName(): string {
