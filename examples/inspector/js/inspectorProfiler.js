@@ -41,9 +41,9 @@ var profiler = (function() {
     }, false);
   }
 
-  Profiler.prototype.start = function(maxTime) {
+  Profiler.prototype.start = function(maxTime, resetTimelines) {
     window.profile = true;
-    requestTimelineBuffers('clear');
+    requestTimelineBuffers(resetTimelines ? 'clear' : 'get');
     controller.deactivateProfile();
     maxTime = maxTime || 0;
     elProfilerToolbar.classList.add("withEmphasis");
@@ -95,7 +95,7 @@ var profiler = (function() {
       this.createProfile();
       this.openPanel();
     } else {
-      this.start();
+      this.start(0, true);
     }
   }
 

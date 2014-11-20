@@ -477,7 +477,8 @@ module Shumway.AVM2.AS.flash.display {
         runScripts = DisplayObject._runScripts;
       }
 
-      assert(DisplayObject._advancableInstances.length < 1024 * 16, "Too many advancable instances.");
+      release || assert(DisplayObject._advancableInstances.length < 1024 * 16,
+                        "Too many advancable instances.");
 
       // Step 1: Remove timeline objects that don't exist on new frame, update existing ones with
       // new properties, and declare, but not create, new ones, update numChildren.
