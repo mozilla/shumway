@@ -185,7 +185,7 @@ module Shumway.AVM2.AS.avm1lib {
         return undefined;
       }
 
-      var props: Timeline.SpriteSymbol = Object.create(symbol.symbolProps);
+      var props: flash.display.SpriteSymbol = Object.create(symbol.symbolProps);
       props.avm1Name = name;
       props.avm1SymbolClass = symbol.theClass;
 

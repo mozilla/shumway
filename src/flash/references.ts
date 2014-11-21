@@ -21,6 +21,8 @@
 ///<reference path='../TextContent.ts' />
 ///<reference path='options.ts' />
 
+///<reference path='symbol.ts' />
+
 ///<reference path='geom/Matrix.ts' />
 ///<reference path='geom/Matrix3D.ts' />
 ///<reference path='geom/Orientation3D.ts' />
@@ -411,7 +413,5 @@
 ///<reference path='xml/XMLTag.ts' />
 
 ///<reference path='avm1.d.ts' />
-
-///<reference path='../player/timeline.ts' />
 
 ///<reference path='linker.ts' />

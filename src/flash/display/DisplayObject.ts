@@ -435,7 +435,7 @@ module Shumway.AVM2.AS.flash.display {
                                 callConstructor: boolean): DisplayObject {
       var symbol = state.symbol;
       if (!symbol) {
-        var ownSymbol = <Timeline.SpriteSymbol>this._symbol;
+        var ownSymbol = <flash.display.SpriteSymbol>this._symbol;
         symbol = <Timeline.DisplaySymbol>ownSymbol.loaderInfo.getSymbolById(state.symbolId);
         state.symbol = symbol;
       }
@@ -1650,12 +1650,12 @@ module Shumway.AVM2.AS.flash.display {
     _setStaticContentFromSymbol(symbol: Shumway.Timeline.DisplaySymbol) {
       release || assert(!symbol.dynamic);
       if (this._canHaveGraphics()) {
-        release || assert(symbol instanceof Shumway.Timeline.ShapeSymbol);
-        this._graphics = (<Shumway.Timeline.ShapeSymbol>symbol).graphics;
+        release || assert(symbol instanceof flash.display.ShapeSymbol);
+        this._graphics = (<flash.display.ShapeSymbol>symbol).graphics;
         this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
       } else if (flash.text.StaticText.isType(this)) {
-        release || assert(symbol instanceof Shumway.Timeline.TextSymbol);
-        var textSymbol = <Shumway.Timeline.TextSymbol>symbol;
+        release || assert(symbol instanceof flash.text.TextSymbol);
+        var textSymbol = <flash.text.TextSymbol>symbol;
         (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
         this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
       }

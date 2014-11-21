@@ -18,7 +18,6 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import assert = Shumway.Debug.assert;
-  import ButtonSymbol = Shumway.Timeline.ButtonSymbol;
 
   export class SimpleButton extends flash.display.InteractiveObject {
 
@@ -273,6 +272,48 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
       this._invalidateFillAndLineBounds(true, true);
+    }
+  }
+
+  export class ButtonSymbol extends Timeline.DisplaySymbol {
+    upState: Timeline.AnimationState = null;
+    overState: Timeline.AnimationState = null;
+    downState: Timeline.AnimationState = null;
+    hitTestState: Timeline.AnimationState = null;
+    loaderInfo: flash.display.LoaderInfo;
+
+    constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
+      super(data, flash.display.SimpleButton, false);
+      this.loaderInfo = loaderInfo;
+    }
+
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ButtonSymbol {
+      var symbol = new ButtonSymbol(data, loaderInfo);
+      if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+        symbol.isAVM1Object = true;
+      }
+      var states = data.states;
+      var character: flash.display.SpriteSymbol = null;
+      var matrix: flash.geom.Matrix = null;
+      var colorTransform: flash.geom.ColorTransform = null;
+      var cmd;
+      for (var stateName in states) {
+        var commands = states[stateName];
+        if (commands.length === 1) {
+          cmd = commands[0];
+          matrix = flash.geom.Matrix.FromUntyped(cmd.matrix);
+          if (cmd.cxform) {
+            colorTransform = flash.geom.ColorTransform.FromCXForm(cmd.cxform);
+          }
+        } else {
+          cmd = {symbolId: -1};
+          character = new flash.display.SpriteSymbol({id: -1, className: null}, loaderInfo);
+          character.frames.push(new Timeline.FrameDelta(loaderInfo, commands));
+        }
+        symbol[stateName + 'State'] = new Timeline.AnimationState(cmd.symbolId, character, 0,
+                                                                  matrix, colorTransform);
+      }
+      return symbol;
     }
   }
 }

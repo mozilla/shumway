@@ -468,7 +468,7 @@ module Shumway.AVM2.AS.flash.display {
       this._applyLoadUpdate(this._queuedLoadUpdates.shift());
     }
 
-    private createContentRoot(symbol: Timeline.SpriteSymbol, sceneData) {
+    private createContentRoot(symbol: flash.display.SpriteSymbol, sceneData) {
       var root = symbol.symbolClass.initializeFrom(symbol);
       // The root object gets a default of 'rootN', which doesn't use up a DisplayObject instance
       // ID.

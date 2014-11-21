@@ -27,7 +27,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Timeline.SpriteSymbol) {
+    static initializer: any = function (symbol: SpriteSymbol) {
       var self: Sprite = this;
 
       self._graphics = null;
@@ -75,7 +75,7 @@ module Shumway.AVM2.AS.flash.display {
     _hitTarget: flash.display.Sprite;
 
     _addFrame(frameInfo: any) {
-      var frames = (<Timeline.SpriteSymbol><any>this._symbol).frames;
+      var frames = (<SpriteSymbol><any>this._symbol).frames;
       frames.push(frameInfo.frameDelta);
       if (frames.length === 1) {
         this._initializeChildren(frames[0]);
@@ -197,6 +197,50 @@ module Shumway.AVM2.AS.flash.display {
       }
       var graphics = this._getGraphics();
       return !!graphics && graphics._containsPoint(localX, localY, true, 0);
+    }
+  }
+
+  export class SpriteSymbol extends Timeline.DisplaySymbol {
+    numFrames: number = 1;
+    frames: Timeline.FrameDelta[] = [];
+    labels: flash.display.FrameLabel[] = [];
+    frameScripts: any[] = [];
+    isRoot: boolean;
+    avm1Name: string;
+    avm1SymbolClass;
+    loaderInfo: flash.display.LoaderInfo;
+
+    constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
+      super(data, flash.display.MovieClip, true);
+      this.loaderInfo = loaderInfo;
+    }
+
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): SpriteSymbol {
+      var symbol = new SpriteSymbol(data, loaderInfo);
+      symbol.numFrames = data.frameCount;
+      if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+        symbol.isAVM1Object = true;
+        symbol.avm1Context = loaderInfo._avm1Context;
+      }
+      symbol.frameScripts = [];
+      var frames = data.frames;
+      for (var i = 0; i < frames.length; i++) {
+        var frameInfo;
+        frameInfo = loaderInfo.getFrame(data, i);
+        if (frameInfo.actionBlocks) {
+          symbol.frameScripts.push(i);
+          symbol.frameScripts.push.apply(symbol.frameScripts, frameInfo.actionBlocks);
+        }
+        if (frameInfo.labelName) {
+          symbol.labels.push(new flash.display.FrameLabel(frameInfo.labelName, i + 1));
+        }
+        var frame = frameInfo.frameDelta;
+        var repeat = frameInfo.repeat || 1;
+        while (repeat--) {
+          symbol.frames.push(frame);
+        }
+      }
+      return symbol;
     }
   }
 }

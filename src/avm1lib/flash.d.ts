@@ -61,6 +61,12 @@ declare module Shumway.AVM2.AS.flash {
         data: {buttonActions: Shumway.Timeline.AVM1ButtonAction[]}
       }
     }
+
+    class BitmapSymbol {}
+    class SpriteSymbol {
+      avm1Name: string;
+      avm1SymbolClass;
+    }
   }
   module events {
     class EventDispatcher extends ASNative {
@@ -100,9 +106,4 @@ declare module Shumway.Timeline {
       actionsData: Uint8Array;
       actionsBlock: AVM1.AVM1ActionsData;
     }
-  class BitmapSymbol {}
-  class SpriteSymbol {
-    avm1Name: string;
-    avm1SymbolClass;
-  }
 }

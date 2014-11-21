@@ -80,7 +80,7 @@ module Shumway.AVM2.AS.flash.display {
           var info = start.soundInfo;
           var sound: SoundClip = sounds[symbolId];
           if (!sound) {
-            var symbolInfo: Timeline.SoundSymbol = <Timeline.SoundSymbol>loaderInfo.getSymbolById(symbolId);
+            var symbolInfo = <flash.media.SoundSymbol>loaderInfo.getSymbolById(symbolId);
             if (!symbolInfo) {
               continue;
             }
@@ -131,7 +131,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.Timeline.SpriteSymbol) {
+    static initializer: any = function (symbol: flash.display.SpriteSymbol) {
       var self: MovieClip = this;
 
       DisplayObject._advancableInstances.push(self);
@@ -225,7 +225,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _addFrame(frameInfo: any) {
-      var spriteSymbol = <Timeline.SpriteSymbol><any>this._symbol;
+      var spriteSymbol = <flash.display.SpriteSymbol><any>this._symbol;
       var frames = spriteSymbol.frames;
       frames.push(frameInfo.frameDelta);
       if (frameInfo.labelName) {
@@ -523,7 +523,7 @@ module Shumway.AVM2.AS.flash.display {
           var state = stateAtDepth[depth];
           // Eagerly create the symbol here, because it's needed in the canBeAnimated check below.
           if (state && state.symbolId > -1 && !state.symbol) {
-            var ownSymbol = <Timeline.SpriteSymbol>this._symbol;
+            var ownSymbol = <flash.display.SpriteSymbol>this._symbol;
             state.symbol = <Timeline.DisplaySymbol>ownSymbol.loaderInfo.getSymbolById(state.symbolId);
           }
           if (child) {
@@ -710,7 +710,7 @@ module Shumway.AVM2.AS.flash.display {
 
     get _avm1SymbolClass(): any {
       return (this._symbol &&
-              (<Timeline.SpriteSymbol>this._symbol).avm1SymbolClass) || null;
+              (<flash.display.SpriteSymbol>this._symbol).avm1SymbolClass) || null;
     }
 
     get _isFullyLoaded(): boolean {

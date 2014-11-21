@@ -332,7 +332,7 @@ module Shumway.Player {
      *
      * TODO: Make sure we get called back if an error occurs while decoding the image.
      */
-    public decodeImage(bitmapSymbol: Shumway.Timeline.BitmapSymbol, resolve: (result) => void) {
+    public decodeImage(bitmapSymbol: flash.display.BitmapSymbol, resolve: (result) => void) {
       release || assert (bitmapSymbol.type === ImageType.PNG ||
                          bitmapSymbol.type === ImageType.GIF ||
                          bitmapSymbol.type === ImageType.JPEG, "No need to decode any other image formats.");
@@ -532,7 +532,7 @@ module Shumway.Player {
           flash.display.MovieClip.reset();
           var symbolInstance = symbol.symbolClass.initializeFrom(symbol);
           symbol.symbolClass.instanceConstructorNoInitialize.call(symbolInstance);
-          if (symbol instanceof Shumway.Timeline.BitmapSymbol) {
+          if (symbol instanceof flash.display.BitmapSymbol) {
             symbolInstance = new flash.display.Bitmap(symbolInstance);
           }
           while (stage.numChildren > 0) {
@@ -564,8 +564,8 @@ module Shumway.Player {
           var frames = 1;
           if (symbol && symbol.id > 0) {
             show(symbol);
-            if (symbol instanceof Shumway.Timeline.SpriteSymbol) {
-              frames = (<Shumway.Timeline.SpriteSymbol>symbol).numFrames;
+            if (symbol instanceof flash.display.SpriteSymbol) {
+              frames = (<flash.display.SpriteSymbol>symbol).numFrames;
             }
           }
           if (playSymbolFrameDurationOption.value > 0) {

@@ -43,8 +43,8 @@ module Shumway.AVM2.AS.flash.display {
       // ...
     };
 
-    _symbol: Shumway.Timeline.BitmapSymbol;
-    static initializer: any = function (symbol: Shumway.Timeline.BitmapSymbol) {
+    _symbol: BitmapSymbol;
+    static initializer: any = function (symbol: BitmapSymbol) {
       this._symbol = symbol;
     };
 
@@ -907,5 +907,53 @@ module Shumway.AVM2.AS.flash.display {
     drawToBitmap(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable,
                  matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform,
                  blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
+  }
+
+  export class BitmapSymbol extends Timeline.DisplaySymbol {
+    width: number;
+    height: number;
+    image: any; // Image, but tsc doesn't like that.
+    data: Uint8Array;
+    type: ImageType;
+
+    private sharedInstance: flash.display.BitmapData;
+
+    constructor(data: Timeline.SymbolData) {
+      super(data, flash.display.BitmapData, false);
+    }
+
+    static FromData(data: any): BitmapSymbol {
+      var symbol = new BitmapSymbol(data);
+      symbol.width = data.width;
+      symbol.height = data.height;
+      symbol.image = data.image;
+      symbol.data = data.data;
+      switch (data.mimeType) {
+        case "application/octet-stream":
+          symbol.type = data.dataType;
+          break;
+        case "image/jpeg":
+          symbol.type = ImageType.JPEG;
+          break;
+        case "image/png":
+          symbol.type = ImageType.PNG;
+          break;
+        case "image/gif":
+          symbol.type = ImageType.GIF;
+          break;
+        default:
+          notImplemented(data.mimeType);
+      }
+      return symbol;
+    }
+
+    getSharedInstance() {
+      return this.sharedInstance || this.createSharedInstance();
+    }
+    createSharedInstance() {
+      this.sharedInstance = this.symbolClass.initializeFrom(this);
+      this.symbolClass.instanceConstructorNoInitialize.call(this.sharedInstance);
+      return this.sharedInstance;
+    }
   }
 }

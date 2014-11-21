@@ -18,6 +18,7 @@ module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import assert = Shumway.Debug.assert;
+  import warning = Shumway.Debug.warning;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
@@ -33,7 +34,7 @@ module Shumway.AVM2.AS.flash.text {
 
     static classInitializer: any = null;
 
-    static initializer: any = function (symbol: Shumway.Timeline.TextSymbol) {
+    static initializer: any = function (symbol: TextSymbol) {
       var self: TextField = this;
 
       self._alwaysShowSelection = false;
@@ -797,4 +798,165 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("public flash.text.TextField::getImageReference"); return;
     }
   }
+
+  export class TextSymbol extends Timeline.DisplaySymbol {
+    color: number = 0;
+    size: number = 0;
+    font: string = "";
+    fontClass: flash.text.Font = null;
+    align: string = flash.text.TextFormatAlign.LEFT;
+    leftMargin: number = 0;
+    rightMargin: number = 0;
+    indent: number = 0;
+    leading: number = 0;
+    multiline: boolean = false;
+    wordWrap: boolean = false;
+    embedFonts: boolean = false;
+    selectable: boolean = true;
+    border: boolean = false;
+    initialText: string = "";
+    html: boolean = false;
+    displayAsPassword: boolean = false;
+    type: string = flash.text.TextFieldType.DYNAMIC;
+    maxChars: number = 0;
+    autoSize: string = flash.text.TextFieldAutoSize.NONE;
+    variableName: string = null;
+    textContent: Shumway.TextContent = null;
+
+    constructor(data: Timeline.SymbolData) {
+      super(data, flash.text.TextField, true);
+    }
+
+    static FromTextData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
+      var symbol = new TextSymbol(data);
+      symbol._setBoundsFromData(data);
+      var tag = data.tag;
+      if (data.static) {
+        symbol.dynamic = false;
+        symbol.symbolClass = flash.text.StaticText;
+        if (tag.initialText) {
+          var textContent = new Shumway.TextContent();
+          textContent.bounds = symbol.lineBounds;
+          textContent.parseHtml(tag.initialText);
+          textContent.matrix = flash.geom.Matrix.FromUntyped(data.matrix);
+          textContent.coords = data.coords;
+          symbol.textContent = textContent;
+        }
+      }
+      if (tag.hasColor) {
+        symbol.color = tag.color >>> 8;
+      }
+      if (tag.hasFont) {
+        symbol.size = tag.fontHeight;
+        // Requesting the font symbol guarantees that it's loaded and initialized.
+        var fontSymbol = loaderInfo.getSymbolById(tag.fontId);
+        var font = flash.text.Font.getBySymbolId(tag.fontId);
+        if (fontSymbol && font) {
+          symbol.font = font.fontName;
+          if (tag.fontClass) {
+            var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
+            symbol.fontClass = <flash.text.Font><any>appDomain.getClass(tag.fontClass);
+          }
+        } else {
+          warning("Font " + tag.fontId + " is not defined.");
+        }
+      }
+      if (tag.hasLayout) {
+        symbol.align = flash.text.TextFormatAlign.fromNumber(tag.align);
+        symbol.leftMargin = tag.leftMargin;
+        symbol.rightMargin = tag.rightMargin;
+        symbol.indent = tag.indent;
+        symbol.leading = tag.leading;
+      }
+      symbol.multiline = !!tag.multiline;
+      symbol.wordWrap = !!tag.wordWrap;
+      symbol.embedFonts = !!tag.useOutlines;
+      symbol.selectable = !tag.noSelect;
+      symbol.border = !!tag.border;
+      if (tag.hasText) {
+        symbol.initialText = tag.initialText;
+      }
+      symbol.html = !!tag.html;
+      symbol.displayAsPassword = !!tag.password;
+      symbol.type = tag.readonly ? flash.text.TextFieldType.DYNAMIC :
+                    flash.text.TextFieldType.INPUT;
+      if (tag.hasMaxLength) {
+        symbol.maxChars = tag.maxLength;
+      }
+      symbol.autoSize = tag.autoSize ? flash.text.TextFieldAutoSize.LEFT : flash.text.TextFieldAutoSize.NONE;
+      symbol.variableName = tag.variableName;
+      return symbol;
+    }
+
+    /**
+     * Turns raw DefineLabel tag data into an object that's consumable as a text symbol and then
+     * passes that into `FromTextData`, returning the resulting TextSymbol.
+     *
+     * This has to be done outside the SWF parser because it relies on any used fonts being
+     * available as symbols, which isn't the case in the SWF parser.
+     */
+    static FromLabelData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
+      var bounds = data.fillBounds;
+      var records = data.records;
+      var coords = data.coords = [];
+      var htmlText = '';
+      var size = 12;
+      var face = 'Times Roman';
+      var color = 0;
+      var x = 0;
+      var y = 0;
+      var codes: number[];
+      for (var i = 0; i < records.length; i++) {
+        var record = records[i];
+        if (record.eot) {
+          break;
+        }
+        if (record.hasFont) {
+          var font = <flash.text.FontSymbol>loaderInfo.getSymbolById(record.fontId);
+          font || Debug.warning('Label ' + data.id + 'refers to undefined font symbol ' +
+                                record.fontId);
+          codes = font.codes;
+          size = record.fontHeight;
+          if (!font.originalSize) {
+            size /= 20;
+          }
+          face = 'swffont' + record.fontId;
+        }
+        if (record.hasColor) {
+          color = record.color >>> 8;
+        }
+        if (record.hasMoveX) {
+          x = record.moveX;
+          if (x < bounds.xMin) {
+            bounds.xMin = x;
+          }
+        }
+        if (record.hasMoveY) {
+          y = record.moveY;
+          if (y < bounds.yMin) {
+            bounds.yMin = y;
+          }
+        }
+        var text = '';
+        var entries = record.entries;
+        var j = 0;
+        var entry;
+        while ((entry = entries[j++])) {
+          var code = codes[entry.glyphIndex];
+          release || assert(code, 'undefined label glyph');
+          var char = String.fromCharCode(code);
+          text += charEscapeMap[char] || char;
+          coords.push(x, y);
+          x += entry.advance;
+        }
+        htmlText += '<font size="' + size + '" face="' + face + '"' + ' color="#' +
+                    ('000000' + color.toString(16)).slice(-6) + '">' + text + '</font>';
+      }
+      data.tag.initialText = htmlText;
+      return TextSymbol.FromTextData(data, loaderInfo);
+    }
+  }
+
+  var charEscapeMap = {'<': '&lt;', '>': '&gt;', '&' : '&amp;'};
+
 }
