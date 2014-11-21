@@ -25,7 +25,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.Timeline.BitmapSymbol) {
+    static initializer: any = function (symbol: flash.display.BitmapSymbol) {
       var self: Bitmap = this;
 
       self._bitmapData = null;

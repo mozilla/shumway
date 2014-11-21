@@ -5,7 +5,7 @@
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
   var Stage = flash.display.Stage;
   var MovieClip = flash.display.MovieClip;
-  var SpriteSymbol = Shumway.Timeline.SpriteSymbol;
+  var SpriteSymbol = flash.display.SpriteSymbol;
   var FrameDelta = Shumway.Timeline.FrameDelta;
 
   var MC_NAME_SUFFIX = 0;

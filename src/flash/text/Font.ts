@@ -845,7 +845,7 @@ module Shumway.AVM2.AS.flash.text {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    static initializer: any = function (symbol: Shumway.Timeline.FontSymbol) {
+    static initializer: any = function (symbol: FontSymbol) {
       var self: Font = this;
 
       // TODO: give fonts proper inter-SWF IDs, so multiple SWFs' fonts don't collide.
@@ -962,7 +962,7 @@ module Shumway.AVM2.AS.flash.text {
     private _fontType: string;
 
     _id: number;
-    _symbol: Shumway.Timeline.FontSymbol;
+    _symbol: FontSymbol;
 
     ascent: number;
     descent: number;
@@ -1021,6 +1021,33 @@ module Shumway.AVM2.AS.flash.text {
       str = asCoerceString(str);
       somewhatImplemented('Font#hasGlyphs');
       return true;
+    }
+  }
+
+  export class FontSymbol extends Timeline.Symbol {
+    name: string;
+    id: number;
+    bold: boolean;
+    italic: boolean;
+    codes: number[];
+    originalSize: boolean;
+    metrics: any;
+
+    constructor(data: Timeline.SymbolData) {
+      super(data, Font);
+    }
+
+    static FromData(data: any): FontSymbol {
+      var symbol = new FontSymbol(data);
+      symbol.name = data.name;
+      // No need to keep the original data baggage around.
+      symbol.data = {id: data.id};
+      symbol.bold = data.bold;
+      symbol.italic = data.italic;
+      symbol.originalSize = data.originalSize;
+      symbol.codes = data.codes;
+      symbol.metrics = data.metrics;
+      return symbol;
     }
   }
 }

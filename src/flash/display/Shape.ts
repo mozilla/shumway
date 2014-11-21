@@ -15,14 +15,14 @@
  */
 // Class: Shape
 module Shumway.AVM2.AS.flash.display {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import warning = Shumway.Debug.warning;
 
   export class Shape extends flash.display.DisplayObject {
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
 
     static classInitializer: any = null;
-    static initializer: any = function (symbol: Shumway.Timeline.ShapeSymbol) {
+    static initializer: any = function (symbol: ShapeSymbol) {
       var self: Shape = this;
       self._graphics = null;
       if (symbol) {
@@ -53,6 +53,39 @@ module Shumway.AVM2.AS.flash.display {
                            globalX: number, globalY: number): boolean {
       var graphics = this._getGraphics();
       return !!graphics && graphics._containsPoint(localX, localY, true, 0);
+    }
+  }
+
+  export class ShapeSymbol extends Timeline.DisplaySymbol {
+    graphics: flash.display.Graphics = null;
+
+    constructor(data: Timeline.SymbolData, symbolClass: Shumway.AVM2.AS.ASClass) {
+      super(data, symbolClass, false);
+    }
+
+    static FromData(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
+      var symbol = new ShapeSymbol(data, flash.display.Shape);
+      symbol._setBoundsFromData(data);
+      symbol.graphics = flash.display.Graphics.FromData(data);
+      symbol.processRequires((<any>data).require, loaderInfo);
+      return symbol;
+    }
+
+    processRequires(dependencies: any[], loaderInfo: flash.display.LoaderInfo): void {
+      if (!dependencies) {
+        return;
+      }
+      var textures = this.graphics.getUsedTextures();
+      for (var i = 0; i < dependencies.length; i++) {
+        var symbol = <flash.display.BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
+        if (!symbol) {
+          warning("Bitmap symbol " + dependencies[i] + " required by shape, but not defined.");
+          textures.push(null);
+          // TODO: handle null-textures from invalid SWFs correctly.
+          continue;
+        }
+        textures.push(symbol.getSharedInstance());
+      }
     }
   }
 }

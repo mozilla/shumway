@@ -281,37 +281,37 @@ module Shumway.AVM2.AS.flash.display {
       // TODO: replace this switch with a table lookup.
       switch (data.type) {
         case 'shape':
-          symbol = Timeline.ShapeSymbol.FromData(data, this);
+          symbol = flash.display.ShapeSymbol.FromData(data, this);
           break;
         case 'morphshape':
-          symbol = Timeline.MorphShapeSymbol.FromData(data, this);
+          symbol = flash.display.MorphShapeSymbol.FromData(data, this);
           break;
         case 'image':
-          symbol = Timeline.BitmapSymbol.FromData(data.definition);
+          symbol = flash.display.BitmapSymbol.FromData(data.definition);
           break;
         case 'label':
-          symbol = Timeline.TextSymbol.FromLabelData(data, this);
+          symbol = flash.text.TextSymbol.FromLabelData(data, this);
           break;
         case 'text':
-          symbol = Timeline.TextSymbol.FromTextData(data, this);
+          symbol = flash.text.TextSymbol.FromTextData(data, this);
           break;
         case 'button':
-          symbol = Timeline.ButtonSymbol.FromData(data, this);
+          symbol = flash.display.ButtonSymbol.FromData(data, this);
           break;
         case 'sprite':
-          symbol = Timeline.SpriteSymbol.FromData(data, this);
+          symbol = flash.display.SpriteSymbol.FromData(data, this);
           break;
         case 'font':
           // Fonts are eagerly parsed and have their data in `definition`.
           if (data.definition) {
             data = data.definition;
           }
-          symbol = Timeline.FontSymbol.FromData(data);
+          symbol = flash.text.FontSymbol.FromData(data);
           var font = flash.text.Font.initializeFrom(symbol);
           flash.text.Font.instanceConstructorNoInitialize.call(font);
           break;
         case 'sound':
-          symbol = Timeline.SoundSymbol.FromData(data);
+          symbol = flash.media.SoundSymbol.FromData(data);
           break;
         case 'binary':
           symbol = Timeline.BinarySymbol.FromData(data);
@@ -322,10 +322,11 @@ module Shumway.AVM2.AS.flash.display {
       return symbol;
     }
 
-    getRootSymbol(): Timeline.SpriteSymbol {
-      var symbol = <Timeline.SpriteSymbol>this._dictionary[0];
+    getRootSymbol(): flash.display.SpriteSymbol {
+      var symbol = <flash.display.SpriteSymbol>this._dictionary[0];
       if (!symbol) {
-        symbol = new Timeline.SpriteSymbol({id: 0, className: this._file.symbolClassesMap[0]}, this);
+        symbol = new flash.display.SpriteSymbol({id: 0, className: this._file.symbolClassesMap[0]},
+                                                this);
         symbol.isRoot = true;
         if (this._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
           symbol.isAVM1Object = true;

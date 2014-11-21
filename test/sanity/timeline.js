@@ -3,7 +3,7 @@
   var Loader = flash.display.Loader;
   var Sprite = flash.display.Sprite;
   var MovieClip = flash.display.MovieClip;
-  var SpriteSymbol = Shumway.Timeline.SpriteSymbol;
+  var SpriteSymbol = flash.display.SpriteSymbol;
   var FrameDelta = Shumway.Timeline.FrameDelta;
   var Event = flash.events.Event;
   var URLRequest = flash.net.URLRequest;

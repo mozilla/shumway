@@ -63,7 +63,7 @@ module Shumway.AVM2.AS.flash.media {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Timeline.SoundSymbol) {
+    static initializer: any = function (symbol: SoundSymbol) {
       this._playQueue = [];
       this._url = null;
       this._length = 0;
@@ -251,6 +251,26 @@ module Shumway.AVM2.AS.flash.media {
       });
 
       stream.load(request);
+    }
+  }
+
+  export class SoundSymbol extends Timeline.Symbol {
+    channels: number;
+    sampleRate: number;
+    pcm: Float32Array;
+    packaged;
+
+    constructor(data: Timeline.SymbolData) {
+      super(data, flash.media.Sound);
+    }
+
+    static FromData(data: any): SoundSymbol {
+      var symbol = new SoundSymbol(data);
+      symbol.channels = data.channels;
+      symbol.sampleRate = data.sampleRate;
+      symbol.pcm = data.pcm;
+      symbol.packaged = data.packaged;
+      return symbol;
     }
   }
 }

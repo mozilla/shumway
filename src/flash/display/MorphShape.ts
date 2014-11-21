@@ -15,14 +15,12 @@
  */
 // Class: MorphShape
 module Shumway.AVM2.AS.flash.display {
-  import assert = Shumway.Debug.assert;
-
   export class MorphShape extends flash.display.DisplayObject {
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
 
     static classInitializer: any = null;
-    static initializer: any = function (symbol: Shumway.Timeline.MorphShapeSymbol) {
+    static initializer: any = function (symbol: flash.display.MorphShapeSymbol) {
       var self: MorphShape = this;
       self._graphics = null;
       if (symbol) {
@@ -54,6 +52,24 @@ module Shumway.AVM2.AS.flash.display {
                            globalX: number, globalY: number): boolean {
       var graphics = this._getGraphics();
       return !!graphics && graphics._containsPoint(localX, localY, true, this._ratio / 0xffff);
+    }
+  }
+
+  export class MorphShapeSymbol extends flash.display.ShapeSymbol {
+    morphFillBounds: Bounds;
+    morphLineBounds: Bounds;
+    constructor(data: Timeline.SymbolData) {
+      super(data, flash.display.MorphShape);
+    }
+
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): MorphShapeSymbol {
+      var symbol = new MorphShapeSymbol(data);
+      symbol._setBoundsFromData(data);
+      symbol.graphics = flash.display.Graphics.FromData(data);
+      symbol.processRequires(data.require, loaderInfo);
+      symbol.morphFillBounds = data.morphFillBounds;
+      symbol.morphLineBounds = data.morphLineBounds;
+      return symbol;
     }
   }
 }
