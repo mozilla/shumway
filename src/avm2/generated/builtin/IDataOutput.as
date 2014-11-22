@@ -63,15 +63,4 @@ package flash.utils
     function get endian():String;
     function set endian(type:String):void;
   }
-
-  /**
-   * Like IDataOutput but provides writeFloat4() additionally.
-   */
-  //[API(CONFIG::SWF_16)]
-  CONFIG::VMCFG_FLOAT
-  public interface IDataOutput2 extends IDataOutput
-  {
-    function writeFloat4(value:float4):void;
-  }
-
 }

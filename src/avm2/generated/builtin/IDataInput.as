@@ -66,15 +66,4 @@ package flash.utils
     function get endian():String;
     function set endian(type:String):void;
   }
-
-  /**
-   * Like IDataInput but provides readFloat4() additionally.
-   */
-  //[API(CONFIG::SWF_16)]
-  CONFIG::VMCFG_FLOAT
-  public interface IDataInput2 extends IDataInput
-  {
-    function readFloat4(): float4;
-  }
-
 }
