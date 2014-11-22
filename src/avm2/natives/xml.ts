@@ -464,7 +464,7 @@ module Shumway.AVM2.AS {
       // AttributeName using the ToAttributeName operator.
       return toAttributeName(name.substring(1));
     }
-    return new ASQName(name);
+    return new ASQName(undefined, name, !!(mn.flags & ASQNameFlags.ATTR_NAME));
   }
 
   function isQNameAttribute(name: any): boolean {
@@ -1077,7 +1077,7 @@ module Shumway.AVM2.AS {
      * new QName (Name)
      * new QName (Namespace, Name)
      */
-    constructor(a?: any, b?: any, c?: boolean) {
+    constructor(nameOrNS_?: any, name_?: any, isAttribute?: boolean) {
       false && super();
 
       var name;
@@ -1086,10 +1086,10 @@ module Shumway.AVM2.AS {
       if (arguments.length === 0) {
         name = "";
       } else if (arguments.length === 1) {
-        name = a;
+        name = nameOrNS_;
       } else { // if (arguments.length === 2) {
-        namespace = a;
-        name = b;
+        namespace = nameOrNS_;
+        name = name_;
       }
 
       // 1. If (Type(Name) is Object and Name.[[Class]] == "QName")
@@ -1144,7 +1144,7 @@ module Shumway.AVM2.AS {
           // NOTE implementations that preserve prefixes in qualified names may also set q.[[Prefix]] to Namespace.prefix
       }
       // 8. Return q
-      var flags = c ? ASQNameFlags.ATTR_NAME : ASQNameFlags.ELEM_NAME;
+      var flags = isAttribute ? ASQNameFlags.ATTR_NAME : ASQNameFlags.ELEM_NAME;
       if (name === '*') {
         flags |= ASQNameFlags.ANY_NAME;
       }
