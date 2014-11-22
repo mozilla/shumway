@@ -4,11 +4,6 @@
        "swf": "swfs/acid/acid-bitmapData-copyPixels.swf",
        "type": "eq"
     },
-    {  "id": "acid-blend",
-       "frames": [1, 5, 10],
-       "swf": "swfs/acid/acid-blend.swf",
-       "type": "eq"
-    },
     {  "id": "acid-image",
        "frames": [1, 5, 10],
        "swf": "swfs/acid/acid-image.swf",
