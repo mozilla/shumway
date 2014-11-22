@@ -1212,6 +1212,10 @@ module Shumway.AVM2.AS {
 
   export class ASXML extends ASNative {
     public static instanceConstructor: any = ASXML;
+    static classInitializer: any = function() {
+      var proto: any = ASXML.prototype;
+      defineNonEnumerableProperty(proto, 'asDeleteProperty', proto._asDeleteProperty);
+    }
 
     public static callableConstructor: any = function (value: any = undefined): ASXML {
       // 13.5.1 The XMLList Constructor Called as a Function
@@ -1613,7 +1617,7 @@ module Shumway.AVM2.AS {
             self._children[k]._kind === ASXMLKind.Element &&
             self._children[k]._name.uri === n.uri)) {
           if (i !== undefined) {
-            self.deleteByIndex(String(i));
+            self.deleteByIndex(i);
           }
           i = k;
         }
@@ -1714,28 +1718,24 @@ module Shumway.AVM2.AS {
         isAttribute, false);
     }
 
-    hasProperty(mn, isAttribute?, isMethod?) {
+    hasProperty(mn: any, isAttribute: boolean, isMethod: boolean) {
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn :
           this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return !!this[Multiname.getQualifiedName(resolved)];
       }
-      var self: ASXML = this;
-      var xl = new XMLList();
       if (isIndex(mn)) {
         // this is a shortcut to the E4X logic that wants us to create a new
-        // XMLList with of size 1 and access it with the given index.
-        if (Number(mn) === 0) {
-          return true;
-        }
-        return false;
+        // XMLList of size 1 and access it with the given index.
+        return Number(mn) === 0;
+
       }
       var name = toXMLName(mn);
       var flags = name.name.flags;
       var anyName = flags & ASQNameFlags.ANY_NAME;
       var anyNamespace = flags & ASQNameFlags.ANY_NAMESPACE;
       if (isAttribute) {
-        if (self._attributes) {
+        if (this._attributes) {
           return this._attributes.some(function (v, i): any {
             return ((anyName || (v._name.localName === name.localName)) &&
               ((anyNamespace || v._name.uri === name.uri)));
@@ -1751,11 +1751,47 @@ module Shumway.AVM2.AS {
       }
     }
 
+    deleteProperty(mn: Multiname, isAttribute: boolean) {
+      if (isIndex(mn)) {
+        // This hasn't ever been implemented and silently does nothing in Tamarin (and Rhino).
+        return true;
+      }
+      var name = toXMLName(mn);
+      var localName = name.localName;
+      var uri = name.uri;
+      var flags = name.name.flags;
+      var anyName = flags & ASQNameFlags.ANY_NAME;
+      var anyNamespace = flags & ASQNameFlags.ANY_NAMESPACE;
+      if (isAttribute) {
+        var attributes = this._attributes;
+        if (attributes) {
+          var newAttributes = this._attributes = [];
+          for (var i = 0; i < attributes.length; i++) {
+            var node = attributes[i];
+            var attrName = node._name;
+            if ((anyName || attrName.localName === localName) &&
+                (anyNamespace || attrName.uri === uri)) {
+              node._parent = null;
+            } else {
+              newAttributes.push(node);
+            }
+          }
+        }
+      } else {
+        if (this._children.some(function (v, i): any {
+          return ((anyName || v._kind === ASXMLKind.Element && v._name.localName === name.localName) &&
+            ((anyNamespace || v._kind === ASXMLKind.Element && v._name.uri === name.uri)));
+        })) {
+          return true;
+        }
+      }
+    }
+
     public asHasProperty(namespaces: Namespace [], name: any, flags: number) {
       if (ASXML.isTraitsOrDynamicPrototype(this)) {
         return _asHasProperty.call(this, namespaces, name, flags);
       }
-      var isAttribute = flags & Multiname.ATTRIBUTE;
+      var isAttribute = !!(flags & Multiname.ATTRIBUTE);
       name = prefixWithNamespace(namespaces, name, isAttribute);
       if (this.hasProperty(name, isAttribute, false)) {
         return true;
@@ -1766,6 +1802,23 @@ module Shumway.AVM2.AS {
       var resolved = Multiname.isQName(name) ? name :
         this.resolveMultinameProperty(namespaces, name, flags);
       return !!this[Multiname.getQualifiedName(resolved)];
+    }
+
+    _asDeleteProperty(namespaces: Namespace [], name: any, flags: number) {
+      if (ASXML.isTraitsOrDynamicPrototype(this)) {
+        return _asDeleteProperty.call(this, namespaces, name, flags);
+      }
+      var isAttribute = !!(flags & Multiname.ATTRIBUTE);
+      name = prefixWithNamespace(namespaces, name, isAttribute);
+      if (this.deleteProperty(name, isAttribute)) {
+        return true;
+      }
+
+      // HACK if child with specific name is not present, check object's attributes.
+      // The presence of the attribute/method can be checked during with(), see #850.
+      var resolved = Multiname.isQName(name) ? name :
+        this.resolveMultinameProperty(namespaces, name, flags);
+      return delete this[Multiname.getQualifiedName(resolved)];
     }
 
     public asHasPropertyInternal(namespaces: Namespace [], name: any, flags: number) {
@@ -1807,20 +1860,19 @@ module Shumway.AVM2.AS {
       notImplemented("XML.[[Delete]]");
     }
 
-    deleteByIndex (p) {
-      var self: ASXML = this;
+    deleteByIndex (p: number) {
       var i = p >>> 0;
       if (String(i) !== String(p)) {
         throw "TypeError in XML.prototype.deleteByIndex(): invalid index " + p;
       }
-      if (p < self.length()) {
-        if (self.children[p]) {
-          self.children[p]._parent = null;
-          delete self.children[p];
-          for (var q = i + 1; q < self.length(); q++) {
-            self.children[q - 1] = self.children[q];
+      if (p < this.length()) {
+        if (this.children[p]) {
+          this.children[p]._parent = null;
+          delete this.children[p];
+          for (var q = i + 1; q < this.length(); q++) {
+            this.children[q - 1] = this.children[q];
           }
-          self.children.length = self.children.length - 1;
+          this.children.length = this.children.length - 1;
         }
       }
     }
@@ -2089,11 +2141,12 @@ module Shumway.AVM2.AS {
         return Number(mn) < this._children.length;
       }
 
+      var isAttribute = mn.isAttribute();
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var node = children[i];
         if (node._kind === ASXMLKind.Element) {
-          if (node.hasProperty(mn, mn.isAttribute())) {
+          if (node.hasProperty(mn, isAttribute, false)) {
             return true;
           }
         }

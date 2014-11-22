@@ -49,7 +49,6 @@ interface IProtocol {
   asNextNameIndex: (index: number) => number;
 
   asGetEnumerableKeys: () => any [];
-  hasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean; // TODO: What's this?
 }
 
 interface Object extends IProtocol {
@@ -599,6 +598,7 @@ module Shumway.AVM2.Runtime {
     return result;
   }
 
+  // TODO: change all the asHasFoo methods to return the resolved name or null to avoid resolving twice.
   export function asHasProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
     return self.resolveMultinameProperty(namespaces, name, flags) in this;
@@ -1044,6 +1044,7 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Function.prototype, "asCall", global.Function.prototype.call);
     defineNonEnumerableProperty(global.Function.prototype, "asApply", global.Function.prototype.apply);
 
+    // TODO: change this to %TypedArray% once JS engines support that. SpiderMonkey will, soon.
     [
       "Array",
       "Object",
