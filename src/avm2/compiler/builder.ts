@@ -467,11 +467,14 @@ module Shumway.AVM2.Compiler {
 
     popMultiname(): ASMultiname {
       var multiname = this.constantPool.multinames[this.bc.index];
-      var namespaces, name, flags = multiname.flags;
+      var namespaces, name, flags;
       if (multiname.isRuntimeName()) {
         name = this.state.stack.pop();
+        // TODO: figure out what `flags` should be set to for runtime names.
+        flags = constant(0);
       } else {
         name = constant(multiname.name);
+        flags = constant(multiname.flags);
       }
       if (multiname.isRuntimeNamespace()) {
         namespaces = shouldFloat(new NewArray(this.region, [this.state.stack.pop()]));
@@ -1157,7 +1160,7 @@ module Shumway.AVM2.Compiler {
               value = pop();
               var typeName = this.constantPool.multinames[bc.index];
               multiname = new IR.ASMultiname(constant(typeName.namespaces), constant(typeName.name),
-                                             typeName.flags);
+                                             constant(typeName.flags));
               type = this.getProperty(this.findProperty(multiname, false), multiname);
               push(this.call(globalProperty("asAsType"), null, [type, value]));
             }
@@ -1375,7 +1378,7 @@ module Shumway.AVM2.Compiler {
           case OP.in:
             object = pop();
             value = pop();
-            multiname = new IR.ASMultiname(Undefined, value, 0);
+            multiname = new IR.ASMultiname(Undefined, value, constant(0));
             push(this.store(new IR.ASHasProperty(region, state.store, object, multiname)));
             break;
           case OP.typeof:

@@ -1760,8 +1760,8 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  export function createName(namespaces: Namespace [], name: any) {
-    return new Multiname(namespaces, name);
+  export function createName(namespaces: Namespace [], name: string, flags: number) {
+    return new Multiname(namespaces, name, flags);
   }
 }
 
