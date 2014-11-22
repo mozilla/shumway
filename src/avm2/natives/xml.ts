@@ -1390,6 +1390,9 @@ module Shumway.AVM2.AS {
       ASXML._prettyIndent = newIndent;
     }
     toString(): string {
+      if (this.hasComplexContent()) {
+        return this.toXMLString();
+      }
       return toString(this);
     }
     native_hasOwnProperty(P: string): boolean {
@@ -2145,6 +2148,9 @@ module Shumway.AVM2.AS {
       return xl;
     }
     toString(): string {
+      if (this.hasComplexContent()) {
+        return this.toXMLString();
+      }
       return toString(this);
     }
     // 9.2.1.7 [[DeepCopy]] ( )
