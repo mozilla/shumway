@@ -468,9 +468,8 @@ module Shumway.AVM2.AS {
   }
 
   function isQNameAttribute(name: any): boolean {
-    if (typeof name === 'object' && (name instanceof ASQName)) {
-      var flags = name._flags;
-      return !!(flags & ASQNameFlags.ATTR_NAME);
+    if (name instanceof ASQName) {
+      return !!(name.name.flags & ASQNameFlags.ATTR_NAME);
     }
     return false;
   }
@@ -1048,25 +1047,12 @@ module Shumway.AVM2.AS {
       }
     };
 
-    _mn: Multiname;
-    _flags: number;
+    name: Multiname;
 
     static fromMultiname(mn: Multiname) {
       var result: ASQName = Object.create(ASQName.prototype);
-      result._mn = mn;
-      var flags = 0;
-      if (mn.isAttribute()) {
-        flags |= ASQNameFlags.ATTR_NAME;
-      } else {
-        flags |= ASQNameFlags.ELEM_NAME;
-      }
-      if (mn.isAnyName()) {
-        flags |= ASQNameFlags.ANY_NAME;
-      }
-      if (mn.isAnyNamespace()) {
-        flags |= ASQNameFlags.ANY_NAMESPACE;
-      }
-      result._flags = flags;
+      result.name = mn;
+      return result;
       return result;
     }
 
@@ -1140,7 +1126,7 @@ module Shumway.AVM2.AS {
         namespace = namespace instanceof ASNamespace ? namespace :
           new ASNamespace(namespace);
         // b. Let q.uri = Namespace.uri
-        uri = namespace.uri
+        uri = namespace.uri;
           // NOTE implementations that preserve prefixes in qualified names may also set q.[[Prefix]] to Namespace.prefix
       }
       // 8. Return q
@@ -1151,19 +1137,15 @@ module Shumway.AVM2.AS {
       if (namespace === null) {
         flags |= ASQNameFlags.ANY_NAMESPACE;
       }
-      this._mn = new Multiname([namespace ? namespace._ns : null], localName);
-      this._flags = flags;
+      this.name = new Multiname([namespace ? namespace._ns : null], localName, flags);
     }
 
     get localName(): string {
-      return this._mn.name;
+      return this.name.name;
     }
 
     get uri(): string {
-      if (this._mn.namespaces[0]) {
-        return this._mn.namespaces[0].uri;
-      }
-      return null;
+      return this.name.namespaces[0] ? this.name.namespaces[0].uri : null;
     }
 
     /**
@@ -1172,7 +1154,7 @@ module Shumway.AVM2.AS {
      * The value of the [[Prefix]] property is a value of type string or undefined. If the [[Prefix]] property is undefined, the prefix associated with this QName is unknown.
      */
     get prefix(): string {
-      return this._mn.namespaces[0].prefix;
+      return this.name.namespaces[0] ? this.name.namespaces[0].prefix : null;
     }
 
     /**
@@ -1201,6 +1183,10 @@ module Shumway.AVM2.AS {
         ns = new ASNamespace(this.prefix, this.uri);
       }
       return ns;
+    }
+
+    get flags() {
+      return this.name.flags;
     }
   }
 
@@ -1578,7 +1564,8 @@ module Shumway.AVM2.AS {
     }
 
     setProperty(p, isAttribute, v) {
-      var i, c, n;
+      var c;
+      var n: ASQName;
       var self: ASXML = this;
       if (p === p >>> 0) {
         throw "TypeError in XML.prototype.setProperty(): invalid property name " + p;
@@ -1604,7 +1591,7 @@ module Shumway.AVM2.AS {
           return;
         }
         this._attributes.forEach(function (v, i, o) {
-          if (v.name === n.localName) {
+          if (v.localName() === n.localName) {
             delete o[i];
           }
         });
@@ -1615,10 +1602,10 @@ module Shumway.AVM2.AS {
         return;
       }
 
-      var i = undefined;
+      var i;
       var primitiveAssign = !isXMLType(c) && n.localName !== "*";
-      var isAny = n._flags & ASQNameFlags.ANY_NAME;
-      var isAnyNamespace = n._flags & ASQNameFlags.ANY_NAMESPACE;
+      var isAny = n.flags & ASQNameFlags.ANY_NAME;
+      var isAnyNamespace = n.flags & ASQNameFlags.ANY_NAMESPACE;
       for (var k = self.length() - 1; k >= 0; k--) {
         if ((isAny || self._children[k]._kind === ASXMLKind.Element &&
           self._children[k]._name.localName === n.localName) &&
@@ -1686,7 +1673,7 @@ module Shumway.AVM2.AS {
       var self: ASXML = this;
       var name = toXMLName(mn);
       var xl = new XMLList(self, name);
-      var flags = name._flags;
+      var flags = name.name.flags;
       var anyName = flags & ASQNameFlags.ANY_NAME;
       var anyNamespace = flags & ASQNameFlags.ANY_NAMESPACE;
 
@@ -1744,7 +1731,7 @@ module Shumway.AVM2.AS {
         return false;
       }
       var name = toXMLName(mn);
-      var flags = name._flags;
+      var flags = name.name.flags;
       var anyName = flags & ASQNameFlags.ANY_NAME;
       var anyNamespace = flags & ASQNameFlags.ANY_NAMESPACE;
       if (isAttribute) {
@@ -1984,26 +1971,28 @@ module Shumway.AVM2.AS {
     }
 
     // 9.1.1.8 [[Descendants]] (P)
-    descendants(name: any = "*"): ASXMLList {
-      name = toXMLName(name);
-      var flags = name._flags;
+    descendants(name_: any = "*"): ASXMLList {
+      var name = toXMLName(name_);
+      var flags = name.flags;
       var self: ASXML = this;
       var xl = new XMLList();
       if (self._kind !== ASXMLKind.Element) {
         return xl;
       }
+      var localName = name.localName;
+      var uri = name.uri;
       var isAny = flags & ASQNameFlags.ANY_NAME;
       if (flags & ASQNameFlags.ATTR_NAME) {
         // Get attributes
         this._attributes.forEach(function (v, i) {
-          if (isAny || name.localName === v._name.localName) {
+          if (isAny || localName === v._name.localName && uri === v._name.uri) {
             xl.appendChild(v);
           }
         });
       } else {
         // Get children
         this._children.forEach(function (v, i) {
-          if (isAny || name.localName === v._name.localName) {
+          if (isAny || localName === v._name.localName && uri === v._name.uri) {
             xl.appendChild(v);
           }
         });
