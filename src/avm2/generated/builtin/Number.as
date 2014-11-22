@@ -24,7 +24,7 @@ public final class Number
   public static const MAX_VALUE         :Number = 1.7976931348623158e+308;
 
   // The following constants correspond to the constants on Math, but we add them to Number to make
-  // Number, float, and float4 behave similarly.
+  // Number behave similarly.
   [API(CONFIG::SWF_16)]
   public static const E       :Number = 2.718281828459045;
   [API(CONFIG::SWF_16)]
@@ -43,7 +43,7 @@ public final class Number
   public static const SQRT2   :Number = 1.4142135623730951;
 
   // The following methods correspond to the methods on Math, but we add them to Number to make
-  // Number, float, and float4 behave similarly.
+  // Number behave similarly.
   [API(CONFIG::SWF_16)]
   public native static function abs   (x:Number)   :Number;
   [API(CONFIG::SWF_16)]

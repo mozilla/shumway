@@ -47,25 +47,12 @@ package flash.utils
     public static const LZMA:String = "lzma";
   };
 
-  // Provide dummy definitions here of IDataInput2 and IDataOutput2, because they will
-  // not be provided by IDataInput.as and IDataOutput.as if VMCFG_FLOAT is disabled.
-
-  CONFIG const NO_VMCFG_FLOAT = !CONFIG::VMCFG_FLOAT;
-
-  CONFIG::NO_VMCFG_FLOAT
-  internal interface IDataInput2 extends IDataInput {
-  }
-
-  CONFIG::NO_VMCFG_FLOAT
-  internal interface IDataOutput2 extends IDataOutput {
-  }
-
   //
   // ByteArray
   //
 
   [native(cls="ByteArrayClass")]
-  public class ByteArray implements IDataInput2, IDataOutput2
+  public class ByteArray implements IDataInput, IDataOutput
   {
 
     public native function ByteArray();
@@ -83,8 +70,6 @@ package flash.utils
     public native function writeUnsignedInt(value:uint):void;
     public native function writeFloat(value:Number):void;
     //[API(CONFIG::SWF_16)]
-    CONFIG::VMCFG_FLOAT
-    public native function writeFloat4(value:float4):void;
     public native function writeDouble(value:Number):void;
     public native function writeMultiByte(value:String, charSet:String):void;
     public native function writeUTF(value:String):void;
@@ -98,8 +83,6 @@ package flash.utils
     public native function readUnsignedInt():uint;
     public native function readFloat():Number;
     //[API(CONFIG::SWF_16)]
-    CONFIG::VMCFG_FLOAT
-    public native function readFloat4():float4;
     public native function readDouble():Number;
     public native function readMultiByte(length:uint, charSet:String):String;
     public native function readUTF():String;
