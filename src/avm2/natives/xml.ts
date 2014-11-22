@@ -1428,6 +1428,13 @@ module Shumway.AVM2.AS {
       return list;
     }
     child(propertyName: any): ASXMLList {
+      if (isIndex(propertyName)) {
+        var list = new XMLList();
+        if (propertyName < this._children.length) {
+          list.appendChild(this._children[propertyName | 0]._deepCopy());
+        }
+        return list;
+      }
       return this.getProperty(propertyName, isQNameAttribute(propertyName), false);
     }
     childIndex(): number /*int*/ {
@@ -2182,6 +2189,13 @@ module Shumway.AVM2.AS {
       return this.getProperty('*', true, false);
     }
     child(propertyName: any): ASXMLList {
+      if (isIndex(propertyName)) {
+        var list = new XMLList();
+        if (propertyName < this._children.length) {
+          list.appendChild(this._children[propertyName | 0]._deepCopy());
+        }
+        return list;
+      }
       return this.getProperty(propertyName, false, false);
     }
     children(): ASXMLList {
