@@ -2105,6 +2105,25 @@ module Shumway.AVM2.AS {
       return toXMLList(value);
     };
 
+    public static addXML(left: ASXMLList, right: ASXMLList) {
+      var result: ASXMLList;
+      if (left instanceof ASXML) {
+        result = new XMLList();
+        result.appendChild(left._deepCopy());
+      } else {
+        result = left._deepCopy();
+      }
+      if (right instanceof ASXML) {
+        result.appendChild(right._deepCopy());
+      } else {
+        var children = right._children;
+        for (var i = 0; i < children.length; i++) {
+          result.appendChild(children[i]._deepCopy());
+        }
+      }
+      return result;
+    }
+
     _children: ASXML [];
     constructor (value: any = undefined) {
       false && super();

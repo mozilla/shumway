@@ -980,10 +980,15 @@ module Shumway.AVM2.Runtime {
    * when one operand is a string. Unlike JavaScript, it calls toString if one operand is a
    * string and valueOf otherwise. This sucks, but we have to emulate this behaviour because
    * YouTube depends on it.
+   *
+   * AS3 also overloads the `+` operator to concatenate XMLs/XMLLists instead of stringifying them.
    */
   export function asAdd(l, r) {
     if (typeof l === "string" || typeof r === "string") {
       return String(l) + String(r);
+    }
+    if (isXMLType(l) && isXMLType(r)) {
+      return Shumway.AVM2.AS.ASXMLList.addXML(l, r);
     }
     return l + r;
   }
