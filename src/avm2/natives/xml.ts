@@ -1212,7 +1212,7 @@ module Shumway.AVM2.AS {
     ALL = FLAG_IGNORE_COMMENTS | FLAG_IGNORE_PROCESSING_INSTRUCTIONS | FLAG_IGNORE_WHITESPACE | FLAG_PRETTY_PRINTING
   }
 
-  enum ASXMLKind {
+  export enum ASXMLKind {
     Unknown,
     Element,
     Attribute,
@@ -1243,7 +1243,8 @@ module Shumway.AVM2.AS {
     private _attributes: ASXML [];
     private _inScopeNamespaces: ASNamespace [];
 
-    private _kind: ASXMLKind;
+    // Public so ASXMLList can access it.
+    _kind: ASXMLKind;
 
     _children: ASXML [];
     private _value: any;
@@ -1401,7 +1402,7 @@ module Shumway.AVM2.AS {
     toString(): string {
       return toString(this);
     }
-    native_hasOwnProperty(P: any = undefined): boolean {
+    native_hasOwnProperty(P: string): boolean {
       // 13.4.4.14 XML.prototype.hasOwnProperty ( P )
       if (this.hasProperty(P, isQNameAttribute(P), false)) {
         return true;
@@ -2091,8 +2092,24 @@ module Shumway.AVM2.AS {
       return xl;
     }
 
-    native_hasOwnProperty(P: any = undefined): boolean {
-      notImplemented("public.XMLList::hasOwnProperty"); return;
+    // 13.5.4.12 XMLList.prototype.hasOwnProperty ( P )
+    native_hasOwnProperty(P: string): boolean {
+      P = asCoerceString(P);
+      var mn = Multiname.fromSimpleName(P);
+      if (isIndex(mn)) {
+        return Number(mn) < this._children.length;
+      }
+
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        var node = children[i];
+        if (node._kind === ASXMLKind.Element) {
+          if (node.hasProperty(mn, mn.isAttribute())) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
     native_propertyIsEnumerable(P: any = undefined): boolean {
 
