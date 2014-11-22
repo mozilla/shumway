@@ -1830,18 +1830,16 @@ module Shumway.AVM2.AS {
         return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
       }
       // Checking if the method exists before calling it
-      var self: Object = this;
-      var result;
       var method;
-      var resolved = self.resolveMultinameProperty(namespaces, name, flags);
-      if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
-        method = self.asGetNumericProperty(resolved);
+      var resolved = this.resolveMultinameProperty(namespaces, name, flags);
+      if (this.asGetNumericProperty && Multiname.isNumeric(resolved)) {
+        method = this.asGetNumericProperty(resolved);
       } else {
-        var openMethods = self.asOpenMethods;
-        method = (openMethods && openMethods[resolved]) || self[resolved];
+        var openMethods = this.asOpenMethods;
+        method = (openMethods && openMethods[resolved]) || this[resolved];
       }
       if (method) {
-        return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
+        return method.asApply(isLex ? null : this, args);
       }
       // Otherwise, 11.2.2.1 CallMethod ( r , args )
       // If f == undefined and Type(base) is XMLList and base.[[Length]] == 1
@@ -2443,18 +2441,16 @@ module Shumway.AVM2.AS {
         return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
       }
       // Checking if the method exists before calling it
-      var self: Object = this;
-      var result;
       var method;
-      var resolved = self.resolveMultinameProperty(namespaces, name, flags);
-      if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
-        method = self.asGetNumericProperty(resolved);
+      var resolved = this.resolveMultinameProperty(namespaces, name, flags);
+      if (this.asGetNumericProperty && Multiname.isNumeric(resolved)) {
+        method = this.asGetNumericProperty(resolved);
       } else {
-        var openMethods = self.asOpenMethods;
-        method = (openMethods && openMethods[resolved]) || self[resolved];
+        var openMethods = this.asOpenMethods;
+        method = (openMethods && openMethods[resolved]) || this[resolved];
       }
       if (method) {
-        return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
+        return method.asApply(isLex ? null : this, args);
       }
       // Otherwise, 11.2.2.1 CallMethod ( r , args )
       // If f == undefined and Type(base) is XMLList and base.[[Length]] == 1
