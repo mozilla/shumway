@@ -2142,10 +2142,13 @@ module Shumway.AVM2.AS {
 
     // 9.1.1.8 [[Descendants]] (P)
     descendants(name_: any = "*"): ASXMLList {
+      var xl = new XMLList();
       var name = toXMLName(name_);
+      return this.descendantsInto(name, xl);
+    }
+    descendantsInto(name: ASQName, xl: ASXMLList) {
       var flags = name.flags;
       var self: ASXML = this;
-      var xl = new XMLList();
       if (self._kind !== ASXMLKind.Element) {
         return xl;
       }
@@ -2348,8 +2351,17 @@ module Shumway.AVM2.AS {
       // 13.5.4.4 XMLList.prototype.child ( propertyName )
       return this.getProperty('*', false, false);
     }
-    descendants(): ASXMLList {
-      notImplemented("public.XMLList::descendants"); return;
+    // 9.2.1.8 [[Descendants]] (P)
+    descendants(name_: any): ASXMLList {
+      var name = toXMLName(name_);
+      var list = new XMLList();
+      for (var i = 0; i < this._children.length; i++) {
+        var child = this._children[i];
+        if (child._kind === ASXMLKind.Element) {
+          child.descendantsInto(name, list);
+        }
+      }
+      return list;
     }
     comments(): ASXMLList {
       // 13.5.4.6 XMLList.prototype.comments ( )
