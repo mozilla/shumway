@@ -32,7 +32,6 @@ module Shumway.AVM2.AS {
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import isNumber = Shumway.isNumber;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
-  import createObject = Shumway.ObjectUtilities.createObject;
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
@@ -45,7 +44,6 @@ module Shumway.AVM2.AS {
   import Runtime = Shumway.AVM2.Runtime;
   import IndentingWriter = Shumway.IndentingWriter;
   import boxValue = Shumway.ObjectUtilities.boxValue;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import SORT = Shumway.AVM2.ABC.SORT;
 
   import ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
@@ -297,10 +295,10 @@ module Shumway.AVM2.AS {
       self.baseClass = baseClass;
 
       // Create a |dynamicPrototype| object and link it to the base class |dynamicPrototype|.
-      self.dynamicPrototype = createObject(baseClass.dynamicPrototype);
+      self.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
 
       // Create a |traitsPrototype| object and link it to the class |dynamicPrototype|.
-      self.traitsPrototype = createObject(self.dynamicPrototype);
+      self.traitsPrototype = Object.create(self.dynamicPrototype);
 
       // Collect and copy all class instance members to the |traitsPrototype|. We copy properties
       // from the most derived class to the base class, ignoring those that are already set.
@@ -1169,7 +1167,7 @@ module Shumway.AVM2.AS {
     };
 
     static CACHE_NUMERIC_COMPARATORS = true;
-    static numericComparatorCache = createEmptyObject();
+    static numericComparatorCache = Object.create(null);
 
     toLocaleString(): string {
       var a: ASArray = ASArray.coerce(this);
@@ -1716,7 +1714,7 @@ module Shumway.AVM2.AS {
     export var ASFunction = Shumway.AVM2.AS.ASFunction;
 
     function makeOriginalPrototype(constructor: Function) {
-      var o = { prototype: createEmptyObject() }
+      var o = { prototype: Object.create(null) };
       var keys = Object.getOwnPropertyNames(constructor.prototype);
       for (var i = 0; i < keys.length; i++) {
         o.prototype[keys[i]] = constructor.prototype[keys[i]];

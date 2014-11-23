@@ -120,7 +120,6 @@ module Shumway.AVM2.Runtime {
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import createMap = Shumway.ObjectUtilities.createMap;
   import copyProperties = Shumway.ObjectUtilities.copyProperties;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import boxValue = Shumway.ObjectUtilities.boxValue;
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
   import assert = Shumway.Debug.assert;
@@ -154,7 +153,7 @@ module Shumway.AVM2.Runtime {
    * Overriden AS3 methods (see hacks.js). This allows you to provide your own JS implementation
    * for AS3 methods.
    */
-  export var VM_METHOD_OVERRIDES = createEmptyObject();
+  export var VM_METHOD_OVERRIDES = Object.create(null);
 
   /**
    * We use this to give functions unique IDs to help with debugging.
@@ -1230,8 +1229,8 @@ module Shumway.AVM2.Runtime {
    * loaded abc files that defines the {b}::x name. Of course, this can change if we load an abc file that defines it.
    */
   export class GlobalMultinameResolver {
-    private static hasNonDynamicNamespaces = createEmptyObject();
-    private static wasResolved = createEmptyObject();
+    private static hasNonDynamicNamespaces = Object.create(null);
+    private static wasResolved = Object.create(null);
 
     private static updateTraits(traits) {
       for (var i = 0; i < traits.length; i++) {
@@ -1277,7 +1276,7 @@ module Shumway.AVM2.Runtime {
         return;
       }
       GlobalMultinameResolver.wasResolved[name] = true;
-      return new Multiname([Namespace.PUBLIC], multiname.name);
+      return new Multiname([Namespace.PUBLIC], multiname.name, 0);
     }
   }
 
@@ -1355,7 +1354,7 @@ module Shumway.AVM2.Runtime {
     return false;
   }
 
-  export var CODE_CACHE = createEmptyObject();
+  export var CODE_CACHE = Object.create(null);
 
   export function searchCodeCache(methodInfo) {
     if (!codeCaching.value) {

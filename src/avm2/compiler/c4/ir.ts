@@ -54,7 +54,6 @@ module Shumway.AVM2.Compiler.IR {
   import assert = Shumway.Debug.assert;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import unexpected = Shumway.Debug.unexpected;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
 
   export interface NodeVisitor {
     (node: Node): void;
@@ -460,7 +459,7 @@ module Shumway.AVM2.Compiler.IR {
 
   export class Operator {
     not: Operator;
-    static byName: Shumway.Map<Operator> = createEmptyObject();
+    static byName: Shumway.Map<Operator> = Object.create(null);
 
     constructor(public name: string, public evaluate: Function, public isBinary: boolean) {
       Operator.byName[name] = this;

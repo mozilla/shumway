@@ -30,7 +30,6 @@ module Shumway.AVM2.Runtime {
   import createMap = Shumway.ObjectUtilities.createMap;
   import cloneObject = Shumway.ObjectUtilities.cloneObject;
   import copyProperties = Shumway.ObjectUtilities.copyProperties;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
   import assert = Shumway.Debug.assert;
 
@@ -313,7 +312,7 @@ module Shumway.AVM2.Runtime {
       this.natives = natives;
       this.parent = parent;
       this.instanceInfo = instanceInfo;
-      this.implementedInterfaces = parent ? cloneObject(parent.implementedInterfaces) : createEmptyObject();
+      this.implementedInterfaces = parent ? cloneObject(parent.implementedInterfaces) : Object.create(null);
       if (parent) {
         this.slots = parent.slots.slice();
         this.nextSlotId = parent.nextSlotId;
@@ -394,7 +393,7 @@ module Shumway.AVM2.Runtime {
           map[key] = binding;
           if (trait.isProtected()) {
             // Inherit protected trait also in the local protected namespace.
-            protectedName = Multiname.getQualifiedName(new Multiname([ii.protectedNs], trait.name.getName()));
+            protectedName = Multiname.getQualifiedName(new Multiname([ii.protectedNs], trait.name.getName(), 0));
             protectedKey = Binding.getKey(protectedName, trait);
             map[protectedKey] = binding;
           }
@@ -437,7 +436,8 @@ module Shumway.AVM2.Runtime {
           // Overwrite protected traits.
           ib = this.parent;
           while (ib && ib.instanceInfo.protectedNs) {
-            protectedName = Multiname.getQualifiedName(new Multiname([ib.instanceInfo.protectedNs], trait.name.getName()));
+            protectedName = Multiname.getQualifiedName(new Multiname([ib.instanceInfo.protectedNs],
+                                                                     trait.name.getName(), 0));
             protectedKey = Binding.getKey(protectedName, trait);
             overwriteProtectedBinding(map, protectedKey, binding);
             ib = ib.parent;

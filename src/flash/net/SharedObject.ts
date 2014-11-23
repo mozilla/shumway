@@ -18,7 +18,6 @@ module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
 
   declare var sessionStorage;
 
@@ -39,10 +38,10 @@ module Shumway.AVM2.AS.flash.net {
     constructor () {
       false && super(undefined);
       flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
-      this._data = createEmptyObject();
+      this._data = Object.create(null);
     }
 
-    static _sharedObjects: any = createEmptyObject();
+    static _sharedObjects: any = Object.create(null);
 
     private _path: string;
 

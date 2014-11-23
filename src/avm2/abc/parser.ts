@@ -718,16 +718,15 @@ module Shumway.AVM2.ABC {
     ];
 
     private static _hashNamespace(kind: CONSTANT, uri: string, prefix: string) {
-      var data = new Int32Array(1 + uri.length + prefix.length);
-      var j = 0;
-      data[j++] = kind;
       var index = Namespace._knownURIs.indexOf(uri);
       if (index >= 0) {
         return kind << 2 | index;
-      } else {
-        for (var i = 0; i < uri.length; i++) {
-          data[j++] = uri.charCodeAt(i);
-        }
+      }
+      var data = new Int32Array(1 + uri.length + prefix.length);
+      var j = 0;
+      data[j++] = kind;
+      for (var i = 0; i < uri.length; i++) {
+        data[j++] = uri.charCodeAt(i);
       }
       for (var i = 0; i < prefix.length; i++) {
         data[j++] = prefix.charCodeAt(i);
@@ -978,15 +977,15 @@ module Shumway.AVM2.ABC {
     private _qualifiedNameCache: Map<Multiname>;
     private static _publicQualifiedNameCache: Map<string> = Shumway.ObjectUtilities.createMap<string>();
 
-    constructor(namespaces: Namespace [], name: string, flags: number = 0) {
-      if (name !== undefined) {
-        release || assert (name === null || isString(name), "Multiname name must be a string. " + name);
+    constructor(namespaces: Namespace [], name: string, flags: number) {
+      if (!release && name !== undefined) {
+        assert (name === null || isString(name), "Multiname name must be a string. " + name);
         // release || assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
       }
       this.runtimeId = Multiname._nextID ++;
       this.namespaces = namespaces;
       this.name = name;
-      this.flags = flags;
+      this.flags = flags|0;
     }
 
     public static parse(constantPool: ConstantPool, stream: AbcStream, multinames: Multiname [], typeNamePatches: any [], multinameIndex: number) {
@@ -1163,13 +1162,13 @@ module Shumway.AVM2.ABC {
         return qn;
       }
       if (isNumeric(qn)) {
-        return new Multiname([Namespace.PUBLIC], qn);
+        return new Multiname([Namespace.PUBLIC], qn, 0);
       }
       if (qn[0] !== "$") {
         return;
       }
       var ns = Namespace.fromQualifiedName(qn.substring(1));
-      return new Multiname([ns], qn.substring(1 + ns.qualifiedName.length));
+      return new Multiname([ns], qn.substring(1 + ns.qualifiedName.length), 0);
     }
 
     public static getNameFromPublicQualifiedName(qn): string {
@@ -1276,7 +1275,7 @@ module Shumway.AVM2.ABC {
         namespace = "";
       }
       return Multiname._simpleNameCache[simpleName] =
-        new Multiname(Namespace.fromSimpleName(namespace), name);
+        new Multiname(Namespace.fromSimpleName(namespace), name, 0);
     }
 
     public getQName(index: number): Multiname {
@@ -1412,7 +1411,7 @@ module Shumway.AVM2.ABC {
 
     public static TO_STRING = Multiname.getPublicQualifiedName("toString");
     public static VALUE_OF  = Multiname.getPublicQualifiedName("valueOf");
-    public static TEMPORARY = new Multiname([], "");
+    public static TEMPORARY = new Multiname([], "", 0);
   }
 
   export class MetaDataInfo {

@@ -17,7 +17,6 @@ module Shumway.Tools.Terminal {
 
   import clamp = NumberUtilities.clamp;
   import trimMiddle = StringUtilities.trimMiddle;
-  import createEmptyObject = ObjectUtilities.createEmptyObject;
 
   export class Buffer {
     lines: string [];
