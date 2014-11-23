@@ -883,7 +883,21 @@ module Shumway.AVM2.Runtime {
     return asIsType(type, value) ? value : null;
   }
 
+  function isXMLType(x): boolean {
+    return x instanceof AS.ASXML ||
+           x instanceof AS.ASXMLList ||
+           x instanceof AS.ASQName ||
+           x instanceof AS.ASNamespace;
+  }
+
   export function asEquals(left: any, right: any): boolean {
+    // See E4X spec, 11.5 Equality Operators for why this is required.
+    if (isXMLType(left)) {
+      return left.equals(right);
+    }
+    if (isXMLType(right)) {
+      return right.equals(left);
+    }
     return left == right;
   }
 
@@ -995,13 +1009,6 @@ module Shumway.AVM2.Runtime {
       return Shumway.AVM2.AS.ASXMLList.addXML(l, r);
     }
     return l + r;
-  }
-
-  export function isXMLType(x): boolean {
-    return x instanceof AS.ASXML ||
-           x instanceof AS.ASXMLList ||
-           x instanceof AS.ASQName ||
-           x instanceof AS.ASNamespace;
   }
 
   function isXMLCollection(x): boolean {
