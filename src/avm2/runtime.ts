@@ -49,7 +49,6 @@ interface IProtocol {
   asNextNameIndex: (index: number) => number;
 
   asGetEnumerableKeys: () => any [];
-  hasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean; // TODO: What's this?
 }
 
 interface Object extends IProtocol {
@@ -599,6 +598,7 @@ module Shumway.AVM2.Runtime {
     return result;
   }
 
+  // TODO: change all the asHasFoo methods to return the resolved name or null to avoid resolving twice.
   export function asHasProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
     return self.resolveMultinameProperty(namespaces, name, flags) in this;
@@ -980,10 +980,15 @@ module Shumway.AVM2.Runtime {
    * when one operand is a string. Unlike JavaScript, it calls toString if one operand is a
    * string and valueOf otherwise. This sucks, but we have to emulate this behaviour because
    * YouTube depends on it.
+   *
+   * AS3 also overloads the `+` operator to concatenate XMLs/XMLLists instead of stringifying them.
    */
   export function asAdd(l, r) {
     if (typeof l === "string" || typeof r === "string") {
       return String(l) + String(r);
+    }
+    if (isXMLType(l) && isXMLType(r)) {
+      return Shumway.AVM2.AS.ASXMLList.addXML(l, r);
     }
     return l + r;
   }
@@ -1044,6 +1049,7 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Function.prototype, "asCall", global.Function.prototype.call);
     defineNonEnumerableProperty(global.Function.prototype, "asApply", global.Function.prototype.apply);
 
+    // TODO: change this to %TypedArray% once JS engines support that. SpiderMonkey will, soon.
     [
       "Array",
       "Object",
@@ -1760,8 +1766,8 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  export function createName(namespaces: Namespace [], name: any) {
-    return new Multiname(namespaces, name);
+  export function createName(namespaces: Namespace [], name: string, flags: number) {
+    return new Multiname(namespaces, name, flags);
   }
 }
 

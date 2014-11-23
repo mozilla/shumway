@@ -414,7 +414,7 @@ module Shumway.AVM2.Compiler.Backend {
     return [
       compileValue(name.namespaces, cx),
       compileValue(name.name, cx),
-      constant(name.flags)
+      compileValue(name.flags, cx)
     ];
   }
 
@@ -695,7 +695,8 @@ module Shumway.AVM2.Compiler.Backend {
   IR.ASMultiname.prototype.compile = function (cx: Context): Compiler.AST.Node {
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
-    return call(id("createName"), [namespaces, name]);
+    var flags = compileValue(this.flags, cx);
+    return call(id("createName"), [namespaces, name, flags]);
   }
 
   IR.Block.prototype.compile = function (cx: Context): Compiler.AST.Node {

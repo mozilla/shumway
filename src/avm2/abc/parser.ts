@@ -1306,7 +1306,7 @@ module Shumway.AVM2.ABC {
     }
 
     public isAttribute() {
-      return this.flags & Multiname.ATTRIBUTE;
+      return !!(this.flags & Multiname.ATTRIBUTE);
     }
 
     public isAnyName(): boolean {
