@@ -1588,6 +1588,9 @@ module Shumway.AVM2.AS {
           this._kind === ASXMLKind.ProcessingInstruction) {
         return false;
       }
+      if (this._kind !== ASXMLKind.Element) {
+        return true;
+      }
       if (!this._children && this._children.length === 0) {
         return true;
       }
