@@ -672,8 +672,8 @@ module Shumway.AVM2.AS {
       return this.dynamicPrototype;
     }
 
-    public asCall(self: any, ...argArray: any[]): any {
-      return this.coerce(argArray[0])
+    public asCall(self: any, cls: ASClass): any {
+      return this.coerce(cls);
     }
 
     public asApply(self: any, argArray?: any): any {
@@ -912,7 +912,7 @@ module Shumway.AVM2.AS {
       return (<any>this).length;
     }
 
-    asCall: (self?, ...args: any []) => any;
+    asCall: (self?, args?: any) => any;
     asApply: (self?, args?: any []) => any;
 
     toString() {
