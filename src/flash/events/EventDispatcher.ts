@@ -16,7 +16,6 @@
 // Class: EventDispatcher
 module Shumway.AVM2.AS.flash.events {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import isFunction = Shumway.isFunction;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import throwError = Shumway.AVM2.Runtime.throwError;
@@ -132,7 +131,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     reset() {
-      this._queues = Shumway.ObjectUtilities.createEmptyObject();
+      this._queues = Object.create(null);
     }
 
     add(type: string, target: EventDispatcher) {
@@ -247,9 +246,9 @@ module Shumway.AVM2.AS.flash.events {
      */
     private _getListeners(useCapture: boolean): Shumway.Map<EventListenerList> {
       if (useCapture) {
-        return this._captureListeners || (this._captureListeners = createEmptyObject());
+        return this._captureListeners || (this._captureListeners = Object.create(null));
       }
-      return this._targetOrBubblingListeners || (this._targetOrBubblingListeners = createEmptyObject());
+      return this._targetOrBubblingListeners || (this._targetOrBubblingListeners = Object.create(null));
     }
 
     addEventListener(type: string, listener: EventHandler, useCapture: boolean = false,

@@ -27,7 +27,6 @@ module Shumway.AVM2.Runtime {
   import Timer = Shumway.Metrics.Timer;
 
   var counter = Shumway.Metrics.Counter.instance;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import assert = Shumway.Debug.assert;
   import IndentingWriter = Shumway.IndentingWriter;
 
@@ -159,7 +158,7 @@ module Shumway.AVM2.Runtime {
       this.exception = { value: undefined };
       this.exceptions = [];
 
-      this.globals = createEmptyObject();
+      this.globals = Object.create(null);
     }
 
     // We sometimes need to know where we came from, such as in
@@ -283,13 +282,13 @@ module Shumway.AVM2.Runtime {
       this.loadedClasses = [];
 
       // Classes cache.
-      this.classCache = createEmptyObject();
+      this.classCache = Object.create(null);
 
       // Script cache.
-      this.scriptCache = createEmptyObject();
+      this.scriptCache = Object.create(null);
 
       // Class Info cache.
-      this.classInfoCache = createEmptyObject();
+      this.classInfoCache = Object.create(null);
 
       // Our parent.
       this.base = base;
@@ -401,6 +400,9 @@ module Shumway.AVM2.Runtime {
           return ci;
         }
       }
+      return this.findClassInfoSlow(mn, originalQn);
+    }
+    findClassInfoSlow(mn, originalQn) {
       // The class info may be among the loaded ABCs, go looking for it.
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {
@@ -460,9 +462,11 @@ module Shumway.AVM2.Runtime {
           return resolved;
         }
       }
+      return this.findDefiningScriptSlow(mn, execute);
+    }
 
-      countTimeline("ApplicationDomain: findDefiningScript");
-
+    findDefiningScriptSlow(mn, execute) {
+      countTimeline("ApplicationDomain: findDefiningScriptSlow");
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {
         var abc = abcs[i];
@@ -481,7 +485,7 @@ module Shumway.AVM2.Runtime {
               }
             }
           } else {
-            Shumway.Debug.unexpected();
+            release || Shumway.Debug.unexpected();
           }
         }
       }

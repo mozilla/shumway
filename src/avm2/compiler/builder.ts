@@ -29,7 +29,6 @@ module Shumway.AVM2.Compiler {
   import top = Shumway.ArrayUtilities.top;
   import unique = Shumway.ArrayUtilities.unique;
   import Scope = Shumway.AVM2.Runtime.Scope;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Runtime = Shumway.AVM2.Runtime
   import GlobalMultinameResolver = Shumway.AVM2.Runtime.GlobalMultinameResolver;
 
@@ -411,7 +410,7 @@ module Shumway.AVM2.Compiler {
   var coerceObject = callGlobalProperty.bind(null, "asCoerceObject");
 
 
-  var coercers = createEmptyObject();
+  var coercers = Object.create(null);
   coercers[Multiname.Int] = coerceInt;
   coercers[Multiname.Uint] = coerceUint;
   coercers[Multiname.Number] = coerceNumber;
@@ -424,7 +423,7 @@ module Shumway.AVM2.Compiler {
     return coercers[Multiname.getQualifiedName(multiname)];
   }
 
-  var callableConstructors = createEmptyObject();
+  var callableConstructors = Object.create(null);
   callableConstructors[Multiname.Int] = coerceInt;
   callableConstructors[Multiname.Uint] = coerceUint;
   callableConstructors[Multiname.Number] = callGlobalProperty.bind(null, "Number");

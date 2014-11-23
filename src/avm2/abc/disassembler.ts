@@ -469,7 +469,7 @@ module Shumway.AVM2.ABC {
           // var methods = traits.methods;
 
           var methods = [];
-          var gettersAndSetters = Shumway.ObjectUtilities.createEmptyObject();
+          var gettersAndSetters = Object.create(null);
 
           traits.methods.forEach(function (trait, i) {
             var traitName = trait.name.getName();

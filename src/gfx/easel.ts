@@ -263,7 +263,7 @@ module Shumway.GFX {
 
     private _selectedNodes: Node [] = [];
 
-    private _eventListeners: Shumway.Map<any []> = Shumway.ObjectUtilities.createEmptyObject();
+    private _eventListeners: Shumway.Map<any []> = Object.create(null);
     private _fps: FPS;
     private _fullScreen: boolean = false;
 

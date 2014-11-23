@@ -350,7 +350,7 @@ module Shumway {
       release || assert(array.length >= count);
       var start = array.length - count;
       var result = array.slice(start, this.length);
-      array.splice(start, count);
+      array.length = start;
       return result;
     }
 
@@ -681,14 +681,6 @@ module Shumway {
     export function hasOwnSetter(object: Object, name: string): boolean {
       var d = Object.getOwnPropertyDescriptor(object, name);
       return !!(d && !!d.set);
-    }
-
-    export function createObject(prototype: Object) {
-      return Object.create(prototype);
-    }
-
-    export function createEmptyObject() {
-      return Object.create(null);
     }
 
     export function createMap<T>():Map<T> {

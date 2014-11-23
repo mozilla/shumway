@@ -41,14 +41,15 @@ var addEventListener = function (type) {
   // console.log('Add listener: ' + type);
 };
 
+var defaultTimerArgs = [];
 var microTaskQueue = null;
 var setTimeout = function (fn, interval) {
-  var args = Array.prototype.slice.call(arguments, 2);
+  var args = arguments.length > 2 ? Array.prototype.slice.call(arguments, 2) : defaultTimerArgs;
   var task = microTaskQueue.scheduleInterval(fn, args, interval, false);
   return task.id;
 };
 var setInterval = function (fn, interval) {
-  var args = Array.prototype.slice.call(arguments, 2);
+  var args = arguments.length > 2 ? Array.prototype.slice.call(arguments, 2) : defaultTimerArgs;
   var task = microTaskQueue.scheduleInterval(fn, args, interval, true);
   return task.id;
 };

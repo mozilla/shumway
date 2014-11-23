@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 module Shumway.Tools.Profiler {
-  import createEmptyObject = ObjectUtilities.createEmptyObject;
 
   export interface TimelineItemKind {
     id: number;
@@ -69,7 +68,7 @@ module Shumway.Tools.Profiler {
       this._stack = [];
       this._data = [];
       this._kinds = [];
-      this._kindNameMap = createEmptyObject();
+      this._kindNameMap = Object.create(null);
       this._marks = new Shumway.CircularBuffer(Int32Array, 20);
       this._times = new Shumway.CircularBuffer(Float64Array, 20);
     }

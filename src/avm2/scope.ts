@@ -27,7 +27,6 @@ module Shumway.AVM2.Runtime {
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
   import defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
   import assert = Shumway.Debug.assert;
 
@@ -98,7 +97,7 @@ module Shumway.AVM2.Runtime {
       release || assert (isObject(this.object));
       this.global = parent ? parent.global : this;
       this.isWith = isWith;
-      this.cache = createEmptyObject();
+      this.cache = Object.create(null);
     }
 
     public findDepth(object: any) {

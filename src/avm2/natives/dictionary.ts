@@ -19,7 +19,6 @@ module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
@@ -72,7 +71,7 @@ module Shumway.AVM2.AS {
         if (!weakKeys) {
           this.keys = [];
         }
-        this.primitiveMap = createEmptyObject();
+        this.primitiveMap = Object.create(null);
       }
 
       public asGetNumericProperty(name: number) {
