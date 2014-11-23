@@ -334,12 +334,17 @@ module Shumway.AVM2.Compiler {
   }
 
   function binary(operator: IR.Operator, left: Value, right: Value): Value {
-    var node = new Binary(operator, left, right);
-    if (left.ty && left.ty !== Shumway.AVM2.Verifier.Type.Any && left.ty === right.ty) {
-      if (operator === Operator.EQ) {
-        node.operator = Operator.SEQ;
-      } else if (operator === Operator.NE) {
-        node.operator = Operator.SNE;
+    var node: Value = new Binary(operator, left, right);
+    if ((operator === Operator.EQ || operator === Operator.NE)) {
+      if (left.ty && left.ty.isStrictComparableWith(right.ty)) {
+        (<Binary>node).operator = operator === Operator.EQ ? Operator.SEQ : Operator.SNE;
+        // A fast non-strict compare is only possible if we can guarantee that at least one operand
+        // isn't an XML or XMLList object.
+      } else if ((!left.ty || left.ty.canBeXML()) || (!right.ty || right.ty.canBeXML())) {
+        node = new Call(null, null, globalProperty("asEquals"), null, [left, right], 0);
+        if (operator === Operator.NE) {
+          node = unary(Operator.FALSE, node);
+        }
       }
     }
     if (peepholeOptimizer) {

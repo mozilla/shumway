@@ -64,6 +64,8 @@ module Shumway.AVM2.Verifier {
     static Function: TraitsType;
     static XML: TraitsType;
     static XMLList: TraitsType;
+    static QName: TraitsType;
+    static Namespace: TraitsType;
     static Dictionary: TraitsType;
 
     static _cache = {
@@ -130,12 +132,24 @@ module Shumway.AVM2.Verifier {
       Type.Function     = Type.fromSimpleName("Function", domain).instanceType();
       Type.XML          = Type.fromSimpleName("XML", domain).instanceType();
       Type.XMLList      = Type.fromSimpleName("XMLList", domain).instanceType();
+      Type.QName        = Type.fromSimpleName("QName", domain).instanceType();
+      Type.Namespace    = Type.fromSimpleName("Namespace", domain).instanceType();
       Type.Dictionary   = Type.fromSimpleName("flash.utils.Dictionary", domain).instanceType();
       Type._typesInitialized = true;
     }
 
     equals(other: Type): boolean {
       return this === other;
+    }
+
+    canBeXML() {
+      return this === Type.Any || this === Type.Object ||
+             this === Type.XML || this === Type.XMLList ||
+             this === Type.QName || this === Type.QName;
+    }
+
+    isStrictComparableWith(other: Type) {
+      return this === other && !this.canBeXML();
     }
 
     merge(other: Type): Type {
@@ -151,7 +165,7 @@ module Shumway.AVM2.Verifier {
     }
 
     super(): Type {
-      Shumway.Debug.abstractMethod("super");
+      release || Shumway.Debug.abstractMethod("super");
       return null;
     }
 
@@ -356,10 +370,7 @@ module Shumway.AVM2.Verifier {
     }
 
     equals(other: Type): boolean {
-      if (other.isTraitsType()) {
-        return this.info.traits === (<TraitsType>other).info.traits;
-      }
-      return false;
+      return other.isTraitsType() && this.info.traits === (<TraitsType>other).info.traits;
     }
 
     merge(other: Type): Type {
