@@ -335,10 +335,7 @@ public dynamic class AVM1Globals {
     var nativeTarget = AVM1Utils.resolveLevel(level);
     nativeTarget.unloadMovie();
   }
-  public function updateAfterEvent() {
-    // flash.events.TimerEvent.updateAfterEvent
-    notImplemented('AVM1Globals.updateAfterEvent');
-  }
+  public native function updateAfterEvent();
 
   // built-ins
   public var NaN:Number = Number.NaN;

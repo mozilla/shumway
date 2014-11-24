@@ -227,9 +227,12 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = 0; i < frames.length; i++) {
         var frameInfo;
         frameInfo = loaderInfo.getFrame(data, i);
-        if (frameInfo.actionBlocks) {
-          symbol.frameScripts.push(i);
-          symbol.frameScripts.push.apply(symbol.frameScripts, frameInfo.actionBlocks);
+        var actionBlocks = frameInfo.actionBlocks;
+        if (actionBlocks) {
+          for (var j = 0; j < actionBlocks.length; j++) {
+            symbol.frameScripts.push(i);
+            symbol.frameScripts.push(actionBlocks[j]);
+          }
         }
         if (frameInfo.labelName) {
           symbol.labels.push(new flash.display.FrameLabel(frameInfo.labelName, i + 1));

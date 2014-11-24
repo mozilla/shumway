@@ -211,6 +211,8 @@ module Shumway.AVM2.AS.avm1lib {
     }
 
     addFrameScript(frameIndex: number, actionsBlock: Uint8Array): void {
+      release || assert(isNumber(frameIndex));
+      release || assert(actionsBlock instanceof Uint8Array);
       var frameScripts = this._frameScripts;
       if (!frameScripts) {
         release || assert(!this._boundExecuteFrameScripts);

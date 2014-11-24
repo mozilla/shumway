@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.avm1lib {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Loader = Shumway.AVM2.AS.flash.display.Loader;
@@ -59,7 +60,7 @@ module Shumway.AVM2.AS.avm1lib {
                                          "setTimeout!", "showRedrawRegions!", "startDrag!", "stop!",
                                          "stopAllSounds!", "stopDrag!", "substring!", "targetPath!",
                                          "toggleHighQuality!", "unloadMovie!",
-                                         "unloadMovieNum!", "updateAfterEvent!"];
+                                         "unloadMovieNum!"];
 
     constructor () {
       false && super();
@@ -118,7 +119,10 @@ module Shumway.AVM2.AS.avm1lib {
     toggleHighQuality: () => any;
     unloadMovie: (target: any) => any;
     unloadMovieNum: (level: any) => any;
-    updateAfterEvent: () => any;
+
+    public updateAfterEvent() {
+      release || somewhatImplemented("updateAfterEvent")
+    }
 
     // AS -> JS Bindings
     static _addInternalClasses(proto: ASObject): void {
