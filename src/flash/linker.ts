@@ -191,23 +191,6 @@ module Shumway.AVM2.AS {
         flash.accessibility.Accessibility),
       M("flash.utils.Timer", "TimerClass", flash.utils.Timer),
       M("flash.utils.ByteArray", "ByteArrayClass", flash.utils.ByteArray),
-
-      M("avm1lib.AVM1Utils", "AVM1Utils", Shumway.AVM2.AS.avm1lib.AVM1Utils),
-      M("avm1lib.AVM1Broadcaster"),
-      M("avm1lib.AVM1Key"),
-      M("avm1lib.AVM1Mouse"),
-      M("avm1lib.AVM1MovieClip", "AVM1MovieClip", Shumway.AVM2.AS.avm1lib.AVM1MovieClip),
-      M("avm1lib.AVM1BitmapData", "AVM1BitmapData", Shumway.AVM2.AS.avm1lib.AVM1BitmapData),
-      M("avm1lib.AVM1Button", "AVM1Button", Shumway.AVM2.AS.avm1lib.AVM1Button),
-      M("avm1lib.AVM1Sound"),
-      M("avm1lib.AVM1TextField", "AVM1TextField", Shumway.AVM2.AS.avm1lib.AVM1TextField),
-      M("avm1lib.AVM1Stage"),
-      M("avm1lib.AVM1System"),
-      M("avm1lib.AVM1Color"),
-      M("avm1lib.AVM1Transform"),
-      M("avm1lib.AVM1Globals", "AVM1Globals", Shumway.AVM2.AS.avm1lib.AVM1Globals),
-      M("avm1lib.AVM1MovieClipLoader", "AVM1MovieClipLoader",
-        Shumway.AVM2.AS.avm1lib.AVM1MovieClipLoader),
     ];
 
     symbols.forEach(function (s) {

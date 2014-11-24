@@ -24,7 +24,6 @@ release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 
 var playerglobalInfo = {
   abcs: WEB_ROOT + "../build/playerglobal/playerglobal.abcs",

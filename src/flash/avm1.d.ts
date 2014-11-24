@@ -15,23 +15,6 @@
  */
 
 import ASClass = Shumway.AVM2.AS.ASClass;
-declare module Shumway.AVM2.AS.avm1lib {
-  export class AVM1Globals extends ASClass {}
-  export class AVM1Utils extends ASClass {}
-  export class AVM1MovieClip extends ASClass {
-    _nativeAS3Object: Shumway.AVM2.AS.flash.display.MovieClip;
-    context: Shumway.AVM1.AVM1Context;
-  }
-  export class AVM1BitmapData extends ASClass {}
-  export class AVM1Button extends ASClass {}
-  export class AVM1TextField extends ASClass {}
-  export class AVM1MovieClipLoader extends ASClass {}
-  export class AVM1Key extends ASClass {}
-  export class AVM1Mouse extends ASClass {}
-
-  export function getAVM1Object(as3Object: any): any;
-  export function initializeAVM1Object(as3Object: any, state: Shumway.Timeline.AnimationState): any;
-}
 
 declare module Shumway.AVM1 {
   import flash = Shumway.AVM2.AS.flash;

@@ -28,20 +28,12 @@ module Shumway {
 
   export function createAVM2(builtinPath: string,
                              libraryPath: any, /* LibraryPathInfo | string */
-                             avm1Path: string,
                              sysMode: ExecutionMode, appMode: ExecutionMode,
                              next: (avm2: AVM2) => void) {
-    function loadAVM1(next) {
-      new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
-        avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), avm1Path));
-        next();
-      });
-    }
-
     var avm2;
     release || assert (builtinPath);
     new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-      AVM2.initialize(sysMode, appMode, avm1Path ? loadAVM1 : null);
+      AVM2.initialize(sysMode, appMode);
       avm2 = AVM2.instance;
       Shumway.AVM2.AS.linkNatives(avm2);
       console.time("Execute builtin.abc");

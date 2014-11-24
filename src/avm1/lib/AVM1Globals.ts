@@ -23,6 +23,8 @@ module Shumway.AVM1.Lib {
   import ASObject = Shumway.AVM2.AS.ASObject;
   import ASFunction = Shumway.AVM2.AS.ASFunction;
 
+  var _escape: (str: string) => string = jsGlobal.escape;
+
   export class AVM1Globals {
     static createAVM1Class(): typeof AVM1Globals {
       return wrapAVM1Class(AVM1Globals,
@@ -158,7 +160,7 @@ module Shumway.AVM1.Lib {
           case '_':
             return '%5F';
           default:
-            return globalEscape(char);
+            return _escape(char);
         }
       });
     }

@@ -21,7 +21,6 @@ var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler",
 
 var avm2Root = "../../src/avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 
 // different playerglobals can be used here
 var playerglobalInfo = {
@@ -109,7 +108,7 @@ function runSwfPlayer(data) {
   var displayParameters = data.displayParameters;
   var file = data.file;
   configureMocks(file);
-  Shumway.createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
+  Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
     function runSWF(file) {
       var player = new Shumway.Player.Window.WindowPlayer(window);
       player.movieParams = movieParams;

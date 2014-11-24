@@ -94,7 +94,6 @@ var viewerPlayerglobalInfo = {
 };
 
 var builtinPath = SHUMWAY_ROOT + "avm2/generated/builtin/builtin.abc";
-var avm1Path = SHUMWAY_ROOT + "avm2/generated/avm1lib/avm1lib.abc";
 
 var playerWindow;
 var playerWindowLoaded = new Promise(function(resolve) {

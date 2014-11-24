@@ -21,7 +21,6 @@ module Shumway.Player {
   import Point = Shumway.AVM2.AS.flash.geom.Point;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
-  import avm1lib = Shumway.AVM2.AS.avm1lib;
   import IExternalInterfaceService = Shumway.IExternalInterfaceService;
 
   import Event = flash.events.Event;

@@ -15,6 +15,7 @@
  */
 
 /// <reference path='../../build/ts/avm2.d.ts' />
+/// <reference path='flash.d.ts' />
 
 ///<reference path='stream.ts' />
 ///<reference path='parser.ts' />
@@ -39,5 +40,3 @@
 ///<reference path='lib/AVM1Sound.ts' />
 ///<reference path='lib/AVM1System.ts' />
 ///<reference path='lib/AVM1MovieClipLoader.ts' />
-
-///<reference path='../avm1lib/references.ts' />

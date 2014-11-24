@@ -19,7 +19,7 @@ var manifestFile = null;
 
 function runSwf(path, callback) {
   var child = spawn(jsPath,
-    [shellPath, '-x', path, '--avm1lib', '--duration', runDuration, '--porcelain'],
+    [shellPath, '-x', path, '--duration', runDuration, '--porcelain'],
     {
       stdio: ['ignore', 'pipe', 'pipe']
     });

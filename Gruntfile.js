@@ -105,10 +105,6 @@ module.exports = function(grunt) {
                                    (grunt.option('rebuild') ? ' -r' : ''),
         cwd: 'utils/playerglobal-builder'
       },
-      build_avm1lib: {
-        cmd: 'node compileabc -m ../src/avm1lib/avm1lib.manifest',
-        cwd: 'utils/'
-      },
       gate: {
         cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
                 (grunt.option('verbose') ? '-v ' : '') +
@@ -202,7 +198,6 @@ module.exports = function(grunt) {
       base: {
         tasks: [
           { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
-          { args: ['exec:build_avm1lib'].concat(parallelArgs), grunt: true },
           { args: ['exec:build_base_ts'].concat(parallelArgs), grunt: true },
         ]
       },
@@ -227,7 +222,6 @@ module.exports = function(grunt) {
       },
       avm1: {
         tasks: [
-          { args: ['exec:build_avm1lib'].concat(parallelArgs), grunt: true },
           { args: ['exec:build_avm1_ts'].concat(parallelArgs), grunt: true }
         ]
       },
@@ -250,11 +244,6 @@ module.exports = function(grunt) {
       base: {
         files: 'src/base/**/*',
         tasks: ['exec:build_base_ts']
-      },
-      avm1lib: {
-        files: ['src/avm1lib/*.as',
-                'src/avm1lib/avm1lib.manifest'],
-        tasks: ['exec:build_avm1lib']
       },
       playerglobal: {
         files: ['src/flash/**/*.as',
@@ -414,7 +403,6 @@ module.exports = function(grunt) {
 
   grunt.registerTask('watch-playerglobal', ['exec:build_playerglobal', 'watch:playerglobal']);
   grunt.registerTask('watch-base', ['exec:build_base_ts', 'watch:base']);
-  grunt.registerTask('watch-avm1lib', ['exec:build_avm1lib', 'watch:avm1lib']);
   grunt.registerTask('watch-avm2', ['exec:build_avm2_ts', 'watch:avm2_ts']);
   grunt.registerTask('watch-swf', ['exec:build_swf_ts', 'watch:swf_ts']);
   grunt.registerTask('watch-flash', ['exec:build_flash_ts', 'watch:flash_ts']);
@@ -552,7 +540,6 @@ module.exports = function(grunt) {
       throw new Error('mozcentralbaseline was not run.');
     }
     var NON_DELTA_BINARIES = [
-      'browser/extensions/shumway/content/avm2/generated/avm1lib/avm1lib.abc',
       'browser/extensions/shumway/content/avm2/generated/builtin/builtin.abc',
       'browser/extensions/shumway/content/playerglobal/playerglobal.abcs'
     ];

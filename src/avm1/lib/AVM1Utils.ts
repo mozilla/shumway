@@ -271,7 +271,13 @@ module Shumway.AVM1.Lib {
     events: any[];
   }
 
+  var isAvm1ObjectMethodsInstalled: boolean = false;
+
   export function installObjectMethods(): any {
+    if (isAvm1ObjectMethodsInstalled) {
+      return;
+    }
+    isAvm1ObjectMethodsInstalled = true;
     var c: any = Shumway.AVM2.AS.ASObject, p = c.asGetPublicProperty('prototype');
     c.asSetPublicProperty('registerClass', function registerClass(name, theClass) {
       AVM1Context.instance.registerClass(name, theClass);
