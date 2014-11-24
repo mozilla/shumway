@@ -210,77 +210,82 @@ module Shumway.AVM2.AS {
     registerNativeFunction('FlashUtilScript::getDefinitionByName',
                            Shumway.AVM2.AS.Natives.getDefinitionByName);
 
-    registerNativeFunction('FlashUtilScript::getTimer', function getTimer() {
-      return Date.now() - flash.display.Loader.runtimeStartTime;
-    });
+    registerNativeFunction('FlashUtilScript::getTimer', FlashUtilScript_getTimer);
 
     registerNativeFunction('FlashUtilScript::escapeMultiByte', escape);
     registerNativeFunction('FlashUtilScript::unescapeMultiByte', unescape);
 
-    registerNativeFunction('FlashNetScript::navigateToURL',
-      function navigateToURL(request, window_) {
-        if (request === null || request === undefined) {
-          throwError('TypeError', Errors.NullPointerError, 'request');
-        }
-        var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
-        if (!RequestClass.isInstanceOf(request)) {
-          throwError('TypeError', Errors.CheckTypeFailedError, request,
-                     'flash.net.URLRequest');
-        }
-        var url = request.url;
-        if (isNullOrUndefined(url)) {
-          throwError('TypeError', Errors.NullPointerError, 'url');
-        }
-        if (/^fscommand:/i.test(url)) {
-          var fscommand = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain.getProperty(
-            Multiname.fromSimpleName('flash.system.fscommand'), true, true);
-          fscommand.call(null, url.substring('fscommand:'.length), window_);
-          return;
-        }
-        // TODO handle other methods than GET
-        FileLoadingService.instance.navigateTo(url, window_);
-      }
-    );
+    registerNativeFunction('FlashNetScript::navigateToURL', FlashNetScript_navigateToURL);
+    registerNativeFunction('FlashNetScript::sendToURL', FlashNetScript_sendToURL);
 
-    registerNativeFunction('FlashNetScript::sendToURL', function sendToURL(request) {
-      if (request === null || request === undefined) {
-        throwError('TypeError', Errors.NullPointerError, 'request');
-      }
-      var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
-      if (!RequestClass.isInstanceOf(request)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, request,
-                   'flash.net.URLRequest');
-      }
-      var session = FileLoadingService.instance.createSession();
-      session.onprogress = function () {
-        // ...
-      };
-      session.open(request);
-    });
+    registerNativeFunction('Toplevel::registerClassAlias', Toplevel_registerClassAlias);
+    registerNativeFunction('Toplevel::getClassByAlias', Toplevel_getClassByAlias);
+  }
 
-    registerNativeFunction('Toplevel::registerClassAlias',
-                           function registerClassAlias(aliasName, classObject) {
-                             if (!aliasName) {
-                               throwError('TypeError', Errors.NullPointerError, 'aliasName');
-                             }
-                             if (!classObject) {
-                               throwError('TypeError', Errors.NullPointerError, 'classObject');
-                             }
+  export function FlashUtilScript_getTimer() {
+    return Date.now() - flash.display.Loader.runtimeStartTime;
+  }
 
-                             aliasesCache.classes.set(classObject, aliasName);
-                             aliasesCache.names[aliasName] = classObject;
-                           });
+  export function FlashNetScript_navigateToURL(request, window_) {
+    if (request === null || request === undefined) {
+      throwError('TypeError', Errors.NullPointerError, 'request');
+    }
+    var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
+    if (!RequestClass.isInstanceOf(request)) {
+      throwError('TypeError', Errors.CheckTypeFailedError, request,
+        'flash.net.URLRequest');
+    }
+    var url = request.url;
+    if (isNullOrUndefined(url)) {
+      throwError('TypeError', Errors.NullPointerError, 'url');
+    }
+    if (/^fscommand:/i.test(url)) {
+      var fscommand = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain.getProperty(
+        Multiname.fromSimpleName('flash.system.fscommand'), true, true);
+      fscommand.call(null, url.substring('fscommand:'.length), window_);
+      return;
+    }
+    // TODO handle other methods than GET
+    FileLoadingService.instance.navigateTo(url, window_);
+  }
 
-    registerNativeFunction('Toplevel::getClassByAlias', function getClassByAlias(aliasName) {
-      if (!aliasName) {
-        throwError('TypeError', Errors.NullPointerError, 'aliasName');
-      }
+  function FlashNetScript_sendToURL(request) {
+    if (request === null || request === undefined) {
+      throwError('TypeError', Errors.NullPointerError, 'request');
+    }
+    var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
+    if (!RequestClass.isInstanceOf(request)) {
+      throwError('TypeError', Errors.CheckTypeFailedError, request,
+        'flash.net.URLRequest');
+    }
+    var session = FileLoadingService.instance.createSession();
+    session.onprogress = function () {
+      // ...
+    };
+    session.open(request);
+  }
 
-      var classObject = aliasesCache.names[aliasName];
-      if (!classObject) {
-        throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
-      }
-      return classObject;
-    });
+  function Toplevel_registerClassAlias(aliasName, classObject) {
+    if (!aliasName) {
+      throwError('TypeError', Errors.NullPointerError, 'aliasName');
+    }
+    if (!classObject) {
+      throwError('TypeError', Errors.NullPointerError, 'classObject');
+    }
+
+    aliasesCache.classes.set(classObject, aliasName);
+    aliasesCache.names[aliasName] = classObject;
+  }
+
+  function Toplevel_getClassByAlias(aliasName) {
+    if (!aliasName) {
+      throwError('TypeError', Errors.NullPointerError, 'aliasName');
+    }
+
+    var classObject = aliasesCache.names[aliasName];
+    if (!classObject) {
+      throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
+    }
+    return classObject;
   }
 }

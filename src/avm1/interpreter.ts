@@ -549,7 +549,7 @@ module Shumway.AVM1 {
       //  __proto__ and __constructor__ can be assigned later
       as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
     } else if (isFunction(ctor)) {
-      result = Object.create(ctor.prototype);
+      result = {}; // TODO Object.create(ctor.prototype);
       as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
       ctor.apply(result, args);
     } else {
@@ -972,9 +972,7 @@ module Shumway.AVM1 {
 
       // fast check if variable in the current scope
       if (scope.asHasProperty(undefined, variableName, 0)) {
-        var fn = scope.asGetPublicProperty(variableName);
-        // TODO fix this bind scope lookup
-        return typeof fn === 'function' && scope.__proto__avm1 ? fn.bind(scope) : fn;
+        return scope.asGetPublicProperty(variableName);
       }
 
       var target = avm1ResolveVariableName(ectx, variableName, false);
@@ -1517,6 +1515,7 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
+      // TODO fix this bind scope lookup, e.g. calling function in with() might require binding
       var fn = avm1GetVariable(ectx, functionName);
       // AVM1 simply ignores attempts to invoke non-functions.
       if (!(fn instanceof Function)) {

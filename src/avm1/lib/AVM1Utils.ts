@@ -166,8 +166,14 @@ module Shumway.AVM1.Lib {
   }
 
   function createAVM1Object(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
-    // TODO do we need to walk on __proto__ to find right ctor.prototype?
-    var avm1Object: any = Object.create(ctor.prototype);
+    // We need to walk on __proto__ to find right ctor.prototype.
+    var proto = ctor.prototype;
+    while (proto && !proto.initAVM1Instance) {
+      proto = proto.asGetPublicProperty('__proto__');
+    }
+    release || Debug.assert(proto);
+
+    var avm1Object: any = Object.create(proto);
     avm1Object.asSetPublicProperty('__proto__', ctor.asGetPublicProperty('prototype'));
     avm1Object.asDefinePublicProperty('__constructor__', {
       value: ctor,
@@ -215,8 +221,8 @@ module Shumway.AVM1.Lib {
         return (<any>obj).apply(this, arguments);
       };
       Object.getOwnPropertyNames(obj).forEach(function (name) {
-        if (name === "name" || name === "length") {
-          // Object.defineProperty will error on name or length
+        if (wrap.hasOwnProperty(name)) {
+          // Object.defineProperty will error e.g. on name or length
           return;
         }
         Object.defineProperty(wrap, name,

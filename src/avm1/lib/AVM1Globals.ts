@@ -25,6 +25,8 @@ module Shumway.AVM1.Lib {
 
   var _escape: (str: string) => string = jsGlobal.escape;
 
+  var _internalTimeouts: number[] = [];
+
   export class AVM1Globals {
     static createAVM1Class(): typeof AVM1Globals {
       return wrapAVM1Class(AVM1Globals,
@@ -88,11 +90,19 @@ module Shumway.AVM1.Lib {
     }
 
     public clearInterval(id: number /* uint */): void {
-      flash.utils.SetIntervalTimer._clearInterval(id);
+      var internalId = _internalTimeouts[id - 1];
+      if (internalId) {
+        clearInterval(internalId);
+        delete _internalTimeouts[id - 1];
+      }
     }
 
     public clearTimeout(id: number /* uint */): void {
-      flash.utils.SetIntervalTimer._clearInterval(id);
+      var internalId = _internalTimeouts[id - 1];
+      if (internalId) {
+        clearTimeout(internalId);
+        delete _internalTimeouts[id - 1];
+      }
     }
 
     public duplicateMovieClip(target, newname, depth) {
@@ -107,9 +117,7 @@ module Shumway.AVM1.Lib {
       return nativeTarget[PropertiesIndexMap[index]];
     }
 
-    public getTimer(): number {
-      return Date.now() - flash.display.Loader.runtimeStartTime;
-    }
+    public getTimer = Shumway.AVM2.AS.FlashUtilScript_getTimer;
 
     public getURL(url, target?, method?) {
       var request = new flash.net.URLRequest(String(url));
@@ -120,7 +128,7 @@ module Shumway.AVM1.Lib {
         this.loadMovieNum(url, +target.substr(6), method);
         return;
       }
-      flash.net.navigateToURL(request, target);
+      Shumway.AVM2.AS.FlashNetScript_navigateToURL(request, target);
     }
 
     public getVersion() {
@@ -263,7 +271,7 @@ module Shumway.AVM1.Lib {
         request.method = method;
       }
       var loader: flash.net.URLLoader = new flash.net.URLLoader(request);
-      loader.dataFormat = flash.net.URLLoaderDataFormat.VARIABLES;
+      loader.dataFormat = 'variables'; // flash.net.URLLoaderDataFormat.VARIABLES;
       function completeHandler(event: flash.events.Event): void {
         loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
         for (var key in loader.data) {
@@ -348,10 +356,6 @@ module Shumway.AVM1.Lib {
       nativeTarget.removeMovieClip();
     }
 
-    private _setInterval(closure: Function, delay: number, ... args): number /* uint */ {
-      return new flash.utils.SetIntervalTimer(closure, delay, true, args).reference;
-    }
-
     public setInterval(): any {
       // AVM1 setInterval silently swallows everything that vaguely looks like an error.
       if (arguments.length < 2) {
@@ -364,13 +368,14 @@ module Shumway.AVM1.Lib {
         if (arguments.length < 3) {
           return undefined;
         }
-        var obj: Object = arguments[0];
+        var obj: any = arguments[0];
         var funName: any = arguments[1];
         if (!(obj && typeof obj === 'object' && typeof funName === 'string')) {
           return undefined;
         }
         args[0] = function (): void {
-          obj[funName].apply(obj, arguments);
+          // TODO add AVM1 property resolution (and case ignore)
+          obj.asCallPublicProperty(funName, arguments);
         };
         for (var i = 2; i < arguments.length; i++) {
           args.push(arguments[i]);
@@ -378,16 +383,13 @@ module Shumway.AVM1.Lib {
       }
       // Unconditionally coerce interval to int, as one would do.
       args[1] |= 0;
-      return this._setInterval.apply(null, args);
+      var internalId = setInterval.apply(null, args);
+      return _internalTimeouts.push(internalId);
     }
 
     public setAVM1Property(target, index, value) {
       var nativeTarget = AVM1Utils.resolveTarget(target);
       nativeTarget[PropertiesIndexMap[index]] = value;
-    }
-
-    private _setTimeout(closure: Function, delay: number, ... args): number /* uint */ {
-      return new flash.utils.SetIntervalTimer(closure, delay, false, args).reference;
     }
 
     public setTimeout() {
@@ -398,7 +400,8 @@ module Shumway.AVM1.Lib {
       }
       // Unconditionally coerce interval to int, as one would do.
       arguments[1] |= 0;
-      return this._setTimeout.apply(null, arguments);
+      var internalId = setTimeout.apply(null, arguments);
+      return _internalTimeouts.push(internalId);
     }
 
     public showRedrawRegions(enable, color) {

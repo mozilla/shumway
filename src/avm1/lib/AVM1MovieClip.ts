@@ -40,7 +40,7 @@ module Shumway.AVM1.Lib {
           'beginFill', 'beginBitmapFill', 'beginGradientFill', 'blendMode',
           'cacheAsBitmap', '_callFrame', 'clear', 'createEmptyMovieClip',
           'createTextField', '_currentframe', 'curveTo', '_droptarget',
-          'duplicateMovieClip', 'enabled', 'endFill', 'filters',
+          'duplicateMovieClip', 'enabled', 'endFill', 'filters', '_framesloaded',
           'focusEnabled', '_focusrect', 'forceSmothing', 'getBounds',
           'getBytesLoaded', 'getBytesTotal', 'getDepth', 'getInstanceAtDepth',
           'getNextHighestDepth', 'getRect', 'getSWFVersion', 'getTextSnapshot',
@@ -355,7 +355,7 @@ module Shumway.AVM1.Lib {
       if (method) {
         request.method = method;
       }
-      flash.net.navigateToURL(request, window);
+      Shumway.AVM2.AS.FlashNetScript_navigateToURL(request, window);
     }
 
     public globalToLocal(pt) {
