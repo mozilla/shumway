@@ -2616,15 +2616,38 @@ module Shumway.AVM2.AS {
         isAttribute);
     }
 
+    // 9.1.1.10 [[ResolveValue]] ( )
+    resolveValue() {
+      return this;
+    }
+
+    // 9.2.1.2 [[Put]] (P, V)
     setProperty(mn, isAttribute, value) {
+      // Steps 1-2.
       if (isIndex(mn)) {
         // TODO do we need to simulate a sparse array here?
         this.appendChild(value);
         return;
       }
-      // TODO
-      var node = this.getProperty(mn, isAttribute, false);
-      toXML(node).replace(0, toXML(value));
+      // Step 3.
+      if (this._children.length === 0) {
+        // Step 3.a.i.
+        var r = this.resolveValue();
+        // Step 3.a.ii.
+        if (r === null || r._children.length !== 1) {
+          return;
+        }
+        // Step 3.a.iii.
+        this.appendChild(r._children[0]);
+      }
+      // Step 3.b.
+      if (this._children.length === 1) {
+        this._children[0].setProperty(mn, isAttribute, value);
+        // Step 4.
+        return;
+      }
+      // Not in the spec, but in Flash.
+      Runtime.throwError('TypeError', Errors.XMLAssigmentOneItemLists);
     }
 
     public asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
