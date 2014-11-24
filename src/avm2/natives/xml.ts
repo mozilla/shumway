@@ -1356,6 +1356,11 @@ module Shumway.AVM2.AS {
       }
       // Not in the spec, but a substantial optimization.
       if (this._kind !== ASXMLKind.Element) {
+        // Step 7.
+        // This only affects non-Element nodes, so moved up here.
+        if (this._value !== other._value) {
+          return false;
+        }
         return true;
       }
       // Step 5.
@@ -1368,10 +1373,6 @@ module Shumway.AVM2.AS {
       var children = this._children;
       var otherChildren = other._children;
       if (children.length !== otherChildren.length) {
-        return false;
-      }
-      // Step 7.
-      if (this._value !== other._value) {
         return false;
       }
       // Step 8.
