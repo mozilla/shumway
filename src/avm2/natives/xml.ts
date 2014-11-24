@@ -848,7 +848,7 @@ module Shumway.AVM2.AS {
 
   var xmlParser = new XMLParser();
 
-  export class ASNamespace extends ASObject {
+  export class ASNamespace extends ASObject implements XMLType {
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
     public static instanceConstructor: any = ASNamespace;
@@ -989,6 +989,12 @@ module Shumway.AVM2.AS {
       this._ns = Namespace.createNamespace(uri, prefix);
     }
 
+    // E4X 11.5.1 The Abstract Equality Comparison Algorithm, step 3.c.
+    equals(other: any): boolean {
+      return other instanceof ASNamespace && (<ASNamespace>other)._ns.uri === this._ns.uri ||
+             typeof other === 'string' && this._ns.uri === other;
+    }
+
     get prefix(): any {
       return this._ns.prefix;
     }
@@ -1020,7 +1026,7 @@ module Shumway.AVM2.AS {
     ANY_NAMESPACE = 8
   }
 
-  export class ASQName extends ASNative {
+  export class ASQName extends ASNative implements XMLType {
     public static instanceConstructor: any = ASQName;
 
     /**
@@ -1140,12 +1146,27 @@ module Shumway.AVM2.AS {
       this.name = new Multiname([namespace ? namespace._ns : null], localName, flags);
     }
 
+    // E4X 11.5.1 The Abstract Equality Comparison Algorithm, step 3.b.
+    equals(other: any): boolean {
+      return other instanceof ASQName &&
+             (<ASQName>other).uri === this.uri && (<ASQName>other).name.name === this.name.name ||
+             typeof other === 'string' && this.toString() === other;
+    }
+
     get localName(): string {
       return this.name.name;
     }
 
     get uri(): string {
       return this.name.namespaces[0] ? this.name.namespaces[0].uri : null;
+    }
+
+    toString() {
+      var uri = this.uri;
+      if (uri) {
+        return uri + '::' + this.name.name;
+      }
+      return this.name.name;
     }
 
     /**
@@ -1207,10 +1228,13 @@ module Shumway.AVM2.AS {
     ProcessingInstruction
   }
 
-  var ASXMLKindNames = [null, 'element', 'attribute', 'text', 'comment',
-    'processing-instruction'];
+  var ASXMLKindNames = [null, 'element', 'attribute', 'text', 'comment', 'processing-instruction'];
 
-  export class ASXML extends ASNative {
+  export interface XMLType {
+    equals(other: any): boolean;
+  }
+
+  export class ASXML extends ASNative implements XMLType {
     public static instanceConstructor: any = ASXML;
     static classInitializer: any = function() {
       var proto: any = ASXML.prototype;
@@ -1257,6 +1281,32 @@ module Shumway.AVM2.AS {
       return x;
     }
 
+    // E4X 11.5.1 The Abstract Equality Comparison Algorithm, steps 1-4.
+    equals(other: any): boolean {
+      // Steps 1,2.
+      if (other instanceof ASXMLList) {
+        return other.equals(this);
+      }
+      // Step 3.
+      if (other instanceof ASXML) {
+        // Step 3.a.i.
+        var otherXML = <ASXML>other;
+        if ((this._kind === ASXMLKind.Text || this._kind === ASXMLKind.Attribute) &&
+            otherXML.hasSimpleContent() ||
+            (otherXML._kind === ASXMLKind.Text || otherXML._kind === ASXMLKind.Attribute) &&
+            this.hasSimpleContent()) {
+          return this.toString() === other.toString();
+        }
+        // Step 3.a.ii.
+        return this._deepEquals(other);
+        // The rest of step 3 is implemented in {Namespace,QName}.equals and non-E4X parts of the
+        // engine.
+      }
+      // Step 4.
+      return this.hasSimpleContent() && this.toString() === asCoerceString(other);
+      // The remaining steps are implemented by other means in the interpreter/compiler.
+    }
+
     init(kind: number, uri, name, prefix) {
       var namespace = uri || prefix ? new ASNamespace(prefix, uri) : undefined;
       var isAttribute = kind === ASXMLKind.Attribute;
@@ -1287,6 +1337,63 @@ module Shumway.AVM2.AS {
         return 0;
       }
       return this._children.length;
+    }
+
+    // 9.1.1.9 [[Equals]] (V)
+    _deepEquals(V: XMLType) {
+      // Step 1.
+      if (!(V instanceof ASXML)) {
+        return false;
+      }
+      var other = <ASXML>V;
+      // Step 2.
+      if (this._kind !== other._kind) {
+        return false;
+      }
+      // Steps 3-4.
+      if (!!this._name !== !!other._name || (this._name && !this._name.equals(other._name))) {
+        return false;
+      }
+      // Not in the spec, but a substantial optimization.
+      if (this._kind !== ASXMLKind.Element) {
+        return true;
+      }
+      // Step 5.
+      var attributes = this._attributes;
+      var otherAttributes = other._attributes;
+      if (attributes.length !== otherAttributes.length) {
+        return false;
+      }
+      // Step 6.
+      var children = this._children;
+      var otherChildren = other._children;
+      if (children.length !== otherChildren.length) {
+        return false;
+      }
+      // Step 7.
+      if (this._value !== other._value) {
+        return false;
+      }
+      // Step 8.
+      attribOuter: for (var i = 0; i < attributes.length; i++) {
+        var attribute = attributes[i];
+        for (var j = 0; j < otherAttributes.length; j++) {
+          var otherAttribute = otherAttributes[j];
+          if (otherAttribute._name.equals(attribute._name) &&
+              otherAttribute._value === attribute._value) {
+            continue attribOuter;
+          }
+        }
+        return false;
+      }
+      // Step 9.
+      for (var i = 0; i < children.length; i++) {
+        if (!children[i]._deepEquals(otherChildren[i])) {
+          return false;
+        }
+      }
+      // Step 10.
+      return true;
     }
 
     // 9.1.1.7 [[DeepCopy]] ( )
@@ -1480,6 +1587,9 @@ module Shumway.AVM2.AS {
       if (this._kind === ASXMLKind.Comment ||
           this._kind === ASXMLKind.ProcessingInstruction) {
         return false;
+      }
+      if (this._kind !== ASXMLKind.Element) {
+        return true;
       }
       if (!this._children && this._children.length === 0) {
         return true;
@@ -2032,10 +2142,13 @@ module Shumway.AVM2.AS {
 
     // 9.1.1.8 [[Descendants]] (P)
     descendants(name_: any = "*"): ASXMLList {
+      var xl = new XMLList();
       var name = toXMLName(name_);
+      return this.descendantsInto(name, xl);
+    }
+    descendantsInto(name: ASQName, xl: ASXMLList) {
       var flags = name.flags;
       var self: ASXML = this;
-      var xl = new XMLList();
       if (self._kind !== ASXMLKind.Element) {
         return xl;
       }
@@ -2104,7 +2217,7 @@ module Shumway.AVM2.AS {
     return self;
   }
 
-  export class ASXMLList extends ASNative {
+  export class ASXMLList extends ASNative implements XMLType {
     public static instanceConstructor: any = ASXMLList;
 
     public static callableConstructor: any = function (value: any = undefined): ASXMLList {
@@ -2147,12 +2260,42 @@ module Shumway.AVM2.AS {
       }
       return xl;
     }
+
+    // E4X 11.5.1 The Abstract Equality Comparison Algorithm, steps 1-2.
+    // (but really 9.2.1.9 [[Equals]] (V))
+    equals(other: any): boolean {
+      var children = this._children;
+      // Step 1.
+      if (other === undefined && children.length === 0) {
+        return true;
+      }
+      // Step 2.
+      if (other instanceof ASXMLList) {
+        var otherChildren = other._children;
+        // Step 2.a.
+        if (otherChildren.length !== children.length) {
+          return false;
+        }
+        // Step 2.b.
+        for (var i = 0; i < children.length; i++) {
+          if (!children[i].equals(otherChildren[i])) {
+            return false;
+          }
+        }
+        // Step 2.c.
+        return true;
+      }
+      // Steps 3-4.
+      return children.length === 1 && children[0].equals(other);
+    }
+
     toString(): string {
       if (this.hasComplexContent()) {
         return this.toXMLString();
       }
       return toString(this);
     }
+
     // 9.2.1.7 [[DeepCopy]] ( )
     _deepCopy() {
       // TODO 2. Copy all internal properties of x to list
@@ -2208,8 +2351,17 @@ module Shumway.AVM2.AS {
       // 13.5.4.4 XMLList.prototype.child ( propertyName )
       return this.getProperty('*', false, false);
     }
-    descendants(): ASXMLList {
-      notImplemented("public.XMLList::descendants"); return;
+    // 9.2.1.8 [[Descendants]] (P)
+    descendants(name_: any): ASXMLList {
+      var name = toXMLName(name_);
+      var list = new XMLList();
+      for (var i = 0; i < this._children.length; i++) {
+        var child = this._children[i];
+        if (child._kind === ASXMLKind.Element) {
+          child.descendantsInto(name, list);
+        }
+      }
+      return list;
     }
     comments(): ASXMLList {
       // 13.5.4.6 XMLList.prototype.comments ( )

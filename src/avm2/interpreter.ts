@@ -559,7 +559,7 @@ module Shumway.AVM2 {
             stack[stack.length - 2] ^= stack.pop();
             break;
           case OP.equals:
-            stack[stack.length - 2] = stack[stack.length - 2] == stack.pop();
+            stack[stack.length - 2] = asEquals(stack[stack.length - 2], stack.pop());
             break;
           case OP.strictequals:
             stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();

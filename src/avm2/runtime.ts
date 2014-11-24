@@ -870,6 +870,7 @@ module Shumway.AVM2.Runtime {
     return error;
   }
 
+  // TODO: handle `type` being null or undefined in the following three functions.
   export function asIsInstanceOf(type, value) {
     return type.isInstanceOf(value);
   }
@@ -880,6 +881,24 @@ module Shumway.AVM2.Runtime {
 
   export function asAsType(type, value) {
     return asIsType(type, value) ? value : null;
+  }
+
+  function isXMLType(x): boolean {
+    return x instanceof AS.ASXML ||
+           x instanceof AS.ASXMLList ||
+           x instanceof AS.ASQName ||
+           x instanceof AS.ASNamespace;
+  }
+
+  export function asEquals(left: any, right: any): boolean {
+    // See E4X spec, 11.5 Equality Operators for why this is required.
+    if (isXMLType(left)) {
+      return left.equals(right);
+    }
+    if (isXMLType(right)) {
+      return right.equals(left);
+    }
+    return left == right;
   }
 
   export function asCoerceByMultiname(methodInfo: MethodInfo, multiname, value) {
@@ -986,26 +1005,26 @@ module Shumway.AVM2.Runtime {
     if (typeof l === "string" || typeof r === "string") {
       return String(l) + String(r);
     }
-    if (isXMLType(l) && isXMLType(r)) {
+    if (isXMLCollection(l) && isXMLCollection(r)) {
       return Shumway.AVM2.AS.ASXMLList.addXML(l, r);
     }
     return l + r;
   }
 
-  function isXMLType(x): boolean {
-    return x instanceof Shumway.AVM2.AS.ASXML ||
-           x instanceof Shumway.AVM2.AS.ASXMLList;
+  function isXMLCollection(x): boolean {
+    return x instanceof AS.ASXML ||
+           x instanceof AS.ASXMLList;
   }
 
   export function getDescendants(object, mn) {
-    if (!isXMLType(object)) {
+    if (!isXMLCollection(object)) {
       throw "Not XML object in getDescendants";
     }
     return object.descendants(mn);
   }
 
   export function checkFilter(value) {
-    if (!value.class || !isXMLType(value)) {
+    if (!value.class || !isXMLCollection(value)) {
       throw "TypeError operand of childFilter not of XML type";
     }
     return value;
@@ -1783,6 +1802,7 @@ var asCreateActivation = Shumway.AVM2.Runtime.asCreateActivation;
 var asIsInstanceOf = Shumway.AVM2.Runtime.asIsInstanceOf;
 var asIsType = Shumway.AVM2.Runtime.asIsType;
 var asAsType = Shumway.AVM2.Runtime.asAsType;
+var asEquals = Shumway.AVM2.Runtime.asEquals;
 var asTypeOf = Shumway.AVM2.Runtime.asTypeOf;
 var asCoerceByMultiname = Shumway.AVM2.Runtime.asCoerceByMultiname;
 var asCoerce = Shumway.AVM2.Runtime.asCoerce;
