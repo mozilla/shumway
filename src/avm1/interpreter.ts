@@ -181,11 +181,8 @@ module Shumway.AVM1 {
     constructor(loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo) {
       super();
       this.loaderInfo = loaderInfo;
-      this.globals = new Shumway.AVM2.AS.avm1lib.AVM1Globals();
-      if (loaderInfo.swfVersion >= 8) {
-        this.globals.asSetPublicProperty("flash",
-          Shumway.AVM2.AS.avm1lib.createFlashObject());
-      }
+      var GlobalsClass = Lib.AVM1Globals.createAVM1Class();
+      this.globals = new GlobalsClass(loaderInfo.swfVersion);
       this.initialScope = new AVM1ScopeListItem(this.globals, null);
       this.assets = {};
       // TODO: remove this list and always retrieve symbols from LoaderInfo.
@@ -243,7 +240,7 @@ module Shumway.AVM1 {
           this.resolveLevel(0));
       }
       if (typeof target !== 'object' || target === null ||
-        !('_nativeAS3Object' in target)) {
+        !('_as3Object' in target)) {
         throw new Error('Invalid AVM1 target object: ' +
           Object.prototype.toString.call(target));
       }
@@ -303,7 +300,7 @@ module Shumway.AVM1 {
 
   function isAVM1MovieClip(obj): boolean {
     return typeof obj === 'object' && obj &&
-      obj instanceof Shumway.AVM2.AS.avm1lib.AVM1MovieClip;
+      obj instanceof Lib.AVM1MovieClip;
   }
 
   function as2GetType(v): string {
@@ -411,7 +408,7 @@ module Shumway.AVM1 {
       case 'string':
         return value;
       case 'movieclip':
-        return (<Shumway.AVM2.AS.avm1lib.AVM1MovieClip> value).__targetPath;
+        return (<Lib.AVM1MovieClip> value).__targetPath;
       case 'object':
         if (typeof value === 'function' &&
             value.asGetPublicProperty('toString') ===
@@ -552,7 +549,7 @@ module Shumway.AVM1 {
       //  __proto__ and __constructor__ can be assigned later
       as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
     } else if (isFunction(ctor)) {
-      result = {};
+      result = Object.create(ctor.prototype);
       as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
       ctor.apply(result, args);
     } else {
@@ -722,7 +719,7 @@ module Shumway.AVM1 {
 
   interface ExecutionContext {
     context: AVM1ContextImpl;
-    global: Shumway.AVM2.AS.avm1lib.AVM1Globals;
+    global: Lib.AVM1Globals;
     scopeContainer: AVM1ScopeListItem;
     scope: any;
     actionTracer: ActionTracer;
@@ -975,7 +972,9 @@ module Shumway.AVM1 {
 
       // fast check if variable in the current scope
       if (scope.asHasProperty(undefined, variableName, 0)) {
-        return scope.asGetPublicProperty(variableName);
+        var fn = scope.asGetPublicProperty(variableName);
+        // TODO fix this bind scope lookup
+        return typeof fn === 'function' && scope.__proto__avm1 ? fn.bind(scope) : fn;
       }
 
       var target = avm1ResolveVariableName(ectx, variableName, false);
@@ -1262,14 +1261,14 @@ module Shumway.AVM1 {
       var _global = ectx.global;
 
       var sa = as2ToString(stack.pop());
-      stack.push(_global.length(sa));
+      stack.push(_global.length_(sa));
     }
     function avm1_0x31_ActionMBStringLength(ectx: ExecutionContext) {
       var stack = ectx.stack;
       var _global = ectx.global;
 
       var sa = as2ToString(stack.pop());
-      stack.push(_global.length(sa));
+      stack.push(_global.length_(sa));
     }
     function avm1_0x21_ActionStringAdd(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -2620,8 +2619,8 @@ module Shumway.AVM1 {
         isEndOfActions: false
       };
 
-      if (scope._nativeAS3Object &&
-          scope._nativeAS3Object._deferScriptExecution) {
+      if (scope._as3Object &&
+          scope._as3Object._deferScriptExecution) {
         currentContext.deferScriptExecution = true;
       }
 

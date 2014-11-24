@@ -163,7 +163,7 @@ module Shumway.AVM2.AS.flash.display {
         self._frames = symbol.frames;
         if (symbol.isAVM1Object) {
           if (symbol.frameScripts) {
-            var avm1MovieClip = avm1lib.getAVM1Object(this);
+            var avm1MovieClip = Shumway.AVM1.Lib.getAVM1Object(this, symbol.avm1Context);
             avm1MovieClip.context = symbol.avm1Context;
             var data = symbol.frameScripts;
             for (var i = 0; i < data.length; i += 2) {
@@ -240,7 +240,7 @@ module Shumway.AVM2.AS.flash.display {
         this._addSoundStreamBlock(frames.length, frameInfo.soundStreamBlock);
       }
       if (spriteSymbol.isAVM1Object) {
-        avm1lib.getAVM1Object(this).addFrameActionBlocks(frames.length - 1, frameInfo);
+        Shumway.AVM1.Lib.getAVM1Object(this, spriteSymbol.avm1Context).addFrameActionBlocks(frames.length - 1, frameInfo);
         if (frameInfo.exports) {
           var exports = frameInfo.exports;
           for (var i = 0; i < exports.length; i++) {
@@ -544,7 +544,7 @@ module Shumway.AVM2.AS.flash.display {
             var character = this.createAnimatedDisplayObject(state, false);
             this.addTimelineObjectAtDepth(character, state.depth);
             if (state.symbol.isAVM1Object) {
-              avm1lib.initializeAVM1Object(character, state);
+              Shumway.AVM1.Lib.initializeAVM1Object(character, state);
             }
           }
         }

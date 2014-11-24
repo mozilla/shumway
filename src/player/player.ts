@@ -174,8 +174,9 @@ module Shumway.Player {
         var startPromise = loader._startPromise;
         startPromise.then(function () {
           if (loaderInfo.actionScriptVersion === flash.display.ActionScriptVersion.ACTIONSCRIPT2) {
-            avm1lib.AVM1Key.asCallPublicProperty('__bind', [stage]);
-            avm1lib.AVM1Mouse.asCallPublicProperty('__bind', [stage]);
+            var avm1Context = loaderInfo._avm1Context;
+            avm1Context.globals.Key._bind(stage, avm1Context);
+            avm1Context.globals.Mouse._bind(stage, avm1Context);
             MovieClip.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
           } else if (loaderInfo.swfVersion < 10) {
             MovieClip.frameNavigationModel = flash.display.FrameNavigationModel.SWF9;

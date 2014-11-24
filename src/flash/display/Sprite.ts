@@ -90,7 +90,7 @@ module Shumway.AVM2.AS.flash.display {
           var character = this.createAnimatedDisplayObject(state, false);
           this.addTimelineObjectAtDepth(character, state.depth);
           if (state.symbol.isAVM1Object) {
-            avm1lib.initializeAVM1Object(character, state);
+            Shumway.AVM1.Lib.initializeAVM1Object(character, state);
           }
         }
       }

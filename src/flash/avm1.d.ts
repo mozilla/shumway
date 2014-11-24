@@ -34,16 +34,34 @@ declare module Shumway.AVM2.AS.avm1lib {
 }
 
 declare module Shumway.AVM1 {
+  import flash = Shumway.AVM2.AS.flash;
+
   export class AVM1ActionsData {
     constructor(actionsBlock: Uint8Array, name: string);
   }
   export class AVM1Context {
-    static create(loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo): AVM1Context;
+    static create(loaderInfo: flash.display.LoaderInfo): AVM1Context;
     addAsset(className: string, symbolId: number, symbolProps);
     executeActions(actionsData: AVM1ActionsData, scopeObj);
     flushPendingScripts();
 
-    globals: Shumway.AVM2.AS.avm1lib.AVM1Globals;
-    root: Shumway.AVM2.AS.avm1lib.AVM1MovieClip;
+    globals: Lib.AVM1Globals;
+    root: Lib.AVM1MovieClip;
+  }
+  export module Lib {
+    function getAVM1Object(obj, context: AVM1Context);
+    function initializeAVM1Object(obj, state);
+    function installObjectMethods();
+    class AVM1Globals extends ASClass {
+      Key: typeof AVM1Key;
+      Mouse: typeof AVM1Mouse;
+    }
+    class AVM1MovieClip extends ASClass {}
+    class AVM1Key extends ASClass {
+      static _bind(stage: flash.display.Stage, context: AVM1Context);
+    }
+    class AVM1Mouse extends ASClass {
+      static _bind(stage: flash.display.Stage, context: AVM1Context);
+    }
   }
 }
