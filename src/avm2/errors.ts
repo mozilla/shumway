@@ -105,7 +105,7 @@ module Shumway.AVM2 {
   //  XMLOnlyWorksWithOneItemLists         : {code: 1086, message: "The %1 method only works on lists containing one item."},
   //  XMLAssignmentToIndexedXMLNotAllowed  : {code: 1087, message: "Assignment to indexed XML is not allowed."},
     XMLMarkupMustBeWellFormed            : {code: 1088, message: "The markup in the document following the root element must be well-formed."},
-  //  XMLAssigmentOneItemLists             : {code: 1089, message: "Assignment to lists with more than one item is not supported."},
+    XMLAssigmentOneItemLists             : {code: 1089, message: "Assignment to lists with more than one item is not supported."},
   //  XMLMalformedElement                  : {code: 1090, message: "XML parser failure: element is malformed."},
   //  XMLUnterminatedCData                 : {code: 1091, message: "XML parser failure: Unterminated CDATA section."},
   //  XMLUnterminatedXMLDecl               : {code: 1092, message: "XML parser failure: Unterminated XML declaration."},

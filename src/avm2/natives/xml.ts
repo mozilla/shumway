@@ -66,7 +66,6 @@ module Shumway.AVM2.AS {
   var _asCallProperty = Object.prototype.asCallProperty;
   var _asHasProperty = Object.prototype.asHasProperty;
   var _asHasOwnProperty = Object.prototype.asHasOwnProperty;
-  var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
   var _asDeleteProperty = Object.prototype.asDeleteProperty;
   var _asGetEnumerableKeys = Object.prototype.asGetEnumerableKeys;
 
@@ -1253,15 +1252,14 @@ module Shumway.AVM2.AS {
     private static _flags: ASXML_FLAGS = ASXML_FLAGS.ALL;
     private static _prettyIndent = 2;
     private _name: ASQName;
-    private _parent: ASXML;
     private _attributes: ASXML [];
     private _inScopeNamespaces: ASNamespace [];
 
-    // Public so ASXMLList can access it.
+    // These properties are public so ASXMLList can access them.
     _kind: ASXMLKind;
-
-    _children: ASXML [];
-    private _value: any;
+    _value: any;
+    _parent: ASXML;
+    _children: ASXML[];
 
     constructor (value: any = undefined) {
       false && super();
@@ -1356,6 +1354,11 @@ module Shumway.AVM2.AS {
       }
       // Not in the spec, but a substantial optimization.
       if (this._kind !== ASXMLKind.Element) {
+        // Step 7.
+        // This only affects non-Element nodes, so moved up here.
+        if (this._value !== other._value) {
+          return false;
+        }
         return true;
       }
       // Step 5.
@@ -1368,10 +1371,6 @@ module Shumway.AVM2.AS {
       var children = this._children;
       var otherChildren = other._children;
       if (children.length !== otherChildren.length) {
-        return false;
-      }
-      // Step 7.
-      if (this._value !== other._value) {
         return false;
       }
       // Step 8.
@@ -1627,8 +1626,48 @@ module Shumway.AVM2.AS {
       return ASXMLKindNames[this._kind];
     }
     normalize(): ASXML {
-      notImplemented("public.XML::normalize"); return;
+      // Steps 1-2.
+      for (var i = 0; i < this._children.length;) {
+        var child = this._children[i];
+        // Step 2.a.
+        if (child._kind === ASXMLKind.Element) {
+          child.normalize();
+          i++;
+        }
+        // Step 2.b.
+        else if (child._kind === ASXMLKind.Text) {
+          // Step 2.b.i.
+          for (i++; i < this._children.length;) {
+            var nextChild = this._children[i];
+            if (nextChild._kind !== ASXMLKind.Text) {
+              break;
+            }
+            child._value += nextChild._value;
+            this.removeByIndex(i);
+          }
+          // Step 2.b.ii.
+          if (child._value.length === 0) {
+            this.removeByIndex(i);
+          }
+          // Step 2.b.iii.
+          else {
+            i++;
+          }
+        }
+        // Step 2.c.
+        else {
+          i++;
+        }
+      }
+      return this;
     }
+
+    private removeByIndex(index: number) {
+      var child = this._children[index];
+      child._parent = null;
+      this._children.splice(index, 1);
+    }
+
     parent(): any {
       return this._parent;
     }
@@ -1983,15 +2022,10 @@ module Shumway.AVM2.AS {
       if (String(i) !== String(p)) {
         throw "TypeError in XML.prototype.deleteByIndex(): invalid index " + p;
       }
-      if (p < this.length()) {
-        if (this.children[p]) {
-          this.children[p]._parent = null;
-          delete this.children[p];
-          for (var q = i + 1; q < this.length(); q++) {
-            this.children[q - 1] = this.children[q];
-          }
-          this.children.length = this.children.length - 1;
-        }
+      var children = this._children;
+      if (p < children.length && children[p]) {
+        children[p]._parent = null;
+        children.splice(p, 1);
       }
     }
 
@@ -2219,6 +2253,10 @@ module Shumway.AVM2.AS {
 
   export class ASXMLList extends ASNative implements XMLType {
     public static instanceConstructor: any = ASXMLList;
+    static classInitializer: any = function() {
+      var proto: any = ASXMLList.prototype;
+      defineNonEnumerableProperty(proto, 'asDeleteProperty', proto._asDeleteProperty);
+    }
 
     public static callableConstructor: any = function (value: any = undefined): ASXMLList {
       // 13.5.1 The XMLList Constructor Called as a Function
@@ -2374,9 +2412,17 @@ module Shumway.AVM2.AS {
       });
       return xl;
     }
+
+    // 13.5.4.8 XMLList.prototype.contains ( value )
     contains(value: any): boolean {
-      // 13.5.4.8 XMLList.prototype.contains ( value )
-      return this._children.indexOf(value) >= 0;
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        if (child.equals(value)) {
+          return true;
+        }
+      }
+      return false;
     }
     copy(): ASXMLList {
       // 13.5.4.9 XMLList.prototype.copy ( )
@@ -2425,9 +2471,45 @@ module Shumway.AVM2.AS {
     name(): Object {
       return this._children[0].name();
     }
+
+    // 13.5.4.16 XMLList.prototype.normalize ( )
     normalize(): ASXMLList {
-      notImplemented("public.XMLList::normalize"); return;
+      // Steps 1-2.
+      for (var i = 0; i < this._children.length;) {
+        var child = this._children[i];
+        // Step 2.a.
+        if (child._kind === ASXMLKind.Element) {
+          child.normalize();
+          i++;
+        }
+        // Step 2.b.
+        else if (child._kind === ASXMLKind.Text) {
+          // Step 2.b.i.
+          for (i++; i < this._children.length;) {
+            var nextChild = this._children[i];
+            if (nextChild._kind !== ASXMLKind.Text) {
+              break;
+            }
+            child._value += nextChild._value;
+            this.removeByIndex(i);
+          }
+          // Step 2.b.ii.
+          if (child._value.length === 0) {
+            this.removeByIndex(i);
+          }
+          // Step 2.b.iii.
+          else {
+            i++;
+          }
+        }
+        // Step 2.c.
+        else {
+          i++;
+        }
+      }
+      return this;
     }
+
     parent(): any {
       // 13.5.4.17 XMLList.prototype.parent ( )
       if (this.length() === 0) {
@@ -2607,15 +2689,38 @@ module Shumway.AVM2.AS {
         isAttribute);
     }
 
+    // 9.1.1.10 [[ResolveValue]] ( )
+    resolveValue() {
+      return this;
+    }
+
+    // 9.2.1.2 [[Put]] (P, V)
     setProperty(mn, isAttribute, value) {
+      // Steps 1-2.
       if (isIndex(mn)) {
         // TODO do we need to simulate a sparse array here?
         this.appendChild(value);
         return;
       }
-      // TODO
-      var node = this.getProperty(mn, isAttribute, false);
-      toXML(node).replace(0, toXML(value));
+      // Step 3.
+      if (this._children.length === 0) {
+        // Step 3.a.i.
+        var r = this.resolveValue();
+        // Step 3.a.ii.
+        if (r === null || r._children.length !== 1) {
+          return;
+        }
+        // Step 3.a.iii.
+        this.appendChild(r._children[0]);
+      }
+      // Step 3.b.
+      if (this._children.length === 1) {
+        this._children[0].setProperty(mn, isAttribute, value);
+        // Step 4.
+        return;
+      }
+      // Not in the spec, but in Flash.
+      Runtime.throwError('TypeError', Errors.XMLAssigmentOneItemLists);
     }
 
     public asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
@@ -2625,6 +2730,42 @@ module Shumway.AVM2.AS {
       var isAttribute = flags & Multiname.ATTRIBUTE;
       name = prefixWithNamespace(namespaces, name, isAttribute);
       return this.setProperty(name, isAttribute, value);
+    }
+
+    // 9.2.1.3 [[Delete]] (P)
+    _asDeleteProperty(namespaces: Namespace [], name: any, flags: number) {
+      // Steps 1-2.
+      if (isIndex(name)) {
+        var i = name|0;
+        // Step 2.a.
+        if (i >= this._children.length) {
+          return true;
+        }
+        // Step 2.b.
+        this.removeByIndex(i);
+        return true;
+      }
+      // Step 3.
+      var isAttribute = !!(flags & Multiname.ATTRIBUTE);
+      name = prefixWithNamespace(namespaces, name, isAttribute);
+      for (var i = 0; i < this._children.length; i++) {
+        var child = this._children[i];
+        if (child._kind === ASXMLKind.Element) {
+          child.deleteProperty(name, isAttribute);
+        }
+      }
+      // Step 4.
+      return true;
+    }
+
+    private removeByIndex(index: number) {
+      var child = this._children[index];
+      var parent = child._parent;
+      if (parent) {
+        child._parent = null;
+        parent._children.splice(parent._children.indexOf(child), 1);
+      }
+      this._children.splice(index, 1);
     }
 
     asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
