@@ -2375,9 +2375,17 @@ module Shumway.AVM2.AS {
       });
       return xl;
     }
+
+    // 13.5.4.8 XMLList.prototype.contains ( value )
     contains(value: any): boolean {
-      // 13.5.4.8 XMLList.prototype.contains ( value )
-      return this._children.indexOf(value) >= 0;
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        if (child.equals(value)) {
+          return true;
+        }
+      }
+      return false;
     }
     copy(): ASXMLList {
       // 13.5.4.9 XMLList.prototype.copy ( )
