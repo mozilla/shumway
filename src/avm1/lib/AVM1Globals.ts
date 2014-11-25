@@ -138,12 +138,16 @@ module Shumway.AVM1.Lib {
 
     _addToPendingScripts(subject: any, fn: Function, args: any [] = null): any {
       release || assert(fn, 'invalid function in _addToPendingScripts');
-      AVM1Context.instance.addToPendingScripts(function () {
-        try {
-          (<Function><any> fn).apply(subject, args);
-        } catch (ex) {
-          console.error('AVM1 pending script error: ' + ex.message);
-        }
+      var currentContext = AVM1Context.instance;
+      var defaultTarget = currentContext.resolveTarget(undefined);
+      currentContext.addToPendingScripts(function () {
+        currentContext.enterContext(function () {
+          try {
+            (<Function><any> fn).apply(subject, args);
+          } catch (ex) {
+            console.error('AVM1 pending script error: ' + ex.message);
+          }
+        }, defaultTarget);
       });
     }
 

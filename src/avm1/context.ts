@@ -53,6 +53,7 @@ module Shumway.AVM1 {
     public resolveLevel(level: number): any {}
     public addToPendingScripts(fn) {}
 
-    public executeActions(actionsData: AVM1ActionsData, scopeObj) {}
+    public enterContext(fn: Function, defaultTarget): void {}
+    public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}
   }
 }

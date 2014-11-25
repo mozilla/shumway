@@ -279,7 +279,45 @@ module Shumway.AVM1 {
       this.frame = previousFrame;
       return previousFrame;
     }
-    executeActions(actionsData: AVM1ActionsData, scopeObj) {
+    enterContext(fn: Function, defaultTarget): void {
+      // Shortcut
+      if (this === AVM1Context.instance && this.isActive &&
+          this.defaultTarget === defaultTarget && this.currentTarget === null) {
+        fn();
+        return;
+      }
+
+      var savedContext = AVM1Context.instance;
+      var savedIsActive = this.isActive;
+      var savedDefaultTarget = this.defaultTarget;
+      var savedCurrentTarget = this.currentTarget;
+      var caughtError;
+      try {
+        // switching contexts if called outside main thread
+        AVM1Context.instance = this;
+        if (!savedIsActive) {
+          this.abortExecutionAt = avm1TimeoutDisabled.value ?
+            Number.MAX_VALUE : Date.now() + MAX_AVM1_HANG_TIMEOUT;
+          this.errorsIgnored = 0;
+          this.isActive = true;
+        }
+        this.defaultTarget = defaultTarget;
+        this.currentTarget = null;
+
+        fn();
+      } catch (e) {
+        caughtError = e;
+      }
+      this.defaultTarget = savedDefaultTarget;
+      this.currentTarget = savedCurrentTarget;
+      this.isActive = savedIsActive;
+      AVM1Context.instance = savedContext;
+      if (caughtError) {
+        // Note: this doesn't use `finally` because that's a no-go for performance.
+        throw caughtError;
+      }
+    }
+    executeActions(actionsData: AVM1ActionsData, scopeObj): void {
       executeActions(actionsData, this, scopeObj);
     }
   }
@@ -650,34 +688,24 @@ module Shumway.AVM1 {
     var actionTracer = ActionTracerFactory.get();
 
     var scopeContainer = context.initialScope.create(scope);
-    var savedContext = AVM1Context.instance;
     var caughtError;
-    try {
-      AVM1Context.instance = context;
-      context.isActive = true;
-      context.abortExecutionAt = avm1TimeoutDisabled.value ? Number.MAX_VALUE :
-        Date.now() + MAX_AVM1_HANG_TIMEOUT;
-      context.errorsIgnored = 0;
-      context.defaultTarget = scope;
-      context.currentTarget = null;
-      context.pushCallFrame(scope, null, null);
-      actionTracer.message('ActionScript Execution Starts');
-      actionTracer.indent();
-      interpretActions(actionsData, scopeContainer, [], []);
-    } catch (e) {
-      caughtError = as2CastError(e);
-      if (caughtError instanceof AVM1CriticalError) {
-        context.executionProhibited = true;
-        console.error('Disabling AVM1 execution');
+    context.pushCallFrame(scope, null, null);
+    actionTracer.message('ActionScript Execution Starts');
+    actionTracer.indent();
+    context.enterContext(function () {
+      try {
+        interpretActions(actionsData, scopeContainer, [], []);
+      } catch (e) {
+        caughtError = as2CastError(e);
       }
+    }, scope);
+    if (caughtError instanceof AVM1CriticalError) {
+      context.executionProhibited = true;
+      console.error('Disabling AVM1 execution');
     }
     context.popCallFrame();
-    context.isActive = false;
-    context.defaultTarget = null;
-    context.currentTarget = null;
     actionTracer.unindent();
     actionTracer.message('ActionScript Execution Stops');
-    AVM1Context.instance = savedContext;
     if (caughtError) {
       // Note: this doesn't use `finally` because that's a no-go for performance.
       throw caughtError; // TODO shall we just ignore it?
@@ -896,38 +924,22 @@ module Shumway.AVM1 {
           newScope.asSetPublicProperty(parametersNames[i], arguments[i]);
         }
 
-        var savedContext = AVM1Context.instance;
-        var savedIsActive = currentContext.isActive;
-        var savedDefaultTarget = currentContext.defaultTarget;
-        var savedCurrentTarget = currentContext.currentTarget;
         var result;
         var caughtError;
-        try {
-          // switching contexts if called outside main thread
-          AVM1Context.instance = currentContext;
-          if (!savedIsActive) {
-            currentContext.abortExecutionAt = avm1TimeoutDisabled.value ?
-              Number.MAX_VALUE : Date.now() + MAX_AVM1_HANG_TIMEOUT;
-            currentContext.errorsIgnored = 0;
-            currentContext.isActive = true;
-          }
-          currentContext.defaultTarget = defaultTarget;
-          currentContext.currentTarget = null;
-          actionTracer.indent();
-          if (++currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
-            throw new AVM1CriticalError('long running script -- AVM1 recursion limit is reached');
-          }
-          result = interpretActions(actionsData, newScopeContainer, constantPool, registers);
-        } catch (e) {
-          caughtError = e;
+        actionTracer.indent();
+        if (++currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
+          throw new AVM1CriticalError('long running script -- AVM1 recursion limit is reached');
         }
-        currentContext.defaultTarget = savedDefaultTarget;
-        currentContext.currentTarget = savedCurrentTarget;
-        currentContext.isActive = savedIsActive;
+        currentContext.enterContext(function () {
+          try {
+            result = interpretActions(actionsData, newScopeContainer, constantPool, registers);
+          } catch (e) {
+            caughtError = e;
+          }
+        }, defaultTarget);
         currentContext.stackDepth--;
         currentContext.popCallFrame();
         actionTracer.unindent();
-        AVM1Context.instance = savedContext;
         if (caughtError) {
           // Note: this doesn't use `finally` because that's a no-go for performance.
           throw caughtError;
