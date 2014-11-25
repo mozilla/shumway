@@ -2426,6 +2426,50 @@ module Shumway.AVM2.AS {
     static classInitializer: any = function() {
       var proto: any = ASXMLList.prototype;
       defineNonEnumerableProperty(proto, 'asDeleteProperty', proto._asDeleteProperty);
+      defineNonEnumerableProperty(proto, '$BgvalueOf', Object.prototype['$BgvalueOf']);
+      defineNonEnumerableProperty(proto, '$BghasOwnProperty', proto.native_hasOwnProperty);
+      defineNonEnumerableProperty(proto, '$BgpropertyIsEnumerable',
+                                  proto.native_propertyIsEnumerable);
+
+      createPublicAliases(proto, [
+        'toString',
+        'addNamespace',
+        'appendChild',
+        'attribute',
+        'attributes',
+        'child',
+        'childIndex',
+        'children',
+        'comments',
+        'contains',
+        'copy',
+        'descendants',
+        'elements',
+        'hasComplexContent',
+        'hasSimpleContent',
+        'inScopeNamespaces',
+        'insertChildAfter',
+        'insertChildBefore',
+        'length',
+        'localName',
+        'name',
+        'namespace',
+        'namespaceDeclarations',
+        'nodeKind',
+        'normalize',
+        'parent',
+        'processingInstructions',
+        'prependChild',
+        'removeNamespace',
+        'replace',
+        'setChildren',
+        'setLocalName',
+        'setName',
+        'setNamespace',
+        'text',
+        'toXMLString',
+        'toJSON'
+      ]);
     }
 
     public static callableConstructor: any = function (value: any = undefined): ASXMLList {
@@ -2467,6 +2511,10 @@ module Shumway.AVM2.AS {
         xl = xl._deepCopy();
       }
       return xl;
+    }
+
+    valueOf() {
+      return this;
     }
 
     // E4X 11.5.1 The Abstract Equality Comparison Algorithm, steps 1-2.
@@ -2713,6 +2761,9 @@ module Shumway.AVM2.AS {
     toXMLString(): string {
       return toXMLString(this);
     }
+    toJSON(k: string) {
+      return 'XMLList';
+    }
     addNamespace(ns: any): ASXML {
 
       notImplemented("public.XMLList::addNamespace"); return;
@@ -2743,9 +2794,15 @@ module Shumway.AVM2.AS {
     nodeKind(): string {
       notImplemented("public.XMLList::nodeKind"); return;
     }
-    private _namespace(prefix: any, argc: number /*int*/): any {
-      argc = argc | 0;
-      notImplemented("public.XMLList::private _namespace"); return;
+    namespace(prefix: string): any {
+      if (!(this instanceof ASXMLList)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XMLList');
+      }
+      if (arguments.length === 0) {
+      } else {
+        prefix = asCoerceString(prefix);
+      }
+      notImplemented("public.XMLList::namespace"); return;
     }
     localName(): Object {
       notImplemented("public.XMLList::localName"); return;

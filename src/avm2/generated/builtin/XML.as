@@ -137,7 +137,7 @@ public final dynamic class XMLList extends Object
     public static const length = 1
 
     AS3 native function toString ():String
-    AS3 function valueOf():XMLList { return this }
+    AS3 native function valueOf():XMLList;
 
     // these Override (hide) the same functions from Object
     override AS3 native function hasOwnProperty (P=void 0):Boolean
@@ -175,12 +175,7 @@ public final dynamic class XMLList extends Object
     AS3 native function insertChildAfter (child1, child2):*; // undefined or this
     AS3 native function insertChildBefore (child1, child2):*; // undefined or this
     AS3 native function nodeKind ():String;
-    private native function _namespace (prefix:*, argc:int):*;
-    AS3 function namespace (prefix = null):* // prefix is optional
-    {
-        // can't use .apply() here, XML getproperty hacking confuses name lookup
-        return arguments.length ? _namespace(prefix, 1) : _namespace(null, 0);
-    }
+    AS3 native function namespace (prefix: String = null):*;
     AS3 native function localName ():Object; // null or String
     AS3 native function namespaceDeclarations ():Array;
     AS3 native function prependChild (value):XML;
@@ -192,7 +187,7 @@ public final dynamic class XMLList extends Object
     AS3 native function setNamespace (ns):void;
 
     // Bug 652200: level of indirection so JSON sidesteps E4X [[Get]] semantics
-    AS3 function toJSON (k:String):* { return this.toJSON(k); }
+    AS3 native function toJSON (k:String):*;
 
     // notification extensions(reserved)
     //public native function notification():Function;
@@ -202,217 +197,6 @@ public final dynamic class XMLList extends Object
     // The code for the actual ctor is in XMLList::construct in the avmplus
     public function XMLList(value = void 0)
     {}
-
-    // this is what rhino appears to do, not sure why bother
-    prototype.valueOf = Object.prototype.valueOf
-
-    prototype.hasOwnProperty = function(P=void 0):Boolean {
-        if (this === prototype)
-        {
-            return this.AS3::hasOwnProperty(P);
-        }
-        var x:XMLList = this
-        return x.AS3::hasOwnProperty(P)
-    }
-
-    prototype.propertyIsEnumerable = function(P=void 0):Boolean {
-        if (this === prototype)
-        {
-            return this.AS3::propertyIsEnumerable(P);
-        }
-        var x:XMLList = this
-        return x.AS3::propertyIsEnumerable(P)
-    }
-
-    prototype.toString = function():String {
-        if (this === prototype)
-        {
-            return "";
-        }
-        var x:XMLList = this
-        return x.AS3::toString()
-    }
-
-    prototype.addNamespace = function(ns):XML {
-        var x:XMLList = this
-        return x.AS3::addNamespace(ns)
-    }
-
-    prototype.appendChild = function(child):XML {
-        var x:XMLList = this
-        return x.AS3::appendChild(child)
-    }
-
-    prototype.attribute = function(arg):XMLList {
-        var x:XMLList = this
-        return x.AS3::attribute(arg)
-    }
-
-    prototype.attributes = function():XMLList {
-        var x:XMLList = this
-        return x.AS3::attributes()
-    }
-
-    prototype.child = function(propertyName):XMLList {
-        var x:XMLList = this
-        return x.AS3::child(propertyName)
-    }
-
-    prototype.childIndex = function():int {
-        var x:XMLList = this
-        return x.AS3::childIndex()
-    }
-
-    prototype.children = function():XMLList {
-        var x:XMLList = this
-        return x.AS3::children()
-    }
-
-    prototype.comments = function():XMLList {
-        var x:XMLList = this
-        return x.AS3::comments()
-    }
-
-    prototype.contains = function(value):Boolean {
-        var x:XMLList = this
-        return x.AS3::contains(value)
-    }
-
-    prototype.copy = function():XMLList {
-        var x:XMLList = this
-        return x.AS3::copy()
-    }
-
-    prototype.descendants = function(name="*"):XMLList {
-        var x:XMLList = this
-        return x.AS3::descendants(name)
-    }
-
-    prototype.elements = function(name="*"):XMLList {
-        var x:XMLList = this
-        return x.AS3::elements(name)
-    }
-
-    prototype.hasComplexContent = function():Boolean {
-        var x:XMLList = this
-        return x.AS3::hasComplexContent()
-    }
-
-    prototype.hasSimpleContent = function():Boolean {
-        var x:XMLList = this
-        return x.AS3::hasSimpleContent()
-    }
-
-    prototype.inScopeNamespaces = function():Array {
-        var x:XMLList = this
-        return x.AS3::inScopeNamespaces()
-    }
-
-    prototype.insertChildAfter = function(child1, child2):* {
-        var x:XMLList = this
-        return x.AS3::insertChildAfter(child1,child2)
-    }
-
-    prototype.insertChildBefore = function(child1, child2):* {
-        var x:XMLList = this
-        return x.AS3::insertChildBefore(child1,child2)
-    }
-
-    prototype.length = function():int {
-        var x:XMLList = this
-        return x.AS3::length()
-    }
-
-    prototype.localName = function():Object {
-        var x:XMLList = this
-        return x.AS3::localName()
-    }
-
-    prototype.name = function():Object {
-        var x:XMLList = this
-        return x.AS3::name()
-    }
-
-    prototype.namespace = function(prefix=null):* {
-        var x:XMLList = this
-        return x.AS3::namespace.AS3::apply(x, arguments)
-    }
-
-    prototype.namespaceDeclarations = function():Array {
-        var x:XMLList = this
-        return x.AS3::namespaceDeclarations()
-    }
-
-    prototype.nodeKind = function():String {
-        var x:XMLList = this
-        return x.AS3::nodeKind()
-    }
-
-    prototype.normalize = function():XMLList {
-        var x:XMLList = this
-        return x.AS3::normalize()
-    }
-
-    prototype.parent = function():* {
-        var x:XMLList = this
-        return x.AS3::parent()
-    }
-
-    prototype.processingInstructions = function(name="*"):XMLList {
-        var x:XMLList = this
-        return x.AS3::processingInstructions(name)
-    }
-
-    prototype.prependChild = function(value):XML {
-        var x:XMLList = this
-        return x.AS3::prependChild(value)
-    }
-
-    prototype.removeNamespace = function(ns):XML {
-        var x:XMLList = this
-        return x.AS3::removeNamespace(ns)
-    }
-
-    prototype.replace = function(propertyName, value):XML {
-        var x:XMLList = this
-        return x.AS3::replace(propertyName, value)
-    }
-
-    prototype.setChildren = function(value):XML {
-        var x:XMLList = this
-        return x.AS3::setChildren(value)
-    }
-
-    prototype.setLocalName = function(name):void {
-        var x:XMLList = this
-        x.AS3::setLocalName(name)
-    }
-
-    prototype.setName = function(name):void {
-        var x:XMLList = this
-        x.AS3::setName(name)
-    }
-
-    prototype.setNamespace = function(ns):void {
-        var x:XMLList = this
-        x.AS3::setNamespace(ns)
-    }
-
-    prototype.text = function():XMLList {
-        var x:XMLList = this
-        return x.AS3::text()
-    }
-
-    prototype.toXMLString = function():String {
-        var x:XMLList = this
-        return x.AS3::toXMLString()
-    }
-
-    // Note: clients are free to replace with method returning non-string
-    prototype.toJSON = function(k:String):* { return "XMLList"; }
-
-    _dontEnumPrototype(prototype);
-
 }
 
 [native(cls="QNameClass", gc="exact", instance="QNameObject", methods="auto", construct="override")]
