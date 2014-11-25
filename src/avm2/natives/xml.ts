@@ -1482,7 +1482,7 @@ module Shumway.AVM2.AS {
       }
       // Step 9.
       for (var i = 0; i < children.length; i++) {
-        if (!children[i]._deepEquals(otherChildren[i])) {
+        if (!children[i].equals(otherChildren[i])) {
           return false;
         }
       }
