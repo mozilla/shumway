@@ -45,7 +45,7 @@ package {
 public final dynamic class XML extends Object
 {
     // { ReadOnly, DontDelete, DontEnum }
-    public static const length = 1
+    public static const length = 1;
 
     // { DontDelete, DontEnum }
     public native static function get ignoreComments():Boolean
@@ -67,60 +67,20 @@ public final dynamic class XML extends Object
     public native static function get prettyIndent():int
     public native static function set prettyIndent(newIndent:int)
 
-    AS3 static function settings ():Object
-    {
-        return {
-            ignoreComments: XML.ignoreComments,
-            ignoreProcessingInstructions: XML.ignoreProcessingInstructions,
-            ignoreWhitespace: XML.ignoreWhitespace,
-            prettyPrinting: XML.prettyPrinting,
-            prettyIndent: XML.prettyIndent
-        };
-    }
+    AS3 native static function settings():Object;
 
-    AS3 static function setSettings(o:Object=null):void
-    {
-        if (o == null) // undefined or null
-        {
-            XML.ignoreComments = true;
-            XML.ignoreProcessingInstructions = true;
-            XML.ignoreWhitespace = true;
-            XML.prettyPrinting = true;
-            XML.prettyIndent = 2;
-            return;
-        }
+    AS3 native static function setSettings(o:Object=null):void;
 
-        if (("ignoreComments" in o) && (o.ignoreComments is Boolean))
-            XML.ignoreComments = o.ignoreComments;
-        if (("ignoreProcessingInstructions" in o) && (o.ignoreProcessingInstructions is Boolean))
-            XML.ignoreProcessingInstructions = o.ignoreProcessingInstructions;
-        if (("ignoreWhitespace" in o) && (o.ignoreWhitespace is Boolean))
-            XML.ignoreWhitespace = o.ignoreWhitespace;
-        if (("prettyPrinting" in o) && (o.prettyPrinting is Boolean))
-            XML.prettyPrinting = o.prettyPrinting;
-        if (("prettyIndent" in o) && (o.prettyIndent is Number))
-            XML.prettyIndent = o.prettyIndent;
-    }
-
-    AS3 static function defaultSettings():Object
-    {
-        return {
-            ignoreComments: true,
-            ignoreProcessingInstructions: true,
-            ignoreWhitespace: true,
-            prettyPrinting: true,
-            prettyIndent: 2
-        };
-    }
+    AS3 native static function defaultSettings():Object;
 
     // override (hide) functions from object
     // ISSUE why do we override valueOf?  it does the same thing as the one in Object
 
-    AS3 native function toString ():String
+    AS3 native function toString ():String;
 
     // override AS3 methods from Object
-    override AS3 native function hasOwnProperty (P=void 0):Boolean
-    override AS3 native function propertyIsEnumerable (P=void 0):Boolean
+    override AS3 native function hasOwnProperty (P=void 0):Boolean;
+    override AS3 native function propertyIsEnumerable (P=void 0):Boolean;
 
     // XML functions
     AS3 native function addNamespace (ns):XML;
@@ -143,12 +103,7 @@ public final dynamic class XML extends Object
     AS3 function length ():int { return 1; }
     AS3 native function localName ():Object; // null or String;
     AS3 native function name ():Object; // null or String;
-    private native function _namespace (prefix:*, argc:int):*;
-    AS3 function namespace (prefix = null):* // prefix is optional
-    {
-        // can't use .apply() here, XML getproperty hacking confuses name lookup
-        return arguments.length ? _namespace(prefix, 1) : _namespace(null, 0);
-    }
+    AS3 native function namespace (prefix:String = null):*;
     AS3 native function namespaceDeclarations ():Array;
     AS3 native function nodeKind ():String;
     AS3 native function normalize ():XML;
@@ -164,242 +119,15 @@ public final dynamic class XML extends Object
     AS3 native function text ():XMLList;
     AS3 native function toXMLString ():String;
 
-    // notification extensions
-    AS3 native function notification():Function;
-    AS3 native function setNotification(f:Function);
-
     // Bug 652200: level of indirection so JSON sidesteps E4X [[Get]] semantics
-    AS3 function toJSON (k:String):* { return this.public::toJSON(k); }
+    AS3 native function toJSON (k:String):*;
 
     // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
     // The code for the actual ctor is in XMLClass::construct in the avmplus
     public function XML(value = void 0)
     {}
-    //
-    // dynamic, proto-hackable properties from E-357
-    //
 
-    XML.settings = function():Object {
-        return AS3::settings()
-    }
-    XML.setSettings = function(o=undefined):void {
-        AS3::setSettings(o)
-    }
-    XML.defaultSettings = function():Object {
-        return AS3::defaultSettings()
-    }
-
-    AS3 function valueOf():XML { return this }
-
-    // this is what rhino appears to do
-    prototype.valueOf = Object.prototype.valueOf
-
-    prototype.hasOwnProperty = function(P=void 0):Boolean {
-        if (this === prototype)
-        {
-            return this.AS3::hasOwnProperty(P);
-        }
-        var x:XML = this
-        return x.AS3::hasOwnProperty(P)
-    }
-
-    prototype.propertyIsEnumerable = function(P=void 0):Boolean {
-        if (this === prototype)
-        {
-            return this.AS3::propertyIsEnumerable(P);
-        }
-        var x:XML = this
-        return x.AS3::propertyIsEnumerable(P)
-    }
-
-    prototype.toString = function():String {
-        if (this === prototype)
-        {
-            return "";
-        }
-        var x:XML = this
-        return x.AS3::toString()
-    }
-
-    prototype.addNamespace = function(ns):XML {
-        var x:XML = this
-        return x.AS3::addNamespace(ns)
-    }
-
-    prototype.appendChild = function(child):XML {
-        var x:XML = this
-        return x.AS3::appendChild(child)
-    }
-
-    prototype.attribute = function(arg):XMLList {
-        var x:XML = this
-        return x.AS3::attribute(arg)
-    }
-
-    prototype.attributes = function():XMLList {
-        var x:XML = this
-        return x.AS3::attributes()
-    }
-
-    prototype.child = function(propertyName):XMLList {
-        var x:XML = this
-        return x.AS3::child(propertyName)
-    }
-
-    prototype.childIndex = function():int {
-        var x:XML = this
-        return x.AS3::childIndex()
-    }
-
-    prototype.children = function():XMLList {
-        var x:XML = this
-        return x.AS3::children()
-    }
-
-    prototype.comments = function():XMLList {
-        var x:XML = this
-        return x.AS3::comments()
-    }
-
-    prototype.contains = function(value):Boolean {
-        var x:XML = this
-        return x.AS3::contains(value)
-    }
-
-    prototype.copy = function():XML {
-        var x:XML = this
-        return x.AS3::copy()
-    }
-
-    prototype.descendants = function(name="*"):XMLList {
-        var x:XML = this
-        return x.AS3::descendants(name)
-    }
-
-    prototype.elements = function(name="*"):XMLList {
-        var x:XML = this
-        return x.AS3::elements(name)
-    }
-
-    prototype.hasComplexContent = function():Boolean {
-        var x:XML = this
-        return x.AS3::hasComplexContent()
-    }
-
-    prototype.hasSimpleContent = function():Boolean {
-        var x:XML = this
-        return x.AS3::hasSimpleContent()
-    }
-
-    prototype.inScopeNamespaces = function():Array {
-        var x:XML = this
-        return x.AS3::inScopeNamespaces()
-    }
-
-    prototype.insertChildAfter = function(child1, child2):*  {
-        var x:XML = this
-        return x.AS3::insertChildAfter(child1,child2)
-    }
-
-    prototype.insertChildBefore = function(child1, child2):* {
-        var x:XML = this
-        return x.AS3::insertChildBefore(child1,child2)
-    }
-
-    prototype.length = function():int {
-        var x:XML = this
-        return x.AS3::length()
-    }
-
-    prototype.localName = function():Object {
-        var x:XML = this
-        return x.AS3::localName()
-    }
-
-    prototype.name = function():Object {
-        var x:XML = this
-        return x.AS3::name()
-    }
-
-    prototype.namespace = function(prefix=null):* {
-        var x:XML = this
-        return x.AS3::namespace.AS3::apply(x, arguments)
-    }
-
-    prototype.namespaceDeclarations = function():Array {
-        var x:XML = this
-        return x.AS3::namespaceDeclarations()
-    }
-
-    prototype.nodeKind = function():String {
-        var x:XML = this
-        return x.AS3::nodeKind()
-    }
-
-    prototype.normalize = function():XML {
-        var x:XML = this
-        return x.AS3::normalize()
-    }
-
-    prototype.parent = function():* {
-        var x:XML = this
-        return x.AS3::parent()
-    }
-
-    prototype.processingInstructions = function(name="*"):XMLList {
-        var x:XML = this
-        return x.AS3::processingInstructions(name)
-    }
-
-    prototype.prependChild = function(value):XML {
-        var x:XML = this
-        return x.AS3::prependChild(value)
-    }
-
-    prototype.removeNamespace = function(ns):XML {
-        var x:XML = this
-        return x.AS3::removeNamespace(ns)
-    }
-
-    prototype.replace = function(propertyName, value):XML {
-        var x:XML = this
-        return x.AS3::replace(propertyName, value)
-    }
-
-    prototype.setChildren = function(value):XML {
-        var x:XML = this
-        return x.AS3::setChildren(value)
-    }
-
-    prototype.setLocalName = function(name):void {
-        var x:XML = this
-        x.AS3::setLocalName(name)
-    }
-
-    prototype.setName = function(name):void {
-        var x:XML = this
-        x.AS3::setName(name)
-    }
-
-    prototype.setNamespace = function(ns):void {
-        var x:XML = this
-        x.AS3::setNamespace(ns)
-    }
-
-    prototype.text = function():XMLList {
-        var x:XML = this
-        return x.AS3::text()
-    }
-
-    prototype.toXMLString = function():String {
-        var x:XML = this
-        return x.AS3::toXMLString()
-    }
-
-    // Note: clients are free to replace with method returning non-string
-    prototype.toJSON = function(k:String):* { return "XML"; }
-
-    _dontEnumPrototype(prototype);
+    AS3 native function valueOf():XML;
 }
 
 [native(cls="XMLListClass", gc="exact", instance="XMLListObject", methods="auto", construct="override")]

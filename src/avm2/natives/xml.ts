@@ -60,6 +60,7 @@ module Shumway.AVM2.AS {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
+  import createPublicAliases = Shumway.ObjectUtilities.createPublicAliases;
 
   var _asGetProperty = Object.prototype.asGetProperty;
   var _asSetProperty = Object.prototype.asSetProperty;
@@ -1238,7 +1239,57 @@ module Shumway.AVM2.AS {
     static classInitializer: any = function() {
       var proto: any = ASXML.prototype;
       defineNonEnumerableProperty(proto, 'asDeleteProperty', proto._asDeleteProperty);
-    }
+      defineNonEnumerableProperty(proto, '$BgvalueOf', Object.prototype['$BgvalueOf']);
+      defineNonEnumerableProperty(proto, '$BghasOwnProperty', proto.native_hasOwnProperty);
+      defineNonEnumerableProperty(proto, '$BgpropertyIsEnumerable',
+                                  proto.native_propertyIsEnumerable);
+
+      createPublicAliases(ASXML, [
+        'settings',
+        'setSettings',
+        'defaultSettings'
+      ]);
+
+      createPublicAliases(proto, [
+        'toString',
+        'addNamespace',
+        'appendChild',
+        'attribute',
+        'attributes',
+        'child',
+        'childIndex',
+        'children',
+        'comments',
+        'contains',
+        'copy',
+        'descendants',
+        'elements',
+        'hasComplexContent',
+        'hasSimpleContent',
+        'inScopeNamespaces',
+        'insertChildAfter',
+        'insertChildBefore',
+        'length',
+        'localName',
+        'name',
+        'namespace',
+        'namespaceDeclarations',
+        'nodeKind',
+        'normalize',
+        'parent',
+        'processingInstructions',
+        'prependChild',
+        'removeNamespace',
+        'replace',
+        'setChildren',
+        'setLocalName',
+        'setName',
+        'setNamespace',
+        'text',
+        'toXMLString',
+        'toJSON'
+      ]);
+    };
 
     public static callableConstructor: any = function (value: any = undefined): ASXML {
       // 13.5.1 The XMLList Constructor Called as a Function
@@ -1247,6 +1298,54 @@ module Shumway.AVM2.AS {
       }
       return toXML(value);
     };
+
+
+    static native_settings():Object {
+      return {
+        $BgignoreComments: ASXML.ignoreComments,
+        $BgignoreProcessingInstructions: ASXML.ignoreProcessingInstructions,
+        $BgignoreWhitespace: ASXML.ignoreWhitespace,
+        $BgprettyPrinting: ASXML.prettyPrinting,
+        $BgprettyIndent: ASXML.prettyIndent
+      };
+    }
+
+    static native_setSettings(o:any):void {
+      if (isNullOrUndefined(o)) {
+        ASXML.ignoreComments = true;
+        ASXML.ignoreProcessingInstructions = true;
+        ASXML.ignoreWhitespace = true;
+        ASXML.prettyPrinting = true;
+        ASXML.prettyIndent = 2;
+        return;
+      }
+
+      if (typeof o.$BgignoreComments === 'boolean') {
+        ASXML.ignoreComments = o.$BgignoreComments;
+      }
+      if (typeof o.$BgignoreProcessingInstructions === 'boolean') {
+        ASXML.ignoreProcessingInstructions = o.$BgignoreProcessingInstructions;
+      }
+      if (typeof o.$BgignoreWhitespace === 'boolean') {
+        ASXML.ignoreWhitespace = o.$BgignoreWhitespace;
+      }
+      if (o.$BgprettyPrinting === 'boolean') {
+        ASXML.prettyPrinting = o.$BgprettyPrinting;
+      }
+      if (o.$BgprettyIndent === 'number') {
+        ASXML.prettyIndent = o.$BgprettyIndent;
+      }
+    }
+
+    static native_defaultSettings():Object {
+      return {
+        $BgignoreComments: true,
+        $BgignoreProcessingInstructions: true,
+        $BgignoreWhitespace: true,
+        $BgprettyPrinting: true,
+        $BgprettyIndent: 2
+      };
+    }
 
     public static defaultNamespace = '';
     private static _flags: ASXML_FLAGS = ASXML_FLAGS.ALL;
@@ -1277,6 +1376,10 @@ module Shumway.AVM2.AS {
         x = x._deepCopy();
       }
       return x;
+    }
+
+    valueOf() {
+      return this;
     }
 
     // E4X 11.5.1 The Abstract Equality Comparison Algorithm, steps 1-4.
@@ -1327,14 +1430,6 @@ module Shumway.AVM2.AS {
           break;
       }
       return this;
-    }
-
-    // XML.[[Length]]
-    length(): number {
-      if (!this._children) {
-        return 0;
-      }
-      return this._children.length;
     }
 
     // 9.1.1.9 [[Equals]] (V)
@@ -1496,6 +1591,9 @@ module Shumway.AVM2.AS {
       ASXML._prettyIndent = newIndent;
     }
     toString(): string {
+      if (ASXML.isTraitsOrDynamicPrototype(this)) {
+        return '';
+      }
       if (this.hasComplexContent()) {
         return this.toXMLString();
       }
@@ -1513,11 +1611,17 @@ module Shumway.AVM2.AS {
       return String(P) === "0";
     }
     addNamespace(ns: any): ASXML {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       // 13.4.4.2 XML.prototype.addNamespace ( namespace )
       this._addInScopeNamespaces(new ASNamespace(ns));
       return this;
     }
     appendChild(child: any): ASXML {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       // TODO review
       if (child._parent) {
         var index = child._parent._children.indexOf(child);
@@ -1529,14 +1633,23 @@ module Shumway.AVM2.AS {
       return this;
     }
     attribute(arg: any): ASXMLList {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       return this.getProperty(arg, true, false);
     }
     attributes(): ASXMLList {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       var list = new XMLList();
       Array.prototype.push.apply(list._children, this._attributes);
       return list;
     }
     child(propertyName: any): ASXMLList {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       if (isIndex(propertyName)) {
         var list = new XMLList();
         if (propertyName < this._children.length) {
@@ -1547,6 +1660,9 @@ module Shumway.AVM2.AS {
       return this.getProperty(propertyName, isQNameAttribute(propertyName), false);
     }
     childIndex(): number /*int*/ {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       // 13.4.4.7 XML.prototype.childIndex ( )
       if (!this._parent || this._kind === ASXMLKind.Attribute) {
         return -1;
@@ -1554,22 +1670,60 @@ module Shumway.AVM2.AS {
       return this._parent._children.indexOf(this);
     }
     children(): ASXMLList {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       var xl = new XMLList(this);
       Array.prototype.push.apply(xl._children, this._children);
       return xl;
     }
+    comments() {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
+      // 13.4.4.9 XML.prototype.comments ( )
+      var self: ASXML = this;
+      var xl = new XMLList(self, null);
+      self._children.forEach(function (v, i) {
+        if (v._kind === ASXMLKind.Comment) {
+          xl.appendChild(v);
+        }
+      });
+      return xl;
+    }
     contains(value: any): boolean {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       // 13.4.4.10 XML.prototype.contains ( value )
       return this === value;
     }
     copy(): ASXML {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       return this._deepCopy();
     }
+    // 9.1.1.8 [[Descendants]] (P)
+    descendants(name_: any = "*"): ASXMLList {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
+      var xl = new XMLList();
+      var name = toXMLName(name_);
+      return this.descendantsInto(name, xl);
+    }
     elements(name: any = "*"): ASXMLList {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       // 13.4.4.13 XML.prototype.elements ( [ name ] )
       return this.getProperty(name, false, false);
     }
     hasComplexContent(): boolean {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       // 13.4.4.15 XML.prototype.hasComplexContent( )
       if (this._kind === ASXMLKind.Attribute ||
           this._kind === ASXMLKind.Comment ||
@@ -1582,6 +1736,9 @@ module Shumway.AVM2.AS {
       });
     }
     hasSimpleContent(): boolean {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       // 13.4.4.16 XML.prototype.hasSimpleContent()
       if (this._kind === ASXMLKind.Comment ||
           this._kind === ASXMLKind.ProcessingInstruction) {
@@ -1599,33 +1756,71 @@ module Shumway.AVM2.AS {
     }
 
     inScopeNamespaces(): any [] {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       notImplemented("public.XML::inScopeNamespaces"); return;
     }
     insertChildAfter(child1: any, child2: any): any {
-
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       notImplemented("public.XML::insertChildAfter"); return;
     }
     insertChildBefore(child1: any, child2: any): any {
-
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       notImplemented("public.XML::insertChildBefore"); return;
     }
+    // XML.[[Length]]
+    length(): number {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
+      if (!this._children) {
+        return 0;
+      }
+      return this._children.length;
+    }
     localName(): Object {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       return this._name.localName;
     }
     name(): Object {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       return this._name;
     }
-    private _namespace(prefix: any, argc: number /*int*/): any {
-      argc = argc | 0;
-      notImplemented("public.XML::private _namespace"); return;
+    namespace(prefix: string): any {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
+      if (arguments.length === 0) {
+      } else {
+        prefix = asCoerceString(prefix);
+      }
+      notImplemented("public.XML::namespace"); return;
     }
     namespaceDeclarations(): any [] {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       notImplemented("public.XML::namespaceDeclarations"); return;
     }
     nodeKind(): string {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       return ASXMLKindNames[this._kind];
     }
     normalize(): ASXML {
+      if (!(this instanceof ASXML)) {
+        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      }
       // Steps 1-2.
       for (var i = 0; i < this._children.length;) {
         var child = this._children[i];
@@ -1683,6 +1878,65 @@ module Shumway.AVM2.AS {
 
       notImplemented("public.XML::removeNamespace"); return;
     }
+    // 9.1.1.12 [[Replace]] (P, V)
+    replace(p: any, v: any): ASXML {
+      var s;
+      var self: ASXML = this;
+      if (self._kind === ASXMLKind.Text ||
+          self._kind === ASXMLKind.Comment ||
+          self._kind === ASXMLKind.ProcessingInstruction ||
+          self._kind === ASXMLKind.Attribute) {
+        return self;
+      }
+      if (v._kind === ASXMLKind.Element) {
+        var a = self;
+        while (a) {
+          if (a === v) {
+            throw "Error in XML.prototype.replace()";
+          }
+          a = a._parent;
+        }
+      }
+      var i = p >>> 0;
+      if (String(p) === String(i)) {
+        if (i >= self.length()) {
+          p = String(self.length());
+        }
+        if (self._children[p]) {
+          self._children[p]._parent = null;
+        }
+      } else {
+        var toRemove = this.getProperty(p, false, false);
+        if (toRemove.length() === 0) { // nothing to replace
+          return self;
+        }
+        toRemove._children.forEach(function (v, i) {
+          var index = self._children.indexOf(v);
+          v._parent = null;
+          if (i === 0) {
+            p = String(index);
+            self._children.splice(index, 1, undefined);
+          } else {
+            self._children.splice(index, 1);
+          }
+        });
+      }
+
+      if (v._kind === ASXMLKind.Element ||
+          v._kind === ASXMLKind.Text ||
+          v._kind === ASXMLKind.Comment ||
+          v._kind === ASXMLKind.ProcessingInstruction) {
+        v._parent = self;
+        self._children[p] = v;
+      } else {
+        s = toString(v);
+        var t = new XML();
+        t._parent = self;
+        t._value = s;
+        self._children[p] = t;
+      }
+      return self;
+    }
     setChildren(value: any): ASXML {
 
       notImplemented("public.XML::setChildren"); return;
@@ -1699,17 +1953,23 @@ module Shumway.AVM2.AS {
 
       notImplemented("public.XML::setNamespace"); return;
     }
+    text() {
+      // 13.4.4.37 XML.prototype.text ( );
+      var self: ASXML = this;
+      var xl = new XMLList(self, null);
+      self._children.forEach(function (v, i) {
+        if (v._kind === ASXMLKind.Text) {
+          xl.appendChild(v);
+        }
+      });
+      return xl;
+    }
     toXMLString(): string {
       return toXMLString(this);
     }
-    notification(): Function {
-      notImplemented("public.XML::notification"); return;
+    toJSON(k: string) {
+      return 'XML';
     }
-    setNotification(f: Function): any {
-      f = f;
-      notImplemented("public.XML::setNotification"); return;
-    }
-
 
     public static isTraitsOrDynamicPrototype(value): boolean {
       return value === ASXML.traitsPrototype || value === ASXML.dynamicPrototype;
@@ -2076,66 +2336,6 @@ module Shumway.AVM2.AS {
       }
     }
 
-    // 9.1.1.12 [[Replace]] (P, V)
-    replace(p: any, v: any): ASXML {
-      var s;
-      var self: ASXML = this;
-      if (self._kind === ASXMLKind.Text ||
-          self._kind === ASXMLKind.Comment ||
-          self._kind === ASXMLKind.ProcessingInstruction ||
-          self._kind === ASXMLKind.Attribute) {
-        return self;
-      }
-      if (v._kind === ASXMLKind.Element) {
-        var a = self;
-        while (a) {
-          if (a === v) {
-            throw "Error in XML.prototype.replace()";
-          }
-          a = a._parent;
-        }
-      }
-      var i = p >>> 0;
-      if (String(p) === String(i)) {
-        if (i >= self.length()) {
-          p = String(self.length());
-        }
-        if (self._children[p]) {
-          self._children[p]._parent = null;
-        }
-      } else {
-        var toRemove = this.getProperty(p, false, false);
-        if (toRemove.length() === 0) { // nothing to replace
-          return self;
-        }
-        toRemove._children.forEach(function (v, i) {
-          var index = self._children.indexOf(v);
-          v._parent = null;
-          if (i === 0) {
-            p = String(index);
-            self._children.splice(index, 1, undefined);
-          } else {
-            self._children.splice(index, 1);
-          }
-        });
-      }
-
-      if (v._kind === ASXMLKind.Element ||
-          v._kind === ASXMLKind.Text ||
-          v._kind === ASXMLKind.Comment ||
-          v._kind === ASXMLKind.ProcessingInstruction) {
-        v._parent = self;
-        self._children[p] = v;
-      } else {
-        s = toString(v);
-        var t = new XML();
-        t._parent = self;
-        t._value = s;
-        self._children[p] = t;
-      }
-      return self;
-    }
-
     // 9.1.1.13 [[AddInScopeNamespace]] ( N )
     addInScopeNamespace(ns: ASNamespace) {
       var s;
@@ -2174,12 +2374,6 @@ module Shumway.AVM2.AS {
       }
     }
 
-    // 9.1.1.8 [[Descendants]] (P)
-    descendants(name_: any = "*"): ASXMLList {
-      var xl = new XMLList();
-      var name = toXMLName(name_);
-      return this.descendantsInto(name, xl);
-    }
     descendantsInto(name: ASQName, xl: ASXMLList) {
       var flags = name.flags;
       var self: ASXML = this;
@@ -2207,30 +2401,6 @@ module Shumway.AVM2.AS {
       // Descend
       this._children.forEach(function (v, i) {
         xl.appendChild(v.descendants(name));
-      });
-      return xl;
-    }
-
-    comments() {
-      // 13.4.4.9 XML.prototype.comments ( )
-      var self: ASXML = this;
-      var xl = new XMLList(self, null);
-      self._children.forEach(function (v, i) {
-        if (v._kind === ASXMLKind.Comment) {
-          xl.appendChild(v);
-        }
-      });
-      return xl;
-    }
-
-    text() {
-      // 13.4.4.37 XML.prototype.text ( );
-      var self: ASXML = this;
-      var xl = new XMLList(self, null);
-      self._children.forEach(function (v, i) {
-        if (v._kind === ASXMLKind.Text) {
-          xl.appendChild(v);
-        }
       });
       return xl;
     }
