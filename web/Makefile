@@ -24,8 +24,6 @@ build: ensureoutputdir
 	# Coping ABC files
 	mkdir -p $(BUILD_DIR)/src/avm2/generated/builtin
 	cp -R $(SHUMWAY_ROOT)/src/avm2/generated/builtin/*.abc $(BUILD_DIR)/src/avm2/generated/builtin/
-	mkdir -p $(BUILD_DIR)/src/avm2/generated/avm1lib
-	cp -R $(SHUMWAY_ROOT)/src/avm2/generated/avm1lib/*.abc $(BUILD_DIR)/src/avm2/generated/avm1lib/
 	# Coping some JavaScript file
 	mkdir -p $(BUILD_DIR)/src/player
 	cp $(SHUMWAY_ROOT)/src/player/fakechannel.js $(BUILD_DIR)/src/player/

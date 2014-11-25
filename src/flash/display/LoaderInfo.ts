@@ -294,9 +294,11 @@ module Shumway.AVM2.AS.flash.display {
           break;
         case 'text':
           symbol = flash.text.TextSymbol.FromTextData(data, this);
+          this._syncAVM1Attributes(symbol);
           break;
         case 'button':
           symbol = flash.display.ButtonSymbol.FromData(data, this);
+          this._syncAVM1Attributes(symbol);
           break;
         case 'sprite':
           symbol = flash.display.SpriteSymbol.FromData(data, this);
@@ -328,14 +330,18 @@ module Shumway.AVM2.AS.flash.display {
         symbol = new flash.display.SpriteSymbol({id: 0, className: this._file.symbolClassesMap[0]},
                                                 this);
         symbol.isRoot = true;
-        if (this._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
-          symbol.isAVM1Object = true;
-          symbol.avm1Context = this._avm1Context;
-        }
         symbol.numFrames = this._file.frameCount;
+        this._syncAVM1Attributes(symbol);
         this._dictionary[0] = symbol;
       }
       return symbol;
+    }
+
+    private _syncAVM1Attributes(symbol: Timeline.Symbol) {
+      if (this._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+        symbol.isAVM1Object = true;
+        symbol.avm1Context = this._avm1Context;
+      }
     }
 
     // TODO: deltas should be computed lazily when they're first needed, and this removed.

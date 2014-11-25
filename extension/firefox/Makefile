@@ -39,8 +39,6 @@ build: ensureoutputdir
 	cp ../../build/playerglobal/playerglobal.abcs $(BUILD_DIR)/content/playerglobal/
 	mkdir -p $(BUILD_DIR)/content/avm2/generated/builtin
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/content/avm2/generated/builtin/
-	mkdir -p $(BUILD_DIR)/content/avm2/generated/avm1lib
-	cp ../../src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/content/avm2/generated/avm1lib/
 	# Coping and optimizing shumway.js files
 	$(foreach f, $(wildcard $(GENERIC_DIR)/shumway*.js), java -jar $(CLOSURE) --formatting PRETTY_PRINT --warning_level QUIET --compilation_level SHUMWAY_OPTIMIZATIONS --language_in ECMASCRIPT5 $(f) > $(BUILD_DIR)/content/$(notdir $(f));)
 	echo $(VERSION) > $(BUILD_DIR)/content/version.txt

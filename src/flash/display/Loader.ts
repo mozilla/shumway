@@ -351,14 +351,10 @@ module Shumway.AVM2.AS.flash.display {
         if (this._content || this !== Loader.getRootLoader()) {
           return;
         }
-        if (file.useAVM1 && !AVM2.instance.avm1Loaded) {
-          var self = this;
-          this._initAvm1().then(function () {
-            self.onFileStartupReady();
-          });
-        } else {
-          this.onFileStartupReady();
+        if (file.useAVM1) {
+          this._initAvm1();
         }
+        this.onFileStartupReady();
       } else {
         this._contentLoaderInfo.bytesLoaded = update.bytesLoaded;
       }
@@ -506,16 +502,16 @@ module Shumway.AVM2.AS.flash.display {
       return root;
     }
 
-    private _initAvm1(): Promise<any> {
+    private _initAvm1(): void {
       var contentLoaderInfo: LoaderInfo = this._contentLoaderInfo;
       // Only the outermost AVM1 SWF gets an AVM1Context. SWFs loaded into it share that context.
       if (this.loaderInfo && this.loaderInfo._avm1Context) {
         contentLoaderInfo._avm1Context = this.loaderInfo._avm1Context;
-        return null;
+        return;
       }
-      return AVM2.instance.loadAVM1().then(function() {
-        contentLoaderInfo._avm1Context = Shumway.AVM1.AVM1Context.create(contentLoaderInfo);
-      });
+
+      Shumway.AVM1.Lib.installObjectMethods();
+      contentLoaderInfo._avm1Context = Shumway.AVM1.AVM1Context.create(contentLoaderInfo);
     }
 
     /**
@@ -524,7 +520,8 @@ module Shumway.AVM2.AS.flash.display {
      * MovieClip tree, including potential nested SWFs.
      */
     private _initAvm1Root(root: flash.display.DisplayObject) {
-      var as2Object = avm1lib.getAVM1Object(root);
+      var avm1Context = this._contentLoaderInfo._avm1Context;
+      var as2Object = Shumway.AVM1.Lib.getAVM1Object(root, avm1Context);
 
       // Only create an AVM1Movie container for the outermost AVM1 SWF. Nested AVM1 SWFs just get
       // their content added to the loading SWFs display list directly.
@@ -533,7 +530,6 @@ module Shumway.AVM2.AS.flash.display {
         return root;
       }
 
-      var avm1Context = this._contentLoaderInfo._avm1Context;
       avm1Context.root = as2Object;
       root.addEventListener('frameConstructed',
                             avm1Context.flushPendingScripts.bind(avm1Context),

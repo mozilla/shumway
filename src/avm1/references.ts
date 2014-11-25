@@ -15,11 +15,28 @@
  */
 
 /// <reference path='../../build/ts/avm2.d.ts' />
+/// <reference path='flash.d.ts' />
 
 ///<reference path='stream.ts' />
 ///<reference path='parser.ts' />
 ///<reference path='analyze.ts' />
 ///<reference path='context.ts' />
 ///<reference path='interpreter.ts' />
-
-///<reference path='../avm1lib/references.ts' />
+///<reference path='lib/AVM1Utils.ts' />
+///<reference path='lib/AVM1Globals.ts' />
+///<reference path='lib/AVM1Broadcaster.ts' />
+///<reference path='lib/AVM1Key.ts' />
+///<reference path='lib/AVM1Mouse.ts' />
+///<reference path='lib/AVM1Stage.ts' />
+///<reference path='lib/AVM1MovieClip.ts' />
+///<reference path='lib/AVM1Button.ts' />
+///<reference path='lib/AVM1TextField.ts' />
+///<reference path='lib/AVM1Color.ts' />
+///<reference path='lib/AVM1Transform.ts' />
+///<reference path='lib/AVM1Proxy.ts' />
+///<reference path='lib/AVM1TextFormat.ts' />
+///<reference path='lib/AVM1BitmapData.ts' />
+///<reference path='lib/AVM1ExternalInterface.ts' />
+///<reference path='lib/AVM1Sound.ts' />
+///<reference path='lib/AVM1System.ts' />
+///<reference path='lib/AVM1MovieClipLoader.ts' />

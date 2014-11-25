@@ -11,23 +11,43 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations undxr the License.
+ * limitations under the License.
  */
-// Class: AVM1TextField
-module Shumway.AVM2.AS.avm1lib {
-  import TextField = Shumway.AVM2.AS.flash.text.TextField;
-  import TextFormat = Shumway.AVM2.AS.flash.text.TextFormat;
 
-  export class AVM1TextFormat extends TextFormat {
-    private static _measureTextField: TextField;
+///<reference path='../references.ts' />
 
-    _as2GetTextExtent(text: string, width?: number) {
+module Shumway.AVM1.Lib {
+  import flash = Shumway.AVM2.AS.flash;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  export class AVM1TextFormat extends flash.text.TextFormat {
+    static createAVM1Class(): typeof AVM1TextFormat {
+      return AVM1Proxy.wrap(AVM1TextFormat, {
+        methods: ['getTextExtent']
+      });
+    }
+
+    constructor(font?: string, size?: number, color?: number, bold?: boolean,
+                italic?: boolean, underline?: boolean, url?: string, target?: string,
+                align?: string, leftMargin?: number, rightMargin?: number,
+                indent?: number, leading?: number) {
+      false && super(font, size, color, bold, italic, underline, url, target, align, leftMargin, rightMargin, indent, leading);
+      flash.text.TextFormat.apply(this, arguments);
+    }
+
+    private static _measureTextField: flash.text.TextField;
+
+    public getTextExtent(text: string, width?: number) {
+      text = asCoerceString(text);
+      width = +width;
+
       var measureTextField = AVM1TextFormat._measureTextField;
       if (!measureTextField) {
-        measureTextField = new TextField();
+        measureTextField = new flash.text.TextField();
         measureTextField.multiline = true;
         AVM1TextFormat._measureTextField = measureTextField;
       }
+
       if (!isNaN(width) && width > 0) {
         measureTextField.width = width + 4;
         measureTextField.wordWrap = true;

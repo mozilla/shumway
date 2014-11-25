@@ -131,12 +131,42 @@ module Shumway.AVM1 {
     }
   }
 
+  class AVM1CallFrame {
+    public inSequence: boolean;
+
+    public calleeThis: any;
+    public calleeSuper: any; // set if super call was used
+    public calleeFn: any;
+    public calleeArgs: any;
+
+    constructor(public previousFrame: AVM1CallFrame, public currentThis: any, public fn: any, public args: any) {
+      this.inSequence = !previousFrame ? false :
+        (previousFrame.calleeThis === currentThis && previousFrame.calleeFn === fn);
+
+      this.resetCallee();
+    }
+
+    setCallee(thisArg: any, superArg: any, fn: any, args: any) {
+      this.calleeThis = thisArg;
+      this.calleeSuper = superArg;
+      this.calleeFn = fn;
+      this.calleeArgs = args;
+    }
+
+    resetCallee() {
+      this.calleeThis = null;
+      this.calleeSuper = null;
+      this.calleeFn = null;
+    }
+  }
+
   class AVM1ContextImpl extends AVM1Context {
     initialScope: AVM1ScopeListItem;
     isActive: boolean;
     executionProhibited: boolean;
     abortExecutionAt: number;
     stackDepth: number;
+    frame: AVM1CallFrame;
     isTryCatchListening: boolean;
     errorsIgnored: number;
     deferScriptExecution: boolean;
@@ -151,11 +181,8 @@ module Shumway.AVM1 {
     constructor(loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo) {
       super();
       this.loaderInfo = loaderInfo;
-      this.globals = new Shumway.AVM2.AS.avm1lib.AVM1Globals();
-      if (loaderInfo.swfVersion >= 8) {
-        this.globals.asSetPublicProperty("flash",
-          Shumway.AVM2.AS.avm1lib.createFlashObject());
-      }
+      var GlobalsClass = Lib.AVM1Globals.createAVM1Class();
+      this.globals = new GlobalsClass(loaderInfo.swfVersion);
       this.initialScope = new AVM1ScopeListItem(this.globals, null);
       this.assets = {};
       // TODO: remove this list and always retrieve symbols from LoaderInfo.
@@ -165,6 +192,7 @@ module Shumway.AVM1 {
       this.executionProhibited = false;
       this.abortExecutionAt = 0;
       this.stackDepth = 0;
+      this.frame = null;
       this.isTryCatchListening = false;
       this.errorsIgnored = 0;
       this.deferScriptExecution = true;
@@ -212,7 +240,7 @@ module Shumway.AVM1 {
           this.resolveLevel(0));
       }
       if (typeof target !== 'object' || target === null ||
-        !('_nativeAS3Object' in target)) {
+        !('_as3Object' in target)) {
         throw new Error('Invalid AVM1 target object: ' +
           Object.prototype.toString.call(target));
       }
@@ -241,7 +269,16 @@ module Shumway.AVM1 {
       }
       this.deferScriptExecution = false;
     }
-
+    pushCallFrame(thisArg: any, fn: any, args: any) : AVM1CallFrame {
+      var nextFrame = new AVM1CallFrame(this.frame, thisArg, fn, args);
+      this.frame = nextFrame;
+      return nextFrame;
+    }
+    popCallFrame() {
+      var previousFrame = this.frame.previousFrame;
+      this.frame = previousFrame;
+      return previousFrame;
+    }
     executeActions(actionsData: AVM1ActionsData, scopeObj) {
       executeActions(actionsData, this, scopeObj);
     }
@@ -263,7 +300,7 @@ module Shumway.AVM1 {
 
   function isAVM1MovieClip(obj): boolean {
     return typeof obj === 'object' && obj &&
-      obj instanceof Shumway.AVM2.AS.avm1lib.AVM1MovieClip;
+      obj instanceof Lib.AVM1MovieClip;
   }
 
   function as2GetType(v): string {
@@ -371,7 +408,7 @@ module Shumway.AVM1 {
       case 'string':
         return value;
       case 'movieclip':
-        return (<Shumway.AVM2.AS.avm1lib.AVM1MovieClip> value).__targetPath;
+        return (<Lib.AVM1MovieClip> value).__targetPath;
       case 'object':
         if (typeof value === 'function' &&
             value.asGetPublicProperty('toString') ===
@@ -407,30 +444,70 @@ module Shumway.AVM1 {
     return false;
   }
 
-  function as2ResolveProperty(obj, name: string, normalize: boolean): string {
+  interface ResolvePropertyResult {
+    link;
+    name;
+  }
+
+  // internal cachable results to avoid GC
+  var __resolvePropertyResult: ResolvePropertyResult = {
+    link: undefined,
+    name: null
+  };
+
+  function avm1EnumerateProperties(obj, fn: (link, name)=>void, thisArg?): void {
+    var processed = Object.create(null);
+    // TODO ignore deleted properties
+    do {
+      forEachPublicProperty(obj, function (name) {
+        if (processed[name]) {
+          return; // skipping already reported properties
+        }
+        fn.call(thisArg, obj, name);
+        processed[name] = true;
+      });
+      // checking entire prototype chain
+      obj = obj.asGetPublicProperty('__proto__');
+    } while (obj);
+  }
+
+  function avm1CheckLinkProperty(obj, name: string): ResolvePropertyResult {
+    // TODO ignore deleted properties
+    do {
+      if (obj.asHasProperty(undefined, name, 0)) {
+        __resolvePropertyResult.link = obj;
+        __resolvePropertyResult.name = name;
+        return __resolvePropertyResult;
+      }
+      // checking entire prototype chain
+      obj = obj.asGetPublicProperty('__proto__');
+    } while (obj);
+    return null;
+  }
+
+  function avm1ResolveProperty(obj, name: string, normalize: boolean): ResolvePropertyResult {
     // AVM1 just ignores lookups on non-existant containers
     if (isNullOrUndefined(obj)) {
       avm1Warn("AVM1 warning: cannot look up member '" + name + "' on undefined object");
       return null;
     }
+    var result: ResolvePropertyResult;
     obj = Object(obj);
     // checking if avm2 public property is present
-    if (obj.asHasProperty(undefined, name, 0)) {
-      return name;
-    }
-    if (isNumeric(name)) {
-      return null;
+    if ((result = avm1CheckLinkProperty(obj, name)) !== null) {
+      return result;
     }
 
     // versions 6 and below ignore identifier case
-    if (as2GetCurrentSwfVersion() > 6) {
+    if (isNumeric(name) ||
+        as2GetCurrentSwfVersion() > 6) {
       return null;
     }
 
     // First checking all lowercase property.
     var lowerCaseName = name.toLowerCase();
-    if (obj.asHasProperty(undefined, lowerCaseName, 0)) {
-      return lowerCaseName;
+    if ((result = avm1CheckLinkProperty(obj, lowerCaseName)) !== null) {
+      return result;
     }
 
     // Checking the dictionary of the well-known normalized names.
@@ -441,32 +518,43 @@ module Shumway.AVM1 {
       });
     }
     var normalizedName = as2IdentifiersCaseMap[lowerCaseName] || null;
-    if (normalizedName && obj.asHasProperty(undefined, normalizedName, 0)) {
-      return normalizedName;
+    if (normalizedName && (result = avm1CheckLinkProperty(obj, name)) !== null) {
+      return result;
     }
 
     // Just enumerating through existing properties.
-    var foundName = null;
-    as2Enumerate(obj, function (name) {
-      if (name.toLowerCase() === lowerCaseName) {
+    var foundName = null, foundLink = null;
+    avm1EnumerateProperties(obj, function (link, name) {
+      if (foundName === null && name.toLowerCase() === lowerCaseName) {
+        foundLink = link;
         foundName = name;
       }
     }, null);
-    return foundName || (normalize ? normalizedName : null);
-  }
-
-  function as2GetProperty(obj, name: string) {
-    // AVM1 just ignores lookups on non-existant containers
-    if (isNullOrUndefined(obj)) {
-      avm1Warn("AVM1 warning: cannot get property '" + name + "' on undefined object");
-      return undefined;
+    if (foundName) {
+      __resolvePropertyResult.link = foundLink;
+      __resolvePropertyResult.name = foundName;
+      return __resolvePropertyResult;
     }
-    obj = Object(obj);
-    return obj.asGetPublicProperty(name);
+    if (normalize) {
+      __resolvePropertyResult.link = obj;
+      __resolvePropertyResult.name = normalizedName;
+      return __resolvePropertyResult;
+    }
+    return null;
   }
 
-  function as2GetPrototype(obj) {
-    return obj && obj.asGetPublicProperty('prototype');
+  function as2HasProperty(obj, name: string): boolean {
+    return !!avm1ResolveProperty(obj, name, false);
+  }
+
+  function as2ResolveProperty(obj, name: string, normalize: boolean): string {
+    var result = avm1ResolveProperty(obj, name, normalize);
+    return result ? result.name : null;
+  }
+
+  function as2GetProperty(obj, name: string): any {
+    var result = avm1ResolveProperty(obj, name, false);
+    return result ? result.link.asGetPublicProperty(name) : undefined;
   }
 
   function as2CastError(ex) {
@@ -478,25 +566,69 @@ module Shumway.AVM1 {
     return ex;
   }
 
+  function as2SetupInternalProperties(obj, proto, ctor) {
+    obj.asSetPublicProperty('__proto__', proto);
+    obj.asDefinePublicProperty('__constructor__', {
+      value: ctor,
+      writable: true,
+      enumerable: false,
+      configurable: false
+    });
+  }
+
   function as2Construct(ctor, args) {
     var result;
     if (isAvm2Class(ctor)) {
+      // Some built-in and AVM2 classes we can use
       result = construct(ctor, args);
+      //  __proto__ and __constructor__ can be assigned later
+      as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
+    } else if (isFunction(ctor)) {
+      result = {}; // TODO Object.create(ctor.prototype);
+      as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
+      ctor.apply(result, args);
     } else {
       // AVM1 simply ignores attempts to invoke non-methods.
-      if (!isFunction(ctor)) {
-        return undefined;
-      }
-
-      result = Object.create(as2GetPrototype(ctor) || as2GetPrototype(AVM1Object));
-      ctor.apply(result, args);
+      return undefined;
     }
-    result.constructor = ctor;
     return result;
   }
 
-  function as2Enumerate(obj, fn, thisArg) {
-    forEachPublicProperty(obj, fn, thisArg);
+  function as2Enumerate(obj, fn: (name) => void, thisArg): void {
+    avm1EnumerateProperties(obj, (link, name) => fn.call(thisArg, name));
+  }
+
+  function as2ResolveSuperProperty(frame: AVM1CallFrame, propertyName: string) {
+    if (as2GetCurrentSwfVersion() < 6) {
+      return null;
+    }
+
+    var resolved;
+    var proto = (frame.inSequence && frame.previousFrame.calleeSuper);
+    if (!proto) {
+      // Skip prototype chain until first specified member is found
+      resolved = avm1ResolveProperty(frame.currentThis, propertyName, false);
+      if (!resolved) {
+        return null;
+      }
+      proto = resolved.link;
+    }
+
+    // Skippig one chain link
+    proto = proto.asGetPublicProperty('__proto__');
+    if (!proto) {
+      return null;
+    }
+
+    resolved = avm1ResolveProperty(proto, propertyName, false);
+    if (!resolved) {
+      return null;
+    }
+    return {
+      target: resolved.link,
+      name: resolved.name,
+      obj: resolved.link.asGetPublicProperty(resolved.name)
+    };
   }
 
   function isAvm2Class(obj): boolean {
@@ -507,65 +639,6 @@ module Shumway.AVM1 {
     instanceConstructor: Function;
     debugName: string; // for AVM2 debugging
     name: string; // Function's name
-    _setClass(cls);
-  }
-
-  function as2CreatePrototypeProxy(obj) {
-    var prototype = obj.asGetPublicProperty('prototype');
-    if (typeof Proxy === 'undefined') {
-      console.error('ES6 proxies are not found');
-      return prototype;
-    }
-    return Proxy.create({
-      getOwnPropertyDescriptor: function(name: string) {
-        return Object.getOwnPropertyDescriptor(prototype, name);
-      },
-      getPropertyDescriptor: function(name: string) {
-        // ES6: return getPropertyDescriptor(prototype, name);
-        for (var p = prototype; p; p = Object.getPrototypeOf(p)) {
-          var desc = Object.getOwnPropertyDescriptor(p, name);
-          if (desc) {
-            return desc;
-          }
-        }
-        return undefined;
-      },
-      getOwnPropertyNames: function() {
-        return Object.getOwnPropertyNames(prototype);
-      },
-      getPropertyNames: function() {
-        // ES6: return getPropertyNames(prototype, name);
-        var names = Object.getOwnPropertyNames(prototype);
-        for (var p = Object.getPrototypeOf(prototype); p;
-             p = Object.getPrototypeOf(p)) {
-          names = names.concat(Object.getOwnPropertyNames(p));
-        }
-        return names;
-      },
-      defineProperty: function(name: string, desc) {
-        if (desc) {
-          if (typeof desc.value === 'function' &&
-              '_setClass' in desc.value) {
-            (<AVM1Function> desc.value)._setClass(obj);
-          }
-          if (typeof desc.get === 'function' &&
-              '_setClass' in desc.get) {
-            (<AVM1Function> desc.get)._setClass(obj);
-          }
-          if (typeof desc.set === 'function' &&
-              '_setClass' in desc.set) {
-            (<AVM1Function> desc.set)._setClass(obj);
-          }
-        }
-        return Object.defineProperty(prototype, name, desc);
-      },
-      delete: function(name: string) {
-        return delete prototype[name];
-      },
-      fix: function() {
-        return undefined;
-      }
-    });
   }
 
   export function executeActions(actionsData: AVM1ActionsData, as2Context: AVM1Context, scope) {
@@ -587,6 +660,7 @@ module Shumway.AVM1 {
       context.errorsIgnored = 0;
       context.defaultTarget = scope;
       context.currentTarget = null;
+      context.pushCallFrame(scope, null, null);
       actionTracer.message('ActionScript Execution Starts');
       actionTracer.indent();
       interpretActions(actionsData, scopeContainer, [], []);
@@ -597,6 +671,7 @@ module Shumway.AVM1 {
         console.error('Disabling AVM1 execution');
       }
     }
+    context.popCallFrame();
     context.isActive = false;
     context.defaultTarget = null;
     context.currentTarget = null;
@@ -668,17 +743,20 @@ module Shumway.AVM1 {
     return undefined;
   }
 
-  var AVM1_SUPER_STUB = {};
+  class AVM1SuperWrapper {
+    constructor(public callFrame: AVM1CallFrame) {}
+  }
 
   interface ExecutionContext {
     context: AVM1ContextImpl;
-    global: Shumway.AVM2.AS.avm1lib.AVM1Globals;
+    global: Lib.AVM1Globals;
     scopeContainer: AVM1ScopeListItem;
     scope: any;
     actionTracer: ActionTracer;
     constantPool: any;
     registers: any[];
     stack: any[];
+    frame: AVM1CallFrame;
     isSwfVersion5: boolean;
     recoveringFromError: boolean;
     isEndOfActions: boolean;
@@ -751,7 +829,6 @@ module Shumway.AVM1 {
         }
       }
 
-      var ownerClass;
       var fn = (function() {
         if (currentContext.executionProhibited) {
           return; // no more avm1 execution, ever
@@ -761,6 +838,9 @@ module Shumway.AVM1 {
         var newScope: any = new AVM1FunctionClosure();
         var thisArg = isGlobalObject(this) ? scope : this;
         var argumentsClone;
+        var supperWrapper;
+
+        var frame = currentContext.pushCallFrame(thisArg, fn, arguments);
 
         if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
           argumentsClone = sliceArguments(arguments, 0);
@@ -770,9 +850,9 @@ module Shumway.AVM1 {
           newScope.asSetPublicProperty('this', thisArg);
         }
         if (!(suppressArguments & ArgumentAssignmentType.Super)) {
-          newScope.asSetPublicProperty('super', AVM1_SUPER_STUB);
+          supperWrapper = new AVM1SuperWrapper(frame);
+          newScope.asSetPublicProperty('super', supperWrapper);
         }
-        newScope.asSetPublicProperty('__class', ownerClass);
         newScopeContainer = scopeContainer.create(newScope);
         var i;
         var registers = [];
@@ -794,7 +874,8 @@ module Shumway.AVM1 {
                 registers[i] = argumentsClone;
                 break;
               case ArgumentAssignmentType.Super:
-                registers[i] = AVM1_SUPER_STUB;
+                supperWrapper = supperWrapper || new AVM1SuperWrapper(frame);
+                registers[i] = supperWrapper;
                 break;
               case ArgumentAssignmentType.Global:
                 registers[i] = _global;
@@ -844,6 +925,7 @@ module Shumway.AVM1 {
         currentContext.currentTarget = savedCurrentTarget;
         currentContext.isActive = savedIsActive;
         currentContext.stackDepth--;
+        currentContext.popCallFrame();
         actionTracer.unindent();
         AVM1Context.instance = savedContext;
         if (caughtError) {
@@ -853,12 +935,7 @@ module Shumway.AVM1 {
         return result;
       });
 
-      ownerClass = fn;
       var fnObj: AVM1Function = <AVM1Function> <any> fn;
-      fnObj._setClass = function (class_) {
-        ownerClass = class_;
-      };
-
       fnObj.instanceConstructor = fn;
       fnObj.debugName = 'avm1 ' + (functionName || '<function>');
       if (functionName) {
@@ -870,19 +947,33 @@ module Shumway.AVM1 {
       var scopeContainer = ectx.scopeContainer;
 
       for (var p = scopeContainer; p; p = p.next) {
-        if (p.scope.asHasProperty(undefined, propertyName, 0)) {
-          p.scope.asSetPublicProperty(propertyName, undefined); // in some cases we need to cleanup events binding
-          return p.scope.asDeleteProperty(undefined, propertyName, 0);
+        var resolved = avm1ResolveProperty(p.scope, propertyName, false);
+        if (resolved) {
+          resolved.link.asSetPublicProperty(resolved.name, undefined); // in some cases we need to cleanup events binding
+          return resolved.link.asDeleteProperty(undefined, resolved.name, 0);
         }
       }
       return false;
     }
-    function avm1ResolveVariableName(ectx: ExecutionContext, variableName: string, nonStrict: boolean) {
+
+  interface ResolveVariableResult {
+    obj;
+    link;
+    name;
+  }
+
+  var __resolveVariableResult = {
+    obj: null,
+    link: null,
+    name: null
+  };
+
+    function avm1ResolveVariableName(ectx: ExecutionContext, variableName: string, nonStrict: boolean): ResolveVariableResult {
       var _global = ectx.global;
       var currentContext = ectx.context;
       var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
 
-      var obj, name, i;
+      var obj, name, i, resolved;
       if (variableName.indexOf(':') >= 0) {
         // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
         var parts = variableName.split(':');
@@ -898,7 +989,8 @@ module Shumway.AVM1 {
         name = objPath.pop();
         obj = _global;
         for (i = 0; i < objPath.length; i++) {
-          obj = obj.asGetPublicProperty(objPath[i]) || obj[objPath[i]];
+          resolved = avm1ResolveProperty(obj, objPath[i], false);
+          obj = resolved && resolved.link.asGetPublicProperty(resolved.name);
           if (!obj) {
             throw new Error(objPath.slice(0, i + 1) + ' is undefined');
           }
@@ -909,85 +1001,115 @@ module Shumway.AVM1 {
         return null; // local variable
       }
 
-      var resolvedName = as2ResolveProperty(obj, name, false);
-      var resolved = resolvedName !== null;
+      resolved = avm1ResolveProperty(obj, name, false);
       if (resolved || nonStrict) {
-        return { obj: obj, name: resolvedName || name, resolved: resolved };
+        __resolveVariableResult.obj = obj;
+        __resolveVariableResult.link = resolved.link;
+        __resolveVariableResult.name = resolved.name;
+        return __resolveVariableResult;
       }
-
       return null;
     }
-    function avm1GetVariable(ectx: ExecutionContext, variableName: string) {
+
+    function avm1ResolveGetVariable(ectx: ExecutionContext, variableName: string): ResolveVariableResult {
       var scopeContainer = ectx.scopeContainer;
       var currentContext = ectx.context;
       var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
       var scope = ectx.scope;
 
       // fast check if variable in the current scope
-      if (scope.asHasProperty(undefined, variableName, 0)) {
-        return scope.asGetPublicProperty(variableName);
+      var resolved: ResolvePropertyResult;
+      resolved = avm1ResolveProperty(scope, variableName, false);
+      if (resolved) {
+        __resolveVariableResult.obj = scope;
+        __resolveVariableResult.link = resolved.link;
+        __resolveVariableResult.name = resolved.name;
+        return __resolveVariableResult;
       }
 
-      var target = avm1ResolveVariableName(ectx, variableName, false);
-      if (target) {
-        return target.obj.asGetPublicProperty(target.name);
+      var resolvedVariable: ResolveVariableResult;
+      resolvedVariable = avm1ResolveVariableName(ectx, variableName, false);
+      if (resolvedVariable) {
+        return resolvedVariable;
       }
 
-      var resolvedName;
-      if ((resolvedName = as2ResolveProperty(scope, variableName, false))) {
-        return scope.asGetPublicProperty(resolvedName);
-      }
       for (var p = scopeContainer; p; p = p.next) {
-        resolvedName = as2ResolveProperty(p.scope, variableName, false);
-        if (resolvedName !== null) {
-          return p.scope.asGetPublicProperty(resolvedName);
+        resolved = avm1ResolveProperty(p.scope, variableName, false);
+        if (resolved) {
+          __resolveVariableResult.obj = p.scope;
+          __resolveVariableResult.link = resolved.link;
+          __resolveVariableResult.name = resolved.name;
+          return __resolveVariableResult;
         }
       }
 
-      if (currentTarget.asHasProperty(undefined, variableName, 0)) {
-        return currentTarget.asGetPublicProperty(variableName);
+      resolved = avm1ResolveProperty(currentTarget, variableName, false);
+      if (resolved) {
+        __resolveVariableResult.obj = p.scope;
+        __resolveVariableResult.link = resolved.link;
+        __resolveVariableResult.name = resolved.name;
+        return __resolveVariableResult;
       }
 
       // TODO refactor that
       if (variableName === 'this') {
-        return currentTarget;
+        scope.asDefinePublicProperty('this', {
+          value: currentTarget,
+          configurable: true
+        });
+        __resolveVariableResult.obj = scope;
+        __resolveVariableResult.link = scope;
+        __resolveVariableResult.name = 'this';
+        return __resolveVariableResult;
       }
 
-      return undefined;
+      return null;
     }
-    function avm1SetVariable(ectx: ExecutionContext, variableName: string, value) {
+    function avm1ResolveSetVariable(ectx: ExecutionContext, variableName: string): ResolveVariableResult {
       var scopeContainer = ectx.scopeContainer;
       var currentContext = ectx.context;
       var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
       var scope = ectx.scope;
 
       if (currentContext.currentTarget) {
-        currentTarget.asSetPublicProperty(variableName, value);
-        return;
+        __resolveVariableResult.obj = currentTarget;
+        __resolveVariableResult.link = currentTarget;
+        __resolveVariableResult.name = variableName;
+        return __resolveVariableResult;
       }
 
       // fast check if variable in the current scope
-      if (scope.asHasProperty(undefined, variableName, 0)) {
-        scope.asSetPublicProperty(variableName, value);
-        return;
+      var resolved: ResolvePropertyResult;
+      resolved = avm1ResolveProperty(scope, variableName, false);
+      if (resolved) {
+        __resolveVariableResult.obj = scope;
+        __resolveVariableResult.link = resolved.link;
+        __resolveVariableResult.name = resolved.name;
+        return __resolveVariableResult;
       }
 
-      var target = avm1ResolveVariableName(ectx, variableName, true);
-      if (target) {
-        target.obj.asSetPublicProperty(target.name, value);
-        return;
+      var resolvedVariable: ResolveVariableResult;
+      resolvedVariable = avm1ResolveVariableName(ectx, variableName, false);
+      if (resolvedVariable) {
+        return resolvedVariable;
       }
 
       for (var p = scopeContainer; p.next; p = p.next) { // excluding globals
-        var resolvedName = as2ResolveProperty(p.scope, variableName, false);
-        if (resolvedName !== null) {
-          p.scope.asSetPublicProperty(resolvedName, value);
-          return;
+        resolved = avm1ResolveProperty(p.scope, variableName, false);
+        if (resolved) {
+          __resolveVariableResult.obj = p.scope;
+          __resolveVariableResult.link = resolved.link;
+          __resolveVariableResult.name = resolved.name;
+          return __resolveVariableResult;
         }
       }
 
-      currentTarget.asSetPublicProperty(variableName, value);
+      __resolveVariableResult.obj = currentTarget;
+      __resolveVariableResult.link = currentTarget;
+      __resolveVariableResult.name = variableName;
+      return __resolveVariableResult;
     }
+
     function avm1ProcessWith(ectx: ExecutionContext, obj, withBlock) {
       var scopeContainer = ectx.scopeContainer;
       var constantPool = ectx.constantPool;
@@ -1212,14 +1334,14 @@ module Shumway.AVM1 {
       var _global = ectx.global;
 
       var sa = as2ToString(stack.pop());
-      stack.push(_global.length(sa));
+      stack.push(_global.length_(sa));
     }
     function avm1_0x31_ActionMBStringLength(ectx: ExecutionContext) {
       var stack = ectx.stack;
       var _global = ectx.global;
 
       var sa = as2ToString(stack.pop());
-      stack.push(_global.length(sa));
+      stack.push(_global.length_(sa));
     }
     function avm1_0x21_ActionStringAdd(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1317,14 +1439,18 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      stack[sp] = avm1GetVariable(ectx, variableName);
+      var resolved = avm1ResolveGetVariable(ectx, variableName);
+      stack[sp] = resolved ? resolved.link.asGetPublicProperty(resolved.name) : undefined;
     }
     function avm1_0x1D_ActionSetVariable(ectx: ExecutionContext) {
       var stack = ectx.stack;
 
       var value = stack.pop();
       var variableName = '' + stack.pop();
-      avm1SetVariable(ectx, variableName, value);
+      var resolved = avm1ResolveSetVariable(ectx, variableName);
+      if (resolved) {
+        resolved.link.asSetPublicProperty(resolved.name, value);
+      }
     }
     function avm1_0x9A_ActionGetURL2(ectx: ExecutionContext, args: any[]) {
       var _global = ectx.global;
@@ -1468,7 +1594,9 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      var fn = avm1GetVariable(ectx, functionName);
+      // TODO fix this bind scope lookup, e.g. calling function in with() might require binding
+      var resolved = avm1ResolveGetVariable(ectx, functionName);
+      var fn = resolved ? resolved.link.asGetPublicProperty(resolved.name) : undefined;
       // AVM1 simply ignores attempts to invoke non-functions.
       if (!(fn instanceof Function)) {
         avm1Warn("AVM1 warning: function '" + functionName +
@@ -1476,7 +1604,7 @@ module Shumway.AVM1 {
         return;
       }
       release || assert(stack.length === sp + 1);
-      stack[sp] = fn.apply(null, args);
+      stack[sp] = fn.apply(resolved.obj || null, args);
     }
     function avm1_0x52_ActionCallMethod(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1495,20 +1623,31 @@ module Shumway.AVM1 {
         return;
       }
 
+      var frame: AVM1CallFrame = ectx.context.frame;
+      var superArg, fn;
+
       // Per spec, a missing or blank method name causes the container to be treated as
       // a function to call.
       if (isNullOrUndefined(methodName) || methodName === '') {
-        if (obj === AVM1_SUPER_STUB) {
-          obj = avm1GetVariable(ectx, '__class').__super;
-          target = avm1GetVariable(ectx, 'this');
+        if (obj instanceof AVM1SuperWrapper) {
+          var superFrame = (<AVM1SuperWrapper>obj).callFrame;
+          var resolvedSuper = as2ResolveSuperProperty(superFrame, '__constructor__');
+          if (resolvedSuper) {
+            superArg = resolvedSuper.target;
+            fn = resolvedSuper.obj;
+            target = superFrame.currentThis;
+          }
         } else {
           // For non-super calls, we call obj with itself as the target.
           // TODO: ensure this is correct.
+          fn = obj;
           target = obj;
         }
         // AVM1 simply ignores attempts to invoke non-functions.
-        if (isFunction(obj)) {
-          stack[sp] = obj.apply(target, args);
+        if (isFunction(fn)) {
+          frame.setCallee(target, superArg, fn, args);
+          stack[sp] = fn.apply(target, args);
+          frame.resetCallee();
         } else {
           avm1Warn("AVM1 warning: obj '" + obj + (obj ? "' is not callable" : "' is undefined"));
         }
@@ -1516,14 +1655,18 @@ module Shumway.AVM1 {
         return;
       }
 
-      if (obj === AVM1_SUPER_STUB) {
-        target = as2GetPrototype(avm1GetVariable(ectx, '__class').__super);
-        obj = avm1GetVariable(ectx, 'this');
-      } else {
+      if (obj instanceof AVM1SuperWrapper) {
+        var superFrame = (<AVM1SuperWrapper>obj).callFrame;
+        var resolvedSuper = as2ResolveSuperProperty(superFrame, methodName);
+        if (resolvedSuper) {
+          superArg = resolvedSuper.target;
+          fn = resolvedSuper.obj;
+          target = superFrame.currentThis;
+        }
+     } else {
+        fn = as2GetProperty(obj, methodName);
         target = obj;
       }
-      var resolvedName = as2ResolveProperty(target, methodName, false);
-      var fn = resolvedName && target.asGetPublicProperty(resolvedName);
 
       // AVM1 simply ignores attempts to invoke non-methods.
       if (!isFunction(fn)) {
@@ -1534,7 +1677,9 @@ module Shumway.AVM1 {
         return;
       }
       release || assert(stack.length === sp + 1);
-      stack[sp] = fn.apply(obj, args);
+      frame.setCallee(target, superArg, fn, args);
+      stack[sp] = fn.apply(target, args);
+      frame.resetCallee();
     }
     function avm1_0x88_ActionConstantPool(ectx: ExecutionContext, args: any[]) {
       var constantPool: any[] = args[0];
@@ -1592,7 +1737,8 @@ module Shumway.AVM1 {
 
       var objectName = stack.pop();
       stack.push(null);
-      var obj = avm1GetVariable(ectx, objectName);
+      var resolved = avm1ResolveGetVariable(ectx, objectName);
+      var obj = resolved ? resolved.link.asGetPublicProperty(resolved.name) : undefined;
       // AVM1 just ignores lookups on non-existant containers. We warned in GetVariable already.
       if (isNullOrUndefined(obj)) {
         return;
@@ -1613,13 +1759,26 @@ module Shumway.AVM1 {
 
       var name = stack.pop();
       var obj = stack.pop();
-      if (name === 'prototype') {
-        // special case to track members
-        stack.push(as2CreatePrototypeProxy(obj));
-      } else {
-        var resolvedName = as2ResolveProperty(obj, name, false);
-        stack.push(resolvedName === null ? undefined :
-          as2GetProperty(obj, resolvedName));
+      stack.push(undefined);
+
+      if (isNullOrUndefined(obj)) {
+        // AVM1 just ignores gets on non-existant containers
+        avm1Warn("AVM1 warning: cannot get member '" + name + "' on undefined object");
+        return;
+      }
+
+      if (obj instanceof AVM1SuperWrapper) {
+        var superFrame = (<AVM1SuperWrapper>obj).callFrame;
+        var resolvedSuper = as2ResolveSuperProperty(superFrame, name);
+        if (resolvedSuper) {
+          stack[stack.length - 1] = resolvedSuper.obj;
+        }
+        return;
+      }
+
+      var resolvedName = as2ResolveProperty(obj, name, false);
+      if (resolvedName !== null) {
+        stack[stack.length - 1] = as2GetProperty(obj, resolvedName);
       }
     }
     function avm1_0x42_ActionInitArray(ectx: ExecutionContext) {
@@ -1634,6 +1793,7 @@ module Shumway.AVM1 {
       var count = +stack.pop();
       avm1ValidateArgsCount(count, stack.length >> 1);
       var obj = {};
+      as2SetupInternalProperties(obj, null, AVM1Object);
       for (var i = 0; i < count; i++) {
         var value = stack.pop();
         var name = stack.pop();
@@ -1684,7 +1844,8 @@ module Shumway.AVM1 {
       var sp = stack.length;
       stack.push(undefined);
 
-      var obj = avm1GetVariable(ectx, objectName);
+      var resolved = avm1ResolveGetVariable(ectx, objectName);
+      var obj = resolved ? resolved.link.asGetPublicProperty(resolved.name) : undefined;
 
       var result = createBuiltinType(obj, args);
       if (result === undefined) {
@@ -1708,6 +1869,11 @@ module Shumway.AVM1 {
       if (isNullOrUndefined(obj)) {
         // AVM1 just ignores sets on non-existant containers
         avm1Warn("AVM1 warning: cannot set member '" + name + "' on undefined object");
+        return;
+      }
+
+      if (obj instanceof AVM1SuperWrapper) {
+        avm1Warn("AVM1 warning: cannot set member '" + name + "' on super");
         return;
       }
 
@@ -1918,11 +2084,10 @@ module Shumway.AVM1 {
 
       var constrSuper = stack.pop();
       var constr = stack.pop();
-      var obj = Object.create(constrSuper.traitsPrototype || as2GetPrototype(constrSuper), {
-        constructor: { value: constr, enumerable: false }
-      });
-      constr.__super = constrSuper;
-      constr.prototype = obj;
+      var prototype = constr.asGetPublicProperty('prototype');
+      var prototypeSuper = constrSuper.asGetPublicProperty('prototype');
+      prototype.asSetPublicProperty('__proto__', prototypeSuper);
+      prototype.asSetPublicProperty('__constructor__', constrSuper);
     }
     function avm1_0x2B_ActionCastOp(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -2529,13 +2694,14 @@ module Shumway.AVM1 {
         constantPool: constantPool,
         registers: registers,
         stack: stack,
+        frame: null,
         isSwfVersion5: isSwfVersion5,
         recoveringFromError: false,
         isEndOfActions: false
       };
 
-      if (scope._nativeAS3Object &&
-          scope._nativeAS3Object._deferScriptExecution) {
+      if (scope._as3Object &&
+          scope._as3Object._deferScriptExecution) {
         currentContext.deferScriptExecution = true;
       }
 
@@ -2696,8 +2862,13 @@ module Shumway.AVM1 {
             var stackDump = [];
             for(var q = 0; q < stack.length; q++) {
               var item = stack[q];
-              stackDump.push(item && typeof item === 'object' ?
-                '[' + (item.constructor && item.constructor.name ? item.constructor.name : 'Object') + ']' : item);
+              if (item && typeof item === 'object') {
+                var constr = item.asGetPublicProperty('__constructor__');
+                stackDump.push('[' + (constr ? constr.name : 'Object') + ']');
+
+              } else {
+                stackDump.push(item);
+              }
             }
 
             var indent = new Array(indentation + 1).join('..');

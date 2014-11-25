@@ -70,33 +70,6 @@ module Shumway.AVM2.AS.flash.text {
     private _underline: Object;
     private _url: string;
 
-    as2GetTextExtent(text: string, width: number/* optional */) {
-      if (!TextFormat.measureTextField) {
-        TextFormat.measureTextField = new flash.text.TextField();
-        TextFormat.measureTextField._multiline = true;
-      }
-      var measureTextField = TextFormat.measureTextField;
-      if (!isNaN(width) && width > 0) {
-        measureTextField.width = width + 4;
-        measureTextField._wordWrap = true;
-      } else {
-        measureTextField._wordWrap = false;
-      }
-      measureTextField.defaultTextFormat = this;
-      measureTextField.text = text;
-      var result: any = {};
-      var textWidth: number = measureTextField.textWidth;
-      var textHeight: number = measureTextField.textHeight;
-      result.asSetPublicProperty('width', textWidth);
-      result.asSetPublicProperty('height', textHeight);
-      result.asSetPublicProperty('textFieldWidth', textWidth + 4);
-      result.asSetPublicProperty('textFieldHeight', textHeight + 4);
-      var metrics: TextLineMetrics = measureTextField.getLineMetrics(0);
-      result.asSetPublicProperty('ascent', metrics.ascent);
-      result.asSetPublicProperty('descent', metrics.descent);
-      return result;
-    }
-
     // AS -> JS Bindings
     get align(): string {
       return this._align;

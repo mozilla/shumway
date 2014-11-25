@@ -11,31 +11,19 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations undxr the License.
+ * limitations under the License.
  */
 
-module Shumway.AVM2.AS.avm1lib {
-  import BitmapData = Shumway.AVM2.AS.flash.display.BitmapData;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import AVM1Context = Shumway.AVM1.AVM1Context;
+///<reference path='../references.ts' />
 
-  export class AVM1BitmapData extends BitmapData {
+module Shumway.AVM1.Lib {
+  import flash = Shumway.AVM2.AS.flash;
 
-    // Called whenever the class is initialized.
-    static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null;
-
-    constructor (bitmapData: flash.display.BitmapData, pixelSnapping: string, smoothing: boolean)
-    {
-      false && super();
+  export class AVM1BitmapData extends flash.display.BitmapData {
+    static createAVM1Class(): typeof AVM1BitmapData {
+      var wrapped = AVM1Proxy.wrap(AVM1BitmapData, null);
+      wrapped.asSetPublicProperty('loadBitmap', AVM1BitmapData.loadBitmap);
+      return wrapped;
     }
 
     static loadBitmap(symbolId: string): flash.display.BitmapData {

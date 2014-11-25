@@ -24,7 +24,6 @@ var viewerPlayerglobalInfo = {
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 
 window.print = function (msg) {
   window.parent.postMessage({type: 'console-log', msg: msg}, '*');
@@ -122,7 +121,7 @@ function runSwfPlayer(flashParams) {
   var movieParams = flashParams.movieParams;
   var objectParams = flashParams.objectParams;
   var movieUrl = flashParams.url;
-  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
+  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (avm2) {
     function runSWF(file) {
       var player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
       player.stageAlign = 'tl';

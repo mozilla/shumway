@@ -24,7 +24,6 @@ var viewerPlayerglobalInfo = {
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 
 window.print = function(msg) {
   console.log(msg);
@@ -44,7 +43,7 @@ function runSwfPlayer(flashParams) {
   Shumway.frameRateOption.value = flashParams.turboMode ? 60 : -1;
   Shumway.AVM2.Verifier.enabled.value = compilerSettings.verifier;
 
-  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
+  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (avm2) {
     function runSWF(file) {
       var player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
       player.defaultStageColor = flashParams.bgcolor;

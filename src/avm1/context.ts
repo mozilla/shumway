@@ -17,8 +17,8 @@
 module Shumway.AVM1 {
   import assert = Shumway.Debug.assert;
 
-  import AVM1MovieClip = Shumway.AVM2.AS.avm1lib.AVM1MovieClip;
-  import AVM1Globals = Shumway.AVM2.AS.avm1lib.AVM1Globals;
+  import AVM1MovieClip = Lib.AVM1MovieClip;
+  import AVM1Globals = Lib.AVM1Globals;
 
   export class AVM1ActionsData {
     public ir; // will cache compiled representation
