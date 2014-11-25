@@ -18,6 +18,7 @@
 
 module Shumway.AVM1.Lib {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assert = Shumway.Debug.assert;
   import flash = Shumway.AVM2.AS.flash;
   import ASObject = Shumway.AVM2.AS.ASObject;
@@ -450,7 +451,7 @@ module Shumway.AVM1.Lib {
     }
     public updateAfterEvent() {
       // flash.events.TimerEvent.updateAfterEvent
-      notImplemented('AVM1Globals.updateAfterEvent');
+      somewhatImplemented('AVM1Globals.updateAfterEvent');
     }
 
     // built-ins
