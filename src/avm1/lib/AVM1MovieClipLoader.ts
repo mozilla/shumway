@@ -28,6 +28,9 @@ module Shumway.AVM1.Lib {
       return wrapped;
     }
 
+    public initAVM1ObjectInstance(context: AVM1Context) {
+    }
+
     private _loader: flash.display.Loader;
     private _target: IAVM1SymbolBase;
 
@@ -42,11 +45,11 @@ module Shumway.AVM1.Lib {
 
       (<flash.display.DisplayObjectContainer>this._target.as3Object).addChild(this._loader);
 
-      this._loader.contentLoaderInfo.addEventListener(flash.events.Event.OPEN, this.openHandler);
-      this._loader.contentLoaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, this.progressHandler);
-      this._loader.contentLoaderInfo.addEventListener(flash.events.IOErrorEvent.IO_ERROR, this.ioErrorHandler);
-      this._loader.contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE, this.completeHandler);
-      this._loader.contentLoaderInfo.addEventListener(flash.events.Event.INIT, this.initHandler);
+      this._loader.contentLoaderInfo.addEventListener(flash.events.Event.OPEN, this.openHandler.bind(this));
+      this._loader.contentLoaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, this.progressHandler.bind(this));
+      this._loader.contentLoaderInfo.addEventListener(flash.events.IOErrorEvent.IO_ERROR, this.ioErrorHandler.bind(this));
+      this._loader.contentLoaderInfo.addEventListener(flash.events.Event.COMPLETE, this.completeHandler.bind(this));
+      this._loader.contentLoaderInfo.addEventListener(flash.events.Event.INIT, this.initHandler.bind(this));
 
       this._loader.load(new flash.net.URLRequest(url));
       // TODO: find out under which conditions we should return false here
@@ -85,14 +88,13 @@ module Shumway.AVM1.Lib {
     }
 
     private initHandler(event: flash.events.Event):void {
+      var exitFrameCallback = function () {
+        this._target.as3Object.removeEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback);
+        this.asCallPublicProperty('broadcastMessage', ['onLoadInit', this._target]);
+      }.bind(this);
       // MovieClipLoader's init event is dispatched after all frame scripts of the AVM1 instance
       // have run for one additional iteration.
-      this._target.as3Object.addEventListener(flash.events.Event.EXIT_FRAME, this.self_exitFrame);
-    }
-
-    private self_exitFrame(event: flash.events.Event):void {
-      this.asCallPublicProperty('broadcastMessage', ['onLoadInit', this._target]);
-      this._target.as3Object.removeEventListener(flash.events.Event.EXIT_FRAME, this.self_exitFrame);
+      this._target.as3Object.addEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback)
     }
   }
 }
