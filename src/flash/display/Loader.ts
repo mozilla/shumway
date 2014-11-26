@@ -351,9 +351,6 @@ module Shumway.AVM2.AS.flash.display {
         if (this._content || this !== Loader.getRootLoader()) {
           return;
         }
-        if (file.useAVM1) {
-          this._initAvm1();
-        }
         this.onFileStartupReady();
       } else {
         this._contentLoaderInfo.bytesLoaded = update.bytesLoaded;
@@ -363,6 +360,10 @@ module Shumway.AVM2.AS.flash.display {
     private _applyLoadUpdate(update: LoadProgressUpdate) {
       var loaderInfo = this._contentLoaderInfo;
       var file = loaderInfo._file;
+
+      if (file.useAVM1) {
+        this._initAvm1();
+      }
 
       if (loaderInfo._allowCodeExecution) {
         var appDomain = AVM2.instance.applicationDomain;

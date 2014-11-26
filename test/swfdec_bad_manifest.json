@@ -378,6 +378,8 @@
       "/utils/swfdec/test/trace/crash-0.5.4-goto-in-constructor-8.swf",
       "/utils/swfdec/test/trace/crash-0.5.5-cvs-truncated.swf",
       "/utils/swfdec/test/trace/crash-0.5.5-cvs-truncated2.swf",
+      "/utils/swfdec/test/trace/crash-0.6.0-moviecliploader-7.swf",
+      "/utils/swfdec/test/trace/crash-0.6.0-moviecliploader-8.swf",
       "/utils/swfdec/test/trace/crash-0.6.2-replaceText-6.swf",
       "/utils/swfdec/test/trace/crash-0.6.2-replaceText-7.swf",
       "/utils/swfdec/test/trace/crash-0.6.2-replaceText-8.swf",
