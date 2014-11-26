@@ -197,6 +197,12 @@ module Shumway.AVM1 {
       this.errorsIgnored = 0;
       this.deferScriptExecution = true;
       this.pendingScripts = [];
+      this.utils = {
+        getProperty(obj, name) {
+          var resolved = avm1ResolveProperty(obj, name, false);
+          return resolved ? resolved.link.asGetPublicProperty(name) : undefined;
+        }
+      };
     }
     addAsset(className: string, symbolId: number, symbolProps) {
       this.assets[className] = symbolId;

@@ -33,6 +33,10 @@ module Shumway.AVM1 {
     theClass;
   }
 
+  export interface IAVM1RuntimeUtils {
+    getProperty(obj, name);
+  }
+
   export class AVM1Context {
     public static instance: AVM1Context = null;
     public root: AVM1MovieClip;
@@ -42,6 +46,8 @@ module Shumway.AVM1 {
       this.root = null;
       this.globals = null;
     }
+
+    public utils: IAVM1RuntimeUtils;
 
     public static create: (loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo) => AVM1Context;
 
