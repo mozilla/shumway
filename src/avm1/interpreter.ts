@@ -628,8 +628,16 @@ module Shumway.AVM1 {
       //  __proto__ and __constructor__ can be assigned later
       as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
     } else if (isFunction(ctor)) {
-      result = {}; // TODO Object.create(ctor.prototype);
+      // Finding right prototype object
+      var proto = ctor.asGetPublicProperty('prototype');
+      while (proto && !proto.initAVM1ObjectInstance) {
+        proto = proto.asGetPublicProperty('__proto__');
+      }
+      result = proto || {};
       as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
+      if (proto) {
+        proto.initAVM1ObjectInstance.call(result, AVM1Context.instance);
+      }
       ctor.apply(result, args);
     } else {
       // AVM1 simply ignores attempts to invoke non-methods.
