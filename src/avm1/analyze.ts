@@ -34,14 +34,17 @@ module Shumway.AVM1 {
     actions: ActionCodeBlockItem[];
     blocks: ActionCodeBlock[];
     dataId: string;
+    singleConstantPool: any[];
   }
 
   export class ActionsDataAnalyzer {
     constructor() {}
-    analyze(parser: ActionsDataParser): AnalyzerResults {
+    analyze(parser: ActionsDataParser, parentResults?: AnalyzerResults): AnalyzerResults {
       var actions: ActionCodeBlockItem[] = [];
       var labels: number[] = [0];
       var processedLabels: boolean[] = [true];
+      var constantPoolFound: boolean = false;
+      var singleConstantPoolAt0: any[] = null;
 
       // Parsing all actions we can reach. Every action will have next position
       // and conditional jump location.
@@ -98,6 +101,17 @@ module Shumway.AVM1 {
               branching = true;
               jumpPosition = parser.length;
               break;
+            case ActionCode.ActionConstantPool:
+              if (constantPoolFound) {
+                singleConstantPoolAt0 = null; // reset if more than one found
+                break;
+              }
+              constantPoolFound = true;
+              if (position === 0) {
+                // For now only counting at position 0 of the block of actions
+                singleConstantPoolAt0 = action.args[0];
+              }
+              break;
           }
           if (branching) {
             if (jumpPosition < 0 || jumpPosition > parser.length) {
@@ -146,10 +160,21 @@ module Shumway.AVM1 {
           jump: lastPosition
         });
       });
+
+      // Determines if action blocks (or defined function) is using the single
+      // constants pool defined at the beginning of the action block.
+      var singleConstantPool: any[] = null;
+      if (constantPoolFound) {
+        singleConstantPool = singleConstantPoolAt0;
+      } else if (parentResults) {
+        // Trying to use parent's constant pool if available.
+        singleConstantPool = parentResults.singleConstantPool;
+      }
       return {
         actions: actions,
         blocks: blocks,
-        dataId: parser.dataId
+        dataId: parser.dataId,
+        singleConstantPool: singleConstantPool
       };
     }
   }
