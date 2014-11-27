@@ -155,21 +155,27 @@ module Shumway.AVM1 {
 
   export class ActionsDataParser {
     public dataId: string;
-    constructor(public stream: ActionsDataStream) {}
+    private _stream: ActionsDataStream;
+    private _actionsData: AVM1ActionsData;
+    constructor(actionsData: AVM1ActionsData, swfVersion: number) {
+      this._actionsData = actionsData;
+      this.dataId = actionsData.id;
+      this._stream = new ActionsDataStream(actionsData.bytes, swfVersion);
+    }
     get position(): number {
-      return this.stream.position;
+      return this._stream.position;
     }
     set position(value: number) {
-      this.stream.position = value;
+      this._stream.position = value;
     }
     get eof(): boolean {
-      return this.stream.position >= this.stream.end;
+      return this._stream.position >= this._stream.end;
     }
     get length(): number {
-      return this.stream.end;
+      return this._stream.end;
     }
     readNext() : ParsedAction {
-      var stream = this.stream;
+      var stream = this._stream;
       var currentPosition = stream.position;
       var actionCode = stream.readUI8();
       var length = actionCode >= 0x80 ? stream.readUI16() : 0;
@@ -301,7 +307,7 @@ module Shumway.AVM1 {
           var codeSize = stream.readUI16();
           nextPosition += codeSize;
           var functionBody = new AVM1ActionsData(stream.readBytes(codeSize),
-            this.dataId + '_f' + stream.position);
+            this.dataId + '_f' + stream.position, this._actionsData);
 
           args = [functionBody, functionName, functionParams];
           break;
@@ -309,7 +315,7 @@ module Shumway.AVM1 {
           var codeSize = stream.readUI16();
           nextPosition += codeSize;
           var withBody = new AVM1ActionsData(stream.readBytes(codeSize),
-            this.dataId + '_w' + stream.position);
+            this.dataId + '_w' + stream.position, this._actionsData);
           args = [withBody];
           break;
         case ActionCode.ActionStoreRegister:
@@ -371,7 +377,7 @@ module Shumway.AVM1 {
           var codeSize = stream.readUI16();
           nextPosition += codeSize;
           var functionBody = new AVM1ActionsData(stream.readBytes(codeSize),
-            this.dataId + '_f' + stream.position);
+            this.dataId + '_f' + stream.position, this._actionsData);
 
           args = [functionBody, functionName, functionParams, registerCount,
             registerAllocation, suppressArguments];
@@ -389,11 +395,11 @@ module Shumway.AVM1 {
           nextPosition += trySize + catchSize + finallySize;
 
           var tryBody = new AVM1ActionsData(stream.readBytes(trySize),
-            this.dataId + '_t' + stream.position);
+            this.dataId + '_t' + stream.position, this._actionsData);
           var catchBody = new AVM1ActionsData(stream.readBytes(catchSize),
-            this.dataId + '_c' + stream.position);
+            this.dataId + '_c' + stream.position, this._actionsData);
           var finallyBody = new AVM1ActionsData(stream.readBytes(finallySize),
-            this.dataId + '_z' + stream.position);
+            this.dataId + '_z' + stream.position, this._actionsData);
 
           args = [catchIsRegisterFlag, catchTarget, tryBody,
             catchBlockFlag, catchBody, finallyBlockFlag, finallyBody];
@@ -412,7 +418,7 @@ module Shumway.AVM1 {
       };
     }
     skip(count) {
-      var stream = this.stream;
+      var stream = this._stream;
       while (count > 0 && stream.position < stream.end) {
         var actionCode = stream.readUI8();
         var length = actionCode >= 0x80 ? stream.readUI16() : 0;

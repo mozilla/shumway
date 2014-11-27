@@ -22,7 +22,7 @@ module Shumway.AVM1 {
 
   export class AVM1ActionsData {
     public ir; // will cache compiled representation
-    constructor(public bytes: Uint8Array, public id: string) {
+    constructor(public bytes: Uint8Array, public id: string, public parent: AVM1ActionsData = null) {
       release || assert(bytes instanceof Uint8Array);
     }
   }

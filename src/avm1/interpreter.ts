@@ -2688,11 +2688,10 @@ module Shumway.AVM1 {
       var currentContext = <AVM1ContextImpl> AVM1Context.instance;
 
       if (!actionsData.ir) {
-        var stream = new ActionsDataStream(actionsData.bytes, currentContext.loaderInfo.swfVersion);
-        var parser = new ActionsDataParser(stream);
-        parser.dataId = actionsData.id;
+        var parser = new ActionsDataParser(actionsData, currentContext.loaderInfo.swfVersion);
         var analyzer = new ActionsDataAnalyzer();
-        actionsData.ir = analyzer.analyze(parser);
+        var parentIR = actionsData.parent && actionsData.parent.ir;
+        actionsData.ir = analyzer.analyze(parser, parentIR);
 
         if (avm1CompilerEnabled.value) {
           try {
@@ -2771,21 +2770,26 @@ module Shumway.AVM1 {
         ActionsDataCompiler.cachedCalls = generateActionCalls();
       }
     }
-    private convertArgs(args: any[], id: number, res): string {
+    private convertArgs(args: any[], id: number, res, ir: AnalyzerResults): string {
       var parts: string[] = [];
       for (var i: number = 0; i < args.length; i++) {
         var arg = args[i];
         if (typeof arg === 'object' && arg !== null && !Array.isArray(arg)) {
           if (arg instanceof ParsedPushConstantAction) {
-            var hint = '';
-            var currentConstantPool = res.constantPool;
-            if (currentConstantPool) {
-              var constant = currentConstantPool[(<ParsedPushConstantAction> arg).constantIndex];
-              hint = constant === undefined ? 'undefined' : JSON.stringify(constant);
-              // preventing code breakage due to bad constant
-              hint = hint.indexOf('*/') >= 0 ? '' : ' /* ' + hint + ' */';
+            if (ir.singleConstantPool) {
+              var constant = ir.singleConstantPool[(<ParsedPushConstantAction> arg).constantIndex];
+              parts.push(constant === undefined ? 'undefined' : JSON.stringify(constant));
+            } else {
+              var hint = '';
+              var currentConstantPool = res.constantPool;
+              if (currentConstantPool) {
+                var constant = currentConstantPool[(<ParsedPushConstantAction> arg).constantIndex];
+                hint = constant === undefined ? 'undefined' : JSON.stringify(constant);
+                // preventing code breakage due to bad constant
+                hint = hint.indexOf('*/') >= 0 ? '' : ' /* ' + hint + ' */';
+              }
+              parts.push('constantPool[' + (<ParsedPushConstantAction> arg).constantIndex + ']' + hint);
             }
-            parts.push('constantPool[' + (<ParsedPushConstantAction> arg).constantIndex + ']' + hint);
           } else if (arg instanceof ParsedPushRegisterAction) {
             parts.push('registers[' + (<ParsedPushRegisterAction> arg).registerNumber + ']');
           } else if (arg instanceof AVM1ActionsData) {
@@ -2803,30 +2807,30 @@ module Shumway.AVM1 {
       }
       return parts.join(',');
     }
-    private convertAction(item: ActionCodeBlockItem, id: number, res, indexInBlock: number): string {
+    private convertAction(item: ActionCodeBlockItem, id: number, res, indexInBlock: number, ir: AnalyzerResults): string {
       switch (item.action.actionCode) {
         case ActionCode.ActionJump:
         case ActionCode.ActionReturn:
           return '';
         case ActionCode.ActionConstantPool:
           res.constantPool = item.action.args[0];
-          return '  constantPool = [' + this.convertArgs(item.action.args[0], id, res) + '];\n' +
+          return '  constantPool = [' + this.convertArgs(item.action.args[0], id, res, ir) + '];\n' +
                  '  ectx.constantPool = constantPool;\n';
         case ActionCode.ActionPush:
-          return '  stack.push(' + this.convertArgs(item.action.args, id, res) + ');\n';
+          return '  stack.push(' + this.convertArgs(item.action.args, id, res, ir) + ');\n';
         case ActionCode.ActionStoreRegister:
           return '  registers[' + item.action.args[0] + '] = stack[stack.length - 1];\n';
         case ActionCode.ActionWaitForFrame:
         case ActionCode.ActionWaitForFrame2:
           return '  if (calls.' + item.action.actionName + '(ectx,[' +
-            this.convertArgs(item.action.args, id, res) + '])) { position = ' + item.conditionalJumpTo + '; ' +
+            this.convertArgs(item.action.args, id, res, ir) + '])) { position = ' + item.conditionalJumpTo + '; ' +
             'checkTimeAfter -= ' + (indexInBlock + 1) + '; break; }\n';
         case ActionCode.ActionIf:
           return '  if (!!stack.pop()) { position = ' + item.conditionalJumpTo + '; ' +
             'checkTimeAfter -= ' + (indexInBlock + 1) + '; break; }\n';
         default:
           var result = '  calls.' + item.action.actionName + '(ectx' +
-            (item.action.args ? ',[' + this.convertArgs(item.action.args, id, res) + ']' : '') +
+            (item.action.args ? ',[' + this.convertArgs(item.action.args, id, res, ir) + ']' : '') +
             ');\n';
           return result;
       }
@@ -2856,7 +2860,7 @@ module Shumway.AVM1 {
         blocks.forEach((b: ActionCodeBlock) => {
           fn += ' case ' + b.label + ':\n';
           b.items.forEach((item: ActionCodeBlockItem, index: number) => {
-            fn += this.convertAction(item, uniqueId++, res, index);
+            fn += this.convertAction(item, uniqueId++, res, index, ir);
           });
           fn += '  position = ' + b.jump + ';\n' +
                 '  checkTimeAfter -= ' + b.items.length + ';\n' +
