@@ -796,7 +796,7 @@ module Shumway {
       });
     }
 
-    export function defineNonEnumerableForwardingProperty(obj, name, otherName) {
+    export function defineNonEnumerableForwardingProperty(obj, name: string, otherName: string) {
       Object.defineProperty(obj, name, {
         get: FunctionUtilities.makeForwardingGetter(otherName),
         set: FunctionUtilities.makeForwardingSetter(otherName),
@@ -806,9 +806,27 @@ module Shumway {
       });
     }
 
-    export function defineNewNonEnumerableProperty(obj, name, value) {
+    export function defineNewNonEnumerableProperty(obj, name: string, value) {
       release || Debug.assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
       ObjectUtilities.defineNonEnumerableProperty(obj, name, value);
+    }
+
+    /**
+     * Takes an object and a list of property names and creates an alias in the public namespace
+     * for each.
+     */
+    export function createPublicAliases(obj: any, names: string[]) {
+      var prop = {
+        value: null,
+        writable: true,
+        configurable: true,
+        enumerable: false
+      };
+      for (var i = 0; i < names.length; i++) {
+        var name = names[i];
+        prop.value = obj[name];
+        Object.defineProperty(obj, '$Bg' + name, prop);
+      }
     }
   }
 
