@@ -767,13 +767,10 @@ module Shumway.AVM2.AS {
               break;
           }
         } else {
-          var isWs = true;
           do {
-            isWs = isWs && isWhitespace(s, j);
-            if (++j >= s.length) break;
-          } while(s[j] !== "<");
+          } while(j++ < s.length && s[j] !== "<");
           var text = s.substring(i, j);
-          sink.text(resolveEntities(text), isWs || isWhitespacePreserved());
+          sink.text(resolveEntities(text), isWhitespacePreserved());
         }
         i = j;
       }
@@ -807,8 +804,12 @@ module Shumway.AVM2.AS {
         endElement: function(name) {
           currentElement = elementsStack.pop();
         },
-        text: function(text, isWhitespace) {
-          if (isWhitespace && ASXML.ignoreWhitespace) {
+        text: function(text, isWhitespacePreserve) {
+          if (ASXML.ignoreWhitespace) {
+            text = trimWhitespaces(text);
+          }
+          // TODO: do an in-depth analysis of what isWhitespacePreserve is about.
+          if (text.length === 0 || isWhitespacePreserve && ASXML.ignoreWhitespace) {
             return;
           }
           var node = createNode(ASXMLKind.Text, "", "");
