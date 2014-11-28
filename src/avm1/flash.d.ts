@@ -211,7 +211,15 @@ declare module Shumway.AVM2.AS.flash {
     class SoundMixer {
       static stopAll(): void;
     }
-    class Sound extends ASNative {}
+    class Sound extends ASNative {
+      play(startTime: number, loops: number, sndTransform?: flash.media.SoundTransform): SoundChannel;
+    }
+    class SoundChannel extends ASNative {
+      soundTransform: SoundTransform;
+      stop();
+    }
+    class SoundTransform extends ASNative  {}
+    class SoundSymbol {}
   }
   module net {
     class URLRequest extends ASNative {
