@@ -205,20 +205,29 @@ module Shumway.AVM1 {
       };
     }
     addAsset(className: string, symbolId: number, symbolProps) {
-      this.assets[className] = symbolId;
+      release || Debug.assert(typeof className === 'string' && !isNaN(symbolId));
+      this.assets[className.toLowerCase()] = symbolId;
       this.assetsSymbols[symbolId] = symbolProps;
-
     }
     registerClass(className: string, theClass) {
-      var symbolId = this.assets[className];
+      className = asCoerceString(className);
+      if (className === null) {
+        avm1Warn('Cannot register class for symbol: className is missing');
+        return null;
+      }
+      var symbolId = this.assets[className.toLowerCase()];
       if (symbolId === undefined) {
-        Debug.error('Cannot register ' + className + ' class for symbol');
+        avm1Warn('Cannot register ' + className + ' class for symbol');
         return;
       }
       this.assetsClasses[symbolId] = theClass;
     }
     getAsset(className: string) : AVM1ExportedSymbol {
-      var symbolId = this.assets[className];
+      className = asCoerceString(className);
+      if (className === null) {
+        return undefined;
+      }
+      var symbolId = this.assets[className.toLowerCase()];
       if (symbolId === undefined) {
         return undefined;
       }
@@ -633,7 +642,7 @@ module Shumway.AVM1 {
       while (proto && !proto.initAVM1ObjectInstance) {
         proto = proto.asGetPublicProperty('__proto__');
       }
-      result = proto || {};
+      result = proto ? Object.create(proto) : {};
       as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
       if (proto) {
         proto.initAVM1ObjectInstance.call(result, AVM1Context.instance);

@@ -215,6 +215,7 @@ module Shumway.AVM2.AS.flash.media {
       somewhatImplemented("public flash.media.SoundChannel::set soundTransform");
       this._soundTransform = isNullOrUndefined(sndTransform) ?
         new flash.media.SoundTransform() : sndTransform;
+      SoundMixer._updateSoundSource(this);
     }
     get leftPeak(): number {
       return this._leftPeak;
@@ -226,7 +227,9 @@ module Shumway.AVM2.AS.flash.media {
       if (this._element) {
         SoundMixer._unregisterSoundSource(this);
 
+        this._element.loop = false;
         this._element.pause();
+        this._element.removeAttribute('src');
       }
       if (this._audioChannel) {
         SoundMixer._unregisterSoundSource(this);
@@ -272,7 +275,7 @@ module Shumway.AVM2.AS.flash.media {
         self._position = (lastCurrentTime = currentTime) * 1000;
       });
       element.addEventListener("ended", function ended() {
-        SoundMixer._unregisterSoundSource(this);
+        SoundMixer._unregisterSoundSource(self);
 
         self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
         self._element = null;

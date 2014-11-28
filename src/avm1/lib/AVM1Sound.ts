@@ -23,32 +23,91 @@ module Shumway.AVM1.Lib {
     static createAVM1Class(): typeof AVM1Sound {
       return wrapAVM1Class(AVM1Sound,
         [],
-        ['attachSound', 'loadSound', 'getBytesLoaded', 'getBytesTotal',
+        ['attachSound', 'duration', 'getBytesLoaded', 'getBytesTotal',
          'getPan', 'setPan', 'getTransform', 'setTransform', 'getVolume', 'setVolume',
          'start', 'stop']);
     }
 
+    public initAVM1ObjectInstance(context: AVM1Context) {
+    }
+
     private _target: IAVM1SymbolBase;
     private _sound: flash.media.Sound;
+    private _channel: flash.media.SoundChannel;
+    private _linkageID: string;
 
     public constructor(target_mc) {
       this._target = AVM1Utils.resolveTarget(target_mc);
-      this._sound = new flash.media.Sound();
+      this._sound = null;
+      this._channel = null;
+      this._linkageID = null;
     }
 
-    public attachSound(id: string): void {}
+    public attachSound(id: string): void {
+      var symbol = AVM1Context.instance.getAsset(id);
+      if (!symbol) {
+        return;
+      }
+
+      var props: flash.media.SoundSymbol = Object.create(symbol.symbolProps);
+      var sound: flash.media.Sound = flash.media.Sound.initializeFrom(props);
+      flash.media.Sound.instanceConstructorNoInitialize.call(sound);
+      this._linkageID = id;
+      this._sound = sound;
+    }
+
     public loadSound(url: string, isStreaming: boolean): void {}
     public getBytesLoaded(): number { return 0; }
     public getBytesTotal(): number { return 0; }
 
-    public getPan(): number { return 0; }
-    public setPan(value: number): void {}
+    public getPan(): number {
+      var transform = this._channel && this._channel.soundTransform;
+      return transform ? transform.asGetPublicProperty('pan') * 100 : 0;
+    }
+    public setPan(value: number): void {
+      var transform = this._channel && this._channel.soundTransform;
+      if (transform) {
+        transform.asSetPublicProperty('pan', value / 100);
+        this._channel.soundTransform = transform;
+      }
+    }
+
     public getTransform(): any { return null; }
     public setTransform(transformObject: any): void {}
-    public getVolume(): number { return 0; }
-    public setVolume(value: number): void {}
 
-    public start(secondOffset?: number, loops?: number): void {}
-    public stop(linkageID?: string): void {}
+    public getVolume(): number {
+      var transform = this._channel && this._channel.soundTransform;
+      return transform ? transform.asGetPublicProperty('volume') * 100 : 0;
+    }
+    public setVolume(value: number): void {
+      var transform = this._channel && this._channel.soundTransform;
+      if (transform) {
+        transform.asSetPublicProperty('volume', value / 100);
+        this._channel.soundTransform = transform;
+      }
+    }
+
+    public start(secondOffset?: number, loops?: number): void {
+      if (!this._sound) {
+        return;
+      }
+      secondOffset = isNaN(secondOffset) || secondOffset < 0 ? 0 : +secondOffset;
+      loops = isNaN(loops) || loops < 1 ? 1 : Math.floor(loops);
+
+      this._stopSoundChannel();
+      this._channel = this._sound.play(secondOffset, loops - 1);
+    }
+    private _stopSoundChannel(): void {
+      if (!this._channel) {
+        return;
+      }
+      this._channel.stop();
+      this._channel = null;
+    }
+    public stop(linkageID?: string): void {
+      if (!linkageID || linkageID === this._linkageID) {
+        this._stopSoundChannel();
+      }
+    }
   }
 }
