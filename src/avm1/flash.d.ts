@@ -51,6 +51,7 @@ declare module Shumway.AVM2.AS.flash {
       _mouseDown: boolean;
       _children: DisplayObject [];
       _depth: number;
+      _symbol: DisplaySymbol;
       getBounds(obj: DisplayObject): flash.geom.Rectangle;
       play();
       stop();
@@ -129,9 +130,7 @@ declare module Shumway.AVM2.AS.flash {
       constructor();
     }
     class SimpleButton extends DisplayObject {
-      _symbol: {
-        data: {buttonActions: Shumway.Timeline.AVM1ButtonAction[]}
-      }
+      _symbol: ButtonSymbol;
     }
 
     class Stage extends DisplayObject {
@@ -144,8 +143,12 @@ declare module Shumway.AVM2.AS.flash {
       stageHeight: number;
     }
 
-    class BitmapSymbol {}
-    class SpriteSymbol {
+    class DisplaySymbol {}
+    class BitmapSymbol extends DisplaySymbol {}
+    class ButtonSymbol extends DisplaySymbol {
+      data: { buttonActions: Shumway.Timeline.AVM1ButtonAction[] }
+    }
+    class SpriteSymbol extends DisplaySymbol {
       avm1Name: string;
       avm1SymbolClass;
     }
@@ -276,9 +279,13 @@ declare module Shumway.AVM2.AS.flash {
       textWidth: number;
       textHeight: number;
       defaultTextFormat: TextFormat;
+      _symbol: TextSymbol;
     }
     class TextFormat extends ASNative {
       constructor(...args);
+    }
+    class TextSymbol extends display.DisplaySymbol {
+      variableName: string;
     }
   }
   module ui {
