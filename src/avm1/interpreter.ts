@@ -490,8 +490,35 @@ module Shumway.AVM1 {
   }
 
   function as2InstanceOf(obj, constructor): boolean {
-    if (obj instanceof constructor) {
-      return true;
+    // TODO refactor this -- quick and dirty hack for now
+    if (isNullOrUndefined(obj) || isNullOrUndefined(constructor)) {
+      return false;
+    }
+
+    if (constructor === Shumway.AVM2.AS.ASString) {
+      return typeof obj === 'string';
+    } else if (constructor === Shumway.AVM2.AS.ASNumber) {
+      return typeof obj === 'number';
+    } else if (constructor === Shumway.AVM2.AS.ASBoolean) {
+      return typeof obj === 'boolean';
+    } else if (constructor === Shumway.AVM2.AS.ASArray) {
+      return Array.isArray(obj);
+    } else if (constructor === Shumway.AVM2.AS.ASFunction) {
+      return typeof obj === 'function';
+    } else if (constructor === Shumway.AVM2.AS.ASObject) {
+      return typeof obj === 'object';
+    }
+
+    var baseProto = constructor.asGetPublicProperty('prototype');
+    if (!baseProto) {
+      return false;
+    }
+    var proto = obj;
+    while (proto) {
+      if (proto === baseProto) {
+        return true; // found the type if the chain
+      }
+      proto = proto.asGetPublicProperty('__proto__');
     }
     // TODO interface check
     return false;
