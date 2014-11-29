@@ -39,13 +39,20 @@ module Shumway.AVM1.Lib {
       return wrapped;
     }
 
-    _variable: string;
+    private _variable: string;
+    private _exitFrameHandler: (event: flash.events.Event) => void;
 
-    public initAVM1Instance(as2Object: flash.text.TextField, context: AVM1Context) {
-      super.initAVM1Instance(as2Object, context);
+
+    public initAVM1Instance(as3Object: flash.text.TextField, context: AVM1Context) {
+      super.initAVM1Instance(as3Object, context);
 
       this._variable = '';
+      this._exitFrameHandler = null;
       initDefaultListeners(this);
+
+      if (as3Object._symbol) {
+        this.variable = as3Object._symbol.variableName || '';
+      }
     }
 
     public get _alpha() {
@@ -351,14 +358,33 @@ module Shumway.AVM1.Lib {
       if (name === this._variable) {
         return;
       }
-      this._variable = name;
       var instance = this.as3Object;
-      var hasPath = name.indexOf('.') >= 0 || name.indexOf(':') >= 0;
+      if (this._exitFrameHandler && !name) {
+        instance.removeEventListener('exitFrame', this._exitFrameHandler);
+        this._exitFrameHandler = null;
+      }
+      this._variable = name;
+      if (!this._exitFrameHandler && name) {
+        this._exitFrameHandler = this._onAS3ObjectExitFrame.bind(this);
+        instance.addEventListener('exitFrame', this._exitFrameHandler);
+      }
+    }
+
+    private _onAS3ObjectExitFrame() {
+      this._syncTextFieldValue(this.as3Object, this._variable);
+    }
+
+    private _syncTextFieldValue(instance, name) {
       var clip;
+      var hasPath = name.indexOf('.') >= 0 || name.indexOf(':') >= 0;
+      var avm1ContextUtils = this.context.utils;
       if (hasPath) {
         var targetPath = name.split(/[.:\/]/g);
         name = targetPath.pop();
         if (targetPath[0] == '_root' || targetPath[0] === '') {
+          if (instance.root === null) {
+            return; // text field is not part of the stage yet
+          }
           clip = getAVM1Object(instance.root, this.context);
           targetPath.shift();
           if (targetPath[0] === '') {
@@ -369,20 +395,20 @@ module Shumway.AVM1.Lib {
         }
         while (targetPath.length > 0) {
           var childName = targetPath.shift();
-          clip = clip.asGetPublicProperty(childName) || clip[childName];
+          clip = avm1ContextUtils.getProperty(clip, childName);
           if (!clip) {
-            throw new Error('Cannot find ' + childName + ' variable');
+            return; // cannot find child clip
           }
         }
       } else {
         clip = getAVM1Object(instance._parent, this.context);
       }
-      if (!clip.asHasProperty(undefined, name, 0)) {
-        clip.asSetPublicProperty(name, instance.text);
+      // Sets default values as defined in SWF if this property was not found.
+      if (!avm1ContextUtils.hasProperty(clip, name)) {
+        avm1ContextUtils.setProperty(clip, name, instance.text);
       }
-      instance.addEventListener('advanceFrame', function () {
-        instance.text = '' + clip.asGetPublicProperty(name);
-      });
+
+      instance.text = '' + avm1ContextUtils.getProperty(clip, name);
     }
 
     public get _visible() {

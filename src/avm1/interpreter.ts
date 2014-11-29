@@ -197,10 +197,27 @@ module Shumway.AVM1 {
       this.errorsIgnored = 0;
       this.deferScriptExecution = true;
       this.pendingScripts = [];
+
+      var context = this;
       this.utils = {
+        hasProperty(obj, name) {
+          var result: boolean;
+          context.enterContext(function () {
+            result = as2HasProperty(obj, name);
+          }, obj);
+          return result;
+        },
         getProperty(obj, name) {
-          var resolved = avm1ResolveProperty(obj, name, false);
-          return resolved ? resolved.link.asGetPublicProperty(name) : undefined;
+          var result;
+          context.enterContext(function () {
+            result = as2GetProperty(obj, name);
+          }, obj);
+          return result;
+        },
+        setProperty(obj, name, value) {
+          context.enterContext(function () {
+            as2SetProperty(obj, name, value);
+          }, obj);
         }
       };
     }
@@ -554,6 +571,11 @@ module Shumway.AVM1 {
     // versions 6 and below ignore identifier case
     if (isNumeric(name) ||
         as2GetCurrentSwfVersion() > 6) {
+      if (normalize) {
+        __resolvePropertyResult.link = obj;
+        __resolvePropertyResult.name = name;
+        return __resolvePropertyResult;
+      }
       return null;
     }
 
@@ -596,18 +618,26 @@ module Shumway.AVM1 {
     return null;
   }
 
+  function as2ResolveProperty(obj, name: string, normalize: boolean): string {
+    var resolved = avm1ResolveProperty(obj, name, normalize);
+    return resolved ? resolved.name : null;
+  }
+
   function as2HasProperty(obj, name: string): boolean {
     return !!avm1ResolveProperty(obj, name, false);
   }
 
-  function as2ResolveProperty(obj, name: string, normalize: boolean): string {
-    var result = avm1ResolveProperty(obj, name, normalize);
-    return result ? result.name : null;
+  function as2GetProperty(obj, name: string): any {
+    var resolved = avm1ResolveProperty(obj, name, false);
+    return resolved ? resolved.link.asGetPublicProperty(resolved.name) : undefined;
   }
 
-  function as2GetProperty(obj, name: string): any {
-    var result = avm1ResolveProperty(obj, name, false);
-    return result ? result.link.asGetPublicProperty(name) : undefined;
+  function as2SetProperty(obj, name: string, value: any): any {
+    var resolved = avm1ResolveProperty(obj, name, true);
+    if (!resolved) {
+      return; // probably obj is undefined or null
+    }
+    resolved.link.asSetPublicProperty(resolved.name, value);
   }
 
   function as2CastError(ex) {

@@ -34,7 +34,9 @@ module Shumway.AVM1 {
   }
 
   export interface IAVM1RuntimeUtils {
+    hasProperty(obj, name);
     getProperty(obj, name);
+    setProperty(obj, name, value);
   }
 
   export class AVM1Context {

@@ -447,6 +447,11 @@
       "swf": "/examples/textfield/align.swf",
       "type": "eq"
     },
+    {  "id": "text-bind-ref",
+      "frames": [3],
+      "swf": "swfs/avm1/text-bind/text-bind-1.swf",
+      "type": "eq"
+    },
     {  "id": "as3-loader",
       "stas": "swfs/trace.stas",
       "filenames": [
