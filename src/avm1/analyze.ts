@@ -35,11 +35,15 @@ module Shumway.AVM1 {
     blocks: ActionCodeBlock[];
     dataId: string;
     singleConstantPool: any[];
+    registersLimit: number /* int */;
   }
 
   export class ActionsDataAnalyzer {
+    public parentResults: AnalyzerResults = null;
+    public registersLimit: number /* int */ = 0;
+
     constructor() {}
-    analyze(parser: ActionsDataParser, parentResults?: AnalyzerResults): AnalyzerResults {
+    analyze(parser: ActionsDataParser): AnalyzerResults {
       var actions: ActionCodeBlockItem[] = [];
       var labels: number[] = [0];
       var processedLabels: boolean[] = [true];
@@ -166,15 +170,16 @@ module Shumway.AVM1 {
       var singleConstantPool: any[] = null;
       if (constantPoolFound) {
         singleConstantPool = singleConstantPoolAt0;
-      } else if (parentResults) {
+      } else if (this.parentResults) {
         // Trying to use parent's constant pool if available.
-        singleConstantPool = parentResults.singleConstantPool;
+        singleConstantPool = this.parentResults.singleConstantPool;
       }
       return {
         actions: actions,
         blocks: blocks,
         dataId: parser.dataId,
-        singleConstantPool: singleConstantPool
+        singleConstantPool: singleConstantPool,
+        registersLimit: this.registersLimit
       };
     }
   }

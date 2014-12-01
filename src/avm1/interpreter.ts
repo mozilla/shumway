@@ -736,6 +736,8 @@ module Shumway.AVM1 {
     }
 
     var actionTracer = ActionTracerFactory.get();
+    var registers = [];
+    registers.length = 4; // by default only 4 registers allowed
 
     var scopeContainer = context.initialScope.create(scope);
     var caughtError;
@@ -744,7 +746,7 @@ module Shumway.AVM1 {
     actionTracer.indent();
     context.enterContext(function () {
       try {
-        interpretActions(actionsData, scopeContainer, [], []);
+        interpretActions(actionsData, scopeContainer, [], registers);
       } catch (e) {
         caughtError = as2CastError(e);
       }
@@ -900,17 +902,36 @@ module Shumway.AVM1 {
       var constantPool = ectx.constantPool;
 
       var skipArguments = null;
-      if (registersAllocation) {
-        for (var i = 0; i < registersAllocation.length; i++) {
-          var registerAllocation = registersAllocation[i];
-          if (registerAllocation &&
-              registerAllocation.type === ArgumentAssignmentType.Argument) {
-            if (!skipArguments) {
-              skipArguments = [];
-            }
-            skipArguments[registersAllocation[i].index] = true;
+      var registersAllocationCount = !registersAllocation ? 0 : registersAllocation.length;
+      for (var i = 0; i < registersAllocationCount; i++) {
+        var registerAllocation = registersAllocation[i];
+        if (registerAllocation &&
+            registerAllocation.type === ArgumentAssignmentType.Argument) {
+          if (!skipArguments) {
+            skipArguments = [];
           }
+          skipArguments[registersAllocation[i].index] = true;
         }
+      }
+
+      var registersLength = Math.min(registersCount, 255); // max allowed for DefineFunction2
+      registersLength = Math.max(registersLength, registersAllocationCount + 1);
+
+      var cachedRegisters = [];
+      var MAX_CACHED_REGISTERS = 10;
+      function createRegisters() {
+        if (cachedRegisters.length > 0) {
+          return cachedRegisters.pop();
+        }
+        var registers = [];
+        registers.length = registersLength;
+        return registers;
+      }
+      function disposeRegisters(registers) {
+        if (cachedRegisters.length > MAX_CACHED_REGISTERS) {
+          return;
+        }
+        cachedRegisters.push(registers);
       }
 
       var fn = (function() {
@@ -939,13 +960,10 @@ module Shumway.AVM1 {
         }
         newScopeContainer = scopeContainer.create(newScope);
         var i;
-        var registers = [];
-        if (registersAllocation) {
-          for (i = 0; i < registersAllocation.length; i++) {
-            var registerAllocation = registersAllocation[i];
-            if (!registerAllocation) {
-              continue;
-            }
+        var registers = createRegisters();
+        for (i = 0; i < registersAllocationCount; i++) {
+          var registerAllocation = registersAllocation[i];
+          if (registerAllocation) {
             switch (registerAllocation.type) {
               case ArgumentAssignmentType.Argument:
                 registers[i] = arguments[registerAllocation.index];
@@ -996,6 +1014,7 @@ module Shumway.AVM1 {
         currentContext.stackDepth--;
         currentContext.popCallFrame();
         actionTracer.unindent();
+        disposeRegisters(registers);
         if (caughtError) {
           // Note: this doesn't use `finally` because that's a no-go for performance.
           throw caughtError;
@@ -1304,7 +1323,12 @@ module Shumway.AVM1 {
         if (value instanceof ParsedPushConstantAction) {
           stack.push(constantPool[(<ParsedPushConstantAction> value).constantIndex]);
         } else if (value instanceof ParsedPushRegisterAction) {
-          stack.push(registers[(<ParsedPushRegisterAction> value).registerNumber]);
+          var registerNumber = (<ParsedPushRegisterAction> value).registerNumber;
+          if (registerNumber < 0 || registerNumber >= registers.length) {
+            stack.push(undefined);
+          } else {
+            stack.push(registers[registerNumber]);
+          }
         } else {
           stack.push(value);
         }
@@ -1762,7 +1786,7 @@ module Shumway.AVM1 {
       var functionParams: string[] = args[2];
 
       var fn = avm1DefineFunction(ectx, functionBody, functionName,
-        functionParams, 0, null, 0);
+        functionParams, 4, null, 0);
       if (functionName) {
         scope.asSetPublicProperty(functionName, fn);
       } else {
@@ -2078,6 +2102,9 @@ module Shumway.AVM1 {
       var registers = ectx.registers;
 
       var register: number = args[0];
+      if (register < 0 || register >= registers.length) {
+        return; // ignoring bad registers references
+      }
       registers[register] = stack[stack.length - 1];
     }
     // SWF 6
@@ -2732,8 +2759,9 @@ module Shumway.AVM1 {
       if (!actionsData.ir) {
         var parser = new ActionsDataParser(actionsData, currentContext.loaderInfo.swfVersion);
         var analyzer = new ActionsDataAnalyzer();
-        var parentIR = actionsData.parent && actionsData.parent.ir;
-        actionsData.ir = analyzer.analyze(parser, parentIR);
+        analyzer.registersLimit = registers.length;
+        analyzer.parentResults = actionsData.parent && actionsData.parent.ir;
+        actionsData.ir = analyzer.analyze(parser);
 
         if (avm1CompilerEnabled.value) {
           try {
@@ -2833,7 +2861,12 @@ module Shumway.AVM1 {
               parts.push('constantPool[' + (<ParsedPushConstantAction> arg).constantIndex + ']' + hint);
             }
           } else if (arg instanceof ParsedPushRegisterAction) {
-            parts.push('registers[' + (<ParsedPushRegisterAction> arg).registerNumber + ']');
+            var registerNumber = (<ParsedPushRegisterAction> arg).registerNumber;
+            if (registerNumber < 0 || registerNumber >= ir.registersLimit) {
+              parts.push('undefined'); // register is out of bounds -- undefined
+            } else {
+              parts.push('registers[' + registerNumber + ']');
+            }
           } else if (arg instanceof AVM1ActionsData) {
             var resName = 'code_' + id + '_' + i;
             res[resName] = arg;
@@ -2861,7 +2894,11 @@ module Shumway.AVM1 {
         case ActionCode.ActionPush:
           return '  stack.push(' + this.convertArgs(item.action.args, id, res, ir) + ');\n';
         case ActionCode.ActionStoreRegister:
-          return '  registers[' + item.action.args[0] + '] = stack[stack.length - 1];\n';
+          var registerNumber = item.action.args[0];
+          if (registerNumber < 0 || registerNumber >= ir.registersLimit) {
+            return ''; // register is out of bounds -- noop
+          }
+          return '  registers[' + registerNumber + '] = stack[stack.length - 1];\n';
         case ActionCode.ActionWaitForFrame:
         case ActionCode.ActionWaitForFrame2:
           return '  if (calls.' + item.action.actionName + '(ectx,[' +
