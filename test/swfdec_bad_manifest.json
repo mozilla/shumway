@@ -29,15 +29,6 @@
     "type": "stas"
   },
   {
-    "id": "trace-D",
-    "stas": "/utils/swfdec/test/trace/default.stas",
-    "filenames": [
-      "/utils/swfdec/test/trace/DoInitAction-once.swf"
-    ],
-    "defaultRate": 20,
-    "type": "stas"
-  },
-  {
     "id": "trace-E",
     "stas": "/utils/swfdec/test/trace/default.stas",
     "filenames": [
@@ -197,10 +188,6 @@
       "/utils/swfdec/test/trace/assetuperror-6.swf",
       "/utils/swfdec/test/trace/assetuperror-7.swf",
       "/utils/swfdec/test/trace/assetuperror-8.swf",
-      "/utils/swfdec/test/trace/atan2-5.swf",
-      "/utils/swfdec/test/trace/atan2-6.swf",
-      "/utils/swfdec/test/trace/atan2-7.swf",
-      "/utils/swfdec/test/trace/atan2-8.swf",
       "/utils/swfdec/test/trace/attachBitmap-5.swf",
       "/utils/swfdec/test/trace/attachBitmap-6.swf",
       "/utils/swfdec/test/trace/attachBitmap-8.swf",
