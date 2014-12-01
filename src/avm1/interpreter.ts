@@ -840,15 +840,21 @@ module Shumway.AVM1 {
     isEndOfActions: boolean;
   }
 
-    function avm1ValidateArgsCount(numArgs: number, maxAmount: number) {
-      if (isNaN(numArgs) || numArgs < 0 || numArgs > maxAmount ||
-        numArgs != (0|numArgs)) {
-        throw new Error('Invalid number of arguments: ' + numArgs);
+    function fixArgsCount(numArgs: number /* int */, maxAmount: number): number {
+      if (isNaN(numArgs) || numArgs < 0) {
+        avm1Warn('Invalid amount of arguments: ' + numArgs);
+        return 0;
       }
+      numArgs |= 0;
+      if (numArgs > maxAmount) {
+        avm1Warn('Truncating amount of arguments: from ' + numArgs + ' to ' + maxAmount);
+        return maxAmount;
+      }
+      return numArgs;
     }
     function avm1ReadFunctionArgs(stack: any[]) {
       var numArgs = +stack.pop();
-      avm1ValidateArgsCount(numArgs, stack.length);
+      numArgs = fixArgsCount(numArgs, stack.length);
       var args = [];
       for (var i = 0; i < numArgs; i++) {
         args.push(stack.pop());
@@ -1853,7 +1859,7 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
 
       var count = +stack.pop();
-      avm1ValidateArgsCount(count, stack.length >> 1);
+      count = fixArgsCount(count, stack.length >> 1);
       var obj = {};
       as2SetupInternalProperties(obj, null, AVM1Object);
       for (var i = 0; i < count; i++) {
@@ -2163,7 +2169,7 @@ module Shumway.AVM1 {
 
       var constr = stack.pop();
       var count = +stack.pop();
-      avm1ValidateArgsCount(count, stack.length);
+      fixArgsCount(count, stack.length);
       var interfaces = [];
       for (var i = 0; i < count; i++) {
         interfaces.push(stack.pop());
