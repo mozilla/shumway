@@ -1,0 +1,13 @@
+{
+  "id": "trace-diff-output",
+  "stas": "/utils/swfdec/test/trace/default.stas",
+  "filenames": [
+    "/utils/swfdec/test/trace/DoInitAction-once.swf",
+    "/utils/swfdec/test/trace/atan2-5.swf",
+    "/utils/swfdec/test/trace/atan2-6.swf",
+    "/utils/swfdec/test/trace/atan2-7.swf",
+    "/utils/swfdec/test/trace/atan2-8.swf"
+  ],
+  "defaultRate": 20,
+  "type": "stas"
+}

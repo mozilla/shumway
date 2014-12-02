@@ -29,15 +29,6 @@
     "type": "stas"
   },
   {
-    "id": "trace-D",
-    "stas": "/utils/swfdec/test/trace/default.stas",
-    "filenames": [
-      "/utils/swfdec/test/trace/DoInitAction-once.swf"
-    ],
-    "defaultRate": 20,
-    "type": "stas"
-  },
-  {
     "id": "trace-E",
     "stas": "/utils/swfdec/test/trace/default.stas",
     "filenames": [
@@ -197,10 +188,6 @@
       "/utils/swfdec/test/trace/assetuperror-6.swf",
       "/utils/swfdec/test/trace/assetuperror-7.swf",
       "/utils/swfdec/test/trace/assetuperror-8.swf",
-      "/utils/swfdec/test/trace/atan2-5.swf",
-      "/utils/swfdec/test/trace/atan2-6.swf",
-      "/utils/swfdec/test/trace/atan2-7.swf",
-      "/utils/swfdec/test/trace/atan2-8.swf",
       "/utils/swfdec/test/trace/attachBitmap-5.swf",
       "/utils/swfdec/test/trace/attachBitmap-6.swf",
       "/utils/swfdec/test/trace/attachBitmap-8.swf",
@@ -261,7 +248,6 @@
       "/utils/swfdec/test/trace/call-arguments-6.swf",
       "/utils/swfdec/test/trace/call-arguments-7.swf",
       "/utils/swfdec/test/trace/call-arguments-8.swf",
-      "/utils/swfdec/test/trace/callfunction-stack.swf",
       "/utils/swfdec/test/trace/callmethod-this-5.swf",
       "/utils/swfdec/test/trace/callmethod-this-6.swf",
       "/utils/swfdec/test/trace/callmethod-this-7.swf",
@@ -1289,7 +1275,6 @@
       "/utils/swfdec/test/trace/rectangle-properties-6.swf",
       "/utils/swfdec/test/trace/rectangle-properties-7.swf",
       "/utils/swfdec/test/trace/rectangle-properties-8.swf",
-      "/utils/swfdec/test/trace/register-count.swf",
       "/utils/swfdec/test/trace/registerclass-previous.swf",
       "/utils/swfdec/test/trace/registerclass-properties.swf",
       "/utils/swfdec/test/trace/relational-5.swf",

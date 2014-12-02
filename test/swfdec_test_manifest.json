@@ -83,6 +83,7 @@
     "id": "trace-c",
     "stas": "/utils/swfdec/test/trace/default.stas",
     "filenames": [
+      "/utils/swfdec/test/trace/callfunction-stack.swf",
       "/utils/swfdec/test/trace/case1-6.swf",
       "/utils/swfdec/test/trace/case1-7.swf",
       "/utils/swfdec/test/trace/catch-in-caller-6.swf",
@@ -436,6 +437,7 @@
     "stas": "/utils/swfdec/test/trace/default.stas",
     "filenames": [
       "/utils/swfdec/test/trace/rectangle-equals-5.swf",
+      "/utils/swfdec/test/trace/register-count.swf",
       "/utils/swfdec/test/trace/remove-child-onUnload-5.swf",
       "/utils/swfdec/test/trace/remove-depths-5.swf",
       "/utils/swfdec/test/trace/remove-movie-6.swf",

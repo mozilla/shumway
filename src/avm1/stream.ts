@@ -106,9 +106,12 @@ module Shumway.AVM1 {
         }
 
         if ((ch & 0xC0) === 0x80) {
-          throw new Error('Invalid UTF8 encoding');
+          // Invalid UTF8 encoding: initial char -- using it as is
+          value += String.fromCharCode(ch);
+          continue;
         }
 
+        var lastPosition = this.position - 1; // in case if we need to recover
         var currentPrefix = 0xC0;
         var validBits = 5;
         do {
@@ -124,7 +127,13 @@ module Shumway.AVM1 {
         for (var i = 5; i >= validBits; --i) {
           ch = this.readUI8();
           if ((ch & 0xC0) !== 0x80) {
-            throw new Error('Invalid UTF8 encoding');
+            // Invalid UTF8 encoding: bad chars in the tail, using previous chars as is
+            var skipToPosition = this.position - 1;
+            this.position = lastPosition;
+            while (this.position < skipToPosition) {
+              value += String.fromCharCode(this.readUI8());
+            }
+            continue;
           }
           code = (code << 6) | (ch & 0x3F);
         }
