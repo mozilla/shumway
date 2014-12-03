@@ -227,10 +227,19 @@ module Shumway.AVM2.Compiler.Backend {
     label = new Variable("$L");
     variables = [];
     constants = [];
+    lazyConstants = [];
     parameters = [];
 
     useConstant(constant: IR.Constant): number {
-      return pushUnique(this.constants, constant);
+      var index;
+      if (isLazyConstant(constant)) {
+        index = pushUnique(this.lazyConstants, constant);
+        this.constants[index] = null;
+      } else {
+        index = pushUnique(this.constants, constant);
+        this.lazyConstants[index] = null;
+      }
+      return index;
     }
 
     useVariable(variable: IR.Variable) {
@@ -714,7 +723,8 @@ module Shumway.AVM2.Compiler.Backend {
     static id: number = 0;
     constructor(public parameters: string [],
                 public body: string,
-                public constants: any []) {
+                public constants: any [],
+                public lazyConstants: any []) {
       // ...
     }
 
@@ -726,8 +736,9 @@ module Shumway.AVM2.Compiler.Backend {
     public C(index: number) {
       var value = this.constants[index];
       // TODO: Avoid using |instanceof| here since this can be called quite frequently.
-      if (value._isLazyInitializer) {
-        this.constants[index] = value.resolve();
+      if (value === null) {
+        value = this.constants[index] = this.lazyConstants[index].resolve();
+        this.lazyConstants[index] = null;
       }
       return this.constants[index];
     }
@@ -777,7 +788,7 @@ module Shumway.AVM2.Compiler.Backend {
     return jsGlobal[compilationGlobalPropertyName] = new Compilation (
       parameters.map(function (p) { return p.name; }),
       source,
-      cx.constants
+      cx.constants, cx.lazyConstants
     );
   }
 }
