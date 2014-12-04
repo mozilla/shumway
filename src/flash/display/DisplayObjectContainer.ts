@@ -453,6 +453,9 @@ module Shumway.AVM2.AS.flash.display {
       var children = this._getUnclippedChildren(testingType, globalX, globalY);
       for (var i = children ? children.length : 0; i--; ) {
         var child = children[i];
+        if (child._maskedObject) {
+          continue;
+        }
         result = child._containsGlobalPoint(globalX, globalY, testingType, objects);
         if (result !== HitTestingResult.Shape) {
           continue;
