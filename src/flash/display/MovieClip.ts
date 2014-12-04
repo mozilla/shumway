@@ -769,5 +769,19 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._gotoFrameAbs(currentScene.offset + currentScene.numFrames + 1);
     }
+
+    _containsPointImpl(globalX: number, globalY: number, localX: number, localY: number,
+                       testingType: HitTestingType, objects: DisplayObject[],
+                       skipBoundsCheck: boolean): HitTestingResult {
+      var result = super._containsPointImpl(globalX, globalY, localX, localY, testingType, objects,
+                                            true);
+      // In AVM1 SWFs, MovieClips are transparent to the mouse as long as they don't have a handler
+      // attached to them for any of the button-related events.
+      if (result === HitTestingResult.Shape && testingType === HitTestingType.Mouse &&
+          '_as2Object' in this && !this.buttonMode && objects[0] === this) {
+        objects.length = 0;
+      }
+      return result;
+    }
   }
 }

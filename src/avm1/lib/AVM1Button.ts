@@ -64,6 +64,7 @@ module Shumway.AVM1.Lib {
       if (!nativeButton._symbol || !nativeButton._symbol.data.buttonActions) {
         return;
       }
+      nativeButton.buttonMode = true;
       nativeButton.addEventListener('addedToStage', this._addListeners.bind(this));
       nativeButton.addEventListener('removedFromStage', this._removeListeners.bind(this));
       var requiredListeners = this._requiredListeners = Object.create(null);

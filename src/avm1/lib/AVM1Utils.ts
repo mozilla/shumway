@@ -373,6 +373,7 @@ module Shumway.AVM1.Lib {
       var handler = clipEventHandler.bind(null, actionsData, instanceAVM1);
       var flags = swfEvent.flags;
       for (var eventFlag in ClipEventMappings) {
+        eventFlag |= 0;
         if (!(flags & (eventFlag | 0))) {
           continue;
         }
@@ -382,6 +383,15 @@ module Shumway.AVM1.Lib {
         //  stageListeners.push({eventName: eventName, handler: handler});
         //  as3Object.stage.addEventListener(eventName, handler);
         //} else {
+        // AVM1 MovieClips are set to button mode if one of the button-related event listeners is
+        // set. This behaviour is triggered regardless of the actual value they are set to.
+        switch (eventFlag) {
+          case AVM1ClipEvents.Release:
+          case AVM1ClipEvents.ReleaseOutside:
+          case AVM1ClipEvents.RollOver:
+          case AVM1ClipEvents.RollOut:
+            as3Object.buttonMode = true;
+        }
         as3Object.addEventListener(eventName, handler);
         //}
       }
