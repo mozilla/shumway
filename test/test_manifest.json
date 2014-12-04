@@ -344,6 +344,13 @@
        ],
        "type": "stas"
     },
+    {  "id": "avm1-mouse-transparency",
+       "stas": "swfs/avm1/mouse-transparency/mouse-transparency.stas",
+       "filenames": [
+         "swfs/avm1/mouse-transparency/mouse-transparency.swf"
+       ],
+       "type": "stas"
+    },
     {  "id": "avm1-rollover",
       "stas": "swfs/avm1/rollover/avm1-rollover.stas",
       "filenames": [
