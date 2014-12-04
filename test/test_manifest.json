@@ -478,5 +478,12 @@
         "swfs/hitTestStyleChange.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "hit-test-masked",
+       "stas": "swfs/hittesting/mask-hit-test.stas",
+      "filenames": [
+        "swfs/hittesting/mask-hit-test.swf"
+      ],
+      "type": "stas"
     }
 ]
