@@ -243,11 +243,12 @@ module Shumway.SWF.Parser.LowLevel {
         while ($stream.pos < tagEnd) {
           var $57 = buttonCondAction($bytes, $stream, tagEnd);
           // Ignore actions that exceed the tag length.
-          if ($stream.pos <= tagEnd) {
-            $56.push($57);
-            $stream.pos = tagEnd;
+          if ($stream.pos > tagEnd) {
+            break;
           }
+          $56.push($57);
         }
+        $stream.pos = tagEnd;
       }
     }
     return $;
@@ -1216,9 +1217,9 @@ module Shumway.SWF.Parser.LowLevel {
   }
 
   function buttonCondAction($bytes, $stream, tagEnd) {
+    var start = $stream.pos;
     var tagSize = readUi16($bytes, $stream);
     // If no tagSize is given, read to the tag's end.
-    var start = $stream.pos;
     var end = tagSize ? start + tagSize : tagEnd;
     var conditions = readUi16($bytes, $stream);
     $stream.pos = end;
@@ -1228,7 +1229,7 @@ module Shumway.SWF.Parser.LowLevel {
       // The lower 9 bits hold state transition flags. See the enum in AVM1Button for details.
       stateTransitionFlags: conditions & 0x1ff,
       // If no tagSize is given, pass `0` to readBinary.
-      actionsData: $bytes.subarray(start, end)
+      actionsData: $bytes.subarray(start + 4, end)
     };
   }
 
