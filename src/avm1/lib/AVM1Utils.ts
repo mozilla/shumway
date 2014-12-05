@@ -329,13 +329,6 @@ module Shumway.AVM1.Lib {
     return wrappedFn;
   }
 
-  export declare class PlaceObjectState {
-    symbolId: number;
-    symbol: { avm1Context: AVM1Context; };
-    variableName: string;
-    events: any[];
-  }
-
   var isAvm1ObjectMethodsInstalled: boolean = false;
 
   export function installObjectMethods(): any {
@@ -404,15 +397,18 @@ module Shumway.AVM1.Lib {
     });
   }
 
-  export function initializeAVM1Object(as3Object: any, state: PlaceObjectState) {
-    var instanceAVM1 = getAVM1Object(as3Object, state.symbol.avm1Context);
+  // TODO: type arguments strongly
+  export function initializeAVM1Object(as3Object: any,
+                                       context: AVM1Context,
+                                       placeObjectTag: any) {
+    var instanceAVM1 = getAVM1Object(as3Object, context);
     release || Debug.assert(instanceAVM1);
 
-    if (state.variableName) {
-      instanceAVM1.asSetPublicProperty('variable', state.variableName);
+    if (placeObjectTag.variableName) {
+      instanceAVM1.asSetPublicProperty('variable', placeObjectTag.variableName);
     }
 
-    var events = state.events;
+    var events = placeObjectTag.events;
     if (!events) {
       return;
     }
@@ -422,7 +418,7 @@ module Shumway.AVM1.Lib {
       var actionsData;
       if (swfEvent.actionsData) {
         actionsData = new AVM1.AVM1ActionsData(swfEvent.actionsData,
-            's' + state.symbolId + 'e' + j);
+            's' + placeObjectTag.symbolId + 'e' + j);
         swfEvent.actionsData = null;
         swfEvent.compiled = actionsData;
       } else {

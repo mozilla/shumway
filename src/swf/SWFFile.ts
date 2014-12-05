@@ -67,7 +67,7 @@ module Shumway.SWF {
     private _currentFrameLabel: string;
     private _currentSoundStreamHead: Parser.SoundStream;
     private _currentSoundStreamBlock: Uint8Array;
-    private _currentDisplayListCommands: UnparsedTag[];
+    private _currentControlTags: UnparsedTag[];
     private _currentActionBlocks: Uint8Array[];
     private _currentInitActionBlocks: InitActionBlock[];
     private _currentExports: SymbolExport[];
@@ -114,7 +114,7 @@ module Shumway.SWF {
       this._currentFrameLabel = null;
       this._currentSoundStreamHead = null;
       this._currentSoundStreamBlock = null;
-      this._currentDisplayListCommands = null;
+      this._currentControlTags = null;
       this._currentActionBlocks = null;
       this._currentInitActionBlocks = null;
       this._currentExports = null;
@@ -517,7 +517,7 @@ module Shumway.SWF {
       var spriteTagEnd = spriteTag.byteOffset + spriteTag.byteLength;
       var frames = timeline.frames;
       var label: string = null;
-      var commands: UnparsedTag[] = [];
+      var controlTags: UnparsedTag[] = [];
       var soundStreamHead: Parser.SoundStream = null;
       var soundStreamBlock: Uint8Array = null;
       var actionBlocks: Uint8Array[] = null;
@@ -538,7 +538,7 @@ module Shumway.SWF {
         }
 
         if (Parser.ControlTags[tagCode]) {
-          commands.push(new UnparsedTag(tagCode, stream.pos, tagLength));
+          controlTags.push(new UnparsedTag(tagCode, stream.pos, tagLength));
           stream.pos += tagLength;
           continue;
         }
@@ -571,10 +571,10 @@ module Shumway.SWF {
             tagLength = 0;
             break;
           case SWFTag.CODE_SHOW_FRAME:
-            frames.push(new SWFFrame(label, commands, soundStreamHead, soundStreamBlock,
+            frames.push(new SWFFrame(controlTags, label, soundStreamHead, soundStreamBlock,
                                      actionBlocks, initActionBlocks, null));
             label = null;
-            commands = [];
+            controlTags = [];
             soundStreamHead = null;
             soundStreamBlock = null;
             actionBlocks = null;
@@ -610,15 +610,15 @@ module Shumway.SWF {
       if (this.framesLoaded === this.frames.length) {
         this.framesLoaded++;
       }
-      this.frames.push(new SWFFrame(this._currentFrameLabel,
-                                    this._currentDisplayListCommands,
+      this.frames.push(new SWFFrame(this._currentControlTags,
+                                    this._currentFrameLabel,
                                     this._currentSoundStreamHead,
                                     this._currentSoundStreamBlock,
                                     this._currentActionBlocks,
                                     this._currentInitActionBlocks,
                                     this._currentExports));
       this._currentFrameLabel = null;
-      this._currentDisplayListCommands = null;
+      this._currentControlTags = null;
       this._currentSoundStreamHead = null;
       this._currentSoundStreamBlock = null;
       this._currentActionBlocks = null;
@@ -653,8 +653,8 @@ module Shumway.SWF {
     }
 
     private addControlTag(tagCode: number, byteOffset: number, tagLength: number) {
-      var commands = this._currentDisplayListCommands || (this._currentDisplayListCommands = []);
-      commands.push(new UnparsedTag(tagCode, byteOffset, tagLength));
+      var controlTags = this._currentControlTags || (this._currentControlTags = []);
+      controlTags.push(new UnparsedTag(tagCode, byteOffset, tagLength));
       this.jumpToNextTag(tagLength);
 
     }
@@ -746,22 +746,22 @@ module Shumway.SWF {
   }
 
   export class SWFFrame {
+    controlTags: UnparsedTag[];
     labelName: string;
-    displayListCommands: UnparsedTag[];
     soundStreamHead: Parser.SoundStream;
     soundStreamBlock: Uint8Array;
     actionBlocks: Uint8Array[];
     initActionBlocks: InitActionBlock[];
     exports: SymbolExport[];
-    constructor(labelName: string, commands: UnparsedTag[],
-                soundStreamHead: Parser.SoundStream,
-                soundStreamBlock: Uint8Array,
-                actionBlocks: Uint8Array[],
-                initActionBlocks: InitActionBlock[],
-                exports: SymbolExport[]) {
+    constructor(controlTags?: UnparsedTag[], labelName?: string,
+                soundStreamHead?: Parser.SoundStream,
+                soundStreamBlock?: Uint8Array,
+                actionBlocks?: Uint8Array[],
+                initActionBlocks?: InitActionBlock[],
+                exports?: SymbolExport[]) {
+      release || controlTags && Object.freeze(controlTags);
+      this.controlTags = controlTags;
       this.labelName = labelName;
-      release || commands && Object.freeze(commands);
-      this.displayListCommands = commands;
       release || actionBlocks && Object.freeze(actionBlocks);
       this.soundStreamHead = soundStreamHead;
       this.soundStreamBlock = soundStreamBlock;
@@ -868,5 +868,23 @@ module Shumway.SWF {
       default:
         return swfTag;
     }
+  }
+
+  export interface DisplayListTag {
+    depth: number;
+  }
+
+  export interface PlaceObjectTag extends DisplayListTag {
+    flags: number;
+    symbolId?: number;
+    matrix?: any; // TODO: type strongly
+    cxform?: any; // TODO: type strongly
+    ratio?: number;
+    name?: string;
+    clipDepth?: number;
+    filters?: any[]; // TODO: type strongly
+    blendMode?: number;
+    bmpCache?: number;
+    visibility?: number;
   }
 }

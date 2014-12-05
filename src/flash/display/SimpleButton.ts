@@ -45,16 +45,20 @@ module Shumway.AVM2.AS.flash.display {
 
       if (symbol) {
         if (symbol.upState) {
-          self._upState = self.createAnimatedDisplayObject(symbol.upState, true);
+          self._upState = self.createAnimatedDisplayObject(symbol.upState.symbol,
+                                                           symbol.upState.placeObjectTag, true);
         }
         if (symbol.overState) {
-          self._overState = self.createAnimatedDisplayObject(symbol.overState, true);
+          self._overState = self.createAnimatedDisplayObject(symbol.overState.symbol,
+                                                             symbol.overState.placeObjectTag, true);
         }
         if (symbol.downState) {
-          self._downState = self.createAnimatedDisplayObject(symbol.downState, true);
+          self._downState = self.createAnimatedDisplayObject(symbol.downState.symbol,
+                                                             symbol.downState.placeObjectTag, true);
         }
         if (symbol.hitTestState) {
-          self._hitTestState = self.createAnimatedDisplayObject(symbol.hitTestState, true);
+          self._hitTestState = self.createAnimatedDisplayObject(symbol.hitTestState.symbol,
+                                                                symbol.hitTestState.placeObjectTag, true);
         }
       }
     };
@@ -275,11 +279,16 @@ module Shumway.AVM2.AS.flash.display {
     }
   }
 
+  export class ButtonState {
+    constructor(public symbol: Timeline.DisplaySymbol, public placeObjectTag: SWF.PlaceObjectTag) {
+    }
+  }
+
   export class ButtonSymbol extends Timeline.DisplaySymbol {
-    upState: Timeline.AnimationState = null;
-    overState: Timeline.AnimationState = null;
-    downState: Timeline.AnimationState = null;
-    hitTestState: Timeline.AnimationState = null;
+    upState: ButtonState = null;
+    overState: ButtonState = null;
+    downState: ButtonState = null;
+    hitTestState: ButtonState = null;
     loaderInfo: flash.display.LoaderInfo;
 
     constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
@@ -293,25 +302,22 @@ module Shumway.AVM2.AS.flash.display {
         symbol.isAVM1Object = true;
       }
       var states = data.states;
-      var character: flash.display.SpriteSymbol = null;
-      var matrix: flash.geom.Matrix = null;
-      var colorTransform: flash.geom.ColorTransform = null;
-      var cmd;
+      var character: Shumway.Timeline.DisplaySymbol = null;
+      var placeObjectTag: Shumway.SWF.PlaceObjectTag;
       for (var stateName in states) {
-        var commands = states[stateName];
-        if (commands.length === 1) {
-          cmd = commands[0];
-          matrix = flash.geom.Matrix.FromUntyped(cmd.matrix);
-          if (cmd.cxform) {
-            colorTransform = flash.geom.ColorTransform.FromCXForm(cmd.cxform);
+        var controlTags = states[stateName];
+        if (controlTags.length === 1) {
+          placeObjectTag = controlTags[0];
+          character = <Shumway.Timeline.DisplaySymbol>loaderInfo.getSymbolById(placeObjectTag.symbolId);
+          if (!character) {
+            continue;
           }
         } else {
-          cmd = {symbolId: -1};
+          placeObjectTag = {flags: Shumway.SWF.Parser.PlaceObjectFlags.Move, depth: 1};
           character = new flash.display.SpriteSymbol({id: -1, className: null}, loaderInfo);
-          character.frames.push(new Timeline.FrameDelta(loaderInfo, commands));
+          (<flash.display.SpriteSymbol>character).frames.push(new Shumway.SWF.SWFFrame(controlTags));
         }
-        symbol[stateName + 'State'] = new Timeline.AnimationState(cmd.symbolId, character, 0,
-                                                                  matrix, colorTransform);
+        symbol[stateName + 'State'] = new ButtonState(character, placeObjectTag);
       }
       return symbol;
     }

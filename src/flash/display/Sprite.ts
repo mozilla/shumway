@@ -20,6 +20,8 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   import Timeline = Shumway.Timeline;
+  import SwfTag = Shumway.SWF.Parser.SwfTag;
+  import PlaceObjectFlags = Shumway.SWF.Parser.PlaceObjectFlags;
 
   export class Sprite extends flash.display.DisplayObjectContainer {
 
@@ -74,25 +76,122 @@ module Shumway.AVM2.AS.flash.display {
 
     _hitTarget: flash.display.Sprite;
 
-    _addFrame(frameInfo: any) {
+    _addFrame(frame: Shumway.SWF.SWFFrame) {
       var frames = (<SpriteSymbol><any>this._symbol).frames;
-      frames.push(frameInfo.frameDelta);
+      frames.push(frame);
       if (frames.length === 1) {
-        this._initializeChildren(frames[0]);
+        this._initializeChildren(frame);
       }
     }
 
-    _initializeChildren(frame: Timeline.FrameDelta): void {
-      var states = frame.stateAtDepth;
-      for (var depth in states) {
-        var state = states[depth];
-        if (state) {
-          var character = this.createAnimatedDisplayObject(state, false);
-          this.addTimelineObjectAtDepth(character, state.depth);
-          if (state.symbol.isAVM1Object) {
-            Shumway.AVM1.Lib.initializeAVM1Object(character, state);
+    _initializeChildren(frame: Shumway.SWF.SWFFrame): void {
+      if (frame.controlTags) {
+        this._processControlTags(frame.controlTags, false);
+      }
+    }
+
+    _processControlTags(tags: any[], backwards: boolean) {
+      // When seeking backwards all timeline objects will be removed unless they are placed again.
+      if (backwards) {
+        var children = this._children.slice();
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          if (child._depth < 0) {
+            continue;
+          }
+          var tag = null;
+          // Look for a control tag tag that places an object at the same depth as the current child.
+          for (var j = 0; j < tags.length; j++) {
+            if (tags[j].depth === child._depth) {
+              tag = tags[j];
+              break;
+            }
+          }
+          // If no such tag was found or a different object is placed, remove the current child.
+          if (!tag || child._symbol.id !== tag.symbolId ||
+              child._ratio !== (tag.ratio === undefined ? -1 : tag.ratio)) {
+            this._removeAnimatedChild(child);
           }
         }
+      }
+
+      var loaderInfo = (<SpriteSymbol>this._symbol).loaderInfo;
+      for (var i = 0; i < tags.length; i++) {
+        var tag = 'depth' in tags[i] ?
+                  tags[i] : <any>loaderInfo._file.getParsedTag(tags[i]);
+        switch (tag.code) {
+          case SwfTag.CODE_REMOVE_OBJECT:
+          case SwfTag.CODE_REMOVE_OBJECT2:
+            var child = this.getTimelineObjectAtDepth(tag.depth | 0);
+            if (child) {
+              this._removeAnimatedChild(child);
+            }
+            break;
+          case SwfTag.CODE_PLACE_OBJECT:
+          case SwfTag.CODE_PLACE_OBJECT2:
+          case SwfTag.CODE_PLACE_OBJECT3:
+            var placeObjectTag = <Shumway.SWF.PlaceObjectTag>tag;
+            var depth = placeObjectTag.depth;
+            var child = this.getTimelineObjectAtDepth(depth);
+            var hasCharacter = placeObjectTag.symbolId > -1;
+
+            // Check for invalid flag constellations.
+            if (placeObjectTag.flags & PlaceObjectFlags.Move) {
+              // Invalid case 1: Move flag set but no child found at given depth.
+              if (!child) {
+                //  Ignore the current tag.
+                break;
+              }
+            } else if (!hasCharacter || (child && !(backwards && hasCharacter))) {
+              // Invalid case 2: Neither Move nor HasCharacter flag set.
+              // Invalid case 3: HasCharacter flag set but given depth is already occupied by a
+              // another object (only if seeking forward).
+              Shumway.Debug.warning("Warning: Failed to place object at depth " + depth + ".");
+              break;
+            }
+
+            var symbol: Shumway.Timeline.DisplaySymbol = null;
+            if (hasCharacter) {
+              symbol = <Shumway.Timeline.DisplaySymbol>loaderInfo.getSymbolById(placeObjectTag.symbolId);
+              if (!symbol) {
+                break;
+              }
+            }
+
+            if (child) {
+              if (symbol && !symbol.dynamic) {
+                // If the current object is of a simple type (for now Shapes, MorphShapes and StaticText)
+                // only its static content is updated instead of replacing it with a new instance.
+                // TODO: Handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
+                child._setStaticContentFromSymbol(symbol);
+              }
+              // We animate the object only if a user script didn't touch any of the properties
+              // this would affect.
+              if (child._hasFlags(DisplayObjectFlags.AnimatedByTimeline)) {
+                child._animate(tag);
+              }
+            } else {
+              // Place a new instance of the symbol.
+              child = this.createAnimatedDisplayObject(symbol, placeObjectTag, false);
+              this.addTimelineObjectAtDepth(child, depth);
+              if (symbol.isAVM1Object) {
+                Shumway.AVM1.Lib.initializeAVM1Object(child, symbol.avm1Context, placeObjectTag);
+              }
+            }
+            break;
+        }
+      }
+    }
+
+    _removeAnimatedChild(child: flash.display.DisplayObject) {
+      this.removeChild(child);
+      if (child._name) {
+        var mn =  Shumway.AVM2.ABC.Multiname.getPublicQualifiedName(child._name);
+        if (this[mn] === child) {
+          this[mn] = null;
+        }
+        // TODO: Implement proper reference counting.
+        // child._removeReference();
       }
     }
 
@@ -202,7 +301,7 @@ module Shumway.AVM2.AS.flash.display {
 
   export class SpriteSymbol extends Timeline.DisplaySymbol {
     numFrames: number = 1;
-    frames: Timeline.FrameDelta[] = [];
+    frames: any[] = [];
     labels: flash.display.FrameLabel[] = [];
     frameScripts: any[] = [];
     isRoot: boolean;
@@ -225,23 +324,18 @@ module Shumway.AVM2.AS.flash.display {
       symbol.frameScripts = [];
       var frames = data.frames;
       for (var i = 0; i < frames.length; i++) {
-        var frameInfo;
-        frameInfo = loaderInfo.getFrame(data, i);
-        var actionBlocks = frameInfo.actionBlocks;
+        var frame = loaderInfo.getFrame(data, i);
+        var actionBlocks = frame.actionBlocks;
         if (actionBlocks) {
           for (var j = 0; j < actionBlocks.length; j++) {
             symbol.frameScripts.push(i);
             symbol.frameScripts.push(actionBlocks[j]);
           }
         }
-        if (frameInfo.labelName) {
-          symbol.labels.push(new flash.display.FrameLabel(frameInfo.labelName, i + 1));
+        if (frame.labelName) {
+          symbol.labels.push(new flash.display.FrameLabel(frame.labelName, i + 1));
         }
-        var frame = frameInfo.frameDelta;
-        var repeat = frameInfo.repeat || 1;
-        while (repeat--) {
-          symbol.frames.push(frame);
-        }
+        symbol.frames.push(frame);
       }
       return symbol;
     }

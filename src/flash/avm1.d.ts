@@ -33,7 +33,8 @@ declare module Shumway.AVM1 {
   }
   export module Lib {
     function getAVM1Object(obj, context: AVM1Context);
-    function initializeAVM1Object(obj, state);
+    function initializeAVM1Object(as3Object, context: AVM1Context,
+                                  placeObjectTag: Shumway.SWF.PlaceObjectTag);
     function installObjectMethods();
     class AVM1Globals extends ASClass {
       Key: typeof AVM1Key;

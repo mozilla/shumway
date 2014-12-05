@@ -838,7 +838,9 @@ module Shumway.AVM2.AS.flash.text {
           var textContent = new Shumway.TextContent();
           textContent.bounds = symbol.lineBounds;
           textContent.parseHtml(tag.initialText);
-          textContent.matrix = flash.geom.Matrix.FromUntyped(data.matrix);
+          var matrix = new flash.geom.Matrix();
+          textContent.matrix = new flash.geom.Matrix();
+          textContent.matrix.copyFromUntyped(data.matrix);
           textContent.coords = data.coords;
           symbol.textContent = textContent;
         }

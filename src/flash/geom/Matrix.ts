@@ -421,6 +421,16 @@ module Shumway.AVM2.AS.flash.geom {
       m[5] = n[5];
     }
 
+    public copyFromUntyped(object: any) {
+      var m = this._data;
+      m[0] = object.a;
+      m[1] = object.b;
+      m[2] = object.c;
+      m[3] = object.d;
+      m[4] = object.tx;
+      m[5] = object.ty;
+    }
+
     public setTo(a: number, b: number, c: number, d: number, tx: number, ty: number): void {
       var m = this._data;
       m[0] = a;
