@@ -808,8 +808,8 @@ module Shumway.AVM1 {
       var prevObj = obj;
       obj = obj.__lookupChild(path[0]);
       if (!obj) {
-        throw new Error(path[0] + ' (expr ' + targetPath + ') is not found in ' +
-          prevObj._target);
+        avm1Warn(path[0] + ' (expr ' + targetPath + ') is not found in ' + prevObj._target);
+        return null;
       }
       path.shift();
     }
@@ -1162,7 +1162,7 @@ module Shumway.AVM1 {
 
       resolved = avm1ResolveProperty(currentTarget, variableName, false);
       if (resolved) {
-        __resolveVariableResult.obj = p.scope;
+        __resolveVariableResult.obj = currentTarget;
         __resolveVariableResult.link = resolved.link;
         __resolveVariableResult.name = resolved.name;
         return __resolveVariableResult;
