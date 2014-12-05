@@ -143,7 +143,9 @@ declare module Shumway.AVM2.AS.flash {
       stageHeight: number;
     }
 
-    class DisplaySymbol {}
+    class DisplaySymbol {
+      id: number;
+    }
     class BitmapSymbol extends DisplaySymbol {}
     class ButtonSymbol extends DisplaySymbol {
       data: { buttonActions: Shumway.Timeline.AVM1ButtonAction[] }
