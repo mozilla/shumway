@@ -59,8 +59,12 @@ public class URLLoader extends EventDispatcher {
     _stream.close();
   }
 
+  public native function _getDecodeErrorsIgnored():Boolean;
+  public native function _setDecodeErrorsIgnored(value:Boolean):void;
+
   private var _stream:URLStream;
   private var _httpResponseEventBound:Boolean;
+
   private function complete() {
     var response:ByteArray = new ByteArray();
     _stream.readBytes(response);
@@ -72,7 +76,12 @@ public class URLLoader extends EventDispatcher {
 
     data = response.toString();
     if (response.length > 0 && dataFormat == 'variables') {
-      data = new URLVariables(String(data));
+      var variable: URLVariables = new URLVariables();
+      if (this._getDecodeErrorsIgnored()) {
+        variable._setErrorsIgnored(true);
+      }
+      variable.decode(String(data));
+      data = variable;
     }
   }
   private function onStreamOpen(e:Event) {

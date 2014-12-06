@@ -620,7 +620,7 @@ module Shumway.AVM1 {
       });
     }
     var normalizedName = as2IdentifiersCaseMap[lowerCaseName] || null;
-    if (normalizedName && (result = avm1CheckLinkProperty(obj, name)) !== null) {
+    if (normalizedName && (result = avm1CheckLinkProperty(obj, normalizedName)) !== null) {
       return result;
     }
 
@@ -639,7 +639,7 @@ module Shumway.AVM1 {
     }
     if (normalize) {
       __resolvePropertyResult.link = obj;
-      __resolvePropertyResult.name = normalizedName;
+      __resolvePropertyResult.name = normalizedName || name;
       return __resolvePropertyResult;
     }
     return null;
@@ -1588,13 +1588,11 @@ module Shumway.AVM1 {
         sendVarsMethod = 'POST';
       }
       var loadTargetFlag = flags & 1 << 6;
-      if (!loadTargetFlag) {
-        _global.getURL(url, target, sendVarsMethod);
-        return;
-      }
       var loadVariablesFlag = flags & 1 << 7;
       if (loadVariablesFlag) {
         _global.loadVariables(url, target, sendVarsMethod);
+      } else if (!loadTargetFlag) {
+        _global.getURL(url, target, sendVarsMethod);
       } else {
         _global.loadMovie(url, target, sendVarsMethod);
       }

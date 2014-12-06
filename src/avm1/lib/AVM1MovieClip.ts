@@ -437,8 +437,8 @@ module Shumway.AVM1.Lib {
       loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);
     }
 
-    public loadVariables(url, method) {
-      throw 'Not implemented: loadVariables';
+    public loadVariables(url: string, method?: string) {
+      this.context.globals._loadVariables(this, url, method);
     }
 
     public localToGlobal(pt) {

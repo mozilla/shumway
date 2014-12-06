@@ -36,7 +36,9 @@ module Shumway.AVM2.AS.flash.net {
       false && super(undefined);
       dummyConstructor("public flash.net.URLLoader");
     }
-    
+
+    private _areDecodeErrorsIgnored: boolean;
+
     // JS -> AS Bindings
     
     data: any;
@@ -58,6 +60,15 @@ module Shumway.AVM2.AS.flash.net {
     onStreamSecurityError: (e: flash.events.SecurityErrorEvent) => any;
     
     // AS -> JS Bindings
-    
+
+    _setDecodeErrorsIgnored(value: boolean): void {
+      this._areDecodeErrorsIgnored = !!value;
+    }
+
+    _getDecodeErrorsIgnored(): boolean {
+      return this._areDecodeErrorsIgnored;
+    }
+
+
   }
 }
