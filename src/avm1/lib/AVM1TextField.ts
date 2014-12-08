@@ -22,7 +22,7 @@ module Shumway.AVM1.Lib {
 
   export class AVM1TextField extends AVM1SymbolBase<flash.text.TextField> {
     static createAVM1Class(): typeof AVM1TextField  {
-      var wrapped = wrapAVM1Class(AVM1TextField,
+      return wrapAVM1Class(AVM1TextField,
         [],
         [ '_alpha', 'antiAliasType', 'autoSize', 'background', 'backgroundColor',
           'border', 'borderColor', 'bottomScroll', 'condenseWhite', 'embedFonts',
@@ -35,24 +35,23 @@ module Shumway.AVM1.Lib {
           'text', 'textColor', 'textHeight', 'textWidth', 'type',
           '_url', '_visible', '_width', 'wordWrap',
           '_x', '_xmouse', '_xscale', '_y', '_ymouse', '_yscale']);
-      AVM1TextField._initEventsHandlers(wrapped);
-      return wrapped;
     }
 
     private _variable: string;
     private _exitFrameHandler: (event: flash.events.Event) => void;
 
 
-    public initAVM1Instance(as3Object: flash.text.TextField, context: AVM1Context) {
-      super.initAVM1Instance(as3Object, context);
+    public initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.text.TextField) {
+      super.initAVM1SymbolInstance(context, as3Object);
 
       this._variable = '';
       this._exitFrameHandler = null;
-      initDefaultListeners(this);
 
       if (as3Object._symbol) {
         this.variable = as3Object._symbol.variableName || '';
       }
+
+      this._initEventsHandlers();
     }
 
     public get _alpha() {
@@ -491,27 +490,27 @@ module Shumway.AVM1.Lib {
     }
 
 
-    private static _initEventsHandlers(wrapped) {
-      var prototype = wrapped.asGetPublicProperty('prototype');
-
-      AVM1Utils.addEventHandlerProxy(prototype, 'onDragOut', 'dragOut');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onDragOver', 'dragOver');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onKeyDown', 'keyDown');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onKeyUp', 'keyUp');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onKillFocus', 'focusOut', function (e) {
-        return [e.relatedObject];
-      });
-      AVM1Utils.addEventHandlerProxy(prototype, 'onLoad', 'load');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onMouseDown', 'mouseDown');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onMouseUp', 'mouseUp');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onPress', 'mouseDown');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onRelease', 'mouseUp');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onReleaseOutside', 'releaseOutside');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onRollOut', 'mouseOut');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onRollOver', 'mouseOver');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onSetFocus', 'focusIn', function (e) {
-        return [e.relatedObject];
-      });
+    private _initEventsHandlers() {
+      this.bindEvents([
+        new AVM1EventHandler('onDragOut', 'dragOut'),
+        new AVM1EventHandler('onDragOver', 'dragOver'),
+        new AVM1EventHandler('onKeyDown', 'keyDown'),
+        new AVM1EventHandler('onKeyUp', 'keyUp'),
+        new AVM1EventHandler('onKillFocus', 'focusOut', function (e) {
+          return [e.relatedObject];
+        }),
+        new AVM1EventHandler('onLoad', 'load'),
+        new AVM1EventHandler('onMouseDown', 'mouseDown'),
+        new AVM1EventHandler('onMouseUp', 'mouseUp'),
+        new AVM1EventHandler('onPress', 'mouseDown'),
+        new AVM1EventHandler('onRelease', 'mouseUp'),
+        new AVM1EventHandler('onReleaseOutside', 'releaseOutside'),
+        new AVM1EventHandler('onRollOut', 'mouseOut'),
+        new AVM1EventHandler('onRollOver', 'mouseOver'),
+        new AVM1EventHandler('onSetFocus', 'focusIn', function (e) {
+          return [e.relatedObject];
+        })
+      ]);
     }
   }
 }

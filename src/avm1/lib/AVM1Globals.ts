@@ -56,7 +56,7 @@ module Shumway.AVM1.Lib {
     public _global: AVM1Globals;
     public flash;
 
-    constructor(swfVersion: number) {
+    constructor(context: AVM1Context) {
       AVM1Globals.instance = this;
       this._global = this;
 
@@ -66,11 +66,14 @@ module Shumway.AVM1.Lib {
         Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass(className);
       });
 
+      var swfVersion = context.loaderInfo.swfVersion;
       if (swfVersion >= 8) {
         this._initializeFlashObject();
       }
 
-      this.AsBroadcaster.initialize(this.Stage);
+      this.AsBroadcaster.initializeWithContext(this.Stage, context);
+      this.AsBroadcaster.initializeWithContext(this.Key, context);
+      this.AsBroadcaster.initializeWithContext(this.Mouse, context);
     }
 
     public asfunction(link) {
@@ -294,6 +297,9 @@ module Shumway.AVM1.Lib {
         forEachPublicProperty(loader.data, function (key, value) {
           context.utils.setProperty(nativeTarget, key, value);
         });
+        if (nativeTarget instanceof AVM1MovieClip) {
+          avm1BroadcastEvent(context, nativeTarget, 'onData');
+        }
       }
       loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);
     }

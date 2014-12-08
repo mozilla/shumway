@@ -177,12 +177,13 @@ module Shumway.AVM1 {
     private assets: Map<number>;
     private assetsSymbols: Array<any>;
     private assetsClasses: Array<any>;
+    private eventObservers: Map<IAVM1EventPropertyObserver[]>;
 
     constructor(loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo) {
       super();
       this.loaderInfo = loaderInfo;
       var GlobalsClass = Lib.AVM1Globals.createAVM1Class();
-      this.globals = new GlobalsClass(loaderInfo.swfVersion);
+      this.globals = new GlobalsClass(this);
       this.initialScope = new AVM1ScopeListItem(this.globals, null);
       this.assets = {};
       // TODO: remove this list and always retrieve symbols from LoaderInfo.
@@ -197,6 +198,7 @@ module Shumway.AVM1 {
       this.errorsIgnored = 0;
       this.deferScriptExecution = true;
       this.pendingScripts = [];
+      this.eventObservers = Object.create(null);
 
       var context = this;
       this.utils = {
@@ -316,6 +318,7 @@ module Shumway.AVM1 {
       if (this === AVM1Context.instance && this.isActive &&
           this.defaultTarget === defaultTarget && this.currentTarget === null) {
         fn();
+        this.currentTarget = null;
         return;
       }
 
@@ -351,6 +354,33 @@ module Shumway.AVM1 {
     }
     executeActions(actionsData: AVM1ActionsData, scopeObj): void {
       executeActions(actionsData, this, scopeObj);
+    }
+    public registerEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {
+      // TODO case insensitive SWF5
+      var observers = this.eventObservers[propertyName];
+      if (!observers) {
+        observers = [];
+        this.eventObservers[propertyName] = observers;
+      }
+      observers.push(observer);
+    }
+    public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {
+      var observers = this.eventObservers[propertyName];
+      if (!observers) {
+        return;
+      }
+      var j = observers.indexOf(observer);
+      if (j < 0) {
+        return;
+      }
+      observers.splice(j, 1);
+    }
+    broadcastEventPropertyChange(propertyName) {
+      var observers = this.eventObservers[propertyName];
+      if (!observers) {
+        return;
+      }
+      observers.forEach((observer: IAVM1EventPropertyObserver) => observer.onEventPropertyModified(propertyName));
     }
   }
 
@@ -664,7 +694,22 @@ module Shumway.AVM1 {
     if (!resolved) {
       return; // probably obj is undefined or null
     }
-    resolved.link.asSetPublicProperty(resolved.name, value);
+    var definition = resolved.link.asGetPropertyDescriptor(undefined, resolved.name, 0);
+    if (definition && !('value' in definition)) {
+      // Using setter or getter
+      resolved.link.asSetPublicProperty(resolved.name, value);
+    } else {
+      obj.asSetPublicProperty(resolved.name, value);
+    }
+    as2SyncEvents(resolved.name);
+  }
+
+  function as2SyncEvents(name) {
+    if (name[0] !== 'o' || name[1] !== 'n') {
+      return;
+    }
+    // Maybe an event property, trying to broadcast change.
+    (<AVM1ContextImpl>AVM1Context.instance).broadcastEventPropertyChange(name);
   }
 
   function as2CastError(ex) {
@@ -1572,6 +1617,7 @@ module Shumway.AVM1 {
       var resolved = avm1ResolveSetVariable(ectx, variableName);
       if (resolved) {
         resolved.link.asSetPublicProperty(resolved.name, value);
+        as2SyncEvents(resolved.name);
       }
     }
     function avm1_0x9A_ActionGetURL2(ectx: ExecutionContext, args: any[]) {
@@ -1841,9 +1887,8 @@ module Shumway.AVM1 {
 
       var name = stack.pop();
       var obj = stack.pop();
-      // in some cases we need to cleanup events binding
-      obj.asSetPublicProperty(name, undefined);
       stack.push(obj.asDeleteProperty(undefined, name, 0));
+      as2SyncEvents(name);
     }
     function avm1_0x3B_ActionDelete2(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1851,6 +1896,7 @@ module Shumway.AVM1 {
       var name = stack.pop();
       var result = avm1DeleteProperty(ectx, name);
       stack.push(result);
+      as2SyncEvents(name);
     }
     function avm1_0x46_ActionEnumerate(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1896,10 +1942,7 @@ module Shumway.AVM1 {
         return;
       }
 
-      var resolvedName = as2ResolveProperty(obj, name, false);
-      if (resolvedName !== null) {
-        stack[stack.length - 1] = as2GetProperty(obj, resolvedName);
-      }
+      stack[stack.length - 1] = as2GetProperty(obj, name);
     }
     function avm1_0x42_ActionInitArray(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1997,8 +2040,7 @@ module Shumway.AVM1 {
         return;
       }
 
-      var resolvedName = as2ResolveProperty(obj, name, true);
-      obj.asSetPublicProperty(resolvedName === null ? name : resolvedName, value);
+      as2SetProperty(obj, name, value);
     }
     function avm1_0x45_ActionTargetPath(ectx: ExecutionContext) {
       var stack = ectx.stack;

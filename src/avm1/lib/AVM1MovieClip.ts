@@ -32,9 +32,22 @@ module Shumway.AVM1.Lib {
   var _asDeleteProperty = Object.prototype.asDeleteProperty;
   var _asGetEnumerableKeys = Object.prototype.asGetEnumerableKeys;
 
+  class AVM1MovieClipButtonModeEvent extends AVM1EventHandler {
+    constructor(public propertyName: string,
+                public eventName: string,
+                public argsConverter: Function = null) {
+      super(propertyName, eventName, argsConverter);
+    }
+
+    public onBind(target: IAVM1SymbolBase): void {
+      var mc: AVM1MovieClip = <any>target;
+      mc.as3Object.buttonMode = true;
+    }
+  }
+
   export class AVM1MovieClip extends AVM1SymbolBase<flash.display.MovieClip> {
     public static createAVM1Class(): typeof AVM1MovieClip {
-      var wrapped = wrapAVM1Class(AVM1MovieClip,
+      return wrapAVM1Class(AVM1MovieClip,
         [],
         ['_alpha', 'attachAudio', 'attachBitmap', 'attachMovie',
           'beginFill', 'beginBitmapFill', 'beginGradientFill', 'blendMode',
@@ -54,8 +67,6 @@ module Shumway.AVM1.Lib {
           '_target', '_totalframes', 'trackAsMenu', 'transform', 'toString',
           'unloadMovie', '_url', 'useHandCursor', '_visible', '_width',
           '_x', '_xmouse', '_xscale', '_y', '_ymouse', '_yscale']);
-      AVM1MovieClip._initEventsHandlers(wrapped);
-      return wrapped;
     }
 
     private _boundExecuteFrameScripts: () => void;
@@ -70,13 +81,13 @@ module Shumway.AVM1.Lib {
       return this.as3Object.graphics;
     }
 
-    public initAVM1Instance(as3Object: flash.display.MovieClip, context: AVM1Context) {
-      super.initAVM1Instance(as3Object, context);
+    public initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.MovieClip) {
+      super.initAVM1SymbolInstance(context, as3Object);
 
       this._frameScripts = null;
       this._boundExecuteFrameScripts = null;
 
-      initDefaultListeners(this);
+      this._initEventsHandlers();
     }
 
     public __lookupChild(id: string) {
@@ -880,29 +891,30 @@ module Shumway.AVM1.Lib {
       }
     }
 
-    private static _initEventsHandlers(wrapped) {
-      var prototype = wrapped.asGetPublicProperty('prototype');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onData', 'data');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onDragOut', 'dragOut');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onDragOver', 'dragOver');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onEnterFrame', 'enterFrame');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onKeyDown', 'keyDown');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onKeyUp', 'keyUp');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onKillFocus', 'focusOut', function (e) {
-        return [e.relatedObject];
-      });
-      AVM1Utils.addEventHandlerProxy(prototype, 'onLoad', 'load');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onMouseDown', 'mouseDown');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onMouseUp', 'mouseUp');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onPress', 'mouseDown');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onRelease', 'mouseUp');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onReleaseOutside', 'releaseOutside');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onRollOut', 'mouseOut');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onRollOver', 'mouseOver');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onSetFocus', 'focusIn', function (e) {
-        return [e.relatedObject];
-      });
-      AVM1Utils.addEventHandlerProxy(prototype, 'onUnload', 'unload');
+    private _initEventsHandlers() {
+      this.bindEvents([
+        new AVM1EventHandler('onData', 'data'),
+        new AVM1EventHandler('onDragOut', 'dragOut'),
+        new AVM1EventHandler('onDragOver', 'dragOver'),
+        new AVM1EventHandler('onEnterFrame', 'enterFrame'),
+        new AVM1EventHandler('onKeyDown', 'keyDown'),
+        new AVM1EventHandler('onKeyUp', 'keyUp'),
+        new AVM1EventHandler('onKillFocus', 'focusOut', function (e) {
+          return [e.relatedObject];
+        }),
+        new AVM1EventHandler('onLoad', 'load'),
+        new AVM1EventHandler('onMouseDown', 'mouseDown'),
+        new AVM1EventHandler('onMouseUp', 'mouseUp'),
+        new AVM1MovieClipButtonModeEvent('onPress', 'mouseDown'),
+        new AVM1MovieClipButtonModeEvent('onRelease', 'mouseUp'),
+        new AVM1MovieClipButtonModeEvent('onReleaseOutside', 'releaseOutside'),
+        new AVM1MovieClipButtonModeEvent('onRollOut', 'mouseOut'),
+        new AVM1MovieClipButtonModeEvent('onRollOver', 'mouseOver'),
+        new AVM1EventHandler('onSetFocus', 'focusIn', function (e) {
+          return [e.relatedObject];
+        }),
+        new AVM1EventHandler( 'onUnload', 'unload')
+      ]);
     }
   }
 }

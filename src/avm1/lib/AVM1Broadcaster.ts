@@ -17,55 +17,48 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-
-  function _broadcastMessage(eventName: string, ...args): void {
-    var listeners: any[] = this.asGetPublicProperty('_listeners');
-    for (var i = 0; i < listeners.length; i++) {
-      var listener: any = listeners[i];
-      // TODO check __proto__ also
-      if (!listener.asHasProperty(undefined, eventName, 0)) {
-        continue;
-      }
-      listener.asCallPublicProperty(eventName, args);
+  function _updateAllSymbolEvents(symbolInstance: IAVM1SymbolBase) {
+    if (!symbolInstance.isAVM1Instance) {
+      return;
     }
-  }
-
-  function _addListener(listener: any): void {
-    /* TODO check why it was introduced
-    if (this._broadcastEventsRegistrationNeeded) {
-      this._broadcastEventsRegistrationNeeded = false;
-      for (var i = 0; i < this._broadcastEvents.length; i++) {
-        (function (subject: any, eventName: string): void {
-          subject[eventName] = function handler(): void {
-            _broadcastMessage.apply(subject, [eventName].concat(<any>arguments));
-          };
-        })(this, this._broadcastEvents[i]);
-      }
-    }
-    */
-    var listeners: any[] = this.asGetPublicProperty('_listeners');
-    listeners.push(listener);
-  }
-
-  function _removeListener(listener: any): Boolean {
-    var listeners: any[] = this.asGetPublicProperty('_listeners');
-    var i = listeners.indexOf(listener);
-    if (i < 0) {
-      return false;
-    }
-    listeners.splice(i, 1);
-    return true;
+    symbolInstance.updateAllEvents();
   }
 
   export class AVM1Broadcaster {
+    private static _context: AVM1Context;
+
+    public static setAVM1Context(context: AVM1Context) {
+      this._context = context;
+    }
+
     public static createAVM1Class(): typeof AVM1Broadcaster {
       return wrapAVM1Class(AVM1Broadcaster, ['initialize'], []);
     }
+
     public static initialize(obj: any): void {
+      AVM1Broadcaster.initializeWithContext(obj, AVM1Context.instance);
+    }
+
+    public static initializeWithContext(obj: any, context: AVM1Context): void {
       obj.asSetPublicProperty('_listeners', []);
-      obj.asSetPublicProperty('broadcastMessage', _broadcastMessage);
-      obj.asSetPublicProperty('addListener', _addListener);
-      obj.asSetPublicProperty('removeListener', _removeListener);
+      obj.asSetPublicProperty('broadcastMessage', function broadcastMessage(eventName: string, ...args): void {
+        avm1BroadcastEvent(context, this, eventName, args);
+      });
+      obj.asSetPublicProperty('addListener', function addListener(listener: any): void {
+        var listeners: any[] = context.utils.getProperty(this, '_listeners');
+        listeners.push(listener);
+        _updateAllSymbolEvents(<any>this);
+      });
+      obj.asSetPublicProperty('removeListener', function removeListener(listener: any): boolean {
+        var listeners: any[] = context.utils.getProperty(this, '_listeners');
+        var i = listeners.indexOf(listener);
+        if (i < 0) {
+          return false;
+        }
+        listeners.splice(i, 1);
+        _updateAllSymbolEvents(<any>this);
+        return true;
+      });
     }
   }
 }

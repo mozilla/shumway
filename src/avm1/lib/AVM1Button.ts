@@ -45,23 +45,21 @@ module Shumway.AVM1.Lib {
     private _actions: ButtonAction[];
 
     static createAVM1Class() : typeof AVM1Button {
-      var wrapped = wrapAVM1Class(AVM1Button,
+      return wrapAVM1Class(AVM1Button,
         [],
         [ '_alpha', 'blendMode', 'cacheAsBitmap', 'enabled', 'filters', '_focusrect',
           'getDepth', '_height', '_highquality', 'menu', '_name', '_parent', '_quality',
           '_rotation', 'scale9Grid', '_soundbuftime', 'tabEnabled', 'tabIndex', '_target',
           'trackAsMenu', '_url', 'useHandCursor', '_visible', '_width',
           '_x', '_xmouse', '_xscale', '_y', '_ymouse', '_yscale']);
-      AVM1Button._initEventsHandlers(wrapped);
-      return wrapped;
     }
 
-    public initAVM1Instance(as3Object: flash.display.SimpleButton, context: AVM1Context) {
-      super.initAVM1Instance(as3Object, context);
+    public initAVM1SymbolInstance(context: AVM1Context, as3Object: flash.display.SimpleButton) {
+      super.initAVM1SymbolInstance(context, as3Object);
 
       var nativeButton = this._as3Object;
-      initDefaultListeners(this);
       if (!nativeButton._symbol || !nativeButton._symbol.data.buttonActions) {
+        this._initEventsHandlers();
         return;
       }
       nativeButton.buttonMode = true;
@@ -109,6 +107,7 @@ module Shumway.AVM1.Lib {
         }
         requiredListeners[type] = this._mouseEventHandler.bind(this, action.stateTransitionFlags);
       }
+      this._initEventsHandlers();
     }
 
     public get _alpha() {
@@ -401,26 +400,27 @@ module Shumway.AVM1.Lib {
         getAVM1Object(this._as3Object._parent, this.context));
     }
 
-    private static _initEventsHandlers(wrappedClass) {
-      var prototype: any = wrappedClass.asGetPublicProperty('prototype');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onDragOut', 'dragOut');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onDragOver', 'dragOver');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onKeyDown', 'keyDown');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onKeyUp', 'keyUp');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onKillFocus', 'focusOut', function (e) {
-        return [e.relatedObject];
-      });
-      AVM1Utils.addEventHandlerProxy(prototype, 'onLoad', 'load');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onMouseDown', 'mouseDown');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onMouseUp', 'mouseUp');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onPress', 'mouseDown');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onRelease', 'mouseUp');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onReleaseOutside', 'releaseOutside');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onRollOut', 'mouseOut');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onRollOver', 'mouseOver');
-      AVM1Utils.addEventHandlerProxy(prototype, 'onSetFocus', 'focusIn', function (e) {
-        return [e.relatedObject];
-      });
+    private _initEventsHandlers() {
+      this.bindEvents([
+        new AVM1EventHandler('onDragOut', 'dragOut'),
+        new AVM1EventHandler('onDragOver', 'dragOver'),
+        new AVM1EventHandler('onKeyDown', 'keyDown'),
+        new AVM1EventHandler('onKeyUp', 'keyUp'),
+        new AVM1EventHandler('onKillFocus', 'focusOut', function (e) {
+          return [e.relatedObject];
+        }),
+        new AVM1EventHandler('onLoad', 'load'),
+        new AVM1EventHandler('onMouseDown', 'mouseDown'),
+        new AVM1EventHandler('onMouseUp', 'mouseUp'),
+        new AVM1EventHandler('onPress', 'mouseDown'),
+        new AVM1EventHandler('onRelease', 'mouseUp'),
+        new AVM1EventHandler('onReleaseOutside', 'releaseOutside'),
+        new AVM1EventHandler('onRollOut', 'mouseOut'),
+        new AVM1EventHandler('onRollOver', 'mouseOver'),
+        new AVM1EventHandler('onSetFocus', 'focusIn', function (e) {
+          return [e.relatedObject];
+        })
+      ]);
     }
   }
 }

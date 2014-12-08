@@ -39,6 +39,10 @@ module Shumway.AVM1 {
     setProperty(obj, name, value);
   }
 
+  export interface IAVM1EventPropertyObserver {
+    onEventPropertyModified(name: string);
+  }
+
   export class AVM1Context {
     public static instance: AVM1Context = null;
     public root: AVM1MovieClip;
@@ -60,6 +64,9 @@ module Shumway.AVM1 {
     public resolveTarget(target): any {}
     public resolveLevel(level: number): any {}
     public addToPendingScripts(fn) {}
+
+    public registerEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
+    public unregisterEventPropertyObserver(propertyName: string, observer: IAVM1EventPropertyObserver) {}
 
     public enterContext(fn: Function, defaultTarget): void {}
     public executeActions(actionsData: AVM1ActionsData, scopeObj): void {}

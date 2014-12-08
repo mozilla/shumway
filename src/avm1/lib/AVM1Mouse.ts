@@ -22,9 +22,7 @@ module Shumway.AVM1.Lib {
 
   export class AVM1Mouse {
     public static createAVM1Class(): typeof AVM1Mouse {
-      var wrapped = wrapAVM1Class(AVM1Mouse, ['show', 'hide'], []);
-      AVM1Broadcaster.initialize(wrapped);
-      return wrapped;
+      return wrapAVM1Class(AVM1Mouse, ['show', 'hide'], []);
     }
 
     public static _bind(stage: flash.display.Stage, context: AVM1Context) {
