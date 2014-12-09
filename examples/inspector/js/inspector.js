@@ -145,7 +145,8 @@ function executeFile(file, buffer, movieParams) {
     var loaderURL = getQueryVariable("loaderURL") || swfURL;
     runIFramePlayer({sysMode: sysMode, appMode: appMode, loaderURL: loaderURL,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
-      stageAlign: state.salign, stageScale: state.scale});
+      stageAlign: state.salign, stageScale: state.scale,
+      fileReadChunkSize: state.fileReadChunkSize});
     return;
   }
 
@@ -302,7 +303,8 @@ Shumway.FileLoadingService.instance = {
         var self = this;
         var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
-        new Shumway.BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
+        new Shumway.BinaryFileReader(path, request.method, request.mimeType, request.data).readChunked(
+          state.fileReadChunkSize,
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },

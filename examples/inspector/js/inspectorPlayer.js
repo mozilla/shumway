@@ -32,6 +32,7 @@ Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
 };
 
+var fileReadChunkSize = 0;
 Shumway.FileLoadingService.instance = {
   createSession: function () {
     return {
@@ -49,7 +50,8 @@ Shumway.FileLoadingService.instance = {
         var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
         var BinaryFileReader = Shumway.BinaryFileReader;
-        new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
+        new BinaryFileReader(path, request.method, request.mimeType, request.data).readChunked(
+          fileReadChunkSize,
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },
@@ -106,6 +108,7 @@ function runSwfPlayer(data) {
   var stageAlign = data.stageAlign;
   var stageScale = data.stageScale;
   var displayParameters = data.displayParameters;
+  fileReadChunkSize = data.fileReadChunkSize;
   var file = data.file;
   configureMocks(file);
   Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
