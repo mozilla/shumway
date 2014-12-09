@@ -64,6 +64,49 @@ module Shumway {
       xhr.send(this.data || null);
     }
 
+    readChunked(chunkSize: number /* int */,
+              ondata: (data: Uint8Array, progress:BinaryFileReaderProgressInfo) => void,
+              onerror: (err: any) => void,
+              onopen?: () => void,
+              oncomplete?: () => void,
+              onhttpstatus?: (location: string, status: string, responseHeaders: any) => void) {
+      if (chunkSize <= 0) {
+        this.readAsync(ondata, onerror, onopen, oncomplete, onhttpstatus);
+        return;
+      }
+
+      var position = 0;
+      var buffer = new Uint8Array(chunkSize);
+      var read = 0, total;
+      this.readAsync(
+        function (data: Uint8Array, progress: BinaryFileReaderProgressInfo) {
+          total = progress.total;
+          var left = data.length, offset = 0;
+          while (position + left >= chunkSize) {
+            var tailSize = chunkSize - position;
+            buffer.set(data.subarray(offset, offset + tailSize), position);
+            offset += tailSize;
+            left -= tailSize;
+            read += chunkSize;
+            ondata(buffer, {loaded: read, total: total});
+            position = 0;
+          }
+          buffer.set(data.subarray(offset), position);
+          position += left;
+        },
+        onerror,
+        onopen,
+        function () {
+          if (position > 0) {
+            read += position;
+            ondata(buffer.subarray(0, position), {loaded: read, total: total});
+            position = 0;
+          }
+          oncomplete && oncomplete();
+        },
+        onhttpstatus);
+    }
+
     readAsync(ondata: (data: Uint8Array, progress:BinaryFileReaderProgressInfo) => void,
               onerror: (err: any) => void,
               onopen?: () => void,

@@ -28,6 +28,7 @@ var stateDefaults = {
   logAssets: false,
   overlayFlash: false,
   useIFramePlayer: false,
+  fileReadChunkSize: 0,
   mute: false,
   release: true,
   salign: 'tl',
@@ -92,6 +93,7 @@ var GUI = (function () {
   inspectorOptions.add(state, "profileStartupDuration").onChange(saveInspectorOption);
   inspectorOptions.add(state, "overlayFlash").onChange(saveInspectorOption);
   inspectorOptions.add(state, "useIFramePlayer").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "fileReadChunkSize").onChange(saveInspectorOption);
   inspectorOptions.add(state, "scale").options({
     "ShowAll": 'showall',
     "ExactFit": 'exactfit',
