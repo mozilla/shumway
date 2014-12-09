@@ -385,13 +385,13 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Implementation for both gotoAndPlay and gotoAndStop.
-     *
-     * Technically, we should throw all errors from those functions directly so the stack is
-     * correct.
-     * We might at some point do that by explicitly inlining this function using some build step.
+     * Resolves frame and scene into absolute frame number. If scene is not specified,
+     * the current scene is used. In legacy mode, it might return `undefined` if frame/scene
+     * was not found.
      */
-    private _gotoFrame(frame: string, sceneName: string): void {
+    _getAbsFrameNumber(frame: string, sceneName: string): number {
+      var legacyMode = MovieClip.frameNavigationModel === FrameNavigationModel.SWF1 ||
+                       MovieClip.frameNavigationModel === FrameNavigationModel.SWF9;
       var scene: Scene;
       if (sceneName !== null) {
         sceneName = asCoerceString(sceneName);
@@ -404,6 +404,9 @@ module Shumway.AVM2.AS.flash.display {
           }
         }
         if (i === scenes.length) {
+          if (legacyMode) {
+            return undefined; // noop for SWF9 and below
+          }
           throwError('ArgumentError', Errors.SceneNotFoundError, sceneName);
         }
       } else {
@@ -415,19 +418,32 @@ module Shumway.AVM2.AS.flash.display {
       /* tslint:disable */
       var frameNum = parseInt(frame, 10);
       if (<any>frameNum != frame) { // TypeScript doesn't like using `==` for number,string vars.
-        var legacyMode = MovieClip.frameNavigationModel === FrameNavigationModel.SWF1 ||
-                         MovieClip.frameNavigationModel === FrameNavigationModel.SWF9;
         var label = scene.getLabelByName(frame, legacyMode);
         if (!label) {
           if (legacyMode) {
-            return; // noop for SWF9 and below
+            return undefined; // noop for SWF9 and below
           }
           throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame, sceneName);
         }
         frameNum = label.frame;
       }
       /* tslint:enable */
-      this._gotoFrameAbs(scene.offset + frameNum);
+      return scene.offset + frameNum;
+    }
+
+    /**
+     * Implementation for both gotoAndPlay and gotoAndStop.
+     *
+     * Technically, we should throw all errors from those functions directly so the stack is
+     * correct.
+     * We might at some point do that by explicitly inlining this function using some build step.
+     */
+    private _gotoFrame(frame: string, sceneName: string): void {
+      var frameNum = this._getAbsFrameNumber(frame, sceneName);
+      if (frameNum === undefined) {
+        return;
+      }
+      this._gotoFrameAbs(frameNum);
     }
 
     private _gotoFrameAbs(frame: number): void {
