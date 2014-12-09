@@ -854,7 +854,8 @@ module Shumway.AVM1 {
       obj = obj.__lookupChild(path[0]);
       if (!obj) {
         avm1Warn(path[0] + ' (expr ' + targetPath + ') is not found in ' + prevObj._target);
-        return null;
+        // TODO refactor me
+        return {}; // resolving to fake object
       }
       path.shift();
     }
