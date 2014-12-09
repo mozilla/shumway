@@ -142,6 +142,15 @@ module Shumway.Shell {
   class ShellPlayer extends Shumway.Player.Player {
     onSendUpdates(updates:DataBuffer, assets:Array<DataBuffer>, async:boolean = true):DataBuffer {
       var bytes = updates.getBytes();
+      if (!async) {
+        // Simulating text field metrics
+        var buffer = new DataBuffer()
+        buffer.write2Ints(1, 1); // textWidth, textHeight
+        buffer.writeInt(0); // offsetX
+        buffer.writeInt(0); // numLines
+        buffer.position = 0;
+        return buffer;
+      }
       // console.log('Updates sent');
       return null;
     }

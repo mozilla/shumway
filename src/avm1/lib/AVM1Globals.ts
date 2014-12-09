@@ -19,6 +19,7 @@
 module Shumway.AVM1.Lib {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
   import assert = Shumway.Debug.assert;
   import flash = Shumway.AVM2.AS.flash;
   import ASObject = Shumway.AVM2.AS.ASObject;
@@ -35,7 +36,7 @@ module Shumway.AVM1.Lib {
         ['_global', 'flash', 'ASSetPropFlags', 'call', 'chr', 'clearInterval', 'clearTimeout',
           'duplicateMovieClip', 'fscommand', 'escape', 'unescape', 'getTimer', 'getURL',
           'getVersion', 'gotoAndPlay', 'gotoAndStop', 'ifFrameLoaded', 'int', 'length=>length_',
-          'loadMovie', 'loadMovieNum', 'loadVariables', 'mbchr', 'mblength', 'mbord',
+          'loadMovie', 'loadMovieNum', 'loadVariables', 'loadVariablesNum', 'mbchr', 'mblength', 'mbord',
           'mbsubstring', 'nextFrame', 'nextScene', 'ord', 'play', 'prevFrame', 'prevScene',
           'print', 'printAsBitmap', 'printAsBitmapNum', 'printNum', 'random',
           'removeMovieClip', 'setInterval', 'setTimeout', 'showRedrawRegions',
@@ -55,7 +56,7 @@ module Shumway.AVM1.Lib {
     public _global: AVM1Globals;
     public flash;
 
-    constructor(swfVersion: number) {
+    constructor(context: AVM1Context) {
       AVM1Globals.instance = this;
       this._global = this;
 
@@ -65,11 +66,14 @@ module Shumway.AVM1.Lib {
         Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass(className);
       });
 
+      var swfVersion = context.loaderInfo.swfVersion;
       if (swfVersion >= 8) {
         this._initializeFlashObject();
       }
 
-      this.AsBroadcaster.initialize(this.Stage);
+      this.AsBroadcaster.initializeWithContext(this.Stage, context);
+      this.AsBroadcaster.initializeWithContext(this.Key, context);
+      this.AsBroadcaster.initializeWithContext(this.Mouse, context);
     }
 
     public asfunction(link) {
@@ -271,16 +275,30 @@ module Shumway.AVM1.Lib {
 
     public loadVariables(url: string, target: any, method: string = ''): void {
       var nativeTarget = AVM1Utils.resolveTarget(target);
+      this._loadVariables(nativeTarget, url, method);
+    }
+
+    public loadVariablesNum(url: string, level: number, method: string = ''): void {
+      var nativeTarget = AVM1Utils.resolveLevel(level);
+      this._loadVariables(nativeTarget, url, method);
+    }
+
+    _loadVariables(nativeTarget: IAVM1SymbolBase, url: string, method: string): void {
       var request = new flash.net.URLRequest(url);
       if (method) {
         request.method = method;
       }
+      var context = AVM1Context.instance;
       var loader: flash.net.URLLoader = new flash.net.URLLoader(request);
+      loader._setDecodeErrorsIgnored(true);
       loader.dataFormat = 'variables'; // flash.net.URLLoaderDataFormat.VARIABLES;
       function completeHandler(event: flash.events.Event): void {
         loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
-        for (var key in loader.data) {
-          nativeTarget[key] = loader.data[key];
+        forEachPublicProperty(loader.data, function (key, value) {
+          context.utils.setProperty(nativeTarget, key, value);
+        });
+        if (nativeTarget instanceof AVM1MovieClip) {
+          avm1BroadcastEvent(context, nativeTarget, 'onData');
         }
       }
       loader.addEventListener(flash.events.Event.COMPLETE, completeHandler);

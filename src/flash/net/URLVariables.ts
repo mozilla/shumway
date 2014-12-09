@@ -30,20 +30,30 @@ module Shumway.AVM2.AS.flash.net {
     static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["decode!"]; // "toString"
+    static instanceSymbols: string [] = ["decode!", "_ignoreErrors!"]; // "toString"
     
     constructor (source: string = null) {
       false && super();
       dummyConstructor("public flash.net.URLVariables");
     }
-    
+
+    private _areErrorsIgnored: boolean;
+
     // JS -> AS Bindings
-    
+
     decode: (source: string) => void;
     unescape: (s: string) => string;
     escape: (s: string) => string;
     
     // AS -> JS Bindings
-    
+
+    _setErrorsIgnored(value: boolean): void {
+      this._areErrorsIgnored = !!value;
+    }
+
+    _getErrorsIgnored(): boolean {
+      return this._areErrorsIgnored;
+    }
+
   }
 }

@@ -20,6 +20,10 @@ import flash.utils.unescapeMultiByte;
 
 [native(cls='URLVariablesClass')]
 public dynamic class URLVariables {
+  // We need to ignore decode errors in AVM1
+  public native function _getErrorsIgnored():Boolean;
+  public native function _setErrorsIgnored(value:Boolean):void;
+
   public function URLVariables(source:String = null) {
     if (source) {
       decode(source);
@@ -30,6 +34,9 @@ public dynamic class URLVariables {
     for (var i: int = 0; i < variables.length; i++) {
       var p: String = variables[i];
       var j:int = p.indexOf('=');
+      if (j < 0 && this._getErrorsIgnored()) {
+        j = p.length;
+      }
       if (j < 0) {
         Error.throwError(Error, 2101); // Errors.DecodeParamError
         return;

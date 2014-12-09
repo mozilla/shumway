@@ -21,11 +21,9 @@ module Shumway.AVM1.Lib {
 
   export class AVM1MovieClipLoader {
     static createAVM1Class():typeof AVM1MovieClipLoader {
-      var wrapped = wrapAVM1Class(AVM1MovieClipLoader,
+      return wrapAVM1Class(AVM1MovieClipLoader,
         [],
         ['loadClip', 'unloadClip', 'getProgress']);
-      AVM1Broadcaster.initialize(wrapped.asGetPublicProperty('prototype'));
-      return wrapped;
     }
 
     public initAVM1ObjectInstance(context: AVM1Context) {
@@ -36,7 +34,6 @@ module Shumway.AVM1.Lib {
 
     constructor() {
       this._loader = new flash.display.Loader();
-      initDefaultListeners(this);
     }
 
     public loadClip(url: string, target):Boolean {
@@ -69,28 +66,30 @@ module Shumway.AVM1.Lib {
       return this._loader.contentLoaderInfo.bytesLoaded;
     }
 
+    private _broadcastMessage(message: string, args: any[] = null) {
+      avm1BroadcastEvent(this._target.context, this, message, args);
+    }
+
     private openHandler(event: flash.events.Event): void {
-      this.asCallPublicProperty('broadcastMessage', ['onLoadStart', this._target]);
+      this._broadcastMessage('onLoadStart', [this._target]);
     }
 
     private progressHandler(event: flash.events.ProgressEvent):void {
-      this.asCallPublicProperty('broadcastMessage', ['onLoadProgress',
-        this._target, event.bytesLoaded, event.bytesTotal]);
+      this._broadcastMessage('onLoadProgress', [this._target, event.bytesLoaded, event.bytesTotal]);
     }
 
     private ioErrorHandler(event: flash.events.IOErrorEvent):void {
-      this.asCallPublicProperty('broadcastMessage', ['onLoadError',
-        this._target, event.errorID, 501]);
+      this._broadcastMessage('onLoadError', [this._target, event.errorID, 501]);
     }
 
     private completeHandler(event: flash.events.Event):void {
-      this.asCallPublicProperty('broadcastMessage', ['onLoadComplete', this._target]);
+      this._broadcastMessage('onLoadComplete', [this._target]);
     }
 
     private initHandler(event: flash.events.Event):void {
       var exitFrameCallback = function () {
         this._target.as3Object.removeEventListener(flash.events.Event.EXIT_FRAME, exitFrameCallback);
-        this.asCallPublicProperty('broadcastMessage', ['onLoadInit', this._target]);
+        this._broadcastMessage('onLoadInit', [this._target]);
       }.bind(this);
       // MovieClipLoader's init event is dispatched after all frame scripts of the AVM1 instance
       // have run for one additional iteration.

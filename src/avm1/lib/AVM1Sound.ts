@@ -19,7 +19,7 @@
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVM2.AS.flash;
 
-  export class AVM1Sound {
+  export class AVM1Sound extends AVM1NativeObject {
     static createAVM1Class(): typeof AVM1Sound {
       return wrapAVM1Class(AVM1Sound,
         [],
@@ -28,15 +28,13 @@ module Shumway.AVM1.Lib {
          'start', 'stop']);
     }
 
-    public initAVM1ObjectInstance(context: AVM1Context) {
-    }
-
     private _target: IAVM1SymbolBase;
     private _sound: flash.media.Sound;
     private _channel: flash.media.SoundChannel;
     private _linkageID: string;
 
     public constructor(target_mc) {
+      super();
       this._target = AVM1Utils.resolveTarget(target_mc);
       this._sound = null;
       this._channel = null;
@@ -44,7 +42,7 @@ module Shumway.AVM1.Lib {
     }
 
     public attachSound(id: string): void {
-      var symbol = AVM1Context.instance.getAsset(id);
+      var symbol = this.context.getAsset(id);
       if (!symbol) {
         return;
       }

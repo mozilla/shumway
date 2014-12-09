@@ -29,6 +29,7 @@ interface IProtocol {
   asSetPublicProperty: (name: any, value: any) => void;
   asDefineProperty: (namespaces: Namespace [], name: any, flags: number, descriptor: PropertyDescriptor) => void;
   asDefinePublicProperty: (name: any, descriptor: PropertyDescriptor) => void;
+  asGetPropertyDescriptor: (namespaces: Namespace [], name: any, flags: number) => PropertyDescriptor;
   asCallProperty: (namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) => any;
   asCallSuper: (scope, namespaces: Namespace [], name: any, flags: number, args: any []) => any;
   asGetSuper: (scope, namespaces: Namespace [], name: any, flags: number) => any;
@@ -466,6 +467,15 @@ module Shumway.AVM2.Runtime {
     }
     var resolved = self.resolveMultinameProperty(namespaces, name, flags);
     Object.defineProperty(self, resolved, descriptor);
+  }
+
+  export function asGetPropertyDescriptor(namespaces: Namespace [], name: any, flags: number): PropertyDescriptor {
+    var self: Object = this;
+    if (typeof name === "object") {
+      name = String(name);
+    }
+    var resolved = self.resolveMultinameProperty(namespaces, name, flags);
+    return Object.getOwnPropertyDescriptor(self, resolved);
   }
 
   export function asCallPublicProperty(name: any, args: any []) {
@@ -1044,6 +1054,7 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Object.prototype, "asSetPublicProperty", asSetPublicProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asDefineProperty", asDefineProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asDefinePublicProperty", asDefinePublicProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asGetPropertyDescriptor", asGetPropertyDescriptor);
     defineNonEnumerableProperty(global.Object.prototype, "asCallProperty", asCallProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asCallSuper", asCallSuper);
     defineNonEnumerableProperty(global.Object.prototype, "asGetSuper", asGetSuper);

@@ -30,11 +30,9 @@ module Shumway.AVM1.Lib {
     private static _lastKeyCode: number = 0;
 
     public static createAVM1Class(): typeof AVM1Key {
-      var wrapped = wrapAVM1Class(AVM1Key,
+      return wrapAVM1Class(AVM1Key,
         ['DOWN', 'LEFT', 'RIGHT', 'UP', 'isDown'],
         []);
-      AVM1Broadcaster.initialize(wrapped);
-      return wrapped;
     }
 
     public static _bind(stage: flash.display.Stage, context: AVM1Context) {

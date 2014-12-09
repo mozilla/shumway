@@ -235,6 +235,7 @@ declare module Shumway.AVM2.AS.flash {
       dataFormat;
       data: any;
       constructor(request?: URLRequest);
+      _setDecodeErrorsIgnored(value: boolean): void;
     }
     class SharedObject extends ASNative {}
   }
