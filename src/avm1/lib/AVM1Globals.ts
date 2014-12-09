@@ -87,7 +87,12 @@ module Shumway.AVM1.Lib {
 
     public call(frame) {
       var nativeTarget = AVM1Utils.resolveTarget<AVM1MovieClip>();
-      nativeTarget._callFrame(frame);
+      var as3Object = nativeTarget.as3Object;
+      var frameNum = as3Object._getAbsFrameNumber(<any>frame, null);
+      if (frameNum === undefined) {
+        return;
+      }
+      as3Object.callFrame(frameNum);
     }
 
     public chr(number) {

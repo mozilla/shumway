@@ -95,6 +95,8 @@ declare module Shumway.AVM2.AS.flash {
       totalFrames: number;
 
       addFrameScript(frameIndex: number, script: (any?) => any /*, ...*/): void;
+      _getAbsFrameNumber(frame: string, sceneName: string): number;
+      callFrame(frame: number): void;
     }
     class Graphics extends ASNative {
       beginFill: Function;
