@@ -283,7 +283,7 @@ module Shumway.AVM2.AS.flash.display {
     loaderInfo: flash.display.LoaderInfo;
 
     constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
-      super(data, flash.display.SimpleButton, false);
+      super(data, flash.display.SimpleButton, true);
       this.loaderInfo = loaderInfo;
     }
 
