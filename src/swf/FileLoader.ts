@@ -18,6 +18,9 @@ module Shumway {
   import assert = Shumway.Debug.assert;
   import SWFFile = Shumway.SWF.SWFFile;
 
+  // Minimal amount of data to load before starting to parse. Chosen fairly arbitrarily.
+  var MIN_LOADED_BYTES = 8192;
+
   export class LoadProgressUpdate {
     constructor(public bytesLoaded: number) {
     }
@@ -34,21 +37,23 @@ module Shumway {
 
     private _listener: ILoadListener;
     private _loadingServiceSession: FileLoadingSession;
-    private _delayedUpdates: LoadProgressUpdate[];
     private _delayedUpdatesPromise: Promise<any>;
+    private _bytesLoaded: number;
+    private _queuedInitialData: Uint8Array;
 
 
     constructor(listener: ILoadListener) {
       release || assert(listener);
+      this._file = null;
       this._listener = listener;
       this._loadingServiceSession = null;
-      this._file = null;
-      this._delayedUpdates = null;
       this._delayedUpdatesPromise = null;
+      this._bytesLoaded = 0;
     }
 
     // TODO: strongly type
     loadFile(request: any) {
+      this._bytesLoaded = 0;
       var session = this._loadingServiceSession = FileLoadingService.instance.createSession();
       session.onopen = this.processLoadOpen.bind(this);
       session.onprogress = this.processNewData.bind(this);
@@ -60,6 +65,7 @@ module Shumway {
       // TODO: implement
     }
     loadBytes(bytes: Uint8Array) {
+      this._bytesLoaded = bytes.length;
       var file = this._file = createFileInstanceForHeader(bytes, bytes.length);
       this._listener.onLoadOpen(file);
       this.processSWFFileUpdate(file);
@@ -68,6 +74,21 @@ module Shumway {
       release || assert(!this._file);
     }
     processNewData(data: Uint8Array, progressInfo: {bytesLoaded: number; bytesTotal: number}) {
+      this._bytesLoaded += data.length;
+      if (this._bytesLoaded < MIN_LOADED_BYTES && this._bytesLoaded < progressInfo.bytesTotal) {
+        if (!this._queuedInitialData) {
+          this._queuedInitialData = new Uint8Array(Math.min(MIN_LOADED_BYTES,
+                                                            progressInfo.bytesTotal));
+        }
+        this._queuedInitialData.set(data, this._bytesLoaded - data.length);
+        return;
+      } else if (this._queuedInitialData) {
+        var allData = new Uint8Array(this._bytesLoaded);
+        allData.set(this._queuedInitialData);
+        allData.set(data, this._bytesLoaded - data.length);
+        data = allData;
+        this._queuedInitialData = null;
+      }
       var file = this._file;
       if (!file) {
         file = this._file = createFileInstanceForHeader(data, progressInfo.bytesTotal);
