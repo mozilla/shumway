@@ -1130,19 +1130,23 @@ module Shumway.AVM1 {
     name: null
   };
 
-    function avm1ResolveVariableName(ectx: ExecutionContext, variableName: string, nonStrict: boolean): ResolveVariableResult {
+    function avm1VariableNameHasPath(variableName: string): boolean {
+      return variableName && (variableName.indexOf('.') >= 0 || variableName.indexOf(':') >= 0);
+    }
+
+    function avm1ResolveVariableName(ectx: ExecutionContext, variableName: string, normalize: boolean): ResolveVariableResult {
       var _global = ectx.global;
       var currentContext = ectx.context;
-      var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
-
       var obj, name, i, resolved;
       if (variableName.indexOf(':') >= 0) {
         // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
+        var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
         var parts = variableName.split(':');
         obj = lookupAVM1Children(parts[0], currentTarget,
           currentContext.resolveLevel(0));
         if (!obj) {
-          throw new Error(parts[0] + ' is undefined');
+          avm1Warn(parts[0] + ' is undefined');
+          return null;
         }
         name = parts[1];
       } else if (variableName.indexOf('.') >= 0) {
@@ -1154,26 +1158,30 @@ module Shumway.AVM1 {
           resolved = avm1ResolveProperty(obj, objPath[i], false);
           obj = resolved && resolved.link.asGetPublicProperty(resolved.name);
           if (!obj) {
-            throw new Error(objPath.slice(0, i + 1) + ' is undefined');
+            avm1Warn(objPath.slice(0, i + 1) + ' is undefined');
+            return null;
           }
         }
+      } else {
+        release || Debug.assert(false, 'AVM1 variable has no path');
       }
 
-      if (!obj) {
-        return null; // local variable
-      }
-
-      resolved = avm1ResolveProperty(obj, name, false);
-      if (resolved || nonStrict) {
+      resolved = avm1ResolveProperty(obj, name, normalize);
+      if (resolved) {
         __resolveVariableResult.obj = obj;
         __resolveVariableResult.link = resolved.link;
         __resolveVariableResult.name = resolved.name;
         return __resolveVariableResult;
+      } else {
+        return null;
       }
-      return null;
     }
 
     function avm1ResolveGetVariable(ectx: ExecutionContext, variableName: string): ResolveVariableResult {
+      if (avm1VariableNameHasPath(variableName)) {
+        return avm1ResolveVariableName(ectx, variableName, false);
+      }
+
       var scopeContainer = ectx.scopeContainer;
       var currentContext = ectx.context;
       var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
@@ -1187,12 +1195,6 @@ module Shumway.AVM1 {
         __resolveVariableResult.link = resolved.link;
         __resolveVariableResult.name = resolved.name;
         return __resolveVariableResult;
-      }
-
-      var resolvedVariable: ResolveVariableResult;
-      resolvedVariable = avm1ResolveVariableName(ectx, variableName, false);
-      if (resolvedVariable) {
-        return resolvedVariable;
       }
 
       for (var p = scopeContainer; p; p = p.next) {
@@ -1228,6 +1230,10 @@ module Shumway.AVM1 {
       return null;
     }
     function avm1ResolveSetVariable(ectx: ExecutionContext, variableName: string): ResolveVariableResult {
+      if (avm1VariableNameHasPath(variableName)) {
+        return avm1ResolveVariableName(ectx, variableName, true);
+      }
+
       var scopeContainer = ectx.scopeContainer;
       var currentContext = ectx.context;
       var currentTarget = currentContext.currentTarget || currentContext.defaultTarget;
@@ -1248,12 +1254,6 @@ module Shumway.AVM1 {
         __resolveVariableResult.link = resolved.link;
         __resolveVariableResult.name = resolved.name;
         return __resolveVariableResult;
-      }
-
-      var resolvedVariable: ResolveVariableResult;
-      resolvedVariable = avm1ResolveVariableName(ectx, variableName, false);
-      if (resolvedVariable) {
-        return resolvedVariable;
       }
 
       for (var p = scopeContainer; p.next; p = p.next) { // excluding globals
