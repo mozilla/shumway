@@ -80,5 +80,7 @@ module Shumway.AVM2.Runtime {
     return true;
   };
 
-
+  VM_METHOD_OVERRIDES["facebook.utils.FBURI::isFacebookURI"] = function () {
+    return true;
+  };
 }
