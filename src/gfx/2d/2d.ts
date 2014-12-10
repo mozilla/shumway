@@ -701,7 +701,7 @@ module Shumway.GFX.Canvas2D {
       // Fill background
       if (!node.hasFlags(NodeFlags.Transparent) && node.color) {
         if (!(state.flags & RenderFlags.IgnoreRenderable)) {
-          // this._container.style.backgroundColor = node.color.toCSSStyle();
+          this._container.style.backgroundColor = node.color.toCSSStyle();
         }
       }
 
