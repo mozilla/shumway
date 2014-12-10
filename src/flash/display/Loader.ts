@@ -351,7 +351,9 @@ module Shumway.AVM2.AS.flash.display {
         if (this._content || this !== Loader.getRootLoader()) {
           return;
         }
-        this.onFileStartupReady();
+        if (file.framesLoaded > 0) {
+          this.onFileStartupReady();
+        }
       } else {
         this._contentLoaderInfo.bytesLoaded = update.bytesLoaded;
       }
@@ -454,6 +456,7 @@ module Shumway.AVM2.AS.flash.display {
     private onFileStartupReady() {
       // The first frames have been loaded, kick off event loop.
       this._startPromise.resolve(null);
+      this._startPromise = null;
       if (this === Loader.getRootLoader()) {
         if (!release && traceLoaderOption.value) {
           console.log("Initial frames loaded, starting main runtime event loop.");
