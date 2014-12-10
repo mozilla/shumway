@@ -240,7 +240,8 @@ module Shumway.SWF {
       // `parsePos` is always at the start of a tag at this point, because it only gets updated
       // when a tag has been fully parsed.
       var tempTag = new UnparsedTag(0, 0, 0);
-      while (this._dataStream.pos < endOffset - 1) {
+      var pos: number;
+      while ((pos = this._dataStream.pos) < endOffset - 1) {
         this.parseNextTagHeader(tempTag);
         if (tempTag.tagCode === SWFTag.CODE_END) {
           if (rootTimelineMode) {
@@ -250,6 +251,7 @@ module Shumway.SWF {
         }
         var tagEnd = tempTag.byteOffset + tempTag.byteLength;
         if (tagEnd > endOffset) {
+          this._dataStream.pos = pos;
           return;
         }
         this.scanTag(tempTag, rootTimelineMode);
