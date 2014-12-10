@@ -624,6 +624,8 @@ module Shumway.GFX.Canvas2D {
       this._renderDebugInfo(node, state);
     }
 
+    private static _debugPoints = Point.createEmptyPoints(4);
+
     _renderDebugInfo(node: Node, state: RenderState) {
       if (!(state.flags & RenderFlags.PaintBounds)) {
         return;
@@ -633,31 +635,37 @@ module Shumway.GFX.Canvas2D {
       var bounds = node.getBounds(true);
       var style = node.properties["style"];
       if (!style) {
-        style = node.properties["style"] = ColorStyle.randomStyle();
+        style = node.properties["style"] = Color.randomColor(0.4).toCSSStyle();
       }
 
-      context.fillStyle = style;
       context.strokeStyle = style;
 
       state.matrix.transformRectangleAABB(bounds);
 
       context.setTransform(1, 0, 0, 1, 0, 0);
-      if (bounds.w > 32 && bounds.h > 32) {
+      if (false && bounds.w > 32 && bounds.h > 32) {
         context.textAlign = "center";
         context.textBaseline = "middle";
         context.font = this._fontSize + "px Arial";
-        var debugText = "" + node.id; // + "\n" +
-          // node.getBounds().w.toFixed(2) + "x" +
-          // node.getBounds().h.toFixed(2);
+        var debugText = "" + node.id;
         context.fillText(debugText, bounds.x + bounds.w / 2, bounds.y + bounds.h / 2);
       }
       bounds.free();
 
       var matrix = state.matrix;
       bounds = node.getBounds();
-      context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
-      context.lineWidth = 1 / matrix.getScale();
-      context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+      var p = Canvas2DRenderer._debugPoints;
+      state.matrix.transformRectangle(bounds, p);
+
+      // Doing it this way is a lot faster than strokeRect.
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(p[0].x, p[0].y);
+      context.lineTo(p[1].x, p[1].y);
+      context.lineTo(p[2].x, p[2].y);
+      context.lineTo(p[3].x, p[3].y);
+      context.lineTo(p[0].x, p[0].y);
+      context.stroke();
     }
 
     visitStage(node: Stage, state: RenderState) {
@@ -686,12 +694,14 @@ module Shumway.GFX.Canvas2D {
         }
       }
 
-      state.target.clear(state.clip);
+      if (this._options.clear) {
+        state.target.clear(state.clip);
+      }
 
       // Fill background
       if (!node.hasFlags(NodeFlags.Transparent) && node.color) {
         if (!(state.flags & RenderFlags.IgnoreRenderable)) {
-          this._container.style.backgroundColor = node.color.toCSSStyle();
+          // this._container.style.backgroundColor = node.color.toCSSStyle();
         }
       }
 
