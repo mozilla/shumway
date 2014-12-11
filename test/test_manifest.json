@@ -135,7 +135,7 @@
       "type": "eq"
     },
     {  "id": "acid-large",
-      "frames": [1, 20],
+      "frames": [20],
       "swf": "swfs/acid/acid-large.swf",
       "type": "eq"
     },
