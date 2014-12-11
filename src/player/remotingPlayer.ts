@@ -62,7 +62,7 @@ module Shumway.Remoting.Player {
       var roots = this.roots;
       for (var i = 0; i < roots.length; i++) {
         Shumway.Player.enterTimeline("remoting objects");
-        this.writeDisplayObject(roots[i]);
+        this.writeDirtyDisplayObjects(roots[i]);
         Shumway.Player.leaveTimeline("remoting objects");
       }
     }
@@ -72,23 +72,36 @@ module Shumway.Remoting.Player {
       var roots = this.roots;
       for (var i = 0; i < roots.length; i++) {
         Shumway.Player.enterTimeline("remoting references");
-        this.writeDisplayObject(roots[i]);
+        this.writeDirtyDisplayObjects(roots[i], true);
         Shumway.Player.leaveTimeline("remoting references");
       }
     }
 
-    writeDisplayObject(displayObject: DisplayObject) {
+    /**
+     * Serializes dirty display objects starting at the specified root |displayObject| node.
+     */
+    writeDirtyDisplayObjects(displayObject: DisplayObject, clearDirtyDescendentsFlag: boolean = false) {
       var serializer = this;
       var roots = this.roots;
       displayObject.visit(function (displayObject) {
-        serializer.writeUpdateFrame(displayObject);
-        // Collect more roots?
-        if (roots && displayObject.mask) {
-          var root = displayObject.mask._findFurthestAncestorOrSelf();
-          Shumway.ArrayUtilities.pushUnique(roots, root)
+        if (displayObject._hasAnyFlags(DisplayObjectFlags.Dirty)) {
+          serializer.writeUpdateFrame(displayObject);
+          // Collect more roots?
+          if (roots && displayObject.mask) {
+            var root = displayObject.mask._findFurthestAncestorOrSelf();
+            Shumway.ArrayUtilities.pushUnique(roots, root)
+          }
         }
-        return VisitorFlags.Continue;
-      }, VisitorFlags.Filter, DisplayObjectFlags.Dirty);
+        if (displayObject._hasFlags(DisplayObjectFlags.DirtyDescendents)) {
+          return VisitorFlags.Continue;
+        }
+        if (clearDirtyDescendentsFlag) {
+          // We need this flag to make sure we don't clear the flag in the first remoting pass.
+          displayObject._removeFlags(DisplayObjectFlags.DirtyDescendents);
+        }
+        // We can skip visiting descendents since they are not dirty.
+        return VisitorFlags.Skip;
+      }, VisitorFlags.None);
     }
 
     writeStage(stage: Stage, currentMouseTarget: flash.display.InteractiveObject) {
@@ -229,7 +242,7 @@ module Shumway.Remoting.Player {
       this.output.writeInt(MessageTag.UpdateFrame);
       this.output.writeInt(displayObject._id);
 
-      writer && writer.writeLn("Sending UpdateFrame: " + displayObject.debugName());
+      writer && writer.writeLn("Sending UpdateFrame: " + displayObject.debugName(true));
 
       var hasMask = false;
       var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
