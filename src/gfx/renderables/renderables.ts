@@ -149,6 +149,7 @@ module Shumway.GFX {
     private _eventSerializer: IVideoPlaybackEventSerializer;
     private _lastCurrentTime: number = 0;
     private _seekHappens: boolean = false;
+    private _isDOMElement = true;
     static _renderableVideos: RenderableVideo [] = [];
 
     constructor(url: string, bounds: Rectangle, assetId: number, eventSerializer: IVideoPlaybackEventSerializer) {
@@ -295,7 +296,10 @@ module Shumway.GFX {
 
     public checkForUpdate() {
       if (this._lastCurrentTime !== this._video.currentTime) {
-        this.invalidate();
+        // Videos composited using DOM elements don't need to invalidate parents.
+        if (!this._isDOMElement) {
+          this.invalidate();
+        }
       }
       this._lastCurrentTime = this._video.currentTime;
     }
