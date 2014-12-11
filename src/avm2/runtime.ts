@@ -316,9 +316,15 @@ module Shumway.AVM2.Runtime {
   export function getNamespaceResolutionMap(namespaces: Namespace []) {
     var self: Object = this;
     var map = self.resolutionMap[namespaces.runtimeId];
-    if (map) return map;
-    map = self.resolutionMap[namespaces.runtimeId] = Shumway.ObjectUtilities.createMap<string>();
-    var bindings = self.bindings;
+    if (map) {
+      return map;
+    }
+    return createNamespaceResolutionMap(self, namespaces);
+  }
+
+  function createNamespaceResolutionMap(object, namespaces: Namespace []) {
+    var map = object.resolutionMap[namespaces.runtimeId] = Shumway.ObjectUtilities.createMap<string>();
+    var bindings = object.bindings;
 
     for (var key in bindings.map) {
       var multiname = key;

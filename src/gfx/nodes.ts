@@ -1116,6 +1116,7 @@ module Shumway.GFX {
     paintDirtyRegion: boolean = false;
     paintFlashing: boolean = false;
     paintViewport: boolean = false;
+    clear: boolean = true;
   }
 
   export enum Backend {

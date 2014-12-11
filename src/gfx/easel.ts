@@ -143,23 +143,40 @@ module Shumway.GFX {
     }
 
     onKeyPress(easel: Easel, event: KeyboardEvent) {
-      if (event.keyCode === 112 || event.key === 'p') { // P
-        this._paused = !this._paused;
+      if (!event.altKey) {
+        return;
       }
-      if (this._keyCodes[83]) {  // S
-        easel.toggleOption("paintRenderable");
-      }
-      if (this._keyCodes[86]) {  // V
-        easel.toggleOption("paintViewport");
-      }
-      if (this._keyCodes[66]) { // B
-        easel.toggleOption("paintBounds");
-      }
-      if (this._keyCodes[68]) { // D
-        easel.toggleOption("paintDirtyRegion");
-      }
-      if (this._keyCodes[70]) { // F
-        easel.toggleOption("paintFlashing");
+      var code = event.keyCode || event.which;
+      console.info("onKeyPress Code: " + code);
+      switch (code) {
+        case 248: // O
+          this._paused = !this._paused;
+          event.preventDefault();
+          break;
+        case 223: // S
+          easel.toggleOption("paintRenderable");
+          event.preventDefault();
+          break;
+        case 8730: // V
+          easel.toggleOption("paintViewport");
+          event.preventDefault();
+          break;
+        case 8747: // B
+          easel.toggleOption("paintBounds");
+          event.preventDefault();
+          break;
+        case 8706: // D
+          easel.toggleOption("paintDirtyRegion");
+          event.preventDefault();
+          break;
+        case 231: // C
+          easel.toggleOption("clear");
+          event.preventDefault();
+          break;
+        case 402: // F
+          easel.toggleOption("paintFlashing");
+          event.preventDefault();
+          break;
       }
       this._update(easel);
     }
@@ -295,7 +312,6 @@ module Shumway.GFX {
         hudContainer.style.width = "100%";
         hudContainer.style.height = "100%";
         hudContainer.style.pointerEvents = "none";
-        hudContainer.style.opacity = "0.7";
         var fpsContainer = document.createElement("div");
         fpsContainer.style.position = "absolute";
         fpsContainer.style.width = "100%";
@@ -350,17 +366,23 @@ module Shumway.GFX {
 
       window.addEventListener("keydown", function (event) {
         self._state.onKeyDown(self, event);
-        self._persistentState.onKeyDown(self, event);
+        if (self._state !== self._persistentState) {
+          self._persistentState.onKeyDown(self, event);
+        }
       }, false);
 
       window.addEventListener("keypress", function (event) {
         self._state.onKeyPress(self, event);
-        self._persistentState.onKeyPress(self, event);
+        if (self._state !== self._persistentState) {
+          self._persistentState.onKeyPress(self, event);
+        }
       }, false);
 
       window.addEventListener("keyup", function (event) {
         self._state.onKeyUp(self, event);
-        self._persistentState.onKeyUp(self, event);
+        if (self._state !== self._persistentState) {
+          self._persistentState.onKeyUp(self, event);
+        }
       }, false);
 
       this._enterRenderLoop();

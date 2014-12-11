@@ -139,14 +139,14 @@ module Shumway.Tools.Mini {
       context.fillRect(tickOffset + index * (w + wPadding), 0, w * 4, this._canvas.height);
 
       var r = Math.min((1000 / 60) / weightedTime, 1);
-      context.fillStyle = this._gradient[r * (this._gradient.length - 1) | 0];
+      context.fillStyle = "#00FF00"; // this._gradient[r * (this._gradient.length - 1) | 0];
       context.globalAlpha = idle ? 0.5 : 1;
       var v = canvasHeight / 2 * r | 0;
       context.fillRect(tickOffset + index * (w + wPadding), canvasHeight - v, w, v);
 
       if (renderTime) {
         r = Math.min((1000 / 240) / renderTime, 1);
-        context.fillStyle = this._gradient[r * (this._gradient.length - 1) | 0];
+        context.fillStyle = "#FF6347"; // "#58FF00"; // "#00FF00"; // this._gradient[r * (this._gradient.length - 1) | 0];
         var v = canvasHeight / 2 * r | 0;
         context.fillRect(tickOffset + index * (w + wPadding), (canvasHeight / 2) - v, w, v);
       }
