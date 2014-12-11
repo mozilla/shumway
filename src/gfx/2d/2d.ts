@@ -643,7 +643,8 @@ module Shumway.GFX.Canvas2D {
       state.matrix.transformRectangleAABB(bounds);
 
       context.setTransform(1, 0, 0, 1, 0, 0);
-      if (false && bounds.w > 32 && bounds.h > 32) {
+      var drawDetails = false;
+      if (drawDetails && bounds.w > 32 && bounds.h > 32) {
         context.textAlign = "center";
         context.textBaseline = "middle";
         context.font = this._fontSize + "px Arial";

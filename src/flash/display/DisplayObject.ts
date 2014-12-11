@@ -178,8 +178,7 @@ module Shumway.AVM2.AS.flash.display {
     DirtyMatrix                               = 0x100000,
 
     /**
-     * Indicates whether this display object's has dirty descendents. If this flag is not set then the subtree does not
-     * need to be synchronized.
+     * Indicates whether this display object's children list is dirty.
      */
     DirtyChildren                             = 0x200000,
 
@@ -219,6 +218,12 @@ module Shumway.AVM2.AS.flash.display {
     DirtyClipDepth                            = 0x10000000,
 
     /**
+     * Indicates whether this display object has dirty descendents. If this flag is set then the subtree need to
+     * be synchronized.
+     */
+    DirtyDescendents                          = 0x20000000,
+
+    /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
      * bits so we don't serialize as much:
      *
@@ -230,7 +235,7 @@ module Shumway.AVM2.AS.flash.display {
      * filters,
      * visible,
      */
-    DirtyMiscellaneousProperties              = 0x20000000,
+    DirtyMiscellaneousProperties              = 0x40000000,
 
     /**
      * All synchronizable properties are dirty.
@@ -350,6 +355,7 @@ module Shumway.AVM2.AS.flash.display {
                                  DisplayObjectFlags.InvalidFillBounds                  |
                                  DisplayObjectFlags.InvalidConcatenatedMatrix          |
                                  DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
+                                 DisplayObjectFlags.DirtyDescendents                   |
                                  DisplayObjectFlags.DirtyGraphics                      |
                                  DisplayObjectFlags.DirtyMatrix                        |
                                  DisplayObjectFlags.DirtyColorTransform                |
@@ -618,7 +624,8 @@ module Shumway.AVM2.AS.flash.display {
     _setDirtyFlags(flags: DisplayObjectFlags) {
       this._displayObjectFlags |= flags;
       if (this._parent) {
-        this._parent._propagateFlagsUp(DisplayObjectFlags.DirtyChildren);
+        // Notify parent that it has a dirty descendent.
+        this._parent._propagateFlagsUp(DisplayObjectFlags.DirtyDescendents);
       }
     }
 
@@ -1857,8 +1864,18 @@ module Shumway.AVM2.AS.flash.display {
       return this.globalToLocal(flash.ui.Mouse._currentPosition).y;
     }
 
-    public debugName(): string {
-      return this._id + " [" + this._depth + "]: (" + this._referenceCount + ") " + this;
+    public debugName(withFlags: boolean = false): string {
+      var name = this._id + " [" + this._depth + "]: (" + this._referenceCount + ") " + this;
+      if (withFlags) {
+        var flagNames = [];
+        for (var i = 0; i < 32; i++) {
+          if (this._hasFlags(1 << i)) {
+            flagNames.push(DisplayObjectFlags[1 << i]);
+          }
+        }
+        name += " " + flagNames.join("|");
+      }
+      return name;
     }
 
     public debugTrace(maxDistance = 1024, name = "") {

@@ -62,7 +62,7 @@ module Shumway.Remoting.Player {
       var roots = this.roots;
       for (var i = 0; i < roots.length; i++) {
         Shumway.Player.enterTimeline("remoting objects");
-        this.writeDisplayObject(roots[i]);
+        this.writeDirtyDisplayObjects(roots[i]);
         Shumway.Player.leaveTimeline("remoting objects");
       }
     }
@@ -72,23 +72,38 @@ module Shumway.Remoting.Player {
       var roots = this.roots;
       for (var i = 0; i < roots.length; i++) {
         Shumway.Player.enterTimeline("remoting references");
-        this.writeDisplayObject(roots[i]);
+        this.writeDirtyDisplayObjects(roots[i], true);
         Shumway.Player.leaveTimeline("remoting references");
       }
     }
 
-    writeDisplayObject(displayObject: DisplayObject) {
-      var serializer = this;
+    /**
+     * Serializes dirty display objects starting at the specified root |displayObject| node.
+     */
+    writeDirtyDisplayObjects(displayObject: DisplayObject, clearDirtyDescendentsFlag: boolean = false) {
+      var self = this;
       var roots = this.roots;
       displayObject.visit(function (displayObject) {
-        serializer.writeUpdateFrame(displayObject);
-        // Collect more roots?
-        if (roots && displayObject.mask) {
-          var root = displayObject.mask._findFurthestAncestorOrSelf();
-          Shumway.ArrayUtilities.pushUnique(roots, root)
+        if (displayObject._hasAnyFlags(DisplayObjectFlags.Dirty)) {
+          self.writeUpdateFrame(displayObject);
+          // Collect more roots?
+          if (roots && displayObject.mask) {
+            var root = displayObject.mask._findFurthestAncestorOrSelf();
+            Shumway.ArrayUtilities.pushUnique(roots, root)
+          }
         }
-        return VisitorFlags.Continue;
-      }, VisitorFlags.Filter, DisplayObjectFlags.Dirty);
+        // TODO: Checking if we need to write assets this way is kinda expensive, do better here.
+        self.writeDirtyAssets(displayObject);
+        if (displayObject._hasFlags(DisplayObjectFlags.DirtyDescendents)) {
+          return VisitorFlags.Continue;
+        }
+        if (clearDirtyDescendentsFlag) {
+          // We need this flag to make sure we don't clear the flag in the first remoting pass.
+          displayObject._removeFlags(DisplayObjectFlags.DirtyDescendents);
+        }
+        // We can skip visiting descendents since they are not dirty.
+        return VisitorFlags.Skip;
+      }, VisitorFlags.None);
     }
 
     writeStage(stage: Stage, currentMouseTarget: flash.display.InteractiveObject) {
@@ -229,7 +244,7 @@ module Shumway.Remoting.Player {
       this.output.writeInt(MessageTag.UpdateFrame);
       this.output.writeInt(displayObject._id);
 
-      writer && writer.writeLn("Sending UpdateFrame: " + displayObject.debugName());
+      writer && writer.writeLn("Sending UpdateFrame: " + displayObject.debugName(true));
 
       var hasMask = false;
       var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
@@ -349,20 +364,40 @@ module Shumway.Remoting.Player {
       if (this.phase === RemotingPhase.References) {
         displayObject._removeFlags(DisplayObjectFlags.Dirty);
       }
+    }
 
-      // Visit remotable child objects that are not otherwise visited.
+    /**
+     * Visit remotable child objects that are not otherwise visited.
+     */
+    writeDirtyAssets(displayObject: DisplayObject) {
+      var graphics = displayObject._getGraphics();
       if (graphics) {
         this.writeGraphics(graphics);
-      } else if (textContent) {
+        return;
+      }
+
+      var textContent = displayObject._getTextContent();
+      if (textContent) {
         this.writeTextContent(textContent);
-      } else if (bitmap) {
+        return;
+      }
+
+      var bitmap: Bitmap = null;
+      if (display.Bitmap.isType(displayObject)) {
+        bitmap = <Bitmap>displayObject;
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);
         }
-      } else if (video) {
+        return;
+      }
+
+      var video: Video = null;
+      if (flash.media.Video.isType(displayObject)) {
+        video = <Video>displayObject;
         if (video._netStream) {
           this.writeNetStream(video._netStream, video._getContentBounds());
         }
+        return;
       }
     }
 
