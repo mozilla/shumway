@@ -748,14 +748,22 @@ module Shumway.GFX.Canvas2D {
      * the appropriate css transform to move it into place.
      */
     visitRenderableVideo(node: RenderableVideo, state: RenderState) {
+      if (!node.video || !node.video.videoWidth) {
+        return; // video is not ready
+      }
+
       var ratio = this._devicePixelRatio;
       var matrix = state.matrix.clone();
       matrix.scale(1 / ratio, 1 / ratio);
+
+      var bounds = node.getBounds();
+      var videoMatrix = Shumway.GFX.Geometry.Matrix.createIdentity();
+      videoMatrix.scale(bounds.w / node.video.videoWidth, bounds.h / node.video.videoHeight);
+      matrix.preMultiply(videoMatrix);
+      videoMatrix.free();
+
       var cssTransform = matrix.toCSSTransform();
       node.video.style.transformOrigin = "0 0";
-      var bounds = node.getBounds();
-      node.video.style.width = bounds.w + "px";
-      node.video.style.height = bounds.h + "px";
       node.video.style.transform = cssTransform;
       this._backgroundVideoLayer.appendChild(node.video);
       matrix.free();

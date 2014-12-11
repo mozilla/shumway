@@ -1098,6 +1098,7 @@ module Shumway.GFX {
                 var w;
                 do {
                   k--;
+                  if (k < 1) throw new Error('Shall never happen: bad maxWidth?'); // FIXME
                   t = chunk.substr(0, k);
                   w = measureContext.measureText(t).width | 0;
                 } while (w > maxWidth);

@@ -37,15 +37,6 @@ Shumway.FileLoadingService.instance = {
   createSession: function () {
     return {
       open: function (request) {
-        if (request.url.indexOf('http://s.youtube.com/stream_204') === 0) {
-          // No reason to send error report yet, let's keep it this way for now.
-          // 204 means no response, so no data will be expected.
-          console.error('YT_CALLBACK: ' + request.url);
-          this.onopen && this.onopen();
-          this.onclose && this.onclose();
-          return;
-        }
-
         var self = this;
         var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
@@ -110,7 +101,7 @@ function runSwfPlayer(data) {
   var displayParameters = data.displayParameters;
   fileReadChunkSize = data.fileReadChunkSize;
   var file = data.file;
-  configureMocks(file);
+  configureExternalInterfaceMocks(file);
   Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
     function runSWF(file) {
       var player = new Shumway.Player.Window.WindowPlayer(window);

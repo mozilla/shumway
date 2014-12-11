@@ -30,16 +30,6 @@ var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"))
 var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
 var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
 
-var asyncLoading = getQueryVariable("async") === "true";
-asyncLoading = true;
-var simpleMode = getQueryVariable("simpleMode") === "true";
-var pauseExecution = getQueryVariable("paused") === "true";
-var remoteFile = getQueryVariable("rfile");
-var yt = getQueryVariable('yt');
-var movieParams = parseQueryString(getQueryVariable('flashvars'));
-
-//var swfController = new SWFController(timeline, pauseExecution);
-
 function timeAllocation(C, count) {
   var s = Date.now();
   for (var i = 0; i < count; i++) {
@@ -77,22 +67,28 @@ function parseQueryString(qs) {
   return obj;
 }
 
+var queryVariables = parseQueryString(window.location.search);
+
+var startPromise = configureMocks(queryVariables);
+
+var asyncLoading = true; // queryVariables['async'] === "true";
+var simpleMode = queryVariables['simpleMode'] === "true";
+
 /**
  * Files can either be specified via the GET param `rfile`, or by manually selecting a local file.
  */
-if (remoteFile) {
-  setTimeout(function () {
-    executeFile(remoteFile, null, movieParams);
+if (queryVariables['rfile'] && !startPromise) {
+  startPromise = Promise.resolve({
+    url: queryVariables['rfile'],
+    args: parseQueryString(queryVariables['flashvars'])
   });
-} else if (yt) {
-  requestYT(yt).then(function (config) {
+}
+if (startPromise) {
+  startPromise.then(function (config) {
     executeFile(config.url, null, config.args);
   });
 } else {
   showOpenFileButton(true);
-}
-if (remoteFile) {
-  configureMocks(remoteFile);
 }
 
 if (simpleMode) {
@@ -142,7 +138,7 @@ function executeFile(file, buffer, movieParams) {
 
   if (state.useIFramePlayer && filename.endsWith(".swf")) {
     var swfURL = Shumway.FileLoadingService.instance.setBaseUrl(file);
-    var loaderURL = getQueryVariable("loaderURL") || swfURL;
+    var loaderURL = queryVariables['loaderURL'] || swfURL;
     runIFramePlayer({sysMode: sysMode, appMode: appMode, loaderURL: loaderURL,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
       stageAlign: state.salign, stageScale: state.scale,
@@ -178,7 +174,7 @@ function executeFile(file, buffer, movieParams) {
     Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
         var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
-        var loaderURL = getQueryVariable("loaderURL") || swfURL;
+        var loaderURL = queryVariables['loaderURL'] || swfURL;
 
         var easel = createEasel();
 
@@ -291,15 +287,6 @@ Shumway.FileLoadingService.instance = {
   createSession: function () {
     return {
       open: function (request) {
-        if (request.url.indexOf('http://s.youtube.com/stream_204') === 0) {
-          // No reason to send error report yet, let's keep it this way for now.
-          // 204 means no response, so no data will be expected.
-          console.error('YT_CALLBACK: ' + request.url);
-          this.onopen && this.onopen();
-          this.onclose && this.onclose();
-          return;
-        }
-
         var self = this;
         var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
