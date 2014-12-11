@@ -766,7 +766,9 @@ module Shumway.GFX.Canvas2D {
       var cssTransform = matrix.toCSSTransform();
       node.video.style.transformOrigin = "0 0";
       node.video.style.transform = cssTransform;
-      this._backgroundVideoLayer.appendChild(node.video);
+      if (this._backgroundVideoLayer !== node.video.parentElement) {
+        this._backgroundVideoLayer.appendChild(node.video);
+      }
       matrix.free();
     }
 

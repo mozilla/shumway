@@ -147,7 +147,8 @@ module Shumway.GFX {
     private _videoEventHandler: (e:Event)=>void;
     private _assetId: number;
     private _eventSerializer: IVideoPlaybackEventSerializer;
-    private _lastCurrentTime: number = 0;
+    private _lastTimeInvalidated: number = 0;
+    private _lastPausedTime: number = 0;
     private _seekHappens: boolean = false;
     private _isDOMElement = true;
     static _renderableVideos: RenderableVideo [] = [];
@@ -247,16 +248,19 @@ module Shumway.GFX {
             if (data.paused && !videoElement.paused) {
               if (!isNaN(data.time)) {
                 videoElement.currentTime = data.time;
+                this._lastPausedTime = data.time;
+              } else {
+                this._lastPausedTime = videoElement.currentTime;
               }
               videoElement.pause();
             } else if (!data.paused && videoElement.paused) {
               videoElement.play();
-              if (!isNaN(data.time)) {
+              if (!isNaN(data.time) && this._lastPausedTime !== data.time) {
                 videoElement.currentTime = data.time;
               }
 
               if (this._seekHappens) {
-                this._seekHappens = true;
+                this._seekHappens = false;
                 this._notifyNetStream(VideoPlaybackEvent.BufferFull, null);
               }
             }
@@ -295,13 +299,13 @@ module Shumway.GFX {
     }
 
     public checkForUpdate() {
-      if (this._lastCurrentTime !== this._video.currentTime) {
+      if (this._lastTimeInvalidated !== this._video.currentTime) {
         // Videos composited using DOM elements don't need to invalidate parents.
         if (!this._isDOMElement) {
           this.invalidate();
         }
       }
-      this._lastCurrentTime = this._video.currentTime;
+      this._lastTimeInvalidated = this._video.currentTime;
     }
 
     public static checkForVideoUpdates() {
