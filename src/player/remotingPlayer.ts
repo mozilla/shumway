@@ -81,17 +81,19 @@ module Shumway.Remoting.Player {
      * Serializes dirty display objects starting at the specified root |displayObject| node.
      */
     writeDirtyDisplayObjects(displayObject: DisplayObject, clearDirtyDescendentsFlag: boolean = false) {
-      var serializer = this;
+      var self = this;
       var roots = this.roots;
       displayObject.visit(function (displayObject) {
         if (displayObject._hasAnyFlags(DisplayObjectFlags.Dirty)) {
-          serializer.writeUpdateFrame(displayObject);
+          self.writeUpdateFrame(displayObject);
           // Collect more roots?
           if (roots && displayObject.mask) {
             var root = displayObject.mask._findFurthestAncestorOrSelf();
             Shumway.ArrayUtilities.pushUnique(roots, root)
           }
         }
+        // TODO: Checking if we need to write assets this way is kinda expensive, do better here.
+        self.writeDirtyAssets(displayObject);
         if (displayObject._hasFlags(DisplayObjectFlags.DirtyDescendents)) {
           return VisitorFlags.Continue;
         }
@@ -362,20 +364,40 @@ module Shumway.Remoting.Player {
       if (this.phase === RemotingPhase.References) {
         displayObject._removeFlags(DisplayObjectFlags.Dirty);
       }
+    }
 
-      // Visit remotable child objects that are not otherwise visited.
+    /**
+     * Visit remotable child objects that are not otherwise visited.
+     */
+    writeDirtyAssets(displayObject: DisplayObject) {
+      var graphics = displayObject._getGraphics();
       if (graphics) {
         this.writeGraphics(graphics);
-      } else if (textContent) {
+        return;
+      }
+
+      var textContent = displayObject._getTextContent();
+      if (textContent) {
         this.writeTextContent(textContent);
-      } else if (bitmap) {
+        return;
+      }
+
+      var bitmap: Bitmap = null;
+      if (display.Bitmap.isType(displayObject)) {
+        bitmap = <Bitmap>displayObject;
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);
         }
-      } else if (video) {
+        return;
+      }
+
+      var video: Video = null;
+      if (flash.media.Video.isType(displayObject)) {
+        video = <Video>displayObject;
         if (video._netStream) {
           this.writeNetStream(video._netStream, video._getContentBounds());
         }
+        return;
       }
     }
 

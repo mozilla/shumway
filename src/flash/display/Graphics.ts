@@ -442,14 +442,10 @@ module Shumway.AVM2.AS.flash.display {
       this._parent = parent;
     }
 
-    _invalidateParent() {
+    _invalidate() {
       release || assert (this._parent, "Graphics instances must have a parent.");
       this._parent._invalidateFillAndLineBounds(true, true);
-      this._parent._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
-    }
-
-    _invalidate() {
-      this._invalidateParent();
+      this._parent._propagateFlagsUp(DisplayObjectFlags.DirtyDescendents);
       this._isDirty = true;
     }
 
