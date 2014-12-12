@@ -455,6 +455,27 @@ module.exports = function(grunt) {
     });
   });
 
+  grunt.registerTask('shell-package', function () {
+    var outputDir = 'build/shell';
+    grunt.file.mkdir(outputDir);
+    var path = require('path');
+
+    grunt.file.copy('src/avm2/generated/builtin/builtin.abc', outputDir + '/src/avm2/generated/builtin/builtin.abc');
+    grunt.file.copy('src/avm2/generated/shell/shell.abc', outputDir + '/src/avm2/generated/shell/shell.abc');
+    grunt.file.copy('build/playerglobal/playerglobal.abcs', outputDir + '/build/playerglobal/playerglobal.abcs');
+    grunt.file.copy('build/playerglobal/playerglobal.json', outputDir + '/build/playerglobal/playerglobal.json');
+    grunt.file.expand('build/ts/*.js').forEach(function (file) {
+      grunt.file.copy(file, outputDir + '/build/ts/' + path.basename(file));
+    });
+    grunt.file.expand('build/bundles/*.js').forEach(function (file) {
+      grunt.file.copy(file, outputDir + '/build/bundles/' + path.basename(file));
+    });
+    grunt.file.expand('build/bundles-cc/*.js').forEach(function (file) {
+      grunt.file.copy(file, outputDir + '/build/bundles-cc/' + path.basename(file));
+    });
+    grunt.file.copy('src/shell/shell-node.js', outputDir + '/src/shell/shell-node.js');
+  });
+
   grunt.registerTask('tracetest', ['exec:tracetest']);
   grunt.registerTask('tracetest-swfdec', ['exec:tracetest_swfdec']);
 
@@ -702,5 +723,5 @@ module.exports = function(grunt) {
   });
   grunt.registerTask('firefox', ['build', 'closure-bundles', 'exec:build_extension']);
   grunt.registerTask('mozcentral', ['build', 'closure-bundles', 'exec:build_mozcentral']);
-  grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'exec:build_web']);
+  grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'shell-package', 'exec:build_web']);
 };
