@@ -42,6 +42,13 @@ if (isV8) {
   read = function (path, type) {
     return type === 'binary' ? new Uint8Array(readbuffer(path)) : oldread(path);
   }
+} else if (isJSC) {
+  if (typeof readBinaryFile === 'undefined') {
+    throw new Error('readBinaryFile was not found');
+  }
+  read = function (path, type) {
+    return type === 'binary' ? new Uint8Array(readBinaryFile(path)) : readFile(path);
+  }
 }
 if (typeof read === 'undefined') {
   throw new Error('Unable to simulate read()');

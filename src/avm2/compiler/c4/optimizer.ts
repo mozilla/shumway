@@ -934,11 +934,11 @@ module Shumway.AVM2.Compiler.IR {
           for (var j = 0; j < phis.length; j++) {
             var phi = phis[j];
             debug && writer.writeLn("Emitting moves for: " + phi);
-            var arguments = phi.args;
-            release || assert (predecessors.length === arguments.length);
+            var phiArguments = phi.args;
+            release || assert (predecessors.length === phiArguments.length);
             for (var k = 0; k < predecessors.length; k++) {
               var predecessor = predecessors[k];
-              var argument = arguments[k];
+              var argument = phiArguments[k];
               if (argument.abstract || isProjection(argument, ProjectionType.STORE)) {
                 continue;
               }
