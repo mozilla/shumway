@@ -35,8 +35,9 @@ var playerglobalInfo = {
 };
 
 declare var readFile, readBinaryFile, readbuffer;
-if (typeof readbuffer !== 'undefined') {
-  // v8
+var isV8 = typeof readbuffer !== 'undefined';
+var isJSC = typeof readFile !== 'undefined';
+if (isV8) {
   var oldread = read;
   read = function (path, type) {
     return type === 'binary' ? new Uint8Array(readbuffer(path)) : oldread(path);
@@ -44,6 +45,11 @@ if (typeof readbuffer !== 'undefined') {
 }
 if (typeof read === 'undefined') {
   throw new Error('Unable to simulate read()');
+}
+
+if (isV8 || isJSC) {
+  // v8 and jsc will fail for Promises
+  this.Promise = undefined;
 }
 
 /**
