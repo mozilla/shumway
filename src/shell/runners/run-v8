@@ -1,10 +1,10 @@
 #!/bin/bash
 SWF_FILE=$(cd $(dirname $1); pwd)/$(basename $1)
-JSSHELL=js
+JSSHELL=d8
 MAINFILE=./build/ts/shell.js
 SAVED_DIR=$(pwd)
 SCRIPT_PATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 cd $SCRIPT_PATH
-$JSSHELL $MAINFILE $RUN_SHUMWAY_FLAGS -x $SWF_FILE
+$JSSHELL $MAINFILE -- $RUN_SHUMWAY_FLAGS -x $SWF_FILE
 cd $SAVED_DIR
