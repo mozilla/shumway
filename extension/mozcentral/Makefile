@@ -16,7 +16,7 @@ UTILS_HOME = ../../utils
 CLOSURE ?= $(UTILS_HOME)/closure.jar
 BUILD_DIR = ../../build/mozcentral
 BUILD_EXTENSION_DIR = $(BUILD_DIR)/browser/extensions/shumway
-GENERIC_DIR = ../../build/bundles
+BUNDLES_DIR = ../../build/bundles-cc
 EXTENSION_SRC = ../firefox
 
 # Just builds a ff extension
@@ -40,8 +40,8 @@ build: ensureoutputdir
 	cp ../../build/playerglobal/playerglobal.abcs $(BUILD_EXTENSION_DIR)/content/playerglobal/
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/avm2/generated/builtin
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_EXTENSION_DIR)/content/avm2/generated/builtin/
-	# Coping and optimizing shumway.js files
-	$(foreach f, $(wildcard $(GENERIC_DIR)/shumway*.js), java -jar $(CLOSURE) --formatting PRETTY_PRINT --warning_level QUIET --compilation_level SHUMWAY_OPTIMIZATIONS --language_in ECMASCRIPT5 $(f) > $(BUILD_EXTENSION_DIR)/content/$(notdir $(f));)
+	# Coping closure optimized shumway.js files
+	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_DIR)/content/
 	echo $(VERSION) > $(BUILD_EXTENSION_DIR)/content/version.txt
 	echo $(VERSION_SHA) >> $(BUILD_EXTENSION_DIR)/content/version.txt
 

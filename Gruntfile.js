@@ -25,8 +25,6 @@ module.exports = function(grunt) {
   // needed by the build system.
   var commonArguments = 'node utils/typescript/tsc --target ES5 --removeComments --sourcemap -d --out build/ts/';
 
-  var closureCommand = 'java -jar utils/closure.jar --formatting PRETTY_PRINT --compilation_level SHUMWAY_OPTIMIZATIONS --language_in ECMASCRIPT5 ';
-
   var defaultBrowserManifestFile = './resources/browser_manifests/browser_manifest.json';
   var defaultTestsManifestFile = 'test_manifest.json';
 
@@ -136,30 +134,6 @@ module.exports = function(grunt) {
       smoke_parse_images: {
         maxBuffer: Infinity,
         cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r -f "CODE_DEFINE_BITS,CODE_DEFINE_BITS_JPEG2,CODE_DEFINE_BITS_JPEG3,CODE_DEFINE_BITS_JPEG4,CODE_JPEG_TABLES,CODE_DEFINE_BITS_LOSSLESS,CODE_DEFINE_BITS_LOSSLESS2" {}'
-      },
-      closure: {
-        // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
-        cmd: closureCommand + [
-          "build/ts/base.js",
-          "build/ts/tools.js",
-          "build/ts/avm2.js",
-          "build/ts/flash.js",
-          "build/ts/avm1.js",
-          "build/ts/gfx-base.js",
-          "build/ts/gfx.js",
-          "build/ts/player.js"
-        ].join(" ") + " > build/shumway.cc.js"
-      },
-      "closure-all": {
-        // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
-        cmd: closureCommand + ' build/ts/base.js > build/ts/base.cc.js && ' +
-             closureCommand + ' build/ts/tools.js > build/ts/tools.cc.js && ' +
-             closureCommand + ' build/ts/avm2.js > build/ts/avm2.cc.js && ' +
-             closureCommand + ' build/ts/flash.js > build/ts/flash.cc.js && ' +
-             closureCommand + ' build/ts/avm1.js > build/ts/avm1.cc.js && ' +
-             closureCommand + ' build/ts/gfx-base.js > build/ts/gfx-base.cc.js && ' +
-             closureCommand + ' build/ts/gfx.js > build/ts/gfx.cc.js && ' +
-             closureCommand + ' build/ts/player.js > build/ts/player.cc.js'
       },
       spell: {
         // TODO: Add more files.
@@ -314,6 +288,89 @@ module.exports = function(grunt) {
     packageRefs(['player'], outputDir + 'shumway.player.js', license);
   });
 
+  function runClosure(jsFiles, output, warnings, done) {
+    // This needs a special build of closure that has SHUMWAY_OPTIMIZATIONS.
+    var closureCmd = 'java';
+    var closureArgs = ['-jar', 'utils/closure.jar',
+      '--formatting', 'PRETTY_PRINT',
+      '--compilation_level', 'SHUMWAY_OPTIMIZATIONS',
+      '--language_in', 'ECMASCRIPT5'];
+    if (!warnings) {
+      closureArgs.push('--warning_level', 'QUIET');
+    }
+    closureArgs = closureArgs.concat(jsFiles).concat(['--js_output_file', output]);
+    console.log('Running closure for ' + jsFiles.join(', ') + ' ...');
+    grunt.util.spawn({
+      cmd: closureCmd,
+      args: closureArgs,
+      opts: { stdio: 'inherit' }
+    }, function (error, result) {
+      if (error || result.code) {
+        done(false);
+        return;
+      }
+      console.log('Closure output is created at ' + output);
+      done(true);
+    });
+  }
+
+  function runClosureTasks(tasks, warnings, done) {
+    var i = 0;
+    (function runNextTask() {
+      if (i < tasks.length) {
+        var task = tasks[i++];
+        runClosure([task[0]], task[1], warnings, function (success) {
+          if (!success) {
+            done(false);
+            return;
+          }
+          runNextTask();
+        });
+      } else {
+        done(true);
+      }
+    })();
+  }
+
+  grunt.registerTask('closure-bundles', function () {
+    var inputDir = 'build/bundles/';
+    var outputDir = 'build/bundles-cc/';
+    grunt.file.mkdir(outputDir);
+
+    runClosureTasks([
+      [inputDir + 'shumway.gfx.js', outputDir + 'shumway.gfx.js'],
+      [inputDir + 'shumway.player.js', outputDir + 'shumway.player.js']
+    ], !!grunt.option('verbose'), this.async());
+  });
+
+  grunt.registerTask('closure', function () {
+    runClosure([
+      "build/ts/base.js",
+      "build/ts/tools.js",
+      "build/ts/avm2.js",
+      "build/ts/flash.js",
+      "build/ts/avm1.js",
+      "build/ts/gfx-base.js",
+      "build/ts/gfx.js",
+      "build/ts/player.js"
+    ], "build/shumway.cc.js", true, this.async());
+  });
+
+  grunt.registerTask('closure-all', function () {
+    var outputDir = 'build/ts-cc/';
+    grunt.file.mkdir(outputDir);
+    runClosureTasks([
+      ["build/ts/base.js", outputDir + "base.js"],
+      ["build/ts/tools.js", outputDir + "tools.js"],
+      ["build/ts/avm2.js", outputDir + "avm2.js"],
+      ["build/ts/flash.js", outputDir + "flash.js"],
+      ["build/ts/avm1.js", outputDir + "avm1.js"],
+      ["build/ts/gfx-base.js", outputDir + "gfx-base.js"],
+      ["build/ts/gfx.js", outputDir + "gfx.js"],
+      ["build/ts/player.js", outputDir + "player.js"]
+    ], true, this.async());
+  });
+
   grunt.registerTask('server', function () {
     var WebServer = require('./test/webserver.js').WebServer;
     var done = this.async();
@@ -440,12 +497,6 @@ module.exports = function(grunt) {
     'build',
     'exec:gate'
   ]);
-  grunt.registerTask('closure', [
-    'exec:closure'
-  ]);
-  grunt.registerTask('closure-all', [
-    'exec:closure-all'
-  ]);
   grunt.registerTask('travis', [
     // 'parallel:base',
     'exec:build_base_ts',
@@ -457,7 +508,7 @@ module.exports = function(grunt) {
     'exec:build_shell_ts',
     'tslint:all',
     'exec:spell',
-    'exec:closure',
+    'closure',
     // 'exec:gate'
   ]);
   grunt.registerTask('smoke', [
@@ -649,7 +700,7 @@ module.exports = function(grunt) {
 
     rsync();
   });
-  grunt.registerTask('firefox', ['build', 'exec:build_extension']);
-  grunt.registerTask('mozcentral', ['build', 'exec:build_mozcentral']);
-  grunt.registerTask('web', ['build', 'exec:build_extension', 'exec:build_web']);
+  grunt.registerTask('firefox', ['build', 'closure-bundles', 'exec:build_extension']);
+  grunt.registerTask('mozcentral', ['build', 'closure-bundles', 'exec:build_mozcentral']);
+  grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'exec:build_web']);
 };
