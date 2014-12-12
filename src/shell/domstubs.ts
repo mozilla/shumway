@@ -14,56 +14,60 @@
  * limitations under the License.
  */
 
-if (typeof console === 'undefined') {
-  console = {
-    log: print,
-    info: print,
-    warn: function() {
-      print(Shumway.IndentingWriter.RED + [].join.call(arguments, ', ') +
-            Shumway.IndentingWriter.ENDC);
-    },
-    error: function() {
-      print(Shumway.IndentingWriter.BOLD_RED + [].join.call(arguments, ', ') +
-            Shumway.IndentingWriter.ENDC + '\nstack:\n' + (new Error().stack));
-    },
-    time: function () {},
-    timeEnd: function () {}
-  };
-}
+var microTaskQueue: Shumway.Shell.MicroTasksQueue = null;
 
-var dump = function (message) {
+this.self = this;
+this.window = this;
+
+declare function print(message: string): void;
+
+this.console = {
+  _print: print,
+  log: print,
+  info: print,
+  warn: function() {
+    print(Shumway.IndentingWriter.RED + [].join.call(arguments, ', ') +
+          Shumway.IndentingWriter.ENDC);
+  },
+  error: function() {
+    print(Shumway.IndentingWriter.BOLD_RED + [].join.call(arguments, ', ') +
+          Shumway.IndentingWriter.ENDC + '\nstack:\n' + (new Error().stack));
+  },
+  time: function () {},
+  timeEnd: function () {}
+};
+
+declare var putstr;
+this.dump = function (message) {
   putstr(message);
 };
 
-var addEventListener = function (type) {
+this.addEventListener = function (type) {
   // console.log('Add listener: ' + type);
 };
 
 var defaultTimerArgs = [];
-var microTaskQueue = null;
-var setTimeout = function (fn, interval) {
+this.setTimeout = function (fn, interval) {
   var args = arguments.length > 2 ? Array.prototype.slice.call(arguments, 2) : defaultTimerArgs;
   var task = microTaskQueue.scheduleInterval(fn, args, interval, false);
   return task.id;
 };
-var setInterval = function (fn, interval) {
+this.setInterval = function (fn, interval) {
   var args = arguments.length > 2 ? Array.prototype.slice.call(arguments, 2) : defaultTimerArgs;
   var task = microTaskQueue.scheduleInterval(fn, args, interval, true);
   return task.id;
 };
-var clearTimeout = function (id) {
+this.clearTimeout = function (id) {
   microTaskQueue.remove(id);
 };
-var clearInterval = clearTimeout;
+this.clearInterval = clearTimeout;
 
-var self = this, window = this;
-
-var navigator = {
+this.navigator = {
   userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.6; rv:4.0) Gecko/20100101 Firefox/4.0'
 };
 
 // TODO remove document stub
-var document = {
+this.document = {
   createElementNS: function (ns, qname) {
     if (qname !== 'svg') {
       throw new Error('only supports svg and create SVGMatrix');
@@ -89,30 +93,23 @@ var document = {
   }
 };
 
-var Image = function () {};
+this.Image = function () {};
+this.Image.prototype = {
+};
 
-Image.prototype = {
-
-}
-
-var URL = function () {};
-
-URL.prototype = {
-
-}
-
-URL.createObjectURL = function createObjectURL() {
+this.URL = function () {};
+this.URL.prototype = {
+};
+this.URL.createObjectURL = function createObjectURL() {
   return "";
 };
 
-var Blob = function () {};
+this.Blob = function () {};
+this.Blob.prototype = {
+};
 
-Blob.prototype = {
-
-}
-
-var XMLHttpRequest = function () {};
-XMLHttpRequest.prototype = {
+this.XMLHttpRequest = function () {};
+this.XMLHttpRequest.prototype = {
   open: function (method, url, async) {
     this.url = url;
     if (async === false) {
@@ -144,7 +141,7 @@ XMLHttpRequest.prototype = {
   }
 }
 
-window.screen = {
+this.window.screen = {
   width: 1024,
   height: 1024
 };
