@@ -29,8 +29,6 @@ if (typeof console === 'undefined') {
     time: function () {},
     timeEnd: function () {}
   };
-} else {
-  print = console.log;
 }
 
 var dump = function (message) {
