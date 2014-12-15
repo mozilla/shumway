@@ -444,9 +444,17 @@ module Shumway.GFX {
     constructor() {
       this._id = Node._nextId ++;
       this._type = NodeType.Node;
-      this._flags = NodeFlags.Default;
       this._index = -1;
       this._parent = null;
+      this.reset();
+    }
+
+    /**
+     * Resets the Node to its initial state but preserves its identity.
+     * It safe to call this on a child without disrupting ownership.
+     */
+    reset() {
+      this._flags = NodeFlags.Default;
       this._bounds = null;
       this._layer = null;
       this._transform = null;
