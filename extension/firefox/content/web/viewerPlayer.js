@@ -166,6 +166,13 @@ function setupServices() {
       }, '*');
     }
   };
+
+  // Using SpecialInflate when chrome code provides it.
+  if (parent.createSpecialInflate) {
+    window.SpecialInflate = function () {
+      return parent.createSpecialInflate();
+    };
+  }
 }
 
 window.addEventListener('message', function onWindowMessage(e) {

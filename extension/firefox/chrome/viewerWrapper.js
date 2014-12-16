@@ -30,6 +30,8 @@ viewer.addEventListener('mozbrowserloadend', function () {
   onLoaded(true);
 });
 
+Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
+
 function runViewer() {
   function handler() {
     function sendMessage(action, data, sync, callbackCookie) {
@@ -52,6 +54,12 @@ function runViewer() {
       onMessageCallback: { value: null, writable: true }
     });
     Components.utils.makeObjectPropsNormal(shumwayComAdapter);
+
+    if (SpecialInflateUtils.isSpecialInflateEnabled) {
+      Components.utils.exportFunction(function () {
+        return SpecialInflateUtils.createWrappedSpecialInflate(childWindow);
+      }, childWindow, {defineAs: 'createSpecialInflate'});
+    }
 
     window.onExternalCallback = function (call) {
       return shumwayComAdapter.onExternalCallback(Components.utils.cloneInto(call, childWindow));
