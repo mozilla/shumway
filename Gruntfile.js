@@ -473,12 +473,23 @@ module.exports = function(grunt) {
     grunt.file.expand('build/bundles-cc/*.js').forEach(function (file) {
       grunt.file.copy(file, outputDir + '/build/bundles-cc/' + path.basename(file));
     });
+    grunt.file.copy('src/shell/shell-node.js', outputDir + '/src/shell/shell-node.js');
+
+    var waitFor = 0, done = this.async();
     grunt.file.expand('src/shell/runners/run-*').forEach(function (file) {
       var dest = outputDir + '/' + path.basename(file);
       grunt.file.copy(file, dest);
-      grunt.util.spawn({cmd: 'chmod', args: ['+x', dest]});
+      waitFor++;
+      grunt.util.spawn({cmd: 'chmod', args: ['+x', dest]}, function () {
+        waitFor--;
+        if (waitFor === 0) {
+          done();
+        }
+      });
     });
-    grunt.file.copy('src/shell/shell-node.js', outputDir + '/src/shell/shell-node.js');
+    if (waitFor === 0) {
+      done();
+    }
   });
 
   grunt.registerTask('tracetest', ['exec:tracetest']);
