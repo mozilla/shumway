@@ -39,6 +39,7 @@ module Shumway.Player {
   import FocusEventData = Shumway.Remoting.Player.FocusEventData;
 
   import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
+  import IAssetResolver = Timeline.IAssetResolver;
   import IFSCommandListener = flash.system.IFSCommandListener;
   import IVideoElementService = flash.net.IVideoElementService;
   import MessageTag = Shumway.Remoting.MessageTag;
@@ -53,7 +54,8 @@ module Shumway.Player {
    * This class brings everything together. Loads the swf, runs the event loop and
    * synchronizes the frame tree with the display list.
    */
-  export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService {
+  export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
+                                 IAssetResolver {
     private _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
@@ -71,6 +73,7 @@ module Shumway.Player {
     /**
      * Used to request things from the GFX remote.
      */
+      // TODO: rip this out
     private _pendingPromises: PromiseWrapper<any> [] = [];
 
     /**
@@ -270,14 +273,6 @@ module Shumway.Player {
               break;
           }
           break;
-        case MessageTag.DecodeImageResponse:
-          var decodeImageResponseData = <Shumway.Remoting.Player.DecodeImageResponseData>message;
-          var promiseId = decodeImageResponseData.promiseId;
-          var decodeImagePromise = this._pendingPromises[promiseId];
-          release || assert(decodeImagePromise, "We should be resolving an unresolved decode image promise at this point.");
-          decodeImagePromise.resolve(message);
-          this._pendingPromises[promiseId] = null;
-          break;
       }
     }
 
@@ -321,38 +316,6 @@ module Shumway.Player {
       serializer.writeRequestBitmapData(bitmapData);
       output.writeInt(Remoting.MessageTag.EOF);
       return this.onSendUpdates(output, assets, false);
-    }
-
-    /**
-     * Decodes an image asynchronously and updates the values in the specified |bitmapSymbol| once the
-     * decoded image data is available. The |resolve| callback is called once the data is available.
-     *
-     * We send a |MessageTag.DecodeImage| message to the GFX backend which then decodes the image asynchronously,
-     * and sends us back a |MessageTag.DecodeImageResponse| with the available data.
-     *
-     * TODO: Make sure we get called back if an error occurs while decoding the image.
-     */
-    public decodeImage(bitmapSymbol: flash.display.BitmapSymbol, resolve: (result) => void) {
-      release || assert (bitmapSymbol.type === ImageType.PNG ||
-                         bitmapSymbol.type === ImageType.GIF ||
-                         bitmapSymbol.type === ImageType.JPEG, "No need to decode any other image formats.");
-      var output = new DataBuffer();
-      var assets = [];
-      var serializer = new Remoting.Player.PlayerChannelSerializer();
-      serializer.output = output;
-      serializer.outputAssets = assets;
-      var promiseId = this._getNextAvailablePromiseId();
-      serializer.writeDecodeImage(promiseId, bitmapSymbol.type, bitmapSymbol.data);
-      output.writeInt(Remoting.MessageTag.EOF);
-      this.onSendUpdates(output, assets);
-      var promiseWrapper = this._pendingPromises[promiseId] = new PromiseWrapper<any>();
-      promiseWrapper.promise.then(function (decodeImageResponseData: Shumway.Remoting.Player.DecodeImageResponseData) {
-        bitmapSymbol.data = decodeImageResponseData.data;
-        bitmapSymbol.type = decodeImageResponseData.type;
-        bitmapSymbol.width = decodeImageResponseData.width;
-        bitmapSymbol.height = decodeImageResponseData.height;
-        resolve(undefined);
-      });
     }
 
     public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
@@ -612,6 +575,22 @@ module Shumway.Player {
     }
 
     onFrameProcessed() {
+      throw new Error('This method is abstract');
+    }
+
+    registerFontOrImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
+      release || assert(symbol.syncId);
+      symbol.resolveAssetPromise = new PromiseWrapper();
+      this.registerFontOrImageImpl(symbol, data);
+      // Fonts are immediately available in Firefox, so we can just mark the symbol as ready.
+      if (data.type === 'font' && inFirefox) {
+        symbol.ready = true;
+      } else {
+        symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);
+      }
+    }
+
+    protected registerFontOrImageImpl(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
       throw new Error('This method is abstract');
     }
 

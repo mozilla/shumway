@@ -402,6 +402,11 @@
       "swf": "/examples/bitmap/non-smoothed-bitmap/nonsmoothedbitmap.swf",
       "type": "eq"
     },
+    {  "id": "getpixel-from-embedded",
+      "stas": "swfs/trace.stas",
+      "filenames": ["swfs/bitmapdata/getpixel-from-embedded.swf"],
+      "type": "stas"
+    },
     {  "id": "pac-ref",
        "frames": [1, 5, 10],
        "swf": "/examples/pac/pac.swf",

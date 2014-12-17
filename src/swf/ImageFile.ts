@@ -32,7 +32,6 @@ module Shumway {
     image: any; // Image
     mimeType: string;
     type: number = 4;
-    decodingPromise: Promise<any>;
     width: number;
     height: number;
 
@@ -45,7 +44,6 @@ module Shumway {
         this.data.set(header);
       }
       this.setMimetype();
-      this.processLoadedData();
     }
 
     get bytesTotal() {
@@ -55,28 +53,11 @@ module Shumway {
     appendLoadedData(data: Uint8Array) {
       this.data.set(data, this.bytesLoaded);
       this.bytesLoaded += data.length;
-      this.processLoadedData();
-    }
-    private processLoadedData() {
-      if (this.bytesLoaded === this.data.length) {
-        var image = this.image = new Image();
-        image.src = URL.createObjectURL(new Blob([this.data], {type: this.mimeType}));
-        //this.data = null;
-        this.decodingPromise = new Promise(function(resolve, reject) {
-          image.onload = resolve;
-          image.onerror = resolve;
-        }).then(this.decodeImage.bind(this));
-      }
     }
 
     private setMimetype() {
       var magic = (this.data[0] << 16) | (this.data[1] << 8) | this.data[2];
       this.mimeType = mimetypesForHeaders[magic];
-    }
-
-    private decodeImage() {
-      this.width = this.image.width;
-      this.height = this.image.height;
     }
   }
 }

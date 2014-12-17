@@ -423,7 +423,7 @@ function registerInspectorAsset(id, symbolId, asset) {
       return;
     }
     if (renderable instanceof Shumway.GFX.RenderableBitmap) {
-      canvas = renderable._canvas;
+      canvas = renderable.renderSource;
     } else {
       canvas = document.createElement("canvas");
       canvas.width = bounds.w;

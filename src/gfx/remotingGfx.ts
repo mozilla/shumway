@@ -89,21 +89,6 @@ module Shumway.Remoting.GFX {
       output.writeInt(MessageTag.FocusEvent);
       output.writeInt(type);
     }
-
-    public writeDecodeImageResponse(promiseId: number, type: ImageType, data: Uint8Array, width: number, height: number) {
-      var output = this.output;
-      output.writeInt(MessageTag.DecodeImageResponse);
-      output.writeInt(promiseId);
-      output.writeInt(type);
-      this._writeAsset(data);
-      output.writeInt(width);
-      output.writeInt(height);
-    }
-
-    private _writeAsset(asset: any) {
-      this.output.writeInt(this.outputAssets.length);
-      this.outputAssets.push(asset);
-    }
   }
 
   export class GFXChannelDeserializerContext implements IVideoPlaybackEventSerializer {
@@ -148,6 +133,9 @@ module Shumway.Remoting.GFX {
       if (typeof registerInspectorAsset !== "undefined") {
         registerInspectorAsset(id, symbolId, asset);
       }
+      if (!release && this._assets[id]) {
+        console.warn("Asset already exists: " + id + ". old:", this._assets[id], "new: " + asset);
+      }
       this._assets[id] = asset;
     }
 
@@ -182,23 +170,41 @@ module Shumway.Remoting.GFX {
       return <RenderableText>this._assets[id];
     }
 
+    registerFont(syncId: number, data: any, resolve: (data: any) => void) {
+      Shumway.registerCSSFont(syncId, data.data, !inFirefox);
+      if (inFirefox) {
+        resolve(null);
+      } else {
+        window.setTimeout(resolve, 400);
+      }
+    }
+
+    registerImage(syncId: number, symbolId: number, data: any, resolve: (data: any) => void) {
+      this._registerAsset(syncId, symbolId, this._decodeImage(data.dataType, data.data, resolve));
+    }
+
     /**
-     * Decodes some raw image data and calls |oncomplete| with the decoded pixel data
-     * once the image is loaded.
+     * Creates an Image element to decode JPG|PNG|GIF data passed in as a buffer.
+     *
+     * The resulting image is stored as the drawing source of a new RenderableBitmap, which is
+     * returned.
+     * Once the image is loaded, the RenderableBitmap's bounds are updated and the provided
+     * oncomplete callback is invoked with the image dimensions.
      */
-    _decodeImage(type: ImageType, data: Uint8Array, oncomplete: (imageData: ImageData) => void) {
+    _decodeImage(type: ImageType, data: Uint8Array, oncomplete: (data: any) => void) {
       var image = new Image();
-      var self = this;
+      var asset = RenderableBitmap.FromImage(image, -1, -1);
       image.src = URL.createObjectURL(new Blob([data], {type: getMIMETypeForImageType(type)}));
       image.onload = function () {
-        self._canvas.width = image.width;
-        self._canvas.height = image.height;
-        self._context.drawImage(image, 0, 0);
-        oncomplete(self._context.getImageData(0, 0, image.width, image.height));
+        release || assert(!asset.parent);
+        asset.setBounds(new Rectangle(0, 0, image.width, image.height));
+        asset.invalidate();
+        oncomplete({width: image.width, height: image.height});
       };
       image.onerror = function () {
         oncomplete(null);
       };
+      return asset;
     }
 
     public sendVideoPlaybackEvent(assetId: number, eventType: VideoPlaybackEvent, data: any): void {
@@ -242,6 +248,7 @@ module Shumway.Remoting.GFX {
         updateNetStream: 0,
         registerFont: 0,
         drawToBitmap: 0,
+        requestBitmapData: 0,
         decodeImage: 0
       };
       Shumway.GFX.enterTimeline("GFXChannelDeserializer.read", data);
@@ -280,12 +287,8 @@ module Shumway.Remoting.GFX {
             this._readDrawToBitmap();
             break;
           case MessageTag.RequestBitmapData:
-            data.drawToBitmap ++;
+            data.requestBitmapData ++;
             this._readRequestBitmapData();
-            break;
-          case MessageTag.DecodeImage:
-            data.decodeImage ++;
-            this._readDecodeImage();
             break;
           default:
             release || assert(false, 'Unknown MessageReader tag: ' + tag);
@@ -633,29 +636,6 @@ module Shumway.Remoting.GFX {
       var id = input.readInt();
       var renderableBitmap = context._getBitmapAsset(id);
       renderableBitmap.readImageData(output);
-    }
-
-    private _readDecodeImage() {
-      var input = this.input;
-      var output = this.output;
-      var context = this.context;
-      var promiseId = input.readInt();
-      var type = <ImageType>input.readInt();
-      var data = this._readAsset();
-      var self = this;
-      this.context._decodeImage(type, data, function (imageData: ImageData) {
-        var buffer = new DataBuffer();
-        var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
-        var assets = [];
-        serializer.output = buffer;
-        serializer.outputAssets = assets;
-        if (imageData) {
-          serializer.writeDecodeImageResponse(promiseId, ImageType.StraightAlphaRGBA, imageData.data, imageData.width, imageData.height);
-        } else {
-          serializer.writeDecodeImageResponse(promiseId, ImageType.None, null, 0, 0);
-        }
-        self.context._easelHost.onSendUpdates(buffer, assets);
-      });
     }
   }
 }

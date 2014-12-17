@@ -163,12 +163,6 @@ module Shumway.GFX {
      */
     Tileable                          = 0x400000,
 
-    /**
-     * Whether the source's content is loading and thus not available yet. Once loading
-     * is complete this flag is cleared and the |Dirty| flag is set.
-     */
-    Loading                           = 0x800000,
-
     // Delete These
     Transparent                       = 0x08000,
   }

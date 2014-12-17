@@ -98,11 +98,11 @@ module Shumway.AVM2.AS.flash.display {
       var queue = Loader._loadQueue;
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
-        var queuedUpdates = instance._queuedLoadUpdates;
-        for (var j = 0; j < queuedUpdates.length; j++) {
-          instance._applyLoadUpdate(queuedUpdates[j]);
+        var queuedUpdate = instance._queuedLoadUpdate;
+        if (queuedUpdate) {
+          instance._applyLoadUpdate(queuedUpdate);
+          instance._queuedLoadUpdate = null;
         }
-        instance._queuedLoadUpdates.length = 0;
 
         var loaderInfo = instance._contentLoaderInfo;
         var bytesLoaded = loaderInfo._newBytesLoaded;
@@ -148,7 +148,6 @@ module Shumway.AVM2.AS.flash.display {
             }
             if (bytesLoaded === bytesTotal) {
               instance._loadStatus = LoadStatus.Complete;
-              instance._queuedLoadUpdates = null;
               queue.splice(i--, 1);
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
             }
@@ -213,7 +212,7 @@ module Shumway.AVM2.AS.flash.display {
     private _fileLoader: FileLoader;
     private _loadStatus: LoadStatus;
     private _loadingType: LoadingType;
-    private _queuedLoadUpdates: LoadProgressUpdate[];
+    private _queuedLoadUpdate: LoadProgressUpdate;
 
     /**
      * Resolved when the root Loader has loaded the first frame(s) of the main SWF.
@@ -265,8 +264,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._fileLoader.loadFile(request._toFileRequest());
 
-      // TODO: Only do this if a load wasn't in progress.
-      this._queuedLoadUpdates = [];
+      this._queuedLoadUpdate = null;
       Loader._loadQueue.push(this);
     }
 
@@ -280,7 +278,7 @@ module Shumway.AVM2.AS.flash.display {
       this._applyLoaderContext(context);
       this._loadingType = LoadingType.Bytes;
       this._fileLoader = new FileLoader(this);
-      this._queuedLoadUpdates = [];
+      this._queuedLoadUpdate = null;
       // Just passing in the bytes won't do, because the buffer can contain slop at the end.
       this._fileLoader.loadBytes(new Uint8Array((<any>data).bytes, 0, data.length));
 
@@ -345,9 +343,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     onLoadProgress(update: LoadProgressUpdate) {
+      release || assert(update);
       var file = this._contentLoaderInfo._file;
       if (file instanceof SWFFile) {
-        this._queuedLoadUpdates.push(update);
+        this._queuedLoadUpdate = update;
         if (this._content || this !== Loader.getRootLoader()) {
           return;
         }
@@ -357,6 +356,51 @@ module Shumway.AVM2.AS.flash.display {
       } else {
         this._contentLoaderInfo.bytesLoaded = update.bytesLoaded;
       }
+    }
+
+    onNewEagerlyParsedSymbols(dictionaryEntries: SWF.EagerlyParsedDictionaryEntry[],
+                              delta: number): Promise<any> {
+      var promises: Promise<any>[] = [];
+      for (var i = dictionaryEntries.length - delta; i < dictionaryEntries.length; i++) {
+        var dictionaryEntry = dictionaryEntries[i];
+        var symbol = this._contentLoaderInfo.getSymbolById(dictionaryEntry.id);
+        // JPEGs with alpha channel are parsed with our JS parser for now. They're ready
+        // immediately, so don't need any more work here. We'll change them to using the system
+        // parser, but for now, just skip further processing here.
+        if (symbol.ready) {
+          continue;
+        }
+        release || assert(symbol.resolveAssetPromise);
+        release || assert(symbol.ready === false);
+        promises.push(symbol.resolveAssetPromise.promise);
+      }
+      return Promise.all(promises);
+    }
+
+    onImageBytesLoaded() {
+      var file = this._fileLoader._file;
+      release || assert(file instanceof ImageFile);
+      var data = {
+        id: -1,
+        data: file.data,
+        mimeType: file.mimeType,
+        dataType: file.type,
+        type: 'image'
+      };
+      var symbol = BitmapSymbol.FromData(data);
+      var resolver: Timeline.IAssetResolver = AVM2.instance.globals['Shumway.Player.Utils'];
+      resolver.registerFontOrImage(symbol, data);
+      release || assert(symbol.resolveAssetPromise);
+      release || assert(symbol.ready === false);
+      symbol.resolveAssetPromise.then(this._applyDecodedImage.bind(this, symbol), null);
+    }
+
+    private _applyDecodedImage(symbol: BitmapSymbol) {
+      var bitmapData = symbol.createSharedInstance();
+      this._content = new flash.display.Bitmap(bitmapData);
+      this._contentLoaderInfo._width = this._content.width;
+      this._contentLoaderInfo._height = this._content.height;
+      this.addTimelineObjectAtDepth(this._content, 0);
     }
 
     private _applyLoadUpdate(update: LoadProgressUpdate) {
@@ -402,13 +446,17 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
 
-      var fontsLoaded = file.fonts.length;
-      var fontsLoadedDelta = fontsLoaded - loaderInfo._fontsLoaded;
-      if (fontsLoadedDelta > 0) {
-        for (var i = loaderInfo._fontsLoaded; i < fontsLoaded; i++) {
-          flash.text.Font.registerLazyFont(file.fonts[i], loaderInfo);
+      // In browsers that can't synchronously decode fonts, we have already registered all
+      // embedded fonts at this point.
+      if (inFirefox) {
+        var fontsLoaded = file.fonts.length;
+        var fontsLoadedDelta = fontsLoaded - loaderInfo._fontsLoaded;
+        if (fontsLoadedDelta > 0) {
+          for (var i = loaderInfo._fontsLoaded; i < fontsLoaded; i++) {
+            flash.text.Font.registerEmbeddedFont(file.fonts[i], loaderInfo);
+          }
+          loaderInfo._fontsLoaded = fontsLoaded;
         }
-        loaderInfo._fontsLoaded = fontsLoaded;
       }
 
       var rootSymbol = loaderInfo.getRootSymbol();
@@ -439,18 +487,10 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
     onLoadComplete() {
-      var file = this._fileLoader._file;
-      if (file instanceof ImageFile) {
-        var bitmapData = flash.display.BitmapData.initializeFrom(file);
-        flash.display.BitmapData.instanceConstructorNoInitialize.call(bitmapData);
-        this._content = new flash.display.Bitmap(bitmapData);
-        this._contentLoaderInfo._width = this._content.width;
-        this._contentLoaderInfo._height = this._content.height;
-        this.addTimelineObjectAtDepth(this._content, 0);
-      }
+      // Go away, tslint.
     }
     onLoadError() {
-      // Go away, TSLint.
+      release || Debug.warning('Not implemented: flash.display.Loader loading-error handling');
     }
 
     private onFileStartupReady() {
@@ -465,7 +505,9 @@ module Shumway.AVM2.AS.flash.display {
       }
       // The very first update is applied immediately, as that creates the root content,
       // which the player expects to exist at this point.
-      this._applyLoadUpdate(this._queuedLoadUpdates.shift());
+      release || assert(this._queuedLoadUpdate);
+      this._applyLoadUpdate(this._queuedLoadUpdate);
+      this._queuedLoadUpdate = null;
     }
 
     private createContentRoot(symbol: flash.display.SpriteSymbol, sceneData) {

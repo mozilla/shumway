@@ -202,7 +202,7 @@ module Shumway {
               break;
             case 'i':
               stack.push(textFormat);
-              if (!prevTextRun) {
+              if (!textFormat.italic) {
                 textFormat = textFormat.clone();
                 textFormat.italic = true;
               }
@@ -410,9 +410,8 @@ module Shumway {
       var size = +textFormat.size;
       textRunData.writeInt(size);
 
-      var font = flash.text.Font.getByName(textFormat.font) || flash.text.Font.getDefaultFont();
-      // TODO: ensure that font serialization really isn't required and clean this up.
-      textRunData.writeInt(0);
+      var font = flash.text.Font.getByNameAndStyle(textFormat.font, textFormat.style) ||
+                 flash.text.Font.getDefaultFont();
       if (font.fontType === flash.text.FontType.EMBEDDED) {
         textRunData.writeUTF('swffont' + font._id);
       } else {
@@ -421,17 +420,22 @@ module Shumway {
       textRunData.writeInt(font.ascent * size);
       textRunData.writeInt(font.descent * size);
       textRunData.writeInt(textFormat.leading === null ? font.leading * size : +textFormat.leading);
-      var bold: boolean;
-      var italic: boolean;
-      if (textFormat.bold === null) {
-        bold = font.fontStyle === flash.text.FontStyle.BOLD || font.fontType === flash.text.FontStyle.BOLD_ITALIC;
-      } else {
-        bold = !!textFormat.bold;
-      }
-      if (textFormat.italic === null) {
-        italic = font.fontStyle === flash.text.FontStyle.ITALIC || font.fontType === flash.text.FontStyle.BOLD_ITALIC;
-      } else {
-        italic = !!textFormat.italic;
+      // For embedded fonts, always set bold and italic to false. They're fully identified by name.
+      var bold: boolean = false;
+      var italic: boolean = false;
+      if (font.fontType === flash.text.FontType.DEVICE) {
+        if (textFormat.bold === null) {
+          bold = font.fontStyle === flash.text.FontStyle.BOLD ||
+                 font.fontType === flash.text.FontStyle.BOLD_ITALIC;
+        } else {
+          bold = !!textFormat.bold;
+        }
+        if (textFormat.italic === null) {
+          italic = font.fontStyle === flash.text.FontStyle.ITALIC ||
+                   font.fontType === flash.text.FontStyle.BOLD_ITALIC;
+        } else {
+          italic = !!textFormat.italic;
+        }
       }
       textRunData.writeBoolean(bold);
       textRunData.writeBoolean(italic);

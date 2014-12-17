@@ -434,7 +434,12 @@ module Shumway.Shell {
           //    counter.traceSorted(writer);
           //    writer.outdent();
           //  }
-          }
+          },
+          onNewEagerlyParsedSymbols(dictionaryEntries: SWF.EagerlyParsedDictionaryEntry[],
+                                    delta: number): Promise<any> {
+            return Promise.resolve();
+          },
+          onImageBytesLoaded() {}
         };
         var loader = new Shumway.FileLoader(loadListener);
         loader.loadBytes(buffer);

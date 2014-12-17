@@ -106,6 +106,9 @@ module Shumway.GFX.Window {
           this.processExternalCommand(data.request);
         } else if (data.type === 'videoControl') {
           data.result = this.processVideoControl(data.id, data.eventType, data.data);
+        } else if (data.type === 'registerFontOrImage') {
+          this.processRegisterFontOrImage(data.syncId, data.symbolId, data.assetType, data.data,
+                                          data.resolve);
         } else if (data.type === 'fscommand') {
           this.processFSCommand(data.command, data.args);
         } else if (data.type === 'timelineResponse' && data.timeline) {
@@ -114,6 +117,8 @@ module Shumway.GFX.Window {
           data.timeline._marks.__proto__ = CircularBuffer.prototype;
           data.timeline._times.__proto__ = CircularBuffer.prototype;
           this._timelineRequests[data.request](<TimelineBuffer>data.timeline);
+        } else {
+          release || Debug.assertUnreachable("Unhandled remoting event " + data.type);
         }
       }
     }

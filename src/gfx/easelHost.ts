@@ -170,6 +170,16 @@ module Shumway.GFX {
       return (<RenderableVideo>asset).processControlRequest(eventType, data);
     }
 
+    processRegisterFontOrImage(syncId: number, symbolId: number, type: string, data: any,
+                               resolve: (data: any) => void) {
+      if (type === 'font') {
+        this._context.registerFont(syncId, data, resolve);
+        return;
+      }
+      release || Debug.assert(type === 'image');
+      this._context.registerImage(syncId, symbolId, data, resolve);
+    }
+
     processFSCommand(command: string, args: string) {
     }
 
