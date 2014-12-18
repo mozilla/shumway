@@ -43,14 +43,14 @@ module Shumway.GFX {
     /**
      * Back reference to nodes that use this renderable.
      */
-    private _parents: Node [] = [];
+    private _parents: Shape [] = [];
 
     /**
      * Back reference to renderables that use this renderable.
      */
     private _renderableParents: Renderable [] = [];
 
-    public addParent(frame: Node) {
+    public addParent(frame: Shape) {
       release || assert(frame);
       var index = indexOf(this._parents, frame);
       release || assert(index < 0);
@@ -62,6 +62,23 @@ module Shumway.GFX {
       var index = indexOf(this._renderableParents, renderable);
       release || assert(index < 0);
       this._renderableParents.push(renderable);
+    }
+
+    /**
+     * Returns the first unrooted parent or creates a new parent if none was found.
+     */
+    public wrap(): Shape {
+      var node: Shape;
+      var parents = this._parents;
+      for (var i = 0; i < parents.length; i++) {
+        node = parents[i];
+        if (!node._parent) {
+          return node;
+        }
+      }
+      node = new Shape(this);
+      this.addParent(node);
+      return node;
     }
 
     public invalidate() {

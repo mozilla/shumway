@@ -62,6 +62,7 @@ module Shumway.SWF {
     private _decompressor: Inflate;
     private _jpegTables: any;
     private _endTagEncountered: boolean;
+    private _loadStarted: number;
 
     private _currentFrameLabel: string;
     private _currentSoundStreamHead: Parser.SoundStream;
@@ -183,6 +184,7 @@ module Shumway.SWF {
       SWF.enterTimeline('Initialize SWFFile');
       this.isCompressed = initialBytes[0] === 67;
       this.swfVersion = initialBytes[3];
+      this._loadStarted = Date.now();
       this._uncompressedLength = readSWFLength(initialBytes);
       // TODO: only report decoded or sync-decodable bytes as loaded.
       this.bytesLoaded = initialBytes.length;
@@ -190,11 +192,10 @@ module Shumway.SWF {
       this._dataStream = new Stream(this._data.buffer);
       this._dataStream.pos = 8;
       this._dataView = <DataView><any>this._dataStream;
-
       if (this.isCompressed) {
         this._data.set(initialBytes.subarray(0, 8));
         this._uncompressedLoadedLength = 8;
-        this._decompressor = new Inflate(true);
+        this._decompressor = Inflate.create(true);
         var self = this;
         // Parts of the header are compressed. Get those out of the way before starting tag parsing.
         this._decompressor.onData = function(data: Uint32Array) {
@@ -226,6 +227,7 @@ module Shumway.SWF {
       this._data.set(data, this._uncompressedLoadedLength);
       this._uncompressedLoadedLength += data.length;
       if (this._uncompressedLoadedLength === this._uncompressedLength) {
+        this._decompressor.close();
         this._decompressor = null;
       }
     }
@@ -246,6 +248,8 @@ module Shumway.SWF {
         if (tempTag.tagCode === SWFTag.CODE_END) {
           if (rootTimelineMode) {
             this._endTagEncountered = true;
+            console.log('SWF load time: ' +
+              ((Date.now() - this._loadStarted) * 0.001).toFixed(4) + 'sec');
           }
           return;
         }

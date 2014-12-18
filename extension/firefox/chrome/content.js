@@ -15,6 +15,7 @@
  */
 
 Components.utils.import('resource://gre/modules/Services.jsm');
+Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
 
 var externalInterfaceWrapper = {
   callback: function (call) {
@@ -55,6 +56,12 @@ addMessageListener('Shumway:init', function (message) {
     onMessageCallback: { value: null, writable: true }
   });
   Components.utils.makeObjectPropsNormal(shumwayComAdapter);
+
+  if (SpecialInflateUtils.isSpecialInflateEnabled) {
+    Components.utils.exportFunction(function () {
+      return SpecialInflateUtils.createWrappedSpecialInflate(content);
+    }, content, {defineAs: 'createSpecialInflate'});
+  }
 
   content.wrappedJSObject.runViewer();
 });

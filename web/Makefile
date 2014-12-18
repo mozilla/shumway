@@ -46,6 +46,9 @@ build: ensureoutputdir
 	mkdir -p $(BUILD_DIR)/extension/firefox
 	cp $(EXTENSION_DIR)/shumway.xpi $(BUILD_DIR)/extension/firefox/
 	cp $(EXTENSION_DIR)/update.rdf $(BUILD_DIR)/extension/firefox/
+	# Package shell
+	mkdir -p $(BUILD_DIR)/shell
+	cd ../build/shell; zip -r ../../web/$(BUILD_DIR)/shell/shumway-shell.zip *
 	# Removing hidden files
 	-find build -name ".DS_Store" -exec rm {} \;
 	# Creating commit

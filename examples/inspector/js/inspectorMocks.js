@@ -195,3 +195,79 @@ function requestYT(yt) {
     xhr.send(null);
   });
 }
+
+var SpecialInflate = (function () {
+  if (typeof SpecialPowers === 'undefined') {
+    return undefined;
+  }
+
+  var Cc = SpecialPowers.Cc;
+  var Ci = SpecialPowers.Ci;
+  var Cu = SpecialPowers.Cu;
+  var Cr = SpecialPowers.Cr;
+
+  function SimpleStreamListener() {
+    this.binaryStream = Cc['@mozilla.org/binaryinputstream;1']
+      .createInstance(Ci.nsIBinaryInputStream);
+    this.onData = null;
+    this.buffer = null;
+  }
+  SimpleStreamListener.prototype = {
+    QueryInterface: SpecialPowers.wrapCallback(function (iid) {
+      if (iid.equals(Ci.nsIStreamListener) ||
+        iid.equals(Ci.nsIRequestObserver) ||
+        iid.equals(Ci.nsISupports))
+        return this;
+      throw Cr.NS_ERROR_NO_INTERFACE;
+    }),
+    onStartRequest: function (aRequest, aContext) {
+      return Cr.NS_OK;
+    },
+    onStopRequest: function (aRequest, aContext, sStatusCode) {
+      return Cr.NS_OK;
+    },
+    onDataAvailable: SpecialPowers.wrapCallback(function (aRequest, aContext, aInputStream, aOffset, aCount) {
+      this.binaryStream.setInputStream(aInputStream);
+      if (!this.buffer || aCount > this.buffer.byteLength) {
+        this.buffer = new ArrayBuffer(aCount);
+      }
+      this.binaryStream.readArrayBuffer(aCount, this.buffer);
+      this.onData(new Uint8Array(this.buffer, 0, aCount));
+      return Cr.NS_OK;
+    })
+  };
+
+  function SpecialInflate() {
+    var listener = new SimpleStreamListener();
+    listener.onData = function (data) {
+      this.onData(data);
+    }.bind(this);
+
+    var converterService = Cc["@mozilla.org/streamConverters;1"].getService(Ci.nsIStreamConverterService);
+    var converter = converterService.asyncConvertData("deflate", "uncompressed", listener, null);
+    converter.onStartRequest(null, null);
+    this.converter = converter;
+
+    var binaryStream = Cc["@mozilla.org/binaryoutputstream;1"].createInstance(Ci.nsIBinaryOutputStream);
+    var pipe = Cc["@mozilla.org/pipe;1"].createInstance(Ci.nsIPipe);
+    pipe.init(true, true, 0, 0xFFFFFFFF, null);
+    binaryStream.setOutputStream(pipe.outputStream);
+    this.binaryStream = binaryStream;
+
+    this.pipeInputStream = pipe.inputStream;
+
+    this.onData = null;
+  }
+  SpecialInflate.prototype = {
+    push: function (data) {
+      this.binaryStream.writeByteArray(data, data.length);
+      this.converter.onDataAvailable(null, null, this.pipeInputStream, 0, data.length);
+    },
+    close: function () {
+      this.binaryStream.close();
+      this.converter.onStopRequest(null, null, Cr.NS_OK);
+    }
+  };
+
+  return SpecialInflate;
+})();

@@ -811,10 +811,10 @@ module Shumway.ArrayUtilities {
       var inflate: Inflate;
       switch (algorithm) {
         case 'zlib':
-          inflate = new Inflate(true);
+          inflate = Inflate.create(true);
           break;
         case 'deflate':
-          inflate = new Inflate(false);
+          inflate = Inflate.create(false);
           break;
         default:
           return;
@@ -826,6 +826,7 @@ module Shumway.ArrayUtilities {
       if (inflate.error) {
         throwError('IOError', Errors.CompressedDataError);
       }
+      inflate.close();
 
       this._ensureCapacity(output._u8.length);
       this._u8.set(output._u8);

@@ -158,8 +158,7 @@ module Shumway.Remoting.GFX {
       var node = null;
       if (id & IDMask.Asset) {
         id &= ~IDMask.Asset;
-        node = new Shape(this._assets[id]);
-        this._assets[id].addParent(node);
+        node = this._assets[id].wrap();
       } else {
         node = this._nodes[id];
       }

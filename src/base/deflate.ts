@@ -53,8 +53,67 @@ module Shumway.ArrayUtilities {
   }
 
   export class Inflate {
-    public onData: (buffer: Uint8Array) => void;
+    public onData:(buffer:Uint8Array) => void;
+    _error: any;
 
+    public get error() {
+      return this._error;
+    }
+
+    constructor(verifyHeader: boolean) {
+      this._error = null;
+    }
+
+    public push(data: Uint8Array, takeOwnership: boolean = false) {  Debug.abstractMethod('Inflate.push'); }
+
+    public close() {
+    }
+
+    public static create(verifyHeader: boolean): Inflate {
+      if (typeof SpecialInflate !== 'undefined') {
+        return new SpecialInflateAdapter(verifyHeader);
+      }
+      return new BasicInflate(verifyHeader);
+    }
+
+    _processZLibHeader(buffer: Uint8Array, start: number, end: number): number {
+      /* returns -1 - bad header, 0 - not enough data, 1+ - number of bytes processed */
+      var ZLIB_HEADER_SIZE = 2;
+      if (start + ZLIB_HEADER_SIZE > end) {
+        return 0;
+      }
+      var header = (buffer[start] << 8) | buffer[start + 1];
+      var error: string = null;
+      if ((header & 0x0f00) !== 0x0800) {
+        error = 'inflate: unknown compression method';
+      } else if ((header % 31) !== 0) {
+        error = 'inflate: bad FCHECK';
+      } else if ((header & 0x20) !== 0) {
+        error = 'inflate: FDICT bit set';
+      }
+      if (error) {
+        this._error = error;
+        return -1;
+      } else {
+        return ZLIB_HEADER_SIZE;
+      }
+    }
+
+    public static inflate(data: Uint8Array, expectedLength: number, zlibHeader: boolean): Uint8Array {
+      var output = new Uint8Array(expectedLength);
+      var position = 0;
+      var inflate = Inflate.create(zlibHeader);
+      inflate.onData = function (data) {
+        output.set(data, position);
+        position += data.length;
+      };
+      inflate.push(data);
+      inflate.close();
+      return output;
+    }
+  }
+
+  class BasicInflate extends Inflate {
     private _buffer: Uint8Array;
     private _bufferSize: number;
     private _bufferPosition: number;
@@ -69,13 +128,13 @@ module Shumway.ArrayUtilities {
     private _block0Read: number;
     private _block2State: DeflateBlock2State;
     private _copyState: DeflateCopyState;
-    private _error: any;
 
     public get error() {
       return this._error;
     }
 
     constructor(verifyHeader: boolean) {
+      super(verifyHeader);
       this._buffer = null;
       this._bufferSize = 0;
       this._bufferPosition = 0;
@@ -149,7 +208,15 @@ module Shumway.ArrayUtilities {
             this._bufferPosition = this._bufferSize;
             break;
           case InflateState.VERIFY_HEADER:
-            incomplete = this._verifyZlibHeader();
+            var processed = this._processZLibHeader(this._buffer, this._bufferPosition, this._bufferSize);
+            if (processed > 0) {
+              this._bufferPosition += processed;
+              this._state = InflateState.INIT;
+            } else if (processed === 0) {
+              incomplete = true;
+            } else {
+              this._state = InflateState.ERROR;
+            }
             break;
         }
 
@@ -180,30 +247,6 @@ module Shumway.ArrayUtilities {
       } else {
         this._bufferSize = 0;
       }
-    }
-    private _verifyZlibHeader(): boolean {
-      var position = this._bufferPosition;
-      if (position + 2 > this._bufferSize) {
-        return true;
-      }
-      var buffer = this._buffer;
-      var header = (buffer[position] << 8) | buffer[position + 1];
-      this._bufferPosition = position + 2;
-      var error: string = null;
-      if ((header & 0x0f00) !== 0x0800) {
-        error = 'inflate: unknown compression method';
-      } else if ((header % 31) !== 0) {
-        error = 'inflate: bad FCHECK';
-      } else if ((header & 0x20) !== 0) {
-        error = 'inflate: FDICT bit set';
-      }
-      if (error) {
-        this._error = error;
-        this._state = InflateState.ERROR;
-      } else {
-        this._state = InflateState.INIT;
-      }
-      return false;
     }
     private _decodeInitState(): boolean {
       if (this._isFinalBlock) {
@@ -542,18 +585,6 @@ module Shumway.ArrayUtilities {
       this._windowPosition = pos;
       return false;
     }
-
-    public static inflate(data: Uint8Array, expectedLength: number, zlibHeader: boolean): Uint8Array {
-      var output = new Uint8Array(expectedLength);
-      var position = 0;
-      var inflate = new Inflate(zlibHeader);
-      inflate.onData = function (data) {
-        output.set(data, position);
-        position += data.length;
-      };
-      inflate.push(data);
-      return output;
-    }
   }
 
   var codeLengthOrder: Uint8Array;
@@ -617,6 +648,64 @@ module Shumway.ArrayUtilities {
       }
     }
     return { codes: codes, maxBits: maxBits };
+  }
+
+
+  declare class SpecialInflate {
+    onData: (data: Uint8Array) => void;
+    push(data: Uint8Array);
+    close();
+  }
+
+  class SpecialInflateAdapter extends Inflate {
+    private _verifyHeader: boolean;
+    private _buffer: Uint8Array;
+
+    private _specialInflate: SpecialInflate;
+
+    constructor(verifyHeader: boolean) {
+      super(verifyHeader);
+
+      this._verifyHeader = verifyHeader;
+
+      this._specialInflate = new SpecialInflate();
+      this._specialInflate.onData = function (data) {
+        this.onData(data);
+      }.bind(this);
+    }
+
+    public push(data: Uint8Array, takeOwnership: boolean = false) {
+      if (this._verifyHeader) {
+        var buffer;
+        if (this._buffer) {
+          buffer = new Uint8Array(this._buffer.length + data.length);
+          buffer.set(this._buffer);
+          buffer.set(data, this._buffer.length);
+          this._buffer = null;
+        } else {
+          buffer = takeOwnership ? data : new Uint8Array(data);
+        }
+        var processed = this._processZLibHeader(buffer, 0, buffer.length);
+        if (processed === 0) {
+          this._buffer = buffer;
+          return;
+        }
+        this._verifyHeader = true;
+        if (processed > 0) {
+          data = buffer.subarray(processed);
+        }
+      }
+      if (!this._error) {
+        this._specialInflate.push(data);
+      }
+    }
+
+    public close() {
+      if (this._specialInflate) {
+        this._specialInflate.close();
+        this._specialInflate = null;
+      }
+    }
   }
 
   enum DeflateState {
