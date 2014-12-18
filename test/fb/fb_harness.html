@@ -13,7 +13,7 @@ function loadDefaultJSON()
   var req = new XMLHttpRequest();
   req.addEventListener("load", loadSuccess)
   req.addEventListener("error", loadError)
-  req.open("GET", fileURI);
+  req.open("GET", url);
   req.send();
 }
 
@@ -33,9 +33,9 @@ function loadSWF()
 {
   var str = document.getElementById("text_area");
   var content_div = document.getElementById("content");
-  var jsonObj = JSON.parse(str.value);
   try
   {
+    var jsonObj = JSON.parse(str.value);
     content_div.innerHTML = "<div>" + buildEmbedTag(jsonObj) + "</div>";
   } catch(e)
   {
