@@ -109,5 +109,22 @@
         "swfs/timeline/timeline_loop.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "navigation",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/timeline/nav/blendMode.swf",
+        "swfs/timeline/nav/cacheAsBitmap.swf",
+        "swfs/timeline/nav/clipDepth.swf",
+        "swfs/timeline/nav/colorTransform.swf",
+        "swfs/timeline/nav/filters.swf",
+        "swfs/timeline/nav/matrix.swf",
+        "swfs/timeline/nav/morphShape.swf",
+        "swfs/timeline/nav/name.swf",
+        "swfs/timeline/nav/ratio.swf",
+        "swfs/timeline/nav/ratio2.swf",
+        "swfs/timeline/nav/shape.swf"
+      ],
+      "type": "stas"
     }
 ]

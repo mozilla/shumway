@@ -26,6 +26,8 @@ module Shumway.AVM2.AS.flash.display {
   import events = flash.events;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 
+  import SwfTag = Shumway.SWF.Parser.SwfTag;
+
   /**
    * Controls how to behave on inter-frame navigation.
    */
@@ -227,7 +229,7 @@ module Shumway.AVM2.AS.flash.display {
     _addFrame(frameInfo: any) {
       var spriteSymbol = <flash.display.SpriteSymbol><any>this._symbol;
       var frames = spriteSymbol.frames;
-      frames.push(frameInfo.frameDelta);
+      frames.push(frameInfo);
       if (frameInfo.labelName) {
         // Frame indices are 1-based, so use frames.length after pushing the frame.
         this.addFrameLabel(frameInfo.labelName, frames.length);
@@ -302,7 +304,7 @@ module Shumway.AVM2.AS.flash.display {
     private _currentFrame: number;
     private _nextFrame: number;
     private _totalFrames: number;
-    private _frames: Shumway.Timeline.FrameDelta[];
+    private _frames: Shumway.SWF.SWFFrame[];
     private _frameScripts: any;
     private _scenes: Scene[];
 
@@ -497,76 +499,27 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
-      var frames = this._frames;
-      var startIndex = currentFrame;
-      var currentFrameDelta = frames[currentFrame - 1];
+      var currentSwfFrame = this._frames[currentFrame - 1];
+      var nextSwfFrame = this._frames[nextFrame - 1];
 
-      if (nextFrame < currentFrame) {
-        var frame = frames[0];
-        release || assert (frame, "FrameDelta is not defined.");
-        if (frame !== currentFrameDelta) {
-          var stateAtDepth = frame.stateAtDepth;
-          var children = this._children.slice();
-          for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-            var childDepth = child._depth;
-            if (childDepth) {
-              // We need to scan all past states to check if we can keep the child.
-              var state: Timeline.AnimationState;
-              for (var j = nextFrame - 1; j >= 0 && !state; j--) {
-                state = frames[j].stateAtDepth[childDepth];
-              }
-              if (!state ||
-                  !(state.canBeReused(child) || state.canBeAnimated(child))) {
-                this._removeAnimatedChild(child);
-              }
-            }
-          }
-        }
-        startIndex = 0;
-      }
+      if (nextSwfFrame !== currentSwfFrame) {
+        this._seekToFrame(nextFrame);
 
-      for (var i = startIndex; i < nextFrame; i++) {
-        var frame = frames[i];
-        release || assert (frame, "FrameDelta is not defined.");
-        if (frame === currentFrameDelta) {
-          continue;
-        }
-        currentFrameDelta = frame;
-        var stateAtDepth = frame.stateAtDepth;
-        for (var depth in stateAtDepth) {
-          var child = this.getTimelineObjectAtDepth(depth | 0);
-          var state = stateAtDepth[depth];
-          // Eagerly create the symbol here, because it's needed in the canBeAnimated check below.
-          if (state && state.symbolId > -1 && !state.symbol) {
-            var ownSymbol = <flash.display.SpriteSymbol>this._symbol;
-            state.symbol = <Timeline.DisplaySymbol>ownSymbol.loaderInfo.getSymbolById(state.symbolId);
-          }
-          if (child) {
-            if (state && state.canBeAnimated(child)) {
-              if (state.symbol && !state.symbol.dynamic) {
-                // TODO: Handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
-                child._setStaticContentFromSymbol(state.symbol);
+        if (nextSwfFrame.controlTags) {
+          var tags = nextSwfFrame.controlTags;
+          var soundStarts: Shumway.Timeline.SoundStart[];
+          for (var i = 0; i < tags.length; i++) {
+            var tag: any = tags[i];
+            if (tag.code === SwfTag.CODE_START_SOUND) {
+              if (!soundStarts) {
+                soundStarts = [];
               }
-              child._animate(state);
-              continue;
-            }
-            if (state && state.canBeReused(child)) {
-              continue;
-            }
-            this._removeAnimatedChild(child);
-          }
-          if (state && state.symbolId > -1) {
-            var character = this.createAnimatedDisplayObject(state, false);
-            this.addTimelineObjectAtDepth(character, state.depth);
-            if (state.symbol.isAVM1Object) {
-              Shumway.AVM1.Lib.initializeAVM1Object(character, state);
+              soundStarts.push(new Shumway.Timeline.SoundStart(tag.soundId, tag.soundInfo));
             }
           }
-        }
-        var soundStarts = frame.soundStarts;
-        if (soundStarts) {
-          this._registerStartSounds(i + 1, soundStarts);
+          if (soundStarts) {
+            this._registerStartSounds(nextFrame, soundStarts);
+          }
         }
       }
 
@@ -578,6 +531,71 @@ module Shumway.AVM2.AS.flash.display {
       this._currentFrame = this._nextFrame = nextFrame;
 
       this._syncSounds(nextFrame);
+    }
+
+    private _seekToFrame(frame: number) {
+      var currentFrame = this._currentFrame;
+      var frames = this._frames;
+
+      if (frame === currentFrame + 1) {
+        var nextSwfFrame = frames[frame - 1];
+        if (nextSwfFrame.controlTags) {
+          this._processControlTags(nextSwfFrame.controlTags, false);
+        }
+        return;
+      }
+
+      var currentSwfFrame = frames[currentFrame - 1];
+      var loaderInfo = (<SpriteSymbol>this._symbol).loaderInfo;
+      var backwards = frame < currentFrame;
+      var controlTags = [];
+      var removedObjects: { [key: string]: boolean; };
+
+      // We scan all control tags in reverse order and make sure we only apply those related to
+      // objects that exist in the new frame.
+      var i = frame;
+      var n = backwards ? 0 : currentFrame;
+      while (i-- > n) {
+        var swfFrame = frames[i];
+        if (swfFrame === currentSwfFrame) {
+          continue;
+        }
+        currentSwfFrame = swfFrame;
+        var tags = swfFrame.controlTags;
+        if (!tags) {
+          continue;
+        }
+        var j = tags.length;
+        while (j--) {
+          var tag = 'depth' in tags[j] ?
+                    tags[j] : <any>loaderInfo._file.getParsedTag(tags[j]);
+          switch (tag.code) {
+            case SwfTag.CODE_REMOVE_OBJECT:
+            case SwfTag.CODE_REMOVE_OBJECT2:
+              if (!removedObjects) {
+                removedObjects = Object.create(null);
+              }
+              removedObjects[tag.depth] = true;
+              if (!backwards) {
+                controlTags.push(tag);
+              }
+              break;
+            case SwfTag.CODE_PLACE_OBJECT:
+            case SwfTag.CODE_PLACE_OBJECT2:
+            case SwfTag.CODE_PLACE_OBJECT3:
+              if (!(removedObjects && removedObjects[tag.depth])) {
+                controlTags.push(tag);
+              }
+              break;
+            default:
+              controlTags.push(tag);
+          }
+        }
+      }
+      // Bring the order back to normal.
+      controlTags.reverse();
+
+      this._processControlTags(controlTags, backwards);
     }
 
     /**
@@ -625,17 +643,6 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       return label;
-    }
-
-    private _removeAnimatedChild(child: flash.display.DisplayObject) {
-      this.removeChild(child);
-      if (child._name) {
-        var mn = Multiname.getPublicQualifiedName(child._name);
-        if (this[mn] === child) {
-          this[mn] = null;
-        }
-        //child._removeReference();
-      }
     }
 
     callFrame(frame: number): void {

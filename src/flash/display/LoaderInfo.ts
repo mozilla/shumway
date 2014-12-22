@@ -344,22 +344,14 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    // TODO: deltas should be computed lazily when they're first needed, and this removed.
-    getFrame(sprite: {frames: SWFFrame[]}, index: number) {
+    // TODO: Frames should be parsed lazily when they're first needed, and this removed.
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1114656
+    getFrame(sprite: {frames: SWFFrame[]}, index: number): SWFFrame {
       var file = this._file;
       if (!sprite) {
         sprite = file;
       }
-      var frame = sprite.frames[index];
-      return {
-        labelName: frame.labelName,
-        soundStreamHead: frame.soundStreamHead,
-        soundStreamBlock: frame.soundStreamBlock,
-        actionBlocks: frame.actionBlocks,
-        initActionBlocks: frame.initActionBlocks,
-        exports: frame.exports,
-        frameDelta: new Timeline.FrameDelta(this, frame.displayListCommands)
-      };
+      return sprite.frames[index];
     }
 
     // TODO: To prevent leaking LoaderInfo instances, those instances should be stored weakly,

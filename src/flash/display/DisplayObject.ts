@@ -39,6 +39,8 @@ module Shumway.AVM2.AS.flash.display {
   import geom = flash.geom;
   import events = flash.events;
 
+  import PlaceObjectFlags = Shumway.SWF.Parser.PlaceObjectFlags;
+
   /*
    * Invalid Bits:
    *
@@ -404,7 +406,7 @@ module Shumway.AVM2.AS.flash.display {
       self._concatenatedColorTransform = new geom.ColorTransform();
 
       self._depth = -1;
-      self._ratio = 0;
+      self._ratio = -1;
       self._index = -1;
       self._maskedObject = null;
 
@@ -437,14 +439,9 @@ module Shumway.AVM2.AS.flash.display {
      * Calling its constructor is optional at this point, since that can happen in a later frame
      * phase.
      */
-    createAnimatedDisplayObject(state: Shumway.Timeline.AnimationState,
+    createAnimatedDisplayObject(symbol: Shumway.Timeline.DisplaySymbol,
+                                placeObjectTag: Shumway.SWF.PlaceObjectTag,
                                 callConstructor: boolean): DisplayObject {
-      var symbol = state.symbol;
-      if (!symbol) {
-        var ownSymbol = <flash.display.SpriteSymbol>this._symbol;
-        symbol = <Timeline.DisplaySymbol>ownSymbol.loaderInfo.getSymbolById(state.symbolId);
-        state.symbol = symbol;
-      }
       var symbolClass = symbol.symbolClass;
       var instance: DisplayObject;
       if (symbolClass.isSubtypeOf(flash.display.BitmapData)) {
@@ -452,9 +449,11 @@ module Shumway.AVM2.AS.flash.display {
       } else {
         instance = symbolClass.initializeFrom(symbol);
       }
+      if (placeObjectTag.flags & PlaceObjectFlags.HasName) {
+        instance._name = placeObjectTag.name;
+      }
       instance._setFlags(DisplayObjectFlags.AnimatedByTimeline);
-      instance._setFlags(DisplayObjectFlags.OwnedByTimeline);
-      instance._animate(state);
+      instance._animate(placeObjectTag);
       if (callConstructor) {
         symbolClass.instanceConstructorNoInitialize.call(instance);
       }
@@ -573,7 +572,7 @@ module Shumway.AVM2.AS.flash.display {
       var oldParent = this._parent;
       release || assert(parent !== this);
       this._parent = parent;
-      this._depth = depth;
+      this._setDepth(depth);
       if (parent) {
         this._addReference();
         var bubblingFlags = DisplayObjectFlags.None;
@@ -590,6 +589,15 @@ module Shumway.AVM2.AS.flash.display {
       if (oldParent) {
         this._removeReference();
       }
+    }
+
+    _setDepth(value: number) {
+      if (value > -1) {
+        this._setFlags(DisplayObjectFlags.OwnedByTimeline);
+      } else {
+        this._removeFlags(DisplayObjectFlags.OwnedByTimeline);
+      }
+      this._depth = value;
     }
 
     _setFillAndLineBoundsFromWidthAndHeight(width: number, height: number) {
@@ -1032,7 +1040,6 @@ module Shumway.AVM2.AS.flash.display {
      * property of this object is changed by user code.
      */
     private _stopTimelineAnimation() {
-      this._removeFlags(DisplayObjectFlags.OwnedByTimeline);
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
 
@@ -1060,44 +1067,109 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Animates this object's display properties.
      */
-    _animate(state: Shumway.Timeline.AnimationState): void {
-      if (state.matrix) {
-        this._setMatrix(state.matrix, false);
+    _animate(placeObjectTag: Shumway.SWF.PlaceObjectTag): void {
+      release || assert(this._hasFlags(DisplayObjectFlags.AnimatedByTimeline));
+
+      var reset = !(placeObjectTag.flags & PlaceObjectFlags.Move) &&
+                  placeObjectTag.flags & PlaceObjectFlags.HasCharacter;
+
+      if (placeObjectTag.flags & PlaceObjectFlags.HasMatrix) {
+        geom.Matrix.TEMP_MATRIX.copyFromUntyped(placeObjectTag.matrix);
+        this._setMatrix(geom.Matrix.TEMP_MATRIX, false);
+      } else if (reset) {
+        this._setMatrix(geom.Matrix.FROZEN_IDENTITY_MATRIX, false);
       }
-      if (state.colorTransform) {
-        this._setColorTransform(state.colorTransform);
+
+      if (placeObjectTag.flags & PlaceObjectFlags.HasColorTransform) {
+        geom.ColorTransform.TEMP_COLOR_TRANSFORM.copyFromUntyped(placeObjectTag.cxform);
+        this._setColorTransform(geom.ColorTransform.TEMP_COLOR_TRANSFORM);
+      } else if (reset) {
+        this._setColorTransform(geom.ColorTransform.FROZEN_IDENTITY_COLOR_TRANSFORM);
       }
-      if (state.ratio !== this._ratio) {
-        this._ratio = state.ratio;
+
+      if (placeObjectTag.flags & PlaceObjectFlags.HasRatio || reset) {
+        var ratio = placeObjectTag.ratio === undefined ? -1 : placeObjectTag.ratio;
+        if (ratio !== this._ratio) {
+          this._ratio = ratio;
+          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+        }
+      }
+
+      if (placeObjectTag.flags & PlaceObjectFlags.HasClipDepth || reset) {
+        var clipDepth = placeObjectTag.clipDepth === undefined ? -1 : placeObjectTag.clipDepth;
+        if (clipDepth !== this._clipDepth) {
+          this._clipDepth = clipDepth;
+          this._setDirtyFlags(DisplayObjectFlags.DirtyClipDepth);
+        }
+      }
+
+      if (placeObjectTag.flags & PlaceObjectFlags.HasFilterList) {
+        var filters: flash.filters.BitmapFilter[] = [];
+        var swfFilters = placeObjectTag.filters;
+        for (var i = 0; i < swfFilters.length; i++) {
+          var obj = swfFilters[i];
+          var filter: flash.filters.BitmapFilter;
+          switch (obj.type) {
+            case 0:
+              filter = flash.filters.DropShadowFilter.FromUntyped(obj);
+              break;
+            case 1:
+              filter = flash.filters.BlurFilter.FromUntyped(obj);
+              break;
+            case 2:
+              filter = flash.filters.GlowFilter.FromUntyped(obj);
+              break;
+            case 3:
+              filter = flash.filters.BevelFilter.FromUntyped(obj);
+              break;
+            case 4:
+              filter = flash.filters.GradientGlowFilter.FromUntyped(obj);
+              break;
+            case 5:
+              filter = flash.filters.ConvolutionFilter.FromUntyped(obj);
+              break;
+            case 6:
+              filter = flash.filters.ColorMatrixFilter.FromUntyped(obj);
+              break;
+            case 7:
+              filter = flash.filters.GradientBevelFilter.FromUntyped(obj);
+              break;
+            default:
+              release || assert(filter, "Unknown filter type.");
+          }
+          filters.push(filter);
+        }
+        this._filters = filters;
+        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      } else if (reset) {
+        this._filters = null;
         this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
       }
-      // Only some animation states have names, don't set the name if it is not defined.
-      if (state.name) {
-        this._name = state.name;
+
+      if (placeObjectTag.flags & PlaceObjectFlags.HasBlendMode || reset) {
+        var blendMode = flash.display.BlendMode.fromNumber(placeObjectTag.blendMode === undefined ?
+                                                            1 : placeObjectTag.blendMode);
+        if (blendMode !== this._blendMode) {
+          this._blendMode = blendMode;
+          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+        }
       }
-      // TODO: Not sure what is happening here, but state.clipDepth can be -1 after
-      // |this._clipDepth| is set to a value larger than zero. This shouldnt' happen.
-      // Tobias?? sbemaild50.swf
-      if (this._clipDepth !== state.clipDepth && state.clipDepth >= 0) {
-        this._clipDepth = state.clipDepth;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyClipDepth);
+
+      if (placeObjectTag.flags & PlaceObjectFlags.HasCacheAsBitmap || reset) {
+        var cacheAsBitmap = placeObjectTag.bmpCache > 0;
+        if (cacheAsBitmap !== this._hasFlags(DisplayObjectFlags.CacheAsBitmap)) {
+          this._toggleFlags(DisplayObjectFlags.CacheAsBitmap, cacheAsBitmap);
+          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+        }
       }
-      if (state.filters) {
-        this.filters = state.filters;
+
+      if (placeObjectTag.flags & PlaceObjectFlags.HasVisible || reset) {
+        var visible = placeObjectTag.visibility !== 0;
+        if (visible !== this._hasFlags(DisplayObjectFlags.Visible)) {
+          this._toggleFlags(DisplayObjectFlags.Visible, visible);
+          this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+        }
       }
-      if (state.blendMode && state.blendMode !== this._blendMode) {
-        this._blendMode = state.blendMode;
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
-      }
-      if (state.cacheAsBitmap) {
-        this._setFlags(flash.display.DisplayObjectFlags.CacheAsBitmap);
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
-      }
-      if (state.visible !== this._hasFlags(DisplayObjectFlags.Visible)) {
-        this._toggleFlags(DisplayObjectFlags.Visible, state.visible);
-        this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
-      }
-      // TODO: state.events
     }
 
     /**
@@ -1666,6 +1738,7 @@ module Shumway.AVM2.AS.flash.display {
         (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
         this._setDirtyFlags(DisplayObjectFlags.DirtyTextContent);
       }
+      this._symbol = symbol;
       this._setFillAndLineBoundsFromSymbol(symbol);
     }
 

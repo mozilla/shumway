@@ -6,7 +6,7 @@
   var Stage = flash.display.Stage;
   var MovieClip = flash.display.MovieClip;
   var SpriteSymbol = flash.display.SpriteSymbol;
-  var FrameDelta = Shumway.Timeline.FrameDelta;
+  var SWFFrame = Shumway.SWF.SWFFrame;
 
   var MC_NAME_SUFFIX = 0;
 
@@ -28,8 +28,9 @@
     DisplayObject._stage = stage;
     stage._stage = stage;
     var symbol = new SpriteSymbol({id: 0});
+    symbol.loaderInfo = loaderInfo;
     symbol.numFrames = numFrames;
-    var frame = new FrameDelta(loaderInfo, []);
+    var frame = new SWFFrame();
     for (var i = 0; i < numFrames; i++) {
       symbol.frames.push(frame);
     }

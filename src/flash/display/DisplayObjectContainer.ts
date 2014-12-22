@@ -223,7 +223,7 @@ module Shumway.AVM2.AS.flash.display {
       var index = maxIndex + 1;
       for (var i = maxIndex; i >= 0; i--) {
         var current = children[i];
-        if (current._depth) {
+        if (current._depth > -1) {
           if (current._depth < depth) {
             index = i + 1;
             break;
@@ -304,7 +304,7 @@ module Shumway.AVM2.AS.flash.display {
       if (child._parent !== this) {
         throwError('ArgumentError', Errors.NotAChildError);
       }
-      child._depth = -1;
+      child._setDepth(-1);
       var currentIndex = this.getChildIndex(child);
       if (children.length === 1 || currentIndex === index) {
         return;
@@ -337,7 +337,6 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       child._addReference();
-      child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
       return child;
     }
 
@@ -390,7 +389,6 @@ module Shumway.AVM2.AS.flash.display {
       var child = this._lookupChildByName(name);
       if (child) {
         child._addReference();
-        child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
         return child;
       }
 
@@ -595,12 +593,12 @@ module Shumway.AVM2.AS.flash.display {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
-      if (index1 === index2) {
-        return;
-      }
-
+      // Always call _swapChildrenAt to make sure _setDepth(-1) is called on both children.
       this._swapChildrenAt(index1, index2);
-      this._invalidateChildren();
+
+      if (index1 !== index2) {
+        this._invalidateChildren();
+      }
     }
 
     private _swapChildrenAt(index1: number, index2: number) {
@@ -608,10 +606,10 @@ module Shumway.AVM2.AS.flash.display {
       var child1 = children[index1];
       var child2 = children[index2];
       children[index2] = child1;
-      child1._depth = -1;
+      child1._setDepth(-1);
       child1._index = index2;
       children[index1] = child2;
-      child2._depth = -1;
+      child2._setDepth(-1);
       child2._index = index1;
     }
 
