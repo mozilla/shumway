@@ -1159,6 +1159,13 @@ interface ArrayBuffer {
       * Read-only. The length of the ArrayBuffer (in bytes).
       */
     byteLength: number;
+
+
+    /**
+     * Returns a new ArrayBuffer whose contents are a copy of this ArrayBuffer's bytes from begin, inclusive, up to end, exclusive.
+     * If either begin or end is negative, it refers to an index from the end of the array, as opposed to from the beginning.
+     */
+    slice: (begin?: number, end?: number) => ArrayBuffer;
 }
 
 declare var ArrayBuffer: {
@@ -10459,7 +10466,7 @@ interface SVGFilterPrimitiveStandardAttributes extends SVGStylable {
     result: SVGAnimatedString;
 }
 
-interface Element {
+interface Element extends Node {
     msRegionOverflow: string;
     onmspointerdown: (ev: any) => any;
     onmsgotpointercapture: (ev: any) => any;
@@ -11346,7 +11353,7 @@ declare var MSBlobBuilder: {
     new (): MSBlobBuilder;
 }
 
-interface HTMLElement {
+interface HTMLElement extends Element {
     onmscontentzoom: (ev: any) => any;
     oncuechange: (ev: Event) => any;
     spellcheck: boolean;
@@ -11823,7 +11830,7 @@ interface MSNavigatorDoNotTrack {
     confirmWebWideTrackingException(args: ExceptionInformation): boolean;
 }
 
-interface HTMLImageElement {
+interface HTMLImageElement extends HTMLElement {
     crossOrigin: string;
     msPlayToPreferredSourceUri: string;
 }

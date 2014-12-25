@@ -10466,7 +10466,7 @@ interface SVGFilterPrimitiveStandardAttributes extends SVGStylable {
     result: SVGAnimatedString;
 }
 
-interface Element {
+interface Element extends Node {
     msRegionOverflow: string;
     onmspointerdown: (ev: any) => any;
     onmsgotpointercapture: (ev: any) => any;
@@ -11353,7 +11353,7 @@ declare var MSBlobBuilder: {
     new (): MSBlobBuilder;
 }
 
-interface HTMLElement {
+interface HTMLElement extends Element {
     onmscontentzoom: (ev: any) => any;
     oncuechange: (ev: Event) => any;
     spellcheck: boolean;
@@ -11830,7 +11830,7 @@ interface MSNavigatorDoNotTrack {
     confirmWebWideTrackingException(args: ExceptionInformation): boolean;
 }
 
-interface HTMLImageElement {
+interface HTMLImageElement extends HTMLElement {
     crossOrigin: string;
     msPlayToPreferredSourceUri: string;
 }
