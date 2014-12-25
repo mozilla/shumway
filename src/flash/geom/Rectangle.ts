@@ -279,11 +279,11 @@ module Shumway.AVM2.AS.flash.geom {
 
     public unionInPlace(toUnion: Rectangle): Rectangle {
       if (toUnion.isEmpty()) {
-        return;
+        return this;
       }
       if (this.isEmpty()) {
         this.copyFrom(toUnion);
-        return;
+        return this;
       }
       var l: number = Math.min(this.x, toUnion.x);
       var t: number = Math.min(this.y, toUnion.y);
@@ -294,10 +294,9 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public equals(toCompare: Rectangle): boolean {
-      return this.x === toCompare.x
-        && this.y === toCompare.y
-        && this.width === toCompare.width
-        && this.height === toCompare.height;
+      return this === toCompare ||
+             this.x === toCompare.x && this.y === toCompare.y
+             && this.width === toCompare.width && this.height === toCompare.height;
     }
 
     public copyFrom(sourceRect: Rectangle): void {
