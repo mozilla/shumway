@@ -8307,7 +8307,8 @@ interface ImageData {
 }
 declare var ImageData: {
     prototype: ImageData;
-    new (): ImageData;
+    new (array: Uint8ClampedArray, width: number, height: number): ImageData;
+    new (width: number, height: number): ImageData;
 }
 
 interface HTMLTableColElement extends HTMLElement, HTMLTableAlignment {
