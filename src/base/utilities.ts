@@ -3195,7 +3195,7 @@ module Shumway {
           if (a === 0) {
             target[i] = 0;
           } else if (a === 0xff) {
-            target[i] = (pBGRA & 0xff) << 24 | ((pBGRA >> 8) & 0x00ffffff);
+            target[i] = 0xff000000 | ((pBGRA >> 8) & 0x00ffffff);
           } else {
             var b = (pBGRA >> 24) & 0xff;
             var g = (pBGRA >> 16) & 0xff;
