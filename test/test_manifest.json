@@ -84,11 +84,6 @@
       "swf": "swfs/acid/acid-color.swf",
       "type": "eq"
     },
-    {  "id": "acid-gc",
-      "frames": [1],
-      "swf": "swfs/acid/acid-gc.swf",
-      "type": "eq"
-    },
     {  "id": "acid-gradient-0",
       "frames": [1],
       "swf": "swfs/acid/acid-gradient-0.swf",
