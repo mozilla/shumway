@@ -50,7 +50,7 @@
       "type": "eq"
     },
     {  "id": "acid-child",
-      "frames": [1, 5, 10],
+      "frames": [5, 10],
       "swf": "swfs/acid/acid-child.swf",
       "type": "eq"
     },
