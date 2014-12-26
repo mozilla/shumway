@@ -5,7 +5,7 @@
        "type": "eq"
     },
     {  "id": "acid-image",
-       "frames": [1, 5, 10],
+       "frames": [10],
        "swf": "swfs/acid/acid-image.swf",
        "type": "eq"
     },
