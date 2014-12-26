@@ -104,11 +104,6 @@
       "swf": "swfs/acid/acid-gradient.swf",
       "type": "eq"
     },
-    {  "id": "acid-image-2",
-      "frames": [10],
-      "swf": "swfs/acid/acid-image-2.swf",
-      "type": "eq"
-    },
     {  "id": "acid-large",
       "frames": [20],
       "swf": "swfs/acid/acid-large.swf",
