@@ -139,11 +139,6 @@
       "swf": "swfs/acid/acid-stroke-0.swf",
       "type": "eq"
     },
-    {  "id": "acid-stroke-1",
-      "frames": [1],
-      "swf": "swfs/acid/acid-stroke-1.swf",
-      "type": "eq"
-    },
     {  "id": "acid-text-2",
       "frames": [1],
       "swf": "swfs/acid/acid-text-2.swf",
