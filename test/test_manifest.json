@@ -65,7 +65,7 @@
       "type": "eq"
     },
     {  "id": "acid-clip-3",
-      "frames": [10, 20],
+      "frames": [3, 10],
       "swf": "swfs/acid/acid-clip-3.swf",
       "type": "eq"
     },
