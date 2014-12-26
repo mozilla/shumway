@@ -44,16 +44,6 @@
       "swf": "swfs/acid/acid-bitmaps.swf",
       "type": "eq"
     },
-    {  "id": "acid-buttons-2",
-      "frames": [1],
-      "swf": "swfs/acid/acid-buttons-2.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-buttons",
-      "frames": [1],
-      "swf": "swfs/acid/acid-buttons.swf",
-      "type": "eq"
-    },
     {  "id": "acid-chars",
       "frames": [1],
       "swf": "swfs/acid/acid-chars.swf",
