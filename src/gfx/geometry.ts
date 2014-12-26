@@ -766,6 +766,7 @@ module Shumway.GFX.Geometry {
     }
 
     transformRectangle (rectangle: Rectangle, points: Point[]) {
+      release || assert(points.length === 4);
       var m = this._data, a = m[0], b = m[1], c = m[2], d = m[3], tx = m[4], ty = m[5];
 
       var x = rectangle.x;
@@ -800,13 +801,13 @@ module Shumway.GFX.Geometry {
           m[1] === 0 &&
           m[2] === 0 &&
           m[3] === 1) {
-        this._type === MatrixType.Translation;
+        this._type = MatrixType.Translation;
         return true;
       } else if (epsilonEquals(m[0], 1) &&
         epsilonEquals(m[1], 0) &&
         epsilonEquals(m[2], 0) &&
         epsilonEquals(m[3], 1)) {
-        this._type === MatrixType.Translation;
+        this._type = MatrixType.Translation;
         return true;
       }
       return false;
