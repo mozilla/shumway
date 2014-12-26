@@ -150,7 +150,7 @@
       "type": "eq"
     },
     {  "id": "acid-text-6",
-      "frames": [1, 10, 20],
+      "frames": [1, 20],
       "swf": "swfs/acid/acid-text-6.swf",
       "type": "eq"
     },
