@@ -550,28 +550,6 @@ module Shumway.GFX {
        */
       var MAX_LINE_WIDTH = 1024;
 
-      function getDeterminant(matrix: SVGMatrix): number {
-        return matrix.a * matrix.d - matrix.b * matrix.c;
-      }
-
-      function getScaleX(matrix: SVGMatrix): number {
-        return matrix.a;
-        if (matrix.a === 1 && matrix.b === 0) {
-          return 1;
-        }
-        var result = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
-        return getDeterminant(matrix) < 0 ? -result : result;
-      }
-
-      function getScaleY(matrix: SVGMatrix): number {
-        return matrix.d;
-        if (matrix.c === 0 && matrix.d === 1) {
-          return 1;
-        }
-        var result = Math.sqrt(matrix.c * matrix.c + matrix.d * matrix.d);
-        return getDeterminant(matrix) < 0 ? -result : result;
-      }
-
       /**
        * There's an impedance mismatch between Flash's vector drawing model and that of Canvas2D[1]: Flash applies scaling
        * of stroke widths once by (depending on settings for the shape) using the concatenated horizontal scaling, vertical
@@ -586,19 +564,13 @@ module Shumway.GFX {
        *
        * Implements Flash stroking behavior.
        */
-      CanvasRenderingContext2D.prototype.flashStroke = (function (path: Path2D, lineScaleMode: LineScaleMode) {
+      CanvasRenderingContext2D.prototype.flashStroke = function (path: Path2D, lineScaleMode: LineScaleMode) {
         var m = this.currentTransform;
         if (!m) {
-          // Firefox doesn't have |currentTransform| so check for |mozCurrentTransform| instead.
-          var mozCurrentTransform = this.mozCurrentTransform;
-          if (mozCurrentTransform) {
-            m = Geometry.Matrix.createSVGMatrixFromArray(mozCurrentTransform);
-          } else {
-            // Chrome doesn't have |currentTransform| yet, so fall back on normal stroking. |currentTransform| is available
-            // only if you enable experimental features.
-            this.stroke(path);
-            return;
-          }
+          // Chrome doesn't have |currentTransform| yet, so fall back on normal stroking.
+          // |currentTransform| is available only if you enable experimental features.
+          this.stroke(path);
+          return;
         }
 
         var transformedPath = new Path2D();
@@ -629,7 +601,22 @@ module Shumway.GFX {
         this.stroke(transformedPath);
         this.setTransform(m.a, m.b, m.c, m.d, m.e, m.f);
         this.lineWidth = oldLineWidth;
-      });
+      };
+
+      // A complete polyfill of currentTransform isn't feasible: we want to only use it if it gives
+      // us a meaningful value. That we can only get if the platform gives us any means at all to
+      // get that value. Gecko does so in the form of mozCurrentTransform, most engines don't.
+      if (!('currentTransform' in CanvasRenderingContext2D.prototype) &&
+        'mozCurrentTransform' in CanvasRenderingContext2D.prototype) {
+        Object.defineProperty(CanvasRenderingContext2D.prototype, 'currentTransform', {
+          get: mozPolyfillCurrentTransform
+        });
+      }
+
+      function mozPolyfillCurrentTransform() {
+        release || assert(this.mozCurrentTransform);
+        return Geometry.Matrix.createSVGMatrixFromArray(this.mozCurrentTransform);
+      }
     })();
   }
 

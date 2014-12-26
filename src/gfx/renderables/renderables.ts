@@ -1409,6 +1409,17 @@ module Shumway.GFX {
       leaveTimeline("RenderableText.reflow");
     }
 
+    private static absoluteBoundPoints = [new Point(0, 0), new Point(0, 0),
+                                          new Point(0, 0), new Point(0, 0)];
+    private static roundBoundPoints(points: Point[]) {
+      release || assert(points === RenderableText.absoluteBoundPoints);
+      for (var i = 0; i < points.length; i++) {
+        var point = points[i];
+        point.x = Math.floor(point.x + .1) + .5;
+        point.y = Math.floor(point.y + .1) + .5;
+      }
+    }
+
     render(context: CanvasRenderingContext2D): void {
       enterTimeline("RenderableText.render");
       context.save();
@@ -1422,7 +1433,37 @@ module Shumway.GFX {
         context.strokeStyle = ColorUtilities.rgbaToCSSStyle(this._borderColor);
         context.lineCap = 'square';
         context.lineWidth = 1;
-        context.strokeRect(rect.x, rect.y, rect.w, rect.h);
+        // TextField bounds are always drawn as 1px lines on (global-space) pixel boundaries.
+        // Their rounding is a bit weird, though: fractions below .9 are rounded down.
+        // We can only fully implement this in browsers that support `currentTransform`.
+        var boundPoints = RenderableText.absoluteBoundPoints;
+        var m: SVGMatrix = context['currentTransform'];
+        if (m) {
+          rect = rect.clone();
+          var matrix = new Matrix(m.a, m.b, m.c, m.d, m.e, m.f);
+          matrix.transformRectangle(rect, boundPoints);
+          context.setTransform(1, 0, 0, 1, 0, 0);
+        } else {
+          boundPoints[0].x = rect.x;
+          boundPoints[0].y = rect.y;
+          boundPoints[1].x = rect.x + rect.w;
+          boundPoints[1].y = rect.y;
+          boundPoints[2].x = rect.x + rect.w;
+          boundPoints[2].y = rect.y + rect.h;
+          boundPoints[3].x = rect.x;
+          boundPoints[3].y = rect.y + rect.h;
+        }
+        RenderableText.roundBoundPoints(boundPoints);
+        var path = new Path2D();
+        path.moveTo(boundPoints[0].x, boundPoints[0].y);
+        path.lineTo(boundPoints[1].x, boundPoints[1].y);
+        path.lineTo(boundPoints[2].x, boundPoints[2].y);
+        path.lineTo(boundPoints[3].x, boundPoints[3].y);
+        path.lineTo(boundPoints[0].x, boundPoints[0].y);
+        context.stroke(path);
+        if (m) {
+          context.setTransform(m.a, m.b, m.c, m.d, m.e, m.f);
+        }
       }
 
       if (this._coords) {
