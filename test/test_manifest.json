@@ -54,24 +54,19 @@
       "swf": "swfs/acid/acid-child.swf",
       "type": "eq"
     },
+    {  "id": "acid-clip",
+      "frames": [1],
+      "swf": "swfs/acid/acid-clip.swf",
+      "type": "eq"
+    },
     {  "id": "acid-clip-2",
       "frames": [1],
       "swf": "swfs/acid/acid-clip-2.swf",
       "type": "eq"
     },
     {  "id": "acid-clip-3",
-      "frames": [1, 10, 20],
+      "frames": [10, 20],
       "swf": "swfs/acid/acid-clip-3.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-clip-bug",
-      "frames": [1],
-      "swf": "swfs/acid/acid-clip-bug.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-clip",
-      "frames": [1],
-      "swf": "swfs/acid/acid-clip.swf",
       "type": "eq"
     },
     {  "id": "acid-color-0",
