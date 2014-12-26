@@ -119,11 +119,6 @@
       "swf": "swfs/acid/acid-scale.swf",
       "type": "eq"
     },
-    {  "id": "acid-sh",
-      "frames": [1],
-      "swf": "swfs/acid/acid-sh.swf",
-      "type": "eq"
-    },
     {  "id": "acid-shapes-testing",
       "frames": [1],
       "swf": "swfs/acid/acid-shapes-testing.swf",
