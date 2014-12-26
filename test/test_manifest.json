@@ -109,11 +109,6 @@
       "swf": "swfs/acid/acid-large.swf",
       "type": "eq"
     },
-    {  "id": "acid-mask-0",
-      "frames": [1],
-      "swf": "swfs/acid/acid-mask-0.swf",
-      "type": "eq"
-    },
     {  "id": "acid-mask",
       "frames": [5, 10],
       "swf": "swfs/acid/acid-mask.swf",
