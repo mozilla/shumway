@@ -115,7 +115,7 @@
       "type": "eq"
     },
     {  "id": "acid-mask",
-      "frames": [1, 5, 10],
+      "frames": [5, 10],
       "swf": "swfs/acid/acid-mask.swf",
       "type": "eq"
     },
