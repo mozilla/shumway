@@ -80,7 +80,7 @@
       "type": "eq"
     },
     {  "id": "acid-color",
-      "frames": [1, 5, 10],
+      "frames": [1, 10],
       "swf": "swfs/acid/acid-color.swf",
       "type": "eq"
     },
