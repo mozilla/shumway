@@ -25,12 +25,12 @@
       "type": "eq"
     },
     {  "id": "acid-bitmap-fill-2",
-      "frames": [20],
+      "frames": [1],
       "swf": "swfs/acid/acid-bitmap-fill-2.swf",
       "type": "eq"
     },
     {  "id": "acid-bitmap-fill",
-      "frames": [20],
+      "frames": [1],
       "swf": "swfs/acid/acid-bitmap-fill.swf",
       "type": "eq"
     },
@@ -40,7 +40,7 @@
       "type": "eq"
     },
     {  "id": "acid-bitmaps",
-      "frames": [1, 5, 10],
+      "frames": [5, 10],
       "swf": "swfs/acid/acid-bitmaps.swf",
       "type": "eq"
     },
