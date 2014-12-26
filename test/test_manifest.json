@@ -54,11 +54,6 @@
       "swf": "swfs/acid/acid-child.swf",
       "type": "eq"
     },
-    {  "id": "acid-click-0",
-      "frames": [1],
-      "swf": "swfs/acid/acid-click-0.swf",
-      "type": "eq"
-    },
     {  "id": "acid-clip-2",
       "frames": [1],
       "swf": "swfs/acid/acid-clip-2.swf",
