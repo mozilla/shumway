@@ -130,7 +130,7 @@
       "type": "eq"
     },
     {  "id": "acid-small",
-      "frames": [1],
+      "frames": [1, 5],
       "swf": "swfs/acid/acid-small.swf",
       "type": "eq"
     },
