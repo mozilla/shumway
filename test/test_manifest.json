@@ -114,16 +114,6 @@
       "swf": "swfs/acid/acid-mask.swf",
       "type": "eq"
     },
-    {  "id": "acid-mouse-0",
-      "frames": [1],
-      "swf": "swfs/acid/acid-mouse-0.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-mouse",
-      "frames": [1],
-      "swf": "swfs/acid/acid-mouse.swf",
-      "type": "eq"
-    },
     {  "id": "acid-scale",
       "frames": [1],
       "swf": "swfs/acid/acid-scale.swf",
