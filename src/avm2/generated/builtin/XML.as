@@ -124,8 +124,7 @@ public final dynamic class XML extends Object
 
     // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
     // The code for the actual ctor is in XMLClass::construct in the avmplus
-    public function XML(value = void 0)
-    {}
+    public native function XML(value = void 0);
 
     AS3 native function valueOf():XML;
 }
@@ -195,8 +194,7 @@ public final dynamic class XMLList extends Object
 
     // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
     // The code for the actual ctor is in XMLList::construct in the avmplus
-    public function XMLList(value = void 0)
-    {}
+    public native function XMLList(value = void 0);
 }
 
 [native(cls="QNameClass", gc="exact", instance="QNameObject", methods="auto", construct="override")]

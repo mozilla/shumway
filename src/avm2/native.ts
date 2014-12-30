@@ -1809,6 +1809,10 @@ module Shumway.AVM2.AS {
       return cls || null;
     }
 
+    export function describeType(value: any, flags: number) {
+      return Shumway.AVM2.AS.describeType(value, flags);
+    }
+
     export function describeTypeJSON(value: any, flags: number) {
       return Shumway.AVM2.AS.describeTypeJSON(value, flags);
     }
