@@ -1797,11 +1797,13 @@ module Shumway.AVM2.Runtime {
       return methodInfo.abc.applicationDomain.getClass("packageInternal __AS3__.vec.Vector$object").applyType(type);
     } else {
       Shumway.Debug.notImplemented(factoryClassName);
-      return;
     }
   }
 
   export function createName(namespaces: Namespace [], name: string, flags: number) {
+    if (name === undefined) {
+      name = '*';
+    }
     return new Multiname(namespaces, name, flags);
   }
 }
