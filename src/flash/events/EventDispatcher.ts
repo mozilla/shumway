@@ -469,7 +469,7 @@ module Shumway.AVM2.AS.flash.events {
        * all listener callbacks but not when bubbling.
        */
       if (event._target) {
-        event = event.clone();
+        event = event.asCallPublicProperty('clone', null);
       }
       var snapshot = list.snapshot();
       for (var i = 0; i < snapshot.length; i++) {
