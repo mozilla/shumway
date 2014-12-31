@@ -392,7 +392,7 @@ module Shumway.AVM2.AS {
       Runtime.throwError('TypeError', Errors.ConvertUndefinedToObjectError);
     }
     if (value instanceof ASXML) {
-      targetList.Append(value);
+      targetList.append(value);
       return;
     }
     // The E4X spec says we must throw a TypeError for non-Boolean, Number, or String objects.
@@ -406,7 +406,7 @@ module Shumway.AVM2.AS {
     for (var i = 0; i < children.length; i++) {
       var v = children[i];
       v._parent = undefined;
-      targetList.Append(v);
+      targetList.append(v);
     }
   }
 
@@ -1661,7 +1661,7 @@ module Shumway.AVM2.AS {
       if (isIndex(propertyName)) {
         var list = new AS.ASXMLList();
         if (propertyName < this._children.length) {
-          list.Append(this._children[propertyName | 0]._deepCopy());
+          list.append(this._children[propertyName | 0]._deepCopy());
         }
         return list;
       }
@@ -1694,7 +1694,7 @@ module Shumway.AVM2.AS {
       var xl = new AS.ASXMLList();
       self._children.forEach(function (v, i) {
         if (v._kind === ASXMLKind.Comment) {
-          xl.Append(v);
+          xl.append(v);
         }
       });
       return xl;
@@ -2015,7 +2015,7 @@ module Shumway.AVM2.AS {
       var xl = new AS.ASXMLList();
       self._children.forEach(function (v, i) {
         if (v._kind === ASXMLKind.Text) {
-          xl.Append(v);
+          xl.append(v);
         }
       });
       return xl;
@@ -2592,11 +2592,11 @@ module Shumway.AVM2.AS {
       var result: ASXMLList;
       if (left instanceof ASXML) {
         result = new AS.ASXMLList();
-        result.Append(left);
+        result.append(left);
       } else {
         result = left;
       }
-      result.Append(right);
+      result.append(right);
       return result;
     }
 
@@ -2912,8 +2912,8 @@ module Shumway.AVM2.AS {
       return xml;
     }
 
-    // 9.2.1.6 [[Append]] (V)
-    Append(V: any) {
+    // 9.2.1.6 [[append]] (V)
+    append(V: any) {
       // Step 1.
       var children = this._children;
       var i = children.length;
@@ -3052,7 +3052,7 @@ module Shumway.AVM2.AS {
         if (v._kind === ASXMLKind.Element) {
           // i. Let gq be the result of calling the [[Get]] method of x[i] with argument P
           var gq = v.getProperty(name, isAttribute);
-          // ii. If gq.[[Length]] > 0, call the [[Append]] method of list with argument gq
+          // ii. If gq.[[Length]] > 0, call the [[append]] method of list with argument gq
           if (gq.length() > 0) {
             var descendants = gq._children;
             for (var j = 0; j < descendants.length; j++) {
@@ -3113,7 +3113,7 @@ module Shumway.AVM2.AS {
       // Steps 1-2.
       if (isIndex(mn)) {
         // TODO do we need to simulate a sparse array here?
-        this.Append(value);
+        this.append(value);
         return;
       }
       // Step 3.
@@ -3125,7 +3125,7 @@ module Shumway.AVM2.AS {
           return;
         }
         // Step 3.a.iii.
-        this.Append(r._children[0]);
+        this.append(r._children[0]);
       }
       // Step 3.b.
       if (this._children.length === 1) {
