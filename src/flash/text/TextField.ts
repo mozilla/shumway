@@ -506,14 +506,13 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get styleSheet(): flash.text.StyleSheet {
-      notImplemented("public flash.text.TextField::get styleSheet"); return;
-      // return this._styleSheet;
+      somewhatImplemented("public flash.text.TextField::get styleSheet");
+      return this._styleSheet;
     }
 
     set styleSheet(value: flash.text.StyleSheet) {
-      value = value;
-      notImplemented("public flash.text.TextField::set styleSheet"); return;
-      // this._styleSheet = value;
+      somewhatImplemented("public flash.text.TextField::set styleSheet");
+      this._styleSheet = value;
     }
 
     get text(): string {
@@ -640,7 +639,9 @@ module Shumway.AVM2.AS.flash.text {
 
     getCharBoundaries(charIndex: number /*int*/): flash.geom.Rectangle {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getCharBoundaries"); return;
+      somewhatImplemented("public flash.text.TextField::getCharBoundaries");
+      var fakeCharHeight = this.textHeight, fakeCharWidth = fakeCharHeight * 0.75;
+      return new flash.geom.Rectangle(charIndex * fakeCharWidth, 0, fakeCharWidth, fakeCharHeight);
     }
     getCharIndexAtPoint(x: number, y: number): number /*int*/ {
       x = +x; y = +y;
