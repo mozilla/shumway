@@ -65,10 +65,9 @@ module Shumway {
       // TODO: implement
     }
     loadBytes(bytes: Uint8Array) {
-      this._bytesLoaded = bytes.length;
-      var file = this._file = createFileInstanceForHeader(bytes, bytes.length);
-      this._listener.onLoadOpen(file);
-      this.processSWFFileUpdate(file);
+      this.processLoadOpen();
+      this.processNewData(bytes, {bytesLoaded: bytes.length, bytesTotal: bytes.length});
+      this.processLoadClose();
     }
     processLoadOpen() {
       release || assert(!this._file);
