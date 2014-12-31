@@ -1071,14 +1071,14 @@ module Shumway.AVM2.AS {
       if (re === (void 0) || re === null) {
         return null;
       } else {
-        if (re instanceof RegExp && re.global) {
+        if (re instanceof XRegExp && re.global) {
           var matches = [], m;
           while ((m = re.exec(this))) {
             matches.push(m[0]);
           }
           return matches;
         }
-        if (!(re instanceof RegExp) && !(typeof re === 'string')) {
+        if (!(re instanceof XRegExp) && !(typeof re === 'string')) {
           re = String(re);
         }
         return this.match(re);
@@ -1086,7 +1086,7 @@ module Shumway.AVM2.AS {
     }
 
     search(re): number {
-      if (re instanceof RegExp) {
+      if (re instanceof XRegExp) {
         return this.search(re);
       }
       return (<string><any>this).indexOf(asCoerceString(re));
