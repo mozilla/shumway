@@ -78,6 +78,15 @@ module Shumway.Player.Test {
       });
     }
 
+    onRegisterFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
+      this._worker.postMessage({
+        type: 'font',
+        id: id,
+        buffer: buffer,
+        forceFontInit: forceFontInit
+      });
+    }
+
     private _onWorkerMessage(e) {
       var data = e.data;
       if (typeof data !== 'object' || data === null) {

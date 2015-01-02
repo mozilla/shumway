@@ -93,6 +93,15 @@ module Shumway.Player.Window {
       }, '*');
     }
 
+    onRegisterFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
+      this._parent.postMessage({
+        type: 'font',
+        id: id,
+        buffer: buffer,
+        forceFontInit: forceFontInit
+      }, '*');
+    }
+
     private onWindowMessage(data, async) {
       if (typeof data === 'object' && data !== null) {
         switch (data.type) {

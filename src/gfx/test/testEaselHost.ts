@@ -130,6 +130,10 @@ module Shumway.GFX.Test {
         case 'fscommand':
           this.processFSCommand(data.command, data.args);
           break;
+        case 'font':
+          this.processRegisterFont(data.id, data.buffer, data.forceFontInit);
+          e.handled = true;
+          break;
       }
     }
 

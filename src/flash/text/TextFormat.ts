@@ -48,8 +48,6 @@ module Shumway.AVM2.AS.flash.text {
       this.leading = leading;
     }
 
-    private static measureTextField: flash.text.TextField;
-
     private _align: string;
     private _blockIndent: Object;
     private _bold: Object;

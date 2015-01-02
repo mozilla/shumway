@@ -29,6 +29,10 @@ module Shumway.SWF {
   import ImageDefinition = Parser.ImageDefinition;
   import ControlTags = Parser.ControlTags;
 
+  export interface IFontLoader {
+    registerCSSFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean);
+  }
+
   export class SWFFile {
     isCompressed: boolean;
     swfVersion: number;
@@ -54,6 +58,10 @@ module Shumway.SWF {
     eagerlyParsedSymbols: EagerlyParsedDictionaryEntry[];
     pendingSymbolsPromise: Promise<any>;
 
+    // We need fontLoader here only for Chrome-like browsers, where fonts
+    // cannot be loaded synchronously.
+    fontLoader: IFontLoader;
+
     private _uncompressedLength: number;
     private _uncompressedLoadedLength: number;
     private _data: Uint8Array;
@@ -72,7 +80,7 @@ module Shumway.SWF {
     private _currentInitActionBlocks: InitActionBlock[];
     private _currentExports: SymbolExport[];
 
-    constructor(initialBytes: Uint8Array, length: number) {
+    constructor(initialBytes: Uint8Array, length: number, fontLoader: IFontLoader = null) {
       // TODO: cleanly abort loading/parsing instead of just asserting here.
       release || assert(initialBytes[0] === 67 || initialBytes[0] === 70,
                         "Unsupported compression format: " + (initialBytes[0] === 90 ?
@@ -104,6 +112,7 @@ module Shumway.SWF {
       this.abcBlocks = [];
       this.dictionary = [];
       this.fonts = [];
+      this.fontLoader = fontLoader;
 
       this.symbolClassesMap = [];
       this.symbolClassesList = [];
@@ -670,6 +679,12 @@ module Shumway.SWF {
 
     private decodeEmbeddedFont(unparsed: UnparsedTag) {
       var definition = this.getParsedTag(unparsed);
+      if (definition.data) {
+        // Only register fonts with embedded glyphs.
+        if (this.fontLoader) {
+          this.fontLoader.registerCSSFont(definition.id, definition.data, true);
+        }
+      }
       var symbol = new EagerlyParsedDictionaryEntry(definition.id, unparsed, 'font', definition);
       if (!release && traceLevel.value > 0) {
         console.info("Decoding embedded font " + definition.id + " with name '" +
@@ -839,10 +854,6 @@ module Shumway.SWF {
       case SWFTag.CODE_DEFINE_FONT3:
       case SWFTag.CODE_DEFINE_FONT4:
         var symbol = Shumway.SWF.Parser.defineFont(swfTag);
-        // Only register fonts with embedded glyphs.
-        if (symbol.data) {
-          Shumway.registerCSSFont(symbol.id, symbol.data, !inFirefox);
-        }
         return symbol;
       case SWFTag.CODE_DEFINE_MORPH_SHAPE:
       case SWFTag.CODE_DEFINE_MORPH_SHAPE2:

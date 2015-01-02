@@ -45,6 +45,8 @@ module Shumway.Player {
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
 
+  import IFontLoader = Shumway.SWF.IFontLoader;
+
   import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
   /**
@@ -53,7 +55,7 @@ module Shumway.Player {
    * This class brings everything together. Loads the swf, runs the event loop and
    * synchronizes the frame tree with the display list.
    */
-  export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService {
+  export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService, IFontLoader {
     private _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
@@ -599,6 +601,10 @@ module Shumway.Player {
       this._stage.setStageContainerSize(displayParameters.stageWidth, displayParameters.stageHeight, displayParameters.pixelRatio);
     }
 
+    public registerCSSFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
+      this.onRegisterFont(id, buffer, forceFontInit);
+    }
+
     onExternalCommand(command) {
       throw new Error('This method is abstract');
     }
@@ -612,6 +618,10 @@ module Shumway.Player {
     }
 
     onFrameProcessed() {
+      throw new Error('This method is abstract');
+    }
+
+    onRegisterFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
       throw new Error('This method is abstract');
     }
 

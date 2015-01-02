@@ -176,6 +176,10 @@ module Shumway.GFX {
     processFrame() {
     }
 
+    processRegisterFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
+      Shumway.registerCSSFont(id, buffer, forceFontInit);
+    }
+
     onExernalCallback(request) {
       throw new Error('This method is abstract');
     }

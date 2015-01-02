@@ -32,20 +32,28 @@ module Shumway {
     onLoadError: () => void;
   }
 
+  // Since we are starting to parse data at file object construction, we need
+  // to pass some additional parameters, e.g. to make SWFFile font loading working.
+  export interface ILoadContext {
+    fontLoader: SWF.IFontLoader;
+  }
+
   export class FileLoader {
     _file: any; // {SWFFile|ImageFile}
 
     private _listener: ILoadListener;
+    private _context: ILoadContext;
     private _loadingServiceSession: FileLoadingSession;
     private _delayedUpdatesPromise: Promise<any>;
     private _bytesLoaded: number;
     private _queuedInitialData: Uint8Array;
 
-
-    constructor(listener: ILoadListener) {
+    constructor(listener: ILoadListener, context: ILoadContext) {
       release || assert(listener);
+      release || assert(context);
       this._file = null;
       this._listener = listener;
+      this._context = context;
       this._loadingServiceSession = null;
       this._delayedUpdatesPromise = null;
       this._bytesLoaded = 0;
@@ -66,7 +74,7 @@ module Shumway {
     }
     loadBytes(bytes: Uint8Array) {
       this._bytesLoaded = bytes.length;
-      var file = this._file = createFileInstanceForHeader(bytes, bytes.length);
+      var file = this._file = createFileInstanceForHeader(bytes, bytes.length, this._context);
       this._listener.onLoadOpen(file);
       this.processSWFFileUpdate(file);
     }
@@ -91,7 +99,7 @@ module Shumway {
       }
       var file = this._file;
       if (!file) {
-        file = this._file = createFileInstanceForHeader(data, progressInfo.bytesTotal);
+        file = this._file = createFileInstanceForHeader(data, progressInfo.bytesTotal, this._context);
         this._listener.onLoadOpen(file);
       } else {
         file.appendLoadedData(data);
@@ -132,11 +140,13 @@ module Shumway {
     }
   }
 
-  function createFileInstanceForHeader(header: Uint8Array, fileLength: number): any {
+  function createFileInstanceForHeader(header: Uint8Array, fileLength: number, context: ILoadContext): any {
     var magic = (header[0] << 16) | (header[1] << 8) | header[2];
 
     if ((magic & 0xffff) === FileTypeMagicHeaderBytes.SWF /* SWF */) {
-      return new SWFFile(header, fileLength);
+      // TODO refactor file object construction to split header and actual data parsing
+      // and move context parameters assignment during onLoadOpen
+      return new SWFFile(header, fileLength, context.fontLoader);
     }
 
     if (magic === FileTypeMagicHeaderBytes.JPG) {

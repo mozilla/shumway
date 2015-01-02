@@ -259,7 +259,9 @@ module Shumway.AVM2.AS.flash.display {
       this._contentLoaderInfo._url = request.url;
       this._applyLoaderContext(context);
       this._loadingType = LoadingType.External;
-      this._fileLoader = new FileLoader(this);
+      this._fileLoader = new FileLoader(this, {
+        fontLoader: Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils']
+      });
       if (!release && traceLoaderOption.value) {
         console.log("Load start: " + request.url);
       }
@@ -279,7 +281,9 @@ module Shumway.AVM2.AS.flash.display {
                                      '/[[DYNAMIC]]/' + (++Loader._embeddedContentLoadCount);
       this._applyLoaderContext(context);
       this._loadingType = LoadingType.Bytes;
-      this._fileLoader = new FileLoader(this);
+      this._fileLoader = new FileLoader(this, {
+        fontLoader: Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils']
+      });
       this._queuedLoadUpdates = [];
       // Just passing in the bytes won't do, because the buffer can contain slop at the end.
       this._fileLoader.loadBytes(new Uint8Array((<any>data).bytes, 0, data.length));

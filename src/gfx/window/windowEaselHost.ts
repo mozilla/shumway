@@ -106,6 +106,8 @@ module Shumway.GFX.Window {
           this.processExternalCommand(data.request);
         } else if (data.type === 'videoControl') {
           data.result = this.processVideoControl(data.id, data.eventType, data.data);
+        } else if (data.type === 'font') {
+          this.processRegisterFont(data.id, data.buffer, data.forceFontInit);
         } else if (data.type === 'fscommand') {
           this.processFSCommand(data.command, data.args);
         } else if (data.type === 'timelineResponse' && data.timeline) {

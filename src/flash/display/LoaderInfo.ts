@@ -307,6 +307,12 @@ module Shumway.AVM2.AS.flash.display {
           // Fonts are eagerly parsed and have their data in `definition`.
           if (data.definition) {
             data = data.definition;
+          } else {
+            // Fonts are not eagerly parsed, needs to be registered.
+            // Only register fonts with embedded glyphs.
+            if (data.data && this._file.fontLoader) {
+              this._file.fontLoader.registerCSSFont(data.id, data.data, false);
+            }
           }
           symbol = flash.text.FontSymbol.FromData(data);
           var font = flash.text.Font.initializeFrom(symbol);

@@ -436,7 +436,7 @@ module Shumway.Shell {
           //  }
           }
         };
-        var loader = new Shumway.FileLoader(loadListener);
+        var loader = new Shumway.FileLoader(loadListener, {fontLoader: null});
         loader.loadBytes(buffer);
       } catch (x) {
         writer.redLn("Cannot parse: " + file + ", reason: " + x);
