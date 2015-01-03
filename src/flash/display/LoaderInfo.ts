@@ -274,8 +274,13 @@ module Shumway.AVM2.AS.flash.display {
       }
       var data = this._file.getSymbol(id);
       if (!data) {
-        // It's entirely valid not to have symbols defined.
-        Debug.warning("Unknown symbol requested: " + id);
+        if (id !== 65535) {
+          // Id 65535 is somehow used invalidly in lots of embedded shapes created by the authoring
+          // tool.
+          Debug.warning("Unknown symbol requested: " + id);
+        }
+        // It's entirely valid not to have symbols defined, but might be a sign of us doing
+        // something wrong in parsing.
         return null;
       }
       // TODO: replace this switch with a table lookup.
