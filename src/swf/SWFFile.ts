@@ -63,6 +63,7 @@ module Shumway.SWF {
     private _jpegTables: any;
     private _endTagEncountered: boolean;
     private _loadStarted: number;
+    private _lastScanPosition: number;
 
     private _currentFrameLabel: string;
     private _currentSoundStreamHead: Parser.SoundStream;
@@ -220,6 +221,7 @@ module Shumway.SWF {
         this.frameCount = obj.frameCount;
       }
       SWF.leaveTimeline();
+      this._lastScanPosition = this._dataStream.pos;
       this.scanLoadedData();
     }
 
@@ -234,7 +236,9 @@ module Shumway.SWF {
 
     private scanLoadedData() {
       SWF.enterTimeline('Scan loaded SWF file tags');
+      this._dataStream.pos = this._lastScanPosition;
       this.scanTagsToOffset(this._uncompressedLoadedLength, true);
+      this._lastScanPosition = this._dataStream.pos;
       SWF.leaveTimeline();
     }
 
@@ -249,7 +253,7 @@ module Shumway.SWF {
           if (rootTimelineMode) {
             this._endTagEncountered = true;
             console.log('SWF load time: ' +
-              ((Date.now() - this._loadStarted) * 0.001).toFixed(4) + 'sec');
+                        ((Date.now() - this._loadStarted) * 0.001).toFixed(4) + 'sec');
           }
           return;
         }
