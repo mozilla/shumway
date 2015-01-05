@@ -71,27 +71,33 @@ module Shumway.AVM2.AS {
   var _asGetEnumerableKeys = Object.prototype.asGetEnumerableKeys;
 
   function isXMLType(val: any): boolean {
-    return (val instanceof ASXML || val instanceof ASXMLList);
+    return (val instanceof AS.ASXML || val instanceof AS.ASXMLList);
   }
 
   // 10.1 ToString
   function toString(node) {
-    if (typeof node === "object" && node !== null) {
-      if (node instanceof ASXMLList) {
-        return node._children.map(toString).join('');
-      }
-      switch (node._kind) {
-        case ASXMLKind.Text:
-        case ASXMLKind.Attribute:
-          return node._value;
-        default:
-          if (node.hasSimpleContent()) {
-            return node._children.map(toString).join('');
-          }
-          return toXMLString(node);
-      }
-    } else {
+    if (!(node instanceof AS.ASXML)) {
       return String(node);
+    }
+    switch (node._kind) {
+      case ASXMLKind.Text:
+      case ASXMLKind.Attribute:
+        return node._value;
+      default:
+        if (node.hasSimpleContent()) {
+          var s = '';
+          for (var i = 0; i < node._children.length; i++) {
+            var child = node._children[i];
+            if (child._kind === ASXMLKind.Comment ||
+                child._kind === ASXMLKind.ProcessingInstruction)
+            {
+              continue;
+            }
+            s += toString(child);
+          }
+          return s;
+        }
+        return toXMLString(node);
     }
   }
 
@@ -263,7 +269,7 @@ module Shumway.AVM2.AS {
       var nsPrefix = node._inScopeNamespaces[i].prefix;
       var nsUri = node._inScopeNamespaces[i].uri;
       if (ancestorNamespaces.every(function (ans) { return ans.uri != nsUri || ans.prefix != nsPrefix; })) {
-        var ns1 = new ASNamespace(nsPrefix, nsUri);
+        var ns1 = new AS.ASNamespace(nsPrefix, nsUri);
         namespaceDeclarations.push(ns1);
       }
     }
@@ -273,7 +279,7 @@ module Shumway.AVM2.AS {
     if (namespace.prefix === undefined) {
       // Let namespace.prefix be an arbitrary implementation defined namespace prefix, such that there is no ns2 ∈ (AncestorNamespaces ∪ namespaceDeclarations) with namespace.prefix == ns2.prefix
       var newPrefix = generateUniquePrefix(currentNamespaces);
-      var ns2 = new ASNamespace(newPrefix, namespace.uri);
+      var ns2 = new AS.ASNamespace(newPrefix, namespace.uri);
       // Let namespaceDeclarations = namespaceDeclarations ∪ { namespace }
       namespaceDeclarations.push(ns2);
       currentNamespaces.push(ns2);
@@ -292,7 +298,7 @@ module Shumway.AVM2.AS {
       if (namespace.prefix === undefined) {
         // Let namespace.prefix be an arbitrary implementation defined namespace prefix, such that there is no ns2 ∈ (AncestorNamespaces ∪ namespaceDeclarations) with namespace.prefix == ns2.prefix
         var newPrefix = generateUniquePrefix(currentNamespaces);
-        var ns2 = new ASNamespace(newPrefix, namespace.uri);
+        var ns2 = new AS.ASNamespace(newPrefix, namespace.uri);
         // Let namespaceDeclarations = namespaceDeclarations ∪ { namespace }
         namespaceDeclarations.push(ns2);
         currentNamespaces.push(ns2);
@@ -347,82 +353,84 @@ module Shumway.AVM2.AS {
   function toXML(v) {
     if (v === null) {
       throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
-    } else if (v === undefined) {
-      throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
-    } else if (v instanceof ASXML) {
-      return v;
-    } else if (v instanceof ASXMLList) {
-      if (v.length() === 1) {
-        return v._children[0];
-      }
-      throw new TypeError(formatErrorMessage(Errors.XMLMarkupMustBeWellFormed));
-    } else {
-      var x = xmlParser.parseFromString(String(v));
-      if (x.length() === 0) {
-        var x = new XML(ASXMLKind.Text);
-        return x;
-      } else if (x.length() === 1) {
-        x._children[0]._parent = null;
-        return x._children[0];
-      }
-      throw "SyntaxError in ToXML";
     }
+    if (v === undefined) {
+      throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
+    }
+    if (v instanceof ASXML) {
+      return v;
+    }
+    if (v instanceof ASXMLList) {
+      if (v._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
+      }
+      return v._children[0];
+    }
+    // The E4X spec says we must throw a TypeError for non-Boolean, Number, or String objects.
+    // Flash thinks otherwise.
+    var x = xmlParser.parseFromString(asCoerceString(v));
+    var length = x.length();
+    if (length === 0) {
+      return createXML(ASXMLKind.Text);
+    }
+    if (length === 1) {
+      x._children[0]._parent = undefined;
+      return x._children[0];
+    }
+    Runtime.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
   }
 
   // 10.4 ToXMLList
-  function toXMLList(value) {
+  function toXMLList(value: any, targetList: ASXMLList): void {
+    // toXMLList is supposed to just return value if it's an XMLList already. For optimization
+    // purposes, we handle that case at the callsites.
+    release || assert(!(value instanceof ASXMLList));
     if (value === null) {
-      throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
-    } else if (value === undefined) {
-      throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
-    } else if (value instanceof XML) {
-      var xl = new XMLList(value.parent, value.name);
-      xl.appendChild(value);
-      return xl;
-    } else if (value instanceof XMLList) {
-      return value;
-    } else {
-      var parentString = '<parent xmlns=\'' + ASXML.defaultNamespace + '\'>' +
-        value + '</parent>';
-      var x = toXML(parentString);
-      var xl = new XMLList();
-      for (var i = 0; i < x.length(); i++) {
-        var v = (<any> x)._children[i];
-        v._parent = null;
-        xl.appendChild(v);
-      }
-      return xl;
+      Runtime.throwError('TypeError', Errors.ConvertNullToObjectError);
+    }
+    if (value === undefined) {
+      Runtime.throwError('TypeError', Errors.ConvertUndefinedToObjectError);
+    }
+    if (value instanceof ASXML) {
+      targetList.append(value);
+      return;
+    }
+    // The E4X spec says we must throw a TypeError for non-Boolean, Number, or String objects.
+    // Flash thinks otherwise.
+    var parentString = '<parent xmlns="' + escapeAttributeValue(ASXML.defaultNamespace) + '">' +
+                       value + '</parent>';
+    var x = toXML(parentString);
+    var children = x._children;
+    if (!children) {
+      return;
+    }
+    for (var i = 0; i < children.length; i++) {
+      var v = children[i];
+      v._parent = undefined;
+      targetList.append(v);
     }
   }
 
   // 10.5 ToAttributeName
   function toAttributeName(v): ASQName {
     if (v === undefined || v === null || typeof v === "boolean" || typeof v === "number") {
-      throw "TypeError: invalid operand to ToAttributeName()";
-    } else if (isXMLType(v)) {
-      v = toString(v);
-    } else if (typeof v === 'object' && v !== null) {
+      Runtime.throwError('TypeError', Errors.ConvertUndefinedToObjectError);
+    }
+    if (typeof v === 'object') {
       if (v instanceof ASQName) {
-        return new ASQName(v.uri, v.localName, true);
+        return new AS.ASQName(v.uri, v.localName, true);
       }
       if (Multiname.isQName(v)) {
         return ASQName.fromMultiname(v);
       }
-      v = toString(v);
     }
-    if (typeof v === "string") {
-      var ns = Namespace.createNamespace("", "");
-      var qn = new ASQName(ns, v, true);
-    } else {
-      // FIXME implement
-    }
-    return qn;
+    v = toString(v);
+    return new AS.ASQName(undefined, v, true);
   }
-
   // 10.6 ToXMLName
   function toXMLName(mn): ASQName {
     if (mn === undefined) {
-      return new ASQName('*');
+      return new AS.ASQName('*');
     }
     // convert argument to a value of type AttributeName or a QName object
     // according to the following:
@@ -464,7 +472,7 @@ module Shumway.AVM2.AS {
       // AttributeName using the ToAttributeName operator.
       return toAttributeName(name.substring(1));
     }
-    return new ASQName(undefined, name, !!(mn.flags & ASQNameFlags.ATTR_NAME));
+    return new AS.ASQName(undefined, name, !!(mn.flags & ASQNameFlags.ATTR_NAME));
   }
 
   function isQNameAttribute(name: any): boolean {
@@ -474,27 +482,27 @@ module Shumway.AVM2.AS {
     return false;
   }
 
-  function prefixWithNamespace(namespaces, name, isAttribute) {
+  function prefixWithNamespace(namespaces, name, isAttribute: boolean) {
     if (!namespaces ||
         namespaces.length !== 1 ||
         !(namespaces[0] instanceof ASNamespace) ||
         (typeof name !== 'string' && name !== undefined)) {
       return name;
     }
-    return new ASQName(namespaces[0], name || '*', isAttribute);
+    return new AS.ASQName(namespaces[0], name || '*', isAttribute);
   }
 
   // 12.1 GetDefaultNamespace
   function getDefaultNamespace(): ASNamespace {
     // The scope's default xml namespace is stored in XML.defaultNamespace
     // (see runtime.ts createInterpretedFunction)
-    return new ASNamespace("", ASXML.defaultNamespace);
+    return new AS.ASNamespace("", ASXML.defaultNamespace);
   }
 
   // 13.1.2.1 isXMLName ( value )
   export function isXMLName(v) {
     try {
-      var qn = new ASQName(v);
+      var qn = new AS.ASQName(v);
     } catch (e) {
       return false;
     }
@@ -512,8 +520,7 @@ module Shumway.AVM2.AS {
           "xmlns": 'http://www.w3.org/2000/xmlns/',
           "xml": 'http://www.w3.org/XML/1998/namespace'
         },
-        inScopes: !ASXML.defaultNamespace ? [] :
-          [{uri: ASXML.defaultNamespace, prefix: ''}],
+        inScopes: !ASXML.defaultNamespace ? [] : [{uri: ASXML.defaultNamespace, prefix: ''}],
         space: 'default',
         xmlns: (ASXML.defaultNamespace || '')
       }];
@@ -777,8 +784,8 @@ module Shumway.AVM2.AS {
     }
     // end of parser
 
-    this.parseFromString = function(s, mimeType) {
-      var currentElement = new XML(ASXMLKind.Element, '', '', '');  // placeholder
+    this.parseFromString = function(s, mimeType?) {
+      var currentElement = createXML(ASXMLKind.Element, '', '', '');  // placeholder
       var elementsStack = [];
       parseXml(s, {
         beginElement: function(name, attrs, namespaces, isEmpty) {
@@ -793,7 +800,7 @@ module Shumway.AVM2.AS {
           }
           for (var i = 0; i < namespaces.length; ++i) {
             var rawNs = namespaces[i];
-            var ns = Namespace.createNamespace(rawNs.uri, rawNs.prefix);
+            var ns = new AS.ASNamespace(rawNs.prefix, rawNs.uri);
             currentElement._inScopeNamespaces.push(ns);
           }
           parent.insert(parent.length(), currentElement);
@@ -843,7 +850,7 @@ module Shumway.AVM2.AS {
     };
 
     function createNode(kind: ASXMLKind, uri, name, prefix?) {
-      return new XML(kind, uri, name, prefix);
+      return createXML(kind, uri, name, prefix);
     }
   }
 
@@ -860,20 +867,6 @@ module Shumway.AVM2.AS {
 
     private _ns: Namespace;
 
-    private static _namespaceConstructor: (ns: Namespace) => void = function (ns: Namespace): void {
-      this._ns = ns;
-    };
-
-    private static _ = (() => {
-      ASNamespace._namespaceConstructor.prototype = ASNamespace.prototype;
-    })();
-
-
-    static fromNamespace(ns: Namespace): ASNamespace {
-      return new ASNamespace._namespaceConstructor(ns);
-    }
-
-
     /**
      * 13.2.1 The Namespace Constructor Called as a Function
      *
@@ -882,19 +875,21 @@ module Shumway.AVM2.AS {
      * Namespace (prefixValue, uriValue)
      */
     public static callableConstructor: any = function (a?: any, b?: any): ASNamespace {
-      // 1. If (prefixValue is not specified and Type(uriValue) is Object and uriValue.[[Class]] == "Namespace")
+      // 1. If (prefixValue is not specified and Type(uriValue) is Object and
+      // uriValue.[[Class]] == "Namespace")
       if (arguments.length === 1 && isObject(a) && a instanceof ASNamespace) {
         // a. Return uriValue
         return a;
       }
-      // 2. Create and return a new Namespace object exactly as if the Namespace constructor had been called with the same arguments (section 13.2.2).
+      // 2. Create and return a new Namespace object exactly as if the Namespace constructor had
+      // been called with the same arguments (section 13.2.2).
       switch (arguments.length) {
         case 0:
-          return new ASNamespace();
+          return new AS.ASNamespace();
         case 1:
-          return new ASNamespace(a);
+          return new AS.ASNamespace(a);
         default:
-          return new ASNamespace(a, b);
+          return new AS.ASNamespace(a, b);
       }
     };
 
@@ -969,7 +964,7 @@ module Shumway.AVM2.AS {
           }
           else {
             // ii. Else throw a TypeError exception
-            throw new TypeError();
+            Runtime.throwError('TypeError', Errors.XMLNamespaceWithPrefixAndNoURI, prefixValue);
           }
         }
         // d. Else if prefixValue is undefined, let n.prefix = undefined
@@ -1046,11 +1041,11 @@ module Shumway.AVM2.AS {
       // 2. Create and return a new QName object exactly as if the QName constructor had been called with the same arguments (section 13.3.2).
       switch (arguments.length) {
         case 0:
-          return new ASQName();
+          return new AS.ASQName();
         case 1:
-          return new ASQName(a);
+          return new AS.ASQName(a);
         default:
-          return new ASQName(a, b);
+          return new AS.ASQName(a, b);
       }
     };
 
@@ -1130,8 +1125,7 @@ module Shumway.AVM2.AS {
       // 7. Else
       else {
         // a. Let Namespace be a new Namespace created as if by calling the constructor new Namespace(Namespace)
-        namespace = namespace instanceof ASNamespace ? namespace :
-          new ASNamespace(namespace);
+        namespace = namespace instanceof ASNamespace ? namespace : new AS.ASNamespace(namespace);
         // b. Let q.uri = Namespace.uri
         uri = namespace.uri;
           // NOTE implementations that preserve prefixes in qualified names may also set q.[[Prefix]] to Namespace.prefix
@@ -1160,6 +1154,13 @@ module Shumway.AVM2.AS {
 
     get uri(): string {
       return this.name.namespaces[0] ? this.name.namespaces[0].uri : null;
+    }
+
+    setUri(uri: string) {
+      if (!this.name.namespaces[0]) {
+        this.name.namespaces.push(Namespace.createNamespace(uri));
+      }
+      this.name.namespaces[0].uri = uri;
     }
 
     toString() {
@@ -1202,7 +1203,7 @@ module Shumway.AVM2.AS {
         }
       }
       if (!ns) {
-        ns = new ASNamespace(this.prefix, this.uri);
+        ns = new AS.ASNamespace(this.prefix, this.uri);
       }
       return ns;
     }
@@ -1292,9 +1293,9 @@ module Shumway.AVM2.AS {
       ]);
     };
 
-    public static callableConstructor: any = function (value: any = undefined): ASXML {
+    public static callableConstructor: any = function (value?: any): ASXML {
       // 13.5.1 The XMLList Constructor Called as a Function
-      if (value === null || value === undefined) {
+      if (isNullOrUndefined(value)) {
         value = '';
       }
       return toXML(value);
@@ -1352,8 +1353,8 @@ module Shumway.AVM2.AS {
     private static _flags: ASXML_FLAGS = ASXML_FLAGS.ALL;
     private static _prettyIndent = 2;
     private _name: ASQName;
-    private _attributes: ASXML [];
-    private _inScopeNamespaces: ASNamespace [];
+    _attributes: ASXML [];
+    _inScopeNamespaces: ASNamespace [];
 
     // These properties are public so ASXMLList can access them.
     _kind: ASXMLKind;
@@ -1361,16 +1362,16 @@ module Shumway.AVM2.AS {
     _parent: ASXML;
     _children: ASXML[];
 
-    constructor (value: any = undefined) {
+    constructor (value?: any) {
       false && super();
-      if (!(this instanceof ASXML)) {
-        if (value instanceof ASXML) {
-          return value; // no cloning
-        }
-        return new ASXML(value);
-      }
-      if (value === null || value === undefined) {
+
+      if (isNullOrUndefined(value)) {
         value = "";
+      }
+      if (typeof value === 'string' && value.length === 0) {
+        this._kind = ASXMLKind.Text;
+        this._value = '';
+        return;
       }
       var x = toXML(value);
       if (isXMLType(value)) {
@@ -1410,11 +1411,11 @@ module Shumway.AVM2.AS {
     }
 
     init(kind: number, uri, name, prefix) {
-      var namespace = uri || prefix ? new ASNamespace(prefix, uri) : undefined;
+      var namespace = uri || prefix ? new AS.ASNamespace(prefix, uri) : undefined;
       var isAttribute = kind === ASXMLKind.Attribute;
-      this._name = new ASQName(namespace, name, isAttribute);
+      this._name = new AS.ASQName(namespace, name, isAttribute);
       this._kind = kind;    // E4X [[Class]]
-      this._parent = null;
+      this._parent = undefined;
       switch (<ASXMLKind> kind) {
         case ASXMLKind.Element:
           this._inScopeNamespaces = [];
@@ -1494,7 +1495,7 @@ module Shumway.AVM2.AS {
     // 9.1.1.7 [[DeepCopy]] ( )
     _deepCopy(): ASXML {
       var kind: ASXMLKind = this._kind;
-      var clone = new ASXML();
+      var clone = new AS.ASXML();
       clone._kind = kind;
       clone._name = this._name;
       switch (kind) {
@@ -1502,7 +1503,7 @@ module Shumway.AVM2.AS {
           clone._inScopeNamespaces = [];
           if (this._inScopeNamespaces.length > 0) {
             this._inScopeNamespaces.forEach(function (ns) {
-              clone._inScopeNamespaces.push(new ASNamespace(ns.prefix, ns.uri));
+              clone._inScopeNamespaces.push(new AS.ASNamespace(ns.prefix, ns.uri));
             });
           }
           clone._attributes = this._attributes.map(function (attr) {
@@ -1600,15 +1601,20 @@ module Shumway.AVM2.AS {
       }
       return toString(this);
     }
+    // 13.4.4.14 XML.prototype.hasOwnProperty ( P )
     native_hasOwnProperty(P: string): boolean {
-      // 13.4.4.14 XML.prototype.hasOwnProperty ( P )
-      if (this.hasProperty(P, isQNameAttribute(P), false)) {
+      if (ASXML.isTraitsOrDynamicPrototype(this)) {
+        return ASObject.prototype.native_hasOwnProperty.call(this, P);
+      }
+      var mn = toXMLName(P);
+      var isAttribute = !!(mn.flags & ASQNameFlags.ATTR_NAME);
+      if (this.hasProperty(mn, isAttribute, false)) {
         return true;
       }
       return _asHasOwnProperty.call(this, String(P));
     }
+    // 13.4.4.30 XML.prototype.propertyIsEnumerable ( P )
     native_propertyIsEnumerable(P: any = undefined): boolean {
-      // 13.4.4.30 XML.prototype.propertyIsEnumerable ( P )
       return String(P) === "0";
     }
     addNamespace(ns: any): ASXML {
@@ -1616,7 +1622,7 @@ module Shumway.AVM2.AS {
         Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
       }
       // 13.4.4.2 XML.prototype.addNamespace ( namespace )
-      this._addInScopeNamespaces(new ASNamespace(ns));
+      this._addInScopeNamespaces(new AS.ASNamespace(ns));
       return this;
     }
     appendChild(child: any): ASXML {
@@ -1637,13 +1643,13 @@ module Shumway.AVM2.AS {
       if (!(this instanceof ASXML)) {
         Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
       }
-      return this.getProperty(arg, true, false);
+      return this.getProperty(arg, true);
     }
     attributes(): ASXMLList {
       if (!(this instanceof ASXML)) {
         Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
       }
-      var list = new XMLList();
+      var list = new AS.ASXMLList();
       Array.prototype.push.apply(list._children, this._attributes);
       return list;
     }
@@ -1652,13 +1658,13 @@ module Shumway.AVM2.AS {
         Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
       }
       if (isIndex(propertyName)) {
-        var list = new XMLList();
+        var list = new AS.ASXMLList();
         if (propertyName < this._children.length) {
-          list.appendChild(this._children[propertyName | 0]._deepCopy());
+          list.append(this._children[propertyName | 0]._deepCopy());
         }
         return list;
       }
-      return this.getProperty(propertyName, isQNameAttribute(propertyName), false);
+      return this.getProperty(propertyName, isQNameAttribute(propertyName));
     }
     childIndex(): number /*int*/ {
       if (!(this instanceof ASXML)) {
@@ -1674,7 +1680,7 @@ module Shumway.AVM2.AS {
       if (!(this instanceof ASXML)) {
         Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
       }
-      var xl = new XMLList(this);
+      var xl = new AS.ASXMLList();
       Array.prototype.push.apply(xl._children, this._children);
       return xl;
     }
@@ -1684,10 +1690,10 @@ module Shumway.AVM2.AS {
       }
       // 13.4.4.9 XML.prototype.comments ( )
       var self: ASXML = this;
-      var xl = new XMLList(self, null);
+      var xl = new AS.ASXMLList();
       self._children.forEach(function (v, i) {
         if (v._kind === ASXMLKind.Comment) {
-          xl.appendChild(v);
+          xl.append(v);
         }
       });
       return xl;
@@ -1710,7 +1716,7 @@ module Shumway.AVM2.AS {
       if (!(this instanceof ASXML)) {
         Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
       }
-      var xl = new XMLList();
+      var xl = new AS.ASXMLList();
       var name = toXMLName(name_);
       return this.descendantsInto(name, xl);
     }
@@ -1719,7 +1725,7 @@ module Shumway.AVM2.AS {
         Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
       }
       // 13.4.4.13 XML.prototype.elements ( [ name ] )
-      return this.getProperty(name, false, false);
+      return this.getProperty(name, false);
     }
     hasComplexContent(): boolean {
       if (!(this instanceof ASXML)) {
@@ -1860,16 +1866,40 @@ module Shumway.AVM2.AS {
 
     private removeByIndex(index: number) {
       var child = this._children[index];
-      child._parent = null;
+      child._parent = undefined;
       this._children.splice(index, 1);
     }
 
     parent(): any {
       return this._parent;
     }
+    // 13.4.4.28 XML.prototype.processingInstructions ( [ name ] )
     processingInstructions(name: any = "*"): ASXMLList {
-
-      notImplemented("public.XML::processingInstructions"); return;
+      // Step 1 (implicit).
+      // Step 2.
+      var localName = toXMLName(name).localName;
+      // Step 3.
+      var list = new AS.ASXMLList();
+      list._targetObject = this;
+      list._targetProperty = null;
+      // Steps 4-5.
+      return this.processingInstructionsInto(name, localName, list);
+    }
+    processingInstructionsInto(name: any, localName: string, list: ASXMLList) {
+      // Step 4.
+      var children = this._children;
+      if (!children) {
+        return list;
+      }
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        if (child._kind === ASXMLKind.ProcessingInstruction &&
+            (name === '*' || child._name.localName === localName)) {
+          list._children.push(child);
+        }
+      }
+      // Step 5.
+      return list;
     }
     prependChild(value: any): ASXML {
 
@@ -1904,16 +1934,16 @@ module Shumway.AVM2.AS {
           p = String(self.length());
         }
         if (self._children[p]) {
-          self._children[p]._parent = null;
+          self._children[p]._parent = undefined;
         }
       } else {
-        var toRemove = this.getProperty(p, false, false);
+        var toRemove = this.getProperty(p, false);
         if (toRemove.length() === 0) { // nothing to replace
           return self;
         }
         toRemove._children.forEach(function (v, i) {
           var index = self._children.indexOf(v);
-          v._parent = null;
+          v._parent = undefined;
           if (i === 0) {
             p = String(index);
             self._children.splice(index, 1, undefined);
@@ -1931,7 +1961,7 @@ module Shumway.AVM2.AS {
         self._children[p] = v;
       } else {
         s = toString(v);
-        var t = new XML();
+        var t = createXML();
         t._parent = self;
         t._value = s;
         self._children[p] = t;
@@ -1939,16 +1969,40 @@ module Shumway.AVM2.AS {
       return self;
     }
     setChildren(value: any): ASXML {
-
-      notImplemented("public.XML::setChildren"); return;
+      this.setProperty('*', false, value);
+      return this;
     }
     setLocalName(name: any): void {
 
       notImplemented("public.XML::setLocalName"); return;
     }
-    setName(name: any): void {
-
-      notImplemented("public.XML::setName"); return;
+    // 13.4.4.35 XML.prototype.setName( name )
+    setName(name_: any): void {
+      // Step 1.
+      if (this._kind === ASXMLKind.Text || this._kind === ASXMLKind.Comment) {
+        return;
+      }
+      // Step 2.
+      if (name_ instanceof AS.ASQName && (<ASQName>name_).uri === null) {
+        name_ = name_.localName;
+      }
+      // Step 3.
+      var name: ASQName = new ASQName(name_);
+      // Step 4.
+      if (this._kind === ASXMLKind.ProcessingInstruction) {
+        name.setUri('');
+      }
+      // Step 5.
+      this._name = name;
+      // Steps 6-8.
+      var node = this;
+      if (this._kind === ASXMLKind.Attribute) {
+        if (this._parent === null) {
+          return;
+        }
+        node = this._parent;
+      }
+      node.addInScopeNamespace(new AS.ASNamespace(name.uri));
     }
     setNamespace(ns: any): void {
 
@@ -1957,10 +2011,10 @@ module Shumway.AVM2.AS {
     text() {
       // 13.4.4.37 XML.prototype.text ( );
       var self: ASXML = this;
-      var xl = new XMLList(self, null);
+      var xl = new AS.ASXMLList();
       self._children.forEach(function (v, i) {
         if (v._kind === ASXMLKind.Text) {
-          xl.appendChild(v);
+          xl.append(v);
         }
       });
       return xl;
@@ -1987,42 +2041,84 @@ module Shumway.AVM2.AS {
       return keys;
     }
 
+    // 9.1.1.2 [[Put]] (P, V)
     setProperty(p, isAttribute, v) {
-      var c;
-      var n: ASQName;
-      var self: ASXML = this;
+      // Step 1;
       if (p === p >>> 0) {
-        throw "TypeError in XML.prototype.setProperty(): invalid property name " + p;
+        Runtime.throwError('TypeError', Errors.XMLAssignmentToIndexedXMLNotAllowed);
       }
-      if (self._kind === ASXMLKind.Text ||
-          self._kind === ASXMLKind.Comment ||
-          self._kind === ASXMLKind.ProcessingInstruction ||
-          self._kind === ASXMLKind.Attribute) {
+      // Step 2.
+      if (this._kind === ASXMLKind.Text ||
+          this._kind === ASXMLKind.Comment ||
+          this._kind === ASXMLKind.ProcessingInstruction ||
+          this._kind === ASXMLKind.Attribute) {
         return;
       }
-      if (!v ||
-        !isXMLType(v) ||
-        v._kind === ASXMLKind.Text ||
-        v._kind === ASXMLKind.Attribute) {
+      // Step 3.
+      var c;
+      if (!isXMLType(v) || v._kind === ASXMLKind.Text || v._kind === ASXMLKind.Attribute) {
         c = toString(v);
+        // Step 4.
       } else {
         c = v._deepCopy();
       }
-      n = toXMLName(p);
-
+      // Step 5.
+      var n = toXMLName(p);
+      // Step 6.
       if (isAttribute) {
-        if (!this._attributes) {
+        // Step a.
+        if (!isXMLName(n.name)) {
           return;
         }
-        this._attributes.forEach(function (v, i, o) {
-          if (v.localName() === n.localName) {
-            delete o[i];
+        // Step b.
+        if (c instanceof AS.ASXMLList) {
+          // Step i.
+          if (c._children.length === 0) {
+            c = '';
+            // Step ii.
+          } else {
+            // Step 1.
+            var s = toString(c._children[0]);
+            // Step 2.
+            for (var j = 1; j < c._children.length; j++) {
+              s += ' ' + toString(c._children[j]);
+            }
+            // Step 3.
+            c = s;
           }
-        });
-        var a = new XML(ASXMLKind.Attribute, n.uri, n.localName);
-        a._value = v;
-        a._parent = this;
-        this._attributes.push(a);
+          // Step c.
+        } else {
+          c = asCoerceString(c);
+        }
+        // Step d.
+        var a: ASXML = null;
+        // Step e.
+        var attributes = this._attributes;
+        var newAttributes = this._attributes = [];
+        for (var j = 0; attributes && j < attributes.length; j++) {
+          var attribute = attributes[j];
+          if (attribute._name.equals(n)) {
+            // Step 1.
+            if (!a) {
+              a = attribute;
+              // Step 2.
+            } else {
+              attribute._parent = undefined;
+              continue;
+            }
+          }
+          newAttributes.push(attribute);
+        }
+        // Step f.
+        if (!a) {
+          a = createXML(ASXMLKind.Attribute, n.uri, n.localName);
+          a._parent = this;
+          newAttributes.push(a);
+          // TODO: implement the namespace parts of step f.
+        }
+        // Step g.
+        a._value = c;
+        // Step h.
         return;
       }
 
@@ -2030,95 +2126,97 @@ module Shumway.AVM2.AS {
       var primitiveAssign = !isXMLType(c) && n.localName !== "*";
       var isAny = n.flags & ASQNameFlags.ANY_NAME;
       var isAnyNamespace = n.flags & ASQNameFlags.ANY_NAMESPACE;
-      for (var k = self.length() - 1; k >= 0; k--) {
-        if ((isAny || self._children[k]._kind === ASXMLKind.Element &&
-          self._children[k]._name.localName === n.localName) &&
+      for (var k = this.length() - 1; k >= 0; k--) {
+        if ((isAny || this._children[k]._kind === ASXMLKind.Element &&
+          this._children[k]._name.localName === n.localName) &&
           (isAnyNamespace ||
-            self._children[k]._kind === ASXMLKind.Element &&
-            self._children[k]._name.uri === n.uri)) {
+            this._children[k]._kind === ASXMLKind.Element &&
+            this._children[k]._name.uri === n.uri)) {
           if (i !== undefined) {
-            self.deleteByIndex(i);
+            this.deleteByIndex(i);
           }
           i = k;
         }
       }
       if (i === undefined) {
-        i = self.length();
+        i = this.length();
         if (primitiveAssign) {
           if (n.uri === null) {
-            var name = new ASQName(getDefaultNamespace(/* scope */), n);
+            var name = new AS.ASQName(getDefaultNamespace(/* scope */), n);
           } else {
-            var name = new ASQName(n);
+            var name = new AS.ASQName(n);
           }
-          var y = new XML(ASXMLKind.Element, name.uri, name.localName, name.prefix);
-          y._parent = self;
+          var y = createXML(ASXMLKind.Element, name.uri, name.localName, name.prefix);
+          y._parent = this;
           var ns = name.getNamespace();
-          self.replace(String(i), y);
+          this.replace(String(i), y);
           y.addInScopeNamespace(ns);
         }
       }
       if (primitiveAssign) {
-        self._children[i]._children = [];   // blow away kids of x[i]
+        this._children[i]._children = [];   // blow away kids of x[i]
         var s = toString(c);
         if (s !== "") {
-          self._children[i].replace("0", s);
+          this._children[i].replace("0", s);
         }
       } else {
-        self.replace(String(i), c);
+        this.replace(String(i), c);
       }
-      return;
     }
 
     public asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
       if (ASXML.isTraitsOrDynamicPrototype(this)) {
         return _asSetProperty.call(this, namespaces, name, flags, value);
       }
-      var isAttribute = flags & Multiname.ATTRIBUTE;
-      this.setProperty(prefixWithNamespace(namespaces, name, isAttribute),
-        isAttribute, value);
+      var isAttribute = !!(flags & Multiname.ATTRIBUTE);
+      this.setProperty(prefixWithNamespace(namespaces, name, isAttribute), isAttribute, value);
     }
 
 
     // 9.1.1.1 XML.[[Get]] (P)
-    getProperty(mn, isAttribute, isMethod) {
-      if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn :
-          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
-        return this[Multiname.getQualifiedName(resolved)];
-      }
-      if (!Multiname.isQName(mn) && isNumeric(mn)) {
+    getProperty(mn, isAttribute: boolean): any {
+      // Step 1.
+      if (isIndex(mn) || !Multiname.isQName(mn) && isNumeric(mn)) {
         // this is a shortcut to the E4X logic that wants us to create a new
         // XMLList with of size 1 and access it with the given index.
-        if (Number(mn) === 0) {
+        if ((mn|0) === 0) {
           return this;
         }
         return null;
       }
-      var self: ASXML = this;
+      // Step 2.
       var name = toXMLName(mn);
-      var xl = new XMLList(self, name);
+      // Step 3.
+      var list = new AS.ASXMLList();
+      list._targetObject = this;
+      list._targetProperty = name;
+      var length = 0;
       var flags = name.name.flags;
       var anyName = flags & ASQNameFlags.ANY_NAME;
       var anyNamespace = flags & ASQNameFlags.ANY_NAMESPACE;
 
+      // Step 4.
+      isAttribute = isAttribute || !!(flags & ASQNameFlags.ATTR_NAME);
       if (isAttribute) {
-        if (self._attributes) {
-          self._attributes.forEach(function (v, i) {
-            if ((anyName || (v._name.localName === name.localName)) &&
+        for (var i = 0; this._attributes && i < this._attributes.length; i++) {
+          var v = this._attributes[i];
+          if ((anyName || (v._name.localName === name.localName)) &&
               ((anyNamespace || v._name.uri === name.uri))) {
-              xl.appendChild(v);
-            }
-          });
-        }
-      } else {
-        self._children.forEach(function (v, i) {
-          if ((anyName || v._kind === ASXMLKind.Element && v._name.localName === name.localName) &&
-            ((anyNamespace || v._kind === ASXMLKind.Element && v._name.uri === name.uri))) {
-            xl.appendChild(v);
+            list._children[length++] = v;
           }
-        });
+        }
+        return list;
       }
-      return xl;
+      // Step 5.
+      for (var i = 0; this._children && i < this._children.length; i++) {
+        var v = this._children[i];
+        if ((anyName || v._kind === ASXMLKind.Element && v._name.localName === name.localName) &&
+            ((anyNamespace || v._kind === ASXMLKind.Element && v._name.uri === name.uri))) {
+          list._children[length++] = v;
+        }
+      }
+      // Step 6.
+      return list;
     }
 
     public asGetNumericProperty(name: number) {
@@ -2133,11 +2231,11 @@ module Shumway.AVM2.AS {
       if (ASXML.isTraitsOrDynamicPrototype(this)) {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
-      var isAttribute = flags & Multiname.ATTRIBUTE;
-      return this.getProperty(prefixWithNamespace(namespaces, name, isAttribute),
-        isAttribute, false);
+      var isAttribute = !!(flags & Multiname.ATTRIBUTE);
+      return this.getProperty(prefixWithNamespace(namespaces, name, isAttribute), isAttribute);
     }
 
+    // 9.1.1.6 [[HasProperty]] (P) (well, very roughly)
     hasProperty(mn: any, isAttribute: boolean, isMethod: boolean) {
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn :
@@ -2148,24 +2246,25 @@ module Shumway.AVM2.AS {
         // this is a shortcut to the E4X logic that wants us to create a new
         // XMLList of size 1 and access it with the given index.
         return Number(mn) === 0;
-
       }
       var name = toXMLName(mn);
       var flags = name.name.flags;
       var anyName = flags & ASQNameFlags.ANY_NAME;
       var anyNamespace = flags & ASQNameFlags.ANY_NAMESPACE;
       if (isAttribute) {
-        if (this._attributes) {
-          return this._attributes.some(function (v, i): any {
-            return ((anyName || (v._name.localName === name.localName)) &&
-              ((anyNamespace || v._name.uri === name.uri)));
-          });
+        for (var i = 0; this._attributes && i < this._attributes.length; i++) {
+          var v = this._attributes[i];
+          if ((anyName || (v._name.localName === name.localName) &&
+                 (anyNamespace || v._name.uri === name.uri))) {
+            return true;
+          }
         }
-      } else {
-        if (this._children.some(function (v, i): any {
-          return ((anyName || v._kind === ASXMLKind.Element && v._name.localName === name.localName) &&
-            ((anyNamespace || v._kind === ASXMLKind.Element && v._name.uri === name.uri)));
-        })) {
+        return false;
+      }
+      for (var i = 0; i < this._children.length; i++) {
+        var v = this._children[i];
+        if ((anyName || v._kind === ASXMLKind.Element && v._name.localName === name.localName) &&
+            ((anyNamespace || v._kind === ASXMLKind.Element && v._name.uri === name.uri))) {
           return true;
         }
       }
@@ -2191,7 +2290,7 @@ module Shumway.AVM2.AS {
             var attrName = node._name;
             if ((anyName || attrName.localName === localName) &&
                 (anyNamespace || attrName.uri === uri)) {
-              node._parent = null;
+              node._parent = undefined;
             } else {
               newAttributes.push(node);
             }
@@ -2285,7 +2384,7 @@ module Shumway.AVM2.AS {
       }
       var children = this._children;
       if (p < children.length && children[p]) {
-        children[p]._parent = null;
+        children[p]._parent = undefined;
         children.splice(p, 1);
       }
     }
@@ -2381,6 +2480,7 @@ module Shumway.AVM2.AS {
       if (self._kind !== ASXMLKind.Element) {
         return xl;
       }
+      var length = xl._children.length;
       var localName = name.localName;
       var uri = name.uri;
       var isAny = flags & ASQNameFlags.ANY_NAME;
@@ -2388,27 +2488,27 @@ module Shumway.AVM2.AS {
         // Get attributes
         this._attributes.forEach(function (v, i) {
           if (isAny || localName === v._name.localName && uri === v._name.uri) {
-            xl.appendChild(v);
+            xl._children[length++] = v;
           }
         });
       } else {
         // Get children
         this._children.forEach(function (v, i) {
           if (isAny || localName === v._name.localName && uri === v._name.uri) {
-            xl.appendChild(v);
+            xl._children[length++] = v;
           }
         });
       }
       // Descend
       this._children.forEach(function (v, i) {
-        xl.appendChild(v.descendants(name));
+        v.descendantsInto(name, xl);
       });
       return xl;
     }
   }
 
-  function XML(kind?: ASXMLKind, uri?, name?, prefix?): void {
-    var self = Object.create(ASXML.prototype);
+  function createXML(kind?: ASXMLKind, uri?, name?, prefix?): ASXML {
+    var xml = new AS.ASXML();
     if (kind === undefined) {
       kind = ASXMLKind.Text;
     }
@@ -2418,8 +2518,8 @@ module Shumway.AVM2.AS {
     if (name === undefined) {
       name = "";
     }
-    self.init(kind, uri, name, prefix);
-    return self;
+    xml.init(kind, uri, name, prefix);
+    return xml;
   }
 
   export class ASXMLList extends ASNative implements XMLType {
@@ -2473,45 +2573,52 @@ module Shumway.AVM2.AS {
       ]);
     }
 
-    public static callableConstructor: any = function (value: any = undefined): ASXMLList {
+    public static callableConstructor: any = function (value: any): ASXMLList {
       // 13.5.1 The XMLList Constructor Called as a Function
-      if (value === null || value === undefined) {
+      if (isNullOrUndefined(value)) {
         value = '';
       }
-      return toXMLList(value);
-    };
+      if (value instanceof ASXMLList) {
+        return value;
+      }
+      var list = new AS.ASXMLList();
+      toXMLList(value, list);
+      return list;
+    }
 
+    // 11.4.1 The Addition Operator ( + )
     public static addXML(left: ASXMLList, right: ASXMLList) {
       var result: ASXMLList;
       if (left instanceof ASXML) {
-        result = new XMLList();
-        result.appendChild(left._deepCopy());
+        result = new AS.ASXMLList();
+        result.append(left);
       } else {
-        result = left._deepCopy();
+        result = left;
       }
-      if (right instanceof ASXML) {
-        result.appendChild(right._deepCopy());
-      } else {
-        var children = right._children;
-        for (var i = 0; i < children.length; i++) {
-          result.appendChild(children[i]._deepCopy());
-        }
-      }
+      result.append(right);
       return result;
     }
 
     _children: ASXML [];
-    constructor (value: any = undefined) {
-      false && super();
+    _targetObject: any; // ASXML|ASXMLList
+    _targetProperty: any; // TODO: type
 
-      if (value === null || value === undefined) {
+    constructor (value?: any) {
+      false && super();
+      this._children = [];
+
+      if (isNullOrUndefined(value)) {
         value = "";
       }
-      var xl = toXMLList(value);
-      if (isXMLType(value)) {
-        xl = xl._deepCopy();
+      if (value instanceof ASXMLList) {
+        var children = (<ASXMLList>value)._children;
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          this._children[i] = child;
+        }
+      } else {
+        toXMLList(value, this);
       }
-      return xl;
     }
 
     valueOf() {
@@ -2550,15 +2657,19 @@ module Shumway.AVM2.AS {
       if (this.hasComplexContent()) {
         return this.toXMLString();
       }
-      return toString(this);
+      var s = '';
+      for (var i = 0; i < this._children.length; i++) {
+        s += toString(this._children[i]);
+      }
+      return s;
     }
 
     // 9.2.1.7 [[DeepCopy]] ( )
     _deepCopy() {
       // TODO 2. Copy all internal properties of x to list
-      var xl = new XMLList();
+      var xl = new AS.ASXMLList();
       for (var i = 0; i < this.length(); i++) {
-        xl.appendChild(this._children[i]._deepCopy());
+        xl._children[i] = this._children[i]._deepCopy();
       }
       return xl;
     }
@@ -2566,12 +2677,15 @@ module Shumway.AVM2.AS {
     // 13.5.4.12 XMLList.prototype.hasOwnProperty ( P )
     native_hasOwnProperty(P: string): boolean {
       P = asCoerceString(P);
-      var mn = Multiname.fromSimpleName(P);
-      if (isIndex(mn)) {
-        return Number(mn) < this._children.length;
+      if (ASXMLList.isTraitsOrDynamicPrototype(this)) {
+        return ASObject.prototype.native_hasOwnProperty.call(this, P);
+      }
+      if (isIndex(P)) {
+        return (<any>P|0) < this._children.length;
       }
 
-      var isAttribute = mn.isAttribute();
+      var mn = toXMLName(P);
+      var isAttribute = !!(mn.flags & ASQNameFlags.ATTR_NAME);
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var node = children[i];
@@ -2583,35 +2697,35 @@ module Shumway.AVM2.AS {
       }
       return false;
     }
-    native_propertyIsEnumerable(P: any = undefined): boolean {
-
-      notImplemented("public.XMLList::propertyIsEnumerable"); return;
+    // 13.5.4.19 XMLList.prototype.propertyIsEnumerable ( P )
+    native_propertyIsEnumerable(P: any): boolean {
+      return isIndex(P) && (P|0) < this._children.length;
     }
     attribute(arg: any): ASXMLList {
-      return this.getProperty(arg, true, false);
+      return this.getProperty(arg, true);
     }
     attributes(): ASXMLList {
       // 13.5.4.3 XMLList.prototype.attributes ( )
-      return this.getProperty('*', true, false);
+      return this.getProperty('*', true);
     }
     child(propertyName: any): ASXMLList {
       if (isIndex(propertyName)) {
-        var list = new XMLList();
+        var list = new AS.ASXMLList();
         if (propertyName < this._children.length) {
-          list.appendChild(this._children[propertyName | 0]._deepCopy());
+          list._children[0] = this._children[propertyName | 0]._deepCopy();
         }
         return list;
       }
-      return this.getProperty(propertyName, false, false);
+      return this.getProperty(propertyName, false);
     }
     children(): ASXMLList {
       // 13.5.4.4 XMLList.prototype.child ( propertyName )
-      return this.getProperty('*', false, false);
+      return this.getProperty('*', false);
     }
     // 9.2.1.8 [[Descendants]] (P)
     descendants(name_: any): ASXMLList {
       var name = toXMLName(name_);
-      var list = new XMLList();
+      var list = new AS.ASXMLList();
       for (var i = 0; i < this._children.length; i++) {
         var child = this._children[i];
         if (child._kind === ASXMLKind.Element) {
@@ -2622,7 +2736,7 @@ module Shumway.AVM2.AS {
     }
     comments(): ASXMLList {
       // 13.5.4.6 XMLList.prototype.comments ( )
-      var xl = new XMLList(this);
+      var xl = new AS.ASXMLList();
       this._children.forEach(function (child) {
         if ((<any> child)._kind === ASXMLKind.Element) {
           var r = child.comments();
@@ -2649,7 +2763,7 @@ module Shumway.AVM2.AS {
     }
     elements(name: any = "*"): ASXMLList {
       // 13.5.4.11 XMLList.prototype.elements ( [ name ] )
-      var xl = new XMLList(this, new ASQName(name));
+      var xl = new AS.ASXMLList();
       this._children.forEach(function (child) {
         if ((<any> child)._kind === ASXMLKind.Element) {
           var r = child.elements(name);
@@ -2731,29 +2845,44 @@ module Shumway.AVM2.AS {
 
     parent(): any {
       // 13.5.4.17 XMLList.prototype.parent ( )
-      if (this.length() === 0) {
+      var children = this._children;
+      if (children.length === 0) {
         return undefined;
       }
-      var parent = (<any> this._children[0])._parent;
-      for (var i = 1; i < this.length(); i++) {
-        if (parent !== (<any> this._children[i])._parent) {
+      var parent = children[0]._parent;
+      for (var i = 1; i < children.length; i++) {
+        if (children[i]._parent !== parent) {
           return undefined;
         }
       }
       return parent;
     }
+    // 13.5.4.18 XMLList.prototype.processingInstructions ( [ name ] )
     processingInstructions(name: any = "*"): ASXMLList {
-
-      notImplemented("public.XMLList::processingInstructions"); return;
+      // (Numbering in the spec starts at 6.)
+      // Step 6 (implicit).
+      // Step 7.
+      var localName = toXMLName(name).localName;
+      // Step 8.
+      var list = new AS.ASXMLList();
+      list._targetObject = this;
+      list._targetProperty = null;
+      // Step 9.
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        children[i].processingInstructionsInto(name, localName, list);
+      }
+      // Step 10.
+      return list;
     }
     text(): ASXMLList {
       // 13.5.4.20 XMLList.prototype.text ( )
-      var xl = new XMLList(this);
+      var xl = new AS.ASXMLList();
       this._children.forEach(function (v:any, i) {
         if (v._kind === ASXMLKind.Element) {
           var gq = v.text();
           if (gq.length() > 0) {
-            xl.appendChild(gq);
+            xl._children.push(gq);
           }
         }
       });
@@ -2766,78 +2895,137 @@ module Shumway.AVM2.AS {
       return 'XMLList';
     }
     addNamespace(ns: any): ASXML {
-
-      notImplemented("public.XMLList::addNamespace"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'addNamespace');
+      }
+      var xml = this._children[0];
+      xml.addNamespace(ns);
+      return xml;
     }
     appendChild(child: any) {
-      if (child instanceof ASXMLList) {
-        this._children.push.apply(this._children, child._children);
-        return child;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'appendChild');
       }
-      this._children.push(child);
-      return child;
-      //notImplemented("public.XMLList::appendChild"); return;
+      var xml = this._children[0];
+      xml.appendChild(child);
+      return xml;
     }
+
+    // 9.2.1.6 [[append]] (V)
+    append(V: any) {
+      // Step 1.
+      var children = this._children;
+      var i = children.length;
+      // Step 2.
+      var n = 1;
+      // Step 3.
+      if (V instanceof AS.ASXMLList) {
+        var valueChildren: ASXML[] = V._children;
+        n = valueChildren.length;
+        if (n === 0) {
+          return;
+        }
+        for (var j = 0; j < valueChildren.length; j++) {
+          children[i + j] = valueChildren[j];
+        }
+        return;
+      }
+      release || assert(V instanceof AS.ASXML);
+      // Step 4.
+      children[i] = V;
+      // Step 5 (implicit).
+    }
+
     childIndex(): number /*int*/ {
-      notImplemented("public.XMLList::childIndex"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'childIndex');
+      }
+      return this._children[0].childIndex();
     }
     inScopeNamespaces(): any [] {
-      notImplemented("public.XMLList::inScopeNamespaces"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'inScopeNamespaces');
+      }
+      return this._children[0].inScopeNamespaces();
     }
     insertChildAfter(child1: any, child2: any): any {
-
-      notImplemented("public.XMLList::insertChildAfter"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'insertChildAfter');
+      }
+      return this._children[0].insertChildAfter(child1, child2);
     }
     insertChildBefore(child1: any, child2: any): any {
-
-      notImplemented("public.XMLList::insertChildBefore"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'insertChildBefore');
+      }
+      return this._children[0].insertChildBefore(child1, child2);
     }
     nodeKind(): string {
-      notImplemented("public.XMLList::nodeKind"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'nodeKind');
+      }
+      return this._children[0].nodeKind();
     }
     namespace(prefix: string): any {
-      if (!(this instanceof ASXMLList)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XMLList');
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'namespace');
       }
-      if (arguments.length === 0) {
-      } else {
-        prefix = asCoerceString(prefix);
-      }
-      notImplemented("public.XMLList::namespace"); return;
+      return this._children[0].namespace(prefix);
     }
     localName(): Object {
-      notImplemented("public.XMLList::localName"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'localName');
+      }
+      return this._children[0].localName();
     }
     namespaceDeclarations(): any [] {
-      notImplemented("public.XMLList::namespaceDeclarations"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists,
+                           'namespaceDeclarations');
+      }
+      return this._children[0].namespaceDeclarations();
     }
     prependChild(value: any): ASXML {
-
-      notImplemented("public.XMLList::prependChild"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'prependChild');
+      }
+      return this._children[0].prependChild(value);
     }
     removeNamespace(ns: any): ASXML {
-
-      notImplemented("public.XMLList::removeNamespace"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'removeNamespace');
+      }
+      return this._children[0].removeNamespace(ns);
     }
     replace(propertyName: any, value: any): ASXML {
-
-      notImplemented("public.XMLList::replace"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'replace');
+      }
+      return this._children[0].replace(propertyName, value);
     }
     setChildren(value: any): ASXML {
-
-      notImplemented("public.XMLList::setChildren"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'setChildren');
+      }
+      return this._children[0].setChildren(value);
     }
     setLocalName(name: any): void {
-
-      notImplemented("public.XMLList::setLocalName"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'setLocalName');
+      }
+      return this._children[0].setLocalName(name);
     }
     setName(name: any): void {
-
-      notImplemented("public.XMLList::setName"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'setName');
+      }
+      return this._children[0].setName(name);
     }
     setNamespace(ns: any): void {
-
-      notImplemented("public.XMLList::setNamespace"); return;
+      if (this._children.length !== 1) {
+        Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'setNamespace');
+      }
+      return this._children[0].setNamespace(ns);
     }
 
     public static isTraitsOrDynamicPrototype(value): boolean {
@@ -2852,25 +3040,23 @@ module Shumway.AVM2.AS {
     }
 
     // 9.2.1.1 [[Get]] (P)
-    getProperty(mn, isAttribute, isMethod) {
-      if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn :
-          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
-        return this[Multiname.getQualifiedName(resolved)];
-      }
+    getProperty(mn, isAttribute): any {
       if (isIndex(mn)) {
         return this._children[mn];
       }
       var name = toXMLName(mn);
-      var xl = new XMLList(this, name);
+      var xl = new AS.ASXMLList();
       this._children.forEach(function (v:any, i) {
         // a. If x[i].[[Class]] == "element",
         if (v._kind === ASXMLKind.Element) {
           // i. Let gq be the result of calling the [[Get]] method of x[i] with argument P
-          var gq = v.getProperty(name, isAttribute, isMethod);
-          // ii. If gq.[[Length]] > 0, call the [[Append]] method of list with argument gq
+          var gq = v.getProperty(name, isAttribute);
+          // ii. If gq.[[Length]] > 0, call the [[append]] method of list with argument gq
           if (gq.length() > 0) {
-            xl.appendChild(gq);
+            var descendants = gq._children;
+            for (var j = 0; j < descendants.length; j++) {
+              xl._children.push(descendants[j]);
+            }
           }
         }
       });
@@ -2889,9 +3075,8 @@ module Shumway.AVM2.AS {
       if (ASXMLList.isTraitsOrDynamicPrototype(this)) {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
-      var isAttribute = flags & Multiname.ATTRIBUTE;
-      return this.getProperty(prefixWithNamespace(namespaces, name, isAttribute),
-        isAttribute, false);
+      var isAttribute = !!(flags & Multiname.ATTRIBUTE);
+      return this.getProperty(prefixWithNamespace(namespaces, name, isAttribute), isAttribute);
     }
 
     hasProperty(mn, isAttribute) {
@@ -2906,13 +3091,13 @@ module Shumway.AVM2.AS {
       if (ASXMLList.isTraitsOrDynamicPrototype(this)) {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
-      var isAttribute = flags & Multiname.ATTRIBUTE;
+      var isAttribute = !!(flags & Multiname.ATTRIBUTE);
       return this.hasProperty(prefixWithNamespace(namespaces, name, isAttribute),
         isAttribute);
     }
 
     public asHasPropertyInternal(namespaces: Namespace [], name: any, flags: number) {
-      var isAttribute = flags & Multiname.ATTRIBUTE;
+      var isAttribute = !!(flags & Multiname.ATTRIBUTE);
       return this.hasProperty(prefixWithNamespace(namespaces, name, isAttribute),
         isAttribute);
     }
@@ -2927,7 +3112,7 @@ module Shumway.AVM2.AS {
       // Steps 1-2.
       if (isIndex(mn)) {
         // TODO do we need to simulate a sparse array here?
-        this.appendChild(value);
+        this.append(value);
         return;
       }
       // Step 3.
@@ -2939,7 +3124,7 @@ module Shumway.AVM2.AS {
           return;
         }
         // Step 3.a.iii.
-        this.appendChild(r._children[0]);
+        this.append(r._children[0]);
       }
       // Step 3.b.
       if (this._children.length === 1) {
@@ -2955,7 +3140,7 @@ module Shumway.AVM2.AS {
       if (ASXMLList.isTraitsOrDynamicPrototype(this)) {
         return _asSetProperty.call(this, namespaces, name, flags, value);
       }
-      var isAttribute = flags & Multiname.ATTRIBUTE;
+      var isAttribute = !!(flags & Multiname.ATTRIBUTE);
       name = prefixWithNamespace(namespaces, name, isAttribute);
       return this.setProperty(name, isAttribute, value);
     }
@@ -2990,7 +3175,7 @@ module Shumway.AVM2.AS {
       var child = this._children[index];
       var parent = child._parent;
       if (parent) {
-        child._parent = null;
+        child._parent = undefined;
         parent._children.splice(parent._children.indexOf(child), 1);
       }
       this._children.splice(index, 1);
@@ -3021,13 +3206,4 @@ module Shumway.AVM2.AS {
       throw new TypeError();
     }
   }
-
-  function XMLList(targetObject?, targetProperty?): void {
-    var self = Object.create(ASXMLList.prototype);
-    self._targetObject = targetObject ? targetObject : null;
-    self._targetProperty = targetProperty ? targetProperty : null;
-    self._children = [];
-    return self;
-  }
-
 }

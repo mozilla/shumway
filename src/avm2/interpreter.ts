@@ -407,6 +407,9 @@ module Shumway.AVM2 {
             break;
           case OP.getdescendants:
             popNameInto(stack, multinames[bc.index], mn);
+            if (mn.name === undefined) {
+              mn.name = '*';
+            }
             stack.push(getDescendants(stack.pop(), mn));
             break;
           case OP.newcatch:
