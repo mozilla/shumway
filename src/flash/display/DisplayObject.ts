@@ -406,7 +406,7 @@ module Shumway.AVM2.AS.flash.display {
       self._concatenatedColorTransform = new geom.ColorTransform();
 
       self._depth = -1;
-      self._ratio = -1;
+      self._ratio = 0;
       self._index = -1;
       self._maskedObject = null;
 
@@ -1088,8 +1088,9 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (placeObjectTag.flags & PlaceObjectFlags.HasRatio || reset) {
-        var ratio = placeObjectTag.ratio === undefined ? -1 : placeObjectTag.ratio;
+        var ratio = placeObjectTag.ratio | 0;
         if (ratio !== this._ratio) {
+          release || assert(ratio >= 0 && ratio <= 0xffff);
           this._ratio = ratio;
           this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
         }
