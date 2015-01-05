@@ -133,7 +133,7 @@ module Shumway.SWF {
         return;
       }
       if (this.isCompressed) {
-        this._decompressor.push(bytes, true);
+        this._decompressor.push(bytes);
       } else {
         this.processDecompressedData(bytes);
       }
@@ -187,7 +187,6 @@ module Shumway.SWF {
       this.swfVersion = initialBytes[3];
       this._loadStarted = Date.now();
       this._uncompressedLength = readSWFLength(initialBytes);
-      // TODO: only report decoded or sync-decodable bytes as loaded.
       this.bytesLoaded = initialBytes.length;
       this._data = new Uint8Array(this._uncompressedLength);
       this._dataStream = new Stream(this._data.buffer);
@@ -202,27 +201,26 @@ module Shumway.SWF {
         this._decompressor.onData = function(data: Uint32Array) {
           self._data.set(data, self._uncompressedLoadedLength);
           self._uncompressedLoadedLength += data.length;
-          // TODO: clean up second part of header parsing.
-          var obj = Parser.LowLevel.readHeader(self._data, self._dataStream);
-          self.bounds = obj.bounds;
-          self.frameRate = obj.frameRate;
-          self.frameCount = obj.frameCount;
           self._decompressor.onData = self.processDecompressedData.bind(self);
+          self.parseHeaderContents();
         };
-        this._decompressor.push(initialBytes.subarray(8), true);
+        this._decompressor.push(initialBytes.subarray(8));
       } else {
         this._data.set(initialBytes);
         this._uncompressedLoadedLength = initialBytes.length;
         this._decompressor = null;
-        // TODO: clean up second part of header parsing.
-        var obj = Parser.LowLevel.readHeader(this._data, this._dataStream);
-        this.bounds = obj.bounds;
-        this.frameRate = obj.frameRate;
-        this.frameCount = obj.frameCount;
+        this.parseHeaderContents();
       }
       SWF.leaveTimeline();
       this._lastScanPosition = this._dataStream.pos;
       this.scanLoadedData();
+    }
+
+    private parseHeaderContents() {
+      var obj = Parser.LowLevel.readHeader(this._data, this._dataStream);
+      this.bounds = obj.bounds;
+      this.frameRate = obj.frameRate;
+      this.frameCount = obj.frameCount;
     }
 
     private processDecompressedData(data: Uint8Array) {
