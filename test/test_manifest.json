@@ -463,7 +463,8 @@
       "stas": "swfs/trace.stas",
       "filenames": [
         "swfs/as3-loader/LoaderTest.swf",
-        "swfs/as3-loader/LoaderLoadBytesTest.swf"
+        "swfs/as3-loader/LoaderLoadBytesTest.swf",
+        "swfs/as3-loader/LoaderLoadBytesTest2.swf"
       ],
       "type": "stas"
     },

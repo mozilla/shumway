@@ -34,7 +34,7 @@ interface IProtocol {
   asCallSuper: (scope, namespaces: Namespace [], name: any, flags: number, args: any []) => any;
   asGetSuper: (scope, namespaces: Namespace [], name: any, flags: number) => any;
   asSetSuper: (scope, namespaces: Namespace [], name: any, flags: number, value: any) => void;
-  asCallPublicProperty: (name: any, args: any []) => void;
+  asCallPublicProperty: (name: any, args: any []) => any;
   asCallResolvedStringProperty: (resolved: any, isLex: boolean, args: any []) => any;
   asConstructProperty: (namespaces: Namespace [], name: any, flags: number, args: any []) => any;
   asHasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
