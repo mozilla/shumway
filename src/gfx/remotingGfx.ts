@@ -564,6 +564,7 @@ module Shumway.Remoting.GFX {
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
         ratio = input.readInt() / 0xffff;
+        release || assert(ratio >= 0 && ratio <= 1);
         var blendMode = input.readInt();
         if (blendMode !== BlendMode.Normal) {
           node.getLayer().blendMode = blendMode;

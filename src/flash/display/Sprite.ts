@@ -108,8 +108,7 @@ module Shumway.AVM2.AS.flash.display {
             }
           }
           // If no such tag was found or a different object is placed, remove the current child.
-          if (!tag || child._symbol.id !== tag.symbolId ||
-              child._ratio !== (tag.ratio === undefined ? -1 : tag.ratio)) {
+          if (!tag || child._symbol.id !== tag.symbolId || child._ratio !== (tag.ratio | 0)) {
             this._removeAnimatedChild(child);
           }
         }
