@@ -69,7 +69,7 @@ module Shumway.AVM2.AS.flash.system {
     private static _version: string = 'SHUMWAY 10,0,0,0';
     // static _screenColor: string;
     // static _pixelAspectRatio: number;
-    // static _screenDPI: number;
+    private static _screenDPI: number = 96; // Using standard CSS DPI for now.
     // static _touchscreenType: string;
     // static _hasIME: boolean;
     // static _hasTLS: boolean;
@@ -195,8 +195,8 @@ module Shumway.AVM2.AS.flash.system {
       // return Capabilities._pixelAspectRatio;
     }
     static get screenDPI(): number {
-      notImplemented("public flash.system.Capabilities::get screenDPI"); return;
-      // return Capabilities._screenDPI;
+      somewhatImplemented("public flash.system.Capabilities::get screenDPI");
+      return Capabilities._screenDPI;
     }
     static get screenResolutionX(): number {
       somewhatImplemented("public flash.system.Capabilities::get screenResolutionX");
