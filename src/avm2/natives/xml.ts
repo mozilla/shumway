@@ -397,7 +397,8 @@ module Shumway.AVM2.AS {
     }
     // The E4X spec says we must throw a TypeError for non-Boolean, Number, or String objects.
     // Flash thinks otherwise.
-    var parentString = '<parent xmlns="' + ASXML.defaultNamespace + '">' + value + '</parent>';
+    var parentString = '<parent xmlns="' + escapeAttributeValue(ASXML.defaultNamespace) + '">' +
+                       value + '</parent>';
     var x = toXML(parentString);
     var children = x._children;
     if (!children) {
@@ -519,8 +520,7 @@ module Shumway.AVM2.AS {
           "xmlns": 'http://www.w3.org/2000/xmlns/',
           "xml": 'http://www.w3.org/XML/1998/namespace'
         },
-        inScopes: !ASXML.defaultNamespace ? [] :
-          [{uri: ASXML.defaultNamespace, prefix: ''}],
+        inScopes: !ASXML.defaultNamespace ? [] : [{uri: ASXML.defaultNamespace, prefix: ''}],
         space: 'default',
         xmlns: (ASXML.defaultNamespace || '')
       }];
