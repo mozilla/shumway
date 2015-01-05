@@ -1239,7 +1239,6 @@ module Shumway.AVM2.AS {
   export class ASXML extends ASNative implements XMLType {
     public static instanceConstructor: any = ASXML;
     static classInitializer: any = function() {
-      AS.ASXML = this;
       var proto: any = ASXML.prototype;
       defineNonEnumerableProperty(proto, 'asDeleteProperty', proto._asDeleteProperty);
       defineNonEnumerableProperty(proto, '$BgvalueOf', Object.prototype['$BgvalueOf']);
