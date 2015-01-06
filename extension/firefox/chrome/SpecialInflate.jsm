@@ -91,7 +91,7 @@ var SpecialInflateUtils = {
     try {
       return Services.prefs.getBoolPref('shumway.specialInflate');
     } catch (ex) {
-      return true;
+      return false; // TODO true;
     }
   },
 
