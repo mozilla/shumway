@@ -5,7 +5,7 @@
        "type": "eq"
     },
     {  "id": "acid-image",
-       "frames": [1, 5, 10],
+       "frames": [10],
        "swf": "swfs/acid/acid-image.swf",
        "type": "eq"
     },
@@ -25,12 +25,12 @@
       "type": "eq"
     },
     {  "id": "acid-bitmap-fill-2",
-      "frames": [20],
+      "frames": [1],
       "swf": "swfs/acid/acid-bitmap-fill-2.swf",
       "type": "eq"
     },
     {  "id": "acid-bitmap-fill",
-      "frames": [20],
+      "frames": [1],
       "swf": "swfs/acid/acid-bitmap-fill.swf",
       "type": "eq"
     },
@@ -40,18 +40,8 @@
       "type": "eq"
     },
     {  "id": "acid-bitmaps",
-      "frames": [1, 5, 10],
+      "frames": [5, 10],
       "swf": "swfs/acid/acid-bitmaps.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-buttons-2",
-      "frames": [1],
-      "swf": "swfs/acid/acid-buttons-2.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-buttons",
-      "frames": [1],
-      "swf": "swfs/acid/acid-buttons.swf",
       "type": "eq"
     },
     {  "id": "acid-chars",
@@ -60,13 +50,13 @@
       "type": "eq"
     },
     {  "id": "acid-child",
-      "frames": [1, 5, 10],
+      "frames": [5, 10],
       "swf": "swfs/acid/acid-child.swf",
       "type": "eq"
     },
-    {  "id": "acid-click-0",
+    {  "id": "acid-clip",
       "frames": [1],
-      "swf": "swfs/acid/acid-click-0.swf",
+      "swf": "swfs/acid/acid-clip.swf",
       "type": "eq"
     },
     {  "id": "acid-clip-2",
@@ -75,18 +65,8 @@
       "type": "eq"
     },
     {  "id": "acid-clip-3",
-      "frames": [1, 10, 20],
+      "frames": [3, 10],
       "swf": "swfs/acid/acid-clip-3.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-clip-bug",
-      "frames": [1],
-      "swf": "swfs/acid/acid-clip-bug.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-clip",
-      "frames": [1],
-      "swf": "swfs/acid/acid-clip.swf",
       "type": "eq"
     },
     {  "id": "acid-color-0",
@@ -100,13 +80,8 @@
       "type": "eq"
     },
     {  "id": "acid-color",
-      "frames": [1, 5, 10],
+      "frames": [1, 10],
       "swf": "swfs/acid/acid-color.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-gc",
-      "frames": [1],
-      "swf": "swfs/acid/acid-gc.swf",
       "type": "eq"
     },
     {  "id": "acid-gradient-0",
@@ -129,44 +104,19 @@
       "swf": "swfs/acid/acid-gradient.swf",
       "type": "eq"
     },
-    {  "id": "acid-image-2",
-      "frames": [10],
-      "swf": "swfs/acid/acid-image-2.swf",
-      "type": "eq"
-    },
     {  "id": "acid-large",
       "frames": [20],
       "swf": "swfs/acid/acid-large.swf",
       "type": "eq"
     },
-    {  "id": "acid-mask-0",
-      "frames": [1],
-      "swf": "swfs/acid/acid-mask-0.swf",
-      "type": "eq"
-    },
     {  "id": "acid-mask",
-      "frames": [1, 5, 10],
+      "frames": [5, 10],
       "swf": "swfs/acid/acid-mask.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-mouse-0",
-      "frames": [1],
-      "swf": "swfs/acid/acid-mouse-0.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-mouse",
-      "frames": [1],
-      "swf": "swfs/acid/acid-mouse.swf",
       "type": "eq"
     },
     {  "id": "acid-scale",
       "frames": [1],
       "swf": "swfs/acid/acid-scale.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-sh",
-      "frames": [1],
-      "swf": "swfs/acid/acid-sh.swf",
       "type": "eq"
     },
     {  "id": "acid-shapes-testing",
@@ -180,18 +130,13 @@
       "type": "eq"
     },
     {  "id": "acid-small",
-      "frames": [1],
+      "frames": [1, 5],
       "swf": "swfs/acid/acid-small.swf",
       "type": "eq"
     },
     {  "id": "acid-stroke-0",
       "frames": [1],
       "swf": "swfs/acid/acid-stroke-0.swf",
-      "type": "eq"
-    },
-    {  "id": "acid-stroke-1",
-      "frames": [1],
-      "swf": "swfs/acid/acid-stroke-1.swf",
       "type": "eq"
     },
     {  "id": "acid-text-2",
@@ -205,7 +150,7 @@
       "type": "eq"
     },
     {  "id": "acid-text-6",
-      "frames": [1, 10, 20],
+      "frames": [1, 20],
       "swf": "swfs/acid/acid-text-6.swf",
       "type": "eq"
     },
