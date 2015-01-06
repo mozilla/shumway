@@ -416,23 +416,20 @@ module Shumway.SWF.Parser.LowLevel {
   export function defineFont2($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
-    var hasLayout = $.hasLayout = readUb($bytes, $stream, 1);
-    var reserved: any;
-    if (swfVersion > 5) {
-      $.shiftJis = readUb($bytes, $stream, 1);
-    } else {
-      reserved = readUb($bytes, $stream, 1);
-    }
-    $.smallText = readUb($bytes, $stream, 1);
-    $.ansi = readUb($bytes, $stream, 1);
-    var wideOffset = $.wideOffset = readUb($bytes, $stream, 1);
-    var wide = $.wide = readUb($bytes, $stream, 1);
-    $.italic = readUb($bytes, $stream, 1);
-    $.bold = readUb($bytes, $stream, 1);
+    var flags = readUi8($bytes, $stream);
+    var hasLayout = $.hasLayout = (flags & 0x80) ? 1 : 0;
+    $.shiftJis = (swfVersion > 5 && flags & 0x40) ? 1 : 0;
+    $.smallText = (flags & 0x20) ? 1 : 0;
+    $.ansi = (flags & 0x10) ? 1 : 0;
+    var wideOffset = $.wideOffset = (flags & 0x08) ? 1 : 0;
+    var wide = $.wide = (flags & 0x04) ? 1 : 0;
+    $.italic = (flags & 0x02) ? 1 : 0;
+    $.bold = (flags & 0x01) ? 1 : 0;
     if (swfVersion > 5) {
       $.language = readUi8($bytes, $stream);
     } else {
-      reserved = readUi8($bytes, $stream);
+      // Skip reserved byte.
+      readUi8($bytes, $stream);
       $.language = 0;
     }
     var nameLength = readUi8($bytes, $stream);
@@ -519,10 +516,10 @@ module Shumway.SWF.Parser.LowLevel {
   export function defineFont4($bytes, $stream, $, swfVersion, tagCode, tagEnd) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
-    var reserved = readUb($bytes, $stream, 5);
-    var hasFontData = $.hasFontData = readUb($bytes, $stream, 1);
-    $.italic = readUb($bytes, $stream, 1);
-    $.bold = readUb($bytes, $stream, 1);
+    var flags = readUi8($bytes, $stream);
+    var hasFontData = $.hasFontData = (flags & 0x4) ? 1 : 0;
+    $.italic = (flags & 0x2) ? 1 : 0;
+    $.bold = (flags & 0x1) ? 1 : 0;
     $.name = readString($bytes, $stream, 0);
     if (hasFontData) {
       $.data = $bytes.subarray($stream.pos, tagEnd);

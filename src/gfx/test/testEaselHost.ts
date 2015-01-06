@@ -127,9 +127,17 @@ module Shumway.GFX.Test {
           e.result = this.processVideoControl(data.id, data.eventType, data.data);
           e.handled = true;
           break;
+        case 'registerFontOrImage':
+          this.processRegisterFontOrImage(data.syncId, data.symbolId, data.assetType, data.data,
+                                          data.resolve);
+          e.handled = true;
+          break;
         case 'fscommand':
           this.processFSCommand(data.command, data.args);
           break;
+        default:
+          // TODO: reactivate this assert after it's not triggered by mouse moves anymore.
+          //release || Debug.assertUnreachable("Unhandled remoting event " + type);
       }
     }
 

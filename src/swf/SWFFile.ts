@@ -42,17 +42,20 @@ module Shumway.SWF {
 
     bytesLoaded: number;
     bytesTotal: number;
+    pendingUpdateDelays: number;
+    // Might be lower than frames.length if eagerly parsed assets pending resolution are blocking
+    // us from reporting the given frame as loaded.
     framesLoaded: number;
 
     frames: SWFFrame[];
     abcBlocks: ABCBlock[];
     dictionary: DictionaryEntry[];
-    fonts: {name: string; id: number}[];
+    fonts: {name: string; style: string; id: number}[];
 
     symbolClassesMap: string[];
     symbolClassesList: {id: number; className: string}[];
-    eagerlyParsedSymbols: EagerlyParsedDictionaryEntry[];
-    pendingSymbolsPromise: Promise<any>;
+    eagerlyParsedSymbolsMap: EagerlyParsedDictionaryEntry[];
+    eagerlyParsedSymbolsList: EagerlyParsedDictionaryEntry[];
 
     private _uncompressedLength: number;
     private _uncompressedLoadedLength: number;
@@ -63,6 +66,7 @@ module Shumway.SWF {
     private _jpegTables: any;
     private _endTagEncountered: boolean;
     private _loadStarted: number;
+    private _lastScanPosition: number;
 
     private _currentFrameLabel: string;
     private _currentSoundStreamHead: Parser.SoundStream;
@@ -98,6 +102,7 @@ module Shumway.SWF {
 
       this.bytesLoaded = 0;
       this.bytesTotal = length;
+      this.pendingUpdateDelays = 0;
       this.framesLoaded = 0;
 
       this.frames = [];
@@ -107,8 +112,8 @@ module Shumway.SWF {
 
       this.symbolClassesMap = [];
       this.symbolClassesList = [];
-      this.eagerlyParsedSymbols = [];
-      this.pendingSymbolsPromise = null;
+      this.eagerlyParsedSymbolsMap = [];
+      this.eagerlyParsedSymbolsList = [];
       this._jpegTables = null;
 
       this._currentFrameLabel = null;
@@ -123,7 +128,6 @@ module Shumway.SWF {
     }
 
     appendLoadedData(bytes: Uint8Array) {
-      this.pendingSymbolsPromise = null;
       // TODO: only report decoded or sync-decodable bytes as loaded.
       this.bytesLoaded += bytes.length;
       release || assert(this.bytesLoaded <= this.bytesTotal);
@@ -132,7 +136,7 @@ module Shumway.SWF {
         return;
       }
       if (this.isCompressed) {
-        this._decompressor.push(bytes, true);
+        this._decompressor.push(bytes);
       } else {
         this.processDecompressedData(bytes);
       }
@@ -140,8 +144,8 @@ module Shumway.SWF {
     }
 
     getSymbol(id: number) {
-      if (this.eagerlyParsedSymbols[id]) {
-        return this.eagerlyParsedSymbols[id];
+      if (this.eagerlyParsedSymbolsMap[id]) {
+        return this.eagerlyParsedSymbolsMap[id];
       }
       var unparsed = this.dictionary[id];
       if (!unparsed) {
@@ -186,7 +190,6 @@ module Shumway.SWF {
       this.swfVersion = initialBytes[3];
       this._loadStarted = Date.now();
       this._uncompressedLength = readSWFLength(initialBytes);
-      // TODO: only report decoded or sync-decodable bytes as loaded.
       this.bytesLoaded = initialBytes.length;
       this._data = new Uint8Array(this._uncompressedLength);
       this._dataStream = new Stream(this._data.buffer);
@@ -201,26 +204,26 @@ module Shumway.SWF {
         this._decompressor.onData = function(data: Uint32Array) {
           self._data.set(data, self._uncompressedLoadedLength);
           self._uncompressedLoadedLength += data.length;
-          // TODO: clean up second part of header parsing.
-          var obj = Parser.LowLevel.readHeader(self._data, self._dataStream);
-          self.bounds = obj.bounds;
-          self.frameRate = obj.frameRate;
-          self.frameCount = obj.frameCount;
           self._decompressor.onData = self.processDecompressedData.bind(self);
+          self.parseHeaderContents();
         };
-        this._decompressor.push(initialBytes.subarray(8), true);
+        this._decompressor.push(initialBytes.subarray(8));
       } else {
         this._data.set(initialBytes);
         this._uncompressedLoadedLength = initialBytes.length;
         this._decompressor = null;
-        // TODO: clean up second part of header parsing.
-        var obj = Parser.LowLevel.readHeader(this._data, this._dataStream);
-        this.bounds = obj.bounds;
-        this.frameRate = obj.frameRate;
-        this.frameCount = obj.frameCount;
+        this.parseHeaderContents();
       }
       SWF.leaveTimeline();
+      this._lastScanPosition = this._dataStream.pos;
       this.scanLoadedData();
+    }
+
+    private parseHeaderContents() {
+      var obj = Parser.LowLevel.readHeader(this._data, this._dataStream);
+      this.bounds = obj.bounds;
+      this.frameRate = obj.frameRate;
+      this.frameCount = obj.frameCount;
     }
 
     private processDecompressedData(data: Uint8Array) {
@@ -234,7 +237,9 @@ module Shumway.SWF {
 
     private scanLoadedData() {
       SWF.enterTimeline('Scan loaded SWF file tags');
+      this._dataStream.pos = this._lastScanPosition;
       this.scanTagsToOffset(this._uncompressedLoadedLength, true);
+      this._lastScanPosition = this._dataStream.pos;
       SWF.leaveTimeline();
     }
 
@@ -249,7 +254,7 @@ module Shumway.SWF {
           if (rootTimelineMode) {
             this._endTagEncountered = true;
             console.log('SWF load time: ' +
-              ((Date.now() - this._loadStarted) * 0.001).toFixed(4) + 'sec');
+                        ((Date.now() - this._loadStarted) * 0.001).toFixed(4) + 'sec');
           }
           return;
         }
@@ -328,11 +333,7 @@ module Shumway.SWF {
       }
       if (FontDefinitionTags[tagCode]) {
         var unparsed = this.addLazySymbol(tagCode, byteOffset, tagLength);
-        if (!inFirefox) {
-          this.decodeEmbeddedFont(unparsed);
-        } else {
-          this.registerEmbeddedFont(unparsed);
-        }
+        this.registerEmbeddedFont(unparsed);
         return;
       }
       if (DefinitionTags[tagCode]) {
@@ -607,7 +608,7 @@ module Shumway.SWF {
     }
 
     private finishFrame() {
-      if (this.framesLoaded === this.frames.length) {
+      if (this.pendingUpdateDelays === 0) {
         this.framesLoaded++;
       }
       this.frames.push(new SWFFrame(this._currentControlTags,
@@ -675,34 +676,35 @@ module Shumway.SWF {
         console.info("Decoding embedded font " + definition.id + " with name '" +
                      definition.name + "'", definition);
       }
-      this.eagerlyParsedSymbols[symbol.id] = symbol;
-      // Nothing more to do for glyph-less fonts.
-      if (!definition.data) {
-        return;
-      }
-      this.fonts.push({name: definition.name, id: definition.id});
-      // Firefox decodes fonts synchronously, so we don't need to delay other processing until it's
-      // done. For other browsers, delay for a time that should be enough in all cases.
-      var promise = new Promise((resolve, reject) => setTimeout(resolve, 400));
-      promise.then(this.markSymbolAsDecoded.bind(this, symbol));
-      var currentPromise = this.pendingSymbolsPromise;
-      this.pendingSymbolsPromise = currentPromise ?
-                                   Promise.all([currentPromise, promise]) :
-                                   promise;
+      this.eagerlyParsedSymbolsMap[symbol.id] = symbol;
+      this.eagerlyParsedSymbolsList.push(symbol);
+
+      var style = flagsToFontStyle(definition.bold, definition.italic);
+      this.fonts.push({name: definition.name, id: definition.id, style: style});
     }
 
     private registerEmbeddedFont(unparsed: UnparsedTag) {
-      // DefineFont only specifies a symbol ID, no font name, so we don't have to do anything here.
-      if (unparsed.tagCode === SWFTag.CODE_DEFINE_FONT) {
+      if (!inFirefox) {
+        this.decodeEmbeddedFont(unparsed);
         return;
       }
       var stream = this._dataStream;
       var id = stream.getUint16(stream.pos, true);
-      // Skip flags and language code.
-      var nameLength = this._data[stream.pos + 4];
-      stream.pos += 5;
-      var name = Parser.readString(this._data, stream, nameLength);
-      this.fonts.push({name: name, id: id});
+      var style: string;
+      var name: string;
+      // DefineFont only specifies a symbol ID, no font name or style.
+      if (unparsed.tagCode === SWFTag.CODE_DEFINE_FONT) {
+        name = null;
+        style = 'regular';
+      } else {
+        var flags = this._data[stream.pos + 2];
+        style = flagsToFontStyle(!!(flags & 0x2), !!(flags & 0x1));
+        var nameLength = this._data[stream.pos + 4];
+        // Skip language code.
+        stream.pos += 5;
+        name = Parser.readString(this._data, stream, nameLength);
+      }
+      this.fonts.push({name: name, id: id, style: style});
       if (!release && traceLevel.value > 0) {
         console.info("Registering embedded font " + id + " with name '" + name + "'");
       }
@@ -717,32 +719,22 @@ module Shumway.SWF {
                      SWFTag[unparsed.tagCode] + " (start: " + unparsed.byteOffset +
                      ", end: " + (unparsed.byteOffset + unparsed.byteLength) + ")");
       }
-      this.eagerlyParsedSymbols[symbol.id] = symbol;
-      var promise = decodeImage(definition, this.markSymbolAsDecoded.bind(this, symbol));
-      var currentPromise = this.pendingSymbolsPromise;
-      this.pendingSymbolsPromise = currentPromise ?
-                                   Promise.all([currentPromise, promise]) :
-                                   promise;
-    }
-
-    private markSymbolAsDecoded(symbol: EagerlyParsedDictionaryEntry, event?: any) {
-      symbol.ready = true;
-      if (!release && traceLevel.value > 0) {
-        console.info("Marking symbol " + symbol.id + " as decoded.", symbol);
-      }
-      if (event && event.type === 'error') {
-        Debug.warning("Decoding of image symbol failed", symbol, event);
-      }
+      this.eagerlyParsedSymbolsMap[symbol.id] = symbol;
+      this.eagerlyParsedSymbolsList.push(symbol);
     }
   }
 
-  function decodeImage(definition: ImageDefinition, oncomplete: (event: any) => void) {
-    var image = definition.image = new Image();
-    image.src = URL.createObjectURL(new Blob([definition.data], {type: definition.mimeType}));
-    return new Promise(function(resolve, reject) {
-      image.onload = resolve;
-      image.onerror = resolve;
-    }).then(oncomplete);
+  function flagsToFontStyle(bold: boolean, italic: boolean) {
+    if (bold && italic) {
+      return 'boldItalic';
+    }
+    if (bold) {
+      return 'bold';
+    }
+    if (italic) {
+      return 'italic';
+    }
+    return 'regular';
   }
 
   export class SWFFrame {
@@ -817,8 +809,6 @@ module Shumway.SWF {
     return bytes[4] | bytes[5] << 8 | bytes[6] << 16 | bytes[7] << 24;
   }
 
-  var inFirefox = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Firefox') >= 0;
-
   function defineSymbol(swfTag, symbols) {
     switch (swfTag.code) {
       case SWFTag.CODE_DEFINE_BITS:
@@ -838,12 +828,7 @@ module Shumway.SWF {
       case SWFTag.CODE_DEFINE_FONT2:
       case SWFTag.CODE_DEFINE_FONT3:
       case SWFTag.CODE_DEFINE_FONT4:
-        var symbol = Shumway.SWF.Parser.defineFont(swfTag);
-        // Only register fonts with embedded glyphs.
-        if (symbol.data) {
-          Shumway.registerCSSFont(symbol.id, symbol.data, !inFirefox);
-        }
-        return symbol;
+        return Shumway.SWF.Parser.defineFont(swfTag);
       case SWFTag.CODE_DEFINE_MORPH_SHAPE:
       case SWFTag.CODE_DEFINE_MORPH_SHAPE2:
       case SWFTag.CODE_DEFINE_SHAPE:

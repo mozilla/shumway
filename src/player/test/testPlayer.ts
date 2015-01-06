@@ -78,6 +78,18 @@ module Shumway.Player.Test {
       });
     }
 
+    protected registerFontOrImageImpl(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
+      var message = {
+        type: 'registerFontOrImage',
+        syncId: symbol.syncId,
+        symbolId: symbol.id,
+        assetType: data.type,
+        data: data,
+        resolve: symbol.resolveAssetPromise.resolve
+      };
+      return this._worker.postSyncMessage(message);
+    }
+
     private _onWorkerMessage(e) {
       var data = e.data;
       if (typeof data !== 'object' || data === null) {

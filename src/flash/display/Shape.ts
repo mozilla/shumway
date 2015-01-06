@@ -79,7 +79,11 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = 0; i < dependencies.length; i++) {
         var symbol = <flash.display.BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
         if (!symbol) {
-          warning("Bitmap symbol " + dependencies[i] + " required by shape, but not defined.");
+          if (dependencies[i] !== 65535) {
+            // Id 65535 is somehow used invalidly in lots of embedded shapes created by the
+            // authoring tool, so don't warn about that.
+            warning("Bitmap symbol " + dependencies[i] + " required by shape, but not defined.");
+          }
           textures.push(null);
           // TODO: handle null-textures from invalid SWFs correctly.
           continue;

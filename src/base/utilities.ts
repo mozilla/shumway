@@ -18,6 +18,7 @@
 var jsGlobal = (function() { return this || (1, eval)('this'); })();
 // Our polyfills for some DOM things make testing this slightly more onerous than it ought to be.
 var inBrowser = typeof window !=='undefined' && 'document' in window && 'plugins' in window.document;
+var inFirefox = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Firefox') >= 0;
 
 declare var putstr;
 // declare var print;
@@ -3195,7 +3196,7 @@ module Shumway {
           if (a === 0) {
             target[i] = 0;
           } else if (a === 0xff) {
-            target[i] = (pBGRA & 0xff) << 24 | ((pBGRA >> 8) & 0x00ffffff);
+            target[i] = 0xff000000 | ((pBGRA >> 8) & 0x00ffffff);
           } else {
             var b = (pBGRA >> 24) & 0xff;
             var g = (pBGRA >> 16) & 0xff;
@@ -3379,6 +3380,7 @@ module Shumway {
     // some measurement from it (which will turn out wrong because the font isn't yet available),
     // and then remove the node again. Then, magic happens. After a bit of time for said magic to
     // take hold, the font is available for actual use on canvas.
+    // TODO: remove the need for magic by implementing this in terms of the font loading API.
     if (forceFontInit) {
       var node = document.createElement('div');
       node.style.fontFamily = 'swffont' + id;

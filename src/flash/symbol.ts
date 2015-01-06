@@ -26,11 +26,25 @@ module Shumway.Timeline {
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
+  export interface IAssetResolver {
+    registerFontOrImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void;
+  }
+
+  export interface EagerlyResolvedSymbol {
+    syncId: number;
+    id: number;
+    ready: boolean;
+    resolveAssetPromise: PromiseWrapper<any>;
+    resolveAssetCallback: (data: any) => void;
+  }
+
   export interface SymbolData {id: number; className: string}
   /**
    * TODO document
    */
   export class Symbol {
+    ready: boolean;
+    resolveAssetPromise: PromiseWrapper<any>;
     data: any;
     isAVM1Object: boolean;
     avm1Context: Shumway.AVM1.AVM1Context;

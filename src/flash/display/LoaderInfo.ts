@@ -270,12 +270,23 @@ module Shumway.AVM2.AS.flash.display {
     getSymbolById(id: number): Shumway.Timeline.Symbol {
       var symbol = this._dictionary[id];
       if (symbol) {
+        if (symbol.ready === false) {
+          // We cannot assert this, as content might invalidly access symbols that aren't available
+          // yet.
+          release || Debug.warning("Accessing symbol that's not yet ready.");
+          return null;
+        }
         return symbol;
       }
       var data = this._file.getSymbol(id);
       if (!data) {
-        // It's entirely valid not to have symbols defined.
-        Debug.warning("Unknown symbol requested: " + id);
+        if (id !== 65535) {
+          // Id 65535 is somehow used invalidly in lots of embedded shapes created by the authoring
+          // tool.
+          Debug.warning("Unknown symbol requested: " + id);
+        }
+        // It's entirely valid not to have symbols defined, but might be a sign of us doing
+        // something wrong in parsing.
         return null;
       }
       // TODO: replace this switch with a table lookup.
@@ -287,7 +298,10 @@ module Shumway.AVM2.AS.flash.display {
           symbol = flash.display.MorphShapeSymbol.FromData(data, this);
           break;
         case 'image':
-          symbol = flash.display.BitmapSymbol.FromData(data.definition);
+          if (data.definition) {
+            data = data.definition;
+          }
+          symbol = flash.display.BitmapSymbol.FromData(data);
           break;
         case 'label':
           symbol = flash.text.TextSymbol.FromLabelData(data, this);
@@ -321,6 +335,10 @@ module Shumway.AVM2.AS.flash.display {
       }
       release || assert(symbol, "Unknown symbol type " + data.type);
       this._dictionary[id] = symbol;
+      if (symbol.ready === false) {
+        var resolver: Timeline.IAssetResolver = AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        resolver.registerFontOrImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
+      }
       return symbol;
     }
 

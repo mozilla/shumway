@@ -349,7 +349,8 @@ module Shumway.GFX {
     properties: {[name: string]: any} = {};
     _canvas: HTMLCanvasElement;
     _context: CanvasRenderingContext2D;
-    _imageData: ImageData;
+    _imageData: ImageData; // Created lazily when an image is created from a BitmapData instance.
+    private _sourceImage: HTMLImageElement;
     private fillStyle: ColorStyle;
 
     public static FromDataBuffer(type: ImageType, dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
@@ -375,40 +376,40 @@ module Shumway.GFX {
       return renderableBitmap;
     }
 
+    /**
+     * Returns a RenderableBitmap from an Image element, which it uses as its source.
+     *
+     * Takes `width` and `height` as arguments so it can deal with non-decoded images,
+     * which will only get their data after asynchronous decoding has completed.
+     */
+    public static FromImage(image: HTMLImageElement, width: number, height: number) {
+      return new RenderableBitmap(image, new Rectangle(0, 0, width, height));
+    }
+
     public updateFromDataBuffer(type: ImageType, dataBuffer: DataBuffer) {
       if (!imageUpdateOption.value) {
         return;
       }
+      var buffer = dataBuffer.buffer;
       enterTimeline("RenderableBitmap.updateFromDataBuffer", {length: dataBuffer.length});
-      if (type === ImageType.JPEG ||
-          type === ImageType.PNG  ||
-          type === ImageType.GIF)
-      {
-        var self = this;
-        self.setFlags(NodeFlags.Loading);
-        var image = new Image();
-        image.src = URL.createObjectURL(dataBuffer.toBlob(getMIMETypeForImageType(type)));
-        image.onload = function () {
-          self._context.drawImage(image, 0, 0);
-          self.removeFlags(NodeFlags.Loading);
-          self.invalidate();
-        };
-        image.onerror = function () {
-          unexpected("Image loading error: " + ImageType[type]);
-        };
+      if (type === ImageType.JPEG || type === ImageType.PNG || type === ImageType.GIF) {
+        release || Debug.assertUnreachable("Mustn't encounter un-decoded images here");
       } else {
+        var bounds = this._bounds;
+        var imageData = this._imageData;
+        if (!imageData || imageData.width !== bounds.w || imageData.height !== bounds.h) {
+          imageData = this._imageData = this._context.createImageData(bounds.w, bounds.h);
+        }
         if (imageConvertOption.value) {
           enterTimeline("ColorUtilities.convertImage");
-          ColorUtilities.convertImage (
-            type,
-            ImageType.StraightAlphaRGBA,
-            new Int32Array(dataBuffer.buffer),
-            new Int32Array(this._imageData.data.buffer)
-          );
+          var pixels = new Int32Array(buffer);
+          var out = new Int32Array(imageData.data.buffer);
+          ColorUtilities.convertImage (type, ImageType.StraightAlphaRGBA, pixels, out);
           leaveTimeline("ColorUtilities.convertImage");
         }
         enterTimeline("putImageData");
-        this._context.putImageData(this._imageData, 0, 0);
+        this._ensureSourceCanvas();
+        this._context.putImageData(imageData, 0, 0);
         leaveTimeline("putImageData");
       }
       this.invalidate();
@@ -419,38 +420,70 @@ module Shumway.GFX {
      * Writes the image data into the given |output| data buffer.
      */
     public readImageData(output: DataBuffer) {
-      var data = <Uint8Array>this._context.getImageData(0, 0, this._canvas.width, this._canvas.height).data;
-      output.writeRawBytes(data);
+      output.writeRawBytes(this.imageData.data);
     }
 
-    constructor(canvas: HTMLCanvasElement, bounds: Rectangle) {
+    constructor(source: any /* HTMLImageElement | HTMLCanvasElement */, bounds: Rectangle) {
       super();
       this.setBounds(bounds);
-      this._canvas = canvas;
-      this._context = this._canvas.getContext("2d");
-      this._imageData = this._context.createImageData(this._bounds.w, this._bounds.h);
+      if (source instanceof HTMLCanvasElement) {
+        this._initializeSourceCanvas(source);
+      } else {
+        this._sourceImage = source;
+      }
     }
 
     render(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle): void {
       enterTimeline("RenderableBitmap.render");
-      if (this._canvas) {
-        context.drawImage(this._canvas, 0, 0);
+      if (this.renderSource) {
+        context.drawImage(this.renderSource, 0, 0);
       } else {
         this._renderFallback(context);
       }
       leaveTimeline("RenderableBitmap.render");
     }
 
-    drawNode(source: Node, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clip: Rectangle): void {
+    drawNode(source: Node, matrix: Shumway.GFX.Geometry.Matrix,
+             colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clip: Rectangle): void {
       // TODO: Support colorMatrix and blendMode.
       enterTimeline("RenderableBitmap.drawFrame");
       // TODO: Hack to be able to compile this as part of gfx-base.
       var Canvas2D = (<any>GFX).Canvas2D;
       var bounds = this.getBounds();
-      var options = new Canvas2D.Canvas2DRendererOptions();
-      var renderer = new Canvas2D.Canvas2DRenderer(this._canvas, null, options);
+      // TODO: don't create a new renderer every time.
+      var renderer = new Canvas2D.Canvas2DRenderer(this._canvas, null);
       renderer.renderNode(source, clip || bounds, matrix);
       leaveTimeline("RenderableBitmap.drawFrame");
+    }
+
+    private _initializeSourceCanvas(source: HTMLCanvasElement) {
+      this._canvas = source;
+      this._context = this._canvas.getContext("2d");
+    }
+
+    private _ensureSourceCanvas() {
+      if (this._canvas) {
+        return;
+      }
+      var canvas = document.createElement("canvas");
+      var bounds = this._bounds;
+      canvas.width = bounds.w;
+      canvas.height = bounds.h;
+      this._initializeSourceCanvas(canvas);
+    }
+
+    private get imageData(): ImageData {
+      if (!this._canvas) {
+        release || assert(this._sourceImage);
+        this._ensureSourceCanvas();
+        this._context.drawImage(this._sourceImage, 0, 0);
+        this._sourceImage = null;
+      }
+      return this._context.getImageData(0, 0, this._bounds.w, this._bounds.h);
+    }
+
+    get renderSource(): any {// Image |  HTMLCanvasElement
+      return this._canvas || this._sourceImage;
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {
@@ -551,14 +584,6 @@ module Shumway.GFX {
     {
       var paintStencilStyle = '#FF4981';
       context.fillStyle = context.strokeStyle = 'transparent';
-
-      // Wait to deserialize paths until all textures have been loaded.
-      var textures = this._textures;
-      for (var i = 0; i < textures.length; i++) {
-        if (textures[i] && textures[i].hasFlags(NodeFlags.Loading)) {
-          return;
-        }
-      }
 
       var paths = this._deserializePaths(this._pathData, context, ratio);
       release || assert(paths);
@@ -794,7 +819,7 @@ module Shumway.GFX {
       var texture = this._textures[textureIndex];
       var fillStyle: CanvasPattern;
       if (texture) {
-        fillStyle = context.createPattern(texture._canvas, repeat);
+        fillStyle = context.createPattern(texture.renderSource, repeat);
         fillStyle.setTransform(fillTransform.toSVGMatrix());
       } else {
         // TODO: Wire up initially-missing textures that become available later.
@@ -1275,13 +1300,7 @@ module Shumway.GFX {
         var endIndex = textRunData.readInt();
 
         var size = textRunData.readInt();
-        var fontId = textRunData.readInt();
-        var fontName:string;
-        if (fontId) {
-          fontName = 'swffont' + fontId;
-        } else {
-          fontName = textRunData.readUTF();
-        }
+        var fontName = textRunData.readUTF();
 
         var ascent = textRunData.readInt();
         var descent = textRunData.readInt();
@@ -1300,12 +1319,12 @@ module Shumway.GFX {
         var italic = textRunData.readBoolean();
         var boldItalic = '';
         if (italic) {
-          boldItalic += 'italic';
+          boldItalic += 'italic ';
         }
         if (bold) {
-          boldItalic += ' bold';
+          boldItalic += 'bold ';
         }
-        var font = boldItalic + ' ' + size + 'px ' + fontName;
+        var font = boldItalic + size + 'px ' + fontName;
 
         var color = textRunData.readInt();
         var fillStyle = ColorUtilities.rgbToHex(color);

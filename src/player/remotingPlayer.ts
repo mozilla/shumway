@@ -540,23 +540,6 @@ module Shumway.Remoting.Player {
       this.output.writeInt(MessageTag.RequestBitmapData);
       this.output.writeInt(bitmapData._id);
     }
-
-    writeDecodeImage(promiseId: number, type: ImageType, data: Uint8Array) {
-      writer && writer.writeLn("Sending DecodeImage");
-      this.output.writeInt(MessageTag.DecodeImage);
-      this.output.writeInt(promiseId);
-      this.output.writeInt(type);
-      this._writeAsset(data);
-    }
-
-  }
-
-  export interface DecodeImageResponseData {
-    promiseId: number;
-    type: ImageType;
-    data: Uint8Array;
-    width: number;
-    height: number;
   }
 
   export interface FocusEventData {
@@ -566,13 +549,6 @@ module Shumway.Remoting.Player {
   export class PlayerChannelDeserializer {
     input: IDataInput;
     inputAssets: any[];
-
-    private _readAsset(): any {
-      var assetId = this.input.readInt();
-      var asset = this.inputAssets[assetId];
-      this.inputAssets[assetId] = null;
-      return asset;
-    }
 
     public read(): any {
       var input = this.input;
@@ -584,27 +560,8 @@ module Shumway.Remoting.Player {
           return this._readKeyboardEvent();
         case MessageTag.FocusEvent:
           return this._readFocusEvent();
-        case MessageTag.DecodeImageResponse:
-          return this._readDecodeImageResponse();
       }
       release || assert(false, 'Unknown MessageReader tag: ' + tag);
-    }
-
-    private _readDecodeImageResponse(): DecodeImageResponseData {
-      var input = this.input;
-      var promiseId = input.readInt();
-      var type = input.readInt();
-      var data = this._readAsset();
-      var width = input.readInt();
-      var height = input.readInt();
-      return {
-        tag: MessageTag.DecodeImageResponse,
-        promiseId: promiseId,
-        type: type,
-        data: data,
-        width: width,
-        height: height
-      };
     }
 
     private _readFocusEvent(): FocusEventData {

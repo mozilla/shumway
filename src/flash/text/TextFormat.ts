@@ -131,6 +131,18 @@ module Shumway.AVM2.AS.flash.text {
       this._font = asCoerceString(value);
     }
 
+    get style(): string {
+      if (this._bold && this._italic) {
+        return FontStyle.BOLD_ITALIC;
+      } else if (this._bold) {
+        return FontStyle.BOLD;
+      } else if (this._italic) {
+        return FontStyle.ITALIC;
+      } else {
+        return FontStyle.REGULAR;
+      }
+    }
+
     get indent(): Object {
       return this._indent;
     }

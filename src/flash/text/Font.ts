@@ -756,8 +756,6 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = function (symbol: FontSymbol) {
       var self: Font = this;
 
-      // TODO: give fonts proper inter-SWF IDs, so multiple SWFs' fonts don't collide.
-      self._id = symbol.data.id;
 
       self._fontName = null;
       self._fontFamily = null;
@@ -769,41 +767,47 @@ module Shumway.AVM2.AS.flash.text {
       self.leading = 0;
       self.advances = null;
 
-      if (symbol) {
-        self._symbol = symbol;
-        self._fontName = symbol.name;
-        self._fontFamily = Font.resolveFontName(symbol.name);
-        if (symbol.bold) {
-          if (symbol.italic) {
-            self._fontStyle = FontStyle.BOLD_ITALIC;
-          } else {
-            self._fontStyle = FontStyle.BOLD;
-          }
-        } else if (symbol.italic) {
-          self._fontStyle = FontStyle.ITALIC;
+      if (!symbol) {
+        self._id = flash.display.DisplayObject.getNextSyncID();
+        return;
+      }
+      self._symbol = symbol;
+      release || Debug.assert(symbol.syncId);
+      self._id = symbol.syncId;
+      self._fontName = symbol.name;
+      self._fontFamily = Font.resolveFontName(symbol.name);
+      if (symbol.bold) {
+        if (symbol.italic) {
+          self._fontStyle = FontStyle.BOLD_ITALIC;
         } else {
-          self._fontStyle = FontStyle.REGULAR;
+          self._fontStyle = FontStyle.BOLD;
         }
+      } else if (symbol.italic) {
+        self._fontStyle = FontStyle.ITALIC;
+      } else {
+        self._fontStyle = FontStyle.REGULAR;
+      }
 
-        var metrics = symbol.metrics;
-        if (metrics) {
-          self.ascent = metrics.ascent;
-          self.descent = metrics.descent;
-          self.leading = metrics.leading;
-          self.advances = metrics.advances;
-        }
+      var metrics = symbol.metrics;
+      if (metrics) {
+        self.ascent = metrics.ascent;
+        self.descent = metrics.descent;
+        self.leading = metrics.leading;
+        self.advances = metrics.advances;
+      }
 
-        // Font symbols without any glyphs describe device fonts.
-        self._fontType = metrics ? FontType.EMBEDDED : FontType.DEVICE;
+      // Font symbols without any glyphs describe device fonts.
+      self._fontType = metrics ? FontType.EMBEDDED : FontType.DEVICE;
 
-        var fontProp = Object.getOwnPropertyDescriptor(Font._fontsBySymbolId, symbol.id + '');
-        // Define mapping or replace lazy getter with value.
-        if (!fontProp || !fontProp.value) {
-          Object.defineProperty(Font._fontsBySymbolId, symbol.id + '', {value: self});
-          Object.defineProperty(Font._fontsByName, symbol.name.toLowerCase(), {value: self});
-          if (self._fontType === FontType.EMBEDDED) {
-            Object.defineProperty(Font._fontsByName, 'swffont' + symbol.id, {value: self});
-          }
+      var fontProp = Object.getOwnPropertyDescriptor(Font._fontsBySymbolId, symbol.syncId + '');
+      // Define mapping or replace lazy getter with value.
+      if (!fontProp || !fontProp.value) {
+        Object.defineProperty(Font._fontsBySymbolId, symbol.syncId + '', {value: self});
+        Object.defineProperty(Font._fontsByName, symbol.name.toLowerCase() + self._fontStyle,
+                              {value: self});
+        if (self._fontType === FontType.EMBEDDED) {
+          Object.defineProperty(Font._fontsByName, 'swffont' + symbol.syncId + self._fontStyle,
+                                {value: self});
         }
       }
     };
@@ -833,14 +837,14 @@ module Shumway.AVM2.AS.flash.text {
       return this._fontsBySymbolId[id];
     }
 
-    static getByName(name: string): Font {
-      var key = name.toLowerCase();
+    static getByNameAndStyle(name: string, style: string): Font {
+      var key = name.toLowerCase() + style;
       var font = this._fontsByName[key];
       if (!font) {
         var font = new Font();
         font._fontName = name;
-        font._fontFamily = Font.resolveFontName(key);
-        font._fontStyle = FontStyle.REGULAR;
+        font._fontFamily = Font.resolveFontName(name.toLowerCase());
+        font._fontStyle = style;
         font._fontType = FontType.DEVICE;
         this._fontsByName[key] = font;
       }
@@ -860,7 +864,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     static getDefaultFont(): Font {
-      return Font.getByName(Font.DEFAULT_FONT_SANS);
+      return Font.getByNameAndStyle(Font.DEFAULT_FONT_SANS, FontStyle.REGULAR);
     }
 
     // JS -> AS Bindings
@@ -889,27 +893,33 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     /**
-     * Registers an embedded font as available in the system without it being decoded.
+     * Registers an embedded font as available in the system.
      *
      * Firefox decodes fonts synchronously, allowing us to do the decoding upon first actual use.
      * All we need to do here is let the system know about the family name and ID, so that both
      * TextFields/Labels referring to the font's symbol ID as well as HTML text specifying a font
      * face can resolve the font.
+     *
+     * For all other browsers, the decoding has been triggered by the Loader at this point.
      */
-    static registerLazyFont(fontMapping: {name: string; id: number},
-                            loaderInfo: flash.display.LoaderInfo): void {
+    static registerEmbeddedFont(fontMapping: {name: string; style: string; id: number},
+                                loaderInfo: flash.display.LoaderInfo): void {
+      var syncId = flash.display.DisplayObject.getNextSyncID();
       var resolverProp = {
-        get: Font.resolveLazyFont.bind(Font, loaderInfo, fontMapping.id),
+        get: Font.resolveEmbeddedFont.bind(Font, loaderInfo, fontMapping.id, syncId),
         configurable: true
       };
-      Object.defineProperty(Font._fontsByName, fontMapping.name.toLowerCase(), resolverProp);
-      Object.defineProperty(Font._fontsByName, 'swffont' + fontMapping.id, resolverProp);
-      Object.defineProperty(Font._fontsBySymbolId, fontMapping.id + '', resolverProp);
+      Object.defineProperty(Font._fontsByName, fontMapping.name.toLowerCase() + fontMapping.style,
+                            resolverProp);
+      Object.defineProperty(Font._fontsByName, 'swffont' + syncId + fontMapping.style,
+                            resolverProp);
+      Object.defineProperty(Font._fontsBySymbolId, syncId + '', resolverProp);
     }
 
-    static resolveLazyFont(loaderInfo: flash.display.LoaderInfo, id: number) {
+    static resolveEmbeddedFont(loaderInfo: flash.display.LoaderInfo, id: number, syncId: number) {
       // Force font resolution and installation in _fontsByName and _fontsBySymbolId.
-      loaderInfo.getSymbolById(id);
+      var symbol = <FontSymbol>loaderInfo.getSymbolById(id);
+      symbol.syncId = syncId;
       return Font._fontsBySymbolId[id];
     }
 
@@ -932,14 +942,14 @@ module Shumway.AVM2.AS.flash.text {
     }
   }
 
-  export class FontSymbol extends Timeline.Symbol {
+  export class FontSymbol extends Timeline.Symbol implements Timeline.EagerlyResolvedSymbol {
     name: string;
-    id: number;
     bold: boolean;
     italic: boolean;
     codes: number[];
     originalSize: boolean;
     metrics: any;
+    syncId: number;
 
     constructor(data: Timeline.SymbolData) {
       super(data, Font);
@@ -947,6 +957,8 @@ module Shumway.AVM2.AS.flash.text {
 
     static FromData(data: any): FontSymbol {
       var symbol = new FontSymbol(data);
+      // Immediately mark glyph-less fonts as ready.
+      symbol.ready = !data.metrics;
       symbol.name = data.name;
       // No need to keep the original data baggage around.
       symbol.data = {id: data.id};
@@ -955,7 +967,17 @@ module Shumway.AVM2.AS.flash.text {
       symbol.originalSize = data.originalSize;
       symbol.codes = data.codes;
       symbol.metrics = data.metrics;
+      symbol.syncId = flash.display.DisplayObject.getNextSyncID();
       return symbol;
+    }
+
+    get resolveAssetCallback() {
+      return this._unboundResolveAssetCallback.bind(this);
+    }
+
+    private _unboundResolveAssetCallback(data: any) {
+      release || Debug.assert(!this.ready);
+      this.ready = true;
     }
   }
 }

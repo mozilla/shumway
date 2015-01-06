@@ -93,6 +93,19 @@ module Shumway.Player.Window {
       }, '*');
     }
 
+    protected registerFontOrImageImpl(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
+      var event = this._parent.document.createEvent('CustomEvent');
+      event.initCustomEvent('syncmessage', false, false, {
+        type: 'registerFontOrImage',
+        syncId: symbol.syncId,
+        symbolId: symbol.id,
+        assetType: data.type,
+        data: data,
+        resolve: symbol.resolveAssetPromise.resolve
+      });
+      this._parent.dispatchEvent(event);
+    }
+
     private onWindowMessage(data, async) {
       if (typeof data === 'object' && data !== null) {
         switch (data.type) {

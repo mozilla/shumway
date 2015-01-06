@@ -64,7 +64,9 @@ module Shumway.ArrayUtilities {
       this._error = null;
     }
 
-    public push(data: Uint8Array, takeOwnership: boolean = false) {  Debug.abstractMethod('Inflate.push'); }
+    public push(data: Uint8Array) {
+      Debug.abstractMethod('Inflate.push');
+    }
 
     public close() {
     }
@@ -162,19 +164,15 @@ module Shumway.ArrayUtilities {
         areTablesInitialized = true;
       }
     }
-    public push(data: Uint8Array, takeOwnership: boolean = false) {
-      if (takeOwnership && this._bufferSize === 0) {
-        this._buffer = data;
-      } else {
-        if (!this._buffer || this._buffer.length < this._bufferSize + data.length) {
-          var newBuffer = new Uint8Array(this._bufferSize + data.length);
-          if (this._buffer) {
-            newBuffer.set(this._buffer);
-          }
-          this._buffer = newBuffer;
+    public push(data: Uint8Array) {
+      if (!this._buffer || this._buffer.length < this._bufferSize + data.length) {
+        var newBuffer = new Uint8Array(this._bufferSize + data.length);
+        if (this._buffer) {
+          newBuffer.set(this._buffer);
         }
-        this._buffer.set(data, this._bufferSize);
+        this._buffer = newBuffer;
       }
+      this._buffer.set(data, this._bufferSize);
       this._bufferSize += data.length;
       this._bufferPosition = 0;
 
@@ -674,7 +672,7 @@ module Shumway.ArrayUtilities {
       }.bind(this);
     }
 
-    public push(data: Uint8Array, takeOwnership: boolean = false) {
+    public push(data: Uint8Array) {
       if (this._verifyHeader) {
         var buffer;
         if (this._buffer) {
@@ -683,7 +681,7 @@ module Shumway.ArrayUtilities {
           buffer.set(data, this._buffer.length);
           this._buffer = null;
         } else {
-          buffer = takeOwnership ? data : new Uint8Array(data);
+          buffer = new Uint8Array(data);
         }
         var processed = this._processZLibHeader(buffer, 0, buffer.length);
         if (processed === 0) {

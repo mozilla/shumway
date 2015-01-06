@@ -92,7 +92,9 @@ module Shumway.AVM2.AS.flash.text {
 
         defaultTextFormat.color = symbol.color;
         defaultTextFormat.size = (symbol.size / 20) | 0;
-        defaultTextFormat.font = symbol.font;
+        defaultTextFormat.font = symbol.face;
+        defaultTextFormat.bold = symbol.bold;
+        defaultTextFormat.italic = symbol.italic;
         defaultTextFormat.align = symbol.align;
         defaultTextFormat.leftMargin = (symbol.leftMargin / 20) | 0;
         defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
@@ -182,7 +184,7 @@ module Shumway.AVM2.AS.flash.text {
     static isFontCompatible(fontName: string, fontStyle: string): boolean {
       fontName = asCoerceString(fontName);
       fontStyle = asCoerceString(fontStyle);
-      var font = Font.getByName(fontName);
+      var font = Font.getByNameAndStyle(fontName, fontStyle);
       if (!font) {
         return false;
       }
@@ -803,8 +805,9 @@ module Shumway.AVM2.AS.flash.text {
   export class TextSymbol extends Timeline.DisplaySymbol {
     color: number = 0;
     size: number = 0;
-    font: string = "";
-    fontClass: flash.text.Font = null;
+    face: string = "";
+    bold: boolean = false;
+    italic: boolean = false;
     align: string = flash.text.TextFormatAlign.LEFT;
     leftMargin: number = 0;
     rightMargin: number = 0;
@@ -852,14 +855,11 @@ module Shumway.AVM2.AS.flash.text {
       if (tag.hasFont) {
         symbol.size = tag.fontHeight;
         // Requesting the font symbol guarantees that it's loaded and initialized.
-        var fontSymbol = loaderInfo.getSymbolById(tag.fontId);
-        var font = flash.text.Font.getBySymbolId(tag.fontId);
-        if (fontSymbol && font) {
-          symbol.font = font.fontName;
-          if (tag.fontClass) {
-            var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
-            symbol.fontClass = <flash.text.Font><any>appDomain.getClass(tag.fontClass);
-          }
+        var fontSymbol = <flash.text.FontSymbol>loaderInfo.getSymbolById(tag.fontId);
+        if (fontSymbol) {
+          symbol.face = tag.useOutlines ? fontSymbol.name : 'swffont' + fontSymbol.syncId;
+          symbol.bold = fontSymbol.bold;
+          symbol.italic = fontSymbol.italic;
         } else {
           warning("Font " + tag.fontId + " is not defined.");
         }
@@ -905,6 +905,8 @@ module Shumway.AVM2.AS.flash.text {
       var htmlText = '';
       var size = 12;
       var face = 'Times Roman';
+      var bold = false;
+      var italic = false;
       var color = 0;
       var x = 0;
       var y = 0;
@@ -915,15 +917,19 @@ module Shumway.AVM2.AS.flash.text {
           break;
         }
         if (record.hasFont) {
-          var font = <flash.text.FontSymbol>loaderInfo.getSymbolById(record.fontId);
-          font || Debug.warning('Label ' + data.id + 'refers to undefined font symbol ' +
-                                record.fontId);
-          codes = font.codes;
-          size = record.fontHeight;
-          if (!font.originalSize) {
-            size /= 20;
+          var fontSymbol = <flash.text.FontSymbol>loaderInfo.getSymbolById(record.fontId);
+          if (fontSymbol) {
+            codes = fontSymbol.codes;
+            size = record.fontHeight;
+            if (!fontSymbol.originalSize) {
+              size /= 20;
+            }
+            face = fontSymbol.metrics ? 'swffont' + fontSymbol.syncId : fontSymbol.name;
+            bold = fontSymbol.bold;
+            italic = fontSymbol.italic;
+          } else {
+            Debug.warning('Label ' + data.id + 'refers to undefined font symbol ' + record.fontId);
           }
-          face = 'swffont' + record.fontId;
         }
         if (record.hasColor) {
           color = record.color >>> 8;
@@ -951,6 +957,12 @@ module Shumway.AVM2.AS.flash.text {
           text += charEscapeMap[char] || char;
           coords.push(x, y);
           x += entry.advance;
+        }
+        if (italic) {
+          text = '<i>' + text + '</i>';
+        }
+        if (bold) {
+          text = '<b>' + text + '</b>';
         }
         htmlText += '<font size="' + size + '" face="' + face + '"' + ' color="#' +
                     ('000000' + color.toString(16)).slice(-6) + '">' + text + '</font>';
