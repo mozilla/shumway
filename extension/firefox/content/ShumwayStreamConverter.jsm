@@ -882,7 +882,7 @@ ShumwayStreamConverterBase.prototype = {
 
     if (element) {
       // Getting absolute URL from the EMBED tag
-      url = element.srcURI.spec;
+      url = element.srcURI && element.srcURI.spec;
 
       pageUrl = element.ownerDocument.location.href; // proper page url?
 
