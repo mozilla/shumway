@@ -118,7 +118,7 @@ module Shumway.GFX.Window {
           data.timeline._times.__proto__ = CircularBuffer.prototype;
           this._timelineRequests[data.request](<TimelineBuffer>data.timeline);
         } else {
-          release || Debug.assertUnreachable("Unhandled remoting event " + data.type);
+          // release || Debug.assertUnreachable("Unhandled remoting event " + data.type);
         }
       }
     }
