@@ -2681,6 +2681,9 @@ module Shumway {
     }
 
     unionInPlace (other: Bounds): void {
+      if (other.isEmpty()) {
+        return;
+      }
       this.extendByPoint(other.xMin, other.yMin);
       this.extendByPoint(other.xMax, other.yMax);
     }
@@ -2823,6 +2826,9 @@ module Shumway {
     }
 
     unionInPlace (other: DebugBounds): void {
+      if (other.isEmpty()) {
+        return;
+      }
       this.extendByPoint(other.xMin, other.yMin);
       this.extendByPoint(other.xMax, other.yMax);
     }

@@ -308,4 +308,18 @@
     eq(exceptionMessage, 'TypeError: Error #1034: Type Coercion failed: cannot convert A to flash.display.DisplayObject.');
   });
 
+  unitTests.push(function emptyChildBounds() {
+    var c1 = new Sprite();
+    var c2 = new Sprite();
+    var s = new Sprite();
+    s.graphics.beginFill(0x00CCFF);
+    s.graphics.drawRect(0, 0, 100, 100);
+    c2.addChild(s);
+    var c3 = new Sprite();
+    c1.addChild(c2);
+    c1.addChild(c3);
+    eq(c1.width, 100);
+    eq(c1.height, 100);
+  });
+
 })();
