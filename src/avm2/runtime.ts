@@ -622,6 +622,9 @@ module Shumway.AVM2.Runtime {
   export function asHasOwnProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
     var resolved: string = self.resolveMultinameProperty(namespaces, name, flags);
+    // We have to check for trait properties too if a simple hasOwnProperty fails.
+    // This is different to JavaScript's hasOwnProperty behaviour where hasOwnProperty returns
+    // false for properties defined on the property chain and not on the instance itself.
     return hasOwnProperty(self, resolved) || self.asBindings.indexOf(resolved) >= 0;
   }
 
