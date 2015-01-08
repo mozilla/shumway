@@ -16,32 +16,162 @@
 // Class: MovieClip
 module Shumway.AVM2.AS.flash.display {
   import MP3DecoderSession = SWF.MP3DecoderSession;
+  import DecodedSound = SWF.Parser.DecodedSound;
 
   var MP3_MIME_TYPE = 'audio/mpeg';
 
-  function openMediaSource(soundStream, mediaSource) {
-    var sourceBuffer;
-    try {
-      sourceBuffer = mediaSource.addSourceBuffer(MP3_MIME_TYPE);
-      soundStream.mediaSource = mediaSource;
-      soundStream.sourceBuffer = sourceBuffer;
-      // cannot issue multiple appendBuffer in a row, flattening frames into
-      // one array
-      var rawFramesLength = 0;
-      soundStream.rawFrames.forEach(function (frameData) {
-        rawFramesLength += frameData.length;
-      });
-      if (rawFramesLength !== 0) {
-        var data = new Uint8Array(rawFramesLength), offset = 0;
-        soundStream.rawFrames.forEach(function (frameData) {
-          data.set(frameData, offset);
-          offset += frameData.length;
+  interface ISoundStreamAdapter {
+    currentTime: number;
+    paused: boolean;
+    isReady: boolean;
+
+    playFrom(time: number);
+    queueData(frame: DecodedSound);
+    finish();
+  }
+
+  class HTMLAudioElementAdapter implements ISoundStreamAdapter {
+    private _element: HTMLAudioElement;
+    private _channel: media.SoundChannel;
+
+    get isReady(): boolean {
+      return !!this._channel;
+    }
+
+    get element(): HTMLAudioElement {
+      return this._element;
+    }
+
+    get currentTime(): number {
+      return this._element.currentTime;
+    }
+
+    playFrom(time: number) {
+      var element = this._element;
+      if (element.paused) {
+        element.play();
+        element.addEventListener('playing', function setTime(e) {
+          element.removeEventListener('playing', setTime);
+          element.currentTime = time;
         });
-        sourceBuffer.appendBuffer(data);
+      } else {
+        element.currentTime = time;
       }
-      soundStream.rawFrames = null;
-    } catch (e) {
-      console.error('MediaSource mp3 playback is not supported: ' + e);
+    }
+
+    get paused(): boolean {
+      return this._element.paused;
+    }
+
+    set paused(value: boolean) {
+      var element = this._element;
+      if (value) {
+        if (!element.paused) {
+          element.pause();
+        }
+      } else {
+        if (element.paused) {
+          element.play();
+        }
+      }
+    }
+
+    constructor(element: HTMLAudioElement) {
+      this._element = element;
+    }
+
+    createChannel() {
+      this._channel = <flash.media.SoundChannel>flash.media.SoundChannel.initializeFrom({element: this._element});
+    }
+
+    queueData(frame: DecodedSound) {
+      Debug.abstractMethod('HTMLAudioElementAdapter::queueData');
+    }
+
+    finish() {
+      Debug.abstractMethod('HTMLAudioElementAdapter::finish');
+    }
+  }
+
+  class MediaSourceStreamAdapter extends HTMLAudioElementAdapter {
+    private _mediaSource: MediaSource;
+    private _sourceBuffer: SourceBuffer;
+    private _updating: boolean;
+    private _loading: boolean;
+    private _rawFrames: any[];
+    private _isReady: boolean;
+
+    constructor(element: HTMLAudioElement) {
+      super(element);
+      this._mediaSource = new MediaSource();
+      this._sourceBuffer = null;
+      this._updating = false;
+      this._loading = true;
+      this._rawFrames = [];
+      this._isReady = false;
+
+      this._mediaSource.addEventListener('sourceopen', this._openMediaSource.bind(this));
+      this.element.src = URL.createObjectURL(this._mediaSource);
+    }
+
+    private _appendSoundData() {
+      if (this._rawFrames.length === 0 || this._updating || !this._sourceBuffer) {
+        return;
+      }
+      if (!this._loading) {
+        this._mediaSource.endOfStream();
+        return;
+      }
+
+      this._updating = true;
+      // There is an issue when multiple appendBuffers are added in a sequence,
+      // pushing frames one-by-one.
+      this._sourceBuffer.appendBuffer(this._rawFrames.shift());
+
+      // Making MediaSourceStreamAdapter be ready on first packet.
+      if (!this._isReady) {
+        this._isReady = true;
+        this.createChannel();
+      }
+    }
+
+    private _openMediaSource() {
+      var sourceBuffer = this._mediaSource.addSourceBuffer(MP3_MIME_TYPE);
+      sourceBuffer.addEventListener('update', function () {
+        this._updating = false;
+        this._appendSoundData();
+      }.bind(this));
+      this._sourceBuffer = sourceBuffer;
+      this._appendSoundData();
+    }
+
+    queueData(frame: DecodedSound) {
+      this._rawFrames.push(frame.data);
+      this._appendSoundData();
+    }
+
+    finish() {
+      this._loading = false;
+      this._appendSoundData();
+    }
+  }
+
+  class BlobStreamAdapter extends HTMLAudioElementAdapter {
+    private  _rawFrames: any[];
+
+    constructor(element: HTMLAudioElement) {
+      super(element);
+      this._rawFrames = [];
+    }
+
+    queueData(frame: DecodedSound) {
+      this._rawFrames.push(frame.data);
+    }
+
+    finish() {
+      var blob = new Blob(this._rawFrames);
+      this.element.src = URL.createObjectURL(blob);
+      this.createChannel();
     }
   }
 
@@ -70,7 +200,83 @@ module Shumway.AVM2.AS.flash.display {
     });
   }
 
-  var PLAY_USING_AUDIO_TAG = true;
+  class WebAudioAdapter implements ISoundStreamAdapter {
+    private _channel: media.SoundChannel;
+    private _sound: media.Sound;
+    private _data;
+    private _position: number;
+
+    get currentTime(): number {
+      return NaN;
+    }
+
+    playFrom(time: number) {
+      // tslint, noop
+    }
+
+    get paused(): boolean {
+      return false;
+    }
+
+    set paused(value: boolean) {
+      // tslint, noop
+    }
+
+    get isReady(): boolean {
+      return !!this._channel;
+    }
+
+    constructor(data: any) {
+      this._channel = null;
+      this._sound = null;
+      this._data = data;
+      this._position = 0;
+    }
+
+    queueData(frame: DecodedSound) {
+      this._data.pcm.set(frame.pcm, this._position);
+      this._position += frame.pcm.length;
+    }
+
+    finish() {
+      // TODO Start from some seek offset, stopping
+      var sound = <flash.media.Sound>flash.media.Sound.initializeFrom(this._data);
+      var channel = sound.play();
+      this._sound = sound;
+      this._channel = channel;
+    }
+  }
+
+  class WebAudioMP3Adapter extends WebAudioAdapter {
+    private _decoderPosition: number;
+    private _decoderSession: MP3DecoderSession;
+
+    constructor(data: any) {
+      super(data);
+
+      this._decoderPosition = 0;
+      this._decoderSession = new MP3DecoderSession();
+      this._decoderSession.onframedata = function (frameData) {
+        var position = this._decoderPosition;
+        data.pcm.set(frameData, position);
+        this._decoderPosition = position + frameData.length;
+      }.bind(this);
+      this._decoderSession.onclosed = function () {
+        WebAudioAdapter.prototype.finish.call(this);
+      }.bind(this);
+      this._decoderSession.onerror = function (error) {
+        console.warn('MP3DecoderSession error: ' + error);
+      };
+    }
+
+    queueData(frame: DecodedSound) {
+      this._decoderSession.pushAsync(frame.data);
+    }
+
+    finish() {
+      this._decoderSession.close();
+    }
+  }
 
   export class MovieClipSoundStream {
     private movieClip: MovieClip;
@@ -78,16 +284,11 @@ module Shumway.AVM2.AS.flash.display {
     private seekIndex: Array<number>;
     private position: number;
     private element;
-    private mediaSource;
-    private sourceBuffer;
-    private rawFrames: Array<any>;
+    private soundStreamAdapter: ISoundStreamAdapter;
+    private wasFullyLoaded: boolean;
 
     private decode: (block: Uint8Array) => SWF.Parser.DecodedSound;
-    private decoderPosition: number;
-    private decoderSession: MP3DecoderSession;
 
-    private channel: media.SoundChannel;
-    private sound: media.Sound;
     private expectedFrame: number;
     private waitFor: number;
 
@@ -100,43 +301,38 @@ module Shumway.AVM2.AS.flash.display {
       };
       this.seekIndex = [];
       this.position = 0;
+      this.wasFullyLoaded = false;
+      this.expectedFrame = 0;
+      this.waitFor = 0;
+
       var isMP3 = streamInfo.format === 'mp3';
-      if (isMP3 && PLAY_USING_AUDIO_TAG) {
+      if (isMP3 && !webAudioMP3Option.value) {
         var element = document.createElement('audio');
         element.preload = 'metadata'; // for mobile devices
         element.loop = false;
         syncTime(element, movieClip);
         if (element.canPlayType(MP3_MIME_TYPE)) {
           this.element = element;
-          if (typeof MediaSource !== 'undefined' &&
-              (<any>MediaSource).isTypeSupported(MP3_MIME_TYPE)) {
-            var mediaSource = new MediaSource();
-            mediaSource.addEventListener('sourceopen',
-              openMediaSource.bind(null, this, mediaSource));
-            element.src = URL.createObjectURL(mediaSource);
+          if (!mediaSourceMP3Option.value) {
+            this.soundStreamAdapter = new BlobStreamAdapter(element);
+          } else if (typeof MediaSource !== 'undefined' &&
+                     (<any>MediaSource).isTypeSupported(MP3_MIME_TYPE)) {
+            this.soundStreamAdapter = new MediaSourceStreamAdapter(element);
           } else {
+            // Falls back to blob playback.
             console.warn('MediaSource is not supported');
+            this.soundStreamAdapter = new BlobStreamAdapter(element);
           }
-          this.rawFrames = [];
           return;
         }
+        // Falls through to WebAudio if element cannot play MP3.
       }
-      var totalSamples = streamInfo.samplesCount * streamInfo.channels;
+
+      // TODO fix streamInfo.samplesCount name -- its actually average value
+      var totalSamples = (streamInfo.samplesCount + 1) * this.movieClip.totalFrames * streamInfo.channels;
       this.data.pcm = new Float32Array(totalSamples);
-      if (isMP3) {
-        var soundStream = this;
-        soundStream.decoderPosition = 0;
-        soundStream.decoderSession = new MP3DecoderSession();
-        soundStream.decoderSession.onframedata = function (frameData) {
-          var position = soundStream.decoderPosition;
-          soundStream.data.pcm.set(frameData, position);
-          soundStream.decoderPosition = position + frameData.length;
-        }.bind(this);
-        soundStream.decoderSession.onerror = function (error) {
-          console.error('ERROR: MP3DecoderSession: ' + error);
-        };
-        // TODO close the session somewhere
-      }
+      this.soundStreamAdapter = !isMP3 ? new WebAudioAdapter(this.data) :
+                                         new WebAudioMP3Adapter(this.data);
     }
 
     public appendBlock(frameNum: number, streamBlock: Uint8Array) {
@@ -144,22 +340,7 @@ module Shumway.AVM2.AS.flash.display {
       var streamPosition = this.position;
       this.seekIndex[frameNum] = streamPosition + decodedBlock.seek * this.data.channels;
       this.position = streamPosition + decodedBlock.samplesCount * this.data.channels;
-
-      if (this.sourceBuffer) {
-        this.sourceBuffer.appendBuffer(decodedBlock.data);
-        return;
-      }
-      if (this.rawFrames) {
-        this.rawFrames.push(decodedBlock.data);
-        return;
-      }
-
-      var decoderSession = this.decoderSession;
-      if (decoderSession) {
-        decoderSession.pushAsync(decodedBlock.data);
-      } else {
-        this.data.pcm.set(decodedBlock.pcm, streamPosition);
-      }
+      this.soundStreamAdapter.queueData(decodedBlock);
     }
 
     public playFrame(frameNum: number) {
@@ -169,60 +350,34 @@ module Shumway.AVM2.AS.flash.display {
 
       var PAUSE_WHEN_OF_SYNC_GREATER = 1.0;
       var PLAYBACK_ADJUSTMENT = 0.25;
-      var element = this.element;
-      if (element) {
+
+      if (!this.wasFullyLoaded && this.movieClip._isFullyLoaded) {
+        this.wasFullyLoaded = true;
+        this.soundStreamAdapter.finish();
+      }
+
+      if (this.soundStreamAdapter.isReady &&
+          !isNaN(this.soundStreamAdapter.currentTime)) {
         var soundStreamData = this.data;
         var time = this.seekIndex[frameNum] /
           soundStreamData.sampleRate / soundStreamData.channels;
-        if (!this.channel && (this.movieClip._isFullyLoaded || this.sourceBuffer)) {
-          if (!this.sourceBuffer) {
-            var blob = new Blob(this.rawFrames);
-            element.src = URL.createObjectURL(blob);
+        var elementTime = this.soundStreamAdapter.currentTime;
+        if (this.expectedFrame !== frameNum) {
+          this.soundStreamAdapter.playFrom(time);
+        } else if (this.waitFor > 0) {
+          if (this.waitFor <= time) {
+            this.soundStreamAdapter.paused = false;
+            this.waitFor = 0;
           }
-
-          var channel = <flash.media.SoundChannel>flash.media.SoundChannel.initializeFrom({element: element});
-          this.channel = channel;
-          this.expectedFrame = 0;
-          this.waitFor = 0;
-        } else if (this.sourceBuffer || !isNaN(element.duration)) {
-          if (this.mediaSource && this.movieClip._isFullyLoaded) {
-            this.mediaSource.endOfStream();
-            this.mediaSource = null;
-          }
-          var elementTime = element.currentTime;
-          if (this.expectedFrame !== frameNum) {
-            if (element.paused) {
-              element.play();
-              element.addEventListener('playing', function setTime(e) {
-                element.removeEventListener('playing', setTime);
-                element.currentTime = time;
-              });
-            } else {
-              element.currentTime = time;
-            }
-          } else if (this.waitFor > 0) {
-            if (this.waitFor <= time) {
-              if (element.paused) {
-                element.play();
-              }
-              this.waitFor = 0;
-            }
-          } else if (elementTime - time > PAUSE_WHEN_OF_SYNC_GREATER) {
-            console.warn('Sound is faster than frames by ' + (elementTime - time));
-            this.waitFor = elementTime - PLAYBACK_ADJUSTMENT;
-            element.pause();
-          } else if (time - elementTime > PAUSE_WHEN_OF_SYNC_GREATER) {
-            console.warn('Sound is slower than frames by ' + (time - elementTime));
-            element.currentTime = time + PLAYBACK_ADJUSTMENT;
-          }
-          this.expectedFrame = frameNum + 1;
+        } else if (elementTime - time > PAUSE_WHEN_OF_SYNC_GREATER) {
+          console.warn('Sound is faster than frames by ' + (elementTime - time));
+          this.waitFor = elementTime - PLAYBACK_ADJUSTMENT;
+          this.soundStreamAdapter.paused = true;
+        } else if (time - elementTime > PAUSE_WHEN_OF_SYNC_GREATER) {
+          console.warn('Sound is slower than frames by ' + (time - elementTime));
+          this.soundStreamAdapter.playFrom(time + PLAYBACK_ADJUSTMENT);
         }
-      } else if (!this.sound) {
-        // Start from some seek offset, stopping
-        var sound = <flash.media.Sound>flash.media.Sound.initializeFrom(this.data);
-        var channel = sound.play();
-        this.sound = sound;
-        this.channel = channel;
+        this.expectedFrame = frameNum + 1;
       }
     }
   }

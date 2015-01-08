@@ -22,8 +22,6 @@ module Shumway.AVM2.AS.flash.media {
   import Telemetry = Shumway.Telemetry;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 
-  var PLAY_USING_AUDIO_TAG = true;
-
   declare var Blob;
   declare var URL;
   declare var decodeMP3;
@@ -75,13 +73,13 @@ module Shumway.AVM2.AS.flash.media {
 
       if (symbol) {
         var soundData = new SoundData();
+        soundData.sampleRate = symbol.sampleRate;
+        soundData.channels = symbol.channels;
+        soundData.completed = true;
         if (symbol.pcm) {
-          soundData.sampleRate = symbol.sampleRate;
-          soundData.channels = symbol.channels;
           soundData.pcm = symbol.pcm;
           soundData.end = symbol.pcm.length;
         }
-        soundData.completed = true;
         if (symbol.packaged) {
           soundData.data = symbol.packaged.data.buffer;
           soundData.mimeType = symbol.packaged.mimeType;
@@ -167,8 +165,20 @@ module Shumway.AVM2.AS.flash.media {
         return channel;
       }
       if (this._soundData) {
-        if (PLAY_USING_AUDIO_TAG) {
+        if (!webAudioOption.value && !webAudioMP3Option.value) {
           channel._playSoundDataViaAudio(this._soundData, startTime, loops);
+        } else if (!this._soundData.pcm) {
+          if (this._soundData.mimeType === 'audio/mpeg' && webAudioMP3Option.value) {
+            SWF.MP3DecoderSession.processAll(new Uint8Array(this._soundData.data)).then(function (result) {
+              this._soundData.pcm = result.data;
+              this._soundData.end = result.data.length;
+              channel._playSoundDataViaChannel(this._soundData, startTime, loops);
+            }.bind(this), function (reason) {
+              console.warn('Unable to decode MP3 data: ' + reason);
+            });
+          } else {
+            console.warn('Unable to decode packaged sound data of type: ' + this._soundData.mimeType);
+          }
         } else {
           channel._playSoundDataViaChannel(this._soundData, startTime, loops);
         }
@@ -192,6 +202,7 @@ module Shumway.AVM2.AS.flash.media {
       var stream = this._stream = new flash.net.URLStream();
       var data = new flash.utils.ByteArray();
       var dataPosition = 0;
+      var playUsingWebAudio = webAudioOption.value;
       var mp3DecodingSession = null;
       var soundData = new SoundData();
       soundData.completed = false;
@@ -200,7 +211,7 @@ module Shumway.AVM2.AS.flash.media {
         _this._bytesLoaded = event[Multiname.getPublicQualifiedName("bytesLoaded")];
         _this._bytesTotal = event[Multiname.getPublicQualifiedName("bytesTotal")];
 
-        if (!PLAY_USING_AUDIO_TAG && !mp3DecodingSession) {
+        if (playUsingWebAudio && !mp3DecodingSession) {
           // initialize MP3 decoding
           mp3DecodingSession = decodeMP3(soundData, function (duration, final) {
             if (_this._length === 0) {
@@ -233,7 +244,7 @@ module Shumway.AVM2.AS.flash.media {
         soundData.mimeType = 'audio/mpeg';
         soundData.completed = true;
 
-        if (PLAY_USING_AUDIO_TAG) {
+        if (!playUsingWebAudio) {
           _this._soundData = soundData;
 
           getAudioDescription(soundData, function (description) {
