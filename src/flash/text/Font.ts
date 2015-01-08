@@ -802,12 +802,16 @@ module Shumway.AVM2.AS.flash.text {
       var fontProp = Object.getOwnPropertyDescriptor(Font._fontsBySymbolId, symbol.syncId + '');
       // Define mapping or replace lazy getter with value.
       if (!fontProp || !fontProp.value) {
-        Object.defineProperty(Font._fontsBySymbolId, symbol.syncId + '', {value: self});
-        Object.defineProperty(Font._fontsByName, symbol.name.toLowerCase() + self._fontStyle,
-                              {value: self});
+        // Keeping resolverProp.configurable === true, some old movies might
+        // have fonts with non-unique names.
+        var resolverProp = {
+          value: self,
+          configurable: true
+        };
+        Object.defineProperty(Font._fontsBySymbolId, symbol.syncId + '', resolverProp);
+        Object.defineProperty(Font._fontsByName, symbol.name.toLowerCase() + self._fontStyle, resolverProp);
         if (self._fontType === FontType.EMBEDDED) {
-          Object.defineProperty(Font._fontsByName, 'swffont' + symbol.syncId + self._fontStyle,
-                                {value: self});
+          Object.defineProperty(Font._fontsByName, 'swffont' + symbol.syncId + self._fontStyle, resolverProp);
         }
       }
     };

@@ -694,7 +694,8 @@ module Shumway.SWF {
       var name: string;
       // DefineFont only specifies a symbol ID, no font name or style.
       if (unparsed.tagCode === SWFTag.CODE_DEFINE_FONT) {
-        name = null;
+        // Assigning some unique name to simplify font registration and look ups.
+        name = '__autofont__' + unparsed.byteOffset;
         style = 'regular';
       } else {
         var flags = this._data[stream.pos + 2];
