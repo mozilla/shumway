@@ -24,22 +24,22 @@ VERSION=0.9.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
 VERSION_SHA=`git log --format="%h" -n 1`
 
 build: ensureoutputdir
-	# Coping extension files
-	echo "Creating extension verions: $(VERSION)"
-	cp -R ../../LICENSE content chrome bootstrap.js chrome.manifest $(BUILD_DIR)/
+	# Copying extension files
+	echo "Creating extension version: $(VERSION)"
+	cp -R ../../LICENSE content chrome bootstrap.js chrome.manifest icon.png icon64.png $(BUILD_DIR)/
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > $(BUILD_DIR)/install.rdf
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
-	# Coping WebGL shaders
+	# Copying WebGL shaders
 	mkdir -p $(BUILD_DIR)/content/gfx/gl/shaders
 	cp ../../src/gfx/gl/shaders/*.frag $(BUILD_DIR)/content/gfx/gl/shaders/
 	cp ../../src/gfx/gl/shaders/*.vert $(BUILD_DIR)/content/gfx/gl/shaders/
-	# Coping JavaScript content files
+	# Copying JavaScript content files
 	mkdir -p $(BUILD_DIR)/content/playerglobal
 	cp ../../build/playerglobal/playerglobal.json $(BUILD_DIR)/content/playerglobal/
 	cp ../../build/playerglobal/playerglobal.abcs $(BUILD_DIR)/content/playerglobal/
 	mkdir -p $(BUILD_DIR)/content/avm2/generated/builtin
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/content/avm2/generated/builtin/
-	# Coping closure optimized shumway.js files
+	# Copying closure optimized shumway.js files
 	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_DIR)/content/
 	echo $(VERSION) > $(BUILD_DIR)/content/version.txt
 	echo $(VERSION_SHA) >> $(BUILD_DIR)/content/version.txt
