@@ -22,6 +22,7 @@
 ///<reference path='options.ts'/>
 ///<reference path='jpeg.ts' />
 ///<reference path='stream.ts' />
+///<reference path='mp3decodersession.ts' />
 ///<reference path='SWFFile.ts' />
 ///<reference path='ImageFile.ts' />
 ///<reference path='FileLoader.ts' />

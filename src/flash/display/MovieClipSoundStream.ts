@@ -15,6 +15,8 @@
  */
 // Class: MovieClip
 module Shumway.AVM2.AS.flash.display {
+  import MP3DecoderSession = SWF.MP3DecoderSession;
+
   var MP3_MIME_TYPE = 'audio/mpeg';
 
   function openMediaSource(soundStream, mediaSource) {
@@ -69,12 +71,6 @@ module Shumway.AVM2.AS.flash.display {
   }
 
   var PLAY_USING_AUDIO_TAG = true;
-
-  declare class MP3DecoderSession {
-    public pushAsync(data): void;
-    public onframedata: (frameData) => void;
-    public onerror: (error) => void;
-  }
 
   export class MovieClipSoundStream {
     private movieClip: MovieClip;
