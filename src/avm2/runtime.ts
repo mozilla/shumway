@@ -411,8 +411,13 @@ module Shumway.AVM2.Runtime {
     return self.asSetProperty(undefined, name, 0, value);
   }
 
-  export var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF + ".apply(this, arguments)");
-  export var forwardToString: () => string = <any>new Function("", 'return this.' + Multiname.TO_STRING + ".apply(this, arguments)");
+  export var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF +
+                                                               ".apply(this, arguments)" +
+                                                               "//# sourceURL=forward-valueOf.as");
+  export var forwardToString: () => string = <any>new Function("", 'return this.' +
+                                                                   Multiname.TO_STRING +
+                                                                   ".apply(this, arguments)" +
+                                                                   "//# sourceURL=forward-toString.as");
 
   /**
    * Patches the |object|'s toString properties with a forwarder that calls the AS3 toString. We only do this when
@@ -1524,6 +1529,7 @@ module Shumway.AVM2.Runtime {
     }
     if (!cached) {
       var fnSource = "function " + fnName + " (" + compilation.parameters.join(", ") + ") " + body;
+      fnSource += "//# sourceURL=fun-" + fnName + ".as";
     }
 
     if (!release) {

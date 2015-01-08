@@ -507,17 +507,20 @@ module Shumway.AVM2.AS {
           var qn = Multiname.getQualifiedName(trait.name);
           if (trait.isSlot()) {
             Object.defineProperty(object, name, {
-              get: <() => any>new Function("", "return this." + qn),
-              set: <(any) => void>new Function("v", "this." + qn + " = v")
+              get: <() => any>new Function("", "return this." + qn +
+                                               "//# sourceURL=get-" + qn + ".as"),
+              set: <(any) => void>new Function("v", "this." + qn + " = v;" +
+                                                    "//# sourceURL=set-" + qn + ".as")
             });
           } else if (trait.isMethod()) {
-            release || assert (!object[name], "Symbol should not already exist.")
+            release || assert (!object[name], "Symbol should not already exist.");
             release || assert (object.asOpenMethods[qn], "There should be an open method for this symbol.");
             object[name] = object.asOpenMethods[qn];
           } else if (trait.isGetter()) {
             release || assert (hasOwnGetter(object, qn), "There should be an getter method for this symbol.");
             Object.defineProperty(object, name, {
-              get: <() => any>new Function("", "return this." + qn),
+              get: <() => any>new Function("", "return this." + qn +
+                                               "//# sourceURL=get-" + qn + ".as")
             });
           } else {
             notImplemented(trait);

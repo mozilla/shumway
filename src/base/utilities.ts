@@ -15,7 +15,7 @@
  */
 
 ///<reference path='references.ts' />
-var jsGlobal = (function() { return this || (1, eval)('this'); })();
+var jsGlobal = (function() { return this || (1, eval)('this//# sourceURL=jsGlobal-getter'); })();
 // Our polyfills for some DOM things make testing this slightly more onerous than it ought to be.
 var inBrowser = typeof window !=='undefined' && 'document' in window && 'plugins' in window.document;
 var inFirefox = typeof navigator !== 'undefined' && navigator.userAgent.indexOf('Firefox') >= 0;
@@ -833,11 +833,13 @@ module Shumway {
 
   export module FunctionUtilities {
     export function makeForwardingGetter(target: string): () => any {
-      return <() => any> new Function("return this[\"" + target + "\"]");
+      return <() => any> new Function("return this[\"" + target + "\"]//# sourceURL=fwd-get-" +
+                                      target + ".as");
     }
 
     export function makeForwardingSetter(target: string): (any) => void {
-      return <(any) => void> new Function("value", "this[\"" + target + "\"] = value;");
+      return <(any) => void> new Function("value", "this[\"" + target + "\"] = value;" +
+                                                   "//# sourceURL=fwd-set-" + target + ".as");
     }
 
     /**
