@@ -622,7 +622,7 @@ module Shumway.AVM2.Runtime {
   export function asHasOwnProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
     var resolved: string = self.resolveMultinameProperty(namespaces, name, flags);
-    return hasOwnProperty(self, resolved);
+    return hasOwnProperty(self, resolved) || self.asBindings.indexOf(resolved) >= 0;
   }
 
   export function asPropertyIsEnumerable(namespaces: Namespace [], name: any, flags: number) {
