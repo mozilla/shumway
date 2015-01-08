@@ -117,7 +117,7 @@ module Shumway.AVM2.AS.flash.media {
       }
     }
 
-    set setVolume(value: number) {
+    setVolume(value: number) {
       // TODO set volume on this._source via gain node
     }
 
