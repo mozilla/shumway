@@ -168,6 +168,7 @@ module Shumway.SWF {
       this._dataStream.pos = unparsed.byteOffset;
       var tag: any = {code: unparsed.tagCode};
       var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
+      release || Debug.assert(handler, 'handler shall exists here');
       var tagEnd = unparsed.byteOffset + unparsed.byteLength;
       handler(this._data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
       var finalPos = this._dataStream.pos;
@@ -694,7 +695,8 @@ module Shumway.SWF {
       var name: string;
       // DefineFont only specifies a symbol ID, no font name or style.
       if (unparsed.tagCode === SWFTag.CODE_DEFINE_FONT) {
-        name = null;
+        // Assigning some unique name to simplify font registration and look ups.
+        name = '__autofont__' + unparsed.byteOffset;
         style = 'regular';
       } else {
         var flags = this._data[stream.pos + 2];

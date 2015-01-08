@@ -187,6 +187,8 @@ module Shumway.Player {
           var bgcolor = self.defaultStageColor !== undefined ? self.defaultStageColor : loaderInfo._colorRGBA;
 
           var root = loader.content;
+          release && assert(root, 'root must exists at this point');
+
           stage._loaderInfo = loaderInfo;
           stage.align = self.stageAlign || '';
           stage.scaleMode = self.stageScale || 'showall';
