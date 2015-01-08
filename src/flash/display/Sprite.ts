@@ -116,8 +116,10 @@ module Shumway.AVM2.AS.flash.display {
 
       var loaderInfo = (<SpriteSymbol>this._symbol).loaderInfo;
       for (var i = 0; i < tags.length; i++) {
-        var tag = 'depth' in tags[i] ?
-                  tags[i] : <any>loaderInfo._file.getParsedTag(tags[i]);
+        // We may have a mix of the parsed and unparsed tags.
+        var parsedOrUnparsedTag = tags[i];
+        var tag = parsedOrUnparsedTag.tagCode === undefined ?
+                  parsedOrUnparsedTag : <any>loaderInfo._file.getParsedTag(parsedOrUnparsedTag);
         switch (tag.code) {
           case SwfTag.CODE_REMOVE_OBJECT:
           case SwfTag.CODE_REMOVE_OBJECT2:

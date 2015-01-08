@@ -510,6 +510,11 @@ module Shumway.AVM2.AS.flash.display {
           var soundStarts: Shumway.Timeline.SoundStart[];
           for (var i = 0; i < tags.length; i++) {
             var tag: any = tags[i];
+            // controlTags might contain parsed and unparsed tags.
+            if (tag.tagCode === SwfTag.CODE_START_SOUND) {
+              var loaderInfo = (<SpriteSymbol>this._symbol).loaderInfo;
+              tag = <any>loaderInfo._file.getParsedTag(tag);
+            }
             if (tag.code === SwfTag.CODE_START_SOUND) {
               if (!soundStarts) {
                 soundStarts = [];
@@ -567,8 +572,10 @@ module Shumway.AVM2.AS.flash.display {
         }
         var j = tags.length;
         while (j--) {
-          var tag = 'depth' in tags[j] ?
-                    tags[j] : <any>loaderInfo._file.getParsedTag(tags[j]);
+          // We may have a mix of the parsed and unparsed tags.
+          var parsedOrUnparsedTag = tags[j];
+          var tag = parsedOrUnparsedTag.tagCode === undefined ?
+                    parsedOrUnparsedTag : <any>loaderInfo._file.getParsedTag(parsedOrUnparsedTag);
           switch (tag.code) {
             case SwfTag.CODE_REMOVE_OBJECT:
             case SwfTag.CODE_REMOVE_OBJECT2:

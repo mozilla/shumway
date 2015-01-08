@@ -168,6 +168,7 @@ module Shumway.SWF {
       this._dataStream.pos = unparsed.byteOffset;
       var tag: any = {code: unparsed.tagCode};
       var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
+      release || Debug.assert(handler, 'handler shall exists here');
       var tagEnd = unparsed.byteOffset + unparsed.byteLength;
       handler(this._data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
       var finalPos = this._dataStream.pos;
