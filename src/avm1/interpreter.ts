@@ -3018,7 +3018,8 @@ module Shumway.AVM1 {
         });
       fn += ' default: ectx.isEndOfActions = true; break;\n}\n}\n' +
         'return stack.pop();};';
-      return (new Function ('calls', 'res', 'checkTimeout', fn))(
+      fn += '//# sourceURL=avm1gen-' + debugName;
+      return (new Function('calls', 'res', 'checkTimeout', fn))(
         ActionsDataCompiler.cachedCalls, res, this.checkAvm1Timeout);
     }
   }
