@@ -23,6 +23,12 @@ module Shumway.AVM2.AS.flash.display {
   import SwfTag = Shumway.SWF.Parser.SwfTag;
   import PlaceObjectFlags = Shumway.SWF.Parser.PlaceObjectFlags;
 
+  enum DragMode {
+    Inactive,
+    LockToPointer,
+    PreserveDistance
+  }
+
   export class Sprite extends flash.display.DisplayObjectContainer {
 
     // Called whenever the class is initialized.
@@ -38,6 +44,10 @@ module Shumway.AVM2.AS.flash.display {
       self._hitArea = null;
       self._useHandCursor = true;
 
+      self._dragMode = DragMode.Inactive;
+      self._dragX = 0;
+      self._dragY = 0;
+      self._dragBounds = null;
       self._hitTarget = null;
 
       if (symbol) {
@@ -74,6 +84,10 @@ module Shumway.AVM2.AS.flash.display {
     private _hitArea: flash.display.Sprite;
     private _useHandCursor: boolean;
 
+    private _dragMode: DragMode;
+    private _dragX: number;
+    private _dragY: number;
+    private _dragBounds: flash.geom.Rectangle;
     _hitTarget: flash.display.Sprite;
 
     _addFrame(frame: Shumway.SWF.SWFFrame) {
@@ -215,8 +229,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get dropTarget(): flash.display.DisplayObject {
-      notImplemented("public flash.display.Sprite::get dropTarget"); return;
-      // return this._dropTarget;
+      return this._dropTarget;
     }
 
     get hitArea(): flash.display.Sprite {
@@ -255,11 +268,45 @@ module Shumway.AVM2.AS.flash.display {
       // this._soundTransform = sndTransform;
     }
     startDrag(lockCenter: boolean = false, bounds: flash.geom.Rectangle = null): void {
-      lockCenter = !!lockCenter; bounds = bounds;
-      notImplemented("public flash.display.Sprite::startDrag"); return;
+      lockCenter = !!lockCenter;
+      if (lockCenter) {
+        this._dragMode = DragMode.LockToPointer;
+      } else {
+        this._dragMode = DragMode.PreserveDistance;
+        var mousePosition = this._getLocalMousePosition();
+        this._dragX = this.x - mousePosition.x;
+        this._dragY = this.y - mousePosition.y;
+      }
+      if (flash.ui.Mouse.draggableObject !== this) {
+        if (flash.ui.Mouse.draggableObject) {
+          flash.ui.Mouse.draggableObject
+        }
+        flash.ui.Mouse.draggableObject = this;
+      }
+      this._dragBounds = bounds;
     }
     stopDrag(): void {
-      notImplemented("public flash.display.Sprite::stopDrag"); return;
+      if (flash.ui.Mouse.draggableObject === this) {
+        flash.ui.Mouse.draggableObject = null;
+        this._dragMode = DragMode.Inactive;
+        this._dragX = 0;
+        this._dragY = 0;
+        this._dragBounds = null;
+      }
+    }
+    _drag(dropTarget: DisplayObject = null): void {
+      var mousePosition = this._getLocalMousePosition();
+      if (this._dragBounds) {
+        this._dragBounds.constrainPoint(mousePosition);
+      }
+      if (this._dragMode === DragMode.PreserveDistance) {
+        this.x = mousePosition.x + this._dragX;
+        this.y = mousePosition.y + this._dragY;
+      } else {
+        this.x = mousePosition.x;
+        this.y = mousePosition.y;
+      }
+      this._dropTarget = dropTarget;
     }
     startTouchDrag(touchPointID: number /*int*/, lockCenter: boolean = false, bounds: flash.geom.Rectangle = null): void {
       touchPointID = touchPointID | 0; lockCenter = !!lockCenter; bounds = bounds;
@@ -272,6 +319,9 @@ module Shumway.AVM2.AS.flash.display {
 
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
                    testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
+      if (testingType === HitTestingType.Drop && this._dragMode > DragMode.Inactive) {
+        return;
+      }
       var result = this._boundsAndMaskContainPoint(globalX, globalY, localX, localY, testingType);
       if (!result && testingType === HitTestingType.Mouse && this._hitArea && this._mouseEnabled) {
         var matrix = this._hitArea._getInvertedConcatenatedMatrix();

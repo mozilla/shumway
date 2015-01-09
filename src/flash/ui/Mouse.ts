@@ -35,14 +35,16 @@ module Shumway.AVM2.AS.flash.ui {
     /**
      * Finds the interactive object on which the event is dispatched.
      */
-    private _findTarget(point: flash.geom.Point): InteractiveObject {
+    private _findTarget(point: flash.geom.Point, testingType: flash.display.HitTestingType): flash.display.DisplayObject {
       var globalX = point.x * 20 | 0;
       var globalY = point.y * 20 | 0;
       var objects = [];
-      this.stage._containsGlobalPoint(globalX, globalY, flash.display.HitTestingType.Mouse,
-                                      objects);
+      this.stage._containsGlobalPoint(globalX, globalY, testingType, objects);
       release || assert(objects.length < 2);
-      return objects.length ? objects[0] : this.stage;
+      if (objects.length) {
+        return objects[0];
+      }
+      return objects.length ? objects[0] : null;
     }
 
     /**
@@ -78,6 +80,7 @@ module Shumway.AVM2.AS.flash.ui {
 
       var globalPoint = data.point;
       flash.ui.Mouse.updateCurrentPosition(globalPoint);
+
       var currentTarget = this.currentTarget;
       var target: InteractiveObject = null;
 
@@ -85,7 +88,7 @@ module Shumway.AVM2.AS.flash.ui {
 
       if (globalPoint.x >= 0 && globalPoint.x < stage.stageWidth &&
           globalPoint.y >= 0 && globalPoint.y < stage.stageHeight) {
-        target = this._findTarget(globalPoint);
+        target = <InteractiveObject>this._findTarget(globalPoint, flash.display.HitTestingType.Mouse) || this.stage;
       } else {
         if (!currentTarget) {
           return stage;
@@ -94,6 +97,11 @@ module Shumway.AVM2.AS.flash.ui {
         if (type !== events.MouseEvent.MOUSE_MOVE) {
           return stage;
         }
+      }
+
+      if (flash.ui.Mouse.draggableObject) {
+        var dropTarget = this._findTarget(globalPoint, flash.display.HitTestingType.Drop);
+        flash.ui.Mouse.draggableObject._drag(dropTarget);
       }
 
       switch (type) {
@@ -198,6 +206,7 @@ module Shumway.AVM2.AS.flash.ui {
     static classInitializer: any = function () {
       this._currentPosition = new flash.geom.Point();
       this._cursor = MouseCursor.AUTO;
+      this.draggableObject = null;
     };
     
     // Called whenever an instance of the class is initialized.
@@ -260,5 +269,7 @@ module Shumway.AVM2.AS.flash.ui {
     public static updateCurrentPosition(value: flash.geom.Point) {
       this._currentPosition.copyFrom(value);
     }
+
+    static draggableObject: flash.display.Sprite;
   }
 }

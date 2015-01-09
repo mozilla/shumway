@@ -294,6 +294,7 @@ module Shumway.AVM2.AS.flash.display {
     HitTestShape,
     Mouse,
     ObjectsUnderPoint,
+    Drop
   }
 
   export enum HitTestingResult {
@@ -1806,10 +1807,14 @@ module Shumway.AVM2.AS.flash.display {
       var containsPoint = this._containsPointDirectly(localX, localY, globalX, globalY);
       // For getObjectsUnderPoint, push all direct hits, for mouse target finding InteractiveObjects
       // only.
-      if (containsPoint && objects &&
-          (testingType === HitTestingType.ObjectsUnderPoint ||
-           InteractiveObject.isType(this) && (<InteractiveObject>this)._mouseEnabled)) {
-        objects.push(this);
+      if (containsPoint && objects) {
+        if (testingType === HitTestingType.Drop) {
+          objects[0] = this;
+        }
+        if (testingType === HitTestingType.ObjectsUnderPoint ||
+            InteractiveObject.isType(this) && (<InteractiveObject>this)._mouseEnabled) {
+          objects.push(this);
+        }
       }
       return containsPoint ? HitTestingResult.Shape : result;
     }
@@ -1930,12 +1935,20 @@ module Shumway.AVM2.AS.flash.display {
       return ancestor;
     }
 
+    _getLocalMousePosition(): flash.geom.Point {
+      var position = flash.ui.Mouse._currentPosition;
+      if (this._parent) {
+        position = this._parent.globalToLocal(flash.ui.Mouse._currentPosition);
+      }
+      return position;
+    }
+
     get mouseX(): number {
-      return this.globalToLocal(flash.ui.Mouse._currentPosition).x;
+      return this._getLocalMousePosition().x;
     }
 
     get mouseY(): number {
-      return this.globalToLocal(flash.ui.Mouse._currentPosition).y;
+      return this._getLocalMousePosition().y;
     }
 
     public debugName(withFlags: boolean = false): string {

@@ -463,7 +463,7 @@ module Shumway.AVM2.AS.flash.display {
           return result;
         }
         anyChildHit = true;
-        if (testingType === HitTestingType.ObjectsUnderPoint) {
+        if (testingType >= HitTestingType.ObjectsUnderPoint) {
           continue;
         }
         release || assert(testingType === HitTestingType.Mouse);
