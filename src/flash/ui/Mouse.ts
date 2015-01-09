@@ -101,7 +101,7 @@ module Shumway.AVM2.AS.flash.ui {
 
       if (flash.ui.Mouse.draggableObject) {
         var dropTarget = this._findTarget(globalPoint, flash.display.HitTestingType.Drop);
-        flash.ui.Mouse.draggableObject._drag(dropTarget);
+        flash.ui.Mouse.draggableObject._updateDragState(dropTarget);
       }
 
       switch (type) {

@@ -25,7 +25,9 @@ module Shumway.AVM2.AS.flash.display {
 
   enum DragMode {
     Inactive,
+    // Indicates that the dragged object is locked to the center of the mouse position.
     LockToPointer,
+    // Indicates that the dragged object is locked to the point where the dragging process started.
     PreserveDistance
   }
 
@@ -294,7 +296,7 @@ module Shumway.AVM2.AS.flash.display {
         this._dragBounds = null;
       }
     }
-    _drag(dropTarget: DisplayObject = null): void {
+    _updateDragState(dropTarget: DisplayObject = null): void {
       var mousePosition = this._getLocalMousePosition();
       if (this._dragBounds) {
         this._dragBounds.constrainPoint(mousePosition);
@@ -319,6 +321,7 @@ module Shumway.AVM2.AS.flash.display {
 
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
                    testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
+      // If looking for a drop target, ignore this object if it is the one being dragged.
       if (testingType === HitTestingType.Drop && this._dragMode > DragMode.Inactive) {
         return;
       }

@@ -1782,19 +1782,20 @@ module Shumway.AVM2.AS.flash.display {
      * Internal implementation of all point intersection checks.
      *
      * _containsPoint is used for
-     *  - mouse target finding
+     *  - mouse/drop target finding
      *  - getObjectsUnderPoint
      *  - hitTestPoint
      *
-     * Mouse target finding and getObjectsUnderPoint require checking against the exact shape,
+     * Mouse/Drop target finding and getObjectsUnderPoint require checking against the exact shape,
      * and making sure that the checked coordinates aren't hidden through masking or clipping.
      *
      * hitTestPoint never checks for clipping, and masking only for testingType HitTestShape.
      *
-     * The `objects` object is used for collecting objects for `getObjectsUnderPoint`. If it is
-     * supplied, objects for which `_containsPointDirectly` is true are added to it.
+     * The `objects` object is used for collecting objects for `getObjectsUnderPoint` or looking
+     * for a drop target. If it is supplied, objects for which `_containsPointDirectly` is true are
+     * added to it.
      *
-     * Overridden in DisplayObjectContainer and SimpleButton.
+     * Overridden in DisplayObjectContainer, Sprite and SimpleButton.
      */
     _containsPoint(globalX: number, globalY: number, localX: number, localY: number,
                    testingType: HitTestingType, objects: DisplayObject[]): HitTestingResult {
@@ -1805,14 +1806,14 @@ module Shumway.AVM2.AS.flash.display {
         return result;
       }
       var containsPoint = this._containsPointDirectly(localX, localY, globalX, globalY);
-      // For getObjectsUnderPoint, push all direct hits, for mouse target finding InteractiveObjects
-      // only.
       if (containsPoint && objects) {
         if (testingType === HitTestingType.Drop) {
+          // For Drop, replace previous hit with current one.
           objects[0] = this;
-        }
-        if (testingType === HitTestingType.ObjectsUnderPoint ||
+        } else if (testingType === HitTestingType.ObjectsUnderPoint ||
             InteractiveObject.isType(this) && (<InteractiveObject>this)._mouseEnabled) {
+          // For getObjectsUnderPoint, push all direct hits, for mouse target finding InteractiveObjects
+          // only.
           objects.push(this);
         }
       }
@@ -1935,6 +1936,9 @@ module Shumway.AVM2.AS.flash.display {
       return ancestor;
     }
 
+    /**
+     * Returns the current mouse position relative to this object.
+     */
     _getLocalMousePosition(): flash.geom.Point {
       var position = flash.ui.Mouse._currentPosition;
       if (this._parent) {
