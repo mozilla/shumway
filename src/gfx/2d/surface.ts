@@ -2,6 +2,7 @@ module Shumway.GFX.Canvas2D {
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
 
   import assert = Shumway.Debug.assert;
+  import clamp = Shumway.NumberUtilities.clamp;
 
   declare var registerScratchCanvas;
 
@@ -169,7 +170,7 @@ module Shumway.GFX.Canvas2D {
         context.globalAlpha = 1;
         context.globalColorMatrix = null;
       } else if (colorMatrix.hasOnlyAlphaMultiplier()) {
-        context.globalAlpha = colorMatrix.alphaMultiplier;
+        context.globalAlpha = clamp(colorMatrix.alphaMultiplier, 0, 1);
         context.globalColorMatrix = null;
       } else {
         context.globalAlpha = 1;
