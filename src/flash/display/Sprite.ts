@@ -280,13 +280,8 @@ module Shumway.AVM2.AS.flash.display {
         this._dragDeltaX = this.x - mousePosition.x;
         this._dragDeltaY = this.y - mousePosition.y;
       }
-      if (flash.ui.Mouse.draggableObject !== this) {
-        if (flash.ui.Mouse.draggableObject) {
-          flash.ui.Mouse.draggableObject
-        }
-        flash.ui.Mouse.draggableObject = this;
-      }
       this._dragBounds = bounds;
+      flash.ui.Mouse.draggableObject = this;
     }
     stopDrag(): void {
       if (flash.ui.Mouse.draggableObject === this) {
@@ -302,7 +297,7 @@ module Shumway.AVM2.AS.flash.display {
       var newX = mousePosition.x;
       var newY = mousePosition.y;
       if (this._dragMode === DragMode.PreserveDistance) {
-        // Preserve distance to the point where the dragging process started.
+        // Preserve the distance to the point where the dragging process started.
         newX += this._dragDeltaX;
         newY += this._dragDeltaY;
       }
@@ -310,7 +305,7 @@ module Shumway.AVM2.AS.flash.display {
         // Clamp new position to constraint bounds.
         var bounds = this._dragBounds;
         newX = clamp(newX, bounds.left, bounds.right);
-        newY = clamp(newX, bounds.top, bounds.bottom);
+        newY = clamp(newY, bounds.top, bounds.bottom);
       }
       this.x = newX;
       this.y = newY;

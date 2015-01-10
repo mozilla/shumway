@@ -152,7 +152,7 @@
         fireMouseEvent('mousedown', 500, 350);
         fireMouseEvent('mousemove', 350, 200);
         eq(draggable.x, 300);
-        eq(draggable.y, 300);
+        eq(draggable.y, 250);
         eq(draggable.dropTarget, null);
 
         fireMouseEvent('mousemove', 50, 50);
@@ -163,7 +163,7 @@
         fireMouseEvent('mouseup', 50, 50);
         fireMouseEvent('mousemove', 500, 350);
         eq(draggable.x, 450);
-        eq(draggable.y, 400);
+        eq(draggable.y, 300);
         eq(draggable.dropTarget, null);
     });
 
