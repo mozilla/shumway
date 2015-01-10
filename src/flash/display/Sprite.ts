@@ -22,6 +22,7 @@ module Shumway.AVM2.AS.flash.display {
   import Timeline = Shumway.Timeline;
   import SwfTag = Shumway.SWF.Parser.SwfTag;
   import PlaceObjectFlags = Shumway.SWF.Parser.PlaceObjectFlags;
+  import clamp = Shumway.NumberUtilities.clamp;
 
   enum DragMode {
     Inactive,
@@ -47,8 +48,8 @@ module Shumway.AVM2.AS.flash.display {
       self._useHandCursor = true;
 
       self._dragMode = DragMode.Inactive;
-      self._dragX = 0;
-      self._dragY = 0;
+      self._dragDeltaX = 0;
+      self._dragDeltaY = 0;
       self._dragBounds = null;
       self._hitTarget = null;
 
@@ -87,8 +88,8 @@ module Shumway.AVM2.AS.flash.display {
     private _useHandCursor: boolean;
 
     private _dragMode: DragMode;
-    private _dragX: number;
-    private _dragY: number;
+    private _dragDeltaX: number;
+    private _dragDeltaY: number;
     private _dragBounds: flash.geom.Rectangle;
     _hitTarget: flash.display.Sprite;
 
@@ -276,8 +277,8 @@ module Shumway.AVM2.AS.flash.display {
       } else {
         this._dragMode = DragMode.PreserveDistance;
         var mousePosition = this._getLocalMousePosition();
-        this._dragX = this.x - mousePosition.x;
-        this._dragY = this.y - mousePosition.y;
+        this._dragDeltaX = this.x - mousePosition.x;
+        this._dragDeltaY = this.y - mousePosition.y;
       }
       if (flash.ui.Mouse.draggableObject !== this) {
         if (flash.ui.Mouse.draggableObject) {
@@ -291,23 +292,28 @@ module Shumway.AVM2.AS.flash.display {
       if (flash.ui.Mouse.draggableObject === this) {
         flash.ui.Mouse.draggableObject = null;
         this._dragMode = DragMode.Inactive;
-        this._dragX = 0;
-        this._dragY = 0;
+        this._dragDeltaX = 0;
+        this._dragDeltaY = 0;
         this._dragBounds = null;
       }
     }
     _updateDragState(dropTarget: DisplayObject = null): void {
       var mousePosition = this._getLocalMousePosition();
-      if (this._dragBounds) {
-        this._dragBounds.constrainPoint(mousePosition);
-      }
+      var newX = mousePosition.x;
+      var newY = mousePosition.y;
       if (this._dragMode === DragMode.PreserveDistance) {
-        this.x = mousePosition.x + this._dragX;
-        this.y = mousePosition.y + this._dragY;
-      } else {
-        this.x = mousePosition.x;
-        this.y = mousePosition.y;
+        // Preserve distance to the point where the dragging process started.
+        newX += this._dragDeltaX;
+        newY += this._dragDeltaY;
       }
+      if (this._dragBounds) {
+        // Clamp new position to constraint bounds.
+        var bounds = this._dragBounds;
+        newX = clamp(newX, bounds.left, bounds.right);
+        newY = clamp(newX, bounds.top, bounds.bottom);
+      }
+      this.x = newX;
+      this.y = newY;
       this._dropTarget = dropTarget;
     }
     startTouchDrag(touchPointID: number /*int*/, lockCenter: boolean = false, bounds: flash.geom.Rectangle = null): void {

@@ -19,7 +19,6 @@ module Shumway.AVM2.AS.flash.geom {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
   import Bounds = Shumway.Bounds;
-  import clamp = Shumway.NumberUtilities.clamp;
 
   export class Rectangle extends ASNative implements flash.utils.IExternalizable {
 
@@ -378,11 +377,6 @@ module Shumway.AVM2.AS.flash.geom {
       this.y = input.readFloat();
       this.width = input.readFloat();
       this.height = input.readFloat();
-    }
-
-    public constrainPoint(point: Point) {
-      point.x = clamp(point.x, this.x, this.x + this.width);
-      point.y = clamp(point.y, this.y, this.y + this.height);
     }
   }
 }
