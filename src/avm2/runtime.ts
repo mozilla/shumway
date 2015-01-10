@@ -75,7 +75,7 @@ interface Object extends IProtocol {
   asIsClass: boolean;
 
   // E4X
-  asDefaultNamepsace: Namespace;
+  asDefaultNamespace: Namespace;
 }
 
 interface Function {

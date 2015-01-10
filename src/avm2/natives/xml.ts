@@ -247,13 +247,17 @@ module Shumway.AVM2.AS {
         return prettyPrinting ?
           s + escapeElementValue(trimWhitespaces(node._value)) :
           escapeElementValue(node._value);
-      // 5. If x.[[Class]] == "attribute", return the result of concatenating s and EscapeAttributeValue(x.[[Value]])
+      // 5. If x.[[Class]] == "attribute", return the result of concatenating s and
+      // EscapeAttributeValue(x.[[Value]])
       case ASXMLKind.Attribute:
         return s + escapeAttributeValue(node._value);
-      // 6. If x.[[Class]] == "comment", return the result of concatenating s, the string "<!--", x.[[Value]] and the string "-->"
+      // 6. If x.[[Class]] == "comment", return the result of concatenating s, the string "<!--",
+      // x.[[Value]] and the string "-->"
       case ASXMLKind.Comment:
         return s + '<!--' + node._value + '-->';
-      // 7 If x.[[Class]] == "processing-instruction", return the result of concatenating s, the string "<?", x.[[Name]].localName, the space <SP> character, x.[[Value]] and the string "?>"
+      // 7 If x.[[Class]] == "processing-instruction", return the result of concatenating s, the
+      // string "<?", x.[[Name]].localName, the space <SP> character, x.[[Value]] and the string
+      // "?>"
       case ASXMLKind.ProcessingInstruction:
         return s + '<?' + node._name.localName + ' ' + node._value + '?>';
       default:
@@ -273,11 +277,14 @@ module Shumway.AVM2.AS {
         namespaceDeclarations.push(ns1);
       }
     }
-    // 11. For each name in the set of names consisting of x.[[Name]] and the name of each attribute in x.[[Attributes]]
+    // 11. For each name in the set of names consisting of x.[[Name]] and the name of each
+    // attribute in x.[[Attributes]]
     var currentNamespaces = ancestorNamespaces.concat(namespaceDeclarations);
     var namespace = node._name.getNamespace(currentNamespaces);
     if (namespace.prefix === undefined) {
-      // Let namespace.prefix be an arbitrary implementation defined namespace prefix, such that there is no ns2 ∈ (AncestorNamespaces ∪ namespaceDeclarations) with namespace.prefix == ns2.prefix
+      // Let namespace.prefix be an arbitrary implementation defined namespace prefix, such that
+      // there is no ns2 ∈ (AncestorNamespaces ∪ namespaceDeclarations) with namespace.prefix ==
+      // ns2.prefix
       var newPrefix = generateUniquePrefix(currentNamespaces);
       var ns2 = new AS.ASNamespace(newPrefix, namespace.uri);
       // Let namespaceDeclarations = namespaceDeclarations ∪ { namespace }
@@ -296,7 +303,9 @@ module Shumway.AVM2.AS {
       var name: ASQName = attr._name;
       var namespace = name.getNamespace(currentNamespaces);
       if (namespace.prefix === undefined) {
-        // Let namespace.prefix be an arbitrary implementation defined namespace prefix, such that there is no ns2 ∈ (AncestorNamespaces ∪ namespaceDeclarations) with namespace.prefix == ns2.prefix
+        // Let namespace.prefix be an arbitrary implementation defined namespace prefix, such that
+        // there is no ns2 ∈ (AncestorNamespaces ∪ namespaceDeclarations) with namespace.prefix ==
+        // ns2.prefix
         var newPrefix = generateUniquePrefix(currentNamespaces);
         var ns2 = new AS.ASNamespace(newPrefix, namespace.uri);
         // Let namespaceDeclarations = namespaceDeclarations ∪ { namespace }
@@ -327,7 +336,8 @@ module Shumway.AVM2.AS {
 
     // 18. Let s be the result of concatenating s and the string ">"
     s += '>';
-    // 19. Let indentChildren = ((x.[[Length]] > 1) or (x.[[Length]] == 1 and x[0].[[Class]] is not equal to "text"))
+    // 19. Let indentChildren = ((x.[[Length]] > 1) or (x.[[Length]] == 1 and x[0].[[Class]] is not
+    // equal to "text"))
     var indentChildren = node._children.length > 1 ||
         (node._children.length === 1 && node._children[0]._kind !== ASXMLKind.Text);
     var nextIndentLevel = (prettyPrinting && indentChildren) ?
@@ -374,7 +384,7 @@ module Shumway.AVM2.AS {
       return createXML(ASXMLKind.Text);
     }
     if (length === 1) {
-      x._children[0]._parent = undefined;
+      x._children[0]._parent = null;
       return x._children[0];
     }
     Runtime.throwError('TypeError', Errors.XMLMarkupMustBeWellFormed);
@@ -406,7 +416,7 @@ module Shumway.AVM2.AS {
     }
     for (var i = 0; i < children.length; i++) {
       var v = children[i];
-      v._parent = undefined;
+      v._parent = null;
       targetList.append(v);
     }
   }
@@ -796,6 +806,7 @@ module Shumway.AVM2.AS {
             var rawAttr = attrs[i];
             var attr = createNode(ASXMLKind.Attribute, rawAttr.name.namespace, rawAttr.name.localName, rawAttr.name.prefix);
             attr._value = rawAttr.value;
+            attr._parent = currentElement;
             currentElement._attributes.push(attr);
           }
           for (var i = 0; i < namespaces.length; ++i) {
@@ -921,11 +932,13 @@ module Shumway.AVM2.AS {
           // ii. Let n.uri = uriValue.uri
           uri = uriValueAsNamespace.uri;
         }
-        // b. Else if Type(uriValue) is Object and uriValue.[[Class]] == "QName" and uriValue.uri is not null
+        // b. Else if Type(uriValue) is Object and uriValue.[[Class]] == "QName" and uriValue.uri
+        // is not null
         else if (isObject(uriValue) && uriValue instanceof ASQName && (<ASQName>uriValue).uri !== null) {
           // i. Let n.uri = uriValue.uri
           uri = uriValue.uri;
-          // NOTE implementations that preserve prefixes in qualified names may also set n.prefix = uriValue.[[Prefix]]
+          // NOTE implementations that preserve prefixes in qualified names may also set n.prefix =
+          // uriValue.[[Prefix]]
         }
         // c. Else
         else {
@@ -945,7 +958,8 @@ module Shumway.AVM2.AS {
       else {
         var prefixValue = a;
         var uriValue = b;
-        // a. If Type(uriValue) is Object and uriValue.[[Class]] == "QName" and uriValue.uri is not null
+        // a. If Type(uriValue) is Object and uriValue.[[Class]] == "QName" and uriValue.uri is not
+        // null
         if (isObject(uriValue) && uriValue instanceof ASQName && (<ASQName>uriValue).uri !== null) {
           // i. Let n.uri = uriValue.uri
           uri = uriValue.uri
@@ -1038,7 +1052,8 @@ module Shumway.AVM2.AS {
         // a. Return Name
         return  a;
       }
-      // 2. Create and return a new QName object exactly as if the QName constructor had been called with the same arguments (section 13.3.2).
+      // 2. Create and return a new QName object exactly as if the QName constructor had been
+      // called with the same arguments (section 13.3.2).
       switch (arguments.length) {
         case 0:
           return new AS.ASQName();
@@ -1119,16 +1134,19 @@ module Shumway.AVM2.AS {
       // 6. If Namespace == null
       if (namespace === null) {
         // a. Let q.uri = null
-        // NOTE implementations that preserve prefixes in qualified names may also set q.[[Prefix]] to undefined
+        // NOTE implementations that preserve prefixes in qualified names may also set q.[[Prefix]]
+        // to undefined
         uri = null;
       }
       // 7. Else
       else {
-        // a. Let Namespace be a new Namespace created as if by calling the constructor new Namespace(Namespace)
+        // a. Let Namespace be a new Namespace created as if by calling the constructor new
+        // Namespace(Namespace)
         namespace = namespace instanceof ASNamespace ? namespace : new AS.ASNamespace(namespace);
         // b. Let q.uri = Namespace.uri
         uri = namespace.uri;
-          // NOTE implementations that preserve prefixes in qualified names may also set q.[[Prefix]] to Namespace.prefix
+          // NOTE implementations that preserve prefixes in qualified names may also set
+          // q.[[Prefix]] to Namespace.prefix
       }
       // 8. Return q
       var flags = isAttribute ? ASQNameFlags.ATTR_NAME : ASQNameFlags.ELEM_NAME;
@@ -1173,8 +1191,10 @@ module Shumway.AVM2.AS {
 
     /**
      * 13.3.5.3 [[Prefix]]
-     * The [[Prefix]] property is an optional internal property that is not directly visible to users. It may be used by implementations that preserve prefixes in qualified names.
-     * The value of the [[Prefix]] property is a value of type string or undefined. If the [[Prefix]] property is undefined, the prefix associated with this QName is unknown.
+     * The [[Prefix]] property is an optional internal property that is not directly visible to
+     * users. It may be used by implementations that preserve prefixes in qualified names. The
+     * value of the [[Prefix]] property is a value of type string or undefined. If the [[Prefix]]
+     * property is undefined, the prefix associated with this QName is unknown.
      */
     get prefix(): string {
       return this.name.namespaces[0] ? this.name.namespaces[0].prefix : null;
@@ -1183,11 +1203,15 @@ module Shumway.AVM2.AS {
     /**
      * 13.3.5.4 [[GetNamespace]] ( [ InScopeNamespaces ] )
      *
-     * The [[GetNamespace]] method is an internal method that returns a Namespace object with a URI matching the URI of this QName. InScopeNamespaces is an optional parameter.
-     * If InScopeNamespaces is unspecified, it is set to the empty set. If one or more Namespaces exists in InScopeNamespaces with a URI matching the URI of this QName, one
-     * of the matching Namespaces will be returned. If no such namespace exists in InScopeNamespaces, [[GetNamespace]] creates and returns a new Namespace with a URI matching
-     * that of this QName. For implementations that preserve prefixes in QNames, [[GetNamespace]] may return a Namespace that also has a matching prefix. The input argument
-     * InScopeNamespaces is a set of Namespace objects.
+     * The [[GetNamespace]] method is an internal method that returns a Namespace object with a URI
+     * matching the URI of this QName. InScopeNamespaces is an optional parameter. If
+     * InScopeNamespaces is unspecified, it is set to the empty set. If one or more Namespaces
+     * exists in InScopeNamespaces with a URI matching the URI of this QName, one of the matching
+     * Namespaces will be returned. If no such namespace exists in InScopeNamespaces,
+     * [[GetNamespace]] creates and returns a new Namespace with a URI matching that of this QName.
+     * For implementations that preserve prefixes in QNames, [[GetNamespace]] may return a
+     * Namespace that also has a matching prefix. The input argument InScopeNamespaces is a set of
+     * Namespace objects.
      */
     getNamespace(inScopeNamespaces?: ASNamespace []) {
       if (this.uri === null) {
@@ -1222,12 +1246,12 @@ module Shumway.AVM2.AS {
   }
 
   export enum ASXMLKind {
-    Unknown,
-    Element,
-    Attribute,
-    Text,
-    Comment,
-    ProcessingInstruction
+    Unknown = 0,
+    Element = 1,
+    Attribute = 2,
+    Text = 3,
+    Comment = 4,
+    ProcessingInstruction = 5
   }
 
   var ASXMLKindNames = [null, 'element', 'attribute', 'text', 'comment', 'processing-instruction'];
@@ -1353,8 +1377,8 @@ module Shumway.AVM2.AS {
     private static _flags: ASXML_FLAGS = ASXML_FLAGS.ALL;
     private static _prettyIndent = 2;
     private _name: ASQName;
-    _attributes: ASXML [];
-    _inScopeNamespaces: ASNamespace [];
+    _attributes: ASXML[];
+    _inScopeNamespaces: ASNamespace[];
 
     // These properties are public so ASXMLList can access them.
     _kind: ASXMLKind;
@@ -1364,6 +1388,8 @@ module Shumway.AVM2.AS {
 
     constructor (value?: any) {
       false && super();
+
+      this._parent = null;
 
       if (isNullOrUndefined(value)) {
         value = "";
@@ -1415,7 +1441,7 @@ module Shumway.AVM2.AS {
       var isAttribute = kind === ASXMLKind.Attribute;
       this._name = new AS.ASQName(namespace, name, isAttribute);
       this._kind = kind;    // E4X [[Class]]
-      this._parent = undefined;
+      this._parent = null;
       switch (<ASXMLKind> kind) {
         case ASXMLKind.Element:
           this._inScopeNamespaces = [];
@@ -1762,11 +1788,35 @@ module Shumway.AVM2.AS {
       });
     }
 
-    inScopeNamespaces(): any [] {
+    // 13.4.4.17
+    inScopeNamespaces(): ASNamespace[] {
       if (!(this instanceof ASXML)) {
         Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+      };
+      return this._inScopeNamespacesImpl(false);
+    }
+
+    private _inScopeNamespacesImpl(internalUse: boolean) {
+      // Step 1.
+      var y = this;
+      // Step 2.
+      var inScopeNS: ASNamespace[] = [];
+      var inScopeNSMap = internalUse ? inScopeNS : {};
+      // Step 3.
+      while (y !== null) {
+        // Step 3.a.
+        var namespaces = y._inScopeNamespaces;
+        for (var i = 0; namespaces && i < namespaces.length; i++) {
+          var ns = namespaces[i];
+          if (!inScopeNSMap[ns.prefix]) {
+            inScopeNSMap[ns.prefix] = ns;
+            inScopeNS.push(ns);
+          }
+        }
+        // Step 3.b.
+        y = y._parent;
       }
-      notImplemented("public.XML::inScopeNamespaces"); return;
+      return inScopeNS;
     }
     insertChildAfter(child1: any, child2: any): any {
       if (!(this instanceof ASXML)) {
@@ -1802,15 +1852,33 @@ module Shumway.AVM2.AS {
       }
       return this._name;
     }
-    namespace(prefix: string): any {
+
+    // 13.4.4.23
+    namespace(prefix?: string): any {
       if (!(this instanceof ASXML)) {
         Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
       }
-      if (arguments.length === 0) {
-      } else {
-        prefix = asCoerceString(prefix);
+      // Step 4.a.
+      if (arguments.length === 0 && this._kind >= ASXMLKind.Text) {
+        return null;
       }
-      notImplemented("public.XML::namespace"); return;
+      // Steps 1-3.
+      var inScopeNS = this._inScopeNamespacesImpl(true);
+      // Step 4.
+      if (arguments.length === 0) {
+        // Step 4.b.
+        return this._name.getNamespace(inScopeNS);
+      }
+      // Step 5.a.
+      prefix = asCoerceString(prefix);
+      // Step 5.b-c.
+      for (var i = 0; i < inScopeNS.length; i++) {
+        var ns = inScopeNS[i];
+        if (ns.prefix === prefix) {
+          return ns;
+        }
+      }
+      // Step 5.b alternate clause implicit.
     }
     namespaceDeclarations(): any [] {
       if (!(this instanceof ASXML)) {
@@ -1866,12 +1934,13 @@ module Shumway.AVM2.AS {
 
     private removeByIndex(index: number) {
       var child = this._children[index];
-      child._parent = undefined;
+      child._parent = null;
       this._children.splice(index, 1);
     }
 
     parent(): any {
-      return this._parent;
+      // Absurdly, and in difference to what the spec says, parent() returns `undefined` for null.
+      return this._parent || undefined;
     }
     // 13.4.4.28 XML.prototype.processingInstructions ( [ name ] )
     processingInstructions(name: any = "*"): ASXMLList {
@@ -1934,7 +2003,7 @@ module Shumway.AVM2.AS {
           p = String(self.length());
         }
         if (self._children[p]) {
-          self._children[p]._parent = undefined;
+          self._children[p]._parent = null;
         }
       } else {
         var toRemove = this.getProperty(p, false);
@@ -1943,7 +2012,7 @@ module Shumway.AVM2.AS {
         }
         toRemove._children.forEach(function (v, i) {
           var index = self._children.indexOf(v);
-          v._parent = undefined;
+          v._parent = null;
           if (i === 0) {
             p = String(index);
             self._children.splice(index, 1, undefined);
@@ -2066,59 +2135,59 @@ module Shumway.AVM2.AS {
       var n = toXMLName(p);
       // Step 6.
       if (isAttribute) {
-        // Step a.
+        // Step 6.a.
         if (!isXMLName(n.name)) {
           return;
         }
-        // Step b.
+        // Step 6.b.
         if (c instanceof AS.ASXMLList) {
-          // Step i.
+          // Step 6.b.i.
           if (c._children.length === 0) {
             c = '';
-            // Step ii.
+            // Step 6.b.ii.
           } else {
-            // Step 1.
+            // Step 6.b.ii.1.
             var s = toString(c._children[0]);
-            // Step 2.
+            // Step 6.b.ii.2.
             for (var j = 1; j < c._children.length; j++) {
               s += ' ' + toString(c._children[j]);
             }
-            // Step 3.
+            // Step 6.b.ii.3.
             c = s;
           }
-          // Step c.
+          // Step 6.c.
         } else {
           c = asCoerceString(c);
         }
-        // Step d.
+        // Step 6.d.
         var a: ASXML = null;
-        // Step e.
+        // Step 6.e.
         var attributes = this._attributes;
         var newAttributes = this._attributes = [];
         for (var j = 0; attributes && j < attributes.length; j++) {
           var attribute = attributes[j];
           if (attribute._name.equals(n)) {
-            // Step 1.
+            // Step 6.e.1.
             if (!a) {
               a = attribute;
-              // Step 2.
+              // Step 6.e.2.
             } else {
-              attribute._parent = undefined;
+              attribute._parent = null;
               continue;
             }
           }
           newAttributes.push(attribute);
         }
-        // Step f.
+        // Step 6.f.
         if (!a) {
           a = createXML(ASXMLKind.Attribute, n.uri, n.localName);
           a._parent = this;
           newAttributes.push(a);
           // TODO: implement the namespace parts of step f.
         }
-        // Step g.
+        // Step 6.g.
         a._value = c;
-        // Step h.
+        // Step 6.h.
         return;
       }
 
@@ -2290,7 +2359,7 @@ module Shumway.AVM2.AS {
             var attrName = node._name;
             if ((anyName || attrName.localName === localName) &&
                 (anyNamespace || attrName.uri === uri)) {
-              node._parent = undefined;
+              node._parent = null;
             } else {
               newAttributes.push(node);
             }
@@ -2365,8 +2434,8 @@ module Shumway.AVM2.AS {
       //   ii. Return the result of calling CallMethod(r0, args) recursively
 
       // f. If f == undefined and Type(base) is XML and base.hasSimpleContent () == true
-      //   i. Let r0 be a new Reference with base object = ToObject(ToString(base)) and property name = P
-      //   ii. Return the result of calling CallMethod(r0, args) recursively
+      //   i. Let r0 be a new Reference with base object = ToObject(ToString(base)) and property
+      // name = P ii. Return the result of calling CallMethod(r0, args) recursively
       if (this.hasSimpleContent()) {
         return Object(toString(this)).asCallProperty(namespaces, name, flags, isLex, args);
       }
@@ -2384,7 +2453,7 @@ module Shumway.AVM2.AS {
       }
       var children = this._children;
       if (p < children.length && children[p]) {
-        children[p]._parent = undefined;
+        children[p]._parent = null;
         children.splice(p, 1);
       }
     }
@@ -2970,7 +3039,8 @@ module Shumway.AVM2.AS {
       if (this._children.length !== 1) {
         Runtime.throwError('TypeError', Errors.XMLOnlyWorksWithOneItemLists, 'namespace');
       }
-      return this._children[0].namespace(prefix);
+      var firstChild = this._children[0];
+      return arguments.length ? firstChild.namespace(prefix) : firstChild.namespace();
     }
     localName(): Object {
       if (this._children.length !== 1) {
@@ -3175,7 +3245,7 @@ module Shumway.AVM2.AS {
       var child = this._children[index];
       var parent = child._parent;
       if (parent) {
-        child._parent = undefined;
+        child._parent = null;
         parent._children.splice(parent._children.indexOf(child), 1);
       }
       this._children.splice(index, 1);
