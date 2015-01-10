@@ -463,7 +463,7 @@ module Shumway.AVM2.AS.flash.display {
           return result;
         }
         anyChildHit = true;
-        if (testingType === HitTestingType.ObjectsUnderPoint) {
+        if (testingType >= HitTestingType.ObjectsUnderPoint) {
           continue;
         }
         release || assert(testingType === HitTestingType.Mouse);
@@ -484,19 +484,22 @@ module Shumway.AVM2.AS.flash.display {
           return HitTestingResult.Shape;
         }
       }
-
-      // We need to always test the container itself for getObjectsUnderPoint.
+      // We need to always test the container itself for getObjectsUnderPoint or when looking for a drop target.
       // Otherwise, it's only required if no child (interactive or not) was hit.
-      if (anyChildHit && testingType !== HitTestingType.ObjectsUnderPoint) {
+      if (anyChildHit && testingType < HitTestingType.ObjectsUnderPoint) {
         if (testingType === HitTestingType.Mouse && objects.length === 0) {
           objects[0] = this;
         }
         return HitTestingResult.Shape;
       }
       var selfHit = this._containsPointDirectly(localX, localY, globalX, globalY);
-      if (selfHit && (testingType === HitTestingType.ObjectsUnderPoint ||
-                      objects && this._mouseEnabled)) {
-        objects.push(this);
+      if (selfHit) {
+        if (testingType === HitTestingType.Drop) {
+          // For Drop, replace previous hit with current one.
+          objects[0] = this;
+        } else if (testingType === HitTestingType.ObjectsUnderPoint || objects && this._mouseEnabled) {
+          objects.push(this);
+        }
       }
       return anyChildHit || selfHit ? HitTestingResult.Shape : HitTestingResult.None;
     }
