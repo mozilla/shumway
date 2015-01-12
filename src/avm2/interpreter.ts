@@ -227,12 +227,12 @@ module Shumway.AVM2 {
           case OP.ifeq:
             b = stack.pop();
             a = stack.pop();
-            pc = a == b ? bc.offset : pc + 1;
+            pc = asEquals(a, b) ? bc.offset : pc + 1;
             continue;
           case OP.ifne:
             b = stack.pop();
             a = stack.pop();
-            pc = a != b ? bc.offset : pc + 1;
+            pc = !asEquals(a, b) ? bc.offset : pc + 1;
             continue;
           case OP.ifstricteq:
             b = stack.pop();
