@@ -1679,17 +1679,21 @@ module Shumway.AVM2.AS {
       Array.prototype.push.apply(list._children, this._attributes);
       return list;
     }
-    child(propertyName: any): ASXMLList {
+
+    // 13.4.4.6
+    child(propertyName: any /* string|number */): ASXMLList {
       if (!(this instanceof ASXML)) {
         Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
       }
+      // Step 1.
       if (isIndex(propertyName)) {
         var list = new AS.ASXMLList();
-        if (propertyName < this._children.length) {
-          list.append(this._children[propertyName | 0]._deepCopy());
+        if (this._children && propertyName < this._children.length) {
+          list.append(this._children[propertyName | 0]);
         }
         return list;
       }
+      // Steps 2-3.
       return this.getProperty(propertyName, isQNameAttribute(propertyName));
     }
     childIndex(): number /*int*/ {
@@ -2679,6 +2683,10 @@ module Shumway.AVM2.AS {
       if (isNullOrUndefined(value)) {
         value = "";
       }
+      if (!value) {
+        return;
+      }
+
       if (value instanceof ASXMLList) {
         var children = (<ASXMLList>value)._children;
         for (var i = 0; i < children.length; i++) {
