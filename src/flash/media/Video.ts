@@ -83,7 +83,7 @@ module Shumway.AVM2.AS.flash.media {
         return;
       }
       if (this._netStream) {
-        netStream._videoReferrer = null;
+        this._netStream._videoReferrer = null;
       }
       this._netStream = netStream;
       if (this._netStream) {
