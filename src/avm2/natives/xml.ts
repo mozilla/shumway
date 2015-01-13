@@ -102,7 +102,7 @@ module Shumway.AVM2.AS {
   }
 
   // 10.2.1.1 EscapeElementValue ( s )
-  function escapeElementValue(s: string): string {
+  export function escapeElementValue(s: string): string {
     var i = 0, ch;
     while (i < s.length && (ch = s[i]) !== '&' && ch !== '<' && ch !== '>') {
       i++;
@@ -132,7 +132,7 @@ module Shumway.AVM2.AS {
   }
 
   // 10.2.1.2 EscapeAttributeValue ( s )
-  function escapeAttributeValue(s: string): string {
+  export function escapeAttributeValue(s: string): string {
     var i = 0, ch;
     while (i < s.length && (ch = s[i]) !== '&' && ch !== '<' &&
            ch !== '\"' && ch !== '\n' && ch !== '\r' && ch !== '\t') {

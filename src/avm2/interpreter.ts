@@ -465,7 +465,13 @@ module Shumway.AVM2 {
             asSetSlot(object, bc.index, value);
             break;
           case OP.convert_s:
-            stack[stack.length - 1] = stack[stack.length - 1] + '';
+            stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
+            break;
+          case OP.esc_xattr:
+            stack[stack.length - 1] = Runtime.escapeXMLAttribute(stack[stack.length - 1]);
+            break;
+          case OP.esc_xelem:
+            stack[stack.length - 1] = Runtime.escapeXMLElement(stack[stack.length - 1]);
             break;
           case OP.coerce_i:
           case OP.convert_i:
