@@ -75,7 +75,7 @@ interface Object extends IProtocol {
   asIsClass: boolean;
 
   // E4X
-  asDefaultNamepsace: Namespace;
+  asDefaultNamespace: Namespace;
 }
 
 interface Function {
@@ -912,6 +912,14 @@ module Shumway.AVM2.Runtime {
            x instanceof AS.ASXMLList ||
            x instanceof AS.ASQName ||
            x instanceof AS.ASNamespace;
+  }
+
+  export function escapeXMLAttribute(value: any) {
+    return AS.escapeAttributeValue(value);
+  }
+
+  export function escapeXMLElement(value: any) {
+    return AS.escapeElementValue(value);
   }
 
   export function asEquals(left: any, right: any): boolean {
@@ -1843,6 +1851,8 @@ var asCoerceObject = Shumway.AVM2.Runtime.asCoerceObject;
 var asCompare = Shumway.AVM2.Runtime.asCompare;
 var asAdd = Shumway.AVM2.Runtime.asAdd;
 var applyType = Shumway.AVM2.Runtime.applyType;
+var escapeXMLAttribute = Shumway.AVM2.Runtime.escapeXMLAttribute;
+var escapeXMLElement = Shumway.AVM2.Runtime.escapeXMLElement;
 
 var asGetSlot = Shumway.AVM2.Runtime.asGetSlot;
 var asSetSlot = Shumway.AVM2.Runtime.asSetSlot;

@@ -412,6 +412,20 @@ module Shumway.AVM2.Compiler {
     return callPure(globalProperty("asCoerceString"), null, [value]);
   }
 
+  function escapeXMLAttribute(value: Value): Value {
+    if (isConstant(value)) {
+      return new Constant(Runtime.escapeXMLAttribute(asConstant(value).value));
+    }
+    return callPure(globalProperty("escapeXMLAttribute"), null, [value]);
+  }
+
+  function escapeXMLElement(value: Value): Value {
+    if (isConstant(value)) {
+      return new Constant(Runtime.escapeXMLElement(asConstant(value).value));
+    }
+    return callPure(globalProperty("escapeXMLElement"), null, [value]);
+  }
+
   var coerceObject = callGlobalProperty.bind(null, "asCoerceObject");
 
 
@@ -1152,6 +1166,12 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.convert_s:
             push(convertString(pop()));
+            break;
+          case OP.esc_xattr:
+            push(escapeXMLAttribute(pop()));
+            break;
+          case OP.esc_xelem:
+            push(escapeXMLElement(pop()));
             break;
           case OP.astype:
             if (bc.ti && bc.ti.noCoercionNeeded) {
