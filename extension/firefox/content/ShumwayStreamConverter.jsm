@@ -804,7 +804,7 @@ function initExternalCom(wrappedWindow, wrappedObject, targetWindow) {
       if (targetWindow.wrappedJSObject.onExternalCallback) {
         result = targetWindow.wrappedJSObject.onExternalCallback({functionName: functionName, args: args});
       }
-      return result;
+      return wrappedWindow.eval(result);
     };
   };
   wrappedObject.__flash__unregisterCallback = function (functionName) {

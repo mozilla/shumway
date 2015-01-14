@@ -550,7 +550,7 @@ module Shumway {
               clone.endIndex = beginIndex;
               newTextRuns.push(clone);
               i--;
-              run.beginIndex = beginIndex;
+              run.beginIndex = beginIndex + 1;
               continue;
             }
           } else if (containsBeginIndex) {
