@@ -841,10 +841,10 @@ module Shumway.GFX.Canvas2D {
 
     _renderWithMask(node: Node, mask: Node, blendMode: BlendMode, stencil: boolean, state: RenderState) {
       var maskMatrix = mask.getTransform().getConcatenatedMatrix(true);
-      // If the mask doesn't have a parent, and therefore can't be a descentant of the stage object,
-      // we still have to factor in the stage's matrix, which includes pixel density scaling.
+      // If the mask doesn't have a parent then it's matrix doesn't include the pixel density
+      // scaling and we have to factor it in separately.
       if (!mask.parent) {
-        maskMatrix = maskMatrix.concatClone(this._stage.getTransform().getConcatenatedMatrix());
+        maskMatrix = maskMatrix.scale(this._devicePixelRatio, this._devicePixelRatio);
       }
 
       var aAABB = node.getBounds().clone();
