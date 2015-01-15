@@ -39,7 +39,7 @@ module Shumway.AVM2.AS {
     HIDE_OBJECT         = 0x0400
   }
 
-  // public keys used multiple times while creating the description
+  // Public keys used multiple times while creating the description.
   var declaredByKey = publicName("declaredBy");
   var metadataKey = publicName("metadata");
   var accessKey = publicName("access");
@@ -53,26 +53,200 @@ module Shumway.AVM2.AS {
   var optionalKey = publicName("optional");
 
   export function describeTypeJSON(o: any, flags: number): any {
-    if (!o || typeof o !== 'object') {
+    // Class traits aren't returned for numeric primitives, undefined, null, bound methods, or
+    // non-class-constructor functions.
+    var isInt = (o|0) === o;
+    if (flags & DescribeTypeFlags.USE_ITRAITS && (isNullOrUndefined(o) || isInt)) {
       return null;
     }
+    var isBoundMethod = false;
+    if (o instanceof Function) {
+      if ('boundTo' in o) {
+        if (flags & DescribeTypeFlags.USE_ITRAITS) {
+          return null;
+        }
+        isBoundMethod = true;
+        // The check for non-class-constructor functions is very, very messy. :(
+      } else if ('methodInfo' in o && o['methodInfo'] && 'lastBoundMethod' in o['methodInfo']) {
+        return null;
+      }
+    }
+    o = Object(o);
     var cls: ASClass = o.classInfo ? o : Object.getPrototypeOf(o).class;
     release || assert(cls, "No class found for object " + o);
-    var isClass = cls === o;
+    var isClass = cls === o && !(flags & DescribeTypeFlags.USE_ITRAITS);
     var info: ClassInfo = cls.classInfo;
 
     var description: any = {};
-    description[nameKey] = unmangledQualifiedName(info.instanceInfo.name);
-    description[publicName("isDynamic")] =
-    isClass || !(info.instanceInfo.flags & CONSTANT.ClassSealed);
-    description[publicName("isFinal")] =
-    isClass || !!(info.instanceInfo.flags & CONSTANT.ClassFinal);
+    // For numeric literals that fit into ints, special case the name.
+    if (isInt) {
+      description[nameKey] = 'int';
+      // Bound methods should be instances of MethodClosure, see bug 1057750. They're not, so
+      // we have to special case them here and below.
+    } else if (isBoundMethod) {
+      description[nameKey] = 'builtin.as$0::MethodClosure';
+    } else {
+      description[nameKey] = unmangledQualifiedName(info.instanceInfo.name);
+    }
+    // More special casing for bound methods. See bug 1057750.
+    description[publicName("isDynamic")] = isClass ||
+                                           !(info.instanceInfo.flags & CONSTANT.ClassSealed) &&
+                                           !isBoundMethod;
+    description[publicName("isFinal")] = isClass ||
+                                         !!(info.instanceInfo.flags & CONSTANT.ClassFinal) ||
+                                         isBoundMethod;
     //TODO: verify that `isStatic` is false for all instances, true for classes
     description[publicName("isStatic")] = isClass;
     if (flags & DescribeTypeFlags.INCLUDE_TRAITS) {
       var traits = description[publicName("traits")] = addTraits(cls, info, isClass, flags);
     }
+    // And yet more, truly ugly, special casing for bound methods. See bug 1057750.
+    if (isBoundMethod) {
+      traits[publicName("bases")].unshift('Function');
+      traits[publicName("accessors")][1][publicName("declaredBy")] = 'builtin.as$0::MethodClosure';
+    }
     return description;
+  }
+
+  export function describeType(value: any, flags: number): ASXML {
+    var classDescription: any = describeTypeJSON(value, flags);
+    // Make sure all XML classes are fully initialized.
+    var systemDomain = Runtime.AVM2.instance.systemDomain;
+    systemDomain.getClass('XML');
+    systemDomain.getClass('XMLList');
+    systemDomain.getClass('QName');
+    systemDomain.getClass('Namespace');
+    var x: ASXML = new AS.ASXML('<type/>');
+    x.setProperty("name", true, classDescription[publicName('name')]);
+    var bases = classDescription[publicName('traits')][publicName('bases')];
+    if (bases.length) {
+      x.setProperty("base", true, bases[0]);
+    }
+    x.setProperty("isDynamic", true, classDescription[publicName('isDynamic')].toString());
+    x.setProperty("isFinal", true, classDescription[publicName('isFinal')].toString());
+    x.setProperty("isStatic", true, classDescription[publicName('isStatic')].toString());
+    describeTraits(x, classDescription[publicName('traits')]);
+
+    var instanceDescription: any = describeTypeJSON(value, flags | DescribeTypeFlags.USE_ITRAITS);
+    if (instanceDescription) {
+      var e: ASXML = new AS.ASXML('<factory/>');
+      e.setProperty('type', true, instanceDescription[publicName('name')]);
+      if (describeTraits(e, instanceDescription[publicName('traits')])) {
+        x.appendChild(e);
+      }
+    }
+    return x;
+  }
+  function describeTraits(x: ASXML, traits: any): boolean {
+    var traitsCount = 0;
+    var bases = traits[publicName('bases')];
+    for (var i = 0; bases && i < bases.length; i++) {
+      var base: string = bases[i];
+      var e: ASXML = new AS.ASXML('<extendsClass type="' + escapeAttributeValue(base) + '"/>');
+      x.appendChild(e);
+      traitsCount++;
+    }
+    var interfaces = traits[publicName('interfaces')];
+    for (var i = 0; interfaces && i < interfaces.length; i++) {
+      var e: ASXML = new AS.ASXML('<implementsInterface type="' +
+                                  escapeAttributeValue(interfaces[i]) + '"/>');
+      x.appendChild(e);
+      traitsCount++;
+    }
+    if (traits[publicName('constructor')] !== null) {
+      var e: ASXML = new AS.ASXML('<constructor/>');
+      describeParams(e, traits[publicName('constructor')]);
+      x.appendChild(e);
+      traitsCount++;
+    }
+    var variables = traits[publicName('variables')];
+    for (var i = 0; variables && i < variables.length; i++) {
+      var variable: any = variables[i];
+      var nodeName = variable[publicName('access')] === 'readonly' ? 'constant' : 'variable';
+      var e: ASXML = new AS.ASXML('<' + nodeName +
+                                  ' name="' + escapeAttributeValue(variable[publicName('name')]) +
+                                  '" type="' + variable[publicName('type')] + '"/>');
+      if (variable[publicName('uri')] !== null) {
+        e.setProperty('uri', true, variable[publicName('uri')]);
+      }
+      if (variable[publicName('metadata')] !== null) {
+        describeMetadataXML(e, variable[publicName('metadata')]);
+      }
+      x.appendChild(e);
+      traitsCount++;
+    }
+    var accessors = traits[publicName('accessors')];
+    for (var i = 0; accessors && i < accessors.length; i++) {
+      var accessor: any = accessors[i];
+      var e: ASXML = new AS.ASXML('<accessor ' +
+                                  'name="' + escapeAttributeValue(accessor[publicName('name')]) +
+                                  '" access="' + accessor[publicName('access')] +
+                                  '" type="' + escapeAttributeValue(accessor[publicName('type')]) +
+                                  '" declaredBy="' +
+                                  escapeAttributeValue(accessor[publicName('declaredBy')]) + '"/>');
+      if (accessor[publicName('uri')] !== null) {
+        e.setProperty('uri', true, accessor[publicName('uri')]);
+      }
+      if (accessor[publicName('metadata')] !== null) {
+        describeMetadataXML(e, variable[publicName('metadata')]);
+      }
+      x.appendChild(e);
+      traitsCount++;
+    }
+    var methods = traits[publicName('methods')];
+    for (var i = 0; methods && i < methods.length; i++) {
+      var method: any = methods[i];
+      var e: ASXML = new AS.ASXML('<method ' +
+                                  'name="' + escapeAttributeValue(method[publicName('name')]) +
+                                  '" declaredBy="' +
+                                  escapeAttributeValue(method[publicName('declaredBy')]) +
+                                  '" returnType="' +
+                                  escapeAttributeValue(method[publicName('returnType')]) + '"/>');
+      describeParams(e, method[publicName('parameters')]);
+      if (method[publicName('uri')] !== null) {
+        e.setProperty('uri', true, method[publicName('uri')]);
+      }
+      if (method[publicName('metadata')] !== null) {
+        describeMetadataXML(e, variable[publicName('metadata')]);
+      }
+      x.appendChild(e);
+      traitsCount++;
+    }
+    describeMetadataXML(x, traits[publicName('metadata')]);
+    return traitsCount > 0;
+  }
+
+  function describeParams(x: ASXML, parameters: any[]): void {
+    if (!parameters) {
+      return;
+    }
+    for (var i = 0; i < parameters.length; i++) {
+      var p = parameters[i];
+      var f: ASXML = new AS.ASXML('<parameter index="' + (i + 1) +
+                                  '" type="' + escapeAttributeValue(p[publicName('type')]) +
+                                  '" optional="' + p[publicName('optional')] + '"/>');
+      x.appendChild(f);
+    }
+  }
+
+  function describeMetadataXML(x: ASXML, metadata: any[]): void {
+    if (!metadata) {
+      return;
+    }
+    for (var i = 0; i < metadata.length; i++) {
+      var md = metadata[i];
+      var m: ASXML = new AS.ASXML('<metadata name="' +
+                                  escapeAttributeValue(md[publicName('name')]) + '"/>');
+      var values = md[publicName('value')];
+      for (var j = 0; j < values.length; j++) {
+        var value = values[j];
+        var a: ASXML = new AS.ASXML('<arg key="' + escapeAttributeValue(value[publicName('key')]) +
+                                    '" value="' +
+                                    escapeAttributeValue(value[publicName('value')]) + '"/>');
+        m.appendChild(a);
+      }
+      x.appendChild(m);
+    }
   }
 
   function publicName(str: string) {
@@ -94,6 +268,11 @@ module Shumway.AVM2.AS {
     }
     var result = [];
     for (var key in map) {
+      // Filter out the [native] metadata nodes. These are implementation details Flash doesn't
+      // expose, so we don't, either.
+      if (key === 'native') {
+        continue;
+      }
       result.push(describeMetadata(map[key]));
     }
     return result;
@@ -111,7 +290,8 @@ module Shumway.AVM2.AS {
     return result;
   }
 
-  function addTraits(cls: ASClass, info: ClassInfo, describingClass: boolean, flags: DescribeTypeFlags) {
+  function addTraits(cls: ASClass, info: ClassInfo, describingClass: boolean,
+                     flags: DescribeTypeFlags) {
     var includeBases = flags & DescribeTypeFlags.INCLUDE_BASES;
     var includeMethods = flags & DescribeTypeFlags.INCLUDE_METHODS && !describingClass;
     var obj: any = {};
@@ -138,7 +318,7 @@ module Shumway.AVM2.AS {
 
     if (flags & DescribeTypeFlags.INCLUDE_INTERFACES) {
       var interfacesVal = obj[publicName("interfaces")] = [];
-      if (flags & DescribeTypeFlags.USE_ITRAITS || !describingClass) {
+      if (!describingClass) {
         for (var key in cls.implementedInterfaces) {
           var ifaceName = (<ASClass> cls.implementedInterfaces[key]).getQualifiedClassName();
           interfacesVal.push(ifaceName);
@@ -153,7 +333,7 @@ module Shumway.AVM2.AS {
 
     var encounteredKeys: any = {};
 
-    // Needed for accessor-merging
+    // Needed for accessor-merging.
     var encounteredGetters: any = {};
     var encounteredSetters: any = {};
 
@@ -168,7 +348,7 @@ module Shumway.AVM2.AS {
       if (flags & DescribeTypeFlags.HIDE_OBJECT && cls === <any>ASObject) {
         break;
       }
-      if (flags & DescribeTypeFlags.USE_ITRAITS || !describingClass) {
+      if (!describingClass) {
         describeTraits(cls.classInfo.instanceInfo.traits);
       } else {
         describeTraits(cls.classInfo.traits);
@@ -205,7 +385,11 @@ module Shumway.AVM2.AS {
       // real content relies on that order, tests certainly do, so we duplicate the code.
       for (var i = traits.length; i--;) {
         var t = traits[i];
-        if (!t.name.getNamespace().isPublic() && !t.name.uri) {
+        var ns = t.name.getNamespace();
+        // Hide all non-public members whose namespace doesn't have a URI specified.
+        // Or, if HIDE_NSURI_METHODS is set, hide those, too, because bugs in Flash.
+        if (!ns.isPublic() && !t.name.uri ||
+            (flags & DescribeTypeFlags.HIDE_NSURI_METHODS && ns.uri)) {
           continue;
         }
         var name = unmangledQualifiedName(t.name);
@@ -213,7 +397,8 @@ module Shumway.AVM2.AS {
           var val = encounteredKeys[name];
           val[accessKey] = 'readwrite';
           if (t.kind === TRAIT.Getter) {
-            val[typeKey] = unmangledQualifiedName(t.methodInfo.returnType);
+            val[typeKey] = t.methodInfo.returnType ?
+                              unmangledQualifiedName(t.methodInfo.returnType) : '*';
           }
           continue;
         }
