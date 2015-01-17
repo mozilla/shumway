@@ -1265,9 +1265,13 @@ module Shumway.GFX {
           return;
         }
 
+        if (lines.length) {
+          baseLinePos += maxLeading;
+        }
+
         baseLinePos += maxAscent;
         currentLine.y = baseLinePos | 0;
-        baseLinePos += maxDescent + maxLeading;
+        baseLinePos += maxDescent;
         currentLine.ascent = maxAscent;
         currentLine.descent = maxDescent;
         currentLine.leading = maxLeading;
