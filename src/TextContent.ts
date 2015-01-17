@@ -183,8 +183,6 @@ module Shumway {
             case 'font':
               stack.push(textFormat);
               var color = ColorUtilities.isValidHexColor(attributes.color) ? ColorUtilities.hexToRGB(attributes.color) : textFormat.color;
-              // TODO: the value of the face property can be a string specifying a list of
-              // comma-delimited font names in which case the first available font should be used.
               var font = attributes.face || textFormat.font;
               var size = isNaN(attributes.size) ? textFormat.size : +attributes.size;
               if (color !== textFormat.color ||

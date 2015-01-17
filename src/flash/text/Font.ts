@@ -818,8 +818,8 @@ module Shumway.AVM2.AS.flash.text {
 
     private static _deviceFontMetrics: Object;
 
-    private static _getFontMetrics(name: string) {
-      return this._deviceFontMetrics[name];
+    private static _getFontMetrics(name: string, style: string) {
+      return this._deviceFontMetrics[name + style] || this._deviceFontMetrics[name];
     }
 
     static resolveFontName(name: string) {
@@ -842,22 +842,31 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     static getByNameAndStyle(name: string, style: string): Font {
-      var key = name.toLowerCase() + style;
-      var font = this._fontsByName[key];
+      var key: string;
+      var font: Font;
+
+      // The name argument can be a string specifying a list of comma-delimited font names in which
+      // case the first available font should be used.
+      var names = name.split(',');
+      for (var i = 0; i < names.length && !font; i++) {
+        key = names[i].toLowerCase() + style;
+        font = this._fontsByName[key];
+      }
+
       if (!font) {
         var font = new Font();
-        font._fontName = name;
-        font._fontFamily = Font.resolveFontName(name.toLowerCase());
+        font._fontName = names[0];
+        font._fontFamily = Font.resolveFontName(names[0].toLowerCase());
         font._fontStyle = style;
         font._fontType = FontType.DEVICE;
         this._fontsByName[key] = font;
       }
       if (font._fontType === FontType.DEVICE) {
-        var metrics = Font._getFontMetrics(key);
+        var metrics = Font._getFontMetrics(font._fontName, font._fontStyle);
         if (!metrics) {
           Shumway.Debug.warning(
-            'Font metrics for "' + name + '" unknown. Fallback to default.');
-          metrics = Font._getFontMetrics(Font.DEFAULT_FONT_SANS);
+            'Font metrics for "' + font._fontName + '" unknown. Fallback to default.');
+          metrics = Font._getFontMetrics(Font.DEFAULT_FONT_SANS, font._fontStyle);
           font._fontFamily = Font.DEFAULT_FONT_SANS;
         }
         font.ascent = metrics[0];
