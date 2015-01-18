@@ -62,7 +62,6 @@ module Shumway.Player {
     private _syncTimeout: number;
     private _frameTimeout: number;
     private _eventLoopIsRunning: boolean;
-    private _rootInitialized: boolean;
     private _framesPlayed: number = 0;
 
     private _writer: IndentingWriter;
@@ -164,8 +163,7 @@ module Shumway.Player {
 
     public load(url: string, buffer?: ArrayBuffer) {
       release || assert (!this._loader, "Can't load twice.");
-      var self = this;
-      var stage = this._stage = new flash.display.Stage();
+      this._stage = new flash.display.Stage();
       var loader = this._loader = flash.display.Loader.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
 
@@ -173,37 +171,7 @@ module Shumway.Player {
         this._playAllSymbols();
         loaderInfo._allowCodeExecution = false;
       } else {
-        var startPromise = loader._startPromise;
-        startPromise.then(function () {
-          if (loaderInfo.actionScriptVersion === flash.display.ActionScriptVersion.ACTIONSCRIPT2) {
-            var avm1Context = loaderInfo._avm1Context;
-            avm1Context.globals.Key._bind(stage, avm1Context);
-            avm1Context.globals.Mouse._bind(stage, avm1Context);
-            MovieClip.frameNavigationModel = flash.display.FrameNavigationModel.SWF1;
-          } else if (loaderInfo.swfVersion < 10) {
-            MovieClip.frameNavigationModel = flash.display.FrameNavigationModel.SWF9;
-          }
-
-          var bgcolor = self.defaultStageColor !== undefined ? self.defaultStageColor : loaderInfo._colorRGBA;
-
-          var root = loader.content;
-          release && assert(root, 'root must exists at this point');
-
-          stage._loaderInfo = loaderInfo;
-          stage.align = self.stageAlign || '';
-          stage.scaleMode = self.stageScale || 'showall';
-          stage.frameRate = loaderInfo.frameRate;
-          stage.setStageWidth(loaderInfo.width);
-          stage.setStageHeight(loaderInfo.height);
-          stage.setStageColor(ColorUtilities.RGBAToARGB(bgcolor));
-          stage.addTimelineObjectAtDepth(root, 0);
-
-          if (self.displayParameters) {
-            self.processDisplayParameters(self.displayParameters);
-          }
-
-          self._enterLoops();
-        }, null);
+        this._enterRootLoadingLoop();
       }
       var context = this.createLoaderContext();
       if (buffer) {
@@ -276,10 +244,6 @@ module Shumway.Player {
           }
           break;
       }
-    }
-
-    private _enterLoops(): void {
-      this._enterEventLoop();
     }
 
     private _pumpDisplayListUpdates(): void {
@@ -411,6 +375,39 @@ module Shumway.Player {
       this._eventLoopTick();
     }
 
+    private _enterRootLoadingLoop(): void {
+      var self = this;
+      var rootLoader = Loader.getRootLoader();
+      rootLoader._setStage(this._stage);
+      function rootLoadingLoop() {
+        var loaderInfo = rootLoader.contentLoaderInfo;
+        if (!loaderInfo._file) {
+          setTimeout(rootLoadingLoop, self._getFrameInterval());
+          return;
+        }
+        var stage = self._stage;
+
+        var bgcolor = self.defaultStageColor !== undefined ?
+                      self.defaultStageColor :
+                      loaderInfo._colorRGBA;
+
+        stage._loaderInfo = loaderInfo;
+        stage.align = self.stageAlign || '';
+        stage.scaleMode = self.stageScale || 'showall';
+        stage.frameRate = loaderInfo.frameRate;
+        stage.setStageWidth(loaderInfo.width);
+        stage.setStageHeight(loaderInfo.height);
+        stage.setStageColor(ColorUtilities.RGBAToARGB(bgcolor));
+
+        if (self.displayParameters) {
+          self.processDisplayParameters(self.displayParameters);
+        }
+
+        self._enterEventLoop();
+      }
+      rootLoadingLoop();
+    }
+
     private _eventLoopTick(): void {
       var runFrameScripts = !playAllSymbolsOption.value;
       var dontSkipFrames = dontSkipFramesOption.value;
@@ -425,23 +422,28 @@ module Shumway.Player {
       }
       // The stage is required for frame event cycle processing.
       DisplayObject._stage = this._stage;
+      // Until the root SWF is initialized, only process Loader events.
+      // Once the root loader's content is created, directly process all events again to avoid
+      // further delay in initialization.
+      if (!Loader.getRootLoader().content) {
+        Loader.processEvents();
+        if (!Loader.getRootLoader().content) {
+          return;
+        }
+      }
       for (var i = 0; i < frameRateMultiplierOption.value; i++) {
         enterTimeline("eventLoop");
         var start = performance.now();
         DisplayObject.performFrameNavigation(true, runFrameScripts);
         counter.count("performFrameNavigation", 1, performance.now() - start);
-        this._framesPlayed++;
-        Loader.progress();
-        if (tracePlayerOption.value > 0 && (this._framesPlayed % tracePlayerOption.value === 0)) {
-          this._tracePlayer();
-        }
+        Loader.processEvents();
         leaveTimeline("eventLoop");
       }
-      if (this._rootInitialized) {
-        this._stage.render();
-      } else {
-        this._rootInitialized = true;
+      this._framesPlayed++;
+      if (tracePlayerOption.value > 0 && (this._framesPlayed % tracePlayerOption.value === 0)) {
+        this._tracePlayer();
       }
+      this._stage.render();
       this._pumpUpdates();
       this.onFrameProcessed();
     }
@@ -478,7 +480,7 @@ module Shumway.Player {
           return;
         }
         loaderInfo.removeEventListener(flash.events.ProgressEvent.PROGRESS, onProgress);
-        self._enterLoops();
+        self._enterEventLoop();
       });
 
       loaderInfo.addEventListener(flash.events.Event.COMPLETE, function onProgress() {

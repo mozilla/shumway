@@ -112,6 +112,10 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _invalidated: boolean;
 
+    setRoot(root: MovieClip) {
+      this.addTimelineObjectAtDepth(root, 0);
+    }
+
     get frameRate(): number {
       return this._frameRate;
     }

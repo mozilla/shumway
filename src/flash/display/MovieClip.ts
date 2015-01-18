@@ -32,9 +32,9 @@ module Shumway.AVM2.AS.flash.display {
    * Controls how to behave on inter-frame navigation.
    */
   export enum FrameNavigationModel {
-    SWF1 = 1,
-    SWF9,
-    SWF10
+    SWF1  =  1,
+    SWF9  =  9,
+    SWF10 = 10
   }
 
   interface SoundClip {
@@ -124,7 +124,6 @@ module Shumway.AVM2.AS.flash.display {
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       MovieClip.reset();
-
     };
 
     static reset() {
@@ -136,7 +135,7 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: flash.display.SpriteSymbol) {
       var self: MovieClip = this;
 
-      DisplayObject._advancableInstances.push(self);
+      display.DisplayObject._advancableInstances.push(self);
 
       self._currentFrame = 0;
       self._totalFrames = 1;
@@ -200,7 +199,7 @@ module Shumway.AVM2.AS.flash.display {
           continue;
         }
 
-        instance._allowFrameNavigation = MovieClip.frameNavigationModel === FrameNavigationModel.SWF1;
+        instance._allowFrameNavigation = display.MovieClip.frameNavigationModel === FrameNavigationModel.SWF1;
         instance.callFrame(instance._currentFrame);
         instance._allowFrameNavigation = true;
 
@@ -208,7 +207,7 @@ module Shumway.AVM2.AS.flash.display {
         // navigation has happened inside the frame script. In that case, we didn't immediately
         // run frame navigation as described in `_gotoFrameAbs`. Instead, we have to do it here.
         if (instance._nextFrame !== instance._currentFrame) {
-          if (MovieClip.frameNavigationModel === FrameNavigationModel.SWF9) {
+          if (display.MovieClip.frameNavigationModel === FrameNavigationModel.SWF9) {
             instance._advanceFrame();
             instance._constructFrame();
             instance._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
@@ -392,8 +391,7 @@ module Shumway.AVM2.AS.flash.display {
      * was not found.
      */
     _getAbsFrameNumber(frame: string, sceneName: string): number {
-      var legacyMode = MovieClip.frameNavigationModel === FrameNavigationModel.SWF1 ||
-                       MovieClip.frameNavigationModel === FrameNavigationModel.SWF9;
+      var legacyMode = display.MovieClip.frameNavigationModel !== FrameNavigationModel.SWF10;
       var scene: Scene;
       if (sceneName !== null) {
         sceneName = asCoerceString(sceneName);
@@ -462,7 +460,7 @@ module Shumway.AVM2.AS.flash.display {
 
       // Frame navigation only happens immediately if not triggered from under a frame script.
       if (this._allowFrameNavigation) {
-        if (MovieClip.frameNavigationModel === FrameNavigationModel.SWF9) {
+        if (display.MovieClip.frameNavigationModel === FrameNavigationModel.SWF9) {
           // In FP 9, the only thing that happens on inter-frame navigation is advancing the frame
           // and constructing new timeline objects.
           this._advanceFrame();

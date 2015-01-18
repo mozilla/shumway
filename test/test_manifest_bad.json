@@ -46,5 +46,12 @@
       "swfs/image-loading/image-loading.swf"
     ],
     "type": "stas"
+  },
+  {  "id": "flash_text_TextField trace",
+    "stas": "swfs/trace.stas",
+    "filenames": [
+      "swfs/flash_text_TextField.swf"
+    ],
+    "type": "stas"
   }
 ]

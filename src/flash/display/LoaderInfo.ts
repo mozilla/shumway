@@ -46,7 +46,6 @@ module Shumway.AVM2.AS.flash.display {
       this._file = null;
       this._isURLInaccessible = false;
       this._bytesLoaded = 0;
-      this._newBytesLoaded = 0;
       this._bytesTotal = 0;
       this._applicationDomain = null;
       this._swfVersion = 9;
@@ -76,20 +75,24 @@ module Shumway.AVM2.AS.flash.display {
       this._colorRGBA = 0xFFFFFFFF;
     }
 
-    setFile(file: SWFFile) {
+    setFile(file: any /* SWFFile | ImageFile */) {
       release || assert(!this._file);
       this._file = file;
-      // TODO: remove these duplicated fields from LoaderInfo.
       this._bytesTotal = file.bytesTotal;
-      this._swfVersion = file.swfVersion;
-      this._frameRate = file.frameRate;
-      var bbox = file.bounds;
-      this._width = bbox.xMax - bbox.xMin;
-      this._height = bbox.yMax - bbox.yMin;
-      this._colorRGBA = file.backgroundColor;
+      if (file instanceof SWFFile) {
+        // TODO: remove these duplicated fields from LoaderInfo.
+        this._swfVersion = file.swfVersion;
+        this._frameRate = file.frameRate;
+        var bbox = file.bounds;
+        this._width = bbox.xMax - bbox.xMin;
+        this._height = bbox.yMax - bbox.yMin;
+        this._colorRGBA = file.backgroundColor;
 
-      if (!file.attributes || !file.attributes.doAbc) {
-        this._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
+        if (!file.attributes || !file.attributes.doAbc) {
+          this._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
+        }
+      } else {
+        release || assert(file instanceof ImageFile);
       }
     }
 
@@ -102,10 +105,9 @@ module Shumway.AVM2.AS.flash.display {
 
     _loaderURL: string;
     _url: string;
-    _file: SWFFile;
+    _file: any /* SWFFile|ImageFile*/;
     _isURLInaccessible: boolean;
     _bytesLoaded: number /*uint*/;
-    _newBytesLoaded: number;
     _bytesTotal: number /*uint*/;
     _applicationDomain: flash.system.ApplicationDomain;
     _swfVersion: number /*uint*/;
@@ -158,12 +160,6 @@ module Shumway.AVM2.AS.flash.display {
 
     get bytesLoaded(): number /*uint*/ {
       return this._bytesLoaded;
-    }
-    set bytesLoaded(value: number /*uint*/) {
-      if (value === this._newBytesLoaded) {
-        return;
-      }
-      this._newBytesLoaded = value;
     }
 
     get bytesTotal(): number /*uint*/ {
@@ -278,6 +274,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         return symbol;
       }
+      release || assert(this._file instanceof SWFFile);
       var data = this._file.getSymbol(id);
       if (!data) {
         if (id !== 65535) {
@@ -343,6 +340,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     getRootSymbol(): flash.display.SpriteSymbol {
+      release || assert(this._file instanceof SWFFile);
+      release || assert(this._file.framesLoaded > 0);
       var symbol = <flash.display.SpriteSymbol>this._dictionary[0];
       if (!symbol) {
         symbol = new flash.display.SpriteSymbol({id: 0, className: this._file.symbolClassesMap[0]},
@@ -366,6 +365,7 @@ module Shumway.AVM2.AS.flash.display {
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1114656
     getFrame(sprite: {frames: SWFFrame[]}, index: number): SWFFrame {
       var file = this._file;
+      release || assert(file instanceof SWFFile);
       if (!sprite) {
         sprite = file;
       }

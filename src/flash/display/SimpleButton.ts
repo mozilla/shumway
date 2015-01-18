@@ -28,7 +28,7 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: ButtonSymbol) {
       var self: SimpleButton = this;
 
-      DisplayObject._advancableInstances.push(self);
+      display.DisplayObject._advancableInstances.push(self);
 
       self._useHandCursor = true;
       self._enabled = true;
