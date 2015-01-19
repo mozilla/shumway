@@ -18,6 +18,7 @@ module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import assert = Debug.assert;
 
   export interface Style {
     color?: string;
@@ -105,8 +106,159 @@ module Shumway.AVM2.AS.flash.text {
       return textFormat;
     }
 
-    parseCSS(CSSText: string) {
-      notImplemented("public flash.text.StyleSheet::parseCSS");
+    parseCSS(css: string) {
+      css = asCoerceString(css) + '';
+      var length = css.length;
+      var index = skipWhitespace(css, 0, length);
+      // Styles are only added once parsing completed successfully. Invalid syntax anywhere discards all new styles.
+      var newStyles = {};
+      var currentNames = [];
+      var sawWhitespace = false;
+      var name = '';
+      while (index < length) {
+        var char = css[index++];
+        // Everything except whitespace, command, and '{' is valid in names.
+        // Note: if no name is given, the empty string is used.
+        switch (char) {
+          case '{':
+            sawWhitespace = false;
+            currentNames.push(name);
+            // parse style.
+            index = parseStyle(css, index, length, currentNames, newStyles);
+            if (index === -1) {
+              // Syntax error encountered in style parsing.
+              return;
+            } else if (!release) {
+              assert(css[index - 1] === '}');
+            }
+            currentNames = [];
+            name = '';
+            index = skipWhitespace(css, index, length);
+            break;
+          case ',':
+            sawWhitespace = false;
+            currentNames.push(name);
+            name = '';
+            index = skipWhitespace(css, index, length);
+            break;
+          case ' ':
+          case '\n':
+          case '\r':
+          case '\t':
+            sawWhitespace = true;
+            index = skipWhitespace(css, index, length);
+            break;
+          default:
+            if (sawWhitespace) {
+              return;
+            }
+            name += char;
+        }
+      }
+      var styles = this._rules;
+      for (name in newStyles) {
+        styles[name.toLowerCase()] = newStyles[name];
+      }
     }
+  }
+
+
+  function parseStyle(css: string, index: number, length: number, names: string[], newStyles: any) {
+    release || assert(index > 0);
+    release || assert(css[index - 1] === '{');
+    var style = {};
+    var name = '';
+    var sawWhitespace = false;
+    var upperCase = false;
+    index = skipWhitespace(css, index, length);
+    // Outer loop parsing property names.
+    nameLoop: while (index < length) {
+      var char = css[index++];
+      switch (char) {
+        case '}':
+          if (name.length > 0) {
+            return -1;
+          }
+          break nameLoop;
+        case ':':
+          var value = '';
+          var propertyName = name;
+          // Reset outer-loop state.
+          name = '';
+          sawWhitespace = false;
+          upperCase = false;
+          // Inner loop parsing property values.
+          valueLoop: while (index < length) {
+            char = css[index];
+            switch (char) {
+              case ';':
+              case '\r':
+              case '\n':
+                index++;
+                index = skipWhitespace(css, index, length);
+              // Fallthrough.
+              case '}':
+                style[propertyName] = value;
+                continue nameLoop;
+              default:
+                index++;
+                value += char;
+            }
+          }
+          // If we got here, the inner loop ended by exhausting the string, so the definition
+          // wasn't properly closed.
+          return -1;
+        case '-':
+          if (css[index] === ':') {
+            name += char;
+          } else {
+            upperCase = true;
+          }
+          break;
+        case ' ':
+        case '\n':
+        case '\r':
+        case '\t':
+          sawWhitespace = true;
+          name += char;
+          upperCase = false;
+          break;
+        default:
+          // Names that're interrupted by whitespace are invalid.
+          if (sawWhitespace) {
+            return -1;
+          }
+          if (upperCase) {
+            char = char.toUpperCase();
+            upperCase = false;
+          }
+          name += char;
+      }
+    }
+    if (css[index - 1] !== '}') {
+      return -1;
+    }
+    for (var i = 0; i < names.length; i++) {
+      newStyles[names[i]] = style;
+    }
+    return index;
+  }
+
+  function skipWhitespace(css: string, index: number, length: number) {
+    while (index < length) {
+      var char = css[index];
+      switch (char) {
+        case ' ':
+        case '\n':
+        case '\r':
+        case '\t':
+          index++;
+          break;
+        default:
+          return index;
+      }
+    }
+    release || assert(index === length);
+    return length;
   }
 }
