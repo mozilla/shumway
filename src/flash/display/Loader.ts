@@ -317,6 +317,9 @@ module Shumway.AVM2.AS.flash.display {
       this._loadingType = LoadingType.Bytes;
       this._fileLoader = new FileLoader(this);
       this._queuedLoadUpdate = null;
+      if (!release && traceLoaderOption.value) {
+        console.log("Loading embedded symbol " + this._contentLoaderInfo._url);
+      }
       // Just passing in the bytes won't do, because the buffer can contain slop at the end.
       this._fileLoader.loadBytes(new Uint8Array((<any>data).bytes, 0, data.length));
 
@@ -329,6 +332,7 @@ module Shumway.AVM2.AS.flash.display {
       if (queueIndex > -1) {
         Loader._loadQueue.splice(queueIndex, 1);
       }
+      this._contentLoaderInfo.reset();
       if (!this._fileLoader) {
         return;
       }

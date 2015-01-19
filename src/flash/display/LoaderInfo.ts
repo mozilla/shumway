@@ -41,6 +41,11 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      this._loader = null;
+      this.reset();
+    }
+
+    reset() {
       this._loaderURL = '';
       this._url = '';
       this._file = null;
@@ -61,7 +66,6 @@ module Shumway.AVM2.AS.flash.display {
       this._sameDomain = false;
       this._childAllowsParent = false;
       this._parentAllowsChild = false;
-      this._loader = null;
       this._content = null;
       this._bytes = null;
       this._uncaughtErrorEvents = null;
@@ -71,7 +75,6 @@ module Shumway.AVM2.AS.flash.display {
       this._mappedSymbolsLoaded = 0;
       this._fontsLoaded = 0;
       this._avm1Context = null;
-
       this._colorRGBA = 0xFFFFFFFF;
     }
 
