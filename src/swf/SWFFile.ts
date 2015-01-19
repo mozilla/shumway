@@ -400,6 +400,9 @@ module Shumway.SWF {
           while (symbolCount--) {
             var symbolId = Parser.readUi16(this._data, stream);
             var symbolClassName = Parser.readString(this._data, stream, 0);
+            if (!release && traceLevel.value > 0) {
+              console.log('Registering symbol class ' + symbolClassName + ' to symbol ' + symbolId);
+            }
             this.symbolClassesMap[symbolId] = symbolClassName;
             this.symbolClassesList.push({id: symbolId, className: symbolClassName});
           }
