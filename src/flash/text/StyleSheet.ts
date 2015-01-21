@@ -18,37 +18,95 @@ module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  export interface Style {
+    color?: string;
+    display?: string;
+    fontFamily?: string;
+    fontSize?: any; // number | string
+    fontStyle?: string;
+    fontWeight?: string;
+    kerning?: any; // number | string
+    leading?: any; // number | string
+    letterSpacing?: any; // number | string
+    marginLeft?: any; // number | string
+    marginRight?: any; // number | string
+    textAlign?: string;
+    textDecoration?: string;
+    textIndent?: any; // number | string
+  }
+
   export class StyleSheet extends flash.events.EventDispatcher {
-    
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["_styles", "styleNames", "getStyle", "setStyle", "clear", "transform", "parseCSS"];
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.text.StyleSheet");
+      false && super();
+      flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      this.clear();
     }
-    
-    // JS -> AS Bindings
-    
-    _styles: ASObject;
-    styleNames: any [];
-    getStyle: (styleName: string) => ASObject;
-    setStyle: (styleName: string, styleObject: ASObject) => void;
-    clear: () => void;
-    transform: (formatObject: ASObject) => flash.text.TextFormat;
-    parseCSS: (CSSText: string) => void;
-    
-    // AS -> JS Bindings
-    
-    // _styleNames: any [];
+
+    private _rules: { [key: string]: Style; };
+
+    get styleNames(): string[] {
+      var styles = this._rules;
+      var names = [];
+      for (var name in styles) {
+        if (styles[name]) {
+          names.push(name);
+        }
+      }
+      return names;
+    }
+
+    getStyle(styleName: string): Style {
+      styleName = asCoerceString(styleName);
+      var style = this._rules[styleName.toLowerCase()];
+      if (!style) {
+        return null;
+      }
+      return ASJSON.transformJSValueToAS(style, false);
+    }
+
+    applyStyle(textFormat: TextFormat, styleName: string): TextFormat {
+      styleName = asCoerceString(styleName);
+      var style = this._rules[styleName.toLowerCase()];
+      if (style) {
+        return textFormat.transform(style);
+      }
+      return textFormat;
+    }
+
+    setStyle(styleName: string, styleObject: Style) {
+      if (typeof styleObject !== 'object') {
+        return;
+      }
+      styleName = asCoerceString(styleName);
+      this._rules[styleName.toLowerCase()] = ASJSON.transformASValueToJS(styleObject, false);
+    }
+
+    hasStyle(styleName: string): boolean {
+      return !!this._rules[styleName.toLowerCase()];
+    }
+
+    clear() {
+      this._rules = Object.create(null);
+    }
+
+    transform(formatObject: ASObject): TextFormat {
+      if (typeof formatObject !== 'object') {
+        return null;
+      }
+      formatObject = ASJSON.transformASValueToJS(formatObject, false);
+      var textFormat = new TextFormat();
+      textFormat.transform(formatObject);
+      return textFormat;
+    }
+
+    parseCSS(CSSText: string) {
+      notImplemented("public flash.text.StyleSheet::parseCSS");
+    }
   }
 }

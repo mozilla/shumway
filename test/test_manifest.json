@@ -441,5 +441,10 @@
         "swfs/hittesting/mask-hit-test.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "captions",
+      "frames": [1],
+      "swf": "swfs/captions.swf",
+      "type": "eq"
     }
 ]

@@ -383,7 +383,7 @@ module Shumway.AVM2.AS.flash.text {
         this._textContent.defaultTextFormat.bold = false;
         this._textContent.defaultTextFormat.italic = false;
       }
-      this._textContent.parseHtml(value, this._multiline);
+      this._textContent.parseHtml(value, this._styleSheet, this._multiline);
       this._htmlText = value;
       this._invalidateContent();
       this._ensureLineMetrics();
@@ -508,12 +508,10 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get styleSheet(): flash.text.StyleSheet {
-      somewhatImplemented("public flash.text.TextField::get styleSheet");
       return this._styleSheet;
     }
 
     set styleSheet(value: flash.text.StyleSheet) {
-      somewhatImplemented("public flash.text.TextField::set styleSheet");
       this._styleSheet = value;
     }
 
@@ -841,7 +839,7 @@ module Shumway.AVM2.AS.flash.text {
         if (tag.initialText) {
           var textContent = new Shumway.TextContent();
           textContent.bounds = symbol.lineBounds;
-          textContent.parseHtml(tag.initialText);
+          textContent.parseHtml(tag.initialText, null, false);
           var matrix = new flash.geom.Matrix();
           textContent.matrix = new flash.geom.Matrix();
           textContent.matrix.copyFromUntyped(data.matrix);

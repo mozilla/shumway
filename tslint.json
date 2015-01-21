@@ -37,7 +37,7 @@
         "check-whitespace"
     ],
     "quotemark": [false, "double"],
-    "radix": true,
+    "radix": false,
     "semicolon": true,
     "triple-equals": [true, "allow-null-check"],
     "variable-name": false,

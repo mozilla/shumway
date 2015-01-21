@@ -431,5 +431,81 @@ module Shumway.AVM2.AS.flash.text {
         this._url = null;
       }
     }
+
+    public transform(formatObject: Style) {
+      var v = formatObject.textAlign;
+      if (v) {
+        this.align = v;
+      }
+      v = formatObject.fontWeight;
+      if (v === "bold") {
+        this.bold = true;
+      } else if (v === "normal") {
+        this.bold = false;
+      }
+      v = formatObject.color;
+      if (v) {
+        if (Shumway.ColorUtilities.isValidHexColor(v)) {
+          this.color = Shumway.ColorUtilities.hexToRGB(v);
+        }
+      }
+      v = formatObject.display;
+      if (v) {
+        this.display = v;
+      }
+      v = formatObject.fontFamily;
+      if (v) {
+        // TODO: Sanitize fontFamily string.
+        this.font = v.replace('sans-serif', '_sans').replace('serif', '_serif');
+      }
+      v = formatObject.textIndent;
+      if (v) {
+        this.indent = parseInt(v);
+      }
+      v = formatObject.fontStyle;
+      if (v === "italic") {
+        this.italic = true;
+      } else if (v === "normal") {
+        this.italic = false;
+      }
+      v = formatObject.kerning;
+      if (v === "true") {
+        this.kerning = 1;
+      } else if (v === "false") {
+        this.kerning = 0;
+      } else {
+        this.kerning = parseInt(v);
+      }
+      v = formatObject.leading;
+      if (v) {
+        this.leading = parseInt(v);
+      }
+      v = formatObject.marginLeft;
+      if (v) {
+        this.leftMargin = parseInt(v);
+      }
+      v = formatObject.letterSpacing;
+      if (v) {
+        this.letterSpacing = parseFloat(v);
+      }
+      v = formatObject.marginRight;
+      if (v) {
+        this.rightMargin = parseInt(v);
+      }
+      v = formatObject.fontSize;
+      if (v) {
+        var size = parseInt(v);
+        if (size > 0) {
+          this.size = size;
+        }
+      }
+      v = formatObject.textDecoration;
+      if (v === "none") {
+        this.underline = false;
+      } else if (v === "underline") {
+        this.underline = true;
+      }
+      return this;
+    }
   }
 }

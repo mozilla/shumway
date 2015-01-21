@@ -134,5 +134,12 @@
         "swfs/timeline/nav/shape.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "styleheet",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/captions.swf"
+      ],
+      "type": "stas"
     }
 ]

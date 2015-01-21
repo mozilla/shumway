@@ -133,7 +133,7 @@ module Shumway {
       this.coords = null;
     }
 
-    parseHtml(htmlText: string, multiline: boolean = false) {
+    parseHtml(htmlText: string, styleSheet: flash.text.StyleSheet, multiline: boolean) {
       var plainText = '';
       var textRuns = this.textRuns;
       textRuns.length = 0;
@@ -161,6 +161,16 @@ module Shumway {
           }
         },
         start: (tagName, attributes) => {
+          var hasStyle = false;
+          if (styleSheet) {
+            hasStyle = styleSheet.hasStyle(tagName);
+            if (hasStyle) {
+              stack.push(textFormat);
+              textFormat = textFormat.clone();
+              styleSheet.applyStyle(textFormat, tagName);
+            }
+          }
+
           switch (tagName) {
             case 'a':
               stack.push(textFormat);
@@ -168,7 +178,9 @@ module Shumway {
               var target = attributes.target || textFormat.target;
               var url = attributes.url || textFormat.url;
               if (target !== textFormat.target || url !== textFormat.url) {
-                textFormat = textFormat.clone();
+                if (!hasStyle) {
+                  textFormat = textFormat.clone();
+                }
                 textFormat.target = target;
                 textFormat.url = url;
               }
@@ -176,7 +188,9 @@ module Shumway {
             case 'b':
               stack.push(textFormat);
               if (!textFormat.bold) {
-                textFormat = textFormat.clone();
+                if (!hasStyle) {
+                  textFormat = textFormat.clone();
+                }
                 textFormat.bold = true;
               }
               break;
@@ -189,7 +203,9 @@ module Shumway {
                   font !== textFormat.font ||
                   size !== textFormat.size)
               {
-                textFormat = textFormat.clone();
+                if (!hasStyle) {
+                  textFormat = textFormat.clone();
+                }
                 textFormat.color = color;
                 textFormat.font = font;
                 textFormat.size = size;
@@ -201,14 +217,18 @@ module Shumway {
             case 'i':
               stack.push(textFormat);
               if (!textFormat.italic) {
-                textFormat = textFormat.clone();
+                if (!hasStyle) {
+                  textFormat = textFormat.clone();
+                }
                 textFormat.italic = true;
               }
               break;
             case 'li':
               stack.push(textFormat);
               if (!textFormat.bullet) {
-                textFormat = textFormat.clone();
+                if (!hasStyle) {
+                  textFormat = textFormat.clone();
+                }
                 textFormat.bullet = true;
               }
               if (plainText[plainText.length - 1] === '\r') {
@@ -219,16 +239,33 @@ module Shumway {
                 handler.chars('\r');
               }
               break;
+            case 'span':
             case 'p':
+              var hasClassStyle = false;
               stack.push(textFormat);
+
+              if (styleSheet && attributes.class) {
+                var cssClass = '.' + attributes.class;
+                hasClassStyle = styleSheet.hasStyle(cssClass);
+                if (hasClassStyle) {
+                  if (!hasStyle) {
+                    textFormat = textFormat.clone();
+                  }
+                  styleSheet.applyStyle(textFormat, cssClass);
+                }
+              }
+
+              if (tagName === 'span') {
+                break;
+              }
+
               var align = attributes.align;
               if (flash.text.TextFormatAlign.toNumber(align) > -1 && align !== textFormat.align) {
-                textFormat = textFormat.clone();
+                if (!(hasStyle || hasClassStyle)) {
+                  textFormat = textFormat.clone();
+                }
                 textFormat.align = align;
               }
-              break;
-            case 'span':
-              // TODO: support CSS style classes.
               break;
             case 'textformat':
               stack.push(textFormat);
@@ -245,7 +282,9 @@ module Shumway {
                   rightMargin !== textFormat.rightMargin /*||
                   tabStops !== textFormat.tabStops*/)
               {
-                textFormat = textFormat.clone();
+                if (!hasStyle) {
+                  textFormat = textFormat.clone();
+                }
                 textFormat.blockIndent = blockIndent;
                 textFormat.indent = indent;
                 textFormat.leading = leading;
@@ -257,7 +296,9 @@ module Shumway {
             case 'u':
               stack.push(textFormat);
               if (!textFormat.underline) {
-                textFormat = textFormat.clone();
+                if (!hasStyle) {
+                  textFormat = textFormat.clone();
+                }
                 textFormat.underline = true;
               }
               break;
@@ -277,6 +318,9 @@ module Shumway {
             case 'textformat':
             case 'u':
               textFormat = stack.pop();
+              if (styleSheet && styleSheet.hasStyle(tagName)) {
+                textFormat = stack.pop();
+              }
           }
         }
       });

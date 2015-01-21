@@ -1296,14 +1296,18 @@ module Shumway.AVM2.AS {
     /**
      * Transforms a JS value into an AS value.
      */
-    private static transformJSValueToAS(value) {
+    static transformJSValueToAS(value, deep: boolean) {
       if (typeof value !== "object") {
         return value;
       }
       var keys = Object.keys(value);
       var result = value instanceof Array ? [] : {};
       for (var i = 0; i < keys.length; i++) {
-        result.asSetPublicProperty(keys[i], ASJSON.transformJSValueToAS(value[keys[i]]));
+        var v = value[keys[i]];
+        if (deep) {
+          v = ASJSON.transformJSValueToAS(v, true);
+        }
+        result.asSetPublicProperty(keys[i], v);
       }
       return result;
     }
@@ -1311,7 +1315,7 @@ module Shumway.AVM2.AS {
     /**
      * Transforms an AS value into a JS value.
      */
-    private static transformASValueToJS(value) {
+    static transformASValueToJS(value, deep: boolean) {
       if (typeof value !== "object") {
         return value;
       }
@@ -1326,18 +1330,22 @@ module Shumway.AVM2.AS {
         if (!isNumeric(key)) {
           jsKey = Multiname.getNameFromPublicQualifiedName(key);
         }
-        result[jsKey] = ASJSON.transformASValueToJS(value[key]);
+        var v = value[key];
+        if (deep) {
+          v = ASJSON.transformASValueToJS(v, true);
+        }
+        result[jsKey] = v;
       }
       return result;
     }
 
     private static parseCore(text: string): Object {
       text = asCoerceString(text);
-      return ASJSON.transformJSValueToAS(JSON.parse(text))
+      return ASJSON.transformJSValueToAS(JSON.parse(text), true)
     }
 
     private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
-      return JSON.stringify(ASJSON.transformASValueToJS(value), replacerFunction, gap);
+      return JSON.stringify(ASJSON.transformASValueToJS(value, true), replacerFunction, gap);
     }
   }
 
