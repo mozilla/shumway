@@ -93,10 +93,12 @@ module Shumway.AVM2.AS.flash.display {
      * first INIT and COMPLETE events are dispatched for all active Loaders, then
      * OPEN and PROGRESS.
      *
-     * A slightly weird result of this is that INIT and COMPLETE are dispatched one
-     * turn *later* than the other events: INIT is only dispatched if the loadStatus
-     * is Openend, which is set in processLateEvents, and COMPLETE only happens if
-     * bytesLoaded, which is also set in processLateEvents, equals bytesTotal.
+     * A slightly weird result of this is that INIT and COMPLETE are dispatched at
+     * least one turn later than the other events: INIT is dispatched after the
+     * content has been created. That, in turn, happens under
+     * `DisplayObject.performFrameNavigation` in reaction to enough data being
+     * marked as available - which happens in the second batch of Loader event
+     * processing.
      */
     static processEvents() {
       Loader.processEarlyEvents();
@@ -120,7 +122,7 @@ module Shumway.AVM2.AS.flash.display {
           release || assert(instance._content);
         }
 
-        if (instance._loadStatus === LoadStatus.Opened) {
+        if (instance._loadStatus === LoadStatus.Opened && instance._content) {
           loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
           instance._loadStatus = LoadStatus.Initialized;
           // Only for the root loader, progress events for the data loaded up until now are
@@ -172,7 +174,7 @@ module Shumway.AVM2.AS.flash.display {
         if (update) {
           instance._applyLoadUpdate(update);
           loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-          false, false, update.bytesLoaded,
+                                                            false, false, update.bytesLoaded,
           bytesTotal));
         }
       }
