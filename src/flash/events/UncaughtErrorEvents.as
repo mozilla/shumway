@@ -16,6 +16,6 @@
 
 package flash.events {
 public class UncaughtErrorEvents extends EventDispatcher {
-  public function UncaughtErrorEvents() {}
+  public native function UncaughtErrorEvents();
 }
 }

@@ -45,26 +45,21 @@ module Shumway.AVM2.AS.flash.display {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    constructor() {
+    constructor(content: MovieClip) {
       false && super();
       flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
       this._children = [];
-      this._constructed = false;
-    }
-
-    private _content: MovieClip;
-    private _constructed: boolean;
-
-    initializeContent(content: MovieClip): void {
-      release || assert(this._children.length === 0);
-      release || assert(!this._parent, "Must have content initialized before being added to stage");
       this._children[0] = this._content = content;
       // Pretend we're a DisplayObjectContainer and can have children. See comment at the top.
       content._setParent(<any>this, 0);
       this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
       this._invalidateFillAndLineBounds(true, true);
-      DisplayObject._advancableInstances.push(this);
+      display.DisplayObject._advancableInstances.push(this);
+      this._constructed = false;
     }
+
+    private _content: MovieClip;
+    private _constructed: boolean;
 
     call(functionName: string): any {
       notImplemented('AVM1Movie#call');

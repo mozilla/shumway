@@ -6,6 +6,10 @@ module Shumway.AVM2.AS {
 
   export var flashOptions = shumwayOptions.register(new OptionSet("Flash Options"));
 
+  export var traceEventsOption = flashOptions.register (
+    new Shumway.Options.Option("te", "Trace Events", "boolean", false, "Trace dispatching of events.")
+  );
+
   export var traceLoaderOption = flashOptions.register (
     new Shumway.Options.Option("tp", "Trace Loader", "boolean", false, "Trace loader execution.")
   );

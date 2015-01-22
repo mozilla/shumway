@@ -1414,9 +1414,21 @@ module Shumway {
     }
     push(value: T) {
       if (this._map) {
+        release || Debug.assert(!this._map.has(value));
         this._map.set(value, null);
       } else {
+        release || Debug.assert(this._list.indexOf(value) === -1);
         this._list.push(value);
+      }
+    }
+    remove(value: T) {
+      if (this._map) {
+        release || Debug.assert(this._map.has(value));
+        this._map.delete(value);
+      } else {
+        release || Debug.assert(this._list.indexOf(value) > -1);
+        this._list[this._list.indexOf(value)] = null;
+        release || Debug.assert(this._list.indexOf(value) === -1);
       }
     }
     forEach(callback: (value: T) => void) {
@@ -1435,7 +1447,11 @@ module Shumway {
       var zeroCount = 0;
       for (var i = 0; i < list.length; i++) {
         var value = list[i];
+        if (!value) {
+          continue;
+        }
         if (useReferenceCounting && value._referenceCount === 0) {
+          list[i] = null;
           zeroCount++;
         } else {
           callback(value);
@@ -1444,8 +1460,9 @@ module Shumway {
       if (zeroCount > 16 && zeroCount > (list.length >> 2)) {
         var newList = [];
         for (var i = 0; i < list.length; i++) {
-          if (list[i]._referenceCount > 0) {
-            newList.push(list[i]);
+          var value = list[i];
+          if (value && value._referenceCount > 0) {
+            newList.push(value);
           }
         }
         this._list = newList;

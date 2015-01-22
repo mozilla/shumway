@@ -20,6 +20,7 @@ module Shumway.AVM2.AS.flash.events {
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
+  import traceEventsOption = Shumway.AVM2.AS.traceEventsOption;
 
   class EventListenerEntry {
     constructor(public listener: EventHandler, public useCapture: boolean, public priority: number) {
@@ -158,6 +159,10 @@ module Shumway.AVM2.AS.flash.events {
       var queue = this._queues[event.type];
       if (!queue) {
         return;
+      }
+      if (!release && traceEventsOption.value) {
+        console.log('Broadcast event of type ' + event._type + ' to ' + queue.length +
+                    ' listeners');
       }
       var nullCount = 0;
       for (var i = 0; i < queue.length; i++) {
@@ -366,31 +371,34 @@ module Shumway.AVM2.AS.flash.events {
      * for this |event|.
      */
     private _skipDispatchEvent(event: Event): boolean {
+      if (this._hasEventListener(event.type)) {
+        return false;
+      }
       // Broadcast events don't have capturing or bubbling phases so it's a simple check.
       if (event.isBroadcastEvent()) {
-        return !this._hasEventListener(event.type);
-      } else if (flash.display.DisplayObject.isType(this)) {
+        return true;
+      } else if (event._bubbles && flash.display.DisplayObject.isType(this)) {
         // Check to see if there are any event listeners on the path to the root.
-        var node = <flash.display.DisplayObject>this;
-        while (node) {
+        for (var node = (<flash.display.DisplayObject>this)._parent; node; node = node._parent) {
           if (node._hasEventListener(event.type)) {
             return false;
           }
-          node = node._parent;
         }
-        return true;
       }
-      return !this._hasEventListener(event.type);
+      return true;
     }
 
     public dispatchEvent(event: Event): boolean {
+      if (arguments.length !== 1) {
+        throwError("ArgumentError", Errors.WrongArgumentCountError,
+                   "flash.events::EventDispatcher/dispatchEvent()", 1, arguments.length);
+      }
       if (this._skipDispatchEvent(event)) {
         return true;
       }
 
-      if (arguments.length !== 1) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError,
-                   "flash.events::EventDispatcher/dispatchEvent()", 1, arguments.length);
+      if (!release && traceEventsOption.value) {
+        console.log('Dispatch event of type ' + event._type);
       }
 
       release || counter.count("EventDispatcher::dispatchEvent");

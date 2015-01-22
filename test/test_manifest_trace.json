@@ -51,17 +51,17 @@
       ],
       "type": "stas"
     },
-    {  "id": "flash_text_TextField trace",
-       "stas": "swfs/trace.stas",
-       "filenames": [
-         "swfs/flash_text_TextField.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "flash_net_classes trace",
        "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_net_classes.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash.display.Loader events trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/as3-loader/events/loader-events.swf"
        ],
        "type": "stas"
     },

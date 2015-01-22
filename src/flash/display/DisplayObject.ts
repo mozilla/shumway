@@ -339,11 +339,11 @@ module Shumway.AVM2.AS.flash.display {
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
-      DisplayObject.reset();
+      this.reset();
     };
 
     static reset() {
-      DisplayObject._advancableInstances = new WeakList<IAdvancable>();
+      this._advancableInstances = new WeakList<IAdvancable>();
     }
 
     // Called whenever an instance of the class is initialized.
@@ -483,7 +483,7 @@ module Shumway.AVM2.AS.flash.display {
         runScripts = DisplayObject._runScripts;
       }
 
-      release || assert(DisplayObject._advancableInstances.length < 1024 * 16,
+      release || assert(display.DisplayObject._advancableInstances.length < 1024 * 16,
                         "Too many advancable instances.");
 
       // Step 1: Remove timeline objects that don't exist on new frame, update existing ones with
@@ -494,7 +494,7 @@ module Shumway.AVM2.AS.flash.display {
       // Also, changed properties of existing objects are updated here instead of during frame
       // construction after ENTER_FRAME.
       // Thus, all these can be done together.
-      DisplayObject._advancableInstances.forEach(function (value) {
+      display.DisplayObject._advancableInstances.forEach(function (value) {
         value._initFrame(mainLoop);
       });
       // Step 2: Dispatch ENTER_FRAME, only called in outermost invocation.
@@ -502,7 +502,7 @@ module Shumway.AVM2.AS.flash.display {
         DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
       }
       // Step 3: Create new timeline objects.
-      DisplayObject._advancableInstances.forEach(function (value) {
+      display.DisplayObject._advancableInstances.forEach(function (value) {
         value._constructFrame();
       });
       // Step 4: Dispatch FRAME_CONSTRUCTED.
@@ -519,7 +519,7 @@ module Shumway.AVM2.AS.flash.display {
         // doubtful anybody could reasonably rely on the exact details of all this.
         // Of course, nothing guarantees that there isn't content that accidentally does, so it'd
         // be nice to eventually get this right.
-        DisplayObject._advancableInstances.forEach(function (value) {
+        display.DisplayObject._advancableInstances.forEach(function (value) {
           var container: any = value;
           if (MovieClip.isInstanceOf(container) && !container.parent) {
             container._enqueueFrameScripts();

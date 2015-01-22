@@ -94,6 +94,10 @@ module Shumway.AVM2.AS.flash.display {
           child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_INIT));
           child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_CONSTRUCT));
           child._setFlags(DisplayObjectFlags.NeedsLoadEvent);
+          if (child._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
+                                 DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
+            this._setFlags(DisplayObjectFlags.ContainsFrameScriptPendingChildren);
+          }
         }
 
         child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));

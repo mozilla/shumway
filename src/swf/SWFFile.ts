@@ -51,6 +51,7 @@ module Shumway.SWF {
     abcBlocks: ABCBlock[];
     dictionary: DictionaryEntry[];
     fonts: {name: string; style: string; id: number}[];
+    data: Uint8Array;
 
     symbolClassesMap: string[];
     symbolClassesList: {id: number; className: string}[];
@@ -59,7 +60,6 @@ module Shumway.SWF {
 
     private _uncompressedLength: number;
     private _uncompressedLoadedLength: number;
-    private _data: Uint8Array;
     private _dataView: DataView;
     private _dataStream: Stream;
     private _decompressor: Inflate;
@@ -170,7 +170,7 @@ module Shumway.SWF {
       var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
       release || Debug.assert(handler, 'handler shall exists here');
       var tagEnd = unparsed.byteOffset + unparsed.byteLength;
-      handler(this._data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
+      handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
       var finalPos = this._dataStream.pos;
       release || assert(finalPos <= tagEnd);
       if (finalPos < tagEnd) {
@@ -192,25 +192,25 @@ module Shumway.SWF {
       this._loadStarted = Date.now();
       this._uncompressedLength = readSWFLength(initialBytes);
       this.bytesLoaded = initialBytes.length;
-      this._data = new Uint8Array(this._uncompressedLength);
-      this._dataStream = new Stream(this._data.buffer);
+      this.data = new Uint8Array(this._uncompressedLength);
+      this._dataStream = new Stream(this.data.buffer);
       this._dataStream.pos = 8;
       this._dataView = <DataView><any>this._dataStream;
       if (this.isCompressed) {
-        this._data.set(initialBytes.subarray(0, 8));
+        this.data.set(initialBytes.subarray(0, 8));
         this._uncompressedLoadedLength = 8;
         this._decompressor = Inflate.create(true);
         var self = this;
         // Parts of the header are compressed. Get those out of the way before starting tag parsing.
         this._decompressor.onData = function(data: Uint32Array) {
-          self._data.set(data, self._uncompressedLoadedLength);
+          self.data.set(data, self._uncompressedLoadedLength);
           self._uncompressedLoadedLength += data.length;
           self._decompressor.onData = self.processDecompressedData.bind(self);
           self.parseHeaderContents();
         };
         this._decompressor.push(initialBytes.subarray(8));
       } else {
-        this._data.set(initialBytes);
+        this.data.set(initialBytes);
         this._uncompressedLoadedLength = initialBytes.length;
         this._decompressor = null;
         this.parseHeaderContents();
@@ -221,14 +221,14 @@ module Shumway.SWF {
     }
 
     private parseHeaderContents() {
-      var obj = Parser.LowLevel.readHeader(this._data, this._dataStream);
+      var obj = Parser.LowLevel.readHeader(this.data, this._dataStream);
       this.bounds = obj.bounds;
       this.frameRate = obj.frameRate;
       this.frameCount = obj.frameCount;
     }
 
     private processDecompressedData(data: Uint8Array) {
-      this._data.set(data, this._uncompressedLoadedLength);
+      this.data.set(data, this._uncompressedLoadedLength);
       this._uncompressedLoadedLength += data.length;
       if (this._uncompressedLoadedLength === this._uncompressedLength) {
         this._decompressor.close();
@@ -362,14 +362,14 @@ module Shumway.SWF {
           this.setSceneAndFrameLabelData(tagLength);
           break;
         case SWFTag.CODE_SET_BACKGROUND_COLOR:
-          this.backgroundColor = Parser.LowLevel.rgb(this._data, this._dataStream);
+          this.backgroundColor = Parser.LowLevel.rgb(this.data, this._dataStream);
           break;
         case SWFTag.CODE_JPEG_TABLES:
           // Only use the first JpegTables tag, ignore any following.
           if (!this._jpegTables) {
             this._jpegTables = tagLength === 0 ?
                               new Uint8Array(0) :
-                              this._data.subarray(stream.pos, stream.pos + tagLength - 2);
+                              this.data.subarray(stream.pos, stream.pos + tagLength - 2);
           }
           this.jumpToNextTag(tagLength);
           break;
@@ -379,14 +379,14 @@ module Shumway.SWF {
             var tagEnd = byteOffset + tagLength;
             var abcBlock = new ABCBlock();
             if (tagCode === SWFTag.CODE_DO_ABC) {
-              abcBlock.flags = Parser.readUi32(this._data, stream);
-              abcBlock.name = Parser.readString(this._data, stream, 0);
+              abcBlock.flags = Parser.readUi32(this.data, stream);
+              abcBlock.name = Parser.readString(this.data, stream, 0);
             }
             else {
               abcBlock.flags = 0;
               abcBlock.name = "";
             }
-            abcBlock.data = this._data.subarray(stream.pos, tagEnd);
+            abcBlock.data = this.data.subarray(stream.pos, tagEnd);
             this.abcBlocks.push(abcBlock);
             stream.pos = tagEnd;
           } else {
@@ -395,11 +395,14 @@ module Shumway.SWF {
           break;
         case SWFTag.CODE_SYMBOL_CLASS:
           var tagEnd = byteOffset + tagLength;
-          var symbolCount = Parser.readUi16(this._data, stream);
+          var symbolCount = Parser.readUi16(this.data, stream);
           // TODO: check if symbols can be reassociated after instances have been created.
           while (symbolCount--) {
-            var symbolId = Parser.readUi16(this._data, stream);
-            var symbolClassName = Parser.readString(this._data, stream, 0);
+            var symbolId = Parser.readUi16(this.data, stream);
+            var symbolClassName = Parser.readString(this.data, stream, 0);
+            if (!release && traceLevel.value > 0) {
+              console.log('Registering symbol class ' + symbolClassName + ' to symbol ' + symbolId);
+            }
             this.symbolClassesMap[symbolId] = symbolClassName;
             this.symbolClassesList.push({id: symbolId, className: symbolClassName});
           }
@@ -411,7 +414,7 @@ module Shumway.SWF {
             var initActionBlocks = this._currentInitActionBlocks ||
                                    (this._currentInitActionBlocks = []);
             var spriteId = this._dataView.getUint16(stream.pos, true);
-            var actionsData = this._data.subarray(byteOffset + 2, byteOffset + tagLength);
+            var actionsData = this.data.subarray(byteOffset + 2, byteOffset + tagLength);
             initActionBlocks.push({spriteId: spriteId, actionsData: actionsData});
           }
           this.jumpToNextTag(tagLength);
@@ -419,21 +422,21 @@ module Shumway.SWF {
         case SWFTag.CODE_DO_ACTION:
           if (this.useAVM1) {
             var actionBlocks = this._currentActionBlocks || (this._currentActionBlocks = []);
-            actionBlocks.push(this._data.subarray(stream.pos, stream.pos + tagLength));
+            actionBlocks.push(this.data.subarray(stream.pos, stream.pos + tagLength));
           }
           this.jumpToNextTag(tagLength);
           break;
         case SWFTag.CODE_SOUND_STREAM_HEAD:
         case SWFTag.CODE_SOUND_STREAM_HEAD2:
-          var soundStreamTag = Parser.LowLevel.soundStreamHead(this._data, this._dataStream);
+          var soundStreamTag = Parser.LowLevel.soundStreamHead(this.data, this._dataStream);
           this._currentSoundStreamHead = Parser.SoundStream.FromTag(soundStreamTag);
           break;
         case SWFTag.CODE_SOUND_STREAM_BLOCK:
-          this._currentSoundStreamBlock = this._data.subarray(stream.pos, stream.pos += tagLength);
+          this._currentSoundStreamBlock = this.data.subarray(stream.pos, stream.pos += tagLength);
           break;
         case SWFTag.CODE_FRAME_LABEL:
           var tagEnd = stream.pos + tagLength;
-          this._currentFrameLabel = Parser.readString(this._data, stream, 0);
+          this._currentFrameLabel = Parser.readString(this.data, stream, 0);
           // TODO: support SWF6+ anchors.
           stream.pos = tagEnd;
           break;
@@ -444,11 +447,11 @@ module Shumway.SWF {
           return;
         case SWFTag.CODE_EXPORT_ASSETS:
           var tagEnd = stream.pos + tagLength;
-          var exportsCount = Parser.readUi16(this._data, stream);
+          var exportsCount = Parser.readUi16(this.data, stream);
           var exports = this._currentExports || (this._currentExports = []);
           while (exportsCount--) {
-            var symbolId = Parser.readUi16(this._data, stream);
-            var className = Parser.readString(this._data, stream, 0);
+            var symbolId = Parser.readUi16(this.data, stream);
+            var className = Parser.readString(this.data, stream, 0);
             if (stream.pos > tagEnd) {
               stream.pos = tagEnd;
               break;
@@ -508,7 +511,7 @@ module Shumway.SWF {
 
     parseSpriteTimeline(spriteTag: DictionaryEntry) {
       SWF.enterTimeline("parseSpriteTimeline");
-      var data = this._data;
+      var data = this.data;
       var stream = this._dataStream;
       var dataView = this._dataView;
       var timeline: any = {
@@ -633,7 +636,7 @@ module Shumway.SWF {
       if (this.attributes) {
         this.jumpToNextTag(tagLength);
       }
-      var bits = this._data[this._dataStream.pos];
+      var bits = this.data[this._dataStream.pos];
       this._dataStream.pos += 4;
       this.attributes = {
         network: bits & 0x1,
@@ -651,7 +654,7 @@ module Shumway.SWF {
       if (this.sceneAndFrameLabelData) {
         this.jumpToNextTag(tagLength);
       }
-      this.sceneAndFrameLabelData = Parser.LowLevel.defineScene(this._data, this._dataStream, null);
+      this.sceneAndFrameLabelData = Parser.LowLevel.defineScene(this.data, this._dataStream, null);
     }
 
     private addControlTag(tagCode: number, byteOffset: number, tagLength: number) {
@@ -699,12 +702,12 @@ module Shumway.SWF {
         name = '__autofont__' + unparsed.byteOffset;
         style = 'regular';
       } else {
-        var flags = this._data[stream.pos + 2];
+        var flags = this.data[stream.pos + 2];
         style = flagsToFontStyle(!!(flags & 0x2), !!(flags & 0x1));
-        var nameLength = this._data[stream.pos + 4];
+        var nameLength = this.data[stream.pos + 4];
         // Skip language code.
         stream.pos += 5;
-        name = Parser.readString(this._data, stream, nameLength);
+        name = Parser.readString(this.data, stream, nameLength);
       }
       this.fonts.push({name: name, id: id, style: style});
       if (!release && traceLevel.value > 0) {
