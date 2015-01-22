@@ -419,7 +419,8 @@
       "filenames": [
         "swfs/as3-loader/LoaderTest.swf",
         "swfs/as3-loader/LoaderLoadBytesTest.swf",
-        "swfs/as3-loader/LoaderLoadBytesTest2.swf"
+        "swfs/as3-loader/LoaderLoadBytesTest2.swf",
+        "swfs/as3-loader/loaderinfo/loaded-content-properties.swf"
       ],
       "type": "stas"
     },

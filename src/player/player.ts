@@ -389,7 +389,7 @@ module Shumway.Player {
 
         var bgcolor = self.defaultStageColor !== undefined ?
                       self.defaultStageColor :
-                      loaderInfo._colorRGBA;
+                      loaderInfo._file.backgroundColor;
 
         stage._loaderInfo = loaderInfo;
         stage.align = self.stageAlign || '';

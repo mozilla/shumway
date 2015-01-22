@@ -193,7 +193,7 @@ module Shumway.AVM2.AS.flash.display {
         // The root loader itself doesn't get an ID.
         //DisplayObject._instanceID--;
       }
-      this._contentLoaderInfo = new flash.display.LoaderInfo();
+      this._contentLoaderInfo = new display.LoaderInfo(display.LoaderInfo.CtorToken);
       this._contentLoaderInfo._loader = this;
 
       this._fileLoader = null;
@@ -431,8 +431,8 @@ module Shumway.AVM2.AS.flash.display {
     private _applyDecodedImage(symbol: BitmapSymbol) {
       var bitmapData = symbol.createSharedInstance();
       this._content = new flash.display.Bitmap(bitmapData);
-      this._contentLoaderInfo._width = this._content.width;
-      this._contentLoaderInfo._height = this._content.height;
+      this._contentLoaderInfo._width = this._content.width * 20;
+      this._contentLoaderInfo._height = this._content.height * 20;
       this.addTimelineObjectAtDepth(this._content, 0);
     }
 
@@ -557,7 +557,7 @@ module Shumway.AVM2.AS.flash.display {
       var loaderInfo = this._contentLoaderInfo;
       root._loaderInfo = loaderInfo;
       var rootTimeline = root;
-      if (loaderInfo._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+      if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         root = this._initAvm1Root(root);
       } else if (this === Loader.getRootLoader()) {
         display.MovieClip.frameNavigationModel = loaderInfo.swfVersion < 10 ?

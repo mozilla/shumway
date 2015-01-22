@@ -20,7 +20,6 @@ module Shumway.AVM2.AS.flash.display {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
-  import ActionScriptVersion = flash.display.ActionScriptVersion;
   import SWFFile = Shumway.SWF.SWFFile;
   import SWFFrame = Shumway.SWF.SWFFrame;
 
@@ -36,36 +35,33 @@ module Shumway.AVM2.AS.flash.display {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["parameters", "uncaughtErrorEvents", "dispatchEvent"];
+    static instanceSymbols: string [] = null; // ["parameters", "uncaughtErrorEvents",
+                                              // "dispatchEvent"];
 
-    constructor () {
+    // Constructing LoaderInfo without providing this token throws, preventing it from AS3.
+    static CtorToken = {};
+    constructor (token: Object) {
       false && super();
+      if (token !== LoaderInfo.CtorToken) {
+        throwError('ArgumentError', Errors.CantInstantiateError, 'LoaderInfo$');
+      }
       flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
       this._loader = null;
       this.reset();
     }
 
     reset() {
-      this._loaderURL = '';
       this._url = '';
       this._file = null;
-      this._isURLInaccessible = false;
       this._bytesLoaded = 0;
       this._bytesTotal = 0;
       this._applicationDomain = null;
-      this._swfVersion = 9;
-      this._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT3;
-      this._frameRate = 24;
       this._parameters = null;
       this._width = 0;
       this._height = 0;
-      this._contentType = '';
       this._sharedEvents = null;
       this._parentSandboxBridge = null;
       this._childSandboxBridge = null;
-      this._sameDomain = false;
-      this._childAllowsParent = false;
-      this._parentAllowsChild = false;
       this._content = null;
       this._bytes = null;
       this._uncaughtErrorEvents = null;
@@ -75,7 +71,6 @@ module Shumway.AVM2.AS.flash.display {
       this._mappedSymbolsLoaded = 0;
       this._fontsLoaded = 0;
       this._avm1Context = null;
-      this._colorRGBA = 0xFFFFFFFF;
     }
 
     setFile(file: any /* SWFFile | ImageFile */) {
@@ -84,48 +79,30 @@ module Shumway.AVM2.AS.flash.display {
       this._bytesTotal = file.bytesTotal;
       if (file instanceof SWFFile) {
         // TODO: remove these duplicated fields from LoaderInfo.
-        this._swfVersion = file.swfVersion;
-        this._frameRate = file.frameRate;
         var bbox = file.bounds;
         this._width = bbox.xMax - bbox.xMin;
         this._height = bbox.yMax - bbox.yMin;
-        this._colorRGBA = file.backgroundColor;
-
-        if (!file.attributes || !file.attributes.doAbc) {
-          this._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
-        }
       } else {
         release || assert(file instanceof ImageFile);
       }
     }
-
-    uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
     static getLoaderInfoByDefinition(object: Object): flash.display.LoaderInfo {
       object = object;
       notImplemented("public flash.display.LoaderInfo::static getLoaderInfoByDefinition"); return;
     }
 
-    _loaderURL: string;
     _url: string;
     _file: any /* SWFFile|ImageFile*/;
-    _isURLInaccessible: boolean;
     _bytesLoaded: number /*uint*/;
     _bytesTotal: number /*uint*/;
     _applicationDomain: flash.system.ApplicationDomain;
-    _swfVersion: number /*uint*/;
-    _actionScriptVersion: number /*uint*/;
-    _frameRate: number;
     _parameters: Object;
     _width: number /*int*/;
     _height: number /*int*/;
-    _contentType: string;
     _sharedEvents: flash.events.EventDispatcher;
     _parentSandboxBridge: Object;
     _childSandboxBridge: Object;
-    _sameDomain: boolean;
-    _childAllowsParent: boolean;
-    _parentAllowsChild: boolean;
     _loader: flash.display.Loader;
     _content: flash.display.DisplayObject;
     _bytes: flash.utils.ByteArray;
@@ -139,26 +116,23 @@ module Shumway.AVM2.AS.flash.display {
      */
     _allowCodeExecution: boolean;
 
-    /**
-     * HACK: This is a hack because I don't know how to get access to the stage once I see a tag
-     * that sets the background color. Here we set it on the LoaderInfo, and then set it on the
-     * stage.
-     */
-    _colorRGBA: number;
-
     _dictionary: Shumway.Timeline.Symbol [];
     _avm1Context: Shumway.AVM1.AVM1Context;
 
     get loaderURL(): string {
-      return this._loaderURL;
+      return this._loader.loaderInfo.url;
     }
 
     get url(): string {
+      if (!this._file) {
+        return null;
+      }
       return this._url;
     }
 
     get isURLInaccessible(): boolean {
-      return this._isURLInaccessible;
+      somewhatImplemented("public flash.display.LoaderInfo::get isURLInaccessible");
+      return this._file ? false : true;
     }
 
     get bytesLoaded(): number /*uint*/ {
@@ -171,67 +145,108 @@ module Shumway.AVM2.AS.flash.display {
 
     get applicationDomain(): flash.system.ApplicationDomain {
       somewhatImplemented("public flash.display.LoaderInfo::get applicationDomain");
-      return flash.system.ApplicationDomain.currentDomain;
+      return this._file ? flash.system.ApplicationDomain.currentDomain : null;
       // return this._applicationDomain;
     }
 
     get swfVersion(): number /*uint*/ {
-      return this._swfVersion;
+      if (!this._file) {
+        throwError('Error', Errors.LoadingObjectNotInitializedError);
+      }
+      if (!(this._file instanceof SWFFile)) {
+        throwError('Error', Errors.LoadingObjectNotSWFError);
+      }
+      return this._file.swfVersion;
     }
 
     get actionScriptVersion(): number /*uint*/ {
-      return this._actionScriptVersion;
+      if (!this._file) {
+        throwError('Error', Errors.LoadingObjectNotInitializedError);
+      }
+      if (!(this._file instanceof SWFFile)) {
+        throwError('Error', Errors.LoadingObjectNotSWFError);
+      }
+      return this._file.useAVM1 ?
+             ActionScriptVersion.ACTIONSCRIPT2 :
+             ActionScriptVersion.ACTIONSCRIPT3;
     }
 
     get frameRate(): number {
-      return this._frameRate;
+      if (!this._file) {
+        throwError('Error', Errors.LoadingObjectNotInitializedError);
+      }
+      if (!(this._file instanceof SWFFile)) {
+        throwError('Error', Errors.LoadingObjectNotSWFError);
+      }
+      return this._file.frameRate;
     }
 
     get width(): number /*int*/ {
+      if (!this._file) {
+        throwError('Error', Errors.LoadingObjectNotInitializedError);
+      }
       return (this._width / 20) | 0;
     }
 
     get height(): number /*int*/ {
+      if (!this._file) {
+        throwError('Error', Errors.LoadingObjectNotInitializedError);
+      }
       return (this._height / 20) | 0;
     }
 
     get contentType(): string {
-      return this._contentType;
+      if (!this._file) {
+        return null;
+      }
+      return this._file instanceof ImageFile ?
+             this._file.mimeType :
+             'application/x-shockwave-flash';
     }
 
     get sharedEvents(): flash.events.EventDispatcher {
-      notImplemented("public flash.display.LoaderInfo::get sharedEvents"); return;
-      // return this._sharedEvents;
+      somewhatImplemented("public flash.display.LoaderInfo::get sharedEvents");
+      if (!this._sharedEvents) {
+        this._sharedEvents = new flash.events.EventDispatcher();
+      }
+      return this._sharedEvents;
     }
     get parentSandboxBridge(): Object {
-      notImplemented("public flash.display.LoaderInfo::get parentSandboxBridge"); return;
-      // return this._parentSandboxBridge;
+      somewhatImplemented("public flash.display.LoaderInfo::get parentSandboxBridge");
+      return this._parentSandboxBridge;
     }
     set parentSandboxBridge(door: Object) {
-      door = door;
-      notImplemented("public flash.display.LoaderInfo::set parentSandboxBridge"); return;
-      // this._parentSandboxBridge = door;
+      somewhatImplemented("public flash.display.LoaderInfo::set parentSandboxBridge");
+      this._parentSandboxBridge = door;
     }
     get childSandboxBridge(): Object {
-      notImplemented("public flash.display.LoaderInfo::get childSandboxBridge"); return;
-      // return this._childSandboxBridge;
+      somewhatImplemented("public flash.display.LoaderInfo::get childSandboxBridge");
+      return this._childSandboxBridge;
     }
     set childSandboxBridge(door: Object) {
-      door = door;
-      notImplemented("public flash.display.LoaderInfo::set childSandboxBridge"); return;
-      // this._childSandboxBridge = door;
+      somewhatImplemented("public flash.display.LoaderInfo::set childSandboxBridge");
+      this._childSandboxBridge = door;
     }
     get sameDomain(): boolean {
-      notImplemented("public flash.display.LoaderInfo::get sameDomain"); return;
-      // return this._sameDomain;
+      if (!this._file) {
+        throwError('Error', Errors.LoadingObjectNotInitializedError);
+      }
+      somewhatImplemented("public flash.display.LoaderInfo::get sameDomain");
+      return true;
     }
     get childAllowsParent(): boolean {
-      notImplemented("public flash.display.LoaderInfo::get childAllowsParent"); return;
-      // return this._childAllowsParent;
+      if (!this._file) {
+        throwError('Error', Errors.LoadingObjectNotInitializedError);
+      }
+      somewhatImplemented("public flash.display.LoaderInfo::get childAllowsParent");
+      return true;
     }
     get parentAllowsChild(): boolean {
-      notImplemented("public flash.display.LoaderInfo::get parentAllowsChild"); return;
-      // return this._parentAllowsChild;
+      if (!this._file) {
+        throwError('Error', Errors.LoadingObjectNotInitializedError);
+      }
+      somewhatImplemented("public flash.display.LoaderInfo::get parentAllowsChild");
+      return true;
     }
 
     get loader(): flash.display.Loader {
@@ -243,10 +258,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get bytes(): flash.utils.ByteArray {
-      notImplemented("public flash.display.LoaderInfo::get bytes"); return;
-      // return this._bytes;
+      if (!this._file) {
+        return new flash.utils.ByteArray();
+      }
+      notImplemented("public flash.display.LoaderInfo::get bytes");
+      return null;
     }
-
     get parameters(): Object {
       somewhatImplemented("public flash.display.LoaderInfo::get parameters");
       if (this._parameters) {
@@ -254,13 +271,20 @@ module Shumway.AVM2.AS.flash.display {
       }
       return {};
     }
-    _getUncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
-      notImplemented("public flash.display.LoaderInfo::_getUncaughtErrorEvents"); return;
+    get uncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
+      somewhatImplemented("public flash.display.LoaderInfo::_getUncaughtErrorEvents");
+      if (!this._uncaughtErrorEvents) {
+        this._uncaughtErrorEvents = new events.UncaughtErrorEvents();
+      }
+      return this._uncaughtErrorEvents;
     }
-    _setUncaughtErrorEvents(value: flash.events.UncaughtErrorEvents): void {
-      value = value;
-      notImplemented("public flash.display.LoaderInfo::_setUncaughtErrorEvents"); return;
-    }
+
+    // TODO: activate this override while keeping the ability to dispatch events from TS.
+    //dispatchEvent(event: events.Event): boolean {
+    //  // TODO: this should be `IllegalOperationError`, but we don't include that class.
+    //  throwError('Error', Errors.InvalidLoaderInfoMethodError);
+    //  return false;
+    //}
 
     getSymbolResolver(classDefinition: ASClass, symbolId: number): () => any {
       return this.resolveClassSymbol.bind(this, classDefinition, symbolId);
@@ -358,7 +382,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _syncAVM1Attributes(symbol: Timeline.Symbol) {
-      if (this._actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
+      if (this.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         symbol.isAVM1Object = true;
         symbol.avm1Context = this._avm1Context;
       }

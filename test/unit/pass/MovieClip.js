@@ -23,7 +23,7 @@
 
   function createMovieClipWithFrames(numFrames) {
     assert(typeof numFrames === 'number');
-    var loaderInfo = new LoaderInfo();
+    var loaderInfo = new LoaderInfo(LoaderInfo.CtorToken);
     var stage = new Stage();
     DisplayObject._stage = stage;
     stage._stage = stage;
