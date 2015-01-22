@@ -23,6 +23,8 @@
 
 ///<reference path='symbol.ts' />
 
+///<reference path='../rtmp/references.ts' />
+
 ///<reference path='geom/Matrix.ts' />
 ///<reference path='geom/Matrix3D.ts' />
 ///<reference path='geom/Orientation3D.ts' />
