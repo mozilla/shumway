@@ -46,8 +46,10 @@ module RtmpJs.Browser {
       var channel = this._initChannel(properties, args);
 
       var writeQueue = [], socketError = false;
-      var socket = TCPSocket.open(this.host, this.port,
-        { useSSL: this.ssl, binaryType: 'arraybuffer' });
+      var createRtmpSocket = (<any>window).createRtmpSocket;
+      var socket = createRtmpSocket ?
+        createRtmpSocket({host: this.host, port: this.port, ssl: this.ssl}) :
+        TCPSocket.open(this.host, this.port, { useSecureTransport: this.ssl, binaryType: 'arraybuffer' });
 
 
       var sendData = function (data) {
@@ -204,7 +206,8 @@ module RtmpJs.Browser {
   function post(path, data, onload) {
     data || (data = emptyPostData);
 
-    var xhr = new (<any>XMLHttpRequest)({mozSystem: true});
+    var createRtmpXHR = (<any>window).createRtmpXHR;
+    var xhr = createRtmpXHR ? createRtmpXHR() : new (<any>XMLHttpRequest)({mozSystem: true});
     xhr.open('POST', path, true);
     xhr.responseType = 'arraybuffer';
     xhr.setRequestHeader('Content-Type', 'application/x-fcs');

@@ -173,6 +173,12 @@ function setupServices() {
       return parent.createSpecialInflate();
     };
   }
+
+  // Using createRtmpXHR/createRtmpSocket when chrome code provides it.
+  if (parent.createRtmpXHR) {
+    window.createRtmpSocket = parent.createRtmpSocket;
+    window.createRtmpXHR = parent.createRtmpXHR;
+  }
 }
 
 window.addEventListener('message', function onWindowMessage(e) {
