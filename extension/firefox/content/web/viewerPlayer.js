@@ -56,13 +56,13 @@ function runSwfPlayer(flashParams) {
 
       player.load(file);
     }
-    file = Shumway.FileLoadingService.instance.setBaseUrl(baseUrl);
+    Shumway.FileLoadingService.instance.setBaseUrl(baseUrl);
     if (asyncLoading) {
       runSWF(movieUrl);
     } else {
       new Shumway.BinaryFileReader(movieUrl).readAll(null, function(buffer, error) {
         if (!buffer) {
-          throw "Unable to open the file " + file + ": " + error;
+          throw "Unable to open the file " + movieUrl + ": " + error;
         }
         runSWF(movieUrl, buffer);
       });
@@ -131,30 +131,10 @@ function setupServices() {
       };
     },
     setBaseUrl: function (url) {
-      var baseUrl;
-      if (typeof URL !== 'undefined') {
-        baseUrl = new URL(url, document.location.href).href;
-      } else {
-        var a = document.createElement('a');
-        a.href = url || '#';
-        a.setAttribute('style', 'display: none;');
-        document.body.appendChild(a);
-        baseUrl = a.href;
-        document.body.removeChild(a);
-      }
-      Shumway.FileLoadingService.instance.baseUrl = baseUrl;
-      return baseUrl;
+      Shumway.FileLoadingService.instance.baseUrl = url;
     },
     resolveUrl: function (url) {
-      if (url.indexOf('://') >= 0) return url;
-
-      var base = Shumway.FileLoadingService.instance.baseUrl;
-      base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-      if (url.indexOf('/') === 0) {
-        var m = /^[^:]+:\/\/[^\/]+/.exec(base);
-        if (m) base = m[0];
-      }
-      return base + url;
+      return new URL(url, Shumway.FileLoadingService.instance.baseUrl).href;
     },
     navigateTo: function (url, target) {
       window.parent.postMessage({
