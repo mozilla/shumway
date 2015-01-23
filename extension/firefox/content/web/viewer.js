@@ -124,6 +124,7 @@ function runViewer() {
 
   movieParams = flashParams.movieParams;
   objectParams = flashParams.objectParams;
+  var baseUrl = flashParams.baseUrl;
   var isOverlay = flashParams.isOverlay;
   pauseExecution = flashParams.isPausedAtStart;
 
@@ -137,7 +138,7 @@ function runViewer() {
   }
 
   playerWindowLoaded.then(function () {
-    parseSwf(movieUrl, movieParams, objectParams);
+    parseSwf(movieUrl, baseUrl, movieParams, objectParams);
   });
 
   if (isOverlay) {
@@ -241,7 +242,7 @@ function processExternalCommand(command) {
   }
 }
 
-function parseSwf(url, movieParams, objectParams) {
+function parseSwf(url, baseUrl, movieParams, objectParams) {
   var compilerSettings = FirefoxCom.requestSync('getCompilerSettings', null);
 
   // init misc preferences
@@ -284,7 +285,7 @@ function parseSwf(url, movieParams, objectParams) {
       turboMode: turboMode,
       bgcolor: backgroundColor,
       url: url,
-      baseUrl: url
+      baseUrl: baseUrl || url
     }
   };
   playerWindow.postMessage(data,  '*');
