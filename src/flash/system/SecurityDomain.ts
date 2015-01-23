@@ -15,9 +15,8 @@
  */
 // Class: SecurityDomain
 module Shumway.AVM2.AS.flash.system {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class SecurityDomain extends ASNative {
     
     // Called whenever the class is initialized.
@@ -31,26 +30,23 @@ module Shumway.AVM2.AS.flash.system {
     
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
+
+    static _currentDomain: SecurityDomain;
     
     constructor () {
       false && super();
-      dummyConstructor("public flash.system.SecurityDomain");
     }
     
     // JS -> AS Bindings
     
     
     // AS -> JS Bindings
-    // static _currentDomain: flash.system.SecurityDomain;
-    get currentDomain(): flash.system.SecurityDomain {
-      notImplemented("public flash.system.SecurityDomain::get currentDomain"); return;
-      // return this._currentDomain;
-    }
-    
-    // _domainID: string;
-    get domainID(): string {
-      notImplemented("public flash.system.SecurityDomain::get domainID"); return;
-      // return this._domainID;
+    static get currentDomain(): flash.system.SecurityDomain {
+      if (!this._currentDomain) {
+        this._currentDomain = new system.SecurityDomain();
+      }
+      somewhatImplemented("public flash.system.SecurityDomain::get currentDomain");
+      return this._currentDomain;
     }
   }
 }
