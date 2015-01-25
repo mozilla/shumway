@@ -16,7 +16,6 @@
 // Class: TextEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TextEvent extends flash.events.Event {
 
     static classInitializer: any = null;
@@ -25,15 +24,32 @@ module Shumway.AVM2.AS.flash.events {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
-                text: string = "") {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.TextEvent");
+    constructor(type: string, bubbles: boolean, cancelable: boolean, text: string) {
+      super(type, bubbles, cancelable);
+      this._text = text;
     }
 
-    // JS -> AS Bindings
     static LINK: string = "link";
     static TEXT_INPUT: string = "textInput";
+
+    _text: string;
+
+    get text(): string {
+      return this._text;
+    }
+     set text(value: string) {
+      this._text = value;
+    }
+
+    clone(): Event {
+      var textEvent = new TextEvent(this.type, this.bubbles, this.cancelable, this.text);
+      this.copyNativeData(textEvent);
+      return textEvent;
+    }
+
+    toString(): string {
+      return this.formatToString('TextEvent', 'type', 'bubbles', 'cancelable', 'text');
+    }
 
     copyNativeData(event: flash.events.TextEvent): void {
       notImplemented("public flash.events.TextEvent::copyNativeData");

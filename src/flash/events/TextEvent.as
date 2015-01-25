@@ -20,33 +20,18 @@ public class TextEvent extends Event {
   public static const LINK:String = "link";
   public static const TEXT_INPUT:String = "textInput";
 
-  private var _text:String;
 
   public function TextEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false,
                             text:String = "")
   {
     super(type, bubbles, cancelable);
-    _text = text;
+    this.text = text;
   }
 
-  public function get text():String {
-    return _text;
-  }
+  public native function get text():String;
+  public native function set text(value:String):void;
 
-  public function set text(value:String):void {
-    _text = value;
-  }
-
-  public override function clone():Event {
-    var textEvent:TextEvent = new TextEvent(type, bubbles, cancelable, text);
-    copyNativeData(textEvent);
-    return textEvent;
-  }
-
-  public override function toString():String {
-    return formatToString('TextEvent', 'type', 'bubbles', 'cancelable', 'text');
-  }
-
-  private native function copyNativeData(event: TextEvent) : void;
+  public override native function clone():Event;
+  public override native function toString():String;
 }
 }

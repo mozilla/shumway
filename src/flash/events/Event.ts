@@ -74,7 +74,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
 
-    constructor(type: string, bubbles: boolean = false, cancelable: boolean = false) {
+    constructor(type: string, bubbles: boolean, cancelable: boolean) {
       false && super();
       this._type = asCoerceString(type);
       this._bubbles = !!bubbles;
