@@ -15,15 +15,11 @@
  */
 // Class: Timer
 module Shumway.AVM2.AS.flash.utils {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-
   export class Timer extends flash.events.EventDispatcher {
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = ["start!"]; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
+    static instanceSymbols: string [] = null;
 
     /**
      * This lets you toggle timer event dispatching which is useful when trying to profile other
@@ -31,43 +27,80 @@ module Shumway.AVM2.AS.flash.utils {
      */
     public static dispatchingEnabled = true;
 
-    constructor (delay: number, repeatCount: number /*int*/ = 0) {
+    constructor (delay: number, repeatCount: number /*int = 0 */) {
       false && super(undefined);
-      dummyConstructor("public flash.utils.Timer");
+      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      this._delay = +delay;
+      this._repeatCount = repeatCount | 0;
+      this._iteration = 0;
     }
-    
-    // JS -> AS Bindings
     
     _delay: number;
     _repeatCount: number /*int*/;
     _iteration: number /*int*/;
     _running: boolean;
-    reset: () => void;
-    start: () => void;
-    tick: () => void;
-
     _interval: number;
-    
-    // AS -> JS Bindings
 
     get running(): boolean {
       return this._running;
+    }
+    get delay() {
+      return this._delay;
+    }
+    set delay(value: number) {
+      value = +value;
+      if (value < 0 || !isFinite(value)) {
+        throwError('RangeError', Errors.DelayRangeError);
+      }
+      this._delay = value;
+
+      if (this._running) {
+        this.stop();
+        this.start();
+      }
+    }
+    set repeatCount(value: number) {
+      this._repeatCount = value | 0;
+      if (this._repeatCount && this._running && this._iteration >= this._repeatCount) {
+        this.stop();
+      }
+    }
+    get repeatCount() {
+      return this._repeatCount;
+    }
+    get currentCount(): number {
+      return this._iteration;
+    }
+    reset() {
+      if (this._running) {
+        this.stop();
+      }
+      this._iteration = 0;
     }
     stop(): void {
       this._running = false;
       clearInterval(this._interval);
     }
-    _start(delay: number, closure: ASFunction): void {
-      this._delay = +delay;
+    start(): void {
+      if (this._running) {
+        return;
+      }
       this._running = true;
-      this._interval = setInterval(closure, delay);
+      this._interval = setInterval(this._tick.bind(this), this._delay);
     }
-    _tick(): void {
+    private _tick(): void {
+      this._iteration++;
       if (!this._running) {
         return;
       }
       if (flash.utils.Timer.dispatchingEnabled) {
-        this.dispatchEvent(new flash.events.TimerEvent("timer", true, false));
+        this.dispatchEvent(new events.TimerEvent("timer", true, false));
+      }
+      if (this._repeatCount !== 0) {
+        if (this._iteration >= this._repeatCount) {
+          this.stop();
+          this.dispatchEvent(new events.TimerEvent(events.TimerEvent.TIMER_COMPLETE, false, false));
+        }
       }
     }
   }

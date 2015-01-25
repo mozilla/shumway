@@ -232,7 +232,7 @@ module Shumway.AVM2 {
   //  NoCloneMethodError                                        : { code: 2062, message: "Children of Event must override clone() {return new MyEventClass (...);}."},
   //  IMEError                                                  : { code: 2063, message: "Error attempting to execute IME command."},
   //  FocusNotSetError                                          : { code: 2065, message: "The focus cannot be set for this target."},
-  //  DelayRangeError                                           : { code: 2066, message: "The Timer delay specified is out of range."},
+    DelayRangeError                                           : { code: 2066, message: "The Timer delay specified is out of range."},
     ExternalInterfaceNotAvailableError                        : { code: 2067, message: "The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime."},
   //  InvalidSoundError                                         : { code: 2068, message: "Invalid sound."},
     InvalidLoaderMethodError                                  : { code: 2069, message: "The Loader class does not implement this method."},
