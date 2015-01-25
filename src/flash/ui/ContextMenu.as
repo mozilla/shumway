@@ -20,13 +20,10 @@ import flash.net.URLRequest;
 
 [native(cls='ContextMenuClass')]
 public final class ContextMenu extends NativeMenu {
-  public static function get isSupported(): Boolean {
-    return true;
-  }
-  public function ContextMenu() {
-    builtInItems = new ContextMenuBuiltInItems();
-    customItems = [];
-  }
+  public native static function get isSupported(): Boolean;
+
+  public native function ContextMenu();
+
   public native function get builtInItems(): ContextMenuBuiltInItems;
   public native function set builtInItems(value: ContextMenuBuiltInItems): void;
   public native function get customItems(): Array;
@@ -37,30 +34,8 @@ public final class ContextMenu extends NativeMenu {
   public native function set clipboardMenu(value: Boolean): void;
   public native function get clipboardItems(): ContextMenuClipboardItems;
   public native function set clipboardItems(value: ContextMenuClipboardItems): void;
-  public function hideBuiltInItems(): void {
-    var items: ContextMenuBuiltInItems = builtInItems;
-    if (!items) {
-      return;
-    }
-    items.save = false;
-    items.zoom = false;
-    items.quality = false;
-    items.play = false;
-    items.loop = false;
-    items.rewind = false;
-    items.forwardAndBack = false;
-    items.print = false;
-  }
-  public function clone(): ContextMenu {
-    var result: ContextMenu = new ContextMenu();
-    result.builtInItems = builtInItems.clone();
-
-    cloneLinkAndClipboardProperties(result);
-    for (var i: int = 0; i < customItems.length; i++) {
-      result.customItems.push(customItems[i].clone());
-    }
-    return result;
-  }
+  public native function hideBuiltInItems(): void;
+  public native function clone(): ContextMenu;
   private native function cloneLinkAndClipboardProperties(c: ContextMenu): void;
 }
 }

@@ -15,36 +15,20 @@
  */
 
 package flash.ui {
+[native(cls='ContextMenuClipboardItemsClass')]
 public final class ContextMenuClipboardItems {
-  public function ContextMenuClipboardItems() {}
-  public function get cut(): Boolean {
-    notImplemented("cut");
-    return false;
-  }
-  public function set cut(val: Boolean): void { notImplemented("cut"); }
-  public function get copy(): Boolean {
-    notImplemented("copy");
-    return false;
-  }
-  public function set copy(val: Boolean): void { notImplemented("copy"); }
-  public function get paste(): Boolean {
-    notImplemented("paste");
-    return false;
-  }
-  public function set paste(val: Boolean): void { notImplemented("paste"); }
-  public function get clear(): Boolean {
-    notImplemented("clear");
-    return false;
-  }
-  public function set clear(val: Boolean): void { notImplemented("clear"); }
-  public function get selectAll(): Boolean {
-    notImplemented("selectAll");
-    return false;
-  }
-  public function set selectAll(val: Boolean): void { notImplemented("selectAll"); }
-  public function clone(): ContextMenuClipboardItems {
-    notImplemented("clone");
-    return null;
-  }
+  public native function ContextMenuClipboardItems();
+
+  public native function get cut(): Boolean;
+  public native function set cut(val: Boolean);
+  public native function get copy(): Boolean;
+  public native function set copy(val: Boolean);
+  public native function get paste(): Boolean;
+  public native function set paste(val: Boolean);
+  public native function get clear(): Boolean;
+  public native function set clear(val: Boolean);
+  public native function get selectAll(): Boolean;
+  public native function set selectAll(val: Boolean);
+  public native function clone(): ContextMenuClipboardItems;
 }
 }

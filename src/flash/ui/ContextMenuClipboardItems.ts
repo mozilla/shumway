@@ -15,43 +15,79 @@
  */
 // Class: ContextMenuClipboardItems
 module Shumway.AVM2.AS.flash.ui {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   export class ContextMenuClipboardItems extends ASNative {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["cut", "cut", "copy", "copy", "paste", "paste", "clear", "clear", "selectAll", "selectAll", "clone"];
+    static instanceSymbols: string [] = null;
     
     constructor () {
       false && super();
-      dummyConstructor("public flash.ui.ContextMenuClipboardItems");
+
+      this._cut = true;
+      this._copy = true;
+      this._paste = true;
+      this._clear = true;
+      this._selectAll = true;
     }
-    
-    // JS -> AS Bindings
-    
-    cut: boolean;
-    copy: boolean;
-    paste: boolean;
-    clear: boolean;
-    selectAll: boolean;
-    clone: () => flash.ui.ContextMenuClipboardItems;
-    
-    // AS -> JS Bindings
-    
-    // _cut: boolean;
-    // _copy: boolean;
-    // _paste: boolean;
-    // _clear: boolean;
-    // _selectAll: boolean;
+
+    _cut: boolean;
+    _copy: boolean;
+    _paste: boolean;
+    _clear: boolean;
+    _selectAll: boolean;
+
+
+    get cut(): boolean {
+      somewhatImplemented("cut");
+      return this._cut;
+    }
+    set cut(val: boolean) {
+      somewhatImplemented("cut");
+      this._cut = !!val;
+    }
+    get copy(): boolean {
+      somewhatImplemented("copy");
+      return this._copy;
+    }
+    set copy(val: boolean) {
+      somewhatImplemented("copy");
+      this._copy = !!val;
+    }
+    get paste(): boolean {
+      somewhatImplemented("paste");
+      return this._paste;
+    }
+    set paste(val: boolean) {
+      somewhatImplemented("paste");
+      this._paste = !!val;
+    }
+    get clear(): boolean {
+      somewhatImplemented("clear");
+      return this._clear;
+    }
+    set clear(val: boolean) {
+      somewhatImplemented("clear");
+      this._clear = !!val;
+    }
+    get selectAll(): boolean {
+      somewhatImplemented("selectAll");
+      return this._selectAll;
+    }
+    set selectAll(val: boolean) {
+      somewhatImplemented("selectAll");
+      this._selectAll = !!val;
+    }
+    clone(): ContextMenuClipboardItems {
+      var items = new ui.ContextMenuClipboardItems();
+      items._cut = this._cut;
+      items._copy = this._copy;
+      items._paste = this._paste;
+      items._clear = this._clear;
+      items._selectAll = this._selectAll;
+      return items;
+    }
   }
 }
