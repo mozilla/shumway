@@ -15,7 +15,6 @@
  */
 // Class: TimerEvent
 module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TimerEvent extends flash.events.Event {
 
