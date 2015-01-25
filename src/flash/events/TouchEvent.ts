@@ -15,7 +15,7 @@
  */
 // Class: TouchEvent
 module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TouchEvent extends flash.events.Event {
 
@@ -51,6 +51,116 @@ module Shumway.AVM2.AS.flash.events {
     static PROXIMITY_OVER: string = "proximityOver";
     static PROXIMITY_ROLL_OUT: string = "proximityRollOut";
     static PROXIMITY_ROLL_OVER: string = "proximityRollOver";
+
+    private _touchPointID:  number;
+    private _isPrimaryTouchPoint: boolean;
+    private _localX: number;
+    private _localY: number;
+    private _sizeX: number;
+    private _sizeY: number;
+    private _pressure: number;
+    private _relatedObject: display.InteractiveObject;
+    private _ctrlKey: boolean;
+    private _altKey: boolean;
+    private _shiftKey: boolean;
+    private _isRelatedObjectInaccessible: boolean;
+
+
+    get touchPointID() {
+      return this._touchPointID;
+    }
+    set touchPointID(value: number) {
+      this._touchPointID = +value;
+    }
+    get isPrimaryTouchPoint(): boolean {
+      return this._isPrimaryTouchPoint;
+    }
+    set isPrimaryTouchPoint(value: boolean) {
+      this._isPrimaryTouchPoint = !!value;
+    }
+    get localX(): number {
+      return this._localX;
+    }
+    set localX(value: number) {
+      this._localX = +value;
+    }
+    get localY(): number {
+      return this._localY;
+    }
+    set localY(value: number) {
+      this._localY = +value;
+    }
+    get sizeX(): number {
+      return this._sizeX;
+    }
+    set sizeX(value: number) {
+      this._sizeX = +value;
+    }
+    get sizeY(): number {
+      return this._sizeY;
+    }
+    set sizeY(value: number) {
+      this._sizeY = +value;
+    }
+    get pressure(): number {
+      return this._pressure;
+    }
+    set pressure(value: number) {
+      this._pressure = +value;
+    }
+    get relatedObject(): display.InteractiveObject {
+      return this._relatedObject;
+    }
+    set relatedObject(value: display.InteractiveObject) {
+      this._relatedObject = value;
+    }
+    get ctrlKey(): boolean {
+      return this._ctrlKey;
+    }
+    set ctrlKey(value: boolean) {
+      this._ctrlKey = !!value;
+    }
+    get altKey(): boolean {
+      return this._altKey;
+    }
+    set altKey(value: boolean) {
+      this._altKey = !!value;
+    }
+    get shiftKey(): boolean {
+      return this._shiftKey;
+    }
+    set shiftKey(value: boolean) {
+      this._shiftKey = !!value;
+    }
+
+    get stageX(): number {
+      somewhatImplemented('TouchEvent::get stageX');
+      return this._localX;
+    }
+    get stageY(): number {
+      somewhatImplemented('TouchEvent::get stageY');
+      return this._localY;
+    }
+
+    get isRelatedObjectInaccessible(): boolean {
+      return this._isRelatedObjectInaccessible;
+    }
+    set isRelatedObjectInaccessible(value: boolean) {
+      this._isRelatedObjectInaccessible = value;
+    }
+
+    clone(): Event {
+      return new events.TouchEvent(this.type, this.bubbles, this.cancelable, this.touchPointID,
+                                   this.isPrimaryTouchPoint, this.localX, this.localY, this.sizeX,
+                                   this.sizeY, this.pressure, this.relatedObject, this.ctrlKey,
+                                   this.altKey, this.shiftKey);
+    }
+    toString(): string {
+      return this.formatToString('TouchEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                                 'touchPointID', 'isPrimaryTouchPoint', 'localX', 'localY', 'sizeX',
+                                 'sizeY', 'pressure', 'relatedObject', 'ctrlKey', 'altKey',
+                                 'shiftKey');
+    }
 
     updateAfterEvent(): void {
       Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
