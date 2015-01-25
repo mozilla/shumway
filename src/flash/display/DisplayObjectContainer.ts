@@ -121,6 +121,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get numChildren(): number {
+      return this._getNumChildren();
+    }
+    // `get numChildren` is overriden in `Stage` and has to be able to call this.
+    _getNumChildren(): number {
       return this._children.length;
     }
 
@@ -130,10 +134,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get tabChildren(): boolean {
+      return this._getTabChildren();
+    }
+    // `get tabChildren` is overriden in `Stage` and has to be able to call this.
+    _getTabChildren(): boolean {
       return this._tabChildren;
     }
 
     set tabChildren(enable: boolean) {
+      this._setTabChildren(enable);
+    }
+    // `set tabChildren` is overriden in `Stage` and has to be able to call this.
+    _setTabChildren(enable: boolean) {
       enable = !!enable;
 
       var old = this._tabChildren;
@@ -144,10 +156,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get mouseChildren(): boolean {
+      return this._getMouseChildren();
+    }
+    // `get mouseChildren` is overriden in `Stage` and has to be able to call this.
+    _getMouseChildren(): boolean {
       return this._mouseChildren;
     }
 
     set mouseChildren(enable: boolean) {
+      this._setMouseChildren(enable);
+    }
+    // `set mouseChildren` is overriden in `Stage` and has to be able to call this.
+    _setMouseChildren(enable: boolean) {
       this._mouseChildren = !!enable;
     }
 

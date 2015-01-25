@@ -92,7 +92,8 @@ module Shumway.AVM2.AS.flash.display {
     InvalidFillBounds                         = 0x0004,
 
     /**
-     * Display object has an invalid matrix because one of its local properties: x, y, scaleX, ... has been mutated.
+     * Display object has an invalid matrix because one of its local properties: x, y, scaleX, ...
+     * has been mutated.
      */
     InvalidMatrix                             = 0x0008,
 
@@ -102,26 +103,29 @@ module Shumway.AVM2.AS.flash.display {
     InvalidInvertedMatrix                     = 0x0010,
 
     /**
-     * Display object has an invalid concatenated matrix because its matrix or one of its ancestor's matrices has been mutated.
+     * Display object has an invalid concatenated matrix because its matrix or one of its
+     * ancestor's matrices has been mutated.
      */
     InvalidConcatenatedMatrix                 = 0x0020,
 
     /**
-     * Display object has an invalid inverted concatenated matrix because its matrix or one of its ancestor's matrices has been
-     * mutated. We don't always need to compute the inverted matrix. This is why we use a sepearete invalid flag for it and don't
-     * roll it under the |InvalidConcatenatedMatrix| flag.
+     * Display object has an invalid inverted concatenated matrix because its matrix or one of its
+     * ancestor's matrices has been mutated. We don't always need to compute the inverted matrix.
+     * This is why we use a sepearete invalid flag for it and don't roll it under the
+     * |InvalidConcatenatedMatrix| flag.
      */
     InvalidInvertedConcatenatedMatrix         = 0x0040,
 
     /**
-     * Display object has an invalid concatenated color transform because its color transform or one of its ancestor's color
-     * transforms has been mutated.
+     * Display object has an invalid concatenated color transform because its color transform or
+     * one of its ancestor's color transforms has been mutated.
      */
     InvalidConcatenatedColorTransform         = 0x0080,
 
     /**
-     * The display object's constructor has been executed or any of the derived class constructors have executed. It may be
-     * that the derived class doesn't call super, in such cases this flag must be set manually elsewhere.
+     * The display object's constructor has been executed or any of the derived class constructors
+     * have executed. It may be that the derived class doesn't call super, in such cases this flag
+     * must be set manually elsewhere.
      */
     Constructed                               = 0x0100,
 
@@ -136,16 +140,17 @@ module Shumway.AVM2.AS.flash.display {
     NeedsLoadEvent                            = 0x0400,
 
     /**
-     * Display object is owned by the timeline, meaning that it is under the control of the timeline and that a reference
-     * to this object has not leaked into AS3 code via the DisplayObjectContainer methods |getChildAt|,  |getChildByName|
-     * or through the execution of the symbol class constructor.
+     * Display object is owned by the timeline, meaning that it is under the control of the
+     * timeline and that a reference to this object has not leaked into AS3 code via the
+     * DisplayObjectContainer methods |getChildAt|,  |getChildByName| or through the execution of
+     * the symbol class constructor.
      */
     OwnedByTimeline                           = 0x0800,
 
     /**
-     * Display object is animated by the timeline. It may no longer be owned by the timeline (|OwnedByTimeline|) but it
-     * is still animated by it. If AS3 code mutates any property on the display object, this flag is cleared and further
-     * timeline mutations are ignored.
+     * Display object is animated by the timeline. It may no longer be owned by the timeline
+     * (|OwnedByTimeline|) but it is still animated by it. If AS3 code mutates any property on the
+     * display object, this flag is cleared and further timeline mutations are ignored.
      */
     AnimatedByTimeline                        = 0x1000,
 
@@ -163,19 +168,21 @@ module Shumway.AVM2.AS.flash.display {
     ContainsFrameScriptPendingChildren        = 0x4000,
 
     /**
-     * Indicates whether this display object is a MorphShape or contains at least one descendant that is.
+     * Indicates whether this display object is a MorphShape or contains at least one descendant
+     * that is.
      */
     ContainsMorph                             = 0x8000,
 
     /**
-     * Indicates whether this display object should be cached as a bitmap. The display object may be cached as bitmap even
-     * if this flag is not set, depending on whether any filters are applied or if the bitmap is too large or we've run out
-     * of memory.
+     * Indicates whether this display object should be cached as a bitmap. The display object may
+     * be cached as bitmap even if this flag is not set, depending on whether any filters are
+     * applied or if the bitmap is too large or we've run out of memory.
      */
     CacheAsBitmap                             = 0x010000,
 
     /**
-     * Indicates whether this display object's matrix has changed since the last time it was synchronized.
+     * Indicates whether this display object's matrix has changed since the last time it was
+     * synchronized.
      */
     DirtyMatrix                               = 0x100000,
 
@@ -185,49 +192,56 @@ module Shumway.AVM2.AS.flash.display {
     DirtyChildren                             = 0x200000,
 
     /**
-     * Indicates whether this display object's graphics has changed since the last time it was synchronized.
+     * Indicates whether this display object's graphics has changed since the last time it was
+     * synchronized.
      */
     DirtyGraphics                             = 0x400000,
 
     /**
-     * Indicates whether this display object's text content has changed since the last time it was synchronized.
+     * Indicates whether this display object's text content has changed since the last time it was
+     * synchronized.
      */
     DirtyTextContent                          = 0x800000,
 
     /**
-     * Indicates whether this display object's bitmap data has changed since the last time it was synchronized.
+     * Indicates whether this display object's bitmap data has changed since the last time it was
+     * synchronized.
      */
     DirtyBitmapData                           = 0x1000000,
 
     /**
-     * Indicates whether this display object's bitmap data has changed since the last time it was synchronized.
+     * Indicates whether this display object's bitmap data has changed since the last time it was
+     * synchronized.
      */
     DirtyNetStream                            = 0x2000000,
 
     /**
-     * Indicates whether this display object's color transform has changed since the last time it was synchronized.
+     * Indicates whether this display object's color transform has changed since the last time it
+     * was synchronized.
      */
     DirtyColorTransform                       = 0x4000000,
 
     /**
-     * Indicates whether this display object's mask has changed since the last time it was synchronized.
+     * Indicates whether this display object's mask has changed since the last time it was
+     * synchronized.
      */
     DirtyMask                                 = 0x8000000,
 
     /**
-     * Indicates whether this display object's clip depth has changed since the last time it was synchronized.
+     * Indicates whether this display object's clip depth has changed since the last time it was
+     * synchronized.
      */
     DirtyClipDepth                            = 0x10000000,
 
     /**
-     * Indicates whether this display object has dirty descendents. If this flag is set then the subtree need to
-     * be synchronized.
+     * Indicates whether this display object has dirty descendents. If this flag is set then the
+     * subtree need to be synchronized.
      */
     DirtyDescendents                          = 0x20000000,
 
     /**
-     * Indicates whether this display object's other properties have changed. We need to split this up in multiple
-     * bits so we don't serialize as much:
+     * Indicates whether this display object's other properties have changed. We need to split this
+     * up in multiple bits so we don't serialize as much:
      *
      * So far we only mark these properties here:
      *
@@ -304,11 +318,11 @@ module Shumway.AVM2.AS.flash.display {
   }
 
   /*
-   * Note: Private or protected functions are prefixed with "_" and *may* return objects that
+   * Note: Private or functions are prefixed with "_" and *may* return objects that
    * should not be mutated. This is for performance reasons and it's up to you to make sure
    * such return values are cloned.
    *
-   * Private or protected functions usually operate on twips, public functions work with pixels
+   * Private or functions usually operate on twips, public functions work with pixels
    * since that's what the AS3 specifies.
    */
 
@@ -778,7 +792,8 @@ module Shumway.AVM2.AS.flash.display {
     _graphics: flash.display.Graphics;
 
     /**
-     * This is only ever used in classes that can have children, like |DisplayObjectContainer| or |SimpleButton|.
+     * This is only ever used in classes that can have children, like |DisplayObjectContainer| or
+     * |SimpleButton|.
      */
     _children: DisplayObject [];
 
@@ -924,7 +939,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Computes the combined transformation color matrixes of this display object and all of its ancestors.
+     * Computes the combined transformation color matrixes of this display object and all of its
+     * ancestors.
      */
     _getConcatenatedColorTransform(): flash.geom.ColorTransform {
       if (!this.stage) {
@@ -977,7 +993,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Computes the bounding box for all of this display object's content, its graphics and all of its children.
+     * Computes the bounding box for all of this display object's content, its graphics and all of
+     * its children.
      */
     _getContentBounds(includeStrokes: boolean = true): Bounds {
       // Tobias: What about filters?
@@ -1012,8 +1029,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Gets the bounds of this display object relative to another coordinate space. The transformation
-     * matrix from the local coordinate space to the target coordinate space is computed using:
+     * Gets the bounds of this display object relative to another coordinate space. The
+     * transformation matrix from the local coordinate space to the target coordinate space is
+     * computed using:
      *
      *   this.concatenatedMatrix * inverse(target.concatenatedMatrix)
      *
@@ -1185,6 +1203,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get x(): number {
+      return this._getX();
+    }
+    _getX(): number {
       var value = this._matrix.tx;
       if (this._canHaveTextContent()) {
         var bounds = this._getContentBounds();
@@ -1210,6 +1231,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get y(): number {
+      return this._getY();
+    }
+    _getY(): number {
       var value = this._matrix.ty;
       if (this._canHaveTextContent()) {
         var bounds = this._getContentBounds();
@@ -1235,7 +1259,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * In Flash player, this always returns a positive number for some reason. This however, is not the case for scaleY.
+     * In Flash player, this always returns a positive number for some reason. This however, is not
+     * the case for scaleY.
      */
     get scaleX(): number {
       return Math.abs(this._scaleX);
@@ -1324,8 +1349,11 @@ module Shumway.AVM2.AS.flash.display {
      * The width of this display object in its parent coordinate space.
      */
     get width(): number {
-      var bounds = this._getTransformedBounds(this._parent, true);
-      return bounds.width / 20;
+      return this._getWidth();
+    }
+    // `get width` is overriden in `Stage` and has to be able to call this.
+    _getWidth() {
+      return this._getTransformedBounds(this._parent, true).width / 20;
     }
 
     /**
@@ -1334,6 +1362,10 @@ module Shumway.AVM2.AS.flash.display {
      * of the object in its parent cooridnate space with rotation applied.
      */
     set width(value: number) {
+      this._setWidth(value);
+    }
+    // `set width` is overriden in `Stage` and has to be able to call this.
+    _setWidth(value: number) {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
       if (value < 0) {
@@ -1361,6 +1393,10 @@ module Shumway.AVM2.AS.flash.display {
      * The height of this display object in its parent coordinate space.
      */
     get height(): number {
+      return this._getHeight();
+    }
+    // `get height` is overriden in `Stage` and has to be able to call this.
+    _getHeight(): number {
       var bounds = this._getTransformedBounds(this._parent, true);
       return bounds.height / 20;
     }
@@ -1371,6 +1407,10 @@ module Shumway.AVM2.AS.flash.display {
      * of the object in its parent cooridnate space with rotation applied.
      */
     set height(value: number) {
+      this._setHeight(value);
+    }
+    // `set height` is overriden in `Stage` and has to be able to call this.
+    _setHeight(value: number) {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
       if (value < 0) {
@@ -1417,6 +1457,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get transform(): flash.geom.Transform {
+      return this._getTransform();
+    }
+    _getTransform() {
       return new flash.geom.Transform(this);
     }
 
@@ -1479,10 +1522,6 @@ module Shumway.AVM2.AS.flash.display {
       return this._parent;
     }
 
-    get visible(): boolean {
-      return this._hasFlags(DisplayObjectFlags.Visible);
-    }
-
     get alpha(): number {
       return this._colorTransform.alphaMultiplier;
     }
@@ -1517,6 +1556,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get scale9Grid(): flash.geom.Rectangle {
+      return this._getScale9Grid();
+    }
+    _getScale9Grid() {
       return this._scale9Grid ? flash.geom.Rectangle.FromBounds(this._scale9Grid) : null;
     }
 
@@ -1530,6 +1572,9 @@ module Shumway.AVM2.AS.flash.display {
      * This is always true if a filter is applied.
      */
     get cacheAsBitmap(): boolean {
+      return this._getCacheAsBitmap();
+    }
+    _getCacheAsBitmap() {
       return (this._filters && this._filters.length > 0) || this._hasFlags(DisplayObjectFlags.CacheAsBitmap);
     }
 
@@ -1542,10 +1587,14 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * References to the internal |_filters| array and its BitmapFilter objects are never leaked outside of this
-     * class. The get/set filters accessors always return deep clones of this array.
+     * References to the internal |_filters| array and its BitmapFilter objects are never leaked
+     * outside of this class. The get/set filters accessors always return deep clones of this
+     * array.
      */
     get filters(): flash.filters.BitmapFilter [] {
+      return this._getFilters();
+    }
+    _getFilters() {
       return this._filters ? this._filters.map(function (x: flash.filters.BitmapFilter) {
         return x.clone();
       }) : [];
@@ -1569,6 +1618,10 @@ module Shumway.AVM2.AS.flash.display {
       if (changed) {
         this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
       }
+    }
+
+    get visible(): boolean {
+      return this._hasFlags(DisplayObjectFlags.Visible);
     }
 
     /**
@@ -1812,8 +1865,8 @@ module Shumway.AVM2.AS.flash.display {
           objects[0] = this;
         } else if (testingType === HitTestingType.ObjectsUnderPoint ||
             InteractiveObject.isType(this) && (<InteractiveObject>this)._mouseEnabled) {
-          // For getObjectsUnderPoint, push all direct hits, for mouse target finding InteractiveObjects
-          // only.
+          // For getObjectsUnderPoint, push all direct hits, for mouse target finding
+          // InteractiveObjects only.
           objects.push(this);
         }
       }
@@ -1873,6 +1926,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get scrollRect(): flash.geom.Rectangle {
+      return this._getScrollRect();
+    }
+    _getScrollRect(): flash.geom.Rectangle {
       return this._scrollRect ? this._scrollRect.clone() : null;
     }
 
@@ -1890,8 +1946,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Sets the opaque background color. By default this is |null|, which indicates that no opaque color is set.
-     * Otherwise this is an unsinged number.
+     * Sets the opaque background color. By default this is |null|, which indicates that no opaque
+     * color is set. Otherwise this is an unsinged number.
      */
     set opaqueBackground(value: any) {
       release || assert (value === null || Shumway.isInteger(value));
