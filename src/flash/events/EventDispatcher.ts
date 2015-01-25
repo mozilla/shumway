@@ -234,6 +234,11 @@ module Shumway.AVM2.AS.flash.events {
       this._target = target || this;
     }
 
+    toString(): string {
+      /* tslint:disable */
+      return ASObject.dynamicPrototype['$BgtoString'].call(this);
+    }
+
     /**
      * Don't lazily construct listener lists if all we're doing is looking for listener types that
      * don't exist yet.

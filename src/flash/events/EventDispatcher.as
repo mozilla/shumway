@@ -18,9 +18,7 @@ package flash.events {
 [native(cls='EventDispatcherClass')]
 public class EventDispatcher implements IEventDispatcher {
   public native function EventDispatcher(target:IEventDispatcher = null);
-  public function toString():String {
-    return Object.prototype.toString.call(this);
-  }
+  public native function toString():String;
   public native function addEventListener(type:String, listener:Function,
                                           useCapture:Boolean = false, priority:int = 0,
                                           useWeakReference:Boolean = false):void;
