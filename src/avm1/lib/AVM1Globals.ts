@@ -294,11 +294,12 @@ module Shumway.AVM1.Lib {
         request.method = method;
       }
       var context = AVM1Context.instance;
-      var loader: flash.net.URLLoader = new flash.net.URLLoader(request);
-      loader._setDecodeErrorsIgnored(true);
+      var loader = new flash.net.URLLoader(request);
+      loader._ignoreDecodeErrors = true;
       loader.dataFormat = 'variables'; // flash.net.URLLoaderDataFormat.VARIABLES;
       function completeHandler(event: flash.events.Event): void {
         loader.removeEventListener(flash.events.Event.COMPLETE, completeHandler);
+        release || Debug.assert(typeof loader.data === 'object');
         forEachPublicProperty(loader.data, function (key, value) {
           context.utils.setProperty(nativeTarget, key, value);
         });

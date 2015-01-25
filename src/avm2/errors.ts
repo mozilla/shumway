@@ -256,7 +256,7 @@ module Shumway.AVM2 {
     LoadingObjectNotSWFError                                  : { code: 2098, message: "The loading object is not a .swf file, you cannot request SWF properties from it."},
     LoadingObjectNotInitializedError                          : { code: 2099, message: "The loading object is not sufficiently loaded to provide this information."},
   //  EmptyByteArrayError                                       : { code: 2100, message: "The ByteArray parameter in Loader.loadBytes() must have length greater than 0."},
-  //  DecodeParamError                                          : { code: 2101, message: "The String passed to URLVariables.decode() must be a URL-encoded query string containing name/value pairs."},
+    DecodeParamError                                          : { code: 2101, message: "The String passed to URLVariables.decode() must be a URL-encoded query string containing name/value pairs."},
   //  NotAnXMLChildError                                        : { code: 2102, message: "The before XMLNode parameter must be a child of the caller."},
   //  XMLRecursionError                                         : { code: 2103, message: "XML recursion failure: new child would create infinite loop."},
     SceneNotFoundError                                        : { code: 2108, message: "Scene %1 was not found."},
