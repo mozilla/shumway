@@ -355,6 +355,10 @@ module Shumway.AVM2.AS.flash.display {
       return label ? label.name : null;
     }
 
+    get currentLabels(): FrameLabel[] {
+      return this._sceneForFrameIndex(this._currentFrame).labels;
+    }
+
     get currentFrameLabel(): string {
       var scene = this._sceneForFrameIndex(this._currentFrame);
       var label = scene.getLabelByFrame(this._currentFrame - scene.offset);
