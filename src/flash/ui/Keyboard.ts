@@ -383,19 +383,19 @@ module Shumway.AVM2.AS.flash.ui {
     // static _numLock: boolean;
     // static _hasVirtualKeyboard: boolean;
     // static _physicalKeyboardType: string;
-    get capsLock(): boolean {
+    static get capsLock(): boolean {
       notImplemented("public flash.ui.Keyboard::get capsLock"); return;
       // return this._capsLock;
     }
-    get numLock(): boolean {
+    static get numLock(): boolean {
       notImplemented("public flash.ui.Keyboard::get numLock"); return;
       // return this._numLock;
     }
-    get hasVirtualKeyboard(): boolean {
+    static get hasVirtualKeyboard(): boolean {
       notImplemented("public flash.ui.Keyboard::get hasVirtualKeyboard"); return;
       // return this._hasVirtualKeyboard;
     }
-    get physicalKeyboardType(): string {
+    static get physicalKeyboardType(): string {
       notImplemented("public flash.ui.Keyboard::get physicalKeyboardType"); return;
       // return this._physicalKeyboardType;
     }

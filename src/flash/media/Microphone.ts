@@ -16,6 +16,7 @@
 // Class: Microphone
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Microphone extends flash.events.EventDispatcher {
@@ -43,12 +44,14 @@ module Shumway.AVM2.AS.flash.media {
     // AS -> JS Bindings
     // static _names: any [];
     // static _isSupported: boolean;
-    get names(): any [] {
-      notImplemented("public flash.media.Microphone::get names"); return;
+    static get names(): any [] {
+      somewhatImplemented("public flash.media.Microphone::get names");
+      return [];
       // return this._names;
     }
-    get isSupported(): boolean {
-      notImplemented("public flash.media.Microphone::get isSupported"); return;
+    static get isSupported(): boolean {
+      somewhatImplemented("public flash.media.Microphone::get isSupported");
+      return false;
       // return this._isSupported;
     }
     static getMicrophone(index: number /*int*/ = -1): flash.media.Microphone {
@@ -176,15 +179,15 @@ module Shumway.AVM2.AS.flash.media {
       notImplemented("public flash.media.Microphone::set soundTransform"); return;
       // this._soundTransform = sndTransform;
     }
-//    get enhancedOptions(): flash.media.MicrophoneEnhancedOptions {
-//      notImplemented("public flash.media.Microphone::get enhancedOptions"); return;
-//      // return this._enhancedOptions;
-//    }
-//    set enhancedOptions(options: flash.media.MicrophoneEnhancedOptions) {
-//      options = options;
-//      notImplemented("public flash.media.Microphone::set enhancedOptions"); return;
-//      // this._enhancedOptions = options;
-//    }
+    get enhancedOptions(): any /* flash.media.MicrophoneEnhancedOptions */ {
+      notImplemented("public flash.media.Microphone::get enhancedOptions"); return;
+      // return this._enhancedOptions;
+    }
+    set enhancedOptions(options: any /* flash.media.MicrophoneEnhancedOptions */) {
+      options = options;
+      notImplemented("public flash.media.Microphone::set enhancedOptions"); return;
+      // this._enhancedOptions = options;
+    }
     setSilenceLevel(silenceLevel: number, timeout: number /*int*/ = -1): void {
       silenceLevel = +silenceLevel; timeout = timeout | 0;
       notImplemented("public flash.media.Microphone::setSilenceLevel"); return;
