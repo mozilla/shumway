@@ -15,6 +15,7 @@
  */
 
 package flash.events {
+[native(cls='ErrorEventClass')]
 public class ErrorEvent extends TextEvent {
   public static const ERROR:String = "error";
 
@@ -22,21 +23,14 @@ public class ErrorEvent extends TextEvent {
                              text:String = "", id:int = 0)
   {
     super(type, bubbles, cancelable, text);
-    _id = id;
+    setID(id);
   }
 
-  private var _id:int;
+  private native function setID(id: int);
 
-  public function get errorID():int {
-    return _id;
-  }
+  public native function get errorID():int;
 
-  public override function clone():Event {
-    return new ErrorEvent(type, bubbles, cancelable, text, errorID);
-  }
-
-  public override function toString():String {
-    return formatToString('ErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase', 'text');
-  }
+  public override native function clone():Event;
+  public override native function toString():String;
 }
 }

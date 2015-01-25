@@ -109,6 +109,7 @@ module Shumway.AVM2.AS {
 
       M("flash.events.EventDispatcher", "EventDispatcherClass", flash.events.EventDispatcher),
       M("flash.events.Event", "EventClass", flash.events.Event),
+      M("flash.events.ErrorEvent", "ErrorEventClass", flash.events.ErrorEvent),
       M("flash.events.IOErrorEvent", "IOErrorEventClass", flash.events.IOErrorEvent),
       M("flash.events.KeyboardEvent", "KeyboardEventClass", flash.events.KeyboardEvent),
       M("flash.events.MouseEvent", "MouseEventClass", flash.events.MouseEvent),
