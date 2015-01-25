@@ -22,7 +22,7 @@ import flash.geom.Rectangle;
 [native(cls='TextFieldClass')]
 public class TextField extends InteractiveObject {
   public static native function isFontCompatible(fontName: String, fontStyle: String): Boolean;
-  public function TextField() {}
+  public native function TextField();
   public native function get alwaysShowSelection(): Boolean;
   public native function set alwaysShowSelection(value: Boolean): void;
   public native function get antiAliasType(): String;
@@ -105,28 +105,16 @@ public class TextField extends InteractiveObject {
   public native function getTextFormat(beginIndex: int = -1, endIndex: int = -1): TextFormat;
   public native function getTextRuns(beginIndex: int = 0, endIndex: int = 2147483647): Array;
   public native function getRawText(): String;
-  public function getXMLText(beginIndex: int = 0, endIndex: int = 2147483647): String {
-    notImplemented("getXMLText");
-    return "";
-  }
-  public function insertXMLText(beginIndex: int, endIndex: int, richText: String,
-                                pasting: Boolean = false): void
-  {
-    notImplemented("insertXMLText");
-  }
+  public native function getXMLText(beginIndex: int = 0, endIndex: int = 2147483647): String;
+  public native function insertXMLText(beginIndex: int, endIndex: int, richText: String,
+                                       pasting: Boolean = false): void;
   public native function replaceSelectedText(value: String): void;
   public native function replaceText(beginIndex: int, endIndex: int, newText: String): void;
   public native function setSelection(beginIndex: int, endIndex: int): void;
   public native function setTextFormat(format: TextFormat, beginIndex: int = -1,
                                        endIndex: int = -1): void;
   public native function getImageReference(id: String): DisplayObject;
-  internal function copyRichText(): String {
-    notImplemented("copyRichText");
-    return "";
-  }
-  internal function pasteRichText(richText: String): Boolean {
-    notImplemented("pasteRichText");
-    return false;
-  }
+  internal native function copyRichText(): String;
+  internal native function pasteRichText(richText: String): Boolean;
 }
 }
