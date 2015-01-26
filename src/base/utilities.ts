@@ -243,15 +243,6 @@ module Shumway {
   }
 
   export module Debug {
-    export function backtrace() {
-      return "Uncomment Debug.backtrace();";
-//      try {
-//        throw new Error();
-//      } catch (e) {
-//        return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
-//      }
-    }
-
     export function error(message: string) {
       console.error(message);
       throw new Error(message);

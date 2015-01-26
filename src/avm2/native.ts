@@ -1355,7 +1355,8 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = null;
     public static getErrorMessage = Shumway.AVM2.getErrorMessage;
     public getStackTrace(): string {
-      return Shumway.AVM2.Runtime.AVM2.getStackTrace();
+      // Stack traces are only available in debug builds. We only do opt.
+      return null;
     }
     constructor(msg: any = "", id: any = 0) {
       false && super();

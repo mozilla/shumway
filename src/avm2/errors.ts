@@ -658,6 +658,3 @@ module Shumway.AVM2 {
 
 // Errors is used in dataBuffer.ts, which is compiled way before this. Gotta break the cycle.
 Errors = Shumway.AVM2.Errors;
-import getErrorMessage = Shumway.AVM2.getErrorMessage;
-import formatErrorMessage = Shumway.AVM2.formatErrorMessage;
-import translateErrorMessage = Shumway.AVM2.translateErrorMessage;
