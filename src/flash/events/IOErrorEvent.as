@@ -26,11 +26,8 @@ public class IOErrorEvent extends ErrorEvent {
   {
     super(type, bubbles, cancelable, text, id);
   }
-  public override function clone():Event {
-    return new IOErrorEvent(type, bubbles, cancelable, text, errorID);
-  }
-  public override function toString():String {
-    return formatToString('IOErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase', 'text');
-  }
+
+  public override native function clone():Event;
+  public override native function toString():String;
 }
 }

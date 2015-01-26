@@ -243,15 +243,6 @@ module Shumway {
   }
 
   export module Debug {
-    export function backtrace() {
-      return "Uncomment Debug.backtrace();";
-//      try {
-//        throw new Error();
-//      } catch (e) {
-//        return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
-//      }
-    }
-
     export function error(message: string) {
       console.error(message);
       throw new Error(message);
@@ -282,8 +273,8 @@ module Shumway {
       }
     }
 
-    export function warning(...messages: any[]) {
-      release || console.warn.apply(console, messages);
+    export function warning(message: any, arg1?: any, arg2?: any/*...messages: any[]*/) {
+      release || console.warn.apply(console, arguments);
     }
 
     export function notUsed(message: string) {

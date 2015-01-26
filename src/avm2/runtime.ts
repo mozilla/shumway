@@ -866,19 +866,18 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  export function throwError(name, error, ...rest) {
-    if (true) {
-      if (error.fqn) {
-        name = error.fqn;
-      }
-      var message = Shumway.AVM2.formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
-      throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
-    } else {
-      throwErrorFromVM(AVM2.currentDomain(), name, Shumway.AVM2.getErrorMessage(error.code), error.code);
+  export function throwError(className: string, error: any, replacement1?: any,
+                             replacement2?: any, replacement3?: any, replacement4?: any) {
+    if (error.fqn) {
+      className = error.fqn;
     }
+    var message = Shumway.AVM2.formatErrorMessage.apply(null,
+                                                        Array.prototype.slice.call(arguments, 1));
+    throwErrorFromVM(AVM2.currentDomain(), className, message, error.code);
   }
 
-  function throwErrorFromVM(domain, errorClass, message, id) {
+  function throwErrorFromVM(domain: ApplicationDomain, errorClass: string, message: string,
+                            id: number) {
     var error = new (domain.getClass(errorClass)).instanceConstructor(message, id);
     throw error;
   }

@@ -15,60 +15,136 @@
  */
 // Class: URLLoader
 module Shumway.AVM2.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  import Event = flash.events.Event;
+  import IOErrorEvent = flash.events.IOErrorEvent;
+  import ProgressEvent = flash.events.ProgressEvent;
+  import HTTPStatusEvent = flash.events.HTTPStatusEvent;
+  import SecurityErrorEvent = flash.events.SecurityErrorEvent;
+
   export class URLLoader extends flash.events.EventDispatcher {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
+    static instanceSymbols: string [] = null;
     
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = ["data", "dataFormat", "bytesLoaded", "bytesTotal", "load", "close"];
-    
-    constructor (request: flash.net.URLRequest = null) {
+    constructor (request?: flash.net.URLRequest) {
       false && super(undefined);
-      dummyConstructor("public flash.net.URLLoader");
+      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      var stream = this._stream = new URLStream();
+
+      stream.addEventListener(Event.OPEN, this.onStreamOpen.bind(this));
+      stream.addEventListener(Event.COMPLETE, this.onStreamComplete.bind(this));
+      stream.addEventListener(ProgressEvent.PROGRESS, this.onStreamProgress.bind(this));
+      stream.addEventListener(IOErrorEvent.IO_ERROR, this.onStreamIOError.bind(this));
+      stream.addEventListener(HTTPStatusEvent.HTTP_STATUS, this.onStreamHTTPStatus.bind(this));
+      stream.addEventListener(HTTPStatusEvent.HTTP_RESPONSE_STATUS,
+                              this.onStreamHTTPResponseStatus.bind(this));
+      stream.addEventListener(SecurityErrorEvent.SECURITY_ERROR,
+                              this.onStreamSecurityError.bind(this));
+
+      this.$BgdataFormat = 'text';
+
+      if (request) {
+        this.load(request);
+      }
     }
 
-    private _areDecodeErrorsIgnored: boolean;
+    $Bgdata: any;
+    $BgdataFormat: string;
+    $BgbytesLoaded: number /*uint*/;
+    $BgbytesTotal: number /*uint*/;
 
-    // JS -> AS Bindings
+    get data() {
+      return this.$Bgdata;
+    }
+    get dataFormat() {
+      return this.$BgdataFormat;
+    }
+    set dataFormat(format: string) {
+      release || Debug.assert(typeof format === 'string');
+      this.$BgdataFormat = format;
+    }
+    get bytesLoaded() {
+      return this.$BgbytesLoaded;
+    }
+    get bytesTotal() {
+      return this.$BgbytesTotal;
+    }
+
+    private _stream: flash.net.URLStream;
+    private _httpResponseEventBound: boolean;
+    _ignoreDecodeErrors: boolean;
+
+    load(request: URLRequest) {
+      this._stream.load(request);
+    }
+
+    close() {
+      this._stream.close();
+    }
+
+    complete() {
+      var response = new utils.ByteArray();
+      this._stream.readBytes(response);
+
+      if (this.$BgdataFormat === 'binary') {
+        this.$Bgdata = response;
+        return;
+      }
+
+      var data = response.toString();
+      if (response.length > 0 && this.$BgdataFormat === 'variables') {
+        var variable: URLVariables = new URLVariables();
+        if (this._ignoreDecodeErrors) {
+          variable._ignoreDecodingErrors = true;
+        }
+        variable.decode(String(data));
+        this.$Bgdata = variable;
+      } else {
+        this.$Bgdata = data;
+      }
+    }
+
+    addEventListener(type: string, listener: (event: Event) => void, useCapture?: boolean,
+                     priority?: number, useWeakReference?: boolean): void {
+      super.addEventListener(type, listener, useCapture, priority, useWeakReference);
+
+      // Looks like there is some bug related to the HTTP_RESPONSE_STATUS
+      if (type === HTTPStatusEvent.HTTP_RESPONSE_STATUS) {
+        this._httpResponseEventBound = true;
+      }
+    }
     
-    data: any;
-    dataFormat: string;
-    bytesLoaded: number /*uint*/;
-    bytesTotal: number /*uint*/;
-    // addEventListener: (type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false) => void;
-    load: (request: flash.net.URLRequest) => void;
-    close: () => void;
-    _stream: flash.net.URLStream;
-    _httpResponseEventBound: boolean;
-    complete: () => any;
-    onStreamOpen: (e: flash.events.Event) => any;
-    onStreamComplete: (e: flash.events.Event) => any;
-    onStreamProgress: (e: flash.events.ProgressEvent) => any;
-    onStreamIOError: (e: flash.events.IOErrorEvent) => any;
-    onStreamHTTPStatus: (e: flash.events.HTTPStatusEvent) => any;
-    onStreamHTTPResponseStatus: (e: flash.events.HTTPStatusEvent) => any;
-    onStreamSecurityError: (e: flash.events.SecurityErrorEvent) => any;
-    
-    // AS -> JS Bindings
-
-    _setDecodeErrorsIgnored(value: boolean): void {
-      this._areDecodeErrorsIgnored = !!value;
+    private onStreamOpen(e: Event) {
+      this.dispatchEvent(e);
     }
-
-    _getDecodeErrorsIgnored(): boolean {
-      return this._areDecodeErrorsIgnored;
+    private onStreamComplete(e: Event) {
+      this.complete();
+      this.dispatchEvent(e);
     }
-
-
+    private onStreamProgress(e: ProgressEvent) {
+      this.$BgbytesLoaded = e.bytesLoaded;
+      this.$BgbytesTotal = e.bytesTotal;
+      this.dispatchEvent(e);
+    }
+    private onStreamIOError(e: IOErrorEvent) {
+      this.complete();
+      this.dispatchEvent(e);
+    }
+    private onStreamHTTPStatus(e: HTTPStatusEvent) {
+      this.dispatchEvent(e);
+    }
+    private onStreamHTTPResponseStatus(e: HTTPStatusEvent) {
+      if (!this._httpResponseEventBound) {
+        return;
+      }
+      this.dispatchEvent(e);
+    }
+    private onStreamSecurityError(e: SecurityErrorEvent) {
+      this.dispatchEvent(e);
+    }
   }
 }

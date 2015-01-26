@@ -21,9 +21,7 @@ import flash.utils.ByteArray;
 
 [native(cls='SoundClass')]
 public class Sound extends EventDispatcher {
-  public function Sound(stream: URLRequest = null, context: SoundLoaderContext = null) {
-    load(stream, context);
-  }
+  public native function Sound(stream: URLRequest = null, context: SoundLoaderContext = null);
   public native function get url(): String;
   public native function get isURLInaccessible(): Boolean;
   public native function get length(): Number;
@@ -31,12 +29,7 @@ public class Sound extends EventDispatcher {
   public native function get bytesLoaded(): uint;
   public native function get bytesTotal(): int;
   public native function get id3(): ID3Info;
-  public function load(stream: URLRequest, context: SoundLoaderContext = null): void {
-    if (!context) {
-      context = new SoundLoaderContext();
-    }
-    _load(stream, context.checkPolicyFile, context.bufferTime);
-  }
+  public native function load(stream: URLRequest, context: SoundLoaderContext = null): void;
   public native function loadCompressedDataFromByteArray(bytes: ByteArray, bytesLength: uint): void;
   public native function loadPCMFromByteArray(bytes: ByteArray, samples: uint,
                                               format: String = "float", stereo: Boolean = true,
@@ -46,7 +39,5 @@ public class Sound extends EventDispatcher {
   public native function close(): void;
   public native function extract(target: ByteArray, length: Number,
                                  startPosition: Number = -1): Number;
-  private native function _load(stream: URLRequest, checkPolicyFile: Boolean,
-                                bufferTime: Number): void;
 }
 }

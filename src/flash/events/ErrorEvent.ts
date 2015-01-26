@@ -15,8 +15,6 @@
  */
 // Class: ErrorEvent
 module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class ErrorEvent extends flash.events.TextEvent {
 
     static classInitializer: any = null;
@@ -27,11 +25,29 @@ module Shumway.AVM2.AS.flash.events {
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 text: string = "", id: number /*int*/ = 0) {
-      super(undefined, undefined, undefined, undefined);
-      dummyConstructor("public flash.events.ErrorEvent");
+      super(type, bubbles, cancelable, text);
+      this.setID(id);
     }
 
     // JS -> AS Bindings
     static ERROR: string = "error";
+
+    _id: number;
+
+    private setID(id: number) {
+      this._id = id;
+    }
+
+    get errorID(): number {
+      return this._id;
+    }
+
+    clone(): Event {
+      return new ErrorEvent(this.type, this.bubbles, this.cancelable, this.text, this.errorID);
+    }
+
+    toString(): string {
+      return this.formatToString('ErrorEvent', 'type', 'bubbles', 'cancelable', 'text', 'errorID');
+    }
   }
 }

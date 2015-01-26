@@ -338,7 +338,7 @@ module Shumway.AVM2.AS {
       return v;
     }
 
-    push(...rest) {
+    push(arg1?, arg2?, arg3?, arg4?, arg5?, arg6?, arg7?, arg8?/*...rest*/) {
       this._checkFixed();
       this._ensureCapacity(this._length + arguments.length);
       for (var i = 0; i < arguments.length; i++) {

@@ -26,7 +26,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
 
     static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // ["name", "mask", "visible", "x", "y", "z", "scaleX", "scaleY", "scaleZ", "rotation", "rotationX", "rotationY", "rotationZ", "alpha", "cacheAsBitmap", "opaqueBackground", "scrollRect", "filters", "blendMode", "transform", "accessibilityProperties", "scale9Grid", "tabEnabled", "tabIndex", "focusRect", "mouseEnabled", "accessibilityImplementation", "width", "width", "height", "height", "textSnapshot", "mouseChildren", "mouseChildren", "numChildren", "tabChildren", "tabChildren", "contextMenu", "constructor", "constructor", "addChild", "addChildAt", "setChildIndex", "addEventListener", "hasEventListener", "willTrigger", "dispatchEvent"];
+    static instanceSymbols: string [] = null;
     static initializer: any = null;
 
     constructor () {
@@ -321,7 +321,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set alpha(alpha: number) {
-      throwError("Error", Errors.InvalidStageMethodError);
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
 
     get alpha(): number {
@@ -370,12 +370,76 @@ module Shumway.AVM2.AS.flash.display {
       super.swapChildrenAt(index1, index2);
     }
 
-    invalidate(): void {
-      this._invalidated = true;
+    get width(): number {
+      this.requireOwnerPermissions();
+      return this._getWidth();
+    }
+    set width(value: number) {
+      this.requireOwnerPermissions();
+      this._setWidth(value);
+    }
+    get height(): number {
+      this.requireOwnerPermissions();
+      return this._getHeight();
+    }
+    set height(value: number) {
+      this.requireOwnerPermissions();
+      this._setHeight(value);
+    }
+    get mouseChildren(): boolean {
+      this.requireOwnerPermissions();
+      return this._getMouseChildren();
+    }
+    set mouseChildren(value: boolean) {
+      this.requireOwnerPermissions();
+      this._setMouseChildren(value);
+    }
+    get numChildren(): number {
+      this.requireOwnerPermissions();
+      return this._getNumChildren();
+    }
+    get tabChildren(): boolean {
+      this.requireOwnerPermissions();
+      return this._getTabChildren();
+    }
+    set tabChildren(value: boolean) {
+      this.requireOwnerPermissions();
+      this._setTabChildren(value);
+    }
+    addChild(child: DisplayObject): DisplayObject {
+      this.requireOwnerPermissions();
+      return super.addChild(child);
+    }
+    addChildAt(child: DisplayObject, index: number): DisplayObject {
+      this.requireOwnerPermissions();
+      return super.addChildAt(child, index);
+    }
+    setChildIndex(child: DisplayObject, index: number): void {
+      this.requireOwnerPermissions();
+      super.setChildIndex(child, index);
+    }
+    addEventListener(type: string, listener: (event: events.Event) => void,
+                     useCapture: boolean, priority: number, useWeakReference: boolean): void
+    {
+      this.requireOwnerPermissions();
+      super.addEventListener(type, listener, useCapture, priority, useWeakReference);
+    }
+    hasEventListener(type: string): boolean {
+      this.requireOwnerPermissions();
+      return super.hasEventListener(type);
+    }
+    willTrigger(type: string): boolean {
+      this.requireOwnerPermissions();
+      return super.willTrigger(type);
     }
 
-    isInvalidated(): boolean {
-      return this._invalidated;
+    dispatchEvent(event: events.Event): boolean {
+      this.requireOwnerPermissions();
+      return super.dispatchEvent(event);
+    }
+
+    invalidate(): void {
+      this._invalidated = true;
     }
 
     isFocusInaccessible(): boolean {
@@ -391,6 +455,173 @@ module Shumway.AVM2.AS.flash.display {
       }
       DisplayObject._broadcastFrameEvent(flash.events.Event.RENDER);
       this._invalidated = false;
+    }
+
+    get name(): string {
+      return this._name;
+    }
+    set name(value: string) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get mask(): DisplayObject {
+      return this._mask;
+    }
+    set mask(value: DisplayObject) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get visible(): boolean {
+      return this._hasFlags(DisplayObjectFlags.Visible);
+    }
+    set visible(value: boolean) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get x(): number {
+      return this._getX();
+    }
+    set x(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get y(): number {
+      return this._getY();
+    }
+    set y(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get z(): number {
+      return this._z;
+    }
+    set z(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get scaleX(): number {
+      return Math.abs(this._scaleX);
+    }
+    set scaleX(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get scaleY(): number {
+      return this._scaleY;
+    }
+    set scaleY(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get scaleZ(): number {
+      return this._scaleZ;
+    }
+    set scaleZ(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get rotation(): number {
+      return this._rotation;
+    }
+    set rotation(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get rotationX(): number {
+      return this._rotationX;
+    }
+    set rotationX(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get rotationY(): number {
+      return this._rotationX;
+    }
+    set rotationY(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get rotationZ(): number {
+      return this._rotationX;
+    }
+    set rotationZ(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get cacheAsBitmap(): boolean {
+      return this._getCacheAsBitmap();
+    }
+    set cacheAsBitmap(value: boolean) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get opaqueBackground(): any {
+      return this._opaqueBackground;
+    }
+    set opaqueBackground(value: any) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get scrollRect(): flash.geom.Rectangle {
+      return this._getScrollRect();
+    }
+    set scrollRect(value: geom.Rectangle) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get filters(): flash.filters.BitmapFilter [] {
+      return this._getFilters();
+    }
+    set filters(value: flash.filters.BitmapFilter[]) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get blendMode(): string {
+      return this._blendMode;
+    }
+    set blendMode(value: string) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get transform(): flash.geom.Transform {
+      return this._getTransform();
+    }
+    set transform(value: geom.Transform) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
+      return this._accessibilityProperties;
+    }
+    set accessibilityProperties(value: accessibility.AccessibilityProperties) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get scale9Grid(): flash.geom.Rectangle {
+      return this._getScale9Grid();
+    }
+    set scale9Grid(value: geom.Rectangle) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get tabEnabled(): boolean {
+      return this._tabEnabled;
+    }
+    set tabEnabled(value: boolean) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get tabIndex(): number /*int*/ {
+      return this._tabIndex;
+    }
+    set tabIndex(value: number) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get focusRect(): any {
+      return this._focusRect;
+    }
+    set focusRect(value: any) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get mouseEnabled(): boolean {
+      return this._mouseEnabled;
+    }
+    set mouseEnabled(value: boolean) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get accessibilityImplementation(): flash.accessibility.AccessibilityImplementation {
+      return this._accessibilityImplementation;
+    }
+    set accessibilityImplementation(value: accessibility.AccessibilityImplementation) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+    }
+    get textSnapshot(): text.TextSnapshot {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
+      return null;
+    }
+    get contextMenu(): flash.ui.ContextMenu {
+      return this._contextMenu;
+    }
+    set contextMenu(value: ui.ContextMenu) {
+      throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
   }
 }

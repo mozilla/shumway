@@ -15,43 +15,33 @@
  */
 // Class: ContextMenu
 module Shumway.AVM2.AS.flash.ui {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ContextMenu extends flash.display.NativeMenu {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // ["isSupported"];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["hideBuiltInItems", "clone"];
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
     
     constructor () {
       false && super();
-      dummyConstructor("public flash.ui.ContextMenu");
+      display.NativeMenu.instanceConstructorNoInitialize.call(this);
+      this.builtInItems = new ui.ContextMenuBuiltInItems();
+      this.customItems = [];
     }
     
-    // JS -> AS Bindings
-    static isSupported: boolean;
-    
-    hideBuiltInItems: () => void;
-    clone: () => flash.ui.ContextMenu;
-    
-    // AS -> JS Bindings
-    // static _isSupported: boolean;
+    static get isSupported(): boolean {
+      somewhatImplemented('ContextMenu::isSupported');
+      return false;
+    }
     
     _builtInItems: flash.ui.ContextMenuBuiltInItems;
     _customItems: any [];
-    // _link: flash.net.URLRequest;
-    // _clipboardMenu: boolean;
-    // _clipboardItems: flash.ui.ContextMenuClipboardItems;
+    _link: flash.net.URLRequest;
+    _clipboardMenu: boolean;
+    _clipboardItems: flash.ui.ContextMenuClipboardItems;
+
     get builtInItems(): flash.ui.ContextMenuBuiltInItems {
       // TODO: Should clone here probably.
       somewhatImplemented("public flash.ui.ContextMenu::get builtInItems");
@@ -75,35 +65,63 @@ module Shumway.AVM2.AS.flash.ui {
       this._customItems = value;
     }
     get link(): flash.net.URLRequest {
-      notImplemented("public flash.ui.ContextMenu::get link"); return;
-      // return this._link;
+      somewhatImplemented("public flash.ui.ContextMenu::get link");
+      return this._link;
     }
     set link(value: flash.net.URLRequest) {
       value = value;
-      notImplemented("public flash.ui.ContextMenu::set link"); return;
-      // this._link = value;
+      somewhatImplemented("public flash.ui.ContextMenu::set link");
+      this._link = value;
     }
     get clipboardMenu(): boolean {
-      notImplemented("public flash.ui.ContextMenu::get clipboardMenu"); return;
-      // return this._clipboardMenu;
+      somewhatImplemented("public flash.ui.ContextMenu::get clipboardMenu");
+      return this._clipboardMenu;
     }
     set clipboardMenu(value: boolean) {
       value = !!value;
-      notImplemented("public flash.ui.ContextMenu::set clipboardMenu"); return;
-      // this._clipboardMenu = value;
+      somewhatImplemented("public flash.ui.ContextMenu::set clipboardMenu");
+      this._clipboardMenu = value;
     }
     get clipboardItems(): flash.ui.ContextMenuClipboardItems {
-      notImplemented("public flash.ui.ContextMenu::get clipboardItems"); return;
-      // return this._clipboardItems;
+      somewhatImplemented("public flash.ui.ContextMenu::get clipboardItems");
+      return this._clipboardItems;
     }
     set clipboardItems(value: flash.ui.ContextMenuClipboardItems) {
       value = value;
-      notImplemented("public flash.ui.ContextMenu::set clipboardItems"); return;
-      // this._clipboardItems = value;
+      somewhatImplemented("public flash.ui.ContextMenu::set clipboardItems");
+      this._clipboardItems = value;
     }
+
+    hideBuiltInItems(): void {
+      var items = this.builtInItems;
+      if (!items) {
+        return;
+      }
+      items.save = false;
+      items.zoom = false;
+      items.quality = false;
+      items.play = false;
+      items.loop = false;
+      items.rewind = false;
+      items.forwardAndBack = false;
+      items.print = false;
+    }
+
+    clone(): ContextMenu {
+      var result = new ui.ContextMenu();
+      result.builtInItems = this.builtInItems.clone();
+
+      this.cloneLinkAndClipboardProperties(result);
+      var customItems = this.customItems;
+      for (var i = 0; i < customItems.length; i++) {
+        result.customItems.push(customItems[i].clone());
+      }
+      return result;
+    }
+
     cloneLinkAndClipboardProperties(c: flash.ui.ContextMenu): void {
       c = c;
-      notImplemented("public flash.ui.ContextMenu::cloneLinkAndClipboardProperties"); return;
+      somewhatImplemented("public flash.ui.ContextMenu::cloneLinkAndClipboardProperties"); return;
     }
   }
 }

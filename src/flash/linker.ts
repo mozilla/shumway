@@ -74,8 +74,8 @@ module Shumway.AVM2.AS {
       M("flash.display.Graphics", "GraphicsClass", flash.display.Graphics),
       M("flash.display.SimpleButton", "SimpleButtonClass", flash.display.SimpleButton),
       M("flash.display.MorphShape", "MorphShapeClass", flash.display.MorphShape),
-      M("flash.display.NativeMenu", "MenuClass", flash.display.NativeMenu),
-      M("flash.display.NativeMenuItem", "MenuItemClass", flash.display.NativeMenuItem),
+      M("flash.display.NativeMenu", "NativeMenuClass", flash.display.NativeMenu),
+      M("flash.display.NativeMenuItem", "NativeMenuItemClass", flash.display.NativeMenuItem),
       M("flash.display.FrameLabel", "FrameLabelClass", flash.display.FrameLabel),
       M("flash.display.Scene", "SceneClass", flash.display.Scene),
       M("flash.display.AVM1Movie", "AVM1MovieClass", flash.display.AVM1Movie),
@@ -109,6 +109,7 @@ module Shumway.AVM2.AS {
 
       M("flash.events.EventDispatcher", "EventDispatcherClass", flash.events.EventDispatcher),
       M("flash.events.Event", "EventClass", flash.events.Event),
+      M("flash.events.ErrorEvent", "ErrorEventClass", flash.events.ErrorEvent),
       M("flash.events.IOErrorEvent", "IOErrorEventClass", flash.events.IOErrorEvent),
       M("flash.events.KeyboardEvent", "KeyboardEventClass", flash.events.KeyboardEvent),
       M("flash.events.MouseEvent", "MouseEventClass", flash.events.MouseEvent),
@@ -124,6 +125,8 @@ module Shumway.AVM2.AS {
 
       M("flash.ui.ContextMenu", "ContextMenuClass", flash.ui.ContextMenu),
       M("flash.ui.ContextMenuItem", "ContextMenuItemClass", flash.ui.ContextMenuItem),
+      M("flash.ui.ContextMenuBuiltInItems", "ContextMenuBuiltInItemsClass", flash.ui.ContextMenuBuiltInItems),
+      M("flash.ui.ContextMenuClipboardItems", "ContextMenuClipboardItemsClass", flash.ui.ContextMenuClipboardItems),
       M("flash.ui.Keyboard", "KeyboardClass", flash.ui.Keyboard),
       M("flash.ui.Mouse", "MouseClass", flash.ui.Mouse),
       M("flash.ui.MouseCursorData", "MouseCursorDataClass", flash.ui.MouseCursorData),
@@ -161,6 +164,7 @@ module Shumway.AVM2.AS {
       M("flash.media.SoundMixer", "SoundMixerClass", flash.media.SoundMixer),
       M("flash.media.SoundTransform", "SoundTransformClass", flash.media.SoundTransform),
       M("flash.media.Video", "VideoClass", flash.media.Video),
+      M("flash.media.StageVideo", "StageVideoClass", flash.media.StageVideo),
       M("flash.media.ID3Info", "ID3InfoClass", flash.media.ID3Info),
       M("flash.media.Microphone", "MicrophoneClass", flash.media.Microphone),
 

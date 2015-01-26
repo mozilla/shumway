@@ -26,132 +26,57 @@ import flash.ui.ContextMenu;
 
 [native(cls='StageClass')]
 public class Stage extends DisplayObjectContainer {
-  public native function Stage()
+  public native function Stage();
+  override public native function set name(value:String):void;
+  override public native function set mask(value:DisplayObject):void;
+  override public native function set visible(value:Boolean):void;
+  override public native function set x(value:Number):void;
+  override public native function set y(value:Number):void;
+  override public native function set z(value:Number):void;
+  override public native function set scaleX(value:Number):void;
+  override public native function set scaleY(value:Number):void;
+  override public native function set scaleZ(value:Number):void;
+  override public native function set rotation(value:Number):void;
+  override public native function set rotationX(value:Number):void;
+  override public native function set rotationY(value:Number):void;
+  override public native function set rotationZ(value:Number):void;
+  override public native function set alpha(value:Number):void;
+  override public native function set cacheAsBitmap(value:Boolean):void;
+  override public native function set opaqueBackground(value:Object):void;
+  override public native function set scrollRect(value:Rectangle):void;
+  override public native function set filters(value:Array):void;
+  override public native function set blendMode(value:String):void;
+  override public native function set transform(value:Transform):void;
+  override public native function set accessibilityProperties(value:AccessibilityProperties):void;
+  override public native function set scale9Grid(value:Rectangle):void;
+  override public native function set tabEnabled(value:Boolean):void;
+  override public native function set tabIndex(value:int):void;
+  override public native function set focusRect(value:Object):void;
+  override public native function set mouseEnabled(value:Boolean):void;
+  override public native function set accessibilityImplementation(value:AccessibilityImplementation):void;
+  override public native function get textSnapshot():TextSnapshot;
+  override public native function set contextMenu(value:ContextMenu):void;
 
-  public override function set name(value:String):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set mask(value:DisplayObject):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set visible(value:Boolean):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set x(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set y(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set z(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set scaleX(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set scaleY(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set scaleZ(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set rotation(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set rotationX(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set rotationY(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set rotationZ(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set alpha(value:Number):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set cacheAsBitmap(value:Boolean):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set opaqueBackground(value:Object):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set scrollRect(value:Rectangle):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set filters(value:Array):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set blendMode(value:String):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set transform(value:Transform):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set accessibilityProperties(value:AccessibilityProperties):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set scale9Grid(value:Rectangle):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set tabEnabled(value:Boolean):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set tabIndex(value:int):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set focusRect(value:Object):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set mouseEnabled(value:Boolean):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function set accessibilityImplementation(value:AccessibilityImplementation):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
-  public override function get width():Number {
-    requireOwnerPermissions();
-    return super.width;
-  }
-  public override function set width(value:Number):void {
-    requireOwnerPermissions();
-    super.width = value;
-  }
-  public override function get height():Number {
-    requireOwnerPermissions();
-    return super.height;
-  }
-  public override function set height(value:Number):void {
-    requireOwnerPermissions();
-    super.height = value;
-  }
-  public override function get textSnapshot():TextSnapshot {
-    Error.throwError(IllegalOperationError, 2071);
-    return null;
-  }
-  public override function get mouseChildren():Boolean {
-    requireOwnerPermissions();
-    return super.mouseChildren;
-  }
-  public override function set mouseChildren(value:Boolean):void {
-    requireOwnerPermissions();
-    super.mouseChildren = value;
-  }
-  public override function get numChildren():int {
-    requireOwnerPermissions();
-    return super.numChildren;
-  }
-  public override function get tabChildren():Boolean {
-    requireOwnerPermissions();
-    return super.tabChildren;
-  }
-  public override function set tabChildren(value:Boolean):void {
-    requireOwnerPermissions();
-    super.tabChildren = value;
-  }
-  public override function set contextMenu(value:ContextMenu):void {
-    Error.throwError(IllegalOperationError, 2071);
-  }
+  override public native function get width():Number;
+  override public native function set width(value:Number):void;
+  override public native function get height():Number;
+  override public native function set height(value:Number):void;
+  override public native function get mouseChildren():Boolean;
+  override public native function set mouseChildren(value:Boolean):void;
+  override public native function get numChildren():int;
+  override public native function get tabChildren():Boolean;
+  override public native function set tabChildren(value:Boolean):void;
+  override public native function addChild(child:DisplayObject):DisplayObject;
+  override public native function addChildAt(child:DisplayObject, index:int):DisplayObject;
+  override public native function setChildIndex(child:DisplayObject,
+                                                index:int):void;
+  override public native function addEventListener(type:String, listener:Function,
+                                                   useCapture:Boolean = false, priority:int = 0,
+                                                   useWeakReference:Boolean = false):void;
+  override public native function hasEventListener(type:String):Boolean;
+  override public native function willTrigger(type:String):Boolean;
+  override public native function dispatchEvent(event:Event):Boolean;
+
   public native function get frameRate():Number;
   public native function set frameRate(value:Number):void;
   public native function get scaleMode():String;
@@ -191,46 +116,9 @@ public class Stage extends DisplayObjectContainer {
   public native function get allowsFullScreenInteractive():Boolean;
   public native function get contentsScaleFactor():Number;
   public native function get displayContextInfo():String;
-  public function get constructor() {
-    return null;
-  }
-  public function set constructor(c) {}
-  public override function addChild(child:DisplayObject):DisplayObject {
-    requireOwnerPermissions();
-    return super.addChild(child);
-  }
-  public override function addChildAt(child:DisplayObject, index:int):DisplayObject {
-    requireOwnerPermissions();
-    return super.addChildAt(child, index);
-  }
-  public override function setChildIndex(child:DisplayObject,
-                                         index:int):void {
-    requireOwnerPermissions();
-    super.setChildIndex(child, index);
-  }
-  public override function addEventListener(type:String, listener:Function,
-                                            useCapture:Boolean = false, priority:int = 0,
-                                            useWeakReference:Boolean = false):void
-  {
-    requireOwnerPermissions();
-    super.addEventListener(type, listener, useCapture, priority, useWeakReference);
-  }
-  public override function hasEventListener(type:String):Boolean {
-    requireOwnerPermissions();
-    return super.hasEventListener(type);
-  }
-  public override function willTrigger(type:String):Boolean {
-    requireOwnerPermissions();
-    return super.willTrigger(type);
-  }
   public override native function removeChildAt(index:int):DisplayObject;
   public override native function swapChildrenAt(index1:int, index2:int):void;
   public native function invalidate():void;
   public native function isFocusInaccessible():Boolean;
-  private native function requireOwnerPermissions(): void;
-  public override function dispatchEvent(event:Event):Boolean {
-    requireOwnerPermissions();
-    return super.dispatchEvent(event);
-  }
 }
 }

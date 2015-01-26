@@ -185,7 +185,7 @@
 
 // ///<reference path='errors/EOFError.ts' />
 // ///<reference path='errors/IOError.ts' />
-// ///<reference path='errors/IllegalOperationError.ts' />
+///<reference path='errors/IllegalOperationError.ts' />
 // ///<reference path='errors/InvalidSWFError.ts' />
 // ///<reference path='errors/MemoryError.ts' />
 // ///<reference path='errors/ScriptTimeoutError.ts' />
@@ -239,8 +239,8 @@
 ///<reference path='media/SoundLoaderContext.ts' />
 ///<reference path='media/SoundMixer.ts' />
 ///<reference path='media/SoundTransform.ts' />
-// ///<reference path='media/StageVideo.ts' />
-// ///<reference path='media/StageVideoAvailability.ts' />
+///<reference path='media/StageVideo.ts' />
+///<reference path='media/StageVideoAvailability.ts' />
 ///<reference path='media/Video.ts' />
 // ///<reference path='media/VideoCodec.ts' />
 // ///<reference path='media/VideoStatus.ts' />

@@ -15,75 +15,27 @@
  */
 
 package flash.ui {
+[native(cls='ContextMenuBuiltInItemsClass')]
 public final class ContextMenuBuiltInItems {
-  public function ContextMenuBuiltInItems() {}
-  private var _save: Boolean = true;
-  private var _zoom: Boolean = true;
-  private var _quality: Boolean = true;
-  private var _play: Boolean = true;
-  private var _loop: Boolean = true;
-  private var _rewind: Boolean = true;
-  private var _forwardAndBack: Boolean = true;
-  private var _print: Boolean = true;
-  public function get save(): Boolean {
-    return _save;
-  }
-  public function set save(val: Boolean): void {
-    _save = val;
-  }
-  public function get zoom(): Boolean {
-    return _zoom;
-  }
-  public function set zoom(val: Boolean): void {
-    _zoom = val;
-  }
-  public function get quality(): Boolean {
-    return _quality;
-  }
-  public function set quality(val: Boolean): void {
-    _quality = val;
-  }
-  public function get play(): Boolean {
-    return _play;
-  }
-  public function set play(val: Boolean): void {
-    _play = val;
-  }
-  public function get loop(): Boolean {
-    return _loop;
-  }
-  public function set loop(val: Boolean): void {
-    _loop = val;
-  }
-  public function get rewind(): Boolean {
-    return _rewind;
-  }
-  public function set rewind(val: Boolean): void {
-    _rewind = val;
-  }
-  public function get forwardAndBack(): Boolean {
-    return _forwardAndBack;
-  }
-  public function set forwardAndBack(val: Boolean): void {
-    _forwardAndBack = val;
-  }
-  public function get print(): Boolean {
-    return _print;
-  }
-  public function set print(val: Boolean): void {
-    _print = val;
-  }
-  public function clone(): ContextMenuBuiltInItems {
-    var items: ContextMenuBuiltInItems = new ContextMenuBuiltInItems();
-    items.save = save;
-    items.zoom = zoom;
-    items.quality = quality;
-    items.play = play;
-    items.loop = loop;
-    items.rewind = rewind;
-    items.forwardAndBack = forwardAndBack;
-    items.print = print;
-    return items;
-  }
+  public native function ContextMenuBuiltInItems();
+
+  public native function get save(): Boolean;
+  public native function set save(val: Boolean): void;
+  public native function get zoom(): Boolean;
+  public native function set zoom(val: Boolean): void;
+  public native function get quality(): Boolean;
+  public native function set quality(val: Boolean): void;
+  public native function get play(): Boolean;
+  public native function set play(val: Boolean): void;
+  public native function get loop(): Boolean;
+  public native function set loop(val: Boolean): void;
+  public native function get rewind(): Boolean;
+  public native function set rewind(val: Boolean): void;
+  public native function get forwardAndBack(): Boolean;
+  public native function set forwardAndBack(val: Boolean): void;
+  public native function get print(): Boolean;
+  public native function set print(val: Boolean): void;
+
+  public native function clone(): ContextMenuBuiltInItems;
 }
 }

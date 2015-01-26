@@ -26,5 +26,6 @@
 ///<reference path='binaryFileReader.ts' />
 ///<reference path='remoting.ts' />
 
-var throwError: (name: any, error: any, ...rest: any[]) => void;
+var throwError: (className: string, error: any, replacement1?: any,
+                 replacement2?: any, replacement3?: any, replacement4?: any) => void;
 var Errors: any;

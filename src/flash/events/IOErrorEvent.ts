@@ -15,11 +15,7 @@
  */
 // Class: IOErrorEvent
 module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class IOErrorEvent extends flash.events.ErrorEvent {
-
     static classInitializer: any = null;
     static initializer: any = null;
 
@@ -28,8 +24,7 @@ module Shumway.AVM2.AS.flash.events {
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 text: string = "", id: number /*int*/ = 0) {
-      super(undefined, undefined, undefined, undefined, undefined);
-      dummyConstructor("public flash.events.IOErrorEvent");
+      super(type, bubbles, cancelable, text, id);
     }
 
     // JS -> AS Bindings
@@ -37,5 +32,17 @@ module Shumway.AVM2.AS.flash.events {
     static NETWORK_ERROR: string = "networkError";
     static DISK_ERROR: string = "diskError";
     static VERIFY_ERROR: string = "verifyError";
+
+    clone(): Event {
+      var event = new IOErrorEvent(this.type, this.bubbles, this.cancelable, this.text,
+                                   this.errorID);
+      this.copyNativeData(event);
+      return event;
+    }
+
+    toString(): string {
+      return this.formatToString('IOErrorEvent', 'type', 'bubbles', 'cancelable', 'text',
+                                 'errorID');
+    }
   }
 }

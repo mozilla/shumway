@@ -232,7 +232,7 @@ module Shumway.AVM2 {
   //  NoCloneMethodError                                        : { code: 2062, message: "Children of Event must override clone() {return new MyEventClass (...);}."},
   //  IMEError                                                  : { code: 2063, message: "Error attempting to execute IME command."},
   //  FocusNotSetError                                          : { code: 2065, message: "The focus cannot be set for this target."},
-  //  DelayRangeError                                           : { code: 2066, message: "The Timer delay specified is out of range."},
+    DelayRangeError                                           : { code: 2066, message: "The Timer delay specified is out of range."},
     ExternalInterfaceNotAvailableError                        : { code: 2067, message: "The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime."},
   //  InvalidSoundError                                         : { code: 2068, message: "Invalid sound."},
     InvalidLoaderMethodError                                  : { code: 2069, message: "The Loader class does not implement this method."},
@@ -256,7 +256,7 @@ module Shumway.AVM2 {
     LoadingObjectNotSWFError                                  : { code: 2098, message: "The loading object is not a .swf file, you cannot request SWF properties from it."},
     LoadingObjectNotInitializedError                          : { code: 2099, message: "The loading object is not sufficiently loaded to provide this information."},
   //  EmptyByteArrayError                                       : { code: 2100, message: "The ByteArray parameter in Loader.loadBytes() must have length greater than 0."},
-  //  DecodeParamError                                          : { code: 2101, message: "The String passed to URLVariables.decode() must be a URL-encoded query string containing name/value pairs."},
+    DecodeParamError                                          : { code: 2101, message: "The String passed to URLVariables.decode() must be a URL-encoded query string containing name/value pairs."},
   //  NotAnXMLChildError                                        : { code: 2102, message: "The before XMLNode parameter must be a child of the caller."},
   //  XMLRecursionError                                         : { code: 2103, message: "XML recursion failure: new child would create infinite loop."},
     SceneNotFoundError                                        : { code: 2108, message: "Scene %1 was not found."},
@@ -658,6 +658,3 @@ module Shumway.AVM2 {
 
 // Errors is used in dataBuffer.ts, which is compiled way before this. Gotta break the cycle.
 Errors = Shumway.AVM2.Errors;
-import getErrorMessage = Shumway.AVM2.getErrorMessage;
-import formatErrorMessage = Shumway.AVM2.formatErrorMessage;
-import translateErrorMessage = Shumway.AVM2.translateErrorMessage;

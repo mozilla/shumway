@@ -16,7 +16,6 @@
 // Class: Sound
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Telemetry = Shumway.Telemetry;
@@ -98,41 +97,38 @@ module Shumway.AVM2.AS.flash.media {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["load"];
     
-    constructor (stream: flash.net.URLRequest = null, context: flash.media.SoundLoaderContext = null) {
+    constructor (stream?: flash.net.URLRequest, context?: flash.media.SoundLoaderContext) {
       false && super(undefined);
-      dummyConstructor("public flash.media.Sound");
+      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      this._isURLInaccessible = false;
+      this._isBuffering = false;
+      this.load(stream, context);
     }
 
     private _playQueue: any[];
     private _soundData: SoundData;
     private _stream: flash.net.URLStream;
-
-    // JS -> AS Bindings
-    
-    load: (stream: flash.net.URLRequest, context?: flash.media.SoundLoaderContext) => void;
-    
-    // AS -> JS Bindings
-    
     private _url: string;
-    // _isURLInaccessible: boolean;
+    _isURLInaccessible: boolean;
     private _length: number;
-    // _isBuffering: boolean;
+    _isBuffering: boolean;
     private _bytesLoaded: number /*uint*/;
     private _bytesTotal: number /*int*/;
     private _id3: ID3Info;
+
     get url(): string {
       return this._url;
     }
     get isURLInaccessible(): boolean {
-      notImplemented("public flash.media.Sound::get isURLInaccessible"); return;
-      // return this._isURLInaccessible;
+      somewhatImplemented("public flash.media.Sound::get isURLInaccessible");
+      return this._isURLInaccessible;
     }
     get length(): number {
       return this._length;
     }
     get isBuffering(): boolean {
-      notImplemented("public flash.media.Sound::get isBuffering"); return;
-      // return this._isBuffering;
+      somewhatImplemented("public flash.media.Sound::get isBuffering");
+      return this._isBuffering;
     }
     get bytesLoaded(): number /*uint*/ {
       return this._bytesLoaded;
@@ -192,11 +188,13 @@ module Shumway.AVM2.AS.flash.media {
       target = target; length = +length; startPosition = +startPosition;
       notImplemented("public flash.media.Sound::extract"); return;
     }
-    _load(request: flash.net.URLRequest, checkPolicyFile: boolean, bufferTime: number): void {
-      checkPolicyFile = !!checkPolicyFile; bufferTime = +bufferTime;
+    load(request: flash.net.URLRequest, context?: SoundLoaderContext): void {
       if (!request) {
         return;
       }
+
+      var checkPolicyFile: boolean = context ? context.checkPolicyFile : false;
+      var bufferTime: number = context ? context.bufferTime : 1000;
 
       var _this = this;
       var stream = this._stream = new flash.net.URLStream();

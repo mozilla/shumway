@@ -218,15 +218,6 @@ module Shumway.AVM2.Runtime {
         });
       return playerglobalLoadedPromise;
     }
-
-    public notifyConstruct(instanceConstructor, args) {
-      // REMOVEME
-    }
-
-    public static getStackTrace(): string {
-      Shumway.Debug.somewhatImplemented("getStackTrace");
-      return Shumway.Debug.backtrace();
-    }
   }
 
   export class ApplicationDomain {

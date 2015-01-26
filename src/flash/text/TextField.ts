@@ -16,7 +16,6 @@
 // Class: TextField
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import assert = Shumway.Debug.assert;
   import warning = Shumway.Debug.warning;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
@@ -125,8 +124,8 @@ module Shumway.AVM2.AS.flash.text {
     };
 
     constructor() {
-      super();
-      dummyConstructor("public flash.text.TextField");
+      false && super();
+      display.InteractiveObject.instanceConstructorNoInitialize.call(this);
     }
 
     _setFillAndLineBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {
@@ -584,6 +583,28 @@ module Shumway.AVM2.AS.flash.text {
       value = !!value;
       notImplemented("public flash.text.TextField::set useRichTextClipboard"); return;
       // this._useRichTextClipboard = value;
+    }
+
+    copyRichText() {
+      notImplemented("public flash.text.TextField::copyRichText");
+    }
+    pasteRichText(richText: string) {
+      richText = asCoerceString(richText);
+      notImplemented("public flash.text.TextField::pasteRichText");
+    }
+
+    getXMLText(beginIndex: number, endIndex: number = 2147483647): string {
+      beginIndex = +beginIndex;
+      endIndex = +endIndex;
+      notImplemented("public flash.text.TextField::getXMLText");
+      return "";
+    }
+    insertXMLText(beginIndex: number, endIndex: number, richText: String, pasting: Boolean): void {
+      beginIndex = +beginIndex;
+      endIndex = +endIndex;
+      richText = asCoerceString(richText);
+      pasting = !!pasting;
+      notImplemented("public flash.text.TextField::insertXMLText");
     }
 
     private _ensureLineMetrics() {

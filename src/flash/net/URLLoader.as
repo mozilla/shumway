@@ -15,105 +15,19 @@
  */
 
 package flash.net {
-import flash.events.Event;
 import flash.events.EventDispatcher;
-import flash.events.HTTPStatusEvent;
-import flash.events.IOErrorEvent;
-import flash.events.ProgressEvent;
-import flash.events.SecurityErrorEvent;
-import flash.utils.ByteArray;
 
 [native(cls="URLLoaderClass")]
 public class URLLoader extends EventDispatcher {
-  public function URLLoader(request:URLRequest = null) {
-    _stream = new URLStream();
-
-    _stream.addEventListener(Event.OPEN, onStreamOpen);
-    _stream.addEventListener(Event.COMPLETE, onStreamComplete);
-    _stream.addEventListener(ProgressEvent.PROGRESS, onStreamProgress);
-    _stream.addEventListener(IOErrorEvent.IO_ERROR, onStreamIOError);
-    _stream.addEventListener(HTTPStatusEvent.HTTP_STATUS, onStreamHTTPStatus);
-    _stream.addEventListener(HTTPStatusEvent.HTTP_RESPONSE_STATUS, onStreamHTTPResponseStatus);
-    _stream.addEventListener(SecurityErrorEvent.SECURITY_ERROR, onStreamSecurityError);
-
-    if (request) {
-      load(request);
-    }
-  }
+  public native function URLLoader(request:URLRequest = null);
   public var data;
-  public var dataFormat:String = "text";
+  public var dataFormat:String;
   public var bytesLoaded:uint;
   public var bytesTotal:uint;
-  public override function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void {
-    super.addEventListener(type, listener, useCapture, priority, useWeakReference);
-
-    // Looks like there is some bug related to the HTTP_RESPONSE_STATUS
-    if (type == HTTPStatusEvent.HTTP_RESPONSE_STATUS) {
-      _httpResponseEventBound = true;
-    }
-  }
-  public function load(request:URLRequest):void {
-    _stream.load(request);
-  }
-  public function close():void {
-    _stream.close();
-  }
-
-  public native function _getDecodeErrorsIgnored():Boolean;
-  public native function _setDecodeErrorsIgnored(value:Boolean):void;
-
-  private var _stream:URLStream;
-  private var _httpResponseEventBound:Boolean;
-
-  private function complete() {
-    var response:ByteArray = new ByteArray();
-    _stream.readBytes(response);
-
-    if (dataFormat == 'binary') {
-      data = response;
-      return;
-    }
-
-    data = response.toString();
-    if (response.length > 0 && dataFormat == 'variables') {
-      var variable: URLVariables = new URLVariables();
-      if (this._getDecodeErrorsIgnored()) {
-        variable._setErrorsIgnored(true);
-      }
-      variable.decode(String(data));
-      data = variable;
-    }
-  }
-  private function onStreamOpen(e:Event) {
-    dispatchEvent(e);
-  }
-  private function onStreamComplete(e:Event) {
-    complete();
-
-    dispatchEvent(e);
-  }
-  private function onStreamProgress(e:ProgressEvent) {
-    bytesLoaded = e.bytesLoaded;
-    bytesTotal = e.bytesTotal;
-
-    dispatchEvent(e);
-  }
-  private function onStreamIOError(e:IOErrorEvent) {
-    complete();
-
-    dispatchEvent(e);
-  }
-  private function onStreamHTTPStatus(e:HTTPStatusEvent) {
-    dispatchEvent(e);
-  }
-  private function onStreamHTTPResponseStatus(e:HTTPStatusEvent) {
-    if (!_httpResponseEventBound) {
-      return;
-    }
-    dispatchEvent(e);
-  }
-  private function onStreamSecurityError(e:SecurityErrorEvent) {
-    dispatchEvent(e);
-  }
+  public override native function addEventListener(type:String, listener:Function,
+                                                   useCapture:Boolean = false, priority:int = 0,
+                                                   useWeakReference:Boolean = false):void;
+  public native function load(request:URLRequest):void;
+  public native function close():void;
 }
 }

@@ -15,57 +15,95 @@
  */
 // Class: ContextMenuBuiltInItems
 module Shumway.AVM2.AS.flash.ui {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ContextMenuBuiltInItems extends ASNative {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["_save", "_zoom", "_quality", "_play", "_loop", "_rewind", "_forwardAndBack", "_print", "save", "save", "zoom", "zoom", "quality", "quality", "play", "play", "loop", "loop", "rewind", "rewind", "forwardAndBack", "forwardAndBack", "print", "print", "clone"];
+    static instanceSymbols: string [] = null;
     
     constructor () {
       false && super();
-      dummyConstructor("public flash.ui.ContextMenuBuiltInItems");
+
+      this._save = true;
+      this._zoom = true;
+      this._quality = true;
+      this._play = true;
+      this._loop = true;
+      this._rewind = true;
+      this._forwardAndBack = true;
+      this._print = true;
     }
-    
-    // JS -> AS Bindings
-    
-    _save: boolean;
-    _zoom: boolean;
-    _quality: boolean;
-    _play: boolean;
-    _loop: boolean;
-    _rewind: boolean;
-    _forwardAndBack: boolean;
-    _print: boolean;
-    save: boolean;
-    zoom: boolean;
-    quality: boolean;
-    play: boolean;
-    loop: boolean;
-    rewind: boolean;
-    forwardAndBack: boolean;
-    print: boolean;
-    clone: () => flash.ui.ContextMenuBuiltInItems;
-    
-    // AS -> JS Bindings
-    
-    // _save: boolean;
-    // _zoom: boolean;
-    // _quality: boolean;
-    // _play: boolean;
-    // _loop: boolean;
-    // _rewind: boolean;
-    // _forwardAndBack: boolean;
-    // _print: boolean;
+
+    private _save: boolean;
+    private _zoom: boolean;
+    private _quality: boolean;
+    private _play: boolean;
+    private _loop: boolean;
+    private _rewind: boolean;
+    private _forwardAndBack: boolean;
+    private _print: boolean;
+
+    get save(): boolean {
+      return this._save;
+    }
+    set save(val: boolean) {
+      this._save = !!val;
+    }
+    get zoom(): boolean {
+      return this._zoom;
+    }
+    set zoom(val: boolean) {
+      this._zoom = !!val;
+    }
+    get quality(): boolean {
+      return this._quality;
+    }
+    set quality(val: boolean) {
+      this._quality = !!val;
+    }
+    get play(): boolean {
+      return this._play;
+    }
+    set play(val: boolean) {
+      this._play = !!val;
+    }
+    get loop(): boolean {
+      return this._loop;
+    }
+    set loop(val: boolean) {
+      this._loop = !!val;
+    }
+    get rewind(): boolean {
+      return this._rewind;
+    }
+    set rewind(val: boolean) {
+      this._rewind = !!val;
+    }
+    get forwardAndBack(): boolean {
+      return this._forwardAndBack;
+    }
+    set forwardAndBack(val: boolean) {
+      this._forwardAndBack = !!val;
+    }
+    get print(): boolean {
+      return this._print;
+    }
+    set print(val: boolean) {
+      this._print = !!val;
+    }
+
+    clone(): ContextMenuBuiltInItems {
+      var items = new ui.ContextMenuBuiltInItems();
+      items._save = this._save;
+      items._zoom = this._zoom;
+      items._quality = this._quality;
+      items._play = this._play;
+      items._loop = this._loop;
+      items._rewind = this._rewind;
+      items._forwardAndBack = this._forwardAndBack;
+      items._print = this._print;
+      return items;
+    }
   }
 }
