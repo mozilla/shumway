@@ -164,6 +164,7 @@ module Shumway.AVM2.AS {
       M("flash.media.SoundMixer", "SoundMixerClass", flash.media.SoundMixer),
       M("flash.media.SoundTransform", "SoundTransformClass", flash.media.SoundTransform),
       M("flash.media.Video", "VideoClass", flash.media.Video),
+      M("flash.media.StageVideo", "StageVideoClass", flash.media.StageVideo),
       M("flash.media.ID3Info", "ID3InfoClass", flash.media.ID3Info),
       M("flash.media.Microphone", "MicrophoneClass", flash.media.Microphone),
 
