@@ -446,7 +446,7 @@ module Shumway.AVM2.AS {
       if (self.initializers) {
         release || assert (self.instanceConstructorNoInitialize === self.instanceConstructor);
         var previousConstructor: any = self;
-        self.instanceConstructor = <any>function (...args) {
+        self.instanceConstructor = <any>function () {
           ASClass.runInitializers(this, undefined);
           return self.instanceConstructorNoInitialize.apply(this, arguments);
         };
@@ -993,8 +993,8 @@ module Shumway.AVM2.AS {
       return Object(Number(value | 0));
     }
 
-    public static asCall(self: any, ...argArray: any[]): any {
-      return argArray[0] | 0;
+    public static asCall(self: any, arg0 /*, ...argArray: any[]*/): any {
+      return arg0 | 0;
     }
 
     public static asApply(self: any, argArray?: any): any {
@@ -1033,8 +1033,8 @@ module Shumway.AVM2.AS {
       return Object(Number(value >>> 0));
     }
 
-    public static asCall(self: any, ...argArray: any[]): any {
-      return argArray[0] >>> 0;
+    public static asCall(self: any, arg0 /*, ...argArray: any[]*/): any {
+      return arg0 >>> 0;
     }
 
     public static asApply(self: any, argArray?: any): any {
@@ -1745,8 +1745,8 @@ module Shumway.AVM2.AS {
       Boolean: makeOriginalPrototype(Boolean)
     }
 
-    export function print(...args: any []) {
-      jsGlobal.print.apply(null, args);
+    export function print(expression: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
+      jsGlobal.print.apply(null, arguments);
     }
 
     export function debugBreak(v: any) {

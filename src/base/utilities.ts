@@ -282,8 +282,8 @@ module Shumway {
       }
     }
 
-    export function warning(...messages: any[]) {
-      release || console.warn.apply(console, messages);
+    export function warning(message: any, arg1?: any, arg2?: any/*...messages: any[]*/) {
+      release || console.warn.apply(console, arguments);
     }
 
     export function notUsed(message: string) {

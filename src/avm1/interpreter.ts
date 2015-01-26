@@ -51,7 +51,7 @@ module Shumway.AVM1 {
     breakpoints: {}
   };
 
-  function avm1Warn(message?: any, ...optionalParams: any[]) {
+  function avm1Warn(message: string, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
     if (avm1ErrorsEnabled.value) {
       try {
         throw new Error(message); // using throw as a way to break in browsers debugger
