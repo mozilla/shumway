@@ -1642,7 +1642,7 @@ module Shumway.AVM2.AS {
     }
     addNamespace(ns: any): ASXML {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // 13.4.4.2 XML.prototype.addNamespace ( namespace )
       this._addInScopeNamespaces(new AS.ASNamespace(ns));
@@ -1650,7 +1650,7 @@ module Shumway.AVM2.AS {
     }
     appendChild(child: any): ASXML {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // TODO review
       if (child._parent) {
@@ -1664,13 +1664,13 @@ module Shumway.AVM2.AS {
     }
     attribute(arg: any): ASXMLList {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       return this.getProperty(arg, true);
     }
     attributes(): ASXMLList {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       var list = AS.ASXMLList.createList(this, this._name);
       Array.prototype.push.apply(list._children, this._attributes);
@@ -1680,7 +1680,7 @@ module Shumway.AVM2.AS {
     // 13.4.4.6
     child(propertyName: any /* string|number */): ASXMLList {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // Step 1.
       if (isIndex(propertyName)) {
@@ -1695,7 +1695,7 @@ module Shumway.AVM2.AS {
     }
     childIndex(): number /*int*/ {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // 13.4.4.7 XML.prototype.childIndex ( )
       if (!this._parent || this._kind === ASXMLKind.Attribute) {
@@ -1705,7 +1705,7 @@ module Shumway.AVM2.AS {
     }
     children(): ASXMLList {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       var xl = AS.ASXMLList.createList(this, this._name);
       Array.prototype.push.apply(xl._children, this._children);
@@ -1713,7 +1713,7 @@ module Shumway.AVM2.AS {
     }
     comments() {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // 13.4.4.9 XML.prototype.comments ( )
       var self: ASXML = this;
@@ -1727,21 +1727,21 @@ module Shumway.AVM2.AS {
     }
     contains(value: any): boolean {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // 13.4.4.10 XML.prototype.contains ( value )
       return this === value;
     }
     copy(): ASXML {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       return this._deepCopy();
     }
     // 9.1.1.8 [[Descendants]] (P)
     descendants(name_: any = "*"): ASXMLList {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       var xl = AS.ASXMLList.createList(this, this._name);
       var name = toXMLName(name_);
@@ -1749,14 +1749,14 @@ module Shumway.AVM2.AS {
     }
     elements(name: any = "*"): ASXMLList {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // 13.4.4.13 XML.prototype.elements ( [ name ] )
       return this.getProperty(name, false);
     }
     hasComplexContent(): boolean {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // 13.4.4.15 XML.prototype.hasComplexContent( )
       if (this._kind === ASXMLKind.Attribute ||
@@ -1771,7 +1771,7 @@ module Shumway.AVM2.AS {
     }
     hasSimpleContent(): boolean {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // 13.4.4.16 XML.prototype.hasSimpleContent()
       if (this._kind === ASXMLKind.Comment ||
@@ -1792,7 +1792,7 @@ module Shumway.AVM2.AS {
     // 13.4.4.17
     inScopeNamespaces(): ASNamespace[] {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       };
       return this._inScopeNamespacesImpl(false);
     }
@@ -1821,20 +1821,20 @@ module Shumway.AVM2.AS {
     }
     insertChildAfter(child1: any, child2: any): any {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       notImplemented("public.XML::insertChildAfter"); return;
     }
     insertChildBefore(child1: any, child2: any): any {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       notImplemented("public.XML::insertChildBefore"); return;
     }
     // XML.[[Length]]
     length(): number {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       if (!this._children) {
         return 0;
@@ -1843,13 +1843,13 @@ module Shumway.AVM2.AS {
     }
     localName(): Object {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       return this._name.localName;
     }
     name(): Object {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       return this._name;
     }
@@ -1857,7 +1857,7 @@ module Shumway.AVM2.AS {
     // 13.4.4.23
     namespace(prefix?: string): any {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // Step 4.a.
       if (arguments.length === 0 && this._kind >= ASXMLKind.Text) {
@@ -1883,19 +1883,19 @@ module Shumway.AVM2.AS {
     }
     namespaceDeclarations(): any [] {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       notImplemented("public.XML::namespaceDeclarations"); return;
     }
     nodeKind(): string {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       return ASXMLKindNames[this._kind];
     }
     normalize(): ASXML {
       if (!(this instanceof ASXML)) {
-        Runtime.throwError(Errors.CheckTypeFailedError, this, 'XML');
+        Runtime.throwError('TypeError', Errors.CheckTypeFailedError, this, 'XML');
       }
       // Steps 1-2.
       for (var i = 0; i < this._children.length;) {
