@@ -209,45 +209,44 @@ module Shumway.AVM2.Runtime {
   export function makeTrampoline(trait: Trait, scope: Scope, natives: any,
                                  patchTargets: IPatchTarget[], parameterLength: number,
                                  description: string): ITrampoline {
-    return (function trampolineContext() {
-      var target = null;
-      /**
-       * Triggers the trampoline and executes it.
-       */
-      var trampoline: ITrampoline = <ITrampoline><any>function execute() {
-        countTimeline("Executing Trampoline");
-        if (!release && Shumway.AVM2.Runtime.traceExecution.value >= 1) {
-          callWriter.writeLn("Trampoline: " + description);
-          Shumway.AVM2.Runtime.traceExecution.value >= 3 && console.log("Trampolining");
-        }
-        if (!target) {
-          target = getTraitFunction(trait, scope, natives);
-          patch(patchTargets, target);
-          trait = scope = natives = patchTargets = null;
-          release || assert (target);
-        }
-        return target.asApply(this, arguments);
-      };
-      /**
-       * Just triggers the trampoline without executing it.
-       */
-      trampoline.trigger = function trigger() {
-        countTimeline("Triggering Trampoline");
-        if (!target) {
-          target = getTraitFunction(trait, scope, natives);
-          patch(patchTargets, target);
-          trait = scope = natives = patchTargets = null;
-          release || assert (target);
-        }
-      };
-      trampoline.isTrampoline = true;
-      trampoline.debugName = "Trampoline #" + vmNextTrampolineId++;
-      // Make sure that the length property of the trampoline matches the trait's number of
-      // parameters. However, since we can't redefine the |length| property of a function,
-      // we define a new hidden |VM_LENGTH| property to store this value.
-      defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
-      return trampoline;
-    })();
+    var target = null;
+    /**
+     * Triggers the trampoline and executes it.
+     */
+    var trampoline: ITrampoline = <ITrampoline><any>function execute() {
+      debugLogTrampoline(description);
+      if (!target) {
+        trampoline.trigger();
+      }
+      return target.asApply(this, arguments);
+    };
+    /**
+     * Just triggers the trampoline without executing it.
+     */
+    trampoline.trigger = function trigger() {
+      countTimeline("Triggering Trampoline");
+      if (!target) {
+        release || assert(!trait.methodInfo.isNative());
+        target = createFunction(trait.methodInfo, scope, false, false, false);
+        patch(patchTargets, target);
+        trait = scope = natives = patchTargets = null;
+        release || assert(target);
+      }
+    };
+    trampoline.isTrampoline = true;
+    // Make sure that the length property of the trampoline matches the trait's number of
+    // parameters. However, since we can't redefine the |length| property of a function,
+    // we define a new hidden |VM_LENGTH| property to store this value.
+    defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
+    return trampoline;
+  }
+
+  function debugLogTrampoline(description: string) {
+    countTimeline("Executing Trampoline");
+    if (!release && Shumway.AVM2.Runtime.traceExecution.value >= 1) {
+      callWriter.writeLn("Trampoline: " + description);
+      Shumway.AVM2.Runtime.traceExecution.value >= 3 && console.log("Trampolining");
+    }
   }
 
   export function makeMemoizer(qn, target): IMemoizer {
@@ -263,9 +262,9 @@ module Shumway.AVM2.Runtime {
         return bindSafely(target.value, this);
       }
       if (isTrampoline(target.value)) {
-        // If the memoizer target is a trampoline then we need to trigger it before we bind the memoizer
-        // target to |this|. Triggering the trampoline will patch the memoizer target but not actually
-        // call it.
+        // If the memoizer target is a trampoline then we need to trigger it before we bind the
+        // memoizer target to |this|. Triggering the trampoline will patch the memoizer target but
+        // not actually call it.
         target.value.trigger();
       }
       release || assert (!isTrampoline(target.value), "We should avoid binding trampolines.");
