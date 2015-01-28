@@ -1300,8 +1300,11 @@ module Shumway.AVM2.AS {
       if (typeof value !== "object") {
         return value;
       }
+      if (isNullOrUndefined(value)) {
+        return value;
+      }
       var keys = Object.keys(value);
-      var result = value instanceof Array ? [] : {};
+      var result = Array.isArray(value) ? [] : {};
       for (var i = 0; i < keys.length; i++) {
         var v = value[keys[i]];
         if (deep) {
@@ -1323,7 +1326,7 @@ module Shumway.AVM2.AS {
         return value;
       }
       var keys = Object.keys(value);
-      var result = value instanceof Array ? [] : {};
+      var result = Array.isArray(value) ? [] : {};
       for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
         var jsKey = key;

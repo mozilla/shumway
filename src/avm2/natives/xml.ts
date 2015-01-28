@@ -742,7 +742,11 @@ module Shumway.AVM2.AS {
                   delete contentAttributes[q];
                 } else if (attributeName.substring(0, 4) === "xml:") {
                   var xmlAttrName = attributeName.substring(4);
-                  if (xmlAttrName !== 'space' && xmlAttrName !== 'lang' && xmlAttrName !== 'base') {
+                  if (xmlAttrName !== 'space' &&
+                      xmlAttrName !== 'lang' &&
+                      xmlAttrName !== 'base' &&
+                      xmlAttrName !== 'id')
+                  {
                     throw "Invalid xml attribute: " + attributeName;
                   }
                   scope[xmlAttrName] = trimWhitespaces(attribute.value);

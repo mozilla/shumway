@@ -167,7 +167,6 @@ module Shumway.Remoting.Player {
         this.output.writeInt(MessageTag.UpdateNetStream);
         this.output.writeInt(netStream._id);
         this._writeRectangle(bounds);
-        this.output.writeUTF(netStream._getVideoStreamURL());
         netStream._isDirty = false;
       }
     }

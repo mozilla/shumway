@@ -797,7 +797,7 @@ function initExternalCom(wrappedWindow, wrappedObject, targetWindow) {
   }
   wrappedObject.__flash__registerCallback = function (functionName) {
     wrappedWindow.console.log('__flash__registerCallback: ' + functionName);
-    this[functionName] = function () {
+    Components.utils.exportFunction(function () {
       var args = Array.prototype.slice.call(arguments, 0);
       wrappedWindow.console.log('__flash__callIn: ' + functionName);
       var result;
@@ -805,7 +805,7 @@ function initExternalCom(wrappedWindow, wrappedObject, targetWindow) {
         result = targetWindow.wrappedJSObject.onExternalCallback({functionName: functionName, args: args});
       }
       return wrappedWindow.eval(result);
-    };
+    }, this, { defineAs: functionName });
   };
   wrappedObject.__flash__unregisterCallback = function (functionName) {
     wrappedWindow.console.log('__flash__unregisterCallback: ' + functionName);

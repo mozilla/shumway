@@ -18,6 +18,7 @@ module Shumway.GFX {
   import Easel = Shumway.GFX.Easel;
   import Stage = Shumway.GFX.Stage;
   import Point = Shumway.GFX.Geometry.Point;
+  import Rectangle = Geometry.Rectangle;
 
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
@@ -162,10 +163,14 @@ module Shumway.GFX {
     }
 
     processVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
-      var asset = this._context._getVideoAsset(id);
+      var context = this._context;
+      var asset = context._getVideoAsset(id);
       if (!asset) {
-        // TODO fix async/sync NetStream creation
-        return undefined;
+        if (eventType != VideoControlEvent.Init) {
+          return undefined;
+        }
+        context.registerVideo(id);
+        asset = context._getVideoAsset(id);
       }
       return (<RenderableVideo>asset).processControlRequest(eventType, data);
     }

@@ -177,6 +177,10 @@ module Shumway.AVM2.AS.flash.net {
       } else {
         this._videoStream.play(url, this.checkPolicyFile);
       }
+
+      this._notifyVideoControl(VideoControlEvent.Init, {
+        url: this._videoStream.url
+      });
     }
     play2(param: flash.net.NetStreamPlayOptions): void {
       param = param;
@@ -636,7 +640,7 @@ module Shumway.AVM2.AS.flash.net {
           });
         });
       }
-      somewhatImplemented("public flash.net.NetStream::appendBytesAction");
+      somewhatImplemented("public flash.net.NetStream::appendBytes");
     }
 
     appendBytesAction(netStreamAppendBytesAction: string) {

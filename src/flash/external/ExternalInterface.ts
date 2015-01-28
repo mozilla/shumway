@@ -72,7 +72,7 @@ module Shumway.AVM2.AS.flash.external {
       if (!callback) {
         return;
       }
-      return callback(functionName, args);
+      return callback(functionName, ASJSON.transformJSValueToAS(args, true));
     }
 
     static _getPropNames(obj: ASObject): any [] {

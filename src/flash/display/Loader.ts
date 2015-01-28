@@ -22,7 +22,6 @@ module Shumway.AVM2.AS.flash.display {
   import ActionScriptVersion = flash.display.ActionScriptVersion;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
 
-  import ApplicationDomain = flash.system.ApplicationDomain;
   import LoaderContext = flash.system.LoaderContext;
   import events = flash.events;
 
@@ -376,7 +375,7 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       if (context && context.applicationDomain) {
-        var domain = new ApplicationDomain(ApplicationDomain.currentDomain);
+        var domain = new system.ApplicationDomain(system.ApplicationDomain.currentDomain);
         this._contentLoaderInfo._applicationDomain = domain;
       }
       this._contentLoaderInfo._parameters = parameters;
