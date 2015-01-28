@@ -1,0 +1,29 @@
+<rss version="2.0" xmlns:jwplayer="http://rss.jwpcdn.com/">
+    <channel>
+
+        <item>
+            <title>Elephants Dream</title>
+            <description>Elephants Dream is a computer-generated short film that was produced almost completely using the free software 3D suite Blender</description>
+            <jwplayer:image>elephants_dream_640x360.jpg</jwplayer:image>
+            <jwplayer:source file="elephants_dream_640x360_2.30.mp4" />
+            <jwplayer:track file="elephants_dream.srt" />
+        </item>
+
+        <item>
+            <title>Big Buck Bunny</title>
+            <description>Big Buck Bunny is a short computer animated film by the Blender Institute.</description>
+            <jwplayer:image>big_buck_bunny_640x360.jpg</jwplayer:image>
+            <jwplayer:source file="big_buck_bunny_640x360_2.28.mp4" />
+            <jwplayer:track file="big_buck_bunny.srt" />
+        </item>
+
+        <item>
+            <title>Sintel Trailer</title>
+            <description>Sintel is a short computer animated film by the Blender Institute.</description>
+            <jwplayer:image>sintel_640x360.jpg</jwplayer:image>
+            <jwplayer:source file="sintel_640x360_2.28.mp4" />
+            <jwplayer:track file="sintel.srt" />
+        </item>
+
+    </channel>
+</rss>
