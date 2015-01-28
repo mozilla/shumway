@@ -429,7 +429,7 @@ var shuobject = (function () {
     },
     hack: function (scope, setNavigatorPlugins) {
       scope = scope || 'all';
-      document.createElement = function (arg) {
+      document.createElement = function (name) {
         if (typeof name !== 'string' || name.toLowerCase() !== 'object') {
           return originalCreateElement.apply(document, arguments);
         }
