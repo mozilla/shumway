@@ -50,26 +50,31 @@ function getPluginParams() {
   };
 }
 
+var playerWindowIframe, playerWindowIframeReady;
 var easelHost;
 
-function runViewer() {
-  var flashParams = getPluginParams();
-  if (!flashParams.url) {
-    console.log("no movie url provided -- stopping here");
-    return;
-  }
-
-  var playerWindowIframe = document.getElementById("playerWindow");
-  playerWindowIframe.addEventListener('load', function () {
+function runViewer(flashParams) {
+  playerWindowIframeReady.then(function () {
     var playerWindow = playerWindowIframe.contentWindow;
 
     var easel = createEasel();
     easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
-
     var data = {
       type: 'runSwf',
       settings: Shumway.Settings.getSettings(),
-      flashParams: flashParams
+      flashParams: {
+        url: flashParams.url,
+        baseUrl: flashParams.baseUrl || flashParams.url,
+        movieParams: flashParams.movieParams || {},
+        objectParams: flashParams.objectParams || {},
+        compilerSettings: flashParams.compilerSettings || {
+          sysCompiler: true,
+          appCompiler: true,
+          verifier: true
+        },
+        bgcolor: undefined,
+        displayParameters: easel.getDisplayParameters()
+      }
     };
     playerWindow.postMessage(data,  '*');
   });
@@ -84,4 +89,27 @@ function createEasel() {
   return new Easel(document.getElementById("easelContainer"));
 }
 
-document.addEventListener("DOMContentLoaded", runViewer);
+function waitForParametersMessage(e) {
+  if (e.data && typeof e.data === 'object' && e.data.type === 'pluginParams') {
+    window.removeEventListener('message', waitForParametersMessage);
+    runViewer(e.data.flashParams);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  playerWindowIframe = document.getElementById("playerWindow");
+  playerWindowIframeReady = new Promise(function (resolve) {
+    playerWindowIframe.addEventListener('load', function load() {
+      playerWindowIframe.removeEventListener('load', load);
+      resolve();
+    });
+  });
+
+  var flashParams = getPluginParams();
+  if (!flashParams.url) {
+    // no movie url provided -- waiting for parameters via postMessage
+    window.addEventListener('message', waitForParametersMessage);
+  } else {
+    runViewer(flashParams);
+  }
+});

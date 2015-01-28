@@ -32,8 +32,8 @@ build: ensureoutputdir
 	cp -R ../../LICENSE $(EXTENSION_SRC)/chrome $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
 	cp -R browser $(BUILD_DIR)/
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders
-	cp ../../src/gfx/gl/shaders/*.frag $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
-	cp ../../src/gfx/gl/shaders/*.vert $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
+	cp ../../src/gfx/gl/shaders/combined.frag $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
+	cp ../../src/gfx/gl/shaders/combined.vert $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/
 	# Coping JavaScript content files
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/playerglobal
 	cp ../../build/playerglobal/playerglobal.json $(BUILD_EXTENSION_DIR)/content/playerglobal/

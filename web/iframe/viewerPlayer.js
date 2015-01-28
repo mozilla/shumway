@@ -86,6 +86,8 @@ Shumway.FileLoadingService.instance = {
   }
 };
 
+var player;
+
 function runSwfPlayer(flashParams) {
   var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
 
@@ -94,13 +96,27 @@ function runSwfPlayer(flashParams) {
   var appMode = compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var asyncLoading = true;
   var baseUrl = flashParams.baseUrl;
-  var movieParams = flashParams.movieParams;
-  var objectParams = flashParams.objectParams;
   var movieUrl = flashParams.url;
   Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (avm2) {
     function runSWF(file) {
-      var player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
+      var movieParams = flashParams.movieParams;
+      var objectParams = flashParams.objectParams;
+
+      player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
+      player.defaultStageColor = flashParams.bgcolor;
+      player.movieParams = movieParams;
+      player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';
+      player.stageScale = (objectParams && objectParams.scale) || 'showall';
+      player.displayParameters = flashParams.displayParameters;
+
       player.load(file);
+
+      Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
+
+      var parentDocument = window.parent.document;
+      var event = parentDocument.createEvent('CustomEvent');
+      event.initCustomEvent('shumwaystarted', true, true, null);
+      parentDocument.dispatchEvent(event);
     }
     file = Shumway.FileLoadingService.instance.setBaseUrl(baseUrl);
     if (asyncLoading) {

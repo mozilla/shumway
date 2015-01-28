@@ -31,8 +31,8 @@ build: ensureoutputdir
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
 	# Copying WebGL shaders
 	mkdir -p $(BUILD_DIR)/content/gfx/gl/shaders
-	cp ../../src/gfx/gl/shaders/*.frag $(BUILD_DIR)/content/gfx/gl/shaders/
-	cp ../../src/gfx/gl/shaders/*.vert $(BUILD_DIR)/content/gfx/gl/shaders/
+	cp ../../src/gfx/gl/shaders/combined.frag $(BUILD_DIR)/content/gfx/gl/shaders/
+	cp ../../src/gfx/gl/shaders/combined.vert $(BUILD_DIR)/content/gfx/gl/shaders/
 	# Copying JavaScript content files
 	mkdir -p $(BUILD_DIR)/content/playerglobal
 	cp ../../build/playerglobal/playerglobal.json $(BUILD_DIR)/content/playerglobal/

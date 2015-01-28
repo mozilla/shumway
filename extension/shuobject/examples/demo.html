@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title>Basic shuobject demo</title>
+  <script src="../shuobject.js"></script>
+  <script>
+    // Create/embed SWF movie.
+    shuobject.embedSWF('demo.swf', 'mainSWF', 800, 512, '9,0,10');
+
+    function sayYum() {
+      // Basic interaction with stage objects
+      var shumwayObj = shuobject.getShumwayObject('mainSWF');
+      var textObject = shumwayObj.stage.getChildAt(0).getChildAt(1);
+      if (textObject.text == 'yum') {
+        textObject.text = 'yum yum';
+      } else {
+        textObject.text = 'yum';
+      }
+    }
+  </script>
+</head>
+<body>
+  <h1>Basic shuobject demo</h1>
+
+  <div id="mainSWF">Flash will be loaded here (it is similar to swfobject)</div>
+  <br>
+  <button onclick="sayYum()">Say 'yum'</button>
+</body>
+</html>

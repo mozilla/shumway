@@ -474,6 +474,7 @@ module.exports = function(grunt) {
       grunt.file.copy(file, outputDir + '/build/bundles-cc/' + path.basename(file));
     });
     grunt.file.copy('src/shell/shell-node.js', outputDir + '/src/shell/shell-node.js');
+    grunt.file.copy('LICENSE', outputDir + '/LICENSE');
 
     var waitFor = 0, done = this.async();
     grunt.file.expand('src/shell/runners/run-*').forEach(function (file) {
@@ -737,7 +738,31 @@ module.exports = function(grunt) {
 
     rsync();
   });
+  grunt.registerTask('shuobject-package', function () {
+    var outputDir = 'build/shuobject';
+    grunt.file.mkdir(outputDir);
+    var path = require('path');
+
+    grunt.file.copy('src/avm2/generated/builtin/builtin.abc', outputDir + '/src/avm2/generated/builtin/builtin.abc');
+    grunt.file.copy('build/playerglobal/playerglobal.abcs', outputDir + '/build/playerglobal/playerglobal.abcs');
+    grunt.file.copy('build/playerglobal/playerglobal.json', outputDir + '/build/playerglobal/playerglobal.json');
+    grunt.file.expand('build/bundles-cc/*.js').forEach(function (file) {  // TODO closure bundles
+      grunt.file.copy(file, outputDir + '/build/bundles/' + path.basename(file));
+    });
+    grunt.file.expand('web/iframe/*').forEach(function (file) {
+      grunt.file.copy(file, outputDir + '/iframe/' + path.basename(file));
+    });
+    grunt.file.copy('extension/shuobject/shuobject.js', outputDir + '/shuobject.js');
+    grunt.file.expand('extension/shuobject/examples/*').forEach(function (file) {
+      grunt.file.copy(file, outputDir + '/examples/' + path.basename(file));
+    });
+    grunt.file.copy('web/demo.swf', outputDir + '/examples/demo.swf');
+    grunt.file.copy('examples/external/externalinterface/avm2.swf', outputDir + '/examples/external_interface.swf');
+
+    grunt.file.copy('LICENSE', outputDir + '/LICENSE');
+  });
+
   grunt.registerTask('firefox', ['build', 'closure-bundles', 'exec:build_extension']);
   grunt.registerTask('mozcentral', ['build', 'closure-bundles', 'exec:build_mozcentral']);
-  grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'shell-package', 'exec:build_web']);
+  grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'shell-package', 'shuobject-package', 'exec:build_web']);
 };
