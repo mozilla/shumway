@@ -206,11 +206,13 @@ var shuobject = (function () {
 
   // Creates Shumway iframe
   function createSWF(swfUrl, id, width, height, flashvars, params, attributes) {
+    var cssStyle;
     if (attributes) {
       swfUrl = swfUrl || attributes['data'];
       id = attributes['id'] || id;
       width = width || attributes['width'];
       height = height || attributes['height'];
+      cssStyle = attributes['style'];
     }
 
     var viewerUrl = combineUrl(shumwayHome, 'iframe/viewer.html');
@@ -271,6 +273,9 @@ var shuobject = (function () {
     };
     iframeElement.src = viewerUrl;
     iframeElement.setAttribute('frameborder', '0');
+    if (cssStyle) {
+      iframeElement.setAttribute('style', cssStyle);
+    }
     iframeElement.addEventListener('load', function load(e) {
       iframeElement.removeEventListener('load', load);
       iframeElement.contentWindow.postMessage({type: 'pluginParams', flashParams: pluginParams}, '*');
@@ -305,7 +310,8 @@ var shuobject = (function () {
       id: element.getAttribute('id'),
       name: element.getAttribute('name'),
       "class": element.getAttribute('class'),
-      align: element.getAttribute('align')
+      align: element.getAttribute('align'),
+      style: element.getAttribute('style')
     };
     var paramNodes = element.getElementsByTagName('param');
     var params = {};
@@ -321,6 +327,27 @@ var shuobject = (function () {
       swfUrl = params['src'] || params['movie'];
     }
     embedSWF(element, swfUrl, id, width, height, undefined, params, attributes, callbackFn);
+  }
+
+  function createAndMonitorShadowObject() {
+    var xObject = originalCreateElement.call(document, 'x-shu-object');
+    var observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function(mutation) {
+        var addedNodes = mutation.addedNodes;
+        if (!addedNodes || addedNodes.length === 0) {
+          return;
+        }
+        for (var i = 0; i < addedNodes.length; i++) {
+          if (addedNodes[i] === xObject) {
+            replaceBySWF(xObject);
+            observer.disconnect();
+            break;
+          }
+        }
+      });
+    });
+    observer.observe(document, {childList: true, subtree: true});
+    return xObject;
   }
 
   return {
@@ -385,24 +412,7 @@ var shuobject = (function () {
       if (typeof name !== 'string' || name.toLowerCase() !== 'object') {
         return originalCreateElement.apply(document, arguments);
       }
-      var xObject = originalCreateElement.call(document, 'x-shu-object');
-      var observer = new MutationObserver(function (mutations) {
-        mutations.forEach(function(mutation) {
-          var addedNodes = mutation.addedNodes;
-          if (!addedNodes || addedNodes.length === 0) {
-            return;
-          }
-          for (var i = 0; i < addedNodes.length; i++) {
-            if (addedNodes[i] === xObject) {
-              replaceBySWF(xObject);
-              observer.disconnect();
-              break;
-            }
-          }
-        });
-      });
-      observer.observe(document, {childList: true, subtree: true});
-      return xObject;
+      return createAndMonitorShadowObject();
     },
     getShumwayObject: function (idOrElement) {
       var element = typeof idOrElement === 'string' ? document.getElementById(idOrElement) : idOrElement;
@@ -416,6 +426,47 @@ var shuobject = (function () {
         cachedQueryParams = parseQueryString(document.location.search);
       }
       return cachedQueryParams[paramName];
+    },
+    hack: function (scope, setNavigatorPlugins) {
+      scope = scope || 'all';
+      document.createElement = function (arg) {
+        if (typeof name !== 'string' || name.toLowerCase() !== 'object') {
+          return originalCreateElement.apply(document, arguments);
+        }
+        var fakeIt = false;
+        switch (scope) {
+          case 'all':
+            fakeIt = true;
+            break;
+          case 'jwplayer':
+            fakeIt = (new Error()).stack.indexOf('embed.flash') >= 0;
+            break;
+        }
+        if (fakeIt) {
+          return createAndMonitorShadowObject();
+        } else {
+          return originalCreateElement.apply(document, arguments);
+        }
+      };
+      var pluginName = 'Shockwave Flash';
+      var mimeTypeName = 'application/x-shockwave-flash';
+      if (setNavigatorPlugins && !window.navigator.plugins[pluginName]) {
+        var mimeType = {
+          description: "Shockwave Flash",
+          suffixes: 'swf',
+          type: mimeTypeName
+        };
+        window.navigator.mimeTypes[mimeTypeName] = mimeType;
+        var plugin = {
+          description: 'Shockwave Flash 10.0 r0 compatible',
+          filename: 'shumway.js',
+          length: 1,
+          name: pluginName,
+          '0': mimeType
+        };
+        mimeType.enabledPlugin = plugin;
+        window.navigator.plugins[pluginName] = plugin;
+      }
     },
     ua: {
       w3: true,
