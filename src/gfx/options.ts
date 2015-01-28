@@ -30,7 +30,7 @@ module Shumway.GFX {
   export var viewportLoupeDiameter = stageOptions.register(new Option("", "viewportLoupeDiameter", "number", 256, "Size of the viewport loupe.", {range: { min: 1, max: 1024, step: 1 }}));
   export var disableClipping = stageOptions.register(new Option("", "disableClipping", "boolean", false, "Disable clipping."));
   export var debugClipping = stageOptions.register(new Option("", "debugClipping", "boolean", false, "Disable clipping."));
-  export var hud = stageOptions.register(new Option("", "hud", "boolean", true, "Enable HUD."));
+  export var hud = stageOptions.register(new Option("", "hud", "boolean", false, "Enable HUD."));
 
   var webGLOptions = stageOptions.register(new OptionSet("WebGL Options"));
   export var perspectiveCamera = webGLOptions.register(new Option("", "pc", "boolean", false, "Use perspective camera."));

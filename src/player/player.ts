@@ -138,6 +138,13 @@ module Shumway.Player {
     }
 
     /**
+     * Movie stage object.
+     */
+    get stage() {
+      return this._stage;
+    }
+
+    /**
      * Abstract method to notify about updates.
      * @param updates
      * @param assets

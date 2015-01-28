@@ -27,10 +27,11 @@ build: ensureoutputdir
 	# Coping some JavaScript file
 	mkdir -p $(BUILD_DIR)/src/player
 	cp $(SHUMWAY_ROOT)/src/player/fakechannel.js $(BUILD_DIR)/src/player/
+	# Coping WebGL shaders
 	mkdir -p $(BUILD_DIR)/src/gfx/gl/shaders
-	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/*.frag $(BUILD_DIR)/src/gfx/gl/shaders/
-	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/*.vert $(BUILD_DIR)/src/gfx/gl/shaders/
-	# Coping generates JavaScript file
+	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/combined.frag $(BUILD_DIR)/src/gfx/gl/shaders/
+	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/combined.vert $(BUILD_DIR)/src/gfx/gl/shaders/
+	# Coping generated JavaScript file
 	mkdir $(BUILD_DIR)/build
 	cp -R $(SHUMWAY_ROOT)/build/ts $(BUILD_DIR)/build/
 	cp -R $(SHUMWAY_ROOT)/build/bundles $(BUILD_DIR)/build/
@@ -49,6 +50,9 @@ build: ensureoutputdir
 	# Package shell
 	mkdir -p $(BUILD_DIR)/shell
 	cd ../build/shell; zip -r ../../web/$(BUILD_DIR)/shell/shumway-shell.zip *
+	# Package shuobject
+	mkdir -p $(BUILD_DIR)/shuobject
+	cd ../build/shuobject; zip -r ../../web/$(BUILD_DIR)/shuobject/shuobject.zip *
 	# Removing hidden files
 	-find build -name ".DS_Store" -exec rm {} \;
 	# Creating commit

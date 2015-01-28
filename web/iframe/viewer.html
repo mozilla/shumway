@@ -25,11 +25,6 @@ limitations under the License.
       body {
         margin: 0;
         overflow: hidden;
-        background-color: rgba(0, 0, 0, 0.78);
-      }
-
-      body.started {
-        background-color: transparent;
       }
 
       #easelContainer {
@@ -41,12 +36,13 @@ limitations under the License.
       #playerWindow {
         position:fixed !important;
         right:0;top:0;width:0;height:0;
+        visibility: hidden;
       }
     </style>
     <script src="../build/bundles/shumway.gfx.js"></script>
   </head>
 
-  <body contextmenu="shumwayMenu">
+  <body>
     <div id="easelContainer"></div>
     <iframe id="playerWindow" src="viewer.player.html"></iframe>
     <script src="viewer.js"></script>
