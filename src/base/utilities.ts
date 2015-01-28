@@ -1893,9 +1893,9 @@ module Shumway {
       this.indent();
     }
 
-    leave(str: string) {
+    leave(str?: string) {
       this.outdent();
-      if (!this._suppressOutput) {
+      if (!this._suppressOutput && str) {
         this._out(this._padding + str);
       }
     }
