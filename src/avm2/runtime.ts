@@ -122,7 +122,6 @@ module Shumway.AVM2.Runtime {
   import createMap = Shumway.ObjectUtilities.createMap;
   import copyProperties = Shumway.ObjectUtilities.copyProperties;
   import boxValue = Shumway.ObjectUtilities.boxValue;
-  import bindSafely = Shumway.FunctionUtilities.bindSafely;
   import assert = Shumway.Debug.assert;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;

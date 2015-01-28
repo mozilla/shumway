@@ -249,61 +249,35 @@ module Shumway.AVM2.Runtime {
     }
   }
 
+  /**
+   * Returns a function that, when installed as a getter on a prototype, creates a
+   * unique-per-instance MethodClosure and installs that on the receiver object it is invoke on.
+   * After that, consecutive gets on the same receiver will directly resolve to the MethodClosure
+   * instance.
+   */
   export function makeMemoizer(qn, target): IMemoizer {
     function memoizer() {
-      countTimeline("Runtime: Memoizing");
-      // release || assert (!Object.prototype.hasOwnProperty.call(this, "class"), this);
-      if (!release && Shumway.AVM2.Runtime.traceExecution.value >= 3) {
-        console.log("Memoizing: " + qn);
-      }
-      Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Memoizing: " + qn);
-      if (isNativePrototype(this)) {
-        countTimeline("Runtime: Method Closures");
-        return bindSafely(target.value, this);
-      }
-      if (isTrampoline(target.value)) {
+      if (target.value.isTrampoline) {
         // If the memoizer target is a trampoline then we need to trigger it before we bind the
         // memoizer target to |this|. Triggering the trampoline will patch the memoizer target but
         // not actually call it.
         target.value.trigger();
+        release || assert (!target.value.isTrampoline, "We should avoid binding trampolines.");
       }
-      release || assert (!isTrampoline(target.value), "We should avoid binding trampolines.");
-      var mc = null;
-      if (this instanceof Shumway.AVM2.AS.ASClass) {
-        countTimeline("Runtime: Static Method Closures");
-        mc = bindSafely(target.value, this);
-        defineReadOnlyProperty(this, qn, mc);
-        return mc;
+      var methodClosure = bindSafely(target.value, this);
+      ObjectUtilities.defineReadOnlyProperty(methodClosure, 'asLength', target.value.length);
+      if (isNativePrototype(this)) {
+        countTimeline("Runtime: Method Closures");
+        return methodClosure;
       }
-      if (Object.prototype.hasOwnProperty.call(this, qn)) {
-        var pd = Object.getOwnPropertyDescriptor(this, qn);
-        if (pd.get) {
-          countTimeline("Runtime: Method Closures");
-          return bindSafely(target.value, this);
-        }
-        countTimeline("Runtime: Unpatched Memoizer");
-        return this[qn];
-      }
-      mc = bindSafely(target.value, this);
-      mc.methodInfo = target.value.methodInfo;
-      defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
-      defineReadOnlyProperty(this, qn, mc);
-      return mc;
+      (<any>methodClosure).methodInfo = target.value.methodInfo;
+      defineReadOnlyProperty(methodClosure, Multiname.getPublicQualifiedName("prototype"), null);
+      defineReadOnlyProperty(this, qn, methodClosure);
+      return methodClosure;
     }
     var m: IMemoizer = <IMemoizer><any>memoizer;
     countTimeline("Runtime: Memoizers");
     m.isMemoizer = true;
-    m.debugName = "Memoizer #" + vmNextMemoizerId++;
     return m;
-  }
-
-  function isTrampoline(fn) {
-    release || assert (fn && typeof fn === "function");
-    return fn.isTrampoline;
-  }
-
-  export function isMemoizer(fn) {
-    release || assert (fn && typeof fn === "function");
-    return fn.isMemoizer;
   }
 }
