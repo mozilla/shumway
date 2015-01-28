@@ -60,6 +60,51 @@ var shuobject = (function () {
     return obj;
   }
 
+  function createEmptySWFBlob(swfVersion, width, height, framerate, avm2, background) {
+    var headerBytes = [0x46, 0x57, 0x53, swfVersion]; // 'FWS'
+    var swfBody = [];
+
+    // Encoding SWF dimensions
+    var bitsPerSizeComponent = 15;
+    var buffer = bitsPerSizeComponent, bufferSize = 5;
+    buffer = (buffer << bitsPerSizeComponent); bufferSize += bitsPerSizeComponent;
+    while (bufferSize > 8) {
+      swfBody.push((buffer >> (bufferSize -= 8)) & 255);
+    }
+    buffer = (buffer << bitsPerSizeComponent) | (width * 20); bufferSize += bitsPerSizeComponent;
+    while (bufferSize > 8) {
+      swfBody.push((buffer >> (bufferSize -= 8)) & 255);
+    }
+    buffer = (buffer << bitsPerSizeComponent); bufferSize += bitsPerSizeComponent;
+    while (bufferSize > 8) {
+      swfBody.push((buffer >> (bufferSize -= 8)) & 255);
+    }
+    buffer = (buffer << bitsPerSizeComponent) | (height * 20); bufferSize += bitsPerSizeComponent;
+    while (bufferSize > 8) {
+      swfBody.push((buffer >> (bufferSize -= 8)) & 255);
+    }
+    if (bufferSize > 0) {
+      swfBody.push((buffer << (8 - bufferSize)) & 255);
+    }
+
+    swfBody.push(((framerate - (framerate | 0)) * 255)|0, framerate|0);
+    swfBody.push(1, 0); // frame count
+    var attributesTagCode = (69 << 6) | 4;
+    swfBody.push(attributesTagCode & 255, attributesTagCode >> 8, (avm2 ? 8 : 0), 0, 0, 0);
+    if (background !== undefined) {
+      var backgroundTagCode = (9 << 6) | 3;
+      swfBody.push(backgroundTagCode & 255, backgroundTagCode >> 8,
+          (background >> 16) & 255, (background >> 8) & 255, background & 255);
+    }
+    var frameTagCode = (1 << 6) | 0;
+    swfBody.push(frameTagCode & 255, frameTagCode >> 8);
+    swfBody.push(0, 0); // end
+    var swfSize = swfBody.length + 8;
+    var sizeBytes = [swfSize & 255, (swfSize >> 8) & 255, (swfSize >> 16) & 255, (swfSize >> 24) & 255];
+    var blob = new Blob([new Uint8Array(headerBytes.concat(sizeBytes, swfBody))], {type: 'application/x-shockwave-flash'});
+    return blob;
+  }
+
   // Initializes and performs external interface communication.
   function processExternalCommand(iframe, command) {
     switch (command.action) {
@@ -332,6 +377,9 @@ var shuobject = (function () {
     removeSWF: function (id) {
       var element = document.getElementById(id);
       element.parentNode.removeChild(element);
+    },
+    buildEmptySWF: function (swfVersion, width, height, framerate, avm2, background) {
+      return URL.createObjectURL(createEmptySWFBlob(swfVersion, width, height, framerate, avm2, background));
     },
     createElement: function (name) {
       if (typeof name !== 'string' || name.toLowerCase() !== 'object') {
