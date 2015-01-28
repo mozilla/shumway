@@ -856,8 +856,13 @@ module Shumway.AVM2.AS {
                        (this.baseClass ? this.baseClass.classInfo.instanceInfo.name : null));
         this.classBindings.trace(writer);
         this.instanceBindings.trace(writer);
+        writer.enter('Interfaces');
+        for (var key in this.implementedInterfaces) {
+          writer.writeLn(this.implementedInterfaces[key].classInfo.toString());
+        }
+        writer.leave();
       }
-      writer.leave("}");
+      writer.leave();
     }
   }
 
