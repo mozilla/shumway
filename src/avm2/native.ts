@@ -847,32 +847,16 @@ module Shumway.AVM2.AS {
     }
 
     trace(writer: IndentingWriter) {
-      writer.enter("Class: " + this.classInfo);
-      writer.writeLn("baseClass: " + (this.baseClass ? this.baseClass.classInfo.instanceInfo.name: null));
-      writer.writeLn("instanceConstructor: " + this.instanceConstructor + " " + ASClass.labelObject(this.instanceConstructor));
-      writer.writeLn("instanceConstructorNoInitialize: " + this.instanceConstructorNoInitialize + " " + ASClass.labelObject(this.instanceConstructorNoInitialize));
-
-      writer.writeLn("traitsPrototype: " + ASClass.labelObject(this.traitsPrototype));
-      writer.writeLn("traitsPrototype.__proto__: " + ASClass.labelObject(this.traitsPrototype.__proto__));
-      writer.writeLn("dynamicPrototype: " + ASClass.labelObject(this.dynamicPrototype));
-      writer.writeLn("dynamicPrototype.__proto__: " + ASClass.labelObject(this.dynamicPrototype.__proto__));
-      writer.writeLn("instanceConstructor.prototype: " + ASClass.labelObject(this.instanceConstructor.prototype));
-
-//      for (var k in this) {
-//        var v = this[k];
-//        if (v && ((typeof v === "function") || (typeof v === "object"))) {
-//          if (v.traceId === undefined) {
-//            v.traceId = ASClass.traceId ++;
-//          }
-//          if (typeof v === "function") {
-//            writer.writeLns(k + ": " + v + " Function " + v.traceId);
-//          } else {
-//            writer.writeLns(k + ": " + v + " Object " + v.traceId);
-//          }
-//        } else {
-//          writer.writeLns(k + ": " + v);
-//        }
-//      }
+      if (this.isInterface()) {
+        writer.enter("Interface: " + this.classInfo);
+        this.interfaceBindings.trace(writer);
+      } else {
+        writer.enter("Class: " + this.classInfo);
+        writer.writeLn("baseClass: " +
+                       (this.baseClass ? this.baseClass.classInfo.instanceInfo.name : null));
+        this.classBindings.trace(writer);
+        this.instanceBindings.trace(writer);
+      }
       writer.leave("}");
     }
   }
