@@ -234,6 +234,7 @@ module Shumway.AVM2.Runtime {
       }
     };
     trampoline.isTrampoline = true;
+    trampoline.patchTargets = patchTargets;
     // Make sure that the length property of the trampoline matches the trait's number of
     // parameters. However, since we can't redefine the |length| property of a function,
     // we define a new hidden |VM_LENGTH| property to store this value.

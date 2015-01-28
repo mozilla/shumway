@@ -206,7 +206,7 @@ module Shumway.AVM2.Runtime {
 
   export function applyMethodTrait(qn: string, object: Object, binding: Binding,
                                    isScriptBinding: boolean) {
-    enterTimeline("applyMethodTrait");
+    //enterTimeline("applyMethodTrait", qn);
     var trait = binding.trait;
     release || assert (trait);
     var isMethod = trait.isMethod();
@@ -214,15 +214,26 @@ module Shumway.AVM2.Runtime {
     var prefix = isMethod ? VM_OPEN_METHOD_PREFIX : isGetter ?
                                                     VM_OPEN_GET_METHOD_PREFIX :
                                                     VM_OPEN_SET_METHOD_PREFIX;
-    var traitFunction;
+    var traitFunction = trait.methodInfo.cachedMethodOrTrampoline;
     var patchTargets: IPatchTarget[];
-    if (trait.methodInfo.isNative()) {
-      traitFunction = getTraitFunction(trait, binding.scope, binding.natives);
+    if (traitFunction) {
+      if ((<any>traitFunction).isTrampoline) {
+        patchTargets = (<any>traitFunction).patchTargets;
+      }
     } else {
-      patchTargets = [{object: object, name: prefix + qn}];
-      traitFunction = makeTrampoline(trait, binding.scope, binding.natives, patchTargets,
-                                     isMethod ? trait.methodInfo.parameters.length : 0,
-                                     String(trait.name));
+      if (trait.methodInfo.isNative()) {
+        traitFunction = getTraitFunction(trait, binding.scope, binding.natives);
+      } else {
+        patchTargets = [];
+        traitFunction = makeTrampoline(trait, binding.scope, binding.natives, patchTargets,
+                                       isMethod ? trait.methodInfo.parameters.length : 0,
+                                       String(trait.name));
+      }
+      release || assert(traitFunction);
+      trait.methodInfo.cachedMethodOrTrampoline = traitFunction;
+    }
+    if (patchTargets) {
+      patchTargets.push({object: object, name: prefix + qn});
       if (isMethod) {
         patchTargets.push({object: object.asOpenMethods, name: qn});
       } else {
@@ -244,9 +255,14 @@ module Shumway.AVM2.Runtime {
         // object that is visible to both the trampoline and the memoizer. The trampoline closes
         // over it and patches the target value while the memoizer uses the target value for
         // subsequent memoizations.
-        var memoizerTarget = {value: traitFunction};
-        patchTargets && patchTargets.push({object: memoizerTarget, name: "value"});
-        defineNonEnumerableGetter(object, qn, makeMemoizer(qn, memoizerTarget));
+        var memoizer = trait.methodInfo.cachedMemoizer;
+        if (!memoizer) {
+          var memoizerTarget = {value: traitFunction};
+          patchTargets && patchTargets.push({object: memoizerTarget, name: "value"});
+          memoizer = makeMemoizer(qn, memoizerTarget);
+          trait.methodInfo.cachedMemoizer = memoizer;
+        }
+        defineNonEnumerableGetter(object, qn, memoizer);
         tryInjectToStringAndValueOfForwarder(object, qn);
       } else {
         defineNonEnumerableProperty(object, qn, traitFunction);
@@ -260,7 +276,7 @@ module Shumway.AVM2.Runtime {
         defineNonEnumerableProperty(object, prefix + qn, traitFunction);
       }
     }
-    leaveTimeline();
+    //leaveTimeline();
   }
 
   /**

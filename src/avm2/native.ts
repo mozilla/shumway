@@ -1605,13 +1605,6 @@ module Shumway.AVM2.AS {
       morphPatchList = null;
     }
 
-    enterTimeline("ClassBindings");
-    cls.classBindings = new ClassBindings(classInfo, classScope, staticNatives);
-    enterTimeline("applyTo");
-    cls.classBindings.applyTo(domain, cls);
-    leaveTimeline();
-    leaveTimeline();
-
     enterTimeline("InstanceBindings");
     cls.instanceBindings = new InstanceBindings(baseClass ? baseClass.instanceBindings : null,
                                                 ii, classScope, instanceNatives);
@@ -1622,13 +1615,20 @@ module Shumway.AVM2.AS {
     }
     leaveTimeline();
 
-    cls.implementedInterfaces = cls.instanceBindings.implementedInterfaces;
-
+    enterTimeline("ClassBindings");
+    cls.classBindings = new ClassBindings(classInfo, classScope, staticNatives);
+    enterTimeline("applyTo");
+    cls.classBindings.applyTo(domain, cls);
     if (cls === <any>ASClass) {
       cls.instanceBindings.applyTo(domain, ASObject, true);
     } else if (ASClass.instanceBindings) {
       ASClass.instanceBindings.applyTo(domain, cls, true);
     }
+    leaveTimeline();
+    leaveTimeline();
+
+    cls.implementedInterfaces = cls.instanceBindings.implementedInterfaces;
+
 
     enterTimeline("Configure");
     ASClass.configureInitializers(cls);
