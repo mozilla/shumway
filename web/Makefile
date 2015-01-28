@@ -53,6 +53,7 @@ build: ensureoutputdir
 	# Package shuobject
 	mkdir -p $(BUILD_DIR)/shuobject
 	cd ../build/shuobject; zip -r ../../web/$(BUILD_DIR)/shuobject/shuobject.zip *
+	cp ../extension/shuobject/shuobject.js $(BUILD_DIR)/
 	# Removing hidden files
 	-find build -name ".DS_Store" -exec rm {} \;
 	# Creating commit
