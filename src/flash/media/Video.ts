@@ -16,6 +16,7 @@
 // Class: Video
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import assert = Shumway.Debug.assert;
   export class Video extends flash.display.DisplayObject {
@@ -75,7 +76,7 @@ module Shumway.AVM2.AS.flash.media {
     }
 
     clear(): void {
-      notImplemented("public flash.media.Video::clear"); return;
+      somewhatImplemented("public flash.media.Video::clear"); return;
     }
 
     attachNetStream(netStream: flash.net.NetStream): void {

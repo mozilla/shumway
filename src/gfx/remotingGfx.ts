@@ -183,6 +183,10 @@ module Shumway.Remoting.GFX {
       this._registerAsset(syncId, symbolId, this._decodeImage(data.dataType, data.data, resolve));
     }
 
+    registerVideo(syncId: number) {
+      this._registerAsset(syncId, 0, new RenderableVideo(syncId, this));
+    }
+
     /**
      * Creates an Image element to decode JPG|PNG|GIF data passed in as a buffer.
      *
@@ -493,10 +497,10 @@ module Shumway.Remoting.GFX {
       var id = this.input.readInt();
       var asset = context._getVideoAsset(id);
       var rectangle = this._readRectangle();
-      var url = this.input.readUTF();
-      if (!asset) {
-        asset = new RenderableVideo(url, rectangle, id, context);
-        context._registerAsset(id, 0, asset);
+      if (asset) {
+        asset.setBounds(rectangle);
+      } else {
+        context.registerVideo(id);
       }
     }
 

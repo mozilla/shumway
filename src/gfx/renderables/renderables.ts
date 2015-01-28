@@ -170,10 +170,10 @@ module Shumway.GFX {
     private _isDOMElement = true;
     static _renderableVideos: RenderableVideo [] = [];
 
-    constructor(url: string, bounds: Rectangle, assetId: number, eventSerializer: IVideoPlaybackEventSerializer) {
+    constructor(assetId: number, eventSerializer: IVideoPlaybackEventSerializer) {
       super();
 
-      this.setBounds(bounds);
+      this.setBounds(new Rectangle(0, 0, 1, 1));
 
       this._assetId = assetId;
       this._eventSerializer = eventSerializer;
@@ -181,7 +181,6 @@ module Shumway.GFX {
       var element: HTMLVideoElement = document.createElement('video');
       var elementEventHandler = this._handleVideoEvent.bind(this);
       element.preload = 'metadata'; // for mobile devices
-      element.src = url;
       // element.loop = true;
       element.addEventListener("play", elementEventHandler);
       element.addEventListener("ended", elementEventHandler);
@@ -200,8 +199,6 @@ module Shumway.GFX {
       if (typeof registerInspectorAsset !== "undefined") {
         registerInspectorAsset(-1, -1, this);
       }
-
-      this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
     }
 
     public get video(): HTMLVideoElement {
@@ -260,6 +257,11 @@ module Shumway.GFX {
       var videoElement = this._video;
       var ESTIMATED_VIDEO_SECOND_SIZE: number = 500;
       switch (type) {
+        case VideoControlEvent.Init:
+          videoElement.src = data.url;
+          videoElement.play();
+          this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
+          break;
         case VideoControlEvent.Pause:
           if (videoElement) {
             if (data.paused && !videoElement.paused) {
