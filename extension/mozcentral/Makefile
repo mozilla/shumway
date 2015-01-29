@@ -41,7 +41,7 @@ build: ensureoutputdir
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/avm2/generated/builtin
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_EXTENSION_DIR)/content/avm2/generated/builtin/
 	# Coping closure optimized shumway.js files
-	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_DIR)/content/
+	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_EXTENSION_DIR)/content/
 	echo $(VERSION) > $(BUILD_EXTENSION_DIR)/content/version.txt
 	echo $(VERSION_SHA) >> $(BUILD_EXTENSION_DIR)/content/version.txt
 

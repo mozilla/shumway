@@ -866,7 +866,8 @@ ShumwayStreamConverterBase.prototype = {
       }
 
       if (isOverlay) {
-        // HACK for facebook, CSS embed tag rescaling
+        // HACK For Facebook, CSS embed tag rescaling -- iframe (our overlay)
+        // has no styling in document. Shall removed with jsplugins.
         for (var child = window.frameElement; child !== element; child = child.parentNode) {
           child.setAttribute('style', 'max-width: 100%; max-height: 100%');
         }
@@ -1040,7 +1041,8 @@ ShumwayStreamConverterBase.prototype = {
     channel.originalURI = aRequest.URI;
     channel.loadGroup = aRequest.loadGroup;
 
-    // We can use all powerful principal.
+    // We can use all powerful principal: we are opening chrome:// web page,
+    // which will need lots of permission.
     var securityManager = Cc['@mozilla.org/scriptsecuritymanager;1']
                           .getService(Ci.nsIScriptSecurityManager);
     var resourcePrincipal = securityManager.getSystemPrincipal();

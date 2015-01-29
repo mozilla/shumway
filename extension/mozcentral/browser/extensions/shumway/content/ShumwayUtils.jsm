@@ -84,8 +84,8 @@ let ShumwayUtils = {
       return;
 
     // Load the component and register it.
-    Cu.import('resource://shumway/ShumwayRegistar.jsm');
-    ShumwayRegistar.register();
+    Cu.import('resource://shumway/ShumwayBootstrapUtils.jsm');
+    ShumwayBootstrapUtils.register();
 
     this._registered = true;
 
@@ -101,8 +101,8 @@ let ShumwayUtils = {
       return;
 
     // Remove the contract/component.
-    ShumwayRegistar.unregister();
-    Cu.unload('resource://shumway/ShumwayRegistar.jsm');
+    ShumwayBootstrapUtils.unregister();
+    Cu.unload('resource://shumway/ShumwayBootstrapUtils.jsm');
 
     this._registered = false;
 
