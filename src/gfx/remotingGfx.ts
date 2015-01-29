@@ -497,11 +497,11 @@ module Shumway.Remoting.GFX {
       var id = this.input.readInt();
       var asset = context._getVideoAsset(id);
       var rectangle = this._readRectangle();
-      if (asset) {
-        asset.setBounds(rectangle);
-      } else {
+      if (!asset) {
         context.registerVideo(id);
+        asset = context._getVideoAsset(id);
       }
+      asset.setBounds(rectangle);
     }
 
     private _readFilters(node: Node) {
