@@ -768,6 +768,9 @@ module Shumway.GFX.Canvas2D {
       node.video.style.transform = cssTransform;
       if (this._backgroundVideoLayer !== node.video.parentElement) {
         this._backgroundVideoLayer.appendChild(node.video);
+        if (node.state === RenderableVideoState.Idle) {
+          node.play();
+        }
       }
       matrix.free();
     }
