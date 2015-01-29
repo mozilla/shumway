@@ -97,6 +97,8 @@ module Shumway.AVM2.ABC {
           // Tamarin/Flash and will cause a verify error.
           release || assert(false, "Function encountered in the wild, should not happen");
           break;
+        default:
+          release || assert(false, "Unknown trait kind: " + TRAIT[this.kind]);
       }
 
       if (this.attributes & ATTR.Metadata) {
@@ -242,6 +244,8 @@ module Shumway.AVM2.ABC {
     isClassInitializer: boolean;
     isScriptInitializer: boolean;
     freeMethod: Function;
+    cachedMethodOrTrampoline: Function;
+    cachedMemoizer: Runtime.IMemoizer;
     lastBoundMethod: {
       scope: Shumway.AVM2.Runtime.Scope;
       boundMethod: Function;

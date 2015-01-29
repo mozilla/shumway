@@ -836,13 +836,15 @@ module Shumway {
     /**
      * Attaches a property to the bound function so we can detect when if it
      * ever gets rebound.
-     * TODO: find out why we need this, maybe remove it.
      */
-    export function bindSafely(fn: Function, object: Object) {
-      release || Debug.assert (!fn.boundTo && object);
-      var f = fn.bind(object);
-      f.boundTo = object;
-      return f;
+    export function bindSafely(method: Function, receiver: Object) {
+      release || Debug.assert (!method.boundTo);
+      release || Debug.assert (receiver);
+      function methodClosure() {
+        return method.apply(receiver, arguments);
+      }
+      (<any>methodClosure).boundTo = receiver;
+      return methodClosure;
     }
   }
 
@@ -1891,9 +1893,9 @@ module Shumway {
       this.indent();
     }
 
-    leave(str: string) {
+    leave(str?: string) {
       this.outdent();
-      if (!this._suppressOutput) {
+      if (!this._suppressOutput && str) {
         this._out(this._padding + str);
       }
     }
