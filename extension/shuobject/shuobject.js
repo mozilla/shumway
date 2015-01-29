@@ -439,7 +439,10 @@ var shuobject = (function () {
             fakeIt = true;
             break;
           case 'jwplayer':
-            fakeIt = (new Error()).stack.indexOf('embed.flash') >= 0;
+            var stack = (new Error()).stack;
+            fakeIt = stack.indexOf('jwplayer.js') >= 0 &&
+                     stack.indexOf('embed') >= 0 &&
+                     stack.indexOf('sendEvent') >= 0;
             break;
         }
         if (fakeIt) {
