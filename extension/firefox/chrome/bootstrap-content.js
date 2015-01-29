@@ -36,8 +36,8 @@
     }
 
     isStarted = true;
-    Cu.import('resource://shumway/ShumwayRegistar.jsm');
-    ShumwayRegistar.register();
+    Cu.import('resource://shumway/ShumwayBootstrapUtils.jsm');
+    ShumwayBootstrapUtils.register();
   }
 
   function shutdown() {
@@ -46,8 +46,8 @@
     }
 
     isStarted = false;
-    ShumwayRegistar.unregister();
-    Cu.unload('resource://shumway/ShumwayRegistar.jsm');
+    ShumwayBootstrapUtils.unregister();
+    Cu.unload('resource://shumway/ShumwayBootstrapUtils.jsm');
   }
 
 

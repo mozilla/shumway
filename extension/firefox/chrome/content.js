@@ -27,6 +27,8 @@ var externalInterfaceWrapper = {
   }
 };
 
+// The object allows resending of external interface, clipboard and other
+// control messages between unprivileged content and ShumwayStreamConverter.
 var shumwayComAdapter;
 
 function sendMessage(action, data, sync, callbackCookie) {
@@ -48,6 +50,8 @@ addMessageListener('Shumway:init', function (message) {
     externalInterface: externalInterfaceWrapper
   });
 
+  // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
+  // up Xray wrappers.
   shumwayComAdapter = Components.utils.createObjectIn(content, {defineAs: 'ShumwayCom'});
   Components.utils.exportFunction(sendMessage, shumwayComAdapter, {defineAs: 'sendMessage'});
   Object.defineProperties(shumwayComAdapter, {
@@ -57,6 +61,8 @@ addMessageListener('Shumway:init', function (message) {
   });
   Components.utils.makeObjectPropsNormal(shumwayComAdapter);
 
+  // Exposing createSpecialInflate function for DEFLATE stream decoding using
+  // Gecko API.
   if (SpecialInflateUtils.isSpecialInflateEnabled) {
     Components.utils.exportFunction(function () {
       return SpecialInflateUtils.createWrappedSpecialInflate(content);

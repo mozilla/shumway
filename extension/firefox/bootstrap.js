@@ -29,7 +29,7 @@ Cu.import('resource://gre/modules/Services.jsm');
 // unregistering of resource urls and components/contracts. Until then we do
 // it programatically. See ManifestDirective ManifestParser.cpp for support.
 
-let shumwayRegistarURL = null;
+let shumwayBootstrapUtilsURL = null;
 let isE10sEnabled = true;
 
 
@@ -61,9 +61,9 @@ function startup(aData, aReason) {
     }
   }
 
-  shumwayRegistarURL = aliasURI.spec + 'ShumwayRegistar.jsm';
-  Cu.import(shumwayRegistarURL);
-  ShumwayRegistar.register();
+  shumwayBootstrapUtilsURL = aliasURI.spec + 'ShumwayBootstrapUtils.jsm';
+  Cu.import(shumwayBootstrapUtilsURL);
+  ShumwayBootstrapUtils.register();
 }
 
 function shutdown(aData, aReason) {
@@ -76,9 +76,9 @@ function shutdown(aData, aReason) {
   // Remove the resource url.
   resProt.setSubstitution(RESOURCE_NAME, null);
 
-  ShumwayRegistar.unregister();
-  Cu.unload(shumwayRegistarURL);
-  shumwayRegistarURL = null;
+  ShumwayBootstrapUtils.unregister();
+  Cu.unload(shumwayBootstrapUtilsURL);
+  shumwayBootstrapUtilsURL = null;
 
   if (isE10sEnabled) {
     Cc["@mozilla.org/parentprocessmessagemanager;1"]

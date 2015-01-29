@@ -46,6 +46,10 @@ function runViewer() {
 
     var childWindow = viewer.contentWindow.wrappedJSObject;
 
+    // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
+    // up Xray wrappers. This allows resending of external interface, clipboard
+    // and other control messages between unprivileged content and
+    // ShumwayStreamConverter.
     var shumwayComAdapter = Components.utils.createObjectIn(childWindow, {defineAs: 'ShumwayCom'});
     Components.utils.exportFunction(sendMessage, shumwayComAdapter, {defineAs: 'sendMessage'});
     Object.defineProperties(shumwayComAdapter, {
@@ -55,6 +59,8 @@ function runViewer() {
     });
     Components.utils.makeObjectPropsNormal(shumwayComAdapter);
 
+    // Exposing createSpecialInflate function for DEFLATE stream decoding using
+    // Gecko API.
     if (SpecialInflateUtils.isSpecialInflateEnabled) {
       Components.utils.exportFunction(function () {
         return SpecialInflateUtils.createWrappedSpecialInflate(childWindow);
@@ -121,10 +127,8 @@ function runViewer() {
 
   promise.then(function (oop) {
     if (oop) {
-      console.log('Shumway: start OOP');
       handlerOOP();
     } else {
-      console.log('Shumway: start normal');
       handler();
     }
   });

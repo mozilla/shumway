@@ -16,7 +16,7 @@
 
 'use strict';
 
-var EXPORTED_SYMBOLS = ['ShumwayRegistar'];
+var EXPORTED_SYMBOLS = ['ShumwayBootstrapUtils'];
 
 const PREF_PREFIX = 'shumway.';
 const PREF_IGNORE_CTP = PREF_PREFIX + 'ignoreCTP';
@@ -71,7 +71,7 @@ Factory.prototype = {
 let converterFactory = new Factory();
 let overlayConverterFactory = new Factory();
 
-var ShumwayRegistar = {
+var ShumwayBootstrapUtils = {
   register: function () {
     // Register the components.
     converterFactory.register(ShumwayStreamConverter);
