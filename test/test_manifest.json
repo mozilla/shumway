@@ -409,6 +409,11 @@
       "swf": "/examples/textfield/align.swf",
       "type": "eq"
     },
+    {  "id": "stylesheet-basics",
+      "frames": [1],
+      "swf": "swfs/stylesheet.swf",
+      "type": "eq"
+    },
     {  "id": "text-bind-ref",
       "frames": [3],
       "swf": "swfs/avm1/text-bind/text-bind-1.swf",

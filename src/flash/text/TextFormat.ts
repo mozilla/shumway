@@ -445,8 +445,19 @@ module Shumway.AVM2.AS.flash.text {
       }
       v = formatObject.color;
       if (v) {
-        if (Shumway.ColorUtilities.isValidHexColor(v)) {
-          this.color = Shumway.ColorUtilities.hexToRGB(v);
+        // When parsing colors, whitespace is trimmed away, and all numbers are accepted, as long
+        // as they make up the full string after the "#", without any non-numeric pre- or suffix.
+        // This implementation is somewhat atrocious, but it should be reasonably fast and works.
+        var colorStr = asCoerceString(v).trim().toLowerCase();
+        if (colorStr[0] === '#') {
+          var numericPart = colorStr.substr(1);
+          while (numericPart[0] === '0') {
+            numericPart = numericPart.substr(1);
+          }
+          var colorVal = parseInt(numericPart, 16);
+          if ((<any>colorVal).original_toString(16) === numericPart) {
+            this.color = colorVal;
+          }
         }
       }
       v = formatObject.display;
