@@ -740,7 +740,7 @@ module Shumway.AVM2.Compiler.Backend {
         value = this.constants[index] = this.lazyConstants[index].resolve();
         this.lazyConstants[index] = null;
       }
-      return this.constants[index];
+      return value;
     }
   }
 

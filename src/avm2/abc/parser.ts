@@ -31,7 +31,7 @@ module Shumway.AVM2.ABC {
       public name: string,
       public type: Multiname,
       public value: any,
-      public optional: boolean = false) {
+      public optional: boolean) {
       // ...
     }
   }
@@ -217,7 +217,7 @@ module Shumway.AVM2.ABC {
     abc: AbcFile;
     index: number;
     hash: number;
-    traits: any[];
+    traits: any[] = null;
     public trace: (writer: IndentingWriter) => void;
     constructor(abc: AbcFile, index: number, hash: Hashes) {
       this.abc = abc;
@@ -227,33 +227,58 @@ module Shumway.AVM2.ABC {
   }
 
   export class MethodInfo extends Info {
-    flags: number;
+    static parseParameterNames: boolean = false;
+
+    flags: number; // Initialized in ctor.
     name: Multiname;
-    debugName: string;
-    parameters: Parameter[];
-    returnType: Multiname;
-    holder: Info;
-    hasBody: boolean;
-    maxStack: number;
-    localCount: number;
-    initScopeDepth: number;
-    maxScopeDepth: number;
-    code: any;
-    exceptions: any;
-    isInstanceInitializer: boolean;
-    isClassInitializer: boolean;
-    isScriptInitializer: boolean;
-    freeMethod: Function;
-    cachedMethodOrTrampoline: Function;
-    cachedMemoizer: Runtime.IMemoizer;
+    displayName: string; // Initialized in ctor.
+    parameters: Parameter[]; // Initialized in ctor.
+    returnType: Multiname; // Initialized in ctor.
+    holder: Info = null;
+    maxStack: number = 0;
+    localCount: number = 0;
+    initScopeDepth: number = 0;
+    maxScopeDepth: number = 0;
+    code: Uint8Array = null;
+    exceptions: any[] = null;
+    freeMethod: Function = null;
+    cachedMethodOrTrampoline: Function = null;
+    cachedMemoizer: Runtime.IMemoizer = null;
     lastBoundMethod: {
       scope: Shumway.AVM2.Runtime.Scope;
       boundMethod: Function;
-    };
-    activationPrototype: Object;
-    analysis: Analysis;
-    hasLookupSwitches: boolean;
-    static parseParameterNames: boolean = false;
+    } = null;
+    activationPrototype: Object = null;
+    analysis: Analysis = null;
+
+    get hasBody() {
+      return !!(this.flags & METHOD.HasBody);
+    }
+    set hasBody(val: boolean) {
+      release || assert(val); // This shouldn't ever be reset.
+      this.flags |= METHOD.HasBody;
+    }
+    get isInstanceInitializer() {
+      return !!(this.flags & METHOD.InstanceInitializer);
+    }
+    set isInstanceInitializer(val: boolean) {
+      release || assert(val); // This shouldn't ever be reset.
+      this.flags |= METHOD.InstanceInitializer;
+    }
+    get isClassInitializer() {
+      return !!(this.flags & METHOD.ClassInitializer);
+    }
+    set isClassInitializer(val: boolean) {
+      release || assert(val); // This shouldn't ever be reset.
+      this.flags |= METHOD.ClassInitializer;
+    }
+    get isScriptInitializer() {
+      return !!(this.flags & METHOD.ScriptInitializer);
+    }
+    set isScriptInitializer(val: boolean) {
+      release || assert(val); // This shouldn't ever be reset.
+      this.flags |= METHOD.ScriptInitializer;
+    }
 
     private static _getParameterName(i) {
       if (i < 26) {
@@ -269,15 +294,16 @@ module Shumway.AVM2.ABC {
       this.returnType = constantPool.multinames[stream.readU30()];
       this.parameters = [];
       for (var i = 0; i < parameterCount; i++) {
-        this.parameters.push(new Parameter(undefined, constantPool.multinames[stream.readU30()], undefined));
+        this.parameters.push(new Parameter(undefined, constantPool.multinames[stream.readU30()],
+                                           undefined, false));
       }
 
-      this.debugName = constantPool.strings[stream.readU30()];
+      var name = constantPool.strings[stream.readU30()];
+      release || (this.displayName = name);
       this.flags = stream.readU8();
 
-      var optionalCount = 0;
       if (this.flags & METHOD.HasOptional) {
-        optionalCount = stream.readU30();
+        var optionalCount = stream.readU30();
         release || assert(parameterCount >= optionalCount);
         for (var i = parameterCount - optionalCount; i < parameterCount; i++) {
           var valueIndex = stream.readU30();
@@ -354,7 +380,6 @@ module Shumway.AVM2.ABC {
 
 
     static parseBody (abc: AbcFile, stream: AbcStream) {
-      var constantPool = abc.constantPool;
       var methods = abc.methods;
 
       var index = stream.readU30();
@@ -366,6 +391,7 @@ module Shumway.AVM2.ABC {
       mi.localCount = stream.readU30();
       mi.initScopeDepth = stream.readU30();
       mi.maxScopeDepth = stream.readU30();
+      // TODO: don't copy the underlying data, it should be stable.
       mi.code = stream.readU8s(stream.readU30());
 
       var exceptions = [];
@@ -1491,14 +1517,19 @@ module Shumway.AVM2.ABC {
   }
 
   export enum METHOD {
-    Arguments          = 0x1,
-    Activation         = 0x2,
-    Needrest           = 0x4,
-    HasOptional        = 0x8,
-    IgnoreRest         = 0x10,
-    Native             = 0x20,
-    Setsdxns           = 0x40,
-    HasParamNames      = 0x80
+    Arguments           = 0x1,
+    Activation          = 0x2,
+    Needrest            = 0x4,
+    HasOptional         = 0x8,
+    IgnoreRest          = 0x10,
+    Native              = 0x20,
+    Setsdxns            = 0x40,
+    HasParamNames       = 0x80,
+    // Flags that're derived at runtime, not present in the bytecode.
+    HasBody             = 0x100,
+    InstanceInitializer = 0x200,
+    ClassInitializer    = 0x400,
+    ScriptInitializer   = 0x800
   }
 
   export enum TRAIT {

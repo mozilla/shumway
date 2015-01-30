@@ -616,7 +616,7 @@ module Shumway.AVM2.Compiler {
             return slowPath;
           }
           return constant(ti.object);
-        } else if (ti.scopeDepth !== undefined) {
+        } else if (ti.scopeDepth !== -1) {
           return this.getScopeObject(this.topScope(ti.scopeDepth));
         }
       }

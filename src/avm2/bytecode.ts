@@ -204,7 +204,8 @@ module Shumway.AVM2 {
     debugfile          = 0xF1,
     bkptline           = 0xF2,
     timestamp          = 0xF3,
-    // TODO: move these to their correct places in the list once IntelliJ doesn't show them as syntax errors.
+    // TODO: move these to their correct places in the list once IntelliJ doesn't show them as
+    // syntax errors.
     throw              = 0x03,
     typeof             = 0x95,
     instanceof         = 0xB1,
@@ -213,12 +214,11 @@ module Shumway.AVM2 {
 
   export interface OpcodeOperandDescription {
     name: string;
-    size: string;
+    size: OpcodeSize;
     type: string;
   }
 
   export interface OpcodeDescription {
-    name: string;
     canThrow: boolean;
     operands: OpcodeOperandDescription [];
   }
@@ -248,188 +248,186 @@ module Shumway.AVM2 {
    */
   export var opcodeTable: OpcodeDescription [] = [
     null,
-    { name: "bkpt", canThrow: false, operands: [] },
-    { name: "nop", canThrow: false, operands: [] },
-    { name: "throw", canThrow: true, operands: [] },
-    { name: "getsuper", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "setsuper", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "dxns", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "dxnslate", canThrow: true, operands: [] },
-    { name: "kill", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "label", canThrow: false, operands: [] },
-    { name: "lf32x4", canThrow: true, operands: [] },
-    { name: "sf32x4", canThrow: true, operands: [] },
-    { name: "ifnlt", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifnle", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifngt", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifnge", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "jump", canThrow: false, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "iftrue", canThrow: false, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "iffalse", canThrow: false, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifeq", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifne", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "iflt", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifle", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifgt", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifge", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifstricteq", canThrow: false, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifstrictne", canThrow: false, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "lookupswitch", canThrow: false, operands: null },
-    { name: "pushwith", canThrow: false, operands: [] },
-    { name: "popscope", canThrow: false, operands: [] },
-    { name: "nextname", canThrow: true, operands: [] },
-    { name: "hasnext", canThrow: true, operands: [] },
-    { name: "pushnull", canThrow: false, operands: [] },
-    { name: "pushundefined", canThrow: false, operands: [] },
+    /* bkpt */ { canThrow: false, operands: [] },
+    /* nop */ { canThrow: false, operands: [] },
+    /* throw */ { canThrow: true, operands: [] },
+    /* getsuper */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* setsuper */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* dxns */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* dxnslate */ { canThrow: true, operands: [] },
+    /* kill */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* label */ { canThrow: false, operands: [] },
+    /* lf32x4 */ { canThrow: true, operands: [] },
+    /* sf32x4 */ { canThrow: true, operands: [] },
+    /* ifnlt */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* ifnle */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* ifngt */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* ifnge */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* jump */ { canThrow: false, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* iftrue */ { canThrow: false, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* iffalse */ { canThrow: false, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* ifeq */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* ifne */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* iflt */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* ifle */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* ifgt */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* ifge */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* ifstricteq */ { canThrow: false, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* ifstrictne */ { canThrow: false, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    /* lookupswitch */ { canThrow: false, operands: null },
+    /* pushwith */ { canThrow: false, operands: [] },
+    /* popscope */ { canThrow: false, operands: [] },
+    /* nextname */ { canThrow: true, operands: [] },
+    /* hasnext */ { canThrow: true, operands: [] },
+    /* pushnull */ { canThrow: false, operands: [] },
+    /* pushundefined */ { canThrow: false, operands: [] },
     null,
-    { name: "nextvalue", canThrow: true, operands: [] },
-    { name: "pushbyte", canThrow: false, operands: [{ name: "value", size: "s08", type: "" }] },
-    { name: "pushshort", canThrow: false, operands: [{ name: "value", size: "s16", type: "" }] },
-    { name: "pushtrue", canThrow: false, operands: [] },
-    { name: "pushfalse", canThrow: false, operands: [] },
-    { name: "pushnan", canThrow: false, operands: [] },
-    { name: "pop", canThrow: false, operands: [] },
-    { name: "dup", canThrow: false, operands: [] },
-    { name: "swap", canThrow: false, operands: [] },
-    { name: "pushstring", canThrow: false, operands: [{ name: "index", size: "u30", type: "S" }] },
-    { name: "pushint", canThrow: false, operands: [{ name: "index", size: "u30", type: "I" }] },
-    { name: "pushuint", canThrow: false, operands: [{ name: "index", size: "u30", type: "U" }] },
-    { name: "pushdouble", canThrow: false, operands: [{ name: "index", size: "u30", type: "D" }] },
-    { name: "pushscope", canThrow: false, operands: [] },
-    { name: "pushnamespace", canThrow: false, operands: [{ name: "index", size: "u30", type: "N" }] },
-    { name: "hasnext2", canThrow: true, operands: [{ name: "object", size: "u30", type: "" }, { name: "index", size: "u30", type: "" }] },
-    { name: "lix8", canThrow: true, operands: null },
-    { name: "lix16", canThrow: true, operands: null },
-    { name: "li8", canThrow: true, operands: [] },
-    { name: "li16", canThrow: true, operands: [] },
-    { name: "li32", canThrow: true, operands: [] },
-    { name: "lf32", canThrow: true, operands: [] },
-    { name: "lf64", canThrow: true, operands: [] },
-    { name: "si8", canThrow: true, operands: [] },
-    { name: "si16", canThrow: true, operands: [] },
-    { name: "si32", canThrow: true, operands: [] },
-    { name: "sf32", canThrow: true, operands: [] },
-    { name: "sf64", canThrow: true, operands: [] },
+    /* nextvalue */ { canThrow: true, operands: [] },
+    /* pushbyte */ { canThrow: false, operands: [{ name: "value", size: OpcodeSize.s08, type: "" }] },
+    /* pushshort */ { canThrow: false, operands: [{ name: "value", size: OpcodeSize.s16, type: "" }] },
+    /* pushtrue */ { canThrow: false, operands: [] },
+    /* pushfalse */ { canThrow: false, operands: [] },
+    /* pushnan */ { canThrow: false, operands: [] },
+    /* pop */ { canThrow: false, operands: [] },
+    /* dup */ { canThrow: false, operands: [] },
+    /* swap */ { canThrow: false, operands: [] },
+    /* pushstring */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "S" }] },
+    /* pushint */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "I" }] },
+    /* pushuint */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "U" }] },
+    /* pushdouble */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "D" }] },
+    /* pushscope */ { canThrow: false, operands: [] },
+    /* pushnamespace */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "N" }] },
+    /* hasnext2 */ { canThrow: true, operands: [{ name: "object", size: OpcodeSize.u30, type: "" }, { name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* lix8 */ { canThrow: true, operands: null },
+    /* lix16 */ { canThrow: true, operands: null },
+    /* li8 */ { canThrow: true, operands: [] },
+    /* li16 */ { canThrow: true, operands: [] },
+    /* li32 */ { canThrow: true, operands: [] },
+    /* lf32 */ { canThrow: true, operands: [] },
+    /* lf64 */ { canThrow: true, operands: [] },
+    /* si8 */ { canThrow: true, operands: [] },
+    /* si16 */ { canThrow: true, operands: [] },
+    /* si32 */ { canThrow: true, operands: [] },
+    /* sf32 */ { canThrow: true, operands: [] },
+    /* sf64 */ { canThrow: true, operands: [] },
     null,
-    { name: "newfunction", canThrow: true, operands: [{ name: "index", size: "u30", type: "MI" }] },
-    { name: "call", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
-    { name: "construct", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
-    { name: "callmethod", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "callstatic", canThrow: true, operands: [{ name: "index", size: "u30", type: "MI" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "callsuper", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "callproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "returnvoid", canThrow: false, operands: [] },
-    { name: "returnvalue", canThrow: true, operands: [] },
-    { name: "constructsuper", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
-    { name: "constructprop", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "callsuperid", canThrow: true, operands: null },
-    { name: "callproplex", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "callinterface", canThrow: true, operands: null },
-    { name: "callsupervoid", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "callpropvoid", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "sxi1", canThrow: false, operands: [] },
-    { name: "sxi8", canThrow: false, operands: [] },
-    { name: "sxi16", canThrow: false, operands: [] },
-    { name: "applytype", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
-    { name: "pushfloat4", canThrow: false, operands: null },
-    { name: "newobject", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
-    { name: "newarray", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
-    { name: "newactivation", canThrow: true, operands: [] },
-    { name: "newclass", canThrow: true, operands: [{ name: "index", size: "u30", type: "CI" }] },
-    { name: "getdescendants", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "newcatch", canThrow: true, operands: [{ name: "index", size: "u30", type: "EI" }] },
-    { name: "findpropglobalstrict", canThrow: true, operands: null },
-    { name: "findpropglobal", canThrow: true, operands: null },
-    { name: "findpropstrict", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "findproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "finddef", canThrow: true, operands: null },
-    { name: "getlex", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "setproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "getlocal", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "setlocal", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "getglobalscope", canThrow: false, operands: [] },
-    { name: "getscopeobject", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "getproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "getouterscope", canThrow: false, operands: null },
-    { name: "initproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
+    /* newfunction */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "MI" }] },
+    /* call */ { canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* construct */ { canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* callmethod */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* callstatic */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "MI" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* callsuper */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* callproperty */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* returnvoid */ { canThrow: false, operands: [] },
+    /* returnvalue */ { canThrow: true, operands: [] },
+    /* constructsuper */ { canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* constructprop */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* callsuperid */ { canThrow: true, operands: null },
+    /* callproplex */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* callinterface */ { canThrow: true, operands: null },
+    /* callsupervoid */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* callpropvoid */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* sxi1 */ { canThrow: false, operands: [] },
+    /* sxi8 */ { canThrow: false, operands: [] },
+    /* sxi16 */ { canThrow: false, operands: [] },
+    /* applytype */ { canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* pushfloat4 */ { canThrow: false, operands: null },
+    /* newobject */ { canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* newarray */ { canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* newactivation */ { canThrow: true, operands: [] },
+    /* newclass */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "CI" }] },
+    /* getdescendants */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    /* newcatch */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "EI" }] },
+    /* findpropglobalstrict */ { canThrow: true, operands: null },
+    /* findpropglobal */ { canThrow: true, operands: null },
+    /* findpropstrict */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    /* findproperty */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    /* finddef */ { canThrow: true, operands: null },
+    /* getlex */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    /* setproperty */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    /* getlocal */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* setlocal */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* getglobalscope */ { canThrow: false, operands: [] },
+    /* getscopeobject */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* getproperty */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    /* getouterscope */ { canThrow: false, operands: null },
+    /* initproperty */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
     null,
-    { name: "deleteproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
+    /* deleteproperty */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
     null,
-    { name: "getslot", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "setslot", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "getglobalslot", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "setglobalslot", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "convert_s", canThrow: true, operands: [] },
-    { name: "esc_xelem", canThrow: true, operands: [] },
-    { name: "esc_xattr", canThrow: true, operands: [] },
-    { name: "convert_i", canThrow: true, operands: [] },
-    { name: "convert_u", canThrow: true, operands: [] },
-    { name: "convert_d", canThrow: true, operands: [] },
-    { name: "convert_b", canThrow: true, operands: [] },
-    { name: "convert_o", canThrow: true, operands: [] },
-    { name: "checkfilter", canThrow: true, operands: [] },
-    { name: "convert_f", canThrow: true, operands: [] },
-    { name: "unplus", canThrow: true, operands: [] },
-    { name: "convert_f4", canThrow: true, operands: [] },
-    null,
-    null,
-    null,
-    null,
-    { name: "coerce", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "coerce_b", canThrow: true, operands: [] },
-    { name: "coerce_a", canThrow: true, operands: [] },
-    { name: "coerce_i", canThrow: true, operands: [] },
-    { name: "coerce_d", canThrow: true, operands: [] },
-    { name: "coerce_s", canThrow: true, operands: [] },
-    { name: "astype", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "astypelate", canThrow: true, operands: [] },
-    { name: "coerce_u", canThrow: true, operands: [] },
-    { name: "coerce_o", canThrow: true, operands: [] },
+    /* getslot */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* setslot */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* getglobalslot */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* setglobalslot */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* convert_s */ { canThrow: true, operands: [] },
+    /* esc_xelem */ { canThrow: true, operands: [] },
+    /* esc_xattr */ { canThrow: true, operands: [] },
+    /* convert_i */ { canThrow: true, operands: [] },
+    /* convert_u */ { canThrow: true, operands: [] },
+    /* convert_d */ { canThrow: true, operands: [] },
+    /* convert_b */ { canThrow: true, operands: [] },
+    /* convert_o */ { canThrow: true, operands: [] },
+    /* checkfilter */ { canThrow: true, operands: [] },
+    /* convert_f */ { canThrow: true, operands: [] },
+    /* unplus */ { canThrow: true, operands: [] },
+    /* convert_f4 */ { canThrow: true, operands: [] },
     null,
     null,
     null,
     null,
-    null,
-    null,
-    { name: "negate", canThrow: true, operands: [] },
-    { name: "increment", canThrow: true, operands: [] },
-    { name: "inclocal", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "decrement", canThrow: true, operands: [] },
-    { name: "declocal", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "typeof", canThrow: false, operands: [] },
-    { name: "not", canThrow: false, operands: [] },
-    { name: "bitnot", canThrow: true, operands: [] },
+    /* coerce */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    /* coerce_b */ { canThrow: true, operands: [] },
+    /* coerce_a */ { canThrow: true, operands: [] },
+    /* coerce_i */ { canThrow: true, operands: [] },
+    /* coerce_d */ { canThrow: true, operands: [] },
+    /* coerce_s */ { canThrow: true, operands: [] },
+    /* astype */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    /* astypelate */ { canThrow: true, operands: [] },
+    /* coerce_u */ { canThrow: true, operands: [] },
+    /* coerce_o */ { canThrow: true, operands: [] },
     null,
     null,
     null,
     null,
     null,
     null,
+    /* negate */ { canThrow: true, operands: [] },
+    /* increment */ { canThrow: true, operands: [] },
+    /* inclocal */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* decrement */ { canThrow: true, operands: [] },
+    /* declocal */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* typeof */ { canThrow: false, operands: [] },
+    /* not */ { canThrow: false, operands: [] },
+    /* bitnot */ { canThrow: true, operands: [] },
     null,
     null,
-    { name: "add", canThrow: true, operands: [] },
-    { name: "subtract", canThrow: true, operands: [] },
-    { name: "multiply", canThrow: true, operands: [] },
-    { name: "divide", canThrow: true, operands: [] },
-    { name: "modulo", canThrow: true, operands: [] },
-    { name: "lshift", canThrow: true, operands: [] },
-    { name: "rshift", canThrow: true, operands: [] },
-    { name: "urshift", canThrow: true, operands: [] },
-    { name: "bitand", canThrow: true, operands: [] },
-    { name: "bitor", canThrow: true, operands: [] },
-    { name: "bitxor", canThrow: true, operands: [] },
-    { name: "equals", canThrow: true, operands: [] },
-    { name: "strictequals", canThrow: true, operands: [] },
-    { name: "lessthan", canThrow: true, operands: [] },
-    { name: "lessequals", canThrow: true, operands: [] },
-    { name: "greaterthan", canThrow: true, operands: [] },
-    { name: "greaterequals", canThrow: true, operands: [] },
-    { name: "instanceof", canThrow: true, operands: [] },
-    { name: "istype", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "istypelate", canThrow: true, operands: [] },
-    { name: "in", canThrow: true, operands: [] },
     null,
     null,
+    null,
+    null,
+    null,
+    null,
+    /* add */ { canThrow: true, operands: [] },
+    /* subtract */ { canThrow: true, operands: [] },
+    /* multiply */ { canThrow: true, operands: [] },
+    /* divide */ { canThrow: true, operands: [] },
+    /* modulo */ { canThrow: true, operands: [] },
+    /* lshift */ { canThrow: true, operands: [] },
+    /* rshift */ { canThrow: true, operands: [] },
+    /* urshift */ { canThrow: true, operands: [] },
+    /* bitand */ { canThrow: true, operands: [] },
+    /* bitor */ { canThrow: true, operands: [] },
+    /* bitxor */ { canThrow: true, operands: [] },
+    /* equals */ { canThrow: true, operands: [] },
+    /* strictequals */ { canThrow: true, operands: [] },
+    /* lessthan */ { canThrow: true, operands: [] },
+    /* lessequals */ { canThrow: true, operands: [] },
+    /* greaterthan */ { canThrow: true, operands: [] },
+    /* greaterequals */ { canThrow: true, operands: [] },
+    /* instanceof */ { canThrow: true, operands: [] },
+    /* istype */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    /* istypelate */ { canThrow: true, operands: [] },
+    /* in */ { canThrow: true, operands: [] },
     null,
     null,
     null,
@@ -439,14 +437,16 @@ module Shumway.AVM2 {
     null,
     null,
     null,
-    { name: "increment_i", canThrow: true, operands: [] },
-    { name: "decrement_i", canThrow: true, operands: [] },
-    { name: "inclocal_i", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "declocal_i", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "negate_i", canThrow: true, operands: [] },
-    { name: "add_i", canThrow: true, operands: [] },
-    { name: "subtract_i", canThrow: true, operands: [] },
-    { name: "multiply_i", canThrow: true, operands: [] },
+    null,
+    null,
+    /* increment_i */ { canThrow: true, operands: [] },
+    /* decrement_i */ { canThrow: true, operands: [] },
+    /* inclocal_i */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* declocal_i */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    /* negate_i */ { canThrow: true, operands: [] },
+    /* add_i */ { canThrow: true, operands: [] },
+    /* subtract_i */ { canThrow: true, operands: [] },
+    /* multiply_i */ { canThrow: true, operands: [] },
     null,
     null,
     null,
@@ -455,16 +455,14 @@ module Shumway.AVM2 {
     null,
     null,
     null,
-    { name: "getlocal0", canThrow: false, operands: [] },
-    { name: "getlocal1", canThrow: false, operands: [] },
-    { name: "getlocal2", canThrow: false, operands: [] },
-    { name: "getlocal3", canThrow: false, operands: [] },
-    { name: "setlocal0", canThrow: false, operands: [] },
-    { name: "setlocal1", canThrow: false, operands: [] },
-    { name: "setlocal2", canThrow: false, operands: [] },
-    { name: "setlocal3", canThrow: false, operands: [] },
-    null,
-    null,
+    /* getlocal0 */ { canThrow: false, operands: [] },
+    /* getlocal1 */ { canThrow: false, operands: [] },
+    /* getlocal2 */ { canThrow: false, operands: [] },
+    /* getlocal3 */ { canThrow: false, operands: [] },
+    /* setlocal0 */ { canThrow: false, operands: [] },
+    /* setlocal1 */ { canThrow: false, operands: [] },
+    /* setlocal2 */ { canThrow: false, operands: [] },
+    /* setlocal3 */ { canThrow: false, operands: [] },
     null,
     null,
     null,
@@ -484,11 +482,17 @@ module Shumway.AVM2 {
     null,
     null,
     null,
-    { name: "invalid", canThrow: false, operands: [] },
     null,
-    { name: "debug", canThrow: true, operands: [{ name: "debugType", size: "u08", type: "" }, { name: "index", size: "u30", type: "S" }, { name: "reg", size: "u08", type: "" }, { name: "extra", size: "u30", type: "" }] },
-    { name: "debugline", canThrow: true, operands: [{ name: "lineNumber", size: "u30", type: "" }] },
-    { name: "debugfile", canThrow: true, operands: [{ name: "index", size: "u30", type: "S" }] },
+    null,
+    /* invalid */ { canThrow: false, operands: [] },
+    null,
+    // Debug operands are mapped to commonly used fields so we don't have to keep extra fields
+    // on Bytecode which we wouldn't use anyway.
+    ///* debug */ { canThrow: true, operands: [{ name: "debugType", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "reg", size: OpcodeSize.u08, type: "" }, { name: "extra", size: OpcodeSize.u30, type: "" }] },
+    ///* debugline */ { canThrow: true, operands: [{ name: "lineNumber", size: OpcodeSize.u30, type: "" }] },
+    /* debug */ { canThrow: true, operands: [{ name: "value", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "object", size: OpcodeSize.u08, type: "" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* debugline */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.u30, type: "" }] },
+    /* debugfile */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "S" }] },
     null,
     null,
     null,
@@ -505,50 +509,66 @@ module Shumway.AVM2 {
     null
   ];
 
+  export enum OpcodeSize {
+    u08,
+    s08,
+    s16,
+    s24,
+    u30,
+    u32
+  }
+
   export function opcodeName(op) {
-    return opcodeTable[op].name;
+    return OP[op];
   }
 
   /**
    * A normalized AS3 bytecode, or BasicBlock.
    */
   export class Bytecode {
-    ti: Verifier.TypeInformation;
-    op: number;
-    position: number;
-    originalPosition: number;
-    canThrow: boolean;
-    offsets: number [];
-    succs: Bytecode [];
-    preds: Bytecode [];
-    dominatees: Bytecode [];
-    targets: Bytecode [];
-    target: Bytecode;
-    dominator: Bytecode;
-    bid: number;
-    end: Bytecode;
-    level: number;
-    hasCatches: boolean;
-    spbacks: BlockSet;
-    bdo: number;
-    index: number;
-    object: number;
-    argCount: number;
-    region: Shumway.AVM2.Compiler.IR.Region;
+    ti: Verifier.TypeInformation = null;
+    op: number; // Initialized in ctor.
+    position: number = 0;
+    canThrow: boolean; // Initialized in ctor.
+    offsets: number [] = null;
+    target: Bytecode = null;
+    targets: Bytecode [] = null;
+    level: number = 0;
 
-    verifierEntryState: Verifier.State;
-    verifierExitState: Verifier.State;
+    // Block data. Not split out into its own, lazily initialized structure because that slows
+    // down the verifier phase by about 15%.
+    bid: number;
+    succs: Bytecode [] = null;
+    preds: Bytecode [] = null;
+    dominatees: Bytecode [] = null;
+
+    dominator: Bytecode = null;
+    end: Bytecode = null;
+    region: Compiler.IR.Region = null;
+    spbacks: BlockSet = null;
+    bdo: number = 0;
+    hasCatches: boolean = false;
+    verifierEntryState: Verifier.State = null;
+
+    // Operands
+    index: number = 0;
+    object: number = 0;
+    argCount: number = 0;
+    offset: number = 0;
+    value: number = 0;
 
     constructor(code) {
+      // If no code is passed, we're creating an invalid opcode for bogus jumps.
+      if (!code) {
+        this.op = OP.invalid;
+        this.canThrow = true;
+        return;
+      }
       var op = code.readU8();
       this.op = op;
-      this.originalPosition = code.position;
 
-      var opdesc = Shumway.AVM2.opcodeTable[op];
-      if (!opdesc) {
-        release || unexpected("Unknown Op " + op);
-      }
-
+      var opdesc = opcodeTable[op];
+      release || opdesc || unexpected("Unknown Op " + op);
       this.canThrow = opdesc.canThrow;
 
       var i, n;
@@ -566,22 +586,22 @@ module Shumway.AVM2 {
           var operand = opdesc.operands[i];
 
           switch (operand.size) {
-            case "u08":
+           case OpcodeSize.u08:
               this[operand.name] = code.readU8();
               break;
-            case "s08":
+           case OpcodeSize.s08:
               this[operand.name] = code.readS8();
               break;
-            case "s16":
+           case OpcodeSize.s16:
               this[operand.name] = code.readS16();
               break;
-            case "s24":
+           case OpcodeSize.s24:
               this[operand.name] = code.readS24();
               break;
-            case "u30":
+           case OpcodeSize.u30:
               this[operand.name] = code.readU30();
               break;
-            case "u32":
+           case OpcodeSize.u32:
               this[operand.name] = code.readU32();
               break;
             default:
@@ -618,7 +638,7 @@ module Shumway.AVM2 {
 
     toString(abc) {
       var opDescription = Shumway.AVM2.opcodeTable[this.op];
-      var str = opDescription.name.padRight(' ', 20);
+      var str = opcodeName(this.op).padRight(' ', 20);
       var i, j;
 
       if (this.op === OP.lookupswitch) {
@@ -730,7 +750,7 @@ module Shumway.AVM2 {
       }
     }
   }
-  
+
   export class Analysis {
     blocks: Bytecode [];
     bytecodes: Bytecode [];
@@ -738,7 +758,12 @@ module Shumway.AVM2 {
     markedLoops: boolean;
     analyzedControlFlow: boolean;
     constructor(public methodInfo: MethodInfo) {
-      if (this.methodInfo.code) {
+      this.blocks = null;
+      this.bytecodes = null;
+      this.boundBlockSet = null;
+      this.markedLoops = false;
+      this.analyzedControlFlow = false;
+      if (methodInfo.code) {
         enterTimeline("normalizeBytecode");
         this.normalizeBytecode();
         leaveTimeline();
@@ -771,8 +796,7 @@ module Shumway.AVM2 {
         return cache[offset];
       }
 
-      var code = Object.create(Bytecode.prototype);
-      code.op = OP.invalid;
+      var code = new Bytecode(null);
       code.position = offset;
       cache && (cache[offset] = code);
       return code;
@@ -785,9 +809,9 @@ module Shumway.AVM2 {
       var bytecodesOffset = [];
       
       // This array is dense.
-      var bytecodes = [];
-      var codeStream = new AbcStream(this.methodInfo.code);
-      var bytecode;
+      var bytecodes: Bytecode[] = [];
+      var codeStream = new AbcStream(methodInfo.code);
+      var bytecode: Bytecode;
 
       while (codeStream.remaining() > 0) {
         var pos = codeStream.position;
@@ -801,7 +825,6 @@ module Shumway.AVM2 {
             continue;
 
           case OP.lookupswitch:
-            this.methodInfo.hasLookupSwitches = true;
             bytecode.targets = [];
             var offsets = bytecode.offsets;
             for (var i = 0, j = offsets.length; i < j; i++) {
@@ -885,7 +908,7 @@ module Shumway.AVM2 {
       this.bytecodes = bytecodes;
 
       // Normalize exceptions table to use new offsets.
-      var exceptions = this.methodInfo.exceptions;
+      var exceptions = methodInfo.exceptions;
       for (var i = 0, j = exceptions.length; i < j; i++) {
         var ex = exceptions[i];
         ex.start = bytecodesOffset[ex.start];

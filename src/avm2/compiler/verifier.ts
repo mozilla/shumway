@@ -38,13 +38,13 @@ module Shumway.AVM2.Verifier {
   }
 
   export class TypeInformation {
-    type: Type;
-    baseClass: any;
-    object: any;
-    scopeDepth: number;
-    trait: Trait;
-    noCoercionNeeded: boolean;
-    noCallSuperNeeded: boolean;
+    type: Type = null;
+    baseClass: any = null;
+    object: any = null;
+    scopeDepth: number = -1;
+    trait: Trait = null;
+    noCoercionNeeded: boolean = false;
+    noCallSuperNeeded: boolean = false;
   }
 
   export class Type {
@@ -510,6 +510,7 @@ module Shumway.AVM2.Verifier {
     local: Type [];
     constructor() {
       this.id = State.id += 1;
+      this.originalId = this.id;
       this.stack = [];
       this.scope = [];
       this.local = [];
@@ -584,8 +585,8 @@ module Shumway.AVM2.Verifier {
   }
 
   class Verification {
-    writer = new IndentingWriter();
-    thisType: Type;
+    writer: IndentingWriter = null;
+    thisType: Type = null;
     returnType: Type;
     multinames: Multiname [];
     pushCount: number = 0;
@@ -597,7 +598,10 @@ module Shumway.AVM2.Verifier {
     ) {
       // ...
       Type.initializeTypes(domain);
-      this.writer = Shumway.AVM2.Verifier.traceLevel.value ? new IndentingWriter() : null;
+
+      if (Shumway.AVM2.Verifier.traceLevel.value) {
+        this.writer = new IndentingWriter();
+      }
       this.multinames = methodInfo.abc.constantPool.multinames;
       this.returnType = Type.Undefined;
     }
@@ -612,7 +616,6 @@ module Shumway.AVM2.Verifier {
     }
 
     private _prepareEntryState(): State {
-      var writer = this.writer;
       var entryState = new State();
       var methodInfo = this.methodInfo;
       this.thisType = methodInfo.holder ? Type.from(methodInfo.holder, this.domain) : Type.Any;
@@ -646,9 +649,6 @@ module Shumway.AVM2.Verifier {
       var writer = this.writer;
 
       var blocks: Bytecode [] = this.methodInfo.analysis.blocks;
-      blocks.forEach(function (x: Bytecode) {
-        x.verifierEntryState = x.verifierExitState = null;
-      });
 
       /**
        * To avoid revisiting the same block more than necessary while iterating to a fixed point,
@@ -679,7 +679,7 @@ module Shumway.AVM2.Verifier {
       while (!worklist.isEmpty()) {
 
         var block = worklist.pop();
-        var exitState = block.verifierExitState = block.verifierEntryState.clone();
+        var exitState = block.verifierEntryState.clone();
 
         this._verifyBlock(block, exitState);
 
@@ -712,7 +712,7 @@ module Shumway.AVM2.Verifier {
             return;
           }
 
-          successor.verifierEntryState = exitState.clone();
+          successor.verifierEntryState = exitState;
           worklist.push(successor);
           if (writer) {
             writer.writeLn("Added Block: " + successor.bid +
