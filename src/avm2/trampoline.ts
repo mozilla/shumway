@@ -68,31 +68,38 @@ module Shumway.AVM2.Runtime {
    * Checks for common method patterns.
    */
   export function checkCommonMethodPatterns(methodInfo: MethodInfo) {
-    if (methodInfo.code) {
-      if (ArrayUtilities.equals(methodInfo.code, patterns[0])) {
-        return function () {
-          // 1     getlocal0
-          // 2     pushscope
-          // 3     returnvoid
-        };
-      } else if (ArrayUtilities.equals(methodInfo.code, patterns[1])) {
-        if (methodInfo.holder instanceof InstanceInfo) {
-          var instanceInfo = <InstanceInfo>methodInfo.holder;
-          if (Multiname.getQualifiedName(instanceInfo.superName) === Multiname.Object) {
-            return function () {
-              // 1     getlocal0
-              // 2     pushscope
-              // 3     getlocal0
-              // 4     constructsuper      argCount:0
-              // 6     returnvoid
-            };
-          }
+    var code = methodInfo.code;
+    if (!code) {
+      return null;
+    }
+    // All common patterns start with the same two bytes.
+    if (code[0] !== 208 || code[1] !== 48) {
+      return null;
+    }
+    if (code[2] === 71) { // Pattern 1.
+      return function () {
+        // 1     getlocal0
+        // 2     pushscope
+        // 3     returnvoid
+      };
+    }
+    if (methodInfo.holder instanceof InstanceInfo) {
+      if (code[2] === 208 && code[3] === 73 && code[4] === 0 && code[5] === 71) {
+        var instanceInfo = <InstanceInfo>methodInfo.holder;
+        if (Multiname.getQualifiedName(instanceInfo.superName) === Multiname.Object) {
+          return function () {
+            // 1     getlocal0
+            // 2     pushscope
+            // 3     getlocal0
+            // 4     constructsuper      argCount:0
+            // 6     returnvoid
+          };
         }
-      } else if (methodInfo.code.length < 10) {
-        // TODO: Add more here as needed.
-        // methodInfo.trace(new IndentingWriter());
-        // console.info(Array.prototype.join.call(methodInfo.code, ", "));
       }
+    } else if (code.length < 10) {
+      // TODO: Add more here as needed.
+      // methodInfo.trace(new IndentingWriter());
+      // console.info(Array.prototype.join.call(methodInfo.code, ", "));
     }
     return null;
   }
