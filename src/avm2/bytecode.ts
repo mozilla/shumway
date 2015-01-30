@@ -809,9 +809,9 @@ module Shumway.AVM2 {
       var bytecodesOffset = [];
       
       // This array is dense.
-      var bytecodes = [];
+      var bytecodes: Bytecode[] = [];
       var codeStream = new AbcStream(methodInfo.code);
-      var bytecode;
+      var bytecode: Bytecode;
 
       while (codeStream.remaining() > 0) {
         var pos = codeStream.position;
@@ -825,7 +825,6 @@ module Shumway.AVM2 {
             continue;
 
           case OP.lookupswitch:
-            methodInfo.hasLookupSwitches = true;
             bytecode.targets = [];
             var offsets = bytecode.offsets;
             for (var i = 0, j = offsets.length; i < j; i++) {
