@@ -97,11 +97,15 @@ var SpecialInflateUtils = {
 
   createWrappedSpecialInflate: function (sandbox) {
     var wrapped = new SpecialInflate();
+    var wrapperOnData = null;
     wrapped.onData = function(data) {
       if (wrapperOnData) {
         wrapperOnData.call(wrapper, Components.utils.cloneInto(data, sandbox));
       }
     };
+    // We will return object created in the sandbox/content, with some exposed
+    // properties/methods, so we can send data between wrapped object and
+    // and sandbox/content.
     var wrapper = new sandbox.Object();
     var waived = Components.utils.waiveXrays(wrapper);
     Object.defineProperties(waived, {
@@ -112,6 +116,8 @@ var SpecialInflateUtils = {
       },
       push: {
         value: function (data) {
+          // Uint8Array is expected in the data parameter.
+          // SpecialInflate.push() fails with other argument types.
           return wrapped.push(data);
         }
       },
