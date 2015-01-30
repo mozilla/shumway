@@ -750,7 +750,7 @@ module Shumway.AVM2 {
       }
     }
   }
-  
+
   export class Analysis {
     blocks: Bytecode [];
     bytecodes: Bytecode [];
@@ -758,7 +758,12 @@ module Shumway.AVM2 {
     markedLoops: boolean;
     analyzedControlFlow: boolean;
     constructor(public methodInfo: MethodInfo) {
-      if (this.methodInfo.code) {
+      this.blocks = null;
+      this.bytecodes = null;
+      this.boundBlockSet = null;
+      this.markedLoops = false;
+      this.analyzedControlFlow = false;
+      if (methodInfo.code) {
         enterTimeline("normalizeBytecode");
         this.normalizeBytecode();
         leaveTimeline();
@@ -805,7 +810,7 @@ module Shumway.AVM2 {
       
       // This array is dense.
       var bytecodes = [];
-      var codeStream = new AbcStream(this.methodInfo.code);
+      var codeStream = new AbcStream(methodInfo.code);
       var bytecode;
 
       while (codeStream.remaining() > 0) {
@@ -820,7 +825,7 @@ module Shumway.AVM2 {
             continue;
 
           case OP.lookupswitch:
-            this.methodInfo.hasLookupSwitches = true;
+            methodInfo.hasLookupSwitches = true;
             bytecode.targets = [];
             var offsets = bytecode.offsets;
             for (var i = 0, j = offsets.length; i < j; i++) {
@@ -904,7 +909,7 @@ module Shumway.AVM2 {
       this.bytecodes = bytecodes;
 
       // Normalize exceptions table to use new offsets.
-      var exceptions = this.methodInfo.exceptions;
+      var exceptions = methodInfo.exceptions;
       for (var i = 0, j = exceptions.length; i < j; i++) {
         var ex = exceptions[i];
         ex.start = bytecodesOffset[ex.start];
