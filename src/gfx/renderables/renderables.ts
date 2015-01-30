@@ -158,6 +158,12 @@ module Shumway.GFX {
     sendVideoPlaybackEvent(assetId: number, eventType: VideoPlaybackEvent, data: any): void;
   }
 
+  export enum RenderableVideoState {
+    Idle = 1,
+    Playing,
+    Paused
+  }
+
   export class RenderableVideo extends Renderable {
     _flags = NodeFlags.Dynamic | NodeFlags.Dirty;
     private _video: HTMLVideoElement;
@@ -168,6 +174,7 @@ module Shumway.GFX {
     private _lastPausedTime: number = 0;
     private _seekHappens: boolean = false;
     private _isDOMElement = true;
+    private _state: RenderableVideoState;
     static _renderableVideos: RenderableVideo [] = [];
 
     constructor(assetId: number, eventSerializer: IVideoPlaybackEventSerializer) {
@@ -199,10 +206,26 @@ module Shumway.GFX {
       if (typeof registerInspectorAsset !== "undefined") {
         registerInspectorAsset(-1, -1, this);
       }
+
+      this._state = RenderableVideoState.Idle;
     }
 
     public get video(): HTMLVideoElement {
       return this._video;
+    }
+
+    public get state(): RenderableVideoState {
+      return this._state;
+    }
+
+    play() {
+      this._video.play();
+      this._state = RenderableVideoState.Playing;
+    }
+
+    pause() {
+      this._video.pause();
+      this._state = RenderableVideoState.Paused;
     }
 
     private _handleVideoEvent(evt: Event) {
@@ -259,7 +282,6 @@ module Shumway.GFX {
       switch (type) {
         case VideoControlEvent.Init:
           videoElement.src = data.url;
-          videoElement.play();
           this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
           break;
         case VideoControlEvent.Pause:
@@ -271,9 +293,9 @@ module Shumway.GFX {
               } else {
                 this._lastPausedTime = videoElement.currentTime;
               }
-              videoElement.pause();
+              this.pause();
             } else if (!data.paused && videoElement.paused) {
-              videoElement.play();
+              this.play();
               if (!isNaN(data.time) && this._lastPausedTime !== data.time) {
                 videoElement.currentTime = data.time;
               }
