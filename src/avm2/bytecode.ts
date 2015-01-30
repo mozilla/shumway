@@ -213,7 +213,7 @@ module Shumway.AVM2 {
 
   export interface OpcodeOperandDescription {
     name: string;
-    size: string;
+    size: OpcodeSize;
     type: string;
   }
 
@@ -251,29 +251,29 @@ module Shumway.AVM2 {
     { name: "bkpt", canThrow: false, operands: [] },
     { name: "nop", canThrow: false, operands: [] },
     { name: "throw", canThrow: true, operands: [] },
-    { name: "getsuper", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "setsuper", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "dxns", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
+    { name: "getsuper", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    { name: "setsuper", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    { name: "dxns", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
     { name: "dxnslate", canThrow: true, operands: [] },
-    { name: "kill", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
+    { name: "kill", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
     { name: "label", canThrow: false, operands: [] },
     { name: "lf32x4", canThrow: true, operands: [] },
     { name: "sf32x4", canThrow: true, operands: [] },
-    { name: "ifnlt", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifnle", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifngt", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifnge", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "jump", canThrow: false, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "iftrue", canThrow: false, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "iffalse", canThrow: false, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifeq", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifne", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "iflt", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifle", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifgt", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifge", canThrow: true, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifstricteq", canThrow: false, operands: [{ name: "offset", size: "s24", type: "" }] },
-    { name: "ifstrictne", canThrow: false, operands: [{ name: "offset", size: "s24", type: "" }] },
+    { name: "ifnlt", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "ifnle", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "ifngt", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "ifnge", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "jump", canThrow: false, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "iftrue", canThrow: false, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "iffalse", canThrow: false, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "ifeq", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "ifne", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "iflt", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "ifle", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "ifgt", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "ifge", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "ifstricteq", canThrow: false, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
+    { name: "ifstrictne", canThrow: false, operands: [{ name: "offset", size: OpcodeSize.s24, type: "" }] },
     { name: "lookupswitch", canThrow: false, operands: null },
     { name: "pushwith", canThrow: false, operands: [] },
     { name: "popscope", canThrow: false, operands: [] },
@@ -283,21 +283,21 @@ module Shumway.AVM2 {
     { name: "pushundefined", canThrow: false, operands: [] },
     null,
     { name: "nextvalue", canThrow: true, operands: [] },
-    { name: "pushbyte", canThrow: false, operands: [{ name: "value", size: "s08", type: "" }] },
-    { name: "pushshort", canThrow: false, operands: [{ name: "value", size: "s16", type: "" }] },
+    { name: "pushbyte", canThrow: false, operands: [{ name: "value", size: OpcodeSize.s08, type: "" }] },
+    { name: "pushshort", canThrow: false, operands: [{ name: "value", size: OpcodeSize.s16, type: "" }] },
     { name: "pushtrue", canThrow: false, operands: [] },
     { name: "pushfalse", canThrow: false, operands: [] },
     { name: "pushnan", canThrow: false, operands: [] },
     { name: "pop", canThrow: false, operands: [] },
     { name: "dup", canThrow: false, operands: [] },
     { name: "swap", canThrow: false, operands: [] },
-    { name: "pushstring", canThrow: false, operands: [{ name: "index", size: "u30", type: "S" }] },
-    { name: "pushint", canThrow: false, operands: [{ name: "index", size: "u30", type: "I" }] },
-    { name: "pushuint", canThrow: false, operands: [{ name: "index", size: "u30", type: "U" }] },
-    { name: "pushdouble", canThrow: false, operands: [{ name: "index", size: "u30", type: "D" }] },
+    { name: "pushstring", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "S" }] },
+    { name: "pushint", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "I" }] },
+    { name: "pushuint", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "U" }] },
+    { name: "pushdouble", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "D" }] },
     { name: "pushscope", canThrow: false, operands: [] },
-    { name: "pushnamespace", canThrow: false, operands: [{ name: "index", size: "u30", type: "N" }] },
-    { name: "hasnext2", canThrow: true, operands: [{ name: "object", size: "u30", type: "" }, { name: "index", size: "u30", type: "" }] },
+    { name: "pushnamespace", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "N" }] },
+    { name: "hasnext2", canThrow: true, operands: [{ name: "object", size: OpcodeSize.u30, type: "" }, { name: "index", size: OpcodeSize.u30, type: "" }] },
     { name: "lix8", canThrow: true, operands: null },
     { name: "lix16", canThrow: true, operands: null },
     { name: "li8", canThrow: true, operands: [] },
@@ -311,54 +311,54 @@ module Shumway.AVM2 {
     { name: "sf32", canThrow: true, operands: [] },
     { name: "sf64", canThrow: true, operands: [] },
     null,
-    { name: "newfunction", canThrow: true, operands: [{ name: "index", size: "u30", type: "MI" }] },
-    { name: "call", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
-    { name: "construct", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
-    { name: "callmethod", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "callstatic", canThrow: true, operands: [{ name: "index", size: "u30", type: "MI" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "callsuper", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "callproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
+    { name: "newfunction", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "MI" }] },
+    { name: "call", canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    { name: "construct", canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    { name: "callmethod", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    { name: "callstatic", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "MI" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    { name: "callsuper", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    { name: "callproperty", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
     { name: "returnvoid", canThrow: false, operands: [] },
     { name: "returnvalue", canThrow: true, operands: [] },
-    { name: "constructsuper", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
-    { name: "constructprop", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
+    { name: "constructsuper", canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    { name: "constructprop", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
     { name: "callsuperid", canThrow: true, operands: null },
-    { name: "callproplex", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
+    { name: "callproplex", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
     { name: "callinterface", canThrow: true, operands: null },
-    { name: "callsupervoid", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
-    { name: "callpropvoid", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }, { name: "argCount", size: "u30", type: "" }] },
+    { name: "callsupervoid", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    { name: "callpropvoid", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
     { name: "sxi1", canThrow: false, operands: [] },
     { name: "sxi8", canThrow: false, operands: [] },
     { name: "sxi16", canThrow: false, operands: [] },
-    { name: "applytype", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
+    { name: "applytype", canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
     { name: "pushfloat4", canThrow: false, operands: null },
-    { name: "newobject", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
-    { name: "newarray", canThrow: true, operands: [{ name: "argCount", size: "u30", type: "" }] },
+    { name: "newobject", canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    { name: "newarray", canThrow: true, operands: [{ name: "argCount", size: OpcodeSize.u30, type: "" }] },
     { name: "newactivation", canThrow: true, operands: [] },
-    { name: "newclass", canThrow: true, operands: [{ name: "index", size: "u30", type: "CI" }] },
-    { name: "getdescendants", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "newcatch", canThrow: true, operands: [{ name: "index", size: "u30", type: "EI" }] },
+    { name: "newclass", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "CI" }] },
+    { name: "getdescendants", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    { name: "newcatch", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "EI" }] },
     { name: "findpropglobalstrict", canThrow: true, operands: null },
     { name: "findpropglobal", canThrow: true, operands: null },
-    { name: "findpropstrict", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "findproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
+    { name: "findpropstrict", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    { name: "findproperty", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
     { name: "finddef", canThrow: true, operands: null },
-    { name: "getlex", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "setproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
-    { name: "getlocal", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "setlocal", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
+    { name: "getlex", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    { name: "setproperty", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
+    { name: "getlocal", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    { name: "setlocal", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
     { name: "getglobalscope", canThrow: false, operands: [] },
-    { name: "getscopeobject", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "getproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
+    { name: "getscopeobject", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    { name: "getproperty", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
     { name: "getouterscope", canThrow: false, operands: null },
-    { name: "initproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
+    { name: "initproperty", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
     null,
-    { name: "deleteproperty", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
+    { name: "deleteproperty", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
     null,
-    { name: "getslot", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "setslot", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "getglobalslot", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "setglobalslot", canThrow: false, operands: [{ name: "index", size: "u30", type: "" }] },
+    { name: "getslot", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    { name: "setslot", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    { name: "getglobalslot", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    { name: "setglobalslot", canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
     { name: "convert_s", canThrow: true, operands: [] },
     { name: "esc_xelem", canThrow: true, operands: [] },
     { name: "esc_xattr", canThrow: true, operands: [] },
@@ -375,13 +375,13 @@ module Shumway.AVM2 {
     null,
     null,
     null,
-    { name: "coerce", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
+    { name: "coerce", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
     { name: "coerce_b", canThrow: true, operands: [] },
     { name: "coerce_a", canThrow: true, operands: [] },
     { name: "coerce_i", canThrow: true, operands: [] },
     { name: "coerce_d", canThrow: true, operands: [] },
     { name: "coerce_s", canThrow: true, operands: [] },
-    { name: "astype", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
+    { name: "astype", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
     { name: "astypelate", canThrow: true, operands: [] },
     { name: "coerce_u", canThrow: true, operands: [] },
     { name: "coerce_o", canThrow: true, operands: [] },
@@ -393,9 +393,9 @@ module Shumway.AVM2 {
     null,
     { name: "negate", canThrow: true, operands: [] },
     { name: "increment", canThrow: true, operands: [] },
-    { name: "inclocal", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
+    { name: "inclocal", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
     { name: "decrement", canThrow: true, operands: [] },
-    { name: "declocal", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
+    { name: "declocal", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
     { name: "typeof", canThrow: false, operands: [] },
     { name: "not", canThrow: false, operands: [] },
     { name: "bitnot", canThrow: true, operands: [] },
@@ -425,7 +425,7 @@ module Shumway.AVM2 {
     { name: "greaterthan", canThrow: true, operands: [] },
     { name: "greaterequals", canThrow: true, operands: [] },
     { name: "instanceof", canThrow: true, operands: [] },
-    { name: "istype", canThrow: true, operands: [{ name: "index", size: "u30", type: "M" }] },
+    { name: "istype", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "M" }] },
     { name: "istypelate", canThrow: true, operands: [] },
     { name: "in", canThrow: true, operands: [] },
     null,
@@ -441,8 +441,8 @@ module Shumway.AVM2 {
     null,
     { name: "increment_i", canThrow: true, operands: [] },
     { name: "decrement_i", canThrow: true, operands: [] },
-    { name: "inclocal_i", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
-    { name: "declocal_i", canThrow: true, operands: [{ name: "index", size: "u30", type: "" }] },
+    { name: "inclocal_i", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
+    { name: "declocal_i", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "" }] },
     { name: "negate_i", canThrow: true, operands: [] },
     { name: "add_i", canThrow: true, operands: [] },
     { name: "subtract_i", canThrow: true, operands: [] },
@@ -486,9 +486,9 @@ module Shumway.AVM2 {
     null,
     { name: "invalid", canThrow: false, operands: [] },
     null,
-    { name: "debug", canThrow: true, operands: [{ name: "debugType", size: "u08", type: "" }, { name: "index", size: "u30", type: "S" }, { name: "reg", size: "u08", type: "" }, { name: "extra", size: "u30", type: "" }] },
-    { name: "debugline", canThrow: true, operands: [{ name: "lineNumber", size: "u30", type: "" }] },
-    { name: "debugfile", canThrow: true, operands: [{ name: "index", size: "u30", type: "S" }] },
+    { name: "debug", canThrow: true, operands: [{ name: "debugType", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "reg", size: OpcodeSize.u08, type: "" }, { name: "extra", size: OpcodeSize.u30, type: "" }] },
+    { name: "debugline", canThrow: true, operands: [{ name: "lineNumber", size: OpcodeSize.u30, type: "" }] },
+    { name: "debugfile", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "S" }] },
     null,
     null,
     null,
@@ -504,6 +504,15 @@ module Shumway.AVM2 {
     null,
     null
   ];
+
+  export enum OpcodeSize {
+    u08,
+    s08,
+    s16,
+    s24,
+    u30,
+    u32
+  }
 
   export function opcodeName(op) {
     return opcodeTable[op].name;
@@ -566,22 +575,22 @@ module Shumway.AVM2 {
           var operand = opdesc.operands[i];
 
           switch (operand.size) {
-            case "u08":
+           case OpcodeSize.u08:
               this[operand.name] = code.readU8();
               break;
-            case "s08":
+           case OpcodeSize.s08:
               this[operand.name] = code.readS8();
               break;
-            case "s16":
+           case OpcodeSize.s16:
               this[operand.name] = code.readS16();
               break;
-            case "s24":
+           case OpcodeSize.s24:
               this[operand.name] = code.readS24();
               break;
-            case "u30":
+           case OpcodeSize.u30:
               this[operand.name] = code.readU30();
               break;
-            case "u32":
+           case OpcodeSize.u32:
               this[operand.name] = code.readU32();
               break;
             default:

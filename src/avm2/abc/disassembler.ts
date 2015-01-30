@@ -128,12 +128,12 @@ module Shumway.AVM2.ABC {
   function traceOperand(operand, abc, code) {
     var value = 0;
     switch(operand.size) {
-      case "s08": value = code.readS8(); break;
-      case "u08": value = code.readU8(); break;
-      case "s16": value = code.readS16(); break;
-      case "s24": value = code.readS24(); break;
-      case "u30": value = code.readU30(); break;
-      case "u32": value = code.readU32(); break;
+     case OpcodeSize.s08: value = code.readS8(); break;
+     case OpcodeSize.u08: value = code.readU8(); break;
+     case OpcodeSize.s16: value = code.readS16(); break;
+     case OpcodeSize.s24: value = code.readS24(); break;
+     case OpcodeSize.u30: value = code.readU30(); break;
+     case OpcodeSize.u32: value = code.readU32(); break;
       default: release || assert(false); break;
     }
     var description = "";
@@ -676,12 +676,12 @@ module Shumway.AVM2.ABC {
       function readOperand(operand) {
         var value = 0;
         switch(operand.size) {
-          case "s08": value = code.readS8(); break;
-          case "u08": value = code.readU8(); break;
-          case "s16": value = code.readS16(); break;
-          case "s24": value = code.readS24(); break;
-          case "u30": value = code.readU30(); break;
-          case "u32": value = code.readU32(); break;
+         case OpcodeSize.s08: value = code.readS8(); break;
+         case OpcodeSize.u08: value = code.readU8(); break;
+         case OpcodeSize.s16: value = code.readS16(); break;
+         case OpcodeSize.s24: value = code.readS24(); break;
+         case OpcodeSize.u30: value = code.readU30(); break;
+         case OpcodeSize.u32: value = code.readU32(); break;
           default: release || assert(false); break;
         }
         var description = "";
