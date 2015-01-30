@@ -487,8 +487,12 @@ module Shumway.AVM2 {
     null,
     { name: "invalid", canThrow: false, operands: [] },
     null,
-    { name: "debug", canThrow: true, operands: [{ name: "debugType", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "reg", size: OpcodeSize.u08, type: "" }, { name: "extra", size: OpcodeSize.u30, type: "" }] },
-    { name: "debugline", canThrow: true, operands: [{ name: "lineNumber", size: OpcodeSize.u30, type: "" }] },
+    // Debug operands are mapped to commonly used fields so we don't have to keep extra fields
+    // on Bytecode which we wouldn't use anyway.
+    //{ name: "debug", canThrow: true, operands: [{ name: "debugType", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "reg", size: OpcodeSize.u08, type: "" }, { name: "extra", size: OpcodeSize.u30, type: "" }] },
+    //{ name: "debugline", canThrow: true, operands: [{ name: "lineNumber", size: OpcodeSize.u30, type: "" }] },
+    { name: "debug", canThrow: true, operands: [{ name: "value", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "object", size: OpcodeSize.u08, type: "" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    { name: "debugline", canThrow: true, operands: [{ name: "offset", size: OpcodeSize.u30, type: "" }] },
     { name: "debugfile", canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "S" }] },
     null,
     null,
@@ -525,34 +529,44 @@ module Shumway.AVM2 {
   export class Bytecode {
     ti: Verifier.TypeInformation = null;
     op: number; // Initialized in ctor.
-    originalPosition: number; // Initialized in ctor.
     position: number = 0;
     canThrow: boolean; // Initialized in ctor.
     offsets: number [] = null;
+    target: Bytecode = null;
+    targets: Bytecode [] = null;
+    level: number = 0;
+
+    // Block data. Not split out into its own, lazily initialized structure because that slows
+    // down the verifier phase by about 15%.
+    bid: number;
     succs: Bytecode [] = null;
     preds: Bytecode [] = null;
     dominatees: Bytecode [] = null;
-    targets: Bytecode [] = null;
-    target: Bytecode = null;
+
     dominator: Bytecode = null;
-    bid: number = 0;
     end: Bytecode = null;
-    level: number = 0;
-    hasCatches: boolean = false;
+    region: Compiler.IR.Region = null;
     spbacks: BlockSet = null;
     bdo: number = 0;
+    hasCatches: boolean = false;
+    verifierEntryState: Verifier.State = null;
+
+    // Operands
     index: number = 0;
     object: number = 0;
     argCount: number = 0;
-    region: Shumway.AVM2.Compiler.IR.Region = null;
-
-    verifierEntryState: Verifier.State;
-    verifierExitState: Verifier.State;
+    offset: number = 0;
+    value: number = 0;
 
     constructor(code) {
+      // If no code is passed, we're creating an invalid opcode for bogus jumps.
+      if (!code) {
+        this.op = OP.invalid;
+        this.canThrow = true;
+        return;
+      }
       var op = code.readU8();
       this.op = op;
-      this.originalPosition = code.position;
 
       var opdesc = Shumway.AVM2.opcodeTable[op];
       release || opdesc || unexpected("Unknown Op " + op);
@@ -778,8 +792,7 @@ module Shumway.AVM2 {
         return cache[offset];
       }
 
-      var code = Object.create(Bytecode.prototype);
-      code.op = OP.invalid;
+      var code = new Bytecode(null);
       code.position = offset;
       cache && (cache[offset] = code);
       return code;
