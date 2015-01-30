@@ -54,17 +54,17 @@ module Shumway.AVM2.Runtime {
     return;
   };
 
-  VM_METHOD_OVERRIDES["org.swiftsuspenders.injectionpoints.PropertyInjectionPoint::org.swiftsuspenders.injectionpoints:PropertyInjectionPoint.initializeInjection"] = function () {
-    return;
-  };
+//  VM_METHOD_OVERRIDES["org.swiftsuspenders.injectionpoints.PropertyInjectionPoint::org.swiftsuspenders.injectionpoints:PropertyInjectionPoint.initializeInjection"] = function () {
+//    return;
+//  };
 
-  VM_METHOD_OVERRIDES["org.swiftsuspenders.injectionpoints.NoParamsConstructorInjectionPoint::applyInjection"] = function () {
-    return;
-  };
+//  VM_METHOD_OVERRIDES["org.swiftsuspenders.injectionpoints.NoParamsConstructorInjectionPoint::applyInjection"] = function () {
+//    return;
+//  };
 
-  VM_METHOD_OVERRIDES["org.swiftsuspenders.injectionpoints.PropertyInjectionPoint::applyInjection"] = function () {
-    return;
-  };
+//  VM_METHOD_OVERRIDES["org.swiftsuspenders.injectionpoints.PropertyInjectionPoint::applyInjection"] = function () {
+//    return;
+//  };
 
 //
 //  VM_METHOD_OVERRIDES["org.swiftsuspenders.Injector::instantiate"] = function () {
