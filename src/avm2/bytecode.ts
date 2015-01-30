@@ -204,7 +204,8 @@ module Shumway.AVM2 {
     debugfile          = 0xF1,
     bkptline           = 0xF2,
     timestamp          = 0xF3,
-    // TODO: move these to their correct places in the list once IntelliJ doesn't show them as syntax errors.
+    // TODO: move these to their correct places in the list once IntelliJ doesn't show them as
+    // syntax errors.
     throw              = 0x03,
     typeof             = 0x95,
     instanceof         = 0xB1,
@@ -522,28 +523,28 @@ module Shumway.AVM2 {
    * A normalized AS3 bytecode, or BasicBlock.
    */
   export class Bytecode {
-    ti: Verifier.TypeInformation;
-    op: number;
-    position: number;
-    originalPosition: number;
-    canThrow: boolean;
-    offsets: number [];
-    succs: Bytecode [];
-    preds: Bytecode [];
-    dominatees: Bytecode [];
-    targets: Bytecode [];
-    target: Bytecode;
-    dominator: Bytecode;
-    bid: number;
-    end: Bytecode;
-    level: number;
-    hasCatches: boolean;
-    spbacks: BlockSet;
-    bdo: number;
-    index: number;
-    object: number;
-    argCount: number;
-    region: Shumway.AVM2.Compiler.IR.Region;
+    ti: Verifier.TypeInformation = null;
+    op: number; // Initialized in ctor.
+    originalPosition: number; // Initialized in ctor.
+    position: number = 0;
+    canThrow: boolean; // Initialized in ctor.
+    offsets: number [] = null;
+    succs: Bytecode [] = null;
+    preds: Bytecode [] = null;
+    dominatees: Bytecode [] = null;
+    targets: Bytecode [] = null;
+    target: Bytecode = null;
+    dominator: Bytecode = null;
+    bid: number = 0;
+    end: Bytecode = null;
+    level: number = 0;
+    hasCatches: boolean = false;
+    spbacks: BlockSet = null;
+    bdo: number = 0;
+    index: number = 0;
+    object: number = 0;
+    argCount: number = 0;
+    region: Shumway.AVM2.Compiler.IR.Region = null;
 
     verifierEntryState: Verifier.State;
     verifierExitState: Verifier.State;
@@ -554,10 +555,7 @@ module Shumway.AVM2 {
       this.originalPosition = code.position;
 
       var opdesc = Shumway.AVM2.opcodeTable[op];
-      if (!opdesc) {
-        release || unexpected("Unknown Op " + op);
-      }
-
+      release || opdesc || unexpected("Unknown Op " + op);
       this.canThrow = opdesc.canThrow;
 
       var i, n;
