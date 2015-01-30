@@ -31,6 +31,7 @@ viewer.addEventListener('mozbrowserloadend', function () {
 });
 
 Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
+Components.utils.import('chrome://shumway/content/RtmpUtils.jsm');
 
 function runViewer() {
   function handler() {
@@ -65,6 +66,15 @@ function runViewer() {
       Components.utils.exportFunction(function () {
         return SpecialInflateUtils.createWrappedSpecialInflate(childWindow);
       }, childWindow, {defineAs: 'createSpecialInflate'});
+    }
+
+    if (RtmpUtils.isRtmpEnabled) {
+      Components.utils.exportFunction(function (params) {
+        return RtmpUtils.createSocket(childWindow, params);
+      }, childWindow, {defineAs: 'createRtmpSocket'});
+      Components.utils.exportFunction(function () {
+        return RtmpUtils.createXHR(childWindow);
+      }, childWindow, {defineAs: 'createRtmpXHR'});
     }
 
     window.onExternalCallback = function (call) {

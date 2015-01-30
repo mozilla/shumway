@@ -62,6 +62,12 @@ module Shumway.AVM2.AS.flash.net {
       this._checkPolicyFile = true;
 
       this._videoStream = new VideoStream();
+      this._videoStream._onEnsurePlay = function () {
+        this._notifyVideoControl(VideoControlEvent.Pause, {
+          paused: false,
+          time: NaN
+        });
+      }.bind(this);
     }
 
     _connection: flash.net.NetConnection;
@@ -171,8 +177,9 @@ module Shumway.AVM2.AS.flash.net {
       var service: IVideoElementService = AVM2.instance.globals['Shumway.Player.Utils'];
       service.registerEventListener(this._id, this.processVideoEvent.bind(this));
 
-      // TODO this._connection
-      if (url === null && !this._connection) {
+      if (this._connection && this._connection.uri) {
+        this._videoStream.playInConnection(this._connection, url);
+      } else if (url === null && !this._connection) {
         this._videoStream.openInDataGenerationMode();
       } else {
         this._videoStream.play(url, this.checkPolicyFile);
@@ -614,9 +621,64 @@ module Shumway.AVM2.AS.flash.net {
       stream.load(request);
     }
 
+    playInConnection(connection: NetConnection, streamPath: string) {
+      this.openInDataGenerationMode();
+
+      var self = this;
+      var mux: RtmpJs.MP4.MP4Mux;
+      var mp4 = {
+        packets: 0,
+        init: function (metadata) {
+          if (!metadata.asGetPublicProperty('audiocodecid') && !metadata.asGetPublicProperty('videocodecid')) {
+            return; // useless metadata?
+          }
+          var parsedMetadata = RtmpJs.MP4.parseFLVMetadata(metadata);
+          mux = new RtmpJs.MP4.MP4Mux(parsedMetadata);
+          mux.ondata = function (data) {
+            self.appendBytes(new Uint8Array(data));
+          }.bind(this);
+        },
+        packet: function (type, data, timestamp) {
+          mux.pushPacket(type, new Uint8Array(data), timestamp);
+        },
+        generate: function () {
+          mux.flush();
+        }
+      };
+
+      connection._createRtmpStream((ns: RtmpJs.INetStream, streamId: number) => {
+        ns.ondata = function (message) {
+          console.log('#packet (' + message.typeId + '): @' + message.timestamp);
+          if (message.data.length > 0) {
+            mp4.packet(message.typeId, message.data, message.timestamp);
+          }
+        };
+        ns.oncallback = function () {
+          console.log('#callback');
+        };
+        ns.onscriptdata = function (type, data) {
+          console.log('#object: ' + type);
+          if (type === 'onMetaData') {
+            mp4.init(data);
+          }
+        };
+        ns.play(streamPath);
+      });
+    }
+
     openInDataGenerationMode() {
       release || assert(this._state === VideoStreamState.CLOSED);
       this._state = VideoStreamState.OPENED_DATA_GENERATION;
+      var mediaSource = new MediaSource();
+      mediaSource.addEventListener('sourceopen', function(e) {
+        this._mediaSource = mediaSource;
+        this._ensurePlaying();
+      }.bind(this));
+      mediaSource.addEventListener('sourceend', function(e) {
+        this._mediaSource = null;
+      }.bind(this));
+
+      this._url = URL.createObjectURL(mediaSource);
     }
 
     appendBytes(bytes: Uint8Array) {
@@ -660,6 +722,14 @@ module Shumway.AVM2.AS.flash.net {
 
     close() {
       this._state = VideoStreamState.CLOSED;
+    }
+
+    _onEnsurePlay: () => any;
+    private _ensurePlaying() {
+      if (!this._onEnsurePlay) {
+        return;
+      }
+      this._onEnsurePlay();
     }
 
     private _detectContentType(bytes: Uint8Array): string {
