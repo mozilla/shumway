@@ -646,9 +646,6 @@ module Shumway.AVM2.Verifier {
       var writer = this.writer;
 
       var blocks: Bytecode [] = this.methodInfo.analysis.blocks;
-      blocks.forEach(function (x: Bytecode) {
-        x.verifierEntryState = x.verifierExitState = null;
-      });
 
       /**
        * To avoid revisiting the same block more than necessary while iterating to a fixed point,
@@ -679,7 +676,7 @@ module Shumway.AVM2.Verifier {
       while (!worklist.isEmpty()) {
 
         var block = worklist.pop();
-        var exitState = block.verifierExitState = block.verifierEntryState.clone();
+        var exitState = block.verifierEntryState.clone();
 
         this._verifyBlock(block, exitState);
 
@@ -712,7 +709,7 @@ module Shumway.AVM2.Verifier {
             return;
           }
 
-          successor.verifierEntryState = exitState.clone();
+          successor.verifierEntryState = exitState;
           worklist.push(successor);
           if (writer) {
             writer.writeLn("Added Block: " + successor.bid +
