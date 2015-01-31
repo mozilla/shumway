@@ -359,7 +359,7 @@ module Shumway.AVM2.Compiler {
           this.emitPush('"' + this.constantPool.strings[bc.index] + '"');
           break;
         case OP.pushdouble:
-          this.emitPush(this.constantPool.doubles[bc.index]);
+          this.emitDouble(bc);
           break;
         case OP.pushint:
           this.emitPush(this.constantPool.ints[bc.index]);
@@ -548,6 +548,12 @@ module Shumway.AVM2.Compiler {
     emitPush(v) {
       this.blockEmitter.writeLn(this.stackTop() + " = " + v + "; // push at " + this.stack);
       this.stack++;
+    }
+
+    emitDouble(bc) {
+      var val = this.constantPool.doubles[bc.index];
+      // `String(-0)` gives "0", so to preserve the `-0`, we have to bend over backwards.
+      this.emitPush((val === 0 && 1 / val < 0) ? '-0' : val);
     }
 
     emitPushScope(isWith: boolean) {
