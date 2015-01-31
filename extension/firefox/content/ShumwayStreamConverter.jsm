@@ -38,6 +38,8 @@ Cu.import('resource://gre/modules/Services.jsm');
 Cu.import('resource://gre/modules/NetUtil.jsm');
 Cu.import('resource://gre/modules/Promise.jsm');
 
+Cu.importGlobalProperties(['URL']);
+
 XPCOMUtils.defineLazyModuleGetter(this, 'PrivateBrowsingUtils',
   'resource://gre/modules/PrivateBrowsingUtils.jsm');
 
@@ -909,7 +911,11 @@ ShumwayStreamConverterBase.prototype = {
       throw new Error('Movie url is not specified');
     }
 
-    baseUrl = objectParams.base || pageUrl;
+    if (objectParams.base) {
+        baseUrl = new URL(objectParams.base, pageUrl).href;
+    } else {
+        baseUrl = pageUrl;
+    }
 
     var movieParams = {};
     if (objectParams.flashvars) {
