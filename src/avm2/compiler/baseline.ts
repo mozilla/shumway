@@ -322,6 +322,9 @@ module Shumway.AVM2.Compiler {
         case OP.callpropvoid:
           this.emitCallProperty(bc);
           break;
+        case OP.getlex:
+          this.emitGetLex(bc.index);
+          break;
         case OP.pushwith:
           this.emitPushScope(true);
           break;
@@ -371,11 +374,6 @@ module Shumway.AVM2.Compiler {
         case OP.pushnan:
           this.emitPush('NaN');
           break;
-        case OP.getlex:
-          multiname = this.popMultiname(bc.index);
-          this.blockEmitter.writeLn("// Read: " + multiname.name);
-          // push(this.getProperty(this.findProperty(multiname, true), multiname, false));
-          break;
         case OP.constructsuper:
           this.emitConstructSuper(bc);
           break;
@@ -419,11 +417,10 @@ module Shumway.AVM2.Compiler {
       var multiname = this.constantPool.multinames[nameIndex];
       if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
-        this.blockEmitter.writeLn(this.peek() + ' = ' + this.pop() + '.' + qualifiedName + ';');
+        this.emitPush(this.pop() + '.' + qualifiedName);
       } else {
         this.emitMultiname(nameIndex);
-        this.blockEmitter.writeLn(this.peek() + ' = ' + this.pop() +
-                                  ".asGetProperty(mn.namespaces, mn.name, mn.flags, false);");
+        this.emitPush(this.pop() + ".asGetProperty(mn.namespaces, mn.name, mn.flags, false)");
       }
     }
 
@@ -460,6 +457,19 @@ module Shumway.AVM2.Compiler {
         this.emitPush(call);
       } else {
         this.blockEmitter.writeLn(call + ';');
+      }
+    }
+
+    emitGetLex(nameIndex: number) {
+      this.emitFindProperty(nameIndex, true);
+      var receiver = this.peek();
+      var multiname = this.constantPool.multinames[nameIndex];
+      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+        var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
+        this.blockEmitter.writeLn(receiver + ' = ' + receiver + '.' + qualifiedName + ';');
+      } else {
+        this.emitMultiname(nameIndex);
+        this.emitPush(receiver + ".asGetProperty(mn.namespaces, mn.name, mn.flags, false)");
       }
     }
 
@@ -523,11 +533,11 @@ module Shumway.AVM2.Compiler {
           coercion = 'asCoerce(mi.abc.applicationDomain.getType(mi.abc.constantPool.multinames[' +
                      bc.index + ']), ' + value + ')';
       }
-      this.blockEmitter.writeLn(coercion + ';');
+      this.emitPush(coercion);
     }
 
     emitDup() {
-      this.emitPush(this.stackTop());
+      this.emitPush(this.peek());
     }
 
     emitReturnVoid() {
