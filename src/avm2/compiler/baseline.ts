@@ -263,8 +263,7 @@ module Shumway.AVM2.Compiler {
 
     pop(): string {
       this.stack --;
-      var v = this.getStack(this.stack);
-      return v;
+      return this.getStack(this.stack);
     }
 
     emitBlock(block: Bytecode) {
@@ -344,8 +343,33 @@ module Shumway.AVM2.Compiler {
         case OP.pushstring:
           this.emitPush('"' + this.constantPool.strings[bc.index] + '"');
           break;
+        case OP.pushdouble:
+          this.emitPush(this.constantPool.doubles[bc.index]);
+          break;
+        case OP.pushint:
+          this.emitPush(this.constantPool.ints[bc.index]);
+          break;
+        case OP.pushuint:
+          this.emitPush(this.constantPool.uints[bc.index]);
+          break;
         case OP.pushbyte:
+        case OP.pushshort:
           this.emitPush(bc.value);
+          break;
+        case OP.pushnull:
+          this.emitPush(null);
+          break;
+        case OP.pushundefined:
+          this.emitPush(undefined);
+          break;
+        case OP.pushtrue:
+          this.emitPush(true);
+          break;
+        case OP.pushfalse:
+          this.emitPush(false);
+          break;
+        case OP.pushnan:
+          this.emitPush('NaN');
           break;
         case OP.getlex:
           multiname = this.popMultiname(bc.index);
