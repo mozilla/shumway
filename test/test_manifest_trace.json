@@ -65,6 +65,13 @@
        ],
        "type": "stas"
     },
+    {  "id": "lzma",
+      "stas": "swfs/lzma.stas",
+      "filenames": [
+        "swfs/lzma.swf"
+      ],
+      "type": "stas"
+    },
     {  "id": "avm1 setInterval trace",
       "stas": "swfs/trace.stas",
       "filenames": [

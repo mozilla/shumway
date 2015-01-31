@@ -52,7 +52,7 @@ module Shumway.ArrayUtilities {
     dupBits: number;
   }
 
-  export class Inflate {
+  export class Inflate implements IDataDecoder {
     public onData:(buffer:Uint8Array) => void;
     _error: any;
 
