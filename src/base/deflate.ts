@@ -54,14 +54,10 @@ module Shumway.ArrayUtilities {
 
   export class Inflate implements IDataDecoder {
     public onData:(buffer:Uint8Array) => void;
-    _error: any;
-
-    public get error() {
-      return this._error;
-    }
+    public onError: (e) => void;
 
     constructor(verifyHeader: boolean) {
-      this._error = null;
+      //
     }
 
     public push(data: Uint8Array) {
@@ -94,7 +90,9 @@ module Shumway.ArrayUtilities {
         error = 'inflate: FDICT bit set';
       }
       if (error) {
-        this._error = error;
+        if (this.onError) {
+          this.onError(error);
+        }
         return -1;
       } else {
         return ZLIB_HEADER_SIZE;
@@ -131,10 +129,6 @@ module Shumway.ArrayUtilities {
     private _block2State: DeflateBlock2State;
     private _copyState: DeflateCopyState;
 
-    public get error() {
-      return this._error;
-    }
-
     constructor(verifyHeader: boolean) {
       super(verifyHeader);
       this._buffer = null;
@@ -157,7 +151,6 @@ module Shumway.ArrayUtilities {
         dist: 0,
         distBits: 0
       };
-      this._error = undefined;
 
       if (!areTablesInitialized) {
         initializeTables();
@@ -278,7 +271,7 @@ module Shumway.ArrayUtilities {
           var length2 = buffer[position + 2] | (buffer[position + 3] << 8);
           position += 4;
           if ((length ^ length2) !== 0xFFFF) {
-            this._error = 'inflate: invalid block 0 length';
+            this._error('inflate: invalid block 0 length');
             state = InflateState.ERROR;
             break;
           }
@@ -337,7 +330,7 @@ module Shumway.ArrayUtilities {
           state = InflateState.BLOCK_2_PRE;
           break;
         default:
-          this._error = 'inflate: unsupported block type';
+          this._error('inflate: unsupported block type');
           state = InflateState.ERROR;
           return false;
       }
@@ -347,6 +340,11 @@ module Shumway.ArrayUtilities {
       this._bitBuffer = bitBuffer;
       this._bitLength = bitLength;
       return false;
+    }
+    private _error(e: string) {
+      if (this.onError) {
+        this.onError(e);
+      }
     }
     private _decodeBlock0() {
       var position = this._bufferPosition;
@@ -414,7 +412,7 @@ module Shumway.ArrayUtilities {
       var code = codeTable.codes[bitBuffer & ((1 << maxBits) - 1)];
       var len = code >> 16;
       if ((code & 0x8000)) {
-        this._error = 'inflate: invalid encoding';
+        this._error('inflate: invalid encoding');
         this._state = InflateState.ERROR;
         return -1;
       }
@@ -693,9 +691,7 @@ module Shumway.ArrayUtilities {
           data = buffer.subarray(processed);
         }
       }
-      if (!this._error) {
-        this._specialInflate.push(data);
-      }
+      this._specialInflate.push(data);
     }
 
     public close() {
@@ -737,8 +733,9 @@ module Shumway.ArrayUtilities {
     }
   }
 
-  export class Deflate {
+  export class Deflate implements IDataDecoder {
     public onData: (data: Uint8Array) => void;
+    public onError: (e) => void;
 
     private _writeZlibHeader: boolean;
     private _state: DeflateState;
@@ -789,7 +786,7 @@ module Shumway.ArrayUtilities {
       }
     }
 
-    public finish() {
+    public close() {
       this._state = DeflateState.DONE;
       this.onData(new Uint8Array([
         0x01,

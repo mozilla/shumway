@@ -666,6 +666,7 @@ module Shumway.ArrayUtilities {
 
   export class LzmaDecoder implements IDataDecoder {
     public onData: (data: Uint8Array) => void;
+    public onError: (e) => void;
     private _state: LzmaDecoderState;
     buffer: Uint8Array;
     private _inStream: InputStream;
@@ -752,17 +753,22 @@ module Shumway.ArrayUtilities {
     }
 
     private _checkError(res) {
+      var error;
       if (res === LZMA_RES_ERROR) {
-        throw new Error("LZMA decoding error");
+        error = "LZMA decoding error";
       } else if (res === LZMA_RES_NOT_COMPLETE) {
-        throw new Error("Decoding is not complete");
+        error = "Decoding is not complete";
       } else if (res === LZMA_RES_FINISHED_WITH_MARKER) {
         if (this._decoder.unpackSize !== undefined &&
             this._decoder.unpackSize !== this._outStream.processed) {
-          throw new Error("Finished with end marker before than specified size");
+          error = "Finished with end marker before than specified size";
         }
       } else {
-        throw new Error("Internal Error");
+        error = "Internal LZMA Error";
+      }
+
+      if (error && this.onError) {
+        this.onError(error);
       }
     }
   }

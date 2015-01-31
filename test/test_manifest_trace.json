@@ -68,7 +68,8 @@
     {  "id": "lzma",
       "stas": "swfs/lzma.stas",
       "filenames": [
-        "swfs/lzma.swf"
+        "swfs/lzma.swf",
+        "swfs/lzma_bytes.swf"
       ],
       "type": "stas"
     },

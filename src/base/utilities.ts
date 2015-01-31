@@ -585,6 +585,7 @@ module Shumway {
 
     export interface IDataDecoder {
       onData: (data: Uint8Array) => void;
+      onError: (e) => void;
       push(data: Uint8Array);
       close();
     }
