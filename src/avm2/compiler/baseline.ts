@@ -15,13 +15,13 @@
  */
 
 module Shumway.AVM2.Compiler {
-  import AbcFile = Shumway.AVM2.ABC.AbcFile;
-  import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
-  import Scope = Shumway.AVM2.Runtime.Scope;
-  import Analysis = Shumway.AVM2.Analysis;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
-  import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
-  import ConstantPool = Shumway.AVM2.ABC.ConstantPool;
+  import AbcFile = ABC.AbcFile;
+  import MethodInfo = ABC.MethodInfo;
+  import Scope = Runtime.Scope;
+  import Multiname = ABC.Multiname;
+  import InstanceInfo = ABC.InstanceInfo;
+  import ConstantPool = ABC.ConstantPool;
+  import assert = Debug.assert;
 
   // var verifier = new Shumway.AVM2.Verifier.Verifier();
 
@@ -278,11 +278,13 @@ module Shumway.AVM2.Compiler {
     }
 
     peekScope() {
+      release || assert(this.scopeIndex > 0);
       return this.getScope(this.scopeIndex - 1);
     }
 
     emitBytecode(block: Bytecode, bc: Bytecode) {
-      var multiname: BaselineMultiname;
+      release || assert(this.stack >= 0);
+      release || assert(this.scopeIndex >= 0);
       var opName;
       var op = bc.op;
       release || (opName = OP[op]);
