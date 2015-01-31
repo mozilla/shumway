@@ -327,6 +327,9 @@ module Shumway.AVM2.Compiler {
         case OP.callproplex:
           this.emitCallProperty(bc);
           break;
+        case OP.constructprop:
+          this.emitConstructProperty(bc);
+          break;
         case OP.getlex:
           this.emitGetLex(bc.index);
           break;
@@ -399,14 +402,17 @@ module Shumway.AVM2.Compiler {
         case OP.convert_b:
           this.emitConvertB();
           break;
-        case OP.returnvoid:
-          this.emitReturnVoid();
-          break;
         case OP.dup:
           this.emitDup();
           break;
         case OP.greaterequals:
           this.emitBinaryExpression(' >= ');
+          break;
+        case OP.returnvoid:
+          this.emitReturnVoid();
+          break;
+        case OP.returnvalue:
+          this.emitReturnValue();
           break;
         default:
           this.blockEmitter.writeLn("// Not Implemented");
@@ -479,6 +485,16 @@ module Shumway.AVM2.Compiler {
       } else {
         this.blockEmitter.writeLn(call + ';');
       }
+    }
+
+    emitConstructProperty(bc: Bytecode) {
+      var args = new Array(bc.argCount);
+      for (var i = bc.argCount; i--;) {
+        args[i] = this.pop();
+      }
+      this.emitGetProperty(bc.index);
+      var receiver = this.peek();
+      this.blockEmitter.writeLn(receiver + ' = new ' + receiver + '(' + args + ');');
     }
 
     emitGetLex(nameIndex: number) {
@@ -593,6 +609,10 @@ module Shumway.AVM2.Compiler {
 
     emitReturnVoid() {
       this.blockEmitter.writeLn('return;');
+    }
+
+    emitReturnValue() {
+      this.blockEmitter.writeLn('return ' + this.pop() + ';');
     }
   }
 
