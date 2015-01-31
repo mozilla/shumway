@@ -109,6 +109,7 @@ module Shumway.AVM2.Compiler {
     constantPool: ConstantPool;
 
     stack: number;
+    pushedStrings: number[] = [];
     private scopeIndex: number;
 
     static localNames = ["this", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
@@ -339,6 +340,9 @@ module Shumway.AVM2.Compiler {
         case OP.pushscope:
           this.emitPushScope(false);
           break;
+        case OP.newobject:
+          this.emitNewObject(bc);
+          break;
 
         case OP.ifnlt:      this.emitBinaryIf(block, bc, "<",   true);   break;
         case OP.ifnge:      this.emitBinaryIf(block, bc, ">=",  true);   break;
@@ -356,10 +360,10 @@ module Shumway.AVM2.Compiler {
         case OP.iffalse:    this.emitUnaryIf(block,  bc, "!");           break;
 
         case OP.pushstring:
-          this.emitPush('"' + this.constantPool.strings[bc.index] + '"');
+          this.emitPushString(bc);
           break;
         case OP.pushdouble:
-          this.emitDouble(bc);
+          this.emitPushDouble(bc);
           break;
         case OP.pushint:
           this.emitPush(this.constantPool.ints[bc.index]);
@@ -550,10 +554,19 @@ module Shumway.AVM2.Compiler {
       this.stack++;
     }
 
-    emitDouble(bc) {
+    emitPushDouble(bc) {
       var val = this.constantPool.doubles[bc.index];
       // `String(-0)` gives "0", so to preserve the `-0`, we have to bend over backwards.
       this.emitPush((val === 0 && 1 / val < 0) ? '-0' : val);
+    }
+
+    emitPushString(bc) {
+      // The property keys for OP.newobject are pushed on the stack. They can't be used in that
+      // format, however, for emitting an object literal definition. So we also store the indices
+      // of all pushed strings here and redo the lookup in `emitNewObject`.
+      this.pushedStrings[this.stack] = bc.index;
+      var str = this.constantPool.strings[bc.index];
+      this.emitPush('"' + str + '"');
     }
 
     emitPushScope(isWith: boolean) {
@@ -561,6 +574,17 @@ module Shumway.AVM2.Compiler {
       var scope = "new Scope(" + parent + ", this, " + isWith + ")";
       this.scopeIndex++;
       this.blockEmitter.writeLn(this.getScope(this.scopeIndex) + " = " + scope + ";");
+    }
+
+    emitNewObject(bc: Bytecode) {
+      var properties = [];
+      for (var i = 0; i < bc.argCount; i++) {
+        var value = this.pop();
+        this.pop();
+        var key = this.constantPool.strings[this.pushedStrings[this.stack]];
+        properties.push('$Bg' + key + ': ' + value);
+      }
+      this.emitPush('{ ' + properties + ' }');
     }
 
     emitConstructSuper(bc: Bytecode) {
