@@ -403,8 +403,32 @@ module Shumway.AVM2.Compiler {
         case OP.coerce:
           this.emitCoerce(bc);
           break;
+        case OP.coerce_a:
+          // NOP.
+          break;
+        case OP.coerce_i:
+        case OP.convert_i:
+          this.emitCoerceInt();
+          break;
+        case OP.coerce_u:
+        case OP.convert_u:
+          this.emitCoerceUint();
+          break;
+        case OP.coerce_d:
+        case OP.convert_d:
+          this.emitCoerceNumber();
+          break;
+        case OP.coerce_b:
         case OP.convert_b:
-          this.emitConvertB();
+          this.emitCoerceBoolean();
+          break;
+        case OP.coerce_o:
+        case OP.convert_o:
+          this.emitCoerceObject(bc);
+          break;
+        case OP.coerce_s:
+        case OP.convert_s:
+          this.emitCoerceString(bc);
           break;
         case OP.dup:
           this.emitDup();
@@ -602,29 +626,57 @@ module Shumway.AVM2.Compiler {
     }
 
     emitCoerce(bc: Bytecode) {
+      var multiname = this.constantPool.multinames[bc.index];
+      switch (multiname) {
+        case Multiname.Int:     return this.emitCoerceInt();
+        case Multiname.Uint:    return this.emitCoerceUint();
+        case Multiname.Number:  return this.emitCoerceNumber();
+        case Multiname.Boolean: return this.emitCoerceBoolean();
+        case Multiname.Object:  return this.emitCoerceObject(bc);
+        case Multiname.String:  return this.emitCoerceString(bc);
+      }
       if (bc.ti && bc.ti.noCoercionNeeded) {
         return;
       }
-      var value = this.pop();
-      var coercion: string;
-      var multiname = this.constantPool.multinames[bc.index];
-      switch (multiname) {
-        case Multiname.Int:     coercion = value + '|0'; break;
-        case Multiname.Uint:    coercion = value + ' >>> 0'; break;
-        case Multiname.Number:  coercion = '+' + value; break;
-        case Multiname.Boolean: coercion = '!!' + value; break;
-        case Multiname.Object:  coercion = 'Object(' + value + ')'; break;
-        case Multiname.String:  coercion = 'asCoerceString(' + value + ')'; break;
-        default:
-          coercion = 'asCoerce(mi.abc.applicationDomain.getType(mi.abc.constantPool.multinames[' +
-                     bc.index + ']), ' + value + ')';
-      }
+      var coercion = 'asCoerce(mi.abc.applicationDomain.getType(mi.abc.constantPool.multinames[' +
+                     bc.index + ']), ' + this.pop() + ')';
       this.emitPush(coercion);
     }
 
-    emitConvertB() {
+    emitCoerceInt() {
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' |= 0;');
+    }
+
+    emitCoerceUint() {
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' >>>= 0;');
+    }
+
+    emitCoerceNumber() {
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + '= +' + val);
+    }
+
+    emitCoerceBoolean() {
       var val = this.peek();
       this.blockEmitter.writeLn(val + ' = !!' + val + ';');
+    }
+
+    emitCoerceObject(bc: Bytecode) {
+      if (bc.ti && bc.ti.noCoercionNeeded) {
+        return;
+      }
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' = asCoerceObject(' + val + ');');
+    }
+
+    emitCoerceString(bc: Bytecode) {
+      if (bc.ti && bc.ti.noCoercionNeeded) {
+        return;
+      }
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' = asCoerceString(' + val + ');');
     }
 
     emitDup() {
