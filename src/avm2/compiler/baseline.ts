@@ -97,6 +97,7 @@ module Shumway.AVM2.Compiler {
 
     }
   }
+
   class BaselineCompiler {
     blocks: Bytecode [];
     bytecodes: Bytecode [];
@@ -335,18 +336,22 @@ module Shumway.AVM2.Compiler {
         case OP.pushscope:
           this.emitPushScope(false);
           break;
-        case OP.ifge:
-        case OP.ifgt:
-        case OP.ifle:
-        case OP.iflt:
-        case OP.iftrue:
-        case OP.iffalse:
-        case OP.ifeq:
-        case OP.ifne:
-        case OP.ifstricteq:
-        case OP.ifstrictne:
-          this.emitIf(block, bc);
-          break;
+
+        case OP.ifnlt:      this.emitBinaryIf(block, bc, "<",   true);   break;
+        case OP.ifnge:      this.emitBinaryIf(block, bc, ">=",  true);   break;
+        case OP.ifngt:      this.emitBinaryIf(block, bc, ">",   true);   break;
+        case OP.ifnle:      this.emitBinaryIf(block, bc, "<=",  true);   break;
+        case OP.ifge:       this.emitBinaryIf(block, bc, ">=",  false);  break;
+        case OP.ifgt:       this.emitBinaryIf(block, bc, ">",   false);  break;
+        case OP.ifle:       this.emitBinaryIf(block, bc, "<=",  false);  break;
+        case OP.iflt:       this.emitBinaryIf(block, bc, "<",   false);  break;
+        case OP.ifeq:       this.emitBinaryIf(block, bc, "==",  false);  break;
+        case OP.ifne:       this.emitBinaryIf(block, bc, "!=",  false);  break;
+        case OP.ifstricteq: this.emitBinaryIf(block, bc, "===", false);  break;
+        case OP.ifstrictne: this.emitBinaryIf(block, bc, "!==", false);  break;
+        case OP.iftrue:     this.emitUnaryIf(block,  bc, "!!");          break;
+        case OP.iffalse:    this.emitUnaryIf(block,  bc, "!");           break;
+
         case OP.pushstring:
           this.emitPush('"' + this.constantPool.strings[bc.index] + '"');
           break;
@@ -496,11 +501,26 @@ module Shumway.AVM2.Compiler {
                                 multiname);
     }
 
-    emitIf(block: Bytecode, bc: Bytecode) {
+    emitBinaryIf(block: Bytecode, bc: Bytecode, operator: string, negate: boolean) {
+      var y = this.pop();
+      var x = this.pop();
+      var condition = x + " " + operator + " " + y;
+      if (negate) {
+        condition = "!(" + condition + ")";
+      }
+      this.emitIf(block, bc, condition);
+    }
+
+    emitUnaryIf(block: Bytecode, bc: Bytecode, operator: string) {
+      var x = this.pop();
+      this.emitIf(block, bc, operator + x);
+    }
+
+    emitIf(block: Bytecode, bc: Bytecode, predicate: string) {
       var next = this.bytecodes[bc.position + 1];
       var target = bc.target;
       Relooper.addBranch(block.relooperBlock, next.relooperBlock);
-      Relooper.addBranch(block.relooperBlock, target.relooperBlock, "c");
+      Relooper.addBranch(block.relooperBlock, target.relooperBlock, predicate);
     }
 
     emitPush(v) {
