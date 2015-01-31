@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -321,7 +321,9 @@ module Shumway.AVM2.Compiler {
         case OP.findpropstrict:
           this.emitFindProperty(bc.index, true);
           break;
+        case OP.callproperty:
         case OP.callpropvoid:
+        case OP.callproplex:
           this.emitCallProperty(bc);
           break;
         case OP.getlex:
@@ -381,6 +383,9 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.coerce:
           this.emitCoerce(bc);
+          break;
+        case OP.convert_b:
+          this.emitConvertB();
           break;
         case OP.returnvoid:
           this.emitReturnVoid();
@@ -536,6 +541,11 @@ module Shumway.AVM2.Compiler {
                      bc.index + ']), ' + value + ')';
       }
       this.emitPush(coercion);
+    }
+
+    emitConvertB() {
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' = !!' + val + ';');
     }
 
     emitDup() {
