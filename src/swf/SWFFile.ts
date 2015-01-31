@@ -19,7 +19,9 @@ module Shumway.SWF {
 
   import Parser = Shumway.SWF.Parser;
   import Stream = SWF.Stream;
+  import IDataDecoder = ArrayUtilities.IDataDecoder;
   import Inflate = ArrayUtilities.Inflate;
+  import LzmaDecoder = ArrayUtilities.LzmaDecoder;
 
   import SWFTag = Parser.SwfTag;
 
@@ -62,7 +64,7 @@ module Shumway.SWF {
     private _uncompressedLoadedLength: number;
     private _dataView: DataView;
     private _dataStream: Stream;
-    private _decompressor: Inflate;
+    private _decompressor: IDataDecoder;
     private _jpegTables: any;
     private _endTagEncountered: boolean;
     private _loadStarted: number;
@@ -78,10 +80,8 @@ module Shumway.SWF {
 
     constructor(initialBytes: Uint8Array, length: number) {
       // TODO: cleanly abort loading/parsing instead of just asserting here.
-      release || assert(initialBytes[0] === 67 || initialBytes[0] === 70,
-                        "Unsupported compression format: " + (initialBytes[0] === 90 ?
-                                                              "LZMA" :
-                                                              initialBytes[0] + ''));
+      release || assert(initialBytes[0] === 67 || initialBytes[0] === 70 || initialBytes[0] === 90,
+                        "Unsupported compression format: " + initialBytes[0]);
       release || assert(initialBytes[1] === 87);
       release || assert(initialBytes[2] === 83);
       release || assert(initialBytes.length >= 30, "At least the header must be complete here.");
@@ -143,6 +143,14 @@ module Shumway.SWF {
       this.scanLoadedData();
     }
 
+    finishLoading() {
+      if (this.isCompressed) {
+        this._decompressor.close();
+        this._decompressor = null;
+        this.scanLoadedData();
+      }
+    }
+
     getSymbol(id: number) {
       if (this.eagerlyParsedSymbolsMap[id]) {
         return this.eagerlyParsedSymbolsMap[id];
@@ -187,7 +195,9 @@ module Shumway.SWF {
 
     private readHeaderAndInitialize(initialBytes: Uint8Array) {
       SWF.enterTimeline('Initialize SWFFile');
-      this.isCompressed = initialBytes[0] === 67;
+      var isDeflateCompressed = initialBytes[0] === 67;
+      var isLzmaCompressed = initialBytes[0] === 90;
+      this.isCompressed = isDeflateCompressed || isLzmaCompressed;
       this.swfVersion = initialBytes[3];
       this._loadStarted = Date.now();
       this._uncompressedLength = readSWFLength(initialBytes);
@@ -196,19 +206,19 @@ module Shumway.SWF {
       this._dataStream = new Stream(this.data.buffer);
       this._dataStream.pos = 8;
       this._dataView = <DataView><any>this._dataStream;
-      if (this.isCompressed) {
+      if (isDeflateCompressed) {
         this.data.set(initialBytes.subarray(0, 8));
         this._uncompressedLoadedLength = 8;
         this._decompressor = Inflate.create(true);
-        var self = this;
         // Parts of the header are compressed. Get those out of the way before starting tag parsing.
-        this._decompressor.onData = function(data: Uint32Array) {
-          self.data.set(data, self._uncompressedLoadedLength);
-          self._uncompressedLoadedLength += data.length;
-          self._decompressor.onData = self.processDecompressedData.bind(self);
-          self.parseHeaderContents();
-        };
+        this._decompressor.onData = this.processFirstBatchOfDecompressedData.bind(this);
         this._decompressor.push(initialBytes.subarray(8));
+      } else if (isLzmaCompressed) {
+        this.data.set(initialBytes.subarray(0, 8));
+        this._uncompressedLoadedLength = 8;
+        this._decompressor = new LzmaDecoder(true);
+        this._decompressor.onData = this.processFirstBatchOfDecompressedData.bind(this);
+        this._decompressor.push(initialBytes);
       } else {
         this.data.set(initialBytes);
         this._uncompressedLoadedLength = initialBytes.length;
@@ -227,13 +237,16 @@ module Shumway.SWF {
       this.frameCount = obj.frameCount;
     }
 
+    private processFirstBatchOfDecompressedData(data: Uint8Array) {
+      this.data.set(data, this._uncompressedLoadedLength);
+      this._uncompressedLoadedLength += data.length;
+      this.parseHeaderContents();
+      this._decompressor.onData = this.processDecompressedData.bind(this);
+    }
+
     private processDecompressedData(data: Uint8Array) {
       this.data.set(data, this._uncompressedLoadedLength);
       this._uncompressedLoadedLength += data.length;
-      if (this._uncompressedLoadedLength === this._uncompressedLength) {
-        this._decompressor.close();
-        this._decompressor = null;
-      }
     }
 
     private scanLoadedData() {
@@ -250,7 +263,9 @@ module Shumway.SWF {
       var tempTag = new UnparsedTag(0, 0, 0);
       var pos: number;
       while ((pos = this._dataStream.pos) < endOffset - 1) {
-        this.parseNextTagHeader(tempTag);
+        if (!this.parseNextTagHeader(tempTag)) {
+          break;
+        }
         if (tempTag.tagCode === SWFTag.CODE_END) {
           if (rootTimelineMode) {
             this._endTagEncountered = true;
@@ -277,7 +292,7 @@ module Shumway.SWF {
      *
      * Public so it can be used by tools to parse through entire SWFs.
      */
-    parseNextTagHeader(target: UnparsedTag) {
+    parseNextTagHeader(target: UnparsedTag): boolean {
       var position = this._dataStream.pos;
       var tagCodeAndLength = this._dataView.getUint16(position, true);
       position += 2;
@@ -286,7 +301,7 @@ module Shumway.SWF {
       var extendedLength = tagLength === 0x3f;
       if (extendedLength) {
         if (position + 4 > this._uncompressedLoadedLength) {
-          return;
+          return false;
         }
         tagLength = this._dataView.getUint32(position, true);
         position += 4;
@@ -294,6 +309,7 @@ module Shumway.SWF {
       this._dataStream.pos = position;
       target.byteOffset = position;
       target.byteLength = tagLength;
+      return true;
     }
 
     private scanTag(tag: UnparsedTag, rootTimelineMode: boolean): void {
