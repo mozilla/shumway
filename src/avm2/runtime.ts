@@ -1520,14 +1520,7 @@ module Shumway.AVM2.Runtime {
 
   export function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
     var mi = methodInfo;
-    var cached = searchCodeCache(mi);
     var compilation: {body: string; parameters: string[]};
-    if (!cached) {
-      var globalName = 'mi_' + methodInfo.name.qualifiedName;
-      jsGlobal[globalName] = methodInfo;
-      compilation = Compiler.baselineCompileMethod(mi, scope, hasDynamicScope, globalName);
-      //compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
-    }
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
     if (mi.holder) {
@@ -1542,6 +1535,17 @@ module Shumway.AVM2.Runtime {
       fnName = fnNamePrefix + "$" + fnName;
     }
     fnName = Shumway.StringUtilities.escapeString(fnName);
+    var globalMiName = 'mi_' + fnName;
+    jsGlobal[globalMiName] = methodInfo;
+
+    var cached = searchCodeCache(mi);
+    if (!cached) {
+      if (Compiler.useBaseline.value) {
+        compilation = Compiler.baselineCompileMethod(mi, scope, hasDynamicScope, globalMiName);
+      } else {
+        compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
+      }
+    }
     if (mi.verified) {
       fnName += "$V";
     }

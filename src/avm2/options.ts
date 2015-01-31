@@ -32,6 +32,7 @@ module Shumway.AVM2 {
     export var breakFilter = options.register(new Option("", "break", "string", "", "Set a break point at methods whose qualified name matches this string pattern."));
     export var compileFilter = options.register(new Option("", "compile", "string", "", "Only compile methods whose qualified name matches this string pattern."));
     export var enableDirtyLocals = options.register(new Option("dl", "dirtyLocals", "boolean", true, "Performe dirty local analysis to minimise PHI nodes."));
+    export var useBaseline = options.register(new Option("bl", "useBaseline", "boolean", false, "Use baseline instead of optimizing compiler."));
   }
 
   export module Verifier {
