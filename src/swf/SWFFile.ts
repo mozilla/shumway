@@ -263,7 +263,9 @@ module Shumway.SWF {
       var tempTag = new UnparsedTag(0, 0, 0);
       var pos: number;
       while ((pos = this._dataStream.pos) < endOffset - 1) {
-        this.parseNextTagHeader(tempTag);
+        if (!this.parseNextTagHeader(tempTag)) {
+          break;
+        }
         if (tempTag.tagCode === SWFTag.CODE_END) {
           if (rootTimelineMode) {
             this._endTagEncountered = true;
@@ -290,7 +292,7 @@ module Shumway.SWF {
      *
      * Public so it can be used by tools to parse through entire SWFs.
      */
-    parseNextTagHeader(target: UnparsedTag) {
+    parseNextTagHeader(target: UnparsedTag): boolean {
       var position = this._dataStream.pos;
       var tagCodeAndLength = this._dataView.getUint16(position, true);
       position += 2;
@@ -299,7 +301,7 @@ module Shumway.SWF {
       var extendedLength = tagLength === 0x3f;
       if (extendedLength) {
         if (position + 4 > this._uncompressedLoadedLength) {
-          return;
+          return false;
         }
         tagLength = this._dataView.getUint32(position, true);
         position += 4;
@@ -307,6 +309,7 @@ module Shumway.SWF {
       this._dataStream.pos = position;
       target.byteOffset = position;
       target.byteLength = tagLength;
+      return true;
     }
 
     private scanTag(tag: UnparsedTag, rootTimelineMode: boolean): void {
