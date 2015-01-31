@@ -244,6 +244,7 @@ module Shumway.AVM2.ABC {
     freeMethod: Function = null;
     cachedMethodOrTrampoline: Function = null;
     cachedMemoizer: Runtime.IMemoizer = null;
+    classScope: Runtime.Scope = null;
     lastBoundMethod: {
       scope: Shumway.AVM2.Runtime.Scope;
       boundMethod: Function;

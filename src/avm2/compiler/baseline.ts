@@ -103,11 +103,12 @@ module Shumway.AVM2.Compiler {
     bodyEmitter: Emitter;
     blockEmitter: Emitter;
     relooperEntryBlock: number;
+    parameters: string [];
     local: string [];
     constantPool: ConstantPool;
 
     stack: number;
-    scope: number;
+    private scopeIndex: number;
 
     static localNames = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
 
@@ -116,7 +117,8 @@ module Shumway.AVM2.Compiler {
      */
     static stackNames = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "_O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
-    constructor(public methodInfo: MethodInfo, scope: Scope, public hasDynamicScope: boolean) {
+    constructor(public methodInfo: MethodInfo, private scope: Scope, private hasDynamicScope: boolean,
+                private globalName: string) {
       this.methodInfo.analysis;
       this.constantPool = this.methodInfo.abc.constantPool;
     }
@@ -129,8 +131,10 @@ module Shumway.AVM2.Compiler {
       this.blockEmitter = new Emitter();
 
       writer.enter("Compiling: " + (compileCount++) + " " + this.methodInfo);
-      var analysis = new Analysis(this.methodInfo);
-      analysis.analyzeControlFlow();
+      var analysis = this.methodInfo.analysis || new Analysis(this.methodInfo);
+      if (!analysis.analyzedControlFlow) {
+        analysis.analyzeControlFlow();
+      }
 
       var blocks = this.blocks = analysis.blocks;
       this.bytecodes = analysis.bytecodes;
@@ -140,11 +144,32 @@ module Shumway.AVM2.Compiler {
       writer.outdent();
 
       this.local = [];
-
-      // TOOD:
-      for (var i = 0; i < 10; i ++) {
+      for (var i = 0; i < this.methodInfo.localCount; i ++) {
         this.local.push(this.getLocalName(i));
       }
+      this.parameters = [];
+      for (var i = 0; i < this.methodInfo.parameters.length; i ++) {
+        var param = this.methodInfo.parameters[i];
+        var paramName = this.local[i];
+        this.parameters.push(paramName);
+        if (param.optional && param.isUsed) {
+          this.bodyEmitter.writeLn('arguments.length < ' + (i + 1) + ' && (' + paramName + ' = ' + param.value + ');');
+        }
+      }
+
+      var localsDefinition = 'var ';
+      for (var i = this.parameters.length; i < this.local.length; i++) {
+        localsDefinition += this.local[i] + (i < (this.local.length - 1) ? ', ' : ';');
+      }
+      this.bodyEmitter.writeLn(localsDefinition);
+
+      var stackSlotsDefinition = 'var ';
+      for (var i = 0; i < this.methodInfo.maxStack; i++) {
+        stackSlotsDefinition += this.getStack(i) + (i < (this.methodInfo.maxStack - 1) ? ', ' : ';');
+      }
+      this.bodyEmitter.writeLn(stackSlotsDefinition);
+
+      this.bodyEmitter.writeLn('var mi = ' + this.globalName + ';');
 
       var relooperEntryBlock = this.relooperEntryBlock = Relooper.addBlock("// Entry Block");
 
@@ -156,18 +181,20 @@ module Shumway.AVM2.Compiler {
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
         this.stack = 0;
-        this.scope = 0;
+        this.scopeIndex = 0;
         this.emitBlock(block);
       }
 
       Relooper.addBranch(relooperEntryBlock, blocks[0].relooperBlock);
 
       for (var i = 1; i < blocks.length; i++) {
-        var block = blocks[i];
         Relooper.addBranch(blocks[i - 1].relooperBlock, blocks[i].relooperBlock);
       }
 
-      writer.writeLn(Relooper.render(this.relooperEntryBlock));
+      var body = this.bodyEmitter.toString() + '\n' + Relooper.render(this.relooperEntryBlock);
+
+      writer.writeLn(body);
+      return {body: body, parameters: this.parameters};
     }
 
     getStack(i: number): string {
@@ -190,17 +217,9 @@ module Shumway.AVM2.Compiler {
 
     getLocal(i: number): string {
       if (i < 0 || i >= this.local.length) {
-        throw new Error("Out of bounds local read");
+        throw new Error("Out of bounds local read: " + i + ' > ' + (this.local.length - 1));
       }
       return this.local[i];
-    }
-
-    emitLoadLocal(i: number) {
-      this.emitPush(this.getLocal(i));
-    }
-
-    emitStoreLocal(i: number) {
-      this.blockEmitter.writeLn(this.getLocal(i) + " = " + this.pop() + ";");
     }
 
     peekAny(): string {
@@ -228,17 +247,10 @@ module Shumway.AVM2.Compiler {
     }
 
     pop(): string {
-      writer && writer.writeLn(" popping: stack: " + this.stack);
       this.stack --;
       var v = this.getStack(this.stack);
-      writer && writer.writeLn("  popped: stack: " + this.stack + " " + v);
+      writer && writer.writeLn("// popped: stack: " + this.stack + " " + v);
       return v;
-    }
-
-    emitPush(v) {
-      writer && writer.writeLn("push: stack: " + this.stack + " " + v);
-      this.blockEmitter.writeLn(this.getStack(this.stack) + " = " + v + ";");
-      this.stack ++;
     }
 
     emitBlock(block: Bytecode) {
@@ -253,33 +265,7 @@ module Shumway.AVM2.Compiler {
     }
 
     peekScope() {
-      return this.getScope(this.scope - 1);
-    }
-
-    emitPushScope(isWith: boolean) {
-      var parent = this.scope === 0 ? "null" : this.peekScope();
-      var scope = "new Scope(" + parent + ", " + isWith + ")";
-      this.blockEmitter.writeLn(this.getScope(this.scope) + " = " + scope + ";");
-      this.scope ++;
-    }
-
-    popMultiname(index: number): BaselineMultiname {
-      var multiname = this.constantPool.multinames[index];
-      var namespaces, name, flags;
-      if (multiname.isRuntimeName()) {
-        name = this.pop();
-        // TODO: figure out what `flags` should be set to for runtime names.
-        flags = 0;
-      } else {
-        name = multiname.name;
-        flags = multiname.flags;
-      }
-      if (multiname.isRuntimeNamespace()) {
-        namespaces = "[" + this.pop() + "]";
-      } else {
-        namespaces = "* constant(multiname.namespaces) *";
-      }
-      return new BaselineMultiname(namespaces, name, flags);
+      return this.getScope(this.scopeIndex - 1);
     }
 
     emitBytecode(block: Bytecode, bc: Bytecode) {
@@ -322,16 +308,30 @@ module Shumway.AVM2.Compiler {
           this.emitIf(block, bc);
           break;
         case OP.pushstring:
-          this.emitPush("\"" + this.constantPool.strings[bc.index] + "\"");
+          this.emitPush('"' + this.constantPool.strings[bc.index] + '"');
           break;
         case OP.getlex:
           multiname = this.popMultiname(bc.index);
           this.blockEmitter.writeLn("// Read: " + multiname.name);
           // push(this.getProperty(this.findProperty(multiname, true), multiname, false));
           break;
+        case OP.constructsuper:
+          this.emitConstructSuper(bc);
+          break;
+        case OP.returnvoid:
+          this.emitReturnVoid();
+          break;
         default:
           this.blockEmitter.writeLn("// Not Implemented");
       }
+    }
+
+    emitLoadLocal(i: number) {
+      this.emitPush(this.getLocal(i));
+    }
+
+    emitStoreLocal(i: number) {
+      this.blockEmitter.writeLn(this.getLocal(i) + " = " + this.pop() + ";");
     }
 
     emitIf(block: Bytecode, bc: Bytecode) {
@@ -340,15 +340,68 @@ module Shumway.AVM2.Compiler {
       Relooper.addBranch(block.relooperBlock, next.relooperBlock);
       Relooper.addBranch(block.relooperBlock, target.relooperBlock, "c");
     }
+
+    emitPush(v) {
+      this.blockEmitter.writeLn(this.getStack(this.stack) + " = " + v +
+                                "; // push at " + this.stack);
+      this.stack++;
+    }
+
+    emitPushScope(isWith: boolean) {
+      var parent = this.scopeIndex === 0 ? "null" : this.peekScope();
+      var scope = "new Scope(" + parent + ", " + isWith + ")";
+      this.blockEmitter.writeLn(this.getScope(this.scopeIndex) + " = " + scope + ";");
+      this.scopeIndex ++;
+    }
+
+    emitConstructSuper(bc: Bytecode) {
+      var superInvoke = 'mi.classScope.object.baseClass.instanceConstructorNoInitialize.call(this';
+      var args = [];
+      for (var i = bc.argCount; i--;) {
+        args.push(this.pop());
+      }
+      if (args.length) {
+        superInvoke += ', ' + args.join(', ');
+      }
+      superInvoke += ');';
+      this.blockEmitter.writeLn(superInvoke);
+      this.scopeIndex ++;
+    }
+
+    emitReturnVoid() {
+      this.blockEmitter.writeLn('return;');
+    }
+
+    popMultiname(index: number): BaselineMultiname {
+      var multiname = this.constantPool.multinames[index];
+      var namespaces, name, flags;
+      if (multiname.isRuntimeName()) {
+        name = this.pop();
+        // TODO: figure out what `flags` should be set to for runtime names.
+        flags = 0;
+      } else {
+        name = multiname.name;
+        flags = multiname.flags;
+      }
+      if (multiname.isRuntimeNamespace()) {
+        namespaces = "[" + this.pop() + "]";
+      } else {
+        namespaces = "* constant(multiname.namespaces) *";
+      }
+      return new BaselineMultiname(namespaces, name, flags);
+    }
   }
 
-  export function baselineCompileMethod(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean) {
-    var compiler = new BaselineCompiler(methodInfo, scope, hasDynamicScope);
+  export function baselineCompileMethod(methodInfo: MethodInfo, scope: Scope,
+                                        hasDynamicScope: boolean, globalName: string) {
+    var compiler = new BaselineCompiler(methodInfo, scope, hasDynamicScope, globalName);
     try {
       var result = compiler.compile();
+      console.log(result);
     } catch (e) {
       writer.errorLn(e);
     }
+    return result;
   }
 
   export function baselineCompileABC(abc: AbcFile) {
@@ -356,7 +409,7 @@ module Shumway.AVM2.Compiler {
       if (!method.code) {
         return;
       }
-      baselineCompileMethod(method, null, false);
+      baselineCompileMethod(method, null, false, '');
     });
   }
 }

@@ -1521,10 +1521,12 @@ module Shumway.AVM2.Runtime {
   export function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
     var mi = methodInfo;
     var cached = searchCodeCache(mi);
-    var compilation: Compilation;
+    var compilation: {body: string; parameters: string[]};
     if (!cached) {
-      Compiler.baselineCompileMethod(mi, scope, hasDynamicScope);
-      compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
+      var globalName = 'mi_' + methodInfo.name.qualifiedName;
+      jsGlobal[globalName] = methodInfo;
+      compilation = Compiler.baselineCompileMethod(mi, scope, hasDynamicScope, globalName);
+      //compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
     }
 
     var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
@@ -1554,7 +1556,8 @@ module Shumway.AVM2.Runtime {
       body = "{ debugger; \n" + body + "}";
     }
     if (!cached) {
-      var fnSource = "function " + fnName + " (" + compilation.parameters.join(", ") + ") " + body;
+      var fnSource = "function " + fnName + " (" + compilation.parameters.join(", ") + ") {\n" +
+                     body + '\n}';
       fnSource += "//# sourceURL=fun-" + fnName + ".as";
     }
 
