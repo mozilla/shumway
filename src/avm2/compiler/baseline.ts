@@ -405,6 +405,9 @@ module Shumway.AVM2.Compiler {
         case OP.dup:
           this.emitDup();
           break;
+        case OP.greaterequals:
+          this.emitBinaryExpression(' >= ');
+          break;
         default:
           this.blockEmitter.writeLn("// Not Implemented");
           throw 1;
@@ -580,6 +583,12 @@ module Shumway.AVM2.Compiler {
 
     emitDup() {
       this.emitPush(this.peek());
+    }
+
+    emitBinaryExpression(expression: string) {
+      var left = this.pop();
+      var right = this.peek();
+      this.blockEmitter.writeLn(right + ' = ' + left + expression + right + ';');
     }
 
     emitReturnVoid() {
