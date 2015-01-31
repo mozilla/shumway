@@ -385,6 +385,9 @@ module Shumway.AVM2.Compiler {
         case OP.returnvoid:
           this.emitReturnVoid();
           break;
+        case OP.dup:
+          this.emitDup();
+          break;
         default:
           this.blockEmitter.writeLn("// Not Implemented");
           throw 1;
@@ -521,6 +524,10 @@ module Shumway.AVM2.Compiler {
                      bc.index + ']), ' + value + ')';
       }
       this.blockEmitter.writeLn(coercion + ';');
+    }
+
+    emitDup() {
+      this.emitPush(this.stackTop());
     }
 
     emitReturnVoid() {
