@@ -110,7 +110,7 @@ module Shumway.AVM2.Compiler {
     stack: number;
     private scopeIndex: number;
 
-    static localNames = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
+    static localNames = ["this", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
 
     /**
      * Make sure that none of these shadow global names, like "U" and "O".
@@ -118,7 +118,7 @@ module Shumway.AVM2.Compiler {
     static stackNames = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "_O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
     constructor(public methodInfo: MethodInfo, private scope: Scope, private hasDynamicScope: boolean,
-                private globalName: string) {
+                private globalMiName: string) {
       this.methodInfo.analysis;
       this.constantPool = this.methodInfo.abc.constantPool;
     }
@@ -150,26 +150,37 @@ module Shumway.AVM2.Compiler {
       this.parameters = [];
       for (var i = 0; i < this.methodInfo.parameters.length; i ++) {
         var param = this.methodInfo.parameters[i];
-        var paramName = this.local[i];
+        var paramName = this.local[i + 1];
         this.parameters.push(paramName);
         if (param.optional && param.isUsed) {
           this.bodyEmitter.writeLn('arguments.length < ' + (i + 1) + ' && (' + paramName + ' = ' + param.value + ');');
         }
       }
 
-      var localsDefinition = 'var ';
-      for (var i = this.parameters.length; i < this.local.length; i++) {
-        localsDefinition += this.local[i] + (i < (this.local.length - 1) ? ', ' : ';');
+      if (this.local.length > this.parameters.length + 1) {
+        var localsDefinition = 'var ';
+        for (var i = this.parameters.length + 1; i < this.local.length; i++) {
+          localsDefinition += this.local[i] + (i < (this.local.length - 1) ? ', ' : ';');
+        }
+        this.bodyEmitter.writeLn(localsDefinition);
       }
-      this.bodyEmitter.writeLn(localsDefinition);
 
-      var stackSlotsDefinition = 'var ';
-      for (var i = 0; i < this.methodInfo.maxStack; i++) {
-        stackSlotsDefinition += this.getStack(i) + (i < (this.methodInfo.maxStack - 1) ? ', ' : ';');
+      if (this.methodInfo.maxStack > 0) {
+        var stackSlotsDefinition = 'var ';
+        for (var i = 0; i < this.methodInfo.maxStack; i++) {
+          stackSlotsDefinition +=
+          this.getStack(i) + (i < (this.methodInfo.maxStack - 1) ? ', ' : ';');
+        }
+        this.bodyEmitter.writeLn(stackSlotsDefinition);
       }
-      this.bodyEmitter.writeLn(stackSlotsDefinition);
 
-      this.bodyEmitter.writeLn('var mi = ' + this.globalName + ';');
+      var scopesDefinition = 'var ';
+      for (var i = 0; i < this.methodInfo.maxScopeDepth; i++) {
+        scopesDefinition += this.getScope(i) + (i < (this.methodInfo.maxScopeDepth - 1) ? ', ' : ';');
+      }
+      this.bodyEmitter.writeLn(scopesDefinition);
+
+      this.bodyEmitter.writeLn('var mi = ' + this.globalMiName + ';');
 
       var relooperEntryBlock = this.relooperEntryBlock = Relooper.addBlock("// Entry Block");
 
@@ -202,6 +213,10 @@ module Shumway.AVM2.Compiler {
         return "s" + (i - BaselineCompiler.stackNames.length);
       }
       return BaselineCompiler.stackNames[i];
+    }
+
+    stackTop(): string {
+      return this.getStack(this.stack);
     }
 
     getLocalName(i: number): string {
@@ -249,7 +264,6 @@ module Shumway.AVM2.Compiler {
     pop(): string {
       this.stack --;
       var v = this.getStack(this.stack);
-      writer && writer.writeLn("// popped: stack: " + this.stack + " " + v);
       return v;
     }
 
@@ -270,7 +284,9 @@ module Shumway.AVM2.Compiler {
 
     emitBytecode(block: Bytecode, bc: Bytecode) {
       var multiname: BaselineMultiname;
+      var opName;
       var op = bc.op;
+      release || (opName = OP[op]);
       this.blockEmitter.writeLn("// BC: " + String(bc));
       switch (op) {
         case OP.getlocal:
@@ -291,9 +307,27 @@ module Shumway.AVM2.Compiler {
         case OP.setlocal3:
           this.emitStoreLocal(op - OP.setlocal0);
           break;
+        case OP.initproperty:
+        case OP.setproperty:
+          this.emitSetProperty(bc.index);
+          break;
+        case OP.getproperty:
+          this.emitGetProperty(bc.index);
+          break;
+        case OP.findproperty:
+          this.emitFindProperty(bc.index, false);
+          break;
+        case OP.findpropstrict:
+          this.emitFindProperty(bc.index, true);
+          break;
+        case OP.callpropvoid:
+          this.emitCallProperty(bc);
+          break;
         case OP.pushwith:
+          this.emitPushScope(true);
+          break;
         case OP.pushscope:
-          this.emitPushScope(op === OP.pushwith);
+          this.emitPushScope(false);
           break;
         case OP.ifge:
         case OP.ifgt:
@@ -310,6 +344,9 @@ module Shumway.AVM2.Compiler {
         case OP.pushstring:
           this.emitPush('"' + this.constantPool.strings[bc.index] + '"');
           break;
+        case OP.pushbyte:
+          this.emitPush(bc.value);
+          break;
         case OP.getlex:
           multiname = this.popMultiname(bc.index);
           this.blockEmitter.writeLn("// Read: " + multiname.name);
@@ -323,6 +360,7 @@ module Shumway.AVM2.Compiler {
           break;
         default:
           this.blockEmitter.writeLn("// Not Implemented");
+          throw 1;
       }
     }
 
@@ -334,6 +372,76 @@ module Shumway.AVM2.Compiler {
       this.blockEmitter.writeLn(this.getLocal(i) + " = " + this.pop() + ";");
     }
 
+    emitSetProperty(nameIndex: number) {
+      var value = this.pop();
+      var multiname = this.constantPool.multinames[nameIndex];
+      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+        var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
+        this.blockEmitter.writeLn(this.pop() + '.' + qualifiedName + ' = ' + value + ';');
+      } else {
+        this.emitMultiname(nameIndex);
+        this.blockEmitter.writeLn(this.pop() + ".asSetProperty(mn.namespaces, mn.name, mn.flags, " +
+                                  value + ");");
+      }
+    }
+
+    emitGetProperty(nameIndex: number) {
+      var multiname = this.constantPool.multinames[nameIndex];
+      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+        var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
+        this.blockEmitter.writeLn(this.peek() + ' = ' + this.pop() + '.' + qualifiedName + ';');
+      } else {
+        this.emitMultiname(nameIndex);
+        this.blockEmitter.writeLn(this.peek() + ' = ' + this.pop() +
+                                  ".asGetProperty(mn.namespaces, mn.name, mn.flags, false);");
+      }
+    }
+
+    emitFindProperty(nameIndex: number, strict: boolean) {
+      var scope = this.getScope(this.scopeIndex);
+      this.emitMultiname(nameIndex);
+      this.emitPush(scope + ".findScopeProperty(mn.namespaces, mn.name, mn.flags, mi, " + strict +
+                    ")");
+    }
+
+    emitCallProperty(bc: Bytecode) {
+      var args = new Array(bc.argCount);
+      for (var i = bc.argCount; i--;) {
+        args[i] = this.pop();
+      }
+      var receiver;
+      if (bc.op === OP.callproplex) {
+        // TODO: prevent popping runtime name parts twice.
+        this.emitFindProperty(bc.index, true);
+        receiver = this.peekScope();
+      }
+      var call: string;
+      var multiname = this.constantPool.multinames[bc.index];
+      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+        var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
+        receiver || (receiver = this.pop());
+        call = receiver + '.' + qualifiedName + '(' + args + ')';
+      } else {
+        this.emitMultiname(bc.index);
+        receiver || (receiver = this.pop());
+        call = receiver + ".asCallProperty(mn.namespaces, mn.name, mn.flags, [" + args + "])";
+      }
+      if (bc.op !== OP.callpropvoid) {
+        this.emitPush(call);
+      } else {
+        this.blockEmitter.writeLn(call + ';');
+      }
+    }
+
+    emitMultiname(index: number) {
+      var multiname = this.constantPool.multinames[index];
+      // Can't handle these yet.
+      Debug.assert(!multiname.isRuntimeName());
+      Debug.assert(!multiname.isRuntimeNamespace());
+      this.blockEmitter.writeLn('var mn = mi.abc.constantPool.multinames[' + index + ']; // ' +
+                                multiname);
+    }
+
     emitIf(block: Bytecode, bc: Bytecode) {
       var next = this.bytecodes[bc.position + 1];
       var target = bc.target;
@@ -342,16 +450,15 @@ module Shumway.AVM2.Compiler {
     }
 
     emitPush(v) {
-      this.blockEmitter.writeLn(this.getStack(this.stack) + " = " + v +
-                                "; // push at " + this.stack);
+      this.blockEmitter.writeLn(this.stackTop() + " = " + v + "; // push at " + this.stack);
       this.stack++;
     }
 
     emitPushScope(isWith: boolean) {
-      var parent = this.scopeIndex === 0 ? "null" : this.peekScope();
-      var scope = "new Scope(" + parent + ", " + isWith + ")";
+      var parent = this.scopeIndex === 0 ? "mi.classScope" : this.peekScope();
+      var scope = "new Scope(" + parent + ", this, " + isWith + ")";
+      this.scopeIndex++;
       this.blockEmitter.writeLn(this.getScope(this.scopeIndex) + " = " + scope + ";");
-      this.scopeIndex ++;
     }
 
     emitConstructSuper(bc: Bytecode) {
@@ -393,8 +500,8 @@ module Shumway.AVM2.Compiler {
   }
 
   export function baselineCompileMethod(methodInfo: MethodInfo, scope: Scope,
-                                        hasDynamicScope: boolean, globalName: string) {
-    var compiler = new BaselineCompiler(methodInfo, scope, hasDynamicScope, globalName);
+                                        hasDynamicScope: boolean, globalMiName: string) {
+    var compiler = new BaselineCompiler(methodInfo, scope, hasDynamicScope, globalMiName);
     try {
       var result = compiler.compile();
       console.log(result);
