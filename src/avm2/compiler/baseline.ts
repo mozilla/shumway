@@ -379,6 +379,9 @@ module Shumway.AVM2.Compiler {
         case OP.constructsuper:
           this.emitConstructSuper(bc);
           break;
+        case OP.coerce:
+          this.emitCoerce(bc);
+          break;
         case OP.returnvoid:
           this.emitReturnVoid();
           break;
@@ -497,6 +500,27 @@ module Shumway.AVM2.Compiler {
       superInvoke += ');';
       this.blockEmitter.writeLn(superInvoke);
       this.scopeIndex ++;
+    }
+
+    emitCoerce(bc: Bytecode) {
+      if (bc.ti && bc.ti.noCoercionNeeded) {
+        return;
+      }
+      var value = this.pop();
+      var coercion: string;
+      var multiname = this.constantPool.multinames[bc.index];
+      switch (multiname) {
+        case Multiname.Int:     coercion = value + '|0'; break;
+        case Multiname.Uint:    coercion = value + ' >>> 0'; break;
+        case Multiname.Number:  coercion = '+' + value; break;
+        case Multiname.Boolean: coercion = '!!' + value; break;
+        case Multiname.Object:  coercion = 'Object(' + value + ')'; break;
+        case Multiname.String:  coercion = 'asCoerceString(' + value + ')'; break;
+        default:
+          coercion = 'asCoerce(mi.abc.applicationDomain.getType(mi.abc.constantPool.multinames[' +
+                     bc.index + ']), ' + value + ')';
+      }
+      this.blockEmitter.writeLn(coercion + ';');
     }
 
     emitReturnVoid() {
