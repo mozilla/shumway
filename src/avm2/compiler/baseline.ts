@@ -378,6 +378,13 @@ module Shumway.AVM2.Compiler {
         case OP.pushnan:
           this.emitPush('NaN');
           break;
+        case OP.pop:
+          // TODO whether this can validly happen. It does happen in mx.core::BitmapAsset's ctor,
+          // where a block starts with a pop, but perhaps something has gone wrong earlier for that?
+          if (this.stack > 0) {
+            this.stack--;
+          }
+          break;
         case OP.constructsuper:
           this.emitConstructSuper(bc);
           break;
