@@ -625,17 +625,17 @@ module Shumway.AVM2.Compiler {
     }
 
     emitConstructSuper(bc: Bytecode) {
-      var superInvoke = 'mi.classScope.object.baseClass.instanceConstructorNoInitialize.call(this';
+      var superInvoke = 'mi.classScope.object.baseClass.instanceConstructorNoInitialize.call(';
       var args = [];
       for (var i = bc.argCount; i--;) {
         args.push(this.pop());
       }
+      superInvoke += this.pop();
       if (args.length) {
         superInvoke += ', ' + args.join(', ');
       }
       superInvoke += ');';
       this.blockEmitter.writeLn(superInvoke);
-      this.scopeIndex ++;
     }
 
     emitCoerce(bc: Bytecode) {
