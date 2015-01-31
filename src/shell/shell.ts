@@ -25,6 +25,8 @@ declare var quit;
 declare var read;
 declare var help;
 
+load("src/avm2/compiler/relooper/relooper.js");
+
 var homePath = "";
 var avm2Root = homePath + "src/avm2/";
 var builtinLibPath = avm2Root + "generated/builtin/builtin.abc";
@@ -114,6 +116,8 @@ module Shumway.Shell {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import flash = Shumway.AVM2.AS.flash;
 
+  import Compiler = Shumway.AVM2.Compiler;
+
   class ShellPlayer extends Shumway.Player.Player {
     onSendUpdates(updates:DataBuffer, assets:Array<DataBuffer>, async:boolean = true):DataBuffer {
       var bytes = updates.getBytes();
@@ -146,6 +150,7 @@ module Shumway.Shell {
   var parseOption: Option;
   var parseForDatabaseOption: Option;
   var disassembleOption: Option;
+  var compileOption: Option;
   var verboseOption: Option;
   var profileOption: Option;
   var releaseOption: Option;
@@ -169,6 +174,7 @@ module Shumway.Shell {
     parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
     parseForDatabaseOption = shellOptions.register(new Option("po", "parseForDatabase", "boolean", false, "Parse File(s)"));
     disassembleOption = shellOptions.register(new Option("d", "disassemble", "boolean", false, "Disassemble File(s)"));
+    compileOption = shellOptions.register(new Option("c", "compile", "boolean", false, "Compile File(s)"));
     verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
     profileOption = shellOptions.register(new Option("o", "profile", "boolean", false, "Profile"));
     releaseOption = shellOptions.register(new Option("r", "release", "boolean", false, "Release mode"));
@@ -272,6 +278,12 @@ module Shumway.Shell {
           disassembleABCFile(file);
         }
       });
+    } else if (compileOption.value) {
+      files.forEach(function (file) {
+        if (file.endsWith(".abc")) {
+          compileABCFile(file);
+        }
+      });
     }
 
     if (Shumway.Unit.everFailed) {
@@ -284,6 +296,13 @@ module Shumway.Shell {
     var buffer = read(file, "binary");
     var abc = new AbcFile(new Uint8Array(buffer), file);
     abc.trace(writer);
+  }
+
+  function compileABCFile(file: string) {
+    var buffer = read(file, "binary");
+    var abc = new AbcFile(new Uint8Array(buffer), file);
+    // abc.trace(writer);
+    Compiler.baselineCompileABC(abc);
   }
 
   function executeFile(file: string): boolean {

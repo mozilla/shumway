@@ -1523,6 +1523,7 @@ module Shumway.AVM2.Runtime {
     var cached = searchCodeCache(mi);
     var compilation: Compilation;
     if (!cached) {
+      Compiler.baselineCompileMethod(mi, scope, hasDynamicScope);
       compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
     }
 

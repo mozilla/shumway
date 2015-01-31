@@ -41,6 +41,7 @@
 ///<reference path='natives/byteArray.ts' />
 ///<reference path='natives/system.ts' />
 
+///<reference path='compiler/baseline.ts' />
 ///<reference path='compiler/verifier.ts' />
 ///<reference path='compiler/c4/ir.ts' />
 ///<reference path='compiler/c4/optimizer.ts' />

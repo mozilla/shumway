@@ -535,6 +535,8 @@ module Shumway.AVM2 {
     targets: Bytecode [] = null;
     level: number = 0;
 
+    relooperBlock: number = 0;
+
     // Block data. Not split out into its own, lazily initialized structure because that slows
     // down the verifier phase by about 15%.
     bid: number;
