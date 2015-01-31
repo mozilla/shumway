@@ -426,8 +426,8 @@ module Shumway.AVM2.Compiler {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.blockEmitter.writeLn(this.pop() + '.' + qualifiedName + ' = ' + value + ';');
       } else {
-        this.emitMultiname(nameIndex);
-        this.blockEmitter.writeLn(this.pop() + ".asSetProperty(mn.namespaces, mn.name, mn.flags, " +
+        var nameElements = this.emitMultiname(nameIndex);
+        this.blockEmitter.writeLn(this.pop() + ".asSetProperty(" + nameElements + ", " +
                                   value + ");");
       }
     }
@@ -438,16 +438,15 @@ module Shumway.AVM2.Compiler {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitPush(this.pop() + '.' + qualifiedName);
       } else {
-        this.emitMultiname(nameIndex);
-        this.emitPush(this.pop() + ".asGetProperty(mn.namespaces, mn.name, mn.flags, false)");
+        var nameElements = this.emitMultiname(nameIndex);
+        this.emitPush(this.pop() + ".asGetProperty(" + nameElements + ", false)");
       }
     }
 
     emitFindProperty(nameIndex: number, strict: boolean) {
       var scope = this.getScope(this.scopeIndex);
-      this.emitMultiname(nameIndex);
-      this.emitPush(scope + ".findScopeProperty(mn.namespaces, mn.name, mn.flags, mi, " + strict +
-                    ")");
+      var nameElements = this.emitMultiname(nameIndex);
+      this.emitPush(scope + ".findScopeProperty(" + nameElements + ", mi, " + strict + ")");
     }
 
     emitCallProperty(bc: Bytecode) {
@@ -468,9 +467,9 @@ module Shumway.AVM2.Compiler {
         receiver || (receiver = this.pop());
         call = receiver + '.' + qualifiedName + '(' + args + ')';
       } else {
-        this.emitMultiname(bc.index);
+        var nameElements = this.emitMultiname(bc.index);
         receiver || (receiver = this.pop());
-        call = receiver + ".asCallProperty(mn.namespaces, mn.name, mn.flags, [" + args + "])";
+        call = receiver + ".asCallProperty(" + nameElements + ", [" + args + "])";
       }
       if (bc.op !== OP.callpropvoid) {
         this.emitPush(call);
@@ -487,18 +486,22 @@ module Shumway.AVM2.Compiler {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.blockEmitter.writeLn(receiver + ' = ' + receiver + '.' + qualifiedName + ';');
       } else {
-        this.emitMultiname(nameIndex);
-        this.emitPush(receiver + ".asGetProperty(mn.namespaces, mn.name, mn.flags, false)");
+        var nameElements = this.emitMultiname(nameIndex);
+        this.emitPush(receiver + ".asGetProperty(" + nameElements + ", false)");
       }
     }
 
-    emitMultiname(index: number) {
+    emitMultiname(index: number): string {
       var multiname = this.constantPool.multinames[index];
-      // Can't handle these yet.
-      Debug.assert(!multiname.isRuntimeName());
-      Debug.assert(!multiname.isRuntimeNamespace());
       this.blockEmitter.writeLn('var mn = mi.abc.constantPool.multinames[' + index + ']; // ' +
                                 multiname);
+      // Can't handle these yet.
+      Debug.assert(!multiname.isRuntimeNamespace());
+      if (!multiname.isRuntime()) {
+        return 'mn.namespaces, mn.name, mn.flags';
+      }
+      var name = multiname.isRuntimeName() ? this.pop() : multiname.name;
+      return 'mn.namespaces, ' + name + ', mn.flags';
     }
 
     emitBinaryIf(block: Bytecode, bc: Bytecode, operator: string, negate: boolean) {
@@ -581,25 +584,6 @@ module Shumway.AVM2.Compiler {
 
     emitReturnVoid() {
       this.blockEmitter.writeLn('return;');
-    }
-
-    popMultiname(index: number): BaselineMultiname {
-      var multiname = this.constantPool.multinames[index];
-      var namespaces, name, flags;
-      if (multiname.isRuntimeName()) {
-        name = this.pop();
-        // TODO: figure out what `flags` should be set to for runtime names.
-        flags = 0;
-      } else {
-        name = multiname.name;
-        flags = multiname.flags;
-      }
-      if (multiname.isRuntimeNamespace()) {
-        namespaces = "[" + this.pop() + "]";
-      } else {
-        namespaces = "* constant(multiname.namespaces) *";
-      }
-      return new BaselineMultiname(namespaces, name, flags);
     }
   }
 
