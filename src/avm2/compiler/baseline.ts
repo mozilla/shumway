@@ -521,8 +521,8 @@ module Shumway.AVM2.Compiler {
         args[i] = this.pop();
       }
       this.emitGetProperty(bc.index);
-      var receiver = this.peek();
-      this.blockEmitter.writeLn(receiver + ' = new ' + receiver + '(' + args + ');');
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' = new ' + val + '.instanceConstructor(' + args + ');');
     }
 
     emitGetLex(nameIndex: number) {
@@ -595,7 +595,7 @@ module Shumway.AVM2.Compiler {
 
     emitPushScope(isWith: boolean) {
       var parent = this.scopeIndex === 0 ? "mi.classScope" : this.peekScope();
-      var scope = "new Scope(" + parent + ", this, " + isWith + ")";
+      var scope = "new Scope(" + parent + ", " + this.pop() + ", " + isWith + ")";
       this.scopeIndex++;
       this.blockEmitter.writeLn(this.getScope(this.scopeIndex) + " = " + scope + ";");
     }
