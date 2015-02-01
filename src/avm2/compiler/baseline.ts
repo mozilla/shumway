@@ -144,28 +144,34 @@ module Shumway.AVM2.Compiler {
 
       release || writer && writer.writeLn("Code: " + this.bytecodes.length + ", Blocks: " + blocks.length);
 
-      this.local = [];
-      for (var i = 0; i < this.methodInfo.localCount; i ++) {
-        this.local.push(this.getLocalName(i));
-      }
+      this.local = ['this'];
+      // TODO: Emit locals, parameters, and stack slots after body, and collect required info there.
+      // This would allow us to get rid of that part of the analysis phase above, and in many cases,
+      // because the information in the header is often incorrect, emit less code.
       this.parameters = [];
-      for (var i = 0; i < this.methodInfo.parameters.length; i ++) {
+      var paramsCount = this.methodInfo.parameters.length;
+      for (var i = 0; i < paramsCount; i ++) {
         var param = this.methodInfo.parameters[i];
-        var paramName = this.local[i + 1];
+        var paramName = this.getLocalName(i + 1);
+        this.local.push(paramName);
         this.parameters.push(paramName);
         if (param.optional && param.isUsed) {
           var value = param.value;
-          if (Multiname.getQualifiedName(param.type) === '$BgString') {
+          if (!param.type && !value) {
+            value = 'undefined';
+          } else if (Multiname.getQualifiedName(param.type) === '$BgString') {
             value = '"' + value + '"';
           }
           this.bodyEmitter.writeLn('arguments.length < ' + (i + 1) + ' && (' + paramName + ' = ' + value + ');');
         }
       }
 
-      if (this.local.length > this.parameters.length + 1) {
+      var localsCount = this.methodInfo.localCount;
+      if (localsCount > paramsCount + 1) {
         var localsDefinition = 'var ';
-        for (var i = this.parameters.length + 1; i < this.local.length; i++) {
-          localsDefinition += this.local[i] + (i < (this.local.length - 1) ? ', ' : ';');
+        for (var i = paramsCount + 1; i < localsCount; i++) {
+          this.local.push(this.getLocalName(i));
+          localsDefinition += this.local[i] + (i < (localsCount - 1) ? ', ' : ';');
         }
         this.bodyEmitter.writeLn(localsDefinition);
       }
