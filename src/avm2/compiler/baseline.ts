@@ -799,7 +799,12 @@ module Shumway.AVM2.Compiler {
       // of all pushed strings here and redo the lookup in `emitNewObject`.
       this.pushedStrings[this.stack] = bc.index;
       var str = this.constantPool.strings[bc.index];
-      this.emitPush('"' + str + '"');
+      // For long strings or ones containing newlines, emit a reference instead of the literal.
+      if (str.length > 40 || str.indexOf('\n') > -1 || str.indexOf('\r') > -1) {
+        this.emitPush('mi.abc.constantPool.strings[' + bc.index + ']');
+      } else {
+        this.emitPush('"' + str + '"');
+      }
     }
 
     emitPushScope(isWith: boolean) {
