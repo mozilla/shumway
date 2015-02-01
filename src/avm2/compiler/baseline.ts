@@ -319,8 +319,7 @@ module Shumway.AVM2.Compiler {
     }
 
     peekScope() {
-      release || assert(this.scopeIndex > 0);
-      return this.getScope(this.scopeIndex - 1);
+      return this.getScope(this.scopeIndex);
     }
 
     emitBytecode(block: Bytecode, bc: Bytecode) {
