@@ -1567,7 +1567,6 @@ module Shumway.AVM2.AS {
 
     var classScope = new Scope(scope, null);
     classScope.object = cls;
-    ii.init.classScope = classScope;
     var instanceConstructor = null;
     if (ii.init.isNative()) {
       release || assert (isNativeClass);

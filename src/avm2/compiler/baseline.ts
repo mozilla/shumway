@@ -126,7 +126,6 @@ module Shumway.AVM2.Compiler {
 
     constructor(public methodInfo: MethodInfo, private scope: Scope, private hasDynamicScope: boolean,
                 private globalMiName: string) {
-      this.methodInfo.analysis;
       this.constantPool = this.methodInfo.abc.constantPool;
     }
 
@@ -145,6 +144,7 @@ module Shumway.AVM2.Compiler {
       if (!analysis.analyzedControlFlow) {
         analysis.analyzeControlFlow();
       }
+      this.methodInfo.classScope = this.scope;
 
       var blocks = this.blocks = analysis.blocks;
       this.bytecodes = analysis.bytecodes;
