@@ -575,6 +575,15 @@ module Shumway.AVM2.Compiler {
         case OP.convert_s:
           this.emitCoerceString(bc);
           break;
+        case OP.istypelate:
+          this.emitIsTypeLate();
+          break;
+        case OP.in:
+          this.emitIn();
+          break;
+        case OP.typeof:
+          this.emitReplace('asTypeOf(' + this.peek() + ')');
+          break;
         case OP.dup:
           this.emitDup();
           break;
@@ -839,6 +848,17 @@ module Shumway.AVM2.Compiler {
       }
       var val = this.peek();
       this.blockEmitter.writeLn(val + ' = asCoerceString(' + val + ');');
+    }
+
+    emitIsTypeLate() {
+      var type = this.pop();
+      this.emitReplace('asIsTypeLate(' + type + ', ' + this.peek() + ')');
+    }
+
+    emitIn() {
+      var object = this.pop();
+      var key = '$Bg' + this.peek();
+      this.emitReplace(key + ' in ' + object);
     }
 
     emitDup() {
