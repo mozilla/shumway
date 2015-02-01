@@ -452,17 +452,29 @@ module Shumway.AVM2.Compiler {
         case OP.negate:
           this.emitUnaryOp('-');
           break;
+        case OP.negate_i:
+          this.emitUnaryOp_i('-');
+          break;
         case OP.unplus:
           this.emitUnaryOp('+');
           break;
         case OP.add:
           this.emitBinaryExpression(' + ');
           break;
+        case OP.add_i:
+          this.emitBinaryExpression_i(' + ');
+          break;
         case OP.subtract:
           this.emitBinaryExpression(' - ');
           break;
+        case OP.subtract_i:
+          this.emitBinaryExpression_i(' - ');
+          break;
         case OP.multiply:
           this.emitBinaryExpression(' * ');
+          break;
+        case OP.multiply_i:
+          this.emitBinaryExpression_i(' * ');
           break;
         case OP.divide:
           this.emitBinaryExpression(' / ');
@@ -736,10 +748,6 @@ module Shumway.AVM2.Compiler {
       this.blockEmitter.writeLn(superInvoke);
     }
 
-    emitUnaryOp(operator: string) {
-      this.emitReplace(operator + this.peek());
-    }
-
     emitCoerce(bc: Bytecode) {
       var multiname = this.constantPool.multinames[bc.index];
       switch (multiname) {
@@ -798,10 +806,24 @@ module Shumway.AVM2.Compiler {
       this.emitPush(this.peek());
     }
 
+    emitUnaryOp(operator: string) {
+      this.emitReplace(operator + this.peek());
+    }
+
+    emitUnaryOp_i(operator: string) {
+      this.emitReplace(operator + this.peek() + '|0');
+    }
+
     emitBinaryExpression(expression: string) {
       var left = this.pop();
       var right = this.peek();
       this.blockEmitter.writeLn(right + ' = ' + left + expression + right + ';');
+    }
+
+    emitBinaryExpression_i(expression: string) {
+      var left = this.pop();
+      var right = this.peek();
+      this.blockEmitter.writeLn(right + ' = ' + left + expression + right + '|0;');
     }
 
     emitReturnVoid() {
