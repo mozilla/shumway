@@ -23,14 +23,7 @@ module Shumway.AVM2.Compiler {
   import ConstantPool = ABC.ConstantPool;
   import assert = Debug.assert;
 
-  // var verifier = new Shumway.AVM2.Verifier.Verifier();
-
-  /**
-   * Emits optimization results inline as comments in the generated source.
-   */
-  var emitDebugInfoComments = false;
-
-  var writer = new IndentingWriter();
+  var writer = Compiler.baselineDebugLevel.value > 0 ? new IndentingWriter() : null;
 
   declare var Relooper;
 
@@ -302,8 +295,10 @@ module Shumway.AVM2.Compiler {
 
     emitBlock(block: Bytecode) {
       this.blockEmitter.reset();
-      this.blockEmitter.writeLn("// Block: " + block.bid);
-      release || writer && writer.writeLn("// Block: " + block.bid);
+      if (!release && Compiler.baselineDebugLevel.value > 1) {
+        this.blockEmitter.writeLn("// Block: " + block.bid);
+        writer.writeLn("// Block: " + block.bid);
+      }
       var bytecodes = this.bytecodes;
       var bc;
       for (var bci = block.position, end = block.end.position; bci <= end; bci++) {

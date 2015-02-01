@@ -31,8 +31,9 @@ module Shumway.AVM2 {
     export var traceLevel = options.register(new Option("tc4", "tc4", "number", 0, "Compiler Trace Level"));
     export var breakFilter = options.register(new Option("", "break", "string", "", "Set a break point at methods whose qualified name matches this string pattern."));
     export var compileFilter = options.register(new Option("", "compile", "string", "", "Only compile methods whose qualified name matches this string pattern."));
-    export var enableDirtyLocals = options.register(new Option("dl", "dirtyLocals", "boolean", true, "Performe dirty local analysis to minimise PHI nodes."));
+    export var enableDirtyLocals = options.register(new Option("dl", "dirtyLocals", "boolean", true, "Perform dirty local analysis to minimise PHI nodes."));
     export var useBaseline = options.register(new Option("bl", "useBaseline", "boolean", false, "Use baseline instead of optimizing compiler."));
+    export var baselineDebugLevel = options.register(new Option("bl-dbg", "baselineDebugLevel", "number", 0, "Level of trace and code debug output in baseline compiler.", { choices: { "off":0, "normal":1, "verbose":2 } }));
   }
 
   export module Verifier {
