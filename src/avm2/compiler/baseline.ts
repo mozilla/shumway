@@ -193,6 +193,7 @@ module Shumway.AVM2.Compiler {
       this.bodyEmitter.writeLn(scopesDefinition);
 
       this.bodyEmitter.writeLn('var mi = ' + this.globalMiName + ';');
+      this.bodyEmitter.writeLn('$0 = mi.classScope;');
 
       var relooperEntryBlock = this.relooperEntryBlock = Relooper.addBlock("// Entry Block");
 
@@ -755,7 +756,7 @@ module Shumway.AVM2.Compiler {
     }
 
     emitPushScope(isWith: boolean) {
-      var parent = this.scopeIndex === 0 ? "mi.classScope" : this.peekScope();
+      var parent = this.getScope(this.scopeIndex);
       var scope = "new Scope(" + parent + ", " + this.pop() + ", " + isWith + ")";
       this.scopeIndex++;
       this.blockEmitter.writeLn(this.getScope(this.scopeIndex) + " = " + scope + ";");
