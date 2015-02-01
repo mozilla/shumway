@@ -392,9 +392,6 @@ module Shumway.AVM2.Compiler {
         case OP.call:
           this.emitCall(bc);
           break;
-        case OP.constructprop:
-          this.emitConstructProperty(bc);
-          break;
         case OP.getlex:
           this.emitGetLex(bc.index);
           break;
@@ -427,6 +424,12 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.newfunction:
           this.emitNewFunction(bc);
+          break;
+        case OP.construct:
+          this.emitConstruct(bc);
+          break;
+        case OP.constructprop:
+          this.emitConstructProperty(bc);
           break;
         case OP.jump:
           this.emitJump(block, bc);
@@ -697,10 +700,7 @@ module Shumway.AVM2.Compiler {
     }
 
     emitCallProperty(bc: Bytecode) {
-      var args = new Array(bc.argCount);
-      for (var i = bc.argCount; i--;) {
-        args[i] = this.pop();
-      }
+      var args = this.popArgs(bc.argCount);
       var receiver;
       if (bc.op === OP.callproplex) {
         // TODO: prevent popping runtime name parts twice.
@@ -726,21 +726,21 @@ module Shumway.AVM2.Compiler {
     }
 
     emitCall(bc: Bytecode) {
-      var args = new Array(bc.argCount);
-      for (var i = bc.argCount; i--;) {
-        args[i] = this.pop();
-      }
+      var args = this.popArgs(bc.argCount);
       var argsString = args.length ? ', ' + args.join(', ') : '';
       var receiver = this.pop();
       var callee = this.peek();
       this.emitReplace(callee + '.asCall(' + receiver + argsString + ')');
     }
 
+    emitConstruct(bc: Bytecode) {
+      var args = this.popArgs(bc.argCount);
+      var ctor = this.peek();
+      this.emitReplace('new ' + ctor + '(' + args + ')');
+    }
+
     emitConstructProperty(bc: Bytecode) {
-      var args = new Array(bc.argCount);
-      for (var i = bc.argCount; i--;) {
-        args[i] = this.pop();
-      }
+      var args = this.popArgs(bc.argCount);
       this.emitGetProperty(bc.index);
       var val = this.peek();
       this.blockEmitter.writeLn(val + ' = new ' + val + '.instanceConstructor(' + args + ');');
@@ -899,10 +899,7 @@ module Shumway.AVM2.Compiler {
 
     emitConstructSuper(bc: Bytecode) {
       var superInvoke = 'mi.classScope.object.baseClass.instanceConstructorNoInitialize.call(';
-      var args = [];
-      for (var i = bc.argCount; i--;) {
-        args.push(this.pop());
-      }
+      var args = this.popArgs(bc.argCount);
       superInvoke += this.pop();
       if (args.length) {
         superInvoke += ', ' + args.join(', ');
@@ -1016,6 +1013,14 @@ module Shumway.AVM2.Compiler {
 
     emitReturnValue() {
       this.blockEmitter.writeLn('return ' + this.pop() + ';');
+    }
+
+    popArgs(count: number): string[] {
+      var args = new Array(count);
+      for (var i = count; i--;) {
+        args[i] = this.pop();
+      }
+      return args;
     }
   }
 
