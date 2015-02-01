@@ -445,7 +445,9 @@ module Shumway.AVM2.Compiler {
         case OP.ifstrictne: this.emitBinaryIf(block, bc, "!==", false);  break;
         case OP.iftrue:     this.emitUnaryIf(block,  bc, "!!");          break;
         case OP.iffalse:    this.emitUnaryIf(block,  bc, "!");           break;
-
+        case OP.lookupswitch:
+          this.emitLookupSwitch(block, bc);
+          break;
         case OP.pushstring:
           this.emitPushString(bc);
           break;
@@ -794,6 +796,23 @@ module Shumway.AVM2.Compiler {
 
     emitJump(block: Bytecode, bc: Bytecode) {
       Relooper.addBranch(block.relooperBlock, bc.target.relooperBlock);
+    }
+
+    emitLookupSwitch(block: Bytecode, bc: Bytecode) {
+      var x = this.pop();
+      // We need some text in the body of the lookup switch block, otherwise the
+      // branch condition variable is ignored.
+      var branchBlock = Relooper.addBlock("// Lookup Switch", String(x));
+      Relooper.addBranch(block.relooperBlock, branchBlock);
+
+      var defaultTarget = bc.targets[bc.targets.length - 1].relooperBlock;
+      for (var i = 0; i < bc.targets.length - 1; i++) {
+        var target = bc.targets[i].relooperBlock;
+        var caseTargetBlock = Relooper.addBlock();
+        Relooper.addBranch(branchBlock, caseTargetBlock, "case " + i + ":");
+        Relooper.addBranch(caseTargetBlock, target);
+      }
+      Relooper.addBranch(branchBlock, defaultTarget);
     }
 
     emitPush(v) {
