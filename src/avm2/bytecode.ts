@@ -678,7 +678,10 @@ module Shumway.AVM2 {
         for (i = 0, j = opDescription.operands.length; i < j; i++) {
           var operand = opDescription.operands[i];
           if (operand.name === "offset") {
-            str += "target:" + this.target.position;
+            // Debug bytecodes lack a target.
+            if (this.target) {
+              str += "target:" + this.target.position;
+            }
           } else {
             str += operand.name + ": ";
             var value = this[operand.name];

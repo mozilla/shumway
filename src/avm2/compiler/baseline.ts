@@ -451,6 +451,11 @@ module Shumway.AVM2.Compiler {
         case OP.returnvalue:
           this.emitReturnValue();
           break;
+        case OP.debug:
+        case OP.debugfile:
+        case OP.debugline:
+          // Ignored.
+          break;
         default:
           this.blockEmitter.writeLn("// Not Implemented");
           throw 1;
