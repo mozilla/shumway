@@ -388,6 +388,9 @@ module Shumway.AVM2.Compiler {
         case OP.newobject:
           this.emitNewObject(bc);
           break;
+        case OP.newarray:
+          this.emitNewArray(bc);
+          break;
         case OP.ifnlt:      this.emitBinaryIf(block, bc, "<",   true);   break;
         case OP.ifnge:      this.emitBinaryIf(block, bc, ">=",  true);   break;
         case OP.ifngt:      this.emitBinaryIf(block, bc, ">",   true);   break;
@@ -780,6 +783,14 @@ module Shumway.AVM2.Compiler {
         properties.push('$Bg' + key + ': ' + value);
       }
       this.emitPush('{ ' + properties + ' }');
+    }
+
+    emitNewArray(bc: Bytecode) {
+      var values = [];
+      for (var i = 0; i < bc.argCount; i++) {
+        values.push(this.pop());
+      }
+      this.emitPush('[' + values.reverse() + ']');
     }
 
     emitConstructSuper(bc: Bytecode) {
