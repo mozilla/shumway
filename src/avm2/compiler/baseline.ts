@@ -440,6 +440,11 @@ module Shumway.AVM2.Compiler {
             this.stack--;
           }
           break;
+        case OP.kill:
+          if (bc.index > 0) {
+            this.emitReplaceLocal(bc.index, 'undefined');
+          }
+          break;
         case OP.constructsuper:
           this.emitConstructSuper(bc);
           break;
