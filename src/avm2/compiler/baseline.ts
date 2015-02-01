@@ -25,6 +25,11 @@ module Shumway.AVM2.Compiler {
 
   // var verifier = new Shumway.AVM2.Verifier.Verifier();
 
+  /**
+   * Emits optimization results inline as comments in the generated source.
+   */
+  var emitDebugInfoComments = false;
+
   var writer = new IndentingWriter();
 
   declare var Relooper;
@@ -117,7 +122,7 @@ module Shumway.AVM2.Compiler {
     /**
      * Make sure that none of these shadow global names, like "U" and "O".
      */
-    static stackNames = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "_O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
+    static stackNames = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
     constructor(public methodInfo: MethodInfo, private scope: Scope, private hasDynamicScope: boolean,
                 private globalMiName: string) {
@@ -191,11 +196,13 @@ module Shumway.AVM2.Compiler {
 
       var relooperEntryBlock = this.relooperEntryBlock = Relooper.addBlock("// Entry Block");
 
+      // Create relooper blocks.
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
         block.relooperBlock = Relooper.addBlock("// Block: " + block.bid);
       }
 
+      // Emit blocks.
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
         this.stack = 0;
@@ -205,10 +212,29 @@ module Shumway.AVM2.Compiler {
 
       Relooper.addBranch(relooperEntryBlock, blocks[0].relooperBlock);
 
-      writer.writeLn("// Rendering ...: ");
-      var body = this.bodyEmitter.toString() + '\n' + Relooper.render(this.relooperEntryBlock);
-      writer.writeLn("// Done: ");
+      var needsTry = this.methodInfo.hasExceptions();
+      var needsWhile = needsTry;
+
+      if (needsWhile) {
+        this.bodyEmitter.enter("while(1) {");
+      }
+      if (needsTry) {
+        this.bodyEmitter.enter("try {");
+      }
+
+      this.bodyEmitter.writeLns(Relooper.render(this.relooperEntryBlock));
+
+      if (needsTry) {
+        this.bodyEmitter.leave("}");
+      }
+      if (needsWhile) {
+        this.bodyEmitter.leave("}");
+      }
+
+      var body = this.bodyEmitter.toString();
+
       writer.writeLn(body);
+
       return {body: body, parameters: this.parameters};
     }
 
@@ -273,7 +299,7 @@ module Shumway.AVM2.Compiler {
     emitBlock(block: Bytecode) {
       this.blockEmitter.reset();
       this.blockEmitter.writeLn("// Block: " + block.bid);
-      writer && writer.writeLn("// Block: " + block.bid);
+
       var bytecodes = this.bytecodes;
       var bc;
       for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
@@ -465,7 +491,7 @@ module Shumway.AVM2.Compiler {
           break;
         default:
           this.blockEmitter.writeLn("// Not Implemented");
-          throw 1;
+          throw "Not Implemented: " + OP[op];
       }
     }
 
@@ -727,10 +753,13 @@ module Shumway.AVM2.Compiler {
                                         hasDynamicScope: boolean, globalMiName: string) {
     var compiler = new BaselineCompiler(methodInfo, scope, hasDynamicScope, globalMiName);
     try {
+      //if (!methodInfo.hasExceptions()) {
+      //  return;
+      //}
       var result = compiler.compile();
       console.log(result);
     } catch (e) {
-      writer.errorLn(e);
+      writer.errorLn("Error: " + e);
     }
     return result;
   }
