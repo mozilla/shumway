@@ -581,6 +581,9 @@ module Shumway.AVM2.Compiler {
         case OP.istypelate:
           this.emitIsTypeLate();
           break;
+        case OP.astypelate:
+          this.emitAsTypeLate();
+          break;
         case OP.in:
           this.emitIn();
           break;
@@ -863,7 +866,12 @@ module Shumway.AVM2.Compiler {
 
     emitIsTypeLate() {
       var type = this.pop();
-      this.emitReplace('asIsTypeLate(' + type + ', ' + this.peek() + ')');
+      this.emitReplace('asIsType(' + type + ', ' + this.peek() + ')');
+    }
+
+    emitAsTypeLate() {
+      var type = this.pop();
+      this.emitReplace('asAsType(' + type + ', ' + this.peek() + ')');
     }
 
     emitIn() {
