@@ -1541,7 +1541,9 @@ module Shumway.AVM2.Runtime {
     var cached = searchCodeCache(mi);
     if (!cached) {
       if (Compiler.useBaseline.value) {
+        enterTimeline('Baseline compile');
         compilation = Compiler.baselineCompileMethod(mi, scope, hasDynamicScope, globalMiName);
+        leaveTimeline();
       } else {
         compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
       }
