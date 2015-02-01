@@ -578,6 +578,9 @@ module Shumway.AVM2.Compiler {
         case OP.convert_s:
           this.emitCoerceString(bc);
           break;
+        case OP.instanceof:
+          this.emitInstanceof();
+          break;
         case OP.istypelate:
           this.emitIsTypeLate();
           break;
@@ -862,6 +865,11 @@ module Shumway.AVM2.Compiler {
       }
       var val = this.peek();
       this.blockEmitter.writeLn(val + ' = asCoerceString(' + val + ');');
+    }
+
+    emitInstanceof() {
+      var type = this.pop();
+      this.emitReplace(type + '.isInstanceOf(' + this.peek() + ')');
     }
 
     emitIsTypeLate() {
