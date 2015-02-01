@@ -443,6 +443,66 @@ module Shumway.AVM2.Compiler {
         case OP.constructsuper:
           this.emitConstructSuper(bc);
           break;
+        case OP.not:
+          this.emitUnaryOp('!');
+          break;
+        case OP.bitnot:
+          this.emitUnaryOp('~');
+          break;
+        case OP.negate:
+          this.emitUnaryOp('-');
+          break;
+        case OP.unplus:
+          this.emitUnaryOp('+');
+          break;
+        case OP.add:
+          this.emitBinaryExpression(' + ');
+          break;
+        case OP.subtract:
+          this.emitBinaryExpression(' - ');
+          break;
+        case OP.multiply:
+          this.emitBinaryExpression(' * ');
+          break;
+        case OP.divide:
+          this.emitBinaryExpression(' / ');
+          break;
+        case OP.modulo:
+          this.emitBinaryExpression(' % ');
+          break;
+        case OP.lshift:
+          this.emitBinaryExpression(' << ');
+          break;
+        case OP.rshift:
+          this.emitBinaryExpression(' >> ');
+          break;
+        case OP.urshift:
+          this.emitBinaryExpression(' >>> ');
+          break;
+        case OP.bitand:
+          this.emitBinaryExpression(' & ');
+          break;
+        case OP.bitor:
+          this.emitBinaryExpression(' | ');
+          break;
+        case OP.bitxor:
+          this.emitBinaryExpression(' ^ ');
+          break;
+        case OP.strictequals:
+          this.emitBinaryExpression(' === ');
+          break;
+        case OP.lessequals:
+          this.emitBinaryExpression(' <= ');
+          break;
+        case OP.lessthan:
+          this.emitBinaryExpression(' < ');
+          break;
+        case OP.greaterequals:
+          this.emitBinaryExpression(' >= ');
+          break;
+        case OP.greaterthan:
+          this.emitBinaryExpression(' > ');
+          break;
         case OP.coerce:
           this.emitCoerce(bc);
           break;
@@ -475,9 +535,6 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.dup:
           this.emitDup();
-          break;
-        case OP.greaterequals:
-          this.emitBinaryExpression(' >= ');
           break;
         case OP.returnvoid:
           this.emitReturnVoid();
@@ -628,6 +685,9 @@ module Shumway.AVM2.Compiler {
       this.blockEmitter.writeLn(this.stackTop() + " = " + v + "; // push at " + this.stack);
       this.stack++;
     }
+    emitReplace(v) {
+      this.blockEmitter.writeLn(this.peek() + " = " + v + "; // push at " + (this.stack - 1));
+    }
 
     emitPushDouble(bc) {
       var val = this.constantPool.doubles[bc.index];
@@ -674,6 +734,10 @@ module Shumway.AVM2.Compiler {
       }
       superInvoke += ');';
       this.blockEmitter.writeLn(superInvoke);
+    }
+
+    emitUnaryOp(operator: string) {
+      this.emitReplace(operator + this.peek());
     }
 
     emitCoerce(bc: Bytecode) {
