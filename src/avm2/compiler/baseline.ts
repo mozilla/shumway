@@ -34,7 +34,7 @@ module Shumway.AVM2.Compiler {
 
   declare var Relooper;
 
-  var compileCount = 0;
+  var compileCount = 0, failCompileCount = 0;
 
   class Emitter {
     private _buffer: string [];
@@ -138,7 +138,9 @@ module Shumway.AVM2.Compiler {
       this.bodyEmitter = new Emitter();
       this.blockEmitter = new Emitter();
 
-      writer && writer.enter("Compiling: " + (compileCount++) + " " + this.methodInfo);
+      var start = performance.now();
+      writer && writer.writeLn("Compiling: " + compileCount + " OK, " + failCompileCount + " FAIL, " + this.methodInfo);
+
       var analysis = this.methodInfo.analysis || new Analysis(this.methodInfo);
       if (!analysis.analyzedControlFlow) {
         analysis.analyzeControlFlow();
@@ -147,9 +149,7 @@ module Shumway.AVM2.Compiler {
       var blocks = this.blocks = analysis.blocks;
       this.bytecodes = analysis.bytecodes;
 
-      writer && writer.writeLn("Code: " + this.bytecodes.length);
-      writer && writer.writeLn("Blocks: " + blocks.length);
-      writer && writer.outdent();
+      writer && writer.writeLn("Code: " + this.bytecodes.length + ", Blocks: " + blocks.length);
 
       this.local = [];
       for (var i = 0; i < this.methodInfo.localCount; i ++) {
@@ -233,7 +233,10 @@ module Shumway.AVM2.Compiler {
 
       var body = this.bodyEmitter.toString();
 
-      writer.writeLn(body);
+      // writer.writeLn(body);
+
+      writer && writer.writeLn("Compiled: " + (performance.now() - start).toFixed(2));
+      compileCount++;
 
       return {body: body, parameters: this.parameters};
     }
@@ -298,7 +301,7 @@ module Shumway.AVM2.Compiler {
 
     emitBlock(block: Bytecode) {
       this.blockEmitter.reset();
-      this.blockEmitter.writeLn("// Block: " + block.bid);
+      emitDebugInfoComments && this.blockEmitter.writeLn("// Block: " + block.bid);
 
       var bytecodes = this.bytecodes;
       var bc;
@@ -309,9 +312,7 @@ module Shumway.AVM2.Compiler {
       Relooper.setBlockCode(block.relooperBlock, this.blockEmitter.toString());
 
       var nextBlock = (end + 1 < bytecodes.length) ? bytecodes[end + 1] : null;
-      writer && writer.writeLn("// Next Block: " + nextBlock + ", isFallthrough: " + bc.isBlockEnd() + " " + bc);
       if (nextBlock && !bc.isBlockEnd()) {
-        writer && writer.writeLn("// Adding Fallthrough: " + nextBlock.bid + " " + nextBlock.relooperBlock);
         Relooper.addBranch(block.relooperBlock, nextBlock.relooperBlock);
       }
     }
@@ -327,7 +328,7 @@ module Shumway.AVM2.Compiler {
       var opName;
       var op = bc.op;
       release || (opName = OP[op]);
-      this.blockEmitter.writeLn("// BC: " + String(bc));
+      emitDebugInfoComments && this.blockEmitter.writeLn("// BC: " + String(bc));
       switch (op) {
         case OP.getlocal:
           this.emitLoadLocal(bc.index);
@@ -490,7 +491,6 @@ module Shumway.AVM2.Compiler {
           // Ignored.
           break;
         default:
-          this.blockEmitter.writeLn("// Not Implemented");
           throw "Not Implemented: " + OP[op];
       }
     }
@@ -753,12 +753,9 @@ module Shumway.AVM2.Compiler {
                                         hasDynamicScope: boolean, globalMiName: string) {
     var compiler = new BaselineCompiler(methodInfo, scope, hasDynamicScope, globalMiName);
     try {
-      //if (!methodInfo.hasExceptions()) {
-      //  return;
-      //}
       var result = compiler.compile();
-      console.log(result);
     } catch (e) {
+      failCompileCount++;
       writer.errorLn("Error: " + e);
     }
     return result;
