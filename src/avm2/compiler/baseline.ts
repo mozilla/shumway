@@ -115,7 +115,7 @@ module Shumway.AVM2.Compiler {
 
     stack: number;
     pushedStrings: number[] = [];
-    private scopeIndex: number;
+    private scopeIndex: number = 0;
 
     static localNames = ["this", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
 
@@ -139,7 +139,7 @@ module Shumway.AVM2.Compiler {
       this.blockEmitter = new Emitter();
 
       var start = performance.now();
-      writer && writer.writeLn("Compiling: " + compileCount + " OK, " + failCompileCount + " FAIL, " + this.methodInfo);
+      release || writer && writer.writeLn("Compiling: " + compileCount + " OK, " + failCompileCount + " FAIL, " + this.methodInfo);
 
       var analysis = this.methodInfo.analysis || new Analysis(this.methodInfo);
       if (!analysis.analyzedControlFlow) {
@@ -149,7 +149,7 @@ module Shumway.AVM2.Compiler {
       var blocks = this.blocks = analysis.blocks;
       this.bytecodes = analysis.bytecodes;
 
-      writer && writer.writeLn("Code: " + this.bytecodes.length + ", Blocks: " + blocks.length);
+      release || writer && writer.writeLn("Code: " + this.bytecodes.length + ", Blocks: " + blocks.length);
 
       this.local = [];
       for (var i = 0; i < this.methodInfo.localCount; i ++) {
@@ -302,8 +302,8 @@ module Shumway.AVM2.Compiler {
 
     emitBlock(block: Bytecode) {
       this.blockEmitter.reset();
-      emitDebugInfoComments && this.blockEmitter.writeLn("// Block: " + block.bid);
-
+      this.blockEmitter.writeLn("// Block: " + block.bid);
+      release || writer && writer.writeLn("// Block: " + block.bid);
       var bytecodes = this.bytecodes;
       var bc;
       for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
@@ -329,7 +329,7 @@ module Shumway.AVM2.Compiler {
       var opName;
       var op = bc.op;
       release || (opName = OP[op]);
-      emitDebugInfoComments && this.blockEmitter.writeLn("// BC: " + String(bc));
+      this.blockEmitter.writeLn("// BC: " + String(bc));
       switch (op) {
         case OP.getlocal:
           this.emitLoadLocal(bc.index);
@@ -691,7 +691,7 @@ module Shumway.AVM2.Compiler {
     emitMultiname(index: number): string {
       var multiname = this.constantPool.multinames[index];
       this.blockEmitter.writeLn('var mn = mi.abc.constantPool.multinames[' + index + ']; // ' +
-                                multiname);
+                                (release ? '' : multiname));
       // Can't handle these yet.
       Debug.assert(!multiname.isRuntimeNamespace());
       if (!multiname.isRuntime()) {
