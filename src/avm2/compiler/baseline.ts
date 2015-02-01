@@ -443,6 +443,30 @@ module Shumway.AVM2.Compiler {
         case OP.constructsuper:
           this.emitConstructSuper(bc);
           break;
+        case OP.increment:
+          this.emitLine(this.peek() + '++;');
+          break;
+        case OP.increment_i:
+          this.emitReplace(this.peek() + '|0 + ' + 1);
+          break;
+        case OP.decrement:
+          this.emitLine(this.peek() + '--;');
+          break;
+        case OP.decrement_i:
+          this.emitReplace(this.peek() + '|0 - ' + 1);
+          break;
+        case OP.inclocal:
+          this.emitLine(this.getLocal(bc.index) + '++;');
+          break;
+        case OP.inclocal_i:
+          this.emitReplaceLocal(bc.index, this.getLocal(bc.index) + '|0 + ' + 1);
+          break;
+        case OP.declocal:
+          this.emitLine(this.getLocal(bc.index) + '--;');
+          break;
+        case OP.declocal_i:
+          this.emitReplaceLocal(bc.index, this.getLocal(bc.index) + '|0 - ' + 1);
+          break;
         case OP.not:
           this.emitUnaryOp('!');
           break;
@@ -572,6 +596,10 @@ module Shumway.AVM2.Compiler {
       this.blockEmitter.writeLn(this.getLocal(i) + " = " + this.pop() + ";");
     }
 
+    emitReplaceLocal(i: number, v: string) {
+      this.blockEmitter.writeLn(this.getLocal(i) + " = " + v + ";");
+    }
+
     emitSetProperty(nameIndex: number) {
       var value = this.pop();
       var multiname = this.constantPool.multinames[nameIndex];
@@ -697,8 +725,13 @@ module Shumway.AVM2.Compiler {
       this.blockEmitter.writeLn(this.stackTop() + " = " + v + "; // push at " + this.stack);
       this.stack++;
     }
+
     emitReplace(v) {
       this.blockEmitter.writeLn(this.peek() + " = " + v + "; // push at " + (this.stack - 1));
+    }
+
+    emitLine(v) {
+      this.blockEmitter.writeLn(v);
     }
 
     emitPushDouble(bc) {
