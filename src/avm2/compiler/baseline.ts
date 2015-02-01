@@ -388,14 +388,17 @@ module Shumway.AVM2.Compiler {
         case OP.newactivation:
           this.emitPush('Object.create(mi.activationPrototype)');
           break;
-        case OP.jump:
-          this.emitJump(block, bc);
-          break;
         case OP.newobject:
           this.emitNewObject(bc);
           break;
         case OP.newarray:
           this.emitNewArray(bc);
+          break;
+        case OP.newfunction:
+          this.emitNewFunction(bc);
+          break;
+        case OP.jump:
+          this.emitJump(block, bc);
           break;
         case OP.ifnlt:      this.emitBinaryIf(block, bc, "<",   true);   break;
         case OP.ifnge:      this.emitBinaryIf(block, bc, ">=",  true);   break;
@@ -811,6 +814,11 @@ module Shumway.AVM2.Compiler {
         values.push(this.pop());
       }
       this.emitPush('[' + values.reverse() + ']');
+    }
+
+    emitNewFunction(bc: Bytecode) {
+      this.emitPush('createFunction(mi.abc.methods[' + bc.index + '], ' + this.peekScope() +
+                    ', true)');
     }
 
     emitConstructSuper(bc: Bytecode) {
