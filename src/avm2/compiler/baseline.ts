@@ -367,6 +367,9 @@ module Shumway.AVM2.Compiler {
         case OP.callproplex:
           this.emitCallProperty(bc);
           break;
+        case OP.call:
+          this.emitCall(bc);
+          break;
         case OP.constructprop:
           this.emitConstructProperty(bc);
           break;
@@ -696,6 +699,17 @@ module Shumway.AVM2.Compiler {
       } else {
         this.blockEmitter.writeLn(call + ';');
       }
+    }
+
+    emitCall(bc: Bytecode) {
+      var args = new Array(bc.argCount);
+      for (var i = bc.argCount; i--;) {
+        args[i] = this.pop();
+      }
+      var argsString = args.length ? ', ' + args.join(', ') : '';
+      var receiver = this.pop();
+      var callee = this.peek();
+      this.emitReplace(callee + '.asCall(' + receiver + argsString + ')');
     }
 
     emitConstructProperty(bc: Bytecode) {
