@@ -27,7 +27,7 @@ module Shumway.AVM2.Compiler {
 
   declare var Relooper;
 
-  var compileCount = 0, failCompileCount = 0;
+  var compileCount = 0, passCompileCount = 0, failCompileCount = 0;
 
   class Emitter {
     private _buffer: string [];
@@ -131,7 +131,7 @@ module Shumway.AVM2.Compiler {
       this.blockEmitter = new Emitter();
 
       var start = performance.now();
-      release || writer && writer.writeLn("Compiling: " + compileCount + " OK, " + failCompileCount + " FAIL, " + this.methodInfo);
+      release || writer && writer.writeLn("Compiling: " + (compileCount++) + " " + this.methodInfo);
 
       var analysis = this.methodInfo.analysis || new Analysis(this.methodInfo);
       if (!analysis.analyzedControlFlow) {
@@ -256,7 +256,8 @@ module Shumway.AVM2.Compiler {
 
       // writer.writeLn(body);
 
-      writer && writer.writeLn("Compiled: " + (performance.now() - start).toFixed(2));
+      passCompileCount++;
+      writer && writer.writeLn("Compiled: PASS: " + passCompileCount + ", FAIL: " + failCompileCount + ", TIME: " + (performance.now() - start).toFixed(2));
       compileCount++;
 
       return {body: body, parameters: this.parameters};
