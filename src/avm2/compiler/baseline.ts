@@ -431,6 +431,9 @@ module Shumway.AVM2.Compiler {
         case OP.constructprop:
           this.emitConstructProperty(bc);
           break;
+        case OP.throw:
+          this.emitThrow();
+          break;
         case OP.jump:
           this.emitJump(block, bc);
           break;
@@ -796,6 +799,10 @@ module Shumway.AVM2.Compiler {
 
     emitJump(block: Bytecode, bc: Bytecode) {
       Relooper.addBranch(block.relooperBlock, bc.target.relooperBlock);
+    }
+
+    emitThrow() {
+      this.emitLine('throw ' + this.pop() + ';');
     }
 
     emitLookupSwitch(block: Bytecode, bc: Bytecode) {
