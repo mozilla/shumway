@@ -109,6 +109,7 @@ module Shumway.AVM2.Compiler {
     constantPool: ConstantPool;
 
     stack: number;
+    pushedStrings: number[] = [];
     private scopeIndex: number;
 
     static localNames = ["this", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
@@ -334,6 +335,9 @@ module Shumway.AVM2.Compiler {
         case OP.callproplex:
           this.emitCallProperty(bc);
           break;
+        case OP.constructprop:
+          this.emitConstructProperty(bc);
+          break;
         case OP.getlex:
           this.emitGetLex(bc.index);
           break;
@@ -345,6 +349,9 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.jump:
           this.emitJump(block, bc);
+          break;
+        case OP.newobject:
+          this.emitNewObject(bc);
           break;
         case OP.ifnlt:      this.emitBinaryIf(block, bc, "<",   true);   break;
         case OP.ifnge:      this.emitBinaryIf(block, bc, ">=",  true);   break;
@@ -362,10 +369,10 @@ module Shumway.AVM2.Compiler {
         case OP.iffalse:    this.emitUnaryIf(block,  bc, "!");           break;
 
         case OP.pushstring:
-          this.emitPush('"' + this.constantPool.strings[bc.index] + '"');
+          this.emitPushString(bc);
           break;
         case OP.pushdouble:
-          this.emitPush(this.constantPool.doubles[bc.index]);
+          this.emitPushDouble(bc);
           break;
         case OP.pushint:
           this.emitPush(this.constantPool.ints[bc.index]);
@@ -405,14 +412,44 @@ module Shumway.AVM2.Compiler {
         case OP.coerce:
           this.emitCoerce(bc);
           break;
+        case OP.coerce_a:
+          // NOP.
+          break;
+        case OP.coerce_i:
+        case OP.convert_i:
+          this.emitCoerceInt();
+          break;
+        case OP.coerce_u:
+        case OP.convert_u:
+          this.emitCoerceUint();
+          break;
+        case OP.coerce_d:
+        case OP.convert_d:
+          this.emitCoerceNumber();
+          break;
+        case OP.coerce_b:
         case OP.convert_b:
-          this.emitConvertB();
+          this.emitCoerceBoolean();
+          break;
+        case OP.coerce_o:
+        case OP.convert_o:
+          this.emitCoerceObject(bc);
+          break;
+        case OP.coerce_s:
+        case OP.convert_s:
+          this.emitCoerceString(bc);
+          break;
+        case OP.dup:
+          this.emitDup();
+          break;
+        case OP.greaterequals:
+          this.emitBinaryExpression(' >= ');
           break;
         case OP.returnvoid:
           this.emitReturnVoid();
           break;
-        case OP.dup:
-          this.emitDup();
+        case OP.returnvalue:
+          this.emitReturnValue();
           break;
         default:
           this.blockEmitter.writeLn("// Not Implemented");
@@ -435,8 +472,8 @@ module Shumway.AVM2.Compiler {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.blockEmitter.writeLn(this.pop() + '.' + qualifiedName + ' = ' + value + ';');
       } else {
-        this.emitMultiname(nameIndex);
-        this.blockEmitter.writeLn(this.pop() + ".asSetProperty(mn.namespaces, mn.name, mn.flags, " +
+        var nameElements = this.emitMultiname(nameIndex);
+        this.blockEmitter.writeLn(this.pop() + ".asSetProperty(" + nameElements + ", " +
                                   value + ");");
       }
     }
@@ -447,16 +484,15 @@ module Shumway.AVM2.Compiler {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitPush(this.pop() + '.' + qualifiedName);
       } else {
-        this.emitMultiname(nameIndex);
-        this.emitPush(this.pop() + ".asGetProperty(mn.namespaces, mn.name, mn.flags, false)");
+        var nameElements = this.emitMultiname(nameIndex);
+        this.emitPush(this.pop() + ".asGetProperty(" + nameElements + ", false)");
       }
     }
 
     emitFindProperty(nameIndex: number, strict: boolean) {
       var scope = this.getScope(this.scopeIndex);
-      this.emitMultiname(nameIndex);
-      this.emitPush(scope + ".findScopeProperty(mn.namespaces, mn.name, mn.flags, mi, " + strict +
-                    ")");
+      var nameElements = this.emitMultiname(nameIndex);
+      this.emitPush(scope + ".findScopeProperty(" + nameElements + ", mi, " + strict + ")");
     }
 
     emitCallProperty(bc: Bytecode) {
@@ -477,15 +513,25 @@ module Shumway.AVM2.Compiler {
         receiver || (receiver = this.pop());
         call = receiver + '.' + qualifiedName + '(' + args + ')';
       } else {
-        this.emitMultiname(bc.index);
+        var nameElements = this.emitMultiname(bc.index);
         receiver || (receiver = this.pop());
-        call = receiver + ".asCallProperty(mn.namespaces, mn.name, mn.flags, [" + args + "])";
+        call = receiver + ".asCallProperty(" + nameElements + ", [" + args + "])";
       }
       if (bc.op !== OP.callpropvoid) {
         this.emitPush(call);
       } else {
         this.blockEmitter.writeLn(call + ';');
       }
+    }
+
+    emitConstructProperty(bc: Bytecode) {
+      var args = new Array(bc.argCount);
+      for (var i = bc.argCount; i--;) {
+        args[i] = this.pop();
+      }
+      this.emitGetProperty(bc.index);
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' = new ' + val + '.instanceConstructor(' + args + ');');
     }
 
     emitGetLex(nameIndex: number) {
@@ -496,18 +542,22 @@ module Shumway.AVM2.Compiler {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.blockEmitter.writeLn(receiver + ' = ' + receiver + '.' + qualifiedName + ';');
       } else {
-        this.emitMultiname(nameIndex);
-        this.emitPush(receiver + ".asGetProperty(mn.namespaces, mn.name, mn.flags, false)");
+        var nameElements = this.emitMultiname(nameIndex);
+        this.emitPush(receiver + ".asGetProperty(" + nameElements + ", false)");
       }
     }
 
-    emitMultiname(index: number) {
+    emitMultiname(index: number): string {
       var multiname = this.constantPool.multinames[index];
-      // Can't handle these yet.
-      Debug.assert(!multiname.isRuntimeName());
-      Debug.assert(!multiname.isRuntimeNamespace());
       this.blockEmitter.writeLn('var mn = mi.abc.constantPool.multinames[' + index + ']; // ' +
                                 multiname);
+      // Can't handle these yet.
+      Debug.assert(!multiname.isRuntimeNamespace());
+      if (!multiname.isRuntime()) {
+        return 'mn.namespaces, mn.name, mn.flags';
+      }
+      var name = multiname.isRuntimeName() ? this.pop() : multiname.name;
+      return 'mn.namespaces, ' + name + ', mn.flags';
     }
 
     emitBinaryIf(block: Bytecode, bc: Bytecode, operator: string, negate: boolean) {
@@ -541,11 +591,37 @@ module Shumway.AVM2.Compiler {
       this.stack++;
     }
 
+    emitPushDouble(bc) {
+      var val = this.constantPool.doubles[bc.index];
+      // `String(-0)` gives "0", so to preserve the `-0`, we have to bend over backwards.
+      this.emitPush((val === 0 && 1 / val < 0) ? '-0' : val);
+    }
+
+    emitPushString(bc) {
+      // The property keys for OP.newobject are pushed on the stack. They can't be used in that
+      // format, however, for emitting an object literal definition. So we also store the indices
+      // of all pushed strings here and redo the lookup in `emitNewObject`.
+      this.pushedStrings[this.stack] = bc.index;
+      var str = this.constantPool.strings[bc.index];
+      this.emitPush('"' + str + '"');
+    }
+
     emitPushScope(isWith: boolean) {
       var parent = this.scopeIndex === 0 ? "mi.classScope" : this.peekScope();
-      var scope = "new Scope(" + parent + ", this, " + isWith + ")";
+      var scope = "new Scope(" + parent + ", " + this.pop() + ", " + isWith + ")";
       this.scopeIndex++;
       this.blockEmitter.writeLn(this.getScope(this.scopeIndex) + " = " + scope + ";");
+    }
+
+    emitNewObject(bc: Bytecode) {
+      var properties = [];
+      for (var i = 0; i < bc.argCount; i++) {
+        var value = this.pop();
+        this.pop();
+        var key = this.constantPool.strings[this.pushedStrings[this.stack]];
+        properties.push('$Bg' + key + ': ' + value);
+      }
+      this.emitPush('{ ' + properties + ' }');
     }
 
     emitConstructSuper(bc: Bytecode) {
@@ -563,56 +639,75 @@ module Shumway.AVM2.Compiler {
     }
 
     emitCoerce(bc: Bytecode) {
+      var multiname = this.constantPool.multinames[bc.index];
+      switch (multiname) {
+        case Multiname.Int:     return this.emitCoerceInt();
+        case Multiname.Uint:    return this.emitCoerceUint();
+        case Multiname.Number:  return this.emitCoerceNumber();
+        case Multiname.Boolean: return this.emitCoerceBoolean();
+        case Multiname.Object:  return this.emitCoerceObject(bc);
+        case Multiname.String:  return this.emitCoerceString(bc);
+      }
       if (bc.ti && bc.ti.noCoercionNeeded) {
         return;
       }
-      var value = this.pop();
-      var coercion: string;
-      var multiname = this.constantPool.multinames[bc.index];
-      switch (multiname) {
-        case Multiname.Int:     coercion = value + '|0'; break;
-        case Multiname.Uint:    coercion = value + ' >>> 0'; break;
-        case Multiname.Number:  coercion = '+' + value; break;
-        case Multiname.Boolean: coercion = '!!' + value; break;
-        case Multiname.Object:  coercion = 'Object(' + value + ')'; break;
-        case Multiname.String:  coercion = 'asCoerceString(' + value + ')'; break;
-        default:
-          coercion = 'asCoerce(mi.abc.applicationDomain.getType(mi.abc.constantPool.multinames[' +
-                     bc.index + ']), ' + value + ')';
-      }
+      var coercion = 'asCoerce(mi.abc.applicationDomain.getType(mi.abc.constantPool.multinames[' +
+                     bc.index + ']), ' + this.pop() + ')';
       this.emitPush(coercion);
     }
 
-    emitConvertB() {
+    emitCoerceInt() {
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' |= 0;');
+    }
+
+    emitCoerceUint() {
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' >>>= 0;');
+    }
+
+    emitCoerceNumber() {
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + '= +' + val);
+    }
+
+    emitCoerceBoolean() {
       var val = this.peek();
       this.blockEmitter.writeLn(val + ' = !!' + val + ';');
+    }
+
+    emitCoerceObject(bc: Bytecode) {
+      if (bc.ti && bc.ti.noCoercionNeeded) {
+        return;
+      }
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' = asCoerceObject(' + val + ');');
+    }
+
+    emitCoerceString(bc: Bytecode) {
+      if (bc.ti && bc.ti.noCoercionNeeded) {
+        return;
+      }
+      var val = this.peek();
+      this.blockEmitter.writeLn(val + ' = asCoerceString(' + val + ');');
     }
 
     emitDup() {
       this.emitPush(this.peek());
     }
 
+    emitBinaryExpression(expression: string) {
+      var left = this.pop();
+      var right = this.peek();
+      this.blockEmitter.writeLn(right + ' = ' + left + expression + right + ';');
+    }
+
     emitReturnVoid() {
       this.blockEmitter.writeLn('return;');
     }
 
-    popMultiname(index: number): BaselineMultiname {
-      var multiname = this.constantPool.multinames[index];
-      var namespaces, name, flags;
-      if (multiname.isRuntimeName()) {
-        name = this.pop();
-        // TODO: figure out what `flags` should be set to for runtime names.
-        flags = 0;
-      } else {
-        name = multiname.name;
-        flags = multiname.flags;
-      }
-      if (multiname.isRuntimeNamespace()) {
-        namespaces = "[" + this.pop() + "]";
-      } else {
-        namespaces = "* constant(multiname.namespaces) *";
-      }
-      return new BaselineMultiname(namespaces, name, flags);
+    emitReturnValue() {
+      this.blockEmitter.writeLn('return ' + this.pop() + ';');
     }
   }
 
