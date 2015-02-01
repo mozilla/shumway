@@ -613,6 +613,32 @@ module Shumway.AVM2 {
       }
     }
 
+    isBlockEnd(): boolean {
+      switch (this.op) {
+        case OP.lookupswitch:
+        case OP.jump:
+        case OP.iflt:
+        case OP.ifnlt:
+        case OP.ifle:
+        case OP.ifnle:
+        case OP.ifgt:
+        case OP.ifngt:
+        case OP.ifge:
+        case OP.ifnge:
+        case OP.ifeq:
+        case OP.ifne:
+        case OP.ifstricteq:
+        case OP.ifstrictne:
+        case OP.iftrue:
+        case OP.iffalse:
+        case OP.returnvalue:
+        case OP.returnvoid:
+        case OP.throw:
+          return true;
+      }
+      return false;
+    }
+
     makeBlockHead(id) {
       if (this.succs) {
         return id;

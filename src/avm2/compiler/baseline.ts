@@ -126,12 +126,13 @@ module Shumway.AVM2.Compiler {
 
     compile() {
       Relooper.cleanup();
+
       Relooper.init();
 
       this.bodyEmitter = new Emitter();
       this.blockEmitter = new Emitter();
 
-      writer.enter("Compiling: " + (compileCount++) + " " + this.methodInfo);
+      writer && writer.enter("Compiling: " + (compileCount++) + " " + this.methodInfo);
       var analysis = this.methodInfo.analysis || new Analysis(this.methodInfo);
       if (!analysis.analyzedControlFlow) {
         analysis.analyzeControlFlow();
@@ -140,9 +141,9 @@ module Shumway.AVM2.Compiler {
       var blocks = this.blocks = analysis.blocks;
       this.bytecodes = analysis.bytecodes;
 
-      writer.writeLn("Code: " + this.bytecodes.length);
-      writer.writeLn("Blocks: " + blocks.length);
-      writer.outdent();
+      writer && writer.writeLn("Code: " + this.bytecodes.length);
+      writer && writer.writeLn("Blocks: " + blocks.length);
+      writer && writer.outdent();
 
       this.local = [];
       for (var i = 0; i < this.methodInfo.localCount; i ++) {
@@ -199,12 +200,9 @@ module Shumway.AVM2.Compiler {
 
       Relooper.addBranch(relooperEntryBlock, blocks[0].relooperBlock);
 
-      for (var i = 1; i < blocks.length; i++) {
-        Relooper.addBranch(blocks[i - 1].relooperBlock, blocks[i].relooperBlock);
-      }
-
+      writer.writeLn("// Rendering ...: ");
       var body = this.bodyEmitter.toString() + '\n' + Relooper.render(this.relooperEntryBlock);
-
+      writer.writeLn("// Done: ");
       writer.writeLn(body);
       return {body: body, parameters: this.parameters};
     }
@@ -270,12 +268,21 @@ module Shumway.AVM2.Compiler {
     emitBlock(block: Bytecode) {
       this.blockEmitter.reset();
       this.blockEmitter.writeLn("// Block: " + block.bid);
+      writer && writer.writeLn("// Block: " + block.bid);
       var bytecodes = this.bytecodes;
+      var bc;
       for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
-        var bc = bytecodes[bci];
+        bc = bytecodes[bci];
         this.emitBytecode(block, bc);
       }
       Relooper.setBlockCode(block.relooperBlock, this.blockEmitter.toString());
+
+      var nextBlock = (end + 1 < bytecodes.length) ? bytecodes[end + 1] : null;
+      writer && writer.writeLn("// Next Block: " + nextBlock + ", isFallthrough: " + bc.isBlockEnd() + " " + bc);
+      if (nextBlock && !bc.isBlockEnd()) {
+        writer && writer.writeLn("// Adding Fallthrough: " + nextBlock.bid + " " + nextBlock.relooperBlock);
+        Relooper.addBranch(block.relooperBlock, nextBlock.relooperBlock);
+      }
     }
 
     peekScope() {
@@ -336,7 +343,9 @@ module Shumway.AVM2.Compiler {
         case OP.pushscope:
           this.emitPushScope(false);
           break;
-
+        case OP.jump:
+          this.emitJump(block, bc);
+          break;
         case OP.ifnlt:      this.emitBinaryIf(block, bc, "<",   true);   break;
         case OP.ifnge:      this.emitBinaryIf(block, bc, ">=",  true);   break;
         case OP.ifngt:      this.emitBinaryIf(block, bc, ">",   true);   break;
@@ -521,6 +530,10 @@ module Shumway.AVM2.Compiler {
       var target = bc.target;
       Relooper.addBranch(block.relooperBlock, next.relooperBlock);
       Relooper.addBranch(block.relooperBlock, target.relooperBlock, predicate);
+    }
+
+    emitJump(block: Bytecode, bc: Bytecode) {
+      Relooper.addBranch(block.relooperBlock, bc.target.relooperBlock);
     }
 
     emitPush(v) {
