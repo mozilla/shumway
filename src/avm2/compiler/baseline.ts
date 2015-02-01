@@ -379,6 +379,12 @@ module Shumway.AVM2.Compiler {
         case OP.pushscope:
           this.emitPushScope(false);
           break;
+        case OP.getglobalscope:
+          this.emitGetGlobalScope();
+          break;
+        case OP.getslot:
+          this.emitGetSlot(bc.index);
+          break;
         case OP.newactivation:
           this.emitPush('Object.create(mi.activationPrototype)');
           break;
@@ -778,6 +784,14 @@ module Shumway.AVM2.Compiler {
       var scope = "new Scope(" + parent + ", " + this.pop() + ", " + isWith + ")";
       this.scopeIndex++;
       this.blockEmitter.writeLn(this.getScope(this.scopeIndex) + " = " + scope + ";");
+    }
+
+    emitGetGlobalScope() {
+      this.emitPush(this.peekScope() + '.global.object');
+    }
+
+    emitGetSlot(index: number) {
+      this.emitReplace('asGetSlot(' + this.peek() + ', ' + index + ')');
     }
 
     emitNewObject(bc: Bytecode) {
