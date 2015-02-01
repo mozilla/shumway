@@ -156,7 +156,11 @@ module Shumway.AVM2.Compiler {
         var paramName = this.local[i + 1];
         this.parameters.push(paramName);
         if (param.optional && param.isUsed) {
-          this.bodyEmitter.writeLn('arguments.length < ' + (i + 1) + ' && (' + paramName + ' = ' + param.value + ');');
+          var value = param.value;
+          if (Multiname.getQualifiedName(param.type) === '$BgString') {
+            value = '"' + value + '"';
+          }
+          this.bodyEmitter.writeLn('arguments.length < ' + (i + 1) + ' && (' + paramName + ' = ' + value + ');');
         }
       }
 
