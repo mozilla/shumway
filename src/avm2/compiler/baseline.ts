@@ -106,8 +106,8 @@ module Shumway.AVM2.Compiler {
     local: string [];
     constantPool: ConstantPool;
 
-    stack: number;
-    pushedStrings: number[] = [];
+    private pushedStrings: number[] = [];
+    private stack: number = 0;
     private scopeIndex: number = 0;
 
     static localNames = ["this", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
@@ -202,12 +202,33 @@ module Shumway.AVM2.Compiler {
         block.relooperBlock = Relooper.addBlock("// Block: " + block.bid);
       }
 
+      var processedBlocks = [];
       // Emit blocks.
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
-        this.stack = 0;
-        this.scopeIndex = 0;
+        var bid = block.bid;
+        release || assert(!processedBlocks[bid]);
+        if (block.preds.length) {
+          var predBlockExits = processedBlocks[block.preds[0].bid];
+          if (!predBlockExits) {
+            continue;
+          }
+          this.stack = predBlockExits.stack;
+          this.scopeIndex = predBlockExits.scopeIndex;
+          if (!release) {
+            for (var j = 1; j < block.preds.length; j++) {
+              predBlockExits = processedBlocks[block.preds[j].bid];
+              assert(predBlockExits);
+              assert(predBlockExits.stack === this.stack);
+              assert(predBlockExits.scopeIndex === this.scopeIndex);
+            }
+          }
+        } else if (!release) {
+          assert(this.stack === 0);
+          assert(this.scopeIndex === 0);
+        }
         this.emitBlock(block);
+        processedBlocks[bid] = {stack: this.stack, scopeIndex: this.scopeIndex};
       }
 
       Relooper.addBranch(relooperEntryBlock, blocks[0].relooperBlock);
@@ -985,7 +1006,7 @@ module Shumway.AVM2.Compiler {
       var result = compiler.compile();
     } catch (e) {
       failCompileCount++;
-      writer.errorLn("Error: " + e);
+      writer && writer.errorLn("Error: " + e);
     }
     return result;
   }
