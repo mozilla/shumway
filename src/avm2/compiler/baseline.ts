@@ -351,6 +351,9 @@ module Shumway.AVM2.Compiler {
         case OP.pushscope:
           this.emitPushScope(false);
           break;
+        case OP.newactivation:
+          this.emitPush('Object.create(mi.activationPrototype)');
+          break;
         case OP.jump:
           this.emitJump(block, bc);
           break;
