@@ -958,15 +958,15 @@ module Shumway.AVM2.Compiler {
     }
 
     emitBinaryExpression(expression: string) {
-      var left = this.pop();
-      var right = this.peek();
-      this.blockEmitter.writeLn(right + ' = ' + left + expression + right + ';');
+      var right = this.pop();
+      var left = this.peek();
+      this.blockEmitter.writeLn(left + ' = ' + left + expression + right + ';');
     }
 
     emitBinaryExpression_i(expression: string) {
-      var left = this.pop();
-      var right = this.peek();
-      this.blockEmitter.writeLn(right + ' = ' + left + expression + right + '|0;');
+      var right = this.pop();
+      var left = this.peek();
+      this.blockEmitter.writeLn(left + ' = ' + left + expression + right + '|0;');
     }
 
     emitReturnVoid() {
