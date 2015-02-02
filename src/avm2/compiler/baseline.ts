@@ -607,6 +607,9 @@ module Shumway.AVM2.Compiler {
         case OP.unplus:
           this.emitUnaryOp('+');
           break;
+        case OP.equals:
+          this.emitEquals();
+          break;
         case OP.add:
           this.emitBinaryExpression(' + ');
           break;
@@ -1099,6 +1102,11 @@ module Shumway.AVM2.Compiler {
     emitSwap() {
       this.emitPopTemporaries(2);
       this.emitPushTemporary(0, 1);
+    }
+
+    emitEquals() {
+      var right = this.pop();
+      this.emitReplace('asEquals(' + this.peek() + ', ' + right + ')');
     }
 
     emitUnaryOp(operator: string) {
