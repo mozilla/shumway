@@ -886,7 +886,7 @@ module Shumway.AVM2.Compiler {
       if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
         var qualifiedName = 'm' + Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         call = 'mi.classScope.object.baseClass.traitsPrototype.' + qualifiedName +
-               '.call(' + this.peek() + ', ' + args + ')';
+               '.call(' + this.peek() + (args.length ? ', ' + args : '') + ')';
       }
       if (!call) {
         var nameElements = this.emitMultiname(bc.index);
