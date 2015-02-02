@@ -109,6 +109,7 @@ module Shumway.AVM2.Compiler {
     private pushedStrings: number[] = [];
     private stack: number = 0;
     private scopeIndex: number = 0;
+    private hasNext2Infos: number = 0;
 
     static localNames = ["this", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
 
@@ -233,10 +234,23 @@ module Shumway.AVM2.Compiler {
           assert(this.scopeIndex === 0);
         }
         this.emitBlock(block);
+        if (!release) {
+          assert(this.stack >= 0);
+          assert(this.scopeIndex >= 0);
+        }
         processedBlocks[bid] = {stack: this.stack, scopeIndex: this.scopeIndex};
       }
 
       Relooper.addBranch(relooperEntryBlock, blocks[0].relooperBlock);
+
+      if (this.hasNext2Infos > 0) {
+        var hasNext2Definition = 'var ';
+        for (var i = 0; i < this.hasNext2Infos; i++) {
+          hasNext2Definition += 'hasNext' + i + ' = new HasNext2Info()';
+          hasNext2Definition += (i < (this.hasNext2Infos - 1) ? ', ' : ';');
+        }
+        this.bodyEmitter.writeLn(hasNext2Definition);
+      }
 
       var needsTry = this.methodInfo.hasExceptions();
       var needsWhile = needsTry;
@@ -444,6 +458,12 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.throw:
           this.emitThrow();
+          break;
+        case OP.hasnext2:
+          this.emitHasNext2(bc);
+          break;
+        case OP.nextname:
+          this.emitNextName();
           break;
         case OP.jump:
           this.emitJump(block, bc);
@@ -811,6 +831,22 @@ module Shumway.AVM2.Compiler {
 
     emitJump(block: Bytecode, bc: Bytecode) {
       Relooper.addBranch(block.relooperBlock, bc.target.relooperBlock);
+    }
+
+    emitHasNext2(bc: Bytecode) {
+      var info = 'hasNext' + (this.hasNext2Infos++);
+      var object = this.local[bc.object];
+      var index = this.local[bc.index];
+      this.emitLine(info + '.object = ' + object + ';');
+      this.emitLine(info + '.index = ' + index + ';');
+      this.emitLine('Object(' + object + ').asHasNext2(' + info + ');');
+      this.emitLine(object + ' = ' + info + '.object;');
+      this.emitPush(index + ' = ' + info + '.index');
+    }
+
+    emitNextName() {
+      var index = this.pop();
+      this.emitReplace(this.peek() + '.asNextName(' + index + ')');
     }
 
     emitThrow() {
