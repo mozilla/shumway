@@ -77,26 +77,14 @@ module Shumway.AVM2.Compiler {
         }
       }
     }
-    writeEmitter(emitter: Emitter) {
-      this._buffer.push.apply(this._buffer, emitter._buffer);
-    }
     indent() {
       this._indent ++;
     }
     outdent() {
       this._indent --;
     }
-    prependLn(s: string) {
-      this._buffer.unshift(s);
-    }
     toString(): string {
       return this._buffer.join("\n");
-    }
-  }
-
-  class BaselineMultiname {
-    constructor(public namespaces, public name, public flags) {
-
     }
   }
 
@@ -164,6 +152,9 @@ module Shumway.AVM2.Compiler {
       // This would allow us to get rid of that part of the analysis phase above, and in many cases,
       // because the information in the header is often incorrect, emit less code.
       this.parameters = [];
+      if (this.hasDynamicScope) {
+        this.parameters.push('$0');
+      }
       var paramsCount = this.methodInfo.parameters.length;
       for (var i = 0; i < paramsCount; i ++) {
         var param = this.methodInfo.parameters[i];
@@ -200,14 +191,20 @@ module Shumway.AVM2.Compiler {
         this.bodyEmitter.writeLn(stackSlotsDefinition);
       }
 
-      var scopesDefinition = 'var ';
-      for (var i = 0; i < this.methodInfo.maxScopeDepth; i++) {
-        scopesDefinition += this.getScope(i) + (i < (this.methodInfo.maxScopeDepth - 1) ? ', ' : ';');
+      var scopesCount = this.methodInfo.maxScopeDepth - this.methodInfo.initScopeDepth + 1;
+      var scopesOffset = this.hasDynamicScope ? 1 : 0;
+      if (scopesCount - scopesOffset) {
+        var scopesDefinition = 'var ';
+        for (var i = scopesOffset; i < scopesCount; i++) {
+          scopesDefinition += this.getScope(i) + (i < (scopesCount - 1) ? ', ' : ';');
+        }
+        this.bodyEmitter.writeLn(scopesDefinition);
       }
-      this.bodyEmitter.writeLn(scopesDefinition);
 
       this.bodyEmitter.writeLn('var mi = ' + this.globalMiName + ';');
-      this.bodyEmitter.writeLn('$0 = mi.classScope;');
+      if (!this.hasDynamicScope) {
+        this.bodyEmitter.writeLn('$0 = mi.classScope;');
+      }
 
       if (this.methodInfo.needsRest() || this.methodInfo.needsArguments()) {
         var offset = this.methodInfo.needsRest() ? paramsCount : 0;
@@ -471,6 +468,9 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.getproperty:
           this.emitGetProperty(bc.index);
+          break;
+        case OP.deleteproperty:
+          this.emitDeleteProperty(bc.index);
           break;
         case OP.findproperty:
           this.emitFindProperty(bc.index, false);
@@ -843,6 +843,17 @@ module Shumway.AVM2.Compiler {
       } else {
         var nameElements = this.emitMultiname(nameIndex);
         this.emitReplace(this.peek() + ".asGetProperty(" + nameElements + ", false)");
+      }
+    }
+
+    emitDeleteProperty(nameIndex: number) {
+      var multiname = this.constantPool.multinames[nameIndex];
+      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+        var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
+        this.emitReplace('delete ' + this.peek() + '.' + qualifiedName);
+      } else {
+        var nameElements = this.emitMultiname(nameIndex);
+        this.emitReplace(this.peek() + ".asDeleteProperty(" + nameElements + ", false)");
       }
     }
 
