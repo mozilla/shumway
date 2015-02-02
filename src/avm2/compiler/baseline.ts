@@ -77,26 +77,14 @@ module Shumway.AVM2.Compiler {
         }
       }
     }
-    writeEmitter(emitter: Emitter) {
-      this._buffer.push.apply(this._buffer, emitter._buffer);
-    }
     indent() {
       this._indent ++;
     }
     outdent() {
       this._indent --;
     }
-    prependLn(s: string) {
-      this._buffer.unshift(s);
-    }
     toString(): string {
       return this._buffer.join("\n");
-    }
-  }
-
-  class BaselineMultiname {
-    constructor(public namespaces, public name, public flags) {
-
     }
   }
 
