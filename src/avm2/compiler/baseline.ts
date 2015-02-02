@@ -648,25 +648,25 @@ module Shumway.AVM2.Compiler {
           this.emitLine(this.peek() + '++;');
           break;
         case OP.increment_i:
-          this.emitReplace(this.peek() + '|0 + ' + 1);
+          this.emitReplace('(' + this.peek() + '|0) + ' + 1);
           break;
         case OP.decrement:
           this.emitLine(this.peek() + '--;');
           break;
         case OP.decrement_i:
-          this.emitReplace(this.peek() + '|0 - ' + 1);
+          this.emitReplace('(' + this.peek() + '|0) - ' + 1);
           break;
         case OP.inclocal:
           this.emitLine(this.getLocal(bc.index) + '++;');
           break;
         case OP.inclocal_i:
-          this.emitReplaceLocal(bc.index, this.getLocal(bc.index) + '|0 + ' + 1);
+          this.emitReplaceLocal(bc.index, '(' + this.getLocal(bc.index) + '|0) + ' + 1);
           break;
         case OP.declocal:
           this.emitLine(this.getLocal(bc.index) + '--;');
           break;
         case OP.declocal_i:
-          this.emitReplaceLocal(bc.index, this.getLocal(bc.index) + '|0 - ' + 1);
+          this.emitReplaceLocal(bc.index, '(' + this.getLocal(bc.index) + '|0) - ' + 1);
           break;
         case OP.not:
           this.emitUnaryOp('!');
