@@ -476,8 +476,14 @@ module Shumway.AVM2.Compiler {
         case OP.setproperty:
           this.emitSetProperty(bc.index);
           break;
+        case OP.setsuper:
+          this.emitSetSuper(bc.index);
+          break;
         case OP.getproperty:
           this.emitGetProperty(bc.index);
+          break;
+        case OP.getsuper:
+          this.emitGetSuper(bc.index);
           break;
         case OP.deleteproperty:
           this.emitDeleteProperty(bc.index);
@@ -848,6 +854,26 @@ module Shumway.AVM2.Compiler {
       }
     }
 
+    emitSetSuper(nameIndex: number) {
+      var value = this.pop();
+      var multiname = this.constantPool.multinames[nameIndex];
+      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+        var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
+        if ('s' + qualifiedName in this.methodInfo.classScope.object.baseClass.traitsPrototype) {
+          this.emitLine('mi.classScope.object.baseClass.traitsPrototype.s' + qualifiedName +
+                        '.call(' + this.pop() + ', ' + value + ');');
+        } else {
+          // If the base class doesn't have this as a setter, we can just emit a plain property
+          // set: if this class overrode the value, then it'd be overridden, period.
+          this.emitLine(this.pop() + '.' + qualifiedName + ' = ' + value + ';');
+        }
+      } else {
+        var nameElements = this.emitMultiname(nameIndex);
+        this.emitReplace(this.peek() + ".asSetSuper(mi.classScope, " + nameElements + ", " +
+                         value + ")");
+      }
+    }
+
     emitGetProperty(nameIndex: number) {
       var multiname = this.constantPool.multinames[nameIndex];
       if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
@@ -856,6 +882,25 @@ module Shumway.AVM2.Compiler {
       } else {
         var nameElements = this.emitMultiname(nameIndex);
         this.emitReplace(this.peek() + ".asGetProperty(" + nameElements + ", false)");
+      }
+    }
+
+    emitGetSuper(nameIndex: number) {
+      var multiname = this.constantPool.multinames[nameIndex];
+      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+        var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
+        if ('g' + qualifiedName in this.methodInfo.classScope.object.baseClass.traitsPrototype) {
+          this.emitReplace('mi.classScope.object.baseClass.traitsPrototype.g' + qualifiedName +
+                           '.call(this)');
+        } else {
+          // If the base class doesn't have this as a getter, we can just emit a plain property
+          // get: if this class overrode the value, then it'd be overridden, period.
+          this.emitReplace(this.peek() + '.' + qualifiedName);
+        }
+      } else {
+        var nameElements = this.emitMultiname(nameIndex);
+        var receiver = this.peek();
+        this.emitReplace(receiver + ".asGetSuper(mi.classScope, " + nameElements + ")");
       }
     }
 
@@ -925,6 +970,7 @@ module Shumway.AVM2.Compiler {
       if (bc.op !== OP.callsupervoid) {
         this.emitReplace(call);
       } else {
+        this.stack--;
         this.blockEmitter.writeLn(call + ';');
       }
     }
@@ -1295,7 +1341,20 @@ module Shumway.AVM2.Compiler {
     }
 
     emitReturnValue() {
-      this.blockEmitter.writeLn('return ' + this.pop() + ';');
+      var value = this.pop();
+      if (this.methodInfo.returnType) {
+        switch (Multiname.getQualifiedName(this.methodInfo.returnType)) {
+          case Multiname.Int: value += '|0'; break;
+          case Multiname.Uint: value += ' >>> 0'; break;
+          case Multiname.String: value = 'asCoerceString(' + value + ')'; break;
+          case Multiname.Number: value = '+' + value; break;
+          case Multiname.Boolean: value = '!!' + value; break;
+          case Multiname.Object: value = 'Object(' + value + ')'; break;
+          default:
+            value = 'asCoerce(mi.abc.applicationDomain.getType(mi.returnType), ' + value + ')';
+        }
+      }
+      this.blockEmitter.writeLn('return ' + value + ';');
     }
 
     popArgs(count: number): string[] {
