@@ -426,6 +426,9 @@ module Shumway.AVM2.Compiler {
         case OP.pushscope:
           this.emitPushScope(false);
           break;
+        case OP.popscope:
+          this.popScope();
+          break;
         case OP.getglobalscope:
           this.emitGetGlobalScope();
           break;
@@ -917,6 +920,10 @@ module Shumway.AVM2.Compiler {
       var scope = "new Scope(" + parent + ", " + this.pop() + ", " + isWith + ")";
       this.scopeIndex++;
       this.blockEmitter.writeLn(this.getScope(this.scopeIndex) + " = " + scope + ";");
+    }
+
+    popScope() {
+      this.scopeIndex--;
     }
 
     emitGetGlobalScope() {
