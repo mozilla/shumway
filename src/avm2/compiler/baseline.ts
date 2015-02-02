@@ -960,6 +960,7 @@ module Shumway.AVM2.Compiler {
       if (bc.op !== OP.callsupervoid) {
         this.emitReplace(call);
       } else {
+        this.stack--;
         this.blockEmitter.writeLn(call + ';');
       }
     }
