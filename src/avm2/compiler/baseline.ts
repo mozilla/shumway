@@ -1153,8 +1153,11 @@ module Shumway.AVM2.Compiler {
     }
 
     emitSwap() {
-      this.emitPopTemporaries(2);
-      this.emitPushTemporary(0, 1);
+      var top = this.getStack(this.stack - 1);
+      var next = this.getStack(this.stack - 2);
+      this.blockEmitter.writeLn("var t = " + top + ";");
+      this.blockEmitter.writeLn(top + " = " + next + ";");
+      this.blockEmitter.writeLn(next + " = t;");
     }
 
     emitEquals() {
