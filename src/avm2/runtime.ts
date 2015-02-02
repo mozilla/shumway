@@ -767,9 +767,6 @@ module Shumway.AVM2.Runtime {
         return;
       }
     }
-    hasNext2Info.index = 0;
-    hasNext2Info.object = null;
-    return;
   }
 
   export function asGetEnumerableKeys(): any [] {
