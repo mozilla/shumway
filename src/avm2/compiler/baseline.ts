@@ -684,6 +684,9 @@ module Shumway.AVM2.Compiler {
         case OP.dup:
           this.emitDup();
           break;
+        case OP.swap:
+          this.emitSwap();
+          break;
         case OP.returnvoid:
           this.emitReturnVoid();
           break;
@@ -1063,6 +1066,11 @@ module Shumway.AVM2.Compiler {
 
     emitDup() {
       this.emitPush(this.peek());
+    }
+
+    emitSwap() {
+      this.emitPopTemporaries(2);
+      this.emitPushTemporary(0, 1);
     }
 
     emitUnaryOp(operator: string) {
