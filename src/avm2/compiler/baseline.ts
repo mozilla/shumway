@@ -108,7 +108,7 @@ module Shumway.AVM2.Compiler {
     static localNames = ["this", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
 
     /**
-     * Make sure that none of these shadow global names, like "U" and "O".
+     * Make sure that none of these shadow global names.
      */
     static stackNames = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
@@ -118,6 +118,8 @@ module Shumway.AVM2.Compiler {
     }
 
     compile() {
+      compileCount++;
+
       Relooper.cleanup();
 
       Relooper.init();
@@ -132,7 +134,7 @@ module Shumway.AVM2.Compiler {
       }
 
       var start = performance.now();
-      release || writer && writer.writeLn("Compiling: " + (compileCount++) + " " + this.methodInfo);
+      release || writer && writer.writeLn("Compiling: " + compileCount + " " + this.methodInfo);
 
       var analysis = this.methodInfo.analysis || new Analysis(this.methodInfo);
       if (!analysis.analyzedControlFlow) {
@@ -315,10 +317,10 @@ module Shumway.AVM2.Compiler {
       var duration = performance.now() - start;
       compileTime += duration;
       passCompileCount++;
-      compileCount++;
       writer && writer.writeLn("Compiled: PASS: " + passCompileCount +
                                ", FAIL: " + failCompileCount +
                                ", TIME: " + (duration).toFixed(2) +
+                               ", RATIO: " + (passCompileCount / compileCount).toFixed(2) +
                                " (" + compileTime.toFixed(2) + " total)");
 
       return {body: body, parameters: this.parameters};
@@ -520,6 +522,9 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.newarray:
           this.emitNewArray(bc);
+          break;
+        case OP.newclass:
+          this.emitNewClass(bc);
           break;
         case OP.newfunction:
           this.emitNewFunction(bc);
@@ -1089,6 +1094,10 @@ module Shumway.AVM2.Compiler {
       var value = this.pop();
       var object = this.pop();
       this.emitLine('asSetSlot(' + object + ', ' + index + ', '+ value + ')');
+    }
+
+    emitNewClass(bc: Bytecode) {
+      this.emitPush('createClass(mi.abc.classes[' + bc.index + '], ' + this.pop() + ', ' + this.peekScope() + ')');
     }
 
     emitNewObject(bc: Bytecode) {
