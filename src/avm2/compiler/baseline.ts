@@ -33,7 +33,7 @@ module Shumway.AVM2.Compiler {
     private _buffer: string [];
     private _indent = 0;
     private _emitIndent;
-    constructor(emitIndent: boolean = true) {
+    constructor(emitIndent: boolean) {
       this._buffer = [];
       this._emitIndent = emitIndent;
     }
@@ -128,8 +128,8 @@ module Shumway.AVM2.Compiler {
 
       Relooper.init();
 
-      this.bodyEmitter = new Emitter();
-      this.blockEmitter = new Emitter();
+      this.bodyEmitter = new Emitter(!release);
+      this.blockEmitter = new Emitter(!release);
 
       var hasExceptions = this.methodInfo.hasExceptions();
 
@@ -972,12 +972,16 @@ module Shumway.AVM2.Compiler {
     }
 
     emitPush(v) {
-      this.blockEmitter.writeLn(this.stackTop() + " = " + v + "; // push at " + this.stack);
+      var line = this.getStack(this.stack) + " = " + v + ";";
+      release || (line += " // push at " + this.stack);
+      this.blockEmitter.writeLn(line);
       this.stack++;
     }
 
     emitReplace(v) {
-      this.blockEmitter.writeLn(this.peek() + " = " + v + "; // push at " + (this.stack - 1));
+      var line = this.getStack(this.stack - 1) + " = " + v + ";";
+      release || (line += " // replace at " + (this.stack - 1));
+      this.blockEmitter.writeLn(line);
     }
 
     emitLine(v) {
