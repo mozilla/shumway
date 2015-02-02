@@ -453,6 +453,9 @@ module Shumway.AVM2.Compiler {
         case OP.newfunction:
           this.emitNewFunction(bc);
           break;
+        case OP.newcatch:
+          this.emitNewCatch(bc);
+          break;
         case OP.construct:
           this.emitConstruct(bc);
           break;
