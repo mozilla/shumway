@@ -465,6 +465,9 @@ module Shumway.AVM2.Compiler {
         case OP.nextname:
           this.emitNextName();
           break;
+        case OP.nextvalue:
+          this.emitNextValue();
+          break;
         case OP.jump:
           this.emitJump(block, bc);
           break;
@@ -847,6 +850,11 @@ module Shumway.AVM2.Compiler {
     emitNextName() {
       var index = this.pop();
       this.emitReplace(this.peek() + '.asNextName(' + index + ')');
+    }
+
+    emitNextValue() {
+      var index = this.pop();
+      this.emitReplace(this.peek() + '.asNextValue(' + index + ')');
     }
 
     emitThrow() {
