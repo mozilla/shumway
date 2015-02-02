@@ -131,6 +131,12 @@ module Shumway.AVM2.Compiler {
       this.bodyEmitter = new Emitter();
       this.blockEmitter = new Emitter();
 
+      var hasExceptions = this.methodInfo.hasExceptions();
+
+      if (hasExceptions) {
+        this.bodyEmitter.writeLn("var pc = 0;");
+      }
+
       var start = performance.now();
       release || writer && writer.writeLn("Compiling: " + (compileCount++) + " " + this.methodInfo);
 
@@ -203,19 +209,38 @@ module Shumway.AVM2.Compiler {
 
       var relooperEntryBlock = this.relooperEntryBlock = Relooper.addBlock("// Entry Block");
 
-      // Create relooper blocks.
+      // Create a relooper block for each basic block.
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
         block.relooperBlock = Relooper.addBlock("// Block: " + block.bid);
       }
 
+      // If we have exception handlers, dispatch to appropriate block using the current PC, which
+      // was set in the catch block.
+      var exceptionEntryBlocks = [];
+      if (hasExceptions) {
+        var exceptions = this.methodInfo.exceptions;
+        for (var i = 0; i < exceptions.length; i++) {
+          var target = exceptions[i].target;
+          exceptionEntryBlocks[target.bid] = target;
+          Relooper.addBranch(relooperEntryBlock, target.relooperBlock, "pc === " + target.pc);
+        }
+      }
+
+      // By default we dispatch to the first block.
+      Relooper.addBranch(relooperEntryBlock, blocks[0].relooperBlock);
+
       var processedBlocks = [];
+
       // Emit blocks.
       for (var i = 0; i < blocks.length; i++) {
         var block = blocks[i];
         var bid = block.bid;
         release || assert(!processedBlocks[bid]);
-        if (block.preds.length) {
+        if (exceptionEntryBlocks[bid]) {
+          this.stack = 1;
+          this.scopeIndex = 0;
+        } else if (block.preds.length) {
           var predBlockExits = processedBlocks[block.preds[0].bid];
           if (predBlockExits) {
             this.stack = predBlockExits.stack;
@@ -241,8 +266,6 @@ module Shumway.AVM2.Compiler {
         processedBlocks[bid] = {stack: this.stack, scopeIndex: this.scopeIndex};
       }
 
-      Relooper.addBranch(relooperEntryBlock, blocks[0].relooperBlock);
-
       if (this.hasNext2Infos > 0) {
         var hasNext2Definition = 'var ';
         for (var i = 0; i < this.hasNext2Infos; i++) {
@@ -252,22 +275,26 @@ module Shumway.AVM2.Compiler {
         this.bodyEmitter.writeLn(hasNext2Definition);
       }
 
-      var needsTry = this.methodInfo.hasExceptions();
-      var needsWhile = needsTry;
-
-      if (needsWhile) {
+      if (hasExceptions) {
         this.bodyEmitter.enter("while(1) {");
-      }
-      if (needsTry) {
         this.bodyEmitter.enter("try {");
       }
 
       this.bodyEmitter.writeLns(Relooper.render(this.relooperEntryBlock));
 
-      if (needsTry) {
+      if (hasExceptions) {
+        this.bodyEmitter.leaveAndEnter("} catch (ex) {");
+        var exceptions = this.methodInfo.exceptions;
+        for (var i = 0; i < exceptions.length; i++) {
+          var handler = exceptions[i];
+          var check = "";
+          if (handler.typeName) {
+            // TODO: Encode type name correctly here.
+            check = " && " + handler.typeName + ".isType(ex)";
+          }
+          this.bodyEmitter.writeLn("if (pc >= " + handler.start_pc + " && pc <= " + handler.end_pc + check + ") { pc = " + handler.target_pc + "; continue; }");
+        }
         this.bodyEmitter.leave("}");
-      }
-      if (needsWhile) {
         this.bodyEmitter.leave("}");
       }
 
@@ -285,6 +312,25 @@ module Shumway.AVM2.Compiler {
                                " (" + compileTime.toFixed(2) + " total)");
 
       return {body: body, parameters: this.parameters};
+    }
+
+    /**
+     * Get's the first exception handler to cover the pc.
+     */
+    getHandler(bc: Bytecode) {
+      // Bytecode can't throw.
+      if (!opcodeTable[bc.op].canThrow) {
+        return null;
+      }
+      var pc = bc.pc;
+      var exceptions = this.methodInfo.exceptions;
+      for (var i = 0; i < exceptions.length; i++) {
+        var exception = exceptions[i];
+        if (exception.start_pc >= pc && pc <= exception.end_pc) {
+          return exception;
+        }
+      }
+      return null;
     }
 
     getStack(i: number): string {
@@ -372,6 +418,13 @@ module Shumway.AVM2.Compiler {
     emitBytecode(block: Bytecode, bc: Bytecode) {
       release || assert(this.stack >= 0);
       release || assert(this.scopeIndex >= 0);
+
+      // If a exception handler exists for the current PC, save the PC in case we throw. This is
+      // how the catch block can figure out where we came from.
+      if (this.getHandler(bc)) {
+        this.blockEmitter.writeLn("pc = " + bc.pc + ";");
+      }
+
       var op = bc.op;
       if (!release) {
         var opName = OP[op];
