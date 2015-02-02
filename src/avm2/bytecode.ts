@@ -527,6 +527,7 @@ module Shumway.AVM2 {
    */
   export class Bytecode {
     ti: Verifier.TypeInformation = null;
+    pc: number; // Original PC position.
     op: number; // Initialized in ctor.
     position: number = 0;
     canThrow: boolean; // Initialized in ctor.
@@ -847,6 +848,7 @@ module Shumway.AVM2 {
       while (codeStream.remaining() > 0) {
         var pos = codeStream.position;
         bytecode = new Bytecode(codeStream);
+        bytecode.pc = pos; // Save PC.
 
         // Get absolute offsets for normalization to new indices below.
         switch (bytecode.op) {
@@ -942,6 +944,13 @@ module Shumway.AVM2 {
       var exceptions = methodInfo.exceptions;
       for (var i = 0, j = exceptions.length; i < j; i++) {
         var ex = exceptions[i];
+
+        // Eventually we'll remove all the normalization code but for now just keep
+        // track of the original PCs for exceptions.
+        ex.start_pc = ex.start;
+        ex.end_pc = ex.end;
+        ex.target_pc = ex.target;
+
         ex.start = bytecodesOffset[ex.start];
         ex.end = bytecodesOffset[ex.end];
         ex.offset = bytecodesOffset[ex.target];
