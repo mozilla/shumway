@@ -481,6 +481,10 @@ module Shumway.AVM2.Compiler {
         case OP.callproplex:
           this.emitCallProperty(bc);
           break;
+        case OP.callsuper:
+        case OP.callsupervoid:
+        this.emitCallSuper(bc);
+        break;
         case OP.call:
           this.emitCall(bc);
           break;
@@ -868,6 +872,29 @@ module Shumway.AVM2.Compiler {
       }
       if (bc.op !== OP.callpropvoid) {
         this.emitPush(call);
+      } else {
+        this.blockEmitter.writeLn(call + ';');
+      }
+    }
+
+    emitCallSuper(bc: Bytecode) {
+      var args = this.popArgs(bc.argCount);
+      var multiname = this.constantPool.multinames[bc.index];
+      // Super calls with statically resolvable names are optimized to direct calls.
+      // This must be valid as `asCallSuper` asserts that the method can be found. (Which in
+      // itself is invalid, as an incorrect, but valid script can create this situation.)
+      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+        var qualifiedName = 'm' + Multiname.qualifyName(multiname.namespaces[0], multiname.name);
+        call = 'mi.classScope.object.baseClass.traitsPrototype.' + qualifiedName +
+               '.call(' + this.peek() + ', ' + args + ')';
+      }
+      if (!call) {
+        var nameElements = this.emitMultiname(bc.index);
+        var call = this.peek() + '.asCallSuper(mi.classScope, ' + nameElements + ', [' + args +
+                                                                                              '])';
+      }
+      if (bc.op !== OP.callsupervoid) {
+        this.emitReplace(call);
       } else {
         this.blockEmitter.writeLn(call + ';');
       }
