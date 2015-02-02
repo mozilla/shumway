@@ -648,25 +648,25 @@ module Shumway.AVM2.Compiler {
           this.emitLine(this.peek() + '++;');
           break;
         case OP.increment_i:
-          this.emitReplace(this.peek() + '|0 + ' + 1);
+          this.emitReplace('(' + this.peek() + '|0) + ' + 1);
           break;
         case OP.decrement:
           this.emitLine(this.peek() + '--;');
           break;
         case OP.decrement_i:
-          this.emitReplace(this.peek() + '|0 - ' + 1);
+          this.emitReplace('(' + this.peek() + '|0) - ' + 1);
           break;
         case OP.inclocal:
           this.emitLine(this.getLocal(bc.index) + '++;');
           break;
         case OP.inclocal_i:
-          this.emitReplaceLocal(bc.index, this.getLocal(bc.index) + '|0 + ' + 1);
+          this.emitReplaceLocal(bc.index, '(' + this.getLocal(bc.index) + '|0) + ' + 1);
           break;
         case OP.declocal:
           this.emitLine(this.getLocal(bc.index) + '--;');
           break;
         case OP.declocal_i:
-          this.emitReplaceLocal(bc.index, this.getLocal(bc.index) + '|0 - ' + 1);
+          this.emitReplaceLocal(bc.index, '(' + this.getLocal(bc.index) + '|0) - ' + 1);
           break;
         case OP.not:
           this.emitUnaryOp('!');
@@ -687,10 +687,10 @@ module Shumway.AVM2.Compiler {
           this.emitEquals();
           break;
         case OP.add:
-          this.emitBinaryExpression(' + ');
+          this.emitAddExpression();
           break;
         case OP.add_i:
-          this.emitBinaryExpression_i(' + ');
+          this.emitAddExpression_i();
           break;
         case OP.subtract:
           this.emitBinaryExpression(' - ');
@@ -781,6 +781,9 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.astypelate:
           this.emitAsTypeLate();
+          break;
+        case OP.applytype:
+          this.emitApplyType(bc);
           break;
         case OP.in:
           this.emitIn();
@@ -1106,7 +1109,7 @@ module Shumway.AVM2.Compiler {
         var value = this.pop();
         this.pop();
         var key = this.constantPool.strings[this.pushedStrings[this.stack]];
-        properties.push('$Bg' + key + ': ' + value);
+        properties.push((isNumeric(key) ? key : '$Bg' + key) + ': ' + value);
       }
       this.emitPush('{ ' + properties + ' }');
     }
@@ -1208,6 +1211,12 @@ module Shumway.AVM2.Compiler {
       this.emitReplace('asAsType(' + type + ', ' + this.peek() + ')');
     }
 
+    emitApplyType(bc: Bytecode) {
+      var args = this.popArgs(bc.argCount);
+      var type = this.peek();
+      this.emitReplace('applyType(mi, ' + type + ', [' + args + '])');
+    }
+
     emitIn() {
       var object = this.pop();
       var key = '$Bg' + this.peek();
@@ -1237,6 +1246,18 @@ module Shumway.AVM2.Compiler {
 
     emitUnaryOp_i(operator: string) {
       this.emitReplace(operator + this.peek() + '|0');
+    }
+
+    emitAddExpression() {
+      var right = this.pop();
+      var left = this.peek();
+      this.blockEmitter.writeLn(left + ' = asAdd(' + left + ', ' + right + ');');
+    }
+
+    emitAddExpression_i() {
+      var right = this.pop();
+      var left = this.peek();
+      this.blockEmitter.writeLn(left + ' = asAdd(' + left + ', ' + right + ')|0;');
     }
 
     emitBinaryExpression(expression: string) {
