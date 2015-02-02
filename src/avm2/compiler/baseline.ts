@@ -470,6 +470,9 @@ module Shumway.AVM2.Compiler {
         case OP.getproperty:
           this.emitGetProperty(bc.index);
           break;
+        case OP.deleteproperty:
+          this.emitDeleteProperty(bc.index);
+          break;
         case OP.findproperty:
           this.emitFindProperty(bc.index, false);
           break;
@@ -838,6 +841,17 @@ module Shumway.AVM2.Compiler {
       } else {
         var nameElements = this.emitMultiname(nameIndex);
         this.emitReplace(this.peek() + ".asGetProperty(" + nameElements + ", false)");
+      }
+    }
+
+    emitDeleteProperty(nameIndex: number) {
+      var multiname = this.constantPool.multinames[nameIndex];
+      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+        var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
+        this.emitReplace('delete ' + this.peek() + '.' + qualifiedName);
+      } else {
+        var nameElements = this.emitMultiname(nameIndex);
+        this.emitReplace(this.peek() + ".asDeleteProperty(" + nameElements + ", false)");
       }
     }
 
