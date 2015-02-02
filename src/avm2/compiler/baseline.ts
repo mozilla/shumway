@@ -189,11 +189,15 @@ module Shumway.AVM2.Compiler {
         this.bodyEmitter.writeLn(stackSlotsDefinition);
       }
 
-      var scopesDefinition = 'var ';
-      for (var i = 0; i < this.methodInfo.maxScopeDepth; i++) {
-        scopesDefinition += this.getScope(i) + (i < (this.methodInfo.maxScopeDepth - 1) ? ', ' : ';');
+      var scopesCount = this.methodInfo.maxScopeDepth - this.methodInfo.initScopeDepth + 1;
+      var scopesOffset = this.hasDynamicScope ? 1 : 0;
+      if (scopesCount - scopesOffset) {
+        var scopesDefinition = 'var ';
+        for (var i = scopesOffset; i < scopesCount; i++) {
+          scopesDefinition += this.getScope(i) + (i < (scopesCount - 1) ? ', ' : ';');
+        }
+        this.bodyEmitter.writeLn(scopesDefinition);
       }
-      this.bodyEmitter.writeLn(scopesDefinition);
 
       this.bodyEmitter.writeLn('var mi = ' + this.globalMiName + ';');
       if (!this.hasDynamicScope) {
