@@ -150,6 +150,9 @@ module Shumway.AVM2.Compiler {
       // This would allow us to get rid of that part of the analysis phase above, and in many cases,
       // because the information in the header is often incorrect, emit less code.
       this.parameters = [];
+      if (this.hasDynamicScope) {
+        this.parameters.push('$0');
+      }
       var paramsCount = this.methodInfo.parameters.length;
       for (var i = 0; i < paramsCount; i ++) {
         var param = this.methodInfo.parameters[i];
@@ -193,7 +196,9 @@ module Shumway.AVM2.Compiler {
       this.bodyEmitter.writeLn(scopesDefinition);
 
       this.bodyEmitter.writeLn('var mi = ' + this.globalMiName + ';');
-      this.bodyEmitter.writeLn('$0 = mi.classScope;');
+      if (!this.hasDynamicScope) {
+        this.bodyEmitter.writeLn('$0 = mi.classScope;');
+      }
 
       if (this.methodInfo.needsRest() || this.methodInfo.needsArguments()) {
         var offset = this.methodInfo.needsRest() ? paramsCount : 0;
