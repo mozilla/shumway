@@ -782,6 +782,9 @@ module Shumway.AVM2.Compiler {
         case OP.astypelate:
           this.emitAsTypeLate();
           break;
+        case OP.applytype:
+          this.emitApplyType(bc);
+          break;
         case OP.in:
           this.emitIn();
           break;
@@ -1206,6 +1209,12 @@ module Shumway.AVM2.Compiler {
     emitAsTypeLate() {
       var type = this.pop();
       this.emitReplace('asAsType(' + type + ', ' + this.peek() + ')');
+    }
+
+    emitApplyType(bc: Bytecode) {
+      var args = this.popArgs(bc.argCount);
+      var type = this.peek();
+      this.emitReplace('applyType(mi, ' + type + ', [' + args + '])');
     }
 
     emitIn() {
