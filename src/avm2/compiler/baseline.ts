@@ -705,7 +705,8 @@ module Shumway.AVM2.Compiler {
     emitCallProperty(bc: Bytecode) {
       var args = this.popArgs(bc.argCount);
       var receiver;
-      if (bc.op === OP.callproplex) {
+      var isLex = bc.op === OP.callproplex;
+      if (isLex) {
         // TODO: prevent popping runtime name parts twice.
         this.emitFindProperty(bc.index, true);
         receiver = this.peekScope();
@@ -719,7 +720,7 @@ module Shumway.AVM2.Compiler {
       } else {
         var nameElements = this.emitMultiname(bc.index);
         receiver || (receiver = this.pop());
-        call = receiver + ".asCallProperty(" + nameElements + ", [" + args + "])";
+        call = receiver + ".asCallProperty(" + nameElements + ", " + isLex + ", [" + args + "])";
       }
       if (bc.op !== OP.callpropvoid) {
         this.emitPush(call);
@@ -739,7 +740,7 @@ module Shumway.AVM2.Compiler {
     emitConstruct(bc: Bytecode) {
       var args = this.popArgs(bc.argCount);
       var ctor = this.peek();
-      this.emitReplace('new ' + ctor + '(' + args + ')');
+      this.emitReplace('new ' + ctor + '.instanceConstructor(' + args + ')');
     }
 
     emitConstructProperty(bc: Bytecode) {
