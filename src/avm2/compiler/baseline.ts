@@ -111,6 +111,8 @@ module Shumway.AVM2.Compiler {
     private scopeIndex: number = 0;
     private hasNext2Infos: number = 0;
 
+    private blockBodies: string[] = [];
+
     static localNames = ["this", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
 
     /**
@@ -280,7 +282,14 @@ module Shumway.AVM2.Compiler {
         this.bodyEmitter.enter("try {");
       }
 
-      this.bodyEmitter.writeLns(Relooper.render(this.relooperEntryBlock));
+      var allBlocks: string = Relooper.render(this.relooperEntryBlock);
+      for (var i = 0; i < blocks.length; i++) {
+        var bid = blocks[i].bid;
+        var blockCode = this.blockBodies[bid];
+        release || assert(blockCode);
+        allBlocks = allBlocks.split('"\'"\'' + bid + '"\'"\'').join(blockCode);
+      }
+      this.bodyEmitter.writeLns(allBlocks);
 
       if (hasExceptions) {
         this.bodyEmitter.leaveAndEnter("} catch (ex) {");
@@ -403,7 +412,8 @@ module Shumway.AVM2.Compiler {
         bc = bytecodes[bci];
         this.emitBytecode(block, bc);
       }
-      Relooper.setBlockCode(block.relooperBlock, this.blockEmitter.toString());
+      this.blockBodies[block.bid] = this.blockEmitter.toString();
+      Relooper.setBlockCode(block.relooperBlock, '"\'"\'' + block.bid + '"\'"\'');
 
       var nextBlock = (end + 1 < bytecodes.length) ? bytecodes[end + 1] : null;
       if (nextBlock && !bc.isBlockEnd()) {
