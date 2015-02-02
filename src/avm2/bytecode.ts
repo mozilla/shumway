@@ -490,9 +490,9 @@ module Shumway.AVM2 {
     // on Bytecode which we wouldn't use anyway.
     ///* debug */ { canThrow: true, operands: [{ name: "debugType", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "reg", size: OpcodeSize.u08, type: "" }, { name: "extra", size: OpcodeSize.u30, type: "" }] },
     ///* debugline */ { canThrow: true, operands: [{ name: "lineNumber", size: OpcodeSize.u30, type: "" }] },
-    /* debug */ { canThrow: true, operands: [{ name: "value", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "object", size: OpcodeSize.u08, type: "" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
-    /* debugline */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.u30, type: "" }] },
-    /* debugfile */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "S" }] },
+    /* debug */ { canThrow: false, operands: [{ name: "value", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "object", size: OpcodeSize.u08, type: "" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* debugline */ { canThrow: false, operands: [{ name: "offset", size: OpcodeSize.u30, type: "" }] },
+    /* debugfile */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "S" }] },
     null,
     null,
     null,
