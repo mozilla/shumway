@@ -55,7 +55,7 @@ module Shumway.AVM2.Compiler {
       this._indent ++;
     }
     writeLn(s: string) {
-      if (this._emitIndent) {
+      if (!release && this._emitIndent) {
         var prefix = "";
         for (var i = 0; i < this._indent; i++) {
           prefix += "  ";
@@ -65,6 +65,10 @@ module Shumway.AVM2.Compiler {
       this._buffer.push(s);
     }
     writeLns(s: string) {
+      if (release) {
+        this._buffer.push(s);
+        return;
+      }
       var lines = s.split("\n");
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
