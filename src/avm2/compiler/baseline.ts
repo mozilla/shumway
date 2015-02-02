@@ -466,6 +466,9 @@ module Shumway.AVM2.Compiler {
         case OP.setproperty:
           this.emitSetProperty(bc.index);
           break;
+        case OP.setsuper:
+          this.emitSetSuper(bc.index);
+          break;
         case OP.getproperty:
           this.emitGetProperty(bc.index);
           break;
@@ -838,6 +841,26 @@ module Shumway.AVM2.Compiler {
         var nameElements = this.emitMultiname(nameIndex);
         this.blockEmitter.writeLn(this.pop() + ".asSetProperty(" + nameElements + ", " +
                                   value + ");");
+      }
+    }
+
+    emitSetSuper(nameIndex: number) {
+      var value = this.pop();
+      var multiname = this.constantPool.multinames[nameIndex];
+      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+        var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
+        if ('s' + qualifiedName in this.methodInfo.classScope.object.baseClass.traitsPrototype) {
+          this.emitLine('mi.classScope.object.baseClass.traitsPrototype.s' + qualifiedName +
+                        '.call(' + this.pop() + ', ' + value + ');');
+        } else {
+          // If the base class doesn't have this as a setter, we can just emit a plain property
+          // set: if this class overrode the value, then it'd be overridden, period.
+          this.emitLine(this.pop() + '.' + qualifiedName + ' = ' + value + ';');
+        }
+      } else {
+        var nameElements = this.emitMultiname(nameIndex);
+        this.emitReplace(this.peek() + ".asSetSuper(mi.classScope, " + nameElements + ", " +
+                         value + ")");
       }
     }
 
