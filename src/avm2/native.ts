@@ -148,6 +148,7 @@ module Shumway.AVM2.AS {
 
     static create(self: ASClass, baseClass: ASClass, instanceConstructor: any) {
       // ! The AS3 instanceConstructor is ignored.
+      self.baseClass = baseClass;
       ASClass.create(self, baseClass, this.instanceConstructor);
     }
 
@@ -287,12 +288,12 @@ module Shumway.AVM2.AS {
      */
     static configureBuiltinPrototype(self: ASClass, baseClass: ASClass) {
       release || assert (self.instanceConstructor);
-      self.baseClass = baseClass;
+      release || assert (self.baseClass === baseClass);
       self.dynamicPrototype = self.traitsPrototype = self.instanceConstructor.prototype;
     }
 
     static configurePrototype(self: ASClass, baseClass: ASClass) {
-      self.baseClass = baseClass;
+      release || assert (self.baseClass === baseClass);
 
       // Create a |dynamicPrototype| object and link it to the base class |dynamicPrototype|.
       self.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
@@ -1564,6 +1565,8 @@ module Shumway.AVM2.AS {
     } else {
       cls = new ASClass(classInfo);
     }
+
+    cls.baseClass = baseClass;
 
     var classScope = new Scope(scope, null);
     classScope.object = cls;
