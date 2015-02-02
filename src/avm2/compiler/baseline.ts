@@ -477,20 +477,48 @@ module Shumway.AVM2.Compiler {
         case OP.jump:
           this.emitJump(block, bc);
           break;
-        case OP.ifnlt:      this.emitBinaryIf(block, bc, "<",   true);   break;
-        case OP.ifnge:      this.emitBinaryIf(block, bc, ">=",  true);   break;
-        case OP.ifngt:      this.emitBinaryIf(block, bc, ">",   true);   break;
-        case OP.ifnle:      this.emitBinaryIf(block, bc, "<=",  true);   break;
-        case OP.ifge:       this.emitBinaryIf(block, bc, ">=",  false);  break;
-        case OP.ifgt:       this.emitBinaryIf(block, bc, ">",   false);  break;
-        case OP.ifle:       this.emitBinaryIf(block, bc, "<=",  false);  break;
-        case OP.iflt:       this.emitBinaryIf(block, bc, "<",   false);  break;
-        case OP.ifeq:       this.emitBinaryIf(block, bc, "==",  false);  break;
-        case OP.ifne:       this.emitBinaryIf(block, bc, "!=",  false);  break;
-        case OP.ifstricteq: this.emitBinaryIf(block, bc, "===", false);  break;
-        case OP.ifstrictne: this.emitBinaryIf(block, bc, "!==", false);  break;
-        case OP.iftrue:     this.emitUnaryIf(block,  bc, "!!");          break;
-        case OP.iffalse:    this.emitUnaryIf(block,  bc, "!");           break;
+        case OP.ifnlt:
+          this.emitBinaryIf(block, bc, "<", true);
+          break;
+        case OP.ifnge:
+          this.emitBinaryIf(block, bc, ">=", true);
+          break;
+        case OP.ifngt:
+          this.emitBinaryIf(block, bc, ">", true);
+          break;
+        case OP.ifnle:
+          this.emitBinaryIf(block, bc, "<=", true);
+          break;
+        case OP.ifge:
+          this.emitBinaryIf(block, bc, ">=", false);
+          break;
+        case OP.ifgt:
+          this.emitBinaryIf(block, bc, ">", false);
+          break;
+        case OP.ifle:
+          this.emitBinaryIf(block, bc, "<=", false);
+          break;
+        case OP.iflt:
+          this.emitBinaryIf(block, bc, "<", false);
+          break;
+        case OP.ifeq:
+          this.emitBinaryIf(block, bc, "==", false);
+          break;
+        case OP.ifne:
+          this.emitBinaryIf(block, bc, "!=", false);
+          break;
+        case OP.ifstricteq:
+          this.emitBinaryIf(block, bc, "===", false);
+          break;
+        case OP.ifstrictne:
+          this.emitBinaryIf(block, bc, "!==", false);
+          break;
+        case OP.iftrue:
+          this.emitUnaryIf(block,  bc, "!!");
+          break;
+        case OP.iffalse:
+          this.emitUnaryIf(block,  bc, "!");
+          break;
         case OP.lookupswitch:
           this.emitLookupSwitch(block, bc);
           break;
