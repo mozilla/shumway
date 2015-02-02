@@ -210,17 +210,16 @@ module Shumway.AVM2.Compiler {
         release || assert(!processedBlocks[bid]);
         if (block.preds.length) {
           var predBlockExits = processedBlocks[block.preds[0].bid];
-          if (!predBlockExits) {
-            continue;
-          }
-          this.stack = predBlockExits.stack;
-          this.scopeIndex = predBlockExits.scopeIndex;
-          if (!release) {
-            for (var j = 1; j < block.preds.length; j++) {
-              predBlockExits = processedBlocks[block.preds[j].bid];
-              assert(predBlockExits);
-              assert(predBlockExits.stack === this.stack);
-              assert(predBlockExits.scopeIndex === this.scopeIndex);
+          if (predBlockExits) {
+            this.stack = predBlockExits.stack;
+            this.scopeIndex = predBlockExits.scopeIndex;
+            if (!release) {
+              for (var j = 1; j < block.preds.length; j++) {
+                predBlockExits = processedBlocks[block.preds[j].bid];
+                assert(predBlockExits);
+                assert(predBlockExits.stack === this.stack);
+                assert(predBlockExits.scopeIndex === this.scopeIndex);
+              }
             }
           }
         } else if (!release) {
@@ -324,7 +323,7 @@ module Shumway.AVM2.Compiler {
     emitBlock(block: Bytecode) {
       this.blockEmitter.reset();
       if (!release && Compiler.baselineDebugLevel.value > 1) {
-        this.blockEmitter.writeLn("// Block: " + block.bid);
+        this.emitLine("// Block: " + block.bid);
         writer.writeLn("// Block: " + block.bid);
       }
       var bytecodes = this.bytecodes;
@@ -348,10 +347,11 @@ module Shumway.AVM2.Compiler {
     emitBytecode(block: Bytecode, bc: Bytecode) {
       release || assert(this.stack >= 0);
       release || assert(this.scopeIndex >= 0);
-      var opName;
       var op = bc.op;
-      release || (opName = OP[op]);
-      this.blockEmitter.writeLn("// BC: " + String(bc));
+      if (!release) {
+        var opName = OP[op];
+        Compiler.baselineDebugLevel.value > 1 && this.emitLine("// BC: " + String(bc));
+      }
       switch (op) {
         case OP.getlocal:
           this.emitLoadLocal(bc.index);
