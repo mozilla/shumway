@@ -968,6 +968,10 @@ module Shumway.AVM2.Compiler {
                     ', true)');
     }
 
+    emitNewCatch(bc: Bytecode) {
+      this.emitPush('mi.exceptions[' + bc.index + '].scopeObject');
+    }
+
     emitConstructSuper(bc: Bytecode) {
       var superInvoke = 'mi.classScope.object.baseClass.instanceConstructorNoInitialize.call(';
       var args = this.popArgs(bc.argCount);
