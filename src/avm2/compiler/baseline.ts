@@ -687,10 +687,10 @@ module Shumway.AVM2.Compiler {
           this.emitEquals();
           break;
         case OP.add:
-          this.emitBinaryExpression(' + ');
+          this.emitAddExpression();
           break;
         case OP.add_i:
-          this.emitBinaryExpression_i(' + ');
+          this.emitAddExpression_i();
           break;
         case OP.subtract:
           this.emitBinaryExpression(' - ');
@@ -1246,6 +1246,18 @@ module Shumway.AVM2.Compiler {
 
     emitUnaryOp_i(operator: string) {
       this.emitReplace(operator + this.peek() + '|0');
+    }
+
+    emitAddExpression() {
+      var right = this.pop();
+      var left = this.peek();
+      this.blockEmitter.writeLn(left + ' = asAdd(' + left + ', ' + right + ');');
+    }
+
+    emitAddExpression_i() {
+      var right = this.pop();
+      var left = this.peek();
+      this.blockEmitter.writeLn(left + ' = asAdd(' + left + ', ' + right + ')|0;');
     }
 
     emitBinaryExpression(expression: string) {
