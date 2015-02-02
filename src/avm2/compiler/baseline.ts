@@ -27,7 +27,7 @@ module Shumway.AVM2.Compiler {
 
   declare var Relooper;
 
-  var compileCount = 0, passCompileCount = 0, failCompileCount = 0;
+  var compileCount = 0, passCompileCount = 0, failCompileCount = 0, compileTime = 0;
 
   class Emitter {
     private _buffer: string [];
@@ -261,9 +261,14 @@ module Shumway.AVM2.Compiler {
 
       // writer.writeLn(body);
 
+      var duration = performance.now() - start;
+      compileTime += duration;
       passCompileCount++;
-      writer && writer.writeLn("Compiled: PASS: " + passCompileCount + ", FAIL: " + failCompileCount + ", TIME: " + (performance.now() - start).toFixed(2));
       compileCount++;
+      writer && writer.writeLn("Compiled: PASS: " + passCompileCount +
+                               ", FAIL: " + failCompileCount +
+                               ", TIME: " + (duration).toFixed(2) +
+                               " (" + compileTime.toFixed(2) + " total)");
 
       return {body: body, parameters: this.parameters};
     }
@@ -1031,10 +1036,13 @@ module Shumway.AVM2.Compiler {
     }
 
     popArgs(count: number): string[] {
-      var args = new Array(count);
-      for (var i = count; i--;) {
-        args[i] = this.pop();
+      var args = [];
+      var end = this.stack;
+      var start = end - count;
+      for (var i = start; i < end; i++) {
+        args.push(this.getStack(i));
       }
+      this.stack = start;
       return args;
     }
   }
