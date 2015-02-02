@@ -830,10 +830,10 @@ module Shumway.AVM2.Compiler {
       var multiname = this.constantPool.multinames[nameIndex];
       if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
-        this.emitPush(this.pop() + '.' + qualifiedName);
+        this.emitReplace(this.peek() + '.' + qualifiedName);
       } else {
         var nameElements = this.emitMultiname(nameIndex);
-        this.emitPush(this.pop() + ".asGetProperty(" + nameElements + ", false)");
+        this.emitReplace(this.peek() + ".asGetProperty(" + nameElements + ", false)");
       }
     }
 
@@ -841,15 +841,16 @@ module Shumway.AVM2.Compiler {
       var scope = this.getScope(this.scopeIndex);
       var nameElements = this.emitMultiname(nameIndex);
       this.emitPush(scope + ".findScopeProperty(" + nameElements + ", mi, " + strict + ")");
+      return nameElements;
     }
 
     emitCallProperty(bc: Bytecode) {
       var args = this.popArgs(bc.argCount);
       var receiver;
       var isLex = bc.op === OP.callproplex;
+      var nameElements;
       if (isLex) {
-        // TODO: prevent popping runtime name parts twice.
-        this.emitFindProperty(bc.index, true);
+        nameElements = this.emitFindProperty(bc.index, true);
         receiver = this.peekScope();
       }
       var call: string;
@@ -859,7 +860,9 @@ module Shumway.AVM2.Compiler {
         receiver || (receiver = this.pop());
         call = receiver + '.' + qualifiedName + '(' + args + ')';
       } else {
-        var nameElements = this.emitMultiname(bc.index);
+        if (!nameElements) {
+          nameElements = this.emitMultiname(bc.index);
+        }
         receiver || (receiver = this.pop());
         call = receiver + ".asCallProperty(" + nameElements + ", " + isLex + ", [" + args + "])";
       }
@@ -892,15 +895,13 @@ module Shumway.AVM2.Compiler {
     }
 
     emitGetLex(nameIndex: number) {
-      this.emitFindProperty(nameIndex, true);
-      var receiver = this.peek();
+      var nameElements = this.emitFindProperty(nameIndex, true);
       var multiname = this.constantPool.multinames[nameIndex];
       if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
-        this.blockEmitter.writeLn(receiver + ' = ' + receiver + '.' + qualifiedName + ';');
+        this.emitReplace(this.peek() + '.' + qualifiedName);
       } else {
-        var nameElements = this.emitMultiname(nameIndex);
-        this.emitPush(receiver + ".asGetProperty(" + nameElements + ", false)");
+        this.emitReplace(this.peek() + ".asGetProperty(" + nameElements + ", false)");
       }
     }
 
