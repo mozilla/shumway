@@ -523,6 +523,9 @@ module Shumway.AVM2.Compiler {
         case OP.newarray:
           this.emitNewArray(bc);
           break;
+        case OP.newclass:
+          this.emitNewClass(bc);
+          break;
         case OP.newfunction:
           this.emitNewFunction(bc);
           break;
@@ -1080,6 +1083,10 @@ module Shumway.AVM2.Compiler {
       var value = this.pop();
       var object = this.pop();
       this.emitLine('asSetSlot(' + object + ', ' + index + ', '+ value + ')');
+    }
+
+    emitNewClass(bc: Bytecode) {
+      this.emitPush('createClass(mi.abc.classes[' + bc.index + '], ' + this.pop() + ', ' + this.peekScope() + ')');
     }
 
     emitNewObject(bc: Bytecode) {
