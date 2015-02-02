@@ -194,6 +194,12 @@ module Shumway.AVM2.Compiler {
       this.bodyEmitter.writeLn('var mi = ' + this.globalMiName + ';');
       this.bodyEmitter.writeLn('$0 = mi.classScope;');
 
+      if (this.methodInfo.needsRest() || this.methodInfo.needsArguments()) {
+        var offset = this.methodInfo.needsRest() ? paramsCount : 0;
+        this.bodyEmitter.writeLn(this.local[paramsCount + 1] +
+                                 ' = sliceArguments(arguments, ' + offset + ');');
+      }
+
       var relooperEntryBlock = this.relooperEntryBlock = Relooper.addBlock("// Entry Block");
 
       // Create relooper blocks.
