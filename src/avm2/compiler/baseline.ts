@@ -1201,9 +1201,9 @@ module Shumway.AVM2.Compiler {
     emitSwap() {
       var top = this.getStack(this.stack - 1);
       var next = this.getStack(this.stack - 2);
-      this.blockEmitter.writeLn("var t = " + top + ";");
+      this.blockEmitter.writeLn("var $t = " + top + ";");
       this.blockEmitter.writeLn(top + " = " + next + ";");
-      this.blockEmitter.writeLn(next + " = t;");
+      this.blockEmitter.writeLn(next + " = $t;");
     }
 
     emitEquals() {
