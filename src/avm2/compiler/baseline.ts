@@ -1277,7 +1277,20 @@ module Shumway.AVM2.Compiler {
     }
 
     emitReturnValue() {
-      this.blockEmitter.writeLn('return ' + this.pop() + ';');
+      var value = this.pop();
+      if (this.methodInfo.returnType) {
+        switch (Multiname.getQualifiedName(this.methodInfo.returnType)) {
+          case Multiname.Int: value += '|0'; break;
+          case Multiname.Uint: value += ' >>> 0'; break;
+          case Multiname.String: value = 'asCoerceString(' + value + ')'; break;
+          case Multiname.Number: value = '+' + value; break;
+          case Multiname.Boolean: value = '!!' + value; break;
+          case Multiname.Object: value = 'Object(' + value + ')'; break;
+          default:
+            value = 'asCoerce(mi.abc.applicationDomain.getType(mi.returnType), ' + value + ')';
+        }
+      }
+      this.blockEmitter.writeLn('return ' + value + ';');
     }
 
     popArgs(count: number): string[] {
