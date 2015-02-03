@@ -1399,7 +1399,7 @@ module Shumway.AVM2.Compiler {
       case Multiname.Boolean:
         return '!!' + value;
       case Multiname.Object:
-        return 'Object(' + value + ')';
+        return 'asCoerceObject(' + value + ')';
       default:
         return value;
     }
