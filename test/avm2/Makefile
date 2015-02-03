@@ -18,8 +18,4 @@ BUILTIN_ABC = ../../src/avm2/generated/builtin/builtin.abc
 all:
 	for file in $(SOURCES) ; do  \
 	  java -jar $(ASC) -d -md -import $(BUILTIN_ABC) $$file; \
-	  echo $$file; \
 	done
-
-
-
