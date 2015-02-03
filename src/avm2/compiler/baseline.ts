@@ -1159,7 +1159,7 @@ module Shumway.AVM2.Compiler {
       } else {
         // String needs escaping, we should move the escaping code outside of the
         // AST module.
-        this.emitPush(Shumway.AVM2.Compiler.AST.escapeString(str));
+        this.emitPush(escapeString(str));
       }
     }
 
@@ -1312,8 +1312,7 @@ module Shumway.AVM2.Compiler {
 
     emitIn() {
       var object = this.pop();
-      var key = '$Bg' + this.peek();
-      this.emitReplace(key + ' in ' + object);
+      this.emitReplace(object + '.asHasProperty(null, ' + this.peek() + ')');
     }
 
     emitDup() {
