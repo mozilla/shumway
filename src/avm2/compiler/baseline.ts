@@ -163,6 +163,8 @@ module Shumway.AVM2.Compiler {
       if (this.hasDynamicScope) {
         this.parameters.push('$0');
       }
+      // If the hasDynamicScope is passed in, then we need to offset the argument position.
+      var parameterIndexOffset = this.hasDynamicScope ? 1 : 0;
       var parameterCount = this.methodInfo.parameters.length;
       for (var i = 0; i < parameterCount; i ++) {
         var parameter = this.methodInfo.parameters[i];
@@ -176,9 +178,7 @@ module Shumway.AVM2.Compiler {
           } else {
             value = String(value);
           }
-          // If the hasDynamicScope is passed in, then we need to offset the argument position.
-          var j = i + (this.hasDynamicScope ? 1 : 0);
-          this.bodyEmitter.writeLn('arguments.length < ' + (j + 1) + ' && (' + parameterName + ' = ' +
+          this.bodyEmitter.writeLn('arguments.length < ' + (parameterIndexOffset + i + 1) + ' && (' + parameterName + ' = ' +
                                    value + ');');
         }
         var coercedParamameter = wrapInCoercer(parameterName, parameter.type);
@@ -222,7 +222,7 @@ module Shumway.AVM2.Compiler {
       }
 
       if (this.methodInfo.needsRest() || this.methodInfo.needsArguments()) {
-        var offset = this.methodInfo.needsRest() ? parameterCount : 0;
+        var offset = parameterIndexOffset + (this.methodInfo.needsRest() ? parameterCount : 0);
         this.bodyEmitter.writeLn(this.local[parameterCount + 1] +
                                  ' = sliceArguments(arguments, ' + offset + ');');
       }
