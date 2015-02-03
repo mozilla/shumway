@@ -508,6 +508,9 @@ module Shumway.AVM2.Compiler {
         case OP.getdescendants:
           this.emitGetDescendants(bc.index);
           break;
+        case OP.checkfilter:
+          this.emitCheckFilter();
+          break;
         case OP.pushwith:
           this.emitPushScope(true);
           break;
@@ -1011,6 +1014,10 @@ module Shumway.AVM2.Compiler {
         name = multiname.name;
       }
       this.emitReplace(this.peek() + ".descendants('" + name + "')");
+    }
+
+    emitCheckFilter() {
+      this.emitReplace('checkFilter(' + this.peek() + ')');
     }
 
     emitMultiname(index: number): string {
