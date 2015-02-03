@@ -514,6 +514,9 @@ module Shumway.AVM2.Compiler {
         case OP.getlex:
           this.emitGetLex(bc.index);
           break;
+        case OP.getdescendants:
+          this.emitGetDescendants(bc.index);
+          break;
         case OP.pushwith:
           this.emitPushScope(true);
           break;
@@ -1010,6 +1013,17 @@ module Shumway.AVM2.Compiler {
       } else {
         this.emitReplace(this.peek() + ".asGetProperty(" + nameElements + ", false)");
       }
+    }
+
+    emitGetDescendants(nameIndex: number) {
+      var name;
+      var multiname = this.constantPool.multinames[nameIndex];
+      if (multiname.isRuntime()) {
+        name = this.pop();
+      } else {
+        name = multiname.name;
+      }
+      this.emitReplace(this.peek() + ".descendants('" + name + "')");
     }
 
     emitMultiname(index: number): string {
