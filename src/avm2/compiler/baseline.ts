@@ -88,9 +88,15 @@ module Shumway.AVM2.Compiler {
     }
   }
 
+  interface BlockState {
+    stack: number;
+    scopeIndex: number;
+  }
+
   class BaselineCompiler {
     blocks: Bytecode [];
     bytecodes: Bytecode [];
+    blockStates: BlockState [];
     bodyEmitter: Emitter;
     blockEmitter: Emitter;
     relooperEntryBlock: number;
@@ -144,6 +150,7 @@ module Shumway.AVM2.Compiler {
 
       var blocks = this.blocks = analysis.blocks;
       this.bytecodes = analysis.bytecodes;
+      this.blockStates = [];
 
       release || writer && writer.writeLn("Code: " + this.bytecodes.length + ", Blocks: " + blocks.length);
 
@@ -232,6 +239,7 @@ module Shumway.AVM2.Compiler {
         var exceptions = this.methodInfo.exceptions;
         for (var i = 0; i < exceptions.length; i++) {
           var target = exceptions[i].target;
+          this.propagateBlockState(null, target, 1, 0);
           exceptionEntryBlocks[target.bid] = target;
           Relooper.addBranch(relooperEntryBlock, target.relooperBlock, "pc === " + target.pc);
         }
@@ -240,41 +248,8 @@ module Shumway.AVM2.Compiler {
       // By default we dispatch to the first block.
       Relooper.addBranch(relooperEntryBlock, blocks[0].relooperBlock);
 
-      var processedBlocks = [];
-
-      // Emit blocks.
-      for (var i = 0; i < blocks.length; i++) {
-        var block = blocks[i];
-        var bid = block.bid;
-        release || assert(!processedBlocks[bid]);
-        if (exceptionEntryBlocks[bid]) {
-          this.stack = 1;
-          this.scopeIndex = 0;
-        } else if (block.preds.length) {
-          var predBlockExits = processedBlocks[block.preds[0].bid];
-          if (predBlockExits) {
-            this.stack = predBlockExits.stack;
-            this.scopeIndex = predBlockExits.scopeIndex;
-            if (!release) {
-              for (var j = 1; j < block.preds.length; j++) {
-                predBlockExits = processedBlocks[block.preds[j].bid];
-                assert(predBlockExits);
-                assert(predBlockExits.stack === this.stack);
-                assert(predBlockExits.scopeIndex === this.scopeIndex);
-              }
-            }
-          }
-        } else if (!release) {
-          assert(this.stack === 0);
-          assert(this.scopeIndex === 0);
-        }
-        this.emitBlock(block);
-        if (!release) {
-          assert(this.stack >= 0);
-          assert(this.scopeIndex >= 0);
-        }
-        processedBlocks[bid] = {stack: this.stack, scopeIndex: this.scopeIndex};
-      }
+      this.propagateBlockState(null, blocks[0], 0, 0);
+      this.emitBlocks();
 
       if (this.hasNext2Infos > 0) {
         var hasNext2Definition = 'var ';
@@ -325,10 +300,40 @@ module Shumway.AVM2.Compiler {
       writer && writer.writeLn("Compiled: PASS: " + passCompileCount +
                                ", FAIL: " + failCompileCount +
                                ", TIME: " + (duration).toFixed(2) +
-                               ", RATIO: " + (passCompileCount / compileCount).toFixed(2) +
+                               ", RATIO: " + (passCompileCount / compileCount).toFixed(4) +
                                " (" + compileTime.toFixed(2) + " total)");
 
       return {body: body, parameters: this.parameters};
+    }
+
+    emitBlocks() {
+      var blocks = this.blocks;
+      for (var i = 0; i < blocks.length; i++) {
+        var block = blocks[i];
+        this.emitBlock(block);
+        if (!release) {
+          assert(this.stack >= 0);
+          assert(this.scopeIndex >= 0);
+        }
+      }
+    }
+
+    setCurrentBlockState(block: Bytecode) {
+      var state = this.blockStates[block.bid];
+      assert (state, "No state exists for " + block.bid);
+      this.stack = state.stack;
+      this.scopeIndex = state.scopeIndex;
+    }
+
+    propagateBlockState(predecessorBlock: Bytecode, block: Bytecode, stack: number, scopeIndex: number) {
+      // writer && writer.writeLn("Propagating from: " + (predecessorBlock ? predecessorBlock.bid : -1) + ", to: " + block.bid + " " + stack + " " + scopeIndex);
+      var state = this.blockStates[block.bid];
+      if (state) {
+        assert(state.stack === stack, "Stack heights don't match, stack: " + stack + ", was: " + state.stack);
+        assert(state.scopeIndex === scopeIndex, "Scope index doesn't match, scopeIndex: " + scopeIndex + ", was: " + state.scopeIndex);
+        return;
+      }
+      this.blockStates[block.bid] = {stack: stack, scopeIndex: scopeIndex};
     }
 
     /**
@@ -409,10 +414,12 @@ module Shumway.AVM2.Compiler {
     }
 
     emitBlock(block: Bytecode) {
+      this.setCurrentBlockState(block);
+      // writer && writer.writeLn("emitBlock: " + block.bid + " " + this.stack + " " + this.scopeIndex);
+
       this.blockEmitter.reset();
       if (!release && Compiler.baselineDebugLevel.value > 1) {
         this.emitLine("// Block: " + block.bid);
-        writer.writeLn("// Block: " + block.bid);
       }
       var bytecodes = this.bytecodes;
       var bc;
@@ -426,6 +433,7 @@ module Shumway.AVM2.Compiler {
       var nextBlock = (end + 1 < bytecodes.length) ? bytecodes[end + 1] : null;
       if (nextBlock && !bc.isBlockEnd()) {
         Relooper.addBranch(block.relooperBlock, nextBlock.relooperBlock);
+        this.propagateBlockState(block, nextBlock, this.stack, this.scopeIndex);
       }
     }
 
@@ -434,6 +442,8 @@ module Shumway.AVM2.Compiler {
     }
 
     emitBytecode(block: Bytecode, bc: Bytecode) {
+      // writer && writer.writeLn(" emitBytecode: " + bc + " | " + this.stack + " " + this.scopeIndex);
+
       release || assert(this.stack >= 0);
       release || assert(this.scopeIndex >= 0);
 
@@ -496,7 +506,7 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.callsuper:
         case OP.callsupervoid:
-        this.emitCallSuper(bc);
+          this.emitCallSuper(bc);
         break;
         case OP.call:
           this.emitCall(bc);
@@ -1034,11 +1044,17 @@ module Shumway.AVM2.Compiler {
       var next = this.bytecodes[bc.position + 1];
       var target = bc.target;
       Relooper.addBranch(block.relooperBlock, next.relooperBlock);
-      Relooper.addBranch(block.relooperBlock, target.relooperBlock, predicate);
+      this.propagateBlockState(block, next, this.stack, this.scopeIndex);
+      
+      if (next !== target) {
+        Relooper.addBranch(block.relooperBlock, target.relooperBlock, predicate);
+        this.propagateBlockState(block, target, this.stack, this.scopeIndex);
+      }
     }
 
     emitJump(block: Bytecode, bc: Bytecode) {
       Relooper.addBranch(block.relooperBlock, bc.target.relooperBlock);
+      this.propagateBlockState(block, bc.target, this.stack, this.scopeIndex);
     }
 
     emitHasNext2(bc: Bytecode) {
@@ -1073,12 +1089,17 @@ module Shumway.AVM2.Compiler {
       var branchBlock = Relooper.addBlock("// Lookup Switch", String(x));
       Relooper.addBranch(block.relooperBlock, branchBlock);
 
-      var defaultTarget = bc.targets[bc.targets.length - 1].relooperBlock;
+      var defaultTargetBlock = bc.targets[bc.targets.length - 1];
+      var defaultTarget = defaultTargetBlock.relooperBlock;
+
+      this.propagateBlockState(block, defaultTargetBlock, this.stack, this.scopeIndex);
       for (var i = 0; i < bc.targets.length - 1; i++) {
-        var target = bc.targets[i].relooperBlock;
-        var caseTargetBlock = Relooper.addBlock();
-        Relooper.addBranch(branchBlock, caseTargetBlock, "case " + i + ":");
-        Relooper.addBranch(caseTargetBlock, target);
+        var targetBlock = bc.targets[i];
+        var target = targetBlock.relooperBlock;
+        var caseTarget = Relooper.addBlock();
+        Relooper.addBranch(branchBlock, caseTarget, "case " + i + ":");
+        Relooper.addBranch(caseTarget, target);
+        this.propagateBlockState(block, targetBlock, this.stack, this.scopeIndex);
       }
       Relooper.addBranch(branchBlock, defaultTarget);
     }
@@ -1382,7 +1403,7 @@ module Shumway.AVM2.Compiler {
       if (!method.code) {
         return;
       }
-      baselineCompileMethod(method, null, false, '');
+      baselineCompileMethod(method, new Scope(null, {baseClass: { traitsPrototype: {} }}), false, '');
     });
   }
 }
