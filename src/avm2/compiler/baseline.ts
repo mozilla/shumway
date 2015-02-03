@@ -295,7 +295,7 @@ module Shumway.AVM2.Compiler {
       writer && writer.writeLn("Compiled: PASS: " + passCompileCount +
                                ", FAIL: " + failCompileCount +
                                ", TIME: " + (duration).toFixed(2) +
-                               ", RATIO: " + (passCompileCount / compileCount).toFixed(2) +
+                               ", RATIO: " + (passCompileCount / compileCount).toFixed(4) +
                                " (" + compileTime.toFixed(2) + " total)");
 
       return {body: body, parameters: this.parameters};
@@ -501,7 +501,7 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.callsuper:
         case OP.callsupervoid:
-        this.emitCallSuper(bc);
+          this.emitCallSuper(bc);
         break;
         case OP.call:
           this.emitCall(bc);
@@ -1386,7 +1386,7 @@ module Shumway.AVM2.Compiler {
       if (!method.code) {
         return;
       }
-      baselineCompileMethod(method, null, false, '');
+      baselineCompileMethod(method, new Scope(null, {baseClass: { traitsPrototype: {} }}), false, '');
     });
   }
 }
