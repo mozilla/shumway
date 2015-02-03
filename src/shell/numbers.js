@@ -184,6 +184,9 @@ if (configurationSet.value.indexOf("i") >= 0) {
 if (configurationSet.value.indexOf("c") >= 0) {
   configurations.push({name: "shu-c", timeout: timeout.value, command: commandPrefix + " -x" + commandSuffix});
 }
+if (configurationSet.value.indexOf("b") >= 0) {
+  configurations.push({name: "shu-b", timeout: timeout.value, command: commandPrefix + " -x -bl" + commandSuffix});
+}
 console.log(padRight("=== Configurations ", "=", 120));
 configurations.forEach(function (x) {
   console.log(padLeft(x.name, ' ', 10) + ", timeout: " + (x.timeout / 1000).toFixed(2) + ", command: " + x.command);
