@@ -75,6 +75,9 @@ module.exports = function(grunt) {
       build_avm2_ts: {
         cmd: commonArguments + 'avm2.js src/avm2/references.ts'
       },
+      build_avm2_tests: {
+        cmd: 'make -C test/avm2/'
+      },
       build_avm1_ts: {
         cmd: commonArguments + 'avm1.js src/avm1/references.ts'
       },
@@ -146,7 +149,11 @@ module.exports = function(grunt) {
         cmd: 'node src/shell/numbers.js -i test/avm2/pass/ -c i -j ' + (+grunt.option('threads') || 9)
       },
       test_avm2: {
-        cmd: 'node src/shell/numbers.js -i ' + (grunt.option('include') || 'test/avm2/pass/') +
+        cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
+                                      ' -j ' + (+grunt.option('threads') || 9)
+      },
+      test_avm2_baseline: {
+        cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
                                       ' -j ' + (+grunt.option('threads') || 9)
       },
       tracetest: {
