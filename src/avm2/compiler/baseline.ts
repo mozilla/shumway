@@ -367,10 +367,6 @@ module Shumway.AVM2.Compiler {
       return BaselineCompiler.stackNames[i];
     }
 
-    stackTop(): string {
-      return this.getStack(this.stack);
-    }
-
     getLocalName(i: number): string {
       if (i >= BaselineCompiler.localNames.length) {
         return "l" + (i - BaselineCompiler.localNames.length);
@@ -389,16 +385,8 @@ module Shumway.AVM2.Compiler {
       return this.local[i];
     }
 
-    peekAny(): string {
-      return this.peek();
-    }
-
     peek(): string {
       return this.getStack(this.stack - 1);
-    }
-
-    popAny(): string {
-      return this.pop();
     }
 
     emitPopTemporaries(n: number) {
@@ -447,8 +435,6 @@ module Shumway.AVM2.Compiler {
     }
 
     emitBytecode(block: Bytecode, bc: Bytecode) {
-      // writer && writer.writeLn(" emitBytecode: " + bc + " | " + this.stack + " " + this.scopeIndex);
-
       release || assert(this.stack >= 0);
       release || assert(this.scopeIndex >= 0);
 
