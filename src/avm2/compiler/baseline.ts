@@ -1039,9 +1039,12 @@ module Shumway.AVM2.Compiler {
       var next = this.bytecodes[bc.position + 1];
       var target = bc.target;
       Relooper.addBranch(block.relooperBlock, next.relooperBlock);
-      Relooper.addBranch(block.relooperBlock, target.relooperBlock, predicate);
       this.propagateBlockState(block, next, this.stack, this.scopeIndex);
-      this.propagateBlockState(block, target, this.stack, this.scopeIndex);
+      
+      if (next !== target) {
+        Relooper.addBranch(block.relooperBlock, target.relooperBlock, predicate);
+        this.propagateBlockState(block, target, this.stack, this.scopeIndex);
+      }
     }
 
     emitJump(block: Bytecode, bc: Bytecode) {
