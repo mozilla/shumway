@@ -22,6 +22,7 @@ module Shumway.AVM2.Compiler {
   import InstanceInfo = ABC.InstanceInfo;
   import ConstantPool = ABC.ConstantPool;
   import assert = Debug.assert;
+  import escapeString = Shumway.AVM2.Compiler.AST.escapeString;
 
   var writer = Compiler.baselineDebugLevel.value > 0 ? new IndentingWriter() : null;
 
@@ -162,32 +163,34 @@ module Shumway.AVM2.Compiler {
       if (this.hasDynamicScope) {
         this.parameters.push('$0');
       }
-      var paramsCount = this.methodInfo.parameters.length;
-      for (var i = 0; i < paramsCount; i ++) {
-        var param = this.methodInfo.parameters[i];
-        var paramName = this.getLocalName(i + 1);
-        this.local.push(paramName);
-        this.parameters.push(paramName);
-        if (param.optional && param.isUsed) {
-          var value = param.value;
-          if (!param.type && !value) {
-            value = 'undefined';
-          } else if (param.type && Multiname.getQualifiedName(param.type) === Multiname.String) {
-            value = '"' + value + '"';
+      var parameterCount = this.methodInfo.parameters.length;
+      for (var i = 0; i < parameterCount; i ++) {
+        var parameter = this.methodInfo.parameters[i];
+        var parameterName = this.getLocalName(i + 1);
+        this.local.push(parameterName);
+        this.parameters.push(parameterName);
+        if (parameter.optional && parameter.isUsed) {
+          var value = parameter.value;
+          if (typeof value === "string") {
+            value = escapeString(value);
+          } else {
+            value = String(value);
           }
-          this.bodyEmitter.writeLn('arguments.length < ' + (i + 1) + ' && (' + paramName + ' = ' +
+          // If the hasDynamicScope is passed in, then we need to offset the argument position.
+          var j = i + (this.hasDynamicScope ? 1 : 0);
+          this.bodyEmitter.writeLn('arguments.length < ' + (j + 1) + ' && (' + parameterName + ' = ' +
                                    value + ');');
         }
-        var coercedParam = wrapInCoercer(paramName, param.type);
-        if (coercedParam !== paramName) {
-          this.bodyEmitter.writeLn(paramName + ' = ' + coercedParam + ';');
+        var coercedParamameter = wrapInCoercer(parameterName, parameter.type);
+        if (coercedParamameter !== parameterName) {
+          this.bodyEmitter.writeLn(parameterName + ' = ' + coercedParamameter + ';');
         }
       }
 
       var localsCount = this.methodInfo.localCount;
-      if (localsCount > paramsCount + 1) {
+      if (localsCount > parameterCount + 1) {
         var localsDefinition = 'var ';
-        for (var i = paramsCount + 1; i < localsCount; i++) {
+        for (var i = parameterCount + 1; i < localsCount; i++) {
           this.local.push(this.getLocalName(i));
           localsDefinition += this.local[i] + (i < (localsCount - 1) ? ', ' : ';');
         }
@@ -219,8 +222,8 @@ module Shumway.AVM2.Compiler {
       }
 
       if (this.methodInfo.needsRest() || this.methodInfo.needsArguments()) {
-        var offset = this.methodInfo.needsRest() ? paramsCount : 0;
-        this.bodyEmitter.writeLn(this.local[paramsCount + 1] +
+        var offset = this.methodInfo.needsRest() ? parameterCount : 0;
+        this.bodyEmitter.writeLn(this.local[parameterCount + 1] +
                                  ' = sliceArguments(arguments, ' + offset + ');');
       }
 
