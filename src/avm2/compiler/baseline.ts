@@ -281,8 +281,10 @@ module Shumway.AVM2.Compiler {
           var handler = exceptions[i];
           var check = "";
           if (handler.typeName) {
-            // TODO: Encode type name correctly here.
-            check = " && " + handler.typeName + ".isType(ex)";
+            this.bodyEmitter.writeLn('var mn = mi.abc.constantPool.multinames[' +
+                                     handler.typeNameIndex + '];');
+            this.bodyEmitter.writeLn('var type = mi.abc.applicationDomain.getType(mn);');
+            check = " && type.isType(ex)";
           }
           this.bodyEmitter.writeLn("if (pc >= " + handler.start_pc + " && pc <= " + handler.end_pc + check + ") { pc = " + handler.target_pc + "; continue; }");
         }
