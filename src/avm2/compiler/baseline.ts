@@ -1024,13 +1024,12 @@ module Shumway.AVM2.Compiler {
       var multiname = this.constantPool.multinames[index];
       this.blockEmitter.writeLn('var mn = mi.abc.constantPool.multinames[' + index + ']; // ' +
                                 (release ? '' : multiname));
-      // Can't handle these yet.
-      Debug.assert(!multiname.isRuntimeNamespace());
       if (!multiname.isRuntime()) {
         return 'mn.namespaces, mn.name, mn.flags';
       }
-      var name = multiname.isRuntimeName() ? this.pop() : multiname.name;
-      return 'mn.namespaces, ' + name + ', mn.flags';
+      var name = multiname.isRuntimeName() ? this.pop() : '"' + multiname.name + '"';
+      var namespaces = multiname.isRuntimeNamespace() ? this.pop() : 'mn.namespaces';
+      return '[' + namespaces + ']' + ', ' + name + ', mn.flags';
     }
 
     emitBinaryIf(block: Bytecode, bc: Bytecode, operator: string, negate: boolean) {
