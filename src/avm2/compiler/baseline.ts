@@ -923,30 +923,26 @@ module Shumway.AVM2.Compiler {
 
     emitCallProperty(bc: Bytecode) {
       var args = this.popArgs(bc.argCount);
-      var receiver;
       var isLex = bc.op === OP.callproplex;
       var nameElements;
       if (isLex) {
         nameElements = this.emitFindProperty(bc.index, true);
-        receiver = this.peekScope();
       }
       var call: string;
       var multiname = this.constantPool.multinames[bc.index];
       if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
-        receiver || (receiver = this.pop());
-        call = receiver + '.' + qualifiedName + '(' + args + ')';
+        call = '.' + qualifiedName + '(' + args + ')';
       } else {
         if (!nameElements) {
           nameElements = this.emitMultiname(bc.index);
         }
-        receiver || (receiver = this.pop());
-        call = receiver + ".asCallProperty(" + nameElements + ", " + isLex + ", [" + args + "])";
+        call = ".asCallProperty(" + nameElements + ", " + isLex + ", [" + args + "])";
       }
       if (bc.op !== OP.callpropvoid) {
-        this.emitPush(call);
+        this.emitReplace(this.peek() + call);
       } else {
-        this.blockEmitter.writeLn(call + ';');
+        this.blockEmitter.writeLn(this.pop() + call + ';');
       }
     }
 
