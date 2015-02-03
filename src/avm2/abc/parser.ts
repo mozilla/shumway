@@ -371,9 +371,11 @@ module Shumway.AVM2.ABC {
         start: stream.readU30(),
         end: stream.readU30(),
         target: stream.readU30(),
-        typeName: multinames[stream.readU30()],
+        typeNameIndex: stream.readU30(),
+        typeName: undefined,
         varName: multinames[stream.readU30()]
       };
+      ex.typeName = multinames[ex.typeNameIndex];
       release || assert(!ex.typeName || !ex.typeName.isRuntime());
       release || assert(!ex.varName || ex.varName.isQName());
       return ex;
