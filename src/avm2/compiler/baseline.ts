@@ -165,10 +165,15 @@ module Shumway.AVM2.Compiler {
           var value = param.value;
           if (!param.type && !value) {
             value = 'undefined';
-          } else if (Multiname.getQualifiedName(param.type) === '$BgString') {
+          } else if (param.type && Multiname.getQualifiedName(param.type) === Multiname.String) {
             value = '"' + value + '"';
           }
-          this.bodyEmitter.writeLn('arguments.length < ' + (i + 1) + ' && (' + paramName + ' = ' + value + ');');
+          this.bodyEmitter.writeLn('arguments.length < ' + (i + 1) + ' && (' + paramName + ' = ' +
+                                   value + ');');
+        }
+        var coercedParam = wrapInCoercer(paramName, param.type);
+        if (coercedParam !== paramName) {
+          this.bodyEmitter.writeLn(paramName + ' = ' + coercedParam + ';');
         }
       }
 
@@ -1324,19 +1329,7 @@ module Shumway.AVM2.Compiler {
 
     emitReturnValue() {
       var value = this.pop();
-      if (this.methodInfo.returnType) {
-        switch (Multiname.getQualifiedName(this.methodInfo.returnType)) {
-          case Multiname.Int: value += '|0'; break;
-          case Multiname.Uint: value += ' >>> 0'; break;
-          case Multiname.String: value = 'asCoerceString(' + value + ')'; break;
-          case Multiname.Number: value = '+' + value; break;
-          case Multiname.Boolean: value = '!!' + value; break;
-          case Multiname.Object: value = 'Object(' + value + ')'; break;
-          default:
-            value = 'asCoerce(mi.abc.applicationDomain.getType(mi.returnType), ' + value + ')';
-        }
-      }
-      this.blockEmitter.writeLn('return ' + value + ';');
+      this.blockEmitter.writeLn('return ' + wrapInCoercer(value, this.methodInfo.returnType) + ';');
     }
 
     popArgs(count: number): string[] {
@@ -1351,6 +1344,27 @@ module Shumway.AVM2.Compiler {
     }
   }
 
+  function wrapInCoercer(value, type: Multiname) {
+    if (!type) {
+      return value;
+    }
+    switch (Multiname.getQualifiedName(type)) {
+      case Multiname.Int:
+        return value + '|0';
+      case Multiname.Uint:
+        return value + ' >>> 0';
+      case Multiname.String:
+        return 'asCoerceString(' + value + ')';
+      case Multiname.Number:
+        return '+' + value;
+      case Multiname.Boolean:
+        return '!!' + value;
+      case Multiname.Object:
+        return 'Object(' + value + ')';
+      default:
+        return value;
+    }
+  }
   export function baselineCompileMethod(methodInfo: MethodInfo, scope: Scope,
                                         hasDynamicScope: boolean, globalMiName: string) {
     var compiler = new BaselineCompiler(methodInfo, scope, hasDynamicScope, globalMiName);
