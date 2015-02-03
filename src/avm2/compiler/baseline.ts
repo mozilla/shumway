@@ -1154,7 +1154,9 @@ module Shumway.AVM2.Compiler {
           str.indexOf('"') > -1) {
         this.emitPush('mi.abc.constantPool.strings[' + bc.index + ']');
       } else {
-        this.emitPush('"' + str + '"');
+        // String needs escaping, we should move the escaping code outside of the
+        // AST module.
+        this.emitPush(Shumway.AVM2.Compiler.AST.escapeString(str));
       }
     }
 
