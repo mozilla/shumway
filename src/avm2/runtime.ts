@@ -1203,7 +1203,7 @@ module Shumway.AVM2.Runtime {
     }
 
     public ensureExecuted() {
-      Shumway.AVM2.Runtime.ensureScriptIsExecuted(this.scriptInfo);
+      Shumway.AVM2.Runtime.ensureScriptIsExecuted(this.scriptInfo, 'external');
     }
   }
 
