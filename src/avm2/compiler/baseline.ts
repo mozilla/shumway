@@ -846,7 +846,7 @@ module Shumway.AVM2.Compiler {
     emitSetProperty(nameIndex: number) {
       var value = this.pop();
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.blockEmitter.writeLn(this.pop() + '.' + qualifiedName + ' = ' + value + ';');
       } else {
@@ -859,7 +859,7 @@ module Shumway.AVM2.Compiler {
     emitSetSuper(nameIndex: number) {
       var value = this.pop();
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         if ('s' + qualifiedName in this.methodInfo.classScope.object.baseClass.traitsPrototype) {
           this.emitLine('mi.classScope.object.baseClass.traitsPrototype.s' + qualifiedName +
@@ -878,7 +878,7 @@ module Shumway.AVM2.Compiler {
 
     emitGetProperty(nameIndex: number) {
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitReplace(this.peek() + '.' + qualifiedName);
       } else {
@@ -889,7 +889,7 @@ module Shumway.AVM2.Compiler {
 
     emitGetSuper(nameIndex: number) {
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         if ('g' + qualifiedName in this.methodInfo.classScope.object.baseClass.traitsPrototype) {
           this.emitReplace('mi.classScope.object.baseClass.traitsPrototype.g' + qualifiedName +
@@ -908,7 +908,7 @@ module Shumway.AVM2.Compiler {
 
     emitDeleteProperty(nameIndex: number) {
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitReplace('delete ' + this.peek() + '.' + qualifiedName);
       } else {
@@ -933,7 +933,7 @@ module Shumway.AVM2.Compiler {
       }
       var call: string;
       var multiname = this.constantPool.multinames[bc.index];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         call = '.' + qualifiedName + '(' + args + ')';
       } else {
@@ -955,7 +955,7 @@ module Shumway.AVM2.Compiler {
       // Super calls with statically resolvable names are optimized to direct calls.
       // This must be valid as `asCallSuper` asserts that the method can be found. (Which in
       // itself is invalid, as an incorrect, but valid script can create this situation.)
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = 'm' + Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         call = 'mi.classScope.object.baseClass.traitsPrototype.' + qualifiedName +
                '.call(' + this.peek() + (args.length ? ', ' + args : '') + ')';
@@ -997,7 +997,7 @@ module Shumway.AVM2.Compiler {
     emitGetLex(nameIndex: number) {
       var nameElements = this.emitFindProperty(nameIndex, true);
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitReplace(this.peek() + '.' + qualifiedName);
       } else {
