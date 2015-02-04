@@ -220,6 +220,7 @@ module Shumway.AVM2.Compiler {
       if (!this.hasDynamicScope) {
         this.bodyEmitter.writeLn('$0 = mi.classScope;');
       }
+      this.bodyEmitter.writeLn('var label;');
 
       if (this.methodInfo.needsRest() || this.methodInfo.needsArguments()) {
         var offset = parameterIndexOffset + (this.methodInfo.needsRest() ? parameterCount : 0);
@@ -331,7 +332,8 @@ module Shumway.AVM2.Compiler {
     }
 
     propagateBlockState(predecessorBlock: Bytecode, block: Bytecode, stack: number, scopeIndex: number) {
-      // writer && writer.writeLn("Propagating from: " + (predecessorBlock ? predecessorBlock.bid : -1) + ", to: " + block.bid + " " + stack + " " + scopeIndex);
+      // writer && writer.writeLn("Propagating from: " + (predecessorBlock ? predecessorBlock.bid :
+      // -1) + ", to: " + block.bid + " " + stack + " " + scopeIndex);
       var state = this.blockStates[block.bid];
       if (state) {
         assert(state.stack === stack, "Stack heights don't match, stack: " + stack + ", was: " + state.stack);
@@ -408,7 +410,8 @@ module Shumway.AVM2.Compiler {
 
     emitBlock(block: Bytecode) {
       this.setCurrentBlockState(block);
-      // writer && writer.writeLn("emitBlock: " + block.bid + " " + this.stack + " " + this.scopeIndex);
+      // writer && writer.writeLn("emitBlock: " + block.bid + " " + this.stack + " " +
+      // this.scopeIndex);
 
       this.blockEmitter.reset();
       if (!release && Compiler.baselineDebugLevel.value > 1) {
@@ -793,6 +796,9 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.instanceof:
           this.emitInstanceof();
+          break;
+        case OP.istype:
+          this.emitIsType(bc.index);
           break;
         case OP.istypelate:
           this.emitIsTypeLate();
@@ -1281,6 +1287,12 @@ module Shumway.AVM2.Compiler {
     emitInstanceof() {
       var type = this.pop();
       this.emitReplace(type + '.isInstanceOf(' + this.peek() + ')');
+    }
+
+    emitIsType(index: number) {
+      this.emitLine('var mn = mi.abc.constantPool.multinames[' + index + '];' +
+                    (release ? '' : ' // ' + this.constantPool.multinames[index]));
+      this.emitReplace('mi.abc.applicationDomain.getType(mn).isType(' + this.peek() + ')');
     }
 
     emitIsTypeLate() {
