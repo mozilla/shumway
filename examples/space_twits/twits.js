@@ -5,20 +5,6 @@
 // A freakishly stupid game. Doesn't even adhere very strictly to MVC.
 // May Dijkstra have mercy on this sinner's soul.
 
-bindNativeClassDefinition('GameClass', {
-  __class__: 'twits.Game',
-  __glue__: {
-    native: {
-      instance: {
-        ctor: function () {
-          play(this, this.asGetPublicProperty('width'), this.asGetPublicProperty('height') - 40);
-        }
-      }
-    }
-  }
-});
-
-
 // Scene graph classes (model / view).
 
 function Scene(game_mc, width, height) {
@@ -160,10 +146,16 @@ Shot.prototype.type = "shot";
 
 
 // Controller
+var Shumway;
+function playTwits(shumwayObj) {
+    Shumway = shumwayObj.Shumway;
+    var game_mc = shumwayObj.stage.getChildAt(0);
+    var width = shumwayObj.stage.stageWidth;
+    var height = shumwayObj.stage.stageHeight;
 
-function play(game_mc, width, height) {
     var SPACESHIP_HEIGHT = 50;
     var ALIEN_WIDTH = 50;
+    var SCORE_HEIGHT = 40;
 
     var mid = width / 2;
 
@@ -172,7 +164,7 @@ function play(game_mc, width, height) {
     scene = new Scene(game_mc, width, height);
     spaceShip = new SpaceShip(scene,
                               mid,
-                              height - SPACESHIP_HEIGHT - 10);
+                              height - SPACESHIP_HEIGHT - SCORE_HEIGHT);
     alien = newAlien();
 
     var moving;
