@@ -846,7 +846,8 @@ module Shumway.AVM2.Compiler {
     emitSetProperty(nameIndex: number) {
       var value = this.pop();
       var multiname = this.constantPool.multinames[nameIndex];
-      if (multiname.isSimpleStatic()) {
+      // TODO: re-enable after XML and XMLList are able to handle this.
+      if (false && multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.blockEmitter.writeLn(this.pop() + '.' + qualifiedName + ' = ' + value + ';');
       } else {
@@ -878,7 +879,8 @@ module Shumway.AVM2.Compiler {
 
     emitGetProperty(nameIndex: number) {
       var multiname = this.constantPool.multinames[nameIndex];
-      if (multiname.isSimpleStatic()) {
+      // TODO: re-enable after XML and XMLList are able to handle this.
+      if (false && multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitReplace(this.peek() + '.' + qualifiedName);
       } else {
@@ -908,7 +910,8 @@ module Shumway.AVM2.Compiler {
 
     emitDeleteProperty(nameIndex: number) {
       var multiname = this.constantPool.multinames[nameIndex];
-      if (multiname.isSimpleStatic()) {
+      // TODO: re-enable after XML and XMLList are able to handle this.
+      if (false && multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitReplace('delete ' + this.peek() + '.' + qualifiedName);
       } else {
@@ -933,7 +936,8 @@ module Shumway.AVM2.Compiler {
       }
       var call: string;
       var multiname = this.constantPool.multinames[bc.index];
-      if (multiname.isSimpleStatic()) {
+      // TODO: re-enable after scope lookups for primitive natives are fixed.
+      if (false && multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         call = '.' + qualifiedName + '(' + args + ')';
       } else {
@@ -1024,12 +1028,9 @@ module Shumway.AVM2.Compiler {
       var multiname = this.constantPool.multinames[index];
       this.blockEmitter.writeLn('var mn = mi.abc.constantPool.multinames[' + index + ']; // ' +
                                 (release ? '' : multiname));
-      if (!multiname.isRuntime()) {
-        return 'mn.namespaces, mn.name, mn.flags';
-      }
       var name = multiname.isRuntimeName() ? this.pop() : '"' + multiname.name + '"';
-      var namespaces = multiname.isRuntimeNamespace() ? this.pop() : 'mn.namespaces';
-      return '[' + namespaces + ']' + ', ' + name + ', mn.flags';
+      var namespaces = multiname.isRuntimeNamespace() ? '[' + this.pop() + ']' : 'mn.namespaces';
+      return namespaces + ', ' + name + ', ' + multiname.flags;
     }
 
     emitBinaryIf(block: Bytecode, bc: Bytecode, operator: string, negate: boolean) {
