@@ -1063,14 +1063,14 @@ module Shumway.AVM2.AS {
       if (re === (void 0) || re === null) {
         return null;
       } else {
-        if (re instanceof XRegExp && re.global) {
+        if (re instanceof RegExp && re.global) {
           var matches = [], m;
           while ((m = re.exec(this))) {
             matches.push(m[0]);
           }
           return matches;
         }
-        if (!(re instanceof XRegExp) && !(typeof re === 'string')) {
+        if (!(re instanceof RegExp) && !(typeof re === 'string')) {
           re = String(re);
         }
         return this.match(re);
@@ -1078,7 +1078,7 @@ module Shumway.AVM2.AS {
     }
 
     search(re): number {
-      if (re instanceof XRegExp) {
+      if (re instanceof RegExp) {
         return this.search(re);
       }
       return (<string><any>this).indexOf(asCoerceString(re));
@@ -1369,13 +1369,60 @@ module Shumway.AVM2.AS {
   export class ASArgumentError extends ASError { }
 
   export class ASRegExp extends ASObject {
-    public static instanceConstructor: any = XRegExp;
-    public static staticNatives: any [] = [XRegExp];
-    public static instanceNatives: any [] = [XRegExp.prototype];
+    public static instanceConstructor: any = null;
+    public static staticNatives: any [] = [RegExp];
+    public static instanceNatives: any [] = [RegExp.prototype];
+
+    public dotall: boolean;
+    public extended: boolean;
+
+    private _captureNames: string[];
+    private _source: string;
+
+    constructor(pattern: string = '', flags?: string) {
+        false && super();
+        this.dotall = false;
+        this.extended = false;
+        var captureNames = this._captureNames = [];
+        var p = pattern;
+        if (flags) {
+          var f = '';
+          for (var i = 0; i < flags.length; i++) {
+            var flag = flags[i];
+            if (flag === 's') {
+              // With this flag set, . can match the newline character.
+              p = p.replace(/\./g, '[\\s\\S]');
+              this.dotall = true;
+            } else if (flag === 'x') {
+              // With this flag set, you can type spaces in the regular expression, which are
+              // ignored as part of the pattern.
+              p = p.replace(/\s+/g, '');
+              this.extended = true;
+            } else {
+              f += flag;
+            }
+          }
+        }
+        p = p.replace(/\((?!\?)|\(\?P<([\w$]+)>/g, function (match) {
+            var name = match[1];
+            if (match[1]) {
+              if (name !== 'length') {
+                captureNames.push(name);
+              }
+              if (captureNames.indexOf(match[1]) > -1) {
+                // TODO: Handle the case were same name is used for multiple groups.
+              }
+            } else {
+              captureNames.push(null);
+            }
+            return '(';
+        });
+        RegExp.call(this, p, f);
+        this._source = pattern;
+    }
 
     get native_source(): string {
-      var self: any = this;
-      return self.source;
+      return this._source;
     }
 
     get native_global(): boolean {
@@ -1416,21 +1463,22 @@ module Shumway.AVM2.AS {
 
     exec(s: string = ""): any {
       var result = RegExp.prototype.exec.apply(this, arguments);
+
       if (!result) {
         return result;
       }
-      // For some reason named groups in AS3 are set to the empty string instead of
-      // undefined as is the case for indexed groups. Here we just emulate the AS3
-      // behaviour.
-      var keys = Object.keys(result);
-      for (var i = 0; i < keys.length; i++) {
-        var k = keys[i];
-        if (!isNumeric(k)) {
-          if (result[k] === undefined) {
-            result[k] = "";
+
+      var captureNames = this._captureNames;
+      for (var i = 0; i < captureNames.length; i++) {
+          var name = captureNames[i];
+          if (name !== null) {
+              result[name] = result[0] || '';
+          } else {
+              // Groups in AS3 are set to the empty string instead of undefined.
+              result[name] = '';
           }
-        }
       }
+
       Shumway.AVM2.Runtime.publicizeProperties(result);
       return result;
     }
