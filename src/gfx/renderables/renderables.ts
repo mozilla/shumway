@@ -511,6 +511,10 @@ module Shumway.GFX {
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {
+      // Only render fallback in debug mode.
+      if (release) {
+        return;
+      }
       if (!this.fillStyle) {
         this.fillStyle = Shumway.ColorStyle.randomStyle();
       }
