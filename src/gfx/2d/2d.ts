@@ -987,8 +987,10 @@ module Shumway.GFX.Canvas2D {
     }
 
     private _allocateSurface(w: number, h: number): Canvas2DSurfaceRegion {
-      var surface = <Canvas2DSurfaceRegion>(Canvas2DRenderer._surfaceCache.allocate(w, h))
-      surface.fill("#FF4981");
+      var surface = <Canvas2DSurfaceRegion>(Canvas2DRenderer._surfaceCache.allocate(w, h));
+      if (!release) {
+        surface.fill("#FF4981");
+      }
       // var color = "rgba(" + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", " + (Math.random() * 255 | 0) + ", 1)"
       // surface.fill(color);
       return surface;
