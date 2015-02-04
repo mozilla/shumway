@@ -103,7 +103,7 @@ public class NetStream extends EventDispatcher {
   public function seek(offset:Number):void {
     call(this, 'seek', null, offset * 1000);
   }
-  public native function play():void;
+  public native function play(... arguments):void;
   public native function play2(param:NetStreamPlayOptions):void;
   public native function get info():NetStreamInfo;
   public native function get multicastInfo():NetStreamMulticastInfo;
