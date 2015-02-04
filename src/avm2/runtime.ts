@@ -247,7 +247,11 @@ module Shumway.AVM2.Runtime {
       }
     }
 
+    // For instance accessors, we have to install a version of the getter/setter that can be
+    // used with Function#call in order to be able to have super.propName work in the right
+    // scope. For methods, a prefixed version without a memoizer is installed.
     defineNonEnumerableProperty(object, prefix + qn, traitFunction);
+
     if (isMethod) {
       object.asOpenMethods[qn] = traitFunction;
       if (isScriptBinding) {
@@ -269,12 +273,6 @@ module Shumway.AVM2.Runtime {
       }
     } else {
       defineNonEnumerableGetterOrSetter(object, qn, traitFunction, isGetter);
-      // For instance accessors, we have to install a version of the getter/setter that can be
-      // used with Function#call in order to be able to have super.propName work in the right
-      // scope.
-      if (isScriptBinding) {
-        defineNonEnumerableProperty(object, prefix + qn, traitFunction);
-      }
     }
     //leaveTimeline();
   }
