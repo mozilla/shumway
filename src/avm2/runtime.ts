@@ -67,7 +67,7 @@ interface Object extends IProtocol {
 
   asEnumerableKeys: any [];
   asLazyInitializer: Shumway.AVM2.Runtime.LazyInitializer;
-  asBindings: any [];
+  asBindings: any;
   asLength: number;
   asSlots: Shumway.AVM2.Runtime.SlotInfoMap;
   asIsNativePrototype: boolean;
@@ -643,7 +643,7 @@ module Shumway.AVM2.Runtime {
     // We have to check for trait properties too if a simple hasOwnProperty fails.
     // This is different to JavaScript's hasOwnProperty behaviour where hasOwnProperty returns
     // false for properties defined on the property chain and not on the instance itself.
-    return hasOwnProperty(self, resolved) || self.asBindings.indexOf(resolved) >= 0;
+    return self.asBindings[resolved] || hasOwnProperty(self, resolved);
   }
 
   export function asPropertyIsEnumerable(namespaces: Namespace [], name: any, flags: number) {
@@ -664,7 +664,7 @@ module Shumway.AVM2.Runtime {
   export function asHasTraitProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
     var resolved = self.resolveMultinameProperty(namespaces, name, flags);
-    return self.asBindings.indexOf(resolved) >= 0;
+    return self.asBindings[resolved];
   }
 
   export function asGetNumericProperty(i: number) {
@@ -1260,7 +1260,7 @@ module Shumway.AVM2.Runtime {
     for (var key in object) {
       if (isNumeric(key)) {
         fn.call(self, key, object[key]);
-      } else if (Multiname.isPublicQualifiedName(key) && object.asBindings.indexOf(key) < 0) {
+      } else if (!object.asBindings[key] && Multiname.isPublicQualifiedName(key)) {
         var name = Multiname.stripPublicQualifier(key);
         fn.call(self, name, object[key]);
       }
