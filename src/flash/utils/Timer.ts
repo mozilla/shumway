@@ -94,12 +94,21 @@ module Shumway.AVM2.AS.flash.utils {
         return;
       }
       if (flash.utils.Timer.dispatchingEnabled) {
-        this.dispatchEvent(new events.TimerEvent("timer", true, false));
+        try {
+          this.dispatchEvent(new events.TimerEvent("timer", true, false));
+        } catch (e) {
+          console.warn('caught error under Timer TIMER event: ', e);
+        }
       }
       if (this._repeatCount !== 0) {
         if (this._iteration >= this._repeatCount) {
           this.stop();
-          this.dispatchEvent(new events.TimerEvent(events.TimerEvent.TIMER_COMPLETE, false, false));
+          try {
+            this.dispatchEvent(new events.TimerEvent(events.TimerEvent.TIMER_COMPLETE, false,
+                                                     false));
+          } catch (e) {
+            console.warn('caught error under Timer COMPLETE event: ', e);
+          }
         }
       }
     }

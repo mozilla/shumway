@@ -170,7 +170,11 @@ module Shumway.AVM2.AS.flash.events {
         if (target === null) {
           nullCount++;
         } else {
-          target.dispatchEvent(event);
+          try {
+            target.dispatchEvent(event);
+          } catch (e) {
+            console.warn('caught error under broadcast event ' + event.type + ': ', e);
+          }
         }
       }
 
