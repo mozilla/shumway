@@ -309,6 +309,7 @@ module Shumway.AVM2.Compiler {
                                ", RATIO: " + (passCompileCount / compileCount).toFixed(4) +
                                " (" + compileTime.toFixed(2) + " total)");
 
+      BytecodePool.releaseList(analysis.bytecodes);
       return {body: body, parameters: this.parameters};
     }
 
