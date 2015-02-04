@@ -45,7 +45,7 @@ module Shumway.AVM2.AS.flash.accessibility {
     // AS -> JS Bindings
     private static _active: boolean = false;
     static get active(): boolean {
-      notImplemented("public flash.accessibility.Accessibility::get active");
+      somewhatImplemented("public flash.accessibility.Accessibility::get active");
       return Accessibility._active;
     }
     static sendEvent(source: flash.display.DisplayObject, childID: number /*uint*/, eventType: number /*uint*/, nonHTML: boolean = false): void {
