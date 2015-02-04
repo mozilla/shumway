@@ -66,7 +66,7 @@ module Shumway.AVM2.AS.flash.text {
       styleName = asCoerceString(styleName);
       var style = this._rules[styleName.toLowerCase()];
       if (!style) {
-        return null;
+        return {}; // note that documentation is lying about `null`;
       }
       return ASJSON.transformJSValueToAS(style, false);
     }
