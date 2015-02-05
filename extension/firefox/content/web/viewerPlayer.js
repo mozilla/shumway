@@ -128,6 +128,11 @@ function setupServices() {
               this.onprogress && this.onprogress(args.array, {bytesLoaded: args.loaded, bytesTotal: args.total});
               break;
           }
+        },
+        close: function () {
+          if (Shumway.FileLoadingService.instance.sessions[sessionId]) {
+            // TODO send abort
+          }
         }
       };
     },
