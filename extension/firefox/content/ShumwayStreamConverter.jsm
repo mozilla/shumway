@@ -754,6 +754,7 @@ function activateShumwayScripts(window, requestListener) {
 }
 
 function initExternalCom(wrappedWindow, wrappedObject, targetWindow) {
+  var traceExternalInterface = getBoolPref('shumway.externalInterface.trace', false);
   if (!wrappedWindow.__flash__initialized) {
     wrappedWindow.__flash__initialized = true;
     wrappedWindow.__flash__toXML = function __flash__toXML(obj) {
@@ -786,29 +787,32 @@ function initExternalCom(wrappedWindow, wrappedObject, targetWindow) {
       }
     };
     wrappedWindow.__flash__eval = function (expr) {
-      this.console.log('__flash__eval: ' + expr);
+      traceExternalInterface && this.console.log('__flash__eval: ' + expr);
       // allowScriptAccess protects page from unwanted swf scripts,
       // we can execute script in the page context without restrictions.
-      return this.eval(expr);
+      var result = this.eval(expr);
+      traceExternalInterface && this.console.log('__flash__eval (result): ' + result);
+      return result;
     }.bind(wrappedWindow);
     wrappedWindow.__flash__call = function (expr) {
-      this.console.log('__flash__call (ignored): ' + expr);
+      traceExternalInterface && this.console.log('__flash__call (ignored): ' + expr);
     };
   }
   wrappedObject.__flash__registerCallback = function (functionName) {
-    wrappedWindow.console.log('__flash__registerCallback: ' + functionName);
+    traceExternalInterface && wrappedWindow.console.log('__flash__registerCallback: ' + functionName);
     Components.utils.exportFunction(function () {
       var args = Array.prototype.slice.call(arguments, 0);
-      wrappedWindow.console.log('__flash__callIn: ' + functionName);
+      traceExternalInterface && wrappedWindow.console.log('__flash__callIn: ' + functionName);
       var result;
       if (targetWindow.wrappedJSObject.onExternalCallback) {
         result = targetWindow.wrappedJSObject.onExternalCallback({functionName: functionName, args: args});
+        traceExternalInterface && wrappedWindow.console.log('__flash__callIn (result): ' + result);
       }
       return wrappedWindow.eval(result);
     }, this, { defineAs: functionName });
   };
   wrappedObject.__flash__unregisterCallback = function (functionName) {
-    wrappedWindow.console.log('__flash__unregisterCallback: ' + functionName);
+    traceExternalInterface && wrappedWindow.console.log('__flash__unregisterCallback: ' + functionName);
     delete this[functionName];
   };
 }
