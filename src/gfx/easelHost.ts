@@ -166,7 +166,7 @@ module Shumway.GFX {
       var context = this._context;
       var asset = context._getVideoAsset(id);
       if (!asset) {
-        if (eventType != VideoControlEvent.Init) {
+        if (eventType !== VideoControlEvent.Init) {
           return undefined;
         }
         context.registerVideo(id);
