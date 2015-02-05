@@ -913,7 +913,11 @@ ShumwayStreamConverterBase.prototype = {
       throw new Error('Movie url is not specified');
     }
 
-    baseUrl = objectParams.base || pageUrl;
+    if (objectParams.base) {
+        baseUrl = Services.io.newURI(objectParams.base, null, pageUrl).spec;
+    } else {
+        baseUrl = pageUrl;
+    }
 
     var movieParams = {};
     if (objectParams.flashvars) {

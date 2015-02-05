@@ -95,6 +95,8 @@ package __AS3__.vec
 
     AS3 native function lastIndexOf(value:Object, from: Number=0x7fffffff): Number;
 
+    AS3 native function unshift();
+
   }
 
   [native(cls="IntVectorClass")]
@@ -145,6 +147,8 @@ package __AS3__.vec
     AS3 native function indexOf(value:int, from:Number=0): Number;
 
     AS3 native function lastIndexOf(value:int, from: Number=0x7fffffff): Number;
+
+    AS3 native function unshift();
 
   }
 
@@ -200,6 +204,8 @@ package __AS3__.vec
 
     AS3 native function lastIndexOf(value:uint, from: Number=0x7fffffff): Number;
 
+    AS3 native function unshift();
+
   }
 
   [native(cls="DoubleVectorClass")]
@@ -252,6 +258,8 @@ package __AS3__.vec
     AS3 native function indexOf(value:Number, from:Number=0): Number;
 
     AS3 native function lastIndexOf(value:Number, from: Number=0x7fffffff): Number;
+
+    AS3 native function unshift();
   }
 
 }
