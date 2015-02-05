@@ -38,8 +38,6 @@ Cu.import('resource://gre/modules/Services.jsm');
 Cu.import('resource://gre/modules/NetUtil.jsm');
 Cu.import('resource://gre/modules/Promise.jsm');
 
-Cu.importGlobalProperties(['URL']);
-
 XPCOMUtils.defineLazyModuleGetter(this, 'PrivateBrowsingUtils',
   'resource://gre/modules/PrivateBrowsingUtils.jsm');
 
@@ -912,7 +910,7 @@ ShumwayStreamConverterBase.prototype = {
     }
 
     if (objectParams.base) {
-        baseUrl = new URL(objectParams.base, pageUrl).href;
+        baseUrl = Services.io.newURI(objectParams.base, null, pageUrl).spec;
     } else {
         baseUrl = pageUrl;
     }
