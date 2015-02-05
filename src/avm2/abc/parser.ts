@@ -495,10 +495,10 @@ module Shumway.AVM2.ABC {
       this.traits = Trait.parseTraits(abc, stream, this);
       this.instanceInfo = abc.instances[index];
       this.instanceInfo.classInfo = this;
-      this.defaultValue = ClassInfo._getDefaultValue(this.instanceInfo.name);
+      this.defaultValue = ClassInfo.getDefaultValue(this.instanceInfo.name);
     }
 
-    private static _getDefaultValue(qn): any {
+    public static getDefaultValue(qn): any {
       if (Multiname.getQualifiedName(qn) === Multiname.Int ||
         Multiname.getQualifiedName(qn) === Multiname.Uint) {
         return 0;

@@ -244,6 +244,14 @@ module Shumway.Shell {
 
     Shumway.Unit.writer = new IndentingWriter();
 
+    if (compileOption.value) {
+      files.forEach(function (file) {
+        if (file.endsWith(".abc")) {
+          compileABCFile(file);
+        }
+      });
+    }
+
     if (parseOption.value) {
       files.forEach(function (file) {
         var start = dateNow();
@@ -276,12 +284,6 @@ module Shumway.Shell {
       files.forEach(function (file) {
         if (file.endsWith(".abc")) {
           disassembleABCFile(file);
-        }
-      });
-    } else if (compileOption.value) {
-      files.forEach(function (file) {
-        if (file.endsWith(".abc")) {
-          compileABCFile(file);
         }
       });
     }
@@ -409,6 +411,13 @@ module Shumway.Shell {
         var loadListener: ILoadListener = {
           onLoadOpen: function(file: Shumway.SWF.SWFFile) {
             swfFile = file;
+            for (var i = 0; i < file.abcBlocks.length; i++) {
+              var abcBlock = file.abcBlocks[i];
+              var abcFile = new AbcFile(abcBlock.data, "TAG" + i);
+              if (compileOption.value) {
+                Compiler.baselineCompileABC(abcFile);
+              }
+            }
           },
           onLoadProgress: function(update: LoadProgressUpdate) {
           },

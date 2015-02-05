@@ -15,8 +15,11 @@
  */
 
 module Shumway.AVM2.Compiler {
+  import Trait = ABC.Trait;
   import AbcFile = ABC.AbcFile;
+  import ClassInfo = ABC.ClassInfo;
   import MethodInfo = ABC.MethodInfo;
+  import ScriptInfo = ABC.ScriptInfo;
   import Scope = Runtime.Scope;
   import Multiname = ABC.Multiname;
   import InstanceInfo = ABC.InstanceInfo;
@@ -30,13 +33,20 @@ module Shumway.AVM2.Compiler {
 
   var compileCount = 0, passCompileCount = 0, failCompileCount = 0, compileTime = 0;
 
+  function makeLiteral(value: any) {
+    if (typeof value === "string") {
+      return escapeString(value);
+    }
+    return String(value);
+  }
+
   class Emitter {
     private _buffer: string [];
     private _indent = 0;
     private _emitIndent;
     constructor(emitIndent: boolean) {
       this._buffer = [];
-      this._emitIndent = emitIndent;
+      this._emitIndent = true; // emitIndent;
     }
     reset() {
       this._buffer.length = 0;
@@ -172,12 +182,7 @@ module Shumway.AVM2.Compiler {
         this.local.push(parameterName);
         this.parameters.push(parameterName);
         if (parameter.optional && parameter.isUsed) {
-          var value = parameter.value;
-          if (typeof value === "string") {
-            value = escapeString(value);
-          } else {
-            value = String(value);
-          }
+          var value = makeLiteral(parameter.value);
           this.bodyEmitter.writeLn('arguments.length < ' + (parameterIndexOffset + i + 1) + ' && (' + parameterName + ' = ' +
                                    value + ');');
         }
@@ -1414,12 +1419,132 @@ module Shumway.AVM2.Compiler {
     return result;
   }
 
-  export function baselineCompileABC(abc: AbcFile) {
-    abc.methods.forEach(function (method) {
-      if (!method.code) {
-        return;
+  function mangleABC(abc: AbcFile) {
+    return StringUtilities.variableLengthEncodeInt32(abc.hash);
+  }
+
+  function mangleScript(scriptInfo: ScriptInfo) {
+    return mangleABC(scriptInfo.abc) + "_" + scriptInfo.index;
+  }
+
+  function mangleClass(classInfo: ClassInfo) {
+    return mangleABC(classInfo.abc) + "_" + Multiname.getQualifiedName(classInfo.instanceInfo.name);
+  }
+
+  function emitScript(emitter: Emitter, scriptInfo: ScriptInfo) {
+    scriptInfo.abc.hash
+    emitter.writeLn("// Script: " + scriptInfo.name);
+
+    emitMethodTraits(emitter, mangleScript(scriptInfo), scriptInfo.traits);
+
+    emitter.enter("function " + mangleScript(scriptInfo) + "() {");
+    emitTraits(emitter, scriptInfo.traits);
+    emitter.leave("}");
+  }
+
+  function emitTraits(emitter: Emitter, traits: Trait []) {
+    for (var i = 0; i < traits.length; i++) {
+      var trait = traits[i];
+      if (trait.isConst() || trait.isSlot()) {
+        var defaultValue = trait.hasDefaultValue ? makeLiteral(trait.value) : ClassInfo.getDefaultValue(trait.typeName);
+        emitter.writeLn("this." + Multiname.getQualifiedName(trait.name) + " = " + defaultValue + ";");
       }
-      baselineCompileMethod(method, new Scope(null, {baseClass: { traitsPrototype: {} }}), false, '');
-    });
+    }
+  }
+
+  function emitMethodTraits(emitter: Emitter, prefix: string, traits: Trait []) {
+    for (var i = 0; i < traits.length; i++) {
+      var trait = traits[i];
+      if (trait.isMethodOrAccessor()) {
+        var methodInfo = trait.methodInfo;
+        if (!methodInfo.code) {
+          return;
+        }
+        var result = baselineCompileMethod(methodInfo, new Scope(null, {baseClass: { traitsPrototype: {} }}), false, '');
+        if (result) {
+          emitter.enter("function " + prefix + Multiname.getQualifiedName(trait.name) + "(" + result.parameters.join(", ") + ") {");
+          emitter.writeLns(result.body);
+          emitter.leave("}");
+        }
+      }
+    }
+  }
+
+  function emitClass(emitter: Emitter, classInfo: ClassInfo) {
+    emitter.writeLn("// Class: " + classInfo.instanceInfo.name + " extends " + classInfo.instanceInfo.superName);
+
+    var instanceMangledName = mangleClass(classInfo);
+
+    var staticMangledName = instanceMangledName + "_Static";
+    emitMethodTraits(emitter, staticMangledName + "_", classInfo.traits);
+
+    emitter.enter("function " + staticMangledName + " () {");
+    emitTraits(emitter, classInfo.traits);
+    emitter.leave("}");
+
+    function emitInstanceTraits(ci: ClassInfo) {
+      if (ci.instanceInfo.superName) {
+        emitInstanceTraits(findClassInfo(ci.instanceInfo.superName));
+      }
+      emitter.writeLn("// Traits: " + ci.instanceInfo.name);
+      emitTraits(emitter, ci.instanceInfo.traits);
+    }
+
+    emitMethodTraits(emitter, instanceMangledName + "_", classInfo.instanceInfo.traits);
+    emitter.enter("function " + instanceMangledName + "() {");
+    emitInstanceTraits(classInfo);
+    emitter.leave("}");
+  }
+
+  var abcs: AbcFile [] = [];
+
+  function findClassInfo(mn: Multiname): ClassInfo {
+    for (var i = 0; i < abcs.length; i++) {
+      var abc = abcs[i];
+      var scripts = abc.scripts;
+      for (var j = 0; j < scripts.length; j++) {
+        var script = scripts[j];
+        var traits = script.traits;
+        for (var k = 0; k < traits.length; k++) {
+          var trait = traits[k];
+          if (trait.isClass()) {
+            var traitName = Multiname.getQualifiedName(trait.name);
+            // So here mn is either a Multiname or a QName.
+            for (var m = 0, n = mn.namespaces.length; m < n; m++) {
+              var qn = mn.getQName(m);
+              if (traitName === Multiname.getQualifiedName(qn)) {
+                return trait.classInfo;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  export function baselineCompileABC(abc: AbcFile) {
+    abcs.push(abc);
+
+    writer && writer.writeLn("Compiling ABC: " + abc);
+
+    var emitter = new Emitter(true);
+
+    for (var i = 0; i < abc.scripts.length; i++) {
+      emitScript(emitter, abc.scripts[i]);
+    }
+
+    for (var i = 0; i < abc.classes.length; i++) {
+      emitClass(emitter, abc.classes[i]);
+    }
+
+    var w = new IndentingWriter();
+    w.writeLns(emitter.toString());
+
+    //abc.methods.forEach(function (method) {
+    //  if (!method.code) {
+    //    return;
+    //  }
+    //  baselineCompileMethod(method, new Scope(null, {baseClass: { traitsPrototype: {} }}), false, '');
+    //});
   }
 }
