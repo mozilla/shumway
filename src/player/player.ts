@@ -424,7 +424,13 @@ module Shumway.Player {
 
         stage._loaderInfo = loaderInfo;
         stage.align = self.stageAlign || '';
-        stage.scaleMode = self.stageScale || 'showall';
+
+        if (!self.stageScale || flash.display.StageScaleMode.toNumber(self.stageScale) < 0) {
+            stage.scaleMode = flash.display.StageScaleMode.SHOW_ALL;
+        } else {
+            stage.scaleMode = self.stageScale;
+        }
+
         stage.frameRate = loaderInfo.frameRate;
         stage.setStageWidth(loaderInfo.width);
         stage.setStageHeight(loaderInfo.height);
