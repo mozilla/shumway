@@ -288,7 +288,9 @@ module Shumway.GFX {
           if (videoElement) {
             if (data.paused && !videoElement.paused) {
               if (!isNaN(data.time)) {
-                videoElement.currentTime = data.time;
+                if (videoElement.seekable.length !== 0) {
+                  videoElement.currentTime = data.time;
+                }
                 this._lastPausedTime = data.time;
               } else {
                 this._lastPausedTime = videoElement.currentTime;
@@ -296,7 +298,7 @@ module Shumway.GFX {
               this.pause();
             } else if (!data.paused && videoElement.paused) {
               this.play();
-              if (!isNaN(data.time) && this._lastPausedTime !== data.time) {
+              if (!isNaN(data.time) && this._lastPausedTime !== data.time && videoElement.seekable.length !== 0) {
                 videoElement.currentTime = data.time;
               }
 
@@ -308,7 +310,7 @@ module Shumway.GFX {
           }
           return;
         case VideoControlEvent.Seek:
-          if (videoElement) {
+          if (videoElement && videoElement.seekable.length !== 0) {
             videoElement.currentTime = data.time;
           }
           return;
