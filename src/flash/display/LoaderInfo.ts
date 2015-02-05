@@ -412,4 +412,9 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
   }
+
+  export interface IRootElementService {
+    pageUrl: string;
+    swfUrl: string;
+  }
 }

@@ -44,7 +44,7 @@ function runSwfPlayer(flashParams) {
   Shumway.AVM2.Verifier.enabled.value = compilerSettings.verifier;
 
   Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (avm2) {
-    function runSWF(file) {
+    function runSWF(file, buffer, baseUrl) {
       var player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = flashParams.movieParams;
@@ -54,17 +54,18 @@ function runSwfPlayer(flashParams) {
 
       Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
 
-      player.load(file);
+      player.pageUrl = baseUrl;
+      player.load(file, buffer);
     }
     Shumway.FileLoadingService.instance.setBaseUrl(baseUrl);
     if (asyncLoading) {
-      runSWF(movieUrl);
+      runSWF(movieUrl, undefined, baseUrl);
     } else {
       new Shumway.BinaryFileReader(movieUrl).readAll(null, function(buffer, error) {
         if (!buffer) {
           throw "Unable to open the file " + movieUrl + ": " + error;
         }
-        runSWF(movieUrl, buffer);
+        runSWF(movieUrl, buffer, baseUrl);
       });
     }
   });
