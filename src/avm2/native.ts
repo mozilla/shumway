@@ -1063,14 +1063,17 @@ module Shumway.AVM2.AS {
       if (re === (void 0) || re === null) {
         return null;
       } else {
-        if (re instanceof RegExp && re.global) {
-          var matches = [], m;
-          while ((m = re.exec(this))) {
-            matches.push(m[0]);
+        if (re instanceof ASRegExp) {
+          if (re.global) {
+            var matches = [], m;
+            while ((m = re.exec(<string><any>this))) {
+                matches.push(m[0]);
+            }
+            return matches;
           }
-          return matches;
+          return re.match(<string><any>this);
         }
-        if (!(re instanceof RegExp) && !(typeof re === 'string')) {
+        if (typeof re !== 'string') {
           re = String(re);
         }
         return this.match(re);
@@ -1078,8 +1081,8 @@ module Shumway.AVM2.AS {
     }
 
     search(re): number {
-      if (re instanceof RegExp) {
-        return this.search(re);
+      if (re instanceof ASRegExp) {
+        return re.search(<string><any>this);
       }
       return (<string><any>this).indexOf(asCoerceString(re));
     }
@@ -1369,15 +1372,20 @@ module Shumway.AVM2.AS {
   export class ASArgumentError extends ASError { }
 
   export class ASRegExp extends ASObject {
-    public static instanceConstructor: any = null;
-    public static staticNatives: any [] = [RegExp];
-    public static instanceNatives: any [] = [RegExp.prototype];
+    public static instanceConstructor: any = ASRegExp;
+    public static staticNatives: any [] = null;
+    public static instanceNatives: any [] = null;
 
+    public global: boolean;
+    public multiline: boolean;
+    public ignoreCase: boolean;
     public dotall: boolean;
     public extended: boolean;
 
     private _captureNames: string[];
     private _source: string;
+
+    private _jsRegExp: RegExp;
 
     constructor(pattern: string = '', flags?: string) {
         false && super();
@@ -1417,7 +1425,10 @@ module Shumway.AVM2.AS {
             }
             return '(';
         });
-        RegExp.call(this, p, f);
+        var r = this._jsRegExp = new RegExp(p, f);
+        this.global = r.global;
+        this.multiline = r.multiline;
+        this.ignoreCase = r.ignoreCase;
         this._source = pattern;
     }
 
@@ -1426,43 +1437,35 @@ module Shumway.AVM2.AS {
     }
 
     get native_global(): boolean {
-      var self: any = this;
-      return self.global;
+      return this.global;
     }
 
     get native_ignoreCase(): boolean {
-      var self: any = this;
-      return self.ignoreCase;
+      return this.ignoreCase;
     }
 
     get native_multiline(): boolean {
-      var self: any = this;
-      return self.multiline;
+      return this.multiline;
     }
 
     get native_lastIndex(): number /*int*/ {
-      var self: any = this;
-      return self.lastIndex;
+      return this._jsRegExp.lastIndex;
     }
 
     set native_lastIndex(i: number /*int*/) {
-      var self: any = this;
-      i = i | 0;
-      self.lastIndex = i;
+      this._jsRegExp.lastIndex = i | 0;
     }
 
     get native_dotall(): boolean {
-      var self: any = this;
-      return self.dotall;
+      return this.dotall;
     }
 
     get native_extended(): boolean {
-      var self: any = this;
-      return self.extended;
+      return this.extended;
     }
 
     exec(s: string = ""): any {
-      var result = RegExp.prototype.exec.apply(this, arguments);
+      var result = this._jsRegExp.exec(s);
 
       if (!result) {
         return result;
@@ -1481,6 +1484,14 @@ module Shumway.AVM2.AS {
 
       Shumway.AVM2.Runtime.publicizeProperties(result);
       return result;
+    }
+
+    search(s: string): number {
+      return s.search(this._jsRegExp);
+    }
+
+    match(s: string): string[] {
+      return s.match(this._jsRegExp);
     }
   }
 
