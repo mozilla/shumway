@@ -1496,11 +1496,11 @@ module Shumway.AVM2.Compiler {
     emitter.leave("}");
   }
 
-  var abcs: AbcFile [] = [];
+  var libraries: AbcFile [] = [];
 
   function findClassInfo(mn: Multiname): ClassInfo {
-    for (var i = 0; i < abcs.length; i++) {
-      var abc = abcs[i];
+    for (var i = 0; i < libraries.length; i++) {
+      var abc = libraries[i];
       var scripts = abc.scripts;
       for (var j = 0; j < scripts.length; j++) {
         var script = scripts[j];
@@ -1522,29 +1522,31 @@ module Shumway.AVM2.Compiler {
     }
   }
 
-  export function baselineCompileABC(abc: AbcFile) {
-    abcs.push(abc);
+  export function baselineCompileABCs(libs: AbcFile [], abcs: AbcFile []) {
 
-    writer && writer.writeLn("Compiling ABC: " + abc);
+    writer && writer.writeLn("Compiling LIBs: " + libs);
+    writer && writer.writeLn("Compiling ABCs: " + abcs);
 
-    var emitter = new Emitter(true);
+    libraries.push.apply(libraries, libs);
+    libraries.push.apply(libraries, abcs);
 
-    for (var i = 0; i < abc.scripts.length; i++) {
-      emitScript(emitter, abc.scripts[i]);
+    for (var j = 0; j < abcs.length; j++) {
+      var abc = abcs[j];
+
+      writer && writer.writeLn("Compiling ABC: " + abc);
+
+      var emitter = new Emitter(true);
+
+      for (var i = 0; i < abc.scripts.length; i++) {
+        emitScript(emitter, abc.scripts[i]);
+      }
+
+      for (var i = 0; i < abc.classes.length; i++) {
+        emitClass(emitter, abc.classes[i]);
+      }
+
+      // var w = new IndentingWriter();
+      // w.writeLns(emitter.toString());
     }
-
-    for (var i = 0; i < abc.classes.length; i++) {
-      emitClass(emitter, abc.classes[i]);
-    }
-
-    var w = new IndentingWriter();
-    w.writeLns(emitter.toString());
-
-    //abc.methods.forEach(function (method) {
-    //  if (!method.code) {
-    //    return;
-    //  }
-    //  baselineCompileMethod(method, new Scope(null, {baseClass: { traitsPrototype: {} }}), false, '');
-    //});
   }
 }

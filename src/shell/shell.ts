@@ -245,11 +245,16 @@ module Shumway.Shell {
     Shumway.Unit.writer = new IndentingWriter();
 
     if (compileOption.value) {
+      var abcs = [];
       files.forEach(function (file) {
+        var buffer = new Uint8Array(read(file, "binary"));
         if (file.endsWith(".abc")) {
-          compileABCFile(file);
+          abcs.push(new AbcFile(buffer, file));
+        } else if (file.endsWith(".swf")) {
+          abcs.push.apply(abcs, extractABCsFromSWF(buffer));
         }
       });
+      Compiler.baselineCompileABCs(abcs.slice(0, 1), abcs.slice(1));
     }
 
     if (parseOption.value) {
@@ -298,13 +303,6 @@ module Shumway.Shell {
     var buffer = read(file, "binary");
     var abc = new AbcFile(new Uint8Array(buffer), file);
     abc.trace(writer);
-  }
-
-  function compileABCFile(file: string) {
-    var buffer = read(file, "binary");
-    var abc = new AbcFile(new Uint8Array(buffer), file);
-    // abc.trace(writer);
-    Compiler.baselineCompileABC(abc);
   }
 
   function executeFile(file: string): boolean {
@@ -391,6 +389,37 @@ module Shumway.Shell {
     return true;
   }
 
+  function extractABCsFromSWF(buffer: Uint8Array): AbcFile [] {
+    var abcs = [];
+    try {
+      var loadListener: ILoadListener = {
+        onLoadOpen: function(file: Shumway.SWF.SWFFile) {
+          for (var i = 0; i < file.abcBlocks.length; i++) {
+            var abcBlock = file.abcBlocks[i];
+            var abcFile = new AbcFile(abcBlock.data, "TAG" + i);
+            abcs.push(abcFile);
+          }
+        },
+        onLoadProgress: function(update: LoadProgressUpdate) {
+        },
+        onLoadError: function() {
+        },
+        onLoadComplete: function() {
+        },
+        onNewEagerlyParsedSymbols(dictionaryEntries: SWF.EagerlyParsedDictionaryEntry[], delta: number): Promise<any> {
+          return Promise.resolve();
+        },
+        onImageBytesLoaded() {}
+      };
+      var loader = new Shumway.FileLoader(loadListener);
+      loader.loadBytes(buffer);
+    } catch (x) {
+      writer.redLn("Cannot parse SWF, reason: " + x);
+      return null;
+    }
+    return abcs;
+  }
+
   /**
    * Parses file.
    */
@@ -410,20 +439,15 @@ module Shumway.Shell {
         var swfFile: Shumway.SWF.SWFFile;
         var loadListener: ILoadListener = {
           onLoadOpen: function(file: Shumway.SWF.SWFFile) {
-            swfFile = file;
-            for (var i = 0; i < file.abcBlocks.length; i++) {
-              var abcBlock = file.abcBlocks[i];
-              var abcFile = new AbcFile(abcBlock.data, "TAG" + i);
-              if (compileOption.value) {
-                Compiler.baselineCompileABC(abcFile);
-              }
-            }
+
           },
           onLoadProgress: function(update: LoadProgressUpdate) {
+
           },
           onLoadError: function() {
           },
           onLoadComplete: function() {
+            writer.redLn("Load complete:");
             // TODO: re-enable all-tags parsing somehow. SWFFile isn't the right tool for that.
           //  var symbols = {};
           //  var tags = result.tags;
