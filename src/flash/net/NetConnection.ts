@@ -102,16 +102,19 @@ module Shumway.AVM2.AS.flash.net {
           return;
         }
 
+        var service: display.IRootElementService =
+          Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+
         var rtmpProps = wrapJSObject({
           app: parsedURL.app,
-          flashver: 'MAC 11,6,602,180', // ? flash.system.Capabilities.version,
-          swfUrl: 'http://localhost:5080/demos/Something.swf',
+          flashver: flash.system.Capabilities.version,
+          swfUrl: service.swfUrl,
           tcUrl: command,
           fpad: false,
           audioCodecs: 0x0FFF,
           videoCodecs: 0x00FF,
           videoFunction: 1,
-          pageUrl: 'http://localhost:5080/demos/Something.html',
+          pageUrl: service.pageUrl || service.swfUrl,
           objectEncoding: 0
         });
 

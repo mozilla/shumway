@@ -69,12 +69,18 @@ module Shumway.AVM2.AS.flash.net {
           time: NaN
         });
       }.bind(this);
+
+      this._resourceName = null;
+      this._metaData = null;
     }
 
     _connection: flash.net.NetConnection;
     _peerID: string;
 
     _id: number;
+
+    private _resourceName: string;
+    private _metaData: any;
 
     /**
      * Only one video can be attached to this |NetStream| object. If we attach another video, then
@@ -127,7 +133,7 @@ module Shumway.AVM2.AS.flash.net {
     _inBufferSeek: boolean;
     // _backBufferLength: number;
     // _bufferTimeMax: number;
-    // _info: flash.net.NetStreamInfo;
+    private _info: flash.net.NetStreamInfo;
     // _multicastInfo: flash.net.NetStreamMulticastInfo;
     // _time: number;
     // _currentFPS: number;
@@ -195,8 +201,39 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.NetStream::play2"); return;
     }
     get info(): flash.net.NetStreamInfo {
-      notImplemented("public flash.net.NetStream::get info"); return;
-      // return this._info;
+      somewhatImplemented("public flash.net.NetStream::get info");
+      var bufferSeconds = 1;
+      var playedSeconds = Math.ceil(this._invoke(304, null));
+      var audioBytesPerSecond = 32;
+      var videoBytesPerSecond = 200;
+      var dataBytesPerSecond = 1;
+      return new NetStreamInfo(
+        audioBytesPerSecond + videoBytesPerSecond,
+        (audioBytesPerSecond + videoBytesPerSecond + dataBytesPerSecond) * (bufferSeconds + playedSeconds),
+        audioBytesPerSecond + videoBytesPerSecond,
+        audioBytesPerSecond,
+        audioBytesPerSecond * (bufferSeconds + playedSeconds),
+        videoBytesPerSecond,
+        videoBytesPerSecond * (bufferSeconds + playedSeconds),
+        dataBytesPerSecond,
+        dataBytesPerSecond * (bufferSeconds + playedSeconds),
+        (audioBytesPerSecond + videoBytesPerSecond + dataBytesPerSecond) * playedSeconds,
+        0,
+        audioBytesPerSecond * bufferSeconds,
+        videoBytesPerSecond * bufferSeconds,
+        dataBytesPerSecond * bufferSeconds,
+        bufferSeconds,
+        bufferSeconds,
+        bufferSeconds,
+        0,
+        0,
+        0,
+        this._metaData,
+        null,
+        this._connection.uri,
+        this._resourceName,
+        false
+      );
     }
     get multicastInfo(): flash.net.NetStreamMulticastInfo {
       notImplemented("public flash.net.NetStream::get multicastInfo"); return;
