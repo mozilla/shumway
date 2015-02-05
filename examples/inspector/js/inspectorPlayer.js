@@ -135,6 +135,7 @@ window.addEventListener('message', function onWindowMessage(e) {
   if (data.settings) {
     Shumway.Settings.setSettings(data.settings);
   }
+  release = !!data.release;
   runSwfPlayer(data);
   document.body.style.backgroundColor = 'green';
 });

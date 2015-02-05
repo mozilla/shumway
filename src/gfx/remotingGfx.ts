@@ -44,8 +44,7 @@ module Shumway.Remoting.GFX {
   import IDataInput = Shumway.ArrayUtilities.IDataInput;
   import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
   import assert = Shumway.Debug.assert;
-  var writer = null; // release ? null : new IndentingWriter();
-//  var writer = new IndentingWriter();
+  var writer = null; // new IndentingWriter();
 
   declare var registerInspectorAsset;
   declare var registerInspectorStage;

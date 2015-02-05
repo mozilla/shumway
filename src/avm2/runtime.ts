@@ -170,7 +170,8 @@ module Shumway.AVM2.Runtime {
   }
 
   export var traitsWriter: IndentingWriter = null; // new IndentingWriter();
-  export var callWriter: IndentingWriter = release ? null : new IndentingWriter();
+  export var callWriter: IndentingWriter = null;
+  lazyInitializer(Shumway.AVM2.Runtime, 'callWriter', () => new IndentingWriter());
 
   export interface IPatchTarget {
     object: Object;
