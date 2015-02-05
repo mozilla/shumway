@@ -196,7 +196,7 @@ module Shumway.AVM2.ABC {
       str = ("" + code.position).padRight(' ', 6);
       switch (bc) {
         case OP.lookupswitch:
-          str += opcodeName(opcode) + ": defaultOffset: " + code.readS24();
+          str += opcodeName(bc) + ": defaultOffset: " + code.readS24();
           var caseCount = code.readU30();
           str += ", caseCount: " + caseCount;
           for (var i = 0; i < caseCount + 1; i++) {
@@ -206,9 +206,9 @@ module Shumway.AVM2.ABC {
           break;
         default:
           if (opcode) {
-            str += opcodeName(opcode).padRight(' ', 20);
+            str += opcodeName(bc).padRight(' ', 20);
             if (!opcode.operands) {
-              release || assert(false, "Opcode: " + opcodeName(opcode) + " has undefined operands.");
+              release || assert(false, "Opcode: " + opcodeName(bc) + " has undefined operands.");
             } else {
               if (opcode.operands.length > 0) {
                 str += traceOperands(opcode, abc, code);
