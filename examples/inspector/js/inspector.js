@@ -123,6 +123,7 @@ function runIFramePlayer(data) {
 
     data.type = 'runSwf';
     data.settings = Shumway.Settings.getSettings();
+    data.release = state.release;
     data.displayParameters = easel.getDisplayParameters();
 
     var playerWorker = playerWorkerIFrame.contentWindow;
