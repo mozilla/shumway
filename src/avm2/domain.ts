@@ -55,9 +55,9 @@ module Shumway.AVM2.Runtime {
     leaveTimeline();
   }
 
-  export function ensureScriptIsExecuted(script, reason: string = "") {
+  export function ensureScriptIsExecuted(script, reason: string) {
     if (!script.executed && !script.executing) {
-      if (Shumway.AVM2.Runtime.traceExecution.value >= 2) {
+      if (!release && Shumway.AVM2.Runtime.traceExecution.value >= 2) {
         console.log("Executing Script For: " + reason);
       }
       executeScript(script);
@@ -330,7 +330,7 @@ module Shumway.AVM2.Runtime {
     }
 
     public findDomainProperty(multiname: Multiname, strict: boolean, execute: boolean) {
-      if (Shumway.AVM2.Runtime.traceDomain.value) {
+      if (!release && Shumway.AVM2.Runtime.traceDomain.value) {
         console.log("ApplicationDomain.findDomainProperty: " + multiname);
       }
       var resolved = this.findDefiningScript(multiname, execute);
@@ -339,8 +339,6 @@ module Shumway.AVM2.Runtime {
       }
       if (strict) {
         return Shumway.Debug.unexpected("Cannot find property " + multiname);
-      } else {
-        return undefined;
       }
       return undefined;
     }
@@ -446,7 +444,7 @@ module Shumway.AVM2.Runtime {
               var trait = traits[k];
               if (mn.hasQName(trait.name)) {
                 if (execute) {
-                  ensureScriptIsExecuted(script, String(trait.name));
+                  ensureScriptIsExecuted(script, release ? '' : String(trait.name));
                 }
                 return (this.scriptCache[mn.runtimeId] = { script: script, trait: trait });
               }

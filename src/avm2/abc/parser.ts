@@ -1368,6 +1368,11 @@ module Shumway.AVM2.ABC {
       return this.namespaces.length === 1 && !this.isAnyName();
     }
 
+    public isSimpleStatic(): boolean {
+      return !(this.flags & (Multiname.RUNTIME_NAME | Multiname.RUNTIME_NAMESPACE)) &&
+             this.namespaces.length === 1;
+    }
+
     public hasTypeParameter(): boolean {
       return !!this.typeParameter;
     }

@@ -522,6 +522,38 @@ module Shumway.AVM2 {
     return OP[op];
   }
 
+  export class BytecodePool {
+    private static _pool: Bytecode[] = [];
+
+    static get(stream: AbcStream): Bytecode {
+      return this._pool.length ? this._pool.pop().parse(stream) : new Bytecode(stream);
+    }
+
+    static release(bc: Bytecode) {
+      bc.bid = undefined;
+      bc.succs = null;
+      bc.preds = null;
+      bc.dominatees = null;
+
+      bc.dominator = null;
+      bc.end = null;
+      bc.region = null;
+      bc.spbacks = null;
+      bc.bdo = 0;
+      bc.target = null;
+      bc.targets = null;
+      bc.ti = null;
+      this._pool.push(bc);
+    }
+
+    static releaseList(list: Bytecode[]) {
+      for (var i = list.length; i--;) {
+        this.release(list[i]);
+      }
+      list.length = 0;
+    }
+  }
+
   /**
    * A normalized AS3 bytecode, or BasicBlock.
    */
@@ -561,11 +593,15 @@ module Shumway.AVM2 {
     value: number = 0;
 
     constructor(code) {
+      this.parse(code);
+    }
+
+    parse(code: AbcStream) {
       // If no code is passed, we're creating an invalid opcode for bogus jumps.
       if (!code) {
         this.op = OP.invalid;
         this.canThrow = true;
-        return;
+        return this;
       }
       var op = code.readU8();
       this.op = op;
@@ -574,18 +610,16 @@ module Shumway.AVM2 {
       release || opdesc || unexpected("Unknown Op " + op);
       this.canThrow = opdesc.canThrow;
 
-      var i, n;
-
       if (op === OP.lookupswitch) {
         var defaultOffset = code.readS24();
         this.offsets = [];
         var n = code.readU30() + 1;
-        for (i = 0; i < n; i++) {
+        for (var i = 0; i < n; i++) {
           this.offsets.push(code.readS24());
         }
         this.offsets.push(defaultOffset);
       } else {
-        for (i = 0, n = opdesc.operands.length; i < n; i++) {
+        for (var i = 0, n = opdesc.operands.length; i < n; i++) {
           var operand = opdesc.operands[i];
 
           switch (operand.size) {
@@ -612,6 +646,7 @@ module Shumway.AVM2 {
           }
         }
       }
+      return this;
     }
 
     isBlockEnd(): boolean {
@@ -828,7 +863,7 @@ module Shumway.AVM2 {
         return cache[offset];
       }
 
-      var code = new Bytecode(null);
+      var code = BytecodePool.get(null);
       code.position = offset;
       cache && (cache[offset] = code);
       return code;
@@ -847,7 +882,7 @@ module Shumway.AVM2 {
 
       while (codeStream.remaining() > 0) {
         var pos = codeStream.position;
-        bytecode = new Bytecode(codeStream);
+        bytecode = BytecodePool.get(codeStream);
         bytecode.pc = pos; // Save PC.
 
         // Get absolute offsets for normalization to new indices below.

@@ -406,7 +406,7 @@ module Shumway.AVM2 {
             break;
           case OP.getdescendants:
             popNameInto(stack, multinames[bc.index], mn);
-            stack[stack.length - 1] = (<any>[stack.length - 1]).descendants(mn.name);
+            stack[stack.length - 1] = (<any>stack[stack.length - 1]).descendants(mn.name);
             break;
           case OP.newcatch:
             release || assert(exceptions[bc.index].scopeObject);

@@ -96,7 +96,7 @@ module Shumway.AVM2.Compiler.AST {
   var escapeStringCacheCount = 0;
   var escapeStringCache = Object.create(null);
 
-  function escapeString(str) {
+  export function escapeString(str) {
     var result, i, len, ch, singleQuotes = 0, doubleQuotes = 0, single, original = str;
     result = escapeStringCache[original];
     if (result) {

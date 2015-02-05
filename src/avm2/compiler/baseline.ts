@@ -220,6 +220,7 @@ module Shumway.AVM2.Compiler {
       if (!this.hasDynamicScope) {
         this.bodyEmitter.writeLn('$0 = mi.classScope;');
       }
+      this.bodyEmitter.writeLn('var label;');
 
       if (this.methodInfo.needsRest() || this.methodInfo.needsArguments()) {
         var offset = parameterIndexOffset + (this.methodInfo.needsRest() ? parameterCount : 0);
@@ -308,6 +309,7 @@ module Shumway.AVM2.Compiler {
                                ", RATIO: " + (passCompileCount / compileCount).toFixed(4) +
                                " (" + compileTime.toFixed(2) + " total)");
 
+      BytecodePool.releaseList(analysis.bytecodes);
       return {body: body, parameters: this.parameters};
     }
 
@@ -331,7 +333,8 @@ module Shumway.AVM2.Compiler {
     }
 
     propagateBlockState(predecessorBlock: Bytecode, block: Bytecode, stack: number, scopeIndex: number) {
-      // writer && writer.writeLn("Propagating from: " + (predecessorBlock ? predecessorBlock.bid : -1) + ", to: " + block.bid + " " + stack + " " + scopeIndex);
+      // writer && writer.writeLn("Propagating from: " + (predecessorBlock ? predecessorBlock.bid :
+      // -1) + ", to: " + block.bid + " " + stack + " " + scopeIndex);
       var state = this.blockStates[block.bid];
       if (state) {
         assert(state.stack === stack, "Stack heights don't match, stack: " + stack + ", was: " + state.stack);
@@ -367,10 +370,6 @@ module Shumway.AVM2.Compiler {
       return BaselineCompiler.stackNames[i];
     }
 
-    stackTop(): string {
-      return this.getStack(this.stack);
-    }
-
     getLocalName(i: number): string {
       if (i >= BaselineCompiler.localNames.length) {
         return "l" + (i - BaselineCompiler.localNames.length);
@@ -389,16 +388,8 @@ module Shumway.AVM2.Compiler {
       return this.local[i];
     }
 
-    peekAny(): string {
-      return this.peek();
-    }
-
     peek(): string {
       return this.getStack(this.stack - 1);
-    }
-
-    popAny(): string {
-      return this.pop();
     }
 
     emitPopTemporaries(n: number) {
@@ -420,7 +411,8 @@ module Shumway.AVM2.Compiler {
 
     emitBlock(block: Bytecode) {
       this.setCurrentBlockState(block);
-      // writer && writer.writeLn("emitBlock: " + block.bid + " " + this.stack + " " + this.scopeIndex);
+      // writer && writer.writeLn("emitBlock: " + block.bid + " " + this.stack + " " +
+      // this.scopeIndex);
 
       this.blockEmitter.reset();
       if (!release && Compiler.baselineDebugLevel.value > 1) {
@@ -447,8 +439,6 @@ module Shumway.AVM2.Compiler {
     }
 
     emitBytecode(block: Bytecode, bc: Bytecode) {
-      // writer && writer.writeLn(" emitBytecode: " + bc + " | " + this.stack + " " + this.scopeIndex);
-
       release || assert(this.stack >= 0);
       release || assert(this.scopeIndex >= 0);
 
@@ -521,6 +511,9 @@ module Shumway.AVM2.Compiler {
           break;
         case OP.getdescendants:
           this.emitGetDescendants(bc.index);
+          break;
+        case OP.checkfilter:
+          this.emitCheckFilter();
           break;
         case OP.pushwith:
           this.emitPushScope(true);
@@ -719,7 +712,7 @@ module Shumway.AVM2.Compiler {
           this.emitAddExpression();
           break;
         case OP.add_i:
-          this.emitAddExpression_i();
+          this.emitBinaryExpression_i(' + ');
           break;
         case OP.subtract:
           this.emitBinaryExpression(' - ');
@@ -805,6 +798,9 @@ module Shumway.AVM2.Compiler {
         case OP.instanceof:
           this.emitInstanceof();
           break;
+        case OP.istype:
+          this.emitIsType(bc.index);
+          break;
         case OP.istypelate:
           this.emitIsTypeLate();
           break;
@@ -857,7 +853,8 @@ module Shumway.AVM2.Compiler {
     emitSetProperty(nameIndex: number) {
       var value = this.pop();
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      // TODO: re-enable after XML and XMLList are able to handle this.
+      if (false && multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.blockEmitter.writeLn(this.pop() + '.' + qualifiedName + ' = ' + value + ';');
       } else {
@@ -870,7 +867,7 @@ module Shumway.AVM2.Compiler {
     emitSetSuper(nameIndex: number) {
       var value = this.pop();
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         if ('s' + qualifiedName in this.methodInfo.classScope.object.baseClass.traitsPrototype) {
           this.emitLine('mi.classScope.object.baseClass.traitsPrototype.s' + qualifiedName +
@@ -889,7 +886,8 @@ module Shumway.AVM2.Compiler {
 
     emitGetProperty(nameIndex: number) {
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      // TODO: re-enable after XML and XMLList are able to handle this.
+      if (false && multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitReplace(this.peek() + '.' + qualifiedName);
       } else {
@@ -900,7 +898,7 @@ module Shumway.AVM2.Compiler {
 
     emitGetSuper(nameIndex: number) {
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         if ('g' + qualifiedName in this.methodInfo.classScope.object.baseClass.traitsPrototype) {
           this.emitReplace('mi.classScope.object.baseClass.traitsPrototype.g' + qualifiedName +
@@ -919,7 +917,8 @@ module Shumway.AVM2.Compiler {
 
     emitDeleteProperty(nameIndex: number) {
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      // TODO: re-enable after XML and XMLList are able to handle this.
+      if (false && multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitReplace('delete ' + this.peek() + '.' + qualifiedName);
       } else {
@@ -937,30 +936,27 @@ module Shumway.AVM2.Compiler {
 
     emitCallProperty(bc: Bytecode) {
       var args = this.popArgs(bc.argCount);
-      var receiver;
       var isLex = bc.op === OP.callproplex;
       var nameElements;
       if (isLex) {
         nameElements = this.emitFindProperty(bc.index, true);
-        receiver = this.peekScope();
       }
       var call: string;
       var multiname = this.constantPool.multinames[bc.index];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      // TODO: re-enable after scope lookups for primitive natives are fixed.
+      if (false && multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
-        receiver || (receiver = this.pop());
-        call = receiver + '.' + qualifiedName + '(' + args + ')';
+        call = '.' + qualifiedName + '(' + args + ')';
       } else {
         if (!nameElements) {
           nameElements = this.emitMultiname(bc.index);
         }
-        receiver || (receiver = this.pop());
-        call = receiver + ".asCallProperty(" + nameElements + ", " + isLex + ", [" + args + "])";
+        call = ".asCallProperty(" + nameElements + ", " + isLex + ", [" + args + "])";
       }
       if (bc.op !== OP.callpropvoid) {
-        this.emitPush(call);
+        this.emitReplace(this.peek() + call);
       } else {
-        this.blockEmitter.writeLn(call + ';');
+        this.blockEmitter.writeLn(this.pop() + call + ';');
       }
     }
 
@@ -970,7 +966,7 @@ module Shumway.AVM2.Compiler {
       // Super calls with statically resolvable names are optimized to direct calls.
       // This must be valid as `asCallSuper` asserts that the method can be found. (Which in
       // itself is invalid, as an incorrect, but valid script can create this situation.)
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = 'm' + Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         call = 'mi.classScope.object.baseClass.traitsPrototype.' + qualifiedName +
                '.call(' + this.peek() + (args.length ? ', ' + args : '') + ')';
@@ -1012,7 +1008,7 @@ module Shumway.AVM2.Compiler {
     emitGetLex(nameIndex: number) {
       var nameElements = this.emitFindProperty(nameIndex, true);
       var multiname = this.constantPool.multinames[nameIndex];
-      if (!multiname.isRuntime() && multiname.namespaces.length === 1) {
+      if (multiname.isSimpleStatic()) {
         var qualifiedName = Multiname.qualifyName(multiname.namespaces[0], multiname.name);
         this.emitReplace(this.peek() + '.' + qualifiedName);
       } else {
@@ -1028,20 +1024,20 @@ module Shumway.AVM2.Compiler {
       } else {
         name = multiname.name;
       }
-      this.emitReplace(this.peek() + ".descendants(" + name + ")");
+      this.emitReplace(this.peek() + ".descendants('" + name + "')");
+    }
+
+    emitCheckFilter() {
+      this.emitReplace('checkFilter(' + this.peek() + ')');
     }
 
     emitMultiname(index: number): string {
       var multiname = this.constantPool.multinames[index];
       this.blockEmitter.writeLn('var mn = mi.abc.constantPool.multinames[' + index + ']; // ' +
                                 (release ? '' : multiname));
-      // Can't handle these yet.
-      Debug.assert(!multiname.isRuntimeNamespace());
-      if (!multiname.isRuntime()) {
-        return 'mn.namespaces, mn.name, mn.flags';
-      }
-      var name = multiname.isRuntimeName() ? this.pop() : multiname.name;
-      return 'mn.namespaces, ' + name + ', mn.flags';
+      var name = multiname.isRuntimeName() ? this.pop() : '"' + (multiname.name || '*') + '"';
+      var namespaces = multiname.isRuntimeNamespace() ? '[' + this.pop() + ']' : 'mn.namespaces';
+      return namespaces + ', ' + name + ', ' + multiname.flags;
     }
 
     emitBinaryIf(block: Bytecode, bc: Bytecode, operator: string, negate: boolean) {
@@ -1294,6 +1290,12 @@ module Shumway.AVM2.Compiler {
       this.emitReplace(type + '.isInstanceOf(' + this.peek() + ')');
     }
 
+    emitIsType(index: number) {
+      this.emitLine('var mn = mi.abc.constantPool.multinames[' + index + '];' +
+                    (release ? '' : ' // ' + this.constantPool.multinames[index]));
+      this.emitReplace('mi.abc.applicationDomain.getType(mn).isType(' + this.peek() + ')');
+    }
+
     emitIsTypeLate() {
       var type = this.pop();
       this.emitReplace('asIsType(' + type + ', ' + this.peek() + ')');
@@ -1346,12 +1348,6 @@ module Shumway.AVM2.Compiler {
       this.blockEmitter.writeLn(left + ' = asAdd(' + left + ', ' + right + ');');
     }
 
-    emitAddExpression_i() {
-      var right = this.pop();
-      var left = this.peek();
-      this.blockEmitter.writeLn(left + ' = asAdd(' + left + ', ' + right + ')|0;');
-    }
-
     emitBinaryExpression(expression: string) {
       var right = this.pop();
       var left = this.peek();
@@ -1361,7 +1357,7 @@ module Shumway.AVM2.Compiler {
     emitBinaryExpression_i(expression: string) {
       var right = this.pop();
       var left = this.peek();
-      this.blockEmitter.writeLn(left + ' = ' + left + expression + right + '|0;');
+      this.blockEmitter.writeLn(left + ' = ' + left + '|0' + expression + right + '|0;');
     }
 
     emitReturnVoid() {

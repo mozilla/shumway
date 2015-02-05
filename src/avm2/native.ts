@@ -881,8 +881,10 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Function];
     public static instanceNatives: any [] = [Function.prototype];
 
+
     constructor() {
       false && super();
+      release || assertUnreachable('ASFunction references must be delegated to Function');
     }
 
     get native_prototype(): Object {
@@ -921,8 +923,10 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = null;
     public static coerce: (value: any) => boolean = Runtime.asCoerceBoolean;
 
-    constructor(value: any = undefined) {
+
+    constructor(input) {
       false && super();
+      release || assertUnreachable('ASBoolean references must be delegated to Boolean');
     }
   }
 
@@ -964,6 +968,11 @@ module Shumway.AVM2.AS {
 
     static _minValue(): number {
       return Number.MIN_VALUE;
+    }
+
+    constructor(input) {
+      false && super();
+      release || assertUnreachable('ASString references must be delegated to Number');
     }
   }
 
@@ -1058,6 +1067,11 @@ module Shumway.AVM2.AS {
     public static coerce: (value: any) => string = Runtime.asCoerceString;
     get native_length(): number {
       return (<any>this).length;
+    }
+
+    constructor(input) {
+      false && super();
+      release || assertUnreachable('ASString references must be delegated to String');
     }
 
     match(re) {
@@ -1158,6 +1172,11 @@ module Shumway.AVM2.AS {
       defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
       defineNonEnumerableProperty(proto, '$BgsortOn', asProto.sortOn);
     };
+
+    constructor(input) {
+      false && super();
+      release || assertUnreachable('ASArray references must be delegated to Array');
+    }
 
     static CACHE_NUMERIC_COMPARATORS = true;
     static numericComparatorCache = Object.create(null);
@@ -1374,6 +1393,11 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [XRegExp];
     public static instanceNatives: any [] = [XRegExp.prototype];
 
+    constructor(input) {
+      false && super();
+      release || assertUnreachable('ASRegExp references must be delegated to XRegExp.');
+    }
+
     get native_source(): string {
       var self: any = this;
       return self.source;
@@ -1445,6 +1469,11 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Date];
     public static instanceNatives: any [] = [Date.prototype];
     public static instanceConstructor: any = Date;
+
+    constructor(input) {
+      false && super();
+      release || assertUnreachable('ASDate references must be delegated to Date');
+    }
   }
 
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
