@@ -513,7 +513,8 @@ module Shumway.AVM2.Runtime {
     var self: Object = this;
     if (traceCallExecution.value) {
       var receiverClassName = self.class ? self.class + " ": "";
-      callWriter.enter("call " + receiverClassName + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+      callWriter.enter("call " + receiverClassName + name + "(" +
+                       (args ? toSafeArrayString(args) : '') + ") #" + callCounter.count(name));
     }
     var receiver: Object = isLex ? null : self;
     var result;
@@ -540,7 +541,8 @@ module Shumway.AVM2.Runtime {
     var self: Object = this;
     if (traceCallExecution.value) {
       var receiverClassName = self.class ? self.class + " ": "";
-      callWriter.enter("call super " + receiverClassName + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+      callWriter.enter("call super " + receiverClassName + name + "(" +
+                       (args ? toSafeArrayString(args) : '') + ") #" + callCounter.count(name));
     }
     var baseClass = scope.object.baseClass;
     var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
@@ -626,7 +628,8 @@ module Shumway.AVM2.Runtime {
     var self: Object = this;
     var constructor = self.asGetProperty(namespaces, name, flags);
     if (traceCallExecution.value) {
-      callWriter.enter("construct " + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+      callWriter.enter("construct " + name + "(" +
+                       (args ? toSafeArrayString(args) : '') + ") #" + callCounter.count(name));
     }
     var result = construct(constructor, args);
     traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
