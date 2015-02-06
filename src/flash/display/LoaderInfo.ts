@@ -93,6 +93,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _url: string;
+    _loaderUrl: string;
     _file: any /* SWFFile|ImageFile*/;
     _bytesLoaded: number /*uint*/;
     _bytesTotal: number /*uint*/;
@@ -120,7 +121,7 @@ module Shumway.AVM2.AS.flash.display {
     _avm1Context: Shumway.AVM1.AVM1Context;
 
     get loaderURL(): string {
-      return this._loader.loaderInfo.url;
+      return this._loaderUrl;
     }
 
     get url(): string {

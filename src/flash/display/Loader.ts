@@ -216,6 +216,11 @@ module Shumway.AVM2.AS.flash.display {
       this._contentLoaderInfo = new display.LoaderInfo(display.LoaderInfo.CtorToken);
       this._contentLoaderInfo._loader = this;
 
+      var currentAbc = AVM2.currentAbc();
+      if (currentAbc) {
+        this._contentLoaderInfo._loaderUrl = currentAbc.env['loaderInfo'].url;
+      }
+
       this._fileLoader = null;
       this._loadStatus = LoadStatus.Unloaded;
     }
@@ -478,6 +483,7 @@ module Shumway.AVM2.AS.flash.display {
           for (var i = loaderInfo._abcBlocksLoaded; i < abcBlocksLoaded; i++) {
             var abcBlock = file.abcBlocks[i];
             var abc = new AbcFile(abcBlock.data, abcBlock.name);
+            abc.env['loaderInfo'] = loaderInfo;
             if (abcBlock.flags) {
               // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
               // immediately.
