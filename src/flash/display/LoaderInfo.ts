@@ -47,6 +47,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
       this._loader = null;
+      this._loaderUrl = '';
       this.reset();
     }
 
@@ -127,7 +128,7 @@ module Shumway.AVM2.AS.flash.display {
 
         // The loaderURL value can be changed by player settings.
         var service: IRootElementService = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
-        return (this.url === service.swfUrl && service.loaderUrl) || this.url;
+        return (this._url === service.swfUrl && service.loaderUrl) || this._url;
       }
       return this._loaderUrl;
     }

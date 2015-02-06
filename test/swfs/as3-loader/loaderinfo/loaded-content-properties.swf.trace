@@ -18,8 +18,7 @@ parentSandboxBridge: null
 sameDomain: Error: Error #2099: The loading object is not sufficiently loaded to provide this information.
 sharedEvents: [object EventDispatcher]
 swfVersion: Error: Error #2099: The loading object is not sufficiently loaded to provide this information.
-TODO: should be [object UncaughtErrorEvents]
-uncaughtErrorEvents: [object Object]
+uncaughtErrorEvents: [object UncaughtErrorEvents]
 url: null
 width: Error: Error #2099: The loading object is not sufficiently loaded to provide this information.
 
@@ -44,7 +43,6 @@ parentSandboxBridge: null
 sameDomain: true
 sharedEvents: [object EventDispatcher]
 swfVersion: Error: Error #2098: The loading object is not a .swf file, you cannot request SWF properties from it.
-TODO: should be [object UncaughtErrorEvents]
-uncaughtErrorEvents: [object Object]
+uncaughtErrorEvents: [object UncaughtErrorEvents]
 url: alf.jpg
 width: 140

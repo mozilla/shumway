@@ -206,11 +206,10 @@ module Shumway.Player {
 
     public load(url: string, buffer?: ArrayBuffer) {
       release || assert (!this._loader, "Can't load twice.");
-      this._swfUrl = url;
+      this._swfUrl = this._loaderUrl = url;
       this._stage = new flash.display.Stage();
       var loader = this._loader = flash.display.Loader.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
-
       if (playAllSymbolsOption.value) {
         this._playAllSymbols();
         loaderInfo._allowCodeExecution = false;
