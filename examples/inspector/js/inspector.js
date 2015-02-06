@@ -139,11 +139,10 @@ function executeFile(file, buffer, movieParams) {
 
   if (state.useIFramePlayer && filename.endsWith(".swf")) {
     var swfURL = Shumway.FileLoadingService.instance.setBaseUrl(file);
-    var loaderURL = queryVariables['loaderURL'] || swfURL;
-    runIFramePlayer({sysMode: sysMode, appMode: appMode, loaderURL: loaderURL,
+    runIFramePlayer({sysMode: sysMode, appMode: appMode,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
       stageAlign: state.salign, stageScale: state.scale,
-      fileReadChunkSize: state.fileReadChunkSize});
+      fileReadChunkSize: state.fileReadChunkSize, loaderURL: state.loaderURL});
     return;
   }
 
@@ -175,7 +174,6 @@ function executeFile(file, buffer, movieParams) {
     Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
         var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
-        var loaderURL = queryVariables['loaderURL'] || swfURL;
 
         var easel = createEasel();
 
@@ -189,6 +187,7 @@ function executeFile(file, buffer, movieParams) {
         player.stageAlign = state.salign;
         player.stageScale = state.scale;
         player.displayParameters = easel.getDisplayParameters();
+        player.loaderUrl = state.loaderURL;
 
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
         player.load(file, buffer);
