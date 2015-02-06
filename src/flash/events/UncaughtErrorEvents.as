@@ -15,6 +15,7 @@
  */
 
 package flash.events {
+[native(cls='UncaughtErrorEventsClass')]
 public class UncaughtErrorEvents extends EventDispatcher {
   public native function UncaughtErrorEvents();
 }
