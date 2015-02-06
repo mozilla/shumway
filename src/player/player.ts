@@ -141,6 +141,11 @@ module Shumway.Player {
      */
     private _swfUrl: string = null;
 
+    /**
+     * Loader URL, can be different from SWF URL.
+     */
+    private _loaderUrl: string = null;
+
     constructor() {
       this._keyboardEventDispatcher = new KeyboardEventDispatcher();
       this._mouseEventDispatcher = new MouseEventDispatcher();
@@ -184,7 +189,15 @@ module Shumway.Player {
     }
 
     public set pageUrl(value: string) {
-      this._pageUrl = value;
+      this._pageUrl = value || null;
+    }
+
+    public get loaderUrl(): string {
+      return this._loaderUrl;
+    }
+
+    public set loaderUrl(value: string) {
+      this._loaderUrl = value || null;
     }
 
     public get swfUrl(): string {
@@ -193,11 +206,10 @@ module Shumway.Player {
 
     public load(url: string, buffer?: ArrayBuffer) {
       release || assert (!this._loader, "Can't load twice.");
-      this._swfUrl = url;
+      this._swfUrl = this._loaderUrl = url;
       this._stage = new flash.display.Stage();
       var loader = this._loader = flash.display.Loader.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
-
       if (playAllSymbolsOption.value) {
         this._playAllSymbols();
         loaderInfo._allowCodeExecution = false;

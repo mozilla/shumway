@@ -109,6 +109,7 @@ function runSwfPlayer(data) {
       player.stageAlign = stageAlign;
       player.stageScale = stageScale;
       player.displayParameters = displayParameters;
+      player.loaderUrl = loaderURL;
       player.load(file);
     }
     file = Shumway.FileLoadingService.instance.setBaseUrl(file);
