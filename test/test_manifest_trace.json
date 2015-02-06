@@ -149,5 +149,12 @@
         "swfs/captions.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "Bug 1093712 - Loadee does not call frames if Loader is not on the stage",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/as3-loader/bug1093712/loader.swf"
+       ],
+       "type": "stas"
     }
 ]
