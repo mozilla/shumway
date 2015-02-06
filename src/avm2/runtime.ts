@@ -155,13 +155,8 @@ module Shumway.AVM2.Runtime {
    */
   export var VM_METHOD_OVERRIDES = Object.create(null);
 
-  /**
-   * We use this to give functions unique IDs to help with debugging.
-   */
-  var vmNextInterpreterFunctionId = 1;
-  var vmNextCompiledFunctionId = 1;
-
   var compiledFunctionCount = 0;
+  var anonymousFunctionsCount = 0;
   /**
    * Checks if the specified |object| is the prototype of a native JavaScript object.
    */
@@ -306,19 +301,23 @@ module Shumway.AVM2.Runtime {
    * - getNamespaceResolutionMap(namespaces)
    * - resolveMultinameProperty(namespaces, name, flags)
    *
-   * Special objects like Vector, Dictionary, XML, etc. can override these to provide different behaviour.
+   * Special objects like Vector, Dictionary, XML, etc. can override these to provide different
+   * behaviour.
    *
-   * To avoid boxing we represent multinames as a group of 3 parts: |namespaces| undefined or an array of
-   * namespace objects, |name| any value, and |flags| an integer value. To resolve a multiname to a qualified
-   * name we call |resolveMultinameProperty|. The expensive case is when we resolve multinames with multiple
-   * namespaces. This is done with the help of |getNamespaceResolutionMap|.
+   * To avoid boxing we represent multinames as a group of 3 parts: |namespaces| undefined or an
+   * array of namespace objects, |name| any value, and |flags| an integer value. To resolve a
+   * multiname to a qualified name we call |resolveMultinameProperty|. The expensive case is when
+   * we resolve multinames with multiple namespaces. This is done with the help of
+   * |getNamespaceResolutionMap|.
    *
-   * Every object that contains traits has a hidden array property called "resolutionMap". This maps between
-   * namespace sets to an object that maps all trait names to their resolved qualified names in each namespace.
+   * Every object that contains traits has a hidden array property called "resolutionMap". This
+   * maps between namespace sets to an object that maps all trait names to their resolved qualified
+   * names in each namespace.
    *
-   * For example, suppose we had the class A { n0 var x; n1 var x; n0 var y; n1 var y; } and two namespace sets:
-   * {n0, n2} and {n2, n1}. The namespace sets are given the unique IDs 0 and 1 respectively. The resolution map
-   * for class A would be:
+   * For example, suppose we had the class A { n0 var x; n1 var x; n0 var y; n1 var y; } and two
+   * namespace sets:
+   * {n0, n2} and {n2, n1}. The namespace sets are given the unique IDs 0 and 1 respectively. The
+   * resolution map for class A would be:
    *
    * resolutionMap[0] = {x: n0$$x, y: n0$$y}
    * resolutionMap[1] = {x: n1$$x, y: n1$$y}
@@ -433,18 +432,19 @@ module Shumway.AVM2.Runtime {
                                                                    "//# sourceURL=forward-toString.as");
 
   /**
-   * Patches the |object|'s toString properties with a forwarder that calls the AS3 toString. We only do this when
-   * an AS3 object has the |toString| trait defined, or whenever the |toString| property is assigned to the object.
+   * Patches the |object|'s toString properties with a forwarder that calls the AS3 toString. We
+   * only do this when an AS3 object has the |toString| trait defined, or whenever the |toString|
+   * property is assigned to the object.
    *
-   * Because native methods are linked lazily, if a class defines a native |toString| method we must make sure that
-   * we don't overwrite its template definition. If we do, then lose the template definition and also create a cycle,
-   * since we would be forwarding to ourselves.
+   * Because native methods are linked lazily, if a class defines a native |toString| method we
+   * must make sure that we don't overwrite its template definition. If we do, then lose the
+   * template definition and also create a cycle, since we would be forwarding to ourselves.
    *
-   * One way to solve this is to make sure that our template definitions don't live in the same objects as the ones
-   * we apply bindings too. This is a huge pain to change at this point.
+   * One way to solve this is to make sure that our template definitions don't live in the same
+   * objects as the ones we apply bindings too. This is a huge pain to change at this point.
    *
-   * Instead, we save the original toString as original_toString and special case the property lookup it in the
-   * getNatve code in natives.ts.
+   * Instead, we save the original toString as original_toString and special case the property
+   * lookup it in the getNatve code in natives.ts.
    */
   function tryInjectToStringAndValueOfForwarder(self: Object, resolved: string) {
     if (resolved === Multiname.VALUE_OF) {
@@ -721,9 +721,11 @@ module Shumway.AVM2.Runtime {
   }
 
   /**
-   * Determine if the given object has any more properties after the specified |index| and if so, return
-   * the next index or |zero| otherwise. If the |obj| has no more properties then continue the search in
-   * |obj.__proto__|. This function returns an updated index and object to be used during iteration.
+   * Determine if the given object has any more properties after the specified |index| and if so,
+   * return the next index or |zero| otherwise. If the |obj| has no more properties then continue
+   * the search in
+   * |obj.__proto__|. This function returns an updated index and object to be used during
+   * iteration.
    *
    * the |for (x in obj) { ... }| statement is compiled into the following pseudo bytecode:
    *
@@ -738,10 +740,11 @@ module Shumway.AVM2.Runtime {
    * }
    *
    * #1 If we return zero, the iteration stops.
-   * #2 The spec says we need to get the nextName at index + 1, but it's actually index - 1, this caused
-   * me two hours of my life that I will probably never get back.
+   * #2 The spec says we need to get the nextName at index + 1, but it's actually index - 1, this
+   * caused me two hours of my life that I will probably never get back.
    *
-   * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
+   * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers
+   * don't rely on it.
    */
   export function asHasNext2(hasNext2Info: HasNext2Info) {
     if (isNullOrUndefined(hasNext2Info.object)) {
@@ -1292,8 +1295,9 @@ module Shumway.AVM2.Runtime {
   }
 
   /**
-   * It's not possible to resolve the multiname {a, b, c}::x to {b}::x if no trait exists in any of the currently
-   * loaded abc files that defines the {b}::x name. Of course, this can change if we load an abc file that defines it.
+   * It's not possible to resolve the multiname {a, b, c}::x to {b}::x if no trait exists in any of
+   * the currently loaded abc files that defines the {b}::x name. Of course, this can change if we
+   * load an abc file that defines it.
    */
   export class GlobalMultinameResolver {
     private static hasNonDynamicNamespaces = Object.create(null);
@@ -1314,7 +1318,8 @@ module Shumway.AVM2.Runtime {
     }
 
     /**
-     * Called after an .abc file is loaded. This invalidates inline caches if they have been created.
+     * Called after an .abc file is loaded. This invalidates inline caches if they have been
+     * created.
      */
     public static loadAbc(abc) {
       if (!globalMultinameAnalysis.value) {
@@ -1459,6 +1464,28 @@ module Shumway.AVM2.Runtime {
     return method;
   }
 
+  function nameFunction(methodInfo) {
+    var fnName = methodInfo.name ?
+                 Multiname.getFullQualifiedName(methodInfo.name) :
+                 "fn" + compiledFunctionCount;
+    if (methodInfo.holder) {
+      var fnNamePrefix = "";
+      if (methodInfo.holder instanceof ClassInfo) {
+        fnNamePrefix = "static$" + methodInfo.holder.instanceInfo.name.getName();
+      } else if (methodInfo.holder instanceof InstanceInfo) {
+        fnNamePrefix = methodInfo.holder.name.getName();
+      } else if (methodInfo.holder instanceof ScriptInfo) {
+        fnNamePrefix = "script";
+      }
+      fnName = fnNamePrefix + "$" + fnName;
+    }
+    fnName = Shumway.StringUtilities.escapeString(fnName);
+    if (methodInfo.verified) {
+      fnName += "$V";
+    }
+    return fnName;
+  }
+
   export function createInterpretedFunction(methodInfo, scope, hasDynamicScope) {
     var mi = methodInfo;
     var hasDefaults = false;
@@ -1508,13 +1535,16 @@ module Shumway.AVM2.Runtime {
       })(fn);
     }
     fn.instanceConstructor = fn;
-    fn.debugName = "Interpreter Function #" + vmNextInterpreterFunctionId++;
+    var fnName = nameFunction(methodInfo);
+    fn.displayName = fn.debugName = fnName;
+    fn.methodInfo = methodInfo;
+    jsGlobal[fnName] = fn;
     return fn;
   }
 
   export function debugName(value) {
     if (isFunction(value)) {
-      return value.debugName;
+      return value.name;
     }
     return value;
   }
@@ -1527,22 +1557,8 @@ module Shumway.AVM2.Runtime {
       compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
     }
 
-    var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
-    if (mi.holder) {
-      var fnNamePrefix = "";
-      if (mi.holder instanceof ClassInfo) {
-        fnNamePrefix = "static$" + mi.holder.instanceInfo.name.getName();
-      } else if (mi.holder instanceof InstanceInfo) {
-        fnNamePrefix = mi.holder.name.getName();
-      } else if (mi.holder instanceof ScriptInfo) {
-        fnNamePrefix = "script";
-      }
-      fnName = fnNamePrefix + "$" + fnName;
-    }
-    fnName = Shumway.StringUtilities.escapeString(fnName);
-    if (mi.verified) {
-      fnName += "$V";
-    }
+    var fnName = nameFunction(methodInfo);
+
     if (!breakpoint) {
       var breakFilter = Shumway.AVM2.Compiler.breakFilter.value;
       if (breakFilter && fnName.search(breakFilter) >= 0) {
@@ -1554,7 +1570,8 @@ module Shumway.AVM2.Runtime {
       body = "{ debugger; \n" + body + "}";
     }
     if (!cached) {
-      var fnSource = "function " + fnName + " (" + compilation.parameters.join(", ") + ") " + body;
+      var fnSource = "jsGlobal. " + fnName + " = function " + fnName + " (" +
+                     compilation.parameters.join(", ") + ") " + body;
       fnSource += "//# sourceURL=fun-" + fnName + ".as";
     }
 
@@ -1569,12 +1586,11 @@ module Shumway.AVM2.Runtime {
         console.log(fnSource);
       }
     }
-    // mi.freeMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
-    // mi.freeMethod = new Function(parameters, body);
-
-    var fn = cached || new Function("return " + fnSource)();
-
-    fn.debugName = "Compiled Function #" + vmNextCompiledFunctionId++;
+    eval(cached || fnSource);
+    var fn = jsGlobal[fnName];
+    fn.debugName = fnName;
+    release || assert(fn);
+    fn.methodInfo = mi;
     return fn;
   }
 
@@ -1707,22 +1723,25 @@ module Shumway.AVM2.Runtime {
   }
 
   /**
-   * ActionScript Classes are modeled as constructor functions (class objects) which hold additional properties:
+   * ActionScript Classes are modeled as constructor functions (class objects) which hold
+   * additional properties:
    *
    * [scope]: a scope object holding the current class object
    *
    * [baseClass]: a reference to the base class object
    *
-   * [instanceTraits]: an accumulated set of traits that are to be applied to instances of this class
+   * [instanceTraits]: an accumulated set of traits that are to be applied to instances of this
+   * class
    *
-   * [prototype]: the prototype object of this constructor function  is populated with the set of instance traits,
-   *   when instances are of this class are created, their __proto__ is set to this object thus inheriting this
-   *   default set of properties.
+   * [prototype]: the prototype object of this constructor function  is populated with the set of
+   * instance traits, when instances are of this class are created, their __proto__ is set to this
+   * object thus inheriting this default set of properties.
    *
-   * [construct]: a reference to the class object itself, this is used when invoking the constructor with an already
-   *   constructed object (i.e. constructsuper)
+   * [construct]: a reference to the class object itself, this is used when invoking the
+   * constructor with an already constructed object (i.e. constructsuper)
    *
-   * additionally, the class object also has a set of class traits applied to it which are visible via scope lookups.
+   * additionally, the class object also has a set of class traits applied to it which are visible
+   * via scope lookups.
    */
   export function createClass(classInfo, baseClass, scope) {
     // release || assert (!baseClass || baseClass instanceof Class);
