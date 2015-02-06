@@ -21,13 +21,9 @@ EXTENSION_SRC = ../firefox
 
 # Just builds a ff extension
 
-VERSION_BASELINE=9c77cb929464c1bca343f4
-VERSION=0.9.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
-VERSION_SHA=`git log --format="%h" -n 1`
-
 build: ensureoutputdir
 	# Coping extension files
-	echo "Creating mozcentral package verions: $(VERSION)"
+	echo "Creating mozcentral package"
 	mkdir -p $(BUILD_EXTENSION_DIR)
 	cp -R ../../LICENSE $(EXTENSION_SRC)/chrome $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
 	cp -R browser $(BUILD_DIR)/
@@ -42,8 +38,7 @@ build: ensureoutputdir
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_EXTENSION_DIR)/content/avm2/generated/builtin/
 	# Coping closure optimized shumway.js files
 	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_EXTENSION_DIR)/content/
-	echo $(VERSION) > $(BUILD_EXTENSION_DIR)/content/version.txt
-	echo $(VERSION_SHA) >> $(BUILD_EXTENSION_DIR)/content/version.txt
+	cp ../../build/version/version.txt $(BUILD_EXTENSION_DIR)/content/version.txt
 
 ensureoutputdir: clean
 	-mkdir -p $(BUILD_DIR)

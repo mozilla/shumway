@@ -171,6 +171,7 @@ module.exports = function(grunt) {
     parallel: {
       base: {
         tasks: [
+          { args: ['generate-version'], grunt: true },
           { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
           { args: ['exec:build_base_ts'].concat(parallelArgs), grunt: true },
         ]
@@ -474,6 +475,7 @@ module.exports = function(grunt) {
       grunt.file.copy(file, outputDir + '/build/bundles-cc/' + path.basename(file));
     });
     grunt.file.copy('src/shell/shell-node.js', outputDir + '/src/shell/shell-node.js');
+    grunt.file.copy('build/version/version.txt', outputDir + '/version.txt');
     grunt.file.copy('LICENSE', outputDir + '/LICENSE');
 
     var waitFor = 0, done = this.async();
@@ -537,6 +539,7 @@ module.exports = function(grunt) {
   ]);
   grunt.registerTask('travis', [
     // 'parallel:base',
+    'generate-version',
     'exec:build_base_ts',
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
@@ -738,6 +741,56 @@ module.exports = function(grunt) {
 
     rsync();
   });
+  grunt.registerTask('generate-version', function () {
+    function generateFiles() {
+      console.log('Generating version files for ' + version + ' (' + sha + ')');
+      grunt.file.write(outputDir + '/version.json',
+        JSON.stringify({version: version, sha: sha}));
+      grunt.file.write(outputDir + '/version.txt', version + '\n' + sha + '\n');
+      grunt.file.write(outputDir + '/version.ts',
+        'module Shumway {\n  export var version = \'' + version + '\';\n' +
+        '  export var build = \'' + sha + '\';\n}\n');
+      grunt.file.write(outputDir + '/version.js',
+          'var Shumway;\n(function (Shumway) {\n' +
+          '  Shumway.version = \'' + version + '\';\n' +
+          '  Shumway.build = \'' + sha + '\';\n' +
+          '})(Shumway || (Shumway = {}));\n');
+    }
+
+    var VERSION_BASELINE = '9c77cb929464c1bca343f4';
+    var VERSION_BASE = '0.9.';
+
+    var version = '' + new Date(), sha = 'unknown';
+
+    var outputDir = 'build/version';
+    grunt.file.mkdir(outputDir);
+
+    var done = this.async();
+    grunt.util.spawn({
+      cmd: 'git',
+      args: ['log', '--format=oneline', VERSION_BASELINE + '..']
+    }, function (error, result, code) {
+      if (code) {
+        generateFiles();
+        done('Error code ' + code + ': ' + error);
+        return;
+      }
+      version = VERSION_BASE + (String(result).split(/\n/g).length);
+      grunt.util.spawn({
+        cmd: 'git',
+        args: ['log', '--format=%h', '-n', '1']
+      }, function (error, result, code) {
+        if (code) {
+          generateFiles();
+          done('Error code ' + code + ': ' + error);
+          return;
+        }
+        sha = String(result);
+        generateFiles();
+        done();
+      });
+    });
+  });
   grunt.registerTask('shuobject-package', function () {
     var outputDir = 'build/shuobject';
     grunt.file.mkdir(outputDir);
@@ -759,6 +812,7 @@ module.exports = function(grunt) {
     grunt.file.copy('web/demo.swf', outputDir + '/examples/demo.swf');
     grunt.file.copy('examples/external/externalinterface/avm2.swf', outputDir + '/examples/external_interface.swf');
 
+    grunt.file.copy('build/version/version.txt', outputDir + '/version.txt');
     grunt.file.copy('LICENSE', outputDir + '/LICENSE');
   });
 
