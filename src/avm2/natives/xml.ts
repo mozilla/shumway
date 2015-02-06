@@ -2431,14 +2431,9 @@ module Shumway.AVM2.AS {
       // Checking if the method exists before calling it
       var method;
       var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-      if (this.asGetNumericProperty && Multiname.isNumeric(resolved)) {
-        method = this.asGetNumericProperty(resolved);
-      } else {
-        var openMethods = this.asOpenMethods;
-        method = (openMethods && openMethods[resolved]) || this[resolved];
-      }
+      method = this.asOpenMethods[resolved] || this[resolved];
       if (method) {
-        return method.asApply(isLex ? null : this, args);
+        return method.apply(isLex ? null : this, args);
       }
       // Otherwise, 11.2.2.1 CallMethod ( r , args )
       // If f == undefined and Type(base) is XMLList and base.[[Length]] == 1
@@ -2450,7 +2445,7 @@ module Shumway.AVM2.AS {
       if (this.hasSimpleContent()) {
         return Object(toString(this)).asCallProperty(namespaces, name, flags, isLex, args);
       }
-      throw new TypeError();
+      throwError('TypeError', Errors.CallOfNonFunctionError, 'value');
     }
 
     _delete(key, isMethod) {
@@ -3455,14 +3450,9 @@ module Shumway.AVM2.AS {
       // Checking if the method exists before calling it
       var method;
       var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-      if (this.asGetNumericProperty && Multiname.isNumeric(resolved)) {
-        method = this.asGetNumericProperty(resolved);
-      } else {
-        var openMethods = this.asOpenMethods;
-        method = (openMethods && openMethods[resolved]) || this[resolved];
-      }
+      method = this.asOpenMethods[resolved] || this[resolved];
       if (method) {
-        return method.asApply(isLex ? null : this, args);
+        return method.apply(isLex ? null : this, args);
       }
       // Otherwise, 11.2.2.1 CallMethod ( r , args )
       // If f == undefined and Type(base) is XMLList and base.[[Length]] == 1
@@ -3470,7 +3460,7 @@ module Shumway.AVM2.AS {
       if (this.length() === 1) {
         return this._children[0].asCallProperty(namespaces, name, flags, isLex, args);
       }
-      throw new TypeError();
+      throwError('TypeError', Errors.CallOfNonFunctionError, 'value');
     }
   }
 }

@@ -47,9 +47,9 @@ module Shumway.AVM2.Runtime {
   }
 
   /**
-   * Scopes are used to emulate the scope stack as a linked list of scopes, rather than a stack. Each
-   * scope holds a reference to a scope [object] (which may exist on multiple scope chains, thus preventing
-   * us from chaining the scope objects together directly).
+   * Scopes are used to emulate the scope stack as a linked list of scopes, rather than a stack.
+   * Each scope holds a reference to a scope [object] (which may exist on multiple scope chains,
+   * thus preventing us from chaining the scope objects together directly).
    *
    * Scope Operations:
    *
@@ -58,13 +58,14 @@ module Shumway.AVM2.Runtime {
    *  get global scope: scope.global
    *  get scope object: scope.object
    *
-   * Method closures have a [savedScope] property which is bound when the closure is created. Since we use a
-   * linked list of scopes rather than a scope stack, we don't need to clone the scope stack, we can bind
-   * the closure to the current scope.
+   * Method closures have a [savedScope] property which is bound when the closure is created. Since
+   * we use a linked list of scopes rather than a scope stack, we don't need to clone the scope
+   * stack, we can bind the closure to the current scope.
    *
-   * The "scope stack" for a method always starts off as empty and methods push and pop scopes on their scope
-   * stack explicitly. If a property is not found on the current scope stack, it is then looked up
-   * in the [savedScope]. To emulate this we actually wrap every generated function in a closure, such as
+   * The "scope stack" for a method always starts off as empty and methods push and pop scopes on
+   * their scope stack explicitly. If a property is not found on the current scope stack, it is
+   * then looked up in the [savedScope]. To emulate this we actually wrap every generated function
+   * in a closure, such as
    *
    *  function fnClosure(scope) {
    *    return function fn() {
@@ -72,14 +73,16 @@ module Shumway.AVM2.Runtime {
    *    };
    *  }
    *
-   * When functions are created, we bind the function to the current scope, using fnClosure.bind(null, this)();
+   * When functions are created, we bind the function to the current scope, using
+   * fnClosure.bind(null, this)();
    *
    * Scope Caching:
    *
-   * Calls to |findScopeProperty| are very expensive. They recurse all the way to the top of the scope chain and then
-   * laterally across other scripts. We optimize this by caching property lookups in each scope using Multiname
-   * |id|s as keys. Each Multiname object is given a unique ID when it's constructed. For QNames we only cache
-   * string QNames.
+   * Calls to |findScopeProperty| are very expensive. They recurse all the way to the top of the
+   * scope chain and then laterally across other scripts. We optimize this by caching property
+   * lookups in each scope using Multiname
+   * |id|s as keys. Each Multiname object is given a unique ID when it's constructed. For QNames we
+   * only cache string QNames.
    *
    * TODO: This is not sound, since you can add/delete properties to/from with scopes.
    */
@@ -124,9 +127,10 @@ module Shumway.AVM2.Runtime {
     }
 
     /**
-     * Searches the scope stack for the object containing the specified property. If |strict| is specified then throw
-     * an exception if the property is not found. If |scopeOnly| is specified then only search the scope chain and not
-     * any of the top level domains (this is used by the verifier to bake in direct object references).
+     * Searches the scope stack for the object containing the specified property. If |strict| is
+     * specified then throw an exception if the property is not found. If |scopeOnly| is specified
+     * then only search the scope chain and not any of the top level domains (this is used by the
+     * verifier to bake in direct object references).
      *
      * Property lookups are cached in scopes but are not used when only looking at |scopesOnly|.
      */
@@ -201,11 +205,14 @@ module Shumway.AVM2.Runtime {
       }
     }
     if (!boundMethod) {
-      countTimeline("Bind Scope - Slow Path");
+      release || countTimeline("Bind Scope - Slow Path");
       boundMethod = function () {
-        Array.prototype.unshift.call(arguments, scope);
+        var args = [scope];
+        for (var i = 0; i < arguments.length; i++) {
+          args.push(arguments[i]);
+        }
         var global = (this === jsGlobal ? scope.global.object : this);
-        return fn.asApply(global, arguments);
+        return fn.apply(global, args);
       };
     }
     boundMethod.methodInfo = methodInfo;
