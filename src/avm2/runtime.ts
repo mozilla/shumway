@@ -405,15 +405,12 @@ module Shumway.AVM2.Runtime {
     var self: Object = this;
     var receiver = isLex ? null : this;
     var openMethods = self.asOpenMethods;
-    // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
-    // when using memoizers because the function gets bound to |this|.
-    var method;
+    // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to 
+    // work when using memoizers because the function gets bound to |this|.
     if (receiver && openMethods && openMethods[resolved]) {
-      method = openMethods[resolved];
-    } else {
-      method = self[resolved];
+      return openMethods[resolved].apply(receiver, args);
     }
-    return method.asApply(receiver, args);
+    return self[resolved].asApply(receiver, args);
   }
 
   export function asGetResolvedStringPropertyFallback(resolved: any) {
@@ -512,7 +509,7 @@ module Shumway.AVM2.Runtime {
 
   export function asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
     var self: Object = this;
-    if (traceCallExecution.value) {
+    if (!release && traceCallExecution.value) {
       var receiverClassName = self.class ? self.class + " ": "";
       callWriter.enter("call " + receiverClassName + name + "(" +
                        (args ? toSafeArrayString(args) : '') + ") #" + callCounter.count(name));
@@ -523,24 +520,26 @@ module Shumway.AVM2.Runtime {
     var resolved = self.resolveMultinameProperty(namespaces, name, flags);
     if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
       method = self.asGetNumericProperty(resolved);
+      result = method.asApply(receiver, args);
     } else {
       var openMethods = self.asOpenMethods;
-      // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
-      // when using memoizers because the function gets bound to |this|.
+      // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to
+      // work when using memoizers because the function gets bound to |this|.
       if (receiver && openMethods && openMethods[resolved]) {
-        method = openMethods[resolved];
+        // For trait methods, we know that they're proper functions, so we can use .apply, enabling
+        // JS engine optimizations.
+        result = openMethods[resolved].apply(receiver, args);
       } else {
-        method = self[resolved];
+        result = self[resolved].asApply(receiver, args);
       }
     }
-    result = method.asApply(receiver, args);
-    traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
+    release || traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;
   }
 
   export function asCallSuper(scope, namespaces: Namespace [], name: any, flags: number, args: any []) {
     var self: Object = this;
-    if (traceCallExecution.value) {
+    if (!release && traceCallExecution.value) {
       var receiverClassName = self.class ? self.class + " ": "";
       callWriter.enter("call super " + receiverClassName + name + "(" +
                        (args ? toSafeArrayString(args) : '') + ") #" + callCounter.count(name));
@@ -550,14 +549,14 @@ module Shumway.AVM2.Runtime {
     var openMethods = baseClass.traitsPrototype.asOpenMethods;
     release || assert (openMethods && openMethods[resolved]);
     var method = openMethods[resolved];
-    var result = method.asApply(this, args);
-    traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
+    var result = method.apply(this, args);
+    release || traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;
   }
 
   export function asSetSuper(scope, namespaces: Namespace [], name: any, flags: number, value: any) {
     var self: Object = this;
-    if (traceCallExecution.value) {
+    if (!release && traceCallExecution.value) {
       var receiverClassName = self.class ? self.class + " ": "";
       callWriter.enter("set super " + receiverClassName + name + "(" + toSafeString(value) + ") #" + callCounter.count(name));
     }
@@ -568,12 +567,12 @@ module Shumway.AVM2.Runtime {
     } else {
       baseClass.traitsPrototype[VM_OPEN_SET_METHOD_PREFIX + resolved].call(this, value);
     }
-    traceCallExecution.value > 0 && callWriter.leave("");
+    release || traceCallExecution.value > 0 && callWriter.leave("");
   }
 
   export function asGetSuper(scope, namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
-    if (traceCallExecution.value) {
+    if (!release && traceCallExecution.value) {
       var receiver = self.class ? self.class + " ": "";
       callWriter.enter("get super " + receiver + name + " #" + callCounter.count(name));
     }
@@ -585,7 +584,7 @@ module Shumway.AVM2.Runtime {
     } else {
       result = baseClass.traitsPrototype[VM_OPEN_GET_METHOD_PREFIX + resolved].call(this);
     }
-    traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
+    release || traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;
   }
 
@@ -594,13 +593,13 @@ module Shumway.AVM2.Runtime {
       // return primitive values for new'd boxes
       var qn = Multiname.getQualifiedName(cls.classInfo.instanceInfo.name);
       if (qn === Multiname.String) {
-        return String.asApply(null, args);
+        return String.apply(null, args);
       }
       if (qn === Multiname.Boolean) {
-        return Boolean.asApply(null, args);
+        return Boolean.apply(null, args);
       }
       if (qn === Multiname.Number) {
-        return Number.asApply(null, args);
+        return Number.apply(null, args);
       }
     }
     var c = <any> cls.instanceConstructor;
@@ -622,7 +621,7 @@ module Shumway.AVM2.Runtime {
     for (var i = 0; i < args.length; i++) {
       applyArguments[i + 1] = args[i];
     }
-    return new (Function.bind.asApply(c, applyArguments));
+    return new (Function.bind.apply(c, applyArguments));
   }
 
   export function asConstructProperty(namespaces: Namespace [], name: any, flags: number, args: any []) {
@@ -637,7 +636,8 @@ module Shumway.AVM2.Runtime {
     return result;
   }
 
-  // TODO: change all the asHasFoo methods to return the resolved name or null to avoid resolving twice.
+  // TODO: change all the asHasFoo methods to return the resolved name or null to avoid resolving
+  // twice.
   export function asHasProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
     return self.resolveMultinameProperty(namespaces, name, flags) in this;
@@ -771,9 +771,6 @@ module Shumway.AVM2.Runtime {
         return;
       }
     }
-    hasNext2Info.index = 0;
-    hasNext2Info.object = null;
-    return;
   }
 
   export function asGetEnumerableKeys(): any [] {

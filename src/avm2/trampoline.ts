@@ -221,24 +221,21 @@ module Shumway.AVM2.Runtime {
      * Triggers the trampoline and executes it.
      */
     var trampoline: ITrampoline = <ITrampoline><any>function execute() {
-      debugLogTrampoline(description);
-      if (!target) {
-        trampoline.trigger();
-      }
-      return target.asApply(this, arguments);
+      release || debugLogTrampoline(description);
+      target || trampoline.trigger();
+      return target.apply(this, arguments);
     };
     /**
      * Just triggers the trampoline without executing it.
      */
     trampoline.trigger = function trigger() {
-      countTimeline("Triggering Trampoline");
-      if (!target) {
-        release || assert(!trait.methodInfo.isNative());
-        target = createFunction(trait.methodInfo, scope, false, false, false);
-        patch(patchTargets, target);
-        trait = scope = natives = patchTargets = null;
-        release || assert(target);
-      }
+      release || countTimeline("Triggering Trampoline");
+      release || assert(!target);
+      release || assert(!trait.methodInfo.isNative());
+      target = createFunction(trait.methodInfo, scope, false, false, false);
+      release || assert(target);
+      patch(patchTargets, target);
+      trait = scope = natives = patchTargets = null;
     };
     trampoline.isTrampoline = true;
     trampoline.patchTargets = patchTargets;
@@ -250,8 +247,9 @@ module Shumway.AVM2.Runtime {
   }
 
   function debugLogTrampoline(description: string) {
+    assert(!release);
     countTimeline("Executing Trampoline");
-    if (!release && Shumway.AVM2.Runtime.traceExecution.value >= 1) {
+    if (Shumway.AVM2.Runtime.traceExecution.value >= 1) {
       callWriter.writeLn("Trampoline: " + description);
       Shumway.AVM2.Runtime.traceExecution.value >= 3 && console.log("Trampolining");
     }
