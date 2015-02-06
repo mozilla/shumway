@@ -282,6 +282,9 @@ module Shumway.GFX {
       switch (type) {
         case VideoControlEvent.Init:
           videoElement.src = data.url;
+          if (this._state > RenderableVideoState.Idle) {
+            this.play();
+          }
           this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
           break;
         case VideoControlEvent.Pause:
