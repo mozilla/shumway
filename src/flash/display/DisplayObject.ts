@@ -535,8 +535,7 @@ module Shumway.AVM2.AS.flash.display {
         // be nice to eventually get this right.
         display.DisplayObject._advancableInstances.forEach(function (value) {
           var container: any = value;
-          release || assert(DisplayObjectContainer.isInstanceOf(container));
-          if (!container.parent) {
+          if (DisplayObjectContainer.isInstanceOf(container) && !container.parent) {
             container._enqueueFrameScripts();
           }
         });
