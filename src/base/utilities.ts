@@ -114,6 +114,11 @@ declare var Uint8ClampedArray: {
   BYTES_PER_ELEMENT: number;
 }
 
+declare module Shumway {
+  var version: string;
+  var build: string;
+}
+
 module Shumway {
 
   export enum CharacterCodes {

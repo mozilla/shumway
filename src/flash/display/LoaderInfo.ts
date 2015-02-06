@@ -121,6 +121,14 @@ module Shumway.AVM2.AS.flash.display {
     _avm1Context: Shumway.AVM1.AVM1Context;
 
     get loaderURL(): string {
+      if (!this._loader) {
+        // For the instance of the main class of the SWF file, this URL is the
+        // same as the SWF file's own URL.
+
+        // The loaderURL value can be changed by player settings.
+        var service: IRootElementService = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        return (this.url === service.swfUrl && service.loaderUrl) || this.url;
+      }
       return this._loaderUrl;
     }
 
@@ -417,5 +425,6 @@ module Shumway.AVM2.AS.flash.display {
   export interface IRootElementService {
     pageUrl: string;
     swfUrl: string;
+    loaderUrl: string;
   }
 }

@@ -220,7 +220,7 @@ function isShumwayEnabledFor(actions) {
 function getVersionInfo() {
   var deferred = Promise.defer();
   var versionInfo = {
-    version: 'unknown',
+    geckoVersion: 'unknown',
     geckoBuildID: 'unknown',
     shumwayVersion: 'unknown'
   };
@@ -230,18 +230,30 @@ function getVersionInfo() {
     versionInfo.geckoVersion = appInfo.version;
     versionInfo.geckoBuildID = appInfo.appBuildID;
   } catch (e) {
-    log('Error encountered while getting platform version info:', e);
+    log('Error encountered while getting platform version info: ' + e);
   }
-  try {
-    var addonId = "shumway@research.mozilla.org";
-    AddonManager.getAddonByID(addonId, function(addon) {
-      versionInfo.shumwayVersion = addon ? addon.version : 'n/a';
-      deferred.resolve(versionInfo);
-    });
-  } catch (e) {
-    log('Error encountered while getting Shumway version info:', e);
+  var xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
+    .createInstance(Ci.nsIXMLHttpRequest);
+  xhr.open('GET', 'resource://shumway/version.txt', true);
+  xhr.overrideMimeType('text/plain');
+  xhr.onload = function () {
+    try {
+      // Trying to merge version.txt lines into something like:
+      //   "version (sha) details"
+      var lines = xhr.responseText.split(/\n/g);
+      lines[1] = '(' + lines[1] + ')';
+      versionInfo.shumwayVersion = lines.join(' ');
+    } catch (e) {
+      log('Error while parsing version info: ' + e);
+    }
     deferred.resolve(versionInfo);
-  }
+  };
+  xhr.onerror = function () {
+    log('Error while reading version info: ' + xhr.error);
+    deferred.resolve(versionInfo);
+  };
+  xhr.send();
+
   return deferred.promise;
 }
 

@@ -19,9 +19,7 @@ BUNDLES_DIR = ../../build/bundles-cc
 
 # Just builds a ff extension
 
-VERSION_BASELINE=9c77cb929464c1bca343f4
-VERSION=0.9.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
-VERSION_SHA=`git log --format="%h" -n 1`
+VERSION = `head -n 1 ../../build/version/version.txt`
 
 build: ensureoutputdir
 	# Copying extension files
@@ -41,8 +39,7 @@ build: ensureoutputdir
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/content/avm2/generated/builtin/
 	# Copying closure optimized shumway.js files
 	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_DIR)/content/
-	echo $(VERSION) > $(BUILD_DIR)/content/version.txt
-	echo $(VERSION_SHA) >> $(BUILD_DIR)/content/version.txt
+	cp ../../build/version/version.txt $(BUILD_DIR)/content/version.txt
 	echo "extension" >> $(BUILD_DIR)/content/version.txt
 	# Packaging XPI file
 	cd $(BUILD_DIR); zip -r shumway.xpi *
