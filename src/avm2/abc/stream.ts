@@ -59,6 +59,10 @@ module Shumway.AVM2.ABC {
       this._position = position;
     }
 
+    advance(length: number) {
+      this._position += length;
+    }
+
     readU8(): number {
       return this._bytes[this._position++];
     }
@@ -68,6 +72,12 @@ module Shumway.AVM2.ABC {
       b.set(this._bytes.subarray(this._position, this._position + count), 0);
       this._position += count;
       return b;
+    }
+
+    viewU8s(count: number) {
+      var view = this._bytes.subarray(this._position, this._position + count);
+      this._position += count;
+      return view;
     }
 
     readS8(): number {
