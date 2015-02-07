@@ -332,7 +332,7 @@ module Shumway.GFX {
       /**
        * Allocates a 2D region.
        */
-      allocate(w: number, h: number): ISurfaceRegion;
+      allocate(w: number, h: number, excludeSurface: ISurface): ISurfaceRegion;
 
       /**
        * Frees the specified region.
@@ -363,9 +363,13 @@ module Shumway.GFX {
         this._surfaces.push(surface);
       }
 
-      allocate(w: number, h: number): ISurfaceRegion {
+      allocate(w: number, h: number, excludeSurface: ISurface): ISurfaceRegion {
         for (var i = 0; i < this._surfaces.length; i++) {
-          var region = this._surfaces[i].allocate(w, h);
+          var surface = this._surfaces[i];
+          if (surface === excludeSurface) {
+            continue;
+          }
+          var region = surface.allocate(w, h);
           if (region) {
             return region;
           }
