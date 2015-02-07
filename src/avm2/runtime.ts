@@ -84,6 +84,8 @@ interface Function {
 }
 
 module Shumway.AVM2.Runtime {
+  import IndentingWriter = Shumway.IndentingWriter;
+
   /**
    * Seals const traits. Technically we need to throw an exception if they are ever modified after
    * the static or instance constructor executes, but we can safely ignore this incompatibility.
@@ -100,6 +102,12 @@ module Shumway.AVM2.Runtime {
    */
   var useSurrogates = true;
 
+  /**
+   * Wrap all method calls in a wrapper that traces execution.
+   */
+  var traceWriter = null; // new IndentingWriter(false, dumpLine);
+
+
   var callCounter = new Shumway.Metrics.Counter(true);
   var counter = Shumway.Metrics.Counter.instance;
 
@@ -115,7 +123,6 @@ module Shumway.AVM2.Runtime {
   import SORT = Shumway.AVM2.ABC.SORT;
 
   import Trait = Shumway.AVM2.ABC.Trait;
-  import IndentingWriter = Shumway.IndentingWriter;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
   import propertyIsEnumerable = Shumway.ObjectUtilities.propertyIsEnumerable;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
@@ -1534,12 +1541,33 @@ module Shumway.AVM2.Runtime {
         };
       })(fn);
     }
+
+    if (traceWriter) {
+      fn = wrapFunctionWithTracingWrapper(fn, methodInfo);
+    }
+
     fn.instanceConstructor = fn;
     var fnName = nameFunction(methodInfo);
     fn.displayName = fn.debugName = fnName;
     fn.methodInfo = methodInfo;
     jsGlobal[fnName] = fn;
     return fn;
+  }
+
+  function wrapFunctionWithTracingWrapper(fn, methodInfo) {
+    return function () {
+      var name = methodInfo.name ? getMethodOverrideKey(methodInfo) : "";
+      var args = Array.prototype.slice.call(arguments, 0).map(x => toSafeString(x));
+      traceWriter.enter("> " + name + " (" + args.join(", ") + ")");
+      try {
+        var result = fn.apply(this, arguments);
+      } catch (e) {
+        traceWriter.leave("< " + name + ": " + e);
+        throw e;
+      }
+      traceWriter.leave("< " + name + " " + toSafeString(result));
+      return result;
+    }
   }
 
   export function debugName(value) {
@@ -1588,6 +1616,10 @@ module Shumway.AVM2.Runtime {
     }
     eval(cached || fnSource);
     var fn = jsGlobal[fnName];
+    if (traceWriter) {
+      fn = wrapFunctionWithTracingWrapper(fn, methodInfo);
+      jsGlobal[fnName] = fn;
+    }
     fn.debugName = fnName;
     release || assert(fn);
     fn.methodInfo = mi;
