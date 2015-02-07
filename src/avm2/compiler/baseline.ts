@@ -605,10 +605,10 @@ module Shumway.AVM2.Compiler {
           this.emitBinaryIf(block, bc, "<", false);
           break;
         case OP.ifeq:
-          this.emitBinaryIf(block, bc, "==", false);
+          this.emitIfEq(block, bc, false);
           break;
         case OP.ifne:
-          this.emitBinaryIf(block, bc, "!=", false);
+          this.emitIfEq(block, bc, true);
           break;
         case OP.ifstricteq:
           this.emitBinaryIf(block, bc, "===", false);
@@ -1045,6 +1045,16 @@ module Shumway.AVM2.Compiler {
       var condition = x + " " + operator + " " + y;
       if (negate) {
         condition = "!(" + condition + ")";
+      }
+      this.emitIf(block, bc, condition);
+    }
+
+    emitIfEq(block: Bytecode, bc: Bytecode, negate: boolean) {
+      var y = this.pop();
+      var x = this.pop();
+      var condition = "asEquals(" + x + ", " + y + ")";
+      if (negate) {
+        condition = "!" + condition;
       }
       this.emitIf(block, bc, condition);
     }
