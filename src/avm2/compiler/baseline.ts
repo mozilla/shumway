@@ -884,8 +884,8 @@ module Shumway.AVM2.Compiler {
         }
       } else {
         var nameElements = this.emitMultiname(nameIndex);
-        this.emitReplace(this.peek() + ".asSetSuper(mi.classScope, " + nameElements + ", " +
-                         value + ")");
+        this.emitLine(this.pop() + ".asSetSuper(mi.classScope, " + nameElements + ", " +
+                         value + ");");
       }
     }
 
