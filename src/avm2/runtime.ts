@@ -1586,7 +1586,11 @@ module Shumway.AVM2.Runtime {
         console.log(fnSource);
       }
     }
-    eval(cached || fnSource);
+
+    // Using `new Function` here because just evaluating fnSource for some reason causes
+    // substantial slowdowns in running the code. This is true across engines (SM and v8, at
+    // least), and affects some benchmarks more than others.
+    new Function('return ' + (cached || fnSource))();
     var fn = jsGlobal[fnName];
     fn.debugName = fnName;
     release || assert(fn);
