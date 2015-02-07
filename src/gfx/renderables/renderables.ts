@@ -607,12 +607,13 @@ module Shumway.GFX {
      * like Flash ignores strokes when clipping so we can also ignore stroke paths when computing
      * the clip region.
      *
-     * If |paintStencil| is |true| then we most not create any alpha values, and also not paint any strokes.
+     * If |paintStencil| is |true| then we must not create any alpha values, and also not paint
+     * any strokes.
      */
     render(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle,
            paintClip: boolean = false, paintStencil: boolean = false): void
     {
-      var paintStencilStyle = '#FF4981';
+      var paintStencilStyle = release ? '#000000' : '#FF4981';
       context.fillStyle = context.strokeStyle = 'transparent';
 
       var paths = this._deserializePaths(this._pathData, context, ratio);
@@ -625,9 +626,13 @@ module Shumway.GFX {
                                               context['imageSmoothingEnabled'] =
                                               path.smoothImage;
         if (path.type === PathType.Fill) {
-          context.fillStyle = paintStencil ? paintStencilStyle : path.style;
-          paintClip ? context.clip(path.path, 'evenodd') : context.fill(path.path, 'evenodd');
-          context.fillStyle = 'transparent';
+          if (paintClip) {
+            context.clip(path.path, 'evenodd');
+          } else {
+            context.fillStyle = paintStencil ? paintStencilStyle : path.style;
+            context.fill(path.path, 'evenodd');
+            context.fillStyle = 'transparent';
+          }
         } else if (!paintClip && !paintStencil) {
           context.strokeStyle = path.style;
           var lineScaleMode = LineScaleMode.Normal;
