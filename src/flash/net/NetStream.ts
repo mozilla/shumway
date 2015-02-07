@@ -64,10 +64,7 @@ module Shumway.AVM2.AS.flash.net {
 
       this._videoStream = new VideoStream();
       this._videoStream._onEnsurePlay = function () {
-        this._notifyVideoControl(VideoControlEvent.Pause, {
-          paused: false,
-          time: NaN
-        });
+        this._notifyVideoControl(VideoControlEvent.EnsurePlaying, null);
       }.bind(this);
 
       this._resourceName = null;
@@ -501,6 +498,8 @@ module Shumway.AVM2.AS.flash.net {
           break;
         case VideoPlaybackEvent.PlayStop:
           this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Buffer.Flush", level: "status"})));
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Play.Stop", level: "status"})));
 
           flash.media.SoundMixer._unregisterSoundSource(this);
@@ -519,9 +518,21 @@ module Shumway.AVM2.AS.flash.net {
           this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: code, level: "error"})));
           break;
+        case VideoPlaybackEvent.Pause:
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Pause.Notify", level: "status"})));
+          break;
+        case VideoPlaybackEvent.Unpause:
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Unpause.Notify", level: "status"})));
+          break;
         case VideoPlaybackEvent.Seeking:
           this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Seek.Notify", level: "status"})));
+          break;
+        case VideoPlaybackEvent.Seeked:
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Seek.Complete", level: "status"})));
           break;
         case VideoPlaybackEvent.Metadata:
           if (this._client) {
