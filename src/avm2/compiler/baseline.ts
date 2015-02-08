@@ -1207,7 +1207,7 @@ module Shumway.AVM2.Compiler {
         var value = this.pop();
         this.pop();
         var key = this.constantPool.strings[this.pushedStrings[this.stack]];
-        properties.push((isNumeric(key) ? key : '$Bg' + key) + ': ' + value);
+        properties.push((isNumeric(key) ? key : escapeString('$Bg' + key)) + ': ' + value);
       }
       this.emitPush('{ ' + properties + ' }');
     }
