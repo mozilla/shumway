@@ -43,9 +43,6 @@ module Shumway.AVM2.Runtime {
     var abc = script.abc;
     release || assert(!script.executing && !script.executed);
     var global = new Global(script);
-    if (abc.applicationDomain.allowNatives) {
-      global[Multiname.getPublicQualifiedName("unsafeJSNative")] = Shumway.AVM2.AS.getNative;
-    }
     script.executing = true;
     var scope = new Scope(null, script.global);
     // XXX interpreted methods populate stack with every call, compiled don't

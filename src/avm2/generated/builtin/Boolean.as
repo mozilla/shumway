@@ -22,16 +22,9 @@ public final class Boolean extends Object
 
   AS3 function valueOf():Boolean { return this }
 
-
-  prototype.toString = unsafeJSNative("Original.Boolean.prototype.toString");
-
-  prototype.valueOf = unsafeJSNative("Original.Boolean.prototype.valueOf");
-
   // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
   // The code for the actual ctor is in BooleanClass::construct in the avmplus
   public function Boolean(value = void 0)
   {}
-
-  _dontEnumPrototype(prototype);
 }
 }

@@ -99,25 +99,14 @@ public final class Number
   }
   AS3 function valueOf():Number { return this }
 
-  prototype.toLocaleString = prototype.toString = unsafeJSNative("Original.Number.prototype.toString");
-  prototype.valueOf = unsafeJSNative("Original.Number.prototype.valueOf");
-
   AS3 native function toExponential(p=0):String;
-
-  prototype.toExponential = unsafeJSNative("Original.Number.prototype.toExponential");
-
   AS3 native function toPrecision(p=0):String;
-  prototype.toPrecision = unsafeJSNative("Original.Number.prototype.toPrecision");
-
   AS3 native function toFixed(p=0):String;
-  prototype.toFixed = unsafeJSNative("Original.Number.prototype.toFixed");
 
   // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
   // The code for the actual ctor is in NumberClass::construct in the avmplus
   public function Number(value = 0)
   {}
-
-  _dontEnumPrototype(prototype);
 }
 
 // No instancegc, value is primitive.
@@ -139,30 +128,23 @@ public final class int
 
   AS3 function valueOf():int { return this }
 
-  prototype.toLocaleString = prototype.toString = unsafeJSNative("Original.Number.prototype.toString");
-  prototype.valueOf = unsafeJSNative("Original.Number.prototype.valueOf");
 
   AS3 function toExponential(p=0):String {
     return Number(this).AS3::toExponential(p)
   }
-  prototype.toExponential = unsafeJSNative("Original.Number.prototype.toExponential");
 
   AS3 function toPrecision(p=0):String {
     return Number(this).AS3::toPrecision(p)
   }
-  prototype.toPrecision = unsafeJSNative("Original.Number.prototype.toPrecision");
 
   AS3 function toFixed(p=0):String {
     return Number(this).AS3::toFixed(p)
   }
-  prototype.toFixed = unsafeJSNative("Original.Number.prototype.toFixed");
 
   // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
   // The code for the actual ctor is in IntClass::construct in the avmplus
   public function int(value = 0)
   {}
-
-  _dontEnumPrototype(prototype);
 }
 
 // No instancegc, value is primitive.
@@ -183,32 +165,24 @@ public final class uint
   }
   AS3 function valueOf():uint { return this }
 
-  prototype.toLocaleString = prototype.toString = unsafeJSNative("Original.Number.prototype.toString");
-  prototype.valueOf = unsafeJSNative("Original.Number.prototype.valueOf");
-
   AS3 function toExponential(p=0):String
   {
     return Number(this).AS3::toExponential(p)
   }
-  prototype.toExponential = unsafeJSNative("Original.Number.prototype.toExponential");
 
   AS3 function toPrecision(p=0):String
   {
     return Number(this).AS3::toPrecision(p)
   }
-  prototype.toPrecision = unsafeJSNative("Original.Number.prototype.toPrecision");
 
   AS3 function toFixed(p=0):String
   {
     return Number(this).AS3::toFixed(p)
   }
-  prototype.toFixed = unsafeJSNative("Original.Number.prototype.toFixed");
 
   // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
   // The code for the actual ctor is in UIntClass::construct in the avmplus
   public function uint(value = 0)
   {}
-
-  _dontEnumPrototype(prototype);
 }
 }

@@ -8,9 +8,6 @@ package {
   [native("notImplemented")]
   public native function notImplemented(s);
 
-  [native("unsafeJSNative")]
-  public native function unsafeJSNative(s);
-
   [native("debugBreak")]
   public native function debugBreak(s);
 }

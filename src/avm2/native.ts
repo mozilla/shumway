@@ -881,6 +881,15 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Function];
     public static instanceNatives: any [] = [Function.prototype];
 
+    static classInitializer: any = function() {
+      var proto: any = ASFunction.dynamicPrototype;
+      var asProto: any = ASFunction.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', asProto.toString);
+      defineNonEnumerableProperty(proto, 'toString', asProto.toString);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', asProto.toString);
+      defineNonEnumerableProperty(proto, '$Bgcall', proto.call);
+      defineNonEnumerableProperty(proto, '$Bgapply', proto.apply);
+    }
 
     constructor() {
       false && super();
@@ -923,6 +932,12 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = null;
     public static coerce: (value: any) => boolean = Runtime.asCoerceBoolean;
 
+    static classInitializer: any = function() {
+      var proto: any = Boolean.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
+      defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
+    }
+
 
     constructor(input) {
       false && super();
@@ -961,6 +976,19 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = Number(0);
     public static coerce: (value: any) => number = Runtime.asCoerceNumber;
 
+    static classInitializer: any = function() {
+      var dynProto: any = this.dynamicPrototype;
+      var numberProto: any = Number.prototype;
+      defineNonEnumerableProperty(dynProto, 'toString', numberProto.toString);
+      defineNonEnumerableProperty(dynProto, '$BgtoString', numberProto.toString);
+      defineNonEnumerableProperty(dynProto, '$BgtoLocaleString', numberProto.toString);
+      defineNonEnumerableProperty(dynProto, 'valueOf', numberProto.valueOf);
+      defineNonEnumerableProperty(dynProto, '$BgvalueOf', numberProto.valueOf);
+      defineNonEnumerableProperty(dynProto, '$BgtoExponential', numberProto.toExponential);
+      defineNonEnumerableProperty(dynProto, '$BgtoPrecision', numberProto.toPrecision);
+      defineNonEnumerableProperty(dynProto, '$BgtoFixed', numberProto.toFixed);
+    }
+
     static _numberToString(n: number, radix: number): string {
       radix = radix | 0;
       return Number(n).toString(radix);
@@ -986,6 +1014,8 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = 0;
     public static coerce: (value: any) => number = Runtime.asCoerceInt;
+
+    static classInitializer: any = ASNumber.classInitializer;
 
     constructor(value: any) {
       false && super();
@@ -1027,6 +1057,8 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = 0;
     public static coerce: (value: any) => number = Runtime.asCoerceUint;
 
+    static classInitializer: any = ASNumber.classInitializer;
+
     constructor(value: any) {
       false && super();
       return Object(Number(value >>> 0));
@@ -1065,6 +1097,32 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [String];
     public static instanceNatives: any [] = [String.prototype];
     public static coerce: (value: any) => string = Runtime.asCoerceString;
+
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(String, '$BgfromCharCode', String.fromCharCode);
+
+      var proto: String = String.prototype;
+      defineNonEnumerableProperty(proto, '$BgindexOf', proto.indexOf);
+      defineNonEnumerableProperty(proto, '$BglastIndexOf', proto.lastIndexOf);
+      defineNonEnumerableProperty(proto, '$BgcharAt', proto.charAt);
+      defineNonEnumerableProperty(proto, '$BgcharCodeAt', proto.charCodeAt);
+      defineNonEnumerableProperty(proto, '$Bgconcat', proto.concat);
+      defineNonEnumerableProperty(proto, '$BglocaleCompare', proto.localeCompare);
+      defineNonEnumerableProperty(proto, '$Bgmatch', proto.match);
+      defineNonEnumerableProperty(proto, '$Bgreplace', proto.replace);
+      defineNonEnumerableProperty(proto, '$Bgsearch', proto.search);
+      defineNonEnumerableProperty(proto, '$Bgslice', proto.slice);
+      defineNonEnumerableProperty(proto, '$Bgsplit', proto.split);
+      defineNonEnumerableProperty(proto, '$Bgsubstring', proto.substring);
+      defineNonEnumerableProperty(proto, '$Bgsubstr', proto.substr);
+      defineNonEnumerableProperty(proto, '$BgtoLowerCase', proto.toLowerCase);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleLowerCase', proto.toLowerCase);
+      defineNonEnumerableProperty(proto, '$BgtoUpperCase', proto.toUpperCase);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleUpperCase', proto.toUpperCase);
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
+      defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
+    }
+
     get native_length(): number {
       return (<any>this).length;
     }
@@ -1470,6 +1528,56 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [Date.prototype];
     public static instanceConstructor: any = Date;
 
+    static classInitializer: any = function() {
+      var proto: any = Date.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
+      defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
+
+      defineNonEnumerableProperty(proto, '$BgtoDateString', proto.toDateString);
+      defineNonEnumerableProperty(proto, '$BgtoTimeString', proto.toTimeString);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', proto.toLocaleString);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleDateString', proto.toLocaleDateString);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleTimeString', proto.toLocaleTimeString);
+      defineNonEnumerableProperty(proto, '$BgtoUTCString', proto.toUTCString);
+
+      // NB: The default AS implementation of |toJSON| is not ES5-compliant, but
+      // the native JS one obviously is.
+      defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
+
+      defineNonEnumerableProperty(proto, '$BggetUTCFullYear', proto.getUTCFullYear);
+      defineNonEnumerableProperty(proto, '$BggetUTCMonth', proto.getUTCMonth);
+      defineNonEnumerableProperty(proto, '$BggetUTCDate', proto.getUTCDate);
+      defineNonEnumerableProperty(proto, '$BggetUTCDay', proto.getUTCDay);
+      defineNonEnumerableProperty(proto, '$BggetUTCHours', proto.getUTCHours);
+      defineNonEnumerableProperty(proto, '$BggetUTCMinutes', proto.getUTCMinutes);
+      defineNonEnumerableProperty(proto, '$BggetUTCSeconds', proto.getUTCSeconds);
+      defineNonEnumerableProperty(proto, '$BggetUTCMilliseconds', proto.getUTCMilliseconds);
+      defineNonEnumerableProperty(proto, '$BggetFullYear', proto.getFullYear);
+      defineNonEnumerableProperty(proto, '$BggetMonth', proto.getMonth);
+      defineNonEnumerableProperty(proto, '$BggetDate', proto.getDate);
+      defineNonEnumerableProperty(proto, '$BggetDay', proto.getDay);
+      defineNonEnumerableProperty(proto, '$BggetHours', proto.getHours);
+      defineNonEnumerableProperty(proto, '$BggetMinutes', proto.getMinutes);
+      defineNonEnumerableProperty(proto, '$BggetSeconds', proto.getSeconds);
+      defineNonEnumerableProperty(proto, '$BggetMilliseconds', proto.getMilliseconds);
+      defineNonEnumerableProperty(proto, '$BggetTimezoneOffset', proto.getTimezoneOffset);
+      defineNonEnumerableProperty(proto, '$BggetTime', proto.getTime);
+      defineNonEnumerableProperty(proto, '$BgsetFullYear', proto.setFullYear);
+      defineNonEnumerableProperty(proto, '$BgsetMonth', proto.setMonth);
+      defineNonEnumerableProperty(proto, '$BgsetDate', proto.setDate);
+      defineNonEnumerableProperty(proto, '$BgsetHours', proto.setHours);
+      defineNonEnumerableProperty(proto, '$BgsetMinutes', proto.setMinutes);
+      defineNonEnumerableProperty(proto, '$BgsetSeconds', proto.setSeconds);
+      defineNonEnumerableProperty(proto, '$BgsetMilliseconds', proto.setMilliseconds);
+      defineNonEnumerableProperty(proto, '$BgsetUTCFullYear', proto.setUTCFullYear);
+      defineNonEnumerableProperty(proto, '$BgsetUTCMonth', proto.setUTCMonth);
+      defineNonEnumerableProperty(proto, '$BgsetUTCDate', proto.setUTCDate);
+      defineNonEnumerableProperty(proto, '$BgsetUTCHours', proto.setUTCHours);
+      defineNonEnumerableProperty(proto, '$BgsetUTCMinutes', proto.setUTCMinutes);
+      defineNonEnumerableProperty(proto, '$BgsetUTCSeconds', proto.setUTCSeconds);
+      defineNonEnumerableProperty(proto, '$BgsetUTCMilliseconds', proto.setUTCMilliseconds);
+    }
+
     constructor(input) {
       false && super();
       release || assertUnreachable('ASDate references must be delegated to Date');
@@ -1749,27 +1857,6 @@ module Shumway.AVM2.AS {
     export var ASObject = Shumway.AVM2.AS.ASObject;
     export var ASFunction = Shumway.AVM2.AS.ASFunction;
 
-    function makeOriginalPrototype(constructor: Function) {
-      var o = { prototype: Object.create(null) };
-      var keys = Object.getOwnPropertyNames(constructor.prototype);
-      for (var i = 0; i < keys.length; i++) {
-        o.prototype[keys[i]] = constructor.prototype[keys[i]];
-      }
-      return o;
-    }
-
-    /**
-     * Make a copy of the original prototype functions in case they are patched. This is to
-     * prevent cyycles.
-     */
-    export var Original = {
-      Date: makeOriginalPrototype(Date),
-      Array: makeOriginalPrototype(Array),
-      String: makeOriginalPrototype(String),
-      Number: makeOriginalPrototype(Number),
-      Boolean: makeOriginalPrototype(Boolean)
-    }
-
     export function print(expression: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
       jsGlobal.print.apply(null, arguments);
     }
@@ -1870,7 +1957,5 @@ module Shumway.AVM2.AS {
     release || assert (illegalAS3Functions.indexOf(<any>v) < 0, "Leaking illegal function.");
     return <any>v;
   }
-
-  registerNativeFunction("unsafeJSNative", getNative);
 }
 

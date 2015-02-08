@@ -51,15 +51,9 @@ dynamic public class Function
    //  function in toString() seems to be a bookend to this feature to me, and
    //  thus shouldn't be in the compact specification either. */
 
-  prototype.toLocaleString = prototype.toString = unsafeJSNative("ASFunction.prototype.toString");
 
   AS3 native function call(thisArg=void 0, ...args)
-  prototype.call = unsafeJSNative("Function.prototype.call");
-
   AS3 native function apply(thisArg=void 0, argArray=void 0)
-  prototype.apply = unsafeJSNative("Function.prototype.apply");
-
-  _dontEnumPrototype(prototype);
 }
 }
 
