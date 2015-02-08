@@ -16,7 +16,6 @@ module Shumway.AVM2.ABCX {
    *
    */
 
-
   export enum CONSTANT {
     Undefined          = 0x00,
     Utf8               = 0x01,
@@ -1018,6 +1017,19 @@ module Shumway.AVM2.ABCX {
     }
 
     trace(writer: IndentingWriter) {
+      for (var i = 0; i < this._methodBodies.length; i++) {
+        var methodBody = this._methodBodies[i];
+        if (methodBody) {
+          try {
+            var stream = new BytecodeStream(methodBody.code);
+            while (stream.currentBytecode() !== Bytecode.END) {
+              stream.next();
+            }
+          } catch (e) {
+            writer.errorLn("Corrupt: " + e);
+          }
+        }
+      }
       return false;
       writer.writeLn("");
       writer.writeLn("");

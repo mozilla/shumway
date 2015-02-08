@@ -107,7 +107,6 @@ module Shumway.AVM2.Runtime {
    */
   var traceWriter = null; // new IndentingWriter(false, dumpLine);
 
-
   var callCounter = new Shumway.Metrics.Counter(true);
   var counter = Shumway.Metrics.Counter.instance;
 

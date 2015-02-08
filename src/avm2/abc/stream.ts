@@ -115,7 +115,7 @@ module Shumway.AVM2.ABC {
      * -1, but instead it's 127. Moreover, what happens to the remaining 4 high bits of the fifth byte that is
      * read? Who knows, here we'll just stay true to the Tamarin implementation.
      */
-      readS32(): number {
+    readS32(): number {
       var result = this.readU8();
       if (result & 0x80) {
         result = result & 0x7f | this.readU8() << 7;
