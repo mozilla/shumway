@@ -190,7 +190,7 @@ module Shumway.GFX.WebGL {
     }
 
     public allocateSurfaceRegion(w: number, h: number, discardCache: boolean = true): WebGLSurfaceRegion {
-      return <WebGLSurfaceRegion>this._surfaceRegionAllocator.allocate(w, h);
+      return <WebGLSurfaceRegion>this._surfaceRegionAllocator.allocate(w, h, null);
     }
 
     /*

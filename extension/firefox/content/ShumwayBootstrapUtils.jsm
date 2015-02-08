@@ -20,6 +20,7 @@ var EXPORTED_SYMBOLS = ['ShumwayBootstrapUtils'];
 
 const PREF_PREFIX = 'shumway.';
 const PREF_IGNORE_CTP = PREF_PREFIX + 'ignoreCTP';
+const PREF_WHITELIST = PREF_PREFIX + 'swf.whitelist';
 const SWF_CONTENT_TYPE = 'application/x-shockwave-flash';
 
 let Cc = Components.classes;
@@ -43,8 +44,18 @@ function getBoolPref(pref, def) {
   }
 }
 
+function getStringPref(pref, def) {
+  try {
+    return Services.prefs.getComplexValue(pref, Ci.nsISupportsString).data;
+  } catch (ex) {
+    return def;
+  }
+}
+
 function log(str) {
-  dump(str + '\n');
+  var msg = 'ShumwayBootstrapUtils.jsm: ' + str;
+  Services.console.logStringMessage(msg);
+  dump(msg + '\n');
 }
 
 // Register/unregister a constructor as a factory.
@@ -71,6 +82,19 @@ Factory.prototype = {
 let converterFactory = new Factory();
 let overlayConverterFactory = new Factory();
 
+function allowedPlatformForMedia() {
+  var oscpu = Cc["@mozilla.org/network/protocol;1?name=http"]
+                .getService(Ci.nsIHttpProtocolHandler).oscpu;
+  if (oscpu.indexOf('Windows NT') === 0) {
+    return oscpu.indexOf('Windows NT 5') < 0; // excluding Windows XP
+  }
+  if (oscpu.indexOf('Intel Mac OS X') === 0) {
+    return true;
+  }
+  // Other platforms are not supported yet.
+  return false;
+}
+
 var ShumwayBootstrapUtils = {
   register: function () {
     // Register the components.
@@ -79,7 +103,17 @@ var ShumwayBootstrapUtils = {
 
     if (registerOverlayPreview) {
       var ignoreCTP = getBoolPref(PREF_IGNORE_CTP, true);
-      Ph.registerPlayPreviewMimeType(SWF_CONTENT_TYPE, ignoreCTP);
+      var whitelist = getStringPref(PREF_WHITELIST);
+      // Some platforms cannot support video playback, and our whitelist targets
+      // only video players atm. We need to disable Shumway for those platforms.
+      if (whitelist && !Services.prefs.prefHasUserValue(PREF_WHITELIST) &&
+          !allowedPlatformForMedia()) {
+        log('Default SWF whitelist is used on an unsupported platform -- ' +
+            'using demo whitelist.');
+        whitelist = 'http://www.areweflashyet.com/*.swf';
+      }
+      Ph.registerPlayPreviewMimeType(SWF_CONTENT_TYPE, ignoreCTP,
+                                     undefined, whitelist);
     }
   },
 

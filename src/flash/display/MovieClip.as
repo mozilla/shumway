@@ -37,7 +37,7 @@ public dynamic class MovieClip extends Sprite {
   public native function prevFrame():void;
   public native function gotoAndPlay(frame:Object, scene:String = null):void;
   public native function gotoAndStop(frame:Object, scene:String = null):void;
-  public native function addFrameScript():void;
+  public native function addFrameScript(... arguments):void;
   public native function prevScene():void;
   public native function nextScene():void;
 }

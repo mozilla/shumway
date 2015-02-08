@@ -91,8 +91,16 @@ module Shumway.AVM2.AS.flash.display {
         child._setFlags(DisplayObjectFlags.Constructed);
 
         if (child._symbol && child._symbol.isAVM1Object) {
-          child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_INIT));
-          child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_CONSTRUCT));
+          try {
+            child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_INIT));
+          } catch (e) {
+            console.warn('caught error under DisplayObjectContainer AVM1_INIT event: ', e);
+          }
+          try {
+            child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_CONSTRUCT));
+          } catch (e) {
+            console.warn('caught error under DisplayObjectContainer AVM1_CONSTRUCT event: ', e);
+          }
           child._setFlags(DisplayObjectFlags.NeedsLoadEvent);
           if (child._hasAnyFlags(DisplayObjectFlags.HasFrameScriptPending |
                                  DisplayObjectFlags.ContainsFrameScriptPendingChildren)) {
@@ -100,9 +108,17 @@ module Shumway.AVM2.AS.flash.display {
           }
         }
 
-        child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
+        try {
+          child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
+        } catch (e) {
+          console.warn('caught error under DisplayObject ADDED event: ', e);
+        }
         if (child.stage) {
-          child.dispatchEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
+          try {
+            child.dispatchEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
+          } catch (e) {
+            console.warn('caught error under DisplayObject ADDED_TO_STAGE event: ', e);
+          }
         }
       }
     }
@@ -123,7 +139,7 @@ module Shumway.AVM2.AS.flash.display {
     get numChildren(): number {
       return this._getNumChildren();
     }
-    // `get numChildren` is overriden in `Stage` and has to be able to call this.
+    // `get numChildren` is overridden in `Stage` and has to be able to call this.
     _getNumChildren(): number {
       return this._children.length;
     }
@@ -136,7 +152,7 @@ module Shumway.AVM2.AS.flash.display {
     get tabChildren(): boolean {
       return this._getTabChildren();
     }
-    // `get tabChildren` is overriden in `Stage` and has to be able to call this.
+    // `get tabChildren` is overridden in `Stage` and has to be able to call this.
     _getTabChildren(): boolean {
       return this._tabChildren;
     }
@@ -144,7 +160,7 @@ module Shumway.AVM2.AS.flash.display {
     set tabChildren(enable: boolean) {
       this._setTabChildren(enable);
     }
-    // `set tabChildren` is overriden in `Stage` and has to be able to call this.
+    // `set tabChildren` is overridden in `Stage` and has to be able to call this.
     _setTabChildren(enable: boolean) {
       enable = !!enable;
 
@@ -158,7 +174,7 @@ module Shumway.AVM2.AS.flash.display {
     get mouseChildren(): boolean {
       return this._getMouseChildren();
     }
-    // `get mouseChildren` is overriden in `Stage` and has to be able to call this.
+    // `get mouseChildren` is overridden in `Stage` and has to be able to call this.
     _getMouseChildren(): boolean {
       return this._mouseChildren;
     }
@@ -166,7 +182,7 @@ module Shumway.AVM2.AS.flash.display {
     set mouseChildren(enable: boolean) {
       this._setMouseChildren(enable);
     }
-    // `set mouseChildren` is overriden in `Stage` and has to be able to call this.
+    // `set mouseChildren` is overridden in `Stage` and has to be able to call this.
     _setMouseChildren(enable: boolean) {
       this._mouseChildren = !!enable;
     }
@@ -203,6 +219,8 @@ module Shumway.AVM2.AS.flash.display {
         return child;
       }
 
+      // TODO: check what happens if a listener for REMOVE throws an error. Does the element get
+      // reparented nevertheless?
       if (child._parent) {
         // Loader overrides removeChildAt to throw an exception. We still want to use it, so we
         // always call the original version here.
@@ -218,14 +236,14 @@ module Shumway.AVM2.AS.flash.display {
       child._setParent(this, -1);
       child._index = index;
       child._invalidatePosition();
+      this._invalidateChildren();
+      child._addReference();
       child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
       // ADDED event handlers may remove the child from the stage, in such cases
       // we should not dispatch the ADDED_TO_STAGE event.
       if (child.stage) {
         child._propagateEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
       }
-      this._invalidateChildren();
-      child._addReference();
       return child;
     }
 

@@ -45,7 +45,7 @@ module Shumway.AVM1.Lib {
     }
 
     public initAVM1ObjectInstance(context: AVM1Context) {
-      release && Debug.assert(context);
+      release || Debug.assert(context);
       this._context = context;
     }
   }
@@ -63,7 +63,7 @@ module Shumway.AVM1.Lib {
 
     public initAVM1SymbolInstance(context: AVM1Context, as3Object: T) {
       this.initAVM1ObjectInstance(context);
-      release && Debug.assert(as3Object);
+      release || Debug.assert(as3Object);
       this._as3Object = as3Object;
     }
 

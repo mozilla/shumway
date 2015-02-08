@@ -179,7 +179,16 @@ module Shumway {
       Debug.warning('Loading error encountered:', error);
     }
     processLoadClose() {
-      if (this._file.bytesLoaded !== this._file.bytesTotal) {
+      var file = this._file;
+      if (file instanceof SWFFile) {
+        var eagerlyParsedSymbolsCount = file.eagerlyParsedSymbolsList.length;
+        var previousFramesLoaded = file.framesLoaded;
+
+        file.finishLoading();
+
+        this.processSWFFileUpdate(file, eagerlyParsedSymbolsCount, previousFramesLoaded);
+      }
+      if (file.bytesLoaded !== file.bytesTotal) {
         Debug.warning("Not Implemented: processing loadClose when loading was aborted");
       }
     }

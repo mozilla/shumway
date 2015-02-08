@@ -122,6 +122,11 @@ module Shumway.AVM2.Runtime {
     });
   }
 
+  enum StackFormat {
+    SpiderMonkey,
+    V8
+  }
+
   export class AVM2 {
     public systemDomain: ApplicationDomain;
     public applicationDomain: ApplicationDomain;
@@ -157,18 +162,19 @@ module Shumway.AVM2.Runtime {
     // |ApplicationDomain.currentDomain|.
 
     public static currentAbc() {
-      var caller: any = arguments.callee;
-      var maxDepth = 20;
-      var abc = null;
-      for (var i = 0; i < maxDepth && caller; i++) {
-        var mi = caller.methodInfo;
-        if (mi) {
-          abc = mi.abc;
-          break;
+      var stack = new Error().stack.split('\n');
+      var format = stack[1].indexOf('    at ') === 0 ? StackFormat.V8 : StackFormat.SpiderMonkey;
+      for (var i = 0; i < stack.length; i++) {
+        var entry = stack[i];
+        var funName = format === StackFormat.SpiderMonkey ?
+                      entry.substr(0, entry.indexOf('@')) :
+                      entry.substr(7, entry.indexOf(' ', 8));
+        var fun = funName && jsGlobal[funName];
+        if (fun && fun.methodInfo) {
+          return fun.methodInfo.abc;
         }
-        caller = caller.caller;
       }
-      return abc;
+      return null;
     }
 
     public static currentDomain() {
@@ -537,7 +543,8 @@ module Shumway.AVM2.Runtime {
       compartment.AVM2.initialize(sysMode, appMode);
       compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
       compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
-      // compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/avmplus/avmplus.abc"));
+      // compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath +
+      // "src/avm2/generated/avmplus/avmplus.abc"));
       this.systemDomain = compartment.AVM2.instance.systemDomain;
       this.applicationDomain = compartment.AVM2.instance.applicationDomain;
     }

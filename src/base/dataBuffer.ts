@@ -797,7 +797,7 @@ module Shumway.ArrayUtilities {
       var output = new DataBuffer();
       deflate.onData = output.writeRawBytes.bind(output);
       deflate.push(this._u8.subarray(0, this._length));
-      deflate.finish();
+      deflate.close();
 
       this._ensureCapacity(output._u8.length);
       this._u8.set(output._u8);
@@ -808,7 +808,7 @@ module Shumway.ArrayUtilities {
     private _uncompress(algorithm: string): void {
       algorithm = asCoerceString(algorithm);
 
-      var inflate: Inflate;
+      var inflate: IDataDecoder;
       switch (algorithm) {
         case 'zlib':
           inflate = Inflate.create(true);
@@ -816,14 +816,19 @@ module Shumway.ArrayUtilities {
         case 'deflate':
           inflate = Inflate.create(false);
           break;
+        case 'lzma':
+          inflate = new LzmaDecoder(false);
+          break;
         default:
           return;
       }
 
       var output = new DataBuffer();
+      var error;
       inflate.onData = output.writeRawBytes.bind(output);
+      inflate.onError = (e) => error = e;
       inflate.push(this._u8.subarray(0, this._length));
-      if (inflate.error) {
+      if (error) {
         throwError('IOError', Errors.CompressedDataError);
       }
       inflate.close();

@@ -349,7 +349,7 @@ module RtmpJs {
         host = s.substring(protocolSeparatorIndex + 3, appnameSeparator);
       }
     }
-    var app = s.substring(appnameSeparator);
+    var app = s.substring(appnameSeparator + 1);
     return {
       protocol: protocol,
       host: host,

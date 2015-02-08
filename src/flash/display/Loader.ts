@@ -122,14 +122,23 @@ module Shumway.AVM2.AS.flash.display {
         }
 
         if (instance._loadStatus === LoadStatus.Opened && instance._content) {
-          loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
+          try {
+            loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
+          } catch (e) {
+            console.warn('caught error under loaderInfo INIT event:', e);
+          }
           instance._loadStatus = LoadStatus.Initialized;
           // Only for the root loader, progress events for the data loaded up until now are
           // dispatched here.
           if (instance === Loader._rootLoader) {
-            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                              false, false, loaderInfo.bytesLoaded,
-                                                              loaderInfo.bytesTotal));
+            try {
+              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                                false, false,
+                                                                loaderInfo.bytesLoaded,
+                                                                loaderInfo.bytesTotal));
+            } catch (e) {
+              console.warn('caught error under loaderInfo PROGRESS event:', e);
+            }
           }
         }
 
@@ -138,7 +147,11 @@ module Shumway.AVM2.AS.flash.display {
           queue.splice(i--, 1);
           release || assert(queue.indexOf(instance) === -1);
           instance._loadStatus = LoadStatus.Complete;
-          loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
+          try {
+            loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
+          } catch (e) {
+            console.warn('caught error under loaderInfo COMPLETE event: ', e);
+          }
         }
       }
     }
@@ -160,7 +173,11 @@ module Shumway.AVM2.AS.flash.display {
         if (instance._loadStatus === LoadStatus.Unloaded) {
           // OPEN is only dispatched when loading external resources, not for loadBytes.
           if (instance._loadingType === LoadingType.External) {
-            loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
+            try {
+              loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
+            } catch (e) {
+              console.warn('caught error under loaderInfo OPEN event: ', e);
+            }
           }
           // The first time any progress is made at all, a progress event with bytesLoaded = 0
           // is dispatched.
@@ -172,9 +189,13 @@ module Shumway.AVM2.AS.flash.display {
         // TODO: The Flash player reports progress in 16kb chunks, in a tight loop right here.
         if (update) {
           instance._applyLoadUpdate(update);
-          loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                            false, false, update.bytesLoaded,
-          bytesTotal));
+          try {
+            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                              false, false, update.bytesLoaded,
+                                                              bytesTotal));
+          } catch (e) {
+            console.warn('caught error under loaderInfo PROGRESS event: ', e);
+          }
         }
       }
     }
@@ -194,6 +215,11 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._contentLoaderInfo = new display.LoaderInfo(display.LoaderInfo.CtorToken);
       this._contentLoaderInfo._loader = this;
+
+      var currentAbc = AVM2.currentAbc();
+      if (currentAbc) {
+        this._contentLoaderInfo._loaderUrl = (<LoaderInfo>currentAbc.env.loaderInfo).url;
+      }
 
       this._fileLoader = null;
       this._loadStatus = LoadStatus.Unloaded;
@@ -457,6 +483,7 @@ module Shumway.AVM2.AS.flash.display {
           for (var i = loaderInfo._abcBlocksLoaded; i < abcBlocksLoaded; i++) {
             var abcBlock = file.abcBlocks[i];
             var abc = new AbcFile(abcBlock.data, abcBlock.name);
+            abc.env.loaderInfo = loaderInfo;
             if (abcBlock.flags) {
               // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
               // immediately.

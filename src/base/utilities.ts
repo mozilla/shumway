@@ -28,7 +28,7 @@ declare var putstr;
 // declare var document;
 // declare var getComputedStyle;
 
-/** @const */ var release: boolean = false;
+/** @const */ var release: boolean = true; // by default 'true' -- we are folding constants in closure compiler
 /** @const */ var profile: boolean = false;
 
 declare var dateNow: () => number;
@@ -36,7 +36,7 @@ declare var dateNow: () => number;
 declare var dump: (message: string) => void;
 
 function dumpLine(line: string) {
-  if (typeof dump !== "undefined") {
+  if (!release && typeof dump !== "undefined") {
     dump(line + "\n");
   }
 }
@@ -47,6 +47,22 @@ if (!jsGlobal.performance) {
 
 if (!jsGlobal.performance.now) {
   jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
+}
+
+function lazyInitializer(obj: any, propertyName: string, fn: ()=>any) {
+  Object.defineProperty(obj, propertyName, {
+    get: function () {
+      var value = fn();
+      Object.defineProperty(obj, propertyName, {
+        value: value,
+        configurable: true,
+        enumerable: true
+      });
+      return value;
+    },
+    configurable: true,
+    enumerable: true
+  });
 }
 
 var START_TIME = performance.now();
@@ -96,6 +112,11 @@ declare var Uint8ClampedArray: {
   new (array: number[]): Uint8ClampedArray;
   new (buffer: ArrayBuffer, byteOffset?: number, length?: number): Uint8ClampedArray;
   BYTES_PER_ELEMENT: number;
+}
+
+declare module Shumway {
+  var version: string;
+  var build: string;
 }
 
 module Shumway {
@@ -581,6 +602,13 @@ module Shumway {
         this.ensureCapacity(this._offset + size);
         this._offset += size;
       }
+    }
+
+    export interface IDataDecoder {
+      onData: (data: Uint8Array) => void;
+      onError: (e) => void;
+      push(data: Uint8Array);
+      close();
     }
   }
 

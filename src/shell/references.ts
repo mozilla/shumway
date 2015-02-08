@@ -4,6 +4,8 @@
 /// <reference path='../../build/ts/flash.d.ts' />
 /// <reference path='../../build/ts/player.d.ts' />
 
+/// <reference path='../../build/version/version.ts' />
+
 ///<reference path='domstubs.ts' />
 ///<reference path='module.ts' />
 ///<reference path='unit.ts' />

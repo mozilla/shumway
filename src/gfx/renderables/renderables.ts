@@ -161,7 +161,8 @@ module Shumway.GFX {
   export enum RenderableVideoState {
     Idle = 1,
     Playing,
-    Paused
+    Paused,
+    Ended
   }
 
   export class RenderableVideo extends Renderable {
@@ -172,7 +173,8 @@ module Shumway.GFX {
     private _eventSerializer: IVideoPlaybackEventSerializer;
     private _lastTimeInvalidated: number = 0;
     private _lastPausedTime: number = 0;
-    private _seekHappens: boolean = false;
+    private _seekHappening: boolean = false;
+    private _pauseHappening: boolean = false;
     private _isDOMElement = true;
     private _state: RenderableVideoState;
     static _renderableVideos: RenderableVideo [] = [];
@@ -188,15 +190,17 @@ module Shumway.GFX {
       var element: HTMLVideoElement = document.createElement('video');
       var elementEventHandler = this._handleVideoEvent.bind(this);
       element.preload = 'metadata'; // for mobile devices
-      // element.loop = true;
       element.addEventListener("play", elementEventHandler);
+      element.addEventListener("pause", elementEventHandler);
       element.addEventListener("ended", elementEventHandler);
       element.addEventListener("loadeddata", elementEventHandler);
       element.addEventListener("progress", elementEventHandler);
-      element.addEventListener("waiting", elementEventHandler);
+      element.addEventListener("suspend", elementEventHandler);
       element.addEventListener("loadedmetadata", elementEventHandler);
       element.addEventListener("error", elementEventHandler);
       element.addEventListener("seeking", elementEventHandler);
+      element.addEventListener("seeked", elementEventHandler);
+      element.addEventListener("canplay", elementEventHandler);
 
       this._video = element;
       this._videoEventHandler = elementEventHandler;
@@ -234,20 +238,38 @@ module Shumway.GFX {
       var element: HTMLVideoElement = this._video;
       switch (evt.type) {
         case "play":
-          type = VideoPlaybackEvent.PlayStart;
+          if (!this._pauseHappening) {
+            return;
+          }
+          type = VideoPlaybackEvent.Unpause;
+          break;
+        case "pause":
+          type = VideoPlaybackEvent.Pause;
+          this._pauseHappening = true;
           break;
         case "ended":
-          type = VideoPlaybackEvent.PlayStop;
+          this._state = RenderableVideoState.Ended;
+          this._notifyNetStream(VideoPlaybackEvent.PlayStop, data);
+          type = VideoPlaybackEvent.BufferEmpty;
           break;
         case "loadeddata":
+          this._pauseHappening = false;
+          this._notifyNetStream(VideoPlaybackEvent.PlayStart, data);
+          this.play();
+          return;
+        case "canplay":
+          if (this._pauseHappening) {
+            return;
+          }
           type = VideoPlaybackEvent.BufferFull;
           break;
         case "progress":
           type = VideoPlaybackEvent.Progress;
           break;
-        case "waiting":
-          type = VideoPlaybackEvent.BufferEmpty;
-          break;
+        case "suspend":
+//          type = VideoPlaybackEvent.BufferEmpty;
+//          break;
+          return;
         case "loadedmetadata":
           type = VideoPlaybackEvent.Metadata;
           data = {
@@ -263,8 +285,17 @@ module Shumway.GFX {
           };
           break;
         case "seeking":
+          if (!this._seekHappening) {
+            return;
+          }
           type = VideoPlaybackEvent.Seeking;
-          this._seekHappens = true;
+          break;
+        case "seeked":
+          if (!this._seekHappening) {
+            return;
+          }
+          type = VideoPlaybackEvent.Seeked;
+          this._seekHappening = false;
           break;
         default:
           return; // unhandled event
@@ -282,13 +313,23 @@ module Shumway.GFX {
       switch (type) {
         case VideoControlEvent.Init:
           videoElement.src = data.url;
+          if (this._state > RenderableVideoState.Idle) {
+            this.play();
+          }
           this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
+          break;
+        case VideoControlEvent.EnsurePlaying:
+          if (videoElement.paused) {
+            videoElement.play();
+          }
           break;
         case VideoControlEvent.Pause:
           if (videoElement) {
             if (data.paused && !videoElement.paused) {
               if (!isNaN(data.time)) {
-                videoElement.currentTime = data.time;
+                if (videoElement.seekable.length !== 0) {
+                  videoElement.currentTime = data.time;
+                }
                 this._lastPausedTime = data.time;
               } else {
                 this._lastPausedTime = videoElement.currentTime;
@@ -296,19 +337,15 @@ module Shumway.GFX {
               this.pause();
             } else if (!data.paused && videoElement.paused) {
               this.play();
-              if (!isNaN(data.time) && this._lastPausedTime !== data.time) {
+              if (!isNaN(data.time) && this._lastPausedTime !== data.time && videoElement.seekable.length !== 0) {
                 videoElement.currentTime = data.time;
-              }
-
-              if (this._seekHappens) {
-                this._seekHappens = false;
-                this._notifyNetStream(VideoPlaybackEvent.BufferFull, null);
               }
             }
           }
           return;
         case VideoControlEvent.Seek:
-          if (videoElement) {
+          if (videoElement && videoElement.seekable.length !== 0) {
+            this._seekHappening = true;
             videoElement.currentTime = data.time;
           }
           return;
@@ -511,6 +548,10 @@ module Shumway.GFX {
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {
+      // Only render fallback in debug mode.
+      if (release) {
+        return;
+      }
       if (!this.fillStyle) {
         this.fillStyle = Shumway.ColorStyle.randomStyle();
       }
@@ -601,12 +642,13 @@ module Shumway.GFX {
      * like Flash ignores strokes when clipping so we can also ignore stroke paths when computing
      * the clip region.
      *
-     * If |paintStencil| is |true| then we most not create any alpha values, and also not paint any strokes.
+     * If |paintStencil| is |true| then we must not create any alpha values, and also not paint
+     * any strokes.
      */
     render(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle,
            paintClip: boolean = false, paintStencil: boolean = false): void
     {
-      var paintStencilStyle = '#FF4981';
+      var paintStencilStyle = release ? '#000000' : '#FF4981';
       context.fillStyle = context.strokeStyle = 'transparent';
 
       var paths = this._deserializePaths(this._pathData, context, ratio);
@@ -619,9 +661,13 @@ module Shumway.GFX {
                                               context['imageSmoothingEnabled'] =
                                               path.smoothImage;
         if (path.type === PathType.Fill) {
-          context.fillStyle = paintStencil ? paintStencilStyle : path.style;
-          paintClip ? context.clip(path.path, 'evenodd') : context.fill(path.path, 'evenodd');
-          context.fillStyle = 'transparent';
+          if (paintClip) {
+            context.clip(path.path, 'evenodd');
+          } else {
+            context.fillStyle = paintStencil ? paintStencilStyle : path.style;
+            context.fill(path.path, 'evenodd');
+            context.fillStyle = 'transparent';
+          }
         } else if (!paintClip && !paintStencil) {
           context.strokeStyle = path.style;
           var lineScaleMode = LineScaleMode.Normal;

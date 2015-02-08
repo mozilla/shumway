@@ -119,6 +119,7 @@ module Shumway.AVM2.AS {
       M("flash.events.ProgressEvent", "ProgressEventClass", flash.events.ProgressEvent),
       M("flash.events.NetStatusEvent", "NetStatusEventClass", flash.events.NetStatusEvent),
       M("flash.events.HTTPStatusEvent", "HTTPStatusEventClass", flash.events.HTTPStatusEvent),
+      M("flash.events.UncaughtErrorEvents", "UncaughtErrorEventsClass", flash.events.UncaughtErrorEvents),
 
       M("flash.external.ExternalInterface", "ExternalInterfaceClass",
         flash.external.ExternalInterface),

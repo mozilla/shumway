@@ -195,7 +195,8 @@ module Shumway.Shell {
     argumentParser.addBoundOptionSet(systemOptions);
 
     function printUsage() {
-      writer.enter("Shumway Command Line Interface");
+      var version = Shumway.version + ' (' + Shumway.build + ')';
+      writer.enter("Shumway Command Line Interface. Version: " + version);
       systemOptions.trace(writer);
       writer.leave("");
     }

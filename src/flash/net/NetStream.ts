@@ -28,6 +28,7 @@ module Shumway.AVM2.AS.flash.net {
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import ISoundSource = flash.media.ISoundSource;
+  import IDataDecoder = Shumway.ArrayUtilities.IDataDecoder;
 
   declare var MediaSource;
   declare var URL;
@@ -63,17 +64,20 @@ module Shumway.AVM2.AS.flash.net {
 
       this._videoStream = new VideoStream();
       this._videoStream._onEnsurePlay = function () {
-        this._notifyVideoControl(VideoControlEvent.Pause, {
-          paused: false,
-          time: NaN
-        });
+        this._notifyVideoControl(VideoControlEvent.EnsurePlaying, null);
       }.bind(this);
+
+      this._resourceName = null;
+      this._metaData = null;
     }
 
     _connection: flash.net.NetConnection;
     _peerID: string;
 
     _id: number;
+
+    private _resourceName: string;
+    private _metaData: any;
 
     /**
      * Only one video can be attached to this |NetStream| object. If we attach another video, then
@@ -126,7 +130,7 @@ module Shumway.AVM2.AS.flash.net {
     _inBufferSeek: boolean;
     // _backBufferLength: number;
     // _bufferTimeMax: number;
-    // _info: flash.net.NetStreamInfo;
+    private _info: flash.net.NetStreamInfo;
     // _multicastInfo: flash.net.NetStreamMulticastInfo;
     // _time: number;
     // _currentFPS: number;
@@ -179,7 +183,7 @@ module Shumway.AVM2.AS.flash.net {
 
       if (this._connection && this._connection.uri) {
         this._videoStream.playInConnection(this._connection, url);
-      } else if (url === null && !this._connection) {
+      } else if (url === null) {
         this._videoStream.openInDataGenerationMode();
       } else {
         this._videoStream.play(url, this.checkPolicyFile);
@@ -194,8 +198,39 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.NetStream::play2"); return;
     }
     get info(): flash.net.NetStreamInfo {
-      notImplemented("public flash.net.NetStream::get info"); return;
-      // return this._info;
+      somewhatImplemented("public flash.net.NetStream::get info");
+      var bufferSeconds = 1;
+      var playedSeconds = Math.ceil(this._invoke(304, null));
+      var audioBytesPerSecond = 32;
+      var videoBytesPerSecond = 200;
+      var dataBytesPerSecond = 1;
+      return new NetStreamInfo(
+        audioBytesPerSecond + videoBytesPerSecond,
+        (audioBytesPerSecond + videoBytesPerSecond + dataBytesPerSecond) * (bufferSeconds + playedSeconds),
+        audioBytesPerSecond + videoBytesPerSecond,
+        audioBytesPerSecond,
+        audioBytesPerSecond * (bufferSeconds + playedSeconds),
+        videoBytesPerSecond,
+        videoBytesPerSecond * (bufferSeconds + playedSeconds),
+        dataBytesPerSecond,
+        dataBytesPerSecond * (bufferSeconds + playedSeconds),
+        (audioBytesPerSecond + videoBytesPerSecond + dataBytesPerSecond) * playedSeconds,
+        0,
+        audioBytesPerSecond * bufferSeconds,
+        videoBytesPerSecond * bufferSeconds,
+        dataBytesPerSecond * bufferSeconds,
+        bufferSeconds,
+        bufferSeconds,
+        bufferSeconds,
+        0,
+        0,
+        0,
+        this._metaData,
+        null,
+        this._connection.uri,
+        this._resourceName,
+        false
+      );
     }
     get multicastInfo(): flash.net.NetStreamMulticastInfo {
       notImplemented("public flash.net.NetStream::get multicastInfo"); return;
@@ -463,6 +498,8 @@ module Shumway.AVM2.AS.flash.net {
           break;
         case VideoPlaybackEvent.PlayStop:
           this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Buffer.Flush", level: "status"})));
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Play.Stop", level: "status"})));
 
           flash.media.SoundMixer._unregisterSoundSource(this);
@@ -481,9 +518,21 @@ module Shumway.AVM2.AS.flash.net {
           this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: code, level: "error"})));
           break;
+        case VideoPlaybackEvent.Pause:
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Pause.Notify", level: "status"})));
+          break;
+        case VideoPlaybackEvent.Unpause:
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Unpause.Notify", level: "status"})));
+          break;
         case VideoPlaybackEvent.Seeking:
           this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Seek.Notify", level: "status"})));
+          break;
+        case VideoPlaybackEvent.Seeked:
+          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Seek.Complete", level: "status"})));
           break;
         case VideoPlaybackEvent.Metadata:
           if (this._client) {
@@ -513,6 +562,18 @@ module Shumway.AVM2.AS.flash.net {
     notifyVideoControl(id: number, eventType: VideoControlEvent, data: any): any;
   }
 
+  var FLV_MIME_TYPE = 'video/x-flv';
+  var MP4_MIME_TYPE = 'video/mp4';
+  var MP3_MIME_TYPE = 'audio/mpeg';
+
+  function buildMimeType(baseType: string, codecs: string[]) {
+    var mimeType = baseType;
+    if (codecs) {
+      mimeType += ';codecs=\"' + codecs.join(',') + '\"';
+    }
+    return mimeType;
+  }
+
   enum VideoStreamState {
     CLOSED = 0,
     OPENED =  1,
@@ -537,6 +598,8 @@ module Shumway.AVM2.AS.flash.net {
     private _mediaSource;
     private _mediaSourceBuffer;
     private _mediaSourceBufferLock: Promise<any>;
+    private _head: Uint8Array;
+    private _decoder: IDataDecoder;
 
     get state(): VideoStreamState {
       return this._state;
@@ -555,8 +618,10 @@ module Shumway.AVM2.AS.flash.net {
       this._url = null;
       this._mediaSource = null;
       this._mediaSourceBuffer = null;
+      this._mediaSourceBufferLock = null;
       this._contentTypeHint = null;
       this._state = VideoStreamState.CLOSED;
+      this._head = null;
     }
 
     get url(): string {
@@ -566,32 +631,20 @@ module Shumway.AVM2.AS.flash.net {
     play(url: string, checkPolicyFile: boolean) {
       release || assert(this._state === VideoStreamState.CLOSED);
 
-      this._state = VideoStreamState.OPENED;
       var isMediaSourceEnabled = mediaSourceOption.value;
       if (isMediaSourceEnabled && typeof MediaSource === 'undefined') {
         console.warn('MediaSource API is not enabled, falling back to regular playback');
         isMediaSourceEnabled = false;
       }
-      if (!isMediaSourceEnabled) {
+      var forceMediaSource = /\.flv($|\?)/i.test(url);
+      if (!forceMediaSource && !isMediaSourceEnabled) {
         somewhatImplemented("public flash.net.NetStream::play");
+        this._state = VideoStreamState.OPENED;
         this._url = FileLoadingService.instance.resolveUrl(url);
         return;
       }
 
-      var mediaSource = new MediaSource();
-      mediaSource.addEventListener('sourceopen', function(e) {
-        this._mediaSource = mediaSource;
-      }.bind(this));
-      mediaSource.addEventListener('sourceend', function(e) {
-        this._mediaSource = null;
-      }.bind(this));
-
-      if (!url) {
-        this._url = null;
-        return;
-      }
-
-      this._url = URL.createObjectURL(mediaSource);
+      this.openInDataGenerationMode();
 
       var request = new net.URLRequest(url);
       request._checkPolicyFile = checkPolicyFile;
@@ -604,7 +657,7 @@ module Shumway.AVM2.AS.flash.net {
         if (contentTypeHeader) {
           var hint: string = contentTypeHeader.asGetPublicProperty('value');
           if (hint !== 'application/octet-stream') {
-            this._contentTypeHint = hint;
+            // this._contentTypeHint = hint;
           }
         }
       }.bind(this));
@@ -634,6 +687,9 @@ module Shumway.AVM2.AS.flash.net {
           }
           var parsedMetadata = RtmpJs.MP4.parseFLVMetadata(metadata);
           mux = new RtmpJs.MP4.MP4Mux(parsedMetadata);
+          mux.oncodecinfo = function (mediaCodecs) {
+            this._contentTypeHint = buildMimeType(MP4_MIME_TYPE, mediaCodecs);
+          };
           mux.ondata = function (data) {
             self.appendBytes(new Uint8Array(data));
           }.bind(this);
@@ -671,45 +727,104 @@ module Shumway.AVM2.AS.flash.net {
       this._state = VideoStreamState.OPENED_DATA_GENERATION;
       var mediaSource = new MediaSource();
       mediaSource.addEventListener('sourceopen', function(e) {
-        this._mediaSource = mediaSource;
         this._ensurePlaying();
       }.bind(this));
       mediaSource.addEventListener('sourceend', function(e) {
         this._mediaSource = null;
       }.bind(this));
-
+      this._mediaSource = mediaSource;
       this._url = URL.createObjectURL(mediaSource);
     }
 
     appendBytes(bytes: Uint8Array) {
       release || assert(this._state === VideoStreamState.OPENED_DATA_GENERATION ||
                         this._state === VideoStreamState.OPENED);
-      if (this._mediaSource) {
-        if (!this._mediaSourceBuffer) {
-          var contentType = this._contentTypeHint || this._detectContentType(bytes);
-          this._mediaSourceBufferLock = Promise.resolve(undefined);
+      release || assert(this._mediaSource);
+
+      if (this._decoder) {
+        this._decoder.push(bytes);
+        return;
+      }
+
+      // First we need to parse some content to find out mime type and codecs
+      // for MediaSource. Caching some data at the beginning until we can tell
+      // the type of the content.
+      var cached;
+      var buffer;
+      if (this._head !== null) {
+        cached = this._head.length;
+        buffer = new Uint8Array(cached + bytes.length);
+        buffer.set(bytes, cached);
+      } else {
+        cached = 0;
+        buffer = bytes;
+      }
+
+      if (!this._decoder) {
+        // Trying to create a data decoder.
+        var contentType = this._detectContentType(buffer);
+        if (contentType === FLV_MIME_TYPE) {
+          // FLV data needs to be parsed and wrapped with MP4 tags.
+          var flvDecoder = new FlvMp4Decoder();
+          flvDecoder.onHeader = function (contentType) {
+            this._mediaSourceBuffer = this._mediaSource.addSourceBuffer(contentType);
+            this._mediaSourceBufferLock = Promise.resolve(undefined);
+          }.bind(this);
+          flvDecoder.onData = this._queueData.bind(this);
+          this._decoder = flvDecoder;
+        } else if (contentType) {
+          // Let's use identity decoder for reset of the types.
+          this._decoder = {
+            onData: this._queueData.bind(this),
+            onError: function (e) { /* */ },
+            push: function (bytes: Uint8Array) { this.onData(bytes); },
+            close: function () { /* */ }
+          };
           this._mediaSourceBuffer = this._mediaSource.addSourceBuffer(contentType);
+          this._mediaSourceBufferLock = Promise.resolve(undefined);
         }
-        var buffer = this._mediaSourceBuffer;
-        // We need to chain all appendBuffer operations using 'update' event.
-        this._mediaSourceBufferLock = this._mediaSourceBufferLock.then(function () {
-          buffer.appendBuffer(bytes);
-          return new Promise(function (resolve) {
-            buffer.addEventListener('update', function updateHandler() {
-              buffer.removeEventListener('update', updateHandler);
-              resolve();
-            });
+      }
+
+      if (this._decoder) {
+        // The decoder exists, doing first data push, see also above.
+        this._decoder.push(buffer);
+        if (cached > 0) {
+          this._head = null;
+        }
+      } else {
+        // Caching header more header data.
+        if (cached === 0) {
+          this._head = new Uint8Array(bytes);
+        } else {
+          this._head = buffer;
+        }
+      }
+    }
+
+    private _queueData(bytes: Uint8Array): void {
+      // We need to chain all appendBuffer operations using 'update' event.
+      var buffer = this._mediaSourceBuffer;
+      this._mediaSourceBufferLock = this._mediaSourceBufferLock.then(function () {
+        buffer.appendBuffer(bytes);
+        return new Promise(function (resolve) {
+          buffer.addEventListener('update', function updateHandler() {
+            buffer.removeEventListener('update', updateHandler);
+            resolve();
           });
         });
-      }
-      somewhatImplemented("public flash.net.NetStream::appendBytes");
+      });
     }
 
     appendBytesAction(netStreamAppendBytesAction: string) {
       release || assert(this._state === VideoStreamState.OPENED_DATA_GENERATION ||
                         this._state === VideoStreamState.OPENED);
       netStreamAppendBytesAction = asCoerceString(netStreamAppendBytesAction);
+      // TODO Ignoring reset actions for now.
       if (netStreamAppendBytesAction === 'endSequence') {
+        if (!this._decoder) { // Probably pushed not enough data.
+          throw new Error('Internal appendBytes error');
+        }
+        this._decoder.close();
         this._mediaSourceBufferLock.then(function () {
           if (this._mediaSource) {
             this._mediaSource.endOfStream();
@@ -733,8 +848,38 @@ module Shumway.AVM2.AS.flash.net {
     }
 
     private _detectContentType(bytes: Uint8Array): string {
-      // TODO check bytes for content type
-      return 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"';
+      if (bytes.length < 16) {
+        return null; // Need more bytes.
+      }
+      if (bytes[0] === 0x46 /* F */ &&
+          bytes[1] === 0x4C /* L */ &&
+          bytes[2] === 0x56 /* V */ &&
+          bytes[3] === 1 /* version 1 */) {
+        // Likely FLV.
+        return FLV_MIME_TYPE;
+      }
+      if (bytes[4] === 0x66 /* f */ &&
+          bytes[5] === 0x74 /* t */ &&
+          bytes[6] === 0x79 /* y */ &&
+          bytes[7] === 0x70 /* p */) {
+        if (this._contentTypeHint &&
+            /^video\/mp4;\s*codecs=/.test(this._contentTypeHint)) {
+          return this._contentTypeHint;
+        }
+        // TODO check bytes for content type
+        return 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"';
+      }
+      if ((bytes[0] === 0x49 /* I */ &&
+           bytes[1] === 0x44 /* D */ &&
+           bytes[2] === 0x33 /* 3 */) ||
+          (bytes[0] === 0xFF &&
+           (bytes[1] & 0xE0) === 0xE0 &&
+           (bytes[1] & 0x1E) !== 0x08)) {
+        // Maybe MP3.
+        return MP3_MIME_TYPE;
+      }
+      // Just a wild (and wrong) guess
+      return this._contentTypeHint || MP4_MIME_TYPE;
     }
 
     processVideoPlaybackEvent(eventType: VideoPlaybackEvent, data: any) {
@@ -766,6 +911,82 @@ module Shumway.AVM2.AS.flash.net {
             videoHeight: data.videoHeight
           });
           break;
+      }
+    }
+  }
+
+  // FLV-to-MP4 data transformation.
+  class FlvMp4Decoder implements IDataDecoder {
+    public onData: (bytes: Uint8Array) => void;
+    public onError: (e) => void;
+    public onHeader: (contentType: string) => void;
+
+    private _flvParser: RtmpJs.FLV.FLVParser;
+    private _mp4Mux: RtmpJs.MP4.MP4Mux;
+
+    constructor() {
+      this._flvParser = new RtmpJs.FLV.FLVParser();
+      this._flvParser.onHeader = this._onFlvHeader.bind(this);
+      this._flvParser.onTag = this._onFlvTag.bind(this);
+      this._flvParser.onClose = this._onFlvClose.bind(this);
+      this._flvParser.onError = this._onFlvError.bind(this);
+      this._mp4Mux = null;
+    }
+
+    private _onFlvHeader(header: RtmpJs.FLV.FLVHeader) {
+      //
+    }
+
+    private _onFlvTag(tag: RtmpJs.FLV.FLVTag)  {
+      if (tag.type === 18) {
+        var ba = new flash.utils.ByteArray();
+        ba.writeRawBytes(tag.data);
+        ba.position = 0;
+        var name = Shumway.AVM2.AMF0.read(ba);
+        var value = Shumway.AVM2.AMF0.read(ba);
+        if (name === 'onMetaData') {
+          var metadata = RtmpJs.MP4.parseFLVMetadata(value);
+          var mp4Mux = new RtmpJs.MP4.MP4Mux(metadata);
+          mp4Mux.oncodecinfo = function (codecs: string[]) {
+            this.onHeader(buildMimeType(MP4_MIME_TYPE, codecs));
+          }.bind(this);
+          mp4Mux.ondata = function (data) {
+            this.onData.call(null, data);
+          }.bind(this);
+          this._mp4Mux = mp4Mux;
+        }
+        return;
+      }
+      this._mp4Mux.pushPacket(tag.type, new Uint8Array(tag.data), tag.timestamp);
+    }
+
+    private _onFlvClose() {
+      this._mp4Mux.flush();
+    }
+
+    private _onFlvError(e) {
+      if (this.onError) {
+        this.onError(e);
+      }
+    }
+
+    public push(bytes: Uint8Array) {
+      try {
+        this._flvParser.push(bytes);
+      } catch (e)  {
+        if (this.onError) {
+          this.onError(e);
+        }
+      }
+    }
+
+    public close() {
+      try {
+       this._flvParser.close();
+      } catch (e)  {
+        if (this.onError) {
+          this.onError(e);
+        }
       }
     }
   }

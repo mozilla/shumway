@@ -188,7 +188,7 @@ module Shumway.AVM2.AS {
         e.setProperty('uri', true, accessor[publicName('uri')]);
       }
       if (accessor[publicName('metadata')] !== null) {
-        describeMetadataXML(e, variable[publicName('metadata')]);
+        describeMetadataXML(e, accessor[publicName('metadata')]);
       }
       x.appendChild(e);
       traitsCount++;
@@ -207,7 +207,7 @@ module Shumway.AVM2.AS {
         e.setProperty('uri', true, method[publicName('uri')]);
       }
       if (method[publicName('metadata')] !== null) {
-        describeMetadataXML(e, variable[publicName('metadata')]);
+        describeMetadataXML(e, method[publicName('metadata')]);
       }
       x.appendChild(e);
       traitsCount++;

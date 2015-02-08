@@ -109,6 +109,7 @@ function runSwfPlayer(data) {
       player.stageAlign = stageAlign;
       player.stageScale = stageScale;
       player.displayParameters = displayParameters;
+      player.loaderUrl = loaderURL;
       player.load(file);
     }
     file = Shumway.FileLoadingService.instance.setBaseUrl(file);
@@ -135,6 +136,7 @@ window.addEventListener('message', function onWindowMessage(e) {
   if (data.settings) {
     Shumway.Settings.setSettings(data.settings);
   }
+  release = !!data.release;
   runSwfPlayer(data);
   document.body.style.backgroundColor = 'green';
 });

@@ -42,6 +42,7 @@ module Shumway.Player {
   import IAssetResolver = Timeline.IAssetResolver;
   import IFSCommandListener = flash.system.IFSCommandListener;
   import IVideoElementService = flash.net.IVideoElementService;
+  import IRootElementService = flash.display.IRootElementService;
   import MessageTag = Shumway.Remoting.MessageTag;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
@@ -55,7 +56,7 @@ module Shumway.Player {
    * synchronizes the frame tree with the display list.
    */
   export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
-                                 IAssetResolver {
+                                 IAssetResolver, IRootElementService {
     private _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
@@ -130,6 +131,21 @@ module Shumway.Player {
      */
     private _hasFocus = true;
 
+    /**
+     * Page URL that hosts SWF.
+     */
+    private _pageUrl: string = null;
+
+    /**
+     * SWF URL.
+     */
+    private _swfUrl: string = null;
+
+    /**
+     * Loader URL, can be different from SWF URL.
+     */
+    private _loaderUrl: string = null;
+
     constructor() {
       this._keyboardEventDispatcher = new KeyboardEventDispatcher();
       this._mouseEventDispatcher = new MouseEventDispatcher();
@@ -168,12 +184,32 @@ module Shumway.Player {
       return !this._isPageVisible;
     }
 
+    public get pageUrl(): string {
+      return this._pageUrl;
+    }
+
+    public set pageUrl(value: string) {
+      this._pageUrl = value || null;
+    }
+
+    public get loaderUrl(): string {
+      return this._loaderUrl;
+    }
+
+    public set loaderUrl(value: string) {
+      this._loaderUrl = value || null;
+    }
+
+    public get swfUrl(): string {
+      return this._swfUrl;
+    }
+
     public load(url: string, buffer?: ArrayBuffer) {
       release || assert (!this._loader, "Can't load twice.");
+      this._swfUrl = this._loaderUrl = url;
       this._stage = new flash.display.Stage();
       var loader = this._loader = flash.display.Loader.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
-
       if (playAllSymbolsOption.value) {
         this._playAllSymbols();
         loaderInfo._allowCodeExecution = false;
@@ -400,7 +436,13 @@ module Shumway.Player {
 
         stage._loaderInfo = loaderInfo;
         stage.align = self.stageAlign || '';
-        stage.scaleMode = self.stageScale || 'showall';
+
+        if (!self.stageScale || flash.display.StageScaleMode.toNumber(self.stageScale) < 0) {
+            stage.scaleMode = flash.display.StageScaleMode.SHOW_ALL;
+        } else {
+            stage.scaleMode = self.stageScale;
+        }
+
         stage.frameRate = loaderInfo.frameRate;
         stage.setStageWidth(loaderInfo.width);
         stage.setStageHeight(loaderInfo.height);
