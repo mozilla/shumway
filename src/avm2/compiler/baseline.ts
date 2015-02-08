@@ -1207,7 +1207,7 @@ module Shumway.AVM2.Compiler {
         var key = this.constantPool.strings[this.pushedStrings[this.stack]];
         properties.push((isNumeric(key) ? key : escapeString('$Bg' + key)) + ': ' + value);
       }
-      this.emitPush('{ ' + properties + ' }');
+      this.emitPush('{ ' + properties.join(', ') + ' }');
     }
 
     emitNewArray(bc: Bytecode) {
