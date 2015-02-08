@@ -137,8 +137,7 @@ module Shumway.AVM2.Compiler {
     compile() {
       compileCount++;
 
-      Relooper.cleanup();
-
+      release || assert(!Relooper.r);
       Relooper.init();
 
       this.bodyEmitter = new Emitter(!release);
@@ -303,8 +302,6 @@ module Shumway.AVM2.Compiler {
 
       var body = this.bodyEmitter.toString();
 
-      // writer.writeLn(body);
-
       var duration = performance.now() - start;
       compileTime += duration;
       passCompileCount++;
@@ -315,6 +312,7 @@ module Shumway.AVM2.Compiler {
                                " (" + compileTime.toFixed(2) + " total)");
 
       BytecodePool.releaseList(analysis.bytecodes);
+      Relooper.cleanup();
       return {body: body, parameters: this.parameters};
     }
 
@@ -1413,13 +1411,17 @@ module Shumway.AVM2.Compiler {
   }
   export function baselineCompileMethod(methodInfo: MethodInfo, scope: Scope,
                                         hasDynamicScope: boolean, globalMiName: string) {
+    var relooperState = Relooper.r;
+    Relooper.r = 0;
     var compiler = new BaselineCompiler(methodInfo, scope, hasDynamicScope, globalMiName);
     try {
       var result = compiler.compile();
     } catch (e) {
+      Relooper.cleanup();
       failCompileCount++;
       writer && writer.errorLn("Error: " + e);
     }
+    Relooper.r = relooperState;
     return result;
   }
 
