@@ -639,7 +639,6 @@ module Shumway.AVM2.AS.flash.net {
         isMediaSourceEnabled = false;
       }
       var forceMediaSource = false;
-        debugger;
       if (/\.flv($|\?)/i.test(url)) {
         if (flvOption.value === 'supported') {
           forceMediaSource = true;
