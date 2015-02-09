@@ -23,15 +23,6 @@ dynamic public class Function
   // E262 {DontEnum, DontDelete, ReadOnly}
   public native function get length():int
 
-  // called by native code to create empty functions used for
-  // prototype and no-arg constructor.
-  [API(CONFIG::VM_INTERNAL)]
-  [cppcall]
-  public static function createEmptyFunction():Function
-  {
-    return function() {}
-  }
-
   /* cn:  Spidermonkey returns the actual source text of the function here.  The ES3
    //  standard only says:
    15.3.4.2 Function.prototype.toString ( )

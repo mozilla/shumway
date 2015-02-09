@@ -101,6 +101,11 @@ module Shumway.AVM2.AS {
       public static instanceNatives: any [] = [DataBuffer.prototype];
       public static callableConstructor: any = null;
 
+      static classInitializer: any = function() {
+        var proto: any = DataBuffer.prototype;
+        ObjectUtilities.defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
+      }
+
       static initializer = function (source: any) {
         var self: ByteArray = this;
 
@@ -156,6 +161,10 @@ module Shumway.AVM2.AS {
 
       constructor() {
         false && super();
+      }
+
+      toJSON() {
+        return "ByteArray";
       }
 
       private _buffer: ArrayBuffer;
@@ -229,24 +238,6 @@ module Shumway.AVM2.AS {
       writeRawBytes: (bytes: Uint8Array) => void;
       position: number;
       length: number;
-
-//      Maybe Someday
-//      atomicCompareAndSwapIntAt(byteIndex: number /*int*/, expectedValue: number /*int*/, newValue: number /*int*/): number /*int*/ {
-//        byteIndex = byteIndex | 0; expectedValue = expectedValue | 0; newValue = newValue | 0;
-//        notImplemented("public flash.utils.ByteArray::atomicCompareAndSwapIntAt"); return;
-//      }
-//      atomicCompareAndSwapLength(expectedLength: number /*int*/, newLength: number /*int*/): number /*int*/ {
-//        expectedLength = expectedLength | 0; newLength = newLength | 0;
-//        notImplemented("public flash.utils.ByteArray::atomicCompareAndSwapLength"); return;
-//      }
-//      get shareable(): boolean {
-//        notImplemented("public flash.utils.ByteArray::get shareable"); return;
-//      }
-//      set shareable(newValue: boolean) {
-//        newValue = !!newValue;
-//        notImplemented("public flash.utils.ByteArray::set shareable"); return;
-//      }
-
     }
 
     ByteArray.prototype.asGetNumericProperty = DataBuffer.prototype.getValue;

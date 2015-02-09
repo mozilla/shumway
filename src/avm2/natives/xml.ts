@@ -1038,7 +1038,10 @@ module Shumway.AVM2.AS {
   }
 
   export class ASQName extends ASNative implements XMLType {
-    public static instanceConstructor: any = ASQName;
+    static classInitializer: any = function() {
+      var proto: any = ASQName.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.ecmaToString);
+    }
 
     /**
      * 13.3.1 The QName Constructor Called as a Function
@@ -1182,12 +1185,34 @@ module Shumway.AVM2.AS {
       this.name.namespaces[0].uri = uri;
     }
 
+    ecmaToString (): string {
+      if (this === ASQName.dynamicPrototype) {
+        return "";
+      }
+      if (!(this instanceof AS.ASQName)) {
+        throwError('TypeError', Errors.InvokeOnIncompatibleObjectError, "QName.prototype.toString");
+      }
+      return this.toString();
+    }
+
     toString() {
       var uri = this.uri;
-      if (uri) {
-        return uri + '::' + this.name.name;
+      if (uri === "") {
+        return this.name.name;
       }
-      return this.name.name;
+      if (uri === null) {
+        return "*::" + this.name.name;
+      }
+      var cc = uri.charCodeAt(uri.length - 1);
+      // strip the version mark, if there is one
+      var base_uri = uri;
+      if(cc >= 0xE000 && cc <= 0xF8FF) {
+        base_uri = uri.substr(0, uri.length - 1);
+      }
+      if (base_uri === "") {
+        return this.name.name;
+      }
+      return base_uri + "::" + this.name.name;
     }
 
     /**

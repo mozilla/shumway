@@ -22,13 +22,10 @@ public dynamic class Object
   // Object.length = 1 per ES3
   // E262 {ReadOnly, DontDelete, DontEnum }
   public static const length:int = 1
-  protected static native function _setPropertyIsEnumerable(o, V:String, enumerable:Boolean):void
 
   AS3 native function isPrototypeOf(V=void 0):Boolean;
   AS3 native function hasOwnProperty(V=void 0):Boolean;
   AS3 native function propertyIsEnumerable(V=void 0):Boolean;
-
-  native protected static function _dontEnumPrototype(proto:Object):void;
 
   // https://bugzilla.mozilla.org/show_bug.cgi?id=605660
   // Some existing Flash content happens to rely on an "init" method

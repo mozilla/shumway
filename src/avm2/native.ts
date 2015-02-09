@@ -182,10 +182,10 @@ module Shumway.AVM2.AS {
       return ASClassPrototype.getQualifiedClassName.call(this);
     }
 
-    static _setPropertyIsEnumerable(o, V: string, enumerable: boolean): void {
+    static _setPropertyIsEnumerable(o, V: string, enumerable: boolean = true): void {
       var name = Multiname.getPublicQualifiedName(V);
       var descriptor = getOwnPropertyDescriptor(o, name);
-      descriptor.enumerable = false;
+      descriptor.enumerable = !!enumerable;
       Object.defineProperty(o, name, descriptor);
     }
 
@@ -559,8 +559,8 @@ module Shumway.AVM2.AS {
     instanceConstructorNoInitialize: new (...args) => any;
 
     /**
-     * Native initializer. Classes that have these defined are constructed in a two phases. All initializers
-     * along the inheritance chain are executed before any constructors are called.
+     * Native initializer. Classes that have these defined are constructed in a two phases. All
+     * initializers along the inheritance chain are executed before any constructors are called.
      */
     initializer: (...args) => any;
 
@@ -620,13 +620,15 @@ module Shumway.AVM2.AS {
     interfaceBindings: InstanceBindings;
 
     /**
-     * Prototype object that holds all class instance traits. This is not usually accessible from AS3 code directly. However,
-     * for some classes (native classes) the |traitsPrototype| === |dynamicPrototype|.
+     * Prototype object that holds all class instance traits. This is not usually accessible from
+     * AS3 code directly. However, for some classes (native classes) the |traitsPrototype| ===
+     * |dynamicPrototype|.
      */
     traitsPrototype: Object;
 
     /**
-     * Prototype object accessible from AS3 script code. This is the AS3 Class prototype object |class A { ... }, A.prototype|
+     * Prototype object accessible from AS3 script code. This is the AS3 Class prototype object
+     * |class A { ... }, A.prototype|
      */
     dynamicPrototype: Object;
 
@@ -703,8 +705,8 @@ module Shumway.AVM2.AS {
         return false;
       }
 
-      // We need to box primitive types before doing the |isPrototypeOf| test. In AS3, primitive values are
-      // identical to their boxed representations: |0 === new Number(0)| is |true|.
+      // We need to box primitive types before doing the |isPrototypeOf| test. In AS3, primitive
+      // values are identical to their boxed representations: |0 === new Number(0)| is |true|.
       value = boxValue(value);
 
       if (this.isInterface()) {
@@ -1423,37 +1425,129 @@ module Shumway.AVM2.AS {
     public static instanceConstructor: any = null;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
+
     public static getErrorMessage = Shumway.AVM2.getErrorMessage;
+    public static throwError(type: typeof ASError, id: number /*, ...rest */) {
+      var info = getErrorInfo(id);
+
+      var args = [info];
+      for (var i = 2; i < arguments.length; i++) {
+        args.push(arguments[i]);
+      }
+      var message = formatErrorMessage.apply(null, args);
+      throw new type(message, id);
+    }
+
+
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', 'Error');
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgmessage', 'Error');
+      defineNonEnumerableProperty(this.dynamicPrototype, '$BgtoString', this.prototype.toString);
+    }
+
+    constructor(msg: any, id: any) {
+      false && super();
+      this.message = asCoerceString(msg);
+      this._errorID = id|0;
+      // This is gnarly but saves us from having individual ctors in all Error child classes.
+      this.name = (<ASClass><any>this.constructor).dynamicPrototype['$Bgname'];
+    }
+
+    message: string;
+    name: string;
+    _errorID: number;
+
+    toString() {
+      return this.message !== "" ? this.name + ": " + this.message : this.name;
+    }
+
+    get errorID() {
+      return this._errorID;
+    }
+
     public getStackTrace(): string {
       // Stack traces are only available in debug builds. We only do opt.
       return null;
     }
-    constructor(msg: any = "", id: any = 0) {
-      false && super();
-      notImplemented("ASError");
-    }
   }
 
-  export class ASDefinitionError extends ASError { }
-  export class ASEvalError extends ASError { }
-  export class ASRangeError extends ASError { }
-  export class ASReferenceError extends ASError { }
-  export class ASSecurityError extends ASError { }
-  export class ASSyntaxError extends ASError { }
-  export class ASTypeError extends ASError { }
-  export class ASURIError extends ASError { }
-  export class ASVerifyError extends ASError { }
-  export class ASUninitializedError extends ASError { }
-  export class ASArgumentError extends ASError { }
+  export class ASDefinitionError extends ASError {
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', this.name.substr(2));
+    }
+  }
+  export class ASEvalError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASRangeError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASReferenceError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASSecurityError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASSyntaxError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASTypeError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASURIError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASVerifyError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASUninitializedError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASArgumentError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+
+  export class ASIOError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASEOFError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASMemoryError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASIllegalOperationError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
 
   export class ASRegExp extends ASObject {
     public static instanceConstructor: any = XRegExp;
     public static staticNatives: any [] = [XRegExp];
     public static instanceNatives: any [] = [XRegExp.prototype];
 
+    static classInitializer: any = function() {
+      var proto = XRegExp.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', ASRegExp.prototype.ecmaToString);
+      defineNonEnumerableProperty(proto, '$Bgexec', proto.exec);
+      defineNonEnumerableProperty(proto, '$Bgtest', proto.test);
+    }
+
     constructor(input) {
       false && super();
       release || assertUnreachable('ASRegExp references must be delegated to XRegExp.');
+    }
+
+    ecmaToString() {
+      var r: any = this;
+      var out = "/" + r.source + "/";
+      if (r.global)       out += "g";
+      if (r.ignoreCase)   out += "i";
+      if (r.multiline)    out += "m";
+      if (r.dotall)       out += "s";
+      if (r.extended)     out += "x";
+      return out;
     }
 
     get native_source(): string {
@@ -1516,6 +1610,10 @@ module Shumway.AVM2.AS {
       }
       Shumway.AVM2.Runtime.publicizeProperties(result);
       return result;
+    }
+
+    test(s: string = ""): boolean {
+      return this.exec(s) !== null;
     }
   }
 
@@ -1629,6 +1727,10 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["VerifyErrorClass"]         = ASVerifyError;
     builtinNativeClasses["UninitializedErrorClass"]  = ASUninitializedError;
     builtinNativeClasses["ArgumentErrorClass"]       = ASArgumentError;
+    builtinNativeClasses["IOErrorClass"]             = ASIOError;
+    builtinNativeClasses["EOFErrorClass"]            = ASEOFError;
+    builtinNativeClasses["MemoryErrorClass"]         = ASMemoryError;
+    builtinNativeClasses["IllegalOperationErrorClass"] = ASIllegalOperationError;
 
     builtinNativeClasses["DateClass"]                = ASDate;
     builtinNativeClasses["MathClass"]                = ASMath;
@@ -1676,8 +1778,8 @@ module Shumway.AVM2.AS {
   }
 
   /**
-   * We need to patch up the prototypes of all classes that are created before the Class class is constructed.
-   * Here we store the classes that need to be patched.
+   * We need to patch up the prototypes of all classes that are created before the Class class is
+   * constructed. Here we store the classes that need to be patched.
    */
   var morphPatchList = [];
 
@@ -1906,7 +2008,8 @@ module Shumway.AVM2.AS {
     }
 
     /**
-     * Returns the fully qualified class name of the base class of the object specified by the |value| parameter.
+     * Returns the fully qualified class name of the base class of the object specified by the
+     * |value| parameter.
      */
     export function getQualifiedSuperclassName(value: any) {
       if (isNullOrUndefined(value)) {

@@ -1481,6 +1481,7 @@ module Shumway.AVM2.Runtime {
     if (methodInfo.verified) {
       fnName += "$V";
     }
+    fnName += '_' + (methodInfo.abc.hash >>> 0);
     return fnName;
   }
 
@@ -1909,5 +1910,6 @@ var checkFilter = Shumway.AVM2.Runtime.checkFilter;
 
 var sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
+var createClass = Shumway.AVM2.Runtime.createClass;
 var createFunction = Shumway.AVM2.Runtime.createFunction;
 var createName = Shumway.AVM2.Runtime.createName;
