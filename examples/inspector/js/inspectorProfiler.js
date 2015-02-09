@@ -41,24 +41,23 @@ var profiler = (function() {
     }, false);
   }
 
-  Profiler.prototype.start = function(maxTime, resetTimelines) {
+  Profiler.prototype.start = function(startTime_, maxTime, resetTimelines) {
     window.profile = true;
     requestTimelineBuffers(resetTimelines ? 'clear' : 'get');
     controller.deactivateProfile();
-    maxTime = maxTime || 0;
     elProfilerToolbar.classList.add("withEmphasis");
     elBtnStartStop.textContent = "Stop";
-    startTime = Date.now();
+    startTime = startTime_;
     timerHandle = setInterval(showTimeMessage, 1000);
     if (maxTime) {
-      timeoutHandle = setTimeout(this.createProfile.bind(this), state.profileStartupDuration);
+      timeoutHandle = setTimeout(this.createProfile.bind(this), maxTime);
     }
     showTimeMessage();
   }
 
   Profiler.prototype.createProfile = function() {
     requestTimelineBuffers('get').then(function (buffers) {
-      controller.createProfile(buffers);
+      controller.createProfile(buffers, startTime);
       elProfilerToolbar.classList.remove("withEmphasis");
       elBtnStartStop.textContent = "Start";
       clearInterval(timerHandle);
@@ -95,13 +94,13 @@ var profiler = (function() {
       this.createProfile();
       this.openPanel();
     } else {
-      this.start(0, true);
+      this.start(0, 0, true);
     }
   }
 
   function showTimeMessage(show) {
     show = typeof show === "undefined" ? true : show;
-    var time = Math.round((Date.now() - startTime) / 1000);
+    var time = Math.round((performance.now() - startTime) / 1000);
     elProfilerMessage.textContent = show ? "Running: " + time + " Seconds" : "";
   }
 
