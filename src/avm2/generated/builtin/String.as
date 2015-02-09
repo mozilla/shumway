@@ -86,7 +86,6 @@ package
     AS3 native function toString();
     AS3 native function valueOf();
 
-    // Dummy constructor
-    public function String(value = "") {}
+    public native function String(value = "");
   }
 }

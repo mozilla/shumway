@@ -103,10 +103,7 @@ public final class Number
   AS3 native function toPrecision(p=0):String;
   AS3 native function toFixed(p=0):String;
 
-  // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
-  // The code for the actual ctor is in NumberClass::construct in the avmplus
-  public function Number(value = 0)
-  {}
+  public native function Number(value = 0);
 }
 
 // No instancegc, value is primitive.
@@ -141,10 +138,7 @@ public final class int
     return Number(this).AS3::toFixed(p)
   }
 
-  // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
-  // The code for the actual ctor is in IntClass::construct in the avmplus
-  public function int(value = 0)
-  {}
+  public native function int(value = 0);
 }
 
 // No instancegc, value is primitive.
@@ -180,9 +174,6 @@ public final class uint
     return Number(this).AS3::toFixed(p)
   }
 
-  // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
-  // The code for the actual ctor is in UIntClass::construct in the avmplus
-  public function uint(value = 0)
-  {}
+  public native function uint(value = 0);
 }
 }

@@ -24,7 +24,6 @@ public final class Boolean extends Object
 
   // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
   // The code for the actual ctor is in BooleanClass::construct in the avmplus
-  public function Boolean(value = void 0)
-  {}
+  public native function Boolean(value = void 0);
 }
 }

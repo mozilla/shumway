@@ -141,8 +141,6 @@ package
     public function get day():Number { return AS3::getDay(); }
     public function get dayUTC():Number { return AS3::getUTCDay(); }
 
-
-    // Dummy constructor
-    public function Date(year = void 0, month = void 0, date = void 0, hours = void 0, minutes = void 0, seconds = void 0, ms = void 0) {}
+    public native function Date(year = void 0, month = void 0, date = void 0, hours = void 0, minutes = void 0, seconds = void 0, ms = void 0);
   }
 }
