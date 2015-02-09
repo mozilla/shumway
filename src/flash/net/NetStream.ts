@@ -62,7 +62,7 @@ module Shumway.AVM2.AS.flash.net {
       this._contentTypeHint = null;
       this._checkPolicyFile = true;
 
-      this._videoStream = new VideoStream();
+      this._videoStream = new VideoStream(this);
       this._videoStream._onEnsurePlay = function () {
         this._notifyVideoControl(VideoControlEvent.EnsurePlaying, null);
       }.bind(this);
@@ -600,6 +600,7 @@ module Shumway.AVM2.AS.flash.net {
     private _mediaSourceBufferLock: Promise<any>;
     private _head: Uint8Array;
     private _decoder: IDataDecoder;
+    private _netStream: NetStream;
 
     get state(): VideoStreamState {
       return this._state;
@@ -609,7 +610,7 @@ module Shumway.AVM2.AS.flash.net {
       return this._bufferTime;
     }
 
-    constructor() {
+    constructor(netStream: NetStream) {
       this._domReady = new PromiseWrapper<any>();
       this._metadataReady = new PromiseWrapper<any>();
       this._started = false;
@@ -622,6 +623,7 @@ module Shumway.AVM2.AS.flash.net {
       this._contentTypeHint = null;
       this._state = VideoStreamState.CLOSED;
       this._head = null;
+      this._netStream = netStream;
     }
 
     get url(): string {
@@ -636,7 +638,20 @@ module Shumway.AVM2.AS.flash.net {
         console.warn('MediaSource API is not enabled, falling back to regular playback');
         isMediaSourceEnabled = false;
       }
-      var forceMediaSource = /\.flv($|\?)/i.test(url);
+      var forceMediaSource = false;
+      if (/\.flv($|\?)/i.test(url)) {
+        if (flvOption.value === 'supported') {
+          forceMediaSource = true;
+        } else if (flvOption.value === 'mock') {
+          url = 'resource://shumway/web/noflv.mp4';
+        } else {
+          setTimeout(() => {
+            this._netStream.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+              false, false, wrapJSObject({code: "NetStream.Play.NoSupportedTrackFound", level: "error"})));
+          });
+          return;
+        }
+      }
       if (!forceMediaSource && !isMediaSourceEnabled) {
         somewhatImplemented("public flash.net.NetStream::play");
         this._state = VideoStreamState.OPENED;
