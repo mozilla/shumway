@@ -117,6 +117,7 @@ module Shumway {
 
     // TODO: strongly type
     loadFile(request: any) {
+      SWF.enterTimeline('Load file', request.url);
       this._bytesLoaded = 0;
       var session = this._loadingServiceSession = FileLoadingService.instance.createSession();
       session.onopen = this.processLoadOpen.bind(this);
@@ -129,9 +130,11 @@ module Shumway {
       // TODO: implement
     }
     loadBytes(bytes: Uint8Array) {
+      SWF.enterTimeline('Load bytes');
       this.processLoadOpen();
       this.processNewData(bytes, {bytesLoaded: bytes.length, bytesTotal: bytes.length});
       this.processLoadClose();
+      // SWF.leaveTimeline happens in processLoadClose.
     }
     processLoadOpen() {
       release || assert(!this._file);
@@ -190,6 +193,8 @@ module Shumway {
       }
       if (file.bytesLoaded !== file.bytesTotal) {
         Debug.warning("Not Implemented: processing loadClose when loading was aborted");
+      } else {
+        SWF.leaveTimeline();
       }
     }
 

@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+declare module Shumway.SWF {
+  function enterTimeline(name: string, data?: any): void;
+  function leaveTimeline(data?: any): void;
+}
+
 module Shumway.AVM2.Runtime {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import Hashes = Shumway.AVM2.ABC.Hashes;
@@ -100,10 +105,12 @@ module Shumway.AVM2.Runtime {
 
   function promiseFile(path, responseType) {
     return new Promise(function (resolve, reject) {
+      SWF.enterTimeline('Load file', path);
       var xhr = new XMLHttpRequest();
       xhr.open('GET', path);
       xhr.responseType = responseType;
       xhr.onload = function () {
+        SWF.leaveTimeline();
         var response = xhr.response;
         if (response) {
           if (responseType === 'json' && xhr.responseType !== 'json') {

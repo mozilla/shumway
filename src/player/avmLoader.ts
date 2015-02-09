@@ -32,7 +32,9 @@ module Shumway {
                              next: (avm2: AVM2) => void) {
     var avm2;
     release || assert (builtinPath);
+    SWF.enterTimeline('Load file', builtinPath);
     new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
+      SWF.leaveTimeline();
       AVM2.initialize(sysMode, appMode);
       avm2 = AVM2.instance;
       Shumway.AVM2.AS.linkNatives(avm2);
