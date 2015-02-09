@@ -27,6 +27,8 @@
 ///<reference path='bytecode.ts' />
 ///<reference path='options.ts' />
 ///<reference path='runtime.ts' />
+///<reference path='int.ts' />
+///<reference path='run.ts' />
 ///<reference path='scope.ts' />
 ///<reference path='bindings.ts' />
 ///<reference path='xregexp.ts' />

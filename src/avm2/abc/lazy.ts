@@ -1,4 +1,4 @@
-module Shumway.AVM2.ABCX {
+module Shumway.AVMX {
   import assert = Shumway.Debug.assert;
   import hashBytesTo32BitsAdler = Shumway.HashUtilities.hashBytesTo32BitsAdler;
   import AbcStream = Shumway.AVM2.ABC.AbcStream;
@@ -8,12 +8,13 @@ module Shumway.AVM2.ABCX {
   /**
    * Naming Conventions:
    *
+   *  mn:   multiname;
    *  nm:   name
    *  ns:   namespace
    *  nss:  namespace set
-   *  nx:   namespace or namespace set (negative numbers)
-   *  mn:   multiname
    *
+   * Parsing is a combination of lazy and eager evaluation. String parsing is deferred until
+   * it is needed for multiname parsing.
    */
 
   export enum CONSTANT {
@@ -90,26 +91,98 @@ module Shumway.AVM2.ABCX {
 
   }
 
-  export class TraitInfo {
-    public metadata: Uint32Array [];
+  export class Traits {
     constructor(
-      public kind: TRAIT,
-      public name: number
+      public abc: ABCFile,
+      public traits: TraitInfo []
     ) {
-      this.metadata = null;
+      // ...
     }
 
-    toString(abc: ABCFile) {
-      return TRAIT[this.kind] + " " + abc.getMultiname(this.name);
+    resolve() {
+      for (var i = 0; i < this.traits.length; i++) {
+        this.traits[i].resolve(this.abc);
+      }
+    }
+
+    attachHolder(holder: Info) {
+      for (var i = 0; i < this.traits.length; i++) {
+        release || assert(!this.traits[i].holder);
+        this.traits[i].holder = holder;
+      }
+    }
+
+    trace(writer: IndentingWriter) {
+      this.resolve();
+      this.traits.forEach(x => writer.writeLn(x.toString()));
+    }
+
+    indexOf(mn: Multiname): number {
+      release || assert (!mn.isRuntime());
+      var mnName = mn.name;
+      var nss = mn.namespaces;
+      var traits = this.traits;
+      for (var i = 0; i < traits.length; i++) {
+        var trait = traits[i];
+        var traitMn = <Multiname>trait.name;
+        if (traitMn.name === mnName) {
+          var nsName = traitMn.namespaces[0].name;
+          for (var j = 0; j < nss.length; j++) {
+            if (nsName === nss[j].name) {
+              return i;
+            }
+          }
+        }
+      }
+      return -1;
+    }
+
+    getTrait(mn: Multiname): TraitInfo {
+      var i = this.indexOf(mn);
+      if (i >= 0) {
+        return this.traits[i];
+      }
+      return null;
+    }
+
+    concat(traits: Traits): Traits {
+      return new Traits(this.abc, this.traits.concat(traits.traits));
+    }
+  }
+
+  export class TraitInfo {
+    public holder: Info;
+    public metadata: Uint32Array [];
+
+    constructor(
+      public kind: TRAIT,
+      public name: Multiname | number
+    ) {
+      this.metadata = null;
+      this.holder = null;
+    }
+
+    getName(): Multiname {
+      return <Multiname>this.name;
+    }
+
+    resolve(abc: ABCFile) {
+      if (typeof this.name === "number") {
+        this.name = abc.getMultiname(<number>this.name);
+      }
+    }
+
+    toString() {
+      return TRAIT[this.kind] + " " + this.name;
     }
   }
 
   export class SlotTraitInfo extends TraitInfo {
     constructor(
       kind: TRAIT,
-      name: number,
+      name: Multiname | number,
       public slot: number,
-      public type: number,
+      public type: Multiname | number,
       public defaultValueKind: CONSTANT,
       public defaultValueIndex: number
     ) {
@@ -120,17 +193,28 @@ module Shumway.AVM2.ABCX {
   export class MethodTraitInfo extends TraitInfo {
     constructor(
       kind: TRAIT,
-      name: number,
-      public methodInfo: number
+      name: Multiname | number,
+      public methodInfo: MethodInfo | number
     ) {
       super(kind, name);
+    }
+
+    getMethodInfo(): MethodInfo {
+      return <MethodInfo>this.methodInfo;
+    }
+
+    resolve(abc: ABCFile) {
+      super.resolve(abc);
+      if (typeof this.methodInfo === "number") {
+        this.methodInfo = abc.getMethodInfo(<number>this.methodInfo);
+      }
     }
   }
 
   export class ClassTraitInfo extends TraitInfo {
     constructor(
       kind: TRAIT,
-      name: number,
+      name: Multiname | number,
       public classInfo: number
     ) {
       super(kind, name);
@@ -140,26 +224,40 @@ module Shumway.AVM2.ABCX {
   export class ParameterInfo {
     constructor(
       public abc: ABCFile,
-      public type: number,
+      public type: Multiname | number,
       /**
        * Don't rely on the name being correct.
        */
-      public name: number,
+      public name: string | number,
       public optionalValueKind: CONSTANT,
       public optionalValueIndex: number
     ) {
       // ...
     }
 
+    getName(): string {
+      if (typeof this.name === "number") {
+        this.name = this.abc.getString(<number>this.name);
+      }
+      return <string>this.name;
+    }
+
+    getType(): Multiname {
+      if (typeof this.type === "number") {
+        this.type = this.abc.getMultiname(<number>this.type);
+      }
+      return <Multiname>this.type;
+    }
+
     toString() {
       var str = "";
       if (this.name) {
-        str += this.abc.getString(this.name);
+        str += this.getName();
       } else {
         str += "?";
       }
       if (this.type) {
-        str += ": " + this.abc.getMultiname(this.type).getNameString();
+        str += ": " + this.getType().name;
       }
       if (this.optionalValueKind >= 0) {
         str += " = " + this.abc.getConstant(this.optionalValueKind, this.optionalValueIndex);
@@ -168,61 +266,98 @@ module Shumway.AVM2.ABCX {
     }
   }
 
-  export class InstanceInfo {
+  export class Info {
+
+  }
+
+  export class InstanceInfo extends Info {
+    public classInfo: ClassInfo = null;
     constructor(
       public abc: ABCFile,
-      public name: number,
-      public superName: number,
+      public name: Multiname | number,
+      public superName: Multiname | number,
       public flags: number,
       public protectedNs: number,
       public interfaces: number [],
       public initializer: number,
-      public traits: TraitInfo []
+      public traits: Traits
     ) {
-      // ...
+      super();
+    }
+
+    getName(): Multiname {
+      if (typeof this.name === "number") {
+        this.name = this.abc.getMultiname(<number>this.name);
+      }
+      return <Multiname>this.name;
+    }
+
+    getSuperName(): Multiname {
+      if (typeof this.superName === "number") {
+        this.superName = this.abc.getMultiname(<number>this.superName);
+      }
+      return <Multiname>this.superName;
     }
 
     toString() {
-      return this.abc.getMultiname(this.name).getNameString();
+      return "InstanceInfo " + this.getName().name;
     }
 
     trace(writer: IndentingWriter) {
-      writer.enter("InstanceInfo: " + this.abc.getMultiname(this.name).getNameString());
-      this.superName && writer.writeLn("Super: " + this.abc.getMultiname(this.superName).getNameString());
-      this.traits.forEach(x => writer.writeLn(x.toString(this.abc)));
+      writer.enter("InstanceInfo: " + this.getName());
+      this.superName && writer.writeLn("Super: " + this.getSuperName());
+      this.traits.trace(writer);
       writer.outdent();
     }
   }
 
-  export class ScriptInfo {
+  export class ScriptInfo extends Info {
+    public global: Global = null;
+    public state: ScriptInfoState = ScriptInfoState.None;
     constructor(
       public abc: ABCFile,
       public initializer: number,
-      public traits: TraitInfo []
+      public traits: Traits
     ) {
-      // ...
+      super();
+    }
+
+    getInitializer(): MethodInfo {
+      return this.abc.getMethodInfo(this.initializer);
     }
 
     trace(writer: IndentingWriter) {
-      writer.enter("ScriptInfo: " + this.traits.length);
-      this.traits.forEach(x => writer.writeLn(x.toString(this.abc)));
+      writer.enter("ScriptInfo");
+      this.traits.trace(writer);
       writer.outdent();
     }
   }
 
-  export class ClassInfo {
+  export class ClassInfo extends Info {
     constructor(
       public abc: ABCFile,
-      public instanceInfo: number,
-      public initializer: number,
-      public traits: TraitInfo []
+      public instanceInfo: InstanceInfo,
+      public initializer: MethodInfo | number,
+      public traits: Traits
     ) {
-      // ...
+      super();
+    }
+
+
+    getInitializer(): MethodInfo {
+      if (typeof this.initializer === "number") {
+        return this.initializer = this.abc.getMethodInfo(<number>this.initializer)
+      }
+      return <MethodInfo>this.initializer;
+    }
+
+    toString() {
+      return "ClassInfo " + this.instanceInfo.getName();
     }
 
     trace(writer: IndentingWriter) {
-      writer.enter("ClassInfo: " + this.traits.length);
-      this.traits.forEach(x => writer.writeLn(x.toString(this.abc)));
+      writer.enter("ClassInfo");
+      this.traits.trace(writer);
       writer.outdent();
     }
   }
@@ -239,7 +374,7 @@ module Shumway.AVM2.ABCX {
     }
   }
 
-  export class MethodBodyInfo {
+  export class MethodBodyInfo extends Info {
     constructor(
       public maxStack: number,
       public localCount: number,
@@ -247,9 +382,9 @@ module Shumway.AVM2.ABCX {
       public maxScopeDepth: number,
       public code: Uint8Array,
       public exceptions: ExceptionInfo [],
-      public traits: TraitInfo []
+      public traits: Traits
     ) {
-      // ...
+      super();
     }
 
     trace(writer: IndentingWriter) {
@@ -258,16 +393,21 @@ module Shumway.AVM2.ABCX {
   }
 
   export class MethodInfo {
-    public body: MethodBodyInfo;
+    private _body: MethodBodyInfo;
     constructor(
       public abc: ABCFile,
+      private _index: number,
       public name: number,
       public returnType: number,
       public parameters: ParameterInfo [],
       public optionalCount: number,
       public flags: number
     ) {
-      this.body = null;
+      this._body = null;
+    }
+
+    getBody(): MethodBodyInfo {
+      return this._body || (this._body = this.abc.getMethodBodyInfo(this._index));
     }
 
     toString() {
@@ -277,7 +417,7 @@ module Shumway.AVM2.ABCX {
       }
       str += " (" + this.parameters.join(", ") + ")";
       if (this.returnType) {
-        str += ": " + this.abc.getMultiname(this.returnType).getNameString();
+        str += ": " + this.abc.getMultiname(this.returnType).name;
       }
       return str;
     }
@@ -286,43 +426,53 @@ module Shumway.AVM2.ABCX {
   export class Multiname {
     constructor(
       public abc: ABCFile,
+      public index: number,
       public kind: CONSTANT,
-      public nx: number,
-      public name: number,
-      public parameterType: number = 0
+      public namespaces: Namespace [],
+      public name: any,
+      public parameterType: Multiname = null
     ) {
       // ...
     }
 
-    getNameString(): string {
-      return this.abc.getString(this.name);
+    public getMangledName(): any {
+      return "$" + this.name;
     }
 
     private _nameToString(): string {
       if (this.isAnyName()) {
         return "*";
       }
-      return this.isRuntimeName() ? "[]" : this.getNameString();
+      return this.isRuntimeName() ? "[]" : this.name;
     }
 
     public toString() {
-      var str = this.isAttribute() ? "@" : "";
-      if (this.isAnyNamespace()) {
-        str += "*::" + this._nameToString();
-      } else if (this.isRuntimeNamespace()) {
+      var str = CONSTANT[this.kind] + " ";
+      str += this.isAttribute() ? "@" : "";
+      if (this.isRuntimeNamespace()) {
         str += "[]::" + this._nameToString();
       } else if (this.isQName()) {
-        str += this.abc.getNamespace(this.nx) + "::";
+        str += this.namespaces[0] + "::";
         str += this._nameToString();
       } else {
-        var nss = Math.abs(this.nx) - 1;
-        str += "{" + this.abc.getNamespaceSet(nss).map(x => String(x)).join(", ") + "}";
+        str += "{" + this.namespaces.map(x => String(x)).join(", ") + "}";
         str += "::" + this._nameToString();
       }
-      if (this.parameterType > 0) {
-        str += "<" + this.abc.getMultiname(this.parameterType) + ">";
+      if (this.parameterType) {
+        str += "<" + this.parameterType + ">";
       }
       return str;
+    }
+
+    public isRuntime(): boolean {
+      switch (this.kind) {
+        case CONSTANT.QName:
+        case CONSTANT.QNameA:
+        case CONSTANT.Multiname:
+        case CONSTANT.MultinameA:
+          return false;
+      }
+      return true;
     }
 
     public isRuntimeName(): boolean {
@@ -348,14 +498,14 @@ module Shumway.AVM2.ABCX {
     }
 
     public isAnyName(): boolean {
-      return !this.isRuntimeName() && this.name === 0;
+      return !this.isRuntimeName() && this.name === "";
     }
 
     public isAnyNamespace(): boolean {
-      if (this.isRuntimeNamespace()) {
+      if (this.isRuntimeNamespace() || this.namespaces.length > 1) {
         return false;
       }
-      return this.nx === 0;
+      return this.namespaces[0].name === "";
 
       // x.* has the same meaning as x.*::*, so look for the former case and give
       // it the same meaning of the latter.
@@ -364,7 +514,7 @@ module Shumway.AVM2.ABCX {
     }
 
     public isQName(): boolean {
-      return this.nx >= 0 && !this.isAnyName();
+      return this.namespaces.length === 1 && !this.isAnyName();
     }
 
     public isAttribute(): boolean {
@@ -381,17 +531,12 @@ module Shumway.AVM2.ABCX {
   }
 
   export class Namespace {
-    constructor(public abc: ABCFile, public kind: CONSTANT, public name: number) {
+    constructor(public abc: ABCFile, public kind: CONSTANT, public name: string) {
       assert (kind !== undefined);
-      // ...
-    }
-
-    getNameString(): string {
-      return this.name === 0 ? "*" : this.abc.getString(this.name);
     }
 
     toString() {
-      return CONSTANT[this.kind] + " " + this.getNameString();
+      return CONSTANT[this.kind] + (this.name !== "" ? ":" + this.name : "");
     }
   }
 
@@ -400,6 +545,20 @@ module Shumway.AVM2.ABCX {
     public ints: Int32Array;
     public uints: Uint32Array;
     public doubles: Float64Array;
+
+    /**
+     * Application domain in which this ABC is loaded.
+     */
+    private _applicationDomain: ApplicationDomain = null;
+
+    public get applicationDomain() {
+      return this._applicationDomain;
+    }
+
+    public setApplicationDomain(applicationDomain: ApplicationDomain) {
+      assert(this._applicationDomain === null && applicationDomain);
+      this._applicationDomain = applicationDomain;
+    }
 
     private _stream: AbcStream;
 
@@ -422,14 +581,15 @@ module Shumway.AVM2.ABCX {
     private _methodBodies: MethodBodyInfo [];
     private _methodInfoOffsets: Uint32Array;
 
-    private _classes: ClassInfo [];
-    private _scripts: ScriptInfo [];
-    private _instances: InstanceInfo [];
+    public classes: ClassInfo [];
+    public scripts: ScriptInfo [];
+    public instances: InstanceInfo [];
 
     constructor(
       private _buffer: Uint8Array,
       private _fileName?: string
     ) {
+      this._applicationDomain = null;
       this._stream = new AbcStream(_buffer);
       this.hash = hashBytesTo32BitsAdler(_buffer, 0, _buffer.length);
       this._checkMagic();
@@ -556,7 +716,7 @@ module Shumway.AVM2.ABCX {
           s.readU32();
           break;
         default:
-          Shumway.Debug.unexpected();
+          Shumway.Debug.unexpected(kind);
           break;
       }
     }
@@ -573,7 +733,7 @@ module Shumway.AVM2.ABCX {
       }
     }
 
-    private _parseMultiname(): Multiname {
+    private _parseMultiname(i: number): Multiname {
       var s = this._stream;
 
       var nx;
@@ -606,14 +766,18 @@ module Shumway.AVM2.ABCX {
           var mn = s.readU32();
           var typeParameterCount = s.readU32();
           release || assert(typeParameterCount === 1, "typeParameterCount is bad " + typeParameterCount); // This is probably the number of type parameters.
-          var typeParameterMn = s.readU32();
+          var typeParameter = this.getMultiname(s.readU32());
           var factory = this.getMultiname(mn);
-          return new Multiname(this, kind, factory.nx, factory.name, typeParameterMn);
+          return new Multiname(this, i, kind, factory.namespaces, factory.name, typeParameter);
         default:
           Shumway.Debug.unexpected();
           break;
       }
-      return new Multiname(this, kind, nx, nm);
+
+      var name = this.getString(nm);
+      var namespaces = nx >= 0 ? [this.getNamespace(nx)] : this.getNamespaceSet(Math.abs(nx) - 1);
+
+      return new Multiname(this, i, kind, namespaces, name);
     }
 
     private _checkMagic() {
@@ -668,7 +832,7 @@ module Shumway.AVM2.ABCX {
       if (mn === undefined) {
         var s = this._stream;
         s.seek(this._multinameOffsets[i]);
-        mn = this._multinames[i] = this._parseMultiname();
+        mn = this._multinames[i] = this._parseMultiname(i);
       }
       return mn;
     }
@@ -685,7 +849,9 @@ module Shumway.AVM2.ABCX {
       if (ns === undefined) {
         var s = this._stream;
         s.seek(this._namespaceOffsets[i]);
-        ns = this._namespaces[i] = new Namespace(this, s.readU8(), s.readU30());
+        var kind = s.readU8();
+        var name = this.getString(s.readU30());
+        ns = this._namespaces[i] = new Namespace(this, kind, name);
       }
       return ns;
     }
@@ -752,7 +918,7 @@ module Shumway.AVM2.ABCX {
       }
     }
 
-    private _parseMethodInfo() {
+    private _parseMethodInfo(j: number) {
       var s = this._stream;
       var parameterCount = s.readU30();
       var returnType = s.readU30();
@@ -778,7 +944,7 @@ module Shumway.AVM2.ABCX {
           parameters[i].name = s.readU30();
         }
       }
-      return new MethodInfo(this, name, returnType, parameters, optionalCount, flags);
+      return new MethodInfo(this, j, name, returnType, parameters, optionalCount, flags);
     }
 
     /**
@@ -790,9 +956,13 @@ module Shumway.AVM2.ABCX {
       if (mi === undefined) {
         var s = this._stream;
         s.seek(this._methodInfoOffsets[i]);
-        mi = this._methods[i] = this._parseMethodInfo();
+        mi = this._methods[i] = this._parseMethodInfo(i);
       }
       return mi;
+    }
+
+    public getMethodBodyInfo(i: number) {
+      return this._methodBodies[i];
     }
 
     private _parseMetaData() {
@@ -814,11 +984,16 @@ module Shumway.AVM2.ABCX {
     private _parseInstanceAndClassInfos() {
       var s = this._stream;
       var n = s.readU30();
-      var instances = this._instances = new Array(n);
+      var instances = this.instances = new Array(n);
       for (var i = 0; i < n; i++) {
         instances[i] = this._parseInstanceInfo();
       }
       this._parseClassInfos(n);
+      var o = s.position;
+      for (var i = 0; i < n; i++) {
+        instances[i].classInfo = this.classes[i];
+      }
+      s.seek(o);
     }
 
     private _parseInstanceInfo() {
@@ -837,7 +1012,9 @@ module Shumway.AVM2.ABCX {
       }
       var initializer = s.readU30();
       var traits = this._parseTraits();
-      return new InstanceInfo(this, name, superName, flags, protectedNs, interfaces, initializer, traits);
+      var instanceInfo = new InstanceInfo(this, name, superName, flags, protectedNs, interfaces, initializer, traits);
+      traits.attachHolder(instanceInfo);
+      return instanceInfo;
     }
 
     private _parseTraits() {
@@ -847,7 +1024,7 @@ module Shumway.AVM2.ABCX {
       for (var i = 0; i < n; i++) {
         traits.push(this._parseTrait());
       }
-      return traits;
+      return new Traits(this, traits);
     }
 
     private _parseTrait() {
@@ -901,7 +1078,7 @@ module Shumway.AVM2.ABCX {
 
     private _parseClassInfos(n: number) {
       var s = this._stream;
-      var classes = this._classes = new Array(n);
+      var classes = this.classes = new Array(n);
       for (var i = 0; i < n; i++) {
         classes[i] = this._parseClassInfo(i);
       }
@@ -911,13 +1088,15 @@ module Shumway.AVM2.ABCX {
       var s = this._stream;
       var initializer = s.readU30();
       var traits = this._parseTraits();
-      return new ClassInfo(this, i, initializer, traits);
+      var classInfo = new ClassInfo(this, this.instances[i], initializer, traits);
+      traits.attachHolder(classInfo);
+      return classInfo;
     }
 
     private _parseScriptInfos() {
       var s = this._stream;
       var n = s.readU30();
-      var scripts = this._scripts = new Array(n);
+      var scripts = this.scripts = new Array(n);
       for (var i = 0; i < n; i++) {
         scripts[i] = this._parseScriptInfo();
       }
@@ -927,7 +1106,9 @@ module Shumway.AVM2.ABCX {
       var s = this._stream;
       var initializer = s.readU30();
       var traits = this._parseTraits();
-      return new ScriptInfo(this, initializer, traits);
+      var scriptInfo = new ScriptInfo(this, initializer, traits);
+      traits.attachHolder(scriptInfo);
+      return scriptInfo;
     }
 
     private _parseMethodBodyInfos() {
@@ -950,6 +1131,7 @@ module Shumway.AVM2.ABCX {
         }
         var traits = this._parseTraits();
         methodBodies[methodInfo] = new MethodBodyInfo(maxStack, localCount, initScopeDepth, maxScopeDepth, code, exceptions, traits);
+        traits.attachHolder(methodBodies[methodInfo]);
       }
     }
 
@@ -1030,7 +1212,7 @@ module Shumway.AVM2.ABCX {
           }
         }
       }
-      return false;
+
       writer.writeLn("");
       writer.writeLn("");
 
@@ -1039,9 +1221,11 @@ module Shumway.AVM2.ABCX {
       writer.writeLn("Namespaces: " + this._namespaces.length);
       writer.writeLn("Strings: " + this._strings.length);
       writer.writeLn("Methods: " + this._methods.length);
-      writer.writeLn("InstanceInfos: " + this._instances.length);
-      writer.writeLn("ClassInfos: " + this._classes.length);
-      writer.writeLn("ScriptInfos: " + this._scripts.length);
+      writer.writeLn("InstanceInfos: " + this.instances.length);
+      writer.writeLn("ClassInfos: " + this.classes.length);
+      writer.writeLn("ScriptInfos: " + this.scripts.length);
+
+      return false;
 
       writer.writeLn("");
 
@@ -1093,30 +1277,30 @@ module Shumway.AVM2.ABCX {
         writer.outdent();
       }
 
-      writer.writeLn("InstanceInfos: " + this._instances.length);
+      writer.writeLn("InstanceInfos: " + this.instances.length);
       if (false) {
         writer.indent();
-        for (var i = 0; i < this._instances.length; i++) {
-          writer.writeLn(i + " " + this._instances[i]);
-          this._instances[i].trace(writer);
+        for (var i = 0; i < this.instances.length; i++) {
+          writer.writeLn(i + " " + this.instances[i]);
+          this.instances[i].trace(writer);
         }
         writer.outdent();
       }
 
-      writer.writeLn("ClassInfos: " + this._classes.length);
+      writer.writeLn("ClassInfos: " + this.classes.length);
       if (false) {
         writer.indent();
-        for (var i = 0; i < this._classes.length; i++) {
-          this._classes[i].trace(writer);
+        for (var i = 0; i < this.classes.length; i++) {
+          this.classes[i].trace(writer);
         }
         writer.outdent();
       }
 
-      writer.writeLn("ScriptInfos: " + this._scripts.length);
+      writer.writeLn("ScriptInfos: " + this.scripts.length);
       if (false) {
         writer.indent();
-        for (var i = 0; i < this._scripts.length; i++) {
-          this._scripts[i].trace(writer);
+        for (var i = 0; i < this.scripts.length; i++) {
+          this.scripts[i].trace(writer);
         }
         writer.outdent();
       }

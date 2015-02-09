@@ -1,4 +1,4 @@
-module Shumway.AVM2.ABCX {
+module Shumway.AVMX {
   import assert = Debug.assert;
   var writer = new IndentingWriter();
 
@@ -465,7 +465,7 @@ module Shumway.AVM2.ABCX {
   }
 
   defineBytecodes();
-  
+
   export class Bytes {
     static u8(code: Uint8Array, i: number): number {
       return code[i];
