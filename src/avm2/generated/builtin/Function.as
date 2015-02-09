@@ -54,13 +54,6 @@ final class MethodClosure extends Function
 {
   public native function MethodClosure();
 
-  override public function get prototype()
-  {
-    return null
-  }
-
-  override public function set prototype(p)
-  {
-    Error.throwError( ReferenceError, 1074 /*kConstWriteError*/, "prototype", "MethodClosure" );
-  }
+  override public native function get prototype();
+  override public native function set prototype(p);
 }

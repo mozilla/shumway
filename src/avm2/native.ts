@@ -950,6 +950,8 @@ module Shumway.AVM2.AS {
   ASBoolean.prototype.toString = Boolean.prototype.toString;
   ASBoolean.prototype.valueOf = Boolean.prototype.valueOf;
 
+  // Note: this entire class is never used. Instead, makeTrampoline returns a closure serving
+  // the same purpose.
   export class ASMethodClosure extends ASFunction {
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
@@ -960,6 +962,16 @@ module Shumway.AVM2.AS {
       var bound = Shumway.FunctionUtilities.bindSafely(fn, self);
       defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
       defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
+    }
+
+    get native_prototype(): Object {
+      return null;
+    }
+
+    // We don't really implement this. `prototype` is a non-configurable accessor on functions,
+    // so changing its getter to throw isn't quite possible.
+    set native_prototype(p) {
+      throwError('ReferenceError', Errors.ConstWriteError, "prototype", "MethodClosure");
     }
 
     toString() {
