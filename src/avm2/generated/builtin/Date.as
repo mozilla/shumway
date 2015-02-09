@@ -40,10 +40,6 @@ package
   [native(cls="DateClass")]
   public dynamic class Date
   {
-    // Date.length = 7 per ES3
-    // E262 {ReadOnly, DontDelete, DontEnum }
-    public static const length:int = 7;
-
     public native static function parse(s):Number;
     public native static function UTC(year, month, date=1, hours=0, minutes=0, seconds=0, ms=0, ... rest):Number;
 
@@ -92,54 +88,54 @@ package
     AS3 native function setUTCSeconds(sec=void 0, ms=void 0):Number;
     AS3 native function setUTCMilliseconds(ms=void 0):Number;
 
-    public function get fullYear():Number { return AS3::getFullYear(); }
-    public function set fullYear(value:Number) { AS3::setFullYear(value); }
+    public native function get fullYear():Number;
+    public native function set fullYear(value:Number);
 
-    public function get month():Number { return AS3::getMonth(); }
-    public function set month(value:Number) { AS3::setMonth(value); }
+    public native function get month():Number;
+    public native function set month(value:Number);
 
-    public function get date():Number { return AS3::getDate(); }
-    public function set date(value:Number) { AS3::setDate(value); }
+    public native function get date():Number;
+    public native function set date(value:Number);
 
-    public function get hours():Number { return AS3::getHours(); }
-    public function set hours(value:Number) { AS3::setHours(value); }
+    public native function get hours():Number;
+    public native function set hours(value:Number);
 
-    public function get minutes():Number { return AS3::getMinutes(); }
-    public function set minutes(value:Number) { AS3::setMinutes(value); }
+    public native function get minutes():Number;
+    public native function set minutes(value:Number);
 
-    public function get seconds():Number { return AS3::getSeconds(); }
-    public function set seconds(value:Number) { AS3::setSeconds(value); }
+    public native function get seconds():Number;
+    public native function set seconds(value:Number);
 
-    public function get milliseconds():Number { return AS3::getMilliseconds(); }
-    public function set milliseconds(value:Number) { AS3::setMilliseconds(value); }
+    public native function get milliseconds():Number;
+    public native function set milliseconds(value:Number);
 
-    public function get fullYearUTC():Number { return AS3::getUTCFullYear(); }
-    public function set fullYearUTC(value:Number) { AS3::setUTCFullYear(value); }
+    public native function get fullYearUTC():Number;
+    public native function set fullYearUTC(value:Number);
 
-    public function get monthUTC():Number { return AS3::getUTCMonth(); }
-    public function set monthUTC(value:Number) { AS3::setUTCMonth(value); }
+    public native function get monthUTC():Number;
+    public native function set monthUTC(value:Number);
 
-    public function get dateUTC():Number { return AS3::getUTCDate(); }
-    public function set dateUTC(value:Number) { AS3::setUTCDate(value); }
+    public native function get dateUTC():Number;
+    public native function set dateUTC(value:Number);
 
-    public function get hoursUTC():Number { return AS3::getUTCHours(); }
-    public function set hoursUTC(value:Number) { AS3::setUTCHours(value); }
+    public native function get hoursUTC():Number;
+    public native function set hoursUTC(value:Number);
 
-    public function get minutesUTC():Number { return AS3::getUTCMinutes(); }
-    public function set minutesUTC(value:Number) { AS3::setUTCMinutes(value); }
+    public native function get minutesUTC():Number;
+    public native function set minutesUTC(value:Number);
 
-    public function get secondsUTC():Number { return AS3::getUTCSeconds(); }
-    public function set secondsUTC(value:Number) { AS3::setUTCSeconds(value); }
+    public native function get secondsUTC():Number;
+    public native function set secondsUTC(value:Number);
 
-    public function get millisecondsUTC():Number { return AS3::getUTCMilliseconds(); }
-    public function set millisecondsUTC(value:Number) { AS3::setUTCMilliseconds(value); }
+    public native function get millisecondsUTC():Number;
+    public native function set millisecondsUTC(value:Number);
 
-    public function get time():Number { return AS3::getTime(); }
-    public function set time(value:Number) { AS3::setTime(value); }
+    public native function get time():Number;
+    public native function set time(value:Number);
 
-    public function get timezoneOffset():Number { return AS3::getTimezoneOffset(); }
-    public function get day():Number { return AS3::getDay(); }
-    public function get dayUTC():Number { return AS3::getUTCDay(); }
+    public native function get timezoneOffset():Number;
+    public native function get day():Number;
+    public native function get dayUTC():Number;
 
     public native function Date(year = void 0, month = void 0, date = void 0, hours = void 0, minutes = void 0, seconds = void 0, ms = void 0);
   }

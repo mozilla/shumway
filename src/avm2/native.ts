@@ -29,6 +29,7 @@ module Shumway.AVM2.AS {
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
   import hasOwnGetter = Shumway.ObjectUtilities.hasOwnGetter;
   import getOwnGetter = Shumway.ObjectUtilities.getOwnGetter;
+  import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import isNumber = Shumway.isNumber;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
@@ -1639,6 +1640,8 @@ module Shumway.AVM2.AS {
     public static instanceConstructor: any = Date;
 
     static classInitializer: any = function() {
+      defineReadOnlyProperty(ASDate, '$Bglength', 7);
+      defineReadOnlyProperty(Date, '$Bglength', 7);
       var proto: any = Date.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
       defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
@@ -1692,6 +1695,55 @@ module Shumway.AVM2.AS {
       false && super();
       release || assertUnreachable('ASDate references must be delegated to Date');
     }
+
+    get fullYear(): number { return (<any>this).getFullYear(); }
+    set fullYear(value: number) { (<any>this).setFullYear(value); }
+
+    get month(): number { return (<any>this).getMonth(); }
+    set month(value: number) { (<any>this).setMonth(value); }
+
+    get date(): number { return (<any>this).getDate(); }
+    set date(value: number) { (<any>this).setDate(value); }
+
+    get hours(): number { return (<any>this).getHours(); }
+    set hours(value: number) { (<any>this).setHours(value); }
+
+    get minutes(): number { return (<any>this).getMinutes(); }
+    set minutes(value: number) { (<any>this).setMinutes(value); }
+
+    get seconds(): number { return (<any>this).getSeconds(); }
+    set seconds(value: number) { (<any>this).setSeconds(value); }
+
+    get milliseconds(): number { return (<any>this).getMilliseconds(); }
+    set milliseconds(value: number) { (<any>this).setMilliseconds(value); }
+
+    get fullYearUTC(): number { return (<any>this).getUTCFullYear(); }
+    set fullYearUTC(value: number) { (<any>this).setUTCFullYear(value); }
+
+    get monthUTC(): number { return (<any>this).getUTCMonth(); }
+    set monthUTC(value: number) { (<any>this).setUTCMonth(value); }
+
+    get dateUTC(): number { return (<any>this).getUTCDate(); }
+    set dateUTC(value: number) { (<any>this).setUTCDate(value); }
+
+    get hoursUTC(): number { return (<any>this).getUTCHours(); }
+    set hoursUTC(value: number) { (<any>this).setUTCHours(value); }
+
+    get minutesUTC(): number { return (<any>this).getUTCMinutes(); }
+    set minutesUTC(value: number) { (<any>this).setUTCMinutes(value); }
+
+    get secondsUTC(): number { return (<any>this).getUTCSeconds(); }
+    set secondsUTC(value: number) { (<any>this).setUTCSeconds(value); }
+
+    get millisecondsUTC(): number { return (<any>this).getUTCMilliseconds(); }
+    set millisecondsUTC(value: number) { (<any>this).setUTCMilliseconds(value); }
+
+    get time(): number { return (<any>this).getTime(); }
+    set time(value: number) { (<any>this).setTime(value); }
+
+    get timezoneOffset(): number { return (<any>this).getTimezoneOffset(); }
+    get day(): number { return (<any>this).getDay(); }
+    get dayUTC(): number { return (<any>this).getUTCDay(); }
   }
 
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
