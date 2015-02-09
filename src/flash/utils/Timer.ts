@@ -15,6 +15,10 @@
  */
 // Class: Timer
 module Shumway.AVM2.AS.flash.utils {
+
+  import enterTimeline = Shumway.AVM2.enterTimeline;
+  import leaveTimeline = Shumway.AVM2.leaveTimeline;
+
   export class Timer extends flash.events.EventDispatcher {
     static classInitializer: any = null;
     static initializer: any = null;
@@ -94,22 +98,24 @@ module Shumway.AVM2.AS.flash.utils {
         return;
       }
       if (flash.utils.Timer.dispatchingEnabled) {
+        enterTimeline("Timer.Timer");
         try {
           this.dispatchEvent(new events.TimerEvent("timer", true, false));
         } catch (e) {
           console.warn('caught error under Timer TIMER event: ', e);
         }
+        leaveTimeline();
       }
-      if (this._repeatCount !== 0) {
-        if (this._iteration >= this._repeatCount) {
-          this.stop();
-          try {
-            this.dispatchEvent(new events.TimerEvent(events.TimerEvent.TIMER_COMPLETE, false,
-                                                     false));
-          } catch (e) {
-            console.warn('caught error under Timer COMPLETE event: ', e);
-          }
+      if (this._repeatCount !== 0 && this._iteration >= this._repeatCount) {
+        this.stop();
+        enterTimeline("Timer.TimerComplete");
+        try {
+          this.dispatchEvent(new events.TimerEvent(events.TimerEvent.TIMER_COMPLETE, false,
+                                                   false));
+        } catch (e) {
+          console.warn('caught error under Timer COMPLETE event: ', e);
         }
+        leaveTimeline();
       }
     }
   }

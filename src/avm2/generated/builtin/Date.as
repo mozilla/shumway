@@ -50,9 +50,6 @@ package
     AS3 native function valueOf():Number;
     AS3 native function setTime(t=void 0):Number;
 
-    prototype.setTime = unsafeJSNative("Date.prototype.setTime");
-    prototype.valueOf = unsafeJSNative("Original.Date.prototype.valueOf");
-
     AS3 native function toString():String;
     AS3 native function toDateString():String;
     AS3 native function toTimeString():String;
@@ -94,49 +91,6 @@ package
     AS3 native function setUTCMinutes(min=void 0, sec=void 0, ms=void 0):Number;
     AS3 native function setUTCSeconds(sec=void 0, ms=void 0):Number;
     AS3 native function setUTCMilliseconds(ms=void 0):Number;
-
-    prototype.toString = unsafeJSNative("Original.Date.prototype.toString");
-    prototype.toDateString = unsafeJSNative("Date.prototype.toDateString");
-    prototype.toTimeString = unsafeJSNative("Date.prototype.toTimeString");
-    prototype.toLocaleString = unsafeJSNative("Date.prototype.toLocaleString");
-    prototype.toLocaleDateString = unsafeJSNative("Date.prototype.toLocaleDateString");
-    prototype.toLocaleTimeString = unsafeJSNative("Date.prototype.toLocaleTimeString");
-    prototype.toUTCString = unsafeJSNative("Date.prototype.toUTCString");
-    // NB: The default AS implementation of |toJSON| is not ES5-compliant, but
-    // the native JS one obviously is.
-    prototype.toJSON = unsafeJSNative("Date.prototype.toJSON");
-    prototype.getUTCFullYear = unsafeJSNative("Date.prototype.getUTCFullYear");
-    prototype.getUTCMonth = unsafeJSNative("Date.prototype.getUTCMonth");
-    prototype.getUTCDate = unsafeJSNative("Date.prototype.getUTCDate");
-    prototype.getUTCDay = unsafeJSNative("Date.prototype.getUTCDay");
-    prototype.getUTCHours = unsafeJSNative("Date.prototype.getUTCHours");
-    prototype.getUTCMinutes = unsafeJSNative("Date.prototype.getUTCMinutes");
-    prototype.getUTCSeconds = unsafeJSNative("Date.prototype.getUTCSeconds");
-    prototype.getUTCMilliseconds = unsafeJSNative("Date.prototype.getUTCMilliseconds");
-    prototype.getFullYear = unsafeJSNative("Date.prototype.getFullYear");
-    prototype.getMonth = unsafeJSNative("Date.prototype.getMonth");
-    prototype.getDate = unsafeJSNative("Date.prototype.getDate");
-    prototype.getDay = unsafeJSNative("Date.prototype.getDay");
-    prototype.getHours = unsafeJSNative("Date.prototype.getHours");
-    prototype.getMinutes = unsafeJSNative("Date.prototype.getMinutes");
-    prototype.getSeconds = unsafeJSNative("Date.prototype.getSeconds");
-    prototype.getMilliseconds = unsafeJSNative("Date.prototype.getMilliseconds");
-    prototype.getTimezoneOffset = unsafeJSNative("Date.prototype.getTimezoneOffset");
-    prototype.getTime = unsafeJSNative("Date.prototype.getTime");
-    prototype.setFullYear = unsafeJSNative("Date.prototype.setFullYear");
-    prototype.setMonth = unsafeJSNative("Date.prototype.setMonth");
-    prototype.setDate = unsafeJSNative("Date.prototype.setDate");
-    prototype.setHours = unsafeJSNative("Date.prototype.setHours");
-    prototype.setMinutes = unsafeJSNative("Date.prototype.setMinutes");
-    prototype.setSeconds = unsafeJSNative("Date.prototype.setSeconds");
-    prototype.setMilliseconds = unsafeJSNative("Date.prototype.setMilliseconds");
-    prototype.setUTCFullYear = unsafeJSNative("Date.prototype.setUTCFullYear");
-    prototype.setUTCMonth = unsafeJSNative("Date.prototype.setUTCMonth");
-    prototype.setUTCDate = unsafeJSNative("Date.prototype.setUTCDate");
-    prototype.setUTCHours = unsafeJSNative("Date.prototype.setUTCHours");
-    prototype.setUTCMinutes = unsafeJSNative("Date.prototype.setUTCMinutes");
-    prototype.setUTCSeconds = unsafeJSNative("Date.prototype.setUTCSeconds");
-    prototype.setUTCMilliseconds = unsafeJSNative("Date.prototype.setUTCMilliseconds");
 
     public function get fullYear():Number { return AS3::getFullYear(); }
     public function set fullYear(value:Number) { AS3::setFullYear(value); }
@@ -190,7 +144,5 @@ package
 
     // Dummy constructor
     public function Date(year = void 0, month = void 0, date = void 0, hours = void 0, minutes = void 0, seconds = void 0, ms = void 0) {}
-
-    _dontEnumPrototype(prototype);
   }
 }

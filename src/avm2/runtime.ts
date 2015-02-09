@@ -67,7 +67,7 @@ interface Object extends IProtocol {
 
   asEnumerableKeys: any [];
   asLazyInitializer: Shumway.AVM2.Runtime.LazyInitializer;
-  asBindings: any [];
+  asBindings: any;
   asLength: number;
   asSlots: Shumway.AVM2.Runtime.SlotInfoMap;
   asIsNativePrototype: boolean;
@@ -249,7 +249,11 @@ module Shumway.AVM2.Runtime {
       }
     }
 
+    // For instance accessors, we have to install a version of the getter/setter that can be
+    // used with Function#call in order to be able to have super.propName work in the right
+    // scope. For methods, a prefixed version without a memoizer is installed.
     defineNonEnumerableProperty(object, prefix + qn, traitFunction);
+
     if (isMethod) {
       object.asOpenMethods[qn] = traitFunction;
       if (isScriptBinding) {
@@ -271,12 +275,6 @@ module Shumway.AVM2.Runtime {
       }
     } else {
       defineNonEnumerableGetterOrSetter(object, qn, traitFunction, isGetter);
-      // For instance accessors, we have to install a version of the getter/setter that can be
-      // used with Function#call in order to be able to have super.propName work in the right
-      // scope.
-      if (isScriptBinding) {
-        defineNonEnumerableProperty(object, prefix + qn, traitFunction);
-      }
     }
     //leaveTimeline();
   }
@@ -655,7 +653,7 @@ module Shumway.AVM2.Runtime {
     // We have to check for trait properties too if a simple hasOwnProperty fails.
     // This is different to JavaScript's hasOwnProperty behaviour where hasOwnProperty returns
     // false for properties defined on the property chain and not on the instance itself.
-    return hasOwnProperty(self, resolved) || self.asBindings.indexOf(resolved) >= 0;
+    return self.asBindings[resolved] || hasOwnProperty(self, resolved);
   }
 
   export function asPropertyIsEnumerable(namespaces: Namespace [], name: any, flags: number) {
@@ -676,7 +674,7 @@ module Shumway.AVM2.Runtime {
   export function asHasTraitProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
     var resolved = self.resolveMultinameProperty(namespaces, name, flags);
-    return self.asBindings.indexOf(resolved) >= 0;
+    return self.asBindings[resolved];
   }
 
   export function asGetNumericProperty(i: number) {
@@ -1216,7 +1214,7 @@ module Shumway.AVM2.Runtime {
     }
 
     public ensureExecuted() {
-      Shumway.AVM2.Runtime.ensureScriptIsExecuted(this.scriptInfo);
+      Shumway.AVM2.Runtime.ensureScriptIsExecuted(this.scriptInfo, 'external');
     }
   }
 
@@ -1275,7 +1273,7 @@ module Shumway.AVM2.Runtime {
     for (var key in object) {
       if (isNumeric(key)) {
         fn.call(self, key, object[key]);
-      } else if (Multiname.isPublicQualifiedName(key) && object.asBindings.indexOf(key) < 0) {
+      } else if (!object.asBindings[key] && Multiname.isPublicQualifiedName(key)) {
         var name = Multiname.stripPublicQualifier(key);
         fn.call(self, name, object[key]);
       }
@@ -1489,6 +1487,7 @@ module Shumway.AVM2.Runtime {
     if (methodInfo.verified) {
       fnName += "$V";
     }
+    fnName += '_' + (methodInfo.abc.hash >>> 0);
     return fnName;
   }
 
@@ -1578,13 +1577,24 @@ module Shumway.AVM2.Runtime {
 
   export function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
     var mi = methodInfo;
-    var cached = searchCodeCache(mi);
-    var compilation: Compilation;
-    if (!cached) {
-      compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
-    }
+    var compilation: {body: string; parameters: string[]};
 
     var fnName = nameFunction(methodInfo);
+    
+    var globalMiName = 'mi_' + fnName;
+    jsGlobal[globalMiName] = methodInfo;
+
+    var cached = searchCodeCache(mi);
+    if (!cached) {
+      if (Compiler.useBaseline.value) {
+        enterTimeline('Baseline compile');
+        compilation = Compiler.baselineCompileMethod(mi, scope, hasDynamicScope, globalMiName);
+        compilation.body = '{\n' + compilation.body + '\n}';
+        leaveTimeline();
+      } else {
+        compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
+      }
+    }
 
     if (!breakpoint) {
       var breakFilter = Shumway.AVM2.Compiler.breakFilter.value;
@@ -1613,7 +1623,11 @@ module Shumway.AVM2.Runtime {
         console.log(fnSource);
       }
     }
-    eval(cached || fnSource);
+
+    // Using `new Function` here because just evaluating fnSource for some reason causes
+    // substantial slowdowns in running the code. This is true across engines (SM and v8, at
+    // least), and affects some benchmarks more than others.
+    new Function('return ' + (cached || fnSource))();
     var fn = jsGlobal[fnName];
     if (traceWriter) {
       fn = wrapFunctionWithTracingWrapper(fn, methodInfo);
@@ -1927,5 +1941,6 @@ var checkFilter = Shumway.AVM2.Runtime.checkFilter;
 
 var sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
+var createClass = Shumway.AVM2.Runtime.createClass;
 var createFunction = Shumway.AVM2.Runtime.createFunction;
 var createName = Shumway.AVM2.Runtime.createName;

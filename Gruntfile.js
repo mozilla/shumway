@@ -75,6 +75,9 @@ module.exports = function(grunt) {
       build_avm2_ts: {
         cmd: commonArguments + 'avm2.js src/avm2/references.ts'
       },
+      build_avm2_tests: {
+        cmd: 'make -C test/avm2/'
+      },
       build_avm1_ts: {
         cmd: commonArguments + 'avm1.js src/avm1/references.ts'
       },
@@ -135,6 +138,10 @@ module.exports = function(grunt) {
         maxBuffer: Infinity,
         cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -p -r -f "CODE_DEFINE_BITS,CODE_DEFINE_BITS_JPEG2,CODE_DEFINE_BITS_JPEG3,CODE_DEFINE_BITS_JPEG4,CODE_JPEG_TABLES,CODE_DEFINE_BITS_LOSSLESS,CODE_DEFINE_BITS_LOSSLESS2" {}'
       },
+      smoke_compile_baseline: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/swf -name "*.swf" | parallel --no-notice -X -N50 utils/jsshell/js build/ts/shell.js -c src/avm2/generated/playerGlobal/playerGlobal.min.abc {}'
+      },
       spell: {
         // TODO: Add more files.
         cmd: 'node utils/spell/spell.js build/ts/player.js'
@@ -146,7 +153,11 @@ module.exports = function(grunt) {
         cmd: 'node src/shell/numbers.js -i test/avm2/pass/ -c i -j ' + (+grunt.option('threads') || 9)
       },
       test_avm2: {
-        cmd: 'node src/shell/numbers.js -i ' + (grunt.option('include') || 'test/avm2/pass/') +
+        cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
+                                      ' -j ' + (+grunt.option('threads') || 9)
+      },
+      test_avm2_baseline: {
+        cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
                                       ' -j ' + (+grunt.option('threads') || 9)
       },
       tracetest: {

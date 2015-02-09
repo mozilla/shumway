@@ -148,6 +148,7 @@ module Shumway.AVM2.AS {
 
     static create(self: ASClass, baseClass: ASClass, instanceConstructor: any) {
       // ! The AS3 instanceConstructor is ignored.
+      self.baseClass = baseClass;
       ASClass.create(self, baseClass, this.instanceConstructor);
     }
 
@@ -181,10 +182,10 @@ module Shumway.AVM2.AS {
       return ASClassPrototype.getQualifiedClassName.call(this);
     }
 
-    static _setPropertyIsEnumerable(o, V: string, enumerable: boolean): void {
+    static _setPropertyIsEnumerable(o, V: string, enumerable: boolean = true): void {
       var name = Multiname.getPublicQualifiedName(V);
       var descriptor = getOwnPropertyDescriptor(o, name);
-      descriptor.enumerable = false;
+      descriptor.enumerable = !!enumerable;
       Object.defineProperty(o, name, descriptor);
     }
 
@@ -287,12 +288,12 @@ module Shumway.AVM2.AS {
      */
     static configureBuiltinPrototype(self: ASClass, baseClass: ASClass) {
       release || assert (self.instanceConstructor);
-      self.baseClass = baseClass;
+      release || assert (self.baseClass === baseClass);
       self.dynamicPrototype = self.traitsPrototype = self.instanceConstructor.prototype;
     }
 
     static configurePrototype(self: ASClass, baseClass: ASClass) {
-      self.baseClass = baseClass;
+      release || assert (self.baseClass === baseClass);
 
       // Create a |dynamicPrototype| object and link it to the base class |dynamicPrototype|.
       self.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
@@ -558,8 +559,8 @@ module Shumway.AVM2.AS {
     instanceConstructorNoInitialize: new (...args) => any;
 
     /**
-     * Native initializer. Classes that have these defined are constructed in a two phases. All initializers
-     * along the inheritance chain are executed before any constructors are called.
+     * Native initializer. Classes that have these defined are constructed in a two phases. All
+     * initializers along the inheritance chain are executed before any constructors are called.
      */
     initializer: (...args) => any;
 
@@ -619,13 +620,15 @@ module Shumway.AVM2.AS {
     interfaceBindings: InstanceBindings;
 
     /**
-     * Prototype object that holds all class instance traits. This is not usually accessible from AS3 code directly. However,
-     * for some classes (native classes) the |traitsPrototype| === |dynamicPrototype|.
+     * Prototype object that holds all class instance traits. This is not usually accessible from
+     * AS3 code directly. However, for some classes (native classes) the |traitsPrototype| ===
+     * |dynamicPrototype|.
      */
     traitsPrototype: Object;
 
     /**
-     * Prototype object accessible from AS3 script code. This is the AS3 Class prototype object |class A { ... }, A.prototype|
+     * Prototype object accessible from AS3 script code. This is the AS3 Class prototype object
+     * |class A { ... }, A.prototype|
      */
     dynamicPrototype: Object;
 
@@ -702,8 +705,8 @@ module Shumway.AVM2.AS {
         return false;
       }
 
-      // We need to box primitive types before doing the |isPrototypeOf| test. In AS3, primitive values are
-      // identical to their boxed representations: |0 === new Number(0)| is |true|.
+      // We need to box primitive types before doing the |isPrototypeOf| test. In AS3, primitive
+      // values are identical to their boxed representations: |0 === new Number(0)| is |true|.
       value = boxValue(value);
 
       if (this.isInterface()) {
@@ -880,8 +883,19 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Function];
     public static instanceNatives: any [] = [Function.prototype];
 
+    static classInitializer: any = function() {
+      var proto: any = ASFunction.dynamicPrototype;
+      var asProto: any = ASFunction.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', asProto.toString);
+      defineNonEnumerableProperty(proto, 'toString', asProto.toString);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', asProto.toString);
+      defineNonEnumerableProperty(proto, '$Bgcall', proto.call);
+      defineNonEnumerableProperty(proto, '$Bgapply', proto.apply);
+    }
+
     constructor() {
       false && super();
+      release || assertUnreachable('ASFunction references must be delegated to Function');
     }
 
     get native_prototype(): Object {
@@ -920,8 +934,16 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = null;
     public static coerce: (value: any) => boolean = Runtime.asCoerceBoolean;
 
-    constructor(value: any = undefined) {
+    static classInitializer: any = function() {
+      var proto: any = Boolean.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
+      defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
+    }
+
+
+    constructor(input) {
       false && super();
+      release || assertUnreachable('ASBoolean references must be delegated to Boolean');
     }
   }
 
@@ -956,6 +978,19 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = Number(0);
     public static coerce: (value: any) => number = Runtime.asCoerceNumber;
 
+    static classInitializer: any = function() {
+      var dynProto: any = this.dynamicPrototype;
+      var numberProto: any = Number.prototype;
+      defineNonEnumerableProperty(dynProto, 'toString', numberProto.toString);
+      defineNonEnumerableProperty(dynProto, '$BgtoString', numberProto.toString);
+      defineNonEnumerableProperty(dynProto, '$BgtoLocaleString', numberProto.toString);
+      defineNonEnumerableProperty(dynProto, 'valueOf', numberProto.valueOf);
+      defineNonEnumerableProperty(dynProto, '$BgvalueOf', numberProto.valueOf);
+      defineNonEnumerableProperty(dynProto, '$BgtoExponential', numberProto.toExponential);
+      defineNonEnumerableProperty(dynProto, '$BgtoPrecision', numberProto.toPrecision);
+      defineNonEnumerableProperty(dynProto, '$BgtoFixed', numberProto.toFixed);
+    }
+
     static _numberToString(n: number, radix: number): string {
       radix = radix | 0;
       return Number(n).toString(radix);
@@ -963,6 +998,11 @@ module Shumway.AVM2.AS {
 
     static _minValue(): number {
       return Number.MIN_VALUE;
+    }
+
+    constructor(input) {
+      false && super();
+      release || assertUnreachable('ASString references must be delegated to Number');
     }
   }
 
@@ -976,6 +1016,8 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = 0;
     public static coerce: (value: any) => number = Runtime.asCoerceInt;
+
+    static classInitializer: any = ASNumber.classInitializer;
 
     constructor(value: any) {
       false && super();
@@ -1017,6 +1059,8 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = 0;
     public static coerce: (value: any) => number = Runtime.asCoerceUint;
 
+    static classInitializer: any = ASNumber.classInitializer;
+
     constructor(value: any) {
       false && super();
       return Object(Number(value >>> 0));
@@ -1055,8 +1099,39 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [String];
     public static instanceNatives: any [] = [String.prototype];
     public static coerce: (value: any) => string = Runtime.asCoerceString;
+
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(String, '$BgfromCharCode', String.fromCharCode);
+
+      var proto: String = String.prototype;
+      defineNonEnumerableProperty(proto, '$BgindexOf', proto.indexOf);
+      defineNonEnumerableProperty(proto, '$BglastIndexOf', proto.lastIndexOf);
+      defineNonEnumerableProperty(proto, '$BgcharAt', proto.charAt);
+      defineNonEnumerableProperty(proto, '$BgcharCodeAt', proto.charCodeAt);
+      defineNonEnumerableProperty(proto, '$Bgconcat', proto.concat);
+      defineNonEnumerableProperty(proto, '$BglocaleCompare', proto.localeCompare);
+      defineNonEnumerableProperty(proto, '$Bgmatch', proto.match);
+      defineNonEnumerableProperty(proto, '$Bgreplace', proto.replace);
+      defineNonEnumerableProperty(proto, '$Bgsearch', proto.search);
+      defineNonEnumerableProperty(proto, '$Bgslice', proto.slice);
+      defineNonEnumerableProperty(proto, '$Bgsplit', proto.split);
+      defineNonEnumerableProperty(proto, '$Bgsubstring', proto.substring);
+      defineNonEnumerableProperty(proto, '$Bgsubstr', proto.substr);
+      defineNonEnumerableProperty(proto, '$BgtoLowerCase', proto.toLowerCase);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleLowerCase', proto.toLowerCase);
+      defineNonEnumerableProperty(proto, '$BgtoUpperCase', proto.toUpperCase);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleUpperCase', proto.toUpperCase);
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
+      defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
+    }
+
     get native_length(): number {
       return (<any>this).length;
+    }
+
+    constructor(input) {
+      false && super();
+      release || assertUnreachable('ASString references must be delegated to String');
     }
 
     match(re) {
@@ -1157,6 +1232,11 @@ module Shumway.AVM2.AS {
       defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
       defineNonEnumerableProperty(proto, '$BgsortOn', asProto.sortOn);
     };
+
+    constructor(input) {
+      false && super();
+      release || assertUnreachable('ASArray references must be delegated to Array');
+    }
 
     static CACHE_NUMERIC_COMPARATORS = true;
     static numericComparatorCache = Object.create(null);
@@ -1345,33 +1425,130 @@ module Shumway.AVM2.AS {
     public static instanceConstructor: any = null;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
+
     public static getErrorMessage = Shumway.AVM2.getErrorMessage;
+    public static throwError(type: typeof ASError, id: number /*, ...rest */) {
+      var info = getErrorInfo(id);
+
+      var args = [info];
+      for (var i = 2; i < arguments.length; i++) {
+        args.push(arguments[i]);
+      }
+      var message = formatErrorMessage.apply(null, args);
+      throw new type(message, id);
+    }
+
+
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', 'Error');
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgmessage', 'Error');
+      defineNonEnumerableProperty(this.dynamicPrototype, '$BgtoString', this.prototype.toString);
+    }
+
+    constructor(msg: any, id: any) {
+      false && super();
+      this.message = asCoerceString(msg);
+      this._errorID = id|0;
+      // This is gnarly but saves us from having individual ctors in all Error child classes.
+      this.name = (<ASClass><any>this.constructor).dynamicPrototype['$Bgname'];
+    }
+
+    message: string;
+    name: string;
+    _errorID: number;
+
+    toString() {
+      return this.message !== "" ? this.name + ": " + this.message : this.name;
+    }
+
+    get errorID() {
+      return this._errorID;
+    }
+
     public getStackTrace(): string {
       // Stack traces are only available in debug builds. We only do opt.
       return null;
     }
-    constructor(msg: any = "", id: any = 0) {
-      false && super();
-      notImplemented("ASError");
-    }
   }
 
-  export class ASDefinitionError extends ASError { }
-  export class ASEvalError extends ASError { }
-  export class ASRangeError extends ASError { }
-  export class ASReferenceError extends ASError { }
-  export class ASSecurityError extends ASError { }
-  export class ASSyntaxError extends ASError { }
-  export class ASTypeError extends ASError { }
-  export class ASURIError extends ASError { }
-  export class ASVerifyError extends ASError { }
-  export class ASUninitializedError extends ASError { }
-  export class ASArgumentError extends ASError { }
+  export class ASDefinitionError extends ASError {
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', this.name.substr(2));
+    }
+  }
+  export class ASEvalError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASRangeError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASReferenceError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASSecurityError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASSyntaxError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASTypeError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASURIError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASVerifyError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASUninitializedError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASArgumentError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+
+  export class ASIOError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASEOFError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASMemoryError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
+  export class ASIllegalOperationError extends ASError {
+    static classInitializer: any = ASDefinitionError.classInitializer;
+  }
 
   export class ASRegExp extends ASObject {
     public static instanceConstructor: any = XRegExp;
     public static staticNatives: any [] = [XRegExp];
     public static instanceNatives: any [] = [XRegExp.prototype];
+
+    static classInitializer: any = function() {
+      var proto = XRegExp.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', ASRegExp.prototype.ecmaToString);
+      defineNonEnumerableProperty(proto, '$Bgexec', proto.exec);
+      defineNonEnumerableProperty(proto, '$Bgtest', proto.test);
+    }
+
+    constructor(input) {
+      false && super();
+      release || assertUnreachable('ASRegExp references must be delegated to XRegExp.');
+    }
+
+    ecmaToString() {
+      var r: any = this;
+      var out = "/" + r.source + "/";
+      if (r.global)       out += "g";
+      if (r.ignoreCase)   out += "i";
+      if (r.multiline)    out += "m";
+      if (r.dotall)       out += "s";
+      if (r.extended)     out += "x";
+      return out;
+    }
 
     get native_source(): string {
       var self: any = this;
@@ -1434,6 +1611,10 @@ module Shumway.AVM2.AS {
       Shumway.AVM2.Runtime.publicizeProperties(result);
       return result;
     }
+
+    test(s: string = ""): boolean {
+      return this.exec(s) !== null;
+    }
   }
 
   export class ASMath extends ASNative {
@@ -1444,6 +1625,61 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Date];
     public static instanceNatives: any [] = [Date.prototype];
     public static instanceConstructor: any = Date;
+
+    static classInitializer: any = function() {
+      var proto: any = Date.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
+      defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
+
+      defineNonEnumerableProperty(proto, '$BgtoDateString', proto.toDateString);
+      defineNonEnumerableProperty(proto, '$BgtoTimeString', proto.toTimeString);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', proto.toLocaleString);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleDateString', proto.toLocaleDateString);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleTimeString', proto.toLocaleTimeString);
+      defineNonEnumerableProperty(proto, '$BgtoUTCString', proto.toUTCString);
+
+      // NB: The default AS implementation of |toJSON| is not ES5-compliant, but
+      // the native JS one obviously is.
+      defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
+
+      defineNonEnumerableProperty(proto, '$BggetUTCFullYear', proto.getUTCFullYear);
+      defineNonEnumerableProperty(proto, '$BggetUTCMonth', proto.getUTCMonth);
+      defineNonEnumerableProperty(proto, '$BggetUTCDate', proto.getUTCDate);
+      defineNonEnumerableProperty(proto, '$BggetUTCDay', proto.getUTCDay);
+      defineNonEnumerableProperty(proto, '$BggetUTCHours', proto.getUTCHours);
+      defineNonEnumerableProperty(proto, '$BggetUTCMinutes', proto.getUTCMinutes);
+      defineNonEnumerableProperty(proto, '$BggetUTCSeconds', proto.getUTCSeconds);
+      defineNonEnumerableProperty(proto, '$BggetUTCMilliseconds', proto.getUTCMilliseconds);
+      defineNonEnumerableProperty(proto, '$BggetFullYear', proto.getFullYear);
+      defineNonEnumerableProperty(proto, '$BggetMonth', proto.getMonth);
+      defineNonEnumerableProperty(proto, '$BggetDate', proto.getDate);
+      defineNonEnumerableProperty(proto, '$BggetDay', proto.getDay);
+      defineNonEnumerableProperty(proto, '$BggetHours', proto.getHours);
+      defineNonEnumerableProperty(proto, '$BggetMinutes', proto.getMinutes);
+      defineNonEnumerableProperty(proto, '$BggetSeconds', proto.getSeconds);
+      defineNonEnumerableProperty(proto, '$BggetMilliseconds', proto.getMilliseconds);
+      defineNonEnumerableProperty(proto, '$BggetTimezoneOffset', proto.getTimezoneOffset);
+      defineNonEnumerableProperty(proto, '$BggetTime', proto.getTime);
+      defineNonEnumerableProperty(proto, '$BgsetFullYear', proto.setFullYear);
+      defineNonEnumerableProperty(proto, '$BgsetMonth', proto.setMonth);
+      defineNonEnumerableProperty(proto, '$BgsetDate', proto.setDate);
+      defineNonEnumerableProperty(proto, '$BgsetHours', proto.setHours);
+      defineNonEnumerableProperty(proto, '$BgsetMinutes', proto.setMinutes);
+      defineNonEnumerableProperty(proto, '$BgsetSeconds', proto.setSeconds);
+      defineNonEnumerableProperty(proto, '$BgsetMilliseconds', proto.setMilliseconds);
+      defineNonEnumerableProperty(proto, '$BgsetUTCFullYear', proto.setUTCFullYear);
+      defineNonEnumerableProperty(proto, '$BgsetUTCMonth', proto.setUTCMonth);
+      defineNonEnumerableProperty(proto, '$BgsetUTCDate', proto.setUTCDate);
+      defineNonEnumerableProperty(proto, '$BgsetUTCHours', proto.setUTCHours);
+      defineNonEnumerableProperty(proto, '$BgsetUTCMinutes', proto.setUTCMinutes);
+      defineNonEnumerableProperty(proto, '$BgsetUTCSeconds', proto.setUTCSeconds);
+      defineNonEnumerableProperty(proto, '$BgsetUTCMilliseconds', proto.setUTCMilliseconds);
+    }
+
+    constructor(input) {
+      false && super();
+      release || assertUnreachable('ASDate references must be delegated to Date');
+    }
   }
 
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
@@ -1491,6 +1727,10 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["VerifyErrorClass"]         = ASVerifyError;
     builtinNativeClasses["UninitializedErrorClass"]  = ASUninitializedError;
     builtinNativeClasses["ArgumentErrorClass"]       = ASArgumentError;
+    builtinNativeClasses["IOErrorClass"]             = ASIOError;
+    builtinNativeClasses["EOFErrorClass"]            = ASEOFError;
+    builtinNativeClasses["MemoryErrorClass"]         = ASMemoryError;
+    builtinNativeClasses["IllegalOperationErrorClass"] = ASIllegalOperationError;
 
     builtinNativeClasses["DateClass"]                = ASDate;
     builtinNativeClasses["MathClass"]                = ASMath;
@@ -1538,8 +1778,8 @@ module Shumway.AVM2.AS {
   }
 
   /**
-   * We need to patch up the prototypes of all classes that are created before the Class class is constructed.
-   * Here we store the classes that need to be patched.
+   * We need to patch up the prototypes of all classes that are created before the Class class is
+   * constructed. Here we store the classes that need to be patched.
    */
   var morphPatchList = [];
 
@@ -1564,6 +1804,8 @@ module Shumway.AVM2.AS {
     } else {
       cls = new ASClass(classInfo);
     }
+
+    cls.baseClass = baseClass;
 
     var classScope = new Scope(scope, null);
     classScope.object = cls;
@@ -1717,27 +1959,6 @@ module Shumway.AVM2.AS {
     export var ASObject = Shumway.AVM2.AS.ASObject;
     export var ASFunction = Shumway.AVM2.AS.ASFunction;
 
-    function makeOriginalPrototype(constructor: Function) {
-      var o = { prototype: Object.create(null) };
-      var keys = Object.getOwnPropertyNames(constructor.prototype);
-      for (var i = 0; i < keys.length; i++) {
-        o.prototype[keys[i]] = constructor.prototype[keys[i]];
-      }
-      return o;
-    }
-
-    /**
-     * Make a copy of the original prototype functions in case they are patched. This is to
-     * prevent cyycles.
-     */
-    export var Original = {
-      Date: makeOriginalPrototype(Date),
-      Array: makeOriginalPrototype(Array),
-      String: makeOriginalPrototype(String),
-      Number: makeOriginalPrototype(Number),
-      Boolean: makeOriginalPrototype(Boolean)
-    }
-
     export function print(expression: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
       jsGlobal.print.apply(null, arguments);
     }
@@ -1787,7 +2008,8 @@ module Shumway.AVM2.AS {
     }
 
     /**
-     * Returns the fully qualified class name of the base class of the object specified by the |value| parameter.
+     * Returns the fully qualified class name of the base class of the object specified by the
+     * |value| parameter.
      */
     export function getQualifiedSuperclassName(value: any) {
       if (isNullOrUndefined(value)) {
@@ -1838,7 +2060,5 @@ module Shumway.AVM2.AS {
     release || assert (illegalAS3Functions.indexOf(<any>v) < 0, "Leaking illegal function.");
     return <any>v;
   }
-
-  registerNativeFunction("unsafeJSNative", getNative);
 }
 

@@ -29,7 +29,6 @@ module Shumway.AVM2 {
   import applyType = Shumway.AVM2.Runtime.applyType;
   import createFunction = Shumway.AVM2.Runtime.createFunction;
   import createClass = Shumway.AVM2.Runtime.createClass;
-  import getDescendants = Shumway.AVM2.Runtime.getDescendants;
   import checkFilter = Shumway.AVM2.Runtime.checkFilter;
   import asAdd = Shumway.AVM2.Runtime.asAdd;
   import translateError = Shumway.AVM2.Runtime.translateError;
@@ -407,10 +406,7 @@ module Shumway.AVM2 {
             break;
           case OP.getdescendants:
             popNameInto(stack, multinames[bc.index], mn);
-            if (mn.name === undefined) {
-              mn.name = '*';
-            }
-            stack.push(getDescendants(stack.pop(), mn));
+            stack[stack.length - 1] = (<any>stack[stack.length - 1]).descendants(mn.name);
             break;
           case OP.newcatch:
             release || assert(exceptions[bc.index].scopeObject);

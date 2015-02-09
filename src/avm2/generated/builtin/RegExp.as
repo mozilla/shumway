@@ -28,46 +28,9 @@ public dynamic class RegExp
   public native function get dotall():Boolean
   public native function get extended():Boolean
 
-  prototype.toString = function():String
-  {
-    var r:RegExp = this // TypeError if not
-    var out:String = "/" + r.source + "/"
-    if (r.global)       out += "g"
-    if (r.ignoreCase)   out += "i"
-    if (r.multiline)    out += "m"
-    if (r.dotall)       out += "s"
-    if (r.extended)     out += "x"
-    return out
-  }
+  AS3 native function exec(s:String="");
+  AS3 native function test(s:String=""):Boolean;
 
-  AS3 native function exec(s:String="")
-
-  prototype.exec = function(s="")
-  {
-    // arg not typed String, so that null and undefined convert
-    // to "null" and "undefined", respectively
-    var r:RegExp = this // TypeError if not
-    return r.AS3::exec(String(s))
-  }
-
-  AS3 function test(s:String=""):Boolean
-  {
-    return AS3::exec(s) != null
-  }
-
-  prototype.test = function(s=""):Boolean
-  {
-    // arg not typed String, so that null and undefined convert
-    // to "null" and "undefined", respectively
-    var r:RegExp = this
-    return r.AS3::test(String(s))
-  }
-
-  // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
-  // The code for the actual ctor is in RegExpClass::construct in the avmplus
-  public function RegExp(pattern = void 0, options = void 0)
-  {}
-
-  _dontEnumPrototype(prototype);
+  public native function RegExp(pattern = void 0, options = void 0);
 }
 }

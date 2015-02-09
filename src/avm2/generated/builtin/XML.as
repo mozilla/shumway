@@ -211,37 +211,9 @@ public final class QName extends Object
 
     AS3 function valueOf():QName { return this }
 
-    AS3 function toString():String {
-        if (uri === "")
-            return localName
-        if (uri === null)
-            return "*::" + localName
-        var cc:uint = uri.charCodeAt(uri.length-1);
-        // strip the version mark, if there is one
-        var base_uri:String = uri;
-        if(cc >= 0xE000 && cc <= 0xF8FF) {
-            base_uri = uri.substr(0, uri.length-1);
-        }
-        if (base_uri === "")
-            return localName
-        return base_uri + "::" + localName
-    }
+    AS3 native function toString():String;
 
-    prototype.toString = function():String
-    {
-        if (this === prototype) return ""
-        if (!(this is QName))
-            Error.throwError( TypeError, 1004 /*kInvokeOnIncompatibleObjectError*/, "QName.prototype.toString" );
-        var q:QName = this
-        return q.AS3::toString()
-    }
-
-    // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
-    // The code for the actual ctor is in QName::construct in the avmplus
-    public function QName(namespace = void 0, name = void 0)
-    {}
-
-    _dontEnumPrototype(prototype);
+    public native function QName(namespace = void 0, name = void 0);
 }
 
 }

@@ -17,6 +17,25 @@ var PASS_PREFIX = GREEN + "PASS: " + ENDC;
 var FAIL_PREFIX = RED + "FAIL: " + ENDC;
 var manifestFile = null;
 
+var ignoredOutput = [
+  "successfully compiled asm.js",
+  "pre-main prep time"
+];
+
+// We want to ignore some messages in our output. The child process's output isn't always received
+// in full lines, so it's important to filter those messages out after all output was received.
+function filterOutput(output) {
+  // Additionally, normalize line endings.
+  return output.split('\r\n').join('\n').split('\n').filter(function(line) {
+    for (var i = ignoredOutput.length; i--;) {
+      if (line.indexOf(ignoredOutput[i]) > -1) {
+        return false;
+      }
+    }
+    return true;
+  }).join('\n');
+}
+
 function runSwf(path, callback) {
   var child = spawn(jsPath,
     [shellPath, '-x', path, '--duration', runDuration, '--porcelain'],
@@ -32,12 +51,11 @@ function runSwf(path, callback) {
     error += data;
   });
   child.on('close', function (code) {
+    error = filterOutput(error);
     if (code) {
       error = 'Exited with code: ' + code + '\n' + error;
     }
-    if (process.platform === 'win32') { // replacing CRLF
-      output = output.replace(/\r\n/g, '\n');
-    }
+    output = filterOutput(output);
     callback(error || null, output);
   });
 }

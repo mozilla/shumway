@@ -244,6 +244,7 @@ module Shumway.AVM2.ABC {
     freeMethod: Function = null;
     cachedMethodOrTrampoline: Function = null;
     cachedMemoizer: Runtime.IMemoizer = null;
+    classScope: Runtime.Scope = null;
     lastBoundMethod: {
       scope: Shumway.AVM2.Runtime.Scope;
       boundMethod: Function;
@@ -370,9 +371,11 @@ module Shumway.AVM2.ABC {
         start: stream.readU30(),
         end: stream.readU30(),
         target: stream.readU30(),
-        typeName: multinames[stream.readU30()],
+        typeNameIndex: stream.readU30(),
+        typeName: undefined,
         varName: multinames[stream.readU30()]
       };
+      ex.typeName = multinames[ex.typeNameIndex];
       release || assert(!ex.typeName || !ex.typeName.isRuntime());
       release || assert(!ex.varName || ex.varName.isQName());
       return ex;
@@ -492,10 +495,10 @@ module Shumway.AVM2.ABC {
       this.traits = Trait.parseTraits(abc, stream, this);
       this.instanceInfo = abc.instances[index];
       this.instanceInfo.classInfo = this;
-      this.defaultValue = ClassInfo._getDefaultValue(this.instanceInfo.name);
+      this.defaultValue = ClassInfo.getDefaultValue(this.instanceInfo.name);
     }
 
-    private static _getDefaultValue(qn): any {
+    public static getDefaultValue(qn): any {
       if (Multiname.getQualifiedName(qn) === Multiname.Int ||
         Multiname.getQualifiedName(qn) === Multiname.Uint) {
         return 0;
@@ -1363,6 +1366,11 @@ module Shumway.AVM2.ABC {
 
     public isQName(): boolean {
       return this.namespaces.length === 1 && !this.isAnyName();
+    }
+
+    public isSimpleStatic(): boolean {
+      return !(this.flags & (Multiname.RUNTIME_NAME | Multiname.RUNTIME_NAMESPACE)) &&
+             this.namespaces.length === 1;
     }
 
     public hasTypeParameter(): boolean {

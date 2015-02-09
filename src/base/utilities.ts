@@ -1398,6 +1398,9 @@ module Shumway {
           enumerable: false,
           configurable: true
         });
+      },
+      delete: function(obj) {
+        delete obj[this.id];
       }
     };
     jsGlobal.WeakMap = WeakMap;

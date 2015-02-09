@@ -490,9 +490,9 @@ module Shumway.AVM2 {
     // on Bytecode which we wouldn't use anyway.
     ///* debug */ { canThrow: true, operands: [{ name: "debugType", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "reg", size: OpcodeSize.u08, type: "" }, { name: "extra", size: OpcodeSize.u30, type: "" }] },
     ///* debugline */ { canThrow: true, operands: [{ name: "lineNumber", size: OpcodeSize.u30, type: "" }] },
-    /* debug */ { canThrow: true, operands: [{ name: "value", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "object", size: OpcodeSize.u08, type: "" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
-    /* debugline */ { canThrow: true, operands: [{ name: "offset", size: OpcodeSize.u30, type: "" }] },
-    /* debugfile */ { canThrow: true, operands: [{ name: "index", size: OpcodeSize.u30, type: "S" }] },
+    /* debug */ { canThrow: false, operands: [{ name: "value", size: OpcodeSize.u08, type: "" }, { name: "index", size: OpcodeSize.u30, type: "S" }, { name: "object", size: OpcodeSize.u08, type: "" }, { name: "argCount", size: OpcodeSize.u30, type: "" }] },
+    /* debugline */ { canThrow: false, operands: [{ name: "offset", size: OpcodeSize.u30, type: "" }] },
+    /* debugfile */ { canThrow: false, operands: [{ name: "index", size: OpcodeSize.u30, type: "S" }] },
     null,
     null,
     null,
@@ -522,11 +522,44 @@ module Shumway.AVM2 {
     return OP[op];
   }
 
+  export class BytecodePool {
+    private static _pool: Bytecode[] = [];
+
+    static get(stream: AbcStream): Bytecode {
+      return this._pool.length ? this._pool.pop().parse(stream) : new Bytecode(stream);
+    }
+
+    static release(bc: Bytecode) {
+      bc.bid = undefined;
+      bc.succs = null;
+      bc.preds = null;
+      bc.dominatees = null;
+
+      bc.dominator = null;
+      bc.end = null;
+      bc.region = null;
+      bc.spbacks = null;
+      bc.bdo = 0;
+      bc.target = null;
+      bc.targets = null;
+      bc.ti = null;
+      this._pool.push(bc);
+    }
+
+    static releaseList(list: Bytecode[]) {
+      for (var i = list.length; i--;) {
+        this.release(list[i]);
+      }
+      list.length = 0;
+    }
+  }
+
   /**
    * A normalized AS3 bytecode, or BasicBlock.
    */
   export class Bytecode {
     ti: Verifier.TypeInformation = null;
+    pc: number; // Original PC position.
     op: number; // Initialized in ctor.
     position: number = 0;
     canThrow: boolean; // Initialized in ctor.
@@ -534,6 +567,8 @@ module Shumway.AVM2 {
     target: Bytecode = null;
     targets: Bytecode [] = null;
     level: number = 0;
+
+    relooperBlock: number = 0;
 
     // Block data. Not split out into its own, lazily initialized structure because that slows
     // down the verifier phase by about 15%.
@@ -558,11 +593,15 @@ module Shumway.AVM2 {
     value: number = 0;
 
     constructor(code) {
+      this.parse(code);
+    }
+
+    parse(code: AbcStream) {
       // If no code is passed, we're creating an invalid opcode for bogus jumps.
       if (!code) {
         this.op = OP.invalid;
         this.canThrow = true;
-        return;
+        return this;
       }
       var op = code.readU8();
       this.op = op;
@@ -571,18 +610,16 @@ module Shumway.AVM2 {
       release || opdesc || unexpected("Unknown Op " + op);
       this.canThrow = opdesc.canThrow;
 
-      var i, n;
-
       if (op === OP.lookupswitch) {
         var defaultOffset = code.readS24();
         this.offsets = [];
         var n = code.readU30() + 1;
-        for (i = 0; i < n; i++) {
+        for (var i = 0; i < n; i++) {
           this.offsets.push(code.readS24());
         }
         this.offsets.push(defaultOffset);
       } else {
-        for (i = 0, n = opdesc.operands.length; i < n; i++) {
+        for (var i = 0, n = opdesc.operands.length; i < n; i++) {
           var operand = opdesc.operands[i];
 
           switch (operand.size) {
@@ -609,6 +646,33 @@ module Shumway.AVM2 {
           }
         }
       }
+      return this;
+    }
+
+    isBlockEnd(): boolean {
+      switch (this.op) {
+        case OP.lookupswitch:
+        case OP.jump:
+        case OP.iflt:
+        case OP.ifnlt:
+        case OP.ifle:
+        case OP.ifnle:
+        case OP.ifgt:
+        case OP.ifngt:
+        case OP.ifge:
+        case OP.ifnge:
+        case OP.ifeq:
+        case OP.ifne:
+        case OP.ifstricteq:
+        case OP.ifstrictne:
+        case OP.iftrue:
+        case OP.iffalse:
+        case OP.returnvalue:
+        case OP.returnvoid:
+        case OP.throw:
+          return true;
+      }
+      return false;
     }
 
     makeBlockHead(id) {
@@ -650,7 +714,10 @@ module Shumway.AVM2 {
         for (i = 0, j = opDescription.operands.length; i < j; i++) {
           var operand = opDescription.operands[i];
           if (operand.name === "offset") {
-            str += "target:" + this.target.position;
+            // Debug bytecodes lack a target.
+            if (this.target) {
+              str += "target:" + this.target.position;
+            }
           } else {
             str += operand.name + ": ";
             var value = this[operand.name];
@@ -796,7 +863,7 @@ module Shumway.AVM2 {
         return cache[offset];
       }
 
-      var code = new Bytecode(null);
+      var code = BytecodePool.get(null);
       code.position = offset;
       cache && (cache[offset] = code);
       return code;
@@ -815,7 +882,8 @@ module Shumway.AVM2 {
 
       while (codeStream.remaining() > 0) {
         var pos = codeStream.position;
-        bytecode = new Bytecode(codeStream);
+        bytecode = BytecodePool.get(codeStream);
+        bytecode.pc = pos; // Save PC.
 
         // Get absolute offsets for normalization to new indices below.
         switch (bytecode.op) {
@@ -911,6 +979,13 @@ module Shumway.AVM2 {
       var exceptions = methodInfo.exceptions;
       for (var i = 0, j = exceptions.length; i < j; i++) {
         var ex = exceptions[i];
+
+        // Eventually we'll remove all the normalization code but for now just keep
+        // track of the original PCs for exceptions.
+        ex.start_pc = ex.start;
+        ex.end_pc = ex.end;
+        ex.target_pc = ex.target;
+
         ex.start = bytecodesOffset[ex.start];
         ex.end = bytecodesOffset[ex.end];
         ex.offset = bytecodesOffset[ex.target];

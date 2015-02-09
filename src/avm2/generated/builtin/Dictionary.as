@@ -72,8 +72,6 @@ package flash.utils {
    */
   [native(cls="DictionaryClass", gc="exact", instance="DictionaryObject", methods="auto")]
   dynamic public class Dictionary {
-    private native function init(weakKeys:Boolean):void;
-
     /**
      * Creates a new Dictionary object. To remove a key from a Dictionary object, use the <code>delete</code> operator.
      *
@@ -86,15 +84,6 @@ package flash.utils {
      *
      *  @playerversion Lite 4
      */
-    public function Dictionary(weakKeys:Boolean=false)
-    {
-      init(weakKeys);
-    }
-
-    // Note: clients are free to replace with method returning non-string
-    prototype.toJSON = function (k:String):* { return "Dictionary"; }
-
-    // Bug 651641: we do not want toJSON enumerated.
-    _dontEnumPrototype(prototype);
+    public native function Dictionary(weakKeys:Boolean=false);
   };
 }

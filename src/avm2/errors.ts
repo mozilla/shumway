@@ -24,7 +24,7 @@ module Shumway.AVM2 {
   //  NotImplementedError                  : {code: 1001, message: "The method %1 is not implemented."},
   //  InvalidPrecisionError                : {code: 1002, message: "Number.toPrecision has a range of 1 to 21. Number.toFixed and Number.toExponential have a range of 0 to 20. Specified value is not within expected range."},
   //  InvalidRadixError                    : {code: 1003, message: "The radix argument must be between 2 and 36; got %1."},
-  //  InvokeOnIncompatibleObjectError      : {code: 1004, message: "Method %1 was invoked on an incompatible object."},
+    InvokeOnIncompatibleObjectError      : {code: 1004, message: "Method %1 was invoked on an incompatible object."},
   //  ArrayIndexNotIntegerError            : {code: 1005, message: "Array index is not a positive integer (%1)."},
     CallOfNonFunctionError               : {code: 1006, message: "%1 is not a function."},
   //  ConstructOfNonFunctionError          : {code: 1007, message: "Instantiation attempted on a non-constructor."},
@@ -619,16 +619,23 @@ module Shumway.AVM2 {
   //  CubeMapSamplerMustUseMipmap                               : { code: 3704, message: "AGAL validation failed: Cube map samplers must enable mipmapping for %2 at token %3 of %1 program."}
   };
 
+  for (var k in Errors) {
+    var error = Errors[k];
+    error.typeName = k;
+    Errors[error.code] = error;
+  }
+
   export function getErrorMessage(index: number): string {
+    var message = "Error #" + index;
     if (!Shumway.AVM2.Runtime.debuggerMode.value) {
-      return "Error #" + index;
+      return message;
     }
-    for (var k in Errors) {
-      if (Errors[k].code == index) {
-        return "Error #" + index + ": " + Errors[k].message;
-      }
-    }
-    return "Error #" + index + ": (unknown)";
+    var error = Errors[index];
+    return message + ": " + (error && error.message || "(unknown)");
+  }
+
+  export function getErrorInfo(index: number): {code: number; message: string; typeName: string} {
+    return Errors[index];
   }
 
   export function formatErrorMessage(error, ...args) {

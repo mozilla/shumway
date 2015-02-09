@@ -68,7 +68,7 @@ module Shumway.GFX.Canvas2D {
         var scaledBounds = bounds.clone();
         scaledBounds.scale(scale, scale);
         scaledBounds.snap();
-        var surfaceRegion: Canvas2DSurfaceRegion = <any>this._surfaceRegionAllocator.allocate(scaledBounds.w, scaledBounds.h);
+        var surfaceRegion: Canvas2DSurfaceRegion = <any>this._surfaceRegionAllocator.allocate(scaledBounds.w, scaledBounds.h, null);
         // surfaceRegion.fill(ColorStyle.randomStyle());
         var region = surfaceRegion.region;
         mipLevel = this._levels[levelIndex] = new MipMapLevel(surfaceRegion, scale);
@@ -777,17 +777,11 @@ module Shumway.GFX.Canvas2D {
 
     visitRenderable(node: Renderable, state: RenderState, ratio?: number) {
       var bounds = node.getBounds();
-      var matrix = state.matrix;
-      var context = state.target.context;
-      var paintClip = !!(state.flags & RenderFlags.PaintClip);
-      var paintStencil = !!(state.flags & RenderFlags.PaintStencil);
-      var paintFlashing = !!(state.flags & RenderFlags.PaintFlashing);
-
-      if (bounds.isEmpty()) {
-        return;
-      }
 
       if (state.flags & RenderFlags.IgnoreRenderable) {
+        return;
+      }
+      if (bounds.isEmpty()) {
         return;
       }
 
@@ -798,6 +792,12 @@ module Shumway.GFX.Canvas2D {
           return;
         }
       }
+
+      var matrix = state.matrix;
+      var context = state.target.context;
+      var paintClip = !!(state.flags & RenderFlags.PaintClip);
+      var paintStencil = !!(state.flags & RenderFlags.PaintStencil);
+      var paintFlashing = !release && !!(state.flags & RenderFlags.PaintFlashing);
 
       context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
 
@@ -812,7 +812,6 @@ module Shumway.GFX.Canvas2D {
 
       var renderCount = node.properties["renderCount"] || 0;
       var cacheShapesMaxSize = this._options.cacheShapesMaxSize;
-      var matrixScale = Math.max(matrix.getAbsoluteScaleX(), matrix.getAbsoluteScaleY());
 
       node.properties["renderCount"] = ++ renderCount;
       node.render(context, ratio, null, paintClip, paintStencil);
@@ -829,7 +828,7 @@ module Shumway.GFX.Canvas2D {
       var mask = layer.mask;
       if (!mask) {
         var clip = Rectangle.allocate();
-        var target = this._renderToTemporarySurface(node, state, clip);
+        var target = this._renderToTemporarySurface(node, state, clip, null);
         if (target) {
           var matrix = state.matrix;
           state.target.draw(target, clip.x, clip.y, clip.w, clip.h, layer.blendMode);
@@ -876,7 +875,7 @@ module Shumway.GFX.Canvas2D {
 
       var aState = state.clone();
       aState.clip.set(clip);
-      var a = this._renderToTemporarySurface(node, aState, Rectangle.createEmpty());
+      var a = this._renderToTemporarySurface(node, aState, Rectangle.createEmpty(), null);
       aState.free();
 
       var bState = state.clone();
@@ -886,7 +885,7 @@ module Shumway.GFX.Canvas2D {
       if (stencil) {
         bState.flags |= RenderFlags.PaintStencil;
       }
-      var b = this._renderToTemporarySurface(mask, bState, Rectangle.createEmpty());
+      var b = this._renderToTemporarySurface(mask, bState, Rectangle.createEmpty(), a.surface);
       bState.free();
 
       a.draw(b, 0, 0, clip.w, clip.h, BlendMode.Alpha);
@@ -938,7 +937,8 @@ module Shumway.GFX.Canvas2D {
       this._frameInfo.leave();
     }
 
-    private _renderToTemporarySurface(node: Node, state: RenderState, clip: Rectangle): Canvas2DSurfaceRegion {
+    private _renderToTemporarySurface(node: Node, state: RenderState, clip: Rectangle,
+                                      excludeSurface: ISurface): Canvas2DSurfaceRegion {
       var matrix = state.matrix;
       var bounds = node.getBounds();
       var boundsAABB = bounds.clone();
@@ -953,7 +953,7 @@ module Shumway.GFX.Canvas2D {
         return null;
       }
 
-      var target = this._allocateSurface(clip.w, clip.h);
+      var target = this._allocateSurface(clip.w, clip.h, excludeSurface);
       var region = target.region;
 
       // Region bounds may be smaller than the allocated surface region.
@@ -971,10 +971,15 @@ module Shumway.GFX.Canvas2D {
       // Clip region bounds so we don't paint outside.
       target.context.save();
 
-      // We can't do this becuse we could be clipping some other temporary region in the same context.
-      // target.context.beginPath();
-      // target.context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w, surfaceRegionBounds.h);
-      // target.context.clip();
+      // We can't do this because we could be clipping some other temporary region in the same
+      // context.
+      // TODO: but we have to, otherwise we overwrite textures that we might need. This happens in
+      // _renderWithMask, which is why we currently force the allocation of a whole second surface
+      // to avoid it. So, we need to find a solution here.
+      //target.context.beginPath();
+      //target.context.rect(surfaceRegionBounds.x, surfaceRegionBounds.y, surfaceRegionBounds.w,
+      //                    surfaceRegionBounds.h);
+      //target.context.clip();
 
       state = state.clone();
       state.target = target;
@@ -986,8 +991,9 @@ module Shumway.GFX.Canvas2D {
       return target;
     }
 
-    private _allocateSurface(w: number, h: number): Canvas2DSurfaceRegion {
-      var surface = <Canvas2DSurfaceRegion>(Canvas2DRenderer._surfaceCache.allocate(w, h));
+    private _allocateSurface(w: number, h: number, excludeSurface: ISurface): Canvas2DSurfaceRegion {
+      var surface = <Canvas2DSurfaceRegion>(Canvas2DRenderer._surfaceCache.allocate(w, h,
+                                            excludeSurface));
       if (!release) {
         surface.fill("#FF4981");
       }

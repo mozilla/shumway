@@ -23,15 +23,6 @@ dynamic public class Function
   // E262 {DontEnum, DontDelete, ReadOnly}
   public native function get length():int
 
-  // called by native code to create empty functions used for
-  // prototype and no-arg constructor.
-  [API(CONFIG::VM_INTERNAL)]
-  [cppcall]
-  public static function createEmptyFunction():Function
-  {
-    return function() {}
-  }
-
   /* cn:  Spidermonkey returns the actual source text of the function here.  The ES3
    //  standard only says:
    15.3.4.2 Function.prototype.toString ( )
@@ -51,15 +42,9 @@ dynamic public class Function
    //  function in toString() seems to be a bookend to this feature to me, and
    //  thus shouldn't be in the compact specification either. */
 
-  prototype.toLocaleString = prototype.toString = unsafeJSNative("ASFunction.prototype.toString");
 
   AS3 native function call(thisArg=void 0, ...args)
-  prototype.call = unsafeJSNative("Function.prototype.call");
-
   AS3 native function apply(thisArg=void 0, argArray=void 0)
-  prototype.apply = unsafeJSNative("Function.prototype.apply");
-
-  _dontEnumPrototype(prototype);
 }
 }
 
