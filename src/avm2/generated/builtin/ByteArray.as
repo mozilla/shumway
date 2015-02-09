@@ -95,28 +95,12 @@ package flash.utils
     public native function readObject():*;
 
     //[API(CONFIG::FP_10_0)]
-    public function deflate():void
-    {
-      _compress("deflate");
-    }
-
-    private native function _compress(algorithm:String):void;
-    public function compress(algorithm:String = CompressionAlgorithm.ZLIB):void
-    {
-      _compress(algorithm);
-    }
+    public native function deflate():void;
+    public native function compress(algorithm:String = CompressionAlgorithm.ZLIB):void;
 
     //[API(CONFIG::FP_10_0)]
-    public function inflate():void
-    {
-      _uncompress("deflate");
-    }
-
-    private native function _uncompress(algorithm:String):void;
-    public function uncompress(algorithm:String = CompressionAlgorithm.ZLIB):void
-    {
-      _uncompress(algorithm);
-    }
+    public native function inflate():void;
+    public native function uncompress(algorithm:String = CompressionAlgorithm.ZLIB):void;
 
     public native function toString():String;
 
@@ -126,7 +110,6 @@ package flash.utils
 
     static public native function get defaultObjectEncoding():uint;
     static public native function set defaultObjectEncoding(version:uint):void;
-    static private var _defaultObjectEncoding:uint;
 
     public native function get objectEncoding():uint;
     public native function set objectEncoding(version:uint):void;

@@ -779,8 +779,20 @@ module Shumway.ArrayUtilities {
       this._bitLength = 0;
     }
 
-    private _compress(algorithm: string): void {
-      algorithm = asCoerceString(algorithm);
+    deflate() {
+      this.compress('deflate');
+    }
+
+    inflate() {
+      this.uncompress('deflate');
+    }
+
+    compress(algorithm: string): void {
+      if (arguments.length === 0) {
+        algorithm = 'zlib';
+      } else {
+        algorithm = asCoerceString(algorithm);
+      }
 
       var deflate: Deflate;
       switch (algorithm) {
@@ -805,8 +817,12 @@ module Shumway.ArrayUtilities {
       this._position = 0;
     }
 
-    private _uncompress(algorithm: string): void {
-      algorithm = asCoerceString(algorithm);
+    uncompress(algorithm: string): void {
+      if (arguments.length === 0) {
+        algorithm = 'zlib';
+      } else {
+        algorithm = asCoerceString(algorithm);
+      }
 
       var inflate: IDataDecoder;
       switch (algorithm) {
