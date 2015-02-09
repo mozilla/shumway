@@ -643,11 +643,11 @@ module Shumway.AVM2.AS.flash.net {
         if (flvOption.value === 'supported') {
           forceMediaSource = true;
         } else if (flvOption.value === 'mock') {
-            url = 'resource://shumway/web/noflv.mp4';
+          url = 'resource://shumway/web/noflv.mp4';
         } else {
-            this._netStream.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
-              false, false, wrapJSObject({code: "NetStream.Play.NoSupportedTrackFound", level: "error"})));
-            return;
+          this._netStream.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+            false, false, wrapJSObject({code: "NetStream.Play.NoSupportedTrackFound", level: "error"})));
+          return;
         }
       }
       if (!forceMediaSource && !isMediaSourceEnabled) {
