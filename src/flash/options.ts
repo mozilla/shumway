@@ -33,4 +33,8 @@ module Shumway.AVM2.AS {
   export var mediaSourceMP3Option = flashOptions.register (
     new Shumway.Options.Option(null, "Use Media Source for MP3", "boolean", true, "Enables Media Source Extension API for MP3 streams.")
   );
+
+  export var flvOption = flashOptions.register (
+    new Shumway.Options.Option(null, "FLV support.", "string", "unsupported", "Defines how to deal with FLV streams.")
+  );
 }
