@@ -57,11 +57,21 @@ module Shumway.GFX {
       this._parents.push(frame);
     }
 
-    public hasParentsOnStage(): boolean {
+    /**
+     * Checks if this node will be reached by the renderer.
+     */
+    public willRender(): boolean {
       var parents = this._parents;
       for (var i = 0; i < parents.length; i++) {
-        if (parents[i].getStage()) {
-          return true;
+        var node = <Node>parents[i];
+        while (node) {
+          if (node.isType(NodeType.Stage)) {
+            return true;
+          }
+          if (!node.hasFlags(NodeFlags.Visible)) {
+            break;
+          }
+          node = node._parent;
         }
       }
       return false;
@@ -400,8 +410,15 @@ module Shumway.GFX {
       var renderables = RenderableVideo._renderableVideos;
       for (var i = 0; i < renderables.length; i++) {
         var renderable = renderables[i];
-        // If this node is no longer on the stage, its video element should be removed from the video layer.
-        if (!renderable.hasParentsOnStage()) {
+        // Check if the node will be reached by the renderer.
+        if (renderable.willRender()) {
+          // If the nodes video element isn't already on the video layer, mark the node as invalid to
+          // make sure the video element will be added the next time the renderer reaches it.
+          if (!renderable._video.parentElement) {
+            renderable.invalidate();
+          }
+        } else if (renderable._video.parentElement) {
+          // The nodes video element should be removed if no longer visible.
           renderable._dispatchEvent(NodeEventType.RemovedFromStage);
         }
         renderables[i].checkForUpdate();
