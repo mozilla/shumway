@@ -1160,7 +1160,7 @@ module Shumway.AVM2.Runtime {
     };
   }
 
-  initializeGlobalObject(jsGlobal);
+  // initializeGlobalObject(jsGlobal);
 
   /**
    * Check if a qualified name is in an object's traits.

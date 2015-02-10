@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var release = true;
+var release = false;
 var SHUMWAY_ROOT = "resource://shumway/";
 
 var viewerPlayerglobalInfo = {

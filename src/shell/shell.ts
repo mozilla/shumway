@@ -25,7 +25,7 @@ declare var quit;
 declare var read;
 declare var help;
 
-load("src/avm2/compiler/relooper/relooper.js");
+// load("src/avm2/compiler/relooper/relooper.js");
 
 var homePath = "";
 var avm2Root = homePath + "src/avm2/";
@@ -107,6 +107,7 @@ if (commandLineArguments.indexOf('-b') >= 0 || commandLineArguments.indexOf('--c
 module Shumway.Shell {
   import assert = Shumway.Debug.assert;
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import ABCFile = Shumway.AVMX.ABCFile;
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
   import ArgumentParser = Shumway.Options.ArgumentParser;
@@ -195,8 +196,7 @@ module Shumway.Shell {
     argumentParser.addBoundOptionSet(systemOptions);
 
     function printUsage() {
-      var version = Shumway.version + ' (' + Shumway.build + ')';
-      writer.enter("Shumway Command Line Interface. Version: " + version);
+      writer.enter("Shumway Command Line Interface");
       systemOptions.trace(writer);
       writer.leave("");
     }
@@ -246,16 +246,24 @@ module Shumway.Shell {
     Shumway.Unit.writer = new IndentingWriter();
 
     if (compileOption.value) {
-      var abcs = [];
+      var buffers = [];
       files.forEach(function (file) {
         var buffer = new Uint8Array(read(file, "binary"));
         if (file.endsWith(".abc")) {
-          abcs.push(new AbcFile(buffer, file));
+          buffers.push(buffer);
         } else if (file.endsWith(".swf")) {
-          abcs.push.apply(abcs, extractABCsFromSWF(buffer));
+          buffers.push.apply(buffers, extractABCsFromSWF(buffer));
         }
       });
-      Compiler.baselineCompileABCs(abcs.slice(0, 1), abcs.slice(1));
+
+      Shumway.AVM2.timelineBuffer.enter("Parse");
+      for (var i = 0; i < buffers.length; i++) {
+        var a = new ABCFile(buffers[i], "X");
+      }
+      Shumway.AVM2.timelineBuffer.leave("Parse");
+      verbose && writer.writeLn("Loading " + buffers.length + " ABCs");
+
+      Shumway.AVM2.timelineBuffer.createSnapshot().trace(new IndentingWriter());
     }
 
     if (parseOption.value) {
@@ -282,9 +290,12 @@ module Shumway.Shell {
           }
         });
       }
-      initializeAVM2(shouldLoadPlayerGlobal, loadShellLibOption.value);
       files.forEach(function (file) {
-        executeFile(file);
+        if (file.endsWith(".abc")) {
+          var securityDomain = createSecurityDomain(builtinLibPath, null, null);
+          var buffer = new Uint8Array(read(file, "binary"));
+          securityDomain.application.loadAndExecuteABC(new ABCFile(buffer));
+        }
       });
     } else if (disassembleOption.value) {
       files.forEach(function (file) {
@@ -390,15 +401,14 @@ module Shumway.Shell {
     return true;
   }
 
-  function extractABCsFromSWF(buffer: Uint8Array): AbcFile [] {
-    var abcs = [];
+  function extractABCsFromSWF(buffer: Uint8Array): Uint8Array [] {
+    var abcData = [];
     try {
       var loadListener: ILoadListener = {
         onLoadOpen: function(file: Shumway.SWF.SWFFile) {
           for (var i = 0; i < file.abcBlocks.length; i++) {
             var abcBlock = file.abcBlocks[i];
-            var abcFile = new AbcFile(abcBlock.data, "TAG" + i);
-            abcs.push(abcFile);
+            abcData.push(abcBlock.data);
           }
         },
         onLoadProgress: function(update: LoadProgressUpdate) {
@@ -418,7 +428,7 @@ module Shumway.Shell {
       writer.redLn("Cannot parse SWF, reason: " + x);
       return null;
     }
-    return abcs;
+    return abcData;
   }
 
   /**
@@ -450,43 +460,43 @@ module Shumway.Shell {
           onLoadComplete: function() {
             writer.redLn("Load complete:");
             // TODO: re-enable all-tags parsing somehow. SWFFile isn't the right tool for that.
-          //  var symbols = {};
-          //  var tags = result.tags;
-          //  var counter = new Metrics.Counter(true);
-          //  for (var i = 0; i < tags.length; i++) {
-          //    var tag = tags[i];
-          //    assert(tag.code !== undefined);
-          //    if (ignoreTag(tag.code, symbolFilters)) {
-          //      continue;
-          //    }
-          //    var startTag = dateNow();
-          //    if (!parseForDatabase) {
-          //      if (tag.code === SWF_TAG_CODE_DO_ABC || tag.code === SWF_TAG_CODE_DO_ABC_) {
-          //        parseABC(tag.data);
-          //      } else {
-          //        parseSymbol(tag, symbols);
-          //      }
-          //    }
-          //    var tagName = SwfTag[tag.code];
-          //    if (tagName) {
-          //      tagName = tagName.substring("CODE_".length);
-          //    } else {
-          //      tagName = "TAG" + tag.code;
-          //    }
-          //    counter.count(tagName, 1, dateNow() - startTag);
-          //  }
-          //  if (parseForDatabase) {
-          //    writer.writeLn(JSON.stringify({
-          //                                    size: buffer.byteLength,
-          //                                    time: dateNow() - startSWF,
-          //                                    name: fileNameWithoutExtension,
-          //                                    tags: counter.toJSON()
-          //                                  }, null, 0));
-          //  } else if (verbose) {
-          //    writer.enter("Tag Frequency:");
-          //    counter.traceSorted(writer);
-          //    writer.outdent();
-          //  }
+            //  var symbols = {};
+            //  var tags = result.tags;
+            //  var counter = new Metrics.Counter(true);
+            //  for (var i = 0; i < tags.length; i++) {
+            //    var tag = tags[i];
+            //    assert(tag.code !== undefined);
+            //    if (ignoreTag(tag.code, symbolFilters)) {
+            //      continue;
+            //    }
+            //    var startTag = dateNow();
+            //    if (!parseForDatabase) {
+            //      if (tag.code === SWF_TAG_CODE_DO_ABC || tag.code === SWF_TAG_CODE_DO_ABC_) {
+            //        parseABC(tag.data);
+            //      } else {
+            //        parseSymbol(tag, symbols);
+            //      }
+            //    }
+            //    var tagName = SwfTag[tag.code];
+            //    if (tagName) {
+            //      tagName = tagName.substring("CODE_".length);
+            //    } else {
+            //      tagName = "TAG" + tag.code;
+            //    }
+            //    counter.count(tagName, 1, dateNow() - startTag);
+            //  }
+            //  if (parseForDatabase) {
+            //    writer.writeLn(JSON.stringify({
+            //                                    size: buffer.byteLength,
+            //                                    time: dateNow() - startSWF,
+            //                                    name: fileNameWithoutExtension,
+            //                                    tags: counter.toJSON()
+            //                                  }, null, 0));
+            //  } else if (verbose) {
+            //    writer.enter("Tag Frequency:");
+            //    counter.traceSorted(writer);
+            //    writer.outdent();
+            //  }
           },
           onNewEagerlyParsedSymbols(dictionaryEntries: SWF.EagerlyParsedDictionaryEntry[],
                                     delta: number): Promise<any> {
@@ -523,6 +533,26 @@ module Shumway.Shell {
       var buffer = read(shellLibPath, 'binary');
       avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "shell.abc"));
     }
+  }
+
+
+  function createSecurityDomain(builtinLibPath, shellLibPath, libraryPathInfo) {
+    var buffer = read(builtinLibPath, 'binary');
+    var securityDomain = new AVMX.SecurityDomain();
+
+    var builtinABC = new ABCFile(new Uint8Array(buffer));
+
+    securityDomain.system.loadAndExecuteABC(builtinABC);
+
+    return securityDomain;
+    //
+    //if (libraryPathInfo) {
+    //  loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
+    //}
+    //if (shellLibPath) {
+    //  var buffer = read(shellLibPath, 'binary');
+    //  avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "shell.abc"));
+    //}
   }
 
   function initializeAVM2(loadPlayerglobal: boolean, loadShellLib: boolean) {

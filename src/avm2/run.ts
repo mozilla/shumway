@@ -31,7 +31,6 @@ module Shumway.AVMX {
 
   function axSetProperty(mn: Multiname, value: any) {
     writer.writeLn("axSetProperty: " + mn + " " + value);
-    this.traits.trace(writer);
     var t = this.traits.getTrait(mn);
     if (t) {
       this[t.getName().getMangledName()] = value;
@@ -42,7 +41,6 @@ module Shumway.AVMX {
 
   function axGetProperty(mn: Multiname): any {
     writer.writeLn("axGetProperty: " + mn);
-    this.traits.trace(writer);
     var t = this.traits.getTrait(mn);
     if (t) {
       return this[t.getName().getMangledName()];
@@ -52,7 +50,6 @@ module Shumway.AVMX {
 
   function axCallProperty(mn: Multiname, args: any []): any {
     writer.writeLn("axCallProperty: " + mn);
-    this.traits.trace(writer);
     var t = this.traits.getTrait(mn);
     if (t) {
       var method = this[t.getName().getMangledName()];

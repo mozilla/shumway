@@ -28,7 +28,7 @@ declare var putstr;
 // declare var document;
 // declare var getComputedStyle;
 
-/** @const */ var release: boolean = true; // by default 'true' -- we are folding constants in closure compiler
+/** @const */ var release: boolean = false; // by default 'true' -- we are folding constants in closure compiler
 /** @const */ var profile: boolean = false;
 
 declare var dateNow: () => number;
