@@ -766,11 +766,17 @@ module Shumway.GFX.Canvas2D {
       var cssTransform = matrix.toCSSTransform();
       node.video.style.transformOrigin = "0 0";
       node.video.style.transform = cssTransform;
-      if (this._backgroundVideoLayer !== node.video.parentElement) {
-        this._backgroundVideoLayer.appendChild(node.video);
+      var videoLayer = this._backgroundVideoLayer;
+      if (videoLayer !== node.video.parentElement) {
+          videoLayer.appendChild(node.video);
         if (node.state === RenderableVideoState.Idle) {
           node.play();
         }
+        node.addEventListener(NodeEventType.RemovedFromStage, function removeVideo(node: RenderableVideo) {
+          release || assert(videoLayer === node.video.parentElement);
+          videoLayer.removeChild(node.video);
+          node.removeEventListener(NodeEventType.RemovedFromStage, removeVideo);
+        });
       }
       matrix.free();
     }

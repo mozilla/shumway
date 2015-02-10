@@ -57,6 +57,16 @@ module Shumway.GFX {
       this._parents.push(frame);
     }
 
+    public hasParentsOnStage(): boolean {
+      var parents = this._parents;
+      for (var i = 0; i < parents.length; i++) {
+        if (parents[i].getStage()) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     public addRenderableParent(renderable: Renderable) {
       release || assert(renderable);
       var index = indexOf(this._renderableParents, renderable);
@@ -390,9 +400,9 @@ module Shumway.GFX {
       var renderables = RenderableVideo._renderableVideos;
       for (var i = 0; i < renderables.length; i++) {
         var renderable = renderables[i];
-        // If this node is no longer on the stage, remove its video element from the video layer.
-        if (!renderable.hasFlags(NodeFlags.AddedToStage) && renderable._video.parentNode) {
-          renderable._video.parentNode.removeChild(renderable._video);
+        // If this node is no longer on the stage, its video element should be removed from the video layer.
+        if (!renderable.hasParentsOnStage()) {
+          renderable._dispatchEvent(NodeEventType.RemovedFromStage);
         }
         renderables[i].checkForUpdate();
       }

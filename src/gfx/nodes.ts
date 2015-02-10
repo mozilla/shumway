@@ -87,16 +87,6 @@ module Shumway.GFX {
     InvalidConcatenatedColorMatrix    = 0x00800,
 
     /**
-     * Whether this node is added to the stage.
-     */
-    AddedToStage                      = 0x01000,
-
-    /**
-     * Propagated when a node is removed from the stage.
-     */
-    RemovedFromStage                  = 0x02000,
-
-    /**
      * Flags to propagate upwards when a node is added or removed from a group.
      */
     UpOnAddedOrRemoved                = InvalidBounds | Dirty,
@@ -193,7 +183,8 @@ module Shumway.GFX {
    */
   export enum NodeEventType {
     None                        = 0x0000,
-    OnStageBoundsChanged        = 0x0001
+    OnStageBoundsChanged        = 0x0001,
+    RemovedFromStage            = 0x0002
   }
 
   /**
@@ -431,6 +422,20 @@ module Shumway.GFX {
     }
 
     /**
+     * Removes an event listener.
+     */
+    public removeEventListener(type: NodeEventType, listener: (node: Node, type?: NodeEventType) => void) {
+      var listeners = this._eventListeners;
+      for (var i = 0; i < listeners.length; i++) {
+        var listenerObject = listeners[i];
+        if (listenerObject.type === type && listenerObject.listener === listener) {
+          listeners.splice(i, 1);
+          return;
+        }
+      }
+    }
+
+    /**
      * Property bag used to attach dynamic properties to this object.
      */
     protected _properties: {[name: string]: any};
@@ -551,10 +556,6 @@ module Shumway.GFX {
     }
 
     public setFlags(flags: NodeFlags) {
-      if (flags & NodeFlags.RemovedFromStage) {
-        this.toggleFlags(NodeFlags.AddedToStage, false);
-        flags &= ~NodeFlags.RemovedFromStage;
-      }
       this._flags |= flags;
     }
 
@@ -788,7 +789,7 @@ module Shumway.GFX {
       node._index = this._children.length;
       this._children.push(node);
       this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
-      node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved | (this._flags & NodeFlags.AddedToStage));
+      node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
       node._markCurrentBoundsAsDirtyRegion();
     }
 
@@ -804,27 +805,17 @@ module Shumway.GFX {
       node._index = -1;
       node._parent = null;
       this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
-
-      if (this.hasFlags(NodeFlags.AddedToStage)) {
-        node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved | NodeFlags.RemovedFromStage);
-      } else {
-        node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
-      }
+      node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
     }
 
     public clearChildren() {
-      var isOnStage = this.hasFlags(NodeFlags.AddedToStage);
       for (var i = 0; i < this._children.length; i++) {
         var child = this._children[i];
         child._markCurrentBoundsAsDirtyRegion();
         if (child) {
           child._index = -1;
           child._parent = null;
-          if (isOnStage) {
-            child._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved | NodeFlags.RemovedFromStage);
-          } else {
-            child._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
-          }
+          child._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
         }
       }
       this._children.length = 0;
@@ -1120,9 +1111,6 @@ module Shumway.GFX {
 
     _propagateFlagsDown(flags: NodeFlags) {
       this.setFlags(flags);
-      if (this._source) {
-        this._source.setFlags(flags);
-      }
     }
 
     public getChildren(clone: boolean = false): Node[] {
@@ -1242,7 +1230,6 @@ module Shumway.GFX {
 
     constructor(w: number, h: number, trackDirtyRegion: boolean = false) {
       super();
-      this._flags |= NodeFlags.AddedToStage | NodeFlags.Dirty
       this._flags &= ~NodeFlags.BoundsAutoCompute;
       this._type = NodeType.Stage;
       this._scaleMode = Stage.DEFAULT_SCALE;
@@ -1250,6 +1237,7 @@ module Shumway.GFX {
       this._content = new Group();
       this._content._flags &= ~NodeFlags.BoundsAutoCompute;
       this.addChild(this._content);
+      this.setFlags(NodeFlags.Dirty);
       this.setBounds(new Rectangle(0, 0, w, h));
       if (trackDirtyRegion) {
         this._dirtyRegion = new DirtyRegion(w, h);
