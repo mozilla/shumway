@@ -389,6 +389,11 @@ module Shumway.GFX {
     public static checkForVideoUpdates() {
       var renderables = RenderableVideo._renderableVideos;
       for (var i = 0; i < renderables.length; i++) {
+        var renderable = renderables[i];
+        // If this node is no longer on the stage, remove its video element from the video layer.
+        if (!renderable.hasFlags(NodeFlags.AddedToStage) && renderable._video.parentNode) {
+          renderable._video.parentNode.removeChild(renderable._video);
+        }
         renderables[i].checkForUpdate();
       }
     }
