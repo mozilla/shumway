@@ -1462,24 +1462,27 @@ module Shumway.AVM2.Runtime {
     return method;
   }
 
-  function nameFunction(methodInfo) {
+  function nameFunction(methodInfo: MethodInfo) {
     var fnName = methodInfo.name ?
                  Multiname.getFullQualifiedName(methodInfo.name) :
                  "fn" + compiledFunctionCount;
     if (methodInfo.holder) {
       var fnNamePrefix = "";
+      // TODO: remove the explicit casts once we've updated to a tsc version that obviates them.
       if (methodInfo.holder instanceof ClassInfo) {
-        fnNamePrefix = "static$" + methodInfo.holder.instanceInfo.name.getName();
+        fnNamePrefix = "static$" + (<ClassInfo>methodInfo.holder).instanceInfo.name.getName();
       } else if (methodInfo.holder instanceof InstanceInfo) {
-        fnNamePrefix = methodInfo.holder.name.getName();
+        fnNamePrefix = (<InstanceInfo>methodInfo.holder).name.getName();
       } else if (methodInfo.holder instanceof ScriptInfo) {
         fnNamePrefix = "script";
       }
-      fnName = fnNamePrefix + "$" + fnName;
+      fnName = fnNamePrefix + fnName;
     }
     fnName = Shumway.StringUtilities.escapeString(fnName);
-    if (methodInfo.verified) {
-      fnName += "$V";
+    if (methodInfo.isGetter) {
+      fnName += "_get";
+    } else if (methodInfo.isSetter) {
+      fnName += "_set";
     }
     fnName += '_' + (methodInfo.abc.hash >>> 0);
     return fnName;
@@ -1553,7 +1556,7 @@ module Shumway.AVM2.Runtime {
     var compilation: {body: string; parameters: string[]};
 
     var fnName = nameFunction(methodInfo);
-    
+
     var globalMiName = 'mi_' + fnName;
     jsGlobal[globalMiName] = methodInfo;
 
@@ -1580,7 +1583,7 @@ module Shumway.AVM2.Runtime {
       body = "{ debugger; \n" + body + "}";
     }
     if (!cached) {
-      var fnSource = "jsGlobal. " + fnName + " = function " + fnName + " (" +
+      var fnSource = "jsGlobal." + fnName + " = function " + fnName + " (" +
                      compilation.parameters.join(", ") + ") " + body;
       fnSource += "//# sourceURL=fun-" + fnName + ".as";
     }
@@ -1597,9 +1600,9 @@ module Shumway.AVM2.Runtime {
       }
     }
 
-    // Using `new Function` here because just evaluating fnSource for some reason causes
-    // substantial slowdowns in running the code. This is true across engines (SM and v8, at
-    // least), and affects some benchmarks more than others.
+    release || assert(!(fnName in jsGlobal), 'Name collision or function compiled twice.');
+    // Using `new Function` here turns out to be fastest. Direct eval is slowest by far, but
+    // indirect eval is also a bit slower.
     new Function('return ' + (cached || fnSource))();
     var fn = jsGlobal[fnName];
     fn.debugName = fnName;
@@ -1616,7 +1619,7 @@ module Shumway.AVM2.Runtime {
    * compiler bakes it in as a constant which should be much more efficient. If the interpreter
    * is used, the scope object is passed in every time.
    */
-  export function createFunction(mi, scope, hasDynamicScope, breakpoint, useInterpreter = false) {
+  export function createFunction(mi: MethodInfo, scope, hasDynamicScope, breakpoint, useInterpreter = false) {
     release || assert(!mi.isNative(), "Method should have a builtin: " + mi.name);
 
     if (mi.freeMethod) {
@@ -1655,7 +1658,8 @@ module Shumway.AVM2.Runtime {
       mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint, mi.isInstanceInitializer);
     }
 
-    mi.freeMethod.methodInfo = mi;
+    // TODO: remove this once all code can deal with looking up the MethodInfo by name on the global.
+    (<any>mi.freeMethod).methodInfo = mi;
 
     if (hasDynamicScope) {
       return bindFreeMethodScope(mi, scope);
@@ -1663,7 +1667,7 @@ module Shumway.AVM2.Runtime {
     return mi.freeMethod;
   }
 
-  export function ensureFunctionIsInitialized(methodInfo) {
+  export function ensureFunctionIsInitialized(methodInfo: MethodInfo) {
     var mi = methodInfo;
 
     // We use not having an analysis to mean "not initialized".
