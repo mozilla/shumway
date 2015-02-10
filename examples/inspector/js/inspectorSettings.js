@@ -35,7 +35,9 @@ var stateDefaults = {
   scale: 'noscale',
   width: -1,
   height: -1,
-  loaderURL: ''
+  loaderURL: '',
+  remoteEnabled: false,
+  remoteSWF: ''
 };
 
 for (var option in stateDefaults) {
@@ -115,6 +117,8 @@ var GUI = (function () {
   inspectorOptions.add(state, "width", -1, 4096, 1).onChange(saveInspectorOption);
   inspectorOptions.add(state, "height", -1, 4096, 1).onChange(saveInspectorOption);
   inspectorOptions.add(state, "loaderURL").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "remoteEnabled").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "remoteSWF").onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();

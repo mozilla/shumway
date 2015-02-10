@@ -27,6 +27,7 @@ build: ensureoutputdir
 	cp -R ../../LICENSE content chrome bootstrap.js chrome.manifest icon.png icon64.png $(BUILD_DIR)/
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > $(BUILD_DIR)/install.rdf
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
+	cp ../../examples/inspector/debug/pingpong.js $(BUILD_DIR)/chrome/
 	# Copying WebGL shaders
 	mkdir -p $(BUILD_DIR)/content/gfx/gl/shaders
 	cp ../../src/gfx/gl/shaders/combined.frag $(BUILD_DIR)/content/gfx/gl/shaders/

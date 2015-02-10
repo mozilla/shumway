@@ -82,6 +82,10 @@ if (queryVariables['rfile'] && !startPromise) {
     url: queryVariables['rfile'],
     args: parseQueryString(queryVariables['flashvars'])
   });
+} else {
+  if (state.remoteEnabled) {
+    initRemoteDebugging();
+  }
 }
 if (startPromise) {
   startPromise.then(function (config) {
@@ -106,6 +110,7 @@ function showOpenFileButton(show) {
 var flashOverlay;
 var currentSWFUrl;
 var currentPlayer;
+var processExternalCommand;
 
 var easelHost;
 function runIFramePlayer(data) {
@@ -130,11 +135,14 @@ function runIFramePlayer(data) {
     playerWorker.postMessage(data, '*');
 
     easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWorker, window);
+    if (processExternalCommand) {
+      easelHost.processExternalCommand = processExternalCommand;
+    }
   });
   container.appendChild(playerWorkerIFrame);
 }
 
-function executeFile(file, buffer, movieParams) {
+function executeFile(file, buffer, movieParams, remoteDebugging) {
   var filename = file.split('?')[0].split('#')[0];
 
   if (state.useIFramePlayer && filename.endsWith(".swf")) {
@@ -142,7 +150,8 @@ function executeFile(file, buffer, movieParams) {
     runIFramePlayer({sysMode: sysMode, appMode: appMode,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
       stageAlign: state.salign, stageScale: state.scale,
-      fileReadChunkSize: state.fileReadChunkSize, loaderURL: state.loaderURL});
+      fileReadChunkSize: state.fileReadChunkSize, loaderURL: state.loaderURL,
+      remoteDebugging: !!remoteDebugging});
     return;
   }
 
@@ -189,7 +198,15 @@ function executeFile(file, buffer, movieParams) {
         player.displayParameters = easel.getDisplayParameters();
         player.loaderUrl = state.loaderURL;
 
+        if (remoteDebugging) {
+          Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
+        }
+
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
+        if (processExternalCommand) {
+          easelHost.processExternalCommand = processExternalCommand;
+        }
+
         player.load(file, buffer);
 
         currentSWFUrl = swfURL;

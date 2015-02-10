@@ -26,6 +26,7 @@ build: ensureoutputdir
 	echo "Creating mozcentral package"
 	mkdir -p $(BUILD_EXTENSION_DIR)
 	cp -R ../../LICENSE $(EXTENSION_SRC)/chrome $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
+	cp ../../examples/inspector/debug/pingpong.js $(BUILD_DIR)/chrome/
 	cp -R browser $(BUILD_DIR)/
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders
 	cp ../../src/gfx/gl/shaders/combined.frag $(BUILD_EXTENSION_DIR)/content/gfx/gl/shaders/

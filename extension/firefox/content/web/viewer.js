@@ -165,6 +165,13 @@ function runViewer() {
   var version = Shumway.version || '';
   document.getElementById('aboutMenu').label =
     document.getElementById('aboutMenu').label.replace('%version%', version);
+
+  var debugMenuEnabled = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.debug.enabled', def: false});
+  if (debugMenuEnabled) {
+    document.getElementById('debugMenu').addEventListener('click', enableDebug);
+  } else {
+    document.getElementById('debugMenu').remove();
+  }
 }
 
 function showURL() {
@@ -203,6 +210,10 @@ function reportIssue() {
 
 function showAbout() {
   window.open('http://areweflashyet.com/');
+}
+
+function enableDebug() {
+  ShumwayCom.enableDebug();
 }
 
 var movieUrl, movieParams, objectParams;

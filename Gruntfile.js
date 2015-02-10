@@ -103,6 +103,9 @@ module.exports = function(grunt) {
                                    (grunt.option('rebuild') ? ' -r' : ''),
         cwd: 'utils/playerglobal-builder'
       },
+      debug_server: {
+        cmd: 'node examples/inspector/debug/server.js'
+      },
       gate: {
         cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
                 (grunt.option('verbose') ? '-v ' : '') +
