@@ -87,6 +87,16 @@ module Shumway.GFX {
     InvalidConcatenatedColorMatrix    = 0x00800,
 
     /**
+     * Whether this node is added to the stage.
+     */
+    AddedToStage                      = 0x01000,
+
+    /**
+     * Propagated when a node is removed from the stage.
+     */
+    RemovedFromStage                  = 0x02000,
+
+    /**
      * Flags to propagate upwards when a node is added or removed from a group.
      */
     UpOnAddedOrRemoved                = InvalidBounds | Dirty,
@@ -541,6 +551,10 @@ module Shumway.GFX {
     }
 
     public setFlags(flags: NodeFlags) {
+      if (flags & NodeFlags.RemovedFromStage) {
+        this.toggleFlags(NodeFlags.AddedToStage, false);
+        flags &= ~NodeFlags.RemovedFromStage;
+      }
       this._flags |= flags;
     }
 
@@ -774,7 +788,7 @@ module Shumway.GFX {
       node._index = this._children.length;
       this._children.push(node);
       this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
-      node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
+      node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved | (this._flags & NodeFlags.AddedToStage));
       node._markCurrentBoundsAsDirtyRegion();
     }
 
@@ -790,17 +804,27 @@ module Shumway.GFX {
       node._index = -1;
       node._parent = null;
       this._propagateFlagsUp(NodeFlags.UpOnAddedOrRemoved);
-      node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
+
+      if (this.hasFlags(NodeFlags.AddedToStage)) {
+        node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved | NodeFlags.RemovedFromStage);
+      } else {
+        node._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
+      }
     }
 
     public clearChildren() {
+      var isOnStage = this.hasFlags(NodeFlags.AddedToStage);
       for (var i = 0; i < this._children.length; i++) {
         var child = this._children[i];
         child._markCurrentBoundsAsDirtyRegion();
         if (child) {
           child._index = -1;
           child._parent = null;
-          child._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
+          if (isOnStage) {
+            child._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved | NodeFlags.RemovedFromStage);
+          } else {
+            child._propagateFlagsDown(NodeFlags.DownOnAddedOrRemoved);
+          }
         }
       }
       this._children.length = 0;
@@ -1096,6 +1120,9 @@ module Shumway.GFX {
 
     _propagateFlagsDown(flags: NodeFlags) {
       this.setFlags(flags);
+      if (this._source) {
+        this._source.setFlags(flags);
+      }
     }
 
     public getChildren(clone: boolean = false): Node[] {
@@ -1215,6 +1242,7 @@ module Shumway.GFX {
 
     constructor(w: number, h: number, trackDirtyRegion: boolean = false) {
       super();
+      this._flags |= NodeFlags.AddedToStage | NodeFlags.Dirty
       this._flags &= ~NodeFlags.BoundsAutoCompute;
       this._type = NodeType.Stage;
       this._scaleMode = Stage.DEFAULT_SCALE;
@@ -1222,7 +1250,6 @@ module Shumway.GFX {
       this._content = new Group();
       this._content._flags &= ~NodeFlags.BoundsAutoCompute;
       this.addChild(this._content);
-      this.setFlags(NodeFlags.Dirty);
       this.setBounds(new Rectangle(0, 0, w, h));
       if (trackDirtyRegion) {
         this._dirtyRegion = new DirtyRegion(w, h);
