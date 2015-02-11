@@ -768,10 +768,7 @@ module Shumway.GFX.Canvas2D {
       node.video.style.transform = cssTransform;
       var videoLayer = this._backgroundVideoLayer;
       if (videoLayer !== node.video.parentElement) {
-          videoLayer.appendChild(node.video);
-        if (node.state === RenderableVideoState.Idle) {
-          node.play();
-        }
+        videoLayer.appendChild(node.video);
         node.addEventListener(NodeEventType.RemovedFromStage, function removeVideo(node: RenderableVideo) {
           release || assert(videoLayer === node.video.parentElement);
           videoLayer.removeChild(node.video);
