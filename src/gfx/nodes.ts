@@ -228,23 +228,24 @@ module Shumway.GFX {
     }
   }
 
-  export class MatrixState extends State {
-    private static _dirtyStack: MatrixState [] = [];
+  export class PreRenderState extends State {
+    private static _dirtyStack: PreRenderState [] = [];
 
     matrix: Matrix = Matrix.createIdentity();
+    depth: number = 0;
 
     constructor() {
       super();
     }
 
-    transform(transform: Transform): MatrixState {
+    transform(transform: Transform): PreRenderState {
       var state = this.clone();
       state.matrix.preMultiply(transform.getMatrix());
       return state;
     }
 
-    static allocate(): MatrixState {
-      var dirtyStack = MatrixState._dirtyStack;
+    static allocate(): PreRenderState {
+      var dirtyStack = PreRenderState._dirtyStack;
       var state = null;
       if (dirtyStack.length) {
         state = dirtyStack.pop();
@@ -252,41 +253,41 @@ module Shumway.GFX {
       return state;
     }
 
-    public clone(): MatrixState {
-      var state = MatrixState.allocate();
+    public clone(): PreRenderState {
+      var state = PreRenderState.allocate();
       if (!state) {
-        state = new MatrixState();
+        state = new PreRenderState();
       }
       state.set(this);
       return state;
     }
 
-    set (state: MatrixState) {
+    set (state: PreRenderState) {
       this.matrix.set(state.matrix);
     }
 
     free() {
-      MatrixState._dirtyStack.push(this);
+      PreRenderState._dirtyStack.push(this);
     }
   }
 
   /**
-   * Helper visitor that checks and resets the dirty bit. If the root node is dirty, then we have to repaint
-   * the entire node tree.
+   * Helper visitor that checks and resets the dirty bit and calculates stack levels. If the root
+   * node is dirty, then we have to repaint the entire node tree.
    */
-  export class DirtyNodeVisitor extends NodeVisitor {
+  export class PreRenderVisitor extends NodeVisitor {
     public isDirty = true;
     private _dirtyRegion: DirtyRegion;
 
     start(node: Group, dirtyRegion: DirtyRegion) {
       this._dirtyRegion = dirtyRegion;
-      var state = new MatrixState();
+      var state = new PreRenderState();
       state.matrix.setIdentity();
       node.visit(this, state);
       state.free();
     }
 
-    visitGroup(node: Group, state: MatrixState) {
+    visitGroup(node: Group, state: PreRenderState) {
       var children = node.getChildren();
       this.visitNode(node, state);
       for (var i = 0; i < children.length; i++) {
@@ -297,11 +298,12 @@ module Shumway.GFX {
       }
     }
 
-    visitNode(node: Node, state: MatrixState) {
+    visitNode(node: Node, state: PreRenderState) {
       if (node.hasFlags(NodeFlags.Dirty)) {
         this.isDirty = true;
       }
       node.toggleFlags(NodeFlags.Dirty, false);
+      node.depth = state.depth++;
     }
   }
 
@@ -393,6 +395,11 @@ module Shumway.GFX {
      */
     protected _transform: Transform;
 
+    /**
+     * This nodes stack level.
+     */
+    public depth: number;
+
     protected _eventListeners: {
       type: NodeEventType;
       listener: (node: Node, type?: NodeEventType) => void;
@@ -468,6 +475,7 @@ module Shumway.GFX {
       this._layer = null;
       this._transform = null;
       this._properties = null;
+      this.depth = -1;
     }
 
     public get clip(): number {
@@ -1226,7 +1234,7 @@ module Shumway.GFX {
     private static DEFAULT_SCALE = StageScaleMode.NoScale;
     private static DEFAULT_ALIGN = StageAlignFlags.Left | StageAlignFlags.Top;
 
-    private _dirtyVisitor: DirtyNodeVisitor = new DirtyNodeVisitor();
+    private _preVisitor: PreRenderVisitor = new PreRenderVisitor();
 
     constructor(w: number, h: number, trackDirtyRegion: boolean = false) {
       super();
@@ -1268,9 +1276,9 @@ module Shumway.GFX {
      * is any code that needs to check if rendering is about to happen.
      */
     readyToRender(): boolean {
-      this._dirtyVisitor.isDirty = false;
-      this._dirtyVisitor.start(this, this._dirtyRegion);
-      if (this._dirtyVisitor.isDirty) {
+      this._preVisitor.isDirty = false;
+      this._preVisitor.start(this, this._dirtyRegion);
+      if (this._preVisitor.isDirty) {
         return true;
       }
       return false;
