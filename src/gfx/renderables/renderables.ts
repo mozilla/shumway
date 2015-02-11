@@ -50,6 +50,10 @@ module Shumway.GFX {
      */
     private _renderableParents: Renderable [] = [];
 
+    public get parents(): Shape [] {
+      return this._parents;
+    }
+
     public addParent(frame: Shape) {
       release || assert(frame);
       var index = indexOf(this._parents, frame);
@@ -420,6 +424,7 @@ module Shumway.GFX {
           if (!renderable._video.parentElement) {
             renderable.invalidate();
           }
+          renderable._video.style.zIndex = renderable.parents[0].depth + '';
         } else if (renderable._video.parentElement) {
           // The nodes video element should be removed if no longer visible.
           renderable._dispatchEvent(NodeEventType.RemovedFromStage);
