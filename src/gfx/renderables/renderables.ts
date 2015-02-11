@@ -221,6 +221,7 @@ module Shumway.GFX {
       element.addEventListener("seeking", elementEventHandler);
       element.addEventListener("seeked", elementEventHandler);
       element.addEventListener("canplay", elementEventHandler);
+      element.style.position = 'absolute';
 
       this._video = element;
       this._videoEventHandler = elementEventHandler;
