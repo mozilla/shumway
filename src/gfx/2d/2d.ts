@@ -350,6 +350,7 @@ module Shumway.GFX.Canvas2D {
       div.style.overflow = "hidden";
       div.style.width = "100%";
       div.style.height = "100%";
+      div.style.zIndex = this._layers.length + '';
       this._container.appendChild(div);
       this._layers.push(div);
       return div;
