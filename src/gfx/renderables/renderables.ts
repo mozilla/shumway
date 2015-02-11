@@ -243,13 +243,13 @@ module Shumway.GFX {
     }
 
     play() {
-      this._video.play();
       this._state = RenderableVideoState.Playing;
+      this._video.play();
     }
 
     pause() {
-      this._video.pause();
       this._state = RenderableVideoState.Paused;
+      this._video.pause();
     }
 
     private _handleVideoEvent(evt: Event) {
@@ -264,6 +264,10 @@ module Shumway.GFX {
           type = VideoPlaybackEvent.Unpause;
           break;
         case "pause":
+          if (this._state === RenderableVideoState.Playing) {
+            element.play();
+            return;
+          }
           type = VideoPlaybackEvent.Pause;
           this._pauseHappening = true;
           break;
