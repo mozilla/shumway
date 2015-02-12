@@ -184,13 +184,9 @@ endif
 build-playerglobal:
 	cd playerglobal-builder; node build -t $(THREADS) $(PLAYERGLOBAL_FLAGS)
 
-build-playerglobal-fp:
-	make -C playerglobal-fp/ build
-
 clean:
 	-rm -rf $(TAMARIN_HOME)
 	-rm -rf $(JSSHELL_HOME)
-	make -C playerglobal-fp/ clean
 
 .PHONY: install-tamarin install-js install-swfdec install-flex-sdk \
         install-node-modules build-tamarin-tests build-playerglobal \

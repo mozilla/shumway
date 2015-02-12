@@ -70,13 +70,6 @@ build-libs:
 build-playerglobal:
 	make -C utils/ build-playerglobal
 
-build-playerglobal-fp:
-	make -C utils/ build-playerglobal-fp
-
-build-playerglobal-min:
-	make -C utils/ install-apparat
-	make -C utils/playerglobal build-min
-
 build-extension:
 	grunt firefox
 
