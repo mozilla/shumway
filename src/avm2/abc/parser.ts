@@ -809,7 +809,14 @@ module Shumway.AVM2.ABC {
       if (mangledNamespace) {
         return mangledNamespace;
       }
-      mangledNamespace = Shumway.StringUtilities.variableLengthEncodeInt32(Namespace._hashNamespace(kind, uri, prefix));
+      // The AS3 namespace is special-cased to make the names readable and hence usable in
+      // for statically using them in JS-implemented builtins.
+      if (key === "8http://adobe.com/AS3/2006/builtin") {
+        mangledNamespace = '$AS3_';
+      } else {
+        var hash = Namespace._hashNamespace(kind, uri, prefix);
+        mangledNamespace = Shumway.StringUtilities.variableLengthEncodeInt32(hash);
+      }
       Namespace._mangledNamespaceMap[mangledNamespace] = {
         kind: kind, uri: uri, prefix: prefix
       };
@@ -818,7 +825,11 @@ module Shumway.AVM2.ABC {
     }
 
     public static fromQualifiedName(qn: string) {
-      var length = Shumway.StringUtilities.fromEncoding(qn[0]);
+      var firstChar = qn.charCodeAt(0);
+      // Names starting with '$' are special-cased very common names.
+      var length = firstChar === 36 /* '$' */ ?
+                   qn.indexOf('_', 1):
+                   Shumway.StringUtilities.fromEncoding(firstChar);
       var mangledNamespace = qn.substring(0, length + 1);
       var ns = Namespace._mangledNamespaceMap[mangledNamespace];
       return new Namespace(ns.kind, ns.uri, ns.prefix);
