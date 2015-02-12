@@ -88,12 +88,6 @@ module Shumway.AVM2.AS {
    *
    */
 
-  export enum InitializationFlags {
-    NONE             = 0x0,
-    OWN_INITIALIZE   = 0x1,
-    SUPER_INITIALIZE = 0x2
-  }
-
   /**
    * In order to avoid shadowing of JS top level Objects we prefix the AS top level
    * classes with the "AS" prefix.
@@ -125,7 +119,6 @@ module Shumway.AVM2.AS {
     public static dynamicPrototype: Object;
     public static typeScriptPrototype: Object;
     public static defaultValue: any = null;
-    public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
     public static native_prototype: Object;
     public static implementedInterfaces: Shumway.Map<ASClass>;
     public static isInterface: () => boolean;
@@ -275,7 +268,6 @@ module Shumway.AVM2.AS {
     public static traitsPrototype: Object = null;
     public static dynamicPrototype: Object = null;
     public static defaultValue: any = null;
-    public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
   }
 
   /**
@@ -656,11 +648,6 @@ module Shumway.AVM2.AS {
     defaultValue: any;
 
     /**
-     * Initialization flags that determine how native initializers get called.
-     */
-    initializationFlags: InitializationFlags;
-
-    /**
      * Defines the AS MetaObject Protocol, |null| if the default protocol should
      * be used. Override this to provide a different protocol.
      */
@@ -673,7 +660,6 @@ module Shumway.AVM2.AS {
       this.classInfo = classInfo;
       this.staticNatives = null;
       this.instanceNatives = null;
-      this.initializationFlags = InitializationFlags.NONE;
       this.defaultValue = null;
     }
 
