@@ -582,7 +582,12 @@ module Shumway.AVM2.Runtime {
     if (self.asSlots.byQN[resolved]) {
       result = this.asGetProperty(namespaces, name, flags);
     } else {
-      result = baseClass.traitsPrototype[VM_OPEN_GET_METHOD_PREFIX + resolved].call(this);
+      var getter = baseClass.traitsPrototype[VM_OPEN_GET_METHOD_PREFIX + resolved];
+      if (getter) {
+        result = getter.call(this);
+      } else {
+        result = baseClass.traitsPrototype[VM_OPEN_METHOD_PREFIX + resolved];
+      }
     }
     release || traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;

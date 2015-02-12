@@ -770,10 +770,15 @@ module Shumway.AVM2.Compiler {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
-      if (ti && ti.trait && ti.trait.isGetter() && ti.baseClass) {
-        var qn = Runtime.VM_OPEN_GET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
-        var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
-        return this.call(callee, object, []);
+      if (ti && ti.trait && ti.baseClass) {
+        if (ti.trait.isGetter()) {
+          var qn = Runtime.VM_OPEN_GET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+          var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
+          return this.call(callee, object, []);
+        } else if (ti.trait.isMethod()) {
+          var qn = Runtime.VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+          return this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
+        }
       }
       return this.store(new IR.ASGetSuper(region, state.store, object, multiname, scope));
     }
