@@ -16,6 +16,8 @@ src/avm2/utils/asc.jar
 src/avm2/utils/avmshell
 src/avm2/utils/js
 
+src/avm1/tests/
+
 src/flash/playerglobal.js
 src/flash/playerglobal.abc
 src/flash/playerglobal-new.js
