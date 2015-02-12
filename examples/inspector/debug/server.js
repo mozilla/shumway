@@ -28,11 +28,15 @@ var DEFAULT_BIND_PORT = 8010;
 
 var IDLE_TIMEOUT = 500;
 var SYNC_TIMEOUT = 120000;
+var BROADCAST_TIMEOUT = 3000;
 
 var incomingData = {};
 var incomingResponse = {};
 var outgoingResponse = {};
 var currentReading = [];
+
+var broadcastQueues = {};
+var broadcastResponses = {};
 
 var verbose = false;
 
@@ -102,6 +106,7 @@ WebServer.prototype = {
     var queryPart = urlParts[3];
 
     var sessionId = pathParts[1], fromId = pathParts[2], toId = pathParts[3];
+    var isBroadcast = !toId;
     var isResponse = queryPart === 'response', isAsync = queryPart === 'async';
     verbose && console.log(sessionId + ': ' + fromId + '->' + toId + ' ' +
                            isResponse + ' ' + isAsync + ' ' + request.method);
@@ -109,6 +114,13 @@ WebServer.prototype = {
     var reverseKeyId = sessionId + '_' + toId + '_' + fromId;
 
     if (request.method === 'POST') {
+      if (isBroadcast && (!isAsync || isResponse)) {
+        setStandardHeaders(response);
+        response.writeHead(500);
+        response.end('Invalid request');
+        return;
+      }
+
       response.on('close', function () {
         verbose && console.log('connection closed'); // TODO client closed without response.end
       });
@@ -128,7 +140,31 @@ WebServer.prototype = {
       var item = {
         isReady: false,
         fn: function () {
-          if (isResponse) {
+          if (isBroadcast) {
+            if (!broadcastQueues[sessionId]) {
+              broadcastQueues[sessionId] = [];
+            }
+            var queue = broadcastQueues[sessionId];
+            var message = {data: body, sentTo: { }};
+            broadcastQueues[sessionId].push(message);
+            var requestTimeout = +request.headers['x-pingpong-timeout'];
+            var broadcastTimeout = requestTimeout || BROADCAST_TIMEOUT;
+            setTimeout(function () {
+              var i = queue.indexOf(message);
+              queue.splice(i, 1);
+              if (queue.length === 0) {
+                delete broadcastQueues[sessionId];
+              }
+            }, broadcastTimeout);
+            if (broadcastResponses[sessionId]) {
+              broadcastResponses[sessionId].forEach(function (responseInfo) {
+                sendData(responseInfo.response, body, true, responseInfo.fromId);
+                message.sentTo[responseInfo.fromId] = true;
+              });
+              delete broadcastResponses[sessionId];
+            }
+            sendNoData(response);
+          } else if (isResponse) {
             if (outgoingResponse[reverseKeyId]) {
               sendData(outgoingResponse[reverseKeyId].shift().response, body, true, fromId);
               if (outgoingResponse[reverseKeyId].length === 0) {
@@ -186,22 +222,61 @@ WebServer.prototype = {
     }
 
     if (request.method == 'GET' && !isResponse) {
-      if (incomingData[keyId]) {
+      var wasSent = false;
+      if (isBroadcast) {
+        var queue = broadcastQueues[sessionId];
+        if (queue) {
+          wasSent = queue.some(function (item) {
+            if (item.sentTo[fromId]) {
+              return false;
+            }
+            sendData(response, item.data, true, fromId);
+            item.sentTo[fromId] = true;
+            return true;
+          });
+        }
+        if (!wasSent) {
+          if (!broadcastResponses[sessionId]) {
+            broadcastResponses[sessionId] = [];
+          }
+          broadcastResponses[sessionId].push({response: response, fromId: fromId});
+        }
+      } else if (incomingData[keyId]) {
         var data = incomingData[keyId].shift();
         sendData(response, data.data, data.isAsync, toId);
         if (incomingData[keyId].length === 0) {
           delete incomingData[keyId];
         }
+        wasSent = true;
       } else {
         if (incomingResponse[keyId]) {
           console.error('Double incoming response from ' + keyId);
         }
         incomingResponse[keyId] = {response: response};
       }
+      if (wasSent) {
+        return;
+      }
       setTimeout(function () {
-        if (incomingResponse[keyId] && incomingResponse[keyId].response === response) {
-          delete incomingResponse[keyId];
-          sendTimeout(response);
+        if (isBroadcast) {
+          var responses = broadcastResponses[sessionId];
+          if (responses) {
+            for (var i = 0; i < responses.length; i++) {
+              if (responses[i].response === response) {
+                sendTimeout(response);
+                responses.splice(i, 1);
+                break;
+              }
+            }
+            if (responses.length === 0) {
+              delete broadcastResponses[sessionId];
+            }
+          }
+        } else {
+          if (incomingResponse[keyId] && incomingResponse[keyId].response === response) {
+            delete incomingResponse[keyId];
+            sendTimeout(response);
+          }
         }
       }, IDLE_TIMEOUT);
       return;

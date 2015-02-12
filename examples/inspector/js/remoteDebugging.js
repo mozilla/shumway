@@ -20,18 +20,19 @@ var remoteDebuggerId;
 var remoteDebugger;
 var remoteDebuggerController;
 function initRemoteDebugging() {
-  remoteDebuggerId = (Date.now() % 100000) + 2;
-  remoteDebugger = new PingPongConnection(removeDebuggerBaseURL + '/debug/' + remoteDebuggerId + '/1');
-  remoteDebugger.onData = remoteDebugger_onData;
+  remoteDebuggerId = (Date.now() % 888888) * 2;
 
-  remoteDebuggerController = new PingPongConnection(removeDebuggerBaseURL + '/debugController/1/2');
+  remoteDebuggerController = new PingPongConnection(removeDebuggerBaseURL + '/debugController/' + remoteDebuggerId);
   remoteDebuggerController.onData = function (data) {
     switch (data.action) {
       case 'getDebugger':
-        if (data.swfUrl && data.swfUrl.indexOf(state.remoteSWF) === 0) {
-          return remoteDebuggerId;
+        if (data.swfUrl && state.remoteSWF && data.swfUrl.indexOf(state.remoteSWF) === 0) {
+          remoteDebugger = new PingPongConnection(removeDebuggerBaseURL + '/debug/' + remoteDebuggerId + '/' + data.swfId);
+          remoteDebugger.onData = remoteDebugger_onData;
+
+          remoteDebuggerController.send({action: 'setDebugger', swfUrl: data.swfUrl, debuggerId: remoteDebuggerId}, true);
         }
-        return 0;
+        return;
       case 'enableDebugging':
         var properties = document.getElementById('settingsContainer').querySelectorAll('.property-name');
         for (var i = 0; i < properties.length; i++) {
@@ -51,7 +52,9 @@ function initRemoteDebugging() {
 var externalInteraceCallback;
 function remoteDebuggerInitServices() {
   window.addEventListener('beforeunload', function(event) {
-    remoteDebugger.send({action: 'reload'}, true);
+    if (state.remoteAutoReload) {
+      remoteDebugger.send({action: 'reload'}, true);
+    }
   });
   processExternalCommand = function (command) {
     switch (command.action) {
@@ -145,6 +148,7 @@ function remoteDebugger_onData(data) {
   switch (data.action) {
     case 'runViewer':
       showOpenFileButton(false);
+      remoteDebuggerController.close();
       remoteDebuggerInitServices();
 
       var flashParams = JSON.parse(remoteDebuggerSendMessage({action: 'getPluginParams', data: null, sync: true}));

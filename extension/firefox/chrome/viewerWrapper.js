@@ -198,11 +198,16 @@ function runViewer() {
 
   promise.then(function (oop) {
     if (DebugUtils.isEnabled) {
-      var debuggerConnection = DebugUtils.createDebuggerConnection(window.swfUrlLoading);
-      if (debuggerConnection) {
-        handleDebug(debuggerConnection);
-        return;
-      }
+      DebugUtils.createDebuggerConnection(window.swfUrlLoading).then(function (debuggerConnection) {
+        if (debuggerConnection) {
+          handleDebug(debuggerConnection);
+        } else if (oop) {
+          handlerOOP();
+        } else {
+          handler();
+        }
+      });
+      return;
     }
 
     if (oop) {

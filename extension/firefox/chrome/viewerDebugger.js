@@ -30,22 +30,31 @@ var DebugUtils = (function () {
     return baseUrl;
   }
 
+  var uniqueId = (Date.now() % 888888) * 2 + 1;
+
   function getEnabledDebuggerId(swfUrl) {
-    var id = 0;
-    var url = getBaseUrl() + '/debugController/2/1';
-    var connection = new PingPongConnection(url, true);
-    try {
-      id = connection.send({action: 'getDebugger', swfUrl: swfUrl},
-        false, 500);
-    } catch (e) {
-      // ignoring failed send request
-    }
-    connection.close();
-    return id;
+    return new Promise(function (resolve) {
+      var url = getBaseUrl() + '/debugController/' + uniqueId;
+      var connection = new PingPongConnection(url);
+      connection.onData = function (data) {
+        if (data.action === 'setDebugger' && data.swfUrl === swfUrl) {
+          resolve(data.debuggerId);
+        }
+      };
+      try {
+        connection.send({action: 'getDebugger', swfUrl: swfUrl, swfId: uniqueId}, true);
+      } catch (e) {
+        // ignoring failed send request
+      }
+      setTimeout(function () {
+        resolve(0);
+        connection.close();
+      }, 500);
+    });
   }
 
   function enableDebug(swfUrl) {
-    var url = getBaseUrl() + '/debugController/2/1';
+    var url = getBaseUrl() + '/debugController/' + uniqueId;
     var connection = new PingPongConnection(url, true);
     try {
       connection.send({action: 'enableDebugging', swfUrl: swfUrl}, true);
@@ -56,14 +65,15 @@ var DebugUtils = (function () {
   }
 
   function createDebuggerConnection(swfUrl) {
-    var debuggerId = getEnabledDebuggerId(swfUrl);
-    if (!debuggerId) {
-      return null;
-    }
+    return getEnabledDebuggerId(swfUrl).then(function (debuggerId) {
+      if (!debuggerId) {
+        return null;
+      }
 
-    var url = getBaseUrl() + '/debug/1/' + debuggerId;
-    console.log('Starting remote debugger with ' + url);
-    return new PingPongConnection(url);
+      var url = getBaseUrl() + '/debug/' + uniqueId + '/' + debuggerId;
+      console.log('Starting remote debugger with ' + url);
+      return new PingPongConnection(url);
+    });
   }
 
   return {
