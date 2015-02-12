@@ -292,7 +292,7 @@ module.exports = function(grunt) {
     var outputDir = 'build/libs/';
     grunt.file.mkdir(outputDir);
     var done = this.async();
-    var buildLibs = require('./src/avm2/generated/buildlibs.js').buildLibs;
+    var buildLibs = require('./src/libs/buildlibs.js').buildLibs;
     buildLibs(outputDir, false, null, function () {
       done();
     });

@@ -19,7 +19,7 @@ var crypto = require('crypto');
 var path = require('path');
 var spawn = require('child_process').spawn;
 
-var ascJar = process.env.asc || path.resolve(__dirname, '../../../utils/asc.jar');
+var ascJar = process.env.asc || path.resolve(__dirname, '../../utils/asc.jar');
 var generatedDir = __dirname;
 
 function scanForIncludes(basePath, files) {
