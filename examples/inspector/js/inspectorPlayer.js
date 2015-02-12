@@ -102,6 +102,10 @@ function runSwfPlayer(data) {
   fileReadChunkSize = data.fileReadChunkSize;
   var file = data.file;
   configureExternalInterfaceMocks(file);
+  if (data.remoteDebugging) {
+    Shumway.ClipboardService.instance = parent.Shumway.ClipboardService.instance;
+    Shumway.FileLoadingService.instance = parent.Shumway.FileLoadingService.instance;
+  }
   Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
     function runSWF(file) {
       var player = new Shumway.Player.Window.WindowPlayer(window);
@@ -111,6 +115,10 @@ function runSwfPlayer(data) {
       player.displayParameters = displayParameters;
       player.loaderUrl = loaderURL;
       player.load(file);
+
+      if (data.remoteDebugging) {
+        Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
+      }
     }
     file = Shumway.FileLoadingService.instance.setBaseUrl(file);
     if (asyncLoading) {
