@@ -33,9 +33,6 @@ endif
 TAMARIN_HOME = ./tamarin-redux
 TAMARIN_URL = http://hg.mozilla.org/tamarin-redux
 
-CLOSURE_JAR = ./cc.jar
-CLOSURE_URL = http://dl.google.com/closure-compiler/compiler-latest.zip
-
 ASC_JAR = ./asc.jar
 
 FLEX_HOME = ./flex_sdk
@@ -83,19 +80,9 @@ AVM2_HOME = ../src/avm2
 AVMSHELL = avmshell
 
 default:
-	@echo "run: make [install-avmshell|install-js|download-closure|"
+	@echo "run: make [install-avmshell|install-js|"
 	@echo "           install-swfdec|install-node-modules|install-tamarin-src|"
 	@echo "           build-tamarin-tests|run-tamarin-tests|build-playerglobal|clean]"
-
-download-closure: $(CLOSURE_JAR)
-
-$(CLOSURE_JAR):
-	mkdir -p ./closure
-	wget $(CLOSURE_URL) -O ./closure/compiler.zip
-	cd ./closure; unzip -o compiler.zip
-	mv closure/compiler.jar cc.jar
-	mv closure/COPYING cc.jar-COPYING
-	rm -rf ./closure
 
 install-avmshell:
 	mkdir -p $(TAMARIN_HOME)/bin/shell
