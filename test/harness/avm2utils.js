@@ -22,8 +22,7 @@ var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", 
 //Shumway.AVM2.Runtime.enableVerifier.value = true;
 release = true;
 
-var avm2Root = SHUMWAY_ROOT + "avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var builtinPath = WEB_ROOT + "../build/libs/builtin.abc";
 
 var playerglobalInfo = {
   abcs: WEB_ROOT + "../build/playerglobal/playerglobal.abcs",

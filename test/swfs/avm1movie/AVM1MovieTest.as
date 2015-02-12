@@ -16,7 +16,7 @@
 
 /**
  * Compiled with:
- * java -jar utils/asc.jar -import src/avm2/generated/playerGlobal/playerGlobal.abc -swf AVM1MovieTest,600,600 test/swfs/avm1movie/AVM1MovieTest.as
+ * java -jar utils/asc.jar -import build/playerglobal/playerglobal-single.abc -swf AVM1MovieTest,600,600 test/swfs/avm1movie/AVM1MovieTest.as
  */
 package {
 import flash.display.Loader;

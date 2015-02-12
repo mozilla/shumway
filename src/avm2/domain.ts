@@ -543,10 +543,10 @@ module Shumway.AVM2.Runtime {
     public initializeShell(sysMode, appMode) {
       var compartment = this.compartment;
       compartment.AVM2.initialize(sysMode, appMode);
-      compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
-      compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
+      compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "build/libs/builtin.abc"));
+      compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "build/libs/shell.abc"));
       // compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath +
-      // "src/avm2/generated/avmplus/avmplus.abc"));
+      // "build/libs/avmplus.abc"));
       this.systemDomain = compartment.AVM2.instance.systemDomain;
       this.applicationDomain = compartment.AVM2.instance.applicationDomain;
     }

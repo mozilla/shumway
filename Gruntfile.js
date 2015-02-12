@@ -93,14 +93,14 @@ module.exports = function(grunt) {
       build_shell_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
       },
-      generate_abcs: {
-        cmd: 'python generate.py',
-        cwd: 'src/avm2/generated'
-      },
       build_playerglobal: {
         cmd: 'node build.js -t ' + (+grunt.option('threads') || 9) +
                                    (grunt.option('sha1') ? ' -s' : '') +
                                    (grunt.option('rebuild') ? ' -r' : ''),
+        cwd: 'utils/playerglobal-builder'
+      },
+      build_playerglobal_single: {
+        cmd: 'node single.js',
         cwd: 'utils/playerglobal-builder'
       },
       debug_server: {
@@ -175,8 +175,13 @@ module.exports = function(grunt) {
       base: {
         tasks: [
           { args: ['generate-version'], grunt: true },
-          { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
+          { args: ['buildlibs'], grunt: true },
           { args: ['exec:build_base_ts'].concat(parallelArgs), grunt: true },
+        ]
+      },
+      tier1: {
+        tasks: [
+          { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
         ]
       },
       tier2: {
@@ -283,6 +288,15 @@ module.exports = function(grunt) {
   });
   grunt.registerTask('update-flash-refs', ['update-refs']); // TODO deprecated
 
+  grunt.registerTask('buildlibs', function() {
+    var outputDir = 'build/libs/';
+    grunt.file.mkdir(outputDir);
+    var done = this.async();
+    var buildLibs = require('./src/avm2/generated/buildlibs.js').buildLibs;
+    buildLibs(outputDir, false, null, function () {
+      done();
+    });
+  });
   grunt.registerTask('bundles', function () {
     var outputDir = 'build/bundles/';
     grunt.file.mkdir(outputDir);
@@ -464,8 +478,8 @@ module.exports = function(grunt) {
     grunt.file.mkdir(outputDir);
     var path = require('path');
 
-    grunt.file.copy('src/avm2/generated/builtin/builtin.abc', outputDir + '/src/avm2/generated/builtin/builtin.abc');
-    grunt.file.copy('src/avm2/generated/shell/shell.abc', outputDir + '/src/avm2/generated/shell/shell.abc');
+    grunt.file.copy('build/libs/builtin.abc', outputDir + '/build/libs/builtin.abc');
+    grunt.file.copy('build/libs/shell.abc', outputDir + '/build/libs/shell.abc');
     grunt.file.copy('build/playerglobal/playerglobal.abcs', outputDir + '/build/playerglobal/playerglobal.abcs');
     grunt.file.copy('build/playerglobal/playerglobal.json', outputDir + '/build/playerglobal/playerglobal.json');
     grunt.file.expand('build/ts/*.js').forEach(function (file) {
@@ -512,6 +526,8 @@ module.exports = function(grunt) {
 
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
+  grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
+  grunt.registerTask('playerglobal-single', ['exec:build_playerglobal_single']);
 
   grunt.registerTask('base', ['exec:build_base_ts', 'exec:gate']);
   grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:gate']);
@@ -528,6 +544,7 @@ module.exports = function(grunt) {
   grunt.registerTask('gfx-test', ['exec:gfx-test']);
   grunt.registerTask('build', [
     'parallel:base',
+    'parallel:tier1',
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
     'parallel:tier2',
@@ -541,9 +558,7 @@ module.exports = function(grunt) {
     'exec:gate'
   ]);
   grunt.registerTask('travis', [
-    // 'parallel:base',
-    'generate-version',
-    'exec:build_base_ts',
+    'parallel:base',
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
     'parallel:tier2',
@@ -635,7 +650,7 @@ module.exports = function(grunt) {
       throw new Error('mozcentralbaseline was not run.');
     }
     var NON_DELTA_BINARIES = [
-      'browser/extensions/shumway/content/avm2/generated/builtin/builtin.abc',
+      'browser/extensions/shumway/content/libs/builtin.abc',
       'browser/extensions/shumway/content/playerglobal/playerglobal.abcs'
     ];
     var MOZCENTRAL_DIR = 'build/mozcentral';
@@ -799,7 +814,7 @@ module.exports = function(grunt) {
     grunt.file.mkdir(outputDir);
     var path = require('path');
 
-    grunt.file.copy('src/avm2/generated/builtin/builtin.abc', outputDir + '/src/avm2/generated/builtin/builtin.abc');
+    grunt.file.copy('build/libs/builtin.abc', outputDir + '/build/libs/builtin.abc');
     grunt.file.copy('build/playerglobal/playerglobal.abcs', outputDir + '/build/playerglobal/playerglobal.abcs');
     grunt.file.copy('build/playerglobal/playerglobal.json', outputDir + '/build/playerglobal/playerglobal.json');
     grunt.file.expand('build/bundles-cc/*.js').forEach(function (file) {  // TODO closure bundles

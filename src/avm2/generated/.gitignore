@@ -1,4 +1,4 @@
 playerGlobal/
-*/*.hashes
+avm1lib/
 */*.h
 */*.cpp
