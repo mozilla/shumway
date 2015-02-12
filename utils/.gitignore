@@ -5,5 +5,8 @@ mtasc/
 node_modules/
 tamarin-redux/
 swfdec/
+builder/
+playerglobal-fp/
+playerGlobal/
 *~
 

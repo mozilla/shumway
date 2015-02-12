@@ -214,29 +214,6 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
         if (state.overlayFlash) {
           ensureFlashOverlay();
         }
-
-        // embedding.loader
-
-//        SWF.embed(buffer || file, document, document.getElementById('stage'), {
-//          onComplete: swfController.completeCallback.bind(swfController),
-//          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
-//          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
-//          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
-//          url: swfURL,
-//          loaderURL: loaderURL,
-//          movieParams: movieParams || {},
-//        });
-
-//        SWF.embed(buffer || file, document, document.getElementById('stage'), {
-//          onComplete: swfController.completeCallback.bind(swfController),
-//          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
-//          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
-//          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
-//          url: swfURL,
-//          loaderURL: loaderURL,
-//          movieParams: movieParams || {},
-//        });
-
       }
       file = Shumway.FileLoadingService.instance.setBaseUrl(file);
       if (!buffer && asyncLoading) {
