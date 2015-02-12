@@ -139,6 +139,13 @@ module Shumway.AVM2.AS {
     public static call = Function.prototype.call;
     public static apply = Function.prototype.apply;
 
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=605660
+    // Some existing Flash content happens to rely on an "init" method
+    // being present in the global namespace; hiding it via VM_INTERNAL breaks
+    // the content as it causes an RTE. Let's provide a name here
+    // that is harmless.
+    public static init() {}
+
     /**
      * Makes native class definitions look like ASClass instances.
      */
@@ -190,24 +197,29 @@ module Shumway.AVM2.AS {
       Object.defineProperty(o, name, descriptor);
     }
 
-    static _dontEnumPrototype(o: Object): void {
-      for (var key in o) {
-        if (Multiname.isPublicQualifiedName(key)) {
-          var descriptor = getOwnPropertyDescriptor(o, key);
-          descriptor.enumerable = false;
-          Object.defineProperty(o, key, descriptor);
-        }
-      }
-    }
-
     static _init() {
-      this.dynamicPrototype.asSetPublicProperty("hasOwnProperty", ASObject.prototype.native_hasOwnProperty);
-      this.dynamicPrototype.asSetPublicProperty("propertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
-      this.dynamicPrototype.asSetPublicProperty("setPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
-      this.dynamicPrototype.asSetPublicProperty("isPrototypeOf", ASObject.prototype.native_isPrototypeOf);
-      this.dynamicPrototype.asSetPublicProperty("toString", ASObject.prototype.toString);
-      this.dynamicPrototype.asSetPublicProperty("valueOf", ASObject.prototype.valueOf);
-      ASObject._dontEnumPrototype(this.dynamicPrototype);
+      defineReadOnlyProperty(ASObject, "$Bglength", 1);
+      defineReadOnlyProperty(Object, "$Bglength", 1);
+      var dynProto: any = this.dynamicPrototype;
+      defineNonEnumerableProperty(dynProto, "$BghasOwnProperty", ASObject.prototype.native_hasOwnProperty);
+      defineNonEnumerableProperty(dynProto, "$BgpropertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
+      defineNonEnumerableProperty(dynProto, "$BgsetPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
+      defineNonEnumerableProperty(dynProto, "$BgisPrototypeOf", ASObject.prototype.native_isPrototypeOf);
+
+      // To make AS3's toString work seamlessly with the native one, we replace
+      // Object.prototype.toString with a forwarder that always just invokes the AS3 toString.
+      // This is valid because AS3's toString is special for all objects, so we have an AS3 toString
+      // in Object.prototype, so everywhere. (Well, and objects created with Object.create(null)
+      // also don't have Object.prototype.toString.)
+      defineNonEnumerableProperty(dynProto, "$BgtoString", Runtime.asToString);
+      defineNonEnumerableProperty(dynProto, "toString", ASObject.prototype.toString);
+
+      // For valueOf, we do mostly the same as for toString. The difference is that AS doesn't
+      // require a special valueOf for most objects, so there's no need for one on
+      // Object.prototype. Hence, we still always forward to the AS3 valueOf, but make the base
+      // implementation of that be the native JS valueOf.
+      defineNonEnumerableProperty(dynProto, "$BgvalueOf", Object.prototype.valueOf);
+      defineNonEnumerableProperty(dynProto, "valueOf", ASObject.prototype.valueOf);
     }
 
     // Hack to make the TypeScript compiler find the original Object.defineProperty.
@@ -217,6 +229,16 @@ module Shumway.AVM2.AS {
     static native_hasOwnProperty: (V: string) => boolean;
     static native_propertyIsEnumerable: (V: string) => boolean;
     static setPropertyIsEnumerable: (V: string, enumerable: boolean) => boolean;
+
+    toString() {
+      release || assert('$BgtoString' in this);
+      return (<any>this).$BgtoString();
+    }
+
+    valueOf() {
+      release || assert('$BgvalueOf' in this);
+      return (<any>this).$BgvalueOf();
+    }
 
     native_isPrototypeOf(V: Object): boolean {
       notImplemented("isPrototypeOf");
@@ -235,18 +257,6 @@ module Shumway.AVM2.AS {
 
     setPropertyIsEnumerable(name: string, enumerable: boolean) {
       ASObject._setPropertyIsEnumerable(this, name, enumerable);
-    }
-
-    /**
-     * This is the top level Object.prototype.toString() function.
-     */
-    toString(): string {
-      var self = boxValue(this);
-      if (self instanceof ASClass) {
-        var cls: ASClass = <any>self;
-        return Shumway.StringUtilities.concat3("[class ", cls.classInfo.instanceInfo.name.name, "]");
-      }
-      return Shumway.StringUtilities.concat3("[object ", self.class.classInfo.instanceInfo.name.name, "]");
     }
   }
 
@@ -1946,14 +1956,6 @@ module Shumway.AVM2.AS {
   }
 
   /**
-   * These functions should never leak into the AS3 world.
-   */
-  var illegalAS3Functions = [
-    Runtime.forwardValueOf,
-    Runtime.forwardToString
-  ];
-
-  /**
    * Searches for a native property in a list of native holders.
    */
   export function getMethodOrAccessorNative(trait: Trait, natives: Object []): any {
@@ -1986,7 +1988,6 @@ module Shumway.AVM2.AS {
           value = native[fullName];
         }
         release || assert (value, "Method or Accessor property exists but it's undefined: " + trait);
-        release || assert (illegalAS3Functions.indexOf(value) < 0, "Leaking illegal function.");
         return value;
       }
     }
@@ -2121,7 +2122,6 @@ module Shumway.AVM2.AS {
     }
 
     release || assert(v, "getNative(" + path + ") not found.");
-    release || assert (illegalAS3Functions.indexOf(<any>v) < 0, "Leaking illegal function.");
     return <any>v;
   }
 }

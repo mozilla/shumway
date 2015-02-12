@@ -263,7 +263,6 @@ module Shumway.AVM2.Runtime {
           trait.methodInfo.cachedMemoizer = memoizer;
         }
         defineNonEnumerableGetter(object, qn, memoizer);
-        tryInjectToStringAndValueOfForwarder(object, qn);
       } else {
         defineNonEnumerableProperty(object, qn, traitFunction);
       }
@@ -410,48 +409,21 @@ module Shumway.AVM2.Runtime {
     return self[resolved].asApply(receiver, args);
   }
 
-  export function asGetResolvedStringPropertyFallback(resolved: any) {
-    var self: Object = this;
-    var name = Multiname.getNameFromPublicQualifiedName(resolved);
-    return self.asGetProperty([Namespace.PUBLIC], name, 0);
-  }
-
   export function asSetPublicProperty(name: any, value: any) {
     var self: Object = this;
     return self.asSetProperty(undefined, name, 0, value);
   }
 
-  export var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF +
-                                                               ".apply(this, arguments)" +
-                                                               "//# sourceURL=forward-valueOf.as");
-  export var forwardToString: () => string = <any>new Function("", 'return this.' +
-                                                                   Multiname.TO_STRING +
-                                                                   ".apply(this, arguments)" +
-                                                                   "//# sourceURL=forward-toString.as");
-
   /**
-   * Patches the |object|'s toString properties with a forwarder that calls the AS3 toString. We
-   * only do this when an AS3 object has the |toString| trait defined, or whenever the |toString|
-   * property is assigned to the object.
-   *
-   * Because native methods are linked lazily, if a class defines a native |toString| method we
-   * must make sure that we don't overwrite its template definition. If we do, then lose the
-   * template definition and also create a cycle, since we would be forwarding to ourselves.
-   *
-   * One way to solve this is to make sure that our template definitions don't live in the same
-   * objects as the ones we apply bindings too. This is a huge pain to change at this point.
-   *
-   * Instead, we save the original toString as original_toString and special case the property
-   * lookup it in the getNatve code in natives.ts.
+   * This is the top level Object.prototype.toString() function.
    */
-  function tryInjectToStringAndValueOfForwarder(self: Object, resolved: string) {
-    if (resolved === Multiname.VALUE_OF) {
-      defineNonEnumerableProperty(self, "original_valueOf", self.valueOf);
-      self.valueOf = forwardValueOf;
-    } else if (resolved === Multiname.TO_STRING) {
-      defineNonEnumerableProperty(self, "original_toString", self.toString);
-      self.toString = forwardToString;
+  export function asToString(): string {
+    var self = boxValue(this);
+    if (self instanceof AS.ASClass) {
+      var cls: AS.ASClass = <any>self;
+      return Shumway.StringUtilities.concat3("[class ", cls.classInfo.instanceInfo.name.name, "]");
     }
+    return Shumway.StringUtilities.concat3("[object ", self.class.classInfo.instanceInfo.name.name, "]");
   }
 
   export function asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
@@ -473,7 +445,6 @@ module Shumway.AVM2.Runtime {
         value = type.coerce(value);
       }
     }
-    tryInjectToStringAndValueOfForwarder(self, resolved);
     self[resolved] = value;
   }
 

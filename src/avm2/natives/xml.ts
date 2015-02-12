@@ -1186,7 +1186,7 @@ module Shumway.AVM2.AS {
     }
 
     ecmaToString (): string {
-      if (this === ASQName.dynamicPrototype) {
+      if (<any>this === ASQName.dynamicPrototype) {
         return "";
       }
       if (!(this instanceof AS.ASQName)) {
