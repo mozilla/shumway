@@ -1063,7 +1063,7 @@ module Shumway.AVM2.AS {
       if (re === (void 0) || re === null) {
         return null;
       } else {
-        if (re instanceof ASRegExp) {
+        if (re instanceof AS.ASRegExp) {
           if (re.global) {
             var matches = [], m;
             while ((m = re.exec(<string><any>this))) {
@@ -1073,15 +1073,12 @@ module Shumway.AVM2.AS {
           }
           return re.match(<string><any>this);
         }
-        if (typeof re !== 'string') {
-          re = String(re);
-        }
-        return this.match(re);
+        return this.match(asCoerceString(re));
       }
     }
 
     search(re): number {
-      if (re instanceof ASRegExp) {
+      if (re instanceof AS.ASRegExp) {
         return re.search(<string><any>this);
       }
       return (<string><any>this).indexOf(asCoerceString(re));
@@ -1399,7 +1396,7 @@ module Shumway.AVM2.AS {
             var flag = flags[i];
             if (flag === 's') {
               // With this flag set, . can match the newline character.
-              p = p.replace(/\./g, '[\\s\\S]');
+              p = p.replace(/(?:^|[^\\])\./g, '[\\s\\S]');
               this.dotall = true;
             } else if (flag === 'x') {
               // With this flag set, you can type spaces in the regular expression, which are
@@ -1411,19 +1408,18 @@ module Shumway.AVM2.AS {
             }
           }
         }
-        p = p.replace(/\((?!\?)|\(\?P<([\w$]+)>/g, function (match) {
-            var name = match[1];
-            if (match[1]) {
-              if (name !== 'length') {
-                captureNames.push(name);
-              }
-              if (captureNames.indexOf(match[1]) > -1) {
-                // TODO: Handle the case were same name is used for multiple groups.
-              }
-            } else {
-              captureNames.push(null);
+        p = p.replace(/(?:^|[^\\])(?:\((?!\?)|\(\?P<([\w$]+)>)/g, function (match, name) {
+          if (name) {
+            if (name !== 'length') {
+              captureNames.push(name);
             }
-            return '(';
+            if (captureNames.indexOf(name) > -1) {
+              // TODO: Handle the case were same name is used for multiple groups.
+            }
+          } else {
+            captureNames.push(null);
+          }
+          return '(';
         });
         var r = this._jsRegExp = new RegExp(p, f);
         this.global = r.global;
@@ -1466,23 +1462,20 @@ module Shumway.AVM2.AS {
 
     exec(s: string = ""): any {
       var result = this._jsRegExp.exec(s);
-
       if (!result) {
         return result;
       }
 
       var captureNames = this._captureNames;
       for (var i = 0; i < captureNames.length; i++) {
-          var name = captureNames[i];
-          if (name !== null) {
-              result[name] = result[0] || '';
-          } else {
-              // Groups in AS3 are set to the empty string instead of undefined.
-              result[name] = '';
-          }
+        var name = captureNames[i];
+        if (name !== null) {
+          var publicName = isNumeric(name) ? name : '$Bg' + name;
+          // In AS3, unmatched groups are set to the empty string instead of undefined.
+          result[publicName] = result[i] || '';
+        }
       }
 
-      Shumway.AVM2.Runtime.publicizeProperties(result);
       return result;
     }
 
