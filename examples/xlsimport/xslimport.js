@@ -48,7 +48,7 @@ function main(avm2) {
   })
 }
 
-var BUILTIN_PATH = SHUMWAY_ROOT + 'avm2/generated/builtin/builtin.abc';
+var BUILTIN_PATH = SHUMWAY_ROOT + 'build/libs/builtin.abc';
 var PLAYERGLOBAL_ABCS = SHUMWAY_ROOT + "build/playerglobal/playerglobal.abcs";
 var PLAYERGLOBAL_CATALOG = SHUMWAY_ROOT + "build/playerglobal/playerglobal.json";
 var AS3XLS_PATH = './as3xls-lib.swc';

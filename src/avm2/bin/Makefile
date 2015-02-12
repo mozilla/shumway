@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-AVM2_HOME = ..
+LIBS_HOME = ../../../build/libs
 UTILS_HOME = ../../../utils
 AVM ?= $(UTILS_HOME)/tamarin-redux/bin/shell/avmshell
-SHELLABC ?= $(AVM2_HOME)/gnerated/shell/shell.abc
-BUILTINABC ?= $(AVM2_HOME)/generated/builtin/builtin.abc
+SHELLABC ?= $(LIBS_HOME)/shell.abc
+BUILTINABC ?= $(LIBS_HOME)/builtin.abc
 ASC ?= $(UTILS_HOME)/asc.jar
 JSSHELL ?= $(UTILS_HOME)/jsshell/js
 THREADS ?= 8
@@ -70,10 +70,10 @@ run-shu-cv:
 	$(UTILS_HOME)/jsshell/js -m -n avm.js -x -c4 -verify -rel $(TEST_PATH)
 
 generate-stubs:
-	js avm.js -s ../generated/builtin/builtin.abc ../../../build/playerglobal/playerglobal-single.abc
+	js avm.js -s $(LIBS_HOME)/builtin.abc ../../../build/playerglobal/playerglobal-single.abc
 
 generate-stubs-force:
-	js avm.js -s ../generated/builtin/builtin.abc ../../../build/playerglobal/playerglobal-single.abc > stubs.txt
+	js avm.js -s $(LIBS_HOME)/builtin.abc ../../../build/playerglobal/playerglobal-single.abc > stubs.txt
 	./shu.py split stubs.txt ../../flash.ts/
 
 .PHONY: default hello-world test-pypy test-interpreter test-compiler test-all run-avm run-shu-i run-shu-c run-shu-cv

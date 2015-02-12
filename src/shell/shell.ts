@@ -26,12 +26,11 @@ declare var read;
 declare var help;
 
 var homePath = "";
-var avm2Root = homePath + "src/avm2/";
-var builtinLibPath = avm2Root + "generated/builtin/builtin.abc";
-var shellLibPath = avm2Root + "generated/shell/shell.abc";
+var builtinLibPath = homePath + "build/libs/builtin.abc";
+var shellLibPath = homePath + "build/libs/shell.abc";
 var playerglobalInfo = {
-  abcs: "build/playerglobal/playerglobal.abcs",
-  catalog: "build/playerglobal/playerglobal.json"
+  abcs: homePath + "build/playerglobal/playerglobal.abcs",
+  catalog: homePath + "build/playerglobal/playerglobal.json"
 };
 
 declare var readFile, readBinaryFile, readbuffer;

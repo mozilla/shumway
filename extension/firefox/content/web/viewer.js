@@ -93,7 +93,7 @@ var viewerPlayerglobalInfo = {
   catalog: SHUMWAY_ROOT + "playerglobal/playerglobal.json"
 };
 
-var builtinPath = SHUMWAY_ROOT + "avm2/generated/builtin/builtin.abc";
+var builtinPath = SHUMWAY_ROOT + "libs/builtin.abc";
 
 var playerWindow;
 var playerWindowLoaded = new Promise(function(resolve) {

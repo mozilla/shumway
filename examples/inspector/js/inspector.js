@@ -39,9 +39,8 @@ function timeAllocation(C, count) {
 }
 
 
-var avm2Root = "../../src/avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var shellAbcPath = avm2Root + "generated/shell/shell.abc";
+var builtinPath = "../../build/libs/builtin.abc";
+var shellAbcPath = "../../build/libs/shell.abc";
 
 // different playerglobals can be used here
 var playerglobalInfo = {
