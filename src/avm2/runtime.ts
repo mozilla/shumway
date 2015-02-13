@@ -989,7 +989,7 @@ module Shumway.AVM2.Runtime {
     } else if (x == undefined) {
       return null;
     }
-    return x + '';
+    return x.toString();
   }
 
   export function asCoerceInt(x): number {
