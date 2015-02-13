@@ -144,7 +144,8 @@ module Shumway.AVM2 {
       if (method.needsRest()) {
         locals.push(sliceArguments(methodArgs, parameterCount));
       } else if (method.needsArguments()) {
-        locals.push(sliceArguments(methodArgs, 0));
+        locals.push(sliceArguments(methodArgs, 0,
+                                   methodArgs.asGetPublicProperty('callee')));
       }
 
       var bytecodes = method.analysis.bytecodes;

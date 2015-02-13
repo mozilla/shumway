@@ -188,11 +188,11 @@ function requestYT(yt) {
 
       setupFileLoadingService();
 
-      var params = {};
-      for (var i in config) {
-        params[i] = typeof config[i] === 'object' ? JSON.stringify(config[i]) : String(config[i]);
+      var args = {};
+      for (var i in config.args) {
+        args[i] = String(config.args[i]);
       }
-      resolve(params);
+      resolve({url: config.url, args: args});
     };
     xhr.onerror = function () {
       reject(xhr.error);
