@@ -1526,6 +1526,17 @@ module Shumway {
       return Math.round(value);
     }
 
+    /**
+     * Rounds *.5 up on even occurrences, down on odd occurrences.
+     * See https://en.wikipedia.org/wiki/Rounding#Alternating_tie-breaking for details.
+     */
+    export function altTieBreakRound(value: number, even: boolean): number {
+      if (Math.abs(value % 1) === 0.5 && !even) {
+        return value | 0;
+      }
+      return Math.round(value);
+    }
+
     export function epsilonEquals(value: number, other: number): boolean {
       return Math.abs(value - other) < 0.0000001;
     }
