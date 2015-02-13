@@ -1520,8 +1520,15 @@ module Shumway.AVM2.Compiler {
 
       if (mi.needsRest() || mi.needsArguments()) {
         var offset = constant(parameterIndexOffset + (mi.needsRest() ? parameterCount : 0));
+        var callee;
+        if (mi.needsArguments()) {
+          callee = getJSPropertyWithState(state, args, "callee");
+        } else {
+          callee = constant(undefined);
+        }
         state.local[parameterCount + 1] =
-          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], IR.Flags.PRISTINE);
+          new Call(start, state.store, globalProperty("sliceArguments"), null,
+            [args, offset, callee], IR.Flags.PRISTINE);
       }
 
       var argumentsLength = getJSPropertyWithState(state, args, "length");

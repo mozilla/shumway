@@ -1370,8 +1370,15 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  export function sliceArguments(args, offset: number = 0) {
-    return Array.prototype.slice.call(args, offset);
+  export function sliceArguments(args, offset: number = 0, callee = undefined) {
+    var result = Array.prototype.slice.call(args, offset);
+    if (callee) {
+      result.asDefinePublicProperty('callee', {
+        value: callee,
+        configurable: true
+      });
+    }
+    return result;
   }
 
   export function canCompile(mi) {
@@ -1504,7 +1511,7 @@ module Shumway.AVM2.Runtime {
     if (hasDynamicScope) {
       fn = function (scope) {
         var global = (this === jsGlobal ? scope.global.object : this);
-        var args = sliceArguments(arguments, 1);
+        var args = sliceArguments(arguments, 1, arguments.callee);
         if (hasDefaults && args.length < defaults.length) {
           args = args.concat(defaults.slice(args.length - defaults.length));
         }
@@ -1513,7 +1520,7 @@ module Shumway.AVM2.Runtime {
     } else {
       fn = function () {
         var global = (this === jsGlobal ? scope.global.object : this);
-        var args = sliceArguments(arguments);
+        var args = sliceArguments(arguments, 0, arguments.callee);
         if (hasDefaults && args.length < defaults.length) {
           args = args.concat(defaults.slice(arguments.length - defaults.length));
         }
