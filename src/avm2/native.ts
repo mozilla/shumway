@@ -1063,23 +1063,23 @@ module Shumway.AVM2.AS {
       if (re === (void 0) || re === null) {
         return null;
       } else {
-        if (re instanceof XRegExp && re.global) {
-          var matches = [], m;
-          while ((m = re.exec(this))) {
-            matches.push(m[0]);
+        if (re instanceof AS.ASRegExp) {
+          if (re.global) {
+            var matches = [], m;
+            while ((m = re.exec(<string><any>this))) {
+                matches.push(m[0]);
+            }
+            return matches;
           }
-          return matches;
+          return re.match(<string><any>this);
         }
-        if (!(re instanceof XRegExp) && !(typeof re === 'string')) {
-          re = String(re);
-        }
-        return this.match(re);
+        return this.match(asCoerceString(re));
       }
     }
 
     search(re): number {
-      if (re instanceof XRegExp) {
-        return this.search(re);
+      if (re instanceof AS.ASRegExp) {
+        return re.search(<string><any>this);
       }
       return (<string><any>this).indexOf(asCoerceString(re));
     }
@@ -1369,70 +1369,122 @@ module Shumway.AVM2.AS {
   export class ASArgumentError extends ASError { }
 
   export class ASRegExp extends ASObject {
-    public static instanceConstructor: any = XRegExp;
-    public static staticNatives: any [] = [XRegExp];
-    public static instanceNatives: any [] = [XRegExp.prototype];
+    public static instanceConstructor: any = ASRegExp;
+    public static staticNatives: any [] = null;
+    public static instanceNatives: any [] = null;
+
+    public global: boolean;
+    public multiline: boolean;
+    public ignoreCase: boolean;
+    public dotall: boolean;
+    public extended: boolean;
+
+    private _captureNames: string[];
+    private _source: string;
+
+    private _jsRegExp: RegExp;
+
+    constructor(pattern: string = '', flags?: string) {
+        false && super();
+        this.dotall = false;
+        this.extended = false;
+        var captureNames = this._captureNames = [];
+        var p = pattern;
+        if (flags) {
+          var f = '';
+          for (var i = 0; i < flags.length; i++) {
+            var flag = flags[i];
+            if (flag === 's') {
+              // With this flag set, . can match the newline character.
+              p = p.replace(/(?:^|[^\\])\./g, '[\\s\\S]');
+              this.dotall = true;
+            } else if (flag === 'x') {
+              // With this flag set, you can type spaces in the regular expression, which are
+              // ignored as part of the pattern.
+              p = p.replace(/\s+/g, '');
+              this.extended = true;
+            } else {
+              f += flag;
+            }
+          }
+        }
+        p = p.replace(/(?:^|[^\\])(?:\((?!\?)|\(\?P<([\w$]+)>)/g, function (match, name) {
+          if (name) {
+            if (name !== 'length') {
+              captureNames.push(name);
+            }
+            if (captureNames.indexOf(name) > -1) {
+              // TODO: Handle the case were same name is used for multiple groups.
+            }
+          } else {
+            captureNames.push(null);
+          }
+          return '(';
+        });
+        var r = this._jsRegExp = new RegExp(p, f);
+        this.global = r.global;
+        this.multiline = r.multiline;
+        this.ignoreCase = r.ignoreCase;
+        this._source = pattern;
+    }
 
     get native_source(): string {
-      var self: any = this;
-      return self.source;
+      return this._source;
     }
 
     get native_global(): boolean {
-      var self: any = this;
-      return self.global;
+      return this.global;
     }
 
     get native_ignoreCase(): boolean {
-      var self: any = this;
-      return self.ignoreCase;
+      return this.ignoreCase;
     }
 
     get native_multiline(): boolean {
-      var self: any = this;
-      return self.multiline;
+      return this.multiline;
     }
 
     get native_lastIndex(): number /*int*/ {
-      var self: any = this;
-      return self.lastIndex;
+      return this._jsRegExp.lastIndex;
     }
 
     set native_lastIndex(i: number /*int*/) {
-      var self: any = this;
-      i = i | 0;
-      self.lastIndex = i;
+      this._jsRegExp.lastIndex = i | 0;
     }
 
     get native_dotall(): boolean {
-      var self: any = this;
-      return self.dotall;
+      return this.dotall;
     }
 
     get native_extended(): boolean {
-      var self: any = this;
-      return self.extended;
+      return this.extended;
     }
 
     exec(s: string = ""): any {
-      var result = RegExp.prototype.exec.apply(this, arguments);
+      var result = this._jsRegExp.exec(s);
       if (!result) {
         return result;
       }
-      // For some reason named groups in AS3 are set to the empty string instead of
-      // undefined as is the case for indexed groups. Here we just emulate the AS3
-      // behaviour.
-      var keys = Object.keys(result);
-      for (var i = 0; i < keys.length; i++) {
-        var k = keys[i];
-        if (!isNumeric(k)) {
-          if (result[k] === undefined) {
-            result[k] = "";
-          }
+
+      var captureNames = this._captureNames;
+      for (var i = 0; i < captureNames.length; i++) {
+        var name = captureNames[i];
+        if (name !== null) {
+          var publicName = isNumeric(name) ? name : '$Bg' + name;
+          // In AS3, unmatched groups are set to the empty string instead of undefined.
+          result[publicName] = result[i] || '';
         }
       }
-      Shumway.AVM2.Runtime.publicizeProperties(result);
+
       return result;
+    }
+
+    search(s: string): number {
+      return s.search(this._jsRegExp);
+    }
+
+    match(s: string): string[] {
+      return s.match(this._jsRegExp);
     }
   }
 

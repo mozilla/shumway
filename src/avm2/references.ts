@@ -27,7 +27,6 @@
 ///<reference path='runtime.ts' />
 ///<reference path='scope.ts' />
 ///<reference path='bindings.ts' />
-///<reference path='xregexp.ts' />
 
 ///<reference path='native.ts' />
 ///<reference path='natives/GenericVector.ts' />
