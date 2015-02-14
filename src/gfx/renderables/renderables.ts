@@ -1515,7 +1515,9 @@ module Shumway.GFX {
               break;
           }
           this._textBounds.setElements(rect.x - 2, rect.y - 2, rect.w + 4, rect.h + 4);
+          bounds.w = availableWidth + 4;
         }
+        bounds.x = rect.x - 2;
         bounds.h = baseLinePos + 4;
       } else {
         this._textBounds = bounds;

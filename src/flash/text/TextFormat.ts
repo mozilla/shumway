@@ -112,7 +112,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set color(value: Object) {
-      this._color = +value | 0;
+      this._color = value != null ? +value | 0 : null;
     }
 
     get display(): string {
