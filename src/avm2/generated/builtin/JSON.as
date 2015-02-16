@@ -82,8 +82,6 @@ package
     [native(cls="JSONClass", classgc="exact", methods="auto", construct="none")]
     public final class JSON
     {
-        private static const as3ns:Namespace = AS3;
-
         private native
         static function parseCore(text:String):Object;
 

@@ -10,19 +10,9 @@ package
 [native(cls="ArrayClass")]
 public dynamic class Array extends Object
 {
-  // option flags for sort and sortOn
-  public static const CASEINSENSITIVE:uint = 1;
-  public static const DESCENDING:uint = 2;
-  public static const UNIQUESORT:uint = 4;
-  public static const RETURNINDEXEDARRAY:uint = 8;
-  public static const NUMERIC:uint = 16;
-
   // E262 {DontEnum, DontDelete}
   public native function get length():uint;
   public native function set length(newLength:uint);
-
-  // Array.length = 1 per ES3
-  public static const length:int = 1
 
   // ECMA 15.4.2.2
   public native function Array(...args);

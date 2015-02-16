@@ -9,11 +9,6 @@ package
 [native(cls="RegExpClass", gc="exact", instance="RegExpObject", methods="auto", construct="override")]
 public dynamic class RegExp
 {
-  // RegExp.length = 1 per ES3
-
-  // E262 {ReadOnly, DontDelete, DontEnum }
-  public static const length:int = 1
-
   // {RO,DD,DE} properties of RegExp instances
   public native function get source():String
   public native function get global():Boolean

@@ -244,5 +244,27 @@ module Shumway.AVM2.AS {
     ByteArray.prototype.asSetNumericProperty = DataBuffer.prototype.setValue;
 
     export var OriginalByteArray = ByteArray;
+
+    export class CompressionAlgorithm extends ASNative {
+
+      static classInitializer: any = function() {
+        ObjectUtilities.defineNonEnumerableProperty(this, '$BgZLIB', CompressionAlgorithm.ZLIB);
+        ObjectUtilities.defineNonEnumerableProperty(this, '$BgDEFLATE',
+                                                    CompressionAlgorithm.DEFLATE);
+        ObjectUtilities.defineNonEnumerableProperty(this, '$BgLZMA', CompressionAlgorithm.LZMA);
+      }
+
+      static initializer: any = null;
+      static classSymbols: string [] = null; // [];
+      static instanceSymbols: string [] = null; // [];
+
+      constructor () {
+        false && super();
+      }
+
+      static ZLIB: string = "zlib";
+      static DEFLATE: string = "deflate";
+      static LZMA: string = "lzma";
+    }
   }
 }

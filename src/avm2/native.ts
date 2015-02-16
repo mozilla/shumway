@@ -284,6 +284,10 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
 
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+    };
+
 
     /**
      * We can't do our traits / dynamic prototype chaining trick when dealing with builtin
@@ -881,6 +885,7 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [Function.prototype];
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
       var proto: any = ASFunction.dynamicPrototype;
       var asProto: any = ASFunction.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', asProto.toString);
@@ -932,6 +937,7 @@ module Shumway.AVM2.AS {
     public static coerce: (value: any) => boolean = Runtime.asCoerceBoolean;
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
       var proto: any = Boolean.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
       defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
@@ -988,6 +994,29 @@ module Shumway.AVM2.AS {
     public static coerce: (value: any) => number = Runtime.asCoerceNumber;
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+
+      defineNonEnumerableProperty(this, '$BgNaN', Number.NaN);
+      defineNonEnumerableProperty(this, '$BgNEGATIVE_INFINITY', Number.NEGATIVE_INFINITY);
+      defineNonEnumerableProperty(this, '$BgPOSITIVE_INFINITY', Number.POSITIVE_INFINITY);
+      defineNonEnumerableProperty(this, '$BgMIN_VALUE', Number.MIN_VALUE);
+      defineNonEnumerableProperty(this, '$BgMAX_VALUE', Number.MAX_VALUE);
+
+      // Technically, these should only be installed for SWF version >= 16. If we ever run into
+      // compatibility issues caused by always doing it, we can jump through some hoops and do that.
+      defineNonEnumerableProperty(this, '$BgE', Math.E);
+      defineNonEnumerableProperty(this, '$BgLN10', Math.LN10);
+      defineNonEnumerableProperty(this, '$BgLN2', Math.LN2);
+      defineNonEnumerableProperty(this, '$BgLOG10E', Math.LOG10E);
+      defineNonEnumerableProperty(this, '$BgLOG2E', Math.LOG2E);
+      defineNonEnumerableProperty(this, '$BgPI', Math.PI);
+      defineNonEnumerableProperty(this, '$BgSQRT1_2', Math.SQRT2);
+      defineNonEnumerableProperty(this, '$BgSQRT2', Math.SQRT2);
+
+      ASNumber.initializeDynamicMethods.call(this);
+    };
+
+    static initializeDynamicMethods() {
       var dynProto: any = this.dynamicPrototype;
       var numberProto: any = Number.prototype;
       defineNonEnumerableProperty(dynProto, 'toString', numberProto.toString);
@@ -998,15 +1027,6 @@ module Shumway.AVM2.AS {
       defineNonEnumerableProperty(dynProto, '$BgtoExponential', numberProto.toExponential);
       defineNonEnumerableProperty(dynProto, '$BgtoPrecision', numberProto.toPrecision);
       defineNonEnumerableProperty(dynProto, '$BgtoFixed', numberProto.toFixed);
-    }
-
-    static _numberToString(n: number, radix: number): string {
-      radix = radix | 0;
-      return Number(n).toString(radix);
-    }
-
-    static _minValue(): number {
-      return Number.MIN_VALUE;
     }
 
     constructor(input) {
@@ -1026,7 +1046,12 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = 0;
     public static coerce: (value: any) => number = Runtime.asCoerceInt;
 
-    static classInitializer: any = ASNumber.classInitializer;
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this, '$BgMIN_VALUE', -0x80000000);
+      defineNonEnumerableProperty(this, '$BgMAX_VALUE', 0x7fffffff);
+      ASNumber.initializeDynamicMethods.call(this);
+    };
 
     constructor(value: any) {
       false && super();
@@ -1068,7 +1093,12 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = 0;
     public static coerce: (value: any) => number = Runtime.asCoerceUint;
 
-    static classInitializer: any = ASNumber.classInitializer;
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this, '$BgMIN_VALUE', 0);
+      defineNonEnumerableProperty(this, '$BgMAX_VALUE', 0xffffffff);
+      ASNumber.initializeDynamicMethods.call(this);
+    };
 
     constructor(value: any) {
       false && super();
@@ -1110,6 +1140,8 @@ module Shumway.AVM2.AS {
     public static coerce: (value: any) => string = Runtime.asCoerceString;
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(String, '$Bglength', 1);
       defineNonEnumerableProperty(String, '$BgfromCharCode', String.fromCharCode);
 
       var proto: String = String.prototype;
@@ -1211,6 +1243,14 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [Array.prototype];
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      // option flags for sort and sortOn
+      defineNonEnumerableProperty(this, '$BgCASEINSENSITIVE', 1);
+      defineNonEnumerableProperty(this, '$BgDESCENDING', 2);
+      defineNonEnumerableProperty(this, '$BgUNIQUESORT', 4);
+      defineNonEnumerableProperty(this, '$BgRETURNINDEXEDARRAY', 8);
+      defineNonEnumerableProperty(this, '$BgNUMERIC', 16);
+
       var proto: any = Array.prototype;
       var asProto = ASArray.prototype;
       defineNonEnumerableProperty(proto, '$Bgjoin', proto.join);
@@ -1537,6 +1577,7 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [XRegExp.prototype];
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
       var proto = XRegExp.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', ASRegExp.prototype.ecmaToString);
       defineNonEnumerableProperty(proto, '$Bgexec', proto.exec);
@@ -1628,6 +1669,17 @@ module Shumway.AVM2.AS {
 
   export class ASMath extends ASNative {
     public static staticNatives: any [] = [Math];
+
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$BgE', Math.E);
+      defineNonEnumerableProperty(this, '$BgLN10', Math.LN10);
+      defineNonEnumerableProperty(this, '$BgLN2', Math.LN2);
+      defineNonEnumerableProperty(this, '$BgLOG10E', Math.LOG10E);
+      defineNonEnumerableProperty(this, '$BgLOG2E', Math.LOG2E);
+      defineNonEnumerableProperty(this, '$BgPI', Math.PI);
+      defineNonEnumerableProperty(this, '$BgSQRT1_2', Math.SQRT2);
+      defineNonEnumerableProperty(this, '$BgSQRT2', Math.SQRT2);
+    }
   }
 
   export class ASDate extends ASNative {
@@ -1808,6 +1860,7 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["ProxyClass"]               = flash.utils.OriginalProxy;
     builtinNativeClasses["DictionaryClass"]          = flash.utils.OriginalDictionary;
     builtinNativeClasses["ByteArrayClass"]           = flash.utils.OriginalByteArray;
+    builtinNativeClasses["CompressionAlgorithmClass"] = flash.utils.CompressionAlgorithm;
     // flash.system
     builtinNativeClasses["SystemClass"]              = flash.system.OriginalSystem;
 

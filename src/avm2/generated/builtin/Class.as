@@ -44,9 +44,5 @@ package
   {
     // {DontEnum,DontDelete,ReadOnly}
     public native final function get prototype();
-
-    // Class.length = 1 per ES3
-    // E262 {ReadOnly, DontDelete, DontEnum }
-    public static const length:int = 1;
   }
 }

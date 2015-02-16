@@ -41,10 +41,6 @@ package
   [native(cls="NamespaceClass")]
   public final class Namespace
   {
-    // E262 {ReadOnly,DontDelete,DontEnum}
-    // E357 length = 2
-    public static const length = 2;
-
     // E357 {DontDelete, ReadOnly}
     public native function get prefix();
 

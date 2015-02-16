@@ -11,10 +11,6 @@ package
 [native(cls="FunctionClass", gc="exact", instance="FunctionObject", methods="auto", construct="instance")]
 dynamic public class Function
 {
-  // Function.length = 1 per ES3
-  // E262 {ReadOnly, DontDelete, DontEnum }
-  public static const length:int = 1
-
   // E262 {DontDelete}
   // JS {DontEnum,DontDelete}
   public native function get prototype()

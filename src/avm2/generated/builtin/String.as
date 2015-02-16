@@ -41,10 +41,6 @@ package
   [native(cls="StringClass")]
   public final class String extends Object
   {
-    // String.length = 1 per ES3
-    // E262 {ReadOnly, DontDelete, DontEnum }
-    public static const length:int = 1;
-
     AS3 native static function fromCharCode(...charcodes):String;
 
     // E262 {DontEnum, DontDelete, ReadOnly}

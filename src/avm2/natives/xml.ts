@@ -873,6 +873,7 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = null;
     public static instanceConstructor: any = ASNamespace;
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 2);
       var proto: any = ASNamespace.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
     }
@@ -1039,6 +1040,7 @@ module Shumway.AVM2.AS {
 
   export class ASQName extends ASNative implements XMLType {
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 2);
       var proto: any = ASQName.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', proto.ecmaToString);
     }
@@ -1215,6 +1217,10 @@ module Shumway.AVM2.AS {
       return base_uri + "::" + this.name.name;
     }
 
+    valueOf() {
+      return this;
+    }
+
     /**
      * 13.3.5.3 [[Prefix]]
      * The [[Prefix]] property is an optional internal property that is not directly visible to
@@ -1289,6 +1295,8 @@ module Shumway.AVM2.AS {
   export class ASXML extends ASNative implements XMLType {
     public static instanceConstructor: any = ASXML;
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+
       var proto: any = ASXML.prototype;
       defineNonEnumerableProperty(proto, 'asDeleteProperty', proto._asDeleteProperty);
       defineNonEnumerableProperty(proto, '$BgvalueOf', Object.prototype['$BgvalueOf']);
@@ -2628,6 +2636,8 @@ module Shumway.AVM2.AS {
   export class ASXMLList extends ASNative implements XMLType {
     public static instanceConstructor: any = ASXMLList;
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+
       var proto: any = ASXMLList.prototype;
       defineNonEnumerableProperty(proto, 'asDeleteProperty', proto._asDeleteProperty);
       defineNonEnumerableProperty(proto, '$BgvalueOf', Object.prototype['$BgvalueOf']);

@@ -40,12 +40,10 @@ package flash.utils
 
   include "api-versions.as"
 
+  [native(cls="CompressionAlgorithmClass")]
   public final class CompressionAlgorithm
   {
-    public static const ZLIB:String = "zlib";
-    public static const DEFLATE:String = "deflate";
-    public static const LZMA:String = "lzma";
-  };
+  }
 
   //
   // ByteArray
@@ -96,11 +94,11 @@ package flash.utils
 
     //[API(CONFIG::FP_10_0)]
     public native function deflate():void;
-    public native function compress(algorithm:String = CompressionAlgorithm.ZLIB):void;
+    public native function compress(algorithm:String = 'zlib'):void;
 
     //[API(CONFIG::FP_10_0)]
     public native function inflate():void;
-    public native function uncompress(algorithm:String = CompressionAlgorithm.ZLIB):void;
+    public native function uncompress(algorithm:String = 'zlib'):void;
 
     public native function toString():String;
 
