@@ -1373,6 +1373,58 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [XRegExp];
     public static instanceNatives: any [] = [XRegExp.prototype];
 
+    get source(): string {
+      var self: any = this;
+      var desc = getOwnPropertyDescriptor(RegExp.prototype, "source");
+      if (desc && "get" in desc) {
+        return desc.get.call(self);
+      }
+      desc = getOwnPropertyDescriptor(self, "source");
+      if (desc && "value" in desc) {
+        return desc.value;
+      }
+      return undefined;
+    }
+
+    get global(): boolean {
+      var self: any = this;
+      var desc = getOwnPropertyDescriptor(RegExp.prototype, "global");
+      if (desc && "get" in desc) {
+        return desc.get.call(self);
+      }
+      desc = getOwnPropertyDescriptor(self, "global");
+      if (desc && "value" in desc) {
+        return desc.value;
+      }
+      return undefined;
+    }
+
+    get ignoreCase(): boolean {
+      var self: any = this;
+      var desc = getOwnPropertyDescriptor(RegExp.prototype, "ignoreCase");
+      if (desc && "get" in desc) {
+        return desc.get.call(self);
+      }
+      desc = getOwnPropertyDescriptor(self, "ignoreCase");
+      if (desc && "value" in desc) {
+        return desc.value;
+      }
+      return undefined;
+    }
+
+    get multiline(): boolean {
+      var self: any = this;
+      var desc = getOwnPropertyDescriptor(RegExp.prototype, "multiline");
+      if (desc && "get" in desc) {
+        return desc.get.call(self);
+      }
+      desc = getOwnPropertyDescriptor(self, "multiline");
+      if (desc && "value" in desc) {
+        return desc.value;
+      }
+      return undefined;
+    }
+
     get native_source(): string {
       var self: any = this;
       return self.source;
