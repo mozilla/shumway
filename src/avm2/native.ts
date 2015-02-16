@@ -1406,10 +1406,107 @@ module Shumway.AVM2.AS {
     }
   }
 
+  function walk(holder: any, name: string, reviver: Function) {
+    var val = holder[name];
+    if (Array.isArray(val)) {
+      var v: any[] = <any>val;
+      for (var i = 0, limit = v.length; i < limit; i++) {
+        var newElement = walk(v, asCoerceString(i), reviver);
+        if (newElement === undefined) {
+          delete v[i];
+        } else {
+          v[i] = newElement;
+        }
+      }
+    } else if (val !== null && typeof val !== 'boolean' && typeof val !== 'number' &&
+               typeof val !== 'string')
+    {
+
+      for (var p in val) {
+        if (!val.hasOwnProperty(p) || !Multiname.isPublicQualifiedName(p)) {
+          break;
+        }
+        var newElement = walk(val, p, reviver);
+        if (newElement === undefined) {
+          delete val[p];
+        } else {
+          val[p] = newElement;
+        }
+      }
+    }
+    return reviver.call(holder, name, val);
+  }
+
   export class ASJSON extends ASObject {
     public static instanceConstructor: any = ASJSON;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
+
+    static parse(text: string, reviver: Function): any {
+      text = asCoerceString(text);
+      if (text === null) {
+        throwError('SyntaxError', Errors.JSONInvalidParseInput);
+      }
+
+      // at this point, we should be assured that text is String.
+      var unfiltered: Object = this.transformJSValueToAS(JSON.parse(text), true);
+
+      if (reviver === null || arguments.length < 2) {
+        return unfiltered;
+      }
+      return walk({"": unfiltered}, "", reviver);
+    }
+
+    static stringify(value: any, replacer = null, space = null): string {
+      // We deliberately deviate from ECMA-262 and throw on
+      // invalid replacer parameter.
+      if (!(replacer === null || replacer instanceof Function || Array.isArray(replacer))) {
+        throwError('TypeError', Errors.JSONInvalidReplacer);
+      }
+
+      var gap;
+      if (typeof space === 'string') {
+        gap = space.length > 10 ? space.substring(0, 10) : space;
+      } else if (typeof space === 'number') {
+        gap = "          ".substring(0, Math.min(10, space | 0));
+      } else {
+        // We follow ECMA-262 and silently ignore invalid space parameter.
+        gap = "";
+      }
+
+      if (replacer === null) {
+        return this.stringifySpecializedToString(value, null, null, gap);
+      } else if (Array.isArray(replacer)) {
+        return this.stringifySpecializedToString(value, this.computePropertyList(replacer), null,
+                                                 gap);
+      } else { // replacer is Function
+        return this.stringifySpecializedToString(value, null, replacer, gap);
+      }
+    }
+
+    // ECMA-262 5th ed, section 15.12.3 stringify, step 4.b
+    private static computePropertyList(r: any[]): string[] {
+      var propertyList = [];
+      var alreadyAdded = Object.create(null);
+      for (var i = 0, length = r.length; i < length; i++) {
+        if (!r.hasOwnProperty(<any>i)) {
+          continue;
+        }
+        var v = r[i];
+        var item: string = null;
+
+        if (typeof v === 'string') {
+          item = v;
+        } else if (typeof v === 'number') {
+          item = asCoerceString(v);
+        }
+        if (item !== null && !alreadyAdded[item]) {
+          alreadyAdded[item] = true;
+          propertyList.push(item);
+        }
+      }
+      return propertyList;
+    }
 
     /**
      * Transforms a JS value into an AS value.
@@ -1460,12 +1557,9 @@ module Shumway.AVM2.AS {
       return result;
     }
 
-    private static parseCore(text: string): Object {
-      text = asCoerceString(text);
-      return ASJSON.transformJSValueToAS(JSON.parse(text), true)
-    }
-
-    private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
+    private static stringifySpecializedToString(value: Object, replacerArray: any [],
+                                                replacerFunction: (key: string, value: any) => any,
+                                                gap: string): string {
       return JSON.stringify(ASJSON.transformASValueToJS(value, true), replacerFunction, gap);
     }
   }

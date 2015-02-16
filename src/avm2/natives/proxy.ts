@@ -15,9 +15,7 @@
  */
 
 module Shumway.AVM2.AS {
-  import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import throwError = Shumway.AVM2.Runtime.throwError;
@@ -36,6 +34,42 @@ module Shumway.AVM2.AS {
      */
     export class Proxy extends ASNative {
       public static protocol: IProtocol = Proxy.prototype;
+
+      native_getProperty(name) {
+        throwError("IllegalOperationError", Errors.ProxyGetPropertyError);
+      }
+
+      native_setProperty() {
+        throwError("IllegalOperationError", Errors.ProxySetPropertyError);
+      }
+
+      native_callProperty() {
+        throwError("IllegalOperationError", Errors.ProxyCallPropertyError);
+      }
+
+      native_hasProperty() {
+        throwError("IllegalOperationError", Errors.ProxyHasPropertyError);
+      }
+
+      native_deleteProperty() {
+        throwError("IllegalOperationError", Errors.ProxyDeletePropertyError);
+      }
+
+      native_getDescendants() {
+        throwError("IllegalOperationError", Errors.ProxyGetDescendantsError);
+      }
+
+      native_nextNameIndex() {
+        throwError("IllegalOperationError", Errors.ProxyNextNameIndexError);
+      }
+
+      native_nextName() {
+        throwError("IllegalOperationError", Errors.ProxyNextNameError);
+      }
+
+      native_nextValue() {
+        throwError("IllegalOperationError", Errors.ProxyNextValueError);
+      }
 
       public asGetProperty(namespaces: Namespace [], name: any, flags: number) {
         var self: Object = this;
