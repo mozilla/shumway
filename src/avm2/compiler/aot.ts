@@ -7,7 +7,7 @@
  *
  * Compiling against a list of .abcs
  *
- * js avm.js -c -verify ../generated/builtin/builtin.abc ../generated/playerGlobal/playerGlobal.min.abc `find ~/Workspaces/Shumway/build/playerglobal/flash -name "*.abc"`  ~/Dropbox/shumway/games/min/MiningTruck.swf
+ * js avm.js -c -verify ../../../build/libs/builtin.abc ../../../build/playerglobal/playerglobal-single.abc `find ~/Workspaces/Shumway/build/playerglobal/flash -name "*.abc"`  ~/Dropbox/shumway/games/min/MiningTruck.swf
  *
  */
 

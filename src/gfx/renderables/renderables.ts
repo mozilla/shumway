@@ -50,11 +50,35 @@ module Shumway.GFX {
      */
     private _renderableParents: Renderable [] = [];
 
+    public get parents(): Shape [] {
+      return this._parents;
+    }
+
     public addParent(frame: Shape) {
       release || assert(frame);
       var index = indexOf(this._parents, frame);
       release || assert(index < 0);
       this._parents.push(frame);
+    }
+
+    /**
+     * Checks if this node will be reached by the renderer.
+     */
+    public willRender(): boolean {
+      var parents = this._parents;
+      for (var i = 0; i < parents.length; i++) {
+        var node = <Node>parents[i];
+        while (node) {
+          if (node.isType(NodeType.Stage)) {
+            return true;
+          }
+          if (!node.hasFlags(NodeFlags.Visible)) {
+            break;
+          }
+          node = node._parent;
+        }
+      }
+      return false;
     }
 
     public addRenderableParent(renderable: Renderable) {
@@ -201,6 +225,7 @@ module Shumway.GFX {
       element.addEventListener("seeking", elementEventHandler);
       element.addEventListener("seeked", elementEventHandler);
       element.addEventListener("canplay", elementEventHandler);
+      element.style.position = 'absolute';
 
       this._video = element;
       this._videoEventHandler = elementEventHandler;
@@ -223,13 +248,13 @@ module Shumway.GFX {
     }
 
     play() {
-      this._video.play();
       this._state = RenderableVideoState.Playing;
+      this._video.play();
     }
 
     pause() {
-      this._video.pause();
       this._state = RenderableVideoState.Paused;
+      this._video.pause();
     }
 
     private _handleVideoEvent(evt: Event) {
@@ -244,6 +269,10 @@ module Shumway.GFX {
           type = VideoPlaybackEvent.Unpause;
           break;
         case "pause":
+          if (this._state === RenderableVideoState.Playing) {
+            element.play();
+            return;
+          }
           type = VideoPlaybackEvent.Pause;
           this._pauseHappening = true;
           break;
@@ -313,9 +342,7 @@ module Shumway.GFX {
       switch (type) {
         case VideoControlEvent.Init:
           videoElement.src = data.url;
-          if (this._state > RenderableVideoState.Idle) {
-            this.play();
-          }
+          this.play();
           this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
           break;
         case VideoControlEvent.EnsurePlaying:
@@ -389,6 +416,19 @@ module Shumway.GFX {
     public static checkForVideoUpdates() {
       var renderables = RenderableVideo._renderableVideos;
       for (var i = 0; i < renderables.length; i++) {
+        var renderable = renderables[i];
+        // Check if the node will be reached by the renderer.
+        if (renderable.willRender()) {
+          // If the nodes video element isn't already on the video layer, mark the node as invalid to
+          // make sure the video element will be added the next time the renderer reaches it.
+          if (!renderable._video.parentElement) {
+            renderable.invalidate();
+          }
+          renderable._video.style.zIndex = renderable.parents[0].depth + '';
+        } else if (renderable._video.parentElement) {
+          // The nodes video element should be removed if no longer visible.
+          renderable._dispatchEvent(NodeEventType.RemovedFromStage);
+        }
         renderables[i].checkForUpdate();
       }
     }
@@ -1475,7 +1515,9 @@ module Shumway.GFX {
               break;
           }
           this._textBounds.setElements(rect.x - 2, rect.y - 2, rect.w + 4, rect.h + 4);
+          bounds.w = availableWidth + 4;
         }
+        bounds.x = rect.x - 2;
         bounds.h = baseLinePos + 4;
       } else {
         this._textBounds = bounds;

@@ -411,7 +411,7 @@ ChromeActions.prototype = {
         var position = e.loaded;
         var data = new Uint8Array(xhr.response);
         notifyLoadFileListener({callback:"loadFile", sessionId: sessionId,
-             topic: "progress", array: data, loaded: e.loaded, total: e.total});
+             topic: "progress", array: data, loaded: position, total: e.total});
         lastPosition = position;
         if (limit && e.total >= limit) {
           xhr.abort();
@@ -1033,6 +1033,8 @@ ShumwayStreamConverterBase.prototype = {
           fallbackToNativePlugin(domWindow, false, true);
           return;
         }
+
+        domWindow.swfUrlLoading = actions.url;
 
         // Report telemetry on amount of swfs on the page
         if (actions.isOverlay) {

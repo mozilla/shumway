@@ -39,9 +39,8 @@ function timeAllocation(C, count) {
 }
 
 
-var avm2Root = "../../src/avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var shellAbcPath = avm2Root + "generated/shell/shell.abc";
+var builtinPath = "../../build/libs/builtin.abc";
+var shellAbcPath = "../../build/libs/shell.abc";
 
 // different playerglobals can be used here
 var playerglobalInfo = {
@@ -82,6 +81,10 @@ if (queryVariables['rfile'] && !startPromise) {
     url: queryVariables['rfile'],
     args: parseQueryString(queryVariables['flashvars'])
   });
+} else {
+  if (state.remoteEnabled) {
+    initRemoteDebugging();
+  }
 }
 if (startPromise) {
   startPromise.then(function (config) {
@@ -106,6 +109,7 @@ function showOpenFileButton(show) {
 var flashOverlay;
 var currentSWFUrl;
 var currentPlayer;
+var processExternalCommand;
 
 var easelHost;
 function runIFramePlayer(data) {
@@ -130,11 +134,14 @@ function runIFramePlayer(data) {
     playerWorker.postMessage(data, '*');
 
     easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWorker, window);
+    if (processExternalCommand) {
+      easelHost.processExternalCommand = processExternalCommand;
+    }
   });
   container.appendChild(playerWorkerIFrame);
 }
 
-function executeFile(file, buffer, movieParams) {
+function executeFile(file, buffer, movieParams, remoteDebugging) {
   var filename = file.split('?')[0].split('#')[0];
 
   if (state.useIFramePlayer && filename.endsWith(".swf")) {
@@ -142,7 +149,8 @@ function executeFile(file, buffer, movieParams) {
     runIFramePlayer({sysMode: sysMode, appMode: appMode,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
       stageAlign: state.salign, stageScale: state.scale,
-      fileReadChunkSize: state.fileReadChunkSize, loaderURL: state.loaderURL});
+      fileReadChunkSize: state.fileReadChunkSize, loaderURL: state.loaderURL,
+      remoteDebugging: !!remoteDebugging});
     return;
   }
 
@@ -189,7 +197,15 @@ function executeFile(file, buffer, movieParams) {
         player.displayParameters = easel.getDisplayParameters();
         player.loaderUrl = state.loaderURL;
 
+        if (remoteDebugging) {
+          Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
+        }
+
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
+        if (processExternalCommand) {
+          easelHost.processExternalCommand = processExternalCommand;
+        }
+
         player.load(file, buffer);
 
         currentSWFUrl = swfURL;
@@ -197,29 +213,6 @@ function executeFile(file, buffer, movieParams) {
         if (state.overlayFlash) {
           ensureFlashOverlay();
         }
-
-        // embedding.loader
-
-//        SWF.embed(buffer || file, document, document.getElementById('stage'), {
-//          onComplete: swfController.completeCallback.bind(swfController),
-//          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
-//          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
-//          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
-//          url: swfURL,
-//          loaderURL: loaderURL,
-//          movieParams: movieParams || {},
-//        });
-
-//        SWF.embed(buffer || file, document, document.getElementById('stage'), {
-//          onComplete: swfController.completeCallback.bind(swfController),
-//          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
-//          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
-//          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
-//          url: swfURL,
-//          loaderURL: loaderURL,
-//          movieParams: movieParams || {},
-//        });
-
       }
       file = Shumway.FileLoadingService.instance.setBaseUrl(file);
       if (!buffer && asyncLoading) {

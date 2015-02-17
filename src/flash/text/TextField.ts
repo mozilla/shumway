@@ -65,7 +65,7 @@ module Shumway.AVM2.AS.flash.text {
       self._selectionEndIndex = 0;
       self._sharpness = 0;
       self._styleSheet = null;
-      self._textColor = -1;
+      self._textColor = null;
       self._textHeight = 0;
       self._textWidth = 0;
       self._thickness = 0;
@@ -350,7 +350,13 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set defaultTextFormat(format: flash.text.TextFormat) {
-      this._textContent.defaultTextFormat.merge(format);
+      var defaultTextFormat = this._textContent.defaultTextFormat;
+      defaultTextFormat.merge(format);
+      if (defaultTextFormat.color === null) {
+        defaultTextFormat.color = this._textColor;
+      } else {
+        this._textColor = +defaultTextFormat.color;
+      }
     }
 
     get embedFonts(): boolean {
@@ -529,11 +535,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get textColor(): number /*uint*/ {
-      return this._textColor < 0 ? +this._textContent.defaultTextFormat.color : this._textColor;
+      return this._textColor === null ? +this._textContent.defaultTextFormat.color : this._textColor;
     }
 
     set textColor(value: number /*uint*/) {
-      this._textColor = value >>> 0;
+      this._textColor = this._textContent.defaultTextFormat.color =  value >>> 0;
     }
 
     get textHeight(): number {

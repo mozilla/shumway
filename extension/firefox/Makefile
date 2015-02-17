@@ -27,6 +27,7 @@ build: ensureoutputdir
 	cp -R ../../LICENSE content chrome bootstrap.js chrome.manifest icon.png icon64.png $(BUILD_DIR)/
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > $(BUILD_DIR)/install.rdf
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
+	cp ../../examples/inspector/debug/pingpong.js $(BUILD_DIR)/chrome/
 	# Copying WebGL shaders
 	mkdir -p $(BUILD_DIR)/content/gfx/gl/shaders
 	cp ../../src/gfx/gl/shaders/combined.frag $(BUILD_DIR)/content/gfx/gl/shaders/
@@ -35,8 +36,8 @@ build: ensureoutputdir
 	mkdir -p $(BUILD_DIR)/content/playerglobal
 	cp ../../build/playerglobal/playerglobal.json $(BUILD_DIR)/content/playerglobal/
 	cp ../../build/playerglobal/playerglobal.abcs $(BUILD_DIR)/content/playerglobal/
-	mkdir -p $(BUILD_DIR)/content/avm2/generated/builtin
-	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/content/avm2/generated/builtin/
+	mkdir -p $(BUILD_DIR)/content/libs
+	cp ../../build/libs/builtin.abc $(BUILD_DIR)/content/libs/
 	# Copying closure optimized shumway.js files
 	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_DIR)/content/
 	cp ../../build/version/version.txt $(BUILD_DIR)/content/version.txt

@@ -118,7 +118,7 @@ module Shumway.AVM2.AS {
             buffer = new Uint8Array(source).buffer;
           } else if ('buffer' in source) {
             if (source.buffer instanceof ArrayBuffer) {
-              buffer = new Uint8Array(source).buffer;
+              buffer = new Uint8Array(source.buffer).buffer;
             } else if (source.buffer instanceof Uint8Array) {
               var begin = source.buffer.byteOffset;
               buffer = source.buffer.buffer.slice(begin, begin + source.buffer.length);

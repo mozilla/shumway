@@ -16,6 +16,7 @@
 module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
@@ -293,7 +294,7 @@ module Shumway.AVM2.AS.flash.display {
     private _content: flash.display.DisplayObject;
     private _contentID: number;
     private _contentLoaderInfo: flash.display.LoaderInfo;
-    _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+    private _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
     private _fileLoader: FileLoader;
     private _imageSymbol: BitmapSymbol;
@@ -332,6 +333,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get uncaughtErrorEvents(): events.UncaughtErrorEvents {
+      somewhatImplemented("public flash.display.Loader::uncaughtErrorEvents");
+      if (!this._uncaughtErrorEvents) {
+        this._uncaughtErrorEvents = new events.UncaughtErrorEvents();
+      }
       return this._uncaughtErrorEvents;
     }
 

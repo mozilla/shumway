@@ -303,6 +303,7 @@ module Shumway.GFX {
       stageContainer.style.position = "absolute";
       stageContainer.style.width = "100%";
       stageContainer.style.height = "100%";
+      stageContainer.style.zIndex = "0";
       container.appendChild(stageContainer);
 
       // Create hud container, that lives on top of the stage.

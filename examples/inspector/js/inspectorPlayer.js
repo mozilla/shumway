@@ -19,8 +19,7 @@ var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"))
 var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
 var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
 
-var avm2Root = "../../src/avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var builtinPath = "../../build/libs/builtin.abc";
 
 // different playerglobals can be used here
 var playerglobalInfo = {
@@ -102,6 +101,10 @@ function runSwfPlayer(data) {
   fileReadChunkSize = data.fileReadChunkSize;
   var file = data.file;
   configureExternalInterfaceMocks(file);
+  if (data.remoteDebugging) {
+    Shumway.ClipboardService.instance = parent.Shumway.ClipboardService.instance;
+    Shumway.FileLoadingService.instance = parent.Shumway.FileLoadingService.instance;
+  }
   Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
     function runSWF(file) {
       var player = new Shumway.Player.Window.WindowPlayer(window);
@@ -111,6 +114,10 @@ function runSwfPlayer(data) {
       player.displayParameters = displayParameters;
       player.loaderUrl = loaderURL;
       player.load(file);
+
+      if (data.remoteDebugging) {
+        Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
+      }
     }
     file = Shumway.FileLoadingService.instance.setBaseUrl(file);
     if (asyncLoading) {
