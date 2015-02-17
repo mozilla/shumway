@@ -55,7 +55,7 @@ function setRelease(release) {
 setRelease(state.release);
 
 if (state.profileStartup && state.profileStartupDuration > 0) {
-  profiler.start(state.profileStartupDuration, false);
+  profiler.start(performance.now(), state.profileStartupDuration, false);
 }
 
 function saveInspectorState() {

@@ -40,12 +40,10 @@ package flash.utils
 
   include "api-versions.as"
 
+  [native(cls="CompressionAlgorithmClass")]
   public final class CompressionAlgorithm
   {
-    public static const ZLIB:String = "zlib";
-    public static const DEFLATE:String = "deflate";
-    public static const LZMA:String = "lzma";
-  };
+  }
 
   //
   // ByteArray
@@ -95,28 +93,12 @@ package flash.utils
     public native function readObject():*;
 
     //[API(CONFIG::FP_10_0)]
-    public function deflate():void
-    {
-      _compress("deflate");
-    }
-
-    private native function _compress(algorithm:String):void;
-    public function compress(algorithm:String = CompressionAlgorithm.ZLIB):void
-    {
-      _compress(algorithm);
-    }
+    public native function deflate():void;
+    public native function compress(algorithm:String = 'zlib'):void;
 
     //[API(CONFIG::FP_10_0)]
-    public function inflate():void
-    {
-      _uncompress("deflate");
-    }
-
-    private native function _uncompress(algorithm:String):void;
-    public function uncompress(algorithm:String = CompressionAlgorithm.ZLIB):void
-    {
-      _uncompress(algorithm);
-    }
+    public native function inflate():void;
+    public native function uncompress(algorithm:String = 'zlib'):void;
 
     public native function toString():String;
 
@@ -126,7 +108,6 @@ package flash.utils
 
     static public native function get defaultObjectEncoding():uint;
     static public native function set defaultObjectEncoding(version:uint):void;
-    static private var _defaultObjectEncoding:uint;
 
     public native function get objectEncoding():uint;
     public native function set objectEncoding(version:uint):void;
@@ -137,12 +118,6 @@ package flash.utils
     // [API(CONFIG::FP_10_0)]
 
     public native function clear():void;
-
-    // Note: clients are free to replace with method returning non-string
-    prototype.toJSON = function (k:String):* { return "ByteArray"; }
-
-    // Bug 651641: we do not want toJSON enumerated.
-    _dontEnumPrototype(prototype);
   };
 
 }

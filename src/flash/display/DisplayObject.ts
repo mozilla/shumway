@@ -490,15 +490,13 @@ module Shumway.AVM2.AS.flash.display {
      */
     static performFrameNavigation(mainLoop: boolean, runScripts: boolean) {
       if (mainLoop) {
-        var timelineData = {instances: 0};
         DisplayObject._runScripts = runScripts;
-        enterTimeline("DisplayObject.performFrameNavigation", timelineData);
       } else {
         runScripts = DisplayObject._runScripts;
       }
 
       release || assert(display.DisplayObject._advancableInstances.length < 1024 * 16,
-                        "Too many advancable instances.");
+      "Too many advancable instances.");
 
       // Step 1: Remove timeline objects that don't exist on new frame, update existing ones with
       // new properties, and declare, but not create, new ones, update numChildren.
@@ -508,20 +506,28 @@ module Shumway.AVM2.AS.flash.display {
       // Also, changed properties of existing objects are updated here instead of during frame
       // construction after ENTER_FRAME.
       // Thus, all these can be done together.
+      enterTimeline("DisplayObject.InitFrame");
       display.DisplayObject._advancableInstances.forEach(function (value) {
         value._initFrame(mainLoop);
       });
+      leaveTimeline();
       // Step 2: Dispatch ENTER_FRAME, only called in outermost invocation.
+      enterTimeline("DisplayObject.EnterFrame");
       if (mainLoop && runScripts) {
         DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
       }
+      leaveTimeline();
       // Step 3: Create new timeline objects.
+      enterTimeline("DisplayObject.ConstructFrame");
       display.DisplayObject._advancableInstances.forEach(function (value) {
         value._constructFrame();
       });
+      leaveTimeline();
       // Step 4: Dispatch FRAME_CONSTRUCTED.
       if (runScripts) {
+        enterTimeline("DisplayObject.FrameConstructed");
         DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
+        leaveTimeline();
         // Step 5: Run frame scripts
         // Flash seems to enqueue all frame scripts recursively, starting at the root of each
         // independent object graph. That can be the stage or a container that isn't itself on
@@ -533,6 +539,7 @@ module Shumway.AVM2.AS.flash.display {
         // doubtful anybody could reasonably rely on the exact details of all this.
         // Of course, nothing guarantees that there isn't content that accidentally does, so it'd
         // be nice to eventually get this right.
+        enterTimeline("DisplayObject.EnqueueFrameScripts");
         display.DisplayObject._advancableInstances.forEach(function (value) {
           var container: any = value;
           if (DisplayObjectContainer.isInstanceOf(container) && !container.parent) {
@@ -540,14 +547,18 @@ module Shumway.AVM2.AS.flash.display {
           }
         });
         flash.display.DisplayObject._stage._enqueueFrameScripts();
+        leaveTimeline();
+        enterTimeline("DisplayObject.RunFrameScript");
         MovieClip.runFrameScripts();
+        leaveTimeline();
         // Step 6: Dispatch EXIT_FRAME.
+        enterTimeline("DisplayObject.ExitFrame");
         DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
+        leaveTimeline();
       } else {
         MovieClip.reset();
       }
       if (mainLoop) {
-        leaveTimeline();
         DisplayObject._runScripts = true;
       }
     }

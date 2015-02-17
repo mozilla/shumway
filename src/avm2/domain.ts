@@ -14,6 +14,11 @@
  * limitations under the License.
  */
 
+declare module Shumway.SWF {
+  function enterTimeline(name: string, data?: any): void;
+  function leaveTimeline(data?: any): void;
+}
+
 module Shumway.AVM2.Runtime {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import Hashes = Shumway.AVM2.ABC.Hashes;
@@ -43,9 +48,6 @@ module Shumway.AVM2.Runtime {
     var abc = script.abc;
     release || assert(!script.executing && !script.executed);
     var global = new Global(script);
-    if (abc.applicationDomain.allowNatives) {
-      global[Multiname.getPublicQualifiedName("unsafeJSNative")] = Shumway.AVM2.AS.getNative;
-    }
     script.executing = true;
     var scope = new Scope(null, script.global);
     // XXX interpreted methods populate stack with every call, compiled don't
@@ -55,9 +57,9 @@ module Shumway.AVM2.Runtime {
     leaveTimeline();
   }
 
-  export function ensureScriptIsExecuted(script, reason: string = "") {
+  export function ensureScriptIsExecuted(script, reason: string) {
     if (!script.executed && !script.executing) {
-      if (Shumway.AVM2.Runtime.traceExecution.value >= 2) {
+      if (!release && Shumway.AVM2.Runtime.traceExecution.value >= 2) {
         console.log("Executing Script For: " + reason);
       }
       executeScript(script);
@@ -103,10 +105,12 @@ module Shumway.AVM2.Runtime {
 
   function promiseFile(path, responseType) {
     return new Promise(function (resolve, reject) {
+      SWF.enterTimeline('Load file', path);
       var xhr = new XMLHttpRequest();
       xhr.open('GET', path);
       xhr.responseType = responseType;
       xhr.onload = function () {
+        SWF.leaveTimeline();
         var response = xhr.response;
         if (response) {
           if (responseType === 'json' && xhr.responseType !== 'json') {
@@ -336,7 +340,7 @@ module Shumway.AVM2.Runtime {
     }
 
     public findDomainProperty(multiname: Multiname, strict: boolean, execute: boolean) {
-      if (Shumway.AVM2.Runtime.traceDomain.value) {
+      if (!release && Shumway.AVM2.Runtime.traceDomain.value) {
         console.log("ApplicationDomain.findDomainProperty: " + multiname);
       }
       var resolved = this.findDefiningScript(multiname, execute);
@@ -345,8 +349,6 @@ module Shumway.AVM2.Runtime {
       }
       if (strict) {
         return Shumway.Debug.unexpected("Cannot find property " + multiname);
-      } else {
-        return undefined;
       }
       return undefined;
     }
@@ -452,7 +454,7 @@ module Shumway.AVM2.Runtime {
               var trait = traits[k];
               if (mn.hasQName(trait.name)) {
                 if (execute) {
-                  ensureScriptIsExecuted(script, String(trait.name));
+                  ensureScriptIsExecuted(script, release ? '' : String(trait.name));
                 }
                 return (this.scriptCache[mn.runtimeId] = { script: script, trait: trait });
               }

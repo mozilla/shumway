@@ -44,9 +44,6 @@ package {
 [native(cls="XMLClass", gc="exact", instance="XMLObject", methods="auto", construct="override")]
 public final dynamic class XML extends Object
 {
-    // { ReadOnly, DontDelete, DontEnum }
-    public static const length = 1;
-
     // { DontDelete, DontEnum }
     public native static function get ignoreComments():Boolean
     public native static function set ignoreComments(newIgnore:Boolean)
@@ -132,9 +129,6 @@ public final dynamic class XML extends Object
 [native(cls="XMLListClass", gc="exact", instance="XMLListObject", methods="auto", construct="override")]
 public final dynamic class XMLList extends Object
 {
-    // { ReadOnly, DontDelete, DontEnum }
-    public static const length = 1
-
     AS3 native function toString ():String
     AS3 native function valueOf():XMLList;
 
@@ -200,48 +194,16 @@ public final dynamic class XMLList extends Object
 [native(cls="QNameClass", gc="exact", instance="QNameObject", methods="auto", construct="override")]
 public final class QName extends Object
 {
-    // E262 {DontDelete, ReadOnly, DontEnum}
-    public static const length = 2
-
     // E357 {DontDelete, ReadOnly}
     public native function get localName():String
 
     // E357 {DontDelete, ReadOnly}
-    public native function get uri()
+    public native function get uri();
 
-    AS3 function valueOf():QName { return this }
+    AS3 native function valueOf():QName;
+    AS3 native function toString():String;
 
-    AS3 function toString():String {
-        if (uri === "")
-            return localName
-        if (uri === null)
-            return "*::" + localName
-        var cc:uint = uri.charCodeAt(uri.length-1);
-        // strip the version mark, if there is one
-        var base_uri:String = uri;
-        if(cc >= 0xE000 && cc <= 0xF8FF) {
-            base_uri = uri.substr(0, uri.length-1);
-        }
-        if (base_uri === "")
-            return localName
-        return base_uri + "::" + localName
-    }
-
-    prototype.toString = function():String
-    {
-        if (this === prototype) return ""
-        if (!(this is QName))
-            Error.throwError( TypeError, 1004 /*kInvokeOnIncompatibleObjectError*/, "QName.prototype.toString" );
-        var q:QName = this
-        return q.AS3::toString()
-    }
-
-    // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
-    // The code for the actual ctor is in QName::construct in the avmplus
-    public function QName(namespace = void 0, name = void 0)
-    {}
-
-    _dontEnumPrototype(prototype);
+    public native function QName(namespace = void 0, name = void 0);
 }
 
 }

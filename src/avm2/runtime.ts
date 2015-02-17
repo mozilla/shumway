@@ -67,7 +67,7 @@ interface Object extends IProtocol {
 
   asEnumerableKeys: any [];
   asLazyInitializer: Shumway.AVM2.Runtime.LazyInitializer;
-  asBindings: any [];
+  asBindings: any;
   asLength: number;
   asSlots: Shumway.AVM2.Runtime.SlotInfoMap;
   asIsNativePrototype: boolean;
@@ -243,7 +243,11 @@ module Shumway.AVM2.Runtime {
       }
     }
 
+    // For instance accessors, we have to install a version of the getter/setter that can be
+    // used with Function#call in order to be able to have super.propName work in the right
+    // scope. For methods, a prefixed version without a memoizer is installed.
     defineNonEnumerableProperty(object, prefix + qn, traitFunction);
+
     if (isMethod) {
       object.asOpenMethods[qn] = traitFunction;
       if (isScriptBinding) {
@@ -259,18 +263,11 @@ module Shumway.AVM2.Runtime {
           trait.methodInfo.cachedMemoizer = memoizer;
         }
         defineNonEnumerableGetter(object, qn, memoizer);
-        tryInjectToStringAndValueOfForwarder(object, qn);
       } else {
         defineNonEnumerableProperty(object, qn, traitFunction);
       }
     } else {
       defineNonEnumerableGetterOrSetter(object, qn, traitFunction, isGetter);
-      // For instance accessors, we have to install a version of the getter/setter that can be
-      // used with Function#call in order to be able to have super.propName work in the right
-      // scope.
-      if (isScriptBinding) {
-        defineNonEnumerableProperty(object, prefix + qn, traitFunction);
-      }
     }
     //leaveTimeline();
   }
@@ -412,48 +409,21 @@ module Shumway.AVM2.Runtime {
     return self[resolved].asApply(receiver, args);
   }
 
-  export function asGetResolvedStringPropertyFallback(resolved: any) {
-    var self: Object = this;
-    var name = Multiname.getNameFromPublicQualifiedName(resolved);
-    return self.asGetProperty([Namespace.PUBLIC], name, 0);
-  }
-
   export function asSetPublicProperty(name: any, value: any) {
     var self: Object = this;
     return self.asSetProperty(undefined, name, 0, value);
   }
 
-  export var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF +
-                                                               ".apply(this, arguments)" +
-                                                               "//# sourceURL=forward-valueOf.as");
-  export var forwardToString: () => string = <any>new Function("", 'return this.' +
-                                                                   Multiname.TO_STRING +
-                                                                   ".apply(this, arguments)" +
-                                                                   "//# sourceURL=forward-toString.as");
-
   /**
-   * Patches the |object|'s toString properties with a forwarder that calls the AS3 toString. We
-   * only do this when an AS3 object has the |toString| trait defined, or whenever the |toString|
-   * property is assigned to the object.
-   *
-   * Because native methods are linked lazily, if a class defines a native |toString| method we
-   * must make sure that we don't overwrite its template definition. If we do, then lose the
-   * template definition and also create a cycle, since we would be forwarding to ourselves.
-   *
-   * One way to solve this is to make sure that our template definitions don't live in the same
-   * objects as the ones we apply bindings too. This is a huge pain to change at this point.
-   *
-   * Instead, we save the original toString as original_toString and special case the property
-   * lookup it in the getNatve code in natives.ts.
+   * This is the top level Object.prototype.toString() function.
    */
-  function tryInjectToStringAndValueOfForwarder(self: Object, resolved: string) {
-    if (resolved === Multiname.VALUE_OF) {
-      defineNonEnumerableProperty(self, "original_valueOf", self.valueOf);
-      self.valueOf = forwardValueOf;
-    } else if (resolved === Multiname.TO_STRING) {
-      defineNonEnumerableProperty(self, "original_toString", self.toString);
-      self.toString = forwardToString;
+  export function asToString(): string {
+    var self = boxValue(this);
+    if (self instanceof AS.ASClass) {
+      var cls: AS.ASClass = <any>self;
+      return Shumway.StringUtilities.concat3("[class ", cls.classInfo.instanceInfo.name.name, "]");
     }
+    return Shumway.StringUtilities.concat3("[object ", self.class.classInfo.instanceInfo.name.name, "]");
   }
 
   export function asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
@@ -475,7 +445,6 @@ module Shumway.AVM2.Runtime {
         value = type.coerce(value);
       }
     }
-    tryInjectToStringAndValueOfForwarder(self, resolved);
     self[resolved] = value;
   }
 
@@ -654,7 +623,7 @@ module Shumway.AVM2.Runtime {
     // We have to check for trait properties too if a simple hasOwnProperty fails.
     // This is different to JavaScript's hasOwnProperty behaviour where hasOwnProperty returns
     // false for properties defined on the property chain and not on the instance itself.
-    return hasOwnProperty(self, resolved) || self.asBindings.indexOf(resolved) >= 0;
+    return self.asBindings[resolved] || hasOwnProperty(self, resolved);
   }
 
   export function asPropertyIsEnumerable(namespaces: Namespace [], name: any, flags: number) {
@@ -675,7 +644,7 @@ module Shumway.AVM2.Runtime {
   export function asHasTraitProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
     var resolved = self.resolveMultinameProperty(namespaces, name, flags);
-    return self.asBindings.indexOf(resolved) >= 0;
+    return self.asBindings[resolved];
   }
 
   export function asGetNumericProperty(i: number) {
@@ -1215,7 +1184,7 @@ module Shumway.AVM2.Runtime {
     }
 
     public ensureExecuted() {
-      Shumway.AVM2.Runtime.ensureScriptIsExecuted(this.scriptInfo);
+      Shumway.AVM2.Runtime.ensureScriptIsExecuted(this.scriptInfo, 'external');
     }
   }
 
@@ -1274,7 +1243,7 @@ module Shumway.AVM2.Runtime {
     for (var key in object) {
       if (isNumeric(key)) {
         fn.call(self, key, object[key]);
-      } else if (Multiname.isPublicQualifiedName(key) && object.asBindings.indexOf(key) < 0) {
+      } else if (!object.asBindings[key] && Multiname.isPublicQualifiedName(key)) {
         var name = Multiname.stripPublicQualifier(key);
         fn.call(self, name, object[key]);
       }
@@ -1476,25 +1445,29 @@ module Shumway.AVM2.Runtime {
     return method;
   }
 
-  function nameFunction(methodInfo) {
+  function nameFunction(methodInfo: MethodInfo) {
     var fnName = methodInfo.name ?
                  Multiname.getFullQualifiedName(methodInfo.name) :
                  "fn" + compiledFunctionCount;
     if (methodInfo.holder) {
       var fnNamePrefix = "";
+      // TODO: remove the explicit casts once we've updated to a tsc version that obviates them.
       if (methodInfo.holder instanceof ClassInfo) {
-        fnNamePrefix = "static$" + methodInfo.holder.instanceInfo.name.getName();
+        fnNamePrefix = "static$" + (<ClassInfo>methodInfo.holder).instanceInfo.name.getName();
       } else if (methodInfo.holder instanceof InstanceInfo) {
-        fnNamePrefix = methodInfo.holder.name.getName();
+        fnNamePrefix = (<InstanceInfo>methodInfo.holder).name.getName();
       } else if (methodInfo.holder instanceof ScriptInfo) {
         fnNamePrefix = "script";
       }
-      fnName = fnNamePrefix + "$" + fnName;
+      fnName = fnNamePrefix + fnName;
     }
     fnName = Shumway.StringUtilities.escapeString(fnName);
-    if (methodInfo.verified) {
-      fnName += "$V";
+    if (methodInfo.isGetter) {
+      fnName += "_get";
+    } else if (methodInfo.isSetter) {
+      fnName += "_set";
     }
+    fnName += '_' + (methodInfo.abc.hash >>> 0);
     return fnName;
   }
 
@@ -1563,13 +1536,24 @@ module Shumway.AVM2.Runtime {
 
   export function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
     var mi = methodInfo;
-    var cached = searchCodeCache(mi);
-    var compilation: Compilation;
-    if (!cached) {
-      compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
-    }
+    var compilation: {body: string; parameters: string[]};
 
     var fnName = nameFunction(methodInfo);
+
+    var globalMiName = 'mi_' + fnName;
+    jsGlobal[globalMiName] = methodInfo;
+
+    var cached = searchCodeCache(mi);
+    if (!cached) {
+      if (Compiler.useBaseline.value) {
+        enterTimeline('Baseline compile');
+        compilation = Compiler.baselineCompileMethod(mi, scope, hasDynamicScope, globalMiName);
+        compilation.body = '{\n' + compilation.body + '\n}';
+        leaveTimeline();
+      } else {
+        compilation = Compiler.compileMethod(mi, scope, hasDynamicScope);
+      }
+    }
 
     if (!breakpoint) {
       var breakFilter = Shumway.AVM2.Compiler.breakFilter.value;
@@ -1582,7 +1566,7 @@ module Shumway.AVM2.Runtime {
       body = "{ debugger; \n" + body + "}";
     }
     if (!cached) {
-      var fnSource = "jsGlobal. " + fnName + " = function " + fnName + " (" +
+      var fnSource = "jsGlobal." + fnName + " = function " + fnName + " (" +
                      compilation.parameters.join(", ") + ") " + body;
       fnSource += "//# sourceURL=fun-" + fnName + ".as";
     }
@@ -1599,9 +1583,9 @@ module Shumway.AVM2.Runtime {
       }
     }
 
-    // Using `new Function` here because just evaluating fnSource for some reason causes
-    // substantial slowdowns in running the code. This is true across engines (SM and v8, at
-    // least), and affects some benchmarks more than others.
+    release || assert(!(fnName in jsGlobal), 'Name collision or function compiled twice.');
+    // Using `new Function` here turns out to be fastest. Direct eval is slowest by far, but
+    // indirect eval is also a bit slower.
     new Function('return ' + (cached || fnSource))();
     var fn = jsGlobal[fnName];
     fn.debugName = fnName;
@@ -1618,7 +1602,7 @@ module Shumway.AVM2.Runtime {
    * compiler bakes it in as a constant which should be much more efficient. If the interpreter
    * is used, the scope object is passed in every time.
    */
-  export function createFunction(mi, scope, hasDynamicScope, breakpoint, useInterpreter = false) {
+  export function createFunction(mi: MethodInfo, scope, hasDynamicScope, breakpoint, useInterpreter = false) {
     release || assert(!mi.isNative(), "Method should have a builtin: " + mi.name);
 
     if (mi.freeMethod) {
@@ -1657,7 +1641,8 @@ module Shumway.AVM2.Runtime {
       mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint, mi.isInstanceInitializer);
     }
 
-    mi.freeMethod.methodInfo = mi;
+    // TODO: remove this once all code can deal with looking up the MethodInfo by name on the global.
+    (<any>mi.freeMethod).methodInfo = mi;
 
     if (hasDynamicScope) {
       return bindFreeMethodScope(mi, scope);
@@ -1665,7 +1650,7 @@ module Shumway.AVM2.Runtime {
     return mi.freeMethod;
   }
 
-  export function ensureFunctionIsInitialized(methodInfo) {
+  export function ensureFunctionIsInitialized(methodInfo: MethodInfo) {
     var mi = methodInfo;
 
     // We use not having an analysis to mean "not initialized".
@@ -1912,5 +1897,6 @@ var checkFilter = Shumway.AVM2.Runtime.checkFilter;
 
 var sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
+var createClass = Shumway.AVM2.Runtime.createClass;
 var createFunction = Shumway.AVM2.Runtime.createFunction;
 var createName = Shumway.AVM2.Runtime.createName;

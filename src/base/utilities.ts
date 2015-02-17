@@ -1110,9 +1110,7 @@ module Shumway {
       return _encoding[n];
     }
 
-    export function fromEncoding(s) {
-      var c = s.charCodeAt(0);
-      var e = 0;
+    export function fromEncoding(c) {
       if (c >= 65 && c <= 90) {
         return c - 65;
       } else if (c >= 97 && c <= 122) {
@@ -1128,11 +1126,11 @@ module Shumway {
     }
 
     export function variableLengthDecodeInt32(s) {
-      var l = StringUtilities.fromEncoding(s[0]);
+      var l = StringUtilities.fromEncoding(s.charCodeAt(0));
       var n = 0;
       for (var i = 0; i < l; i++) {
         var offset = ((l - i - 1) * 6);
-        n |= StringUtilities.fromEncoding(s[1 + i]) << offset;
+        n |= StringUtilities.fromEncoding(s.charCodeAt(1 + i)) << offset;
       }
       return n;
     }
@@ -1398,6 +1396,9 @@ module Shumway {
           enumerable: false,
           configurable: true
         });
+      },
+      delete: function(obj) {
+        delete obj[this.id];
       }
     };
     jsGlobal.WeakMap = WeakMap;

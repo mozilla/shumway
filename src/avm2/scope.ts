@@ -90,7 +90,7 @@ module Shumway.AVM2.Runtime {
   export class Scope {
     parent: Scope;
     global: Scope;
-    object: Object;
+    object: any;
     isWith: boolean;
     cache: any;
 

@@ -51,6 +51,8 @@
 ///<reference path='compiler/c4/looper.ts' />
 ///<reference path='compiler/c4/backend.ts' />
 
+///<reference path='compiler/baseline.ts' />
+
 ///<reference path='domain.ts' />
 ///<reference path='trampoline.ts' />
 ///<reference path='interpreter.ts' />

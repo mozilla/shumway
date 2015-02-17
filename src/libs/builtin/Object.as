@@ -19,29 +19,14 @@ include "api-versions.as"
 [native(cls="ObjectClass", classgc="exact", methods="auto", construct="override")]
 public dynamic class Object
 {
-  // Object.length = 1 per ES3
-  // E262 {ReadOnly, DontDelete, DontEnum }
-  public static const length:int = 1
-  protected static native function _setPropertyIsEnumerable(o, V:String, enumerable:Boolean):void
-
   AS3 native function isPrototypeOf(V=void 0):Boolean;
   AS3 native function hasOwnProperty(V=void 0):Boolean;
   AS3 native function propertyIsEnumerable(V=void 0):Boolean;
 
-  native protected static function _dontEnumPrototype(proto:Object):void;
-
-  // https://bugzilla.mozilla.org/show_bug.cgi?id=605660
-  // Some existing Flash content happens to rely on an "init" method
-  // being present in the global namespace; hiding it via VM_INTERNAL breaks
-  // the content as it causes an RTE. Let's provide a name here
-  // that is harmless.
-  static function init() {
-    // Nop.
-  }
+  static native function init();
 
   // Delay proto functions until class Function is initialized.
-  [API(CONFIG::VM_INTERNAL)]
-  public native static function _init();
+  internal native static function _init();
 }
 
   // dont create proto functions until after class Function is initialized

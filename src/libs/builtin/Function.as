@@ -11,10 +11,6 @@ package
 [native(cls="FunctionClass", gc="exact", instance="FunctionObject", methods="auto", construct="instance")]
 dynamic public class Function
 {
-  // Function.length = 1 per ES3
-  // E262 {ReadOnly, DontDelete, DontEnum }
-  public static const length:int = 1
-
   // E262 {DontDelete}
   // JS {DontEnum,DontDelete}
   public native function get prototype()
@@ -22,15 +18,6 @@ dynamic public class Function
 
   // E262 {DontEnum, DontDelete, ReadOnly}
   public native function get length():int
-
-  // called by native code to create empty functions used for
-  // prototype and no-arg constructor.
-  [API(CONFIG::VM_INTERNAL)]
-  [cppcall]
-  public static function createEmptyFunction():Function
-  {
-    return function() {}
-  }
 
   /* cn:  Spidermonkey returns the actual source text of the function here.  The ES3
    //  standard only says:
@@ -51,15 +38,9 @@ dynamic public class Function
    //  function in toString() seems to be a bookend to this feature to me, and
    //  thus shouldn't be in the compact specification either. */
 
-  prototype.toLocaleString = prototype.toString = unsafeJSNative("ASFunction.prototype.toString");
 
   AS3 native function call(thisArg=void 0, ...args)
-  prototype.call = unsafeJSNative("Function.prototype.call");
-
   AS3 native function apply(thisArg=void 0, argArray=void 0)
-  prototype.apply = unsafeJSNative("Function.prototype.apply");
-
-  _dontEnumPrototype(prototype);
 }
 }
 
@@ -69,13 +50,6 @@ final class MethodClosure extends Function
 {
   public native function MethodClosure();
 
-  override public function get prototype()
-  {
-    return null
-  }
-
-  override public function set prototype(p)
-  {
-    Error.throwError( ReferenceError, 1074 /*kConstWriteError*/, "prototype", "MethodClosure" );
-  }
+  override public native function get prototype();
+  override public native function set prototype(p);
 }

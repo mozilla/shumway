@@ -455,7 +455,7 @@ module Shumway.AVM2.AS.flash.text {
             numericPart = numericPart.substr(1);
           }
           var colorVal = parseInt(numericPart, 16);
-          if ((<any>colorVal).original_toString(16) === numericPart) {
+          if (colorVal.toString(16) === numericPart) {
             this.color = colorVal;
           }
         }

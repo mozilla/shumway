@@ -31,6 +31,9 @@ module Shumway.AVM2.AS.flash.display {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import SWFFile = Shumway.SWF.SWFFile;
 
+  import enterTimeline = Shumway.AVM2.enterTimeline;
+  import leaveTimeline = Shumway.AVM2.leaveTimeline;
+
   enum LoadStatus {
     Unloaded    = 0,
     Opened      = 1,
@@ -123,15 +126,18 @@ module Shumway.AVM2.AS.flash.display {
         }
 
         if (instance._loadStatus === LoadStatus.Opened && instance._content) {
+          enterTimeline("Loader.INIT");
           try {
             loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
           } catch (e) {
             console.warn('caught error under loaderInfo INIT event:', e);
           }
+          leaveTimeline();
           instance._loadStatus = LoadStatus.Initialized;
           // Only for the root loader, progress events for the data loaded up until now are
           // dispatched here.
           if (instance === Loader._rootLoader) {
+            enterTimeline("Loader.Progress", 'rootLoader');
             try {
               loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
                                                                 false, false,
@@ -140,6 +146,7 @@ module Shumway.AVM2.AS.flash.display {
             } catch (e) {
               console.warn('caught error under loaderInfo PROGRESS event:', e);
             }
+            leaveTimeline();
           }
         }
 
@@ -148,11 +155,13 @@ module Shumway.AVM2.AS.flash.display {
           queue.splice(i--, 1);
           release || assert(queue.indexOf(instance) === -1);
           instance._loadStatus = LoadStatus.Complete;
+          enterTimeline("Loader.Complete");
           try {
             loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
           } catch (e) {
             console.warn('caught error under loaderInfo COMPLETE event: ', e);
           }
+          leaveTimeline();
         }
       }
     }
@@ -174,22 +183,31 @@ module Shumway.AVM2.AS.flash.display {
         if (instance._loadStatus === LoadStatus.Unloaded) {
           // OPEN is only dispatched when loading external resources, not for loadBytes.
           if (instance._loadingType === LoadingType.External) {
+            enterTimeline("Loader.Open");
             try {
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
             } catch (e) {
               console.warn('caught error under loaderInfo OPEN event: ', e);
             }
+            leaveTimeline();
           }
           // The first time any progress is made at all, a progress event with bytesLoaded = 0
           // is dispatched.
-          loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                            false, false, 0, bytesTotal));
+          enterTimeline("Loader.Progress");
+          try {
+            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                              false, false, 0, bytesTotal));
+          } catch (e) {
+            console.warn('caught error under loaderInfo PROGRESS event: ', e);
+          }
+          leaveTimeline();
           instance._loadStatus = LoadStatus.Opened;
         }
 
         // TODO: The Flash player reports progress in 16kb chunks, in a tight loop right here.
         if (update) {
           instance._applyLoadUpdate(update);
+          enterTimeline("Loader.Progress");
           try {
             loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
                                                               false, false, update.bytesLoaded,
@@ -197,6 +215,7 @@ module Shumway.AVM2.AS.flash.display {
           } catch (e) {
             console.warn('caught error under loaderInfo PROGRESS event: ', e);
           }
+          leaveTimeline();
         }
       }
     }

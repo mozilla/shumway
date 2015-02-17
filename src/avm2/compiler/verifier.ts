@@ -876,12 +876,6 @@ module Shumway.AVM2.Verifier {
           return type;
         }
 
-        if (mn.isConstantType()) {
-          if (mn.getConstantValue().name === "unsafeJSNative") {
-            return Type.Any;
-          }
-        }
-
         writer && writer.warnLn("findProperty(" + mn + ")");
         return Type.Any;
       }

@@ -25,6 +25,8 @@ declare var quit;
 declare var read;
 declare var help;
 
+load("src/avm2/compiler/relooper/relooper.js");
+
 var homePath = "";
 var builtinLibPath = homePath + "build/libs/builtin.abc";
 var shellLibPath = homePath + "build/libs/shell.abc";
@@ -113,6 +115,8 @@ module Shumway.Shell {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import flash = Shumway.AVM2.AS.flash;
 
+  import Compiler = Shumway.AVM2.Compiler;
+
   class ShellPlayer extends Shumway.Player.Player {
     onSendUpdates(updates:DataBuffer, assets:Array<DataBuffer>, async:boolean = true):DataBuffer {
       var bytes = updates.getBytes();
@@ -145,6 +149,7 @@ module Shumway.Shell {
   var parseOption: Option;
   var parseForDatabaseOption: Option;
   var disassembleOption: Option;
+  var compileOption: Option;
   var verboseOption: Option;
   var profileOption: Option;
   var releaseOption: Option;
@@ -168,6 +173,7 @@ module Shumway.Shell {
     parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
     parseForDatabaseOption = shellOptions.register(new Option("po", "parseForDatabase", "boolean", false, "Parse File(s)"));
     disassembleOption = shellOptions.register(new Option("d", "disassemble", "boolean", false, "Disassemble File(s)"));
+    compileOption = shellOptions.register(new Option("c", "compile", "boolean", false, "Compile File(s)"));
     verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
     profileOption = shellOptions.register(new Option("o", "profile", "boolean", false, "Profile"));
     releaseOption = shellOptions.register(new Option("r", "release", "boolean", false, "Release mode"));
@@ -237,6 +243,19 @@ module Shumway.Shell {
     }
 
     Shumway.Unit.writer = new IndentingWriter();
+
+    if (compileOption.value) {
+      var abcs = [];
+      files.forEach(function (file) {
+        var buffer = new Uint8Array(read(file, "binary"));
+        if (file.endsWith(".abc")) {
+          abcs.push(new AbcFile(buffer, file));
+        } else if (file.endsWith(".swf")) {
+          abcs.push.apply(abcs, extractABCsFromSWF(buffer));
+        }
+      });
+      Compiler.baselineCompileABCs(abcs.slice(0, 1), abcs.slice(1));
+    }
 
     if (parseOption.value) {
       files.forEach(function (file) {
@@ -370,6 +389,37 @@ module Shumway.Shell {
     return true;
   }
 
+  function extractABCsFromSWF(buffer: Uint8Array): AbcFile [] {
+    var abcs = [];
+    try {
+      var loadListener: ILoadListener = {
+        onLoadOpen: function(file: Shumway.SWF.SWFFile) {
+          for (var i = 0; i < file.abcBlocks.length; i++) {
+            var abcBlock = file.abcBlocks[i];
+            var abcFile = new AbcFile(abcBlock.data, "TAG" + i);
+            abcs.push(abcFile);
+          }
+        },
+        onLoadProgress: function(update: LoadProgressUpdate) {
+        },
+        onLoadError: function() {
+        },
+        onLoadComplete: function() {
+        },
+        onNewEagerlyParsedSymbols(dictionaryEntries: SWF.EagerlyParsedDictionaryEntry[], delta: number): Promise<any> {
+          return Promise.resolve();
+        },
+        onImageBytesLoaded() {}
+      };
+      var loader = new Shumway.FileLoader(loadListener);
+      loader.loadBytes(buffer);
+    } catch (x) {
+      writer.redLn("Cannot parse SWF, reason: " + x);
+      return null;
+    }
+    return abcs;
+  }
+
   /**
    * Parses file.
    */
@@ -389,13 +439,15 @@ module Shumway.Shell {
         var swfFile: Shumway.SWF.SWFFile;
         var loadListener: ILoadListener = {
           onLoadOpen: function(file: Shumway.SWF.SWFFile) {
-            swfFile = file;
+
           },
           onLoadProgress: function(update: LoadProgressUpdate) {
+
           },
           onLoadError: function() {
           },
           onLoadComplete: function() {
+            writer.redLn("Load complete:");
             // TODO: re-enable all-tags parsing somehow. SWFFile isn't the right tool for that.
           //  var symbols = {};
           //  var tags = result.tags;

@@ -34,7 +34,6 @@ module Shumway.AVM2.Runtime {
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
   import defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
   import makeForwardingGetter = Shumway.FunctionUtilities.makeForwardingGetter;
   import makeForwardingSetter = Shumway.FunctionUtilities.makeForwardingSetter;
@@ -144,7 +143,7 @@ module Shumway.AVM2.Runtime {
         release || assert(!hasOwnProperty(object, VM_OPEN_METHODS), "Already has VM_OPEN_METHODS.");
 
         defineNonEnumerableProperty(object, VM_SLOTS, new SlotInfoMap());
-        defineNonEnumerableProperty(object, VM_BINDINGS, []);
+        defineNonEnumerableProperty(object, VM_BINDINGS, Object.create(null));
         defineNonEnumerableProperty(object, VM_OPEN_METHODS, createMap<Function>());
 
         defineNonEnumerableProperty(object, "bindings", this);
@@ -172,11 +171,9 @@ module Shumway.AVM2.Runtime {
           if (key !== qn) {
             traitsWriter && traitsWriter.yellowLn("Binding Trait: " + key + " -> " + qn);
             defineNonEnumerableGetter(object, key, makeForwardingGetter(qn));
-            pushUnique(object.asBindings, key);
           } else {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
             defineNonEnumerableProperty(object, qn, defaultValue);
-            pushUnique(object.asBindings, qn);
             var slotInfo = new SlotInfo(
               qn,
               trait.isConst(),
@@ -195,9 +192,9 @@ module Shumway.AVM2.Runtime {
           } else {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
           }
-          pushUnique(object.asBindings, key);
           applyMethodTrait(key, object, binding, !(this instanceof ScriptBindings));
         }
+        object.asBindings[key] = true;
       }
     }
   }

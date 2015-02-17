@@ -873,6 +873,7 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = null;
     public static instanceConstructor: any = ASNamespace;
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 2);
       var proto: any = ASNamespace.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
     }
@@ -1038,7 +1039,11 @@ module Shumway.AVM2.AS {
   }
 
   export class ASQName extends ASNative implements XMLType {
-    public static instanceConstructor: any = ASQName;
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 2);
+      var proto: any = ASQName.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', proto.ecmaToString);
+    }
 
     /**
      * 13.3.1 The QName Constructor Called as a Function
@@ -1182,12 +1187,38 @@ module Shumway.AVM2.AS {
       this.name.namespaces[0].uri = uri;
     }
 
+    ecmaToString (): string {
+      if (<any>this === ASQName.dynamicPrototype) {
+        return "";
+      }
+      if (!(this instanceof AS.ASQName)) {
+        throwError('TypeError', Errors.InvokeOnIncompatibleObjectError, "QName.prototype.toString");
+      }
+      return this.toString();
+    }
+
     toString() {
       var uri = this.uri;
-      if (uri) {
-        return uri + '::' + this.name.name;
+      if (uri === "") {
+        return this.name.name;
       }
-      return this.name.name;
+      if (uri === null) {
+        return "*::" + this.name.name;
+      }
+      var cc = uri.charCodeAt(uri.length - 1);
+      // strip the version mark, if there is one
+      var base_uri = uri;
+      if(cc >= 0xE000 && cc <= 0xF8FF) {
+        base_uri = uri.substr(0, uri.length - 1);
+      }
+      if (base_uri === "") {
+        return this.name.name;
+      }
+      return base_uri + "::" + this.name.name;
+    }
+
+    valueOf() {
+      return this;
     }
 
     /**
@@ -1264,6 +1295,8 @@ module Shumway.AVM2.AS {
   export class ASXML extends ASNative implements XMLType {
     public static instanceConstructor: any = ASXML;
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+
       var proto: any = ASXML.prototype;
       defineNonEnumerableProperty(proto, 'asDeleteProperty', proto._asDeleteProperty);
       defineNonEnumerableProperty(proto, '$BgvalueOf', Object.prototype['$BgvalueOf']);
@@ -2603,6 +2636,8 @@ module Shumway.AVM2.AS {
   export class ASXMLList extends ASNative implements XMLType {
     public static instanceConstructor: any = ASXMLList;
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+
       var proto: any = ASXMLList.prototype;
       defineNonEnumerableProperty(proto, 'asDeleteProperty', proto._asDeleteProperty);
       defineNonEnumerableProperty(proto, '$BgvalueOf', Object.prototype['$BgvalueOf']);

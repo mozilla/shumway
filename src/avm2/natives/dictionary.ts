@@ -40,6 +40,10 @@ module Shumway.AVM2.AS {
      * string keys when enumerating.
      */
     export class Dictionary extends ASNative {
+      static classInitializer: any = function() {
+        var proto: any = Dictionary.prototype;
+        ObjectUtilities.defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
+      }
 
       public static isTraitsOrDynamicPrototype(value): boolean {
         return value === Dictionary.traitsPrototype || value === Dictionary.dynamicPrototype;
@@ -55,6 +59,12 @@ module Shumway.AVM2.AS {
 
       constructor (weakKeys: boolean = false) {
         false && super();
+        this.weakKeys = !!weakKeys;
+        this.map = new WeakMap();
+        if (!weakKeys) {
+          this.keys = [];
+        }
+        this.primitiveMap = Object.create(null);
       }
 
       static makePrimitiveKey(key) {
@@ -65,13 +75,8 @@ module Shumway.AVM2.AS {
         return undefined;
       }
 
-      private init(weakKeys: boolean): void {
-        this.weakKeys = !!weakKeys;
-        this.map = new WeakMap();
-        if (!weakKeys) {
-          this.keys = [];
-        }
-        this.primitiveMap = Object.create(null);
+      toJSON() {
+        return "Dictionary";
       }
 
       public asGetNumericProperty(name: number) {

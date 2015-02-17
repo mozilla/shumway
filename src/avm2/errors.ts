@@ -24,7 +24,7 @@ module Shumway.AVM2 {
   //  NotImplementedError                  : {code: 1001, message: "The method %1 is not implemented."},
   //  InvalidPrecisionError                : {code: 1002, message: "Number.toPrecision has a range of 1 to 21. Number.toFixed and Number.toExponential have a range of 0 to 20. Specified value is not within expected range."},
   //  InvalidRadixError                    : {code: 1003, message: "The radix argument must be between 2 and 36; got %1."},
-  //  InvokeOnIncompatibleObjectError      : {code: 1004, message: "Method %1 was invoked on an incompatible object."},
+    InvokeOnIncompatibleObjectError      : {code: 1004, message: "Method %1 was invoked on an incompatible object."},
   //  ArrayIndexNotIntegerError            : {code: 1005, message: "Array index is not a positive integer (%1)."},
     CallOfNonFunctionError               : {code: 1006, message: "%1 is not a function."},
   //  ConstructOfNonFunctionError          : {code: 1007, message: "Instantiation attempted on a non-constructor."},
@@ -142,9 +142,9 @@ module Shumway.AVM2 {
     VectorFixedError                     : {code: 1126, message: "Cannot change the length of a fixed Vector."},
   //  TypeAppOfNonParamType                : {code: 1127, message: "Type application attempted on a non-parameterized type."},
   //  WrongTypeArgCountError               : {code: 1128, message: "Incorrect number of type parameters for %1. Expected %2, got %3."},
-  //  JSONCyclicStructure                  : {code: 1129, message: "Cyclic structure cannot be converted to JSON string."},
-  //  JSONInvalidReplacer                  : {code: 1131, message: "Replacer argument to JSON stringifier must be an array or a two parameter function."},
-  //  JSONInvalidParseInput                : {code: 1132, message: "Invalid JSON parse input."},
+    JSONCyclicStructure                  : {code: 1129, message: "Cyclic structure cannot be converted to JSON string."},
+    JSONInvalidReplacer                  : {code: 1131, message: "Replacer argument to JSON stringifier must be an array or a two parameter function."},
+    JSONInvalidParseInput                : {code: 1132, message: "Invalid JSON parse input."},
   //  FileOpenError                        : {code: 1500, message: "Error occurred opening file %1."},
   //  FileWriteError                       : {code: 1501, message: "Error occurred writing to file %1."},
   //  ScriptTimeoutError                   : {code: 1502, message: "A script has executed for longer than the default timeout period of 15 seconds."},
@@ -164,15 +164,15 @@ module Shumway.AVM2 {
     EOFError                             : {code: 2030, message: "End of file was encountered.", fqn: 'flash.errors.EOFError'},
     CompressedDataError                  : {code: 2058, message: "There was an error decompressing the data.", fqn: 'flash.errors.IOError'},
   //  EmptyStringError                     : {code: 2085, message: "Parameter %1 must be non-empty string."},
-  //  ProxyGetPropertyError                : {code: 2088, message: "The Proxy class does not implement getProperty. It must be overridden by a subclass."},
-  //  ProxySetPropertyError                : {code: 2089, message: "The Proxy class does not implement setProperty. It must be overridden by a subclass."},
-  //  ProxyCallPropertyError               : {code: 2090, message: "The Proxy class does not implement callProperty. It must be overridden by a subclass."},
-  //  ProxyHasPropertyError                : {code: 2091, message: "The Proxy class does not implement hasProperty. It must be overridden by a subclass."},
-  //  ProxyDeletePropertyError             : {code: 2092, message: "The Proxy class does not implement deleteProperty. It must be overridden by a subclass."},
-  //  ProxyGetDescendantsError             : {code: 2093, message: "The Proxy class does not implement getDescendants. It must be overridden by a subclass."},
-  //  ProxyNextNameIndexError              : {code: 2105, message: "The Proxy class does not implement nextNameIndex. It must be overridden by a subclass."},
-  //  ProxyNextNameError                   : {code: 2106, message: "The Proxy class does not implement nextName. It must be overridden by a subclass."},
-  //  ProxyNextValueError                  : {code: 2107, message: "The Proxy class does not implement nextValue. It must be overridden by a subclass."},
+    ProxyGetPropertyError                : {code: 2088, message: "The Proxy class does not implement getProperty. It must be overridden by a subclass."},
+    ProxySetPropertyError                : {code: 2089, message: "The Proxy class does not implement setProperty. It must be overridden by a subclass."},
+    ProxyCallPropertyError               : {code: 2090, message: "The Proxy class does not implement callProperty. It must be overridden by a subclass."},
+    ProxyHasPropertyError                : {code: 2091, message: "The Proxy class does not implement hasProperty. It must be overridden by a subclass."},
+    ProxyDeletePropertyError             : {code: 2092, message: "The Proxy class does not implement deleteProperty. It must be overridden by a subclass."},
+    ProxyGetDescendantsError             : {code: 2093, message: "The Proxy class does not implement getDescendants. It must be overridden by a subclass."},
+    ProxyNextNameIndexError              : {code: 2105, message: "The Proxy class does not implement nextNameIndex. It must be overridden by a subclass."},
+    ProxyNextNameError                   : {code: 2106, message: "The Proxy class does not implement nextName. It must be overridden by a subclass."},
+    ProxyNextValueError                  : {code: 2107, message: "The Proxy class does not implement nextValue. It must be overridden by a subclass."},
   //  InvalidArrayLengthError              : {code: 2108, message: "The value %1 is not a valid Array length."},
   //  ReadExternalNotImplementedError      : {code: 2173, message: "Unable to read object in stream.  The class %1 does not implement flash.utils.IExternalizable but is aliased to an externalizable class."},
 
@@ -619,16 +619,23 @@ module Shumway.AVM2 {
   //  CubeMapSamplerMustUseMipmap                               : { code: 3704, message: "AGAL validation failed: Cube map samplers must enable mipmapping for %2 at token %3 of %1 program."}
   };
 
+  for (var k in Errors) {
+    var error = Errors[k];
+    error.typeName = k;
+    Errors[error.code] = error;
+  }
+
   export function getErrorMessage(index: number): string {
+    var message = "Error #" + index;
     if (!Shumway.AVM2.Runtime.debuggerMode.value) {
-      return "Error #" + index;
+      return message;
     }
-    for (var k in Errors) {
-      if (Errors[k].code == index) {
-        return "Error #" + index + ": " + Errors[k].message;
-      }
-    }
-    return "Error #" + index + ": (unknown)";
+    var error = Errors[index];
+    return message + ": " + (error && error.message || "(unknown)");
+  }
+
+  export function getErrorInfo(index: number): {code: number; message: string; typeName: string} {
+    return Errors[index];
   }
 
   export function formatErrorMessage(error, ...args) {

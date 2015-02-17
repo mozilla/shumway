@@ -12,26 +12,11 @@ package
 [native(cls="BooleanClass", classgc="exact", instance="bool", methods="auto", construct="override")]
 public final class Boolean extends Object
 {
-  // Boolean.length = 1 per ES3
-  // E262 {ReadOnly, DontDelete, DontEnum }
-  public static const length:int = 1
-
-  AS3 function toString():String {
-    return this ? "true" : "false"
-  }
-
-  AS3 function valueOf():Boolean { return this }
-
-
-  prototype.toString = unsafeJSNative("Original.Boolean.prototype.toString");
-
-  prototype.valueOf = unsafeJSNative("Original.Boolean.prototype.valueOf");
+  AS3 native function toString():String;
+  AS3 native function valueOf():Boolean;
 
   // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
   // The code for the actual ctor is in BooleanClass::construct in the avmplus
-  public function Boolean(value = void 0)
-  {}
-
-  _dontEnumPrototype(prototype);
+  public native function Boolean(value = void 0);
 }
 }
