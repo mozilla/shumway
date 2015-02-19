@@ -756,7 +756,35 @@ function activateShumwayScripts(window, requestListener) {
     };
     window.wrappedJSObject.runViewer();
 
+    var parentWindow = window.parent;
     var viewerWindow = window.viewer.contentWindow;
+
+    function activate(e) {
+      e.preventDefault();
+      viewerWindow.removeEventListener('mousedown', activate, true);
+
+      parentWindow.addEventListener('keydown', forwardKeyEvent, true);
+      parentWindow.addEventListener('keyup', forwardKeyEvent, true);
+
+      sendFocusEvent('focus');
+
+      parentWindow.addEventListener('blur', deactivate, true);
+      parentWindow.addEventListener('mousedown', deactivate, true);
+      parentWindow.addEventListener('unload', deactivate, true);
+    }
+
+    function deactivate() {
+      parentWindow.removeEventListener('blur', deactivate, true);
+      parentWindow.removeEventListener('mousedown', deactivate, true);
+      parentWindow.removeEventListener('unload', deactivate, true);
+
+      parentWindow.removeEventListener('keydown', forwardKeyEvent, true);
+      parentWindow.removeEventListener('keyup', forwardKeyEvent, true);
+
+      sendFocusEvent('blur');
+
+      viewerWindow.addEventListener('mousedown', activate, true);
+    }
 
     function forwardKeyEvent(e) {
       var event = viewerWindow.document.createEvent('KeyboardEvent');
@@ -779,25 +807,7 @@ function activateShumwayScripts(window, requestListener) {
       viewerWindow.dispatchEvent(event);
     }
 
-    viewerWindow.addEventListener('mousedown', function activate(e) {
-      e.preventDefault();
-      viewerWindow.removeEventListener('mousedown', activate, true);
-
-      window.parent.addEventListener('keydown', forwardKeyEvent, true);
-      window.parent.addEventListener('keyup', forwardKeyEvent, true);
-
-      sendFocusEvent('focus');
-
-      window.parent.addEventListener('mousedown', function deactivate() {
-        window.parent.removeEventListener('mousedown', deactivate, true);
-        window.parent.removeEventListener('keydown', forwardKeyEvent, true);
-        window.parent.removeEventListener('keyup', forwardKeyEvent, true);
-
-        sendFocusEvent('blur');
-
-        viewerWindow.addEventListener('mousedown', activate, true);
-      }, true);
-    }, true);
+    viewerWindow.addEventListener('mousedown', activate, true);
   }
 
   if (window.document.readyState === "interactive" ||
