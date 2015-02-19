@@ -87,11 +87,48 @@ module Shumway.AVMX {
     Metadata           = 0x04
   }
 
-  export class MetadataInfo {
+  export enum SORT {
+    CASEINSENSITIVE = 1,
+    DESCENDING = 2,
+    UNIQUESORT = 4,
+    RETURNINDEXEDARRAY = 8,
+    NUMERIC = 16,
+  }
 
+  export class MetadataInfo {
+    constructor(
+      public abc: ABCFile,
+      public name: String | number,
+      public keys: Uint32Array,
+      public values: Uint32Array
+    ) {
+      // ...
+    }
+
+    getName(): string {
+      if (typeof this.name === "number") {
+        this.name = this.abc.getString(<number>this.name);
+      }
+      return <string>this.name;
+    }
+
+    getValueAt(i: number): string {
+      return this.abc.getString(this.values[i]);
+    }
+
+    getValue(key: string): string {
+      for (var i = 0; i < this.keys.length; i++) {
+        if (this.abc.getString(this.keys[i]) === key) {
+          return this.abc.getString(this.values[i]);
+        }
+      }
+      return null;
+    }
   }
 
   export class Traits {
+    private _nextSlotID: number = 1;
+    public slots: SlotTraitInfo [] = null;
     constructor(
       public abc: ABCFile,
       public traits: TraitInfo []
@@ -117,13 +154,19 @@ module Shumway.AVMX {
       this.traits.forEach(x => writer.writeLn(x.toString()));
     }
 
-    indexOf(mn: Multiname): number {
-      release || assert (!mn.isRuntime());
+    /**
+     * Searches for a trait with the specified name and kind. Use |-1| for the kind
+     * if you don't care about the kind.
+     */
+    indexOf(mn: Multiname, kind: TRAIT): number {
       var mnName = mn.name;
       var nss = mn.namespaces;
       var traits = this.traits;
       for (var i = 0; i < traits.length; i++) {
         var trait = traits[i];
+        if (kind >= 0 && trait.kind !== kind) {
+          continue;
+        }
         var traitMn = <Multiname>trait.name;
         if (traitMn.name === mnName) {
           var nsName = traitMn.namespaces[0].name;
@@ -137,8 +180,8 @@ module Shumway.AVMX {
       return -1;
     }
 
-    getTrait(mn: Multiname): TraitInfo {
-      var i = this.indexOf(mn);
+    getTrait(mn: Multiname, kind: TRAIT): TraitInfo {
+      var i = this.indexOf(mn, kind);
       if (i >= 0) {
         return this.traits[i];
       }
@@ -146,20 +189,68 @@ module Shumway.AVMX {
     }
 
     concat(traits: Traits): Traits {
-      return new Traits(this.abc, this.traits.concat(traits.traits));
+      var a = this.traits.slice(0);
+      var b = traits.traits;
+      for (var i = 0; i < b.length; i++) {
+        var t = b[i];
+        if (t.isMethodOrAccessor()) {
+          var j = this.indexOf(t.getName(), t.kind);
+          if (j >= 0) {
+            a[j] = t;
+            continue;
+          }
+        }
+        a.push(t);
+      }
+      return new Traits(this.abc, a);
+    }
+
+    getSlot(i: number): TraitInfo {
+      if (this.slots === null) {
+        var slots = this.slots = [];
+        for (var j = 0; j < this.traits.length; j++) {
+          var trait = this.traits[j];
+          if (trait.kind === TRAIT.Slot) {
+            var slotTrait: SlotTraitInfo = <SlotTraitInfo>trait;
+            if (!slotTrait.slot) {
+              slotTrait.slot = this._nextSlotID ++;
+            } else {
+              this._nextSlotID = slotTrait.slot + 1;
+            }
+            assert (!slots[slotTrait.slot]);
+            slots[slotTrait.slot] = slotTrait;
+          }
+        }
+      }
+      return this.slots[i];
     }
   }
 
   export class TraitInfo {
     public holder: Info;
-    public metadata: Uint32Array [];
+    public metadata: MetadataInfo [] | Uint32Array;
 
     constructor(
+      public abc: ABCFile,
       public kind: TRAIT,
       public name: Multiname | number
     ) {
       this.metadata = null;
       this.holder = null;
+    }
+
+    getMetadata(): MetadataInfo [] {
+      if (!this.metadata) {
+        return null;
+      }
+      if (this.metadata instanceof Uint32Array) {
+        var metadata = new Array(this.metadata.length);
+        for (var i = 0; i < this.metadata.length; i++) {
+          metadata[i] = this.abc.getMetadataInfo(<number>this.metadata[i]);
+        }
+        this.metadata = metadata;
+      }
+      return <MetadataInfo []>this.metadata;
     }
 
     getName(): Multiname {
@@ -175,10 +266,32 @@ module Shumway.AVMX {
     toString() {
       return TRAIT[this.kind] + " " + this.name;
     }
+
+    isMethod(): boolean {
+      return this.kind === TRAIT.Method;
+    }
+
+    isGetter(): boolean {
+      return this.kind === TRAIT.Getter;
+    }
+
+    isSetter(): boolean {
+      return this.kind === TRAIT.Setter;
+    }
+
+    isAccessor(): boolean {
+      return this.kind === TRAIT.Getter ||
+             this.kind === TRAIT.Setter;
+    }
+
+    isMethodOrAccessor(): boolean {
+      return this.isAccessor() || this.kind === TRAIT.Method;
+    }
   }
 
   export class SlotTraitInfo extends TraitInfo {
     constructor(
+      abc: ABCFile,
       kind: TRAIT,
       name: Multiname | number,
       public slot: number,
@@ -186,17 +299,19 @@ module Shumway.AVMX {
       public defaultValueKind: CONSTANT,
       public defaultValueIndex: number
     ) {
-      super(kind, name);
+      super(abc, kind, name);
     }
   }
 
   export class MethodTraitInfo extends TraitInfo {
+    public method: Function = null;
     constructor(
+      abc: ABCFile,
       kind: TRAIT,
       name: Multiname | number,
       public methodInfo: MethodInfo | number
     ) {
-      super(kind, name);
+      super(abc, kind, name);
     }
 
     getMethodInfo(): MethodInfo {
@@ -213,11 +328,12 @@ module Shumway.AVMX {
 
   export class ClassTraitInfo extends TraitInfo {
     constructor(
+      abc: ABCFile,
       kind: TRAIT,
       name: Multiname | number,
-      public classInfo: number
+      public classInfo: ClassInfo
     ) {
-      super(kind, name);
+      super(abc, kind, name);
     }
   }
 
@@ -272,6 +388,7 @@ module Shumway.AVMX {
 
   export class InstanceInfo extends Info {
     public classInfo: ClassInfo = null;
+    public runtimeTraits: Traits = null;
     constructor(
       public abc: ABCFile,
       public name: Multiname | number,
@@ -279,10 +396,17 @@ module Shumway.AVMX {
       public flags: number,
       public protectedNs: number,
       public interfaces: number [],
-      public initializer: number,
+      public initializer: MethodInfo | number,
       public traits: Traits
     ) {
       super();
+    }
+
+    getInitializer(): MethodInfo {
+      if (typeof this.initializer === "number") {
+        this.initializer = this.abc.getMethodInfo(<number>this.initializer);
+      }
+      return <MethodInfo>this.initializer;
     }
 
     getName(): Multiname {
@@ -309,10 +433,14 @@ module Shumway.AVMX {
       this.traits.trace(writer);
       writer.outdent();
     }
+
+    isInterface(): boolean {
+      return !!(this.flags & CONSTANT.ClassInterface);
+    }
   }
 
   export class ScriptInfo extends Info {
-    public global: Global = null;
+    public global: AXGlobal = null;
     public state: ScriptInfoState = ScriptInfoState.None;
     constructor(
       public abc: ABCFile,
@@ -334,6 +462,7 @@ module Shumway.AVMX {
   }
 
   export class ClassInfo extends Info {
+    public trait: ClassTraitInfo = null;
     constructor(
       public abc: ABCFile,
       public instanceInfo: InstanceInfo,
@@ -343,6 +472,21 @@ module Shumway.AVMX {
       super();
     }
 
+    getNativeMetadata(): MetadataInfo {
+      if (!this.trait) {
+        return null;
+      }
+      var metadata = this.trait.getMetadata();
+      if (!metadata) {
+        return null;
+      }
+      for (var i = 0; i < metadata.length; i++) {
+        if (metadata[i].getName() === "native") {
+          return metadata[i];
+        }
+      }
+      return null;
+    }
 
     getInitializer(): MethodInfo {
       if (typeof this.initializer === "number") {
@@ -375,6 +519,7 @@ module Shumway.AVMX {
   }
 
   export class MethodBodyInfo extends Info {
+    public activationPrototype: Object = null;
     constructor(
       public maxStack: number,
       public localCount: number,
@@ -393,6 +538,7 @@ module Shumway.AVMX {
   }
 
   export class MethodInfo {
+    public trait: MethodTraitInfo = null;
     private _body: MethodBodyInfo;
     constructor(
       public abc: ABCFile,
@@ -404,6 +550,22 @@ module Shumway.AVMX {
       public flags: number
     ) {
       this._body = null;
+    }
+
+    getNativeMetadata(): MetadataInfo {
+      if (!this.trait) {
+        return null;
+      }
+      var metadata = this.trait.getMetadata();
+      if (!metadata) {
+        return null;
+      }
+      for (var i = 0; i < metadata.length; i++) {
+        if (metadata[i].getName() === "native") {
+          return metadata[i];
+        }
+      }
+      return null;
     }
 
     getBody(): MethodBodyInfo {
@@ -421,9 +583,15 @@ module Shumway.AVMX {
       }
       return str;
     }
+
+    isNative(): boolean {
+      return !!(this.flags & METHOD.Native);
+    }
   }
 
   export class Multiname {
+    private static _nextID = 1;
+    public id: number = Multiname._nextID ++;
     constructor(
       public abc: ABCFile,
       public index: number,
@@ -436,7 +604,12 @@ module Shumway.AVMX {
     }
 
     public getMangledName(): any {
-      return "$" + this.name;
+      assert (this.isQName());
+      return "$" + this.namespaces[0].getMangledName() + this.name;
+    }
+
+    public getPublicMangledName(): any {
+      return Multiname.getPublicMangledName(this.name);
     }
 
     private _nameToString(): string {
@@ -528,9 +701,27 @@ module Shumway.AVMX {
       }
       return false;
     }
+
+    public static getPublicMangledName(value: any): any {
+      return "$" + Namespace.PUBLIC.getMangledName() + value;
+    }
+
+    public static getMangledName(value: any): any {
+      if (value instanceof Multiname) {
+        return value.getMangledName();
+      }
+      return Multiname.getPublicMangledName(value);
+    }
+
+    public static isPublicQualifiedName(value: any): boolean {
+      // FIX ME
+      return false;
+    }
   }
 
   export class Namespace {
+    public prefix: string = "";
+    private _mangledName: string = null;
     constructor(public abc: ABCFile, public kind: CONSTANT, public name: string) {
       assert (kind !== undefined);
     }
@@ -538,6 +729,41 @@ module Shumway.AVMX {
     toString() {
       return CONSTANT[this.kind] + (this.name !== "" ? ":" + this.name : "");
     }
+
+    private static _knownNames = [
+      ""
+    ];
+
+    private static _hashNamespace(kind: CONSTANT, name: string, prefix: string) {
+      var index = Namespace._knownNames.indexOf(name);
+      if (index >= 0) {
+        return kind << 2 | index;
+      }
+      var data = new Int32Array(1 + name.length + prefix.length);
+      var j = 0;
+      data[j++] = kind;
+      for (var i = 0; i < name.length; i++) {
+        data[j++] = name.charCodeAt(i);
+      }
+      for (var i = 0; i < prefix.length; i++) {
+        data[j++] = prefix.charCodeAt(i);
+      }
+      return Shumway.HashUtilities.hashBytesTo32BitsMD5(data, 0, j);
+    }
+
+    public getMangledName(): string {
+      if (this._mangledName !== null) {
+        return this._mangledName;
+      }
+      return this._mangledName = Shumway.StringUtilities.variableLengthEncodeInt32(Namespace._hashNamespace(this.kind, this.name, this.prefix))
+    }
+
+    public static PUBLIC = new Namespace(null, CONSTANT.Namespace, "");
+    public static PROTECTED = new Namespace(null, CONSTANT.ProtectedNamespace, "");
+    public static PROXY = new Namespace(null, CONSTANT.Namespace, "http://www.adobe.com/2006/actionscript/flash/proxy");
+    public static VECTOR = new Namespace(null, CONSTANT.Namespace, "__AS3__.vec");
+    public static VECTOR_PACKAGE = new Namespace(null, CONSTANT.PackageInternalNs, "__AS3__.vec");
+    public static BUILTIN = new Namespace(null, CONSTANT.PrivateNs, "builtin.as$0");
   }
 
   export class ABCFile {
@@ -737,7 +963,7 @@ module Shumway.AVMX {
       var s = this._stream;
 
       var nx;
-      var nm;
+      var nm = -1;
 
       var kind = s.readU8();
       switch (kind) {
@@ -774,7 +1000,7 @@ module Shumway.AVMX {
           break;
       }
 
-      var name = this.getString(nm);
+      var name = nm >= 0 ? this.getString(nm) : null;
       var namespaces = nx >= 0 ? [this.getNamespace(nx)] : this.getNamespaceSet(Math.abs(nx) - 1);
 
       return new Multiname(this, i, kind, namespaces, name);
@@ -981,6 +1207,27 @@ module Shumway.AVMX {
       }
     }
 
+    public getMetadataInfo(i: number): MetadataInfo {
+      release || assert(i >= 0 && i < this._metadata.length);
+      var mi = this._metadata[i];
+      if (mi === undefined) {
+        var s = this._stream;
+        s.seek(this._metadataInfoOffsets[i]);
+        var name = s.readU30(); // Name
+        var itemCount = s.readU30(); // Item Count
+        var keys = new Uint32Array(itemCount);
+        for (var j = 0; j < itemCount; j++) {
+          keys[j] = s.readU30();
+        }
+        var values = new Uint32Array(itemCount);
+        for (var j = 0; j < itemCount; j++) {
+          values[j] = s.readU30();
+        }
+        mi = this._metadata[i] = new MetadataInfo(this, name, keys, values);
+      }
+      return mi;
+    }
+
     private _parseInstanceAndClassInfos() {
       var s = this._stream;
       var n = s.readU30();
@@ -996,7 +1243,7 @@ module Shumway.AVMX {
       s.seek(o);
     }
 
-    private _parseInstanceInfo() {
+    private _parseInstanceInfo(): InstanceInfo {
       var s = this._stream;
       var name = s.readU30();
       var superName = s.readU30();
@@ -1035,7 +1282,7 @@ module Shumway.AVMX {
       var kind = tag & 0x0F;
       var attributes = (tag >> 4) & 0x0F;
 
-      var trait;
+      var trait: TraitInfo;
       switch (kind) {
         case TRAIT.Slot:
         case TRAIT.Const:
@@ -1046,20 +1293,22 @@ module Shumway.AVMX {
           if (valueIndex !== 0) {
             valueKind = s.readU8();
           }
-          trait = new SlotTraitInfo(kind, name, slot, type, valueIndex, valueKind);
+          trait = new SlotTraitInfo(this, kind, name, slot, type, valueIndex, valueKind);
           break;
         case TRAIT.Method:
         case TRAIT.Setter:
         case TRAIT.Getter:
           var dispID = s.readU30(); // Tamarin optimization.
-          var methodInfo = s.readU30();
-          // this.methodInfo.name = this.name;
-          trait = new MethodTraitInfo(kind, name, methodInfo);
+          var methodInfoIndex = s.readU30();
+          var o = s.position;
+          var methodInfo = this.getMethodInfo(methodInfoIndex);
+          trait = methodInfo.trait = new MethodTraitInfo(this, kind, name, methodInfo);
+          s.seek(o);
           break;
         case TRAIT.Class:
           var slot = s.readU30();
-          var classInfo = s.readU30();
-          trait = new ClassTraitInfo(kind, name, classInfo);
+          var classInfo = this.classes[s.readU30()];
+          trait = classInfo.trait = new ClassTraitInfo(this, kind, name, classInfo);
           break;
         default:
           release || assert(false, "Unknown trait kind: " + TRAIT[kind] + " " + kind);
@@ -1199,6 +1448,8 @@ module Shumway.AVMX {
     }
 
     trace(writer: IndentingWriter) {
+      return false;
+
       for (var i = 0; i < this._methodBodies.length; i++) {
         var methodBody = this._methodBodies[i];
         if (methodBody) {
@@ -1224,8 +1475,6 @@ module Shumway.AVMX {
       writer.writeLn("InstanceInfos: " + this.instances.length);
       writer.writeLn("ClassInfos: " + this.classes.length);
       writer.writeLn("ScriptInfos: " + this.scripts.length);
-
-      return false;
 
       writer.writeLn("");
 

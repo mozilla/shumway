@@ -1,67 +1,273 @@
 interface IMetaObjectProtocol {
   axHasPropertyInternal(mn: Shumway.AVMX.Multiname): boolean;
   axSetProperty(mn: Shumway.AVMX.Multiname, value: any);
+  axSetPublicProperty(nm: any, value: any);
 }
 
 interface Object extends IMetaObjectProtocol {
 
 }
 
+var $: Shumway.AVMX.SecurityDomain = null;
+
 module Shumway.AVMX {
 
   export enum ScriptInfoState {
-    None      = 0,
+    None = 0,
     Executing = 1,
-    Executed  = 2
+    Executed = 2
   }
 
   import assert = Shumway.Debug.assert;
   import boxValue = Shumway.ObjectUtilities.boxValue;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
+
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
+
+  import ASClass = Shumway.AVMX.AS.ASClass;
 
   import sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
   var writer = new IndentingWriter();
+
+  /**
+   * Similar to |toString| but returns |null| for |null| or |undefined| instead
+   * of "null" or "undefined".
+   */
+  export function asCoerceString(x): string {
+    if (typeof x === "string") {
+      return x;
+    } else if (x == undefined) {
+      return null;
+    }
+    return x + '';
+  }
+
+  export function asCoerceInt(x): number {
+    return x | 0;
+  }
+
+  export function asCoerceUint(x): number {
+    return x >>> 0;
+  }
+
+  export function asCoerceNumber(x): number {
+    return +x;
+  }
+
+  export function asCoerceBoolean(x): boolean {
+    return !!x;
+  }
+
+  export function asCoerceObject(x): Object {
+    if (x instanceof Boolean) {
+      return x.valueOf();
+    } else if (x == undefined) {
+      return null;
+    }
+    if (typeof x === 'string' || typeof x === 'number') {
+      return x;
+    }
+    return Object(x);
+  }
+
+  export function asDefaultCompareFunction(a, b) {
+    return String(a).localeCompare(String(b));
+  }
+
+  export function asCompare(a: any, b: any, options: SORT, compareFunction?) {
+    release || Shumway.Debug.assertNotImplemented(!(options & SORT.UNIQUESORT), "UNIQUESORT");
+    release || Shumway.Debug.assertNotImplemented(!(options & SORT.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+    var result = 0;
+    if (!compareFunction) {
+      compareFunction = asDefaultCompareFunction;
+    }
+    if (options & SORT.CASEINSENSITIVE) {
+      a = String(a).toLowerCase();
+      b = String(b).toLowerCase();
+    }
+    if (options & SORT.NUMERIC) {
+      a = toNumber(a);
+      b = toNumber(b);
+      result = a < b ? -1 : (a > b ? 1 : 0);
+    } else {
+      result = compareFunction(a, b);
+    }
+    if (options & SORT.DESCENDING) {
+      result *= -1;
+    }
+    return result;
+  }
+
+  /**
+   * ActionScript 3 has different behaviour when deciding whether to call toString or valueOf
+   * when one operand is a string. Unlike JavaScript, it calls toString if one operand is a
+   * string and valueOf otherwise. This sucks, but we have to emulate this behaviour because
+   * YouTube depends on it.
+   *
+   * AS3 also overloads the `+` operator to concatenate XMLs/XMLLists instead of stringifying them.
+   */
+  export function asAdd(l: any, r: any): any {
+    if (typeof l === "string" || typeof r === "string") {
+      return String(l) + String(r);
+    }
+    if (isXMLCollection(l) && isXMLCollection(r)) {
+      // FIXME
+      // return AS.ASXMLList.addXML(l, r);
+    }
+    return l + r;
+  }
+
+  function isXMLCollection(x): boolean {
+    // FIXME
+    return false;
+    //return x instanceof AS.ASXML ||
+    //       x instanceof AS.ASXMLList;
+  }
+
+  function isXMLType(x): boolean {
+    // FIX ME
+    return false;
+    //return x instanceof AS.ASXML ||
+    //       x instanceof AS.ASXMLList ||
+    //       x instanceof AS.ASQName ||
+    //       x instanceof AS.ASNamespace;
+  }
+
+  export function asEquals(left: any, right: any): boolean {
+    // See E4X spec, 11.5 Equality Operators for why this is required.
+    if (isXMLType(left)) {
+      return left.equals(right);
+    }
+    if (isXMLType(right)) {
+      return right.equals(left);
+    }
+    return left == right;
+  }
 
   function axHasPropertyInternal(mn: Multiname): boolean {
     return this.traits.indexOf(mn) >= 0;
   }
 
   function axSetProperty(mn: Multiname, value: any) {
-    writer.writeLn("axSetProperty: " + mn + " " + value);
+    if (mn.isRuntimeName() && isNumeric(mn.name)) {
+      this[mn.name] = value;
+    }
     var t = this.traits.getTrait(mn);
     if (t) {
       this[t.getName().getMangledName()] = value;
       return;
     }
-    assert(false, "Cannot set property: " + mn);
+    this[mn.getPublicMangledName()] = value;
   }
 
   function axGetProperty(mn: Multiname): any {
-    writer.writeLn("axGetProperty: " + mn);
+    if (mn.isRuntimeName() && isNumeric(mn.name)) {
+      return this[mn.name];
+    }
     var t = this.traits.getTrait(mn);
     if (t) {
       return this[t.getName().getMangledName()];
     }
-    assert(false, "Cannot get property: " + mn);
+    return this[mn.getPublicMangledName()];
   }
 
   function axCallProperty(mn: Multiname, args: any []): any {
-    writer.writeLn("axCallProperty: " + mn);
     var t = this.traits.getTrait(mn);
+    var m;
     if (t) {
-      var method = this[t.getName().getMangledName()];
-      return method.apply(this, args);
+      m = this[t.getName().getMangledName()];
+    } else {
+      m = this[mn.getPublicMangledName()];
     }
-    assert(false, "Cannot call property: " + mn);
+    assert(m, mn);
+    return m.apply(this, args);
   }
 
-  defineNonEnumerableProperty(Object.prototype, "axHasPropertyInternal", axHasPropertyInternal);
-  defineNonEnumerableProperty(Object.prototype, "axSetProperty", axSetProperty);
-  defineNonEnumerableProperty(Object.prototype, "axGetProperty", axGetProperty);
-  defineNonEnumerableProperty(Object.prototype, "axCallProperty", axCallProperty);
+  function axArrayGetProperty(mn: Multiname): any {
+    if (mn.isRuntimeName() && isNumeric(mn.name)) {
+      return this.value[mn.name];
+    }
+    var t = this.traits.getTrait(mn);
+    if (t) {
+      return this[t.getName().getMangledName()];
+    }
+    return this.value[mn.getPublicMangledName()];
+  }
+
+  function axArraySetProperty(mn: Multiname, value: any) {
+    if (mn.isRuntimeName() && isNumeric(mn.name)) {
+      this.value[mn.name] = value;
+    }
+    var t = this.traits.getTrait(mn);
+    if (t) {
+      this[t.getName().getMangledName()] = value;
+      return;
+    }
+    this.value[mn.getPublicMangledName()] = value;
+  }
+
+  function axFunctionApply(thisArg: any, argArray?: any): any {
+    return this.value.apply(thisArg, argArray);
+  }
+
+  function axFunctionCall(thisArg: any, ...argArray: any[]): any {
+    return this.value.apply(thisArg, argArray);
+  }
+
+  export function axSetPublicProperty(nm: any, value: any) {
+    this[Multiname.getPublicMangledName(nm)] = value;
+  }
+
+  export function asGetSlot(object: ITraits, i: number) {
+    return object[object.traits.getSlot(i).getName().getMangledName()];
+  }
+
+  export function asSetSlot(object: ITraits, i: number, value: any) {
+    var t = object.traits.getSlot(i);
+    object[t.getName().getMangledName()] = value;
+    //var slotInfo = object.asSlots.byID[index];
+    //if (slotInfo.const) {
+    //  return;
+    //}
+    //var name = slotInfo.name;
+    //var type = slotInfo.type;
+    //if (type && type.coerce) {
+    //  object[name] = type.coerce(value);
+    //} else {
+    //  object[name] = value;
+    //}
+  }
+
+  export function asTypeOf(x: any): string {
+    // ABC doesn't box primitives, so typeof returns the primitive type even when
+    // the value is new'd
+    if (x) {
+      if (x.constructor === String) {
+        return "string"
+      } else if (x.constructor === Number) {
+        return "number"
+      } else if (x.constructor === Boolean) {
+        return "boolean"
+      } else if (x instanceof Shumway.AVM2.AS.ASXML ||
+        x instanceof Shumway.AVM2.AS.ASXMLList) {
+        return "xml";
+      } else if (Shumway.AVM2.AS.ASClass.isType(x)) {
+        return "object";
+      }
+    }
+    return typeof x;
+  }
+
+  //defineNonEnumerableProperty(Object.prototype, "axHasPropertyInternal", axHasPropertyInternal);
+  //defineNonEnumerableProperty(Object.prototype, "axSetProperty", axSetProperty);
+  //defineNonEnumerableProperty(Object.prototype, "axSetPublicProperty", axSetPublicProperty);
+  //defineNonEnumerableProperty(Object.prototype, "axGetProperty", axGetProperty);
+  //defineNonEnumerableProperty(Object.prototype, "axCallProperty", axCallProperty);
+  //
+  //defineNonEnumerableProperty(Function.prototype, "axCall", Function.prototype.call);
+  //defineNonEnumerableProperty(Function.prototype, "axApply", Function.prototype.apply);
 
   /**
    * All objects with Traits must implement this interface.
@@ -92,7 +298,7 @@ module Shumway.AVMX {
         if (current.object === object) {
           return depth;
         }
-        depth ++;
+        depth++;
         current = current.parent;
       }
       return -1;
@@ -109,21 +315,20 @@ module Shumway.AVMX {
     }
 
     public findScopeProperty(mn: Multiname, strict: boolean, scopeOnly: boolean): Object {
-      writer.writeLn("findScopeProperty: " + mn + " in " + this.object);
       var object: Object;
       if (!mn.isRuntime() && !scopeOnly) {
-        if ((object = this.cache[mn.index])) {
+        if ((object = this.cache[mn.id])) {
           return object;
         }
       }
       // Scope lookups should not be trapped by proxies.
       if (this.object.axHasPropertyInternal(mn)) {
-        return (this.isWith || mn.isRuntime()) ? this.object : (this.cache[mn.index] = this.object);
+        return (this.isWith || mn.isRuntime()) ? this.object : (this.cache[mn.id] = this.object);
       }
       if (this.parent) {
         var object = this.parent.findScopeProperty(mn, strict, scopeOnly);
         if (mn.kind === CONSTANT.QName) {
-          this.cache[mn.index] = object;
+          this.cache[mn.id] = object;
         }
         return object;
       }
@@ -131,7 +336,7 @@ module Shumway.AVMX {
         return null;
       }
       // If we can't find the property look in the domain.
-      var globalObject = <Global><any>this.global.object;
+      var globalObject = <AXGlobal><any>this.global.object;
       if ((object = globalObject.applicationDomain.findProperty(mn, strict, true))) {
         return object;
       }
@@ -141,26 +346,72 @@ module Shumway.AVMX {
     }
   }
 
-  export class Global implements ITraits {
-    traits: Traits;
-
-    constructor(
-      public applicationDomain: ApplicationDomain,
-      public scriptInfo: ScriptInfo
-    ) {
-      this.traits = scriptInfo.traits;
-      this.traits.resolve();
+  function createMethodForTrait(methodTraitInfo: MethodTraitInfo, scope: Scope) {
+    if (methodTraitInfo.method) {
+      return methodTraitInfo.method;
     }
-
-    toString() {
-      return "[Global Object]";
+    var methodInfo = methodTraitInfo.getMethodInfo();
+    var method;
+    if (methodInfo.flags & METHOD.Native) {
+      var metadata = methodInfo.getNativeMetadata();
+      if (metadata) {
+        method = AS.getNative(metadata.getValueAt(0));
+      } else {
+        method = AS.getMethodOrAccessorNative(methodTraitInfo);
+      }
+      assert(method, "Cannot find native: " + methodTraitInfo);
+    } else {
+      method = function () {
+        return interpret(this, methodInfo, scope, sliceArguments(arguments));
+      };
     }
-
-    asHasPropertyInternalMn(mn: Multiname): boolean {
-      this.scriptInfo.trace(writer);
-      writer.writeLn("Found: " + this.scriptInfo.traits.indexOf(mn));
-      return false;
+    if (!release) {
+      method.toString = function () {
+        return "Interpret " + methodTraitInfo.toString();
+      }
     }
+    methodTraitInfo.method = method;
+    return method;
+  }
+
+  export function applyTraits(object: ITraits, traits: Traits, scope: Scope) {
+    object.traits = traits;
+    var T = traits.traits;
+    for (var i = 0; i < T.length; i++) {
+      var t = T[i];
+      if (t.kind === TRAIT.Method || t.kind === TRAIT.Getter || t.kind === TRAIT.Setter) {
+        var method = createMethodForTrait(<MethodTraitInfo>t, scope);
+        var mangledName = t.getName().getMangledName();
+        if (t.kind === TRAIT.Method) {
+          defineNonEnumerableProperty(object, mangledName, method);
+        } else {
+          defineNonEnumerableGetterOrSetter(object, mangledName, method, t.kind === TRAIT.Getter)
+        }
+      }
+    }
+  }
+
+  export interface AXGlobal extends ITraits {
+    applicationDomain: ApplicationDomain;
+    scriptInfo: ScriptInfo;
+    scope: Scope;
+  }
+
+  export interface AXClass extends ITraits, Function {
+    scope: Scope;
+    superClass: AXClass;
+    classInfo: ClassInfo;
+    tPrototype: Object;
+    dPrototype: Object;
+    prototype: Object
+  }
+
+  export interface AXFunction extends ITraits {
+
+  }
+
+  export interface AXActivation extends ITraits {
+
   }
 
   /**
@@ -169,13 +420,247 @@ module Shumway.AVMX {
   export class SecurityDomain {
     public system: ApplicationDomain;
     public application: ApplicationDomain;
+    //public Object;
+    //public Number;
+    //public String;
+    public AXObject;
+    public AXArray;
+    public AXGlobal;
+    public AXClass;
+    public AXFunction;
+    public AXActivation;
     constructor() {
-      this.system = new ApplicationDomain(null);
-      this.system.securityDomain = this;
-      this.application = new ApplicationDomain(this.system);
+      this.system = new ApplicationDomain(this, null);
+      this.application = new ApplicationDomain(this, this.system);
     }
+
     findDefiningABC(mn: Multiname): ABCFile {
       return null;
+    }
+
+    createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
+      return new this.AXClass(classInfo, superClass, scope);
+    }
+
+    createFunction(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean): AXFunction {
+      return new this.AXFunction(function () {
+        return interpret(this, methodInfo, scope, sliceArguments(arguments));
+      });
+    }
+
+    createActivation(methodInfo: MethodInfo): AXActivation {
+      var body = methodInfo.getBody();
+      if (!body.activationPrototype) {
+        body.activationPrototype = new this.AXActivation(body);
+      }
+      return Object.create(body.activationPrototype);
+    }
+
+    box(v: any) {
+      if (Object.prototype.isPrototypeOf.call(this.AXObject.dPrototype, v)) {
+        return v;
+      }
+      if (v instanceof Array) {
+        return new this.AXArray(v);
+      }
+      assert(false, "Cannot box: " + v);
+    }
+
+    initializeGlobals() {
+      var classClassInfo = this.system.findClassInfo("Class");
+      var staticClassClassTraits = classClassInfo.instanceInfo.traits;
+
+      classClassInfo.instanceInfo.traits.resolve();
+
+      var self = this;
+
+      var nativeClasses = Object.create(null);
+
+      // Object
+      var AXObject: AXClass = <any>function axObject() {};
+      AXObject.dPrototype = Object.create(null);
+      AXObject.tPrototype = Object.create(AXObject.dPrototype);
+      AXObject.prototype = AXObject.tPrototype;
+
+      // Class
+      var AXClass: AXClass = <any>function axClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope) {
+        var className = classInfo.instanceInfo.getName().name;
+
+        var self = nativeClasses[className] || this;
+
+        self.scope = scope;
+        self.classInfo = classInfo;
+        self.superClass = superClass;
+
+        var needsPrototypes = !self.dPrototype;
+        if (needsPrototypes) {
+          self.dPrototype = Object.create(superClass.dPrototype);
+          self.tPrototype = Object.create(self.dPrototype);
+        }
+
+        // Prepare static traits.
+        var staticTraits = staticClassClassTraits.concat(classInfo.traits);
+        staticTraits.resolve();
+        self.traits = staticTraits;
+        applyTraits(self, staticTraits, scope);
+
+        // Prepare instance traits.
+        var instanceTraits = superClass ? superClass.classInfo.instanceInfo.runtimeTraits.concat(classInfo.instanceInfo.traits)
+                                        : classInfo.instanceInfo.traits;
+        instanceTraits.resolve();
+        classInfo.instanceInfo.runtimeTraits = instanceTraits;
+        self.tPrototype.traits = instanceTraits;
+        applyTraits(self.tPrototype, instanceTraits, scope);
+        return self;
+      };
+
+      AXClass.dPrototype = Object.create(AXObject.tPrototype);
+      AXClass.tPrototype = Object.create(AXClass.dPrototype);
+      AXClass.prototype = AXClass.tPrototype;
+      AXClass.prototype.toString = function () {
+        return "[Class " + this.classInfo.instanceInfo.getName().name + "]";
+      };
+
+      // Array
+      var AXArray: AXClass = <any>function axArray(v: Array<any>) {
+        this.value = v;
+      };
+      AXArray.dPrototype = Object.create(AXObject.tPrototype);
+      AXArray.tPrototype = Object.create(AXArray.dPrototype);
+      AXArray.prototype = AXArray.tPrototype;
+      AXArray.prototype.toString = function () {
+        return this.value.toString();
+      };
+
+      var AXGlobal = <any>function axGlobal(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
+        this.applicationDomain = applicationDomain;
+        this.scriptInfo = scriptInfo;
+        this.traits = scriptInfo.traits;
+        this.traits.resolve();
+        this.scope = new Scope(null, this, false);
+        applyTraits(this, this.traits, this.scope);
+      };
+      AXGlobal.prototype = Object.create(AXObject.dPrototype);
+      AXGlobal.prototype.toString = function () {
+        return "[Global Object]";
+      };
+
+      var AXActivation = <any>function AXActivation(methodBodyInfo: MethodBodyInfo) {
+        methodBodyInfo.traits.resolve();
+        this.traits = methodBodyInfo.traits;
+      };
+      AXActivation.prototype = Object.create(AXObject.dPrototype);
+      AXActivation.prototype.toString = function () {
+        return "[Activation]";
+      };
+
+      var AXFunction: AXClass = <any>function axFunction(v: Function) {
+        this.value = v;
+      };
+      AXFunction.dPrototype = Object.create(AXObject.tPrototype);
+      AXFunction.tPrototype = Object.create(AXFunction.dPrototype);
+      AXFunction.prototype = AXFunction.tPrototype;
+      AXFunction.prototype.toString = function () {
+        return "[Function Object]";
+      };
+
+      function defineClasses(exportName, name, value: AXClass) {
+        self[exportName] = nativeClasses[name] = value;
+        value.dPrototype.toString = function () {
+          return "[" + name + ".prototype]";
+        };
+        (<any>Object).setPrototypeOf(value,   AXClass.prototype);
+      }
+
+      defineClasses("AXObject", "Object", AXObject);
+      defineClasses("AXClass", "Class", AXClass);
+      defineClasses("AXFunction", "Function", AXFunction);
+      defineClasses("AXArray", "Array", AXArray);
+
+      self.AXGlobal = AXGlobal;
+      self.AXActivation = AXActivation;
+
+      (<any>Object).setPrototypeOf(AXGlobal, AXObject.prototype);
+      (<any>Object).setPrototypeOf(AXActivation, AXObject.prototype);
+
+      var D = defineNonEnumerableProperty;
+
+      D(AXObject.dPrototype, "axHasPropertyInternal", axHasPropertyInternal);
+      D(AXObject.dPrototype, "axSetProperty", axSetProperty);
+      D(AXObject.dPrototype, "axSetPublicProperty", axSetPublicProperty);
+      D(AXObject.dPrototype, "axGetProperty", axGetProperty);
+      D(AXObject.dPrototype, "axCallProperty", axCallProperty);
+
+
+      var P = function defineNonEnumerablePublicProperty(object, name, value) {
+        D(object, Multiname.getPublicMangledName(name), value);
+      };
+
+      var Ap = Array.prototype;
+
+      P(AXArray.dPrototype, "push", function () { return Ap.push.apply(this.value, arguments); });
+      P(AXArray.dPrototype, "pop", function () { return Ap.pop.apply(this.value, arguments); });
+      P(AXArray.dPrototype, "unshift", function () { return Ap.unshift.apply(this.value, arguments); });
+      P(AXArray.dPrototype, "reverse", function () { return Ap.reverse.apply(this.value, arguments); });
+      P(AXArray.dPrototype, "concat", function () {
+        var value: Array<any> = this.value.slice();
+        for (var i = 0; i < arguments.length; i++) {
+          var a = arguments[i];
+          if (a instanceof AXArray) {
+            Ap.push.apply(value, a);
+          } else {
+            value.push(a);
+          }
+        }
+        return new self.AXArray(value);
+      });
+      P(AXArray.dPrototype, "indexOf", function () { return Ap.indexOf.apply(this.value, arguments); });
+      P(AXArray.dPrototype, "lastIndexOf", function () { return Ap.lastIndexOf.apply(this.value, arguments); });
+      P(AXArray.dPrototype, "every", function (callbackfn: any, thisArg?) {
+        return Ap.every.call(this.value, callbackfn.value, thisArg);
+      });
+
+      //definePublicProperties(Array.prototype, [
+      //  "join", "toString", "pop", "push", "reverse", "concat", "slice", "shift",
+      //  "unshift", "indexOf", "lastIndexOf", "forEach", "map", "filter", "some"
+      //], Array.prototype);
+      //
+
+      D(AXArray.prototype, "axGetProperty", axArrayGetProperty);
+      D(AXArray.prototype, "axSetProperty", axArraySetProperty);
+
+      D(AXFunction.prototype, "axCall", axFunctionCall);
+      D(AXFunction.prototype, "axApply", axFunctionApply);
+
+      //self.Number = function Number(v) {
+      //  this.value = v;
+      //};
+      //self.Number.prototype = Object.create(this.Object.prototype);
+      //
+      //self.String = function String(v) {
+      //  this.value = v;
+      //};
+      //self.String.prototype = Object.create(this.Object.prototype);
+      //
+      //self.Global = function Global(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
+      //  this.applicationDomain = applicationDomain;
+      //  this.scriptInfo = scriptInfo;
+      //  this.traits = scriptInfo.traits;
+      //  this.traits.resolve();
+      //  this.scope = new Scope(null, this, false);
+      //  applyTraits(this, this.traits, this.scope);
+      //};
+      //
+      //self.Global.prototype = Object.create(this.Object.prototype);
+      //self.Global.prototype.toString = function () {
+      //  return new String("[Global Object]");
+      //};
+      //
+
+
+
+      //
+      //$ = self;
     }
   }
 
@@ -197,8 +682,8 @@ module Shumway.AVMX {
 
     private _abcs: ABCFile [];
 
-    constructor(parent: ApplicationDomain) {
-      this.securityDomain = null;
+    constructor(securityDomain: SecurityDomain, parent: ApplicationDomain) {
+      this.securityDomain = securityDomain;
       this.parent = parent;
       this.system = parent ? parent.system : this;
       this._abcs = [];
@@ -212,8 +697,12 @@ module Shumway.AVMX {
 
     public loadAndExecuteABC(abc: ABCFile) {
       this.loadABC(abc);
+      this.executeABC(abc);
+    }
+
+    public executeABC(abc: ABCFile) {
       var lastScript = abc.scripts[abc.scripts.length - 1];
-      this._executeScript(lastScript);
+      this.executeScript(lastScript);
     }
 
     public findClassInfo(name: string) {
@@ -229,21 +718,18 @@ module Shumway.AVMX {
       return null;
     }
 
-    private _executeScript(scriptInfo: ScriptInfo) {
+    public executeScript(scriptInfo: ScriptInfo) {
       assert (scriptInfo.state === ScriptInfoState.None);
 
       writer.writeLn("Running Script: " + scriptInfo);
-      var global = new Global(this, scriptInfo);
+      var global = new this.securityDomain.AXGlobal(this, scriptInfo);
       scriptInfo.global = global;
-      var scope = new Scope(null, global, false);
-
       scriptInfo.state = ScriptInfoState.Executing;
-      interpret(<any>global, scriptInfo.getInitializer(), scope, []);
+      interpret(<any>global, scriptInfo.getInitializer(), global.scope, []);
       scriptInfo.state = ScriptInfoState.Executed;
     }
 
-    public findProperty(mn: Multiname, strict: boolean, execute: boolean): Global {
-      writer.writeLn("Domain::findProperty: " + mn + " " + mn.index);
+    public findProperty(mn: Multiname, strict: boolean, execute: boolean): AXGlobal {
       var script = this.findDefiningScript(mn, execute);
       if (script) {
         return script.global;
@@ -268,7 +754,7 @@ module Shumway.AVMX {
           var script = scripts[j];
           var traits = script.traits;
           traits.resolve();
-          var index = traits.indexOf(mn);
+          var index = traits.indexOf(mn, -1);
           if (index > 0) {
             if (execute) {
               this._ensureScriptIsExecuted(script);
@@ -289,118 +775,15 @@ module Shumway.AVMX {
     }
 
     private _ensureScriptIsExecuted(script: ScriptInfo) {
-      writer.writeLn("Script State: " + script.state);
       if (script.state === ScriptInfoState.None) {
-        this._executeScript(script);
+        this.executeScript(script);
       }
     }
   }
 
-  function createMethodForTrait(methodTraitInfo: MethodTraitInfo, scope: Scope) {
-    var methodInfo = methodTraitInfo.getMethodInfo();
-    var method;
-    if (methodInfo.flags === METHOD.Native) {
-      var natives = getNativesForHolder(methodTraitInfo.holder);
-      var mangledName = methodTraitInfo.getName().getMangledName();
-      method = natives && natives[mangledName];
-      assert (method, "Cannot find native: " + mangledName);
-    } else {
-      method = function () {
-        return interpret(this, methodInfo, scope, sliceArguments(arguments));
-      };
+  export function createMethod(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean) {
+    return function () {
+      return interpret(this, methodInfo, scope, sliceArguments(arguments));
     }
-    if (!release) {
-      method.toString = function () {
-        return "Interpret " + methodTraitInfo.toString();
-      }
-    }
-    return method;
-  }
-
-  function getNativesForHolder(holder: Info): Object {
-    writer.writeLn("Holder: " + holder);
-    if (holder instanceof ClassInfo) {
-      var classInfo: ClassInfo = <ClassInfo>holder;
-      if (classInfo.instanceInfo.getName().name === "Object") {
-        return {
-          "$_setPropertyIsEnumerable": function (object: Object, name: string, enumerable: boolean) {
-            var descriptor = getOwnPropertyDescriptor(object, name);
-            descriptor.enumerable = enumerable;
-            Object.defineProperty(object, name, descriptor);
-          },
-          "$_dontEnumPrototype": function (object: Object, name: string, enumerable: boolean) {
-
-          },
-          "$_init": function (object: Object, name: string, enumerable: boolean) {
-
-          }
-        };
-      }
-    } else if (holder instanceof InstanceInfo) {
-      var instanceInfo: InstanceInfo = <InstanceInfo>holder;
-      if (instanceInfo.getName().name === "Class") {
-        return {
-          "$prototype": function () {
-            return this._dynamicPrototype;
-          }
-        };
-      }
-    } else if (holder instanceof ScriptInfo) {
-      var scriptInfo: ScriptInfo = <ScriptInfo>holder;
-    }
-  }
-
-  function applyTraitsBindings(object: Object, traits: Traits, scope: Scope) {
-    var T = traits.traits;
-    for (var i = 0; i < T.length; i++) {
-      var t = T[i];
-      if (t.kind === TRAIT.Method || t.kind === TRAIT.Getter || t.kind === TRAIT.Setter) {
-        var method = createMethodForTrait(<MethodTraitInfo>t, scope);
-        var mangledName = t.getName().getMangledName();
-        if (t.kind === TRAIT.Method) {
-          defineNonEnumerableProperty(object, mangledName, method);
-        } else {
-          defineNonEnumerableGetterOrSetter(object, mangledName, method, t.kind === TRAIT.Getter)
-        }
-      }
-    }
-  }
-
-  export class Klass implements ITraits {
-    public traits: Traits;
-    private _traitsPrototype: Object;
-    private _dynamicPrototype: Object;
-
-    constructor(
-      public classInfo: ClassInfo,
-      public superKlass: Klass,
-      public scope: Scope
-    ) {
-      this._applyClassTraits();
-      this._dynamicPrototype = superKlass ? Object.create(superKlass._dynamicPrototype) : Object.prototype;
-      this._traitsPrototype = Object.create(this._dynamicPrototype);
-    }
-
-    private _applyClassTraits() {
-      var classClassInfo = this.classInfo.abc.applicationDomain.findClassInfo("Class");
-
-      this.traits = classClassInfo.instanceInfo.traits.concat(this.classInfo.traits);
-      this.traits.resolve();
-      applyTraitsBindings(this, this.traits, this.scope);
-      this.traits.trace(writer);
-    }
-
-    toString() {
-      return "[Klass " + this.classInfo.instanceInfo.getName().name + "]";
-    }
-  }
-
-  export function createClass(classInfo: ClassInfo, superKlass: Klass, scope: Scope): Klass {
-    var klass = new Klass(classInfo, superKlass, scope);
-
-
-    interpret(klass, classInfo.getInitializer(), scope, []);
-
-    return klass;
   }
 }

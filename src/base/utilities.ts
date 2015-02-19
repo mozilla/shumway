@@ -201,7 +201,6 @@ module Shumway {
       }
       return isIndex(value) || isNumericString(value);
     }
-    // Debug.notImplemented(typeof value);
     return false;
   }
 

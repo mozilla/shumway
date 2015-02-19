@@ -33,6 +33,7 @@
 ///<reference path='bindings.ts' />
 ///<reference path='xregexp.ts' />
 
+///<reference path='nat.ts' />
 ///<reference path='native.ts' />
 ///<reference path='natives/GenericVector.ts' />
 ///<reference path='natives/int32Vector.ts' />

@@ -64,6 +64,7 @@ interface Object extends IProtocol {
 
 
   class: Shumway.AVM2.AS.ASClass;
+  asClass: Shumway.AVMX.AS.ASClass;
 
   asEnumerableKeys: any [];
   asLazyInitializer: Shumway.AVM2.Runtime.LazyInitializer;
@@ -81,6 +82,7 @@ interface Object extends IProtocol {
 interface Function {
   asCall(thisArg: any, ...argArray: any[]): any;
   asApply(thisArg: any, argArray?: any): any;
+  name: string;
 }
 
 module Shumway.AVM2.Runtime {

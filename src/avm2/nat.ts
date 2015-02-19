@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Mozilla Foundation
+ * Copyright 2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,79 +13,75 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module Shumway.AVMX.AS {
 
-interface Object {
-  __proto__: Object;
-}
-
-module Shumway.AVM2.AS {
-  
-  import Trait = Shumway.AVM2.ABC.Trait;
-  import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
-  import Namespace = Shumway.AVM2.ABC.Namespace;
-  import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
-  import Scope = Shumway.AVM2.Runtime.Scope;
+  import assert = Shumway.Debug.assert;
+  //import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
+  //import Scope = Shumway.AVM2.Runtime.Scope;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
   import hasOwnGetter = Shumway.ObjectUtilities.hasOwnGetter;
   import getOwnGetter = Shumway.ObjectUtilities.getOwnGetter;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import isNumber = Shumway.isNumber;
+  //import isNumber = Shumway.isNumber;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
+  //import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  //import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import assert = Shumway.Debug.assert;
+  //import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
-  import createFunction = Shumway.AVM2.Runtime.createFunction;
-  import Runtime = Shumway.AVM2.Runtime;
-  import IndentingWriter = Shumway.IndentingWriter;
+  //import createFunction = Shumway.AVM2.Runtime.createFunction;
+  //import Runtime = Shumway.AVM2.Runtime;
+  //import IndentingWriter = Shumway.IndentingWriter;
   import boxValue = Shumway.ObjectUtilities.boxValue;
-  import SORT = Shumway.AVM2.ABC.SORT;
+  //import SORT = Shumway.AVM2.ABC.SORT;
+  //
+  //import ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
+  //import InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
+  //
+  //import Int32Vector = Shumway.AVM2.AS.Int32Vector;
+  //import Uint32Vector = Shumway.AVM2.AS.Uint32Vector;
+  //import Float64Vector = Shumway.AVM2.AS.Float64Vector;
+  //import asCompare = Shumway.AVM2.Runtime.asCompare;
+  import pushMany = Shumway.ArrayUtilities.pushMany;
+  import Scope = Shumway.AVMX.Scope;
 
-  import ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
-  import InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
-
-  import Int32Vector = Shumway.AVM2.AS.Int32Vector;
-  import Uint32Vector = Shumway.AVM2.AS.Uint32Vector;
-  import Float64Vector = Shumway.AVM2.AS.Float64Vector;
-  import asCompare = Shumway.AVM2.Runtime.asCompare;
+  import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
 
   var debug = false;
 
   var writer = debug ? new IndentingWriter() : null;
 
   /**
-   * This is all very magical, things are not what they seem, beware!!!
-   *
-   * The AS3 Class Hierarchy can be expressed as TypeScript, which is nice because
-   * we get all sorts of compile time error checking and default arguments support.
-   *
-   * TODO: TS default argument support is not semantically equivalent to AS3 which
-   * uses the arguments.length, TS uses typeof argument === "undefined", so beware.
-   *
-   * For the most part, you can cut and paste AS3 code into TypeScript and it will
-   * parse correctly.
-   *
-   * The prototype chain configured by TypeScript is not actually used, We only use
-   * Class definitions as a templates from which we construct real AS3 classes.
-   *
-   * Linking:
-   *
-   * AS -> TS
-   *
-   * Native AS3 members are linked against TS members. A verification step makes
-   * sure all native members are implemented.
-   *
-   * TS -> AS
-   *
-   * For this you need to provide TS type definitions and then specify which
-   * properties should be made available.
-   *
-   */
+  * This is all very magical, things are not what they seem, beware!!!
+  *
+  * The AS3 Class Hierarchy can be expressed as TypeScript, which is nice because
+  * we get all sorts of compile time error checking and default arguments support.
+  *
+  * TODO: TS default argument support is not semantically equivalent to AS3 which
+  * uses the arguments.length, TS uses typeof argument === "undefined", so beware.
+  *
+  * For the most part, you can cut and paste AS3 code into TypeScript and it will
+  * parse correctly.
+  *
+  * The prototype chain configured by TypeScript is not actually used, We only use
+  * Class definitions as a templates from which we construct real AS3 classes.
+  *
+  * Linking:
+  *
+  * AS -> TS
+  *
+  * Native AS3 members are linked against TS members. A verification step makes
+  * sure all native members are implemented.
+  *
+  * TS -> AS
+  *
+  * For this you need to provide TS type definitions and then specify which
+  * properties should be made available.
+  *
+  */
 
   export enum InitializationFlags {
     NONE             = 0x0,
@@ -94,13 +90,14 @@ module Shumway.AVM2.AS {
   }
 
   /**
-   * In order to avoid shadowing of JS top level Objects we prefix the AS top level
-   * classes with the "AS" prefix.
-   */
+  * In order to avoid shadowing of JS top level Objects we prefix the AS top level
+  * classes with the "AS" prefix.
+  */
 
-  export class ASObject {
-    public static baseClass: typeof ASClass = null;
-    public static classInfo: ClassInfo;
+  export class ASObject implements ITraits {
+    public static traits: Traits;
+    public static asSuperClass: typeof ASClass = null;
+    public static classInfo: ClassInfo = null;
     public static instanceConstructor: any = Object;
     public static instanceConstructorNoInitialize: any = null;
 
@@ -122,6 +119,10 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [];
     public static traitsPrototype: Object;
     public static dynamicPrototype: Object;
+
+    public static tPrototype: Object;
+    public static dPrototype: Object;
+
     public static typeScriptPrototype: Object;
     public static defaultValue: any = null;
     public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
@@ -146,17 +147,17 @@ module Shumway.AVM2.AS {
       this.__proto__ = ASClass.prototype;
     }
 
-    static create(self: ASClass, baseClass: ASClass, instanceConstructor: any) {
+    static create(self: ASClass, asSuperClass: ASClass, instanceConstructor: any) {
       // ! The AS3 instanceConstructor is ignored.
-      self.baseClass = baseClass;
-      ASClass.create(self, baseClass, this.instanceConstructor);
+      self.asSuperClass = asSuperClass;
+      ASClass.create(self, asSuperClass, this.instanceConstructor);
     }
 
     public static initializeFrom(value: any) {
       return ASClassPrototype.initializeFrom.call(this, value);
     }
 
-    public static coerce: (value: any) => any = Runtime.asCoerceObject;
+    public static coerce: (value: any) => any = asCoerceObject;
 
     public static isInstanceOf: (value: any) => boolean;
     public static isType: (value: any) => boolean;
@@ -183,7 +184,7 @@ module Shumway.AVM2.AS {
     }
 
     static _setPropertyIsEnumerable(o, V: string, enumerable: boolean = true): void {
-      var name = Multiname.getPublicQualifiedName(V);
+      var name = Multiname.getPublicMangledName(V);
       var descriptor = getOwnPropertyDescriptor(o, name);
       descriptor.enumerable = !!enumerable;
       Object.defineProperty(o, name, descriptor);
@@ -200,13 +201,13 @@ module Shumway.AVM2.AS {
     }
 
     static _init() {
-      this.dynamicPrototype.asSetPublicProperty("hasOwnProperty", ASObject.prototype.native_hasOwnProperty);
-      this.dynamicPrototype.asSetPublicProperty("propertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
-      this.dynamicPrototype.asSetPublicProperty("setPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
-      this.dynamicPrototype.asSetPublicProperty("isPrototypeOf", ASObject.prototype.native_isPrototypeOf);
-      this.dynamicPrototype.asSetPublicProperty("toString", ASObject.prototype.toString);
-      this.dynamicPrototype.asSetPublicProperty("valueOf", ASObject.prototype.valueOf);
-      ASObject._dontEnumPrototype(this.dynamicPrototype);
+      this.dPrototype.axSetPublicProperty("hasOwnProperty", ASObject.prototype.native_hasOwnProperty);
+      this.dPrototype.axSetPublicProperty("propertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
+      this.dPrototype.axSetPublicProperty("setPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
+      this.dPrototype.axSetPublicProperty("isPrototypeOf", ASObject.prototype.native_isPrototypeOf);
+      this.dPrototype.axSetPublicProperty("toString", ASObject.prototype.toString);
+      this.dPrototype.axSetPublicProperty("valueOf", ASObject.prototype.valueOf);
+      ASObject._dontEnumPrototype(this.dPrototype);
     }
 
     // Hack to make the TypeScript compiler find the original Object.defineProperty.
@@ -216,6 +217,8 @@ module Shumway.AVM2.AS {
     static native_hasOwnProperty: (V: string) => boolean;
     static native_propertyIsEnumerable: (V: string) => boolean;
     static setPropertyIsEnumerable: (V: string, enumerable: boolean) => boolean;
+
+    traits: Traits = null;
 
     native_isPrototypeOf(V: Object): boolean {
       notImplemented("isPrototypeOf");
@@ -240,20 +243,21 @@ module Shumway.AVM2.AS {
      * This is the top level Object.prototype.toString() function.
      */
     toString(): string {
-      var self = boxValue(this);
+      var self: ASObject = boxValue(this);
       if (self instanceof ASClass) {
         var cls: ASClass = <any>self;
-        return Shumway.StringUtilities.concat3("[class ", cls.classInfo.instanceInfo.name.name, "]");
+        // cls.classInfo.instanceInfo.getName().name
+        return Shumway.StringUtilities.concat3("[class ", cls.classInfo.instanceInfo.getName().name, "]");
       }
       return Shumway.StringUtilities.concat3("[object ", self.class.classInfo.instanceInfo.name.name, "]");
     }
   }
 
   /**
-   * Inherit from this if you don't want to inherit the static junk from ASObject
+   * Inherit from this if you don't want to inherit the default static properties from ASObject.
    */
   export class ASNative extends ASObject {
-    public static baseClass: typeof ASClass = null;
+    public static asSuperClass: typeof ASClass = null;
     public static classInfo: ClassInfo = null;
     public static instanceConstructor: any = null;
     public static callableConstructor: any = null;
@@ -268,39 +272,29 @@ module Shumway.AVM2.AS {
   }
 
   /**
-   * In AS3 all objects inherit from the Object class. Class objects themselves are instances
-   * of the Class class. In Shumway, Class instances can be constructed in two ways: dynamically,
-   * through the |new ASClass()| constructor function, or "statically" by inheriting the static
-   * properties from the ASObject class. Statically constructed functions get morphed into
-   * proper ASClass instances when they get constructed at runtime.
-   *
-   * We need to be really careful not to step on TS's inheritance scheme.
-   */
+  * In AS3 all objects inherit from the Object class. Class objects themselves are instances
+  * of the Class class. In Shumway, Class instances can be constructed in two ways: dynamically,
+  * through the |new ASClass()| constructor function, or "statically" by inheriting the static
+  * properties from the ASObject class. Statically constructed functions get morphed into
+  * proper ASClass instances when they get constructed at runtime.
+  *
+  * We need to be really careful not to step on TS's inheritance scheme.
+  */
   export class ASClass extends ASObject {
+    public static traits: Traits;
     public static instanceConstructor: any = ASClass;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
 
-
-    /**
-     * We can't do our traits / dynamic prototype chaining trick when dealing with builtin
-     * functions: Object, Array, etc. Here, we take over the builtin function prototype.
-     */
-    static configureBuiltinPrototype(self: ASClass, baseClass: ASClass) {
-      release || assert (self.instanceConstructor);
-      release || assert (self.baseClass === baseClass);
-      self.dynamicPrototype = self.traitsPrototype = self.instanceConstructor.prototype;
-    }
-
-    static configurePrototype(self: ASClass, baseClass: ASClass) {
-      release || assert (self.baseClass === baseClass);
-
-      // Create a |dynamicPrototype| object and link it to the base class |dynamicPrototype|.
-      self.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
+    static configurePrototype(asClass: ASClass) {
+      // Create a |dynamicPrototype| object and link it to the super class|dynamicPrototype|.
+      asClass.dynamicPrototype = asClass.asSuperClass ? Object.create(asClass.asSuperClass.dynamicPrototype)
+                                                      : Object.create(null);
 
       // Create a |traitsPrototype| object and link it to the class |dynamicPrototype|.
-      self.traitsPrototype = Object.create(self.dynamicPrototype);
+      asClass.traitsPrototype = Object.create(asClass.dynamicPrototype);
 
+      /*
       // Collect and copy all class instance members to the |traitsPrototype|. We copy properties
       // from the most derived class to the base class, ignoring those that are already set.
 
@@ -308,14 +302,14 @@ module Shumway.AVM2.AS {
       var classes = [];
       while (self) {
         classes.push(self);
-        self = self.baseClass;
+        self = self.asSuperClass;
       }
 
       for (var i = 0; i < classes.length; i++) {
         var sources = [classes[i].typeScriptPrototype];
         // Also look at |instanceNatives| if defined.
         if (classes[i].instanceNatives) {
-          Shumway.ArrayUtilities.pushMany(sources, classes[i].instanceNatives);
+          pushMany(sources, classes[i].instanceNatives);
         }
         for (var j = 0; j < sources.length; j++) {
           var source = sources[j];
@@ -336,24 +330,37 @@ module Shumway.AVM2.AS {
           }
         }
       }
+      */
     }
 
-    /**
-     * Called when the class is actually constructed during bytecode execution.
-     */
-    static create(self: ASClass, baseClass: ASClass, instanceConstructor: any) {
-      release || assert (!self.instanceConstructorNoInitialize, "This should not be set yet.");
-      release || assert (!self.dynamicPrototype && !self.traitsPrototype, "These should not be set yet.");
+    static link(asClass: ASClass, asSuperClass: ASClass, scope: Scope) {
+      asClass.asSuperClass = asSuperClass;
+      ASClass.configurePrototype(asClass);
 
-      /**
-       * Save TypeScript prototype object.
-       */
+      // Attach traits.
+      var classInfo = asClass.classInfo;
+      var classClassInfo = classInfo.abc.applicationDomain.findClassInfo("Class");
+      classClassInfo.instanceInfo.traits.resolve();
+      classInfo.traits.resolve();
+      var staticTraits = classClassInfo.instanceInfo.traits.concat(classInfo.traits);
+
+      applyTraits(asClass, staticTraits, scope);
+
+      classInfo.instanceInfo.traits.resolve();
+      var instanceTraits = asSuperClass ? asSuperClass.classInfo.instanceInfo.runtimeTraits.concat(classInfo.instanceInfo.traits)
+                                        : classInfo.instanceInfo.traits;
+
+      asClass.classInfo.instanceInfo.runtimeTraits = instanceTraits;
+      applyTraits(<any>asClass.traitsPrototype, instanceTraits, scope);
+
+      /*
+      // Save TypeScript prototype object.
       self.typeScriptPrototype = self.prototype;
 
       if (self.instanceConstructor && !isPrototypeWriteable(self.instanceConstructor)) {
-        ASClass.configureBuiltinPrototype(self, baseClass);
+        ASClass.configureBuiltinPrototype(self, asSuperClass);
       } else {
-        ASClass.configurePrototype(self, baseClass);
+        ASClass.configurePrototype(self, asSuperClass);
       }
 
       if (!self.instanceConstructor) {
@@ -365,9 +372,7 @@ module Shumway.AVM2.AS {
         writer && writer.warnLn("Ignoring AS3 instanceConstructor.");
       }
 
-      /**
-       * If no |callableConstructor| exists then we insert a coercing
-       */
+      // If no |callableConstructor| exists then we insert a coercing
       if (!self.callableConstructor) {
         self.callableConstructor = self.coerce.bind(self);
       }
@@ -376,17 +381,31 @@ module Shumway.AVM2.AS {
       self.instanceConstructor.prototype = self.traitsPrototype;
       defineNonEnumerableProperty(self.instanceConstructor.prototype, "class", self);
 
-      /**
-       * Set the |constructor| property.
-       */
-      defineNonEnumerableProperty(self.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), self);
+      // Set the |constructor| property.
+      defineNonEnumerableProperty(self.dynamicPrototype, Multiname.getPublicMangledName("constructor"), self);
 
-      /**
-       * If class defines a custom protocol, use that.
-       */
+      // If class defines a custom protocol, use that.
       if (self.protocol) {
         Shumway.ObjectUtilities.copyOwnPropertyDescriptors(self.traitsPrototype, self.protocol);
       }
+
+      var classInfo = self.classInfo;
+
+      // Attach traits.
+      var classClassInfo = classInfo.abc.applicationDomain.findClassInfo("Class");
+      classClassInfo.instanceInfo.traits.resolve();
+      classInfo.traits.resolve();
+      var staticTraits = classClassInfo.instanceInfo.traits.concat(classInfo.traits);
+
+      applyTraits(self, staticTraits, scope, staticNatives);
+
+      classInfo.instanceInfo.traits.resolve();
+      var instanceTraits = asSuperClass ? asSuperClass.classInfo.instanceInfo.runtimeTraits.concat(classInfo.instanceInfo.traits)
+        : classInfo.instanceInfo.traits;
+
+      self.classInfo.instanceInfo.runtimeTraits = instanceTraits;
+      applyTraits(<any>self.traitsPrototype, instanceTraits, scope, instanceNatives);
+      */
     }
 
     /**
@@ -402,8 +421,8 @@ module Shumway.AVM2.AS {
      * Calls the initializers of an object in order.
      */
     static runInitializers(self: Object, argument: any) {
-      argument = argument || self.class.defaultInitializerArgument;
-      var cls: ASClass = self.class;
+      argument = argument || self.asClass.defaultInitializerArgument;
+      var cls: ASClass = self.asClass;
       var initializers = cls.initializers;
       if (initializers) {
         for (var i = 0; i < initializers.length; i++) {
@@ -415,7 +434,7 @@ module Shumway.AVM2.AS {
     /**
      * Some AS3 classes have two parallel constructor chains:
      *
-     * Consider the following inheritance hierarchy, (superClass <- subClass)
+     * Consider the following inheritance hierarchy, (asSuperClass <- subClass)
      *
      * A  <- B  <- C  <- D
      *
@@ -434,8 +453,8 @@ module Shumway.AVM2.AS {
      * go through all the super constructors.
      */
     static configureInitializers(self: ASClass) {
-      if (self.baseClass && self.baseClass.initializers) {
-        self.initializers = self.baseClass.initializers.slice(0);
+      if (self.asSuperClass && self.asSuperClass.initializers) {
+        self.initializers = self.asSuperClass.initializers.slice(0);
       }
       if (self.initializer) {
         if (!self.initializers) {
@@ -505,13 +524,13 @@ module Shumway.AVM2.AS {
             return;
           }
           var name = trait.name.name;
-          var qn = Multiname.getQualifiedName(trait.name);
+          var qn = Multiname.getMangledName(trait.name);
           if (trait.isSlot()) {
             Object.defineProperty(object, name, {
               get: <() => any>new Function("", "return this." + qn +
-                                               "//# sourceURL=get-" + qn + ".as"),
+              "//# sourceURL=get-" + qn + ".as"),
               set: <(any) => void>new Function("v", "this." + qn + " = v;" +
-                                                    "//# sourceURL=set-" + qn + ".as")
+              "//# sourceURL=set-" + qn + ".as")
             });
           } else if (trait.isMethod()) {
             release || assert (!object[name], "Symbol should not already exist.");
@@ -521,7 +540,7 @@ module Shumway.AVM2.AS {
             release || assert (hasOwnGetter(object, qn), "There should be an getter method for this symbol.");
             Object.defineProperty(object, name, {
               get: <() => any>new Function("", "return this." + qn +
-                                               "//# sourceURL=get-" + qn + ".as")
+              "//# sourceURL=get-" + qn + ".as")
             });
           } else {
             notImplemented(trait);
@@ -539,6 +558,11 @@ module Shumway.AVM2.AS {
     }
 
     /**
+     * Traits.
+     */
+    traits: Traits;
+
+    /**
      * Class info.
      */
     classInfo: ClassInfo;
@@ -546,7 +570,7 @@ module Shumway.AVM2.AS {
     /**
      * Base class.
      */
-    baseClass: ASClass;
+    asSuperClass: ASClass;
 
     /**
      * Constructs an instance of this class.
@@ -625,12 +649,14 @@ module Shumway.AVM2.AS {
      * |dynamicPrototype|.
      */
     traitsPrototype: Object;
+    tPrototype: Object;
 
     /**
      * Prototype object accessible from AS3 script code. This is the AS3 Class prototype object
      * |class A { ... }, A.prototype|
      */
     dynamicPrototype: Object;
+    dPrototype: Object;
 
     /**
      * Original prototype object populated by TypeScript.
@@ -672,8 +698,8 @@ module Shumway.AVM2.AS {
     }
 
     get native_prototype(): Object {
-      release || assert (this.dynamicPrototype);
-      return this.dynamicPrototype;
+      release || assert (this.dPrototype);
+      return this.dPrototype;
     }
 
     public asCall(self: any, cls: ASClass): any {
@@ -714,7 +740,7 @@ module Shumway.AVM2.AS {
           return false;
         }
         release || assert(value.class.implementedInterfaces, "No 'implementedInterfaces' map found on class " + value.class);
-        var qualifiedName = Multiname.getQualifiedName(this.classInfo.instanceInfo.name);
+        var qualifiedName = Multiname.getMangledName(this.classInfo.instanceInfo.name);
         return value.class.implementedInterfaces[qualifiedName] !== undefined;
       }
 
@@ -730,7 +756,7 @@ module Shumway.AVM2.AS {
         if (that.traitsPrototype === value.traitsPrototype) {
           return true;
         }
-        that = that.baseClass;
+        that = that.asSuperClass;
       }
       return false;
     }
@@ -745,10 +771,10 @@ module Shumway.AVM2.AS {
     }
 
     public getQualifiedClassName(): string {
-      var name = this.classInfo.instanceInfo.name;
-      var uri = name.namespaces[0].uri;
-      if (uri) {
-        return uri + "::" + name.name;
+      var name = this.classInfo.instanceInfo.getName();
+      var namespaceName = name.namespaces[0].name;
+      if (namespaceName) {
+        return namespaceName + "::" + name.name;
       }
       return name.name;
     }
@@ -768,21 +794,21 @@ module Shumway.AVM2.AS {
       writer && writer.enter("Verifying Class: " + self.classInfo + " {");
       var traits = [self.classInfo.traits, self.classInfo.instanceInfo.traits];
 
-      var staticNatives: Object [] = [self];
+      var staticNatives: Object [] = [self, ASClass.prototype];
       if (self.staticNatives) {
-        Shumway.ArrayUtilities.pushMany(staticNatives, self.staticNatives);
+        pushMany(staticNatives, self.staticNatives);
       }
 
       var instanceNatives: Object [] = [self.prototype];
       if (self.instanceNatives) {
-        Shumway.ArrayUtilities.pushMany(instanceNatives, self.instanceNatives);
+        pushMany(instanceNatives, self.instanceNatives);
       }
 
       if (self === <any>ASObject) {
-        release || assert (!self.baseClass, "ASObject should have no base class.");
+        release || assert (!self.asSuperClass, "ASObject should have no base class.");
       } else {
-        release || assert (self.baseClass, self.classInfo.instanceInfo.name + " has no base class.");
-        release || assert (self.baseClass !== self);
+        release || assert (self.asSuperClass, self.classInfo.instanceInfo.name + " has no base class.");
+        release || assert (self.asSuperClass !== self);
       }
 
       release || assert (self.traitsPrototype === self.instanceConstructor.prototype, "The traitsPrototype is not set correctly.");
@@ -807,10 +833,10 @@ module Shumway.AVM2.AS {
 
       for (var j = 0; j < traits.length; j++) {
         var isClassTrait = j === 0;
-        for (var i = 0; i < traits[j].length; i++) {
-          var trait = traits[j][i];
-          var name = escapeNativeName(trait.name.name);
-          if (!(trait.isMethodOrAccessor() && trait.methodInfo.isNative())) {
+        for (var i = 0; i < traits[j].traits.length; i++) {
+          var trait = traits[j].traits[i];
+          var name = escapeNativeName(trait.getName().name);
+          if (!(trait.isMethodOrAccessor() && (<MethodTraitInfo>trait).getMethodInfo().isNative())) {
             continue;
           }
           var holders = isClassTrait ? staticNatives : instanceNatives;
@@ -855,8 +881,8 @@ module Shumway.AVM2.AS {
         this.interfaceBindings.trace(writer);
       } else {
         writer.enter("Class: " + this.classInfo);
-        writer.writeLn("baseClass: " +
-                       (this.baseClass ? this.baseClass.classInfo.instanceInfo.name : null));
+        writer.writeLn("asSuperClass: " +
+        (this.asSuperClass ? this.asSuperClass.classInfo.instanceInfo.name : null));
         this.classBindings.trace(writer);
         this.instanceBindings.trace(writer);
         writer.enter('Interfaces');
@@ -870,12 +896,12 @@ module Shumway.AVM2.AS {
   }
 
   var ASClassPrototype = ASClass.prototype;
-
-  (<any>ASClassPrototype).call = Function.prototype.call;
-  (<any>ASClassPrototype).apply = Function.prototype.apply;
-
+  //
+  //(<any>ASClassPrototype).call = Function.prototype.call;
+  //(<any>ASClassPrototype).apply = Function.prototype.apply;
+  //
   export class ASFunction extends ASObject {
-    public static baseClass: typeof ASClass = null;
+    public static asSuperClass: typeof ASClass = null;
     public static classInfo: ClassInfo;
     public static instanceConstructor: any = Function;
     public static classBindings: ClassBindings;
@@ -891,7 +917,7 @@ module Shumway.AVM2.AS {
       defineNonEnumerableProperty(proto, '$BgtoLocaleString', asProto.toString);
       defineNonEnumerableProperty(proto, '$Bgcall', proto.call);
       defineNonEnumerableProperty(proto, '$Bgapply', proto.apply);
-    }
+    };
 
     constructor() {
       false && super();
@@ -910,9 +936,9 @@ module Shumway.AVM2.AS {
 
     get native_length(): number {
       // Check if we're getting the length of a trampoline.
-      if (this.hasOwnProperty(Runtime.VM_LENGTH)) {
-        return this.asLength;
-      }
+      //if (this.hasOwnProperty(Runtime.VM_LENGTH)) {
+      //  return this.asLength;
+      //}
       return (<any>this).length;
     }
 
@@ -932,14 +958,13 @@ module Shumway.AVM2.AS {
     public static classInfo: ClassInfo;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
-    public static coerce: (value: any) => boolean = Runtime.asCoerceBoolean;
+    public static coerce: (value: any) => boolean = asCoerceBoolean;
 
     static classInitializer: any = function() {
       var proto: any = Boolean.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
       defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
-    }
-
+    };
 
     constructor(input) {
       false && super();
@@ -967,6 +992,28 @@ module Shumway.AVM2.AS {
     }
   }
 
+  export class ASNamespace extends ASNative {
+    constructor() {
+      false && super();
+    }
+
+    get prefix(): string {
+      return "FIXME";
+    }
+
+    get uri(): string {
+      return "FIXME";
+    }
+
+    toString(): string {
+      return "FIXME";
+    }
+
+    valueOf(): any {
+      return "FIXME";
+    }
+  }
+
   export class ASNumber extends ASObject {
     public static instanceConstructor: any = Number;
     public static callableConstructor: any = ASNumber.instanceConstructor;
@@ -976,7 +1023,7 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = Number(0);
-    public static coerce: (value: any) => number = Runtime.asCoerceNumber;
+    public static coerce: (value: any) => number = asCoerceNumber;
 
     static classInitializer: any = function() {
       var dynProto: any = this.dynamicPrototype;
@@ -989,7 +1036,7 @@ module Shumway.AVM2.AS {
       defineNonEnumerableProperty(dynProto, '$BgtoExponential', numberProto.toExponential);
       defineNonEnumerableProperty(dynProto, '$BgtoPrecision', numberProto.toPrecision);
       defineNonEnumerableProperty(dynProto, '$BgtoFixed', numberProto.toFixed);
-    }
+    };
 
     static _numberToString(n: number, radix: number): string {
       radix = radix | 0;
@@ -1015,7 +1062,7 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = 0;
-    public static coerce: (value: any) => number = Runtime.asCoerceInt;
+    public static coerce: (value: any) => number = asCoerceInt;
 
     static classInitializer: any = ASNumber.classInitializer;
 
@@ -1057,7 +1104,7 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = 0;
-    public static coerce: (value: any) => number = Runtime.asCoerceUint;
+    public static coerce: (value: any) => number = asCoerceUint;
 
     static classInitializer: any = ASNumber.classInitializer;
 
@@ -1098,7 +1145,7 @@ module Shumway.AVM2.AS {
     public static classInfo: ClassInfo;
     public static staticNatives: any [] = [String];
     public static instanceNatives: any [] = [String.prototype];
-    public static coerce: (value: any) => string = Runtime.asCoerceString;
+    public static coerce: (value: any) => string = asCoerceString;
 
     static classInitializer: any = function() {
       defineNonEnumerableProperty(String, '$BgfromCharCode', String.fromCharCode);
@@ -1134,30 +1181,30 @@ module Shumway.AVM2.AS {
       release || assertUnreachable('ASString references must be delegated to String');
     }
 
-    //match(re) {
-    //  if (re === (void 0) || re === null) {
-    //    return null;
-    //  } else {
-    //    if (re instanceof XRegExp && re.global) {
-    //      var matches = [], m;
-    //      while ((m = re.exec(this))) {
-    //        matches.push(m[0]);
-    //      }
-    //      return matches;
-    //    }
-    //    if (!(re instanceof XRegExp) && !(typeof re === 'string')) {
-    //      re = String(re);
-    //    }
-    //    return this.match(re);
-    //  }
-    //}
+    match(re) {
+      if (re === (void 0) || re === null) {
+        return null;
+      } else {
+        if (re instanceof XRegExp && re.global) {
+          var matches = [], m;
+          while ((m = re.exec(this))) {
+            matches.push(m[0]);
+          }
+          return matches;
+        }
+        if (!(re instanceof XRegExp) && !(typeof re === 'string')) {
+          re = String(re);
+        }
+        return this.match(re);
+      }
+    }
 
-    //search(re): number {
-    //  if (re instanceof XRegExp) {
-    //    return this.search(re);
-    //  }
-    //  return (<string><any>this).indexOf(asCoerceString(re));
-    //}
+    search(re): number {
+      if (re instanceof XRegExp) {
+        return this.search(re);
+      }
+      return (<string><any>this).indexOf(asCoerceString(re));
+    }
 
     toUpperCase() {
       // avmshell bug compatibility
@@ -1175,8 +1222,8 @@ module Shumway.AVM2.AS {
   }
 
   /**
-   * Format: args: [compareFunction], [sortOptions]
-   */
+  * Format: args: [compareFunction], [sortOptions]
+  */
   export function arraySort(o, args) {
     if (args.length === 0) {
       return o.sort();
@@ -1196,41 +1243,26 @@ module Shumway.AVM2.AS {
     return o;
   }
 
+  function definePublicProperties(object: Object, names: string [], source: Object) {
+    for (var i = 0; i < names.length; i++) {
+      defineNonEnumerableProperty(object, Multiname.getPublicMangledName(names[i]), source[names[i]]);
+    }
+  }
+
   export class ASArray extends ASObject {
     public static instanceConstructor: any = Array;
     public static staticNatives: any [] = [Array];
     public static instanceNatives: any [] = [Array.prototype];
 
     static classInitializer: any = function() {
-      var proto: any = Array.prototype;
-      var asProto = ASArray.prototype;
-      defineNonEnumerableProperty(proto, '$Bgjoin', proto.join);
-      // Same as join, see Array.as in Tamarin repository.
-      defineNonEnumerableProperty(proto, '$BgtoString', proto.join);
-      defineNonEnumerableProperty(proto, '$BgtoLocaleString', asProto.toLocaleString);
+      definePublicProperties(Array.prototype, [
+        "join", "toString", "pop", "push", "reverse", "concat", "slice", "shift",
+        "unshift", "indexOf", "lastIndexOf", "forEach", "map", "filter", "some"
+      ], Array.prototype);
 
-      defineNonEnumerableProperty(proto, '$Bgpop', proto.pop);
-      defineNonEnumerableProperty(proto, '$Bgpush', proto.push);
-
-      defineNonEnumerableProperty(proto, '$Bgreverse', proto.reverse);
-      defineNonEnumerableProperty(proto, '$Bgconcat', proto.concat);
-      defineNonEnumerableProperty(proto, '$Bgsplice', asProto.splice);
-      defineNonEnumerableProperty(proto, '$Bgslice', proto.slice);
-
-      defineNonEnumerableProperty(proto, '$Bgshift', proto.shift);
-      defineNonEnumerableProperty(proto, '$Bgunshift', proto.unshift);
-
-      defineNonEnumerableProperty(proto, '$BgindexOf', proto.indexOf);
-      defineNonEnumerableProperty(proto, '$BglastIndexOf', proto.lastIndexOf);
-
-      defineNonEnumerableProperty(proto, '$BgforEach', proto.forEach);
-      defineNonEnumerableProperty(proto, '$Bgmap', proto.map);
-      defineNonEnumerableProperty(proto, '$Bgfilter', proto.filter);
-      defineNonEnumerableProperty(proto, '$Bgsome', proto.some);
-      defineNonEnumerableProperty(proto, '$Bgevery', asProto.every);
-
-      defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
-      defineNonEnumerableProperty(proto, '$BgsortOn', asProto.sortOn);
+      definePublicProperties(Array.prototype, [
+        "toLocaleString", "splice", "every", "sort", "sortOn"
+      ], ASArray.prototype);
     };
 
     constructor(input) {
@@ -1300,7 +1332,7 @@ module Shumway.AVM2.AS {
         options = arguments[1];
       }
       o.sort(function (a, b) {
-        return Runtime.asCompare(a, b, options, compareFunction);
+        return asCompare(a, b, options, compareFunction);
       });
       return o;
     }
@@ -1316,7 +1348,7 @@ module Shumway.AVM2.AS {
         options = [options];
       }
       for (var i = names.length - 1; i >= 0; i--) {
-        var key = Multiname.getPublicQualifiedName(names[i]);
+        var key = Multiname.getPublicMangledName(names[i]);
         if (ASArray.CACHE_NUMERIC_COMPARATORS && options[i] & SORT.NUMERIC) {
           var str = "var x = +(a." + key + "), y = +(b." + key + ");";
           if (options[i] & SORT.DESCENDING) {
@@ -1331,7 +1363,7 @@ module Shumway.AVM2.AS {
           o.sort(numericComparator);
         } else {
           o.sort(function (a, b) {
-            return Runtime.asCompare(a[key], b[key], options[i] | 0);
+            return asCompare(a[key], b[key], options[i] | 0);
           });
         }
       }
@@ -1346,554 +1378,479 @@ module Shumway.AVM2.AS {
       (<any>this).length = newLength;
     }
   }
-
-  export class ASVector<T> extends ASNative {
-    public static staticNatives: any [] = null;
-    public static instanceNatives: any [] = null;
-    public static instanceConstructor: any = ASVector;
-    public static callableConstructor: any = null;
-    newThisType(): ASVector<T> {
-      return new this.class.instanceConstructor();
-    }
-  }
-
-  export class ASJSON extends ASObject {
-    public static instanceConstructor: any = ASJSON;
-    public static staticNatives: any [] = null;
-    public static instanceNatives: any [] = null;
-
-    /**
-     * Transforms a JS value into an AS value.
-     */
-    static transformJSValueToAS(value, deep: boolean) {
-      if (typeof value !== "object") {
-        return value;
-      }
-      if (isNullOrUndefined(value)) {
-        return value;
-      }
-      var keys = Object.keys(value);
-      var result = Array.isArray(value) ? [] : {};
-      for (var i = 0; i < keys.length; i++) {
-        var v = value[keys[i]];
-        if (deep) {
-          v = ASJSON.transformJSValueToAS(v, true);
-        }
-        result.asSetPublicProperty(keys[i], v);
-      }
-      return result;
-    }
-
-    /**
-     * Transforms an AS value into a JS value.
-     */
-    static transformASValueToJS(value, deep: boolean) {
-      if (typeof value !== "object") {
-        return value;
-      }
-      if (isNullOrUndefined(value)) {
-        return value;
-      }
-      var keys = Object.keys(value);
-      var result = Array.isArray(value) ? [] : {};
-      for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        var jsKey = key;
-        if (!isNumeric(key)) {
-          jsKey = Multiname.getNameFromPublicQualifiedName(key);
-        }
-        var v = value[key];
-        if (deep) {
-          v = ASJSON.transformASValueToJS(v, true);
-        }
-        result[jsKey] = v;
-      }
-      return result;
-    }
-
-    private static parseCore(text: string): Object {
-      text = asCoerceString(text);
-      return ASJSON.transformJSValueToAS(JSON.parse(text), true)
-    }
-
-    private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
-      return JSON.stringify(ASJSON.transformASValueToJS(value, true), replacerFunction, gap);
-    }
-  }
-
-  export class ASError extends ASNative {
-    public static instanceConstructor: any = null;
-    public static staticNatives: any [] = null;
-    public static instanceNatives: any [] = null;
-
-    public static getErrorMessage = Shumway.AVM2.getErrorMessage;
-    public static throwError(type: typeof ASError, id: number /*, ...rest */) {
-      var info = getErrorInfo(id);
-
-      var args = [info];
-      for (var i = 2; i < arguments.length; i++) {
-        args.push(arguments[i]);
-      }
-      var message = formatErrorMessage.apply(null, args);
-      throw new type(message, id);
-    }
-
-
-    static classInitializer: any = function() {
-      defineNonEnumerableProperty(this, '$Bglength', 1);
-      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', 'Error');
-      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgmessage', 'Error');
-      defineNonEnumerableProperty(this.dynamicPrototype, '$BgtoString', this.prototype.toString);
-    }
-
-    constructor(msg: any, id: any) {
-      false && super();
-      this.message = asCoerceString(msg);
-      this._errorID = id|0;
-      // This is gnarly but saves us from having individual ctors in all Error child classes.
-      this.name = (<ASClass><any>this.constructor).dynamicPrototype['$Bgname'];
-    }
-
-    message: string;
-    name: string;
-    _errorID: number;
-
-    toString() {
-      return this.message !== "" ? this.name + ": " + this.message : this.name;
-    }
-
-    get errorID() {
-      return this._errorID;
-    }
-
-    public getStackTrace(): string {
-      // Stack traces are only available in debug builds. We only do opt.
-      return null;
-    }
-  }
-
-  export class ASDefinitionError extends ASError {
-    static classInitializer: any = function() {
-      defineNonEnumerableProperty(this, '$Bglength', 1);
-      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', this.name.substr(2));
-    }
-  }
-  export class ASEvalError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASRangeError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASReferenceError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASSecurityError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASSyntaxError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASTypeError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASURIError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASVerifyError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASUninitializedError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASArgumentError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-
-  export class ASIOError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASEOFError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASMemoryError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-  export class ASIllegalOperationError extends ASError {
-    static classInitializer: any = ASDefinitionError.classInitializer;
-  }
-
-  export class ASRegExp extends ASObject {
-    //public static instanceConstructor: any = XRegExp;
-    //public static staticNatives: any [] = [XRegExp];
-    //public static instanceNatives: any [] = [XRegExp.prototype];
-
-    static classInitializer: any = function() {
-      //var proto = XRegExp.prototype;
-      //defineNonEnumerableProperty(proto, '$BgtoString', ASRegExp.prototype.ecmaToString);
-      //defineNonEnumerableProperty(proto, '$Bgexec', proto.exec);
-      //defineNonEnumerableProperty(proto, '$Bgtest', proto.test);
-    }
-
-    constructor(input) {
-      false && super();
-      release || assertUnreachable('ASRegExp references must be delegated to XRegExp.');
-    }
-
-    ecmaToString() {
-      var r: any = this;
-      var out = "/" + r.source + "/";
-      if (r.global)       out += "g";
-      if (r.ignoreCase)   out += "i";
-      if (r.multiline)    out += "m";
-      if (r.dotall)       out += "s";
-      if (r.extended)     out += "x";
-      return out;
-    }
-
-    get native_source(): string {
-      var self: any = this;
-      return self.source;
-    }
-
-    get native_global(): boolean {
-      var self: any = this;
-      return self.global;
-    }
-
-    get native_ignoreCase(): boolean {
-      var self: any = this;
-      return self.ignoreCase;
-    }
-
-    get native_multiline(): boolean {
-      var self: any = this;
-      return self.multiline;
-    }
-
-    get native_lastIndex(): number /*int*/ {
-      var self: any = this;
-      return self.lastIndex;
-    }
-
-    set native_lastIndex(i: number /*int*/) {
-      var self: any = this;
-      i = i | 0;
-      self.lastIndex = i;
-    }
-
-    get native_dotall(): boolean {
-      var self: any = this;
-      return self.dotall;
-    }
-
-    get native_extended(): boolean {
-      var self: any = this;
-      return self.extended;
-    }
-
-    exec(s: string = ""): any {
-      var result = RegExp.prototype.exec.apply(this, arguments);
-      if (!result) {
-        return result;
-      }
-      // For some reason named groups in AS3 are set to the empty string instead of
-      // undefined as is the case for indexed groups. Here we just emulate the AS3
-      // behaviour.
-      var keys = Object.keys(result);
-      for (var i = 0; i < keys.length; i++) {
-        var k = keys[i];
-        if (!isNumeric(k)) {
-          if (result[k] === undefined) {
-            result[k] = "";
-          }
-        }
-      }
-      Shumway.AVM2.Runtime.publicizeProperties(result);
-      return result;
-    }
-
-    test(s: string = ""): boolean {
-      return this.exec(s) !== null;
-    }
-  }
-
-  export class ASMath extends ASNative {
-    public static staticNatives: any [] = [Math];
-  }
-
-  export class ASDate extends ASNative {
-    public static staticNatives: any [] = [Date];
-    public static instanceNatives: any [] = [Date.prototype];
-    public static instanceConstructor: any = Date;
-
-    static classInitializer: any = function() {
-      var proto: any = Date.prototype;
-      defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
-      defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
-
-      defineNonEnumerableProperty(proto, '$BgtoDateString', proto.toDateString);
-      defineNonEnumerableProperty(proto, '$BgtoTimeString', proto.toTimeString);
-      defineNonEnumerableProperty(proto, '$BgtoLocaleString', proto.toLocaleString);
-      defineNonEnumerableProperty(proto, '$BgtoLocaleDateString', proto.toLocaleDateString);
-      defineNonEnumerableProperty(proto, '$BgtoLocaleTimeString', proto.toLocaleTimeString);
-      defineNonEnumerableProperty(proto, '$BgtoUTCString', proto.toUTCString);
-
-      // NB: The default AS implementation of |toJSON| is not ES5-compliant, but
-      // the native JS one obviously is.
-      defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
-
-      defineNonEnumerableProperty(proto, '$BggetUTCFullYear', proto.getUTCFullYear);
-      defineNonEnumerableProperty(proto, '$BggetUTCMonth', proto.getUTCMonth);
-      defineNonEnumerableProperty(proto, '$BggetUTCDate', proto.getUTCDate);
-      defineNonEnumerableProperty(proto, '$BggetUTCDay', proto.getUTCDay);
-      defineNonEnumerableProperty(proto, '$BggetUTCHours', proto.getUTCHours);
-      defineNonEnumerableProperty(proto, '$BggetUTCMinutes', proto.getUTCMinutes);
-      defineNonEnumerableProperty(proto, '$BggetUTCSeconds', proto.getUTCSeconds);
-      defineNonEnumerableProperty(proto, '$BggetUTCMilliseconds', proto.getUTCMilliseconds);
-      defineNonEnumerableProperty(proto, '$BggetFullYear', proto.getFullYear);
-      defineNonEnumerableProperty(proto, '$BggetMonth', proto.getMonth);
-      defineNonEnumerableProperty(proto, '$BggetDate', proto.getDate);
-      defineNonEnumerableProperty(proto, '$BggetDay', proto.getDay);
-      defineNonEnumerableProperty(proto, '$BggetHours', proto.getHours);
-      defineNonEnumerableProperty(proto, '$BggetMinutes', proto.getMinutes);
-      defineNonEnumerableProperty(proto, '$BggetSeconds', proto.getSeconds);
-      defineNonEnumerableProperty(proto, '$BggetMilliseconds', proto.getMilliseconds);
-      defineNonEnumerableProperty(proto, '$BggetTimezoneOffset', proto.getTimezoneOffset);
-      defineNonEnumerableProperty(proto, '$BggetTime', proto.getTime);
-      defineNonEnumerableProperty(proto, '$BgsetFullYear', proto.setFullYear);
-      defineNonEnumerableProperty(proto, '$BgsetMonth', proto.setMonth);
-      defineNonEnumerableProperty(proto, '$BgsetDate', proto.setDate);
-      defineNonEnumerableProperty(proto, '$BgsetHours', proto.setHours);
-      defineNonEnumerableProperty(proto, '$BgsetMinutes', proto.setMinutes);
-      defineNonEnumerableProperty(proto, '$BgsetSeconds', proto.setSeconds);
-      defineNonEnumerableProperty(proto, '$BgsetMilliseconds', proto.setMilliseconds);
-      defineNonEnumerableProperty(proto, '$BgsetUTCFullYear', proto.setUTCFullYear);
-      defineNonEnumerableProperty(proto, '$BgsetUTCMonth', proto.setUTCMonth);
-      defineNonEnumerableProperty(proto, '$BgsetUTCDate', proto.setUTCDate);
-      defineNonEnumerableProperty(proto, '$BgsetUTCHours', proto.setUTCHours);
-      defineNonEnumerableProperty(proto, '$BgsetUTCMinutes', proto.setUTCMinutes);
-      defineNonEnumerableProperty(proto, '$BgsetUTCSeconds', proto.setUTCSeconds);
-      defineNonEnumerableProperty(proto, '$BgsetUTCMilliseconds', proto.setUTCMilliseconds);
-    }
-
-    constructor(input) {
-      false && super();
-      release || assertUnreachable('ASDate references must be delegated to Date');
-    }
-  }
+  //
+  //export class ASVector<T> extends ASNative {
+  //  public static staticNatives: any [] = null;
+  //  public static instanceNatives: any [] = null;
+  //  public static instanceConstructor: any = ASVector;
+  //  public static callableConstructor: any = null;
+  //  newThisType(): ASVector<T> {
+  //    return new this.class.instanceConstructor();
+  //  }
+  //}
+  //
+  //export class ASJSON extends ASObject {
+  //  public static instanceConstructor: any = ASJSON;
+  //  public static staticNatives: any [] = null;
+  //  public static instanceNatives: any [] = null;
+  //
+  //  /**
+  //   * Transforms a JS value into an AS value.
+  //   */
+  //  static transformJSValueToAS(value, deep: boolean) {
+  //    if (typeof value !== "object") {
+  //      return value;
+  //    }
+  //    if (isNullOrUndefined(value)) {
+  //      return value;
+  //    }
+  //    var keys = Object.keys(value);
+  //    var result = Array.isArray(value) ? [] : {};
+  //    for (var i = 0; i < keys.length; i++) {
+  //      var v = value[keys[i]];
+  //      if (deep) {
+  //        v = ASJSON.transformJSValueToAS(v, true);
+  //      }
+  //      result.asSetPublicProperty(keys[i], v);
+  //    }
+  //    return result;
+  //  }
+  //
+  //  /**
+  //   * Transforms an AS value into a JS value.
+  //   */
+  //  static transformASValueToJS(value, deep: boolean) {
+  //    if (typeof value !== "object") {
+  //      return value;
+  //    }
+  //    if (isNullOrUndefined(value)) {
+  //      return value;
+  //    }
+  //    var keys = Object.keys(value);
+  //    var result = Array.isArray(value) ? [] : {};
+  //    for (var i = 0; i < keys.length; i++) {
+  //      var key = keys[i];
+  //      var jsKey = key;
+  //      if (!isNumeric(key)) {
+  //        jsKey = Multiname.getNameFromPublicQualifiedName(key);
+  //      }
+  //      var v = value[key];
+  //      if (deep) {
+  //        v = ASJSON.transformASValueToJS(v, true);
+  //      }
+  //      result[jsKey] = v;
+  //    }
+  //    return result;
+  //  }
+  //
+  //  private static parseCore(text: string): Object {
+  //    text = asCoerceString(text);
+  //    return ASJSON.transformJSValueToAS(JSON.parse(text), true)
+  //  }
+  //
+  //  private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
+  //    return JSON.stringify(ASJSON.transformASValueToJS(value, true), replacerFunction, gap);
+  //  }
+  //}
+  //
+  //export class ASError extends ASNative {
+  //  public static instanceConstructor: any = null;
+  //  public static staticNatives: any [] = null;
+  //  public static instanceNatives: any [] = null;
+  //
+  //  public static getErrorMessage = Shumway.AVM2.getErrorMessage;
+  //  public static throwError(type: typeof ASError, id: number /*, ...rest */) {
+  //    var info = getErrorInfo(id);
+  //
+  //    var args = [info];
+  //    for (var i = 2; i < arguments.length; i++) {
+  //      args.push(arguments[i]);
+  //    }
+  //    var message = formatErrorMessage.apply(null, args);
+  //    throw new type(message, id);
+  //  }
+  //
+  //
+  //  static classInitializer: any = function() {
+  //    defineNonEnumerableProperty(this, '$Bglength', 1);
+  //    defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', 'Error');
+  //    defineNonEnumerableProperty(this.dynamicPrototype, '$Bgmessage', 'Error');
+  //    defineNonEnumerableProperty(this.dynamicPrototype, '$BgtoString', this.prototype.toString);
+  //  }
+  //
+  //  constructor(msg: any, id: any) {
+  //    false && super();
+  //    this.message = asCoerceString(msg);
+  //    this._errorID = id|0;
+  //    // This is gnarly but saves us from having individual ctors in all Error child classes.
+  //    this.name = (<ASClass><any>this.constructor).dynamicPrototype['$Bgname'];
+  //  }
+  //
+  //  message: string;
+  //  name: string;
+  //  _errorID: number;
+  //
+  //  toString() {
+  //    return this.message !== "" ? this.name + ": " + this.message : this.name;
+  //  }
+  //
+  //  get errorID() {
+  //    return this._errorID;
+  //  }
+  //
+  //  public getStackTrace(): string {
+  //    // Stack traces are only available in debug builds. We only do opt.
+  //    return null;
+  //  }
+  //}
+  //
+  //export class ASDefinitionError extends ASError {
+  //  static classInitializer: any = function() {
+  //    defineNonEnumerableProperty(this, '$Bglength', 1);
+  //    defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', this.name.substr(2));
+  //  }
+  //}
+  //export class ASEvalError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASRangeError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASReferenceError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASSecurityError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASSyntaxError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASTypeError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASURIError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASVerifyError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASUninitializedError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASArgumentError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //
+  //export class ASIOError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASEOFError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASMemoryError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //export class ASIllegalOperationError extends ASError {
+  //  static classInitializer: any = ASDefinitionError.classInitializer;
+  //}
+  //
+  //export class ASRegExp extends ASObject {
+  //  public static instanceConstructor: any = XRegExp;
+  //  public static staticNatives: any [] = [XRegExp];
+  //  public static instanceNatives: any [] = [XRegExp.prototype];
+  //
+  //  static classInitializer: any = function() {
+  //    var proto = XRegExp.prototype;
+  //    defineNonEnumerableProperty(proto, '$BgtoString', ASRegExp.prototype.ecmaToString);
+  //    defineNonEnumerableProperty(proto, '$Bgexec', proto.exec);
+  //    defineNonEnumerableProperty(proto, '$Bgtest', proto.test);
+  //  }
+  //
+  //  constructor(input) {
+  //    false && super();
+  //    release || assertUnreachable('ASRegExp references must be delegated to XRegExp.');
+  //  }
+  //
+  //  ecmaToString() {
+  //    var r: any = this;
+  //    var out = "/" + r.source + "/";
+  //    if (r.global)       out += "g";
+  //    if (r.ignoreCase)   out += "i";
+  //    if (r.multiline)    out += "m";
+  //    if (r.dotall)       out += "s";
+  //    if (r.extended)     out += "x";
+  //    return out;
+  //  }
+  //
+  //  get native_source(): string {
+  //    var self: any = this;
+  //    return self.source;
+  //  }
+  //
+  //  get native_global(): boolean {
+  //    var self: any = this;
+  //    return self.global;
+  //  }
+  //
+  //  get native_ignoreCase(): boolean {
+  //    var self: any = this;
+  //    return self.ignoreCase;
+  //  }
+  //
+  //  get native_multiline(): boolean {
+  //    var self: any = this;
+  //    return self.multiline;
+  //  }
+  //
+  //  get native_lastIndex(): number /*int*/ {
+  //    var self: any = this;
+  //    return self.lastIndex;
+  //  }
+  //
+  //  set native_lastIndex(i: number /*int*/) {
+  //    var self: any = this;
+  //    i = i | 0;
+  //    self.lastIndex = i;
+  //  }
+  //
+  //  get native_dotall(): boolean {
+  //    var self: any = this;
+  //    return self.dotall;
+  //  }
+  //
+  //  get native_extended(): boolean {
+  //    var self: any = this;
+  //    return self.extended;
+  //  }
+  //
+  //  exec(s: string = ""): any {
+  //    var result = RegExp.prototype.exec.apply(this, arguments);
+  //    if (!result) {
+  //      return result;
+  //    }
+  //    // For some reason named groups in AS3 are set to the empty string instead of
+  //    // undefined as is the case for indexed groups. Here we just emulate the AS3
+  //    // behaviour.
+  //    var keys = Object.keys(result);
+  //    for (var i = 0; i < keys.length; i++) {
+  //      var k = keys[i];
+  //      if (!isNumeric(k)) {
+  //        if (result[k] === undefined) {
+  //          result[k] = "";
+  //        }
+  //      }
+  //    }
+  //    Shumway.AVM2.Runtime.publicizeProperties(result);
+  //    return result;
+  //  }
+  //
+  //  test(s: string = ""): boolean {
+  //    return this.exec(s) !== null;
+  //  }
+  //}
+  //
+  //export class ASMath extends ASNative {
+  //  public static staticNatives: any [] = [Math];
+  //}
+  //
+  //export class ASDate extends ASNative {
+  //  public static staticNatives: any [] = [Date];
+  //  public static instanceNatives: any [] = [Date.prototype];
+  //  public static instanceConstructor: any = Date;
+  //
+  //  static classInitializer: any = function() {
+  //    var proto: any = Date.prototype;
+  //    defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
+  //    defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
+  //
+  //    defineNonEnumerableProperty(proto, '$BgtoDateString', proto.toDateString);
+  //    defineNonEnumerableProperty(proto, '$BgtoTimeString', proto.toTimeString);
+  //    defineNonEnumerableProperty(proto, '$BgtoLocaleString', proto.toLocaleString);
+  //    defineNonEnumerableProperty(proto, '$BgtoLocaleDateString', proto.toLocaleDateString);
+  //    defineNonEnumerableProperty(proto, '$BgtoLocaleTimeString', proto.toLocaleTimeString);
+  //    defineNonEnumerableProperty(proto, '$BgtoUTCString', proto.toUTCString);
+  //
+  //    // NB: The default AS implementation of |toJSON| is not ES5-compliant, but
+  //    // the native JS one obviously is.
+  //    defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
+  //
+  //    defineNonEnumerableProperty(proto, '$BggetUTCFullYear', proto.getUTCFullYear);
+  //    defineNonEnumerableProperty(proto, '$BggetUTCMonth', proto.getUTCMonth);
+  //    defineNonEnumerableProperty(proto, '$BggetUTCDate', proto.getUTCDate);
+  //    defineNonEnumerableProperty(proto, '$BggetUTCDay', proto.getUTCDay);
+  //    defineNonEnumerableProperty(proto, '$BggetUTCHours', proto.getUTCHours);
+  //    defineNonEnumerableProperty(proto, '$BggetUTCMinutes', proto.getUTCMinutes);
+  //    defineNonEnumerableProperty(proto, '$BggetUTCSeconds', proto.getUTCSeconds);
+  //    defineNonEnumerableProperty(proto, '$BggetUTCMilliseconds', proto.getUTCMilliseconds);
+  //    defineNonEnumerableProperty(proto, '$BggetFullYear', proto.getFullYear);
+  //    defineNonEnumerableProperty(proto, '$BggetMonth', proto.getMonth);
+  //    defineNonEnumerableProperty(proto, '$BggetDate', proto.getDate);
+  //    defineNonEnumerableProperty(proto, '$BggetDay', proto.getDay);
+  //    defineNonEnumerableProperty(proto, '$BggetHours', proto.getHours);
+  //    defineNonEnumerableProperty(proto, '$BggetMinutes', proto.getMinutes);
+  //    defineNonEnumerableProperty(proto, '$BggetSeconds', proto.getSeconds);
+  //    defineNonEnumerableProperty(proto, '$BggetMilliseconds', proto.getMilliseconds);
+  //    defineNonEnumerableProperty(proto, '$BggetTimezoneOffset', proto.getTimezoneOffset);
+  //    defineNonEnumerableProperty(proto, '$BggetTime', proto.getTime);
+  //    defineNonEnumerableProperty(proto, '$BgsetFullYear', proto.setFullYear);
+  //    defineNonEnumerableProperty(proto, '$BgsetMonth', proto.setMonth);
+  //    defineNonEnumerableProperty(proto, '$BgsetDate', proto.setDate);
+  //    defineNonEnumerableProperty(proto, '$BgsetHours', proto.setHours);
+  //    defineNonEnumerableProperty(proto, '$BgsetMinutes', proto.setMinutes);
+  //    defineNonEnumerableProperty(proto, '$BgsetSeconds', proto.setSeconds);
+  //    defineNonEnumerableProperty(proto, '$BgsetMilliseconds', proto.setMilliseconds);
+  //    defineNonEnumerableProperty(proto, '$BgsetUTCFullYear', proto.setUTCFullYear);
+  //    defineNonEnumerableProperty(proto, '$BgsetUTCMonth', proto.setUTCMonth);
+  //    defineNonEnumerableProperty(proto, '$BgsetUTCDate', proto.setUTCDate);
+  //    defineNonEnumerableProperty(proto, '$BgsetUTCHours', proto.setUTCHours);
+  //    defineNonEnumerableProperty(proto, '$BgsetUTCMinutes', proto.setUTCMinutes);
+  //    defineNonEnumerableProperty(proto, '$BgsetUTCSeconds', proto.setUTCSeconds);
+  //    defineNonEnumerableProperty(proto, '$BgsetUTCMilliseconds', proto.setUTCMilliseconds);
+  //  }
+  //
+  //  constructor(input) {
+  //    false && super();
+  //    release || assertUnreachable('ASDate references must be delegated to Date');
+  //  }
+  //}
 
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
-  var isInitialized: boolean = false;
-
-  export function initialize(domain: ApplicationDomain) {
-    if (isInitialized) {
-      return;
-    }
-
-    builtinNativeClasses["ObjectClass"]              = ASObject;
-    builtinNativeClasses["Class"]                    = ASClass;
-    builtinNativeClasses["FunctionClass"]            = ASFunction;
-    builtinNativeClasses["BooleanClass"]             = ASBoolean;
-    builtinNativeClasses["MethodClosureClass"]       = ASMethodClosure;
-    builtinNativeClasses["NamespaceClass"]           = ASNamespace;
-    builtinNativeClasses["NumberClass"]              = ASNumber;
-    builtinNativeClasses["IntClass"]                 = ASInt;
-    builtinNativeClasses["UIntClass"]                = ASUint;
-    builtinNativeClasses["StringClass"]              = ASString;
-    builtinNativeClasses["ArrayClass"]               = ASArray;
-    builtinNativeClasses["VectorClass"]              = ASVector;
-    builtinNativeClasses["ObjectVectorClass"]        = AS.GenericVector;
-    builtinNativeClasses["IntVectorClass"]           = AS.Int32Vector;
-    builtinNativeClasses["UIntVectorClass"]          = AS.Uint32Vector;
-    builtinNativeClasses["DoubleVectorClass"]        = AS.Float64Vector;
-    builtinNativeClasses["JSONClass"]                = ASJSON;
-    builtinNativeClasses["XMLClass"]                 = ASXML;
-    builtinNativeClasses["XMLListClass"]             = ASXMLList;
-    builtinNativeClasses["QNameClass"]               = ASQName;
-
-
-
-    // Errors
-    builtinNativeClasses["ErrorClass"]               = ASError;
-    builtinNativeClasses["DefinitionErrorClass"]     = ASDefinitionError;
-    builtinNativeClasses["EvalErrorClass"]           = ASEvalError;
-    builtinNativeClasses["RangeErrorClass"]          = ASRangeError;
-    builtinNativeClasses["ReferenceErrorClass"]      = ASReferenceError;
-    builtinNativeClasses["SecurityErrorClass"]       = ASSecurityError;
-    builtinNativeClasses["SyntaxErrorClass"]         = ASSyntaxError;
-    builtinNativeClasses["TypeErrorClass"]           = ASTypeError;
-    builtinNativeClasses["URIErrorClass"]            = ASURIError;
-    builtinNativeClasses["VerifyErrorClass"]         = ASVerifyError;
-    builtinNativeClasses["UninitializedErrorClass"]  = ASUninitializedError;
-    builtinNativeClasses["ArgumentErrorClass"]       = ASArgumentError;
-    builtinNativeClasses["IOErrorClass"]             = ASIOError;
-    builtinNativeClasses["EOFErrorClass"]            = ASEOFError;
-    builtinNativeClasses["MemoryErrorClass"]         = ASMemoryError;
-    builtinNativeClasses["IllegalOperationErrorClass"] = ASIllegalOperationError;
-
-    builtinNativeClasses["DateClass"]                = ASDate;
-    builtinNativeClasses["MathClass"]                = ASMath;
-
-    builtinNativeClasses["RegExpClass"]              = ASRegExp;
-
-    /**
-     * If the Linker links against flash.* classes then we end up in a cycle. A reference to
-     * |flash.utils.ByteArray| for instance would cause us to initialize the |ByteArray| class,
-     * when we're not fully initialized ourselves. To get around this we make sure we don't refer
-     * to possibly linked classes by prefixing their names with "Original".
-     */
-
-    // flash.utils
-    builtinNativeClasses["ProxyClass"]               = flash.utils.OriginalProxy;
-    builtinNativeClasses["DictionaryClass"]          = flash.utils.OriginalDictionary;
-    builtinNativeClasses["ByteArrayClass"]           = flash.utils.OriginalByteArray;
-    // flash.system
-    builtinNativeClasses["SystemClass"]              = flash.system.OriginalSystem;
-
-    isInitialized = true;
+  function initializeBuiltins() {
+    builtinNativeClasses["Object"]              = ASObject;
+    builtinNativeClasses["Class"]               = ASClass;
+    builtinNativeClasses["Function"]            = ASFunction;
+    builtinNativeClasses["Boolean"]             = ASBoolean;
+    builtinNativeClasses["MethodClosure"]       = ASMethodClosure;
+    builtinNativeClasses["Namespace"]           = ASNamespace;
+    builtinNativeClasses["Number"]              = ASNumber;
+    builtinNativeClasses["Int"]                 = ASInt;
+    builtinNativeClasses["UInt"]                = ASUint;
+    builtinNativeClasses["String"]              = ASString;
+    builtinNativeClasses["Array"]               = ASArray;
+    //builtinNativeClasses["VectorClass"]              = ASVector;
+    //builtinNativeClasses["ObjectVectorClass"]        = AS.GenericVector;
+    //builtinNativeClasses["IntVectorClass"]           = AS.Int32Vector;
+    //builtinNativeClasses["UIntVectorClass"]          = AS.Uint32Vector;
+    //builtinNativeClasses["DoubleVectorClass"]        = AS.Float64Vector;
+    //builtinNativeClasses["JSONClass"]                = ASJSON;
+    //builtinNativeClasses["XMLClass"]                 = ASXML;
+    //builtinNativeClasses["XMLListClass"]             = ASXMLList;
+    //builtinNativeClasses["QNameClass"]               = ASQName;
+    //
+    //// Errors
+    //builtinNativeClasses["ErrorClass"]               = ASError;
+    //builtinNativeClasses["DefinitionErrorClass"]     = ASDefinitionError;
+    //builtinNativeClasses["EvalErrorClass"]           = ASEvalError;
+    //builtinNativeClasses["RangeErrorClass"]          = ASRangeError;
+    //builtinNativeClasses["ReferenceErrorClass"]      = ASReferenceError;
+    //builtinNativeClasses["SecurityErrorClass"]       = ASSecurityError;
+    //builtinNativeClasses["SyntaxErrorClass"]         = ASSyntaxError;
+    //builtinNativeClasses["TypeErrorClass"]           = ASTypeError;
+    //builtinNativeClasses["URIErrorClass"]            = ASURIError;
+    //builtinNativeClasses["VerifyErrorClass"]         = ASVerifyError;
+    //builtinNativeClasses["UninitializedErrorClass"]  = ASUninitializedError;
+    //builtinNativeClasses["ArgumentErrorClass"]       = ASArgumentError;
+    //builtinNativeClasses["IOErrorClass"]             = ASIOError;
+    //builtinNativeClasses["EOFErrorClass"]            = ASEOFError;
+    //builtinNativeClasses["MemoryErrorClass"]         = ASMemoryError;
+    //builtinNativeClasses["IllegalOperationErrorClass"] = ASIllegalOperationError;
+    //
+    //builtinNativeClasses["DateClass"]                = ASDate;
+    //builtinNativeClasses["MathClass"]                = ASMath;
+    //
+    //builtinNativeClasses["RegExpClass"]              = ASRegExp;
+    //
+    ///**
+    // * If the Linker links against flash.* classes then we end up in a cycle. A reference to
+    // * |flash.utils.ByteArray| for instance would cause us to initialize the |ByteArray| class,
+    // * when we're not fully initialized ourselves. To get around this we make sure we don't refer
+    // * to possibly linked classes by prefixing their names with "Original".
+    // */
+    //
+    //// flash.utils
+    //builtinNativeClasses["ProxyClass"]               = flash.utils.OriginalProxy;
+    //builtinNativeClasses["DictionaryClass"]          = flash.utils.OriginalDictionary;
+    //builtinNativeClasses["ByteArrayClass"]           = flash.utils.OriginalByteArray;
+    //// flash.system
+    //builtinNativeClasses["SystemClass"]              = flash.system.OriginalSystem;
   }
 
+  initializeBuiltins();
 
   var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
   var nativeFunctions: Shumway.Map<Function> = Shumway.ObjectUtilities.createMap<Function>();
 
-  export function registerNativeClass(name: string, cls: ASClass) {
-    release || assert (!nativeClasses[name], "Native class: " + name + " is already registered.");
-    nativeClasses[name] = cls;
-  }
-
-  export function registerNativeFunction(name: string, fn: Function) {
-    release || assert (!nativeFunctions[name], "Native function: " + name + " is already registered.");
-    nativeFunctions[name] = fn;
-  }
-
-  export function createInterface(classInfo: ClassInfo) {
-    var ii = classInfo.instanceInfo;
-    release || assert(ii.isInterface());
-    var cls = new ASClass(classInfo);
-    cls.interfaceBindings = new InstanceBindings(null, ii, null, null);
-    cls.verify();
-    return cls;
-  }
+  //export function registerNativeClass(name: string, cls: ASClass) {
+  //  release || assert (!nativeClasses[name], "Native class: " + name + " is already registered.");
+  //  nativeClasses[name] = cls;
+  //}
+  //
+  //export function registerNativeFunction(name: string, fn: Function) {
+  //  release || assert (!nativeFunctions[name], "Native function: " + name + " is already registered.");
+  //  nativeFunctions[name] = fn;
+  //}
+  //
+  //export function createInterface(classInfo: ClassInfo) {
+  //  var ii = classInfo.instanceInfo;
+  //  release || assert(ii.isInterface());
+  //  var cls = new ASClass(classInfo);
+  //  cls.interfaceBindings = new InstanceBindings(null, ii, null, null);
+  //  cls.verify();
+  //  return cls;
+  //}
 
   /**
-   * We need to patch up the prototypes of all classes that are created before the Class class is
-   * constructed. Here we store the classes that need to be patched.
-   */
+  * We need to patch up the prototypes of all classes that are created before the Class class is
+  * constructed. Here we store the classes that need to be patched.
+  */
   var morphPatchList = [];
 
-  export function createClass(classInfo: ClassInfo, baseClass: ASClass, scope: Scope) {
-    var ci = classInfo;
-    var ii = ci.instanceInfo;
-    var domain = ci.abc.applicationDomain;
-    var isNativeClass = ci.native;
-    var cls: ASClass;
-    if (isNativeClass) {
-      cls = builtinNativeClasses[ci.native.cls];
-      if (!cls) {
-        cls = nativeClasses[ci.native.cls];
-      }
-      if (!cls) {
-        Shumway.Debug.unexpected("No native class for " + ci.native.cls);
-      }
-      cls.morphIntoASClass(classInfo);
-      if (morphPatchList) {
-        morphPatchList.push(cls);
-      }
-    } else {
-      cls = new ASClass(classInfo);
-    }
-
-    cls.baseClass = baseClass;
-
-    var classScope = new Scope(scope, null);
-    classScope.object = cls;
-    var instanceConstructor = null;
-    if (ii.init.isNative()) {
-      release || assert (isNativeClass);
-      instanceConstructor = cls;
-    } else {
-      instanceConstructor = createFunction(ii.init, classScope, false, false);
-    }
-
-    /**
-     * Only collect natives for native classes.
-     */
-
-    var staticNatives: Object [] = null;
-    var instanceNatives: Object [] = null;
-
-    if (isNativeClass) {
-      staticNatives = [cls];
-      if (cls.staticNatives) {
-        Shumway.ArrayUtilities.pushMany(staticNatives, cls.staticNatives);
-      }
-      instanceNatives = [cls.prototype];
-      if (cls.instanceNatives) {
-        Shumway.ArrayUtilities.pushMany(instanceNatives, cls.instanceNatives);
-      }
-    }
-
-    ASClass.create(cls, baseClass, instanceConstructor);
-    release || cls.verify();
-
-    // Once we see the Class class patch up the prototypes of all the classes
-    // that were constructed before, including this one.
-    if (classInfo.instanceInfo.name.name === "Class") {
-      for (var i = 0; i < morphPatchList.length; i++) {
-        morphPatchList[i].__proto__ = ASClass.prototype;
-      }
-      morphPatchList = null;
-    }
-
-    enterTimeline("InstanceBindings");
-    cls.instanceBindings = new InstanceBindings(baseClass ? baseClass.instanceBindings : null,
-                                                ii, classScope, instanceNatives);
-    if (cls.instanceConstructor) {
-      enterTimeline("applyTo");
-      cls.instanceBindings.applyTo(domain, cls.traitsPrototype);
-      leaveTimeline();
-    }
-    leaveTimeline();
-
-    enterTimeline("ClassBindings");
-    cls.classBindings = new ClassBindings(classInfo, classScope, staticNatives);
-    enterTimeline("applyTo");
-    cls.classBindings.applyTo(domain, cls);
-    if (cls === <any>ASClass) {
-      cls.instanceBindings.applyTo(domain, ASObject, true);
-    } else if (ASClass.instanceBindings) {
-      ASClass.instanceBindings.applyTo(domain, cls, true);
-    }
-    leaveTimeline();
-    leaveTimeline();
-
-    cls.implementedInterfaces = cls.instanceBindings.implementedInterfaces;
-
-
-    enterTimeline("Configure");
-    ASClass.configureInitializers(cls);
-    ASClass.linkSymbols(cls);
-    ASClass.runClassInitializer(cls);
-    leaveTimeline();
-
-    return cls;
+  export function createClass(classInfo: ClassInfo, asSuperClass: ASClass, scope: Scope): ASClass {
+    console.log("creatClass: " + classInfo.instanceInfo.getName().name);
+    var asClass = new ASClass(classInfo);
+    ASClass.link(asClass, asSuperClass, scope);
+    return asClass;
   }
 
   /**
-   * These functions should never leak into the AS3 world.
-   */
+  * These functions should never leak into the AS3 world.
+  */
   var illegalAS3Functions = [
-    Runtime.forwardValueOf,
-    Runtime.forwardToString
+    // Runtime.forwardValueOf,
+    // Runtime.forwardToString
   ];
 
+  export  function getNativesForTrait(trait: TraitInfo): Object [] {
+    var className = null;
+    var natives: Object [];
+
+    if (trait.holder instanceof InstanceInfo) {
+      var instanceInfo = <InstanceInfo>trait.holder;
+      className = instanceInfo.getName().name;
+      var native = builtinNativeClasses[className];
+      natives = [native.prototype];
+      if (native.instanceNatives) {
+        pushMany(natives, native.instanceNatives);
+      }
+    } else if (trait.holder instanceof ClassInfo) {
+      var classInfo = <ClassInfo>trait.holder;
+      className = classInfo.instanceInfo.getName().name;
+      var native = builtinNativeClasses[className];
+      natives = [native, ASClass.prototype];
+      if (native.staticNatives) {
+        pushMany(natives, native.staticNatives);
+      }
+    }
+    return natives;
+  }
+
   /**
-   * Searches for a native property in a list of native holders.
-   */
-  export function getMethodOrAccessorNative(trait: Trait, natives: Object []): any {
-    var name = escapeNativeName(Multiname.getName(trait.name));
+  * Searches for a native property in a list of native holders.
+  */
+  export function getMethodOrAccessorNative(trait: TraitInfo): any {
+    var natives = getNativesForTrait(trait);
+    var name = escapeNativeName(trait.getName().name);
     debug && console.log("getMethodOrAccessorNative(" + name + ")");
     for (var i = 0; i < natives.length; i++) {
       var native = natives[i];
@@ -1926,16 +1883,14 @@ module Shumway.AVM2.AS {
         return value;
       }
     }
-    Shumway.Debug.warning("No native method for: " + trait.kindName() + " " +
-                          trait.methodInfo.holder + "::" + Multiname.getQualifiedName(trait.name) +
-                          ", make sure you've got the static keyword for static methods.");
-    //release || assertUnreachable("Cannot find " + trait + " in natives.");
+    Shumway.Debug.warning("No native method for: " + trait.holder + " " + trait + ", make sure you've got the static keyword for static methods.");
+    release || assertUnreachable("Cannot find " + trait + " in natives.");
     return null;
   }
 
-  /**
-   * This is to avoid conflicts with JS properties.
-   */
+  ///**
+  // * This is to avoid conflicts with JS properties.
+  // */
   export function escapeNativeName(name: string) {
     switch (name) {
       case "prototype":             return "native_prototype";
@@ -1945,10 +1900,10 @@ module Shumway.AVM2.AS {
       default:                      return name;
     }
   }
-
+  //
   /**
-   * Other natives can live in this module
-   */
+  * Other natives can live in this module
+  */
   export module Natives {
     // Expose Some Builtin Objects
     export var String = jsGlobal.String;
@@ -1956,8 +1911,8 @@ module Shumway.AVM2.AS {
     export var Boolean = jsGlobal.Boolean;
     export var Number = jsGlobal.Number;
     export var Date = jsGlobal.Date;
-    export var ASObject = Shumway.AVM2.AS.ASObject;
-    export var ASFunction = Shumway.AVM2.AS.ASFunction;
+    export var ASObject = AS.ASObject;
+    export var ASFunction = AS.ASFunction;
 
     export function print(expression: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
       jsGlobal.print.apply(null, arguments);
@@ -1985,67 +1940,69 @@ module Shumway.AVM2.AS {
     export var parseFloat: (string: string) => number = jsGlobal.parseFloat;
     export var escape: (x: any) => any = jsGlobal.escape;
     export var unescape: (x: any) => any = jsGlobal.unescape;
-    export var isXMLName: (x: any) => boolean;
+    export var isXMLName: (x: any) => boolean = function () {
+      return false; // "FIX ME";
+    };
     export var notImplemented: (x: any) => void = Shumway.Debug.notImplemented;
 
-    /**
-     * Returns the fully qualified class name of an object.
-     */
-    export function getQualifiedClassName(value: any):string {
-      if (value === null) {
-        return "null";
-      } else if (value === undefined) {
-        return "void";
-      }
-      if (ASInt.isType(value)) {
-        return "int";
-      }
-      value = boxValue(value)
-      if (ASClass.isType(value)) {
-        return (<ASClass> value).getQualifiedClassName();
-      }
-      return value.class.getQualifiedClassName();
-    }
-
-    /**
-     * Returns the fully qualified class name of the base class of the object specified by the
-     * |value| parameter.
-     */
-    export function getQualifiedSuperclassName(value: any) {
-      if (isNullOrUndefined(value)) {
-        return "null";
-      }
-      value = boxValue(value);
-      var cls: ASClass = ASClass.isType(value) ? value : value.class;
-      if (!cls.baseClass) {
-        return "null";
-      }
-      return cls.baseClass.getQualifiedClassName();
-    }
-
-    /**
-     * Returns the class with the specified name, or |null| if no such class exists.
-     */
-    export function getDefinitionByName(name: string): ASClass {
-      var simpleName = String(name).replace("::", ".");
-      var cls = Shumway.AVM2.Runtime.AVM2.currentDomain().getClass(simpleName, false);
-      return cls || null;
-    }
-
-    export function describeType(value: any, flags: number) {
-      return Shumway.AVM2.AS.describeType(value, flags);
-    }
-
-    export function describeTypeJSON(value: any, flags: number) {
-      return Shumway.AVM2.AS.describeTypeJSON(value, flags);
-    }
+  //  /**
+  //   * Returns the fully qualified class name of an object.
+  //   */
+  //  export function getQualifiedClassName(value: any):string {
+  //    if (value === null) {
+  //      return "null";
+  //    } else if (value === undefined) {
+  //      return "void";
+  //    }
+  //    if (ASInt.isType(value)) {
+  //      return "int";
+  //    }
+  //    value = boxValue(value)
+  //    if (ASClass.isType(value)) {
+  //      return (<ASClass> value).getQualifiedClassName();
+  //    }
+  //    return value.class.getQualifiedClassName();
+  //  }
+  //
+  //  /**
+  //   * Returns the fully qualified class name of the base class of the object specified by the
+  //   * |value| parameter.
+  //   */
+  //  export function getQualifiedasSuperClassName(value: any) {
+  //    if (isNullOrUndefined(value)) {
+  //      return "null";
+  //    }
+  //    value = boxValue(value);
+  //    var cls: ASClass = ASClass.isType(value) ? value : value.class;
+  //    if (!cls.asSuperClass) {
+  //      return "null";
+  //    }
+  //    return cls.asSuperClass.getQualifiedClassName();
+  //  }
+  //
+  //  /**
+  //   * Returns the class with the specified name, or |null| if no such class exists.
+  //   */
+  //  export function getDefinitionByName(name: string): ASClass {
+  //    var simpleName = String(name).replace("::", ".");
+  //    var cls = Shumway.AVM2.Runtime.AVM2.currentDomain().getClass(simpleName, false);
+  //    return cls || null;
+  //  }
+  //
+  //  export function describeType(value: any, flags: number) {
+  //    return Shumway.AVM2.AS.describeType(value, flags);
+  //  }
+  //
+  //  export function describeTypeJSON(value: any, flags: number) {
+  //    return Shumway.AVM2.AS.describeTypeJSON(value, flags);
+  //  }
   }
 
   /**
-   * Searchs for natives using a string path "a.b.c...".
+   * Searches for natives using a string path "a.b.c...".
    */
   export function getNative(path: string): Function {
-    debug && console.log("getNative(" + path + ")");
+    debug && console.log("getNative(\"" + path + "\")");
     var chain = path.split(".");
     var v = Natives;
     for (var i = 0, j = chain.length; i < j; i++) {

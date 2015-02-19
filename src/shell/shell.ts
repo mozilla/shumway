@@ -294,7 +294,9 @@ module Shumway.Shell {
         if (file.endsWith(".abc")) {
           var securityDomain = createSecurityDomain(builtinLibPath, null, null);
           var buffer = new Uint8Array(read(file, "binary"));
-          securityDomain.application.loadAndExecuteABC(new ABCFile(buffer));
+          var abc = new ABCFile(buffer);
+          securityDomain.application.loadABC(abc);
+          securityDomain.application.executeABC(abc);
         }
       });
     } else if (disassembleOption.value) {
@@ -539,20 +541,11 @@ module Shumway.Shell {
   function createSecurityDomain(builtinLibPath, shellLibPath, libraryPathInfo) {
     var buffer = read(builtinLibPath, 'binary');
     var securityDomain = new AVMX.SecurityDomain();
-
     var builtinABC = new ABCFile(new Uint8Array(buffer));
-
-    securityDomain.system.loadAndExecuteABC(builtinABC);
-
+    securityDomain.system.loadABC(builtinABC);
+    securityDomain.initializeGlobals();
+    securityDomain.system.executeABC(builtinABC);
     return securityDomain;
-    //
-    //if (libraryPathInfo) {
-    //  loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
-    //}
-    //if (shellLibPath) {
-    //  var buffer = read(shellLibPath, 'binary');
-    //  avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "shell.abc"));
-    //}
   }
 
   function initializeAVM2(loadPlayerglobal: boolean, loadShellLib: boolean) {

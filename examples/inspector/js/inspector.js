@@ -156,20 +156,35 @@ function executeFile(file, buffer, movieParams) {
   var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
 
+
   if (filename.endsWith(".abc")) {
     libraryScripts = {};
-    Shumway.createAVM2(builtinPath, shellAbcPath, sysMode, appMode, function (avm2) {
-      function runAbc(file, buffer) {
-        avm2.applicationDomain.executeAbc(new Shumway.AVM2.ABC.AbcFile(new Uint8Array(buffer), file));
-      }
-      if (!buffer) {
-        new BinaryFileReader(file).readAll(null, function(buffer) {
-          runAbc(file, buffer);
-        });
-      } else {
-        runAbc(file, buffer);
-      }
+
+    new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
+      var securityDomain = new Shumway.AVMX.SecurityDomain();
+      var builtinABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
+      securityDomain.system.loadABC(builtinABC);
+      securityDomain.initializeGlobals();
+      securityDomain.system.executeABC(builtinABC);
+
+      new BinaryFileReader(file).readAll(null, function (buffer) {
+        var abc = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
+        securityDomain.application.loadAndExecuteABC(abc);
+      });
     });
+
+    //Shumway.createAVM2(builtinPath, shellAbcPath, sysMode, appMode, function (avm2) {
+    //  function runAbc(file, buffer) {
+    //    avm2.applicationDomain.executeAbc(new Shumway.AVM2.ABC.AbcFile(new Uint8Array(buffer), file));
+    //  }
+    //  if (!buffer) {
+    //    new BinaryFileReader(file).readAll(null, function(buffer) {
+    //      runAbc(file, buffer);
+    //    });
+    //  } else {
+    //    runAbc(file, buffer);
+    //  }
+    //});
   } else if (filename.endsWith(".swf")) {
     Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {

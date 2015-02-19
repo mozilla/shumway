@@ -1,8 +1,6 @@
 module Shumway.AVMX {
   import assert = Shumway.Debug.assert;
   var writer = new IndentingWriter();
-
-  import box = Shumway.ObjectUtilities.boxValue;
   import popManyInto = Shumway.ArrayUtilities.popManyInto;
 
   /**
@@ -56,14 +54,17 @@ module Shumway.AVMX {
 
 
   function popNameInto(stack: any [], mn: Multiname, rn: Multiname) {
+    rn.id = mn.id;
     rn.kind = mn.kind;
     if (mn.isRuntimeName()) {
       rn.name = stack.pop();
+      rn.id = -1;
     } else {
       rn.name = mn.name;
     }
     if (mn.isRuntimeNamespace()) {
       rn.namespaces = [stack.pop()];
+      rn.id = -1;
     } else {
       rn.namespaces = mn.namespaces;
     }
@@ -74,15 +75,17 @@ module Shumway.AVMX {
     writer.enter("> " + methodInfo);
     try {
       var result = _interpret(self, methodInfo, savedScope, args);
-      writer.leave("< " + methodInfo);
+      writer.leave("< " + methodInfo.trait);
       return result;
     } catch (e) {
-      writer.leave("< " + methodInfo + ", Exception: " + e);
+      writer.leave("< " + methodInfo.trait + ", Exception: " + e);
       throw e;
     }
   }
 
   function _interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, args: any []) {
+    var securityDomain = methodInfo.abc.applicationDomain.securityDomain;
+
     var abc = methodInfo.abc;
     var body = methodInfo.getBody();
     release || assert(body);
@@ -103,8 +106,7 @@ module Shumway.AVMX {
       local.push(arg);
     }
 
-    var pc = 0;
-
+    var pc = 0, st = pc;
     function s32(): number {
       var result = code[pc++];
       if (result & 0x80) {
@@ -131,14 +133,20 @@ module Shumway.AVMX {
       return s32() >>> 0;
     }
 
+    function s24(): number {
+      var u = code[pc++] | (code[pc++] << 8) | (code[pc++] << 16);
+      return (u << 8) >> 8;
+    }
+
     var rn = new Multiname(abc, 0, null, null, null);
 
     var code = body.code;
-    var value;
+    var value, object, a, b, offset, index, result;
 
     while (true) {
-      writer.greenLn("" + pc + ", BC: " + Bytecode[code[pc]] + " [" + stack.map(String).join(", ") + "]");
+      writer.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" + stack.map(x => x == undefined ? String(x) : x.toString()).join(", ") + "]");
       try {
+        var st = pc;
         var bc = code[pc++];
         switch (bc) {
           case Bytecode.THROW:
@@ -159,74 +167,86 @@ module Shumway.AVMX {
           //case Bytecode.kill:
           //  locals[bc.index] = undefined;
           //  break;
-          //case Bytecode.ifnlt:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = !(a < b) ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.ifge:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = a >= b ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.ifnle:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = !(a <= b) ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.ifgt:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = a > b ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.ifngt:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = !(a > b) ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.ifle:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = a <= b ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.ifnge:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = !(a >= b) ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.iflt:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = a < b ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.jump:
-          //  pc = bc.offset;
-          //  continue;
-          //case Bytecode.iftrue:
-          //  pc = !!stack.pop() ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.iffalse:
-          //  pc = !stack.pop() ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.ifeq:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = asEquals(a, b) ? bc.offset : pc + 1;
-          //  continue;
-          //case Bytecode.ifne:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = !asEquals(a, b) ? bc.offset : pc + 1;
-          //  continue;
+          case Bytecode.IFNLT:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = !(a < b) ? st + offset : pc;
+            continue;
+          case Bytecode.IFGE:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = a >= b ? st + offset : pc;
+            continue;
+          case Bytecode.IFNLE:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = !(a <= b) ? st + offset : pc;
+            continue;
+          case Bytecode.IFGT:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = a > b ? st + offset : pc;
+            continue;
+          case Bytecode.IFNGT:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = !(a > b) ? st + offset : pc;
+            continue;
+          case Bytecode.IFLE:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = a <= b ? st + offset : pc;
+            continue;
+          case Bytecode.IFNGE:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = !(a >= b) ? st + offset : pc;
+            continue;
+          case Bytecode.IFLT:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = a < b ? st + offset : pc;
+            continue;
+          case Bytecode.JUMP:
+            pc = st + s24();
+            continue;
+          case Bytecode.IFTRUE:
+            offset = s24();
+            pc = !!stack.pop() ? st + offset : pc;
+            continue;
+          case Bytecode.IFFALSE:
+            offset = s24();
+            pc = !stack.pop() ? st + offset : pc;
+            continue;
+          case Bytecode.IFEQ:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = asEquals(a, b) ? st + offset : pc;
+            continue;
+          case Bytecode.IFNE:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = !asEquals(a, b) ? st + offset : pc;
+            continue;
           //case Bytecode.ifstricteq:
           //  b = stack.pop();
           //  a = stack.pop();
-          //  pc = a === b ? bc.offset : pc + 1;
+          //  pc = a === b ? st + offset : pc;
           //  continue;
           //case Bytecode.ifstrictne:
           //  b = stack.pop();
           //  a = stack.pop();
-          //  pc = a !== b ? bc.offset : pc + 1;
+          //  pc = a !== b ? st + offset : pc;
           //  continue;
           //case Bytecode.lookupswitch:
           //  index = stack.pop();
@@ -299,22 +319,22 @@ module Shumway.AVMX {
           case Bytecode.DUP:
             stack.push(stack[stack.length - 1]);
             break;
-          //case Bytecode.swap:
-          //  object = stack[stack.length - 1];
-          //  stack[stack.length - 1] = stack[stack.length - 2];
-          //  stack[stack.length - 2] = object;
-          //  break;
-          case Bytecode.PUSHSCOPE:
-            scope.push(box(stack.pop()), false);
+          case Bytecode.SWAP:
+            value = stack[stack.length - 1];
+            stack[stack.length - 1] = stack[stack.length - 2];
+            stack[stack.length - 2] = value;
             break;
-          //case Bytecode.newfunction:
-          //  stack.push(createFunction(methods[bc.index], scope.topScope(), true, false));
-          //  break;
-          //case Bytecode.call:
-          //  popManyInto(stack, bc.argCount, args);
-          //  object = stack.pop();
-          //  stack[stack.length - 1] = stack[stack.length - 1].asApply(object, args);
-          //  break;
+          case Bytecode.PUSHSCOPE:
+            scope.push(securityDomain.box(stack.pop()), false);
+            break;
+          case Bytecode.NEWFUNCTION:
+            stack.push(securityDomain.createFunction(abc.getMethodInfo(u30()), scope.topScope(), true));
+            break;
+          case Bytecode.CALL:
+            popManyInto(stack, u30(), args);
+            object = stack.pop();
+            stack[stack.length - 1] = stack[stack.length - 1].axApply(object, args);
+            break;
           //case Bytecode.construct:
           //  popManyInto(stack, bc.argCount, args);
           //  stack[stack.length - 1] = construct(stack[stack.length - 1], args);
@@ -344,11 +364,11 @@ module Shumway.AVMX {
           // case Bytecode.CALLPROPLEX:
           case Bytecode.CALLPROPERTY:
           case Bytecode.CALLPROPVOID:
-            var index = u30();
-            var argCount = u30();
+            index = u30();
+            argCount = u30();
             popManyInto(stack, argCount, args);
             popNameInto(stack, abc.getMultiname(index), rn);
-            var result = box(stack.pop()).axCallProperty(rn, args);
+            result = securityDomain.box(stack.pop()).axCallProperty(rn, args);
             if (bc !== Bytecode.CALLPROPVOID) {
               stack.push(result);
             }
@@ -368,26 +388,26 @@ module Shumway.AVMX {
           //  popManyInto(stack, bc.argCount, args);
           //  stack[stack.length - 1] = applyType(method, stack[stack.length - 1], args);
           //  break;
-          //case Bytecode.newobject:
-          //  object = {};
-          //  for (var i = 0; i < bc.argCount; i++) {
-          //    value = stack.pop();
-          //    object[Multiname.getPublicQualifiedName(stack.pop())] = value;
-          //  }
-          //  stack.push(object);
-          //  break;
-          //case Bytecode.newarray:
-          //  object = [];
-          //  popManyInto(stack, bc.argCount, args);
-          //  object.push.apply(object, args);
-          //  stack.push(object);
-          //  break;
-          //case Bytecode.newactivation:
-          //  release || assert(method.needsActivation());
-          //  stack.push(asCreateActivation(method));
-          //  break;
+          case Bytecode.NEWOBJECT:
+            object = {};
+            argCount = u30();
+            for (var i = 0; i < argCount; i++) {
+              value = stack.pop();
+              object[Multiname.getPublicMangledName(stack.pop())] = value;
+            }
+            stack.push(object);
+            break;
+          case Bytecode.NEWARRAY:
+            object = [];
+            popManyInto(stack, u30(), args);
+            object.push.apply(object, args);
+            stack.push(securityDomain.box(object));
+            break;
+          case Bytecode.NEWACTIVATION:
+            stack.push(securityDomain.createActivation(methodInfo));
+            break;
           case Bytecode.NEWCLASS:
-            stack[stack.length - 1] = createClass(
+            stack[stack.length - 1] = securityDomain.createClass(
               abc.classes[u30()], stack[stack.length - 1], scope.topScope()
             );
             break;
@@ -418,7 +438,7 @@ module Shumway.AVMX {
           case Bytecode.SETPROPERTY:
             value = stack.pop();
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            box(stack.pop()).axSetProperty(rn, value);
+            securityDomain.box(stack.pop()).axSetProperty(rn, value);
             break;
           case Bytecode.GETLOCAL:
             stack.push(local[u30()]);
@@ -426,28 +446,28 @@ module Shumway.AVMX {
           //case Bytecode.setlocal:
           //  locals[bc.index] = stack.pop();
           //  break;
-          //case Bytecode.getglobalscope:
-          //  stack.push(savedScope.global.object);
-          //  break;
-          //case Bytecode.getscopeobject:
-          //  stack.push(scope.get(bc.index));
-          //  break;
+          case Bytecode.GETGLOBALSCOPE:
+            stack.push(savedScope.global.object);
+            break;
+          case Bytecode.GETSCOPEOBJECT:
+            stack.push(scope.get(code[pc++]));
+            break;
           case Bytecode.GETPROPERTY:
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            stack[stack.length - 1] = box(stack[stack.length - 1]).axGetProperty(rn);
+            stack[stack.length - 1] = securityDomain.box(stack[stack.length - 1]).axGetProperty(rn);
             break;
           //case Bytecode.deleteproperty:
           //  popNameInto(stack, multinames[bc.index], mn);
           //  stack[stack.length - 1] = box(stack[stack.length - 1]).asDeleteProperty(mn.namespaces, mn.name, mn.flags);
           //  break;
-          //case Bytecode.getslot:
-          //  stack[stack.length - 1] = asGetSlot(stack[stack.length - 1], bc.index);
-          //  break;
-          //case Bytecode.setslot:
-          //  value = stack.pop();
-          //  object = stack.pop();
-          //  asSetSlot(object, bc.index, value);
-          //  break;
+          case Bytecode.GETSLOT:
+            stack[stack.length - 1] = asGetSlot(stack[stack.length - 1], u30());
+            break;
+          case Bytecode.SETSLOT:
+            value = stack.pop();
+            object = stack.pop();
+            asSetSlot(object, u30(), value);
+            break;
           //case Bytecode.convert_s:
           //  stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
           //  break;
@@ -457,22 +477,22 @@ module Shumway.AVMX {
           //case Bytecode.esc_xelem:
           //  stack[stack.length - 1] = Runtime.escapeXMLElement(stack[stack.length - 1]);
           //  break;
-          //case Bytecode.coerce_i:
-          //case Bytecode.convert_i:
-          //  stack[stack.length - 1] |= 0;
-          //  break;
-          //case Bytecode.coerce_u:
-          //case Bytecode.convert_u:
-          //  stack[stack.length - 1] >>>= 0;
-          //  break;
-          //case Bytecode.coerce_d:
-          //case Bytecode.convert_d:
-          //  stack[stack.length - 1] = +stack[stack.length - 1];
-          //  break;
-          //case Bytecode.coerce_b:
-          //case Bytecode.convert_b:
-          //  stack[stack.length - 1] = !!stack[stack.length - 1];
-          //  break;
+          case Bytecode.COERCE_I:
+          case Bytecode.CONVERT_I:
+            stack[stack.length - 1] |= 0;
+            break;
+          case Bytecode.COERCE_U:
+          case Bytecode.CONVERT_U:
+            stack[stack.length - 1] >>>= 0;
+            break;
+          case Bytecode.COERCE_D:
+          case Bytecode.CONVERT_D:
+            stack[stack.length - 1] = +stack[stack.length - 1];
+            break;
+          case Bytecode.COERCE_B:
+          case Bytecode.CONVERT_B:
+            stack[stack.length - 1] = !!stack[stack.length - 1];
+            break;
           //case Bytecode.checkfilter:
           //  stack[stack.length - 1] = checkFilter(stack[stack.length - 1]);
           //  break;
@@ -497,30 +517,30 @@ module Shumway.AVMX {
           //case Bytecode.negate:
           //  stack[stack.length - 1] = -stack[stack.length - 1];
           //  break;
-          //case Bytecode.increment:
-          //  ++stack[stack.length - 1];
-          //  break;
-          //case Bytecode.inclocal:
-          //  ++locals[bc.index];
-          //  break;
-          //case Bytecode.decrement:
-          //  --stack[stack.length - 1];
-          //  break;
-          //case Bytecode.declocal:
-          //  --locals[bc.index];
-          //  break;
-          //case Bytecode.typeof:
-          //  stack[stack.length - 1] = asTypeOf(stack[stack.length - 1]);
-          //  break;
-          //case Bytecode.not:
-          //  stack[stack.length - 1] = !stack[stack.length - 1];
-          //  break;
+          case Bytecode.INCREMENT:
+            ++stack[stack.length - 1];
+            break;
+          case Bytecode.INCLOCAL:
+            ++(<number []>local)[u30()];
+            break;
+          case Bytecode.DECREMENT:
+            --stack[stack.length - 1];
+            break;
+          case Bytecode.DECLOCAL:
+            --(<number []>local)[u30()];
+            break;
+          case Bytecode.TYPEOF:
+            stack[stack.length - 1] = asTypeOf(stack[stack.length - 1]);
+            break;
+          case Bytecode.NOT:
+            stack[stack.length - 1] = !stack[stack.length - 1];
+            break;
           //case Bytecode.bitnot:
           //  stack[stack.length - 1] = ~stack[stack.length - 1];
           //  break;
-          //case Bytecode.add:
-          //  stack[stack.length - 2] = asAdd(stack[stack.length - 2], stack.pop());
-          //  break;
+          case Bytecode.ADD:
+            stack[stack.length - 2] = asAdd(stack[stack.length - 2], stack.pop());
+            break;
           //case Bytecode.subtract:
           //  stack[stack.length - 2] -= stack.pop();
           //  break;
@@ -551,9 +571,9 @@ module Shumway.AVMX {
           //case Bytecode.bitxor:
           //  stack[stack.length - 2] ^= stack.pop();
           //  break;
-          //case Bytecode.equals:
-          //  stack[stack.length - 2] = asEquals(stack[stack.length - 2], stack.pop());
-          //  break;
+          case Bytecode.EQUALS:
+            stack[stack.length - 2] = asEquals(stack[stack.length - 2], stack.pop());
+            break;
           //case Bytecode.strictequals:
           //  stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();
           //  break;
@@ -624,9 +644,13 @@ module Shumway.AVMX {
           //case Bytecode.dxnslate:
           //  Shumway.AVM2.AS.ASXML.defaultNamespace = stack.pop();
           //  break;
-          //case Bytecode.debug:
-          //case Bytecode.debugline:
-          //case Bytecode.debugfile:
+          case Bytecode.DEBUG:
+            pc ++; u30();
+            pc ++; u30();
+            break;
+          case Bytecode.DEBUGLINE:
+          case Bytecode.DEBUGFILE:
+            u30();
             break;
           default:
             Debug.notImplemented(Bytecode[bc]);
