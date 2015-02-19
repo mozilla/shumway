@@ -755,6 +755,59 @@ function activateShumwayScripts(window, requestListener) {
       return requestListener.receive.apply(requestListener, arguments);
     };
     window.wrappedJSObject.runViewer();
+
+    var parentWindow = window.parent;
+    var viewerWindow = window.viewer.contentWindow;
+
+    function activate(e) {
+      e.preventDefault();
+      viewerWindow.removeEventListener('mousedown', activate, true);
+
+      parentWindow.addEventListener('keydown', forwardKeyEvent, true);
+      parentWindow.addEventListener('keyup', forwardKeyEvent, true);
+
+      sendFocusEvent('focus');
+
+      parentWindow.addEventListener('blur', deactivate, true);
+      parentWindow.addEventListener('mousedown', deactivate, true);
+      viewerWindow.addEventListener('unload', deactivate, true);
+    }
+
+    function deactivate() {
+      parentWindow.removeEventListener('blur', deactivate, true);
+      parentWindow.removeEventListener('mousedown', deactivate, true);
+      viewerWindow.removeEventListener('unload', deactivate, true);
+
+      parentWindow.removeEventListener('keydown', forwardKeyEvent, true);
+      parentWindow.removeEventListener('keyup', forwardKeyEvent, true);
+
+      sendFocusEvent('blur');
+
+      viewerWindow.addEventListener('mousedown', activate, true);
+    }
+
+    function forwardKeyEvent(e) {
+      var event = viewerWindow.document.createEvent('KeyboardEvent');
+      event.initKeyEvent(e.type,
+                         e.bubbles,
+                         e.cancelable,
+                         e.view,
+                         e.ctrlKey,
+                         e.altKey,
+                         e.shiftKey,
+                         e.metaKey,
+                         e.keyCode,
+                         e.charCode);
+      viewerWindow.dispatchEvent(event);
+    }
+
+    function sendFocusEvent(type) {
+      var event = viewerWindow.document.createEvent("UIEvent");
+      event.initEvent(type, false, true);
+      viewerWindow.dispatchEvent(event);
+    }
+
+    viewerWindow.addEventListener('mousedown', activate, true);
   }
 
   if (window.document.readyState === "interactive" ||
