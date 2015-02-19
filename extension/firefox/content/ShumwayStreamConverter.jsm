@@ -770,13 +770,13 @@ function activateShumwayScripts(window, requestListener) {
 
       parentWindow.addEventListener('blur', deactivate, true);
       parentWindow.addEventListener('mousedown', deactivate, true);
-      parentWindow.addEventListener('unload', deactivate, true);
+      viewerWindow.addEventListener('unload', deactivate, true);
     }
 
     function deactivate() {
       parentWindow.removeEventListener('blur', deactivate, true);
       parentWindow.removeEventListener('mousedown', deactivate, true);
-      parentWindow.removeEventListener('unload', deactivate, true);
+      viewerWindow.removeEventListener('unload', deactivate, true);
 
       parentWindow.removeEventListener('keydown', forwardKeyEvent, true);
       parentWindow.removeEventListener('keyup', forwardKeyEvent, true);
