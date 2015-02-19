@@ -755,6 +755,49 @@ function activateShumwayScripts(window, requestListener) {
       return requestListener.receive.apply(requestListener, arguments);
     };
     window.wrappedJSObject.runViewer();
+
+    var viewerWindow = window.viewer.contentWindow;
+
+    function forwardKeyEvent(e) {
+      var event = viewerWindow.document.createEvent('KeyboardEvent');
+      event.initKeyEvent(e.type,
+                         e.bubbles,
+                         e.cancelable,
+                         e.view,
+                         e.ctrlKey,
+                         e.altKey,
+                         e.shiftKey,
+                         e.metaKey,
+                         e.keyCode,
+                         e.charCode);
+      viewerWindow.dispatchEvent(event);
+    }
+
+    function sendFocusEvent(type) {
+      var event = viewerWindow.document.createEvent("UIEvent");
+      event.initEvent(type, false, true);
+      viewerWindow.dispatchEvent(event);
+    }
+
+    viewerWindow.addEventListener('mousedown', function activate(e) {
+      e.preventDefault();
+      viewerWindow.removeEventListener('mousedown', activate, true);
+
+      window.parent.addEventListener('keydown', forwardKeyEvent, true);
+      window.parent.addEventListener('keyup', forwardKeyEvent, true);
+
+      sendFocusEvent('focus');
+
+      window.parent.addEventListener('mousedown', function deactivate() {
+        window.parent.removeEventListener('mousedown', deactivate, true);
+        window.parent.removeEventListener('keydown', forwardKeyEvent, true);
+        window.parent.removeEventListener('keyup', forwardKeyEvent, true);
+
+        sendFocusEvent('blur');
+
+        viewerWindow.addEventListener('mousedown', activate, true);
+      }, true);
+    }, true);
   }
 
   if (window.document.readyState === "interactive" ||
