@@ -108,6 +108,8 @@ module Shumway.Shell {
   import assert = Shumway.Debug.assert;
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import ABCFile = Shumway.AVMX.ABCFile;
+  import WriterFlags = Shumway.AVMX.WriterFlags;
+
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
   import ArgumentParser = Shumway.Options.ArgumentParser;
@@ -160,6 +162,7 @@ module Shumway.Shell {
   var symbolFilterOption: Option;
   var microTaskDurationOption: Option;
   var microTaskCountOption: Option;
+  var repeatOption: Option;
   var loadPlayerGlobalOption: Option;
   var loadShellLibOption: Option;
   var porcelainOutputOption: Option;
@@ -167,6 +170,7 @@ module Shumway.Shell {
   var usePlayerClosureBundleOption: Option;
 
   var fuzzMillOption: Option;
+  var writersOption: Option;
 
   export function main(commandLineArguments: string []) {
     var systemOptions: Shumway.Options.OptionSet = Shumway.Settings.shumwayOptions;
@@ -186,11 +190,14 @@ module Shumway.Shell {
     symbolFilterOption = shellOptions.register(new Option("f", "filter", "string", "", "Symbol Filter"));
     microTaskDurationOption = shellOptions.register(new Option("md", "duration", "number", 0, "Micro task duration."));
     microTaskCountOption = shellOptions.register(new Option("mc", "count", "number", 0, "Micro task count."));
+    repeatOption = shellOptions.register(new Option("rp", "rp", "number", 1, "Repeat count."));
     loadPlayerGlobalOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
     loadShellLibOption = shellOptions.register(new Option("s", "shell", "boolean", false, "Load Shell Global"));
     porcelainOutputOption = shellOptions.register(new Option('', "porcelain", "boolean", false, "Keeps outputs free from the debug messages."));
 
     fuzzMillOption = shellOptions.register(new Option('', "fuzz", "string", "", "Generates random SWFs XML."));
+
+    writersOption = shellOptions.register(new Option("w", "writers", "string", "", "Writers Filter [r: runtime, i: interpreter]"));
 
     var argumentParser = new ArgumentParser();
     argumentParser.addBoundOptionSet(systemOptions);
@@ -245,6 +252,15 @@ module Shumway.Shell {
 
     Shumway.Unit.writer = new IndentingWriter();
 
+    var writerFlags = WriterFlags.None;
+    if (writersOption.value.indexOf("r") >= 0) {
+      writerFlags |= WriterFlags.Runtime;
+    }
+    if (writersOption.value.indexOf("i") >= 0) {
+      writerFlags |= WriterFlags.Interpreter;
+    }
+    Shumway.AVMX.setWriters(writerFlags);
+
     if (compileOption.value) {
       var buffers = [];
       files.forEach(function (file) {
@@ -292,11 +308,15 @@ module Shumway.Shell {
       }
       files.forEach(function (file) {
         if (file.endsWith(".abc")) {
-          var securityDomain = createSecurityDomain(builtinLibPath, null, null);
-          var buffer = new Uint8Array(read(file, "binary"));
-          var abc = new ABCFile(buffer);
-          securityDomain.application.loadABC(abc);
-          securityDomain.application.executeABC(abc);
+          for (var i = 0; i < repeatOption.value; i++) {
+            var t = performance.now();
+            var securityDomain = createSecurityDomain(builtinLibPath, null, null);
+            var buffer = new Uint8Array(read(file, "binary"));
+            var abc = new ABCFile(buffer);
+            securityDomain.application.loadABC(abc);
+            securityDomain.application.executeABC(abc);
+            writer.writeLn("Took: " + (performance.now() - t).toFixed(2));
+          }
         }
       });
     } else if (disassembleOption.value) {
@@ -543,7 +563,7 @@ module Shumway.Shell {
     var securityDomain = new AVMX.SecurityDomain();
     var builtinABC = new ABCFile(new Uint8Array(buffer));
     securityDomain.system.loadABC(builtinABC);
-    securityDomain.initializeGlobals();
+    securityDomain.initialize();
     securityDomain.system.executeABC(builtinABC);
     return securityDomain;
   }

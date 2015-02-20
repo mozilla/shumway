@@ -1,6 +1,5 @@
 module Shumway.AVMX {
   import assert = Shumway.Debug.assert;
-  var writer = new IndentingWriter();
   import popManyInto = Shumway.ArrayUtilities.popManyInto;
 
   /**
@@ -72,13 +71,13 @@ module Shumway.AVMX {
 
 
   export function interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, args: any []) {
-    writer.enter("> " + methodInfo);
+    interpreterWriter && interpreterWriter.enter("> " + methodInfo);
     try {
       var result = _interpret(self, methodInfo, savedScope, args);
-      writer.leave("< " + methodInfo.trait);
+      interpreterWriter && interpreterWriter.leave("< " + methodInfo.trait);
       return result;
     } catch (e) {
-      writer.leave("< " + methodInfo.trait + ", Exception: " + e);
+      interpreterWriter && interpreterWriter.leave("< " + methodInfo.trait + ", Exception: " + e);
       throw e;
     }
   }
@@ -144,7 +143,7 @@ module Shumway.AVMX {
     var value, object, a, b, offset, index, result;
 
     while (true) {
-      writer.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" + stack.map(x => x == undefined ? String(x) : x.toString()).join(", ") + "]");
+      interpreterWriter && interpreterWriter.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" + stack.map(x => x == undefined ? String(x) : x.toString()).join(", ") + "]");
       try {
         var st = pc;
         var bc = code[pc++];
@@ -574,9 +573,9 @@ module Shumway.AVMX {
           case Bytecode.EQUALS:
             stack[stack.length - 2] = asEquals(stack[stack.length - 2], stack.pop());
             break;
-          //case Bytecode.strictequals:
-          //  stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();
-          //  break;
+          case Bytecode.STRICTEQUALS:
+            stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();
+            break;
           //case Bytecode.lessthan:
           //  stack[stack.length - 2] = stack[stack.length - 2] < stack.pop();
           //  break;
@@ -656,8 +655,8 @@ module Shumway.AVMX {
             Debug.notImplemented(Bytecode[bc]);
         }
       } catch (e) {
-        writer.writeLn("Error: " + e);
-        writer.writeLn("Stack: " + e.stack);
+        interpreterWriter && interpreterWriter.writeLn("Error: " + e);
+        interpreterWriter && interpreterWriter.writeLn("Stack: " + e.stack);
         jsGlobal.quit();
       }
     }

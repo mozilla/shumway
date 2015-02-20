@@ -164,7 +164,7 @@ function executeFile(file, buffer, movieParams) {
       var securityDomain = new Shumway.AVMX.SecurityDomain();
       var builtinABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
       securityDomain.system.loadABC(builtinABC);
-      securityDomain.initializeGlobals();
+      securityDomain.initialize();
       securityDomain.system.executeABC(builtinABC);
 
       new BinaryFileReader(file).readAll(null, function (buffer) {

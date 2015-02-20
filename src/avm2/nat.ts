@@ -96,6 +96,7 @@ module Shumway.AVMX.AS {
 
   export class ASObject implements ITraits {
     public static traits: Traits;
+
     public static asSuperClass: typeof ASClass = null;
     public static classInfo: ClassInfo = null;
     public static instanceConstructor: any = Object;
@@ -122,6 +123,7 @@ module Shumway.AVMX.AS {
 
     public static tPrototype: Object;
     public static dPrototype: Object;
+    public static securityDomain: SecurityDomain;
 
     public static typeScriptPrototype: Object;
     public static defaultValue: any = null;
@@ -201,12 +203,12 @@ module Shumway.AVMX.AS {
     }
 
     static _init() {
-      this.dPrototype.axSetPublicProperty("hasOwnProperty", ASObject.prototype.native_hasOwnProperty);
-      this.dPrototype.axSetPublicProperty("propertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
-      this.dPrototype.axSetPublicProperty("setPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
-      this.dPrototype.axSetPublicProperty("isPrototypeOf", ASObject.prototype.native_isPrototypeOf);
-      this.dPrototype.axSetPublicProperty("toString", ASObject.prototype.toString);
-      this.dPrototype.axSetPublicProperty("valueOf", ASObject.prototype.valueOf);
+      this.dPrototype.axSetPublicProperty("hasOwnProperty", new this.securityDomain.AXFunction(ASObject.prototype.native_hasOwnProperty));
+      //this.dPrototype.axSetPublicProperty("propertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
+      //this.dPrototype.axSetPublicProperty("setPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
+      //this.dPrototype.axSetPublicProperty("isPrototypeOf", ASObject.prototype.native_isPrototypeOf);
+      //this.dPrototype.axSetPublicProperty("toString", ASObject.prototype.toString);
+      //this.dPrototype.axSetPublicProperty("valueOf", ASObject.prototype.valueOf);
       ASObject._dontEnumPrototype(this.dPrototype);
     }
 
@@ -219,6 +221,7 @@ module Shumway.AVMX.AS {
     static setPropertyIsEnumerable: (V: string, enumerable: boolean) => boolean;
 
     traits: Traits = null;
+    securityDomain: SecurityDomain;
 
     native_isPrototypeOf(V: Object): boolean {
       notImplemented("isPrototypeOf");

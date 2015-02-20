@@ -4,6 +4,10 @@ interface IMetaObjectProtocol {
   axSetPublicProperty(nm: any, value: any);
 }
 
+interface Function {
+  axApply(thisArg: any, argArray?: any): any;
+}
+
 interface Object extends IMetaObjectProtocol {
 
 }
@@ -12,6 +16,22 @@ var $: Shumway.AVMX.SecurityDomain = null;
 
 module Shumway.AVMX {
 
+  export enum WriterFlags {
+    None = 0,
+    Runtime = 1,
+    Interpreter = 2
+  }
+
+  var writer = new IndentingWriter();
+  export var runtimeWriter = null;
+  export var interpreterWriter = null;
+
+  export function setWriters(flags: WriterFlags) {
+    runtimeWriter = (flags & WriterFlags.Runtime) ? writer : null;
+    interpreterWriter = (flags & WriterFlags.Runtime) ? writer : null;
+  }
+
+  
   export enum ScriptInfoState {
     None = 0,
     Executing = 1,
@@ -28,8 +48,6 @@ module Shumway.AVMX {
   import ASClass = Shumway.AVMX.AS.ASClass;
 
   import sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
-
-  var writer = new IndentingWriter();
 
   /**
    * Similar to |toString| but returns |null| for |null| or |undefined| instead
@@ -146,43 +164,59 @@ module Shumway.AVMX {
     return left == right;
   }
 
+  /**
+   * These values are allowed to exist without being unboxed.
+   */
+  function isPrimitiveValue(value: any) {
+    if (value === null || value === undefined || typeof value === "number" || typeof value === "string" || typeof value === "boolean") {
+      return true;
+    }
+    return false;
+  }
+
+  function isValidValue(value: any) {
+    if (isPrimitiveValue(value)) {
+      return true;
+    }
+    // Values that have Object on the prototype chain are not allowed.
+    if (value instanceof Object) {
+      return false;
+    }
+    return true;
+  }
+
+  function checkValue(value: any) {
+    assert(isValidValue(value), "Value: " + value + " is not allowed to flow into AS3.");
+  }
+
   function axHasPropertyInternal(mn: Multiname): boolean {
     return this.traits.indexOf(mn) >= 0;
   }
 
-  function axSetProperty(mn: Multiname, value: any) {
+  function axResolveMultiname(mn: Multiname): any {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
-      this[mn.name] = value;
+      return mn.name;
     }
     var t = this.traits.getTrait(mn);
     if (t) {
-      this[t.getName().getMangledName()] = value;
-      return;
+      return t.getName().getMangledName();
     }
-    this[mn.getPublicMangledName()] = value;
+    return mn.getPublicMangledName();
+  }
+
+  function axSetProperty(mn: Multiname, value: any) {
+    release || assert(isValidValue(value));
+    this[this.axResolveMultiname(mn)] = value;
   }
 
   function axGetProperty(mn: Multiname): any {
-    if (mn.isRuntimeName() && isNumeric(mn.name)) {
-      return this[mn.name];
-    }
-    var t = this.traits.getTrait(mn);
-    if (t) {
-      return this[t.getName().getMangledName()];
-    }
-    return this[mn.getPublicMangledName()];
+    var value = this[this.axResolveMultiname(mn)];
+    release || checkValue(value);
+    return value;
   }
 
   function axCallProperty(mn: Multiname, args: any []): any {
-    var t = this.traits.getTrait(mn);
-    var m;
-    if (t) {
-      m = this[t.getName().getMangledName()];
-    } else {
-      m = this[mn.getPublicMangledName()];
-    }
-    assert(m, mn);
-    return m.apply(this, args);
+    return this[this.axResolveMultiname(mn)].axApply(this, args);
   }
 
   function axArrayGetProperty(mn: Multiname): any {
@@ -217,15 +251,19 @@ module Shumway.AVMX {
   }
 
   export function axSetPublicProperty(nm: any, value: any) {
+    release || checkValue(value);
     this[Multiname.getPublicMangledName(nm)] = value;
   }
 
   export function asGetSlot(object: ITraits, i: number) {
-    return object[object.traits.getSlot(i).getName().getMangledName()];
+    var value = object[object.traits.getSlot(i).getName().getMangledName()];
+    release || checkValue(value);
+    return value;
   }
 
   export function asSetSlot(object: ITraits, i: number, value: any) {
     var t = object.traits.getSlot(i);
+    release || checkValue(value);
     object[t.getName().getMangledName()] = value;
     //var slotInfo = object.asSlots.byID[index];
     //if (slotInfo.const) {
@@ -274,6 +312,7 @@ module Shumway.AVMX {
    */
   export interface ITraits {
     traits: Traits;
+    securityDomain: SecurityDomain;
   }
 
   export class Scope {
@@ -383,7 +422,7 @@ module Shumway.AVMX {
         var method = createMethodForTrait(<MethodTraitInfo>t, scope);
         var mangledName = t.getName().getMangledName();
         if (t.kind === TRAIT.Method) {
-          defineNonEnumerableProperty(object, mangledName, method);
+          defineNonEnumerableProperty(object, mangledName, new object.securityDomain.AXFunction(method));
         } else {
           defineNonEnumerableGetterOrSetter(object, mangledName, method, t.kind === TRAIT.Getter)
         }
@@ -414,21 +453,27 @@ module Shumway.AVMX {
 
   }
 
+  function initializeJavaScriptGlobal() {
+    // Add the |axApply| method on the function prototype so that we can treat
+    // Functions as AXFunctions.
+    Function.prototype.axApply = Function.prototype.apply;
+  }
+
+  initializeJavaScriptGlobal();
+
   /**
    * Provides security isolation between application domains.
    */
   export class SecurityDomain {
     public system: ApplicationDomain;
     public application: ApplicationDomain;
-    //public Object;
-    //public Number;
-    //public String;
     public AXObject;
     public AXArray;
     public AXGlobal;
     public AXClass;
     public AXFunction;
     public AXActivation;
+
     constructor() {
       this.system = new ApplicationDomain(this, null);
       this.application = new ApplicationDomain(this, this.system);
@@ -466,7 +511,8 @@ module Shumway.AVMX {
       assert(false, "Cannot box: " + v);
     }
 
-    initializeGlobals() {
+    initialize() {
+      var nativeClasses = Object.create(null);
       var classClassInfo = this.system.findClassInfo("Class");
       var staticClassClassTraits = classClassInfo.instanceInfo.traits;
 
@@ -474,13 +520,26 @@ module Shumway.AVMX {
 
       var self = this;
 
-      var nativeClasses = Object.create(null);
-
       // Object
       var AXObject: AXClass = <any>function axObject() {};
       AXObject.dPrototype = Object.create(null);
       AXObject.tPrototype = Object.create(AXObject.dPrototype);
       AXObject.prototype = AXObject.tPrototype;
+
+      var axPrototype: any = AXObject.dPrototype;
+
+      axPrototype.securityDomain = self;
+
+      var axObjectPrototype: any = AXObject.prototype;
+
+      // Debugging Helper
+      axObjectPrototype.trace = function trace() {
+        var self = this;
+        var writer = new IndentingWriter();
+        this.traits.traits.forEach(t => {
+          writer.writeLn(t + ": " + self[t.getName().getMangledName()]);
+        });
+      };
 
       // Class
       var AXClass: AXClass = <any>function axClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope) {
@@ -590,10 +649,10 @@ module Shumway.AVMX {
       D(AXObject.dPrototype, "axSetPublicProperty", axSetPublicProperty);
       D(AXObject.dPrototype, "axGetProperty", axGetProperty);
       D(AXObject.dPrototype, "axCallProperty", axCallProperty);
+      D(AXObject.dPrototype, "axResolveMultiname", axResolveMultiname);
 
-
-      var P = function defineNonEnumerablePublicProperty(object, name, value) {
-        D(object, Multiname.getPublicMangledName(name), value);
+      var P = function setPublicProperty(object, name, value) {
+        object.axSetPublicProperty(name, new self.AXFunction(value));
       };
 
       var Ap = Array.prototype;
@@ -631,6 +690,9 @@ module Shumway.AVMX {
 
       D(AXFunction.prototype, "axCall", axFunctionCall);
       D(AXFunction.prototype, "axApply", axFunctionApply);
+
+      P(AXFunction.dPrototype, "call", function (thisArg) { return this.value.apply(thisArg, arguments); });
+      P(AXFunction.dPrototype, "apply", function (thisArg, args) { return this.value.apply(thisArg, args.value); });
 
       //self.Number = function Number(v) {
       //  this.value = v;
@@ -721,7 +783,7 @@ module Shumway.AVMX {
     public executeScript(scriptInfo: ScriptInfo) {
       assert (scriptInfo.state === ScriptInfoState.None);
 
-      writer.writeLn("Running Script: " + scriptInfo);
+      runtimeWriter && runtimeWriter.writeLn("Running Script: " + scriptInfo);
       var global = new this.securityDomain.AXGlobal(this, scriptInfo);
       scriptInfo.global = global;
       scriptInfo.state = ScriptInfoState.Executing;
