@@ -937,12 +937,9 @@ module Shumway.AVMX.AS {
       self.prototype = p;
     }
 
-    get native_length(): number {
-      // Check if we're getting the length of a trampoline.
-      //if (this.hasOwnProperty(Runtime.VM_LENGTH)) {
-      //  return this.asLength;
-      //}
-      return (<any>this).length;
+    get length(): number {
+      assert (false, "Fix me.");
+      return 0;
     }
 
     asCall: (self?, args?: any) => any;
@@ -1141,6 +1138,8 @@ module Shumway.AVMX.AS {
   }
 
   export class ASString extends ASObject {
+    value: string;
+
     public static instanceConstructor: any = String;
     public static callableConstructor: any = ASString.instanceConstructor;
     public static classBindings: ClassBindings;
@@ -1175,8 +1174,8 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
     }
 
-    get native_length(): number {
-      return (<any>this).length;
+    get length(): number {
+      return this.value.length;
     }
 
     constructor(input) {
@@ -1253,6 +1252,7 @@ module Shumway.AVMX.AS {
   }
 
   export class ASArray extends ASObject {
+    value: any [];
     public static instanceConstructor: any = Array;
     public static staticNatives: any [] = [Array];
     public static instanceNatives: any [] = [Array.prototype];
@@ -1291,6 +1291,7 @@ module Shumway.AVMX.AS {
       }
       return out;
     }
+
     splice(): any[] {
       var o = this;
       if (arguments.length === 0) {
@@ -1373,15 +1374,15 @@ module Shumway.AVMX.AS {
       return o;
     }
 
-    get native_length(): number /*uint*/ {
-      return (<any>this).length;
+    get length(): number {
+      return this.value.length;
     }
-    set native_length(newLength: number /*uint*/) {
-      newLength = newLength >>> 0;
-      (<any>this).length = newLength;
+
+    set length(newLength: number) {
+      this.value.length = newLength >>> 0;
     }
   }
-  //
+
   //export class ASVector<T> extends ASNative {
   //  public static staticNatives: any [] = null;
   //  public static instanceNatives: any [] = null;
@@ -1858,6 +1859,7 @@ module Shumway.AVMX.AS {
     for (var i = 0; i < natives.length; i++) {
       var native = natives[i];
       var fullName = name;
+      /*
       // Check for cases where the method has been patched, as could be the case for
       // toString and valueOf.
       if (hasOwnProperty(native, "original_" + name)) {
@@ -1868,6 +1870,7 @@ module Shumway.AVMX.AS {
       if (!hasOwnProperty(native, name) && hasOwnProperty(native, "native_" + name)) {
         fullName = "native_" + name;
       }
+      */
       if (hasOwnProperty(native, fullName)) {
         var value;
         if (trait.isAccessor()) {
@@ -1881,8 +1884,7 @@ module Shumway.AVMX.AS {
           release || assert (trait.isMethod());
           value = native[fullName];
         }
-        release || assert (value, "Method or Accessor property exists but it's undefined: " + trait);
-        release || assert (illegalAS3Functions.indexOf(value) < 0, "Leaking illegal function.");
+        release || assert (value, "Method or Accessor property exists but it's undefined: " + trait.holder + " " + trait);
         return value;
       }
     }

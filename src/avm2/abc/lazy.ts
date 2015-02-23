@@ -365,6 +365,14 @@ module Shumway.AVMX {
       return <Multiname>this.type;
     }
 
+    hasOptionalValue(): boolean {
+      return this.optionalValueKind >= 0;
+    }
+
+    getOptionalValue(): any {
+      return this.abc.getConstant(this.optionalValueKind, this.optionalValueIndex);
+    }
+
     toString() {
       var str = "";
       if (this.name) {
@@ -1149,7 +1157,7 @@ module Shumway.AVMX {
       var parameterCount = s.readU30();
       var returnType = s.readU30();
       var parameterOffset = s.position;
-      var parameters = new Array(parameterCount);
+      var parameters = new Array<ParameterInfo>(parameterCount);
       for (var i = 0; i < parameterCount; i++) {
         parameters[i] = new ParameterInfo(this, s.readU30(), 0, -1, -1);
       }
@@ -1159,8 +1167,8 @@ module Shumway.AVMX {
         var optionalCount = s.readU30();
         release || assert(parameterCount >= optionalCount);
         for (var i = parameterCount - optionalCount; i < parameterCount; i++) {
-          parameters[i].value = s.readU30();
-          parameters[i].kind = s.readU8();
+          parameters[i].optionalValueIndex = s.readU30();
+          parameters[i].optionalValueKind = s.readU8();
         }
       }
       if (flags & METHOD.HasParamNames) {
