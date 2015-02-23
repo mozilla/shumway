@@ -99,13 +99,13 @@ module Shumway.AVMX {
       var p = methodInfo.parameters[i];
       if (i < argCount) {
         arg = args[i];
-      } else {
-        // arg = p.
+      } else if (p.hasOptionalValue()) {
+        arg = p.getOptionalValue();
       }
       local.push(arg);
     }
 
-    var pc = 0, st = pc;
+    var pc = 0;
     function s32(): number {
       var result = code[pc++];
       if (result & 0x80) {
@@ -145,9 +145,10 @@ module Shumway.AVMX {
     while (true) {
       interpreterWriter && interpreterWriter.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" + stack.map(x => x == undefined ? String(x) : x.toString()).join(", ") + "]");
       try {
-        var st = pc;
         var bc = code[pc++];
         switch (bc) {
+          case Bytecode.LABEL:
+            continue;
           case Bytecode.THROW:
             throw stack.pop();
           //case Bytecode.GETSUPER:
@@ -170,82 +171,82 @@ module Shumway.AVMX {
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = !(a < b) ? st + offset : pc;
+            pc = !(a < b) ? pc + offset : pc;
             continue;
           case Bytecode.IFGE:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = a >= b ? st + offset : pc;
+            pc = a >= b ? pc + offset : pc;
             continue;
           case Bytecode.IFNLE:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = !(a <= b) ? st + offset : pc;
+            pc = !(a <= b) ? pc + offset : pc;
             continue;
           case Bytecode.IFGT:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = a > b ? st + offset : pc;
+            pc = a > b ? pc + offset : pc;
             continue;
           case Bytecode.IFNGT:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = !(a > b) ? st + offset : pc;
+            pc = !(a > b) ? pc + offset : pc;
             continue;
           case Bytecode.IFLE:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = a <= b ? st + offset : pc;
+            pc = a <= b ? pc + offset : pc;
             continue;
           case Bytecode.IFNGE:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = !(a >= b) ? st + offset : pc;
+            pc = !(a >= b) ? pc + offset : pc;
             continue;
           case Bytecode.IFLT:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = a < b ? st + offset : pc;
+            pc = a < b ? pc + offset : pc;
             continue;
           case Bytecode.JUMP:
-            pc = st + s24();
+            pc = s24() + pc;
             continue;
           case Bytecode.IFTRUE:
             offset = s24();
-            pc = !!stack.pop() ? st + offset : pc;
+            pc = !!stack.pop() ? pc + offset : pc;
             continue;
           case Bytecode.IFFALSE:
             offset = s24();
-            pc = !stack.pop() ? st + offset : pc;
+            pc = !stack.pop() ? pc + offset : pc;
             continue;
           case Bytecode.IFEQ:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = asEquals(a, b) ? st + offset : pc;
+            pc = asEquals(a, b) ? pc + offset : pc;
             continue;
           case Bytecode.IFNE:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = !asEquals(a, b) ? st + offset : pc;
+            pc = !asEquals(a, b) ? pc + offset : pc;
             continue;
           //case Bytecode.ifstricteq:
           //  b = stack.pop();
           //  a = stack.pop();
-          //  pc = a === b ? st + offset : pc;
+          //  pc = a === b ? pc + offset : pc;
           //  continue;
           //case Bytecode.ifstrictne:
           //  b = stack.pop();
           //  a = stack.pop();
-          //  pc = a !== b ? st + offset : pc;
+          //  pc = a !== b ? pc + offset : pc;
           //  continue;
           //case Bytecode.lookupswitch:
           //  index = stack.pop();
@@ -334,10 +335,10 @@ module Shumway.AVMX {
             object = stack.pop();
             stack[stack.length - 1] = stack[stack.length - 1].axApply(object, args);
             break;
-          //case Bytecode.construct:
-          //  popManyInto(stack, bc.argCount, args);
-          //  stack[stack.length - 1] = construct(stack[stack.length - 1], args);
-          //  break;
+          case Bytecode.CONSTRUCT:
+            popManyInto(stack, u30(), args);
+            stack[stack.length - 1] = securityDomain.box(stack[stack.length - 1]).axConstruct(args);
+            break;
           case Bytecode.RETURNVOID:
             return;
           case Bytecode.RETURNVALUE:
@@ -350,13 +351,13 @@ module Shumway.AVMX {
           //  object = stack.pop();
           //  savedScope.object.baseClass.instanceConstructorNoInitialize.apply(object, args);
           //  break;
-          //case Bytecode.constructprop:
-          //  popManyInto(stack, bc.argCount, args);
-          //  popNameInto(stack, multinames[bc.index], mn);
-          //  object = box(stack[stack.length - 1]);
-          //  object = object.asConstructProperty(mn.namespaces, mn.name, mn.flags, args);
-          //  stack[stack.length - 1] = object;
-          //  break;
+          case Bytecode.CONSTRUCTPROP:
+            index = u30();
+            argCount = u30();
+            popManyInto(stack, argCount, args);
+            popNameInto(stack, abc.getMultiname(index), rn);
+            stack[stack.length - 1] = securityDomain.box(stack[stack.length - 1]).axConstructProperty(rn, args);
+            break;
           //case Bytecode.callsuperid:
           //  Shumway.Debug.notImplemented("Bytecode.callsuperid");
           //  break;
@@ -442,9 +443,9 @@ module Shumway.AVMX {
           case Bytecode.GETLOCAL:
             stack.push(local[u30()]);
             break;
-          //case Bytecode.setlocal:
-          //  locals[bc.index] = stack.pop();
-          //  break;
+          case Bytecode.SETLOCAL:
+            local[u30()] = stack.pop();
+            break;
           case Bytecode.GETGLOBALSCOPE:
             stack.push(savedScope.global.object);
             break;
