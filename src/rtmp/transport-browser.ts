@@ -46,9 +46,9 @@ module RtmpJs.Browser {
       var channel = this._initChannel(properties, args);
 
       var writeQueue = [], socketError = false;
-      var createRtmpSocket = (<any>window).createRtmpSocket;
-      var socket = createRtmpSocket ?
-        createRtmpSocket({host: this.host, port: this.port, ssl: this.ssl}) :
+      var ShumwayCom = (<any>window).ShumwayCom;
+      var socket = ShumwayCom && ShumwayCom.createRtmpSocket ?
+        ShumwayCom.createRtmpSocket({host: this.host, port: this.port, ssl: this.ssl}) :
         TCPSocket.open(this.host, this.port, { useSecureTransport: this.ssl, binaryType: 'arraybuffer' });
 
 
@@ -206,8 +206,9 @@ module RtmpJs.Browser {
   function post(path, data, onload) {
     data || (data = emptyPostData);
 
-    var createRtmpXHR = (<any>window).createRtmpXHR;
-    var xhr = createRtmpXHR ? createRtmpXHR() : new (<any>XMLHttpRequest)({mozSystem: true});
+    var ShumwayCom = (<any>window).ShumwayCom;
+    var xhr = ShumwayCom && ShumwayCom.createRtmpXHR ?
+      ShumwayCom.createRtmpXHR() : new (<any>XMLHttpRequest)({mozSystem: true});
     xhr.open('POST', path, true);
     xhr.responseType = 'arraybuffer';
     xhr.setRequestHeader('Content-Type', 'application/x-fcs');

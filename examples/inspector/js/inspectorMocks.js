@@ -201,7 +201,7 @@ function requestYT(yt) {
   });
 }
 
-var SpecialInflate = (function () {
+var ShumwayCom = (function () {
   if (typeof SpecialPowers === 'undefined') {
     return undefined;
   }
@@ -274,5 +274,9 @@ var SpecialInflate = (function () {
     }
   };
 
-  return SpecialInflate;
+  return {
+    createSpecialInflate: function () {
+      return new SpecialInflate();
+    }
+  };
 })();

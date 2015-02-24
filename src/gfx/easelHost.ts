@@ -71,9 +71,9 @@ module Shumway.GFX {
         this._fullscreen = value;
         // TODO refactor to have a normal two-way communication service/api
         // HACK for now
-        var firefoxCom = (<any>window).FirefoxCom;
-        if (firefoxCom) {
-          firefoxCom.request('setFullscreen', value, null);
+        var ShumwayCom = (<any>window).ShumwayCom;
+        if (ShumwayCom && ShumwayCom.setFullscreen) {
+          ShumwayCom.setFullscreen(value);
         }
       }
     }

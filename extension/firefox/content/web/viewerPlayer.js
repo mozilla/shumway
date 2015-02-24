@@ -152,18 +152,7 @@ function setupServices() {
     }
   };
 
-  // Using SpecialInflate when chrome code provides it.
-  if (parent.createSpecialInflate) {
-    window.SpecialInflate = function () {
-      return parent.createSpecialInflate();
-    };
-  }
-
-  // Using createRtmpXHR/createRtmpSocket when chrome code provides it.
-  if (parent.createRtmpXHR) {
-    window.createRtmpSocket = parent.createRtmpSocket;
-    window.createRtmpXHR = parent.createRtmpXHR;
-  }
+  window.ShumwayCom = parent.ShumwayCom;
 }
 
 window.addEventListener('message', function onWindowMessage(e) {

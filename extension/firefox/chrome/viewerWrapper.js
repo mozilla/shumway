@@ -16,7 +16,6 @@
 
 window.notifyShumwayMessage = function (detail) { };
 window.onExternalCallback = null;
-window.onMessageCallback = null;
 window.onLoadFileCallback = null;
 
 var viewer = document.getElementById('viewer'), onLoaded;
@@ -30,60 +29,26 @@ viewer.addEventListener('mozbrowserloadend', function () {
   onLoaded(true);
 });
 
-Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
-Components.utils.import('chrome://shumway/content/RtmpUtils.jsm');
+Components.utils.import('chrome://shumway/content/ShumwayCom.jsm');
 
 function runViewer() {
   function handler() {
-    function sendMessage(action, data, sync, callbackCookie) {
+    function sendMessage(action, data, sync) {
       var detail = {action: action, data: data, sync: sync};
-      if (callbackCookie !== undefined) {
-        detail.callback = true;
-        detail.cookie = callbackCookie;
-      }
       var result = window.notifyShumwayMessage(detail);
       return Components.utils.cloneInto(result, childWindow);
     }
 
     var childWindow = viewer.contentWindow.wrappedJSObject;
 
-    // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
-    // up Xray wrappers. This allows resending of external interface, clipboard
-    // and other control messages between unprivileged content and
-    // ShumwayStreamConverter.
-    var shumwayComAdapter = Components.utils.createObjectIn(childWindow, {defineAs: 'ShumwayCom'});
-    Components.utils.exportFunction(sendMessage, shumwayComAdapter, {defineAs: 'sendMessage'});
-    Components.utils.exportFunction(enableDebug, shumwayComAdapter, {defineAs: 'enableDebug'});
-    Object.defineProperties(shumwayComAdapter, {
-      onLoadFileCallback: { value: null, writable: true },
-      onExternalCallback: { value: null, writable: true },
-      onMessageCallback: { value: null, writable: true }
+    var shumwayComAdapter = ShumwayCom.createAdapter(childWindow, {
+      sendMessage: sendMessage,
+      enableDebug: enableDebug
     });
-    Components.utils.makeObjectPropsNormal(shumwayComAdapter);
 
-    // Exposing createSpecialInflate function for DEFLATE stream decoding using
-    // Gecko API.
-    if (SpecialInflateUtils.isSpecialInflateEnabled) {
-      Components.utils.exportFunction(function () {
-        return SpecialInflateUtils.createWrappedSpecialInflate(childWindow);
-      }, childWindow, {defineAs: 'createSpecialInflate'});
-    }
-
-    if (RtmpUtils.isRtmpEnabled) {
-      Components.utils.exportFunction(function (params) {
-        return RtmpUtils.createSocket(childWindow, params);
-      }, childWindow, {defineAs: 'createRtmpSocket'});
-      Components.utils.exportFunction(function () {
-        return RtmpUtils.createXHR(childWindow);
-      }, childWindow, {defineAs: 'createRtmpXHR'});
-    }
 
     window.onExternalCallback = function (call) {
       return shumwayComAdapter.onExternalCallback(Components.utils.cloneInto(call, childWindow));
-    };
-
-    window.onMessageCallback = function (response) {
-      shumwayComAdapter.onMessageCallback(Components.utils.cloneInto(response, childWindow));
     };
 
     window.onLoadFileCallback = function (args) {
@@ -126,13 +91,6 @@ function runViewer() {
       return externalInterface.callback(JSON.stringify(call));
     };
 
-    window.onMessageCallback = function (response) {
-      messageManager.sendAsyncMessage('Shumway:messageCallback', {
-        cookie: response.cookie,
-        response: response.response
-      });
-    };
-
     window.onLoadFileCallback = function (args) {
       messageManager.sendAsyncMessage('Shumway:loadFile', args);
     };
@@ -151,10 +109,6 @@ function runViewer() {
         data: data.data,
         sync: data.sync
       };
-      if (data.callback) {
-        detail.callback = true;
-        detail.cookie = data.cookie;
-      }
       return window.notifyShumwayMessage(detail);
     }
 
@@ -173,10 +127,6 @@ function runViewer() {
 
     window.onExternalCallback = function (call) {
       return connection.send({action: 'onExternalCallback', detail: call});
-    };
-
-    window.onMessageCallback = function (response) {
-      return connection.send({action: 'onMessageCallback', detail: response});
     };
 
     window.onLoadFileCallback = function (args) {

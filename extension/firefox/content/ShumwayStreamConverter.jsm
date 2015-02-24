@@ -316,7 +316,8 @@ ChromeActions.prototype = {
       movieParams: this.movieParams,
       objectParams: this.objectParams,
       isOverlay: this.isOverlay,
-      isPausedAtStart: this.isPausedAtStart
+      isPausedAtStart: this.isPausedAtStart,
+      isDebuggerEnabled: getBoolPref('shumway.debug.enabled', false)
      };
   },
   _canDownloadFile: function canDownloadFile(data, callback) {
@@ -615,20 +616,7 @@ RequestListener.prototype.receive = function(detail) {
     return response === undefined ? undefined : JSON.stringify(response);
   }
 
-  var responseCallback;
-  if (detail.callback) {
-    var cookie = detail.cookie;
-    response = function sendResponse(response) {
-      var win = actions.window;
-      if (win.wrappedJSObject.onMessageCallback) {
-        win.wrappedJSObject.onMessageCallback({
-          response: response === undefined ? undefined : JSON.stringify(response),
-          cookie: cookie
-        });
-      }
-    };
-  }
-  actions[action].call(this.actions, data, responseCallback);
+  actions[action].call(this.actions, data);
 };
 
 var ActivationQueue = {

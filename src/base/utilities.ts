@@ -119,6 +119,8 @@ declare module Shumway {
   var build: string;
 }
 
+declare var ShumwayCom;
+
 module Shumway {
 
   export enum CharacterCodes {
