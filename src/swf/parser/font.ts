@@ -141,7 +141,7 @@ module Shumway.SWF.Parser {
     if (tag.codes) {
       for (var i = 0; i < tag.codes.length; i++) {
         var code = tag.codes[i];
-        if (code < 32 || codes.indexOf(code) > -1) {
+        if (code < 32 || code in glyphIndex) {
           maxCode++;
           if (maxCode == 8232) {
             maxCode = 8240;
