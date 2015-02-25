@@ -9,6 +9,7 @@ build/ts/tools.js
 #!inline console.timeEnd("Load Shared Dependencies");
 
 #!inline console.time("Load AVM2 Dependencies");
+build/libs/relooper.js
 build/ts/avm2.js
 #!inline console.timeEnd("Load AVM2 Dependencies");
 
