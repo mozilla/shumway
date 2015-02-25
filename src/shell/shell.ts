@@ -15,7 +15,7 @@
  */
 
 /**
- * Let's you run Shumway from the command line.
+ * Lets you run Shumway from the command line.
  */
 
 declare var scriptArgs;
@@ -25,9 +25,8 @@ declare var quit;
 declare var read;
 declare var help;
 
-load("src/avm2/compiler/relooper/relooper.js");
-
 var homePath = "";
+load(homePath + "build/libs/relooper.js");
 var builtinLibPath = homePath + "build/libs/builtin.abc";
 var shellLibPath = homePath + "build/libs/shell.abc";
 var playerglobalInfo = {

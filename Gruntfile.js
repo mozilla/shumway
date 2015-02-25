@@ -193,7 +193,7 @@ module.exports = function(grunt) {
           { args: ['exec:build_base_ts'].concat(parallelArgs), grunt: true },
         ]
       },
-      tier1: {
+      playerglobal: {
         tasks: [
           { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
         ]
@@ -310,6 +310,9 @@ module.exports = function(grunt) {
     buildLibs(outputDir, false, null, function () {
       done();
     });
+  });
+  grunt.registerTask('copy_relooper', function() {
+    grunt.file.copy('src/avm2/compiler/relooper/relooper.js', 'build/libs/relooper.js');
   });
   grunt.registerTask('bundles', function () {
     var outputDir = 'build/bundles/';
@@ -496,6 +499,7 @@ module.exports = function(grunt) {
     grunt.file.copy('build/libs/shell.abc', outputDir + '/build/libs/shell.abc');
     grunt.file.copy('build/playerglobal/playerglobal.abcs', outputDir + '/build/playerglobal/playerglobal.abcs');
     grunt.file.copy('build/playerglobal/playerglobal.json', outputDir + '/build/playerglobal/playerglobal.json');
+    grunt.file.copy('build/libs/relooper.js', outputDir + '/build/libs/relooper.js');
     grunt.file.expand('build/ts/*.js').forEach(function (file) {
       grunt.file.copy(file, outputDir + '/build/ts/' + path.basename(file));
     });
@@ -550,7 +554,7 @@ module.exports = function(grunt) {
   grunt.registerTask('player', ['exec:build_player_ts', 'exec:gate']);
   grunt.registerTask('shell', ['exec:build_shell_ts', 'exec:gate']);
   grunt.registerTask('tools', ['exec:build_tools_ts', 'exec:gate']);
-  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'exec:gate']);
+  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'exec:gate']);
   grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts']);
   grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts', 'exec:gate']);
   grunt.registerTask('gate', ['exec:gate']);
@@ -558,10 +562,11 @@ module.exports = function(grunt) {
   grunt.registerTask('gfx-test', ['exec:gfx-test']);
   grunt.registerTask('build', [
     'parallel:base',
-    'parallel:tier1',
+    'parallel:playerglobal',
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
     'parallel:tier2',
+    'copy_relooper',
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
@@ -572,17 +577,18 @@ module.exports = function(grunt) {
     'exec:gate'
   ]);
   grunt.registerTask('travis', [
+    // Duplicates almost all of "build" because we don't want to do the costly "playerglobal" task.
     'parallel:base',
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
     'parallel:tier2',
+    'copy_relooper',
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
     'tslint:all',
     'exec:spell',
-    'closure',
-    // 'exec:gate'
+    'closure'
   ]);
   grunt.registerTask('smoke', [
     'exec:smoke_parse'
@@ -828,6 +834,7 @@ module.exports = function(grunt) {
     grunt.file.copy('build/libs/builtin.abc', outputDir + '/build/libs/builtin.abc');
     grunt.file.copy('build/playerglobal/playerglobal.abcs', outputDir + '/build/playerglobal/playerglobal.abcs');
     grunt.file.copy('build/playerglobal/playerglobal.json', outputDir + '/build/playerglobal/playerglobal.json');
+    grunt.file.copy('build/libs/relooper.js', outputDir + '/build/libs/relooper.js');
     grunt.file.expand('build/bundles-cc/*.js').forEach(function (file) {  // TODO closure bundles
       grunt.file.copy(file, outputDir + '/build/bundles/' + path.basename(file));
     });
