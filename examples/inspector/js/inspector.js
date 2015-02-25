@@ -109,7 +109,6 @@ function showOpenFileButton(show) {
 var flashOverlay;
 var currentSWFUrl;
 var currentPlayer;
-var processExternalCommand;
 
 var easelHost;
 function runIFramePlayer(data) {
@@ -134,9 +133,6 @@ function runIFramePlayer(data) {
     playerWorker.postMessage(data, '*');
 
     easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWorker, window);
-    if (processExternalCommand) {
-      easelHost.processExternalCommand = processExternalCommand;
-    }
   });
   container.appendChild(playerWorkerIFrame);
 }
@@ -144,8 +140,13 @@ function runIFramePlayer(data) {
 function executeFile(file, buffer, movieParams, remoteDebugging) {
   var filename = file.split('?')[0].split('#')[0];
 
+  file = new URL(file, document.location.href).href;
+
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
+  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+
   if (state.useIFramePlayer && filename.endsWith(".swf")) {
-    var swfURL = Shumway.FileLoadingService.instance.setBaseUrl(file);
     runIFramePlayer({sysMode: sysMode, appMode: appMode,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading,
       stageAlign: state.salign, stageScale: state.scale,
@@ -155,14 +156,21 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
   }
 
   var BinaryFileReader = Shumway.BinaryFileReader;
-  var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
+
+  if (remoteDebugging) {
+    Shumway.ClipboardService.instance = new Shumway.Player.ShumwayComClipboardService();
+    Shumway.ExternalInterfaceService.instance = new Shumway.Player.ShumwayComExternalInterface();
+    Shumway.FileLoadingService.instance = new Shumway.Player.ShumwayComFileLoadingService();
+    Shumway.FileLoadingService.instance.init(file);
+  } else {
+    Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
+    Shumway.FileLoadingService.instance.init(file, state.fileReadChunkSize);
+  }
 
   // All execution paths must now load AVM2.
   if (!appCompiler.value) {
     showMessage("Running in the Interpreter");
   }
-  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
 
   if (filename.endsWith(".abc")) {
     libraryScripts = {};
@@ -197,14 +205,7 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
         player.displayParameters = easel.getDisplayParameters();
         player.loaderUrl = state.loaderURL;
 
-        if (remoteDebugging) {
-          Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
-        }
-
         easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
-        if (processExternalCommand) {
-          easelHost.processExternalCommand = processExternalCommand;
-        }
 
         player.load(file, buffer);
 
@@ -214,7 +215,6 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
           ensureFlashOverlay();
         }
       }
-      file = Shumway.FileLoadingService.instance.setBaseUrl(file);
       if (!buffer && asyncLoading) {
         runSWF(file);
       } else if (!buffer) {
@@ -274,62 +274,6 @@ window.addEventListener('resize', function () {
 
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
-};
-
-Shumway.FileLoadingService.instance = {
-  createSession: function () {
-    return {
-      open: function (request) {
-        var self = this;
-        var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
-        console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
-        new Shumway.BinaryFileReader(path, request.method, request.mimeType, request.data).readChunked(
-          state.fileReadChunkSize,
-          function (data, progress) {
-            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
-          },
-          function (e) { self.onerror(e); },
-          self.onopen,
-          self.onclose,
-          self.onhttpstatus);
-      }
-    };
-  },
-  setBaseUrl: function (url) {
-    var baseUrl;
-    if (typeof URL !== 'undefined') {
-      baseUrl = new URL(url, document.location.href).href;
-    } else {
-      var a = document.createElement('a');
-      a.href = url || '#';
-      a.setAttribute('style', 'display: none;');
-      document.body.appendChild(a);
-      baseUrl = a.href;
-      document.body.removeChild(a);
-    }
-    Shumway.FileLoadingService.instance.baseUrl = baseUrl;
-    return baseUrl;
-  },
-  resolveUrl: function (url) {
-    var base = Shumway.FileLoadingService.instance.baseUrl || '';
-    if (typeof URL !== 'undefined') {
-      return new URL(url, base).href;
-    }
-
-    if (url.indexOf('://') >= 0) {
-      return url;
-    }
-
-    base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-    if (url.indexOf('/') === 0) {
-      var m = /^[^:]+:\/\/[^\/]+/.exec(base);
-      if (m) base = m[0];
-    }
-    return base + url;
-  },
-  navigateTo: function (url, target) {
-    window.open(this.resolveUrl(url), target || '_blank');
-  }
 };
 
 // toggle info panels (debug info, display list, settings, none)

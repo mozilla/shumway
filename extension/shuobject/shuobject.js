@@ -108,17 +108,14 @@ var shuobject = (function () {
   // Initializes and performs external interface communication.
   function processExternalCommand(iframe, command) {
     switch (command.action) {
-      case 'isEnabled':
-        command.result = true;
-        break;
-      case 'initJS':
-        var easelHost = this;
+      case 'init':
+        var externalInterfaceService = this;
         iframe.__flash__registerCallback = function (functionName) {
           console.log('__flash__registerCallback: ' + functionName);
           this[functionName] = function () {
             var args = Array.prototype.slice.call(arguments, 0);
             console.log('__flash__callIn: ' + functionName);
-            var result = easelHost.sendExernalCallback(functionName, args);
+            var result = externalInterfaceService.onExternalCallback(functionName, args);
             return window.eval(result);
           };
         };
@@ -168,24 +165,20 @@ var shuobject = (function () {
           console.log('__flash__call (ignored): ' + expr);
         };
         break;
-      default:
-        switch (command.action) {
-          case 'getId':
-            command.result = iframe.id;
-            break;
-          case 'eval':
-            command.result = window.__flash__eval(command.expression);
-            break;
-          case 'call':
-            command.result = window.__flash__call(command.request);
-            break;
-          case 'register':
-            iframe.__flash__registerCallback(command.functionName);
-            break;
-          case 'unregister':
-            iframe.__flash__unregisterCallback(command.functionName);
-            break;
-        }
+      case 'getId':
+        command.result = iframe.id;
+        break;
+      case 'eval':
+        command.result = window.__flash__eval(command.expression);
+        break;
+      case 'call':
+        command.result = window.__flash__call(command.request);
+        break;
+      case 'register':
+        iframe.__flash__registerCallback(command.functionName);
+        break;
+      case 'unregister':
+        iframe.__flash__unregisterCallback(command.functionName);
         break;
     }
   }
@@ -194,8 +187,9 @@ var shuobject = (function () {
   // stage, flash namespace, and Shumway utils.
   function initializeBindings(iframeElement) {
     var easelHost = iframeElement.contentWindow.easelHost;
-    easelHost.processExternalCommand = processExternalCommand.bind(easelHost, iframeElement);
     var playerWindowIframe = iframeElement.contentWindow.playerWindowIframe.contentWindow;
+    var externalInterfaceService = playerWindowIframe.iframeExternalInterface;
+    externalInterfaceService.processExternalCommand = processExternalCommand.bind(externalInterfaceService, iframeElement);
     iframeElement.shumway = {
       stage: playerWindowIframe.player.stage,
       Shumway: playerWindowIframe.Shumway,

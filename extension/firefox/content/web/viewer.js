@@ -33,13 +33,6 @@ window.print = function(msg) {
 
 var SHUMWAY_ROOT = "resource://shumway/";
 
-var viewerPlayerglobalInfo = {
-  abcs: SHUMWAY_ROOT + "playerglobal/playerglobal.abcs",
-  catalog: SHUMWAY_ROOT + "playerglobal/playerglobal.json"
-};
-
-var builtinPath = SHUMWAY_ROOT + "libs/builtin.abc";
-
 var playerWindow;
 var playerWindowLoaded = new Promise(function(resolve) {
   var playerWindowIframe = document.getElementById("playerWindow");
@@ -51,13 +44,6 @@ var playerWindowLoaded = new Promise(function(resolve) {
 });
 
 function runViewer() {
-  ShumwayCom.onLoadFileCallback = function (data) {
-    playerWindow.postMessage({
-      type: "loadFileResponse",
-      args: data
-    }, '*');
-  };
-
   var flashParams = ShumwayCom.getPluginParams();
 
   movieUrl = flashParams.url;
@@ -166,18 +152,6 @@ var movieUrl, movieParams, objectParams;
 window.addEventListener("message", function handlerMessage(e) {
   var args = e.data;
   switch (args.callback) {
-    case 'loadFileRequest':
-      ShumwayCom.loadFile(args.data);
-      break;
-    case 'reportTelemetry':
-      ShumwayCom.reportTelemetry(args.data);
-      break;
-    case 'setClipboard':
-      ShumwayCom.setClipboard(args.data);
-      break;
-    case 'navigateTo':
-      ShumwayCom.navigateTo(args.data);
-      break;
     case 'started':
       document.body.classList.add('started');
       break;
@@ -185,23 +159,6 @@ window.addEventListener("message", function handlerMessage(e) {
 }, true);
 
 var easelHost;
-
-function processExternalCommand(command) {
-  switch (command.action) {
-    case 'isEnabled':
-      command.result = true;
-      break;
-    case 'initJS':
-      ShumwayCom.externalCom({action: 'init'});
-      ShumwayCom.onExternalCallback = function (call) {
-        return easelHost.sendExernalCallback(call.functionName, call.args);
-      };
-      break;
-    default:
-      command.result = ShumwayCom.externalCom(command);
-      break;
-  }
-}
 
 function parseSwf(url, baseUrl, movieParams, objectParams) {
   var settings = ShumwayCom.getSettings();
@@ -232,7 +189,6 @@ function parseSwf(url, baseUrl, movieParams, objectParams) {
 
   var easel = createEasel(backgroundColor);
   easelHost = new Shumway.GFX.Window.WindowEaselHost(easel, playerWindow, window);
-  easelHost.processExternalCommand = processExternalCommand;
 
   var displayParameters = easel.getDisplayParameters();
   var data = {

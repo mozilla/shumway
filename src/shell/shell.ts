@@ -326,10 +326,10 @@ module Shumway.Shell {
     }
     var asyncLoading = true;
     if (asyncLoading) {
-      Shumway.FileLoadingService.instance.setBaseUrl(file);
+      (<any>Shumway.FileLoadingService.instance).setBaseUrl(file);
       runSWF(file);
     } else {
-      Shumway.FileLoadingService.instance.setBaseUrl(file);
+      (<any>Shumway.FileLoadingService.instance).setBaseUrl(file);
       runSWF(read(file, 'binary'));
     }
     console.info("Running: " + file);

@@ -49,99 +49,36 @@ function initRemoteDebugging() {
   };
 }
 
-var externalInteraceCallback;
+var ShumwayCom;
 function remoteDebuggerInitServices() {
   window.addEventListener('beforeunload', function(event) {
     if (state.remoteAutoReload) {
       remoteDebugger.send({action: 'reload'}, true);
     }
   });
-  processExternalCommand = function (command) {
-    switch (command.action) {
-      case 'isEnabled':
-        command.result = true;
-        break;
-      case 'initJS':
-        remoteDebuggerSendMessage({action: 'externalCom', data: {action: 'init'}, sync: true});
-        externalInteraceCallback = function (functionName, args) {
-          return easelHost.sendExernalCallback(functionName, args);
-        };
-        break;
-      default:
-        var result = remoteDebuggerSendMessage({action: 'externalCom', data: command, sync: true});
-        command.result = result ? JSON.parse(result) : undefined;
-        break;
-    }
-  };
-  Shumway.ClipboardService.instance = {
-    setClipboard: function (data) {
-      remoteDebuggerSendMessage({action: 'setClipboard', data: data}, false);
-    }
-  };
-  Shumway.FileLoadingService.instance = {
-    baseUrl: null,
-    nextSessionId: 1, // 0 - is reserved
-    sessions: [],
-    createSession: function () {
-      var sessionId = this.nextSessionId++;
-      return this.sessions[sessionId] = {
-        open: function (request) {
-          var self = this;
-          var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
-          console.log('Session #' + sessionId + ': loading ' + path);
-          remoteDebuggerSendMessage({
-            action: 'loadFile',
-            data: {url: path, method: request.method,
-              mimeType: request.mimeType, postData: request.data,
-              checkPolicyFile: request.checkPolicyFile, sessionId: sessionId}
-          }, true);
-        },
-        notify: function (args) {
-          switch (args.topic) {
-            case "open":
-              this.onopen();
-              break;
-            case "close":
-              this.onclose();
-              Shumway.FileLoadingService.instance.sessions[sessionId] = null;
-              console.log('Session #' + sessionId + ': closed');
-              break;
-            case "error":
-              this.onerror && this.onerror(args.error);
-              break;
-            case "progress":
-              console.log('Session #' + sessionId + ': loaded ' + args.loaded + '/' + args.total);
-              this.onprogress && this.onprogress(new Uint8Array(args.array), {bytesLoaded: args.loaded, bytesTotal: args.total});
-              break;
-          }
-        },
-        close: function () {
-          if (Shumway.FileLoadingService.instance.sessions[sessionId]) {
-            // TODO send abort
-          }
-        }
-      };
-    },
-    setBaseUrl: function (url) {
-      return Shumway.FileLoadingService.instance.baseUrl = url;
-    },
-    resolveUrl: function (url) {
-      return new URL(url, Shumway.FileLoadingService.instance.baseUrl).href;
-    },
-    navigateTo: function (url, target) {
-      remoteDebuggerSendMessage({
-        action: 'navigateTo',
-        data: {
-          url: this.resolveUrl(url),
-          target: target
-        }
-      }, true);
-    }
+
+  ShumwayCom = {
+    userInput: function () { remoteDebuggerSendMessage('userInput', undefined, true); },
+    fallback: function () { remoteDebuggerSendMessage('fallback', undefined, true); },
+    endActivation: function () { remoteDebuggerSendMessage('endActivation', undefined, true); },
+    reportIssue: function (details) { remoteDebuggerSendMessage('reportIssue', details, true); },
+    reportTelemetry: function () { remoteDebuggerSendMessage('reportTelemetry', data, true); },
+    enableDebug: function () { remoteDebuggerSendMessage('enableDebug', undefined, true); },
+    getPluginParams: function () { return remoteDebuggerSendMessage('getPluginParams', undefined, false); },
+    getSettings: function () { return remoteDebuggerSendMessage('getSettings', undefined, false); },
+    setClipboard: function (data) { remoteDebuggerSendMessage('setClipboard', data, true); },
+    setFullscreen: function (enabled) { remoteDebuggerSendMessage('setFullscreen', enabled, true); },
+    externalCom: function (args) { return remoteDebuggerSendMessage('externalCom', args, false); },
+    loadFile: function (args) { remoteDebuggerSendMessage('loadFile', args, true); },
+    navigateTo: function (args) { remoteDebuggerSendMessage('navigateTo', args, true); },
+
+    onLoadFileCallback: null,
+    onExternalCallback: null
   };
 }
 
-function remoteDebuggerSendMessage(detail, async) {
-  return remoteDebugger.send({action: 'sendMessage', detail: detail}, async);
+function remoteDebuggerSendMessage(id, data, async) {
+  return remoteDebugger.send({action: 'sendMessage', id: id, data: data, sync: !async}, async);
 }
 
 function remoteDebugger_onData(data) {
@@ -151,24 +88,21 @@ function remoteDebugger_onData(data) {
       remoteDebuggerController.close();
       remoteDebuggerInitServices();
 
-      var flashParams = JSON.parse(remoteDebuggerSendMessage({action: 'getPluginParams', data: null, sync: true}));
+      var flashParams = ShumwayCom.getPluginParams();
 
       var movieUrl = flashParams.url;
       var movieParams = flashParams.movieParams;
       executeFile(movieUrl, undefined, movieParams, true);
 
-      remoteDebuggerSendMessage({action: 'endActivation', data: null}, true);
-      return;
+      ShumwayCom.endActivation();
+      break;
     case 'onExternalCallback':
       var call = data.detail;
-      externalInteraceCallback(call.functionName, call.args);
-      return;
+      ShumwayCom.onExternalCallback(call);
+      break;
     case 'onLoadFileCallback':
       var args = data.detail;
-      var session = Shumway.FileLoadingService.instance.sessions[args.sessionId];
-      if (session) {
-        session.notify(args);
-      }
-      return;
+      ShumwayCom.onLoadFileCallback(args);
+      break;
   }
 }

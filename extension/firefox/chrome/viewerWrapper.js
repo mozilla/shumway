@@ -46,7 +46,6 @@ function runViewer() {
       enableDebug: enableDebug
     });
 
-
     window.onExternalCallback = function (call) {
       return shumwayComAdapter.onExternalCallback(Components.utils.cloneInto(call, childWindow));
     };
@@ -105,17 +104,20 @@ function runViewer() {
 
     function sendMessage(data) {
       var detail = {
-        action: data.action,
+        action: data.id,
         data: data.data,
         sync: data.sync
       };
-      return window.notifyShumwayMessage(detail);
+      var result = window.notifyShumwayMessage(detail);
+      if (data.sync) {
+        return result === undefined ? undefined : JSON.parse(result);
+      }
     }
 
     connection.onData = function (data) {
       switch (data.action) {
         case 'sendMessage':
-          return sendMessage(data.detail);
+          return sendMessage(data);
         case 'reload':
           document.body.className = 'remoteReload';
           setTimeout(function () {

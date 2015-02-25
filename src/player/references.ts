@@ -27,6 +27,7 @@
 ///<reference path='remotingPlayer.ts' />
 ///<reference path='player.ts' />
 ///<reference path='avmLoader.ts' />
+///<reference path='external.ts' />
 
 ///<reference path='window/windowPlayer.ts' />
 ///<reference path='test/testPlayer.ts' />

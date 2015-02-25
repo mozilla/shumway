@@ -31,64 +31,6 @@ Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
 };
 
-var fileReadChunkSize = 0;
-Shumway.FileLoadingService.instance = {
-  createSession: function () {
-    return {
-      open: function (request) {
-        var self = this;
-        var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
-        console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
-        var BinaryFileReader = Shumway.BinaryFileReader;
-        new BinaryFileReader(path, request.method, request.mimeType, request.data).readChunked(
-          fileReadChunkSize,
-          function (data, progress) {
-            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
-          },
-          function (e) { self.onerror(e); },
-          self.onopen,
-          self.onclose,
-          self.onhttpstatus);
-      }
-    };
-  },
-  setBaseUrl: function (url) {
-    var baseUrl;
-    if (typeof URL !== 'undefined') {
-      baseUrl = new URL(url, document.location.href).href;
-    } else {
-      var a = document.createElement('a');
-      a.href = url || '#';
-      a.setAttribute('style', 'display: none;');
-      document.body.appendChild(a);
-      baseUrl = a.href;
-      document.body.removeChild(a);
-    }
-    Shumway.FileLoadingService.instance.baseUrl = baseUrl;
-    return baseUrl;
-  },
-  resolveUrl: function (url) {
-    var base = Shumway.FileLoadingService.instance.baseUrl || '';
-    if (typeof URL !== 'undefined') {
-      return new URL(url, base).href;
-    }
-
-    if (url.indexOf('://') >= 0) {
-      return url;
-    }
-
-    base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-    if (url.indexOf('/') === 0) {
-      var m = /^[^:]+:\/\/[^\/]+/.exec(base);
-      if (m) base = m[0];
-    }
-    return base + url;
-  },
-  navigateTo: function (url, target) {
-    window.parent.open(this.resolveUrl(url), target || '_blank');
-  }
-};
-
 function runSwfPlayer(data) {
   var sysMode = data.sysMode;
   var appMode = data.appMode;
@@ -98,12 +40,17 @@ function runSwfPlayer(data) {
   var stageAlign = data.stageAlign;
   var stageScale = data.stageScale;
   var displayParameters = data.displayParameters;
-  fileReadChunkSize = data.fileReadChunkSize;
   var file = data.file;
   configureExternalInterfaceMocks(file);
   if (data.remoteDebugging) {
-    Shumway.ClipboardService.instance = parent.Shumway.ClipboardService.instance;
-    Shumway.FileLoadingService.instance = parent.Shumway.FileLoadingService.instance;
+    window.ShumwayCom = parent.ShumwayCom;
+    Shumway.ClipboardService.instance = new Shumway.Player.ShumwayComClipboardService();
+    Shumway.ExternalInterfaceService.instance = new Shumway.Player.ShumwayComExternalInterface();
+    Shumway.FileLoadingService.instance = new Shumway.Player.ShumwayComFileLoadingService();
+    Shumway.FileLoadingService.instance.init(file);
+  } else {
+    Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
+    Shumway.FileLoadingService.instance.init(file, data.fileReadChunkSize);
   }
   Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
     function runSWF(file) {
@@ -114,12 +61,7 @@ function runSwfPlayer(data) {
       player.displayParameters = displayParameters;
       player.loaderUrl = loaderURL;
       player.load(file);
-
-      if (data.remoteDebugging) {
-        Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
-      }
     }
-    file = Shumway.FileLoadingService.instance.setBaseUrl(file);
     if (asyncLoading) {
       runSWF(file);
     } else {

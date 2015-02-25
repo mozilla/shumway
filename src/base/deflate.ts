@@ -647,12 +647,6 @@ module Shumway.ArrayUtilities {
   }
 
 
-  interface SpecialInflate {
-    onData: (data: Uint8Array) => void;
-    push(data: Uint8Array);
-    close();
-  }
-
   class SpecialInflateAdapter extends Inflate {
     private _verifyHeader: boolean;
     private _buffer: Uint8Array;
