@@ -37,7 +37,8 @@ function sendMessage(action, data, sync) {
     sendAsyncMessage('Shumway:message', detail);
     return;
   }
-  var result = sendSyncMessage('Shumway:message', detail);
+  var result = String(sendSyncMessage('Shumway:message', detail));
+  result = result == 'undefined' ? undefined : JSON.parse(result);
   return Components.utils.cloneInto(result, content);
 }
 

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-window.notifyShumwayMessage = function (detail) { };
-window.onExternalCallback = null;
-window.onLoadFileCallback = null;
-
 var viewer = document.getElementById('viewer'), onLoaded;
 var promise = new Promise(function (resolve) {
   onLoaded = resolve;
@@ -34,8 +30,7 @@ Components.utils.import('chrome://shumway/content/ShumwayCom.jsm');
 function runViewer() {
   function handler() {
     function sendMessage(action, data, sync) {
-      var detail = {action: action, data: data, sync: sync};
-      var result = window.notifyShumwayMessage(detail);
+      var result = shumwayActions.invoke(action, data);
       return Components.utils.cloneInto(result, childWindow);
     }
 
@@ -46,11 +41,11 @@ function runViewer() {
       enableDebug: enableDebug
     });
 
-    window.onExternalCallback = function (call) {
+    shumwayActions.onExternalCallback = function (call) {
       return shumwayComAdapter.onExternalCallback(Components.utils.cloneInto(call, childWindow));
     };
 
-    window.onLoadFileCallback = function (args) {
+    shumwayActions.onLoadFileCallback = function (args) {
       shumwayComAdapter.onLoadFileCallback(Components.utils.cloneInto(args, childWindow));
     };
 
@@ -69,28 +64,22 @@ function runViewer() {
     });
 
     messageManager.addMessageListener('Shumway:message', function (message) {
-      var detail = {
-        action: message.data.action,
-        data: message.data.data,
-        sync: message.data.sync
-      };
-      if (message.data.callback) {
-        detail.callback = true;
-        detail.cookie = message.data.cookie;
+      var data = message.data;
+      var result = shumwayActions.invoke(data.action, data.data);
+      if (message.sync) {
+        return result === undefined ? 'undefined' : JSON.stringify(result);
       }
-
-      return window.notifyShumwayMessage(detail);
     });
 
     messageManager.addMessageListener('Shumway:enableDebug', function (message) {
       enableDebug();
     });
 
-    window.onExternalCallback = function (call) {
+    shumwayActions.onExternalCallback = function (call) {
       return externalInterface.callback(JSON.stringify(call));
     };
 
-    window.onLoadFileCallback = function (args) {
+    shumwayActions.onLoadFileCallback = function (args) {
       messageManager.sendAsyncMessage('Shumway:loadFile', args);
     };
 
@@ -103,15 +92,7 @@ function runViewer() {
     document.body.className = 'remoteDebug';
 
     function sendMessage(data) {
-      var detail = {
-        action: data.id,
-        data: data.data,
-        sync: data.sync
-      };
-      var result = window.notifyShumwayMessage(detail);
-      if (data.sync) {
-        return result === undefined ? undefined : JSON.parse(result);
-      }
+      return shumwayActions.invoke(data.id, data.data);
     }
 
     connection.onData = function (data) {
@@ -127,11 +108,11 @@ function runViewer() {
       }
     };
 
-    window.onExternalCallback = function (call) {
+    shumwayActions.onExternalCallback = function (call) {
       return connection.send({action: 'onExternalCallback', detail: call});
     };
 
-    window.onLoadFileCallback = function (args) {
+    shumwayActions.onLoadFileCallback = function (args) {
       if (args.array) {
         args.array = Array.prototype.slice.call(args.array, 0);
       }
@@ -142,15 +123,19 @@ function runViewer() {
   }
 
   function enableDebug() {
-    DebugUtils.enableDebug(window.swfUrlLoading);
+    DebugUtils.enableDebug(window.shumwayStartupInfo.url);
     setTimeout(function () {
       window.top.location.reload();
     }, 1000);
   }
 
+  var startupInfo = window.shumwayStartupInfo;
+  var shumwayActions = ShumwayCom.createActions(startupInfo, window, document);
+
   promise.then(function (oop) {
     if (DebugUtils.isEnabled) {
-      DebugUtils.createDebuggerConnection(window.swfUrlLoading).then(function (debuggerConnection) {
+      DebugUtils.createDebuggerConnection(window.shumwayStartupInfo.url).then(
+          function (debuggerConnection) {
         if (debuggerConnection) {
           handleDebug(debuggerConnection);
         } else if (oop) {
