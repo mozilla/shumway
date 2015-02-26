@@ -26,17 +26,20 @@ build: ensureoutputdir
 	cp $(SHUMWAY_ROOT)/src/player/fakechannel.js $(BUILD_DIR)/src/player/
 	# Coping WebGL shaders
 	mkdir -p $(BUILD_DIR)/src/gfx/gl/shaders
-	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/combined.{frag,vert} $(BUILD_DIR)/src/gfx/gl/shaders/
+	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/combined.frag $(BUILD_DIR)/src/gfx/gl/shaders/
+	cp $(SHUMWAY_ROOT)/src/gfx/gl/shaders/combined.vert $(BUILD_DIR)/src/gfx/gl/shaders/
 	# Coping generated JavaScript file
 	mkdir $(BUILD_DIR)/build
 	cp -R $(SHUMWAY_ROOT)/build/ts $(BUILD_DIR)/build/
 	cp -R $(SHUMWAY_ROOT)/build/bundles $(BUILD_DIR)/build/
 	# playerglobals for the inspector
 	mkdir $(BUILD_DIR)/build/playerglobal
-	cp $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.{json,abcs} $(BUILD_DIR)/build/playerglobal/
+	cp $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.json $(BUILD_DIR)/build/playerglobal/
+	cp $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.abcs $(BUILD_DIR)/build/playerglobal/
 	# Coping ABC and Relooper files
 	mkdir $(BUILD_DIR)/build/libs
-	cp -R $(SHUMWAY_ROOT)/build/libs/*.{abc,js} $(BUILD_DIR)/build/libs/
+	cp -R $(SHUMWAY_ROOT)/build/libs/*.abc $(BUILD_DIR)/build/libs/
+	cp -R $(SHUMWAY_ROOT)/build/libs/*.js $(BUILD_DIR)/build/libs/
 	mkdir $(BUILD_DIR)/build/version
 	cp -R $(SHUMWAY_ROOT)/build/version/version.js $(BUILD_DIR)/build/version/
 	# Copy examples
@@ -45,7 +48,8 @@ build: ensureoutputdir
 	cp -R iframe $(BUILD_DIR)/
 	# Copy extensions
 	mkdir -p $(BUILD_DIR)/extension/firefox
-	cp $(EXTENSION_DIR)/{shumway.xpi,update.rdf} $(BUILD_DIR)/extension/firefox/
+	cp $(EXTENSION_DIR)/shumway.xpi $(BUILD_DIR)/extension/firefox/
+	cp $(EXTENSION_DIR)/update.rdf $(BUILD_DIR)/extension/firefox/
 	# Package shell
 	mkdir -p $(BUILD_DIR)/shell
 	cd ../build/shell; zip -r ../../web/$(BUILD_DIR)/shell/shumway-shell.zip *
