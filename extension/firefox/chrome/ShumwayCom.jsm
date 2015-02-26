@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Mozilla Foundation
+ * Copyright 2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ var EXPORTED_SYMBOLS = ['ShumwayCom'];
 Components.utils.import('resource://gre/modules/XPCOMUtils.jsm');
 Components.utils.import('resource://gre/modules/Services.jsm');
 Components.utils.import('resource://gre/modules/Promise.jsm');
+Components.utils.import('resource://gre/modules/NetUtil.jsm');
 
 Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
 Components.utils.import('chrome://shumway/content/RtmpUtils.jsm');
@@ -44,6 +45,12 @@ function getStringPref(pref, def) {
   }
 }
 
+function log(aMsg) {
+  let msg = 'ShumwayCom.js: ' + (aMsg.join ? aMsg.join('') : aMsg);
+  Services.console.logStringMessage(msg);
+  dump(msg + '\n');
+}
+
 var ShumwayCom = {
   createAdapter: function (content, callbacks) {
     function setFullscreen(value) {
@@ -59,18 +66,8 @@ var ShumwayCom = {
     }
 
     function getSettings() {
-      var compilerSettings = callbacks.sendMessage('getCompilerSettings', null, true);
-      var turboMode = callbacks.sendMessage('getBoolPref', {pref: 'shumway.turboMode', def: false}, true);
-      var hud = callbacks.sendMessage('getBoolPref', {pref: 'shumway.hud', def: false}, true);
-      var forceHidpi = callbacks.sendMessage('getBoolPref', {pref: 'shumway.force_hidpi', def: false}, true);
-      return Components.utils.cloneInto({
-        compilerSettings: compilerSettings,
-        misc: {
-          turboMode: turboMode,
-          hud: hud,
-          forceHidpi: forceHidpi
-        }
-      }, content);
+      return Components.utils.cloneInto(
+        callbacks.sendMessage('getSettings', null, true), content);
     }
 
     function getPluginParams() {
@@ -152,13 +149,13 @@ var ShumwayCom = {
   },
 
   createActions: function (startupInfo, window, document) {
-    return new ChromeActions(startupInfo, window, document);
+    return new ShumwayChromeActions(startupInfo, window, document);
   }
 };
 
 
-// All the priviledged actions.
-function ChromeActions(startupInfo, window, document) {
+// All the privileged actions.
+function ShumwayChromeActions(startupInfo, window, document) {
   this.url = startupInfo.url;
   this.objectParams = startupInfo.objectParams;
   this.movieParams = startupInfo.movieParams;
@@ -182,7 +179,11 @@ function ChromeActions(startupInfo, window, document) {
   this.onExternalCallback = null;
 }
 
-ChromeActions.prototype = {
+ShumwayChromeActions.prototype = {
+  // The method is created for convenience of routing messages from the OOP
+  // handler or remote debugger adapter. All method calls are originated from
+  // the ShumwayCom adapter (see above), or from the debugger adapter.
+  // See viewerWrapper.js for these usages near sendMessage calls.
   invoke: function (name, args) {
     return this[name].call(this, args);
   },
@@ -194,21 +195,21 @@ ChromeActions.prototype = {
     return getBoolPref(data.pref, data.def);
   },
 
-  getCompilerSettings: function getCompilerSettings() {
+  getSettings: function getSettings() {
     return {
-      appCompiler: getBoolPref('shumway.appCompiler', true),
-      sysCompiler: getBoolPref('shumway.sysCompiler', false),
-      verifier: getBoolPref('shumway.verifier', true)
-    };
-  },
-
-  addProfilerMarker: function (marker) {
-    if ('nsIProfiler' in Components.interfaces) {
-      let profiler = Components.classes["@mozilla.org/tools/profiler;1"]
-                                       .getService(Components.interfaces.nsIProfiler);
-      profiler.AddMarker(marker);
+      compilerSettings: {
+        appCompiler: getBoolPref('shumway.appCompiler', true),
+        sysCompiler: getBoolPref('shumway.sysCompiler', false),
+        verifier: getBoolPref('shumway.verifier', true)
+      },
+      playerSettings: {
+        turboMode: getBoolPref('shumway.turboMode', false),
+        hud: getBoolPref('shumway.hud', false),
+        forceHidpi: getBoolPref('shumway.force_hidpi', false)
+      }
     }
   },
+
   getPluginParams: function getPluginParams() {
     return {
       url: this.url,
@@ -220,60 +221,7 @@ ChromeActions.prototype = {
       isDebuggerEnabled: getBoolPref('shumway.debug.enabled', false)
     };
   },
-  _canDownloadFile: function canDownloadFile(data, callback) {
-    var url = data.url, checkPolicyFile = data.checkPolicyFile;
 
-    // TODO flash cross-origin request
-    if (url === this.url) {
-      // allow downloading for the original file
-      return callback({success: true});
-    }
-
-    // allows downloading from the same origin
-    var parsedUrl, parsedBaseUrl;
-    try {
-      parsedUrl = NetUtil.newURI(url);
-    } catch (ex) { /* skipping invalid urls */ }
-    try {
-      parsedBaseUrl = NetUtil.newURI(this.url);
-    } catch (ex) { /* skipping invalid urls */ }
-
-    if (parsedUrl && parsedBaseUrl &&
-      parsedUrl.prePath === parsedBaseUrl.prePath) {
-      return callback({success: true});
-    }
-
-    // additionally using internal whitelist
-    var whitelist = getStringPref('shumway.whitelist', '');
-    if (whitelist && parsedUrl) {
-      var whitelisted = whitelist.split(',').some(function (i) {
-        return domainMatches(parsedUrl.host, i);
-      });
-      if (whitelisted) {
-        return callback({success: true});
-      }
-    }
-
-    if (!checkPolicyFile || !parsedUrl || !parsedBaseUrl) {
-      return callback({success: false});
-    }
-
-    // we can request crossdomain.xml
-    fetchPolicyFile(parsedUrl.prePath + '/crossdomain.xml', this.crossdomainRequestsCache,
-      function (policy, error) {
-
-        if (!policy || policy.siteControl === 'none') {
-          return callback({success: false});
-        }
-        // TODO assuming master-only, there are also 'by-content-type', 'all', etc.
-
-        var allowed = policy.allowAccessFrom.some(function (i) {
-          return domainMatches(parsedBaseUrl.host, i.domain) &&
-            (!i.secure || parsedBaseUrl.scheme.toLowerCase() === 'https');
-        });
-        return callback({success: allowed});
-      }.bind(this));
-  },
   loadFile: function loadFile(data) {
     function notifyLoadFileListener(data) {
       if (!actions.onLoadFileCallback) {
@@ -333,21 +281,21 @@ ChromeActions.prototype = {
       notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "open"});
     };
 
-    this._canDownloadFile({url: url, checkPolicyFile: checkPolicyFile}, function (data) {
-      if (data.success) {
-        performXHR();
-      } else {
-        log("data access id prohibited to " + url + " from " + baseUrl);
-        notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "error",
-          error: "only original swf file or file from the same origin loading supported"});
-      }
+    canDownloadFile(url, checkPolicyFile, this.url, this.crossdomainRequestsCache).then(function () {
+      performXHR();
+    }, function (reason) {
+      log("data access is prohibited to " + url + " from " + baseUrl);
+      notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "error",
+        error: "only original swf file or file from the same origin loading supported"});
     });
   },
+
   navigateTo: function (data) {
     var embedTag = this.embedTag.wrappedJSObject;
     var window = embedTag ? embedTag.ownerDocument.defaultView : this.window;
     window.open(data.url, data.target || '_self');
   },
+
   fallback: function(automatic) {
     automatic = !!automatic;
     var event = this.document.createEvent('CustomEvent');
@@ -356,6 +304,7 @@ ChromeActions.prototype = {
     });
     this.window.dispatchEvent(event);
   },
+
   userInput: function() {
     var win = this.window;
     var winUtils = win.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
@@ -364,6 +313,7 @@ ChromeActions.prototype = {
       this.lastUserInput = Date.now();
     }
   },
+
   isUserInputInProgress: function () {
     // TODO userInput does not work for OOP
     if (!getBoolPref('shumway.userInputSecurity', true)) {
@@ -378,6 +328,7 @@ ChromeActions.prototype = {
     // TODO other security checks?
     return true;
   },
+
   setClipboard: function (data) {
     if (typeof data !== 'string' || !this.isUserInputInProgress()) {
       return;
@@ -387,6 +338,7 @@ ChromeActions.prototype = {
                                       .getService(Components.interfaces.nsIClipboardHelper);
     clipboard.copyString(data);
   },
+
   setFullscreen: function (enabled) {
     enabled = !!enabled;
 
@@ -401,11 +353,13 @@ ChromeActions.prototype = {
       target.ownerDocument.mozCancelFullScreen();
     }
   },
+
   endActivation: function () {
     var event = this.document.createEvent('CustomEvent');
     event.initCustomEvent('shumwayActivated', true, true, null);
     this.window.dispatchEvent(event);
   },
+
   reportTelemetry: function (data) {
     var topic = data.topic;
     switch (topic) {
@@ -445,7 +399,8 @@ ChromeActions.prototype = {
         break;
     }
   },
-  reportIssue: function(exceptions) {
+
+  reportIssue: function (exceptions) {
     var urlTemplate = "https://bugzilla.mozilla.org/enter_bug.cgi?op_sys=All&priority=--" +
       "&rep_platform=All&target_milestone=---&version=Trunk&product=Firefox" +
       "&component=Shumway&short_desc=&comment={comment}" +
@@ -470,6 +425,7 @@ ChromeActions.prototype = {
       this.window.open(url);
     }.bind(this));
   },
+
   externalCom: function (data) {
     if (!this.allowScriptAccess)
       return;
@@ -496,11 +452,82 @@ ChromeActions.prototype = {
       case 'unregister':
         return embedTag.__flash__unregisterCallback(data.functionName);
     }
-  },
-  getWindowUrl: function() {
-    return this.window.parent.wrappedJSObject.location + '';
   }
 };
+
+function disableXHRRedirect(xhr) {
+  var listener = {
+    asyncOnChannelRedirect: function(oldChannel, newChannel, flags, callback) {
+      // TODO perform URL check?
+      callback.onRedirectVerifyCallback(Components.results.NS_ERROR_ABORT);
+    },
+    getInterface: function(iid) {
+      return this.QueryInterface(iid);
+    },
+    QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIChannelEventSink])
+  };
+  xhr.channel.notificationCallbacks = listener;
+}
+
+function canDownloadFile(url, checkPolicyFile, swfUrl, cache) {
+  // TODO flash cross-origin request
+  if (url === swfUrl) {
+    // Allows downloading for the original file.
+    return Promise.resolve(undefined);
+  }
+
+  // Allows downloading from the same origin.
+  var parsedUrl, parsedBaseUrl;
+  try {
+    parsedUrl = NetUtil.newURI(url);
+  } catch (ex) { /* skipping invalid urls */ }
+  try {
+    parsedBaseUrl = NetUtil.newURI(swfUrl);
+  } catch (ex) { /* skipping invalid urls */ }
+
+  if (parsedUrl && parsedBaseUrl &&
+    parsedUrl.prePath === parsedBaseUrl.prePath) {
+    return Promise.resolve(undefined);
+  }
+
+  // Additionally using internal whitelist.
+  var whitelist = getStringPref('shumway.whitelist', '');
+  if (whitelist && parsedUrl) {
+    var whitelisted = whitelist.split(',').some(function (i) {
+      return domainMatches(parsedUrl.host, i);
+    });
+    if (whitelisted) {
+      return Promise.resolve();
+    }
+  }
+
+  if (!parsedUrl || !parsedBaseUrl) {
+    return Promise.reject('Invalid or non-specified URL or Base URL.');
+  }
+
+  if (!checkPolicyFile) {
+    return Promise.reject('Check of the policy file is not allowed.');
+  }
+
+  // We can request crossdomain.xml.
+  return fetchPolicyFile(parsedUrl.prePath + '/crossdomain.xml', cache).
+    then(function (policy) {
+
+      if (policy.siteControl === 'none') {
+        throw 'Site control is set to \"none\"';
+      }
+      // TODO assuming master-only, there are also 'by-content-type', 'all', etc.
+
+      var allowed = policy.allowAccessFrom.some(function (i) {
+        return domainMatches(parsedBaseUrl.host, i.domain) &&
+          (!i.secure || parsedBaseUrl.scheme.toLowerCase() === 'https');
+      });
+      if (!allowed) {
+        throw 'crossdomain.xml does not contain source URL.';
+      }
+      return undefined;
+    });
+}
 
 function domainMatches(host, pattern) {
   if (!pattern) return false;
@@ -517,22 +544,25 @@ function domainMatches(host, pattern) {
   return parts[parts.length - 1] === '' || p === host.length;
 }
 
-function fetchPolicyFile(url, cache, callback) {
+function fetchPolicyFile(url, cache) {
   if (url in cache) {
-    return callback(cache[url]);
+    return cache[url];
   }
+
+  var deferred = Promise.defer();
 
   log('Fetching policy file at ' + url);
   var MAX_POLICY_SIZE = 8192;
   var xhr =  Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
                                .createInstance(Components.interfaces.nsIXMLHttpRequest);
   xhr.open('GET', url, true);
+  disableXHRRedirect(xhr);
   xhr.overrideMimeType('text/xml');
   xhr.onprogress = function (e) {
     if (e.loaded >= MAX_POLICY_SIZE) {
       xhr.abort();
       cache[url] = false;
-      callback(null, 'Max policy size');
+      deferred.reject('Max policy size');
     }
   };
   xhr.onreadystatechange = function(event) {
@@ -540,8 +570,8 @@ function fetchPolicyFile(url, cache, callback) {
       // TODO disable redirects
       var doc = xhr.responseXML;
       if (xhr.status !== 200 || !doc) {
-        cache[url] = false;
-        return callback(null, 'Invalid HTTP status: ' + xhr.statusText);
+        deferred.reject('Invalid HTTP status: ' + xhr.statusText);
+        return;
       }
       // parsing params
       var params = doc.documentElement.childNodes;
@@ -563,10 +593,11 @@ function fetchPolicyFile(url, cache, callback) {
             break;
         }
       }
-      callback(cache[url] = policy);
+      deferred.resolve(policy);
     }
   };
   xhr.send(null);
+  return (cache[url] = deferred.promise);
 }
 
 function getVersionInfo() {

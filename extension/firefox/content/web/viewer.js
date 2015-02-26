@@ -165,9 +165,9 @@ function parseSwf(url, baseUrl, movieParams, objectParams) {
   var compilerSettings = settings.compilerSettings;
 
   // init misc preferences
-  var turboMode = settings.misc.turboMode;
-  Shumway.GFX.hud.value = settings.misc.hud;
-  //forceHidpi.value = settings.misc.forceHidpi;
+  var turboMode = settings.playerSettings.turboMode;
+  Shumway.GFX.hud.value = settings.playerSettings.hud;
+  //forceHidpi.value = settings.playerSettings.forceHidpi;
 
   console.info("Compiler settings: " + JSON.stringify(compilerSettings));
   console.info("Parsing " + url + "...");
