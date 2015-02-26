@@ -107,7 +107,8 @@ function loadMovie(path, reportFrames) {
     var sysMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
     var appMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
 
-    Shumway.FileLoadingService.instance.baseUrl = path;
+    Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
+    Shumway.FileLoadingService.instance.init(path);
 
     Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
       easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
@@ -132,26 +133,6 @@ function createEasel() {
 
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) {}
-};
-
-Shumway.FileLoadingService.instance = {
-  createSession: function () {
-    return {
-      open: function (request) {
-        var self = this;
-        var base = Shumway.FileLoadingService.instance.baseUrl || '';
-        var path = combineUrl(base, request.url);
-        console.log('FileLoadingService: loading ' + path);
-        new Shumway.BinaryFileReader(path).readAsync(
-          function (data, progress) {
-            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
-          },
-          function (e) { self.onerror(e); },
-          self.onopen,
-          self.onclose);
-      }
-    };
-  }
 };
 
 var traceMessages = '';

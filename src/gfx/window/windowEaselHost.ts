@@ -51,15 +51,6 @@ module Shumway.GFX.Window {
       }, '*', [bytes.buffer]);
     }
 
-    onExernalCallback(request) {
-      var event = this._playerWindow.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, {
-        type: 'externalCallback',
-        request: request
-      });
-      this._playerWindow.dispatchEvent(event);
-    }
-
     onDisplayParameters(params: DisplayParameters) {
       this._playerWindow.postMessage({
         type: 'displayParameters',
@@ -102,8 +93,6 @@ module Shumway.GFX.Window {
           }
         } else if (data.type === 'frame') {
           this.processFrame();
-        } else if (data.type === 'external') {
-          this.processExternalCommand(data.request);
         } else if (data.type === 'videoControl') {
           data.result = this.processVideoControl(data.id, data.eventType, data.data);
         } else if (data.type === 'registerFontOrImage') {

@@ -15,7 +15,6 @@
  */
 
 var release = true;
-var SHUMWAY_ROOT = "../src/";
 
 var viewerPlayerglobalInfo = {
   abcs: "../build/playerglobal/playerglobal.abcs",
@@ -32,60 +31,51 @@ Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
 };
 
-Shumway.FileLoadingService.instance = {
-  createSession: function () {
-    return {
-      open: function (request) {
-        var self = this;
-        var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
-        console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
-        var BinaryFileReader = Shumway.BinaryFileReader;
-        new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
-          function (data, progress) {
-            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
-          },
-          function (e) { self.onerror(e); },
-          self.onopen,
-          self.onclose,
-          self.onhttpstatus);
-      }
+var player;
+
+var iframeExternalInterface = {
+  onExternalCallback: null,
+  processExternalCommand: null,
+
+  get enabled() {
+    return true;
+  },
+
+  initJS: function (callback) {
+    this.processExternalCommand({action: 'init'});
+    this.onExternalCallback = function (functionName, args) {
+      return callback(functionName, args);
     };
   },
-  setBaseUrl: function (url) {
-    var baseUrl;
-    if (typeof URL !== 'undefined') {
-      baseUrl = new URL(url, document.location.href).href;
-    } else {
-      var a = document.createElement('a');
-      a.href = url || '#';
-      a.setAttribute('style', 'display: none;');
-      document.body.appendChild(a);
-      baseUrl = a.href;
-      document.body.removeChild(a);
-    }
-    Shumway.FileLoadingService.instance.baseUrl = baseUrl;
-    return baseUrl;
+
+  registerCallback: function (functionName) {
+    var cmd = {action: 'register', functionName: functionName, remove: false};
+    this.processExternalCommand(cmd);
   },
-  resolveUrl: function (url) {
-    var base = Shumway.FileLoadingService.instance.baseUrl || '';
-    if (typeof URL !== 'undefined') {
-      return new URL(url, base).href;
-    }
 
-    if (url.indexOf('://') >= 0) {
-      return url;
-    }
+  unregisterCallback: function (functionName) {
+    var cmd = {action: 'register', functionName: functionName, remove: true};
+    this.processExternalCommand(cmd);
+  },
 
-    base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-    if (url.indexOf('/') === 0) {
-      var m = /^[^:]+:\/\/[^\/]+/.exec(base);
-      if (m) base = m[0];
-    }
-    return base + url;
+  eval: function (expression) {
+    var cmd = {action: 'eval', expression: expression};
+    this.processExternalCommand(cmd);
+    return cmd.result;
+  },
+
+  call: function (request) {
+    var cmd = {action: 'call', request: request};
+    this.processExternalCommand(cmd);
+    return cmd.result;
+  },
+
+  getId: function () {
+    var cmd = {action: 'getId'};
+    this.processExternalCommand(cmd);
+    return cmd.result;
   }
 };
-
-var player;
 
 function runSwfPlayer(flashParams) {
   var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
@@ -111,14 +101,16 @@ function runSwfPlayer(flashParams) {
       player.pageUrl = baseUrl;
       player.load(file, buffer);
 
-      Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
-
       var parentDocument = window.parent.document;
       var event = parentDocument.createEvent('CustomEvent');
       event.initCustomEvent('shumwaystarted', true, true, null);
       parentDocument.dispatchEvent(event);
     }
-    file = Shumway.FileLoadingService.instance.setBaseUrl(baseUrl);
+
+    Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
+    Shumway.FileLoadingService.instance.init(baseUrl);
+    Shumway.ExternalInterfaceService.instance = iframeExternalInterface;
+
     if (asyncLoading) {
       runSWF(movieUrl, undefined, baseUrl);
     } else {

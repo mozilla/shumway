@@ -68,8 +68,8 @@ module Shumway.ArrayUtilities {
     }
 
     public static create(verifyHeader: boolean): Inflate {
-      if (typeof SpecialInflate !== 'undefined') {
-        return new SpecialInflateAdapter(verifyHeader);
+      if (typeof ShumwayCom !== 'undefined' && ShumwayCom.createSpecialInflate) {
+        return new SpecialInflateAdapter(verifyHeader, ShumwayCom.createSpecialInflate);
       }
       return new BasicInflate(verifyHeader);
     }
@@ -647,24 +647,18 @@ module Shumway.ArrayUtilities {
   }
 
 
-  declare class SpecialInflate {
-    onData: (data: Uint8Array) => void;
-    push(data: Uint8Array);
-    close();
-  }
-
   class SpecialInflateAdapter extends Inflate {
     private _verifyHeader: boolean;
     private _buffer: Uint8Array;
 
     private _specialInflate: SpecialInflate;
 
-    constructor(verifyHeader: boolean) {
+    constructor(verifyHeader: boolean, createSpecialInflate: () => SpecialInflate) {
       super(verifyHeader);
 
       this._verifyHeader = verifyHeader;
 
-      this._specialInflate = new SpecialInflate();
+      this._specialInflate = createSpecialInflate();
       this._specialInflate.onData = function (data) {
         this.onData(data);
       }.bind(this);

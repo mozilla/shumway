@@ -3413,7 +3413,6 @@ module Shumway {
 
   export interface IFileLoadingService {
     createSession(): FileLoadingSession;
-    setBaseUrl(url: string);
     resolveUrl(url: string): string;
     navigateTo(url: string, target: string);
   }
@@ -3471,12 +3470,14 @@ module Shumway {
     };
   }
 
-  export class ClipboardService {
-    public static instance: ClipboardService = null;
+  export interface IClipboardService {
+    setClipboard(data: string): void;
+  }
 
-    public setClipboard(data: string): void {
-      Debug.abstractMethod("public ClipboardService::setClipboard");
-    }
+  export module ClipboardService {
+    export var instance: IClipboardService = {
+      setClipboard(data: string) { Debug.notImplemented('setClipboard'); }
+    };
   }
 
   export class Callback {

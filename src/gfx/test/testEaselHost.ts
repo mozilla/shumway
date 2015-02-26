@@ -56,13 +56,6 @@ module Shumway.GFX.Test {
       }, [bytes.buffer]);
     }
 
-    onExernalCallback(request) {
-      this._worker.postSyncMessage({
-        type: 'externalCallback',
-        request: request
-      });
-    }
-
     onDisplayParameters(params: DisplayParameters) {
       this._worker.postMessage({
         type: 'displayParameters',
@@ -118,10 +111,6 @@ module Shumway.GFX.Test {
           break;
         case 'frame':
           this.processFrame();
-          break;
-        case 'external':
-          e.result = this.processExternalCommand(data.command);
-          e.handled = true;
           break;
         case 'videoControl':
           e.result = this.processVideoControl(data.id, data.eventType, data.data);

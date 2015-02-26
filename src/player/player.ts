@@ -646,48 +646,5 @@ module Shumway.Player {
     protected registerFontOrImageImpl(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
       throw new Error('This method is abstract');
     }
-
-    public createExternalInterfaceService() : IExternalInterfaceService {
-      var isEnabled: boolean;
-      var player = this;
-      return  {
-        get enabled() {
-          if (isEnabled === undefined) {
-            var cmd: any = {action: 'isEnabled'};
-            player.onExternalCommand(cmd);
-            isEnabled = cmd.result;
-          }
-          return isEnabled;
-        },
-        initJS(callback: (functionName: string, args: any[]) => any) {
-          player.externalCallback = callback;
-          var cmd: any = {action: 'initJS'};
-          player.onExternalCommand(cmd);
-        },
-        registerCallback(functionName: string) {
-          var cmd: any = {action: 'register', functionName: functionName, remove: false};
-          player.onExternalCommand(cmd);
-        },
-        unregisterCallback(functionName: string) {
-          var cmd: any = {action: 'register', functionName: functionName, remove: true};
-          player.onExternalCommand(cmd);
-        },
-        eval(expression: string): any {
-          var cmd: any = {action: 'eval', expression: expression};
-          player.onExternalCommand(cmd);
-          return cmd.result;
-        },
-        call(request: string): any {
-          var cmd: any = {action: 'call', request: request};
-          player.onExternalCommand(cmd);
-          return cmd.result;
-        },
-        getId(): string {
-          var cmd: any = {action: 'getId'};
-          player.onExternalCommand(cmd);
-          return cmd.result;
-        }
-      };
-    }
   }
 }
