@@ -63,6 +63,9 @@ function updateLibRefs(filePath, manifestPath, lib, onlyIncludes) {
           if (entry.indexOf('#!inline ') === 0) {
             return indent + '<script> ' + entry.substr(9).trim() + ' </script>';
           }
+          if (entry.indexOf('#!skipbundle ') === 0) {
+            return indent + '<script src="' + baseUrl + entry.substr(13).trim() + '"></script>';
+          }
           console.error('Skipping unknown ' + entry);
           return '';
         }
@@ -106,6 +109,9 @@ function updateJSLibRefs(filePath, manifestPath, lib, onlyIncludes) {
         if (entry[1] === '!') {
           if (entry.indexOf('#!inline ') === 0) {
             return indent + entry.substr(9).trim();
+          }
+          if (entry.indexOf('#!skipbundle ') === 0) {
+            return indent + 'load("' + baseUrl + entry.substr(13).trim() + '");';
           }
           console.error('Skipping unknown ' + entry);
           return '';
@@ -200,6 +206,9 @@ function packageRefs(includes, output, license) {
     if (entry[1] === '!') {
       if (entry.indexOf('#!inline ') === 0) {
         content += entry.substr(9).trim() + '\n';
+        return;
+      }
+      if (entry.indexOf('#!skipbundle ') === 0) {
         return;
       }
       console.error('Skipping unknown ' + entry);

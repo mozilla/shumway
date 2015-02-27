@@ -36,8 +36,10 @@ build: ensureoutputdir
 	mkdir -p $(BUILD_DIR)/content/playerglobal
 	cp ../../build/playerglobal/playerglobal.json $(BUILD_DIR)/content/playerglobal/
 	cp ../../build/playerglobal/playerglobal.abcs $(BUILD_DIR)/content/playerglobal/
+	# Coping ABC and Relooper files
 	mkdir -p $(BUILD_DIR)/content/libs
 	cp ../../build/libs/builtin.abc $(BUILD_DIR)/content/libs/
+	cp ../../build/libs/relooper.js $(BUILD_DIR)/content/libs/
 	# Copying closure optimized shumway.js files
 	cp $(BUNDLES_DIR)/shumway*.js $(BUILD_DIR)/content/
 	cp ../../build/version/version.txt $(BUILD_DIR)/content/version.txt
