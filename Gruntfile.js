@@ -795,7 +795,13 @@ module.exports = function(grunt) {
           '})(Shumway || (Shumway = {}));\n');
     }
 
-    var version = '' + new Date(), sha = 'unknown';
+    function getDefaultVersion() {
+      var d = new Date();
+      return d.getFullYear() * 100000000 + (d.getMonth() + 1) * 1000000 +
+             d.getDate() * 10000 + d.getHours() * 100 + d.getMinutes()
+    }
+
+    var version = getDefaultVersion(), sha = 'unknown';
 
     var outputDir = 'build/version';
     grunt.file.mkdir(outputDir);
