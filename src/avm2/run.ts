@@ -756,9 +756,10 @@ module Shumway.AVMX {
       var Ap = Array.prototype;
 
       P(AXArray.dPrototype, "push", function () { return Ap.push.apply(this.value, arguments); });
-      P(AXArray.dPrototype, "pop", function () { return Ap.pop.apply(this.value, arguments); });
+      P(AXArray.dPrototype, "pop", function () { return this.value.pop(); });
+      P(AXArray.dPrototype, "shift", function () { return this.value.shift(); });
       P(AXArray.dPrototype, "unshift", function () { return Ap.unshift.apply(this.value, arguments); });
-      P(AXArray.dPrototype, "reverse", function () { return Ap.reverse.apply(this.value, arguments); });
+      P(AXArray.dPrototype, "reverse", function () { this.value.reverse(); return this; });
       P(AXArray.dPrototype, "concat", function () {
         var value: Array<any> = this.value.slice();
         for (var i = 0; i < arguments.length; i++) {
@@ -771,17 +772,36 @@ module Shumway.AVMX {
         }
         return new securityDomain.AXArray(value);
       });
-      P(AXArray.dPrototype, "indexOf", function () { return Ap.indexOf.apply(this.value, arguments); });
-      P(AXArray.dPrototype, "lastIndexOf", function () { return Ap.lastIndexOf.apply(this.value, arguments); });
-      P(AXArray.dPrototype, "every", function (callbackfn: any, thisArg?) {
-        return Ap.every.call(this.value, callbackfn.value, thisArg);
+      P(AXArray.dPrototype, "slice", function (startIndex: number, endIndex: number) {
+        return new securityDomain.AXArray(this.value.slice(startIndex, endIndex));
       });
-
-      //definePublicProperties(Array.prototype, [
-      //  "join", "toString", "pop", "push", "reverse", "concat", "slice", "shift",
-      //  "unshift", "indexOf", "lastIndexOf", "forEach", "map", "filter", "some"
-      //], Array.prototype);
-      //
+      P(AXArray.dPrototype, "join", function (sep: string) {
+        return this.value.join(sep);
+      });
+      P(AXArray.dPrototype, "toString", function () {
+        return this.value.join(',');
+      });
+      P(AXArray.dPrototype, "indexOf", function (value: any, fromIndex: number) {
+        return this.value.indexOf(value, fromIndex|0);
+      });
+      P(AXArray.dPrototype, "lastIndexOf", function (value: any, fromIndex: number) {
+        return this.value.lastIndexOf(value, arguments.length > 1 ? fromIndex : 0x7fffffff);
+      });
+      P(AXArray.dPrototype, "every", function (callbackfn: {value: Function}, thisArg?) {
+        return this.value.every(callbackfn.value, thisArg);
+      });
+      P(AXArray.dPrototype, "some", function (callbackfn: {value: Function}, thisArg?) {
+        return this.value.some(callbackfn.value, thisArg);
+      });
+      P(AXArray.dPrototype, "forEach", function (callbackfn: {value: Function}, thisArg?) {
+        return this.value.forEach(callbackfn.value, thisArg);
+      });
+      P(AXArray.dPrototype, "map", function (callbackfn: {value: Function}, thisArg?) {
+        return new securityDomain.AXArray(this.value.map(callbackfn.value, thisArg));
+      });
+      P(AXArray.dPrototype, "filter", function (callbackfn: {value: Function}, thisArg?) {
+        return new securityDomain.AXArray(this.value.filter(callbackfn.value, thisArg));
+      });
 
       D(AXArray.prototype, "axGetProperty", axArrayGetProperty);
       D(AXArray.prototype, "axSetProperty", axArraySetProperty);
