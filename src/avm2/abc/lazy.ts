@@ -657,25 +657,11 @@ module Shumway.AVMX {
     }
 
     public isRuntimeName(): boolean {
-      switch (this.kind) {
-        case CONSTANT.RTQNameL:
-        case CONSTANT.RTQNameLA:
-        case CONSTANT.MultinameL:
-        case CONSTANT.MultinameLA:
-          return true;
-      }
-      return false;
+      return !this.name;
     }
 
     public isRuntimeNamespace(): boolean {
-      switch (this.kind) {
-        case CONSTANT.RTQName:
-        case CONSTANT.RTQNameA:
-        case CONSTANT.RTQNameL:
-        case CONSTANT.RTQNameLA:
-          return true;
-      }
-      return false;
+      return !this.namespaces;
     }
 
     public isAnyName(): boolean {
@@ -968,39 +954,50 @@ module Shumway.AVMX {
     }
 
     private _parseMultiname(i: number): Multiname {
-      var s = this._stream;
+      var stream = this._stream;
 
-      var nx;
-      var nm = -1;
+      var namespaceIsRuntime = false;
+      var namespaceIndex;
+      var useNamespaceSet = true;
+      var nameIndex = 0;
 
-      var kind = s.readU8();
+      var kind = stream.readU8();
       switch (kind) {
         case CONSTANT.QName:
         case CONSTANT.QNameA:
-          nx = s.readU30();
-          nm = s.readU30();
+          namespaceIndex = stream.readU30();
+          useNamespaceSet = false;
+          nameIndex = stream.readU30();
           break;
         case CONSTANT.RTQName: case CONSTANT.RTQNameA:
-          nm = s.readU30();
+          namespaceIsRuntime = true;
+          nameIndex = stream.readU30();
           break;
         case CONSTANT.RTQNameL: case CONSTANT.RTQNameLA:
+          namespaceIsRuntime = true;
           break;
         case CONSTANT.Multiname: case CONSTANT.MultinameA:
-          nm = s.readU30();
-          nx = -1 - s.readU30();
+          nameIndex = stream.readU30();
+          namespaceIndex = stream.readU30();
           break;
         case CONSTANT.MultinameL: case CONSTANT.MultinameLA:
-          nx = -1 - s.readU30();
-          release || assert(nx !== 0, "NX is zero.");
+          namespaceIndex = stream.readU30();
+          if (!release && namespaceIndex === 0) {
+            // TODO: figure out what to do in this case. What would Tamarin do?
+            Debug.warning("Invalid multiname: namespace-set index is 0");
+          }
           break;
         /**
          * This is undocumented, looking at Tamarin source for this one.
          */
         case CONSTANT.TypeName:
-          var mn = s.readU32();
-          var typeParameterCount = s.readU32();
-          release || assert(typeParameterCount === 1, "typeParameterCount is bad " + typeParameterCount); // This is probably the number of type parameters.
-          var typeParameter = this.getMultiname(s.readU32());
+          var mn = stream.readU32();
+          var typeParameterCount = stream.readU32();
+          if (!release && typeParameterCount !== 1) {
+            // TODO: figure out what to do in this case. What would Tamarin do?
+            Debug.warning("Invalid multiname: bad type parameter count " + typeParameterCount);
+          }
+          var typeParameter = this.getMultiname(stream.readU32());
           var factory = this.getMultiname(mn);
           return new Multiname(this, i, kind, factory.namespaces, factory.name, typeParameter);
         default:
@@ -1008,8 +1005,16 @@ module Shumway.AVMX {
           break;
       }
 
-      var name = nm >= 0 ? this.getString(nm) : null;
-      var namespaces = nx >= 0 ? [this.getNamespace(nx)] : this.getNamespaceSet(Math.abs(nx) - 1);
+      // A name index of 0 means that it's a runtime name.
+      var name = nameIndex === 0 ? null : this.getString(nameIndex);
+      var namespaces;
+      if (namespaceIsRuntime) {
+        namespaces = null;
+      } else {
+        namespaces = useNamespaceSet ?
+                     this.getNamespaceSet(namespaceIndex) :
+                     [this.getNamespace(namespaceIndex)];
+      }
 
       return new Multiname(this, i, kind, namespaces, name);
     }
