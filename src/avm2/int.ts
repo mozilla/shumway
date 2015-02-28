@@ -238,16 +238,18 @@ module Shumway.AVMX {
             offset = s24();
             pc = !asEquals(a, b) ? pc + offset : pc;
             continue;
-          //case Bytecode.ifstricteq:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = a === b ? pc + offset : pc;
-          //  continue;
-          //case Bytecode.ifstrictne:
-          //  b = stack.pop();
-          //  a = stack.pop();
-          //  pc = a !== b ? pc + offset : pc;
-          //  continue;
+          case Bytecode.IFSTRICTEQ:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = a === b ? pc + offset : pc;
+            continue;
+          case Bytecode.IFSTRICTNE:
+            b = stack.pop();
+            a = stack.pop();
+            offset = s24();
+            pc = a !== b ? pc + offset : pc;
+            continue;
           //case Bytecode.lookupswitch:
           //  index = stack.pop();
           //  if (index < 0 || index >= bc.offsets.length) {
