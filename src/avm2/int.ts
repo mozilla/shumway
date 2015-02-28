@@ -514,9 +514,9 @@ module Shumway.AVMX {
           //  object = stack[stack.length - 1];
           //  stack[stack.length - 1] = object == undefined ? null : object;
           //  break;
-          //case Bytecode.negate:
-          //  stack[stack.length - 1] = -stack[stack.length - 1];
-          //  break;
+          case Bytecode.NEGATE:
+            stack[stack.length - 1] = -stack[stack.length - 1];
+            break;
           case Bytecode.INCREMENT:
             ++stack[stack.length - 1];
             break;
@@ -535,60 +535,60 @@ module Shumway.AVMX {
           case Bytecode.NOT:
             stack[stack.length - 1] = !stack[stack.length - 1];
             break;
-          //case Bytecode.bitnot:
-          //  stack[stack.length - 1] = ~stack[stack.length - 1];
-          //  break;
+          case Bytecode.BITNOT:
+            stack[stack.length - 1] = ~stack[stack.length - 1];
+            break;
           case Bytecode.ADD:
             stack[stack.length - 2] = asAdd(stack[stack.length - 2], stack.pop());
             break;
-          //case Bytecode.subtract:
-          //  stack[stack.length - 2] -= stack.pop();
-          //  break;
-          //case Bytecode.multiply:
-          //  stack[stack.length - 2] *= stack.pop();
-          //  break;
+          case Bytecode.SUBTRACT:
+            stack[stack.length - 2] -= stack.pop();
+            break;
+          case Bytecode.MULTIPLY:
+            stack[stack.length - 2] *= stack.pop();
+            break;
           case Bytecode.DIVIDE:
             stack[stack.length - 2] /= stack.pop();
             break;
-          //case Bytecode.modulo:
-          //  stack[stack.length - 2] %= stack.pop();
-          //  break;
-          //case Bytecode.lshift:
-          //  stack[stack.length - 2] <<= stack.pop();
-          //  break;
-          //case Bytecode.rshift:
-          //  stack[stack.length - 2] >>= stack.pop();
-          //  break;
-          //case Bytecode.urshift:
-          //  stack[stack.length - 2] >>>= stack.pop();
-          //  break;
-          //case Bytecode.bitand:
-          //  stack[stack.length - 2] &= stack.pop();
-          //  break;
-          //case Bytecode.bitor:
-          //  stack[stack.length - 2] |= stack.pop();
-          //  break;
-          //case Bytecode.bitxor:
-          //  stack[stack.length - 2] ^= stack.pop();
-          //  break;
+          case Bytecode.MODULO:
+            stack[stack.length - 2] %= stack.pop();
+            break;
+          case Bytecode.LSHIFT:
+            stack[stack.length - 2] <<= stack.pop();
+            break;
+          case Bytecode.RSHIFT:
+            stack[stack.length - 2] >>= stack.pop();
+            break;
+          case Bytecode.URSHIFT:
+            stack[stack.length - 2] >>>= stack.pop();
+            break;
+          case Bytecode.BITAND:
+            stack[stack.length - 2] &= stack.pop();
+            break;
+          case Bytecode.BITOR:
+            stack[stack.length - 2] |= stack.pop();
+            break;
+          case Bytecode.BITXOR:
+            stack[stack.length - 2] ^= stack.pop();
+            break;
           case Bytecode.EQUALS:
             stack[stack.length - 2] = asEquals(stack[stack.length - 2], stack.pop());
             break;
           case Bytecode.STRICTEQUALS:
             stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();
             break;
-          //case Bytecode.lessthan:
-          //  stack[stack.length - 2] = stack[stack.length - 2] < stack.pop();
-          //  break;
-          //case Bytecode.lessequals:
-          //  stack[stack.length - 2] = stack[stack.length - 2] <= stack.pop();
-          //  break;
-          //case Bytecode.greaterthan:
-          //  stack[stack.length - 2] = stack[stack.length - 2] > stack.pop();
-          //  break;
-          //case Bytecode.greaterequals:
-          //  stack[stack.length - 2] = stack[stack.length - 2] >= stack.pop();
-          //  break;
+          case Bytecode.LESSTHAN:
+            stack[stack.length - 2] = stack[stack.length - 2] < stack.pop();
+            break;
+          case Bytecode.LESSEQUALS:
+            stack[stack.length - 2] = stack[stack.length - 2] <= stack.pop();
+            break;
+          case Bytecode.GREATERTHAN:
+            stack[stack.length - 2] = stack[stack.length - 2] > stack.pop();
+            break;
+          case Bytecode.GREATEREQUALS:
+            stack[stack.length - 2] = stack[stack.length - 2] >= stack.pop();
+            break;
           //case Bytecode.instanceof:
           //  stack[stack.length - 2] = asIsInstanceOf(stack.pop(), stack[stack.length - 1]);
           //  break;
@@ -601,31 +601,31 @@ module Shumway.AVMX {
           //case Bytecode.in:
           //  stack[stack.length - 2] = box(stack.pop()).asHasProperty(null, stack[stack.length - 1]);
           //  break;
-          //case Bytecode.increment_i:
-          //  stack[stack.length - 1] = (stack[stack.length - 1] | 0) + 1;
-          //  break;
-          //case Bytecode.decrement_i:
-          //  stack[stack.length - 1] = (stack[stack.length - 1] | 0) - 1;
-          //  break;
+          case Bytecode.INCREMENT_I:
+            stack[stack.length - 1] = (stack[stack.length - 1] | 0) + 1;
+            break;
+          case Bytecode.DECREMENT_I:
+            stack[stack.length - 1] = (stack[stack.length - 1] | 0) - 1;
+            break;
           //case Bytecode.inclocal_i:
           //  locals[bc.index] = (locals[bc.index] | 0) + 1;
           //  break;
           //case Bytecode.declocal_i:
           //  locals[bc.index] = (locals[bc.index] | 0) - 1;
           //  break;
-          //case Bytecode.negate_i:
-          //  // Negation entails casting to int
-          //  stack[stack.length - 1] = ~stack[stack.length - 1];
-          //  break;
-          //case Bytecode.add_i:
-          //  stack[stack.length - 2] = stack[stack.length - 2] + stack.pop() | 0;
-          //  break;
-          //case Bytecode.subtract_i:
-          //  stack[stack.length - 2] = stack[stack.length - 2] - stack.pop() | 0;
-          //  break;
-          //case Bytecode.multiply_i:
-          //  stack[stack.length - 2] = stack[stack.length - 2] * stack.pop() | 0;
-          //  break;
+          case Bytecode.NEGATE_I:
+            // Negation entails casting to int
+            stack[stack.length - 1] = ~stack[stack.length - 1];
+            break;
+          case Bytecode.ADD_I:
+            stack[stack.length - 2] = stack[stack.length - 2] + stack.pop() | 0;
+            break;
+          case Bytecode.SUBTRACT_I:
+            stack[stack.length - 2] = stack[stack.length - 2] - stack.pop() | 0;
+            break;
+          case Bytecode.MULTIPLY_I:
+            stack[stack.length - 2] = stack[stack.length - 2] * stack.pop() | 0;
+            break;
           case Bytecode.GETLOCAL0:
           case Bytecode.GETLOCAL1:
           case Bytecode.GETLOCAL2:
