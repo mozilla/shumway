@@ -370,9 +370,12 @@ module Shumway.AVMX {
             argCount = u30();
             popManyInto(stack, argCount, args);
             popNameInto(stack, abc.getMultiname(index), rn);
-            result = securityDomain.box(stack.pop()).axCallProperty(rn, args);
-            if (bc !== Bytecode.CALLPROPVOID) {
-              stack.push(result);
+            var receiver = stack[stack.length - 1];
+            result = securityDomain.box(receiver).axCallProperty(rn, args);
+            if (bc === Bytecode.CALLPROPVOID) {
+              stack.length--;
+            } else {
+              stack[stack.length - 1] = result;
             }
             break;
           //case Bytecode.callsuper:
