@@ -67,6 +67,7 @@ module Shumway.AVMX {
     } else {
       rn.namespaces = mn.namespaces;
     }
+    interpreterWriter && interpreterWriter.greenLn("Name: " + rn.name);
   }
 
 
@@ -92,6 +93,7 @@ module Shumway.AVMX {
     var local = [self];
     var stack = [];
     var scope = new ScopeStack(savedScope);
+    var rn: Multiname = null;
 
     var argCount = args.length;
     var arg;
@@ -102,6 +104,13 @@ module Shumway.AVMX {
       } else if (p.hasOptionalValue()) {
         arg = p.getOptionalValue();
       }
+      rn = p.getType();
+      if (rn && !rn.isAnyName()) {
+        type = scope.topScope().getScopeProperty(rn, true, false);
+        interpreterWriter && interpreterWriter.writeLn("Coercing argument to: " + type);
+        arg = type.axCoerce(arg);
+      }
+
       local.push(arg);
     }
 
@@ -137,10 +146,10 @@ module Shumway.AVMX {
       return (u << 8) >> 8;
     }
 
-    var rn = new Multiname(abc, 0, null, null, null);
+    rn = new Multiname(abc, 0, null, null, null);
 
     var code = body.code;
-    var value, object, a, b, offset, index, result;
+    var value, object, type, a, b, offset, index, result;
 
     while (true) {
       interpreterWriter && interpreterWriter.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" + stack.map(x => x == undefined ? String(x) : x.toString()).join(", ") + "]");
@@ -394,11 +403,11 @@ module Shumway.AVMX {
           //  stack[stack.length - 1] = applyType(method, stack[stack.length - 1], args);
           //  break;
           case Bytecode.NEWOBJECT:
-            object = {};
+            object = securityDomain.AXObject.axConstruct();
             argCount = u30();
             for (var i = 0; i < argCount; i++) {
               value = stack.pop();
-              object[Multiname.getPublicMangledName(stack.pop())] = value;
+              object.axSetPublicProperty(stack.pop(), value);
             }
             stack.push(object);
             break;
@@ -501,24 +510,28 @@ module Shumway.AVMX {
           //case Bytecode.checkfilter:
           //  stack[stack.length - 1] = checkFilter(stack[stack.length - 1]);
           //  break;
-          //case Bytecode.coerce:
-          //  stack[stack.length - 1] = asCoerce(domain.getType(multinames[bc.index]), stack[stack.length - 1]);
-          //  break;
+          case Bytecode.COERCE:
+            popNameInto(stack, abc.getMultiname(u30()), rn);
+            type = scope.topScope().getScopeProperty(rn, true, false);
+            stack[stack.length - 1] = type.axCoerce(stack[stack.length - 1]);
+            break;
           case Bytecode.COERCE_A: /* NOP */
             break;
           //case Bytecode.coerce_s:
           //  stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
           //  break;
-          //case Bytecode.astype:
-          //  stack[stack.length - 2] = asAsType(domain.getType(multinames[bc.index]), stack[stack.length - 1]);
-          //  break;
-          //case Bytecode.astypelate:
-          //  stack[stack.length - 2] = asAsType(stack.pop(), stack[stack.length - 1]);
-          //  break;
-          //case Bytecode.coerce_o:
-          //  object = stack[stack.length - 1];
-          //  stack[stack.length - 1] = object == undefined ? null : object;
-          //  break;
+          case Bytecode.ASTYPE:
+            popNameInto(stack, abc.getMultiname(u30()), rn);
+            type = scope.topScope().getScopeProperty(rn, true, false);
+            stack[stack.length - 2] = type.axAsType(stack[stack.length - 1]);
+            break;
+          case Bytecode.ASTYPELATE:
+            stack[stack.length - 2] = stack.pop().axAsType(stack[stack.length - 1]);
+            break;
+          case Bytecode.COERCE_O:
+            object = stack[stack.length - 1];
+            stack[stack.length - 1] = object == undefined ? null : object;
+            break;
           case Bytecode.NEGATE:
             stack[stack.length - 1] = -stack[stack.length - 1];
             break;
@@ -594,15 +607,17 @@ module Shumway.AVMX {
           case Bytecode.GREATEREQUALS:
             stack[stack.length - 2] = stack[stack.length - 2] >= stack.pop();
             break;
-          //case Bytecode.instanceof:
-          //  stack[stack.length - 2] = asIsInstanceOf(stack.pop(), stack[stack.length - 1]);
-          //  break;
-          //case Bytecode.istype:
-          //  stack[stack.length - 1] = asIsType(domain.getType(multinames[bc.index]), stack[stack.length - 1]);
-          //  break;
-          //case Bytecode.istypelate:
-          //  stack[stack.length - 2] = asIsType(stack.pop(), stack[stack.length - 1]);
-          //  break;
+          case Bytecode.INSTANCEOF:
+            stack[stack.length - 2] = stack.pop().axIsInstanceOf(stack[stack.length - 1]);
+            break;
+          case Bytecode.ISTYPE:
+            popNameInto(stack, abc.getMultiname(u30()), rn);
+            type = scope.topScope().findScopeProperty(rn, true, false);
+            stack[stack.length - 1] = type.axIsType(stack[stack.length - 1]);
+            break;
+          case Bytecode.ISTYPELATE:
+            stack[stack.length - 2] = stack.pop().axIsType(stack[stack.length - 1]);
+            break;
           //case Bytecode.in:
           //  stack[stack.length - 2] = box(stack.pop()).asHasProperty(null, stack[stack.length - 1]);
           //  break;

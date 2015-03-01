@@ -67,6 +67,13 @@ module Shumway.AVMX {
     return x + '';
   }
 
+  function axCoerceObject(x) {
+    if (x == null) {
+      return null;
+    }
+    return x;
+  }
+
   export function asCoerceInt(x): number {
     return x | 0;
   }
@@ -77,6 +84,30 @@ module Shumway.AVMX {
 
   export function asCoerceNumber(x): number {
     return +x;
+  }
+
+  export function axIsTypeNumber(x): boolean {
+    return typeof x === "number";
+  }
+
+  export function axIsTypeInt(x): boolean {
+    return typeof x === "number" && ((x | 0) === x);
+  }
+
+  export function axIsTypeUint(x): boolean {
+    return typeof x === "number" && ((x >>> 0) === x);
+  }
+
+  export function axIsTypeString(x): boolean {
+    return typeof x === "string";
+  }
+
+  export function axIsTypeBoolean(x): boolean {
+    return typeof x === "boolean";
+  }
+
+  export function axFalse(): boolean {
+    return false;
   }
 
   export function asCoerceBoolean(x): boolean {
@@ -280,23 +311,25 @@ module Shumway.AVMX {
   }
 
   export function asTypeOf(x: any): string {
-    // ABC doesn't box primitives, so typeof returns the primitive type even when
-    // the value is new'd
-    if (x) {
-      if (x.constructor === String) {
-        return "string"
-      } else if (x.constructor === Number) {
-        return "number"
-      } else if (x.constructor === Boolean) {
-        return "boolean"
-      } else if (x instanceof Shumway.AVM2.AS.ASXML ||
-        x instanceof Shumway.AVM2.AS.ASXMLList) {
-        return "xml";
-      } else if (Shumway.AVM2.AS.ASClass.isType(x)) {
-        return "object";
-      }
-    }
     return typeof x;
+  }
+
+  function axCoerce(x: any) {
+    // FIXME
+    return null;
+  }
+
+  function axIsTypeObject(x: any) {
+    // FIXME
+    return Object.isPrototypeOf.call(this.dPrototype, this.securityDomain.box(x));
+  }
+
+  function axAsType(x: any): any {
+    return this.axIsType(x) ? x : null;
+  }
+
+  function axIsInstanceOfObject(x: any) {
+    return Object.isPrototypeOf.call(this.dPrototype, this.securityDomain.box(x));
   }
 
   //defineNonEnumerableProperty(Object.prototype, "axHasPropertyInternal", axHasPropertyInternal);
@@ -354,8 +387,12 @@ module Shumway.AVMX {
       return objects;
     }
 
-    public findScopeProperty(mn: Multiname, strict: boolean, scopeOnly: boolean): Object {
-      var object: Object;
+    public getScopeProperty(mn: Multiname, strict: boolean, scopeOnly: boolean): any {
+      return this.findScopeProperty(mn, strict, scopeOnly).axGetProperty(mn);
+    }
+
+    public findScopeProperty(mn: Multiname, strict: boolean, scopeOnly: boolean): any {
+      var object;
       if (!mn.isRuntime() && !scopeOnly) {
         if ((object = this.cache[mn.id])) {
           return object;
@@ -450,6 +487,7 @@ module Shumway.AVMX {
   };
 
   export interface AXGlobal extends ITraits {
+    securityDomain: SecurityDomain;
     applicationDomain: ApplicationDomain;
     scriptInfo: ScriptInfo;
     scope: Scope;
@@ -464,6 +502,10 @@ module Shumway.AVMX {
     prototype: Object;
     axConstruct: any;
     axApply: any;
+    axCoerce: any;
+    axIsType: any;
+    axAsType: any;
+    axIsInstanceOf: any;
     axClassBranding: Object;
   }
 
@@ -552,6 +594,9 @@ module Shumway.AVMX {
       if (typeof v === "number") {
         return new this.AXNumber(v);
       }
+      if (typeof v === "boolean") {
+        return new this.AXBoolean(v);
+      }
       if (typeof v === "string") {
         return new this.AXString(v);
       }
@@ -564,6 +609,7 @@ module Shumway.AVMX {
 
     createAXGlobal(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
       var global: AXGlobal = Object.create(this.AXGlobalProto);
+      global.securityDomain = this;
       global.applicationDomain = applicationDomain;
       global.scriptInfo = scriptInfo;
       global.traits = scriptInfo.traits;
@@ -573,17 +619,22 @@ module Shumway.AVMX {
       return global;
     }
 
-    defineClass(exportName, name, value: AXClass, axApply, axConstruct) {
+    defineClass(exportName, name, value: AXClass, axApply, axConstruct, axCoerce, axIsType, axIsInstanceOf) {
       this[exportName] = this.nativeClasses[name] = value;
       value.dPrototype.toString = function () {
         return "[" + name + ".prototype]";
       };
-      value.axApply = axApply;
-      value.axConstruct = axConstruct;
-
       var D = defineNonEnumerableProperty;
 
       D(value.__proto__, "securityDomain", this);
+
+
+      D(value, "axApply", axApply);
+      D(value, "axConstruct", axConstruct);
+      D(value, "axCoerce", axCoerce);
+      D(value, "axIsType", axIsType);
+      D(value, "axAsType", axAsType);
+      D(value, "axIsInstanceOf", axIsInstanceOf);
 
       D(value, "axClassBranding", AXClassBranding);
       D(value, "axHasPropertyInternal", axHasPropertyInternal);
@@ -595,14 +646,17 @@ module Shumway.AVMX {
       D(value, "axResolveMultiname", axResolveMultiname);
     }
 
-    definePrimitiveClass(exportName, name, value: AXClass, cast) {
+    definePrimitiveClass(exportName, name, value, axConvert, axCoerce, axIsType, axIsInstanceOf) {
       this.defineClass(exportName, name, value,
                        function axApply(_ , args: any []) {
-                         return cast(args[0]);
+                         return axConvert(args ? args[0] : undefined);
                        },
                        function axConstruct(args: any []) {
-                         return cast(args[0]);
-                       }
+                         return axConvert(args ? args[0] : undefined);
+                       },
+                       axCoerce,
+                       axIsType,
+                       axIsInstanceOf
       );
     }
 
@@ -768,26 +822,27 @@ module Shumway.AVMX {
         return args[0];
       }
 
-      this.defineClass("AXClass", "Class", AXClass, axApplyIdentity, axConstructIdentity);
-      this.defineClass("AXFunction", "Function", AXFunction, axApplyIdentity, axConstructIdentity);
-      this.defineClass("AXArray", "Array", AXArray, axApplyIdentity, axConstructIdentity);
+      this.defineClass("AXClass", "Class", AXClass, axApplyIdentity, axConstructIdentity, axCoerceObject, axIsTypeObject, axIsInstanceOfObject);
+      this.defineClass("AXFunction", "Function", AXFunction, axApplyIdentity, axConstructIdentity, axCoerceObject, axIsTypeObject, axIsInstanceOfObject);
+      this.defineClass("AXArray", "Array", AXArray, axApplyIdentity, axConstructIdentity, axCoerceObject, axIsTypeObject, axIsInstanceOfObject);
 
-      this.defineClass("AXPrimitiveBox", "PrimitiveBox", AXPrimitiveBox, null, null);
+      this.defineClass("AXPrimitiveBox", "PrimitiveBox", AXPrimitiveBox, null, null, null, null, null);
 
-      function axCoerceObject(x) {
+      // AXObject is not technically a primitive class but it needs a coercing apply/constructor.
+
+      // Object(null) creates an object, and this behaves differently than: (function (x: Object) { trace (x); })(null) which prints null.
+      function asSpecialCoerceObject(x) {
         if (x == null) {
-          return new this.securityDomain.AXObject();
+          return new self.AXObject();
         }
         return x;
       }
-
-      // AXObject is not technically a primitive class but it needs a coercing apply/constructor.
-      this.definePrimitiveClass("AXObject", "Object", AXObject, axCoerceObject);
-      this.definePrimitiveClass("AXNumber", "Number", AXNumber, asCoerceNumber);
-      this.definePrimitiveClass("AXInt", "int", AXInt, asCoerceInt);
-      this.definePrimitiveClass("AXUint", "uint", AXUint, asCoerceUint);
-      this.definePrimitiveClass("AXString", "String", AXString, asConvertString);
-      this.definePrimitiveClass("AXBoolean", "Boolean", AXBoolean, asCoerceBoolean);
+      this.definePrimitiveClass("AXObject", "Object", AXObject, asSpecialCoerceObject, axCoerceObject, axIsTypeObject, axIsInstanceOfObject);
+      this.definePrimitiveClass("AXNumber", "Number", AXNumber, asCoerceNumber, asCoerceNumber, axIsTypeNumber, axIsTypeNumber);
+      this.definePrimitiveClass("AXInt", "int", AXInt, asCoerceInt, asCoerceInt, axIsTypeInt, axFalse);
+      this.definePrimitiveClass("AXUint", "uint", AXUint, asCoerceUint, asCoerceUint, axIsTypeUint, axFalse);
+      this.definePrimitiveClass("AXString", "String", AXString, asConvertString, asCoerceString, axIsTypeString, axIsTypeString);
+      this.definePrimitiveClass("AXBoolean", "Boolean", AXBoolean, asCoerceBoolean, asCoerceBoolean, axIsTypeBoolean, axIsTypeBoolean);
 
       var D = defineNonEnumerableProperty;
 
