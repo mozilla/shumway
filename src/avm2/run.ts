@@ -432,6 +432,23 @@ module Shumway.AVMX {
     }
   }
 
+  // The Object that's at the root of all AXObjects' prototype chain, regardless of their
+  // SecurityDomain.
+  export var AXBaseProto = Object.create(null);
+
+  AXBaseProto.$BgtoString = function() {
+    return "[object Object]";
+  };
+  AXBaseProto.toString = function () {
+    return this.$BgtoString();
+  };
+  AXBaseProto.$BgvalueOf = function() {
+    return this;
+  };
+  AXBaseProto.valueOf = function () {
+    return this.$BgvalueOf();
+  };
+
   export interface AXGlobal extends ITraits {
     applicationDomain: ApplicationDomain;
     scriptInfo: ScriptInfo;
@@ -486,9 +503,12 @@ module Shumway.AVMX {
     private AXGlobalProto;
     private AXActivationProto;
 
+    private nativeClasses: any;
+
     constructor() {
       this.system = new ApplicationDomain(this, null);
       this.application = new ApplicationDomain(this, this.system);
+      this.nativeClasses = Object.create(null);
     }
 
     findDefiningABC(mn: Multiname): ABCFile {
@@ -553,30 +573,58 @@ module Shumway.AVMX {
       return global;
     }
 
+    defineClass(exportName, name, value: AXClass, axApply, axConstruct) {
+      this[exportName] = this.nativeClasses[name] = value;
+      value.dPrototype.toString = function () {
+        return "[" + name + ".prototype]";
+      };
+      value.axApply = axApply;
+      value.axConstruct = axConstruct;
+
+      var D = defineNonEnumerableProperty;
+
+      D(value.__proto__, "securityDomain", this);
+
+      D(value, "axClassBranding", AXClassBranding);
+      D(value, "axHasPropertyInternal", axHasPropertyInternal);
+      D(value, "axSetProperty", axSetProperty);
+      D(value, "axSetPublicProperty", axSetPublicProperty);
+      D(value, "axGetProperty", axGetProperty);
+      D(value, "axCallProperty", axCallProperty);
+      D(value, "axConstructProperty", axConstructProperty);
+      D(value, "axResolveMultiname", axResolveMultiname);
+    }
+
+    definePrimitiveClass(exportName, name, value: AXClass, cast) {
+      this.defineClass(exportName, name, value,
+                       function axApply(_ , args: any []) {
+                         return cast(args[0]);
+                       },
+                       function axConstruct(args: any []) {
+                         return cast(args[0]);
+                       }
+      );
+    }
+
     /**
      * Configures all the builtin Objects.
      */
     initialize() {
-      var nativeClasses = Object.create(null);
+      var nativeClasses = this.nativeClasses;
       var classClassInfo = this.system.findClassInfo("Class");
       var staticClassClassTraits = classClassInfo.instanceInfo.traits;
 
       classClassInfo.instanceInfo.traits.resolve();
 
-      var securityDomain = this;
-
       // Object
       var AXObject: AXClass = <any>function axObject() {};
-      AXObject.dPrototype = Object.create(null);
+      AXObject.dPrototype = Object.create(AXBaseProto);
       AXObject.tPrototype = Object.create(AXObject.dPrototype);
       AXObject.prototype = AXObject.tPrototype;
-      AXObject.prototype.toString = function () {
-        return "[object Object]";
-      };
 
       var axPrototype: any = AXObject.dPrototype;
 
-      axPrototype.securityDomain = securityDomain;
+      axPrototype.securityDomain = this;
 
       var axObjectPrototype: any = AXObject.prototype;
 
@@ -712,28 +760,6 @@ module Shumway.AVMX {
       AXString.prototype = AXString.tPrototype;
       AXString.prototype.toString = function () { return this.value; };
 
-      function defineClass(exportName, name, value: AXClass, axApply, axConstruct) {
-        securityDomain[exportName] = nativeClasses[name] = value;
-        value.dPrototype.toString = function () {
-          return "[" + name + ".prototype]";
-        };
-        value.axApply = axApply;
-        value.axConstruct = axConstruct;
-
-        var D = defineNonEnumerableProperty;
-
-        D(value.__proto__, "securityDomain", AXClass.prototype['securityDomain']);
-
-        D(value, "axClassBranding", AXClassBranding);
-        D(value, "axHasPropertyInternal", axHasPropertyInternal);
-        D(value, "axSetProperty", axSetProperty);
-        D(value, "axSetPublicProperty", axSetPublicProperty);
-        D(value, "axGetProperty", axGetProperty);
-        D(value, "axCallProperty", axCallProperty);
-        D(value, "axConstructProperty", axConstructProperty);
-        D(value, "axResolveMultiname", axResolveMultiname);
-      }
-
       function axApplyIdentity(self, args) {
         return args[0];
       }
@@ -742,37 +768,26 @@ module Shumway.AVMX {
         return args[0];
       }
 
-      defineClass("AXClass", "Class", AXClass, axApplyIdentity, axConstructIdentity);
-      defineClass("AXFunction", "Function", AXFunction, axApplyIdentity, axConstructIdentity);
-      defineClass("AXArray", "Array", AXArray, axApplyIdentity, axConstructIdentity);
+      this.defineClass("AXClass", "Class", AXClass, axApplyIdentity, axConstructIdentity);
+      this.defineClass("AXFunction", "Function", AXFunction, axApplyIdentity, axConstructIdentity);
+      this.defineClass("AXArray", "Array", AXArray, axApplyIdentity, axConstructIdentity);
 
-      defineClass("AXPrimitiveBox", "PrimitiveBox", AXPrimitiveBox, null, null);
-
-      function definePrimitiveClass(exportName, name, value: AXClass, cast) {
-        defineClass(exportName, name, value,
-          function axApply(_ , args: any []) {
-            return cast(args[0]);
-          },
-          function axConstruct(args: any []) {
-            return cast(args[0]);
-          }
-        );
-      }
+      this.defineClass("AXPrimitiveBox", "PrimitiveBox", AXPrimitiveBox, null, null);
 
       function axCoerceObject(x) {
         if (x == null) {
-          return new securityDomain.AXObject();
+          return new this.securityDomain.AXObject();
         }
         return x;
       }
 
       // AXObject is not technically a primitive class but it needs a coercing apply/constructor.
-      definePrimitiveClass("AXObject", "Object", AXObject, axCoerceObject);
-      definePrimitiveClass("AXNumber", "Number", AXNumber, asCoerceNumber);
-      definePrimitiveClass("AXInt", "int", AXInt, asCoerceInt);
-      definePrimitiveClass("AXUint", "uint", AXUint, asCoerceUint);
-      definePrimitiveClass("AXString", "String", AXString, asConvertString);
-      definePrimitiveClass("AXBoolean", "Boolean", AXBoolean, asCoerceBoolean);
+      this.definePrimitiveClass("AXObject", "Object", AXObject, axCoerceObject);
+      this.definePrimitiveClass("AXNumber", "Number", AXNumber, asCoerceNumber);
+      this.definePrimitiveClass("AXInt", "int", AXInt, asCoerceInt);
+      this.definePrimitiveClass("AXUint", "uint", AXUint, asCoerceUint);
+      this.definePrimitiveClass("AXString", "String", AXString, asConvertString);
+      this.definePrimitiveClass("AXBoolean", "Boolean", AXBoolean, asCoerceBoolean);
 
       var D = defineNonEnumerableProperty;
 
@@ -784,8 +799,9 @@ module Shumway.AVMX {
       D(AXObject.dPrototype, "axConstructProperty", axConstructProperty);
       D(AXObject.dPrototype, "axResolveMultiname", axResolveMultiname);
 
+      var self = this;
       var P = function setPublicProperty(object, name, value) {
-        object.axSetPublicProperty(name, new securityDomain.AXFunction(value));
+        object.axSetPublicProperty(name, new self.AXFunction(value));
       };
 
       var Ap = AS.ASArray.prototype;
@@ -815,7 +831,7 @@ module Shumway.AVMX {
       D(AXFunction.prototype, "axConstruct", axFunctionConstruct);
 
       P(AXFunction.dPrototype, "call", function (self, a, b, c) {
-        if (securityDomain.isPrimitive(self)) {
+        if (this.securityDomain.isPrimitive(self)) {
           self = null;
         }
         switch (arguments.length) {
@@ -829,7 +845,7 @@ module Shumway.AVMX {
       });
 
       P(AXFunction.dPrototype, "apply", function (self, args) {
-        if (securityDomain.isPrimitive(self)) {
+        if (this.securityDomain.isPrimitive(self)) {
           self = null;
         }
         return this.value.apply(self, args.value);
