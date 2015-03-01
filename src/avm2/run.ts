@@ -173,7 +173,7 @@ module Shumway.AVMX {
     }
     // Values that have Object on the prototype chain are not allowed.
     if (value instanceof Object) {
-      return false;
+      return (<any>value).axClassBranding === AVMX.AXClassBranding;
     }
     return true;
   }
@@ -444,10 +444,13 @@ module Shumway.AVMX {
     classInfo: ClassInfo;
     tPrototype: Object;
     dPrototype: Object;
-    prototype: Object
+    prototype: Object;
     axConstruct: any;
     axApply: any;
+    axClassBranding: Object;
   }
+
+  export var AXClassBranding = Object.create(null);
 
   export interface AXFunction extends ITraits {
 
@@ -473,14 +476,15 @@ module Shumway.AVMX {
     public application: ApplicationDomain;
     public AXObject;
     public AXArray;
-    public AXGlobal;
     public AXClass;
     public AXFunction;
-    public AXActivation;
     public AXNumber;
     public AXString;
     public AXBoolean;
     public AXPrimitiveBox;
+
+    private AXGlobalProto;
+    private AXActivationProto;
 
     constructor() {
       this.system = new ApplicationDomain(this, null);
@@ -505,7 +509,9 @@ module Shumway.AVMX {
     createActivation(methodInfo: MethodInfo): AXActivation {
       var body = methodInfo.getBody();
       if (!body.activationPrototype) {
-        body.activationPrototype = new this.AXActivation(body);
+        body.traits.resolve();
+        body.activationPrototype = Object.create(this.AXActivationProto);
+        (<any>body.activationPrototype).traits = body.traits;
       }
       return Object.create(body.activationPrototype);
     }
@@ -515,6 +521,9 @@ module Shumway.AVMX {
         return v;
       }
       if (Object.prototype.isPrototypeOf.call(this.AXObject.dPrototype, v)) {
+        return v;
+      }
+      if (v.axClassBranding === AXClassBranding) {
         return v;
       }
       if (v instanceof Array) {
@@ -531,6 +540,17 @@ module Shumway.AVMX {
 
     isPrimitive(v: any) {
       return isPrimitiveJSValue(v) || v instanceof this.AXPrimitiveBox;
+    }
+
+    createAXGlobal(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
+      var global: AXGlobal = Object.create(this.AXGlobalProto);
+      global.applicationDomain = applicationDomain;
+      global.scriptInfo = scriptInfo;
+      global.traits = scriptInfo.traits;
+      global.traits.resolve();
+      global.scope = new Scope(null, global, false);
+      applyTraits(global, global.traits, global.scope);
+      return global;
     }
 
     /**
@@ -567,6 +587,16 @@ module Shumway.AVMX {
         this.traits.traits.forEach(t => {
           writer.writeLn(t + ": " + self[t.getName().getMangledName()]);
         });
+      };
+
+      this.AXGlobalProto = Object.create(AXObject.dPrototype);
+      this.AXGlobalProto.toString = function() {
+        return '[object global]';
+      };
+
+      this.AXActivationProto = Object.create(AXObject.dPrototype);
+      this.AXActivationProto.toString = function() {
+        return '[Activation]';
       };
 
       // Class
@@ -618,6 +648,9 @@ module Shumway.AVMX {
 
       // We modify the __proto__ of class constructor functions to point to AXClass.prototype. This means that they no longer
       // have the |call| and |apply| functions. We add them back here for convenience.
+      // TODO: this comment is no longer true, but we should replace it with something about
+      // classes not being functions and you having to use `axConstruct` for instantiation.
+      // ... once that is, in fact, true.
       axClassPrototype.call = Function.prototype.call;
       axClassPrototype.apply = Function.prototype.apply;
 
@@ -630,28 +663,6 @@ module Shumway.AVMX {
       AXArray.prototype = AXArray.tPrototype;
       AXArray.prototype.toString = function () {
         return this.value.toString();
-      };
-
-      var AXGlobal = <any>function axGlobal(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
-        this.applicationDomain = applicationDomain;
-        this.scriptInfo = scriptInfo;
-        this.traits = scriptInfo.traits;
-        this.traits.resolve();
-        this.scope = new Scope(null, this, false);
-        applyTraits(this, this.traits, this.scope);
-      };
-      AXGlobal.prototype = Object.create(AXObject.dPrototype);
-      AXGlobal.prototype.toString = function () {
-        return "[object global]";
-      };
-
-      var AXActivation = <any>function AXActivation(methodBodyInfo: MethodBodyInfo) {
-        methodBodyInfo.traits.resolve();
-        this.traits = methodBodyInfo.traits;
-      };
-      AXActivation.prototype = Object.create(AXObject.dPrototype);
-      AXActivation.prototype.toString = function () {
-        return "[Activation]";
       };
 
       var AXFunction: AXClass = <any>function axFunction(v: Function) {
@@ -708,7 +719,19 @@ module Shumway.AVMX {
         };
         value.axApply = axApply;
         value.axConstruct = axConstruct;
-        (<any>Object).setPrototypeOf(value, AXClass.prototype);
+
+        var D = defineNonEnumerableProperty;
+
+        D(value.__proto__, "securityDomain", AXClass.prototype['securityDomain']);
+
+        D(value, "axClassBranding", AXClassBranding);
+        D(value, "axHasPropertyInternal", axHasPropertyInternal);
+        D(value, "axSetProperty", axSetProperty);
+        D(value, "axSetPublicProperty", axSetPublicProperty);
+        D(value, "axGetProperty", axGetProperty);
+        D(value, "axCallProperty", axCallProperty);
+        D(value, "axConstructProperty", axConstructProperty);
+        D(value, "axResolveMultiname", axResolveMultiname);
       }
 
       function axApplyIdentity(self, args) {
@@ -750,12 +773,6 @@ module Shumway.AVMX {
       definePrimitiveClass("AXUint", "uint", AXUint, asCoerceUint);
       definePrimitiveClass("AXString", "String", AXString, asConvertString);
       definePrimitiveClass("AXBoolean", "Boolean", AXBoolean, asCoerceBoolean);
-
-      securityDomain.AXGlobal = AXGlobal;
-      securityDomain.AXActivation = AXActivation;
-
-      (<any>Object).setPrototypeOf(AXGlobal, AXObject.prototype);
-      (<any>Object).setPrototypeOf(AXActivation, AXObject.prototype);
 
       var D = defineNonEnumerableProperty;
 
@@ -878,7 +895,7 @@ module Shumway.AVMX {
       assert (scriptInfo.state === ScriptInfoState.None);
 
       runtimeWriter && runtimeWriter.writeLn("Running Script: " + scriptInfo);
-      var global = new this.securityDomain.AXGlobal(this, scriptInfo);
+      var global = this.securityDomain.createAXGlobal(this, scriptInfo);
       scriptInfo.global = global;
       scriptInfo.state = ScriptInfoState.Executing;
       interpret(<any>global, scriptInfo.getInitializer(), global.scope, []);
