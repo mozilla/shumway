@@ -5,7 +5,8 @@ interface IMetaObjectProtocol {
 }
 
 interface Function {
-  axApply(thisArg: any, argArray?: any): any;
+  axApply(thisArg: any, argArray?: any[]): any;
+  axCall(thisArg: any): any;
 }
 
 interface Object extends IMetaObjectProtocol {
@@ -210,7 +211,8 @@ module Shumway.AVMX {
   }
 
   function checkValue(value: any) {
-    assert(isValidASValue(value), "Value: " + value + " is not allowed to flow into AS3.");
+    release || assert(isValidASValue(value),
+                      "Value: " + value + " is not allowed to flow into AS3.");
   }
 
   function axHasPropertyInternal(mn: Multiname): boolean {
@@ -473,22 +475,22 @@ module Shumway.AVMX {
   // SecurityDomain.
   export var AXBaseProto = Object.create(null);
 
-  AXBaseProto.$BgtoString = {value: function() {
+  AXBaseProto.$BgtoString = function() {
     return "[object Object]";
-  }};
-  AXBaseProto.toString = function () {
-    return this.$BgtoString.value();
   };
-  AXBaseProto.$BgvalueOf = {value: function() {
+  AXBaseProto.toString = function () {
+    return this.$BgtoString.axCall(this);
+  };
+  AXBaseProto.$BgvalueOf = function() {
     return this;
-  }};
+  };
   AXBaseProto.valueOf = function () {
-    return this.$BgvalueOf.value();
+    return this.$BgvalueOf.axCall(this);
   };
 
   export interface AXObject {
-    $BgtoString: {value: Function};
-    $BgvalueOf: {value: Function};
+    $BgtoString: AXCallable;
+    $BgvalueOf: AXCallable;
   }
 
   export interface AXGlobal extends ITraits, AXObject {
@@ -517,7 +519,16 @@ module Shumway.AVMX {
   export var AXClassBranding = Object.create(null);
 
   export interface AXFunction extends ITraits {
+    axApply(thisArg: any, argArray?: any[]): any;
+    axCall(thisArg: any): any;
+  }
 
+  /**
+   * Can be used wherever both AXFunctions and raw JS functions are valid values.
+   */
+  export interface AXCallable {
+    axApply(thisArg: any, argArray?: any[]): any;
+    axCall(thisArg: any): any;
   }
 
   export interface AXActivation extends ITraits {
@@ -525,9 +536,10 @@ module Shumway.AVMX {
   }
 
   function initializeJavaScriptGlobal() {
-    // Add the |axApply| method on the function prototype so that we can treat
+    // Add the |axApply| and |axCall| methods on the function prototype so that we can treat
     // Functions as AXFunctions.
     Function.prototype.axApply = Function.prototype.apply;
+    Function.prototype.axCall = Function.prototype.call;
   }
 
   initializeJavaScriptGlobal();
@@ -626,9 +638,9 @@ module Shumway.AVMX {
 
     defineClass(exportName, name, value: AXClass, axApply, axConstruct, axCoerce, axIsType, axIsInstanceOf) {
       this[exportName] = this.nativeClasses[name] = value;
-      value.dPrototype.$BgtoString = {value: function () {
+      value.dPrototype.$BgtoString = function () {
         return "[" + name + ".prototype]";
-      }};
+      };
       var D = defineNonEnumerableProperty;
 
       D(value.__proto__, "securityDomain", this);
@@ -697,14 +709,14 @@ module Shumway.AVMX {
       };
 
       this.AXGlobalProto = Object.create(AXObject.dPrototype);
-      this.AXGlobalProto.$BgtoString = {value: function() {
+      this.AXGlobalProto.$BgtoString = function() {
         return '[object global]';
-      }};
+      };
 
       this.AXActivationProto = Object.create(AXObject.dPrototype);
-      this.AXActivationProto.$BgtoString = {value: function() {
+      this.AXActivationProto.$BgtoString = function() {
         return '[Activation]';
-      }};
+      };
 
       // Class
       var AXClass: AXClass = <any>function axClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope) {
@@ -748,9 +760,9 @@ module Shumway.AVMX {
       AXClass.dPrototype = Object.create(AXObject.tPrototype);
       AXClass.tPrototype = Object.create(AXClass.dPrototype);
       AXClass.prototype = AXClass.tPrototype;
-      AXClass.prototype.$BgtoString = {value: function () {
+      AXClass.prototype.$BgtoString = function () {
         return "[class " + this.classInfo.instanceInfo.getName().name + "]";
-      }};
+      };
       var axClassPrototype: any = AXClass.prototype;
 
       // We modify the __proto__ of class constructor functions to point to AXClass.prototype. This means that they no longer
@@ -766,11 +778,13 @@ module Shumway.AVMX {
         this.value = v;
       };
       AXArray.dPrototype = Object.create(AXObject.tPrototype);
+      // Array.prototype is an Array, and behaves like one.
+      AXArray.dPrototype['value'] = [];
       AXArray.tPrototype = Object.create(AXArray.dPrototype);
       AXArray.prototype = AXArray.tPrototype;
-      AXArray.prototype.$BgtoString = {value: function () {
+      AXArray.prototype.$BgtoString = function () {
         return this.value.toString();
-      }};
+      };
 
       var AXFunction: AXClass = <any>function axFunction(v: Function) {
         this.value = v;
@@ -778,9 +792,9 @@ module Shumway.AVMX {
       AXFunction.dPrototype = Object.create(AXObject.tPrototype);
       AXFunction.tPrototype = Object.create(AXFunction.dPrototype);
       AXFunction.prototype = AXFunction.tPrototype;
-      AXFunction.prototype.$BgtoString = {value: function () {
+      AXFunction.prototype.$BgtoString = function () {
         return "[Function Object]";
-      }};
+      };
 
       // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder base class
       // to help us with instanceof tests.
@@ -793,31 +807,31 @@ module Shumway.AVMX {
       AXBoolean.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
       AXBoolean.tPrototype = Object.create(AXBoolean.dPrototype);
       AXBoolean.prototype = AXBoolean.tPrototype;
-      AXBoolean.prototype.$BgtoString = {value: function () { return this.value.toString(); }};
+      AXBoolean.prototype.$BgtoString = function () { return this.value.toString(); };
 
       var AXNumber = <any>function axNumber(v: number) { this.value = v; };
       AXNumber.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
       AXNumber.tPrototype = Object.create(AXNumber.dPrototype);
       AXNumber.prototype = AXNumber.tPrototype;
-      AXNumber.prototype.$BgtoString = {value: function () { return this.value.toString(); }};
+      AXNumber.prototype.$BgtoString = function () { return this.value.toString(); };
 
       var AXInt = <any>function axInt(v: number) { this.value = v; };
       AXInt.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
       AXInt.tPrototype = Object.create(AXInt.dPrototype);
       AXInt.prototype = AXInt.tPrototype;
-      AXInt.prototype.$BgtoString = {value: function () { return this.value.toString(); }};
+      AXInt.prototype.$BgtoString = function () { return this.value.toString(); };
 
       var AXUint = <any>function axUint(v: number) { this.value = v; };
       AXUint.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
       AXUint.tPrototype = Object.create(AXUint.dPrototype);
       AXUint.prototype = AXUint.tPrototype;
-      AXUint.prototype.$BgtoString = {value: function () { return this.value.toString(); }};
+      AXUint.prototype.$BgtoString = function () { return this.value.toString(); };
 
       var AXString = <any>function axString(v: string) { this.value = v; };
       AXString.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
       AXString.tPrototype = Object.create(AXString.dPrototype);
       AXString.prototype = AXString.tPrototype;
-      AXString.prototype.$BgtoString = {value: function () { return this.value; }};
+      AXString.prototype.$BgtoString = function () { return this.value; };
 
       function axApplyIdentity(self, args) {
         return args[0];
