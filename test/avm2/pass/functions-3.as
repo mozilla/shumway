@@ -86,6 +86,11 @@ package {
     trace("---  ---");
     var classes = [Boolean, Number, String, int, uint];
     var values = [0, 1, -1, null, undefined, "Hello", 1.4];
+    trace("Values: " + values);
+    trace("Values Length: " + values.length);
+    for (var j = 0; j < values.length; j++) {
+      trace(values[j]);
+    }
     for (var i = 0; i < classes.length; i++) {
       var c = classes[i];
       trace(i);
@@ -93,6 +98,7 @@ package {
       for (var j = 0; j < values.length; j++) {
         var v = values[j];
         trace(c + "(" + v + ") " + c(v));
+        // trace("new " + c + "(" + v + ") " + new c(v));
       }
     }
   })();

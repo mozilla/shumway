@@ -657,11 +657,25 @@ module Shumway.AVMX {
     }
 
     public isRuntimeName(): boolean {
-      return !this.name;
+      switch (this.kind) {
+        case CONSTANT.RTQNameL:
+        case CONSTANT.RTQNameLA:
+        case CONSTANT.MultinameL:
+        case CONSTANT.MultinameLA:
+          return true;
+      }
+      return false;
     }
 
     public isRuntimeNamespace(): boolean {
-      return !this.namespaces;
+      switch (this.kind) {
+        case CONSTANT.RTQName:
+        case CONSTANT.RTQNameA:
+        case CONSTANT.RTQNameL:
+        case CONSTANT.RTQNameLA:
+          return true;
+      }
+      return false;
     }
 
     public isAnyName(): boolean {

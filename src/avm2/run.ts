@@ -60,6 +60,13 @@ module Shumway.AVMX {
     return x + '';
   }
 
+  export function asConvertString(x): string {
+    if (typeof x === "string") {
+      return x;
+    }
+    return x + '';
+  }
+
   export function asCoerceInt(x): number {
     return x | 0;
   }
@@ -703,7 +710,7 @@ module Shumway.AVMX {
       AXString.prototype = AXString.tPrototype;
       AXString.prototype.toString = function () { return this.value; };
 
-      function defineClasses(exportName, name, value: AXClass, axApply, axConstruct) {
+      function defineClass(exportName, name, value: AXClass, axApply, axConstruct) {
         securityDomain[exportName] = nativeClasses[name] = value;
         value.dPrototype.toString = function () {
           return "[" + name + ".prototype]";
@@ -721,17 +728,29 @@ module Shumway.AVMX {
         return args[0];
       }
 
-      defineClasses("AXObject", "Object", AXObject, axApplyIdentity, axConstructIdentity);
-      defineClasses("AXClass", "Class", AXClass, axApplyIdentity, axConstructIdentity);
-      defineClasses("AXFunction", "Function", AXFunction, axApplyIdentity, axConstructIdentity);
-      defineClasses("AXArray", "Array", AXArray, axApplyIdentity, axConstructIdentity);
+      defineClass("AXObject", "Object", AXObject, axApplyIdentity, axConstructIdentity);
+      defineClass("AXClass", "Class", AXClass, axApplyIdentity, axConstructIdentity);
+      defineClass("AXFunction", "Function", AXFunction, axApplyIdentity, axConstructIdentity);
+      defineClass("AXArray", "Array", AXArray, axApplyIdentity, axConstructIdentity);
 
-      defineClasses("AXPrimitiveBox", "PrimitiveBox", AXPrimitiveBox, null, null);
-      defineClasses("AXNumber", "Number", AXNumber, axApplyIdentity, axConstructIdentity);
-      defineClasses("AXInt", "int", AXInt, axApplyIdentity, axConstructIdentity);
-      defineClasses("AXUint", "uint", AXUint, axApplyIdentity, axConstructIdentity);
-      defineClasses("AXString", "String", AXString, axApplyIdentity, axConstructIdentity);
-      defineClasses("AXBoolean", "Boolean", AXBoolean, axApplyIdentity, axConstructIdentity);
+      defineClass("AXPrimitiveBox", "PrimitiveBox", AXPrimitiveBox, null, null);
+
+      function definePrimitiveClass(exportName, name, value: AXClass, cast) {
+        defineClass(exportName, name, value,
+          function axApply(_ , args: any []) {
+            return cast(args[0]);
+          },
+          function axApply(_ , args: any []) {
+            return cast(args[0]);
+          }
+        );
+      }
+
+      definePrimitiveClass("AXNumber", "Number", AXNumber, asCoerceNumber);
+      definePrimitiveClass("AXInt", "int", AXInt, asCoerceInt);
+      definePrimitiveClass("AXUint", "uint", AXUint, asCoerceUint);
+      definePrimitiveClass("AXString", "String", AXString, asConvertString);
+      definePrimitiveClass("AXBoolean", "Boolean", AXBoolean, asCoerceBoolean);
 
       securityDomain.AXGlobal = AXGlobal;
       securityDomain.AXActivation = AXActivation;
