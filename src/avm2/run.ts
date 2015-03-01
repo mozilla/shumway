@@ -436,20 +436,25 @@ module Shumway.AVMX {
   // SecurityDomain.
   export var AXBaseProto = Object.create(null);
 
-  AXBaseProto.$BgtoString = function() {
+  AXBaseProto.$BgtoString = {value: function() {
     return "[object Object]";
-  };
+  }};
   AXBaseProto.toString = function () {
-    return this.$BgtoString();
+    return this.$BgtoString.value();
   };
-  AXBaseProto.$BgvalueOf = function() {
+  AXBaseProto.$BgvalueOf = {value: function() {
     return this;
-  };
+  }};
   AXBaseProto.valueOf = function () {
-    return this.$BgvalueOf();
+    return this.$BgvalueOf.value();
   };
 
-  export interface AXGlobal extends ITraits {
+  export interface AXObject {
+    $BgtoString: {value: Function};
+    $BgvalueOf: {value: Function};
+  }
+
+  export interface AXGlobal extends ITraits, AXObject {
     applicationDomain: ApplicationDomain;
     scriptInfo: ScriptInfo;
     scope: Scope;
@@ -459,9 +464,9 @@ module Shumway.AVMX {
     scope: Scope;
     superClass: AXClass;
     classInfo: ClassInfo;
-    tPrototype: Object;
-    dPrototype: Object;
-    prototype: Object;
+    tPrototype: AXObject;
+    dPrototype: AXObject;
+    prototype: AXObject;
     axConstruct: any;
     axApply: any;
     axClassBranding: Object;
@@ -575,9 +580,9 @@ module Shumway.AVMX {
 
     defineClass(exportName, name, value: AXClass, axApply, axConstruct) {
       this[exportName] = this.nativeClasses[name] = value;
-      value.dPrototype.toString = function () {
+      value.dPrototype.$BgtoString = {value: function () {
         return "[" + name + ".prototype]";
-      };
+      }};
       value.axApply = axApply;
       value.axConstruct = axConstruct;
 
@@ -638,14 +643,14 @@ module Shumway.AVMX {
       };
 
       this.AXGlobalProto = Object.create(AXObject.dPrototype);
-      this.AXGlobalProto.toString = function() {
+      this.AXGlobalProto.$BgtoString = {value: function() {
         return '[object global]';
-      };
+      }};
 
       this.AXActivationProto = Object.create(AXObject.dPrototype);
-      this.AXActivationProto.toString = function() {
+      this.AXActivationProto.$BgtoString = {value: function() {
         return '[Activation]';
-      };
+      }};
 
       // Class
       var AXClass: AXClass = <any>function axClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope) {
@@ -689,9 +694,9 @@ module Shumway.AVMX {
       AXClass.dPrototype = Object.create(AXObject.tPrototype);
       AXClass.tPrototype = Object.create(AXClass.dPrototype);
       AXClass.prototype = AXClass.tPrototype;
-      AXClass.prototype.toString = function () {
+      AXClass.prototype.$BgtoString = {value: function () {
         return "[class " + this.classInfo.instanceInfo.getName().name + "]";
-      };
+      }};
       var axClassPrototype: any = AXClass.prototype;
 
       // We modify the __proto__ of class constructor functions to point to AXClass.prototype. This means that they no longer
@@ -709,9 +714,9 @@ module Shumway.AVMX {
       AXArray.dPrototype = Object.create(AXObject.tPrototype);
       AXArray.tPrototype = Object.create(AXArray.dPrototype);
       AXArray.prototype = AXArray.tPrototype;
-      AXArray.prototype.toString = function () {
+      AXArray.prototype.$BgtoString = {value: function () {
         return this.value.toString();
-      };
+      }};
 
       var AXFunction: AXClass = <any>function axFunction(v: Function) {
         this.value = v;
@@ -719,9 +724,9 @@ module Shumway.AVMX {
       AXFunction.dPrototype = Object.create(AXObject.tPrototype);
       AXFunction.tPrototype = Object.create(AXFunction.dPrototype);
       AXFunction.prototype = AXFunction.tPrototype;
-      AXFunction.prototype.toString = function () {
+      AXFunction.prototype.$BgtoString = {value: function () {
         return "[Function Object]";
-      };
+      }};
 
       // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder base class
       // to help us with instanceof tests.
@@ -734,31 +739,31 @@ module Shumway.AVMX {
       AXBoolean.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
       AXBoolean.tPrototype = Object.create(AXBoolean.dPrototype);
       AXBoolean.prototype = AXBoolean.tPrototype;
-      AXBoolean.prototype.toString = function () { return this.value.toString(); };
+      AXBoolean.prototype.$BgtoString = {value: function () { return this.value.toString(); }};
 
       var AXNumber = <any>function axNumber(v: number) { this.value = v; };
       AXNumber.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
       AXNumber.tPrototype = Object.create(AXNumber.dPrototype);
       AXNumber.prototype = AXNumber.tPrototype;
-      AXNumber.prototype.toString = function () { return this.value.toString(); };
+      AXNumber.prototype.$BgtoString = {value: function () { return this.value.toString(); }};
 
       var AXInt = <any>function axInt(v: number) { this.value = v; };
       AXInt.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
       AXInt.tPrototype = Object.create(AXInt.dPrototype);
       AXInt.prototype = AXInt.tPrototype;
-      AXInt.prototype.toString = function () { return this.value.toString(); };
+      AXInt.prototype.$BgtoString = {value: function () { return this.value.toString(); }};
 
       var AXUint = <any>function axUint(v: number) { this.value = v; };
       AXUint.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
       AXUint.tPrototype = Object.create(AXUint.dPrototype);
       AXUint.prototype = AXUint.tPrototype;
-      AXUint.prototype.toString = function () { return this.value.toString(); };
+      AXUint.prototype.$BgtoString = {value: function () { return this.value.toString(); }};
 
       var AXString = <any>function axString(v: string) { this.value = v; };
       AXString.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
       AXString.tPrototype = Object.create(AXString.dPrototype);
       AXString.prototype = AXString.tPrototype;
-      AXString.prototype.toString = function () { return this.value; };
+      AXString.prototype.$BgtoString = {value: function () { return this.value; }};
 
       function axApplyIdentity(self, args) {
         return args[0];
