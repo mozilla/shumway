@@ -740,7 +740,7 @@ module Shumway.AVMX {
           function axApply(_ , args: any []) {
             return cast(args[0]);
           },
-          function axApply(_ , args: any []) {
+          function axConstruct(args: any []) {
             return cast(args[0]);
           }
         );
