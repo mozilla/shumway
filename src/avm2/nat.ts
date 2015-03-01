@@ -1254,8 +1254,6 @@ module Shumway.AVMX.AS {
   export class ASArray extends ASObject {
     value: any [];
     public static instanceConstructor: any = Array;
-    public static staticNatives: any [] = [Array];
-    public static instanceNatives: any [] = [Array.prototype];
 
     static classInitializer: any = function() {
       definePublicProperties(Array.prototype, [
@@ -1276,12 +1274,88 @@ module Shumway.AVMX.AS {
     static CACHE_NUMERIC_COMPARATORS = true;
     static numericComparatorCache = Object.create(null);
 
+
+    push() {
+      return this.value.push.apply(this.value, arguments);
+    }
+    pop() {
+      return this.value.pop();
+    }
+    shift() {
+      return this.value.shift();
+    }
+    unshift() {
+      return this.value.unshift.apply(this.value, arguments);
+    }
+    reverse() {
+      this.value.reverse();
+      return this;
+    }
+    concat() {
+      var value = this.value.slice();
+      for (var i = 0; i < arguments.length; i++) {
+        var a = arguments[i];
+        // Treat all objects with a `securityDomain` property and a value that's an Array as
+        // concat-spreadable.
+        // TODO: verify that this is correct.
+        if (typeof a === 'object' && a && a.securityDomain && Array.isArray(a.value)) {
+          value.push.apply(value, a.value);
+        } else {
+          value.push(a);
+        }
+      }
+      return new this.securityDomain.AXArray(value);
+    }
+    slice(startIndex: number, endIndex: number) {
+      return new this.securityDomain.AXArray(this.value.slice(startIndex, endIndex));
+    }
+    join(sep: string) {
+      return this.value.join(sep);
+    }
+    toString() {
+      return this.value.join(',');
+    }
+    indexOf(value: any, fromIndex: number) {
+      return this.value.indexOf(value, fromIndex|0);
+    }
+    lastIndexOf(value: any, fromIndex: number) {
+      return this.value.lastIndexOf(value, arguments.length > 1 ? fromIndex : 0x7fffffff);
+    }
+    every(callbackfn: {value: Function}, thisArg?) {
+      var o = this.value;
+      for (var i = 0; i < o.length; i++) {
+        if (callbackfn.value.call(thisArg, o[i], i, o) !== true) {
+          return false;
+        }
+      }
+      return true;
+    }
+    some(callbackfn: {value}, thisArg?) {
+      return this.value.some(callbackfn.value, thisArg);
+    }
+    forEach(callbackfn: {value}, thisArg?) {
+      return this.value.forEach(callbackfn.value, thisArg);
+    }
+    map(callbackfn: {value}, thisArg?) {
+      return new this.securityDomain.AXArray(this.value.map(callbackfn.value, thisArg));
+    }
+    filter(callbackfn: {value: Function}, thisArg?) {
+      var result = [];
+      var o = this.value;
+      for (var i = 0; i < o.length; i++) {
+        if (callbackfn.value.call(thisArg, o[i], i, o) === true) {
+          result.push(o[i]);
+        }
+      }
+      return new this.securityDomain.AXArray(result);
+    }
+
     toLocaleString(): string {
-      var a: ASArray = ASArray.coerce(this);
+      var value = this.securityDomain.AXArray.coerce(this).value;
 
       var out: string = "";
-      for (var i = 0, n = (<any>a).length; i < n; i++) {
-        var val = a[i];
+      for (var i = 0, n = value.length; i < n; i++) {
+        var val = value[i];
         if (val !== null && val !== undefined) {
           out += val.toLocaleString();
         }
@@ -1293,32 +1367,11 @@ module Shumway.AVMX.AS {
     }
 
     splice(): any[] {
-      var o = this;
+      var o = this.value;
       if (arguments.length === 0) {
         return undefined;
       }
-      return o.splice.apply(o, arguments);
-    }
-
-    every(callback: Function, thisObject: any): boolean {
-      var o = <any>this;
-      for (var i = 0; i < o.length; i++) {
-        if (callback.call(thisObject, o[i], i, o) !== true) {
-          return false;
-        }
-      }
-      return false;
-    }
-
-    filter(callback: Function, thisObject: any): any [] {
-      var o = <any>this;
-      var result = [];
-      for (var i = 0; i < o.length; i++) {
-        if (callback.call(thisObject, o[i], i, o) === true) {
-          result.push(o[i]);
-        }
-      }
-      return result;
+      return new this.securityDomain.AXArray(o.splice.apply(o, arguments));
     }
 
     sort(): any {
