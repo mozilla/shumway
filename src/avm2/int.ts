@@ -394,7 +394,7 @@ module Shumway.AVMX {
           //  stack[stack.length - 1] = applyType(method, stack[stack.length - 1], args);
           //  break;
           case Bytecode.NEWOBJECT:
-            object = {};
+            object = Object.create(securityDomain.AXObject.tPrototype);
             argCount = u30();
             for (var i = 0; i < argCount; i++) {
               value = stack.pop();
