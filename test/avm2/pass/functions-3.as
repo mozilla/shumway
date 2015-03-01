@@ -71,6 +71,11 @@ package {
   })();
 
   (function () {
+    trace("--- .call(new Object()) ---");
+    trace(zar.call(new Object()));
+  })();
+
+  (function () {
     trace("--- .call(Object(x)) ---");
     trace(zar.call(Object(null)));
     trace(zar.call(Object(0)));
@@ -83,8 +88,8 @@ package {
 
 
   (function () {
-    trace("---  ---");
     var classes = [Boolean, Number, String, int, uint];
+    trace("--- " + classes + " ---");
     var values = [0, 1, -1, null, undefined, "Hello", 1.4];
     trace("Values: " + values);
     trace("Values Length: " + values.length);
@@ -98,8 +103,23 @@ package {
       for (var j = 0; j < values.length; j++) {
         var v = values[j];
         trace(c + "(" + v + ") " + c(v));
-        // trace("new " + c + "(" + v + ") " + new c(v));
+        trace("new " + c + "(" + v + ") " + new c(v));
       }
+    }
+  })();
+
+  (function () {
+    var classes = [Object];
+    trace("--- " + classes + " ---");
+    var values = [0, 1, -1, null, undefined, "Hello", 1.4, [], {}];
+    for (var j = 0; j < values.length; j++) {
+      var v = values[j];
+      trace(Object + "(" + v + ") " + Object(v));
+      trace("new " + Object + "(" + v + ") " + new Object(v));
+      trace(Object(v) == v);
+      trace(Object(v) === v);
+      trace(new Object(v) == v);
+      trace(new Object(v) === v);
     }
   })();
 

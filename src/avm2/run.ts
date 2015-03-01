@@ -83,18 +83,6 @@ module Shumway.AVMX {
     return !!x;
   }
 
-  export function asCoerceObject(x): Object {
-    if (x instanceof Boolean) {
-      return x.valueOf();
-    } else if (x == undefined) {
-      return null;
-    }
-    if (typeof x === 'string' || typeof x === 'number') {
-      return x;
-    }
-    return Object(x);
-  }
-
   export function asDefaultCompareFunction(a, b) {
     return String(a).localeCompare(String(b));
   }
@@ -562,6 +550,9 @@ module Shumway.AVMX {
       AXObject.dPrototype = Object.create(null);
       AXObject.tPrototype = Object.create(AXObject.dPrototype);
       AXObject.prototype = AXObject.tPrototype;
+      AXObject.prototype.toString = function () {
+        return "[object Object]";
+      };
 
       var axPrototype: any = AXObject.dPrototype;
 
@@ -728,7 +719,6 @@ module Shumway.AVMX {
         return args[0];
       }
 
-      defineClass("AXObject", "Object", AXObject, axApplyIdentity, axConstructIdentity);
       defineClass("AXClass", "Class", AXClass, axApplyIdentity, axConstructIdentity);
       defineClass("AXFunction", "Function", AXFunction, axApplyIdentity, axConstructIdentity);
       defineClass("AXArray", "Array", AXArray, axApplyIdentity, axConstructIdentity);
@@ -746,6 +736,15 @@ module Shumway.AVMX {
         );
       }
 
+      function axCoerceObject(x) {
+        if (x == null) {
+          return new securityDomain.AXObject();
+        }
+        return x;
+      }
+
+      // AXObject is not technically a primitive class but it needs a coercing apply/constructor.
+      definePrimitiveClass("AXObject", "Object", AXObject, axCoerceObject);
       definePrimitiveClass("AXNumber", "Number", AXNumber, asCoerceNumber);
       definePrimitiveClass("AXInt", "int", AXInt, asCoerceInt);
       definePrimitiveClass("AXUint", "uint", AXUint, asCoerceUint);
@@ -849,37 +848,6 @@ module Shumway.AVMX {
         }
         return this.value.apply(self, args.value);
       });
-
-
-      //self.Number = function Number(v) {
-      //  this.value = v;
-      //};
-      //self.Number.prototype = Object.create(this.Object.prototype);
-      //
-      //self.String = function String(v) {
-      //  this.value = v;
-      //};
-      //self.String.prototype = Object.create(this.Object.prototype);
-      //
-      //self.Global = function Global(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
-      //  this.applicationDomain = applicationDomain;
-      //  this.scriptInfo = scriptInfo;
-      //  this.traits = scriptInfo.traits;
-      //  this.traits.resolve();
-      //  this.scope = new Scope(null, this, false);
-      //  applyTraits(this, this.traits, this.scope);
-      //};
-      //
-      //self.Global.prototype = Object.create(this.Object.prototype);
-      //self.Global.prototype.toString = function () {
-      //  return new String("[Global Object]");
-      //};
-      //
-
-
-
-      //
-      //$ = self;
     }
   }
 
