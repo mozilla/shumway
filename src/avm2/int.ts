@@ -173,9 +173,9 @@ module Shumway.AVMX {
           //    savedScope, mn.namespaces, mn.name, mn.flags, value
           //  );
           //  break;
-          //case Bytecode.kill:
-          //  locals[bc.index] = undefined;
-          //  break;
+          case Bytecode.KILL:
+            local[u30()] = undefined;
+            break;
           case Bytecode.IFNLT:
             b = stack.pop();
             a = stack.pop();
@@ -259,13 +259,18 @@ module Shumway.AVMX {
             offset = s24();
             pc = a !== b ? pc + offset : pc;
             continue;
-          //case Bytecode.lookupswitch:
-          //  index = stack.pop();
-          //  if (index < 0 || index >= bc.offsets.length) {
-          //    index = bc.offsets.length - 1; // The last target is the default.
-          //  }
-          //  pc = bc.offsets[index];
-          //  continue;
+          case Bytecode.LOOKUPSWITCH:
+            var basePC = pc - 1;
+            var defaultOffset = s24();
+            var caseCount = u30();
+            index = stack.pop();
+            if (index <= caseCount) {
+              pc = pc + 3 * index; // Jump to case offset.
+              pc = basePC + s24();
+            } else {
+              pc = basePC + defaultOffset;
+            }
+            continue;
           //case Bytecode.pushwith:
           //  scope.push(box(stack.pop()), true);
           //  break;

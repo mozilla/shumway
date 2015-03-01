@@ -315,7 +315,6 @@ module Shumway.Shell {
             var abc = new ABCFile(buffer);
             securityDomain.application.loadABC(abc);
             securityDomain.application.executeABC(abc);
-            writer.writeLn("Took: " + (performance.now() - t).toFixed(2));
           }
         }
       });
