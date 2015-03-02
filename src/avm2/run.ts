@@ -289,16 +289,17 @@ module Shumway.AVMX {
     this[Multiname.getPublicMangledName(nm)] = value;
   }
 
-  export function asGetSlot(object: ITraits, i: number) {
-    var value = object[object.traits.getSlot(i).getName().getMangledName()];
+  export function axGetSlot(i: number) {
+    var t = this.traits.getSlot(i);
+    var value = this[t.getName().getMangledName()];
     release || checkValue(value);
     return value;
   }
 
-  export function asSetSlot(object: ITraits, i: number, value: any) {
-    var t = object.traits.getSlot(i);
+  export function axSetSlot(i: number, value: any) {
+    var t = this.traits.getSlot(i);
     release || checkValue(value);
-    object[t.getName().getMangledName()] = value;
+    this[t.getName().getMangledName()] = value;
     //var slotInfo = object.asSlots.byID[index];
     //if (slotInfo.const) {
     //  return;
@@ -869,6 +870,8 @@ module Shumway.AVMX {
       D(AXObject.dPrototype, "axSetProperty", axSetProperty);
       D(AXObject.dPrototype, "axSetPublicProperty", axSetPublicProperty);
       D(AXObject.dPrototype, "axGetProperty", axGetProperty);
+      D(AXObject.dPrototype, "axSetSlot", axSetSlot);
+      D(AXObject.dPrototype, "axGetSlot", axGetSlot);
       D(AXObject.dPrototype, "axCallProperty", axCallProperty);
       D(AXObject.dPrototype, "axConstructProperty", axConstructProperty);
       D(AXObject.dPrototype, "axResolveMultiname", axResolveMultiname);

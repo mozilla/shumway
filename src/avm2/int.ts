@@ -480,12 +480,11 @@ module Shumway.AVMX {
           //  stack[stack.length - 1] = box(stack[stack.length - 1]).asDeleteProperty(mn.namespaces, mn.name, mn.flags);
           //  break;
           case Bytecode.GETSLOT:
-            stack[stack.length - 1] = asGetSlot(stack[stack.length - 1], u30());
+            stack[stack.length - 1] = securityDomain.box(stack[stack.length - 1]).axGetSlot(u30());
             break;
           case Bytecode.SETSLOT:
             value = stack.pop();
-            object = stack.pop();
-            asSetSlot(object, u30(), value);
+            securityDomain.box(stack.pop()).axSetSlot(u30(), value);
             break;
           //case Bytecode.convert_s:
           //  stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
