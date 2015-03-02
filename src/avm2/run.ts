@@ -111,6 +111,10 @@ module Shumway.AVMX {
     return false;
   }
 
+  export function axEmpty() {
+
+  }
+
   export function asCoerceBoolean(x): boolean {
     return !!x;
   }
@@ -508,6 +512,7 @@ module Shumway.AVMX {
     tPrototype: AXObject;
     dPrototype: AXObject;
     prototype: AXObject;
+    axConstructor: any;
     axConstruct: any;
     axApply: any;
     axCoerce: any;
@@ -576,12 +581,13 @@ module Shumway.AVMX {
     }
 
     createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
-      var axClass = new this.AXClass(classInfo, superClass, scope);
+      var classScope = new Scope(scope, null);
 
-      var classScope = new Scope(scope, axClass);
+      var axClass = new this.AXClass(classInfo, superClass, classScope);
+      classScope.object = axClass;
 
       // Run the static initializer.
-      interpret(axClass, classInfo.getInitializer(), scope, [axClass]);
+      interpret(axClass, classInfo.getInitializer(), classScope, [axClass]);
       return axClass;
     }
 
@@ -655,6 +661,7 @@ module Shumway.AVMX {
 
       D(value, "axApply", axApply);
       D(value, "axConstruct", axConstruct);
+      D(value, "axConstructor", axEmpty); // TODO: This is a placeholder so that all classaes have a |axConstructor| function.
       D(value, "axCoerce", axCoerce);
       D(value, "axIsType", axIsType);
       D(value, "axAsType", axAsType);
@@ -732,11 +739,30 @@ module Shumway.AVMX {
         var self = this;
         if (nativeClasses[className]) {
           self = nativeClasses[className];
-          self.instanceConstructor = self;
         } else {
-          self.instanceConstructor = function () {
-            assert("TODO: Coercing constructor.");
+          // Class constructor.
+          function axConstructor() {
+            return interpret(this, self.classInfo.instanceInfo.getInitializer(), self.scope, sliceArguments(arguments));
           };
+
+          self.axConstructor = axConstructor;
+
+          // This actually creates a new object.
+          self.axConstruct = function axConstruct() {
+            var object = Object.create(self.tPrototype);
+            axConstructor.apply(object, arguments);
+            return object;
+          };
+
+          // This makes the class callable and behave like a coercion.
+          self.axApply = function axApply(_, args) {
+            return axAsType.call(self, args[0]);
+          }
+
+          self.axIsType = function axIsType(x) {
+            // TODO: Fix me.
+            return true;
+          }
         }
 
         self.scope = scope;

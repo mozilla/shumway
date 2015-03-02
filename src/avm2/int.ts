@@ -362,15 +362,13 @@ module Shumway.AVMX {
               // return asCoerceByMultiname(method, method.returnType, stack.pop());
             }
             return stack.pop();
-          //case Bytecode.constructsuper:
-          //  popManyInto(stack, bc.argCount, args);
-          //  object = stack.pop();
-          //  savedScope.object.baseClass.instanceConstructorNoInitialize.apply(object, args);
-          //  break;
+          case Bytecode.CONSTRUCTSUPER:
+            popManyInto(stack, u30(), args);
+            (<any>savedScope.object).superClass.axConstructor(stack.pop(), args);
+            break;
           case Bytecode.CONSTRUCTPROP:
             index = u30();
-            argCount = u30();
-            popManyInto(stack, argCount, args);
+            popManyInto(stack, u30(), args);
             popNameInto(stack, abc.getMultiname(index), rn);
             stack[stack.length - 1] = securityDomain.box(stack[stack.length - 1]).axConstructProperty(rn, args);
             break;
