@@ -130,7 +130,6 @@ module Shumway.AVMX {
     private _nextSlotID: number = 1;
     public slots: SlotTraitInfo [] = null;
     constructor(
-      public abc: ABCFile,
       public traits: TraitInfo []
     ) {
       // ...
@@ -138,7 +137,7 @@ module Shumway.AVMX {
 
     resolve() {
       for (var i = 0; i < this.traits.length; i++) {
-        this.traits[i].resolve(this.abc);
+        this.traits[i].resolve();
       }
     }
 
@@ -202,7 +201,7 @@ module Shumway.AVMX {
         }
         a.push(t);
       }
-      return new Traits(this.abc, a);
+      return new Traits(a);
     }
 
     getSlot(i: number): TraitInfo {
@@ -210,7 +209,9 @@ module Shumway.AVMX {
         var slots = this.slots = [];
         for (var j = 0; j < this.traits.length; j++) {
           var trait = this.traits[j];
-          if (trait.kind === TRAIT.Slot) {
+          if (trait.kind === TRAIT.Slot ||
+              trait.kind === TRAIT.Const ||
+              trait.kind === TRAIT.Class) {
             var slotTrait: SlotTraitInfo = <SlotTraitInfo>trait;
             if (!slotTrait.slot) {
               slotTrait.slot = this._nextSlotID ++;
@@ -257,9 +258,9 @@ module Shumway.AVMX {
       return <Multiname>this.name;
     }
 
-    resolve(abc: ABCFile) {
+    resolve() {
       if (typeof this.name === "number") {
-        this.name = abc.getMultiname(<number>this.name);
+        this.name = this.abc.getMultiname(<number>this.name);
       }
     }
 
@@ -318,22 +319,23 @@ module Shumway.AVMX {
       return <MethodInfo>this.methodInfo;
     }
 
-    resolve(abc: ABCFile) {
-      super.resolve(abc);
+    resolve() {
+      super.resolve();
       if (typeof this.methodInfo === "number") {
-        this.methodInfo = abc.getMethodInfo(<number>this.methodInfo);
+        this.methodInfo = this.abc.getMethodInfo(<number>this.methodInfo);
       }
     }
   }
 
-  export class ClassTraitInfo extends TraitInfo {
+  export class ClassTraitInfo extends SlotTraitInfo {
     constructor(
       abc: ABCFile,
       kind: TRAIT,
       name: Multiname | number,
+      slot: number,
       public classInfo: ClassInfo
     ) {
-      super(abc, kind, name);
+      super(abc, kind, name, slot, 0, 0, 0);
     }
   }
 
@@ -1298,7 +1300,7 @@ module Shumway.AVMX {
       for (var i = 0; i < n; i++) {
         traits.push(this._parseTrait());
       }
-      return new Traits(this, traits);
+      return new Traits(traits);
     }
 
     private _parseTrait() {
@@ -1335,7 +1337,7 @@ module Shumway.AVMX {
         case TRAIT.Class:
           var slot = s.readU30();
           var classInfo = this.classes[s.readU30()];
-          trait = classInfo.trait = new ClassTraitInfo(this, kind, name, classInfo);
+          trait = classInfo.trait = new ClassTraitInfo(this, kind, name, slot, classInfo);
           break;
         default:
           release || assert(false, "Unknown trait kind: " + TRAIT[kind] + " " + kind);
