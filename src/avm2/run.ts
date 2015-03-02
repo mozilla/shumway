@@ -576,7 +576,13 @@ module Shumway.AVMX {
     }
 
     createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
-      return new this.AXClass(classInfo, superClass, scope);
+      var axClass = new this.AXClass(classInfo, superClass, scope);
+
+      var classScope = new Scope(scope, axClass);
+
+      // Run the static initializer.
+      interpret(axClass, classInfo.getInitializer(), scope, [axClass]);
+      return axClass;
     }
 
     createFunction(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean): AXFunction {
