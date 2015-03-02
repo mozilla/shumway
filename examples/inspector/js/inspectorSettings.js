@@ -38,7 +38,8 @@ var stateDefaults = {
   loaderURL: '',
   remoteEnabled: false,
   remoteSWF: '',
-  remoteAutoReload: true
+  remoteAutoReload: true,
+  recordingLimit: 0
 };
 
 for (var option in stateDefaults) {
@@ -121,10 +122,13 @@ var GUI = (function () {
   inspectorOptions.add(state, "remoteEnabled").onChange(saveInspectorOption);
   inspectorOptions.add(state, "remoteSWF").onChange(saveInspectorOption);
   inspectorOptions.add(state, "remoteAutoReload").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "recordingLimit").onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
   }
+
+  gui.add({ "Save Recording": saveRecording }, "Save Recording");
 
   gui.domElement.addEventListener("click", function(e) {
     if (e.target.nodeName.toLowerCase() == "li" && e.target.classList.contains("title")) {
@@ -181,6 +185,22 @@ var GUI = (function () {
     var screenShot = currentEasel.screenShot(undefined, true);
     var w = window.open(screenShot.dataURL, 'screenShot', 'height=' + screenShot.w + ', width=' + screenShot.h);
     w.document.title = 'Shumway Screen Shot';
+  }
+
+  function saveRecording() {
+    if (!easelHost.recorder) {
+      return;
+    }
+
+    var blob = easelHost.recorder.getRecording();
+
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.target = '_parent';
+    a.download = 'movie.swfm';
+    document.body.appendChild(a);
+    a.click();
+    a.parentNode.removeChild(a);
   }
 
   function notifyOptionsChanged() {
