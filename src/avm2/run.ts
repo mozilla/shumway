@@ -115,29 +115,53 @@ module Shumway.AVMX {
     return !!x;
   }
 
-  export function asDefaultCompareFunction(a, b) {
+  export function axDefaultCompareFunction(a, b) {
     return String(a).localeCompare(String(b));
   }
 
-  export function asCompare(a: any, b: any, options: SORT, compareFunction?) {
+  export function axCompare(a: any, b: any, options: SORT, sortOrder: number,
+                            compareFunction: (a, b) => number) {
     release || Shumway.Debug.assertNotImplemented(!(options & SORT.UNIQUESORT), "UNIQUESORT");
-    release || Shumway.Debug.assertNotImplemented(!(options & SORT.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+    release || Shumway.Debug.assertNotImplemented(!(options & SORT.RETURNINDEXEDARRAY),
+                                                  "RETURNINDEXEDARRAY");
     var result = 0;
-    if (!compareFunction) {
-      compareFunction = asDefaultCompareFunction;
-    }
     if (options & SORT.CASEINSENSITIVE) {
       a = String(a).toLowerCase();
       b = String(b).toLowerCase();
     }
     if (options & SORT.NUMERIC) {
-      a = toNumber(a);
-      b = toNumber(b);
+      a = +a;
+      b = +b;
       result = a < b ? -1 : (a > b ? 1 : 0);
     } else {
       result = compareFunction(a, b);
     }
-    if (options & SORT.DESCENDING) {
+    return result * sortOrder;
+  }
+
+  export function axCompareFields(objA: any, objB: any, names: string[], optionsList: SORT[]) {
+    release || assert(names.length === optionsList.length);
+    release || assert(names.length > 0);
+    var result = 0;
+    var i;
+    for (i = 0; i < names.length && result === 0; i++) {
+      var name = names[i];
+      var a = objA[name];
+      var b = objB[name];
+      var options = optionsList[i];
+      if (options & SORT.CASEINSENSITIVE) {
+        a = String(a).toLowerCase();
+        b = String(b).toLowerCase();
+      }
+      if (options & SORT.NUMERIC) {
+        a = +a;
+        b = +b;
+        result = a < b ? -1 : (a > b ? 1 : 0);
+      } else {
+        result = String(a).localeCompare(String(b));
+      }
+    }
+    if (options[i - 1] & SORT.DESCENDING) {
       result *= -1;
     }
     return result;
@@ -905,6 +929,8 @@ module Shumway.AVMX {
       P(AXArray.dPrototype, "forEach", Ap.forEach);
       P(AXArray.dPrototype, "map", Ap.map);
       P(AXArray.dPrototype, "filter", Ap.filter);
+      P(AXArray.dPrototype, "sort", Ap.sort);
+      P(AXArray.dPrototype, "sortOn", Ap.sortOn);
 
       D(AXArray.prototype, "axGetProperty", axArrayGetProperty);
       D(AXArray.prototype, "axSetProperty", axArraySetProperty);

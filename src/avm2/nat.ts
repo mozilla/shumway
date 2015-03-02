@@ -1375,56 +1375,82 @@ module Shumway.AVMX.AS {
     }
 
     sort(): any {
-      var o = <any>this;
+      var o = this.value;
       if (arguments.length === 0) {
-        return o.sort();
+        o.sort();
+        return this;
       }
-      var compareFunction, options = 0;
-      if (arguments[0] instanceof Function) {
-        compareFunction = arguments[0];
+      var compareFunction;
+      var options = 0;
+      if (arguments[0] instanceof this.securityDomain.AXFunction) {
+        compareFunction = arguments[0].value;
       } else if (isNumber(arguments[0])) {
         options = arguments[0];
       }
       if (isNumber(arguments[1])) {
         options = arguments[1];
       }
+      if (!options) {
+        o.sort();
+        return this;
+      }
+      var sortOrder = options & SORT.DESCENDING ? -1 : 1;
       o.sort(function (a, b) {
-        return asCompare(a, b, options, compareFunction);
+        return axCompare(a, b, options, sortOrder, compareFunction || axDefaultCompareFunction);
       });
-      return o;
+      return this;
     }
 
     sortOn(names: any, options: any): any {
-      var o = <any>this;
+      if (arguments.length === 0) {
+        throwError("ArgumentError", AVM2.Errors.WrongArgumentCountError,
+                   "Array/http://adobe.com/AS3/2006/builtin::sortOn()", "1", "0");
+      }
+      // The following oddities in how the arguments are used are gleaned from Tamarin, so hush.
+      var o = this.value;
+      // The options we'll end up using.
+      var optionsList: number[] = [];
       if (isString(names)) {
-        names = [names];
-      }
-      if (isNullOrUndefined(options)) {
-        options = [];
-      } else if (isNumber(options)) {
-        options = [options];
-      }
-      for (var i = names.length - 1; i >= 0; i--) {
-        var key = Multiname.getPublicMangledName(names[i]);
-        if (ASArray.CACHE_NUMERIC_COMPARATORS && options[i] & SORT.NUMERIC) {
-          var str = "var x = +(a." + key + "), y = +(b." + key + ");";
-          if (options[i] & SORT.DESCENDING) {
-            str += "return x < y ? 1 : (x > y ? -1 : 0);";
-          } else {
-            str += "return x < y ? -1 : (x > y ? 1 : 0);";
-          }
-          var numericComparator = ASArray.numericComparatorCache[str];
-          if (!numericComparator) {
-            numericComparator = ASArray.numericComparatorCache[str] = new Function("a", "b", str);
-          }
-          o.sort(numericComparator);
-        } else {
-          o.sort(function (a, b) {
-            return asCompare(a[key], b[key], options[i] | 0);
-          });
+        names = [Multiname.getPublicMangledName(names)];
+        // If the name is a string, coerce `options` to int.
+        optionsList = [options | 0];
+      } else if (names && Array.isArray(names.value)) {
+        names = names.value;
+        for (var i = 0; i < names.length; i++) {
+          names[i] = Multiname.getPublicMangledName(names[i]);
         }
+        if (options && Array.isArray(options.value)) {
+          options = options.value;
+          // Use the options Array only if it's the same length as names.
+          if (options.length === names.length) {
+            for (var i = 0; i < options.length; i++) {
+              optionsList[i] = options[i] | 0;
+            }
+            // Otherwise, use 0 for all options.
+          } else {
+            for (var i = 0; i < names.length; i++) {
+              optionsList[i] = 0;
+            }
+          }
+        } else {
+          var optionsVal = options | 0;
+          for (var i = 0; i < names.length; i++) {
+            optionsList[i] = optionsVal;
+          }
+        }
+      } else {
+        // Not supplying either a String or an Array means nothing is sorted on.
+        return this;
       }
-      return o;
+      release || assert(optionsList.length === names.length);
+      // For use with uniqueSort and returnIndexedArray once we support them.
+      var optionsVal: number = optionsList[0];
+      release || Shumway.Debug.assertNotImplemented(!(optionsVal & SORT.UNIQUESORT), "UNIQUESORT");
+      release || Shumway.Debug.assertNotImplemented(!(optionsVal & SORT.RETURNINDEXEDARRAY),
+                                                    "RETURNINDEXEDARRAY");
+
+      o.sort((a, b) => axCompareFields(a, b, names, optionsList));
+      return this;
     }
 
     get length(): number {
@@ -1530,8 +1556,8 @@ module Shumway.AVMX.AS {
   //
   //  static classInitializer: any = function() {
   //    defineNonEnumerableProperty(this, '$Bglength', 1);
-  //    defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', 'Error');
-  //    defineNonEnumerableProperty(this.dynamicPrototype, '$Bgmessage', 'Error');
+  // defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', 'Error');
+  // defineNonEnumerableProperty(this.dynamicPrototype, '$Bgmessage', 'Error');
   //    defineNonEnumerableProperty(this.dynamicPrototype, '$BgtoString', this.prototype.toString);
   //  }
   //
