@@ -91,7 +91,7 @@ module Shumway.GFX.Test {
       return Promise.resolve(buffer);
     }
 
-    private _onWorkerMessage(e, async: boolean = true): any {
+    _onWorkerMessage(e, async: boolean = true): any {
       var data = e.data;
       if (typeof data !== 'object' || data === null) {
         return;

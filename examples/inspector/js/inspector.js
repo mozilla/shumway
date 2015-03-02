@@ -155,6 +155,20 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
     return;
   }
 
+  if (file.endsWith(".swfm")) {
+    var easel = createEasel();
+
+    document.addEventListener('shumwayOptionsChanged', function () {
+      syncGFXOptions(easel.options);
+      easel.stage.invalidate();
+    });
+    syncGFXOptions(easel.options);
+
+    easelHost = new Shumway.GFX.Test.PlaybackEaselHost(easel);
+    easelHost.playUrl(file);
+    return;
+  }
+
   var BinaryFileReader = Shumway.BinaryFileReader;
 
   if (remoteDebugging) {
@@ -205,7 +219,10 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
         player.displayParameters = easel.getDisplayParameters();
         player.loaderUrl = state.loaderURL;
 
-        easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
+        var useRecorder = state.recordingLimit > 0;
+        easelHost = useRecorder ?
+          new Shumway.GFX.Test.RecordingEaselHost(easel, state.recordingLimit) :
+          new Shumway.GFX.Test.TestEaselHost(easel);
 
         player.load(file, buffer);
 
