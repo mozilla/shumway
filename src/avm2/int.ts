@@ -343,6 +343,9 @@ module Shumway.AVMX {
           case Bytecode.PUSHSCOPE:
             scope.push(securityDomain.box(stack.pop()), false);
             break;
+          case Bytecode.PUSHWITH:
+            scope.push(securityDomain.box(stack.pop()), true);
+            break;
           case Bytecode.NEWFUNCTION:
             stack.push(securityDomain.createFunction(abc.getMethodInfo(u30()), scope.topScope(), true));
             break;
