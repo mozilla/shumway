@@ -114,7 +114,8 @@ function loadMovie(path, reportFrames) {
       easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
       initEaselHostCallbacks();
 
-      player = new Shumway.Player.Test.TestPlayer();
+      var gfxService = new Shumway.Player.Test.TestGFXService();
+      player = new Shumway.Player.Player(gfxService);
       player.stageAlign = 'tl';
       player.stageScale = 'noscale';
       player.displayParameters = easel.getDisplayParameters();

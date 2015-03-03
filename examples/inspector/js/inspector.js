@@ -212,7 +212,8 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
           easel.stage.invalidate();
         });
         syncGFXOptions(easel.options);
-        var player = new Shumway.Player.Test.TestPlayer();
+        var gfxService = new Shumway.Player.Test.TestGFXService();
+        var player = new Shumway.Player.Player(gfxService);
         player.movieParams = movieParams;
         player.stageAlign = state.salign;
         player.stageScale = state.scale;

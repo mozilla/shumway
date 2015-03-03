@@ -20,7 +20,7 @@ module Shumway.Player.Test {
 
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
 
-  export class TestPlayer extends Player {
+  export class TestGFXService extends GFXServiceBase {
     private _worker;
 
     constructor() {
@@ -32,7 +32,7 @@ module Shumway.Player.Test {
       this._worker.addEventListener('syncmessage', this._onSyncWorkerMessage.bind(this));
     }
 
-    public onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true): DataBuffer {
+    update(updates: DataBuffer, assets: any[]): void {
       var bytes = updates.getBytes();
       var message = {
         type: 'player',
@@ -40,30 +40,28 @@ module Shumway.Player.Test {
         assets: assets
       };
       var transferList = [bytes.buffer];
-      if (!async) {
-        var result = this._worker.postSyncMessage(message, transferList);
-        return DataBuffer.FromPlainObject(result);
-      }
       this._worker.postMessage(message, transferList);
-      return null;
     }
 
-    onExternalCommand(command) {
-      this._worker.postSyncMessage({
-        type: 'external',
-        command: command
-      });
+    updateAndGet(updates: DataBuffer, assets: any[]): any {
+      var bytes = updates.getBytes();
+      var message = {
+        type: 'player',
+        updates: bytes,
+        assets: assets
+      };
+      var transferList = [bytes.buffer];
+      var result = this._worker.postSyncMessage(message, transferList);
+      return DataBuffer.FromPlainObject(result);
     }
 
-    onFSCommand(command: string, args: string) {
+    frame(): void {
       this._worker.postMessage({
-        type: 'fscommand',
-        command: command,
-        args: args
+        type: 'frame'
       });
     }
 
-    onVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
+    videoControl(id: number, eventType: VideoControlEvent, data: any): any {
       return this._worker.postSyncMessage({
         type: 'videoControl',
         id: id,
@@ -72,22 +70,26 @@ module Shumway.Player.Test {
       });
     }
 
-    onFrameProcessed() {
-      this._worker.postMessage({
-        type: 'frame'
-      });
+    registerFontOrImage(syncId: number, symbolId: number, type: string, data: any): Promise<any> {
+      return new Promise<any>(function (resolve, reject) {
+        var message = {
+          type: 'registerFontOrImage',
+          syncId: syncId,
+          symbolId: symbolId,
+          assetType: type,
+          data: data,
+          resolve: resolve
+        };
+        this._worker.postSyncMessage(message);
+      }.bind(this));
     }
 
-    protected registerFontOrImageImpl(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
-      var message = {
-        type: 'registerFontOrImage',
-        syncId: symbol.syncId,
-        symbolId: symbol.id,
-        assetType: data.type,
-        data: data,
-        resolve: symbol.resolveAssetPromise.resolve
-      };
-      return this._worker.postSyncMessage(message);
+    fscommand(command: string, args: string): void {
+      this._worker.postMessage({
+        type: 'fscommand',
+        command: command,
+        args: args
+      });
     }
 
     private _onWorkerMessage(e) {
@@ -100,10 +102,6 @@ module Shumway.Player.Test {
           var updates = DataBuffer.FromArrayBuffer(e.data.updates.buffer);
           this.processUpdates(updates, e.data.assets);
           break;
-        case 'externalCallback':
-          this.processExternalCallback(data.request);
-          e.handled = true;
-          return;
         case 'videoPlayback':
           this.processVideoEvent(data.id, data.eventType, data.data);
           return;

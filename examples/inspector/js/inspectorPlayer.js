@@ -54,7 +54,8 @@ function runSwfPlayer(data) {
   }
   Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
     function runSWF(file) {
-      var player = new Shumway.Player.Window.WindowPlayer(window);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(window);
+      var player = new Shumway.Player.Player(gfxService);
       player.movieParams = movieParams;
       player.stageAlign = stageAlign;
       player.stageScale = stageScale;
