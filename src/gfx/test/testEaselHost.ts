@@ -91,6 +91,14 @@ module Shumway.GFX.Test {
       return Promise.resolve(buffer);
     }
 
+    private _sendRegisterFontOrImageResponse(requestId: number, result: any) {
+      this._worker.postMessage({
+        type: 'registerFontOrImageResponse',
+        requestId: requestId,
+        result: result
+      });
+    }
+
     _onWorkerMessage(e, async: boolean = true): any {
       var data = e.data;
       if (typeof data !== 'object' || data === null) {
@@ -118,7 +126,7 @@ module Shumway.GFX.Test {
           break;
         case 'registerFontOrImage':
           this.processRegisterFontOrImage(data.syncId, data.symbolId, data.assetType, data.data,
-                                          data.resolve);
+            this._sendRegisterFontOrImageResponse.bind(this, data.requestId));
           e.handled = true;
           break;
         case 'fscommand':

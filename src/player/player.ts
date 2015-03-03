@@ -87,7 +87,11 @@ module Shumway.Player {
       throw new Error('This method is abstract');
     }
 
-    registerFontOrImage(syncId: number, symbolId: number, type: string, data: any): Promise<any> {
+    registerFont(syncId: number, data: any): Promise<any> {
+      throw new Error('This method is abstract');
+    }
+
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
       throw new Error('This method is abstract');
     }
 
@@ -688,18 +692,27 @@ module Shumway.Player {
       });
     }
 
-    registerFontOrImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
+    registerFont(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
       release || assert(symbol.syncId);
       symbol.resolveAssetPromise = new PromiseWrapper(); // TODO no need for wrapper here, change to Promise
-      this._gfxService.registerFontOrImage(symbol.syncId, symbol.id, data.type, data).then(function (result) {
+      this._gfxService.registerFont(symbol.syncId, data).then(function (result) {
         symbol.resolveAssetPromise.resolve(result);
       });
       // Fonts are immediately available in Firefox, so we can just mark the symbol as ready.
-      if (data.type === 'font' && inFirefox) {
+      if (inFirefox) {
         symbol.ready = true;
       } else {
         symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);
       }
+    }
+
+    registerImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
+      release || assert(symbol.syncId);
+      symbol.resolveAssetPromise = new PromiseWrapper(); // TODO no need for wrapper here, change to Promise
+      this._gfxService.registerImage(symbol.syncId, symbol.id, data).then(function (result) {
+        symbol.resolveAssetPromise.resolve(result);
+      });
+      symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);
     }
   }
 }

@@ -370,10 +370,23 @@ module Shumway.AVM2.AS.flash.display {
       release || assert(symbol, "Unknown symbol type " + data.type);
       this._dictionary[id] = symbol;
       if (symbol.ready === false) {
-        var resolver: Timeline.IAssetResolver = AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
-        resolver.registerFontOrImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
+        this._registerFontOrImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
       }
       return symbol;
+    }
+
+    private _registerFontOrImage(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
+      var resolver: Timeline.IAssetResolver = AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      switch (data.type) {
+        case 'font':
+          resolver.registerFont(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
+          break;
+        case 'image':
+          resolver.registerImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
+          break;
+        default:
+          throw new Error('Unsupported assert type: ' + data.type);
+      }
     }
 
     getRootSymbol(): flash.display.SpriteSymbol {

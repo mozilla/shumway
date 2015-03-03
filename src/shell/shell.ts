@@ -143,9 +143,14 @@ module Shumway.Shell {
       // console.log('videoControl');
     }
 
-    registerFontOrImage(syncId: number, symbolId: number, type: string, data: any): Promise<any> {
-      // console.log('registerFontOrImage');
+    registerFont(syncId: number, data: any): Promise<any> {
+      // console.log('registerFont');
       return Promise.resolve(undefined);
+    }
+
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+      // console.log('registerImage');
+      return Promise.resolve({width: 100, height: 50});
     }
 
     fscommand(command: string, args: string): void {

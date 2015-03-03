@@ -472,9 +472,8 @@ module Shumway.AVM2.AS.flash.display {
       var symbol = BitmapSymbol.FromData(data);
       this._imageSymbol = symbol;
       var resolver: Timeline.IAssetResolver = AVM2.instance.globals['Shumway.Player.Utils'];
-      resolver.registerFontOrImage(symbol, data);
+      resolver.registerImage(symbol, data);
       release || assert(symbol.resolveAssetPromise);
-      release || assert(symbol.ready === false);
     }
 
     private _applyDecodedImage(symbol: BitmapSymbol) {

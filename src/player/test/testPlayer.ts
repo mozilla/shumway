@@ -22,6 +22,7 @@ module Shumway.Player.Test {
 
   export class TestGFXService extends GFXServiceBase {
     private _worker;
+    private _fontOrImageRequests: PromiseWrapper<any>[];
 
     constructor() {
       super();
@@ -30,6 +31,7 @@ module Shumway.Player.Test {
       this._worker = Shumway.Player.Test.FakeSyncWorker.instance;
       this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
       this._worker.addEventListener('syncmessage', this._onSyncWorkerMessage.bind(this));
+      this._fontOrImageRequests = [];
     }
 
     update(updates: DataBuffer, assets: any[]): void {
@@ -70,18 +72,35 @@ module Shumway.Player.Test {
       });
     }
 
-    registerFontOrImage(syncId: number, symbolId: number, type: string, data: any): Promise<any> {
-      return new Promise<any>(function (resolve, reject) {
-        var message = {
-          type: 'registerFontOrImage',
-          syncId: syncId,
-          symbolId: symbolId,
-          assetType: type,
-          data: data,
-          resolve: resolve
-        };
-        this._worker.postSyncMessage(message);
-      }.bind(this));
+    registerFont(syncId: number, data: any): Promise<any> {
+      var requestId = this._fontOrImageRequests.length;
+      var result = new PromiseWrapper<any>();
+      this._fontOrImageRequests[requestId] = result;
+      var message = {
+        type: 'registerFontOrImage',
+        syncId: syncId,
+        assetType: 'font',
+        data: data,
+        requestId: requestId
+      };
+      this._worker.postMessage(message);
+      return result.promise;
+    }
+
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+      var requestId = this._fontOrImageRequests.length;
+      var result = new PromiseWrapper<any>();
+      this._fontOrImageRequests[requestId] = result;
+      var message = {
+        type: 'registerFontOrImage',
+        syncId: syncId,
+        symbolId: symbolId,
+        assetType: 'image',
+        data: data,
+        requestId: requestId
+      };
+      this._worker.postMessage(message);
+      return result.promise;
     }
 
     fscommand(command: string, args: string): void {
@@ -107,6 +126,12 @@ module Shumway.Player.Test {
           return;
         case 'displayParameters':
           this.processDisplayParameters(data.params);
+          break;
+        case 'registerFontOrImageResponse':
+          var request = this._fontOrImageRequests[data.requestId];
+          release || Debug.assert(request);
+          delete this._fontOrImageRequests[data.requestId];
+          request.resolve(data.result);
           break;
       }
     }

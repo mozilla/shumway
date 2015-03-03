@@ -23,6 +23,7 @@ module Shumway.Player.Window {
   export class WindowGFXService extends GFXServiceBase {
     private _window;
     private _parent;
+    private _fontOrImageRequests: PromiseWrapper<any>[];
 
     constructor(window, parent?) {
       super();
@@ -35,6 +36,7 @@ module Shumway.Player.Window {
       this._window.addEventListener('syncmessage', function (e) {
         this.onWindowMessage(e.detail, false);
       }.bind(this));
+      this._fontOrImageRequests = [];
     }
 
     update(updates: DataBuffer, assets: any[]): void {
@@ -85,19 +87,35 @@ module Shumway.Player.Window {
       return event.detail.result;
     }
 
-    registerFontOrImage(syncId: number, symbolId: number, type: string, data: any): Promise<any> {
-      return new Promise<any>(function (resolve, reject) {
-        var event = this._parent.document.createEvent('CustomEvent');
-        event.initCustomEvent('syncmessage', false, false, {
-          type: 'registerFontOrImage',
-          syncId: syncId,
-          symbolId: symbolId,
-          assetType: type,
-          data: data,
-          resolve: resolve
-        });
-        this._parent.dispatchEvent(event);
-      }.bind(this));
+    registerFont(syncId: number, data: any): Promise<any> {
+      var requestId = this._fontOrImageRequests.length;
+      var result = new PromiseWrapper<any>();
+      this._fontOrImageRequests[requestId] = result;
+      var message = {
+        type: 'registerFontOrImage',
+        syncId: syncId,
+        assetType: 'font',
+        data: data,
+        requestId: requestId
+      };
+      this._parent.postMessage(message, '*');
+      return result.promise;
+    }
+
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+      var requestId = this._fontOrImageRequests.length;
+      var result = new PromiseWrapper<any>();
+      this._fontOrImageRequests[requestId] = result;
+      var message = {
+        type: 'registerFontOrImage',
+        syncId: syncId,
+        symbolId: symbolId,
+        assetType: 'image',
+        data: data,
+        requestId: requestId
+      };
+      this._parent.postMessage(message, '*');
+      return result.promise;
     }
 
     fscommand(command: string, args: string): void {
