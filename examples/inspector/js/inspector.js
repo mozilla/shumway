@@ -186,9 +186,11 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
     showMessage("Running in the Interpreter");
   }
 
+  Shumway.SystemResourcesLoadingService.instance =
+    new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo, shellAbcPath);
+
   if (filename.endsWith(".abc")) {
-    libraryScripts = {};
-    Shumway.createAVM2(builtinPath, shellAbcPath, sysMode, appMode, function (avm2) {
+    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Shell, sysMode, appMode).then(function (avm2) {
       function runAbc(file, buffer) {
         avm2.applicationDomain.executeAbc(new Shumway.AVM2.ABC.AbcFile(new Uint8Array(buffer), file));
       }
@@ -201,7 +203,7 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
       }
     });
   } else if (filename.endsWith(".swf")) {
-    Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
+    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
       function runSWF(file, buffer) {
         var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
 
@@ -247,7 +249,7 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
       }
     });
   } else if (filename.endsWith(".js") || filename.endsWith("/")) {
-    Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
+    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
       executeUnitTests(file, avm2);
     });
   }

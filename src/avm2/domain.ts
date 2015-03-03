@@ -103,29 +103,6 @@ module Shumway.AVM2.Runtime {
     return null;
   }
 
-  function promiseFile(path, responseType) {
-    return new Promise(function (resolve, reject) {
-      SWF.enterTimeline('Load file', path);
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', path);
-      xhr.responseType = responseType;
-      xhr.onload = function () {
-        SWF.leaveTimeline();
-        var response = xhr.response;
-        if (response) {
-          if (responseType === 'json' && xhr.responseType !== 'json') {
-            // some browsers (e.g. Safari) have no idea what json is
-            response = JSON.parse(response);
-          }
-          resolve(response);
-        } else {
-          reject('Unable to load ' + path + ': ' + xhr.statusText);
-        }
-      };
-      xhr.send();
-    });
-  }
-
   enum StackFormat {
     SpiderMonkey,
     V8
@@ -197,12 +174,13 @@ module Shumway.AVM2.Runtime {
       return !!playerglobal;
     }
 
-    public static loadPlayerglobal(abcsPath, catalogPath) {
+    public static loadPlayerglobal(): Promise<any> {
       if (playerglobalLoadedPromise) {
         return Promise.reject('Playerglobal is already loaded');
       }
-      playerglobalLoadedPromise = Promise.all([
-        promiseFile(abcsPath, 'arraybuffer'), promiseFile(catalogPath, 'json')]).
+      return Promise.all([
+        SystemResourcesLoadingService.instance.load(SystemResourceId.PlayerglobalAbcs),
+        SystemResourcesLoadingService.instance.load(SystemResourceId.PlayerglobalManifest)]).
         then(function (result) {
           playerglobal = {
             abcs: result[0],
@@ -223,10 +201,7 @@ module Shumway.AVM2.Runtime {
               }
             }
           }
-        }, function (e) {
-          console.error(e);
         });
-      return playerglobalLoadedPromise;
     }
   }
 

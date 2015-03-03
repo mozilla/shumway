@@ -21,19 +21,20 @@ module Shumway {
   import assert = Shumway.Debug.assert;
   import ExecutionMode = Shumway.AVM2.Runtime.ExecutionMode;
 
-  export interface LibraryPathInfo {
-    abcs: string;
-    catalog: string;
+  export enum AVM2LoadLibrariesFlags {
+    Builtin = 1,
+    Playerglobal = 2,
+    Shell = 4
   }
 
-  export function createAVM2(builtinPath: string,
-                             libraryPath: any, /* LibraryPathInfo | string */
-                             sysMode: ExecutionMode, appMode: ExecutionMode,
-                             next: (avm2: AVM2) => void) {
+  export function createAVM2(libraries: AVM2LoadLibrariesFlags,
+                             sysMode: ExecutionMode,
+                             appMode: ExecutionMode): Promise<AVM2> {
     var avm2;
-    release || assert (builtinPath);
-    SWF.enterTimeline('Load file', builtinPath);
-    new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
+    var result = new PromiseWrapper<AVM2>();
+    release || assert (!!(libraries & AVM2LoadLibrariesFlags.Builtin));
+    SWF.enterTimeline('Load builton.abc file');
+    SystemResourcesLoadingService.instance.load(SystemResourceId.BuiltinAbc).then(function (buffer) {
       SWF.leaveTimeline();
       AVM2.initialize(sysMode, appMode);
       avm2 = AVM2.instance;
@@ -47,20 +48,24 @@ module Shumway {
 
       // If library is shell.abc, then just go ahead and run it now since
       // it's not worth doing it lazily given that it is so small.
-      if (typeof libraryPath === 'string') {
-        new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
-          avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), <string>libraryPath));
-          next(avm2);
-        });
+      if (!!(libraries & AVM2LoadLibrariesFlags.Shell)) {
+        SystemResourcesLoadingService.instance.load(SystemResourceId.ShellAbc).then(function (buffer) {
+          avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "shell.abc"));
+          result.resolve(avm2);
+        }, result.reject);
         return;
       }
 
-      var libraryPathInfo: LibraryPathInfo = libraryPath;
-      if (!AVM2.isPlayerglobalLoaded()) {
-        AVM2.loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog).then(function () {
-          next(avm2);
-        });
+      if (!!(libraries & AVM2LoadLibrariesFlags.Playerglobal) &&
+          !AVM2.isPlayerglobalLoaded()) {
+        AVM2.loadPlayerglobal().then(function () {
+          result.resolve(avm2);
+        }, result.reject);
+        return;
       }
-    });
+
+      result.resolve(avm2);
+    }, result.reject);
+    return result.promise;
   }
 }
