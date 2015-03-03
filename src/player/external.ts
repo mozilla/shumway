@@ -176,7 +176,7 @@ module Shumway.Player {
     }
 
     navigateTo(url: string, target: string) {
-      window.parent.open(this.resolveUrl(url), target || '_blank');
+      window.open(this.resolveUrl(url), target || '_blank');
     }
   }
 
