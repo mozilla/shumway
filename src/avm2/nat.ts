@@ -203,7 +203,8 @@ module Shumway.AVMX.AS {
     }
 
     static _init() {
-      this.dPrototype.axSetPublicProperty("hasOwnProperty", new this.securityDomain.AXFunction(ASObject.prototype.native_hasOwnProperty));
+      this.dPrototype.axSetPublicProperty("hasOwnProperty",
+                                          this.securityDomain.AXFunction.axBox(ASObject.prototype.native_hasOwnProperty));
       //this.dPrototype.axSetPublicProperty("propertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
       //this.dPrototype.axSetPublicProperty("setPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
       //this.dPrototype.axSetPublicProperty("isPrototypeOf", ASObject.prototype.native_isPrototypeOf);
@@ -1304,10 +1305,10 @@ module Shumway.AVMX.AS {
           value.push(a);
         }
       }
-      return new this.securityDomain.AXArray(value);
+      return this.securityDomain.AXArray.axBox(value);
     }
     slice(startIndex: number, endIndex: number) {
-      return new this.securityDomain.AXArray(this.value.slice(startIndex, endIndex));
+      return this.securityDomain.AXArray.axBox(this.value.slice(startIndex, endIndex));
     }
     join(sep: string) {
       return this.value.join(sep);
@@ -1337,7 +1338,7 @@ module Shumway.AVMX.AS {
       return this.value.forEach(callbackfn.value, thisArg);
     }
     map(callbackfn: {value}, thisArg?) {
-      return new this.securityDomain.AXArray(this.value.map(callbackfn.value, thisArg));
+      return this.securityDomain.AXArray.axBox(this.value.map(callbackfn.value, thisArg));
     }
     filter(callbackfn: {value: Function}, thisArg?) {
       var result = [];
@@ -1347,11 +1348,11 @@ module Shumway.AVMX.AS {
           result.push(o[i]);
         }
       }
-      return new this.securityDomain.AXArray(result);
+      return this.securityDomain.AXArray.axBox(result);
     }
 
     toLocaleString(): string {
-      var value = this.securityDomain.AXArray.coerce(this).value;
+      var value = this.securityDomain.AXArray.axCoerce(this).value;
 
       var out: string = "";
       for (var i = 0, n = value.length; i < n; i++) {
@@ -1371,7 +1372,7 @@ module Shumway.AVMX.AS {
       if (arguments.length === 0) {
         return undefined;
       }
-      return new this.securityDomain.AXArray(o.splice.apply(o, arguments));
+      return this.securityDomain.AXArray.axBox(o.splice.apply(o, arguments));
     }
 
     sort(): any {
@@ -1382,7 +1383,7 @@ module Shumway.AVMX.AS {
       }
       var compareFunction;
       var options = 0;
-      if (arguments[0] instanceof this.securityDomain.AXFunction) {
+      if (this.securityDomain.AXFunction.axIsInstanceOf(arguments[0])) {
         compareFunction = arguments[0].value;
       } else if (isNumber(arguments[0])) {
         options = arguments[0];

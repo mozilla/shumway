@@ -48,6 +48,59 @@ module Shumway.AVMX {
 
   import sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
+  function axApplyIdentity(self, args) {
+    return args[0];
+  }
+
+  function axBoxIdentity(args) {
+    return args[0];
+  }
+
+  function axBoxPrimitive(value) {
+    var boxed = Object.create(this.tPrototype);
+    boxed.value = value;
+    return boxed;
+  }
+
+  function axCoerceObject(x) {
+    if (x == null) {
+      return null;
+    }
+    return x;
+  }
+
+  function axApplyObject(_, args) {
+    var x = args[0];
+    if (x == null) {
+      return Object.create(this.tPrototype);
+    }
+    return x;
+  }
+
+  function axConstructObject(args) {
+    var x = args[0];
+    if (x == null) {
+      return Object.create(this.tPrototype);
+    }
+    return x;
+  }
+
+  export function asCoerceInt(x): number {
+    return x | 0;
+  }
+
+  export function asCoerceUint(x): number {
+    return x >>> 0;
+  }
+
+  export function asCoerceNumber(x): number {
+    return +x;
+  }
+
+  export function asCoerceBoolean(x): boolean {
+    return !!x;
+  }
+
   /**
    * Similar to |toString| but returns |null| for |null| or |undefined| instead
    * of "null" or "undefined".
@@ -68,25 +121,6 @@ module Shumway.AVMX {
     return x + '';
   }
 
-  function axCoerceObject(x) {
-    if (x == null) {
-      return null;
-    }
-    return x;
-  }
-
-  export function asCoerceInt(x): number {
-    return x | 0;
-  }
-
-  export function asCoerceUint(x): number {
-    return x >>> 0;
-  }
-
-  export function asCoerceNumber(x): number {
-    return +x;
-  }
-
   export function axIsTypeNumber(x): boolean {
     return typeof x === "number";
   }
@@ -99,20 +133,16 @@ module Shumway.AVMX {
     return typeof x === "number" && ((x >>> 0) === x);
   }
 
-  export function axIsTypeString(x): boolean {
-    return typeof x === "string";
-  }
-
   export function axIsTypeBoolean(x): boolean {
     return typeof x === "boolean";
   }
 
-  export function axFalse(): boolean {
-    return false;
+  export function axIsTypeString(x): boolean {
+    return typeof x === "string";
   }
 
-  export function asCoerceBoolean(x): boolean {
-    return !!x;
+  export function axFalse(): boolean {
+    return false;
   }
 
   export function axDefaultCompareFunction(a, b) {
@@ -214,24 +244,16 @@ module Shumway.AVMX {
   }
 
   /**
-   * These values are allowed to exist without being unboxed.
+   * These values are allowed to exist without being boxed.
    */
   function isPrimitiveJSValue(value: any) {
-    if (value === null || value === undefined || typeof value === "number" || typeof value === "string" || typeof value === "boolean") {
-      return true;
-    }
-    return false;
+    return value === null || value === undefined || typeof value === "number" ||
+           typeof value === "string" || typeof value === "boolean";
+
   }
 
   function isValidASValue(value: any) {
-    if (isPrimitiveJSValue(value)) {
-      return true;
-    }
-    // Values that have Object on the prototype chain are not allowed.
-    if (value instanceof Object) {
-      return (<any>value).axClassBranding === AVMX.AXClassBranding;
-    }
-    return true;
+    return AXBaseProto.isPrototypeOf(value) || isPrimitiveJSValue(value);
   }
 
   function checkValue(value: any) {
@@ -281,7 +303,7 @@ module Shumway.AVMX {
     if (t) {
       return this[t.getName().getMangledName()];
     }
-    return this.value[mn.getPublicMangledName()];
+    return this[mn.getPublicMangledName()];
   }
 
   function axArraySetProperty(mn: Multiname, value: any) {
@@ -293,7 +315,7 @@ module Shumway.AVMX {
       this[t.getName().getMangledName()] = value;
       return;
     }
-    this.value[mn.getPublicMangledName()] = value;
+    this[mn.getPublicMangledName()] = value;
   }
 
   function axFunctionApply(self: any, args?: any): any {
@@ -463,7 +485,7 @@ module Shumway.AVMX {
       } else {
         method = AS.getMethodOrAccessorNative(methodTraitInfo);
       }
-      assert(method, "Cannot find native: " + methodTraitInfo);
+      release || assert(method, "Cannot find native: " + methodTraitInfo);
     } else {
       method = function () {
         var self = this === jsGlobal ? scope.global.object : this;
@@ -488,7 +510,8 @@ module Shumway.AVMX {
         var method = createMethodForTrait(<MethodTraitInfo>t, scope);
         var mangledName = t.getName().getMangledName();
         if (t.kind === TRAIT.Method) {
-          defineNonEnumerableProperty(object, mangledName, new object.securityDomain.AXFunction(method));
+          defineNonEnumerableProperty(object, mangledName,
+                                      object.securityDomain.AXFunction.axBox(method));
         } else {
           defineNonEnumerableGetterOrSetter(object, mangledName, method, t.kind === TRAIT.Getter)
         }
@@ -499,6 +522,18 @@ module Shumway.AVMX {
   // The Object that's at the root of all AXObjects' prototype chain, regardless of their
   // SecurityDomain.
   export var AXBaseProto = Object.create(null);
+
+  var D = defineNonEnumerableProperty;
+  D(AXBaseProto, "axHasPropertyInternal", axHasPropertyInternal);
+  D(AXBaseProto, "axSetProperty", axSetProperty);
+  D(AXBaseProto, "axSetPublicProperty", axSetPublicProperty);
+  D(AXBaseProto, "axGetProperty", axGetProperty);
+  D(AXBaseProto, "axSetSlot", axSetSlot);
+  D(AXBaseProto, "axGetSlot", axGetSlot);
+  D(AXBaseProto, "axCallProperty", axCallProperty);
+  D(AXBaseProto, "axConstructProperty", axConstructProperty);
+  D(AXBaseProto, "axResolveMultiname", axResolveMultiname);
+  D(AXBaseProto, "isPrototypeOf", Object.prototype.isPrototypeOf);
 
   AXBaseProto.$BgtoString = function() {
     return "[object Object]";
@@ -513,37 +548,34 @@ module Shumway.AVMX {
     return this.$BgvalueOf.axCall(this);
   };
 
-  export interface AXObject {
+  export interface AXObject extends ITraits {
     $BgtoString: AXCallable;
     $BgvalueOf: AXCallable;
   }
 
-  export interface AXGlobal extends ITraits, AXObject {
+  export interface AXGlobal extends AXObject {
     securityDomain: SecurityDomain;
     applicationDomain: ApplicationDomain;
     scriptInfo: ScriptInfo;
     scope: Scope;
   }
 
-  export interface AXClass extends ITraits, Function {
+  export interface AXClass extends AXObject {
     scope: Scope;
     superClass: AXClass;
     classInfo: ClassInfo;
     tPrototype: AXObject;
     dPrototype: AXObject;
-    prototype: AXObject;
+    axBox: any;
     axConstruct: any;
     axApply: any;
     axCoerce: any;
     axIsType: any;
     axAsType: any;
     axIsInstanceOf: any;
-    axClassBranding: Object;
   }
 
-  export var AXClassBranding = Object.create(null);
-
-  export interface AXFunction extends ITraits {
+  export interface AXFunction extends ITraits, AXObject {
     axApply(thisArg: any, argArray?: any[]): any;
     axCall(thisArg: any): any;
   }
@@ -556,18 +588,22 @@ module Shumway.AVMX {
     axCall(thisArg: any): any;
   }
 
+  // Add the |axApply| and |axCall| methods on the function prototype so that we can treat
+  // Functions as AXCallables.
+  Function.prototype.axApply = Function.prototype.apply;
+  Function.prototype.axCall = Function.prototype.call;
+
   export interface AXActivation extends ITraits {
 
   }
 
-  function initializeJavaScriptGlobal() {
-    // Add the |axApply| and |axCall| methods on the function prototype so that we can treat
-    // Functions as AXFunctions.
-    Function.prototype.axApply = Function.prototype.apply;
-    Function.prototype.axCall = Function.prototype.call;
+  function AXClassToString() {
+    return "[class " + this.classInfo.instanceInfo.getName().name + "]";
   }
 
-  initializeJavaScriptGlobal();
+  function AXClassPrototypeToString() {
+    return "[" + this.classInfo.instanceInfo.getName().name + ".prototype]";
+  }
 
   /**
    * Provides security isolation between application domains.
@@ -575,17 +611,19 @@ module Shumway.AVMX {
   export class SecurityDomain {
     public system: ApplicationDomain;
     public application: ApplicationDomain;
-    public AXObject;
-    public AXArray;
-    public AXClass;
-    public AXFunction;
-    public AXNumber;
-    public AXString;
-    public AXBoolean;
-    public AXPrimitiveBox;
+    public AXObject: AXClass;
+    public AXArray: AXClass;
+    public AXClass: AXClass;
+    public AXFunction: AXClass;
+    public AXNumber: AXClass;
+    public AXString: AXClass;
+    public AXBoolean: AXClass;
 
+    private AXPrimitiveBox;
     private AXGlobalProto;
     private AXActivationProto;
+    private objectProto: AXObject;
+    private classProto: AXObject;
 
     private nativeClasses: any;
 
@@ -600,9 +638,41 @@ module Shumway.AVMX {
     }
 
     createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
-      var axClass = new this.AXClass(classInfo, superClass, scope);
+      var axClass: AXClass;
 
-      var classScope = new Scope(scope, axClass);
+      var className = classInfo.instanceInfo.getName().name;
+      if (this.nativeClasses[className]) {
+        axClass = this.nativeClasses[className];
+      } else {
+        axClass = Object.create(this.AXClass.dPrototype);
+        axClass.dPrototype = Object.create(this.objectProto);
+        axClass.tPrototype = Object.create(axClass.dPrototype);
+        var classScope = new Scope(scope, axClass);
+        axClass.axConstruct = this.createFunction(<MethodInfo>classInfo.instanceInfo.initializer,
+                                                  classScope, false);
+        axClass.axCoerce = function () {
+          assert(false, "TODO: Coercing constructor.");
+        };
+      }
+
+      axClass.classInfo = (<any>axClass.dPrototype).classInfo = classInfo;
+      axClass.superClass = superClass;
+      axClass.scope = scope;
+
+      // Prepare static traits.
+      var staticTraits = this.AXClass.classInfo.instanceInfo.traits.concat(classInfo.traits);
+      staticTraits.resolve();
+      axClass.traits = staticTraits;
+      applyTraits(axClass, staticTraits, scope);
+
+      // Prepare instance traits.
+      var instanceTraits = superClass ?
+                           superClass.classInfo.instanceInfo.runtimeTraits.concat(classInfo.instanceInfo.traits) :
+                           classInfo.instanceInfo.traits;
+      instanceTraits.resolve();
+      classInfo.instanceInfo.runtimeTraits = instanceTraits;
+      axClass.dPrototype.traits = instanceTraits;
+      applyTraits(axClass.tPrototype, instanceTraits, scope);
 
       // Run the static initializer.
       interpret(axClass, classInfo.getInitializer(), scope, [axClass]);
@@ -610,7 +680,7 @@ module Shumway.AVMX {
     }
 
     createFunction(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean): AXFunction {
-      return new this.AXFunction(function () {
+      return this.AXFunction.axBox(function () {
         var self = this === jsGlobal ? scope.global.object : this;
         return interpret(self, methodInfo, scope, sliceArguments(arguments));
       });
@@ -630,29 +700,26 @@ module Shumway.AVMX {
       if (v == undefined) {
         return v;
       }
-      if (Object.prototype.isPrototypeOf.call(this.AXObject.dPrototype, v)) {
-        return v;
-      }
-      if (v.axClassBranding === AXClassBranding) {
+      if (AXBaseProto.isPrototypeOf(v)) {
         return v;
       }
       if (v instanceof Array) {
-        return new this.AXArray(v);
+        return this.AXArray.axBox(v);
       }
       if (typeof v === "number") {
-        return new this.AXNumber(v);
+        return this.AXNumber.axBox(v);
       }
       if (typeof v === "boolean") {
-        return new this.AXBoolean(v);
+        return this.AXBoolean.axBox(v);
       }
       if (typeof v === "string") {
-        return new this.AXString(v);
+        return this.AXString.axBox(v);
       }
       assert(false, "Cannot box: " + v);
     }
 
     isPrimitive(v: any) {
-      return isPrimitiveJSValue(v) || v instanceof this.AXPrimitiveBox;
+      return isPrimitiveJSValue(v) || this.AXPrimitiveBox.dPrototype.isPrototypeOf(v);
     }
 
     createAXGlobal(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
@@ -667,277 +734,113 @@ module Shumway.AVMX {
       return global;
     }
 
-    defineClass(exportName, name, value: AXClass, axApply, axConstruct, axCoerce, axIsType, axIsInstanceOf) {
-      this[exportName] = this.nativeClasses[name] = value;
-      value.dPrototype.$BgtoString = function () {
-        return "[" + name + ".prototype]";
-      };
+    /**
+     * Prepares the dynamic Class prototype that all Class instances (including Class) have in
+     * their prototype chain.
+     *
+     * This prototype defines the default hooks for all classes. Classes can override some or
+     * all of them.
+     */
+    prepareClassProto() {
+      var classProto: AXObject = Object.create(this.objectProto);
+      classProto.$BgtoString = AXClassToString;
+
       var D = defineNonEnumerableProperty;
+      D(classProto, "axApply", axApplyIdentity);
+      D(classProto, "axBox", axBoxIdentity);
+      D(classProto, "axCoerce", axCoerce);
+      D(classProto, "axIsType", axIsTypeObject);
+      D(classProto, "axAsType", axAsType);
+      D(classProto, "axIsInstanceOf", axIsInstanceOfObject);
 
-      D(value.__proto__, "securityDomain", this);
-
-
-      D(value, "axApply", axApply);
-      D(value, "axConstruct", axConstruct);
-      D(value, "axCoerce", axCoerce);
-      D(value, "axIsType", axIsType);
-      D(value, "axAsType", axAsType);
-      D(value, "axIsInstanceOf", axIsInstanceOf);
-
-      D(value, "axClassBranding", AXClassBranding);
-      D(value, "axHasPropertyInternal", axHasPropertyInternal);
-      D(value, "axSetProperty", axSetProperty);
-      D(value, "axSetPublicProperty", axSetPublicProperty);
-      D(value, "axGetProperty", axGetProperty);
-      D(value, "axCallProperty", axCallProperty);
-      D(value, "axConstructProperty", axConstructProperty);
-      D(value, "axResolveMultiname", axResolveMultiname);
+      this.classProto = classProto;
     }
 
-    definePrimitiveClass(exportName, name, value, axConvert, axCoerce, axIsType, axIsInstanceOf) {
-      this.defineClass(exportName, name, value,
-                       function axApply(_ , args: any []) {
-                         return axConvert(args ? args[0] : undefined);
-                       },
-                       function axConstruct(args: any []) {
-                         return axConvert(args ? args[0] : undefined);
-                       },
-                       axCoerce,
-                       axIsType,
-                       axIsInstanceOf
-      );
+    prepareNativeClass(exportName: string, name: string, instanceProto: AXObject) {
+      var axClass: AXClass = Object.create(this.classProto);
+      // For Object, we've already created the instance prototype to break circular dependencies
+      // between Object and Class.
+      axClass.dPrototype = name === 'Object' ? instanceProto : Object.create(instanceProto);
+      axClass.tPrototype = Object.create(axClass.dPrototype);
+      this[exportName] = this.nativeClasses[name] = axClass;
+      axClass.dPrototype.$BgtoString = AXClassPrototypeToString;
+      return axClass;
+    }
+
+    preparePrimitiveClass(exportName: string, name: string, convert, coerce, isType, isInstanceOf) {
+      var axClass = this.prepareNativeClass(exportName, name, this.AXPrimitiveBox.dPrototype);
+      var D = defineNonEnumerableProperty;
+      D(axClass, 'axBox', axBoxPrimitive);
+      D(axClass, "axApply", function axApply(_ , args: any []) {
+        return convert(args ? args[0] : undefined);
+      });
+      D(axClass, "axConstruct", function axConstruct(args: any []) {
+        return convert(args ? args[0] : undefined);
+      });
+      D(axClass, "axCoerce", coerce);
+      D(axClass, "axIsType", isType);
+      D(axClass, "axIsInstanceOf", isInstanceOf);
+      D(axClass.tPrototype, "$BgtoString", function() { return this.value.toString(); });
     }
 
     /**
      * Configures all the builtin Objects.
      */
     initialize() {
-      var nativeClasses = this.nativeClasses;
+      var D = defineNonEnumerableProperty;
+      var P = function setPublicProperty(object, name, value) {
+        object.axSetPublicProperty(name, AXFunction.axBox(value));
+      };
+
+      // Some facts:
+      // - The Class constructor is itself an instance of Class.
+      // - The Class constructor is an instance of Object.
+      // - The Object constructor is an instance of Class.
+      // - The Object constructor is an instance of Object.
+      // The basic prototype that all objects in this security domain have in common.
+      var objectProto = this.objectProto = Object.create(AXBaseProto);
+      (<any>this.objectProto).securityDomain = this;
+      this.prepareClassProto();
+      var AXClass = this.prepareNativeClass("AXClass", "Class", objectProto);
       var classClassInfo = this.system.findClassInfo("Class");
-      var staticClassClassTraits = classClassInfo.instanceInfo.traits;
-
       classClassInfo.instanceInfo.traits.resolve();
-
-      // Object
-      var AXObject: AXClass = <any>function axObject() {};
-      AXObject.dPrototype = Object.create(AXBaseProto);
-      AXObject.tPrototype = Object.create(AXObject.dPrototype);
-      AXObject.prototype = AXObject.tPrototype;
-
-      var axPrototype: any = AXObject.dPrototype;
-
-      axPrototype.securityDomain = this;
-
-      var axObjectPrototype: any = AXObject.prototype;
+      AXClass.classInfo = classClassInfo;
+      var AXObject = this.prepareNativeClass("AXObject", "Object", objectProto);
+      // Object(null) creates an object, and this behaves differently than:
+      // (function (x: Object) { trace (x); })(null) which prints null.
+      D(AXObject, "axApply", axApplyObject);
+      D(AXObject, "axConstruct", axConstructObject);
+      D(AXObject, "axCoerce", axCoerceObject);
 
       // Debugging Helper
-      axObjectPrototype.trace = function trace() {
+      release || (this.objectProto['trace'] = function trace() {
         var self = this;
         var writer = new IndentingWriter();
         this.traits.traits.forEach(t => {
           writer.writeLn(t + ": " + self[t.getName().getMangledName()]);
         });
-      };
+      });
 
-      this.AXGlobalProto = Object.create(AXObject.dPrototype);
+      this.AXGlobalProto = Object.create(this.objectProto);
       this.AXGlobalProto.$BgtoString = function() {
         return '[object global]';
       };
 
-      this.AXActivationProto = Object.create(AXObject.dPrototype);
+      this.AXActivationProto = Object.create(this.objectProto);
       this.AXActivationProto.$BgtoString = function() {
         return '[Activation]';
       };
 
-      // Class
-      var AXClass: AXClass = <any>function axClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope) {
-        var className = classInfo.instanceInfo.getName().name;
-
-        var self = this;
-        if (nativeClasses[className]) {
-          self = nativeClasses[className];
-          self.instanceConstructor = self;
-        } else {
-          self.instanceConstructor = function () {
-            assert("TODO: Coercing constructor.");
-          };
-        }
-
-        self.scope = scope;
-        self.classInfo = classInfo;
-        self.superClass = superClass;
-        var needsPrototypes = !self.dPrototype;
-        if (needsPrototypes) {
-          self.dPrototype = Object.create(superClass.dPrototype);
-          self.tPrototype = Object.create(self.dPrototype);
-        }
-
-        // Prepare static traits.
-        var staticTraits = staticClassClassTraits.concat(classInfo.traits);
-        staticTraits.resolve();
-        self.traits = staticTraits;
-        applyTraits(self, staticTraits, scope);
-
-        // Prepare instance traits.
-        var instanceTraits = superClass ? superClass.classInfo.instanceInfo.runtimeTraits.concat(classInfo.instanceInfo.traits)
-                                        : classInfo.instanceInfo.traits;
-        instanceTraits.resolve();
-        classInfo.instanceInfo.runtimeTraits = instanceTraits;
-        self.tPrototype.traits = instanceTraits;
-        applyTraits(self.tPrototype, instanceTraits, scope);
-        return self;
-      };
-
-      AXClass.dPrototype = Object.create(AXObject.tPrototype);
-      AXClass.tPrototype = Object.create(AXClass.dPrototype);
-      AXClass.prototype = AXClass.tPrototype;
-      AXClass.prototype.$BgtoString = function () {
-        return "[class " + this.classInfo.instanceInfo.getName().name + "]";
-      };
-      var axClassPrototype: any = AXClass.prototype;
-
-      // We modify the __proto__ of class constructor functions to point to AXClass.prototype. This means that they no longer
-      // have the |call| and |apply| functions. We add them back here for convenience.
-      // TODO: this comment is no longer true, but we should replace it with something about
-      // classes not being functions and you having to use `axConstruct` for instantiation.
-      // ... once that is, in fact, true.
-      axClassPrototype.call = Function.prototype.call;
-      axClassPrototype.apply = Function.prototype.apply;
-
-      // Array
-      var AXArray: AXClass = <any>function axArray(v: Array<any>) {
-        this.value = v;
-      };
-      AXArray.dPrototype = Object.create(AXObject.tPrototype);
-      // Array.prototype is an Array, and behaves like one.
-      AXArray.dPrototype['value'] = [];
-      AXArray.tPrototype = Object.create(AXArray.dPrototype);
-      AXArray.prototype = AXArray.tPrototype;
-      AXArray.prototype.$BgtoString = function () {
-        return this.value.toString();
-      };
-
-      var AXFunction: AXClass = <any>function axFunction(v: Function) {
-        this.value = v;
-      };
-      AXFunction.dPrototype = Object.create(AXObject.tPrototype);
-      AXFunction.tPrototype = Object.create(AXFunction.dPrototype);
-      AXFunction.prototype = AXFunction.tPrototype;
-      AXFunction.prototype.$BgtoString = function () {
+      var AXFunction = this.prepareNativeClass("AXFunction", "Function", objectProto);
+      D(AXFunction, "axBox", axBoxPrimitive);
+      D(AXFunction.dPrototype, "axCall", axFunctionCall);
+      D(AXFunction.dPrototype, "axApply", axFunctionApply);
+      D(AXFunction.tPrototype, '$BgtoString', AXFunction.axBox(function () {
         return "[Function Object]";
-      };
+      }));
 
-      // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder base class
-      // to help us with instanceof tests.
-      var AXPrimitiveBox = <any>function axPrimitiveBox() {};
-      AXPrimitiveBox.dPrototype = Object.create(AXObject.tPrototype);
-      AXPrimitiveBox.tPrototype = Object.create(AXPrimitiveBox.dPrototype);
-      AXPrimitiveBox.prototype = AXPrimitiveBox.tPrototype;
-
-      var AXBoolean = <any>function axBoolean(v: boolean) { this.value = v; };
-      AXBoolean.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
-      AXBoolean.tPrototype = Object.create(AXBoolean.dPrototype);
-      AXBoolean.prototype = AXBoolean.tPrototype;
-      AXBoolean.prototype.$BgtoString = function () { return this.value.toString(); };
-
-      var AXNumber = <any>function axNumber(v: number) { this.value = v; };
-      AXNumber.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
-      AXNumber.tPrototype = Object.create(AXNumber.dPrototype);
-      AXNumber.prototype = AXNumber.tPrototype;
-      AXNumber.prototype.$BgtoString = function () { return this.value.toString(); };
-
-      var AXInt = <any>function axInt(v: number) { this.value = v; };
-      AXInt.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
-      AXInt.tPrototype = Object.create(AXInt.dPrototype);
-      AXInt.prototype = AXInt.tPrototype;
-      AXInt.prototype.$BgtoString = function () { return this.value.toString(); };
-
-      var AXUint = <any>function axUint(v: number) { this.value = v; };
-      AXUint.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
-      AXUint.tPrototype = Object.create(AXUint.dPrototype);
-      AXUint.prototype = AXUint.tPrototype;
-      AXUint.prototype.$BgtoString = function () { return this.value.toString(); };
-
-      var AXString = <any>function axString(v: string) { this.value = v; };
-      AXString.dPrototype = Object.create(AXPrimitiveBox.tPrototype);
-      AXString.tPrototype = Object.create(AXString.dPrototype);
-      AXString.prototype = AXString.tPrototype;
-      AXString.prototype.$BgtoString = function () { return this.value; };
-
-      function axApplyIdentity(self, args) {
-        return args[0];
-      }
-
-      function axConstructIdentity(args) {
-        return args[0];
-      }
-
-      this.defineClass("AXClass", "Class", AXClass, axApplyIdentity, axConstructIdentity, axCoerceObject, axIsTypeObject, axIsInstanceOfObject);
-      this.defineClass("AXFunction", "Function", AXFunction, axApplyIdentity, axConstructIdentity, axCoerceObject, axIsTypeObject, axIsInstanceOfObject);
-      this.defineClass("AXArray", "Array", AXArray, axApplyIdentity, axConstructIdentity, axCoerceObject, axIsTypeObject, axIsInstanceOfObject);
-
-      this.defineClass("AXPrimitiveBox", "PrimitiveBox", AXPrimitiveBox, null, null, null, null, null);
-
-      // AXObject is not technically a primitive class but it needs a coercing apply/constructor.
-
-      // Object(null) creates an object, and this behaves differently than: (function (x: Object) { trace (x); })(null) which prints null.
-      function asSpecialCoerceObject(x) {
-        if (x == null) {
-          return new self.AXObject();
-        }
-        return x;
-      }
-      this.definePrimitiveClass("AXObject", "Object", AXObject, asSpecialCoerceObject, axCoerceObject, axIsTypeObject, axIsInstanceOfObject);
-      this.definePrimitiveClass("AXNumber", "Number", AXNumber, asCoerceNumber, asCoerceNumber, axIsTypeNumber, axIsTypeNumber);
-      this.definePrimitiveClass("AXInt", "int", AXInt, asCoerceInt, asCoerceInt, axIsTypeInt, axFalse);
-      this.definePrimitiveClass("AXUint", "uint", AXUint, asCoerceUint, asCoerceUint, axIsTypeUint, axFalse);
-      this.definePrimitiveClass("AXString", "String", AXString, asConvertString, asCoerceString, axIsTypeString, axIsTypeString);
-      this.definePrimitiveClass("AXBoolean", "Boolean", AXBoolean, asCoerceBoolean, asCoerceBoolean, axIsTypeBoolean, axIsTypeBoolean);
-
-      var D = defineNonEnumerableProperty;
-
-      D(AXObject.dPrototype, "axHasPropertyInternal", axHasPropertyInternal);
-      D(AXObject.dPrototype, "axSetProperty", axSetProperty);
-      D(AXObject.dPrototype, "axSetPublicProperty", axSetPublicProperty);
-      D(AXObject.dPrototype, "axGetProperty", axGetProperty);
-      D(AXObject.dPrototype, "axSetSlot", axSetSlot);
-      D(AXObject.dPrototype, "axGetSlot", axGetSlot);
-      D(AXObject.dPrototype, "axCallProperty", axCallProperty);
-      D(AXObject.dPrototype, "axConstructProperty", axConstructProperty);
-      D(AXObject.dPrototype, "axResolveMultiname", axResolveMultiname);
-
-      var self = this;
-      var P = function setPublicProperty(object, name, value) {
-        object.axSetPublicProperty(name, new self.AXFunction(value));
-      };
-
-      var Ap = AS.ASArray.prototype;
-
-      P(AXArray.dPrototype, "push", Ap.push);
-      P(AXArray.dPrototype, "pop", Ap.pop);
-      P(AXArray.dPrototype, "shift", Ap.shift);
-      P(AXArray.dPrototype, "unshift", Ap.unshift);
-      P(AXArray.dPrototype, "reverse", Ap.reverse);
-      P(AXArray.dPrototype, "concat", Ap.concat);
-      P(AXArray.dPrototype, "slice", Ap.slice);
-      P(AXArray.dPrototype, "join", Ap.join);
-      P(AXArray.dPrototype, "toString", Ap.toString);
-      P(AXArray.dPrototype, "indexOf", Ap.indexOf);
-      P(AXArray.dPrototype, "lastIndexOf", Ap.lastIndexOf);
-      P(AXArray.dPrototype, "every", Ap.every);
-      P(AXArray.dPrototype, "some", Ap.some);
-      P(AXArray.dPrototype, "forEach", Ap.forEach);
-      P(AXArray.dPrototype, "map", Ap.map);
-      P(AXArray.dPrototype, "filter", Ap.filter);
-      P(AXArray.dPrototype, "sort", Ap.sort);
-      P(AXArray.dPrototype, "sortOn", Ap.sortOn);
-
-      D(AXArray.prototype, "axGetProperty", axArrayGetProperty);
-      D(AXArray.prototype, "axSetProperty", axArraySetProperty);
-
-      D(AXFunction.prototype, "axCall", axFunctionCall);
-      D(AXFunction.prototype, "axApply", axFunctionApply);
-      D(AXFunction.prototype, "axConstruct", axFunctionConstruct);
+      D(AXFunction, "axConstruct", function() { return Object.create(this.tPrototype);});
+      D(AXFunction.dPrototype, "axConstruct", axFunctionConstruct);
 
       P(AXFunction.dPrototype, "call", function (self, a, b, c) {
         if (this.securityDomain.isPrimitive(self)) {
@@ -959,6 +862,52 @@ module Shumway.AVMX {
         }
         return this.value.apply(self, args.value);
       });
+
+      var AXArray = this.prepareNativeClass("AXArray", "Array", objectProto);
+      D(AXArray, 'axBox', axBoxPrimitive);
+      AXArray.tPrototype.$BgtoString = AXFunction.axBox(function () {
+        return this.value.toString();
+      });
+      // Array.prototype is an Array, and behaves like one.
+      AXArray.dPrototype['value'] = [];
+      var Ap = AS.ASArray.prototype;
+      P(AXArray.dPrototype, "push", Ap.push);
+      P(AXArray.dPrototype, "pop", Ap.pop);
+      P(AXArray.dPrototype, "shift", Ap.shift);
+      P(AXArray.dPrototype, "unshift", Ap.unshift);
+      P(AXArray.dPrototype, "reverse", Ap.reverse);
+      P(AXArray.dPrototype, "concat", Ap.concat);
+      P(AXArray.dPrototype, "slice", Ap.slice);
+      P(AXArray.dPrototype, "join", Ap.join);
+      P(AXArray.dPrototype, "toString", Ap.toString);
+      P(AXArray.dPrototype, "indexOf", Ap.indexOf);
+      P(AXArray.dPrototype, "lastIndexOf", Ap.lastIndexOf);
+      P(AXArray.dPrototype, "every", Ap.every);
+      P(AXArray.dPrototype, "some", Ap.some);
+      P(AXArray.dPrototype, "forEach", Ap.forEach);
+      P(AXArray.dPrototype, "map", Ap.map);
+      P(AXArray.dPrototype, "filter", Ap.filter);
+      P(AXArray.dPrototype, "sort", Ap.sort);
+      P(AXArray.dPrototype, "sortOn", Ap.sortOn);
+
+      D(AXArray.dPrototype, "axGetProperty", axArrayGetProperty);
+      D(AXArray.dPrototype, "axSetProperty", axArraySetProperty);
+
+      // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder
+      // base class to help us with instanceof tests.
+      var AXPrimitiveBox = this.prepareNativeClass("AXPrimitiveBox", "PrimitiveBox", objectProto);
+      D(AXPrimitiveBox.dPrototype, '$BgtoString',
+        AXFunction.axBox(function () { return this.value.toString(); }));
+      var AXBoolean = this.preparePrimitiveClass("AXBoolean", "Boolean", asCoerceBoolean,
+                                                 asCoerceBoolean, axIsTypeBoolean, axIsTypeBoolean);
+      var AXString = this.preparePrimitiveClass("AXString", "String", asConvertString,
+                                                 asCoerceString, axIsTypeString, axIsTypeString);
+      var AXNumber = this.preparePrimitiveClass("AXNumber", "Number", asCoerceNumber,
+                                                asCoerceNumber, axIsTypeNumber, axIsTypeNumber);
+      var AXInt = this.preparePrimitiveClass("AXInt", "int", asCoerceInt, asCoerceInt,
+                                             axIsTypeInt, axFalse);
+      var AXUint = this.preparePrimitiveClass("AXUint", "uint", asCoerceUint, asCoerceUint,
+                                              axIsTypeUint, axFalse);
     }
   }
 
