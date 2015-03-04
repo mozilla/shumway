@@ -375,9 +375,6 @@ module Shumway.AVMX {
             popNameInto(stack, abc.getMultiname(index), rn);
             stack[stack.length - 1] = securityDomain.box(stack[stack.length - 1]).axConstructProperty(rn, args);
             break;
-          //case Bytecode.callsuperid:
-          //  Shumway.Debug.notImplemented("Bytecode.callsuperid");
-          //  break;
           // case Bytecode.CALLPROPLEX:
           case Bytecode.CALLPROPERTY:
           case Bytecode.CALLPROPVOID:
@@ -393,17 +390,20 @@ module Shumway.AVMX {
               stack[stack.length - 1] = result;
             }
             break;
-          //case Bytecode.callsuper:
-          //case Bytecode.callsupervoid:
-          //  popManyInto(stack, bc.argCount, args);
-          //  popNameInto(stack, multinames[bc.index], mn);
-          //  result = stack.pop().asCallSuper (
-          //    savedScope, mn.namespaces, mn.name, mn.flags, args
-          //  );
-          //  if (op !== Bytecode.callsupervoid) {
-          //    stack.push(result);
-          //  }
-          //  break;
+          case Bytecode.CALLSUPER:
+          case Bytecode.CALLSUPERVOID:
+            index = u30();
+            argCount = u30();
+            popManyInto(stack, argCount, args);
+            popNameInto(stack, abc.getMultiname(index), rn);
+            var receiver = stack[stack.length - 1];
+            result = securityDomain.box(receiver).axCallSuper(rn, savedScope, args);
+            if (bc === Bytecode.CALLSUPERVOID) {
+              stack.length--;
+            } else {
+              stack[stack.length - 1] = result;
+            }
+            break;
           //case Bytecode.applytype:
           //  popManyInto(stack, bc.argCount, args);
           //  stack[stack.length - 1] = applyType(method, stack[stack.length - 1], args);

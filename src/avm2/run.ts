@@ -353,6 +353,12 @@ module Shumway.AVMX {
     return this[this.axResolveMultiname(mn)].axApply(this, args);
   }
 
+  function axCallSuper(mn: Multiname, scope: Scope, args: any []): any {
+    var name = this.axResolveMultiname(mn);
+    var fun = (<AXClass>scope.parent.object).tPrototype[name];
+    return fun.axApply(this, args);
+  }
+
   function axConstructProperty(mn: Multiname, args: any []): any {
     return this[this.axResolveMultiname(mn)].axConstruct(args);
   }
@@ -443,15 +449,6 @@ module Shumway.AVMX {
     return Object.isPrototypeOf.call(this.dPrototype, this.securityDomain.box(x));
   }
 
-  //defineNonEnumerableProperty(Object.prototype, "axHasPropertyInternal", axHasPropertyInternal);
-  //defineNonEnumerableProperty(Object.prototype, "axSetProperty", axSetProperty);
-  //defineNonEnumerableProperty(Object.prototype, "axSetPublicProperty", axSetPublicProperty);
-  //defineNonEnumerableProperty(Object.prototype, "axGetProperty", axGetProperty);
-  //defineNonEnumerableProperty(Object.prototype, "axCallProperty", axCallProperty);
-  //
-  //defineNonEnumerableProperty(Function.prototype, "axCall", Function.prototype.call);
-  //defineNonEnumerableProperty(Function.prototype, "axApply", Function.prototype.apply);
-
   /**
    * All objects with Traits must implement this interface.
    */
@@ -463,7 +460,7 @@ module Shumway.AVMX {
   export class Scope {
     parent: Scope;
     global: Scope;
-    object: Object;
+    object: AXObject;
     isWith: boolean;
     cache: any;
 
@@ -608,6 +605,7 @@ module Shumway.AVMX {
   D(AXBasePrototype, "axSetSlot", axSetSlot);
   D(AXBasePrototype, "axGetSlot", axGetSlot);
   D(AXBasePrototype, "axCallProperty", axCallProperty);
+  D(AXBasePrototype, "axCallSuper", axCallSuper);
   D(AXBasePrototype, "axConstructProperty", axConstructProperty);
   D(AXBasePrototype, "axResolveMultiname", axResolveMultiname);
   D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
@@ -785,7 +783,7 @@ module Shumway.AVMX {
       var staticTraits = this.AXClass.classInfo.instanceInfo.traits.concat(classInfo.traits);
       staticTraits.resolve();
       axClass.traits = staticTraits;
-      applyTraits(axClass, staticTraits, scope);
+      applyTraits(axClass, staticTraits, classScope);
 
       // Prepare instance traits.
       var instanceTraits = superClass ?
@@ -794,7 +792,7 @@ module Shumway.AVMX {
       instanceTraits.resolve();
       classInfo.instanceInfo.runtimeTraits = instanceTraits;
       axClass.tPrototype.traits = instanceTraits;
-      applyTraits(axClass.tPrototype, instanceTraits, scope);
+      applyTraits(axClass.tPrototype, instanceTraits, classScope);
 
       // Run the static initializer.
       interpret(axClass, classInfo.getInitializer(), classScope, [axClass]);
