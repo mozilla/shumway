@@ -935,7 +935,7 @@ module.exports = function(grunt) {
           "Shumway"
         ]
       };
-      fs.writeFileSync(outputDir + '/bower.json', JSON.stringify(packageJSON, null, 2));
+      fs.writeFileSync(outputDir + '/bower.json', JSON.stringify(bowerJSON, null, 2));
 
       grunt.file.copy('build/version/version.txt', outputDir + '/version.txt');
       grunt.file.copy('LICENSE', outputDir + '/LICENSE');
