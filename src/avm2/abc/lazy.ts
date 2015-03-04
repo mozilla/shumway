@@ -619,7 +619,7 @@ module Shumway.AVMX {
     }
 
     public getPublicMangledName(): any {
-      return Multiname.getPublicMangledName(this.name);
+      return "$Bg" + this.name;
     }
 
     private _nameToString(): string {
@@ -713,7 +713,7 @@ module Shumway.AVMX {
     }
 
     public static getPublicMangledName(value: any): any {
-      return "$" + Namespace.PUBLIC.getMangledName() + value;
+      return "$Bg" + value;
     }
 
     public static getMangledName(value: any): any {

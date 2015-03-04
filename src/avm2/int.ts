@@ -343,6 +343,9 @@ module Shumway.AVMX {
           case Bytecode.PUSHSCOPE:
             scope.push(securityDomain.box(stack.pop()), false);
             break;
+          case Bytecode.PUSHWITH:
+            scope.push(securityDomain.box(stack.pop()), true);
+            break;
           case Bytecode.NEWFUNCTION:
             stack.push(securityDomain.createFunction(abc.getMethodInfo(u30()), scope.topScope(), true));
             break;
@@ -406,7 +409,7 @@ module Shumway.AVMX {
           //  stack[stack.length - 1] = applyType(method, stack[stack.length - 1], args);
           //  break;
           case Bytecode.NEWOBJECT:
-            object = securityDomain.AXObject.axConstruct();
+            object = Object.create(securityDomain.AXObject.tPrototype);
             argCount = u30();
             for (var i = 0; i < argCount; i++) {
               value = stack.pop();
@@ -418,7 +421,7 @@ module Shumway.AVMX {
             object = [];
             popManyInto(stack, u30(), args);
             object.push.apply(object, args);
-            stack.push(securityDomain.box(object));
+            stack.push(securityDomain.AXArray.axBox(object));
             break;
           case Bytecode.NEWACTIVATION:
             stack.push(securityDomain.createActivation(methodInfo));

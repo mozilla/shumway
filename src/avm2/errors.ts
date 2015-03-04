@@ -81,7 +81,7 @@ module Shumway.AVM2 {
   //  NumberOutOfRangeError                : {code: 1061, message: "The value %1 cannot be converted to %2 without losing precision."},
     WrongArgumentCountError              : {code: 1063, message: "Argument count mismatch on %1. Expected %2, got %3."},
   //  CannotCallMethodAsConstructor        : {code: 1064, message: "Cannot call method %1 as constructor."},
-  //  UndefinedVarError                    : {code: 1065, message: "Variable %1 is not defined."},
+    UndefinedVarError                    : {code: 1065, message: "Variable %1 is not defined."},
   //  FunctionConstructorError             : {code: 1066, message: "The form function('function body') is not supported."},
   //  IllegalNativeMethodBodyError         : {code: 1067, message: "Native method %1 has illegal method body."},
   //  CannotMergeTypesError                : {code: 1068, message: "%1 and %2 cannot be reconciled."},
