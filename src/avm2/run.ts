@@ -442,7 +442,7 @@ module Shumway.AVMX {
 
     public findScopeProperty(mn: Multiname, strict: boolean, scopeOnly: boolean): any {
       var object;
-      if (!mn.isRuntime() && !scopeOnly) {
+      if (!scopeOnly && !mn.isRuntime()) {
         if ((object = this.cache[mn.id])) {
           return object;
         }
@@ -461,14 +461,29 @@ module Shumway.AVMX {
       if (scopeOnly) {
         return null;
       }
+
+      // Attributes can't be stored on globals or be directly defined in scripts.
+      if (mn.isAttribute()) {
+        throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
+      }
+
       // If we can't find the property look in the domain.
       var globalObject = <AXGlobal><any>this.global.object;
       if ((object = globalObject.applicationDomain.findProperty(mn, strict, true))) {
         return object;
       }
-      assert(!strict, "Cannot find property " + mn);
+
+      // If we still haven't found it, look for dynamic properties on the global.
+      // No need to do this for non-strict lookups as we'll end up returning the
+      // global anyways.
+      if (strict) {
+        if (!(mn.getPublicMangledName() in globalObject)) {
+          throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
+        }
+      }
+
       // Can't find it still, return the global object.
-      return <any>globalObject;
+      return globalObject;
     }
   }
 
