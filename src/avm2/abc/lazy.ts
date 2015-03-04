@@ -188,6 +188,10 @@ module Shumway.AVMX {
     }
 
     concat(traits: Traits): Traits {
+      // Resolve traits so that indexOf works out.
+      this.resolve();
+      traits.resolve();
+
       var a = this.traits.slice(0);
       var b = traits.traits;
       for (var i = 0; i < b.length; i++) {
