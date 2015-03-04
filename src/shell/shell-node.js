@@ -33,8 +33,8 @@ var sandbox = vm.createContext({
   help: function () {
     // simulating SpiderMonkey interface
   },
-  exit: function (code) {
-    exit(code);
+  quit: function (code) {
+    process.exit(code);
   },
   Uint8Array: Uint8Array,
   Uint16Array: Uint16Array,
