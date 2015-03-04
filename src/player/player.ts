@@ -49,6 +49,174 @@ module Shumway.Player {
 
   import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
+  import FocusEventType = Remoting.FocusEventType;
+  import IGFXService = Shumway.Remoting.IGFXService;
+  import IGFXServiceObserver = Shumway.Remoting.IGFXServiceObserver;
+
+  /**
+   * Base class implementation of the IGFXServer. The different transports shall
+   * inherit this class
+   */
+  export class GFXServiceBase implements IGFXService {
+    _observers: IGFXServiceObserver[] = [];
+
+    addObserver(observer: IGFXServiceObserver) {
+      this._observers.push(observer);
+    }
+
+    removeObserver(observer: IGFXServiceObserver) {
+      var i = this._observers.indexOf(observer);
+      if (i >= 0) {
+        this._observers.splice(i, 1);
+      }
+    }
+
+    update(updates: DataBuffer, assets: any[]): void {
+      throw new Error('This method is abstract');
+    }
+
+    updateAndGet(updates: DataBuffer, assets: any[]): any {
+      throw new Error('This method is abstract');
+    }
+
+    frame(): void {
+      throw new Error('This method is abstract');
+    }
+
+    videoControl(id: number, eventType: VideoControlEvent, data: any): any {
+      throw new Error('This method is abstract');
+    }
+
+    registerFont(syncId: number, data: any): Promise<any> {
+      throw new Error('This method is abstract');
+    }
+
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+      throw new Error('This method is abstract');
+    }
+
+    fscommand(command: string, args: string): void {
+      throw new Error('This method is abstract');
+    }
+
+    public processUpdates(updates: DataBuffer, assets: any []) {
+      var deserializer = new Remoting.Player.PlayerChannelDeserializer();
+
+      deserializer.input = updates;
+      deserializer.inputAssets = assets;
+
+      var message = deserializer.read();
+      switch (message.tag) {
+        case MessageTag.KeyboardEvent:
+          this._observers.forEach(function (observer) {
+            observer.keyboardEvent(message);
+          });
+          break;
+        case MessageTag.MouseEvent:
+          this._observers.forEach(function (observer) {
+            observer.mouseEvent(message);
+          });
+          break;
+        case MessageTag.FocusEvent:
+          this._observers.forEach(function (observer) {
+            observer.focusEvent(message);
+          });
+          break;
+      }
+    }
+
+    public processDisplayParameters(displayParameters: DisplayParameters) {
+      this._observers.forEach(function (observer) {
+        observer.displayParameters(displayParameters);
+      });
+    }
+
+    public processVideoEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
+      this._observers.forEach(function (observer) {
+        observer.videoEvent(id, eventType, data);
+      });
+    }
+  }
+
+  /**
+   * Helper class to handle GFXService notifications/events and forward them to
+   * the Player object.
+   */
+  class GFXServiceObserver implements IGFXServiceObserver {
+    private _player: Player;
+    private _mouseEventDispatcher: MouseEventDispatcher;
+    private _keyboardEventDispatcher: KeyboardEventDispatcher;
+    private _videoEventListeners: {(eventType: VideoPlaybackEvent, data: any):void}[] = [];
+    private _writer: IndentingWriter;
+
+    constructor (player: Player) {
+      this._player = player;
+      this._keyboardEventDispatcher = new KeyboardEventDispatcher();
+      this._mouseEventDispatcher = new MouseEventDispatcher();
+      this._writer = new IndentingWriter();
+    }
+
+    videoEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
+      var listener = this._videoEventListeners[id];
+      Debug.assert(listener, 'Video event listener is not found');
+      listener(eventType, data);
+    }
+
+    displayParameters(displayParameters: DisplayParameters) {
+      this._player._stage.setStageContainerSize(displayParameters.stageWidth, displayParameters.stageHeight, displayParameters.pixelRatio);
+    }
+
+    focusEvent(data: any) {
+      var message: FocusEventData = data;
+      var focusType = message.type;
+      switch (focusType) {
+        case FocusEventType.DocumentHidden:
+          this._player._isPageVisible = false;
+          break;
+        case FocusEventType.DocumentVisible:
+          this._player._isPageVisible = true;
+          break;
+        case FocusEventType.WindowBlur:
+          // TODO: This is purposely disabled so that applications don't pause when they are out of
+          // focus while the debugging window is open.
+          // EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.DEACTIVATE));
+          this._player._hasFocus = false;
+          break;
+        case FocusEventType.WindowFocus:
+          EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ACTIVATE));
+          this._player._hasFocus = true;
+          break;
+      }
+
+    }
+
+    keyboardEvent(data: any) {
+      var message: KeyboardEventData = data;
+      // If the stage doesn't have a focus then dispatch events on the stage
+      // directly.
+      var target = this._player._stage.focus ? this._player._stage.focus : this._player._stage;
+      this._keyboardEventDispatcher.target = target;
+      this._keyboardEventDispatcher.dispatchKeyboardEvent(message);
+    }
+
+    mouseEvent(data: any) {
+      var message: MouseEventAndPointData = data;
+      this._mouseEventDispatcher.stage = this._player._stage;
+      var target = this._mouseEventDispatcher.handleMouseEvent(message);
+      if (traceMouseEventOption.value) {
+        this._writer.writeLn("Mouse Event: type: " + message.type + ", point: " + message.point + ", target: " + target + (target ? ", name: " + target._name : ""));
+        if (message.type === "click" && target) {
+          target.debugTrace();
+        }
+      }
+      this._player._currentMouseTarget = this._mouseEventDispatcher.currentTarget;
+    }
+
+    registerEventListener(id: number, listener: (eventType: VideoPlaybackEvent, data: any)=>void) {
+      this._videoEventListeners[id] = listener;
+    }
+  }
+
   /**
    * Shumway Player
    *
@@ -57,39 +225,17 @@ module Shumway.Player {
    */
   export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
                                  IAssetResolver, IRootElementService {
-    private _stage: flash.display.Stage;
+    _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
-    private _syncTimeout: number;
     private _frameTimeout: number;
     private _eventLoopIsRunning: boolean;
     private _framesPlayed: number = 0;
 
     private _writer: IndentingWriter;
-    private _mouseEventDispatcher: MouseEventDispatcher;
-    private _keyboardEventDispatcher: KeyboardEventDispatcher;
-    private _videoEventListeners: {(eventType: VideoPlaybackEvent, data: any):void}[] = [];
 
-    /**
-     * Used to request things from the GFX remote.
-     */
-      // TODO: rip this out
-    private _pendingPromises: PromiseWrapper<any> [] = [];
-
-    /**
-     * Returns an id that can be remoted to GFX.
-     */
-    private _getNextAvailablePromiseId(): number {
-      var length = this._pendingPromises.length;
-      for (var i = 0; i < length; i++) {
-        if (!this._pendingPromises[i]) {
-          return i;
-        }
-      }
-      return length;
-    }
-
-    public externalCallback: (functionName: string, args: any[]) => any = null;
+    private _gfxService: IGFXService;
+    private _gfxServiceObserver: GFXServiceObserver;
 
     /**
      * If set, overrides SWF file background color.
@@ -124,12 +270,17 @@ module Shumway.Player {
     /**
      * Page Visibility API visible state.
      */
-    private _isPageVisible = true;
+    _isPageVisible = true;
 
     /**
      * Page focus state.
      */
-    private _hasFocus = true;
+    _hasFocus = true;
+
+    /**
+     * Stage current mouse target.
+     */
+    _currentMouseTarget: flash.display.InteractiveObject = null;
 
     /**
      * Page URL that hosts SWF.
@@ -146,10 +297,13 @@ module Shumway.Player {
      */
     private _loaderUrl: string = null;
 
-    constructor() {
-      this._keyboardEventDispatcher = new KeyboardEventDispatcher();
-      this._mouseEventDispatcher = new MouseEventDispatcher();
+    constructor(gfxService: IGFXService) {
+      release || Debug.assert(gfxService);
       this._writer = new IndentingWriter();
+      this._gfxService = gfxService;
+      this._gfxServiceObserver = new GFXServiceObserver(this);
+      this._gfxService.addObserver(this._gfxServiceObserver);
+
       AVM2.instance.globals['Shumway.Player.Utils'] = this;
     }
 
@@ -158,16 +312,6 @@ module Shumway.Player {
      */
     get stage() {
       return this._stage;
-    }
-
-    /**
-     * Abstract method to notify about updates.
-     * @param updates
-     * @param assets
-     */
-    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true): DataBuffer {
-      throw new Error('This method is abstract');
-      return null;
     }
 
     /**
@@ -239,58 +383,8 @@ module Shumway.Player {
       return loaderContext;
     }
 
-    public processUpdates(updates: DataBuffer, assets: any []) {
-      var deserializer = new Remoting.Player.PlayerChannelDeserializer();
-      var FocusEventType = Remoting.FocusEventType;
-
-      deserializer.input = updates;
-      deserializer.inputAssets = assets;
-
-      var message = deserializer.read();
-      switch (message.tag) {
-        case MessageTag.KeyboardEvent:
-          // If the stage doesn't have a focus then dispatch events on the stage
-          // directly.
-          var target = this._stage.focus ? this._stage.focus : this._stage;
-          this._keyboardEventDispatcher.target = target;
-          this._keyboardEventDispatcher.dispatchKeyboardEvent(<KeyboardEventData>message);
-          break;
-        case MessageTag.MouseEvent:
-          this._mouseEventDispatcher.stage = this._stage;
-          var target = this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>message);
-          if (traceMouseEventOption.value) {
-            this._writer.writeLn("Mouse Event: type: " + message.type + ", point: " + message.point + ", target: " + target + (target ? ", name: " + target._name : ""));
-            if (message.type === "click" && target) {
-              target.debugTrace();
-            }
-          }
-          break;
-        case MessageTag.FocusEvent:
-          var focusType = (<FocusEventData>message).type;
-          switch (focusType) {
-            case FocusEventType.DocumentHidden:
-              this._isPageVisible = false;
-              break;
-            case FocusEventType.DocumentVisible:
-              this._isPageVisible = true;
-              break;
-            case FocusEventType.WindowBlur:
-              // TODO: This is purposely disabled so that applications don't pause when they are out of
-              // focus while the debugging window is open.
-              // EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.DEACTIVATE));
-              this._hasFocus = false;
-              break;
-            case FocusEventType.WindowFocus:
-              EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ACTIVATE));
-              this._hasFocus = true;
-              break;
-          }
-          break;
-      }
-    }
-
     private _pumpDisplayListUpdates(): void {
-      this.syncDisplayObject(this._stage);
+      this.syncDisplayObject(this._stage, true);
     }
 
     public syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean = true): DataBuffer {
@@ -301,7 +395,7 @@ module Shumway.Player {
       serializer.outputAssets = assets;
 
       if (flash.display.Stage.isType(displayObject)) {
-        serializer.writeStage(<flash.display.Stage>displayObject, this._mouseEventDispatcher.currentTarget);
+        serializer.writeStage(<flash.display.Stage>displayObject, this._currentMouseTarget);
       }
 
       serializer.begin(displayObject);
@@ -310,7 +404,12 @@ module Shumway.Player {
       updates.writeInt(Remoting.MessageTag.EOF);
 
       enterTimeline("remoting assets");
-      var output = this.onSendUpdates(updates, assets, async);
+      var output;
+      if (async) {
+        this._gfxService.update(updates, assets);
+      } else {
+        output = this._gfxService.updateAndGet(updates, assets);
+      }
       leaveTimeline("remoting assets");
 
       return output;
@@ -324,7 +423,7 @@ module Shumway.Player {
       serializer.outputAssets = assets;
       serializer.writeRequestBitmapData(bitmapData);
       output.writeInt(Remoting.MessageTag.EOF);
-      return this.onSendUpdates(output, assets, false);
+      return this._gfxService.updateAndGet(output, assets);
     }
 
     public drawToBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
@@ -351,16 +450,16 @@ module Shumway.Player {
       updates.writeInt(Shumway.Remoting.MessageTag.EOF);
 
       enterTimeline("sendUpdates");
-      this.onSendUpdates(updates, assets, false);
+      this._gfxService.updateAndGet(updates, assets); // TODO replace to update() ?
       leaveTimeline("sendUpdates");
     }
 
     public registerEventListener(id: number, listener: (eventType: VideoPlaybackEvent, data: any)=>void) {
-      this._videoEventListeners[id] = listener;
+      this._gfxServiceObserver.registerEventListener(id, listener);
     }
 
     public notifyVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
-      return this.onVideoControl(id, eventType, data);
+      return this._gfxService.videoControl(id, eventType, data);
     }
 
     public executeFSCommand(command: string, args: string) {
@@ -371,7 +470,7 @@ module Shumway.Player {
         default:
           somewhatImplemented('FSCommand ' + command);
       }
-      this.onFSCommand(command, args);
+      this._gfxService.fscommand(command, args);
     }
 
     public requestRendering(): void {
@@ -449,7 +548,7 @@ module Shumway.Player {
         stage.setStageColor(ColorUtilities.RGBAToARGB(bgcolor));
 
         if (self.displayParameters) {
-          self.processDisplayParameters(self.displayParameters);
+          self._gfxServiceObserver.displayParameters(self.displayParameters);
         }
 
         self._enterEventLoop();
@@ -494,7 +593,7 @@ module Shumway.Player {
       }
       this._stage.render();
       this._pumpUpdates();
-      this.onFrameProcessed();
+      this._gfxService.frame();
     }
 
     private _tracePlayer(): void {
@@ -593,58 +692,27 @@ module Shumway.Player {
       });
     }
 
-    public processExternalCallback(request) {
-      if (!this.externalCallback) {
-        return;
-      }
-
-      try {
-        request.result = this.externalCallback(request.functionName, request.args);
-      } catch (e) {
-        request.error = e.message;
-      }
-    }
-
-    public processVideoEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
-      var listener = this._videoEventListeners[id];
-      Debug.assert(listener, 'Video event listener is not found');
-      listener(eventType, data);
-    }
-
-    public processDisplayParameters(displayParameters: DisplayParameters) {
-      this._stage.setStageContainerSize(displayParameters.stageWidth, displayParameters.stageHeight, displayParameters.pixelRatio);
-    }
-
-    onExternalCommand(command) {
-      throw new Error('This method is abstract');
-    }
-
-    onFSCommand(command: string, args: string) {
-      throw new Error('This method is abstract');
-    }
-
-    onVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
-      throw new Error('This method is abstract');
-    }
-
-    onFrameProcessed() {
-      throw new Error('This method is abstract');
-    }
-
-    registerFontOrImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
+    registerFont(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
       release || assert(symbol.syncId);
-      symbol.resolveAssetPromise = new PromiseWrapper();
-      this.registerFontOrImageImpl(symbol, data);
+      symbol.resolveAssetPromise = new PromiseWrapper(); // TODO no need for wrapper here, change to Promise
+      this._gfxService.registerFont(symbol.syncId, data).then(function (result) {
+        symbol.resolveAssetPromise.resolve(result);
+      });
       // Fonts are immediately available in Firefox, so we can just mark the symbol as ready.
-      if (data.type === 'font' && inFirefox) {
+      if (inFirefox) {
         symbol.ready = true;
       } else {
         symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);
       }
     }
 
-    protected registerFontOrImageImpl(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
-      throw new Error('This method is abstract');
+    registerImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void {
+      release || assert(symbol.syncId);
+      symbol.resolveAssetPromise = new PromiseWrapper(); // TODO no need for wrapper here, change to Promise
+      this._gfxService.registerImage(symbol.syncId, symbol.id, data).then(function (result) {
+        symbol.resolveAssetPromise.resolve(result);
+      });
+      symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);
     }
   }
 }

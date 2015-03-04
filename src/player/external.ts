@@ -176,7 +176,56 @@ module Shumway.Player {
     }
 
     navigateTo(url: string, target: string) {
-      window.parent.open(this.resolveUrl(url), target || '_blank');
+      window.open(this.resolveUrl(url), target || '_blank');
+    }
+  }
+
+  export class BrowserSystemResourcesLoadingService implements ISystemResourcesLoadingService {
+    public constructor(public builtinPath: string,
+                       public viewerPlayerglobalInfo?: {abcs: string; catalog: string;},
+                       public shellPath?: string) {
+    }
+
+    public load(id: SystemResourceId): Promise<any> {
+      switch (id) {
+        case SystemResourceId.BuiltinAbc:
+          return this._promiseFile(this.builtinPath, 'arraybuffer');
+        case SystemResourceId.PlayerglobalAbcs:
+          return this._promiseFile(this.viewerPlayerglobalInfo.abcs, 'arraybuffer');
+        case SystemResourceId.PlayerglobalManifest:
+          return this._promiseFile(this.viewerPlayerglobalInfo.catalog, 'json');
+        case SystemResourceId.ShellAbc:
+          return this._promiseFile(this.shellPath, 'arraybuffer');
+        default:
+          return Promise.reject(new Error('Unsupported system resource id: ' + id));
+      }
+    }
+
+    private _promiseFile(path, responseType) {
+      return new Promise(function (resolve, reject) {
+        SWF.enterTimeline('Load file', path);
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', path);
+        xhr.responseType = responseType;
+        xhr.onload = function () {
+          SWF.leaveTimeline();
+          var response = xhr.response;
+          if (response) {
+            if (responseType === 'json' && xhr.responseType !== 'json') {
+              // some browsers (e.g. Safari) have no idea what json is
+              response = JSON.parse(response);
+            }
+            resolve(response);
+          } else {
+            reject('Unable to load ' + path + ': ' + xhr.statusText);
+          }
+        };
+        xhr.onerror = function () {
+          SWF.leaveTimeline();
+          reject('Unable to load: xhr error');
+        };
+        xhr.send();
+      });
     }
   }
 }

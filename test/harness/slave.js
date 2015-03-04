@@ -110,11 +110,15 @@ function loadMovie(path, reportFrames) {
     Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
     Shumway.FileLoadingService.instance.init(path);
 
-    Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
+    Shumway.SystemResourcesLoadingService.instance =
+      new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo);
+
+    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
       easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
       initEaselHostCallbacks();
 
-      player = new Shumway.Player.Test.TestPlayer();
+      var gfxService = new Shumway.Player.Test.TestGFXService();
+      player = new Shumway.Player.Player(gfxService);
       player.stageAlign = 'tl';
       player.stageScale = 'noscale';
       player.displayParameters = easel.getDisplayParameters();

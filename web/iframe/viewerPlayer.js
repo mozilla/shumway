@@ -86,12 +86,15 @@ function runSwfPlayer(flashParams) {
   var asyncLoading = true;
   var baseUrl = flashParams.baseUrl;
   var movieUrl = flashParams.url;
-  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (avm2) {
+  Shumway.SystemResourcesLoadingService.instance =
+    new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, viewerPlayerglobalInfo);
+  Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
     function runSWF(file, buffer, baseUrl) {
       var movieParams = flashParams.movieParams;
       var objectParams = flashParams.objectParams;
 
-      player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(window, window.parent);
+      player = new Shumway.Player.Player(gfxService);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = movieParams;
       player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';

@@ -116,29 +116,48 @@ module Shumway.Shell {
 
   import Compiler = Shumway.AVM2.Compiler;
 
-  class ShellPlayer extends Shumway.Player.Player {
-    onSendUpdates(updates:DataBuffer, assets:Array<DataBuffer>, async:boolean = true):DataBuffer {
+  class ShellGFXServer extends Shumway.Player.GFXServiceBase {
+    update(updates: DataBuffer, assets: any[]): void {
       var bytes = updates.getBytes();
-      if (!async) {
-        // Simulating text field metrics
-        var buffer = new DataBuffer()
-        buffer.write2Ints(1, 1); // textWidth, textHeight
-        buffer.writeInt(0); // offsetX
-        buffer.writeInt(0); // numLines
-        buffer.position = 0;
-        return buffer;
-      }
       // console.log('Updates sent');
       return null;
     }
-    onFSCommand(command: string, args: string) {
+
+    updateAndGet(updates: DataBuffer, assets: any[]): any {
+      var bytes = updates.getBytes();
+
+      // Simulating text field metrics
+      var buffer = new DataBuffer();
+      buffer.write2Ints(1, 1); // textWidth, textHeight
+      buffer.writeInt(0); // offsetX
+      buffer.writeInt(0); // numLines
+      buffer.position = 0;
+      return buffer;
+    }
+
+    frame(): void {
+      // console.log('Frame');
+    }
+
+    videoControl(id: number, eventType: Shumway.Remoting.VideoControlEvent, data: any): any {
+      // console.log('videoControl');
+    }
+
+    registerFont(syncId: number, data: any): Promise<any> {
+      // console.log('registerFont');
+      return Promise.resolve(undefined);
+    }
+
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+      // console.log('registerImage');
+      return Promise.resolve({width: 100, height: 50});
+    }
+
+    fscommand(command: string, args: string): void {
       if (command === 'quit') {
         // console.log('Player quit');
         microTaskQueue.stop();
       }
-    }
-    onFrameProcessed() {
-      // console.log('Frame');
     }
   }
 
@@ -320,7 +339,7 @@ module Shumway.Shell {
       flash.display.Loader.reset();
       flash.display.DisplayObject.reset();
       flash.display.MovieClip.reset();
-      var player = new ShellPlayer();
+      var player = new Shumway.Player.Player(new ShellGFXServer());
       player.load(file);
     }
     var asyncLoading = true;

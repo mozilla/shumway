@@ -27,7 +27,8 @@ module Shumway.Timeline {
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
   export interface IAssetResolver {
-    registerFontOrImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void;
+    registerFont(symbol: Timeline.EagerlyResolvedSymbol, data: any): void;
+    registerImage(symbol: Timeline.EagerlyResolvedSymbol, data: any): void;
   }
 
   export interface EagerlyResolvedSymbol {

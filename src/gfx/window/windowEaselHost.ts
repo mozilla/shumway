@@ -80,6 +80,14 @@ module Shumway.GFX.Window {
       }.bind(this));
     }
 
+    private _sendRegisterFontOrImageResponse(requestId: number, result: any) {
+      this._playerWindow.postMessage({
+        type: 'registerFontOrImageResponse',
+        requestId: requestId,
+        result: result
+      }, '*');
+    }
+
     private onWindowMessage(data, async: boolean = true) {
       if (typeof data === 'object' && data !== null) {
         if (data.type === 'player') {
@@ -97,7 +105,7 @@ module Shumway.GFX.Window {
           data.result = this.processVideoControl(data.id, data.eventType, data.data);
         } else if (data.type === 'registerFontOrImage') {
           this.processRegisterFontOrImage(data.syncId, data.symbolId, data.assetType, data.data,
-                                          data.resolve);
+            this._sendRegisterFontOrImageResponse.bind(this, data.requestId));
         } else if (data.type === 'fscommand') {
           this.processFSCommand(data.command, data.args);
         } else if (data.type === 'timelineResponse' && data.timeline) {
