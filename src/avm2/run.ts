@@ -617,16 +617,12 @@ module Shumway.AVMX {
     return "[class " + this.classInfo.instanceInfo.getName().name + "]";
   }
 
-  function AXClassPrototypeToString() {
-    return "[" + this.classInfo.instanceInfo.getName().name + ".prototype]";
-  }
-
   /**
    * Generic axConstruct method that lives on the AXClass prototype. This just
    * creates an empty object with the right prototype and then calls the
    * instance initializer.
    */
-  function AXClassPrototypeAXConstruct() {
+  function axConstruct() {
     var self: AXClass = this;
     var object = Object.create(self.tPrototype);
     self.axInitializer.apply(object, arguments);
@@ -636,14 +632,14 @@ module Shumway.AVMX {
   /**
    * Default initializer.
    */
-  function AXClassPrototypeAXInitializer() {
+  function axDefaultInitializer() {
     // Nop.
   }
 
   /**
    * Default axApply.
    */
-  function AXClassPrototypeAXApply(self, args: any []) {
+  function axDefaultApply(self, args: any []) {
     // TODO: Coerce.
     return args ? args[0] : undefined;
   }
@@ -684,13 +680,15 @@ module Shumway.AVMX {
       var axClass: AXClass;
 
       var className = classInfo.instanceInfo.getName().name;
+      var classScope: Scope;
       if (this.nativeClasses[className]) {
         axClass = this.nativeClasses[className];
+        classScope = new Scope(scope, axClass);
       } else {
         axClass = Object.create(this.AXClass.dPrototype);
         axClass.dPrototype = Object.create(this.objectProto);
         axClass.tPrototype = Object.create(axClass.dPrototype);
-        var classScope = new Scope(scope, axClass);
+        classScope = new Scope(scope, axClass);
         var initializerMethodInfo = classInfo.instanceInfo.getInitializer();
         axClass.axInitializer = this.createInitializerFunction(initializerMethodInfo, classScope);
         axClass.axCoerce = function () {
@@ -802,6 +800,10 @@ module Shumway.AVMX {
       D(classProto, "axAsType", axAsType);
       D(classProto, "axIsInstanceOf", axIsInstanceOfObject);
 
+      D(classProto, "axConstruct", axConstruct);
+      D(classProto, "axInitializer", axDefaultInitializer);
+      D(classProto, "axApply", axDefaultApply);
+
       this.classProto = classProto;
     }
 
@@ -809,14 +811,15 @@ module Shumway.AVMX {
       var axClass: AXClass = Object.create(this.classProto);
       // For Object, we've already created the instance prototype to break circular dependencies
       // between Object and Class.
-      axClass.dPrototype = name === 'Object' ? instanceProto : Object.create(instanceProto);
+      if (name === 'Object') {
+        axClass.dPrototype = instanceProto;
+      } else if (name === 'Class') {
+        axClass.dPrototype = axClass;
+      } else {
+        axClass.dPrototype = Object.create(instanceProto);
+      }
       axClass.tPrototype = Object.create(axClass.dPrototype);
       this[exportName] = this.nativeClasses[name] = axClass;
-      var AXClassPrototype: any = axClass.dPrototype;
-      AXClassPrototype.$BgtoString = AXClassPrototypeToString;
-      AXClassPrototype.axConstruct = AXClassPrototypeAXConstruct;
-      AXClassPrototype.axInitializer = AXClassPrototypeAXInitializer;
-      AXClassPrototype.axApply = AXClassPrototypeAXApply;
       return axClass;
     }
 
