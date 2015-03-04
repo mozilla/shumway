@@ -515,7 +515,7 @@ module.exports = function(grunt) {
 
     var waitFor = 0, done = this.async();
     grunt.file.expand('src/shell/runners/run-*').forEach(function (file) {
-      var dest = outputDir + '/' + path.basename(file);
+      var dest = outputDir + '/bin/' + path.basename(file);
       grunt.file.copy(file, dest);
       waitFor++;
       grunt.util.spawn({cmd: 'chmod', args: ['+x', dest]}, function () {
@@ -858,7 +858,125 @@ module.exports = function(grunt) {
     grunt.file.copy('LICENSE', outputDir + '/LICENSE');
   });
 
+  function copyFilesUsingPattern(src, dest, callback) {
+    var path = require('path');
+    grunt.file.expand(src).forEach(function (file) {
+      var p = path.join(dest, path.basename(file));
+      grunt.file.copy(file, p);
+      if (callback) {
+        callback(p);
+      }
+    });
+  }
+
+  grunt.registerTask('dist-package', function() {
+    var done = this.async();
+    var outputDir = 'build/dist';
+    var repoURL = 'https://github.com/mozilla/shumway-dist';
+
+    var path = require('path');
+    var fs = require('fs');
+    var versionJSON = JSON.parse(fs.readFileSync('build/version/version.json'));
+
+    function prepareFiles(done) {
+      grunt.file.copy('build/libs/builtin.abc', outputDir + '/build/libs/builtin.abc');
+      grunt.file.copy('build/playerglobal/playerglobal.abcs', outputDir + '/build/playerglobal/playerglobal.abcs');
+      grunt.file.copy('build/playerglobal/playerglobal.json', outputDir + '/build/playerglobal/playerglobal.json');
+      grunt.file.copy('build/libs/relooper.js', outputDir + '/build/libs/relooper.js');
+      copyFilesUsingPattern('build/bundles-cc/*.js', outputDir + '/build/bundles');
+
+      // shuobject packaging
+      copyFilesUsingPattern('web/iframe/*', outputDir + '/iframe');
+      grunt.file.copy('extension/shuobject/shuobject.js', outputDir + '/shuobject.js');
+
+      // shell packaging
+      grunt.file.copy('build/ts/shell.js', outputDir + '/build/ts/shell.js');
+      fs.writeFileSync(outputDir + '/build/ts/shell.conf', 'dist');
+      grunt.file.copy('src/shell/shell-node.js', outputDir + '/src/shell/shell-node.js');
+
+      var waitFor = 1;
+      copyFilesUsingPattern('src/shell/runners/run-*', outputDir + '/bin', function (dest) {
+        waitFor++;
+        grunt.util.spawn({cmd: 'chmod', args: ['+x', dest]}, function () {
+          waitFor--;
+          if (waitFor === 0) {
+            done();
+          }
+        });
+      });
+
+      // manifests
+      var packageJSON = {
+        "name": "shumway-dist",
+        "version": versionJSON.version,
+        "description": "Generic build of Mozilla's Shumway library.",
+        "keywords": [
+          "Mozilla",
+          "Shumway"
+        ],
+        "homepage": "http://mozilla.github.io/shumway/",
+        "bugs": "https://github.com/mozilla/shumway/issues",
+        "license": "Apache-2.0",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/mozilla/shumway-dist"
+        }
+      };
+      fs.writeFileSync(outputDir + '/package.json', JSON.stringify(packageJSON, null, 2));
+      var bowerJSON = {
+        "name": "shumway-dist",
+        "version": versionJSON.version,
+        "main": [
+          "shuobject.js"
+        ],
+        "ignore": [],
+        "keywords": [
+          "Mozilla",
+          "Shumway"
+        ]
+      };
+      fs.writeFileSync(outputDir + '/bower.json', JSON.stringify(packageJSON, null, 2));
+
+      grunt.file.copy('build/version/version.txt', outputDir + '/version.txt');
+      grunt.file.copy('LICENSE', outputDir + '/LICENSE');
+      grunt.file.copy('utils/dist/README.md', outputDir + '/README.md');
+
+      if (--waitFor === 0) {
+        done();
+      }
+    }
+
+    function addCommitMessages(done) {
+      var message = 'Shumway version ' + versionJSON.version;
+      var tag = 'v' + versionJSON.version;
+      grunt.util.spawn({cmd: 'git', args: ['add', '--all'], opts: {cwd: outputDir}}, function (error) {
+        grunt.util.spawn({cmd: 'git', args: ['commit', '-am', message], opts: {cwd: outputDir}}, function () {
+          grunt.util.spawn({cmd: 'git', args: ['tag', '-a', tag, '-m', message], opts: {cwd: outputDir}}, function () {
+            done();
+          });
+        });
+      });
+    }
+
+    grunt.file.delete(outputDir);
+    grunt.file.mkdir(outputDir);
+
+    grunt.util.spawn({cmd: 'git', args: ['clone', '--depth', '1', repoURL, outputDir]}, function () {
+      prepareFiles(function () {
+        addCommitMessages(function () {
+          console.info();
+          console.info('Done. Push with');
+          console.info('  cd ' + outputDir + '; git push --tags ' + repoURL + ' master');
+          console.info();
+
+          done();
+        });
+      });
+    });
+  });
+
   grunt.registerTask('firefox', ['build', 'closure-bundles', 'exec:build_extension']);
   grunt.registerTask('mozcentral', ['build', 'closure-bundles', 'exec:build_mozcentral']);
   grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'shell-package', 'shuobject-package', 'exec:build_web']);
+  grunt.registerTask('dist', ['build', 'closure-bundles', 'dist-package']);
 };
