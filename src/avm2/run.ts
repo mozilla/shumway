@@ -17,54 +17,67 @@ var $: Shumway.AVMX.SecurityDomain = null;
 
 module Shumway.AVMX {
   /*
-   *    #--> __proto__ reference
-   *    ---> object reference
-   *    - non-enumerable property
+   *     +--------------------------+
+   *     |      Base Prototype      |
+   *     +--------------------------+
+   *     |- axHasPropertyInternal   |
+   *     |- axHasProperty           |            +-------------------+
+   *     |- axSetProperty           |     +-----#|  objectPrototype  |
+   *     |- axGetProperty           |     |      +-------------------+
+   *     |- axSetPublicProperty     |     |      | - securityDomain  |
+   *     |- axGetSlot               |<----+      +-------------------+
+   *     |- axSetSlot               |     |
+   *     |  …                       |     |
+   *     |                          |     |      +-------------------+
+   *     |                          |     +-----#|  objectPrototype  |
+   *     |                          |            +-------------------+
+   *     +--------------------------+            | - securityDomain  |
+   *                                             +-------------------+
+   *                                                       ^
+   *                                                       |
+   *                                                       |
+   *                                                       #
+   *     +-----------------+                        +------------+
+   *  +-#|  Class Object   |----------------------->| tPrototype |<-----------------<--------------------+
+   *  |  +-----------------+                        +------------+                  |                    |
+   *  |                                                    ^                        |                    |
+   *  |                                                    |                        |                    |
+   *  |                                                    |--------+               |                    |
+   *  |                                                    |        |               #                    #
+   *  |                         +------------+             |        |      +-----------------+  +-----------------+
+   *  |                         | - traits   |             #        |      |     Number      |  |      Uint       |
+   *  |  +-----------------+    +------------+      +------------+  |      +-----------------+  +-----------------+
+   *  +-#|   Class Class   |--->| tPrototype |#---->| dPrototype |  |      | - value         |  | - value         |
+   *  |  +-----------------+    +------------+      +------------+  |      +-----------------+  +-----------------+
+   *  |                                ^                            |
+   *  |                                |                            |      +-----------------+  +-----------------+
+   *  +--------------------------------+----------------------------+-----#|     Boolean     |  |      Array      |
+   *  |                                                             |      +-----------------+  +-----------------+
+   *  |                                                             |      | - value         |  | - value         |
+   *  |  +-----------------+    +------------+      +------------+  |      +-----------------+  +-----------------+
+   *  +-#|     Class A     |--->| tPrototype |#---->| dPrototype |#-+
+   *  |  +-----------------+    +------------+      +------------+         +-----------------+  +-----------------+
+   *  |                         | - traits   |--+          ^               |       Int       |  |    Function     |
+   *  |                         +------------+  |          |               +-----------------+  +-----------------+
+   *  |                                ^        |          |               | - value         |  | - value         |
+   *  |                                |        |          +--------+      +-----------------+  +-----------------+
+   *  |                                #        |                   |
+   *  |                         +------------+  |   +------------+  |      +-----------------+
+   *  |                         |  Object A  |  +-->|   Traits   |  |      |     String      |
+   *  |                         +------------+      +------------+  |      +-----------------+
+   *  |                                                             |      | - value         |
+   *  |                                                             |      +-----------------+
+   *  |                                                             |
+   *  |                                                             |
+   *  |                                                             |
+   *  |                                                             |
+   *  |                                                             |
+   *  | +-----------------+     +------------+      +------------+  |
+   *  +#|Class B extends A|---->| tPrototype |#---->| dPrototype |#-+
+   *    +-----------------+     +------------+      +------------+
+   *                            | - traits   |
+   *                            +------------+
    *
-   *    +--------------------------+
-   *    |      Base Prototype      |
-   *    +--------------------------+
-   *    |- axHasPropertyInternal   |
-   *    |- axHasProperty           |            +-------------------+
-   *    |- axSetProperty           |     +-----#|  objectPrototype  |
-   *    |- axGetProperty           |     |      +-------------------+
-   *    |- axSetPublicProperty     |     |      | - securityDomain  |
-   *    |- axGetSlot               |<----+      +-------------------+
-   *    |- axSetSlot               |     |
-   *    |  …                       |     |
-   *    |                          |     |      +-------------------+
-   *    |                          |     +-----#|  objectPrototype  |<---------------------------------+
-   *    |                          |            +-------------------+             |                    |
-   *    +--------------------------+            | - securityDomain  |             |                    |
-   *                                            +-------------------+             |                    |
-   *                                                      ^                       |                    |
-   *                                                      |                       |                    |
-   *                                                      #                       #                    #
-   *    +-----------------+    +------------+      +------------+        +-----------------+  +-----------------+
-   * +-#|  Class Object   |--->| tPrototype |#---->| dPrototype |<--+    |     Number      |  |      Uint       |
-   * |  +-----------------+    +------------+      +------------+   |    +-----------------+  +-----------------+
-   * |                                                    ^         |    | - value         |  | - value         |
-   * |                                                    |         |    +-----------------+  +-----------------+
-   * |                                                    #         |
-   * |  +-----------------+    +------------+      +------------+   |    +-----------------+  +-----------------+
-   * +-#|   Class Class   |--->| tPrototype |#---->| dPrototype |   |    |     Boolean     |  |      Array      |
-   * |  +-----------------+    +------------+      +------------+   |    +-----------------+  +-----------------+
-   * |                                ^                             |    | - value         |  | - value         |
-   * |                                |                             |    +-----------------+  +-----------------+
-   * +--------------------------------+                             |
-   * |                                                              |    +-----------------+  +-----------------+
-   * |                                                              |    |       Int       |  |    Function     |
-   * |  +-----------------+    +------------+      +------------+   |    +-----------------+  +-----------------+
-   * +-#|     Class A     |--->| tPrototype |#---->| dPrototype |#--+    | - value         |  | - value         |
-   *    +-----------------+    +------------+      +------------+        +-----------------+  +-----------------+
-   *                           | - traits   |--+
-   *                           +------------+  |
-   *                                  ^        |
-   *                                  |        |
-   *                                  #        |
-   *                           +------------+  |   +------------+
-   *                           |  Object A  |  +-->|   Traits   |
-   *                           +------------+      +------------+
    */
   export enum WriterFlags {
     None = 0,
@@ -683,6 +696,13 @@ module Shumway.AVMX {
   }
 
   /**
+   * Throwing initializer for interfaces.
+   */
+  function axInterfaceInitializer() {
+    throwError("VerifierError", Errors.NotImplementedError, this.classInfo.instanceInfo.name.name);
+  }
+
+  /**
    * Default axApply.
    */
   function axDefaultApply(self, args: any []) {
@@ -730,9 +750,24 @@ module Shumway.AVMX {
       if (this.nativeClasses[className]) {
         axClass = this.nativeClasses[className];
         classScope = new Scope(scope, axClass);
-      } else {
-        axClass = Object.create(this.AXClass.dPrototype);
+        release || assert(axClass.dPrototype);
+        release || assert(axClass.tPrototype);
+      } else if (classInfo.instanceInfo.isInterface()) {
+        axClass = Object.create(this.AXClass.tPrototype);
         axClass.dPrototype = Object.create(this.objectPrototype);
+        axClass.tPrototype = Object.create(axClass.dPrototype);
+        axClass.axInitializer = axInterfaceInitializer;
+      } else {
+        axClass = Object.create(this.AXClass.tPrototype);
+        // For direct descendants of Object, we want the dynamic prototype to inherit from
+        // Object's tPrototype because Foo.prototype is always a proper instance of Object.
+        // For all other cases, the dynamic prototype should extend the parent class's
+        // dynamic prototype not the tPrototype.
+        if (superClass === this.AXObject) {
+          axClass.dPrototype = Object.create(this.objectPrototype);
+        } else {
+          axClass.dPrototype = Object.create(superClass.dPrototype);
+        }
         axClass.tPrototype = Object.create(axClass.dPrototype);
         classScope = new Scope(scope, axClass);
         var initializerMethodInfo = classInfo.instanceInfo.getInitializer();
@@ -758,7 +793,7 @@ module Shumway.AVMX {
                            classInfo.instanceInfo.traits;
       instanceTraits.resolve();
       classInfo.instanceInfo.runtimeTraits = instanceTraits;
-      axClass.dPrototype.traits = instanceTraits;
+      axClass.tPrototype.traits = instanceTraits;
       applyTraits(axClass.tPrototype, instanceTraits, scope);
 
       // Run the static initializer.
@@ -835,7 +870,8 @@ module Shumway.AVMX {
      * all of them.
      */
     prepareRootClassPrototype() {
-      var rootClassPrototype: AXObject = Object.create(this.objectPrototype);
+      var dynamicClassPrototype: AXObject = Object.create(this.objectPrototype);
+      var rootClassPrototype: AXObject = Object.create(dynamicClassPrototype);
       rootClassPrototype.$BgtoString = function axClassToString() {
         return "[class " + this.classInfo.instanceInfo.getName().name + "]";
       };
@@ -854,26 +890,30 @@ module Shumway.AVMX {
       this.rootClassPrototype = rootClassPrototype;
     }
 
-    prepareNativeClass(exportName: string, name: string, instancePrototype: AXObject) {
+    prepareNativeClass(exportName: string, name: string, isPrimitiveClass: boolean) {
       var axClass: AXClass = Object.create(this.rootClassPrototype);
-      // For Object, we've already created the instance prototype to break circular dependencies
-      // between Object and Class.
+
+      // For Object and Class, we've already created the instance prototype to break
+      // circular dependencies.
       if (name === 'Object') {
-        axClass.dPrototype = instancePrototype;
+        axClass.dPrototype = <any>Object.getPrototypeOf(this.objectPrototype);
+        axClass.tPrototype = this.objectPrototype;
       } else if (name === 'Class') {
-        // TODO: We're setting the axClass as its own |dPrototype| so that new non-native class
-        // instances have the rootClassPrototype on the prototype chain.
-        axClass.dPrototype = axClass;
+        axClass.dPrototype = <any>Object.getPrototypeOf(this.rootClassPrototype);
+        axClass.tPrototype = this.rootClassPrototype;
       } else {
+        var instancePrototype = isPrimitiveClass ?
+                                this.AXPrimitiveBox.dPrototype :
+                                this.objectPrototype;
         axClass.dPrototype = Object.create(instancePrototype);
+        axClass.tPrototype = Object.create(axClass.dPrototype);
       }
-      axClass.tPrototype = Object.create(axClass.dPrototype);
       this[exportName] = this.nativeClasses[name] = axClass;
       return axClass;
     }
 
     preparePrimitiveClass(exportName: string, name: string, convert, coerce, isType, isInstanceOf) {
-      var axClass = this.prepareNativeClass(exportName, name, this.AXPrimitiveBox.dPrototype);
+      var axClass = this.prepareNativeClass(exportName, name, true);
       var D = defineNonEnumerableProperty;
       D(axClass, 'axBox', axBoxPrimitive);
       D(axClass, "axApply", function axApply(_ , args: any []) {
@@ -903,15 +943,19 @@ module Shumway.AVMX {
       // - The Object constructor is an instance of Class.
       // - The Object constructor is an instance of Object.
       
-      // The basic prototype that all objects in this security domain have in common.
-      var objectPrototype = this.objectPrototype = Object.create(AXBasePrototype);
-      (<any>this.objectPrototype).securityDomain = this;
+      // The basic dynamic prototype that all objects in this security domain have in common.
+      var dynamicObjectPrototype = Object.create(AXBasePrototype);
+      dynamicObjectPrototype.securityDomain = this;
+      // The basic traits prototype that all objects in this security domain have in common.
+      this.objectPrototype = Object.create(dynamicObjectPrototype);
+
       this.prepareRootClassPrototype();
-      var AXClass = this.prepareNativeClass("AXClass", "Class", objectPrototype);
+      var AXClass = this.prepareNativeClass("AXClass", "Class", false);
       var classClassInfo = this.system.findClassInfo("Class");
       classClassInfo.instanceInfo.traits.resolve();
       AXClass.classInfo = classClassInfo;
-      var AXObject = this.prepareNativeClass("AXObject", "Object", objectPrototype);
+
+      var AXObject = this.prepareNativeClass("AXObject", "Object", false);
       // Object(null) creates an object, and this behaves differently than:
       // (function (x: Object) { trace (x); })(null) which prints null.
       D(AXObject, "axApply", axApplyObject);
@@ -937,7 +981,7 @@ module Shumway.AVMX {
         return '[Activation]';
       };
 
-      var AXFunction = this.prepareNativeClass("AXFunction", "Function", objectPrototype);
+      var AXFunction = this.prepareNativeClass("AXFunction", "Function", false);
       D(AXFunction, "axBox", axBoxPrimitive);
       D(AXFunction.dPrototype, "axCall", axFunctionCall);
       D(AXFunction.dPrototype, "axApply", axFunctionApply);
@@ -969,7 +1013,7 @@ module Shumway.AVMX {
         return this.value.apply(self, args.value);
       });
 
-      var AXArray = this.prepareNativeClass("AXArray", "Array", objectPrototype);
+      var AXArray = this.prepareNativeClass("AXArray", "Array", false);
       D(AXArray, 'axBox', axBoxPrimitive);
       AXArray.tPrototype.$BgtoString = AXFunction.axBox(function () {
         return this.value.toString();
@@ -1001,7 +1045,7 @@ module Shumway.AVMX {
 
       // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder
       // base class to help us with instanceof tests.
-      var AXPrimitiveBox = this.prepareNativeClass("AXPrimitiveBox", "PrimitiveBox", objectPrototype);
+      var AXPrimitiveBox = this.prepareNativeClass("AXPrimitiveBox", "PrimitiveBox", false);
       D(AXPrimitiveBox.dPrototype, '$BgtoString',
         AXFunction.axBox(function () { return this.value.toString(); }));
       var AXBoolean = this.preparePrimitiveClass("AXBoolean", "Boolean", asCoerceBoolean,
