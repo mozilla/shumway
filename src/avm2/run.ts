@@ -582,6 +582,7 @@ module Shumway.AVMX {
     tPrototype: AXObject;
     dPrototype: AXObject;
     axBox: any;
+    axInitializer: any;
     axConstruct: any;
     axApply: any;
     axCoerce: any;
@@ -618,6 +619,33 @@ module Shumway.AVMX {
 
   function AXClassPrototypeToString() {
     return "[" + this.classInfo.instanceInfo.getName().name + ".prototype]";
+  }
+
+  /**
+   * Generic axConstruct method that lives on the AXClass prototype. This just
+   * creates an empty object with the right prototype and then calls the
+   * instance initializer.
+   */
+  function AXClassPrototypeAXConstruct() {
+    var self: AXClass = this;
+    var object = Object.create(self.tPrototype);
+    self.axInitializer.apply(object, arguments);
+    return object;
+  }
+
+  /**
+   * Default initializer.
+   */
+  function AXClassPrototypeAXInitializer() {
+    // Nop.
+  }
+
+  /**
+   * Default axApply.
+   */
+  function AXClassPrototypeAXApply(self, args: any []) {
+    // TODO: Coerce.
+    return args ? args[0] : undefined;
   }
 
   /**
@@ -663,8 +691,8 @@ module Shumway.AVMX {
         axClass.dPrototype = Object.create(this.objectProto);
         axClass.tPrototype = Object.create(axClass.dPrototype);
         var classScope = new Scope(scope, axClass);
-        axClass.axConstruct = this.createFunction(<MethodInfo>classInfo.instanceInfo.initializer,
-                                                  classScope, false);
+        var initializerMethodInfo = classInfo.instanceInfo.getInitializer();
+        axClass.axInitializer = this.createInitializerFunction(initializerMethodInfo, classScope);
         axClass.axCoerce = function () {
           assert(false, "TODO: Coercing constructor.");
         };
@@ -699,6 +727,12 @@ module Shumway.AVMX {
         var self = this === jsGlobal ? scope.global.object : this;
         return interpret(self, methodInfo, scope, sliceArguments(arguments));
       });
+    }
+
+    createInitializerFunction(methodInfo: MethodInfo, scope: Scope): Function {
+      return function () {
+        return interpret(this, methodInfo, scope, sliceArguments(arguments));
+      };
     }
 
     createActivation(methodInfo: MethodInfo): AXActivation {
@@ -778,7 +812,11 @@ module Shumway.AVMX {
       axClass.dPrototype = name === 'Object' ? instanceProto : Object.create(instanceProto);
       axClass.tPrototype = Object.create(axClass.dPrototype);
       this[exportName] = this.nativeClasses[name] = axClass;
-      axClass.dPrototype.$BgtoString = AXClassPrototypeToString;
+      var AXClassPrototype: any = axClass.dPrototype;
+      AXClassPrototype.$BgtoString = AXClassPrototypeToString;
+      AXClassPrototype.axConstruct = AXClassPrototypeAXConstruct;
+      AXClassPrototype.axInitializer = AXClassPrototypeAXInitializer;
+      AXClassPrototype.axApply = AXClassPrototypeAXApply;
       return axClass;
     }
 
