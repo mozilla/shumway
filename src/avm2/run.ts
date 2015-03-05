@@ -779,6 +779,10 @@ module Shumway.AVMX {
       axClass.superClass = superClass;
       axClass.scope = scope;
 
+      // Add the |constructor| property on the class traits prototype so that all instances can
+      // get to their class constructor.
+      defineNonEnumerableProperty(axClass.tPrototype, "$Bgconstructor", axClass);
+
       // Prepare static traits.
       var staticTraits = this.AXClass.classInfo.instanceInfo.traits.concat(classInfo.traits);
       staticTraits.resolve();

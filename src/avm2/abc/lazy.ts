@@ -197,6 +197,9 @@ module Shumway.AVMX {
       for (var i = 0; i < b.length; i++) {
         var t = b[i];
         if (t.isMethodOrAccessor()) {
+          if (t.getName().name === "aBar") {
+            debugger;
+          }
           var j = this.indexOf(t.getName(), t.kind);
           if (j >= 0) {
             a[j] = t;

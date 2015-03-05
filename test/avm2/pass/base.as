@@ -1,12 +1,19 @@
 package {
   import avmplus.System;
+
   (function () {
-    trace(Object);
-    trace(Object.constructor);
-    // trace(Object.constructor.prototype);
-    trace(Array);
-    trace(Array.constructor);
-    // trace(Array.constructor.prototype);
+    ([Object, Array, Number, int, uint, String, Class]).forEach(function(c) {
+      trace(c.constructor);
+      trace(c.constructor.prototype);
+    });
+  })();
+
+  (function () {
+    ([Object, Array, Number, int, uint, String]).forEach(function(c) {
+      var o = new c();
+      trace(o.constructor);
+      trace(o.constructor.prototype);
+    });
   })();
 
   (function () {
