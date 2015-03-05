@@ -121,16 +121,26 @@ var ShumwayCom = {
           secondaryAdapter.onLoadFileCallback(Components.utils.cloneInto(arg, playerContent));
         }
       };
-      shumwayComAdapter.onExternalCallback = function (arg) {
+      shumwayComAdapter.onExternalCallback = function (call) {
         if (secondaryAdapter.onExternalCallback) {
-          return secondaryAdapter.onExternalCallback(Components.utils.cloneInto(arg, playerContent));
+          return secondaryAdapter.onExternalCallback(Components.utils.cloneInto(call, playerContent));
         }
       };
-      shumwayComAdapter.onSystemResourceCallback = function (id, arg) {
+      shumwayComAdapter.onSystemResourceCallback = function (id, data) {
         if (secondaryAdapter.onSystemResourceCallback) {
-          secondaryAdapter.onSystemResourceCallback(id, Components.utils.cloneInto(arg, playerContent));
+          secondaryAdapter.onSystemResourceCallback(id, Components.utils.cloneInto(data, playerContent));
         }
       };
+      secondaryAdapter._onSyncMessage = function (msg) {
+        if (shumwayComAdapter.onSyncMessage) {
+          var waivedMsg = Components.utils.waiveXrays(msg);
+          return shumwayComAdapter.onSyncMessage(Components.utils.cloneInto(waivedMsg, content));
+        }
+      };
+    }
+
+    function postSyncMessage(msg) {
+      return Components.utils.cloneInto(shumwayComAdapter._onSyncMessage(msg), content);
     }
 
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
@@ -151,11 +161,13 @@ var ShumwayCom = {
     Components.utils.exportFunction(userInput, shumwayComAdapter, {defineAs: 'userInput'});
     Components.utils.exportFunction(loadSystemResource, shumwayComAdapter, {defineAs: 'loadSystemResource'});
     Components.utils.exportFunction(setupComBridge, shumwayComAdapter, {defineAs: 'setupComBridge'});
+    Components.utils.exportFunction(postSyncMessage, shumwayComAdapter, {defineAs: 'postSyncMessage'});
 
     Object.defineProperties(shumwayComAdapter, {
       onLoadFileCallback: { value: null, writable: true },
       onExternalCallback: { value: null, writable: true },
       onSystemResourceCallback: { value: null, writable: true },
+      onSyncMessage: { value: null, writable: true }
     });
 
     // Exposing createSpecialInflate function for DEFLATE stream decoding using

@@ -33,10 +33,12 @@ declare var ShumwayCom: {
   loadSystemResource: (id: number) => void;
   navigateTo: (args: any) => void;
   setupComBridge: (playerWindow: any) => void;
+  postSyncMessage: (data: any) => any;
 
   onLoadFileCallback: (data) => void;
   onExternalCallback: (call) => any;
   onSystemResourceCallback: (id: number, data: any) => void;
+  onSyncMessage: (data: any) => any;
 };
 
 interface SpecialInflate {
