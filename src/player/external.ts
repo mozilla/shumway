@@ -1,5 +1,5 @@
 /**
- * Copyright 2014 Mozilla Foundation
+ * Copyright 2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,6 +177,37 @@ module Shumway.Player {
 
     navigateTo(url: string, target: string) {
       window.open(this.resolveUrl(url), target || '_blank');
+    }
+  }
+
+  export class ShumwayComResourcesLoadingService implements ISystemResourcesLoadingService {
+    private _pendingPromises: Array<PromiseWrapper<any>>;
+
+    public constructor(preload: boolean) {
+      this._pendingPromises = [];
+
+      if (preload) {
+        this.load(SystemResourceId.BuiltinAbc);
+        this.load(SystemResourceId.PlayerglobalAbcs);
+        this.load(SystemResourceId.PlayerglobalManifest);
+      }
+
+      ShumwayCom.onSystemResourceCallback = this._onSystemResourceCallback.bind(this);
+    }
+
+    private _onSystemResourceCallback(id: SystemResourceId, data: any): void {
+      this._pendingPromises[id].resolve(data);
+    }
+
+    public load(id: SystemResourceId): Promise<any> {
+      var result = this._pendingPromises[id];
+      if (!result) {
+        result = new PromiseWrapper<any>();
+        this._pendingPromises[id] = result;
+
+        ShumwayCom.loadSystemResource(id);
+      }
+      return result.promise;
     }
   }
 

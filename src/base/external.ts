@@ -30,10 +30,13 @@ declare var ShumwayCom: {
   setFullscreen: (enabled: boolean) => void;
   externalCom: (args: any) => any;
   loadFile: (args: any) => void;
+  loadSystemResource: (id: number) => void;
   navigateTo: (args: any) => void;
+  setupComBridge: (playerWindow: any) => void;
 
   onLoadFileCallback: (data) => void;
   onExternalCallback: (call) => any;
+  onSystemResourceCallback: (id: number, data: any) => void;
 };
 
 interface SpecialInflate {
