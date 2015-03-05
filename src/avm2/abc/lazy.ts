@@ -309,6 +309,14 @@ module Shumway.AVMX {
     ) {
       super(abc, kind, name);
     }
+
+    hasDefaultValue(): boolean {
+      return this.defaultValueKind >= 0;
+    }
+
+    getDefaultValue(): any {
+      return this.abc.getConstant(this.defaultValueKind, this.defaultValueIndex);
+    }
   }
 
   export class MethodTraitInfo extends TraitInfo {
@@ -342,7 +350,7 @@ module Shumway.AVMX {
       slot: number,
       public classInfo: ClassInfo
     ) {
-      super(abc, kind, name, slot, 0, 0, 0);
+      super(abc, kind, name, slot, 0, 0, -1);
     }
   }
 
@@ -1325,11 +1333,11 @@ module Shumway.AVMX {
           var slot = s.readU30();
           var type = s.readU30();
           var valueIndex = s.readU30();
-          var valueKind = 0;
+          var valueKind = -1;
           if (valueIndex !== 0) {
             valueKind = s.readU8();
           }
-          trait = new SlotTraitInfo(this, kind, name, slot, type, valueIndex, valueKind);
+          trait = new SlotTraitInfo(this, kind, name, slot, type, valueKind, valueIndex);
           break;
         case TRAIT.Method:
         case TRAIT.Setter:
