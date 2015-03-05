@@ -580,14 +580,19 @@ module Shumway.AVMX {
     var T = traits.traits;
     for (var i = 0; i < T.length; i++) {
       var t = T[i];
+      var mangledName = t.getName().getMangledName();
       if (t.kind === TRAIT.Method || t.kind === TRAIT.Getter || t.kind === TRAIT.Setter) {
         var method = createMethodForTrait(<MethodTraitInfo>t, scope);
-        var mangledName = t.getName().getMangledName();
         if (t.kind === TRAIT.Method) {
           defineNonEnumerableProperty(object, mangledName,
                                       object.securityDomain.AXFunction.axBox(method));
         } else {
           defineNonEnumerableGetterOrSetter(object, mangledName, method, t.kind === TRAIT.Getter)
+        }
+      } else if (t.kind === TRAIT.Slot || t.kind === TRAIT.Const) {
+        var s = <SlotTraitInfo>t;
+        if (s.hasDefaultValue()) {
+          defineNonEnumerableProperty(object, mangledName, s.getDefaultValue());
         }
       }
     }
