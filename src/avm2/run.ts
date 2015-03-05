@@ -324,14 +324,14 @@ module Shumway.AVMX {
   }
 
   function axHasPropertyInternal(mn: Multiname): boolean {
-    return this.traits.indexOf(mn) >= 0;
+    return this.traits.indexOf(mn, -1) >= 0;
   }
 
   function axResolveMultiname(mn: Multiname): any {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
       return mn.name;
     }
-    var t = this.traits.getTrait(mn);
+    var t = this.traits.getTrait(mn, -1);
     if (t) {
       return t.getName().getMangledName();
     }
@@ -376,7 +376,7 @@ module Shumway.AVMX {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
       return this.value[mn.name];
     }
-    var t = this.traits.getTrait(mn);
+    var t = this.traits.getTrait(mn, -1);
     if (t) {
       return this[t.getName().getMangledName()];
     }
@@ -387,7 +387,7 @@ module Shumway.AVMX {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
       this.value[mn.name] = value;
     }
-    var t = this.traits.getTrait(mn);
+    var t = this.traits.getTrait(mn, -1);
     if (t) {
       this[t.getName().getMangledName()] = value;
       return;
