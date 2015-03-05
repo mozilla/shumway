@@ -1154,7 +1154,7 @@ module Shumway.AVMX {
           var traits = script.traits;
           traits.resolve();
           var index = traits.indexOf(mn, -1);
-          if (index > 0) {
+          if (index >= 0) {
             if (execute) {
               this._ensureScriptIsExecuted(script);
             }
