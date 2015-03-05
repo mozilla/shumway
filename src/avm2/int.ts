@@ -146,6 +146,11 @@ module Shumway.AVMX {
       return (u << 8) >> 8;
     }
 
+    // Boxes the top of the stack.
+    function peekBox() {
+      return securityDomain.box(stack[stack.length - 1]);
+    }
+
     rn = new Multiname(abc, 0, null, null, null);
 
     var code = body.code;
@@ -356,7 +361,7 @@ module Shumway.AVMX {
             break;
           case Bytecode.CONSTRUCT:
             popManyInto(stack, u30(), args);
-            stack[stack.length - 1] = securityDomain.box(stack[stack.length - 1]).axConstruct(args);
+            stack[stack.length - 1] = peekBox().axConstruct(args);
             break;
           case Bytecode.RETURNVOID:
             return;
@@ -373,7 +378,7 @@ module Shumway.AVMX {
             index = u30();
             popManyInto(stack, u30(), args);
             popNameInto(stack, abc.getMultiname(index), rn);
-            stack[stack.length - 1] = securityDomain.box(stack[stack.length - 1]).axConstructProperty(rn, args);
+            stack[stack.length - 1] = peekBox().axConstructProperty(rn, args);
             break;
           // case Bytecode.CALLPROPLEX:
           case Bytecode.CALLPROPERTY:
@@ -474,14 +479,14 @@ module Shumway.AVMX {
             break;
           case Bytecode.GETPROPERTY:
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            stack[stack.length - 1] = securityDomain.box(stack[stack.length - 1]).axGetProperty(rn);
+            stack[stack.length - 1] = peekBox().axGetProperty(rn);
             break;
-          //case Bytecode.deleteproperty:
-          //  popNameInto(stack, multinames[bc.index], mn);
-          //  stack[stack.length - 1] = box(stack[stack.length - 1]).asDeleteProperty(mn.namespaces, mn.name, mn.flags);
-          //  break;
+          case Bytecode.DELETEPROPERTY:
+            popNameInto(stack, abc.getMultiname(u30()), rn);
+            stack[stack.length - 1] = peekBox().axDeleteProperty(rn);
+            break;
           case Bytecode.GETSLOT:
-            stack[stack.length - 1] = securityDomain.box(stack[stack.length - 1]).axGetSlot(u30());
+            stack[stack.length - 1] = peekBox().axGetSlot(u30());
             break;
           case Bytecode.SETSLOT:
             value = stack.pop();

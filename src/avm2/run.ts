@@ -349,6 +349,15 @@ module Shumway.AVMX {
     return value;
   }
 
+  function axDeleteProperty(mn: Multiname): any {
+    // Cannot delete traits.
+    if (this.traits.getTrait(mn)) {
+      return false;
+    }
+    return delete this[mn.getPublicMangledName()];
+  }
+
+
   function axCallProperty(mn: Multiname, args: any []): any {
     return this[this.axResolveMultiname(mn)].axApply(this, args);
   }
@@ -386,12 +395,26 @@ module Shumway.AVMX {
     this[mn.getPublicMangledName()] = value;
   }
 
+  function axArrayDeleteProperty(mn: Multiname): any {
+    if (mn.isRuntimeName() && isNumeric(mn.name)) {
+      return delete this.value[mn.name];
+    }
+    // Cannot delete array traits.
+    if (this.traits.getTrait(mn)) {
+      return false;
+    }
+    return delete this[mn.getPublicMangledName()];
+  }
+
   function axFunctionApply(self: any, args?: any): any {
     return this.value.apply(self, args);
   }
 
-  function axFunctionConstruct(args) {
-    assert(false);
+  function axFunctionConstruct() {
+    release || assert(this.prototype);
+    var object = Object.create(this.prototype);
+    this.value.apply(object, arguments);
+    return object;
   }
 
   function axFunctionCall(self: any, ...args: any[]): any {
@@ -607,6 +630,7 @@ module Shumway.AVMX {
   D(AXBasePrototype, "axSetProperty", axSetProperty);
   D(AXBasePrototype, "axSetPublicProperty", axSetPublicProperty);
   D(AXBasePrototype, "axGetProperty", axGetProperty);
+  D(AXBasePrototype, "axDeleteProperty", axDeleteProperty);
   D(AXBasePrototype, "axSetSlot", axSetSlot);
   D(AXBasePrototype, "axGetSlot", axGetSlot);
   D(AXBasePrototype, "axCallProperty", axCallProperty);
@@ -1049,6 +1073,7 @@ module Shumway.AVMX {
 
       D(AXArray.dPrototype, "axGetProperty", axArrayGetProperty);
       D(AXArray.dPrototype, "axSetProperty", axArraySetProperty);
+      D(AXArray.dPrototype, "axDeleteProperty", axArrayDeleteProperty);
 
       // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder
       // base class to help us with instanceof tests.
