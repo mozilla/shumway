@@ -127,8 +127,9 @@ module Shumway.AVMX {
   }
 
   export class Traits {
-    private _nextSlotID: number = 1;
     public slots: SlotTraitInfo [] = null;
+    private _nextSlotID: number = 1;
+    private _resolved = false;
     constructor(
       public traits: TraitInfo []
     ) {
@@ -136,9 +137,13 @@ module Shumway.AVMX {
     }
 
     resolve() {
+      if (this._resolved) {
+        return;
+      }
       for (var i = 0; i < this.traits.length; i++) {
         this.traits[i].resolve();
       }
+      this._resolved = true;
     }
 
     attachHolder(holder: Info) {
@@ -158,6 +163,7 @@ module Shumway.AVMX {
      * if you don't care about the kind.
      */
     indexOf(mn: Multiname, kind: TRAIT): number {
+      release || assert(this._resolved);
       var mnName = mn.name;
       var nss = mn.namespaces;
       var traits = this.traits;
@@ -212,6 +218,7 @@ module Shumway.AVMX {
     }
 
     getSlot(i: number): TraitInfo {
+      release || assert(this._resolved);
       if (this.slots === null) {
         var slots = this.slots = [];
         for (var j = 0; j < this.traits.length; j++) {
