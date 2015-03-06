@@ -1193,7 +1193,7 @@ module Shumway.GFX {
   }
 
   export class TextLine {
-    private static _measureContext = document.createElement('canvas').getContext('2d');
+    private static _measureContext: CanvasRenderingContext2D;
 
     x: number = 0;
     y: number = 0;
@@ -1204,10 +1204,18 @@ module Shumway.GFX {
     align: number = 0;
     runs: TextRun[] = [];
 
+    private static _getMeasureContext(): CanvasRenderingContext2D {
+      if (!TextLine._measureContext) {
+        TextLine._measureContext = document.createElement('canvas').getContext('2d');
+      }
+      return TextLine._measureContext;
+    }
+
     addRun(font: string, fillStyle: string, text: string, underline: boolean) {
       if (text) {
-        TextLine._measureContext.font = font;
-        var width = TextLine._measureContext.measureText(text).width | 0;
+        var measureContext = TextLine._getMeasureContext();
+        measureContext.font = font;
+        var width = measureContext.measureText(text).width | 0;
         this.runs.push(new TextRun(font, fillStyle, text, width, underline));
         this.width += width;
       }
@@ -1221,7 +1229,7 @@ module Shumway.GFX {
       currentLine.width = 0;
       currentLine.runs = [];
 
-      var measureContext = TextLine._measureContext;
+      var measureContext = TextLine._getMeasureContext();
 
       for (var i = 0; i < runs.length; i++) {
         var run = runs[i];
