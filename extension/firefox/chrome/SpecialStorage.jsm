@@ -33,25 +33,31 @@ var SpecialStorageUtils = {
     // We will return object created in the sandbox/content, with some exposed
     // properties/methods, so we can send data between wrapped object and
     // and sandbox/content.
-    var wrapper = new sandbox.Object();
-    var waived = Components.utils.waiveXrays(wrapper);
-    Object.defineProperties(waived, {
+    var wrapper = Components.utils.createObjectIn(sandbox);
+    Object.defineProperties(wrapper, {
       getItem: {
         value: function (key) {
           return storage.getItem(key);
-        }
+        },
+        enumerable: true,
+        configurable: true
       },
       setItem: {
         value: function (key, value) {
-          return storage.setItem(key, value);
-        }
+          storage.setItem(key, value);
+        },
+        enumerable: true,
+        configurable: true
       },
       removeItem: {
         value: function (key) {
-          return storage.removeItem(key);
-        }
+          storage.removeItem(key);
+        },
+        enumerable: true,
+        configurable: true
       }
     });
+    Components.utils.makeObjectPropsNormal(wrapper);
     return wrapper;
   }
 };
