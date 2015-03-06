@@ -140,6 +140,12 @@ module Shumway.Player.Window {
           case 'displayParameters':
             this.processDisplayParameters(data.params);
             break;
+          case 'registerFontOrImageResponse':
+            var request = this._fontOrImageRequests[data.requestId];
+            release || Debug.assert(request);
+            delete this._fontOrImageRequests[data.requestId];
+            request.resolve(data.result);
+            break;
           case 'options':
             Shumway.Settings.setSettings(data.settings);
             break;
