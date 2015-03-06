@@ -458,7 +458,7 @@ module Shumway {
       return array;
     }
 
-    export function memcopy<T extends TypedArray>(destination: T, source: T, doffset: number = 0,
+    export function memCopy<T extends TypedArray>(destination: T, source: T, doffset: number = 0,
                                                   soffset: number = 0, length: number = 0) {
       if (soffset > 0 || (length > 0 && length < source.length)) {
         if (length <= 0) {

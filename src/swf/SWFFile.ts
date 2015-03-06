@@ -239,7 +239,7 @@ module Shumway.SWF {
 
     private processFirstBatchOfDecompressedData(data: Uint8Array) {
       var maxLength = Math.min(data.length, this._uncompressedLength - this._uncompressedLoadedLength);
-      ArrayUtilities.memcopy(this.data, data, this._uncompressedLoadedLength, 0, maxLength);
+      ArrayUtilities.memCopy(this.data, data, this._uncompressedLoadedLength, 0, maxLength);
       this._uncompressedLoadedLength += maxLength;
       this.parseHeaderContents();
       this._decompressor.onData = this.processDecompressedData.bind(this);
@@ -247,7 +247,7 @@ module Shumway.SWF {
 
     private processDecompressedData(data: Uint8Array) {
       var maxLength = Math.min(data.length, this._uncompressedLength - this._uncompressedLoadedLength);
-      ArrayUtilities.memcopy(this.data, data, this._uncompressedLoadedLength, 0, maxLength);
+      ArrayUtilities.memCopy(this.data, data, this._uncompressedLoadedLength, 0, maxLength);
       this._uncompressedLoadedLength += maxLength;
     }
 
