@@ -54,67 +54,10 @@ function log(aMsg) {
 
 var ShumwayCom = {
   createAdapter: function (content, callbacks) {
-    function setFullscreen(value) {
-      callbacks.sendMessage('setFullscreen', value, false);
-    }
-
-    function endActivation() {
-      callbacks.sendMessage('endActivation', null, false);
-    }
-
-    function fallback() {
-      callbacks.sendMessage('fallback', null, false);
-    }
-
-    function getSettings() {
-      return Components.utils.cloneInto(
-        callbacks.sendMessage('getSettings', null, true), content);
-    }
-
-    function getPluginParams() {
-      return Components.utils.cloneInto(
-        callbacks.sendMessage('getPluginParams', null, true), content);
-    }
-
-    function reportIssue() {
-      callbacks.sendMessage('reportIssue', null, false);
-    }
-
-    function externalCom(args) {
-      var result = String(callbacks.sendMessage('externalCom', args, true));
-      return Components.utils.cloneInto(result, content);
-    }
-
-    function loadFile(args) {
-      callbacks.sendMessage('loadFile', args, false);
-    }
-
-    function reportTelemetry(args) {
-      callbacks.sendMessage('reportTelemetry', args, false);
-    }
-
-    function setClipboard(args) {
-      callbacks.sendMessage('setClipboard', args, false);
-    }
-
-    function navigateTo(args) {
-      callbacks.sendMessage('navigateTo', args, false);
-    }
-
-    function userInput() {
-      callbacks.sendMessage('userInput', null, true);
-    }
-
-    function loadSystemResource(id) {
-      loadShumwaySystemResource(id).then(function (data) {
-        if (shumwayComAdapter.onSystemResourceCallback) {
-          shumwayComAdapter.onSystemResourceCallback(id,
-            Components.utils.cloneInto(data, content));
-        }
-      });
-    }
 
     function setupComBridge(playerWindow) {
+      // Creates secondary ShumwayCom adapter and sets up the forwarders from
+      // the callbacks to primary adapter.
       var playerContent = playerWindow.contentWindow;
       var secondaryAdapter = ShumwayCom.createAdapter(playerContent, callbacks);
       shumwayComAdapter.onLoadFileCallback = function (arg) {
@@ -132,70 +75,121 @@ var ShumwayCom = {
           secondaryAdapter.onSystemResourceCallback(id, Components.utils.cloneInto(data, playerContent));
         }
       };
+      // Sets up the _onSyncMessage helper that is used from postSyncMessage of
+      // the secondary adapter.
       secondaryAdapter._onSyncMessage = function (msg) {
         if (shumwayComAdapter.onSyncMessage) {
-          var waivedMsg = Components.utils.waiveXrays(msg);
+          var waivedMsg = Components.utils.waiveXrays(msg); // for cloneInto
           return shumwayComAdapter.onSyncMessage(Components.utils.cloneInto(waivedMsg, content));
         }
       };
     }
 
-    function postSyncMessage(msg) {
-      return Components.utils.cloneInto(shumwayComAdapter._onSyncMessage(msg), content);
+    function genPropDesc(value) {
+      return {
+        enumerable: true, configurable: true, writable: true, value: value
+      };
     }
 
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var shumwayComAdapter = Components.utils.createObjectIn(content, {defineAs: 'ShumwayCom'});
-    Components.utils.exportFunction(callbacks.enableDebug, shumwayComAdapter, {defineAs: 'enableDebug'});
-    Components.utils.exportFunction(setFullscreen, shumwayComAdapter, {defineAs: 'setFullscreen'});
-    Components.utils.exportFunction(endActivation, shumwayComAdapter, {defineAs: 'endActivation'});
-    Components.utils.exportFunction(fallback, shumwayComAdapter, {defineAs: 'fallback'});
-    Components.utils.exportFunction(getSettings, shumwayComAdapter, {defineAs: 'getSettings'});
-    Components.utils.exportFunction(getPluginParams, shumwayComAdapter, {defineAs: 'getPluginParams'});
-    Components.utils.exportFunction(reportIssue, shumwayComAdapter, {defineAs: 'reportIssue'});
-    Components.utils.exportFunction(externalCom, shumwayComAdapter, {defineAs: 'externalCom'});
-    Components.utils.exportFunction(loadFile, shumwayComAdapter, {defineAs: 'loadFile'});
-    Components.utils.exportFunction(reportTelemetry, shumwayComAdapter, {defineAs: 'reportTelemetry'});
-    Components.utils.exportFunction(setClipboard, shumwayComAdapter, {defineAs: 'setClipboard'});
-    Components.utils.exportFunction(navigateTo, shumwayComAdapter, {defineAs: 'navigateTo'});
-    Components.utils.exportFunction(userInput, shumwayComAdapter, {defineAs: 'userInput'});
-    Components.utils.exportFunction(loadSystemResource, shumwayComAdapter, {defineAs: 'loadSystemResource'});
-    Components.utils.exportFunction(setupComBridge, shumwayComAdapter, {defineAs: 'setupComBridge'});
-    Components.utils.exportFunction(postSyncMessage, shumwayComAdapter, {defineAs: 'postSyncMessage'});
+    Object.defineProperties(shumwayComAdapter, {
+      enableDebug: genPropDesc(function enableDebug() {
+        callbacks.enableDebug()
+      }),
+      setFullscreen: genPropDesc(function setFullscreen(value) {
+        callbacks.sendMessage('setFullscreen', value, false);
+      }),
+      endActivation: genPropDesc(function endActivation() {
+        callbacks.sendMessage('endActivation', null, false);
+      }),
+      fallback: genPropDesc(function fallback() {
+        callbacks.sendMessage('fallback', null, false);
+      }),
+      getSettings: genPropDesc(function getSettings() {
+        return Components.utils.cloneInto(
+          callbacks.sendMessage('getSettings', null, true), content);
+      }),
+      getPluginParams: genPropDesc(function getPluginParams() {
+        return Components.utils.cloneInto(
+          callbacks.sendMessage('getPluginParams', null, true), content);
+      }),
+      reportIssue: genPropDesc(function reportIssue() {
+        callbacks.sendMessage('reportIssue', null, false);
+      }),
+      externalCom: genPropDesc(function externalCom(args) {
+        var result = String(callbacks.sendMessage('externalCom', args, true));
+        return Components.utils.cloneInto(result, content);
+      }),
+      loadFile: genPropDesc(function loadFile(args) {
+        callbacks.sendMessage('loadFile', args, false);
+      }),
+      reportTelemetry: genPropDesc(function reportTelemetry(args) {
+        callbacks.sendMessage('reportTelemetry', args, false);
+      }),
+      setClipboard: genPropDesc(function setClipboard(args) {
+        callbacks.sendMessage('setClipboard', args, false);
+      }),
+      navigateTo: genPropDesc(function navigateTo(args) {
+        callbacks.sendMessage('navigateTo', args, false);
+      }),
+      userInput: genPropDesc(function userInput() {
+        callbacks.sendMessage('userInput', null, true);
+      }),
+      loadSystemResource: genPropDesc(function loadSystemResource(id) {
+        loadShumwaySystemResource(id).then(function (data) {
+          if (shumwayComAdapter.onSystemResourceCallback) {
+            shumwayComAdapter.onSystemResourceCallback(id,
+              Components.utils.cloneInto(data, content));
+          }
+        });
+      }),
+      setupComBridge: genPropDesc(setupComBridge),
+      postSyncMessage: genPropDesc(function postSyncMessage(msg) {
+        return Components.utils.cloneInto(shumwayComAdapter._onSyncMessage(msg), content);
+      })
+    });
 
     Object.defineProperties(shumwayComAdapter, {
-      onLoadFileCallback: { value: null, writable: true },
-      onExternalCallback: { value: null, writable: true },
-      onSystemResourceCallback: { value: null, writable: true },
-      onSyncMessage: { value: null, writable: true }
+      onLoadFileCallback: genPropDesc(null),
+      onExternalCallback: genPropDesc(null),
+      onSystemResourceCallback: genPropDesc(null),
+      onSyncMessage: genPropDesc(null)
+    });
+
+    Object.defineProperties(shumwayComAdapter, {
+      createSpecialStorage: genPropDesc(function () {
+        var environment = callbacks.getEnvironment();
+        return SpecialStorageUtils.createWrappedSpecialStorage(content,
+          environment.swfUrl, environment.privateBrowsing);
+      })
     });
 
     // Exposing createSpecialInflate function for DEFLATE stream decoding using
     // Gecko API.
     if (SpecialInflateUtils.isSpecialInflateEnabled) {
-      Components.utils.exportFunction(function () {
-        return SpecialInflateUtils.createWrappedSpecialInflate(content);
-      }, shumwayComAdapter, {defineAs: 'createSpecialInflate'});
+      Object.defineProperties(shumwayComAdapter, {
+        createSpecialInflate: genPropDesc(function () {
+          return SpecialInflateUtils.createWrappedSpecialInflate(content);
+        })
+      });
     }
 
+    // Exposing createRtmpSocket/createRtmpXHR functions to support RTMP stream
+    // functionality.
     if (RtmpUtils.isRtmpEnabled) {
-      Components.utils.exportFunction(function (params) {
-        return RtmpUtils.createSocket(content, params);
-      }, shumwayComAdapter, {defineAs: 'createRtmpSocket'});
-      Components.utils.exportFunction(function () {
-        return RtmpUtils.createXHR(content);
-      }, shumwayComAdapter, {defineAs: 'createRtmpXHR'});
+      Object.defineProperties(shumwayComAdapter, {
+        createRtmpSocket: genPropDesc(function (params) {
+          return RtmpUtils.createSocket(content, params);
+        }),
+        createRtmpXHR: genPropDesc(function () {
+          return RtmpUtils.createXHR(content);
+        })
+      });
     }
-
-    Components.utils.exportFunction(function () {
-      var environment = callbacks.getEnvironment();
-      return SpecialStorageUtils.createWrappedSpecialStorage(content,
-        environment.swfUrl, environment.privateBrowsing);
-    }, shumwayComAdapter, {defineAs: 'createSpecialStorage'});
 
     Components.utils.makeObjectPropsNormal(shumwayComAdapter);
-
     return shumwayComAdapter;
   },
 
