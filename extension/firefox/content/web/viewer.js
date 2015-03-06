@@ -38,7 +38,7 @@ var playerWindowLoaded = new Promise(function(resolve) {
   var playerWindowIframe = document.getElementById("playerWindow");
   playerWindowIframe.addEventListener('load', function () {
     playerWindow = playerWindowIframe.contentWindow;
-    resolve();
+    resolve(playerWindowIframe);
   });
   playerWindowIframe.src = 'resource://shumway/web/viewer.player.html';
 });
@@ -69,7 +69,8 @@ function runViewer() {
     }).join(',');
   }
 
-  playerWindowLoaded.then(function () {
+  playerWindowLoaded.then(function (playerWindowIframe) {
+    ShumwayCom.setupComBridge(playerWindowIframe);
     parseSwf(movieUrl, baseUrl, movieParams, objectParams);
   });
 

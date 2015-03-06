@@ -17,7 +17,8 @@
 declare var ShumwayCom: {
   createSpecialInflate: () => SpecialInflate;
   createRtmpSocket: (options) => any;
-  createRtmpXHR: ()=> XMLHttpRequest;
+  createRtmpXHR: () => XMLHttpRequest;
+  createSpecialStorage: () => SpecialStorage;
   userInput: () => void;
   fallback: () => void;
   endActivation: () => void;
@@ -30,11 +31,22 @@ declare var ShumwayCom: {
   setFullscreen: (enabled: boolean) => void;
   externalCom: (args: any) => any;
   loadFile: (args: any) => void;
+  loadSystemResource: (id: number) => void;
   navigateTo: (args: any) => void;
+  setupComBridge: (playerWindow: any) => void;
+  postSyncMessage: (data: any) => any;
 
   onLoadFileCallback: (data) => void;
   onExternalCallback: (call) => any;
+  onSystemResourceCallback: (id: number, data: any) => void;
+  onSyncMessage: (data: any) => any;
 };
+
+interface SpecialStorage {
+  getItem(key: string): string;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
 
 interface SpecialInflate {
   onData: (data: Uint8Array) => void;

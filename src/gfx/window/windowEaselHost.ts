@@ -37,9 +37,16 @@ module Shumway.GFX.Window {
       this._window.addEventListener('message', function (e) {
         this.onWindowMessage(e.data);
       }.bind(this));
-      this._window.addEventListener('syncmessage', function (e) {
-        this.onWindowMessage(e.detail, false);
-      }.bind(this));
+      if (typeof ShumwayCom !== 'undefined') {
+        ShumwayCom.onSyncMessage = function (msg) {
+          this.onWindowMessage(msg, false);
+          return msg.result;
+        }.bind(this);
+      } else {
+        this._window.addEventListener('syncmessage', function (e) {
+          this.onWindowMessage(e.detail, false);
+        }.bind(this));
+      }
     }
 
     onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
@@ -59,14 +66,12 @@ module Shumway.GFX.Window {
     }
 
     onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
-      var event = this._playerWindow.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, {
+      this._playerWindow.postMessage({
         type: 'videoPlayback',
         id: id,
         eventType: eventType,
         data: data
-      });
-      this._playerWindow.dispatchEvent(event);
+      }, '*');
     }
 
     public requestTimeline(type: string, cmd: string): Promise<TimelineBuffer> {

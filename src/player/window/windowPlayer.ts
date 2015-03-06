@@ -31,10 +31,7 @@ module Shumway.Player.Window {
       this._window = window;
       this._parent = parent || window.parent;
       this._window.addEventListener('message', function (e) {
-        this.onWindowMessage(e.data, true);
-      }.bind(this));
-      this._window.addEventListener('syncmessage', function (e) {
-        this.onWindowMessage(e.detail, false);
+        this.onWindowMessage(e.data);
       }.bind(this));
       this._fontOrImageRequests = [];
     }
@@ -59,12 +56,7 @@ module Shumway.Player.Window {
         assets: assets,
         result: undefined
       };
-      var transferList = [bytes.buffer];
-      // TODO var result = this._parent.postSyncMessage(message, '*', transferList);
-      var event = this._parent.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, message);
-      this._parent.dispatchEvent(event);
-      var result = message.result;
+      var result = this._sendSyncMessage(message);
       return DataBuffer.FromPlainObject(result);
     }
 
@@ -75,16 +67,25 @@ module Shumway.Player.Window {
     }
 
     videoControl(id: number, eventType: VideoControlEvent, data: any): any {
-      var event = this._parent.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, {
+      var message = {
         type: 'videoControl',
         id: id,
         eventType: eventType,
         data: data,
         result: undefined
-      });
+      };
+      return this._sendSyncMessage(message);
+    }
+
+    private _sendSyncMessage(message) {
+      if (typeof ShumwayCom !== 'undefined' && ShumwayCom.postSyncMessage) {
+        return ShumwayCom.postSyncMessage(message);
+      }
+
+      var event = this._parent.document.createEvent('CustomEvent');
+      event.initCustomEvent('syncmessage', false, false, message);
       this._parent.dispatchEvent(event);
-      return event.detail.result;
+      return message.result;
     }
 
     registerFont(syncId: number, data: any): Promise<any> {
@@ -126,7 +127,7 @@ module Shumway.Player.Window {
       }, '*');
     }
 
-    private onWindowMessage(data, async) {
+    private onWindowMessage(data) {
       if (typeof data === 'object' && data !== null) {
         switch (data.type) {
           case 'gfx':

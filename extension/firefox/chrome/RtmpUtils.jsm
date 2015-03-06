@@ -73,47 +73,56 @@ var RtmpUtils = {
       }
     };
 
-    var wrapper = new sandbox.Object();
-    var waived = Components.utils.waiveXrays(wrapper);
-    Object.defineProperties(waived, {
+    var wrapper = Cu.createObjectIn(sandbox);
+    Object.defineProperties(wrapper, {
       onopen: {
         get: function () { return wrapperOnOpen; },
         set: function (value) { wrapperOnOpen = value; },
-        enumerable: true
+        enumerable: true,
+        configurable: true
       },
       ondata: {
         get: function () { return wrapperOnData; },
         set: function (value) { wrapperOnData = value; },
-        enumerable: true
+        enumerable: true,
+        configurable: true
       },
       ondrain: {
         get: function () { return wrapperOnDrain; },
         set: function (value) { wrapperOnDrain = value; },
-        enumerable: true
+        enumerable: true,
+        configurable: true
       },
       onerror: {
         get: function () { return wrapperOnError; },
         set: function (value) { wrapperOnError = value; },
-        enumerable: true
+        enumerable: true,
+        configurable: true
       },
       onclose: {
         get: function () { return wrapperOnClose; },
         set: function (value) { wrapperOnClose = value; },
-        enumerable: true
+        enumerable: true,
+        configurable: true
       },
 
       send: {
         value: function (buffer, offset, count) {
           return socket.send(buffer, offset, count);
-        }
+        },
+        enumerable: true,
+        configurable: true
       },
 
       close: {
         value: function () {
           socket.close();
-        }
+        },
+        enumerable: true,
+        configurable: true
       }
     });
+    Components.utils.makeObjectPropsNormal(wrapper);
     return wrapper;
   },
 
@@ -132,16 +141,17 @@ var RtmpUtils = {
       }
     };
 
-    var wrapper = new sandbox.Object();
-    var waived = Components.utils.waiveXrays(wrapper);
-    Object.defineProperties(waived, {
+    var wrapper =  Components.utils.createObjectIn(sandbox);
+    Object.defineProperties(wrapper, {
       status: {
         get: function () { return xhr.status; },
-        enumerable: true
+        enumerable: true,
+        configurable: true
       },
       response: {
         get: function () { return Components.utils.cloneInto(xhr.response, sandbox); },
-        enumerable: true
+        enumerable: true,
+        configurable: true
       },
       responseType: {
         get: function () { return xhr.responseType; },
@@ -150,17 +160,20 @@ var RtmpUtils = {
             throw new Error('Invalid responseType.');
           }
         },
-        enumerable: true
+        enumerable: true,
+        configurable: true
       },
       onload: {
         get: function () { return wrapperOnLoad; },
         set: function (value) { wrapperOnLoad = value; },
-        enumerable: true
+        enumerable: true,
+        configurable: true
       },
       onerror: {
         get: function () { return wrapperOnError; },
         set: function (value) { wrapperOnError = value; },
-        enumerable: true
+        enumerable: true,
+        configurable: true
       },
       open: {
         value: function (method, path, async) {
@@ -171,22 +184,29 @@ var RtmpUtils = {
           xhr.open('POST', path, true);
           xhr.responseType = 'arraybuffer';
           xhr.setRequestHeader('Content-Type', 'application/x-fcs');
-        }
+        },
+        enumerable: true,
+        configurable: true
       },
       setRequestHeader: {
         value: function (header, value) {
           if (header !== 'Content-Type' || value !== 'application/x-fcs') {
             throw new Error('invalid setRequestHeader() arguments');
           }
-        }
+        },
+        enumerable: true,
+        configurable: true
       },
 
       send: {
         value: function (data) {
           xhr.send(data);
-        }
+        },
+        enumerable: true,
+        configurable: true
       }
     });
+    Components.utils.makeObjectPropsNormal(wrapper);
     return wrapper;
   }
 };

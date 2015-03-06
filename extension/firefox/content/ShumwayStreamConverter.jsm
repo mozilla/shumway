@@ -440,6 +440,7 @@ ShumwayStreamConverterBase.prototype = {
     var startupInfo = {};
     startupInfo.window = window;
     startupInfo.url = url;
+    startupInfo.privateBrowsing = isContentWindowPrivate(window);
     startupInfo.objectParams = objectParams;
     startupInfo.movieParams = movieParams;
     startupInfo.baseUrl = baseUrl || url;

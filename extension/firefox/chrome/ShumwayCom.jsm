@@ -22,6 +22,7 @@ Components.utils.import('resource://gre/modules/Promise.jsm');
 Components.utils.import('resource://gre/modules/NetUtil.jsm');
 
 Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
+Components.utils.import('chrome://shumway/content/SpecialStorage.jsm');
 Components.utils.import('chrome://shumway/content/RtmpUtils.jsm');
 
 XPCOMUtils.defineLazyModuleGetter(this, 'ShumwayTelemetry',
@@ -104,6 +105,45 @@ var ShumwayCom = {
       callbacks.sendMessage('userInput', null, true);
     }
 
+    function loadSystemResource(id) {
+      loadShumwaySystemResource(id).then(function (data) {
+        if (shumwayComAdapter.onSystemResourceCallback) {
+          shumwayComAdapter.onSystemResourceCallback(id,
+            Components.utils.cloneInto(data, content));
+        }
+      });
+    }
+
+    function setupComBridge(playerWindow) {
+      var playerContent = playerWindow.contentWindow;
+      var secondaryAdapter = ShumwayCom.createAdapter(playerContent, callbacks);
+      shumwayComAdapter.onLoadFileCallback = function (arg) {
+        if (secondaryAdapter.onLoadFileCallback) {
+          secondaryAdapter.onLoadFileCallback(Components.utils.cloneInto(arg, playerContent));
+        }
+      };
+      shumwayComAdapter.onExternalCallback = function (call) {
+        if (secondaryAdapter.onExternalCallback) {
+          return secondaryAdapter.onExternalCallback(Components.utils.cloneInto(call, playerContent));
+        }
+      };
+      shumwayComAdapter.onSystemResourceCallback = function (id, data) {
+        if (secondaryAdapter.onSystemResourceCallback) {
+          secondaryAdapter.onSystemResourceCallback(id, Components.utils.cloneInto(data, playerContent));
+        }
+      };
+      secondaryAdapter._onSyncMessage = function (msg) {
+        if (shumwayComAdapter.onSyncMessage) {
+          var waivedMsg = Components.utils.waiveXrays(msg);
+          return shumwayComAdapter.onSyncMessage(Components.utils.cloneInto(waivedMsg, content));
+        }
+      };
+    }
+
+    function postSyncMessage(msg) {
+      return Components.utils.cloneInto(shumwayComAdapter._onSyncMessage(msg), content);
+    }
+
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
     var shumwayComAdapter = Components.utils.createObjectIn(content, {defineAs: 'ShumwayCom'});
@@ -120,10 +160,15 @@ var ShumwayCom = {
     Components.utils.exportFunction(setClipboard, shumwayComAdapter, {defineAs: 'setClipboard'});
     Components.utils.exportFunction(navigateTo, shumwayComAdapter, {defineAs: 'navigateTo'});
     Components.utils.exportFunction(userInput, shumwayComAdapter, {defineAs: 'userInput'});
+    Components.utils.exportFunction(loadSystemResource, shumwayComAdapter, {defineAs: 'loadSystemResource'});
+    Components.utils.exportFunction(setupComBridge, shumwayComAdapter, {defineAs: 'setupComBridge'});
+    Components.utils.exportFunction(postSyncMessage, shumwayComAdapter, {defineAs: 'postSyncMessage'});
 
     Object.defineProperties(shumwayComAdapter, {
       onLoadFileCallback: { value: null, writable: true },
       onExternalCallback: { value: null, writable: true },
+      onSystemResourceCallback: { value: null, writable: true },
+      onSyncMessage: { value: null, writable: true }
     });
 
     // Exposing createSpecialInflate function for DEFLATE stream decoding using
@@ -143,6 +188,12 @@ var ShumwayCom = {
       }, shumwayComAdapter, {defineAs: 'createRtmpXHR'});
     }
 
+    Components.utils.exportFunction(function () {
+      var environment = callbacks.getEnvironment();
+      return SpecialStorageUtils.createWrappedSpecialStorage(content,
+        environment.swfUrl, environment.privateBrowsing);
+    }, shumwayComAdapter, {defineAs: 'createSpecialStorage'});
+
     Components.utils.makeObjectPropsNormal(shumwayComAdapter);
 
     return shumwayComAdapter;
@@ -153,6 +204,38 @@ var ShumwayCom = {
   }
 };
 
+function loadShumwaySystemResource(id) {
+  var url, type;
+  switch (id) {
+    case 0: // BuiltinAbc
+      url = 'resource://shumway/libs/builtin.abc';
+      type = 'arraybuffer';
+      break;
+    case 1: // PlayerglobalAbcs
+      url = 'resource://shumway/playerglobal/playerglobal.abcs';
+      type = 'arraybuffer';
+      break;
+    case 2: // PlayerglobalManifest
+      url = 'resource://shumway/playerglobal/playerglobal.json';
+      type = 'json';
+      break;
+    default:
+      return Promise.reject('Unsupported system resource id');
+  }
+
+  var deferred = Promise.defer();
+
+  var xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
+                              .createInstance(Components.interfaces.nsIXMLHttpRequest);
+  xhr.open('GET', url, true);
+  xhr.responseType = type;
+  xhr.onload = function () {
+    deferred.resolve(xhr.response);
+  };
+  xhr.send(null);
+
+  return deferred.promise;
+}
 
 // All the privileged actions.
 function ShumwayChromeActions(startupInfo, window, document) {

@@ -15,14 +15,6 @@
  */
 
 var release = true;
-var SHUMWAY_ROOT = "resource://shumway/";
-
-var viewerPlayerglobalInfo = {
-  abcs: SHUMWAY_ROOT + "playerglobal/playerglobal.abcs",
-  catalog: SHUMWAY_ROOT + "playerglobal/playerglobal.json"
-};
-
-var builtinPath = SHUMWAY_ROOT + "libs/builtin.abc";
 
 window.print = function(msg) {
   console.log(msg);
@@ -42,8 +34,6 @@ function runSwfPlayer(flashParams) {
   Shumway.frameRateOption.value = flashParams.turboMode ? 60 : -1;
   Shumway.AVM2.Verifier.enabled.value = compilerSettings.verifier;
 
-  Shumway.SystemResourcesLoadingService.instance =
-    new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, viewerPlayerglobalInfo);
   Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
     function runSWF(file, buffer, baseUrl) {
       var gfxService = new Shumway.Player.Window.WindowGFXService(window, window.parent);
@@ -73,12 +63,11 @@ function runSwfPlayer(flashParams) {
 }
 
 function setupServices() {
-  window.ShumwayCom = parent.ShumwayCom;
-
   Shumway.Telemetry.instance = new Shumway.Player.ShumwayComTelemetryService();
   Shumway.ExternalInterfaceService.instance = new Shumway.Player.ShumwayComExternalInterface();
   Shumway.ClipboardService.instance = new Shumway.Player.ShumwayComClipboardService();
   Shumway.FileLoadingService.instance = new Shumway.Player.ShumwayComFileLoadingService();
+  Shumway.SystemResourcesLoadingService.instance = new Shumway.Player.ShumwayComResourcesLoadingService(true);
 }
 
 window.addEventListener('message', function onWindowMessage(e) {

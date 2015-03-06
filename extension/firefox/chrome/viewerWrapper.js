@@ -38,7 +38,8 @@ function runViewer() {
 
     var shumwayComAdapter = ShumwayCom.createAdapter(childWindow, {
       sendMessage: sendMessage,
-      enableDebug: enableDebug
+      enableDebug: enableDebug,
+      getEnvironment: getEnvironment,
     });
 
     shumwayActions.onExternalCallback = function (call) {
@@ -83,7 +84,7 @@ function runViewer() {
       messageManager.sendAsyncMessage('Shumway:loadFile', args);
     };
 
-    messageManager.sendAsyncMessage('Shumway:init', {});
+    messageManager.sendAsyncMessage('Shumway:init', getEnvironment());
   }
 
 
@@ -120,6 +121,13 @@ function runViewer() {
     };
 
     connection.send({action: 'runViewer'}, true);
+  }
+
+  function getEnvironment() {
+    return {
+      swfUrl: window.shumwayStartupInfo.url,
+      privateBrowsing: window.shumwayStartupInfo.privateBrowsing
+    };
   }
 
   function enableDebug() {
