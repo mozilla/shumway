@@ -21,6 +21,12 @@ Components.utils.import('resource://gre/modules/Services.jsm');
 
 var SpecialStorageUtils = {
   createWrappedSpecialStorage: function (sandbox, swfUrl, privateBrowsing) {
+    function genPropDesc(value) {
+      return {
+        enumerable: true, configurable: true, writable: true, value: value
+      };
+    }
+
     // Creating internal localStorage object based on url and privateBrowsing setting.
     var uri = Services.io.newURI(swfUrl, null, null);
     var principal = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
@@ -35,27 +41,15 @@ var SpecialStorageUtils = {
     // and sandbox/content.
     var wrapper = Components.utils.createObjectIn(sandbox);
     Object.defineProperties(wrapper, {
-      getItem: {
-        value: function (key) {
-          return storage.getItem(key);
-        },
-        enumerable: true,
-        configurable: true
-      },
-      setItem: {
-        value: function (key, value) {
-          storage.setItem(key, value);
-        },
-        enumerable: true,
-        configurable: true
-      },
-      removeItem: {
-        value: function (key) {
-          storage.removeItem(key);
-        },
-        enumerable: true,
-        configurable: true
-      }
+      getItem: genPropDesc(function (key) {
+        return storage.getItem(key);
+      }),
+      setItem: genPropDesc(function (key, value) {
+        storage.setItem(key, value);
+      }),
+      removeItem: genPropDesc(function (key) {
+        storage.removeItem(key);
+      })
     });
     Components.utils.makeObjectPropsNormal(wrapper);
     return wrapper;
