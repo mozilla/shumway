@@ -357,7 +357,6 @@ module Shumway.AVMX {
     return delete this[mn.getPublicMangledName()];
   }
 
-
   function axCallProperty(mn: Multiname, args: any []): any {
     return this[this.axResolveMultiname(mn)].axApply(this, args);
   }
@@ -406,19 +405,11 @@ module Shumway.AVMX {
     return delete this[mn.getPublicMangledName()];
   }
 
-  function axFunctionApply(self: any, args?: any): any {
-    return this.value.apply(self, args);
-  }
-
   function axFunctionConstruct() {
     release || assert(this.prototype);
     var object = Object.create(this.prototype);
     this.value.apply(object, arguments);
     return object;
-  }
-
-  function axFunctionCall(self: any, ...args: any[]): any {
-    return this.value.apply(self, args);
   }
 
   export function axSetPublicProperty(nm: any, value: any) {
@@ -1014,8 +1005,8 @@ module Shumway.AVMX {
 
       var AXFunction = this.prepareNativeClass("AXFunction", "Function", false);
       D(AXFunction, "axBox", axBoxPrimitive);
-      D(AXFunction.dPrototype, "axCall", axFunctionCall);
-      D(AXFunction.dPrototype, "axApply", axFunctionApply);
+      D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.call);
+      D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.apply);
       D(AXFunction.tPrototype, '$BgtoString', AXFunction.axBox(function () {
         return "[Function Object]";
       }));

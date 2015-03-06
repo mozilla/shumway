@@ -744,7 +744,7 @@ module Shumway.AVMX.AS {
           return false;
         }
         release || assert(value.class.implementedInterfaces, "No 'implementedInterfaces' map found on class " + value.class);
-        var qualifiedName = Multiname.getMangledName(this.classInfo.instanceInfo.name);
+        var qualifiedName = Multiname.getMangledName(this.classInfo.instanceInfo.getName());
         return value.class.implementedInterfaces[qualifiedName] !== undefined;
       }
 
@@ -776,7 +776,7 @@ module Shumway.AVMX.AS {
 
     public getQualifiedClassName(): string {
       var name = this.classInfo.instanceInfo.getName();
-      var namespaceName = name.namespaces[0].name;
+      var namespaceName = name.namespaces[0].uri;
       if (namespaceName) {
         return namespaceName + "::" + name.name;
       }
@@ -910,8 +910,6 @@ module Shumway.AVMX.AS {
     public static instanceConstructor: any = Function;
     public static classBindings: ClassBindings;
     public static instanceBindings: InstanceBindings;
-    public static staticNatives: any [] = [Function];
-    public static instanceNatives: any [] = [Function.prototype];
 
     static classInitializer: any = function() {
       var proto: any = ASFunction.dynamicPrototype;
@@ -928,6 +926,8 @@ module Shumway.AVMX.AS {
       release || assertUnreachable('ASFunction references must be delegated to Function');
     }
 
+    private value: Function;
+
     get native_prototype(): Object {
       var self: Function = <any>this;
       return self.prototype;
@@ -941,6 +941,14 @@ module Shumway.AVMX.AS {
     get length(): number {
       assert (false, "Fix me.");
       return 0;
+    }
+
+    call(self: any, ...args: any[]): any {
+      return this.value.apply(self, args);
+    }
+
+    apply(self: any, args?: any): any {
+      return this.value.apply(self, args);
     }
 
     asCall: (self?, args?: any) => any;
