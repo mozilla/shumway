@@ -22,6 +22,7 @@ Components.utils.import('resource://gre/modules/Promise.jsm');
 Components.utils.import('resource://gre/modules/NetUtil.jsm');
 
 Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
+Components.utils.import('chrome://shumway/content/SpecialStorage.jsm');
 Components.utils.import('chrome://shumway/content/RtmpUtils.jsm');
 
 XPCOMUtils.defineLazyModuleGetter(this, 'ShumwayTelemetry',
@@ -186,6 +187,12 @@ var ShumwayCom = {
         return RtmpUtils.createXHR(content);
       }, shumwayComAdapter, {defineAs: 'createRtmpXHR'});
     }
+
+    Components.utils.exportFunction(function () {
+      var environment = callbacks.getEnvironment();
+      return SpecialStorageUtils.createWrappedSpecialStorage(content,
+        environment.swfUrl, environment.privateBrowsing);
+    }, shumwayComAdapter, {defineAs: 'createSpecialStorage'});
 
     Components.utils.makeObjectPropsNormal(shumwayComAdapter);
 

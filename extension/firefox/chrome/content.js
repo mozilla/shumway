@@ -47,13 +47,16 @@ function enableDebug() {
 }
 
 addMessageListener('Shumway:init', function (message) {
+  var environment = message.data;
+
   sendAsyncMessage('Shumway:running', {}, {
     externalInterface: externalInterfaceWrapper
   });
 
   shumwayComAdapter = ShumwayCom.createAdapter(content, {
     sendMessage: sendMessage,
-    enableDebug: enableDebug
+    enableDebug: enableDebug,
+    getEnvironment: function () { return environment; }
   });
 
   content.wrappedJSObject.runViewer();

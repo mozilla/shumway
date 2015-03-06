@@ -17,7 +17,8 @@
 declare var ShumwayCom: {
   createSpecialInflate: () => SpecialInflate;
   createRtmpSocket: (options) => any;
-  createRtmpXHR: ()=> XMLHttpRequest;
+  createRtmpXHR: () => XMLHttpRequest;
+  createSpecialStorage: () => SpecialStorage;
   userInput: () => void;
   fallback: () => void;
   endActivation: () => void;
@@ -40,6 +41,12 @@ declare var ShumwayCom: {
   onSystemResourceCallback: (id: number, data: any) => void;
   onSyncMessage: (data: any) => any;
 };
+
+interface SpecialStorage {
+  getItem(key: string): string;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
 
 interface SpecialInflate {
   onData: (data: Uint8Array) => void;
