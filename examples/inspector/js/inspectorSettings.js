@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+Shumway.Settings.shumwayOptions =
+  new Shumway.Options.OptionSet(Shumway.Settings.ROOT, Shumway.Settings.load());
+
 var LC_KEY_INSPECTOR_SETTINGS = "Inspector Options";
 
 var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);

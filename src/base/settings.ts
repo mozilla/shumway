@@ -19,7 +19,9 @@ module Shumway.Settings {
   declare var window;
 
   export var ROOT: string = "Shumway Options";
-  export var shumwayOptions = new Shumway.Options.OptionSet(ROOT, load());
+  export var shumwayOptions = new Shumway.Options.OptionSet(ROOT);
+
+  // TODO remove any localStorage operations from this file -- there are used only with the inspector.
 
   export function isStorageSupported() {
     try {
@@ -31,7 +33,7 @@ module Shumway.Settings {
     }
   }
 
-  export function load(key:string = ROOT) {
+  export function load(key:string = ROOT): any {
     var settings:any = {};
     if (isStorageSupported()) {
       var lsValue:string = window.localStorage[key];
@@ -45,7 +47,7 @@ module Shumway.Settings {
     return settings;
   }
 
-  export function save(settings:any = null, key:string = ROOT) {
+  export function save(settings:any = null, key:string = ROOT): void {
     if (isStorageSupported()) {
       try {
         window.localStorage[key] = JSON.stringify(settings ? settings : shumwayOptions.getSettings());

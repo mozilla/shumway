@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-var shumwayOptions = Shumway.Settings.shumwayOptions;
+var shumwayOptions = new Shumway.Options.OptionSet(Shumway.Settings.ROOT, Shumway.Settings.load());
+Shumway.Settings.shumwayOptions = shumwayOptions;
+
 var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"));
 var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
 var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
