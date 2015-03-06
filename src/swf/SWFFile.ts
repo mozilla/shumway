@@ -202,7 +202,7 @@ module Shumway.SWF {
       this._loadStarted = Date.now();
       this._uncompressedLength = readSWFLength(initialBytes);
       this.bytesLoaded = initialBytes.length;
-      this.data = new Uint8Array(this._uncompressedLength);
+      this.data = new Uint8Array(this.isCompressed ? this._uncompressedLength : this.bytesTotal);
       this._dataStream = new Stream(this.data.buffer);
       this._dataStream.pos = 8;
       this._dataView = <DataView><any>this._dataStream;
