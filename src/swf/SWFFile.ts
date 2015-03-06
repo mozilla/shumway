@@ -238,15 +238,17 @@ module Shumway.SWF {
     }
 
     private processFirstBatchOfDecompressedData(data: Uint8Array) {
-      this.data.set(data, this._uncompressedLoadedLength);
-      this._uncompressedLoadedLength += data.length;
+      var maxLength = Math.min(data.length, this._uncompressedLength - this._uncompressedLoadedLength);
+      ArrayUtilities.memcopy(this.data, data, this._uncompressedLoadedLength, 0, maxLength);
+      this._uncompressedLoadedLength += maxLength;
       this.parseHeaderContents();
       this._decompressor.onData = this.processDecompressedData.bind(this);
     }
 
     private processDecompressedData(data: Uint8Array) {
-      this.data.set(data, this._uncompressedLoadedLength);
-      this._uncompressedLoadedLength += data.length;
+      var maxLength = Math.min(data.length, this._uncompressedLength - this._uncompressedLoadedLength);
+      ArrayUtilities.memcopy(this.data, data, this._uncompressedLoadedLength, 0, maxLength);
+      this._uncompressedLoadedLength += maxLength;
     }
 
     private scanLoadedData() {

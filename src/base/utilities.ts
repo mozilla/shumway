@@ -438,19 +438,36 @@ module Shumway {
       ArrayUtilities.pushMany(dst, src);
     }
 
+    export interface TypedArray {
+      buffer: ArrayBuffer;
+      length: number;
+      set: (array: TypedArray, offset?: number) => void;
+      subarray: (begin: number, end?: number) => TypedArray;
+    }
+
     /**
      * Makes sure that a typed array has the requested capacity. If required, it creates a new
      * instance of the array's class with a power-of-two capacity at least as large as required.
-     *
-     * Note: untyped because generics with constraints are pretty annoying.
      */
-    export function ensureTypedArrayCapacity(array: any, capacity: number): any {
+    export function ensureTypedArrayCapacity<T extends TypedArray>(array: T, capacity: number): T {
       if (array.length < capacity) {
         var oldArray = array;
-        array = new array.constructor(Shumway.IntegerUtilities.nearestPowerOfTwo(capacity));
+        array = new (<any>array).constructor(Shumway.IntegerUtilities.nearestPowerOfTwo(capacity));
         array.set(oldArray, 0);
       }
       return array;
+    }
+
+    export function memcopy<T extends TypedArray>(destination: T, source: T, doffset: number = 0,
+                                                  soffset: number = 0, length: number = 0) {
+      if (soffset > 0 || (length > 0 && length < source.length)) {
+        if (length <= 0) {
+          length = source.length - soffset;
+        }
+        destination.set(source.subarray(soffset, soffset + length), doffset);
+      } else {
+        destination.set(source, doffset);
+      }
     }
 
     export class ArrayWriter {
