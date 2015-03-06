@@ -351,6 +351,7 @@ module Shumway.AVMX.AS {
     static tsInstanceSymbols = ["prototype"];
 
     private _prototype: AXObject;
+    private value: Function;
 
     get prototype(): AXObject {
       if (!this._prototype) {
@@ -374,13 +375,11 @@ module Shumway.AVMX.AS {
     }
 
     call(self, a, b, c) {
-      var fn: AXFunction = <any>this;
-      return fn.axApply(self, sliceArguments(arguments, 1));
+      return this.value.apply(self, sliceArguments(arguments, 1));
     }
 
     apply(self, args) {
-      var fn: AXFunction = <any>this;
-      return fn.axApply(self, args);
+      return this.value.apply(self, args);
     }
   }
 

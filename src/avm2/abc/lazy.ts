@@ -87,6 +87,15 @@ module Shumway.AVMX {
     Metadata           = 0x04
   }
 
+  export enum NamespaceType {
+    Public          = 0,
+    Protected       = 1,
+    PackageInternal = 2,
+    Private         = 3,
+    Explicit        = 4,
+    StaticProtected = 5
+  }
+
   export enum SORT {
     CASEINSENSITIVE = 1,
     DESCENDING = 2,
@@ -127,8 +136,9 @@ module Shumway.AVMX {
   }
 
   export class Traits {
-    private _nextSlotID: number = 1;
     public slots: SlotTraitInfo [] = null;
+    private _nextSlotID: number = 1;
+    private _resolved = false;
     constructor(
       public traits: TraitInfo []
     ) {
@@ -136,9 +146,13 @@ module Shumway.AVMX {
     }
 
     resolve() {
+      if (this._resolved) {
+        return;
+      }
       for (var i = 0; i < this.traits.length; i++) {
         this.traits[i].resolve();
       }
+      this._resolved = true;
     }
 
     attachHolder(holder: Info) {
@@ -158,6 +172,7 @@ module Shumway.AVMX {
      * if you don't care about the kind.
      */
     indexOf(mn: Multiname, kind: TRAIT): number {
+      release || assert(this._resolved);
       var mnName = mn.name;
       var nss = mn.namespaces;
       var traits = this.traits;
@@ -168,9 +183,10 @@ module Shumway.AVMX {
         }
         var traitMn = <Multiname>trait.name;
         if (traitMn.name === mnName) {
-          var nsName = traitMn.namespaces[0].name;
+          var namespace = traitMn.namespaces[0];
+          var nsName = namespace.uri;
           for (var j = 0; j < nss.length; j++) {
-            if (nsName === nss[j].name) {
+            if (nsName === nss[j].uri && namespace.type === nss[j].type) {
               return i;
             }
           }
@@ -212,6 +228,7 @@ module Shumway.AVMX {
     }
 
     getSlot(i: number): TraitInfo {
+      release || assert(this._resolved);
       if (this.slots === null) {
         var slots = this.slots = [];
         for (var j = 0; j < this.traits.length; j++) {
@@ -703,7 +720,7 @@ module Shumway.AVMX {
       if (this.isRuntimeNamespace() || this.namespaces.length > 1) {
         return false;
       }
-      return this.namespaces[0].name === "";
+      return this.namespaces[0].uri === "";
 
       // x.* has the same meaning as x.*::*, so look for the former case and give
       // it the same meaning of the latter.
@@ -727,15 +744,13 @@ module Shumway.AVMX {
       return false;
     }
 
-    public static getPublicMangledName(value: any): any {
-      return "$Bg" + value;
+    public static getPublicMangledName(name: string): any {
+      return "$Bg" + name;
     }
 
-    public static getMangledName(value: any): any {
-      if (value instanceof Multiname) {
-        return value.getMangledName();
-      }
-      return Multiname.getPublicMangledName(value);
+    public static getMangledName(name: Multiname): any {
+      release || assert(name instanceof Multiname);
+      return name.getMangledName();
     }
 
     public static isPublicQualifiedName(value: any): boolean {
@@ -744,31 +759,35 @@ module Shumway.AVMX {
     }
   }
 
+  // Used in _hashNamespace so we don't need to allocate a new buffer each time.
+  var namespaceHashingBuffer = new Int32Array(100);
+
   export class Namespace {
     public prefix: string = "";
     private _mangledName: string = null;
-    constructor(public abc: ABCFile, public kind: CONSTANT, public name: string) {
-      assert (kind !== undefined);
+    constructor(public abc: ABCFile, public type: NamespaceType, public uri: string) {
+      assert (type !== undefined);
     }
 
     toString() {
-      return CONSTANT[this.kind] + (this.name !== "" ? ":" + this.name : "");
+      return NamespaceType[this.type] + (this.uri !== "" ? ":" + this.uri : "");
     }
 
     private static _knownNames = [
       ""
     ];
 
-    private static _hashNamespace(kind: CONSTANT, name: string, prefix: string) {
-      var index = Namespace._knownNames.indexOf(name);
+    private static _hashNamespace(type: NamespaceType, uri: string, prefix: string) {
+      var index = Namespace._knownNames.indexOf(uri);
       if (index >= 0) {
-        return kind << 2 | index;
+        return type << 2 | index;
       }
-      var data = new Int32Array(1 + name.length + prefix.length);
+      var length = 1 + uri.length + prefix.length;
+      var data = length < 101 ? namespaceHashingBuffer : new Int32Array(length);
       var j = 0;
-      data[j++] = kind;
-      for (var i = 0; i < name.length; i++) {
-        data[j++] = name.charCodeAt(i);
+      data[j++] = type;
+      for (var i = 0; i < uri.length; i++) {
+        data[j++] = uri.charCodeAt(i);
       }
       for (var i = 0; i < prefix.length; i++) {
         data[j++] = prefix.charCodeAt(i);
@@ -780,15 +799,20 @@ module Shumway.AVMX {
       if (this._mangledName !== null) {
         return this._mangledName;
       }
-      return this._mangledName = Shumway.StringUtilities.variableLengthEncodeInt32(Namespace._hashNamespace(this.kind, this.name, this.prefix))
+      if (this.type === NamespaceType.Public) {
+        return this._mangledName = 'Bg';
+      }
+      var nsHash = Namespace._hashNamespace(this.type, this.uri, this.prefix);
+      return this._mangledName = Shumway.StringUtilities.variableLengthEncodeInt32(nsHash);
     }
 
-    public static PUBLIC = new Namespace(null, CONSTANT.Namespace, "");
-    public static PROTECTED = new Namespace(null, CONSTANT.ProtectedNamespace, "");
-    public static PROXY = new Namespace(null, CONSTANT.Namespace, "http://www.adobe.com/2006/actionscript/flash/proxy");
-    public static VECTOR = new Namespace(null, CONSTANT.Namespace, "__AS3__.vec");
-    public static VECTOR_PACKAGE = new Namespace(null, CONSTANT.PackageInternalNs, "__AS3__.vec");
-    public static BUILTIN = new Namespace(null, CONSTANT.PrivateNs, "builtin.as$0");
+    public static PUBLIC = new Namespace(null, NamespaceType.Public, "");
+    public static PROTECTED = new Namespace(null, NamespaceType.Protected, "");
+    public static STATIC_PROTECTED = new Namespace(null, NamespaceType.StaticProtected, "");
+    public static PROXY = new Namespace(null, NamespaceType.Public, "http://www.adobe.com/2006/actionscript/flash/proxy");
+    public static VECTOR = new Namespace(null, NamespaceType.Public, "__AS3__.vec");
+    public static VECTOR_PACKAGE = new Namespace(null, NamespaceType.PackageInternal, "__AS3__.vec");
+    public static BUILTIN = new Namespace(null, NamespaceType.Private, "builtin.as$0");
   }
 
   export class ABCFile {
@@ -963,7 +987,8 @@ module Shumway.AVMX {
         case CONSTANT.TypeName:
           s.readU32();
           var typeParameterCount = s.readU32();
-          release || assert(typeParameterCount === 1); // This is probably the number of type parameters.
+          release || assert(typeParameterCount === 1); // This is probably the number of type
+                                                       // parameters.
           s.readU32();
           break;
         default:
@@ -1116,13 +1141,48 @@ module Shumway.AVMX {
         return null;
       }
       var ns = this._namespaces[i];
-      if (ns === undefined) {
-        var s = this._stream;
-        s.seek(this._namespaceOffsets[i]);
-        var kind = s.readU8();
-        var name = this.getString(s.readU30());
-        ns = this._namespaces[i] = new Namespace(this, kind, name);
+      if (ns !== undefined) {
+        return ns;
       }
+      var s = this._stream;
+      s.seek(this._namespaceOffsets[i]);
+      var kind = s.readU8();
+      var uriIndex = s.readU30();
+      var uri = uriIndex ? this.getString(uriIndex) : undefined;
+      var type: NamespaceType;
+      switch (kind) {
+        case CONSTANT.Namespace:
+        case CONSTANT.PackageNamespace:
+          type = NamespaceType.Public;
+          break;
+        case CONSTANT.PackageInternalNs:
+          type = NamespaceType.PackageInternal;
+          break;
+        case CONSTANT.ProtectedNamespace:
+          type = NamespaceType.Protected;
+          break;
+        case CONSTANT.ExplicitNamespace:
+          type = NamespaceType.Explicit;
+          break;
+        case CONSTANT.StaticProtectedNs:
+          type = NamespaceType.StaticProtected;
+          break;
+        case CONSTANT.PrivateNs:
+          type = NamespaceType.Private;
+          break;
+        default:
+          throwError("VerifierError", Errors.CpoolEntryWrongTypeError, i);
+      }
+      if (uri && type !== NamespaceType.Private) {
+        // TODO: deal with API versions here. Those are suffixed to the uri. We used to
+        // just strip them out, but we also had an assert against them occurring at all,
+        // so it might be the case that we don't even need to do anything at all.
+      } else if (uri === undefined) {
+        // Only private namespaces gets the empty string instead of undefined. A comment
+        // in Tamarin source code indicates this might not be intentional, but oh well.
+        uri = '';
+      }
+      ns = this._namespaces[i] = new Namespace(this, type, uri);
       return ns;
     }
 

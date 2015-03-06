@@ -325,14 +325,14 @@ module Shumway.AVMX {
   }
 
   function axHasPropertyInternal(mn: Multiname): boolean {
-    return this.traits.indexOf(mn) >= 0;
+    return this.traits.indexOf(mn, -1) >= 0;
   }
 
   function axResolveMultiname(mn: Multiname): any {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
       return mn.name;
     }
-    var t = this.traits.getTrait(mn);
+    var t = this.traits.getTrait(mn, -1);
     if (t) {
       return t.getName().getMangledName();
     }
@@ -358,7 +358,6 @@ module Shumway.AVMX {
     return delete this[mn.getPublicMangledName()];
   }
 
-
   function axCallProperty(mn: Multiname, args: any []): any {
     return this[this.axResolveMultiname(mn)].axApply(this, args);
   }
@@ -377,7 +376,7 @@ module Shumway.AVMX {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
       return this.value[mn.name];
     }
-    var t = this.traits.getTrait(mn);
+    var t = this.traits.getTrait(mn, -1);
     if (t) {
       return this[t.getName().getMangledName()];
     }
@@ -388,7 +387,7 @@ module Shumway.AVMX {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
       this.value[mn.name] = value;
     }
-    var t = this.traits.getTrait(mn);
+    var t = this.traits.getTrait(mn, -1);
     if (t) {
       this[t.getName().getMangledName()] = value;
       return;
@@ -407,19 +406,11 @@ module Shumway.AVMX {
     return delete this[mn.getPublicMangledName()];
   }
 
-  function axFunctionApply(self: any, args?: any): any {
-    return this.value.apply(self, args);
-  }
-
   function axFunctionConstruct() {
     release || assert(this.prototype);
     var object = Object.create(this.prototype);
     this.value.apply(object, arguments);
     return object;
-  }
-
-  function axFunctionCall(self: any, ...args: any[]): any {
-    return this.value.apply(self, args);
   }
 
   export function axSetPublicProperty(nm: any, value: any) {
@@ -1015,8 +1006,8 @@ module Shumway.AVMX {
 
       var AXFunction = this.prepareNativeClass("AXFunction", "Function", false);
       D(AXFunction, "axBox", axBoxPrimitive);
-      D(AXFunction.dPrototype, "axCall", axFunctionCall);
-      D(AXFunction.dPrototype, "axApply", axFunctionApply);
+      D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.call);
+      D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.apply);
       D(AXFunction.tPrototype, '$BgtoString', AXFunction.axBox(function () {
         return "[Function Object]";
       }));

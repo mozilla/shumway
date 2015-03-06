@@ -53,7 +53,7 @@ module Shumway.AVM2 {
   //  StackDepthUnbalancedError            : {code: 1030, message: "Stack depth is unbalanced. %1 != %2."},
   //  ScopeDepthUnbalancedError            : {code: 1031, message: "Scope depth is unbalanced. %1 != %2."},
   //  CpoolIndexRangeError                 : {code: 1032, message: "Cpool index %1 is out of range %2."},
-  //  CpoolEntryWrongTypeError             : {code: 1033, message: "Cpool entry %1 is wrong type."},
+    CpoolEntryWrongTypeError             : {code: 1033, message: "Cpool entry %1 is wrong type."},
     CheckTypeFailedError                 : {code: 1034, message: "Type Coercion failed: cannot convert %1 to %2."},
   //  IllegalSuperCallError                : {code: 1035, message: "Illegal super expression found in method %1."},
   //  CannotAssignToMethodError            : {code: 1037, message: "Cannot assign to a method %1 on %2."},
