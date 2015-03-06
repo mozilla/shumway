@@ -1,5 +1,6 @@
 interface IMetaObjectProtocol {
   axHasPropertyInternal(mn: Shumway.AVMX.Multiname): boolean;
+  axHasOwnProperty(mn: Shumway.AVMX.Multiname): boolean;
   axSetProperty(mn: Shumway.AVMX.Multiname, value: any);
   axSetPublicProperty(nm: any, value: any);
 }
