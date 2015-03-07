@@ -835,7 +835,7 @@ module Shumway.SWF {
 
   function readSWFLength(bytes: Uint8Array) {
     // We read the length manually because creating a DataView just for that is silly.
-    return bytes[4] | bytes[5] << 8 | bytes[6] << 16 | bytes[7] << 24;
+    return (bytes[4] | bytes[5] << 8 | bytes[6] << 16 | bytes[7] << 24) >>> 0;
   }
 
   function defineSymbol(swfTag, symbols) {
