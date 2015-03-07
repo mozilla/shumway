@@ -178,7 +178,13 @@ module Shumway.SWF {
       var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
       release || Debug.assert(handler, 'handler shall exists here');
       var tagEnd = unparsed.byteOffset + unparsed.byteLength;
-      handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
+      try {
+        handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
+      } catch (e) {
+        if (!(e instanceof RangeError)) {
+          throw e;
+        }
+      }
       var finalPos = this._dataStream.pos;
       release || assert(finalPos <= tagEnd);
       if (finalPos < tagEnd) {
