@@ -104,7 +104,10 @@ module Shumway.ArrayUtilities {
       var position = 0;
       var inflate = Inflate.create(zlibHeader);
       inflate.onData = function (data) {
-        output.set(data, position);
+        var maxLength = Math.min(data.length, output.length - position);
+        if (maxLength) {
+          memCopy(output, data, position, 0, maxLength);
+        }
         position += data.length;
       };
       inflate.push(data);
