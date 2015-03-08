@@ -659,6 +659,9 @@ module Shumway.AVMX {
     }
 
     public getPublicMangledName(): any {
+      if (isNumeric(this.name)) {
+        return this.name;
+      }
       return "$Bg" + this.name;
     }
 
@@ -753,6 +756,9 @@ module Shumway.AVMX {
     }
 
     public static getPublicMangledName(name: string): any {
+      if (isNumeric(name)) {
+        return name;
+      }
       return "$Bg" + name;
     }
 

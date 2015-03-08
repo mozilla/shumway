@@ -512,9 +512,9 @@ module Shumway.AVMX {
             value = stack.pop();
             box(stack.pop()).axSetSlot(u30(), value);
             break;
-          //case Bytecode.convert_s:
-          //  stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
-          //  break;
+          case Bytecode.CONVERT_S:
+            stack[stack.length - 1] = asConvertString(stack[stack.length - 1]);
+            break;
           //case Bytecode.esc_xattr:
           //  stack[stack.length - 1] = Runtime.escapeXMLAttribute(stack[stack.length - 1]);
           //  break;
