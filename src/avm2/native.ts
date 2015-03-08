@@ -1747,7 +1747,7 @@ module Shumway.AVM2.AS {
     // flash.utils
     builtinNativeClasses["ProxyClass"]               = flash.utils.OriginalProxy;
     // builtinNativeClasses["DictionaryClass"]          = flash.utils.OriginalDictionary;
-    builtinNativeClasses["ByteArrayClass"]           = flash.utils.OriginalByteArray;
+    // builtinNativeClasses["ByteArrayClass"]           = flash.utils.OriginalByteArray;
     // flash.system
     builtinNativeClasses["SystemClass"]              = flash.system.OriginalSystem;
 

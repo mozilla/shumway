@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2 {
+module Shumway.AVMX {
   import Multiname = Shumway.AVM2.ABC.Multiname;
-  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
+  import ByteArray = Shumway.AVMX.AS.flash.utils.ByteArray;
   import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
   import construct = Shumway.AVM2.Runtime.construct;
 

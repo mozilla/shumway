@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import unexpected = Shumway.Debug.unexpected;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import Namespace = Shumway.AVM2.ABC.Namespace;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
+  import Namespace = Shumway.AVMX.Namespace;
+  import Multiname = Shumway.AVMX.Multiname;
 
   import utf8decode = Shumway.StringUtilities.utf8decode;
   import utf8encode = Shumway.StringUtilities.utf8encode;
@@ -33,7 +33,7 @@ module Shumway.AVM2.AS {
   import assert = Shumway.Debug.assert;
 
   export module flash.net {
-    export class ObjectEncoding extends ASNative {
+    export class ObjectEncoding extends ASObject {
       public static AMF0 = 0;
       public static AMF3 = 3;
       public static DEFAULT = ObjectEncoding.AMF3;
@@ -49,13 +49,6 @@ module Shumway.AVM2.AS {
   }
 
   export module flash.utils {
-    var _asGetProperty = Object.prototype.asGetProperty;
-    var _asSetProperty = Object.prototype.asSetProperty;
-    var _asCallProperty = Object.prototype.asCallProperty;
-    var _asHasProperty = Object.prototype.asHasProperty;
-    var _asHasOwnProperty = Object.prototype.asHasOwnProperty;
-    var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
-    var _asDeleteProperty = Object.prototype.asDeleteProperty;
 
     export interface IDataInput {
       readBytes: (bytes: flash.utils.ByteArray, offset?: number /*uint*/, length?: number /*uint*/) => void;
@@ -94,21 +87,20 @@ module Shumway.AVM2.AS {
       endian: string;
     }
 
-    export class ByteArray extends ASNative implements IDataInput, IDataOutput {
+    export class ByteArray extends ASObject implements IDataInput, IDataOutput {
 
-      public static instanceConstructor: any = DataBuffer;
-      public static staticNatives: any [] = [DataBuffer];
+      public static classNatives: any [] = [DataBuffer];
       public static instanceNatives: any [] = [DataBuffer.prototype];
-      public static callableConstructor: any = null;
 
       static classInitializer: any = function() {
         var proto: any = DataBuffer.prototype;
         ObjectUtilities.defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
       }
 
-      static initializer = function (source: any) {
+      constructor(source: any) {
+        false && super();
         var self: ByteArray = this;
-
+        DataBuffer.call(self);
         var buffer: ArrayBuffer;
         var length = 0;
         if (source) {
@@ -157,10 +149,6 @@ module Shumway.AVM2.AS {
       static set defaultObjectEncoding(version: number /*uint*/) {
         version = version >>> 0;
         this._defaultObjectEncoding = version;
-      }
-
-      constructor() {
-        false && super();
       }
 
       toJSON() {
@@ -238,11 +226,29 @@ module Shumway.AVM2.AS {
       writeRawBytes: (bytes: Uint8Array) => void;
       position: number;
       length: number;
+
+      axGetProperty(mn: Multiname): any {
+        if (isNumeric(mn.name)) {
+          var self = <any>this;
+          return self.getValue(mn.name);
+        }
+        var t = this.traits.getTrait(mn, -1);
+        if (t) {
+          return this[t.getName().getMangledName()];
+        }
+      }
+
+      axSetProperty(mn: Multiname, value: any): void {
+        if (isNumeric(mn.name)) {
+          var self = <any>this;
+          self.setValue(mn.name, value);
+          return;
+        }
+        var t = this.traits.getTrait(mn, -1);
+        if (t) {
+          this[t.getName().getMangledName()] = value;
+        }
+      }
     }
-
-    ByteArray.prototype.asGetNumericProperty = DataBuffer.prototype.getValue;
-    ByteArray.prototype.asSetNumericProperty = DataBuffer.prototype.setValue;
-
-    export var OriginalByteArray = ByteArray;
   }
 }

@@ -142,7 +142,7 @@ module Shumway.AVMX.AS {
     static traits: Traits;
     static dPrototype: ASObject;
     static tPrototype: ASObject;
-    static staticNatives: Object [];
+    static classNatives: Object [];
     static instanceNatives: Object [];
     static securityDomain: SecurityDomain;
     static classSymbols = [];
@@ -183,7 +183,7 @@ module Shumway.AVMX.AS {
     dPrototype: ASObject;
     tPrototype: ASObject;
 
-    staticNatives: Object [];
+    classNatives: Object [];
     instanceNatives: Object [];
 
     classSymbols: string [];
@@ -393,10 +393,6 @@ module Shumway.AVMX.AS {
       return Object.keys(this.value);
     }
 
-    axHasProperty(mn: Multiname): boolean {
-      return this.axHasPropertyInternal(mn);
-    }
-
     axHasPropertyInternal(mn: Multiname): boolean {
       if (this.traits.indexOf(mn, -1) >= 0) {
         return true;
@@ -405,16 +401,6 @@ module Shumway.AVMX.AS {
         return mn.name in this.value;
       }
       return mn.getPublicMangledName() in this.value;
-    }
-
-    axGetPublicProperty(name: any): any {
-      rn.name = name;
-      return this.axGetProperty(rn);
-    }
-
-    axSetPublicProperty(name: any, value: any) {
-      rn.name = name;
-      this.axSetProperty(rn, value);
     }
 
     axGetProperty(mn: Multiname): any {
@@ -519,10 +505,18 @@ module Shumway.AVMX.AS {
   }
 
   export class ASString extends ASObject {
-    static staticNatives: any [] = [String];
+    static classNatives: any [] = [String];
+
+    // TODO: It's not safe to pull methods from String.prototype.
     static instanceNatives: any [] = [String.prototype];
 
     value: string;
+
+    charCodeAt() {
+      return this.value.charCodeAt.apply(this.value, arguments);
+    }
+
+    // TODO: Add all other string functions.
 
     get length(): number {
       return this.value.length;
@@ -530,7 +524,7 @@ module Shumway.AVMX.AS {
   }
 
   export class ASNumber extends ASObject {
-    static staticNatives: any [] = [Math];
+    static classNatives: any [] = [Math];
     static instanceNatives: any [] = [Number.prototype];
     value: number;
 
@@ -558,6 +552,10 @@ module Shumway.AVMX.AS {
     }
   }
 
+  export class ASMath extends ASObject {
+    public static classNatives: any [] = [Math];
+  }
+
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
   export function initializeBuiltins() {
@@ -573,7 +571,10 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
 
+    builtinNativeClasses["Math"]                = ASMath;
+
     builtinNativeClasses["Dictionary"]          = flash.utils.Dictionary;
+    builtinNativeClasses["ByteArray"]           = flash.utils.ByteArray;
   }
 
   export function getNativesForTrait(trait: TraitInfo): Object [] {
@@ -595,8 +596,8 @@ module Shumway.AVMX.AS {
       var native = builtinNativeClasses[className];
       release || assert (native, "Class native is not defined: " + className);
       natives = [native];
-      if (native.staticNatives) {
-        pushMany(natives, native.staticNatives);
+      if (native.classNatives) {
+        pushMany(natives, native.classNatives);
       }
     }
     return natives;
@@ -737,7 +738,21 @@ module Shumway.AVMX.AS {
       }
       return true;
     }
+
+    // Copy class methods and properties.
+    if (asClass.classNatives) {
+      for (var i = 0; i < asClass.classNatives.length; i++) {
+        copyOwnPropertyDescriptors(axClass, asClass.classNatives[i], filter);
+      }
+    }
     copyOwnPropertyDescriptors(axClass, asClass, filter);
+
+    // Copy instance methods and properties.
+    if (asClass.instanceNatives) {
+      for (var i = 0; i < asClass.instanceNatives.length; i++) {
+        copyOwnPropertyDescriptors(axClass.tPrototype, asClass.instanceNatives[i], filter);
+      }
+    }
     copyOwnPropertyDescriptors(axClass.tPrototype, asClass.prototype, filter);
   }
 
@@ -806,7 +821,7 @@ module Shumway.AVMX.AS {
   //  public static tsClassSymbols: string [];
   //  public static tsInstanceSymbols: string [];
   //
-  //  public static staticNatives: any [];
+  //  public static classNatives: any [];
   //  public static instanceNatives: any [];
   //  public static traitsPrototype: Object;
   //  public static dynamicPrototype: Object;
@@ -935,7 +950,7 @@ module Shumway.AVMX.AS {
   //  public static callableConstructor: any = null;
   //  public static classBindings: ClassBindings = null;
   //  public static instanceBindings: InstanceBindings = null;
-  //  public static staticNatives: any [] = null;
+  //  public static classNatives: any [] = null;
   //  public static instanceNatives: any [] = null;
   //  public static traitsPrototype: Object = null;
   //  public static dynamicPrototype: Object = null;
@@ -955,7 +970,7 @@ module Shumway.AVMX.AS {
   //export class ASClass extends ASObject {
   //  public static traits: Traits;
   //  public static instanceConstructor: any = ASClass;
-  //  public static staticNatives: any [] = null;
+  //  public static classNatives: any [] = null;
   //  public static instanceNatives: any [] = null;
   //
   //  static link(asClass: ASClass, asSuperClass: ASClass, scope: Scope) {
@@ -1194,7 +1209,7 @@ module Shumway.AVMX.AS {
   //  /**
   //   * A list of objects to search for methods or accessors when linking static native traits.
   //   */
-  //  staticNatives: Object [];
+  //  classNatives: Object [];
   //
   //  /**
   //   * A list of objects to search for methods or accessors when linking instance native traits.
@@ -1277,7 +1292,7 @@ module Shumway.AVMX.AS {
   //  constructor(classInfo: ClassInfo) {
   //    false && super();
   //    this.classInfo = classInfo;
-  //    this.staticNatives = null;
+  //    this.classNatives = null;
   //    this.instanceNatives = null;
   //    this.initializationFlags = InitializationFlags.NONE;
   //    this.defaultValue = null;
@@ -1385,9 +1400,9 @@ module Shumway.AVMX.AS {
   //    writer && writer.enter("Verifying Class: " + self.classInfo + " {");
   //    var traits = [self.classInfo.traits, self.classInfo.instanceInfo.traits];
   //
-  //    var staticNatives: Object [] = [self, ASClass.prototype];
-  //    if (self.staticNatives) {
-  //      pushMany(staticNatives, self.staticNatives);
+  //    var classNatives: Object [] = [self, ASClass.prototype];
+  //    if (self.classNatives) {
+  //      pushMany(classNatives, self.classNatives);
   //    }
   //
   //    var instanceNatives: Object [] = [self.prototype];
@@ -1405,8 +1420,8 @@ module Shumway.AVMX.AS {
   //    release || assert (self.traitsPrototype === self.instanceConstructor.prototype, "The traitsPrototype is not set correctly.");
   //
   //    if (self !== <any>ASObject) {
-  //      if (ASObject.staticNatives === self.staticNatives) {
-  //        writer && writer.warnLn("Template does not override its staticNatives, possibly a bug.");
+  //      if (ASObject.classNatives === self.classNatives) {
+  //        writer && writer.warnLn("Template does not override its classNatives, possibly a bug.");
   //      }
   //      if (ASObject.instanceNatives === self.instanceNatives) {
   //        writer && writer.warnLn("Template does not override its instanceNatives, possibly a bug.");
@@ -1430,7 +1445,7 @@ module Shumway.AVMX.AS {
   //        if (!(trait.isMethodOrAccessor() && (<MethodTraitInfo>trait).getMethodInfo().isNative())) {
   //          continue;
   //        }
-  //        var holders = isClassTrait ? staticNatives : instanceNatives;
+  //        var holders = isClassTrait ? classNatives : instanceNatives;
   //        var hasDefinition = false;
   //        if (trait.isMethod()) {
   //          hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnProperty, name);
@@ -1536,7 +1551,7 @@ module Shumway.AVMX.AS {
   //  public static classBindings: ClassBindings;
   //  public static instanceBindings: InstanceBindings;
   //  public static classInfo: ClassInfo;
-  //  public static staticNatives: any [] = null;
+  //  public static classNatives: any [] = null;
   //  public static instanceNatives: any [] = null;
   //  public static coerce: (value: any) => boolean = asCoerceBoolean;
   //
@@ -1556,7 +1571,7 @@ module Shumway.AVMX.AS {
   //ASBoolean.prototype.valueOf = Boolean.prototype.valueOf;
   //
   //export class ASMethodClosure extends ASFunction {
-  //  public static staticNatives: any [] = null;
+  //  public static classNatives: any [] = null;
   //  public static instanceNatives: any [] = null;
   //  public static instanceConstructor: any = ASMethodClosure;
   //
@@ -1600,7 +1615,7 @@ module Shumway.AVMX.AS {
   //  public static classBindings: ClassBindings;
   //  public static instanceBindings: InstanceBindings;
   //  public static classInfo: ClassInfo;
-  //  public static staticNatives: any [] = [Math];
+  //  public static classNatives: any [] = [Math];
   //  public static instanceNatives: any [] = [Number.prototype];
   //  public static defaultValue: any = Number(0);
   //  public static coerce: (value: any) => number = asCoerceNumber;
@@ -1639,7 +1654,7 @@ module Shumway.AVMX.AS {
   //  public static classBindings: ClassBindings;
   //  public static instanceBindings: InstanceBindings;
   //  public static classInfo: ClassInfo;
-  //  public static staticNatives: any [] = [Math];
+  //  public static classNatives: any [] = [Math];
   //  public static instanceNatives: any [] = [Number.prototype];
   //  public static defaultValue: any = 0;
   //  public static coerce: (value: any) => number = asCoerceInt;
@@ -1681,7 +1696,7 @@ module Shumway.AVMX.AS {
   //  public static classBindings: ClassBindings;
   //  public static instanceBindings: InstanceBindings;
   //  public static classInfo: ClassInfo;
-  //  public static staticNatives: any [] = [Math];
+  //  public static classNatives: any [] = [Math];
   //  public static instanceNatives: any [] = [Number.prototype];
   //  public static defaultValue: any = 0;
   //  public static coerce: (value: any) => number = asCoerceUint;
@@ -1725,7 +1740,7 @@ module Shumway.AVMX.AS {
   //  public static classBindings: ClassBindings;
   //  public static instanceBindings: InstanceBindings;
   //  public static classInfo: ClassInfo;
-  //  public static staticNatives: any [] = [String];
+  //  public static classNatives: any [] = [String];
   //  public static instanceNatives: any [] = [String.prototype];
   //  public static coerce: (value: any) => string = asCoerceString;
   //
@@ -2047,7 +2062,7 @@ module Shumway.AVMX.AS {
   //}
   //
   ////export class ASVector<T> extends ASNative {
-  ////  public static staticNatives: any [] = null;
+  ////  public static classNatives: any [] = null;
   ////  public static instanceNatives: any [] = null;
   ////  public static instanceConstructor: any = ASVector;
   ////  public static callableConstructor: any = null;
@@ -2058,7 +2073,7 @@ module Shumway.AVMX.AS {
   ////
   ////export class ASJSON extends ASObject {
   ////  public static instanceConstructor: any = ASJSON;
-  ////  public static staticNatives: any [] = null;
+  ////  public static classNatives: any [] = null;
   ////  public static instanceNatives: any [] = null;
   ////
   ////  /**
@@ -2122,7 +2137,7 @@ module Shumway.AVMX.AS {
   ////
   ////export class ASError extends ASNative {
   ////  public static instanceConstructor: any = null;
-  ////  public static staticNatives: any [] = null;
+  ////  public static classNatives: any [] = null;
   ////  public static instanceNatives: any [] = null;
   ////
   ////  public static getErrorMessage = Shumway.AVM2.getErrorMessage;
@@ -2223,7 +2238,7 @@ module Shumway.AVMX.AS {
   ////
   ////export class ASRegExp extends ASObject {
   ////  public static instanceConstructor: any = XRegExp;
-  ////  public static staticNatives: any [] = [XRegExp];
+  ////  public static classNatives: any [] = [XRegExp];
   ////  public static instanceNatives: any [] = [XRegExp.prototype];
   ////
   ////  static classInitializer: any = function() {
@@ -2317,11 +2332,11 @@ module Shumway.AVMX.AS {
   ////}
   ////
   ////export class ASMath extends ASNative {
-  ////  public static staticNatives: any [] = [Math];
+  ////  public static classNatives: any [] = [Math];
   ////}
   ////
   ////export class ASDate extends ASNative {
-  ////  public static staticNatives: any [] = [Date];
+  ////  public static classNatives: any [] = [Date];
   ////  public static instanceNatives: any [] = [Date.prototype];
   ////  public static instanceConstructor: any = Date;
   ////
@@ -2473,8 +2488,8 @@ module Shumway.AVMX.AS {
   //    className = classInfo.instanceInfo.getName().name;
   //    var native = builtinNativeClasses[className];
   //    natives = [native, ASClass.prototype];
-  //    if (native.staticNatives) {
-  //      pushMany(natives, native.staticNatives);
+  //    if (native.classNatives) {
+  //      pushMany(natives, native.classNatives);
   //    }
   //  }
   //  return natives;

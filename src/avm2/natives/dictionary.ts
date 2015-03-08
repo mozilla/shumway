@@ -33,14 +33,14 @@ module Shumway.AVMX.AS {
       private weakKeys: boolean;
       private primitiveMap: Object;
 
-      static axInitializer(weakKeys: boolean = false) {
-        var self: Dictionary = <any>this;
-        self.weakKeys = !!weakKeys;
-        self.map = new WeakMap();
+      constructor(weakKeys: boolean = false) {
+        false && super();
+        this.weakKeys = !!weakKeys;
+        this.map = new WeakMap();
         if (!weakKeys) {
-          self.keys = [];
+          this.keys = [];
         }
-        self.primitiveMap = Object.create(null);
+        this.primitiveMap = Object.create(null);
       }
 
       static makePrimitiveKey(key: any) {
