@@ -434,40 +434,6 @@ module Shumway.AVMX {
     return this.axGetPublicProperty(this.axNextName(index));
   }
 
-  function axArrayGetProperty(mn: Multiname): any {
-    if (mn.isRuntimeName() && isNumeric(mn.name)) {
-      return this.value[mn.name];
-    }
-    var t = this.traits.getTrait(mn, -1);
-    if (t) {
-      return this[t.getName().getMangledName()];
-    }
-    return this[mn.getPublicMangledName()];
-  }
-
-  function axArraySetProperty(mn: Multiname, value: any) {
-    if (mn.isRuntimeName() && isNumeric(mn.name)) {
-      this.value[mn.name] = value;
-    }
-    var t = this.traits.getTrait(mn, -1);
-    if (t) {
-      this[t.getName().getMangledName()] = value;
-      return;
-    }
-    this[mn.getPublicMangledName()] = value;
-  }
-
-  function axArrayDeleteProperty(mn: Multiname): any {
-    if (mn.isRuntimeName() && isNumeric(mn.name)) {
-      return delete this.value[mn.name];
-    }
-    // Cannot delete array traits.
-    if (this.traits.getTrait(mn)) {
-      return false;
-    }
-    return delete this[mn.getPublicMangledName()];
-  }
-
   function axFunctionConstruct() {
     release || assert(this.prototype);
     var object = Object.create(this.prototype);
@@ -1210,10 +1176,6 @@ module Shumway.AVMX {
       P(AXArray.dPrototype, "filter", Ap.filter);
       P(AXArray.dPrototype, "sort", Ap.sort);
       P(AXArray.dPrototype, "sortOn", Ap.sortOn);
-
-      D(AXArray.dPrototype, "axGetProperty", axArrayGetProperty);
-      D(AXArray.dPrototype, "axSetProperty", axArraySetProperty);
-      D(AXArray.dPrototype, "axDeleteProperty", axArrayDeleteProperty);
 
       // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder
       // base class to help us with instanceof tests.

@@ -406,6 +406,40 @@ module Shumway.AVMX.AS {
       rn.name = name;
       this.axSetProperty(rn, value);
     }
+
+    axGetProperty(mn: Multiname): any {
+      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+        return this.value[mn.name];
+      }
+      var t = this.traits.getTrait(mn, -1);
+      if (t) {
+        return this[t.getName().getMangledName()];
+      }
+      return this[mn.getPublicMangledName()];
+    }
+
+    axSetProperty(mn: Multiname, value: any) {
+      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+        this.value[mn.name] = value;
+      }
+      var t = this.traits.getTrait(mn, -1);
+      if (t) {
+        this[t.getName().getMangledName()] = value;
+        return;
+      }
+      this[mn.getPublicMangledName()] = value;
+    }
+
+    axDeleteProperty(mn: Multiname): any {
+      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+        return delete this.value[mn.name];
+      }
+      // Cannot delete array traits.
+      if (this.traits.getTrait(mn, -1)) {
+        return false;
+      }
+      return delete this[mn.getPublicMangledName()];
+    }
   }
 
   export class ASFunction extends ASObject {
