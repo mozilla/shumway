@@ -675,11 +675,14 @@ module Shumway.AVMX {
   D(AXBasePrototype, "axCallSuper", axCallSuper);
   D(AXBasePrototype, "axConstructProperty", axConstructProperty);
   D(AXBasePrototype, "axResolveMultiname", axResolveMultiname);
-  D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
   D(AXBasePrototype, "axNextNameIndex", axNextNameIndex);
   D(AXBasePrototype, "axNextName", axNextName);
   D(AXBasePrototype, "axNextValue", axNextValue);
   D(AXBasePrototype, "axGetEnumerableKeys", axGetEnumerableKeys);
+
+  // Helper methods borrowed from Object.prototype.
+  D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
+  D(AXBasePrototype, "hasOwnProperty", Object.prototype.hasOwnProperty);
 
   AXBasePrototype.$BgtoString = function() {
     return "[object Object]";
@@ -748,10 +751,17 @@ module Shumway.AVMX {
    * Make sure we bottom out at the securityDomain's objectPrototype.
    */
   export function safeGetPrototypeOf(object: AXObject): AXObject {
-    if (object.securityDomain.objectPrototype === object) {
+    var prototype = Object.getPrototypeOf(object);
+    if (prototype.hasOwnProperty("traits")) {
+      return safeGetPrototypeOf(prototype);
+    }
+    if (!prototype.securityDomain) {
       return null;
     }
-    return Object.getPrototypeOf(object);
+    if (prototype.securityDomain.objectPrototype === object) {
+      return null;
+    }
+    return prototype;
   }
 
   export class HasNext2Info {
@@ -1084,7 +1094,7 @@ module Shumway.AVMX {
     initialize() {
       var D = defineNonEnumerableProperty;
       var P = function setPublicProperty(object, name, value) {
-        object.axSetPublicProperty(name, AXFunction.axBox(value));
+        defineNonEnumerableProperty(object, Multiname.getPublicMangledName(name), AXFunction.axBox(value));
       };
 
       // Some facts:

@@ -811,7 +811,7 @@ module Shumway {
       Object.defineProperty(obj, name, { value: value,
         writable: true,
         configurable: true,
-        enumerable: true
+        enumerable: false
       });
     }
 
