@@ -362,10 +362,10 @@ module Shumway.AVM2.AS {
   // 10.3 ToXML
   function toXML(v) {
     if (v === null) {
-      throw new TypeError(formatErrorMessage(Errors.ConvertNullToObjectError));
+      throw new TypeError(AVMX.formatErrorMessage(Errors.ConvertNullToObjectError));
     }
     if (v === undefined) {
-      throw new TypeError(formatErrorMessage(Errors.ConvertUndefinedToObjectError));
+      throw new TypeError(AVMX.formatErrorMessage(Errors.ConvertUndefinedToObjectError));
     }
     if (v instanceof ASXML) {
       return v;

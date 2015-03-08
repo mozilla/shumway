@@ -549,14 +549,34 @@ module Shumway.AVMX {
   }
 
   export class ExceptionInfo {
+    public catchPrototype: Object = null;
+    private _traits: Traits = null;
     constructor(
+      public abc: ABCFile,
       public start: number,
       public end: number,
       public target: number,
-      public type: number,
+      public type: Multiname | number,
       public varName: number
     ) {
       // ...
+    }
+
+    getType(): Multiname {
+      if (typeof this.type === "number") {
+        this.type = this.abc.getMultiname(<number>this.type);
+      }
+      return <Multiname>this.type;
+    }
+
+    getTraits(): Traits {
+      if (!this._traits) {
+        this._traits = new Traits([
+          new SlotTraitInfo(this.abc, TRAIT.Slot, this.varName, 1, this.type, 0, 0)
+        ]);
+        this._traits.resolve();
+      }
+      return this._traits;
     }
   }
 
@@ -1505,7 +1525,7 @@ module Shumway.AVMX {
         var e = s.readU30();
         var exceptions = new Array(e);
         for (var j = 0; j < e; ++j) {
-          exceptions[i] = this._parseException();
+          exceptions[j] = this._parseException();
         }
         var traits = this._parseTraits();
         methodBodies[methodInfo] = new MethodBodyInfo(maxStack, localCount, initScopeDepth, maxScopeDepth, code, exceptions, traits);
@@ -1520,7 +1540,7 @@ module Shumway.AVMX {
       var target = s.readU30();
       var type = s.readU30();
       var varName = s.readU30();
-      return new ExceptionInfo(start, end, target, type, varName);
+      return new ExceptionInfo(this, start, end, target, type, varName);
     }
 
     public getConstant(kind: CONSTANT, i: number): any {

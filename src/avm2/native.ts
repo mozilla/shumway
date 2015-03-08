@@ -1426,15 +1426,15 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
 
-    public static getErrorMessage = Shumway.AVM2.getErrorMessage;
+    public static getErrorMessage = null;
     public static throwError(type: typeof ASError, id: number /*, ...rest */) {
-      var info = getErrorInfo(id);
+      var info = null; // getErrorInfo(id);
 
       var args = [info];
       for (var i = 2; i < arguments.length; i++) {
         args.push(arguments[i]);
       }
-      var message = formatErrorMessage.apply(null, args);
+      var message = null; // formatErrorMessage.apply(null, args);
       throw new type(message, id);
     }
 

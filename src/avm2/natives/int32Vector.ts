@@ -35,7 +35,6 @@ module Shumway.AVMX.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import throwError = Shumway.AVM2.Runtime.throwError;
   import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import clamp = Shumway.NumberUtilities.clamp;
   import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
@@ -196,8 +195,8 @@ module Shumway.AVMX.AS {
       for (var i = 0; i < arguments.length; i++) {
         var vector: Int32Vector = arguments[i];
         if (!(vector._buffer instanceof Int32Array)) {
-          throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
-                     '__AS3__.vec.Vector.<int>');
+          this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
+                                         '__AS3__.vec.Vector.<int>');
         }
         length += vector._length;
       }
@@ -248,9 +247,9 @@ module Shumway.AVMX.AS {
 
     some(callback, thisObject) {
       if (arguments.length !== 2) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError);
+        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError);
       } else if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       for (var i = 0; i < this._length; i++) {
         if (callback.call(thisObject, this._buffer[this._offset + i], i, this)) {
@@ -329,7 +328,7 @@ module Shumway.AVMX.AS {
 
     map(callback, thisObject) {
       if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       var v = new Int32Vector();
       for (var i = 0; i < this._length; i++) {
@@ -478,7 +477,7 @@ module Shumway.AVMX.AS {
 
     _checkFixed() {
       if (this._fixed) {
-        throwError("RangeError", Errors.VectorFixedError);
+        this.securityDomain.throwError("RangeError", Errors.VectorFixedError);
       }
     }
 

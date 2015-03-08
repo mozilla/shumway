@@ -84,7 +84,8 @@ module Shumway.AVMX {
   }
 
   function _interpret(self: Object, methodInfo: MethodInfo, savedScope: Scope, args: any []) {
-    var securityDomain = methodInfo.abc.applicationDomain.securityDomain;
+    var applicationDomain = methodInfo.abc.applicationDomain;
+    var securityDomain = applicationDomain.securityDomain;
 
     var abc = methodInfo.abc;
     var body = methodInfo.getBody();
@@ -178,6 +179,7 @@ module Shumway.AVMX {
     var code = body.code;
     var value, object, type, a, b, offset, index, result;
 
+    interpretLabel:
     while (true) {
       interpreterWriter && interpreterWriter.greenLn("" + pc + ": " + Bytecode[code[pc]] + " [" + stack.map(x => x == undefined ? String(x) : x.toString()).join(", ") + "]");
       try {
@@ -463,10 +465,9 @@ module Shumway.AVMX {
           //  }
           //  stack.push(getDescendants(stack.pop(), mn));
           //  break;
-          //case Bytecode.newcatch:
-          //  release || assert(exceptions[bc.index].scopeObject);
-          //  stack.push(exceptions[bc.index].scopeObject);
-          //  break;
+          case Bytecode.NEWCATCH:
+            stack.push(securityDomain.createCatch(body.exceptions[u30()]));
+            break;
           case Bytecode.FINDPROPERTY:
           case Bytecode.FINDPROPSTRICT:
             popNameInto(stack, abc.getMultiname(u30()), rn);
@@ -706,9 +707,33 @@ module Shumway.AVMX {
             Debug.notImplemented(Bytecode[bc]);
         }
       } catch (e) {
-        interpreterWriter && interpreterWriter.writeLn("Error: " + e);
-        interpreterWriter && interpreterWriter.writeLn("Stack: " + e.stack);
-        jsGlobal.quit();
+        var exceptions = body.exceptions;
+        if (!exceptions.length) {
+          throw e;
+        }
+        // TODO: e = translateError(e);
+
+        // All script exceptions must have a security domain, if they don't then this
+        // must be a VM exception.
+        if (!e.securityDomain) {
+          throw e;
+        }
+
+        for (var i = 0; i < exceptions.length; i++) {
+          var handler = exceptions[i];
+          if (pc >= handler.start && pc <= handler.end) {
+            var typeName = handler.getType();
+            if (!typeName || applicationDomain.getClass(typeName).axIsType(e)) {
+              stack.length = 0;
+              stack.push(e);
+              scope.clear();
+              pc = handler.target;
+              continue interpretLabel;
+            }
+          }
+        }
+
+        throw e;
       }
     }
   }

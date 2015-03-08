@@ -46,10 +46,7 @@ package __AS3__.vec
   [native(cls="ObjectVectorClass")]
   dynamic final class Vector$object
   {
-    // Dummy constructor -- actual code is in construct()
-    public function Vector$object(length:uint=0, fixed:Boolean=false)
-    {
-    }
+    public native function Vector$object(length:uint=0, fixed:Boolean=false);
 
     public native function get length():uint;
     public native function set length(value:uint);
@@ -156,7 +153,6 @@ package __AS3__.vec
   [native(cls="UIntVectorClass")]
   dynamic final class Vector$uint
   {
-    // Dummy constructor -- actual code is in construct()
     public native function Vector$uint(length:uint=0, fixed:Boolean=false);
 
     public native function get length():uint;
@@ -211,7 +207,6 @@ package __AS3__.vec
   [native(cls="DoubleVectorClass")]
   dynamic final class Vector$double
   {
-    // Dummy constructor -- actual code is in construct()
     public native function Vector$double(length:uint=0, fixed:Boolean=false);
 
     public native function get length():uint;

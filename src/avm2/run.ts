@@ -747,6 +747,10 @@ module Shumway.AVMX {
 
   }
 
+  export interface AXCatch extends ITraits {
+
+  }
+
   /**
    * Make sure we bottom out at the securityDomain's objectPrototype.
    */
@@ -832,6 +836,9 @@ module Shumway.AVMX {
    * Generic axConstruct method that lives on the AXClass prototype. This just
    * creates an empty object with the right prototype and then calls the
    * instance initializer.
+   *
+   * TODO: Flatten out the argArray, or create an alternate helper ax helper to
+   * make object construction faster.
    */
   function axConstruct(argArray?: any[]) {
     var self: AXClass = this;
@@ -879,6 +886,7 @@ module Shumway.AVMX {
     private AXPrimitiveBox;
     private AXGlobalProto;
     private AXActivationProto;
+    private AXCatchPrototype;
 
     public objectPrototype: AXObject;
     private rootClassPrototype: AXObject;
@@ -893,6 +901,19 @@ module Shumway.AVMX {
 
     findDefiningABC(mn: Multiname): ABCFile {
       return null;
+    }
+
+    throwError(className: string, error: any, replacement1?: any,
+               replacement2?: any, replacement3?: any, replacement4?: any) {
+      var message = formatErrorMessage.apply(null, sliceArguments(arguments, 1));
+      this.throwErrorFromVM(className, message, error.code);
+    }
+
+    throwErrorFromVM(errorClass: string, message: string, id: number) {
+      rn.namespaces = [Namespace.PUBLIC];
+      rn.name = errorClass;
+      var axClass: AXClass = <any>this.application.getProperty(rn, true, true);
+      throw axClass.axConstruct([message, id])
     }
 
     applyType(methodInfo: MethodInfo, axClass: AXClass, types: AXClass []): AXClass {
@@ -915,12 +936,28 @@ module Shumway.AVMX {
               break;
           }
         }
-        // return methodInfo.abc.applicationDomain.getClass("packageInternal __AS3__.vec.Vector$object").applyType(type);
-        debugger;
-        return;
+        rn.namespaces = [Namespace.VECTOR_PACKAGE];
+        rn.name = "Vector$object";
+        var objectVector = <any>methodInfo.abc.applicationDomain.getProperty(rn, true, true);
+        return objectVector.applyType(objectVector, type);
       } else {
         Shumway.Debug.notImplemented(factoryClassName);
       }
+    }
+
+    /**
+     * Used for factory types. This creates a class that by default behaves the same
+     * as its factory class but gives us the opportunity to override protocol
+     * handlers.
+     */
+    createSyntheticClass(superClass: AXClass): AXClass {
+      var axClass = Object.create(this.AXClass.tPrototype);
+      // Put the superClass tPrototype on the prototype chain so we have access
+      // to all factory protocol handlers by default.
+      axClass.tPrototype = Object.create(superClass.tPrototype);
+      // We don't need a new dPrototype object.
+      axClass.dPrototype = superClass.dPrototype;
+      return axClass;
     }
 
     createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
@@ -1014,6 +1051,15 @@ module Shumway.AVMX {
         (<any>body.activationPrototype).traits = body.traits;
       }
       return Object.create(body.activationPrototype);
+    }
+
+    createCatch(exceptionInfo: ExceptionInfo): AXCatch {
+      if (!exceptionInfo.catchPrototype) {
+        var traits = exceptionInfo.getTraits();
+        exceptionInfo.catchPrototype = Object.create(this.AXCatchPrototype);
+        (<any>exceptionInfo.catchPrototype).traits = traits;
+      }
+      return Object.create(exceptionInfo.catchPrototype);
     }
 
     box(v: any) {
@@ -1173,6 +1219,11 @@ module Shumway.AVMX {
         return '[Activation]';
       };
 
+      this.AXCatchPrototype = Object.create(this.objectPrototype);
+      this.AXCatchPrototype.$BgtoString = function() {
+        return '[Catch]';
+      };
+
       var AXFunction = this.prepareNativeClass("AXFunction", "Function", false);
       D(AXFunction, "axBox", axBoxPrimitive);
       D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.axCall);
@@ -1323,9 +1374,9 @@ module Shumway.AVMX {
       return null;
     }
 
-    //public getClass(simpleName: string): AXClass {
-    //  return this.getProperty(Multiname.fromSimpleName(simpleName), true, true);
-    //}
+    public getClass(mn: Multiname): AXClass {
+      return <any>this.getProperty(mn, true, true);
+    }
 
     public getProperty(mn: Multiname, strict: boolean, execute: boolean): AXObject {
       var global: any = this.findProperty(mn, strict, execute);

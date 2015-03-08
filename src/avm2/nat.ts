@@ -157,6 +157,7 @@ module Shumway.AVMX.AS {
     static axSetPublicProperty: (name: any, value: any) => void;
     static axGetPublicProperty: (name: any) => any;
     static axCoerce: (v: any) => any;
+    static axConstruct: (argArray?: any []) => any;
 
     static native_isPrototypeOf: (v: any) => boolean;
     static native_hasOwnProperty: (v: any) => boolean;
@@ -194,6 +195,8 @@ module Shumway.AVMX.AS {
     axCoerce(v: any): any {
 
     }
+
+    axConstruct: (argArray?: any []) => any;
 
     get prototype(): ASObject {
       release || assert (this.dPrototype);
@@ -336,7 +339,8 @@ module Shumway.AVMX.AS {
 
     sortOn(names: any, options: any): any {
       if (arguments.length === 0) {
-        throwError("ArgumentError", AVM2.Errors.WrongArgumentCountError,
+        this.securityDomain.throwError(
+                   "ArgumentError", Errors.WrongArgumentCountError,
                    "Array/http://adobe.com/AS3/2006/builtin::sortOn()", "1", "0");
       }
       // The following oddities in how the arguments are used are gleaned from Tamarin, so hush.
@@ -561,6 +565,89 @@ module Shumway.AVMX.AS {
     public static classNatives: any [] = [Math];
   }
 
+  export class ASError extends ASObject {
+
+    public static getErrorMessage = Shumway.AVMX.getErrorMessage;
+
+    public static throwError(type: ASClass, id: number /*, ...rest */) {
+      var info = getErrorInfo(id);
+      var args = [info];
+      for (var i = 2; i < arguments.length; i++) {
+        args.push(arguments[i]);
+      }
+      var message = formatErrorMessage.apply(null, args);
+      throw type.axConstruct([message, id]);
+    }
+
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', 'Error');
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgmessage', 'Error');
+      defineNonEnumerableProperty(this.dynamicPrototype, '$BgtoString', this.prototype.toString);
+    }
+
+    constructor(message: any, id: any) {
+      false && super();
+      this.message = asCoerceString(message);
+      this._errorID = id | 0;
+
+      // This is gnarly but saves us from having individual ctors in all Error child classes.
+      // this.name = (<ASClass><any>this.constructor).dPrototype['$Bgname'];
+    }
+
+    message: string;
+    name: string;
+    _errorID: number;
+
+    toString() {
+      return this.message !== "" ? this.name + ": " + this.message : this.name;
+    }
+
+    get errorID() {
+      return this._errorID;
+    }
+
+    public getStackTrace(): string {
+      // Stack traces are only available in debug builds. We only do opt.
+      return null;
+    }
+  }
+
+  export class ASDefinitionError extends ASError {
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', this.name.substr(2));
+    }
+  }
+  export class ASEvalError extends ASError {
+  }
+  export class ASRangeError extends ASError {
+  }
+  export class ASReferenceError extends ASError {
+  }
+  export class ASSecurityError extends ASError {
+  }
+  export class ASSyntaxError extends ASError {
+  }
+  export class ASTypeError extends ASError {
+  }
+  export class ASURIError extends ASError {
+  }
+  export class ASVerifyError extends ASError {
+  }
+  export class ASUninitializedError extends ASError {
+  }
+  export class ASArgumentError extends ASError {
+  }
+  export class ASIOError extends ASError {
+  }
+  export class ASEOFError extends ASError {
+  }
+  export class ASMemoryError extends ASError {
+  }
+  export class ASIllegalOperationError extends ASError {
+  }
+
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
   export function initializeBuiltins() {
@@ -583,6 +670,25 @@ module Shumway.AVMX.AS {
 
 
     builtinNativeClasses["Math"]                = ASMath;
+
+
+    // Errors
+    builtinNativeClasses["Error"]               = ASError;
+    builtinNativeClasses["DefinitionError"]     = ASDefinitionError;
+    builtinNativeClasses["EvalError"]           = ASEvalError;
+    builtinNativeClasses["RangeError"]          = ASRangeError;
+    builtinNativeClasses["ReferenceError"]      = ASReferenceError;
+    builtinNativeClasses["SecurityError"]       = ASSecurityError;
+    builtinNativeClasses["SyntaxError"]         = ASSyntaxError;
+    builtinNativeClasses["TypeError"]           = ASTypeError;
+    builtinNativeClasses["URIError"]            = ASURIError;
+    builtinNativeClasses["VerifyError"]         = ASVerifyError;
+    builtinNativeClasses["UninitializedError"]  = ASUninitializedError;
+    builtinNativeClasses["ArgumentError"]       = ASArgumentError;
+    builtinNativeClasses["IOError"]             = ASIOError;
+    builtinNativeClasses["EOFError"]            = ASEOFError;
+    builtinNativeClasses["MemoryError"]         = ASMemoryError;
+    builtinNativeClasses["IllegalOperationError"] = ASIllegalOperationError;
 
     builtinNativeClasses["Dictionary"]          = flash.utils.Dictionary;
     builtinNativeClasses["ByteArray"]           = flash.utils.ByteArray;

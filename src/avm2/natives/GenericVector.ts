@@ -115,36 +115,48 @@ module Shumway.AVMX.AS {
     }
 
     /**
-     * TODO: Need to really debug this, very tricky.
+     * Creates a new class that is bound to this type.
      */
-    public static applyType(type: ASClass): ASClass {
-      function parameterizedVectorConstructor(length: number /*uint*/, fixed: boolean) {
-        // TODO: FIX ME
-        // Function.prototype.call.call(GenericVector.instanceConstructor, this, length, fixed, type);
-      };
-
-      function parameterizedVectorCallableConstructor(object) {
-        if (object instanceof Int32Vector) {
-          return object;
-        }
-        var length = object.asGetProperty(undefined, "length");
-        if (length !== undefined) {
-          var v = new parameterizedVectorConstructor(length, false);
-          for (var i = 0; i < length; i++) {
-            v.asSetNumericProperty(i, object.asGetPublicProperty(i));
-          }
-          return v;
-        }
-        Shumway.Debug.unexpected();
+    public static applyType(factoryType: AXClass, type: AXClass): AXClass {
+      var axClass = factoryType.securityDomain.createSyntheticClass(factoryType);
+      axClass.axInitializer = function (length: number /*uint*/ = 0, fixed: boolean = false) {
+        // factoryType.axInitializer points to the GenericVector constructor.
+        factoryType.axInitializer.call(this, length, fixed, type);
       }
-
-      var parameterizedVector = <any>parameterizedVectorConstructor;
-      parameterizedVector.prototype = GenericVector.prototype;
-      parameterizedVector.instanceConstructor = parameterizedVector;
-      parameterizedVector.callableConstructor = parameterizedVectorCallableConstructor;
-      parameterizedVector.__proto__ = GenericVector;
-      return <any>parameterizedVector;
+      return axClass;
     }
+
+    ///**
+    // * TODO: Need to really debug this, very tricky.
+    // */
+    //public static applyType(type: ASClass): ASClass {
+    //  function parameterizedVectorConstructor(length: number /*uint*/, fixed: boolean) {
+    //    // TODO: FIX ME
+    //    // Function.prototype.call.call(GenericVector.instanceConstructor, this, length, fixed, type);
+    //  };
+    //
+    //  function parameterizedVectorCallableConstructor(object) {
+    //    if (object instanceof Int32Vector) {
+    //      return object;
+    //    }
+    //    var length = object.asGetProperty(undefined, "length");
+    //    if (length !== undefined) {
+    //      var v = new parameterizedVectorConstructor(length, false);
+    //      for (var i = 0; i < length; i++) {
+    //        v.asSetNumericProperty(i, object.asGetPublicProperty(i));
+    //      }
+    //      return v;
+    //    }
+    //    Shumway.Debug.unexpected();
+    //  }
+    //
+    //  var parameterizedVector = <any>parameterizedVectorConstructor;
+    //  parameterizedVector.prototype = GenericVector.prototype;
+    //  parameterizedVector.instanceConstructor = parameterizedVector;
+    //  parameterizedVector.callableConstructor = parameterizedVectorCallableConstructor;
+    //  parameterizedVector.__proto__ = GenericVector;
+    //  return <any>parameterizedVector;
+    //}
 
     private _fill(index: number, length: number, value: any) {
       for (var i = 0; i < length; i++) {
