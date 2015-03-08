@@ -171,6 +171,7 @@ module Shumway.AVM2.AS.flash.display {
             var symbol: Shumway.Timeline.DisplaySymbol = null;
             if (hasCharacter) {
               symbol = <Shumway.Timeline.DisplaySymbol>loaderInfo.getSymbolById(placeObjectTag.symbolId);
+              // The Flash Player ignores references to not defined symbols here. So should we.
               if (!symbol) {
                 break;
               }

@@ -178,13 +178,7 @@ module Shumway.SWF {
       var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
       release || Debug.assert(handler, 'handler shall exists here');
       var tagEnd = unparsed.byteOffset + unparsed.byteLength;
-      try {
-        handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
-      } catch (e) {
-        if (!(e instanceof RangeError)) {
-          throw e;
-        }
-      }
+      handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
       var finalPos = this._dataStream.pos;
       release || assert(finalPos <= tagEnd);
       if (finalPos < tagEnd) {
@@ -208,6 +202,9 @@ module Shumway.SWF {
       this._loadStarted = Date.now();
       this._uncompressedLength = readSWFLength(initialBytes);
       this.bytesLoaded = initialBytes.length;
+      // In some malformed SWFs, the parsed length in the header doesn't exactly match the actual size of the file. For
+      // uncompressed files it seems to be safer to make the buffer large enough from the beginning to fit the entire
+      // file than having to resize it later or risking an exception when reading out of bounds.
       this.data = new Uint8Array(this.isCompressed ? this._uncompressedLength : this.bytesTotal);
       this._dataStream = new Stream(this.data.buffer);
       this._dataStream.pos = 8;
@@ -244,17 +241,18 @@ module Shumway.SWF {
     }
 
     private processFirstBatchOfDecompressedData(data: Uint8Array) {
-      var maxLength = Math.min(data.length, this._uncompressedLength - this._uncompressedLoadedLength);
-      ArrayUtilities.memCopy(this.data, data, this._uncompressedLoadedLength, 0, maxLength);
-      this._uncompressedLoadedLength += maxLength;
+      this.processDecompressedData(data);
       this.parseHeaderContents();
       this._decompressor.onData = this.processDecompressedData.bind(this);
     }
 
     private processDecompressedData(data: Uint8Array) {
-      var maxLength = Math.min(data.length, this._uncompressedLength - this._uncompressedLoadedLength);
-      ArrayUtilities.memCopy(this.data, data, this._uncompressedLoadedLength, 0, maxLength);
-      this._uncompressedLoadedLength += maxLength;
+      // Make sure we don't cause an exception here when trying to set out-of-bound data by clamping the number of bytes
+      // to write to the remaining space in our buffer. If this is the case, we probably got a wrong file length from
+      // the SWF header. The Flash Player ignores data that goes over that given length, so should we.
+      var length = Math.min(data.length, this._uncompressedLength - this._uncompressedLoadedLength);
+      ArrayUtilities.memCopy(this.data, data, this._uncompressedLoadedLength, 0, length);
+      this._uncompressedLoadedLength += length;
     }
 
     private scanLoadedData() {

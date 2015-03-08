@@ -504,7 +504,10 @@ module Shumway.SWF.Parser.LowLevel {
       var kerningCount = readUi16($bytes, $stream);
       var $56 = $.kerning = [];
       var $57 = kerningCount;
-      while ($57--) {
+      // DefineFont2 tags tend to have a wrong kerning count so we have to make sure here that there is enough unread
+      // data remaining before parsing the next kerning record. If not, we have to bail out earlier in the following
+      // loop to avoid an out-of-bound exception.
+      while ($57-- && $stream.remaining() >= (wide ? 4 : 2) + 2) {
         var $58 = {};
         kerning($bytes, $stream, $58, wide);
         $56.push($58);
