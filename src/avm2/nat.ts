@@ -148,6 +148,7 @@ module Shumway.AVMX.AS {
     static classSymbols = [];
     static instanceSymbols = [];
     static classInfo: ClassInfo;
+    static axInitializer: Function;
 
     static axHasProperty: (mn: Multiname) => boolean;
     static axHasPropertyInternal: (mn: Multiname) => boolean;
@@ -189,6 +190,7 @@ module Shumway.AVMX.AS {
     classSymbols: string [];
     instanceSymbols: string [];
     classInfo: ClassInfo;
+    axInitializer: Function;
 
     get prototype(): ASObject {
       release || assert (this.dPrototype);
@@ -560,7 +562,7 @@ module Shumway.AVMX.AS {
 
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
-  function initializeBuiltins() {
+  export function initializeBuiltins() {
     builtinNativeClasses["Object"]              = ASObject;
     builtinNativeClasses["Class"]               = ASClass;
     builtinNativeClasses["Function"]            = ASFunction;
@@ -572,9 +574,9 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["UInt"]                = ASUint;
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
-  }
 
-  initializeBuiltins();
+    builtinNativeClasses["Dictionary"]          = flash.utils.Dictionary;
+  }
 
   export function getNativesForTrait(trait: TraitInfo): Object [] {
     var className = null;
@@ -602,9 +604,24 @@ module Shumway.AVMX.AS {
     return natives;
   }
 
+  export function getNativeInitializer(classInfo: ClassInfo) {
+    var methodInfo = classInfo.instanceInfo.getInitializer();
+    var className = classInfo.instanceInfo.getName().name;
+    var asClass = builtinNativeClasses[className];
+    if (asClass && asClass.axInitializer) {
+      release || assert (methodInfo.isNative(), "Constructor must be native.");
+      return asClass.axInitializer;
+    }
+    // TODO: Assert eagerly.
+    return function () {
+      release || assert (!methodInfo.isNative(), "Must supply a constructor for " + classInfo + ".");
+    }
+    return null;
+  }
+
   /**
-  * Searches for a native property in a list of native holders.
-  */
+   * Searches for a native property in a list of native holders.
+   */
   export function getMethodOrAccessorNative(trait: TraitInfo): any {
     var natives = getNativesForTrait(trait);
     var name = trait.getName().name;

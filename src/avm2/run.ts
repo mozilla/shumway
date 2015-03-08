@@ -923,8 +923,7 @@ module Shumway.AVMX {
         }
         axClass.tPrototype = Object.create(axClass.dPrototype);
         classScope = new Scope(scope, axClass);
-        var initializerMethodInfo = classInfo.instanceInfo.getInitializer();
-        axClass.axInitializer = this.createInitializerFunction(initializerMethodInfo, classScope);
+        axClass.axInitializer = this.createInitializerFunction(classInfo, classScope);
         axClass.axCoerce = function () {
           assert(false, "TODO: Coercing constructor.");
         };
@@ -968,7 +967,12 @@ module Shumway.AVMX {
       });
     }
 
-    createInitializerFunction(methodInfo: MethodInfo, scope: Scope): Function {
+    createInitializerFunction(classInfo: ClassInfo, scope: Scope): Function {
+      var nativeInitializer = AS.getNativeInitializer(classInfo);
+      if (nativeInitializer) {
+        return nativeInitializer;
+      }
+      var methodInfo = classInfo.instanceInfo.getInitializer();
       return function () {
         return interpret(this, methodInfo, scope, sliceArguments(arguments));
       };

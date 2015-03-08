@@ -145,3 +145,6 @@ module Shumway.AVM2.AS {
     export var OriginalSystem = System;
   }
 }
+
+// Do this here temporarily until we find a nicer place.
+Shumway.AVMX.AS.initializeBuiltins();
