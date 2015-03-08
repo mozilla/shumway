@@ -377,7 +377,7 @@ module Shumway.AVMX {
           case Bytecode.CALL:
             popManyInto(stack, u30(), args);
             object = stack.pop();
-            stack[stack.length - 1] = stack[stack.length - 1].axApply(object, args);
+            stack[stack.length - 1] = box(stack[stack.length - 1]).axApply(object, args);
             break;
           case Bytecode.CONSTRUCT:
             popManyInto(stack, u30(), args);
@@ -429,10 +429,10 @@ module Shumway.AVMX {
               stack[stack.length - 1] = result;
             }
             break;
-          //case Bytecode.applytype:
-          //  popManyInto(stack, bc.argCount, args);
-          //  stack[stack.length - 1] = applyType(method, stack[stack.length - 1], args);
-          //  break;
+          case Bytecode.APPLYTYPE:
+            popManyInto(stack, u30(), args);
+            stack[stack.length - 1] = securityDomain.applyType(methodInfo, stack[stack.length - 1], args);
+            break;
           case Bytecode.NEWOBJECT:
             object = Object.create(securityDomain.AXObject.tPrototype);
             argCount = u30();

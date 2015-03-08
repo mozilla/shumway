@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   /**
    * Check arguments and throw the appropriate errors.
    */
@@ -31,17 +31,13 @@ module Shumway.AVM2.AS {
   import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
   import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
-  export class GenericVector extends ASVector<Object> {
+  export class GenericVector extends ASObject {
 
     static CASEINSENSITIVE = 1;
     static DESCENDING = 2;
     static UNIQUESORT = 4;
     static RETURNINDEXEDARRAY = 8;
     static NUMERIC = 16;
-
-    public static instanceConstructor: any = GenericVector;
-    public static staticNatives: any [] = [GenericVector];
-    public static instanceNatives: any [] = [GenericVector.prototype];
 
     static classInitializer: any = function() {
       var proto: any = GenericVector.prototype;
@@ -113,7 +109,8 @@ module Shumway.AVM2.AS {
       this._fixed = !!fixed;
       this._buffer = new Array(length);
       this._type = type;
-      this._defaultValue = type ? type.defaultValue : null;
+      // TODO: FIX ME
+      // this._defaultValue = type ? type.defaultValue : null;
       this._fill(0, length, this._defaultValue);
     }
 
@@ -122,7 +119,8 @@ module Shumway.AVM2.AS {
      */
     public static applyType(type: ASClass): ASClass {
       function parameterizedVectorConstructor(length: number /*uint*/, fixed: boolean) {
-        Function.prototype.call.call(GenericVector.instanceConstructor, this, length, fixed, type);
+        // TODO: FIX ME
+        // Function.prototype.call.call(GenericVector.instanceConstructor, this, length, fixed, type);
       };
 
       function parameterizedVectorCallableConstructor(object) {
@@ -325,7 +323,7 @@ module Shumway.AVM2.AS {
 
     _coerce(v) {
       if (this._type) {
-        return this._type.coerce(v);
+        return this._type.axCoerce(v);
       } else if (v === undefined) {
         return null;
       }

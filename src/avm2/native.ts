@@ -49,7 +49,7 @@ module Shumway.AVM2.AS {
   import ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
   import InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
 
-  import Int32Vector = Shumway.AVM2.AS.Int32Vector;
+  // import Int32Vector = Shumway.AVM2.AS.Int32Vector;
   import Uint32Vector = Shumway.AVM2.AS.Uint32Vector;
   import Float64Vector = Shumway.AVM2.AS.Float64Vector;
   import asCompare = Shumway.AVM2.Runtime.asCompare;
@@ -1703,10 +1703,10 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["StringClass"]              = ASString;
     builtinNativeClasses["ArrayClass"]               = ASArray;
     builtinNativeClasses["VectorClass"]              = ASVector;
-    builtinNativeClasses["ObjectVectorClass"]        = AS.GenericVector;
-    builtinNativeClasses["IntVectorClass"]           = AS.Int32Vector;
-    builtinNativeClasses["UIntVectorClass"]          = AS.Uint32Vector;
-    builtinNativeClasses["DoubleVectorClass"]        = AS.Float64Vector;
+    // builtinNativeClasses["ObjectVectorClass"]        = AS.GenericVector;
+    //builtinNativeClasses["IntVectorClass"]           = AS.Int32Vector;
+    //builtinNativeClasses["UIntVectorClass"]          = AS.Uint32Vector;
+    //builtinNativeClasses["DoubleVectorClass"]        = AS.Float64Vector;
     builtinNativeClasses["JSONClass"]                = ASJSON;
     builtinNativeClasses["XMLClass"]                 = ASXML;
     builtinNativeClasses["XMLListClass"]             = ASXMLList;

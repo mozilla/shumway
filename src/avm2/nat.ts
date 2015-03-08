@@ -156,6 +156,7 @@ module Shumway.AVMX.AS {
     static axGetProperty: (mn: Multiname) => any;
     static axSetPublicProperty: (name: any, value: any) => void;
     static axGetPublicProperty: (name: any) => any;
+    static axCoerce: (v: any) => any;
 
     static native_isPrototypeOf: (v: any) => boolean;
     static native_hasOwnProperty: (v: any) => boolean;
@@ -189,6 +190,10 @@ module Shumway.AVMX.AS {
     classSymbols: string [];
     instanceSymbols: string [];
     classInfo: ClassInfo;
+
+    axCoerce(v: any): any {
+
+    }
 
     get prototype(): ASObject {
       release || assert (this.dPrototype);
@@ -570,6 +575,12 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["UInt"]                = ASUint;
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
+
+    builtinNativeClasses["Vector$object"]       = GenericVector;
+    builtinNativeClasses["Vector$int"]          = Int32Vector;
+    builtinNativeClasses["Vector$uint"]         = Int32Vector; // FIXME
+    builtinNativeClasses["Vector$double"]       = Int32Vector; // FIXME
+
 
     builtinNativeClasses["Math"]                = ASMath;
 

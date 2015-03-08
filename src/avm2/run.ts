@@ -833,10 +833,10 @@ module Shumway.AVMX {
    * creates an empty object with the right prototype and then calls the
    * instance initializer.
    */
-  function axConstruct() {
+  function axConstruct(argArray?: any[]) {
     var self: AXClass = this;
     var object = Object.create(self.tPrototype);
-    self.axInitializer.apply(object, arguments);
+    self.axInitializer.apply(object, argArray);
     return object;
   }
 
@@ -893,6 +893,34 @@ module Shumway.AVMX {
 
     findDefiningABC(mn: Multiname): ABCFile {
       return null;
+    }
+
+    applyType(methodInfo: MethodInfo, axClass: AXClass, types: AXClass []): AXClass {
+      var factoryClassName = axClass.classInfo.instanceInfo.getName().name;
+      if (factoryClassName === "Vector") {
+        release || assert(types.length === 1);
+        var type = types[0];
+        var typeClassName;
+        if (!isNullOrUndefined(type)) {
+          typeClassName = type.classInfo.instanceInfo.getName().name.toLowerCase();
+          switch (typeClassName) {
+            case "number":
+              typeClassName = "double";
+            case "int":
+            case "uint":
+            case "double":
+              rn.namespaces = [Namespace.VECTOR_PACKAGE];
+              rn.name = "Vector$" + typeClassName;
+              return <AXClass>methodInfo.abc.applicationDomain.getProperty(rn, true, true);
+              break;
+          }
+        }
+        // return methodInfo.abc.applicationDomain.getClass("packageInternal __AS3__.vec.Vector$object").applyType(type);
+        debugger;
+        return;
+      } else {
+        Shumway.Debug.notImplemented(factoryClassName);
+      }
     }
 
     createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
@@ -1291,6 +1319,18 @@ module Shumway.AVMX {
       var script = this.findDefiningScript(mn, execute);
       if (script) {
         return script.global;
+      }
+      return null;
+    }
+
+    //public getClass(simpleName: string): AXClass {
+    //  return this.getProperty(Multiname.fromSimpleName(simpleName), true, true);
+    //}
+
+    public getProperty(mn: Multiname, strict: boolean, execute: boolean): AXObject {
+      var global: any = this.findProperty(mn, strict, execute);
+      if (global) {
+        return global.axGetProperty(mn);
       }
       return null;
     }
