@@ -33,6 +33,7 @@ module Shumway.AVMX.AS {
   import sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
+  import copyOwnPropertyDescriptors = Shumway.ObjectUtilities.copyOwnPropertyDescriptors;
 
   import Multiname = Shumway.AVMX.Multiname;
   var debug = false;
@@ -98,13 +99,29 @@ module Shumway.AVMX.AS {
 
 
   export class ASMetaObject implements IMetaObjectProtocol {
-    axHasPropertyInternal: (mn: Multiname) => boolean;
-    axHasOwnProperty: (mn: Multiname) => boolean;
-    axSetProperty: (mn: Multiname, value: any) => void;
-    axSetPublicProperty: (nm: any, value: any) => void;
+    axHasPropertyInternal(mn: Multiname): boolean {
+      release || Debug.abstractMethod("axHasPropertyInternal");
+      return false;
+    }
+    axHasOwnProperty(mn: Multiname): boolean {
+      release || Debug.abstractMethod("axHasOwnProperty");
+      return false;
+    }
+    axSetProperty(mn: Multiname, value: any): void {
+      release || Debug.abstractMethod("axSetProperty");
+    }
+    axGetProperty(mn: Multiname): any {
+      release || Debug.abstractMethod("axGetProperty");
+    }
+    axSetPublicProperty(name: any, value: any): void {
+      release || Debug.abstractMethod("axSetPublicProperty");
+    }
+    axGetPublicProperty(name: any): any {
+      release || Debug.abstractMethod("axGetPublicProperty");
+    }
   }
 
-  var rn = new Multiname(null, 0, CONSTANT.RTQName, null, null);
+  var rn = new Multiname(null, 0, CONSTANT.RTQNameL, null, null);
 
   function makeMultiname(v) {
     rn.name = v;
@@ -112,30 +129,46 @@ module Shumway.AVMX.AS {
   }
 
   export class ASObject extends ASMetaObject {
+    traits: Traits;
     securityDomain: SecurityDomain;
 
+    // Declare all instance ASObject fields as statics here so that the TS
+    // compiler can convert ASClass class objects to ASObject instances.
+
+    static traits: Traits;
     static dPrototype: ASObject;
     static tPrototype: ASObject;
-
     static staticNatives: Object [];
     static instanceNatives: Object [];
-
     static securityDomain: SecurityDomain;
+    static classSymbols = [];
+    static instanceSymbols = [];
+    static classInfo: ClassInfo;
+    static axHasPropertyInternal: (mn: Multiname) => boolean;
+    static axHasOwnProperty: (mn: Multiname) => boolean;
+    static axSetProperty: (mn: Multiname, value: any) => void;
+    static axGetProperty: (mn: Multiname) => any;
+    static axSetPublicProperty: (name: any, value: any) => void;
+    static axGetPublicProperty: (name: any) => any;
+
+    static native_isPrototypeOf: (v: any) => boolean;
+    static native_hasOwnProperty: (v: any) => boolean;
+    static native_propertyIsEnumerable: (v: any) => boolean;
 
     static _init() {
       // Nop.
     }
 
-    isPrototypeOf(v: any): boolean {
+    native_isPrototypeOf(v: any): boolean {
       notImplemented("Object::isPrototypeOf");
       return false;
     }
 
-    hasOwnProperty(v: any): boolean {
+    native_hasOwnProperty(v: any): boolean {
       return this.axHasOwnProperty(makeMultiname(v));
     }
 
-    propertyIsEnumerable(v: any): boolean {
+    native_propertyIsEnumerable(v: any): boolean {
       return this.axHasOwnProperty(makeMultiname(v));
     }
   }
@@ -146,6 +179,10 @@ module Shumway.AVMX.AS {
 
     staticNatives: Object [];
     instanceNatives: Object [];
+
+    classSymbols: string [];
+    instanceSymbols: string [];
+    classInfo: ClassInfo;
 
     get prototype(): ASObject {
       release || assert (this.dPrototype);
@@ -345,6 +382,30 @@ module Shumway.AVMX.AS {
     set length(newLength: number) {
       this.value.length = newLength >>> 0;
     }
+
+    axGetEnumerableKeys(): any [] {
+      return Object.keys(this.value);
+    }
+
+    axHasPropertyInternal(mn: Multiname): boolean {
+      if (this.traits.indexOf(mn, -1) >= 0) {
+        return true;
+      }
+      if (isNumeric(mn.name)) {
+        return mn.name in this.value;
+      }
+      return mn.getPublicMangledName() in this.value;
+    }
+
+    axGetPublicProperty(name: any): any {
+      rn.name = name;
+      return this.axGetProperty(rn);
+    }
+
+    axSetPublicProperty(name: any, value: any) {
+      rn.name = name;
+      this.axSetProperty(rn, value);
+    }
   }
 
   export class ASFunction extends ASObject {
@@ -374,12 +435,20 @@ module Shumway.AVMX.AS {
       return "function Function() {}";
     }
 
-    call(self, a, b, c) {
-      return this.value.apply(self, sliceArguments(arguments, 1));
+    call(thisArg: any) {
+      return this.value.apply(thisArg, sliceArguments(arguments, 1));
     }
 
-    apply(self, args) {
-      return this.value.apply(self, args);
+    apply(thisArg: any, argArray?: ASArray): any {
+      return this.value.apply(thisArg, argArray ? argArray.value : undefined);
+    }
+
+    axCall(thisArg: any): any {
+      return this.value.apply(thisArg, sliceArguments(arguments, 1));
+    }
+
+    axApply(thisArg: any, argArray?: any[]): any {
+      return this.value.apply(thisArg, argArray);
     }
   }
 
@@ -499,6 +568,11 @@ module Shumway.AVMX.AS {
     for (var i = 0; i < natives.length; i++) {
       var native = natives[i];
       var fullName = name;
+      // We prefix methods that should not be exported with "native_", check to see
+      // if a method exists with that prefix first when looking for native methods.
+      if (!hasOwnProperty(native, name) && hasOwnProperty(native, "native_" + name)) {
+        fullName = "native_" + name;
+      }
       if (hasOwnProperty(native, fullName)) {
         var value;
         if (trait.isAccessor()) {
@@ -519,6 +593,93 @@ module Shumway.AVMX.AS {
     Shumway.Debug.warning("No native method for: " + trait.holder + " " + trait + ", make sure you've got the static keyword for static methods.");
     release || assertUnreachable("Cannot find " + trait + " in natives.");
     return null;
+  }
+
+  export function tryLinkNativeClass(axClass: AXClass) {
+    var className = axClass.classInfo.instanceInfo.getName().name;
+    var asClass = builtinNativeClasses[className];
+    if (asClass) {
+      linkClass(axClass, asClass);
+    }
+  }
+
+  function linkClass(axClass: AXClass, asClass: ASClass) {
+    /**
+     * Only returns true if the symbol is available in debug or release modes. Only symbols
+     * followed by the  "!" suffix are available in release builds.
+     */
+    function containsSymbol(symbols: string [], name: string) {
+      for (var i = 0; i < symbols.length; i++) {
+        var symbol = symbols[i];
+        if (symbol.indexOf(name) >= 0) {
+          var releaseSymbol = symbol[symbol.length - 1] === "!";
+          if (releaseSymbol) {
+            symbol = symbol.slice(0, symbol.length - 1);
+          }
+          if (name !== symbol) {
+            continue;
+          }
+          if (release) {
+            return releaseSymbol;
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function link(symbols, traits, object) {
+      for (var i = 0; i < traits.length; i++) {
+        var trait = traits[i];
+        if (!containsSymbol(symbols, trait.name.name)) {
+          continue;
+        }
+        release || assert (!trait.name.getNamespace().isPrivate(), "Why are you linking against private members?");
+        if (trait.isConst()) {
+          notImplemented("Don't link against const traits.");
+          return;
+        }
+        var name = trait.name.name;
+        var qn = Multiname.getMangledName(trait.name);
+        if (trait.isSlot()) {
+          Object.defineProperty(object, name, {
+            get: <() => any>new Function("", "return this." + qn +
+            "//# sourceURL=get-" + qn + ".as"),
+            set: <(any) => void>new Function("v", "this." + qn + " = v;" +
+            "//# sourceURL=set-" + qn + ".as")
+          });
+        } else if (trait.isMethod()) {
+          release || assert (!object[name], "Symbol should not already exist.");
+          release || assert (object.asOpenMethods[qn], "There should be an open method for this symbol.");
+          object[name] = object.asOpenMethods[qn];
+        } else if (trait.isGetter()) {
+          release || assert (hasOwnGetter(object, qn), "There should be an getter method for this symbol.");
+          Object.defineProperty(object, name, {
+            get: <() => any>new Function("", "return this." + qn +
+            "//# sourceURL=get-" + qn + ".as")
+          });
+        } else {
+          notImplemented(trait);
+        }
+      }
+    }
+
+    if (asClass.classSymbols) {
+      // link(self.classSymbols, self.classInfo.traits,  self);
+    }
+
+    if (asClass.instanceSymbols) {
+      // link(self.instanceSymbols, self.classInfo.instanceInfo.traits,  self.tPrototype);
+    }
+
+    function filter(propertyName: string): boolean {
+      if (propertyName.indexOf("native_") === 0) {
+        return false;
+      }
+      return true;
+    }
+    copyOwnPropertyDescriptors(axClass, asClass, filter);
+    copyOwnPropertyDescriptors(axClass.tPrototype, asClass.prototype, filter);
   }
 
   ///**

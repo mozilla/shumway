@@ -3,6 +3,9 @@ interface IMetaObjectProtocol {
   axHasOwnProperty(mn: Shumway.AVMX.Multiname): boolean;
   axSetProperty(mn: Shumway.AVMX.Multiname, value: any);
   axSetPublicProperty(nm: any, value: any);
+  axNextNameIndex(index: number);
+  axEnumerableKeys: any [];
+  axGetEnumerableKeys(): any [];
 }
 
 interface Function {
@@ -372,6 +375,65 @@ module Shumway.AVMX {
     return this[this.axResolveMultiname(mn)].axConstruct(args);
   }
 
+  var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [Namespace.PUBLIC], null);
+
+  export function axGetEnumerableKeys(): any [] {
+    var self: AXObject = this;
+    if (this.securityDomain.isPrimitive(this)) {
+      return [];
+    }
+    var keys = Object.keys(this);
+    var result = [];
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (isNumeric(key)) {
+        result.push(key);
+      } else {
+        var name = Multiname.stripPublicMangledName(key);
+        if (name !== undefined) {
+          result.push(name);
+        }
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Gets the next name index of an object. Index |zero| is actually not an
+   * index, but rather an indicator to start the iteration.
+   */
+  export function axNextNameIndex(index: number) {
+    var self: AXObject = this;
+    if (index === 0) {
+      // Gather all enumerable keys since we're starting a new iteration.
+      defineNonEnumerableProperty(self, "axEnumerableKeys", self.axGetEnumerableKeys());
+    }
+    var axEnumerableKeys = self.axEnumerableKeys;
+    while (index < axEnumerableKeys.length) {
+      rn.name = axEnumerableKeys[index];
+      if (self.axHasPropertyInternal(rn)) {
+        return index + 1;
+      }
+      index ++;
+    }
+    return 0;
+  }
+
+  /**
+   * Gets the nextName after the specified |index|, which you would expect to
+   * be index + 1, but it's actually index - 1;
+   */
+  export function axNextName(index: number): any {
+    var self: AXObject = this;
+    var axEnumerableKeys = self.axEnumerableKeys;
+    release || assert(axEnumerableKeys && index > 0 && index < axEnumerableKeys.length + 1);
+    return axEnumerableKeys[index - 1];
+  }
+
+  export function axNextValue(index: number): any {
+    return this.axGetPublicProperty(this.axNextName(index));
+  }
+
   function axArrayGetProperty(mn: Multiname): any {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
       return this.value[mn.name];
@@ -413,9 +475,13 @@ module Shumway.AVMX {
     return object;
   }
 
-  export function axSetPublicProperty(nm: any, value: any) {
+  export function axGetPublicProperty(name: any): any {
+    return this[Multiname.getPublicMangledName(name)];
+  }
+
+  export function axSetPublicProperty(name: any, value: any) {
     release || checkValue(value);
-    this[Multiname.getPublicMangledName(nm)] = value;
+    this[Multiname.getPublicMangledName(name)] = value;
   }
 
   export function axGetSlot(i: number) {
@@ -621,6 +687,7 @@ module Shumway.AVMX {
   D(AXBasePrototype, "axHasPropertyInternal", axHasPropertyInternal);
   D(AXBasePrototype, "axSetProperty", axSetProperty);
   D(AXBasePrototype, "axSetPublicProperty", axSetPublicProperty);
+  D(AXBasePrototype, "axGetPublicProperty", axGetPublicProperty);
   D(AXBasePrototype, "axGetProperty", axGetProperty);
   D(AXBasePrototype, "axDeleteProperty", axDeleteProperty);
   D(AXBasePrototype, "axSetSlot", axSetSlot);
@@ -630,6 +697,10 @@ module Shumway.AVMX {
   D(AXBasePrototype, "axConstructProperty", axConstructProperty);
   D(AXBasePrototype, "axResolveMultiname", axResolveMultiname);
   D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
+  D(AXBasePrototype, "axNextNameIndex", axNextNameIndex);
+  D(AXBasePrototype, "axNextName", axNextName);
+  D(AXBasePrototype, "axNextValue", axNextValue);
+  D(AXBasePrototype, "axGetEnumerableKeys", axGetEnumerableKeys);
 
   AXBasePrototype.$BgtoString = function() {
     return "[object Object]";
@@ -694,6 +765,79 @@ module Shumway.AVMX {
 
   }
 
+  /**
+   * Make sure we bottom out at the securityDomain's objectPrototype.
+   */
+  export function safeGetPrototypeOf(object: AXObject): AXObject {
+    if (object.securityDomain.objectPrototype === object) {
+      return null;
+    }
+    return Object.getPrototypeOf(object);
+  }
+
+  export class HasNext2Info {
+    constructor(public object: AXObject, public index: number) {
+      // ...
+    }
+
+    /**
+     * Determine if the given object has any more properties after the specified |index| and if so,
+     * return the next index or |zero| otherwise. If the |obj| has no more properties then continue
+     * the search in
+     * |obj.__proto__|. This function returns an updated index and object to be used during
+     * iteration.
+     *
+     * the |for (x in obj) { ... }| statement is compiled into the following pseudo bytecode:
+     *
+     * index = 0;
+     * while (true) {
+     *   (obj, index) = hasNext2(obj, index);
+     *   if (index) { #1
+     *     x = nextName(obj, index); #2
+     *   } else {
+     *     break;
+     *   }
+     * }
+     *
+     * #1 If we return zero, the iteration stops.
+     * #2 The spec says we need to get the nextName at index + 1, but it's actually index - 1, this
+     * caused me two hours of my life that I will probably never get back.
+     *
+     * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers
+     * don't rely on it.
+     */
+    next(object: AXObject, index: number) {
+      this.object = object;
+      this.index = index;
+      if (isNullOrUndefined(this.object)) {
+        this.index = 0;
+        this.object = null;
+        return;
+      }
+      var object = this.object;
+      var nextIndex = object.axNextNameIndex(this.index);
+      if (nextIndex > 0) {
+        this.index = nextIndex;
+        this.object = object;
+        return;
+      }
+      // If there are no more properties in the object then follow the prototype chain.
+      while (true) {
+        var object = safeGetPrototypeOf(object);
+        if (!object) {
+          this.index = 0;
+          this.object = null;
+          return;
+        }
+        nextIndex = object.axNextNameIndex(0);
+        if (nextIndex > 0) {
+          this.index = nextIndex;
+          this.object = object;
+          return;
+        }
+      }
+    }
+  }
 
   /**
    * Generic axConstruct method that lives on the AXClass prototype. This just
@@ -746,7 +890,8 @@ module Shumway.AVMX {
     private AXPrimitiveBox;
     private AXGlobalProto;
     private AXActivationProto;
-    private objectPrototype: AXObject;
+
+    public objectPrototype: AXObject;
     private rootClassPrototype: AXObject;
 
     private nativeClasses: any;
@@ -818,6 +963,9 @@ module Shumway.AVMX {
       classInfo.instanceInfo.runtimeTraits = instanceTraits;
       axClass.tPrototype.traits = instanceTraits;
       applyTraits(axClass.tPrototype, instanceTraits, classScope);
+
+      // Copy over all TS symbols.
+      AS.tryLinkNativeClass(axClass);
 
       // Run the static initializer.
       interpret(axClass, classInfo.getInitializer(), classScope, [axClass]);
@@ -1006,8 +1154,8 @@ module Shumway.AVMX {
 
       var AXFunction = this.prepareNativeClass("AXFunction", "Function", false);
       D(AXFunction, "axBox", axBoxPrimitive);
-      D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.call);
-      D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.apply);
+      D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.axCall);
+      D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.axApply);
       D(AXFunction.tPrototype, '$BgtoString', AXFunction.axBox(function () {
         return "[Function Object]";
       }));

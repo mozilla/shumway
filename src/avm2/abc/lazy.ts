@@ -756,6 +756,17 @@ module Shumway.AVMX {
       return "$Bg" + name;
     }
 
+    /**
+     * Removes the public prefix, or returns undefined if the prefix doesn't exist.
+     */
+    public static stripPublicMangledName(name: string): any {
+      if (name.indexOf("$Bg") === 0) {
+        return name.substring(3);
+      }
+      return undefined;
+    }
+
+
     public static getMangledName(name: Multiname): any {
       release || assert(name instanceof Multiname);
       return name.getMangledName();

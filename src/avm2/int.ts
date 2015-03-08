@@ -152,9 +152,25 @@ module Shumway.AVMX {
       return (u << 8) >> 8;
     }
 
+    function box(v) {
+      return securityDomain.box(v);
+    }
+
     // Boxes the top of the stack.
     function peekBox() {
-      return securityDomain.box(stack[stack.length - 1]);
+      return box(stack[stack.length - 1]);
+    }
+
+    var hasNext2Infos: HasNext2Info [];
+
+    function getHasNext2Info(pc: number): HasNext2Info {
+      if (!hasNext2Infos) {
+        hasNext2Infos = [];
+      }
+      if (!hasNext2Infos[pc]) {
+        hasNext2Infos[pc] = new HasNext2Info(null, 0);
+      }
+      return hasNext2Infos[pc];
     }
 
     rn = new Multiname(abc, 0, null, null, null);
@@ -288,25 +304,23 @@ module Shumway.AVMX {
           case Bytecode.POPSCOPE:
             scope.pop();
             break;
-          //case Bytecode.nextname:
-          //  index = stack.pop();
-          //  stack[stack.length - 1] = box(stack[stack.length - 1]).asNextName(index);
-          //  break;
-          //case Bytecode.nextvalue:
-          //  index = stack.pop();
-          //  stack[stack.length - 1] = box(stack[stack.length - 1]).asNextValue(index);
-          //  break;
-          //case Bytecode.hasnext2:
-          //  var hasNext2Info = hasNext2Infos[pc] || (hasNext2Infos[pc] = new HasNext2Info(null, 0));
-          //  object = locals[bc.object];
-          //  index = locals[bc.index];
-          //  hasNext2Info.object = object;
-          //  hasNext2Info.index = index;
-          //  Object(object).asHasNext2(hasNext2Info);
-          //  locals[bc.object] = hasNext2Info.object;
-          //  locals[bc.index] = hasNext2Info.index;
-          //  stack.push(!!hasNext2Info.index);
-          //  break;
+          case Bytecode.NEXTNAME:
+            index = stack.pop();
+            stack[stack.length - 1] = box(stack[stack.length - 1]).axNextName(index);
+            break;
+          case Bytecode.NEXTVALUE:
+            index = stack.pop();
+            stack[stack.length - 1] = box(stack[stack.length - 1]).axNextValue(index);
+            break;
+          case Bytecode.HASNEXT2:
+            var hasNext2Info = getHasNext2Info(pc);
+            var objectIndex = u30();
+            var indexIndex = u30();
+            hasNext2Info.next(box(local[objectIndex]), <number>local[indexIndex]);
+            local[objectIndex] = hasNext2Info.object;
+            local[indexIndex] = hasNext2Info.index;
+            stack.push(!!hasNext2Info.index);
+            break;
           case Bytecode.PUSHNULL:
             stack.push(null);
             break;
@@ -352,10 +366,10 @@ module Shumway.AVMX {
             stack[stack.length - 2] = value;
             break;
           case Bytecode.PUSHSCOPE:
-            scope.push(securityDomain.box(stack.pop()), false);
+            scope.push(box(stack.pop()), false);
             break;
           case Bytecode.PUSHWITH:
-            scope.push(securityDomain.box(stack.pop()), true);
+            scope.push(box(stack.pop()), true);
             break;
           case Bytecode.NEWFUNCTION:
             stack.push(securityDomain.createFunction(abc.getMethodInfo(u30()), scope.topScope(), true));
@@ -394,7 +408,7 @@ module Shumway.AVMX {
             popManyInto(stack, argCount, args);
             popNameInto(stack, abc.getMultiname(index), rn);
             var receiver = stack[stack.length - 1];
-            result = securityDomain.box(receiver).axCallProperty(rn, args);
+            result = box(receiver).axCallProperty(rn, args);
             if (bc === Bytecode.CALLPROPVOID) {
               stack.length--;
             } else {
@@ -408,7 +422,7 @@ module Shumway.AVMX {
             popManyInto(stack, argCount, args);
             popNameInto(stack, abc.getMultiname(index), rn);
             var receiver = stack[stack.length - 1];
-            result = securityDomain.box(receiver).axCallSuper(rn, savedScope, args);
+            result = box(receiver).axCallSuper(rn, savedScope, args);
             if (bc === Bytecode.CALLSUPERVOID) {
               stack.length--;
             } else {
@@ -469,7 +483,7 @@ module Shumway.AVMX {
           case Bytecode.SETPROPERTY:
             value = stack.pop();
             popNameInto(stack, abc.getMultiname(u30()), rn);
-            securityDomain.box(stack.pop()).axSetProperty(rn, value);
+            box(stack.pop()).axSetProperty(rn, value);
             break;
           case Bytecode.GETLOCAL:
             stack.push(local[u30()]);
@@ -496,7 +510,7 @@ module Shumway.AVMX {
             break;
           case Bytecode.SETSLOT:
             value = stack.pop();
-            securityDomain.box(stack.pop()).axSetSlot(u30(), value);
+            box(stack.pop()).axSetSlot(u30(), value);
             break;
           //case Bytecode.convert_s:
           //  stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
