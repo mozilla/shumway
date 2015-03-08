@@ -884,8 +884,8 @@ module Shumway.AVMX {
     public AXBoolean: AXClass;
 
     private AXPrimitiveBox;
-    private AXGlobalProto;
-    private AXActivationProto;
+    private AXGlobalPrototype;
+    private AXActivationPrototype;
     private AXCatchPrototype;
 
     public objectPrototype: AXObject;
@@ -1047,7 +1047,7 @@ module Shumway.AVMX {
       var body = methodInfo.getBody();
       if (!body.activationPrototype) {
         body.traits.resolve();
-        body.activationPrototype = Object.create(this.AXActivationProto);
+        body.activationPrototype = Object.create(this.AXActivationPrototype);
         (<any>body.activationPrototype).traits = body.traits;
       }
       return Object.create(body.activationPrototype);
@@ -1089,7 +1089,7 @@ module Shumway.AVMX {
     }
 
     createAXGlobal(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
-      var global: AXGlobal = Object.create(this.AXGlobalProto);
+      var global: AXGlobal = Object.create(this.AXGlobalPrototype);
       global.securityDomain = this;
       global.applicationDomain = applicationDomain;
       global.scriptInfo = scriptInfo;
@@ -1209,13 +1209,13 @@ module Shumway.AVMX {
         });
       });
 
-      this.AXGlobalProto = Object.create(this.objectPrototype);
-      this.AXGlobalProto.$BgtoString = function() {
+      this.AXGlobalPrototype = Object.create(this.objectPrototype);
+      this.AXGlobalPrototype.$BgtoString = function() {
         return '[object global]';
       };
 
-      this.AXActivationProto = Object.create(this.objectPrototype);
-      this.AXActivationProto.$BgtoString = function() {
+      this.AXActivationPrototype = Object.create(this.objectPrototype);
+      this.AXActivationPrototype.$BgtoString = function() {
         return '[Activation]';
       };
 
