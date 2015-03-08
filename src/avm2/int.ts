@@ -648,9 +648,9 @@ module Shumway.AVMX {
           case Bytecode.ISTYPELATE:
             stack[stack.length - 2] = stack.pop().axIsType(stack[stack.length - 1]);
             break;
-          //case Bytecode.in:
-          //  stack[stack.length - 2] = box(stack.pop()).asHasProperty(null, stack[stack.length - 1]);
-          //  break;
+          case Bytecode.IN:
+            stack[stack.length - 2] = box(stack.pop()).axHasPublicProperty(stack[stack.length - 1]);
+            break;
           case Bytecode.INCREMENT_I:
             stack[stack.length - 1] = (stack[stack.length - 1] | 0) + 1;
             break;

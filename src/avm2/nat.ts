@@ -99,6 +99,10 @@ module Shumway.AVMX.AS {
 
 
   export class ASMetaObject implements IMetaObjectProtocol {
+    axHasProperty(mn: Multiname): boolean {
+      release || Debug.abstractMethod("axHasProperty");
+      return false;
+    }
     axHasPropertyInternal(mn: Multiname): boolean {
       release || Debug.abstractMethod("axHasPropertyInternal");
       return false;
@@ -144,6 +148,8 @@ module Shumway.AVMX.AS {
     static classSymbols = [];
     static instanceSymbols = [];
     static classInfo: ClassInfo;
+
+    static axHasProperty: (mn: Multiname) => boolean;
     static axHasPropertyInternal: (mn: Multiname) => boolean;
     static axHasOwnProperty: (mn: Multiname) => boolean;
     static axSetProperty: (mn: Multiname, value: any) => void;
@@ -385,6 +391,10 @@ module Shumway.AVMX.AS {
 
     axGetEnumerableKeys(): any [] {
       return Object.keys(this.value);
+    }
+
+    axHasProperty(mn: Multiname): boolean {
+      return this.axHasPropertyInternal(mn);
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {

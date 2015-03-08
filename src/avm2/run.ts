@@ -1,4 +1,5 @@
 interface IMetaObjectProtocol {
+  axHasPublicProperty(mn: Shumway.AVMX.Multiname): boolean;
   axHasPropertyInternal(mn: Shumway.AVMX.Multiname): boolean;
   axHasOwnProperty(mn: Shumway.AVMX.Multiname): boolean;
   axSetProperty(mn: Shumway.AVMX.Multiname, value: any);
@@ -328,7 +329,16 @@ module Shumway.AVMX {
   }
 
   function axHasPropertyInternal(mn: Multiname): boolean {
-    return this.traits.indexOf(mn, -1) >= 0;
+    return this.axResolveMultiname(mn) in this;
+  }
+
+  function axHasProperty(mn: Multiname): boolean {
+    return this.axHasPropertyInternal(mn);
+  }
+
+  function axHasPublicProperty(name: any): boolean {
+    rn.name = name;
+    return this.axHasProperty(rn);
   }
 
   function axResolveMultiname(mn: Multiname): any {
@@ -651,7 +661,10 @@ module Shumway.AVMX {
 
   var D = defineNonEnumerableProperty;
   D(AXBasePrototype, "axHasPropertyInternal", axHasPropertyInternal);
+  D(AXBasePrototype, "axHasProperty", axHasProperty);
   D(AXBasePrototype, "axSetProperty", axSetProperty);
+  D(AXBasePrototype, "axHasProperty", axHasProperty);
+  D(AXBasePrototype, "axHasPublicProperty", axHasPublicProperty);
   D(AXBasePrototype, "axSetPublicProperty", axSetPublicProperty);
   D(AXBasePrototype, "axGetPublicProperty", axGetPublicProperty);
   D(AXBasePrototype, "axGetProperty", axGetProperty);
