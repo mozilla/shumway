@@ -148,7 +148,6 @@ module Shumway.AVMX.AS {
     static classSymbols = [];
     static instanceSymbols = [];
     static classInfo: ClassInfo;
-    static axInitializer: Function;
 
     static axHasProperty: (mn: Multiname) => boolean;
     static axHasPropertyInternal: (mn: Multiname) => boolean;
@@ -190,7 +189,6 @@ module Shumway.AVMX.AS {
     classSymbols: string [];
     instanceSymbols: string [];
     classInfo: ClassInfo;
-    axInitializer: Function;
 
     get prototype(): ASObject {
       release || assert (this.dPrototype);
@@ -604,13 +602,13 @@ module Shumway.AVMX.AS {
     return natives;
   }
 
-  export function getNativeInitializer(classInfo: ClassInfo) {
+  export function getNativeInitializer(classInfo: ClassInfo): Function {
     var methodInfo = classInfo.instanceInfo.getInitializer();
     var className = classInfo.instanceInfo.getName().name;
     var asClass = builtinNativeClasses[className];
-    if (asClass && asClass.axInitializer) {
-      release || assert (methodInfo.isNative(), "Constructor must be native.");
-      return asClass.axInitializer;
+    if (methodInfo.isNative()) {
+      // Use TS constructor as the initializer function.
+      return <any>asClass;
     }
     // TODO: Assert eagerly.
     return function () {
