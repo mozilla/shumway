@@ -56,9 +56,9 @@ module Shumway.AVMX {
   }
 
   export enum METHOD {
-    Arguments           = 0x1,
+    NeedArguments       = 0x1,
     Activation          = 0x2,
-    Needrest            = 0x4,
+    NeedRest            = 0x4,
     HasOptional         = 0x8,
     IgnoreRest          = 0x10,
     Native              = 0x20,
@@ -628,6 +628,14 @@ module Shumway.AVMX {
 
     isNative(): boolean {
       return !!(this.flags & METHOD.Native);
+    }
+
+    needsRest(): boolean {
+      return !!(this.flags & METHOD.NeedRest);
+    }
+
+    needsArguments(): boolean {
+      return !!(this.flags & METHOD.NeedArguments);
     }
   }
 

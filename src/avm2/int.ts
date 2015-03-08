@@ -114,6 +114,12 @@ module Shumway.AVMX {
       local.push(arg);
     }
 
+    if (methodInfo.needsRest()) {
+      local.push(box(sliceArguments(args, methodInfo.parameters.length)));
+    } else if (methodInfo.needsArguments()) {
+      local.push(box(sliceArguments(args, 0)));
+    }
+
     var pc = 0;
     function s32(): number {
       var result = code[pc++];
