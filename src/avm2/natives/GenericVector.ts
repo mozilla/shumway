@@ -23,13 +23,10 @@ module Shumway.AVMX.AS {
   import assert = Shumway.Debug.assert;
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
-  import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
-  import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
-  import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
+  var asCheckVectorGetNumericProperty = null; // TODO
+  var asCheckVectorSetNumericProperty = null; // TODO
 
   export class GenericVector extends ASObject {
 
@@ -419,30 +416,30 @@ module Shumway.AVMX.AS {
       }
     }
 
-    asNextName(index: number): any {
-      return index - 1;
-    }
-
-    asNextValue(index: number): any {
-      return this._buffer[index - 1];
-    }
-
-    asNextNameIndex(index: number): number {
-      var nextNameIndex = index + 1;
-      if (nextNameIndex <= this._buffer.length) {
-        return nextNameIndex;
-      }
-      return 0;
-    }
-
-    asHasProperty(namespaces, name, flags) {
-      if (GenericVector.prototype === this || !isNumeric(name)) {
-        return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
-      }
-      var index = toNumber(name);
-      return index >= 0 && index < this._buffer.length;
-    }
-
+    //asNextName(index: number): any {
+    //  return index - 1;
+    //}
+    //
+    //asNextValue(index: number): any {
+    //  return this._buffer[index - 1];
+    //}
+    //
+    //asNextNameIndex(index: number): number {
+    //  var nextNameIndex = index + 1;
+    //  if (nextNameIndex <= this._buffer.length) {
+    //    return nextNameIndex;
+    //  }
+    //  return 0;
+    //}
+    //
+    //asHasProperty(namespaces, name, flags) {
+    //  if (GenericVector.prototype === this || !isNumeric(name)) {
+    //    return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
+    //  }
+    //  var index = toNumber(name);
+    //  return index >= 0 && index < this._buffer.length;
+    //}
+    //
     asGetNumericProperty(i) {
       checkArguments && asCheckVectorGetNumericProperty(i, this._buffer.length);
       return this._buffer[i];
@@ -452,9 +449,9 @@ module Shumway.AVMX.AS {
       checkArguments && asCheckVectorSetNumericProperty(i, this._buffer.length, this._fixed);
       this._buffer[i] = this._coerce(v);
     }
-
-    asHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
-    }
+    //
+    //asHasNext2(hasNext2Info: HasNext2Info) {
+    //  hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
+    //}
   }
 }

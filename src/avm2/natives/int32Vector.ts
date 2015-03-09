@@ -31,14 +31,13 @@ module Shumway.AVMX.AS {
    */
   var checkArguments = true;
 
+  import assert = Shumway.Debug.assert;
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import clamp = Shumway.NumberUtilities.clamp;
-  import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
-  import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
+  var asCheckVectorGetNumericProperty = null; // Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
+  var asCheckVectorSetNumericProperty = null; // Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
   export class Int32Vector extends ASObject {
     static EXTRA_CAPACITY = 4;
@@ -195,8 +194,9 @@ module Shumway.AVMX.AS {
       for (var i = 0; i < arguments.length; i++) {
         var vector: Int32Vector = arguments[i];
         if (!(vector._buffer instanceof Int32Array)) {
-          this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
-                                         '__AS3__.vec.Vector.<int>');
+          assert(false); // TODO
+          // this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
+          //                               '__AS3__.vec.Vector.<int>');
         }
         length += vector._length;
       }
@@ -497,7 +497,8 @@ module Shumway.AVMX.AS {
 
     asHasProperty(namespaces, name, flags) {
       if (Int32Vector.prototype === this || !isNumeric(name)) {
-        return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
+        assert(false); // TODO
+        // return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
       }
       var index = toNumber(name);
       return index >= 0 && index < this._length;

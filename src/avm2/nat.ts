@@ -13,6 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module Shumway.AVM2.AS {
+  // Keep this module around for now so the flash.js package doesn't fail.
+  export class ASObject {
+
+  }
+  export class ASNative extends ASObject {
+
+  }
+  export class ASError extends ASObject {
+
+  }
+}
+
 module Shumway.AVMX.AS {
 
 
@@ -30,7 +43,6 @@ module Shumway.AVMX.AS {
   import boxValue = Shumway.ObjectUtilities.boxValue;
   import pushMany = Shumway.ArrayUtilities.pushMany;
   import Scope = Shumway.AVMX.Scope;
-  import sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import copyOwnPropertyDescriptors = Shumway.ObjectUtilities.copyOwnPropertyDescriptors;
@@ -612,6 +624,9 @@ module Shumway.AVMX.AS {
       return null;
     }
   }
+
+  // TODO: Dummy XML until we port XML.
+  export class ASXML extends ASObject {}
 
   export class ASDefinitionError extends ASError {
     static classInitializer: any = function() {

@@ -15,10 +15,10 @@
  */
 
 module Shumway.AVMX {
-  import Multiname = Shumway.AVM2.ABC.Multiname;
   import ByteArray = Shumway.AVMX.AS.flash.utils.ByteArray;
-  import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
-  import construct = Shumway.AVM2.Runtime.construct;
+  var forEachPublicProperty = null; // TODO
+  var construct = null; // TODO
+  import assert = Shumway.Debug.assert;
 
   export enum AMF0Marker {
     NUMBER = 0x00,
@@ -340,8 +340,9 @@ module Shumway.AVMX {
                 break;
               }
             }
-            traits.members.push(slot ? Multiname.getQualifiedName(slot.name) :
-              Multiname.getPublicQualifiedName(traitName));
+            assert(false); // TODO
+            // traits.members.push(slot ? Multiname.getQualifiedName(slot.name) :
+            //  Multiname.getPublicQualifiedName(traitName));
           }
           (caches.traitsCache || (caches.traitsCache = [])).push(traits);
         }
@@ -473,7 +474,8 @@ module Shumway.AVMX {
                 if (!slot.name.getNamespace().isPublic()) {
                   continue;
                 }
-                traits.push(Multiname.getQualifiedName(slot.name));
+                assert(false); // TODO
+                // traits.push(Multiname.getQualifiedName(slot.name));
                 traitsNames.push(slot.name.name);
               }
               traitsCache.push(objectClass);

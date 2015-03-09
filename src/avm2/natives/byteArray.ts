@@ -17,7 +17,6 @@
 module Shumway.AVMX.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import unexpected = Shumway.Debug.unexpected;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Namespace = Shumway.AVMX.Namespace;
   import Multiname = Shumway.AVMX.Multiname;
 
@@ -134,8 +133,6 @@ module Shumway.AVMX.AS {
         self._bitBuffer = 0;
         self._bitLength = 0;
       }
-
-      static protocol: IProtocol = ByteArray.prototype;
 
       /* The initial size of the backing, in bytes. Doubled every OOM. */
       private static INITIAL_SIZE = 128;

@@ -94,12 +94,15 @@ module Shumway.AVMX {
   export var runtimeWriter = null;
   export var interpreterWriter = null;
 
+  export function sliceArguments(args, offset: number = 0) {
+    return Array.prototype.slice.call(args, offset);
+  }
+
   export function setWriters(flags: WriterFlags) {
     runtimeWriter = (flags & WriterFlags.Runtime) ? writer : null;
     interpreterWriter = (flags & WriterFlags.Runtime) ? writer : null;
   }
 
-  
   export enum ScriptInfoState {
     None = 0,
     Executing = 1,
@@ -112,8 +115,6 @@ module Shumway.AVMX {
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import ASClass = Shumway.AVMX.AS.ASClass;
-
-  import sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
   function axApplyIdentity(self, args) {
     return args[0];
