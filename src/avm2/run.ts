@@ -1,17 +1,38 @@
-interface IMetaObjectProtocol {
+/**
+ * MetaobjectProtocol interface.
+ */
+interface IMetaobjectProtocol {
+  axResolveMultiname(mn: Shumway.AVMX.Multiname): any;
+  axHasProperty(mn: Shumway.AVMX.Multiname): boolean;
+  axDeleteProperty(mn: Shumway.AVMX.Multiname): boolean;
+
+  axCallProperty(mn: Shumway.AVMX.Multiname, argsArray: any []): any;
+  axCallSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argsArray: any []): any;
+  axConstructProperty(mn: Shumway.AVMX.Multiname, args: any []): any;
   axHasPropertyInternal(mn: Shumway.AVMX.Multiname): boolean;
   axHasOwnProperty(mn: Shumway.AVMX.Multiname): boolean;
+
   axSetProperty(mn: Shumway.AVMX.Multiname, value: any);
+  axGetProperty(mn: Shumway.AVMX.Multiname): any;
+
+  axNextNameIndex(index: number): any;
+  axNextName(index: number): any;
+  axNextValue(index: number): any;
+
+  axEnumerableKeys: any [];
+  axGetEnumerableKeys(): any [];
+
+  axHasPublicProperty(nm: any): boolean;
   axSetPublicProperty(nm: any, value: any);
+  axGetPublicProperty(nm: any): any;
+
+  axGetSlot(i: number): any;
+  axSetSlot(i: number, value: any);
 }
 
 interface Function {
   axApply(thisArg: any, argArray?: any[]): any;
   axCall(thisArg: any): any;
-}
-
-interface Object extends IMetaObjectProtocol {
-
 }
 
 var $: Shumway.AVMX.SecurityDomain = null;
@@ -90,12 +111,15 @@ module Shumway.AVMX {
   export var runtimeWriter = null;
   export var interpreterWriter = null;
 
+  export function sliceArguments(args, offset: number = 0) {
+    return Array.prototype.slice.call(args, offset);
+  }
+
   export function setWriters(flags: WriterFlags) {
     runtimeWriter = (flags & WriterFlags.Runtime) ? writer : null;
     interpreterWriter = (flags & WriterFlags.Runtime) ? writer : null;
   }
 
-  
   export enum ScriptInfoState {
     None = 0,
     Executing = 1,
@@ -108,8 +132,6 @@ module Shumway.AVMX {
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import ASClass = Shumway.AVMX.AS.ASClass;
-
-  import sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
   function axApplyIdentity(self, args) {
     return args[0];
@@ -315,131 +337,22 @@ module Shumway.AVMX {
 
   }
 
-  function isValidASValue(value: any) {
+  export function isValidASValue(value: any) {
     return AXBasePrototype.isPrototypeOf(value) || isPrimitiveJSValue(value);
   }
 
-  function checkValue(value: any) {
+  export function checkValue(value: any) {
     release || assert(isValidASValue(value),
                       "Value: " + value + " is not allowed to flow into AS3.");
   }
 
-  function axHasPropertyInternal(mn: Multiname): boolean {
-    return !!this.traits.getTrait(mn);
-  }
-
-  function axResolveMultiname(mn: Multiname): any {
-    if (mn.isRuntimeName() && isNumeric(mn.name)) {
-      return mn.name;
-    }
-    var t = this.traits.getTrait(mn);
-    if (t) {
-      return t.name.getMangledName();
-    }
-    return mn.getPublicMangledName();
-  }
-
-  function axSetProperty(mn: Multiname, value: any) {
-    release || assert(isValidASValue(value));
-    this[this.axResolveMultiname(mn)] = value;
-  }
-
-  function axGetProperty(mn: Multiname): any {
-    var value = this[this.axResolveMultiname(mn)];
-    release || checkValue(value);
-    return value;
-  }
-
-  function axDeleteProperty(mn: Multiname): any {
-    // Cannot delete traits.
-    if (this.traits.getTrait(mn)) {
-      return false;
-    }
-    return delete this[mn.getPublicMangledName()];
-  }
-
-  function axCallProperty(mn: Multiname, args: any []): any {
-    return this[this.axResolveMultiname(mn)].axApply(this, args);
-  }
-
-  function axCallSuper(mn: Multiname, scope: Scope, args: any []): any {
-    var name = this.axResolveMultiname(mn);
-    var fun = (<AXClass>scope.parent.object).tPrototype[name];
-    return fun.axApply(this, args);
-  }
-
-  function axConstructProperty(mn: Multiname, args: any []): any {
-    return this[this.axResolveMultiname(mn)].axConstruct(args);
-  }
-
-  function axArrayGetProperty(mn: Multiname): any {
-    if (mn.isRuntimeName() && isNumeric(mn.name)) {
-      return this.value[mn.name];
-    }
-    var t = this.traits.getTrait(mn);
-    if (t) {
-      return this[t.name.getMangledName()];
-    }
-    return this[mn.getPublicMangledName()];
-  }
-
-  function axArraySetProperty(mn: Multiname, value: any) {
-    if (mn.isRuntimeName() && isNumeric(mn.name)) {
-      this.value[mn.name] = value;
-    }
-    var t = this.traits.getTrait(mn);
-    if (t) {
-      this[t.name.getMangledName()] = value;
-      return;
-    }
-    this[mn.getPublicMangledName()] = value;
-  }
-
-  function axArrayDeleteProperty(mn: Multiname): any {
-    if (mn.isRuntimeName() && isNumeric(mn.name)) {
-      return delete this.value[mn.name];
-    }
-    // Cannot delete array traits.
-    if (this.traits.getTrait(mn)) {
-      return false;
-    }
-    return delete this[mn.getPublicMangledName()];
-  }
+  var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [Namespace.PUBLIC], null);
 
   function axFunctionConstruct() {
     release || assert(this.prototype);
     var object = Object.create(this.prototype);
     this.value.apply(object, arguments);
     return object;
-  }
-
-  export function axSetPublicProperty(nm: any, value: any) {
-    release || checkValue(value);
-    this[Multiname.getPublicMangledName(nm)] = value;
-  }
-
-  export function axGetSlot(i: number) {
-    var t = this.traits.getSlot(i);
-    var value = this[t.getName().getMangledName()];
-    release || checkValue(value);
-    return value;
-  }
-
-  export function axSetSlot(i: number, value: any) {
-    var t = this.traits.getSlot(i);
-    release || checkValue(value);
-    this[t.getName().getMangledName()] = value;
-    //var slotInfo = object.asSlots.byID[index];
-    //if (slotInfo.const) {
-    //  return;
-    //}
-    //var name = slotInfo.name;
-    //var type = slotInfo.type;
-    //if (type && type.coerce) {
-    //  object[name] = type.coerce(value);
-    //} else {
-    //  object[name] = value;
-    //}
   }
 
   export function asTypeOf(x: any): string {
@@ -569,37 +482,61 @@ module Shumway.AVMX {
       Object.defineProperty(object, t.name.getMangledName(), t);
     }
   }
+
+  var D = defineNonEnumerableProperty;
+
   // The Object that's at the root of all AXObjects' prototype chain, regardless of their
   // SecurityDomain.
-  export var AXBasePrototype = Object.create(null);
-  var D = defineNonEnumerableProperty;
-  D(AXBasePrototype, "axHasPropertyInternal", axHasPropertyInternal);
-  D(AXBasePrototype, "axSetProperty", axSetProperty);
-  D(AXBasePrototype, "axSetPublicProperty", axSetPublicProperty);
-  D(AXBasePrototype, "axGetProperty", axGetProperty);
-  D(AXBasePrototype, "axDeleteProperty", axDeleteProperty);
-  D(AXBasePrototype, "axSetSlot", axSetSlot);
-  D(AXBasePrototype, "axGetSlot", axGetSlot);
-  D(AXBasePrototype, "axCallProperty", axCallProperty);
-  D(AXBasePrototype, "axCallSuper", axCallSuper);
-  D(AXBasePrototype, "axConstructProperty", axConstructProperty);
-  D(AXBasePrototype, "axResolveMultiname", axResolveMultiname);
-  D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
+  export var AXBasePrototype = null;
 
-  AXBasePrototype.$BgtoString = function() {
-    return "[object Object]";
-  };
-  AXBasePrototype.toString = function () {
-    return this.$BgtoString.axCall(this);
-  };
-  AXBasePrototype.$BgvalueOf = function() {
-    return this;
-  };
-  AXBasePrototype.valueOf = function () {
-    return this.$BgvalueOf.axCall(this);
-  };
+  /**
+   * Execute this lazily because we want to make sure the AS package is available.
+   */
+  function initializeAXBasePrototype() {
+    if (AXBasePrototype) {
+      return;
+    }
+    var Op = AS.ASObject.prototype;
+    AXBasePrototype = Object.create(null)
+    D(AXBasePrototype, "axHasPropertyInternal", Op.axHasPropertyInternal);
+    D(AXBasePrototype, "axHasProperty", Op.axHasProperty);
+    D(AXBasePrototype, "axSetProperty", Op.axSetProperty);
+    D(AXBasePrototype, "axHasProperty", Op.axHasProperty);
+    D(AXBasePrototype, "axHasPublicProperty", Op.axHasPublicProperty);
+    D(AXBasePrototype, "axSetPublicProperty", Op.axSetPublicProperty);
+    D(AXBasePrototype, "axGetPublicProperty", Op.axGetPublicProperty);
+    D(AXBasePrototype, "axGetProperty", Op.axGetProperty);
+    D(AXBasePrototype, "axDeleteProperty", Op.axDeleteProperty);
+    D(AXBasePrototype, "axSetSlot", Op.axSetSlot);
+    D(AXBasePrototype, "axGetSlot", Op.axGetSlot);
+    D(AXBasePrototype, "axCallProperty", Op.axCallProperty);
+    D(AXBasePrototype, "axCallSuper", Op.axCallSuper);
+    D(AXBasePrototype, "axConstructProperty", Op.axConstructProperty);
+    D(AXBasePrototype, "axResolveMultiname", Op.axResolveMultiname);
+    D(AXBasePrototype, "axNextNameIndex", Op.axNextNameIndex);
+    D(AXBasePrototype, "axNextName", Op.axNextName);
+    D(AXBasePrototype, "axNextValue", Op.axNextValue);
+    D(AXBasePrototype, "axGetEnumerableKeys", Op.axGetEnumerableKeys);
 
-  export interface AXObject extends ITraits {
+    // Helper methods borrowed from Object.prototype.
+    D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
+    D(AXBasePrototype, "hasOwnProperty", Object.prototype.hasOwnProperty);
+
+    AXBasePrototype.$BgtoString = function () {
+      return "[object Object]";
+    };
+    AXBasePrototype.toString = function () {
+      return this.$BgtoString.axCall(this);
+    };
+    AXBasePrototype.$BgvalueOf = function () {
+      return this;
+    };
+    AXBasePrototype.valueOf = function () {
+      return this.$BgvalueOf.axCall(this);
+    };
+  }
+
+  export interface AXObject extends ITraits, IMetaobjectProtocol {
     $BgtoString: AXCallable;
     $BgvalueOf: AXCallable;
   }
@@ -649,16 +586,103 @@ module Shumway.AVMX {
 
   }
 
+  export interface AXCatch extends ITraits {
+
+  }
+
+  /**
+   * Make sure we bottom out at the securityDomain's objectPrototype.
+   */
+  export function safeGetPrototypeOf(object: AXObject): AXObject {
+    var prototype = Object.getPrototypeOf(object);
+    if (prototype.hasOwnProperty("traits")) {
+      return safeGetPrototypeOf(prototype);
+    }
+    if (!prototype.securityDomain) {
+      return null;
+    }
+    if (prototype.securityDomain.objectPrototype === object) {
+      return null;
+    }
+    return prototype;
+  }
+
+  export class HasNext2Info {
+    constructor(public object: AXObject, public index: number) {
+      // ...
+    }
+
+    /**
+     * Determine if the given object has any more properties after the specified |index| and if so,
+     * return the next index or |zero| otherwise. If the |obj| has no more properties then continue
+     * the search in
+     * |obj.__proto__|. This function returns an updated index and object to be used during
+     * iteration.
+     *
+     * the |for (x in obj) { ... }| statement is compiled into the following pseudo bytecode:
+     *
+     * index = 0;
+     * while (true) {
+     *   (obj, index) = hasNext2(obj, index);
+     *   if (index) { #1
+     *     x = nextName(obj, index); #2
+     *   } else {
+     *     break;
+     *   }
+     * }
+     *
+     * #1 If we return zero, the iteration stops.
+     * #2 The spec says we need to get the nextName at index + 1, but it's actually index - 1, this
+     * caused me two hours of my life that I will probably never get back.
+     *
+     * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers
+     * don't rely on it.
+     */
+    next(object: AXObject, index: number) {
+      this.object = object;
+      this.index = index;
+      if (isNullOrUndefined(this.object)) {
+        this.index = 0;
+        this.object = null;
+        return;
+      }
+      var object = this.object;
+      var nextIndex = object.axNextNameIndex(this.index);
+      if (nextIndex > 0) {
+        this.index = nextIndex;
+        this.object = object;
+        return;
+      }
+      // If there are no more properties in the object then follow the prototype chain.
+      while (true) {
+        var object = safeGetPrototypeOf(object);
+        if (!object) {
+          this.index = 0;
+          this.object = null;
+          return;
+        }
+        nextIndex = object.axNextNameIndex(0);
+        if (nextIndex > 0) {
+          this.index = nextIndex;
+          this.object = object;
+          return;
+        }
+      }
+    }
+  }
 
   /**
    * Generic axConstruct method that lives on the AXClass prototype. This just
    * creates an empty object with the right prototype and then calls the
    * instance initializer.
+   *
+   * TODO: Flatten out the argArray, or create an alternate helper ax helper to
+   * make object construction faster.
    */
-  function axConstruct() {
+  function axConstruct(argArray?: any[]) {
     var self: AXClass = this;
     var object = Object.create(self.tPrototype);
-    self.axInitializer.apply(object, arguments);
+    self.axInitializer.apply(object, argArray);
     return object;
   }
 
@@ -699,14 +723,17 @@ module Shumway.AVMX {
     public AXBoolean: AXClass;
 
     private AXPrimitiveBox;
-    private AXGlobalProto;
-    private AXActivationProto;
-    private objectPrototype: AXObject;
+    private AXGlobalPrototype;
+    private AXActivationPrototype;
+    private AXCatchPrototype;
+
+    public objectPrototype: AXObject;
     private rootClassPrototype: AXObject;
 
     private nativeClasses: any;
 
     constructor() {
+      initializeAXBasePrototype();
       this.system = new ApplicationDomain(this, null);
       this.application = new ApplicationDomain(this, this.system);
       this.nativeClasses = Object.create(null);
@@ -714,6 +741,63 @@ module Shumway.AVMX {
 
     findDefiningABC(mn: Multiname): ABCFile {
       return null;
+    }
+
+    throwError(className: string, error: any, replacement1?: any,
+               replacement2?: any, replacement3?: any, replacement4?: any) {
+      var message = formatErrorMessage.apply(null, sliceArguments(arguments, 1));
+      this.throwErrorFromVM(className, message, error.code);
+    }
+
+    throwErrorFromVM(errorClass: string, message: string, id: number) {
+      rn.namespaces = [Namespace.PUBLIC];
+      rn.name = errorClass;
+      var axClass: AXClass = <any>this.application.getProperty(rn, true, true);
+      throw axClass.axConstruct([message, id])
+    }
+
+    applyType(methodInfo: MethodInfo, axClass: AXClass, types: AXClass []): AXClass {
+      var factoryClassName = axClass.classInfo.instanceInfo.getName().name;
+      if (factoryClassName === "Vector") {
+        release || assert(types.length === 1);
+        var type = types[0];
+        var typeClassName;
+        if (!isNullOrUndefined(type)) {
+          typeClassName = type.classInfo.instanceInfo.getName().name.toLowerCase();
+          switch (typeClassName) {
+            case "number":
+              typeClassName = "double";
+            case "int":
+            case "uint":
+            case "double":
+              rn.namespaces = [Namespace.VECTOR_PACKAGE];
+              rn.name = "Vector$" + typeClassName;
+              return <AXClass>methodInfo.abc.applicationDomain.getProperty(rn, true, true);
+              break;
+          }
+        }
+        rn.namespaces = [Namespace.VECTOR_PACKAGE];
+        rn.name = "Vector$object";
+        var objectVector = <any>methodInfo.abc.applicationDomain.getProperty(rn, true, true);
+        return objectVector.applyType(objectVector, type);
+      } else {
+        Shumway.Debug.notImplemented(factoryClassName);
+      }
+    }
+
+    /**
+     * Used for factory types. This creates a class that by default behaves the same
+     * as its factory class but gives us the opportunity to override protocol
+     * handlers.
+     */
+    createSyntheticClass(superClass: AXClass): AXClass {
+      var axClass = Object.create(this.AXClass.tPrototype);
+      // Put the superClass tPrototype on the prototype chain so we have access
+      // to all factory protocol handlers by default.
+      axClass.tPrototype = Object.create(superClass.tPrototype);
+      // We don't need a new dPrototype object.
+      axClass.dPrototype = superClass.dPrototype;
+      return axClass;
     }
 
     createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
@@ -739,7 +823,7 @@ module Shumway.AVMX {
           }
           axClass.tPrototype = Object.create(axClass.dPrototype);
           var initializerMethodInfo = instanceInfo.getInitializer();
-          axClass.axInitializer = this.createInitializerFunction(initializerMethodInfo, classScope);
+          axClass.axInitializer = this.createInitializerFunction(classInfo, classScope);
           axClass.axCoerce = function () {
             assert(false, "TODO: Coercing constructor.");
           };
@@ -750,7 +834,6 @@ module Shumway.AVMX {
         assert(axClass.dPrototype);
         assert(axClass.tPrototype);
       }
-
 
       axClass.classInfo = (<any>axClass.dPrototype).classInfo = classInfo;
       axClass.superClass = superClass;
@@ -764,6 +847,9 @@ module Shumway.AVMX {
       // Add the |constructor| property on the class traits prototype so that all instances can
       // get to their class constructor.
       defineNonEnumerableProperty(axClass.tPrototype, "$Bgconstructor", axClass);
+
+      // Copy over all TS symbols.
+      AS.tryLinkNativeClass(axClass);
 
       // Run the static initializer.
       interpret(axClass, classInfo.getInitializer(), classScope, [axClass]);
@@ -802,7 +888,12 @@ module Shumway.AVMX {
       });
     }
 
-    createInitializerFunction(methodInfo: MethodInfo, scope: Scope): Function {
+    createInitializerFunction(classInfo: ClassInfo, scope: Scope): Function {
+      var nativeInitializer = AS.getNativeInitializer(classInfo);
+      if (nativeInitializer) {
+        return nativeInitializer;
+      }
+      var methodInfo = classInfo.instanceInfo.getInitializer();
       return function () {
         return interpret(this, methodInfo, scope, sliceArguments(arguments));
       };
@@ -812,10 +903,19 @@ module Shumway.AVMX {
       var body = methodInfo.getBody();
       if (!body.activationPrototype) {
         body.traits.resolve();
-        body.activationPrototype = Object.create(this.AXActivationProto);
+        body.activationPrototype = Object.create(this.AXActivationPrototype);
         (<any>body.activationPrototype).traits = body.traits.resolveRuntimeTraits(null, null, scope);
       }
       return Object.create(body.activationPrototype);
+    }
+
+    createCatch(exceptionInfo: ExceptionInfo): AXCatch {
+      if (!exceptionInfo.catchPrototype) {
+        var traits = exceptionInfo.getTraits();
+        exceptionInfo.catchPrototype = Object.create(this.AXCatchPrototype);
+        (<any>exceptionInfo.catchPrototype).traits = traits;
+      }
+      return Object.create(exceptionInfo.catchPrototype);
     }
 
     box(v: any) {
@@ -845,7 +945,7 @@ module Shumway.AVMX {
     }
 
     createAXGlobal(applicationDomain: ApplicationDomain, scriptInfo: ScriptInfo) {
-      var global: AXGlobal = Object.create(this.AXGlobalProto);
+      var global: AXGlobal = Object.create(this.AXGlobalPrototype);
       global.securityDomain = this;
       global.applicationDomain = applicationDomain;
       global.scriptInfo = scriptInfo;
@@ -978,7 +1078,7 @@ module Shumway.AVMX {
     initialize() {
       var D = defineNonEnumerableProperty;
       var P = function setPublicProperty(object, name, value) {
-        object.axSetPublicProperty(name, AXFunction.axBox(value));
+        defineNonEnumerableProperty(object, Multiname.getPublicMangledName(name), AXFunction.axBox(value));
       };
       
       // The basic dynamic prototype that all objects in this security domain have in common.
@@ -1006,20 +1106,24 @@ module Shumway.AVMX {
         });
       });
 
-      this.AXGlobalProto = Object.create(this.objectPrototype);
-      this.AXGlobalProto.$BgtoString = function() {
+      this.AXGlobalPrototype = Object.create(this.objectPrototype);
+      this.AXGlobalPrototype.$BgtoString = function() {
         return '[object global]';
       };
 
-      this.AXActivationProto = Object.create(this.objectPrototype);
-      this.AXActivationProto.$BgtoString = function() {
+      this.AXActivationPrototype = Object.create(this.objectPrototype);
+      this.AXActivationPrototype.$BgtoString = function() {
         return '[Activation]';
       };
 
-      var AXFunction = this.prepareNativeClass("AXFunction", "Function", false);
-      D(AXFunction, "axBox", axBoxPrimitive);
-      D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.call);
-      D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.apply);
+      this.AXCatchPrototype = Object.create(this.objectPrototype);
+      this.AXCatchPrototype.$BgtoString = function() {
+        return '[Catch]';
+      };
+
+      var AXFunction = this.AXFunction;
+      D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.axCall);
+      D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.axApply);
       D(AXFunction.tPrototype, '$BgtoString', AXFunction.axBox(function () {
         return "[Function Object]";
       }));
@@ -1074,10 +1178,6 @@ module Shumway.AVMX {
       P(AXArray.dPrototype, "filter", Ap.filter);
       P(AXArray.dPrototype, "sort", Ap.sort);
       P(AXArray.dPrototype, "sortOn", Ap.sortOn);
-
-      D(AXArray.dPrototype, "axGetProperty", axArrayGetProperty);
-      D(AXArray.dPrototype, "axSetProperty", axArraySetProperty);
-      D(AXArray.dPrototype, "axDeleteProperty", axArrayDeleteProperty);
 
       // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder
       // base class to help us with instanceof tests.
@@ -1166,6 +1266,18 @@ module Shumway.AVMX {
       var script = this.findDefiningScript(mn, execute);
       if (script) {
         return script.global;
+      }
+      return null;
+    }
+
+    public getClass(mn: Multiname): AXClass {
+      return <any>this.getProperty(mn, true, true);
+    }
+
+    public getProperty(mn: Multiname, strict: boolean, execute: boolean): AXObject {
+      var global: any = this.findProperty(mn, strict, execute);
+      if (global) {
+        return global.axGetProperty(mn);
       }
       return null;
     }

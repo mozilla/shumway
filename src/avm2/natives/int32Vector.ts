@@ -25,23 +25,21 @@
  * compiler is good enough.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   /**
    * Check arguments and throw the appropriate errors.
    */
   var checkArguments = true;
 
+  import assert = Shumway.Debug.assert;
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import clamp = Shumway.NumberUtilities.clamp;
-  import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
-  import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
+  var asCheckVectorGetNumericProperty = null; // Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
+  var asCheckVectorSetNumericProperty = null; // Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
-  export class Int32Vector extends ASVector<ASInt> {
+  export class Int32Vector extends ASObject {
     static EXTRA_CAPACITY = 4;
     static INITIAL_CAPACITY = 10;
     static DEFAULT_VALUE = 0;
@@ -196,8 +194,9 @@ module Shumway.AVM2.AS {
       for (var i = 0; i < arguments.length; i++) {
         var vector: Int32Vector = arguments[i];
         if (!(vector._buffer instanceof Int32Array)) {
-          throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
-                     '__AS3__.vec.Vector.<int>');
+          assert(false); // TODO
+          // this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
+          //                               '__AS3__.vec.Vector.<int>');
         }
         length += vector._length;
       }
@@ -248,9 +247,9 @@ module Shumway.AVM2.AS {
 
     some(callback, thisObject) {
       if (arguments.length !== 2) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError);
+        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError);
       } else if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       for (var i = 0; i < this._length; i++) {
         if (callback.call(thisObject, this._buffer[this._offset + i], i, this)) {
@@ -329,7 +328,7 @@ module Shumway.AVM2.AS {
 
     map(callback, thisObject) {
       if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       var v = new Int32Vector();
       for (var i = 0; i < this._length; i++) {
@@ -478,7 +477,7 @@ module Shumway.AVM2.AS {
 
     _checkFixed() {
       if (this._fixed) {
-        throwError("RangeError", Errors.VectorFixedError);
+        this.securityDomain.throwError("RangeError", Errors.VectorFixedError);
       }
     }
 
@@ -498,7 +497,8 @@ module Shumway.AVM2.AS {
 
     asHasProperty(namespaces, name, flags) {
       if (Int32Vector.prototype === this || !isNumeric(name)) {
-        return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
+        assert(false); // TODO
+        // return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
       }
       var index = toNumber(name);
       return index >= 0 && index < this._length;

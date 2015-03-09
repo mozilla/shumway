@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export module flash.system {
-    export class IME extends ASNative /* flash.events.EventDispatcher */ {
+    export class IME extends ASObject /* flash.events.EventDispatcher */ {
       constructor () {
         false && super();
       }
@@ -59,7 +58,7 @@ module Shumway.AVM2.AS {
       }
     }
 
-    export class System extends ASNative {
+    export class System extends ASObject {
       private static _useCodePage: boolean = false;
 
       static get ime(): flash.system.IME {
@@ -145,3 +144,6 @@ module Shumway.AVM2.AS {
     export var OriginalSystem = System;
   }
 }
+
+// Do this here temporarily until we find a nicer place.
+Shumway.AVMX.AS.initializeBuiltins();

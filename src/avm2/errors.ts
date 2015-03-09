@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2 {
+module Shumway.AVMX {
+  export interface ErrorInfo {
+    code: number;
+    message: string;
+    // typeName: string;
+  }
+
   export var Errors = {
   /**
    * AVM2 Error Codes
@@ -634,7 +640,7 @@ module Shumway.AVM2 {
     return message + ": " + (error && error.message || "(unknown)");
   }
 
-  export function getErrorInfo(index: number): {code: number; message: string; typeName: string} {
+  export function getErrorInfo(index: number): ErrorInfo {
     return Errors[index];
   }
 
@@ -664,4 +670,4 @@ module Shumway.AVM2 {
 }
 
 // Errors is used in dataBuffer.ts, which is compiled way before this. Gotta break the cycle.
-Errors = Shumway.AVM2.Errors;
+Errors = Shumway.AVMX.Errors;

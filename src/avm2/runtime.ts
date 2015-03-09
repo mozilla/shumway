@@ -896,7 +896,7 @@ module Shumway.AVM2.Runtime {
     if (error.fqn) {
       className = error.fqn;
     }
-    var message = Shumway.AVM2.formatErrorMessage.apply(null,
+    var message = Shumway.AVMX.formatErrorMessage.apply(null,
                                                         Array.prototype.slice.call(arguments, 1));
     throwErrorFromVM(AVM2.currentDomain(), className, message, error.code);
   }
@@ -911,7 +911,7 @@ module Shumway.AVM2.Runtime {
     if (error instanceof Error) {
       var type = domain.getClass(error.name);
       if (type) {
-        return new type.instanceConstructor(Shumway.AVM2.translateErrorMessage(error));
+        return new type.instanceConstructor(Shumway.AVMX.translateErrorMessage(error));
       }
       Shumway.Debug.unexpected("Can't translate error: " + error);
     }

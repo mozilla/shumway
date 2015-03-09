@@ -56,9 +56,9 @@ module Shumway.AVMX {
   }
 
   export enum METHOD {
-    Arguments           = 0x1,
+    NeedArguments       = 0x1,
     Activation          = 0x2,
-    Needrest            = 0x4,
+    NeedRest            = 0x4,
     HasOptional         = 0x8,
     IgnoreRest          = 0x10,
     Native              = 0x20,
@@ -693,14 +693,34 @@ module Shumway.AVMX {
   }
 
   export class ExceptionInfo {
+    public catchPrototype: Object = null;
+    private _traits: Traits = null;
     constructor(
+      public abc: ABCFile,
       public start: number,
       public end: number,
       public target: number,
-      public type: number,
+      public type: Multiname | number,
       public varName: number
     ) {
       // ...
+    }
+
+    getType(): Multiname {
+      if (typeof this.type === "number") {
+        this.type = this.abc.getMultiname(<number>this.type);
+      }
+      return <Multiname>this.type;
+    }
+
+    getTraits(): Traits {
+      if (!this._traits) {
+        this._traits = new Traits([
+          new SlotTraitInfo(this.abc, TRAIT.Slot, this.varName, 1, this.type, 0, 0)
+        ]);
+        this._traits.resolve();
+      }
+      return this._traits;
     }
   }
 
@@ -773,6 +793,14 @@ module Shumway.AVMX {
     isNative(): boolean {
       return !!(this.flags & METHOD.Native);
     }
+
+    needsRest(): boolean {
+      return !!(this.flags & METHOD.NeedRest);
+    }
+
+    needsArguments(): boolean {
+      return !!(this.flags & METHOD.NeedArguments);
+    }
   }
 
   export class Multiname {
@@ -787,28 +815,6 @@ module Shumway.AVMX {
       public parameterType: Multiname = null
     ) {
       // ...
-    }
-
-    public static getPublicMangledName(name: string): any {
-      return "$Bg" + name;
-    }
-
-    public static getMangledName(name: Multiname): any {
-      release || assert(name instanceof Multiname);
-      return name.getMangledName();
-    }
-
-    public static isPublicQualifiedName(value: any): boolean {
-      return value.indexOf('$Bg') === 0;
-    }
-
-    public getMangledName(): string {
-      assert (this.isQName());
-      return "$" + this.namespaces[0].getMangledName() + this.name;
-    }
-
-    public getPublicMangledName(): any {
-      return "$Bg" + this.name;
     }
 
     private _nameToString(): string {
@@ -899,6 +905,44 @@ module Shumway.AVMX {
           return true;
       }
       return false;
+    }
+
+    public getMangledName(): string {
+      assert (this.isQName());
+      return "$" + this.namespaces[0].getMangledName() + this.name;
+    }
+
+    public getPublicMangledName(): any {
+      if (isNumeric(this.name)) {
+        return this.name;
+      }
+      return "$Bg" + this.name;
+    }
+
+    public static isPublicQualifiedName(value: any): boolean {
+      return value.indexOf('$Bg') === 0;
+    }
+
+    public static getPublicMangledName(name: string): any {
+      if (isNumeric(name)) {
+        return name;
+      }
+      return "$Bg" + name;
+    }
+
+    /**
+     * Removes the public prefix, or returns undefined if the prefix doesn't exist.
+     */
+    public static stripPublicMangledName(name: string): any {
+      if (name.indexOf("$Bg") === 0) {
+        return name.substring(3);
+      }
+      return undefined;
+    }
+
+    public static getMangledName(name: Multiname): any {
+      release || assert(name instanceof Multiname);
+      return name.getMangledName();
     }
   }
 
@@ -1630,7 +1674,7 @@ module Shumway.AVMX {
         var e = s.readU30();
         var exceptions = new Array(e);
         for (var j = 0; j < e; ++j) {
-          exceptions[i] = this._parseException();
+          exceptions[j] = this._parseException();
         }
         var traits = this._parseTraits();
         methodBodies[methodInfo] = new MethodBodyInfo(maxStack, localCount, initScopeDepth, maxScopeDepth, code, exceptions, traits);
@@ -1645,7 +1689,7 @@ module Shumway.AVMX {
       var target = s.readU30();
       var type = s.readU30();
       var varName = s.readU30();
-      return new ExceptionInfo(start, end, target, type, varName);
+      return new ExceptionInfo(this, start, end, target, type, varName);
     }
 
     public getConstant(kind: CONSTANT, i: number): any {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   /**
    * Check arguments and throw the appropriate errors.
    */
@@ -23,25 +23,18 @@ module Shumway.AVM2.AS {
   import assert = Shumway.Debug.assert;
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
-  import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
-  import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
-  import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
+  var asCheckVectorGetNumericProperty = null; // TODO
+  var asCheckVectorSetNumericProperty = null; // TODO
 
-  export class GenericVector extends ASVector<Object> {
+  export class GenericVector extends ASObject {
 
     static CASEINSENSITIVE = 1;
     static DESCENDING = 2;
     static UNIQUESORT = 4;
     static RETURNINDEXEDARRAY = 8;
     static NUMERIC = 16;
-
-    public static instanceConstructor: any = GenericVector;
-    public static staticNatives: any [] = [GenericVector];
-    public static instanceNatives: any [] = [GenericVector.prototype];
 
     static classInitializer: any = function() {
       var proto: any = GenericVector.prototype;
@@ -113,40 +106,54 @@ module Shumway.AVM2.AS {
       this._fixed = !!fixed;
       this._buffer = new Array(length);
       this._type = type;
-      this._defaultValue = type ? type.defaultValue : null;
+      // TODO: FIX ME
+      // this._defaultValue = type ? type.defaultValue : null;
       this._fill(0, length, this._defaultValue);
     }
 
     /**
-     * TODO: Need to really debug this, very tricky.
+     * Creates a new class that is bound to this type.
      */
-    public static applyType(type: ASClass): ASClass {
-      function parameterizedVectorConstructor(length: number /*uint*/, fixed: boolean) {
-        Function.prototype.call.call(GenericVector.instanceConstructor, this, length, fixed, type);
-      };
-
-      function parameterizedVectorCallableConstructor(object) {
-        if (object instanceof Int32Vector) {
-          return object;
-        }
-        var length = object.asGetProperty(undefined, "length");
-        if (length !== undefined) {
-          var v = new parameterizedVectorConstructor(length, false);
-          for (var i = 0; i < length; i++) {
-            v.asSetNumericProperty(i, object.asGetPublicProperty(i));
-          }
-          return v;
-        }
-        Shumway.Debug.unexpected();
+    public static applyType(factoryType: AXClass, type: AXClass): AXClass {
+      var axClass = factoryType.securityDomain.createSyntheticClass(factoryType);
+      axClass.axInitializer = function (length: number /*uint*/ = 0, fixed: boolean = false) {
+        // factoryType.axInitializer points to the GenericVector constructor.
+        factoryType.axInitializer.call(this, length, fixed, type);
       }
-
-      var parameterizedVector = <any>parameterizedVectorConstructor;
-      parameterizedVector.prototype = GenericVector.prototype;
-      parameterizedVector.instanceConstructor = parameterizedVector;
-      parameterizedVector.callableConstructor = parameterizedVectorCallableConstructor;
-      parameterizedVector.__proto__ = GenericVector;
-      return <any>parameterizedVector;
+      return axClass;
     }
+
+    ///**
+    // * TODO: Need to really debug this, very tricky.
+    // */
+    //public static applyType(type: ASClass): ASClass {
+    //  function parameterizedVectorConstructor(length: number /*uint*/, fixed: boolean) {
+    //    // TODO: FIX ME
+    //    // Function.prototype.call.call(GenericVector.instanceConstructor, this, length, fixed, type);
+    //  };
+    //
+    //  function parameterizedVectorCallableConstructor(object) {
+    //    if (object instanceof Int32Vector) {
+    //      return object;
+    //    }
+    //    var length = object.asGetProperty(undefined, "length");
+    //    if (length !== undefined) {
+    //      var v = new parameterizedVectorConstructor(length, false);
+    //      for (var i = 0; i < length; i++) {
+    //        v.asSetNumericProperty(i, object.asGetPublicProperty(i));
+    //      }
+    //      return v;
+    //    }
+    //    Shumway.Debug.unexpected();
+    //  }
+    //
+    //  var parameterizedVector = <any>parameterizedVectorConstructor;
+    //  parameterizedVector.prototype = GenericVector.prototype;
+    //  parameterizedVector.instanceConstructor = parameterizedVector;
+    //  parameterizedVector.callableConstructor = parameterizedVectorCallableConstructor;
+    //  parameterizedVector.__proto__ = GenericVector;
+    //  return <any>parameterizedVector;
+    //}
 
     private _fill(index: number, length: number, value: any) {
       for (var i = 0; i < length; i++) {
@@ -325,7 +332,7 @@ module Shumway.AVM2.AS {
 
     _coerce(v) {
       if (this._type) {
-        return this._type.coerce(v);
+        return this._type.axCoerce(v);
       } else if (v === undefined) {
         return null;
       }
@@ -409,30 +416,30 @@ module Shumway.AVM2.AS {
       }
     }
 
-    asNextName(index: number): any {
-      return index - 1;
-    }
-
-    asNextValue(index: number): any {
-      return this._buffer[index - 1];
-    }
-
-    asNextNameIndex(index: number): number {
-      var nextNameIndex = index + 1;
-      if (nextNameIndex <= this._buffer.length) {
-        return nextNameIndex;
-      }
-      return 0;
-    }
-
-    asHasProperty(namespaces, name, flags) {
-      if (GenericVector.prototype === this || !isNumeric(name)) {
-        return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
-      }
-      var index = toNumber(name);
-      return index >= 0 && index < this._buffer.length;
-    }
-
+    //asNextName(index: number): any {
+    //  return index - 1;
+    //}
+    //
+    //asNextValue(index: number): any {
+    //  return this._buffer[index - 1];
+    //}
+    //
+    //asNextNameIndex(index: number): number {
+    //  var nextNameIndex = index + 1;
+    //  if (nextNameIndex <= this._buffer.length) {
+    //    return nextNameIndex;
+    //  }
+    //  return 0;
+    //}
+    //
+    //asHasProperty(namespaces, name, flags) {
+    //  if (GenericVector.prototype === this || !isNumeric(name)) {
+    //    return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
+    //  }
+    //  var index = toNumber(name);
+    //  return index >= 0 && index < this._buffer.length;
+    //}
+    //
     asGetNumericProperty(i) {
       checkArguments && asCheckVectorGetNumericProperty(i, this._buffer.length);
       return this._buffer[i];
@@ -442,9 +449,9 @@ module Shumway.AVM2.AS {
       checkArguments && asCheckVectorSetNumericProperty(i, this._buffer.length, this._fixed);
       this._buffer[i] = this._coerce(v);
     }
-
-    asHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
-    }
+    //
+    //asHasNext2(hasNext2Info: HasNext2Info) {
+    //  hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
+    //}
   }
 }

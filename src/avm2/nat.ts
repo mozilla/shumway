@@ -13,6 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+module Shumway.AVM2.AS {
+  // Keep this module around for now so the flash.js package doesn't fail.
+  export class ASObject {
+
+  }
+  export class ASNative extends ASObject {
+
+  }
+  export class ASError extends ASObject {
+
+  }
+}
+
 module Shumway.AVMX.AS {
 
 
@@ -30,14 +43,13 @@ module Shumway.AVMX.AS {
   import boxValue = Shumway.ObjectUtilities.boxValue;
   import pushMany = Shumway.ArrayUtilities.pushMany;
   import Scope = Shumway.AVMX.Scope;
-  import sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
+  import copyOwnPropertyDescriptors = Shumway.ObjectUtilities.copyOwnPropertyDescriptors;
 
   import Multiname = Shumway.AVMX.Multiname;
-  var debug = false;
 
-  var writer = debug ? new IndentingWriter() : null;
+  var writer = null; // new IndentingWriter();
 
 
   /**
@@ -96,56 +108,254 @@ module Shumway.AVMX.AS {
     return <any>v;
   }
 
-
-  export class ASMetaObject implements IMetaObjectProtocol {
-    axHasPropertyInternal: (mn: Multiname) => boolean;
-    axHasOwnProperty: (mn: Multiname) => boolean;
-    axSetProperty: (mn: Multiname, value: any) => void;
-    axSetPublicProperty: (nm: any, value: any) => void;
-  }
-
-  var rn = new Multiname(null, 0, CONSTANT.RTQName, null, null);
+  var rn = new Multiname(null, 0, CONSTANT.RTQNameL, null, null);
 
   function makeMultiname(v) {
     rn.name = v;
     return rn;
   }
 
-  export class ASObject extends ASMetaObject {
+  /**
+   * MetaobjectProtocol base traps. Inherit some or all of these to
+   * implement custom behaviour.
+   */
+  export class ASObject implements IMetaobjectProtocol {
+    traits: RuntimeTraits;
     securityDomain: SecurityDomain;
 
+    // Declare all instance ASObject fields as statics here so that the TS
+    // compiler can convert ASClass class objects to ASObject instances.
+
+    static traits: RuntimeTraits;
     static dPrototype: ASObject;
     static tPrototype: ASObject;
-
-    static staticNatives: Object [];
+    static classNatives: Object [];
     static instanceNatives: Object [];
-
     static securityDomain: SecurityDomain;
+    static classSymbols = [];
+    static instanceSymbols = [];
+    static classInfo: ClassInfo;
+
+    static axResolveMultiname: (mn: Multiname) => any;
+    static axHasProperty: (mn: Multiname) => boolean;
+    static axDeleteProperty: (mn: Multiname) => boolean;
+    static axCallProperty: (mn: Multiname, argsArray: any []) => any;
+    static axCallSuper: (mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argsArray: any []) => any;
+    static axConstructProperty: (mn: Multiname, args: any []) => any;
+    static axHasPropertyInternal: (mn: Multiname) => boolean;
+    static axHasOwnProperty: (mn: Multiname) => boolean;
+    static axSetProperty: (mn: Multiname, value: any) => void;
+    static axGetProperty: (mn: Multiname) => any;
+
+
+
+    static axEnumerableKeys: any [];
+    static axGetEnumerableKeys: () => any [];
+    static axHasPublicProperty: (nm: any) => boolean;
+    static axSetPublicProperty: (nm: any, value: any) => void;
+    static axGetPublicProperty: (nm: any) => any;
+    static axCoerce: (v: any) => any;
+    static axConstruct: (argArray?: any []) => any;
+
+    static axNextNameIndex: (index: number) => number;
+    static axNextName: (index: number) => any;
+    static axNextValue: (index: number) => any;
+
+
+    static axGetSlot: (i: number) => any;
+    static axSetSlot: (i: number, value: any) => void;
+
+    static native_isPrototypeOf: (v: any) => boolean;
+    static native_hasOwnProperty: (v: any) => boolean;
+    static native_propertyIsEnumerable: (v: any) => boolean;
 
     static _init() {
       // Nop.
     }
 
-    isPrototypeOf(v: any): boolean {
+    native_isPrototypeOf(v: any): boolean {
       notImplemented("Object::isPrototypeOf");
       return false;
     }
 
-    hasOwnProperty(v: any): boolean {
+    native_hasOwnProperty(v: any): boolean {
       return this.axHasOwnProperty(makeMultiname(v));
     }
 
-    propertyIsEnumerable(v: any): boolean {
+    native_propertyIsEnumerable(v: any): boolean {
       return this.axHasOwnProperty(makeMultiname(v));
     }
+
+    axResolveMultiname(mn: Multiname): any {
+      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+        return mn.name;
+      }
+      var t = this.traits.getTrait(mn);
+      if (t) {
+        return t.name.getMangledName();
+      }
+      return mn.getPublicMangledName();
+    }
+
+    axHasProperty(mn: Multiname): boolean {
+      return this.axHasPropertyInternal(mn);
+    }
+
+    axHasPublicProperty(name: any): boolean {
+      rn.name = name;
+      return this.axHasProperty(rn);
+    }
+
+    axSetProperty(mn: Multiname, value: any) {
+      release || assert(isValidASValue(value));
+      this[this.axResolveMultiname(mn)] = value;
+    }
+
+    axGetProperty(mn: Multiname): any {
+      var value = this[this.axResolveMultiname(mn)];
+      release || checkValue(value);
+      return value;
+    }
+
+    axDeleteProperty(mn: Multiname): any {
+      // Cannot delete traits.
+      if (this.traits.getTrait(mn)) {
+        return false;
+      }
+      return delete this[mn.getPublicMangledName()];
+    }
+
+    axCallProperty(mn: Multiname, args: any []): any {
+      return this[this.axResolveMultiname(mn)].axApply(this, args);
+    }
+
+    axCallSuper(mn: Multiname, scope: Scope, args: any []): any {
+      var name = this.axResolveMultiname(mn);
+      var fun = (<AXClass>scope.parent.object).tPrototype[name];
+      return fun.axApply(this, args);
+    }
+    axConstructProperty(mn: Multiname, args: any []): any {
+      return this[this.axResolveMultiname(mn)].axConstruct(args);
+    }
+
+    axHasPropertyInternal(mn: Multiname): boolean {
+      return this.axResolveMultiname(mn) in this;
+    }
+
+    axHasOwnProperty(mn: Multiname): boolean {
+      release || Debug.abstractMethod("axHasOwnProperty");
+      return false;
+    }
+
+    axGetEnumerableKeys(): any [] {
+      var self: AXObject = <any>this;
+      if (this.securityDomain.isPrimitive(this)) {
+        return [];
+      }
+      var keys = Object.keys(this);
+      var result = [];
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        if (isNumeric(key)) {
+          result.push(key);
+        } else {
+          var name = Multiname.stripPublicMangledName(key);
+          if (name !== undefined) {
+            result.push(name);
+          }
+        }
+      }
+      return result;
+    }
+
+    axGetPublicProperty(name: any): any {
+      return this[Multiname.getPublicMangledName(name)];
+    }
+
+    axSetPublicProperty(name: any, value: any) {
+      release || checkValue(value);
+      this[Multiname.getPublicMangledName(name)] = value;
+    }
+
+    axGetSlot(i: number): any {
+      var t = this.traits.getSlot(i);
+      var value = this[t.getName().getMangledName()];
+      release || checkValue(value);
+      return value;
+    }
+
+    axSetSlot(i: number, value: any) {
+      var t = this.traits.getSlot(i);
+      release || checkValue(value);
+      this[t.getName().getMangledName()] = value;
+      //var slotInfo = object.asSlots.byID[index];
+      //if (slotInfo.const) {
+      //  return;
+      //}
+      //var name = slotInfo.name;
+      //var type = slotInfo.type;
+      //if (type && type.coerce) {
+      //  object[name] = type.coerce(value);
+      //} else {
+      //  object[name] = value;
+      //}
+    }
+
+    /**
+     * Gets the next name index of an object. Index |zero| is actually not an
+     * index, but rather an indicator to start the iteration.
+     */
+    axNextNameIndex(index: number): number {
+      var self: AXObject = <any>this;
+      if (index === 0) {
+        // Gather all enumerable keys since we're starting a new iteration.
+        defineNonEnumerableProperty(self, "axEnumerableKeys", self.axGetEnumerableKeys());
+      }
+      var axEnumerableKeys = self.axEnumerableKeys;
+      while (index < axEnumerableKeys.length) {
+        rn.name = axEnumerableKeys[index];
+        if (self.axHasPropertyInternal(rn)) {
+          return index + 1;
+        }
+        index ++;
+      }
+      return 0;
+    }
+
+    /**
+     * Gets the nextName after the specified |index|, which you would expect to
+     * be index + 1, but it's actually index - 1;
+     */
+    axNextName(index: number): any {
+      var self: AXObject = <any>this;
+      var axEnumerableKeys = self.axEnumerableKeys;
+      release || assert(axEnumerableKeys && index > 0 && index < axEnumerableKeys.length + 1);
+      return axEnumerableKeys[index - 1];
+    }
+
+    axNextValue(index: number): any {
+      return this.axGetPublicProperty(this.axNextName(index));
+    }
+
+    axEnumerableKeys: any [];
   }
 
   export class ASClass extends ASObject {
     dPrototype: ASObject;
     tPrototype: ASObject;
 
-    staticNatives: Object [];
+    classNatives: Object [];
     instanceNatives: Object [];
+
+    classSymbols: string [];
+    instanceSymbols: string [];
+    classInfo: ClassInfo;
+
+    axCoerce(v: any): any {
+
+    }
+
+    axConstruct: (argArray?: any []) => any;
 
     get prototype(): ASObject {
       release || assert (this.dPrototype);
@@ -288,7 +498,8 @@ module Shumway.AVMX.AS {
 
     sortOn(names: any, options: any): any {
       if (arguments.length === 0) {
-        throwError("ArgumentError", AVM2.Errors.WrongArgumentCountError,
+        this.securityDomain.throwError(
+                   "ArgumentError", Errors.WrongArgumentCountError,
                    "Array/http://adobe.com/AS3/2006/builtin::sortOn()", "1", "0");
       }
       // The following oddities in how the arguments are used are gleaned from Tamarin, so hush.
@@ -345,6 +556,54 @@ module Shumway.AVMX.AS {
     set length(newLength: number) {
       this.value.length = newLength >>> 0;
     }
+
+    axGetEnumerableKeys(): any [] {
+      return Object.keys(this.value);
+    }
+
+    axHasPropertyInternal(mn: Multiname): boolean {
+      if (this.traits.indexOf(mn) >= 0) {
+        return true;
+      }
+      if (isNumeric(mn.name)) {
+        return mn.name in this.value;
+      }
+      return mn.getPublicMangledName() in this.value;
+    }
+
+    axGetProperty(mn: Multiname): any {
+      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+        return this.value[mn.name];
+      }
+      var t = this.traits.getTrait(mn);
+      if (t) {
+        return this[t.name.getMangledName()];
+      }
+      return this[mn.getPublicMangledName()];
+    }
+
+    axSetProperty(mn: Multiname, value: any) {
+      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+        this.value[mn.name] = value;
+      }
+      var t = this.traits.getTrait(mn);
+      if (t) {
+        this[t.name.getMangledName()] = value;
+        return;
+      }
+      this[mn.getPublicMangledName()] = value;
+    }
+
+    axDeleteProperty(mn: Multiname): any {
+      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+        return delete this.value[mn.name];
+      }
+      // Cannot delete array traits.
+      if (this.traits.getTrait(mn)) {
+        return false;
+      }
+      return delete this[mn.getPublicMangledName()];
+    }
   }
 
   export class ASFunction extends ASObject {
@@ -374,12 +633,20 @@ module Shumway.AVMX.AS {
       return "function Function() {}";
     }
 
-    call(self, a, b, c) {
-      return this.value.apply(self, sliceArguments(arguments, 1));
+    call(thisArg: any) {
+      return this.value.apply(thisArg, sliceArguments(arguments, 1));
     }
 
-    apply(self, args) {
-      return this.value.apply(self, args);
+    apply(thisArg: any, argArray?: ASArray): any {
+      return this.value.apply(thisArg, argArray ? argArray.value : undefined);
+    }
+
+    axCall(thisArg: any): any {
+      return this.value.apply(thisArg, sliceArguments(arguments, 1));
+    }
+
+    axApply(thisArg: any, argArray?: any[]): any {
+      return this.value.apply(thisArg, argArray);
     }
   }
 
@@ -406,10 +673,18 @@ module Shumway.AVMX.AS {
   }
 
   export class ASString extends ASObject {
-    static staticNatives: any [] = [String];
+    static classNatives: any [] = [String];
+
+    // TODO: It's not safe to pull methods from String.prototype.
     static instanceNatives: any [] = [String.prototype];
 
     value: string;
+
+    charCodeAt() {
+      return this.value.charCodeAt.apply(this.value, arguments);
+    }
+
+    // TODO: Add all other string functions.
 
     get length(): number {
       return this.value.length;
@@ -417,7 +692,7 @@ module Shumway.AVMX.AS {
   }
 
   export class ASNumber extends ASObject {
-    static staticNatives: any [] = [Math];
+    static classNatives: any [] = [Math];
     static instanceNatives: any [] = [Number.prototype];
     value: number;
 
@@ -445,9 +720,99 @@ module Shumway.AVMX.AS {
     }
   }
 
+  export class ASMath extends ASObject {
+    public static classNatives: any [] = [Math];
+  }
+
+  export class ASError extends ASObject {
+
+    public static getErrorMessage = Shumway.AVMX.getErrorMessage;
+
+    public static throwError(type: ASClass, id: number /*, ...rest */) {
+      var info = getErrorInfo(id);
+      var args = [info];
+      for (var i = 2; i < arguments.length; i++) {
+        args.push(arguments[i]);
+      }
+      var message = formatErrorMessage.apply(null, args);
+      throw type.axConstruct([message, id]);
+    }
+
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', 'Error');
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgmessage', 'Error');
+      defineNonEnumerableProperty(this.dynamicPrototype, '$BgtoString', this.prototype.toString);
+    }
+
+    constructor(message: any, id: any) {
+      false && super();
+      this.message = asCoerceString(message);
+      this._errorID = id | 0;
+
+      // This is gnarly but saves us from having individual ctors in all Error child classes.
+      // this.name = (<ASClass><any>this.constructor).dPrototype['$Bgname'];
+    }
+
+    message: string;
+    name: string;
+    _errorID: number;
+
+    toString() {
+      return this.message !== "" ? this.name + ": " + this.message : this.name;
+    }
+
+    get errorID() {
+      return this._errorID;
+    }
+
+    public getStackTrace(): string {
+      // Stack traces are only available in debug builds. We only do opt.
+      return null;
+    }
+  }
+
+  // TODO: Dummy XML until we port XML.
+  export class ASXML extends ASObject {}
+
+  export class ASDefinitionError extends ASError {
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', this.name.substr(2));
+    }
+  }
+  export class ASEvalError extends ASError {
+  }
+  export class ASRangeError extends ASError {
+  }
+  export class ASReferenceError extends ASError {
+  }
+  export class ASSecurityError extends ASError {
+  }
+  export class ASSyntaxError extends ASError {
+  }
+  export class ASTypeError extends ASError {
+  }
+  export class ASURIError extends ASError {
+  }
+  export class ASVerifyError extends ASError {
+  }
+  export class ASUninitializedError extends ASError {
+  }
+  export class ASArgumentError extends ASError {
+  }
+  export class ASIOError extends ASError {
+  }
+  export class ASEOFError extends ASError {
+  }
+  export class ASMemoryError extends ASError {
+  }
+  export class ASIllegalOperationError extends ASError {
+  }
+
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
-  function initializeBuiltins() {
+  export function initializeBuiltins() {
     builtinNativeClasses["Object"]              = ASObject;
     builtinNativeClasses["Class"]               = ASClass;
     builtinNativeClasses["Function"]            = ASFunction;
@@ -459,9 +824,37 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["UInt"]                = ASUint;
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
-  }
 
-  initializeBuiltins();
+    builtinNativeClasses["Vector$object"]       = GenericVector;
+    builtinNativeClasses["Vector$int"]          = Int32Vector;
+    builtinNativeClasses["Vector$uint"]         = Int32Vector; // FIXME
+    builtinNativeClasses["Vector$double"]       = Int32Vector; // FIXME
+
+
+    builtinNativeClasses["Math"]                = ASMath;
+
+
+    // Errors
+    builtinNativeClasses["Error"]               = ASError;
+    builtinNativeClasses["DefinitionError"]     = ASDefinitionError;
+    builtinNativeClasses["EvalError"]           = ASEvalError;
+    builtinNativeClasses["RangeError"]          = ASRangeError;
+    builtinNativeClasses["ReferenceError"]      = ASReferenceError;
+    builtinNativeClasses["SecurityError"]       = ASSecurityError;
+    builtinNativeClasses["SyntaxError"]         = ASSyntaxError;
+    builtinNativeClasses["TypeError"]           = ASTypeError;
+    builtinNativeClasses["URIError"]            = ASURIError;
+    builtinNativeClasses["VerifyError"]         = ASVerifyError;
+    builtinNativeClasses["UninitializedError"]  = ASUninitializedError;
+    builtinNativeClasses["ArgumentError"]       = ASArgumentError;
+    builtinNativeClasses["IOError"]             = ASIOError;
+    builtinNativeClasses["EOFError"]            = ASEOFError;
+    builtinNativeClasses["MemoryError"]         = ASMemoryError;
+    builtinNativeClasses["IllegalOperationError"] = ASIllegalOperationError;
+
+    builtinNativeClasses["Dictionary"]          = flash.utils.Dictionary;
+    builtinNativeClasses["ByteArray"]           = flash.utils.ByteArray;
+  }
 
   export function getNativesForTrait(trait: TraitInfo): Object [] {
     var className = null;
@@ -482,23 +875,42 @@ module Shumway.AVMX.AS {
       var native = builtinNativeClasses[className];
       release || assert (native, "Class native is not defined: " + className);
       natives = [native];
-      if (native.staticNatives) {
-        pushMany(natives, native.staticNatives);
+      if (native.classNatives) {
+        pushMany(natives, native.classNatives);
       }
     }
     return natives;
   }
 
+  export function getNativeInitializer(classInfo: ClassInfo): Function {
+    var methodInfo = classInfo.instanceInfo.getInitializer();
+    var className = classInfo.instanceInfo.getName().name;
+    var asClass = builtinNativeClasses[className];
+    if (methodInfo.isNative()) {
+      // Use TS constructor as the initializer function.
+      return <any>asClass;
+    }
+    // TODO: Assert eagerly.
+    return function () {
+      release || assert (!methodInfo.isNative(), "Must supply a constructor for " + classInfo + ".");
+    }
+    return null;
+  }
+
   /**
-  * Searches for a native property in a list of native holders.
-  */
+   * Searches for a native property in a list of native holders.
+   */
   export function getMethodOrAccessorNative(trait: TraitInfo): any {
     var natives = getNativesForTrait(trait);
     var name = trait.getName().name;
-    debug && console.log("getMethodOrAccessorNative(" + name + ")");
     for (var i = 0; i < natives.length; i++) {
       var native = natives[i];
       var fullName = name;
+      // We prefix methods that should not be exported with "native_", check to see
+      // if a method exists with that prefix first when looking for native methods.
+      if (!hasOwnProperty(native, name) && hasOwnProperty(native, "native_" + name)) {
+        fullName = "native_" + name;
+      }
       if (hasOwnProperty(native, fullName)) {
         var value;
         if (trait.isAccessor()) {
@@ -519,6 +931,123 @@ module Shumway.AVMX.AS {
     Shumway.Debug.warning("No native method for: " + trait.holder + " " + trait + ", make sure you've got the static keyword for static methods.");
     release || assertUnreachable("Cannot find " + trait + " in natives.");
     return null;
+  }
+
+  export function tryLinkNativeClass(axClass: AXClass) {
+    var className = axClass.classInfo.instanceInfo.getName().name;
+    var asClass = builtinNativeClasses[className];
+    if (asClass) {
+      linkClass(axClass, asClass);
+    }
+  }
+
+  function linkClass(axClass: AXClass, asClass: ASClass) {
+    /**
+     * Only returns true if the symbol is available in debug or release modes. Only symbols
+     * followed by the  "!" suffix are available in release builds.
+     */
+    function containsSymbol(symbols: string [], name: string) {
+      for (var i = 0; i < symbols.length; i++) {
+        var symbol = symbols[i];
+        if (symbol.indexOf(name) >= 0) {
+          var releaseSymbol = symbol[symbol.length - 1] === "!";
+          if (releaseSymbol) {
+            symbol = symbol.slice(0, symbol.length - 1);
+          }
+          if (name !== symbol) {
+            continue;
+          }
+          if (release) {
+            return releaseSymbol;
+          }
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function link(symbols, traits, object) {
+      for (var i = 0; i < traits.length; i++) {
+        var trait = traits[i];
+        if (!containsSymbol(symbols, trait.name.name)) {
+          continue;
+        }
+        release || assert (!trait.name.getNamespace().isPrivate(), "Why are you linking against private members?");
+        if (trait.isConst()) {
+          notImplemented("Don't link against const traits.");
+          return;
+        }
+        var name = trait.name.name;
+        var qn = Multiname.getMangledName(trait.name);
+        if (trait.isSlot()) {
+          Object.defineProperty(object, name, {
+            get: <() => any>new Function("", "return this." + qn +
+            "//# sourceURL=get-" + qn + ".as"),
+            set: <(any) => void>new Function("v", "this." + qn + " = v;" +
+            "//# sourceURL=set-" + qn + ".as")
+          });
+        } else if (trait.isMethod()) {
+          release || assert (!object[name], "Symbol should not already exist.");
+          release || assert (object.asOpenMethods[qn], "There should be an open method for this symbol.");
+          object[name] = object.asOpenMethods[qn];
+        } else if (trait.isGetter()) {
+          release || assert (hasOwnGetter(object, qn), "There should be an getter method for this symbol.");
+          Object.defineProperty(object, name, {
+            get: <() => any>new Function("", "return this." + qn +
+            "//# sourceURL=get-" + qn + ".as")
+          });
+        } else {
+          notImplemented(trait);
+        }
+      }
+    }
+
+    if (asClass.classSymbols) {
+      // link(self.classSymbols, self.classInfo.traits,  self);
+    }
+
+    if (asClass.instanceSymbols) {
+      // link(self.instanceSymbols, self.classInfo.instanceInfo.traits,  self.tPrototype);
+    }
+
+    function filter(propertyName: string): boolean {
+      if (propertyName.indexOf("native_") === 0) {
+        return false;
+      }
+      return true;
+    }
+
+    // Copy class methods and properties.
+    if (asClass.classNatives) {
+      for (var i = 0; i < asClass.classNatives.length; i++) {
+        copyOwnPropertyDescriptors(axClass, asClass.classNatives[i], filter);
+      }
+    }
+    copyOwnPropertyDescriptors(axClass, asClass, filter);
+
+    // Copy instance methods and properties.
+    if (asClass.instanceNatives) {
+      for (var i = 0; i < asClass.instanceNatives.length; i++) {
+        copyOwnPropertyDescriptors(axClass.tPrototype, asClass.instanceNatives[i], filter);
+      }
+    }
+    copyOwnPropertyDescriptors(axClass.tPrototype, asClass.prototype, filter);
+
+    false && writer && traceASClass(axClass, asClass);
+  }
+
+  function traceASClass(axClass: AXClass, asClass: ASClass) {
+    writer.enter("Class: " + axClass.classInfo);
+    writer.enter("Traps:");
+    for (var k in asClass.prototype) {
+      if (k.indexOf("ax") !== 0) {
+        continue;
+      }
+      var hasOwn = asClass.hasOwnProperty(k);
+      writer.writeLn((hasOwn ? "Own" : "Inherited") + " trap: " + k);
+    }
+    writer.leave();
+    writer.leave();
   }
 
   ///**
@@ -562,7 +1091,7 @@ module Shumway.AVMX.AS {
   //*/
   //
   //export class ASObject implements ITraits {
-  //  public static traits: Traits;
+  //  public static traits: RuntimeTraits;
   //
   //  public static asSuperClass: typeof ASClass = null;
   //  public static classInfo: ClassInfo = null;
@@ -586,7 +1115,7 @@ module Shumway.AVMX.AS {
   //  public static tsClassSymbols: string [];
   //  public static tsInstanceSymbols: string [];
   //
-  //  public static staticNatives: any [];
+  //  public static classNatives: any [];
   //  public static instanceNatives: any [];
   //  public static traitsPrototype: Object;
   //  public static dynamicPrototype: Object;
@@ -669,7 +1198,7 @@ module Shumway.AVMX.AS {
   //  static native_propertyIsEnumerable: (V: string) => boolean;
   //  static setPropertyIsEnumerable: (V: string, enumerable: boolean) => boolean;
   //
-  //  traits: Traits = null;
+  //  traits: RuntimeTraits = null;
   //  securityDomain: SecurityDomain;
   //
   //  native_isPrototypeOf(V: Object): boolean {
@@ -715,7 +1244,7 @@ module Shumway.AVMX.AS {
   //  public static callableConstructor: any = null;
   //  public static classBindings: ClassBindings = null;
   //  public static instanceBindings: InstanceBindings = null;
-  //  public static staticNatives: any [] = null;
+  //  public static classNatives: any [] = null;
   //  public static instanceNatives: any [] = null;
   //  public static traitsPrototype: Object = null;
   //  public static dynamicPrototype: Object = null;
@@ -733,9 +1262,9 @@ module Shumway.AVMX.AS {
   //* We need to be really careful not to step on TS's inheritance scheme.
   //*/
   //export class ASClass extends ASObject {
-  //  public static traits: Traits;
+  //  public static traits: RuntimeTraits;
   //  public static instanceConstructor: any = ASClass;
-  //  public static staticNatives: any [] = null;
+  //  public static classNatives: any [] = null;
   //  public static instanceNatives: any [] = null;
   //
   //  static link(asClass: ASClass, asSuperClass: ASClass, scope: Scope) {
@@ -923,7 +1452,7 @@ module Shumway.AVMX.AS {
   //  /**
   //   * Traits.
   //   */
-  //  traits: Traits;
+  //  traits: RuntimeTraits;
   //
   //  /**
   //   * Class info.
@@ -974,7 +1503,7 @@ module Shumway.AVMX.AS {
   //  /**
   //   * A list of objects to search for methods or accessors when linking static native traits.
   //   */
-  //  staticNatives: Object [];
+  //  classNatives: Object [];
   //
   //  /**
   //   * A list of objects to search for methods or accessors when linking instance native traits.
@@ -1057,7 +1586,7 @@ module Shumway.AVMX.AS {
   //  constructor(classInfo: ClassInfo) {
   //    false && super();
   //    this.classInfo = classInfo;
-  //    this.staticNatives = null;
+  //    this.classNatives = null;
   //    this.instanceNatives = null;
   //    this.initializationFlags = InitializationFlags.NONE;
   //    this.defaultValue = null;
@@ -1165,9 +1694,9 @@ module Shumway.AVMX.AS {
   //    writer && writer.enter("Verifying Class: " + self.classInfo + " {");
   //    var traits = [self.classInfo.traits, self.classInfo.instanceInfo.traits];
   //
-  //    var staticNatives: Object [] = [self, ASClass.prototype];
-  //    if (self.staticNatives) {
-  //      pushMany(staticNatives, self.staticNatives);
+  //    var classNatives: Object [] = [self, ASClass.prototype];
+  //    if (self.classNatives) {
+  //      pushMany(classNatives, self.classNatives);
   //    }
   //
   //    var instanceNatives: Object [] = [self.prototype];
@@ -1185,8 +1714,8 @@ module Shumway.AVMX.AS {
   //    release || assert (self.traitsPrototype === self.instanceConstructor.prototype, "The traitsPrototype is not set correctly.");
   //
   //    if (self !== <any>ASObject) {
-  //      if (ASObject.staticNatives === self.staticNatives) {
-  //        writer && writer.warnLn("Template does not override its staticNatives, possibly a bug.");
+  //      if (ASObject.classNatives === self.classNatives) {
+  //        writer && writer.warnLn("Template does not override its classNatives, possibly a bug.");
   //      }
   //      if (ASObject.instanceNatives === self.instanceNatives) {
   //        writer && writer.warnLn("Template does not override its instanceNatives, possibly a bug.");
@@ -1210,7 +1739,7 @@ module Shumway.AVMX.AS {
   //        if (!(trait.isMethodOrAccessor() && (<MethodTraitInfo>trait).getMethodInfo().isNative())) {
   //          continue;
   //        }
-  //        var holders = isClassTrait ? staticNatives : instanceNatives;
+  //        var holders = isClassTrait ? classNatives : instanceNatives;
   //        var hasDefinition = false;
   //        if (trait.isMethod()) {
   //          hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnProperty, name);
@@ -1316,7 +1845,7 @@ module Shumway.AVMX.AS {
   //  public static classBindings: ClassBindings;
   //  public static instanceBindings: InstanceBindings;
   //  public static classInfo: ClassInfo;
-  //  public static staticNatives: any [] = null;
+  //  public static classNatives: any [] = null;
   //  public static instanceNatives: any [] = null;
   //  public static coerce: (value: any) => boolean = asCoerceBoolean;
   //
@@ -1336,7 +1865,7 @@ module Shumway.AVMX.AS {
   //ASBoolean.prototype.valueOf = Boolean.prototype.valueOf;
   //
   //export class ASMethodClosure extends ASFunction {
-  //  public static staticNatives: any [] = null;
+  //  public static classNatives: any [] = null;
   //  public static instanceNatives: any [] = null;
   //  public static instanceConstructor: any = ASMethodClosure;
   //
@@ -1380,7 +1909,7 @@ module Shumway.AVMX.AS {
   //  public static classBindings: ClassBindings;
   //  public static instanceBindings: InstanceBindings;
   //  public static classInfo: ClassInfo;
-  //  public static staticNatives: any [] = [Math];
+  //  public static classNatives: any [] = [Math];
   //  public static instanceNatives: any [] = [Number.prototype];
   //  public static defaultValue: any = Number(0);
   //  public static coerce: (value: any) => number = asCoerceNumber;
@@ -1419,7 +1948,7 @@ module Shumway.AVMX.AS {
   //  public static classBindings: ClassBindings;
   //  public static instanceBindings: InstanceBindings;
   //  public static classInfo: ClassInfo;
-  //  public static staticNatives: any [] = [Math];
+  //  public static classNatives: any [] = [Math];
   //  public static instanceNatives: any [] = [Number.prototype];
   //  public static defaultValue: any = 0;
   //  public static coerce: (value: any) => number = asCoerceInt;
@@ -1461,7 +1990,7 @@ module Shumway.AVMX.AS {
   //  public static classBindings: ClassBindings;
   //  public static instanceBindings: InstanceBindings;
   //  public static classInfo: ClassInfo;
-  //  public static staticNatives: any [] = [Math];
+  //  public static classNatives: any [] = [Math];
   //  public static instanceNatives: any [] = [Number.prototype];
   //  public static defaultValue: any = 0;
   //  public static coerce: (value: any) => number = asCoerceUint;
@@ -1505,7 +2034,7 @@ module Shumway.AVMX.AS {
   //  public static classBindings: ClassBindings;
   //  public static instanceBindings: InstanceBindings;
   //  public static classInfo: ClassInfo;
-  //  public static staticNatives: any [] = [String];
+  //  public static classNatives: any [] = [String];
   //  public static instanceNatives: any [] = [String.prototype];
   //  public static coerce: (value: any) => string = asCoerceString;
   //
@@ -1827,7 +2356,7 @@ module Shumway.AVMX.AS {
   //}
   //
   ////export class ASVector<T> extends ASNative {
-  ////  public static staticNatives: any [] = null;
+  ////  public static classNatives: any [] = null;
   ////  public static instanceNatives: any [] = null;
   ////  public static instanceConstructor: any = ASVector;
   ////  public static callableConstructor: any = null;
@@ -1838,7 +2367,7 @@ module Shumway.AVMX.AS {
   ////
   ////export class ASJSON extends ASObject {
   ////  public static instanceConstructor: any = ASJSON;
-  ////  public static staticNatives: any [] = null;
+  ////  public static classNatives: any [] = null;
   ////  public static instanceNatives: any [] = null;
   ////
   ////  /**
@@ -1902,7 +2431,7 @@ module Shumway.AVMX.AS {
   ////
   ////export class ASError extends ASNative {
   ////  public static instanceConstructor: any = null;
-  ////  public static staticNatives: any [] = null;
+  ////  public static classNatives: any [] = null;
   ////  public static instanceNatives: any [] = null;
   ////
   ////  public static getErrorMessage = Shumway.AVM2.getErrorMessage;
@@ -2003,7 +2532,7 @@ module Shumway.AVMX.AS {
   ////
   ////export class ASRegExp extends ASObject {
   ////  public static instanceConstructor: any = XRegExp;
-  ////  public static staticNatives: any [] = [XRegExp];
+  ////  public static classNatives: any [] = [XRegExp];
   ////  public static instanceNatives: any [] = [XRegExp.prototype];
   ////
   ////  static classInitializer: any = function() {
@@ -2097,11 +2626,11 @@ module Shumway.AVMX.AS {
   ////}
   ////
   ////export class ASMath extends ASNative {
-  ////  public static staticNatives: any [] = [Math];
+  ////  public static classNatives: any [] = [Math];
   ////}
   ////
   ////export class ASDate extends ASNative {
-  ////  public static staticNatives: any [] = [Date];
+  ////  public static classNatives: any [] = [Date];
   ////  public static instanceNatives: any [] = [Date.prototype];
   ////  public static instanceConstructor: any = Date;
   ////
@@ -2253,8 +2782,8 @@ module Shumway.AVMX.AS {
   //    className = classInfo.instanceInfo.getName().name;
   //    var native = builtinNativeClasses[className];
   //    natives = [native, ASClass.prototype];
-  //    if (native.staticNatives) {
-  //      pushMany(natives, native.staticNatives);
+  //    if (native.classNatives) {
+  //      pushMany(natives, native.classNatives);
   //    }
   //  }
   //  return natives;

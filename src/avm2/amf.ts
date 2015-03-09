@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2 {
-  import Multiname = Shumway.AVM2.ABC.Multiname;
-  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
-  import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
-  import construct = Shumway.AVM2.Runtime.construct;
+module Shumway.AVMX {
+  import ByteArray = Shumway.AVMX.AS.flash.utils.ByteArray;
+  var forEachPublicProperty = null; // TODO
+  var construct = null; // TODO
+  import assert = Shumway.Debug.assert;
 
   export enum AMF0Marker {
     NUMBER = 0x00,
@@ -340,8 +340,9 @@ module Shumway.AVM2 {
                 break;
               }
             }
-            traits.members.push(slot ? Multiname.getQualifiedName(slot.name) :
-              Multiname.getPublicQualifiedName(traitName));
+            assert(false); // TODO
+            // traits.members.push(slot ? Multiname.getQualifiedName(slot.name) :
+            //  Multiname.getPublicQualifiedName(traitName));
           }
           (caches.traitsCache || (caches.traitsCache = [])).push(traits);
         }
@@ -473,7 +474,8 @@ module Shumway.AVM2 {
                 if (!slot.name.getNamespace().isPublic()) {
                   continue;
                 }
-                traits.push(Multiname.getQualifiedName(slot.name));
+                assert(false); // TODO
+                // traits.push(Multiname.getQualifiedName(slot.name));
                 traitsNames.push(slot.name.name);
               }
               traitsCache.push(objectClass);
