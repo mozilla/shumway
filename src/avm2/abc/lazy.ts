@@ -78,7 +78,8 @@ module Shumway.AVMX {
     Setter             = 3,
     Class              = 4,
     Function           = 5,
-    Const              = 6
+    Const              = 6,
+    GetterSetter       = 7 // This is a runtime addition, not a valid ABC Trait type.
   }
 
   export enum ATTR {
@@ -135,9 +136,12 @@ module Shumway.AVMX {
     }
   }
 
+  /**
+   * The Traits class represents the collection of compile-time traits associated with a type.
+   * It's not used for runtime name resolution on instances; instead, the combined traits for
+   * a type and all its super types is resolved and translated to an instance of RuntimeTraits.
+   */
   export class Traits {
-    public slots: SlotTraitInfo [] = null;
-    private _nextSlotID: number = 1;
     private _resolved = false;
     constructor(
       public traits: TraitInfo []
@@ -168,19 +172,15 @@ module Shumway.AVMX {
     }
 
     /**
-     * Searches for a trait with the specified name and kind. Use |-1| for the kind
-     * if you don't care about the kind.
+     * Searches for a trait with the specified name.
      */
-    indexOf(mn: Multiname, kind: TRAIT): number {
+    private indexOf(mn: Multiname): number {
       release || assert(this._resolved);
       var mnName = mn.name;
       var nss = mn.namespaces;
       var traits = this.traits;
       for (var i = 0; i < traits.length; i++) {
         var trait = traits[i];
-        if (kind >= 0 && trait.kind !== kind) {
-          continue;
-        }
         var traitMn = <Multiname>trait.name;
         if (traitMn.name === mnName) {
           var namespace = traitMn.namespaces[0];
@@ -195,60 +195,122 @@ module Shumway.AVMX {
       return -1;
     }
 
-    getTrait(mn: Multiname, kind: TRAIT): TraitInfo {
-      var i = this.indexOf(mn, kind);
-      if (i >= 0) {
-        return this.traits[i];
-      }
-      return null;
+    getTrait(mn: Multiname): TraitInfo {
+      var i = this.indexOf(mn);
+      return i >= 0 ? this.traits[i] : null;
     }
 
-    concat(traits: Traits): Traits {
+    /**
+     * Turns a list of compile-time traits into runtime traits with resolved bindings.
+     *
+     * Additionally, all protected traits get added to a map with their unqualified name as key.
+     * That map is created with the super type's map on its prototype chain. If a type overrides
+     * a protected trait, it gets set as that type's value for the unqualified name. Additionally,
+     * its name is canonicalized to use the namespace used in the initially introducing type.
+     * During name lookup, we first check for a hit in that map and (after verifying that the mn
+     * has a correct protected name in its namespaces set) return the most recent trait. That way,
+     * all lookups always get the most recent trait, even if they originate from a super class.
+     */
+    resolveRuntimeTraits(superTraits: RuntimeTraits, protectedNs: Namespace,
+                         scope: Scope): RuntimeTraits {
       // Resolve traits so that indexOf works out.
       this.resolve();
-      traits.resolve();
 
-      var a = this.traits.slice(0);
-      var b = traits.traits;
-      for (var i = 0; i < b.length; i++) {
-        var t = b[i];
-        if (t.isMethodOrAccessor()) {
-          if (t.getName().name === "aBar") {
-            debugger;
+      // First, copy all super traits if given.
+      var traits: RuntimeTraitInfo[] = superTraits ? superTraits.traits.slice() : [];
+
+      var protectedNsMappings = Object.create(superTraits ? superTraits.protectedNsMappings : null);
+      var result = new RuntimeTraits(traits, superTraits, protectedNs, protectedNsMappings);
+      var securityDomain = scope.object.securityDomain;
+
+      // Then, add all of the child traits, replacing or extending parent traits where necessary.
+      for (var i = 0; i < this.traits.length; i++) {
+        var trait = this.traits[i];
+        var j = result.indexOf(trait.getName());
+        var currentTrait = j > -1 ? traits[j] : null;
+        var name = <Multiname>trait.name;
+        var runtimeTrait = new RuntimeTraitInfo(name, trait.kind);
+        if (name.namespaces[0].type === NamespaceType.Protected) {
+          // Names for protected traits get canonicalized to the name of the type that initially
+          // introduces the trait.
+          if (result.protectedNsMappings[name.name]) {
+            runtimeTrait.name = result.protectedNsMappings[name.name].name;
           }
-          var j = this.indexOf(t.getName(), t.kind);
-          if (j >= 0) {
-            a[j] = t;
-            continue;
-          }
+          result.protectedNsMappings[name.name] = runtimeTrait;
         }
-        a.push(t);
-      }
-      return new Traits(a);
-    }
 
-    getSlot(i: number): TraitInfo {
-      release || assert(this._resolved);
-      if (this.slots === null) {
-        var slots = this.slots = [];
-        for (var j = 0; j < this.traits.length; j++) {
-          var trait = this.traits[j];
-          if (trait.kind === TRAIT.Slot ||
-              trait.kind === TRAIT.Const ||
-              trait.kind === TRAIT.Class) {
-            var slotTrait: SlotTraitInfo = <SlotTraitInfo>trait;
-            if (!slotTrait.slot) {
-              slotTrait.slot = this._nextSlotID ++;
-            } else {
-              this._nextSlotID = slotTrait.slot + 1;
+        if (j === -1) {
+          traits.push(runtimeTrait);
+        } else {
+          traits[j] = runtimeTrait;
+        }
+        switch (trait.kind) {
+          case TRAIT.Method:
+            var method = createMethodForTrait(<MethodTraitInfo>trait, scope);
+            // TODO: get rid of method boxing. We only really need to do this for MethodClosures.
+            runtimeTrait.value = securityDomain.AXFunction.axBox(method);
+            break;
+          case TRAIT.Getter:
+            runtimeTrait.get = createMethodForTrait(<MethodTraitInfo>trait, scope);
+            if (currentTrait && currentTrait.set) {
+              runtimeTrait.set = currentTrait.set;
+              runtimeTrait.kind = TRAIT.GetterSetter;
             }
-            assert (!slots[slotTrait.slot]);
-            slots[slotTrait.slot] = slotTrait;
-          }
+            break;
+          case TRAIT.Setter:
+            runtimeTrait.set = createMethodForTrait(<MethodTraitInfo>trait, scope);
+            if (currentTrait && currentTrait.get) {
+              runtimeTrait.get = currentTrait.get;
+              runtimeTrait.kind = TRAIT.GetterSetter;
+            }
+            break;
+          case TRAIT.Slot:
+          case TRAIT.Const:
+          case TRAIT.Class:
+            // Only non-const slots need to be writable. Everything else is fixed.
+            runtimeTrait.writable = true;
+            var slotTrait = <SlotTraitInfo>trait;
+            if ((slotTrait).hasDefaultValue()) {
+              runtimeTrait.value = slotTrait.getDefaultValue();
+            } else {
+              // TODO: Throw error for const without default.
+              // TODO: check if the default value needs to differ by type.
+              runtimeTrait.value = undefined;
+            }
+            result.addSlotTrait(slotTrait);
         }
       }
-      return this.slots[i];
+      return result;
     }
+  }
+
+  function createMethodForTrait(methodTraitInfo: MethodTraitInfo, scope: Scope) {
+    if (methodTraitInfo.method) {
+      return methodTraitInfo.method;
+    }
+    var methodInfo = methodTraitInfo.getMethodInfo();
+    var method;
+    if (methodInfo.flags & METHOD.Native) {
+      var metadata = methodInfo.getNativeMetadata();
+      if (metadata) {
+        method = AS.getNative(metadata.getValueAt(0));
+      } else {
+        method = AS.getMethodOrAccessorNative(methodTraitInfo);
+      }
+      release || assert(method, "Cannot find native: " + methodTraitInfo);
+    } else {
+      method = function () {
+        var self = this === jsGlobal ? scope.global.object : this;
+        return interpret(self, methodInfo, scope, sliceArguments(arguments));
+      };
+    }
+    if (!release) {
+      method.toString = function () {
+        return "Interpret " + methodTraitInfo.toString();
+      }
+    }
+    methodTraitInfo.method = method;
+    return method;
   }
 
   export class TraitInfo {
@@ -311,6 +373,87 @@ module Shumway.AVMX {
 
     isMethodOrAccessor(): boolean {
       return this.isAccessor() || this.kind === TRAIT.Method;
+    }
+  }
+
+  export class RuntimeTraits {
+    public slots: SlotTraitInfo [] = [];
+    private _nextSlotID: number = 1;
+
+    constructor(public traits: RuntimeTraitInfo[], public superTraits: RuntimeTraits,
+                public protectedNs: Namespace, public protectedNsMappings: any) {
+      // ..
+    }
+
+    public addSlotTrait(trait: SlotTraitInfo) {
+      var slot = trait.slot;
+      if (!slot) {
+        slot = trait.slot = this._nextSlotID++;
+      } else {
+        this._nextSlotID = slot + 1;
+      }
+      release || assert(!this.slots[slot]);
+      this.slots[slot] = trait;
+    }
+
+    /**
+     * Searches for a trait with the specified name.
+     */
+    public indexOf(mn: Multiname): number {
+      var mnName = mn.name;
+      var nss = mn.namespaces;
+      var traits = this.traits;
+      for (var i = 0; i < traits.length; i++) {
+        var trait = traits[i];
+        var traitMn = <Multiname>trait.name;
+        if (traitMn.name === mnName) {
+          var namespace = traitMn.namespaces[0];
+          var nsName = namespace.uri;
+          for (var j = 0; j < nss.length; j++) {
+            if (nsName === nss[j].uri && namespace.type === nss[j].type) {
+              return i;
+            }
+          }
+        }
+      }
+      return -1;
+    }
+
+    getTrait(mn: Multiname): RuntimeTraitInfo {
+      var trait: RuntimeTraitInfo = this.protectedNsMappings[mn.name];
+      if (trait) {
+        for (var i = 0; i < mn.namespaces.length; i++) {
+          var ns = mn.namespaces[i];
+          if (ns.type === NamespaceType.Protected) {
+            var protectedScope = this;
+            while (protectedScope) {
+              if (protectedScope.protectedNs.uri === ns.uri) {
+                return trait;
+              }
+              protectedScope = protectedScope.superTraits;
+            }
+          }
+        }
+      }
+      var i = this.indexOf(mn);
+      return i >= 0 ? this.traits[i] : null;
+    }
+
+    getSlot(i: number): TraitInfo {
+      return this.slots[i];
+    }
+  }
+
+  export class RuntimeTraitInfo {
+    configurable: boolean = true; // Always false.
+    enumerable: boolean; // Always false.
+    writable: boolean;
+    get: () => any;
+    set: (v: any) => void;
+    value: any;
+
+    constructor(public name: Multiname, public kind: TRAIT) {
+      // ..
     }
   }
 
@@ -430,7 +573,7 @@ module Shumway.AVMX {
 
   export class InstanceInfo extends Info {
     public classInfo: ClassInfo = null;
-    public runtimeTraits: Traits = null;
+    public runtimeTraits: RuntimeTraits = null;
     constructor(
       public abc: ABCFile,
       public name: Multiname | number,
@@ -505,6 +648,7 @@ module Shumway.AVMX {
 
   export class ClassInfo extends Info {
     public trait: ClassTraitInfo = null;
+    public runtimeTraits: RuntimeTraits = null;
     constructor(
       public abc: ABCFile,
       public instanceInfo: InstanceInfo,
@@ -645,7 +789,20 @@ module Shumway.AVMX {
       // ...
     }
 
-    public getMangledName(): any {
+    public static getPublicMangledName(name: string): any {
+      return "$Bg" + name;
+    }
+
+    public static getMangledName(name: Multiname): any {
+      release || assert(name instanceof Multiname);
+      return name.getMangledName();
+    }
+
+    public static isPublicQualifiedName(value: any): boolean {
+      return value.indexOf('$Bg') === 0;
+    }
+
+    public getMangledName(): string {
       assert (this.isQName());
       return "$" + this.namespaces[0].getMangledName() + this.name;
     }
@@ -741,20 +898,6 @@ module Shumway.AVMX {
         case CONSTANT.MultinameLA:
           return true;
       }
-      return false;
-    }
-
-    public static getPublicMangledName(name: string): any {
-      return "$Bg" + name;
-    }
-
-    public static getMangledName(name: Multiname): any {
-      release || assert(name instanceof Multiname);
-      return name.getMangledName();
-    }
-
-    public static isPublicQualifiedName(value: any): boolean {
-      // FIX ME
       return false;
     }
   }
@@ -1119,7 +1262,9 @@ module Shumway.AVMX {
      * Returns the multiname at the specified index in the multiname table.
      */
     public getMultiname(i: number): Multiname {
-      release || assert(i >= 0 && i < this._multinameOffsets.length);
+      if (i < 0 || i >= this._multinameOffsets.length) {
+        throwError("VerifierError", Errors.CpoolIndexRangeError, i, this._multinameOffsets.length);
+      }
       if (i === 0) {
         return null;
       }
@@ -1136,7 +1281,9 @@ module Shumway.AVMX {
      * Returns the namespace at the specified index in the namespace table.
      */
     public getNamespace(i: number): Namespace {
-      release || assert(i >= 0 && i < this._namespaceOffsets.length);
+      if (i < 0 || i >= this._namespaceOffsets.length) {
+        throwError("VerifierError", Errors.CpoolIndexRangeError, i, this._namespaceOffsets.length);
+      }
       if (i === 0) {
         return null;
       }
@@ -1190,7 +1337,9 @@ module Shumway.AVMX {
      * Returns the namespace set at the specified index in the namespace set table.
      */
     public getNamespaceSet(i: number): Namespace [] {
-      release || assert(i >= 0 && i < this._namespaceSets.length);
+      if (i < 0 || i >= this._namespaceSets.length) {
+        throwError("VerifierError", Errors.CpoolIndexRangeError, i, this._namespaceSets.length);
+      }
       if (i === 0) {
         return null;
       }
@@ -1352,9 +1501,9 @@ module Shumway.AVMX {
       var name = s.readU30();
       var superName = s.readU30();
       var flags = s.readU8();
-      var protectedNs = 0;
+      var protectedNsIndex = 0;
       if (flags & CONSTANT.ClassProtectedNs) {
-        protectedNs = s.readU30();
+        protectedNsIndex = s.readU30();
       }
       var interfaceCount = s.readU30();
       var interfaces = [];
@@ -1363,7 +1512,8 @@ module Shumway.AVMX {
       }
       var initializer = s.readU30();
       var traits = this._parseTraits();
-      var instanceInfo = new InstanceInfo(this, name, superName, flags, protectedNs, interfaces, initializer, traits);
+      var instanceInfo = new InstanceInfo(this, name, superName, flags, protectedNsIndex,
+                                          interfaces, initializer, traits);
       traits.attachHolder(instanceInfo);
       return instanceInfo;
     }
@@ -1400,8 +1550,8 @@ module Shumway.AVMX {
           trait = new SlotTraitInfo(this, kind, name, slot, type, valueKind, valueIndex);
           break;
         case TRAIT.Method:
-        case TRAIT.Setter:
         case TRAIT.Getter:
+        case TRAIT.Setter:
           var dispID = s.readU30(); // Tamarin optimization.
           var methodInfoIndex = s.readU30();
           var o = s.position;
@@ -1415,7 +1565,7 @@ module Shumway.AVMX {
           trait = classInfo.trait = new ClassTraitInfo(this, kind, name, slot, classInfo);
           break;
         default:
-          release || assert(false, "Unknown trait kind: " + TRAIT[kind] + " " + kind);
+            throwError("VerifierError", Errors.UnsupportedTraitsKindError, kind);
       }
 
       if (attributes & ATTR.Metadata) {

@@ -325,16 +325,16 @@ module Shumway.AVMX {
   }
 
   function axHasPropertyInternal(mn: Multiname): boolean {
-    return this.traits.indexOf(mn, -1) >= 0;
+    return !!this.traits.getTrait(mn);
   }
 
   function axResolveMultiname(mn: Multiname): any {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
       return mn.name;
     }
-    var t = this.traits.getTrait(mn, -1);
+    var t = this.traits.getTrait(mn);
     if (t) {
-      return t.getName().getMangledName();
+      return t.name.getMangledName();
     }
     return mn.getPublicMangledName();
   }
@@ -376,9 +376,9 @@ module Shumway.AVMX {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
       return this.value[mn.name];
     }
-    var t = this.traits.getTrait(mn, -1);
+    var t = this.traits.getTrait(mn);
     if (t) {
-      return this[t.getName().getMangledName()];
+      return this[t.name.getMangledName()];
     }
     return this[mn.getPublicMangledName()];
   }
@@ -387,9 +387,9 @@ module Shumway.AVMX {
     if (mn.isRuntimeName() && isNumeric(mn.name)) {
       this.value[mn.name] = value;
     }
-    var t = this.traits.getTrait(mn, -1);
+    var t = this.traits.getTrait(mn);
     if (t) {
-      this[t.getName().getMangledName()] = value;
+      this[t.name.getMangledName()] = value;
       return;
     }
     this[mn.getPublicMangledName()] = value;
@@ -468,7 +468,7 @@ module Shumway.AVMX {
    * All objects with Traits must implement this interface.
    */
   export interface ITraits {
-    traits: Traits;
+    traits: RuntimeTraits;
     securityDomain: SecurityDomain;
   }
 
@@ -561,62 +561,17 @@ module Shumway.AVMX {
     }
   }
 
-  function createMethodForTrait(methodTraitInfo: MethodTraitInfo, scope: Scope) {
-    if (methodTraitInfo.method) {
-      return methodTraitInfo.method;
-    }
-    var methodInfo = methodTraitInfo.getMethodInfo();
-    var method;
-    if (methodInfo.flags & METHOD.Native) {
-      var metadata = methodInfo.getNativeMetadata();
-      if (metadata) {
-        method = AS.getNative(metadata.getValueAt(0));
-      } else {
-        method = AS.getMethodOrAccessorNative(methodTraitInfo);
-      }
-      release || assert(method, "Cannot find native: " + methodTraitInfo);
-    } else {
-      method = function () {
-        var self = this === jsGlobal ? scope.global.object : this;
-        return interpret(self, methodInfo, scope, sliceArguments(arguments));
-      };
-    }
-    if (!release) {
-      method.toString = function () {
-        return "Interpret " + methodTraitInfo.toString();
-      }
-    }
-    methodTraitInfo.method = method;
-    return method;
-  }
-
-  export function applyTraits(object: ITraits, traits: Traits, scope: Scope) {
+  export function applyTraits(object: ITraits, traits: RuntimeTraits) {
     object.traits = traits;
     var T = traits.traits;
     for (var i = 0; i < T.length; i++) {
       var t = T[i];
-      var mangledName = t.getName().getMangledName();
-      if (t.kind === TRAIT.Method || t.kind === TRAIT.Getter || t.kind === TRAIT.Setter) {
-        var method = createMethodForTrait(<MethodTraitInfo>t, scope);
-        if (t.kind === TRAIT.Method) {
-          defineNonEnumerableProperty(object, mangledName,
-                                      object.securityDomain.AXFunction.axBox(method));
-        } else {
-          defineNonEnumerableGetterOrSetter(object, mangledName, method, t.kind === TRAIT.Getter)
-        }
-      } else if (t.kind === TRAIT.Slot || t.kind === TRAIT.Const) {
-        var s = <SlotTraitInfo>t;
-        if (s.hasDefaultValue()) {
-          defineNonEnumerableProperty(object, mangledName, s.getDefaultValue());
-        }
-      }
+      Object.defineProperty(object, t.name.getMangledName(), t);
     }
   }
-
   // The Object that's at the root of all AXObjects' prototype chain, regardless of their
   // SecurityDomain.
   export var AXBasePrototype = Object.create(null);
-
   var D = defineNonEnumerableProperty;
   D(AXBasePrototype, "axHasPropertyInternal", axHasPropertyInternal);
   D(AXBasePrototype, "axSetProperty", axSetProperty);
@@ -762,66 +717,82 @@ module Shumway.AVMX {
     }
 
     createClass(classInfo: ClassInfo, superClass: AXClass, scope: Scope): AXClass {
-      var axClass: AXClass;
-
-      var className = classInfo.instanceInfo.getName().name;
-      var classScope: Scope;
-      if (this.nativeClasses[className]) {
-        axClass = this.nativeClasses[className];
-        classScope = new Scope(scope, axClass);
-        release || assert(axClass.dPrototype);
-        release || assert(axClass.tPrototype);
-      } else if (classInfo.instanceInfo.isInterface()) {
-        axClass = Object.create(this.AXClass.tPrototype);
-        axClass.dPrototype = Object.create(this.objectPrototype);
-        axClass.tPrototype = Object.create(axClass.dPrototype);
-        axClass.axInitializer = axInterfaceInitializer;
-      } else {
-        axClass = Object.create(this.AXClass.tPrototype);
-        // For direct descendants of Object, we want the dynamic prototype to inherit from
-        // Object's tPrototype because Foo.prototype is always a proper instance of Object.
-        // For all other cases, the dynamic prototype should extend the parent class's
-        // dynamic prototype not the tPrototype.
-        if (superClass === this.AXObject) {
+      var instanceInfo = classInfo.instanceInfo;
+      var className = instanceInfo.getName().name;
+      var axClass: AXClass = this.nativeClasses[className] ||
+                             Object.create(this.AXClass.tPrototype);
+      var classScope = new Scope(scope, axClass);
+      if (!this.nativeClasses[className]) {
+        if (instanceInfo.isInterface()) {
           axClass.dPrototype = Object.create(this.objectPrototype);
+          axClass.tPrototype = Object.create(axClass.dPrototype);
+          axClass.axInitializer = axInterfaceInitializer;
         } else {
-          axClass.dPrototype = Object.create(superClass.dPrototype);
+          // For direct descendants of Object, we want the dynamic prototype to inherit from
+          // Object's tPrototype because Foo.prototype is always a proper instance of Object.
+          // For all other cases, the dynamic prototype should extend the parent class's
+          // dynamic prototype not the tPrototype.
+          if (superClass === this.AXObject) {
+            axClass.dPrototype = Object.create(this.objectPrototype);
+          } else {
+            axClass.dPrototype = Object.create(superClass.dPrototype);
+          }
+          axClass.tPrototype = Object.create(axClass.dPrototype);
+          var initializerMethodInfo = instanceInfo.getInitializer();
+          axClass.axInitializer = this.createInitializerFunction(initializerMethodInfo, classScope);
+          axClass.axCoerce = function () {
+            assert(false, "TODO: Coercing constructor.");
+          };
         }
-        axClass.tPrototype = Object.create(axClass.dPrototype);
-        classScope = new Scope(scope, axClass);
-        var initializerMethodInfo = classInfo.instanceInfo.getInitializer();
-        axClass.axInitializer = this.createInitializerFunction(initializerMethodInfo, classScope);
-        axClass.axCoerce = function () {
-          assert(false, "TODO: Coercing constructor.");
-        };
+      } else if (!release) {
+        // Native classes have their inheritance structure set up during initial SecurityDomain
+        // creation.
+        assert(axClass.dPrototype);
+        assert(axClass.tPrototype);
       }
+
 
       axClass.classInfo = (<any>axClass.dPrototype).classInfo = classInfo;
       axClass.superClass = superClass;
       axClass.scope = scope;
 
+      // Object and Class have their traits initialized earlier to avoid circular dependencies.
+      if (className !== 'Object' && className !== 'Class') {
+        this.initializeRuntimeTraits(axClass, superClass, classScope);
+      }
+
       // Add the |constructor| property on the class traits prototype so that all instances can
       // get to their class constructor.
       defineNonEnumerableProperty(axClass.tPrototype, "$Bgconstructor", axClass);
 
-      // Prepare static traits.
-      var staticTraits = this.AXClass.classInfo.instanceInfo.traits.concat(classInfo.traits);
-      staticTraits.resolve();
-      axClass.traits = staticTraits;
-      applyTraits(axClass, staticTraits, classScope);
-
-      // Prepare instance traits.
-      var instanceTraits = superClass ?
-                           superClass.classInfo.instanceInfo.runtimeTraits.concat(classInfo.instanceInfo.traits) :
-                           classInfo.instanceInfo.traits;
-      instanceTraits.resolve();
-      classInfo.instanceInfo.runtimeTraits = instanceTraits;
-      axClass.tPrototype.traits = instanceTraits;
-      applyTraits(axClass.tPrototype, instanceTraits, classScope);
-
       // Run the static initializer.
       interpret(axClass, classInfo.getInitializer(), classScope, [axClass]);
       return axClass;
+    }
+
+    private initializeRuntimeTraits(axClass: AXClass, superClass: AXClass, scope: Scope) {
+      var classInfo = axClass.classInfo;
+      var instanceInfo = classInfo.instanceInfo;
+
+      // Prepare class traits.
+      var classTraits: RuntimeTraits;
+      if (axClass === this.AXClass) {
+        classTraits = instanceInfo.traits.resolveRuntimeTraits(null, null, scope);
+      } else {
+        var rootClassTraits = this.AXClass.classInfo.instanceInfo.runtimeTraits;
+        release || assert(rootClassTraits);
+        classTraits = classInfo.traits.resolveRuntimeTraits(rootClassTraits, null, scope);
+      }
+      classInfo.runtimeTraits = classTraits;
+      applyTraits(axClass, classTraits);
+
+      // Prepare instance traits.
+      var superInstanceTraits = superClass ? superClass.classInfo.instanceInfo.runtimeTraits : null;
+      var protectedNs = classInfo.abc.getNamespace(instanceInfo.protectedNs);
+      var instanceTraits = instanceInfo.traits.resolveRuntimeTraits(superInstanceTraits,
+                                                                    protectedNs, scope);
+      instanceInfo.runtimeTraits = instanceTraits;
+      applyTraits(axClass.tPrototype, instanceTraits);
     }
 
     createFunction(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean): AXFunction {
@@ -837,12 +808,12 @@ module Shumway.AVMX {
       };
     }
 
-    createActivation(methodInfo: MethodInfo): AXActivation {
+    createActivation(methodInfo: MethodInfo, scope: Scope): AXActivation {
       var body = methodInfo.getBody();
       if (!body.activationPrototype) {
         body.traits.resolve();
         body.activationPrototype = Object.create(this.AXActivationProto);
-        (<any>body.activationPrototype).traits = body.traits;
+        (<any>body.activationPrototype).traits = body.traits.resolveRuntimeTraits(null, null, scope);
       }
       return Object.create(body.activationPrototype);
     }
@@ -878,10 +849,11 @@ module Shumway.AVMX {
       global.securityDomain = this;
       global.applicationDomain = applicationDomain;
       global.scriptInfo = scriptInfo;
-      global.traits = scriptInfo.traits;
-      global.traits.resolve();
-      global.scope = new Scope(null, global, false);
-      applyTraits(global, global.traits, global.scope);
+
+      var scope = global.scope = new Scope(null, global, false);
+      var objectTraits = this.AXObject.classInfo.instanceInfo.runtimeTraits;
+      var traits = scriptInfo.traits.resolveRuntimeTraits(objectTraits, null, scope);
+      applyTraits(global, traits);
       return global;
     }
 
@@ -911,6 +883,55 @@ module Shumway.AVMX {
       D(rootClassPrototype, "axApply", axDefaultApply);
 
       this.rootClassPrototype = rootClassPrototype;
+    }
+
+    private initializeCoreNatives() {
+      // Some facts:
+      // - The Class constructor is itself an instance of Class.
+      // - The Class constructor is an instance of Object.
+      // - The Object constructor is an instance of Class.
+      // - The Object constructor is an instance of Object.
+
+      this.prepareRootClassPrototype();
+      var AXClass = this.prepareNativeClass("AXClass", "Class", false);
+      AXClass.classInfo = this.system.findClassInfo("Class");
+
+      var AXObject = this.prepareNativeClass("AXObject", "Object", false);
+      AXObject.classInfo = this.system.findClassInfo("Object");
+
+      var AXObject = this.AXObject;
+
+      // AXFunction needs to exist for runtime trait resolution.
+      var AXFunction = this.prepareNativeClass("AXFunction", "Function", false);
+      defineNonEnumerableProperty(AXFunction, "axBox", axBoxPrimitive);
+
+      // Initialization of the core classes' traits is a messy multi-step process:
+
+      // First, create a scope for looking up all the things.
+      var scope = new Scope(null, AXClass, false);
+
+      // Then, create the runtime traits all Object instances share.
+      var objectCI = this.AXObject.classInfo;
+      var objectII = objectCI.instanceInfo;
+      var objectRTT = objectII.runtimeTraits = objectII.traits.resolveRuntimeTraits(null, null,
+                                                                                    scope);
+      applyTraits(this.AXObject.tPrototype, objectRTT);
+
+      // Building on that, create the runtime traits all Class instances share.
+      var classCI = this.AXClass.classInfo;
+      var classII = classCI.instanceInfo;
+      classII.runtimeTraits = classII.traits.resolveRuntimeTraits(objectRTT, null, scope);
+      applyTraits(this.AXClass.tPrototype, classII.runtimeTraits);
+
+      // As sort of a loose end, also create the one class trait Class itself has.
+      classCI.runtimeTraits = classCI.traits.resolveRuntimeTraits(objectRTT, null, scope);
+      applyTraits(this.AXClass, classCI.runtimeTraits);
+
+      // Now we can create Object's runtime class traits.
+      objectCI.runtimeTraits = objectCI.traits.resolveRuntimeTraits(classII.runtimeTraits, null,
+                                                                    scope);
+      applyTraits(this.AXObject, objectCI.runtimeTraits);
+      return AXObject;
     }
 
     prepareNativeClass(exportName: string, name: string, isPrimitiveClass: boolean) {
@@ -959,26 +980,17 @@ module Shumway.AVMX {
       var P = function setPublicProperty(object, name, value) {
         object.axSetPublicProperty(name, AXFunction.axBox(value));
       };
-
-      // Some facts:
-      // - The Class constructor is itself an instance of Class.
-      // - The Class constructor is an instance of Object.
-      // - The Object constructor is an instance of Class.
-      // - The Object constructor is an instance of Object.
       
       // The basic dynamic prototype that all objects in this security domain have in common.
       var dynamicObjectPrototype = Object.create(AXBasePrototype);
       dynamicObjectPrototype.securityDomain = this;
       // The basic traits prototype that all objects in this security domain have in common.
       this.objectPrototype = Object.create(dynamicObjectPrototype);
+      this.initializeCoreNatives();
 
-      this.prepareRootClassPrototype();
-      var AXClass = this.prepareNativeClass("AXClass", "Class", false);
-      var classClassInfo = this.system.findClassInfo("Class");
-      classClassInfo.instanceInfo.traits.resolve();
-      AXClass.classInfo = classClassInfo;
-
-      var AXObject = this.prepareNativeClass("AXObject", "Object", false);
+      // The core classes' MOP hooks are defined here to keep all the hooks initialization in one
+      // place.
+      var AXObject = this.AXObject;
       // Object(null) creates an object, and this behaves differently than:
       // (function (x: Object) { trace (x); })(null) which prints null.
       D(AXObject, "axApply", axApplyObject);
@@ -1175,8 +1187,7 @@ module Shumway.AVMX {
           var script = scripts[j];
           var traits = script.traits;
           traits.resolve();
-          var index = traits.indexOf(mn, -1);
-          if (index >= 0) {
+          if (traits.getTrait(mn)) {
             if (execute) {
               this._ensureScriptIsExecuted(script);
             }

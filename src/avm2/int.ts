@@ -429,7 +429,7 @@ module Shumway.AVMX {
             stack.push(securityDomain.AXArray.axBox(object));
             break;
           case Bytecode.NEWACTIVATION:
-            stack.push(securityDomain.createActivation(methodInfo));
+            stack.push(securityDomain.createActivation(methodInfo, scope.topScope()));
             break;
           case Bytecode.NEWCLASS:
             stack[stack.length - 1] = securityDomain.createClass(
