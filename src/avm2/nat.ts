@@ -49,7 +49,7 @@ module Shumway.AVMX.AS {
 
   import Multiname = Shumway.AVMX.Multiname;
 
-  var writer = null; // new IndentingWriter();
+  var writer = new IndentingWriter();
 
 
   /**
@@ -154,6 +154,10 @@ module Shumway.AVMX.AS {
     static axHasPublicProperty: (nm: any) => boolean;
     static axSetPublicProperty: (nm: any, value: any) => void;
     static axGetPublicProperty: (nm: any) => any;
+
+    static axSetNumericProperty: (nm: number, value: any) => void;
+    static axGetNumericProperty: (nm: number) => any;
+
     static axCoerce: (v: any) => any;
     static axConstruct: (argArray?: any []) => any;
 
@@ -335,6 +339,14 @@ module Shumway.AVMX.AS {
 
     axNextValue(index: number): any {
       return this.axGetPublicProperty(this.axNextName(index));
+    }
+
+    axSetNumericProperty(nm: number, value: any) {
+      this.axSetPublicProperty(nm, value);
+    }
+
+    axGetNumericProperty(nm: number): any {
+      return this.axGetPublicProperty(nm);
     }
 
     axEnumerableKeys: any [];
@@ -616,6 +628,7 @@ module Shumway.AVMX.AS {
       release || checkValue(value);
       if (isNumeric(nm)) {
         this.value[nm] = value;
+        return;
       }
       this[Multiname.getPublicMangledName(nm)] = value;
     }
@@ -842,9 +855,8 @@ module Shumway.AVMX.AS {
 
     builtinNativeClasses["Vector$object"]       = GenericVector;
     builtinNativeClasses["Vector$int"]          = Int32Vector;
-    builtinNativeClasses["Vector$uint"]         = Int32Vector; // FIXME
-    builtinNativeClasses["Vector$double"]       = Int32Vector; // FIXME
-
+    builtinNativeClasses["Vector$uint"]         = Uint32Vector;
+    builtinNativeClasses["Vector$double"]       = Float64Vector;
 
     builtinNativeClasses["Math"]                = ASMath;
 

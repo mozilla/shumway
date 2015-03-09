@@ -27,23 +27,19 @@
  * compiler is good enough.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   /**
    * Check arguments and throw the appropriate errors.
    */
   var checkArguments = true;
 
+  import assert = Shumway.Debug.assert;
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import clamp = Shumway.NumberUtilities.clamp;
-  import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
-  import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
-  export class Float64Vector extends ASVector<ASInt> {
+  export class Float64Vector extends ASObject {
     static EXTRA_CAPACITY = 4;
     static INITIAL_CAPACITY = 10;
     static DEFAULT_VALUE = 0;
@@ -109,11 +105,11 @@ module Shumway.AVM2.AS {
       if (object instanceof Float64Vector) {
         return object;
       }
-      var length = object.asGetProperty(undefined, "length");
+      var length = object.axGetProperty(undefined, "length");
       if (length !== undefined) {
         var v = new Float64Vector(length, false);
         for (var i = 0; i < length; i++) {
-          v.asSetNumericProperty(i, object.asGetPublicProperty(i));
+          v.axSetNumericProperty(i, object.axGetPublicProperty(i));
         }
         return v;
       }
@@ -198,8 +194,9 @@ module Shumway.AVM2.AS {
       for (var i = 0; i < arguments.length; i++) {
         var vector: Float64Vector = arguments[i];
         if (!(vector._buffer instanceof Float64Array)) {
-          throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
-                     '__AS3__.vec.Vector.<Number>');
+          assert(false); // TODO
+          // this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
+          //                               '__AS3__.vec.Vector.<Number>');
         }
         length += vector._length;
       }
@@ -250,9 +247,9 @@ module Shumway.AVM2.AS {
 
     some(callback, thisObject) {
       if (arguments.length !== 2) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError);
+        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError);
       } else if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       for (var i = 0; i < this._length; i++) {
         if (callback.call(thisObject, this._buffer[this._offset + i], i, this)) {
@@ -331,7 +328,7 @@ module Shumway.AVM2.AS {
 
     map(callback, thisObject) {
       if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       var v = new Float64Vector();
       for (var i = 0; i < this._length; i++) {
@@ -480,41 +477,81 @@ module Shumway.AVM2.AS {
 
     _checkFixed() {
       if (this._fixed) {
-        throwError("RangeError", Errors.VectorFixedError);
+        this.securityDomain.throwError("RangeError", Errors.VectorFixedError);
       }
     }
 
-    asGetNumericProperty(i) {
-      checkArguments && asCheckVectorGetNumericProperty(i, this._length);
-      return this._buffer[this._offset + i];
+    axGetProperty(mn: Multiname): any {
+      if (isNumeric(mn.name)) {
+        return this.axGetNumericProperty(mn.name);
+      }
+      var t = this.traits.getTrait(mn, -1);
+      if (t) {
+        return this[t.getName().getMangledName()];
+      }
+      return this[mn.getPublicMangledName()];
     }
 
-    asSetNumericProperty(i, v) {
-      checkArguments && asCheckVectorSetNumericProperty(i, this._length, this._fixed);
-      if (i === this._length) {
+    axSetProperty(mn: Multiname, value: any) {
+      if (isNumeric(mn.name)) {
+        this.axSetNumericProperty(mn.name, value);
+        return;
+      }
+      var t = this.traits.getTrait(mn, -1);
+      if (t) {
+        this[t.getName().getMangledName()] = value;
+        return;
+      }
+      this[mn.getPublicMangledName()] = value;
+    }
+
+    axGetPublicProperty(nm: any): any {
+      if (isNumeric(nm)) {
+        return this.axGetNumericProperty(nm);
+      }
+      return this[Multiname.getPublicMangledName(nm)];
+    }
+
+    axSetPublicProperty(nm: any, value: any) {
+      release || checkValue(value);
+      if (isNumeric(nm)) {
+        this.axSetPublicProperty(nm, value);
+        return;
+      }
+      this[Multiname.getPublicMangledName(nm)] = value;
+    }
+
+    axGetNumericProperty(nm: number) {
+      checkArguments && asCheckVectorGetNumericProperty(nm, this._length);
+      return this._buffer[this._offset + nm];
+    }
+
+    axSetNumericProperty(nm: number, v: any) {
+      checkArguments && asCheckVectorSetNumericProperty(nm, this._length, this._fixed);
+      if (nm === this._length) {
         this._ensureCapacity(this._length + 1);
         this._length ++;
       }
-      this._buffer[this._offset + i] = v;
+      this._buffer[this._offset + nm] = v;
     }
 
-    asHasProperty(namespaces, name, flags) {
-      if (Float64Vector.prototype === this || !isNumeric(name)) {
-        return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
+    axHasPropertyInternal(mn: Multiname): boolean {
+      if (isNumeric(mn.name)) {
+        var index = toNumber(mn.name);
+        return index >= 0 && index < this._length;
       }
-      var index = toNumber(name);
-      return index >= 0 && index < this._length;
+      return this.axResolveMultiname(mn) in this;
     }
 
-    asNextName(index: number): any {
+    axNextName(index: number): any {
       return index - 1;
     }
 
-    asNextValue(index: number): any {
+    axNextValue(index: number): any {
       return this._buffer[this._offset + index - 1];
     }
 
-    asNextNameIndex(index: number): number {
+    axNextNameIndex(index: number): number {
       var nextNameIndex = index + 1;
       if (nextNameIndex <= this._length) {
         return nextNameIndex;
@@ -522,8 +559,8 @@ module Shumway.AVM2.AS {
       return 0;
     }
 
-    asHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
+    axHasNext2(hasNext2Info: HasNext2Info) {
+      hasNext2Info.index = this.axNextNameIndex(hasNext2Info.index)
     }
   }
 }

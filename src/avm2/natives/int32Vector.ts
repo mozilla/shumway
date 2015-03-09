@@ -36,8 +36,6 @@ module Shumway.AVMX.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import clamp = Shumway.NumberUtilities.clamp;
-  var asCheckVectorGetNumericProperty = null; // Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
-  var asCheckVectorSetNumericProperty = null; // Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
   export class Int32Vector extends ASObject {
     static EXTRA_CAPACITY = 4;
@@ -105,11 +103,11 @@ module Shumway.AVMX.AS {
       if (object instanceof Int32Vector) {
         return object;
       }
-      var length = object.asGetProperty(undefined, "length");
+      var length = object.axGetProperty(undefined, "length");
       if (length !== undefined) {
         var v = new Int32Vector(length, false);
         for (var i = 0; i < length; i++) {
-          v.asSetNumericProperty(i, object.asGetPublicProperty(i));
+          v.axSetNumericProperty(i, object.axGetPublicProperty(i));
         }
         return v;
       }
@@ -481,38 +479,77 @@ module Shumway.AVMX.AS {
       }
     }
 
-    asGetNumericProperty(i) {
-      checkArguments && asCheckVectorGetNumericProperty(i, this._length);
-      return this._buffer[this._offset + i];
+    axGetProperty(mn: Multiname): any {
+      if (isNumeric(mn.name)) {
+        return this.axGetNumericProperty(mn.name);
+      }
+      var t = this.traits.getTrait(mn, -1);
+      if (t) {
+        return this[t.getName().getMangledName()];
+      }
+      return this[mn.getPublicMangledName()];
     }
 
-    asSetNumericProperty(i, v) {
-      checkArguments && asCheckVectorSetNumericProperty(i, this._length, this._fixed);
-      if (i === this._length) {
+    axSetProperty(mn: Multiname, value: any) {
+      if (isNumeric(mn.name)) {
+        this.axSetNumericProperty(mn.name, value);
+        return;
+      }
+      var t = this.traits.getTrait(mn, -1);
+      if (t) {
+        this[t.getName().getMangledName()] = value;
+        return;
+      }
+      this[mn.getPublicMangledName()] = value;
+    }
+
+    axGetPublicProperty(nm: any): any {
+      if (isNumeric(nm)) {
+        return this.axGetNumericProperty(nm);
+      }
+      return this[Multiname.getPublicMangledName(nm)];
+    }
+
+    axSetPublicProperty(nm: any, value: any) {
+      release || checkValue(value);
+      if (isNumeric(nm)) {
+        this.axSetPublicProperty(nm, value);
+        return;
+      }
+      this[Multiname.getPublicMangledName(nm)] = value;
+    }
+
+    axGetNumericProperty(nm: number) {
+      checkArguments && asCheckVectorGetNumericProperty(nm, this._length);
+      return this._buffer[this._offset + nm];
+    }
+
+    axSetNumericProperty(nm: number, v: any) {
+      checkArguments && asCheckVectorSetNumericProperty(nm, this._length, this._fixed);
+      if (nm === this._length) {
         this._ensureCapacity(this._length + 1);
         this._length ++;
       }
-      this._buffer[this._offset + i] = v;
+      this._buffer[this._offset + nm] = v;
     }
 
-    asHasProperty(namespaces, name, flags) {
-      if (Int32Vector.prototype === this || !isNumeric(name)) {
-        assert(false); // TODO
-        // return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
+    axHasPropertyInternal(mn: Multiname): boolean {
+      if (isNumeric(mn.name)) {
+        var index = toNumber(mn.name);
+        return index >= 0 && index < this._length;
       }
-      var index = toNumber(name);
-      return index >= 0 && index < this._length;
+      return this.axResolveMultiname(mn) in this;
     }
 
-    asNextName(index: number): any {
+    axNextName(index: number): any {
       return index - 1;
     }
 
-    asNextValue(index: number): any {
+    axNextValue(index: number): any {
       return this._buffer[this._offset + index - 1];
     }
 
-    asNextNameIndex(index: number): number {
+    axNextNameIndex(index: number): number {
       var nextNameIndex = index + 1;
       if (nextNameIndex <= this._length) {
         return nextNameIndex;
@@ -520,8 +557,8 @@ module Shumway.AVMX.AS {
       return 0;
     }
 
-    asHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
+    axHasNext2(hasNext2Info: HasNext2Info) {
+      hasNext2Info.index = this.axNextNameIndex(hasNext2Info.index)
     }
   }
 }
