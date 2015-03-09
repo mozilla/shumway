@@ -65,7 +65,7 @@ module Shumway.SWF.Parser.LowLevel {
                       readUi8($bytes, $stream);
     $.depth = readUi16($bytes, $stream);
     if (flags & PlaceObjectFlags.HasClassName) {
-      $.className = readString($bytes, $stream, 0);
+      $.className = readString($bytes, $stream);
     }
     if (flags & PlaceObjectFlags.HasCharacter) {
       $.symbolId = readUi16($bytes, $stream);
@@ -81,7 +81,7 @@ module Shumway.SWF.Parser.LowLevel {
       $.ratio = readUi16($bytes, $stream);
     }
     if (flags & PlaceObjectFlags.HasName) {
-      $.name = readString($bytes, $stream, 0);
+      $.name = readString($bytes, $stream);
     }
     if (flags & PlaceObjectFlags.HasClipDepth) {
       $.clipDepth = readUi16($bytes, $stream);
@@ -323,7 +323,7 @@ module Shumway.SWF.Parser.LowLevel {
       $.soundId = readUi16($bytes, $stream);
     }
     if (tagCode == 89) {
-      $.soundClassName = readString($bytes, $stream, 0);
+      $.soundClassName = readString($bytes, $stream);
     }
     $.soundInfo = soundInfo($bytes, $stream);
     return $;
@@ -388,7 +388,7 @@ module Shumway.SWF.Parser.LowLevel {
       $.fontId = readUi16($bytes, $stream);
     }
     if (hasFontClass) {
-      $.fontClass = readString($bytes, $stream, 0);
+      $.fontClass = readString($bytes, $stream);
     }
     if (hasFont) {
       $.fontHeight = readUi16($bytes, $stream);
@@ -406,9 +406,9 @@ module Shumway.SWF.Parser.LowLevel {
       $.indent = readSi16($bytes, $stream);
       $.leading = readSi16($bytes, $stream);
     }
-    $.variableName = readString($bytes, $stream, 0);
+    $.variableName = readString($bytes, $stream);
     if (hasText) {
-      $.initialText = readString($bytes, $stream, 0);
+      $.initialText = readString($bytes, $stream);
     }
     return $;
   }
@@ -523,7 +523,7 @@ module Shumway.SWF.Parser.LowLevel {
     var hasFontData = $.hasFontData = (flags & 0x4) ? 1 : 0;
     $.italic = (flags & 0x2) ? 1 : 0;
     $.bold = (flags & 0x1) ? 1 : 0;
-    $.name = readString($bytes, $stream, 0);
+    $.name = readString($bytes, $stream);
     if (hasFontData) {
       $.data = $bytes.subarray($stream.pos, tagEnd);
       $stream.pos = tagEnd;
@@ -547,7 +547,7 @@ module Shumway.SWF.Parser.LowLevel {
     while ($1--) {
       var $2: any = {};
       $2.offset = readEncodedU32($bytes, $stream);
-      $2.name = readString($bytes, $stream, 0);
+      $2.name = readString($bytes, $stream);
       $0.push($2);
     }
     var labelCount = readEncodedU32($bytes, $stream);
@@ -556,7 +556,7 @@ module Shumway.SWF.Parser.LowLevel {
     while ($4--) {
       var $5: any = {};
       $5.frame = readEncodedU32($bytes, $stream);
-      $5.name = readString($bytes, $stream, 0);
+      $5.name = readString($bytes, $stream);
       $3.push($5);
     }
     return $;

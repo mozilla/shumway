@@ -408,7 +408,7 @@ module Shumway.SWF {
             var abcBlock = new ABCBlock();
             if (tagCode === SWFTag.CODE_DO_ABC) {
               abcBlock.flags = Parser.readUi32(this.data, stream);
-              abcBlock.name = Parser.readString(this.data, stream, 0);
+              abcBlock.name = Parser.readString(this.data, stream);
             }
             else {
               abcBlock.flags = 0;
@@ -427,7 +427,7 @@ module Shumway.SWF {
           // TODO: check if symbols can be reassociated after instances have been created.
           while (symbolCount--) {
             var symbolId = Parser.readUi16(this.data, stream);
-            var symbolClassName = Parser.readString(this.data, stream, 0);
+            var symbolClassName = Parser.readString(this.data, stream);
             if (!release && traceLevel.value > 0) {
               console.log('Registering symbol class ' + symbolClassName + ' to symbol ' + symbolId);
             }
@@ -464,7 +464,7 @@ module Shumway.SWF {
           break;
         case SWFTag.CODE_FRAME_LABEL:
           var tagEnd = stream.pos + tagLength;
-          this._currentFrameLabel = Parser.readString(this.data, stream, 0);
+          this._currentFrameLabel = Parser.readString(this.data, stream);
           // TODO: support SWF6+ anchors.
           stream.pos = tagEnd;
           break;
@@ -479,7 +479,7 @@ module Shumway.SWF {
           var exports = this._currentExports || (this._currentExports = []);
           while (exportsCount--) {
             var symbolId = Parser.readUi16(this.data, stream);
-            var className = Parser.readString(this.data, stream, 0);
+            var className = Parser.readString(this.data, stream);
             if (stream.pos > tagEnd) {
               stream.pos = tagEnd;
               break;
@@ -598,7 +598,7 @@ module Shumway.SWF {
             break;
           case SWFTag.CODE_FRAME_LABEL:
             var tagEnd = stream.pos + tagLength;
-            label = Parser.readString(data, stream, 0);
+            label = Parser.readString(data, stream);
             // TODO: support SWF6+ anchors.
             stream.pos = tagEnd;
             tagLength = 0;
