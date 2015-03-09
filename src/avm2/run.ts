@@ -2,7 +2,13 @@
  * MetaobjectProtocol interface.
  */
 interface IMetaobjectProtocol {
+  axResolveMultiname(mn: Shumway.AVMX.Multiname): any;
   axHasProperty(mn: Shumway.AVMX.Multiname): boolean;
+  axDeleteProperty(mn: Shumway.AVMX.Multiname): boolean;
+
+  axCallProperty(mn: Shumway.AVMX.Multiname, argsArray: any []): any;
+  axCallSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argsArray: any []): any;
+  axConstructProperty(mn: Shumway.AVMX.Multiname, args: any []): any;
   axHasPropertyInternal(mn: Shumway.AVMX.Multiname): boolean;
   axHasOwnProperty(mn: Shumway.AVMX.Multiname): boolean;
 
@@ -10,12 +16,18 @@ interface IMetaobjectProtocol {
   axGetProperty(mn: Shumway.AVMX.Multiname): any;
 
   axNextNameIndex(index: number): any;
+  axNextName(index: number): any;
+  axNextValue(index: number): any;
+
   axEnumerableKeys: any [];
   axGetEnumerableKeys(): any [];
 
   axHasPublicProperty(nm: any): boolean;
   axSetPublicProperty(nm: any, value: any);
   axGetPublicProperty(nm: any): any;
+
+  axGetSlot(i: number): any;
+  axSetSlot(i: number, value: any);
 }
 
 interface Function {
@@ -325,169 +337,22 @@ module Shumway.AVMX {
 
   }
 
-  function isValidASValue(value: any) {
+  export function isValidASValue(value: any) {
     return AXBasePrototype.isPrototypeOf(value) || isPrimitiveJSValue(value);
   }
 
-  function checkValue(value: any) {
+  export function checkValue(value: any) {
     release || assert(isValidASValue(value),
                       "Value: " + value + " is not allowed to flow into AS3.");
   }
 
-  function axHasPropertyInternal(mn: Multiname): boolean {
-    return this.axResolveMultiname(mn) in this;
-  }
-
-  function axHasProperty(mn: Multiname): boolean {
-    return this.axHasPropertyInternal(mn);
-  }
-
-  function axHasPublicProperty(name: any): boolean {
-    rn.name = name;
-    return this.axHasProperty(rn);
-  }
-
-  function axResolveMultiname(mn: Multiname): any {
-    if (mn.isRuntimeName() && isNumeric(mn.name)) {
-      return mn.name;
-    }
-    var t = this.traits.getTrait(mn, -1);
-    if (t) {
-      return t.getName().getMangledName();
-    }
-    return mn.getPublicMangledName();
-  }
-
-  function axSetProperty(mn: Multiname, value: any) {
-    release || assert(isValidASValue(value));
-    this[this.axResolveMultiname(mn)] = value;
-  }
-
-  function axGetProperty(mn: Multiname): any {
-    var value = this[this.axResolveMultiname(mn)];
-    release || checkValue(value);
-    return value;
-  }
-
-  function axDeleteProperty(mn: Multiname): any {
-    // Cannot delete traits.
-    if (this.traits.getTrait(mn)) {
-      return false;
-    }
-    return delete this[mn.getPublicMangledName()];
-  }
-
-  function axCallProperty(mn: Multiname, args: any []): any {
-    return this[this.axResolveMultiname(mn)].axApply(this, args);
-  }
-
-  function axCallSuper(mn: Multiname, scope: Scope, args: any []): any {
-    var name = this.axResolveMultiname(mn);
-    var fun = (<AXClass>scope.parent.object).tPrototype[name];
-    return fun.axApply(this, args);
-  }
-
-  function axConstructProperty(mn: Multiname, args: any []): any {
-    return this[this.axResolveMultiname(mn)].axConstruct(args);
-  }
-
   var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [Namespace.PUBLIC], null);
-
-  export function axGetEnumerableKeys(): any [] {
-    var self: AXObject = this;
-    if (this.securityDomain.isPrimitive(this)) {
-      return [];
-    }
-    var keys = Object.keys(this);
-    var result = [];
-    for (var i = 0; i < keys.length; i++) {
-      var key = keys[i];
-      if (isNumeric(key)) {
-        result.push(key);
-      } else {
-        var name = Multiname.stripPublicMangledName(key);
-        if (name !== undefined) {
-          result.push(name);
-        }
-      }
-    }
-    return result;
-  }
-
-  /**
-   * Gets the next name index of an object. Index |zero| is actually not an
-   * index, but rather an indicator to start the iteration.
-   */
-  export function axNextNameIndex(index: number) {
-    var self: AXObject = this;
-    if (index === 0) {
-      // Gather all enumerable keys since we're starting a new iteration.
-      defineNonEnumerableProperty(self, "axEnumerableKeys", self.axGetEnumerableKeys());
-    }
-    var axEnumerableKeys = self.axEnumerableKeys;
-    while (index < axEnumerableKeys.length) {
-      rn.name = axEnumerableKeys[index];
-      if (self.axHasPropertyInternal(rn)) {
-        return index + 1;
-      }
-      index ++;
-    }
-    return 0;
-  }
-
-  /**
-   * Gets the nextName after the specified |index|, which you would expect to
-   * be index + 1, but it's actually index - 1;
-   */
-  export function axNextName(index: number): any {
-    var self: AXObject = this;
-    var axEnumerableKeys = self.axEnumerableKeys;
-    release || assert(axEnumerableKeys && index > 0 && index < axEnumerableKeys.length + 1);
-    return axEnumerableKeys[index - 1];
-  }
-
-  export function axNextValue(index: number): any {
-    return this.axGetPublicProperty(this.axNextName(index));
-  }
 
   function axFunctionConstruct() {
     release || assert(this.prototype);
     var object = Object.create(this.prototype);
     this.value.apply(object, arguments);
     return object;
-  }
-
-  export function axGetPublicProperty(name: any): any {
-    return this[Multiname.getPublicMangledName(name)];
-  }
-
-  export function axSetPublicProperty(name: any, value: any) {
-    release || checkValue(value);
-    this[Multiname.getPublicMangledName(name)] = value;
-  }
-
-  export function axGetSlot(i: number) {
-    var t = this.traits.getSlot(i);
-    var value = this[t.getName().getMangledName()];
-    release || checkValue(value);
-    return value;
-  }
-
-  export function axSetSlot(i: number, value: any) {
-    var t = this.traits.getSlot(i);
-    release || checkValue(value);
-    this[t.getName().getMangledName()] = value;
-    //var slotInfo = object.asSlots.byID[index];
-    //if (slotInfo.const) {
-    //  return;
-    //}
-    //var name = slotInfo.name;
-    //var type = slotInfo.type;
-    //if (type && type.coerce) {
-    //  object[name] = type.coerce(value);
-    //} else {
-    //  object[name] = value;
-    //}
   }
 
   export function asTypeOf(x: any): string {
@@ -661,47 +526,58 @@ module Shumway.AVMX {
     }
   }
 
+  var D = defineNonEnumerableProperty;
+
   // The Object that's at the root of all AXObjects' prototype chain, regardless of their
   // SecurityDomain.
-  export var AXBasePrototype = Object.create(null);
+  export var AXBasePrototype = null;
 
-  var D = defineNonEnumerableProperty;
-  D(AXBasePrototype, "axHasPropertyInternal", axHasPropertyInternal);
-  D(AXBasePrototype, "axHasProperty", axHasProperty);
-  D(AXBasePrototype, "axSetProperty", axSetProperty);
-  D(AXBasePrototype, "axHasProperty", axHasProperty);
-  D(AXBasePrototype, "axHasPublicProperty", axHasPublicProperty);
-  D(AXBasePrototype, "axSetPublicProperty", axSetPublicProperty);
-  D(AXBasePrototype, "axGetPublicProperty", axGetPublicProperty);
-  D(AXBasePrototype, "axGetProperty", axGetProperty);
-  D(AXBasePrototype, "axDeleteProperty", axDeleteProperty);
-  D(AXBasePrototype, "axSetSlot", axSetSlot);
-  D(AXBasePrototype, "axGetSlot", axGetSlot);
-  D(AXBasePrototype, "axCallProperty", axCallProperty);
-  D(AXBasePrototype, "axCallSuper", axCallSuper);
-  D(AXBasePrototype, "axConstructProperty", axConstructProperty);
-  D(AXBasePrototype, "axResolveMultiname", axResolveMultiname);
-  D(AXBasePrototype, "axNextNameIndex", axNextNameIndex);
-  D(AXBasePrototype, "axNextName", axNextName);
-  D(AXBasePrototype, "axNextValue", axNextValue);
-  D(AXBasePrototype, "axGetEnumerableKeys", axGetEnumerableKeys);
+  /**
+   * Execute this lazily because we want to make sure the AS package is available.
+   */
+  function initializeAXBasePrototype() {
+    if (AXBasePrototype) {
+      return;
+    }
+    var Op = AS.ASObject.prototype;
+    AXBasePrototype = Object.create(null)
+    D(AXBasePrototype, "axHasPropertyInternal", Op.axHasPropertyInternal);
+    D(AXBasePrototype, "axHasProperty", Op.axHasProperty);
+    D(AXBasePrototype, "axSetProperty", Op.axSetProperty);
+    D(AXBasePrototype, "axHasProperty", Op.axHasProperty);
+    D(AXBasePrototype, "axHasPublicProperty", Op.axHasPublicProperty);
+    D(AXBasePrototype, "axSetPublicProperty", Op.axSetPublicProperty);
+    D(AXBasePrototype, "axGetPublicProperty", Op.axGetPublicProperty);
+    D(AXBasePrototype, "axGetProperty", Op.axGetProperty);
+    D(AXBasePrototype, "axDeleteProperty", Op.axDeleteProperty);
+    D(AXBasePrototype, "axSetSlot", Op.axSetSlot);
+    D(AXBasePrototype, "axGetSlot", Op.axGetSlot);
+    D(AXBasePrototype, "axCallProperty", Op.axCallProperty);
+    D(AXBasePrototype, "axCallSuper", Op.axCallSuper);
+    D(AXBasePrototype, "axConstructProperty", Op.axConstructProperty);
+    D(AXBasePrototype, "axResolveMultiname", Op.axResolveMultiname);
+    D(AXBasePrototype, "axNextNameIndex", Op.axNextNameIndex);
+    D(AXBasePrototype, "axNextName", Op.axNextName);
+    D(AXBasePrototype, "axNextValue", Op.axNextValue);
+    D(AXBasePrototype, "axGetEnumerableKeys", Op.axGetEnumerableKeys);
 
-  // Helper methods borrowed from Object.prototype.
-  D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
-  D(AXBasePrototype, "hasOwnProperty", Object.prototype.hasOwnProperty);
+    // Helper methods borrowed from Object.prototype.
+    D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
+    D(AXBasePrototype, "hasOwnProperty", Object.prototype.hasOwnProperty);
 
-  AXBasePrototype.$BgtoString = function() {
-    return "[object Object]";
-  };
-  AXBasePrototype.toString = function () {
-    return this.$BgtoString.axCall(this);
-  };
-  AXBasePrototype.$BgvalueOf = function() {
-    return this;
-  };
-  AXBasePrototype.valueOf = function () {
-    return this.$BgvalueOf.axCall(this);
-  };
+    AXBasePrototype.$BgtoString = function () {
+      return "[object Object]";
+    };
+    AXBasePrototype.toString = function () {
+      return this.$BgtoString.axCall(this);
+    };
+    AXBasePrototype.$BgvalueOf = function () {
+      return this;
+    };
+    AXBasePrototype.valueOf = function () {
+      return this.$BgvalueOf.axCall(this);
+    };
+  }
 
   export interface AXObject extends ITraits, IMetaobjectProtocol {
     $BgtoString: AXCallable;
@@ -900,6 +776,7 @@ module Shumway.AVMX {
     private nativeClasses: any;
 
     constructor() {
+      initializeAXBasePrototype();
       this.system = new ApplicationDomain(this, null);
       this.application = new ApplicationDomain(this, this.system);
       this.nativeClasses = Object.create(null);

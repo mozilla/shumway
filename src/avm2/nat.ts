@@ -108,50 +108,6 @@ module Shumway.AVMX.AS {
     return <any>v;
   }
 
-
-  /**
-   * MetaobjectProtocol base traps. Inherit some or all of these to
-   * implement custom behaviour.
-   */
-  export class ASMetaobject implements IMetaobjectProtocol {
-    axHasProperty(mn: Multiname): boolean {
-      release || Debug.abstractMethod("axHasProperty");
-      return false;
-    }
-    axHasPropertyInternal(mn: Multiname): boolean {
-      release || Debug.abstractMethod("axHasPropertyInternal");
-      return false;
-    }
-    axHasOwnProperty(mn: Multiname): boolean {
-      release || Debug.abstractMethod("axHasOwnProperty");
-      return false;
-    }
-    axSetProperty(mn: Multiname, value: any): void {
-      release || Debug.abstractMethod("axSetProperty");
-    }
-    axGetProperty(mn: Multiname): any {
-      release || Debug.abstractMethod("axGetProperty");
-    }
-    axSetPublicProperty(nm: any, value: any): void {
-      release || Debug.abstractMethod("axSetPublicProperty");
-    }
-    axHasPublicProperty(nm: any): boolean {
-      release || Debug.abstractMethod("axHasPublicProperty");
-      return false;
-    }
-    axGetPublicProperty(nm: any): any {
-      release || Debug.abstractMethod("axGetPublicProperty");
-    }
-    axNextNameIndex(index: number): any {
-      release || Debug.abstractMethod("axNextNameIndex");
-    }
-    axGetEnumerableKeys(): any [] {
-      release || Debug.abstractMethod("axGetEnumerableKeys");
-      return null;
-    }
-    axEnumerableKeys: any [];
-  }
-
   var rn = new Multiname(null, 0, CONSTANT.RTQNameL, null, null);
 
   function makeMultiname(v) {
@@ -159,7 +115,11 @@ module Shumway.AVMX.AS {
     return rn;
   }
 
-  export class ASObject extends ASMetaobject {
+  /**
+   * MetaobjectProtocol base traps. Inherit some or all of these to
+   * implement custom behaviour.
+   */
+  export class ASObject implements IMetaobjectProtocol {
     traits: Traits;
     securityDomain: SecurityDomain;
 
@@ -176,12 +136,18 @@ module Shumway.AVMX.AS {
     static instanceSymbols = [];
     static classInfo: ClassInfo;
 
+    static axResolveMultiname: (mn: Multiname) => any;
     static axHasProperty: (mn: Multiname) => boolean;
+    static axDeleteProperty: (mn: Multiname) => boolean;
+    static axCallProperty: (mn: Multiname, argsArray: any []) => any;
+    static axCallSuper: (mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argsArray: any []) => any;
+    static axConstructProperty: (mn: Multiname, args: any []) => any;
     static axHasPropertyInternal: (mn: Multiname) => boolean;
     static axHasOwnProperty: (mn: Multiname) => boolean;
     static axSetProperty: (mn: Multiname, value: any) => void;
     static axGetProperty: (mn: Multiname) => any;
-    static axNextNameIndex: (index: number) => any;
+
+
 
     static axEnumerableKeys: any [];
     static axGetEnumerableKeys: () => any [];
@@ -190,6 +156,14 @@ module Shumway.AVMX.AS {
     static axGetPublicProperty: (nm: any) => any;
     static axCoerce: (v: any) => any;
     static axConstruct: (argArray?: any []) => any;
+
+    static axNextNameIndex: (index: number) => number;
+    static axNextName: (index: number) => any;
+    static axNextValue: (index: number) => any;
+
+
+    static axGetSlot: (i: number) => any;
+    static axSetSlot: (i: number, value: any) => void;
 
     static native_isPrototypeOf: (v: any) => boolean;
     static native_hasOwnProperty: (v: any) => boolean;
@@ -211,6 +185,159 @@ module Shumway.AVMX.AS {
     native_propertyIsEnumerable(v: any): boolean {
       return this.axHasOwnProperty(makeMultiname(v));
     }
+
+    axResolveMultiname(mn: Multiname): any {
+      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+        return mn.name;
+      }
+      var t = this.traits.getTrait(mn, -1);
+      if (t) {
+        return t.getName().getMangledName();
+      }
+      return mn.getPublicMangledName();
+    }
+
+    axHasProperty(mn: Multiname): boolean {
+      return this.axHasPropertyInternal(mn);
+    }
+
+    axHasPublicProperty(name: any): boolean {
+      rn.name = name;
+      return this.axHasProperty(rn);
+    }
+
+    axSetProperty(mn: Multiname, value: any) {
+      release || assert(isValidASValue(value));
+      this[this.axResolveMultiname(mn)] = value;
+    }
+
+    axGetProperty(mn: Multiname): any {
+      var value = this[this.axResolveMultiname(mn)];
+      release || checkValue(value);
+      return value;
+    }
+
+    axDeleteProperty(mn: Multiname): any {
+      // Cannot delete traits.
+      if (this.traits.getTrait(mn, -1)) {
+        return false;
+      }
+      return delete this[mn.getPublicMangledName()];
+    }
+
+    axCallProperty(mn: Multiname, args: any []): any {
+      return this[this.axResolveMultiname(mn)].axApply(this, args);
+    }
+
+    axCallSuper(mn: Multiname, scope: Scope, args: any []): any {
+      var name = this.axResolveMultiname(mn);
+      var fun = (<AXClass>scope.parent.object).tPrototype[name];
+      return fun.axApply(this, args);
+    }
+    axConstructProperty(mn: Multiname, args: any []): any {
+      return this[this.axResolveMultiname(mn)].axConstruct(args);
+    }
+
+    axHasPropertyInternal(mn: Multiname): boolean {
+      return this.axResolveMultiname(mn) in this;
+    }
+
+    axHasOwnProperty(mn: Multiname): boolean {
+      release || Debug.abstractMethod("axHasOwnProperty");
+      return false;
+    }
+
+    axGetEnumerableKeys(): any [] {
+      var self: AXObject = <any>this;
+      if (this.securityDomain.isPrimitive(this)) {
+        return [];
+      }
+      var keys = Object.keys(this);
+      var result = [];
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        if (isNumeric(key)) {
+          result.push(key);
+        } else {
+          var name = Multiname.stripPublicMangledName(key);
+          if (name !== undefined) {
+            result.push(name);
+          }
+        }
+      }
+      return result;
+    }
+
+    axGetPublicProperty(name: any): any {
+      return this[Multiname.getPublicMangledName(name)];
+    }
+
+    axSetPublicProperty(name: any, value: any) {
+      release || checkValue(value);
+      this[Multiname.getPublicMangledName(name)] = value;
+    }
+
+    axGetSlot(i: number): any {
+      var t = this.traits.getSlot(i);
+      var value = this[t.getName().getMangledName()];
+      release || checkValue(value);
+      return value;
+    }
+
+    axSetSlot(i: number, value: any) {
+      var t = this.traits.getSlot(i);
+      release || checkValue(value);
+      this[t.getName().getMangledName()] = value;
+      //var slotInfo = object.asSlots.byID[index];
+      //if (slotInfo.const) {
+      //  return;
+      //}
+      //var name = slotInfo.name;
+      //var type = slotInfo.type;
+      //if (type && type.coerce) {
+      //  object[name] = type.coerce(value);
+      //} else {
+      //  object[name] = value;
+      //}
+    }
+
+    /**
+     * Gets the next name index of an object. Index |zero| is actually not an
+     * index, but rather an indicator to start the iteration.
+     */
+    axNextNameIndex(index: number): number {
+      var self: AXObject = <any>this;
+      if (index === 0) {
+        // Gather all enumerable keys since we're starting a new iteration.
+        defineNonEnumerableProperty(self, "axEnumerableKeys", self.axGetEnumerableKeys());
+      }
+      var axEnumerableKeys = self.axEnumerableKeys;
+      while (index < axEnumerableKeys.length) {
+        rn.name = axEnumerableKeys[index];
+        if (self.axHasPropertyInternal(rn)) {
+          return index + 1;
+        }
+        index ++;
+      }
+      return 0;
+    }
+
+    /**
+     * Gets the nextName after the specified |index|, which you would expect to
+     * be index + 1, but it's actually index - 1;
+     */
+    axNextName(index: number): any {
+      var self: AXObject = <any>this;
+      var axEnumerableKeys = self.axEnumerableKeys;
+      release || assert(axEnumerableKeys && index > 0 && index < axEnumerableKeys.length + 1);
+      return axEnumerableKeys[index - 1];
+    }
+
+    axNextValue(index: number): any {
+      return this.axGetPublicProperty(this.axNextName(index));
+    }
+
+    axEnumerableKeys: any [];
   }
 
   export class ASClass extends ASObject {
@@ -906,7 +1033,7 @@ module Shumway.AVMX.AS {
     }
     copyOwnPropertyDescriptors(axClass.tPrototype, asClass.prototype, filter);
 
-    writer && traceASClass(axClass, asClass);
+    false && writer && traceASClass(axClass, asClass);
   }
 
   function traceASClass(axClass: AXClass, asClass: ASClass) {
