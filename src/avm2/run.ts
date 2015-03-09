@@ -1,21 +1,26 @@
-interface IMetaObjectProtocol {
-  axHasPublicProperty(mn: Shumway.AVMX.Multiname): boolean;
+/**
+ * MetaobjectProtocol interface.
+ */
+interface IMetaobjectProtocol {
+  axHasProperty(mn: Shumway.AVMX.Multiname): boolean;
   axHasPropertyInternal(mn: Shumway.AVMX.Multiname): boolean;
   axHasOwnProperty(mn: Shumway.AVMX.Multiname): boolean;
+
   axSetProperty(mn: Shumway.AVMX.Multiname, value: any);
-  axSetPublicProperty(nm: any, value: any);
-  axNextNameIndex(index: number);
+  axGetProperty(mn: Shumway.AVMX.Multiname): any;
+
+  axNextNameIndex(index: number): any;
   axEnumerableKeys: any [];
   axGetEnumerableKeys(): any [];
+
+  axHasPublicProperty(nm: any): boolean;
+  axSetPublicProperty(nm: any, value: any);
+  axGetPublicProperty(nm: any): any;
 }
 
 interface Function {
   axApply(thisArg: any, argArray?: any[]): any;
   axCall(thisArg: any): any;
-}
-
-interface Object extends IMetaObjectProtocol {
-
 }
 
 var $: Shumway.AVMX.SecurityDomain = null;
@@ -698,7 +703,7 @@ module Shumway.AVMX {
     return this.$BgvalueOf.axCall(this);
   };
 
-  export interface AXObject extends ITraits {
+  export interface AXObject extends ITraits, IMetaobjectProtocol {
     $BgtoString: AXCallable;
     $BgvalueOf: AXCallable;
   }

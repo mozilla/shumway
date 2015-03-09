@@ -48,9 +48,8 @@ module Shumway.AVMX.AS {
   import copyOwnPropertyDescriptors = Shumway.ObjectUtilities.copyOwnPropertyDescriptors;
 
   import Multiname = Shumway.AVMX.Multiname;
-  var debug = false;
 
-  var writer = debug ? new IndentingWriter() : null;
+  var writer = null; // new IndentingWriter();
 
 
   /**
@@ -110,7 +109,11 @@ module Shumway.AVMX.AS {
   }
 
 
-  export class ASMetaObject implements IMetaObjectProtocol {
+  /**
+   * MetaobjectProtocol base traps. Inherit some or all of these to
+   * implement custom behaviour.
+   */
+  export class ASMetaobject implements IMetaobjectProtocol {
     axHasProperty(mn: Multiname): boolean {
       release || Debug.abstractMethod("axHasProperty");
       return false;
@@ -129,12 +132,24 @@ module Shumway.AVMX.AS {
     axGetProperty(mn: Multiname): any {
       release || Debug.abstractMethod("axGetProperty");
     }
-    axSetPublicProperty(name: any, value: any): void {
+    axSetPublicProperty(nm: any, value: any): void {
       release || Debug.abstractMethod("axSetPublicProperty");
     }
-    axGetPublicProperty(name: any): any {
+    axHasPublicProperty(nm: any): boolean {
+      release || Debug.abstractMethod("axHasPublicProperty");
+      return false;
+    }
+    axGetPublicProperty(nm: any): any {
       release || Debug.abstractMethod("axGetPublicProperty");
     }
+    axNextNameIndex(index: number): any {
+      release || Debug.abstractMethod("axNextNameIndex");
+    }
+    axGetEnumerableKeys(): any [] {
+      release || Debug.abstractMethod("axGetEnumerableKeys");
+      return null;
+    }
+    axEnumerableKeys: any [];
   }
 
   var rn = new Multiname(null, 0, CONSTANT.RTQNameL, null, null);
@@ -144,7 +159,7 @@ module Shumway.AVMX.AS {
     return rn;
   }
 
-  export class ASObject extends ASMetaObject {
+  export class ASObject extends ASMetaobject {
     traits: Traits;
     securityDomain: SecurityDomain;
 
@@ -166,8 +181,13 @@ module Shumway.AVMX.AS {
     static axHasOwnProperty: (mn: Multiname) => boolean;
     static axSetProperty: (mn: Multiname, value: any) => void;
     static axGetProperty: (mn: Multiname) => any;
-    static axSetPublicProperty: (name: any, value: any) => void;
-    static axGetPublicProperty: (name: any) => any;
+    static axNextNameIndex: (index: number) => any;
+
+    static axEnumerableKeys: any [];
+    static axGetEnumerableKeys: () => any [];
+    static axHasPublicProperty: (nm: any) => boolean;
+    static axSetPublicProperty: (nm: any, value: any) => void;
+    static axGetPublicProperty: (nm: any) => any;
     static axCoerce: (v: any) => any;
     static axConstruct: (argArray?: any []) => any;
 
@@ -756,7 +776,6 @@ module Shumway.AVMX.AS {
   export function getMethodOrAccessorNative(trait: TraitInfo): any {
     var natives = getNativesForTrait(trait);
     var name = trait.getName().name;
-    debug && console.log("getMethodOrAccessorNative(" + name + ")");
     for (var i = 0; i < natives.length; i++) {
       var native = natives[i];
       var fullName = name;
@@ -886,6 +905,22 @@ module Shumway.AVMX.AS {
       }
     }
     copyOwnPropertyDescriptors(axClass.tPrototype, asClass.prototype, filter);
+
+    writer && traceASClass(axClass, asClass);
+  }
+
+  function traceASClass(axClass: AXClass, asClass: ASClass) {
+    writer.enter("Class: " + axClass.classInfo);
+    writer.enter("Traps:");
+    for (var k in asClass.prototype) {
+      if (k.indexOf("ax") !== 0) {
+        continue;
+      }
+      var hasOwn = asClass.hasOwnProperty(k);
+      writer.writeLn((hasOwn ? "Own" : "Inherited") + " trap: " + k);
+    }
+    writer.leave();
+    writer.leave();
   }
 
   ///**
