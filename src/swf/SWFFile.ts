@@ -215,12 +215,18 @@ module Shumway.SWF {
         this._decompressor = Inflate.create(true);
         // Parts of the header are compressed. Get those out of the way before starting tag parsing.
         this._decompressor.onData = this.processFirstBatchOfDecompressedData.bind(this);
+        this._decompressor.onError = function (error) {
+          throw new Error(error);
+        }
         this._decompressor.push(initialBytes.subarray(8));
       } else if (isLzmaCompressed) {
         this.data.set(initialBytes.subarray(0, 8));
         this._uncompressedLoadedLength = 8;
         this._decompressor = new LzmaDecoder(true);
         this._decompressor.onData = this.processFirstBatchOfDecompressedData.bind(this);
+        this._decompressor.onError = function (error) {
+          throw new Error(error);
+        }
         this._decompressor.push(initialBytes);
       } else {
         this.data.set(initialBytes);

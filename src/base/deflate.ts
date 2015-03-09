@@ -113,6 +113,9 @@ module Shumway.ArrayUtilities {
         }
         position += length;
       };
+      inflate.onError = function (error) {
+        throw new Error(error);
+      };
       inflate.push(data);
       inflate.close();
       return output;
