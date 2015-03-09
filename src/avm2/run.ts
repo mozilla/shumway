@@ -6,8 +6,8 @@ interface IMetaobjectProtocol {
   axHasProperty(mn: Shumway.AVMX.Multiname): boolean;
   axDeleteProperty(mn: Shumway.AVMX.Multiname): boolean;
 
-  axCallProperty(mn: Shumway.AVMX.Multiname, argsArray: any []): any;
-  axCallSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argsArray: any []): any;
+  axCallProperty(mn: Shumway.AVMX.Multiname, argArray: any []): any;
+  axCallSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argArray: any []): any;
   axConstructProperty(mn: Shumway.AVMX.Multiname, args: any []): any;
   axHasPropertyInternal(mn: Shumway.AVMX.Multiname): boolean;
   axHasOwnProperty(mn: Shumway.AVMX.Multiname): boolean;

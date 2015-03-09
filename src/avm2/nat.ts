@@ -139,8 +139,8 @@ module Shumway.AVMX.AS {
     static axResolveMultiname: (mn: Multiname) => any;
     static axHasProperty: (mn: Multiname) => boolean;
     static axDeleteProperty: (mn: Multiname) => boolean;
-    static axCallProperty: (mn: Multiname, argsArray: any []) => any;
-    static axCallSuper: (mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argsArray: any []) => any;
+    static axCallProperty: (mn: Multiname, argArray: any []) => any;
+    static axCallSuper: (mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argArray: any []) => any;
     static axConstructProperty: (mn: Multiname, args: any []) => any;
     static axHasPropertyInternal: (mn: Multiname) => boolean;
     static axHasOwnProperty: (mn: Multiname) => boolean;
@@ -201,8 +201,8 @@ module Shumway.AVMX.AS {
       return this.axHasPropertyInternal(mn);
     }
 
-    axHasPublicProperty(name: any): boolean {
-      rn.name = name;
+    axHasPublicProperty(nm: any): boolean {
+      rn.name = nm;
       return this.axHasProperty(rn);
     }
 
@@ -268,13 +268,13 @@ module Shumway.AVMX.AS {
       return result;
     }
 
-    axGetPublicProperty(name: any): any {
-      return this[Multiname.getPublicMangledName(name)];
+    axGetPublicProperty(nm: any): any {
+      return this[Multiname.getPublicMangledName(nm)];
     }
 
-    axSetPublicProperty(name: any, value: any) {
+    axSetPublicProperty(nm: any, value: any) {
       release || checkValue(value);
-      this[Multiname.getPublicMangledName(name)] = value;
+      this[Multiname.getPublicMangledName(nm)] = value;
     }
 
     axGetSlot(i: number): any {
@@ -603,6 +603,21 @@ module Shumway.AVMX.AS {
         return false;
       }
       return delete this[mn.getPublicMangledName()];
+    }
+
+    axGetPublicProperty(nm: any): any {
+      if (isNumeric(nm)) {
+        return this.value[nm];
+      }
+      return this[Multiname.getPublicMangledName(nm)];
+    }
+
+    axSetPublicProperty(nm: any, value: any) {
+      release || checkValue(value);
+      if (isNumeric(nm)) {
+        this.value[nm] = value;
+      }
+      this[Multiname.getPublicMangledName(nm)] = value;
     }
   }
 
