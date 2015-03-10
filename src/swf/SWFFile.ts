@@ -456,7 +456,7 @@ module Shumway.SWF {
           break;
         case SWFTag.CODE_SOUND_STREAM_HEAD:
         case SWFTag.CODE_SOUND_STREAM_HEAD2:
-          var soundStreamTag = Parser.LowLevel.soundStreamHead(this.data, this._dataStream);
+          var soundStreamTag = Parser.LowLevel.soundStreamHead(this.data, this._dataStream, byteOffset + tagLength);
           this._currentSoundStreamHead = Parser.SoundStream.FromTag(soundStreamTag);
           break;
         case SWFTag.CODE_SOUND_STREAM_BLOCK:

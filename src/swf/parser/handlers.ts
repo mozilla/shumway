@@ -329,7 +329,7 @@ module Shumway.SWF.Parser.LowLevel {
     return $;
   }
 
-  export function soundStreamHead($bytes, $stream) {
+  export function soundStreamHead($bytes, $stream, tagEnd: number) {
     var $: any = {};
     var playbackFlags = readUi8($bytes, $stream);
     $.playbackRate = playbackFlags >> 2 & 3;
@@ -341,7 +341,7 @@ module Shumway.SWF.Parser.LowLevel {
     $.streamSize = streamFlags >> 1 & 1;
     $.streamType = streamFlags & 1;
     $.samplesCount = readUi16($bytes, $stream);
-    if (streamCompression == 2) {
+    if (streamCompression == 2 && tagEnd - $stream.pos >= 2) {
       $.latencySeek = readSi16($bytes, $stream);
     }
     return $;
