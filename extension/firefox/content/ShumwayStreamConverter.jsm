@@ -416,25 +416,7 @@ ShumwayStreamConverterBase.prototype = {
       }
     }
 
-    var allowScriptAccess = false;
-    switch (objectParams.allowscriptaccess || 'sameDomain') {
-    case 'always':
-      allowScriptAccess = true;
-      break;
-    case 'never':
-      allowScriptAccess = false;
-      break;
-    default:
-      if (!pageUrl)
-        break;
-      try {
-        // checking if page is in same domain (? same protocol and port)
-        allowScriptAccess =
-          Services.io.newURI('/', null, Services.io.newURI(pageUrl, null, null)).spec ==
-          Services.io.newURI('/', null, Services.io.newURI(url, null, null)).spec;
-      } catch (ex) {}
-      break;
-    }
+    var allowScriptAccess = isScriptAllowed(objectParams.allowscriptaccess, url, pageUrl);
 
     var startupInfo = {};
     startupInfo.window = window;
@@ -556,6 +538,32 @@ ShumwayStreamConverterBase.prototype = {
     // Do nothing.
   }
 };
+
+function isScriptAllowed(allowScriptAccessParameter, url, pageUrl) {
+  if (!allowScriptAccessParameter) {
+    allowScriptAccessParameter = 'sameDomain';
+  }
+  var allowScriptAccess = false;
+  switch (allowScriptAccessParameter.toLowerCase()) { // ignoring case here
+    case 'always':
+      allowScriptAccess = true;
+      break;
+    case 'never':
+      allowScriptAccess = false;
+      break;
+    default: // 'samedomain'
+      if (!pageUrl)
+        break;
+      try {
+        // checking if page is in same domain (? same protocol and port)
+        allowScriptAccess =
+          Services.io.newURI('/', null, Services.io.newURI(pageUrl, null, null)).spec ==
+          Services.io.newURI('/', null, Services.io.newURI(url, null, null)).spec;
+      } catch (ex) {}
+      break;
+  }
+  return allowScriptAccess;
+}
 
 // properties required for XPCOM registration:
 function copyProperties(obj, template) {
