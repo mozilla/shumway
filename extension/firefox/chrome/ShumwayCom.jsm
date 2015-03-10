@@ -325,9 +325,23 @@ ShumwayChromeActions.prototype = {
   },
 
   navigateTo: function (data) {
+    // Our restrictions are a little bit different from Flash's: let's enable
+    // only http(s) and only when script execution is allowed.
+    // See https://helpx.adobe.com/flash/kb/control-access-scripts-host-web.html
+    var url = data.url || 'about:blank';
+    var target = data.target || '_self';
+    var isWhitelistedProtocol = /^(http|https):\/\//i.test(url);
+    if (!isWhitelistedProtocol || !this.allowScriptAccess) {
+      return;
+    }
+    // ...and only when user input is in-progress.
+    if (!this.isUserInputInProgress()) {
+      return;
+    }
+    log('!!navigateTo: ' + url + ' ... ' + target);
     var embedTag = this.embedTag.wrappedJSObject;
     var window = embedTag ? embedTag.ownerDocument.defaultView : this.window;
-    window.open(data.url, data.target || '_self');
+    window.open(url, target);
   },
 
   fallback: function(automatic) {
