@@ -177,16 +177,11 @@ module Shumway.SWF {
       var tag: any = {code: unparsed.tagCode};
       var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
       release || Debug.assert(handler, 'handler shall exists here');
-      var tagEnd = unparsed.byteOffset + unparsed.byteLength;
+      var tagEnd = Math.min(unparsed.byteOffset + unparsed.byteLength, this._dataStream.end);
       handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
       var finalPos = this._dataStream.pos;
-      release || assert(finalPos <= tagEnd);
-      if (finalPos < tagEnd) {
-        var consumedBytes = finalPos - unparsed.byteOffset;
-        Debug.warning('Scanning ' + SWFTag[unparsed.tagCode] + ' at offset ' +
-                      unparsed.byteOffset + ' consumed ' + consumedBytes + ' of ' +
-                      unparsed.byteLength + ' bytes. (' + (tagEnd - finalPos) + ' left)');
-        this._dataStream.pos = tagEnd;
+      if (finalPos !== tagEnd) {
+        this.emitTagSlopWarning(unparsed, tagEnd);
       }
       var symbol = defineSymbol(tag, this.dictionary);
       SWF.leaveTimeline();
@@ -292,8 +287,7 @@ module Shumway.SWF {
           return;
         }
         this.scanTag(tempTag, rootTimelineMode);
-        release || assert(this._dataStream.pos <= tagEnd);
-        if (this._dataStream.pos < tagEnd) {
+        if (this._dataStream.pos !== tagEnd) {
           this.emitTagSlopWarning(tempTag, tagEnd);
         }
       }
@@ -347,9 +341,8 @@ module Shumway.SWF {
         var spriteTagEnd = byteOffset + tagLength;
         stream.pos += 4; // Jump over symbol ID and frameCount.
         this.scanTagsToOffset(spriteTagEnd, false);
-        if (this._dataStream.pos < tagEnd) {
-          this.emitTagSlopWarning(tag, tagEnd);
-          stream.pos = spriteTagEnd;
+        if (this._dataStream.pos !== spriteTagEnd) {
+          this.emitTagSlopWarning(tag, spriteTagEnd);
         }
         return;
       }
