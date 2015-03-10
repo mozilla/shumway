@@ -509,9 +509,6 @@ module Shumway.AVMX {
             value = stack.pop();
             box(stack.pop()).axSetSlot(u30(), value);
             break;
-          case Bytecode.CONVERT_S:
-            stack[stack.length - 1] = asConvertString(stack[stack.length - 1]);
-            break;
           //case Bytecode.esc_xattr:
           //  stack[stack.length - 1] = Runtime.escapeXMLAttribute(stack[stack.length - 1]);
           //  break;
@@ -534,6 +531,12 @@ module Shumway.AVMX {
           case Bytecode.CONVERT_B:
             stack[stack.length - 1] = !!stack[stack.length - 1];
             break;
+          case Bytecode.COERCE_S:
+            stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
+            break;
+          case Bytecode.CONVERT_S:
+            stack[stack.length - 1] = asConvertString(stack[stack.length - 1]);
+            break;
           //case Bytecode.checkfilter:
           //  stack[stack.length - 1] = checkFilter(stack[stack.length - 1]);
           //  break;
@@ -544,9 +547,6 @@ module Shumway.AVMX {
             break;
           case Bytecode.COERCE_A: /* NOP */
             break;
-          //case Bytecode.coerce_s:
-          //  stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
-          //  break;
           case Bytecode.ASTYPE:
             popNameInto(stack, abc.getMultiname(u30()), rn);
             type = scope.topScope().getScopeProperty(rn, true, false);
