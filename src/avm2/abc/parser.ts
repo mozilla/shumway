@@ -1240,7 +1240,7 @@ module Shumway.AVM2.ABC {
         return name;
       }
       // release || assert (isString(name) || isNullOrUndefined(name));
-      qname = Multiname.qualifyName(Namespace.PUBLIC, name);
+      qname = '$Bg' + asCoerceString(name);
       if (typeof name === "string") {
         Multiname._publicQualifiedNameCache[name] = qname;
       }
@@ -1248,7 +1248,7 @@ module Shumway.AVM2.ABC {
     }
 
     public static isPublicQualifiedName(qn): boolean {
-      return typeof qn === "number" || isNumeric(qn) || qn.indexOf(Namespace.PUBLIC.qualifiedName) === 1;
+      return typeof qn === "number" || isNumeric(qn) || qn.indexOf('$Bg') === 0;
     }
 
     public static getAccessModifier(mn): string {

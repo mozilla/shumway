@@ -595,63 +595,100 @@ module Shumway.AVMX.AS {
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
-      if (this.traits.indexOf(mn) >= 0) {
-        return true;
-      }
-      if (isNumeric(mn.name)) {
+      // Optimization for the common case of array element accesses.
+      if (typeof mn.name === 'number') {
         return mn.name in this.value;
       }
-      return mn.getPublicMangledName() in this.value;
+      var name = mn.name.toString();
+      if (isNumeric(name)) {
+        return name in this.value;
+      }
+      var namespaces = mn.namespaces;
+      if (this.traits.indexOf(namespaces, name) > -1) {
+        return true;
+      }
+      return '$Bg' + name in this;
     }
 
     axGetProperty(mn: Multiname): any {
-      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+      // Optimization for the common case of array element accesses.
+      if (typeof mn.name === 'number') {
         return this.value[mn.name];
+      }
+      var name = mn.name.toString();
+      var namespaces = mn.namespaces;
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        return this.value[name];
       }
       var t = this.traits.getTrait(mn);
       if (t) {
         return this[t.name.getMangledName()];
       }
-      return this[mn.getPublicMangledName()];
+      return this['$Bg' + name];
     }
 
     axSetProperty(mn: Multiname, value: any) {
-      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+      release || checkValue(value);
+      // Optimization for the common case of array element accesses.
+      if (typeof mn.name === 'number') {
         this.value[mn.name] = value;
+        return;
+      }
+      var name = mn.name.toString();
+      var namespaces = mn.namespaces;
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        this.value[name] = value;
+        return;
       }
       var t = this.traits.getTrait(mn);
       if (t) {
         this[t.name.getMangledName()] = value;
         return;
       }
-      this[mn.getPublicMangledName()] = value;
+      this['$Bg' + name] = value;
     }
 
     axDeleteProperty(mn: Multiname): any {
-      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+      // Optimization for the common case of array element accesses.
+      if (typeof mn.name === 'number') {
         return delete this.value[mn.name];
+        return;
+      }
+      var name = mn.name.toString();
+      var namespaces = mn.namespaces;
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        return delete this.value[name];
       }
       // Cannot delete array traits.
       if (this.traits.getTrait(mn)) {
         return false;
       }
-      return delete this[mn.getPublicMangledName()];
+      return delete this['$Bg' + name];
     }
 
     axGetPublicProperty(nm: any): any {
-      if (isNumeric(nm)) {
+      // Optimization for the common case of array element accesses.
+      if (typeof nm === 'number') {
         return this.value[nm];
       }
-      return this[Multiname.getPublicMangledName(nm)];
+      var name = nm.toString();
+      if (isNumeric(name)) {
+        return this.value[name];
+      }
+      return this['$Bg' + name];
     }
 
     axSetPublicProperty(nm: any, value: any) {
       release || checkValue(value);
-      if (isNumeric(nm)) {
+      // Optimization for the common case of array element accesses.
+      if (typeof nm === 'number') {
         this.value[nm] = value;
-        return;
       }
-      this[Multiname.getPublicMangledName(nm)] = value;
+      var name = nm.toString();
+      if (isNumeric(name)) {
+        this.value[name] = value;
+      }
+      this['$Bg' + name] = value;
     }
   }
 

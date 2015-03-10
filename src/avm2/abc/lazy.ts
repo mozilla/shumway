@@ -226,9 +226,9 @@ module Shumway.AVMX {
       // Then, add all of the child traits, replacing or extending parent traits where necessary.
       for (var i = 0; i < this.traits.length; i++) {
         var trait = this.traits[i];
-        var j = result.indexOf(trait.getName());
-        var currentTrait = j > -1 ? traits[j] : null;
         var name = <Multiname>trait.name;
+        var j = result.indexOf(name.namespaces, name.name);
+        var currentTrait = j > -1 ? traits[j] : null;
         var runtimeTrait = new RuntimeTraitInfo(name, trait.kind);
         if (name.namespaces[0].type === NamespaceType.Protected) {
           // Names for protected traits get canonicalized to the name of the type that initially
@@ -399,9 +399,8 @@ module Shumway.AVMX {
     /**
      * Searches for a trait with the specified name.
      */
-    public indexOf(mn: Multiname): number {
-      var mnName = mn.name;
-      var nss = mn.namespaces;
+    public indexOf(nss: Namespace[], mnName: string): number {
+      release || assert(typeof mnName === 'string');
       var traits = this.traits;
       for (var i = 0; i < traits.length; i++) {
         var trait = traits[i];
@@ -420,10 +419,12 @@ module Shumway.AVMX {
     }
 
     getTrait(mn: Multiname): RuntimeTraitInfo {
-      var trait: RuntimeTraitInfo = this.protectedNsMappings[mn.name];
+      var name = mn.name.toString();
+      var namespaces = mn.namespaces;
+      var trait: RuntimeTraitInfo = this.protectedNsMappings[name];
       if (trait) {
-        for (var i = 0; i < mn.namespaces.length; i++) {
-          var ns = mn.namespaces[i];
+        for (var i = 0; i < namespaces.length; i++) {
+          var ns = namespaces[i];
           if (ns.type === NamespaceType.Protected) {
             var protectedScope = this;
             while (protectedScope) {
@@ -435,7 +436,7 @@ module Shumway.AVMX {
           }
         }
       }
-      var i = this.indexOf(mn);
+      var i = this.indexOf(namespaces, name);
       return i >= 0 ? this.traits[i] : null;
     }
 
