@@ -1075,15 +1075,16 @@ module Shumway.AVMX {
       return axClass;
     }
 
-    preparePrimitiveClass(exportName: string, name: string, convert, coerce, isType, isInstanceOf) {
+    preparePrimitiveClass(exportName: string, name: string, convert, conversionDefault, coerce,
+                          isType, isInstanceOf) {
       var axClass = this.prepareNativeClass(exportName, name, true);
       var D = defineNonEnumerableProperty;
       D(axClass, 'axBox', axBoxPrimitive);
       D(axClass, "axApply", function axApply(_ , args: any []) {
-        return convert(args ? args[0] : undefined);
+        return convert(args && args.length ? args[0] : conversionDefault);
       });
       D(axClass, "axConstruct", function axConstruct(args: any []) {
-        return convert(args ? args[0] : undefined);
+        return convert(args && args.length ? args[0] : conversionDefault);
       });
       D(axClass, "axCoerce", coerce);
       D(axClass, "axIsType", isType);
@@ -1203,15 +1204,15 @@ module Shumway.AVMX {
       var AXPrimitiveBox = this.prepareNativeClass("AXPrimitiveBox", "PrimitiveBox", false);
       D(AXPrimitiveBox.dPrototype, '$BgtoString',
         AXFunction.axBox(function () { return this.value.toString(); }));
-      var AXBoolean = this.preparePrimitiveClass("AXBoolean", "Boolean", asCoerceBoolean,
+      var AXBoolean = this.preparePrimitiveClass("AXBoolean", "Boolean", asCoerceBoolean, false,
                                                  asCoerceBoolean, axIsTypeBoolean, axIsTypeBoolean);
-      var AXString = this.preparePrimitiveClass("AXString", "String", asConvertString,
+      var AXString = this.preparePrimitiveClass("AXString", "String", asConvertString, '',
                                                  asCoerceString, axIsTypeString, axIsTypeString);
-      var AXNumber = this.preparePrimitiveClass("AXNumber", "Number", asCoerceNumber,
+      var AXNumber = this.preparePrimitiveClass("AXNumber", "Number", asCoerceNumber, 0,
                                                 asCoerceNumber, axIsTypeNumber, axIsTypeNumber);
-      var AXInt = this.preparePrimitiveClass("AXInt", "int", asCoerceInt, asCoerceInt,
+      var AXInt = this.preparePrimitiveClass("AXInt", "int", asCoerceInt, 0, asCoerceInt,
                                              axIsTypeInt, axFalse);
-      var AXUint = this.preparePrimitiveClass("AXUint", "uint", asCoerceUint, asCoerceUint,
+      var AXUint = this.preparePrimitiveClass("AXUint", "uint", asCoerceUint, 0, asCoerceUint,
                                               axIsTypeUint, axFalse);
     }
   }
