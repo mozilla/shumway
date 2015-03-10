@@ -674,6 +674,7 @@ module Shumway.SWF {
     private setSceneAndFrameLabelData(tagLength: number) {
       if (this.sceneAndFrameLabelData) {
         this.jumpToNextTag(tagLength);
+        return;
       }
       this.sceneAndFrameLabelData = Parser.LowLevel.defineScene(this.data, this._dataStream, null);
     }
