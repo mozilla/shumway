@@ -16,51 +16,14 @@
 
 ///<reference path='references.ts' />
 module Shumway.Settings {
-  declare var window;
-
   export var ROOT: string = "Shumway Options";
   export var shumwayOptions = new Shumway.Options.OptionSet(ROOT);
-
-  // TODO remove any localStorage operations from this file -- there are used only with the inspector.
-
-  export function isStorageSupported() {
-    try {
-      return typeof window !== 'undefined' &&
-             "localStorage" in window &&
-             window["localStorage"] !== null;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  export function load(key:string = ROOT): any {
-    var settings:any = {};
-    if (isStorageSupported()) {
-      var lsValue:string = window.localStorage[key];
-      if (lsValue) {
-        try {
-          settings = JSON.parse(lsValue);
-        } catch (e) {
-        }
-      }
-    }
-    return settings;
-  }
-
-  export function save(settings:any = null, key:string = ROOT): void {
-    if (isStorageSupported()) {
-      try {
-        window.localStorage[key] = JSON.stringify(settings ? settings : shumwayOptions.getSettings());
-      } catch (e) {
-      }
-    }
-  }
 
   export function setSettings(settings: any) {
     shumwayOptions.setSettings(settings);
   }
 
-  export function getSettings(settings: any) {
+  export function getSettings() {
     return shumwayOptions.getSettings();
   }
 }
