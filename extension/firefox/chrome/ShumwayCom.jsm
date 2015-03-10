@@ -53,144 +53,169 @@ function log(aMsg) {
 }
 
 var ShumwayCom = {
-  createAdapter: function (content, callbacks) {
-
-    function setupComBridge(playerWindow) {
-      // Creates secondary ShumwayCom adapter and sets up the forwarders from
-      // the callbacks to primary adapter.
-      var playerContent = playerWindow.contentWindow;
-      var secondaryAdapter = ShumwayCom.createAdapter(playerContent, callbacks);
-      shumwayComAdapter.onLoadFileCallback = function (arg) {
-        if (secondaryAdapter.onLoadFileCallback) {
-          secondaryAdapter.onLoadFileCallback(Components.utils.cloneInto(arg, playerContent));
-        }
-      };
-      shumwayComAdapter.onExternalCallback = function (call) {
-        if (secondaryAdapter.onExternalCallback) {
-          return secondaryAdapter.onExternalCallback(Components.utils.cloneInto(call, playerContent));
-        }
-      };
-      shumwayComAdapter.onSystemResourceCallback = function (id, data) {
-        if (secondaryAdapter.onSystemResourceCallback) {
-          secondaryAdapter.onSystemResourceCallback(id, Components.utils.cloneInto(data, playerContent));
-        }
-      };
-      // Sets up the _onSyncMessage helper that is used from postSyncMessage of
-      // the secondary adapter.
-      secondaryAdapter._onSyncMessage = function (msg) {
-        if (shumwayComAdapter.onSyncMessage) {
-          var waivedMsg = Components.utils.waiveXrays(msg); // for cloneInto
-          return shumwayComAdapter.onSyncMessage(Components.utils.cloneInto(waivedMsg, content));
-        }
-      };
-    }
-
-    function genPropDesc(value) {
-      return {
-        enumerable: true, configurable: true, writable: true, value: value
-      };
-    }
-
+  createAdapter: function (content, callbacks, hooks) {
     // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
     // up Xray wrappers.
-    var shumwayComAdapter = Components.utils.createObjectIn(content, {defineAs: 'ShumwayCom'});
-    Object.defineProperties(shumwayComAdapter, {
-      enableDebug: genPropDesc(function enableDebug() {
+    var wrapped = {
+      enableDebug: function enableDebug() {
         callbacks.enableDebug()
-      }),
-      setFullscreen: genPropDesc(function setFullscreen(value) {
+      },
+
+      setFullscreen: function setFullscreen(value) {
         callbacks.sendMessage('setFullscreen', value, false);
-      }),
-      endActivation: genPropDesc(function endActivation() {
+      },
+
+      endActivation: function endActivation() {
         callbacks.sendMessage('endActivation', null, false);
-      }),
-      fallback: genPropDesc(function fallback() {
+      },
+
+      fallback: function fallback() {
         callbacks.sendMessage('fallback', null, false);
-      }),
-      getSettings: genPropDesc(function getSettings() {
+      },
+
+      getSettings: function getSettings() {
         return Components.utils.cloneInto(
           callbacks.sendMessage('getSettings', null, true), content);
-      }),
-      getPluginParams: genPropDesc(function getPluginParams() {
+      },
+
+      getPluginParams: function getPluginParams() {
         return Components.utils.cloneInto(
           callbacks.sendMessage('getPluginParams', null, true), content);
-      }),
-      reportIssue: genPropDesc(function reportIssue() {
+      },
+
+      reportIssue: function reportIssue() {
         callbacks.sendMessage('reportIssue', null, false);
-      }),
-      externalCom: genPropDesc(function externalCom(args) {
+      },
+
+      reportTelemetry: function reportTelemetry(args) {
+        callbacks.sendMessage('reportTelemetry', args, false);
+      },
+
+      userInput: function userInput() {
+        callbacks.sendMessage('userInput', null, true);
+      },
+
+      setupComBridge: function setupComBridge(playerWindow) {
+        // postSyncMessage helper function to relay messages from the secondary
+        // window to the primary one.
+        function postSyncMessage(msg) {
+          if (onSyncMessageCallback) {
+            // the msg came from other content window
+            var reclonedMsg = Components.utils.cloneInto(Components.utils.waiveXrays(msg), content);
+            var result = onSyncMessageCallback(reclonedMsg);
+            // the result will be sent later to other content window
+            var waivedResult = Components.utils.waiveXrays(result);
+            return waivedResult;
+          }
+        }
+
+        // Creates secondary ShumwayCom adapter.
+        var playerContent = playerWindow.contentWindow.wrappedJSObject;
+        ShumwayCom.createPlayerAdapter(playerContent, postSyncMessage, callbacks, hooks);
+      },
+
+      setSyncMessageCallback: function (callback) {
+        onSyncMessageCallback = callback;
+      }
+    };
+
+    var onSyncMessageCallback;
+
+    var shumwayComAdapter = Components.utils.cloneInto(wrapped, content, {cloneFunctions:true});
+    content.ShumwayCom = shumwayComAdapter;
+  },
+
+  createPlayerAdapter: function (content, postSyncMessage, callbacks, hooks) {
+    // Exposing ShumwayCom object/adapter to the unprivileged content -- setting
+    // up Xray wrappers.
+    var wrapped = {
+      externalCom: function externalCom(args) {
         var result = String(callbacks.sendMessage('externalCom', args, true));
         return Components.utils.cloneInto(result, content);
-      }),
-      loadFile: genPropDesc(function loadFile(args) {
+      },
+
+      loadFile: function loadFile(args) {
         callbacks.sendMessage('loadFile', args, false);
-      }),
-      reportTelemetry: genPropDesc(function reportTelemetry(args) {
+      },
+
+      reportTelemetry: function reportTelemetry(args) {
         callbacks.sendMessage('reportTelemetry', args, false);
-      }),
-      setClipboard: genPropDesc(function setClipboard(args) {
+      },
+
+      setClipboard: function setClipboard(args) {
         callbacks.sendMessage('setClipboard', args, false);
-      }),
-      navigateTo: genPropDesc(function navigateTo(args) {
+      },
+
+      navigateTo: function navigateTo(args) {
         callbacks.sendMessage('navigateTo', args, false);
-      }),
-      userInput: genPropDesc(function userInput() {
-        callbacks.sendMessage('userInput', null, true);
-      }),
-      loadSystemResource: genPropDesc(function loadSystemResource(id) {
+      },
+
+      loadSystemResource: function loadSystemResource(id) {
         loadShumwaySystemResource(id).then(function (data) {
-          if (shumwayComAdapter.onSystemResourceCallback) {
-            shumwayComAdapter.onSystemResourceCallback(id,
-              Components.utils.cloneInto(data, content));
+          if (onSystemResourceCallback) {
+            onSystemResourceCallback(id, Components.utils.cloneInto(data, content));
           }
         });
-      }),
-      setupComBridge: genPropDesc(setupComBridge),
-      postSyncMessage: genPropDesc(function postSyncMessage(msg) {
-        return Components.utils.cloneInto(shumwayComAdapter._onSyncMessage(msg), content);
-      })
-    });
+      },
 
-    Object.defineProperties(shumwayComAdapter, {
-      onLoadFileCallback: genPropDesc(null),
-      onExternalCallback: genPropDesc(null),
-      onSystemResourceCallback: genPropDesc(null),
-      onSyncMessage: genPropDesc(null)
-    });
+      postSyncMessage: function (msg) {
+        var result = postSyncMessage(msg);
+        return Components.utils.cloneInto(result, content)
+      },
 
-    Object.defineProperties(shumwayComAdapter, {
-      createSpecialStorage: genPropDesc(function () {
+      createSpecialStorage: function () {
         var environment = callbacks.getEnvironment();
         return SpecialStorageUtils.createWrappedSpecialStorage(content,
           environment.swfUrl, environment.privateBrowsing);
-      })
-    });
+      },
+
+      setLoadFileCallback: function (callback) {
+        onLoadFileCallback = callback;
+      },
+      setExternalCallback: function (callback) {
+        onExternalCallback = callback;
+      },
+      setSystemResourceCallback: function (callback) {
+        onSystemResourceCallback = callback;
+      }
+    };
 
     // Exposing createSpecialInflate function for DEFLATE stream decoding using
     // Gecko API.
     if (SpecialInflateUtils.isSpecialInflateEnabled) {
-      Object.defineProperties(shumwayComAdapter, {
-        createSpecialInflate: genPropDesc(function () {
-          return SpecialInflateUtils.createWrappedSpecialInflate(content);
-        })
-      });
+      wrapped.createSpecialInflate = function () {
+        return SpecialInflateUtils.createWrappedSpecialInflate(content);
+      };
     }
 
     // Exposing createRtmpSocket/createRtmpXHR functions to support RTMP stream
     // functionality.
     if (RtmpUtils.isRtmpEnabled) {
-      Object.defineProperties(shumwayComAdapter, {
-        createRtmpSocket: genPropDesc(function (params) {
-          return RtmpUtils.createSocket(content, params);
-        }),
-        createRtmpXHR: genPropDesc(function () {
-          return RtmpUtils.createXHR(content);
-        })
-      });
+      wrapped.createRtmpSocket = function (params) {
+        return RtmpUtils.createSocket(content, params);
+      };
+      wrapped.createRtmpXHR = function () {
+        return RtmpUtils.createXHR(content);
+      };
     }
 
-    Components.utils.makeObjectPropsNormal(shumwayComAdapter);
-    return shumwayComAdapter;
+    var onSystemResourceCallback;
+    var onExternalCallback;
+    var onLoadFileCallback;
+
+    hooks.onLoadFileCallback = function (arg) {
+      if (onLoadFileCallback) {
+        onLoadFileCallback(Components.utils.cloneInto(arg, content));
+      }
+    };
+    hooks.onExternalCallback = function (call) {
+      if (onExternalCallback) {
+        return onExternalCallback(Components.utils.cloneInto(call, content));
+      }
+    };
+
+    var shumwayComAdapter = Components.utils.cloneInto(wrapped, content, {cloneFunctions:true});
+    content.ShumwayCom = shumwayComAdapter;
   },
 
   createActions: function (startupInfo, window, document) {
