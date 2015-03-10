@@ -659,9 +659,9 @@ module Shumway.ArrayUtilities {
       this._verifyHeader = verifyHeader;
 
       this._specialInflate = createSpecialInflate();
-      this._specialInflate.onData = function (data) {
+      this._specialInflate.setDataCallback(function (data) {
         this.onData(data);
-      }.bind(this);
+      }.bind(this));
     }
 
     public push(data: Uint8Array) {

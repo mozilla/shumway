@@ -50,6 +50,7 @@ function initRemoteDebugging() {
 }
 
 var ShumwayCom;
+var shumwayComLoadFileCallback, shumwayComExternalCallback;
 function remoteDebuggerInitServices() {
   window.addEventListener('beforeunload', function(event) {
     if (state.remoteAutoReload) {
@@ -72,8 +73,8 @@ function remoteDebuggerInitServices() {
     loadFile: function (args) { remoteDebuggerSendMessage('loadFile', args, true); },
     navigateTo: function (args) { remoteDebuggerSendMessage('navigateTo', args, true); },
 
-    onLoadFileCallback: null,
-    onExternalCallback: null
+    setLoadFileCallback: function (callback) { shumwayComLoadFileCallback = callback; },
+    setExternalCallback: function (callback) { shumwayComExternalCallback = callback; }
   };
 }
 
@@ -98,11 +99,11 @@ function remoteDebugger_onData(data) {
       break;
     case 'onExternalCallback':
       var call = data.detail;
-      ShumwayCom.onExternalCallback(call);
+      shumwayComExternalCallback(call);
       break;
     case 'onLoadFileCallback':
       var args = data.detail;
-      ShumwayCom.onLoadFileCallback(args);
+      shumwayComLoadFileCallback(args);
       break;
   }
 }

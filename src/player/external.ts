@@ -24,9 +24,9 @@ module Shumway.Player {
 
     initJS(callback: (functionName: string, args: any[]) => any) {
       ShumwayCom.externalCom({action: 'init'});
-      ShumwayCom.onExternalCallback = function (call) {
+      ShumwayCom.setExternalCallback(function (call) {
         return callback(call.functionName, call.args);
-      };
+      });
       this._externalCallback = callback;
     }
 
@@ -64,12 +64,12 @@ module Shumway.Player {
     public init(baseUrl: string): void {
       this._baseUrl = baseUrl;
       var service = this;
-      ShumwayCom.onLoadFileCallback = function (args) {
+      ShumwayCom.setLoadFileCallback(function (args) {
         var session = service._sessions[args.sessionId];
         if (session) {
           service._notifySession(session, args);
         }
-      };
+      });
     }
 
     private _notifySession(session: FileLoadingSession, args): void {
@@ -192,7 +192,7 @@ module Shumway.Player {
         this.load(SystemResourceId.PlayerglobalManifest);
       }
 
-      ShumwayCom.onSystemResourceCallback = this._onSystemResourceCallback.bind(this);
+      ShumwayCom.setSystemResourceCallback(this._onSystemResourceCallback.bind(this));
     }
 
     private _onSystemResourceCallback(id: SystemResourceId, data: any): void {

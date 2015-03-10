@@ -16,8 +16,8 @@
 
 declare var ShumwayCom: {
   createSpecialInflate: () => SpecialInflate;
-  createRtmpSocket: (options) => any;
-  createRtmpXHR: () => XMLHttpRequest;
+  createRtmpSocket: (options: {host: string; port: number; ssl: boolean}) => RtmpSocket;
+  createRtmpXHR: () => RtmpXHR;
   createSpecialStorage: () => SpecialStorage;
   userInput: () => void;
   fallback: () => void;
@@ -36,10 +36,10 @@ declare var ShumwayCom: {
   setupComBridge: (playerWindow: any) => void;
   postSyncMessage: (data: any) => any;
 
-  onLoadFileCallback: (data) => void;
-  onExternalCallback: (call) => any;
-  onSystemResourceCallback: (id: number, data: any) => void;
-  onSyncMessage: (data: any) => any;
+  setLoadFileCallback: (callback: (data) => void) => void;
+  setExternalCallback: (callback: (call) => any) => void;
+  setSystemResourceCallback: (callback: (id: number, data: any) => void) => void;
+  setSyncMessageCallback: (callback: (data: any) => any) => void;
 };
 
 interface SpecialStorage {
@@ -49,8 +49,31 @@ interface SpecialStorage {
 }
 
 interface SpecialInflate {
-  onData: (data: Uint8Array) => void;
+  setDataCallback(callback: (data: Uint8Array) => void): void;
   push(data: Uint8Array);
   close();
 }
 
+interface RtmpSocket {
+  setOpenCallback(callback: () => void): void;
+  setDataCallback(callback: (e: {data: ArrayBuffer}) => void): void;
+  setDrainCallback(callback: () => void): void;
+  setErrorCallback(callback: (e: any) => void): void;
+  setCloseCallback(callback: () => void): void;
+
+  send(buffer: ArrayBuffer, offset: number, count: number): boolean;
+  close(): void;
+}
+
+interface RtmpXHR {
+  status: number;
+  response: any;
+  responseType: string;
+
+  setLoadCallback(callback: () => void): void;
+  setErrorCallback(callback: () => void): void;
+
+  open(method: string, path: string, async?: boolean): void;
+  setRequestHeader(header: string, value: string): void;
+  send(data?: any): void;
+}

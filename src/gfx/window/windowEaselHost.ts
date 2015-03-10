@@ -38,10 +38,10 @@ module Shumway.GFX.Window {
         this.onWindowMessage(e.data);
       }.bind(this));
       if (typeof ShumwayCom !== 'undefined') {
-        ShumwayCom.onSyncMessage = function (msg) {
+        ShumwayCom.setSyncMessageCallback(function (msg) {
           this.onWindowMessage(msg, false);
           return msg.result;
-        }.bind(this);
+        }.bind(this));
       } else {
         this._window.addEventListener('syncmessage', function (e) {
           this.onWindowMessage(e.detail, false);
