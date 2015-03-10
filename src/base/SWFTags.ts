@@ -129,6 +129,8 @@ module Shumway.SWF.Parser {
     CODE_DEFINE_SPRITE                     = 39,
     CODE_DEFINE_MORPH_SHAPE                = 46,
     CODE_DEFINE_FONT2                      = 48,
+    // We don't support DefineVideoStream tags for now so leave the next line commented to make the
+    // parser log a message if such a tag is encountered.
     // CODE_DEFINE_VIDEO_STREAM            = 60,
     CODE_DEFINE_FONT3                      = 75,
     CODE_DEFINE_SHAPE4                     = 83,

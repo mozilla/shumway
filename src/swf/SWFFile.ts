@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 module Shumway.SWF {
   import assert = Shumway.Debug.assert;
 
@@ -211,6 +211,7 @@ module Shumway.SWF {
         // Parts of the header are compressed. Get those out of the way before starting tag parsing.
         this._decompressor.onData = this.processFirstBatchOfDecompressedData.bind(this);
         this._decompressor.onError = function (error) {
+          // TODO: Let the loader handle this error.
           throw new Error(error);
         }
         this._decompressor.push(initialBytes.subarray(8));
@@ -220,6 +221,7 @@ module Shumway.SWF {
         this._decompressor = new LzmaDecoder(true);
         this._decompressor.onData = this.processFirstBatchOfDecompressedData.bind(this);
         this._decompressor.onError = function (error) {
+          // TODO: Let the loader handle this error.
           throw new Error(error);
         }
         this._decompressor.push(initialBytes);
@@ -401,7 +403,7 @@ module Shumway.SWF {
             var abcBlock = new ABCBlock();
             if (tagCode === SWFTag.CODE_DO_ABC) {
               abcBlock.flags = Parser.readUi32(this.data, stream);
-              abcBlock.name = Parser.readString(this.data, stream);
+              abcBlock.name = Parser.readString(this.data, stream, -1);
             }
             else {
               abcBlock.flags = 0;
@@ -420,7 +422,7 @@ module Shumway.SWF {
           // TODO: check if symbols can be reassociated after instances have been created.
           while (symbolCount--) {
             var symbolId = Parser.readUi16(this.data, stream);
-            var symbolClassName = Parser.readString(this.data, stream);
+            var symbolClassName = Parser.readString(this.data, stream, -1);
             if (!release && traceLevel.value > 0) {
               console.log('Registering symbol class ' + symbolClassName + ' to symbol ' + symbolId);
             }
@@ -457,7 +459,7 @@ module Shumway.SWF {
           break;
         case SWFTag.CODE_FRAME_LABEL:
           var tagEnd = stream.pos + tagLength;
-          this._currentFrameLabel = Parser.readString(this.data, stream);
+          this._currentFrameLabel = Parser.readString(this.data, stream, -1);
           // TODO: support SWF6+ anchors.
           stream.pos = tagEnd;
           break;
@@ -472,7 +474,7 @@ module Shumway.SWF {
           var exports = this._currentExports || (this._currentExports = []);
           while (exportsCount--) {
             var symbolId = Parser.readUi16(this.data, stream);
-            var className = Parser.readString(this.data, stream);
+            var className = Parser.readString(this.data, stream, -1);
             if (stream.pos > tagEnd) {
               stream.pos = tagEnd;
               break;
@@ -591,7 +593,7 @@ module Shumway.SWF {
             break;
           case SWFTag.CODE_FRAME_LABEL:
             var tagEnd = stream.pos + tagLength;
-            label = Parser.readString(data, stream);
+            label = Parser.readString(data, stream, -1);
             // TODO: support SWF6+ anchors.
             stream.pos = tagEnd;
             tagLength = 0;

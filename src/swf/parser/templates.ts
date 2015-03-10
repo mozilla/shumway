@@ -127,10 +127,10 @@ module Shumway.SWF.Parser {
     return readSb($bytes, $stream, size) / 65536;
   }
 
-  export function readString($bytes, $stream, length?) {
+  export function readString($bytes, $stream, length) {
     var codes: Uint8Array;
     var pos = $stream.pos;
-    if (length !== undefined) {
+    if (length > -1) {
       codes = $bytes.subarray(pos, pos += length);
     } else {
       length = 0;

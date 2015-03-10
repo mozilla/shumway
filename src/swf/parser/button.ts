@@ -31,7 +31,8 @@ module Shumway.SWF.Parser {
       if (character.eob)
         break;
       var characterItem = dictionary[character.symbolId];
-      // The Flash Player ignores references to not defined symbols here. So should we.
+      // The Flash Player ignores references to undefined symbols here. So should we.
+      // TODO: What should happen if the symbol gets defined later in the file?
       if (characterItem) {
         var cmd = {
           symbolId: characterItem.id,
