@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 module Shumway.SWF {
   import assert = Shumway.Debug.assert;
 
@@ -177,16 +177,11 @@ module Shumway.SWF {
       var tag: any = {code: unparsed.tagCode};
       var handler = Parser.LowLevel.tagHandlers[unparsed.tagCode];
       release || Debug.assert(handler, 'handler shall exists here');
-      var tagEnd = unparsed.byteOffset + unparsed.byteLength;
+      var tagEnd = Math.min(unparsed.byteOffset + unparsed.byteLength, this._dataStream.end);
       handler(this.data, this._dataStream, tag, this.swfVersion, unparsed.tagCode, tagEnd);
       var finalPos = this._dataStream.pos;
-      release || assert(finalPos <= tagEnd);
-      if (finalPos < tagEnd) {
-        var consumedBytes = finalPos - unparsed.byteOffset;
-        Debug.warning('Scanning ' + SWFTag[unparsed.tagCode] + ' at offset ' +
-                      unparsed.byteOffset + ' consumed ' + consumedBytes + ' of ' +
-                      unparsed.byteLength + ' bytes. (' + (tagEnd - finalPos) + ' left)');
-        this._dataStream.pos = tagEnd;
+      if (finalPos !== tagEnd) {
+        this.emitTagSlopWarning(unparsed, tagEnd);
       }
       var symbol = defineSymbol(tag, this.dictionary);
       SWF.leaveTimeline();
@@ -202,7 +197,10 @@ module Shumway.SWF {
       this._loadStarted = Date.now();
       this._uncompressedLength = readSWFLength(initialBytes);
       this.bytesLoaded = initialBytes.length;
-      this.data = new Uint8Array(this._uncompressedLength);
+      // In some malformed SWFs, the parsed length in the header doesn't exactly match the actual size of the file. For
+      // uncompressed files it seems to be safer to make the buffer large enough from the beginning to fit the entire
+      // file than having to resize it later or risking an exception when reading out of bounds.
+      this.data = new Uint8Array(this.isCompressed ? this._uncompressedLength : this.bytesTotal);
       this._dataStream = new Stream(this.data.buffer);
       this._dataStream.pos = 8;
       this._dataView = <DataView><any>this._dataStream;
@@ -212,12 +210,20 @@ module Shumway.SWF {
         this._decompressor = Inflate.create(true);
         // Parts of the header are compressed. Get those out of the way before starting tag parsing.
         this._decompressor.onData = this.processFirstBatchOfDecompressedData.bind(this);
+        this._decompressor.onError = function (error) {
+          // TODO: Let the loader handle this error.
+          throw new Error(error);
+        }
         this._decompressor.push(initialBytes.subarray(8));
       } else if (isLzmaCompressed) {
         this.data.set(initialBytes.subarray(0, 8));
         this._uncompressedLoadedLength = 8;
         this._decompressor = new LzmaDecoder(true);
         this._decompressor.onData = this.processFirstBatchOfDecompressedData.bind(this);
+        this._decompressor.onError = function (error) {
+          // TODO: Let the loader handle this error.
+          throw new Error(error);
+        }
         this._decompressor.push(initialBytes);
       } else {
         this.data.set(initialBytes);
@@ -238,15 +244,18 @@ module Shumway.SWF {
     }
 
     private processFirstBatchOfDecompressedData(data: Uint8Array) {
-      this.data.set(data, this._uncompressedLoadedLength);
-      this._uncompressedLoadedLength += data.length;
+      this.processDecompressedData(data);
       this.parseHeaderContents();
       this._decompressor.onData = this.processDecompressedData.bind(this);
     }
 
     private processDecompressedData(data: Uint8Array) {
-      this.data.set(data, this._uncompressedLoadedLength);
-      this._uncompressedLoadedLength += data.length;
+      // Make sure we don't cause an exception here when trying to set out-of-bound data by clamping the number of bytes
+      // to write to the remaining space in our buffer. If this is the case, we probably got a wrong file length from
+      // the SWF header. The Flash Player ignores data that goes over that given length, so should we.
+      var length = Math.min(data.length, this._uncompressedLength - this._uncompressedLoadedLength);
+      ArrayUtilities.memCopy(this.data, data, this._uncompressedLoadedLength, 0, length);
+      this._uncompressedLoadedLength += length;
     }
 
     private scanLoadedData() {
@@ -280,8 +289,7 @@ module Shumway.SWF {
           return;
         }
         this.scanTag(tempTag, rootTimelineMode);
-        release || assert(this._dataStream.pos <= tagEnd);
-        if (this._dataStream.pos < tagEnd) {
+        if (this._dataStream.pos !== tagEnd) {
           this.emitTagSlopWarning(tempTag, tagEnd);
         }
       }
@@ -335,9 +343,8 @@ module Shumway.SWF {
         var spriteTagEnd = byteOffset + tagLength;
         stream.pos += 4; // Jump over symbol ID and frameCount.
         this.scanTagsToOffset(spriteTagEnd, false);
-        if (this._dataStream.pos < tagEnd) {
-          this.emitTagSlopWarning(tag, tagEnd);
-          stream.pos = spriteTagEnd;
+        if (this._dataStream.pos !== spriteTagEnd) {
+          this.emitTagSlopWarning(tag, spriteTagEnd);
         }
         return;
       }
@@ -396,7 +403,7 @@ module Shumway.SWF {
             var abcBlock = new ABCBlock();
             if (tagCode === SWFTag.CODE_DO_ABC) {
               abcBlock.flags = Parser.readUi32(this.data, stream);
-              abcBlock.name = Parser.readString(this.data, stream, 0);
+              abcBlock.name = Parser.readString(this.data, stream, -1);
             }
             else {
               abcBlock.flags = 0;
@@ -415,7 +422,7 @@ module Shumway.SWF {
           // TODO: check if symbols can be reassociated after instances have been created.
           while (symbolCount--) {
             var symbolId = Parser.readUi16(this.data, stream);
-            var symbolClassName = Parser.readString(this.data, stream, 0);
+            var symbolClassName = Parser.readString(this.data, stream, -1);
             if (!release && traceLevel.value > 0) {
               console.log('Registering symbol class ' + symbolClassName + ' to symbol ' + symbolId);
             }
@@ -444,7 +451,7 @@ module Shumway.SWF {
           break;
         case SWFTag.CODE_SOUND_STREAM_HEAD:
         case SWFTag.CODE_SOUND_STREAM_HEAD2:
-          var soundStreamTag = Parser.LowLevel.soundStreamHead(this.data, this._dataStream);
+          var soundStreamTag = Parser.LowLevel.soundStreamHead(this.data, this._dataStream, byteOffset + tagLength);
           this._currentSoundStreamHead = Parser.SoundStream.FromTag(soundStreamTag);
           break;
         case SWFTag.CODE_SOUND_STREAM_BLOCK:
@@ -452,7 +459,7 @@ module Shumway.SWF {
           break;
         case SWFTag.CODE_FRAME_LABEL:
           var tagEnd = stream.pos + tagLength;
-          this._currentFrameLabel = Parser.readString(this.data, stream, 0);
+          this._currentFrameLabel = Parser.readString(this.data, stream, -1);
           // TODO: support SWF6+ anchors.
           stream.pos = tagEnd;
           break;
@@ -467,7 +474,7 @@ module Shumway.SWF {
           var exports = this._currentExports || (this._currentExports = []);
           while (exportsCount--) {
             var symbolId = Parser.readUi16(this.data, stream);
-            var className = Parser.readString(this.data, stream, 0);
+            var className = Parser.readString(this.data, stream, -1);
             if (stream.pos > tagEnd) {
               stream.pos = tagEnd;
               break;
@@ -586,7 +593,7 @@ module Shumway.SWF {
             break;
           case SWFTag.CODE_FRAME_LABEL:
             var tagEnd = stream.pos + tagLength;
-            label = Parser.readString(data, stream, 0);
+            label = Parser.readString(data, stream, -1);
             // TODO: support SWF6+ anchors.
             stream.pos = tagEnd;
             tagLength = 0;
@@ -669,6 +676,7 @@ module Shumway.SWF {
     private setSceneAndFrameLabelData(tagLength: number) {
       if (this.sceneAndFrameLabelData) {
         this.jumpToNextTag(tagLength);
+        return;
       }
       this.sceneAndFrameLabelData = Parser.LowLevel.defineScene(this.data, this._dataStream, null);
     }
@@ -827,7 +835,7 @@ module Shumway.SWF {
 
   function readSWFLength(bytes: Uint8Array) {
     // We read the length manually because creating a DataView just for that is silly.
-    return bytes[4] | bytes[5] << 8 | bytes[6] << 16 | bytes[7] << 24;
+    return (bytes[4] | bytes[5] << 8 | bytes[6] << 16 | bytes[7] << 24) >>> 0;
   }
 
   function defineSymbol(swfTag, symbols) {

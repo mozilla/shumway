@@ -104,8 +104,17 @@ module Shumway.ArrayUtilities {
       var position = 0;
       var inflate = Inflate.create(zlibHeader);
       inflate.onData = function (data) {
-        output.set(data, position);
-        position += data.length;
+        // Make sure we don't cause an exception here when trying to set out-of-bound data by clamping the number of
+        // bytes to write to the remaining space in our output buffer. The Flash Player ignores data that goes over the
+        // expected length, so should we.
+        var length = Math.min(data.length, output.length - position);
+        if (length) {
+          memCopy(output, data, position, 0, length);
+        }
+        position += length;
+      };
+      inflate.onError = function (error) {
+        throw new Error(error);
       };
       inflate.push(data);
       inflate.close();
