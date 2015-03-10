@@ -938,10 +938,10 @@ module Shumway.AVMX.AS {
       // Use TS constructor as the initializer function.
       return <any>asClass;
     }
-    // TODO: Assert eagerly.
-    return function () {
-      release || assert (!methodInfo.isNative(), "Must supply a constructor for " + classInfo + ".");
-    }
+    //// TODO: Assert eagerly.
+    //return function () {
+    //  release || assert (!methodInfo.isNative(), "Must supply a constructor for " + classInfo + ".");
+    //}
     return null;
   }
 
