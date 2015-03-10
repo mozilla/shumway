@@ -49,7 +49,7 @@ module Shumway.AVMX.AS {
 
   import Multiname = Shumway.AVMX.Multiname;
 
-  var writer = null; // new IndentingWriter();
+  var writer = new IndentingWriter();
 
 
   /**
@@ -139,8 +139,8 @@ module Shumway.AVMX.AS {
     static axResolveMultiname: (mn: Multiname) => any;
     static axHasProperty: (mn: Multiname) => boolean;
     static axDeleteProperty: (mn: Multiname) => boolean;
-    static axCallProperty: (mn: Multiname, argsArray: any []) => any;
-    static axCallSuper: (mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argsArray: any []) => any;
+    static axCallProperty: (mn: Multiname, argArray: any []) => any;
+    static axCallSuper: (mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argArray: any []) => any;
     static axConstructProperty: (mn: Multiname, args: any []) => any;
     static axHasPropertyInternal: (mn: Multiname) => boolean;
     static axHasOwnProperty: (mn: Multiname) => boolean;
@@ -154,6 +154,10 @@ module Shumway.AVMX.AS {
     static axHasPublicProperty: (nm: any) => boolean;
     static axSetPublicProperty: (nm: any, value: any) => void;
     static axGetPublicProperty: (nm: any) => any;
+
+    static axSetNumericProperty: (nm: number, value: any) => void;
+    static axGetNumericProperty: (nm: number) => any;
+
     static axCoerce: (v: any) => any;
     static axConstruct: (argArray?: any []) => any;
 
@@ -201,8 +205,8 @@ module Shumway.AVMX.AS {
       return this.axHasPropertyInternal(mn);
     }
 
-    axHasPublicProperty(name: any): boolean {
-      rn.name = name;
+    axHasPublicProperty(nm: any): boolean {
+      rn.name = nm;
       return this.axHasProperty(rn);
     }
 
@@ -268,13 +272,13 @@ module Shumway.AVMX.AS {
       return result;
     }
 
-    axGetPublicProperty(name: any): any {
-      return this[Multiname.getPublicMangledName(name)];
+    axGetPublicProperty(nm: any): any {
+      return this[Multiname.getPublicMangledName(nm)];
     }
 
-    axSetPublicProperty(name: any, value: any) {
+    axSetPublicProperty(nm: any, value: any) {
       release || checkValue(value);
-      this[Multiname.getPublicMangledName(name)] = value;
+      this[Multiname.getPublicMangledName(nm)] = value;
     }
 
     axGetSlot(i: number): any {
@@ -335,6 +339,14 @@ module Shumway.AVMX.AS {
 
     axNextValue(index: number): any {
       return this.axGetPublicProperty(this.axNextName(index));
+    }
+
+    axSetNumericProperty(nm: number, value: any) {
+      this.axSetPublicProperty(nm, value);
+    }
+
+    axGetNumericProperty(nm: number): any {
+      return this.axGetPublicProperty(nm);
     }
 
     axEnumerableKeys: any [];
@@ -604,6 +616,22 @@ module Shumway.AVMX.AS {
       }
       return delete this[mn.getPublicMangledName()];
     }
+
+    axGetPublicProperty(nm: any): any {
+      if (isNumeric(nm)) {
+        return this.value[nm];
+      }
+      return this[Multiname.getPublicMangledName(nm)];
+    }
+
+    axSetPublicProperty(nm: any, value: any) {
+      release || checkValue(value);
+      if (isNumeric(nm)) {
+        this.value[nm] = value;
+        return;
+      }
+      this[Multiname.getPublicMangledName(nm)] = value;
+    }
   }
 
   export class ASFunction extends ASObject {
@@ -827,9 +855,8 @@ module Shumway.AVMX.AS {
 
     builtinNativeClasses["Vector$object"]       = GenericVector;
     builtinNativeClasses["Vector$int"]          = Int32Vector;
-    builtinNativeClasses["Vector$uint"]         = Int32Vector; // FIXME
-    builtinNativeClasses["Vector$double"]       = Int32Vector; // FIXME
-
+    builtinNativeClasses["Vector$uint"]         = Uint32Vector;
+    builtinNativeClasses["Vector$double"]       = Float64Vector;
 
     builtinNativeClasses["Math"]                = ASMath;
 

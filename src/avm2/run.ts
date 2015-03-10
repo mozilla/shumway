@@ -6,8 +6,8 @@ interface IMetaobjectProtocol {
   axHasProperty(mn: Shumway.AVMX.Multiname): boolean;
   axDeleteProperty(mn: Shumway.AVMX.Multiname): boolean;
 
-  axCallProperty(mn: Shumway.AVMX.Multiname, argsArray: any []): any;
-  axCallSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argsArray: any []): any;
+  axCallProperty(mn: Shumway.AVMX.Multiname, argArray: any []): any;
+  axCallSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argArray: any []): any;
   axConstructProperty(mn: Shumway.AVMX.Multiname, args: any []): any;
   axHasPropertyInternal(mn: Shumway.AVMX.Multiname): boolean;
   axHasOwnProperty(mn: Shumway.AVMX.Multiname): boolean;
@@ -25,6 +25,9 @@ interface IMetaobjectProtocol {
   axHasPublicProperty(nm: any): boolean;
   axSetPublicProperty(nm: any, value: any);
   axGetPublicProperty(nm: any): any;
+
+  axSetNumericProperty(nm: number, value: any);
+  axGetNumericProperty(nm: number): any;
 
   axGetSlot(i: number): any;
   axSetSlot(i: number, value: any);
@@ -344,6 +347,18 @@ module Shumway.AVMX {
   export function checkValue(value: any) {
     release || assert(isValidASValue(value),
                       "Value: " + value + " is not allowed to flow into AS3.");
+  }
+
+  export function asCheckVectorSetNumericProperty(i: number, length: number, fixed: boolean) {
+    if (i < 0 || i > length || (i === length && fixed) || !isNumeric(i)) {
+      this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, i, length);
+    }
+  }
+
+  export function asCheckVectorGetNumericProperty(i: number, length: number) {
+    if (i < 0 || i >= length || !isNumeric(i)) {
+      this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, i, length);
+    }
   }
 
   var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [Namespace.PUBLIC], null);
