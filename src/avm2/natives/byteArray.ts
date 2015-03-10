@@ -166,8 +166,9 @@ module Shumway.AVMX.AS {
       asGetNumericProperty: (name: number) => number;
       asSetNumericProperty: (name: number, value: number) => void;
 
-//      readBytes: (bytes: flash.utils.ByteArray, offset: number, length: number) => void = DataBuffer.prototype.readByte;
-//      writeBytes: (bytes: flash.utils.ByteArray, offset: number, length: number) => void = DataBuffer.prototype.writeBytes;
+//      readBytes: (bytes: flash.utils.ByteArray, offset: number, length: number) => void =
+// DataBuffer.prototype.readByte; writeBytes: (bytes: flash.utils.ByteArray, offset: number,
+// length: number) => void = DataBuffer.prototype.writeBytes;
 
       readBytes: (bytes: flash.utils.ByteArray, offset?: number /*uint*/, length?: number /*uint*/) => void;
       readBoolean: () => boolean;
@@ -225,23 +226,35 @@ module Shumway.AVMX.AS {
       length: number;
 
       axGetProperty(mn: Multiname): any {
-        if (isNumeric(mn.name)) {
-          var self = <any>this;
-          return self.getValue(mn.name);
+        // Optimization for the common case of indexed element accesses.
+        if (typeof mn.name === 'number') {
+          release || assert(mn.isRuntimeName());
+          return (<any>this).getValue(mn.name);
         }
-        var t = this.traits.getTrait(mn);
+        var name = asCoerceName(mn.name);
+        if (mn.isRuntimeName() && isNumeric(name)) {
+          return (<any>this).getValue(name);
+        }
+        var t = this.traits.getTrait(mn.namespaces, name);
         if (t) {
           return this[t.name.getMangledName()];
         }
       }
 
       axSetProperty(mn: Multiname, value: any): void {
-        if (isNumeric(mn.name)) {
-          var self = <any>this;
-          self.setValue(mn.name, value);
+        release || checkValue(value);
+        // Optimization for the common case of indexed element accesses.
+        if (typeof mn.name === 'number') {
+          release || assert(mn.isRuntimeName());
+          (<any>this).setValue(mn.name, value);
           return;
         }
-        var t = this.traits.getTrait(mn);
+        var name = asCoerceName(mn.name);
+        if (mn.isRuntimeName() && isNumeric(name)) {
+          (<any>this).setValue(name, value);
+          return;
+        }
+        var t = this.traits.getTrait(mn.namespaces, name);
         if (t) {
           this[t.name.getMangledName()] = value;
         }

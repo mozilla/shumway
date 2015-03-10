@@ -418,9 +418,8 @@ module Shumway.AVMX {
       return -1;
     }
 
-    getTrait(mn: Multiname): RuntimeTraitInfo {
-      var name = mn.name.toString();
-      var namespaces = mn.namespaces;
+    getTrait(namespaces: Namespace[], name: string): RuntimeTraitInfo {
+      release || assert(typeof name === 'string');
       var trait: RuntimeTraitInfo = this.protectedNsMappings[name];
       if (trait) {
         for (var i = 0; i < namespaces.length; i++) {
@@ -910,14 +909,14 @@ module Shumway.AVMX {
 
     public getMangledName(): string {
       assert (this.isQName());
-      return "$" + this.namespaces[0].getMangledName() + this.name;
+      return "$" + this.namespaces[0].getMangledName() + this.name.toString();
     }
 
     public getPublicMangledName(): any {
       if (isNumeric(this.name)) {
         return this.name;
       }
-      return "$Bg" + this.name;
+      return "$Bg" + this.name.toString();
     }
 
     public static isPublicQualifiedName(value: any): boolean {

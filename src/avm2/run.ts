@@ -204,6 +204,19 @@ module Shumway.AVMX {
     return x + '';
   }
 
+  /**
+   * Same as |asCoerceString| except for returning "null" instead of |null| for
+   * |null| or |undefined|, and calls |toString| instead of (implicitly) |valueOf|.
+   */
+  export function asCoerceName(x): string {
+    if (typeof x === "string") {
+      return x;
+    } else if (x == undefined) {
+      return 'null';
+    }
+    return x.toString();
+  }
+
   export function asConvertString(x): string {
     if (typeof x === "string") {
       return x;
@@ -383,7 +396,7 @@ module Shumway.AVMX {
 
   function axIsTypeObject(x: any) {
     // FIXME
-    return Object.isPrototypeOf.call(this.dPrototype, this.securityDomain.box(x));
+    return this.dPrototype.isPrototypeOf(this.securityDomain.box(x));
   }
 
   function axAsType(x: any): any {
@@ -391,7 +404,7 @@ module Shumway.AVMX {
   }
 
   function axIsInstanceOfObject(x: any) {
-    return Object.isPrototypeOf.call(this.dPrototype, this.securityDomain.box(x));
+    return this.dPrototype.isPrototypeOf(this.securityDomain.box(x));
   }
 
   /**

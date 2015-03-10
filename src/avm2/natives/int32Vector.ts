@@ -17,12 +17,13 @@
 /**
  * TypedArray Vector Template
  *
- * If you make any changes to this code you'll need to regenerate uint32Vector.ts & float64Vector.ts. We duplicate all
- * the code for vectors because we want to keep things monomorphic as much as possible.
+ * If you make any changes to this code you'll need to regenerate uint32Vector.ts &
+ * float64Vector.ts. We duplicate all the code for vectors because we want to keep things
+ * monomorphic as much as possible.
  *
- * NOTE: Not all of the AS3 methods need to be implemented natively, some are self-hosted in AS3 code.
- * For better performance we should probably implement them all natively (in JS that is) unless our
- * compiler is good enough.
+ * NOTE: Not all of the AS3 methods need to be implemented natively, some are self-hosted in AS3
+ * code. For better performance we should probably implement them all natively (in JS that is)
+ * unless our compiler is good enough.
  */
 
 module Shumway.AVMX.AS {
@@ -193,8 +194,8 @@ module Shumway.AVMX.AS {
         var vector: Int32Vector = arguments[i];
         if (!(vector._buffer instanceof Int32Array)) {
           assert(false); // TODO
-          // this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
-          //                               '__AS3__.vec.Vector.<int>');
+          // this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError,
+          // vector.constructor.name, '__AS3__.vec.Vector.<int>');
         }
         length += vector._length;
       }
@@ -215,9 +216,9 @@ module Shumway.AVMX.AS {
     }
 
     /**
-     * Executes a |callback| function with three arguments: element, index, the vector itself as well
-     * as passing the |thisObject| as |this| for each of the elements in the vector. If any of the
-     * callbacks return |false| the function terminates, otherwise it returns |true|.
+     * Executes a |callback| function with three arguments: element, index, the vector itself as
+     * well as passing the |thisObject| as |this| for each of the elements in the vector. If any of
+     * the callbacks return |false| the function terminates, otherwise it returns |true|.
      */
     every(callback, thisObject) {
       for (var i = 0; i < this._length; i++) {
@@ -230,8 +231,8 @@ module Shumway.AVMX.AS {
 
     /**
      * Filters the elements for which the |callback| method returns |true|. The |callback| function
-     * is called with three arguments: element, index, the vector itself as well as passing the |thisObject|
-     * as |this| for each of the elements in the vector.
+     * is called with three arguments: element, index, the vector itself as well as passing the
+     * |thisObject| as |this| for each of the elements in the vector.
      */
     filter(callback, thisObject) {
       var v = new Int32Vector();
@@ -480,43 +481,67 @@ module Shumway.AVMX.AS {
     }
 
     axGetProperty(mn: Multiname): any {
-      if (isNumeric(mn.name)) {
+      // Optimization for the common case of indexed element accesses.
+      if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
         return this.axGetNumericProperty(mn.name);
       }
-      var t = this.traits.getTrait(mn);
+      var name = asCoerceName(mn.name);
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        return this.axGetNumericProperty(+name);
+      }
+      var t = this.traits.getTrait(mn.namespaces, name);
       if (t) {
         return this[t.name.getMangledName()];
       }
-      return this[mn.getPublicMangledName()];
+      return this['$Bg' + name];
     }
 
     axSetProperty(mn: Multiname, value: any) {
-      if (isNumeric(mn.name)) {
+      release || checkValue(value);
+      // Optimization for the common case of indexed element accesses.
+      if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
         this.axSetNumericProperty(mn.name, value);
         return;
       }
-      var t = this.traits.getTrait(mn);
+      var name = asCoerceName(mn.name);
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        this.axSetNumericProperty(+name, value);
+        return;
+      }
+      var t = this.traits.getTrait(mn.namespaces, name);
       if (t) {
         this[t.name.getMangledName()] = value;
         return;
       }
-      this[mn.getPublicMangledName()] = value;
+      this['$Bg' + name] = value;
     }
 
     axGetPublicProperty(nm: any): any {
-      if (isNumeric(nm)) {
+      // Optimization for the common case of indexed element accesses.
+      if (typeof nm === 'number') {
         return this.axGetNumericProperty(nm);
       }
-      return this[Multiname.getPublicMangledName(nm)];
+      var name = asCoerceName(nm);
+      if (isNumeric(name)) {
+        return this.axGetNumericProperty(+name);
+      }
+      return this['$Bg' + name];
     }
 
     axSetPublicProperty(nm: any, value: any) {
       release || checkValue(value);
-      if (isNumeric(nm)) {
-        this.axSetPublicProperty(nm, value);
+      // Optimization for the common case of indexed element accesses.
+      if (typeof nm === 'number') {
+        return this.axGetNumericProperty(nm);
+      }
+      var name = asCoerceName(nm);
+      if (isNumeric(name)) {
+        this.axSetNumericProperty(+name, value);
         return;
       }
-      this[Multiname.getPublicMangledName(nm)] = value;
+      this['$Bg' + name] = value;
     }
 
     axGetNumericProperty(nm: number) {
@@ -525,6 +550,7 @@ module Shumway.AVMX.AS {
     }
 
     axSetNumericProperty(nm: number, v: any) {
+      release || assert(isNumeric(nm));
       checkArguments && asCheckVectorSetNumericProperty(nm, this._length, this._fixed);
       if (nm === this._length) {
         this._ensureCapacity(this._length + 1);
@@ -534,8 +560,14 @@ module Shumway.AVMX.AS {
     }
 
     axHasPropertyInternal(mn: Multiname): boolean {
-      if (isNumeric(mn.name)) {
-        var index = toNumber(mn.name);
+      // Optimization for the common case of indexed element accesses.
+      if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
+        return mn.name >= 0 && mn.name < this._length;
+      }
+      var name = asCoerceName(mn.name);
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        var index = toNumber(name);
         return index >= 0 && index < this._length;
       }
       return this.axResolveMultiname(mn) in this;

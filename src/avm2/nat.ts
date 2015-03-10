@@ -108,7 +108,7 @@ module Shumway.AVMX.AS {
     return <any>v;
   }
 
-  var rn = new Multiname(null, 0, CONSTANT.RTQNameL, null, null);
+  var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
 
   function makeMultiname(v) {
     rn.name = v;
@@ -190,14 +190,20 @@ module Shumway.AVMX.AS {
     }
 
     axResolveMultiname(mn: Multiname): any {
-      if (mn.isRuntimeName() && isNumeric(mn.name)) {
+      if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
         return mn.name;
       }
-      var t = this.traits.getTrait(mn);
+      var name = asCoerceName(mn.name);
+      var namespaces = mn.namespaces;
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        return name;
+      }
+      var t = this.traits.getTrait(namespaces, name);
       if (t) {
         return t.name.getMangledName();
       }
-      return mn.getPublicMangledName();
+      return '$Bg' + name;
     }
 
     axHasProperty(mn: Multiname): boolean {
@@ -210,7 +216,7 @@ module Shumway.AVMX.AS {
     }
 
     axSetProperty(mn: Multiname, value: any) {
-      release || assert(isValidASValue(value));
+      release || checkValue(value);
       this[this.axResolveMultiname(mn)] = value;
     }
 
@@ -221,7 +227,9 @@ module Shumway.AVMX.AS {
     }
 
     axGetSuper(mn: Multiname, scope: Scope): any {
-      var trait = (<AXClass>scope.parent.object).tPrototype.traits.getTrait(mn);
+      var name = asCoerceName(mn.name);
+      var namespaces = mn.namespaces;
+      var trait = (<AXClass>scope.parent.object).tPrototype.traits.getTrait(namespaces, name);
       var value;
       if (trait.kind === TRAIT.Getter || trait.kind === TRAIT.GetterSetter) {
         value = trait.get.call(this);
@@ -233,8 +241,10 @@ module Shumway.AVMX.AS {
     }
 
     axSetSuper(mn: Multiname, scope: Scope, value: any) {
-      release || assert(isValidASValue(value));
-      var trait = (<AXClass>scope.parent.object).tPrototype.traits.getTrait(mn);
+      release || checkValue(value);
+      var name = asCoerceName(mn.name);
+      var namespaces = mn.namespaces;
+      var trait = (<AXClass>scope.parent.object).tPrototype.traits.getTrait(namespaces, name);
       if (trait.kind === TRAIT.Setter || trait.kind === TRAIT.GetterSetter) {
         trait.set.call(this, value);
       } else {
@@ -244,7 +254,9 @@ module Shumway.AVMX.AS {
 
     axDeleteProperty(mn: Multiname): any {
       // Cannot delete traits.
-      if (this.traits.getTrait(mn)) {
+      var name = asCoerceName(mn.name);
+      var namespaces = mn.namespaces;
+      if (this.traits.getTrait(namespaces, name)) {
         return false;
       }
       return delete this[mn.getPublicMangledName()];
@@ -268,8 +280,7 @@ module Shumway.AVMX.AS {
     }
 
     axHasOwnProperty(mn: Multiname): boolean {
-      release || Debug.abstractMethod("axHasOwnProperty");
-      return false;
+      return this.hasOwnProperty(this.axResolveMultiname(mn));
     }
 
     axGetEnumerableKeys(): any [] {
@@ -597,9 +608,10 @@ module Shumway.AVMX.AS {
     axHasPropertyInternal(mn: Multiname): boolean {
       // Optimization for the common case of array element accesses.
       if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
         return mn.name in this.value;
       }
-      var name = mn.name.toString();
+      var name = asCoerceName(mn.name);
       if (isNumeric(name)) {
         return name in this.value;
       }
@@ -610,17 +622,34 @@ module Shumway.AVMX.AS {
       return '$Bg' + name in this;
     }
 
+    axHasOwnProperty(mn: Multiname): boolean {
+      // Optimization for the common case of array element accesses.
+      if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
+        return this.value.hasOwnProperty(mn.name);
+      }
+      var name = asCoerceName(mn.name);
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        return this.value.hasOwnProperty(name);
+      }
+      var t = this.traits.getTrait(mn.namespaces, name);
+      if (t) {
+        return this.hasOwnProperty(t.name.getMangledName());
+      }
+      return this.hasOwnProperty('$Bg' + name);
+    }
+
     axGetProperty(mn: Multiname): any {
       // Optimization for the common case of array element accesses.
       if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
         return this.value[mn.name];
       }
-      var name = mn.name.toString();
-      var namespaces = mn.namespaces;
+      var name = asCoerceName(mn.name);
       if (mn.isRuntimeName() && isNumeric(name)) {
         return this.value[name];
       }
-      var t = this.traits.getTrait(mn);
+      var t = this.traits.getTrait(mn.namespaces, name);
       if (t) {
         return this[t.name.getMangledName()];
       }
@@ -631,16 +660,16 @@ module Shumway.AVMX.AS {
       release || checkValue(value);
       // Optimization for the common case of array element accesses.
       if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
         this.value[mn.name] = value;
         return;
       }
-      var name = mn.name.toString();
-      var namespaces = mn.namespaces;
+      var name = asCoerceName(mn.name);
       if (mn.isRuntimeName() && isNumeric(name)) {
         this.value[name] = value;
         return;
       }
-      var t = this.traits.getTrait(mn);
+      var t = this.traits.getTrait(mn.namespaces, name);
       if (t) {
         this[t.name.getMangledName()] = value;
         return;
@@ -651,16 +680,17 @@ module Shumway.AVMX.AS {
     axDeleteProperty(mn: Multiname): any {
       // Optimization for the common case of array element accesses.
       if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
         return delete this.value[mn.name];
         return;
       }
-      var name = mn.name.toString();
+      var name = asCoerceName(mn.name);
       var namespaces = mn.namespaces;
       if (mn.isRuntimeName() && isNumeric(name)) {
         return delete this.value[name];
       }
       // Cannot delete array traits.
-      if (this.traits.getTrait(mn)) {
+      if (this.traits.getTrait(namespaces, name)) {
         return false;
       }
       return delete this['$Bg' + name];
@@ -671,7 +701,7 @@ module Shumway.AVMX.AS {
       if (typeof nm === 'number') {
         return this.value[nm];
       }
-      var name = nm.toString();
+      var name = asCoerceName(nm);
       if (isNumeric(name)) {
         return this.value[name];
       }
@@ -684,7 +714,7 @@ module Shumway.AVMX.AS {
       if (typeof nm === 'number') {
         this.value[nm] = value;
       }
-      var name = nm.toString();
+      var name = asCoerceName(nm);
       if (isNumeric(name)) {
         this.value[name] = value;
       }
