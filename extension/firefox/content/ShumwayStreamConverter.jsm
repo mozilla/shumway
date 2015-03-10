@@ -32,7 +32,6 @@ const SEAMONKEY_ID = '{92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a}';
 
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
-Cu.import('resource://gre/modules/NetUtil.jsm');
 
 XPCOMUtils.defineLazyModuleGetter(this, 'PrivateBrowsingUtils',
   'resource://gre/modules/PrivateBrowsingUtils.jsm');
@@ -482,7 +481,17 @@ ShumwayStreamConverterBase.prototype = {
 
     // Create a new channel that loads the viewer as a chrome resource.
     var viewerUrl = 'chrome://shumway/content/viewer.wrapper.html';
-    var channel = Services.io.newChannel(viewerUrl, null, null);
+    // TODO use only newChannel2 after FF37 is released.
+    var channel = Services.io.newChannel2 ?
+                  Services.io.newChannel2(viewerUrl,
+                                          null,
+                                          null,
+                                          null, // aLoadingNode
+                                          Services.scriptSecurityManager.getSystemPrincipal(),
+                                          null, // aTriggeringPrincipal
+                                          Ci.nsILoadInfo.SEC_NORMAL,
+                                          Ci.nsIContentPolicy.TYPE_OTHER) :
+                  Services.io.newChannel(viewerUrl, null, null);
 
     var converter = this;
     var listener = this.listener;
