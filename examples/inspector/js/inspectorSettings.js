@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-Shumway.Settings.shumwayOptions =
-  new Shumway.Options.OptionSet(Shumway.Settings.ROOT, Shumway.Settings.load());
+Shumway.Settings.shumwayOptions.setSettings(loadSettingsFromStorage(Shumway.Settings.ROOT));
+
 
 var LC_KEY_INSPECTOR_SETTINGS = "Inspector Options";
 
-var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
+var state = loadSettingsFromStorage(LC_KEY_INSPECTOR_SETTINGS);
 
 var stateDefaults = {
   folderOpen: true,
@@ -62,8 +62,26 @@ if (state.profileStartup && state.profileStartupDuration > 0) {
   profiler.start(performance.now(), state.profileStartupDuration, false);
 }
 
+function loadSettingsFromStorage(key) {
+  try {
+    var lsValue = window.localStorage[key];
+    if (lsValue) {
+      return JSON.parse(lsValue);
+    }
+  } catch (e) {}
+  return {};
+}
+
+function saveSettingsToStorage(key, settings) {
+  try {
+    var lsValue = JSON.stringify(settings);
+    window.localStorage[key] = lsValue;
+  } catch (e) {
+  }
+}
+
 function saveInspectorState() {
-  Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
+  saveSettingsToStorage(LC_KEY_INSPECTOR_SETTINGS, state);
 }
 
 function resizeEaselContainer() {
@@ -140,7 +158,7 @@ var GUI = (function () {
                                        Shumway.Settings.shumwayOptions);
       if (option) {
         option.open = isOpen;
-        Shumway.Settings.save();
+        saveSettingsToStorage(Shumway.Settings.ROOT, Shumway.Settings.getSettings());
         notifyOptionsChanged();
       } else {
         if (e.target.textContent === "Inspector Options") {
@@ -279,7 +297,7 @@ var GUI = (function () {
         }
         ctrl.name(option.longName);
         ctrl.onChange(function() {
-          Shumway.Settings.save();
+          saveSettingsToStorage(Shumway.Settings.ROOT, Shumway.Settings.getSettings());
           notifyOptionsChanged();
         });
         addTooltip(ctrl, option.description);
