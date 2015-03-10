@@ -146,8 +146,8 @@ module Shumway.AVMX.AS {
     static axHasOwnProperty: (mn: Multiname) => boolean;
     static axSetProperty: (mn: Multiname, value: any) => void;
     static axGetProperty: (mn: Multiname) => any;
-
-
+    static axGetSuper: (mn: Multiname, scope: Scope) => any;
+    static axSetSuper: (mn: Multiname, scope: Scope, value: any) => void;
 
     static axEnumerableKeys: any [];
     static axGetEnumerableKeys: () => any [];
@@ -164,7 +164,6 @@ module Shumway.AVMX.AS {
     static axNextNameIndex: (index: number) => number;
     static axNextName: (index: number) => any;
     static axNextValue: (index: number) => any;
-
 
     static axGetSlot: (i: number) => any;
     static axSetSlot: (i: number, value: any) => void;
@@ -219,6 +218,28 @@ module Shumway.AVMX.AS {
       var value = this[this.axResolveMultiname(mn)];
       release || checkValue(value);
       return value;
+    }
+
+    axGetSuper(mn: Multiname, scope: Scope): any {
+      var trait = (<AXClass>scope.parent.object).tPrototype.traits.getTrait(mn);
+      var value;
+      if (trait.kind === TRAIT.Getter || trait.kind === TRAIT.GetterSetter) {
+        value = trait.get.call(this);
+      } else {
+        value = this[trait.name.getMangledName()];
+      }
+      release || checkValue(value);
+      return value;
+    }
+
+    axSetSuper(mn: Multiname, scope: Scope, value: any) {
+      release || assert(isValidASValue(value));
+      var trait = (<AXClass>scope.parent.object).tPrototype.traits.getTrait(mn);
+      if (trait.kind === TRAIT.Setter || trait.kind === TRAIT.GetterSetter) {
+        trait.set.call(this, value);
+      } else {
+        this[trait.name.getMangledName()] = value;
+      }
     }
 
     axDeleteProperty(mn: Multiname): any {

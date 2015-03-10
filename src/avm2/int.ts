@@ -189,19 +189,6 @@ module Shumway.AVMX {
             continue;
           case Bytecode.THROW:
             throw stack.pop();
-          //case Bytecode.GETSUPER:
-          //  popNameInto(stack, multinames[bc.index], mn);
-          //  stack.push(stack.pop().asGetSuper (
-          //    savedScope, mn.namespaces, mn.name, mn.flags
-          //  ));
-          //  break;
-          //case Bytecode.setsuper:
-          //  value = stack.pop();
-          //  popNameInto(stack, multinames[bc.index], mn);
-          //  stack.pop().asSetSuper (
-          //    savedScope, mn.namespaces, mn.name, mn.flags, value
-          //  );
-          //  break;
           case Bytecode.KILL:
             local[u30()] = undefined;
             break;
@@ -486,6 +473,23 @@ module Shumway.AVMX {
             popNameInto(stack, abc.getMultiname(u30()), rn);
             box(stack.pop()).axSetProperty(rn, value);
             break;
+          case Bytecode.GETPROPERTY:
+            popNameInto(stack, abc.getMultiname(u30()), rn);
+            stack[stack.length - 1] = peekBox().axGetProperty(rn);
+            break;
+          case Bytecode.DELETEPROPERTY:
+            popNameInto(stack, abc.getMultiname(u30()), rn);
+            stack[stack.length - 1] = peekBox().axDeleteProperty(rn);
+            break;
+          case Bytecode.GETSUPER:
+            popNameInto(stack, abc.getMultiname(u30()), rn);
+            stack[stack.length - 1] = peekBox().axGetSuper(rn, savedScope);
+            break;
+          case Bytecode.SETSUPER:
+            value = stack.pop();
+            popNameInto(stack, abc.getMultiname(u30()), rn);
+            box(stack.pop()).axSetSuper(rn, savedScope, value);
+            break;
           case Bytecode.GETLOCAL:
             stack.push(local[u30()]);
             break;
@@ -497,14 +501,6 @@ module Shumway.AVMX {
             break;
           case Bytecode.GETSCOPEOBJECT:
             stack.push(scope.get(code[pc++]));
-            break;
-          case Bytecode.GETPROPERTY:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
-            stack[stack.length - 1] = peekBox().axGetProperty(rn);
-            break;
-          case Bytecode.DELETEPROPERTY:
-            popNameInto(stack, abc.getMultiname(u30()), rn);
-            stack[stack.length - 1] = peekBox().axDeleteProperty(rn);
             break;
           case Bytecode.GETSLOT:
             stack[stack.length - 1] = peekBox().axGetSlot(u30());

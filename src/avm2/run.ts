@@ -14,6 +14,8 @@ interface IMetaobjectProtocol {
 
   axSetProperty(mn: Shumway.AVMX.Multiname, value: any);
   axGetProperty(mn: Shumway.AVMX.Multiname): any;
+  axGetSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope): any;
+  axSetSuper(mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, value: any);
 
   axNextNameIndex(index: number): any;
   axNextName(index: number): any;
@@ -522,6 +524,8 @@ module Shumway.AVMX {
     D(AXBasePrototype, "axGetPublicProperty", Op.axGetPublicProperty);
     D(AXBasePrototype, "axGetProperty", Op.axGetProperty);
     D(AXBasePrototype, "axDeleteProperty", Op.axDeleteProperty);
+    D(AXBasePrototype, "axGetSuper", Op.axGetSuper);
+    D(AXBasePrototype, "axSetSuper", Op.axSetSuper);
     D(AXBasePrototype, "axSetSlot", Op.axSetSlot);
     D(AXBasePrototype, "axGetSlot", Op.axGetSlot);
     D(AXBasePrototype, "axCallProperty", Op.axCallProperty);
