@@ -43,7 +43,7 @@
   function newURL(url, baseURL) {
     // Just enough to make viewer working.
     if (!baseURL || url.indexOf('://') >= 0) {
-      this.href = url;
+      this._setURL(url);
       return;
     }
 
@@ -55,9 +55,19 @@
         base = m[0];
       }
     }
-    this.href = base + url;
+    this._setURL(base + url);
   }
   newURL.prototype = {
+    _setURL: function (url) {
+      this.href = url;
+      // Simple parsing to extract protocol, hostname and port.
+      var m = /^(\w+:)\/\/([^:/]+)(:([0-9]+))?/.exec(url.toLowerCase());
+      if (m) {
+        this.protocol = m[1];
+        this.hostname = m[2];
+        this.port = m[4] || '';
+      }
+    },
     toString: function () {
       return this.href;
     }

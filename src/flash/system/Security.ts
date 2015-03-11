@@ -81,9 +81,17 @@ module Shumway.AVM2.AS.flash.system {
     static allowDomain(): void {
       somewhatImplemented("public flash.system.Security::static allowDomain [\"" +
         Array.prototype.join.call(arguments, "\", \"") + "\"]");
+      var whitelist: ICrossDomainSWFLoadingWhitelist = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      for (var i = 0; i < arguments.length; i++) {
+        whitelist.addToSWFLoadingWhitelist(asCoerceString(arguments[i]), false);
+      }
     }
     static allowInsecureDomain(): void {
       somewhatImplemented("public flash.system.Security::static allowInsecureDomain");
+      var whitelist: ICrossDomainSWFLoadingWhitelist = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      for (var i = 0; i < arguments.length; i++) {
+        whitelist.addToSWFLoadingWhitelist(asCoerceString(arguments[i]), true);
+      }
     }
     static loadPolicyFile(url: string): void {
       url = asCoerceString(url);
@@ -102,5 +110,10 @@ module Shumway.AVM2.AS.flash.system {
       notImplemented("public flash.system.Security::static duplicateSandboxBridgeOutputArgument"); return;
     }
     
+  }
+
+  export interface ICrossDomainSWFLoadingWhitelist {
+    addToSWFLoadingWhitelist(domain: string, insecure: boolean);
+    checkDomainForSWFLoading(domain: string): boolean;
   }
 }
