@@ -790,6 +790,13 @@ module Shumway.AVMX.AS {
 
   export class ASBoolean extends ASObject {
     value: boolean;
+
+    toString() {
+      return this.value.toString();
+    }
+    valueOf() {
+      return this.value.valueOf();
+    }
   }
 
   export class ASString extends ASObject {

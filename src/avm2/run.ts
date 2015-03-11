@@ -555,7 +555,13 @@ module Shumway.AVMX {
     D(AXBasePrototype, "hasOwnProperty", Object.prototype.hasOwnProperty);
 
     AXBasePrototype.$BgtoString = function () {
-      return "[object Object]";
+      // Dynamic prototypes just return [object Object], so we have to special-case them.
+      // Since the dynamic object is the one holding the direct reference to `classInfo`,
+      // we can check for that.
+      var name = this.hasOwnProperty('classInfo') ?
+                 'Object' :
+                 this.classInfo.instanceInfo.name.name;
+      return Shumway.StringUtilities.concat3("[object ", name, "]");
     };
     AXBasePrototype.toString = function () {
       return this.$BgtoString.axCall(this);
