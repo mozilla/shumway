@@ -1165,29 +1165,19 @@ module Shumway.AVMX {
       // here to keep all the hooks initialization in one place.
       var AXObject = this.AXObject;
       var AXFunction = this.AXFunction;
-      var proto: any = AXObject.dPrototype;
-      var asProto: any = AS.ASObject.prototype;
-      P(proto, "hasOwnProperty", asProto.native_hasOwnProperty);
-      P(proto, "propertyIsEnumerable", asProto.native_propertyIsEnumerable);
-      P(proto, "setPropertyIsEnumerable", asProto.setPropertyIsEnumerable);
-      P(proto, "isPrototypeOf", asProto.native_isPrototypeOf);
-      P(proto, "toString", asProto.toString);
-      P(proto, "valueOf", asProto.valueOf);
 
       // Object(null) creates an object, and this behaves differently than:
       // (function (x: Object) { trace (x); })(null) which prints null.
       D(AXObject, "axApply", axApplyObject);
       D(AXObject, "axConstruct", axConstructObject);
       D(AXObject, "axCoerce", axCoerceObject);
+      D(AXFunction, "axConstruct", function() {
+        return Object.create(this.tPrototype);
+      });
+      D(AXFunction.dPrototype, "axConstruct", axFunctionConstruct);
 
       D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.axCall);
       D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.axApply);
-      D(AXFunction.tPrototype, '$BgtoString', AXFunction.axBox(function () {
-        return "[Function Object]";
-      }));
-
-      D(AXFunction, "axConstruct", function() { return Object.create(this.tPrototype);});
-      D(AXFunction.dPrototype, "axConstruct", axFunctionConstruct);
 
       P(AXFunction.dPrototype, "call", function (self, a, b, c) {
         if (this.securityDomain.isPrimitive(self)) {
@@ -1218,28 +1208,7 @@ module Shumway.AVMX {
         return this.value.toString();
       });
       // Array.prototype is an Array, and behaves like one.
-      proto = AXArray.dPrototype;
-      proto['value'] = [];
-      asProto = AS.ASArray.prototype;
-      P(proto, "push", asProto.push);
-      P(proto, "pop", asProto.pop);
-      P(proto, "shift", asProto.shift);
-      P(proto, "unshift", asProto.unshift);
-      P(proto, "reverse", asProto.reverse);
-      P(proto, "concat", asProto.concat);
-      P(proto, "slice", asProto.slice);
-      P(proto, "splice", asProto.splice);
-      P(proto, "join", asProto.join);
-      P(proto, "toString", asProto.toString);
-      P(proto, "indexOf", asProto.indexOf);
-      P(proto, "lastIndexOf", asProto.lastIndexOf);
-      P(proto, "every", asProto.every);
-      P(proto, "some", asProto.some);
-      P(proto, "forEach", asProto.forEach);
-      P(proto, "map", asProto.map);
-      P(proto, "filter", asProto.filter);
-      P(proto, "sort", asProto.sort);
-      P(proto, "sortOn", asProto.sortOn);
+      AXArray.dPrototype['value'] = [];
 
       // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder
       // base class to help us with instanceof tests.
@@ -1248,55 +1217,18 @@ module Shumway.AVMX {
         AXFunction.axBox(function () { return this.value.toString(); }));
       var AXBoolean = this.preparePrimitiveClass("AXBoolean", "Boolean", asCoerceBoolean, false,
                                                  asCoerceBoolean, axIsTypeBoolean, axIsTypeBoolean);
-      proto = AXBoolean.dPrototype;
-      asProto = AS.ASBoolean.prototype;
-      P(proto, 'toString', asProto.toString);
-      P(proto, 'valueOf', asProto.valueOf);
 
       var AXString = this.preparePrimitiveClass("AXString", "String", asConvertString, '',
                                                  asCoerceString, axIsTypeString, axIsTypeString);
-      proto = AXString.dPrototype;
-      asProto = AS.ASString.prototype;
-      P(proto, 'indexOf', asProto.generic_indexOf);
-      P(proto, 'lastIndexOf', asProto.generic_lastIndexOf);
-      P(proto, 'charAt', asProto.generic_charAt);
-      P(proto, 'charCodeAt', asProto.generic_charCodeAt);
-      P(proto, 'concat', asProto.generic_concat);
-      P(proto, 'localeCompare', asProto.generic_localeCompare);
-      P(proto, 'match', asProto.generic_match);
-      P(proto, 'replace', asProto.generic_replace);
-      P(proto, 'search', asProto.generic_search);
-      P(proto, 'slice', asProto.generic_slice);
-      P(proto, 'split', asProto.generic_split);
-      P(proto, 'substring', asProto.generic_substring);
-      P(proto, 'substr', asProto.generic_substr);
-      P(proto, 'toLowerCase', asProto.generic_toLowerCase);
-      P(proto, 'toLocaleLowerCase', asProto.generic_toLowerCase);
-      P(proto, 'toUpperCase', asProto.generic_toUpperCase);
-      P(proto, 'toLocaleUpperCase', asProto.generic_toUpperCase);
-      P(proto, 'toString', asProto.toString);
-      P(proto, 'valueOf', asProto.valueOf);
 
       var AXNumber = this.preparePrimitiveClass("AXNumber", "Number", asCoerceNumber, 0,
                                                 asCoerceNumber, axIsTypeNumber, axIsTypeNumber);
-      proto = AXNumber.dPrototype;
-      asProto = AS.ASNumber.prototype;
-      P(proto, 'toString', asProto.toString);
-      P(proto, 'valueOf', asProto.valueOf);
 
       var AXInt = this.preparePrimitiveClass("AXInt", "int", asCoerceInt, 0, asCoerceInt,
                                              axIsTypeInt, axFalse);
-      proto = AXInt.dPrototype;
-      asProto = AS.ASInt.prototype;
-      P(proto, 'toString', asProto.toString);
-      P(proto, 'valueOf', asProto.valueOf);
 
       var AXUint = this.preparePrimitiveClass("AXUint", "uint", asCoerceUint, 0, asCoerceUint,
                                               axIsTypeUint, axFalse);
-      proto = AXUint.dPrototype;
-      asProto = AS.ASUint.prototype;
-      P(proto, 'toString', asProto.toString);
-      P(proto, 'valueOf', asProto.valueOf);
     }
   }
 

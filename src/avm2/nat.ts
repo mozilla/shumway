@@ -115,6 +115,11 @@ module Shumway.AVMX.AS {
     return rn;
   }
 
+  function addPrototypeFunctionAlias(object: AXObject, name: string, fun: Function) {
+    release || assert(name.indexOf('$Bg') === 0);
+    defineNonEnumerableProperty(object, name, object.securityDomain.AXFunction.axBox(fun));
+  };
+
   /**
    * MetaobjectProtocol base traps. Inherit some or all of these to
    * implement custom behaviour.
@@ -177,6 +182,12 @@ module Shumway.AVMX.AS {
     static classInitializer(axClass: AXClass) {
       var proto: any = axClass.dPrototype;
       var asProto: any = this.prototype;
+      addPrototypeFunctionAlias(proto, "$BghasOwnProperty", asProto.native_hasOwnProperty);
+      addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable", asProto.native_propertyIsEnumerable);
+      addPrototypeFunctionAlias(proto, "$BgsetPropertyIsEnumerable", asProto.setPropertyIsEnumerable);
+      addPrototypeFunctionAlias(proto, "$BgisPrototypeOf", asProto.native_isPrototypeOf);
+      addPrototypeFunctionAlias(proto, "$BgtoString", asProto.toString);
+      addPrototypeFunctionAlias(proto, "$BgvalueOf", asProto.valueOf);
     }
 
     static _init() {
@@ -437,6 +448,30 @@ module Shumway.AVMX.AS {
   }
 
   export class ASArray extends ASObject {
+    static classInitializer(axClass: AXClass) {
+      var proto: any = axClass.dPrototype;
+      var asProto: any = this.prototype;
+      addPrototypeFunctionAlias(proto, "$Bgpush", asProto.push);
+      addPrototypeFunctionAlias(proto, "$Bgpop", asProto.pop);
+      addPrototypeFunctionAlias(proto, "$Bgshift", asProto.shift);
+      addPrototypeFunctionAlias(proto, "$Bgunshift", asProto.unshift);
+      addPrototypeFunctionAlias(proto, "$Bgreverse", asProto.reverse);
+      addPrototypeFunctionAlias(proto, "$Bgconcat", asProto.concat);
+      addPrototypeFunctionAlias(proto, "$Bgslice", asProto.slice);
+      addPrototypeFunctionAlias(proto, "$Bgsplice", asProto.splice);
+      addPrototypeFunctionAlias(proto, "$Bgjoin", asProto.join);
+      addPrototypeFunctionAlias(proto, "$BgtoString", asProto.toString);
+      addPrototypeFunctionAlias(proto, "$BgindexOf", asProto.indexOf);
+      addPrototypeFunctionAlias(proto, "$BglastIndexOf", asProto.lastIndexOf);
+      addPrototypeFunctionAlias(proto, "$Bgevery", asProto.every);
+      addPrototypeFunctionAlias(proto, "$Bgsome", asProto.some);
+      addPrototypeFunctionAlias(proto, "$BgforEach", asProto.forEach);
+      addPrototypeFunctionAlias(proto, "$Bgmap", asProto.map);
+      addPrototypeFunctionAlias(proto, "$Bgfilter", asProto.filter);
+      addPrototypeFunctionAlias(proto, "$Bgsort", asProto.sort);
+      addPrototypeFunctionAlias(proto, "$BgsortOn", asProto.sortOn);
+    }
+
     value: any [];
 
     push() {
@@ -752,7 +787,11 @@ module Shumway.AVMX.AS {
   }
 
   export class ASFunction extends ASObject {
-    static tsInstanceSymbols = ["prototype"];
+    static classInitializer(axClass: AXClass) {
+      var proto: any = axClass.dPrototype;
+      var asProto: any = this.prototype;
+      addPrototypeFunctionAlias(proto, "$BgtoString", asProto.toString);
+    }
 
     private _prototype: AXObject;
     protected value: Function;
@@ -847,6 +886,13 @@ module Shumway.AVMX.AS {
   }
 
   export class ASBoolean extends ASObject {
+    static classInitializer(axClass: AXClass) {
+      var proto: any = axClass.dPrototype;
+      var asProto: any = this.prototype;
+      addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+    }
+
     value: boolean;
 
     toString() {
@@ -859,6 +905,30 @@ module Shumway.AVMX.AS {
 
   export class ASString extends ASObject {
     static classNatives: any [] = [String];
+
+    static classInitializer(axClass: AXClass) {
+      var proto: any = axClass.dPrototype;
+      var asProto: any = this.prototype;
+      addPrototypeFunctionAlias(proto, '$BgindexOf', asProto.generic_indexOf);
+      addPrototypeFunctionAlias(proto, '$BglastIndexOf', asProto.generic_lastIndexOf);
+      addPrototypeFunctionAlias(proto, '$BgcharAt', asProto.generic_charAt);
+      addPrototypeFunctionAlias(proto, '$BgcharCodeAt', asProto.generic_charCodeAt);
+      addPrototypeFunctionAlias(proto, '$Bgconcat', asProto.generic_concat);
+      addPrototypeFunctionAlias(proto, '$BglocaleCompare', asProto.generic_localeCompare);
+      addPrototypeFunctionAlias(proto, '$Bgmatch', asProto.generic_match);
+      addPrototypeFunctionAlias(proto, '$Bgreplace', asProto.generic_replace);
+      addPrototypeFunctionAlias(proto, '$Bgsearch', asProto.generic_search);
+      addPrototypeFunctionAlias(proto, '$Bgslice', asProto.generic_slice);
+      addPrototypeFunctionAlias(proto, '$Bgsplit', asProto.generic_split);
+      addPrototypeFunctionAlias(proto, '$Bgsubstring', asProto.generic_substring);
+      addPrototypeFunctionAlias(proto, '$Bgsubstr', asProto.generic_substr);
+      addPrototypeFunctionAlias(proto, '$BgtoLowerCase', asProto.generic_toLowerCase);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleLowerCase', asProto.generic_toLowerCase);
+      addPrototypeFunctionAlias(proto, '$BgtoUpperCase', asProto.generic_toUpperCase);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleUpperCase', asProto.generic_toUpperCase);
+      addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+    }
 
     value: string;
 
@@ -977,7 +1047,14 @@ module Shumway.AVMX.AS {
 
   export class ASNumber extends ASObject {
     static classNatives: any [] = [Math];
-    static instanceNatives: any [] = [Number.prototype];
+
+    static classInitializer(axClass: AXClass) {
+      var proto: any = axClass.dPrototype;
+      var asProto: any = this.prototype;
+      addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+    }
+
     value: number;
 
     toString(radix: number) {
@@ -988,16 +1065,42 @@ module Shumway.AVMX.AS {
       return this.value;
     }
 
+    toExponential(p): string {
+      return this.value.toExponential(p);
+    }
+
+    toPrecision(p): string {
+      return this.value.toPrecision(p);
+    }
+
+    toFixed(p): string {
+      return this.value.toFixed(p);
+    }
+
     static _minValue(): number {
       return Number.MIN_VALUE;
     }
   }
 
   export class ASInt extends ASObject {
+    static classInitializer(axClass: AXClass) {
+      var proto: any = axClass.dPrototype;
+      var asProto: any = this.prototype;
+      addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+    }
+
     value: number;
   }
 
   export class ASUint extends ASObject {
+    static classInitializer(axClass: AXClass) {
+      var proto: any = axClass.dPrototype;
+      var asProto: any = this.prototype;
+      addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+    }
+
     value: number;
   }
 
