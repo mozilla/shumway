@@ -21,21 +21,23 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "grunt travis --verbose"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/mozilla/shumway.git"
   },
   "author": "Mozilla Research",
-  "licenses" : [{
+  "licenses": [
+    {
       "type": "Apache",
       "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-  }],
+    }
+  ],
   "bugs": {
     "url": "https://github.com/mozilla/shumway/issues"
   },
-  "scripts": {
-    "test": "grunt travis --verbose"
+  "dependencies": {
+    "fast-html-parser": "^1.0.0"
   }
 }
