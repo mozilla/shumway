@@ -280,7 +280,11 @@ module Shumway.AVMX.AS {
     }
 
     axHasOwnProperty(mn: Multiname): boolean {
-      return this.hasOwnProperty(this.axResolveMultiname(mn));
+      var name = this.axResolveMultiname(mn);
+      // We have to check for trait properties too if a simple hasOwnProperty fails.
+      // This is different to JavaScript's hasOwnProperty behaviour where hasOwnProperty returns
+      // false for properties defined on the property chain and not on the instance itself.
+      return this.hasOwnProperty(name) || Object.getPrototypeOf(this).hasOwnProperty(name);
     }
 
     axGetEnumerableKeys(): any [] {
@@ -634,7 +638,7 @@ module Shumway.AVMX.AS {
       }
       var t = this.traits.getTrait(mn.namespaces, name);
       if (t) {
-        return this.hasOwnProperty(t.name.getMangledName());
+        return true;
       }
       return this.hasOwnProperty('$Bg' + name);
     }

@@ -596,7 +596,7 @@ module Shumway.AVMX {
     axIsInstanceOf: any;
   }
 
-  export interface AXFunction extends ITraits, AXObject {
+  export interface AXFunction extends AXObject {
     axApply(thisArg: any, argArray?: any[]): any;
     axCall(thisArg: any): any;
   }
