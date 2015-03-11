@@ -19,11 +19,12 @@ var EXPORTED_SYMBOLS = ['ShumwayCom'];
 Components.utils.import('resource://gre/modules/XPCOMUtils.jsm');
 Components.utils.import('resource://gre/modules/Services.jsm');
 Components.utils.import('resource://gre/modules/Promise.jsm');
-Components.utils.import('resource://gre/modules/NetUtil.jsm');
 
 Components.utils.import('chrome://shumway/content/SpecialInflate.jsm');
 Components.utils.import('chrome://shumway/content/SpecialStorage.jsm');
 Components.utils.import('chrome://shumway/content/RtmpUtils.jsm');
+Components.utils.import('chrome://shumway/content/ExternalInterface.jsm');
+Components.utils.import('chrome://shumway/content/FileLoader.jsm');
 
 XPCOMUtils.defineLazyModuleGetter(this, 'ShumwayTelemetry',
   'resource://shumway/ShumwayTelemetry.jsm');
@@ -33,14 +34,6 @@ const MAX_USER_INPUT_TIMEOUT = 250; // ms
 function getBoolPref(pref, def) {
   try {
     return Services.prefs.getBoolPref(pref);
-  } catch (ex) {
-    return def;
-  }
-}
-
-function getStringPref(pref, def) {
-  try {
-    return Services.prefs.getComplexValue(pref, Components.interfaces.nsISupportsString).data;
   } catch (ex) {
     return def;
   }
@@ -267,17 +260,20 @@ function ShumwayChromeActions(startupInfo, window, document) {
   this.isPausedAtStart = startupInfo.isPausedAtStart;
   this.window = window;
   this.document = document;
-  this.externalComInitialized = false;
   this.allowScriptAccess = startupInfo.allowScriptAccess;
   this.lastUserInput = 0;
-  this.crossdomainRequestsCache = Object.create(null);
   this.telemetry = {
     startTime: Date.now(),
     features: [],
     errors: []
   };
 
+  this.fileLoader = new FileLoader(startupInfo.url, startupInfo.baseUrl, function (args) {
+    this.onLoadFileCallback(args);
+  }.bind(this));
   this.onLoadFileCallback = null;
+
+  this.externalInterface = null;
   this.onExternalCallback = null;
 }
 
@@ -325,77 +321,27 @@ ShumwayChromeActions.prototype = {
   },
 
   loadFile: function loadFile(data) {
-    function notifyLoadFileListener(data) {
-      if (!actions.onLoadFileCallback) {
-        return;
-      }
-      actions.onLoadFileCallback(data);
-    }
-
-    var actions = this;
-    var url = data.url;
-    var checkPolicyFile = data.checkPolicyFile;
-    var sessionId = data.sessionId;
-    var limit = data.limit || 0;
-    var method = data.method || "GET";
-    var mimeType = data.mimeType;
-    var postData = data.postData || null;
-
-    var win = this.window;
-    var baseUrl = this.baseUrl;
-
-    var performXHR = function () {
-      var xhr = Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
-                                  .createInstance(Components.interfaces.nsIXMLHttpRequest);
-      xhr.open(method, url, true);
-      xhr.responseType = "moz-chunked-arraybuffer";
-
-      if (baseUrl) {
-        // Setting the referer uri, some site doing checks if swf is embedded
-        // on the original page.
-        xhr.setRequestHeader("Referer", baseUrl);
-      }
-
-      // TODO apply range request headers if limit is specified
-
-      var lastPosition = 0;
-      xhr.onprogress = function (e) {
-        var position = e.loaded;
-        var data = new Uint8Array(xhr.response);
-        notifyLoadFileListener({callback:"loadFile", sessionId: sessionId,
-          topic: "progress", array: data, loaded: position, total: e.total});
-        lastPosition = position;
-        if (limit && e.total >= limit) {
-          xhr.abort();
-        }
-      };
-      xhr.onreadystatechange = function(event) {
-        if (xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0) {
-            notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "error", error: xhr.statusText});
-          }
-          notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "close"});
-        }
-      };
-      if (mimeType)
-        xhr.setRequestHeader("Content-Type", mimeType);
-      xhr.send(postData);
-      notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "open"});
-    };
-
-    canDownloadFile(url, checkPolicyFile, this.url, this.crossdomainRequestsCache).then(function () {
-      performXHR();
-    }, function (reason) {
-      log("data access is prohibited to " + url + " from " + baseUrl);
-      notifyLoadFileListener({callback:"loadFile", sessionId: sessionId, topic: "error",
-        error: "only original swf file or file from the same origin loading supported"});
-    });
+    this.fileLoader.load(data);
   },
 
   navigateTo: function (data) {
+    // Our restrictions are a little bit different from Flash's: let's enable
+    // only http(s) and only when script execution is allowed.
+    // See https://helpx.adobe.com/flash/kb/control-access-scripts-host-web.html
+    var url = data.url || 'about:blank';
+    var target = data.target || '_self';
+    var isWhitelistedProtocol = /^(http|https):\/\//i.test(url);
+    if (!isWhitelistedProtocol || !this.allowScriptAccess) {
+      return;
+    }
+    // ...and only when user input is in-progress.
+    if (!this.isUserInputInProgress()) {
+      return;
+    }
+    log('!!navigateTo: ' + url + ' ... ' + target);
     var embedTag = this.embedTag.wrappedJSObject;
     var window = embedTag ? embedTag.ownerDocument.defaultView : this.window;
-    window.open(data.url, data.target || '_self');
+    window.open(url, target);
   },
 
   fallback: function(automatic) {
@@ -532,175 +478,18 @@ ShumwayChromeActions.prototype = {
     if (!this.allowScriptAccess)
       return;
 
-    // TODO check security ?
-    var parentWindow = this.window.parent.wrappedJSObject;
-    var embedTag = this.embedTag.wrappedJSObject;
-    switch (data.action) {
-      case 'init':
-        if (this.externalComInitialized)
-          return;
-
-        this.externalComInitialized = true;
-        initExternalCom(parentWindow, embedTag, this);
-        return;
-      case 'getId':
-        return embedTag.id;
-      case 'eval':
-        return parentWindow.__flash__eval(data.expression);
-      case 'call':
-        return parentWindow.__flash__call(data.request);
-      case 'register':
-        return embedTag.__flash__registerCallback(data.functionName);
-      case 'unregister':
-        return embedTag.__flash__unregisterCallback(data.functionName);
+    // TODO check more security stuff ?
+    if (!this.externalInterface) {
+      var parentWindow = this.window.parent.wrappedJSObject;
+      var embedTag = this.embedTag.wrappedJSObject;
+      this.externalInterface = new ExternalInterface(parentWindow, embedTag, function (call) {
+        this.onExternalCallback(call);
+      }.bind(this));
     }
+
+    return this.externalInterface.processAction(data);
   }
 };
-
-function disableXHRRedirect(xhr) {
-  var listener = {
-    asyncOnChannelRedirect: function(oldChannel, newChannel, flags, callback) {
-      // TODO perform URL check?
-      callback.onRedirectVerifyCallback(Components.results.NS_ERROR_ABORT);
-    },
-    getInterface: function(iid) {
-      return this.QueryInterface(iid);
-    },
-    QueryInterface: XPCOMUtils.generateQI([Components.interfaces.nsIChannelEventSink])
-  };
-  xhr.channel.notificationCallbacks = listener;
-}
-
-function canDownloadFile(url, checkPolicyFile, swfUrl, cache) {
-  // TODO flash cross-origin request
-  if (url === swfUrl) {
-    // Allows downloading for the original file.
-    return Promise.resolve(undefined);
-  }
-
-  // Allows downloading from the same origin.
-  var parsedUrl, parsedBaseUrl;
-  try {
-    parsedUrl = NetUtil.newURI(url);
-  } catch (ex) { /* skipping invalid urls */ }
-  try {
-    parsedBaseUrl = NetUtil.newURI(swfUrl);
-  } catch (ex) { /* skipping invalid urls */ }
-
-  if (parsedUrl && parsedBaseUrl &&
-    parsedUrl.prePath === parsedBaseUrl.prePath) {
-    return Promise.resolve(undefined);
-  }
-
-  // Additionally using internal whitelist.
-  var whitelist = getStringPref('shumway.whitelist', '');
-  if (whitelist && parsedUrl) {
-    var whitelisted = whitelist.split(',').some(function (i) {
-      return domainMatches(parsedUrl.host, i);
-    });
-    if (whitelisted) {
-      return Promise.resolve();
-    }
-  }
-
-  if (!parsedUrl || !parsedBaseUrl) {
-    return Promise.reject('Invalid or non-specified URL or Base URL.');
-  }
-
-  if (!checkPolicyFile) {
-    return Promise.reject('Check of the policy file is not allowed.');
-  }
-
-  // We can request crossdomain.xml.
-  return fetchPolicyFile(parsedUrl.prePath + '/crossdomain.xml', cache).
-    then(function (policy) {
-
-      if (policy.siteControl === 'none') {
-        throw 'Site control is set to \"none\"';
-      }
-      // TODO assuming master-only, there are also 'by-content-type', 'all', etc.
-
-      var allowed = policy.allowAccessFrom.some(function (i) {
-        return domainMatches(parsedBaseUrl.host, i.domain) &&
-          (!i.secure || parsedBaseUrl.scheme.toLowerCase() === 'https');
-      });
-      if (!allowed) {
-        throw 'crossdomain.xml does not contain source URL.';
-      }
-      return undefined;
-    });
-}
-
-function domainMatches(host, pattern) {
-  if (!pattern) return false;
-  if (pattern === '*') return true;
-  host = host.toLowerCase();
-  var parts = pattern.toLowerCase().split('*');
-  if (host.indexOf(parts[0]) !== 0) return false;
-  var p = parts[0].length;
-  for (var i = 1; i < parts.length; i++) {
-    var j = host.indexOf(parts[i], p);
-    if (j === -1) return false;
-    p = j + parts[i].length;
-  }
-  return parts[parts.length - 1] === '' || p === host.length;
-}
-
-function fetchPolicyFile(url, cache) {
-  if (url in cache) {
-    return cache[url];
-  }
-
-  var deferred = Promise.defer();
-
-  log('Fetching policy file at ' + url);
-  var MAX_POLICY_SIZE = 8192;
-  var xhr =  Components.classes["@mozilla.org/xmlextras/xmlhttprequest;1"]
-                               .createInstance(Components.interfaces.nsIXMLHttpRequest);
-  xhr.open('GET', url, true);
-  disableXHRRedirect(xhr);
-  xhr.overrideMimeType('text/xml');
-  xhr.onprogress = function (e) {
-    if (e.loaded >= MAX_POLICY_SIZE) {
-      xhr.abort();
-      cache[url] = false;
-      deferred.reject('Max policy size');
-    }
-  };
-  xhr.onreadystatechange = function(event) {
-    if (xhr.readyState === 4) {
-      // TODO disable redirects
-      var doc = xhr.responseXML;
-      if (xhr.status !== 200 || !doc) {
-        deferred.reject('Invalid HTTP status: ' + xhr.statusText);
-        return;
-      }
-      // parsing params
-      var params = doc.documentElement.childNodes;
-      var policy = { siteControl: null, allowAccessFrom: []};
-      for (var i = 0; i < params.length; i++) {
-        switch (params[i].localName) {
-          case 'site-control':
-            policy.siteControl = params[i].getAttribute('permitted-cross-domain-policies');
-            break;
-          case 'allow-access-from':
-            var access = {
-              domain: params[i].getAttribute('domain'),
-              security: params[i].getAttribute('security') === 'true'
-            };
-            policy.allowAccessFrom.push(access);
-            break;
-          default:
-            // TODO allow-http-request-headers-from and other
-            break;
-        }
-      }
-      deferred.resolve(policy);
-    }
-  };
-  xhr.send(null);
-  return (cache[url] = deferred.promise);
-}
 
 function getVersionInfo() {
   var deferred = Promise.defer();
@@ -740,68 +529,4 @@ function getVersionInfo() {
   xhr.send();
 
   return deferred.promise;
-}
-
-function initExternalCom(wrappedWindow, wrappedObject, actions) {
-  var traceExternalInterface = getBoolPref('shumway.externalInterface.trace', false);
-  if (!wrappedWindow.__flash__initialized) {
-    wrappedWindow.__flash__initialized = true;
-    wrappedWindow.__flash__toXML = function __flash__toXML(obj) {
-      switch (typeof obj) {
-        case 'boolean':
-          return obj ? '<true/>' : '<false/>';
-        case 'number':
-          return '<number>' + obj + '</number>';
-        case 'object':
-          if (obj === null) {
-            return '<null/>';
-          }
-          if ('hasOwnProperty' in obj && obj.hasOwnProperty('length')) {
-            // array
-            var xml = '<array>';
-            for (var i = 0; i < obj.length; i++) {
-              xml += '<property id="' + i + '">' + __flash__toXML(obj[i]) + '</property>';
-            }
-            return xml + '</array>';
-          }
-          var xml = '<object>';
-          for (var i in obj) {
-            xml += '<property id="' + i + '">' + __flash__toXML(obj[i]) + '</property>';
-          }
-          return xml + '</object>';
-        case 'string':
-          return '<string>' + obj.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</string>';
-        case 'undefined':
-          return '<undefined/>';
-      }
-    };
-    wrappedWindow.__flash__eval = function (expr) {
-      traceExternalInterface && this.console.log('__flash__eval: ' + expr);
-      // allowScriptAccess protects page from unwanted swf scripts,
-      // we can execute script in the page context without restrictions.
-      var result = this.eval(expr);
-      traceExternalInterface && this.console.log('__flash__eval (result): ' + result);
-      return result;
-    }.bind(wrappedWindow);
-    wrappedWindow.__flash__call = function (expr) {
-      traceExternalInterface && this.console.log('__flash__call (ignored): ' + expr);
-    };
-  }
-  wrappedObject.__flash__registerCallback = function (functionName) {
-    traceExternalInterface && wrappedWindow.console.log('__flash__registerCallback: ' + functionName);
-    Components.utils.exportFunction(function () {
-      var args = Array.prototype.slice.call(arguments, 0);
-      traceExternalInterface && wrappedWindow.console.log('__flash__callIn: ' + functionName);
-      var result;
-      if (actions.onExternalCallback) {
-        result = actions.onExternalCallback({functionName: functionName, args: args});
-        traceExternalInterface && wrappedWindow.console.log('__flash__callIn (result): ' + result);
-      }
-      return wrappedWindow.eval(result);
-    }, this, { defineAs: functionName });
-  };
-  wrappedObject.__flash__unregisterCallback = function (functionName) {
-    traceExternalInterface && wrappedWindow.console.log('__flash__unregisterCallback: ' + functionName);
-    delete this[functionName];
-  };
 }

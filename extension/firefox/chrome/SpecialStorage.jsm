@@ -17,7 +17,6 @@
 var EXPORTED_SYMBOLS = ['SpecialStorageUtils'];
 
 Components.utils.import('resource://gre/modules/Services.jsm');
-Components.utils.import('resource://gre/modules/Services.jsm');
 
 var SpecialStorageUtils = {
   createWrappedSpecialStorage: function (sandbox, swfUrl, privateBrowsing) {
