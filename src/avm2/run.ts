@@ -1104,6 +1104,7 @@ module Shumway.AVMX {
       D(axClass, "axIsInstanceOf", isInstanceOf);
       D(axClass.tPrototype, "$BgtoString", function() { return this.value.toString(); });
       D(axClass.dPrototype, "value", defaultValue);
+      return axClass;
     }
 
     /**
@@ -1192,26 +1193,27 @@ module Shumway.AVMX {
         return this.value.toString();
       });
       // Array.prototype is an Array, and behaves like one.
-      AXArray.dPrototype['value'] = [];
+      var proto: any = AXArray.dPrototype;
+      proto['value'] = [];
       var Ap = AS.ASArray.prototype;
-      P(AXArray.dPrototype, "push", Ap.push);
-      P(AXArray.dPrototype, "pop", Ap.pop);
-      P(AXArray.dPrototype, "shift", Ap.shift);
-      P(AXArray.dPrototype, "unshift", Ap.unshift);
-      P(AXArray.dPrototype, "reverse", Ap.reverse);
-      P(AXArray.dPrototype, "concat", Ap.concat);
-      P(AXArray.dPrototype, "slice", Ap.slice);
-      P(AXArray.dPrototype, "join", Ap.join);
-      P(AXArray.dPrototype, "toString", Ap.toString);
-      P(AXArray.dPrototype, "indexOf", Ap.indexOf);
-      P(AXArray.dPrototype, "lastIndexOf", Ap.lastIndexOf);
-      P(AXArray.dPrototype, "every", Ap.every);
-      P(AXArray.dPrototype, "some", Ap.some);
-      P(AXArray.dPrototype, "forEach", Ap.forEach);
-      P(AXArray.dPrototype, "map", Ap.map);
-      P(AXArray.dPrototype, "filter", Ap.filter);
-      P(AXArray.dPrototype, "sort", Ap.sort);
-      P(AXArray.dPrototype, "sortOn", Ap.sortOn);
+      P(proto, "push", Ap.push);
+      P(proto, "pop", Ap.pop);
+      P(proto, "shift", Ap.shift);
+      P(proto, "unshift", Ap.unshift);
+      P(proto, "reverse", Ap.reverse);
+      P(proto, "concat", Ap.concat);
+      P(proto, "slice", Ap.slice);
+      P(proto, "join", Ap.join);
+      P(proto, "toString", Ap.toString);
+      P(proto, "indexOf", Ap.indexOf);
+      P(proto, "lastIndexOf", Ap.lastIndexOf);
+      P(proto, "every", Ap.every);
+      P(proto, "some", Ap.some);
+      P(proto, "forEach", Ap.forEach);
+      P(proto, "map", Ap.map);
+      P(proto, "filter", Ap.filter);
+      P(proto, "sort", Ap.sort);
+      P(proto, "sortOn", Ap.sortOn);
 
       // Boolean, int, Number, String, and uint are primitives in AS3. We create a placeholder
       // base class to help us with instanceof tests.
@@ -1222,6 +1224,28 @@ module Shumway.AVMX {
                                                  asCoerceBoolean, axIsTypeBoolean, axIsTypeBoolean);
       var AXString = this.preparePrimitiveClass("AXString", "String", asConvertString, '',
                                                  asCoerceString, axIsTypeString, axIsTypeString);
+      proto = AXString.dPrototype;
+      var Sp = AS.ASString.prototype;
+      P(proto, 'indexOf', Sp.generic_indexOf);
+      P(proto, 'lastIndexOf', Sp.generic_lastIndexOf);
+      P(proto, 'charAt', Sp.generic_charAt);
+      P(proto, 'charCodeAt', Sp.generic_charCodeAt);
+      P(proto, 'concat', Sp.generic_concat);
+      P(proto, 'localeCompare', Sp.generic_localeCompare);
+      P(proto, 'match', Sp.generic_match);
+      P(proto, 'replace', Sp.generic_replace);
+      P(proto, 'search', Sp.generic_search);
+      P(proto, 'slice', Sp.generic_slice);
+      P(proto, 'split', Sp.generic_split);
+      P(proto, 'substring', Sp.generic_substring);
+      P(proto, 'substr', Sp.generic_substr);
+      P(proto, 'toLowerCase', Sp.generic_toLowerCase);
+      P(proto, 'toLocaleLowerCase', Sp.generic_toLowerCase);
+      P(proto, 'toUpperCase', Sp.generic_toUpperCase);
+      P(proto, 'toLocaleUpperCase', Sp.generic_toUpperCase);
+      P(proto, 'toString', Sp.toString);
+      P(proto, 'valueOf', Sp.valueOf);
+
       var AXNumber = this.preparePrimitiveClass("AXNumber", "Number", asCoerceNumber, 0,
                                                 asCoerceNumber, axIsTypeNumber, axIsTypeNumber);
       var AXInt = this.preparePrimitiveClass("AXInt", "int", asCoerceInt, 0, asCoerceInt,

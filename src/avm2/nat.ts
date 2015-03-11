@@ -795,16 +795,115 @@ module Shumway.AVMX.AS {
   export class ASString extends ASObject {
     static classNatives: any [] = [String];
 
-    // TODO: It's not safe to pull methods from String.prototype.
-    static instanceNatives: any [] = [String.prototype];
-
     value: string;
 
-    charCodeAt() {
-      return this.value.charCodeAt.apply(this.value, arguments);
+    indexOf(char: string) {
+      return this.value.indexOf(char);
+    }
+    lastIndexOf(char: string) {
+      return this.value.lastIndexOf(char);
+    }
+    charAt(index: number) {
+      return this.value.charAt(index);
+    }
+    charCodeAt(index: number) {
+      return this.value.charCodeAt(index);
+    }
+    concat() {
+      return this.value.concat.apply(this.value, arguments);
+    }
+    localeCompare() {
+      return this.value.localeCompare.apply(this.value, arguments);
+    }
+    match(pattern) {
+      return this.value.match(pattern);
+    }
+    replace(pattern, repl) {
+      return this.value.replace(pattern, repl);
+    }
+    search(pattern) {
+      return this.value.search(pattern);
+    }
+    slice(start?: number, end?: number) {
+      return this.value.slice(start, end);
+    }
+    split(separator: string, limit?: number) {
+      return this.value.split(separator, limit);
+    }
+    substring(start: number, end?: number) {
+      return this.value.substring(start, end);
+    }
+    substr(from: number, length?: number) {
+      return this.value.substr(from, length);
+    }
+    toLocaleLowerCase() {
+      return this.value.toLowerCase();
+    }
+    toLowerCase() {
+      return this.value.toLowerCase();
+    }
+    toLocaleUpperCase() {
+      return this.value.toUpperCase();
+    }
+    toUpperCase() {
+      return this.value.toUpperCase();
     }
 
-    // TODO: Add all other string functions.
+    // The String.prototype versions of these methods  are generic, so the implementation is
+    // different.
+
+    generic_indexOf(char: string) {
+      return String.prototype.indexOf.call(this.value, char);
+    }
+    generic_lastIndexOf(char: string) {
+      return String.prototype.lastIndexOf.call(this.value, char);
+    }
+    generic_charAt(index: number) {
+      return String.prototype.charAt.call(this.value, index);
+    }
+    generic_charCodeAt(index: number) {
+      return String.prototype.charCodeAt.call(this.value, index);
+    }
+    generic_concat() {
+      return String.prototype.concat.apply(this.value, arguments);
+    }
+    generic_localeCompare() {
+      return String.prototype.localeCompare.apply(this.value, arguments);
+    }
+    generic_match(pattern) {
+      return String.prototype.match.call(this.value, pattern);
+    }
+    generic_replace(pattern, repl) {
+      return String.prototype.replace.call(this.value, pattern, repl);
+    }
+    generic_search(pattern) {
+      return String.prototype.search.call(this.value, pattern);
+    }
+    generic_slice(start?: number, end?: number) {
+      return String.prototype.slice.call(this.value, start, end);
+    }
+    generic_split(separator: string, limit?: number) {
+      return String.prototype.split.call(this.value, separator, limit);
+    }
+    generic_substring(start: number, end?: number) {
+      return String.prototype.substring.call(this.value, start, end);
+    }
+    generic_substr(from: number, length?: number) {
+      return String.prototype.substr.call(this.value, from, length);
+    }
+    generic_toLowerCase() {
+      return String.prototype.toLowerCase.call(this.value);
+    }
+    generic_toUpperCase() {
+      return String.prototype.toUpperCase.call(this.value);
+    }
+
+    toString() {
+      return this.value.toString();
+    }
+    valueOf() {
+      return this.value.valueOf();
+    }
 
     get length(): number {
       return this.value.length;
