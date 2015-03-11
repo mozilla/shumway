@@ -72,6 +72,7 @@ function runViewer(flashParams) {
           appCompiler: true,
           verifier: true
         },
+        isRemote: flashParams.isRemote,
         bgcolor: undefined,
         displayParameters: easel.getDisplayParameters()
       }

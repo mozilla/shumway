@@ -19,12 +19,18 @@ var shuobject = (function () {
   // Using last loaded script director as a base for Shumway resources
   var lastScriptElement = (document.body || document.getElementsByTagName('head')[0]).lastChild;
   var shumwayHome = combineUrl(lastScriptElement.src, '.');
+  // Checking if viewer is hosted remotely
+  var shumwayRemote = getOrigin(document.location.href) !== getOrigin(shumwayHome);
 
   var originalCreateElement = document.createElement;
   var cachedQueryParams;
 
   function combineUrl(baseUrl, url) {
     return new URL(url, baseUrl).href;
+  }
+
+  function getOrigin(url) {
+    return new URL(url).origin;
   }
 
   function onDOMReady(callback) {
@@ -103,6 +109,52 @@ var shuobject = (function () {
     var sizeBytes = [swfSize & 255, (swfSize >> 8) & 255, (swfSize >> 16) & 255, (swfSize >> 24) & 255];
     var blob = new Blob([new Uint8Array(headerBytes.concat(sizeBytes, swfBody))], {type: 'application/x-shockwave-flash'});
     return blob;
+  }
+
+  var enabledRemoteOrigins = null;
+
+  function fetchRemoteFile(data, target, origin) {
+    function sendResponse(args) {
+      args.type = 'shumwayFileLoadingResponse';
+      args.sessionId = sessionId;
+      target.postMessage(args, origin);
+    }
+
+    var sessionId = data.sessionId;
+    var xhr = new XMLHttpRequest();
+    xhr.open(data.method || 'GET', data.url, true);
+    xhr.responseType = 'arraybuffer';
+    xhr.onload = function () {
+      if (xhr.status !== 200) {
+        sendResponse({topic: 'error', error: 'XHR status: ' + xhr.status});
+        return;
+      }
+      var data = new Uint8Array(xhr.response);
+      sendResponse({topic: 'progress', array: data, loaded: data.length, total: data.length});
+      sendResponse({topic: 'close'});
+    };
+    xhr.onerror = function () {
+      sendResponse({topic: 'error', error: 'XHR error'});
+    };
+    xhr.send(data.postData || null);
+    sendResponse({topic: 'open'});
+  }
+
+  function setupRemote(origin) {
+    if (!enabledRemoteOrigins) {
+      window.addEventListener('message', function (e) {
+        var data = e.data;
+        if (typeof data !== 'object' || data === null || data.type !== 'shumwayFileLoading') {
+          return;
+        }
+        if (!enabledRemoteOrigins[e.origin]) {
+          return;
+        }
+        fetchRemoteFile(data, e.source, e.origin);
+      });
+      enabledRemoteOrigins = Object.create(null);
+    }
+    enabledRemoteOrigins[origin] = true;
   }
 
   // Initializes and performs external interface communication.
@@ -263,8 +315,12 @@ var shuobject = (function () {
       baseUrl: getDocumentBase(),
       url: absoluteSwfUrl,
       movieParams: movieParams,
-      objectParams: objectParams
+      objectParams: objectParams,
+      isRemote: shumwayRemote
     };
+    if (shumwayRemote) {
+      setupRemote(getOrigin(viewerUrl));
+    }
     iframeElement.src = viewerUrl;
     iframeElement.setAttribute('frameborder', '0');
     if (cssStyle) {
@@ -282,6 +338,14 @@ var shuobject = (function () {
     var iframeElement = createSWF(swfUrl, id, width, height, flashvars, params, attributes);
     iframeElement.addEventListener('load', function load(e) {
       iframeElement.removeEventListener('load', load);
+      if (shumwayRemote) {
+        // It's not possible expose the external interface or internals of
+        // the Shumway, because iframeElement.contentDocument is not available.
+        if (callbackFn) {
+          callbackFn({success: true, id: iframeElement.id, ref: iframeElement});
+        }
+        return;
+      }
       var contentDocument = iframeElement.contentDocument;
       contentDocument.addEventListener('shumwaystarted', function started(e) {
         contentDocument.removeEventListener('shumwaystarted', started, true);
@@ -345,12 +409,29 @@ var shuobject = (function () {
   }
 
   return {
+    /**
+     * Specifies the location of the Shumway base folder.
+     */
     get shumwayHome() {
       return shumwayHome;
     },
 
     set shumwayHome(value) {
       shumwayHome = combineUrl(document.location.href, value);
+    },
+
+    /**
+     * Specifies if Shumway shall take in account cross-domain policies.
+     *
+     * When true is set, SWF files will be requested by the main page, external
+     * interface is disable and Shumway internal objects are not available.
+     */
+    get shumwayRemote() {
+      return shumwayRemote;
+    },
+
+    set shumwayRemote(value) {
+      shumwayRemote = !!value;
     },
 
     registerObject: function (id, version, expressInstallSwfurl, callbackFn) {
@@ -363,6 +444,7 @@ var shuobject = (function () {
       });
     },
     embedSWF: function (swfUrl, id, width, height, version, expressInstallSwfurl, flashvars, params, attributes, callbackFn) {
+
       onDOMReady(function () {
         var element = document.getElementById(id);
         if (!element) {

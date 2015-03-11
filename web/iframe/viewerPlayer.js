@@ -110,9 +110,13 @@ function runSwfPlayer(flashParams) {
       parentDocument.dispatchEvent(event);
     }
 
-    Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
+    Shumway.FileLoadingService.instance = flashParams.isRemote ?
+      new RemoteFileLoadingService() :
+      new Shumway.Player.BrowserFileLoadingService();
     Shumway.FileLoadingService.instance.init(baseUrl);
-    Shumway.ExternalInterfaceService.instance = iframeExternalInterface;
+    if (!flashParams.isRemote) {
+      Shumway.ExternalInterfaceService.instance = iframeExternalInterface;
+    }
 
     if (asyncLoading) {
       runSWF(movieUrl, undefined, baseUrl);
@@ -126,6 +130,82 @@ function runSwfPlayer(flashParams) {
     }
   });
 }
+
+function RemoteFileLoadingService() {
+  this._baseUrl = null;
+  this._nextSessionId = 1;
+  this._sessions = [];
+}
+RemoteFileLoadingService.prototype = {
+  init: function (baseUrl) {
+    this._baseUrl = baseUrl;
+    var service = this;
+    window.addEventListener('message', function (e) {
+      var data = e.data;
+      if (typeof data !== 'object' || data === null ||
+          data.type !== 'shumwayFileLoadingResponse') {
+        return;
+      }
+      var session = service._sessions[data.sessionId];
+      if (session) {
+        service._notifySession(session, data);
+      }
+    });
+  },
+
+  _notifySession: function (session, args) {
+    var sessionId = args.sessionId;
+    switch (args.topic) {
+      case "open":
+        session.onopen();
+        break;
+      case "close":
+        session.onclose();
+        this._sessions[sessionId] = null;
+        console.log('Session #' + sessionId + ': closed');
+        break;
+      case "error":
+        session.onerror && session.onerror(args.error);
+        break;
+      case "progress":
+        console.log('Session #' + sessionId + ': loaded ' + args.loaded + '/' + args.total);
+        var data = args.array;
+        if (!(data instanceof Uint8Array)) {
+          data = new Uint8Array(data);
+        }
+        session.onprogress && session.onprogress(data, {bytesLoaded: args.loaded, bytesTotal: args.total});
+        break;
+    }
+  },
+
+  createSession: function () {
+    var sessionId = this._nextSessionId++;
+    var service = this;
+    var session = {
+      open: function (request) {
+        var path = service.resolveUrl(request.url);
+        console.log('Session #' + sessionId + ': loading ' + path);
+        window.parent.parent.postMessage({type: 'shumwayFileLoading', url: path, method: request.method,
+          mimeType: request.mimeType, postData: request.data,
+          checkPolicyFile: request.checkPolicyFile, sessionId: sessionId}, '*');
+      },
+      close: function () {
+        if (service._sessions[sessionId]) {
+          // TODO send abort
+        }
+      }
+    };
+    return (this._sessions[sessionId] = session);
+  },
+
+  resolveUrl: function (url) {
+    return new URL(url, this._baseUrl).href;
+  },
+
+  navigateTo: function (url, target) {
+    window.open(this.resolveUrl(url), target || '_blank');
+  }
+};
 
 window.addEventListener('message', function onWindowMessage(e) {
   var data = e.data;
