@@ -527,7 +527,7 @@ module Shumway.AVMX {
       return;
     }
     var Op = AS.ASObject.prototype;
-    AXBasePrototype = Object.create(null)
+    AXBasePrototype = Object.create(null);
     D(AXBasePrototype, "axHasPropertyInternal", Op.axHasPropertyInternal);
     D(AXBasePrototype, "axHasProperty", Op.axHasProperty);
     D(AXBasePrototype, "axSetProperty", Op.axSetProperty);
@@ -860,7 +860,6 @@ module Shumway.AVMX {
             axClass.dPrototype = Object.create(superClass.dPrototype);
           }
           axClass.tPrototype = Object.create(axClass.dPrototype);
-          var initializerMethodInfo = instanceInfo.getInitializer();
           axClass.axInitializer = this.createInitializerFunction(classInfo, classScope);
           axClass.axCoerce = function () {
             assert(false, "TODO: Coercing constructor.");
@@ -1118,7 +1117,8 @@ module Shumway.AVMX {
     initialize() {
       var D = defineNonEnumerableProperty;
       var P = function setPublicProperty(object, name, value) {
-        defineNonEnumerableProperty(object, Multiname.getPublicMangledName(name), AXFunction.axBox(value));
+        defineNonEnumerableProperty(object, Multiname.getPublicMangledName(name),
+                                    AXFunction.axBox(value));
       };
       
       // The basic dynamic prototype that all objects in this security domain have in common.
@@ -1127,15 +1127,6 @@ module Shumway.AVMX {
       // The basic traits prototype that all objects in this security domain have in common.
       this.objectPrototype = Object.create(dynamicObjectPrototype);
       this.initializeCoreNatives();
-
-      // The core classes' MOP hooks are defined here to keep all the hooks initialization in one
-      // place.
-      var AXObject = this.AXObject;
-      // Object(null) creates an object, and this behaves differently than:
-      // (function (x: Object) { trace (x); })(null) which prints null.
-      D(AXObject, "axApply", axApplyObject);
-      D(AXObject, "axConstruct", axConstructObject);
-      D(AXObject, "axCoerce", axCoerceObject);
 
       // Debugging Helper
       release || (this.objectPrototype['trace'] = function trace() {
@@ -1161,7 +1152,25 @@ module Shumway.AVMX {
         return '[Catch]';
       };
 
+      // The core classes' MOP hooks and dynamic prototype methods are defined
+      // here to keep all the hooks initialization in one place.
+      var AXObject = this.AXObject;
       var AXFunction = this.AXFunction;
+      var proto: any = AXObject.dPrototype;
+      var asProto: any = AS.ASObject.prototype;
+      P(proto, "hasOwnProperty", asProto.native_hasOwnProperty);
+      P(proto, "propertyIsEnumerable", asProto.native_propertyIsEnumerable);
+      P(proto, "setPropertyIsEnumerable", asProto.setPropertyIsEnumerable);
+      P(proto, "isPrototypeOf", asProto.native_isPrototypeOf);
+      P(proto, "toString", asProto.toString);
+      P(proto, "valueOf", asProto.valueOf);
+
+      // Object(null) creates an object, and this behaves differently than:
+      // (function (x: Object) { trace (x); })(null) which prints null.
+      D(AXObject, "axApply", axApplyObject);
+      D(AXObject, "axConstruct", axConstructObject);
+      D(AXObject, "axCoerce", axCoerceObject);
+
       D(AXFunction.dPrototype, "axCall", AS.ASFunction.prototype.axCall);
       D(AXFunction.dPrototype, "axApply", AS.ASFunction.prototype.axApply);
       D(AXFunction.tPrototype, '$BgtoString', AXFunction.axBox(function () {
@@ -1198,9 +1207,9 @@ module Shumway.AVMX {
         return this.value.toString();
       });
       // Array.prototype is an Array, and behaves like one.
-      var proto: any = AXArray.dPrototype;
+      proto = AXArray.dPrototype;
       proto['value'] = [];
-      var asProto: any = AS.ASArray.prototype;
+      asProto = AS.ASArray.prototype;
       P(proto, "push", asProto.push);
       P(proto, "pop", asProto.pop);
       P(proto, "shift", asProto.shift);
