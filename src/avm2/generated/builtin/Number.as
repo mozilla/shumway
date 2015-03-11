@@ -91,13 +91,10 @@ public final class Number
   private static const DTOSTR_PRECISION:int = 2;
   private static const DTOSTR_EXPONENTIAL:int = 3;
 
-  private static native function _numberToString(n:Number, radix:int):String;
   private static native function _minValue():Number;
 
-  AS3 function toString(radix=10):String {
-    return _numberToString(this,radix)
-  }
-  AS3 function valueOf():Number { return this }
+  AS3 native function toString(radix=10):String;
+  AS3 native function valueOf():Number;
 
   AS3 native function toExponential(p=0):String;
   AS3 native function toPrecision(p=0):String;

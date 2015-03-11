@@ -915,9 +915,12 @@ module Shumway.AVMX.AS {
     static instanceNatives: any [] = [Number.prototype];
     value: number;
 
-    static _numberToString(n: number, radix: number): string {
-      radix = radix | 0;
-      return Number(n).toString(radix);
+    toString(radix: number) {
+      return this.value.toString(radix);
+    }
+
+    valueOf() {
+      return this.value;
     }
 
     static _minValue(): number {
