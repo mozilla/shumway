@@ -43,6 +43,7 @@ module Shumway.Player {
   import IFSCommandListener = flash.system.IFSCommandListener;
   import IVideoElementService = flash.net.IVideoElementService;
   import IRootElementService = flash.display.IRootElementService;
+  import ICrossDomainSWFLoadingWhitelist = flash.system.ICrossDomainSWFLoadingWhitelist;
   import MessageTag = Shumway.Remoting.MessageTag;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
@@ -224,7 +225,7 @@ module Shumway.Player {
    * synchronizes the frame tree with the display list.
    */
   export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
-                                 IAssetResolver, IRootElementService {
+                                 IAssetResolver, IRootElementService, ICrossDomainSWFLoadingWhitelist {
     _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
@@ -360,6 +361,7 @@ module Shumway.Player {
       } else {
         this._enterRootLoadingLoop();
       }
+      this.addToSWFLoadingWhitelist(FileLoadingService.instance.resolveUrl(url), false);
       var context = this.createLoaderContext();
       if (buffer) {
         var symbol = Shumway.Timeline.BinarySymbol.FromData({id: -1, data: buffer});
@@ -713,6 +715,37 @@ module Shumway.Player {
         symbol.resolveAssetPromise.resolve(result);
       });
       symbol.resolveAssetPromise.then(symbol.resolveAssetCallback, null);
+    }
+
+    private _crossDomainSWFLoadingWhitelist: {protocol: string; hostname: string; insecure: boolean}[] = [];
+
+    addToSWFLoadingWhitelist(domain: string, insecure: boolean) {
+      if (domain.indexOf('/') < 0) { // anything without path, this includes '*'
+        this._crossDomainSWFLoadingWhitelist.push({protocol: 'http:', hostname: domain, insecure: insecure});
+        return;
+      }
+      try {
+        var url = new (<any>window).URL(domain);
+        this._crossDomainSWFLoadingWhitelist.push({protocol: url.protocol, hostname: url.hostname, insecure: insecure});
+      } catch (e) { }
+    }
+
+    checkDomainForSWFLoading(domain: string): boolean {
+      try {
+        var url = new (<any>window).URL(domain);
+      } catch (e) {
+        return false;
+      }
+      return this._crossDomainSWFLoadingWhitelist.some(function (entry) {
+        if (url.hostname !== entry.hostname && entry.hostname !== '*') {
+          return false;
+        }
+        if (entry.insecure) {
+          return true;
+        }
+        // The HTTPS SWF has to be more protected than it's whitelisted HTTP equivalent.
+        return url.protocol === 'https:' || entry.protocol !== 'https:';
+      }, this);
     }
   }
 }

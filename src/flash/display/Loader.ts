@@ -25,6 +25,7 @@ module Shumway.AVM2.AS.flash.display {
 
   import LoaderContext = flash.system.LoaderContext;
   import events = flash.events;
+  import ICrossDomainSWFLoadingWhitelist = flash.system.ICrossDomainSWFLoadingWhitelist;
 
   import FileLoader = Shumway.FileLoader;
   import ILoadListener = Shumway.ILoadListener;
@@ -340,6 +341,12 @@ module Shumway.AVM2.AS.flash.display {
       return this._uncaughtErrorEvents;
     }
 
+    private _canLoadSWFFromDomain(url: string): boolean {
+      url = FileLoadingService.instance.resolveUrl(url);
+      var whitelist: ICrossDomainSWFLoadingWhitelist = AVM2.instance.globals['Shumway.Player.Utils'];
+      return whitelist.checkDomainForSWFLoading(url);
+    }
+
     load(request: flash.net.URLRequest, context?: LoaderContext): void {
       this.close();
       // TODO: clean up contentloaderInfo.
@@ -350,7 +357,17 @@ module Shumway.AVM2.AS.flash.display {
       if (!release && traceLoaderOption.value) {
         console.log("Loading url " + request.url);
       }
-      this._fileLoader.loadFile(request._toFileRequest());
+      // Starts loading on the next script execution turn, in case if allowDomain
+      // will be called. This is a very simplified heuristic to restrict
+      // unwanted SWFs that can break the loading one.
+      Promise.resolve<any>(undefined).then(function (fileLoader: FileLoader, fileRequest) {
+        if (this._canLoadSWFFromDomain(fileRequest.url)) {
+          fileLoader.loadFile(fileRequest);
+        } else {
+          console.error('Loading of ' + fileRequest.url + ' was rejected based on allowDomain heuristic.');
+          // TODO trigger some loading error
+        }
+      }.bind(this, this._fileLoader, request._toFileRequest()));
 
       this._queuedLoadUpdate = null;
       release || assert(Loader._loadQueue.indexOf(this) === -1);
