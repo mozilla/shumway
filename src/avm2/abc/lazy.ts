@@ -986,7 +986,7 @@ module Shumway.AVMX {
       if (this._mangledName !== null) {
         return this._mangledName;
       }
-      if (this.type === NamespaceType.Public) {
+      if (this.type === NamespaceType.Public && this.uri === '') {
         return this._mangledName = 'Bg';
       }
       var nsHash = Namespace._hashNamespace(this.type, this.uri, this.prefix);
