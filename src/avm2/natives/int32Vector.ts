@@ -52,35 +52,36 @@ module Shumway.AVMX.AS {
     public static instanceNatives: any [] = [Int32Vector.prototype];
     public static callableConstructor: any = Int32Vector.callable;
 
-    static classInitializer: any = function() {
-      var proto: any = Int32Vector.prototype;
-      defineNonEnumerableProperty(proto, '$Bgjoin', proto.join);
+    static classInitializer(axClass: AXClass) {
+      var proto: any = axClass.dPrototype;
+      var asProto: any = this.prototype;
+      defineNonEnumerableProperty(proto, '$Bgjoin', asProto.join);
       // Same as join, see VectorImpl.as in Tamarin repository.
-      defineNonEnumerableProperty(proto, '$BgtoString', proto.join);
-      defineNonEnumerableProperty(proto, '$BgtoLocaleString', proto.toLocaleString);
+      defineNonEnumerableProperty(proto, '$BgtoString', asProto.join);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', asProto.toLocaleString);
 
-      defineNonEnumerableProperty(proto, '$Bgpop', proto.pop);
-      defineNonEnumerableProperty(proto, '$Bgpush', proto.push);
+      defineNonEnumerableProperty(proto, '$Bgpop', asProto.pop);
+      defineNonEnumerableProperty(proto, '$Bgpush', asProto.push);
 
-      defineNonEnumerableProperty(proto, '$Bgreverse', proto.reverse);
-      defineNonEnumerableProperty(proto, '$Bgconcat', proto.concat);
-      defineNonEnumerableProperty(proto, '$Bgsplice', proto.splice);
-      defineNonEnumerableProperty(proto, '$Bgslice', proto.slice);
+      defineNonEnumerableProperty(proto, '$Bgreverse', asProto.reverse);
+      defineNonEnumerableProperty(proto, '$Bgconcat', asProto.concat);
+      defineNonEnumerableProperty(proto, '$Bgsplice', asProto.splice);
+      defineNonEnumerableProperty(proto, '$Bgslice', asProto.slice);
 
-      defineNonEnumerableProperty(proto, '$Bgshift', proto.shift);
-      defineNonEnumerableProperty(proto, '$Bgunshift', proto.unshift);
+      defineNonEnumerableProperty(proto, '$Bgshift', asProto.shift);
+      defineNonEnumerableProperty(proto, '$Bgunshift', asProto.unshift);
 
-      defineNonEnumerableProperty(proto, '$BgindexOf', proto.indexOf);
-      defineNonEnumerableProperty(proto, '$BglastIndexOf', proto.lastIndexOf);
+      defineNonEnumerableProperty(proto, '$BgindexOf', asProto.indexOf);
+      defineNonEnumerableProperty(proto, '$BglastIndexOf', asProto.lastIndexOf);
 
-      defineNonEnumerableProperty(proto, '$BgforEach', proto.forEach);
-      defineNonEnumerableProperty(proto, '$Bgmap', proto.map);
-      defineNonEnumerableProperty(proto, '$Bgfilter', proto.filter);
-      defineNonEnumerableProperty(proto, '$Bgsome', proto.some);
-      defineNonEnumerableProperty(proto, '$Bgevery', proto.every);
+      defineNonEnumerableProperty(proto, '$BgforEach', asProto.forEach);
+      defineNonEnumerableProperty(proto, '$Bgmap', asProto.map);
+      defineNonEnumerableProperty(proto, '$Bgfilter', asProto.filter);
+      defineNonEnumerableProperty(proto, '$Bgsome', asProto.some);
+      defineNonEnumerableProperty(proto, '$Bgevery', asProto.every);
 
-      defineNonEnumerableProperty(proto, '$Bgsort', proto.sort);
-    };
+      defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
+    }
 
     newThisType(): Int32Vector {
       return new Int32Vector();

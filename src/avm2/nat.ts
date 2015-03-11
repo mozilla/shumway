@@ -172,6 +172,12 @@ module Shumway.AVMX.AS {
     static native_hasOwnProperty: (v: any) => boolean;
     static native_propertyIsEnumerable: (v: any) => boolean;
 
+    static classInitializer(axClass: AXClass) {
+      var proto: any = axClass.dPrototype;
+      var asProto: any = this.prototype;
+      defineNonEnumerableProperty(proto, '$Bgjoin', asProto.join);
+    }
+
     static _init() {
       // Nop.
     }
@@ -394,6 +400,8 @@ module Shumway.AVMX.AS {
 
     classNatives: Object [];
     instanceNatives: Object [];
+
+    classInitializer: (axClass: AXClass) => void;
 
     classSymbols: string [];
     instanceSymbols: string [];
@@ -1169,80 +1177,77 @@ module Shumway.AVMX.AS {
     }
   }
 
-  function linkClass(axClass: AXClass, asClass: ASClass) {
-    /**
-     * Only returns true if the symbol is available in debug or release modes. Only symbols
-     * followed by the  "!" suffix are available in release builds.
-     */
-    function containsSymbol(symbols: string [], name: string) {
-      for (var i = 0; i < symbols.length; i++) {
-        var symbol = symbols[i];
-        if (symbol.indexOf(name) >= 0) {
-          var releaseSymbol = symbol[symbol.length - 1] === "!";
-          if (releaseSymbol) {
-            symbol = symbol.slice(0, symbol.length - 1);
-          }
-          if (name !== symbol) {
-            continue;
-          }
-          if (release) {
-            return releaseSymbol;
-          }
-          return true;
+  /**
+   * Only returns true if the symbol is available in debug or release modes. Only symbols
+   * followed by the  "!" suffix are available in release builds.
+   */
+  function containsSymbol(symbols: string [], name: string) {
+    for (var i = 0; i < symbols.length; i++) {
+      var symbol = symbols[i];
+      if (symbol.indexOf(name) >= 0) {
+        var releaseSymbol = symbol[symbol.length - 1] === "!";
+        if (releaseSymbol) {
+          symbol = symbol.slice(0, symbol.length - 1);
         }
-      }
-      return false;
-    }
-
-    function link(symbols, traits, object) {
-      for (var i = 0; i < traits.length; i++) {
-        var trait = traits[i];
-        if (!containsSymbol(symbols, trait.name.name)) {
+        if (name !== symbol) {
           continue;
         }
-        release || assert (!trait.name.getNamespace().isPrivate(), "Why are you linking against private members?");
-        if (trait.isConst()) {
-          notImplemented("Don't link against const traits.");
-          return;
+        if (release) {
+          return releaseSymbol;
         }
-        var name = trait.name.name;
-        var qn = Multiname.getMangledName(trait.name);
-        if (trait.isSlot()) {
-          Object.defineProperty(object, name, {
-            get: <() => any>new Function("", "return this." + qn +
-            "//# sourceURL=get-" + qn + ".as"),
-            set: <(any) => void>new Function("v", "this." + qn + " = v;" +
-            "//# sourceURL=set-" + qn + ".as")
-          });
-        } else if (trait.isMethod()) {
-          release || assert (!object[name], "Symbol should not already exist.");
-          release || assert (object.asOpenMethods[qn], "There should be an open method for this symbol.");
-          object[name] = object.asOpenMethods[qn];
-        } else if (trait.isGetter()) {
-          release || assert (hasOwnGetter(object, qn), "There should be an getter method for this symbol.");
-          Object.defineProperty(object, name, {
-            get: <() => any>new Function("", "return this." + qn +
-            "//# sourceURL=get-" + qn + ".as")
-          });
-        } else {
-          notImplemented(trait);
-        }
+        return true;
       }
     }
+    return false;
+  }
 
+  function link(symbols, traits, object) {
+    for (var i = 0; i < traits.length; i++) {
+      var trait = traits[i];
+      if (!containsSymbol(symbols, trait.name.name)) {
+        continue;
+      }
+      release || assert (!trait.name.getNamespace().isPrivate(), "Why are you linking against private members?");
+      if (trait.isConst()) {
+        notImplemented("Don't link against const traits.");
+        return;
+      }
+      var name = trait.name.name;
+      var qn = Multiname.getMangledName(trait.name);
+      if (trait.isSlot()) {
+        Object.defineProperty(object, name, {
+          get: <() => any>new Function("", "return this." + qn +
+                                           "//# sourceURL=get-" + qn + ".as"),
+          set: <(any) => void>new Function("v", "this." + qn + " = v;" +
+                                                "//# sourceURL=set-" + qn + ".as")
+        });
+      } else if (trait.isMethod()) {
+        release || assert (!object[name], "Symbol should not already exist.");
+        release || assert (object.asOpenMethods[qn], "There should be an open method for this symbol.");
+        object[name] = object.asOpenMethods[qn];
+      } else if (trait.isGetter()) {
+        release || assert (hasOwnGetter(object, qn), "There should be an getter method for this symbol.");
+        Object.defineProperty(object, name, {
+          get: <() => any>new Function("", "return this." + qn +
+                                           "//# sourceURL=get-" + qn + ".as")
+        });
+      } else {
+        notImplemented(trait);
+      }
+    }
+  }
+
+  function filter(propertyName: string): boolean {
+    return propertyName.indexOf("native_") !== 0;
+  }
+
+  function linkClass(axClass: AXClass, asClass: ASClass) {
     if (asClass.classSymbols) {
       // link(self.classSymbols, self.classInfo.traits,  self);
     }
 
     if (asClass.instanceSymbols) {
       // link(self.instanceSymbols, self.classInfo.instanceInfo.traits,  self.tPrototype);
-    }
-
-    function filter(propertyName: string): boolean {
-      if (propertyName.indexOf("native_") === 0) {
-        return false;
-      }
-      return true;
     }
 
     // Copy class methods and properties.
@@ -1260,6 +1265,10 @@ module Shumway.AVMX.AS {
       }
     }
     copyOwnPropertyDescriptors(axClass.tPrototype, asClass.prototype, filter);
+
+    if (asClass.classInitializer) {
+      asClass.classInitializer(axClass);
+    }
 
     false && writer && traceASClass(axClass, asClass);
   }

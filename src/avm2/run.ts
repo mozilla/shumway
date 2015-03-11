@@ -1217,6 +1217,7 @@ module Shumway.AVMX {
       P(proto, "reverse", asProto.reverse);
       P(proto, "concat", asProto.concat);
       P(proto, "slice", asProto.slice);
+      P(proto, "splice", asProto.splice);
       P(proto, "join", asProto.join);
       P(proto, "toString", asProto.toString);
       P(proto, "indexOf", asProto.indexOf);
