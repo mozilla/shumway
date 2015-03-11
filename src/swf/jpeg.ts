@@ -738,7 +738,7 @@ module Shumway.JPEG {
               l = frame.components.push({
                 h: h,
                 v: v,
-                quantizationTable: quantizationTables[qId]
+                quantizationTableId: qId
               });
               frame.componentIds[componentId] = l - 1;
               offset += 3;
@@ -784,6 +784,8 @@ module Shumway.JPEG {
               var tableSpec = data[offset++];
               component.huffmanTableDC = huffmanTablesDC[tableSpec >> 4];
               component.huffmanTableAC = huffmanTablesAC[tableSpec & 15];
+              var qId = component.quantizationTableId;
+              component.quantizationTable = quantizationTables[qId];
               components.push(component);
             }
             var spectralStart = data[offset++];
