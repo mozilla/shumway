@@ -1088,21 +1088,22 @@ module Shumway.AVMX {
       return axClass;
     }
 
-    preparePrimitiveClass(exportName: string, name: string, convert, conversionDefault, coerce,
+    preparePrimitiveClass(exportName: string, name: string, convert, defaultValue, coerce,
                           isType, isInstanceOf) {
       var axClass = this.prepareNativeClass(exportName, name, true);
       var D = defineNonEnumerableProperty;
       D(axClass, 'axBox', axBoxPrimitive);
       D(axClass, "axApply", function axApply(_ , args: any []) {
-        return convert(args && args.length ? args[0] : conversionDefault);
+        return convert(args && args.length ? args[0] : defaultValue);
       });
       D(axClass, "axConstruct", function axConstruct(args: any []) {
-        return convert(args && args.length ? args[0] : conversionDefault);
+        return convert(args && args.length ? args[0] : defaultValue);
       });
       D(axClass, "axCoerce", coerce);
       D(axClass, "axIsType", isType);
       D(axClass, "axIsInstanceOf", isInstanceOf);
       D(axClass.tPrototype, "$BgtoString", function() { return this.value.toString(); });
+      D(axClass.dPrototype, "value", defaultValue);
     }
 
     /**
