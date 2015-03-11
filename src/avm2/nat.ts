@@ -129,6 +129,7 @@ module Shumway.AVMX.AS {
     static traits: RuntimeTraits;
     static dPrototype: ASObject;
     static tPrototype: ASObject;
+    protected static _methodClosureCache: any;
     static classNatives: Object [];
     static instanceNatives: Object [];
     static securityDomain: SecurityDomain;
@@ -146,6 +147,7 @@ module Shumway.AVMX.AS {
     static axHasOwnProperty: (mn: Multiname) => boolean;
     static axSetProperty: (mn: Multiname, value: any) => void;
     static axGetProperty: (mn: Multiname) => any;
+    static axGetMethod: (name: string) => AXFunction;
     static axGetSuper: (mn: Multiname, scope: Scope) => any;
     static axSetSuper: (mn: Multiname, scope: Scope, value: any) => void;
 
@@ -175,7 +177,6 @@ module Shumway.AVMX.AS {
     static classInitializer(axClass: AXClass) {
       var proto: any = axClass.dPrototype;
       var asProto: any = this.prototype;
-      defineNonEnumerableProperty(proto, '$Bgjoin', asProto.join);
     }
 
     static _init() {
@@ -227,9 +228,25 @@ module Shumway.AVMX.AS {
     }
 
     axGetProperty(mn: Multiname): any {
-      var value = this[this.axResolveMultiname(mn)];
+      var name = this.axResolveMultiname(mn);
+      var value = this[name];
+      if (typeof value === 'function') {
+        return this.axGetMethod(name);
+      }
       release || checkValue(value);
       return value;
+    }
+
+    protected _methodClosureCache: any = null;
+
+    axGetMethod(name: string): AXFunction {
+      release || assert(typeof this[name] === 'function');
+      var cache = this._methodClosureCache || (this._methodClosureCache = Object.create(null));
+      var method = cache[name];
+      if (!method) {
+        method = cache[name] = this.securityDomain.AXMethodClosure.Create(<any>this, this[name]);
+      }
+      return method;
     }
 
     axGetSuper(mn: Multiname, scope: Scope): any {
@@ -738,7 +755,7 @@ module Shumway.AVMX.AS {
     static tsInstanceSymbols = ["prototype"];
 
     private _prototype: AXObject;
-    private value: Function;
+    protected value: Function;
 
     get prototype(): AXObject {
       if (!this._prototype) {
@@ -753,8 +770,7 @@ module Shumway.AVMX.AS {
     }
 
     get length(): number {
-      assert (false, "Fix me.");
-      return 0;
+      return this.value.length;
     }
 
     toString() {
@@ -775,6 +791,40 @@ module Shumway.AVMX.AS {
 
     axApply(thisArg: any, argArray?: any[]): any {
       return this.value.apply(thisArg, argArray);
+    }
+  }
+
+  export class ASMethodClosure extends ASFunction {
+    static classInitializer(axClass: AXClass) {
+      var proto: any = axClass.dPrototype;
+      var asProto: any = this.prototype;
+      defineNonEnumerableProperty(proto, '$Bgcall', asProto.call);
+      defineNonEnumerableProperty(proto, '$Bgapply', asProto.apply);
+    }
+    static Create(receiver: AXObject, method: Function) {
+      var closure: ASMethodClosure = Object.create(this.securityDomain.AXMethodClosure.tPrototype);
+      closure.receiver = receiver;
+      closure.value = method;
+      return closure;
+    }
+
+    private receiver: AXObject;
+
+    get prototype(): AXObject {
+      return null;
+    }
+
+    set prototype(prototype: AXObject) {
+      this.securityDomain.throwError("ReferenceError", Errors.ConstWriteError, "prototype",
+                                     "MethodClosure");
+    }
+
+    axCall(ignoredThisArg: any): any {
+      return this.value.apply(this.receiver, sliceArguments(arguments, 1));
+    }
+
+    axApply(ignoredThisArg: any, argArray?: any[]): any {
+      return this.value.apply(this.receiver, argArray);
     }
   }
 
@@ -949,12 +999,6 @@ module Shumway.AVMX.AS {
 
   export class ASUint extends ASObject {
     value: number;
-  }
-
-  export class ASMethodClosure extends ASFunction {
-    toString() {
-      return "function Function() {}";
-    }
   }
 
   export class ASMath extends ASObject {

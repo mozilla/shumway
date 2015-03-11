@@ -247,8 +247,7 @@ module Shumway.AVMX {
         switch (trait.kind) {
           case TRAIT.Method:
             var method = createMethodForTrait(<MethodTraitInfo>trait, scope);
-            // TODO: get rid of method boxing. We only really need to do this for MethodClosures.
-            runtimeTrait.value = securityDomain.AXFunction.axBox(method);
+            runtimeTrait.value = method;
             break;
           case TRAIT.Getter:
             runtimeTrait.get = createMethodForTrait(<MethodTraitInfo>trait, scope);

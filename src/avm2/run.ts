@@ -607,6 +607,10 @@ module Shumway.AVMX {
     axCall(thisArg: any): any;
   }
 
+  export interface AXMethodClosureClass extends AXClass {
+    Create(receiver: AXObject, method: Function): AXFunction;
+  }
+
   /**
    * Can be used wherever both AXFunctions and raw JS functions are valid values.
    */
@@ -756,6 +760,7 @@ module Shumway.AVMX {
     public AXArray: AXClass;
     public AXClass: AXClass;
     public AXFunction: AXClass;
+    public AXMethodClosure: AXMethodClosureClass;
     public AXNumber: AXClass;
     public AXString: AXClass;
     public AXBoolean: AXClass;
@@ -923,6 +928,10 @@ module Shumway.AVMX {
         var self = this === jsGlobal ? scope.global.object : this;
         return interpret(self, methodInfo, scope, sliceArguments(arguments));
       });
+    }
+
+    createMethodClosure(receiver: AXObject, method: Function): AXFunction {
+      return this.AXMethodClosure.Create(receiver, method);
     }
 
     createInitializerFunction(classInfo: ClassInfo, scope: Scope): Function {
@@ -1200,6 +1209,8 @@ module Shumway.AVMX {
         }
         return this.value.apply(self, args.value);
       });
+
+      this.prepareNativeClass("AXMethodClosure", "MethodClosure", false);
 
       var AXArray = this.prepareNativeClass("AXArray", "Array", false);
       D(AXArray, 'axBox', axBoxPrimitive);
