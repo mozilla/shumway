@@ -1058,7 +1058,8 @@ module Shumway {
         d = chunk & 63; // 63 = 2^6 - 1
 
         // Convert the raw binary segments to the appropriate ASCII encoding
-        base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d];
+        base64 += concat4(encodings[a], encodings[b], encodings[c],
+                          encodings[d]);
       }
 
       // Deal with the remaining bytes and padding
@@ -1070,7 +1071,7 @@ module Shumway {
         // Set the 4 least significant bits to zero
         b = (chunk & 3) << 4; // 3 = 2^2 - 1
 
-        base64 += encodings[a] + encodings[b] + '==';
+        base64 += concat3(encodings[a], encodings[b], '==');
       } else if (byteRemainder == 2) {
         chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1];
 
@@ -1080,7 +1081,7 @@ module Shumway {
         // Set the 2 least significant bits to zero
         c = (chunk & 15) << 2; // 15 = 2^4 - 1
 
-        base64 += encodings[a] + encodings[b] + encodings[c] + '=';
+        base64 += concat4(encodings[a], encodings[b], encodings[c], '=');
       }
       return base64;
     }
