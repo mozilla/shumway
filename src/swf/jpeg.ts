@@ -137,7 +137,8 @@ module Shumway.JPEG {
           return node;
         }
         if (typeof node !== 'object') {
-          throw 'invalid huffman sequence';
+          // throw 'invalid huffman sequence'; // FP or browser is not failing
+          return 0;
         }
       }
       return null;
