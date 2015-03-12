@@ -809,7 +809,12 @@ module Shumway.JPEG {
               offset -= 3;
               break;
             }
-            throw 'unknown JPEG marker ' + fileMarker.toString(16);
+            // throw 'unknown JPEG marker ' + fileMarker.toString(16);
+            // Skipping to the next marker
+            while (offset < data.length && data[offset] !== 0xFF) {
+              offset++;
+            }
+            break;
         }
         fileMarker = readUint16();
       }
