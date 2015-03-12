@@ -646,6 +646,10 @@ module Shumway.ArrayUtilities {
       this.leftToUnpack = leftToUnpack;
       return LZMA_RES_NOT_COMPLETE;
     }
+
+    flushOutput(): void {
+      this.outWindow.flush();
+    }
   }
 
   var LZMA_RES_ERROR = 0;
@@ -661,7 +665,8 @@ module Shumway.ArrayUtilities {
     WAIT_FOR_LZMA_HEADER = 0,
     WAIT_FOR_SWF_HEADER = 1,
     PROCESS_DATA = 2,
-    CLOSED = 3
+    CLOSED = 3,
+    ERROR = 4
   }
 
   export class LzmaDecoder implements IDataDecoder {
@@ -735,21 +740,46 @@ module Shumway.ArrayUtilities {
 
         data = data.subarray(headerBytesExpected);
         this._state = LzmaDecoderState.PROCESS_DATA;
+      } else if (this._state !== LzmaDecoderState.PROCESS_DATA) {
+        return;
       }
-      this._inStream.append(data);
-      var res = this._decoder.decode(true);
-      this._inStream.compact();
 
-      if (res !== LZMA_RES_NOT_COMPLETE) {
-        this._checkError(res);
+      try {
+        this._inStream.append(data);
+        var res = this._decoder.decode(true);
+        this._inStream.compact();
+
+        if (res !== LZMA_RES_NOT_COMPLETE) {
+          this._checkError(res);
+        }
+      } catch (e) {
+        this._decoder.flushOutput();
+        this._decoder = null;
+        this._error(e);
       }
     }
 
     public close() {
+      if (this._state !== LzmaDecoderState.PROCESS_DATA) {
+        return;
+      }
       this._state = LzmaDecoderState.CLOSED;
-      var res = this._decoder.decode(false);
-      this._checkError(res);
+      try {
+        var res = this._decoder.decode(false);
+        this._checkError(res);
+      } catch (e) {
+        this._decoder.flushOutput();
+        this._error(e);
+      }
       this._decoder = null;
+    }
+
+    private _error(error) {
+      // Stopping processing any data if an error occurs.
+      this._state = LzmaDecoderState.ERROR;
+      if (this.onError) {
+        this.onError(error);
+      }
     }
 
     private _checkError(res) {
@@ -767,8 +797,8 @@ module Shumway.ArrayUtilities {
         error = "Internal LZMA Error";
       }
 
-      if (error && this.onError) {
-        this.onError(error);
+      if (error) {
+        this._error(error);
       }
     }
   }
