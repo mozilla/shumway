@@ -116,8 +116,11 @@ module Shumway.JPEG {
       if (bitsData == 0xFF) {
         var nextByte = data[offset++];
         if (nextByte) {
-          throw 'unexpected marker: ' +
-            ((bitsData << 8) | nextByte).toString(16);
+          // Found some marker, feeding zeros
+          bitsCount = 31;
+          bitsData = 0;
+          offset -= 2;
+          return 0;
         }
         // unstuff 0
       }
@@ -134,7 +137,8 @@ module Shumway.JPEG {
           return node;
         }
         if (typeof node !== 'object') {
-          throw 'invalid huffman sequence';
+          // throw 'invalid huffman sequence'; // FP or browser is not failing
+          return 0;
         }
       }
       return null;
@@ -738,7 +742,7 @@ module Shumway.JPEG {
               l = frame.components.push({
                 h: h,
                 v: v,
-                quantizationTable: quantizationTables[qId]
+                quantizationTableId: qId
               });
               frame.componentIds[componentId] = l - 1;
               offset += 3;
@@ -784,6 +788,8 @@ module Shumway.JPEG {
               var tableSpec = data[offset++];
               component.huffmanTableDC = huffmanTablesDC[tableSpec >> 4];
               component.huffmanTableAC = huffmanTablesAC[tableSpec & 15];
+              var qId = component.quantizationTableId;
+              component.quantizationTable = quantizationTables[qId];
               components.push(component);
             }
             var spectralStart = data[offset++];
@@ -803,7 +809,12 @@ module Shumway.JPEG {
               offset -= 3;
               break;
             }
-            throw 'unknown JPEG marker ' + fileMarker.toString(16);
+            // throw 'unknown JPEG marker ' + fileMarker.toString(16);
+            // Skipping to the next marker
+            while (offset < data.length && data[offset] !== 0xFF) {
+              offset++;
+            }
+            break;
         }
         fileMarker = readUint16();
       }
