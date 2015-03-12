@@ -116,8 +116,11 @@ module Shumway.JPEG {
       if (bitsData == 0xFF) {
         var nextByte = data[offset++];
         if (nextByte) {
-          throw 'unexpected marker: ' +
-            ((bitsData << 8) | nextByte).toString(16);
+          // Found some marker, feeding zeros
+          bitsCount = 31;
+          bitsData = 0;
+          offset -= 2;
+          return 0;
         }
         // unstuff 0
       }
