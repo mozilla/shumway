@@ -117,9 +117,9 @@ module Shumway.AVMX.AS {
      */
     public static applyType(factoryType: AXClass, type: AXClass): AXClass {
       var axClass = factoryType.securityDomain.createSyntheticClass(factoryType);
-      axClass.axInitializer = function (length: number /*uint*/ = 0, fixed: boolean = false) {
-        // factoryType.axInitializer points to the GenericVector constructor.
-        factoryType.axInitializer.call(this, length, fixed, type);
+      axClass.tPrototype.axInitializer = function (length: number /*uint*/ = 0, fixed: boolean = false) {
+        // factoryType.tPrototype.axInitializer points to the GenericVector constructor.
+        factoryType.tPrototype.axInitializer.call(this, length, fixed, type);
       }
       return axClass;
     }

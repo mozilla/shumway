@@ -115,10 +115,10 @@ module Shumway.AVMX.AS {
     return rn;
   }
 
-  function addPrototypeFunctionAlias(object: AXObject, name: string, fun: Function) {
+  export function addPrototypeFunctionAlias(object: AXObject, name: string, fun: Function) {
     release || assert(name.indexOf('$Bg') === 0);
     defineNonEnumerableProperty(object, name, object.securityDomain.AXFunction.axBox(fun));
-  };
+  }
 
   /**
    * MetaobjectProtocol base traps. Inherit some or all of these to
@@ -175,6 +175,7 @@ module Shumway.AVMX.AS {
     static axGetSlot: (i: number) => any;
     static axSetSlot: (i: number, value: any) => void;
 
+    static getPrototypeOf: () => boolean;
     static native_isPrototypeOf: (v: any) => boolean;
     static native_hasOwnProperty: (v: any) => boolean;
     static native_propertyIsEnumerable: (v: any) => boolean;
@@ -193,6 +194,8 @@ module Shumway.AVMX.AS {
     static _init() {
       // Nop.
     }
+
+    getPrototypeOf: () => any;
 
     native_isPrototypeOf(v: any): boolean {
       notImplemented("Object::isPrototypeOf");
@@ -867,24 +870,6 @@ module Shumway.AVMX.AS {
     }
   }
 
-  export class ASNamespace extends ASObject {
-    get prefix(): string {
-      return "FIXME";
-    }
-
-    get uri(): string {
-      return "FIXME";
-    }
-
-    toString(): string {
-      return "FIXME";
-    }
-
-    valueOf(): any {
-      return "FIXME";
-    }
-  }
-
   export class ASBoolean extends ASObject {
     static classInitializer(axClass: AXClass) {
       var proto: any = axClass.dPrototype;
@@ -1156,9 +1141,6 @@ module Shumway.AVMX.AS {
     }
   }
 
-  // TODO: Dummy XML until we port XML.
-  export class ASXML extends ASObject {}
-
   export class ASDefinitionError extends ASError {
     static classInitializer: any = function() {
       defineNonEnumerableProperty(this, '$Bglength', 1);
@@ -1214,8 +1196,12 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["Vector$uint"]         = Uint32Vector;
     builtinNativeClasses["Vector$double"]       = Float64Vector;
 
-    builtinNativeClasses["Math"]                = ASMath;
+    builtinNativeClasses["Namespace"]           = ASNamespace;
+    builtinNativeClasses["QName"]               = ASQName;
+    builtinNativeClasses["XML"]                 = ASXML;
+    builtinNativeClasses["XMLList"]             = ASXMLList;
 
+    builtinNativeClasses["Math"]                = ASMath;
 
     // Errors
     builtinNativeClasses["Error"]               = ASError;

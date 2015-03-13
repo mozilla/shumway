@@ -33,6 +33,8 @@ interface IMetaobjectProtocol {
 
   axGetSlot(i: number): any;
   axSetSlot(i: number, value: any);
+
+  getPrototypeOf(): any;
 }
 
 interface Function {
@@ -360,8 +362,13 @@ module Shumway.AVMX {
   }
 
   export function checkValue(value: any) {
-    release || assert(isValidASValue(value),
-                      "Value: " + value + " is not allowed to flow into AS3.");
+    if (!release) {
+      if (!isValidASValue(value)) {
+        // Stringifying the value is potentially costly, so only do it if necessary,
+        // even in debug mode.
+        assert(false, "Value: " + value + " is not allowed to flow into AS3.");
+      }
+    }
   }
 
   export function asCheckVectorSetNumericProperty(i: number, length: number, fixed: boolean) {
@@ -577,6 +584,7 @@ module Shumway.AVMX {
   export interface AXObject extends ITraits, IMetaobjectProtocol {
     $BgtoString: AXCallable;
     $BgvalueOf: AXCallable;
+    axInitializer: any;
   }
 
   export interface AXGlobal extends AXObject {
@@ -593,7 +601,6 @@ module Shumway.AVMX {
     tPrototype: AXObject;
     dPrototype: AXObject;
     axBox: any;
-    axInitializer: any;
     axConstruct: any;
     axApply: any;
     axCoerce: any;
@@ -609,6 +616,24 @@ module Shumway.AVMX {
 
   export interface AXMethodClosureClass extends AXClass {
     Create(receiver: AXObject, method: Function): AXFunction;
+  }
+
+  export interface AXXMLClass extends AXClass {
+    Create(value?: any): AS.ASXML;
+  }
+
+  export interface AXXMLListClass extends AXClass {
+    Create(value?: any): AS.ASXMLList;
+    createList(targetObject?: AS.ASXML, targetProperty?: AS.ASQName): AS.ASXMLList;
+  }
+
+  export interface AXNamespaceClass extends AXClass {
+    Create(uriOrPrefix?: any, uri?: any): AS.ASNamespace;
+  }
+
+  export interface AXQNameClass extends AXClass {
+    Create(nameOrNS?: any, name?: any, isAttribute?: boolean): AS.ASQName;
+    fromMultiname(mn: Multiname): AS.ASQName;
   }
 
   /**
@@ -722,9 +747,8 @@ module Shumway.AVMX {
    * make object construction faster.
    */
   function axConstruct(argArray?: any[]) {
-    var self: AXClass = this;
-    var object = Object.create(self.tPrototype);
-    self.axInitializer.apply(object, argArray);
+    var object = Object.create(this.tPrototype);
+    object.axInitializer.apply(object, argArray);
     return object;
   }
 
@@ -764,6 +788,17 @@ module Shumway.AVMX {
     public AXNumber: AXClass;
     public AXString: AXClass;
     public AXBoolean: AXClass;
+
+    public AXXML: AXXMLClass;
+    public AXXMLList: AXXMLListClass;
+    public AXNamespace: AXNamespaceClass;
+    public AXQName: AXQNameClass;
+
+    public get xmlParser(): AS.XMLParser {
+      return this._xmlParser || (this._xmlParser = new AS.XMLParser(this));
+    }
+
+    private _xmlParser: AS.XMLParser;
 
     private AXPrimitiveBox;
     private AXGlobalPrototype;
@@ -853,7 +888,7 @@ module Shumway.AVMX {
         if (instanceInfo.isInterface()) {
           axClass.dPrototype = Object.create(this.objectPrototype);
           axClass.tPrototype = Object.create(axClass.dPrototype);
-          axClass.axInitializer = axInterfaceInitializer;
+          axClass.tPrototype.axInitializer = axInterfaceInitializer;
         } else {
           // For direct descendants of Object, we want the dynamic prototype to inherit from
           // Object's tPrototype because Foo.prototype is always a proper instance of Object.
@@ -865,16 +900,17 @@ module Shumway.AVMX {
             axClass.dPrototype = Object.create(superClass.dPrototype);
           }
           axClass.tPrototype = Object.create(axClass.dPrototype);
-          axClass.axInitializer = this.createInitializerFunction(classInfo, classScope);
+          axClass.tPrototype.axInitializer = this.createInitializerFunction(classInfo, classScope);
           axClass.axCoerce = function () {
             assert(false, "TODO: Coercing constructor.");
           };
         }
-      } else if (!release) {
+      } else {
+        axClass.tPrototype.axInitializer = this.createInitializerFunction(classInfo, classScope);
         // Native classes have their inheritance structure set up during initial SecurityDomain
         // creation.
-        assert(axClass.dPrototype);
-        assert(axClass.tPrototype);
+        release || assert(axClass.dPrototype);
+        release || assert(axClass.tPrototype);
       }
 
       axClass.classInfo = (<any>axClass.dPrototype).classInfo = classInfo;
@@ -932,6 +968,10 @@ module Shumway.AVMX {
 
     createMethodClosure(receiver: AXObject, method: Function): AXFunction {
       return this.AXMethodClosure.Create(receiver, method);
+    }
+
+    createQName(namespace: any, localName: any): AS.ASQName {
+      return this.AXQName.Create(namespace, localName);
     }
 
     createInitializerFunction(classInfo: ClassInfo, scope: Scope): Function {
@@ -1025,7 +1065,6 @@ module Shumway.AVMX {
       D(rootClassPrototype, "axAsType", axAsType);
       D(rootClassPrototype, "axIsInstanceOf", axIsInstanceOfObject);
       D(rootClassPrototype, "axConstruct", axConstruct);
-      D(rootClassPrototype, "axInitializer", axDefaultInitializer);
       D(rootClassPrototype, "axApply", axDefaultApply);
 
       this.rootClassPrototype = rootClassPrototype;
@@ -1170,6 +1209,7 @@ module Shumway.AVMX {
       // (function (x: Object) { trace (x); })(null) which prints null.
       D(AXObject, "axApply", axApplyObject);
       D(AXObject, "axConstruct", axConstructObject);
+      D(AXObject.tPrototype, "axInitializer", axDefaultInitializer);
       D(AXObject, "axCoerce", axCoerceObject);
       D(AXFunction, "axConstruct", function() {
         return Object.create(this.tPrototype);
@@ -1201,6 +1241,11 @@ module Shumway.AVMX {
       });
 
       this.prepareNativeClass("AXMethodClosure", "MethodClosure", false);
+
+      this.prepareNativeClass("AXXML", "XML", false);
+      this.prepareNativeClass("AXXMLList", "XMLList", false);
+      this.prepareNativeClass("AXQName", "QName", false);
+      this.prepareNativeClass("AXNamespace", "Namespace", false);
 
       var AXArray = this.prepareNativeClass("AXArray", "Array", false);
       D(AXArray, 'axBox', axBoxPrimitive);

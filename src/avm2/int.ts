@@ -381,7 +381,7 @@ module Shumway.AVMX {
             return stack.pop();
           case Bytecode.CONSTRUCTSUPER:
             popManyInto(stack, u30(), args);
-            (<any>savedScope.object).superClass.axInitializer.apply(stack.pop(), args);
+            (<any>savedScope.object).superClass.tPrototype.axInitializer.apply(stack.pop(), args);
             break;
           case Bytecode.CONSTRUCTPROP:
             index = u30();
