@@ -25,7 +25,6 @@ module Shumway.AVM2.Compiler.AST {
 
   var hexadecimal = false;
   var renumber = false;
-  var quotes = "double";
 
   function escapeAllowedCharacter(ch, next) {
     var code = ch.charCodeAt(0), hex = code.toString(16), result = '\\';
@@ -85,7 +84,7 @@ module Shumway.AVM2.Compiler.AST {
   var escapeStringCache = Object.create(null);
 
   export function escapeString(str: string) {
-    var result, i, len, ch, singleQuotes = 0, doubleQuotes = 0, single, original = str;
+    var result, i, len, ch, original = str;
     result = escapeStringCache[original];
     if (result) {
       return result;
@@ -98,11 +97,7 @@ module Shumway.AVM2.Compiler.AST {
 
     for (i = 0, len = str.length; i < len; ++i) {
       ch = str[i];
-      if (ch === '\'') {
-        ++singleQuotes;
-      } else if (ch === '"') {
-        ++doubleQuotes;
-      } else if ('\\\n\r\u2028\u2029'.indexOf(ch) >= 0) {
+      if ('\\\n\r\u2028\u2029'.indexOf(ch) >= 0) {
         result += escapeDisallowedCharacter(ch);
         continue;
       } else if (!(ch >= ' ' && ch <= '~')) {
@@ -112,19 +107,18 @@ module Shumway.AVM2.Compiler.AST {
       result += ch;
     }
 
-    single = !(quotes === 'double' || (quotes === 'auto' && doubleQuotes < singleQuotes));
     str = result;
-    result = single ? '\'' : '"';
+    result = '"';
 
     for (i = 0, len = str.length; i < len; ++i) {
       ch = str[i];
-      if ((ch === '\'' && single) || (ch === '"' && !single)) {
+      if (ch === '"') {
         result += '\\';
       }
       result += ch;
     }
 
-    result += (single ? '\'' : '"');
+    result += '"';
     escapeStringCache[original] = result;
     escapeStringCacheCount ++;
     return result;
