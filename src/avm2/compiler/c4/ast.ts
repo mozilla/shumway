@@ -84,8 +84,7 @@ module Shumway.AVM2.Compiler.AST {
   var escapeStringCache = Object.create(null);
 
   export function escapeString(str: string) {
-    var result, i, len, ch, original = str;
-    result = escapeStringCache[original];
+    var result = escapeStringCache[str];
     if (result) {
       return result;
     }
@@ -93,11 +92,13 @@ module Shumway.AVM2.Compiler.AST {
       escapeStringCache = Object.create(null);
       escapeStringCacheCount = 0;
     }
-    result = '';
+    result = '"';
 
-    for (i = 0, len = str.length; i < len; ++i) {
-      ch = str[i];
-      if ('\\\n\r\u2028\u2029'.indexOf(ch) >= 0) {
+    for (var i = 0, len = str.length; i < len; ++i) {
+      var ch = str[i];
+      if (ch === '"') {
+        result += '\\';
+      } else if ('\\\n\r\u2028\u2029'.indexOf(ch) >= 0) {
         result += escapeDisallowedCharacter(ch);
         continue;
       } else if (!(ch >= ' ' && ch <= '~')) {
@@ -107,19 +108,8 @@ module Shumway.AVM2.Compiler.AST {
       result += ch;
     }
 
-    str = result;
-    result = '"';
-
-    for (i = 0, len = str.length; i < len; ++i) {
-      ch = str[i];
-      if (ch === '"') {
-        result += '\\';
-      }
-      result += ch;
-    }
-
     result += '"';
-    escapeStringCache[original] = result;
+    escapeStringCache[str] = result;
     escapeStringCacheCount ++;
     return result;
   }
