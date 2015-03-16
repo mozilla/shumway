@@ -29,16 +29,6 @@ module Shumway.AVM2.Compiler.AST {
   var renumber = false;
   var quotes = "double";
 
-  function stringToArray(str) {
-    var length = str.length,
-      result = [],
-      i;
-    for (i = 0; i < length; ++i) {
-      result[i] = str.charAt(i);
-    }
-    return result;
-  }
-
   function escapeAllowedCharacter(ch, next) {
     var code = ch.charCodeAt(0), hex = code.toString(16), result = '\\';
 
@@ -96,7 +86,7 @@ module Shumway.AVM2.Compiler.AST {
   var escapeStringCacheCount = 0;
   var escapeStringCache = Object.create(null);
 
-  export function escapeString(str) {
+  export function escapeString(str: string) {
     var result, i, len, ch, singleQuotes = 0, doubleQuotes = 0, single, original = str;
     result = escapeStringCache[original];
     if (result) {
@@ -107,10 +97,6 @@ module Shumway.AVM2.Compiler.AST {
       escapeStringCacheCount = 0;
     }
     result = '';
-
-    if (typeof str[0] === 'undefined') {
-      str = stringToArray(str);
-    }
 
     for (i = 0, len = str.length; i < len; ++i) {
       ch = str[i];
@@ -133,10 +119,6 @@ module Shumway.AVM2.Compiler.AST {
     single = !(quotes === 'double' || (quotes === 'auto' && doubleQuotes < singleQuotes));
     str = result;
     result = single ? '\'' : '"';
-
-    if (typeof str[0] === 'undefined') {
-      str = stringToArray(str);
-    }
 
     for (i = 0, len = str.length; i < len; ++i) {
       ch = str[i];
