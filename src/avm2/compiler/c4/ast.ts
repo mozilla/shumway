@@ -23,7 +23,6 @@ module Shumway.AVM2.Compiler.AST {
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   // The top part of this file is copied from escodegen.
 
-  var json = false;
   var escapeless = false;
   var hexadecimal = false;
   var renumber = false;
@@ -43,7 +42,7 @@ module Shumway.AVM2.Compiler.AST {
         result += 't';
         break;
       default:
-        if (json || code > 0xff) {
+        if (code > 0xff) {
           result += 'u' + '0000'.slice(hex.length) + hex;
         } else if (ch === '\u0000' && '0123456789'.indexOf(next) < 0) {
           result += '0';
@@ -104,12 +103,10 @@ module Shumway.AVM2.Compiler.AST {
         ++singleQuotes;
       } else if (ch === '"') {
         ++doubleQuotes;
-      } else if (ch === '/' && json) {
-        result += '\\';
       } else if ('\\\n\r\u2028\u2029'.indexOf(ch) >= 0) {
         result += escapeDisallowedCharacter(ch);
         continue;
-      } else if ((json && ch < ' ') || !(json || escapeless || (ch >= ' ' && ch <= '~'))) {
+      } else if (!(escapeless || (ch >= ' ' && ch <= '~'))) {
         result += escapeAllowedCharacter(ch, str[i + 1]);
         continue;
       }
@@ -148,7 +145,7 @@ module Shumway.AVM2.Compiler.AST {
     }
 
     if (value === 1 / 0) {
-      return json ? 'null' : renumber ? '1e400' : '1e+400';
+      return renumber ? '1e400' : '1e+400';
     }
 
     result = generateNumberCache[value];
@@ -167,7 +164,7 @@ module Shumway.AVM2.Compiler.AST {
     }
 
     point = result.indexOf('.');
-    if (!json && result.charAt(0) === '0' && point === 1) {
+    if (result.charAt(0) === '0' && point === 1) {
       point = 0;
       result = result.slice(1);
     }
