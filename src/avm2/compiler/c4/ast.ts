@@ -27,57 +27,43 @@ module Shumway.AVM2.Compiler.AST {
   var renumber = false;
 
   function escapeAllowedCharacter(ch, next) {
-    var code = ch.charCodeAt(0), hex = code.toString(16), result = '\\';
-
     switch (ch) {
       case '\b':
-        result += 'b';
-        break;
+        return '\\b';
       case '\f':
-        result += 'f';
-        break;
+        return '\\f';
       case '\t':
-        result += 't';
-        break;
+        return '\\t';
       default:
+        var code = ch.charCodeAt(0), hex = code.toString(16), result;
         if (code > 0xff) {
-          result += 'u' + '0000'.slice(hex.length) + hex;
+          result = '\\u' + '0000'.slice(hex.length) + hex;
         } else if (ch === '\u0000' && '0123456789'.indexOf(next) < 0) {
-          result += '0';
+          result = '\\0';
         } else if (ch === '\x0B') { // '\v'
-          result += 'x0B';
+          result = '\\x0B';
         } else {
-          result += 'x' + '00'.slice(hex.length) + hex;
+          result = '\\x' + '00'.slice(hex.length) + hex;
         }
-        break;
+        return result;
     }
-
-    return result;
   }
 
   function escapeDisallowedCharacter(ch) {
-    var result = '\\';
     switch (ch) {
       case '\\':
-        result += '\\';
-        break;
+        return '\\\\';
       case '\n':
-        result += 'n';
-        break;
+        return '\\n';
       case '\r':
-        result += 'r';
-        break;
+        return '\\r';
       case '\u2028':
-        result += 'u2028';
-        break;
+        return '\\u2028';
       case '\u2029':
-        result += 'u2029';
-        break;
+        return '\\u2029';
       default:
         throw new Error('Incorrectly classified character');
     }
-
-    return result;
   }
 
   var escapeStringCacheCount = 0;
