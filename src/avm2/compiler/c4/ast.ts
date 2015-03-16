@@ -23,7 +23,6 @@ module Shumway.AVM2.Compiler.AST {
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   // The top part of this file is copied from escodegen.
 
-  var escapeless = false;
   var hexadecimal = false;
   var renumber = false;
   var quotes = "double";
@@ -106,7 +105,7 @@ module Shumway.AVM2.Compiler.AST {
       } else if ('\\\n\r\u2028\u2029'.indexOf(ch) >= 0) {
         result += escapeDisallowedCharacter(ch);
         continue;
-      } else if (!(escapeless || (ch >= ' ' && ch <= '~'))) {
+      } else if (!(ch >= ' ' && ch <= '~')) {
         result += escapeAllowedCharacter(ch, str[i + 1]);
         continue;
       }
