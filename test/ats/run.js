@@ -82,37 +82,34 @@ function next(err, swf) {
       console.log("Run task " + i + " of " + n);
       task.run(swf, function (err, result) {
         var updates = Object.create(null);
-        updates[taskName + '_last'] = time;
+        $set = updates.$set = Object.create(null);
+        $set[taskName + '_last'] = time;
         if (err) {
           if (taskName + '_result' in swf) {
-            updates[taskName + '_regressed'] = true;
-            updates.$unset = Object.create(null);
-            updates.$unset[taskName + '_result'] = true;
+            $set[taskName + '_regressed'] = true;
+            $unset = updates.$unset = Object.create(null);
+            $unset[taskName + '_result'] = true;
           }
-          updates[taskName + '_error'] = err.message;
+          $set[taskName + '_error'] = err.message;
         } else {
-          updates[taskName + '_result'] = result;
-          updates[taskName + '_time'] = +new Date - time;
+          $set[taskName + '_result'] = result;
+          $set[taskName + '_time'] = +new Date - time;
           if (taskName + '_error' in swf) {
-            updates.$unset = Object.create(null);
-            updates.$unset[taskName + '_error'] = true;
-            updates.$unset[taskName + '_regressed'] = true;
+            $unset = updates.$unset = Object.create(null);
+            $unset[taskName + '_error'] = true;
+            $unset[taskName + '_regressed'] = true;
           }
         }
-        db.swfs.update(
-          { _id: swf._id },
-          { $set: updates },
-          function (err) {
-            if (err) {
-              handle_error(err);
-            }
-            if (i < n) {
-              swfs.next(next);
-            } else {
-              wrap_up();
-            }
+        db.swfs.update({ _id: swf._id }, updates, function (err) {
+          if (err) {
+            handle_error(err);
           }
-        );
+          if (i < n) {
+            swfs.next(next);
+          } else {
+            wrap_up();
+          }
+        });
       });
     }
   });
