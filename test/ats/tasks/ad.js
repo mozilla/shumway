@@ -1,6 +1,7 @@
 var parser = require('fast-html-parser');
 
 var commonAdSizes = {
+  // https://support.google.com/adsense/answer/6002621
   '300x250': 'Medium Rectangle',
   '336x280': 'Large Rectangle',
   '728x90': 'Leaderboard',
@@ -26,7 +27,13 @@ var commonAdSizes = {
   '580x400': 'Netboard',
   '750x300': 'Triple Billboard',
   '750x200': 'Double Billboard',
-  '750x100': 'Billboard'
+  '750x100': 'Billboard',
+  // https://en.wikipedia.org/wiki/Web_banner#Standard_sizes
+  '300x100': '3:1 Rectangle',
+  '720x300': 'Pop-Under',
+  '88x31': 'Micro Bar',
+  '120x90': 'Button 1',
+  '120x60': 'Button 2'
 };
 
 function lowerCaseKeys(obj) {
@@ -92,7 +99,8 @@ exports.run = function (info, cb) {
   }
   var parse_result = info.parse_result;
   if (parse_result) {
-    adType = commonAdSizes[parse_result.width + 'x' + parse_result.height];
+    adType = commonAdSizes[parse_result.width + 'x' + parse_result.height] ||
+             commonAdSizes[parse_result.height + 'x' + parse_result.width];
   }
   var result = null;
   if (clickTag || adType) {
