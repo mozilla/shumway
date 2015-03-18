@@ -13,8 +13,7 @@ var binary = new firefox.Binary('/Applications/Firefox.app/Contents/MacOS/firefo
 var options = new firefox.Options().setProfile(profile);
 options.setBinary(binary);
 
-var driver = new firefox.Driver(options);
-driver.manage().timeouts().setScriptTimeout(10000);
+var driver;
 
 function escapeRegExp(string){
   return string.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
@@ -22,7 +21,7 @@ function escapeRegExp(string){
 
 function main(info, cb) {
   var i = 0;
-  var n = info.parse_result.max_ticks;
+  var n = Math.min(info.parse_result.max_ticks, 100);
   var errors = [];
   function tick() {
     if (i++ < n) {
@@ -48,6 +47,10 @@ exports.run = function (info, cb) {
   var uri = 'http://areweflashyet.com/swfs/' + info.file;
     // 'data:text/html,<!DOCTYPE html>' +
     // info.outerHTML.replace(new RegExp(escapeRegExp(info.src), 'g'), 'http://areweflashyet.com/swfs/' + info.file);
+  if (!driver) {
+    driver = new firefox.Driver(options);
+    driver.manage().timeouts().setScriptTimeout(10000);
+  }
   // driver.manage().window().setSize(info.parse_result.width, info.parse_result.height);
   driver.get(uri).then(function () {
     driver.wait(function() {
@@ -55,7 +58,7 @@ exports.run = function (info, cb) {
       .then(function(val) {
         return val;
       });
-    }, 5000).then(function () {
+    }, 10000).then(function () {
       driver.executeAsyncScript(main, info)
       .then(function (result) {
         if (cb) {
