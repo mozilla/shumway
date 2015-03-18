@@ -10,9 +10,13 @@ exports.run = function (info, cb) {
     onLoadOpen: function (file) {
       if (file instanceof Shumway.SWF.SWFFile) {
         var dictionary = file.dictionary;
+        var maxTicks = file.frameCount;
         for (var i = 0; i < dictionary.length; i++) {
           if (dictionary[i]) {
             var symbol = file.getSymbol(dictionary[i].id);
+            if (symbol.type === 'sprite' && symbol.frameCount > maxTicks) {
+              maxTicks = symbol.frameCount;
+            }
           }
         }
         result.type = 'SWF';
@@ -25,6 +29,7 @@ exports.run = function (info, cb) {
         var bounds = file.bounds;
         result.width = bounds.width / 20 | 0;
         result.height = bounds.height / 20 | 0;
+        result.max_ticks = maxTicks;
       } else if (file instanceof Shumway.ImageFile) {
         result.type = 'Image';
         result.file_size = file.bytesTotal;
