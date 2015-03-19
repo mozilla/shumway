@@ -611,7 +611,7 @@ module Shumway.SWF.Parser {
       toString16(maxContours) +
       '\x00\x00' + // maxCompositePoints
       '\x00\x00' + // maxCompositeContours
-      '\x00\x00' + // maxZones
+      '\x00\x01' + // maxZones
       '\x00\x00' + // maxTwilightPoints
       '\x00\x00' + // maxStorage
       '\x00\x00' + // maxFunctionDefs
