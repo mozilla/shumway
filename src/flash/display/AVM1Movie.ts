@@ -69,6 +69,10 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented('AVM1Movie#call');
     }
 
+    _addFrame(frame: Shumway.SWF.SWFFrame) {
+      this._content._addFrame(frame);
+    }
+
     _initFrame(advance: boolean): void {
       // Empty implementation: AVM1Movie doesn't have frames, and the contained MovieClip
       // adds itself to the IAdvancables list.
