@@ -575,7 +575,7 @@ module Shumway.SWF.Parser {
     }
     tables['hmtx'] = hmtx;
 
-    if (tag.kerning) {
+    if (tag.kerning && tag.kerning.length) {
       var kerning = tag.kerning;
       var nPairs = kerning.length;
       var searchRange = maxPower2(nPairs) * 2;
