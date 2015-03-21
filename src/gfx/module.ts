@@ -643,7 +643,7 @@ module Shumway.GFX {
     })();
   }
 
-  /**
+  /**`
    * Polyfill |globalColorMatrix| on |CanvasRenderingContext2D|.
    */
   if (typeof CanvasRenderingContext2D !== 'undefined' && CanvasRenderingContext2D.prototype.globalColorMatrix === undefined) {
