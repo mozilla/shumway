@@ -452,5 +452,10 @@
       "frames": [1],
       "swf": "swfs/captions.swf",
       "type": "eq"
+    },
+    {  "id": "clipping",
+      "frames": [1],
+      "swf": "swfs/clipping.swf",
+      "type": "eq"
     }
 ]
