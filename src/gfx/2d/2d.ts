@@ -182,6 +182,7 @@ module Shumway.GFX.Canvas2D {
 
     clip: Rectangle = Rectangle.createEmpty();
     clipList: Rectangle [] = [];
+    clipPath: Path2D = null;
     flags: RenderFlags = RenderFlags.None;
     target: Canvas2DSurfaceRegion = null;
     matrix: Matrix = Matrix.createIdentity();
@@ -197,6 +198,7 @@ module Shumway.GFX.Canvas2D {
 
     set (state: RenderState) {
       this.clip.set(state.clip);
+      this.clipPath = state.clipPath;
       this.target = state.target;
       this.matrix.set(state.matrix);
       this.colorMatrix.set(state.colorMatrix);
@@ -223,6 +225,7 @@ module Shumway.GFX.Canvas2D {
     }
 
     free() {
+      this.clipPath = null;
       RenderState._dirtyStack.push(this);
     }
 
@@ -249,6 +252,26 @@ module Shumway.GFX.Canvas2D {
       } else {
         this.flags &= ~flags;
       }
+    }
+
+    beginClipPath(transform: Matrix) {
+      this.target.context.save();
+      this.clipPath = new Path2D();
+    }
+
+    applyClipPath() {
+      var context = this.target.context;
+      // Coords in clipPath are defined in global space, so have to reset the current transform, ...
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      // ... apply the clip ...
+      context.clip(this.clipPath);
+      // ... and finally restore the current transform.
+      var matrix = this.matrix;
+      context.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+    }
+
+    closeClipPath() {
+      this.target.context.restore();
     }
   }
 
@@ -589,7 +612,8 @@ module Shumway.GFX.Canvas2D {
           var children = node.getChildren();
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
-            var childState = state.transform(child.getTransform());
+            var transform = child.getTransform();
+            var childState = state.transform(transform);
             childState.toggleFlags(RenderFlags.ImageSmoothing, child.hasFlags(NodeFlags.ImageSmoothing));
             if (child.clip >= 0) {
               clips = clips || new Uint8Array(children.length); // MEMORY: Don't allocate here.
@@ -603,16 +627,17 @@ module Shumway.GFX.Canvas2D {
                * clipping region.
                */
               // clipState.clip.set(MAX_VIEWPORT);
-              state.target.context.save();
               clipState.flags |= RenderFlags.PaintClip;
+              clipState.beginClipPath(transform.getMatrix());
               child.visit(this, clipState);
+              clipState.applyClipPath();
               clipState.free();
             } else {
               child.visit(this, childState);
             }
             if (clips && clips[i] > 0) {
               while (clips[i]--) {
-                state.target.context.restore();
+                state.closeClipPath();
               }
             }
             childState.free();
@@ -818,7 +843,7 @@ module Shumway.GFX.Canvas2D {
       var cacheShapesMaxSize = this._options.cacheShapesMaxSize;
 
       node.properties["renderCount"] = ++ renderCount;
-      node.render(context, ratio, null, paintClip, paintStencil);
+      node.render(context, ratio, null, paintClip ? state.clipPath : null, paintStencil);
       if (paintFlashing) {
         var elapsed = performance.now() - paintStart;
         context.fillStyle = ColorStyle.gradientColor(0.1 / elapsed);
