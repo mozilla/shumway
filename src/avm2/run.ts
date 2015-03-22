@@ -671,11 +671,17 @@ module Shumway.AVMX {
 
   export interface AXXMLClass extends AXClass {
     Create(value?: any): AS.ASXML;
+    isTraitsOrdPrototype(list: AS.ASXML): boolean;
+    defaultNamespace: string;
+    _flags: number;
+    _prettyIndent: number;
+    prettyPrinting: boolean;
   }
 
   export interface AXXMLListClass extends AXClass {
     Create(value?: any): AS.ASXMLList;
     createList(targetObject?: AS.ASXML, targetProperty?: AS.ASQName): AS.ASXMLList;
+    isTraitsOrdPrototype(list: AS.ASXMLList): boolean;
   }
 
   export interface AXNamespaceClass extends AXClass {
@@ -794,7 +800,7 @@ module Shumway.AVMX {
    * creates an empty object with the right prototype and then calls the
    * instance initializer.
    *
-   * TODO: Flatten out the argArray, or create an alternate helper ax helper to
+   * TODO: Flatten out the argArray, or create an alternate ax helper to
    * make object construction faster.
    */
   function axConstruct(argArray?: any[]) {
@@ -814,7 +820,8 @@ module Shumway.AVMX {
    * Throwing initializer for interfaces.
    */
   function axInterfaceInitializer() {
-    throwError("VerifierError", Errors.NotImplementedError, this.classInfo.instanceInfo.name.name);
+    this.securityDomain.throwError("VerifierError", Errors.NotImplementedError,
+                                   this.classInfo.instanceInfo.name.name);
   }
 
   /**
