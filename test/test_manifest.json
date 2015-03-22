@@ -452,5 +452,10 @@
       "frames": [1],
       "swf": "swfs/captions.swf",
       "type": "eq"
+    },
+    {  "id": "hard-wrap",
+      "frames": [1],
+      "swf": "swfs/hardwrap.swf",
+      "type": "eq"
     }
 ]
