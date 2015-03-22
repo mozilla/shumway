@@ -1262,20 +1262,22 @@ module Shumway.GFX {
               spaceLeft = maxWidth - wordWidth;
               if (spaceLeft < 0) {
                 var k = chunk.length;
-                var t;
-                var w;
-                do {
+                var t = chunk;
+                var w = wordWidth;
+                while (k > 1) {
                   k--;
-                  if (k < 1) throw new Error('Shall never happen: bad maxWidth?'); // FIXME
                   t = chunk.substr(0, k);
                   w = measureContext.measureText(t).width | 0;
-                } while (w > maxWidth);
+                  if (w <= maxWidth) {
+                    break;
+                  }
+                }
                 run.text = t;
                 run.width = w;
                 chunk = chunk.substr(k);
                 wordWidth = measureContext.measureText(chunk).width | 0;
               }
-            } while (spaceLeft < 0);
+            } while (chunk && spaceLeft < 0);
           } else {
             spaceLeft = spaceLeft - wordWidth;
           }

@@ -236,6 +236,7 @@ module Shumway {
                 break;
               }
             case 'br':
+            case 'sbr':
               if (multiline) {
                 handler.chars('\r');
               }
