@@ -43,14 +43,29 @@ module Shumway.AVM1 {
     onEventPropertyModified(name: string);
   }
 
+  export class ActionsDataFactory {
+    private _cache: WeakMap<Uint8Array, AVM1ActionsData> = new WeakMap<Uint8Array, AVM1ActionsData>();
+    public createActionsData(bytes: Uint8Array, id: string, parent: AVM1ActionsData = null): AVM1ActionsData {
+      var actionsData = this._cache.get(bytes);
+      if (!actionsData) {
+        actionsData = new AVM1ActionsData(bytes, id, parent);
+        this._cache.set(bytes, actionsData);
+      }
+      release || assert(actionsData.bytes === bytes && actionsData.id === id && actionsData.parent === parent);
+      return actionsData;
+    }
+  }
+
   export class AVM1Context {
     public static instance: AVM1Context = null;
     public root: AVM1MovieClip;
     public loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo;
     public globals: AVM1Globals;
+    public actionsDataFactory: ActionsDataFactory;
     constructor() {
       this.root = null;
       this.globals = null;
+      this.actionsDataFactory = new ActionsDataFactory();
     }
 
     public utils: IAVM1RuntimeUtils;
