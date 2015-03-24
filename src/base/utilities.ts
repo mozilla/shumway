@@ -1424,9 +1424,6 @@ module Shumway {
 
   polyfillWeakMap();
 
-  declare var netscape;
-  declare var Components;
-
   export interface IReferenceCountable {
     _referenceCount: number;
     _addReference();
@@ -1439,7 +1436,7 @@ module Shumway {
     private _map: WeakMap<T, T>;
     private _list: T [];
     constructor() {
-      if (typeof netscape !== "undefined" && netscape.security.PrivilegeManager) {
+      if (typeof ShumwayCom !== "undefined" && ShumwayCom.getWeakMapKeys) {
         this._map = new WeakMap<T, T>();
       } else {
         this._list = [];
@@ -1473,10 +1470,8 @@ module Shumway {
     }
     forEach(callback: (value: T) => void) {
       if (this._map) {
-        if (typeof netscape !== "undefined") {
-          netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-        }
-        Components.utils.nondeterministicGetWeakMapKeys(this._map).forEach(function (value: T) {
+        var keys: Array<T> = ShumwayCom.getWeakMapKeys(this._map);
+        keys.forEach(function (value: T) {
           if (value._referenceCount !== 0) {
             callback(value);
           }
