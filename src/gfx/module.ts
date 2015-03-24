@@ -640,13 +640,6 @@ module Shumway.GFX {
         release || assert(this.mozCurrentTransform);
         return Geometry.Matrix.createSVGMatrixFromArray(this.mozCurrentTransform);
       }
-
-      // Force everyone to use setTransform to mutate the current transformation matrix.
-      ['resetTransform', 'rotate', 'scale', 'transform', 'translate'].forEach(function (functionName) {
-        CanvasRenderingContext2D.prototype[functionName] = function () {
-          release || assert(false, "Calling " + functionName + ' is not allowed, use setTransform instead.');
-        };
-      });
     })();
   }
 
