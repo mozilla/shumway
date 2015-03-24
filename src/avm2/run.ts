@@ -861,14 +861,30 @@ module Shumway.AVMX {
 
     private nativeClasses: any;
 
+    private _catalogs: ABCCatalog [];
+
     constructor() {
       initializeAXBasePrototype();
       this.system = new ApplicationDomain(this, null);
       this.application = new ApplicationDomain(this, this.system);
       this.nativeClasses = Object.create(null);
+      this._catalogs = [];
+    }
+
+    addCatalog(abcCatalog: ABCCatalog) {
+      this._catalogs.push(abcCatalog);
     }
 
     findDefiningABC(mn: Multiname): ABCFile {
+      runtimeWriter && runtimeWriter.writeLn("findDefiningABC: " + mn);
+      var abcFile = null;
+      for (var i = 0; i < this._catalogs.length; i++) {
+        var abcCatalog = this._catalogs[i];
+        abcFile = abcCatalog.getABCByMultiname(mn);
+        if (abcFile) {
+          return abcFile;
+        }
+      }
       return null;
     }
 
@@ -1325,6 +1341,9 @@ module Shumway.AVMX {
 
       var AXUint = this.preparePrimitiveClass("AXUint", "uint", asCoerceUint, 0, asCoerceUint,
                                               axIsTypeUint, axFalse);
+
+      // Install class loaders on the security domain.
+      AS.installClassLoaders(this.application, this);
     }
   }
 

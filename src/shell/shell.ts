@@ -29,7 +29,7 @@ declare var help;
 
 var homePath = "";
 var avm2Root = homePath + "src/avm2/";
-var builtinLibPath = avm2Root + "generated/builtin/builtin.abc";
+var builtinABCPath = avm2Root + "generated/builtin/builtin.abc";
 var shellLibPath = avm2Root + "generated/shell/shell.abc";
 var playerglobalInfo = {
   abcs: "build/playerglobal/playerglobal.abcs",
@@ -161,7 +161,7 @@ module Shumway.Shell {
   var microTaskDurationOption: Option;
   var microTaskCountOption: Option;
   var repeatOption: Option;
-  var loadPlayerGlobalOption: Option;
+  var loadPlayerGlobalCatalogOption: Option;
   var loadShellLibOption: Option;
   var porcelainOutputOption: Option;
   var usePlayerBundleOption: Option;
@@ -189,7 +189,7 @@ module Shumway.Shell {
     microTaskDurationOption = shellOptions.register(new Option("md", "duration", "number", 0, "Micro task duration."));
     microTaskCountOption = shellOptions.register(new Option("mc", "count", "number", 0, "Micro task count."));
     repeatOption = shellOptions.register(new Option("rp", "rp", "number", 1, "Repeat count."));
-    loadPlayerGlobalOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
+    loadPlayerGlobalCatalogOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
     loadShellLibOption = shellOptions.register(new Option("s", "shell", "boolean", false, "Load Shell Global"));
     porcelainOutputOption = shellOptions.register(new Option('', "porcelain", "boolean", false, "Keeps outputs free from the debug messages."));
 
@@ -295,26 +295,17 @@ module Shumway.Shell {
     }
 
     if (executeOption.value) {
-      var shouldLoadPlayerGlobal = loadPlayerGlobalOption.value;
-      if (!shouldLoadPlayerGlobal) {
+      var shouldloadPlayerGlobalCatalog = loadPlayerGlobalCatalogOption.value;
+      if (!shouldloadPlayerGlobalCatalog) {
         // We need to load player globals if any swfs need to be executed.
         files.forEach(file => {
           if (file.endsWith(".swf")) {
-            shouldLoadPlayerGlobal = true;
+            shouldloadPlayerGlobalCatalog = true;
           }
         });
       }
       files.forEach(function (file) {
-        if (file.endsWith(".abc")) {
-          for (var i = 0; i < repeatOption.value; i++) {
-            var t = performance.now();
-            var securityDomain = createSecurityDomain(builtinLibPath, null, null);
-            var buffer = new Uint8Array(read(file, "binary"));
-            var abc = new ABCFile(buffer);
-            securityDomain.application.loadABC(abc);
-            securityDomain.application.executeABC(abc);
-          }
-        }
+        executeFile(file);
       });
     } else if (disassembleOption.value) {
       files.forEach(function (file) {
@@ -369,6 +360,13 @@ module Shumway.Shell {
   }
 
   function executeABCFile(file: string) {
+    var t = performance.now();
+    var securityDomain = createSecurityDomain(builtinABCPath, null, null);
+    var buffer = new Uint8Array(read(file, "binary"));
+    var abc = new ABCFile(buffer);
+    securityDomain.application.loadABC(abc);
+    securityDomain.application.executeABC(abc);
+
     //REDUX:
     //verboseOption.value && writer.writeLn("Running ABC: " + file);
     //var buffer = read(file, "binary");
@@ -381,7 +379,9 @@ module Shumway.Shell {
   }
 
   function executeUnitTestFile(file: string) {
-    print("XXX");
+    var securityDomain = createSecurityDomain(builtinABCPath, null, null);
+    Shumway.AVMX.AS.installClassLoaders(securityDomain.application, jsGlobal);
+
     writer.writeLn("Running test file: " + file + " ...");
     var start = dateNow();
     load(file);
@@ -541,58 +541,21 @@ module Shumway.Shell {
     return true;
   }
 
-  function createAVM2(builtinLibPath, shellLibPath?,  libraryPathInfo?) {
-    //var buffer = read(builtinLibPath, 'binary');
-    //var mode = interpreterOption.value ? Runtime.ExecutionMode.INTERPRET : Runtime.ExecutionMode.COMPILE;
-    //Runtime.AVM2.initialize(mode, mode);
-    //var avm2Instance = Runtime.AVM2.instance;
-    //Shumway.AVM2.AS.linkNatives(avm2Instance);
-    //avm2Instance.systemDomain.executeAbc(new ABCFile(new Uint8Array(buffer), "builtin.abc"));
-    //if (libraryPathInfo) {
-    //  loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
-    //}
-    //if (shellLibPath) {
-    //  var buffer = read(shellLibPath, 'binary');
-    //  avm2Instance.systemDomain.executeAbc(new ABCFile(new Uint8Array(buffer), "shell.abc"));
-    //}
-  }
-
-
-  function createSecurityDomain(builtinLibPath, shellLibPath, libraryPathInfo) {
-    var buffer = read(builtinLibPath, 'binary');
+  function createSecurityDomain(builtinABCPath: string, shellABCPath: string, libraryPathInfo): AVMX.SecurityDomain {
+    var buffer = read(builtinABCPath, 'binary');
     var securityDomain = new AVMX.SecurityDomain();
     var builtinABC = new ABCFile(new Uint8Array(buffer));
     securityDomain.system.loadABC(builtinABC);
+    securityDomain.addCatalog(loadPlayerGlobalCatalog());
     securityDomain.initialize();
     securityDomain.system.executeABC(builtinABC);
     return securityDomain;
   }
 
-  function initializeAVM2(loadPlayerglobal: boolean, loadShellLib: boolean) {
-    createAVM2(builtinLibPath, loadShellLib ? shellLibPath : undefined, loadPlayerglobal ? playerglobalInfo : undefined);
-  }
-
-  function loadPlayerglobal(abcsPath, catalogPath) {
-    //REDUX:
-    //var playerglobal = Shumway.AVM2.Runtime.playerglobal = {
-    //  abcs: read(abcsPath, 'binary').buffer,
-    //  map: Object.create(null),
-    //  scripts: Object.create(null)
-    //};
-    //var catalog = JSON.parse(read(catalogPath));
-    //for (var i = 0; i < catalog.length; i++) {
-    //  var abc = catalog[i];
-    //  playerglobal.scripts[abc.name] = abc;
-    //  if (typeof abc.defs === 'string') {
-    //    playerglobal.map[abc.defs] = abc.name;
-    //    writer.writeLn(abc.defs)
-    //  } else {
-    //    for (var j = 0; j < abc.defs.length; j++) {
-    //      var def = abc.defs[j];
-    //      playerglobal.map[def] = abc.name;
-    //    }
-    //  }
-    //}
+  function loadPlayerGlobalCatalog(): AVMX.ABCCatalog {
+    var abcs = read("build/playerglobal/playerglobal.abcs", 'binary');
+    var index = JSON.parse(read("build/playerglobal/playerglobal.json"));
+    return new AVMX.ABCCatalog(abcs, index);
   }
 }
 

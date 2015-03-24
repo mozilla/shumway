@@ -110,10 +110,12 @@ module Shumway.AVMX.AS {
 
   var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
 
-  function makeMultiname(v) {
+  function makeMultiname(v: any, namespace?: Namespace) {
+    rn.namespaces = namespace ? [namespace] : [];
     rn.name = v;
     return rn;
   }
+
 
   export function addPrototypeFunctionAlias(object: AXObject, name: string, fun: Function) {
     release || assert(name.indexOf('$Bg') === 0);
@@ -1265,6 +1267,10 @@ module Shumway.AVMX.AS {
   }
 
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var nativeClassLoaderNames: {
+    name: string
+  } [] = [];
 
   export function initializeBuiltins() {
     builtinNativeClasses["Object"]              = ASObject;
@@ -1307,12 +1313,16 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["IOError"]             = ASIOError;
     builtinNativeClasses["EOFError"]            = ASEOFError;
     builtinNativeClasses["MemoryError"]         = ASMemoryError;
-    builtinNativeClasses["IllegalOperationError"] = ASIllegalOperationError;
-
-    builtinNativeClasses["Dictionary"]          = flash.utils.Dictionary;
-    builtinNativeClasses["ByteArray"]           = flash.utils.ByteArray;
-
+    builtinNativeClasses["IllegalOperationError"]   = ASIllegalOperationError;
     builtinNativeClasses["JSON"]                = ASJSON;
+    builtinNativeClasses["flash.utils.Dictionary"]  = flash.utils.Dictionary;
+    builtinNativeClasses["flash.utils.ByteArray"]   = flash.utils.ByteArray;
+  }
+
+  export function registerNativeClass(name: string, asClass: ASClass) {
+    release || assert (!nativeClasses[name], "Native class: " + name + " is already registered.");
+    nativeClasses[name] = asClass;
+    nativeClassLoaderNames.push({name: name});
   }
 
   export function getNativesForTrait(trait: TraitInfo): Object [] {
@@ -1321,8 +1331,8 @@ module Shumway.AVMX.AS {
 
     if (trait.holder instanceof InstanceInfo) {
       var instanceInfo = <InstanceInfo>trait.holder;
-      className = instanceInfo.getName().name;
-      var native = builtinNativeClasses[className];
+      className = instanceInfo.getClassName();
+      var native = builtinNativeClasses[className] || nativeClasses[className];
       release || assert (native, "Class native is not defined: " + className);
       natives = [native.prototype];
       if (native.instanceNatives) {
@@ -1330,8 +1340,8 @@ module Shumway.AVMX.AS {
       }
     } else if (trait.holder instanceof ClassInfo) {
       var classInfo = <ClassInfo>trait.holder;
-      className = classInfo.instanceInfo.getName().name;
-      var native = builtinNativeClasses[className];
+      className = classInfo.instanceInfo.getClassName();
+      var native = builtinNativeClasses[className] || nativeClasses[className];
       release || assert (native, "Class native is not defined: " + className);
       natives = [native];
       if (native.classNatives) {
@@ -1508,5 +1518,52 @@ module Shumway.AVMX.AS {
     }
     writer.leave();
     writer.leave();
+  }
+
+  /**
+   * Creates a self patching getter that lazily constructs the class and memoizes
+   * to the class's instance constructor.
+   */
+  function defineClassLoader(applicationDomain: ApplicationDomain, container: Object, classNamespace: string, className: string) {
+    Object.defineProperty(container, className, {
+      get: function () {
+        writer && writer.writeLn("Running Memoizer: " + className);
+        var ns = new Namespace(null, NamespaceType.Public, classNamespace);
+        var mn = makeMultiname(className, ns);
+        var axClass = applicationDomain.getClass(mn);
+        release || assert(axClass, "Class " + classNamespace + ":" + className + " is not found.");
+        release || assert(axClass.axConstruct);
+        Object.defineProperty(container, className, {
+          value: function () {
+            return axClass.axConstruct();
+          },
+          writable: false
+        });
+        return container[className];
+      },
+      configurable: true
+    });
+  }
+
+  function makeClassLoader(applicationDomain: ApplicationDomain, container: Object, classPath: string) {
+    runtimeWriter && runtimeWriter.writeLn("Defining Memoizer: " + classPath);
+    var path = classPath.split(".");
+    for (var i = 0, j = path.length - 1; i < j; i++) {
+      if (!container[path[i]]) {
+        container[path[i]] = Object.create(null);
+      }
+      container = container[path[i]];
+    }
+    defineClassLoader(applicationDomain, container, path.slice(0, path.length - 1).join("."), path[path.length - 1]);
+  }
+
+  /**
+   * Installs class loaders for all the previously registered native classes.
+   */
+  export function installClassLoaders(applicationDomain: ApplicationDomain, container: Object) {
+    for (var i = 0; i < nativeClassLoaderNames.length; i++) {
+      var loaderName = nativeClassLoaderNames[i].name;
+      makeClassLoader(applicationDomain, container, loaderName);
+    }
   }
 }

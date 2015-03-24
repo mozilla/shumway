@@ -600,6 +600,14 @@ module Shumway.AVMX {
       return <Multiname>this.name;
     }
 
+    getClassName(): string {
+      var name = this.getName();
+      if (name.namespaces[0].uri) {
+        return name.namespaces[0].uri + "." + name.name;
+      }
+      return name.name;
+    }
+
     getSuperName(): Multiname {
       if (typeof this.superName === "number") {
         this.superName = this.abc.getMultiname(<number>this.superName);
@@ -820,14 +828,14 @@ module Shumway.AVMX {
       if (this.isAnyName()) {
         return "*";
       }
-      return this.isRuntimeName() ? "[]" : this.name;
+      return this.isRuntimeName() ? "[" + this.name + "]" : this.name;
     }
 
     public toString() {
       var str = CONSTANT[this.kind] + " ";
       str += this.isAttribute() ? "@" : "";
       if (this.isRuntimeNamespace()) {
-        str += "[]::" + this._nameToString();
+        str += "[" + this.namespaces.map(x => String(x)).join(", ") + "]::" + this._nameToString();
       } else if (this.isQName()) {
         str += this.namespaces[0] + "::";
         str += this._nameToString();
@@ -1850,6 +1858,51 @@ module Shumway.AVMX {
         }
         writer.outdent();
       }
+    }
+  }
+
+  export class ABCCatalog {
+    map: Shumway.Map<string>;
+    abcs: Uint8Array;
+    scripts: Shumway.Map<any>;
+    constructor(abcs: Uint8Array, index: any) {
+      this.map = ObjectUtilities.createMap<string>();
+      this.abcs = abcs;
+      this.scripts = ObjectUtilities.createMap<string>();
+      for (var i = 0; i < index.length; i++) {
+        var abc = index[i];
+        this.scripts[abc.name] = abc;
+        if (typeof abc.defs === 'string') {
+          this.map[abc.defs] = abc.name;
+        } else {
+          for (var j = 0; j < abc.defs.length; j++) {
+            var def = abc.defs[j];
+            this.map[def] = abc.name;
+          }
+        }
+      }
+    }
+
+    getABCByScriptName(scriptName: string): ABCFile {
+      var entry = this.scripts[scriptName];
+      if (!entry) {
+        return null;
+      }
+      return new ABCFile(this.abcs.subarray(entry.offset, entry.offset + entry.length), scriptName);
+    }
+
+    getABCByDefinition(definitionName: string): ABCFile {
+      var scriptName = this.map[definitionName];
+      if (!scriptName) {
+        return null;
+      }
+      return this.getABCByScriptName(scriptName);
+    }
+
+    getABCByMultiname(mn: Multiname): ABCFile {
+      release || assert (mn.namespaces.length === 1);
+      var definitionName = mn.namespaces[0].uri + ":" + mn.name;
+      return this.getABCByDefinition(definitionName);
     }
   }
 }
