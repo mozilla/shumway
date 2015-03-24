@@ -1535,7 +1535,7 @@ module Shumway.AVMX.AS {
         release || assert(axClass.axConstruct);
         Object.defineProperty(container, className, {
           value: function () {
-            return axClass.axConstruct();
+            return axClass.axConstruct(arguments);
           },
           writable: false
         });

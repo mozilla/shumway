@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-Shumway.AVM1.avm1TimeoutDisabled.value = true;
+// REDUX: Uncomment the line below.
+// Shumway.AVM1.avm1TimeoutDisabled.value = true;
 
 // Examples of the commands to control the AVM1 debugger
 // (use console or uncomment them here)
