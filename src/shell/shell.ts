@@ -96,7 +96,7 @@ if (commandLineArguments.indexOf('-b') >= 0 || commandLineArguments.indexOf('--c
 
   load("build/ts/flash.js");
 
-  load("build/ts/avm1.js");
+  // REDUX: load("build/ts/avm1.js");
 
   load("build/ts/gfx-base.js");
   load("build/ts/player.js");
@@ -106,7 +106,6 @@ if (commandLineArguments.indexOf('-b') >= 0 || commandLineArguments.indexOf('--c
 
 module Shumway.Shell {
   import assert = Shumway.Debug.assert;
-  import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import ABCFile = Shumway.AVMX.ABCFile;
   import WriterFlags = Shumway.AVMX.WriterFlags;
 
@@ -117,7 +116,6 @@ module Shumway.Shell {
   import Runtime = Shumway.AVM2.Runtime;
   import SwfTag = Shumway.SWF.Parser.SwfTag;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  import flash = Shumway.AVM2.AS.flash;
 
   import Compiler = Shumway.AVM2.Compiler;
 
@@ -334,7 +332,7 @@ module Shumway.Shell {
 
   function disassembleABCFile(file: string) {
     var buffer = read(file, "binary");
-    var abc = new AbcFile(new Uint8Array(buffer), file);
+    var abc = new ABCFile(new Uint8Array(buffer), file);
     abc.trace(writer);
   }
 
@@ -351,9 +349,10 @@ module Shumway.Shell {
 
   function executeSWFFile(file: string, runDuration: number, runCount: number) {
     function runSWF(file: any) {
-      flash.display.Loader.reset();
-      flash.display.DisplayObject.reset();
-      flash.display.MovieClip.reset();
+      // REDUX:
+      // flash.display.Loader.reset();
+      // flash.display.DisplayObject.reset();
+      // flash.display.MovieClip.reset();
       var player = new ShellPlayer();
       player.load(file);
     }
@@ -365,22 +364,24 @@ module Shumway.Shell {
       Shumway.FileLoadingService.instance.setBaseUrl(file);
       runSWF(read(file, 'binary'));
     }
-    console.info("Running: " + file);
+    console.info("-Running: " + file);
     microTaskQueue.run(runDuration, runCount, true);
   }
 
   function executeABCFile(file: string) {
-    verboseOption.value && writer.writeLn("Running ABC: " + file);
-    var buffer = read(file, "binary");
-    try {
-      Runtime.AVM2.instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
-    } catch (x) {
-      writer.writeLns(x.stack);
-    }
-    verboseOption.value && writer.outdent();
+    //REDUX:
+    //verboseOption.value && writer.writeLn("Running ABC: " + file);
+    //var buffer = read(file, "binary");
+    //try {
+    //  Runtime.AVM2.instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
+    //} catch (x) {
+    //  writer.writeLns(x.stack);
+    //}
+    //verboseOption.value && writer.outdent();
   }
 
   function executeUnitTestFile(file: string) {
+    print("XXX");
     writer.writeLn("Running test file: " + file + " ...");
     var start = dateNow();
     load(file);
@@ -458,7 +459,7 @@ module Shumway.Shell {
   function parseFile(file: string, parseForDatabase: boolean, symbolFilters: string []): boolean {
     var fileName = file.replace(/^.*[\\\/]/, '');
     function parseABC(buffer: ArrayBuffer) {
-      new AbcFile(new Uint8Array(buffer), "ABC");
+      new ABCFile(new Uint8Array(buffer), "ABC");
     }
     var buffers = [];
     if (file.endsWith(".swf")) {
@@ -541,19 +542,19 @@ module Shumway.Shell {
   }
 
   function createAVM2(builtinLibPath, shellLibPath?,  libraryPathInfo?) {
-    var buffer = read(builtinLibPath, 'binary');
-    var mode = interpreterOption.value ? Runtime.ExecutionMode.INTERPRET : Runtime.ExecutionMode.COMPILE;
-    Runtime.AVM2.initialize(mode, mode);
-    var avm2Instance = Runtime.AVM2.instance;
-    Shumway.AVM2.AS.linkNatives(avm2Instance);
-    avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
-    if (libraryPathInfo) {
-      loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
-    }
-    if (shellLibPath) {
-      var buffer = read(shellLibPath, 'binary');
-      avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "shell.abc"));
-    }
+    //var buffer = read(builtinLibPath, 'binary');
+    //var mode = interpreterOption.value ? Runtime.ExecutionMode.INTERPRET : Runtime.ExecutionMode.COMPILE;
+    //Runtime.AVM2.initialize(mode, mode);
+    //var avm2Instance = Runtime.AVM2.instance;
+    //Shumway.AVM2.AS.linkNatives(avm2Instance);
+    //avm2Instance.systemDomain.executeAbc(new ABCFile(new Uint8Array(buffer), "builtin.abc"));
+    //if (libraryPathInfo) {
+    //  loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
+    //}
+    //if (shellLibPath) {
+    //  var buffer = read(shellLibPath, 'binary');
+    //  avm2Instance.systemDomain.executeAbc(new ABCFile(new Uint8Array(buffer), "shell.abc"));
+    //}
   }
 
 
@@ -572,25 +573,26 @@ module Shumway.Shell {
   }
 
   function loadPlayerglobal(abcsPath, catalogPath) {
-    var playerglobal = Shumway.AVM2.Runtime.playerglobal = {
-      abcs: read(abcsPath, 'binary').buffer,
-      map: Object.create(null),
-      scripts: Object.create(null)
-    };
-    var catalog = JSON.parse(read(catalogPath));
-    for (var i = 0; i < catalog.length; i++) {
-      var abc = catalog[i];
-      playerglobal.scripts[abc.name] = abc;
-      if (typeof abc.defs === 'string') {
-        playerglobal.map[abc.defs] = abc.name;
-        writer.writeLn(abc.defs)
-      } else {
-        for (var j = 0; j < abc.defs.length; j++) {
-          var def = abc.defs[j];
-          playerglobal.map[def] = abc.name;
-        }
-      }
-    }
+    //REDUX:
+    //var playerglobal = Shumway.AVM2.Runtime.playerglobal = {
+    //  abcs: read(abcsPath, 'binary').buffer,
+    //  map: Object.create(null),
+    //  scripts: Object.create(null)
+    //};
+    //var catalog = JSON.parse(read(catalogPath));
+    //for (var i = 0; i < catalog.length; i++) {
+    //  var abc = catalog[i];
+    //  playerglobal.scripts[abc.name] = abc;
+    //  if (typeof abc.defs === 'string') {
+    //    playerglobal.map[abc.defs] = abc.name;
+    //    writer.writeLn(abc.defs)
+    //  } else {
+    //    for (var j = 0; j < abc.defs.length; j++) {
+    //      var def = abc.defs[j];
+    //      playerglobal.map[def] = abc.name;
+    //    }
+    //  }
+    //}
   }
 }
 

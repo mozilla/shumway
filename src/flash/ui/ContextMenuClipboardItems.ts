@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: ContextMenuClipboardItems
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  export class ContextMenuClipboardItems extends ASNative {
+  export class ContextMenuClipboardItems extends ASObject {
     
     static classInitializer: any = null;
     static initializer: any = null;

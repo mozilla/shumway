@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: H264VideoStreamSettings
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class H264VideoStreamSettings extends flash.media.VideoStreamSettings {
     
     // Called whenever the class is initialized.

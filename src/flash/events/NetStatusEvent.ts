@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: NetStatusEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class NetStatusEvent extends flash.events.Event {
 

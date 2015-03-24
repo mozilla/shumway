@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: InteractiveObject
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import DisplayObject = flash.display.DisplayObject;
 
   import events = flash.events;

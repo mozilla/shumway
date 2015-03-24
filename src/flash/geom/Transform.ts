@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 // Class: Transform
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import Errors = Shumway.AVM2.Errors;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import throwError = Shumway.AVMX.throwError;
 
-  export class Transform extends ASNative {
+  export class Transform extends ASObject {
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null; // [];
@@ -83,12 +82,12 @@ module Shumway.AVM2.AS.flash.geom {
       var raw = m.rawData;
       // TODO why is this not a 3D matrix?
       this.matrix = new flash.geom.Matrix (
-        raw.asGetPublicProperty(0),
-        raw.asGetPublicProperty(1),
-        raw.asGetPublicProperty(4),
-        raw.asGetPublicProperty(5),
-        raw.asGetPublicProperty(12),
-        raw.asGetPublicProperty(13)
+        raw.axGetPublicProperty(0),
+        raw.axGetPublicProperty(1),
+        raw.axGetPublicProperty(4),
+        raw.axGetPublicProperty(5),
+        raw.axGetPublicProperty(12),
+        raw.axGetPublicProperty(13)
       );
       // this.matrix will reset this._target._matrix3D
       // TODO: Must make sure to also deal with the _rotateXYZ properties.

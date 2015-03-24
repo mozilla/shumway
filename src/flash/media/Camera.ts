@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: Camera
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class Camera extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -166,7 +166,7 @@ module Shumway.AVM2.AS.flash.media {
       rect = rect; destination = destination;
       notImplemented("public flash.media.Camera::copyToByteArray"); return;
     }
-    copyToVector(rect: flash.geom.Rectangle, destination: ASVector<any>): void {
+    copyToVector(rect: flash.geom.Rectangle, destination: Float64Vector): void {
       rect = rect; destination = destination;
       notImplemented("public flash.media.Camera::copyToVector"); return;
     }

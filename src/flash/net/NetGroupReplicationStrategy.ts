@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: NetGroupReplicationStrategy
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class NetGroupReplicationStrategy extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class NetGroupReplicationStrategy extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

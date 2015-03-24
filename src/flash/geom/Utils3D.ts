@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: Utils3D
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Utils3D extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class Utils3D extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -45,7 +45,7 @@ module Shumway.AVM2.AS.flash.geom {
       m = m; v = v;
       notImplemented("public flash.geom.Utils3D::static projectVector"); return;
     }
-    static projectVectors(m: flash.geom.Matrix3D, verts: ASVector<any>, projectedVerts: ASVector<any>, uvts: ASVector<any>): void {
+    static projectVectors(m: flash.geom.Matrix3D, verts: Float64Vector, projectedVerts: Float64Vector, uvts: Float64Vector): void {
       m = m; verts = verts; projectedVerts = projectedVerts; uvts = uvts;
       notImplemented("public flash.geom.Utils3D::static projectVectors"); return;
     }

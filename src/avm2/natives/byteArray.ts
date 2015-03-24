@@ -96,7 +96,7 @@ module Shumway.AVMX.AS {
         ObjectUtilities.defineNonEnumerableProperty(proto, '$BgtoJSON', proto.toJSON);
       }
 
-      constructor(source: any) {
+      constructor(source?: any) {
         false && super();
         var self: ByteArray = this;
         DataBuffer.call(self);

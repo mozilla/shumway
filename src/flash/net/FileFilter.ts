@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 // Class: FileFilter
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
-  export class FileFilter extends ASNative {
+  export class FileFilter extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

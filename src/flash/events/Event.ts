@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: Event
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Event extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class Event extends ASObject {
 
     static _instances: Shumway.Map<Event>;
 
@@ -215,7 +215,7 @@ module Shumway.AVM2.AS.flash.events {
       var str = '[' + className;
       for (var i: number = 0; i < args.length; i++) {
         var field = args[i];
-        var value: Object = this.asGetPublicProperty(field);
+        var value: Object = this.axGetPublicProperty(field);
         if (typeof value === 'string') {
           value = '"' + value + '"';
         }

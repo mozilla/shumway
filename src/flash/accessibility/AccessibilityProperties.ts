@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: AccessibilityProperties
-module Shumway.AVM2.AS.flash.accessibility {
+module Shumway.AVMX.AS.flash.accessibility {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class AccessibilityProperties extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class AccessibilityProperties extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

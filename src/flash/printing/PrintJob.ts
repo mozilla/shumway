@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: PrintJob
-module Shumway.AVM2.AS.flash.printing {
+module Shumway.AVMX.AS.flash.printing {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class PrintJob extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.

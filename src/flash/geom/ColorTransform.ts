@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 // Class: ColorTransform
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   import toS16 = Shumway.IntegerUtilities.toS16;
   import clampS8U8 = Shumway.IntegerUtilities.clampS8U8;
 
-  export class ColorTransform extends ASNative {
+  export class ColorTransform extends ASObject {
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null; // [];

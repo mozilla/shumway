@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: ClipboardFormats
-module Shumway.AVM2.AS.flash.desktop {
+module Shumway.AVMX.AS.flash.desktop {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class ClipboardFormats extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class ClipboardFormats extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

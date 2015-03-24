@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 // Class: TextFormatAlign
-module Shumway.AVM2.AS.flash.text {
-  export class TextFormatAlign extends ASNative {
+module Shumway.AVMX.AS.flash.text {
+  export class TextFormatAlign extends ASObject {
 
     static classInitializer: any = null;
     static initializer: any = null;

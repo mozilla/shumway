@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: Geolocation
-module Shumway.AVM2.AS.flash.sensors {
+module Shumway.AVMX.AS.flash.sensors {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class Geolocation extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.

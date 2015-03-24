@@ -27,6 +27,7 @@ interface IMetaobjectProtocol {
   axHasPublicProperty(nm: any): boolean;
   axSetPublicProperty(nm: any, value: any);
   axGetPublicProperty(nm: any): any;
+  axCallPublicProperty(nm: any, argArray: any []): any;
 
   axSetNumericProperty(nm: number, value: any);
   axGetNumericProperty(nm: number): any;
@@ -108,6 +109,55 @@ module Shumway.AVMX {
    *                            +------------+
    *
    */
+
+  // REDUX: Temporary until we fix all usages of the global usages.
+  export var throwError: any = null;
+  export function checkNullParameter(argument: any, name: string) {
+    if (!argument) {
+      throwError('TypeError', Errors.NullPointerError, name);
+    }
+  }
+  export function checkParameterType(argument: any, name: string, type: AS.ASClass) {
+    checkNullParameter(argument, name)
+    // REDUX:
+    //if (!type.isType(argument)) {
+    //  throwError('TypeError', Errors.CheckTypeFailedError, argument, type.classInfo.instanceInfo.name.getOriginalName());
+    //}
+  }
+  export function wrapJSObject(object) {
+    // REDUX:
+    return null;
+    //var wrapper = Object.create(object);
+    //for (var i in object) {
+    //  Object.defineProperty(wrapper, Multiname.getPublicQualifiedName(i), (function (object, i) {
+    //    return {
+    //      get: function () { return object[i] },
+    //      set: function (value) { object[i] = value; },
+    //      enumerable: true
+    //    };
+    //  })(object, i));
+    //}
+    //return wrapper;
+  }
+  export function forEachPublicProperty(object, fn, self?) {
+    // REDUX:
+    //if (!object.asBindings) {
+    //  for (var key in object) {
+    //    fn.call(self, key, object[key]);
+    //  }
+    //  return;
+    //}
+    //
+    //for (var key in object) {
+    //  if (isNumeric(key)) {
+    //    fn.call(self, key, object[key]);
+    //  } else if (!object.asBindings[key] && Multiname.isPublicQualifiedName(key)) {
+    //    var name = Multiname.stripPublicQualifier(key);
+    //    fn.call(self, name, object[key]);
+    //  }
+    //}
+  }
+
   export enum WriterFlags {
     None = 0,
     Runtime = 1,
@@ -542,6 +592,7 @@ module Shumway.AVMX {
     D(AXBasePrototype, "axHasPublicProperty", Op.axHasPublicProperty);
     D(AXBasePrototype, "axSetPublicProperty", Op.axSetPublicProperty);
     D(AXBasePrototype, "axGetPublicProperty", Op.axGetPublicProperty);
+    D(AXBasePrototype, "axCallPublicProperty", Op.axCallPublicProperty);
     D(AXBasePrototype, "axGetProperty", Op.axGetProperty);
     D(AXBasePrototype, "axDeleteProperty", Op.axDeleteProperty);
     D(AXBasePrototype, "axGetSuper", Op.axGetSuper);

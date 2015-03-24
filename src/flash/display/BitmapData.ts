@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 // Class: BitmapData
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import AVM2 = Shumway.AVM2.Runtime.AVM2;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import throwError = Shumway.AVMX.throwError;
   import swap32 = Shumway.IntegerUtilities.swap32;
   import premultiplyARGB = Shumway.ColorUtilities.premultiplyARGB;
   import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
@@ -37,7 +36,7 @@ module Shumway.AVM2.AS.flash.display {
    * unpacked, it is stored as premultiplied ARGB since it's what the SWF encodes bitmaps as.  This way
    * we don't have to do unecessary byte conversions.
    */
-  export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
+  export class BitmapData extends ASObject implements IBitmapDrawable, Shumway.Remoting.IRemotable {
 
     static classInitializer: any = function () {
       // ...
@@ -587,7 +586,7 @@ module Shumway.AVM2.AS.flash.display {
          colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
          clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
       somewhatImplemented("public flash.display.BitmapData::draw");
-      var serializer: IBitmapDataSerializer = AVM2.instance.globals['Shumway.Player.Utils'];
+      var serializer: IBitmapDataSerializer = null; // REDUX: AVM2.instance.globals['Shumway.Player.Utils'];
       if (matrix) {
         matrix = matrix.clone().toTwipsInPlace();
       }
@@ -831,7 +830,7 @@ module Shumway.AVM2.AS.flash.display {
       this._locked = false;
     }
 
-    histogram(hRect: flash.geom.Rectangle = null): ASVector<any> {
+    histogram(hRect: flash.geom.Rectangle = null): GenericVector {
       hRect = hRect;
       notImplemented("public flash.display.BitmapData::histogram");
       return;
@@ -856,7 +855,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _ensureBitmapData() {
       if (this._isRemoteDirty) {
-        var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        var serializer = null; // REDUX: Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
         var data = serializer.requestBitmapData(this);
         this._setData(data.getBytes(), ImageType.StraightAlphaRGBA);
         this._isRemoteDirty = false;

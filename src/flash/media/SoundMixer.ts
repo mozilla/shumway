@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: SoundMixer
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   export interface ISoundSource {
@@ -26,7 +26,7 @@ module Shumway.AVM2.AS.flash.media {
     stopSound();
   }
 
-  export class SoundMixer extends ASNative {
+  export class SoundMixer extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

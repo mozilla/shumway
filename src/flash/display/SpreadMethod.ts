@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: SpreadMethod
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import GradientSpreadMethod = Shumway.GradientSpreadMethod;
-  export class SpreadMethod extends ASNative {
+  export class SpreadMethod extends ASObject {
     
     static classInitializer: any = null;
     static initializer: any = null;

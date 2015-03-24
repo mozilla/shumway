@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: Matrix
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Bounds = Shumway.Bounds;
 
@@ -45,7 +45,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
   }
 
-  export class Matrix extends ASNative {
+  export class Matrix extends ASObject {
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null; // [];

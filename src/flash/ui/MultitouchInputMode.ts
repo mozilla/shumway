@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: MultitouchInputMode
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class MultitouchInputMode extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class MultitouchInputMode extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

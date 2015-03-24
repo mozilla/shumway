@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: SecureSocket
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class SecureSocket extends flash.net.Socket {
     
     // Called whenever the class is initialized.

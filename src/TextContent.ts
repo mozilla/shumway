@@ -21,7 +21,7 @@ module Shumway {
   import Bounds = Shumway.Bounds;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import ColorUtilities = Shumway.ColorUtilities;
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
   export enum TextContentFlags {
     None            = 0x0000,

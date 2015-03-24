@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import throwError = Shumway.AVMX.throwError;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
-  import AVM2 = Shumway.AVM2.Runtime.AVM2;
 
   import LoaderContext = flash.system.LoaderContext;
   import events = flash.events;
 
   import FileLoader = Shumway.FileLoader;
   import ILoadListener = Shumway.ILoadListener;
-  import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import SWFFile = Shumway.SWF.SWFFile;
 
   import enterTimeline = Shumway.AVM2.enterTimeline;
@@ -235,10 +233,11 @@ module Shumway.AVM2.AS.flash.display {
       this._contentLoaderInfo = new display.LoaderInfo(display.LoaderInfo.CtorToken);
       this._contentLoaderInfo._loader = this;
 
-      var currentAbc = AVM2.currentAbc();
-      if (currentAbc) {
-        this._contentLoaderInfo._loaderUrl = (<LoaderInfo>currentAbc.env.loaderInfo).url;
-      }
+      // REDUX:
+      //var currentAbc = AVM2.currentAbc();
+      //if (currentAbc) {
+      //  this._contentLoaderInfo._loaderUrl = (<LoaderInfo>currentAbc.env.loaderInfo).url;
+      //}
 
       this._fileLoader = null;
       this._loadStatus = LoadStatus.Unloaded;
@@ -420,7 +419,9 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       if (context && context.applicationDomain) {
-        var domain = new system.ApplicationDomain(system.ApplicationDomain.currentDomain);
+        var domain = null;
+        // REDUX:
+        // var domain = new system.ApplicationDomain(system.ApplicationDomain.currentDomain);
         this._contentLoaderInfo._applicationDomain = domain;
       }
       this._contentLoaderInfo._parameters = parameters;
@@ -466,7 +467,7 @@ module Shumway.AVM2.AS.flash.display {
       };
       var symbol = BitmapSymbol.FromData(data);
       this._imageSymbol = symbol;
-      var resolver: Timeline.IAssetResolver = AVM2.instance.globals['Shumway.Player.Utils'];
+      var resolver: Timeline.IAssetResolver = null; // REDUX: AVM2.instance.globals['Shumway.Player.Utils'];
       resolver.registerFontOrImage(symbol, data);
       release || assert(symbol.resolveAssetPromise);
       release || assert(symbol.ready === false);
@@ -494,15 +495,16 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (loaderInfo._allowCodeExecution) {
-        var appDomain = AVM2.instance.applicationDomain;
+        var appDomain = null; // REDUX: AVM2.instance.applicationDomain;
 
         var abcBlocksLoaded = file.abcBlocks.length;
         var abcBlocksLoadedDelta = abcBlocksLoaded - loaderInfo._abcBlocksLoaded;
         if (abcBlocksLoadedDelta > 0) {
           for (var i = loaderInfo._abcBlocksLoaded; i < abcBlocksLoaded; i++) {
             var abcBlock = file.abcBlocks[i];
-            var abc = new AbcFile(abcBlock.data, abcBlock.name);
-            abc.env.loaderInfo = loaderInfo;
+            var abc = new ABCFile(abcBlock.data, abcBlock.name);
+            // REDUX: abc.env below is not yet available.
+            // abc.env.loaderInfo = loaderInfo;
             if (abcBlock.flags) {
               // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
               // immediately.

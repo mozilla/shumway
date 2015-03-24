@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 // Class: GestureEvent
-module Shumway.AVM2.AS.flash.events {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.events {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;

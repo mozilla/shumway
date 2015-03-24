@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: XMLDocument
-module Shumway.AVM2.AS.flash.xml {
+module Shumway.AVMX.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class XMLDocument extends flash.xml.XMLNode {
     static initializer: any = null;
     constructor (source: string = null) {

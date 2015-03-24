@@ -65,7 +65,7 @@ module Shumway.AVM1.Lib {
     public setPan(value: number): void {
       var transform = this._channel && this._channel.soundTransform;
       if (transform) {
-        transform.asSetPublicProperty('pan', value / 100);
+        transform.axSetPublicProperty('pan', value / 100);
         this._channel.soundTransform = transform;
       }
     }
@@ -80,7 +80,7 @@ module Shumway.AVM1.Lib {
     public setVolume(value: number): void {
       var transform = this._channel && this._channel.soundTransform;
       if (transform) {
-        transform.asSetPublicProperty('volume', value / 100);
+        transform.axSetPublicProperty('volume', value / 100);
         this._channel.soundTransform = transform;
       }
     }

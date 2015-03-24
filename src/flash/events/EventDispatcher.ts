@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 // Class: EventDispatcher
-module Shumway.AVM2.AS.flash.events {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.events {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import isFunction = Shumway.isFunction;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import throwError = Shumway.AVMX.throwError;
   import assert = Shumway.Debug.assert;
-  import traceEventsOption = Shumway.AVM2.AS.traceEventsOption;
 
   class EventListenerEntry {
     constructor(public listener: EventHandler, public useCapture: boolean, public priority: number) {
@@ -201,7 +200,7 @@ module Shumway.AVM2.AS.flash.events {
    * the DisplayObject class. The EventDispatcher class allows any object on the display list to be
    * an event target and as such, to use the methods of the IEventDispatcher interface.
    */
-  export class EventDispatcher extends ASNative implements IEventDispatcher {
+  export class EventDispatcher extends ASObject implements IEventDispatcher {
 
     public static broadcastEventDispatchQueue: BroadcastEventDispatchQueue;
 
@@ -240,7 +239,9 @@ module Shumway.AVM2.AS.flash.events {
 
     toString(): string {
       /* tslint:disable */
-      return ASObject.dynamicPrototype['$BgtoString'].call(this);
+      // REDUX:
+      // return ASObject.dynamicPrototype['$BgtoString'].call(this);
+      return "";
     }
 
     /**
@@ -486,7 +487,7 @@ module Shumway.AVM2.AS.flash.events {
        * all listener callbacks but not when bubbling.
        */
       if (event._target) {
-        event = event.asCallPublicProperty('clone', null);
+        event = event.axCallPublicProperty('clone', null);
       }
       var snapshot = list.snapshot();
       for (var i = 0; i < snapshot.length; i++) {

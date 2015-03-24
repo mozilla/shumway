@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: BitmapFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import Rectangle = flash.geom.Rectangle;
 
-  export class BitmapFilter extends ASNative {
+  export class BitmapFilter extends ASObject {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;

@@ -161,6 +161,7 @@ module Shumway.AVMX.AS {
     static axHasPublicProperty: (nm: any) => boolean;
     static axSetPublicProperty: (nm: any, value: any) => void;
     static axGetPublicProperty: (nm: any) => any;
+    static axCallPublicProperty: (nm: any, argArray: any []) => any;
 
     static axSetNumericProperty: (nm: number, value: any) => void;
     static axGetNumericProperty: (nm: number) => any;
@@ -194,6 +195,21 @@ module Shumway.AVMX.AS {
     static _init() {
       // Nop.
     }
+
+    // REDUX:
+    static instanceConstructorNoInitialize = function () { notImplemented("instanceConstructorNoInitialize => axInitialize"); };
+    static initializeFrom = function (x: any) { notImplemented("initializeFrom"); return null; };
+    static isInstanceOf = function (x: any) { notImplemented("isInstanceOf"); return false; };
+    static isType = function (x: any) { notImplemented("isType"); return false; };
+    static isSubtypeOf = function (x: any) { notImplemented("isType"); return false; };
+    static class: any;
+    class: any;
+    instanceConstructorNoInitialize = function () { notImplemented("instanceConstructorNoInitialize => axInitialize"); };
+    initializeFrom = function (x: any) { notImplemented("initializeFrom"); return null; };
+    isInstanceOf = function (x: any) { notImplemented("isInstanceOf"); return false; };
+    isType = function (x: any) { notImplemented("isType"); return false; };
+    isSubtypeOf = function (x: any) { notImplemented("isType"); return false; };
+
 
     getPrototypeOf: () => any;
 
@@ -352,6 +368,10 @@ module Shumway.AVMX.AS {
     axSetPublicProperty(nm: any, value: any) {
       release || checkValue(value);
       this[Multiname.getPublicMangledName(nm)] = value;
+    }
+
+    axCallPublicProperty(nm: any, argArray: any []): any {
+      notImplemented("axCallPublicProperty");
     }
 
     axGetSlot(i: number): any {
@@ -1176,6 +1196,74 @@ module Shumway.AVMX.AS {
   export class ASIllegalOperationError extends ASError {
   }
 
+  export class ASJSON extends ASObject {
+    /**
+     * Transforms a JS value into an AS value.
+     */
+    static transformJSValueToAS(value, deep: boolean) {
+      // REDUX:
+      //if (typeof value !== "object") {
+      //  return value;
+      //}
+      //if (isNullOrUndefined(value)) {
+      //  return value;
+      //}
+      //var keys = Object.keys(value);
+      //var result = Array.isArray(value) ? [] : {};
+      //for (var i = 0; i < keys.length; i++) {
+      //  var v = value[keys[i]];
+      //  if (deep) {
+      //    v = ASJSON.transformJSValueToAS(v, true);
+      //  }
+      //  result.axSetPublicProperty(keys[i], v);
+      //}
+      //return result;
+      return null;
+    }
+
+    /**
+     * Transforms an AS value into a JS value.
+     */
+    static transformASValueToJS(value, deep: boolean) {
+      // REDUX
+      //if (typeof value !== "object") {
+      //  return value;
+      //}
+      //if (isNullOrUndefined(value)) {
+      //  return value;
+      //}
+      //var keys = Object.keys(value);
+      //var result = Array.isArray(value) ? [] : {};
+      //for (var i = 0; i < keys.length; i++) {
+      //  var key = keys[i];
+      //  var jsKey = key;
+      //  if (!isNumeric(key)) {
+      //    jsKey = Multiname.getNameFromPublicQualifiedName(key);
+      //  }
+      //  var v = value[key];
+      //  if (deep) {
+      //    v = ASJSON.transformASValueToJS(v, true);
+      //  }
+      //  result[jsKey] = v;
+      //}
+      //return result;
+      return null;
+    }
+
+    private static parseCore(text: string): Object {
+      // REDUX:
+      //text = asCoerceString(text);
+      //return ASJSON.transformJSValueToAS(JSON.parse(text), true)
+      return;
+    }
+
+    private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
+      // REDUX:
+      // return JSON.stringify(ASJSON.transformASValueToJS(value, true), replacerFunction, gap);
+      return null;
+    }
+  }
+
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
   export function initializeBuiltins() {
@@ -1223,6 +1311,8 @@ module Shumway.AVMX.AS {
 
     builtinNativeClasses["Dictionary"]          = flash.utils.Dictionary;
     builtinNativeClasses["ByteArray"]           = flash.utils.ByteArray;
+
+    builtinNativeClasses["JSON"]                = ASJSON;
   }
 
   export function getNativesForTrait(trait: TraitInfo): Object [] {

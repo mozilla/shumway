@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: StaticText
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
 
   export class StaticText extends flash.display.DisplayObject {

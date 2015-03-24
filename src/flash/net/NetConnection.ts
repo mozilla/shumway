@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 // Class: NetConnection
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
   import Telemetry = Shumway.Telemetry;
-  import events = Shumway.AVM2.AS.flash.events;
 
   export class NetConnection extends flash.events.EventDispatcher {
     
@@ -103,7 +101,9 @@ module Shumway.AVM2.AS.flash.net {
         }
 
         var service: display.IRootElementService =
-          Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+          // REDUX:
+          // Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+          null;
 
         var rtmpProps = wrapJSObject({
           app: parsedURL.app,

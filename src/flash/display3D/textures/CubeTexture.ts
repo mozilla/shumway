@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: CubeTexture
-module Shumway.AVM2.AS.flash.display3D.textures {
+module Shumway.AVMX.AS.flash.display3D.textures {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class CubeTexture extends flash.display3D.textures.TextureBase {
     
     // Called whenever the class is initialized.

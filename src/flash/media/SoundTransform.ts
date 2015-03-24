@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: SoundTransform
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  export class SoundTransform extends ASNative {
+  export class SoundTransform extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

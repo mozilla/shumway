@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: SharedObject
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   declare var sessionStorage;

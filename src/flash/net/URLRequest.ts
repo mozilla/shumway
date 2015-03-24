@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 // Class: URLRequest
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import throwError = Shumway.AVMX.throwError;
 
-  export class URLRequest extends ASNative {
+  export class URLRequest extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -118,7 +118,7 @@ module Shumway.AVM2.AS.flash.net {
           obj.data = <ASObject><any>
             new Uint8Array((<any> this._data)._buffer, 0, (<any> this._data).length);
         } else {
-          var data = this._data.asGetPublicProperty("toString").call(this._data);
+          var data = this._data.axGetPublicProperty("toString").call(this._data);
           if (this._method === 'GET') {
             var i = obj.url.lastIndexOf('?');
             obj.url = (i < 0 ? obj.url : obj.url.substring(0, i)) + '?' + data;

@@ -17,7 +17,7 @@ module Shumway.Remoting.Player {
   import MessageTag = Shumway.Remoting.MessageTag;
   import MessageBits = Shumway.Remoting.MessageBits;
 
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import Stage = flash.display.Stage;
   import Graphics = flash.display.Graphics;
   import NetStream = flash.net.NetStream;

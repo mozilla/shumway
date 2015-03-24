@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: GameInputControl
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class GameInputControl extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.

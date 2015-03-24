@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: BlurFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import Rectangle = flash.geom.Rectangle;
 

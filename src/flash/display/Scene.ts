@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: Scene
-module Shumway.AVM2.AS.flash.display {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Scene extends ASNative {
+module Shumway.AVMX.AS.flash.display {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class Scene extends ASObject {
 
     static classInitializer: any = null;
     static initializer: any = null;

@@ -520,24 +520,24 @@ module Shumway.AVM1.Lib {
 
     private _initializeFlashObject(): void {
       this.flash = {};
-      this.flash.asSetPublicProperty('_MovieClip', this.MovieClip); // ???
+      this.flash.axSetPublicProperty('_MovieClip', this.MovieClip); // ???
       var display = {};
-      display.asSetPublicProperty('BitmapData', AVM1BitmapData.createAVM1Class());
-      this.flash.asSetPublicProperty('display', display);
+      display.axSetPublicProperty('BitmapData', AVM1BitmapData.createAVM1Class());
+      this.flash.axSetPublicProperty('display', display);
       var external = {};
-      external.asSetPublicProperty('ExternalInterface', AVM1ExternalInterface.createAVM1Class());
-      this.flash.asSetPublicProperty('external', external);
+      external.axSetPublicProperty('ExternalInterface', AVM1ExternalInterface.createAVM1Class());
+      this.flash.axSetPublicProperty('external', external);
       var filters = {};
-      this.flash.asSetPublicProperty('filters', filters);
+      this.flash.axSetPublicProperty('filters', filters);
       var geom = {};
-      geom.asSetPublicProperty('ColorTransform', flash.geom.ColorTransform);
-      geom.asSetPublicProperty('Matrix', flash.geom.Matrix);
-      geom.asSetPublicProperty('Point', flash.geom.Point);
-      geom.asSetPublicProperty('Rectangle', flash.geom.Rectangle);
-      geom.asSetPublicProperty('Transform', AVM1Transform.createAVM1Class());
-      this.flash.asSetPublicProperty('geom', geom);
+      geom.axSetPublicProperty('ColorTransform', flash.geom.ColorTransform);
+      geom.axSetPublicProperty('Matrix', flash.geom.Matrix);
+      geom.axSetPublicProperty('Point', flash.geom.Point);
+      geom.axSetPublicProperty('Rectangle', flash.geom.Rectangle);
+      geom.axSetPublicProperty('Transform', AVM1Transform.createAVM1Class());
+      this.flash.axSetPublicProperty('geom', geom);
       var text = {};
-      this.flash.asSetPublicProperty('text', text);
+      this.flash.axSetPublicProperty('text', text);
     }
 
     public toString() {

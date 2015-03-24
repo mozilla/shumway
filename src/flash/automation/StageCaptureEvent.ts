@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: StageCaptureEvent
-module Shumway.AVM2.AS.flash.automation {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.automation {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class StageCaptureEvent extends flash.events.Event {
     static initializer: any = null;
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, url: string = "", checksum: number /*uint*/ = 0) {

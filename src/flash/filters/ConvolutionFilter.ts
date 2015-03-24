@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: ConvolutionFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   export class ConvolutionFilter extends flash.filters.BitmapFilter {
 
@@ -100,7 +100,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._expandArray(matrix, actualLen);
         this._matrix = matrix;
       } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "matrix");
+        throwError("TypeError", Errors.NullPointerError, "matrix");
       }
     }
 

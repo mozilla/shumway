@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: GlowFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import assert = Shumway.Debug.assert;
   import Rectangle = flash.geom.Rectangle;

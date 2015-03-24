@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: MouseEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
@@ -198,7 +198,8 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
+      // REDUX:
+      // Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
     }
 
     private _getGlobalPoint(): flash.geom.Point {

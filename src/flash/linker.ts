@@ -16,7 +16,7 @@
 
 ///<reference path='references.ts' />
 module Shumway.AVM2.AS {
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import throwError = Shumway.AVMX.throwError;
   import flash = Shumway.AVM2.AS.flash;
   import Multiname = Shumway.AVM2.ABC.Multiname;
 

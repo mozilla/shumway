@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 /// <reference path='../references.ts'/>
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import FileLoadingService = Shumway.FileLoadingService;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-
-  import utils = Shumway.AVM2.AS.flash.utils;
+  import throwError = Shumway.AVMX.throwError;
 
   export class URLStream extends flash.events.EventDispatcher implements flash.utils.IDataInput {
     
@@ -130,8 +128,8 @@ module Shumway.AVM2.AS.flash.net {
             }
           }
         });
-        httpStatusEvent.asSetPublicProperty('responseHeaders', headers);
-        httpStatusEvent.asSetPublicProperty('responseURL', location);
+        httpStatusEvent.axSetPublicProperty('responseHeaders', headers);
+        httpStatusEvent.axSetPublicProperty('responseURL', location);
         self.dispatchEvent(httpStatusEvent);
       };
       session.onclose = function () {

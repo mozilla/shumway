@@ -15,10 +15,10 @@
  */
 
 // Class: Graphics
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import throwError = Shumway.AVMX.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
   import Bounds = Shumway.Bounds;
   import assert = Shumway.Debug.assert;
@@ -336,7 +336,7 @@ module Shumway.AVM2.AS.flash.display {
   }
   // end of GFX geometry.ts
 
-  export class Graphics extends ASNative implements Shumway.Remoting.IRemotable {
+  export class Graphics extends ASObject implements Shumway.Remoting.IRemotable {
 
     static classInitializer: any = null;
     static initializer: any = null;
@@ -828,7 +828,7 @@ module Shumway.AVM2.AS.flash.display {
 //      //shader = shader; matrix = matrix;
 //      notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
 //    }
-    drawPath(commands: ASVector<any>, data: ASVector<any>, winding: string = "evenOdd"): void {
+    drawPath(commands: GenericVector, data: GenericVector, winding: string = "evenOdd"): void {
       commands = commands;
       data = data;
       winding = asCoerceString(winding);
@@ -836,8 +836,8 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    drawTriangles(vertices: ASVector<any>, indices: ASVector<any> = null,
-                  uvtData: ASVector<any> = null, culling: string = "none"): void {
+    drawTriangles(vertices: GenericVector, indices: GenericVector = null,
+                  uvtData: GenericVector = null, culling: string = "none"): void {
       vertices = vertices;
       indices = indices;
       uvtData = uvtData;
@@ -846,7 +846,7 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    drawGraphicsData(graphicsData: ASVector<any>): void {
+    drawGraphicsData(graphicsData: GenericVector): void {
       graphicsData = graphicsData;
       notImplemented("public flash.display.Graphics::drawGraphicsData");
       return;

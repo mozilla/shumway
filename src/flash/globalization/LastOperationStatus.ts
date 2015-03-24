@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: LastOperationStatus
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class LastOperationStatus extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class LastOperationStatus extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

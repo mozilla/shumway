@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: CSMSettings
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class CSMSettings extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class CSMSettings extends ASObject {
 
     static classInitializer: any = null;
     static initializer: any = null;

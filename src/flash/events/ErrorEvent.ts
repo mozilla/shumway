@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: ErrorEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   export class ErrorEvent extends flash.events.TextEvent {
 
     static classInitializer: any = null;

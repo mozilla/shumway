@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: Responder
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
 
-  export class Responder extends ASNative {
+  export class Responder extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

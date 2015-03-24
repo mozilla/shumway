@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: BitmapFilterQuality
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
-  export class BitmapFilterQuality extends ASNative {
+  export class BitmapFilterQuality extends ASObject {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;

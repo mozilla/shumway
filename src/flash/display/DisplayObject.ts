@@ -24,14 +24,14 @@
  *
  */
 // Class: DisplayObject
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import abstractMethod = Shumway.Debug.abstractMethod;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import checkNullParameter = Shumway.AVM2.Runtime.checkNullParameter;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import throwError = Shumway.AVMX.throwError;
+  import checkNullParameter = Shumway.AVMX.checkNullParameter;
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
 

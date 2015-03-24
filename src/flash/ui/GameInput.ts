@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: GameInput
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import throwError = Shumway.AVMX.throwError;
   export class GameInput extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.

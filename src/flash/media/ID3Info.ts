@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: ID3Info
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
 
-  export class ID3Info extends ASNative {
+  export class ID3Info extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

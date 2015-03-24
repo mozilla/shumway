@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: MovieClip
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import MP3DecoderSession = SWF.MP3DecoderSession;
   import DecodedSound = SWF.Parser.DecodedSound;
 

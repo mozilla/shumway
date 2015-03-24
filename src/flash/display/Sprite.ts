@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: Sprite
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   import Timeline = Shumway.Timeline;
   import SwfTag = Shumway.SWF.Parser.SwfTag;
@@ -204,9 +204,8 @@ module Shumway.AVM2.AS.flash.display {
     _removeAnimatedChild(child: flash.display.DisplayObject) {
       this.removeChild(child);
       if (child._name) {
-        var mn =  Shumway.AVM2.ABC.Multiname.getPublicQualifiedName(child._name);
-        if (this[mn] === child) {
-          this[mn] = null;
+        if (this.axGetPublicProperty(child._name) === child) {
+          this.axSetPublicProperty(child._name, null);
         }
         // TODO: Implement proper reference counting.
         // child._removeReference();

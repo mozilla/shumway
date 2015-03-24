@@ -21,7 +21,7 @@ module Shumway.AVM2 {
   import asGetSlot = Shumway.AVM2.Runtime.asGetSlot;
   import asSetSlot = Shumway.AVM2.Runtime.asSetSlot;
   import asCoerce = Shumway.AVM2.Runtime.asCoerce;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import asAsType = Shumway.AVM2.Runtime.asAsType;
   import asTypeOf = Shumway.AVM2.Runtime.asTypeOf;
   import asIsInstanceOf = Shumway.AVM2.Runtime.asIsInstanceOf;

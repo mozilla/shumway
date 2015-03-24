@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: HTTPStatusEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class HTTPStatusEvent extends flash.events.Event {
 

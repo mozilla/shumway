@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: Vector3D
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Vector3D extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class Vector3D extends ASObject {
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null;

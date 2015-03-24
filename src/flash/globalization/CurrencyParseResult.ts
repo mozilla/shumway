@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: CurrencyParseResult
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class CurrencyParseResult extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class CurrencyParseResult extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

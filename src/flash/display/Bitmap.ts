@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: Bitmap
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import assert = Shumway.Debug.assert;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import throwError = Shumway.AVMX.throwError;
   export class Bitmap extends flash.display.DisplayObject {
     
     // Called whenever the class is initialized.

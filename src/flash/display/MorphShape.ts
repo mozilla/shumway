@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: MorphShape
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   export class MorphShape extends flash.display.DisplayObject {
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];

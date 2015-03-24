@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: GraphicsGradientFill
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class GraphicsGradientFill extends ASNative implements IGraphicsFill, IGraphicsData {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class GraphicsGradientFill extends ASObject implements IGraphicsFill, IGraphicsData {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

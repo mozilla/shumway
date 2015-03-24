@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: MicrophoneEnhancedMode
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class MicrophoneEnhancedMode extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class MicrophoneEnhancedMode extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

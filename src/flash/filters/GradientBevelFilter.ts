@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: GradientBevelFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import Rectangle = flash.geom.Rectangle;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export class GradientBevelFilter extends flash.filters.BitmapFilter {
 
@@ -139,7 +139,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._alphas = GradientArrays.sanitizeAlphas(this._alphas, len, len);
         this._ratios = GradientArrays.sanitizeRatios(this._ratios, len, len);
       } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "colors");
+        throwError("TypeError", Errors.NullPointerError, "colors");
       }
     }
 
@@ -153,7 +153,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._alphas = GradientArrays.alphas;
         this._ratios = GradientArrays.ratios;
       } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "alphas");
+        throwError("TypeError", Errors.NullPointerError, "alphas");
       }
     }
 
@@ -167,7 +167,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._alphas = GradientArrays.alphas;
         this._ratios = GradientArrays.ratios;
       } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "ratios");
+        throwError("TypeError", Errors.NullPointerError, "ratios");
       }
     }
 
@@ -212,7 +212,7 @@ module Shumway.AVM2.AS.flash.filters {
     set type(value: string) {
       value = asCoerceString(value);
       if (value === null) {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "type");
+        throwError("TypeError", Errors.NullPointerError, "type");
       } else {
         if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
           this._type = value;

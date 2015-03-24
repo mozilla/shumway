@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: SecurityDomain
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  export class SecurityDomain extends ASNative {
+  export class SecurityDomain extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

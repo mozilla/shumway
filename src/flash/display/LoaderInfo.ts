@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: LoaderInfo
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   import SWFFile = Shumway.SWF.SWFFile;
   import SWFFrame = Shumway.SWF.SWFFrame;
@@ -127,7 +127,7 @@ module Shumway.AVM2.AS.flash.display {
         // same as the SWF file's own URL.
 
         // The loaderURL value can be changed by player settings.
-        var service: IRootElementService = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        var service: IRootElementService = null; // REDUX: Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
         return (this._url === service.swfUrl && service.loaderUrl) || this._url;
       }
       return this._loaderUrl;
@@ -155,7 +155,10 @@ module Shumway.AVM2.AS.flash.display {
 
     get applicationDomain(): flash.system.ApplicationDomain {
       somewhatImplemented("public flash.display.LoaderInfo::get applicationDomain");
-      return this._file ? flash.system.ApplicationDomain.currentDomain : null;
+      // REDUX:
+      // return this._file ? flash.system.ApplicationDomain.currentDomain : null;
+      return null;
+
       // return this._applicationDomain;
     }
 
@@ -370,7 +373,7 @@ module Shumway.AVM2.AS.flash.display {
       release || assert(symbol, "Unknown symbol type " + data.type);
       this._dictionary[id] = symbol;
       if (symbol.ready === false) {
-        var resolver: Timeline.IAssetResolver = AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        var resolver: Timeline.IAssetResolver = null; // REDUX: AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
         resolver.registerFontOrImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
       }
       return symbol;

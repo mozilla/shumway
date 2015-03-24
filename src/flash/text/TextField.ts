@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 // Class: TextField
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
   import warning = Shumway.Debug.warning;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import throwError = Shumway.AVMX.throwError;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import clamp = Shumway.NumberUtilities.clamp;
 
@@ -611,7 +611,7 @@ module Shumway.AVM2.AS.flash.text {
       if (!this._hasFlags(DisplayObjectFlags.DirtyTextContent)) {
         return;
       }
-      var serializer = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      var serializer = null; // REDUX: Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
       var lineMetricsData = serializer.syncDisplayObject(this, false);
       var textWidth = lineMetricsData.readInt();
       var textHeight = lineMetricsData.readInt();

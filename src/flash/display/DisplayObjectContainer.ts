@@ -15,14 +15,14 @@
  */
 
 ///<reference path='../references.ts' />
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import checkParameterType = Shumway.AVM2.Runtime.checkParameterType;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import throwError = Shumway.AVMX.throwError;
+  import checkParameterType = Shumway.AVMX.checkParameterType;
   import clamp = Shumway.NumberUtilities.clamp;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
+  import Multiname = Shumway.AVMX.Multiname;
 
   import events = flash.events;
   import VisitorFlags = flash.display.VisitorFlags;
@@ -85,7 +85,7 @@ module Shumway.AVM2.AS.flash.display {
         child.class.instanceConstructorNoInitialize.call(child);
         child._removeReference();
         if (child._name) {
-          this[Multiname.getPublicQualifiedName(child._name)] = child;
+          this.axSetPublicProperty(child._name, child);
           //child._addReference();
         }
         child._setFlags(DisplayObjectFlags.Constructed);

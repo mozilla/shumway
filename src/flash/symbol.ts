@@ -22,7 +22,7 @@ module Shumway.Timeline {
   import abstractMethod = Shumway.Debug.abstractMethod;
   import Bounds = Shumway.Bounds;
   import ColorUtilities = Shumway.ColorUtilities;
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
@@ -48,13 +48,13 @@ module Shumway.Timeline {
     data: any;
     isAVM1Object: boolean;
     avm1Context: Shumway.AVM1.AVM1Context;
-    symbolClass: Shumway.AVM2.AS.ASClass;
+    symbolClass: ASClass;
 
-    constructor(data: SymbolData, symbolDefaultClass: Shumway.AVM2.AS.ASClass) {
+    constructor(data: SymbolData, symbolDefaultClass: ASClass) {
       release || assert (isInteger(data.id));
       this.data = data;
       if (data.className) {
-        var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
+        var appDomain = null; // REDUX: Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
         try {
           var symbolClass = appDomain.getClass(data.className);
           this.symbolClass = symbolClass;
@@ -79,7 +79,7 @@ module Shumway.Timeline {
     scale9Grid: Bounds;
     dynamic: boolean;
 
-    constructor(data: SymbolData, symbolClass: Shumway.AVM2.AS.ASClass, dynamic: boolean) {
+    constructor(data: SymbolData, symbolClass: ASClass, dynamic: boolean) {
       super(data, symbolClass);
       this.dynamic = dynamic;
     }

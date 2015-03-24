@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: TextRun
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
 
-  export class TextRun extends ASNative {
+  export class TextRun extends ASObject {
 
     static classInitializer: any = null;
     static initializer: any = null;

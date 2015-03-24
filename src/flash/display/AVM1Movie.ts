@@ -33,10 +33,10 @@
  * [1]: If you ignore the undocumented `call` and `addCallback` methods for a moment.
  */
 
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export class AVM1Movie extends flash.display.DisplayObject implements IAdvancable {
 

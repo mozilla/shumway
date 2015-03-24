@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 // Class: Mouse
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assert = Shumway.Debug.assert;
 
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import InteractiveObject = flash.display.InteractiveObject;
 
   import events = flash.events;
@@ -199,7 +199,7 @@ module Shumway.AVM2.AS.flash.ui {
     buttons: MouseButtonFlags;
   }
 
-  export class Mouse extends ASNative {
+  export class Mouse extends ASObject {
 
 
     // Called whenever the class is initialized.

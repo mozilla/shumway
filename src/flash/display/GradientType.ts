@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: GradientType
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  export class GradientType extends ASNative {
+  export class GradientType extends ASObject {
     
     static classInitializer: any = null;
     static initializer: any = null;

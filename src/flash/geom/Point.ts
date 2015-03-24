@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: Point
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Point extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class Point extends ASObject {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;

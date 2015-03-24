@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 // Class: MovieClip
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import throwError = Shumway.AVMX.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
   import events = flash.events;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
+  import Multiname = Shumway.AVMX.Multiname;
 
   import SwfTag = Shumway.SWF.Parser.SwfTag;
 

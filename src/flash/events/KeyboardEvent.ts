@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: KeyboardEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import dummyConstructor = Shumway.Debug.dummyConstructor;
 
   export class KeyboardEvent extends flash.events.Event {
@@ -93,7 +93,8 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     updateAfterEvent(): void {
-      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
+      // REDUX:
+      // Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
     }
   }
 }

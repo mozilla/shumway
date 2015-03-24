@@ -15,7 +15,7 @@
  */
 
 module RtmpJs {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
   var TRANSPORT_ENCODING = 0;
 

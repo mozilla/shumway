@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: IExternalizable
-module Shumway.AVM2.AS.flash.utils {
+module Shumway.AVMX.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export interface IExternalizable {
     
     // JS -> AS Bindings

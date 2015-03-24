@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: LocalConnection
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import FileLoadingService = Shumway.FileLoadingService;
 

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: BevelFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import Rectangle = flash.geom.Rectangle;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import assert = Shumway.Debug.assert;
 
   export class BevelFilter extends flash.filters.BitmapFilter {
@@ -200,7 +200,7 @@ module Shumway.AVM2.AS.flash.filters {
     set type(value: string) {
       value = asCoerceString(value);
       if (value === null) {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "type");
+        throwError("TypeError", Errors.NullPointerError, "type");
       } else {
         if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
           this._type = value;

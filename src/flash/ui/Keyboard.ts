@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: Keyboard
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   /**
    * Dispatches AS3 keyboard events to the focus event dispatcher.
@@ -79,7 +79,7 @@ module Shumway.AVM2.AS.flash.ui {
     shiftKey: boolean;
   }
 
-  export class Keyboard extends ASNative {
+  export class Keyboard extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

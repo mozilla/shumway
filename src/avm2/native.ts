@@ -35,7 +35,7 @@ module Shumway.AVM2.AS {
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assert = Shumway.Debug.assert;
@@ -200,12 +200,12 @@ module Shumway.AVM2.AS {
     }
 
     static _init() {
-      this.dynamicPrototype.asSetPublicProperty("hasOwnProperty", ASObject.prototype.native_hasOwnProperty);
-      this.dynamicPrototype.asSetPublicProperty("propertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
-      this.dynamicPrototype.asSetPublicProperty("setPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
-      this.dynamicPrototype.asSetPublicProperty("isPrototypeOf", ASObject.prototype.native_isPrototypeOf);
-      this.dynamicPrototype.asSetPublicProperty("toString", ASObject.prototype.toString);
-      this.dynamicPrototype.asSetPublicProperty("valueOf", ASObject.prototype.valueOf);
+      this.dynamicPrototype.axSetPublicProperty("hasOwnProperty", ASObject.prototype.native_hasOwnProperty);
+      this.dynamicPrototype.axSetPublicProperty("propertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
+      this.dynamicPrototype.axSetPublicProperty("setPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
+      this.dynamicPrototype.axSetPublicProperty("isPrototypeOf", ASObject.prototype.native_isPrototypeOf);
+      this.dynamicPrototype.axSetPublicProperty("toString", ASObject.prototype.toString);
+      this.dynamicPrototype.axSetPublicProperty("valueOf", ASObject.prototype.valueOf);
       ASObject._dontEnumPrototype(this.dynamicPrototype);
     }
 
@@ -1347,7 +1347,7 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASVector<T> extends ASNative {
+  export class ASVector<T> extends ASObject {
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
     public static instanceConstructor: any = ASVector;
@@ -1379,7 +1379,7 @@ module Shumway.AVM2.AS {
         if (deep) {
           v = ASJSON.transformJSValueToAS(v, true);
         }
-        result.asSetPublicProperty(keys[i], v);
+        result.axSetPublicProperty(keys[i], v);
       }
       return result;
     }
@@ -1421,7 +1421,7 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASError extends ASNative {
+  export class ASError extends ASObject {
     public static instanceConstructor: any = null;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
@@ -1617,11 +1617,11 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASMath extends ASNative {
+  export class ASMath extends ASObject {
     public static staticNatives: any [] = [Math];
   }
 
-  export class ASDate extends ASNative {
+  export class ASDate extends ASObject {
     public static staticNatives: any [] = [Date];
     public static instanceNatives: any [] = [Date.prototype];
     public static instanceConstructor: any = Date;

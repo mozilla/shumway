@@ -88,7 +88,7 @@ module Shumway.AVMX {
   }
 
   function setAvmProperty(obj, propertyName, value) {
-    obj.asSetPublicProperty(propertyName, value);
+    obj.axSetPublicProperty(propertyName, value);
   }
 
   export class AMF0 {

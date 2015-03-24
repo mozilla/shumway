@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 // Class: TextFormat
-module Shumway.AVM2.AS.flash.text {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.text {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import roundHalfEven = Shumway.NumberUtilities.roundHalfEven;
   import notImplemented = Shumway.Debug.notImplemented;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import throwError = Shumway.AVMX.throwError;
 
-  export class TextFormat extends ASNative {
+  export class TextFormat extends ASObject {
 
     static classInitializer: any = null;
     static initializer: any = null;

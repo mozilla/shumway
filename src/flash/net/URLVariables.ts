@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 // Class: URLVariables
-module Shumway.AVM2.AS.flash.net {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.net {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   declare var escape;
   declare var unescape;
 
-  export class URLVariables extends ASNative {
+  export class URLVariables extends ASObject {
     
     static classInitializer: any = null;
     static initializer: any = null;
@@ -50,23 +50,23 @@ module Shumway.AVM2.AS.flash.net {
         }
         var name = unescape(p.substring(0, j).split('+').join(' '));
         var value = unescape(p.substring(j + 1).split('+').join(' '));
-        var currentValue = this.asGetPublicProperty(name);
+        var currentValue = this.axGetPublicProperty(name);
         if (typeof currentValue === 'undefined') {
-          this.asSetPublicProperty(name, value);
+          this.axSetPublicProperty(name, value);
         } else if (Array.isArray(currentValue)) {
           currentValue.push(value);
         } else {
-          this.asSetPublicProperty(name, [currentValue, value]);
+          this.axSetPublicProperty(name, [currentValue, value]);
         }
       }
     }
 
     toString(): string {
       var pairs = [];
-      var keys = this.asGetEnumerableKeys();
+      var keys = this.axGetEnumerableKeys();
       for (var i = 0; i < keys.length; i++) {
         var name = keys[i].split(' ').join('+');
-        var value = this.asGetPublicProperty(name);
+        var value = this.axGetPublicProperty(name);
         name = escape(name).split(' ').join('+');
         if (Array.isArray(value)) {
           for (var j = 0; j < value.length; j++) {

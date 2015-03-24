@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: Matrix3D
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   /*
    * _matrix stores data by columns
@@ -60,7 +60,7 @@ module Shumway.AVM2.AS.flash.geom {
     ]);
   }
 
-  export class Matrix3D extends ASNative {
+  export class Matrix3D extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -239,11 +239,11 @@ module Shumway.AVM2.AS.flash.geom {
       m[0] = m[5] = m[10] = m[15] = 1;
       m[1] = m[2] = m[3] = m[4] = m[6] = m[7] = m[8] = m[9] = m[11] = m[12] = m[13] = m[14] = 0;
     }
-    decompose(orientationStyle: string = "eulerAngles"): ASVector<any> {
+    decompose(orientationStyle: string = "eulerAngles"): Float64Vector {
       orientationStyle = asCoerceString(orientationStyle);
       notImplemented("public flash.geom.Matrix3D::decompose"); return;
     }
-    recompose(components: ASVector<any>, orientationStyle: string = "eulerAngles"): boolean {
+    recompose(components: Float64Vector, orientationStyle: string = "eulerAngles"): boolean {
       orientationStyle = asCoerceString(orientationStyle);
       notImplemented("public flash.geom.Matrix3D::recompose"); return;
     }
@@ -354,9 +354,9 @@ module Shumway.AVM2.AS.flash.geom {
           m31 = m[2], m32 = m[6], m33 = m[10], m34 = m[14],
           m41 = m[3], m42 = m[7], m43 = m[11], m44 = m[15];
       for (var i = 0; i < vin.length - 2; i += 3) {
-        var x = vin.asGetNumericProperty(i),
-            y = vin.asGetNumericProperty(i + 1),
-            z = vin.asGetNumericProperty(i + 2);
+        var x = vin.axGetNumericProperty(i),
+            y = vin.axGetNumericProperty(i + 1),
+            z = vin.axGetNumericProperty(i + 2);
         vout.push(m11 * x + m12 * y + m13 * z + m14);
         vout.push(m21 * x + m22 * y + m23 * z + m24);
         vout.push(m31 * x + m32 * y + m33 * z + m34);
@@ -389,24 +389,24 @@ module Shumway.AVM2.AS.flash.geom {
       var m = this._matrix;
       if (transpose) {
         for (var i = 0, j = index | 0; i < 16; i++, j++) {
-          vector.asSetNumericProperty(j, m[transposeTransform[i]]);
+          vector.axSetNumericProperty(j, m[transposeTransform[i]]);
         }
       } else {
         for (var i = 0, j = index | 0; i < 16; i++, j++) {
-          vector.asSetNumericProperty(j, m[i]);
+          vector.axSetNumericProperty(j, m[i]);
         }
       }
     }
-    copyRawDataFrom(vector: ASVector<any>, index: number /*uint*/ = 0, transpose: boolean = false): void {
+    copyRawDataFrom(vector: Float64Vector, index: number /*uint*/ = 0, transpose: boolean = false): void {
       vector = vector; index = index >>> 0; transpose = !!transpose;
       var m = this._matrix;
       if (transpose) {
         for (var i = 0, j = index | 0; i < 16; i++, j++) {
-          m[transposeTransform[i]] = vector.asGetNumericProperty(j) || 0; // removing NaN
+          m[transposeTransform[i]] = vector.axGetNumericProperty(j) || 0; // removing NaN
         }
       } else {
         for (var i = 0, j = index | 0; i < 16; i++, j++) {
-          m[i] = vector.asGetNumericProperty(j) || 0; // removing NaN
+          m[i] = vector.axGetNumericProperty(j) || 0; // removing NaN
         }
       }
     }

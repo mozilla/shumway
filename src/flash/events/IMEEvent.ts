@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: IMEEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class IMEEvent extends flash.events.TextEvent {

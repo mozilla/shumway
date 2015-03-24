@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 // Class: Multitouch
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Multitouch extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class Multitouch extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -67,7 +67,7 @@ module Shumway.AVM2.AS.flash.ui {
       return false;
       // return this._supportsGestureEvents;
     }
-    static get supportedGestures(): ASVector<any> {
+    static get supportedGestures(): GenericVector {
       somewhatImplemented("public flash.ui.Multitouch::get supportedGestures");
       return null;
       // return this._supportedGestures;

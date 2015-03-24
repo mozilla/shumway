@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: AuthorizedFeatures
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class AuthorizedFeatures extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class AuthorizedFeatures extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

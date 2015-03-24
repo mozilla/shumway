@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: NumberParseResult
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class NumberParseResult extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class NumberParseResult extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 // Class: ExternalInterface
-module Shumway.AVM2.AS.flash.external {
+module Shumway.AVMX.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import Telemetry = Shumway.Telemetry;
-  import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
   import ExternalInterfaceService = Shumway.ExternalInterfaceService;
 
-  export class ExternalInterface extends ASNative {
+  export class ExternalInterface extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -72,12 +71,14 @@ module Shumway.AVM2.AS.flash.external {
       if (!callback) {
         return;
       }
-      return callback(functionName, ASJSON.transformJSValueToAS(args, true));
+      // REDUX:
+      // return callback(functionName, ASJSON.transformJSValueToAS(args, true));
     }
 
     static _getPropNames(obj: ASObject): any [] {
       var keys = [];
-      forEachPublicProperty(obj, function (key) { keys.push(key); }, null);
+      // REDUX:
+      // forEachPublicProperty(obj, function (key) { keys.push(key); }, null);
       return keys;
     }
 

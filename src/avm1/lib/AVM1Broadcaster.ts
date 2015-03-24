@@ -40,16 +40,16 @@ module Shumway.AVM1.Lib {
     }
 
     public static initializeWithContext(obj: any, context: AVM1Context): void {
-      obj.asSetPublicProperty('_listeners', []);
-      obj.asSetPublicProperty('broadcastMessage', function broadcastMessage(eventName: string, ...args): void {
+      obj.axSetPublicProperty('_listeners', []);
+      obj.axSetPublicProperty('broadcastMessage', function broadcastMessage(eventName: string, ...args): void {
         avm1BroadcastEvent(context, this, eventName, args);
       });
-      obj.asSetPublicProperty('addListener', function addListener(listener: any): void {
+      obj.axSetPublicProperty('addListener', function addListener(listener: any): void {
         var listeners: any[] = context.utils.getProperty(this, '_listeners');
         listeners.push(listener);
         _updateAllSymbolEvents(<any>this);
       });
-      obj.asSetPublicProperty('removeListener', function removeListener(listener: any): boolean {
+      obj.axSetPublicProperty('removeListener', function removeListener(listener: any): boolean {
         var listeners: any[] = context.utils.getProperty(this, '_listeners');
         var i = listeners.indexOf(listener);
         if (i < 0) {

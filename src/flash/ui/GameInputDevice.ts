@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: GameInputDevice
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class GameInputDevice extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -82,7 +82,7 @@ module Shumway.AVM2.AS.flash.ui {
       i = i | 0;
       notImplemented("public flash.ui.GameInputDevice::getControlAt"); return;
     }
-    startCachingSamples(numSamples: number /*int*/, controls: ASVector<any>): void {
+    startCachingSamples(numSamples: number /*int*/, controls: GenericVector): void {
       numSamples = numSamples | 0; controls = controls;
       notImplemented("public flash.ui.GameInputDevice::startCachingSamples"); return;
     }

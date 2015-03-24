@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: TextLineMetrics
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  export class TextLineMetrics extends ASNative {
+  export class TextLineMetrics extends ASObject {
 
     static classInitializer: any = null;
     static initializer: any = null;

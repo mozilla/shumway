@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: GraphicsPath
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class GraphicsPath extends ASNative implements IGraphicsPath, IGraphicsData {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class GraphicsPath extends ASObject implements IGraphicsPath, IGraphicsData {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["commands", "data", "_winding", "winding", "winding", "moveTo", "lineTo", "curveTo", "cubicCurveTo", "wideLineTo", "wideMoveTo", "ensureLists"];
     
-    constructor (commands: ASVector<number /*int*/> = null, data: ASVector<number> = null, winding: string = "evenOdd") {
+    constructor (commands: Int32Vector = null, data: Int32Vector = null, winding: string = "evenOdd") {
       false && super();
       this.commands = commands;
       this.data = data;
@@ -40,8 +40,8 @@ module Shumway.AVM2.AS.flash.display {
     
     // JS -> AS Bindings
     
-    commands: ASVector<number /*int*/>;
-    data: ASVector<number>;
+    commands: Int32Vector;
+    data: Int32Vector;
     _winding: string;
     winding: string;
     moveTo: (x: number, y: number) => void;

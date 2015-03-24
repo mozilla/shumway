@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: URLRequestHeader
-module Shumway.AVM2.AS.flash.net {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.net {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
-  export class URLRequestHeader extends ASNative {
+  export class URLRequestHeader extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

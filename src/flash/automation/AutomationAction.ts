@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: AutomationAction
-module Shumway.AVM2.AS.flash.automation {
+module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class AutomationAction extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class AutomationAction extends ASObject {
     static initializer: any = null;
     constructor () {
       false && super();

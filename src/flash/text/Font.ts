@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 // Class: Font
-module Shumway.AVM2.AS.flash.text {
+module Shumway.AVMX.AS.flash.text {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   import FontStyle = flash.text.FontStyle;
   import FontType = flash.text.FontType;
 
-  export class Font extends ASNative implements Shumway.Remoting.IRemotable {
+  export class Font extends ASObject implements Shumway.Remoting.IRemotable {
 
     private static _fonts: Font[];
     private static _fontsBySymbolId: Shumway.Map<Font>;
@@ -41,8 +41,15 @@ module Shumway.AVM2.AS.flash.text {
       Font._fontsBySymbolId = Shumway.ObjectUtilities.createMap<Font>();
       Font._fontsByName = Shumway.ObjectUtilities.createMap<Font>();
 
+      Font.DEVICE_FONT_METRICS_BUILTIN = {
+        "_sans": [0.9, 0.22, 0.08],
+        "_serif": [0.88, 0.26, 0.08],
+        "_typewriter": [0.86, 0.24, 0.08]
+      };
+
       // Measurements taken on a freshly installed Windows 7 (Ultimate).
       Font.DEVICE_FONT_METRICS_WIN = {
+        __proto__: Font.DEVICE_FONT_METRICS_BUILTIN,
         "Arial": [1, 0.25, 0],
         "Arial Baltic": [1, 0.25, 0],
         "Arial Black": [1.0833, 0.3333, 0],
@@ -89,6 +96,7 @@ module Shumway.AVM2.AS.flash.text {
       };
       // Measurements taken on a freshly installed Mac OS X 10.10 (Yosemite).
       Font.DEVICE_FONT_METRICS_MAC = {
+        __proto__: Font.DEVICE_FONT_METRICS_BUILTIN,
         "Al Bayan Bold": [1, 0.5833, 0],
         "Al Bayan Plain": [1, 0.5, 0],
         "Al Nile": [0.8333, 0.5, 0],
@@ -632,6 +640,7 @@ module Shumway.AVM2.AS.flash.text {
       };
       // Measurements taken on a freshly installed Ubuntu Linux 12.04.5 (Precise Pangolin).
       Font.DEVICE_FONT_METRICS_LINUX = {
+        __proto__: Font.DEVICE_FONT_METRICS_BUILTIN,
         "KacstFarsi": [1.0417, 0.5208, 0],
         "Meera": [0.651, 0.4557, 0],
         "FreeMono": [0.7812, 0.1953, 0],
@@ -718,16 +727,6 @@ module Shumway.AVM2.AS.flash.text {
         "Times": [0.9115, 0.3255, 0],
         "Monospace": [0.9115, 0.2604, 0]
       };
-
-      Font.DEVICE_FONT_METRICS_BUILTIN = {
-        "_sans": [0.9, 0.22, 0.08],
-        "_serif": [0.88, 0.26, 0.08],
-        "_typewriter": [0.86, 0.24, 0.08]
-      };
-
-      Font.DEVICE_FONT_METRICS_WIN.__proto__ = Font.DEVICE_FONT_METRICS_BUILTIN;
-      Font.DEVICE_FONT_METRICS_MAC.__proto__ = Font.DEVICE_FONT_METRICS_BUILTIN;
-      Font.DEVICE_FONT_METRICS_LINUX.__proto__ = Font.DEVICE_FONT_METRICS_BUILTIN;
 
       var userAgent = self.navigator.userAgent;
       if (userAgent.indexOf("Windows") > -1) {

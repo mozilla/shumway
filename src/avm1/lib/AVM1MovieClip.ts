@@ -372,8 +372,8 @@ module Shumway.AVM1.Lib {
     public globalToLocal(pt) {
       var tmp: flash.geom.Point = this.as3Object.globalToLocal(
         new flash.geom.Point(pt.asGetPublicProperty('x'), pt.asGetPublicProperty('y')));
-      pt.asSetPublicProperty('x', tmp.x);
-      pt.asSetPublicProperty('y', tmp.y);
+      pt.axSetPublicProperty('x', tmp.x);
+      pt.axSetPublicProperty('y', tmp.y);
     }
 
     public gotoAndPlay(frame) {
@@ -455,8 +455,8 @@ module Shumway.AVM1.Lib {
     public localToGlobal(pt) {
       var tmp: flash.geom.Point = this.as3Object.localToGlobal(
         new flash.geom.Point(pt.asGetPublicProperty('x'), pt.asGetPublicProperty('y')));
-      pt.asSetPublicProperty('x', tmp.x);
-      pt.asSetPublicProperty('y', tmp.y);
+      pt.axSetPublicProperty('x', tmp.x);
+      pt.axSetPublicProperty('y', tmp.y);
     }
 
     public get _lockroot() {

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: ContextMenuItem
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class ContextMenuItem extends flash.display.NativeMenuItem {
     
     // Called whenever the class is initialized.

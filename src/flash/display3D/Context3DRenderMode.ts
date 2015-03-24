@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: Context3DRenderMode
-module Shumway.AVM2.AS.flash.display3D {
+module Shumway.AVMX.AS.flash.display3D {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Context3DRenderMode extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class Context3DRenderMode extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

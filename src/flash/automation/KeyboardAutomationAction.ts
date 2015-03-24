@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: KeyboardAutomationAction
-module Shumway.AVM2.AS.flash.automation {
+module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class KeyboardAutomationAction extends flash.automation.AutomationAction {
     static initializer: any = null;
     constructor (type: string, keyCode: number /*uint*/ = 0) {

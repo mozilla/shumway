@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: GraphicsStroke
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class GraphicsStroke extends ASNative implements IGraphicsStroke, IGraphicsData {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class GraphicsStroke extends ASObject implements IGraphicsStroke, IGraphicsData {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

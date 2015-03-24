@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import ASClass = Shumway.AVM2.AS.ASClass;
+import ASClass = Shumway.AVMX.AS.ASClass;
 
 declare module Shumway.AVM1 {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
   export class AVM1ActionsData {
     constructor(actionsBlock: Uint8Array, name: string, parent: AVM1ActionsData);

@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 // Class: NetStream
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
-  import events = Shumway.AVM2.AS.flash.events;
-  import net = Shumway.AVM2.AS.flash.net;
-  import utils = Shumway.AVM2.AS.flash.utils;
+  import events = Shumway.AVMX.AS.flash.events;
+  import net = Shumway.AVMX.AS.flash.net;
+  import utils = Shumway.AVMX.AS.flash.utils;
   import FileLoadingService = Shumway.FileLoadingService;
-  import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import ISoundSource = flash.media.ISoundSource;
@@ -178,7 +176,7 @@ module Shumway.AVM2.AS.flash.net {
       // (void) -> void ???
       url = asCoerceString(url);
 
-      var service: IVideoElementService = AVM2.instance.globals['Shumway.Player.Utils'];
+      var service: IVideoElementService = null; // REDUX: AVM2.instance.globals['Shumway.Player.Utils'];
       service.registerEventListener(this._id, this.processVideoEvent.bind(this));
 
       if (this._connection && this._connection.uri) {
@@ -481,7 +479,7 @@ module Shumway.AVM2.AS.flash.net {
     }
 
     private _notifyVideoControl(eventType: VideoControlEvent, data: any): any {
-      var service: IVideoElementService = AVM2.instance.globals['Shumway.Player.Utils'];
+      var service: IVideoElementService = null; // REDUX: AVM2.instance.globals['Shumway.Player.Utils'];
       return service.notifyVideoControl(this._id, eventType, data);
     }
 
@@ -536,11 +534,12 @@ module Shumway.AVM2.AS.flash.net {
           break;
         case VideoPlaybackEvent.Metadata:
           if (this._client) {
-            var metadata = {};
-            metadata.asSetPublicProperty('width', data.videoWidth);
-            metadata.asSetPublicProperty('height', data.videoHeight);
-            metadata.asSetPublicProperty('duration', data.duration);
-            this._client.asCallPublicProperty('onMetaData', [metadata]);
+            // REDUX: Create a valid empty object here.
+            var metadata: ASObject = null; // {};
+            metadata.axSetPublicProperty('width', data.videoWidth);
+            metadata.axSetPublicProperty('height', data.videoHeight);
+            metadata.axSetPublicProperty('duration', data.duration);
+            this._client.axCallPublicProperty('onMetaData', [metadata]);
           }
           break;
       }
@@ -650,12 +649,12 @@ module Shumway.AVM2.AS.flash.net {
       request._checkPolicyFile = checkPolicyFile;
       var stream = new net.URLStream();
       stream.addEventListener('httpStatus', function (e) {
-        var responseHeaders = e.asGetPublicProperty('responseHeaders');
+        var responseHeaders = e.axGetPublicProperty('responseHeaders');
         var contentTypeHeader = responseHeaders.filter(function (h) {
-          return h.asGetPublicProperty('name') === 'Content-Type';
+          return h.axGetPublicProperty('name') === 'Content-Type';
         })[0];
         if (contentTypeHeader) {
-          var hint: string = contentTypeHeader.asGetPublicProperty('value');
+          var hint: string = contentTypeHeader.axGetPublicProperty('value');
           if (hint !== 'application/octet-stream') {
             // this._contentTypeHint = hint;
           }
@@ -682,7 +681,7 @@ module Shumway.AVM2.AS.flash.net {
       var mp4 = {
         packets: 0,
         init: function (metadata) {
-          if (!metadata.asGetPublicProperty('audiocodecid') && !metadata.asGetPublicProperty('videocodecid')) {
+          if (!metadata.axGetPublicProperty('audiocodecid') && !metadata.axGetPublicProperty('videocodecid')) {
             return; // useless metadata?
           }
           var parsedMetadata = RtmpJs.MP4.parseFLVMetadata(metadata);
@@ -942,8 +941,8 @@ module Shumway.AVM2.AS.flash.net {
         var ba = new flash.utils.ByteArray();
         ba.writeRawBytes(tag.data);
         ba.position = 0;
-        var name = Shumway.AVM2.AMF0.read(ba);
-        var value = Shumway.AVM2.AMF0.read(ba);
+        var name = AMF0.read(ba);
+        var value = AMF0.read(ba);
         if (name === 'onMetaData') {
           var metadata = RtmpJs.MP4.parseFLVMetadata(value);
           var mp4Mux = new RtmpJs.MP4.MP4Mux(metadata);

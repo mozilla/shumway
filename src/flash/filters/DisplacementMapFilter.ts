@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: DisplacementMapFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export class DisplacementMapFilter extends flash.filters.BitmapFilter {
 

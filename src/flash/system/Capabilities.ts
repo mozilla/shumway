@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 // Class: Capabilities
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
 
   declare var window;
 
-  export class Capabilities extends ASNative {
+  export class Capabilities extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

@@ -77,9 +77,9 @@
   function objectEnAndDecoding() {
     var ba = new ByteArray();
     var sourceObj = {};
-    sourceObj.asSetPublicProperty('a', 10);
-    sourceObj.asSetPublicProperty('b', 20);
-    sourceObj.asSetPublicProperty('c', 30);
+    sourceObj.axSetPublicProperty('a', 10);
+    sourceObj.axSetPublicProperty('b', 20);
+    sourceObj.axSetPublicProperty('c', 30);
     ba.writeObject(sourceObj);
     eq(ba.length, 16);
     ba.position = 0;

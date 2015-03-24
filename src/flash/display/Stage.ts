@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 // Class: Stage
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import throwError = Shumway.AVMX.throwError;
 
   export class Stage extends flash.display.DisplayObjectContainer {
 
@@ -89,8 +89,8 @@ module Shumway.AVM2.AS.flash.display {
     private _displayState: string;
     private _fullScreenSourceRect: flash.geom.Rectangle;
     private _mouseLock: boolean;
-    private _stageVideos: ASVector<any>;
-    private _stage3Ds: ASVector<any>;
+    private _stageVideos: GenericVector;
+    private _stage3Ds: GenericVector;
     private _colorARGB: number /*uint*/;
     private _fullScreenWidth: number /*uint*/;
     private _fullScreenHeight: number /*uint*/;
@@ -306,7 +306,7 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.Stage::get stageVideos");
       return this._stageVideos;
     }
-    get stage3Ds(): ASVector<any> {
+    get stage3Ds(): GenericVector {
       notImplemented("public flash.display.Stage::get stage3Ds"); return;
       // return this._stage3Ds;
     }

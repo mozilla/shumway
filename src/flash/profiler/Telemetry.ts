@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: Telemetry
-module Shumway.AVM2.AS.flash.profiler {
+module Shumway.AVMX.AS.flash.profiler {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Telemetry extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class Telemetry extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: SetIntervalTimer
-module Shumway.AVM2.AS.flash.utils {
+module Shumway.AVMX.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class SetIntervalTimer extends flash.utils.Timer {
     
     // Called whenever the class is initialized.

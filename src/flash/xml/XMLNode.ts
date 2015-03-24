@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: XMLNode
-module Shumway.AVM2.AS.flash.xml {
+module Shumway.AVMX.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class XMLNode extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class XMLNode extends ASObject {
     static initializer: any = null;
     constructor (type: number /*uint*/, value: string) {
       type = type >>> 0; value = asCoerceString(value);

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: ClipboardTransferMode
-module Shumway.AVM2.AS.flash.desktop {
+module Shumway.AVMX.AS.flash.desktop {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class ClipboardTransferMode extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class ClipboardTransferMode extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

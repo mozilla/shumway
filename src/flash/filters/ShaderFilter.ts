@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: ShaderFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class ShaderFilter extends flash.filters.BitmapFilter {
     
     // Called whenever the class is initialized.

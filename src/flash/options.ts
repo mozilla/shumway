@@ -1,4 +1,4 @@
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
 

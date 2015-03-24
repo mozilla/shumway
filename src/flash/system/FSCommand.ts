@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 // Class: FSCommand
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
-  export class FSCommand extends ASNative {
+  export class FSCommand extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -53,7 +53,7 @@ module Shumway.AVM2.AS.flash.system {
         return;
       }
 
-      var listener: IFSCommandListener = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      var listener: IFSCommandListener = null; // REDUX: Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
       listener.executeFSCommand(command, args);
     }
   }

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: EventPhase
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  export class EventPhase extends ASNative {
+  export class EventPhase extends ASObject {
 
     static classInitializer: any = null;
     static initializer: any = null;

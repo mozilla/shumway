@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: ContextMenuEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class ContextMenuEvent extends flash.events.Event {

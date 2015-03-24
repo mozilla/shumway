@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 // Class: Rectangle
-module Shumway.AVM2.AS.flash.geom {
+module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
   import Bounds = Shumway.Bounds;
 
-  export class Rectangle extends ASNative implements flash.utils.IExternalizable {
+  export class Rectangle extends ASObject implements flash.utils.IExternalizable {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;

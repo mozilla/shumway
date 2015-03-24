@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: ColorMatrixFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   export class ColorMatrixFilter extends flash.filters.BitmapFilter {
 
@@ -79,7 +79,7 @@ module Shumway.AVM2.AS.flash.filters {
         }
         this._matrix = matrix;
       } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "matrix");
+        throwError("TypeError", Errors.NullPointerError, "matrix");
       }
     }
 

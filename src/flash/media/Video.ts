@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: Video
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import assert = Shumway.Debug.assert;
   export class Video extends flash.display.DisplayObject {
     static classInitializer: any = null;

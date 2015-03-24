@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: SimpleButton
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import assert = Shumway.Debug.assert;
 
   export class SimpleButton extends flash.display.InteractiveObject {

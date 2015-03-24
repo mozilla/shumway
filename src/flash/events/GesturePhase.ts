@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: GesturePhase
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  export class GesturePhase extends ASNative {
+  export class GesturePhase extends ASObject {
 
     static classInitializer: any = null;
     static initializer: any = null;

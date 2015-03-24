@@ -43,7 +43,7 @@ module Shumway.AVM1.Lib {
 
     public setRGB(offset) {
       var transform = new flash.geom.ColorTransform();
-      transform.asSetPublicProperty('color', offset);
+      transform.axSetPublicProperty('color', offset);
       this.setTransform(transform);
     }
 

@@ -74,7 +74,7 @@ module Shumway.AVM1.Lib {
         _asSetProperty.call(self, namespaces, name, flags, value);
         return;
       }
-      return this._target.asSetPublicProperty(name, value);
+      return this._target.axSetPublicProperty(name, value);
     }
 
     public asCallProperty(namespaces:Namespace [], name:any, flags:number, isLex:boolean, args:any []):any {
@@ -125,7 +125,7 @@ module Shumway.AVM1.Lib {
 
     public proxyNativeMethod(name:string) {
       var boundMethod = this._target[name].bind(this._target);
-      this._target.asSetPublicProperty(name, boundMethod);
+      this._target.axSetPublicProperty(name, boundMethod);
     }
 
     public static wrap<T>(cls: T, natives: { methods?: string[]; }): any {

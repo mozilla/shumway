@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: BitmapFilterType
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
-  export class BitmapFilterType extends ASNative {
+  export class BitmapFilterType extends ASObject {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;

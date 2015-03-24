@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: IOError
-module Shumway.AVM2.AS.flash.errors {
+module Shumway.AVMX.AS.flash.errors {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class IOError extends ASError {
     
     // Called whenever the class is initialized.

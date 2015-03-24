@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: CertificateStatus
-module Shumway.AVM2.AS.flash.security {
+module Shumway.AVMX.AS.flash.security {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class CertificateStatus extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class CertificateStatus extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: ProgressEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class ProgressEvent extends flash.events.Event {

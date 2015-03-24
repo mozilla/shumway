@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: Timer
-module Shumway.AVM2.AS.flash.utils {
+module Shumway.AVMX.AS.flash.utils {
 
   import enterTimeline = Shumway.AVM2.enterTimeline;
   import leaveTimeline = Shumway.AVM2.leaveTimeline;

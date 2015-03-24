@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: DisplacementMapFilterMode
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class DisplacementMapFilterMode extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class DisplacementMapFilterMode extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

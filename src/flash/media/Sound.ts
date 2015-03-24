@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 // Class: Sound
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Telemetry = Shumway.Telemetry;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
 
   declare var Blob;
   declare var URL;
@@ -206,8 +205,8 @@ module Shumway.AVM2.AS.flash.media {
       soundData.completed = false;
 
       stream.addEventListener("progress", function (event) {
-        _this._bytesLoaded = event[Multiname.getPublicQualifiedName("bytesLoaded")];
-        _this._bytesTotal = event[Multiname.getPublicQualifiedName("bytesTotal")];
+        _this._bytesLoaded = event.axGetPublicProperty("bytesLoaded");
+        _this._bytesTotal = event.axGetPublicProperty("bytesTotal");
 
         if (playUsingWebAudio && !mp3DecodingSession) {
           // initialize MP3 decoding

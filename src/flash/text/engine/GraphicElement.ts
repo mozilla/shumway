@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: GraphicElement
-module Shumway.AVM2.AS.flash.text.engine {
+module Shumway.AVMX.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class GraphicElement extends flash.text.engine.ContentElement {
     
     // Called whenever the class is initialized.

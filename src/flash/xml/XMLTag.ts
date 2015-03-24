@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: XMLTag
-module Shumway.AVM2.AS.flash.xml {
+module Shumway.AVMX.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class XMLTag extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class XMLTag extends ASObject {
     static initializer: any = null;
     constructor () {
       false && super();

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: LoaderContext
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class LoaderContext extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class LoaderContext extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -35,8 +35,9 @@ module Shumway.AVM2.AS.flash.system {
     constructor (checkPolicyFile: boolean = false, applicationDomain: flash.system.ApplicationDomain = null, securityDomain: flash.system.SecurityDomain = null) {
       false && super();
       this.checkPolicyFile = checkPolicyFile;
-      this.applicationDomain = applicationDomain;
-      this.securityDomain = securityDomain;
+      // REDUX: Name conflict.
+      // this.applicationDomain = applicationDomain;
+      // this.securityDomain = securityDomain;
       this.imageDecodingPolicy = flash.system.ImageDecodingPolicy.ON_DEMAND;
     }
     
@@ -44,7 +45,8 @@ module Shumway.AVM2.AS.flash.system {
     
     checkPolicyFile: boolean;
     applicationDomain: flash.system.ApplicationDomain;
-    securityDomain: flash.system.SecurityDomain;
+    // REDUX: Name conflict.
+    // securityDomain: flash.system.SecurityDomain;
     allowCodeImport: boolean;
     requestedContentParent: flash.display.DisplayObjectContainer;
     parameters: ASObject;

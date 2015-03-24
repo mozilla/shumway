@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: MouseAutomationAction
-module Shumway.AVM2.AS.flash.automation {
+module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class MouseAutomationAction extends flash.automation.AutomationAction {
     static initializer: any = null;
     constructor (type: string, stageX: number = 0, stageY: number = 0, delta: number /*int*/ = 0) {

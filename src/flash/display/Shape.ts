@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: Shape
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import warning = Shumway.Debug.warning;
 
   export class Shape extends flash.display.DisplayObject {
@@ -59,7 +59,7 @@ module Shumway.AVM2.AS.flash.display {
   export class ShapeSymbol extends Timeline.DisplaySymbol {
     graphics: flash.display.Graphics = null;
 
-    constructor(data: Timeline.SymbolData, symbolClass: Shumway.AVM2.AS.ASClass) {
+    constructor(data: Timeline.SymbolData, symbolClass: ASClass) {
       super(data, symbolClass, false);
     }
 

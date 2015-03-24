@@ -17,10 +17,9 @@
 module Shumway.Player {
   import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import flash = Shumway.AVM2.AS.flash;
-  import Point = Shumway.AVM2.AS.flash.geom.Point;
+  import flash = Shumway.AVMX.AS.flash;
+  import Point = Shumway.AVMX.AS.flash.geom.Point;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import IExternalInterfaceService = Shumway.IExternalInterfaceService;
 
   import Event = flash.events.Event;
@@ -32,9 +31,9 @@ module Shumway.Player {
   import Loader = flash.display.Loader;
   import VisitorFlags = flash.display.VisitorFlags;
 
-  import MouseEventAndPointData = Shumway.AVM2.AS.flash.ui.MouseEventAndPointData;
+  import MouseEventAndPointData = Shumway.AVMX.AS.flash.ui.MouseEventAndPointData;
   import MouseEventDispatcher = flash.ui.MouseEventDispatcher;
-  import KeyboardEventData = Shumway.AVM2.AS.flash.ui.KeyboardEventData;
+  import KeyboardEventData = Shumway.AVMX.AS.flash.ui.KeyboardEventData;
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
   import FocusEventData = Shumway.Remoting.Player.FocusEventData;
 
@@ -150,7 +149,8 @@ module Shumway.Player {
       this._keyboardEventDispatcher = new KeyboardEventDispatcher();
       this._mouseEventDispatcher = new MouseEventDispatcher();
       this._writer = new IndentingWriter();
-      AVM2.instance.globals['Shumway.Player.Utils'] = this;
+      // REDUX:
+      // AVM2.instance.globals['Shumway.Player.Utils'] = this;
     }
 
     /**
@@ -232,9 +232,9 @@ module Shumway.Player {
       if (this.movieParams) {
         var parameters: any = {};
         for (var i in this.movieParams) {
-          parameters.asSetPublicProperty(i, this.movieParams[i]);
+          parameters.axSetPublicProperty(i, this.movieParams[i]);
         }
-        loaderContext.parameters = <Shumway.AVM2.AS.ASObject>parameters;
+        loaderContext.parameters = <Shumway.AVMX.AS.ASObject>parameters;
       }
       return loaderContext;
     }
@@ -501,8 +501,8 @@ module Shumway.Player {
       var writer = this._writer;
       writer.enter("Frame: " + this._framesPlayed);
 
-      Shumway.AVM2.counter.traceSorted(writer, true);
-      Shumway.AVM2.counter.clear();
+      Shumway.AVMX.counter.traceSorted(writer, true);
+      Shumway.AVMX.counter.clear();
 
       Shumway.Player.counter.traceSorted(writer, true);
       Shumway.Player.counter.clear();

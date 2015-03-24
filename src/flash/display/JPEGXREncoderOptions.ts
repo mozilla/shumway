@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 // Class: JPEGXREncoderOptions
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class JPEGXREncoderOptions extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class JPEGXREncoderOptions extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;

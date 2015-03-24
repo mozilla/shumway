@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: ContextMenu
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class ContextMenu extends flash.display.NativeMenu {
     
     static classInitializer: any = null;

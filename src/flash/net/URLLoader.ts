@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 // Class: URLLoader
-module Shumway.AVM2.AS.flash.net {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.net {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   import Event = flash.events.Event;
   import IOErrorEvent = flash.events.IOErrorEvent;

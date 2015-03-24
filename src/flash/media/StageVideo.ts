@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 // Class: StageVideo
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class StageVideo extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -93,7 +93,7 @@ module Shumway.AVM2.AS.flash.media {
       notImplemented("public flash.media.StageVideo::get videoHeight"); return;
       // return this._videoHeight;
     }
-    get colorSpaces(): ASVector<any> {
+    get colorSpaces(): Float64Vector {
       notImplemented("public flash.media.StageVideo::get colorSpaces"); return;
       // return this._colorSpaces;
     }
