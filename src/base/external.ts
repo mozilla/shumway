@@ -19,6 +19,7 @@ declare var ShumwayCom: {
   createRtmpSocket: (options: {host: string; port: number; ssl: boolean}) => RtmpSocket;
   createRtmpXHR: () => RtmpXHR;
   createSpecialStorage: () => SpecialStorage;
+  getWeakMapKeys: (weakMap) => Array<any>;
   userInput: () => void;
   fallback: () => void;
   endActivation: () => void;
