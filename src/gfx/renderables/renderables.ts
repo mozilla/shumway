@@ -162,11 +162,12 @@ module Shumway.GFX {
     }
 
     /**
-     * Render source content in the specified |context|. If specified, the rectangular |cullBounds| can be used to cull parts of the shape
-     * for better performance. If specified, |Region| indicates whether the shape's fills should be used as clip regions instead.
+     * Render source content in the specified |context| or add one or more paths to |clipPath| if specified.
+     * If specified, the rectangular |cullBounds| can be used to cull parts of the shape for better performance.
+     * If |paintStencil| is |true| then we must not create any alpha values, and also not paint any strokes.
      */
     render(context: CanvasRenderingContext2D, ratio: number, cullBounds?: Shumway.GFX.Geometry.Rectangle,
-           clipPath?: Path2D, paintpaintStencil?: boolean): void {
+           clipPath?: Path2D, paintStencil?: boolean): void {
 
     }
   }
