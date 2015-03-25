@@ -99,6 +99,10 @@ var ShumwayBootstrapUtils = {
   isRegistered: false,
 
   register: function () {
+    if (this.isRegistered) {
+      return;
+    }
+
     this.isRegistered = true;
 
     // Register the components.
@@ -122,6 +126,10 @@ var ShumwayBootstrapUtils = {
   },
 
   unregister: function () {
+    if (!this.isRegistered) {
+      return;
+    }
+
     this.isRegistered = false;
 
     // Remove the contract/component.
