@@ -445,13 +445,13 @@ module Shumway.AVMX {
               abc.classes[u30()], stack[stack.length - 1], scope.topScope()
             );
             break;
-          //case Bytecode.getdescendants:
-          //  popNameInto(stack, multinames[bc.index], mn);
-          //  if (mn.name === undefined) {
-          //    mn.name = '*';
-          //  }
-          //  stack.push(getDescendants(stack.pop(), mn));
-          //  break;
+          case Bytecode.GETDESCENDANTS:
+            popNameInto(stack, abc.getMultiname(u30()), rn);
+            if (rn.name === undefined) {
+              rn.name = '*';
+            }
+            stack[stack.length - 1] = axGetDescendants(stack[stack.length - 1], rn, securityDomain);
+            break;
           case Bytecode.NEWCATCH:
             stack.push(securityDomain.createCatch(body.exceptions[u30()]));
             break;

@@ -883,14 +883,14 @@ module Shumway.AVMX {
     }
 
     public isAnyName(): boolean {
-      return !this.isRuntimeName() && this.name === "";
+      return !this.isRuntimeName() && this.name === null;
     }
 
     public isAnyNamespace(): boolean {
       if (this.isRuntimeNamespace() || this.namespaces.length > 1) {
         return false;
       }
-      return this.namespaces[0].uri === "";
+      return this.namespaces.length === 0 || this.namespaces[0].uri === "";
 
       // x.* has the same meaning as x.*::*, so look for the former case and give
       // it the same meaning of the latter.
@@ -899,7 +899,38 @@ module Shumway.AVMX {
     }
 
     public isQName(): boolean {
-      return this.namespaces.length === 1 && !this.isAnyName();
+      return !!this.namespaces && this.namespaces.length === 1 && !this.isAnyName();
+    }
+
+    public get uri(): string {
+      release || assert(this.isQName());
+      return this.namespaces[0].uri;
+    }
+
+    public get prefix(): string {
+      release || assert(this.isQName());
+      return this.namespaces[0].prefix;
+    }
+
+    public equalsQName(mn: Multiname): boolean {
+      release || assert(this.isQName());
+      return this.name === mn.name && this.namespaces[0].uri === mn.namespaces[0].uri;
+    }
+
+    public matches(mn: Multiname): boolean {
+      release || assert(this.isQName());
+      if (this.name !== mn.name && !mn.isAnyName()) {
+        return false;
+      }
+      for (var i = this.namespaces.length; i--;) {
+        var ns = this.namespaces[i];
+        for (var j = mn.namespaces.length; j--;) {
+          if (mn.namespaces[j].uri === ns.uri) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     public isAttribute(): boolean {
