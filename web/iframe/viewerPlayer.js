@@ -38,7 +38,7 @@ var iframeExternalInterface = {
   processExternalCommand: null,
 
   get enabled() {
-    return true;
+    return !!this.processExternalCommand;
   },
 
   initJS: function (callback) {
