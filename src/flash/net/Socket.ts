@@ -19,7 +19,6 @@ module Shumway.AVMX.AS.flash.net {
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import throwError = Shumway.AVMX.throwError;
 
   export class Socket extends flash.events.EventDispatcher implements flash.utils.IDataInput, flash.utils.IDataOutput {
     
@@ -189,7 +188,7 @@ module Shumway.AVMX.AS.flash.net {
     internalConnect(host, port) {
       host = asCoerceString(host); port |= 0;
       somewhatImplemented("flash.net.Socket::internalConnect");
-      throwError('SecurityError', Errors.SocketConnectError, host, port);
+      this.securityDomain.throwError('SecurityError', Errors.SocketConnectError, host, port);
     }
     didFailureOccur(): boolean {
       somewhatImplemented("flash.net.Socket::didFailureOccur");

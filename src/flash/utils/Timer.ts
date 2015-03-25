@@ -54,7 +54,7 @@ module Shumway.AVMX.AS.flash.utils {
     set delay(value: number) {
       value = +value;
       if (value < 0 || !isFinite(value)) {
-        throwError('RangeError', Errors.DelayRangeError);
+        this.securityDomain.throwError('RangeError', Errors.DelayRangeError);
       }
       this._delay = value;
 

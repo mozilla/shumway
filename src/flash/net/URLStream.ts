@@ -19,7 +19,6 @@ module Shumway.AVMX.AS.flash.net {
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import FileLoadingService = Shumway.FileLoadingService;
-  import throwError = Shumway.AVMX.throwError;
 
   export class URLStream extends flash.events.EventDispatcher implements flash.utils.IDataInput {
     
@@ -142,7 +141,7 @@ module Shumway.AVMX.AS.flash.net {
     readBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
       offset = offset >>> 0; length = length >>> 0;
       if (length < 0) {
-        throwError('ArgumentError', Errors.InvalidArgumentError, "length");
+        this.securityDomain.throwError('ArgumentError', Errors.InvalidArgumentError, "length");
       }
 
       this._buffer.readBytes(bytes, offset, length);

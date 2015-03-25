@@ -1146,7 +1146,8 @@ module Shumway.AVMX.AS {
         return "";
       }
       if (!(this.securityDomain.AXQName.dPrototype.isPrototypeOf(this))) {
-        throwError('TypeError', Errors.InvokeOnIncompatibleObjectError, "QName.prototype.toString");
+        this.securityDomain.throwError('TypeError', Errors.InvokeOnIncompatibleObjectError,
+                                       "QName.prototype.toString");
       }
       return this.toString();
     }

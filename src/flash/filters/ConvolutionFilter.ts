@@ -100,7 +100,7 @@ module Shumway.AVMX.AS.flash.filters {
         this._expandArray(matrix, actualLen);
         this._matrix = matrix;
       } else {
-        throwError("TypeError", Errors.NullPointerError, "matrix");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "matrix");
       }
     }
 

@@ -25,8 +25,6 @@ module Shumway.AVMX.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import clamp = Shumway.NumberUtilities.clamp;
-  var asCheckVectorGetNumericProperty = null; // TODO
-  var asCheckVectorSetNumericProperty = null; // TODO
 
   export class GenericVector extends ASObject {
 
@@ -249,9 +247,9 @@ module Shumway.AVMX.AS {
 
     some(callback, thisObject) {
       if (arguments.length !== 2) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError);
+        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError);
       } else if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       for (var i = 0; i < this._buffer.length; i++) {
         if (callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
@@ -263,7 +261,7 @@ module Shumway.AVMX.AS {
 
     forEach(callback, thisObject) {
       if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       for (var i = 0; i < this._buffer.length; i++) {
         callback.call(thisObject, this.asGetNumericProperty(i), i, this);
@@ -293,7 +291,7 @@ module Shumway.AVMX.AS {
 
     map(callback, thisObject) {
       if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       var v = new GenericVector(0, false, this._type);
       for (var i = 0; i < this._buffer.length; i++) {
@@ -413,7 +411,7 @@ module Shumway.AVMX.AS {
 
     _checkFixed() {
       if (this._fixed) {
-        throwError("RangeError", Errors.VectorFixedError);
+        this.securityDomain.throwError("RangeError", Errors.VectorFixedError);
       }
     }
 
@@ -442,12 +440,14 @@ module Shumway.AVMX.AS {
     //}
     //
     asGetNumericProperty(i) {
-      checkArguments && asCheckVectorGetNumericProperty(i, this._buffer.length);
+      checkArguments && axCheckVectorGetNumericProperty(i, this._buffer.length,
+                                                        this.securityDomain);
       return this._buffer[i];
     }
 
     asSetNumericProperty(i, v) {
-      checkArguments && asCheckVectorSetNumericProperty(i, this._buffer.length, this._fixed);
+      checkArguments && axCheckVectorSetNumericProperty(i, this._buffer.length, this._fixed,
+                                                        this.securityDomain);
       this._buffer[i] = this._coerce(v);
     }
     //

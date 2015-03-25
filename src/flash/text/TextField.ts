@@ -19,7 +19,6 @@ module Shumway.AVMX.AS.flash.text {
   import assert = Shumway.Debug.assert;
   import warning = Shumway.Debug.warning;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import throwError = Shumway.AVMX.throwError;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import clamp = Shumway.NumberUtilities.clamp;
@@ -244,7 +243,7 @@ module Shumway.AVMX.AS.flash.text {
     set antiAliasType(antiAliasType: string) {
       antiAliasType = asCoerceString(antiAliasType);
       if (AntiAliasType.toNumber(antiAliasType) < 0) {
-        throwError("ArgumentError", Errors.InvalidParamError, "antiAliasType");
+        this.securityDomain.throwError("ArgumentError", Errors.InvalidParamError, "antiAliasType");
       }
       this._antiAliasType = antiAliasType;
     }
@@ -259,7 +258,7 @@ module Shumway.AVMX.AS.flash.text {
         return;
       }
       if (TextFieldAutoSize.toNumber(value) < 0) {
-        throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
+        this.securityDomain.throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
       }
       this._autoSize = value;
       this._textContent.autoSize = TextFieldAutoSize.toNumber(value);
@@ -688,7 +687,7 @@ module Shumway.AVMX.AS.flash.text {
     getLineMetrics(lineIndex: number /*int*/): flash.text.TextLineMetrics {
       lineIndex = lineIndex | 0;
       if (lineIndex < 0 || lineIndex > this._numLines - 1) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
       }
       this._ensureLineMetrics();
       var lineMetricsData = this._lineMetricsData;
@@ -736,7 +735,7 @@ module Shumway.AVMX.AS.flash.text {
         }
       }
       if (endIndex <= beginIndex || endIndex > maxIndex) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
       }
       var format: TextFormat;
       var textRuns = this._textContent.textRuns;
@@ -804,7 +803,7 @@ module Shumway.AVMX.AS.flash.text {
         }
       }
       if (beginIndex > maxIndex || endIndex > maxIndex) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
       }
       if (endIndex <= beginIndex) {
         return;

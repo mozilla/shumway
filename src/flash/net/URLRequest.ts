@@ -18,7 +18,6 @@ module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
-  import throwError = Shumway.AVMX.throwError;
 
   export class URLRequest extends ASObject {
     
@@ -79,7 +78,7 @@ module Shumway.AVMX.AS.flash.net {
       value = asCoerceString(value);
       if (value !== 'get' && value !== 'GET' &&
           value !== 'post' && value !== 'POST') {
-        throwError('ArgumentError', Errors.InvalidArgumentError);
+        this.securityDomain.throwError('ArgumentError', Errors.InvalidArgumentError);
       }
       this._method = value;
     }
@@ -95,7 +94,7 @@ module Shumway.AVMX.AS.flash.net {
     }
     set requestHeaders(value: any []) {
       if (!Array.isArray(value)) {
-        throwError('ArgumentError', Errors.InvalidArgumentError, "value");
+        this.securityDomain.throwError('ArgumentError', Errors.InvalidArgumentError, "value");
       }
       this._requestHeaders = value;
     }

@@ -18,7 +18,6 @@ module Shumway.AVMX.AS.flash.ui {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import throwError = Shumway.AVMX.throwError;
   export class GameInput extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -57,7 +56,7 @@ module Shumway.AVMX.AS.flash.ui {
       index = index | 0;
 
       somewhatImplemented("public flash.ui.GameInput::static getDeviceAt");
-      throwError("RangeError", Errors.ParamRangeError, "index");
+      this.securityDomain.throwError("RangeError", Errors.ParamRangeError, "index");
       return null;
     }
     
