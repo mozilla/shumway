@@ -42,7 +42,7 @@ module Shumway.AVMX {
   //  FindVarWithNoScopeError              : {code: 1013, message: "Cannot call OP_findproperty when scopeDepth is 0."},
     ClassNotFoundError                   : {code: 1014, message: "Class %1 could not be found."},
   //  IllegalSetDxns                       : {code: 1015, message: "Method %1 cannot set default xml namespace"},
-  //  DescendentsError                     : {code: 1016, message: "Descendants operator (..) not supported on type %1."},
+    DescendentsError                     : {code: 1016, message: "Descendants operator (..) not supported on type %1."},
   //  ScopeStackOverflowError              : {code: 1017, message: "Scope stack overflow occurred."},
   //  ScopeStackUnderflowError             : {code: 1018, message: "Scope stack underflow occurred."},
   //  GetScopeObjectBoundsError            : {code: 1019, message: "Getscopeobject %1 is out of bounds."},

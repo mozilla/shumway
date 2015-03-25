@@ -296,6 +296,18 @@ module Shumway.AVMX {
     return typeof x === "string";
   }
 
+  function axIsXMLCollection(x, securityDomain: SecurityDomain): boolean {
+    return securityDomain.AXXML.dPrototype.isPrototypeOf(x) ||
+           securityDomain.AXXMLList.dPrototype.isPrototypeOf(x);
+  }
+
+  export function axGetDescendants(object, mn: Multiname, securityDomain: SecurityDomain) {
+    if (!axIsXMLCollection(object, securityDomain)) {
+      securityDomain.throwError('TypeError', Errors.DescendentsError, object);
+    }
+    return object.descendants(mn);
+  }
+
   export function axFalse(): boolean {
     return false;
   }
@@ -671,20 +683,27 @@ module Shumway.AVMX {
 
   export interface AXXMLClass extends AXClass {
     Create(value?: any): AS.ASXML;
+    isTraitsOrdPrototype(xml: AS.ASXML): boolean;
+    defaultNamespace: Namespace;
+    _flags: number;
+    _prettyIndent: number;
+    prettyPrinting: boolean;
   }
 
   export interface AXXMLListClass extends AXClass {
     Create(value?: any): AS.ASXMLList;
-    createList(targetObject?: AS.ASXML, targetProperty?: AS.ASQName): AS.ASXMLList;
+    CreateList(targetObject: AS.ASXML, targetProperty: Multiname): AS.ASXMLList;
+    isTraitsOrdPrototype(list: AS.ASXMLList): boolean;
   }
 
   export interface AXNamespaceClass extends AXClass {
     Create(uriOrPrefix?: any, uri?: any): AS.ASNamespace;
+    FromNamespace(ns: Namespace): AS.ASNamespace;
   }
 
   export interface AXQNameClass extends AXClass {
-    Create(nameOrNS?: any, name?: any, isAttribute?: boolean): AS.ASQName;
-    fromMultiname(mn: Multiname): AS.ASQName;
+    Create(nameOrNS: any, name?: any): AS.ASQName;
+    FromMultiname(mn: Multiname): AS.ASQName;
   }
 
   /**
@@ -794,7 +813,7 @@ module Shumway.AVMX {
    * creates an empty object with the right prototype and then calls the
    * instance initializer.
    *
-   * TODO: Flatten out the argArray, or create an alternate helper ax helper to
+   * TODO: Flatten out the argArray, or create an alternate ax helper to
    * make object construction faster.
    */
   function axConstruct(argArray?: any[]) {
@@ -814,7 +833,8 @@ module Shumway.AVMX {
    * Throwing initializer for interfaces.
    */
   function axInterfaceInitializer() {
-    throwError("VerifierError", Errors.NotImplementedError, this.classInfo.instanceInfo.name.name);
+    this.securityDomain.throwError("VerifierError", Errors.NotImplementedError,
+                                   this.classInfo.instanceInfo.name.name);
   }
 
   /**
