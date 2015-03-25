@@ -185,6 +185,7 @@ module Shumway.AVMX {
 
   import assert = Shumway.Debug.assert;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
+  import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
@@ -574,7 +575,8 @@ module Shumway.AVMX {
   }
 
   export function applyTraits(object: ITraits, traits: RuntimeTraits) {
-    object.traits = traits;
+    release || assert(!object.hasOwnProperty("traits"));
+    defineReadOnlyProperty(object, "traits", traits);
     var T = traits.traits;
     for (var i = 0; i < T.length; i++) {
       var t = T[i];
@@ -1078,7 +1080,7 @@ module Shumway.AVMX {
       if (!body.activationPrototype) {
         body.traits.resolve();
         body.activationPrototype = Object.create(this.AXActivationPrototype);
-        (<any>body.activationPrototype).traits = body.traits.resolveRuntimeTraits(null, null, scope);
+        defineReadOnlyProperty(body.activationPrototype, "traits", body.traits.resolveRuntimeTraits(null, null, scope));
       }
       return Object.create(body.activationPrototype);
     }
@@ -1087,7 +1089,7 @@ module Shumway.AVMX {
       if (!exceptionInfo.catchPrototype) {
         var traits = exceptionInfo.getTraits();
         exceptionInfo.catchPrototype = Object.create(this.AXCatchPrototype);
-        (<any>exceptionInfo.catchPrototype).traits = traits;
+        defineReadOnlyProperty(exceptionInfo.catchPrototype, "traits", traits);
       }
       return Object.create(exceptionInfo.catchPrototype);
     }

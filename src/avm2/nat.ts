@@ -27,7 +27,7 @@ module Shumway.AVM2.AS {
 }
 
 interface ISecurityDomain extends Shumway.AVMX.SecurityDomain {
-  
+
 }
 
 module Shumway.AVMX.AS {
@@ -469,6 +469,7 @@ module Shumway.AVMX.AS {
     }
 
     axConstruct: (argArray?: any []) => any;
+    axIsType: (value: any) => boolean;
 
     get prototype(): ASObject {
       release || assert (this.dPrototype);
@@ -1495,16 +1496,19 @@ module Shumway.AVMX.AS {
     }
     copyOwnPropertyDescriptors(axClass, asClass, filter);
 
+    if (axClass.superClass) {
+      // Inherit prototype descriptors from the super class. This is a bit risky because
+      // it copies over all properties and may overwrite properties that we don't expect.
+      // TODO: Look into a safer way to do this, for now it doesn't overwrite already
+      // defined properties.
+      copyOwnPropertyDescriptors(axClass.tPrototype, axClass.superClass.tPrototype, null, false);
+    }
+
     // Copy instance methods and properties.
     if (asClass.instanceNatives) {
       for (var i = 0; i < asClass.instanceNatives.length; i++) {
         copyOwnPropertyDescriptors(axClass.tPrototype, asClass.instanceNatives[i], filter);
       }
-    }
-
-    if (axClass.superClass) {
-      // Inherit prototype descriptors from the super class.
-      copyOwnPropertyDescriptors(axClass.tPrototype, axClass.superClass.tPrototype);
     }
 
     // Inherit or override prototype descriptors from the template class.

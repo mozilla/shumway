@@ -17,8 +17,8 @@
 interface ISecurityDomain {
   flash?: {
     display: {
-      EventDispatcher: Shumway.AVMX.AS.flash.events.EventDispatcher;
-      DisplayObject: Shumway.AVMX.AS.flash.display.DisplayObject;
+      EventDispatcher: typeof Shumway.AVMX.AS.flash.events.EventDispatcher;
+      DisplayObject: typeof Shumway.AVMX.AS.flash.display.DisplayObject;
     }
   }
 }
@@ -143,5 +143,4 @@ module Shumway.AVMX.AS {
 
   M("flash.accessibility.Accessibility", flash.accessibility.Accessibility);
   M("flash.utils.Timer", flash.utils.Timer);
-  M("flash.utils.ByteArray", flash.utils.ByteArray);
 }
