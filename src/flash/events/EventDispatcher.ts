@@ -18,7 +18,6 @@ module Shumway.AVMX.AS.flash.events {
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import isFunction = Shumway.isFunction;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
-  import throwError = Shumway.AVMX.throwError;
   import assert = Shumway.Debug.assert;
 
   class EventListenerEntry {
@@ -271,16 +270,18 @@ module Shumway.AVMX.AS.flash.events {
     {
       // The error message always says "2", even though up to five arguments are valid.
       if (arguments.length < 2 || arguments.length > 5) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError,
-                   "flash.events::EventDispatcher/addEventListener()", 2, arguments.length);
+        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError,
+                                       "flash.events::EventDispatcher/addEventListener()", 2,
+                                       arguments.length);
       }
       // The type of `listener` is checked before that of `type`.
       if (!isFunction(listener)) {
         // TODO: The Player unevals the `listener`. To some extend, we could, too.
-        throwError("TypeError", Errors.CheckTypeFailedError, listener, "Function");
+        this.securityDomain.throwError("TypeError", Errors.CheckTypeFailedError, listener,
+                                       "Function");
       }
       if (isNullOrUndefined(type)) {
-        throwError("TypeError", Errors.NullPointerError, "type");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
       useCapture = !!useCapture;
@@ -300,16 +301,18 @@ module Shumway.AVMX.AS.flash.events {
     removeEventListener(type: string, listener: EventHandler, useCapture: boolean = false): void {
       // The error message always says "2", even though 3 arguments are valid.
       if (arguments.length < 2 || arguments.length > 3) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError,
-                   "flash.events::EventDispatcher/removeEventListener()", 2, arguments.length);
+        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError,
+                                       "flash.events::EventDispatcher/removeEventListener()", 2,
+                                       arguments.length);
       }
       // The type of `listener` is checked before that of `type`.
       if (!isFunction(listener)) {
         // TODO: The Player unevals the `listener`. To some extend, we could, too.
-        throwError("TypeError", Errors.CheckTypeFailedError, listener, "Function");
+        this.securityDomain.throwError("TypeError", Errors.CheckTypeFailedError, listener,
+                                       "Function");
       }
       if (isNullOrUndefined(type)) {
-        throwError("TypeError", Errors.NullPointerError, "type");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
       var listeners = this._getListeners(!!useCapture);
@@ -343,11 +346,12 @@ module Shumway.AVMX.AS.flash.events {
 
     hasEventListener(type: string): boolean {
       if (arguments.length !== 1) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError,
-                   "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
+        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError,
+                                       "flash.events::EventDispatcher/hasEventListener()", 1,
+                                       arguments.length);
       }
       if (isNullOrUndefined(type)) {
-        throwError("TypeError", Errors.NullPointerError, "type");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
       return this._hasEventListener(type);
@@ -355,11 +359,12 @@ module Shumway.AVMX.AS.flash.events {
 
     willTrigger(type: string): boolean {
       if (arguments.length !== 1) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError,
-                   "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
+        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError,
+                                       "flash.events::EventDispatcher/hasEventListener()", 1,
+                                       arguments.length);
       }
       if (isNullOrUndefined(type)) {
-        throwError("TypeError", Errors.NullPointerError, "type");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
       if (this._hasEventListener(type)) {
@@ -400,8 +405,9 @@ module Shumway.AVMX.AS.flash.events {
 
     public dispatchEvent(event: Event): boolean {
       if (arguments.length !== 1) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError,
-                   "flash.events::EventDispatcher/dispatchEvent()", 1, arguments.length);
+        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError,
+                                       "flash.events::EventDispatcher/dispatchEvent()", 1,
+                                       arguments.length);
       }
       if (this._skipDispatchEvent(event)) {
         return true;

@@ -20,7 +20,6 @@ module Shumway.AVM2.AS {
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import Multiname = Shumway.AVM2.ABC.Multiname;
-  import throwError = Shumway.AVMX.throwError;
 
   export module flash.utils {
     var _asGetProperty = Object.prototype.asGetProperty;

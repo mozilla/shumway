@@ -20,7 +20,6 @@ module Shumway.AVMX.AS.flash.display {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import asCoerceString = Shumway.AVMX.asCoerceString;
-  import throwError = Shumway.AVMX.throwError;
   import swap32 = Shumway.IntegerUtilities.swap32;
   import premultiplyARGB = Shumway.ColorUtilities.premultiplyARGB;
   import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
@@ -69,7 +68,7 @@ module Shumway.AVMX.AS.flash.display {
       if (width > BitmapData.MAXIMUM_WIDTH || width <= 0 ||
           height > BitmapData.MAXIMUM_HEIGHT || height <= 0 ||
           width * height > BitmapData.MAXIMUM_DIMENSION) {
-        throwError('ArgumentError', Errors.InvalidBitmapData);
+        this.securityDomain.throwError('ArgumentError', Errors.InvalidBitmapData);
       }
       this._rect = new Rectangle(0, 0, width, height);
       this._transparent = transparent;

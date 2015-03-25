@@ -865,19 +865,6 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-
-  export function asCheckVectorSetNumericProperty(i, length, fixed) {
-    if (i < 0 || i > length || (i === length && fixed) || !isNumeric(i)) {
-      throwError("RangeError", Errors.OutOfRangeError, i, length);
-    }
-  }
-
-  export function asCheckVectorGetNumericProperty(i, length) {
-    if (i < 0 || i >= length || !isNumeric(i)) {
-      throwError("RangeError", Errors.OutOfRangeError, i, length);
-    }
-  }
-
   export function checkNullParameter(argument: any, name: string) {
     if (!argument) {
       throwError('TypeError', Errors.NullPointerError, name);

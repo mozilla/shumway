@@ -200,7 +200,7 @@ module Shumway.AVMX.AS.flash.filters {
     set type(value: string) {
       value = asCoerceString(value);
       if (value === null) {
-        throwError("TypeError", Errors.NullPointerError, "type");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       } else {
         if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
           this._type = value;

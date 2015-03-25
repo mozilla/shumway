@@ -18,7 +18,6 @@
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVMX.asCoerceString;
-  import throwError = Shumway.AVMX.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
   import Bounds = Shumway.Bounds;
   import assert = Shumway.Debug.assert;
@@ -1260,14 +1259,16 @@ module Shumway.AVMX.AS.flash.display {
                               skipWrite: boolean): void
     {
       if (isNullOrUndefined(bitmap)) {
-        throwError('TypeError', Errors.NullPointerError, 'bitmap');
+        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'bitmap');
       } else if (!(flash.display.BitmapData.isType(bitmap))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap', 'flash.display.BitmapData');
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap',
+                                       'flash.display.BitmapData');
       }
       if (isNullOrUndefined(matrix)) {
         matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
       } else if (!(flash.geom.Matrix.isType(matrix))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
+                                       'flash.geom.Matrix');
       }
       repeat = !!repeat;
       smooth = !!smooth;
@@ -1296,32 +1297,32 @@ module Shumway.AVMX.AS.flash.display {
                                 skipWrite: boolean): void
     {
       if (isNullOrUndefined(type)) {
-        throwError('TypeError', Errors.NullPointerError, 'type');
+        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'type');
       }
       var gradientType = GradientType.toNumber(asCoerceString(type));
       if (gradientType < 0) {
-        throwError("ArgumentError", Errors.InvalidEnumError, "type");
+        this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "type");
       }
 
       if (isNullOrUndefined(colors)) {
-        throwError('TypeError', Errors.NullPointerError, 'colors');
+        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'colors');
       }
       if (!(colors instanceof Array)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
       }
 
       if (!(alphas instanceof Array)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
       }
       if (isNullOrUndefined(alphas)) {
-        throwError('TypeError', Errors.NullPointerError, 'alphas');
+        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'alphas');
       }
 
       if (!(ratios instanceof Array)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
       }
       if (isNullOrUndefined(ratios)) {
-        throwError('TypeError', Errors.NullPointerError, 'ratios');
+        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'ratios');
       }
 
       var colorsRGBA: number[] = [];
@@ -1348,7 +1349,8 @@ module Shumway.AVMX.AS.flash.display {
       if (isNullOrUndefined(matrix)) {
         matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
       } else if (!(flash.geom.Matrix.isType(matrix))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
+                                       'flash.geom.Matrix');
       }
 
       if (skipWrite) {

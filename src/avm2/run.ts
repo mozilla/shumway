@@ -110,15 +110,13 @@ module Shumway.AVMX {
    *
    */
 
-  // REDUX: Temporary until we fix all usages of the global usages.
-  export var throwError: any = null;
-  export function checkNullParameter(argument: any, name: string) {
+  export function checkNullParameter(argument: any, name: string, securityDomain: SecurityDomain) {
     if (!argument) {
-      throwError('TypeError', Errors.NullPointerError, name);
+      securityDomain.throwError('TypeError', Errors.NullPointerError, name);
     }
   }
   export function checkParameterType(argument: any, name: string, type: AS.ASClass) {
-    checkNullParameter(argument, name)
+    //checkNullParameter(argument, name);
     // REDUX:
     //if (!type.isType(argument)) {
     //  throwError('TypeError', Errors.CheckTypeFailedError, argument, type.classInfo.instanceInfo.name.getOriginalName());
@@ -433,15 +431,17 @@ module Shumway.AVMX {
     }
   }
 
-  export function asCheckVectorSetNumericProperty(i: number, length: number, fixed: boolean) {
+  export function axCheckVectorSetNumericProperty(i: number, length: number, fixed: boolean,
+                                                  securityDomain: SecurityDomain) {
     if (i < 0 || i > length || (i === length && fixed) || !isNumeric(i)) {
-      this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, i, length);
+      securityDomain.throwError("RangeError", Errors.OutOfRangeError, i, length);
     }
   }
 
-  export function asCheckVectorGetNumericProperty(i: number, length: number) {
+  export function axCheckVectorGetNumericProperty(i: number, length: number,
+                                                  securityDomain: SecurityDomain) {
     if (i < 0 || i >= length || !isNumeric(i)) {
-      this.securityDomain.throwError("RangeError", Errors.OutOfRangeError, i, length);
+      securityDomain.throwError("RangeError", Errors.OutOfRangeError, i, length);
     }
   }
 
@@ -550,7 +550,7 @@ module Shumway.AVMX {
 
       // Attributes can't be stored on globals or be directly defined in scripts.
       if (mn.isAttribute()) {
-        throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
+        this.object.securityDomain.throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
       }
 
       // If we can't find the property look in the domain.
@@ -564,7 +564,7 @@ module Shumway.AVMX {
       // global anyways.
       if (strict) {
         if (!(mn.getPublicMangledName() in globalObject)) {
-          throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
+          this.object.securityDomain.throwError("ReferenceError", Errors.UndefinedVarError, mn.name);
         }
       }
 

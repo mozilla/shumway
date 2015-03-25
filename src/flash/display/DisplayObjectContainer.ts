@@ -19,7 +19,6 @@ module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVMX.asCoerceString;
-  import throwError = Shumway.AVMX.throwError;
   import checkParameterType = Shumway.AVMX.checkParameterType;
   import clamp = Shumway.NumberUtilities.clamp;
   import Multiname = Shumway.AVMX.Multiname;
@@ -204,14 +203,14 @@ module Shumway.AVMX.AS.flash.display {
 
       release || assert (child._hasFlags(DisplayObjectFlags.Constructed), "Child is not fully constructed.");
       if (child === this) {
-        throwError('ArgumentError', Errors.CantAddSelfError);
+        this.securityDomain.throwError('ArgumentError', Errors.CantAddSelfError);
       }
       if (DisplayObjectContainer.isType(child) && (<DisplayObjectContainer>child).contains(this)) {
-        throwError('ArgumentError', Errors.CantAddParentError);
+        this.securityDomain.throwError('ArgumentError', Errors.CantAddParentError);
       }
       var children = this._children;
       if (index < 0 || index > children.length) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
       }
 
       if (child._parent === this) {
@@ -300,7 +299,7 @@ module Shumway.AVMX.AS.flash.display {
 
       var children = this._children;
       if (index < 0 || index >= children.length) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
       }
 
       var child = children[index];
@@ -328,7 +327,7 @@ module Shumway.AVMX.AS.flash.display {
     getChildIndex(child: DisplayObject): number /*int*/ {
       checkParameterType(child, "child", flash.display.DisplayObject);
       if (child._parent !== this) {
-        throwError('ArgumentError', Errors.NotAChildError);
+        this.securityDomain.throwError('ArgumentError', Errors.NotAChildError);
       }
       return child._index;
     }
@@ -341,10 +340,10 @@ module Shumway.AVMX.AS.flash.display {
       checkParameterType(child, "child", flash.display.DisplayObject);
       var children = this._children;
       if (index < 0 || index >= children.length) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
       }
       if (child._parent !== this) {
-        throwError('ArgumentError', Errors.NotAChildError);
+        this.securityDomain.throwError('ArgumentError', Errors.NotAChildError);
       }
       child._setDepth(-1);
       var currentIndex = this.getChildIndex(child);
@@ -370,7 +369,7 @@ module Shumway.AVMX.AS.flash.display {
 
       var children = this._children;
       if (index < 0 || index >= children.length) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
       }
 
       var child = this._lookupChildByIndex(index);
@@ -635,7 +634,7 @@ module Shumway.AVMX.AS.flash.display {
       var children = this._children;
       if (index1 < 0 || index1 >= children.length ||
           index2 < 0 || index2 >= children.length) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
       }
 
       // Always call _swapChildrenAt to make sure _setDepth(-1) is called on both children.
@@ -669,7 +668,7 @@ module Shumway.AVMX.AS.flash.display {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
 
       if (beginIndex < 0 || endIndex < 0 || endIndex < beginIndex || endIndex >= this._children.length) {
-        throwError('RangeError', Errors.ParamRangeError);
+        this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
       }
 
       var count = endIndex - beginIndex + 1;

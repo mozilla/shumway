@@ -18,7 +18,6 @@ module Shumway.AVMX.AS.flash.text {
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import roundHalfEven = Shumway.NumberUtilities.roundHalfEven;
   import notImplemented = Shumway.Debug.notImplemented;
-  import throwError = Shumway.AVMX.throwError;
 
   export class TextFormat extends ASObject {
 
@@ -78,7 +77,7 @@ module Shumway.AVMX.AS.flash.text {
     set align(value: string) {
       value = asCoerceString(value);
       //if (TextFormatAlign.toNumber(value) < 0) {
-      //  throwError("ArgumentError", Errors.InvalidEnumError, "align");
+      //  this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "align");
       //}
       this._align = value;
     }
@@ -213,7 +212,8 @@ module Shumway.AVMX.AS.flash.text {
 
     set tabStops(value: any []) {
       if (!(value instanceof Array)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError, value, 'Array');
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError, value,
+                                       'Array');
       }
       this._tabStops = value;
     }

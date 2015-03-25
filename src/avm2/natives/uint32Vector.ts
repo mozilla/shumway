@@ -548,13 +548,14 @@ module Shumway.AVMX.AS {
     }
 
     axGetNumericProperty(nm: number) {
-      checkArguments && asCheckVectorGetNumericProperty(nm, this._length);
+      checkArguments && axCheckVectorGetNumericProperty(nm, this._length, this.securityDomain);
       return this._buffer[this._offset + nm];
     }
 
     axSetNumericProperty(nm: number, v: any) {
       release || assert(isNumeric(nm));
-      checkArguments && asCheckVectorSetNumericProperty(nm, this._length, this._fixed);
+      checkArguments && axCheckVectorSetNumericProperty(nm, this._length, this._fixed,
+                                                        this.securityDomain);
       if (nm === this._length) {
         this._ensureCapacity(this._length + 1);
         this._length ++;

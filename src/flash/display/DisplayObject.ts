@@ -30,7 +30,6 @@ module Shumway.AVMX.AS.flash.display {
   import abstractMethod = Shumway.Debug.abstractMethod;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import asCoerceString = Shumway.AVMX.asCoerceString;
-  import throwError = Shumway.AVMX.throwError;
   import checkNullParameter = Shumway.AVMX.checkNullParameter;
   import assert = Shumway.Debug.assert;
   import unexpected = Shumway.Debug.unexpected;
@@ -1525,7 +1524,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set name(value: string) {
-      checkNullParameter(value, "name");
+      checkNullParameter(value, "name", this.securityDomain);
       this._name = asCoerceString(value);
     }
 
@@ -1560,7 +1559,7 @@ module Shumway.AVMX.AS.flash.display {
         return;
       }
       if (BlendMode.toNumber(value) < 0) {
-        throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
+        this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
       this._blendMode = value;
       this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);

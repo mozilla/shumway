@@ -20,7 +20,6 @@ module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
-  import throwError = Shumway.AVMX.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
   import events = flash.events;
@@ -411,7 +410,7 @@ module Shumway.AVMX.AS.flash.display {
           if (legacyMode) {
             return undefined; // noop for SWF9 and below
           }
-          throwError('ArgumentError', Errors.SceneNotFoundError, sceneName);
+          this.securityDomain.throwError('ArgumentError', Errors.SceneNotFoundError, sceneName);
         }
       } else {
         scene = this._sceneForFrameIndex(this._currentFrame);
@@ -427,7 +426,8 @@ module Shumway.AVMX.AS.flash.display {
           if (legacyMode) {
             return undefined; // noop for SWF9 and below
           }
-          throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame, sceneName);
+          this.securityDomain.throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame,
+                                         sceneName);
         }
         frameNum = label.frame;
       }
@@ -688,8 +688,9 @@ module Shumway.AVMX.AS.flash.display {
       // - the `sceneName` argument is coerced first
       // - the `frame` argument is coerced to string, but `undefined` results in `"null"`
       if (arguments.length === 0 || arguments.length > 2) {
-        throwError('ArgumentError', Errors.WrongArgumentCountError,
-                   'flash.display::MovieClip/gotoAndPlay()', 1, arguments.length);
+        this.securityDomain.throwError('ArgumentError', Errors.WrongArgumentCountError,
+                                       'flash.display::MovieClip/gotoAndPlay()', 1,
+                                       arguments.length);
       }
       scene = asCoerceString(scene);
       frame = asCoerceString(frame) + ''; // The asCoerceString returns `null` for `undefined`.
@@ -700,8 +701,9 @@ module Shumway.AVMX.AS.flash.display {
     gotoAndStop(frame: any, scene: string = null): void {
       // See comment in gotoAndPlay for an explanation of the arguments handling stuff.
       if (arguments.length === 0 || arguments.length > 2) {
-        throwError('ArgumentError', Errors.WrongArgumentCountError,
-                   'flash.display::MovieClip/gotoAndPlay()', 1, arguments.length);
+        this.securityDomain.throwError('ArgumentError', Errors.WrongArgumentCountError,
+                                       'flash.display::MovieClip/gotoAndPlay()', 1,
+                                       arguments.length);
       }
       scene = asCoerceString(scene);
       frame = asCoerceString(frame) + ''; // The asCoerceString returns `null` for `undefined`.
@@ -723,7 +725,8 @@ module Shumway.AVMX.AS.flash.display {
       // frameIndex is in range 0..totalFrames-1
       var numArgs = arguments.length;
       if (numArgs & 1) {
-        throwError('ArgumentError', Errors.TooFewArgumentsError, numArgs, numArgs + 1);
+        this.securityDomain.throwError('ArgumentError', Errors.TooFewArgumentsError, numArgs,
+                                       numArgs + 1);
       }
       var frameScripts = this._frameScripts;
       var totalFrames = this._totalFrames;

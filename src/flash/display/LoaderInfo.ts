@@ -43,7 +43,7 @@ module Shumway.AVMX.AS.flash.display {
     constructor (token: Object) {
       false && super();
       if (token !== LoaderInfo.CtorToken) {
-        throwError('ArgumentError', Errors.CantInstantiateError, 'LoaderInfo$');
+        this.securityDomain.throwError('ArgumentError', Errors.CantInstantiateError, 'LoaderInfo$');
       }
       flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
       this._loader = null;
@@ -164,20 +164,20 @@ module Shumway.AVMX.AS.flash.display {
 
     get swfVersion(): number /*uint*/ {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       if (!(this._file instanceof SWFFile)) {
-        throwError('Error', Errors.LoadingObjectNotSWFError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotSWFError);
       }
       return this._file.swfVersion;
     }
 
     get actionScriptVersion(): number /*uint*/ {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       if (!(this._file instanceof SWFFile)) {
-        throwError('Error', Errors.LoadingObjectNotSWFError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotSWFError);
       }
       return this._file.useAVM1 ?
              ActionScriptVersion.ACTIONSCRIPT2 :
@@ -186,24 +186,24 @@ module Shumway.AVMX.AS.flash.display {
 
     get frameRate(): number {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       if (!(this._file instanceof SWFFile)) {
-        throwError('Error', Errors.LoadingObjectNotSWFError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotSWFError);
       }
       return this._file.frameRate;
     }
 
     get width(): number /*int*/ {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       return (this._width / 20) | 0;
     }
 
     get height(): number /*int*/ {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       return (this._height / 20) | 0;
     }
@@ -242,21 +242,21 @@ module Shumway.AVMX.AS.flash.display {
     }
     get sameDomain(): boolean {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       somewhatImplemented("public flash.display.LoaderInfo::get sameDomain");
       return true;
     }
     get childAllowsParent(): boolean {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       somewhatImplemented("public flash.display.LoaderInfo::get childAllowsParent");
       return true;
     }
     get parentAllowsChild(): boolean {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       somewhatImplemented("public flash.display.LoaderInfo::get parentAllowsChild");
       return true;
@@ -295,7 +295,7 @@ module Shumway.AVMX.AS.flash.display {
     // TODO: activate this override while keeping the ability to dispatch events from TS.
     //dispatchEvent(event: events.Event): boolean {
     //  // TODO: this should be `IllegalOperationError`, but we don't include that class.
-    //  throwError('Error', Errors.InvalidLoaderInfoMethodError);
+    //  this.securityDomain.throwError('Error', Errors.InvalidLoaderInfoMethodError);
     //  return false;
     //}
 

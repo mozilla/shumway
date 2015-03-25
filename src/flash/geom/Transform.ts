@@ -18,7 +18,6 @@ module Shumway.AVMX.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVMX.asCoerceString;
-  import throwError = Shumway.AVMX.throwError;
 
   export class Transform extends ASObject {
     static classInitializer: any = null;
@@ -31,7 +30,7 @@ module Shumway.AVMX.AS.flash.geom {
     constructor (displayObject: flash.display.DisplayObject) {
       false && super();
       if (!displayObject) {
-        throwError("ArgumentError", Errors.NullPointerError, "displayObject");
+        this.securityDomain.throwError("ArgumentError", Errors.NullPointerError, "displayObject");
       }
       this._displayObject = displayObject;
     }
@@ -76,7 +75,8 @@ module Shumway.AVMX.AS.flash.geom {
 
     set matrix3D(m: flash.geom.Matrix3D) {
       if (!(Matrix3D.isType(m))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, m,
+                                       'flash.geom.Matrix3D');
       }
 
       var raw = m.rawData;

@@ -1345,7 +1345,9 @@ module Shumway.AVMX {
      */
     public getMultiname(i: number): Multiname {
       if (i < 0 || i >= this._multinameOffsets.length) {
-        throwError("VerifierError", Errors.CpoolIndexRangeError, i, this._multinameOffsets.length);
+        this.applicationDomain.securityDomain.throwError("VerifierError",
+                                                         Errors.CpoolIndexRangeError, i,
+                                                         this._multinameOffsets.length);
       }
       if (i === 0) {
         return null;
@@ -1364,7 +1366,9 @@ module Shumway.AVMX {
      */
     public getNamespace(i: number): Namespace {
       if (i < 0 || i >= this._namespaceOffsets.length) {
-        throwError("VerifierError", Errors.CpoolIndexRangeError, i, this._namespaceOffsets.length);
+        this.applicationDomain.securityDomain.throwError("VerifierError",
+                                                         Errors.CpoolIndexRangeError, i,
+                                                         this._namespaceOffsets.length);
       }
       if (i === 0) {
         return null;
@@ -1400,7 +1404,8 @@ module Shumway.AVMX {
           type = NamespaceType.Private;
           break;
         default:
-          throwError("VerifierError", Errors.CpoolEntryWrongTypeError, i);
+          this.applicationDomain.securityDomain.throwError("VerifierError",
+                                                           Errors.CpoolEntryWrongTypeError, i);
       }
       if (uri && type !== NamespaceType.Private) {
         // TODO: deal with API versions here. Those are suffixed to the uri. We used to
@@ -1420,7 +1425,9 @@ module Shumway.AVMX {
      */
     public getNamespaceSet(i: number): Namespace [] {
       if (i < 0 || i >= this._namespaceSets.length) {
-        throwError("VerifierError", Errors.CpoolIndexRangeError, i, this._namespaceSets.length);
+        this.applicationDomain.securityDomain.throwError("VerifierError",
+                                                         Errors.CpoolIndexRangeError, i,
+                                                         this._namespaceSets.length);
       }
       if (i === 0) {
         return null;
@@ -1647,7 +1654,8 @@ module Shumway.AVMX {
           trait = classInfo.trait = new ClassTraitInfo(this, kind, name, slot, classInfo);
           break;
         default:
-            throwError("VerifierError", Errors.UnsupportedTraitsKindError, kind);
+          this.applicationDomain.securityDomain.throwError("VerifierError",
+                                                           Errors.UnsupportedTraitsKindError, kind);
       }
 
       if (attributes & ATTR.Metadata) {

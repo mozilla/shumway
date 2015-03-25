@@ -16,7 +16,6 @@
 module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
-  import throwError = Shumway.AVMX.throwError;
   import asCoerceString = Shumway.AVMX.asCoerceString;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
@@ -264,27 +263,27 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     addChild(child: DisplayObject): DisplayObject {
-      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
       return null;
     }
 
     addChildAt(child: DisplayObject, index: number): DisplayObject {
-      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
       return null;
     }
 
     removeChild(child: DisplayObject): DisplayObject {
-      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
       return null;
     }
 
     removeChildAt(index: number): DisplayObject {
-      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
       return null;
     }
 
     setChildIndex(child: DisplayObject, index: number): void {
-      throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
+      this.securityDomain.throwError('IllegalOperationError', Errors.InvalidLoaderMethodError);
     }
 
     // AS -> JS Bindings
@@ -412,8 +411,9 @@ module Shumway.AVMX.AS.flash.display {
         for (var key in contextParameters) {
           var value = contextParameters[key];
           if (!isString(value)) {
-            throwError('IllegalOperationError', Errors.ObjectWithStringsParamError,
-                       'LoaderContext.parameters');
+            this.securityDomain.throwError('IllegalOperationError',
+                                           Errors.ObjectWithStringsParamError,
+                                           'LoaderContext.parameters');
           }
           parameters[key] = value;
         }

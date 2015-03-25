@@ -239,7 +239,7 @@ module Shumway.AVMX.AS.flash.ui {
     static set cursor(value: string) {
       value = asCoerceString(value);
       if (MouseCursor.toNumber(value) < 0) {
-        throwError("ArgumentError", Errors.InvalidParamError, "cursor");
+        this.securityDomain.throwError("ArgumentError", Errors.InvalidParamError, "cursor");
       }
       this._cursor = value;
     }

@@ -139,7 +139,7 @@ module Shumway.AVMX.AS.flash.filters {
         this._alphas = GradientArrays.sanitizeAlphas(this._alphas, len, len);
         this._ratios = GradientArrays.sanitizeRatios(this._ratios, len, len);
       } else {
-        throwError("TypeError", Errors.NullPointerError, "colors");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "colors");
       }
     }
 
@@ -153,7 +153,7 @@ module Shumway.AVMX.AS.flash.filters {
         this._alphas = GradientArrays.alphas;
         this._ratios = GradientArrays.ratios;
       } else {
-        throwError("TypeError", Errors.NullPointerError, "alphas");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "alphas");
       }
     }
 
@@ -167,7 +167,7 @@ module Shumway.AVMX.AS.flash.filters {
         this._alphas = GradientArrays.alphas;
         this._ratios = GradientArrays.ratios;
       } else {
-        throwError("TypeError", Errors.NullPointerError, "ratios");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "ratios");
       }
     }
 
@@ -212,7 +212,7 @@ module Shumway.AVMX.AS.flash.filters {
     set type(value: string) {
       value = asCoerceString(value);
       if (value === null) {
-        throwError("TypeError", Errors.NullPointerError, "type");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       } else {
         if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
           this._type = value;
