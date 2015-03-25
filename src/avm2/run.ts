@@ -1047,6 +1047,7 @@ module Shumway.AVMX {
         return nativeInitializer;
       }
       var methodInfo = classInfo.instanceInfo.getInitializer();
+      release || assert(!methodInfo.isNative(), "Must provide a native initializer for " + classInfo.instanceInfo.getClassName());
       return function () {
         return interpret(this, methodInfo, scope, sliceArguments(arguments));
       };

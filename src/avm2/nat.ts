@@ -26,9 +26,11 @@ module Shumway.AVM2.AS {
   }
 }
 
+interface ISecurityDomain extends Shumway.AVMX.SecurityDomain {
+  
+}
+
 module Shumway.AVMX.AS {
-
-
   import assert = Shumway.Debug.assert;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
   import hasOwnGetter = Shumway.ObjectUtilities.hasOwnGetter;
@@ -128,7 +130,7 @@ module Shumway.AVMX.AS {
    */
   export class ASObject implements IMetaobjectProtocol {
     traits: RuntimeTraits;
-    securityDomain: SecurityDomain;
+    securityDomain: ISecurityDomain;
 
     // Declare all instance ASObject fields as statics here so that the TS
     // compiler can convert ASClass class objects to ASObject instances.
@@ -177,6 +179,8 @@ module Shumway.AVMX.AS {
 
     static axGetSlot: (i: number) => any;
     static axSetSlot: (i: number, value: any) => void;
+
+    static axIsType: (value: any) => boolean;
 
     static getPrototypeOf: () => boolean;
     static native_isPrototypeOf: (v: any) => boolean;
@@ -1277,7 +1281,7 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["Class"]               = ASClass;
     builtinNativeClasses["Function"]            = ASFunction;
     builtinNativeClasses["Boolean"]             = ASBoolean;
-    builtinNativeClasses["MethodClosure"]       = ASMethodClosure;
+    builtinNativeClasses["builtin.as$0.MethodClosure"]       = ASMethodClosure;
     builtinNativeClasses["Namespace"]           = ASNamespace;
     builtinNativeClasses["Number"]              = ASNumber;
     builtinNativeClasses["Int"]                 = ASInt;
@@ -1353,8 +1357,8 @@ module Shumway.AVMX.AS {
 
   export function getNativeInitializer(classInfo: ClassInfo): Function {
     var methodInfo = classInfo.instanceInfo.getInitializer();
-    var className = classInfo.instanceInfo.getName().name;
-    var asClass = builtinNativeClasses[className];
+    var className = classInfo.instanceInfo.getClassName();
+    var asClass = builtinNativeClasses[className] || nativeClasses[className];
     if (methodInfo.isNative()) {
       // Use TS constructor as the initializer function.
       return <any>asClass;
@@ -1403,8 +1407,8 @@ module Shumway.AVMX.AS {
   }
 
   export function tryLinkNativeClass(axClass: AXClass) {
-    var className = axClass.classInfo.instanceInfo.getName().name;
-    var asClass = builtinNativeClasses[className];
+    var className = axClass.classInfo.instanceInfo.getClassName();
+    var asClass = builtinNativeClasses[className] || nativeClasses[className];
     if (asClass) {
       linkClass(axClass, asClass);
     }
@@ -1497,27 +1501,34 @@ module Shumway.AVMX.AS {
         copyOwnPropertyDescriptors(axClass.tPrototype, asClass.instanceNatives[i], filter);
       }
     }
+
+    if (axClass.superClass) {
+      // Inherit prototype descriptors from the super class.
+      copyOwnPropertyDescriptors(axClass.tPrototype, axClass.superClass.tPrototype);
+    }
+
+    // Inherit or override prototype descriptors from the template class.
     copyOwnPropertyDescriptors(axClass.tPrototype, asClass.prototype, filter);
 
     if (asClass.classInitializer) {
       asClass.classInitializer(axClass);
     }
 
-    false && writer && traceASClass(axClass, asClass);
+    runtimeWriter && traceASClass(axClass, asClass);
   }
 
   function traceASClass(axClass: AXClass, asClass: ASClass) {
-    writer.enter("Class: " + axClass.classInfo);
-    writer.enter("Traps:");
+    runtimeWriter.enter("Class: " + axClass.classInfo);
+    runtimeWriter.enter("Traps:");
     for (var k in asClass.prototype) {
       if (k.indexOf("ax") !== 0) {
         continue;
       }
       var hasOwn = asClass.hasOwnProperty(k);
-      writer.writeLn((hasOwn ? "Own" : "Inherited") + " trap: " + k);
+      runtimeWriter.writeLn((hasOwn ? "Own" : "Inherited") + " trap: " + k);
     }
-    writer.leave();
-    writer.leave();
+    runtimeWriter.leave();
+    runtimeWriter.leave();
   }
 
   /**
@@ -1527,16 +1538,20 @@ module Shumway.AVMX.AS {
   function defineClassLoader(applicationDomain: ApplicationDomain, container: Object, classNamespace: string, className: string) {
     Object.defineProperty(container, className, {
       get: function () {
-        writer && writer.writeLn("Running Memoizer: " + className);
+        runtimeWriter && runtimeWriter.writeLn("Running Memoizer: " + className);
         var ns = new Namespace(null, NamespaceType.Public, classNamespace);
         var mn = makeMultiname(className, ns);
         var axClass = applicationDomain.getClass(mn);
         release || assert(axClass, "Class " + classNamespace + ":" + className + " is not found.");
         release || assert(axClass.axConstruct);
+        var loader: any = function () {
+          return axClass.axConstruct(arguments);
+        };
+        loader.axIsType = function (value: any) {
+          return axClass.axIsType(value);
+        }
         Object.defineProperty(container, className, {
-          value: function () {
-            return axClass.axConstruct(arguments);
-          },
+          value: loader,
           writable: false
         });
         return container[className];

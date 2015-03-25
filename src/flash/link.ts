@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+interface ISecurityDomain {
+  flash?: {
+    display: {
+      EventDispatcher: Shumway.AVMX.AS.flash.events.EventDispatcher;
+      DisplayObject: Shumway.AVMX.AS.flash.display.DisplayObject;
+    }
+  }
+}
+
 ///<reference path='references.ts' />
 module Shumway.AVMX.AS {
   function M(name: string, asClass: ASClass) {

@@ -48,8 +48,10 @@ module Shumway.AVMX.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      DisplayObject.instanceConstructorNoInitialize.call(this);
+      super();
+      // REDUX: Is it okay?
+      // false && super();
+      // DisplayObject.instanceConstructorNoInitialize.call(this);
     }
     
     // JS -> AS Bindings

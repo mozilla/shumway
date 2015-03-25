@@ -581,8 +581,9 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     constructor () {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super(undefined);
+      // false && super(undefined);
+      // events.EventDispatcher.instanceConstructorNoInitialize.call(this);
       this._addReference();
       this._setFlags(DisplayObjectFlags.Constructed);
     }

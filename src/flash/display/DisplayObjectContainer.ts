@@ -40,8 +40,10 @@ module Shumway.AVMX.AS.flash.display {
     };
 
     constructor () {
-      false && super();
-      InteractiveObject.instanceConstructorNoInitialize.call(this);
+      super();
+      // REDUX: Is it okay to just call super now?
+      // false && super();
+      // InteractiveObject.instanceConstructorNoInitialize.call(this);
       this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
     }
 
