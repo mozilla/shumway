@@ -437,7 +437,7 @@ module Shumway.AVMX.AS {
   export class XMLParser {
     constructor(private securityDomain: SecurityDomain) {
     }
-    private parseXml(s, sink) {
+    private parseXml(s) {
       var i = 0, scopes: any [] = [{
         namespaces: [],
         lookup: {
@@ -592,7 +592,7 @@ module Shumway.AVMX.AS {
               ++j;
               q = s.indexOf(">", j); if(q < 0) { throw "Unexpected EOF[1]"; }
               name = getName(s.substring(j,q), true);
-              sink.endElement(name);
+              this.endElement(name);
               scopes.pop();
               j = q + 1;
               break;
@@ -602,17 +602,17 @@ module Shumway.AVMX.AS {
               if (s.substring(j + pi.parsed, j + pi.parsed + 2) != "?>") {
                 throw "Unexpected EOF[2]";
               }
-              sink.pi(pi.name, pi.value);
+              this.pi(pi.name, pi.value);
               j += pi.parsed + 2;
               break;
             case "!":
               if (s.substring(j + 1, j + 3) === "--") {
                 q = s.indexOf("-->", j + 3); if(q < 0) { throw "Unexpected EOF[3]"; }
-                sink.comment(s.substring(j + 3, q));
+                this.comment(s.substring(j + 3, q));
                 j = q + 3;
               } else if (s.substring(j + 1, j + 8) === "[CDATA[") {
                 q = s.indexOf("]]>", j + 8); if(q < 0) { throw "Unexpected EOF[4]"; }
-                sink.cdata(s.substring(j + 8, q));
+                this.cdata(s.substring(j + 8, q));
                 j = q + 3;
               } else if (s.substring(j + 1, j + 8) === "DOCTYPE") {
                 var q2 = s.indexOf("[", j + 8), complexDoctype = false;
@@ -622,7 +622,7 @@ module Shumway.AVMX.AS {
                   complexDoctype = true;
                 }
                 var doctypeContent = s.substring(j + 8, q + (complexDoctype ? 1 : 0));
-                sink.doctype(doctypeContent);
+                this.doctype(doctypeContent);
                 // XXX pull entities ?
                 j = q + (complexDoctype ? 2 : 1);
               } else {
@@ -699,7 +699,7 @@ module Shumway.AVMX.AS {
                   attributes.push({name: getName(attribute.name, false), value: attribute.value});
                 }
               }
-              sink.beginElement(getName(content.name, true), attributes, inScopeNamespaces, isClosed);
+              this.beginElement(getName(content.name, true), attributes, inScopeNamespaces, isClosed);
               j += content.parsed + (isClosed ? 2 : 1);
               if (isClosed) scopes.pop();
               break;
@@ -708,78 +708,90 @@ module Shumway.AVMX.AS {
           do {
           } while(j++ < s.length && s[j] !== "<");
           var text = s.substring(i, j);
-          sink.text(resolveEntities(text), isWhitespacePreserved());
+          this.text(resolveEntities(text), isWhitespacePreserved());
         }
         i = j;
       }
     }
     // end of parser
 
+    private currentElement: ASXML;
+    private elementsStack: ASXML[];
+
+    beginElement(name, attrs, namespaces: Namespace[], isEmpty: boolean) {
+      var parent = this.currentElement;
+      this.elementsStack.push(parent);
+      this.currentElement = createXML(this.securityDomain, ASXMLKind.Element, name.namespace,
+                                      name.name, name.prefix);
+      for (var i = 0; i < attrs.length; ++i) {
+        var rawAttr = attrs[i];
+        var attr = createXML(this.securityDomain, ASXMLKind.Attribute, rawAttr.name.namespace,
+                             rawAttr.name.name, rawAttr.name.prefix);
+        attr._value = rawAttr.value;
+        attr._parent = this.currentElement;
+        this.currentElement._attributes.push(attr);
+      }
+      for (var i = 0; i < namespaces.length; ++i) {
+        this.currentElement._inScopeNamespaces.push(namespaces[i]);
+      }
+      parent.insert(parent.length(), this.currentElement);
+      if (isEmpty) {
+        this.currentElement = this.elementsStack.pop();
+      }
+    }
+
+    endElement(name) {
+      this.currentElement = this.elementsStack.pop();
+    }
+
+    text(text, isWhitespacePreserve) {
+      if (ASXML.ignoreWhitespace) {
+        text = trimWhitespaces(text);
+      }
+      // TODO: do an in-depth analysis of what isWhitespacePreserve is about.
+      if (text.length === 0 || isWhitespacePreserve && ASXML.ignoreWhitespace) {
+        return;
+      }
+      var node = createXML(this.securityDomain);
+      node._value = text;
+      this.currentElement.insert(this.currentElement.length(), node);
+    }
+
+    cdata(text) {
+      var node = createXML(this.securityDomain);
+      node._value = text;
+      this.currentElement.insert(this.currentElement.length(), node);
+    }
+
+    comment(text) {
+      if (ASXML.ignoreComments) {
+        return;
+      }
+      var node = createXML(this.securityDomain, ASXMLKind.Comment, "", "");
+      node._value = text;
+      this.currentElement.insert(this.currentElement.length(), node);
+    }
+
+    pi(name, value) {
+      if (ASXML.ignoreProcessingInstructions) {
+        return;
+      }
+      var node = createXML(this.securityDomain, ASXMLKind.ProcessingInstruction, "", name);
+      node._value = value;
+      this.currentElement.insert(this.currentElement.length(), node);
+    }
+
+    doctype(text) { }
+
     parseFromString(s, mimeType?) {
       // placeholder
-      var securityDomain = this.securityDomain;
-      var currentElement = createXML(securityDomain, ASXMLKind.Element, '', '', '');
-      var elementsStack = [];
-      this.parseXml(s, {
-        beginElement: function(name, attrs, namespaces: Namespace[], isEmpty: boolean) {
-          var parent = currentElement;
-          elementsStack.push(parent);
-          currentElement = createXML(securityDomain, ASXMLKind.Element, name.namespace,
-                                     name.name, name.prefix);
-          for (var i = 0; i < attrs.length; ++i) {
-            var rawAttr = attrs[i];
-            var attr = createXML(securityDomain, ASXMLKind.Attribute, rawAttr.name.namespace,
-                                 rawAttr.name.name, rawAttr.name.prefix);
-            attr._value = rawAttr.value;
-            attr._parent = currentElement;
-            currentElement._attributes.push(attr);
-          }
-          for (var i = 0; i < namespaces.length; ++i) {
-            currentElement._inScopeNamespaces.push(namespaces[i]);
-          }
-          parent.insert(parent.length(), currentElement);
-          if (isEmpty) {
-            currentElement = elementsStack.pop();
-          }
-        },
-        endElement: function(name) {
-          currentElement = elementsStack.pop();
-        },
-        text: function(text, isWhitespacePreserve) {
-          if (ASXML.ignoreWhitespace) {
-            text = trimWhitespaces(text);
-          }
-          // TODO: do an in-depth analysis of what isWhitespacePreserve is about.
-          if (text.length === 0 || isWhitespacePreserve && ASXML.ignoreWhitespace) {
-            return;
-          }
-          var node = createXML(securityDomain);
-          node._value = text;
-          currentElement.insert(currentElement.length(), node);
-        },
-        cdata: function(text) {
-          var node = createXML(securityDomain);
-          node._value = text;
-          currentElement.insert(currentElement.length(), node);
-        },
-        comment: function(text) {
-          if (ASXML.ignoreComments) {
-            return;
-          }
-          var node = createXML(securityDomain, ASXMLKind.Comment, "", "");
-          node._value = text;
-          currentElement.insert(currentElement.length(), node);
-        },
-        pi: function(name, value) {
-          if (ASXML.ignoreProcessingInstructions) {
-            return;
-          }
-          var node = createXML(securityDomain, ASXMLKind.ProcessingInstruction, "", name);
-          node._value = value;
-          currentElement.insert(currentElement.length(), node);
-        },
-        doctype: function(text) { }
-      });
+      var currentElement = this.currentElement = createXML(this.securityDomain, ASXMLKind.Element,
+                                                           '', '', '');
+      this.elementsStack = [];
+      this.parseXml(s);
+      this.currentElement = null;
+      release || assert(this.elementsStack.length === 0);
+      this.elementsStack = null;
       return currentElement;
     }
   }
@@ -1600,6 +1612,7 @@ module Shumway.AVMX.AS {
       if (this.securityDomain.AXQName.tPrototype.isPrototypeOf(arg)) {
         return this.getProperty((<ASQName>arg).name);
       }
+      arg = asCoerceString(arg);
       if (arg === '*') {
         arg = null;
       }
@@ -1933,7 +1946,6 @@ module Shumway.AVMX.AS {
     }
     // 9.1.1.12 [[Replace]] (P, V)
     replace(p: any, v: any): ASXML {
-      var s;
       if (this._kind === ASXMLKind.Text ||
           this._kind === ASXMLKind.Comment ||
           this._kind === ASXMLKind.ProcessingInstruction ||
@@ -1949,50 +1961,50 @@ module Shumway.AVMX.AS {
           a = a._parent;
         }
       }
-      var i = p >>> 0;
-      if (String(p) === String(i)) {
-        if (i >= this.length()) {
-          p = String(this.length());
+      var mn: Multiname;
+      if (this.securityDomain.AXQName.tPrototype.isPrototypeOf(p)) {
+        mn = (<ASQName>p).name;
+      }
+      mn = toXMLName(p, this.securityDomain);
+      var i = mn.name >>> 0;
+      var children = this._children;
+      if (String(mn.name) === String(i)) {
+        if (i >= children.length) {
+          i = children.length;
         }
-        if (this._children && this._children[p]) {
-          this._children[p]._parent = null;
+        if (children && children[i]) {
+          children[i]._parent = null;
         }
       } else {
-        var toRemove = this.getProperty(p);
-        if (toRemove.length() === 0) { // nothing to replace
+        var toRemove = this.getProperty(mn);
+        if (toRemove._children.length === 0) { // nothing to replace
           return this;
         }
-        this._children && toRemove._children.forEach(function (v, i) {
-          var index = this._children.indexOf(v);
+        toRemove._children.forEach(function (v, i) {
+          var index = children.indexOf(v);
           v._parent = null;
           if (i === 0) {
-            p = String(index);
-            this._children.splice(index, 1, undefined);
+            mn.name = String(index);
+            children.splice(index, 1, undefined);
           } else {
-            this._children.splice(index, 1);
+            children.splice(index, 1);
           }
         });
       }
 
-      if (v._kind === ASXMLKind.Element ||
-          v._kind === ASXMLKind.Text ||
-          v._kind === ASXMLKind.Comment ||
-          v._kind === ASXMLKind.ProcessingInstruction) {
-        v._parent = this;
-        if (!this._children) {
-          this._children = [];
-        }
-        this._children[p] = v;
-      } else {
-        s = toString(v, this.securityDomain);
-        var t = createXML(this.securityDomain);
-        t._parent = this;
-        t._value = s;
-        if (!this._children) {
-          this._children = [];
-        }
-        this._children[p] = t;
+      release || assert(isIndex(mn.name));
+
+      if (v._kind !== ASXMLKind.Element ||
+          v._kind !== ASXMLKind.Text ||
+          v._kind !== ASXMLKind.Comment ||
+          v._kind !== ASXMLKind.ProcessingInstruction)
+      {
+        var s = toString(v, this.securityDomain);
+        v = createXML(this.securityDomain);
+        v._value = s;
       }
+      v._parent = this;
+      children[mn.name] = v;
       return this;
     }
     setChildren(value: any): ASXML {
@@ -2196,6 +2208,7 @@ module Shumway.AVMX.AS {
 
     // 9.1.1.2 [[Put]] (P, V)
     setProperty(mn: Multiname, v) {
+      release || assert(mn instanceof Multiname);
       // Step 1. (Step 3 in Tamarin source.)
       if (!mn.isAnyName() && !mn.isAttribute() && mn.name === mn.name >>> 0) {
         this.securityDomain.throwError('TypeError', Errors.XMLAssignmentToIndexedXMLNotAllowed);
@@ -2331,6 +2344,7 @@ module Shumway.AVMX.AS {
 
     // 9.1.1.1 XML.[[Get]] (P)
     getProperty(mn: Multiname): any {
+      release || assert(mn instanceof Multiname);
       // Step 1.
       if (isIndex(mn) || isNumeric(mn)) {
         // this is a shortcut to the E4X logic that wants us to create a new
