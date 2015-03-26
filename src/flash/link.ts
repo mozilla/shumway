@@ -16,6 +16,10 @@
 
 import flashPackage = Shumway.AVMX.AS.flash;
 interface ISecurityDomain {
+  ObjectVector: typeof Shumway.AVMX.AS.GenericVector;
+  Int32Vector: typeof Shumway.AVMX.AS.Int32Vector;
+  Uint32Vector: typeof Shumway.AVMX.AS.Uint32Vector;
+  Float64Vector: typeof Shumway.AVMX.AS.Float64Vector;
   flash?: {
     display: {
       EventDispatcher: typeof flashPackage.events.EventDispatcher;
@@ -49,7 +53,10 @@ interface ISecurityDomain {
     }
     geom: {
       Point: typeof flashPackage.geom.Point;
+      Rectangle: typeof flashPackage.geom.Rectangle;
       Matrix: typeof flashPackage.geom.Matrix;
+      Matrix3D: typeof flashPackage.geom.Matrix3D;
+      Vector3D: typeof flashPackage.geom.Vector3D;
     }
   }
 }

@@ -434,7 +434,7 @@
     m.transformVectors( v, r );
     for( var i  = 0; i < 9; ++i )
     {
-      eqFloat(r.asGetNumericProperty(i), t.asGetNumericProperty(i), "Points transform " + i, e);
+      eqFloat(r.axGetNumericProperty(i), t.axGetNumericProperty(i), "Points transform " + i, e);
     }
   }
 
@@ -443,9 +443,9 @@
     var m   = randomMatrix();
     var p  = m.position;
     var r  = m.rawData;
-    eqFloat(p.x, r.asGetNumericProperty(12), "Position x get correct", e);
-    eqFloat(p.y, r.asGetNumericProperty(13), "Position y get correct", e);
-    eqFloat(p.z, r.asGetNumericProperty(14), "Position z get correct", e);
+    eqFloat(p.x, r.axGetNumericProperty(12), "Position x get correct", e);
+    eqFloat(p.y, r.axGetNumericProperty(13), "Position y get correct", e);
+    eqFloat(p.z, r.axGetNumericProperty(14), "Position z get correct", e);
   }
 
   function setPosition() 
@@ -455,9 +455,9 @@
     m.position = p;
     var r  = m.rawData;
 
-    eqFloat(p.x, r.asGetNumericProperty(12), "Position x set correct", e);
-    eqFloat(p.y, r.asGetNumericProperty(13), "Position y set correct", e);
-    eqFloat(p.z, r.asGetNumericProperty(14), "Position z set correct", e);
+    eqFloat(p.x, r.axGetNumericProperty(12), "Position x set correct", e);
+    eqFloat(p.y, r.axGetNumericProperty(13), "Position y set correct", e);
+    eqFloat(p.z, r.axGetNumericProperty(14), "Position z set correct", e);
   }
 
   function getRawData16() 
@@ -528,7 +528,7 @@
     var r2  = m2.rawData;
     for( var i  = 0; i < 16; ++i )
     {
-      if( r1.asGetNumericProperty(i) != r2.asGetNumericProperty(i) ) return false;
+      if( r1.axGetNumericProperty(i) != r2.axGetNumericProperty(i) ) return false;
     }
     return true;
   }
@@ -539,9 +539,9 @@
     var r2  = m2.rawData;
     for( var i  = 0; i < 16; ++i )
     {
-      if( Math.abs( r1.asGetNumericProperty(i) - r2.asGetNumericProperty(i) ) > e )
+      if( Math.abs( r1.axGetNumericProperty(i) - r2.axGetNumericProperty(i) ) > e )
       {
-        print( "Fails at " + i + " : " + r1.asGetNumericProperty(i) + " != " + r2.asGetNumericProperty(i) );
+        print( "Fails at " + i + " : " + r1.axGetNumericProperty(i) + " != " + r2.axGetNumericProperty(i) );
         return false;
       }
     }
@@ -556,7 +556,7 @@
     }
     for( var i  = 0; i < v1.length; ++i )
     {
-      if( Math.abs( v1.asGetNumericProperty(i) - v2.asGetNumericProperty(i) ) > e ) return false;
+      if( Math.abs( v1.axGetNumericProperty(i) - v2.axGetNumericProperty(i) ) > e ) return false;
     }
     return true;
   }
