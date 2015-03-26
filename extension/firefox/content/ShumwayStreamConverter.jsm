@@ -392,10 +392,6 @@ ShumwayStreamConverterBase.prototype = {
       }
     }
 
-    if (!url) { // at this point url shall be known -- asserting
-      throw new Error('Movie url is not specified');
-    }
-
     if (objectParams.base) {
         baseUrl = Services.io.newURI(objectParams.base, null, pageUrl).spec;
     } else {
@@ -406,7 +402,7 @@ ShumwayStreamConverterBase.prototype = {
     if (objectParams.flashvars) {
       movieParams = parseQueryString(objectParams.flashvars);
     }
-    var queryStringMatch = /\?([^#]+)/.exec(url);
+    var queryStringMatch = url && /\?([^#]+)/.exec(url);
     if (queryStringMatch) {
       var queryStringParams = parseQueryString(queryStringMatch[1]);
       for (var i in queryStringParams) {
@@ -416,7 +412,8 @@ ShumwayStreamConverterBase.prototype = {
       }
     }
 
-    var allowScriptAccess = isScriptAllowed(objectParams.allowscriptaccess, url, pageUrl);
+    var allowScriptAccess = !!url &&
+      isScriptAllowed(objectParams.allowscriptaccess, url, pageUrl);
 
     var startupInfo = {};
     startupInfo.window = window;
@@ -494,6 +491,18 @@ ShumwayStreamConverterBase.prototype = {
         var domWindow = getDOMWindow(channel);
         let startupInfo = converter.getStartupInfo(domWindow,
                                                    converter.getUrlHint(originalURI));
+
+        listener.onStopRequest(aRequest, context, statusCode);
+
+        if (!startupInfo.url) {
+          // Special case when movie URL is not specified, e.g. swfobject
+          // checks only version. No need to instantiate the flash plugin.
+          if (startupInfo.embedTag) {
+            setupSimpleExternalInterface(startupInfo.embedTag);
+          }
+          return;
+        }
+
         if (!isShumwayEnabledFor(startupInfo)) {
           fallbackToNativePlugin(domWindow, false, true);
           return;
@@ -515,8 +524,6 @@ ShumwayStreamConverterBase.prototype = {
         ActivationQueue.enqueue(startupInfo, function(domWindow) {
           activateShumwayScripts(domWindow);
         }.bind(null, domWindow));
-
-        listener.onStopRequest(aRequest, context, statusCode);
       }
     };
 
@@ -538,6 +545,18 @@ ShumwayStreamConverterBase.prototype = {
     // Do nothing.
   }
 };
+
+function setupSimpleExternalInterface(embedTag) {
+  Components.utils.exportFunction(function (variable) {
+    switch (variable) {
+      case '$version':
+        return 'SHUMWAY 10,0,0';
+      default:
+        log('GetVariable: ' + variable);
+        return undefined;
+    }
+  }, embedTag.wrappedJSObject, {defineAs: 'GetVariable'});
+}
 
 function isScriptAllowed(allowScriptAccessParameter, url, pageUrl) {
   if (!allowScriptAccessParameter) {
