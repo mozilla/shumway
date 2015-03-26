@@ -201,6 +201,8 @@ module Shumway.AVMX.AS.flash.events {
    */
   export class EventDispatcher extends ASObject implements IEventDispatcher {
 
+    static axClass: typeof EventDispatcher;
+
     public static broadcastEventDispatchQueue: BroadcastEventDispatchQueue;
 
     static classInitializer() {
@@ -280,7 +282,7 @@ module Shumway.AVMX.AS.flash.events {
       // Notify the broadcast event queue. If |useCapture| is set then the Flash player
       // doesn't seem to register this target.
       if (!useCapture && Event.isBroadcastEventType(type)) {
-        EventDispatcher.broadcastEventDispatchQueue.add(type, this);
+        this.securityDomain.flash.events.EventDispatcher.axClass.broadcastEventDispatchQueue.add(type, this);
       }
     }
 
@@ -308,7 +310,7 @@ module Shumway.AVMX.AS.flash.events {
         if (list.isEmpty()) {
           // Notify the broadcast event queue of the removal.
           if (!useCapture && Event.isBroadcastEventType(type)) {
-            EventDispatcher.broadcastEventDispatchQueue.remove(type, this);
+            this.securityDomain.flash.events.EventDispatcher.axClass.broadcastEventDispatchQueue.remove(type, this);
           }
           listeners[type] = null;
         }

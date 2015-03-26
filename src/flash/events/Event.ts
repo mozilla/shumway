@@ -30,11 +30,10 @@ module Shumway.AVMX.AS.flash.events {
     };
 
     static getInstance(type: string, bubbles: boolean = false, cancelable: boolean = false): Event {
-      var self: typeof Event = this;
-      var instance = self._instances[type];
+      var instance = this._instances[type];
       if (!instance) {
-        instance = new self.securityDomain.flash.events.Event(type, bubbles, cancelable);
-        self._instances[type] = instance;
+        instance = new this.securityDomain.flash.events.Event(type, bubbles, cancelable);
+        this._instances[type] = instance;
       }
       instance._bubbles = bubbles;
       instance._cancelable = cancelable;
@@ -42,10 +41,10 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     static getBroadcastInstance(type: string, bubbles: boolean = false, cancelable: boolean = false): Event {
-      var instance = Event._instances[type];
+      var instance = this._instances[type];
       if (!instance) {
-        instance = new Event(type, bubbles, cancelable);
-        Event._instances[type] = instance;
+        instance = new this.securityDomain.flash.events.Event(type, bubbles, cancelable);
+        this._instances[type] = instance;
         // Some events are documented as broadcast event in the AS3 docs. We can't set |_isBroadcastEvent| flag in the
         // constructor because if you create custom events with these types they do capture and bubble.
         release || assert (Event.isBroadcastEventType(type));

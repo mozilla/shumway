@@ -32,6 +32,7 @@ interface ISecurityDomain {
     };
     events: {
       Event: typeof flashPackage.events.Event;
+      EventDispatcher: typeof flashPackage.events.EventDispatcher;
     };
     filters: {
       BitmapFilter: typeof flashPackage.filters.BitmapFilter;
