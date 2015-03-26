@@ -5,7 +5,6 @@
   var Rectangle = flash.geom.Rectangle;
   var Vector3D = flash.geom.Vector3D;
   var Matrix3D = flash.geom.Matrix3D;
-  var Float64Vector = Shumway.AVM2.AS.Float64Vector;
 
   // Original at https://raw.github.com/richardlord/Coral/master/native/test/NativeMatrix3DUnitTest.as
   /*
@@ -39,7 +38,7 @@
    */
 
   function makeVector(array) {
-    return Float64Vector.axApply(null, [array]);
+    return securityDomain.Float64Vector.axApply(null, [array]);
   }
   
   var e = 0.001;

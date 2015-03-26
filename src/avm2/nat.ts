@@ -1291,7 +1291,9 @@ module Shumway.AVMX.AS {
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
   var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
   var nativeClassLoaderNames: {
-    name: string
+    name: string;
+    alias: string;
+    nsType: NamespaceType
   } [] = [];
 
   export function initializeBuiltins() {
@@ -1341,11 +1343,17 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["flash.utils.ByteArray"] = flash.utils.ByteArray;
   }
 
-  export function registerNativeClass(name: string, asClass: ASClass) {
+  export function registerNativeClass(name: string, asClass: ASClass, alias: string = name,
+                                      nsType: NamespaceType = NamespaceType.Public) {
     release || assert (!nativeClasses[name], "Native class: " + name + " is already registered.");
     nativeClasses[name] = asClass;
-    nativeClassLoaderNames.push({name: name});
+    nativeClassLoaderNames.push({name: name, alias: alias, nsType: nsType});
   }
+
+  registerNativeClass("__AS3__.vec.Vector$object", GenericVector, 'ObjectVector', NamespaceType.PackageInternal);
+  registerNativeClass("__AS3__.vec.Vector$int", Int32Vector, 'Int32Vector', NamespaceType.PackageInternal);
+  registerNativeClass("__AS3__.vec.Vector$uint", Uint32Vector, 'Uint32Vector', NamespaceType.PackageInternal);
+  registerNativeClass("__AS3__.vec.Vector$double", Float64Vector, 'Float64Vector', NamespaceType.PackageInternal);
 
   export function getNativesForTrait(trait: TraitInfo): Object [] {
     var className = null;
@@ -1559,11 +1567,13 @@ module Shumway.AVMX.AS {
    * Creates a self patching getter that lazily constructs the class and memoizes
    * to the class's instance constructor.
    */
-  function defineClassLoader(applicationDomain: ApplicationDomain, container: Object, classNamespace: string, className: string) {
-    Object.defineProperty(container, className, {
+  function defineClassLoader(applicationDomain: ApplicationDomain, container: Object,
+                             classNamespace: string, nsType: NamespaceType, className: string,
+                             classAlias: string) {
+    Object.defineProperty(container, classAlias, {
       get: function () {
         runtimeWriter && runtimeWriter.writeLn("Running Memoizer: " + className);
-        var ns = new Namespace(null, NamespaceType.Public, classNamespace);
+        var ns = new Namespace(null, nsType, classNamespace);
         var mn = makeMultiname(className, ns);
         var axClass = applicationDomain.getClass(mn);
         release || assert(axClass, "Class " + classNamespace + ":" + className + " is not found.");
@@ -1575,26 +1585,32 @@ module Shumway.AVMX.AS {
           return axClass.axIsType(value);
         };
         loader.axClass = axClass;
-        Object.defineProperty(container, className, {
+        Object.defineProperty(container, classAlias, {
           value: loader,
           writable: false
         });
-        return container[className];
+        return loader;
       },
       configurable: true
     });
   }
 
-  function makeClassLoader(applicationDomain: ApplicationDomain, container: Object, classPath: string) {
+  function makeClassLoader(applicationDomain: ApplicationDomain, container: Object,
+                           classPath: string, aliasPath: string, nsType: NamespaceType) {
     runtimeWriter && runtimeWriter.writeLn("Defining Memoizer: " + classPath);
-    var path = classPath.split(".");
-    for (var i = 0, j = path.length - 1; i < j; i++) {
-      if (!container[path[i]]) {
-        container[path[i]] = Object.create(null);
+    var aliasPathTokens = aliasPath.split(".");
+    for (var i = 0, j = aliasPathTokens.length - 1; i < j; i++) {
+      if (!container[aliasPathTokens[i]]) {
+        container[aliasPathTokens[i]] = Object.create(null);
       }
-      container = container[path[i]];
+      container = container[aliasPathTokens[i]];
     }
-    defineClassLoader(applicationDomain, container, path.slice(0, path.length - 1).join("."), path[path.length - 1]);
+    var classPathTokens = classPath.split(".");
+    defineClassLoader(applicationDomain, container,
+                      classPathTokens.slice(0, classPathTokens.length - 1).join("."),
+                      nsType,
+                      classPathTokens[classPathTokens.length - 1],
+                      aliasPathTokens[aliasPathTokens.length - 1]);
   }
 
   /**
@@ -1603,7 +1619,9 @@ module Shumway.AVMX.AS {
   export function installClassLoaders(applicationDomain: ApplicationDomain, container: Object) {
     for (var i = 0; i < nativeClassLoaderNames.length; i++) {
       var loaderName = nativeClassLoaderNames[i].name;
-      makeClassLoader(applicationDomain, container, loaderName);
+      var loaderAlias = nativeClassLoaderNames[i].alias;
+      var nsType = nativeClassLoaderNames[i].nsType;
+      makeClassLoader(applicationDomain, container, loaderName, loaderAlias, nsType);
     }
   }
 }
