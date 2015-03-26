@@ -1134,11 +1134,11 @@ module Shumway.AVMX.AS {
       throw type.axConstruct([message, id]);
     }
 
-    static classInitializer: any = function() {
-      defineNonEnumerableProperty(this, '$Bglength', 1);
-      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', 'Error');
-      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgmessage', 'Error');
-      defineNonEnumerableProperty(this.dynamicPrototype, '$BgtoString', this.prototype.toString);
+    static classInitializer: any = function(axClass: AXClass) {
+      defineNonEnumerableProperty(axClass, '$Bglength', 1);
+      defineNonEnumerableProperty(axClass.dPrototype, '$Bgname', 'Error');
+      defineNonEnumerableProperty(axClass.dPrototype, '$Bgmessage', 'Error');
+      defineNonEnumerableProperty(axClass.dPrototype, '$BgtoString', this.prototype.toString);
     }
 
     constructor(message: any, id: any) {
@@ -1169,9 +1169,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASDefinitionError extends ASError {
-    static classInitializer: any = function() {
-      defineNonEnumerableProperty(this, '$Bglength', 1);
-      defineNonEnumerableProperty(this.dynamicPrototype, '$Bgname', this.name.substr(2));
+    static classInitializer: any = function(axClass: AXClass) {
+      defineNonEnumerableProperty(axClass, '$Bglength', 1);
+      defineNonEnumerableProperty(axClass.dPrototype, '$Bgname', this.name.substr(2));
     }
   }
   export class ASEvalError extends ASError {
@@ -1282,7 +1282,7 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["Class"]               = ASClass;
     builtinNativeClasses["Function"]            = ASFunction;
     builtinNativeClasses["Boolean"]             = ASBoolean;
-    builtinNativeClasses["builtin.as$0.MethodClosure"]       = ASMethodClosure;
+    builtinNativeClasses["builtin.as$0.MethodClosure"] = ASMethodClosure;
     builtinNativeClasses["Namespace"]           = ASNamespace;
     builtinNativeClasses["Number"]              = ASNumber;
     builtinNativeClasses["Int"]                 = ASInt;
@@ -1290,10 +1290,10 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
 
-    builtinNativeClasses["Vector$object"]       = GenericVector;
-    builtinNativeClasses["Vector$int"]          = Int32Vector;
-    builtinNativeClasses["Vector$uint"]         = Uint32Vector;
-    builtinNativeClasses["Vector$double"]       = Float64Vector;
+    builtinNativeClasses["__AS3__.vec.Vector$object"] = GenericVector;
+    builtinNativeClasses["__AS3__.vec.Vector$int"] = Int32Vector;
+    builtinNativeClasses["__AS3__.vec.Vector$uint"] = Uint32Vector;
+    builtinNativeClasses["__AS3__.vec.Vector$double"] = Float64Vector;
 
     builtinNativeClasses["Namespace"]           = ASNamespace;
     builtinNativeClasses["QName"]               = ASQName;
@@ -1315,13 +1315,13 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["VerifyError"]         = ASVerifyError;
     builtinNativeClasses["UninitializedError"]  = ASUninitializedError;
     builtinNativeClasses["ArgumentError"]       = ASArgumentError;
-    builtinNativeClasses["IOError"]             = ASIOError;
-    builtinNativeClasses["EOFError"]            = ASEOFError;
-    builtinNativeClasses["MemoryError"]         = ASMemoryError;
-    builtinNativeClasses["IllegalOperationError"]   = ASIllegalOperationError;
+    builtinNativeClasses["flash.errors.IOError"] = ASIOError;
+    builtinNativeClasses["flash.errors.EOFError"] = ASEOFError;
+    builtinNativeClasses["flash.errors.MemoryError"] = ASMemoryError;
+    builtinNativeClasses["flash.errors.IllegalOperationError"] = ASIllegalOperationError;
     builtinNativeClasses["JSON"]                = ASJSON;
-    builtinNativeClasses["flash.utils.Dictionary"]  = flash.utils.Dictionary;
-    builtinNativeClasses["flash.utils.ByteArray"]   = flash.utils.ByteArray;
+    builtinNativeClasses["flash.utils.Dictionary"] = flash.utils.Dictionary;
+    builtinNativeClasses["flash.utils.ByteArray"] = flash.utils.ByteArray;
   }
 
   export function registerNativeClass(name: string, asClass: ASClass) {
