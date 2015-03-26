@@ -33,13 +33,13 @@ module Shumway.AVMX.AS.flash.display {
 
     static initializer: any = function () {
       var self: DisplayObjectContainer = this;
-      self._tabChildren = true;
-      self._mouseChildren = true;
-      self._children = [];
     };
 
     constructor () {
       super();
+      this._tabChildren = true;
+      this._mouseChildren = true;
+      this._children = [];
       // REDUX: Is it okay to just call super now?
       // false && super();
       // InteractiveObject.instanceConstructorNoInitialize.call(this);
@@ -207,7 +207,7 @@ module Shumway.AVMX.AS.flash.display {
       if (child === this) {
         this.securityDomain.throwError('ArgumentError', Errors.CantAddSelfError);
       }
-      if (DisplayObjectContainer.isType(child) && (<DisplayObjectContainer>child).contains(this)) {
+      if (this.securityDomain.flash.display.DisplayObjectContainer.axIsType(child) && (<DisplayObjectContainer>child).contains(this)) {
         this.securityDomain.throwError('ArgumentError', Errors.CantAddParentError);
       }
       var children = this._children;

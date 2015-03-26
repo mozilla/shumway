@@ -19,6 +19,7 @@ interface ISecurityDomain {
     display: {
       EventDispatcher: typeof Shumway.AVMX.AS.flash.events.EventDispatcher;
       DisplayObject: typeof Shumway.AVMX.AS.flash.display.DisplayObject;
+      DisplayObjectContainer: typeof Shumway.AVMX.AS.flash.display.DisplayObjectContainer;
     }
   }
 }

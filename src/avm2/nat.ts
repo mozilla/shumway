@@ -375,9 +375,9 @@ module Shumway.AVMX.AS {
       release || checkValue(value);
       this[Multiname.getPublicMangledName(nm)] = value;
     }
-
+    
     axCallPublicProperty(nm: any, argArray: any []): any {
-      notImplemented("axCallPublicProperty");
+      return this[Multiname.getPublicMangledName(nm)].axApply(this, argArray);
     }
 
     axGetSlot(i: number): any {
