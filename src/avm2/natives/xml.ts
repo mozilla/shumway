@@ -1008,7 +1008,7 @@ module Shumway.AVMX.AS {
     }
 
     static FromMultiname(mn: Multiname) {
-      var name: ASQName = Object.create(ASQName.prototype);
+      var name: ASQName = Object.create(this.securityDomain.AXQName.tPrototype);
       name.name = mn;
       return name;
     }
