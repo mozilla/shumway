@@ -754,11 +754,11 @@ module Shumway.AVMX.AS {
     }
 
     text(text, isWhitespacePreserve) {
-      if (ASXML.ignoreWhitespace) {
+      if (this.securityDomain.AXXML.ignoreWhitespace) {
         text = trimWhitespaces(text);
       }
       // TODO: do an in-depth analysis of what isWhitespacePreserve is about.
-      if (text.length === 0 || isWhitespacePreserve && ASXML.ignoreWhitespace) {
+      if (text.length === 0 || isWhitespacePreserve && this.securityDomain.AXXML.ignoreWhitespace) {
         return;
       }
       var node = createXML(this.securityDomain);
@@ -773,7 +773,7 @@ module Shumway.AVMX.AS {
     }
 
     comment(text) {
-      if (ASXML.ignoreComments) {
+      if (this.securityDomain.AXXML.ignoreComments) {
         return;
       }
       var node = createXML(this.securityDomain, ASXMLKind.Comment, "", "");
@@ -782,7 +782,7 @@ module Shumway.AVMX.AS {
     }
 
     pi(name, value) {
-      if (ASXML.ignoreProcessingInstructions) {
+      if (this.securityDomain.AXXML.ignoreProcessingInstructions) {
         return;
       }
       var node = createXML(this.securityDomain, ASXMLKind.ProcessingInstruction, "", name);

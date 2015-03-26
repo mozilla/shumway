@@ -446,7 +446,17 @@ module Shumway.AVMX {
     return object;
   }
 
-  export function asTypeOf(x: any): string {
+  export function asTypeOf(x: any, securityDomain: SecurityDomain): string {
+    // ABC doesn't box primitives, so typeof returns the primitive type even when
+    // the value is new'd
+    if (x) {
+      if (x.value) {
+        return typeof x.value;
+      }
+      if (axIsXMLCollection(x, securityDomain)) {
+        return "xml";
+      }
+    }
     return typeof x;
   }
 
@@ -681,6 +691,9 @@ module Shumway.AVMX {
     _flags: number;
     _prettyIndent: number;
     prettyPrinting: boolean;
+    ignoreComments: boolean;
+    ignoreWhitespace: boolean;
+    ignoreProcessingInstructions: boolean;
   }
 
   export interface AXXMLListClass extends AXClass {
