@@ -307,6 +307,13 @@ module Shumway.AVMX {
     return object.descendants(mn);
   }
 
+  export function axCheckFilter(value, securityDomain: SecurityDomain) {
+    if (!value || !AS.isXMLCollection(value, securityDomain)) {
+      throw "TypeError operand of checkFilter not of XML type";
+    }
+    return value;
+  }
+
   export function axFalse(): boolean {
     return false;
   }
@@ -371,39 +378,23 @@ module Shumway.AVMX {
    *
    * AS3 also overloads the `+` operator to concatenate XMLs/XMLLists instead of stringifying them.
    */
-  export function asAdd(l: any, r: any): any {
+  export function asAdd(l: any, r: any, securityDomain: SecurityDomain): any {
     if (typeof l === "string" || typeof r === "string") {
       return String(l) + String(r);
     }
-    if (isXMLCollection(l) && isXMLCollection(r)) {
+    if (AS.isXMLCollection(l, securityDomain) && AS.isXMLCollection(r, securityDomain)) {
       // FIXME
       // return AS.ASXMLList.addXML(l, r);
     }
     return l + r;
   }
 
-  function isXMLCollection(x): boolean {
-    // FIXME
-    return false;
-    //return x instanceof AS.ASXML ||
-    //       x instanceof AS.ASXMLList;
-  }
-
-  function isXMLType(x): boolean {
-    // FIX ME
-    return false;
-    //return x instanceof AS.ASXML ||
-    //       x instanceof AS.ASXMLList ||
-    //       x instanceof AS.ASQName ||
-    //       x instanceof AS.ASNamespace;
-  }
-
-  export function asEquals(left: any, right: any): boolean {
+  export function asEquals(left: any, right: any, securityDomain: SecurityDomain): boolean {
     // See E4X spec, 11.5 Equality Operators for why this is required.
-    if (isXMLType(left)) {
+    if (AS.isXMLType(left, securityDomain)) {
       return left.equals(right);
     }
-    if (isXMLType(right)) {
+    if (AS.isXMLType(right, securityDomain)) {
       return right.equals(left);
     }
     return left == right;

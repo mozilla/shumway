@@ -59,9 +59,16 @@ module Shumway.AVMX.AS {
 
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
 
-  function isXMLType(val: any, securityDomain: SecurityDomain): boolean {
-    return securityDomain.AXXML.dPrototype.isPrototypeOf(val) ||
-           securityDomain.AXXMLList.dPrototype.isPrototypeOf(val);
+  export function isXMLType(val: any, securityDomain: SecurityDomain): boolean {
+    return val && (securityDomain.AXXML.dPrototype.isPrototypeOf(val) ||
+                   securityDomain.AXXMLList.dPrototype.isPrototypeOf(val) ||
+                   securityDomain.AXQName.dPrototype.isPrototypeOf(val) ||
+                   securityDomain.AXNamespace.dPrototype.isPrototypeOf(val));
+  }
+
+  export function isXMLCollection(val: any, securityDomain: SecurityDomain): boolean {
+    return val && (securityDomain.AXXML.dPrototype.isPrototypeOf(val) ||
+                   securityDomain.AXXMLList.dPrototype.isPrototypeOf(val));
   }
 
   // 10.1 ToString
