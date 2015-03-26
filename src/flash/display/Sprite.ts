@@ -33,26 +33,11 @@ module Shumway.AVMX.AS.flash.display {
   }
 
   export class Sprite extends flash.display.DisplayObjectContainer {
-
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: SpriteSymbol) {
-      var self: Sprite = this;
 
-      self._graphics = null;
-      self._buttonMode = false;
-      self._dropTarget = null;
-      self._hitArea = null;
-      self._useHandCursor = true;
-
-      self._dragMode = DragMode.Inactive;
-      self._dragDeltaX = 0;
-      self._dragDeltaY = 0;
-      self._dragBounds = null;
-      self._hitTarget = null;
-
+    static initializer(symbol: SpriteSymbol) {
+      DisplayObjectContainer.initializer.call(this);
+      var self: Sprite = <any>this;
       if (symbol) {
         if (symbol.isRoot) {
           self._root = self;
@@ -63,7 +48,7 @@ module Shumway.AVMX.AS.flash.display {
           self._initializeChildren(symbol.frames[0]);
         }
       }
-    };
+    }
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -73,6 +58,17 @@ module Shumway.AVMX.AS.flash.display {
 
     constructor () {
       super();
+      this._graphics = null;
+      this._buttonMode = false;
+      this._dropTarget = null;
+      this._hitArea = null;
+      this._useHandCursor = true;
+
+      this._dragMode = DragMode.Inactive;
+      this._dragDeltaX = 0;
+      this._dragDeltaY = 0;
+      this._dragBounds = null;
+      this._hitTarget = null;
       this._constructChildren();
     }
     

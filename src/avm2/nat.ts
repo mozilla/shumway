@@ -199,13 +199,24 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, "$BgvalueOf", asProto.valueOf);
     }
 
+    static initializer(x?: any): ASObject {
+      Debug.abstractMethod("ASObject::initializer");
+      return null;
+    }
+
     static _init() {
       // Nop.
     }
 
+    static initializeFrom(x: any) {
+      var object = Object.create(this.tPrototype);
+      this.initializer.call(object, x);
+      return object;
+    }
+
     // REDUX:
     static instanceConstructorNoInitialize = function () { notImplemented("instanceConstructorNoInitialize => axInitialize"); };
-    static initializeFrom = function (x: any) { notImplemented("initializeFrom"); return null; };
+
     static isInstanceOf = function (x: any) { notImplemented("isInstanceOf"); return false; };
     static isType = function (x: any) { notImplemented("isType"); return false; };
     static isSubtypeOf = function (x: any) { notImplemented("isType"); return false; };
@@ -466,6 +477,7 @@ module Shumway.AVMX.AS {
      * Called on every class when it is initialized. The |axClass| object is passed in as |this|.
      */
     classInitializer: (asClass?: ASClass) => void;
+    initializer: (x?: any) => void;
 
     classSymbols: string [];
     instanceSymbols: string [];

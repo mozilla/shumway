@@ -31,9 +31,9 @@ module Shumway.AVMX.AS.flash.display {
     static classSymbols: string [] = null;
     static classInitializer: any = null;
 
-    static initializer: any = function () {
-      var self: DisplayObjectContainer = this;
-    };
+    static initializer(x?: any) {
+
+    }
 
     constructor () {
       super();

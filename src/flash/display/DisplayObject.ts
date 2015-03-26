@@ -421,12 +421,12 @@ module Shumway.AVMX.AS.flash.display {
      */
     static performFrameNavigation(mainLoop: boolean, runScripts: boolean) {
       if (mainLoop) {
-        DisplayObject._runScripts = runScripts;
+        this._runScripts = runScripts;
       } else {
-        runScripts = DisplayObject._runScripts;
+        runScripts = this._runScripts;
       }
 
-      release || assert(display.DisplayObject._advancableInstances.length < 1024 * 16,
+      release || assert(this._advancableInstances.length < 1024 * 16,
       "Too many advancable instances.");
 
       // Step 1: Remove timeline objects that don't exist on new frame, update existing ones with
@@ -438,26 +438,26 @@ module Shumway.AVMX.AS.flash.display {
       // construction after ENTER_FRAME.
       // Thus, all these can be done together.
       enterTimeline("DisplayObject.InitFrame");
-      display.DisplayObject._advancableInstances.forEach(function (value) {
+      this._advancableInstances.forEach(function (value) {
         value._initFrame(mainLoop);
       });
       leaveTimeline();
       // Step 2: Dispatch ENTER_FRAME, only called in outermost invocation.
       enterTimeline("DisplayObject.EnterFrame");
       if (mainLoop && runScripts) {
-        DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
+        this._broadcastFrameEvent(events.Event.ENTER_FRAME);
       }
       leaveTimeline();
       // Step 3: Create new timeline objects.
       enterTimeline("DisplayObject.ConstructFrame");
-      display.DisplayObject._advancableInstances.forEach(function (value) {
+      this._advancableInstances.forEach(function (value) {
         value._constructFrame();
       });
       leaveTimeline();
       // Step 4: Dispatch FRAME_CONSTRUCTED.
       if (runScripts) {
         enterTimeline("DisplayObject.FrameConstructed");
-        DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
+        this._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
         leaveTimeline();
         // Step 5: Run frame scripts
         // Flash seems to enqueue all frame scripts recursively, starting at the root of each
@@ -471,26 +471,27 @@ module Shumway.AVMX.AS.flash.display {
         // Of course, nothing guarantees that there isn't content that accidentally does, so it'd
         // be nice to eventually get this right.
         enterTimeline("DisplayObject.EnqueueFrameScripts");
-        display.DisplayObject._advancableInstances.forEach(function (value) {
+        var displayObjectContainerClass = this.securityDomain.flash.display.DisplayObjectContainer.axClass;
+        this._advancableInstances.forEach(function (value) {
           var container: any = value;
-          if (DisplayObjectContainer.isInstanceOf(container) && !container.parent) {
+          if (displayObjectContainerClass.axIsType(container) && !container.parent) {
             container._enqueueFrameScripts();
           }
         });
-        flash.display.DisplayObject._stage._enqueueFrameScripts();
+        this._stage._enqueueFrameScripts();
         leaveTimeline();
         enterTimeline("DisplayObject.RunFrameScript");
-        MovieClip.runFrameScripts();
+        this.securityDomain.flash.display.MovieClip.axClass.runFrameScripts();
         leaveTimeline();
         // Step 6: Dispatch EXIT_FRAME.
         enterTimeline("DisplayObject.ExitFrame");
-        DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
+        this._broadcastFrameEvent(events.Event.EXIT_FRAME);
         leaveTimeline();
       } else {
         MovieClip.reset();
       }
       if (mainLoop) {
-        DisplayObject._runScripts = true;
+        this._runScripts = true;
       }
     }
 
@@ -505,10 +506,10 @@ module Shumway.AVMX.AS.flash.display {
         case events.Event.EXIT_FRAME:
         case events.Event.RENDER:
           // TODO: Fire RENDER events only for objects on the display list.
-          event = events.Event.getBroadcastInstance(type);
+          event = this.securityDomain.flash.events.Event.axClass.getBroadcastInstance(type);
       }
       release || assert (event, "Invalid frame event.");
-      events.EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(event);
+      this.securityDomain.flash.events.EventDispatcher.axClass.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 
     constructor () {

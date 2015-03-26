@@ -134,9 +134,10 @@ module Shumway.AVMX.AS.flash.display {
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: flash.display.SpriteSymbol) {
+      Sprite.initializer.call(this);
       var self: MovieClip = this;
 
-      display.DisplayObject._advancableInstances.push(self);
+      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(self);
 
       self._currentFrame = 0;
       self._totalFrames = 1;
@@ -189,8 +190,9 @@ module Shumway.AVMX.AS.flash.display {
 
     static runFrameScripts() {
       enterTimeline("MovieClip.executeFrame");
-      var queue: MovieClip[] = MovieClip._callQueue;
-      MovieClip._callQueue = [];
+      var movieClipClass = this.securityDomain.flash.display.MovieClip.axClass;
+      var queue: MovieClip[] = movieClipClass._callQueue;
+      movieClipClass._callQueue = [];
       for (var i = 0; i < queue.length; i++) {
         var instance = queue[i];
 
@@ -200,7 +202,7 @@ module Shumway.AVMX.AS.flash.display {
           continue;
         }
 
-        instance._allowFrameNavigation = display.MovieClip.frameNavigationModel === FrameNavigationModel.SWF1;
+        instance._allowFrameNavigation = movieClipClass.frameNavigationModel === FrameNavigationModel.SWF1;
         instance.callFrame(instance._currentFrame);
         instance._allowFrameNavigation = true;
 
@@ -286,11 +288,11 @@ module Shumway.AVMX.AS.flash.display {
 
     _enqueueFrameScripts() {
       if (this._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
-        MovieClip._callQueue.push(this);
+        this.securityDomain.flash.display.MovieClip.axClass._callQueue.push(this);
       }
       if (this._hasFlags(DisplayObjectFlags.HasFrameScriptPending)) {
         this._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
-        MovieClip._callQueue.push(this);
+        this.securityDomain.flash.display.MovieClip.axClass._callQueue.push(this);
       }
       super._enqueueFrameScripts();
     }
@@ -465,7 +467,7 @@ module Shumway.AVMX.AS.flash.display {
 
       // Frame navigation only happens immediately if not triggered from under a frame script.
       if (this._allowFrameNavigation) {
-        if (display.MovieClip.frameNavigationModel === FrameNavigationModel.SWF9) {
+        if (this.securityDomain.flash.display.MovieClip.axClass.frameNavigationModel === FrameNavigationModel.SWF9) {
           // In FP 9, the only thing that happens on inter-frame navigation is advancing the frame
           // and constructing new timeline objects.
           this._advanceFrame();
@@ -474,7 +476,7 @@ module Shumway.AVMX.AS.flash.display {
           // Frame navigation in an individual timeline triggers an iteration of the whole
           // frame navigation cycle in FP 10+. This includes broadcasting frame events to *all*
           // display objects.
-          DisplayObject.performFrameNavigation(false, true);
+          this.securityDomain.flash.display.DisplayObject.axClass.performFrameNavigation(false, true);
         }
       }
     }
