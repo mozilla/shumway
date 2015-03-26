@@ -25,7 +25,7 @@
     assert(typeof numFrames === 'number');
     var loaderInfo = new LoaderInfo(LoaderInfo.axClass.CtorToken);
     var stage = new Stage();
-    DisplayObject._stage = stage;
+    DisplayObject.axClass._stage = stage;
     stage._stage = stage;
     var symbol = new SpriteSymbol({id: 0});
     symbol.loaderInfo = loaderInfo;

@@ -32,7 +32,7 @@ module Shumway.AVMX.AS.flash.geom {
     0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15
   ]);
 
-  function getRotationMatrix(theta, u, v, w, a, b, c) {
+  function getRotationMatrix(theta, u, v, w, a, b, c, securityDomain: ISecurityDomain) {
     // http://inside.mines.edu/~gmurray/ArbitraryAxisRotation/
     var u2 = u * u, v2 = v * v, w2 = w * w;
     var L2 = u2 + v2 + w2, L = Math.sqrt(L2);
@@ -40,7 +40,7 @@ module Shumway.AVMX.AS.flash.geom {
     u2 /= L2; v2 /= L2; w2 /= L2;
     var cos = Math.cos(theta), sin = Math.sin(theta);
 
-    return new flash.geom.Matrix3D([
+    return securityDomain.flash.geom.Matrix3D.axClass.FromArray([
       u2 + (v2 + w2) * cos,
       u * v * (1 - cos) + w * sin,
       u * w * (1 - cos) - v * sin,
@@ -61,22 +61,20 @@ module Shumway.AVMX.AS.flash.geom {
   }
 
   export class Matrix3D extends ASObject {
-    
-    // Called whenever the class is initialized.
-    static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
+
+    static classInitializer = null;
+
+    static axClass: typeof Matrix3D;
+
+    static FromArray(matrix: any) {
+      var result = Object.create(this.tPrototype);
+      result._matrix = new Float32Array(matrix);
+      return result;
+    }
 
     _matrix: Float32Array;
     constructor (v: any = null) {
-      false && super();
+      super();
       this._matrix = new Float32Array(16);
       if (v && v.length >= 16) {
         this.copyRawDataFrom(v, 0, false);
@@ -98,7 +96,7 @@ module Shumway.AVMX.AS.flash.geom {
     // _position: flash.geom.Vector3D;
     // _determinant: number;
     get rawData(): any {
-      var result = new Float64Vector();
+      var result = new this.securityDomain.Float64Vector();
       this.copyRawDataTo(result, 0, false);
       return result;
     }
@@ -107,7 +105,7 @@ module Shumway.AVMX.AS.flash.geom {
     }
     get position(): flash.geom.Vector3D {
       var m = this._matrix;
-      return new flash.geom.Vector3D(m[12], m[13], m[14]);
+      return new this.securityDomain.flash.geom.Vector3D(m[12], m[13], m[14]);
     }
     set position(pos: flash.geom.Vector3D) {
       var m = this._matrix;
@@ -129,7 +127,7 @@ module Shumway.AVMX.AS.flash.geom {
       return d;
     }
     clone(): flash.geom.Matrix3D {
-      return new flash.geom.Matrix3D(this._matrix);
+      return this.securityDomain.flash.geom.Matrix3D.axClass.FromArray(this._matrix);
     }
     copyToMatrix3D(dest: flash.geom.Matrix3D): void {
       dest = dest;
@@ -271,7 +269,8 @@ module Shumway.AVMX.AS.flash.geom {
     appendRotation(degrees: number, axis: flash.geom.Vector3D, pivotPoint: flash.geom.Vector3D = null): void {
       degrees = +degrees; axis = axis; pivotPoint = pivotPoint;
       this.append(getRotationMatrix(degrees / 180 * Math.PI, axis.x, axis.y, axis.z,
-        pivotPoint ? pivotPoint.x : 0, pivotPoint ? pivotPoint.y : 0, pivotPoint ? pivotPoint.z : 0));
+        pivotPoint ? pivotPoint.x : 0, pivotPoint ? pivotPoint.y : 0, pivotPoint ? pivotPoint.z : 0,
+        this.securityDomain));
     }
     appendScale(xScale: number, yScale: number, zScale: number): void {
       xScale = +xScale; yScale = +yScale; zScale = +zScale;
@@ -308,7 +307,8 @@ module Shumway.AVMX.AS.flash.geom {
     prependRotation(degrees: number, axis: flash.geom.Vector3D, pivotPoint: flash.geom.Vector3D = null): void {
       degrees = +degrees; axis = axis; pivotPoint = pivotPoint;
       this.prepend(getRotationMatrix(degrees / 180 * Math.PI, axis.x, axis.y, axis.z,
-        pivotPoint ? pivotPoint.x : 0, pivotPoint ? pivotPoint.y : 0, pivotPoint ? pivotPoint.z : 0));
+        pivotPoint ? pivotPoint.x : 0, pivotPoint ? pivotPoint.y : 0, pivotPoint ? pivotPoint.z : 0,
+        this.securityDomain));
     }
     prependScale(xScale: number, yScale: number, zScale: number): void {
       xScale = +xScale; yScale = +yScale; zScale = +zScale;
@@ -332,7 +332,7 @@ module Shumway.AVMX.AS.flash.geom {
     transformVector(v: flash.geom.Vector3D): flash.geom.Vector3D {
       var m = this._matrix;
       var x = v.x, y = v.y, z = v.z;
-      return new flash.geom.Vector3D(
+      return new this.securityDomain.flash.geom.Vector3D(
         m[0] * x + m[4] * y + m[8 ] * z + m[12],
         m[1] * x + m[5] * y + m[9 ] * z + m[13],
         m[2] * x + m[6] * y + m[10] * z + m[14]
@@ -341,7 +341,7 @@ module Shumway.AVMX.AS.flash.geom {
     deltaTransformVector(v: flash.geom.Vector3D): flash.geom.Vector3D {
       var m = this._matrix;
       var x = v.x, y = v.y, z = v.z;
-      return new flash.geom.Vector3D(
+      return new this.securityDomain.flash.geom.Vector3D(
         m[0] * x + m[4] * y + m[8 ] * z,
         m[1] * x + m[5] * y + m[9 ] * z,
         m[2] * x + m[6] * y + m[10] * z
