@@ -39,7 +39,7 @@
    */
 
   function makeVector(array) {
-    return Float64Vector.callable(array);
+    return Float64Vector.axApply(null, [array]);
   }
   
   var e = 0.001;
