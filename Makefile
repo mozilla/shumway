@@ -53,7 +53,7 @@ BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with insta
 
 link-utils:
 	cp -R $(BASE)/node_modules .
-	ln -s $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell utils/
+	ln -s $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/swfdec utils/
 
 clone-build:
 	cp -R $(BASE)/build .
