@@ -353,6 +353,14 @@ module Shumway.AVMX {
       return TRAIT[this.kind] + " " + this.name;
     }
 
+    isConst(): boolean {
+      return this.kind === TRAIT.Const;
+    }
+
+    isSlot(): boolean {
+      return this.kind === TRAIT.Slot;
+    }
+
     isMethod(): boolean {
       return this.kind === TRAIT.Method;
     }
@@ -900,6 +908,11 @@ module Shumway.AVMX {
 
     public isQName(): boolean {
       return !!this.namespaces && this.namespaces.length === 1 && !this.isAnyName();
+    }
+
+    public get namespace(): Namespace {
+      release || assert(this.isQName());
+      return this.namespaces[0];
     }
 
     public get uri(): string {

@@ -1440,7 +1440,7 @@ module Shumway.AVMX.AS {
   }
 
   /**
-   * Only returns true if the symbol is available in debug or release modes. Only symbols
+   * Returns |true| if the symbol is available in debug or release modes. Only symbols
    * followed by the  "!" suffix are available in release builds.
    */
   function containsSymbol(symbols: string [], name: string) {
@@ -1463,19 +1463,19 @@ module Shumway.AVMX.AS {
     return false;
   }
 
-  function link(symbols, traits, object) {
-    for (var i = 0; i < traits.length; i++) {
-      var trait = traits[i];
-      if (!containsSymbol(symbols, trait.name.name)) {
+  function linkSymbols(symbols: string [], traits: Traits, object) {
+    for (var i = 0; i < traits.traits.length; i++) {
+      var trait = traits.traits[i];
+      if (!containsSymbol(symbols, trait.getName().name)) {
         continue;
       }
-      release || assert (!trait.name.getNamespace().isPrivate(), "Why are you linking against private members?");
+      release || assert (trait.getName().namespace.type !== NamespaceType.Private, "Why are you linking against private members?");
       if (trait.isConst()) {
         notImplemented("Don't link against const traits.");
         return;
       }
-      var name = trait.name.name;
-      var qn = Multiname.getMangledName(trait.name);
+      var name = trait.getName().name;
+      var qn = Multiname.getMangledName(trait.getName());
       if (trait.isSlot()) {
         Object.defineProperty(object, name, {
           get: <() => any>new Function("", "return this." + qn +
@@ -1483,10 +1483,6 @@ module Shumway.AVMX.AS {
           set: <(any) => void>new Function("v", "this." + qn + " = v;" +
                                                 "//# sourceURL=set-" + qn + ".as")
         });
-      } else if (trait.isMethod()) {
-        release || assert (!object[name], "Symbol should not already exist.");
-        release || assert (object.asOpenMethods[qn], "There should be an open method for this symbol.");
-        object[name] = object.asOpenMethods[qn];
       } else if (trait.isGetter()) {
         release || assert (hasOwnGetter(object, qn), "There should be an getter method for this symbol.");
         Object.defineProperty(object, name, {
@@ -1494,7 +1490,7 @@ module Shumway.AVMX.AS {
                                            "//# sourceURL=get-" + qn + ".as")
         });
       } else {
-        notImplemented(trait);
+        notImplemented(trait.toString());
       }
     }
   }
@@ -1509,7 +1505,7 @@ module Shumway.AVMX.AS {
 
     // TypeScript's static inheritance can lead to subtle linking bugs. Make sure we don't fall
     // victim to this by checking that we don't inherit non-null static properties.
-    if (!release && axClass.superClass) {
+    if (false && !release && axClass.superClass) {
       if (asClass.classSymbols) {
         release || assert(asClass.classSymbols !== axClass.superClass.asClass.classSymbols,
           "Make sure class " + axClass + " doesn't inherit super class's classSymbols.");
@@ -1529,11 +1525,11 @@ module Shumway.AVMX.AS {
     }
 
     if (asClass.classSymbols) {
-      // link(self.classSymbols, self.classInfo.traits,  self);
+      linkSymbols(asClass.classSymbols, axClass.classInfo.traits, axClass);
     }
 
     if (asClass.instanceSymbols) {
-      // link(self.instanceSymbols, self.classInfo.instanceInfo.traits,  self.tPrototype);
+      linkSymbols(asClass.instanceSymbols, axClass.classInfo.instanceInfo.traits,  axClass.tPrototype);
     }
 
     // Copy class methods and properties.
