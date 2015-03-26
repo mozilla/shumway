@@ -113,6 +113,7 @@ module Shumway.AVMX.AS {
   var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
 
   function makeMultiname(v: any, namespace?: Namespace) {
+    var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
     rn.namespaces = namespace ? [namespace] : [];
     rn.name = v;
     return rn;
@@ -255,7 +256,9 @@ module Shumway.AVMX.AS {
 
     axHasPublicProperty(nm: any): boolean {
       rn.name = nm;
-      return this.axHasProperty(rn);
+      var result = this.axHasProperty(rn);
+      release || assert(rn.name === nm);
+      return result;
     }
 
     axSetProperty(mn: Multiname, value: any) {
@@ -418,6 +421,7 @@ module Shumway.AVMX.AS {
       while (index < axEnumerableKeys.length) {
         rn.name = axEnumerableKeys[index];
         if (self.axHasPropertyInternal(rn)) {
+          release || assert(rn.name === axEnumerableKeys[index]);
           return index + 1;
         }
         index ++;

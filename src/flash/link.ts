@@ -40,6 +40,13 @@ interface ISecurityDomain {
     text: {
       TextField: typeof flashPackage.text.TextField;
       StaticText: typeof flashPackage.text.StaticText;
+    };
+    ui: {
+      Mouse: typeof flashPackage.ui.Mouse;
+    }
+    geom: {
+      Point: typeof flashPackage.geom.Point;
+      Matrix: typeof flashPackage.geom.Matrix;
     }
   }
 }

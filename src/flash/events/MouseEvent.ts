@@ -31,8 +31,15 @@ module Shumway.AVMX.AS.flash.events {
                 relatedObject: flash.display.InteractiveObject = null, ctrlKey: boolean = false,
                 altKey: boolean = false, shiftKey: boolean = false, buttonDown: boolean = false,
                 delta: number /*int*/ = 0) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.MouseEvent");
+      super(type, bubbles, cancelable);
+      this._localX = localX;
+      this._localY = localY;
+      this._relatedObject = relatedObject;
+      this._ctrlKey = ctrlKey;
+      this._altKey = altKey;
+      this._shiftKey = shiftKey;
+      this._buttonDown = buttonDown;
+      this._delta = delta;
     }
 
     // JS -> AS Bindings

@@ -35,7 +35,8 @@ module Shumway.AVMX.AS.flash.ui {
     /**
      * Finds the interactive object on which the event is dispatched.
      */
-    private _findTarget(point: flash.geom.Point, testingType: flash.display.HitTestingType): flash.display.DisplayObject {
+    private _findTarget(point: flash.geom.Point,
+                        testingType: flash.display.HitTestingType): flash.display.DisplayObject {
       var globalX = point.x * 20 | 0;
       var globalY = point.y * 20 | 0;
       var objects = [];
@@ -50,7 +51,9 @@ module Shumway.AVMX.AS.flash.ui {
     /**
      * Converts DOM mouse event data into AS3 mouse events.
      */
-    private _dispatchMouseEvent(target: flash.display.InteractiveObject, type: string, data: MouseEventAndPointData, relatedObject: flash.display.InteractiveObject = null) {
+    private _dispatchMouseEvent(target: flash.display.InteractiveObject, type: string,
+                                data: MouseEventAndPointData,
+                                relatedObject: flash.display.InteractiveObject = null) {
       var localPoint = target.globalToLocal(data.point);
       var event = new events.MouseEvent (
         type,
@@ -79,7 +82,7 @@ module Shumway.AVMX.AS.flash.ui {
       }
 
       var globalPoint = data.point;
-      flash.ui.Mouse.updateCurrentPosition(globalPoint);
+      this.stage.securityDomain.flash.ui.Mouse.axClass.updateCurrentPosition(globalPoint);
 
       var currentTarget = this.currentTarget;
       var target: InteractiveObject = null;
@@ -201,25 +204,17 @@ module Shumway.AVMX.AS.flash.ui {
 
   export class Mouse extends ASObject {
 
+    static axClass: typeof Mouse;
 
     // Called whenever the class is initialized.
-    static classInitializer: any = function () {
-      this._currentPosition = new flash.geom.Point();
+    static classInitializer() {
+      this._currentPosition = new this.securityDomain.flash.geom.Point();
       this._cursor = MouseCursor.AUTO;
       this.draggableObject = null;
-    };
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
+    }
     
     constructor () {
-      false && super();
+      super();
     }
     
     // JS -> AS Bindings

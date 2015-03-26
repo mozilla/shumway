@@ -2011,9 +2011,9 @@ module Shumway.AVMX.AS.flash.display {
      * Returns the current mouse position relative to this object.
      */
     _getLocalMousePosition(): flash.geom.Point {
-      var position = flash.ui.Mouse._currentPosition;
+      var position = this.securityDomain.flash.ui.Mouse.axClass._currentPosition;
       if (this._parent) {
-        position = this._parent.globalToLocal(flash.ui.Mouse._currentPosition);
+        position = this._parent.globalToLocal(position);
       }
       return position;
     }
