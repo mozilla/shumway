@@ -62,6 +62,8 @@ module Shumway.AVMX.AS.flash.geom {
 
   export class Matrix3D extends ASObject {
 
+    static classInitializer = null;
+
     static axClass: typeof Matrix3D;
 
     static FromArray(matrix: any) {
@@ -69,15 +71,6 @@ module Shumway.AVMX.AS.flash.geom {
       result._matrix = new Float32Array(matrix);
       return result;
     }
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
 
     _matrix: Float32Array;
     constructor (v: any = null) {
