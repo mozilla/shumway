@@ -691,6 +691,9 @@ module Shumway.AVMX {
     _flags: number;
     _prettyIndent: number;
     prettyPrinting: boolean;
+    ignoreComments: boolean;
+    ignoreWhitespace: boolean;
+    ignoreProcessingInstructions: boolean;
   }
 
   export interface AXXMLListClass extends AXClass {
