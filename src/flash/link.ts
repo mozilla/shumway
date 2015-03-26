@@ -164,5 +164,7 @@ module Shumway.AVMX.AS {
 
   M("flash.accessibility.Accessibility", flash.accessibility.Accessibility);
   M("flash.accessibility.AccessibilityProperties", flash.accessibility.AccessibilityProperties);
+
   M("flash.utils.Timer", flash.utils.Timer);
+  M("flash.utils.ByteArray", flash.utils.ByteArray);
 }

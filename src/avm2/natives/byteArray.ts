@@ -225,6 +225,42 @@ module Shumway.AVMX.AS {
       position: number;
       length: number;
 
+      axGetPublicProperty(nm: any): any {
+        // Optimization for the common case of indexed element accesses.
+        if (typeof nm === 'number') {
+          return this.axGetNumericProperty(nm);
+        }
+        var name = asCoerceName(nm);
+        if (isNumeric(name)) {
+          return this.axGetNumericProperty(+name);
+        }
+        return this['$Bg' + name];
+      }
+
+      axGetNumericProperty(nm: number) {
+        release || assert(typeof nm === 'number');
+        return (<any>this).getValue(nm);
+      }
+
+      axSetPublicProperty(nm: any, value: any) {
+        release || checkValue(value);
+        // Optimization for the common case of indexed element accesses.
+        if (typeof nm === 'number') {
+          return this.axSetNumericProperty(nm, value);
+        }
+        var name = asCoerceName(nm);
+        if (isNumeric(name)) {
+          this.axSetNumericProperty(+name, value);
+          return;
+        }
+        this['$Bg' + name] = value;
+      }
+
+      axSetNumericProperty(nm: number, value: any) {
+        release || assert(typeof nm === 'number');
+        (<any>this).setValue(nm, value);
+      }
+
       axGetProperty(mn: Multiname): any {
         // Optimization for the common case of indexed element accesses.
         if (typeof mn.name === 'number') {

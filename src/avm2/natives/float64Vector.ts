@@ -537,7 +537,8 @@ module Shumway.AVMX.AS {
       release || checkValue(value);
       // Optimization for the common case of indexed element accesses.
       if (typeof nm === 'number') {
-        return this.axGetNumericProperty(nm);
+        this.axSetNumericProperty(nm, value);
+        return;
       }
       var name = asCoerceName(nm);
       if (isNumeric(name)) {

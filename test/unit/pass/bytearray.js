@@ -16,6 +16,7 @@
 
 (function graphicsTests() {
   var ByteArray = flash.utils.ByteArray;
+  var AXObject = ByteArray.axClass.securityDomain.AXObject;
 
   unitTests.push(basics);
   unitTests.push(readBytes);
@@ -28,19 +29,19 @@
     ba.writeByte(0x00);
     ba.writeByte(0xff);
     eq(ba.length, 3);
-    eq(ba.asGetPublicProperty(0), 0xff);
-    eq(ba.asGetPublicProperty(1), 0x00);
-    eq(ba.asGetPublicProperty(2), 0xff);
+    eq(ba.axGetPublicProperty(0), 0xff);
+    eq(ba.axGetPublicProperty(1), 0x00);
+    eq(ba.axGetPublicProperty(2), 0xff);
 
     ba.writeUnsignedInt(0xffffffff);
     eq(ba.length, 7);
-    eq(ba.asGetPublicProperty(0), 0xff);
-    eq(ba.asGetPublicProperty(1), 0x00);
-    eq(ba.asGetPublicProperty(2), 0xff);
-    eq(ba.asGetPublicProperty(3), 0xff);
-    eq(ba.asGetPublicProperty(4), 0xff);
-    eq(ba.asGetPublicProperty(5), 0xff);
-    eq(ba.asGetPublicProperty(6), 0xff);
+    eq(ba.axGetPublicProperty(0), 0xff);
+    eq(ba.axGetPublicProperty(1), 0x00);
+    eq(ba.axGetPublicProperty(2), 0xff);
+    eq(ba.axGetPublicProperty(3), 0xff);
+    eq(ba.axGetPublicProperty(4), 0xff);
+    eq(ba.axGetPublicProperty(5), 0xff);
+    eq(ba.axGetPublicProperty(6), 0xff);
 
     ba.position = 0;
 
@@ -76,7 +77,7 @@
 
   function objectEnAndDecoding() {
     var ba = new ByteArray();
-    var sourceObj = {};
+    var sourceObj = AXObject.axConstruct([]);
     sourceObj.axSetPublicProperty('a', 10);
     sourceObj.axSetPublicProperty('b', 20);
     sourceObj.axSetPublicProperty('c', 30);
@@ -84,9 +85,9 @@
     eq(ba.length, 16);
     ba.position = 0;
     var obj = ba.readObject();
-    eq(obj.asGetPublicProperty('a'), 10);
-    eq(obj.asGetPublicProperty('b'), 20);
-    eq(obj.asGetPublicProperty('c'), 30);
+    eq(obj.axGetPublicProperty('a'), 10);
+    eq(obj.axGetPublicProperty('b'), 20);
+    eq(obj.axGetPublicProperty('c'), 30);
   }
 
 })();
