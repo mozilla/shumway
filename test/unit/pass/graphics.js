@@ -104,15 +104,15 @@
 //    assertThrowsInstanceOf(function() {g.beginGradientFill(null)}, TypeError,
 //                           'beginGradientFill must specify a valid type');
     var matrix = new Matrix(1, 2, 3, 4, 5, 6);
-    g.beginGradientFill(GradientType.LINEAR, [0, 0xff0000], [1, 0.5], [45.3, 198.24], matrix,
-                        SpreadMethod.REPEAT, InterpolationMethod.LINEAR_RGB, -0.73);
+    g.beginGradientFill("linear", [0, 0xff0000], [1, 0.5], [45.3, 198.24], matrix,
+                        "repeat", "linearRGB", -0.73);
     shape.styles.position = 0;
     eq(shape.commands[0], PathCommand.BeginGradientFill, "fill is stored");
     eq(shape.coordinatesPosition, 0, "fills don't write coordinates");
-    eq(GradientType.fromNumber(shape.styles.readUnsignedByte()), GradientType.LINEAR,
+    eq(GradientType.axClass.fromNumber(shape.styles.readUnsignedByte()), "linear",
        'gradient type is stored');
     eq(shape.styles.readShort(), -93, 'focal point is stored as fixed8');
-    matrixEq(Matrix.FromDataBuffer(shape.styles), matrix, "matrix is stored");
+    matrixEq(Matrix.axClass.FromDataBuffer(shape.styles), matrix, "matrix is stored");
 
     eq(shape.styles.readUnsignedByte(), 2, 'number of color stops is stored');
     eq(shape.styles.readUnsignedByte(), 45, 'first ratio is stored');
@@ -120,15 +120,15 @@
     eq(shape.styles.readUnsignedByte(), 198, 'second ratio is stored');
     eq(shape.styles.readUnsignedInt(), 0xff00007f, 'second RGBA color is stored');
 
-    eq(SpreadMethod.fromNumber(shape.styles.readUnsignedByte()), SpreadMethod.REPEAT,
+    eq(SpreadMethod.axClass.fromNumber(shape.styles.readUnsignedByte()), "repeat",
        'spread method is stored');
-    eq(InterpolationMethod.fromNumber(shape.styles.readUnsignedByte()),
-       InterpolationMethod.LINEAR_RGB, 'interpolation method is stored');
+    eq(InterpolationMethod.axClass.fromNumber(shape.styles.readUnsignedByte()),
+       "linearRGB", 'interpolation method is stored');
     eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
     eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
     g.clear();
 
-    g.beginGradientFill(GradientType.LINEAR, [0, 0xff0000], [1], [0, 100]);
+    g.beginGradientFill("linear", [0, 0xff0000], [1], [0, 100]);
     eq(shape.commandsPosition, 0, "Calls of beginGradientFill with different " +
                                   "lengths for the colors, alphas and ratios " +
                                   "are ignored");
@@ -148,7 +148,7 @@
     var index = shape.styles.readUnsignedInt();
     eq(index, 0, "beginBitmapFill stores given bitmap's id");
     eq(g.getUsedTextures()[index], bitmap, "beginBitmapFill stores given bitmap's id");
-    matrixEq(Matrix.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
+    matrixEq(Matrix.axClass.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
              "default matrix is serialized if none is provided");
     eq(shape.styles.readBoolean(), true, "defaults to repeat");
     eq(shape.styles.readBoolean(), false, "defaults to no smooting");
@@ -157,12 +157,12 @@
     g.clear();
 
     try {
-      g.beginBitmapFill({});
+      g.beginBitmapFill(securityDomain.createObject());
       assertUnreachable("beginBitmapFill with invalid bitmap argument throws");
     } catch (e) {
     }
     try {
-      g.beginBitmapFill(bitmap, {});
+      g.beginBitmapFill(bitmap, securityDomain.createObject());
       assertUnreachable("beginBitmapFill with non-matrix 2nd argument throws");
     } catch (e) {
     }
@@ -173,7 +173,7 @@
     g.beginBitmapFill(bitmap, matrix, false, true);
     shape.styles.position = 0;
     shape.styles.readUnsignedInt(); // skip bitmap id
-    matrixEq(Matrix.FromDataBuffer(shape.styles), matrix,
+    matrixEq(Matrix.axClass.FromDataBuffer(shape.styles), matrix,
              "serialized matrix is identical to input matrix");
     eq(shape.styles.readBoolean(), false, "repeat flag is written correctly");
     eq(shape.styles.readBoolean(), true, "smooth flag is written correctly");
@@ -263,7 +263,7 @@
 //    assertThrowsInstanceOf(function() {g.beginGradientFill(null)}, TypeError,
 //                           'beginGradientFill must specify a valid type');
 
-    g.lineGradientStyle(GradientType.LINEAR, [0, 0xff0000], [1, 0.5], [45.3, 198.24]);
+    g.lineGradientStyle("linear", [0, 0xff0000], [1, 0.5], [45.3, 198.24]);
     shape.styles.position = 0;
     eq(shape.commandsPosition, 0, "lineGradientStyle doesn't write data if no lineStyle is set");
     eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
@@ -272,16 +272,16 @@
     g.lineStyle(10, 0xff00ff);
     var initialPosition = shape.styles.position;
     var matrix = new Matrix(1, 2, 3, 4, 5, 6);
-    g.lineGradientStyle(GradientType.LINEAR, [0, 0xff0000], [1, 0.5], [45.3, 198.24], matrix,
-                        SpreadMethod.REPEAT, InterpolationMethod.LINEAR_RGB, -0.73);
+    g.lineGradientStyle("linear", [0, 0xff0000], [1, 0.5], [45.3, 198.24], matrix,
+                        "repeat", "linearRGB", -0.73);
     shape.styles.position = initialPosition;
     eq(shape.commands[0], PathCommand.LineStyleSolid, "initial line style is stored");
     eq(shape.commands[1], PathCommand.LineStyleGradient, "gradient line style is stored");
     eq(shape.coordinatesPosition, 1, "lineStyle writes thickness into coordinates");
-    eq(GradientType.fromNumber(shape.styles.readUnsignedByte()), GradientType.LINEAR,
+    eq(GradientType.axClass.fromNumber(shape.styles.readUnsignedByte()), "linear",
        'gradient type is stored');
     eq(shape.styles.readShort(), -93, 'focal point is stored as fixed8');
-    matrixEq(Matrix.FromDataBuffer(shape.styles), matrix, "matrix is stored");
+    matrixEq(Matrix.axClass.FromDataBuffer(shape.styles), matrix, "matrix is stored");
 
     eq(shape.styles.readUnsignedByte(), 2, 'number of color stops is stored');
     eq(shape.styles.readUnsignedByte(), 45, 'first ratio is stored');
@@ -289,15 +289,15 @@
     eq(shape.styles.readUnsignedByte(), 198, 'second ratio is stored');
     eq(shape.styles.readUnsignedInt(), 0xff00007f, 'second RGBA color is stored');
 
-    eq(SpreadMethod.fromNumber(shape.styles.readUnsignedByte()), SpreadMethod.REPEAT,
+    eq(SpreadMethod.axClass.fromNumber(shape.styles.readUnsignedByte()), "repeat",
        'spread method is stored');
-    eq(InterpolationMethod.fromNumber(shape.styles.readUnsignedByte()),
-       InterpolationMethod.LINEAR_RGB, 'interpolation method is stored');
+    eq(InterpolationMethod.axClass.fromNumber(shape.styles.readUnsignedByte()),
+       "linearRGB", 'interpolation method is stored');
     eq(shape.commandsPosition, 2, "instructions didn't write more data than expected");
     eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
     g.clear();
 
-    g.lineGradientStyle(GradientType.LINEAR, [0, 0xff0000], [1], [0, 100]);
+    g.lineGradientStyle("linear", [0, 0xff0000], [1], [0, 100]);
     eq(shape.commandsPosition, 0, "Calls of lineGradientStyle with different lengths for the " +
                                   "colors, alphas and ratios are ignored");
     eq(shape.coordinatesPosition, 0, "fills don't write coordinates");
@@ -328,7 +328,7 @@
     var index = shape.styles.readUnsignedInt();
     eq(index, 0, "lineBitmapStyle stores given bitmap's id");
     eq(g.getUsedTextures()[index], bitmap, "lineBitmapStyle stores given bitmap's id");
-    matrixEq(Matrix.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
+    matrixEq(Matrix.axClass.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
              "default matrix is serialized if none is provided");
     eq(shape.styles.readBoolean(), true, "defaults to repeat");
     eq(shape.styles.readBoolean(), false, "defaults to no smooting");
@@ -337,12 +337,12 @@
     g.clear();
 
     try {
-      g.lineBitmapStyle({});
+      g.lineBitmapStyle(securityDomain.createObject());
       assertUnreachable("lineBitmapStyle with invalid bitmap argument throws");
     } catch (e) {
     }
     try {
-      g.lineBitmapStyle(bitmap, {});
+      g.lineBitmapStyle(bitmap, securityDomain.createObject());
       assertUnreachable("lineBitmapStyle with non-matrix 2nd argument throws");
     } catch (e) {
     }
@@ -355,7 +355,7 @@
     g.lineBitmapStyle(bitmap, matrix, false, true);
     shape.styles.position = initialPosition;
     shape.styles.readUnsignedInt(); // skip bitmap id
-    matrixEq(Matrix.FromDataBuffer(shape.styles), matrix,
+    matrixEq(Matrix.axClass.FromDataBuffer(shape.styles), matrix,
              "serialized matrix is identical to input matrix");
     eq(shape.styles.readBoolean(), false, "repeat flag is written correctly");
     eq(shape.styles.readBoolean(), true, "smooth flag is written correctly");

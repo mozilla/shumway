@@ -1260,13 +1260,13 @@ module Shumway.AVMX.AS.flash.display {
     {
       if (isNullOrUndefined(bitmap)) {
         this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'bitmap');
-      } else if (!(flash.display.BitmapData.isType(bitmap))) {
+      } else if (!(this.securityDomain.flash.display.BitmapData.axIsType(bitmap))) {
         this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap',
                                        'flash.display.BitmapData');
       }
       if (isNullOrUndefined(matrix)) {
         matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
-      } else if (!(flash.geom.Matrix.isType(matrix))) {
+      } else if (!(this.securityDomain.flash.geom.Matrix.axIsType(matrix))) {
         this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
                                        'flash.geom.Matrix');
       }
@@ -1348,7 +1348,7 @@ module Shumway.AVMX.AS.flash.display {
 
       if (isNullOrUndefined(matrix)) {
         matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
-      } else if (!(flash.geom.Matrix.isType(matrix))) {
+      } else if (!(this.securityDomain.flash.geom.Matrix.axIsType(matrix))) {
         this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
                                        'flash.geom.Matrix');
       }

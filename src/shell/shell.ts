@@ -382,6 +382,10 @@ module Shumway.Shell {
     var securityDomain = createSecurityDomain(builtinABCPath, null, null);
     Shumway.AVMX.AS.installClassLoaders(securityDomain.application, jsGlobal);
 
+    // Make the securityDomain available on the global object for ease of use
+    // in unit tests.
+    jsGlobal.securityDomain = securityDomain;
+
     writer.writeLn("Running test file: " + file + " ...");
     var start = dateNow();
     load(file);

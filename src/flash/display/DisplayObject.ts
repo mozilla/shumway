@@ -1784,7 +1784,7 @@ module Shumway.AVMX.AS.flash.display {
       if (this._graphics) {
         return this._graphics;
       }
-      this._graphics = new flash.display.Graphics();
+      this._graphics = new this.securityDomain.flash.display.Graphics();
       this._graphics._setParent(this);
       this._invalidateFillAndLineBounds(true, true);
       this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);

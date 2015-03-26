@@ -29,6 +29,9 @@ interface ISecurityDomain {
       MovieClip: typeof flashPackage.display.MovieClip;
       Sprite: typeof flashPackage.display.Sprite;
       Shape: typeof flashPackage.display.Shape;
+      Graphics: typeof flashPackage.display.Graphics;
+      Bitmap: typeof flashPackage.display.Bitmap;
+      BitmapData: typeof flashPackage.display.BitmapData;
     };
     events: {
       Event: typeof flashPackage.events.Event;
@@ -75,6 +78,10 @@ module Shumway.AVMX.AS {
   M("flash.display.FrameLabel", flash.display.FrameLabel);
   M("flash.display.Scene", flash.display.Scene);
   M("flash.display.AVM1Movie", flash.display.AVM1Movie);
+
+  M("flash.display.GradientType", flash.display.GradientType);
+  M("flash.display.SpreadMethod", flash.display.SpreadMethod);
+  M("flash.display.InterpolationMethod", flash.display.InterpolationMethod);
 
   M("flash.filters.BevelFilter", flash.filters.BevelFilter);
   M("flash.filters.BitmapFilter", flash.filters.BitmapFilter);

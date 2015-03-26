@@ -123,6 +123,7 @@ module Shumway.AVMX {
   }
   export function wrapJSObject(object) {
     // REDUX:
+    notImplemented("wrapJSObject");
     return null;
     //var wrapper = Object.create(object);
     //for (var i in object) {
@@ -136,23 +137,15 @@ module Shumway.AVMX {
     //}
     //return wrapper;
   }
-  export function forEachPublicProperty(object, fn, self?) {
-    // REDUX:
-    //if (!object.asBindings) {
-    //  for (var key in object) {
-    //    fn.call(self, key, object[key]);
-    //  }
-    //  return;
-    //}
-    //
-    //for (var key in object) {
-    //  if (isNumeric(key)) {
-    //    fn.call(self, key, object[key]);
-    //  } else if (!object.asBindings[key] && Multiname.isPublicQualifiedName(key)) {
-    //    var name = Multiname.stripPublicQualifier(key);
-    //    fn.call(self, name, object[key]);
-    //  }
-    //}
+
+  export function forEachPublicProperty(object: AXObject, callbackfn: (property: any, value: any) => void, thisArg?: any) {
+    // REDUX: Do we need to walk the proto chain here?
+    var properties = object.axGetEnumerableKeys();
+    for (var i = 0; i < properties.length; i++) {
+      var property = properties[i];
+      var value = object.axGetPublicProperty(property);
+      callbackfn.call(thisArg, property, value);
+    }
   }
 
   export enum WriterFlags {
@@ -181,6 +174,8 @@ module Shumway.AVMX {
   }
 
   import assert = Shumway.Debug.assert;
+  import notImplemented = Shumway.Debug.notImplemented;
+
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
 
@@ -953,6 +948,13 @@ module Shumway.AVMX {
       } else {
         Shumway.Debug.notImplemented(factoryClassName);
       }
+    }
+
+    /**
+     * Constructs a plain vanilla object in this security domain.
+     */
+    createObject() {
+      return Object.create(this.AXObject.tPrototype);
     }
 
     /**

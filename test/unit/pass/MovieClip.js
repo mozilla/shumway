@@ -12,8 +12,8 @@
 
   function reset() {
     MC_NAME_SUFFIX = 0;
-    MovieClip.reset();
-    DisplayObjectContainer.reset();
+    MovieClip.axClass.reset();
+    DisplayObjectContainer.axClass.reset();
   }
 
   function A(){}
@@ -41,7 +41,7 @@
 
   function createMovieClipFromSymbol(symbol) {
     var mc = MovieClip.axClass.initializeFrom(symbol);
-    mc.class.instanceConstructorNoInitialize.call(mc);
+    mc.axInitializer();
     mc._name = 'movieclip_' + MC_NAME_SUFFIX++;
     return mc;
   }
@@ -111,7 +111,7 @@
     });
     eq(framesExecuted[0], 0, "Just adding a script to the current frame doesn't run it");
     mc.stage._enqueueFrameScripts();
-    MovieClip.runFrameScripts();
+    MovieClip.axClass.runFrameScripts();
     eq(framesExecuted[0], 1, "MovieClip.runFrameScripts() runs queued scripts");
     mc.addFrameScript(2, function(){
       framesExecuted[3]++;

@@ -16,7 +16,6 @@
 
 module Shumway.AVMX {
   import ByteArray = Shumway.AVMX.AS.flash.utils.ByteArray;
-  var forEachPublicProperty = null; // TODO
   var construct = null; // TODO
   import assert = Shumway.Debug.assert;
 
