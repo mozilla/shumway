@@ -34,9 +34,9 @@ module Shumway.AVMX.AS {
     static RETURNINDEXEDARRAY = 8;
     static NUMERIC = 16;
 
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = GenericVector.prototype;
       defineNonEnumerableProperty(proto, '$Bgjoin', asProto.join);
       // Same as join, see VectorImpl.as in Tamarin repository.
       defineNonEnumerableProperty(proto, '$BgtoString', asProto.join);

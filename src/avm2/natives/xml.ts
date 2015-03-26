@@ -994,9 +994,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASQName extends ASObject implements XMLType {
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASQName.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', asProto.ecmaToString);
     }
 
@@ -1220,15 +1220,15 @@ module Shumway.AVMX.AS {
 
   export class ASXML extends ASObject implements XMLType {
     public static instanceConstructor: any = ASXML;
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASXML.prototype;
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
       defineNonEnumerableProperty(proto, '$BghasOwnProperty', proto.native_hasOwnProperty);
       defineNonEnumerableProperty(proto, '$BgpropertyIsEnumerable',
                                   proto.native_propertyIsEnumerable);
 
-      addPrototypeFunctionAlias(axClass, '$BgvalueOf', asProto.valueOf);
+      addPrototypeFunctionAlias(<any>this, '$BgvalueOf', asProto.valueOf);
       addPrototypeFunctionAlias(proto, '$Bgsettings', this.native_settings);
       addPrototypeFunctionAlias(proto, '$BgsetSettings', this.native_setSettings);
       addPrototypeFunctionAlias(proto, '$BgdefaultSettings', this.native_defaultSettings);
@@ -2666,9 +2666,9 @@ module Shumway.AVMX.AS {
 
   export class ASXMLList extends ASObject implements XMLType {
     public static instanceConstructor: any = ASXMLList;
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASXMLList.prototype;
       defineNonEnumerableProperty(proto, '$BgvalueOf', Object.prototype['$BgvalueOf']);
       defineNonEnumerableProperty(proto, '$BghasOwnProperty', proto.native_hasOwnProperty);
       defineNonEnumerableProperty(proto, '$BgpropertyIsEnumerable',

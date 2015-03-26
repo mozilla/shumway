@@ -187,9 +187,9 @@ module Shumway.AVMX.AS {
     static native_hasOwnProperty: (v: any) => boolean;
     static native_propertyIsEnumerable: (v: any) => boolean;
 
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASObject.prototype;
       addPrototypeFunctionAlias(proto, "$BghasOwnProperty", asProto.native_hasOwnProperty);
       addPrototypeFunctionAlias(proto, "$BgpropertyIsEnumerable", asProto.native_propertyIsEnumerable);
       addPrototypeFunctionAlias(proto, "$BgsetPropertyIsEnumerable", asProto.setPropertyIsEnumerable);
@@ -458,7 +458,10 @@ module Shumway.AVMX.AS {
     classNatives: Object [];
     instanceNatives: Object [];
 
-    classInitializer: (axClass: AXClass) => void;
+    /**
+     * Called on every class when it is initialized. The |axClass| object is passed in as |this|.
+     */
+    classInitializer: () => void;
 
     classSymbols: string [];
     instanceSymbols: string [];
@@ -478,9 +481,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASArray extends ASObject {
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASArray.prototype;
       addPrototypeFunctionAlias(proto, "$Bgpush", asProto.push);
       addPrototypeFunctionAlias(proto, "$Bgpop", asProto.pop);
       addPrototypeFunctionAlias(proto, "$Bgshift", asProto.shift);
@@ -817,9 +820,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASFunction extends ASObject {
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASFunction.prototype;
       addPrototypeFunctionAlias(proto, "$BgtoString", asProto.toString);
     }
 
@@ -864,9 +867,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASMethodClosure extends ASFunction {
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASMethodClosure.prototype;
       defineNonEnumerableProperty(proto, '$Bgcall', asProto.call);
       defineNonEnumerableProperty(proto, '$Bgapply', asProto.apply);
     }
@@ -898,9 +901,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASBoolean extends ASObject {
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASBoolean.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
     }
@@ -918,9 +921,9 @@ module Shumway.AVMX.AS {
   export class ASString extends ASObject {
     static classNatives: any [] = [String];
 
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASString.prototype;
       addPrototypeFunctionAlias(proto, '$BgindexOf', asProto.generic_indexOf);
       addPrototypeFunctionAlias(proto, '$BglastIndexOf', asProto.generic_lastIndexOf);
       addPrototypeFunctionAlias(proto, '$BgcharAt', asProto.generic_charAt);
@@ -1060,9 +1063,9 @@ module Shumway.AVMX.AS {
   export class ASNumber extends ASObject {
     static classNatives: any [] = [Math];
 
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASNumber.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
     }
@@ -1095,9 +1098,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASInt extends ASObject {
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASInt.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
     }
@@ -1106,9 +1109,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASUint extends ASObject {
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASUint.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
     }
@@ -1134,11 +1137,11 @@ module Shumway.AVMX.AS {
       throw type.axConstruct([message, id]);
     }
 
-    static classInitializer: any = function(axClass: AXClass) {
-      defineNonEnumerableProperty(axClass, '$Bglength', 1);
-      defineNonEnumerableProperty(axClass.dPrototype, '$Bgname', 'Error');
-      defineNonEnumerableProperty(axClass.dPrototype, '$Bgmessage', 'Error');
-      defineNonEnumerableProperty(axClass.dPrototype, '$BgtoString', this.prototype.toString);
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this.dPrototype, '$Bgname', 'Error');
+      defineNonEnumerableProperty(this.dPrototype, '$Bgmessage', 'Error');
+      defineNonEnumerableProperty(this.dPrototype, '$BgtoString', ASError.prototype.toString);
     }
 
     constructor(message: any, id: any) {
@@ -1169,9 +1172,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASDefinitionError extends ASError {
-    static classInitializer: any = function(axClass: AXClass) {
-      defineNonEnumerableProperty(axClass, '$Bglength', 1);
-      defineNonEnumerableProperty(axClass.dPrototype, '$Bgname', this.name.substr(2));
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this.dPrototype, '$Bgname', (<any>ASDefinitionError).name.substr(2));
     }
   }
   export class ASEvalError extends ASError {
@@ -1515,7 +1518,7 @@ module Shumway.AVMX.AS {
     copyOwnPropertyDescriptors(axClass.tPrototype, asClass.prototype, filter);
 
     if (asClass.classInitializer) {
-      asClass.classInitializer(axClass);
+      asClass.classInitializer.call(axClass);
     }
 
     runtimeWriter && traceASClass(axClass, asClass);

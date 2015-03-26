@@ -53,9 +53,9 @@ module Shumway.AVMX.AS {
     public static staticNatives: any [] = [Float64Vector];
     public static instanceNatives: any [] = [Float64Vector.prototype];
 
-    static classInitializer(axClass: AXClass) {
-      var proto: any = axClass.dPrototype;
-      var asProto: any = this.prototype;
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = Float64Vector.prototype;
       defineNonEnumerableProperty(proto, '$Bgjoin', asProto.join);
       // Same as join, see VectorImpl.as in Tamarin repository.
       defineNonEnumerableProperty(proto, '$BgtoString', asProto.join);
