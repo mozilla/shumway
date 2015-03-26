@@ -191,11 +191,11 @@
     eq(shape.coordinates[0], 20, "given thickness is stored");
     eq(shape.styles.readUnsignedInt(), 0xff, "default color is full-opacity black");
     eq(shape.styles.readBoolean(), false, "defaults to no pixel hinting");
-    eq(LineScaleMode.fromNumber(shape.styles.readUnsignedByte()), LineScaleMode.NORMAL,
+    eq(LineScaleMode.axClass.fromNumber(shape.styles.readUnsignedByte()), 'normal',
        "defaults to normal scaling");
-    eq(CapsStyle.fromNumber(shape.styles.readUnsignedByte()), CapsStyle.ROUND,
+    eq(CapsStyle.axClass.fromNumber(shape.styles.readUnsignedByte()), 'round',
        "defaults to round caps");
-    eq(JointStyle.fromNumber(shape.styles.readUnsignedByte()), JointStyle.ROUND,
+    eq(JointStyle.axClass.fromNumber(shape.styles.readUnsignedByte()), 'round',
        "defaults to round joints");
     eq(shape.styles.readUnsignedByte(), 3, "defaults to miterLimit of 3");
     eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
@@ -236,7 +236,7 @@
     var g = createGraphics();
     var shape = g.getGraphicsData();
 
-    g.lineStyle(10, 0xaabbcc, 0.5, true, LineScaleMode.HORIZONTAL, CapsStyle.SQUARE,
+    g.lineStyle(10, 0xaabbcc, 0.5, true, 'horizontal', 'square',
                 JointStyle.BEVEL, 10);
     shape.styles.position = 0;
     eq(shape.commands[0], PathCommand.LineStyleSolid, "style is stored");
@@ -244,11 +244,11 @@
     eq(shape.coordinates[0], 200, "given thickness is stored");
     eq(shape.styles.readUnsignedInt(), 0xaabbcc80, "color and alpha are stored correctly");
     eq(shape.styles.readBoolean(), true, "pixel hinting is stored");
-    eq(LineScaleMode.fromNumber(shape.styles.readUnsignedByte()), LineScaleMode.HORIZONTAL,
+    eq(LineScaleMode.axClass.fromNumber(shape.styles.readUnsignedByte()), 'horizontal',
        "lineScaleMode is stored");
-    eq(CapsStyle.fromNumber(shape.styles.readUnsignedByte()), CapsStyle.SQUARE,
+    eq(CapsStyle.axClass.fromNumber(shape.styles.readUnsignedByte()), 'square',
        "capsStyle is stored");
-    eq(JointStyle.fromNumber(shape.styles.readUnsignedByte()), JointStyle.BEVEL,
+    eq(JointStyle.axClass.fromNumber(shape.styles.readUnsignedByte()), JointStyle.BEVEL,
        "jointsStyle is stored");
     eq(shape.styles.readUnsignedByte(), 10, "miterLimit is stored");
     eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");

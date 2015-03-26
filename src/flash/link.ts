@@ -82,6 +82,9 @@ module Shumway.AVMX.AS {
   M("flash.display.GradientType", flash.display.GradientType);
   M("flash.display.SpreadMethod", flash.display.SpreadMethod);
   M("flash.display.InterpolationMethod", flash.display.InterpolationMethod);
+  M("flash.display.LineScaleMode", flash.display.LineScaleMode);
+  M("flash.display.CapsStyle", flash.display.CapsStyle);
+  M("flash.display.JointStyle", flash.display.JointStyle);
 
   M("flash.filters.BevelFilter", flash.filters.BevelFilter);
   M("flash.filters.BitmapFilter", flash.filters.BitmapFilter);

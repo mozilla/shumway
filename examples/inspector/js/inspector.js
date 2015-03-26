@@ -191,6 +191,7 @@ function executeFile(file, buffer, movieParams) {
     } else if (filename.endsWith(".swf")) {
       assert(false);
     } else if (filename.endsWith(".js") || filename.endsWith("/")) {
+      jsGlobal.securityDomain = securityDomain;
       Shumway.AVMX.AS.installClassLoaders(securityDomain.application, jsGlobal);
       executeUnitTests(filename);
     }
