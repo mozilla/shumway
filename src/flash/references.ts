@@ -17,6 +17,7 @@
 /// <reference path='../../build/ts/avm2.d.ts' />
 /// <reference path='../../build/ts/swf.d.ts' />
 
+///<reference path='module.ts' />
 ///<reference path='../htmlparser.ts' />
 ///<reference path='../TextContent.ts' />
 ///<reference path='options.ts' />

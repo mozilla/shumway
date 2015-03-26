@@ -55,16 +55,16 @@ module Shumway.AVMX.AS.flash.display {
      * LoaderInfo object is always null. Also, no OPEN event ever gets dispatched.
      */
     static getRootLoader(): Loader {
-      if (Loader._rootLoader) {
-        return Loader._rootLoader;
+      if (this._rootLoader) {
+        return this._rootLoader;
       }
       var loader = new flash.display.Loader();
       // The root loader gets a default name, but it's not visible and hence the instance id must
       // not be used up.
-      flash.display.DisplayObject._instanceID--;
+      this.securityDomain.flash.display.DisplayObject.axClass._instanceID--;
       // The root loaderInfo's `loader` property is always null.
       loader._contentLoaderInfo._loader = null;
-      Loader._rootLoader = loader;
+      this._rootLoader = loader;
       return loader;
     }
 
@@ -73,16 +73,12 @@ module Shumway.AVMX.AS.flash.display {
       Loader.classInitializer();
     }
 
-    static classInitializer: any = function () {
-      Loader._rootLoader = null;
-      Loader._loadQueue = [];
-      Loader.runtimeStartTime = 0;
-      Loader._embeddedContentLoadCount = 0;
-    };
-    static initializer: any = function() {
-      var self: Loader = this;
-      display.DisplayObject._advancableInstances.push(self);
-    };
+    static classInitializer() {
+      this._rootLoader = null;
+      this._loadQueue = [];
+      this.runtimeStartTime = 0;
+      this._embeddedContentLoadCount = 0;
+    }
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -217,19 +213,20 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     constructor () {
-      false && super();
-      DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
+      super();
 
+      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(this);
       this._content = null;
       if (Loader._rootLoader) {
         // Loader reserves the next instance ID to use for the loaded content.
         // This isn't needed for the first, root, loader, because that uses "root1" as the name.
-        this._contentID = DisplayObject._instanceID++;
+        this._contentID = this.securityDomain.flash.display.DisplayObject.axClass._instanceID++;
       } else {
         // The root loader itself doesn't get an ID.
-        //DisplayObject._instanceID--;
+        //this.securityDomain.flash.display.DisplayObject.axClass._instanceID--;
       }
-      this._contentLoaderInfo = new display.LoaderInfo(display.LoaderInfo.CtorToken);
+      var loaderInfoCtor = this.securityDomain.flash.display.LoaderInfo;
+      this._contentLoaderInfo = new loaderInfoCtor(loaderInfoCtor.axClass.CtorToken);
       this._contentLoaderInfo._loader = this;
 
       // REDUX:
@@ -253,7 +250,7 @@ module Shumway.AVMX.AS.flash.display {
 
     _constructFrame() {
       if (this === Loader.getRootLoader() && this._content) {
-        display.DisplayObject._advancableInstances.remove(this);
+        this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.remove(this);
         this._children[0] = this._content;
         this._constructChildren();
         this._children.length = 0;
@@ -574,7 +571,7 @@ module Shumway.AVMX.AS.flash.display {
       var root = symbol.symbolClass.initializeFrom(symbol);
       // The initial SWF's root object gets a default of 'root1', which doesn't use up a
       // DisplayObject instance ID. For the others, we have reserved on in `_contentID`.
-      flash.display.DisplayObject._instanceID--;
+      this.securityDomain.flash.display.DisplayObject.axClass._instanceID--;
       if (this === Loader._rootLoader) {
         root._name = 'root1';
       } else {
@@ -607,9 +604,10 @@ module Shumway.AVMX.AS.flash.display {
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         root = this._initAvm1Root(root);
       } else if (this === Loader.getRootLoader()) {
-        display.MovieClip.frameNavigationModel = loaderInfo.swfVersion < 10 ?
-                                                 flash.display.FrameNavigationModel.SWF9 :
-                                                 flash.display.FrameNavigationModel.SWF10;
+        var movieClipClass = this.securityDomain.flash.display.MovieClip.axClass;
+        movieClipClass.frameNavigationModel = loaderInfo.swfVersion < 10 ?
+                                              flash.display.FrameNavigationModel.SWF9 :
+                                              flash.display.FrameNavigationModel.SWF10;
       }
       this._content = root;
       if (this === Loader.getRootLoader()) {

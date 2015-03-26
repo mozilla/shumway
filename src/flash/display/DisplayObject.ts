@@ -330,15 +330,17 @@ module Shumway.AVMX.AS.flash.display {
     _constructFrame(): void;
   }
 
+  var displayObjectSyncID = 0;
+
   export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable, Shumway.Remoting.IRemotable {
+
+    static axClass: typeof DisplayObject;
 
     /**
      * Every displayObject is assigned an unique integer ID.
      */
-    static _syncID = 0;
-
     static getNextSyncID() {
-      return this._syncID++;
+      return displayObjectSyncID++;
     }
 
     /**
@@ -351,9 +353,9 @@ module Shumway.AVMX.AS.flash.display {
     static _advancableInstances: WeakList<IAdvancable>;
 
     // Called whenever the class is initialized.
-    static classInitializer: any = function () {
+    static classInitializer() {
       this.reset();
-    };
+    }
 
     static reset() {
       this._advancableInstances = new WeakList<IAdvancable>();
@@ -588,7 +590,8 @@ module Shumway.AVMX.AS.flash.display {
      * Sets the object's initial name to adhere to the 'instanceN' naming scheme.
      */
     _setInitialName() {
-      this._name = 'instance' + (flash.display.DisplayObject._instanceID++);
+      this._name = 'instance' +
+                   (this.securityDomain.flash.display.DisplayObject.axClass._instanceID++);
     }
 
     _setParent(parent: DisplayObjectContainer, depth: number) {
@@ -959,11 +962,13 @@ module Shumway.AVMX.AS.flash.display {
         var ancestor = this._findNearestAncestor(DisplayObjectFlags.InvalidConcatenatedColorTransform, false);
         var path = DisplayObject._getAncestors(this, ancestor);
         var i = path.length - 1;
-        if (flash.display.Stage.isType(path[i])) {
+        var stageClass = this.securityDomain.flash.display.Stage;
+        if (stageClass.axIsType(path[i])) {
           i--;
         }
-        var m = ancestor && !flash.display.Stage.isType(ancestor) ? ancestor._concatenatedColorTransform.clone()
-                                                                  : new geom.ColorTransform();
+        var m = ancestor && !stageClass.axIsType(ancestor) ?
+                ancestor._concatenatedColorTransform.clone() :
+                new geom.ColorTransform();
         while (i >= 0) {
           ancestor = path[i--];
           release || assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
@@ -1509,7 +1514,7 @@ module Shumway.AVMX.AS.flash.display {
       var node = this;
       do {
         if (node._stage === node) {
-          release || assert(flash.display.Stage.isType(node));
+          release || assert(this.securityDomain.flash.display.Stage.axIsType(node));
           return <flash.display.Stage>node;
         }
         node = node._parent;
@@ -1796,7 +1801,7 @@ module Shumway.AVMX.AS.flash.display {
         release || assert(symbol instanceof flash.display.ShapeSymbol);
         this._graphics = (<flash.display.ShapeSymbol>symbol).graphics;
         this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
-      } else if (flash.text.StaticText.isType(this)) {
+      } else if (this.securityDomain.flash.text.StaticText.axIsType(this)) {
         release || assert(symbol instanceof flash.text.TextSymbol);
         var textSymbol = <flash.text.TextSymbol>symbol;
         (<flash.text.StaticText>this)._textContent = textSymbol.textContent;
@@ -1873,7 +1878,8 @@ module Shumway.AVMX.AS.flash.display {
           // For Drop, replace previous hit with current one.
           objects[0] = this;
         } else if (testingType === HitTestingType.ObjectsUnderPoint ||
-            InteractiveObject.isType(this) && (<InteractiveObject>this)._mouseEnabled) {
+                   this.securityDomain.flash.display.InteractiveObject.axIsType(this) &&
+                   (<InteractiveObject>this)._mouseEnabled) {
           // For getObjectsUnderPoint, push all direct hits, for mouse target finding
           // InteractiveObjects only.
           objects.push(this);

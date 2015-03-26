@@ -24,6 +24,9 @@ module Shumway.AVMX.AS.flash.display {
   import SWFFrame = Shumway.SWF.SWFFrame;
 
   export class LoaderInfo extends flash.events.EventDispatcher {
+
+    static axClass: typeof LoaderInfo;
+
     // Constructing LoaderInfo without providing this token throws, preventing it from AS3.
     static CtorToken = {};
     constructor (token: Object) {

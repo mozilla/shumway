@@ -14,18 +14,31 @@
  * limitations under the License.
  */
 
+import flashPackage = Shumway.AVMX.AS.flash;
 interface ISecurityDomain {
   flash?: {
     display: {
-      EventDispatcher: typeof Shumway.AVMX.AS.flash.events.EventDispatcher;
-      DisplayObject: typeof Shumway.AVMX.AS.flash.display.DisplayObject;
-      DisplayObjectContainer: typeof Shumway.AVMX.AS.flash.display.DisplayObjectContainer;
+      EventDispatcher: typeof flashPackage.events.EventDispatcher;
+      DisplayObject: typeof flashPackage.display.DisplayObject;
+      DisplayObjectContainer: typeof flashPackage.display.DisplayObjectContainer;
+      InteractiveObject: typeof flashPackage.display.InteractiveObject;
+      AVM1Movie: typeof flashPackage.display.AVM1Movie;
+      Stage: typeof flashPackage.display.Stage;
+      Loader: typeof flashPackage.display.Loader;
+      LoaderInfo: typeof flashPackage.display.LoaderInfo;
+      MovieClip: typeof flashPackage.display.MovieClip;
+      Sprite: typeof flashPackage.display.Sprite;
+      Shape: typeof flashPackage.display.Shape;
     };
     events: {
-      Event: typeof Shumway.AVMX.AS.flash.events.Event;
+      Event: typeof flashPackage.events.Event;
     };
     filters: {
-      BitmapFilter: typeof Shumway.AVMX.AS.flash.filters.BitmapFilter;
+      BitmapFilter: typeof flashPackage.filters.BitmapFilter;
+    };
+    text: {
+      TextField: typeof flashPackage.text.TextField;
+      StaticText: typeof flashPackage.text.StaticText;
     }
   }
 }
@@ -149,5 +162,6 @@ module Shumway.AVMX.AS {
   M("flash.system.LoaderContext", flash.system.LoaderContext);
 
   M("flash.accessibility.Accessibility", flash.accessibility.Accessibility);
+  M("flash.accessibility.AccessibilityProperties", flash.accessibility.AccessibilityProperties);
   M("flash.utils.Timer", flash.utils.Timer);
 }

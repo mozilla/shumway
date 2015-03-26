@@ -203,10 +203,9 @@ module Shumway.AVMX.AS.flash.events {
 
     public static broadcastEventDispatchQueue: BroadcastEventDispatchQueue;
 
-    // Called whenever the class is initialized.
-    static classInitializer: any = function () {
-      EventDispatcher.broadcastEventDispatchQueue = new BroadcastEventDispatchQueue();
-    };
+    static classInitializer() {
+      this.broadcastEventDispatchQueue = new BroadcastEventDispatchQueue();
+    }
 
     private _target: flash.events.IEventDispatcher;
 
@@ -216,24 +215,11 @@ module Shumway.AVMX.AS.flash.events {
     private _captureListeners: Shumway.Map<EventListenerList>;
     private _targetOrBubblingListeners: Shumway.Map<EventListenerList>;
 
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      var self: EventDispatcher = this;
-
-      self._target = this;
-      self._captureListeners = null;
-      self._targetOrBubblingListeners = null;
-    };
-
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["toString", "dispatchEvent"];
-
     constructor(target: flash.events.IEventDispatcher = null) {
-      false && super();
+      super();
       this._target = target || this;
+      this._captureListeners = null;
+      this._targetOrBubblingListeners = null;
     }
 
     toString(): string {

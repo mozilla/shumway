@@ -118,16 +118,18 @@ module Shumway.AVMX.AS.flash.display {
 
     static frameNavigationModel: FrameNavigationModel;
 
+    static axClass: typeof MovieClip;
+
     private static _callQueue: MovieClip [];
 
     // Called whenever the class is initialized.
-    static classInitializer: any = function () {
-      MovieClip.reset();
-    };
+    static classInitializer() {
+      this.reset();
+    }
 
     static reset() {
-      MovieClip.frameNavigationModel = FrameNavigationModel.SWF10;
-      MovieClip._callQueue = [];
+      this.frameNavigationModel = FrameNavigationModel.SWF10;
+      this._callQueue = [];
     }
 
     // Called whenever an instance of the class is initialized.
