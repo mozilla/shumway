@@ -1553,7 +1553,8 @@ module Shumway.AVMX.AS {
         };
         loader.axIsType = function (value: any) {
           return axClass.axIsType(value);
-        }
+        };
+        loader.axClass = axClass;
         Object.defineProperty(container, className, {
           value: loader,
           writable: false

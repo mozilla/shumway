@@ -239,11 +239,11 @@ module Shumway.AVMX.AS.flash.display {
       child._invalidatePosition();
       this._invalidateChildren();
       child._addReference();
-      child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
+      child.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.ADDED, true));
       // ADDED event handlers may remove the child from the stage, in such cases
       // we should not dispatch the ADDED_TO_STAGE event.
       if (child.stage) {
-        child._propagateEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
+        child._propagateEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.ADDED_TO_STAGE));
       }
       return child;
     }

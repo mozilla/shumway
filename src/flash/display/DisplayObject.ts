@@ -362,77 +362,7 @@ module Shumway.AVMX.AS.flash.display {
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.DisplaySymbol) {
       release || counter.count("DisplayObject::initializer");
-
       var self: DisplayObject = this;
-
-      self._id = flash.display.DisplayObject.getNextSyncID();
-      self._displayObjectFlags = DisplayObjectFlags.Visible                            |
-                                 DisplayObjectFlags.InvalidLineBounds                  |
-                                 DisplayObjectFlags.InvalidFillBounds                  |
-                                 DisplayObjectFlags.InvalidConcatenatedMatrix          |
-                                 DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
-                                 DisplayObjectFlags.DirtyDescendents                   |
-                                 DisplayObjectFlags.DirtyGraphics                      |
-                                 DisplayObjectFlags.DirtyMatrix                        |
-                                 DisplayObjectFlags.DirtyColorTransform                |
-                                 DisplayObjectFlags.DirtyMask                          |
-                                 DisplayObjectFlags.DirtyClipDepth                     |
-                                 DisplayObjectFlags.DirtyMiscellaneousProperties;
-
-      self._root = null;
-      self._stage = null;
-      self._setInitialName();
-      self._parent = null;
-      self._mask = null;
-
-      self._z = 0;
-      self._scaleX = 1;
-      self._scaleY = 1;
-      self._skewX = 0;
-      self._skewY = 0;
-      self._scaleZ = 1;
-      self._rotation = 0;
-      self._rotationX = 0;
-      self._rotationY = 0;
-      self._rotationZ = 0;
-
-      self._width = 0;
-      self._height = 0;
-      self._opaqueBackground = null;
-      self._scrollRect = null;
-      self._filters = null;
-      self._blendMode = BlendMode.NORMAL;
-      release || assert (self._blendMode);
-      self._scale9Grid = null;
-      self._loaderInfo = null;
-      self._accessibilityProperties = null;
-
-      self._fillBounds = new Bounds(0, 0, 0, 0);
-      self._lineBounds = new Bounds(0, 0, 0, 0);
-      self._clipDepth = -1;
-
-      self._concatenatedMatrix = new geom.Matrix();
-      self._invertedConcatenatedMatrix = new geom.Matrix();
-      self._matrix = new geom.Matrix();
-      self._invertedMatrix = new geom.Matrix();
-      self._matrix3D = null;
-      self._colorTransform = new geom.ColorTransform();
-      self._concatenatedColorTransform = new geom.ColorTransform();
-
-      self._depth = -1;
-      self._ratio = 0;
-      self._index = -1;
-      self._maskedObject = null;
-
-      self._mouseOver = false;
-      self._mouseDown = false;
-
-      self._symbol = null;
-      self._graphics = null;
-      self._children = null;
-
-      self._referenceCount = 0;
-
       if (symbol) {
         if (symbol.scale9Grid) {
           // No need to take ownership: scale9Grid is never changed.
@@ -581,8 +511,75 @@ module Shumway.AVMX.AS.flash.display {
 
     constructor () {
       super(undefined);
-      // false && super(undefined);
-      // events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+
+      this._id = flash.display.DisplayObject.getNextSyncID();
+      this._displayObjectFlags = DisplayObjectFlags.Visible                            |
+                                 DisplayObjectFlags.InvalidLineBounds                  |
+                                 DisplayObjectFlags.InvalidFillBounds                  |
+                                 DisplayObjectFlags.InvalidConcatenatedMatrix          |
+                                 DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
+                                 DisplayObjectFlags.DirtyDescendents                   |
+                                 DisplayObjectFlags.DirtyGraphics                      |
+                                 DisplayObjectFlags.DirtyMatrix                        |
+                                 DisplayObjectFlags.DirtyColorTransform                |
+                                 DisplayObjectFlags.DirtyMask                          |
+                                 DisplayObjectFlags.DirtyClipDepth                     |
+                                 DisplayObjectFlags.DirtyMiscellaneousProperties;
+
+      this._root = null;
+      this._stage = null;
+      this._setInitialName();
+      this._parent = null;
+      this._mask = null;
+
+      this._z = 0;
+      this._scaleX = 1;
+      this._scaleY = 1;
+      this._skewX = 0;
+      this._skewY = 0;
+      this._scaleZ = 1;
+      this._rotation = 0;
+      this._rotationX = 0;
+      this._rotationY = 0;
+      this._rotationZ = 0;
+
+      this._width = 0;
+      this._height = 0;
+      this._opaqueBackground = null;
+      this._scrollRect = null;
+      this._filters = null;
+      this._blendMode = BlendMode.NORMAL;
+      release || assert (this._blendMode);
+      this._scale9Grid = null;
+      this._loaderInfo = null;
+      this._accessibilityProperties = null;
+
+      this._fillBounds = new Bounds(0, 0, 0, 0);
+      this._lineBounds = new Bounds(0, 0, 0, 0);
+      this._clipDepth = -1;
+
+      this._concatenatedMatrix = new geom.Matrix();
+      this._invertedConcatenatedMatrix = new geom.Matrix();
+      this._matrix = new geom.Matrix();
+      this._invertedMatrix = new geom.Matrix();
+      this._matrix3D = null;
+      this._colorTransform = new geom.ColorTransform();
+      this._concatenatedColorTransform = new geom.ColorTransform();
+
+      this._depth = -1;
+      this._ratio = 0;
+      this._index = -1;
+      this._maskedObject = null;
+
+      this._mouseOver = false;
+      this._mouseDown = false;
+
+      this._symbol = null;
+      this._graphics = null;
+      this._children = null;
+
+      this._referenceCount = 0;
+
       this._addReference();
       this._setFlags(DisplayObjectFlags.Constructed);
     }

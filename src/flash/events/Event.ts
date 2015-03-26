@@ -20,10 +20,12 @@ module Shumway.AVMX.AS.flash.events {
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class Event extends ASObject {
 
+    static axClass: typeof Event;
+
     static _instances: Shumway.Map<Event>;
 
     static classInitializer: any = function () {
-      Event._instances = Shumway.ObjectUtilities.createMap<Event>();
+      this._instances = Shumway.ObjectUtilities.createMap<Event>();
     };
 
     static initializer: any = null;
