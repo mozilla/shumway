@@ -24,28 +24,13 @@ module Shumway.AVMX.AS.flash.display {
   import SWFFrame = Shumway.SWF.SWFFrame;
 
   export class LoaderInfo extends flash.events.EventDispatcher {
-
-    // Called whenever the class is initialized.
-    static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["parameters", "uncaughtErrorEvents",
-                                              // "dispatchEvent"];
-
     // Constructing LoaderInfo without providing this token throws, preventing it from AS3.
     static CtorToken = {};
     constructor (token: Object) {
-      false && super();
       if (token !== LoaderInfo.CtorToken) {
         this.securityDomain.throwError('ArgumentError', Errors.CantInstantiateError, 'LoaderInfo$');
       }
-      flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       this._loader = null;
       this._loaderUrl = '';
       this.reset();

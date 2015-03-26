@@ -5,7 +5,7 @@
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
   var Stage = flash.display.Stage;
   var MovieClip = flash.display.MovieClip;
-  var SpriteSymbol = flash.display.SpriteSymbol;
+  var SpriteSymbol = Shumway.AVMX.AS.flash.display.SpriteSymbol;
   var SWFFrame = Shumway.SWF.SWFFrame;
 
   var MC_NAME_SUFFIX = 0;
@@ -23,7 +23,7 @@
 
   function createMovieClipWithFrames(numFrames) {
     assert(typeof numFrames === 'number');
-    var loaderInfo = new LoaderInfo(LoaderInfo.CtorToken);
+    var loaderInfo = new LoaderInfo(LoaderInfo.axClass.CtorToken);
     var stage = new Stage();
     DisplayObject._stage = stage;
     stage._stage = stage;
@@ -40,7 +40,7 @@
   }
 
   function createMovieClipFromSymbol(symbol) {
-    var mc = MovieClip.initializeFrom(symbol);
+    var mc = MovieClip.axClass.initializeFrom(symbol);
     mc.class.instanceConstructorNoInitialize.call(mc);
     mc._name = 'movieclip_' + MC_NAME_SUFFIX++;
     return mc;
