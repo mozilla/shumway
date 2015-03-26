@@ -249,8 +249,7 @@
       "/utils/swfdec/test/trace/equality-old-7.swf",
       "/utils/swfdec/test/trace/equality-old-8.swf",
       "/utils/swfdec/test/trace/extends-simple.swf",
-      "/utils/swfdec/test/trace/extends-super.swf",
-      "/utils/swfdec/test/trace/external-interface-properties-7.swf"
+      "/utils/swfdec/test/trace/extends-super.swf"
     ],
     "defaultRate": 20,
     "type": "stas"
