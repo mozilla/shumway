@@ -305,6 +305,8 @@ module Shumway.AVMX.AS {
       }
       // Object - Otherwise, convert the input argument to a string using ToString.
       name = String(mn);
+    } else if (typeof mn === 'number') {
+      name = mn + '';
     } else if (typeof mn === 'string') {
       // String - Create a QName object or AttributeName from the String
       // as specified below in section 10.6.1. See below.
@@ -1995,9 +1997,9 @@ module Shumway.AVMX.AS {
 
       release || assert(isIndex(mn.name));
 
-      if (v._kind !== ASXMLKind.Element ||
-          v._kind !== ASXMLKind.Text ||
-          v._kind !== ASXMLKind.Comment ||
+      if (v._kind !== ASXMLKind.Element &&
+          v._kind !== ASXMLKind.Text &&
+          v._kind !== ASXMLKind.Comment &&
           v._kind !== ASXMLKind.ProcessingInstruction)
       {
         var s = toString(v, this.securityDomain);
