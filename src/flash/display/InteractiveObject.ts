@@ -18,7 +18,6 @@ module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVMX.asCoerceString;
-  import DisplayObject = flash.display.DisplayObject;
 
   import events = flash.events;
 
@@ -28,18 +27,7 @@ module Shumway.AVMX.AS.flash.display {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      var self: InteractiveObject = this;
-      self._tabEnabled = false;
-      self._tabIndex = -1;
-      self._focusRect = null;
-      self._mouseEnabled = true;
-      self._doubleClickEnabled = false;
-      self._accessibilityImplementation = null;
-      self._softKeyboardInputAreaOfInterest = null;
-      self._needsSoftKeyboard = false;
-      self._contextMenu = null;
-    };
+    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -49,9 +37,15 @@ module Shumway.AVMX.AS.flash.display {
     
     constructor () {
       super();
-      // REDUX: Is it okay?
-      // false && super();
-      // DisplayObject.instanceConstructorNoInitialize.call(this);
+      this._tabEnabled = false;
+      this._tabIndex = -1;
+      this._focusRect = null;
+      this._mouseEnabled = true;
+      this._doubleClickEnabled = false;
+      this._accessibilityImplementation = null;
+      this._softKeyboardInputAreaOfInterest = null;
+      this._needsSoftKeyboard = false;
+      this._contextMenu = null;
     }
     
     // JS -> AS Bindings

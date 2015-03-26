@@ -40,9 +40,6 @@ module Shumway.AVMX.AS.flash.display {
       this._tabChildren = true;
       this._mouseChildren = true;
       this._children = [];
-      // REDUX: Is it okay to just call super now?
-      // false && super();
-      // InteractiveObject.instanceConstructorNoInitialize.call(this);
       this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
     }
 
