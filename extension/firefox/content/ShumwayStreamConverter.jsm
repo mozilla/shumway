@@ -392,10 +392,12 @@ ShumwayStreamConverterBase.prototype = {
       }
     }
 
+    baseUrl = pageUrl;
     if (objectParams.base) {
-        baseUrl = Services.io.newURI(objectParams.base, null, pageUrl).spec;
-    } else {
-        baseUrl = pageUrl;
+      try {
+        var parsedPageUrl = Services.io.newURI(pageUrl);
+        baseUrl = Services.io.newURI(objectParams.base, null, parsedPageUrl).spec;
+      } catch (e) { /* ignore */ }
     }
 
     var movieParams = {};
