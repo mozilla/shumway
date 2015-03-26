@@ -465,7 +465,7 @@ module Shumway.AVMX.AS {
     classInfo: ClassInfo;
 
     axCoerce(v: any): any {
-
+      return v;
     }
 
     axConstruct: (argArray?: any []) => any;

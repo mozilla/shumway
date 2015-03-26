@@ -255,13 +255,13 @@ module Shumway.AVMX {
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = asEquals(a, b) ? pc + offset : pc;
+            pc = asEquals(a, b, securityDomain) ? pc + offset : pc;
             continue;
           case Bytecode.IFNE:
             b = stack.pop();
             a = stack.pop();
             offset = s24();
-            pc = !asEquals(a, b) ? pc + offset : pc;
+            pc = !asEquals(a, b, securityDomain) ? pc + offset : pc;
             continue;
           case Bytecode.IFSTRICTEQ:
             b = stack.pop();
@@ -537,9 +537,9 @@ module Shumway.AVMX {
           case Bytecode.CONVERT_S:
             stack[stack.length - 1] = asConvertString(stack[stack.length - 1]);
             break;
-          //case Bytecode.checkfilter:
-          //  stack[stack.length - 1] = checkFilter(stack[stack.length - 1]);
-          //  break;
+          case Bytecode.CHECKFILTER:
+            stack[stack.length - 1] = axCheckFilter(stack[stack.length - 1], securityDomain);
+            break;
           case Bytecode.COERCE:
             popNameInto(stack, abc.getMultiname(u30()), rn);
             type = scope.topScope().getScopeProperty(rn, true, false);
@@ -584,7 +584,7 @@ module Shumway.AVMX {
             stack[stack.length - 1] = ~stack[stack.length - 1];
             break;
           case Bytecode.ADD:
-            stack[stack.length - 2] = asAdd(stack[stack.length - 2], stack.pop());
+            stack[stack.length - 2] = asAdd(stack[stack.length - 2], stack.pop(), securityDomain);
             break;
           case Bytecode.SUBTRACT:
             stack[stack.length - 2] -= stack.pop();
@@ -617,7 +617,8 @@ module Shumway.AVMX {
             stack[stack.length - 2] ^= stack.pop();
             break;
           case Bytecode.EQUALS:
-            stack[stack.length - 2] = asEquals(stack[stack.length - 2], stack.pop());
+            stack[stack.length - 2] = asEquals(stack[stack.length - 2], stack.pop(),
+                                               securityDomain);
             break;
           case Bytecode.STRICTEQUALS:
             stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();

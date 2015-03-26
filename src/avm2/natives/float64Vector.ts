@@ -52,7 +52,6 @@ module Shumway.AVMX.AS {
     public static instanceConstructor: any = Float64Vector;
     public static staticNatives: any [] = [Float64Vector];
     public static instanceNatives: any [] = [Float64Vector.prototype];
-    public static callableConstructor: any = Float64Vector.callable;
 
     static classInitializer(axClass: AXClass) {
       var proto: any = axClass.dPrototype;
@@ -103,7 +102,8 @@ module Shumway.AVMX.AS {
       this._length = length;
     }
 
-    static callable(object) {
+    static axApply(self: Float64Vector, args: any[]) {
+      var object = args[0];
       if (object instanceof Float64Vector) {
         return object;
       }

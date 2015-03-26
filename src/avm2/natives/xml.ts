@@ -59,9 +59,16 @@ module Shumway.AVMX.AS {
 
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
 
-  function isXMLType(val: any, securityDomain: SecurityDomain): boolean {
-    return securityDomain.AXXML.dPrototype.isPrototypeOf(val) ||
-           securityDomain.AXXMLList.dPrototype.isPrototypeOf(val);
+  export function isXMLType(val: any, securityDomain: SecurityDomain): boolean {
+    return val && (securityDomain.AXXML.dPrototype.isPrototypeOf(val) ||
+                   securityDomain.AXXMLList.dPrototype.isPrototypeOf(val) ||
+                   securityDomain.AXQName.dPrototype.isPrototypeOf(val) ||
+                   securityDomain.AXNamespace.dPrototype.isPrototypeOf(val));
+  }
+
+  export function isXMLCollection(val: any, securityDomain: SecurityDomain): boolean {
+    return val && (securityDomain.AXXML.dPrototype.isPrototypeOf(val) ||
+                   securityDomain.AXXMLList.dPrototype.isPrototypeOf(val));
   }
 
   // 10.1 ToString
@@ -814,10 +821,12 @@ module Shumway.AVMX.AS {
      * Namespace (uriValue)
      * Namespace (prefixValue, uriValue)
      */
-    public static callableConstructor: any = function (a?: any, b?: any): ASNamespace {
+    public static axApply(self: ASNamespace, args: any[]): ASNamespace {
+      var a = args[0];
+      var b = args[1];
       // 1. If (prefixValue is not specified and Type(uriValue) is Object and
       // uriValue.[[Class]] == "Namespace")
-      if (arguments.length === 1 && isObject(a) &&
+      if (args.length === 1 && isObject(a) &&
           this.securityDomain.AXNamespace.dPrototype.isPrototypeOf(a))
       {
         // a. Return uriValue
@@ -825,7 +834,7 @@ module Shumway.AVMX.AS {
       }
       // 2. Create and return a new Namespace object exactly as if the Namespace constructor had
       // been called with the same arguments (section 13.2.2).
-      switch (arguments.length) {
+      switch (args.length) {
         case 0:
           return this.securityDomain.AXNamespace.Create();
         case 1:
@@ -833,7 +842,7 @@ module Shumway.AVMX.AS {
         default:
           return this.securityDomain.AXNamespace.Create(a, b);
       }
-    };
+    }
 
     static Create(uriOrPrefix_: any, uri_: any): ASNamespace {
       var ns: ASNamespace = Object.create(this.securityDomain.AXNamespace.tPrototype);
@@ -1013,28 +1022,28 @@ module Shumway.AVMX.AS {
      * QName ( Name )
      * QName ( Namespace , Name )
      */
-    public static callableConstructor: any = function (nameOrNS_?: any, name_?: any): ASQName {
+    public static axApply(self: ASNamespace, args: any[]): ASQName {
+      var nameOrNS_ = args[0];
+      var name_ = args[1];
       // 1. If Namespace is not specified and Type(Name) is Object and Name.[[Class]] == “QName”
-      if (arguments.length === 1 && isObject(nameOrNS_) &&
+      if (args.length === 1 && isObject(nameOrNS_) &&
           this.securityDomain.AXQName.dPrototype.isPrototypeOf(nameOrNS_))
       {
         // a. Return Name
         return  nameOrNS_;
       }
 
-      // TODO: fix
       // 2. Create and return a new QName object exactly as if the QName constructor had been
       // called with the same arguments (section 13.3.2).
-      //switch (arguments.length) {
-      //  case 0:
-      //    return this.securityDomain.AXQName.Create();
-      //  case 1:
-      //    return this.securityDomain.AXQName.Create(nameOrNS_);
-      //  default:
-      //    return this.securityDomain.AXQName.Create(nameOrNS_, name_);
-      //}
-      return null;
-    };
+      switch (arguments.length) {
+        case 0:
+          return this.securityDomain.AXQName.Create();
+        case 1:
+          return this.securityDomain.AXQName.Create(nameOrNS_);
+        default:
+          return this.securityDomain.AXQName.Create(nameOrNS_, name_);
+      }
+    }
 
     name: Multiname;
 
@@ -1331,6 +1340,15 @@ module Shumway.AVMX.AS {
     _value: any;
     _parent: ASXML;
     _children: ASXML[];
+
+    public static axApply(self: ASXML, args: any[]): ASXML {
+      var value = args[0];
+      // 13.5.1 The XMLList Constructor Called as a Function
+      if (isNullOrUndefined(value)) {
+        value = '';
+      }
+      return toXML(value, this.securityDomain);
+    }
 
     constructor (value?: any) {
       false && super();
@@ -2695,7 +2713,8 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgtoJSON', asProto.toJSON);
     }
 
-    public static callableConstructor: any = function (value: any): ASXMLList {
+    public static axApply(self: ASXMLList, args: any[]): ASXMLList {
+      var value = args[0];
       // 13.5.1 The XMLList Constructor Called as a Function
       if (isNullOrUndefined(value)) {
         value = '';
