@@ -196,7 +196,7 @@ module Shumway.AVMX.AS.flash.display {
 
         if (instance._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
           instance._removeFlags(DisplayObjectFlags.NeedsLoadEvent);
-          instance.dispatchEvent(events.Event.getInstance(events.Event.AVM1_LOAD));
+          instance.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.AVM1_LOAD));
           continue;
         }
 

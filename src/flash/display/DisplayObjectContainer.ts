@@ -93,12 +93,12 @@ module Shumway.AVMX.AS.flash.display {
 
         if (child._symbol && child._symbol.isAVM1Object) {
           try {
-            child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_INIT));
+            child.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.AVM1_INIT));
           } catch (e) {
             console.warn('caught error under DisplayObjectContainer AVM1_INIT event: ', e);
           }
           try {
-            child.dispatchEvent(events.Event.getInstance(events.Event.AVM1_CONSTRUCT));
+            child.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.AVM1_CONSTRUCT));
           } catch (e) {
             console.warn('caught error under DisplayObjectContainer AVM1_CONSTRUCT event: ', e);
           }
@@ -110,13 +110,13 @@ module Shumway.AVMX.AS.flash.display {
         }
 
         try {
-          child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
+          child.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.ADDED, true));
         } catch (e) {
           console.warn('caught error under DisplayObject ADDED event: ', e);
         }
         if (child.stage) {
           try {
-            child.dispatchEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
+            child.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.ADDED_TO_STAGE));
           } catch (e) {
             console.warn('caught error under DisplayObject ADDED_TO_STAGE event: ', e);
           }
@@ -169,7 +169,7 @@ module Shumway.AVMX.AS.flash.display {
       var old = this._tabChildren;
       this._tabChildren = enable;
       if (old !== enable) {
-        this.dispatchEvent(events.Event.getInstance(events.Event.TAB_CHILDREN_CHANGE, true));
+        this.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.TAB_CHILDREN_CHANGE, true));
       }
     }
 
@@ -190,7 +190,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     addChild(child: DisplayObject): DisplayObject {
-      checkParameterType(child, "child", flash.display.DisplayObject);
+      checkParameterType(child, "child", this.securityDomain.flash.display.DisplayObject.axClass);
       return this.addChildAt(child, this._children.length);
     }
 
@@ -199,7 +199,7 @@ module Shumway.AVMX.AS.flash.display {
      * is different than the range setChildIndex expects.
      */
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
-      checkParameterType(child, "child", flash.display.DisplayObject);
+      checkParameterType(child, "child", this.securityDomain.flash.display.DisplayObject.axClass);
       release || counter.count("DisplayObjectContainer::addChildAt");
 
       index = index | 0;
@@ -292,7 +292,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     removeChild(child: DisplayObject): DisplayObject {
-      checkParameterType(child, "child", flash.display.DisplayObject);
+      checkParameterType(child, "child", this.securityDomain.flash.display.DisplayObject.axClass);
       return this.removeChildAt(this.getChildIndex(child));
     }
 
@@ -308,9 +308,9 @@ module Shumway.AVMX.AS.flash.display {
 
       var child = children[index];
       if (child._hasFlags(DisplayObjectFlags.Constructed)) {
-        child.dispatchEvent(events.Event.getInstance(events.Event.REMOVED, true));
+        child.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.REMOVED, true));
         if (this.stage) {
-          child._propagateEvent(events.Event.getInstance(events.Event.REMOVED_FROM_STAGE));
+          child._propagateEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.REMOVED_FROM_STAGE));
         }
         // Children list might have been mutated by the REMOVED or REMOVED_FROM_STAGE event,
         // we may need to operate on the new index of the child.
@@ -329,7 +329,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     getChildIndex(child: DisplayObject): number /*int*/ {
-      checkParameterType(child, "child", flash.display.DisplayObject);
+      checkParameterType(child, "child", this.securityDomain.flash.display.DisplayObject.axClass);
       if (child._parent !== this) {
         this.securityDomain.throwError('ArgumentError', Errors.NotAChildError);
       }
@@ -341,7 +341,7 @@ module Shumway.AVMX.AS.flash.display {
      */
     setChildIndex(child: DisplayObject, index: number /*int*/): void {
       index = index | 0;
-      checkParameterType(child, "child", flash.display.DisplayObject);
+      checkParameterType(child, "child", this.securityDomain.flash.display.DisplayObject.axClass);
       var children = this._children;
       if (index < 0 || index >= children.length) {
         this.securityDomain.throwError('RangeError', Errors.ParamRangeError);
@@ -628,7 +628,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     contains(child: DisplayObject): boolean {
-      checkParameterType(child, "child", flash.display.DisplayObject);
+      checkParameterType(child, "child", this.securityDomain.flash.display.DisplayObject.axClass);
       return this._isAncestor(child);
     }
 
@@ -663,8 +663,8 @@ module Shumway.AVMX.AS.flash.display {
 
     swapChildren(child1: DisplayObject, child2: DisplayObject): void {
       // Flash prints out 'child' for both non-null |child1| and |child2|.
-      checkParameterType(child1, "child", flash.display.DisplayObject);
-      checkParameterType(child2, "child", flash.display.DisplayObject);
+      checkParameterType(child1, "child", this.securityDomain.flash.display.DisplayObject.axClass);
+      checkParameterType(child2, "child", this.securityDomain.flash.display.DisplayObject.axClass);
       this.swapChildrenAt(this.getChildIndex(child1), this.getChildIndex(child2));
     }
 

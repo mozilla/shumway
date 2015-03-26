@@ -120,7 +120,7 @@ module Shumway.AVMX.AS.flash.display {
         if (instance._loadStatus === LoadStatus.Opened && instance._content) {
           enterTimeline("Loader.INIT");
           try {
-            loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
+            loaderInfo.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.INIT));
           } catch (e) {
             console.warn('caught error under loaderInfo INIT event:', e);
           }
@@ -149,7 +149,7 @@ module Shumway.AVMX.AS.flash.display {
           instance._loadStatus = LoadStatus.Complete;
           enterTimeline("Loader.Complete");
           try {
-            loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
+            loaderInfo.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.COMPLETE));
           } catch (e) {
             console.warn('caught error under loaderInfo COMPLETE event: ', e);
           }
@@ -177,7 +177,7 @@ module Shumway.AVMX.AS.flash.display {
           if (instance._loadingType === LoadingType.External) {
             enterTimeline("Loader.Open");
             try {
-              loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
+              loaderInfo.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.OPEN));
             } catch (e) {
               console.warn('caught error under loaderInfo OPEN event: ', e);
             }
@@ -390,7 +390,7 @@ module Shumway.AVMX.AS.flash.display {
       this._content = null;
       this._contentLoaderInfo._loader = null;
       this._loadStatus = LoadStatus.Unloaded;
-      this.dispatchEvent(events.Event.getInstance(events.Event.UNLOAD));
+      this.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.UNLOAD));
     }
     unload() {
       this._unload(false, false);

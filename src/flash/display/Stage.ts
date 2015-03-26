@@ -213,7 +213,7 @@ module Shumway.AVMX.AS.flash.display {
         this._stageContainerWidth = width;
         this._stageContainerHeight = height;
         if (this.scaleMode === StageScaleMode.NO_SCALE) {
-          this.dispatchEvent(flash.events.Event.getInstance(flash.events.Event.RESIZE));
+          this.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(flash.events.Event.RESIZE));
         }
       }
     }

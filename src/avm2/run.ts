@@ -116,11 +116,10 @@ module Shumway.AVMX {
     }
   }
   export function checkParameterType(argument: any, name: string, type: AS.ASClass) {
-    //checkNullParameter(argument, name);
-    // REDUX:
-    //if (!type.isType(argument)) {
-    //  throwError('TypeError', Errors.CheckTypeFailedError, argument, type.classInfo.instanceInfo.name.getOriginalName());
-    //}
+    if (!type.axIsType(argument)) {
+      type.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, argument,
+                                     type.classInfo.instanceInfo.getClassName());
+    }
   }
   export function wrapJSObject(object) {
     // REDUX:
