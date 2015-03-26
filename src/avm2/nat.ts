@@ -141,7 +141,7 @@ module Shumway.AVMX.AS {
     protected static _methodClosureCache: any;
     static classNatives: Object [];
     static instanceNatives: Object [];
-    static securityDomain: SecurityDomain;
+    static securityDomain: ISecurityDomain;
     static classSymbols = [];
     static instanceSymbols = [];
     static classInfo: ClassInfo;

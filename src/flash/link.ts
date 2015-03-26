@@ -24,6 +24,9 @@ interface ISecurityDomain {
     events: {
       Event: typeof Shumway.AVMX.AS.flash.events.Event;
     };
+    filters: {
+      BitmapFilter: typeof Shumway.AVMX.AS.flash.filters.BitmapFilter;
+    }
   }
 }
 

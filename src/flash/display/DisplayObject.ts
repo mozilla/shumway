@@ -1617,8 +1617,9 @@ module Shumway.AVMX.AS.flash.display {
         changed = this.filters.length > 0;
         this._filters.length = 0;
       } else {
+        var bitmapFilterClass = this.securityDomain.flash.filters.BitmapFilter;
         this._filters = value.map(function (x: flash.filters.BitmapFilter) {
-          release || assert (flash.filters.BitmapFilter.isType(x));
+          release || assert (bitmapFilterClass.axIsType(x));
           return x.clone();
         });
         changed = true;
@@ -1813,7 +1814,7 @@ module Shumway.AVMX.AS.flash.display {
      * in the global coordinate space overlap.
      */
     hitTestObject(other: DisplayObject): boolean {
-      release || assert (other && DisplayObject.isType(other));
+      release || assert (other && this.securityDomain.flash.display.DisplayObject.axIsType(other));
       var a = this, b = other;
       var aBounds = a._getContentBounds(false).clone();
       var bBounds = b._getContentBounds(false).clone();

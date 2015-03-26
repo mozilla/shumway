@@ -123,8 +123,7 @@ module Shumway.AVMX.AS.flash.text {
     };
 
     constructor() {
-      false && super();
-      display.InteractiveObject.instanceConstructorNoInitialize.call(this);
+      super();
     }
 
     _setFillAndLineBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {

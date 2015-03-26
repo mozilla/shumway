@@ -25,19 +25,16 @@ module Shumway.AVMX.AS.flash.events {
     static _instances: Shumway.Map<Event>;
 
     static classInitializer: any = function () {
-      this._instances = Shumway.ObjectUtilities.createMap<Event>();
+      var self: typeof Event = this;
+      self._instances = Shumway.ObjectUtilities.createMap<Event>();
     };
 
-    static initializer: any = null;
-
-    static classSymbols: string [] = null;
-    static instanceSymbols: string [] = null;
-
     static getInstance(type: string, bubbles: boolean = false, cancelable: boolean = false): Event {
-      var instance = Event._instances[type];
+      var self: typeof Event = this;
+      var instance = self._instances[type];
       if (!instance) {
-        instance = new Event(type, bubbles, cancelable);
-        Event._instances[type] = instance;
+        instance = new self.securityDomain.flash.events.Event(type, bubbles, cancelable);
+        self._instances[type] = instance;
       }
       instance._bubbles = bubbles;
       instance._cancelable = cancelable;

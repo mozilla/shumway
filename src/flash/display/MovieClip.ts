@@ -220,8 +220,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     constructor () {
-      false && super();
-      Sprite.instanceConstructorNoInitialize.call(this);
+      super();
     }
 
     _addFrame(frameInfo: any) {

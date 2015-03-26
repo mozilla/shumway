@@ -73,8 +73,7 @@ module Shumway.AVMX.AS.flash.display {
                 overState: flash.display.DisplayObject = null,
                 downState: flash.display.DisplayObject = null,
                 hitTestState: flash.display.DisplayObject = null) {
-      false && super();
-      InteractiveObject.instanceConstructorNoInitialize.call(this);
+      super();
       if (upState) {
         this.upState = upState;
       }

@@ -29,8 +29,7 @@ module Shumway.AVMX.AS.flash.display {
     static initializer: any = null;
 
     constructor () {
-      false && super();
-      DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
+      super();
       this._root = this;
       this._stage = this;
       this._frameRate = 24;

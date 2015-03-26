@@ -72,8 +72,7 @@ module Shumway.AVMX.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
 
     constructor () {
-      false && super();
-      DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
+      super();
       this._constructChildren();
     }
     

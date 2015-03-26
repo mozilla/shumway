@@ -18,10 +18,7 @@ module Shumway.AVMX.AS.flash.display {
   import warning = Shumway.Debug.warning;
 
   export class Shape extends flash.display.DisplayObject {
-    static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // [];
 
-    static classInitializer: any = null;
     static initializer: any = function (symbol: ShapeSymbol) {
       var self: Shape = this;
       self._graphics = null;
@@ -33,8 +30,7 @@ module Shumway.AVMX.AS.flash.display {
     };
 
     constructor () {
-      false && super();
-      DisplayObject.instanceConstructorNoInitialize.call(this);
+      super();
     }
 
     _canHaveGraphics(): boolean {

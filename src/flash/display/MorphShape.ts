@@ -32,8 +32,7 @@ module Shumway.AVMX.AS.flash.display {
     };
     
     constructor () {
-      false && super();
-      DisplayObject.instanceConstructorNoInitialize.call(this);
+      super();
     }
 
     _canHaveGraphics(): boolean {
