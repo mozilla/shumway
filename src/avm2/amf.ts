@@ -148,7 +148,7 @@ module Shumway.AVMX {
         case AMF0Marker.STRING:
           return readString(ba);
         case AMF0Marker.OBJECT:
-          var obj = {};
+          var obj = ba.securityDomain.createObject();
           while (true) {
             var key = readString(ba);
             if (!key.length) break;
@@ -184,7 +184,7 @@ module Shumway.AVMX {
           }
           return arr;
         case AMF0Marker.AVMPLUS:
-          return readAmf3Data(ba, {});
+          return readAmf3Data(ba, ba.securityDomain.createObject());
         default:
           throw 'AMF0 Unknown marker ' + marker;
       }
@@ -346,7 +346,7 @@ module Shumway.AVMX {
           (caches.traitsCache || (caches.traitsCache = [])).push(traits);
         }
 
-        var obj = objectClass ? construct(objectClass, []) : {};
+        var obj = objectClass ? construct(objectClass, []) : ba.securityDomain.createObject();
         (caches.objectsCache || (caches.objectsCache = [])).push(obj);
         for (var i = 0; i < traits.members.length; i++) {
           var value = readAmf3Data(ba, caches);
@@ -520,10 +520,10 @@ module Shumway.AVMX {
 
   export class AMF3 {
     public static write(ba: ByteArray, object) {
-      writeAmf3Data(ba, object, {});
+      writeAmf3Data(ba, object, ba.securityDomain.createObject());
     }
     public static read(ba: ByteArray) {
-      return readAmf3Data(ba, {});
+      return readAmf3Data(ba, ba.securityDomain.createObject());
     }
   }
 }
