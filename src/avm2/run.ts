@@ -704,7 +704,7 @@ module Shumway.AVMX {
   }
 
   export interface AXQNameClass extends AXClass {
-    Create(nameOrNS: any, name?: any): AS.ASQName;
+    Create(nameOrNS?: any, name?: any): AS.ASQName;
     FromMultiname(mn: Multiname): AS.ASQName;
   }
 
