@@ -79,6 +79,7 @@ module Shumway.AVMX.AS.flash.display {
       this.runtimeStartTime = 0;
       this._embeddedContentLoadCount = 0;
     }
+    static initializer = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;

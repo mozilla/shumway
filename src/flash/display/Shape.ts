@@ -18,7 +18,7 @@ module Shumway.AVMX.AS.flash.display {
   import warning = Shumway.Debug.warning;
 
   export class Shape extends flash.display.DisplayObject {
-
+    static classInitializer = null;
     static initializer: any = function (symbol: ShapeSymbol) {
       var self: Shape = this;
       self._graphics = null;

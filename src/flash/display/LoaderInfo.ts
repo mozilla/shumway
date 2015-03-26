@@ -25,6 +25,7 @@ module Shumway.AVMX.AS.flash.display {
 
   export class LoaderInfo extends flash.events.EventDispatcher {
 
+    static classInitializer = null;
     static axClass: typeof LoaderInfo;
 
     // Constructing LoaderInfo without providing this token throws, preventing it from AS3.

@@ -656,6 +656,7 @@ module Shumway.AVMX {
 
   export interface AXClass extends AXObject {
     scope: Scope;
+    asClass: ASClass;
     superClass: AXClass;
     classInfo: ClassInfo;
     tPrototype: AXObject;

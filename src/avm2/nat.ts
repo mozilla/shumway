@@ -143,8 +143,8 @@ module Shumway.AVMX.AS {
     static classNatives: Object [];
     static instanceNatives: Object [];
     static securityDomain: ISecurityDomain;
-    static classSymbols = [];
-    static instanceSymbols = [];
+    static classSymbols = null;
+    static instanceSymbols = null;
     static classInfo: ClassInfo;
 
     static axResolveMultiname: (mn: Multiname) => any;
@@ -199,10 +199,7 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, "$BgvalueOf", asProto.valueOf);
     }
 
-    static initializer(x?: any): ASObject {
-      Debug.abstractMethod("ASObject::initializer");
-      return null;
-    }
+    static initializer: (x?: any) => ASObject = null;
 
     static _init() {
       // Nop.
@@ -494,6 +491,8 @@ module Shumway.AVMX.AS {
       release || assert (this.dPrototype);
       return this.dPrototype;
     }
+
+    static classInitializer = null;
   }
 
   export class ASArray extends ASObject {
@@ -1497,6 +1496,30 @@ module Shumway.AVMX.AS {
   }
 
   function linkClass(axClass: AXClass, asClass: ASClass) {
+    // Save asClass on the axClass.
+    axClass.asClass = asClass;
+
+    // TypeScript's static inheritance can lead to subtle linking bugs. Make sure we don't fall
+    // victim to this by checking that we don't inherit non-null static properties.
+    if (!release && axClass.superClass) {
+      if (asClass.classSymbols) {
+        release || assert(asClass.classSymbols !== axClass.superClass.asClass.classSymbols,
+          "Make sure class " + axClass + " doesn't inherit super class's classSymbols.");
+      }
+      if (asClass.instanceSymbols) {
+        release || assert(asClass.instanceSymbols !== axClass.superClass.asClass.instanceSymbols,
+          "Make sure class " + axClass + " doesn't inherit super class's instanceSymbols.");
+      }
+      if (asClass.classInitializer) {
+        release || assert(asClass.classInitializer !== axClass.superClass.asClass.classInitializer,
+          "Make sure class " + axClass + " doesn't inherit super class's class initializer.");
+      }
+      if (asClass.initializer) {
+        release || assert(asClass.initializer !== axClass.superClass.asClass.initializer,
+          "Make sure class " + axClass + " doesn't inherit super class's initializer.");
+      }
+    }
+
     if (asClass.classSymbols) {
       // link(self.classSymbols, self.classInfo.traits,  self);
     }
