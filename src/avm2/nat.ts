@@ -461,7 +461,7 @@ module Shumway.AVMX.AS {
     /**
      * Called on every class when it is initialized. The |axClass| object is passed in as |this|.
      */
-    classInitializer: () => void;
+    classInitializer: (asClass?: ASClass) => void;
 
     classSymbols: string [];
     instanceSymbols: string [];
@@ -1137,28 +1137,30 @@ module Shumway.AVMX.AS {
       throw type.axConstruct([message, id]);
     }
 
-    static classInitializer: any = function() {
+    static classInitializer(asClass?: any) {
       defineNonEnumerableProperty(this, '$Bglength', 1);
-      defineNonEnumerableProperty(this.dPrototype, '$Bgname', 'Error');
-      defineNonEnumerableProperty(this.dPrototype, '$Bgmessage', 'Error');
-      defineNonEnumerableProperty(this.dPrototype, '$BgtoString', ASError.prototype.toString);
+      defineNonEnumerableProperty(this.dPrototype, '$Bgname', asClass.name.substr(2));
+      if (asClass === ASError) {
+        defineNonEnumerableProperty(this.dPrototype, '$Bgmessage', 'Error');
+        defineNonEnumerableProperty(this.dPrototype, '$BgtoString', ASError.prototype.toString);
+      }
     }
 
     constructor(message: any, id: any) {
-      false && super();
-      this.message = asCoerceString(message);
+      super();
+      this.$Bgmessage = asCoerceString(message);
       this._errorID = id | 0;
 
       // This is gnarly but saves us from having individual ctors in all Error child classes.
       // this.name = (<ASClass><any>this.constructor).dPrototype['$Bgname'];
     }
 
-    message: string;
-    name: string;
+    $Bgmessage: string;
+    $Bgname: string;
     _errorID: number;
 
     toString() {
-      return this.message !== "" ? this.name + ": " + this.message : this.name;
+      return this.$Bgmessage !== "" ? this.$Bgname + ": " + this.$Bgmessage : this.$Bgname;
     }
 
     get errorID() {
@@ -1172,10 +1174,6 @@ module Shumway.AVMX.AS {
   }
 
   export class ASDefinitionError extends ASError {
-    static classInitializer: any = function() {
-      defineNonEnumerableProperty(this, '$Bglength', 1);
-      defineNonEnumerableProperty(this.dPrototype, '$Bgname', (<any>ASDefinitionError).name.substr(2));
-    }
   }
   export class ASEvalError extends ASError {
   }
@@ -1518,7 +1516,10 @@ module Shumway.AVMX.AS {
     copyOwnPropertyDescriptors(axClass.tPrototype, asClass.prototype, filter);
 
     if (asClass.classInitializer) {
-      asClass.classInitializer.call(axClass);
+      asClass.classInitializer.call(axClass, asClass);
+      if (!release) {
+        Object.freeze(asClass);
+      }
     }
 
     runtimeWriter && traceASClass(axClass, asClass);
