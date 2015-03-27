@@ -52,7 +52,9 @@ function startMovie(file) {
     easelHost.alwaysRenderFrame = true;
     easelHost.ignoreTimestamps = fastRun;
     easelHost.onComplete = function () {
-      alert('Score: ' + Math.round(easelHost.cpuTime));
+      alert('Score: ' + Math.round(easelHost.cpuTime) + '\n' +
+        ' (updates: ' + Math.round(easelHost.cpuTimeUpdates) +
+        ', render: ' + Math.round(easelHost.cpuTimeRendering) + ')');
     };
   } else {
     easel.startRendering();
