@@ -55,7 +55,7 @@ module Shumway.AVMX.AS.flash.ui {
                                 data: MouseEventAndPointData,
                                 relatedObject: flash.display.InteractiveObject = null) {
       var localPoint = target.globalToLocal(data.point);
-      var event = new events.MouseEvent (
+      var event = new this.stage.securityDomain.flash.events.MouseEvent (
         type,
         type !== events.MouseEvent.ROLL_OVER &&
         type !== events.MouseEvent.ROLL_OUT &&
