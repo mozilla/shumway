@@ -347,6 +347,7 @@ var currentEasel;
 function createEasel() {
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   currentEasel = new Easel(document.getElementById("easelContainer"));
+  currentEasel.startRendering();
   return currentEasel;
 }
 

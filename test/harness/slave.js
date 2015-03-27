@@ -132,6 +132,7 @@ function createEasel() {
   Shumway.GFX.hud.value = true;
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var easel = new Shumway.GFX.Easel(document.getElementById("easelContainer"), true);
+  easel.startRendering();
   return easel;
 }
 

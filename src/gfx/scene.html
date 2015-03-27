@@ -88,7 +88,8 @@
 
     var container = document.getElementById("container");
 
-    var easel = new Easel(container, Backend.Canvas2D)
+    var easel = new Easel(container, Backend.Canvas2D);
+    easel.startRendering();
     var stage = easel.stage;
     var world = easel.world;
 

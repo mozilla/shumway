@@ -24,13 +24,20 @@ module Shumway.GFX.Test {
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
   import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
+  var MINIMAL_TIMER_INTERVAL = 5;
+
   export class PlaybackEaselHost extends EaselHost {
     private _parser: MovieRecordParser;
     private _lastTimestamp: number;
 
+    public ignoreTimestamps: boolean = false;
+    public alwaysRenderFrame: boolean = false;
+    public cpuTime: number = 0;
+
+    public onComplete: () => void = null;
+
     public constructor(easel: Easel) {
       super(easel);
-
     }
 
     private playUrl(url: string) {
@@ -68,14 +75,27 @@ module Shumway.GFX.Test {
     private _parseNext() {
       var type = this._parser.readNextRecord();
       if (type !== MovieRecordType.None) {
+        var runRecordBound = this._runRecord.bind(this);
         var interval = this._parser.currentTimestamp - this._lastTimestamp;
         this._lastTimestamp = this._parser.currentTimestamp;
-        setTimeout(this._runRecord.bind(this), interval);
+        if (interval < MINIMAL_TIMER_INTERVAL) {
+          // Records are too close to each other, running on next script turn.
+          Promise.resolve(undefined).then(runRecordBound);
+        } else if (this.ignoreTimestamps) {
+          setTimeout(runRecordBound);
+        } else {
+          setTimeout(runRecordBound, interval);
+        }
+      } else {
+        if (this.onComplete) {
+          this.onComplete();
+        }
       }
     }
 
     private _runRecord() {
       var data;
+      var start = performance.now();
       switch (this._parser.currentType) {
         case MovieRecordType.PlayerCommand:
         case MovieRecordType.PlayerCommandAsync:
@@ -90,6 +110,9 @@ module Shumway.GFX.Test {
           }
           break;
         case MovieRecordType.Frame:
+          if (this.alwaysRenderFrame) {
+            this.easel.render();
+          }
           this.processFrame();
           break;
         case MovieRecordType.FontOrImage:
@@ -104,6 +127,7 @@ module Shumway.GFX.Test {
         default:
           throw new Error('Invalid movie record type');
       }
+      this.cpuTime += performance.now() - start;
       this._parseNext();
     }
   }
