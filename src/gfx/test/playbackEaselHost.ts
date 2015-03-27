@@ -32,12 +32,17 @@ module Shumway.GFX.Test {
 
     public ignoreTimestamps: boolean = false;
     public alwaysRenderFrame: boolean = false;
-    public cpuTime: number = 0;
+    public cpuTimeUpdates: number = 0;
+    public cpuTimeRendering: number = 0;
 
     public onComplete: () => void = null;
 
     public constructor(easel: Easel) {
       super(easel);
+    }
+
+    public get cpuTime(): number {
+      return this.cpuTimeUpdates + this.cpuTimeRendering;
     }
 
     private playUrl(url: string) {
@@ -110,9 +115,6 @@ module Shumway.GFX.Test {
           }
           break;
         case MovieRecordType.Frame:
-          if (this.alwaysRenderFrame) {
-            this.easel.render();
-          }
           this.processFrame();
           break;
         case MovieRecordType.FontOrImage:
@@ -127,7 +129,21 @@ module Shumway.GFX.Test {
         default:
           throw new Error('Invalid movie record type');
       }
-      this.cpuTime += performance.now() - start;
+      this.cpuTimeUpdates += performance.now() - start;
+
+      if (this._parser.currentType === MovieRecordType.Frame &&
+          this.alwaysRenderFrame) {
+        requestAnimationFrame(this._renderFrameJustAfterRAF.bind(this));
+      } else {
+        this._parseNext();
+      }
+    }
+
+    private _renderFrameJustAfterRAF() {
+      var start = performance.now();
+      this.easel.render();
+      this.cpuTimeRendering += performance.now() - start;
+
       this._parseNext();
     }
   }
