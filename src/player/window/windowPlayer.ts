@@ -24,8 +24,8 @@ module Shumway.Player.Window {
     private _window;
     private _parent;
 
-    constructor(window, parent?) {
-      super();
+    constructor(securitDomain: ISecurityDomain, window, parent) {
+      super(securitDomain);
       this._window = window;
       this._parent = parent || window.parent;
       this._window.addEventListener('message', function (e) {

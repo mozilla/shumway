@@ -288,7 +288,7 @@ module Shumway.AVMX.AS.flash.display {
     //  return false;
     //}
 
-    getSymbolResolver(classDefinition: ASClass, symbolId: number): () => any {
+    getSymbolResolver(classDefinition: AXClass, symbolId: number): () => any {
       return this.resolveClassSymbol.bind(this, classDefinition, symbolId);
     }
 

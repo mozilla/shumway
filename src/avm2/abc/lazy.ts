@@ -832,6 +832,14 @@ module Shumway.AVMX {
       // ...
     }
 
+    public static FromFQNString(fqn: string, nsType: NamespaceType) {
+      var lastDot = fqn.lastIndexOf('.');
+      var uri = lastDot === -1 ? '' : fqn.substr(0, lastDot);
+      var name = lastDot === -1 ? fqn : fqn.substr(lastDot + 1);
+      var ns = new Namespace(null, nsType, uri);
+      return new Multiname(null, 0, CONSTANT.RTQName, [ns], name);
+    }
+
     private _nameToString(): string {
       if (this.isAnyName()) {
         return "*";

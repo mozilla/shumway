@@ -23,8 +23,8 @@ module Shumway.Player.Test {
   export class TestPlayer extends Player {
     private _worker;
 
-    constructor() {
-      super();
+    constructor(securityDomain: ISecurityDomain) {
+      super(securityDomain);
 
       // TODO this is temporary worker to test postMessage tranfers
       this._worker = Shumway.Player.Test.FakeSyncWorker.instance;

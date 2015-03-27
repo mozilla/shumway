@@ -110,11 +110,11 @@ function loadMovie(path, reportFrames) {
 
     Shumway.FileLoadingService.instance.baseUrl = path;
 
-    Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (avm2) {
+    Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (securityDomain) {
       easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
       initEaselHostCallbacks();
 
-      player = new Shumway.Player.Test.TestPlayer();
+      player = new Shumway.Player.Test.TestPlayer(securityDomain);
       player.stageAlign = 'tl';
       player.stageScale = 'noscale';
       player.displayParameters = easel.getDisplayParameters();

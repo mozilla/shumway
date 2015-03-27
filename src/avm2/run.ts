@@ -1442,6 +1442,7 @@ module Shumway.AVMX {
     }
 
     public findProperty(mn: Multiname, strict: boolean, execute: boolean): AXGlobal {
+      release || assert(mn instanceof Multiname);
       var script = this.findDefiningScript(mn, execute);
       if (script) {
         return script.global;
@@ -1450,10 +1451,12 @@ module Shumway.AVMX {
     }
 
     public getClass(mn: Multiname): AXClass {
+      release || assert(mn instanceof Multiname);
       return <any>this.getProperty(mn, true, true);
     }
 
     public getProperty(mn: Multiname, strict: boolean, execute: boolean): AXObject {
+      release || assert(mn instanceof Multiname);
       var global: any = this.findProperty(mn, strict, execute);
       if (global) {
         return global.axGetProperty(mn);
@@ -1462,6 +1465,7 @@ module Shumway.AVMX {
     }
 
     public findDefiningScript(mn: Multiname, execute: boolean): ScriptInfo {
+      release || assert(mn instanceof Multiname);
       // Look in parent domain first.
       if (this.parent) {
         var script = this.parent.findDefiningScript(mn, execute);
