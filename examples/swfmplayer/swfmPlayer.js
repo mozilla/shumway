@@ -35,6 +35,8 @@ function parseQueryString(qs) {
 var queryVariables = parseQueryString(window.location.search);
 
 var movieURL = queryVariables['swfm'] || 'tiger.swfm';
+var scoreRun = queryVariables['score'] === 'true';
+var fastRun = queryVariables['fast'] === 'true';
 var easelHost;
 
 function startMovie(file) {
@@ -45,6 +47,16 @@ function startMovie(file) {
 
   easelHost = new Shumway.GFX.Test.PlaybackEaselHost(easel);
   easelHost.playUrl(file);
+
+  if (scoreRun) {
+    easelHost.alwaysRenderFrame = true;
+    easelHost.ignoreTimestamps = fastRun;
+    easelHost.onComplete = function () {
+      alert('Score: ' + Math.round(easelHost.cpuTime));
+    };
+  } else {
+    easel.startRendering();
+  }
 }
 
 window.addEventListener('DOMContentLoaded', function () {

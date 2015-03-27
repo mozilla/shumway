@@ -215,5 +215,7 @@ function createEasel(backgroundColor) {
   var Canvas2DRenderer = Shumway.GFX.Canvas2DRenderer;
 
   Shumway.GFX.WebGL.SHADER_ROOT = SHUMWAY_ROOT + "gfx/gl/shaders/";
-  return new Easel(document.getElementById("easelContainer"), false, backgroundColor);
+  var easel = new Easel(document.getElementById("easelContainer"), false, backgroundColor);
+  easel.startRendering();
+  return easel;
 }
