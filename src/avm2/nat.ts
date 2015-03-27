@@ -1138,6 +1138,165 @@ module Shumway.AVMX.AS {
     public static classNatives: any [] = [Math];
   }
 
+  export class ASDate extends ASObject {
+    public static staticNatives: any [] = [Date];
+    public static instanceNatives: any [] = [Date.prototype];
+
+    static classInitializer: any = function() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASDate.prototype;
+      addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
+      addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+
+      addPrototypeFunctionAlias(proto, '$BgtoDateString', asProto.toDateString);
+      addPrototypeFunctionAlias(proto, '$BgtoTimeString', asProto.toTimeString);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toLocaleString);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleDateString', asProto.toLocaleDateString);
+      addPrototypeFunctionAlias(proto, '$BgtoLocaleTimeString', asProto.toLocaleTimeString);
+      addPrototypeFunctionAlias(proto, '$BgtoUTCString', asProto.toUTCString);
+
+      // NB: The default AS implementation of |toJSON| is not ES5-compliant, but
+      // the native JS one obviously is.
+      addPrototypeFunctionAlias(proto, '$BgtoJSON', asProto.toJSON);
+
+      addPrototypeFunctionAlias(proto, '$BggetUTCFullYear', asProto.getUTCFullYear);
+      addPrototypeFunctionAlias(proto, '$BggetUTCMonth', asProto.getUTCMonth);
+      addPrototypeFunctionAlias(proto, '$BggetUTCDate', asProto.getUTCDate);
+      addPrototypeFunctionAlias(proto, '$BggetUTCDay', asProto.getUTCDay);
+      addPrototypeFunctionAlias(proto, '$BggetUTCHours', asProto.getUTCHours);
+      addPrototypeFunctionAlias(proto, '$BggetUTCMinutes', asProto.getUTCMinutes);
+      addPrototypeFunctionAlias(proto, '$BggetUTCSeconds', asProto.getUTCSeconds);
+      addPrototypeFunctionAlias(proto, '$BggetUTCMilliseconds', asProto.getUTCMilliseconds);
+      addPrototypeFunctionAlias(proto, '$BggetFullYear', asProto.getFullYear);
+      addPrototypeFunctionAlias(proto, '$BggetMonth', asProto.getMonth);
+      addPrototypeFunctionAlias(proto, '$BggetDate', asProto.getDate);
+      addPrototypeFunctionAlias(proto, '$BggetDay', asProto.getDay);
+      addPrototypeFunctionAlias(proto, '$BggetHours', asProto.getHours);
+      addPrototypeFunctionAlias(proto, '$BggetMinutes', asProto.getMinutes);
+      addPrototypeFunctionAlias(proto, '$BggetSeconds', asProto.getSeconds);
+      addPrototypeFunctionAlias(proto, '$BggetMilliseconds', asProto.getMilliseconds);
+      addPrototypeFunctionAlias(proto, '$BggetTimezoneOffset', asProto.getTimezoneOffset);
+      addPrototypeFunctionAlias(proto, '$BggetTime', asProto.getTime);
+      addPrototypeFunctionAlias(proto, '$BgsetFullYear', asProto.setFullYear);
+      addPrototypeFunctionAlias(proto, '$BgsetMonth', asProto.setMonth);
+      addPrototypeFunctionAlias(proto, '$BgsetDate', asProto.setDate);
+      addPrototypeFunctionAlias(proto, '$BgsetHours', proto.setHours);
+      addPrototypeFunctionAlias(proto, '$BgsetMinutes', asProto.setMinutes);
+      addPrototypeFunctionAlias(proto, '$BgsetSeconds', asProto.setSeconds);
+      addPrototypeFunctionAlias(proto, '$BgsetMilliseconds', asProto.setMilliseconds);
+      addPrototypeFunctionAlias(proto, '$BgsetUTCFullYear', asProto.setUTCFullYear);
+      addPrototypeFunctionAlias(proto, '$BgsetUTCMonth', asProto.setUTCMonth);
+      addPrototypeFunctionAlias(proto, '$BgsetUTCDate', asProto.setUTCDate);
+      addPrototypeFunctionAlias(proto, '$BgsetUTCHours', asProto.setUTCHours);
+      addPrototypeFunctionAlias(proto, '$BgsetUTCMinutes', asProto.setUTCMinutes);
+      addPrototypeFunctionAlias(proto, '$BgsetUTCSeconds', asProto.setUTCSeconds);
+      addPrototypeFunctionAlias(proto, '$BgsetUTCMilliseconds', asProto.setUTCMilliseconds);
+    }
+
+    static parse(s): number {
+      notImplemented("Date::parse");
+      return -1;
+    }
+
+    static UTC(year, month, date = 1, hours = 0, minutes = 0, seconds = 0, ms = 0, ... rest): number {
+      notImplemented("Date::UTC");
+      return -1;
+    }
+
+    constructor() {
+      super();
+    }
+  }
+
+  // REDUX: This is just copied over from the old code, needs to be fixed up.
+  export class ASRegExp extends ASObject {
+    static classInitializer: any = function() {
+    }
+
+    constructor() {
+      super();
+      notImplemented("RegExp::constructor");
+    }
+
+    ecmaToString(): string {
+      var r: any = this;
+      var out = "/" + r.source + "/";
+      if (r.global)       out += "g";
+      if (r.ignoreCase)   out += "i";
+      if (r.multiline)    out += "m";
+      if (r.dotall)       out += "s";
+      if (r.extended)     out += "x";
+      return out;
+    }
+
+    get native_source(): string {
+      var self: any = this;
+      return self.source;
+    }
+
+    get native_global(): boolean {
+      var self: any = this;
+      return self.global;
+    }
+
+    get native_ignoreCase(): boolean {
+      var self: any = this;
+      return self.ignoreCase;
+    }
+
+    get native_multiline(): boolean {
+      var self: any = this;
+      return self.multiline;
+    }
+
+    get native_lastIndex(): number /*int*/ {
+      var self: any = this;
+      return self.lastIndex;
+    }
+
+    set native_lastIndex(i: number /*int*/) {
+      var self: any = this;
+      i = i | 0;
+      self.lastIndex = i;
+    }
+
+    get native_dotall(): boolean {
+      var self: any = this;
+      return self.dotall;
+    }
+
+    get native_extended(): boolean {
+      var self: any = this;
+      return self.extended;
+    }
+
+    exec(s: string = ""): any {
+      // REDUX:
+      //var result = RegExp.prototype.exec.apply(this, arguments);
+      //if (!result) {
+      //  return result;
+      //}
+      //// For some reason named groups in AS3 are set to the empty string instead of
+      //// undefined as is the case for indexed groups. Here we just emulate the AS3
+      //// behaviour.
+      //var keys = Object.keys(result);
+      //for (var i = 0; i < keys.length; i++) {
+      //  var k = keys[i];
+      //  if (!isNumeric(k)) {
+      //    if (result[k] === undefined) {
+      //      result[k] = "";
+      //    }
+      //  }
+      //}
+      //Shumway.AVM2.Runtime.publicizeProperties(result);
+      //return result;
+    }
+
+    test(s: string = ""): boolean {
+      return this.exec(s) !== null;
+    }
+  }
+
   export class ASError extends ASObject {
 
     public static getErrorMessage = Shumway.AVMX.getErrorMessage;
@@ -1319,6 +1478,8 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["XMLList"]             = ASXMLList;
 
     builtinNativeClasses["Math"]                = ASMath;
+    builtinNativeClasses["Date"]                = ASDate;
+    builtinNativeClasses["RegExp"]                = ASRegExp;
 
     // Errors
     builtinNativeClasses["Error"]               = ASError;
