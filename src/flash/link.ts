@@ -57,6 +57,14 @@ interface ISecurityDomain {
       Matrix: typeof flashPackage.geom.Matrix;
       Matrix3D: typeof flashPackage.geom.Matrix3D;
       Vector3D: typeof flashPackage.geom.Vector3D;
+      ColorTransform: typeof flashPackage.geom.ColorTransform;
+    }
+    net: {
+      URLRequest: typeof flashPackage.net.URLRequest;
+    }
+    system: {
+      LoaderContext: typeof flashPackage.system.LoaderContext;
+      ApplicationDomain: typeof flashPackage.system.ApplicationDomain;
     }
   }
 }

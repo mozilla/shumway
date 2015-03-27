@@ -1265,7 +1265,7 @@ module Shumway.AVMX.AS.flash.display {
                                        'flash.display.BitmapData');
       }
       if (isNullOrUndefined(matrix)) {
-        matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
+        matrix = this.securityDomain.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
       } else if (!(this.securityDomain.flash.geom.Matrix.axIsType(matrix))) {
         this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
                                        'flash.geom.Matrix');
@@ -1347,7 +1347,7 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       if (isNullOrUndefined(matrix)) {
-        matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
+        matrix = this.securityDomain.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
       } else if (!(this.securityDomain.flash.geom.Matrix.axIsType(matrix))) {
         this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
                                        'flash.geom.Matrix');

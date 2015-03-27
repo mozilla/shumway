@@ -43,9 +43,9 @@ function runSwfPlayer(flashParams) {
   Shumway.frameRateOption.value = flashParams.turboMode ? 60 : -1;
   Shumway.AVM2.Verifier.enabled.value = compilerSettings.verifier;
 
-  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (avm2) {
+  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (securityDomain) {
     function runSWF(file, buffer, baseUrl) {
-      var player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
+      var player = new Shumway.Player.Window.WindowPlayer(securityDomain, window, window.parent);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = flashParams.movieParams;
       player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';

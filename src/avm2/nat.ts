@@ -1587,15 +1587,12 @@ module Shumway.AVMX.AS {
    * to the class's instance constructor.
    */
   function defineClassLoader(applicationDomain: ApplicationDomain, container: Object,
-                             classNamespace: string, nsType: NamespaceType, className: string,
-                             classAlias: string) {
+                             mn: Multiname, classAlias: string) {
     Object.defineProperty(container, classAlias, {
       get: function () {
-        runtimeWriter && runtimeWriter.writeLn("Running Memoizer: " + className);
-        var ns = new Namespace(null, nsType, classNamespace);
-        var mn = makeMultiname(className, ns);
+        runtimeWriter && runtimeWriter.writeLn("Running Memoizer: " + mn.name);
         var axClass = applicationDomain.getClass(mn);
-        release || assert(axClass, "Class " + classNamespace + ":" + className + " is not found.");
+        release || assert(axClass, "Class " + mn + " is not found.");
         release || assert(axClass.axConstruct);
         var loader: any = function () {
           return axClass.axConstruct(arguments);
@@ -1624,12 +1621,8 @@ module Shumway.AVMX.AS {
       }
       container = container[aliasPathTokens[i]];
     }
-    var classPathTokens = classPath.split(".");
-    defineClassLoader(applicationDomain, container,
-                      classPathTokens.slice(0, classPathTokens.length - 1).join("."),
-                      nsType,
-                      classPathTokens[classPathTokens.length - 1],
-                      aliasPathTokens[aliasPathTokens.length - 1]);
+    var mn = Multiname.FromFQNString(classPath, nsType);
+    defineClassLoader(applicationDomain, container, mn, aliasPathTokens.pop());
   }
 
   /**

@@ -121,9 +121,9 @@ function runSwfPlayer(flashParams) {
   var movieParams = flashParams.movieParams;
   var objectParams = flashParams.objectParams;
   var movieUrl = flashParams.url;
-  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (avm2) {
+  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (securitDomain) {
     function runSWF(file) {
-      var player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
+      var player = new Shumway.Player.Window.WindowPlayer(securitDomain, window, window.parent);
       player.stageAlign = 'tl';
       player.stageScale = 'noscale';
       player.load(file);

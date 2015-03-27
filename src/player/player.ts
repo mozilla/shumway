@@ -56,6 +56,8 @@ module Shumway.Player {
    */
   export class Player implements IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
                                  IAssetResolver, IRootElementService {
+    public securityDomain: ISecurityDomain;
+
     private _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
@@ -145,7 +147,10 @@ module Shumway.Player {
      */
     private _loaderUrl: string = null;
 
-    constructor() {
+    constructor(securityDomain: ISecurityDomain) {
+      this.securityDomain = securityDomain;
+      // Freeze in debug builds.
+      release || Object.defineProperty(this, 'securityDomain', {value: securityDomain});
       this._keyboardEventDispatcher = new KeyboardEventDispatcher();
       this._mouseEventDispatcher = new MouseEventDispatcher();
       this._writer = new IndentingWriter();
@@ -207,8 +212,8 @@ module Shumway.Player {
     public load(url: string, buffer?: ArrayBuffer) {
       release || assert (!this._loader, "Can't load twice.");
       this._swfUrl = this._loaderUrl = url;
-      this._stage = new flash.display.Stage();
-      var loader = this._loader = flash.display.Loader.getRootLoader();
+      this._stage = new this.securityDomain.flash.display.Stage();
+      var loader = this._loader = this.securityDomain.flash.display.Loader.axClass.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
       if (playAllSymbolsOption.value) {
         this._playAllSymbols();
@@ -223,12 +228,12 @@ module Shumway.Player {
         symbol.symbolClass.instanceConstructorNoInitialize.call(byteArray);
         this._loader.loadBytes(byteArray, context);
       } else {
-        this._loader.load(new flash.net.URLRequest(url), context);
+        this._loader.load(new this.securityDomain.flash.net.URLRequest(url), context);
       }
     }
 
     private createLoaderContext() : flash.system.LoaderContext {
-      var loaderContext = new flash.system.LoaderContext();
+      var loaderContext = new this.securityDomain.flash.system.LoaderContext();
       if (this.movieParams) {
         var parameters: any = {};
         for (var i in this.movieParams) {
@@ -420,7 +425,7 @@ module Shumway.Player {
 
     private _enterRootLoadingLoop(): void {
       var self = this;
-      var rootLoader = Loader.getRootLoader();
+      var rootLoader = this.securityDomain.flash.display.Loader.axClass.getRootLoader();
       rootLoader._setStage(this._stage);
       function rootLoadingLoop() {
         var loaderInfo = rootLoader.contentLoaderInfo;
@@ -470,13 +475,14 @@ module Shumway.Player {
         return;
       }
       // The stage is required for frame event cycle processing.
-      DisplayObject._stage = this._stage;
+      this.securityDomain.flash.display.DisplayObject.axClass._stage = this._stage;
       // Until the root SWF is initialized, only process Loader events.
       // Once the root loader's content is created, directly process all events again to avoid
       // further delay in initialization.
-      if (!Loader.getRootLoader().content) {
-        Loader.processEvents();
-        if (!Loader.getRootLoader().content) {
+      var loaderClass = this.securityDomain.flash.display.Loader.axClass;
+      if (!loaderClass.getRootLoader().content) {
+        loaderClass.processEvents();
+        if (!loaderClass.getRootLoader().content) {
           return;
         }
       }
@@ -507,7 +513,8 @@ module Shumway.Player {
       Shumway.Player.counter.traceSorted(writer, true);
       Shumway.Player.counter.clear();
 
-      writer.writeLn("advancableInstances: " + flash.display.DisplayObject._advancableInstances.length);
+      writer.writeLn("advancableInstances: " +
+                     this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.length);
       writer.outdent();
     }
 
@@ -549,7 +556,7 @@ module Shumway.Player {
           var symbolInstance = symbol.symbolClass.initializeFrom(symbol);
           symbol.symbolClass.instanceConstructorNoInitialize.call(symbolInstance);
           if (symbol instanceof flash.display.BitmapSymbol) {
-            symbolInstance = new flash.display.Bitmap(symbolInstance);
+            symbolInstance = new this.securityDomain.flash.display.Bitmap(symbolInstance);
           }
           while (stage.numChildren > 0) {
             stage.removeChildAt(0);

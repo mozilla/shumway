@@ -189,7 +189,68 @@ function executeFile(file, buffer, movieParams) {
         securityDomain.application.loadAndExecuteABC(abc);
       });
     } else if (filename.endsWith(".swf")) {
-      assert(false);
+      function runSWF(file, buffer) {
+        var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
+
+        var easel = createEasel();
+
+        document.addEventListener('shumwayOptionsChanged', function () {
+          syncGFXOptions(easel.options);
+          easel.stage.invalidate();
+        });
+        syncGFXOptions(easel.options);
+        var player = new Shumway.Player.Test.TestPlayer(securityDomain);
+        player.movieParams = movieParams;
+        player.stageAlign = state.salign;
+        player.stageScale = state.scale;
+        player.displayParameters = easel.getDisplayParameters();
+        player.loaderUrl = state.loaderURL;
+
+        easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
+        player.load(file, buffer);
+
+        currentSWFUrl = swfURL;
+        currentPlayer = player;
+        if (state.overlayFlash) {
+          ensureFlashOverlay();
+        }
+
+        // embedding.loader
+
+//        SWF.embed(buffer || file, document, document.getElementById('stage'), {
+//          onComplete: swfController.completeCallback.bind(swfController),
+//          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
+//          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
+//          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
+//          url: swfURL,
+//          loaderURL: loaderURL,
+//          movieParams: movieParams || {},
+//        });
+
+//        SWF.embed(buffer || file, document, document.getElementById('stage'), {
+//          onComplete: swfController.completeCallback.bind(swfController),
+//          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
+//          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
+//          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
+//          url: swfURL,
+//          loaderURL: loaderURL,
+//          movieParams: movieParams || {},
+//        });
+
+      }
+      file = Shumway.FileLoadingService.instance.setBaseUrl(file);
+      if (!buffer && asyncLoading) {
+        runSWF(file);
+      } else if (!buffer) {
+        new BinaryFileReader(file).readAll(null, function(buffer, error) {
+          if (!buffer) {
+            throw "Unable to open the file " + file + ": " + error;
+          }
+          runSWF(file, buffer);
+        });
+      } else {
+        runSWF(file, buffer);
+      }
     } else if (filename.endsWith(".js") || filename.endsWith("/")) {
       jsGlobal.securityDomain = securityDomain;
       Shumway.AVMX.AS.installClassLoaders(securityDomain.application, jsGlobal);

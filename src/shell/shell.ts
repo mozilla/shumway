@@ -344,7 +344,8 @@ module Shumway.Shell {
       // flash.display.Loader.reset();
       // flash.display.DisplayObject.reset();
       // flash.display.MovieClip.reset();
-      var player = new ShellPlayer();
+      var securityDomain = createSecurityDomain(builtinABCPath, null, null);
+      var player = new ShellPlayer(securityDomain);
       player.load(file);
     }
     var asyncLoading = true;
@@ -545,9 +546,9 @@ module Shumway.Shell {
     return true;
   }
 
-  function createSecurityDomain(builtinABCPath: string, shellABCPath: string, libraryPathInfo): AVMX.SecurityDomain {
+  function createSecurityDomain(builtinABCPath: string, shellABCPath: string, libraryPathInfo): ISecurityDomain {
     var buffer = read(builtinABCPath, 'binary');
-    var securityDomain = new AVMX.SecurityDomain();
+    var securityDomain = <ISecurityDomain>new AVMX.SecurityDomain();
     var builtinABC = new ABCFile(new Uint8Array(buffer));
     securityDomain.system.loadABC(builtinABC);
     securityDomain.addCatalog(loadPlayerGlobalCatalog());
