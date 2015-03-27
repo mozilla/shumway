@@ -453,7 +453,7 @@ module Shumway.AVMX {
             stack[stack.length - 1] = axGetDescendants(stack[stack.length - 1], rn, securityDomain);
             break;
           case Bytecode.NEWCATCH:
-            stack.push(securityDomain.createCatch(body.exceptions[u30()]));
+            stack.push(securityDomain.createCatch(body.exceptions[u30()], scope.topScope()));
             break;
           case Bytecode.FINDPROPERTY:
           case Bytecode.FINDPROPSTRICT:

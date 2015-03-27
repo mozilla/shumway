@@ -116,6 +116,9 @@ module Shumway.AVMX {
     }
   }
   export function checkParameterType(argument: any, name: string, type: AS.ASClass) {
+    if (argument == null) {
+      return;
+    }
     if (!type.axIsType(argument)) {
       type.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, argument,
                                      type.classInfo.instanceInfo.getClassName());
@@ -996,8 +999,12 @@ module Shumway.AVMX {
           }
           axClass.tPrototype = Object.create(axClass.dPrototype);
           axClass.tPrototype.axInitializer = this.createInitializerFunction(classInfo, classScope);
-          axClass.axCoerce = function () {
-            assert(false, "TODO: Coercing constructor.");
+          axClass.axCoerce = function (x: any) {
+            if (x == null) {
+              return null;
+            }
+            checkParameterType(x, "?", this);
+            return x;
           };
         }
       } else {
@@ -1091,11 +1098,11 @@ module Shumway.AVMX {
       return Object.create(body.activationPrototype);
     }
 
-    createCatch(exceptionInfo: ExceptionInfo): AXCatch {
+    createCatch(exceptionInfo: ExceptionInfo, scope: Scope): AXCatch {
       if (!exceptionInfo.catchPrototype) {
         var traits = exceptionInfo.getTraits();
         exceptionInfo.catchPrototype = Object.create(this.AXCatchPrototype);
-        defineReadOnlyProperty(exceptionInfo.catchPrototype, "traits", traits);
+        defineReadOnlyProperty(exceptionInfo.catchPrototype, "traits", traits.resolveRuntimeTraits(null, null, scope));
       }
       return Object.create(exceptionInfo.catchPrototype);
     }
