@@ -148,7 +148,7 @@
     var index = shape.styles.readUnsignedInt();
     eq(index, 0, "beginBitmapFill stores given bitmap's id");
     eq(g.getUsedTextures()[index], bitmap, "beginBitmapFill stores given bitmap's id");
-    matrixEq(Matrix.axClass.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
+    matrixEq(Matrix.axClass.FromDataBuffer(shape.styles), Matrix.axClass.FROZEN_IDENTITY_MATRIX,
              "default matrix is serialized if none is provided");
     eq(shape.styles.readBoolean(), true, "defaults to repeat");
     eq(shape.styles.readBoolean(), false, "defaults to no smooting");
@@ -328,7 +328,7 @@
     var index = shape.styles.readUnsignedInt();
     eq(index, 0, "lineBitmapStyle stores given bitmap's id");
     eq(g.getUsedTextures()[index], bitmap, "lineBitmapStyle stores given bitmap's id");
-    matrixEq(Matrix.axClass.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
+    matrixEq(Matrix.axClass.FromDataBuffer(shape.styles), Matrix.axClass.FROZEN_IDENTITY_MATRIX,
              "default matrix is serialized if none is provided");
     eq(shape.styles.readBoolean(), true, "defaults to repeat");
     eq(shape.styles.readBoolean(), false, "defaults to no smooting");

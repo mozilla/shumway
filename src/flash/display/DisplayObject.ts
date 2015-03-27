@@ -1058,7 +1058,7 @@ module Shumway.AVMX.AS.flash.display {
       }
       var m;
       if (targetCoordinateSpace) {
-        m = geom.Matrix.TEMP_MATRIX;
+        m = this.securityDomain.flash.geom.Matrix.axClass.TEMP_MATRIX;
         var invertedTargetMatrix = targetCoordinateSpace._getInvertedConcatenatedMatrix();
         invertedTargetMatrix.preMultiplyInto(this._getConcatenatedMatrix(), m);
       } else {
@@ -1106,18 +1106,20 @@ module Shumway.AVMX.AS.flash.display {
       var reset = !(placeObjectTag.flags & PlaceObjectFlags.Move) &&
                   placeObjectTag.flags & PlaceObjectFlags.HasCharacter;
 
+      var matrixClass = this.securityDomain.flash.geom.Matrix.axClass;
       if (placeObjectTag.flags & PlaceObjectFlags.HasMatrix) {
-        geom.Matrix.TEMP_MATRIX.copyFromUntyped(placeObjectTag.matrix);
-        this._setMatrix(geom.Matrix.TEMP_MATRIX, false);
+        matrixClass.TEMP_MATRIX.copyFromUntyped(placeObjectTag.matrix);
+        this._setMatrix(matrixClass.TEMP_MATRIX, false);
       } else if (reset) {
-        this._setMatrix(geom.Matrix.FROZEN_IDENTITY_MATRIX, false);
+        this._setMatrix(matrixClass.FROZEN_IDENTITY_MATRIX, false);
       }
 
+      var colorTransformClass = this.securityDomain.flash.geom.ColorTransform.axClass;
       if (placeObjectTag.flags & PlaceObjectFlags.HasColorTransform) {
-        geom.ColorTransform.TEMP_COLOR_TRANSFORM.copyFromUntyped(placeObjectTag.cxform);
-        this._setColorTransform(geom.ColorTransform.TEMP_COLOR_TRANSFORM);
+        colorTransformClass.TEMP_COLOR_TRANSFORM.copyFromUntyped(placeObjectTag.cxform);
+        this._setColorTransform(colorTransformClass.TEMP_COLOR_TRANSFORM);
       } else if (reset) {
-        this._setColorTransform(geom.ColorTransform.FROZEN_IDENTITY_COLOR_TRANSFORM);
+        this._setColorTransform(colorTransformClass.FROZEN_IDENTITY_COLOR_TRANSFORM);
       }
 
       if (placeObjectTag.flags & PlaceObjectFlags.HasRatio || reset) {
