@@ -82,7 +82,8 @@ module Shumway.AVMX.AS.flash.ui {
       }
 
       var globalPoint = data.point;
-      this.stage.securityDomain.flash.ui.Mouse.axClass.updateCurrentPosition(globalPoint);
+      var mouseClass = this.stage.securityDomain.flash.ui.Mouse.axClass;
+      mouseClass.updateCurrentPosition(globalPoint);
 
       var currentTarget = this.currentTarget;
       var target: InteractiveObject = null;
@@ -102,9 +103,9 @@ module Shumway.AVMX.AS.flash.ui {
         }
       }
 
-      if (flash.ui.Mouse.draggableObject) {
+      if (mouseClass.draggableObject) {
         var dropTarget = this._findTarget(globalPoint, flash.display.HitTestingType.Drop);
-        flash.ui.Mouse.draggableObject._updateDragState(dropTarget);
+        mouseClass.draggableObject._updateDragState(dropTarget);
       }
 
       switch (type) {
