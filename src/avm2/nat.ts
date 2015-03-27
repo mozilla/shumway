@@ -1538,14 +1538,14 @@ module Shumway.AVMX.AS {
         copyOwnPropertyDescriptors(axClass, asClass.classNatives[i], filter);
       }
     }
-    copyOwnPropertyDescriptors(axClass, asClass, filter);
+    copyOwnPropertyDescriptors(axClass, asClass, filter, true, true);
 
     if (axClass.superClass) {
       // Inherit prototype descriptors from the super class. This is a bit risky because
       // it copies over all properties and may overwrite properties that we don't expect.
       // TODO: Look into a safer way to do this, for now it doesn't overwrite already
       // defined properties.
-      copyOwnPropertyDescriptors(axClass.tPrototype, axClass.superClass.tPrototype, null, false);
+      copyOwnPropertyDescriptors(axClass.tPrototype, axClass.superClass.tPrototype, null, false, true);
     }
 
     // Copy instance methods and properties.

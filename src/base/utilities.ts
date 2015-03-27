@@ -748,7 +748,11 @@ module Shumway {
       }
     }
 
-    export function copyOwnPropertyDescriptors(object: Object, template: Object, filter: (name: string) => boolean = null, overwrite = true) {
+    export function copyOwnPropertyDescriptors(object: Object,
+                                               template: Object,
+                                               filter: (name: string) => boolean = null,
+                                               overwrite = true,
+                                               makeWritable = false) {
       for (var property in template) {
         if (hasOwnProperty(template, property) && (!filter || filter(property))) {
           var descriptor = Object.getOwnPropertyDescriptor(template, property);
@@ -757,6 +761,9 @@ module Shumway {
           }
           release || Debug.assert (descriptor);
           try {
+            if (makeWritable && descriptor.writable === false) {
+              descriptor.writable = true;
+            }
             Object.defineProperty(object, property, descriptor);
           } catch (e) {
             Debug.assert("Can't define: " + property);
