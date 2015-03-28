@@ -41,13 +41,11 @@ module Shumway.AVMX.AS.flash.display {
   export class AVM1Movie extends flash.display.DisplayObject implements IAdvancable {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(content: MovieClip) {
-      false && super();
-      flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
+      super();
       this._children = [];
       this._children[0] = this._content = content;
       // Pretend we're a DisplayObjectContainer and can have children. See comment at the top.

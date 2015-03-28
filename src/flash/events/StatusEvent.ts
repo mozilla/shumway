@@ -15,20 +15,21 @@
  */
 // Class: StatusEvent
 module Shumway.AVMX.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class StatusEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    code: string;
+    level: string;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 code: string = "", level: string = "") {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.StatusEvent");
+      super(type, bubbles, cancelable);
+      this.code = asCoerceString(code);
+      this.level = asCoerceString(level);
     }
 
     // JS -> AS Bindings

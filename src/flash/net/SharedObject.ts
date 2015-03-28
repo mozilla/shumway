@@ -25,10 +25,7 @@ module Shumway.AVMX.AS.flash.net {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -36,8 +33,7 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = null; // ["connect", "close", "flush", "size", "fps", "send", "clear", "setProperty"];
     
     constructor () {
-      false && super(undefined);
-      flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       this._data = Object.create(null);
     }
 

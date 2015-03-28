@@ -21,10 +21,7 @@ module Shumway.AVMX.AS.flash.display {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -32,7 +29,7 @@ module Shumway.AVMX.AS.flash.display {
     static instanceSymbols: string [] = null; // ["commands", "data", "_winding", "winding", "winding", "moveTo", "lineTo", "curveTo", "cubicCurveTo", "wideLineTo", "wideMoveTo", "ensureLists"];
     
     constructor (commands: Int32Vector = null, data: Int32Vector = null, winding: string = "evenOdd") {
-      false && super();
+      super();
       this.commands = commands;
       this.data = data;
       this.winding = asCoerceString(winding);

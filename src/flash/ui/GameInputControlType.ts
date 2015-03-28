@@ -15,17 +15,11 @@
  */
 // Class: GameInputControlType
 module Shumway.AVMX.AS.flash.ui {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class GameInputControlType extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,20 +27,14 @@ module Shumway.AVMX.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.ui.GameInputControlType");
+      super();
     }
     
-    // JS -> AS Bindings
     static MOVEMENT: string = "movement";
     static ROTATION: string = "rotation";
     static DIRECTION: string = "direction";
     static ACCELERATION: string = "acceleration";
     static BUTTON: string = "button";
     static TRIGGER: string = "trigger";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

@@ -17,7 +17,6 @@
 module Shumway.AVMX.AS.flash.media {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import error = Shumway.Debug.error;
@@ -164,9 +163,11 @@ module Shumway.AVMX.AS.flash.media {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
+
+    _symbol: SoundChannel;
     
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: SoundChannel) {
+    applySymbol() {
+      release || assert(this._symbol);
       this._element = null;
       this._position = 0;
       this._leftPeak = 0;
@@ -178,7 +179,7 @@ module Shumway.AVMX.AS.flash.media {
       //if (this._element) {
       //  this._registerWithSoundMixer();
       //}
-    };
+    }
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -187,8 +188,8 @@ module Shumway.AVMX.AS.flash.media {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.media.SoundChannel");
+      super();
+      release || assert(!this._symbol);
     }
 
     _element;

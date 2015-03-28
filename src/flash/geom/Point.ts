@@ -22,9 +22,6 @@ module Shumway.AVMX.AS.flash.geom {
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-
     // List of static symbols to link.
     static classSymbols: string [] = null; // ["interpolate", "distance", "polar"];
 
@@ -32,7 +29,7 @@ module Shumway.AVMX.AS.flash.geom {
     static instanceSymbols: string [] = null; // ["x", "y", "length", "clone", "offset", "equals", "subtract", "add", "normalize", "copyFrom", "setTo", "toString"];
 
     constructor(x: number = 0, y: number = 0) {
-      false && super();
+      super();
       this.x = +x;
       this.y = +y;
     }

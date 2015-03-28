@@ -15,18 +15,15 @@
  */
 // Class: TimerEvent
 module Shumway.AVMX.AS.flash.events {
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TimerEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles?: boolean, cancelable?: boolean) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.TimerEvent");
+      super(type, bubbles, cancelable);
     }
 
     // JS -> AS Bindings

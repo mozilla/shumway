@@ -15,17 +15,11 @@
  */
 // Class: SecurityPanel
 module Shumway.AVMX.AS.flash.system {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class SecurityPanel extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +27,7 @@ module Shumway.AVMX.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.system.SecurityPanel");
+      super();
     }
     
     // JS -> AS Bindings
@@ -45,9 +38,5 @@ module Shumway.AVMX.AS.flash.system {
     static CAMERA: string = "camera";
     static DISPLAY: string = "display";
     static SETTINGS_MANAGER: string = "settingsManager";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

@@ -16,16 +16,12 @@
 // Class: GroupSpecifier
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class GroupSpecifier extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // ["encodePostingAuthorization", "encodePublishAuthorization", "encodeIPMulticastAddressSpec", "encodeBootstrapPeerIDSpec"];
     
@@ -33,9 +29,8 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = null; // ["makeUnique", "routingEnabled", "routingEnabled", "multicastEnabled", "multicastEnabled", "objectReplicationEnabled", "objectReplicationEnabled", "postingEnabled", "postingEnabled", "peerToPeerDisabled", "peerToPeerDisabled", "ipMulticastMemberUpdatesEnabled", "ipMulticastMemberUpdatesEnabled", "setPublishPassword", "setPostingPassword", "serverChannelEnabled", "serverChannelEnabled", "addBootstrapPeer", "addIPMulticastAddress", "toString", "groupspecWithoutAuthorizations", "groupspecWithAuthorizations", "authorizations"];
     
     constructor (name: string) {
+      super();
       name = asCoerceString(name);
-      false && super();
-      dummyConstructor("public flash.net.GroupSpecifier");
     }
     
     // JS -> AS Bindings

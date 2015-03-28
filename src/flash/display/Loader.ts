@@ -81,7 +81,6 @@ module Shumway.AVMX.AS.flash.display {
       this.runtimeStartTime = 0;
       this._embeddedContentLoadCount = 0;
     }
-    static initializer = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -133,7 +132,7 @@ module Shumway.AVMX.AS.flash.display {
           instance._loadStatus = LoadStatus.Initialized;
           // Only for the root loader, progress events for the data loaded up until now are
           // dispatched here.
-          if (instance === Loader._rootLoader) {
+          if (instance === this.securityDomain.flash.display.Loader.axClass._rootLoader) {
             enterTimeline("Loader.Progress", 'rootLoader');
             try {
               loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
@@ -220,12 +219,13 @@ module Shumway.AVMX.AS.flash.display {
     constructor () {
       super();
 
-      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(this);
+      var displayObjectClass = this.securityDomain.flash.display.DisplayObject.axClass;
+      displayObjectClass._advancableInstances.push(this);
       this._content = null;
-      if (Loader._rootLoader) {
+      if (this.securityDomain.flash.display.Loader.axClass._rootLoader) {
         // Loader reserves the next instance ID to use for the loaded content.
         // This isn't needed for the first, root, loader, because that uses "root1" as the name.
-        this._contentID = this.securityDomain.flash.display.DisplayObject.axClass._instanceID++;
+        this._contentID = displayObjectClass._instanceID++;
       } else {
         // The root loader itself doesn't get an ID.
         //this.securityDomain.flash.display.DisplayObject.axClass._instanceID--;
@@ -469,7 +469,7 @@ module Shumway.AVMX.AS.flash.display {
         dataType: file.type,
         type: 'image'
       };
-      var symbol = BitmapSymbol.FromData(data);
+      var symbol = BitmapSymbol.FromData(data, this._contentLoaderInfo);
       this._imageSymbol = symbol;
       var resolver: Timeline.IAssetResolver = null; // REDUX: AVM2.instance.globals['Shumway.Player.Utils'];
       resolver.registerFontOrImage(symbol, data);
@@ -576,17 +576,18 @@ module Shumway.AVMX.AS.flash.display {
       if (symbol.isAVM1Object) {
         this._initAvm1(symbol);
       }
-      var root = symbol.symbolClass.initializeFrom(symbol);
+      var root = constructClassFromSymbol(symbol, symbol.symbolClass);
       // The initial SWF's root object gets a default of 'root1', which doesn't use up a
       // DisplayObject instance ID. For the others, we have reserved on in `_contentID`.
       this.securityDomain.flash.display.DisplayObject.axClass._instanceID--;
-      if (this === Loader._rootLoader) {
+      var loaderClass = this.securityDomain.flash.display.Loader.axClass;
+      if (this === loaderClass._rootLoader) {
         root._name = 'root1';
       } else {
         root._name = 'instance' + this._contentID;
       }
 
-      if (MovieClip.isType(root)) {
+      if (this.securityDomain.flash.display.MovieClip.axClass.axIsType(root)) {
         var mc = <MovieClip>root;
         if (sceneData) {
           var scenes = sceneData.scenes;
@@ -611,15 +612,15 @@ module Shumway.AVMX.AS.flash.display {
       var rootTimeline = root;
       if (loaderInfo.actionScriptVersion === ActionScriptVersion.ACTIONSCRIPT2) {
         root = this._initAvm1Root(root);
-      } else if (this === this.securityDomain.flash.display.Loader.axClass.getRootLoader()) {
+      } else if (this === loaderClass.getRootLoader()) {
         var movieClipClass = this.securityDomain.flash.display.MovieClip.axClass;
         movieClipClass.frameNavigationModel = loaderInfo.swfVersion < 10 ?
                                               flash.display.FrameNavigationModel.SWF9 :
                                               flash.display.FrameNavigationModel.SWF10;
       }
       this._content = root;
-      if (this === this.securityDomain.flash.display.Loader.axClass.getRootLoader()) {
-        Loader.runtimeStartTime = Date.now();
+      if (this === loaderClass.getRootLoader()) {
+        this.securityDomain.flash.display.Loader.runtimeStartTime = Date.now();
         this._stage.setRoot(root);
       } else {
         this.addTimelineObjectAtDepth(root, 0);

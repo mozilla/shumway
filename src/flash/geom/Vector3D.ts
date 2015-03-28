@@ -19,7 +19,6 @@ module Shumway.AVMX.AS.flash.geom {
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class Vector3D extends ASObject {
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
@@ -28,7 +27,7 @@ module Shumway.AVMX.AS.flash.geom {
     public static Z_AXIS: Vector3D = Object.freeze(new Vector3D(0, 0, 1));
 
     constructor (x: number = 0, y: number = 0, z: number = 0, w: number = 0) {
-      false && super();
+      super();
       this.x = +x;
       this.y = +y;
       this.z = +z;

@@ -31,10 +31,6 @@ module Shumway.AVMX.AS.flash.display {
     static classSymbols: string [] = null;
     static classInitializer: any = null;
 
-    static initializer(x?: any) {
-
-    }
-
     constructor () {
       super();
       this._tabChildren = true;

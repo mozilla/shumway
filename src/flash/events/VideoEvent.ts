@@ -15,20 +15,19 @@
  */
 // Class: VideoEvent
 module Shumway.AVMX.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class VideoEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    status: string;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 status: string = null) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.VideoEvent");
+      super(type, bubbles, cancelable);
+      this.status = asCoerceString(status);
     }
 
     // JS -> AS Bindings

@@ -21,14 +21,13 @@ module Shumway.AVMX.AS.flash.geom {
 
   export class Transform extends ASObject {
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
 
     private _displayObject: flash.display.DisplayObject;
 
     constructor (displayObject: flash.display.DisplayObject) {
-      false && super();
+      super();
       if (!displayObject) {
         this.securityDomain.throwError("ArgumentError", Errors.NullPointerError, "displayObject");
       }

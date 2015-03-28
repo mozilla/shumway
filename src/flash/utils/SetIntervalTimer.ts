@@ -15,16 +15,10 @@
  */
 // Class: SetIntervalTimer
 module Shumway.AVMX.AS.flash.utils {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class SetIntervalTimer extends flash.utils.Timer {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // ["intervalArray", "_clearInterval"];
@@ -33,9 +27,8 @@ module Shumway.AVMX.AS.flash.utils {
     static instanceSymbols: string [] = null; // ["reference", "closure", "rest", "onTimer"];
     
     constructor (closure: ASFunction, delay: number, repeats: boolean, rest: any []) {
-      closure = closure; delay = +delay; repeats = !!repeats; rest = rest;
-      false && super(undefined, undefined);
-      dummyConstructor("packageInternal flash.utils.SetIntervalTimer");
+      super(+delay, !!repeats ? 0 : 1);
+      closure = closure; rest = rest;
     }
     
     // JS -> AS Bindings
@@ -46,8 +39,5 @@ module Shumway.AVMX.AS.flash.utils {
     closure: ASFunction;
     rest: any [];
     onTimer: (event: flash.events.Event) => void;
-    
-    // AS -> JS Bindings
-    
   }
 }

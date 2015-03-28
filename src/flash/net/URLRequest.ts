@@ -16,7 +16,6 @@
 // Class: URLRequest
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export class URLRequest extends ASObject {
@@ -24,26 +23,21 @@ module Shumway.AVMX.AS.flash.net {
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      this._url = null;
+    // List of static symbols to link.
+    static classSymbols: string [] = null; // [];
+
+    // List of instance symbols to link.
+    static bindings: string [] = null;
+
+    constructor (url: string = null) {
+      super();
+      this._url = asCoerceString(url);
       this._method = 'GET';
       this._data = null;
       this._digest = null;
       this._contentType = 'application/x-www-form-urlencoded';
       this._requestHeaders = [];
       this._checkPolicyFile = true;
-    };
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static bindings: string [] = null;
-    
-    constructor (url: string = null) {
-      false && super();
-      this._url = asCoerceString(url);
     }
 
     _checkPolicyFile: boolean;

@@ -17,11 +17,14 @@
 module Shumway.AVMX.AS.flash.text {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVMX.asCoerceString;
+  import assert = Debug.assert;
 
   import FontStyle = flash.text.FontStyle;
   import FontType = flash.text.FontType;
 
   export class Font extends ASObject implements Shumway.Remoting.IRemotable {
+
+    static axClass: typeof Font;
 
     private static _fonts: Font[];
     private static _fontsBySymbolId: Shumway.Map<Font>;
@@ -752,51 +755,38 @@ module Shumway.AVMX.AS.flash.text {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    static initializer: any = function (symbol: FontSymbol) {
-      var self: Font = this;
-
-
-      self._fontName = null;
-      self._fontFamily = null;
-      self._fontStyle = null;
-      self._fontType = null;
-
-      self.ascent = 0;
-      self.descent = 0;
-      self.leading = 0;
-      self.advances = null;
-
-      if (!symbol) {
-        self._id = flash.display.DisplayObject.getNextSyncID();
-        return;
-      }
-      self._symbol = symbol;
+    _symbol: FontSymbol;
+    applySymbol() {
+      release || Debug.assert(this._symbol);
+      var symbol = this._symbol;
       release || Debug.assert(symbol.syncId);
-      self._id = symbol.syncId;
-      self._fontName = symbol.name;
-      self._fontFamily = Font.resolveFontName(symbol.name);
+      this._initializeFields();
+
+      this._id = symbol.syncId;
+      this._fontName = symbol.name;
+      this._fontFamily = Font.resolveFontName(symbol.name);
       if (symbol.bold) {
         if (symbol.italic) {
-          self._fontStyle = FontStyle.BOLD_ITALIC;
+          this._fontStyle = FontStyle.BOLD_ITALIC;
         } else {
-          self._fontStyle = FontStyle.BOLD;
+          this._fontStyle = FontStyle.BOLD;
         }
       } else if (symbol.italic) {
-        self._fontStyle = FontStyle.ITALIC;
+        this._fontStyle = FontStyle.ITALIC;
       } else {
-        self._fontStyle = FontStyle.REGULAR;
+        this._fontStyle = FontStyle.REGULAR;
       }
 
       var metrics = symbol.metrics;
       if (metrics) {
-        self.ascent = metrics.ascent;
-        self.descent = metrics.descent;
-        self.leading = metrics.leading;
-        self.advances = metrics.advances;
+        this.ascent = metrics.ascent;
+        this.descent = metrics.descent;
+        this.leading = metrics.leading;
+        this.advances = metrics.advances;
       }
 
       // Font symbols without any glyphs describe device fonts.
-      self._fontType = metrics ? FontType.EMBEDDED : FontType.DEVICE;
+      this._fontType = metrics ? FontType.EMBEDDED : FontType.DEVICE;
 
       var fontProp = Object.getOwnPropertyDescriptor(Font._fontsBySymbolId, symbol.syncId + '');
       // Define mapping or replace lazy getter with value.
@@ -804,16 +794,29 @@ module Shumway.AVMX.AS.flash.text {
         // Keeping resolverProp.configurable === true, some old movies might
         // have fonts with non-unique names.
         var resolverProp = {
-          value: self,
+          value: this,
           configurable: true
         };
         Object.defineProperty(Font._fontsBySymbolId, symbol.syncId + '', resolverProp);
-        Object.defineProperty(Font._fontsByName, symbol.name.toLowerCase() + self._fontStyle, resolverProp);
-        if (self._fontType === FontType.EMBEDDED) {
-          Object.defineProperty(Font._fontsByName, 'swffont' + symbol.syncId + self._fontStyle, resolverProp);
+        Object.defineProperty(Font._fontsByName, symbol.name.toLowerCase() + this._fontStyle, resolverProp);
+        if (this._fontType === FontType.EMBEDDED) {
+          Object.defineProperty(Font._fontsByName, 'swffont' + symbol.syncId + this._fontStyle, resolverProp);
         }
       }
-    };
+    }
+
+    private _initializeFields() {
+      this._fontName = null;
+      this._fontFamily = null;
+      this._fontStyle = null;
+      this._fontType = null;
+
+      this.ascent = 0;
+      this.descent = 0;
+      this.leading = 0;
+      this.advances = null;
+      this._id = flash.display.DisplayObject.getNextSyncID();
+    }
 
     private static _deviceFontMetrics: Object;
 
@@ -833,7 +836,9 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     constructor() {
-      false && super();
+      super();
+      release || assert(!this._symbol);
+      this._initializeFields();
     }
 
     static getBySymbolId(id: number): Font {
@@ -886,7 +891,6 @@ module Shumway.AVMX.AS.flash.text {
     private _fontType: string;
 
     _id: number;
-    _symbol: FontSymbol;
 
     ascent: number;
     descent: number;
@@ -963,12 +967,12 @@ module Shumway.AVMX.AS.flash.text {
     metrics: any;
     syncId: number;
 
-    constructor(data: Timeline.SymbolData) {
-      super(data, Font);
+    constructor(data: Timeline.SymbolData, securityDomain: ISecurityDomain) {
+      super(data, securityDomain.flash.text.Font.axClass);
     }
 
-    static FromData(data: any): FontSymbol {
-      var symbol = new FontSymbol(data);
+    static FromData(data: any, loaderInfo: display.LoaderInfo): FontSymbol {
+      var symbol = new FontSymbol(data, loaderInfo.securityDomain);
       // Immediately mark glyph-less fonts as ready.
       symbol.ready = !data.metrics;
       symbol.name = data.name;

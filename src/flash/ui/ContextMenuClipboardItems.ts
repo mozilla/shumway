@@ -19,12 +19,11 @@ module Shumway.AVMX.AS.flash.ui {
   export class ContextMenuClipboardItems extends ASObject {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
     
     constructor () {
-      false && super();
+      super();
 
       this._cut = true;
       this._copy = true;

@@ -33,9 +33,11 @@ interface ISecurityDomain {
       MovieClip: typeof flashPackage.display.MovieClip;
       Sprite: typeof flashPackage.display.Sprite;
       Shape: typeof flashPackage.display.Shape;
+      MorphShape: typeof flashPackage.display.MorphShape;
       Graphics: typeof flashPackage.display.Graphics;
       Bitmap: typeof flashPackage.display.Bitmap;
       BitmapData: typeof flashPackage.display.BitmapData;
+      SimpleButton: typeof flashPackage.display.SimpleButton;
     };
     events: {
       Event: typeof flashPackage.events.Event;
@@ -47,7 +49,9 @@ interface ISecurityDomain {
     };
     text: {
       TextField: typeof flashPackage.text.TextField;
+      TextFormat: typeof flashPackage.text.TextFormat;
       StaticText: typeof flashPackage.text.StaticText;
+      Font: typeof flashPackage.text.Font;
     };
     ui: {
       Mouse: typeof flashPackage.ui.Mouse;
@@ -62,6 +66,12 @@ interface ISecurityDomain {
     }
     net: {
       URLRequest: typeof flashPackage.net.URLRequest;
+    }
+    utils: {
+      ByteArray: typeof flashPackage.utils.ByteArray;
+    }
+    media: {
+      Sound: typeof flashPackage.media.Sound;
     }
     system: {
       LoaderContext: typeof flashPackage.system.LoaderContext;
@@ -200,4 +210,12 @@ module Shumway.AVMX.AS {
 
   M("flash.utils.Timer", flash.utils.Timer);
   M("flash.utils.ByteArray", flash.utils.ByteArray);
+
+  export function constructClassFromSymbol(symbol: Timeline.Symbol, axClass: ASClass) {
+    var instance = Object.create(axClass.tPrototype);
+    instance._symbol = symbol;
+    instance.applySymbol();
+    Object.getPrototypeOf(instance).constructor.call(instance);
+    return instance;
+  }
 }

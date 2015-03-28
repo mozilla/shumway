@@ -16,17 +16,13 @@
 // Class: FileFilter
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export class FileFilter extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -34,8 +30,7 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = null; // [];
     
     constructor (description: string, extension: string, macType: string = null) {
-      false && super();
-      dummyConstructor("public flash.net.FileFilter");
+      super();
     }
     
     // JS -> AS Bindings

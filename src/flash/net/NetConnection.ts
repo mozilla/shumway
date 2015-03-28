@@ -16,7 +16,6 @@
 // Class: NetConnection
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Telemetry = Shumway.Telemetry;
@@ -25,10 +24,7 @@ module Shumway.AVMX.AS.flash.net {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -36,8 +32,7 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = ["close", "addHeader", "call"];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.net.NetConnection");
+      super();
     }
     
     // JS -> AS Bindings

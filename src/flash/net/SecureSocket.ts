@@ -16,16 +16,11 @@
 // Class: SecureSocket
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class SecureSocket extends flash.net.Socket {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +28,7 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = null; // ["serverCertificateStatus", "connect"];
     
     constructor () {
-      false && super(undefined, undefined);
-      dummyConstructor("public flash.net.SecureSocket");
+      super(undefined, undefined);
     }
     
     // JS -> AS Bindings

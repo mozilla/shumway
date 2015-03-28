@@ -16,16 +16,12 @@
 // Class: SoundLoaderContext
 module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class SoundLoaderContext extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,9 @@ module Shumway.AVMX.AS.flash.media {
     static instanceSymbols: string [] = null; // ["bufferTime", "checkPolicyFile"];
     
     constructor (bufferTime: number = 1000, checkPolicyFile: boolean = false) {
-      bufferTime = +bufferTime; checkPolicyFile = !!checkPolicyFile;
-      false && super();
-      dummyConstructor("public flash.media.SoundLoaderContext");
+      super();
+      this.bufferTime = +bufferTime;
+      this.checkPolicyFile = !!checkPolicyFile;
     }
     
     // JS -> AS Bindings

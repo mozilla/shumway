@@ -199,16 +199,8 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, "$BgvalueOf", asProto.valueOf);
     }
 
-    static initializer: (x?: any) => ASObject = null;
-
     static _init() {
       // Nop.
-    }
-
-    static initializeFrom(x: any) {
-      var object = Object.create(this.tPrototype);
-      this.initializer.call(object, x);
-      return object;
     }
 
     // REDUX:
@@ -220,7 +212,6 @@ module Shumway.AVMX.AS {
     static class: any;
     class: any;
     instanceConstructorNoInitialize = function () { notImplemented("instanceConstructorNoInitialize => axInitialize"); };
-    initializeFrom = function (x: any) { notImplemented("initializeFrom"); return null; };
     isInstanceOf = function (x: any) { notImplemented("isInstanceOf"); return false; };
     isType = function (x: any) { notImplemented("isType"); return false; };
     isSubtypeOf = function (x: any) { notImplemented("isType"); return false; };
@@ -474,7 +465,6 @@ module Shumway.AVMX.AS {
      * Called on every class when it is initialized. The |axClass| object is passed in as |this|.
      */
     classInitializer: (asClass?: ASClass) => void;
-    initializer: (x?: any) => void;
 
     classSymbols: string [];
     instanceSymbols: string [];
@@ -1518,10 +1508,6 @@ module Shumway.AVMX.AS {
         release || assert(asClass.classInitializer !== axClass.superClass.asClass.classInitializer,
           "Make sure class " + axClass + " doesn't inherit super class's class initializer.");
       }
-      if (asClass.initializer) {
-        release || assert(asClass.initializer !== axClass.superClass.asClass.initializer,
-          "Make sure class " + axClass + " doesn't inherit super class's initializer.");
-      }
     }
 
     if (asClass.classSymbols) {
@@ -1545,18 +1531,18 @@ module Shumway.AVMX.AS {
       // it copies over all properties and may overwrite properties that we don't expect.
       // TODO: Look into a safer way to do this, for now it doesn't overwrite already
       // defined properties.
-      copyOwnPropertyDescriptors(axClass.tPrototype, axClass.superClass.tPrototype, null, false, true);
+      //copyOwnPropertyDescriptors(axClass.dPrototype, axClass.superClass.dPrototype, null, false, true);
     }
 
     // Copy instance methods and properties.
     if (asClass.instanceNatives) {
       for (var i = 0; i < asClass.instanceNatives.length; i++) {
-        copyOwnPropertyDescriptors(axClass.tPrototype, asClass.instanceNatives[i], filter);
+        copyOwnPropertyDescriptors(axClass.dPrototype, asClass.instanceNatives[i], filter);
       }
     }
 
     // Inherit or override prototype descriptors from the template class.
-    copyOwnPropertyDescriptors(axClass.tPrototype, asClass.prototype, filter);
+    copyOwnPropertyDescriptors(axClass.dPrototype, asClass.prototype, filter);
 
     if (asClass.classInitializer) {
       asClass.classInitializer.call(axClass, asClass);

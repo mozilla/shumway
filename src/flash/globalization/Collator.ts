@@ -16,16 +16,12 @@
 // Class: Collator
 module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class Collator extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -34,8 +30,7 @@ module Shumway.AVMX.AS.flash.globalization {
     
     constructor (requestedLocaleIDName: string, initialMode: string = "sorting") {
       requestedLocaleIDName = asCoerceString(requestedLocaleIDName); initialMode = asCoerceString(initialMode);
-      false && super();
-      dummyConstructor("public flash.globalization.Collator");
+      super();
     }
     
     // JS -> AS Bindings

@@ -16,7 +16,6 @@
 // Class: SoundMixer
 module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
@@ -30,10 +29,7 @@ module Shumway.AVMX.AS.flash.media {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -41,8 +37,7 @@ module Shumway.AVMX.AS.flash.media {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.media.SoundMixer");
+      super();
     }
 
     private static _masterVolume = 1;

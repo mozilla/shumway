@@ -15,20 +15,16 @@
  */
 // Class: SoftKeyboardEvent
 module Shumway.AVMX.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class SoftKeyboardEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean, cancelable: boolean,
                 relatedObjectVal: flash.display.InteractiveObject, triggerTypeVal: string) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.SoftKeyboardEvent");
+      super(type, bubbles, cancelable);
     }
 
     // JS -> AS Bindings

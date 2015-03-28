@@ -15,27 +15,52 @@
  */
 // Class: NetStreamInfo
 module Shumway.AVMX.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class NetStreamInfo extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["currentBytesPerSecond", "byteCount", "maxBytesPerSecond", "audioBytesPerSecond", "audioByteCount", "videoBytesPerSecond", "videoByteCount", "dataBytesPerSecond", "dataByteCount", "playbackBytesPerSecond", "droppedFrames", "audioBufferByteLength", "videoBufferByteLength", "dataBufferByteLength", "audioBufferLength", "videoBufferLength", "dataBufferLength", "SRTT", "audioLossRate", "videoLossRate", "metaData", "xmpData", "uri", "resourceName", "isLive", "toString", "_curBPS", "_byteCount", "_maxBPS", "_audioBPS", "_audioByteCount", "_videoBPS", "_videoByteCount", "_dataBPS", "_dataByteCount", "_playbackBPS", "_droppedFrames", "_audioBufferByteLength", "_videoBufferByteLength", "_dataBufferByteLength", "_audioBufferLength", "_videoBufferLength", "_dataBufferLength", "_srtt", "_audioLossRate", "_videoLossRate", "_metaData", "_xmpData", "_uri", "_resourceName", "_isLive"];
-    
-    constructor (curBPS: number, byteCount: number, maxBPS: number, audioBPS: number, audioByteCount: number, videoBPS: number, videoByteCount: number, dataBPS: number, dataByteCount: number, playbackBPS: number, droppedFrames: number, audioBufferByteLength: number, videoBufferByteLength: number, dataBufferByteLength: number, audioBufferLength: number, videoBufferLength: number, dataBufferLength: number, srtt: number, audioLossRate: number, videoLossRate: number, metaData: ASObject = null, xmpData: ASObject = null, uri: string = null, resourceName: string = null, isLive: boolean = true) {
-      curBPS = +curBPS; byteCount = +byteCount; maxBPS = +maxBPS; audioBPS = +audioBPS; audioByteCount = +audioByteCount; videoBPS = +videoBPS; videoByteCount = +videoByteCount; dataBPS = +dataBPS; dataByteCount = +dataByteCount; playbackBPS = +playbackBPS; droppedFrames = +droppedFrames; audioBufferByteLength = +audioBufferByteLength; videoBufferByteLength = +videoBufferByteLength; dataBufferByteLength = +dataBufferByteLength; audioBufferLength = +audioBufferLength; videoBufferLength = +videoBufferLength; dataBufferLength = +dataBufferLength; srtt = +srtt; audioLossRate = +audioLossRate; videoLossRate = +videoLossRate; metaData = metaData; xmpData = xmpData; uri = asCoerceString(uri); resourceName = asCoerceString(resourceName); isLive = !!isLive;
-      false && super();
-      dummyConstructor("public flash.net.NetStreamInfo");
+    static instanceSymbols: string [] = null;
+
+    constructor(curBPS: number, byteCount: number, maxBPS: number, audioBPS: number,
+                audioByteCount: number, videoBPS: number, videoByteCount: number, dataBPS: number,
+                dataByteCount: number, playbackBPS: number, droppedFrames: number,
+                audioBufferByteLength: number, videoBufferByteLength: number,
+                dataBufferByteLength: number, audioBufferLength: number, videoBufferLength: number,
+                dataBufferLength: number, srtt: number, audioLossRate: number,
+                videoLossRate: number, metaData: ASObject = null, xmpData: ASObject = null,
+                uri: string = null, resourceName: string = null, isLive: boolean = true)
+    {
+      super();
+      this.currentBytesPerSecond = +curBPS;
+      this.byteCount = +byteCount;
+      this.maxBytesPerSecond = +maxBPS;
+      this.audioBytesPerSecond = +audioBPS;
+      this.audioByteCount = +audioByteCount;
+      this.videoBytesPerSecond = +videoBPS;
+      this.videoByteCount = +videoByteCount;
+      this.dataBytesPerSecond = +dataBPS;
+      this.dataByteCount = +dataByteCount;
+      this.playbackBytesPerSecond = +playbackBPS;
+      this.droppedFrames = +droppedFrames;
+      this.audioBufferByteLength = +audioBufferByteLength;
+      this.videoBufferByteLength = +videoBufferByteLength;
+      this.dataBufferByteLength = +dataBufferByteLength;
+      this.audioBufferLength = +audioBufferLength;
+      this.videoBufferLength = +videoBufferLength;
+      this.dataBufferLength = +dataBufferLength;
+      this._srtt = +srtt;
+      this.audioLossRate = +audioLossRate;
+      this.videoLossRate = +videoLossRate;
+      this.metaData = metaData;
+      this.xmpData = xmpData;
+      this.uri = asCoerceString(uri);
+      this.resourceName = asCoerceString(resourceName);
+      this.isLive = !!isLive;
     }
     
     // JS -> AS Bindings
@@ -90,33 +115,5 @@ module Shumway.AVMX.AS.flash.net {
     _uri: string;
     _resourceName: string;
     _isLive: boolean;
-    
-    // AS -> JS Bindings
-    
-    // _currentBytesPerSecond: number;
-    // _byteCount: number;
-    // _maxBytesPerSecond: number;
-    // _audioBytesPerSecond: number;
-    // _audioByteCount: number;
-    // _videoBytesPerSecond: number;
-    // _videoByteCount: number;
-    // _dataBytesPerSecond: number;
-    // _dataByteCount: number;
-    // _playbackBytesPerSecond: number;
-    // _droppedFrames: number;
-    // _audioBufferByteLength: number;
-    // _videoBufferByteLength: number;
-    // _dataBufferByteLength: number;
-    // _audioBufferLength: number;
-    // _videoBufferLength: number;
-    // _dataBufferLength: number;
-    // _SRTT: number;
-    // _audioLossRate: number;
-    // _videoLossRate: number;
-    // _metaData: ASObject;
-    // _xmpData: ASObject;
-    // _uri: string;
-    // _resourceName: string;
-    // _isLive: boolean;
   }
 }

@@ -16,16 +16,12 @@
 // Class: DateTimeFormatter
 module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class DateTimeFormatter extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVMX.AS.flash.globalization {
     static instanceSymbols: string [] = null; // ["format", "formatUTC"];
     
     constructor (requestedLocaleIDName: string, dateStyle: string = "long", timeStyle: string = "long") {
+      super();
       requestedLocaleIDName = asCoerceString(requestedLocaleIDName); dateStyle = asCoerceString(dateStyle); timeStyle = asCoerceString(timeStyle);
-      false && super();
-      dummyConstructor("public flash.globalization.DateTimeFormatter");
     }
     
     // JS -> AS Bindings

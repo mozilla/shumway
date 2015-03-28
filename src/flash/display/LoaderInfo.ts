@@ -327,7 +327,7 @@ module Shumway.AVMX.AS.flash.display {
           if (data.definition) {
             data = data.definition;
           }
-          symbol = flash.display.BitmapSymbol.FromData(data);
+          symbol = flash.display.BitmapSymbol.FromData(data, this);
           break;
         case 'label':
           symbol = flash.text.TextSymbol.FromLabelData(data, this);
@@ -348,15 +348,14 @@ module Shumway.AVMX.AS.flash.display {
           if (data.definition) {
             data = data.definition;
           }
-          symbol = flash.text.FontSymbol.FromData(data);
-          var font = flash.text.Font.initializeFrom(symbol);
-          flash.text.Font.instanceConstructorNoInitialize.call(font);
+          symbol = flash.text.FontSymbol.FromData(data, this);
+          var font = constructClassFromSymbol(symbol, symbol.symbolClass);
           break;
         case 'sound':
-          symbol = flash.media.SoundSymbol.FromData(data);
+          symbol = flash.media.SoundSymbol.FromData(data, this);
           break;
         case 'binary':
-          symbol = Timeline.BinarySymbol.FromData(data);
+          symbol = Timeline.BinarySymbol.FromData(data, this);
           break;
       }
       release || assert(symbol, "Unknown symbol type " + data.type);

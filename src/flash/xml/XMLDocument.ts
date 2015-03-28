@@ -19,11 +19,9 @@ module Shumway.AVMX.AS.flash.xml {
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class XMLDocument extends flash.xml.XMLNode {
-    static initializer: any = null;
     constructor (source: string = null) {
       source = asCoerceString(source);
-      false && super(undefined, undefined);
-      dummyConstructor("public flash.xml.XMLDocument");
+      super(undefined, undefined);
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

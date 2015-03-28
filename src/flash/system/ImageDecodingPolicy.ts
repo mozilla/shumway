@@ -15,17 +15,11 @@
  */
 // Class: ImageDecodingPolicy
 module Shumway.AVMX.AS.flash.system {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class ImageDecodingPolicy extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,16 +27,10 @@ module Shumway.AVMX.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.system.ImageDecodingPolicy");
+      super();
     }
     
-    // JS -> AS Bindings
     static ON_DEMAND: string = "onDemand";
     static ON_LOAD: string = "onLoad";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

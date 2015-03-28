@@ -16,13 +16,10 @@
 // Class: GestureEvent
 module Shumway.AVMX.AS.flash.events {
   import asCoerceString = Shumway.AVMX.asCoerceString;
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   export class GestureEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -30,8 +27,13 @@ module Shumway.AVMX.AS.flash.events {
     constructor(type: string, bubbles: boolean = true, cancelable: boolean = false,
                 phase: string = null, localX: number = 0, localY: number = 0,
                 ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.GestureEvent");
+      super(type, bubbles, cancelable);
+      this._phase = asCoerceString(phase);
+      this._localX = +localX;
+      this._localY = +localY;
+      this._ctrlKey = !!ctrlKey;
+      this._altKey = !!altKey;
+      this._shiftKey = !!shiftKey;
     }
 
     // JS -> AS Bindings

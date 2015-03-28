@@ -16,7 +16,6 @@
 // Class: ExternalInterface
 module Shumway.AVMX.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import Telemetry = Shumway.Telemetry;
   import ExternalInterfaceService = Shumway.ExternalInterfaceService;
@@ -25,10 +24,7 @@ module Shumway.AVMX.AS.flash.external {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // ["marshallExceptions", "ensureInitialized", "addCallback", "convertToXML", "convertToXMLString", "convertFromXML", "convertToJSString", "call"];
     
@@ -36,8 +32,7 @@ module Shumway.AVMX.AS.flash.external {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.external.ExternalInterface");
+      super();
     }
     
     // JS -> AS Bindings

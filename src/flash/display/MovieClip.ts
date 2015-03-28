@@ -87,8 +87,7 @@ module Shumway.AVMX.AS.flash.display {
             }
 
             var symbolClass = symbolInfo.symbolClass;
-            var soundObj = symbolClass.initializeFrom(symbolInfo);
-            symbolClass.instanceConstructorNoInitialize.call(soundObj);
+            var soundObj = constructClassFromSymbol(symbolInfo, symbolClass);
             sounds[symbolId] = sound = { object: soundObj };
           }
           if (sound.channel) {
@@ -132,56 +131,32 @@ module Shumway.AVMX.AS.flash.display {
       this._callQueue = [];
     }
 
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: flash.display.SpriteSymbol) {
-      Sprite.initializer.call(this);
-      var self: MovieClip = this;
-
-      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(self);
-
-      self._currentFrame = 0;
-      self._totalFrames = 1;
-      self._trackAsMenu = false;
-      self._scenes = [];
-      self._enabled = true;
-      self._isPlaying = false;
-
-      self._frames = [];
-      self._frameScripts = [];
-      self._nextFrame = 1;
-      self._stopped = false;
-      self._allowFrameNavigation = true;
-
-      self._sounds = null;
-
-      self._buttonFrames = Object.create(null);
-      self._currentButtonState = null;
-
-      if (symbol) {
-        self._totalFrames = symbol.numFrames;
-        self._currentFrame = 1;
-        if (!symbol.isRoot) {
-          self.addScene('', symbol.labels, 0, symbol.numFrames);
-        }
-        self._frames = symbol.frames;
-        if (symbol.isAVM1Object) {
-          if (symbol.frameScripts) {
-            var avm1MovieClip = Shumway.AVM1.Lib.getAVM1Object(this, symbol.avm1Context);
-            avm1MovieClip.context = symbol.avm1Context;
-            var data = symbol.frameScripts;
-            for (var i = 0; i < data.length; i += 2) {
-              avm1MovieClip.addFrameScript(data[i], data[i + 1]);
-            }
-          }
-          if (symbol.avm1Name) {
-            self.name = symbol.avm1Name;
-          }
-        }
-      } else {
-        self.addScene('', [], 0, self._totalFrames);
+    applySymbol() {
+      super.applySymbol();
+      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(this);
+      this._initializeFields();
+      var symbol = this._symbol;
+      this._totalFrames = symbol.numFrames;
+      this._currentFrame = 1;
+      if (!symbol.isRoot) {
+        this.addScene('', symbol.labels, 0, symbol.numFrames);
       }
-    };
-    
+      this._frames = symbol.frames;
+      if (symbol.isAVM1Object) {
+        if (symbol.frameScripts) {
+          var avm1MovieClip = Shumway.AVM1.Lib.getAVM1Object(this, symbol.avm1Context);
+          avm1MovieClip.context = symbol.avm1Context;
+          var data = symbol.frameScripts;
+          for (var i = 0; i < data.length; i += 2) {
+            avm1MovieClip.addFrameScript(data[i], data[i + 1]);
+          }
+        }
+        if (symbol.avm1Name) {
+          this.name = symbol.avm1Name;
+        }
+      }
+    }
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -225,6 +200,28 @@ module Shumway.AVMX.AS.flash.display {
 
     constructor () {
       super();
+      release || assert(!this._symbol);
+      this._initializeFields();
+    }
+
+    private _initializeFields() {
+      this._currentFrame = 0;
+      this._totalFrames = 1;
+      this._trackAsMenu = false;
+      this._scenes = [];
+      this._enabled = true;
+      this._isPlaying = false;
+
+      this._frames = [];
+      this._frameScripts = [];
+      this._nextFrame = 1;
+      this._stopped = false;
+      this._allowFrameNavigation = true;
+
+      this._sounds = null;
+
+      this._buttonFrames = Object.create(null);
+      this._currentButtonState = null;
     }
 
     _addFrame(frameInfo: any) {

@@ -15,17 +15,11 @@
  */
 // Class: NetGroupSendResult
 module Shumway.AVMX.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class NetGroupSendResult extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,17 +27,12 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.net.NetGroupSendResult");
+      super();
     }
     
     // JS -> AS Bindings
     static ERROR: string = "error";
     static NO_ROUTE: string = "no route";
     static SENT: string = "sent";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

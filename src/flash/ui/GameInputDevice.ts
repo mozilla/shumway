@@ -16,16 +16,12 @@
 // Class: GameInputDevice
 module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class GameInputDevice extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,16 +29,11 @@ module Shumway.AVMX.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.ui.GameInputDevice");
+      super();
     }
     
-    // JS -> AS Bindings
     static MAX_BUFFER_SIZE: number /*int*/ = 4800;
-    
-    
-    // AS -> JS Bindings
-    
+
     // _numControls: number /*int*/;
     // _sampleInterval: number /*int*/;
     // _enabled: boolean;

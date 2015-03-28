@@ -16,16 +16,12 @@
 // Class: TextRenderer
 module Shumway.AVMX.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class TextRenderer extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,14 +29,9 @@ module Shumway.AVMX.AS.flash.text {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.text.TextRenderer");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
+
     // static _antiAliasType: string;
     // static _maxLevel: number /*int*/;
     // static _displayMode: string;

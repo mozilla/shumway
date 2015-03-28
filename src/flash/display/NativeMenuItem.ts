@@ -22,10 +22,7 @@ module Shumway.AVMX.AS.flash.display {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +30,7 @@ module Shumway.AVMX.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       this._enabled = true;
     }
 

@@ -15,17 +15,11 @@
  */
 // Class: SystemUpdaterType
 module Shumway.AVMX.AS.flash.system {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class SystemUpdaterType extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,16 +27,11 @@ module Shumway.AVMX.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.system.SystemUpdaterType");
+      super();
     }
     
     // JS -> AS Bindings
     static SYSTEM: string = "system";
     static DRM: string = "drm";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

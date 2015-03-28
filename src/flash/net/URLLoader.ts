@@ -26,13 +26,11 @@ module Shumway.AVMX.AS.flash.net {
   export class URLLoader extends flash.events.EventDispatcher {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
     
     constructor (request?: flash.net.URLRequest) {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       var stream = this._stream = new URLStream();
 
       stream.addEventListener(Event.OPEN, this.onStreamOpen.bind(this));

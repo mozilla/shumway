@@ -361,18 +361,15 @@ module Shumway.AVMX.AS.flash.display {
       this._advancableInstances = new WeakList<IAdvancable>();
     }
 
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.Timeline.DisplaySymbol) {
+    applySymbol() {
       release || counter.count("DisplayObject::initializer");
-      var self: DisplayObject = this;
-      if (symbol) {
-        if (symbol.scale9Grid) {
-          // No need to take ownership: scale9Grid is never changed.
-          self._scale9Grid = symbol.scale9Grid;
-        }
-        self._symbol = symbol;
+      var symbol = this._symbol;
+      if (symbol.scale9Grid) {
+        // No need to take ownership: scale9Grid is never changed.
+        this._scale9Grid = symbol.scale9Grid;
       }
-    };
+      this._symbol = symbol;
+    }
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -389,12 +386,11 @@ module Shumway.AVMX.AS.flash.display {
                                 placeObjectTag: Shumway.SWF.PlaceObjectTag,
                                 callConstructor: boolean): DisplayObject {
       var symbolClass = symbol.symbolClass;
-      var instance: DisplayObject;
-      if (symbolClass.isSubtypeOf(flash.display.BitmapData)) {
-        instance = flash.display.Bitmap.initializeFrom(symbol);
-      } else {
-        instance = symbolClass.initializeFrom(symbol);
+
+      if (this.securityDomain.flash.display.BitmapData.axClass.isSubtypeOf(symbolClass)) {
+        symbolClass = this.securityDomain.flash.display.Bitmap.axClass;
       }
+      var instance: DisplayObject = constructClassFromSymbol(symbol, symbolClass);
       if (placeObjectTag.flags & PlaceObjectFlags.HasName) {
         instance._name = placeObjectTag.name;
       }
@@ -513,7 +509,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     constructor () {
-      super(undefined);
+      super();
 
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._displayObjectFlags = DisplayObjectFlags.Visible                            |
@@ -553,7 +549,8 @@ module Shumway.AVMX.AS.flash.display {
       this._filters = null;
       this._blendMode = BlendMode.NORMAL;
       release || assert (this._blendMode);
-      this._scale9Grid = null;
+      // Don't overwrite the scale9Grid if it has been set from a symbol.
+      this._scale9Grid = this._scale9Grid || null;
       this._loaderInfo = null;
       this._accessibilityProperties = null;
 
@@ -577,7 +574,6 @@ module Shumway.AVMX.AS.flash.display {
       this._mouseOver = false;
       this._mouseDown = false;
 
-      this._symbol = null;
       this._graphics = null;
       this._children = null;
 
@@ -800,7 +796,7 @@ module Shumway.AVMX.AS.flash.display {
     _mouseOver: boolean;
     _mouseDown: boolean;
 
-    _symbol: Shumway.Timeline.Symbol;
+    _symbol: Shumway.Timeline.DisplaySymbol;
     _graphics: flash.display.Graphics;
 
     /**

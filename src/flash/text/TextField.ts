@@ -32,46 +32,88 @@ module Shumway.AVMX.AS.flash.text {
 
     static classInitializer: any = null;
 
-    static initializer: any = function (symbol: TextSymbol) {
-      var self: TextField = this;
+    _symbol: TextSymbol;
 
-      self._alwaysShowSelection = false;
-      self._antiAliasType = AntiAliasType.NORMAL;
-      self._autoSize = TextFieldAutoSize.NONE;
-      self._background = false;
-      self._backgroundColor = 0xffffffff;
-      self._border = false;
-      self._borderColor = 0x000000ff;
-      self._bottomScrollV = 1;
-      self._caretIndex = 0;
-      self._condenseWhite = false;
-      self._embedFonts = false;
-      self._gridFitType = GridFitType.PIXEL;
-      self._htmlText = '';
-      self._length = 0;
-      self._textInteractionMode = TextInteractionMode.NORMAL;
-      self._maxChars = 0;
-      self._maxScrollH = 0;
-      self._maxScrollV = 1;
-      self._mouseWheelEnabled = false;
-      self._multiline = false;
-      self._numLines = 1;
-      self._displayAsPassword = false;
-      self._restrict = null;
-      self._selectable = true;
-      self._selectedText = '';
-      self._selectionBeginIndex = 0;
-      self._selectionEndIndex = 0;
-      self._sharpness = 0;
-      self._styleSheet = null;
-      self._textColor = -1;
-      self._textHeight = 0;
-      self._textWidth = 0;
-      self._thickness = 0;
-      self._type = TextFieldType.DYNAMIC;
-      self._useRichTextClipboard = false;
+    applySymbol() {
+      this._initializeFields();
+      release || assert(this._symbol);
+      var symbol = this._symbol;
+      this._setFillAndLineBoundsFromSymbol(symbol);
+      var defaultTextFormat = this._textContent.defaultTextFormat;
+      defaultTextFormat.color = symbol.color;
+      defaultTextFormat.size = (symbol.size / 20) | 0;
+      defaultTextFormat.font = symbol.face;
+      defaultTextFormat.bold = symbol.bold;
+      defaultTextFormat.italic = symbol.italic;
+      defaultTextFormat.align = symbol.align;
+      defaultTextFormat.leftMargin = (symbol.leftMargin / 20) | 0;
+      defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
+      defaultTextFormat.indent = (symbol.indent / 20) | 0;
+      defaultTextFormat.leading = (symbol.leading / 20) | 0;
+      this._multiline = symbol.multiline;
+      this._embedFonts = symbol.embedFonts;
+      this._selectable = symbol.selectable;
+      this._displayAsPassword = symbol.displayAsPassword;
+      this._type = symbol.type;
+      this._maxChars = symbol.maxChars;
+      if (symbol.border) {
+        this.background = true;
+        this.border = true;
+      }
+      if (symbol.html) {
+        this.htmlText = symbol.initialText;
+      } else {
+        this.text = symbol.initialText;
+      }
+      this.wordWrap = symbol.wordWrap;
+      this.autoSize = symbol.autoSize;
+    }
+    constructor() {
+      super();
+      release || assert(!this._symbol);
+      this._initializeFields();
+      this._setFillAndLineBoundsFromWidthAndHeight(100 * 20, 100 * 20);
+    }
 
-      var defaultTextFormat = new flash.text.TextFormat(
+    private _initializeFields(): void {
+      this._alwaysShowSelection = false;
+      this._antiAliasType = AntiAliasType.NORMAL;
+      this._autoSize = TextFieldAutoSize.NONE;
+      this._background = false;
+      this._backgroundColor = 0xffffffff;
+      this._border = false;
+      this._borderColor = 0x000000ff;
+      this._bottomScrollV = 1;
+      this._caretIndex = 0;
+      this._condenseWhite = false;
+      this._embedFonts = false;
+      this._gridFitType = GridFitType.PIXEL;
+      this._htmlText = '';
+      this._length = 0;
+      this._textInteractionMode = TextInteractionMode.NORMAL;
+      this._maxChars = 0;
+      this._maxScrollH = 0;
+      this._maxScrollV = 1;
+      this._mouseWheelEnabled = false;
+      this._multiline = false;
+      this._numLines = 1;
+      this._displayAsPassword = false;
+      this._restrict = null;
+      this._selectable = true;
+      this._selectedText = '';
+      this._selectionBeginIndex = 0;
+      this._selectionEndIndex = 0;
+      this._sharpness = 0;
+      this._styleSheet = null;
+      this._textColor = -1;
+      this._textHeight = 0;
+      this._textWidth = 0;
+      this._thickness = 0;
+      this._type = TextFieldType.DYNAMIC;
+      this._useRichTextClipboard = false;
+      this._lineMetricsData = null;
+
+      var defaultTextFormat = new this.securityDomain.flash.text.TextFormat(
         Font.DEFAULT_FONT_SERIF,
         12,
         0,
@@ -82,48 +124,7 @@ module Shumway.AVMX.AS.flash.text {
         '',
         TextFormatAlign.LEFT
       );
-      self._textContent = new Shumway.TextContent(defaultTextFormat);
-      self._lineMetricsData = null;
-
-      if (symbol) {
-        self._setFillAndLineBoundsFromSymbol(symbol);
-
-        defaultTextFormat.color = symbol.color;
-        defaultTextFormat.size = (symbol.size / 20) | 0;
-        defaultTextFormat.font = symbol.face;
-        defaultTextFormat.bold = symbol.bold;
-        defaultTextFormat.italic = symbol.italic;
-        defaultTextFormat.align = symbol.align;
-        defaultTextFormat.leftMargin = (symbol.leftMargin / 20) | 0;
-        defaultTextFormat.rightMargin = (symbol.rightMargin / 20) | 0;
-        defaultTextFormat.indent = (symbol.indent / 20) | 0;
-        defaultTextFormat.leading = (symbol.leading / 20) | 0;
-
-        self._multiline = symbol.multiline;
-        self._embedFonts = symbol.embedFonts;
-        self._selectable = symbol.selectable;
-        self._displayAsPassword = symbol.displayAsPassword;
-        self._type = symbol.type;
-        self._maxChars = symbol.maxChars;
-
-        if (symbol.border) {
-          self.background = true;
-          self.border = true;
-        }
-        if (symbol.html) {
-          self.htmlText = symbol.initialText;
-        } else {
-          self.text = symbol.initialText;
-        }
-        self.wordWrap = symbol.wordWrap;
-        self.autoSize = symbol.autoSize;
-      } else {
-        self._setFillAndLineBoundsFromWidthAndHeight(100 * 20, 100 * 20);
-      }
-    };
-
-    constructor() {
-      super();
+      this._textContent = new Shumway.TextContent(defaultTextFormat);
     }
 
     _setFillAndLineBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {
@@ -172,10 +173,11 @@ module Shumway.AVMX.AS.flash.text {
 
     //selectedText: string;
     //appendText: (newText: string) => void;
-    //getXMLText: (beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647) => string;
-    //insertXMLText: (beginIndex: number /*int*/, endIndex: number /*int*/, richText: string, pasting: boolean = false) => void;
-    //copyRichText: () => string;
-    //pasteRichText: (richText: string) => boolean;
+    //getXMLText: (beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647) =>
+    // string;
+    //insertXMLText: (beginIndex: number /*int*/, endIndex: number /*int*/, richText: string,
+    // pasting: boolean = false) => void; copyRichText: () => string; pasteRichText: (richText:
+    // string) => boolean;
 
     // AS -> JS Bindings
     static isFontCompatible(fontName: string, fontStyle: string): boolean {
@@ -375,7 +377,8 @@ module Shumway.AVMX.AS.flash.text {
 
     set htmlText(value: string) {
       value = asCoerceString(value);
-      // Flash resets the bold and italic flags when an html value is set on a text field created from a symbol.
+      // Flash resets the bold and italic flags when an html value is set on a text field created
+      // from a symbol.
       if (this._symbol) {
         this._textContent.defaultTextFormat.bold = false;
         this._textContent.defaultTextFormat.italic = false;
@@ -609,7 +612,8 @@ module Shumway.AVMX.AS.flash.text {
       if (!this._hasFlags(DisplayObjectFlags.DirtyTextContent)) {
         return;
       }
-      var serializer = null; // REDUX: Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      var serializer = null; // REDUX:
+                             // Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
       var lineMetricsData = serializer.syncDisplayObject(this, false);
       var textWidth = lineMetricsData.readInt();
       var textHeight = lineMetricsData.readInt();
@@ -844,23 +848,23 @@ module Shumway.AVMX.AS.flash.text {
     variableName: string = null;
     textContent: Shumway.TextContent = null;
 
-    constructor(data: Timeline.SymbolData) {
-      super(data, flash.text.TextField, true);
+    constructor(data: Timeline.SymbolData, securityDomain: ISecurityDomain) {
+      super(data, securityDomain.flash.text.TextField.axClass, true);
     }
 
     static FromTextData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
-      var symbol = new TextSymbol(data);
+      var symbol = new TextSymbol(data, loaderInfo.securityDomain);
       symbol._setBoundsFromData(data);
       var tag = data.tag;
       if (data.static) {
         symbol.dynamic = false;
-        symbol.symbolClass = flash.text.StaticText;
+        symbol.symbolClass = loaderInfo.securityDomain.flash.text.StaticText.axClass;
         if (tag.initialText) {
           var textContent = new Shumway.TextContent();
           textContent.bounds = symbol.lineBounds;
           textContent.parseHtml(tag.initialText, null, false);
           var matrix = new flash.geom.Matrix();
-          textContent.matrix = new flash.geom.Matrix();
+          textContent.matrix = new loaderInfo.securityDomain.flash.geom.Matrix();
           textContent.matrix.copyFromUntyped(data.matrix);
           textContent.coords = data.coords;
           symbol.textContent = textContent;
@@ -898,12 +902,15 @@ module Shumway.AVMX.AS.flash.text {
       }
       symbol.html = !!tag.html;
       symbol.displayAsPassword = !!tag.password;
-      symbol.type = tag.readonly ? flash.text.TextFieldType.DYNAMIC :
+      symbol.type = tag.readonly ?
+                    flash.text.TextFieldType.DYNAMIC :
                     flash.text.TextFieldType.INPUT;
       if (tag.hasMaxLength) {
         symbol.maxChars = tag.maxLength;
       }
-      symbol.autoSize = tag.autoSize ? flash.text.TextFieldAutoSize.LEFT : flash.text.TextFieldAutoSize.NONE;
+      symbol.autoSize = tag.autoSize ?
+                        flash.text.TextFieldAutoSize.LEFT :
+                        flash.text.TextFieldAutoSize.NONE;
       symbol.variableName = tag.variableName;
       return symbol;
     }

@@ -16,35 +16,27 @@
 // Class: JPEGXREncoderOptions
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class JPEGXREncoderOptions extends ASObject {
-    
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
+
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["quantization", "colorSpace", "trimFlexBits"];
-    
+
     constructor (quantization: number /*uint*/ = 20, colorSpace: string = "auto", trimFlexBits: number /*uint*/ = 0) {
-      quantization = quantization >>> 0; colorSpace = asCoerceString(colorSpace); trimFlexBits = trimFlexBits >>> 0;
-      false && super();
-      dummyConstructor("public flash.display.JPEGXREncoderOptions");
+      super();
+      this.quantization = quantization >>> 0;
+      this.colorSpace = asCoerceString(colorSpace);
+      this.trimFlexBits = trimFlexBits >>> 0;
     }
-    
-    // JS -> AS Bindings
-    
+
     quantization: number /*uint*/;
     colorSpace: string;
     trimFlexBits: number /*uint*/;
-    
-    // AS -> JS Bindings
-    
   }
 }

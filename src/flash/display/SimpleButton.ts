@@ -21,47 +21,48 @@ module Shumway.AVMX.AS.flash.display {
 
   export class SimpleButton extends flash.display.InteractiveObject {
 
+    static axClass: typeof SimpleButton;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: ButtonSymbol) {
-      var self: SimpleButton = this;
-
-      display.DisplayObject._advancableInstances.push(self);
-
-      self._useHandCursor = true;
-      self._enabled = true;
-      self._trackAsMenu = false;
-      self._upState = null;
-      self._overState = null;
-      self._downState = null;
-      self._hitTestState = null;
-
-      self._currentState = null;
-      self._children = [];
-
-      self._symbol = symbol;
-
-      if (symbol) {
-        if (symbol.upState) {
-          self._upState = self.createAnimatedDisplayObject(symbol.upState.symbol,
-                                                           symbol.upState.placeObjectTag, true);
-        }
-        if (symbol.overState) {
-          self._overState = self.createAnimatedDisplayObject(symbol.overState.symbol,
-                                                             symbol.overState.placeObjectTag, true);
-        }
-        if (symbol.downState) {
-          self._downState = self.createAnimatedDisplayObject(symbol.downState.symbol,
-                                                             symbol.downState.placeObjectTag, true);
-        }
-        if (symbol.hitTestState) {
-          self._hitTestState = self.createAnimatedDisplayObject(symbol.hitTestState.symbol,
-                                                                symbol.hitTestState.placeObjectTag, true);
-        }
+    _symbol: ButtonSymbol;
+    applySymbol() {
+      release || assert(this._symbol);
+      display.DisplayObject._advancableInstances.push(this);
+      this._initializeFields();
+      var symbol = this._symbol;
+      if (symbol.upState) {
+        this._upState = this.createAnimatedDisplayObject(symbol.upState.symbol,
+                                                         symbol.upState.placeObjectTag, true);
       }
-    };
+      if (symbol.overState) {
+        this._overState = this.createAnimatedDisplayObject(symbol.overState.symbol,
+                                                           symbol.overState.placeObjectTag, true);
+      }
+      if (symbol.downState) {
+        this._downState = this.createAnimatedDisplayObject(symbol.downState.symbol,
+                                                           symbol.downState.placeObjectTag, true);
+      }
+      if (symbol.hitTestState) {
+        this._hitTestState = this.createAnimatedDisplayObject(symbol.hitTestState.symbol,
+                                                              symbol.hitTestState.placeObjectTag,
+                                                              true);
+      }
+    }
+
+    private _initializeFields() {
+      this._useHandCursor = true;
+      this._enabled = true;
+      this._trackAsMenu = false;
+      this._upState = null;
+      this._overState = null;
+      this._downState = null;
+      this._hitTestState = null;
+
+      this._currentState = null;
+      this._children = [];
+    }
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -69,11 +70,14 @@ module Shumway.AVMX.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
 
-    constructor(upState: flash.display.DisplayObject = null,
-                overState: flash.display.DisplayObject = null,
-                downState: flash.display.DisplayObject = null,
-                hitTestState: flash.display.DisplayObject = null) {
+    constructor(upState?: flash.display.DisplayObject,
+                overState?: flash.display.DisplayObject,
+                downState?: flash.display.DisplayObject,
+                hitTestState?: flash.display.DisplayObject) {
       super();
+      release || assert(!this._symbol);
+      display.DisplayObject._advancableInstances.push(this);
+      this._initializeFields();
       if (upState) {
         this.upState = upState;
       }
@@ -113,8 +117,6 @@ module Shumway.AVMX.AS.flash.display {
     private _hitTestState: flash.display.DisplayObject;
 
     private _currentState: flash.display.DisplayObject;
-
-    _symbol: ButtonSymbol;
 
     get useHandCursor(): boolean {
       return this._useHandCursor;
@@ -291,7 +293,7 @@ module Shumway.AVMX.AS.flash.display {
     loaderInfo: flash.display.LoaderInfo;
 
     constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
-      super(data, flash.display.SimpleButton, true);
+      super(data, loaderInfo.securityDomain.flash.display.SimpleButton.axClass, true);
       this.loaderInfo = loaderInfo;
     }
 

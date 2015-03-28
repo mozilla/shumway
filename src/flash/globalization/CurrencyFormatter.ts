@@ -16,16 +16,12 @@
 // Class: CurrencyFormatter
 module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class CurrencyFormatter extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -34,8 +30,7 @@ module Shumway.AVMX.AS.flash.globalization {
     
     constructor (requestedLocaleIDName: string) {
       requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
-      false && super();
-      dummyConstructor("public flash.globalization.CurrencyFormatter");
+      super();
     }
     
     // JS -> AS Bindings

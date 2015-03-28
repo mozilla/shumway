@@ -16,16 +16,12 @@
 // Class: LocaleID
 module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class LocaleID extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVMX.AS.flash.globalization {
     static instanceSymbols: string [] = null; // [];
     
     constructor (name: string) {
+      super();
       name = asCoerceString(name);
-      false && super();
-      dummyConstructor("public flash.globalization.LocaleID");
     }
     
     // JS -> AS Bindings

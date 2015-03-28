@@ -15,17 +15,11 @@
  */
 // Class: DeleteObjectSample
 module Shumway.AVMX.AS.flash.sampler {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class DeleteObjectSample extends flash.sampler.Sample {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,16 +27,10 @@ module Shumway.AVMX.AS.flash.sampler {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.sampler.DeleteObjectSample");
+      super();
     }
-    
-    // JS -> AS Bindings
     
     id: number = undefined;
     size: number = undefined;
-    
-    // AS -> JS Bindings
-    
   }
 }

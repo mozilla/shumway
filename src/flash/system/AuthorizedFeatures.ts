@@ -16,16 +16,11 @@
 // Class: AuthorizedFeatures
 module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class AuthorizedFeatures extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,15 +28,9 @@ module Shumway.AVMX.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.system.AuthorizedFeatures");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     createApplicationInstaller(strings: ASXML, icon: flash.utils.ByteArray): flash.system.ApplicationInstaller {
       strings = strings; icon = icon;
       notImplemented("public flash.system.AuthorizedFeatures::createApplicationInstaller"); return;

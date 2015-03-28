@@ -17,7 +17,6 @@
 module Shumway.AVMX.AS.flash.events {
   export class IOErrorEvent extends flash.events.ErrorEvent {
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;

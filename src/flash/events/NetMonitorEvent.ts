@@ -15,20 +15,20 @@
  */
 // Class: NetMonitorEvent
 module Shumway.AVMX.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class NetMonitorEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    netStream: flash.net.NetStream;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 netStream: flash.net.NetStream = null) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.NetMonitorEvent");
+      super(type, bubbles, cancelable);
+      // TODO: coerce
+      this.netStream = netStream;
     }
 
     // JS -> AS Bindings

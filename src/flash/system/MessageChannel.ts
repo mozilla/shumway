@@ -16,16 +16,11 @@
 // Class: MessageChannel
 module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class MessageChannel extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,11 +28,8 @@ module Shumway.AVMX.AS.flash.system {
     static instanceSymbols: string [] = null; // ["addEventListener", "removeEventListener", "toString"];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.system.MessageChannel");
+      super();
     }
-    
-    // JS -> AS Bindings
     
     // addEventListener: (type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false) => void;
     // removeEventListener: (type: string, listener: ASFunction, useCapture: boolean = false) => void;

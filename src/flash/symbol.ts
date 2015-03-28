@@ -54,10 +54,11 @@ module Shumway.Timeline {
       release || assert (isInteger(data.id));
       this.data = data;
       if (data.className) {
-        var appDomain = null; // REDUX: Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
+        var system = symbolDefaultClass.securityDomain.system;
         try {
-          var symbolClass = appDomain.getClass(data.className);
-          this.symbolClass = symbolClass;
+          var symbolClass = system.getClass(AVMX.Multiname.FromFQNString(data.className,
+                                                                         AVMX.NamespaceType.Public));
+          this.symbolClass = <ASClass><any>symbolClass;
         } catch (e) {
           warning ("Symbol " + data.id + " bound to non-existing class " + data.className);
           this.symbolClass = symbolDefaultClass;
@@ -97,12 +98,12 @@ module Shumway.Timeline {
     buffer: Uint8Array;
     byteLength: number;
 
-    constructor(data: SymbolData) {
-      super(data, flash.utils.ByteArray);
+    constructor(data: SymbolData, securityDomain: ISecurityDomain) {
+      super(data, securityDomain.flash.utils.ByteArray.axClass);
     }
 
-    static FromData(data: any): BinarySymbol {
-      var symbol = new BinarySymbol(data);
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): BinarySymbol {
+      var symbol = new BinarySymbol(data, loaderInfo.securityDomain);
       symbol.buffer = data.data;
       symbol.byteLength = data.data.byteLength;
       return symbol;

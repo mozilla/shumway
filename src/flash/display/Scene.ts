@@ -19,12 +19,11 @@ module Shumway.AVMX.AS.flash.display {
   export class Scene extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
 
     constructor (name: string, labels: FrameLabel[], offset: number, numFrames: number /*int*/) {
-      false && super();
+      super();
       this._name = asCoerceString(name);
       // Note: creating Scene objects in ActionScript, while possible, is undocumented and entirely
       // useless. Luckily, that also means that they're not very carefully implemented.

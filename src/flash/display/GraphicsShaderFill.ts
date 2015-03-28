@@ -16,16 +16,12 @@
 // Class: GraphicsShaderFill
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class GraphicsShaderFill extends ASObject implements IGraphicsFill, IGraphicsData {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,9 @@ module Shumway.AVMX.AS.flash.display {
     static instanceSymbols: string [] = null; // ["shader", "matrix"];
     
     constructor (shader: flash.display.Shader = null, matrix: flash.geom.Matrix = null) {
-      shader = shader; matrix = matrix;
-      false && super();
-      dummyConstructor("public flash.display.GraphicsShaderFill");
+      super();
+      this.shader = shader;
+      this.matrix = matrix;
     }
     
     // JS -> AS Bindings

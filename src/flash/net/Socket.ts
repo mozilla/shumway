@@ -16,7 +16,6 @@
 // Class: Socket
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
@@ -24,10 +23,7 @@ module Shumway.AVMX.AS.flash.net {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -35,9 +31,8 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = null; // ["timeout", "timeout", "connect", "close"];
     
     constructor (host: string = null, port: number /*int*/ = 0) {
+      super(undefined);
       host = asCoerceString(host); port = port | 0;
-      false && super(undefined);
-      dummyConstructor("public flash.net.Socket");
     }
     
     // JS -> AS Bindings

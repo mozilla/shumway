@@ -15,12 +15,10 @@
  */
 // Class: KeyboardEvent
 module Shumway.AVMX.AS.flash.events {
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
 
   export class KeyboardEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -29,8 +27,13 @@ module Shumway.AVMX.AS.flash.events {
                 charCodeValue: number /*uint*/ = 0, keyCodeValue: number /*uint*/ = 0,
                 keyLocationValue: number /*uint*/ = 0, ctrlKeyValue: boolean = false,
                 altKeyValue: boolean = false, shiftKeyValue: boolean = false) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.KeyboardEvent");
+      super(type, bubbles, cancelable);
+      this._charCode = charCodeValue >>> 0;
+      this._keyCode = keyCodeValue >>> 0;
+      this._keyLocation = keyLocationValue >>> 0;
+      this._ctrlKey = !!ctrlKeyValue;
+      this._altKey = !!altKeyValue;
+      this._shiftKey = !!shiftKeyValue;
     }
 
     static KEY_DOWN: string = "keyDown";

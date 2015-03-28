@@ -23,12 +23,11 @@ module Shumway.AVMX.AS.flash.net {
   export class URLVariables extends ASObject {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
     
     constructor (source: string = null) {
-      false && super();
+      super();
       this._ignoreDecodingErrors = false;
       source && this.decode(source);
     }

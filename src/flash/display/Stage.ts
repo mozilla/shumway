@@ -26,7 +26,6 @@ module Shumway.AVMX.AS.flash.display {
 
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
-    static initializer: any = null;
 
     constructor () {
       super();

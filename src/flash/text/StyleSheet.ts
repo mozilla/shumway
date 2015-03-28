@@ -39,13 +39,11 @@ module Shumway.AVMX.AS.flash.text {
 
   export class StyleSheet extends flash.events.EventDispatcher {
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
     
     constructor () {
-      false && super();
-      flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       this.clear();
     }
 

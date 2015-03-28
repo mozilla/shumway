@@ -15,17 +15,11 @@
  */
 // Class: NetStreamAppendBytesAction
 module Shumway.AVMX.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class NetStreamAppendBytesAction extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,17 +27,12 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.net.NetStreamAppendBytesAction");
+      super();
     }
     
     // JS -> AS Bindings
     static RESET_BEGIN: string = "resetBegin";
     static RESET_SEEK: string = "resetSeek";
     static END_SEQUENCE: string = "endSequence";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

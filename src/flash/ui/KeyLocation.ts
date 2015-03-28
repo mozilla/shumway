@@ -15,16 +15,10 @@
  */
 // Class: KeyLocation
 module Shumway.AVMX.AS.flash.ui {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class KeyLocation extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,19 +27,13 @@ module Shumway.AVMX.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.ui.KeyLocation");
+      super();
     }
     
-    // JS -> AS Bindings
     static STANDARD: number /*uint*/ = undefined;
     static LEFT: number /*uint*/ = 1;
     static RIGHT: number /*uint*/ = 2;
     static NUM_PAD: number /*uint*/ = 3;
     static D_PAD: number /*uint*/ = 4;
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

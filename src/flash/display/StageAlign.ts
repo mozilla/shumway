@@ -16,20 +16,17 @@
 // Class: StageAlign
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import StageAlignFlags = Shumway.Remoting.StageAlignFlags;
 
   export class StageAlign extends ASObject {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.display.StageAlign");
+      super();
     }
     
     // JS -> AS Bindings

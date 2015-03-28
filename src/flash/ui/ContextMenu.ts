@@ -20,13 +20,11 @@ module Shumway.AVMX.AS.flash.ui {
   export class ContextMenu extends flash.display.NativeMenu {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
     
     constructor () {
-      false && super();
-      display.NativeMenu.instanceConstructorNoInitialize.call(this);
+      super();
       this.builtInItems = new ui.ContextMenuBuiltInItems();
       this.customItems = [];
     }
