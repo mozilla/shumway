@@ -15,24 +15,27 @@
  */
 // Class: MorphShape
 module Shumway.AVMX.AS.flash.display {
+  import assert = Debug.assert;
   export class MorphShape extends flash.display.DisplayObject {
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
 
+    static axClass: typeof MorphShape;
+
     static classInitializer: any = null;
-    static initializer: any = function (symbol: flash.display.MorphShapeSymbol) {
-      var self: MorphShape = this;
-      self._graphics = null;
-      if (symbol) {
-        this._setStaticContentFromSymbol(symbol);
-        // TODO: Check what do do if the computed bounds of the graphics object don't
-        // match those given by the symbol.
-      }
+    _symbol: MorphShapeSymbol;
+    applySymbol() {
+      release || assert(this._symbol);
+      this._graphics = null;
+      this._setStaticContentFromSymbol(this._symbol);
+      // TODO: Check what do do if the computed bounds of the graphics object don't
+      // match those given by the symbol.
       this._setFlags(DisplayObjectFlags.ContainsMorph);
-    };
-    
+    }
+
     constructor () {
       super();
+      release || assert(!this._symbol);
     }
 
     _canHaveGraphics(): boolean {
@@ -57,12 +60,12 @@ module Shumway.AVMX.AS.flash.display {
   export class MorphShapeSymbol extends flash.display.ShapeSymbol {
     morphFillBounds: Bounds;
     morphLineBounds: Bounds;
-    constructor(data: Timeline.SymbolData) {
-      super(data, flash.display.MorphShape);
+    constructor(data: Timeline.SymbolData, securityDomain: ISecurityDomain) {
+      super(data, securityDomain.flash.display.MorphShape.axClass);
     }
 
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): MorphShapeSymbol {
-      var symbol = new MorphShapeSymbol(data);
+      var symbol = new MorphShapeSymbol(data, loaderInfo.securityDomain);
       symbol._setBoundsFromData(data);
       symbol.graphics = flash.display.Graphics.FromData(data);
       symbol.processRequires(data.require, loaderInfo);

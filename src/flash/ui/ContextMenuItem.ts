@@ -22,9 +22,6 @@ module Shumway.AVMX.AS.flash.ui {
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,7 +30,7 @@ module Shumway.AVMX.AS.flash.ui {
     
     constructor (caption: string, separatorBefore: boolean = false,
                  enabled: boolean = true, visible: boolean = true) {
-      false && super();
+      super();
       caption = asCoerceString(caption); separatorBefore = !!separatorBefore; enabled = !!enabled; visible = !!visible;
       this._caption = caption ? caption : "";
       this._separatorBefore = separatorBefore;

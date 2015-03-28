@@ -21,9 +21,6 @@ module Shumway.AVMX.AS.flash.filters {
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
 
@@ -46,7 +43,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
-      false && super();
+      super();
       this.matrixX = matrixX;
       this.matrixY = matrixY;
       if (matrix) {

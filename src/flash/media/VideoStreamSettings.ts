@@ -16,16 +16,12 @@
 // Class: VideoStreamSettings
 module Shumway.AVMX.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class VideoStreamSettings extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +29,7 @@ module Shumway.AVMX.AS.flash.media {
     static instanceSymbols: string [] = null; // ["width", "height", "fps", "quality", "bandwidth", "keyFrameInterval", "codec", "setMode", "setQuality", "setKeyFrameInterval"];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.media.VideoStreamSettings");
+      super();
     }
     
     // JS -> AS Bindings

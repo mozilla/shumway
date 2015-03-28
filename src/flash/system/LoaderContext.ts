@@ -15,17 +15,11 @@
  */
 // Class: LoaderContext
 module Shumway.AVMX.AS.flash.system {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class LoaderContext extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,15 +27,13 @@ module Shumway.AVMX.AS.flash.system {
     static instanceSymbols: string [] = ["checkPolicyFile!", "applicationDomain!", "securityDomain!", "allowCodeImport!", "requestedContentParent!", "parameters!", "imageDecodingPolicy!"];
     
     constructor (checkPolicyFile: boolean = false, applicationDomain: flash.system.ApplicationDomain = null, securityDomain: flash.system.SecurityDomain = null) {
-      false && super();
+      super();
       this.checkPolicyFile = checkPolicyFile;
       // REDUX: Name conflict.
       // this.applicationDomain = applicationDomain;
       // this.securityDomain = securityDomain;
       this.imageDecodingPolicy = flash.system.ImageDecodingPolicy.ON_DEMAND;
     }
-    
-    // JS -> AS Bindings
     
     checkPolicyFile: boolean;
     applicationDomain: flash.system.ApplicationDomain;
@@ -51,8 +43,5 @@ module Shumway.AVMX.AS.flash.system {
     requestedContentParent: flash.display.DisplayObjectContainer;
     parameters: ASObject;
     imageDecodingPolicy: string;
-    
-    // AS -> JS Bindings
-    
   }
 }

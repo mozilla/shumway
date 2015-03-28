@@ -21,13 +21,11 @@ module Shumway.AVMX.AS.flash.media {
   import assert = Shumway.Debug.assert;
   export class Video extends flash.display.DisplayObject {
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
     
     constructor (width: number /*int*/ = 320, height: number /*int*/ = 240) {
-      false && super();
-      flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
+      super();
       width |= 0;
       height |= 0;
       width = width || 320;

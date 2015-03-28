@@ -19,7 +19,6 @@ module Shumway.AVMX.AS.flash.events {
   export class TextEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;

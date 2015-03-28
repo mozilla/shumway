@@ -15,20 +15,20 @@
  */
 // Class: IMEEvent
 module Shumway.AVMX.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class IMEEvent extends flash.events.TextEvent {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    imeClient: flash.text.ime.IIMEClient;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 text: string = "", imeClient: flash.text.ime.IIMEClient = null) {
-      super(undefined, undefined, undefined, undefined);
-      dummyConstructor("public flash.events.IMEEvent");
+      super(type, bubbles, cancelable, text);
+      // TODO: coerce
+      this.imeClient = imeClient;
     }
 
     // JS -> AS Bindings

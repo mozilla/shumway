@@ -15,23 +15,23 @@
  */
 // Class: PressAndTapGestureEvent
 module Shumway.AVMX.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class PressAndTapGestureEvent extends flash.events.GestureEvent {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
+
+    tapLocalX: number;
+    tapLocalY: number;
 
     constructor(type: string, bubbles: boolean = true, cancelable: boolean = false,
                 phase: string = null, localX: number = 0, localY: number = 0, tapLocalX: number = 0,
                 tapLocalY: number = 0, ctrlKey: boolean = false, altKey: boolean = false,
                 shiftKey: boolean = false) {
-      super(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined,
-            undefined);
-      dummyConstructor("public flash.events.PressAndTapGestureEvent");
+      super(type, bubbles, cancelable, phase, localX, localY, ctrlKey, altKey, shiftKey);
+      this.tapLocalX = +tapLocalX;
+      this.tapLocalY = +tapLocalY;
     }
 
     // JS -> AS Bindings

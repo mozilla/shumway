@@ -17,16 +17,12 @@
 module Shumway.AVMX.AS.flash.desktop {
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class Clipboard extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -34,8 +30,7 @@ module Shumway.AVMX.AS.flash.desktop {
     static instanceSymbols: string [] = null; // ["setData", "setDataHandler", "getData", "hasFormat"];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.desktop.Clipboard");
+      super();
     }
     
     // JS -> AS Bindings

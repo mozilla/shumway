@@ -25,9 +25,6 @@ module Shumway.AVMX.AS.flash.filters {
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
 
@@ -71,8 +68,13 @@ module Shumway.AVMX.AS.flash.filters {
       );
     }
 
-    constructor (distance: number = 4, angle: number = 45, highlightColor: number /*uint*/ = 16777215, highlightAlpha: number = 1, shadowColor: number /*uint*/ = 0, shadowAlpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
-      false && super();
+    constructor(distance: number = 4, angle: number = 45,
+                highlightColor: number /*uint*/ = 16777215, highlightAlpha: number = 1,
+                shadowColor: number /*uint*/ = 0, shadowAlpha: number = 1, blurX: number = 4,
+                blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1,
+                type: string = "inner", knockout: boolean = false)
+    {
+      super();
       this.distance = distance;
       this.angle = angle;
       this.highlightColor = highlightColor;

@@ -221,7 +221,6 @@ module Shumway.AVMX {
 
       var protectedNsMappings = Object.create(superTraits ? superTraits.protectedNsMappings : null);
       var result = new RuntimeTraits(traits, superTraits, protectedNs, protectedNsMappings);
-      var securityDomain = scope.object.securityDomain;
 
       // Then, add all of the child traits, replacing or extending parent traits where necessary.
       for (var i = 0; i < this.traits.length; i++) {

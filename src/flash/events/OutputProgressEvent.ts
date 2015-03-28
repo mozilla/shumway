@@ -15,20 +15,20 @@
  */
 // Class: OutputProgressEvent
 module Shumway.AVMX.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class OutputProgressEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
+    bytesPending: number;
+    bytesTotal: number;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 bytesPending: number = 0, bytesTotal: number = 0) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.OutputProgressEvent");
+      super(type, bubbles, cancelable);
+      this.bytesPending = +bytesPending;
+      this.bytesTotal = +bytesTotal;
     }
 
     // JS -> AS Bindings

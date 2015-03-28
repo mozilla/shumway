@@ -21,10 +21,7 @@ module Shumway.AVMX.AS.flash.net {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -32,16 +29,12 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = ["name!", "value!"];
     
     constructor (name: string = "", value: string = "") {
-      name = asCoerceString(name); value = asCoerceString(value);
-      false && super();
+      super();
+      this.name = asCoerceString(name);
+      this.value = asCoerceString(value);
     }
-    
-    // JS -> AS Bindings
     
     name: string;
     value: string;
-    
-    // AS -> JS Bindings
-    
   }
 }

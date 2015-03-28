@@ -16,16 +16,12 @@
 // Class: Shader
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class Shader extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,9 @@ module Shumway.AVMX.AS.flash.display {
     static instanceSymbols: string [] = null; // ["byteCode"];
     
     constructor (code: flash.utils.ByteArray = null) {
-      code = code;
-      false && super();
-      dummyConstructor("public flash.display.Shader");
+      super();
+      // TODO: coerce
+      this.code = code;
     }
     
     // JS -> AS Bindings

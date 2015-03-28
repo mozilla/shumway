@@ -53,12 +53,19 @@ module Shumway.AVMX.AS.flash.geom {
       this.FROZEN_IDENTITY_MATRIX = Object.freeze(this.axConstruct([]));
       this.TEMP_MATRIX = this.axConstruct([]);
     }
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // ["a", "b", "c", "d", "tx", "ty", "concat", "invert", "identity", "createBox", "createGradientBox", "rotate", "translate", "scale", "deltaTransformPoint", "transformPoint", "copyFrom", "setTo", "copyRowTo", "copyColumnTo", "copyRowFrom", "copyColumnFrom", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["a", "b", "c", "d", "tx", "ty", "concat",
+                                              // "invert", "identity", "createBox",
+                                              // "createGradientBox", "rotate", "translate",
+                                              // "scale", "deltaTransformPoint", "transformPoint",
+                                              // "copyFrom", "setTo", "copyRowTo", "copyColumnTo",
+                                              // "copyRowFrom", "copyColumnFrom", "clone",
+                                              // "toString"];
 
-    constructor (a: number = 1, b: number = 0, c: number = 0, d: number = 1, tx: number = 0, ty: number = 0) {
-      false && super();
+    constructor(a: number = 1, b: number = 0, c: number = 0, d: number = 1, tx: number = 0,
+                ty: number = 0)
+    {
+      super();
       var m = this._data = new Float64Array(6);
       m[0] = a;
       m[1] = b;
@@ -83,9 +90,10 @@ module Shumway.AVMX.AS.flash.geom {
     // Must only be used in cases where the members are fully initialized and then directly used.
     public static TEMP_MATRIX: Matrix;
 
-    // Matrix data is stored in a typed array, this has proven to be about 60% faster in Firefox and
-    // about the same speed in Chrome. At some point we may want to pool all these matrix objects, or
-    // share one large array buffer for matrix data.
+    // Matrix data is stored in a typed array, this has proven to be about 60% faster in Firefox
+    // and
+    // about the same speed in Chrome. At some point we may want to pool all these matrix objects,
+    // or share one large array buffer for matrix data.
     _data: Float64Array;
     
     public set a(a: number) {

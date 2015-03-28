@@ -16,11 +16,9 @@
 // Class: TouchEvent
 module Shumway.AVMX.AS.flash.events {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class TouchEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -31,8 +29,7 @@ module Shumway.AVMX.AS.flash.events {
                 sizeY: number = NaN, pressure: number = NaN,
                 relatedObject: flash.display.InteractiveObject = null, ctrlKey: boolean = false,
                 altKey: boolean = false, shiftKey: boolean = false) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.TouchEvent");
+      super(type, bubbles, cancelable);
     }
 
     // JS -> AS Bindings

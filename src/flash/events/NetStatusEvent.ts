@@ -15,18 +15,17 @@
  */
 // Class: NetStatusEvent
 module Shumway.AVMX.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
   export class NetStatusEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 info: Object = null) {
-      false && super(undefined, undefined, undefined);
+      super(type, bubbles, cancelable);
+      this._info = info;
     }
 
     private _info: Object;

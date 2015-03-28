@@ -15,22 +15,17 @@
  */
 // Class: CSMSettings
 module Shumway.AVMX.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class CSMSettings extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null; // ["fontSize", "insideCutoff", "outsideCutoff"];
 
     constructor(fontSize: number, insideCutoff: number, outsideCutoff: number) {
-      fontSize = +fontSize;
-      insideCutoff = +insideCutoff;
-      outsideCutoff = +outsideCutoff;
-      false && super();
-      dummyConstructor("public flash.text.CSMSettings");
+      super();
+      this.fontSize = +fontSize;
+      this.insideCutoff = +insideCutoff;
+      this.outsideCutoff = +outsideCutoff;
     }
 
     // JS -> AS Bindings

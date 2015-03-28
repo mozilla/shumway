@@ -15,16 +15,10 @@
  */
 // Class: CompositionAttributeRange
 module Shumway.AVMX.AS.flash.text.ime {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class CompositionAttributeRange extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -34,18 +28,12 @@ module Shumway.AVMX.AS.flash.text.ime {
     
     constructor (relativeStart: number /*int*/, relativeEnd: number /*int*/, selected: boolean, converted: boolean) {
       relativeStart = relativeStart | 0; relativeEnd = relativeEnd | 0; selected = !!selected; converted = !!converted;
-      false && super();
-      dummyConstructor("public flash.text.ime.CompositionAttributeRange");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
+
     relativeStart: number /*int*/;
     relativeEnd: number /*int*/;
     selected: boolean;
     converted: boolean;
-    
-    // AS -> JS Bindings
-    
   }
 }

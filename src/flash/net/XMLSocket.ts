@@ -16,16 +16,12 @@
 // Class: XMLSocket
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class XMLSocket extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = null; // ["timeout", "timeout", "connected", "connect", "send", "close"];
     
     constructor (host: string = null, port: number /*int*/ = 0) {
+      super();
       host = asCoerceString(host); port = port | 0;
-      false && super(undefined);
-      dummyConstructor("public flash.net.XMLSocket");
     }
     
     // JS -> AS Bindings

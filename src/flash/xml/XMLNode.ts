@@ -16,14 +16,11 @@
 // Class: XMLNode
 module Shumway.AVMX.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class XMLNode extends ASObject {
-    static initializer: any = null;
     constructor (type: number /*uint*/, value: string) {
       type = type >>> 0; value = asCoerceString(value);
-      false && super();
-      dummyConstructor("public flash.xml.XMLNode");
+      super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

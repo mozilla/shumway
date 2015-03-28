@@ -81,7 +81,8 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     createChannel() {
-      this._channel = <flash.media.SoundChannel>flash.media.SoundChannel.initializeFrom({element: this._element});
+      // REDUX:
+      //this._channel = <flash.media.SoundChannel>flash.media.SoundChannel.initializeFrom({element: this._element});
     }
 
     queueData(frame: DecodedSound) {
@@ -240,10 +241,11 @@ module Shumway.AVMX.AS.flash.display {
 
     finish() {
       // TODO Start from some seek offset, stopping
-      var sound = <flash.media.Sound>flash.media.Sound.initializeFrom(this._data);
-      var channel = sound.play();
-      this._sound = sound;
-      this._channel = channel;
+      // REDUX:
+      //var sound = <flash.media.Sound>flash.media.Sound.initializeFrom(this._data);
+      //var channel = sound.play();
+      //this._sound = sound;
+      //this._channel = channel;
     }
   }
 

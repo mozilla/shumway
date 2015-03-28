@@ -15,17 +15,11 @@
  */
 // Class: SystemUpdater
 module Shumway.AVMX.AS.flash.system {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class SystemUpdater extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,16 +27,10 @@ module Shumway.AVMX.AS.flash.system {
     static instanceSymbols: string [] = null; // ["update", "cancel"];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.system.SystemUpdater");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
+
     update: (type: string) => void;
     cancel: () => void;
-    
-    // AS -> JS Bindings
-    
   }
 }

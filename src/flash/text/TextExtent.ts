@@ -15,33 +15,24 @@
  */
 // Class: TextExtent
 module Shumway.AVMX.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class TextExtent extends ASObject {
-    static initializer: any = null;
 
     constructor(width: number, height: number, textFieldWidth: number, textFieldHeight: number,
                 ascent: number, descent: number) {
-      width = +width;
-      height = +height;
-      textFieldWidth = +textFieldWidth;
-      textFieldHeight = +textFieldHeight;
-      ascent = +ascent;
-      descent = +descent;
-      false && super();
-      dummyConstructor("public flash.text.TextExtent");
+      super();
+      this.width = +width;
+      this.height = +height;
+      this.textFieldWidth = +textFieldWidth;
+      this.textFieldHeight = +textFieldHeight;
+      this.ascent = +ascent;
+      this.descent = +descent;
     }
 
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
     width: number;
     height: number;
     textFieldWidth: number;
     textFieldHeight: number;
     ascent: number;
     descent: number;
-    // Instance AS -> JS Bindings
   }
 }

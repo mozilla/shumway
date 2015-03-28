@@ -15,17 +15,12 @@
  */
 // Class: Responder
 module Shumway.AVMX.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
 
   export class Responder extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +28,7 @@ module Shumway.AVMX.AS.flash.net {
     static instanceSymbols: string [] = null; // [];
     
     constructor (result: ASFunction, status: ASFunction = null) {
-      false && super();
-      dummyConstructor("public flash.net.Responder");
+      super();
     }
 
     private _result: ASFunction;

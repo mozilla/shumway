@@ -84,9 +84,6 @@ module Shumway.AVMX.AS.flash.ui {
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -94,10 +91,8 @@ module Shumway.AVMX.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.ui.Keyboard");
+      super();
     }
-
 
     // JS -> AS Bindings
     static KEYNAME_UPARROW: string = "Up";

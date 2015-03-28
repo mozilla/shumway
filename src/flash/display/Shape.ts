@@ -15,22 +15,27 @@
  */
 // Class: Shape
 module Shumway.AVMX.AS.flash.display {
-  import warning = Shumway.Debug.warning;
+  import assert = Debug.assert;
+  import warning = Debug.warning;
 
   export class Shape extends flash.display.DisplayObject {
-    static classInitializer = null;
-    static initializer: any = function (symbol: ShapeSymbol) {
-      var self: Shape = this;
-      self._graphics = null;
-      if (symbol) {
-        this._setStaticContentFromSymbol(symbol);
-        // TODO: Check what do do if the computed bounds of the graphics object don't
-        // match those given by the symbol.
-      }
-    };
 
+    static axClass: typeof Shape;
+
+
+    static classInitializer = null;
+
+    _symbol: ShapeSymbol;
+    applySymbol() {
+      release || assert(this._symbol);
+      this._setStaticContentFromSymbol(this._symbol);
+      // TODO: Check what do do if the computed bounds of the graphics object don't
+      // match those given by the symbol.
+    }
     constructor () {
       super();
+      release || assert(!this._symbol);
+      this._graphics = null;
     }
 
     _canHaveGraphics(): boolean {
@@ -60,7 +65,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     static FromData(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
-      var symbol = new ShapeSymbol(data, flash.display.Shape);
+      var symbol = new ShapeSymbol(data, loaderInfo.securityDomain.flash.display.Shape.axClass);
       symbol._setBoundsFromData(data);
       symbol.graphics = flash.display.Graphics.FromData(data);
       symbol.processRequires((<any>data).require, loaderInfo);

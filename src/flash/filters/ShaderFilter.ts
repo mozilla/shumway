@@ -16,16 +16,11 @@
 // Class: ShaderFilter
 module Shumway.AVMX.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class ShaderFilter extends flash.filters.BitmapFilter {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +28,8 @@ module Shumway.AVMX.AS.flash.filters {
     static instanceSymbols: string [] = null; // ["leftExtension", "leftExtension", "topExtension", "topExtension", "rightExtension", "rightExtension", "bottomExtension", "bottomExtension"];
     
     constructor (shader: flash.display.Shader = null) {
+      super();
       shader = shader;
-      false && super();
-      dummyConstructor("public flash.filters.ShaderFilter");
     }
     
     // JS -> AS Bindings

@@ -17,14 +17,10 @@
 module Shumway.AVMX.AS.flash.automation {
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class StageCaptureEvent extends flash.events.Event {
-    static initializer: any = null;
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, url: string = "", checksum: number /*uint*/ = 0) {
       type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; url = asCoerceString(url); checksum = checksum >>> 0;
-      false && super(undefined, undefined, undefined);
-      dummyConstructor("public flash.automation.StageCaptureEvent");
+      super(undefined, undefined, undefined);
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

@@ -15,9 +15,10 @@
  */
 // Class: Sound
 module Shumway.AVMX.AS.flash.media {
-  import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVMX.asCoerceString;
+  import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import assert = Debug.assert;
   import Telemetry = Shumway.Telemetry;
 
   declare var Blob;
@@ -57,38 +58,32 @@ module Shumway.AVMX.AS.flash.media {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: SoundSymbol) {
-      this._playQueue = [];
-      this._url = null;
-      this._length = 0;
-      this._bytesTotal = 0;
-      this._bytesLoaded = 0;
-      this._id3 = new flash.media.ID3Info();
 
-      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
+    _symbol: SoundSymbol;
+    applySymbol() {
+      release || assert(this._symbol);
 
-      if (symbol) {
-        var soundData = new SoundData();
-        soundData.sampleRate = symbol.sampleRate;
-        soundData.channels = symbol.channels;
-        soundData.completed = true;
-        if (symbol.pcm) {
-          soundData.pcm = symbol.pcm;
-          soundData.end = symbol.pcm.length;
-        }
-        if (symbol.packaged) {
-          soundData.data = symbol.packaged.data.buffer;
-          soundData.mimeType = symbol.packaged.mimeType;
-        }
-        var self = this;
-        getAudioDescription(soundData, function (description) {
-          self._length = description.duration;
-        });
-        this._soundData = soundData;
-      }
-    };
+      // REDUX:
+      //if (symbol) {
+      //  var soundData = new SoundData();
+      //  soundData.sampleRate = symbol.sampleRate;
+      //  soundData.channels = symbol.channels;
+      //  soundData.completed = true;
+      //  if (symbol.pcm) {
+      //    soundData.pcm = symbol.pcm;
+      //    soundData.end = symbol.pcm.length;
+      //  }
+      //  if (symbol.packaged) {
+      //    soundData.data = symbol.packaged.data.buffer;
+      //    soundData.mimeType = symbol.packaged.mimeType;
+      //  }
+      //  var self = this;
+      //  getAudioDescription(soundData, function (description) {
+      //    self._length = description.duration;
+      //  });
+      //  this._soundData = soundData;
+      //}
+    }
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -97,8 +92,17 @@ module Shumway.AVMX.AS.flash.media {
     static instanceSymbols: string [] = null; // ["load"];
     
     constructor (stream?: flash.net.URLRequest, context?: flash.media.SoundLoaderContext) {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
+
+      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
+
+      this._playQueue = [];
+      this._url = null;
+      this._length = 0;
+      this._bytesTotal = 0;
+      this._bytesLoaded = 0;
+      this._id3 = new flash.media.ID3Info();
+
       this._isURLInaccessible = false;
       this._isBuffering = false;
       this.load(stream, context);
@@ -268,12 +272,12 @@ module Shumway.AVMX.AS.flash.media {
     pcm: Float32Array;
     packaged;
 
-    constructor(data: Timeline.SymbolData) {
-      super(data, flash.media.Sound);
+    constructor(data: Timeline.SymbolData, securityDomain: ISecurityDomain) {
+      super(data, securityDomain.flash.media.Sound.axClass);
     }
 
-    static FromData(data: any): SoundSymbol {
-      var symbol = new SoundSymbol(data);
+    static FromData(data: any, loaderInfo: display.LoaderInfo): SoundSymbol {
+      var symbol = new SoundSymbol(data, loaderInfo.securityDomain);
       symbol.channels = data.channels;
       symbol.sampleRate = data.sampleRate;
       symbol.pcm = data.pcm;

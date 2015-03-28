@@ -21,7 +21,6 @@ module Shumway.AVMX.AS.flash.utils {
 
   export class Timer extends flash.events.EventDispatcher {
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
 
@@ -32,8 +31,7 @@ module Shumway.AVMX.AS.flash.utils {
     public static dispatchingEnabled = true;
 
     constructor (delay: number, repeatCount: number /*int = 0 */) {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       this._delay = +delay;
       this._repeatCount = repeatCount | 0;
       this._iteration = 0;

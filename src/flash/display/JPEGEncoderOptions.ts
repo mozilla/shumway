@@ -16,16 +16,12 @@
 // Class: JPEGEncoderOptions
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class JPEGEncoderOptions extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVMX.AS.flash.display {
     static instanceSymbols: string [] = null; // ["quality"];
     
     constructor (quality: number /*uint*/ = 80) {
-      quality = quality >>> 0;
-      false && super();
-      dummyConstructor("public flash.display.JPEGEncoderOptions");
+      super();
+      this.quality = quality >>> 0;
     }
     
     // JS -> AS Bindings

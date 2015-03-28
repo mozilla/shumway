@@ -338,13 +338,12 @@ module Shumway.AVMX.AS.flash.display {
   export class Graphics extends ASObject implements Shumway.Remoting.IRemotable {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor () {
-      false && super();
+      super();
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._graphicsData = new ShapeData();
       this._textures = [];

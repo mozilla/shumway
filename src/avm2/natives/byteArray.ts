@@ -88,6 +88,8 @@ module Shumway.AVMX.AS {
 
     export class ByteArray extends ASObject implements IDataInput, IDataOutput {
 
+      static axClass: typeof ByteArray;
+
       public static classNatives: any [] = [DataBuffer];
       public static instanceNatives: any [] = [DataBuffer.prototype];
 

@@ -15,16 +15,10 @@
  */
 // Class: GameInputFinger
 module Shumway.AVMX.AS.flash.ui {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class GameInputFinger extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,18 +27,12 @@ module Shumway.AVMX.AS.flash.ui {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.ui.GameInputFinger");
+      super();
     }
     
-    // JS -> AS Bindings
     static THUMB: string = "thumb";
     static INDEX: string = "index";
     static MIDDLE: string = "middle";
     static UNKNOWN: string = "unknown";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

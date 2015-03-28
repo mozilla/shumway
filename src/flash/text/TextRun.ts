@@ -15,18 +15,15 @@
  */
 // Class: TextRun
 module Shumway.AVMX.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
-
   export class TextRun extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null; // ["beginIndex", "endIndex", "textFormat"];
 
     constructor(beginIndex: number /*int*/, endIndex: number /*int*/,
                 textFormat: flash.text.TextFormat) {
-      false && super();
+      super();
       this._beginIndex = beginIndex | 0;
       this._endIndex = endIndex | 0;
       this._textFormat = textFormat;

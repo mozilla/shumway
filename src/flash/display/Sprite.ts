@@ -35,21 +35,20 @@ module Shumway.AVMX.AS.flash.display {
   export class Sprite extends flash.display.DisplayObjectContainer {
     static classInitializer: any = null;
 
-    static initializer(symbol: SpriteSymbol) {
-      DisplayObjectContainer.initializer.call(this);
-      var self: Sprite = <any>this;
-      if (symbol) {
-        if (symbol.isRoot) {
-          self._root = self;
-        }
-        if (symbol.numFrames && symbol.frames.length > 0) {
-          // For a SWF's root symbol, all frames are added after initialization, with
-          // _initializeChildren called after the first frame is added.
-          self._initializeChildren(symbol.frames[0]);
-        }
+    _symbol: SpriteSymbol;
+
+    applySymbol() {
+      release || assert(this._symbol);
+      var symbol = this._symbol;
+      if (symbol.isRoot) {
+        this._root = this;
+      }
+      if (symbol.numFrames && symbol.frames.length > 0) {
+        // For a SWF's root symbol, all frames are added after initialization, with
+        // _initializeChildren called after the first frame is added.
+        this._initializeChildren(symbol.frames[0]);
       }
     }
-    
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -58,6 +57,7 @@ module Shumway.AVMX.AS.flash.display {
 
     constructor () {
       super();
+      release || assert(!this._symbol);
       this._graphics = null;
       this._buttonMode = false;
       this._dropTarget = null;
@@ -112,7 +112,8 @@ module Shumway.AVMX.AS.flash.display {
             continue;
           }
           var tag = null;
-          // Look for a control tag tag that places an object at the same depth as the current child.
+          // Look for a control tag tag that places an object at the same depth as the current
+          // child.
           for (var j = 0; j < tags.length; j++) {
             if (tags[j].depth === child._depth) {
               tag = tags[j];
@@ -173,9 +174,10 @@ module Shumway.AVMX.AS.flash.display {
 
             if (child) {
               if (symbol && !symbol.dynamic) {
-                // If the current object is of a simple type (for now Shapes, MorphShapes and StaticText)
-                // only its static content is updated instead of replacing it with a new instance.
-                // TODO: Handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
+                // If the current object is of a simple type (for now Shapes, MorphShapes and
+                // StaticText) only its static content is updated instead of replacing it with a
+                // new instance. TODO: Handle
+                // http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
                 child._setStaticContentFromSymbol(symbol);
               }
               // We animate the object only if a user script didn't touch any of the properties
@@ -359,7 +361,7 @@ module Shumway.AVMX.AS.flash.display {
     loaderInfo: flash.display.LoaderInfo;
 
     constructor(data: Timeline.SymbolData, loaderInfo: flash.display.LoaderInfo) {
-      super(data, flash.display.MovieClip, true);
+      super(data, loaderInfo.securityDomain.flash.display.MovieClip.axClass, true);
       this.loaderInfo = loaderInfo;
     }
 

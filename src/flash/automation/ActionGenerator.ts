@@ -16,13 +16,9 @@
 // Class: ActionGenerator
 module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class ActionGenerator extends ASObject {
-    static initializer: any = null;
     constructor () {
-      false && super();
-      dummyConstructor("public flash.automation.ActionGenerator");
+      super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

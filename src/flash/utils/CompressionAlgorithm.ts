@@ -15,16 +15,10 @@
  */
 // Class: CompressionAlgorithm
 module Shumway.AVMX.AS.flash.utils {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class CompressionAlgorithm extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,17 +27,11 @@ module Shumway.AVMX.AS.flash.utils {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.utils.CompressionAlgorithm");
+      super();
     }
     
-    // JS -> AS Bindings
     static ZLIB: string = "zlib";
     static DEFLATE: string = "deflate";
     static LZMA: string = "lzma";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

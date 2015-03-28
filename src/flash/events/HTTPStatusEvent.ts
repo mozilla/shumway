@@ -15,19 +15,17 @@
  */
 // Class: HTTPStatusEvent
 module Shumway.AVMX.AS.flash.events {
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class HTTPStatusEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 status: number /*int*/ = 0) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.HTTPStatusEvent");
+      super(type, bubbles, cancelable);
+      this._status = status | 0;
     }
 
     // JS -> AS Bindings

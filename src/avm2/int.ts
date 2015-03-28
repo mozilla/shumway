@@ -460,13 +460,11 @@ module Shumway.AVMX {
             popNameInto(stack, abc.getMultiname(u30()), rn);
             stack.push(scope.topScope().findScopeProperty(rn, bc === Bytecode.FINDPROPSTRICT, false));
             break;
-          //case Bytecode.getlex:
-          //  multiname = multinames[bc.index];
-          //  object = scope.topScope().findScopeProperty (
-          //    multiname.namespaces, multiname.name, multiname.flags, method, true, false
-          //  );
-          //  stack.push(object.asGetProperty(multiname.namespaces, multiname.name, multiname.flags));
-          //  break;
+          case Bytecode.GETLEX:
+            popNameInto(stack, abc.getMultiname(u30()), rn);
+            object = scope.topScope().findScopeProperty(rn, true, false);
+            stack.push(object.axGetProperty(rn));
+            break;
           case Bytecode.INITPROPERTY:
           case Bytecode.SETPROPERTY:
             value = stack.pop();

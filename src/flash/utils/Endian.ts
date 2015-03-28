@@ -15,16 +15,10 @@
  */
 // Class: Endian
 module Shumway.AVMX.AS.flash.utils {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class Endian extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,16 +27,10 @@ module Shumway.AVMX.AS.flash.utils {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.utils.Endian");
+      super();
     }
     
-    // JS -> AS Bindings
     static BIG_ENDIAN: string = "bigEndian";
     static LITTLE_ENDIAN: string = "littleEndian";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

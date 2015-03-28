@@ -15,21 +15,26 @@
  */
 // Class: AccelerometerEvent
 module Shumway.AVMX.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   export class AccelerometerEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    timestamp: number;
+    accelerationX: number;
+    accelerationY: number;
+    accelerationZ: number;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 timestamp: number = 0, accelerationX: number = 0, accelerationY: number = 0,
                 accelerationZ: number = 0) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.AccelerometerEvent");
+      super(type, bubbles, cancelable);
+      this.timestamp = +timestamp;
+      this.accelerationX = +accelerationX;
+      this.accelerationY = +accelerationY;
+      this.accelerationZ = +accelerationZ;
     }
 
     // JS -> AS Bindings

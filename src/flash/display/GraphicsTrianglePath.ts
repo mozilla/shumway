@@ -16,16 +16,12 @@
 // Class: GraphicsTrianglePath
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class GraphicsTrianglePath extends ASObject implements IGraphicsPath, IGraphicsData {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,12 @@ module Shumway.AVMX.AS.flash.display {
     static instanceSymbols: string [] = null; // ["indices", "vertices", "uvtData", "_culling", "culling", "culling"];
     
     constructor (vertices: Float64Vector = null, indices: Int32Vector = null, uvtData: Float64Vector = null, culling: string = "none") {
-      vertices = vertices; indices = indices; uvtData = uvtData; culling = asCoerceString(culling);
-      false && super();
-      dummyConstructor("public flash.display.GraphicsTrianglePath");
+      super();
+      // TODO: coerce to vector types
+      this.vertices = vertices;
+      this.indices = indices;
+      this.uvtData = uvtData;
+      this.culling = asCoerceString(culling);
     }
     
     // JS -> AS Bindings

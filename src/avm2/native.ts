@@ -152,10 +152,6 @@ module Shumway.AVM2.AS {
       ASClass.create(self, baseClass, this.instanceConstructor);
     }
 
-    public static initializeFrom(value: any) {
-      return ASClassPrototype.initializeFrom.call(this, value);
-    }
-
     public static coerce: (value: any) => any = Runtime.asCoerceObject;
 
     public static isInstanceOf: (value: any) => boolean;
@@ -390,29 +386,6 @@ module Shumway.AVM2.AS {
     }
 
     /**
-     * Creates an object of this class but doesn't run the constructors, just the initializers.
-     */
-    public initializeFrom(value: any): any {
-      var o = Object.create(this.traitsPrototype);
-      ASClass.runInitializers(o, value);
-      return o;
-    }
-
-    /**
-     * Calls the initializers of an object in order.
-     */
-    static runInitializers(self: Object, argument: any) {
-      argument = argument || self.class.defaultInitializerArgument;
-      var cls: ASClass = self.class;
-      var initializers = cls.initializers;
-      if (initializers) {
-        for (var i = 0; i < initializers.length; i++) {
-          initializers[i].call(self, argument);
-        }
-      }
-    }
-
-    /**
      * Some AS3 classes have two parallel constructor chains:
      *
      * Consider the following inheritance hierarchy, (superClass <- subClass)
@@ -448,7 +421,6 @@ module Shumway.AVM2.AS {
         release || assert (self.instanceConstructorNoInitialize === self.instanceConstructor);
         var previousConstructor: any = self;
         self.instanceConstructor = <any>function () {
-          ASClass.runInitializers(this, undefined);
           return self.instanceConstructorNoInitialize.apply(this, arguments);
         };
         self.instanceConstructor.prototype = self.traitsPrototype;

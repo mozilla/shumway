@@ -22,7 +22,6 @@ module Shumway.AVMX.AS.flash.text {
   export class TextFormat extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
 
@@ -31,7 +30,7 @@ module Shumway.AVMX.AS.flash.text {
                 url: string = null, target: string = null, align: string = null,
                 leftMargin: Object = null, rightMargin: Object = null, indent: Object = null,
                 leading: Object = null) {
-      false && super();
+      super();
       this.font = font;
       this.size = size;
       this.color = color;

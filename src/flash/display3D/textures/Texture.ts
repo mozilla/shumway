@@ -16,15 +16,11 @@
 // Class: Texture
 module Shumway.AVMX.AS.flash.display3D.textures {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class Texture extends flash.display3D.textures.TextureBase {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,15 +29,9 @@ module Shumway.AVMX.AS.flash.display3D.textures {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.display3D.textures.Texture");
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     uploadFromBitmapData(source: flash.display.BitmapData, miplevel: number /*uint*/ = 0): void {
       source = source; miplevel = miplevel >>> 0;
       notImplemented("public flash.display3D.textures.Texture::uploadFromBitmapData"); return;

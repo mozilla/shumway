@@ -16,16 +16,12 @@
 // Class: EOFError
 module Shumway.AVMX.AS.flash.errors {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   export class EOFError extends flash.errors.IOError {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,15 +29,7 @@ module Shumway.AVMX.AS.flash.errors {
     static instanceSymbols: string [] = null; // [];
     
     constructor (message: string = "", id: number /*int*/ = 0) {
-      message = asCoerceString(message); id = id | 0;
-      false && super(undefined, undefined);
-      dummyConstructor("public flash.errors.EOFError");
+      super(message, id);
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

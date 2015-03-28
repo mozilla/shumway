@@ -15,17 +15,12 @@
  */
 // Class: ID3Info
 module Shumway.AVMX.AS.flash.media {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
 
   export class ID3Info extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +28,7 @@ module Shumway.AVMX.AS.flash.media {
     static instanceSymbols: string [] = ["songName", "artist", "album", "year", "comment", "genre", "track"];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.media.ID3Info");
+      super();
     }
     
     // JS -> AS Bindings

@@ -16,7 +16,6 @@
 /// <reference path='../references.ts'/>
 module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
   import asCoerceString = Shumway.AVMX.asCoerceString;
   import FileLoadingService = Shumway.FileLoadingService;
 
@@ -24,34 +23,24 @@ module Shumway.AVMX.AS.flash.net {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
+
+    // List of static symbols to link.
+    static classSymbols: string [] = null; // [];
+
+    // List of instance symbols to link.
+    static instanceSymbols: string [] = null; // [];
+
+    constructor () {
+      super();
       this._buffer = new utils.ByteArray();
       this._writePosition = 0;
       this._connected = false;
-    };
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
-    constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.net.URLStream");
     }
 
     private _buffer: utils.ByteArray;
     private _writePosition: number;
     private _session;
 
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
     private _connected: boolean;
     // _diskCacheEnabled: boolean;
     get connected(): boolean {
