@@ -35,8 +35,9 @@ module Shumway.AVMX.AS {
 
       constructor(weakKeys: boolean = false) {
         false && super();
-        this.weakKeys = !!weakKeys;
         this.map = new WeakMap();
+        this.keys = null;
+        this.weakKeys = !!weakKeys;
         if (!weakKeys) {
           this.keys = [];
         }
@@ -125,7 +126,10 @@ module Shumway.AVMX.AS {
           // TODO implement workaround for flashx.textLayout.external.WeakRef
           return primitiveMapKeys; // assuming all weak ref objects are gone
         }
-        return primitiveMapKeys.concat(this.keys);
+        if (this.keys) {
+          return primitiveMapKeys.concat(this.keys);
+        }
+        return primitiveMapKeys.slice();
       }
     }
   }
