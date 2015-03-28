@@ -152,6 +152,10 @@ module.exports = function(grunt) {
       test_avm2_quick: {
         cmd: 'node src/shell/numbers.js -i test/avm2/pass/ -c i -j ' + (+grunt.option('threads') || 9)
       },
+      test_avm2_redux: {
+        cmd: 'node src/shell/numbers.js -i test/avm2/redux-pass.txt -c i -j ' + (+grunt.option('threads') || 9) + " && " +
+             'node src/shell/numbers.js -i test/avm2/redux-fail.txt -c i -j ' + (+grunt.option('threads') || 9)
+      },
       test_avm2: {
         cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
                                       ' -j ' + (+grunt.option('threads') || 9)

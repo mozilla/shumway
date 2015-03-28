@@ -361,22 +361,11 @@ module Shumway.Shell {
   }
 
   function executeABCFile(file: string) {
-    var t = performance.now();
     var securityDomain = createSecurityDomain(builtinABCPath, null, null);
     var buffer = new Uint8Array(read(file, "binary"));
     var abc = new ABCFile(buffer);
     securityDomain.application.loadABC(abc);
     securityDomain.application.executeABC(abc);
-
-    //REDUX:
-    //verboseOption.value && writer.writeLn("Running ABC: " + file);
-    //var buffer = read(file, "binary");
-    //try {
-    //  Runtime.AVM2.instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
-    //} catch (x) {
-    //  writer.writeLns(x.stack);
-    //}
-    //verboseOption.value && writer.outdent();
   }
 
   function executeUnitTestFile(file: string) {
