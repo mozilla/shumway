@@ -131,32 +131,6 @@ module Shumway.AVMX.AS.flash.display {
       this._callQueue = [];
     }
 
-    applySymbol() {
-      super.applySymbol();
-      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(this);
-      this._initializeFields();
-      var symbol = this._symbol;
-      this._totalFrames = symbol.numFrames;
-      this._currentFrame = 1;
-      if (!symbol.isRoot) {
-        this.addScene('', symbol.labels, 0, symbol.numFrames);
-      }
-      this._frames = symbol.frames;
-      if (symbol.isAVM1Object) {
-        if (symbol.frameScripts) {
-          var avm1MovieClip = Shumway.AVM1.Lib.getAVM1Object(this, symbol.avm1Context);
-          avm1MovieClip.context = symbol.avm1Context;
-          var data = symbol.frameScripts;
-          for (var i = 0; i < data.length; i += 2) {
-            avm1MovieClip.addFrameScript(data[i], data[i + 1]);
-          }
-        }
-        if (symbol.avm1Name) {
-          this.name = symbol.avm1Name;
-        }
-      }
-    }
-
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -198,10 +172,37 @@ module Shumway.AVMX.AS.flash.display {
       leaveTimeline();
     }
 
+    applySymbol() {
+      super.applySymbol();
+      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(this);
+      this._initializeFields();
+      var symbol = this._symbol;
+      this._totalFrames = symbol.numFrames;
+      this._currentFrame = 1;
+      if (!symbol.isRoot) {
+        this.addScene('', symbol.labels, 0, symbol.numFrames);
+      }
+      this._frames = symbol.frames;
+      if (symbol.isAVM1Object) {
+        if (symbol.frameScripts) {
+          var avm1MovieClip = Shumway.AVM1.Lib.getAVM1Object(this, symbol.avm1Context);
+          avm1MovieClip.context = symbol.avm1Context;
+          var data = symbol.frameScripts;
+          for (var i = 0; i < data.length; i += 2) {
+            avm1MovieClip.addFrameScript(data[i], data[i + 1]);
+          }
+        }
+        if (symbol.avm1Name) {
+          this.name = symbol.avm1Name;
+        }
+      }
+    }
+
     constructor () {
       super();
-      release || assert(!this._symbol);
-      this._initializeFields();
+      if (!this._symbol) {
+        this._initializeFields();
+      }
     }
 
     private _initializeFields() {

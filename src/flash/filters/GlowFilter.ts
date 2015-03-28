@@ -21,6 +21,8 @@ module Shumway.AVMX.AS.flash.filters {
 
   export class GlowFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof GlowFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 

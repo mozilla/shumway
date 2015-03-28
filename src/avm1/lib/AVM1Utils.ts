@@ -253,19 +253,19 @@ module Shumway.AVM1.Lib {
     if (as3Object._as2Object) {
       return as3Object._as2Object;
     }
-    if (flash.display.MovieClip.isType(as3Object)) {
+    if (this.securityDomain.flash.display.MovieClip.axClass.axIsType(as3Object)) {
       if (<flash.display.MovieClip>as3Object._avm1SymbolClass) {
         return createAVM1Object(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
       }
       return createAVM1Object(context.globals.MovieClip, as3Object, context);
     }
-    if (flash.display.SimpleButton.isType(as3Object)) {
+    if (this.securityDomain.flash.display.SimpleButton.axClass.axIsType(as3Object)) {
       return createAVM1Object(context.globals.Button, as3Object, context);
     }
-    if (flash.text.TextField.isType(as3Object)) {
+    if (this.securityDomain.flash.text.TextField.axClass.axIsType(as3Object)) {
       return createAVM1Object(context.globals.TextField, as3Object, context);
     }
-    if (flash.display.BitmapData.isType(as3Object)) {
+    if (this.securityDomain.flash.display.BitmapData.axClass.axIsType(as3Object)) {
       return new as3Object;
     }
 

@@ -361,16 +361,6 @@ module Shumway.AVMX.AS.flash.display {
       this._advancableInstances = new WeakList<IAdvancable>();
     }
 
-    applySymbol() {
-      release || counter.count("DisplayObject::initializer");
-      var symbol = this._symbol;
-      if (symbol.scale9Grid) {
-        // No need to take ownership: scale9Grid is never changed.
-        this._scale9Grid = symbol.scale9Grid;
-      }
-      this._symbol = symbol;
-    }
-
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
 
@@ -387,7 +377,7 @@ module Shumway.AVMX.AS.flash.display {
                                 callConstructor: boolean): DisplayObject {
       var symbolClass = symbol.symbolClass;
 
-      if (this.securityDomain.flash.display.BitmapData.axClass.isSubtypeOf(symbolClass)) {
+      if (this.securityDomain.flash.display.BitmapData.axClass.dPrototype.isPrototypeOf(symbolClass.dPrototype)) {
         symbolClass = this.securityDomain.flash.display.Bitmap.axClass;
       }
       var instance: DisplayObject = constructClassFromSymbol(symbol, symbolClass);
@@ -508,6 +498,14 @@ module Shumway.AVMX.AS.flash.display {
       this.securityDomain.flash.events.EventDispatcher.axClass.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 
+    applySymbol() {
+      var symbol = this._symbol;
+      if (symbol.scale9Grid) {
+        // No need to take ownership: scale9Grid is never changed.
+        this._scale9Grid = symbol.scale9Grid;
+      }
+    }
+
     constructor () {
       super();
 
@@ -548,7 +546,6 @@ module Shumway.AVMX.AS.flash.display {
       this._scrollRect = null;
       this._filters = null;
       this._blendMode = BlendMode.NORMAL;
-      release || assert (this._blendMode);
       // Don't overwrite the scale9Grid if it has been set from a symbol.
       this._scale9Grid = this._scale9Grid || null;
       this._loaderInfo = null;

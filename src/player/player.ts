@@ -223,9 +223,9 @@ module Shumway.Player {
       }
       var context = this.createLoaderContext();
       if (buffer) {
-        var symbol = Shumway.Timeline.BinarySymbol.FromData({id: -1, data: buffer});
-        var byteArray = symbol.symbolClass.initializeFrom(symbol);
-        symbol.symbolClass.instanceConstructorNoInitialize.call(byteArray);
+        var symbol = Shumway.Timeline.BinarySymbol.FromData({id: -1, data: buffer},
+                                                            this._loaderInfo);
+        var byteArray = AVMX.AS.constructClassFromSymbol(symbol, symbol.symbolClass);
         this._loader.loadBytes(byteArray, context);
       } else {
         this._loader.load(new this.securityDomain.flash.net.URLRequest(url), context);
@@ -305,7 +305,7 @@ module Shumway.Player {
       serializer.output = updates;
       serializer.outputAssets = assets;
 
-      if (flash.display.Stage.isType(displayObject)) {
+      if (this.securityDomain.flash.display.Stage.axClass.axIsType(displayObject)) {
         serializer.writeStage(<flash.display.Stage>displayObject, this._mouseEventDispatcher.currentTarget);
       }
 
@@ -341,7 +341,7 @@ module Shumway.Player {
 
       serializer.writeBitmapData(bitmapData);
 
-      if (flash.display.BitmapData.isType(source)) {
+      if (this.securityDomain.flash.display.BitmapData.axClass.axIsType(source)) {
         serializer.writeBitmapData(<flash.display.BitmapData>source);
       } else {
         var displayObject = <flash.display.DisplayObject>source;
@@ -475,7 +475,8 @@ module Shumway.Player {
         return;
       }
       // The stage is required for frame event cycle processing.
-      this.securityDomain.flash.display.DisplayObject.axClass._stage = this._stage;
+      var displayObjectClass = this.securityDomain.flash.display.DisplayObject.axClass;
+      displayObjectClass._stage = this._stage;
       // Until the root SWF is initialized, only process Loader events.
       // Once the root loader's content is created, directly process all events again to avoid
       // further delay in initialization.
@@ -489,9 +490,9 @@ module Shumway.Player {
       for (var i = 0; i < frameRateMultiplierOption.value; i++) {
         enterTimeline("eventLoop");
         var start = performance.now();
-        DisplayObject.performFrameNavigation(true, runFrameScripts);
+        displayObjectClass.performFrameNavigation(true, runFrameScripts);
         counter.count("performFrameNavigation", 1, performance.now() - start);
-        Loader.processEvents();
+        loaderClass.processEvents();
         leaveTimeline("eventLoop");
       }
       this._framesPlayed++;

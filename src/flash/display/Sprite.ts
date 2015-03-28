@@ -46,6 +46,7 @@ module Shumway.AVMX.AS.flash.display {
       if (symbol.numFrames && symbol.frames.length > 0) {
         // For a SWF's root symbol, all frames are added after initialization, with
         // _initializeChildren called after the first frame is added.
+        this._children = [];
         this._initializeChildren(symbol.frames[0]);
       }
     }
@@ -57,7 +58,6 @@ module Shumway.AVMX.AS.flash.display {
 
     constructor () {
       super();
-      release || assert(!this._symbol);
       this._graphics = null;
       this._buttonMode = false;
       this._dropTarget = null;
@@ -279,11 +279,11 @@ module Shumway.AVMX.AS.flash.display {
         this._dragDeltaY = this.y - mousePosition.y;
       }
       this._dragBounds = bounds;
-      this.securityDomain.flash.ui.Mouse.axClass.draggableObject = this;
+      flash.ui.Mouse.draggableObject = this;
     }
     stopDrag(): void {
-      if (this.securityDomain.flash.ui.Mouse.axClass.draggableObject === this) {
-        this.securityDomain.flash.ui.Mouse.axClass.draggableObject = null;
+      if (flash.ui.Mouse.draggableObject === this) {
+        flash.ui.Mouse.draggableObject = null;
         this._dragMode = DragMode.Inactive;
         this._dragDeltaX = 0;
         this._dragDeltaY = 0;

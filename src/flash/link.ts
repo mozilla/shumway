@@ -46,6 +46,9 @@ interface ISecurityDomain {
     };
     filters: {
       BitmapFilter: typeof flashPackage.filters.BitmapFilter;
+      BlurFilter: typeof flashPackage.filters.BlurFilter;
+      DropShadowFilter: typeof flashPackage.filters.DropShadowFilter;
+      GlowFilter: typeof flashPackage.filters.GlowFilter;
     };
     text: {
       TextField: typeof flashPackage.text.TextField;
@@ -72,9 +75,11 @@ interface ISecurityDomain {
     }
     media: {
       Sound: typeof flashPackage.media.Sound;
+      Video: typeof flashPackage.media.Video;
     }
     system: {
       LoaderContext: typeof flashPackage.system.LoaderContext;
+      JPEGLoaderContext: typeof flashPackage.system.JPEGLoaderContext;
       ApplicationDomain: typeof flashPackage.system.ApplicationDomain;
     }
   }

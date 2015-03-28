@@ -107,7 +107,7 @@ module Shumway.AVMX.AS.flash.net {
       obj.checkPolicyFile = this._checkPolicyFile;
       if (this._data) {
         obj.mimeType = this._contentType;
-        if (flash.utils.ByteArray.isType(this._data)) {
+        if (this.securityDomain.flash.utils.ByteArray.axClass.axIsType(this._data)) {
           obj.data = <ASObject><any>
             new Uint8Array((<any> this._data)._buffer, 0, (<any> this._data).length);
         } else {

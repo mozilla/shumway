@@ -325,7 +325,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     _getJPEGLoaderContextdeblockingfilter(context: flash.system.LoaderContext): number {
-      if (flash.system.JPEGLoaderContext.isType(context)) {
+      if (this.securityDomain.flash.system.JPEGLoaderContext.axClass.axIsType(context)) {
         return (<flash.system.JPEGLoaderContext>context).deblockingFilter;
       }
       return 0.0;

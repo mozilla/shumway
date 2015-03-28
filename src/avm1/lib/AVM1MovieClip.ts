@@ -205,7 +205,7 @@ module Shumway.AVM1.Lib {
       var nativeAS3Object = this.as3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
       // Bitmaps aren't reflected in AVM1, so the rest here doesn't apply.
-      if (flash.display.Bitmap.isType(mc)) {
+      if (this.securityDomain.flash.display.Bitmap.axIsType(mc)) {
         return null;
       }
       var as2mc = getAVM1Object(mc, this.context);
@@ -327,7 +327,7 @@ module Shumway.AVM1.Lib {
         // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
         if (child && child._depth === depth) {
           // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
-          if (flash.display.Bitmap.isType(child)) {
+          if (this.securityDomain.flash.display.Bitmap.axIsType(child)) {
             return this;
           }
           return getAVM1Object(child, this.context);

@@ -17,6 +17,8 @@
 module Shumway.AVMX.AS.flash.system {
   export class JPEGLoaderContext extends flash.system.LoaderContext {
 
+    static axClass: typeof JPEGLoaderContext;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
@@ -30,11 +32,8 @@ module Shumway.AVMX.AS.flash.system {
                 applicationDomain: flash.system.ApplicationDomain = null,
                 securityDomain: flash.system.SecurityDomain = null)
     {
-      super(undefined, undefined, undefined);
+      super(checkPolicyFile, applicationDomain, securityDomain);
       this.deblockingFilter = +deblockingFilter;
-      checkPolicyFile = !!checkPolicyFile;
-      applicationDomain = applicationDomain;
-      securityDomain = securityDomain;
     }
 
     deblockingFilter: number;

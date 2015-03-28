@@ -21,6 +21,8 @@ module Shumway.AVMX.AS.flash.filters {
 
   export class DropShadowFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof DropShadowFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 

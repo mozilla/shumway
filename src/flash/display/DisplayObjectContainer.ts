@@ -35,7 +35,8 @@ module Shumway.AVMX.AS.flash.display {
       super();
       this._tabChildren = true;
       this._mouseChildren = true;
-      this._children = [];
+      // Might already have been initialized from a symbol.
+      this._children = this._children || [];
       this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
     }
 
@@ -84,14 +85,15 @@ module Shumway.AVMX.AS.flash.display {
         }
         child._setFlags(DisplayObjectFlags.Constructed);
 
+        var eventClass = this.securityDomain.flash.events.Event.axClass;
         if (child._symbol && child._symbol.isAVM1Object) {
           try {
-            child.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.AVM1_INIT));
+            child.dispatchEvent(eventClass.getInstance(events.Event.AVM1_INIT));
           } catch (e) {
             console.warn('caught error under DisplayObjectContainer AVM1_INIT event: ', e);
           }
           try {
-            child.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.AVM1_CONSTRUCT));
+            child.dispatchEvent(eventClass.getInstance(events.Event.AVM1_CONSTRUCT));
           } catch (e) {
             console.warn('caught error under DisplayObjectContainer AVM1_CONSTRUCT event: ', e);
           }
@@ -103,13 +105,13 @@ module Shumway.AVMX.AS.flash.display {
         }
 
         try {
-          child.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.ADDED, true));
+          child.dispatchEvent(eventClass.getInstance(events.Event.ADDED, true));
         } catch (e) {
           console.warn('caught error under DisplayObject ADDED event: ', e);
         }
         if (child.stage) {
           try {
-            child.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.ADDED_TO_STAGE));
+            child.dispatchEvent(eventClass.getInstance(events.Event.ADDED_TO_STAGE));
           } catch (e) {
             console.warn('caught error under DisplayObject ADDED_TO_STAGE event: ', e);
           }

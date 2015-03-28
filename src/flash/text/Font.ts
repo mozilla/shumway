@@ -755,6 +755,36 @@ module Shumway.AVMX.AS.flash.text {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    private _initializeFields() {
+      this._fontName = null;
+      this._fontFamily = null;
+      this._fontStyle = null;
+      this._fontType = null;
+
+      this.ascent = 0;
+      this.descent = 0;
+      this.leading = 0;
+      this.advances = null;
+      this._id = flash.display.DisplayObject.getNextSyncID();
+    }
+
+    private static _deviceFontMetrics: Object;
+
+    private static _getFontMetrics(name: string, style: string) {
+      return this._deviceFontMetrics[name + style] || this._deviceFontMetrics[name];
+    }
+
+    static resolveFontName(name: string) {
+      if (name === '_sans') {
+        return Font.DEFAULT_FONT_SANS;
+      } else if (name === '_serif') {
+        return Font.DEFAULT_FONT_SERIF;
+      } else if (name === '_typewriter') {
+        return Font.DEFAULT_FONT_TYPEWRITER;
+      }
+      return name;
+    }
+
     _symbol: FontSymbol;
     applySymbol() {
       release || Debug.assert(this._symbol);
@@ -805,40 +835,11 @@ module Shumway.AVMX.AS.flash.text {
       }
     }
 
-    private _initializeFields() {
-      this._fontName = null;
-      this._fontFamily = null;
-      this._fontStyle = null;
-      this._fontType = null;
-
-      this.ascent = 0;
-      this.descent = 0;
-      this.leading = 0;
-      this.advances = null;
-      this._id = flash.display.DisplayObject.getNextSyncID();
-    }
-
-    private static _deviceFontMetrics: Object;
-
-    private static _getFontMetrics(name: string, style: string) {
-      return this._deviceFontMetrics[name + style] || this._deviceFontMetrics[name];
-    }
-
-    static resolveFontName(name: string) {
-      if (name === '_sans') {
-        return Font.DEFAULT_FONT_SANS;
-      } else if (name === '_serif') {
-        return Font.DEFAULT_FONT_SERIF;
-      } else if (name === '_typewriter') {
-        return Font.DEFAULT_FONT_TYPEWRITER;
-      }
-      return name;
-    }
-
     constructor() {
       super();
-      release || assert(!this._symbol);
-      this._initializeFields();
+      if (!this._symbol) {
+        this._initializeFields();
+      }
     }
 
     static getBySymbolId(id: number): Font {

@@ -123,8 +123,8 @@ module Shumway.Remoting.Player {
         if (cursor === MouseCursor.AUTO) {
           var node = currentMouseTarget;
           do {
-            if (flash.display.SimpleButton.isType(node) ||
-                (flash.display.Sprite.isType(node) &&
+            if (stage.securityDomain.flash.display.SimpleButton.axClass.axIsType(node) ||
+                (stage.securityDomain.flash.display.Sprite.axClass.axIsType(node) &&
                  (<flash.display.Sprite>node).buttonMode) &&
                  (<any>currentMouseTarget).useHandCursor)
             {
@@ -251,7 +251,7 @@ module Shumway.Remoting.Player {
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
 
       var video: Video = null;
-      if (flash.media.Video.isType(displayObject)) {
+      if (displayObject.securityDomain.flash.media.Video.axClass.axIsType(displayObject)) {
         video = <Video>displayObject;
       }
 
@@ -268,7 +268,7 @@ module Shumway.Remoting.Player {
         hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
       }
       var bitmap: Bitmap = null;
-      if (display.Bitmap.isType(displayObject)) {
+      if (displayObject.securityDomain.flash.display.Bitmap.axClass.axIsType(displayObject)) {
         bitmap = <Bitmap>displayObject;
       }
 
@@ -382,7 +382,7 @@ module Shumway.Remoting.Player {
       }
 
       var bitmap: Bitmap = null;
-      if (display.Bitmap.isType(displayObject)) {
+      if (displayObject.securityDomain.flash.display.Bitmap.axClass.axIsType(displayObject)) {
         bitmap = <Bitmap>displayObject;
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);
@@ -391,7 +391,7 @@ module Shumway.Remoting.Player {
       }
 
       var video: Video = null;
-      if (flash.media.Video.isType(displayObject)) {
+      if (displayObject.securityDomain.flash.media.Video.axClass.axIsType(displayObject)) {
         video = <Video>displayObject;
         if (video._netStream) {
           this.writeNetStream(video._netStream, video._getContentBounds());
@@ -407,7 +407,7 @@ module Shumway.Remoting.Player {
     {
       this.output.writeInt(MessageTag.DrawToBitmap);
       this.output.writeInt(bitmapData._id);
-      if (BitmapData.isType(source)) {
+      if (bitmapData.securityDomain.flash.display.BitmapData.axClass.axIsType(source)) {
         this.output.writeInt(IDMask.Asset | source._id);
       } else {
         this.output.writeInt(source._id);
@@ -449,11 +449,16 @@ module Shumway.Remoting.Player {
     }
 
     private _writeFilters(filters: flash.filters.BitmapFilter []) {
+      if (filters.length === 0) {
+        this.output.writeInt(0);
+        return;
+      }
+      var securityDomain = filters[0].securityDomain;
       var count = 0;
       for (var i = 0; i < filters.length; i++) {
-        if (flash.filters.BlurFilter.isType(filters[i]) ||
-            flash.filters.DropShadowFilter.isType(filters[i]) ||
-            flash.filters.GlowFilter.isType(filters[i])) {
+        if (securityDomain.flash.filters.BlurFilter.axClass.axIsType(filters[i]) ||
+            securityDomain.flash.filters.DropShadowFilter.axClass.axIsType(filters[i]) ||
+            securityDomain.flash.filters.GlowFilter.axClass.axIsType(filters[i])) {
           count ++;
         } else {
           Shumway.Debug.somewhatImplemented(filters[i].toString());
@@ -462,13 +467,13 @@ module Shumway.Remoting.Player {
       this.output.writeInt(count);
       for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
-        if (flash.filters.BlurFilter.isType(filter)) {
+        if (securityDomain.flash.filters.BlurFilter.axClass.axIsType(filter)) {
           var blurFilter = <flash.filters.BlurFilter>filter;
           this.output.writeInt(FilterType.Blur);
           this.output.writeFloat(blurFilter.blurX);
           this.output.writeFloat(blurFilter.blurY);
           this.output.writeInt(blurFilter.quality);
-        } else if (flash.filters.DropShadowFilter.isType(filter)) {
+        } else if (securityDomain.flash.filters.DropShadowFilter.axClass.axIsType(filter)) {
           var dropShadowFilter = <flash.filters.DropShadowFilter>filter;
           this.output.writeInt(FilterType.DropShadow);
           this.output.writeFloat(dropShadowFilter.alpha);
@@ -482,7 +487,7 @@ module Shumway.Remoting.Player {
           this.output.writeBoolean(dropShadowFilter.knockout);
           this.output.writeInt(dropShadowFilter.quality);
           this.output.writeFloat(dropShadowFilter.strength);
-        } else if (flash.filters.GlowFilter.isType(filter)) {
+        } else if (securityDomain.flash.filters.GlowFilter.axClass.axIsType(filter)) {
           var glowFilter = <flash.filters.GlowFilter>filter;
           this.output.writeInt(FilterType.DropShadow);
           this.output.writeFloat(glowFilter.alpha);

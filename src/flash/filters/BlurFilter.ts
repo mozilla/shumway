@@ -20,6 +20,8 @@ module Shumway.AVMX.AS.flash.filters {
 
   export class BlurFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof BlurFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
