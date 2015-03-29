@@ -40,7 +40,7 @@ module Shumway.AVMX.AS {
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import clamp = Shumway.NumberUtilities.clamp;
 
-  export class Float64Vector extends ASObject {
+  export class Float64Vector extends BaseVector {
     static EXTRA_CAPACITY = 4;
     static INITIAL_CAPACITY = 10;
     static DEFAULT_VALUE = 0;
@@ -85,7 +85,7 @@ module Shumway.AVMX.AS {
     }
 
     newThisType(): Float64Vector {
-      return new Float64Vector();
+      return new this.securityDomain.Float64Vector();
     }
 
     private _fixed: boolean;
@@ -104,12 +104,12 @@ module Shumway.AVMX.AS {
 
     static axApply(self: Float64Vector, args: any[]) {
       var object = args[0];
-      if (object instanceof Float64Vector) {
+      if (self.securityDomain.Float64Vector.axIsType(object)) {
         return object;
       }
-      var length = object.axGetProperty(undefined, "length");
+      var length = object.axGetPublicProperty("length");
       if (length !== undefined) {
-        var v = new Float64Vector(length, false);
+        var v = new self.securityDomain.Float64Vector(length, false);
         for (var i = 0; i < length; i++) {
           v.axSetNumericProperty(i, object.axGetPublicProperty(i));
         }
@@ -202,7 +202,7 @@ module Shumway.AVMX.AS {
         }
         length += vector._length;
       }
-      var result = new Float64Vector(length);
+      var result = new this.securityDomain.Float64Vector(length);
       var buffer = result._buffer;
       buffer.set(this._buffer);
       var offset = this._length;
@@ -238,7 +238,7 @@ module Shumway.AVMX.AS {
      * |thisObject| as |this| for each of the elements in the vector.
      */
     filter(callback, thisObject) {
-      var v = new Float64Vector();
+      var v = new this.securityDomain.Float64Vector();
       for (var i = 0; i < this._length; i++) {
         if (callback.call(thisObject, this._buffer[this._offset + i], i, this)) {
           v.push(this._buffer[this._offset + i]);
@@ -332,7 +332,7 @@ module Shumway.AVMX.AS {
       if (!isFunction(callback)) {
         this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
-      var v = new Float64Vector();
+      var v = new this.securityDomain.Float64Vector();
       for (var i = 0; i < this._length; i++) {
         v.push(callback.call(thisObject, this._buffer[this._offset + i], i, this));
       }
@@ -375,6 +375,7 @@ module Shumway.AVMX.AS {
       if (arguments.length === 0) {
         return Array.prototype.sort.call(this._view());
       }
+      // REDUX: The instanceof check here is probably broken.
       if (sortBehavior instanceof Function) {
         return Array.prototype.sort.call(this._view(), sortBehavior);
       } else {
@@ -416,7 +417,7 @@ module Shumway.AVMX.AS {
       var length = this._length;
       var first = Math.min(Math.max(start, 0), length);
       var last = Math.min(Math.max(end, first), length);
-      var result = new Float64Vector(last - first, this.fixed);
+      var result = new this.securityDomain.Float64Vector(last - first, this.fixed);
       result._buffer.set(buffer.subarray(this._offset + first, this._offset + last),
                          result._offset);
       return result;
@@ -432,7 +433,7 @@ module Shumway.AVMX.AS {
       var insertCount = arguments.length - 2;
       var deletedItems;
 
-      var result = new Float64Vector(deleteCount, this.fixed);
+      var result = new this.securityDomain.Float64Vector(deleteCount, this.fixed);
       if (deleteCount > 0) {
         deletedItems = buffer.subarray(startOffset, startOffset + deleteCount);
         result._buffer.set(deletedItems, result._offset);
@@ -481,71 +482,6 @@ module Shumway.AVMX.AS {
       if (this._fixed) {
         this.securityDomain.throwError("RangeError", Errors.VectorFixedError);
       }
-    }
-
-    axGetProperty(mn: Multiname): any {
-      // Optimization for the common case of indexed element accesses.
-      if (typeof mn.name === 'number') {
-        release || assert(mn.isRuntimeName());
-        return this.axGetNumericProperty(mn.name);
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
-        return this.axGetNumericProperty(+name);
-      }
-      var t = this.traits.getTrait(mn.namespaces, name);
-      if (t) {
-        return this[t.name.getMangledName()];
-      }
-      return this['$Bg' + name];
-    }
-
-    axSetProperty(mn: Multiname, value: any) {
-      release || checkValue(value);
-      // Optimization for the common case of indexed element accesses.
-      if (typeof mn.name === 'number') {
-        release || assert(mn.isRuntimeName());
-        this.axSetNumericProperty(mn.name, value);
-        return;
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
-        this.axSetNumericProperty(+name, value);
-        return;
-      }
-      var t = this.traits.getTrait(mn.namespaces, name);
-      if (t) {
-        this[t.name.getMangledName()] = value;
-        return;
-      }
-      this['$Bg' + name] = value;
-    }
-
-    axGetPublicProperty(nm: any): any {
-      // Optimization for the common case of indexed element accesses.
-      if (typeof nm === 'number') {
-        return this.axGetNumericProperty(nm);
-      }
-      var name = asCoerceName(nm);
-      if (isNumeric(name)) {
-        return this.axGetNumericProperty(+name);
-      }
-      return this['$Bg' + name];
-    }
-
-    axSetPublicProperty(nm: any, value: any) {
-      release || checkValue(value);
-      // Optimization for the common case of indexed element accesses.
-      if (typeof nm === 'number') {
-        this.axSetNumericProperty(nm, value);
-        return;
-      }
-      var name = asCoerceName(nm);
-      if (isNumeric(name)) {
-        this.axSetNumericProperty(+name, value);
-        return;
-      }
-      this['$Bg' + name] = value;
     }
 
     axGetNumericProperty(nm: number) {

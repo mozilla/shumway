@@ -27,7 +27,9 @@ module Shumway.AVM2.AS {
 }
 
 interface ISecurityDomain extends Shumway.AVMX.SecurityDomain {
-
+  Int32Vector: typeof Shumway.AVMX.AS.Int32Vector;
+  Uint32Vector: typeof Shumway.AVMX.AS.Uint32Vector;
+  Float64Vector: typeof Shumway.AVMX.AS.Float64Vector;
 }
 
 module Shumway.AVMX.AS {

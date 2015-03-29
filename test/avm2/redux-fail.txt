@@ -11,12 +11,8 @@ test/avm2/pass/xml-2.abc
 test/avm2/pass/xml-10.abc
 test/avm2/pass/vectors.abc
 test/avm2/pass/vectors-int.abc
-test/avm2/pass/vectors-numeric-2.abc
 test/avm2/pass/vectors-4.abc
-test/avm2/pass/vectors-errors.abc
 test/avm2/pass/vectors-generic.abc
-test/avm2/pass/vectors-numeric.abc
-test/avm2/pass/vectors-1.abc
 test/avm2/pass/type-5.abc
 test/avm2/pass/type-2.abc
 test/avm2/pass/trait-types-0.abc

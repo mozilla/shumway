@@ -225,7 +225,7 @@ package {
   (function () {
     trace("-- splice --");
     trace(Vector.<int>([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
-    a = Vector.<int>([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]); trace(a.splice(0, 1) + " " + a);
+    var a = Vector.<int>([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]); trace(a.splice(0, 1) + " " + a);
     a = Vector.<int>([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]); trace(a.splice(1, 1) + " " + a);
     a = Vector.<int>([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]); trace(a.splice(4, 100) + " " + a);
     a = Vector.<int>([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]); trace(a.splice(4, 100, 50, 51, 52) + " " + a);
@@ -455,7 +455,7 @@ package {
   (function () {
     trace("-- splice --");
     trace(Vector.<uint>([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]));
-    a = Vector.<uint>([0, 1, 2, 3, -4, -5, -6, -7, 8, 9]); trace(a.splice(0, 1) + " " + a);
+    var a = Vector.<uint>([0, 1, 2, 3, -4, -5, -6, -7, 8, 9]); trace(a.splice(0, 1) + " " + a);
     a = Vector.<uint>([0, 1, 2, 3, -4, -5, -6, -7, 8, 9]); trace(a.splice(1, 1) + " " + a);
     a = Vector.<uint>([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]); trace(a.splice(4, 100) + " " + a);
     a = Vector.<uint>([0, 1, -2, -3, -4, 5, 6, 7, 8, 9]); trace(a.splice(4, 100, 50, 51, 52) + " " + a);
