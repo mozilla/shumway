@@ -105,3 +105,4 @@ test/avm2/pass/vectors-1.abc
 test/avm2/pass/vectors-numeric-2.abc
 test/avm2/pass/vectors-errors.abc
 test/avm2/pass/vectors-numeric.abc
+test/avm2/pass/switch-3.abc
