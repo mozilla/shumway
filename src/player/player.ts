@@ -286,7 +286,9 @@ module Shumway.Player {
               this._hasFocus = false;
               break;
             case FocusEventType.WindowFocus:
-              EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ACTIVATE));
+              var eventDispatcherClass = this.securityDomain.flash.events.EventDispatcher.axClass;
+              var eventClass = this.securityDomain.flash.events.Event.axClass;
+              eventDispatcherClass.broadcastEventDispatchQueue.dispatchEvent(eventClass.getBroadcastInstance(Event.ACTIVATE));
               this._hasFocus = true;
               break;
           }
@@ -468,9 +470,8 @@ module Shumway.Player {
       // TODO: change this to the mode described in
       // http://www.craftymind.com/2008/04/18/updated-elastic-racetrack-for-flash-9-and-avm2/
       this._frameTimeout = setTimeout(this._eventLoopTick, this._getFrameInterval());
-      if (!dontSkipFrames && (
-        !frameEnabledOption.value && runFrameScripts ||
-        this._shouldThrottleDownFrameExecution()))
+      if (!dontSkipFrames && (!frameEnabledOption.value && runFrameScripts ||
+                              this._shouldThrottleDownFrameExecution()))
       {
         return;
       }

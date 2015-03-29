@@ -29,7 +29,6 @@ module Shumway.AVMX.AS.flash.display {
     _symbol: ButtonSymbol;
     applySymbol() {
       release || assert(this._symbol);
-      display.DisplayObject._advancableInstances.push(this);
       this._initializeFields();
       var symbol = this._symbol;
       if (symbol.upState) {
@@ -51,7 +50,8 @@ module Shumway.AVMX.AS.flash.display {
       }
     }
 
-    private _initializeFields() {
+    protected _initializeFields() {
+      super._initializeFields();
       this._useHandCursor = true;
       this._enabled = true;
       this._trackAsMenu = false;
@@ -75,22 +75,25 @@ module Shumway.AVMX.AS.flash.display {
                 downState?: flash.display.DisplayObject,
                 hitTestState?: flash.display.DisplayObject) {
       super();
-      release || assert(!this._symbol);
       display.DisplayObject._advancableInstances.push(this);
-      this._initializeFields();
-      if (upState) {
-        this.upState = upState;
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
       }
-      if (overState) {
-        this.overState = overState;
+      if (!this._symbol) {
+        if (upState) {
+          this.upState = upState;
+        }
+        if (overState) {
+          this.overState = overState;
+        }
+        if (downState) {
+          this.downState = downState;
+        }
+        if (hitTestState) {
+          this.hitTestState = hitTestState;
+        }
+        this._updateButton();
       }
-      if (downState) {
-        this.downState = downState;
-      }
-      if (hitTestState) {
-        this.hitTestState = hitTestState;
-      }
-      this._updateButton();
     }
 
     _initFrame(advance: boolean) {

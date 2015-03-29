@@ -377,7 +377,8 @@ module Shumway.AVMX.AS.flash.display {
                                 callConstructor: boolean): DisplayObject {
       var symbolClass = symbol.symbolClass;
 
-      if (this.securityDomain.flash.display.BitmapData.axClass.dPrototype.isPrototypeOf(symbolClass.dPrototype)) {
+      var bitmapDataClass = this.securityDomain.flash.display.BitmapData.axClass;
+      if (bitmapDataClass.dPrototype.isPrototypeOf(symbolClass.dPrototype)) {
         symbolClass = this.securityDomain.flash.display.Bitmap.axClass;
       }
       var instance: DisplayObject = constructClassFromSymbol(symbol, symbolClass);
@@ -387,7 +388,7 @@ module Shumway.AVMX.AS.flash.display {
       instance._setFlags(DisplayObjectFlags.AnimatedByTimeline);
       instance._animate(placeObjectTag);
       if (callConstructor) {
-        symbolClass.instanceConstructorNoInitialize.call(instance);
+        (<AXObject><any>instance).axInitializer();
       }
       return instance;
     }
@@ -498,29 +499,31 @@ module Shumway.AVMX.AS.flash.display {
       this.securityDomain.flash.events.EventDispatcher.axClass.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 
-    applySymbol() {
-      var symbol = this._symbol;
-      if (symbol.scale9Grid) {
-        // No need to take ownership: scale9Grid is never changed.
-        this._scale9Grid = symbol.scale9Grid;
-      }
-    }
-
     constructor () {
       super();
 
-      this._id = flash.display.DisplayObject.getNextSyncID();
-      this._displayObjectFlags = DisplayObjectFlags.Visible                            |
-                                 DisplayObjectFlags.InvalidLineBounds                  |
-                                 DisplayObjectFlags.InvalidFillBounds                  |
-                                 DisplayObjectFlags.InvalidConcatenatedMatrix          |
-                                 DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
-                                 DisplayObjectFlags.DirtyDescendents                   |
-                                 DisplayObjectFlags.DirtyGraphics                      |
-                                 DisplayObjectFlags.DirtyMatrix                        |
-                                 DisplayObjectFlags.DirtyColorTransform                |
-                                 DisplayObjectFlags.DirtyMask                          |
-                                 DisplayObjectFlags.DirtyClipDepth                     |
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
+
+      this._addReference();
+      this._setFlags(DisplayObjectFlags.Constructed);
+    }
+
+    protected _initializeFields() {
+      super._initializeFields(this);
+      this._id = this.securityDomain.flash.display.DisplayObject.axClass.getNextSyncID();
+      this._displayObjectFlags = DisplayObjectFlags.Visible |
+                                 DisplayObjectFlags.InvalidLineBounds |
+                                 DisplayObjectFlags.InvalidFillBounds |
+                                 DisplayObjectFlags.InvalidConcatenatedMatrix |
+                                 DisplayObjectFlags.InvalidInvertedConcatenatedMatrix |
+                                 DisplayObjectFlags.DirtyDescendents |
+                                 DisplayObjectFlags.DirtyGraphics |
+                                 DisplayObjectFlags.DirtyMatrix |
+                                 DisplayObjectFlags.DirtyColorTransform |
+                                 DisplayObjectFlags.DirtyMask |
+                                 DisplayObjectFlags.DirtyClipDepth |
                                  DisplayObjectFlags.DirtyMiscellaneousProperties;
 
       this._root = null;
@@ -546,8 +549,8 @@ module Shumway.AVMX.AS.flash.display {
       this._scrollRect = null;
       this._filters = null;
       this._blendMode = BlendMode.NORMAL;
-      // Don't overwrite the scale9Grid if it has been set from a symbol.
-      this._scale9Grid = this._scale9Grid || null;
+      // No need to take ownership: scale9Grid is never changed.
+      this._scale9Grid = this._symbol ? this._symbol.scale9Grid : null;
       this._loaderInfo = null;
       this._accessibilityProperties = null;
 
@@ -555,13 +558,15 @@ module Shumway.AVMX.AS.flash.display {
       this._lineBounds = new Bounds(0, 0, 0, 0);
       this._clipDepth = -1;
 
-      this._concatenatedMatrix = new geom.Matrix();
-      this._invertedConcatenatedMatrix = new geom.Matrix();
-      this._matrix = new geom.Matrix();
-      this._invertedMatrix = new geom.Matrix();
+      var matrixClass = this.securityDomain.flash.geom.Matrix;
+      this._concatenatedMatrix = new matrixClass();
+      this._invertedConcatenatedMatrix = new matrixClass();
+      this._matrix = new matrixClass();
+      this._invertedMatrix = new matrixClass();
       this._matrix3D = null;
-      this._colorTransform = new geom.ColorTransform();
-      this._concatenatedColorTransform = new geom.ColorTransform();
+      var colorTransformClass = this.securityDomain.flash.geom.ColorTransform;
+      this._colorTransform = new colorTransformClass();
+      this._concatenatedColorTransform = new colorTransformClass();
 
       this._depth = -1;
       this._ratio = 0;
@@ -575,9 +580,6 @@ module Shumway.AVMX.AS.flash.display {
       this._children = null;
 
       this._referenceCount = 0;
-
-      this._addReference();
-      this._setFlags(DisplayObjectFlags.Constructed);
     }
 
     /**
@@ -1568,7 +1570,8 @@ module Shumway.AVMX.AS.flash.display {
       return this._getScale9Grid();
     }
     _getScale9Grid() {
-      return this._scale9Grid ? flash.geom.Rectangle.FromBounds(this._scale9Grid) : null;
+      var rectangleClass = this.securityDomain.flash.geom.Rectangle.axClass;
+      return this._scale9Grid ? rectangleClass.FromBounds(this._scale9Grid) : null;
     }
 
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
@@ -1658,12 +1661,14 @@ module Shumway.AVMX.AS.flash.display {
 
     getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
       targetCoordinateSpace = targetCoordinateSpace || this;
-      return geom.Rectangle.FromBounds(this._getTransformedBounds(targetCoordinateSpace, true));
+      var rectangleClass = this.securityDomain.flash.geom.Rectangle.axClass;
+      return rectangleClass.FromBounds(this._getTransformedBounds(targetCoordinateSpace, true));
     }
 
     getRect(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
       targetCoordinateSpace = targetCoordinateSpace || this;
-      return geom.Rectangle.FromBounds(this._getTransformedBounds(targetCoordinateSpace, false));
+      var rectangleClass = this.securityDomain.flash.geom.Rectangle.axClass;
+      return rectangleClass.FromBounds(this._getTransformedBounds(targetCoordinateSpace, false));
     }
 
     /**

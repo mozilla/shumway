@@ -31,13 +31,21 @@ module Shumway.AVMX.AS.flash.display {
     static classSymbols: string [] = null;
     static classInitializer: any = null;
 
+
     constructor () {
       super();
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
+      this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
+    }
+
+    protected _initializeFields() {
+      super._initializeFields();
       this._tabChildren = true;
       this._mouseChildren = true;
       // Might already have been initialized from a symbol.
       this._children = this._children || [];
-      this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
     }
 
     private _tabChildren: boolean;
@@ -77,7 +85,8 @@ module Shumway.AVMX.AS.flash.display {
         if (child._hasFlags(DisplayObjectFlags.Constructed)) {
           continue;
         }
-        child.class.instanceConstructorNoInitialize.call(child);
+        (<any>child).axInitializer();
+        //child.class.instanceConstructorNoInitialize.call(child);
         child._removeReference();
         if (child._name) {
           this.axSetPublicProperty(child._name, child);
@@ -190,8 +199,8 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     /**
-     * Adds a child at a given index. The index must be within the range [0 ... children.length]. Note that this
-     * is different than the range setChildIndex expects.
+     * Adds a child at a given index. The index must be within the range [0 ... children.length].
+     * Note that this is different than the range setChildIndex expects.
      */
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
       checkParameterType(child, "child", this.securityDomain.flash.display.DisplayObject.axClass);
@@ -248,7 +257,8 @@ module Shumway.AVMX.AS.flash.display {
     /**
      * Adds a timeline object to this container. The new child is added after the last object that
      * exists at a smaller depth, or before the first object that exists at a greater depth. If no
-     * other timeline object is found, the new child is added to the front(top) of all other children.
+     * other timeline object is found, the new child is added to the front(top) of all other
+     * children.
      *
      * Note that this differs from `addChildAt` in that the depth isn't an index in the `children`
      * array, and doesn't have to be in the dense range [0..children.length].
@@ -524,8 +534,8 @@ module Shumway.AVMX.AS.flash.display {
           return HitTestingResult.Shape;
         }
       }
-      // We need to always test the container itself for getObjectsUnderPoint or when looking for a drop target.
-      // Otherwise, it's only required if no child (interactive or not) was hit.
+      // We need to always test the container itself for getObjectsUnderPoint or when looking for a
+      // drop target. Otherwise, it's only required if no child (interactive or not) was hit.
       if (anyChildHit && testingType < HitTestingType.ObjectsUnderPoint) {
         if (testingType === HitTestingType.Mouse && objects.length === 0) {
           objects[0] = this;

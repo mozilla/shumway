@@ -42,8 +42,8 @@ module Shumway.AVMX.AS.flash.display {
     _symbol: BitmapSymbol;
     applySymbol() {
       release || assert(this._symbol);
-      release || assert(symbol.syncId);
       var symbol = this._symbol;
+      release || assert(symbol.syncId);
       this._rect = new this.securityDomain.flash.geom.Rectangle(0, 0, symbol.width, symbol.height);
       this._transparent = true;
       this._id = symbol.syncId;

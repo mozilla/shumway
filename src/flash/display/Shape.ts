@@ -27,17 +27,22 @@ module Shumway.AVMX.AS.flash.display {
 
     _symbol: ShapeSymbol;
     applySymbol() {
+      this._initializeFields();
       release || assert(this._symbol);
       // TODO: Check what do do if the computed bounds of the graphics object don't
       // match those given by the symbol.
+      this._setStaticContentFromSymbol(this._symbol);
     }
     constructor () {
       super();
-      if (this._symbol) {
-        this._setStaticContentFromSymbol(this._symbol);
-      } else {
-        this._graphics = null;
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
       }
+    }
+
+    protected _initializeFields() {
+      super._initializeFields();
+      this._graphics = null;
     }
 
     _canHaveGraphics(): boolean {

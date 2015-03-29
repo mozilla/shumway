@@ -220,7 +220,6 @@ module Shumway.AVMX.AS {
     var instance = Object.create(axClass.tPrototype);
     instance._symbol = symbol;
     instance.applySymbol();
-    Object.getPrototypeOf(instance).constructor.call(instance);
     return instance;
   }
 }

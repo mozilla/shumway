@@ -34,6 +34,13 @@ module Shumway.AVMX.AS.flash.display {
     
     constructor () {
       super();
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
+    }
+
+    protected _initializeFields() {
+      super._initializeFields();
       this._tabEnabled = false;
       this._tabIndex = -1;
       this._focusRect = null;

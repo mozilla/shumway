@@ -116,12 +116,13 @@ module Shumway.AVMX.AS.flash.events {
   /**
    * Broadcast Events
    *
-   * The logic here is pretty much copied from: http://www.senocular.com/flash/tutorials/orderofoperations/
+   * The logic here is pretty much copied from:
+   * http://www.senocular.com/flash/tutorials/orderofoperations/
    */
   export class BroadcastEventDispatchQueue {
     /**
-     * The queues start off compact but can have null values if event targets are removed. Periodically we
-     * compact them if too many null values exist.
+     * The queues start off compact but can have null values if event targets are removed.
+     * Periodically we compact them if too many null values exist.
      */
     private _queues: Shumway.Map<EventDispatcher []>;
 
@@ -217,9 +218,19 @@ module Shumway.AVMX.AS.flash.events {
     private _captureListeners: Shumway.Map<EventListenerList>;
     private _targetOrBubblingListeners: Shumway.Map<EventListenerList>;
 
+    protected _fieldsInitialized: boolean;
+
     constructor(target: flash.events.IEventDispatcher = null) {
       super();
-      this._target = target || this;
+      if (!this._fieldsInitialized) {
+        this._initializeFields(target || this);
+      }
+    }
+
+    protected _initializeFields(target: flash.events.IEventDispatcher) {
+      release || assert(!this._fieldsInitialized);
+      this._fieldsInitialized = true;
+      this._target = target;
       this._captureListeners = null;
       this._targetOrBubblingListeners = null;
     }
@@ -477,8 +488,8 @@ module Shumway.AVMX.AS.flash.events {
         return true;
       }
       /**
-       * If the target is already set then we must clone the event. We can reuse the event object for
-       * all listener callbacks but not when bubbling.
+       * If the target is already set then we must clone the event. We can reuse the event object
+       * for all listener callbacks but not when bubbling.
        */
       if (event._target) {
         event = event.axCallPublicProperty('clone', null);

@@ -70,12 +70,16 @@ module Shumway.AVMX.AS.flash.text {
     }
     constructor() {
       super();
-      release || assert(!this._symbol);
-      this._initializeFields();
-      this._setFillAndLineBoundsFromWidthAndHeight(100 * 20, 100 * 20);
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
+      if (!this._symbol) {
+        this._setFillAndLineBoundsFromWidthAndHeight(100 * 20, 100 * 20);
+      }
     }
 
-    private _initializeFields(): void {
+    protected _initializeFields(): void {
+      super._initializeFields();
       this._alwaysShowSelection = false;
       this._antiAliasType = AntiAliasType.NORMAL;
       this._autoSize = TextFieldAutoSize.NONE;

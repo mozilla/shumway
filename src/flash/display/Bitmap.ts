@@ -27,6 +27,7 @@ module Shumway.AVMX.AS.flash.display {
     _symbol: BitmapSymbol;
     applySymbol() {
       release || assert(this._symbol);
+      this._initializeFields();
       var symbol = this._symbol;
       var symbolClass = symbol.symbolClass;
       // If the symbol class inherits from Bitmap, we are already within its initializer.
@@ -51,10 +52,11 @@ module Shumway.AVMX.AS.flash.display {
     
     constructor (bitmapData: flash.display.BitmapData = null, pixelSnapping: string = "auto", smoothing: boolean = false) {
       super();
-      release || assert(!this._symbol);
-      this.bitmapData = bitmapData;
-      this._pixelSnapping = asCoerceString(pixelSnapping);
-      this._smoothing = !!smoothing;
+      if (!this._symbol) {
+        this.bitmapData = bitmapData;
+        this._pixelSnapping = asCoerceString(pixelSnapping);
+        this._smoothing = !!smoothing;
+      }
     }
 
     _pixelSnapping: string;

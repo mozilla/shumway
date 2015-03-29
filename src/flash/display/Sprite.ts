@@ -39,14 +39,15 @@ module Shumway.AVMX.AS.flash.display {
 
     applySymbol() {
       release || assert(this._symbol);
+      this._initializeFields();
       var symbol = this._symbol;
       if (symbol.isRoot) {
         this._root = this;
       }
+      this._children = [];
       if (symbol.numFrames && symbol.frames.length > 0) {
         // For a SWF's root symbol, all frames are added after initialization, with
         // _initializeChildren called after the first frame is added.
-        this._children = [];
         this._initializeChildren(symbol.frames[0]);
       }
     }
@@ -58,6 +59,14 @@ module Shumway.AVMX.AS.flash.display {
 
     constructor () {
       super();
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
+      this._constructChildren();
+    }
+
+    protected _initializeFields() {
+      super._initializeFields();
       this._graphics = null;
       this._buttonMode = false;
       this._dropTarget = null;
@@ -69,7 +78,6 @@ module Shumway.AVMX.AS.flash.display {
       this._dragDeltaY = 0;
       this._dragBounds = null;
       this._hitTarget = null;
-      this._constructChildren();
     }
     
     // JS -> AS Bindings

@@ -175,7 +175,6 @@ module Shumway.AVMX.AS.flash.display {
     applySymbol() {
       super.applySymbol();
       this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(this);
-      this._initializeFields();
       var symbol = this._symbol;
       this._totalFrames = symbol.numFrames;
       this._currentFrame = 1;
@@ -200,12 +199,13 @@ module Shumway.AVMX.AS.flash.display {
 
     constructor () {
       super();
-      if (!this._symbol) {
+      if (!this._fieldsInitialized) {
         this._initializeFields();
       }
     }
 
-    private _initializeFields() {
+    protected _initializeFields() {
+      super._initializeFields();
       this._currentFrame = 0;
       this._totalFrames = 1;
       this._trackAsMenu = false;
@@ -662,7 +662,7 @@ module Shumway.AVMX.AS.flash.display {
         return;
       }
       try {
-        frameScript.call(this);
+        frameScript.$Bgcall(this);
       } catch (e) {
         Telemetry.instance.reportTelemetry({ topic: 'error', error: Telemetry.ErrorTypes.AVM2_ERROR });
 

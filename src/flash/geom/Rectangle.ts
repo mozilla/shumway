@@ -22,6 +22,8 @@ module Shumway.AVMX.AS.flash.geom {
 
   export class Rectangle extends ASObject implements flash.utils.IExternalizable {
 
+    static axClass: typeof Rectangle;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
