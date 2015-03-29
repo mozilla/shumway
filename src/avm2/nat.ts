@@ -48,6 +48,7 @@ module Shumway.AVMX.AS {
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import copyOwnPropertyDescriptors = Shumway.ObjectUtilities.copyOwnPropertyDescriptors;
+  import copyPropertiesByList = Shumway.ObjectUtilities.copyPropertiesByList;
 
   import Multiname = Shumway.AVMX.Multiname;
 
@@ -1653,6 +1654,33 @@ module Shumway.AVMX.AS {
     return propertyName.indexOf("native_") !== 0;
   }
 
+  var axTrapNames = [
+    "axResolveMultiname",
+    "axHasProperty",
+    "axDeleteProperty",
+    "axCallProperty",
+    "axCallSuper",
+    "axConstructProperty",
+    "axHasPropertyInternal",
+    "axHasOwnProperty",
+    "axSetProperty",
+    "axGetProperty",
+    "axGetSuper",
+    "axSetSuper",
+    "axNextNameIndex",
+    "axNextName",
+    "axNextValue",
+    "axGetEnumerableKeys",
+    "axHasPublicProperty",
+    "axSetPublicProperty",
+    "axGetPublicProperty",
+    "axCallPublicProperty",
+    "axSetNumericProperty",
+    "axGetNumericProperty",
+    "axGetSlot",
+    "axSetSlot"
+  ];
+
   function linkClass(axClass: AXClass, asClass: ASClass) {
     // Save asClass on the axClass.
     axClass.asClass = asClass;
@@ -1695,7 +1723,7 @@ module Shumway.AVMX.AS {
       // it copies over all properties and may overwrite properties that we don't expect.
       // TODO: Look into a safer way to do this, for now it doesn't overwrite already
       // defined properties.
-      //copyOwnPropertyDescriptors(axClass.dPrototype, axClass.superClass.dPrototype, null, false, true);
+      // copyOwnPropertyDescriptors(axClass.dPrototype, axClass.superClass.dPrototype, null, false, true);
     }
 
     // Copy instance methods and properties.
@@ -1707,6 +1735,10 @@ module Shumway.AVMX.AS {
 
     // Inherit or override prototype descriptors from the template class.
     copyOwnPropertyDescriptors(axClass.dPrototype, asClass.prototype, filter);
+
+    // Copy inherited traps. We want to make sure we copy all the in inherited traps, not just the traps
+    // defined in asClass.Prototype.
+    copyPropertiesByList(axClass.dPrototype, asClass.prototype, axTrapNames);
 
     if (asClass.classInitializer) {
       asClass.classInitializer.call(axClass, asClass);

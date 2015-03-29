@@ -26,7 +26,74 @@ module Shumway.AVMX.AS {
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import clamp = Shumway.NumberUtilities.clamp;
 
-  export class GenericVector extends ASObject {
+  export class BaseVector extends ASObject {
+    axGetProperty(mn: Multiname): any {
+      // Optimization for the common case of indexed element accesses.
+      if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
+        return this.axGetNumericProperty(mn.name);
+      }
+      var name = asCoerceName(mn.name);
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        return this.axGetNumericProperty(+name);
+      }
+      var t = this.traits.getTrait(mn.namespaces, name);
+      if (t) {
+        return this[t.name.getMangledName()];
+      }
+      return this['$Bg' + name];
+    }
+
+    axSetProperty(mn: Multiname, value: any) {
+      release || checkValue(value);
+      // Optimization for the common case of indexed element accesses.
+      if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
+        this.axSetNumericProperty(mn.name, value);
+        return;
+      }
+      var name = asCoerceName(mn.name);
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        this.axSetNumericProperty(+name, value);
+        return;
+      }
+      var t = this.traits.getTrait(mn.namespaces, name);
+      if (t) {
+        this[t.name.getMangledName()] = value;
+        return;
+      }
+      this['$Bg' + name] = value;
+    }
+
+    axGetPublicProperty(nm: any): any {
+      // Optimization for the common case of indexed element accesses.
+      if (typeof nm === 'number') {
+        return this.axGetNumericProperty(nm);
+      }
+      var name = asCoerceName(nm);
+      if (isNumeric(name)) {
+        return this.axGetNumericProperty(+name);
+      }
+      return this['$Bg' + name];
+    }
+
+    axSetPublicProperty(nm: any, value: any) {
+      release || checkValue(value);
+      // Optimization for the common case of indexed element accesses.
+      if (typeof nm === 'number') {
+        this.axSetNumericProperty(nm, value);
+        return;
+      }
+      var name = asCoerceName(nm);
+      if (isNumeric(name)) {
+        this.axSetNumericProperty(+name, value);
+        return;
+      }
+      this['$Bg' + name] = value;
+    }
+  }
+
+  export class GenericVector extends BaseVector {
 
     static CASEINSENSITIVE = 1;
     static DESCENDING = 2;
@@ -223,7 +290,7 @@ module Shumway.AVMX.AS {
      */
     every(callback: Function, thisObject: Object) {
       for (var i = 0; i < this._buffer.length; i++) {
-        if (!callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
+        if (!callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
           return false;
         }
       }
@@ -238,8 +305,8 @@ module Shumway.AVMX.AS {
     filter(callback, thisObject) {
       var v = new GenericVector(0, false, this._type);
       for (var i = 0; i < this._buffer.length; i++) {
-        if (callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
-          v.push(this.asGetNumericProperty(i));
+        if (callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
+          v.push(this.axGetNumericProperty(i));
         }
       }
       return v;
@@ -252,7 +319,7 @@ module Shumway.AVMX.AS {
         this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       for (var i = 0; i < this._buffer.length; i++) {
-        if (callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
+        if (callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
           return true;
         }
       }
@@ -264,7 +331,7 @@ module Shumway.AVMX.AS {
         this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       for (var i = 0; i < this._buffer.length; i++) {
-        callback.call(thisObject, this.asGetNumericProperty(i), i, this);
+        callback.call(thisObject, this.axGetNumericProperty(i), i, this);
       }
     }
 
@@ -295,7 +362,7 @@ module Shumway.AVMX.AS {
       }
       var v = new GenericVector(0, false, this._type);
       for (var i = 0; i < this._buffer.length; i++) {
-        v.push(callback.call(thisObject, this.asGetNumericProperty(i), i, this));
+        v.push(callback.call(thisObject, this.axGetNumericProperty(i), i, this));
       }
       return v;
     }
@@ -439,13 +506,13 @@ module Shumway.AVMX.AS {
     //  return index >= 0 && index < this._buffer.length;
     //}
     //
-    asGetNumericProperty(i) {
+    axGetNumericProperty(i: number) {
       checkArguments && axCheckVectorGetNumericProperty(i, this._buffer.length,
                                                         this.securityDomain);
       return this._buffer[i];
     }
 
-    asSetNumericProperty(i, v) {
+    axSetNumericProperty(i: number, v) {
       checkArguments && axCheckVectorSetNumericProperty(i, this._buffer.length, this._fixed,
                                                         this.securityDomain);
       this._buffer[i] = this._coerce(v);

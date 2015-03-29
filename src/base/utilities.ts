@@ -772,6 +772,15 @@ module Shumway {
       }
     }
 
+    export function copyPropertiesByList(object: Object,
+                                         template: Object,
+                                         propertyList: string []) {
+      for (var i = 0; i < propertyList.length; i++) {
+        var property = propertyList[i];
+        object[property] = template[property];
+      }
+    }
+
     export function getLatestGetterOrSetterPropertyDescriptor(object, name) {
       var descriptor: PropertyDescriptor = {};
       while (object) {

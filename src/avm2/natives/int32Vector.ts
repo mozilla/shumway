@@ -38,7 +38,7 @@ module Shumway.AVMX.AS {
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import clamp = Shumway.NumberUtilities.clamp;
 
-  export class Int32Vector extends ASObject {
+  export class Int32Vector extends BaseVector {
     static EXTRA_CAPACITY = 4;
     static INITIAL_CAPACITY = 10;
     static DEFAULT_VALUE = 0;
@@ -479,71 +479,6 @@ module Shumway.AVMX.AS {
       if (this._fixed) {
         this.securityDomain.throwError("RangeError", Errors.VectorFixedError);
       }
-    }
-
-    axGetProperty(mn: Multiname): any {
-      // Optimization for the common case of indexed element accesses.
-      if (typeof mn.name === 'number') {
-        release || assert(mn.isRuntimeName());
-        return this.axGetNumericProperty(mn.name);
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
-        return this.axGetNumericProperty(+name);
-      }
-      var t = this.traits.getTrait(mn.namespaces, name);
-      if (t) {
-        return this[t.name.getMangledName()];
-      }
-      return this['$Bg' + name];
-    }
-
-    axSetProperty(mn: Multiname, value: any) {
-      release || checkValue(value);
-      // Optimization for the common case of indexed element accesses.
-      if (typeof mn.name === 'number') {
-        release || assert(mn.isRuntimeName());
-        this.axSetNumericProperty(mn.name, value);
-        return;
-      }
-      var name = asCoerceName(mn.name);
-      if (mn.isRuntimeName() && isNumeric(name)) {
-        this.axSetNumericProperty(+name, value);
-        return;
-      }
-      var t = this.traits.getTrait(mn.namespaces, name);
-      if (t) {
-        this[t.name.getMangledName()] = value;
-        return;
-      }
-      this['$Bg' + name] = value;
-    }
-
-    axGetPublicProperty(nm: any): any {
-      // Optimization for the common case of indexed element accesses.
-      if (typeof nm === 'number') {
-        return this.axGetNumericProperty(nm);
-      }
-      var name = asCoerceName(nm);
-      if (isNumeric(name)) {
-        return this.axGetNumericProperty(+name);
-      }
-      return this['$Bg' + name];
-    }
-
-    axSetPublicProperty(nm: any, value: any) {
-      release || checkValue(value);
-      // Optimization for the common case of indexed element accesses.
-      if (typeof nm === 'number') {
-        this.axSetNumericProperty(nm, value);
-        return;
-      }
-      var name = asCoerceName(nm);
-      if (isNumeric(name)) {
-        this.axSetNumericProperty(+name, value);
-        return;
-      }
-      this['$Bg' + name] = value;
     }
 
     axGetNumericProperty(nm: number) {
