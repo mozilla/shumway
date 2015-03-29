@@ -1073,6 +1073,9 @@ module Shumway.AVMX.AS {
       var asProto: any = ASNumber.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
+      addPrototypeFunctionAlias(proto, '$BgtoFixed', asProto.toFixed);
+      addPrototypeFunctionAlias(proto, '$BgtoExponential', asProto.toExponential);
+      addPrototypeFunctionAlias(proto, '$BgtoPrecision', asProto.toPrecision);
     }
 
     value: number;

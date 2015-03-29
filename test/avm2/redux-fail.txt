@@ -37,7 +37,6 @@ test/avm2/pass/proxy-1.abc
 test/avm2/pass/proxy-0.abc
 test/avm2/pass/props-get.abc
 test/avm2/pass/props-5.abc
-test/avm2/pass/numbers-0.abc
 test/avm2/pass/native-object.abc
 test/avm2/pass/names-2.abc
 test/avm2/pass/json.abc

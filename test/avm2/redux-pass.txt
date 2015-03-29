@@ -100,3 +100,4 @@ test/avm2/pass/arrays-1.abc
 test/avm2/pass/arrays-0.abc
 test/avm2/pass/add-0.abc
 test/avm2/pass/arrays.abc
+test/avm2/pass/numbers-0.abc
