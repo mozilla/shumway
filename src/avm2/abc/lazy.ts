@@ -1072,6 +1072,7 @@ module Shumway.AVMX {
     private _applicationDomain: ApplicationDomain = null;
 
     public get applicationDomain() {
+      release || assert(this._applicationDomain);
       return this._applicationDomain;
     }
 

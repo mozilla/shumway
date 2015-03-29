@@ -515,7 +515,7 @@ module Shumway.AVMX.AS.flash.display {
               system.loadABC(abc);
             } else {
               // TODO: probably delay execution until playhead reaches the frame.
-              system.executeABC(abc);
+              system.loadAndExecuteABC(abc);
             }
           }
           loaderInfo._abcBlocksLoaded = abcBlocksLoaded;
