@@ -95,10 +95,7 @@ module Shumway.AVMX.AS.flash.net {
           return;
         }
 
-        var service: display.IRootElementService =
-          // REDUX:
-          // Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
-          null;
+        var service: display.IRootElementService = this.securityDomain.player;
 
         var rtmpProps = wrapJSObject({
           app: parsedURL.app,

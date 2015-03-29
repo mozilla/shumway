@@ -582,8 +582,7 @@ module Shumway.AVMX.AS.flash.display {
          colorTransform: flash.geom.ColorTransform = null, blendMode: string = null,
          clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
       somewhatImplemented("public flash.display.BitmapData::draw");
-      var serializer: IBitmapDataSerializer = null; // REDUX:
-                                                    // AVM2.instance.globals['Shumway.Player.Utils'];
+      var serializer: IBitmapDataSerializer = this.securityDomain.player;
       if (matrix) {
         matrix = matrix.clone().toTwipsInPlace();
       }

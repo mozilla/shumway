@@ -116,7 +116,7 @@ module Shumway.AVMX.AS.flash.display {
         // same as the SWF file's own URL.
 
         // The loaderURL value can be changed by player settings.
-        var service: IRootElementService = null; // REDUX: Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        var service: IRootElementService = this.securityDomain.player;
         return (this._url === service.swfUrl && service.loaderUrl) || this._url;
       }
       return this._loaderUrl;
@@ -361,7 +361,7 @@ module Shumway.AVMX.AS.flash.display {
       release || assert(symbol, "Unknown symbol type " + data.type);
       this._dictionary[id] = symbol;
       if (symbol.ready === false) {
-        var resolver: Timeline.IAssetResolver = null; // REDUX: AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        var resolver: Timeline.IAssetResolver = this.securityDomain.player;
         resolver.registerFontOrImage(<Timeline.EagerlyResolvedSymbol><any>symbol, data);
       }
       return symbol;

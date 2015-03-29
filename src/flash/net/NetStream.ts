@@ -172,7 +172,7 @@ module Shumway.AVMX.AS.flash.net {
       // (void) -> void ???
       url = asCoerceString(url);
 
-      var service: IVideoElementService = null; // REDUX: AVM2.instance.globals['Shumway.Player.Utils'];
+      var service: IVideoElementService = this.securityDomain.player;
       service.registerEventListener(this._id, this.processVideoEvent.bind(this));
 
       if (this._connection && this._connection.uri) {
@@ -475,7 +475,7 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     private _notifyVideoControl(eventType: VideoControlEvent, data: any): any {
-      var service: IVideoElementService = null; // REDUX: AVM2.instance.globals['Shumway.Player.Utils'];
+      var service: IVideoElementService = this.securityDomain.player;
       return service.notifyVideoControl(this._id, eventType, data);
     }
 

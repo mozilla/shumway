@@ -471,7 +471,7 @@ module Shumway.AVMX.AS.flash.display {
       };
       var symbol = BitmapSymbol.FromData(data, this._contentLoaderInfo);
       this._imageSymbol = symbol;
-      var resolver: Timeline.IAssetResolver = null; // REDUX: AVM2.instance.globals['Shumway.Player.Utils'];
+      var resolver: Timeline.IAssetResolver = this.securityDomain.player;
       resolver.registerFontOrImage(symbol, data);
       release || assert(symbol.resolveAssetPromise);
       release || assert(symbol.ready === false);

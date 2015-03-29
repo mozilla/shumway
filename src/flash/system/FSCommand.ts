@@ -43,8 +43,7 @@ module Shumway.AVMX.AS.flash.system {
         return;
       }
 
-      var listener: IFSCommandListener = null; // REDUX: Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
-      listener.executeFSCommand(command, args);
+      this.securityDomain.player.executeFSCommand(command, args);
     }
   }
 

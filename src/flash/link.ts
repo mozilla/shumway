@@ -16,6 +16,7 @@
 
 import flashPackage = Shumway.AVMX.AS.flash;
 interface ISecurityDomain {
+  player: Shumway.Player.SWFPlayer;
   ObjectVector: typeof Shumway.AVMX.AS.GenericVector;
   Int32Vector: typeof Shumway.AVMX.AS.Int32Vector;
   Uint32Vector: typeof Shumway.AVMX.AS.Uint32Vector;
@@ -202,7 +203,7 @@ module Shumway.AVMX.AS {
   M("flash.net.Socket", flash.net.Socket);
   M("flash.net.URLVariables", flash.net.URLVariables);
 
-  M("packageInternal flash.system.FSCommand", flash.system.FSCommand);
+  M("flash.system.FSCommand", flash.system.FSCommand);
   M("flash.system.Capabilities", flash.system.Capabilities);
   M("flash.system.Security", flash.system.Security);
   M("flash.system.SecurityDomain", flash.system.SecurityDomain);

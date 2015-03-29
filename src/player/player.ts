@@ -42,6 +42,7 @@ module Shumway.Player {
   import IFSCommandListener = flash.system.IFSCommandListener;
   import IVideoElementService = flash.net.IVideoElementService;
   import IRootElementService = flash.display.IRootElementService;
+
   import MessageTag = Shumway.Remoting.MessageTag;
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
   import VideoPlaybackEvent = Shumway.Remoting.VideoPlaybackEvent;
@@ -149,6 +150,7 @@ module Shumway.Player {
 
     constructor(securityDomain: ISecurityDomain) {
       this.securityDomain = securityDomain;
+      securityDomain.player = this;
       // Freeze in debug builds.
       release || Object.defineProperty(this, 'securityDomain', {value: securityDomain});
       this._keyboardEventDispatcher = new KeyboardEventDispatcher();

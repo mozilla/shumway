@@ -15,3 +15,15 @@
  */
 
 "use strict";
+
+module Shumway.Player {
+  import flash = Shumway.AVMX.AS.flash;
+  import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
+  import IAssetResolver = Timeline.IAssetResolver;
+  import IFSCommandListener = flash.system.IFSCommandListener;
+  import IVideoElementService = flash.net.IVideoElementService;
+  import IRootElementService = flash.display.IRootElementService;
+  export interface SWFPlayer extends IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
+                                     IAssetResolver, IRootElementService {
+  }
+}
