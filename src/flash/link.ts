@@ -57,6 +57,12 @@ interface ISecurityDomain {
       BlurFilter: typeof flashPackage.filters.BlurFilter;
       DropShadowFilter: typeof flashPackage.filters.DropShadowFilter;
       GlowFilter: typeof flashPackage.filters.GlowFilter;
+      BevelFilter: typeof flashPackage.filters.BevelFilter;
+      ColorMatrixFilter: typeof flashPackage.filters.ColorMatrixFilter;
+      ConvolutionFilter: typeof flashPackage.filters.ConvolutionFilter;
+      DisplacementMapFilter: typeof flashPackage.filters.DisplacementMapFilter;
+      GradientBevelFilter: typeof flashPackage.filters.GradientBevelFilter;
+      GradientGlowFilter: typeof flashPackage.filters.GradientGlowFilter;
     };
     text: {
       StaticText: typeof flashPackage.text.StaticText;

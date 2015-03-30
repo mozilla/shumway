@@ -32,7 +32,7 @@ module Shumway.AVMX.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      return new BlurFilter(obj.blurX, obj.blurY, obj.quality);
+      return new this.securityDomain.flash.filters.BlurFilter(obj.blurX, obj.blurY, obj.quality);
     }
 
     constructor (blurX: number = 4, blurY: number = 4, quality: number /*int*/ = 1) {
@@ -84,7 +84,8 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new BlurFilter(this._blurX, this._blurY, this._quality);
+      return new this.securityDomain.flash.filters.BlurFilter(this._blurX, this._blurY,
+                                                              this._quality);
     }
   }
 }

@@ -21,6 +21,8 @@ module Shumway.AVMX.AS.flash.filters {
 
   export class GradientGlowFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof GradientGlowFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
@@ -52,7 +54,7 @@ module Shumway.AVMX.AS.flash.filters {
       }
       // obj.angle is represented in radians, the api needs degrees
       var angle: number = obj.angle * 180 / Math.PI;
-      return new GradientGlowFilter(
+      return new this.securityDomain.flash.filters.GradientGlowFilter(
         obj.distance,
         angle,
         colors,
@@ -224,7 +226,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new GradientGlowFilter(
+      return new this.securityDomain.flash.filters.GradientGlowFilter(
         this._distance,
         this._angle,
         this._colors,

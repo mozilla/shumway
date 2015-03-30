@@ -1126,35 +1126,36 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       if (placeObjectTag.flags & PlaceObjectFlags.HasFilterList) {
-        var filters: flash.filters.BitmapFilter[] = [];
+        var filtersPackage = this.securityDomain.flash.filters;
+        var filters: filters.BitmapFilter[] = [];
         var swfFilters = placeObjectTag.filters;
         for (var i = 0; i < swfFilters.length; i++) {
           var obj = swfFilters[i];
-          var filter: flash.filters.BitmapFilter;
+          var filter: filters.BitmapFilter;
           switch (obj.type) {
             case 0:
-              filter = flash.filters.DropShadowFilter.FromUntyped(obj);
+              filter = filtersPackage.DropShadowFilter.axClass.FromUntyped(obj);
               break;
             case 1:
-              filter = flash.filters.BlurFilter.FromUntyped(obj);
+              filter = filtersPackage.BlurFilter.axClass.FromUntyped(obj);
               break;
             case 2:
-              filter = flash.filters.GlowFilter.FromUntyped(obj);
+              filter = filtersPackage.GlowFilter.axClass.FromUntyped(obj);
               break;
             case 3:
-              filter = flash.filters.BevelFilter.FromUntyped(obj);
+              filter = filtersPackage.BevelFilter.axClass.FromUntyped(obj);
               break;
             case 4:
-              filter = flash.filters.GradientGlowFilter.FromUntyped(obj);
+              filter = filtersPackage.GradientGlowFilter.axClass.FromUntyped(obj);
               break;
             case 5:
-              filter = flash.filters.ConvolutionFilter.FromUntyped(obj);
+              filter = filtersPackage.ConvolutionFilter.axClass.FromUntyped(obj);
               break;
             case 6:
-              filter = flash.filters.ColorMatrixFilter.FromUntyped(obj);
+              filter = filtersPackage.ColorMatrixFilter.axClass.FromUntyped(obj);
               break;
             case 7:
-              filter = flash.filters.GradientBevelFilter.FromUntyped(obj);
+              filter = filtersPackage.GradientBevelFilter.axClass.FromUntyped(obj);
               break;
             default:
               release || assert(filter, "Unknown filter type.");
@@ -1594,27 +1595,31 @@ module Shumway.AVMX.AS.flash.display {
      * outside of this class. The get/set filters accessors always return deep clones of this
      * array.
      */
-    get filters(): flash.filters.BitmapFilter [] {
+    get filters(): ASArray /* flash.filters.BitmapFilter [] */ {
       return this._getFilters();
     }
     _getFilters() {
-      return this._filters ? this._filters.map(function (x: flash.filters.BitmapFilter) {
+      var filters = this._filters ? this._filters.map(function (x: flash.filters.BitmapFilter) {
         return x.clone();
       }) : [];
+      return this.securityDomain.createArray(filters);
     }
 
-    set filters(value: flash.filters.BitmapFilter []) {
+    set filters(value_: ASArray) {
+      var value: flash.filters.BitmapFilter [] = value_.value;
       if (!this._filters) {
         this._filters = [];
       }
       var changed = false;
       if (isNullOrUndefined(value)) {
-        changed = this.filters.length > 0;
+        changed = this._filters.length > 0;
         this._filters.length = 0;
       } else {
         var bitmapFilterClass = this.securityDomain.flash.filters.BitmapFilter;
         this._filters = value.map(function (x: flash.filters.BitmapFilter) {
-          release || assert (bitmapFilterClass.axIsType(x));
+          if (!bitmapFilterClass.axIsType(x)) {
+            this.securityDomain.throwError('TypeError', Errors.ParamTypeError, '0', 'Filter');
+          }
           return x.clone();
         });
         changed = true;
