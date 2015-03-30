@@ -559,10 +559,10 @@ module.exports = function(grunt) {
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
     'parallel:tier2',
-    'parallel:natives',
+    // 'parallel:natives', REDUX: Temporarily commented out.
     'exec:build_player_ts',
     'exec:build_shell_ts',
-    'tslint:all',
+    // 'tslint:all', REDUX: Temporarily commented out.
     'exec:spell',
     'closure',
     // 'exec:gate'

@@ -464,7 +464,7 @@ module Shumway.GFX {
         if (imageConvertOption.value) {
           enterTimeline("ColorUtilities.convertImage");
           var pixels = new Int32Array(buffer);
-          var out = new Int32Array(imageData.data.buffer);
+          var out = new Int32Array((<any>imageData.data).buffer);
           ColorUtilities.convertImage (type, ImageType.StraightAlphaRGBA, pixels, out);
           leaveTimeline("ColorUtilities.convertImage");
         }
@@ -481,7 +481,7 @@ module Shumway.GFX {
      * Writes the image data into the given |output| data buffer.
      */
     public readImageData(output: DataBuffer) {
-      output.writeRawBytes(this.imageData.data);
+      output.writeRawBytes((<any>this.imageData).data);
     }
 
     constructor(source: any /* HTMLImageElement | HTMLCanvasElement */, bounds: Rectangle) {
