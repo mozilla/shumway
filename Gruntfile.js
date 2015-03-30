@@ -23,7 +23,7 @@ module.exports = function(grunt) {
 
   // Don't use `--removeComments` here because it strips out closure annotations that are
   // needed by the build system.
-  var commonArguments = 'tsc --target ES5 --removeComments --sourcemap -d --out build/ts/';
+  var commonArguments = 'node_modules/typescript/bin/tsc --target ES5 --removeComments --sourcemap -d --out build/ts/';
 
   var defaultBrowserManifestFile = './resources/browser_manifests/browser_manifest.json';
   var defaultTestsManifestFile = 'test_manifest.json';
