@@ -292,10 +292,12 @@ module Shumway.AVMX {
       var metadata = methodInfo.getNativeMetadata();
       if (metadata) {
         method = AS.getNative(metadata.getValueAt(0));
+        release || assert(method, "Cannot find native: " + methodTraitInfo);
+        method = createGlobalNative(method, scope.object.securityDomain);
       } else {
         method = AS.getMethodOrAccessorNative(methodTraitInfo);
+        release || assert(method, "Cannot find native: " + methodTraitInfo);
       }
-      release || assert(method, "Cannot find native: " + methodTraitInfo);
     } else {
       method = function () {
         var self = this === jsGlobal ? scope.global.object : this;
@@ -309,6 +311,13 @@ module Shumway.AVMX {
     }
     methodTraitInfo.method = method;
     return method;
+  }
+
+  function createGlobalNative(native: Function, securityDomain: SecurityDomain) {
+    var args: any[] = [securityDomain];
+    return function() {
+      return native.apply(this, args.concat(arguments));
+    }
   }
 
   export class TraitInfo {
@@ -998,9 +1007,21 @@ module Shumway.AVMX {
       return undefined;
     }
 
-    public static getMangledName(name: Multiname): any {
-      release || assert(name instanceof Multiname);
-      return name.getMangledName();
+    public static FromSimpleName(simpleName: string): Multiname {
+      var nameIndex = simpleName.lastIndexOf(".");
+      if (nameIndex <= 0) {
+        nameIndex = simpleName.lastIndexOf(" ");
+      }
+
+      var uri = '';
+      if (nameIndex > 0 && nameIndex < simpleName.length - 1) {
+        name = simpleName.substring(nameIndex + 1).trim();
+        uri = simpleName.substring(0, nameIndex).trim();
+      } else {
+        name = simpleName;
+      }
+      var ns = new Namespace(null, NamespaceType.Public, uri);
+      return new Multiname(null, 0, CONSTANT.RTQName, [ns], name);
     }
   }
 

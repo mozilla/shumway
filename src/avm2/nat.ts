@@ -103,15 +103,15 @@ module Shumway.AVMX.AS {
    */
   export function getNative(path: string): Function {
     var chain = path.split(".");
-    var v = Natives;
+    var v: any = Natives;
     for (var i = 0, j = chain.length; i < j; i++) {
       v = v && v[chain[i]];
     }
     if (!v) {
-      v = <any>nativeFunctions[path];
+      v = nativeFunctions[path];
     }
     release || assert(v, "getNative(" + path + ") not found.");
-    return <any>v;
+    return v;
   }
 
   var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [], null);
@@ -1507,10 +1507,59 @@ module Shumway.AVMX.AS {
     nativeClassLoaderNames.push({name: name, alias: alias, nsType: nsType});
   }
 
+  export function registerNativeFunction(path: string, fun: Function) {
+    release || assert (!nativeFunctions[path], "Native function: " + path + " is already registered.");
+    nativeFunctions[path] = fun;
+  }
+
   registerNativeClass("__AS3__.vec.Vector$object", GenericVector, 'ObjectVector', NamespaceType.PackageInternal);
   registerNativeClass("__AS3__.vec.Vector$int", Int32Vector, 'Int32Vector', NamespaceType.PackageInternal);
   registerNativeClass("__AS3__.vec.Vector$uint", Uint32Vector, 'Uint32Vector', NamespaceType.PackageInternal);
   registerNativeClass("__AS3__.vec.Vector$double", Float64Vector, 'Float64Vector', NamespaceType.PackageInternal);
+
+  function FlashNetScript_getDefinitionByName(securityDomain: SecurityDomain,
+                                              name: string): ASClass {
+    var simpleName = String(name).replace("::", ".");
+    return <any>securityDomain.application.getClass(Multiname.FromSimpleName(simpleName));
+  }
+
+  function FlashNetScript_getTimer(securityDomain: SecurityDomain) {
+    return Date.now() - (<any>securityDomain).flash.display.Loader.axClass.runtimeStartTime;
+  }
+
+  function FlashNetScript_navigateToURL(securityDomain: SecurityDomain, request, window_) {
+    if (request === null || request === undefined) {
+      securityDomain.throwError('TypeError', Errors.NullPointerError, 'request');
+    }
+    var RequestClass = (<any>securityDomain).flash.net.URLRequest.axClass;
+    if (!RequestClass.isInstanceOf(request)) {
+      securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, request,
+                                'flash.net.URLRequest');
+    }
+    var url = request.url;
+    if (isNullOrUndefined(url)) {
+      securityDomain.throwError('TypeError', Errors.NullPointerError, 'url');
+    }
+    if (url.indexOf('fscommand:') === 0) {
+      var fscommand = (<any>securityDomain).flash.system.fscommand;
+      fscommand.axCall(null, url.substring('fscommand:'.length), window_);
+      return;
+    }
+    // TODO handle other methods than GET
+    FileLoadingService.instance.navigateTo(url, window_);
+  }
+
+  registerNativeFunction('FlashUtilScript::getDefinitionByName',
+                         FlashNetScript_getDefinitionByName);
+
+  registerNativeFunction('FlashUtilScript::getTimer', FlashNetScript_getTimer);
+
+  registerNativeFunction('FlashUtilScript::navigateToURL', FlashNetScript_navigateToURL);
+
+  declare var escape;
+  declare var unescape;
+  registerNativeFunction('FlashUtilScript::escapeMultiByte', escape);
+  registerNativeFunction('FlashUtilScript::unescapeMultiByte', unescape);
 
   export function getNativesForTrait(trait: TraitInfo): Object [] {
     var className = null;
@@ -1633,7 +1682,7 @@ module Shumway.AVMX.AS {
         return;
       }
       var name = trait.getName().name;
-      var qn = Multiname.getMangledName(trait.getName());
+      var qn = trait.getName().getMangledName();
       if (trait.isSlot()) {
         Object.defineProperty(object, name, {
           get: <() => any>new Function("", "return this." + qn +
