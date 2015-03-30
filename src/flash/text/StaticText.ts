@@ -25,12 +25,15 @@ module Shumway.AVMX.AS.flash.text {
     _symbol: TextSymbol;
     applySymbol() {
       release || assert(this._symbol);
+      this._initializeFields();
       this._setStaticContentFromSymbol(this._symbol);
     }
 
     constructor () {
       super();
-      release || assert(!this._symbol);
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
     }
 
     _canHaveTextContent(): boolean {

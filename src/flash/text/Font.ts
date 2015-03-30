@@ -40,19 +40,19 @@ module Shumway.AVMX.AS.flash.text {
     static DEFAULT_FONT_TYPEWRITER = 'Courier New';
 
     static classInitializer: any = function () {
-      Font._fonts = [];
-      Font._fontsBySymbolId = Shumway.ObjectUtilities.createMap<Font>();
-      Font._fontsByName = Shumway.ObjectUtilities.createMap<Font>();
+      this._fonts = [];
+      this._fontsBySymbolId = Shumway.ObjectUtilities.createMap<Font>();
+      this._fontsByName = Shumway.ObjectUtilities.createMap<Font>();
 
-      Font.DEVICE_FONT_METRICS_BUILTIN = {
+      this.DEVICE_FONT_METRICS_BUILTIN = {
         "_sans": [0.9, 0.22, 0.08],
         "_serif": [0.88, 0.26, 0.08],
         "_typewriter": [0.86, 0.24, 0.08]
       };
 
       // Measurements taken on a freshly installed Windows 7 (Ultimate).
-      Font.DEVICE_FONT_METRICS_WIN = {
-        __proto__: Font.DEVICE_FONT_METRICS_BUILTIN,
+      this.DEVICE_FONT_METRICS_WIN = {
+        __proto__: this.DEVICE_FONT_METRICS_BUILTIN,
         "Arial": [1, 0.25, 0],
         "Arial Baltic": [1, 0.25, 0],
         "Arial Black": [1.0833, 0.3333, 0],
@@ -98,8 +98,8 @@ module Shumway.AVMX.AS.flash.text {
         "Wingdings": [0.9167, 0.25, 0]
       };
       // Measurements taken on a freshly installed Mac OS X 10.10 (Yosemite).
-      Font.DEVICE_FONT_METRICS_MAC = {
-        __proto__: Font.DEVICE_FONT_METRICS_BUILTIN,
+      this.DEVICE_FONT_METRICS_MAC = {
+        __proto__: this.DEVICE_FONT_METRICS_BUILTIN,
         "Al Bayan Bold": [1, 0.5833, 0],
         "Al Bayan Plain": [1, 0.5, 0],
         "Al Nile": [0.8333, 0.5, 0],
@@ -642,8 +642,8 @@ module Shumway.AVMX.AS.flash.text {
         "Zapfino": [1.9167, 1.5, 0]
       };
       // Measurements taken on a freshly installed Ubuntu Linux 12.04.5 (Precise Pangolin).
-      Font.DEVICE_FONT_METRICS_LINUX = {
-        __proto__: Font.DEVICE_FONT_METRICS_BUILTIN,
+      this.DEVICE_FONT_METRICS_LINUX = {
+        __proto__: this.DEVICE_FONT_METRICS_BUILTIN,
         "KacstFarsi": [1.0417, 0.5208, 0],
         "Meera": [0.651, 0.4557, 0],
         "FreeMono": [0.7812, 0.1953, 0],
@@ -733,20 +733,20 @@ module Shumway.AVMX.AS.flash.text {
 
       var userAgent = self.navigator.userAgent;
       if (userAgent.indexOf("Windows") > -1) {
-        Font._deviceFontMetrics = Font.DEVICE_FONT_METRICS_WIN;
+        this._deviceFontMetrics = this.DEVICE_FONT_METRICS_WIN;
       } else if (/(Macintosh|iPad|iPhone|iPod|Android)/.test(userAgent)) {
-        Font._deviceFontMetrics = this.DEVICE_FONT_METRICS_MAC;
-        Font.DEFAULT_FONT_SANS = 'Helvetica';
-        Font.DEFAULT_FONT_SERIF = 'Times Roman';
-        Font.DEFAULT_FONT_TYPEWRITER = 'Courier';
+        this._deviceFontMetrics = this.DEVICE_FONT_METRICS_MAC;
+        this.DEFAULT_FONT_SANS = 'Helvetica';
+        this.DEFAULT_FONT_SERIF = 'Times Roman';
+        this.DEFAULT_FONT_TYPEWRITER = 'Courier';
       } else {
-        Font._deviceFontMetrics = this.DEVICE_FONT_METRICS_LINUX;
-        Font.DEFAULT_FONT_SANS = 'Sans';
-        Font.DEFAULT_FONT_SERIF = 'Times';
-        Font.DEFAULT_FONT_TYPEWRITER = 'Monospace';
+        this._deviceFontMetrics = this.DEVICE_FONT_METRICS_LINUX;
+        this.DEFAULT_FONT_SANS = 'Sans';
+        this.DEFAULT_FONT_SERIF = 'Times';
+        this.DEFAULT_FONT_TYPEWRITER = 'Monospace';
       }
 
-      var metrics = Font._deviceFontMetrics;
+      var metrics = this._deviceFontMetrics;
       for (var fontName in metrics) {
         metrics[fontName.toLowerCase()] = metrics[fontName];
       }
@@ -776,11 +776,11 @@ module Shumway.AVMX.AS.flash.text {
 
     static resolveFontName(name: string) {
       if (name === '_sans') {
-        return Font.DEFAULT_FONT_SANS;
+        return this.DEFAULT_FONT_SANS;
       } else if (name === '_serif') {
-        return Font.DEFAULT_FONT_SERIF;
+        return this.DEFAULT_FONT_SERIF;
       } else if (name === '_typewriter') {
-        return Font.DEFAULT_FONT_TYPEWRITER;
+        return this.DEFAULT_FONT_TYPEWRITER;
       }
       return name;
     }
@@ -794,6 +794,7 @@ module Shumway.AVMX.AS.flash.text {
 
       this._id = symbol.syncId;
       this._fontName = symbol.name;
+      var Font = this.securityDomain.flash.text.Font.axClass;
       this._fontFamily = Font.resolveFontName(symbol.name);
       if (symbol.bold) {
         if (symbol.italic) {
@@ -859,20 +860,20 @@ module Shumway.AVMX.AS.flash.text {
       }
 
       if (!font) {
-        var font = new Font();
+        var font = new this.securityDomain.flash.text.Font();
         font._fontName = names[0];
-        font._fontFamily = Font.resolveFontName(names[0].toLowerCase());
+        font._fontFamily = this.resolveFontName(names[0].toLowerCase());
         font._fontStyle = style;
         font._fontType = FontType.DEVICE;
         this._fontsByName[key] = font;
       }
       if (font._fontType === FontType.DEVICE) {
-        var metrics = Font._getFontMetrics(font._fontName, font._fontStyle);
+        var metrics = this._getFontMetrics(font._fontName, font._fontStyle);
         if (!metrics) {
           Shumway.Debug.warning(
             'Font metrics for "' + font._fontName + '" unknown. Fallback to default.');
-          metrics = Font._getFontMetrics(Font.DEFAULT_FONT_SANS, font._fontStyle);
-          font._fontFamily = Font.DEFAULT_FONT_SANS;
+          metrics = this._getFontMetrics(this.DEFAULT_FONT_SANS, font._fontStyle);
+          font._fontFamily = this.DEFAULT_FONT_SANS;
         }
         font.ascent = metrics[0];
         font.descent = metrics[1];
@@ -882,7 +883,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     static getDefaultFont(): Font {
-      return Font.getByNameAndStyle(Font.DEFAULT_FONT_SANS, FontStyle.REGULAR);
+      return this.getByNameAndStyle(this.DEFAULT_FONT_SANS, FontStyle.REGULAR);
     }
 
     // JS -> AS Bindings
@@ -921,23 +922,23 @@ module Shumway.AVMX.AS.flash.text {
      */
     static registerEmbeddedFont(fontMapping: {name: string; style: string; id: number},
                                 loaderInfo: flash.display.LoaderInfo): void {
-      var syncId = flash.display.DisplayObject.getNextSyncID();
+      var syncId = this.securityDomain.flash.display.DisplayObject.axClass.getNextSyncID();
       var resolverProp = {
-        get: Font.resolveEmbeddedFont.bind(Font, loaderInfo, fontMapping.id, syncId),
+        get: this.resolveEmbeddedFont.bind(Font, loaderInfo, fontMapping.id, syncId),
         configurable: true
       };
-      Object.defineProperty(Font._fontsByName, fontMapping.name.toLowerCase() + fontMapping.style,
+      Object.defineProperty(this._fontsByName, fontMapping.name.toLowerCase() + fontMapping.style,
                             resolverProp);
-      Object.defineProperty(Font._fontsByName, 'swffont' + syncId + fontMapping.style,
+      Object.defineProperty(this._fontsByName, 'swffont' + syncId + fontMapping.style,
                             resolverProp);
-      Object.defineProperty(Font._fontsBySymbolId, syncId + '', resolverProp);
+      Object.defineProperty(this._fontsBySymbolId, syncId + '', resolverProp);
     }
 
     static resolveEmbeddedFont(loaderInfo: flash.display.LoaderInfo, id: number, syncId: number) {
       // Force font resolution and installation in _fontsByName and _fontsBySymbolId.
       var symbol = <FontSymbol>loaderInfo.getSymbolById(id);
       symbol.syncId = syncId;
-      return Font._fontsBySymbolId[id];
+      return this._fontsBySymbolId[id];
     }
 
     get fontName(): string {

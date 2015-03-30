@@ -25,5 +25,6 @@ module Shumway.Player {
   import IRootElementService = flash.display.IRootElementService;
   export interface SWFPlayer extends IBitmapDataSerializer, IFSCommandListener, IVideoElementService,
                                      IAssetResolver, IRootElementService {
+    syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean);
   }
 }
