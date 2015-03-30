@@ -209,7 +209,7 @@ module.exports = function(grunt) {
           grunt: true
         },
         tasks: [
-          'exec:build_avm1_ts',
+          // 'exec:build_avm1_ts', // REDUX: Temporarily disabled.
           'exec:build_flash_ts'
         ]
       },
@@ -562,7 +562,7 @@ module.exports = function(grunt) {
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
     'parallel:tier2',
-    // 'parallel:natives', REDUX: Temporarily commented out.
+    'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
     // 'tslint:all', REDUX: Temporarily commented out.
