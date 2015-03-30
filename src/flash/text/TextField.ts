@@ -128,7 +128,7 @@ module Shumway.AVMX.AS.flash.text {
         '',
         TextFormatAlign.LEFT
       );
-      this._textContent = new Shumway.TextContent(defaultTextFormat);
+      this._textContent = new Shumway.TextContent(this.securityDomain, defaultTextFormat);
     }
 
     _setFillAndLineBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {
@@ -616,8 +616,7 @@ module Shumway.AVMX.AS.flash.text {
       if (!this._hasFlags(DisplayObjectFlags.DirtyTextContent)) {
         return;
       }
-      var serializer = null; // REDUX:
-                             // Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      var serializer = this.securityDomain.player;
       var lineMetricsData = serializer.syncDisplayObject(this, false);
       var textWidth = lineMetricsData.readInt();
       var textHeight = lineMetricsData.readInt();
@@ -668,7 +667,8 @@ module Shumway.AVMX.AS.flash.text {
       charIndex = charIndex | 0;
       somewhatImplemented("public flash.text.TextField::getCharBoundaries");
       var fakeCharHeight = this.textHeight, fakeCharWidth = fakeCharHeight * 0.75;
-      return new flash.geom.Rectangle(charIndex * fakeCharWidth, 0, fakeCharWidth, fakeCharHeight);
+      return new this.securityDomain.flash.geom.Rectangle(charIndex * fakeCharWidth, 0,
+                                                          fakeCharWidth, fakeCharHeight);
     }
     getCharIndexAtPoint(x: number, y: number): number /*int*/ {
       x = +x; y = +y;
@@ -707,7 +707,8 @@ module Shumway.AVMX.AS.flash.text {
       var descent = lineMetricsData.readInt();
       var leading = lineMetricsData.readInt();
       var height = ascent + descent + leading;
-      return new TextLineMetrics(x, width, height, ascent, descent, leading);
+      return new this.securityDomain.flash.text.TextLineMetrics(x, width, height, ascent, descent,
+                                                                leading);
     }
 
     getLineOffset(lineIndex: number /*int*/): number /*int*/ {
@@ -857,18 +858,18 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     static FromTextData(data: any, loaderInfo: flash.display.LoaderInfo): TextSymbol {
-      var symbol = new TextSymbol(data, loaderInfo.securityDomain);
+      var securityDomain = loaderInfo.securityDomain;
+      var symbol = new TextSymbol(data, securityDomain);
       symbol._setBoundsFromData(data);
       var tag = data.tag;
       if (data.static) {
         symbol.dynamic = false;
-        symbol.symbolClass = loaderInfo.securityDomain.flash.text.StaticText.axClass;
+        symbol.symbolClass = securityDomain.flash.text.StaticText.axClass;
         if (tag.initialText) {
-          var textContent = new Shumway.TextContent();
+          var textContent = new Shumway.TextContent(securityDomain);
           textContent.bounds = symbol.lineBounds;
           textContent.parseHtml(tag.initialText, null, false);
-          var matrix = new flash.geom.Matrix();
-          textContent.matrix = new loaderInfo.securityDomain.flash.geom.Matrix();
+          textContent.matrix = new securityDomain.flash.geom.Matrix();
           textContent.matrix.copyFromUntyped(data.matrix);
           textContent.coords = data.coords;
           symbol.textContent = textContent;

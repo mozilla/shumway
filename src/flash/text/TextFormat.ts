@@ -272,7 +272,7 @@ module Shumway.AVMX.AS.flash.text {
     }
 
     clone(): TextFormat {
-      return new flash.text.TextFormat(
+      return new this.securityDomain.flash.text.TextFormat(
         this.font,
         this.size,
         this.color,

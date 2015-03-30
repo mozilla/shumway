@@ -543,7 +543,8 @@ module Shumway.AVMX.AS.flash.display {
         var fontsLoadedDelta = fontsLoaded - loaderInfo._fontsLoaded;
         if (fontsLoadedDelta > 0) {
           for (var i = loaderInfo._fontsLoaded; i < fontsLoaded; i++) {
-            flash.text.Font.registerEmbeddedFont(file.fonts[i], loaderInfo);
+            this.securityDomain.flash.text.Font.axClass.registerEmbeddedFont(file.fonts[i],
+                                                                             loaderInfo);
           }
           loaderInfo._fontsLoaded = fontsLoaded;
         }

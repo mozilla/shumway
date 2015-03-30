@@ -185,33 +185,35 @@ module Shumway.Remoting.Player {
     }
 
     writeTextContent(textContent: Shumway.TextContent) {
-      if (textContent.flags & Shumway.TextContentFlags.Dirty) {
-        writer && writer.writeLn("Sending TextContent: " + textContent._id);
-        this.output.writeInt(MessageTag.UpdateTextContent);
-        this.output.writeInt(textContent._id);
-        this.output.writeInt(-1);
-        this._writeRectangle(textContent.bounds);
-        this._writeMatrix(textContent.matrix || flash.geom.Matrix.FROZEN_IDENTITY_MATRIX);
-        this.output.writeInt(textContent.backgroundColor);
-        this.output.writeInt(textContent.borderColor);
-        this.output.writeInt(textContent.autoSize);
-        this.output.writeBoolean(textContent.wordWrap);
-        this.output.writeInt(textContent.scrollV);
-        this.output.writeInt(textContent.scrollH);
-        this._writeAsset(textContent.plainText);
-        this._writeAsset(textContent.textRunData.toPlainObject());
-        var coords = textContent.coords;
-        if (coords) {
-          var numCoords = coords.length;
-          this.output.writeInt(numCoords);
-          for (var i = 0; i < numCoords; i++) {
-            this.output.writeInt(coords[i]);
-          }
-        } else {
-          this.output.writeInt(0);
-        }
-        textContent.flags &= ~Shumway.TextContentFlags.Dirty
+      if (!(textContent.flags & Shumway.TextContentFlags.Dirty)) {
+        return;
       }
+      writer && writer.writeLn("Sending TextContent: " + textContent._id);
+      this.output.writeInt(MessageTag.UpdateTextContent);
+      this.output.writeInt(textContent._id);
+      this.output.writeInt(-1);
+      this._writeRectangle(textContent.bounds);
+      var identity = textContent._securityDomain.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
+      this._writeMatrix(textContent.matrix || identity);
+      this.output.writeInt(textContent.backgroundColor);
+      this.output.writeInt(textContent.borderColor);
+      this.output.writeInt(textContent.autoSize);
+      this.output.writeBoolean(textContent.wordWrap);
+      this.output.writeInt(textContent.scrollV);
+      this.output.writeInt(textContent.scrollH);
+      this._writeAsset(textContent.plainText);
+      this._writeAsset(textContent.textRunData.toPlainObject());
+      var coords = textContent.coords;
+      if (coords) {
+        var numCoords = coords.length;
+        this.output.writeInt(numCoords);
+        for (var i = 0; i < numCoords; i++) {
+          this.output.writeInt(coords[i]);
+        }
+      } else {
+        this.output.writeInt(0);
+      }
+      textContent.flags &= ~Shumway.TextContentFlags.Dirty
     }
 
     /**

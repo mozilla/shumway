@@ -299,10 +299,11 @@ module Shumway.Player {
     }
 
     private _pumpDisplayListUpdates(): void {
-      this.syncDisplayObject(this._stage);
+      this.syncDisplayObject(this._stage, true);
     }
 
-    public syncDisplayObject(displayObject: flash.display.DisplayObject, async: boolean = true): DataBuffer {
+    public syncDisplayObject(displayObject: flash.display.DisplayObject,
+                             async: boolean): DataBuffer {
       var updates = new DataBuffer();
       var assets = [];
       var serializer = new Remoting.Player.PlayerChannelSerializer();
