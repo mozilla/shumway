@@ -184,6 +184,9 @@ module.exports = function(grunt) {
           console.info("Instrumenting " + path + " (" + targetPath + "), this may take a while if the file is large.");
           return 'swfmill swf2xml ' + path + ' | xsltproc utils/instrument-swf.xslt - | swfmill xml2swf stdin ' + targetPath;
         }
+      },
+      install_js_travis: {
+        cmd: "make -C utils/ install-js"
       }
     },
     parallel: {
@@ -556,6 +559,7 @@ module.exports = function(grunt) {
     'exec:gate'
   ]);
   grunt.registerTask('travis', [
+    'exec:install_js_travis',
     // 'parallel:base',
     'generate-version',
     'exec:build_base_ts',
