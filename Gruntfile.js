@@ -21,9 +21,8 @@ module.exports = function(grunt) {
       grunt.option("color", false);
   }
 
-  // Don't use `--removeComments` here because it strips out closure annotations that are
-  // needed by the build system.
-  var commonArguments = 'node_modules/typescript/bin/tsc --target ES5 --removeComments --sourcemap -d --out build/ts/';
+  var tscCommand = 'node_modules/typescript/bin/tsc';
+  var commonArguments = tscCommand + ' --target ES5 --removeComments --sourcemap -d --out build/ts/';
 
   var defaultBrowserManifestFile = './resources/browser_manifests/browser_manifest.json';
   var defaultTestsManifestFile = 'test_manifest.json';
@@ -94,7 +93,7 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'player.js src/player/references.ts'
       },
       build_shell_ts: {
-        cmd: 'tsc --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
+        cmd: tscCommand + ' --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',
