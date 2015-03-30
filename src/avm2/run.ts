@@ -1072,6 +1072,17 @@ module Shumway.AVMX {
       return this.AXMethodClosure.Create(receiver, method);
     }
 
+    isCallable(value): boolean {
+      if (typeof value === 'function') {
+        return true;
+      }
+      if (typeof value !== 'object' || !AXBasePrototype.isPrototypeOf(value)) {
+        return false;
+      }
+      // The value might not come from this securityDomain, but still be a callable from another.
+      return value.securityDomain.AXFunction.dPrototype.isPrototypeOf(value);
+    }
+
     createQName(namespace: any, localName: any): AS.ASQName {
       return this.AXQName.Create(namespace, localName);
     }
@@ -1236,7 +1247,9 @@ module Shumway.AVMX {
       } else {
         var instancePrototype = isPrimitiveClass ?
                                 this.AXPrimitiveBox.dPrototype :
-                                this.objectPrototype;
+                                name === 'MethodClosure' ?
+                                  this.AXFunction.dPrototype :
+                                  this.objectPrototype;
         axClass.dPrototype = Object.create(instancePrototype);
         axClass.tPrototype = Object.create(axClass.dPrototype);
       }

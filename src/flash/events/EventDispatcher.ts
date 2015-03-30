@@ -16,7 +16,6 @@
 // Class: EventDispatcher
 module Shumway.AVMX.AS.flash.events {
   import asCoerceString = Shumway.AVMX.asCoerceString;
-  import isFunction = Shumway.isFunction;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import assert = Shumway.Debug.assert;
 
@@ -274,7 +273,7 @@ module Shumway.AVMX.AS.flash.events {
                                        arguments.length);
       }
       // The type of `listener` is checked before that of `type`.
-      if (!isFunction(listener)) {
+      if (!this.securityDomain.isCallable(listener)) {
         // TODO: The Player unevals the `listener`. To some extend, we could, too.
         this.securityDomain.throwError("TypeError", Errors.CheckTypeFailedError, listener,
                                        "Function");
@@ -305,7 +304,7 @@ module Shumway.AVMX.AS.flash.events {
                                        arguments.length);
       }
       // The type of `listener` is checked before that of `type`.
-      if (!isFunction(listener)) {
+      if (!this.securityDomain.isCallable(listener)) {
         // TODO: The Player unevals the `listener`. To some extend, we could, too.
         this.securityDomain.throwError("TypeError", Errors.CheckTypeFailedError, listener,
                                        "Function");

@@ -248,7 +248,7 @@ module Shumway.AVMX.AS {
     some(callback, thisObject) {
       if (arguments.length !== 2) {
         this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError);
-      } else if (!isFunction(callback)) {
+      } else if (!this.securityDomain.isCallable(callback)) {
         this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       for (var i = 0; i < this._length; i++) {
@@ -327,7 +327,7 @@ module Shumway.AVMX.AS {
     }
 
     map(callback, thisObject) {
-      if (!isFunction(callback)) {
+      if (!this.securityDomain.isCallable(callback)) {
         this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       var v = new Int32Vector();
