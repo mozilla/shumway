@@ -64,9 +64,9 @@ module Shumway.AVMX.AS.flash.text {
       styleName = asCoerceString(styleName);
       var style = this._rules[styleName.toLowerCase()];
       if (!style) {
-        return {}; // note that documentation is lying about `null`;
+        return this.securityDomain.createObject(); // note that documentation is lying about `null`;
       }
-      return ASJSON.transformJSValueToAS(style, false);
+      return ASJSON.transformJSValueToAS(this.securityDomain, style, false);
     }
 
     applyStyle(textFormat: TextFormat, styleName: string): TextFormat {
@@ -83,7 +83,8 @@ module Shumway.AVMX.AS.flash.text {
         return;
       }
       styleName = asCoerceString(styleName);
-      this._rules[styleName.toLowerCase()] = ASJSON.transformASValueToJS(styleObject, false);
+      this._rules[styleName.toLowerCase()] = ASJSON.transformASValueToJS(this.securityDomain,
+                                                                         styleObject, false);
     }
 
     hasStyle(styleName: string): boolean {
@@ -98,8 +99,8 @@ module Shumway.AVMX.AS.flash.text {
       if (typeof formatObject !== 'object') {
         return null;
       }
-      formatObject = ASJSON.transformASValueToJS(formatObject, false);
-      var textFormat = new TextFormat();
+      formatObject = ASJSON.transformASValueToJS(this.securityDomain, formatObject, false);
+      var textFormat = new this.securityDomain.flash.text.TextFormat();
       textFormat.transform(formatObject);
       return textFormat;
     }

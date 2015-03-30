@@ -1381,54 +1381,71 @@ module Shumway.AVMX.AS {
     /**
      * Transforms a JS value into an AS value.
      */
-    static transformJSValueToAS(value, deep: boolean) {
-      // REDUX:
-      //if (typeof value !== "object") {
-      //  return value;
-      //}
-      //if (isNullOrUndefined(value)) {
-      //  return value;
-      //}
-      //var keys = Object.keys(value);
-      //var result = Array.isArray(value) ? [] : {};
-      //for (var i = 0; i < keys.length; i++) {
-      //  var v = value[keys[i]];
-      //  if (deep) {
-      //    v = ASJSON.transformJSValueToAS(v, true);
-      //  }
-      //  result.axSetPublicProperty(keys[i], v);
-      //}
-      //return result;
-      return null;
+    static transformJSValueToAS(securityDomain: SecurityDomain, value, deep: boolean) {
+      release || assert(typeof value !== 'function');
+      if (typeof value !== "object") {
+        return value;
+      }
+      if (isNullOrUndefined(value)) {
+        return value;
+      }
+      if (Array.isArray(value)) {
+        var list = [];
+        for (var i = 0; i < value.length; i++) {
+          var entry = value[i];
+          var axValue = deep ? ASJSON.transformJSValueToAS(securityDomain, entry, true) : entry;
+          list.push(axValue);
+        }
+        return securityDomain.createArray(list);
+      }
+      var keys = Object.keys(value);
+      var result = securityDomain.createObject();
+      for (var i = 0; i < keys.length; i++) {
+        var v = value[keys[i]];
+        if (deep) {
+          v = ASJSON.transformJSValueToAS(securityDomain, v, true);
+        }
+        result.axSetPublicProperty(keys[i], v);
+      }
+      return result;
     }
 
     /**
      * Transforms an AS value into a JS value.
      */
-    static transformASValueToJS(value, deep: boolean) {
-      // REDUX
-      //if (typeof value !== "object") {
-      //  return value;
-      //}
-      //if (isNullOrUndefined(value)) {
-      //  return value;
-      //}
-      //var keys = Object.keys(value);
-      //var result = Array.isArray(value) ? [] : {};
-      //for (var i = 0; i < keys.length; i++) {
-      //  var key = keys[i];
-      //  var jsKey = key;
-      //  if (!isNumeric(key)) {
-      //    jsKey = Multiname.getNameFromPublicQualifiedName(key);
-      //  }
-      //  var v = value[key];
-      //  if (deep) {
-      //    v = ASJSON.transformASValueToJS(v, true);
-      //  }
-      //  result[jsKey] = v;
-      //}
-      //return result;
-      return null;
+    static transformASValueToJS(securityDomain: SecurityDomain, value, deep: boolean) {
+      if (typeof value !== "object") {
+        return value;
+      }
+      if (isNullOrUndefined(value)) {
+        return value;
+      }
+      if (securityDomain.AXArray.axIsType(value)) {
+        var resultList = [];
+        var list = value.value;
+        for (var i = 0; i < list.length; i++) {
+          var entry = list[i];
+          var jsValue = deep ? ASJSON.transformASValueToJS(securityDomain, entry, true) : entry;
+          resultList.push(jsValue);
+        }
+        return resultList;
+      }
+      var keys = Object.keys(value);
+      var resultObject = {};
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var jsKey = key;
+        if (!isNumeric(key)) {
+          release || assert(key.indexOf('$Bg') === 0);
+          jsKey = key.substr(3);
+        }
+        var v = value[key];
+        if (deep) {
+          v = ASJSON.transformASValueToJS(securityDomain, v, true);
+        }
+        resultObject[jsKey] = v;
+      }
+      return resultObject;
     }
 
     private static parseCore(text: string): Object {
