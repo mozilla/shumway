@@ -1922,23 +1922,24 @@ module Shumway.AVMX {
   }
 
   export class ABCCatalog {
-    map: Shumway.Map<string>;
+    map: Shumway.Map<Shumway.Map<string>>;
     abcs: Uint8Array;
     scripts: Shumway.Map<any>;
     constructor(abcs: Uint8Array, index: any) {
-      this.map = ObjectUtilities.createMap<string>();
+      this.map = ObjectUtilities.createMap<Shumway.Map<string>>();
       this.abcs = abcs;
       this.scripts = ObjectUtilities.createMap<string>();
       for (var i = 0; i < index.length; i++) {
         var abc = index[i];
         this.scripts[abc.name] = abc;
-        if (typeof abc.defs === 'string') {
-          this.map[abc.defs] = abc.name;
-        } else {
-          for (var j = 0; j < abc.defs.length; j++) {
-            var def = abc.defs[j];
-            this.map[def] = abc.name;
+        release || assert(Array.isArray(abc.defs));
+        for (var j = 0; j < abc.defs.length; j++) {
+          var def = abc.defs[j].split(':');
+          var nameMappings = this.map[def[1]];
+          if (!nameMappings) {
+            nameMappings = this.map[def[1]] = Object.create(null);
           }
+          nameMappings[def[0]] = abc.name;
         }
       }
     }
@@ -1951,18 +1952,20 @@ module Shumway.AVMX {
       return new ABCFile(this.abcs.subarray(entry.offset, entry.offset + entry.length), scriptName);
     }
 
-    getABCByDefinition(definitionName: string): ABCFile {
-      var scriptName = this.map[definitionName];
-      if (!scriptName) {
+    getABCByMultiname(mn: Multiname): ABCFile {
+      var mappings = this.map[mn.name];
+      if (!mappings) {
         return null;
       }
-      return this.getABCByScriptName(scriptName);
-    }
-
-    getABCByMultiname(mn: Multiname): ABCFile {
-      release || assert (mn.namespaces.length === 1);
-      var definitionName = mn.namespaces[0].uri + ":" + mn.name;
-      return this.getABCByDefinition(definitionName);
+      var namespaces = mn.namespaces;
+      for (var i = 0; i < namespaces.length; i++) {
+        var ns = namespaces[i];
+        var scriptName = mappings[ns.uri];
+        if (scriptName) {
+          return this.getABCByScriptName(scriptName);
+        }
+      }
+      return null;
     }
   }
 }
