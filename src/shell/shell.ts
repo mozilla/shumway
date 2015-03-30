@@ -143,6 +143,9 @@ module Shumway.Shell {
     onFrameProcessed() {
       // console.log('Frame');
     }
+    registerFontOrImageImpl(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
+      Debug.somewhatImplemented("ShellPlayer::registerFontOrImageImpl");
+    }
   }
 
   var verbose = false;
@@ -337,8 +340,8 @@ module Shumway.Shell {
       // flash.display.DisplayObject.reset();
       // flash.display.MovieClip.reset();
       var securityDomain = createSecurityDomain(builtinABCPath, null, null);
-      //var player = new ShellPlayer(securityDomain, null);
-      //player.load(file);
+      var player = new ShellPlayer(securityDomain);
+      player.load(file);
     }
     var asyncLoading = true;
     if (asyncLoading) {
