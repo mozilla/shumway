@@ -395,7 +395,10 @@ ShumwayStreamConverterBase.prototype = {
     baseUrl = pageUrl;
     if (objectParams.base) {
       try {
+        // Verifying base URL, passed in object parameters. It shall be okay to
+        // ignore bad/corrupted base.
         var parsedPageUrl = Services.io.newURI(pageUrl);
+        // ... it can specified as a relative URL.
         baseUrl = Services.io.newURI(objectParams.base, null, parsedPageUrl).spec;
       } catch (e) { /* ignore */ }
     }
@@ -554,7 +557,7 @@ function setupSimpleExternalInterface(embedTag) {
       case '$version':
         return 'SHUMWAY 10,0,0';
       default:
-        log('GetVariable: ' + variable);
+        log('Not supported GetVariable() call: ' + variable);
         return undefined;
     }
   }, embedTag.wrappedJSObject, {defineAs: 'GetVariable'});
