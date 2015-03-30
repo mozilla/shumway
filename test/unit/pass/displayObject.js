@@ -342,12 +342,12 @@ function displayTests() {
     neq(o.filters, a);
     neq(o.filters, o.filters);
     var D = new flash.filters.DropShadowFilter ();
-    o.filters = [D];
+    o.filters = securityDomain.createArray([D]);
     D.distance = 10;
-    eq(o.filters[0].distance, 4);
-    o.filters[0].distance = 19;
-    eq(o.filters[0].distance, 4);
-    neq(o.filters[0], o.filters[0]);
+    eq(o.filters.value[0].distance, 4);
+    o.filters.value[0].distance = 19;
+    eq(o.filters.value[0].distance, 4);
+    neq(o.filters.value[0], o.filters.value[0]);
     o.filters = null;
     eq(o.filters.length, 0);
   });
