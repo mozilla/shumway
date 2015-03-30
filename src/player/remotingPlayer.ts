@@ -457,10 +457,13 @@ module Shumway.Remoting.Player {
       }
       var securityDomain = filters[0].securityDomain;
       var count = 0;
+      var blurFilterClass = securityDomain.flash.filters.BlurFilter.axClass;
+      var dropShadowFilterClass = securityDomain.flash.filters.DropShadowFilter.axClass;
+      var glowFilterClass = securityDomain.flash.filters.GlowFilter.axClass;
       for (var i = 0; i < filters.length; i++) {
-        if (securityDomain.flash.filters.BlurFilter.axClass.axIsType(filters[i]) ||
-            securityDomain.flash.filters.DropShadowFilter.axClass.axIsType(filters[i]) ||
-            securityDomain.flash.filters.GlowFilter.axClass.axIsType(filters[i])) {
+        if (blurFilterClass.axIsType(filters[i]) ||
+            dropShadowFilterClass.axIsType(filters[i]) ||
+            glowFilterClass.axIsType(filters[i])) {
           count ++;
         } else {
           Shumway.Debug.somewhatImplemented(filters[i].toString());
@@ -469,13 +472,13 @@ module Shumway.Remoting.Player {
       this.output.writeInt(count);
       for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
-        if (securityDomain.flash.filters.BlurFilter.axClass.axIsType(filter)) {
+        if (blurFilterClass.axIsType(filter)) {
           var blurFilter = <flash.filters.BlurFilter>filter;
           this.output.writeInt(FilterType.Blur);
           this.output.writeFloat(blurFilter.blurX);
           this.output.writeFloat(blurFilter.blurY);
           this.output.writeInt(blurFilter.quality);
-        } else if (securityDomain.flash.filters.DropShadowFilter.axClass.axIsType(filter)) {
+        } else if (dropShadowFilterClass.axIsType(filter)) {
           var dropShadowFilter = <flash.filters.DropShadowFilter>filter;
           this.output.writeInt(FilterType.DropShadow);
           this.output.writeFloat(dropShadowFilter.alpha);
@@ -489,7 +492,7 @@ module Shumway.Remoting.Player {
           this.output.writeBoolean(dropShadowFilter.knockout);
           this.output.writeInt(dropShadowFilter.quality);
           this.output.writeFloat(dropShadowFilter.strength);
-        } else if (securityDomain.flash.filters.GlowFilter.axClass.axIsType(filter)) {
+        } else if (glowFilterClass.axIsType(filter)) {
           var glowFilter = <flash.filters.GlowFilter>filter;
           this.output.writeInt(FilterType.DropShadow);
           this.output.writeFloat(glowFilter.alpha);
@@ -553,8 +556,11 @@ module Shumway.Remoting.Player {
   }
 
   export class PlayerChannelDeserializer {
-    input: IDataInput;
-    inputAssets: any[];
+
+    constructor(private securityDomain: ISecurityDomain, private input: IDataInput,
+                private inputAssets: any[]) {
+      // ..
+    }
 
     public read(): any {
       var input = this.input;
@@ -590,7 +596,7 @@ module Shumway.Remoting.Player {
       return {
         tag: MessageTag.MouseEvent,
         type: type,
-        point: new Point(pX, pY),
+        point: new this.securityDomain.flash.geom.Point(pX, pY),
         ctrlKey: !!(flags & KeyboardEventFlags.CtrlKey),
         altKey: !!(flags & KeyboardEventFlags.AltKey),
         shiftKey: !!(flags & KeyboardEventFlags.ShiftKey),

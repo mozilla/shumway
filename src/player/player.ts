@@ -247,11 +247,8 @@ module Shumway.Player {
     }
 
     public processUpdates(updates: DataBuffer, assets: any []) {
-      var deserializer = new Remoting.Player.PlayerChannelDeserializer();
-      var FocusEventType = Remoting.FocusEventType;
-
-      deserializer.input = updates;
-      deserializer.inputAssets = assets;
+      var deserializer = new Remoting.Player.PlayerChannelDeserializer(this.securityDomain, updates,
+                                                                       assets);
 
       var message = deserializer.read();
       switch (message.tag) {
@@ -274,6 +271,7 @@ module Shumway.Player {
           break;
         case MessageTag.FocusEvent:
           var focusType = (<FocusEventData>message).type;
+          var FocusEventType = Remoting.FocusEventType;
           switch (focusType) {
             case FocusEventType.DocumentHidden:
               this._isPageVisible = false;
