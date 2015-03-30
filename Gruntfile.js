@@ -152,6 +152,9 @@ module.exports = function(grunt) {
       test_avm2_quick: {
         cmd: 'node src/shell/numbers.js -i test/avm2/pass/ -c i -j ' + (+grunt.option('threads') || 9)
       },
+      test_avm2_redux_pass: {
+        cmd: 'node src/shell/numbers.js -i test/avm2/redux-pass.txt -c i -j ' + (+grunt.option('threads') || 9)
+      },
       test_avm2_redux: {
         cmd: 'node src/shell/numbers.js -i test/avm2/redux-pass.txt -c i -j ' + (+grunt.option('threads') || 9) + " && " +
              'node src/shell/numbers.js -i test/avm2/redux-fail.txt -c i -j ' + (+grunt.option('threads') || 9)
@@ -564,8 +567,9 @@ module.exports = function(grunt) {
     'exec:build_shell_ts',
     // 'tslint:all', REDUX: Temporarily commented out.
     'exec:spell',
-    'closure',
-    // 'exec:gate'
+    // 'closure', REDUX: Temporarily commented out.
+    'exec:test_avm2_redux_pass',
+    'exec:gate'
   ]);
   grunt.registerTask('smoke', [
     'exec:smoke_parse'

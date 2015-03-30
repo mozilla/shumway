@@ -1606,7 +1606,7 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     set filters(value_: ASArray) {
-      var value: flash.filters.BitmapFilter [] = value_.value;
+      var value: flash.filters.BitmapFilter [] = value_ ? value_.value : null;
       if (!this._filters) {
         this._filters = [];
       }
