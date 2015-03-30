@@ -140,6 +140,8 @@ module Shumway.AVMX.AS.flash.display {
     static runFrameScripts() {
       enterTimeline("MovieClip.executeFrame");
       var movieClipClass = this.securityDomain.flash.display.MovieClip.axClass;
+      var displayObjectClass = this.securityDomain.flash.display.DisplayObject.axClass;
+      var eventClass = this.securityDomain.flash.events.Event.axClass;
       var queue: MovieClip[] = movieClipClass._callQueue;
       movieClipClass._callQueue = [];
       for (var i = 0; i < queue.length; i++) {
@@ -147,7 +149,7 @@ module Shumway.AVMX.AS.flash.display {
 
         if (instance._hasFlags(DisplayObjectFlags.NeedsLoadEvent)) {
           instance._removeFlags(DisplayObjectFlags.NeedsLoadEvent);
-          instance.dispatchEvent(this.securityDomain.flash.events.Event.axClass.getInstance(events.Event.AVM1_LOAD));
+          instance.dispatchEvent(eventClass.getInstance(events.Event.AVM1_LOAD));
           continue;
         }
 
@@ -159,13 +161,13 @@ module Shumway.AVMX.AS.flash.display {
         // navigation has happened inside the frame script. In that case, we didn't immediately
         // run frame navigation as described in `_gotoFrameAbs`. Instead, we have to do it here.
         if (instance._nextFrame !== instance._currentFrame) {
-          if (display.MovieClip.frameNavigationModel === FrameNavigationModel.SWF9) {
+          if (movieClipClass.frameNavigationModel === FrameNavigationModel.SWF9) {
             instance._advanceFrame();
             instance._constructFrame();
             instance._removeFlags(DisplayObjectFlags.HasFrameScriptPending);
             instance.callFrame(instance._currentFrame);
           } else {
-            DisplayObject.performFrameNavigation(false, true);
+            displayObjectClass.performFrameNavigation(false, true);
           }
         }
       }
@@ -395,7 +397,8 @@ module Shumway.AVMX.AS.flash.display {
      * was not found.
      */
     _getAbsFrameNumber(frame: string, sceneName: string): number {
-      var legacyMode = display.MovieClip.frameNavigationModel !== FrameNavigationModel.SWF10;
+      var navigationModel = this.securityDomain.flash.display.MovieClip.axClass.frameNavigationModel;
+      var legacyMode = navigationModel !== FrameNavigationModel.SWF10;
       var scene: Scene;
       if (sceneName !== null) {
         sceneName = asCoerceString(sceneName);

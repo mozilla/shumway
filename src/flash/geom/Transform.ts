@@ -80,7 +80,7 @@ module Shumway.AVMX.AS.flash.geom {
 
       var raw = m.rawData;
       // TODO why is this not a 3D matrix?
-      this.matrix = new flash.geom.Matrix (
+      this.matrix = new this.securityDomain.flash.geom.Matrix (
         raw.axGetPublicProperty(0),
         raw.axGetPublicProperty(1),
         raw.axGetPublicProperty(4),

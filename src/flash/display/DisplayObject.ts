@@ -955,7 +955,7 @@ module Shumway.AVMX.AS.flash.display {
         }
         var m = ancestor && !stageClass.axIsType(ancestor) ?
                 ancestor._concatenatedColorTransform.clone() :
-                new geom.ColorTransform();
+                new this.securityDomain.flash.geom.ColorTransform();
         while (i >= 0) {
           ancestor = path[i--];
           release || assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
@@ -1462,7 +1462,7 @@ module Shumway.AVMX.AS.flash.display {
       return this._getTransform();
     }
     _getTransform() {
-      return new flash.geom.Transform(this);
+      return new this.securityDomain.flash.geom.Transform(this);
     }
 
     set transform(value: flash.geom.Transform) {

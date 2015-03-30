@@ -194,7 +194,9 @@ module Shumway.AVMX.AS.flash.geom {
       this.alphaOffset = object.alphaOffset;
     }
 
-    public setTo(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number, redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number): void {
+    public setTo(redMultiplier: number, greenMultiplier: number, blueMultiplier: number,
+                 alphaMultiplier: number, redOffset: number, greenOffset: number,
+                 blueOffset: number, alphaOffset: number): void {
       this.redMultiplier = redMultiplier;
       this.greenMultiplier = greenMultiplier;
       this.blueMultiplier = blueMultiplier;
@@ -206,7 +208,7 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     public clone(): ColorTransform {
-      return new ColorTransform(
+      return new this.securityDomain.flash.geom.ColorTransform(
         this.redMultiplier,
         this.greenMultiplier,
         this.blueMultiplier,
