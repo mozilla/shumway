@@ -458,8 +458,11 @@ module Shumway.AVMX {
   }
 
   function axCoerce(x: any) {
-    // FIXME
-    return null;
+    if (!this.axIsType(x)) {
+      this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, x,
+                                     this.classInfo.instanceInfo.getClassName());
+    }
+    return x;
   }
 
   function axIsTypeObject(x: any) {

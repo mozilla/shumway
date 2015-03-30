@@ -337,7 +337,7 @@ function displayTests() {
   unitTests.push(function checkFiltersGetterAndSetter() {
     var o = new DisplayObject();
     eq(o.filters.length, 0);
-    var a = [];
+    var a = {value:[]};
     o.filters = a;
     neq(o.filters, a);
     neq(o.filters, o.filters);
