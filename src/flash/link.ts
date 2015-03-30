@@ -17,10 +17,6 @@
 import flashPackage = Shumway.AVMX.AS.flash;
 interface ISecurityDomain {
   player: Shumway.Player.SWFPlayer;
-  ObjectVector: typeof Shumway.AVMX.AS.GenericVector;
-  Int32Vector: typeof Shumway.AVMX.AS.Int32Vector;
-  Uint32Vector: typeof Shumway.AVMX.AS.Uint32Vector;
-  Float64Vector: typeof Shumway.AVMX.AS.Float64Vector;
   flash?: {
     display: {
       EventDispatcher: typeof flashPackage.events.EventDispatcher;

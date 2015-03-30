@@ -1125,9 +1125,6 @@ module Shumway.AVMX {
       this._parseInstanceAndClassInfos();
       this._parseScriptInfos();
       this._parseMethodBodyInfos();
-
-      this.trace(writer);
-      // this.stress();
     }
 
     private _parseConstantPool() {
@@ -1813,38 +1810,8 @@ module Shumway.AVMX {
     }
 
     trace(writer: IndentingWriter) {
-      return false;
-
-      for (var i = 0; i < this._methodBodies.length; i++) {
-        var methodBody = this._methodBodies[i];
-        if (methodBody) {
-          try {
-            var stream = new BytecodeStream(methodBody.code);
-            while (stream.currentBytecode() !== Bytecode.END) {
-              stream.next();
-            }
-          } catch (e) {
-            writer.errorLn("Corrupt: " + e);
-          }
-        }
-      }
-
-      writer.writeLn("");
-      writer.writeLn("");
-
       writer.writeLn("Multinames: " + this._multinames.length);
-      writer.writeLn("Namespace Sets: " + this._namespaceSets.length);
-      writer.writeLn("Namespaces: " + this._namespaces.length);
-      writer.writeLn("Strings: " + this._strings.length);
-      writer.writeLn("Methods: " + this._methods.length);
-      writer.writeLn("InstanceInfos: " + this.instances.length);
-      writer.writeLn("ClassInfos: " + this.classes.length);
-      writer.writeLn("ScriptInfos: " + this.scripts.length);
-
-      writer.writeLn("");
-
-      writer.writeLn("Multinames: " + this._multinames.length);
-      if (false) {
+      if (true) {
         writer.indent();
         for (var i = 0; i < this._multinames.length; i++) {
           writer.writeLn(i + " " + this.getMultiname(i));
@@ -1853,7 +1820,7 @@ module Shumway.AVMX {
       }
 
       writer.writeLn("Namespace Sets: " + this._namespaceSets.length);
-      if (false) {
+      if (true) {
         writer.indent();
         for (var i = 0; i < this._namespaceSets.length; i++) {
           writer.writeLn(i + " " + this.getNamespaceSet(i));
@@ -1862,7 +1829,7 @@ module Shumway.AVMX {
       }
 
       writer.writeLn("Namespaces: " + this._namespaces.length);
-      if (false) {
+      if (true) {
         writer.indent();
         for (var i = 0; i < this._namespaces.length; i++) {
           writer.writeLn(i + " " + this.getNamespace(i));
@@ -1871,7 +1838,7 @@ module Shumway.AVMX {
       }
 
       writer.writeLn("Strings: " + this._strings.length);
-      if (false) {
+      if (true) {
         writer.indent();
         for (var i = 0; i < this._strings.length; i++) {
           writer.writeLn(i + " " + this.getString(i));
@@ -1892,7 +1859,7 @@ module Shumway.AVMX {
       }
 
       writer.writeLn("InstanceInfos: " + this.instances.length);
-      if (false) {
+      if (true) {
         writer.indent();
         for (var i = 0; i < this.instances.length; i++) {
           writer.writeLn(i + " " + this.instances[i]);
@@ -1902,7 +1869,7 @@ module Shumway.AVMX {
       }
 
       writer.writeLn("ClassInfos: " + this.classes.length);
-      if (false) {
+      if (true) {
         writer.indent();
         for (var i = 0; i < this.classes.length; i++) {
           this.classes[i].trace(writer);
@@ -1911,7 +1878,7 @@ module Shumway.AVMX {
       }
 
       writer.writeLn("ScriptInfos: " + this.scripts.length);
-      if (false) {
+      if (true) {
         writer.indent();
         for (var i = 0; i < this.scripts.length; i++) {
           this.scripts[i].trace(writer);
