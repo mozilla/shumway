@@ -75,7 +75,7 @@ module Shumway.AVMX.AS.flash.display {
                 downState?: flash.display.DisplayObject,
                 hitTestState?: flash.display.DisplayObject) {
       super();
-      display.DisplayObject._advancableInstances.push(this);
+      this.securityDomain.flash.display.DisplayObject.axClass._advancableInstances.push(this);
       if (!this._fieldsInitialized) {
         this._initializeFields();
       }

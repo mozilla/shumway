@@ -236,8 +236,7 @@
     var g = createGraphics();
     var shape = g.getGraphicsData();
 
-    g.lineStyle(10, 0xaabbcc, 0.5, true, 'horizontal', 'square',
-                JointStyle.BEVEL, 10);
+    g.lineStyle(10, 0xaabbcc, 0.5, true, 'horizontal', 'square', 'bevel', 10);
     shape.styles.position = 0;
     eq(shape.commands[0], PathCommand.LineStyleSolid, "style is stored");
     eq(shape.coordinatesPosition, 1, "lineStyle writes thickness into coordinates");
@@ -248,7 +247,7 @@
        "lineScaleMode is stored");
     eq(CapsStyle.axClass.fromNumber(shape.styles.readUnsignedByte()), 'square',
        "capsStyle is stored");
-    eq(JointStyle.axClass.fromNumber(shape.styles.readUnsignedByte()), JointStyle.BEVEL,
+    eq(JointStyle.axClass.fromNumber(shape.styles.readUnsignedByte()), 'bevel',
        "jointsStyle is stored");
     eq(shape.styles.readUnsignedByte(), 10, "miterLimit is stored");
     eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
