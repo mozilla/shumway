@@ -499,7 +499,8 @@ module Shumway.AVMX.AS.flash.events {
         event._target = target;
         event._currentTarget = currentTarget;
         event._eventPhase = eventPhase;
-        entry.listener(event);
+        // REDUX: Ask till about how to handle passing the receiver here.
+        entry.listener.call((<any>entry.listener).receiver, event);
         if (event._stopImmediatePropagation) {
           break;
         }

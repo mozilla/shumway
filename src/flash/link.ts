@@ -39,6 +39,7 @@ interface ISecurityDomain {
     events: {
       Event: typeof flashPackage.events.Event;
       MouseEvent: typeof flashPackage.events.MouseEvent;
+      KeyboardEvent: typeof flashPackage.events.KeyboardEvent;
       EventDispatcher: typeof flashPackage.events.EventDispatcher;
     };
     filters: {
