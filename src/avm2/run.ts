@@ -458,6 +458,9 @@ module Shumway.AVMX {
   }
 
   function axCoerce(x: any) {
+    if (isNullOrUndefined(x)) {
+      return null;
+    }
     if (!this.axIsType(x)) {
       this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, x,
                                      this.classInfo.instanceInfo.getClassName());
