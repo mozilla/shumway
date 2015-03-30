@@ -586,6 +586,47 @@ module Shumway.AVM2.AS.flash.display {
       release || Debug.warning('Not implemented: flash.display.Loader loading-error handling');
     }
 
+    private _addScenesToMovieClip(mc: MovieClip, sceneData, numFrames: number) {
+      // Creating scenes so we will always have frames assigned to some scene.
+      if (!sceneData) {
+        mc.addScene('Scene 1', [], 0, numFrames);
+        return;
+      }
+
+      // Sorting scenes by offset
+      var sceneInfos = [];
+      var scenes = sceneData.scenes;
+      for (var i = 0; i < scenes.length; i++) {
+        sceneInfos.push({offset: scenes[i].offset, name: scenes[i].name});
+      }
+      sceneInfos.sort((a, b) => a.offset - b.offset);
+
+      var n = sceneInfos.length;
+      var offset, endFrame;
+      if (n > 0 && sceneInfos[0].offset > 0) {
+        // Starting from non-zero frame, we need to create a fake scene.
+        offset = sceneInfos[0].offset;
+        endFrame = Math.min(offset, numFrames);
+        mc.addScene('Scene 0', [], 0, endFrame);
+      }
+
+      for (var i = 0, n = sceneInfos.length; i < n; i++) {
+        var sceneInfo = sceneInfos[i];
+        offset = sceneInfo.offset;
+        if (offset >= numFrames) {
+          break; // out of the movie clip timeline range
+        }
+        endFrame = i < n - 1 ? Math.min(scenes[i + 1].offset, numFrames) : numFrames;
+        mc.addScene(sceneInfo.name, [], offset, endFrame - offset);
+      }
+
+      var labels = sceneData.labels;
+      for (var i = 0; i < labels.length; i++) {
+        var labelInfo = labels[i];
+        mc.addFrameLabel(labelInfo.name, labelInfo.frame + 1);
+      }
+    }
+
     private createContentRoot(symbol: SpriteSymbol, sceneData) {
       if (symbol.isAVM1Object) {
         this._initAvm1(symbol);
@@ -601,23 +642,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (MovieClip.isType(root)) {
-        var mc = <MovieClip>root;
-        if (sceneData) {
-          var scenes = sceneData.scenes;
-          for (var i = 0, n = scenes.length; i < n; i++) {
-            var sceneInfo = scenes[i];
-            var offset = sceneInfo.offset;
-            var endFrame = i < n - 1 ? scenes[i + 1].offset : symbol.numFrames;
-            mc.addScene(sceneInfo.name, [], offset, endFrame - offset);
-          }
-          var labels = sceneData.labels;
-          for (var i = 0; i < labels.length; i++) {
-            var labelInfo = labels[i];
-            mc.addFrameLabel(labelInfo.name, labelInfo.frame + 1);
-          }
-        } else {
-          mc.addScene('Scene 1', [], 0, symbol.numFrames);
-        }
+        this._addScenesToMovieClip(<MovieClip>root, sceneData, symbol.numFrames);
       }
 
       var loaderInfo = this._contentLoaderInfo;
