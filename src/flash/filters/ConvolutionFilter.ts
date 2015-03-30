@@ -18,6 +18,8 @@ module Shumway.AVMX.AS.flash.filters {
 
   export class ConvolutionFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof ConvolutionFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
@@ -28,7 +30,7 @@ module Shumway.AVMX.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      return new ConvolutionFilter(
+      return new this.securityDomain.flash.filters.ConvolutionFilter(
         obj.matrixX,
         obj.matrixY,
         obj.matrix,
@@ -165,7 +167,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new ConvolutionFilter(
+      return new this.securityDomain.flash.filters.ConvolutionFilter(
         this._matrixX,
         this._matrixY,
         this.matrix,

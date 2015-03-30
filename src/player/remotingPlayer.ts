@@ -303,7 +303,7 @@ module Shumway.Remoting.Player {
       if (hasMiscellaneousProperties) {
         this.output.writeInt(displayObject._ratio);
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
-        this._writeFilters(displayObject.filters);
+        this._writeFilters(displayObject._filters);
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
         this.output.writeBoolean(displayObject.cacheAsBitmap);
         if (bitmap) {
@@ -451,7 +451,7 @@ module Shumway.Remoting.Player {
     }
 
     private _writeFilters(filters: flash.filters.BitmapFilter []) {
-      if (filters.length === 0) {
+      if (!filters || filters.length === 0) {
         this.output.writeInt(0);
         return;
       }

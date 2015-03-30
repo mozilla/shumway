@@ -42,7 +42,7 @@ module Shumway.AVMX.AS.flash.filters {
       var angle: number = obj.angle * 180 / Math.PI;
       // obj.compositeSource maps to !hideObject
       var hideObject: boolean = !obj.compositeSource;
-      return new DropShadowFilter(
+      return new this.securityDomain.flash.filters.DropShadowFilter(
         obj.distance,
         angle,
         color,
@@ -185,7 +185,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new DropShadowFilter(
+      return new this.securityDomain.flash.filters.DropShadowFilter(
         this._distance,
         this._angle,
         this._color,

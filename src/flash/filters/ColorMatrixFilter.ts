@@ -18,6 +18,8 @@ module Shumway.AVMX.AS.flash.filters {
 
   export class ColorMatrixFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof ColorMatrixFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
@@ -28,7 +30,7 @@ module Shumway.AVMX.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      return new ColorMatrixFilter(obj.matrix);
+      return new this.securityDomain.flash.filters.ColorMatrixFilter(obj.matrix);
     }
 
     constructor (matrix: any [] = null) {
@@ -81,7 +83,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new ColorMatrixFilter(this.matrix);
+      return new this.securityDomain.flash.filters.ColorMatrixFilter(this.matrix);
     }
   }
 }

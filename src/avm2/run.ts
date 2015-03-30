@@ -962,6 +962,15 @@ module Shumway.AVMX {
     }
 
     /**
+     * Constructs an AXArray in this security domain and sets its value to the given array.
+     */
+    createArray(value: any[]) {
+      var array = Object.create(this.AXArray.tPrototype);
+      array.value = value;
+      return array;
+    }
+
+    /**
      * Used for factory types. This creates a class that by default behaves the same
      * as its factory class but gives us the opportunity to override protocol
      * handlers.

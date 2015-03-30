@@ -550,10 +550,10 @@ module Shumway.AVMX.AS.flash.display {
     set scrollRect(value: geom.Rectangle) {
       this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
-    get filters(): flash.filters.BitmapFilter [] {
+    get filters() {
       return this._getFilters();
     }
-    set filters(value: flash.filters.BitmapFilter[]) {
+    set filters(value: ASArray) {
       this.securityDomain.throwError('IllegalOperationError', Errors.InvalidStageMethodError);
     }
     get blendMode(): string {

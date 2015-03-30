@@ -38,7 +38,7 @@ module Shumway.AVMX.AS.flash.filters {
       release || assert(obj.colors && obj.colors.length === 1, "colors must be Array of length 1");
       var color: number = obj.colors[0] >>> 8;
       var alpha: number = (obj.colors[0] & 0xff) / 0xff;
-      return new GlowFilter(
+      return new this.securityDomain.flash.filters.GlowFilter(
         color,
         alpha,
         obj.blurX,
@@ -139,7 +139,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new GlowFilter(
+      return new this.securityDomain.flash.filters.GlowFilter(
         this._color,
         this._alpha,
         this._blurX,

@@ -31,7 +31,7 @@ module Shumway.AVMX.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      return new DisplacementMapFilter(
+      return new this.securityDomain.flash.filters.DisplacementMapFilter(
         obj.mapBitmap,
         obj.mapPoint,
         obj.componentX,
@@ -146,7 +146,7 @@ module Shumway.AVMX.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new DisplacementMapFilter(
+      return new this.securityDomain.flash.filters.DisplacementMapFilter(
         this._mapBitmap,
         this._mapPoint,
         this._componentX,

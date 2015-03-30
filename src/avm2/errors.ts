@@ -189,7 +189,7 @@ module Shumway.AVMX {
     TooFewArgumentsError                                      : { code: 2001, message: "Too few arguments were specified; got %1, %2 expected."},
   //  InvalidSocketError                                        : { code: 2002, message: "Operation attempted on invalid socket."},
   //  InvalidSocketPortError                                    : { code: 2003, message: "Invalid socket port number specified."},
-  //  ParamTypeError                                            : { code: 2005, message: "Parameter %1 is of the incorrect type. Should be type %2."},
+    ParamTypeError                                            : { code: 2005, message: "Parameter %1 is of the incorrect type. Should be type %2."},
   //  HasStyleSheetError                                        : { code: 2009, message: "This method cannot be used on a text field with a style sheet."},
   //  SocketLocalFileSecurityError                              : { code: 2010, message: "Local-with-filesystem SWF files are not permitted to use sockets."},
     SocketConnectError                                        : { code: 2011, message: "Socket connection failed to %1:%2."},
