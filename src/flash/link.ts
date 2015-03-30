@@ -37,10 +37,20 @@ interface ISecurityDomain {
       SimpleButton: typeof flashPackage.display.SimpleButton;
     };
     events: {
-      Event: typeof flashPackage.events.Event;
-      MouseEvent: typeof flashPackage.events.MouseEvent;
-      KeyboardEvent: typeof flashPackage.events.KeyboardEvent;
       EventDispatcher: typeof flashPackage.events.EventDispatcher;
+      Event: typeof flashPackage.events.Event;
+      KeyboardEvent: typeof flashPackage.events.KeyboardEvent;
+      MouseEvent: typeof flashPackage.events.MouseEvent;
+      ProgressEvent: typeof flashPackage.events.ProgressEvent;
+      ErrorEvent: typeof flashPackage.events.ErrorEvent;
+      GestureEvent: typeof flashPackage.events.GestureEvent;
+      HTTPStatusEvent: typeof flashPackage.events.HTTPStatusEvent;
+      IOErrorEvent: typeof flashPackage.events.IOErrorEvent;
+      NetStatusEvent: typeof flashPackage.events.NetStatusEvent;
+      TextEvent: typeof flashPackage.events.TextEvent;
+      TimerEvent: typeof flashPackage.events.TimerEvent;
+      TouchEvent: typeof flashPackage.events.TouchEvent;
+      UncaughtErrorEvents: typeof flashPackage.events.UncaughtErrorEvents;
     };
     filters: {
       BitmapFilter: typeof flashPackage.filters.BitmapFilter;

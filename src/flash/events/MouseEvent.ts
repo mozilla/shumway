@@ -222,10 +222,12 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     clone(): Event {
-      return new flash.events.MouseEvent(this.type, this.bubbles, this.cancelable,
-                                         this.localX, this.localY, this.relatedObject,
-                                         this.ctrlKey, this.altKey, this.shiftKey,
-                                         this.buttonDown, this.delta);
+      return new this.securityDomain.flash.events.MouseEvent(this.type, this.bubbles,
+                                                             this.cancelable,
+                                                             this.localX, this.localY,
+                                                             this.relatedObject, this.ctrlKey,
+                                                             this.altKey, this.shiftKey,
+                                                             this.buttonDown, this.delta);
     }
 
     toString(): string {

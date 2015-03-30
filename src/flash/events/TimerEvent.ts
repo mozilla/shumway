@@ -31,7 +31,8 @@ module Shumway.AVMX.AS.flash.events {
     static TIMER_COMPLETE: string = "timerComplete";
 
     clone(): Event {
-      return new events.TimerEvent(this.type, this.bubbles, this.cancelable);
+      return new this.securityDomain.flash.events.TimerEvent(this.type, this.bubbles,
+                                                             this.cancelable);
     }
 
     toString(): string {

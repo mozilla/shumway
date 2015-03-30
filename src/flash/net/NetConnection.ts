@@ -80,17 +80,16 @@ module Shumway.AVMX.AS.flash.net {
 
       somewhatImplemented("public flash.net.NetConnection::connect");
       this._uri = command;
+      var netStatusEventCtor = this.securityDomain.flash.events.NetStatusEvent;
       if (!command) {
         this._connected = true;
-        this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
-          false, false,
+        this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS, false, false,
           wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
       } else {
         var parsedURL = RtmpJs.parseConnectionString(command);
         if (!parsedURL || !parsedURL.host ||
             (parsedURL.protocol !== 'rtmp' && parsedURL.protocol !== 'rtmpt' && parsedURL.protocol !== 'rtmps')) {
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
-            false, false,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS, false, false,
             wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Failed'})));
           return;
         }
@@ -129,7 +128,7 @@ module Shumway.AVMX.AS.flash.net {
         };
         rtmpConnection.onconnected = function (e) {
           this._connected = true;
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new this.securityDomain.flash.events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false,
             wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
         }.bind(this);

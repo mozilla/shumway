@@ -209,7 +209,7 @@ module Shumway.AVMX.AS.flash.display {
     get sharedEvents(): flash.events.EventDispatcher {
       somewhatImplemented("public flash.display.LoaderInfo::get sharedEvents");
       if (!this._sharedEvents) {
-        this._sharedEvents = new flash.events.EventDispatcher();
+        this._sharedEvents = new this.securityDomain.flash.events.EventDispatcher();
       }
       return this._sharedEvents;
     }
@@ -276,7 +276,7 @@ module Shumway.AVMX.AS.flash.display {
     get uncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
       somewhatImplemented("public flash.display.LoaderInfo::_getUncaughtErrorEvents");
       if (!this._uncaughtErrorEvents) {
-        this._uncaughtErrorEvents = new events.UncaughtErrorEvents();
+        this._uncaughtErrorEvents = new this.securityDomain.flash.events.UncaughtErrorEvents();
       }
       return this._uncaughtErrorEvents;
     }

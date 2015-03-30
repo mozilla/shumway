@@ -278,7 +278,8 @@ module Shumway.AVMX.AS.flash.media {
       element.addEventListener("ended", function ended() {
         SoundMixer._unregisterSoundSource(self);
 
-        self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
+        self.dispatchEvent(new this.securityDomain.flash.events.Event("soundComplete", false,
+                                                                      false));
         self._element = null;
       });
       this._element = element;
@@ -303,7 +304,8 @@ module Shumway.AVMX.AS.flash.media {
           SoundMixer._unregisterSoundSource(this);
 
           self._audioChannel.stop();
-          self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
+          self.dispatchEvent(new this.securityDomain.flash.events.Event("soundComplete", false,
+                                                                        false));
           return;
         }
 

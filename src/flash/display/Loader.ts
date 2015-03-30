@@ -135,7 +135,8 @@ module Shumway.AVMX.AS.flash.display {
           if (instance === this.securityDomain.flash.display.Loader.axClass._rootLoader) {
             enterTimeline("Loader.Progress", 'rootLoader');
             try {
-              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+              loaderInfo.dispatchEvent(new this.securityDomain.flash.events.ProgressEvent(
+                                                                events.ProgressEvent.PROGRESS,
                                                                 false, false,
                                                                 loaderInfo.bytesLoaded,
                                                                 loaderInfo.bytesTotal));
@@ -176,6 +177,7 @@ module Shumway.AVMX.AS.flash.display {
         }
         instance._queuedLoadUpdate = null;
 
+        var progressEventCtor = this.securityDomain.flash.events.ProgressEvent;
         if (instance._loadStatus === LoadStatus.Unloaded) {
           // OPEN is only dispatched when loading external resources, not for loadBytes.
           if (instance._loadingType === LoadingType.External) {
@@ -191,8 +193,8 @@ module Shumway.AVMX.AS.flash.display {
           // is dispatched.
           enterTimeline("Loader.Progress");
           try {
-            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                              false, false, 0, bytesTotal));
+            loaderInfo.dispatchEvent(new progressEventCtor(events.ProgressEvent.PROGRESS,
+                                                           false, false, 0, bytesTotal));
           } catch (e) {
             console.warn('caught error under loaderInfo PROGRESS event: ', e);
           }
@@ -205,9 +207,9 @@ module Shumway.AVMX.AS.flash.display {
           instance._applyLoadUpdate(update);
           enterTimeline("Loader.Progress");
           try {
-            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
-                                                              false, false, update.bytesLoaded,
-                                                              bytesTotal));
+            loaderInfo.dispatchEvent(new progressEventCtor(events.ProgressEvent.PROGRESS,
+                                                           false, false, update.bytesLoaded,
+                                                           bytesTotal));
           } catch (e) {
             console.warn('caught error under loaderInfo PROGRESS event: ', e);
           }

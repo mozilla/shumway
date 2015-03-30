@@ -147,10 +147,13 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     clone(): Event {
-      return new events.TouchEvent(this.type, this.bubbles, this.cancelable, this.touchPointID,
-                                   this.isPrimaryTouchPoint, this.localX, this.localY, this.sizeX,
-                                   this.sizeY, this.pressure, this.relatedObject, this.ctrlKey,
-                                   this.altKey, this.shiftKey);
+      return new this.securityDomain.flash.events.TouchEvent(this.type, this.bubbles,
+                                                             this.cancelable, this.touchPointID,
+                                                             this.isPrimaryTouchPoint, this.localX,
+                                                             this.localY, this.sizeX, this.sizeY,
+                                                             this.pressure, this.relatedObject,
+                                                             this.ctrlKey, this.altKey,
+                                                             this.shiftKey);
     }
     toString(): string {
       return this.formatToString('TouchEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',

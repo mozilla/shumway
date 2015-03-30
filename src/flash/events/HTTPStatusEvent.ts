@@ -56,7 +56,8 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     clone(): Event {
-      var event = new events.HTTPStatusEvent(this.type, this.bubbles, this.cancelable, this.status);
+      var event = new this.securityDomain.flash.events.HTTPStatusEvent(this.type, this.bubbles,
+                                                                       this.cancelable, this.status);
       event.responseURL = this.responseURL;
       event.responseHeaders = this.responseHeaders;
       return event;

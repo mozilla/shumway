@@ -154,7 +154,7 @@ module Shumway.AVMX.AS.flash.events {
 
     dispatchEvent(event: flash.events.Event) {
       release || assert (event.isBroadcastEvent(), "Cannot dispatch non-broadcast events.");
-      var queue = this._queues[event.type];
+      var queue = this._queues[event._type];
       if (!queue) {
         return;
       }
@@ -171,7 +171,7 @@ module Shumway.AVMX.AS.flash.events {
           try {
             target.dispatchEvent(event);
           } catch (e) {
-            console.warn('caught error under broadcast event ' + event.type + ': ', e);
+            console.warn('caught error under broadcast event ' + event._type + ': ', e);
           }
         }
       }

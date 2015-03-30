@@ -42,7 +42,8 @@ module Shumway.AVMX.AS.flash.events {
     }
 
     clone(): Event {
-      return new ErrorEvent(this.type, this.bubbles, this.cancelable, this.text, this.errorID);
+      return new this.securityDomain.flash.events.ErrorEvent(this.type, this.bubbles,
+                                                             this.cancelable, this.text, this.errorID);
     }
 
     toString(): string {

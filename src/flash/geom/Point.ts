@@ -64,7 +64,7 @@ module Shumway.AVMX.AS.flash.geom {
 
     public static interpolate(p1: Point, p2: Point, f: number): Point {
       var f1: number = 1 - f;
-      return new Point(p1.x * f + p2.x * f1, p1.y * f + p2.y * f1);
+      return new this.securityDomain.flash.geom.Point(p1.x * f + p2.x * f1, p1.y * f + p2.y * f1);
     }
 
     public static distance(p1: Point, p2: Point): number {
@@ -76,11 +76,12 @@ module Shumway.AVMX.AS.flash.geom {
     public static polar(length: number, angle: number): Point {
       length = +length;
       angle = +angle;
-      return new Point(length * Math.cos(angle), length * Math.sin(angle));
+      return new this.securityDomain.flash.geom.Point(length * Math.cos(angle),
+                                                      length * Math.sin(angle));
     }
 
     public clone(): Point {
-      return new Point(this.x, this.y);
+      return new this.securityDomain.flash.geom.Point(this.x, this.y);
     }
 
     public offset(dx: number, dy: number): void {
@@ -93,11 +94,11 @@ module Shumway.AVMX.AS.flash.geom {
     }
 
     public subtract(v: Point): Point {
-      return new Point(this.x - v.x, this.y - v.y);
+      return new this.securityDomain.flash.geom.Point(this.x - v.x, this.y - v.y);
     }
 
     public add(v: Point): Point {
-      return new Point(this.x + v.x, this.y + v.y);
+      return new this.securityDomain.flash.geom.Point(this.x + v.x, this.y + v.y);
     }
 
     public normalize(thickness: number): void {

@@ -98,7 +98,7 @@ module Shumway.AVMX.AS.flash.utils {
       if (flash.utils.Timer.dispatchingEnabled) {
         enterTimeline("Timer.Timer");
         try {
-          this.dispatchEvent(new events.TimerEvent("timer", true, false));
+          this.dispatchEvent(new this.securityDomain.flash.events.TimerEvent("timer", true, false));
         } catch (e) {
           console.warn('caught error under Timer TIMER event: ', e);
         }
@@ -108,8 +108,8 @@ module Shumway.AVMX.AS.flash.utils {
         this.stop();
         enterTimeline("Timer.TimerComplete");
         try {
-          this.dispatchEvent(new events.TimerEvent(events.TimerEvent.TIMER_COMPLETE, false,
-                                                   false));
+          this.dispatchEvent(new this.securityDomain.flash.events.TimerEvent(events.TimerEvent.TIMER_COMPLETE,
+                                                                             false, false));
         } catch (e) {
           console.warn('caught error under Timer COMPLETE event: ', e);
         }

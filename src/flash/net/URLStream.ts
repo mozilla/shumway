@@ -93,19 +93,21 @@ module Shumway.AVMX.AS.flash.net {
         self._writePosition = self._buffer.position;
         self._buffer.position = readPosition;
 
-        self.dispatchEvent(new ProgressEvent(ProgressEvent.PROGRESS,
+        self.dispatchEvent(new this.securityDomain.flash.events.ProgressEvent(ProgressEvent.PROGRESS,
           false, false, progressState.bytesLoaded, progressState.bytesTotal));
       };
       session.onerror = function (error) {
         self._connected = false;
-        self.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR, false, false, error));
+        self.dispatchEvent(new this.securityDomain.flash.events.IOErrorEvent(IOErrorEvent.IO_ERROR,
+                                                                             false, false, error));
       };
       session.onopen = function () {
         self._connected = true;
-        self.dispatchEvent(new Event(Event.OPEN, false, false));
+        self.dispatchEvent(new this.securityDomain.flash.events.Event(Event.OPEN, false, false));
       };
       session.onhttpstatus = function (location: string, httpStatus: number, httpHeaders: any) {
-        var httpStatusEvent = new HTTPStatusEvent(HTTPStatusEvent.HTTP_STATUS, false, false, httpStatus);
+        var httpStatusEvent = new this.securityDomain.flash.events.HTTPStatusEvent(HTTPStatusEvent.HTTP_STATUS,
+                                                                                   false, false, httpStatus);
         var headers = [];
         httpHeaders.split(/(?:\n|\r?\n)/g).forEach(function (h) {
           var m = /^([^:]+): (.*)$/.exec(h);
@@ -122,7 +124,8 @@ module Shumway.AVMX.AS.flash.net {
       };
       session.onclose = function () {
         self._connected = false;
-        self.dispatchEvent(new Event(Event.COMPLETE, false, false));
+        self.dispatchEvent(new this.securityDomain.flash.events.Event(Event.COMPLETE, false,
+                                                                      false));
       };
       session.open(request._toFileRequest());
       this._session = session;

@@ -486,16 +486,7 @@ module Shumway.AVMX.AS.flash.display {
      * Dispatches a frame event on all instances of DisplayObjects.
      */
     static _broadcastFrameEvent(type: string): void {
-      var event: flash.events.Event;
-      switch (type) {
-        case events.Event.ENTER_FRAME:
-        case events.Event.FRAME_CONSTRUCTED:
-        case events.Event.EXIT_FRAME:
-        case events.Event.RENDER:
-          // TODO: Fire RENDER events only for objects on the display list.
-          event = this.securityDomain.flash.events.Event.axClass.getBroadcastInstance(type);
-      }
-      release || assert (event, "Invalid frame event.");
+      var event = this.securityDomain.flash.events.Event.axClass.getBroadcastInstance(type);
       this.securityDomain.flash.events.EventDispatcher.axClass.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 

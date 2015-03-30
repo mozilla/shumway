@@ -482,50 +482,51 @@ module Shumway.AVMX.AS.flash.net {
     processVideoEvent(eventType: VideoPlaybackEvent, data: any): void {
       this._videoStream.processVideoPlaybackEvent(eventType, data);
 
+      var netStatusEventCtor = this.securityDomain.flash.events.NetStatusEvent;
       switch (eventType) {
         case VideoPlaybackEvent.Initialized:
           flash.media.SoundMixer._updateSoundSource(this);
           break;
         case VideoPlaybackEvent.PlayStart:
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Play.Start", level: "status"})));
           break;
         case VideoPlaybackEvent.PlayStop:
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Buffer.Flush", level: "status"})));
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Play.Stop", level: "status"})));
 
           flash.media.SoundMixer._unregisterSoundSource(this);
           break;
         case VideoPlaybackEvent.BufferFull:
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Buffer.Full", level: "status"})));
           break;
         case VideoPlaybackEvent.BufferEmpty:
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Buffer.Empty", level: "status"})));
           break;
         case VideoPlaybackEvent.Error:
           var code = data.code === 4 ? "NetStream.Play.NoSupportedTrackFound" :
               data.code === 3 ? "NetStream.Play.FileStructureInvalid" : "NetStream.Play.StreamNotFound";
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
             false, false, wrapJSObject({code: code, level: "error"})));
           break;
         case VideoPlaybackEvent.Pause:
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Pause.Notify", level: "status"})));
           break;
         case VideoPlaybackEvent.Unpause:
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Unpause.Notify", level: "status"})));
           break;
         case VideoPlaybackEvent.Seeking:
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Seek.Notify", level: "status"})));
           break;
         case VideoPlaybackEvent.Seeked:
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new netStatusEventCtor(netStatusEventCtor.NET_STATUS,
             false, false, wrapJSObject({code: "NetStream.Seek.Complete", level: "status"})));
           break;
         case VideoPlaybackEvent.Metadata:
