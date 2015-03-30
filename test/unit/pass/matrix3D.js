@@ -236,23 +236,23 @@
     u.normalize();
     m.appendRotation( 120, u, p );
     
-    var v  = m.deltaTransformVector( Vector3D.X_AXIS );
-    Assert.assertTrue( "New rotation transform on x axis", v.nearEquals( Vector3D.Y_AXIS, e ) );
+    var v  = m.deltaTransformVector( Vector3D.axClass.X_AXIS );
+    Assert.assertTrue( "New rotation transform on x axis", v.nearEquals( Vector3D.axClass.Y_AXIS, e ) );
     
-    v = m.deltaTransformVector( Vector3D.Y_AXIS );
-    Assert.assertTrue( "New rotation transform on y axis", v.nearEquals( Vector3D.Z_AXIS, e ) );
+    v = m.deltaTransformVector( Vector3D.axClass.Y_AXIS );
+    Assert.assertTrue( "New rotation transform on y axis", v.nearEquals( Vector3D.axClass.Z_AXIS, e ) );
     
-    v = m.deltaTransformVector( Vector3D.Z_AXIS );
-    Assert.assertTrue( "New rotation transform on z axis", v.nearEquals( Vector3D.X_AXIS, e ) );
+    v = m.deltaTransformVector( Vector3D.axClass.Z_AXIS );
+    Assert.assertTrue( "New rotation transform on z axis", v.nearEquals( Vector3D.axClass.X_AXIS, e ) );
     
-    var q  = m.transformVector( p.add( Vector3D.X_AXIS ) );
-    Assert.assertTrue( "New rotation transform on p + x axis", q.nearEquals( p.add( Vector3D.Y_AXIS ), e ) );
+    var q  = m.transformVector( p.add( Vector3D.axClass.X_AXIS ) );
+    Assert.assertTrue( "New rotation transform on p + x axis", q.nearEquals( p.add( Vector3D.axClass.Y_AXIS ), e ) );
     
-    q = m.transformVector( p.add( Vector3D.Y_AXIS ) );
-    Assert.assertTrue( "New rotation transform on p + y axis", q.nearEquals( p.add( Vector3D.Z_AXIS ), e ) );
+    q = m.transformVector( p.add( Vector3D.axClass.Y_AXIS ) );
+    Assert.assertTrue( "New rotation transform on p + y axis", q.nearEquals( p.add( Vector3D.axClass.Z_AXIS ), e ) );
     
-    q = m.transformVector( p.add( Vector3D.Z_AXIS ) );
-    Assert.assertTrue( "New rotation transform on p + z axis", q.nearEquals( p.add( Vector3D.X_AXIS ), e ) );
+    q = m.transformVector( p.add( Vector3D.axClass.Z_AXIS ) );
+    Assert.assertTrue( "New rotation transform on p + z axis", q.nearEquals( p.add( Vector3D.axClass.X_AXIS ), e ) );
   }
 
   function append() 

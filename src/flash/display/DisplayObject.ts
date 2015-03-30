@@ -1615,7 +1615,7 @@ module Shumway.AVMX.AS.flash.display {
         changed = this._filters.length > 0;
         this._filters.length = 0;
       } else {
-        var bitmapFilterClass = this.securityDomain.flash.filters.BitmapFilter;
+        var bitmapFilterClass = this.securityDomain.flash.filters.BitmapFilter.axClass;
         this._filters = value.map(function (x: flash.filters.BitmapFilter) {
           if (!bitmapFilterClass.axIsType(x)) {
             this.securityDomain.throwError('TypeError', Errors.ParamTypeError, '0', 'Filter');
