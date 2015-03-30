@@ -351,7 +351,6 @@ module Shumway.Shell {
       Shumway.FileLoadingService.instance.setBaseUrl(file);
       runSWF(read(file, 'binary'));
     }
-    writer.writeLn("Running: " + file);
     microTaskQueue.run(runDuration, runCount, true);
   }
 

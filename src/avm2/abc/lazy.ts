@@ -292,11 +292,9 @@ module Shumway.AVMX {
       var metadata = methodInfo.getNativeMetadata();
       if (metadata) {
         method = AS.getNative(metadata.getValueAt(0));
-        release || assert(method, "Cannot find native: " + methodTraitInfo);
         method = createGlobalNative(method, scope.object.securityDomain);
       } else {
         method = AS.getMethodOrAccessorNative(methodTraitInfo);
-        release || assert(method, "Cannot find native: " + methodTraitInfo);
       }
     } else {
       method = function () {
@@ -314,9 +312,20 @@ module Shumway.AVMX {
   }
 
   function createGlobalNative(native: Function, securityDomain: SecurityDomain) {
-    var args: any[] = [securityDomain];
+
     return function() {
-      return native.apply(this, args.concat(arguments));
+      switch (arguments.length) {
+        case 0: return native(securityDomain);
+        case 1: return native(securityDomain, arguments[0]);
+        case 2: return native(securityDomain, arguments[0], arguments[1]);
+        case 3: return native(securityDomain, arguments[0], arguments[1], arguments[2]);
+        default:
+          var args: any[] = [securityDomain];
+          for (var i = 0; i < arguments.length; i++) {
+            args.push(arguments[i]);
+          }
+          return native.apply(this, args);
+      }
     }
   }
 

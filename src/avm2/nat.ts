@@ -63,8 +63,10 @@ module Shumway.AVMX.AS {
    */
   export module Natives {
 
-    export function print(expression: any, arg1?: any, arg2?: any, arg3?: any, arg4?: any) {
-      jsGlobal.print.apply(null, arguments);
+    export function print(securityDomain: SecurityDomain, expression: any, arg1?: any, arg2?: any,
+                          arg3?: any, arg4?: any) {
+      var args = Array.prototype.slice.call(arguments, 1);
+      jsGlobal.print.apply(null, args);
     }
 
     export function debugBreak(v: any) {
