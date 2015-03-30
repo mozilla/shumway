@@ -573,7 +573,7 @@ module Shumway.AVMX {
             --(<number []>local)[u30()];
             break;
           case Bytecode.TYPEOF:
-            stack[stack.length - 1] = asTypeOf(stack[stack.length - 1], securityDomain);
+            stack[stack.length - 1] = axTypeOf(stack[stack.length - 1], securityDomain);
             break;
           case Bytecode.NOT:
             stack[stack.length - 1] = !stack[stack.length - 1];
