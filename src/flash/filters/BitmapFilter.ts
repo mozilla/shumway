@@ -20,6 +20,8 @@ module Shumway.AVMX.AS.flash.filters {
 
   export class BitmapFilter extends ASObject {
 
+    static axClass: typeof BitmapFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 

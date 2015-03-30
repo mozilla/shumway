@@ -17,7 +17,9 @@
 module Shumway.AVMX.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ShaderFilter extends flash.filters.BitmapFilter {
-    
+
+    static axClass: typeof ShaderFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 

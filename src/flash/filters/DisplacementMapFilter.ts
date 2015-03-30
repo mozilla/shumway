@@ -21,6 +21,8 @@ module Shumway.AVMX.AS.flash.filters {
 
   export class DisplacementMapFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof DisplacementMapFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
