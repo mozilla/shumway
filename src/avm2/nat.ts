@@ -499,6 +499,14 @@ module Shumway.AVMX.AS {
     static classInitializer() {
       var proto: any = this.dPrototype;
       var asProto: any = ASArray.prototype;
+
+      // option flags for sort and sortOn
+      defineNonEnumerableProperty(this, '$BgCASEINSENSITIVE', 1);
+      defineNonEnumerableProperty(this, '$BgDESCENDING', 2);
+      defineNonEnumerableProperty(this, '$BgUNIQUESORT', 4);
+      defineNonEnumerableProperty(this, '$BgRETURNINDEXEDARRAY', 8);
+      defineNonEnumerableProperty(this, '$BgNUMERIC', 16);
+
       addPrototypeFunctionAlias(proto, "$Bgpush", asProto.push);
       addPrototypeFunctionAlias(proto, "$Bgpop", asProto.pop);
       addPrototypeFunctionAlias(proto, "$Bgshift", asProto.shift);
@@ -1115,36 +1123,42 @@ module Shumway.AVMX.AS {
     }
   }
 
-  export class ASInt extends ASObject {
+  export class ASInt extends ASNumber {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
 
     static classInitializer() {
       var proto: any = this.dPrototype;
-      var asProto: any = ASInt.prototype;
+      var asProto: any = ASNumber.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
     }
-
-    value: number;
   }
 
-  export class ASUint extends ASObject {
+  export class ASUint extends ASNumber {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
 
     static classInitializer() {
       var proto: any = this.dPrototype;
-      var asProto: any = ASUint.prototype;
+      var asProto: any = ASNumber.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
     }
-
-    value: number;
   }
 
   export class ASMath extends ASObject {
     public static classNatives: any [] = [Math];
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$BgE', Math.E);
+      defineNonEnumerableProperty(this, '$BgLN10', Math.LN10);
+      defineNonEnumerableProperty(this, '$BgLN2', Math.LN2);
+      defineNonEnumerableProperty(this, '$BgLOG10E', Math.LOG10E);
+      defineNonEnumerableProperty(this, '$BgLOG2E', Math.LOG2E);
+      defineNonEnumerableProperty(this, '$BgPI', Math.PI);
+      defineNonEnumerableProperty(this, '$BgSQRT1_2', Math.SQRT2);
+      defineNonEnumerableProperty(this, '$BgSQRT2', Math.SQRT2);
+    }
   }
 
   export class ASDate extends ASObject {

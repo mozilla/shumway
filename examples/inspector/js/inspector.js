@@ -193,7 +193,7 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
   if (filename.endsWith(".abc")) {
     Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Shell).then(function (securityDomain) {
       function runAbc(file, buffer) {
-        securityDomain.executeABC(new Shumway.AVMX.ABCFile(new Uint8Array(buffer)));
+        securityDomain.system.loadAndExecuteABC(new Shumway.AVMX.ABCFile(new Uint8Array(buffer)));
       }
       if (!buffer) {
         new BinaryFileReader(file).readAll(null, function(buffer) {
