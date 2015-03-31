@@ -1213,7 +1213,7 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgsetUTCMinutes', asProto.setUTCMinutes);
       addPrototypeFunctionAlias(proto, '$BgsetUTCSeconds', asProto.setUTCSeconds);
       addPrototypeFunctionAlias(proto, '$BgsetUTCMilliseconds', asProto.setUTCMilliseconds);
-    }
+    };
 
     static parse(s): number {
       notImplemented("Date::parse");
@@ -1225,9 +1225,19 @@ module Shumway.AVMX.AS {
       return -1;
     }
 
-    constructor() {
+
+    constructor(yearOrTimevalue: any, month: number, date: number = 1, hour: number = 0, minute: number = 0, second: number = 0, millisecond: number = 0) {
       super();
-      this.value = new Date();
+      switch (arguments.length) {
+        case  0: this.value = new Date(); break;
+        case  1: this.value = new Date(yearOrTimevalue); break;
+        case  2: this.value = new Date(yearOrTimevalue, month); break;
+        case  3: this.value = new Date(yearOrTimevalue, month, date); break;
+        case  4: this.value = new Date(yearOrTimevalue, month, date, hour); break;
+        case  5: this.value = new Date(yearOrTimevalue, month, date, hour, minute); break;
+        case  6: this.value = new Date(yearOrTimevalue, month, date, hour, minute, second); break;
+        default: this.value = new Date(yearOrTimevalue, month, date, hour, minute, second, millisecond); break;
+      }
     }
 
     toString()              { return this.value.toString(); }
@@ -1259,47 +1269,47 @@ module Shumway.AVMX.AS {
     getTimezoneOffset()     { return this.value.getTimezoneOffset(); }
     getTime()               { return this.value.getTime(); }
 
-    setFullYear(year=undefined, month=undefined, date=undefined) {
-      this.value.setFullYear(year, month, date);
+    setFullYear(year: number, month: number, date: number) {
+      this.value.setFullYear.apply(this.value, arguments);
     }
-    setMonth(month=undefined, date=undefined) {
-      this.value.setMonth(month, date);
+    setMonth(month: number, date: number) {
+      this.value.setMonth.apply(this.value, arguments);
     }
-    setDate(date=undefined) {
-      this.value.setDate(date);
+    setDate(date: number) {
+      this.value.setDate.apply(this.value, arguments);
     }
-    setHours(hour=undefined, min=undefined, sec=undefined, ms=undefined) {
-      this.value.setHours(hour, min, sec, ms);
+    setHours(hour: number, minutes: number, seconds: number, milliseconds: number) {
+      this.value.setHours.apply(this.value, arguments);
     }
-    setMinutes(min=undefined, sec=undefined, ms=undefined) {
-      this.value.setMinutes(min, sec, ms);
+    setMinutes(minutes: number, seconds: number, milliseconds: number) {
+      this.value.setMinutes.apply(this.value, arguments);
     }
-    setSeconds(sec=undefined, ms=undefined) {
-      this.value.setSeconds(sec, ms);
+    setSeconds(seconds: number, milliseconds: number) {
+      this.value.setSeconds.apply(this.value, arguments);
     }
-    setMilliseconds(ms=undefined) {
-      this.value.setMilliseconds(ms);
+    setMilliseconds(milliseconds: number) {
+      this.value.setMilliseconds.apply(this.value, arguments);
     }
-    setUTCFullYear(year=undefined, month=undefined, date=undefined) {
-      this.value.setUTCFullYear(year, month, date);
+    setUTCFullYear(year: number, month: number, date: number) {
+      this.value.setUTCFullYear.apply(this.value, arguments);
     }
-    setUTCMonth(month=undefined, date=undefined) {
-      this.value.setUTCMonth(month, date);
+    setUTCMonth(month: number, date: number) {
+      this.value.setUTCMonth.apply(this.value, arguments);
     }
-    setUTCDate(date=undefined) {
-      this.value.setUTCDate(date);
+    setUTCDate(date: number) {
+      this.value.setUTCDate.apply(this.value, arguments);
     }
-    setUTCHours(hour=undefined, min=undefined, sec=undefined, ms=undefined) {
-      this.value.setUTCHours(hour, min, sec, ms);
+    setUTCHours(hour: number, minutes: number, seconds: number, milliseconds: number) {
+      this.value.setUTCHours.apply(this.value, arguments);
     }
-    setUTCMinutes(min=undefined, sec=undefined, ms=undefined) {
-      this.value.setUTCMinutes(min, sec, ms);
+    setUTCMinutes(minutes: number, seconds: number, milliseconds: number) {
+      this.value.setUTCMinutes.apply(this.value, arguments);
     }
-    setUTCSeconds(sec=undefined, ms=undefined) {
-      this.value.setUTCSeconds(sec, ms);
+    setUTCSeconds(seconds: number, milliseconds: number) {
+      this.value.setUTCSeconds.apply(this.value, arguments);
     }
-    setUTCMilliseconds(ms=undefined) {
-      this.value.setUTCMilliseconds(ms);
+    setUTCMilliseconds(milliseconds: number) {
+      this.value.setUTCMilliseconds.apply(this.value, arguments);
     }
 
     get fullYear(): number {
