@@ -458,6 +458,8 @@ module Shumway.AVMX {
     define(Bytecode.DEBUG, "aeae");
     define(Bytecode.DEBUGLINE, "e");
     define(Bytecode.DEBUGFILE, "e");
+    define(Bytecode.BKPTLINE, "e");
+    define(Bytecode.TIMESTAMP, "");
 
     // define(Bytecode.UNUSED_6B, "", Flags.NONE);
     // define(Bytecode.UNUSED_DE, "", Flags.NONE);
