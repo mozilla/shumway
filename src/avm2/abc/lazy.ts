@@ -268,13 +268,8 @@ module Shumway.AVMX {
             // Only non-const slots need to be writable. Everything else is fixed.
             runtimeTrait.writable = true;
             var slotTrait = <SlotTraitInfo>trait;
-            if ((slotTrait).hasDefaultValue()) {
-              runtimeTrait.value = slotTrait.getDefaultValue();
-            } else {
-              // TODO: Throw error for const without default.
-              // TODO: check if the default value needs to differ by type.
-              runtimeTrait.value = undefined;
-            }
+            runtimeTrait.value = slotTrait.getDefaultValue();
+            // TODO: Throw error for const without default.
             result.addSlotTrait(slotTrait);
         }
       }
@@ -481,6 +476,14 @@ module Shumway.AVMX {
     }
   }
 
+  var typeDefaultValues = {
+    __proto__: null,
+    $BgNumber: NaN,
+    $Bgint: 0,
+    $Bguint: 0,
+    $BgBoolean: false
+  };
+
   export class SlotTraitInfo extends TraitInfo {
     constructor(
       abc: ABCFile,
@@ -494,11 +497,21 @@ module Shumway.AVMX {
       super(abc, kind, name);
     }
 
-    hasDefaultValue(): boolean {
-      return this.defaultValueKind >= 0;
+    resolve() {
+      super.resolve();
+      if (typeof this.type === "number") {
+        this.type = this.abc.getMultiname(<number>this.type);
+      }
     }
 
     getDefaultValue(): any {
+      if (this.defaultValueKind === -1) {
+        if (this.type === null) {
+          return undefined;
+        }
+        var value = typeDefaultValues[(<Multiname>this.type).getMangledName()];
+        return value === undefined ? null : value;
+      }
       return this.abc.getConstant(this.defaultValueKind, this.defaultValueIndex);
     }
   }
@@ -653,6 +666,14 @@ module Shumway.AVMX {
 
     isInterface(): boolean {
       return !!(this.flags & CONSTANT.ClassInterface);
+    }
+
+    isSealed(): boolean {
+      return !!(this.flags & CONSTANT.ClassSealed);
+    }
+
+    isFinal(): boolean {
+      return !!(this.flags & CONSTANT.ClassFinal);
     }
   }
 
@@ -1079,6 +1100,10 @@ module Shumway.AVMX {
       }
       var nsHash = Namespace._hashNamespace(this.type, this.uri, this.prefix);
       return this._mangledName = Shumway.StringUtilities.variableLengthEncodeInt32(nsHash);
+    }
+
+    public isPublic(): boolean {
+      return this.type === NamespaceType.Public;
     }
 
     public static PUBLIC = new Namespace(null, NamespaceType.Public, "");
