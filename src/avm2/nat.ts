@@ -157,7 +157,7 @@ module Shumway.AVMX.AS {
     static axResolveMultiname: (mn: Multiname) => any;
     static axHasProperty: (mn: Multiname) => boolean;
     static axDeleteProperty: (mn: Multiname) => boolean;
-    static axCallProperty: (mn: Multiname, argArray: any []) => any;
+    static axCallProperty: (mn: Multiname, argArray: any [], isLex: boolean) => any;
     static axCallSuper: (mn: Shumway.AVMX.Multiname, scope: Shumway.AVMX.Scope, argArray: any []) => any;
     static axConstructProperty: (mn: Multiname, args: any []) => any;
     static axHasPropertyInternal: (mn: Multiname) => boolean;
@@ -334,8 +334,8 @@ module Shumway.AVMX.AS {
       return delete this[mn.getPublicMangledName()];
     }
 
-    axCallProperty(mn: Multiname, args: any []): any {
-      return this[this.axResolveMultiname(mn)].axApply(this, args);
+    axCallProperty(mn: Multiname, args: any [], isLex: boolean): any {
+      return this[this.axResolveMultiname(mn)].axApply(isLex ? null : this, args);
     }
 
     axCallSuper(mn: Multiname, scope: Scope, args: any []): any {

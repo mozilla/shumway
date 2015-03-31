@@ -389,7 +389,7 @@ module Shumway.AVMX {
             popNameInto(stack, abc.getMultiname(index), rn);
             stack[stack.length - 1] = peekBox().axConstructProperty(rn, args);
             break;
-          // case Bytecode.CALLPROPLEX:
+          case Bytecode.CALLPROPLEX:
           case Bytecode.CALLPROPERTY:
           case Bytecode.CALLPROPVOID:
             index = u30();
@@ -397,7 +397,7 @@ module Shumway.AVMX {
             popManyInto(stack, argCount, args);
             popNameInto(stack, abc.getMultiname(index), rn);
             var receiver = stack[stack.length - 1];
-            result = box(receiver).axCallProperty(rn, args);
+            result = box(receiver).axCallProperty(rn, args, bc === Bytecode.CALLPROPLEX);
             if (bc === Bytecode.CALLPROPVOID) {
               stack.length--;
             } else {
