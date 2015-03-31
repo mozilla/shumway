@@ -1473,6 +1473,9 @@ module Shumway.AVMX.AS {
       if (pattern === undefined) {
         pattern = source = '';
       } else if (this.securityDomain.AXRegExp.axIsType(pattern)) {
+        if (flags) {
+          this.securityDomain.throwError("TypeError", Errors.RegExpFlagsArgumentError);
+        }
         source = pattern.source;
         pattern = pattern.value;
       } else {
@@ -1481,9 +1484,10 @@ module Shumway.AVMX.AS {
         source = pattern.replace(/(^|^[\/]|(?:\\\\)+)\//g, '$1\\/');
         pattern = this._parse(source);
         if (flags) {
-          var f = '';
-          for (var i = 0; i < flags.length; i++) {
-            var flag = flags[i];
+          var f = flags;
+          flags = '';
+          for (var i = 0; i < f.length; i++) {
+            var flag = f[i];
             switch (flag) {
               case 's':
                 // With the s flag set, . will match the newline character.
@@ -1498,12 +1502,12 @@ module Shumway.AVMX.AS {
               case 'm':
                 // Only keep valid flags since an ECMAScript compatible RegExp implementation will
                 // throw on invalid ones. We have to avoid that in ActionScript.
-                f += flag;
+                flags += flag;
             }
           }
         }
       }
-      this.value = new RegExp(pattern, f);
+      this.value = new RegExp(pattern, flags);
       this._source = source;
     }
 
