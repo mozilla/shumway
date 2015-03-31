@@ -20,7 +20,6 @@ declare module Shumway.AVM1 {
   import flash = Shumway.AVMX.AS.flash;
 
   export class AVM1ActionsData {
-    constructor(actionsBlock: Uint8Array, name: string, parent: AVM1ActionsData);
   }
   export class AVM1Context {
     static create(loaderInfo: flash.display.LoaderInfo): AVM1Context;

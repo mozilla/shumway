@@ -50,11 +50,35 @@ module Shumway.GFX {
      */
     private _renderableParents: Renderable [] = [];
 
+    public get parents(): Shape [] {
+      return this._parents;
+    }
+
     public addParent(frame: Shape) {
       release || assert(frame);
       var index = indexOf(this._parents, frame);
       release || assert(index < 0);
       this._parents.push(frame);
+    }
+
+    /**
+     * Checks if this node will be reached by the renderer.
+     */
+    public willRender(): boolean {
+      var parents = this._parents;
+      for (var i = 0; i < parents.length; i++) {
+        var node = <Node>parents[i];
+        while (node) {
+          if (node.isType(NodeType.Stage)) {
+            return true;
+          }
+          if (!node.hasFlags(NodeFlags.Visible)) {
+            break;
+          }
+          node = node._parent;
+        }
+      }
+      return false;
     }
 
     public addRenderableParent(renderable: Renderable) {
@@ -138,10 +162,12 @@ module Shumway.GFX {
     }
 
     /**
-     * Render source content in the specified |context|. If specified, the rectangular |cullBounds| can be used to cull parts of the shape
-     * for better performance. If specified, |Region| indicates whether the shape's fills should be used as clip regions instead.
+     * Render source content in the specified |context| or add one or more paths to |clipPath| if specified.
+     * If specified, the rectangular |cullBounds| can be used to cull parts of the shape for better performance.
+     * If |paintStencil| is |true| then we must not create any alpha values, and also not paint any strokes.
      */
-    render(context: CanvasRenderingContext2D, ratio: number, cullBounds?: Shumway.GFX.Geometry.Rectangle, paintClip?: boolean, paintpaintStencil?: boolean): void {
+    render(context: CanvasRenderingContext2D, ratio: number, cullBounds?: Shumway.GFX.Geometry.Rectangle,
+           clipPath?: Path2D, paintStencil?: boolean): void {
 
     }
   }
@@ -201,6 +227,7 @@ module Shumway.GFX {
       element.addEventListener("seeking", elementEventHandler);
       element.addEventListener("seeked", elementEventHandler);
       element.addEventListener("canplay", elementEventHandler);
+      element.style.position = 'absolute';
 
       this._video = element;
       this._videoEventHandler = elementEventHandler;
@@ -223,13 +250,13 @@ module Shumway.GFX {
     }
 
     play() {
-      this._video.play();
       this._state = RenderableVideoState.Playing;
+      this._video.play();
     }
 
     pause() {
-      this._video.pause();
       this._state = RenderableVideoState.Paused;
+      this._video.pause();
     }
 
     private _handleVideoEvent(evt: Event) {
@@ -244,6 +271,10 @@ module Shumway.GFX {
           type = VideoPlaybackEvent.Unpause;
           break;
         case "pause":
+          if (this._state === RenderableVideoState.Playing) {
+            element.play();
+            return;
+          }
           type = VideoPlaybackEvent.Pause;
           this._pauseHappening = true;
           break;
@@ -313,9 +344,7 @@ module Shumway.GFX {
       switch (type) {
         case VideoControlEvent.Init:
           videoElement.src = data.url;
-          if (this._state > RenderableVideoState.Idle) {
-            this.play();
-          }
+          this.play();
           this._notifyNetStream(VideoPlaybackEvent.Initialized, null);
           break;
         case VideoControlEvent.EnsurePlaying:
@@ -389,6 +418,19 @@ module Shumway.GFX {
     public static checkForVideoUpdates() {
       var renderables = RenderableVideo._renderableVideos;
       for (var i = 0; i < renderables.length; i++) {
+        var renderable = renderables[i];
+        // Check if the node will be reached by the renderer.
+        if (renderable.willRender()) {
+          // If the nodes video element isn't already on the video layer, mark the node as invalid to
+          // make sure the video element will be added the next time the renderer reaches it.
+          if (!renderable._video.parentElement) {
+            renderable.invalidate();
+          }
+          renderable._video.style.zIndex = renderable.parents[0].depth + '';
+        } else if (renderable._video.parentElement) {
+          // The nodes video element should be removed if no longer visible.
+          renderable._dispatchEvent(NodeEventType.RemovedFromStage);
+        }
         renderables[i].checkForUpdate();
       }
     }
@@ -637,16 +679,16 @@ module Shumway.GFX {
     }
 
     /**
-     * If |paintClip| is |true| then we must call |clip| instead of |fill|. We also cannot call
-     * |save| or |restore| because those functions reset the current clipping region. It looks
-     * like Flash ignores strokes when clipping so we can also ignore stroke paths when computing
+     * If |clipPath| is not |null| then we must add all paths to |clipPath| instead of drawing to |context|.
+     * We also cannot call |save| or |restore| because those functions reset the current clipping region.
+     * It looks like Flash ignores strokes when clipping so we can also ignore stroke paths when computing
      * the clip region.
      *
      * If |paintStencil| is |true| then we must not create any alpha values, and also not paint
      * any strokes.
      */
     render(context: CanvasRenderingContext2D, ratio: number, cullBounds: Rectangle,
-           paintClip: boolean = false, paintStencil: boolean = false): void
+           clipPath: Path2D = null, paintStencil: boolean = false): void
     {
       var paintStencilStyle = release ? '#000000' : '#FF4981';
       context.fillStyle = context.strokeStyle = 'transparent';
@@ -661,14 +703,14 @@ module Shumway.GFX {
                                               context['imageSmoothingEnabled'] =
                                               path.smoothImage;
         if (path.type === PathType.Fill) {
-          if (paintClip) {
-            context.clip(path.path, 'evenodd');
+          if (clipPath) {
+            clipPath.addPath(path.path, (<any>context).currentTransform);
           } else {
             context.fillStyle = paintStencil ? paintStencilStyle : path.style;
             context.fill(path.path, 'evenodd');
             context.fillStyle = 'transparent';
           }
-        } else if (!paintClip && !paintStencil) {
+        } else if (!clipPath && !paintStencil) {
           context.strokeStyle = path.style;
           var lineScaleMode = LineScaleMode.Normal;
           if (path.strokeProperties) {
@@ -1153,7 +1195,7 @@ module Shumway.GFX {
   }
 
   export class TextLine {
-    private static _measureContext = document.createElement('canvas').getContext('2d');
+    private static _measureContext: CanvasRenderingContext2D;
 
     x: number = 0;
     y: number = 0;
@@ -1164,10 +1206,18 @@ module Shumway.GFX {
     align: number = 0;
     runs: TextRun[] = [];
 
+    private static _getMeasureContext(): CanvasRenderingContext2D {
+      if (!TextLine._measureContext) {
+        TextLine._measureContext = document.createElement('canvas').getContext('2d');
+      }
+      return TextLine._measureContext;
+    }
+
     addRun(font: string, fillStyle: string, text: string, underline: boolean) {
       if (text) {
-        TextLine._measureContext.font = font;
-        var width = TextLine._measureContext.measureText(text).width | 0;
+        var measureContext = TextLine._getMeasureContext();
+        measureContext.font = font;
+        var width = measureContext.measureText(text).width | 0;
         this.runs.push(new TextRun(font, fillStyle, text, width, underline));
         this.width += width;
       }
@@ -1181,7 +1231,7 @@ module Shumway.GFX {
       currentLine.width = 0;
       currentLine.runs = [];
 
-      var measureContext = TextLine._measureContext;
+      var measureContext = TextLine._getMeasureContext();
 
       for (var i = 0; i < runs.length; i++) {
         var run = runs[i];
@@ -1214,20 +1264,22 @@ module Shumway.GFX {
               spaceLeft = maxWidth - wordWidth;
               if (spaceLeft < 0) {
                 var k = chunk.length;
-                var t;
-                var w;
-                do {
+                var t = chunk;
+                var w = wordWidth;
+                while (k > 1) {
                   k--;
-                  if (k < 1) throw new Error('Shall never happen: bad maxWidth?'); // FIXME
                   t = chunk.substr(0, k);
                   w = measureContext.measureText(t).width | 0;
-                } while (w > maxWidth);
+                  if (w <= maxWidth) {
+                    break;
+                  }
+                }
                 run.text = t;
                 run.width = w;
                 chunk = chunk.substr(k);
                 wordWidth = measureContext.measureText(chunk).width | 0;
               }
-            } while (spaceLeft < 0);
+            } while (chunk && spaceLeft < 0);
           } else {
             spaceLeft = spaceLeft - wordWidth;
           }
@@ -1475,7 +1527,9 @@ module Shumway.GFX {
               break;
           }
           this._textBounds.setElements(rect.x - 2, rect.y - 2, rect.w + 4, rect.h + 4);
+          bounds.w = availableWidth + 4;
         }
+        bounds.x = rect.x - 2;
         bounds.h = baseLinePos + 4;
       } else {
         this._textBounds = bounds;

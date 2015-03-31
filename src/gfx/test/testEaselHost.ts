@@ -56,13 +56,6 @@ module Shumway.GFX.Test {
       }, [bytes.buffer]);
     }
 
-    onExernalCallback(request) {
-      this._worker.postSyncMessage({
-        type: 'externalCallback',
-        request: request
-      });
-    }
-
     onDisplayParameters(params: DisplayParameters) {
       this._worker.postMessage({
         type: 'displayParameters',
@@ -98,7 +91,15 @@ module Shumway.GFX.Test {
       return Promise.resolve(buffer);
     }
 
-    private _onWorkerMessage(e, async: boolean = true): any {
+    private _sendRegisterFontOrImageResponse(requestId: number, result: any) {
+      this._worker.postMessage({
+        type: 'registerFontOrImageResponse',
+        requestId: requestId,
+        result: result
+      });
+    }
+
+    _onWorkerMessage(e, async: boolean = true): any {
       var data = e.data;
       if (typeof data !== 'object' || data === null) {
         return;
@@ -119,17 +120,13 @@ module Shumway.GFX.Test {
         case 'frame':
           this.processFrame();
           break;
-        case 'external':
-          e.result = this.processExternalCommand(data.command);
-          e.handled = true;
-          break;
         case 'videoControl':
           e.result = this.processVideoControl(data.id, data.eventType, data.data);
           e.handled = true;
           break;
         case 'registerFontOrImage':
           this.processRegisterFontOrImage(data.syncId, data.symbolId, data.assetType, data.data,
-                                          data.resolve);
+            this._sendRegisterFontOrImageResponse.bind(this, data.requestId));
           e.handled = true;
           break;
         case 'fscommand':

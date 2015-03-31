@@ -31,22 +31,27 @@ module Shumway.SWF.Parser {
       if (character.eob)
         break;
       var characterItem = dictionary[character.symbolId];
-      release || characterItem || Debug.warning('undefined character in button ' + tag.id);
-      var cmd = {
-        symbolId: characterItem.id,
-        code: SwfTag.CODE_PLACE_OBJECT,
-        depth: character.depth,
-        flags: character.matrix ? PlaceObjectFlags.HasMatrix : 0,
-        matrix: character.matrix
-      };
-      if (character.stateUp)
-        states.up.push(cmd);
-      if (character.stateOver)
-        states.over.push(cmd);
-      if (character.stateDown)
-        states.down.push(cmd);
-      if (character.stateHitTest)
-        states.hitTest.push(cmd);
+      // The Flash Player ignores references to undefined symbols here. So should we.
+      // TODO: What should happen if the symbol gets defined later in the file?
+      if (characterItem) {
+        var cmd = {
+          symbolId: characterItem.id,
+          code: SwfTag.CODE_PLACE_OBJECT,
+          depth: character.depth,
+          flags: character.matrix ? PlaceObjectFlags.HasMatrix : 0,
+          matrix: character.matrix
+        };
+        if (character.stateUp)
+          states.up.push(cmd);
+        if (character.stateOver)
+          states.over.push(cmd);
+        if (character.stateDown)
+          states.down.push(cmd);
+        if (character.stateHitTest)
+          states.hitTest.push(cmd);
+      } else {
+        release || Debug.warning('undefined character in button ' + tag.id);
+      }
     }
     var button = {
       type: 'button',

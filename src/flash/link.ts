@@ -85,13 +85,20 @@ interface ISecurityDomain {
     }
     net: {
       URLRequest: typeof flashPackage.net.URLRequest;
+      URLRequestHeader: typeof flashPackage.net.URLRequestHeader;
+      URLStream: typeof flashPackage.net.URLStream;
+      NetStreamInfo: typeof flashPackage.net.NetStreamInfo;
+      URLVariables: typeof flashPackage.net.URLVariables;
     }
     utils: {
       ByteArray: typeof flashPackage.utils.ByteArray;
     }
     media: {
       Sound: typeof flashPackage.media.Sound;
+      SoundChannel: typeof flashPackage.media.SoundChannel;
+      SoundTransform: typeof flashPackage.media.SoundTransform;
       Video: typeof flashPackage.media.Video;
+      ID3Info: typeof flashPackage.media.ID3Info;
     }
     system: {
       LoaderContext: typeof flashPackage.system.LoaderContext;

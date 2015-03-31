@@ -22,8 +22,7 @@ var viewerPlayerglobalInfo = {
   catalog: "../../build/playerglobal/playerglobal.json"
 };
 
-var avm2Root = SHUMWAY_ROOT + "avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var builtinPath = "../../build/libs/builtin.abc";
 
 window.print = function (msg) {
   window.parent.postMessage({type: 'console-log', msg: msg}, '*');
@@ -33,48 +32,7 @@ Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
 };
 
-Shumway.FileLoadingService.instance = {
-  createSession: function () {
-    return {
-      open: function (request) {
-        var self = this;
-        var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
-        console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
-        var BinaryFileReader = Shumway.BinaryFileReader;
-        new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
-          function (data, progress) {
-            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
-          },
-          function (e) { self.onerror(e); },
-          self.onopen,
-          self.onclose,
-          self.onhttpstatus);
-      }
-    };
-  },
-  setBaseUrl: function (url) {
-    var baseUrl;
-    if (typeof URL !== 'undefined') {
-      baseUrl = new URL(url, document.location.href).href;
-    } else {
-      var a = document.createElement('a');
-      a.href = url || '#';
-      a.setAttribute('style', 'display: none;');
-      document.body.appendChild(a);
-      baseUrl = a.href;
-      document.body.removeChild(a);
-    }
-    Shumway.FileLoadingService.instance.baseUrl = baseUrl;
-    return baseUrl;
-  },
-  resolveUrl: function (url) {
-    var base = Shumway.FileLoadingService.instance.baseUrl || '';
-    if (typeof URL !== 'undefined') {
-      return new URL(url, base).href;
-    }
-    return combineUrl(base, url);
-  }
-};
+Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
 
 // Combines two URLs. The baseUrl shall be absolute URL. If the url is an
 // absolute URL, it will be returned as is.
@@ -121,14 +79,19 @@ function runSwfPlayer(flashParams) {
   var movieParams = flashParams.movieParams;
   var objectParams = flashParams.objectParams;
   var movieUrl = flashParams.url;
-  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (securitDomain) {
+  Shumway.SystemResourcesLoadingService.instance =
+    new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, viewerPlayerglobalInfo);
+  Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
     function runSWF(file) {
-      var player = new Shumway.Player.Window.WindowPlayer(securitDomain, window, window.parent);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, window.parent);
+      var player = new Shumway.Player.Player(securityDomain, gfxService);
       player.stageAlign = 'tl';
       player.stageScale = 'noscale';
       player.load(file);
     }
-    file = Shumway.FileLoadingService.instance.setBaseUrl(baseUrl);
+
+    Shumway.FileLoadingService.instance.init(baseUrl);
+    movieUrl = Shumway.FileLoadingService.instance.resolveUrl(movieUrl);
     if (asyncLoading) {
       runSWF(movieUrl);
     } else {

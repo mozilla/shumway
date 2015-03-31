@@ -70,7 +70,8 @@ module Shumway.AVM1.Lib {
       for (var i = 0; i < actions.length; i++) {
         var action = actions[i];
         if (!action.actionsBlock) {
-          action.actionsBlock = new AVM1.AVM1ActionsData(action.actionsData, 's' + nativeButton._symbol.id + 'e' + i);
+          action.actionsBlock = context.actionsDataFactory.createActionsData(
+            action.actionsData, 's' + nativeButton._symbol.id + 'e' + i);
         }
         if (action.keyCode) {
           requiredListeners['keyDown'] = this._keyDownHandler.bind(this);

@@ -443,7 +443,7 @@ module Shumway.AVMX {
     return object;
   }
 
-  export function asTypeOf(x: any, securityDomain: SecurityDomain): string {
+  export function axTypeOf(x: any, securityDomain: SecurityDomain): string {
     // ABC doesn't box primitives, so typeof returns the primitive type even when
     // the value is new'd
     if (x) {
@@ -458,8 +458,14 @@ module Shumway.AVMX {
   }
 
   function axCoerce(x: any) {
-    // FIXME
-    return null;
+    if (isNullOrUndefined(x)) {
+      return null;
+    }
+    if (!this.axIsType(x)) {
+      this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, x,
+                                     this.classInfo.instanceInfo.getClassName());
+    }
+    return x;
   }
 
   function axIsTypeObject(x: any) {

@@ -174,6 +174,7 @@ module Shumway.AVMX.AS.flash.media {
       this._rightPeak = 0;
       this._pcmData = null;
       this._soundTransform = new flash.media.SoundTransform();
+      this._playing = false;
 
       //this._element = symbol._element || null;
       //if (this._element) {
@@ -196,6 +197,7 @@ module Shumway.AVMX.AS.flash.media {
     _sound: flash.media.Sound;
     private _audioChannel;
     private _pcmData;
+    private _playing: boolean;
 
     // JS -> AS Bindings
     
@@ -224,6 +226,9 @@ module Shumway.AVMX.AS.flash.media {
     get rightPeak(): number {
       return this._rightPeak;
     }
+    get playing(): boolean {
+      return this._playing;
+    }
     stop(): void {
       if (this._element) {
         SoundMixer._unregisterSoundSource(this);
@@ -231,11 +236,13 @@ module Shumway.AVMX.AS.flash.media {
         this._element.loop = false;
         this._element.pause();
         this._element.removeAttribute('src');
+        this._playing = false;
       }
       if (this._audioChannel) {
         SoundMixer._unregisterSoundSource(this);
 
         this._audioChannel.stop();
+        this._playing = false;
       }
     }
     _playSoundDataViaAudio(soundData, startTime, loops) {
@@ -278,11 +285,13 @@ module Shumway.AVMX.AS.flash.media {
       element.addEventListener("ended", function ended() {
         SoundMixer._unregisterSoundSource(self);
 
+        self._element = null;
+        self._playing = false;
         self.dispatchEvent(new this.securityDomain.flash.events.Event("soundComplete", false,
                                                                       false));
-        self._element = null;
       });
       this._element = element;
+      this._playing = true;
 
       SoundMixer._updateSoundSource(this);
     }
@@ -304,6 +313,7 @@ module Shumway.AVMX.AS.flash.media {
           SoundMixer._unregisterSoundSource(this);
 
           self._audioChannel.stop();
+          self._playing = false;
           self.dispatchEvent(new this.securityDomain.flash.events.Event("soundComplete", false,
                                                                         false));
           return;
@@ -330,6 +340,7 @@ module Shumway.AVMX.AS.flash.media {
         self._position = position / soundData.sampleRate / soundData.channels * 1000;
       };
       this._audioChannel.start();
+      this._playing = true;
 
       SoundMixer._updateSoundSource(this);
     }

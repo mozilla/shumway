@@ -101,7 +101,7 @@ module Shumway.AVMX.AS.flash.media {
       this._length = 0;
       this._bytesTotal = 0;
       this._bytesLoaded = 0;
-      this._id3 = new flash.media.ID3Info();
+      this._id3 = new this.securityDomain.flash.media.ID3Info();
 
       this._isURLInaccessible = false;
       this._isBuffering = false;
@@ -152,10 +152,11 @@ module Shumway.AVMX.AS.flash.media {
     }
     play(startTime: number = 0, loops: number /*int*/ = 0, sndTransform: flash.media.SoundTransform = null): flash.media.SoundChannel {
       startTime = +startTime; loops = loops | 0;
-      var channel = new flash.media.SoundChannel();
+      var channel = new this.securityDomain.flash.media.SoundChannel();
       channel._sound = this;
       channel._soundTransform = isNullOrUndefined(sndTransform) ?
-        new flash.media.SoundTransform() : sndTransform;
+                                new this.securityDomain.flash.media.SoundTransform() :
+                                sndTransform;
       this._playQueue.push({
         channel: channel,
         startTime: startTime
@@ -200,8 +201,8 @@ module Shumway.AVMX.AS.flash.media {
       var bufferTime: number = context ? context.bufferTime : 1000;
 
       var _this = this;
-      var stream = this._stream = new flash.net.URLStream();
-      var data = new flash.utils.ByteArray();
+      var stream = this._stream = new this.securityDomain.flash.net.URLStream();
+      var data = new this.securityDomain.flash.utils.ByteArray();
       var dataPosition = 0;
       var playUsingWebAudio = webAudioOption.value;
       var mp3DecodingSession = null;

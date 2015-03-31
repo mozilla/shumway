@@ -1,6 +1,6 @@
 /**
  * Compiled with:
- * java -jar utils/asc.jar -import src/avm2/generated/playerGlobal/playerGlobal.abc -swf Loadee,600,600 test/swfs/as3-loader/Loadee.as
+ * java -jar utils/asc.jar -import build/playerglobal/playerglobal-single.abc -swf Loadee,600,600 test/swfs/as3-loader/Loadee.as
  */
 
 package {

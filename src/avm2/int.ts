@@ -573,7 +573,7 @@ module Shumway.AVMX {
             --(<number []>local)[u30()];
             break;
           case Bytecode.TYPEOF:
-            stack[stack.length - 1] = asTypeOf(stack[stack.length - 1], securityDomain);
+            stack[stack.length - 1] = axTypeOf(stack[stack.length - 1], securityDomain);
             break;
           case Bytecode.NOT:
             stack[stack.length - 1] = !stack[stack.length - 1];
@@ -653,12 +653,14 @@ module Shumway.AVMX {
           case Bytecode.DECREMENT_I:
             stack[stack.length - 1] = (stack[stack.length - 1] | 0) - 1;
             break;
-          //case Bytecode.inclocal_i:
-          //  locals[bc.index] = (locals[bc.index] | 0) + 1;
-          //  break;
-          //case Bytecode.declocal_i:
-          //  locals[bc.index] = (locals[bc.index] | 0) - 1;
-          //  break;
+          case Bytecode.INCLOCAL_I:
+            index = u30();
+            (<number []>local)[index] = ((<number []>local)[index] | 0) + 1;
+            break;
+          case Bytecode.DECLOCAL_I:
+            index = u30();
+            (<number []>local)[index] = ((<number []>local)[index] | 0) - 1;
+            break;
           case Bytecode.NEGATE_I:
             // Negation entails casting to int
             stack[stack.length - 1] = ~stack[stack.length - 1];

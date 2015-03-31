@@ -22,6 +22,7 @@ module Shumway {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import ColorUtilities = Shumway.ColorUtilities;
   import flash = Shumway.AVMX.AS.flash;
+  import altTieBreakRound = Shumway.NumberUtilities.altTieBreakRound;
 
   export enum TextContentFlags {
     None            = 0x0000,
@@ -237,6 +238,7 @@ module Shumway {
                 break;
               }
             case 'br':
+            case 'sbr':
               if (multiline) {
                 handler.chars('\r');
               }
@@ -462,8 +464,8 @@ module Shumway {
       } else {
         textRunData.writeUTF(font._fontFamily);
       }
-      textRunData.writeInt(font.ascent * size);
-      textRunData.writeInt(font.descent * size);
+      textRunData.writeInt(altTieBreakRound(font.ascent * size, true));
+      textRunData.writeInt(altTieBreakRound(font.descent * size, false));
       textRunData.writeInt(textFormat.leading === null ? font.leading * size : +textFormat.leading);
       // For embedded fonts, always set bold and italic to false. They're fully identified by name.
       var bold: boolean = false;

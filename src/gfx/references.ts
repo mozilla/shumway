@@ -33,6 +33,9 @@
 /// <reference path='easelHost.ts' />
 /// <reference path='window/windowEaselHost.ts' />
 /// <reference path='test/testEaselHost.ts' />
+/// <reference path='test/recorder.ts' />
+/// <reference path='test/playbackEaselHost.ts' />
+/// <reference path='test/recordingEaselHost.ts' />
 
 interface WebGLActiveInfo {
   location: any;

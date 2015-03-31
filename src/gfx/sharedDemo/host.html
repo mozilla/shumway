@@ -73,6 +73,7 @@
   var containers = [];
   function createEasel(container) {
     var easel = new Easel(container, Backend.Canvas2D);
+    easel.startRendering();
     easels.push(easel);
     map.set(container, easel);
     var stage = easel.stage;
@@ -86,6 +87,7 @@
 
   function destroyEasel(container) {
     var easel = map.get(container);
+    easel.stopRendering();
     var i = easels.indexOf(easel);
     easels.splice(i, 1);
   }

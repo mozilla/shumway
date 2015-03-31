@@ -401,7 +401,6 @@
 ///<reference path='ui/Multitouch.ts' />
 ///<reference path='ui/MultitouchInputMode.ts' />
 
-// ///<reference path='utils/CompressionAlgorithm.ts' />
 ///<reference path='utils/Endian.ts' />
 ///<reference path='utils/IDataInput2.ts' />
 ///<reference path='utils/IDataOutput2.ts' />

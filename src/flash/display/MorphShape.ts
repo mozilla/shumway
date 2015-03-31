@@ -25,8 +25,8 @@ module Shumway.AVMX.AS.flash.display {
     static classInitializer: any = null;
     _symbol: MorphShapeSymbol;
     applySymbol() {
+      this._initializeFields();
       release || assert(this._symbol);
-      this._graphics = null;
       this._setStaticContentFromSymbol(this._symbol);
       // TODO: Check what do do if the computed bounds of the graphics object don't
       // match those given by the symbol.

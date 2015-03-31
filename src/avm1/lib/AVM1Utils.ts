@@ -417,8 +417,8 @@ module Shumway.AVM1.Lib {
       var swfEvent = events[j];
       var actionsData;
       if (swfEvent.actionsData) {
-        actionsData = new AVM1.AVM1ActionsData(swfEvent.actionsData,
-            's' + placeObjectTag.symbolId + 'e' + j);
+        actionsData = context.actionsDataFactory.createActionsData(
+          swfEvent.actionsData, 's' + placeObjectTag.symbolId + 'e' + j);
         swfEvent.actionsData = null;
         swfEvent.compiled = actionsData;
       } else {

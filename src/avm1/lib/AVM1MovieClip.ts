@@ -848,8 +848,8 @@ module Shumway.AVM1.Lib {
         scripts = frameScripts[frameIndex + 1] = [];
         this.as3Object.addFrameScript(frameIndex, this._boundExecuteFrameScripts);
       }
-      var actionsData = new AVM1.AVM1ActionsData(actionsBlock,
-          'f' + frameIndex + 'i' + scripts.length);
+      var actionsData = this.context.actionsDataFactory.createActionsData(
+        actionsBlock, 'f' + frameIndex + 'i' + scripts.length);
       scripts.push(actionsData);
     }
 
@@ -873,8 +873,8 @@ module Shumway.AVM1.Lib {
 
         var avm1Context = self.context;
         for (var i = 0; i < actionsBlocks.length; i++) {
-          var actionsData = new AVM1.AVM1ActionsData(actionsBlocks[i].actionsData,
-              'f' + frameIndex + 'i' + i);
+          var actionsData = avm1Context.actionsDataFactory.createActionsData(
+            actionsBlocks[i].actionsData, 'f' + frameIndex + 'i' + i);
           avm1Context.executeActions(actionsData, self);
         }
       }

@@ -197,4 +197,25 @@ module Shumway.Remoting {
     screenWidth: number;
     screenHeight: number;
   }
+
+  export interface IGFXServiceObserver {
+    displayParameters(displayParameters: DisplayParameters);
+    focusEvent(data: any);
+    keyboardEvent(data: any);
+    mouseEvent(data: any);
+    videoEvent(id: number, eventType: VideoPlaybackEvent, data: any);
+  }
+
+  export interface IGFXService {
+    addObserver(observer: IGFXServiceObserver);
+    removeObserver(observer: IGFXServiceObserver);
+
+    update(updates: DataBuffer, assets: Array<DataBuffer>): void;
+    updateAndGet(updates: DataBuffer, assets: Array<DataBuffer>): any;
+    frame(): void;
+    videoControl(id: number, eventType: VideoControlEvent, data: any): any;
+    registerFont(syncId: number, data: any): Promise<any>;
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any>;
+    fscommand(command: string, args: string): void;
+  }
 }

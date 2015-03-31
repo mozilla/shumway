@@ -68,7 +68,7 @@ var manifestHash = crypto.createHash('sha1').update(manifestData).digest('hex');
 var manifestHashEntryName = '$(BUILDHOME)/manifest.json';
 var manifestUpdated = fs.statSync('manifest.json').mtime.valueOf();
 var ascjar = '../utils/asc.jar';
-var buildasc = './avm2/generated/builtin/builtin.abc';
+var buildasc = '../build/libs/builtin.abc';
 
 // switching working dir to ./src
 process.chdir('../../src');

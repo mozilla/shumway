@@ -210,6 +210,10 @@ module Shumway.AVMX.AS {
       // Nop.
     }
 
+    static init() {
+      // Nop.
+    }
+
     // REDUX:
     static instanceConstructorNoInitialize = function () { notImplemented("instanceConstructorNoInitialize => axInitialize"); };
 
@@ -496,6 +500,14 @@ module Shumway.AVMX.AS {
     static classInitializer() {
       var proto: any = this.dPrototype;
       var asProto: any = ASArray.prototype;
+
+      // option flags for sort and sortOn
+      defineNonEnumerableProperty(this, '$BgCASEINSENSITIVE', 1);
+      defineNonEnumerableProperty(this, '$BgDESCENDING', 2);
+      defineNonEnumerableProperty(this, '$BgUNIQUESORT', 4);
+      defineNonEnumerableProperty(this, '$BgRETURNINDEXEDARRAY', 8);
+      defineNonEnumerableProperty(this, '$BgNUMERIC', 16);
+
       addPrototypeFunctionAlias(proto, "$Bgpush", asProto.push);
       addPrototypeFunctionAlias(proto, "$Bgpop", asProto.pop);
       addPrototypeFunctionAlias(proto, "$Bgshift", asProto.shift);
@@ -1115,35 +1127,46 @@ module Shumway.AVMX.AS {
     }
   }
 
-  export class ASInt extends ASObject {
+  export class ASInt extends ASNumber {
+    public static staticNatives: any [] = [Math];
+    public static instanceNatives: any [] = [Number.prototype];
+
     static classInitializer() {
       var proto: any = this.dPrototype;
-      var asProto: any = ASInt.prototype;
+      var asProto: any = ASNumber.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
     }
-
-    value: number;
   }
 
-  export class ASUint extends ASObject {
+  export class ASUint extends ASNumber {
+    public static staticNatives: any [] = [Math];
+    public static instanceNatives: any [] = [Number.prototype];
+
     static classInitializer() {
       var proto: any = this.dPrototype;
-      var asProto: any = ASUint.prototype;
+      var asProto: any = ASNumber.prototype;
       addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
     }
-
-    value: number;
   }
 
   export class ASMath extends ASObject {
     public static classNatives: any [] = [Math];
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$BgE', Math.E);
+      defineNonEnumerableProperty(this, '$BgLN10', Math.LN10);
+      defineNonEnumerableProperty(this, '$BgLN2', Math.LN2);
+      defineNonEnumerableProperty(this, '$BgLOG10E', Math.LOG10E);
+      defineNonEnumerableProperty(this, '$BgLOG2E', Math.LOG2E);
+      defineNonEnumerableProperty(this, '$BgPI', Math.PI);
+      defineNonEnumerableProperty(this, '$BgSQRT1_2', Math.SQRT2);
+      defineNonEnumerableProperty(this, '$BgSQRT2', Math.SQRT2);
+    }
   }
 
   export class ASDate extends ASObject {
-    public static staticNatives: any [] = [Date];
-    public static instanceNatives: any [] = [Date.prototype];
+    value: Date;
 
     static classInitializer: any = function() {
       var proto: any = this.dPrototype;
@@ -1208,6 +1231,194 @@ module Shumway.AVMX.AS {
 
     constructor() {
       super();
+      this.value = new Date();
+    }
+
+    toString()              { return this.value.toString(); }
+    valueOf()               { return this.value.valueOf(); }
+    setTime(value = 0)      { this.value.setTime(value); }
+    toDateString()          { return this.value.toDateString(); }
+    toTimeString()          { return this.value.toTimeString(); }
+    toLocaleString()        { return this.value.toLocaleString(); }
+    toLocaleDateString()    { return this.value.toLocaleDateString(); }
+    toLocaleTimeString()    { return this.value.toLocaleTimeString(); }
+    toUTCString()           { return this.value.toUTCString(); }
+
+    getUTCFullYear()        { return this.value.getUTCFullYear(); }
+    getUTCMonth()           { return this.value.getUTCMonth(); }
+    getUTCDate()            { return this.value.getUTCDate(); }
+    getUTCDay()             { return this.value.getUTCDay(); }
+    getUTCHours()           { return this.value.getUTCHours(); }
+    getUTCMinutes()         { return this.value.getUTCMinutes(); }
+    getUTCSeconds()         { return this.value.getUTCSeconds(); }
+    getUTCMilliseconds()    { return this.value.getUTCMilliseconds(); }
+    getFullYear()           { return this.value.getFullYear(); }
+    getMonth()              { return this.value.getMonth(); }
+    getDate()               { return this.value.getDate(); }
+    getDay()                { return this.value.getDay(); }
+    getHours()              { return this.value.getHours(); }
+    getMinutes()            { return this.value.getMinutes(); }
+    getSeconds()            { return this.value.getSeconds(); }
+    getMilliseconds()       { return this.value.getMilliseconds(); }
+    getTimezoneOffset()     { return this.value.getTimezoneOffset(); }
+    getTime()               { return this.value.getTime(); }
+
+    setFullYear(year=undefined, month=undefined, date=undefined) {
+      this.value.setFullYear(year, month, date);
+    }
+    setMonth(month=undefined, date=undefined) {
+      this.value.setMonth(month, date);
+    }
+    setDate(date=undefined) {
+      this.value.setDate(date);
+    }
+    setHours(hour=undefined, min=undefined, sec=undefined, ms=undefined) {
+      this.value.setHours(hour, min, sec, ms);
+    }
+    setMinutes(min=undefined, sec=undefined, ms=undefined) {
+      this.value.setMinutes(min, sec, ms);
+    }
+    setSeconds(sec=undefined, ms=undefined) {
+      this.value.setSeconds(sec, ms);
+    }
+    setMilliseconds(ms=undefined) {
+      this.value.setMilliseconds(ms);
+    }
+    setUTCFullYear(year=undefined, month=undefined, date=undefined) {
+      this.value.setUTCFullYear(year, month, date);
+    }
+    setUTCMonth(month=undefined, date=undefined) {
+      this.value.setUTCMonth(month, date);
+    }
+    setUTCDate(date=undefined) {
+      this.value.setUTCDate(date);
+    }
+    setUTCHours(hour=undefined, min=undefined, sec=undefined, ms=undefined) {
+      this.value.setUTCHours(hour, min, sec, ms);
+    }
+    setUTCMinutes(min=undefined, sec=undefined, ms=undefined) {
+      this.value.setUTCMinutes(min, sec, ms);
+    }
+    setUTCSeconds(sec=undefined, ms=undefined) {
+      this.value.setUTCSeconds(sec, ms);
+    }
+    setUTCMilliseconds(ms=undefined) {
+      this.value.setUTCMilliseconds(ms);
+    }
+
+    get fullYear(): number {
+      return this.value.getFullYear();
+    }
+    set fullYear(value: number) {
+      this.value.setFullYear(value);
+    }
+
+    get month(): number {
+      return this.value.getMonth();
+    }
+    set month(value: number) {
+      this.value.setMonth(value);
+    }
+
+    get date(): number {
+      return this.value.getDate();
+    }
+    set date(value: number) {
+      this.value.setDate(value);
+    }
+
+    get hours(): number {
+      return this.value.getHours();
+    }
+    set hours(value: number) {
+      this.value.setHours(value);
+    }
+
+    get minutes(): number {
+      return this.value.getMinutes();
+    }
+    set minutes(value: number) {
+      this.value.setMinutes(value);
+    }
+
+    get seconds(): number {
+      return this.value.getSeconds();
+    }
+    set seconds(value: number) {
+      this.value.setSeconds(value);
+    }
+
+    get milliseconds(): number {
+      return this.value.getMilliseconds();
+    }
+    set milliseconds(value: number) {
+      this.value.setMilliseconds(value);
+    }
+
+    get fullYearUTC(): number {
+      return this.value.getUTCFullYear();
+    }
+    set fullYearUTC(value: number) {
+      this.value.setUTCFullYear(value);
+    }
+
+    get monthUTC(): number {
+      return this.value.getUTCMonth();
+    }
+    set monthUTC(value: number) {
+      this.value.setUTCMonth(value);
+    }
+
+    get dateUTC(): number {
+      return this.value.getUTCDate();
+    }
+    set dateUTC(value: number) {
+      this.value.setUTCDate(value);
+    }
+
+    get hoursUTC(): number {
+      return this.value.getUTCHours();
+    }
+    set hoursUTC(value: number) {
+      this.value.setUTCHours(value);
+    }
+
+    get minutesUTC(): number {
+      return this.value.getUTCMinutes();
+    }
+    set minutesUTC(value: number) {
+      this.value.setUTCMinutes(value);
+    }
+
+    get secondsUTC(): number {
+      return this.value.getUTCSeconds();
+    }
+    set secondsUTC(value: number) {
+      this.value.setUTCSeconds(value);
+    }
+
+    get millisecondsUTC(): number {
+      return this.value.getUTCMilliseconds();
+    }
+    set millisecondsUTC(value: number) {
+      this.value.setUTCMilliseconds(value);
+    }
+
+    get time(): number {
+      return this.value.getTime();
+    }
+    set time(value: number) {
+      this.value.setTime(value);
+    }
+
+    get timezoneOffset(): number {
+      return this.value.getTimezoneOffset();
+    }
+    get day(): number {
+      return this.value.getDay();
+    }
+    get dayUTC(): number {
+      return this.value.getUTCDay();
     }
   }
 
@@ -1470,54 +1681,71 @@ module Shumway.AVMX.AS {
     /**
      * Transforms a JS value into an AS value.
      */
-    static transformJSValueToAS(value, deep: boolean) {
-      // REDUX:
-      //if (typeof value !== "object") {
-      //  return value;
-      //}
-      //if (isNullOrUndefined(value)) {
-      //  return value;
-      //}
-      //var keys = Object.keys(value);
-      //var result = Array.isArray(value) ? [] : {};
-      //for (var i = 0; i < keys.length; i++) {
-      //  var v = value[keys[i]];
-      //  if (deep) {
-      //    v = ASJSON.transformJSValueToAS(v, true);
-      //  }
-      //  result.axSetPublicProperty(keys[i], v);
-      //}
-      //return result;
-      return null;
+    static transformJSValueToAS(securityDomain: SecurityDomain, value, deep: boolean) {
+      release || assert(typeof value !== 'function');
+      if (typeof value !== "object") {
+        return value;
+      }
+      if (isNullOrUndefined(value)) {
+        return value;
+      }
+      if (Array.isArray(value)) {
+        var list = [];
+        for (var i = 0; i < value.length; i++) {
+          var entry = value[i];
+          var axValue = deep ? ASJSON.transformJSValueToAS(securityDomain, entry, true) : entry;
+          list.push(axValue);
+        }
+        return securityDomain.createArray(list);
+      }
+      var keys = Object.keys(value);
+      var result = securityDomain.createObject();
+      for (var i = 0; i < keys.length; i++) {
+        var v = value[keys[i]];
+        if (deep) {
+          v = ASJSON.transformJSValueToAS(securityDomain, v, true);
+        }
+        result.axSetPublicProperty(keys[i], v);
+      }
+      return result;
     }
 
     /**
      * Transforms an AS value into a JS value.
      */
-    static transformASValueToJS(value, deep: boolean) {
-      // REDUX
-      //if (typeof value !== "object") {
-      //  return value;
-      //}
-      //if (isNullOrUndefined(value)) {
-      //  return value;
-      //}
-      //var keys = Object.keys(value);
-      //var result = Array.isArray(value) ? [] : {};
-      //for (var i = 0; i < keys.length; i++) {
-      //  var key = keys[i];
-      //  var jsKey = key;
-      //  if (!isNumeric(key)) {
-      //    jsKey = Multiname.getNameFromPublicQualifiedName(key);
-      //  }
-      //  var v = value[key];
-      //  if (deep) {
-      //    v = ASJSON.transformASValueToJS(v, true);
-      //  }
-      //  result[jsKey] = v;
-      //}
-      //return result;
-      return null;
+    static transformASValueToJS(securityDomain: SecurityDomain, value, deep: boolean) {
+      if (typeof value !== "object") {
+        return value;
+      }
+      if (isNullOrUndefined(value)) {
+        return value;
+      }
+      if (securityDomain.AXArray.axIsType(value)) {
+        var resultList = [];
+        var list = value.value;
+        for (var i = 0; i < list.length; i++) {
+          var entry = list[i];
+          var jsValue = deep ? ASJSON.transformASValueToJS(securityDomain, entry, true) : entry;
+          resultList.push(jsValue);
+        }
+        return resultList;
+      }
+      var keys = Object.keys(value);
+      var resultObject = {};
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var jsKey = key;
+        if (!isNumeric(key)) {
+          release || assert(key.indexOf('$Bg') === 0);
+          jsKey = key.substr(3);
+        }
+        var v = value[key];
+        if (deep) {
+          v = ASJSON.transformASValueToJS(securityDomain, v, true);
+        }
+        resultObject[jsKey] = v;
+      }
+      return resultObject;
     }
 
     private static parseCore(text: string): Object {
@@ -1550,8 +1778,8 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["builtin.as$0.MethodClosure"] = ASMethodClosure;
     builtinNativeClasses["Namespace"]           = ASNamespace;
     builtinNativeClasses["Number"]              = ASNumber;
-    builtinNativeClasses["Int"]                 = ASInt;
-    builtinNativeClasses["UInt"]                = ASUint;
+    builtinNativeClasses["int"]                 = ASInt;
+    builtinNativeClasses["uint"]                = ASUint;
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
 

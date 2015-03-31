@@ -437,19 +437,36 @@ module Shumway {
       ArrayUtilities.pushMany(dst, src);
     }
 
+    export interface TypedArray {
+      buffer: ArrayBuffer;
+      length: number;
+      set: (array: TypedArray, offset?: number) => void;
+      subarray: (begin: number, end?: number) => TypedArray;
+    }
+
     /**
      * Makes sure that a typed array has the requested capacity. If required, it creates a new
      * instance of the array's class with a power-of-two capacity at least as large as required.
-     *
-     * Note: untyped because generics with constraints are pretty annoying.
      */
-    export function ensureTypedArrayCapacity(array: any, capacity: number): any {
+    export function ensureTypedArrayCapacity<T extends TypedArray>(array: T, capacity: number): T {
       if (array.length < capacity) {
         var oldArray = array;
-        array = new array.constructor(Shumway.IntegerUtilities.nearestPowerOfTwo(capacity));
+        array = new (<any>array).constructor(Shumway.IntegerUtilities.nearestPowerOfTwo(capacity));
         array.set(oldArray, 0);
       }
       return array;
+    }
+
+    export function memCopy<T extends TypedArray>(destination: T, source: T, doffset: number = 0,
+                                                  soffset: number = 0, length: number = 0) {
+      if (soffset > 0 || (length > 0 && length < source.length)) {
+        if (length <= 0) {
+          length = source.length - soffset;
+        }
+        destination.set(source.subarray(soffset, soffset + length), doffset);
+      } else {
+        destination.set(source, doffset);
+      }
     }
 
     export class ArrayWriter {
@@ -1056,7 +1073,8 @@ module Shumway {
         d = chunk & 63; // 63 = 2^6 - 1
 
         // Convert the raw binary segments to the appropriate ASCII encoding
-        base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d];
+        base64 += concat4(encodings[a], encodings[b], encodings[c],
+                          encodings[d]);
       }
 
       // Deal with the remaining bytes and padding
@@ -1068,7 +1086,7 @@ module Shumway {
         // Set the 4 least significant bits to zero
         b = (chunk & 3) << 4; // 3 = 2^2 - 1
 
-        base64 += encodings[a] + encodings[b] + '==';
+        base64 += concat3(encodings[a], encodings[b], '==');
       } else if (byteRemainder == 2) {
         chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1];
 
@@ -1078,7 +1096,7 @@ module Shumway {
         // Set the 2 least significant bits to zero
         c = (chunk & 15) << 2; // 15 = 2^4 - 1
 
-        base64 += encodings[a] + encodings[b] + encodings[c] + '=';
+        base64 += concat4(encodings[a], encodings[b], encodings[c], '=');
       }
       return base64;
     }
@@ -1125,9 +1143,7 @@ module Shumway {
       return _encoding[n];
     }
 
-    export function fromEncoding(s) {
-      var c = s.charCodeAt(0);
-      var e = 0;
+    export function fromEncoding(c) {
       if (c >= 65 && c <= 90) {
         return c - 65;
       } else if (c >= 97 && c <= 122) {
@@ -1143,11 +1159,11 @@ module Shumway {
     }
 
     export function variableLengthDecodeInt32(s) {
-      var l = StringUtilities.fromEncoding(s[0]);
+      var l = StringUtilities.fromEncoding(s.charCodeAt(0));
       var n = 0;
       for (var i = 0; i < l; i++) {
         var offset = ((l - i - 1) * 6);
-        n |= StringUtilities.fromEncoding(s[1 + i]) << offset;
+        n |= StringUtilities.fromEncoding(s.charCodeAt(1 + i)) << offset;
       }
       return n;
     }
@@ -1423,9 +1439,6 @@ module Shumway {
 
   polyfillWeakMap();
 
-  declare var netscape;
-  declare var Components;
-
   export interface IReferenceCountable {
     _referenceCount: number;
     _addReference();
@@ -1438,7 +1451,7 @@ module Shumway {
     private _map: WeakMap<T, T>;
     private _list: T [];
     constructor() {
-      if (typeof netscape !== "undefined" && netscape.security.PrivilegeManager) {
+      if (typeof ShumwayCom !== "undefined" && ShumwayCom.getWeakMapKeys) {
         this._map = new WeakMap<T, T>();
       } else {
         this._list = [];
@@ -1472,10 +1485,8 @@ module Shumway {
     }
     forEach(callback: (value: T) => void) {
       if (this._map) {
-        if (typeof netscape !== "undefined") {
-          netscape.security.PrivilegeManager.enablePrivilege("UniversalXPConnect");
-        }
-        Components.utils.nondeterministicGetWeakMapKeys(this._map).forEach(function (value: T) {
+        var keys: Array<T> = ShumwayCom.getWeakMapKeys(this._map);
+        keys.forEach(function (value: T) {
           if (value._referenceCount !== 0) {
             callback(value);
           }
@@ -1540,6 +1551,17 @@ module Shumway {
       if (Math.abs(value % 1) === 0.5) {
         var floor = Math.floor(value);
         return floor % 2 === 0 ? floor : Math.ceil(value);
+      }
+      return Math.round(value);
+    }
+
+    /**
+     * Rounds *.5 up on even occurrences, down on odd occurrences.
+     * See https://en.wikipedia.org/wiki/Rounding#Alternating_tie-breaking for details.
+     */
+    export function altTieBreakRound(value: number, even: boolean): number {
+      if (Math.abs(value % 1) === 0.5 && !even) {
+        return value | 0;
       }
       return Math.round(value);
     }
@@ -3419,13 +3441,27 @@ module Shumway {
 
   export interface IFileLoadingService {
     createSession(): FileLoadingSession;
-    setBaseUrl(url: string);
     resolveUrl(url: string): string;
     navigateTo(url: string, target: string);
   }
 
   export module FileLoadingService {
     export var instance: IFileLoadingService;
+  }
+
+  export enum SystemResourceId {
+    BuiltinAbc = 0,
+    PlayerglobalAbcs = 1,
+    PlayerglobalManifest = 2,
+    ShellAbc = 3
+  }
+
+  export interface ISystemResourcesLoadingService {
+    load(id: SystemResourceId): Promise<any>;
+  }
+
+  export module SystemResourcesLoadingService {
+    export var instance: ISystemResourcesLoadingService;
   }
 
   export function registerCSSFont(id: number, buffer: ArrayBuffer, forceFontInit: boolean) {
@@ -3477,12 +3513,14 @@ module Shumway {
     };
   }
 
-  export class ClipboardService {
-    public static instance: ClipboardService = null;
+  export interface IClipboardService {
+    setClipboard(data: string): void;
+  }
 
-    public setClipboard(data: string): void {
-      Debug.abstractMethod("public ClipboardService::setClipboard");
-    }
+  export module ClipboardService {
+    export var instance: IClipboardService = {
+      setClipboard(data: string) { Debug.notImplemented('setClipboard'); }
+    };
   }
 
   export class Callback {

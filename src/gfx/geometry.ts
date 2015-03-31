@@ -663,13 +663,21 @@ module Shumway.GFX.Geometry {
       return this._data[5];
     }
 
-    private static _svg: any = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    private static _svg: SVGSVGElement;
+
 
     constructor (a: number, b: number, c: number, d: number, tx: number, ty: number) {
       this._data = new Float64Array(6);
       this._type = MatrixType.Unknown;
       this.setElements(a, b, c, d, tx, ty);
       Matrix.allocationCount ++;
+    }
+
+    private static _createSVGMatrix(): SVGMatrix  {
+      if (!Matrix._svg) {
+        Matrix._svg = <any>document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      }
+      return Matrix._svg.createSVGMatrix();
     }
 
     setElements (a: number, b: number, c: number, d: number, tx: number, ty: number) {
@@ -1173,7 +1181,7 @@ module Shumway.GFX.Geometry {
 
     public toSVGMatrix(): SVGMatrix {
       var m = this._data;
-      var matrix: SVGMatrix = Matrix._svg.createSVGMatrix();
+      var matrix: SVGMatrix = Matrix._createSVGMatrix();
       matrix.a = m[0];
       matrix.b = m[1];
       matrix.c = m[2];
@@ -1199,11 +1207,11 @@ module Shumway.GFX.Geometry {
     }
 
     public static createIdentitySVGMatrix(): SVGMatrix {
-      return Matrix._svg.createSVGMatrix();
+      return Matrix._createSVGMatrix();
     }
 
     public static createSVGMatrixFromArray(array: number []): SVGMatrix {
-      var matrix: SVGMatrix = Matrix._svg.createSVGMatrix();
+      var matrix: SVGMatrix = Matrix._createSVGMatrix();
       matrix.a = array[0];
       matrix.b = array[1];
       matrix.c = array[2];

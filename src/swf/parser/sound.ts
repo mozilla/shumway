@@ -115,7 +115,7 @@ module Shumway.SWF.Parser {
           16, !(new Uint8Array(new Uint16Array([1]).buffer))[0]);
         break;
       default:
-        throw new Error('Unsupported audio format: ' + tag.soundFormat);
+        Debug.warning('Unsupported audio format: ' + tag.soundFormat);
     }
 
     var sound = {
