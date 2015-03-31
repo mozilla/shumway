@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/mozilla/shumway.svg?branch=nat)](https://travis-ci.org/mozilla/shumway)
+[![Build Status](https://travis-ci.org/mozilla/shumway.svg?branch=master)](https://travis-ci.org/mozilla/shumway)
 
 # Shumway
 

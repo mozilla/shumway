@@ -130,7 +130,7 @@ module Shumway.SWF.Parser {
   export function readString($bytes, $stream, length) {
     var codes: Uint8Array;
     var pos = $stream.pos;
-    if (length) {
+    if (length > -1) {
       codes = $bytes.subarray(pos, pos += length);
     } else {
       length = 0;

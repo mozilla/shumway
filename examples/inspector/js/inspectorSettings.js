@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
+Shumway.Settings.shumwayOptions.setSettings(loadSettingsFromStorage(Shumway.Settings.ROOT));
+
+
 var LC_KEY_INSPECTOR_SETTINGS = "Inspector Options";
 
-var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
+var state = loadSettingsFromStorage(LC_KEY_INSPECTOR_SETTINGS);
 
 var stateDefaults = {
   folderOpen: true,
@@ -35,7 +38,11 @@ var stateDefaults = {
   scale: 'noscale',
   width: -1,
   height: -1,
-  loaderURL: ''
+  loaderURL: '',
+  remoteEnabled: false,
+  remoteSWF: '',
+  remoteAutoReload: true,
+  recordingLimit: 0
 };
 
 for (var option in stateDefaults) {
@@ -55,8 +62,26 @@ if (state.profileStartup && state.profileStartupDuration > 0) {
   profiler.start(performance.now(), state.profileStartupDuration, false);
 }
 
+function loadSettingsFromStorage(key) {
+  try {
+    var lsValue = window.localStorage[key];
+    if (lsValue) {
+      return JSON.parse(lsValue);
+    }
+  } catch (e) {}
+  return {};
+}
+
+function saveSettingsToStorage(key, settings) {
+  try {
+    var lsValue = JSON.stringify(settings);
+    window.localStorage[key] = lsValue;
+  } catch (e) {
+  }
+}
+
 function saveInspectorState() {
-  Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
+  saveSettingsToStorage(LC_KEY_INSPECTOR_SETTINGS, state);
 }
 
 function resizeEaselContainer() {
@@ -115,10 +140,16 @@ var GUI = (function () {
   inspectorOptions.add(state, "width", -1, 4096, 1).onChange(saveInspectorOption);
   inspectorOptions.add(state, "height", -1, 4096, 1).onChange(saveInspectorOption);
   inspectorOptions.add(state, "loaderURL").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "remoteEnabled").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "remoteSWF").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "remoteAutoReload").onChange(saveInspectorOption);
+  inspectorOptions.add(state, "recordingLimit").onChange(saveInspectorOption);
   //inspectorOptions.add(state, "mute").onChange(saveInspectorOption);
   if (state.folderOpen) {
     inspectorOptions.open();
   }
+
+  gui.add({ "Save Recording": saveRecording }, "Save Recording");
 
   gui.domElement.addEventListener("click", function(e) {
     if (e.target.nodeName.toLowerCase() == "li" && e.target.classList.contains("title")) {
@@ -127,7 +158,7 @@ var GUI = (function () {
                                        Shumway.Settings.shumwayOptions);
       if (option) {
         option.open = isOpen;
-        Shumway.Settings.save();
+        saveSettingsToStorage(Shumway.Settings.ROOT, Shumway.Settings.getSettings());
         notifyOptionsChanged();
       } else {
         if (e.target.textContent === "Inspector Options") {
@@ -175,6 +206,22 @@ var GUI = (function () {
     var screenShot = currentEasel.screenShot(undefined, true);
     var w = window.open(screenShot.dataURL, 'screenShot', 'height=' + screenShot.w + ', width=' + screenShot.h);
     w.document.title = 'Shumway Screen Shot';
+  }
+
+  function saveRecording() {
+    if (!easelHost.recorder) {
+      return;
+    }
+
+    var blob = easelHost.recorder.getRecording();
+
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.target = '_parent';
+    a.download = 'movie.swfm';
+    document.body.appendChild(a);
+    a.click();
+    a.parentNode.removeChild(a);
   }
 
   function notifyOptionsChanged() {
@@ -250,7 +297,7 @@ var GUI = (function () {
         }
         ctrl.name(option.longName);
         ctrl.onChange(function() {
-          Shumway.Settings.save();
+          saveSettingsToStorage(Shumway.Settings.ROOT, Shumway.Settings.getSettings());
           notifyOptionsChanged();
         });
         addTooltip(ctrl, option.description);

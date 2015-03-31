@@ -16,9 +16,8 @@
 
 var SHUMWAY_ROOT = "../../src/";
 
-var avm2Root = "../../src/avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
-var shellAbcPath = avm2Root + "generated/shell/shell.abc";
+var builtinPath = "../../build/libs/builtin.abc";
+var shellAbcPath = "../../build/libs/shell.abc";
 
 // different playerglobals can be used here
 var playerglobalInfo = {
@@ -108,13 +107,18 @@ function loadMovie(path, reportFrames) {
     var sysMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
     var appMode = Shumway.AVM2.Runtime.ExecutionMode.COMPILE; // .INTERPRET
 
-    Shumway.FileLoadingService.instance.baseUrl = path;
+    Shumway.FileLoadingService.instance = new Shumway.Player.BrowserFileLoadingService();
+    Shumway.FileLoadingService.instance.init(path);
 
-    Shumway.createAVM2(builtinPath, playerglobalInfo, sysMode, appMode, function (securityDomain) {
+    Shumway.SystemResourcesLoadingService.instance =
+      new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo);
+
+    Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
       easelHost = new Shumway.GFX.Test.TestEaselHost(easel);
       initEaselHostCallbacks();
 
-      player = new Shumway.Player.Test.TestPlayer(securityDomain);
+      var gfxService = new Shumway.Player.Test.TestGFXService(securityDomain);
+      player = new Shumway.Player.Player(securityDomain, gfxService);
       player.stageAlign = 'tl';
       player.stageScale = 'noscale';
       player.displayParameters = easel.getDisplayParameters();
@@ -128,31 +132,12 @@ function createEasel() {
   Shumway.GFX.hud.value = true;
   Shumway.GFX.WebGL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var easel = new Shumway.GFX.Easel(document.getElementById("easelContainer"), true);
+  easel.startRendering();
   return easel;
 }
 
 Shumway.Telemetry.instance = {
   reportTelemetry: function (data) {}
-};
-
-Shumway.FileLoadingService.instance = {
-  createSession: function () {
-    return {
-      open: function (request) {
-        var self = this;
-        var base = Shumway.FileLoadingService.instance.baseUrl || '';
-        var path = combineUrl(base, request.url);
-        console.log('FileLoadingService: loading ' + path);
-        new Shumway.BinaryFileReader(path).readAsync(
-          function (data, progress) {
-            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
-          },
-          function (e) { self.onerror(e); },
-          self.onopen,
-          self.onclose);
-      }
-    };
-  }
 };
 
 var traceMessages = '';

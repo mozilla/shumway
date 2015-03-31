@@ -17,48 +17,55 @@
 module Shumway {
   import BinaryFileReader = Shumway.BinaryFileReader;
   import assert = Shumway.Debug.assert;
+  import SecurityDomain = Shumway.AVMX.SecurityDomain;
 
-  export interface LibraryPathInfo {
-    abcs: string;
-    catalog: string;
+  export enum AVM2LoadLibrariesFlags {
+    Builtin = 1,
+    Playerglobal = 2,
+    Shell = 4
   }
 
-  export function createAVM2(builtinPath: string,
-                             libraryPath: any, /* LibraryPathInfo | string */
-                             sysMode: any, appMode: any,
-                             next: (avm2: any) => void) {
-    //REDUX:
-    //var avm2;
-    //release || assert (builtinPath);
-    //SWF.enterTimeline('Load file', builtinPath);
-    //new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-    //  SWF.leaveTimeline();
-    //  AVM2.initialize(sysMode, appMode);
-    //  avm2 = AVM2.instance;
-    //  Shumway.AVM2.AS.linkNatives(avm2);
-    //  console.time("Execute builtin.abc");
-    //  // Avoid loading more Abcs while the builtins are loaded
-    //  avm2.builtinsLoaded = false;
-    //  avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
-    //  avm2.builtinsLoaded = true;
-    //  console.timeEnd("Execute builtin.abc");
-    //
-    //  // If library is shell.abc, then just go ahead and run it now since
-    //  // it's not worth doing it lazily given that it is so small.
-    //  if (typeof libraryPath === 'string') {
-    //    new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
-    //      avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), <string>libraryPath));
-    //      next(avm2);
-    //    });
-    //    return;
-    //  }
-    //
-    //  var libraryPathInfo: LibraryPathInfo = libraryPath;
-    //  if (!AVM2.isPlayerglobalLoaded()) {
-    //    AVM2.loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog).then(function () {
-    //      next(avm2);
-    //    });
-    //  }
-    //});
+  export function createSecurityDomain(libraries: AVM2LoadLibrariesFlags): Promise<SecurityDomain> {
+    var result = new PromiseWrapper<SecurityDomain>();
+    release || assert (!!(libraries & AVM2LoadLibrariesFlags.Builtin));
+    SWF.enterTimeline('Load builton.abc file');
+    SystemResourcesLoadingService.instance.load(SystemResourceId.BuiltinAbc).then(function (buffer) {
+      var securityDomain = new Shumway.AVMX.SecurityDomain();
+      var builtinABC = new Shumway.AVMX.ABCFile(new Uint8Array(buffer));
+      securityDomain.system.loadABC(builtinABC);
+      securityDomain.initialize();
+      securityDomain.system.executeABC(builtinABC);
+      SWF.leaveTimeline();
+
+
+      // If library is shell.abc, then just go ahead and run it now since
+      // it's not worth doing it lazily given that it is so small.
+      if (!!(libraries & AVM2LoadLibrariesFlags.Shell)) {
+        // REDUX:
+        result.resolve(securityDomain);
+        //SystemResourcesLoadingService.instance.load(SystemResourceId.ShellAbc).then(function (buffer) {
+        //  avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "shell.abc"));
+        //  result.resolve(avm2);
+        //}, result.reject);
+        return;
+      }
+
+      if (!!(libraries & AVM2LoadLibrariesFlags.Playerglobal)) {
+        SWF.enterTimeline('Load playerglobal files');
+        return Promise.all([
+          SystemResourcesLoadingService.instance.load(SystemResourceId.PlayerglobalAbcs),
+          SystemResourcesLoadingService.instance.load(SystemResourceId.PlayerglobalManifest)]).
+          then(function (results) {
+            var catalog = new Shumway.AVMX.ABCCatalog(new Uint8Array(results[0]), results[1]);
+            securityDomain.addCatalog(catalog);
+            SWF.leaveTimeline();
+            result.resolve(securityDomain);
+          }, result.reject);
+        return;
+      }
+
+      result.resolve(securityDomain);
+    }, result.reject);
+    return result.promise;
   }
 }

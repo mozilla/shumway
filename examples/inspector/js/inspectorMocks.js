@@ -178,6 +178,7 @@ function requestYT(yt) {
     var xhr = new XMLHttpRequest({mozSystem: true});
     xhr.open('GET', 'http://www.youtube.com/watch?v=' + yt, true);
     xhr.onload = function (e) {
+
       var config = JSON.parse(/ytplayer\.config\s*=\s*(.+?);(<\/script|ytplayer)/.exec(xhr.responseText)[1]);
       // HACK removing FLVs from the fmt_list
       config.args.fmt_list = config.args.fmt_list.split(',').filter(function (s) {
@@ -187,7 +188,11 @@ function requestYT(yt) {
 
       setupFileLoadingService();
 
-      resolve(config);
+      var args = {};
+      for (var i in config.args) {
+        args[i] = String(config.args[i]);
+      }
+      resolve({url: config.url, args: args});
     };
     xhr.onerror = function () {
       reject(xhr.error);
@@ -196,7 +201,7 @@ function requestYT(yt) {
   });
 }
 
-var SpecialInflate = (function () {
+var ShumwayCom = (function () {
   if (typeof SpecialPowers === 'undefined') {
     return undefined;
   }
@@ -269,5 +274,9 @@ var SpecialInflate = (function () {
     }
   };
 
-  return SpecialInflate;
+  return {
+    createSpecialInflate: function () {
+      return new SpecialInflate();
+    }
+  };
 })();

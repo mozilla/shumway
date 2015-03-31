@@ -141,7 +141,7 @@ module Shumway.SWF.Parser {
     if (tag.codes) {
       for (var i = 0; i < tag.codes.length; i++) {
         var code = tag.codes[i];
-        if (code < 32 || codes.indexOf(code) > -1) {
+        if (code < 32 || code in glyphIndex) {
           maxCode++;
           if (maxCode == 8232) {
             maxCode = 8240;
@@ -575,7 +575,7 @@ module Shumway.SWF.Parser {
     }
     tables['hmtx'] = hmtx;
 
-    if (tag.kerning) {
+    if (tag.kerning && tag.kerning.length) {
       var kerning = tag.kerning;
       var nPairs = kerning.length;
       var searchRange = maxPower2(nPairs) * 2;
@@ -611,7 +611,7 @@ module Shumway.SWF.Parser {
       toString16(maxContours) +
       '\x00\x00' + // maxCompositePoints
       '\x00\x00' + // maxCompositeContours
-      '\x00\x00' + // maxZones
+      '\x00\x01' + // maxZones
       '\x00\x00' + // maxTwilightPoints
       '\x00\x00' + // maxStorage
       '\x00\x00' + // maxFunctionDefs

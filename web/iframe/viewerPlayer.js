@@ -15,15 +15,13 @@
  */
 
 var release = true;
-var SHUMWAY_ROOT = "../src/";
 
 var viewerPlayerglobalInfo = {
   abcs: "../build/playerglobal/playerglobal.abcs",
   catalog: "../build/playerglobal/playerglobal.json"
 };
 
-var avm2Root = SHUMWAY_ROOT + "avm2/";
-var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var builtinPath = "../build/libs/builtin.abc";
 
 window.print = function (msg) {
   console.log(msg);
@@ -33,60 +31,51 @@ Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
 };
 
-Shumway.FileLoadingService.instance = {
-  createSession: function () {
-    return {
-      open: function (request) {
-        var self = this;
-        var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
-        console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
-        var BinaryFileReader = Shumway.BinaryFileReader;
-        new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
-          function (data, progress) {
-            self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
-          },
-          function (e) { self.onerror(e); },
-          self.onopen,
-          self.onclose,
-          self.onhttpstatus);
-      }
+var player;
+
+var iframeExternalInterface = {
+  onExternalCallback: null,
+  processExternalCommand: null,
+
+  get enabled() {
+    return !!this.processExternalCommand;
+  },
+
+  initJS: function (callback) {
+    this.processExternalCommand({action: 'init'});
+    this.onExternalCallback = function (functionName, args) {
+      return callback(functionName, args);
     };
   },
-  setBaseUrl: function (url) {
-    var baseUrl;
-    if (typeof URL !== 'undefined') {
-      baseUrl = new URL(url, document.location.href).href;
-    } else {
-      var a = document.createElement('a');
-      a.href = url || '#';
-      a.setAttribute('style', 'display: none;');
-      document.body.appendChild(a);
-      baseUrl = a.href;
-      document.body.removeChild(a);
-    }
-    Shumway.FileLoadingService.instance.baseUrl = baseUrl;
-    return baseUrl;
+
+  registerCallback: function (functionName) {
+    var cmd = {action: 'register', functionName: functionName, remove: false};
+    this.processExternalCommand(cmd);
   },
-  resolveUrl: function (url) {
-    var base = Shumway.FileLoadingService.instance.baseUrl || '';
-    if (typeof URL !== 'undefined') {
-      return new URL(url, base).href;
-    }
 
-    if (url.indexOf('://') >= 0) {
-      return url;
-    }
+  unregisterCallback: function (functionName) {
+    var cmd = {action: 'register', functionName: functionName, remove: true};
+    this.processExternalCommand(cmd);
+  },
 
-    base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-    if (url.indexOf('/') === 0) {
-      var m = /^[^:]+:\/\/[^\/]+/.exec(base);
-      if (m) base = m[0];
-    }
-    return base + url;
+  eval: function (expression) {
+    var cmd = {action: 'eval', expression: expression};
+    this.processExternalCommand(cmd);
+    return cmd.result;
+  },
+
+  call: function (request) {
+    var cmd = {action: 'call', request: request};
+    this.processExternalCommand(cmd);
+    return cmd.result;
+  },
+
+  getId: function () {
+    var cmd = {action: 'getId'};
+    this.processExternalCommand(cmd);
+    return cmd.result;
   }
 };
-
-var player;
 
 function runSwfPlayer(flashParams) {
   var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
@@ -97,12 +86,15 @@ function runSwfPlayer(flashParams) {
   var asyncLoading = true;
   var baseUrl = flashParams.baseUrl;
   var movieUrl = flashParams.url;
-  Shumway.createAVM2(builtinPath, viewerPlayerglobalInfo, sysMode, appMode, function (avm2) {
+  Shumway.SystemResourcesLoadingService.instance =
+    new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, viewerPlayerglobalInfo);
+  Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
     function runSWF(file, buffer, baseUrl) {
       var movieParams = flashParams.movieParams;
       var objectParams = flashParams.objectParams;
 
-      player = new Shumway.Player.Window.WindowPlayer(window, window.parent);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, window.parent);
+      player = new Shumway.Player.Player(securityDomain, gfxService);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = movieParams;
       player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';
@@ -112,14 +104,20 @@ function runSwfPlayer(flashParams) {
       player.pageUrl = baseUrl;
       player.load(file, buffer);
 
-      Shumway.ExternalInterfaceService.instance = player.createExternalInterfaceService();
-
       var parentDocument = window.parent.document;
       var event = parentDocument.createEvent('CustomEvent');
       event.initCustomEvent('shumwaystarted', true, true, null);
       parentDocument.dispatchEvent(event);
     }
-    file = Shumway.FileLoadingService.instance.setBaseUrl(baseUrl);
+
+    Shumway.FileLoadingService.instance = flashParams.isRemote ?
+      new RemoteFileLoadingService() :
+      new Shumway.Player.BrowserFileLoadingService();
+    Shumway.FileLoadingService.instance.init(baseUrl);
+    if (!flashParams.isRemote) {
+      Shumway.ExternalInterfaceService.instance = iframeExternalInterface;
+    }
+
     if (asyncLoading) {
       runSWF(movieUrl, undefined, baseUrl);
     } else {
@@ -132,6 +130,82 @@ function runSwfPlayer(flashParams) {
     }
   });
 }
+
+function RemoteFileLoadingService() {
+  this._baseUrl = null;
+  this._nextSessionId = 1;
+  this._sessions = [];
+}
+RemoteFileLoadingService.prototype = {
+  init: function (baseUrl) {
+    this._baseUrl = baseUrl;
+    var service = this;
+    window.addEventListener('message', function (e) {
+      var data = e.data;
+      if (typeof data !== 'object' || data === null ||
+          data.type !== 'shumwayFileLoadingResponse') {
+        return;
+      }
+      var session = service._sessions[data.sessionId];
+      if (session) {
+        service._notifySession(session, data);
+      }
+    });
+  },
+
+  _notifySession: function (session, args) {
+    var sessionId = args.sessionId;
+    switch (args.topic) {
+      case "open":
+        session.onopen();
+        break;
+      case "close":
+        session.onclose();
+        this._sessions[sessionId] = null;
+        console.log('Session #' + sessionId + ': closed');
+        break;
+      case "error":
+        session.onerror && session.onerror(args.error);
+        break;
+      case "progress":
+        console.log('Session #' + sessionId + ': loaded ' + args.loaded + '/' + args.total);
+        var data = args.array;
+        if (!(data instanceof Uint8Array)) {
+          data = new Uint8Array(data);
+        }
+        session.onprogress && session.onprogress(data, {bytesLoaded: args.loaded, bytesTotal: args.total});
+        break;
+    }
+  },
+
+  createSession: function () {
+    var sessionId = this._nextSessionId++;
+    var service = this;
+    var session = {
+      open: function (request) {
+        var path = service.resolveUrl(request.url);
+        console.log('Session #' + sessionId + ': loading ' + path);
+        window.parent.parent.postMessage({type: 'shumwayFileLoading', url: path, method: request.method,
+          mimeType: request.mimeType, postData: request.data,
+          checkPolicyFile: request.checkPolicyFile, sessionId: sessionId}, '*');
+      },
+      close: function () {
+        if (service._sessions[sessionId]) {
+          // TODO send abort
+        }
+      }
+    };
+    return (this._sessions[sessionId] = session);
+  },
+
+  resolveUrl: function (url) {
+    return new URL(url, this._baseUrl).href;
+  },
+
+  navigateTo: function (url, target) {
+    window.open(this.resolveUrl(url), target || '_blank');
+  }
+};
 
 window.addEventListener('message', function onWindowMessage(e) {
   var data = e.data;

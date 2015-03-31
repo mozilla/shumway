@@ -83,6 +83,7 @@ module Shumway.AVM2.ABC {
           this.dispId = stream.readU30();
           this.methodInfo = methods[stream.readU30()];
           this.methodInfo.name = this.name;
+          this.methodInfo.flags |= MethodTypeFlagByTraitKind[this.kind];
           // make sure that the holder was not already set
           AbcFile.attachHolder(this.methodInfo, this.holder);
           this.methodInfo.abc = abc;
@@ -279,6 +280,36 @@ module Shumway.AVM2.ABC {
     set isScriptInitializer(val: boolean) {
       release || assert(val); // This shouldn't ever be reset.
       this.flags |= METHOD.ScriptInitializer;
+    }
+    get isMethod() {
+      return !!(this.flags & METHOD.MethodTrait);
+    }
+    set isMethod(val: boolean) {
+      release || assert(val); // This shouldn't ever be reset.
+      release || assert(!(this.flags & (METHOD.InstanceInitializer | METHOD.ClassInitializer |
+                                        METHOD.ScriptInitializer | METHOD.GetterTrait |
+                                        METHOD.SetterTrait)));
+      this.flags |= METHOD.MethodTrait;
+    }
+    get isGetter() {
+      return !!(this.flags & METHOD.GetterTrait);
+    }
+    set isGetter(val: boolean) {
+      release || assert(val); // This shouldn't ever be reset.
+      release || assert(!(this.flags & (METHOD.InstanceInitializer | METHOD.ClassInitializer |
+                                        METHOD.ScriptInitializer | METHOD.MethodTrait |
+                                        METHOD.SetterTrait)));
+      this.flags |= METHOD.GetterTrait;
+    }
+    get isSetter() {
+      return !!(this.flags & METHOD.SetterTrait);
+    }
+    set isSetter(val: boolean) {
+      release || assert(val); // This shouldn't ever be reset.
+      release || assert(!(this.flags & (METHOD.InstanceInitializer | METHOD.ClassInitializer |
+                                        METHOD.ScriptInitializer | METHOD.MethodTrait |
+                                        METHOD.GetterTrait)));
+      this.flags |= METHOD.SetterTrait;
     }
 
     private static _getParameterName(i) {
@@ -526,7 +557,6 @@ module Shumway.AVM2.ABC {
     loaded: boolean;
     executed: boolean;
     executing: boolean;
-    static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index, Hashes.ScriptInfo);
       this.runtimeId = ClassInfo.nextID ++;
@@ -535,10 +565,6 @@ module Shumway.AVM2.ABC {
       this.init.isScriptInitializer = true;
       AbcFile.attachHolder(this.init, this);
       this.traits = Trait.parseTraits(abc, stream, this);
-      // this.traits.verified = true;
-    }
-    get entryPoint(): MethodInfo {
-      return this.init;
     }
     public toString() {
       return this.name;
@@ -564,7 +590,8 @@ module Shumway.AVM2.ABC {
 
       var computedHash;
       if (!hash || !release) {
-        // Compute hash if one was not supplied or if we're in debug mode so we can do a sanity check.
+        // Compute hash if one was not supplied or if we're in debug mode so we can do a sanity
+        // check.
         enterTimeline("Adler");
         computedHash = Shumway.HashUtilities.hashBytesTo32BitsAdler(bytes, 0, bytes.length);
         leaveTimeline();
@@ -782,7 +809,14 @@ module Shumway.AVM2.ABC {
       if (mangledNamespace) {
         return mangledNamespace;
       }
-      mangledNamespace = Shumway.StringUtilities.variableLengthEncodeInt32(Namespace._hashNamespace(kind, uri, prefix));
+      // The AS3 namespace is special-cased to make the names readable and hence usable in
+      // for statically using them in JS-implemented builtins.
+      if (key === "8http://adobe.com/AS3/2006/builtin") {
+        mangledNamespace = '$AS3_';
+      } else {
+        var hash = Namespace._hashNamespace(kind, uri, prefix);
+        mangledNamespace = Shumway.StringUtilities.variableLengthEncodeInt32(hash);
+      }
       Namespace._mangledNamespaceMap[mangledNamespace] = {
         kind: kind, uri: uri, prefix: prefix
       };
@@ -791,7 +825,11 @@ module Shumway.AVM2.ABC {
     }
 
     public static fromQualifiedName(qn: string) {
-      var length = Shumway.StringUtilities.fromEncoding(qn[0]);
+      var firstChar = qn.charCodeAt(0);
+      // Names starting with '$' are special-cased very common names.
+      var length = firstChar === 36 /* '$' */ ?
+                   qn.indexOf('_', 1):
+                   Shumway.StringUtilities.fromEncoding(firstChar);
       var mangledNamespace = qn.substring(0, length + 1);
       var ns = Namespace._mangledNamespaceMap[mangledNamespace];
       return new Namespace(ns.kind, ns.uri, ns.prefix);
@@ -940,14 +978,16 @@ module Shumway.AVM2.ABC {
   /**
    * Section 2.3 and 4.4.3
    *
-   * Multinames are (namespace set, name) pairs that are resolved to QNames (qualified names) at runtime. The terminology
-   * in general is very confusing so we follow some naming conventions to simplify things. First of all, in ActionScript 3
-   * there are 10 types of multinames. Half of them end in an "A" are used to represent the names of XML attributes. Those
-   * prefixed with "RT" are "runtime" multinames which means they get their namespace from the runtime execution stack.
-   * Multinames suffixed with "L" are called "late" which means they get their name from the runtime execution stack.
+   * Multinames are (namespace set, name) pairs that are resolved to QNames (qualified names) at
+   * runtime. The terminology in general is very confusing so we follow some naming conventions to
+   * simplify things. First of all, in ActionScript 3 there are 10 types of multinames. Half of
+   * them end in an "A" are used to represent the names of XML attributes. Those prefixed with "RT"
+   * are "runtime" multinames which means they get their namespace from the runtime execution
+   * stack. Multinames suffixed with "L" are called "late" which means they get their name from the
+   * runtime execution stack.
    *
-   *  QName - A QName (qualified name) is the simplest form of multiname, it has one name and one namespace.
-   *  E.g. ns::n
+   *  QName - A QName (qualified name) is the simplest form of multiname, it has one name and one
+   * namespace. E.g. ns::n
    *
    *  RTQName - A QName whose namespace part is resolved at runtime.
    *  E.g. [x]::n
@@ -961,24 +1001,26 @@ module Shumway.AVM2.ABC {
    *  MultinameL - A multiname with a namespace set whose name part is resolved at runtime.
    *  E.g. {ns0, ns1, ns2, ...}::[y]
    *
-   * Multinames are used very frequently so it's important that we optimize their use. In Shumway, QNames are
-   * represented as either: Multiname objects, strings or numbers, depending on the information they need to carry.
-   * Typically, most named QNames will be strings while numeric QNames will be treated as numbers. All other Multiname
-   * types will be represented as Multiname objects.
+   * Multinames are used very frequently so it's important that we optimize their use. In Shumway,
+   * QNames are represented as either: Multiname objects, strings or numbers, depending on the
+   * information they need to carry. Typically, most named QNames will be strings while numeric
+   * QNames will be treated as numbers. All other Multiname types will be represented as Multiname
+   * objects.
    *
    * Please use the following conventions when dealing with multinames:
    *
-   * In the AS3 bytecode specification the word "name" usually refers to multinames. We use the same property name in
-   * Shumway thus leading to code such as |instanceInfo.name.name| which is quite ugly. If possible, avoid using the
-   * word "name" to refer to multinames, instead use "mn" or "multiname" and use the word "name" to refer to the
-   * name part of a Multiname.
+   * In the AS3 bytecode specification the word "name" usually refers to multinames. We use the
+   * same property name in Shumway thus leading to code such as |instanceInfo.name.name| which is
+   * quite ugly. If possible, avoid using the word "name" to refer to multinames, instead use "mn"
+   * or "multiname" and use the word "name" to refer to the name part of a Multiname.
    *
    * Multiname: multiname, mn
    * QName: qualifiedName, qn
    * Namespace: namespace, ns
    *
-   * Because a qualified name can be either a Multiname object, a string, a number, or even a Number object use the static
-   * Multiname methods to query multinames. For instance, use |Multiname.isRuntimeMultiname(mn)| instead of
+   * Because a qualified name can be either a Multiname object, a string, a number, or even a
+   * Number object use the static Multiname methods to query multinames. For instance, use
+   * |Multiname.isRuntimeMultiname(mn)| instead of
    * |mn.isRuntimeMultiname()| since the latter will fail if |mn| is not a Multiname object.
    */
 
@@ -1074,10 +1116,12 @@ module Shumway.AVM2.ABC {
         case CONSTANT.TypeName:
           var factoryTypeIndex = stream.readU32();
           var typeParameterCount = stream.readU32();
-          release || assert(typeParameterCount === 1); // This is probably the number of type parameters.
+          release || assert(typeParameterCount === 1); // This is probably the number of type
+                                                       // parameters.
           var typeParameterIndex = stream.readU32();
           var mn = undefined;
-          // If both |factoryTypeIndex| and |typeParameterIndex| are parsed then we can construct the type.
+          // If both |factoryTypeIndex| and |typeParameterIndex| are parsed then we can construct
+          // the type.
           if (multinames[factoryTypeIndex] && multinames[typeParameterIndex]) {
             mn = new Multiname(multinames[factoryTypeIndex].namespaces, multinames[factoryTypeIndex].name, flags);
             mn.typeParameter = multinames[typeParameterIndex];
@@ -1537,7 +1581,10 @@ module Shumway.AVM2.ABC {
     HasBody             = 0x100,
     InstanceInitializer = 0x200,
     ClassInitializer    = 0x400,
-    ScriptInitializer   = 0x800
+    ScriptInitializer   = 0x800,
+    MethodTrait         = 0x1000,
+    GetterTrait         = 0x2000,
+    SetterTrait         = 0x4000
   }
 
   export enum TRAIT {
@@ -1549,6 +1596,12 @@ module Shumway.AVM2.ABC {
     Function           = 5,
     Const              = 6
   }
+
+  export var MethodTypeFlagByTraitKind = {
+    1: METHOD.MethodTrait,
+    2: METHOD.GetterTrait,
+    3: METHOD.SetterTrait,
+  };
 
   export enum ATTR {
     Final              = 0x01,

@@ -280,6 +280,9 @@ module Shumway.GFX {
 
     private _selectedNodes: Node [] = [];
 
+    private _isRendering: boolean = false;
+    private _rAF: number = undefined;
+
     private _eventListeners: Shumway.Map<any []> = Object.create(null);
     private _fps: FPS;
     private _fullScreen: boolean = false;
@@ -303,6 +306,7 @@ module Shumway.GFX {
       stageContainer.style.position = "absolute";
       stageContainer.style.width = "100%";
       stageContainer.style.height = "100%";
+      stageContainer.style.zIndex = "0";
       container.appendChild(stageContainer);
 
       // Create hud container, that lives on top of the stage.
@@ -384,8 +388,6 @@ module Shumway.GFX {
           self._persistentState.onKeyUp(self, event);
         }
       }, false);
-
-      this._enterRenderLoop();
     }
 
     private _listenForContainerSizeChanges() {
@@ -434,12 +436,24 @@ module Shumway.GFX {
       }
     }
 
-    private _enterRenderLoop() {
+    public startRendering() {
+      if (this._isRendering) {
+        return;
+      }
+      this._isRendering = true;
+
       var self = this;
-      requestAnimationFrame(function tick() {
+      this._rAF = requestAnimationFrame(function tick() {
         self.render();
-        requestAnimationFrame(tick);
+        self._rAF = requestAnimationFrame(tick);
       });
+    }
+
+    public stopRendering() {
+      if (this._isRendering) {
+        this._isRendering = false;
+        cancelAnimationFrame(this._rAF);
+      }
     }
 
     set state(state: UIState) {

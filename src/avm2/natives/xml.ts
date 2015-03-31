@@ -808,6 +808,7 @@ module Shumway.AVMX.AS {
   export class ASNamespace extends ASObject implements XMLType {
     public static instanceConstructor: any = ASNamespace;
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 2);
       var proto: any = ASNamespace.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
     }
@@ -995,6 +996,7 @@ module Shumway.AVMX.AS {
 
   export class ASQName extends ASObject implements XMLType {
     static classInitializer() {
+      defineNonEnumerableProperty(this, '$Bglength', 2);
       var proto: any = this.dPrototype;
       var asProto: any = ASQName.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', asProto.ecmaToString);
@@ -1011,6 +1013,7 @@ module Shumway.AVMX.AS {
       var name: ASQName = Object.create(this.securityDomain.AXQName.tPrototype);
       name.name = mn;
       return name;
+
     }
 
     axInitializer: (nameOrNS_?: any, name_?: any) => any;
@@ -1183,6 +1186,10 @@ module Shumway.AVMX.AS {
       return base_uri + "::" + this.name.name;
     }
 
+    valueOf() {
+      return this;
+    }
+
     /**
      * 13.3.5.3 [[Prefix]]
      * The [[Prefix]] property is an optional internal property that is not directly visible to
@@ -1221,6 +1228,7 @@ module Shumway.AVMX.AS {
   export class ASXML extends ASObject implements XMLType {
     public static instanceConstructor: any = ASXML;
     static classInitializer() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
       var proto: any = this.dPrototype;
       var asProto: any = ASXML.prototype;
       addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
@@ -2667,6 +2675,8 @@ module Shumway.AVMX.AS {
   export class ASXMLList extends ASObject implements XMLType {
     public static instanceConstructor: any = ASXMLList;
     static classInitializer() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+
       var proto: any = this.dPrototype;
       var asProto: any = ASXMLList.prototype;
       defineNonEnumerableProperty(proto, '$BgvalueOf', Object.prototype['$BgvalueOf']);

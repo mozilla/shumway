@@ -17,11 +17,13 @@ module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   import asCoerceString = Shumway.AVMX.asCoerceString;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
   import LoaderContext = flash.system.LoaderContext;
   import events = flash.events;
+  import ICrossDomainSWFLoadingWhitelist = flash.system.ICrossDomainSWFLoadingWhitelist;
 
   import FileLoader = Shumway.FileLoader;
   import ILoadListener = Shumway.ILoadListener;
@@ -295,7 +297,7 @@ module Shumway.AVMX.AS.flash.display {
     private _content: flash.display.DisplayObject;
     private _contentID: number;
     private _contentLoaderInfo: flash.display.LoaderInfo;
-    _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+    private _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
     private _fileLoader: FileLoader;
     private _imageSymbol: BitmapSymbol;
@@ -334,7 +336,17 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     get uncaughtErrorEvents(): events.UncaughtErrorEvents {
+      somewhatImplemented("public flash.display.Loader::uncaughtErrorEvents");
+      if (!this._uncaughtErrorEvents) {
+        this._uncaughtErrorEvents = new events.UncaughtErrorEvents();
+      }
       return this._uncaughtErrorEvents;
+    }
+
+    private _canLoadSWFFromDomain(url: string): boolean {
+      url = FileLoadingService.instance.resolveUrl(url);
+      var whitelist: ICrossDomainSWFLoadingWhitelist = this.securityDomain.player;
+      return whitelist.checkDomainForSWFLoading(url);
     }
 
     load(request: flash.net.URLRequest, context?: LoaderContext): void {
@@ -347,7 +359,17 @@ module Shumway.AVMX.AS.flash.display {
       if (!release && traceLoaderOption.value) {
         console.log("Loading url " + request.url);
       }
-      this._fileLoader.loadFile(request._toFileRequest());
+      // Starts loading on the next script execution turn, in case if allowDomain
+      // will be called. This is a very simplified heuristic to restrict
+      // unwanted SWFs that can break the loading one.
+      Promise.resolve<any>(undefined).then(function (fileLoader: FileLoader, fileRequest) {
+        if (this._canLoadSWFFromDomain(fileRequest.url)) {
+          fileLoader.loadFile(fileRequest);
+        } else {
+          console.error('Loading of ' + fileRequest.url + ' was rejected based on allowDomain heuristic.');
+          // TODO trigger some loading error
+        }
+      }.bind(this, this._fileLoader, request._toFileRequest()));
 
       this._queuedLoadUpdate = null;
       var loaderClass = this.securityDomain.flash.display.Loader.axClass;
@@ -474,9 +496,8 @@ module Shumway.AVMX.AS.flash.display {
       var symbol = BitmapSymbol.FromData(data, this._contentLoaderInfo);
       this._imageSymbol = symbol;
       var resolver: Timeline.IAssetResolver = this.securityDomain.player;
-      resolver.registerFontOrImage(symbol, data);
+      resolver.registerImage(symbol, data);
       release || assert(symbol.resolveAssetPromise);
-      release || assert(symbol.ready === false);
     }
 
     private _applyDecodedImage(symbol: BitmapSymbol) {
@@ -575,6 +596,47 @@ module Shumway.AVMX.AS.flash.display {
       release || Debug.warning('Not implemented: flash.display.Loader loading-error handling');
     }
 
+    private _addScenesToMovieClip(mc: MovieClip, sceneData, numFrames: number) {
+      // Creating scenes so we will always have frames assigned to some scene.
+      if (!sceneData) {
+        mc.addScene('Scene 1', [], 0, numFrames);
+        return;
+      }
+
+      // Sorting scenes by offset
+      var sceneInfos = [];
+      var scenes = sceneData.scenes;
+      for (var i = 0; i < scenes.length; i++) {
+        sceneInfos.push({offset: scenes[i].offset, name: scenes[i].name});
+      }
+      sceneInfos.sort((a, b) => a.offset - b.offset);
+
+      var n = sceneInfos.length;
+      var offset, endFrame;
+      if (n > 0 && sceneInfos[0].offset > 0) {
+        // Starting from non-zero frame, we need to create a fake scene.
+        offset = sceneInfos[0].offset;
+        endFrame = Math.min(offset, numFrames);
+        mc.addScene('Scene 0', [], 0, endFrame);
+      }
+
+      for (var i = 0, n = sceneInfos.length; i < n; i++) {
+        var sceneInfo = sceneInfos[i];
+        offset = sceneInfo.offset;
+        if (offset >= numFrames) {
+          break; // out of the movie clip timeline range
+        }
+        endFrame = i < n - 1 ? Math.min(scenes[i + 1].offset, numFrames) : numFrames;
+        mc.addScene(sceneInfo.name, [], offset, endFrame - offset);
+      }
+
+      var labels = sceneData.labels;
+      for (var i = 0; i < labels.length; i++) {
+        var labelInfo = labels[i];
+        mc.addFrameLabel(labelInfo.name, labelInfo.frame + 1);
+      }
+    }
+
     private createContentRoot(symbol: SpriteSymbol, sceneData) {
       if (symbol.isAVM1Object) {
         this._initAvm1(symbol);
@@ -591,23 +653,7 @@ module Shumway.AVMX.AS.flash.display {
       }
 
       if (this.securityDomain.flash.display.MovieClip.axClass.axIsType(root)) {
-        var mc = <MovieClip>root;
-        if (sceneData) {
-          var scenes = sceneData.scenes;
-          for (var i = 0, n = scenes.length; i < n; i++) {
-            var sceneInfo = scenes[i];
-            var offset = sceneInfo.offset;
-            var endFrame = i < n - 1 ? scenes[i + 1].offset : symbol.numFrames;
-            mc.addScene(sceneInfo.name, [], offset, endFrame - offset);
-          }
-          var labels = sceneData.labels;
-          for (var i = 0; i < labels.length; i++) {
-            var labelInfo = labels[i];
-            mc.addFrameLabel(labelInfo.name, labelInfo.frame + 1);
-          }
-        } else {
-          mc.addScene('Scene 1', [], 0, symbol.numFrames);
-        }
+        this._addScenesToMovieClip(<MovieClip>root, sceneData, symbol.numFrames);
       }
 
       var loaderInfo = this._contentLoaderInfo;

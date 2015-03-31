@@ -21,9 +21,6 @@ EXTENSION_DIR=../build/firefox
 
 build: ensureoutputdir
 	cp -R $(SHUMWAY_ROOT)/LICENSE index.html main.css demo.swf gallery images $(BUILD_DIR)/
-	# Coping ABC files
-	mkdir -p $(BUILD_DIR)/src/avm2/generated/builtin
-	cp -R $(SHUMWAY_ROOT)/src/avm2/generated/builtin/*.abc $(BUILD_DIR)/src/avm2/generated/builtin/
 	# Coping some JavaScript file
 	mkdir -p $(BUILD_DIR)/src/player
 	cp $(SHUMWAY_ROOT)/src/player/fakechannel.js $(BUILD_DIR)/src/player/
@@ -39,6 +36,12 @@ build: ensureoutputdir
 	mkdir $(BUILD_DIR)/build/playerglobal
 	cp $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.json $(BUILD_DIR)/build/playerglobal/
 	cp $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.abcs $(BUILD_DIR)/build/playerglobal/
+	# Coping ABC and Relooper files
+	mkdir $(BUILD_DIR)/build/libs
+	cp -R $(SHUMWAY_ROOT)/build/libs/*.abc $(BUILD_DIR)/build/libs/
+	cp -R $(SHUMWAY_ROOT)/build/libs/*.js $(BUILD_DIR)/build/libs/
+	mkdir $(BUILD_DIR)/build/version
+	cp -R $(SHUMWAY_ROOT)/build/version/version.js $(BUILD_DIR)/build/version/
 	# Copy examples
 	cp -R $(SHUMWAY_ROOT)/examples $(BUILD_DIR)
 	# Copy build and iframe files
