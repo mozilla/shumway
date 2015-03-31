@@ -83,21 +83,7 @@ module Shumway.Shell
       return url;
     },
     resolveUrl: function (url) {
-      if (url.indexOf('://') >= 0) {
-        return url;
-      }
-
-      var base = shellFileLoadingService.baseUrl || '';
-      if (base === url) {
-        return url;
-      }
-
-      base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
-      if (url.indexOf('/') === 0) {
-        var m = /^[^:]+:\/\/[^\/]+/.exec(base);
-        if (m) base = m[0];
-      }
-      return base + url;
+      return new (<any>URL)(url, shellFileLoadingService.baseUrl).href;
     },
     navigateTo: function (url, target) {
     }

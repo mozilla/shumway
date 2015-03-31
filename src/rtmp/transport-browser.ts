@@ -18,8 +18,6 @@ module RtmpJs.Browser {
   var DEFAULT_RTMP_PORT = 1935;
   var COMBINE_RTMPT_DATA = true;
 
-  var TCPSocket = (<any>navigator).mozTCPSocket;
-
   export class RtmpTransport extends BaseTransport {
     host: string;
     port: number;
@@ -38,6 +36,9 @@ module RtmpJs.Browser {
     }
 
     connect(properties, args?) {
+      var TCPSocket = typeof navigator !== 'undefined' &&
+                      (<any>navigator).mozTCPSocket;
+
       if (!TCPSocket) {
         throw new Error('Your browser does not support socket communication.\n' +
           'Currenly only Firefox with enabled mozTCPSocket is allowed (see README.md).');
@@ -46,9 +47,8 @@ module RtmpJs.Browser {
       var channel = this._initChannel(properties, args);
 
       var writeQueue = [], socketError = false;
-      var createRtmpSocket = (<any>window).createRtmpSocket;
-      var socket = createRtmpSocket ?
-        createRtmpSocket({host: this.host, port: this.port, ssl: this.ssl}) :
+      var socket: any = typeof ShumwayComRtmpSocket !== 'undefined' && ShumwayComRtmpSocket.isAvailable ?
+        new ShumwayComRtmpSocket(this.host, this.port, { useSecureTransport: this.ssl, binaryType: 'arraybuffer' }) :
         TCPSocket.open(this.host, this.port, { useSecureTransport: this.ssl, binaryType: 'arraybuffer' });
 
 
@@ -206,8 +206,8 @@ module RtmpJs.Browser {
   function post(path, data, onload) {
     data || (data = emptyPostData);
 
-    var createRtmpXHR = (<any>window).createRtmpXHR;
-    var xhr = createRtmpXHR ? createRtmpXHR() : new (<any>XMLHttpRequest)({mozSystem: true});
+    var xhr: any = typeof ShumwayComRtmpXHR !== 'undefined' && ShumwayComRtmpXHR.isAvailable ?
+      new ShumwayComRtmpXHR() : new (<any>XMLHttpRequest)({mozSystem: true});
     xhr.open('POST', path, true);
     xhr.responseType = 'arraybuffer';
     xhr.setRequestHeader('Content-Type', 'application/x-fcs');

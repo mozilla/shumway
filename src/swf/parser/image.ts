@@ -146,7 +146,13 @@ module Shumway.SWF.Parser {
         var height = image.height;
         var length = width * height;
 
-        var alphaMaskBytes = Inflate.inflate(alphaData, length, true);
+        var alphaMaskBytes;
+        try {
+          alphaMaskBytes = Inflate.inflate(alphaData, length, true);
+        } catch (e) {
+          // Alpha layer is invalid, so hiding everything.
+          alphaMaskBytes = new Uint8Array(width);
+        }
 
         var data = image.data = new Uint8ClampedArray(length * 4);
         jpegImage.copyToImageData(image);

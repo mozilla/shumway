@@ -209,6 +209,10 @@ module Shumway.AVMX.AS {
       // Nop.
     }
 
+    static init() {
+      // Nop.
+    }
+
     // REDUX:
     static instanceConstructorNoInitialize = function () { notImplemented("instanceConstructorNoInitialize => axInitialize"); };
 
@@ -1112,6 +1116,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASInt extends ASObject {
+    public static staticNatives: any [] = [Math];
+    public static instanceNatives: any [] = [Number.prototype];
+
     static classInitializer() {
       var proto: any = this.dPrototype;
       var asProto: any = ASInt.prototype;
@@ -1123,6 +1130,9 @@ module Shumway.AVMX.AS {
   }
 
   export class ASUint extends ASObject {
+    public static staticNatives: any [] = [Math];
+    public static instanceNatives: any [] = [Number.prototype];
+
     static classInitializer() {
       var proto: any = this.dPrototype;
       var asProto: any = ASUint.prototype;
@@ -1478,8 +1488,8 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["builtin.as$0.MethodClosure"] = ASMethodClosure;
     builtinNativeClasses["Namespace"]           = ASNamespace;
     builtinNativeClasses["Number"]              = ASNumber;
-    builtinNativeClasses["Int"]                 = ASInt;
-    builtinNativeClasses["UInt"]                = ASUint;
+    builtinNativeClasses["int"]                 = ASInt;
+    builtinNativeClasses["uint"]                = ASUint;
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
 

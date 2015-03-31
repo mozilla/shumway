@@ -71,9 +71,8 @@ module Shumway.GFX {
         this._fullscreen = value;
         // TODO refactor to have a normal two-way communication service/api
         // HACK for now
-        var firefoxCom = (<any>window).FirefoxCom;
-        if (firefoxCom) {
-          firefoxCom.request('setFullscreen', value, null);
+        if (typeof ShumwayCom !== 'undefined' && ShumwayCom.setFullscreen) {
+          ShumwayCom.setFullscreen(value);
         }
       }
     }
@@ -154,14 +153,6 @@ module Shumway.GFX {
       deserializer.read();
     }
 
-    processExternalCommand(command) {
-      if (command.action === 'isEnabled') {
-        command.result = false;
-        return;
-      }
-      throw new Error('This command is not supported');
-    }
-
     processVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
       var context = this._context;
       var asset = context._getVideoAsset(id);
@@ -189,22 +180,6 @@ module Shumway.GFX {
     }
 
     processFrame() {
-    }
-
-    onExernalCallback(request) {
-      throw new Error('This method is abstract');
-    }
-
-    sendExernalCallback(functionName: string, args: any[]): any {
-      var request: any = {
-        functionName: functionName,
-        args: args
-      };
-      this.onExernalCallback(request);
-      if (request.error) {
-        throw new Error(request.error);
-      }
-      return request.result;
     }
 
     onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {

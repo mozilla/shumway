@@ -162,7 +162,7 @@ module Shumway.AVMX.AS.flash.ui {
             currentTarget._mouseDown = false;
             this._dispatchMouseEvent(currentTarget, events.MouseEvent.MOUSE_OUT, data, target);
             var nodeLeft = currentTarget;
-            while (nodeLeft !== commonAncestor) {
+            while (nodeLeft && nodeLeft !== commonAncestor) {
               this._dispatchMouseEvent(nodeLeft, events.MouseEvent.ROLL_OUT, data, target);
               nodeLeft = nodeLeft.parent;
             }

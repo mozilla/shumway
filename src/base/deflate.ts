@@ -68,8 +68,8 @@ module Shumway.ArrayUtilities {
     }
 
     public static create(verifyHeader: boolean): Inflate {
-      if (typeof SpecialInflate !== 'undefined') {
-        return new SpecialInflateAdapter(verifyHeader);
+      if (typeof ShumwayCom !== 'undefined' && ShumwayCom.createSpecialInflate) {
+        return new SpecialInflateAdapter(verifyHeader, ShumwayCom.createSpecialInflate);
       }
       return new BasicInflate(verifyHeader);
     }
@@ -104,8 +104,17 @@ module Shumway.ArrayUtilities {
       var position = 0;
       var inflate = Inflate.create(zlibHeader);
       inflate.onData = function (data) {
-        output.set(data, position);
-        position += data.length;
+        // Make sure we don't cause an exception here when trying to set out-of-bound data by clamping the number of
+        // bytes to write to the remaining space in our output buffer. The Flash Player ignores data that goes over the
+        // expected length, so should we.
+        var length = Math.min(data.length, output.length - position);
+        if (length) {
+          memCopy(output, data, position, 0, length);
+        }
+        position += length;
+      };
+      inflate.onError = function (error) {
+        throw new Error(error);
       };
       inflate.push(data);
       inflate.close();
@@ -647,27 +656,21 @@ module Shumway.ArrayUtilities {
   }
 
 
-  declare class SpecialInflate {
-    onData: (data: Uint8Array) => void;
-    push(data: Uint8Array);
-    close();
-  }
-
   class SpecialInflateAdapter extends Inflate {
     private _verifyHeader: boolean;
     private _buffer: Uint8Array;
 
     private _specialInflate: SpecialInflate;
 
-    constructor(verifyHeader: boolean) {
+    constructor(verifyHeader: boolean, createSpecialInflate: () => SpecialInflate) {
       super(verifyHeader);
 
       this._verifyHeader = verifyHeader;
 
-      this._specialInflate = new SpecialInflate();
-      this._specialInflate.onData = function (data) {
+      this._specialInflate = createSpecialInflate();
+      this._specialInflate.setDataCallback(function (data) {
         this.onData(data);
-      }.bind(this);
+      }.bind(this));
     }
 
     public push(data: Uint8Array) {

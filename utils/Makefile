@@ -33,9 +33,6 @@ endif
 TAMARIN_HOME = ./tamarin-redux
 TAMARIN_URL = http://hg.mozilla.org/tamarin-redux
 
-CLOSURE_JAR = ./cc.jar
-CLOSURE_URL = http://dl.google.com/closure-compiler/compiler-latest.zip
-
 ASC_JAR = ./asc.jar
 
 FLEX_HOME = ./flex_sdk
@@ -83,19 +80,9 @@ AVM2_HOME = ../src/avm2
 AVMSHELL = avmshell
 
 default:
-	@echo "run: make [install-avmshell|install-js|download-closure|"
+	@echo "run: make [install-avmshell|install-js|"
 	@echo "           install-swfdec|install-node-modules|install-tamarin-src|"
 	@echo "           build-tamarin-tests|run-tamarin-tests|build-playerglobal|clean]"
-
-download-closure: $(CLOSURE_JAR)
-
-$(CLOSURE_JAR):
-	mkdir -p ./closure
-	wget $(CLOSURE_URL) -O ./closure/compiler.zip
-	cd ./closure; unzip -o compiler.zip
-	mv closure/compiler.jar cc.jar
-	mv closure/COPYING cc.jar-COPYING
-	rm -rf ./closure
 
 install-avmshell:
 	mkdir -p $(TAMARIN_HOME)/bin/shell
@@ -120,20 +107,20 @@ $(TAMARIN_HOME)/configure.py:
 	cp patches/tamarin-acceptance/* $(TAMARIN_HOME)/test/acceptance/
 
 run-tamarin-tests: install-tamarin-tests
-	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --threads $(THREADS) --vmargs "-rel -i" --log as3.log as3
-	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --threads $(THREADS) --vmargs "-rel -i" --log ecma3.log ecma3
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../../../build/libs/builtin.abc SHELLABC=../../../../build/libs/shell.abc python runtests.py --shumway --threads $(THREADS) --vmargs "-rel -i" --log as3.log as3
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../../../build/libs/builtin.abc SHELLABC=../../../../build/libs/shell.abc python runtests.py --shumway --threads $(THREADS) --vmargs "-rel -i" --log ecma3.log ecma3
 
 run-tamarin-e4x-tests: install-tamarin-tests
-	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads $(THREADS) --timeout 360 --vmargs "-rel -i" --log test.log e4x
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../../../build/libs/builtin.abc SHELLABC=../../../../build/libs/shell.abc python runtests.py --shumway  --threads $(THREADS) --timeout 360 --vmargs "-rel -i" --log test.log e4x
 
 run-tamarin-sanity-tests: install-tamarin-tests
-	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads $(THREADS) --timeout 360 --vmargs "-rel -i" --log test.log ecma3/String ecma3/Function ecma3/ExecutionContexts ecma3/Math/e15_8_2_1.as
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../../../build/libs/builtin.abc SHELLABC=../../../../build/libs/shell.abc python runtests.py --shumway  --threads $(THREADS) --timeout 360 --vmargs "-rel -i" --log test.log ecma3/String ecma3/Function ecma3/ExecutionContexts ecma3/Math/e15_8_2_1.as
 
 run-youtube-tests: install-tamarin-tests
-	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads 1 --timeout 360 --vmargs "-rel -i" --log test.log ecma3/Math ecma3/Date/e15_9_5.as ecma3/GlobalObject/encodeURIComponent.as ecma3/GlobalObject/decodeURIComponent.as ecma3/GlobalObject/e15_1_2_3_1.as ecma3/GlobalObject/e15_1_2_3_2.as ecma3/GlobalObject/e15_1_2_2_1.as ecma3/GlobalObject/e15_1_2_2_2.as
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../../../build/libs/builtin.abc SHELLABC=../../../../build/libs/shell.abc python runtests.py --shumway  --threads 1 --timeout 360 --vmargs "-rel -i" --log test.log ecma3/Math ecma3/Date/e15_9_5.as ecma3/GlobalObject/encodeURIComponent.as ecma3/GlobalObject/decodeURIComponent.as ecma3/GlobalObject/e15_1_2_3_1.as ecma3/GlobalObject/e15_1_2_3_2.as ecma3/GlobalObject/e15_1_2_2_1.as ecma3/GlobalObject/e15_1_2_2_2.as
 
 run-tamarin-performance: install-tamarin-tests
-	cd $(TAMARIN_HOME)/test/performance;  SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --avm2 ../../bin/shell/$(AVMSHELL)
+	cd $(TAMARIN_HOME)/test/performance;  SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../../../build/libs/builtin.abc SHELLABC=../../../../build/libs/shell.abc python runtests.py --shumway --avm2 ../../bin/shell/$(AVMSHELL)
 
 install-js:
 	-rm -rf $(JSSHELL_HOME)
@@ -184,13 +171,9 @@ endif
 build-playerglobal:
 	cd playerglobal-builder; node build -t $(THREADS) $(PLAYERGLOBAL_FLAGS)
 
-build-playerglobal-fp:
-	make -C playerglobal-fp/ build
-
 clean:
 	-rm -rf $(TAMARIN_HOME)
 	-rm -rf $(JSSHELL_HOME)
-	make -C playerglobal-fp/ clean
 
 .PHONY: install-tamarin install-js install-swfdec install-flex-sdk \
         install-node-modules build-tamarin-tests build-playerglobal \

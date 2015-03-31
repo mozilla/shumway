@@ -1,6 +1,6 @@
 /**
  * Compiled with:
- * java -jar utils/asc.jar -import src/avm2/generated/playerGlobal/playerGlobal.abc -swf LoaderTest,600,600 test/swfs/as3-loader/LoaderTest.as
+ * java -jar utils/asc.jar -import build/playerglobal/playerglobal-single.abc -swf LoaderTest,600,600 test/swfs/as3-loader/LoaderTest.as
  */
 package {
 import flash.display.Loader;

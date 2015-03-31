@@ -16,6 +16,9 @@
 
 module.exports = function(grunt) {
 
+  var VERSION_BASELINE = '8c92f57b7811f5ce54';
+  var VERSION_BASE = '0.10.';
+
   // work around a grunt bug where color output is written to non-tty output
   if (!process.stdout.isTTY) {
       grunt.option("color", false);
@@ -95,15 +98,18 @@ module.exports = function(grunt) {
       build_shell_ts: {
         cmd: tscCommand + ' --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
       },
-      generate_abcs: {
-        cmd: 'python generate.py',
-        cwd: 'src/avm2/generated'
-      },
       build_playerglobal: {
         cmd: 'node build.js -t ' + (+grunt.option('threads') || 9) +
                                    (grunt.option('sha1') ? ' -s' : '') +
                                    (grunt.option('rebuild') ? ' -r' : ''),
         cwd: 'utils/playerglobal-builder'
+      },
+      build_playerglobal_single: {
+        cmd: 'node single.js',
+        cwd: 'utils/playerglobal-builder'
+      },
+      debug_server: {
+        cmd: 'node examples/inspector/debug/server.js'
       },
       gate: {
         cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
@@ -192,8 +198,13 @@ module.exports = function(grunt) {
       base: {
         tasks: [
           { args: ['generate-version'], grunt: true },
-          { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
+          { args: ['buildlibs'], grunt: true },
           { args: ['exec:build_base_ts'].concat(parallelArgs), grunt: true },
+        ]
+      },
+      playerglobal: {
+        tasks: [
+          { args: ['exec:build_playerglobal'].concat(parallelArgs), grunt: true },
         ]
       },
       tier2: {
@@ -300,6 +311,18 @@ module.exports = function(grunt) {
   });
   grunt.registerTask('update-flash-refs', ['update-refs']); // TODO deprecated
 
+  grunt.registerTask('buildlibs', function() {
+    var outputDir = 'build/libs/';
+    grunt.file.mkdir(outputDir);
+    var done = this.async();
+    var buildLibs = require('./src/libs/buildlibs.js').buildLibs;
+    buildLibs(outputDir, false, null, function () {
+      done();
+    });
+  });
+  grunt.registerTask('copy_relooper', function() {
+    grunt.file.copy('src/avm2/compiler/relooper/relooper.js', 'build/libs/relooper.js');
+  });
   grunt.registerTask('bundles', function () {
     var outputDir = 'build/bundles/';
     grunt.file.mkdir(outputDir);
@@ -481,10 +504,11 @@ module.exports = function(grunt) {
     grunt.file.mkdir(outputDir);
     var path = require('path');
 
-    grunt.file.copy('src/avm2/generated/builtin/builtin.abc', outputDir + '/src/avm2/generated/builtin/builtin.abc');
-    grunt.file.copy('src/avm2/generated/shell/shell.abc', outputDir + '/src/avm2/generated/shell/shell.abc');
+    grunt.file.copy('build/libs/builtin.abc', outputDir + '/build/libs/builtin.abc');
+    grunt.file.copy('build/libs/shell.abc', outputDir + '/build/libs/shell.abc');
     grunt.file.copy('build/playerglobal/playerglobal.abcs', outputDir + '/build/playerglobal/playerglobal.abcs');
     grunt.file.copy('build/playerglobal/playerglobal.json', outputDir + '/build/playerglobal/playerglobal.json');
+    grunt.file.copy('build/libs/relooper.js', outputDir + '/build/libs/relooper.js');
     grunt.file.expand('build/ts/*.js').forEach(function (file) {
       grunt.file.copy(file, outputDir + '/build/ts/' + path.basename(file));
     });
@@ -500,7 +524,7 @@ module.exports = function(grunt) {
 
     var waitFor = 0, done = this.async();
     grunt.file.expand('src/shell/runners/run-*').forEach(function (file) {
-      var dest = outputDir + '/' + path.basename(file);
+      var dest = outputDir + '/bin/' + path.basename(file);
       grunt.file.copy(file, dest);
       waitFor++;
       grunt.util.spawn({cmd: 'chmod', args: ['+x', dest]}, function () {
@@ -529,6 +553,8 @@ module.exports = function(grunt) {
 
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
+  grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
+  grunt.registerTask('playerglobal-single', ['exec:build_playerglobal_single']);
 
   grunt.registerTask('base', ['exec:build_base_ts', 'exec:gate']);
   grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:gate']);
@@ -537,7 +563,7 @@ module.exports = function(grunt) {
   grunt.registerTask('player', ['exec:build_player_ts', 'exec:gate']);
   grunt.registerTask('shell', ['exec:build_shell_ts', 'exec:gate']);
   grunt.registerTask('tools', ['exec:build_tools_ts', 'exec:gate']);
-  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'exec:gate']);
+  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'exec:gate']);
   grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts']);
   grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts', 'exec:gate']);
   grunt.registerTask('gate', ['exec:gate']);
@@ -545,9 +571,11 @@ module.exports = function(grunt) {
   grunt.registerTask('gfx-test', ['exec:gfx-test']);
   grunt.registerTask('build', [
     'parallel:base',
+    'parallel:playerglobal',
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
     'parallel:tier2',
+    'copy_relooper',
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
@@ -559,12 +587,14 @@ module.exports = function(grunt) {
   ]);
   grunt.registerTask('travis', [
     'exec:install_js_travis',
+    // Duplicates almost all of "build" because we don't want to do the costly "playerglobal" task.
     // 'parallel:base',
     'generate-version',
     'exec:build_base_ts',
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
     'parallel:tier2',
+    'copy_relooper',
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
@@ -654,7 +684,7 @@ module.exports = function(grunt) {
       throw new Error('mozcentralbaseline was not run.');
     }
     var NON_DELTA_BINARIES = [
-      'browser/extensions/shumway/content/avm2/generated/builtin/builtin.abc',
+      'browser/extensions/shumway/content/libs/builtin.abc',
       'browser/extensions/shumway/content/playerglobal/playerglobal.abcs'
     ];
     var MOZCENTRAL_DIR = 'build/mozcentral';
@@ -779,10 +809,13 @@ module.exports = function(grunt) {
           '})(Shumway || (Shumway = {}));\n');
     }
 
-    var VERSION_BASELINE = '9c77cb929464c1bca343f4';
-    var VERSION_BASE = '0.9.';
+    function getDefaultVersion() {
+      var d = new Date();
+      return d.getFullYear() * 100000000 + (d.getMonth() + 1) * 1000000 +
+             d.getDate() * 10000 + d.getHours() * 100 + d.getMinutes()
+    }
 
-    var version = '' + new Date(), sha = 'unknown';
+    var version = getDefaultVersion(), sha = 'unknown';
 
     var outputDir = 'build/version';
     grunt.file.mkdir(outputDir);
@@ -818,9 +851,10 @@ module.exports = function(grunt) {
     grunt.file.mkdir(outputDir);
     var path = require('path');
 
-    grunt.file.copy('src/avm2/generated/builtin/builtin.abc', outputDir + '/src/avm2/generated/builtin/builtin.abc');
+    grunt.file.copy('build/libs/builtin.abc', outputDir + '/build/libs/builtin.abc');
     grunt.file.copy('build/playerglobal/playerglobal.abcs', outputDir + '/build/playerglobal/playerglobal.abcs');
     grunt.file.copy('build/playerglobal/playerglobal.json', outputDir + '/build/playerglobal/playerglobal.json');
+    grunt.file.copy('build/libs/relooper.js', outputDir + '/build/libs/relooper.js');
     grunt.file.expand('build/bundles-cc/*.js').forEach(function (file) {  // TODO closure bundles
       grunt.file.copy(file, outputDir + '/build/bundles/' + path.basename(file));
     });
@@ -838,7 +872,125 @@ module.exports = function(grunt) {
     grunt.file.copy('LICENSE', outputDir + '/LICENSE');
   });
 
+  function copyFilesUsingPattern(src, dest, callback) {
+    var path = require('path');
+    grunt.file.expand(src).forEach(function (file) {
+      var p = path.join(dest, path.basename(file));
+      grunt.file.copy(file, p);
+      if (callback) {
+        callback(p);
+      }
+    });
+  }
+
+  grunt.registerTask('dist-package', function() {
+    var done = this.async();
+    var outputDir = 'build/dist';
+    var repoURL = 'https://github.com/mozilla/shumway-dist';
+
+    var path = require('path');
+    var fs = require('fs');
+    var versionJSON = JSON.parse(fs.readFileSync('build/version/version.json'));
+
+    function prepareFiles(done) {
+      grunt.file.copy('build/libs/builtin.abc', outputDir + '/build/libs/builtin.abc');
+      grunt.file.copy('build/playerglobal/playerglobal.abcs', outputDir + '/build/playerglobal/playerglobal.abcs');
+      grunt.file.copy('build/playerglobal/playerglobal.json', outputDir + '/build/playerglobal/playerglobal.json');
+      grunt.file.copy('build/libs/relooper.js', outputDir + '/build/libs/relooper.js');
+      copyFilesUsingPattern('build/bundles-cc/*.js', outputDir + '/build/bundles');
+
+      // shuobject packaging
+      copyFilesUsingPattern('web/iframe/*', outputDir + '/iframe');
+      grunt.file.copy('extension/shuobject/shuobject.js', outputDir + '/shuobject.js');
+
+      // shell packaging
+      grunt.file.copy('build/ts/shell.js', outputDir + '/build/ts/shell.js');
+      fs.writeFileSync(outputDir + '/build/ts/shell.conf', 'dist');
+      grunt.file.copy('src/shell/shell-node.js', outputDir + '/src/shell/shell-node.js');
+
+      var waitFor = 1;
+      copyFilesUsingPattern('src/shell/runners/run-*', outputDir + '/bin', function (dest) {
+        waitFor++;
+        grunt.util.spawn({cmd: 'chmod', args: ['+x', dest]}, function () {
+          waitFor--;
+          if (waitFor === 0) {
+            done();
+          }
+        });
+      });
+
+      // manifests
+      var packageJSON = {
+        "name": "shumway-dist",
+        "version": versionJSON.version,
+        "description": "Generic build of Mozilla's Shumway library.",
+        "keywords": [
+          "Mozilla",
+          "Shumway"
+        ],
+        "homepage": "http://mozilla.github.io/shumway/",
+        "bugs": "https://github.com/mozilla/shumway/issues",
+        "license": "Apache-2.0",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/mozilla/shumway-dist"
+        }
+      };
+      fs.writeFileSync(outputDir + '/package.json', JSON.stringify(packageJSON, null, 2));
+      var bowerJSON = {
+        "name": "shumway-dist",
+        "version": versionJSON.version,
+        "main": [
+          "shuobject.js"
+        ],
+        "ignore": [],
+        "keywords": [
+          "Mozilla",
+          "Shumway"
+        ]
+      };
+      fs.writeFileSync(outputDir + '/bower.json', JSON.stringify(bowerJSON, null, 2));
+
+      grunt.file.copy('build/version/version.txt', outputDir + '/version.txt');
+      grunt.file.copy('LICENSE', outputDir + '/LICENSE');
+      grunt.file.copy('utils/dist/README.md', outputDir + '/README.md');
+
+      if (--waitFor === 0) {
+        done();
+      }
+    }
+
+    function addCommitMessages(done) {
+      var message = 'Shumway version ' + versionJSON.version;
+      var tag = 'v' + versionJSON.version;
+      grunt.util.spawn({cmd: 'git', args: ['add', '--all'], opts: {cwd: outputDir}}, function (error) {
+        grunt.util.spawn({cmd: 'git', args: ['commit', '-am', message], opts: {cwd: outputDir}}, function () {
+          grunt.util.spawn({cmd: 'git', args: ['tag', '-a', tag, '-m', message], opts: {cwd: outputDir}}, function () {
+            done();
+          });
+        });
+      });
+    }
+
+    grunt.file.delete(outputDir);
+    grunt.file.mkdir(outputDir);
+
+    grunt.util.spawn({cmd: 'git', args: ['clone', '--depth', '1', repoURL, outputDir]}, function () {
+      prepareFiles(function () {
+        addCommitMessages(function () {
+          console.info();
+          console.info('Done. Push with');
+          console.info('  cd ' + outputDir + '; git push --tags ' + repoURL + ' master');
+          console.info();
+
+          done();
+        });
+      });
+    });
+  });
+
   grunt.registerTask('firefox', ['build', 'closure-bundles', 'exec:build_extension']);
   grunt.registerTask('mozcentral', ['build', 'closure-bundles', 'exec:build_mozcentral']);
   grunt.registerTask('web', ['build', 'closure-bundles', 'exec:build_extension', 'shell-package', 'shuobject-package', 'exec:build_web']);
+  grunt.registerTask('dist', ['build', 'closure-bundles', 'dist-package']);
 };

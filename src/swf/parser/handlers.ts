@@ -65,7 +65,7 @@ module Shumway.SWF.Parser.LowLevel {
                       readUi8($bytes, $stream);
     $.depth = readUi16($bytes, $stream);
     if (flags & PlaceObjectFlags.HasClassName) {
-      $.className = readString($bytes, $stream, 0);
+      $.className = readString($bytes, $stream, -1);
     }
     if (flags & PlaceObjectFlags.HasCharacter) {
       $.symbolId = readUi16($bytes, $stream);
@@ -81,7 +81,7 @@ module Shumway.SWF.Parser.LowLevel {
       $.ratio = readUi16($bytes, $stream);
     }
     if (flags & PlaceObjectFlags.HasName) {
-      $.name = readString($bytes, $stream, 0);
+      $.name = readString($bytes, $stream, -1);
     }
     if (flags & PlaceObjectFlags.HasClipDepth) {
       $.clipDepth = readUi16($bytes, $stream);
@@ -323,13 +323,13 @@ module Shumway.SWF.Parser.LowLevel {
       $.soundId = readUi16($bytes, $stream);
     }
     if (tagCode == 89) {
-      $.soundClassName = readString($bytes, $stream, 0);
+      $.soundClassName = readString($bytes, $stream, -1);
     }
     $.soundInfo = soundInfo($bytes, $stream);
     return $;
   }
 
-  export function soundStreamHead($bytes, $stream) {
+  export function soundStreamHead($bytes, $stream, tagEnd: number) {
     var $: any = {};
     var playbackFlags = readUi8($bytes, $stream);
     $.playbackRate = playbackFlags >> 2 & 3;
@@ -341,7 +341,7 @@ module Shumway.SWF.Parser.LowLevel {
     $.streamSize = streamFlags >> 1 & 1;
     $.streamType = streamFlags & 1;
     $.samplesCount = readUi16($bytes, $stream);
-    if (streamCompression == 2) {
+    if (streamCompression == 2 && tagEnd - $stream.pos >= 2) {
       $.latencySeek = readSi16($bytes, $stream);
     }
     return $;
@@ -388,7 +388,7 @@ module Shumway.SWF.Parser.LowLevel {
       $.fontId = readUi16($bytes, $stream);
     }
     if (hasFontClass) {
-      $.fontClass = readString($bytes, $stream, 0);
+      $.fontClass = readString($bytes, $stream, -1);
     }
     if (hasFont) {
       $.fontHeight = readUi16($bytes, $stream);
@@ -406,14 +406,14 @@ module Shumway.SWF.Parser.LowLevel {
       $.indent = readSi16($bytes, $stream);
       $.leading = readSi16($bytes, $stream);
     }
-    $.variableName = readString($bytes, $stream, 0);
+    $.variableName = readString($bytes, $stream, -1);
     if (hasText) {
-      $.initialText = readString($bytes, $stream, 0);
+      $.initialText = readString($bytes, $stream, -1);
     }
     return $;
   }
 
-  export function defineFont2($bytes, $stream, $, swfVersion, tagCode) {
+  export function defineFont2($bytes, $stream, $, swfVersion, tagCode, tagEnd) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     var flags = readUi8($bytes, $stream);
@@ -504,7 +504,10 @@ module Shumway.SWF.Parser.LowLevel {
       var kerningCount = readUi16($bytes, $stream);
       var $56 = $.kerning = [];
       var $57 = kerningCount;
-      while ($57--) {
+      // DefineFont2 tags tend to have a wrong kerning count so we have to make sure here that there is enough unread
+      // data remaining before parsing the next kerning record. If not, we have to bail out earlier in the following
+      // loop to avoid reading out of bound.
+      while ($57-- && tagEnd - $stream.pos >= (wide ? 4 : 2) + 2) {
         var $58 = {};
         kerning($bytes, $stream, $58, wide);
         $56.push($58);
@@ -520,7 +523,7 @@ module Shumway.SWF.Parser.LowLevel {
     var hasFontData = $.hasFontData = (flags & 0x4) ? 1 : 0;
     $.italic = (flags & 0x2) ? 1 : 0;
     $.bold = (flags & 0x1) ? 1 : 0;
-    $.name = readString($bytes, $stream, 0);
+    $.name = readString($bytes, $stream, -1);
     if (hasFontData) {
       $.data = $bytes.subarray($stream.pos, tagEnd);
       $stream.pos = tagEnd;
@@ -544,7 +547,7 @@ module Shumway.SWF.Parser.LowLevel {
     while ($1--) {
       var $2: any = {};
       $2.offset = readEncodedU32($bytes, $stream);
-      $2.name = readString($bytes, $stream, 0);
+      $2.name = readString($bytes, $stream, -1);
       $0.push($2);
     }
     var labelCount = readEncodedU32($bytes, $stream);
@@ -553,7 +556,7 @@ module Shumway.SWF.Parser.LowLevel {
     while ($4--) {
       var $5: any = {};
       $5.frame = readEncodedU32($bytes, $stream);
-      $5.name = readString($bytes, $stream, 0);
+      $5.name = readString($bytes, $stream, -1);
       $3.push($5);
     }
     return $;

@@ -26,6 +26,7 @@
 ///<reference path='SWFTags.ts' />
 ///<reference path='binaryFileReader.ts' />
 ///<reference path='remoting.ts' />
+///<reference path='external.ts' />
 
 var throwError: (className: string, error: any, replacement1?: any,
                  replacement2?: any, replacement3?: any, replacement4?: any) => void;

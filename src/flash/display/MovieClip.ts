@@ -90,11 +90,12 @@ module Shumway.AVMX.AS.flash.display {
             var soundObj = constructClassFromSymbol(symbolInfo, symbolClass);
             sounds[symbolId] = sound = { object: soundObj };
           }
-          if (sound.channel) {
+          if (sound.channel && info.stop) {
             sound.channel.stop();
             sound.channel = null;
           }
-          if (!info.stop) {
+          if (!info.stop &&
+              (!sound.channel || !sound.channel.playing)) {
             // TODO envelope, in/out point
             var loops = info.hasLoops ? info.loopCount : 0;
             sound.channel = sound.object.play(0, loops);

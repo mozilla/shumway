@@ -23,82 +23,54 @@ module Shumway.AVM2.Compiler.AST {
   import assertUnreachable = Shumway.Debug.assertUnreachable;
   // The top part of this file is copied from escodegen.
 
-  var json = false;
-  var escapeless = false;
   var hexadecimal = false;
   var renumber = false;
-  var quotes = "double";
-
-  function stringToArray(str) {
-    var length = str.length,
-      result = [],
-      i;
-    for (i = 0; i < length; ++i) {
-      result[i] = str.charAt(i);
-    }
-    return result;
-  }
 
   function escapeAllowedCharacter(ch, next) {
-    var code = ch.charCodeAt(0), hex = code.toString(16), result = '\\';
-
     switch (ch) {
       case '\b':
-        result += 'b';
-        break;
+        return '\\b';
       case '\f':
-        result += 'f';
-        break;
+        return '\\f';
       case '\t':
-        result += 't';
-        break;
+        return '\\t';
       default:
-        if (json || code > 0xff) {
-          result += 'u' + '0000'.slice(hex.length) + hex;
+        var code = ch.charCodeAt(0), hex = code.toString(16), result;
+        if (code > 0xff) {
+          result = '\\u' + '0000'.slice(hex.length) + hex;
         } else if (ch === '\u0000' && '0123456789'.indexOf(next) < 0) {
-          result += '0';
+          result = '\\0';
         } else if (ch === '\x0B') { // '\v'
-          result += 'x0B';
+          result = '\\x0B';
         } else {
-          result += 'x' + '00'.slice(hex.length) + hex;
+          result = '\\x' + '00'.slice(hex.length) + hex;
         }
-        break;
+        return result;
     }
-
-    return result;
   }
 
   function escapeDisallowedCharacter(ch) {
-    var result = '\\';
     switch (ch) {
       case '\\':
-        result += '\\';
-        break;
+        return '\\\\';
       case '\n':
-        result += 'n';
-        break;
+        return '\\n';
       case '\r':
-        result += 'r';
-        break;
+        return '\\r';
       case '\u2028':
-        result += 'u2028';
-        break;
+        return '\\u2028';
       case '\u2029':
-        result += 'u2029';
-        break;
+        return '\\u2029';
       default:
         throw new Error('Incorrectly classified character');
     }
-
-    return result;
   }
 
   var escapeStringCacheCount = 0;
   var escapeStringCache = Object.create(null);
 
-  export function escapeString(str) {
-    var result, i, len, ch, singleQuotes = 0, doubleQuotes = 0, single, original = str;
-    result = escapeStringCache[original];
+  export function escapeString(str: string) {
+    var result = escapeStringCache[str];
     if (result) {
       return result;
     }
@@ -106,48 +78,24 @@ module Shumway.AVM2.Compiler.AST {
       escapeStringCache = Object.create(null);
       escapeStringCacheCount = 0;
     }
-    result = '';
+    result = '"';
 
-    if (typeof str[0] === 'undefined') {
-      str = stringToArray(str);
-    }
-
-    for (i = 0, len = str.length; i < len; ++i) {
-      ch = str[i];
-      if (ch === '\'') {
-        ++singleQuotes;
-      } else if (ch === '"') {
-        ++doubleQuotes;
-      } else if (ch === '/' && json) {
+    for (var i = 0, len = str.length; i < len; ++i) {
+      var ch = str[i];
+      if (ch === '"') {
         result += '\\';
       } else if ('\\\n\r\u2028\u2029'.indexOf(ch) >= 0) {
         result += escapeDisallowedCharacter(ch);
         continue;
-      } else if ((json && ch < ' ') || !(json || escapeless || (ch >= ' ' && ch <= '~'))) {
+      } else if (!(ch >= ' ' && ch <= '~')) {
         result += escapeAllowedCharacter(ch, str[i + 1]);
         continue;
       }
       result += ch;
     }
 
-    single = !(quotes === 'double' || (quotes === 'auto' && doubleQuotes < singleQuotes));
-    str = result;
-    result = single ? '\'' : '"';
-
-    if (typeof str[0] === 'undefined') {
-      str = stringToArray(str);
-    }
-
-    for (i = 0, len = str.length; i < len; ++i) {
-      ch = str[i];
-      if ((ch === '\'' && single) || (ch === '"' && !single)) {
-        result += '\\';
-      }
-      result += ch;
-    }
-
-    result += (single ? '\'' : '"');
-    escapeStringCache[original] = result;
+    result += '"';
+    escapeStringCache[str] = result;
     escapeStringCacheCount ++;
     return result;
   }
@@ -166,7 +114,7 @@ module Shumway.AVM2.Compiler.AST {
     }
 
     if (value === 1 / 0) {
-      return json ? 'null' : renumber ? '1e400' : '1e+400';
+      return renumber ? '1e400' : '1e+400';
     }
 
     result = generateNumberCache[value];
@@ -185,7 +133,7 @@ module Shumway.AVM2.Compiler.AST {
     }
 
     point = result.indexOf('.');
-    if (!json && result.charAt(0) === '0' && point === 1) {
+    if (result.charAt(0) === '0' && point === 1) {
       point = 0;
       result = result.slice(1);
     }

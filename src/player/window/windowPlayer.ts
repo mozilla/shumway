@@ -20,23 +20,23 @@ module Shumway.Player.Window {
 
   import VideoControlEvent = Shumway.Remoting.VideoControlEvent;
 
-  export class WindowPlayer extends Player {
+  export class WindowGFXService extends GFXServiceBase {
     private _window;
     private _parent;
+    private _fontOrImageRequests: PromiseWrapper<any>[];
 
-    constructor(securitDomain: ISecurityDomain, window, parent) {
-      super(securitDomain);
+    constructor(securityDomain: ISecurityDomain, window, parent?) {
+      super(securityDomain);
+
       this._window = window;
       this._parent = parent || window.parent;
       this._window.addEventListener('message', function (e) {
-        this.onWindowMessage(e.data, true);
+        this.onWindowMessage(e.data);
       }.bind(this));
-      this._window.addEventListener('syncmessage', function (e) {
-        this.onWindowMessage(e.detail, false);
-      }.bind(this));
+      this._fontOrImageRequests = [];
     }
 
-    onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>, async: boolean = true): DataBuffer {
+    update(updates: DataBuffer, assets: any[]): void {
       var bytes = updates.getBytes();
       var message = {
         type: 'player',
@@ -45,28 +45,81 @@ module Shumway.Player.Window {
         result: undefined
       };
       var transferList = [bytes.buffer];
-      if (!async) {
-        // TODO var result = this._parent.postSyncMessage(message, '*', transferList);
-        var event = this._parent.document.createEvent('CustomEvent');
-        event.initCustomEvent('syncmessage', false, false, message);
-        this._parent.dispatchEvent(event);
-        var result = message.result;
-        return DataBuffer.FromPlainObject(result);
-      }
       this._parent.postMessage(message, '*', transferList);
-      return null;
     }
 
-    onExternalCommand(command) {
+    updateAndGet(updates: DataBuffer, assets: any[]): any {
+      var bytes = updates.getBytes();
+      var message = {
+        type: 'player',
+        updates: bytes,
+        assets: assets,
+        result: undefined
+      };
+      var result = this._sendSyncMessage(message);
+      return DataBuffer.FromPlainObject(result);
+    }
+
+    frame(): void {
+      this._parent.postMessage({
+        type: 'frame'
+      }, '*');
+    }
+
+    videoControl(id: number, eventType: VideoControlEvent, data: any): any {
+      var message = {
+        type: 'videoControl',
+        id: id,
+        eventType: eventType,
+        data: data,
+        result: undefined
+      };
+      return this._sendSyncMessage(message);
+    }
+
+    private _sendSyncMessage(message) {
+      if (typeof ShumwayCom !== 'undefined' && ShumwayCom.postSyncMessage) {
+        return ShumwayCom.postSyncMessage(message);
+      }
+
       var event = this._parent.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, {
-        type: 'external',
-        request: command
-      });
+      event.initCustomEvent('syncmessage', false, false, message);
       this._parent.dispatchEvent(event);
+      return message.result;
     }
 
-    onFSCommand(command: string, args: string) {
+    registerFont(syncId: number, data: any): Promise<any> {
+      var requestId = this._fontOrImageRequests.length;
+      var result = new PromiseWrapper<any>();
+      this._fontOrImageRequests[requestId] = result;
+      var message = {
+        type: 'registerFontOrImage',
+        syncId: syncId,
+        assetType: 'font',
+        data: data,
+        requestId: requestId
+      };
+      this._parent.postMessage(message, '*');
+      return result.promise;
+    }
+
+    registerImage(syncId: number, symbolId: number, data: any): Promise<any> {
+      var requestId = this._fontOrImageRequests.length;
+      var result = new PromiseWrapper<any>();
+      this._fontOrImageRequests[requestId] = result;
+      var message = {
+        type: 'registerFontOrImage',
+        syncId: syncId,
+        symbolId: symbolId,
+        assetType: 'image',
+        data: data,
+        requestId: requestId
+      };
+      this._parent.postMessage(message, '*');
+      return result.promise;
+    }
+
+    fscommand(command: string, args: string): void {
       this._parent.postMessage({
         type: 'fscommand',
         command: command,
@@ -74,39 +127,7 @@ module Shumway.Player.Window {
       }, '*');
     }
 
-    onVideoControl(id: number, eventType: VideoControlEvent, data: any): any {
-      var event = this._parent.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, {
-        type: 'videoControl',
-        id: id,
-        eventType: eventType,
-        data: data,
-        result: undefined
-      });
-      this._parent.dispatchEvent(event);
-      return event.detail.result;
-    }
-
-    onFrameProcessed() {
-      this._parent.postMessage({
-        type: 'frame'
-      }, '*');
-    }
-
-    protected registerFontOrImageImpl(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
-      var event = this._parent.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, {
-        type: 'registerFontOrImage',
-        syncId: symbol.syncId,
-        symbolId: symbol.id,
-        assetType: data.type,
-        data: data,
-        resolve: symbol.resolveAssetPromise.resolve
-      });
-      this._parent.dispatchEvent(event);
-    }
-
-    private onWindowMessage(data, async) {
+    private onWindowMessage(data) {
       if (typeof data === 'object' && data !== null) {
         switch (data.type) {
           case 'gfx':
@@ -114,14 +135,17 @@ module Shumway.Player.Window {
             var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
             this.processUpdates(updates, data.assets);
             break;
-          case 'externalCallback':
-            this.processExternalCallback(data.request);
-            break;
           case 'videoPlayback':
             this.processVideoEvent(data.id, data.eventType, data.data);
             break;
           case 'displayParameters':
             this.processDisplayParameters(data.params);
+            break;
+          case 'registerFontOrImageResponse':
+            var request = this._fontOrImageRequests[data.requestId];
+            release || Debug.assert(request);
+            delete this._fontOrImageRequests[data.requestId];
+            request.resolve(data.result);
             break;
           case 'options':
             Shumway.Settings.setSettings(data.settings);
@@ -145,7 +169,7 @@ module Shumway.Player.Window {
                   break;
                 }
                 this._parent.postMessage({
-                  type:'timelineResponse',
+                  type: 'timelineResponse',
                   request: data.request,
                   timeline: Shumway.Player.timelineBuffer
                 }, '*');
@@ -156,7 +180,7 @@ module Shumway.Player.Window {
                   break;
                 }
                 this._parent.postMessage({
-                  type:'timelineResponse',
+                  type: 'timelineResponse',
                   request: data.request,
                   timeline: Shumway.SWF.timelineBuffer
                 }, '*');

@@ -37,9 +37,16 @@ module Shumway.GFX.Window {
       this._window.addEventListener('message', function (e) {
         this.onWindowMessage(e.data);
       }.bind(this));
-      this._window.addEventListener('syncmessage', function (e) {
-        this.onWindowMessage(e.detail, false);
-      }.bind(this));
+      if (typeof ShumwayCom !== 'undefined') {
+        ShumwayCom.setSyncMessageCallback(function (msg) {
+          this.onWindowMessage(msg, false);
+          return msg.result;
+        }.bind(this));
+      } else {
+        this._window.addEventListener('syncmessage', function (e) {
+          this.onWindowMessage(e.detail, false);
+        }.bind(this));
+      }
     }
 
     onSendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) {
@@ -51,15 +58,6 @@ module Shumway.GFX.Window {
       }, '*', [bytes.buffer]);
     }
 
-    onExernalCallback(request) {
-      var event = this._playerWindow.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, {
-        type: 'externalCallback',
-        request: request
-      });
-      this._playerWindow.dispatchEvent(event);
-    }
-
     onDisplayParameters(params: DisplayParameters) {
       this._playerWindow.postMessage({
         type: 'displayParameters',
@@ -68,14 +66,12 @@ module Shumway.GFX.Window {
     }
 
     onVideoPlaybackEvent(id: number, eventType: VideoPlaybackEvent, data: any) {
-      var event = this._playerWindow.document.createEvent('CustomEvent');
-      event.initCustomEvent('syncmessage', false, false, {
+      this._playerWindow.postMessage({
         type: 'videoPlayback',
         id: id,
         eventType: eventType,
         data: data
-      });
-      this._playerWindow.dispatchEvent(event);
+      }, '*');
     }
 
     public requestTimeline(type: string, cmd: string): Promise<TimelineBuffer> {
@@ -87,6 +83,14 @@ module Shumway.GFX.Window {
           request: type
         }, '*');
       }.bind(this));
+    }
+
+    private _sendRegisterFontOrImageResponse(requestId: number, result: any) {
+      this._playerWindow.postMessage({
+        type: 'registerFontOrImageResponse',
+        requestId: requestId,
+        result: result
+      }, '*');
     }
 
     private onWindowMessage(data, async: boolean = true) {
@@ -102,13 +106,11 @@ module Shumway.GFX.Window {
           }
         } else if (data.type === 'frame') {
           this.processFrame();
-        } else if (data.type === 'external') {
-          this.processExternalCommand(data.request);
         } else if (data.type === 'videoControl') {
           data.result = this.processVideoControl(data.id, data.eventType, data.data);
         } else if (data.type === 'registerFontOrImage') {
           this.processRegisterFontOrImage(data.syncId, data.symbolId, data.assetType, data.data,
-                                          data.resolve);
+            this._sendRegisterFontOrImageResponse.bind(this, data.requestId));
         } else if (data.type === 'fscommand') {
           this.processFSCommand(data.command, data.args);
         } else if (data.type === 'timelineResponse' && data.timeline) {

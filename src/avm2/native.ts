@@ -29,6 +29,7 @@ module Shumway.AVM2.AS {
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
   import hasOwnGetter = Shumway.ObjectUtilities.hasOwnGetter;
   import getOwnGetter = Shumway.ObjectUtilities.getOwnGetter;
+  import defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import isNumber = Shumway.isNumber;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
@@ -87,12 +88,6 @@ module Shumway.AVM2.AS {
    *
    */
 
-  export enum InitializationFlags {
-    NONE             = 0x0,
-    OWN_INITIALIZE   = 0x1,
-    SUPER_INITIALIZE = 0x2
-  }
-
   /**
    * In order to avoid shadowing of JS top level Objects we prefix the AS top level
    * classes with the "AS" prefix.
@@ -124,7 +119,6 @@ module Shumway.AVM2.AS {
     public static dynamicPrototype: Object;
     public static typeScriptPrototype: Object;
     public static defaultValue: any = null;
-    public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
     public static native_prototype: Object;
     public static implementedInterfaces: Shumway.Map<ASClass>;
     public static isInterface: () => boolean;
@@ -137,6 +131,13 @@ module Shumway.AVM2.AS {
      */
     public static call = Function.prototype.call;
     public static apply = Function.prototype.apply;
+
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=605660
+    // Some existing Flash content happens to rely on an "init" method
+    // being present in the global namespace; hiding it via VM_INTERNAL breaks
+    // the content as it causes an RTE. Let's provide a name here
+    // that is harmless.
+    public static init() {}
 
     /**
      * Makes native class definitions look like ASClass instances.
@@ -185,24 +186,29 @@ module Shumway.AVM2.AS {
       Object.defineProperty(o, name, descriptor);
     }
 
-    static _dontEnumPrototype(o: Object): void {
-      for (var key in o) {
-        if (Multiname.isPublicQualifiedName(key)) {
-          var descriptor = getOwnPropertyDescriptor(o, key);
-          descriptor.enumerable = false;
-          Object.defineProperty(o, key, descriptor);
-        }
-      }
-    }
-
     static _init() {
-      this.dynamicPrototype.axSetPublicProperty("hasOwnProperty", ASObject.prototype.native_hasOwnProperty);
-      this.dynamicPrototype.axSetPublicProperty("propertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
-      this.dynamicPrototype.axSetPublicProperty("setPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
-      this.dynamicPrototype.axSetPublicProperty("isPrototypeOf", ASObject.prototype.native_isPrototypeOf);
-      this.dynamicPrototype.axSetPublicProperty("toString", ASObject.prototype.toString);
-      this.dynamicPrototype.axSetPublicProperty("valueOf", ASObject.prototype.valueOf);
-      ASObject._dontEnumPrototype(this.dynamicPrototype);
+      defineReadOnlyProperty(ASObject, "$Bglength", 1);
+      defineReadOnlyProperty(Object, "$Bglength", 1);
+      var dynProto: any = this.dynamicPrototype;
+      defineNonEnumerableProperty(dynProto, "$BghasOwnProperty", ASObject.prototype.native_hasOwnProperty);
+      defineNonEnumerableProperty(dynProto, "$BgpropertyIsEnumerable", ASObject.prototype.native_propertyIsEnumerable);
+      defineNonEnumerableProperty(dynProto, "$BgsetPropertyIsEnumerable", ASObject.prototype.setPropertyIsEnumerable);
+      defineNonEnumerableProperty(dynProto, "$BgisPrototypeOf", ASObject.prototype.native_isPrototypeOf);
+
+      // To make AS3's toString work seamlessly with the native one, we replace
+      // Object.prototype.toString with a forwarder that always just invokes the AS3 toString.
+      // This is valid because AS3's toString is special for all objects, so we have an AS3 toString
+      // in Object.prototype, so everywhere. (Well, and objects created with Object.create(null)
+      // also don't have Object.prototype.toString.)
+      defineNonEnumerableProperty(dynProto, "$BgtoString", Runtime.asToString);
+      defineNonEnumerableProperty(dynProto, "toString", ASObject.prototype.toString);
+
+      // For valueOf, we do mostly the same as for toString. The difference is that AS doesn't
+      // require a special valueOf for most objects, so there's no need for one on
+      // Object.prototype. Hence, we still always forward to the AS3 valueOf, but make the base
+      // implementation of that be the native JS valueOf.
+      defineNonEnumerableProperty(dynProto, "$BgvalueOf", Object.prototype.valueOf);
+      defineNonEnumerableProperty(dynProto, "valueOf", ASObject.prototype.valueOf);
     }
 
     // Hack to make the TypeScript compiler find the original Object.defineProperty.
@@ -212,6 +218,16 @@ module Shumway.AVM2.AS {
     static native_hasOwnProperty: (V: string) => boolean;
     static native_propertyIsEnumerable: (V: string) => boolean;
     static setPropertyIsEnumerable: (V: string, enumerable: boolean) => boolean;
+
+    toString() {
+      release || assert('$BgtoString' in this);
+      return (<any>this).$BgtoString();
+    }
+
+    valueOf() {
+      release || assert('$BgvalueOf' in this);
+      return (<any>this).$BgvalueOf();
+    }
 
     native_isPrototypeOf(V: Object): boolean {
       notImplemented("isPrototypeOf");
@@ -231,18 +247,6 @@ module Shumway.AVM2.AS {
     setPropertyIsEnumerable(name: string, enumerable: boolean) {
       ASObject._setPropertyIsEnumerable(this, name, enumerable);
     }
-
-    /**
-     * This is the top level Object.prototype.toString() function.
-     */
-    toString(): string {
-      var self = boxValue(this);
-      if (self instanceof ASClass) {
-        var cls: ASClass = <any>self;
-        return Shumway.StringUtilities.concat3("[class ", cls.classInfo.instanceInfo.name.name, "]");
-      }
-      return Shumway.StringUtilities.concat3("[object ", self.class.classInfo.instanceInfo.name.name, "]");
-    }
   }
 
   /**
@@ -260,7 +264,6 @@ module Shumway.AVM2.AS {
     public static traitsPrototype: Object = null;
     public static dynamicPrototype: Object = null;
     public static defaultValue: any = null;
-    public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
   }
 
   /**
@@ -276,6 +279,10 @@ module Shumway.AVM2.AS {
     public static instanceConstructor: any = ASClass;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
+
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+    };
 
 
     /**
@@ -617,11 +624,6 @@ module Shumway.AVM2.AS {
     defaultValue: any;
 
     /**
-     * Initialization flags that determine how native initializers get called.
-     */
-    initializationFlags: InitializationFlags;
-
-    /**
      * Defines the AS MetaObject Protocol, |null| if the default protocol should
      * be used. Override this to provide a different protocol.
      */
@@ -634,7 +636,6 @@ module Shumway.AVM2.AS {
       this.classInfo = classInfo;
       this.staticNatives = null;
       this.instanceNatives = null;
-      this.initializationFlags = InitializationFlags.NONE;
       this.defaultValue = null;
     }
 
@@ -856,6 +857,7 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [Function.prototype];
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
       var proto: any = ASFunction.dynamicPrototype;
       var asProto: any = ASFunction.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', asProto.toString);
@@ -907,6 +909,7 @@ module Shumway.AVM2.AS {
     public static coerce: (value: any) => boolean = Runtime.asCoerceBoolean;
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
       var proto: any = Boolean.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
       defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
@@ -922,6 +925,8 @@ module Shumway.AVM2.AS {
   ASBoolean.prototype.toString = Boolean.prototype.toString;
   ASBoolean.prototype.valueOf = Boolean.prototype.valueOf;
 
+  // Note: this entire class is never used. Instead, makeTrampoline returns a closure serving
+  // the same purpose.
   export class ASMethodClosure extends ASFunction {
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
@@ -932,6 +937,16 @@ module Shumway.AVM2.AS {
       var bound = Shumway.FunctionUtilities.bindSafely(fn, self);
       defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
       defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
+    }
+
+    get native_prototype(): Object {
+      return null;
+    }
+
+    // We don't really implement this. `prototype` is a non-configurable accessor on functions,
+    // so changing its getter to throw isn't quite possible.
+    set native_prototype(p) {
+      throwError('ReferenceError', Errors.ConstWriteError, "prototype", "MethodClosure");
     }
 
     toString() {
@@ -951,6 +966,29 @@ module Shumway.AVM2.AS {
     public static coerce: (value: any) => number = Runtime.asCoerceNumber;
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+
+      defineNonEnumerableProperty(this, '$BgNaN', Number.NaN);
+      defineNonEnumerableProperty(this, '$BgNEGATIVE_INFINITY', Number.NEGATIVE_INFINITY);
+      defineNonEnumerableProperty(this, '$BgPOSITIVE_INFINITY', Number.POSITIVE_INFINITY);
+      defineNonEnumerableProperty(this, '$BgMIN_VALUE', Number.MIN_VALUE);
+      defineNonEnumerableProperty(this, '$BgMAX_VALUE', Number.MAX_VALUE);
+
+      // Technically, these should only be installed for SWF version >= 16. If we ever run into
+      // compatibility issues caused by always doing it, we can jump through some hoops and do that.
+      defineNonEnumerableProperty(this, '$BgE', Math.E);
+      defineNonEnumerableProperty(this, '$BgLN10', Math.LN10);
+      defineNonEnumerableProperty(this, '$BgLN2', Math.LN2);
+      defineNonEnumerableProperty(this, '$BgLOG10E', Math.LOG10E);
+      defineNonEnumerableProperty(this, '$BgLOG2E', Math.LOG2E);
+      defineNonEnumerableProperty(this, '$BgPI', Math.PI);
+      defineNonEnumerableProperty(this, '$BgSQRT1_2', Math.SQRT2);
+      defineNonEnumerableProperty(this, '$BgSQRT2', Math.SQRT2);
+
+      ASNumber.initializeDynamicMethods.call(this);
+    };
+
+    static initializeDynamicMethods() {
       var dynProto: any = this.dynamicPrototype;
       var numberProto: any = Number.prototype;
       defineNonEnumerableProperty(dynProto, 'toString', numberProto.toString);
@@ -961,15 +999,6 @@ module Shumway.AVM2.AS {
       defineNonEnumerableProperty(dynProto, '$BgtoExponential', numberProto.toExponential);
       defineNonEnumerableProperty(dynProto, '$BgtoPrecision', numberProto.toPrecision);
       defineNonEnumerableProperty(dynProto, '$BgtoFixed', numberProto.toFixed);
-    }
-
-    static _numberToString(n: number, radix: number): string {
-      radix = radix | 0;
-      return Number(n).toString(radix);
-    }
-
-    static _minValue(): number {
-      return Number.MIN_VALUE;
     }
 
     constructor(input) {
@@ -989,7 +1018,12 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = 0;
     public static coerce: (value: any) => number = Runtime.asCoerceInt;
 
-    static classInitializer: any = ASNumber.classInitializer;
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this, '$BgMIN_VALUE', -0x80000000);
+      defineNonEnumerableProperty(this, '$BgMAX_VALUE', 0x7fffffff);
+      ASNumber.initializeDynamicMethods.call(this);
+    };
 
     constructor(value: any) {
       false && super();
@@ -1031,7 +1065,12 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = 0;
     public static coerce: (value: any) => number = Runtime.asCoerceUint;
 
-    static classInitializer: any = ASNumber.classInitializer;
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(this, '$BgMIN_VALUE', 0);
+      defineNonEnumerableProperty(this, '$BgMAX_VALUE', 0xffffffff);
+      ASNumber.initializeDynamicMethods.call(this);
+    };
 
     constructor(value: any) {
       false && super();
@@ -1073,6 +1112,8 @@ module Shumway.AVM2.AS {
     public static coerce: (value: any) => string = Runtime.asCoerceString;
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      defineNonEnumerableProperty(String, '$Bglength', 1);
       defineNonEnumerableProperty(String, '$BgfromCharCode', String.fromCharCode);
 
       var proto: String = String.prototype;
@@ -1174,6 +1215,14 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [Array.prototype];
 
     static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      // option flags for sort and sortOn
+      defineNonEnumerableProperty(this, '$BgCASEINSENSITIVE', 1);
+      defineNonEnumerableProperty(this, '$BgDESCENDING', 2);
+      defineNonEnumerableProperty(this, '$BgUNIQUESORT', 4);
+      defineNonEnumerableProperty(this, '$BgRETURNINDEXEDARRAY', 8);
+      defineNonEnumerableProperty(this, '$BgNUMERIC', 16);
+
       var proto: any = Array.prototype;
       var asProto = ASArray.prototype;
       defineNonEnumerableProperty(proto, '$Bgjoin', proto.join);
@@ -1329,10 +1378,107 @@ module Shumway.AVM2.AS {
     }
   }
 
+  function walk(holder: any, name: string, reviver: Function) {
+    var val = holder[name];
+    if (Array.isArray(val)) {
+      var v: any[] = <any>val;
+      for (var i = 0, limit = v.length; i < limit; i++) {
+        var newElement = walk(v, asCoerceString(i), reviver);
+        if (newElement === undefined) {
+          delete v[i];
+        } else {
+          v[i] = newElement;
+        }
+      }
+    } else if (val !== null && typeof val !== 'boolean' && typeof val !== 'number' &&
+               typeof val !== 'string')
+    {
+
+      for (var p in val) {
+        if (!val.hasOwnProperty(p) || !Multiname.isPublicQualifiedName(p)) {
+          break;
+        }
+        var newElement = walk(val, p, reviver);
+        if (newElement === undefined) {
+          delete val[p];
+        } else {
+          val[p] = newElement;
+        }
+      }
+    }
+    return reviver.call(holder, name, val);
+  }
+
   export class ASJSON extends ASObject {
     public static instanceConstructor: any = ASJSON;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
+
+    static parse(text: string, reviver: Function): any {
+      text = asCoerceString(text);
+      if (text === null) {
+        throwError('SyntaxError', Errors.JSONInvalidParseInput);
+      }
+
+      // at this point, we should be assured that text is String.
+      var unfiltered: Object = this.transformJSValueToAS(JSON.parse(text), true);
+
+      if (reviver === null || arguments.length < 2) {
+        return unfiltered;
+      }
+      return walk({"": unfiltered}, "", reviver);
+    }
+
+    static stringify(value: any, replacer = null, space = null): string {
+      // We deliberately deviate from ECMA-262 and throw on
+      // invalid replacer parameter.
+      if (!(replacer === null || replacer instanceof Function || Array.isArray(replacer))) {
+        throwError('TypeError', Errors.JSONInvalidReplacer);
+      }
+
+      var gap;
+      if (typeof space === 'string') {
+        gap = space.length > 10 ? space.substring(0, 10) : space;
+      } else if (typeof space === 'number') {
+        gap = "          ".substring(0, Math.min(10, space | 0));
+      } else {
+        // We follow ECMA-262 and silently ignore invalid space parameter.
+        gap = "";
+      }
+
+      if (replacer === null) {
+        return this.stringifySpecializedToString(value, null, null, gap);
+      } else if (Array.isArray(replacer)) {
+        return this.stringifySpecializedToString(value, this.computePropertyList(replacer), null,
+                                                 gap);
+      } else { // replacer is Function
+        return this.stringifySpecializedToString(value, null, replacer, gap);
+      }
+    }
+
+    // ECMA-262 5th ed, section 15.12.3 stringify, step 4.b
+    private static computePropertyList(r: any[]): string[] {
+      var propertyList = [];
+      var alreadyAdded = Object.create(null);
+      for (var i = 0, length = r.length; i < length; i++) {
+        if (!r.hasOwnProperty(<any>i)) {
+          continue;
+        }
+        var v = r[i];
+        var item: string = null;
+
+        if (typeof v === 'string') {
+          item = v;
+        } else if (typeof v === 'number') {
+          item = asCoerceString(v);
+        }
+        if (item !== null && !alreadyAdded[item]) {
+          alreadyAdded[item] = true;
+          propertyList.push(item);
+        }
+      }
+      return propertyList;
+    }
 
     /**
      * Transforms a JS value into an AS value.
@@ -1383,12 +1529,9 @@ module Shumway.AVM2.AS {
       return result;
     }
 
-    private static parseCore(text: string): Object {
-      text = asCoerceString(text);
-      return ASJSON.transformJSValueToAS(JSON.parse(text), true)
-    }
-
-    private static stringifySpecializedToString(value: Object, replacerArray: any [], replacerFunction: (key: string, value: any) => any, gap: string): string {
+    private static stringifySpecializedToString(value: Object, replacerArray: any [],
+                                                replacerFunction: (key: string, value: any) => any,
+                                                gap: string): string {
       return JSON.stringify(ASJSON.transformASValueToJS(value, true), replacerFunction, gap);
     }
   }
@@ -1500,10 +1643,11 @@ module Shumway.AVM2.AS {
     //public static instanceNatives: any [] = [XRegExp.prototype];
 
     static classInitializer: any = function() {
-      //var proto = XRegExp.prototype;
-      //defineNonEnumerableProperty(proto, '$BgtoString', ASRegExp.prototype.ecmaToString);
-      //defineNonEnumerableProperty(proto, '$Bgexec', proto.exec);
-      //defineNonEnumerableProperty(proto, '$Bgtest', proto.test);
+      defineNonEnumerableProperty(this, '$Bglength', 1);
+      var proto = XRegExp.prototype;
+      defineNonEnumerableProperty(proto, '$BgtoString', ASRegExp.prototype.ecmaToString);
+      defineNonEnumerableProperty(proto, '$Bgexec', proto.exec);
+      defineNonEnumerableProperty(proto, '$Bgtest', proto.test);
     }
 
     constructor(input) {
@@ -1520,6 +1664,58 @@ module Shumway.AVM2.AS {
       if (r.dotall)       out += "s";
       if (r.extended)     out += "x";
       return out;
+    }
+
+    get source(): string {
+      var self: any = this;
+      var desc = getOwnPropertyDescriptor(RegExp.prototype, "source");
+      if (desc && "get" in desc) {
+        return desc.get.call(self);
+      }
+      desc = getOwnPropertyDescriptor(self, "source");
+      if (desc && "value" in desc) {
+        return desc.value;
+      }
+      return undefined;
+    }
+
+    get global(): boolean {
+      var self: any = this;
+      var desc = getOwnPropertyDescriptor(RegExp.prototype, "global");
+      if (desc && "get" in desc) {
+        return desc.get.call(self);
+      }
+      desc = getOwnPropertyDescriptor(self, "global");
+      if (desc && "value" in desc) {
+        return desc.value;
+      }
+      return undefined;
+    }
+
+    get ignoreCase(): boolean {
+      var self: any = this;
+      var desc = getOwnPropertyDescriptor(RegExp.prototype, "ignoreCase");
+      if (desc && "get" in desc) {
+        return desc.get.call(self);
+      }
+      desc = getOwnPropertyDescriptor(self, "ignoreCase");
+      if (desc && "value" in desc) {
+        return desc.value;
+      }
+      return undefined;
+    }
+
+    get multiline(): boolean {
+      var self: any = this;
+      var desc = getOwnPropertyDescriptor(RegExp.prototype, "multiline");
+      if (desc && "get" in desc) {
+        return desc.get.call(self);
+      }
+      desc = getOwnPropertyDescriptor(self, "multiline");
+      if (desc && "value" in desc) {
+        return desc.value;
+      }
+      return undefined;
     }
 
     get native_source(): string {
@@ -1591,6 +1787,17 @@ module Shumway.AVM2.AS {
 
   export class ASMath extends ASObject {
     public static staticNatives: any [] = [Math];
+
+    static classInitializer: any = function() {
+      defineNonEnumerableProperty(this, '$BgE', Math.E);
+      defineNonEnumerableProperty(this, '$BgLN10', Math.LN10);
+      defineNonEnumerableProperty(this, '$BgLN2', Math.LN2);
+      defineNonEnumerableProperty(this, '$BgLOG10E', Math.LOG10E);
+      defineNonEnumerableProperty(this, '$BgLOG2E', Math.LOG2E);
+      defineNonEnumerableProperty(this, '$BgPI', Math.PI);
+      defineNonEnumerableProperty(this, '$BgSQRT1_2', Math.SQRT2);
+      defineNonEnumerableProperty(this, '$BgSQRT2', Math.SQRT2);
+    }
   }
 
   export class ASDate extends ASObject {
@@ -1599,6 +1806,8 @@ module Shumway.AVM2.AS {
     public static instanceConstructor: any = Date;
 
     static classInitializer: any = function() {
+      defineReadOnlyProperty(ASDate, '$Bglength', 7);
+      defineReadOnlyProperty(Date, '$Bglength', 7);
       var proto: any = Date.prototype;
       defineNonEnumerableProperty(proto, '$BgtoString', proto.toString);
       defineNonEnumerableProperty(proto, '$BgvalueOf', proto.valueOf);
@@ -1652,6 +1861,55 @@ module Shumway.AVM2.AS {
       false && super();
       release || assertUnreachable('ASDate references must be delegated to Date');
     }
+
+    get fullYear(): number { return (<any>this).getFullYear(); }
+    set fullYear(value: number) { (<any>this).setFullYear(value); }
+
+    get month(): number { return (<any>this).getMonth(); }
+    set month(value: number) { (<any>this).setMonth(value); }
+
+    get date(): number { return (<any>this).getDate(); }
+    set date(value: number) { (<any>this).setDate(value); }
+
+    get hours(): number { return (<any>this).getHours(); }
+    set hours(value: number) { (<any>this).setHours(value); }
+
+    get minutes(): number { return (<any>this).getMinutes(); }
+    set minutes(value: number) { (<any>this).setMinutes(value); }
+
+    get seconds(): number { return (<any>this).getSeconds(); }
+    set seconds(value: number) { (<any>this).setSeconds(value); }
+
+    get milliseconds(): number { return (<any>this).getMilliseconds(); }
+    set milliseconds(value: number) { (<any>this).setMilliseconds(value); }
+
+    get fullYearUTC(): number { return (<any>this).getUTCFullYear(); }
+    set fullYearUTC(value: number) { (<any>this).setUTCFullYear(value); }
+
+    get monthUTC(): number { return (<any>this).getUTCMonth(); }
+    set monthUTC(value: number) { (<any>this).setUTCMonth(value); }
+
+    get dateUTC(): number { return (<any>this).getUTCDate(); }
+    set dateUTC(value: number) { (<any>this).setUTCDate(value); }
+
+    get hoursUTC(): number { return (<any>this).getUTCHours(); }
+    set hoursUTC(value: number) { (<any>this).setUTCHours(value); }
+
+    get minutesUTC(): number { return (<any>this).getUTCMinutes(); }
+    set minutesUTC(value: number) { (<any>this).setUTCMinutes(value); }
+
+    get secondsUTC(): number { return (<any>this).getUTCSeconds(); }
+    set secondsUTC(value: number) { (<any>this).setUTCSeconds(value); }
+
+    get millisecondsUTC(): number { return (<any>this).getUTCMilliseconds(); }
+    set millisecondsUTC(value: number) { (<any>this).setUTCMilliseconds(value); }
+
+    get time(): number { return (<any>this).getTime(); }
+    set time(value: number) { (<any>this).setTime(value); }
+
+    get timezoneOffset(): number { return (<any>this).getTimezoneOffset(); }
+    get day(): number { return (<any>this).getDay(); }
+    get dayUTC(): number { return (<any>this).getUTCDay(); }
   }
 
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
@@ -1718,8 +1976,9 @@ module Shumway.AVM2.AS {
 
     // flash.utils
     builtinNativeClasses["ProxyClass"]               = flash.utils.OriginalProxy;
-    // builtinNativeClasses["DictionaryClass"]          = flash.utils.OriginalDictionary;
-    // builtinNativeClasses["ByteArrayClass"]           = flash.utils.OriginalByteArray;
+    builtinNativeClasses["DictionaryClass"]          = flash.utils.OriginalDictionary;
+    builtinNativeClasses["ByteArrayClass"]           = flash.utils.OriginalByteArray;
+    builtinNativeClasses["CompressionAlgorithmClass"] = flash.utils.CompressionAlgorithm;
     // flash.system
     builtinNativeClasses["SystemClass"]              = flash.system.OriginalSystem;
 
@@ -1854,14 +2113,6 @@ module Shumway.AVM2.AS {
   }
 
   /**
-   * These functions should never leak into the AS3 world.
-   */
-  var illegalAS3Functions = [
-    Runtime.forwardValueOf,
-    Runtime.forwardToString
-  ];
-
-  /**
    * Searches for a native property in a list of native holders.
    */
   export function getMethodOrAccessorNative(trait: Trait, natives: Object []): any {
@@ -1894,7 +2145,6 @@ module Shumway.AVM2.AS {
           value = native[fullName];
         }
         release || assert (value, "Method or Accessor property exists but it's undefined: " + trait);
-        release || assert (illegalAS3Functions.indexOf(value) < 0, "Leaking illegal function.");
         return value;
       }
     }
@@ -2029,7 +2279,6 @@ module Shumway.AVM2.AS {
     }
 
     release || assert(v, "getNative(" + path + ") not found.");
-    release || assert (illegalAS3Functions.indexOf(<any>v) < 0, "Leaking illegal function.");
     return <any>v;
   }
 }

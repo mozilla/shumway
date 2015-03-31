@@ -97,8 +97,38 @@ this.Image = function () {};
 this.Image.prototype = {
 };
 
-this.URL = function () {};
+this.URL = function (url, baseURL) {
+  if (url.indexOf('://') >= 0 || baseURL === url) {
+    this._setURL(url);
+    return;
+  }
+
+  var base = baseURL || '';
+  var base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
+  if (url.indexOf('/') === 0) {
+    var m = /^[^:]+:\/\/[^\/]+/.exec(base);
+    if (m) base = m[0];
+  }
+  this._setURL(base + url);
+};
 this.URL.prototype = {
+  _setURL: function (url) {
+    this.href = url;
+    // Simple parsing to extract protocol, hostname and port.
+    var m = /^(\w+:)\/\/([^:/]+)(:([0-9]+))?/.exec(url.toLowerCase());
+    if (m) {
+      this.protocol = m[1];
+      this.hostname = m[2];
+      this.port = m[4] || '';
+    } else {
+      this.protocol = 'file:';
+      this.hostname = '';
+      this.port = '';
+    }
+  },
+  toString: function () {
+    return this.href;
+  }
 };
 this.URL.createObjectURL = function createObjectURL() {
   return "";
