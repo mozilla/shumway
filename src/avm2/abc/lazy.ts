@@ -458,7 +458,7 @@ module Shumway.AVMX {
       return i >= 0 ? this.traits[i] : null;
     }
 
-    getSlot(i: number): TraitInfo {
+    getSlot(i: number): SlotTraitInfo {
       return this.slots[i];
     }
   }
@@ -485,12 +485,13 @@ module Shumway.AVMX {
   };
 
   export class SlotTraitInfo extends TraitInfo {
+    private _type: AXClass = undefined;
     constructor(
       abc: ABCFile,
       kind: TRAIT,
       name: Multiname | number,
       public slot: number,
-      public type: Multiname | number,
+      public typeName: Multiname | number,
       public defaultValueKind: CONSTANT,
       public defaultValueIndex: number
     ) {
@@ -499,20 +500,30 @@ module Shumway.AVMX {
 
     resolve() {
       super.resolve();
-      if (typeof this.type === "number") {
-        this.type = this.abc.getMultiname(<number>this.type);
+      if (typeof this.typeName === "number") {
+        this.typeName = this.abc.getMultiname(<number>this.typeName);
       }
     }
 
     getDefaultValue(): any {
       if (this.defaultValueKind === -1) {
-        if (this.type === null) {
+        if (this.typeName === null) {
           return undefined;
         }
-        var value = typeDefaultValues[(<Multiname>this.type).getMangledName()];
+        var value = typeDefaultValues[(<Multiname>this.typeName).getMangledName()];
         return value === undefined ? null : value;
       }
       return this.abc.getConstant(this.defaultValueKind, this.defaultValueIndex);
+    }
+
+    getType(): AXClass {
+      if (this._type !== undefined) {
+        return this._type;
+      }
+      this._type = this.typeName ?
+                   this.abc.applicationDomain.getClass(<Multiname>this.typeName) :
+                   null;
+      return this._type;
     }
   }
 

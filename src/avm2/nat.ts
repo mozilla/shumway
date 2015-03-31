@@ -404,20 +404,11 @@ module Shumway.AVMX.AS {
     }
 
     axSetSlot(i: number, value: any) {
-      var t = this.traits.getSlot(i);
       release || checkValue(value);
-      this[t.getName().getMangledName()] = value;
-      //var slotInfo = object.asSlots.byID[index];
-      //if (slotInfo.const) {
-      //  return;
-      //}
-      //var name = slotInfo.name;
-      //var type = slotInfo.type;
-      //if (type && type.coerce) {
-      //  object[name] = type.coerce(value);
-      //} else {
-      //  object[name] = value;
-      //}
+      var t = this.traits.getSlot(i);
+      var name = t.getName().getMangledName();
+      var type = t.getType();
+      this[name] = type ? type.axCoerce(value) : value;
     }
 
     /**
