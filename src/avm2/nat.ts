@@ -360,7 +360,7 @@ module Shumway.AVMX.AS {
     }
 
     axGetEnumerableKeys(): any [] {
-      var self: AXObject = <any>this;
+      var tPrototype = Object.getPrototypeOf(this);
       if (this.securityDomain.isPrimitive(this)) {
         return [];
       }
@@ -371,6 +371,9 @@ module Shumway.AVMX.AS {
         if (isNumeric(key)) {
           result.push(key);
         } else {
+          if (tPrototype.hasOwnProperty(key)) {
+            continue;
+          }
           var name = Multiname.stripPublicMangledName(key);
           if (name !== undefined) {
             result.push(name);
@@ -1868,13 +1871,13 @@ module Shumway.AVMX.AS {
   registerNativeClass("__AS3__.vec.Vector$uint", Uint32Vector, 'Uint32Vector', NamespaceType.PackageInternal);
   registerNativeClass("__AS3__.vec.Vector$double", Float64Vector, 'Float64Vector', NamespaceType.PackageInternal);
 
-  function FlashNetScript_getDefinitionByName(securityDomain: SecurityDomain,
+  function FlashUtilScript_getDefinitionByName(securityDomain: SecurityDomain,
                                               name: string): ASClass {
     var simpleName = String(name).replace("::", ".");
     return <any>securityDomain.application.getClass(Multiname.FromSimpleName(simpleName));
   }
 
-  function FlashNetScript_getTimer(securityDomain: SecurityDomain) {
+  function FlashUtilScript_getTimer(securityDomain: SecurityDomain) {
     return Date.now() - (<any>securityDomain).flash.display.Loader.axClass.runtimeStartTime;
   }
 
@@ -1900,17 +1903,64 @@ module Shumway.AVMX.AS {
     FileLoadingService.instance.navigateTo(url, window_);
   }
 
-  registerNativeFunction('FlashUtilScript::getDefinitionByName',
-                         FlashNetScript_getDefinitionByName);
+  function FlashNetScript_sendToURL(securityDomain: SecurityDomain, request) {
+    if (isNullOrUndefined(request)) {
+      securityDomain.throwError('TypeError', Errors.NullPointerError, 'request');
+    }
+    var RequestClass = (<any>securityDomain).flash.net.URLRequest.axClass;
+    if (!RequestClass.axIsType(request)) {
+      securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, request,
+                                     'flash.net.URLRequest');
+    }
+    var session = FileLoadingService.instance.createSession();
+    session.onprogress = function () {
+      // ...
+    };
+    session.open(request);
+  }
 
-  registerNativeFunction('FlashUtilScript::getTimer', FlashNetScript_getTimer);
+  function Toplevel_registerClassAlias(securityDomain: SecurityDomain, aliasName, classObject) {
+    aliasName = asCoerceString(aliasName);
+    if (!aliasName) {
+      securityDomain.throwError('TypeError', Errors.NullPointerError, 'aliasName');
+    }
+    if (!classObject) {
+      securityDomain.throwError('TypeError', Errors.NullPointerError, 'classObject');
+    }
+
+    securityDomain.classAliases.classes.set(classObject, aliasName);
+    securityDomain.classAliases.names[aliasName] = classObject;
+  }
+
+  function Toplevel_getClassByAlias(securityDomain: SecurityDomain, aliasName: string) {
+    aliasName = asCoerceString(aliasName);
+    if (!aliasName) {
+      securityDomain.throwError('TypeError', Errors.NullPointerError, 'aliasName');
+    }
+
+    var classObject = securityDomain.classAliases.names[aliasName];
+    if (!classObject) {
+      securityDomain.throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
+    }
+    return classObject;
+  }
+
+  registerNativeFunction('FlashUtilScript::getDefinitionByName',
+                         FlashUtilScript_getDefinitionByName);
+
+  registerNativeFunction('FlashUtilScript::getTimer', FlashUtilScript_getTimer);
 
   registerNativeFunction('FlashUtilScript::navigateToURL', FlashNetScript_navigateToURL);
+  registerNativeFunction('FlashNetScript::navigateToURL', FlashNetScript_navigateToURL);
+  registerNativeFunction('FlashNetScript::sendToURL', FlashNetScript_sendToURL);
 
   declare var escape;
   declare var unescape;
   registerNativeFunction('FlashUtilScript::escapeMultiByte', escape);
   registerNativeFunction('FlashUtilScript::unescapeMultiByte', unescape);
+
+  registerNativeFunction('Toplevel::registerClassAlias', Toplevel_registerClassAlias);
+  registerNativeFunction('Toplevel::getClassByAlias', Toplevel_getClassByAlias);
 
   export function getNativesForTrait(trait: TraitInfo): Object [] {
     var className = null;
