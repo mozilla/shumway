@@ -529,6 +529,10 @@ module Shumway.AVMX.AS {
       return this.securityDomain.AXArray.axBox(Array.apply(Array, args));
     }
 
+    public static axConstruct(args: any[]): ASArray {
+      return this.securityDomain.AXArray.axBox(Array.apply(Array, args));
+    }
+
     push() {
       return this.value.push.apply(this.value, arguments);
     }
@@ -988,6 +992,7 @@ module Shumway.AVMX.AS {
       return this.value.localeCompare.apply(this.value, arguments);
     }
     match(pattern) {
+      debugger;
       if (this.securityDomain.AXRegExp.axIsType(pattern)) {
         pattern = pattern.value;
       }
@@ -1459,29 +1464,47 @@ module Shumway.AVMX.AS {
     private _source: string;
     private _captureNames: string [];
 
-    constructor(pattern: string = '', flags?: string) {
+    constructor(pattern: any, flags?: string) {
       super();
       this._dotall = false;
       this._extended = false;
       this._captureNames = [];
-      if (flags) {
-        var f = '';
-        for (var i = 0; i < flags.length; i++) {
-          var flag = flags[i];
-          if (flag === 's') {
-            // With the s flag set, . will match the newline character.
-            this._dotall = true;
-          } else if (flag === 'x') {
-            // With the x flag set, spaces in the regular expression, will be ignored as part of
-            // the pattern.
-            this._extended = true;
-          } else {
-            f += flag;
+      var source;
+      if (pattern === undefined) {
+        pattern = source = '';
+      } else if (this.securityDomain.AXRegExp.axIsType(pattern)) {
+        source = pattern.source;
+        pattern = pattern.value;
+      } else {
+        pattern = String(pattern);
+        // Escape all forward slashes.
+        source = pattern.replace(/(^|^[\/]|(?:\\\\)+)\//g, '$1\\/');
+        pattern = this._parse(source);
+        if (flags) {
+          var f = '';
+          for (var i = 0; i < flags.length; i++) {
+            var flag = flags[i];
+            switch (flag) {
+              case 's':
+                // With the s flag set, . will match the newline character.
+                this._dotall = true;
+                break;
+              case 'x':
+                // With the x flag set, spaces in the regular expression, will be ignored as part of
+                // the pattern.
+                this._extended = true;
+              case 'g':
+              case 'i':
+              case 'm':
+                // Only keep valid flags since an ECMAScript compatible RegExp implementation will
+                // throw on invalid ones. We have to avoid that in ActionScript.
+                f += flag;
+            }
           }
         }
       }
-      this.value = new RegExp(this._parse(pattern), f);
-      this._source = pattern;
+      this.value = new RegExp(pattern, f);
+      this._source = source;
     }
 
     private _parse(pattern: string): string {

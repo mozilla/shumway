@@ -5,5 +5,9 @@
   trace(a.join(','));
   trace(a.toString());
 })();
+(function () {
+  var a = new Array(77);
+  trace(a.length);
+})();
 
 trace("-- DONE --");
