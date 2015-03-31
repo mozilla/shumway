@@ -253,7 +253,7 @@ module Shumway.AVM1.Lib {
     if (as3Object._as2Object) {
       return as3Object._as2Object;
     }
-    var securityDomain: any = context.securityDomain; // REDUX
+    var securityDomain = context.securityDomain;
     if (securityDomain.flash.display.MovieClip.axClass.axIsType(as3Object)) {
       if (<flash.display.MovieClip>as3Object._avm1SymbolClass) {
         return createAVM1Object(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
