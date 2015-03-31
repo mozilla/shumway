@@ -44,8 +44,8 @@ module Shumway.AVM1.Lib {
     private _requiredListeners: any;
     private _actions: ButtonAction[];
 
-    static createAVM1Class() : typeof AVM1Button {
-      return wrapAVM1Class(AVM1Button,
+    static createAVM1Class(securityDomain: ISecurityDomain) : typeof AVM1Button {
+      return wrapAVM1Class(securityDomain, AVM1Button,
         [],
         [ '_alpha', 'blendMode', 'cacheAsBitmap', 'enabled', 'filters', '_focusrect',
           'getDepth', '_height', '_highquality', 'menu', '_name', '_parent', '_quality',

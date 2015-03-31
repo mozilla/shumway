@@ -19,8 +19,9 @@
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1Key {
+  export class AVM1Key extends ASObject {
     public static DOWN: number = 40;
     public static LEFT: number = 37;
     public static RIGHT: number = 39;
@@ -29,8 +30,8 @@ module Shumway.AVM1.Lib {
     private static _keyStates: any[] = [];
     private static _lastKeyCode: number = 0;
 
-    public static createAVM1Class(): typeof AVM1Key {
-      return wrapAVM1Class(AVM1Key,
+    public static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Key {
+      return wrapAVM1Class(securityDomain, AVM1Key,
         ['DOWN', 'LEFT', 'RIGHT', 'UP', 'isDown'],
         []);
     }

@@ -18,10 +18,11 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1Color {
-    static createAVM1Class(): typeof AVM1Color {
-      return wrapAVM1Class(AVM1Color,
+  export class AVM1Color extends ASObject {
+    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Color {
+      return wrapAVM1Class(securityDomain, AVM1Color,
         [],
         ['getRGB', 'getTransform', 'setRGB', 'setTransform']);
     }
@@ -29,6 +30,7 @@ module Shumway.AVM1.Lib {
     private _target: IAVM1SymbolBase;
 
     public constructor(target_mc) {
+      super();
       this._target = AVM1Utils.resolveTarget(target_mc);
     }
 

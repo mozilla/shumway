@@ -18,10 +18,11 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1MovieClipLoader {
-    static createAVM1Class():typeof AVM1MovieClipLoader {
-      return wrapAVM1Class(AVM1MovieClipLoader,
+  export class AVM1MovieClipLoader extends ASObject {
+    static createAVM1Class(securityDomain: ISecurityDomain):typeof AVM1MovieClipLoader {
+      return wrapAVM1Class(securityDomain, AVM1MovieClipLoader,
         [],
         ['loadClip', 'unloadClip', 'getProgress']);
     }
@@ -33,6 +34,7 @@ module Shumway.AVM1.Lib {
     private _target: IAVM1SymbolBase;
 
     constructor() {
+      super();
       this._loader = new flash.display.Loader();
     }
 

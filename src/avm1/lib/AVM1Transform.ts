@@ -18,10 +18,11 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1Transform {
-    static createAVM1Class():typeof AVM1Transform {
-      return wrapAVM1Class(AVM1Transform,
+  export class AVM1Transform extends ASObject {
+    static createAVM1Class(securityDomain: ISecurityDomain):typeof AVM1Transform {
+      return wrapAVM1Class(securityDomain, AVM1Transform,
         [],
         ['matrix', 'concatenatedMatrix', 'colorTransform', 'pixelBounds']);
     }
@@ -29,6 +30,7 @@ module Shumway.AVM1.Lib {
     private _target:IAVM1SymbolBase;
 
     public constructor(target_mc) {
+      super();
       this._target = AVM1Utils.resolveTarget(target_mc);
     }
 

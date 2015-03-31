@@ -208,6 +208,9 @@ module.exports = function(grunt) {
       },
       install_js_travis: {
         cmd: "make -C utils/ install-js"
+      },
+      install_avmshell_travis: {
+        cmd: "make -C utils/ install-avmshell"
       }
     },
     parallel: {
@@ -603,6 +606,7 @@ module.exports = function(grunt) {
   ]);
   grunt.registerTask('travis', [
     'exec:install_js_travis',
+    'exec:install_avmshell_travis',
     // Duplicates almost all of "build" because we don't want to do the costly "playerglobal" task.
     // 'parallel:base',
     'generate-version',
