@@ -29,6 +29,7 @@ declare module Shumway.AVM1 {
 
     globals: Lib.AVM1Globals;
     root: Lib.AVM1MovieClip;
+    securityDomain: ISecurityDomain;
   }
   export module Lib {
     function getAVM1Object(obj, context: AVM1Context);

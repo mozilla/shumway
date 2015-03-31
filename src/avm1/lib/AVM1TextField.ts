@@ -17,7 +17,7 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import notImplemented = Shumway.Debug.notImplemented;
 
   export class AVM1TextField extends AVM1SymbolBase<flash.text.TextField> {

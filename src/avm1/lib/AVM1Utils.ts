@@ -17,8 +17,8 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import ASObject = Shumway.AVM2.AS.ASObject;
-  import flash = Shumway.AVM2.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
+  import flash = Shumway.AVMX.AS.flash;
 
   export interface IAVM1SymbolBase {
     isAVM1Instance: boolean;
@@ -253,19 +253,20 @@ module Shumway.AVM1.Lib {
     if (as3Object._as2Object) {
       return as3Object._as2Object;
     }
-    if (this.securityDomain.flash.display.MovieClip.axClass.axIsType(as3Object)) {
+    var securityDomain: any = context.securityDomain; // REDUX
+    if (securityDomain.flash.display.MovieClip.axClass.axIsType(as3Object)) {
       if (<flash.display.MovieClip>as3Object._avm1SymbolClass) {
         return createAVM1Object(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
       }
       return createAVM1Object(context.globals.MovieClip, as3Object, context);
     }
-    if (this.securityDomain.flash.display.SimpleButton.axClass.axIsType(as3Object)) {
+    if (securityDomain.flash.display.SimpleButton.axClass.axIsType(as3Object)) {
       return createAVM1Object(context.globals.Button, as3Object, context);
     }
-    if (this.securityDomain.flash.text.TextField.axClass.axIsType(as3Object)) {
+    if (securityDomain.flash.text.TextField.axClass.axIsType(as3Object)) {
       return createAVM1Object(context.globals.TextField, as3Object, context);
     }
-    if (this.securityDomain.flash.display.BitmapData.axClass.axIsType(as3Object)) {
+    if (securityDomain.flash.display.BitmapData.axClass.axIsType(as3Object)) {
       return new as3Object;
     }
 
@@ -322,7 +323,8 @@ module Shumway.AVM1.Lib {
   }
 
   export function wrapAVM1Class<T>(fn: T, staticMembers: string[], members: string[]): T  {
-    var wrappedFn = wrapAVM1Object(fn, staticMembers);
+    // REDUX
+    var wrappedFn: any = wrapAVM1Object(fn, staticMembers);
     var prototype = (<any>fn).prototype;
     var wrappedPrototype = wrapAVM1Object(prototype, members);
     wrappedFn.axSetPublicProperty('prototype', wrappedPrototype);

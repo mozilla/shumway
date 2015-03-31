@@ -17,20 +17,22 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
-  import Multiname = Shumway.AVM2.ABC.Multiname;
-  import resolveMultinameProperty = Shumway.AVM2.Runtime.resolveMultinameProperty;
+  import Multiname = Shumway.AVMX.Multiname;
+  import Namespace = Shumway.AVMX.Namespace;
+  var resolveMultinameProperty = null; // REDUX Shumway.AVMX.resolveMultinameProperty;
 
-  var _asGetProperty = Object.prototype.asGetProperty;
-  var _asSetProperty = Object.prototype.asSetProperty;
-  var _asCallProperty = Object.prototype.asCallProperty;
-  var _asHasProperty = Object.prototype.asHasProperty;
-  var _asHasOwnProperty = Object.prototype.asHasOwnProperty;
-  var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
-  var _asDeleteProperty = Object.prototype.asDeleteProperty;
-  var _asGetEnumerableKeys = Object.prototype.asGetEnumerableKeys;
+  var _asGetProperty = null; // REDUX Object.prototype.asGetProperty;
+  var _asSetProperty = null; // REDUX Object.prototype.asSetProperty;
+  var _asCallProperty = null; // REDUX Object.prototype.asCallProperty;
+  var _asHasProperty = null; // REDUX Object.prototype.asHasProperty;
+  var _asHasOwnProperty = null; // REDUX Object.prototype.asHasOwnProperty;
+  var _asHasTraitProperty = null; // REDUX Object.prototype.asHasTraitProperty;
+  var _asDeleteProperty = null; // REDUX Object.prototype.asDeleteProperty;
+  var _asGetEnumerableKeys = null; // REDUX Object.prototype.asGetEnumerableKeys;
 
   class AVM1MovieClipButtonModeEvent extends AVM1EventHandler {
     constructor(public propertyName: string,
@@ -138,7 +140,7 @@ module Shumway.AVM1.Lib {
       props.avm1Name = name;
       props.avm1SymbolClass = symbol.theClass;
 
-      var mc:flash.display.MovieClip = flash.display.MovieClip.initializeFrom(props);
+      var mc:flash.display.MovieClip = (<any>flash).display.MovieClip.initializeFrom(props);
       flash.display.MovieClip.instanceConstructorNoInitialize.call(mc);
 
       return mc;
@@ -205,7 +207,8 @@ module Shumway.AVM1.Lib {
       var nativeAS3Object = this.as3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
       // Bitmaps aren't reflected in AVM1, so the rest here doesn't apply.
-      if (this.securityDomain.flash.display.Bitmap.axIsType(mc)) {
+      var securityDomain: any = this.context.securityDomain; // REDUX
+      if (securityDomain.flash.display.Bitmap.axIsType(mc)) {
         return null;
       }
       var as2mc = getAVM1Object(mc, this.context);
@@ -327,7 +330,8 @@ module Shumway.AVM1.Lib {
         // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
         if (child && child._depth === depth) {
           // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
-          if (this.securityDomain.flash.display.Bitmap.axIsType(child)) {
+          var securityDomain: any = this.context.securityDomain; // REDUX
+          if (securityDomain.flash.display.Bitmap.axIsType(child)) {
             return this;
           }
           return getAVM1Object(child, this.context);
@@ -781,7 +785,7 @@ module Shumway.AVM1.Lib {
       }
       var resolved = resolveMultinameProperty(namespaces, name, flags);
       if (Multiname.isPublicQualifiedName(resolved) && this.isAVM1Instance) {
-        return this.__lookupChild(Multiname.getNameFromPublicQualifiedName(resolved));
+        return this.__lookupChild((<any>Multiname).getNameFromPublicQualifiedName(resolved)); // REDUX
       }
       return undefined;
     }
@@ -798,7 +802,7 @@ module Shumway.AVM1.Lib {
       }
       var resolved = resolveMultinameProperty(namespaces, name, flags);
       if (Multiname.isPublicQualifiedName(resolved) && this.isAVM1Instance) {
-        return !!this.__lookupChild(Multiname.getNameFromPublicQualifiedName(resolved));
+        return !!this.__lookupChild((<any>Multiname).getNameFromPublicQualifiedName(resolved)); // REDUX
       }
       return false;
     }
@@ -815,7 +819,7 @@ module Shumway.AVM1.Lib {
         var child = as3MovieClip._children[i];
         var name = child.name;
         if (!_asHasProperty.call(this, undefined, name, 0)) {
-          keys.push(Multiname.getPublicQualifiedName(name));
+          keys.push((<any>Multiname).getPublicQualifiedName(name)); // REDUX
         }
       }
       return keys;

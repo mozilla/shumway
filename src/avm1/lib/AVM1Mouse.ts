@@ -17,7 +17,7 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
 
   export class AVM1Mouse {
@@ -26,17 +26,18 @@ module Shumway.AVM1.Lib {
     }
 
     public static _bind(stage: flash.display.Stage, context: AVM1Context) {
+      // REDUX
       stage.addEventListener('mouseDown', function (e: flash.events.MouseEvent) {
-        context.globals.Mouse.asCallPublicProperty('broadcastMessage', ['onMouseDown']);
+        (<any>context.globals.Mouse).axCallPublicProperty('broadcastMessage', ['onMouseDown']);
       }, false);
       stage.addEventListener('mouseMove', function (e: flash.events.MouseEvent) {
-        context.globals.Mouse.asCallPublicProperty('broadcastMessage', ['onMouseMove']);
+        (<any>context.globals.Mouse).axCallPublicProperty('broadcastMessage', ['onMouseMove']);
       }, false);
       stage.addEventListener('mouseOut', function (e: flash.events.MouseEvent) {
-        context.globals.Mouse.asCallPublicProperty('broadcastMessage', ['onMouseMove']);
+        (<any>context.globals.Mouse).axCallPublicProperty('broadcastMessage', ['onMouseMove']);
       }, false);
       stage.addEventListener('mouseUp', function (e: flash.events.MouseEvent) {
-        context.globals.Mouse.asCallPublicProperty('broadcastMessage', ['onMouseUp']);
+        (<any>context.globals.Mouse).axCallPublicProperty('broadcastMessage', ['onMouseUp']);
       }, false);
     }
 

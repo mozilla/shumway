@@ -17,7 +17,7 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
 
   export class AVM1Key {
@@ -37,17 +37,17 @@ module Shumway.AVM1.Lib {
 
     public static _bind(stage: flash.display.Stage, context: AVM1Context) {
       stage.addEventListener('keyDown', function (e: flash.events.KeyboardEvent) {
-        var keyCode = e.asGetPublicProperty('keyCode');
+        var keyCode = e.axGetPublicProperty('keyCode');
         AVM1Key._lastKeyCode = keyCode;
         AVM1Key._keyStates[keyCode] = 1;
-        context.globals.Key.asCallPublicProperty('broadcastMessage', ['onKeyDown']);
+        (<any>context.globals.Key).axCallPublicProperty('broadcastMessage', ['onKeyDown']); // REDUX
       }, false);
 
       stage.addEventListener('keyUp', function (e: flash.events.KeyboardEvent) {
-        var keyCode = e.asGetPublicProperty('keyCode');
+        var keyCode = e.axGetPublicProperty('keyCode');
         AVM1Key._lastKeyCode = keyCode;
         delete AVM1Key._keyStates[keyCode];
-        context.globals.Key.asCallPublicProperty('broadcastMessage', ['onKeyUp']);
+        (<any>context.globals.Key).axCallPublicProperty('broadcastMessage', ['onKeyUp']); // REDUX
       }, false);
     }
 

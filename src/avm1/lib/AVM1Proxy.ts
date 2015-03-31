@@ -17,16 +17,17 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import notImplemented = Shumway.Debug.notImplemented;
+  import Namespace = Shumway.AVMX.Namespace;
 
-  var _asGetProperty = Object.prototype.asGetProperty;
-  var _asSetProperty = Object.prototype.asSetProperty;
-  var _asCallProperty = Object.prototype.asCallProperty;
-  var _asHasProperty = Object.prototype.asHasProperty;
-  var _asHasOwnProperty = Object.prototype.asHasOwnProperty;
-  var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
-  var _asDeleteProperty = Object.prototype.asDeleteProperty;
+  var _asGetProperty = null; // REDUX Object.prototype.asGetProperty;
+  var _asSetProperty = null; // REDUX Object.prototype.asSetProperty;
+  var _asCallProperty = null; // REDUX Object.prototype.asCallProperty;
+  var _asHasProperty = null; // REDUX Object.prototype.asHasProperty;
+  var _asHasOwnProperty = null; // REDUX Object.prototype.asHasOwnProperty;
+  var _asHasTraitProperty = null; // REDUX Object.prototype.asHasTraitProperty;
+  var _asDeleteProperty = null; // REDUX Object.prototype.asDeleteProperty;
 
   export class AVM1Proxy<T> extends Shumway.AVM2.AS.ASObject {
     private _target:T;
@@ -57,15 +58,15 @@ module Shumway.AVM1.Lib {
       if (this._isInternalProperty(namespaces, name, flags)) {
         return _asGetProperty.call(self, namespaces, name, flags);
       }
-      return this._target.asGetPublicProperty(name);
+      return (<any>this._target).axGetPublicProperty(name); // REDUX
     }
 
     public asGetNumericProperty(name:number) {
-      return this._target.asGetNumericProperty(name);
+      return (<any>this._target).asGetNumericProperty(name); // REDUX
     }
 
     public asSetNumericProperty(name:number, value) {
-      return this._target.asSetNumericProperty(name, value);
+      return (<any>this._target).asSetNumericProperty(name, value); // REDUX
     }
 
     public asSetProperty(namespaces:Namespace [], name:any, flags:number, value:any) {
@@ -74,7 +75,7 @@ module Shumway.AVM1.Lib {
         _asSetProperty.call(self, namespaces, name, flags, value);
         return;
       }
-      return this._target.axSetPublicProperty(name, value);
+      return (<any>this._target).axSetPublicProperty(name, value); // REDUX
     }
 
     public asCallProperty(namespaces:Namespace [], name:any, flags:number, isLex:boolean, args:any []):any {
@@ -82,7 +83,7 @@ module Shumway.AVM1.Lib {
       if (this._isInternalProperty(namespaces, name, flags)) {
         return _asCallProperty.call(self, namespaces, name, flags, false, args);
       }
-      return this._target.asCallPublicProperty(name, args);
+      return (<any>this._target).axCallPublicProperty(name, args); // REDUX
     }
 
     public asHasProperty(namespaces:Namespace [], name:any, flags:number):any {
@@ -90,7 +91,7 @@ module Shumway.AVM1.Lib {
       if (this._isInternalProperty(namespaces, name, flags)) {
         return _asHasProperty.call(self, namespaces, name, flags);
       }
-      return this._target.asHasProperty(undefined, name, 0);
+      return (<any>this._target).asHasProperty(undefined, name, 0); // REDUX
     }
 
     public asHasOwnProperty(namespaces:Namespace [], name:any, flags:number):any {
@@ -98,7 +99,7 @@ module Shumway.AVM1.Lib {
       if (this._isInternalProperty(namespaces, name, flags)) {
         return _asHasOwnProperty.call(self, namespaces, name, flags);
       }
-      return this._target.asHasOwnProperty(undefined, name, 0);
+      return (<any>this._target).asHasOwnProperty(undefined, name, 0); // REDUX
     }
 
     public asDeleteProperty(namespaces:Namespace [], name:any, flags:number):any {
@@ -125,7 +126,7 @@ module Shumway.AVM1.Lib {
 
     public proxyNativeMethod(name:string) {
       var boundMethod = this._target[name].bind(this._target);
-      this._target.axSetPublicProperty(name, boundMethod);
+      (<any>this._target).axSetPublicProperty(name, boundMethod); // REDUX
     }
 
     public static wrap<T>(cls: T, natives: { methods?: string[]; }): any {
