@@ -360,7 +360,7 @@ module Shumway.AVMX.AS {
     }
 
     axGetEnumerableKeys(): any [] {
-      var self: AXObject = <any>this;
+      var tPrototype = Object.getPrototypeOf(this);
       if (this.securityDomain.isPrimitive(this)) {
         return [];
       }
@@ -371,6 +371,9 @@ module Shumway.AVMX.AS {
         if (isNumeric(key)) {
           result.push(key);
         } else {
+          if (tPrototype.hasOwnProperty(key)) {
+            continue;
+          }
           var name = Multiname.stripPublicMangledName(key);
           if (name !== undefined) {
             result.push(name);
