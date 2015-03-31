@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 // Class: HTTPStatusEvent
-module Shumway.AVM2.AS.flash.events {
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class HTTPStatusEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 status: number /*int*/ = 0) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.HTTPStatusEvent");
+      super(type, bubbles, cancelable);
+      this._status = status | 0;
     }
 
     // JS -> AS Bindings
@@ -58,7 +56,8 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     clone(): Event {
-      var event = new events.HTTPStatusEvent(this.type, this.bubbles, this.cancelable, this.status);
+      var event = new this.securityDomain.flash.events.HTTPStatusEvent(this.type, this.bubbles,
+                                                                       this.cancelable, this.status);
       event.responseURL = this.responseURL;
       event.responseHeaders = this.responseHeaders;
       return event;

@@ -190,6 +190,12 @@ module Shumway.ArrayUtilities {
         this._buffer = newBuffer;
         this._resetViews();
         this._u8.set(curentView);
+        var u8 = this._u8;
+        // Zero out the rest of the buffer, since the arrayBufferPool doesn't
+        // always give us a empty buffer.
+        for (var i = curentView.length; i < u8.length; i++) {
+          u8[i] = 0;
+        }
         DataBuffer._arrayBufferPool.release(currentBuffer);
       }
     }

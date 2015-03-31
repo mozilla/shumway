@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 // Class: SampleDataEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class SampleDataEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    theposition: number;
+    thedata: flash.utils.ByteArray;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 theposition: number = 0, thedata: flash.utils.ByteArray = null) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.SampleDataEvent");
+      super(type, bubbles, cancelable);
+      this.theposition = +theposition;
+      // TODO: coerce
+      this.thedata = thedata;
     }
 
     // JS -> AS Bindings

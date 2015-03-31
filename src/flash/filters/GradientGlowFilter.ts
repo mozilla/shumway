@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 // Class: GradientGlowFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import Rectangle = flash.geom.Rectangle;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export class GradientGlowFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof GradientGlowFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -55,7 +54,7 @@ module Shumway.AVM2.AS.flash.filters {
       }
       // obj.angle is represented in radians, the api needs degrees
       var angle: number = obj.angle * 180 / Math.PI;
-      return new GradientGlowFilter(
+      return new this.securityDomain.flash.filters.GradientGlowFilter(
         obj.distance,
         angle,
         colors,
@@ -70,8 +69,12 @@ module Shumway.AVM2.AS.flash.filters {
       );
     }
 
-    constructor (distance: number = 4, angle: number = 45, colors: any [] = null, alphas: any [] = null, ratios: any [] = null, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
-      false && super();
+    constructor(distance: number = 4, angle: number = 45, colors: any [] = null,
+                alphas: any [] = null, ratios: any [] = null, blurX: number = 4, blurY: number = 4,
+                strength: number = 1, quality: number /*int*/ = 1, type: string = "inner",
+                knockout: boolean = false)
+    {
+      super();
       this.distance = distance;
       this.angle = angle;
       GradientArrays.sanitize(colors, alphas, ratios);
@@ -139,7 +142,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._alphas = GradientArrays.sanitizeAlphas(this._alphas, len, len);
         this._ratios = GradientArrays.sanitizeRatios(this._ratios, len, len);
       } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "colors");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "colors");
       }
     }
 
@@ -153,7 +156,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._alphas = GradientArrays.alphas;
         this._ratios = GradientArrays.ratios;
       } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "alphas");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "alphas");
       }
     }
 
@@ -167,7 +170,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._alphas = GradientArrays.alphas;
         this._ratios = GradientArrays.ratios;
       } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "ratios");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "ratios");
       }
     }
 
@@ -212,7 +215,7 @@ module Shumway.AVM2.AS.flash.filters {
     set type(value: string) {
       value = asCoerceString(value);
       if (value === null) {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "type");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "type");
       } else {
         if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
           this._type = value;
@@ -223,7 +226,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new GradientGlowFilter(
+      return new this.securityDomain.flash.filters.GradientGlowFilter(
         this._distance,
         this._angle,
         this._colors,

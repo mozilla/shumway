@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 // Class: TextEvent
-module Shumway.AVM2.AS.flash.events {
+module Shumway.AVMX.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class TextEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
@@ -42,7 +41,8 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     clone(): Event {
-      var textEvent = new TextEvent(this.type, this.bubbles, this.cancelable, this.text);
+      var textEvent = new this.securityDomain.flash.events.TextEvent(this.type, this.bubbles,
+                                                                     this.cancelable, this.text);
       this.copyNativeData(textEvent);
       return textEvent;
     }

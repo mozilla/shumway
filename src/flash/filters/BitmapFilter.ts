@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 // Class: BitmapFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   import Rectangle = flash.geom.Rectangle;
 
-  export class BitmapFilter extends ASNative {
+  export class BitmapFilter extends ASObject {
+
+    static axClass: typeof BitmapFilter;
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -63,7 +62,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     constructor () {
-      false && super();
+      super();
     }
 
     _updateFilterBounds(bounds: Rectangle) {

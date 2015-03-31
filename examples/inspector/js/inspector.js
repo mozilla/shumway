@@ -29,6 +29,7 @@ var shumwayOptions = Shumway.Settings.shumwayOptions;
 var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"));
 var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
 var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
+var BinaryFileReader = Shumway.BinaryFileReader;
 
 function timeAllocation(C, count) {
   var s = Date.now();
@@ -190,9 +191,9 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
     new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo, shellAbcPath);
 
   if (filename.endsWith(".abc")) {
-    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Shell, sysMode, appMode).then(function (avm2) {
+    Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Shell).then(function (securityDomain) {
       function runAbc(file, buffer) {
-        avm2.applicationDomain.executeAbc(new Shumway.AVM2.ABC.AbcFile(new Uint8Array(buffer), file));
+        securityDomain.executeABC(new Shumway.AVMX.ABCFile(new Uint8Array(buffer)));
       }
       if (!buffer) {
         new BinaryFileReader(file).readAll(null, function(buffer) {
@@ -203,7 +204,7 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
       }
     });
   } else if (filename.endsWith(".swf")) {
-    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
+    Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
       function runSWF(file, buffer) {
         var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
 
@@ -214,8 +215,8 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
           easel.stage.invalidate();
         });
         syncGFXOptions(easel.options);
-        var gfxService = new Shumway.Player.Test.TestGFXService();
-        var player = new Shumway.Player.Player(gfxService);
+        var gfxService = new Shumway.Player.Test.TestGFXService(securityDomain);
+        var player = new Shumway.Player.Player(securityDomain, gfxService);
         player.movieParams = movieParams;
         player.stageAlign = state.salign;
         player.stageScale = state.scale;
@@ -249,8 +250,10 @@ function executeFile(file, buffer, movieParams, remoteDebugging) {
       }
     });
   } else if (filename.endsWith(".js") || filename.endsWith("/")) {
-    Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
-      executeUnitTests(file, avm2);
+    Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
+      jsGlobal.securityDomain = securityDomain;
+      Shumway.AVMX.AS.installClassLoaders(securityDomain.application, jsGlobal);
+      executeUnitTests(filename);
     });
   }
 }

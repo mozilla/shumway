@@ -14,15 +14,11 @@
  * limitations under the License.
  */
 // Class: Configuration
-module Shumway.AVM2.AS.flash.automation {
+module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class Configuration extends ASNative {
-    static initializer: any = null;
+  export class Configuration extends ASObject {
     constructor () {
-      false && super();
-      dummyConstructor("public flash.automation.Configuration");
+      super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

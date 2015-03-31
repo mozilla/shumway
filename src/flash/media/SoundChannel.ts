@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 // Class: SoundChannel
-module Shumway.AVM2.AS.flash.media {
+module Shumway.AVMX.AS.flash.media {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import error = Shumway.Debug.error;
 
@@ -164,9 +163,11 @@ module Shumway.AVM2.AS.flash.media {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
+
+    _symbol: SoundChannel;
     
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: SoundChannel) {
+    applySymbol() {
+      release || assert(this._symbol);
       this._element = null;
       this._position = 0;
       this._leftPeak = 0;
@@ -179,7 +180,7 @@ module Shumway.AVM2.AS.flash.media {
       //if (this._element) {
       //  this._registerWithSoundMixer();
       //}
-    };
+    }
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -188,8 +189,8 @@ module Shumway.AVM2.AS.flash.media {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.media.SoundChannel");
+      super();
+      release || assert(!this._symbol);
     }
 
     _element;
@@ -286,7 +287,8 @@ module Shumway.AVM2.AS.flash.media {
 
         self._element = null;
         self._playing = false;
-        self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
+        self.dispatchEvent(new this.securityDomain.flash.events.Event("soundComplete", false,
+                                                                      false));
       });
       this._element = element;
       this._playing = true;
@@ -312,7 +314,8 @@ module Shumway.AVM2.AS.flash.media {
 
           self._audioChannel.stop();
           self._playing = false;
-          self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
+          self.dispatchEvent(new this.securityDomain.flash.events.Event("soundComplete", false,
+                                                                        false));
           return;
         }
 

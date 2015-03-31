@@ -114,6 +114,7 @@ package {
   (function () {
     ([A, B, C, D]).forEach(function (c) {
       trace(c);
+      trace(c.prototype);
     });
   })();
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 // Class: MovieClip
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import MP3DecoderSession = SWF.MP3DecoderSession;
   import DecodedSound = SWF.Parser.DecodedSound;
 
@@ -81,7 +81,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     createChannel() {
-      this._channel = <flash.media.SoundChannel>flash.media.SoundChannel.initializeFrom({element: this._element});
+      // REDUX:
+      //this._channel = <flash.media.SoundChannel>flash.media.SoundChannel.initializeFrom({element: this._element});
     }
 
     queueData(frame: DecodedSound) {
@@ -240,10 +241,11 @@ module Shumway.AVM2.AS.flash.display {
 
     finish() {
       // TODO Start from some seek offset, stopping
-      var sound = <flash.media.Sound>flash.media.Sound.initializeFrom(this._data);
-      var channel = sound.play();
-      this._sound = sound;
-      this._channel = channel;
+      // REDUX:
+      //var sound = <flash.media.Sound>flash.media.Sound.initializeFrom(this._data);
+      //var channel = sound.play();
+      //this._sound = sound;
+      //this._channel = channel;
     }
   }
 

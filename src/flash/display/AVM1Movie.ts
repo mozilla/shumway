@@ -33,21 +33,19 @@
  * [1]: If you ignore the undocumented `call` and `addCallback` methods for a moment.
  */
 
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import assert = Shumway.Debug.assert;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export class AVM1Movie extends flash.display.DisplayObject implements IAdvancable {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor(content: MovieClip) {
-      false && super();
-      flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
+      super();
       this._children = [];
       this._children[0] = this._content = content;
       // Pretend we're a DisplayObjectContainer and can have children. See comment at the top.

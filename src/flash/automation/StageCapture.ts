@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 // Class: StageCapture
-module Shumway.AVM2.AS.flash.automation {
+module Shumway.AVMX.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class StageCapture extends flash.events.EventDispatcher {
-    static initializer: any = null;
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.automation.StageCapture");
+      super();
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings

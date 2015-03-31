@@ -28,7 +28,7 @@ declare var putstr;
 // declare var document;
 // declare var getComputedStyle;
 
-/** @const */ var release: boolean = true; // by default 'true' -- we are folding constants in closure compiler
+/** @const */ var release: boolean = false; // by default 'true' -- we are folding constants in closure compiler
 /** @const */ var profile: boolean = false;
 
 declare var dateNow: () => number;
@@ -201,7 +201,6 @@ module Shumway {
       }
       return isIndex(value) || isNumericString(value);
     }
-    // Debug.notImplemented(typeof value);
     return false;
   }
 
@@ -766,20 +765,36 @@ module Shumway {
       }
     }
 
-    export function copyOwnPropertyDescriptors(object: Object, template: Object, overwrite = true) {
+    export function copyOwnPropertyDescriptors(object: Object,
+                                               template: Object,
+                                               filter: (name: string) => boolean = null,
+                                               overwrite = true,
+                                               makeWritable = false) {
       for (var property in template) {
-        if (hasOwnProperty(template, property)) {
+        if (hasOwnProperty(template, property) && (!filter || filter(property))) {
           var descriptor = Object.getOwnPropertyDescriptor(template, property);
           if (!overwrite && hasOwnProperty(object, property)) {
             continue
           }
           release || Debug.assert (descriptor);
           try {
+            if (makeWritable && descriptor.writable === false) {
+              descriptor.writable = true;
+            }
             Object.defineProperty(object, property, descriptor);
           } catch (e) {
-            // console.log("Can't define " + property);
+            Debug.assert("Can't define: " + property);
           }
         }
+      }
+    }
+
+    export function copyPropertiesByList(object: Object,
+                                         template: Object,
+                                         propertyList: string []) {
+      for (var i = 0; i < propertyList.length; i++) {
+        var property = propertyList[i];
+        object[property] = template[property];
       }
     }
 

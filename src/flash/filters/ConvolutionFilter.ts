@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 // Class: ConvolutionFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   export class ConvolutionFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof ConvolutionFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -31,7 +30,7 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      return new ConvolutionFilter(
+      return new this.securityDomain.flash.filters.ConvolutionFilter(
         obj.matrixX,
         obj.matrixY,
         obj.matrix,
@@ -46,7 +45,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
-      false && super();
+      super();
       this.matrixX = matrixX;
       this.matrixY = matrixY;
       if (matrix) {
@@ -100,7 +99,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._expandArray(matrix, actualLen);
         this._matrix = matrix;
       } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "matrix");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "matrix");
       }
     }
 
@@ -168,7 +167,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return new ConvolutionFilter(
+      return new this.securityDomain.flash.filters.ConvolutionFilter(
         this._matrixX,
         this._matrixY,
         this.matrix,

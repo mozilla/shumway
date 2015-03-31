@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 // Class: LoaderContext
-module Shumway.AVM2.AS.flash.system {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class LoaderContext extends ASNative {
+module Shumway.AVMX.AS.flash.system {
+  export class LoaderContext extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,24 +27,21 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = ["checkPolicyFile!", "applicationDomain!", "securityDomain!", "allowCodeImport!", "requestedContentParent!", "parameters!", "imageDecodingPolicy!"];
     
     constructor (checkPolicyFile: boolean = false, applicationDomain: flash.system.ApplicationDomain = null, securityDomain: flash.system.SecurityDomain = null) {
-      false && super();
+      super();
       this.checkPolicyFile = checkPolicyFile;
-      this.applicationDomain = applicationDomain;
-      this.securityDomain = securityDomain;
+      // REDUX: Name conflict.
+      // this.applicationDomain = applicationDomain;
+      // this.securityDomain = securityDomain;
       this.imageDecodingPolicy = flash.system.ImageDecodingPolicy.ON_DEMAND;
     }
     
-    // JS -> AS Bindings
-    
     checkPolicyFile: boolean;
     applicationDomain: flash.system.ApplicationDomain;
-    securityDomain: flash.system.SecurityDomain;
+    // REDUX: Name conflict.
+    // securityDomain: flash.system.SecurityDomain;
     allowCodeImport: boolean;
     requestedContentParent: flash.display.DisplayObjectContainer;
     parameters: ASObject;
     imageDecodingPolicy: string;
-    
-    // AS -> JS Bindings
-    
   }
 }

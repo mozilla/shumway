@@ -15,10 +15,9 @@
  */
 
 // Class: Graphics
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import clamp = Shumway.NumberUtilities.clamp;
   import Bounds = Shumway.Bounds;
   import assert = Shumway.Debug.assert;
@@ -336,16 +335,15 @@ module Shumway.AVM2.AS.flash.display {
   }
   // end of GFX geometry.ts
 
-  export class Graphics extends ASNative implements Shumway.Remoting.IRemotable {
+  export class Graphics extends ASObject implements Shumway.Remoting.IRemotable {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
     constructor () {
-      false && super();
+      super();
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._graphicsData = new ShapeData();
       this._textures = [];
@@ -828,7 +826,7 @@ module Shumway.AVM2.AS.flash.display {
 //      //shader = shader; matrix = matrix;
 //      notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
 //    }
-    drawPath(commands: ASVector<any>, data: ASVector<any>, winding: string = "evenOdd"): void {
+    drawPath(commands: GenericVector, data: GenericVector, winding: string = "evenOdd"): void {
       commands = commands;
       data = data;
       winding = asCoerceString(winding);
@@ -836,8 +834,8 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    drawTriangles(vertices: ASVector<any>, indices: ASVector<any> = null,
-                  uvtData: ASVector<any> = null, culling: string = "none"): void {
+    drawTriangles(vertices: GenericVector, indices: GenericVector = null,
+                  uvtData: GenericVector = null, culling: string = "none"): void {
       vertices = vertices;
       indices = indices;
       uvtData = uvtData;
@@ -846,7 +844,7 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    drawGraphicsData(graphicsData: ASVector<any>): void {
+    drawGraphicsData(graphicsData: GenericVector): void {
       graphicsData = graphicsData;
       notImplemented("public flash.display.Graphics::drawGraphicsData");
       return;
@@ -1260,14 +1258,16 @@ module Shumway.AVM2.AS.flash.display {
                               skipWrite: boolean): void
     {
       if (isNullOrUndefined(bitmap)) {
-        throwError('TypeError', Errors.NullPointerError, 'bitmap');
-      } else if (!(flash.display.BitmapData.isType(bitmap))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap', 'flash.display.BitmapData');
+        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'bitmap');
+      } else if (!(this.securityDomain.flash.display.BitmapData.axIsType(bitmap))) {
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap',
+                                       'flash.display.BitmapData');
       }
       if (isNullOrUndefined(matrix)) {
-        matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
-      } else if (!(flash.geom.Matrix.isType(matrix))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+        matrix = this.securityDomain.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
+      } else if (!(this.securityDomain.flash.geom.Matrix.axIsType(matrix))) {
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
+                                       'flash.geom.Matrix');
       }
       repeat = !!repeat;
       smooth = !!smooth;
@@ -1296,32 +1296,32 @@ module Shumway.AVM2.AS.flash.display {
                                 skipWrite: boolean): void
     {
       if (isNullOrUndefined(type)) {
-        throwError('TypeError', Errors.NullPointerError, 'type');
+        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'type');
       }
       var gradientType = GradientType.toNumber(asCoerceString(type));
       if (gradientType < 0) {
-        throwError("ArgumentError", Errors.InvalidEnumError, "type");
+        this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "type");
       }
 
       if (isNullOrUndefined(colors)) {
-        throwError('TypeError', Errors.NullPointerError, 'colors');
+        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'colors');
       }
       if (!(colors instanceof Array)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
       }
 
       if (!(alphas instanceof Array)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
       }
       if (isNullOrUndefined(alphas)) {
-        throwError('TypeError', Errors.NullPointerError, 'alphas');
+        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'alphas');
       }
 
       if (!(ratios instanceof Array)) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
       }
       if (isNullOrUndefined(ratios)) {
-        throwError('TypeError', Errors.NullPointerError, 'ratios');
+        this.securityDomain.throwError('TypeError', Errors.NullPointerError, 'ratios');
       }
 
       var colorsRGBA: number[] = [];
@@ -1346,9 +1346,10 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (isNullOrUndefined(matrix)) {
-        matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
-      } else if (!(flash.geom.Matrix.isType(matrix))) {
-        throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+        matrix = this.securityDomain.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
+      } else if (!(this.securityDomain.flash.geom.Matrix.axIsType(matrix))) {
+        this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, 'matrix',
+                                       'flash.geom.Matrix');
       }
 
       if (skipWrite) {

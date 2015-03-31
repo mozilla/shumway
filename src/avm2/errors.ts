@@ -14,14 +14,20 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2 {
+module Shumway.AVMX {
+  export interface ErrorInfo {
+    code: number;
+    message: string;
+    // typeName: string;
+  }
+
   export var Errors = {
   /**
    * AVM2 Error Codes
    */
 
   //  OutOfMemoryError                     : {code: 1000, message: "The system is out of memory."},
-  //  NotImplementedError                  : {code: 1001, message: "The method %1 is not implemented."},
+    NotImplementedError                  : {code: 1001, message: "The method %1 is not implemented."},
   //  InvalidPrecisionError                : {code: 1002, message: "Number.toPrecision has a range of 1 to 21. Number.toFixed and Number.toExponential have a range of 0 to 20. Specified value is not within expected range."},
   //  InvalidRadixError                    : {code: 1003, message: "The radix argument must be between 2 and 36; got %1."},
     InvokeOnIncompatibleObjectError      : {code: 1004, message: "Method %1 was invoked on an incompatible object."},
@@ -36,7 +42,7 @@ module Shumway.AVM2 {
   //  FindVarWithNoScopeError              : {code: 1013, message: "Cannot call OP_findproperty when scopeDepth is 0."},
     ClassNotFoundError                   : {code: 1014, message: "Class %1 could not be found."},
   //  IllegalSetDxns                       : {code: 1015, message: "Method %1 cannot set default xml namespace"},
-  //  DescendentsError                     : {code: 1016, message: "Descendants operator (..) not supported on type %1."},
+    DescendentsError                     : {code: 1016, message: "Descendants operator (..) not supported on type %1."},
   //  ScopeStackOverflowError              : {code: 1017, message: "Scope stack overflow occurred."},
   //  ScopeStackUnderflowError             : {code: 1018, message: "Scope stack underflow occurred."},
   //  GetScopeObjectBoundsError            : {code: 1019, message: "Getscopeobject %1 is out of bounds."},
@@ -52,8 +58,8 @@ module Shumway.AVM2 {
   //  DispIdUndefinedError                 : {code: 1029, message: "Disp_id %1 is undefined on %2."},
   //  StackDepthUnbalancedError            : {code: 1030, message: "Stack depth is unbalanced. %1 != %2."},
   //  ScopeDepthUnbalancedError            : {code: 1031, message: "Scope depth is unbalanced. %1 != %2."},
-  //  CpoolIndexRangeError                 : {code: 1032, message: "Cpool index %1 is out of range %2."},
-  //  CpoolEntryWrongTypeError             : {code: 1033, message: "Cpool entry %1 is wrong type."},
+    CpoolIndexRangeError                 : {code: 1032, message: "Cpool index %1 is out of range %2."},
+    CpoolEntryWrongTypeError             : {code: 1033, message: "Cpool entry %1 is wrong type."},
     CheckTypeFailedError                 : {code: 1034, message: "Type Coercion failed: cannot convert %1 to %2."},
   //  IllegalSuperCallError                : {code: 1035, message: "Illegal super expression found in method %1."},
   //  CannotAssignToMethodError            : {code: 1037, message: "Cannot assign to a method %1 on %2."},
@@ -64,7 +70,7 @@ module Shumway.AVM2 {
   //  InvalidMagicError                    : {code: 1042, message: "Not an ABC file.  major_version=%1 minor_version=%2."},
   //  InvalidCodeLengthError               : {code: 1043, message: "Invalid code_length=%1."},
   //  InvalidMethodInfoFlagsError          : {code: 1044, message: "MethodInfo-%1 unsupported flags=%2."},
-  //  UnsupportedTraitsKindError           : {code: 1045, message: "Unsupported traits kind=%1."},
+    UnsupportedTraitsKindError           : {code: 1045, message: "Unsupported traits kind=%1."},
   //  MethodInfoOrderError                 : {code: 1046, message: "MethodInfo-%1 referenced before definition."},
   //  MissingEntryPointError               : {code: 1047, message: "No entry point was found."},
   //  PrototypeTypeError                   : {code: 1049, message: "Prototype objects must be vanilla Objects."},
@@ -81,7 +87,7 @@ module Shumway.AVM2 {
   //  NumberOutOfRangeError                : {code: 1061, message: "The value %1 cannot be converted to %2 without losing precision."},
     WrongArgumentCountError              : {code: 1063, message: "Argument count mismatch on %1. Expected %2, got %3."},
   //  CannotCallMethodAsConstructor        : {code: 1064, message: "Cannot call method %1 as constructor."},
-  //  UndefinedVarError                    : {code: 1065, message: "Variable %1 is not defined."},
+    UndefinedVarError                    : {code: 1065, message: "Variable %1 is not defined."},
   //  FunctionConstructorError             : {code: 1066, message: "The form function('function body') is not supported."},
   //  IllegalNativeMethodBodyError         : {code: 1067, message: "Native method %1 has illegal method body."},
   //  CannotMergeTypesError                : {code: 1068, message: "%1 and %2 cannot be reconciled."},
@@ -130,7 +136,7 @@ module Shumway.AVM2 {
   //  NoGlobalScopeError                   : {code: 1114, message: "OP_getglobalslot or OP_setglobalslot used with no global scope."},
   //  NotConstructorError                  : {code: 1115, message: "%1 is not a constructor."},
   //  ApplyError                           : {code: 1116, message: "second argument to Function.prototype.apply must be an array."},
-  //  XMLInvalidName                       : {code: 1117, message: "Invalid XML name: %1."},
+    XMLInvalidName                       : {code: 1117, message: "Invalid XML name: %1."},
   //  XMLIllegalCyclicalLoop               : {code: 1118, message: "Illegal cyclical loop between nodes."},
   //  DeleteTypeError                      : {code: 1119, message: "Delete operator is not supported with operand of type %1."},
   //  DeleteSealedError                    : {code: 1120, message: "Cannot delete property %1 on %2."},
@@ -183,7 +189,7 @@ module Shumway.AVM2 {
     TooFewArgumentsError                                      : { code: 2001, message: "Too few arguments were specified; got %1, %2 expected."},
   //  InvalidSocketError                                        : { code: 2002, message: "Operation attempted on invalid socket."},
   //  InvalidSocketPortError                                    : { code: 2003, message: "Invalid socket port number specified."},
-  //  ParamTypeError                                            : { code: 2005, message: "Parameter %1 is of the incorrect type. Should be type %2."},
+    ParamTypeError                                            : { code: 2005, message: "Parameter %1 is of the incorrect type. Should be type %2."},
   //  HasStyleSheetError                                        : { code: 2009, message: "This method cannot be used on a text field with a style sheet."},
   //  SocketLocalFileSecurityError                              : { code: 2010, message: "Local-with-filesystem SWF files are not permitted to use sockets."},
     SocketConnectError                                        : { code: 2011, message: "Socket connection failed to %1:%2."},
@@ -634,7 +640,7 @@ module Shumway.AVM2 {
     return message + ": " + (error && error.message || "(unknown)");
   }
 
-  export function getErrorInfo(index: number): {code: number; message: string; typeName: string} {
+  export function getErrorInfo(index: number): ErrorInfo {
     return Errors[index];
   }
 
@@ -664,4 +670,4 @@ module Shumway.AVM2 {
 }
 
 // Errors is used in dataBuffer.ts, which is compiled way before this. Gotta break the cycle.
-Errors = Shumway.AVM2.Errors;
+Errors = Shumway.AVMX.Errors;

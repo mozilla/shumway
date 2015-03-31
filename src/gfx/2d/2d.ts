@@ -18,7 +18,7 @@ module Shumway.GFX.Canvas2D {
 
   declare var registerScratchCanvas;
 
-  var writer = new IndentingWriter(false, dumpLine);
+  var writer = null; // new IndentingWriter(false, dumpLine);
 
   var MIN_CACHE_LEVELS = 5;
   var MAX_CACHE_LEVELS = 3;

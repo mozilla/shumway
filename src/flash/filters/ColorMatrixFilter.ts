@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 // Class: ColorMatrixFilter
-module Shumway.AVM2.AS.flash.filters {
+module Shumway.AVMX.AS.flash.filters {
 
   export class ColorMatrixFilter extends flash.filters.BitmapFilter {
 
+    static axClass: typeof ColorMatrixFilter;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -31,11 +30,11 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static FromUntyped(obj: any) {
-      return new ColorMatrixFilter(obj.matrix);
+      return new this.securityDomain.flash.filters.ColorMatrixFilter(obj.matrix);
     }
 
     constructor (matrix: any [] = null) {
-      false && super();
+      super();
       if (matrix) {
         this.matrix = matrix;
       } else {
@@ -79,12 +78,12 @@ module Shumway.AVM2.AS.flash.filters {
         }
         this._matrix = matrix;
       } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "matrix");
+        this.securityDomain.throwError("TypeError", Errors.NullPointerError, "matrix");
       }
     }
 
     clone(): BitmapFilter {
-      return new ColorMatrixFilter(this.matrix);
+      return new this.securityDomain.flash.filters.ColorMatrixFilter(this.matrix);
     }
   }
 }

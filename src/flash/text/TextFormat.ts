@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 // Class: TextFormat
-module Shumway.AVM2.AS.flash.text {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.text {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import roundHalfEven = Shumway.NumberUtilities.roundHalfEven;
   import notImplemented = Shumway.Debug.notImplemented;
-  import throwError = Shumway.AVM2.Runtime.throwError;
 
-  export class TextFormat extends ASNative {
+  export class TextFormat extends ASObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
 
@@ -32,7 +30,7 @@ module Shumway.AVM2.AS.flash.text {
                 url: string = null, target: string = null, align: string = null,
                 leftMargin: Object = null, rightMargin: Object = null, indent: Object = null,
                 leading: Object = null) {
-      false && super();
+      super();
       this.font = font;
       this.size = size;
       this.color = color;
@@ -78,7 +76,7 @@ module Shumway.AVM2.AS.flash.text {
     set align(value: string) {
       value = asCoerceString(value);
       //if (TextFormatAlign.toNumber(value) < 0) {
-      //  throwError("ArgumentError", Errors.InvalidEnumError, "align");
+      //  this.securityDomain.throwError("ArgumentError", Errors.InvalidEnumError, "align");
       //}
       this._align = value;
     }
@@ -213,7 +211,8 @@ module Shumway.AVM2.AS.flash.text {
 
     set tabStops(value: any []) {
       if (!(value instanceof Array)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError, value, 'Array');
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError, value,
+                                       'Array');
       }
       this._tabStops = value;
     }
@@ -273,7 +272,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     clone(): TextFormat {
-      return new flash.text.TextFormat(
+      return new this.securityDomain.flash.text.TextFormat(
         this.font,
         this.size,
         this.color,

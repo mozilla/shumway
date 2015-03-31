@@ -4,7 +4,7 @@
     var Stage = flash.display.Stage;
     var Shape = flash.display.Shape;
     var Sprite = flash.display.Sprite;
-    var MouseEventDispatcher = flash.ui.MouseEventDispatcher;
+    var MouseEventDispatcher = Shumway.AVMX.AS.flash.ui.MouseEventDispatcher;
     var MouseEvent = flash.events.MouseEvent;
     var Point = flash.geom.Point;
     var Rectangle = flash.geom.Rectangle;

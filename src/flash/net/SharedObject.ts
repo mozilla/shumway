@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 // Class: SharedObject
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   interface IStorage {
@@ -42,10 +42,7 @@ module Shumway.AVM2.AS.flash.net {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -53,8 +50,7 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // ["connect", "close", "flush", "size", "fps", "send", "clear", "setProperty"];
     
     constructor () {
-      false && super(undefined);
-      flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       this._data = Object.create(null);
     }
 

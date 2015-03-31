@@ -16,7 +16,7 @@ function foo() {
 (function () {
   trace("--- 0 ---");
   var x = 0;
-  for (var i = 0; i < 3000000; i++) {
+  for (var i = 0; i < 30; i++) {
     // foo();
     x ++;
   }

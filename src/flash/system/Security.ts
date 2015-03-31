@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 // Class: Security
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
-  export class Security extends ASNative {
+  export class Security extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -35,8 +31,7 @@ module Shumway.AVM2.AS.flash.system {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.system.Security");
+      super();
     }
     
     // JS -> AS Bindings
@@ -81,14 +76,14 @@ module Shumway.AVM2.AS.flash.system {
     static allowDomain(): void {
       somewhatImplemented("public flash.system.Security::static allowDomain [\"" +
         Array.prototype.join.call(arguments, "\", \"") + "\"]");
-      var whitelist: ICrossDomainSWFLoadingWhitelist = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      var whitelist: ICrossDomainSWFLoadingWhitelist = this.securityDomain.player;
       for (var i = 0; i < arguments.length; i++) {
         whitelist.addToSWFLoadingWhitelist(asCoerceString(arguments[i]), false);
       }
     }
     static allowInsecureDomain(): void {
       somewhatImplemented("public flash.system.Security::static allowInsecureDomain");
-      var whitelist: ICrossDomainSWFLoadingWhitelist = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      var whitelist: ICrossDomainSWFLoadingWhitelist = this.securityDomain.player;
       for (var i = 0; i < arguments.length; i++) {
         whitelist.addToSWFLoadingWhitelist(asCoerceString(arguments[i]), true);
       }

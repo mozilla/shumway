@@ -21,7 +21,7 @@ module Shumway {
   import Bounds = Shumway.Bounds;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import ColorUtilities = Shumway.ColorUtilities;
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import altTieBreakRound = Shumway.NumberUtilities.altTieBreakRound;
 
   export enum TextContentFlags {
@@ -99,6 +99,7 @@ module Shumway {
 
   export class TextContent implements Shumway.Remoting.IRemotable {
     _id: number;
+    _securityDomain: ISecurityDomain;
 
     private _bounds: Bounds;
     private _plainText: string;
@@ -116,8 +117,9 @@ module Shumway {
     matrix: flash.geom.Matrix;
     coords: number[];
 
-    constructor(defaultTextFormat?: flash.text.TextFormat) {
-      this._id = flash.display.DisplayObject.getNextSyncID();
+    constructor(securityDomain: ISecurityDomain, defaultTextFormat?: flash.text.TextFormat) {
+      this._securityDomain = securityDomain;
+      this._id = securityDomain.flash.display.DisplayObject.axClass.getNextSyncID();
       this._bounds = new Bounds(0, 0, 0, 0);
       this._plainText = '';
       this._backgroundColor = 0;
@@ -127,7 +129,7 @@ module Shumway {
       this._scrollV = 1;
       this._scrollH = 0;
       this.flags = TextContentFlags.None;
-      this.defaultTextFormat = defaultTextFormat || new flash.text.TextFormat();
+      this.defaultTextFormat = defaultTextFormat || new securityDomain.flash.text.TextFormat();
       this.textRuns = [];
       this.textRunData = new DataBuffer();
       this.matrix = null;
@@ -454,8 +456,9 @@ module Shumway {
       var size = +textFormat.size;
       textRunData.writeInt(size);
 
-      var font = flash.text.Font.getByNameAndStyle(textFormat.font, textFormat.style) ||
-                 flash.text.Font.getDefaultFont();
+      var fontClass = this._securityDomain.flash.text.Font.axClass;
+      var font = fontClass.getByNameAndStyle(textFormat.font, textFormat.style) ||
+                 fontClass.getDefaultFont();
       if (font.fontType === flash.text.FontType.EMBEDDED) {
         textRunData.writeUTF('swffont' + font._id);
       } else {

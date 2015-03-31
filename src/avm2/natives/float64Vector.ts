@@ -19,31 +19,28 @@
 /**
  * TypedArray Vector Template
  *
- * If you make any changes to this code you'll need to regenerate uint32Vector.ts & float64Vector.ts. We duplicate all
- * the code for vectors because we want to keep things monomorphic as much as possible.
+ * If you make any changes to this code you'll need to regenerate uint32Vector.ts &
+ * float64Vector.ts. We duplicate all the code for vectors because we want to keep things
+ * monomorphic as much as possible.
  *
- * NOTE: Not all of the AS3 methods need to be implemented natively, some are self-hosted in AS3 code.
- * For better performance we should probably implement them all natively (in JS that is) unless our
- * compiler is good enough.
+ * NOTE: Not all of the AS3 methods need to be implemented natively, some are self-hosted in AS3
+ * code. For better performance we should probably implement them all natively (in JS that is)
+ * unless our compiler is good enough.
  */
 
-module Shumway.AVM2.AS {
+module Shumway.AVMX.AS {
   /**
    * Check arguments and throw the appropriate errors.
    */
   var checkArguments = true;
 
+  import assert = Shumway.Debug.assert;
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-  import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import clamp = Shumway.NumberUtilities.clamp;
-  import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
-  import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
-  export class Float64Vector extends ASVector<ASInt> {
+  export class Float64Vector extends BaseVector {
     static EXTRA_CAPACITY = 4;
     static INITIAL_CAPACITY = 10;
     static DEFAULT_VALUE = 0;
@@ -55,40 +52,40 @@ module Shumway.AVM2.AS {
     public static instanceConstructor: any = Float64Vector;
     public static staticNatives: any [] = [Float64Vector];
     public static instanceNatives: any [] = [Float64Vector.prototype];
-    public static callableConstructor: any = Float64Vector.callable;
 
-    static classInitializer: any = function() {
-      var proto: any = Float64Vector.prototype;
-      defineNonEnumerableProperty(proto, '$Bgjoin', proto.join);
+    static classInitializer() {
+      var proto: any = this.dPrototype;
+      var asProto: any = Float64Vector.prototype;
+      defineNonEnumerableProperty(proto, '$Bgjoin', asProto.join);
       // Same as join, see VectorImpl.as in Tamarin repository.
-      defineNonEnumerableProperty(proto, '$BgtoString', proto.join);
-      defineNonEnumerableProperty(proto, '$BgtoLocaleString', proto.toLocaleString);
+      defineNonEnumerableProperty(proto, '$BgtoString', asProto.join);
+      defineNonEnumerableProperty(proto, '$BgtoLocaleString', asProto.toLocaleString);
 
-      defineNonEnumerableProperty(proto, '$Bgpop', proto.pop);
-      defineNonEnumerableProperty(proto, '$Bgpush', proto.push);
+      defineNonEnumerableProperty(proto, '$Bgpop', asProto.pop);
+      defineNonEnumerableProperty(proto, '$Bgpush', asProto.push);
 
-      defineNonEnumerableProperty(proto, '$Bgreverse', proto.reverse);
-      defineNonEnumerableProperty(proto, '$Bgconcat', proto.concat);
-      defineNonEnumerableProperty(proto, '$Bgsplice', proto.splice);
-      defineNonEnumerableProperty(proto, '$Bgslice', proto.slice);
+      defineNonEnumerableProperty(proto, '$Bgreverse', asProto.reverse);
+      defineNonEnumerableProperty(proto, '$Bgconcat', asProto.concat);
+      defineNonEnumerableProperty(proto, '$Bgsplice', asProto.splice);
+      defineNonEnumerableProperty(proto, '$Bgslice', asProto.slice);
 
-      defineNonEnumerableProperty(proto, '$Bgshift', proto.shift);
-      defineNonEnumerableProperty(proto, '$Bgunshift', proto.unshift);
+      defineNonEnumerableProperty(proto, '$Bgshift', asProto.shift);
+      defineNonEnumerableProperty(proto, '$Bgunshift', asProto.unshift);
 
-      defineNonEnumerableProperty(proto, '$BgindexOf', proto.indexOf);
-      defineNonEnumerableProperty(proto, '$BglastIndexOf', proto.lastIndexOf);
+      defineNonEnumerableProperty(proto, '$BgindexOf', asProto.indexOf);
+      defineNonEnumerableProperty(proto, '$BglastIndexOf', asProto.lastIndexOf);
 
-      defineNonEnumerableProperty(proto, '$BgforEach', proto.forEach);
-      defineNonEnumerableProperty(proto, '$Bgmap', proto.map);
-      defineNonEnumerableProperty(proto, '$Bgfilter', proto.filter);
-      defineNonEnumerableProperty(proto, '$Bgsome', proto.some);
-      defineNonEnumerableProperty(proto, '$Bgevery', proto.every);
+      defineNonEnumerableProperty(proto, '$BgforEach', asProto.forEach);
+      defineNonEnumerableProperty(proto, '$Bgmap', asProto.map);
+      defineNonEnumerableProperty(proto, '$Bgfilter', asProto.filter);
+      defineNonEnumerableProperty(proto, '$Bgsome', asProto.some);
+      defineNonEnumerableProperty(proto, '$Bgevery', asProto.every);
 
-      defineNonEnumerableProperty(proto, '$Bgsort', proto.sort);
-    };
+      defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
+    }
 
     newThisType(): Float64Vector {
-      return new Float64Vector();
+      return new this.securityDomain.Float64Vector();
     }
 
     private _fixed: boolean;
@@ -105,15 +102,16 @@ module Shumway.AVM2.AS {
       this._length = length;
     }
 
-    static callable(object) {
-      if (object instanceof Float64Vector) {
+    static axApply(self: Float64Vector, args: any[]) {
+      var object = args[0];
+      if (self.securityDomain.Float64Vector.axIsType(object)) {
         return object;
       }
-      var length = object.asGetProperty(undefined, "length");
+      var length = object.axGetPublicProperty("length");
       if (length !== undefined) {
-        var v = new Float64Vector(length, false);
+        var v = new self.securityDomain.Float64Vector(length, false);
         for (var i = 0; i < length; i++) {
-          v.asSetNumericProperty(i, object.asGetPublicProperty(i));
+          v.axSetNumericProperty(i, object.axGetPublicProperty(i));
         }
         return v;
       }
@@ -198,12 +196,13 @@ module Shumway.AVM2.AS {
       for (var i = 0; i < arguments.length; i++) {
         var vector: Float64Vector = arguments[i];
         if (!(vector._buffer instanceof Float64Array)) {
-          throwError('TypeError', Errors.CheckTypeFailedError, vector.constructor.name,
-                     '__AS3__.vec.Vector.<Number>');
+          assert(false); // TODO
+          // this.securityDomain.throwError('TypeError', Errors.CheckTypeFailedError,
+          // vector.constructor.name, '__AS3__.vec.Vector.<Number>');
         }
         length += vector._length;
       }
-      var result = new Float64Vector(length);
+      var result = new this.securityDomain.Float64Vector(length);
       var buffer = result._buffer;
       buffer.set(this._buffer);
       var offset = this._length;
@@ -220,9 +219,9 @@ module Shumway.AVM2.AS {
     }
 
     /**
-     * Executes a |callback| function with three arguments: element, index, the vector itself as well
-     * as passing the |thisObject| as |this| for each of the elements in the vector. If any of the
-     * callbacks return |false| the function terminates, otherwise it returns |true|.
+     * Executes a |callback| function with three arguments: element, index, the vector itself as
+     * well as passing the |thisObject| as |this| for each of the elements in the vector. If any of
+     * the callbacks return |false| the function terminates, otherwise it returns |true|.
      */
     every(callback, thisObject) {
       for (var i = 0; i < this._length; i++) {
@@ -235,11 +234,11 @@ module Shumway.AVM2.AS {
 
     /**
      * Filters the elements for which the |callback| method returns |true|. The |callback| function
-     * is called with three arguments: element, index, the vector itself as well as passing the |thisObject|
-     * as |this| for each of the elements in the vector.
+     * is called with three arguments: element, index, the vector itself as well as passing the
+     * |thisObject| as |this| for each of the elements in the vector.
      */
     filter(callback, thisObject) {
-      var v = new Float64Vector();
+      var v = new this.securityDomain.Float64Vector();
       for (var i = 0; i < this._length; i++) {
         if (callback.call(thisObject, this._buffer[this._offset + i], i, this)) {
           v.push(this._buffer[this._offset + i]);
@@ -250,9 +249,9 @@ module Shumway.AVM2.AS {
 
     some(callback, thisObject) {
       if (arguments.length !== 2) {
-        throwError("ArgumentError", Errors.WrongArgumentCountError);
-      } else if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+        this.securityDomain.throwError("ArgumentError", Errors.WrongArgumentCountError);
+      } else if (!this.securityDomain.isCallable(callback)) {
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
       for (var i = 0; i < this._length; i++) {
         if (callback.call(thisObject, this._buffer[this._offset + i], i, this)) {
@@ -330,10 +329,10 @@ module Shumway.AVM2.AS {
     }
 
     map(callback, thisObject) {
-      if (!isFunction(callback)) {
-        throwError("ArgumentError", Errors.CheckTypeFailedError);
+      if (!this.securityDomain.isCallable(callback)) {
+        this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
-      var v = new Float64Vector();
+      var v = new this.securityDomain.Float64Vector();
       for (var i = 0; i < this._length; i++) {
         v.push(callback.call(thisObject, this._buffer[this._offset + i], i, this));
       }
@@ -376,6 +375,7 @@ module Shumway.AVM2.AS {
       if (arguments.length === 0) {
         return Array.prototype.sort.call(this._view());
       }
+      // REDUX: The instanceof check here is probably broken.
       if (sortBehavior instanceof Function) {
         return Array.prototype.sort.call(this._view(), sortBehavior);
       } else {
@@ -417,7 +417,7 @@ module Shumway.AVM2.AS {
       var length = this._length;
       var first = Math.min(Math.max(start, 0), length);
       var last = Math.min(Math.max(end, first), length);
-      var result = new Float64Vector(last - first, this.fixed);
+      var result = new this.securityDomain.Float64Vector(last - first, this.fixed);
       result._buffer.set(buffer.subarray(this._offset + first, this._offset + last),
                          result._offset);
       return result;
@@ -433,7 +433,7 @@ module Shumway.AVM2.AS {
       var insertCount = arguments.length - 2;
       var deletedItems;
 
-      var result = new Float64Vector(deleteCount, this.fixed);
+      var result = new this.securityDomain.Float64Vector(deleteCount, this.fixed);
       if (deleteCount > 0) {
         deletedItems = buffer.subarray(startOffset, startOffset + deleteCount);
         result._buffer.set(deletedItems, result._offset);
@@ -480,41 +480,49 @@ module Shumway.AVM2.AS {
 
     _checkFixed() {
       if (this._fixed) {
-        throwError("RangeError", Errors.VectorFixedError);
+        this.securityDomain.throwError("RangeError", Errors.VectorFixedError);
       }
     }
 
-    asGetNumericProperty(i) {
-      checkArguments && asCheckVectorGetNumericProperty(i, this._length);
-      return this._buffer[this._offset + i];
+    axGetNumericProperty(nm: number) {
+      checkArguments && axCheckVectorGetNumericProperty(nm, this._length, this.securityDomain);
+      return this._buffer[this._offset + nm];
     }
 
-    asSetNumericProperty(i, v) {
-      checkArguments && asCheckVectorSetNumericProperty(i, this._length, this._fixed);
-      if (i === this._length) {
+    axSetNumericProperty(nm: number, v: any) {
+      release || assert(isNumeric(nm));
+      checkArguments && axCheckVectorSetNumericProperty(nm, this._length, this._fixed,
+                                                        this.securityDomain);
+      if (nm === this._length) {
         this._ensureCapacity(this._length + 1);
         this._length ++;
       }
-      this._buffer[this._offset + i] = v;
+      this._buffer[this._offset + nm] = v;
     }
 
-    asHasProperty(namespaces, name, flags) {
-      if (Float64Vector.prototype === this || !isNumeric(name)) {
-        return Object.prototype.asHasProperty.call(this, namespaces, name, flags);
+    axHasPropertyInternal(mn: Multiname): boolean {
+      // Optimization for the common case of indexed element accesses.
+      if (typeof mn.name === 'number') {
+        release || assert(mn.isRuntimeName());
+        return mn.name >= 0 && mn.name < this._length;
       }
-      var index = toNumber(name);
-      return index >= 0 && index < this._length;
+      var name = asCoerceName(mn.name);
+      if (mn.isRuntimeName() && isNumeric(name)) {
+        var index = toNumber(name);
+        return index >= 0 && index < this._length;
+      }
+      return this.axResolveMultiname(mn) in this;
     }
 
-    asNextName(index: number): any {
+    axNextName(index: number): any {
       return index - 1;
     }
 
-    asNextValue(index: number): any {
+    axNextValue(index: number): any {
       return this._buffer[this._offset + index - 1];
     }
 
-    asNextNameIndex(index: number): number {
+    axNextNameIndex(index: number): number {
       var nextNameIndex = index + 1;
       if (nextNameIndex <= this._length) {
         return nextNameIndex;
@@ -522,8 +530,8 @@ module Shumway.AVM2.AS {
       return 0;
     }
 
-    asHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.asNextNameIndex(hasNext2Info.index)
+    axHasNext2(hasNext2Info: HasNext2Info) {
+      hasNext2Info.index = this.axNextNameIndex(hasNext2Info.index)
     }
   }
 }

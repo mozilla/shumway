@@ -54,10 +54,10 @@ function runSwfPlayer(data) {
   }
   Shumway.SystemResourcesLoadingService.instance =
     new Shumway.Player.BrowserSystemResourcesLoadingService(builtinPath, playerglobalInfo);
-  Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
+  Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
     function runSWF(file) {
-      var gfxService = new Shumway.Player.Window.WindowGFXService(window);
-      var player = new Shumway.Player.Player(gfxService);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window);
+      var player = new Shumway.Player.Player(securityDomain, gfxService);
       player.movieParams = movieParams;
       player.stageAlign = stageAlign;
       player.stageScale = stageScale;

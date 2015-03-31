@@ -509,6 +509,36 @@ module Shumway.AVM2 {
     null
   ];
 
+  var www = new IndentingWriter();
+
+//*     I - an index into the integer constant pool
+//*     U - an index into the unsigned integer constant pool
+//*     D - an index into the doubles constant pool
+//*     S - an index into the string constant pool
+//*     N - an index into the namespace constant pool
+//*     M - an index into the multiname constant pool
+//*    CI - an index into the class info list
+//*    EI - an index into the exception info list
+//*    MI - an index into the method info list
+
+
+  // for (var i = 0; i < opcodeTable.length; i++) {
+  //  if (opcodeTable[i]) {
+  //    var s = "";
+  //    var t = "";
+  //    var o = opcodeTable[i].operands;
+  //    if (o) {
+  //      for (var j = 0; j < o.length; j++) {
+  //        // s += o[j].name + " " + o[j].size + " " + o[j].type;
+  //        s += "abcdef"[o[j].size]; // + " " + o[j].type;
+  //        t += o[j].type;
+  //
+  //      }
+  //    }
+  //    www.writeLn("define(Bytecode." + String(opcodeName(i)).toUpperCase() + ", \"" + s + "\", Flags.CAN_THROW);");
+  //  }
+  //}
+
   export enum OpcodeSize {
     u08,
     s08,

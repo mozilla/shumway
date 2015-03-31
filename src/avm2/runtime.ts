@@ -64,6 +64,7 @@ interface Object extends IProtocol {
 
 
   class: Shumway.AVM2.AS.ASClass;
+  asClass: Shumway.AVMX.AS.ASClass;
 
   asEnumerableKeys: any [];
   asLazyInitializer: Shumway.AVM2.Runtime.LazyInitializer;
@@ -81,9 +82,12 @@ interface Object extends IProtocol {
 interface Function {
   asCall(thisArg: any, ...argArray: any[]): any;
   asApply(thisArg: any, argArray?: any): any;
+  name: string;
 }
 
 module Shumway.AVM2.Runtime {
+  import IndentingWriter = Shumway.IndentingWriter;
+
   /**
    * Seals const traits. Technically we need to throw an exception if they are ever modified after
    * the static or instance constructor executes, but we can safely ignore this incompatibility.
@@ -100,6 +104,11 @@ module Shumway.AVM2.Runtime {
    */
   var useSurrogates = true;
 
+  /**
+   * Wrap all method calls in a wrapper that traces execution.
+   */
+  var traceWriter = null; // new IndentingWriter(false, dumpLine);
+
   var callCounter = new Shumway.Metrics.Counter(true);
   var counter = Shumway.Metrics.Counter.instance;
 
@@ -115,7 +124,6 @@ module Shumway.AVM2.Runtime {
   import SORT = Shumway.AVM2.ABC.SORT;
 
   import Trait = Shumway.AVM2.ABC.Trait;
-  import IndentingWriter = Shumway.IndentingWriter;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
   import propertyIsEnumerable = Shumway.ObjectUtilities.propertyIsEnumerable;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
@@ -833,19 +841,6 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-
-  export function asCheckVectorSetNumericProperty(i, length, fixed) {
-    if (i < 0 || i > length || (i === length && fixed) || !isNumeric(i)) {
-      throwError("RangeError", Errors.OutOfRangeError, i, length);
-    }
-  }
-
-  export function asCheckVectorGetNumericProperty(i, length) {
-    if (i < 0 || i >= length || !isNumeric(i)) {
-      throwError("RangeError", Errors.OutOfRangeError, i, length);
-    }
-  }
-
   export function checkNullParameter(argument: any, name: string) {
     if (!argument) {
       throwError('TypeError', Errors.NullPointerError, name);
@@ -864,7 +859,7 @@ module Shumway.AVM2.Runtime {
     if (error.fqn) {
       className = error.fqn;
     }
-    var message = Shumway.AVM2.formatErrorMessage.apply(null,
+    var message = Shumway.AVMX.formatErrorMessage.apply(null,
                                                         Array.prototype.slice.call(arguments, 1));
     throwErrorFromVM(AVM2.currentDomain(), className, message, error.code);
   }
@@ -879,7 +874,7 @@ module Shumway.AVM2.Runtime {
     if (error instanceof Error) {
       var type = domain.getClass(error.name);
       if (type) {
-        return new type.instanceConstructor(Shumway.AVM2.translateErrorMessage(error));
+        return new type.instanceConstructor(Shumway.AVMX.translateErrorMessage(error));
       }
       Shumway.Debug.unexpected("Can't translate error: " + error);
     }
@@ -1130,7 +1125,7 @@ module Shumway.AVM2.Runtime {
     };
   }
 
-  initializeGlobalObject(jsGlobal);
+  // initializeGlobalObject(jsGlobal);
 
   /**
    * Check if a qualified name is in an object's traits.
@@ -1519,12 +1514,33 @@ module Shumway.AVM2.Runtime {
         };
       })(fn);
     }
+
+    if (traceWriter) {
+      fn = wrapFunctionWithTracingWrapper(fn, methodInfo);
+    }
+
     fn.instanceConstructor = fn;
     var fnName = nameFunction(methodInfo);
     fn.displayName = fn.debugName = fnName;
     fn.methodInfo = methodInfo;
     jsGlobal[fnName] = fn;
     return fn;
+  }
+
+  function wrapFunctionWithTracingWrapper(fn, methodInfo) {
+    return function () {
+      var name = methodInfo.name ? getMethodOverrideKey(methodInfo) : "";
+      var args = Array.prototype.slice.call(arguments, 0).map(x => toSafeString(x));
+      traceWriter.enter("> " + name + " (" + args.join(", ") + ")");
+      try {
+        var result = fn.apply(this, arguments);
+      } catch (e) {
+        traceWriter.leave("< " + name + ": " + e);
+        throw e;
+      }
+      traceWriter.leave("< " + name + " " + toSafeString(result));
+      return result;
+    }
   }
 
   export function debugName(value) {
@@ -1588,6 +1604,10 @@ module Shumway.AVM2.Runtime {
     // indirect eval is also a bit slower.
     new Function('return ' + (cached || fnSource))();
     var fn = jsGlobal[fnName];
+    if (traceWriter) {
+      fn = wrapFunctionWithTracingWrapper(fn, methodInfo);
+      jsGlobal[fnName] = fn;
+    }
     fn.debugName = fnName;
     release || assert(fn);
     fn.methodInfo = mi;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 // Class: URLLoader
-module Shumway.AVM2.AS.flash.net {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.net {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   import Event = flash.events.Event;
   import IOErrorEvent = flash.events.IOErrorEvent;
@@ -26,13 +26,11 @@ module Shumway.AVM2.AS.flash.net {
   export class URLLoader extends flash.events.EventDispatcher {
     
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null;
     
     constructor (request?: flash.net.URLRequest) {
-      false && super(undefined);
-      events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       var stream = this._stream = new URLStream();
 
       stream.addEventListener(Event.OPEN, this.onStreamOpen.bind(this));

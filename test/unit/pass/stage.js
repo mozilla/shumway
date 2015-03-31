@@ -120,7 +120,7 @@
     var fail = false;
     for (var i = 0; i < 50; i++) {
       var element = tree.getRandomNode();
-      if (DisplayObjectContainer.isType(element)) {
+      if (DisplayObjectContainer.axIsType(element)) {
         var otherElement = tree.getRandomNode();
         if (!otherElement._isAncestor(element)) {
           element.addChild(otherElement);

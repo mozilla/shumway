@@ -16,14 +16,14 @@
 
 
 module Shumway.AVM1 {
-  import Multiname = Shumway.AVM2.ABC.Multiname;
-  import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
-  import construct = Shumway.AVM2.Runtime.construct;
+  import Multiname = Shumway.AVMX.Multiname;
+  import forEachPublicProperty = Shumway.AVMX.forEachPublicProperty;
+  var construct = null; // REDUX: Shumway.AVM2.Runtime.construct;
   import isNumeric = Shumway.isNumeric;
   import isFunction = Shumway.isFunction;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import sliceArguments = Shumway.AVM2.Runtime.sliceArguments;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  import sliceArguments = Shumway.AVMX.sliceArguments;
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
   import Telemetry = Shumway.Telemetry;
@@ -120,10 +120,10 @@ module Shumway.AVM1 {
     }
   }
 
-  class AVM1FunctionClosure extends Shumway.AVM2.AS.ASObject {
+  class AVM1FunctionClosure extends Shumway.AVMX.AS.ASObject {
     constructor() {
       super();
-      this.asSetPublicProperty('toString', this.toString);
+      this.axSetPublicProperty('toString', this.toString);
     }
 
     toString(): string {
@@ -179,7 +179,7 @@ module Shumway.AVM1 {
     private assetsClasses: Array<any>;
     private eventObservers: Map<IAVM1EventPropertyObserver[]>;
 
-    constructor(loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo) {
+    constructor(loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) {
       super();
       this.loaderInfo = loaderInfo;
       var GlobalsClass = Lib.AVM1Globals.createAVM1Class();
@@ -384,7 +384,7 @@ module Shumway.AVM1 {
     }
   }
 
-  AVM1Context.create = function(loaderInfo: Shumway.AVM2.AS.flash.display.LoaderInfo): AVM1Context {
+  AVM1Context.create = function(loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo): AVM1Context {
     return new AVM1ContextImpl(loaderInfo);
   };
 
@@ -512,7 +512,7 @@ module Shumway.AVM1 {
       case 'object':
         if (typeof value === 'function' &&
             value.asGetPublicProperty('toString') ===
-              AVM2.AS.ASFunction.traitsPrototype.asGetPublicProperty('toString')) {
+              AVMX.AS.ASFunction.traitsPrototype.asGetPublicProperty('toString')) {
           // Printing AVM1 thing instead of 'function Function() {}' when
           // native AS3 Function.prototype.toString is found.
           return '[type Function]';
@@ -542,17 +542,17 @@ module Shumway.AVM1 {
       return false;
     }
 
-    if (constructor === Shumway.AVM2.AS.ASString) {
+    if (constructor === Shumway.AVMX.AS.ASString) {
       return typeof obj === 'string';
-    } else if (constructor === Shumway.AVM2.AS.ASNumber) {
+    } else if (constructor === Shumway.AVMX.AS.ASNumber) {
       return typeof obj === 'number';
-    } else if (constructor === Shumway.AVM2.AS.ASBoolean) {
+    } else if (constructor === Shumway.AVMX.AS.ASBoolean) {
       return typeof obj === 'boolean';
-    } else if (constructor === Shumway.AVM2.AS.ASArray) {
+    } else if (constructor === Shumway.AVMX.AS.ASArray) {
       return Array.isArray(obj);
-    } else if (constructor === Shumway.AVM2.AS.ASFunction) {
+    } else if (constructor === Shumway.AVMX.AS.ASFunction) {
       return typeof obj === 'function';
-    } else if (constructor === Shumway.AVM2.AS.ASObject) {
+    } else if (constructor === Shumway.AVMX.AS.ASObject) {
       return typeof obj === 'object';
     }
 
@@ -697,9 +697,9 @@ module Shumway.AVM1 {
     var definition = resolved.link.asGetPropertyDescriptor(undefined, resolved.name, 0);
     if (definition && !('value' in definition)) {
       // Using setter or getter
-      resolved.link.asSetPublicProperty(resolved.name, value);
+      resolved.link.axSetPublicProperty(resolved.name, value);
     } else {
-      obj.asSetPublicProperty(resolved.name, value);
+      obj.axSetPublicProperty(resolved.name, value);
     }
     as2SyncEvents(resolved.name);
   }
@@ -722,7 +722,7 @@ module Shumway.AVM1 {
   }
 
   function as2SetupInternalProperties(obj, proto, ctor) {
-    obj.asSetPublicProperty('__proto__', proto);
+    obj.axSetPublicProperty('__proto__', proto);
     obj.asDefinePublicProperty('__constructor__', {
       value: ctor,
       writable: true,
@@ -795,7 +795,7 @@ module Shumway.AVM1 {
   }
 
   function isAvm2Class(obj): boolean {
-    return obj instanceof Shumway.AVM2.AS.ASClass;
+    return obj instanceof Shumway.AVMX.AS.ASClass;
   }
 
   interface AVM1Function {
@@ -862,7 +862,7 @@ module Shumway.AVM1 {
     return obj;
   }
 
-  class AVM1Object extends Shumway.AVM2.AS.ASObject {
+  class AVM1Object extends Shumway.AVMX.AS.ASObject {
   }
 
   function createBuiltinType(obj, args: any[]) {
@@ -1025,14 +1025,14 @@ module Shumway.AVM1 {
 
         if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
           argumentsClone = sliceArguments(arguments, 0);
-          newScope.asSetPublicProperty('arguments', argumentsClone);
+          newScope.axSetPublicProperty('arguments', argumentsClone);
         }
         if (!(suppressArguments & ArgumentAssignmentType.This)) {
-          newScope.asSetPublicProperty('this', thisArg);
+          newScope.axSetPublicProperty('this', thisArg);
         }
         if (!(suppressArguments & ArgumentAssignmentType.Super)) {
           supperWrapper = new AVM1SuperWrapper(frame);
-          newScope.asSetPublicProperty('super', supperWrapper);
+          newScope.axSetPublicProperty('super', supperWrapper);
         }
         newScopeContainer = scopeContainer.create(newScope);
         var i;
@@ -1071,7 +1071,7 @@ module Shumway.AVM1 {
           if (skipArguments && skipArguments[i]) {
             continue;
           }
-          newScope.asSetPublicProperty(parametersNames[i], arguments[i]);
+          newScope.axSetPublicProperty(parametersNames[i], arguments[i]);
         }
 
         var result;
@@ -1112,7 +1112,7 @@ module Shumway.AVM1 {
       for (var p = scopeContainer; p; p = p.next) {
         var resolved = avm1ResolveProperty(p.scope, propertyName, false);
         if (resolved) {
-          resolved.link.asSetPublicProperty(resolved.name, undefined); // in some cases we need to cleanup events binding
+          resolved.link.axSetPublicProperty(resolved.name, undefined); // in some cases we need to cleanup events binding
           return resolved.link.asDeleteProperty(undefined, resolved.name, 0);
         }
       }
@@ -1302,7 +1302,7 @@ module Shumway.AVM1 {
           caughtError = e;
         } else {
           if (typeof catchTarget === 'string') { // TODO catchIsRegisterFlag?
-            scope.asSetPublicProperty(catchTarget, e.error);
+            scope.axSetPublicProperty(catchTarget, e.error);
           } else {
             registers[catchTarget] = e.error;
           }
@@ -1617,7 +1617,7 @@ module Shumway.AVM1 {
       var variableName = '' + stack.pop();
       var resolved = avm1ResolveSetVariable(ectx, variableName);
       if (resolved) {
-        resolved.link.asSetPublicProperty(resolved.name, value);
+        resolved.link.axSetPublicProperty(resolved.name, value);
         as2SyncEvents(resolved.name);
       }
     }
@@ -1863,7 +1863,7 @@ module Shumway.AVM1 {
       var fn = avm1DefineFunction(ectx, functionBody, functionName,
         functionParams, 4, null, 0);
       if (functionName) {
-        scope.asSetPublicProperty(functionName, fn);
+        scope.axSetPublicProperty(functionName, fn);
       } else {
         stack.push(fn);
       }
@@ -1874,14 +1874,14 @@ module Shumway.AVM1 {
 
       var value = stack.pop();
       var name = stack.pop();
-      scope.asSetPublicProperty(name, value);
+      scope.axSetPublicProperty(name, value);
     }
     function avm1_0x41_ActionDefineLocal2(ectx: ExecutionContext) {
       var stack = ectx.stack;
       var scope = ectx.scope;
 
       var name = stack.pop();
-      scope.asSetPublicProperty(name, undefined);
+      scope.axSetPublicProperty(name, undefined);
     }
     function avm1_0x3A_ActionDelete(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1961,7 +1961,7 @@ module Shumway.AVM1 {
       for (var i = 0; i < count; i++) {
         var value = stack.pop();
         var name = stack.pop();
-        obj.asSetPublicProperty(name, value);
+        obj.axSetPublicProperty(name, value);
       }
       stack.push(obj);
     }
@@ -2240,7 +2240,7 @@ module Shumway.AVM1 {
       var fn = avm1DefineFunction(ectx, functionBody, functionName,
         functionParams, registerCount, registerAllocation, suppressArguments);
       if (functionName) {
-        scope.asSetPublicProperty(functionName, fn);
+        scope.axSetPublicProperty(functionName, fn);
       } else {
         stack.push(fn);
       }
@@ -2252,8 +2252,8 @@ module Shumway.AVM1 {
       var constr = stack.pop();
       var prototype = constr.asGetPublicProperty('prototype');
       var prototypeSuper = constrSuper.asGetPublicProperty('prototype');
-      prototype.asSetPublicProperty('__proto__', prototypeSuper);
-      prototype.asSetPublicProperty('__constructor__', constrSuper);
+      prototype.axSetPublicProperty('__proto__', prototypeSuper);
+      prototype.axSetPublicProperty('__constructor__', constrSuper);
     }
     function avm1_0x2B_ActionCastOp(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -2337,7 +2337,7 @@ module Shumway.AVM1 {
             console.log(Object.getPrototypeOf(e));
             console.log(Object.getPrototypeOf(Object.getPrototypeOf(e)));
             console.error('AVM1 error: ' + e);
-            var avm2 = Shumway.AVM2.Runtime.AVM2;
+            var avm2 = null; // REDUX: Shumway.AVM2.Runtime.AVM2;
             avm2.instance.exceptions.push({source: 'avm1', message: e.message,
               stack: e.stack});
             executionContext.recoveringFromError = true;
@@ -2815,7 +2815,7 @@ module Shumway.AVM1 {
             throw new AVM1CriticalError('long running script -- AVM1 errors limit is reached');
           }
           console.error('AVM1 error: ' + e);
-          var avm2 = Shumway.AVM2.Runtime.AVM2;
+          var avm2 = null; // REDUX: Shumway.AVM2.Runtime.AVM2;
           avm2.instance.exceptions.push({source: 'avm1', message: e.message,
             stack: e.stack});
           executionContext.recoveringFromError = true;

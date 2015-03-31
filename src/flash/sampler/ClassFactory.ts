@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 // Class: ClassFactory
-module Shumway.AVM2.AS.flash.sampler {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class ClassFactory extends ASNative {
+module Shumway.AVMX.AS.flash.sampler {
+  export class ClassFactory extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +27,7 @@ module Shumway.AVM2.AS.flash.sampler {
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
-      false && super();
-      dummyConstructor("packageInternal flash.sampler.ClassFactory");
+      super();
     }
     
     // JS -> AS Bindings
@@ -42,9 +35,5 @@ module Shumway.AVM2.AS.flash.sampler {
     static SampleClass: ASClass = undefined;
     static DeleteObjectSampleClass: ASClass = undefined;
     static NewObjectSampleClass: ASClass = undefined;
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

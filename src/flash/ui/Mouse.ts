@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 // Class: Mouse
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   import dummyConstructor = Shumway.Debug.dummyConstructor;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assert = Shumway.Debug.assert;
 
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import InteractiveObject = flash.display.InteractiveObject;
 
   import events = flash.events;
@@ -35,7 +35,8 @@ module Shumway.AVM2.AS.flash.ui {
     /**
      * Finds the interactive object on which the event is dispatched.
      */
-    private _findTarget(point: flash.geom.Point, testingType: flash.display.HitTestingType): flash.display.DisplayObject {
+    private _findTarget(point: flash.geom.Point,
+                        testingType: flash.display.HitTestingType): flash.display.DisplayObject {
       var globalX = point.x * 20 | 0;
       var globalY = point.y * 20 | 0;
       var objects = [];
@@ -50,9 +51,11 @@ module Shumway.AVM2.AS.flash.ui {
     /**
      * Converts DOM mouse event data into AS3 mouse events.
      */
-    private _dispatchMouseEvent(target: flash.display.InteractiveObject, type: string, data: MouseEventAndPointData, relatedObject: flash.display.InteractiveObject = null) {
+    private _dispatchMouseEvent(target: flash.display.InteractiveObject, type: string,
+                                data: MouseEventAndPointData,
+                                relatedObject: flash.display.InteractiveObject = null) {
       var localPoint = target.globalToLocal(data.point);
-      var event = new events.MouseEvent (
+      var event = new this.stage.securityDomain.flash.events.MouseEvent (
         type,
         type !== events.MouseEvent.ROLL_OVER &&
         type !== events.MouseEvent.ROLL_OUT &&
@@ -79,7 +82,8 @@ module Shumway.AVM2.AS.flash.ui {
       }
 
       var globalPoint = data.point;
-      flash.ui.Mouse.updateCurrentPosition(globalPoint);
+      var mouseClass = this.stage.securityDomain.flash.ui.Mouse.axClass;
+      mouseClass.updateCurrentPosition(globalPoint);
 
       var currentTarget = this.currentTarget;
       var target: InteractiveObject = null;
@@ -99,9 +103,9 @@ module Shumway.AVM2.AS.flash.ui {
         }
       }
 
-      if (flash.ui.Mouse.draggableObject) {
+      if (mouseClass.draggableObject) {
         var dropTarget = this._findTarget(globalPoint, flash.display.HitTestingType.Drop);
-        flash.ui.Mouse.draggableObject._updateDragState(dropTarget);
+        mouseClass.draggableObject._updateDragState(dropTarget);
       }
 
       switch (type) {
@@ -199,27 +203,19 @@ module Shumway.AVM2.AS.flash.ui {
     buttons: MouseButtonFlags;
   }
 
-  export class Mouse extends ASNative {
+  export class Mouse extends ASObject {
 
+    static axClass: typeof Mouse;
 
     // Called whenever the class is initialized.
-    static classInitializer: any = function () {
-      this._currentPosition = new flash.geom.Point();
+    static classInitializer() {
+      this._currentPosition = new this.securityDomain.flash.geom.Point();
       this._cursor = MouseCursor.AUTO;
       this.draggableObject = null;
-    };
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
+    }
     
     constructor () {
-      false && super();
+      super();
     }
     
     // JS -> AS Bindings
@@ -239,7 +235,7 @@ module Shumway.AVM2.AS.flash.ui {
     static set cursor(value: string) {
       value = asCoerceString(value);
       if (MouseCursor.toNumber(value) < 0) {
-        throwError("ArgumentError", Errors.InvalidParamError, "cursor");
+        this.securityDomain.throwError("ArgumentError", Errors.InvalidParamError, "cursor");
       }
       this._cursor = value;
     }

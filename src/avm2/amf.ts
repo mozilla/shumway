@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2 {
-  import Multiname = Shumway.AVM2.ABC.Multiname;
-  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
-  import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
-  import construct = Shumway.AVM2.Runtime.construct;
+module Shumway.AVMX {
+  import ByteArray = Shumway.AVMX.AS.flash.utils.ByteArray;
+  var construct = null; // TODO
+  import assert = Shumway.Debug.assert;
 
   export enum AMF0Marker {
     NUMBER = 0x00,
@@ -88,7 +87,7 @@ module Shumway.AVM2 {
   }
 
   function setAvmProperty(obj, propertyName, value) {
-    obj.asSetPublicProperty(propertyName, value);
+    obj.axSetPublicProperty(propertyName, value);
   }
 
   export class AMF0 {
@@ -149,7 +148,7 @@ module Shumway.AVM2 {
         case AMF0Marker.STRING:
           return readString(ba);
         case AMF0Marker.OBJECT:
-          var obj = {};
+          var obj = ba.securityDomain.createObject();
           while (true) {
             var key = readString(ba);
             if (!key.length) break;
@@ -185,7 +184,7 @@ module Shumway.AVM2 {
           }
           return arr;
         case AMF0Marker.AVMPLUS:
-          return readAmf3Data(ba, {});
+          return readAmf3Data(ba, ba.securityDomain.createObject());
         default:
           throw 'AMF0 Unknown marker ' + marker;
       }
@@ -340,13 +339,14 @@ module Shumway.AVM2 {
                 break;
               }
             }
-            traits.members.push(slot ? Multiname.getQualifiedName(slot.name) :
-              Multiname.getPublicQualifiedName(traitName));
+            assert(false); // TODO
+            // traits.members.push(slot ? Multiname.getQualifiedName(slot.name) :
+            //  Multiname.getPublicQualifiedName(traitName));
           }
           (caches.traitsCache || (caches.traitsCache = [])).push(traits);
         }
 
-        var obj = objectClass ? construct(objectClass, []) : {};
+        var obj = objectClass ? construct(objectClass, []) : ba.securityDomain.createObject();
         (caches.objectsCache || (caches.objectsCache = [])).push(obj);
         for (var i = 0; i < traits.members.length; i++) {
           var value = readAmf3Data(ba, caches);
@@ -473,7 +473,8 @@ module Shumway.AVM2 {
                 if (!slot.name.getNamespace().isPublic()) {
                   continue;
                 }
-                traits.push(Multiname.getQualifiedName(slot.name));
+                assert(false); // TODO
+                // traits.push(Multiname.getQualifiedName(slot.name));
                 traitsNames.push(slot.name.name);
               }
               traitsCache.push(objectClass);
@@ -519,10 +520,10 @@ module Shumway.AVM2 {
 
   export class AMF3 {
     public static write(ba: ByteArray, object) {
-      writeAmf3Data(ba, object, {});
+      writeAmf3Data(ba, object, ba.securityDomain.createObject());
     }
     public static read(ba: ByteArray) {
-      return readAmf3Data(ba, {});
+      return readAmf3Data(ba, ba.securityDomain.createObject());
     }
   }
 }

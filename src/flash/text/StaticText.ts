@@ -14,26 +14,26 @@
  * limitations under the License.
  */
 // Class: StaticText
-module Shumway.AVM2.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
-
+module Shumway.AVMX.AS.flash.text {
+  import assert = Debug.assert;
   export class StaticText extends flash.display.DisplayObject {
 
     static classInitializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    static initializer: any = function (symbol: flash.text.TextSymbol) {
-      var self: StaticText = this;
-      self._textContent = null;
-      if (symbol) {
-        this._setStaticContentFromSymbol(symbol);
-      }
-    };
+    _symbol: TextSymbol;
+    applySymbol() {
+      release || assert(this._symbol);
+      this._initializeFields();
+      this._setStaticContentFromSymbol(this._symbol);
+    }
 
     constructor () {
-      false && super();
-      flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
+      super();
+      if (!this._fieldsInitialized) {
+        this._initializeFields();
+      }
     }
 
     _canHaveTextContent(): boolean {

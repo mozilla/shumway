@@ -34,10 +34,10 @@ function runSwfPlayer(flashParams) {
   Shumway.frameRateOption.value = flashParams.turboMode ? 60 : -1;
   Shumway.AVM2.Verifier.enabled.value = compilerSettings.verifier;
 
-  Shumway.createAVM2(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal, sysMode, appMode).then(function (avm2) {
+  Shumway.createSecurityDomain(Shumway.AVM2LoadLibrariesFlags.Builtin | Shumway.AVM2LoadLibrariesFlags.Playerglobal).then(function (securityDomain) {
     function runSWF(file, buffer, baseUrl) {
-      var gfxService = new Shumway.Player.Window.WindowGFXService(window, window.parent);
-      var player = new Shumway.Player.Player(gfxService);
+      var gfxService = new Shumway.Player.Window.WindowGFXService(securityDomain, window, window.parent);
+      var player = new Shumway.Player.Player(securityDomain, gfxService);
       player.defaultStageColor = flashParams.bgcolor;
       player.movieParams = flashParams.movieParams;
       player.stageAlign = (objectParams && (objectParams.salign || objectParams.align)) || '';

@@ -26,9 +26,9 @@ declare var read;
 declare var help;
 
 var homePath = "";
-load(homePath + "build/libs/relooper.js");
-var builtinLibPath = homePath + "build/libs/builtin.abc";
-var shellLibPath = homePath + "build/libs/shell.abc";
+//load(homePath + "build/libs/relooper.js");
+var builtinABCPath = homePath + "build/libs/builtin.abc";
+var shellABCPath = homePath + "build/libs/shell.abc";
 var playerglobalInfo = {
   abcs: homePath + "build/playerglobal/playerglobal.abcs",
   catalog: homePath + "build/playerglobal/playerglobal.json"
@@ -101,7 +101,7 @@ if (disableBundleSelection || commandLineArguments.indexOf('--bundle') >= 0) {
 
   load("build/ts/flash.js");
 
-  load("build/ts/avm1.js");
+  // REDUX: load("build/ts/avm1.js");
 
   load("build/ts/gfx-base.js");
   load("build/ts/player.js");
@@ -111,7 +111,9 @@ if (disableBundleSelection || commandLineArguments.indexOf('--bundle') >= 0) {
 
 module Shumway.Shell {
   import assert = Shumway.Debug.assert;
-  import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import ABCFile = Shumway.AVMX.ABCFile;
+  import WriterFlags = Shumway.AVMX.WriterFlags;
+
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
   import ArgumentParser = Shumway.Options.ArgumentParser;
@@ -119,7 +121,6 @@ module Shumway.Shell {
   import Runtime = Shumway.AVM2.Runtime;
   import SwfTag = Shumway.SWF.Parser.SwfTag;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  import flash = Shumway.AVM2.AS.flash;
 
   import Compiler = Shumway.AVM2.Compiler;
 
@@ -180,7 +181,6 @@ module Shumway.Shell {
   var writer = new IndentingWriter();
 
   var parseOption: Option;
-  var parseForDatabaseOption: Option;
   var disassembleOption: Option;
   var compileOption: Option;
   var verboseOption: Option;
@@ -191,20 +191,21 @@ module Shumway.Shell {
   var symbolFilterOption: Option;
   var microTaskDurationOption: Option;
   var microTaskCountOption: Option;
-  var loadPlayerGlobalOption: Option;
+  var repeatOption: Option;
+  var loadPlayerGlobalCatalogOption: Option;
   var loadShellLibOption: Option;
   var porcelainOutputOption: Option;
   var usePlayerBundleOption: Option;
   var usePlayerClosureBundleOption: Option;
 
   var fuzzMillOption: Option;
+  var writersOption: Option;
 
   export function main(commandLineArguments: string []) {
     var systemOptions: Shumway.Options.OptionSet = Shumway.Settings.shumwayOptions;
     var shellOptions = systemOptions.register(new Shumway.Options.OptionSet("Shell Options"));
 
     parseOption = shellOptions.register(new Option("p", "parse", "boolean", false, "Parse File(s)"));
-    parseForDatabaseOption = shellOptions.register(new Option("po", "parseForDatabase", "boolean", false, "Parse File(s)"));
     disassembleOption = shellOptions.register(new Option("d", "disassemble", "boolean", false, "Disassemble File(s)"));
     compileOption = shellOptions.register(new Option("c", "compile", "boolean", false, "Compile File(s)"));
     verboseOption = shellOptions.register(new Option("v", "verbose", "boolean", false, "Verbose"));
@@ -219,18 +220,20 @@ module Shumway.Shell {
     symbolFilterOption = shellOptions.register(new Option("f", "filter", "string", "", "Symbol Filter"));
     microTaskDurationOption = shellOptions.register(new Option("md", "duration", "number", 0, "Micro task duration."));
     microTaskCountOption = shellOptions.register(new Option("mc", "count", "number", 0, "Micro task count."));
-    loadPlayerGlobalOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
+    repeatOption = shellOptions.register(new Option("rp", "rp", "number", 1, "Repeat count."));
+    loadPlayerGlobalCatalogOption = shellOptions.register(new Option("g", "playerGlobal", "boolean", false, "Load Player Global"));
     loadShellLibOption = shellOptions.register(new Option("s", "shell", "boolean", false, "Load Shell Global"));
     porcelainOutputOption = shellOptions.register(new Option('', "porcelain", "boolean", false, "Keeps outputs free from the debug messages."));
 
     fuzzMillOption = shellOptions.register(new Option('', "fuzz", "string", "", "Generates random SWFs XML."));
 
+    writersOption = shellOptions.register(new Option("w", "writers", "string", "", "Writers Filter [r: runtime, i: interpreter]"));
+
     var argumentParser = new ArgumentParser();
     argumentParser.addBoundOptionSet(systemOptions);
 
     function printUsage() {
-      var version = Shumway.version + ' (' + Shumway.build + ')';
-      writer.enter("Shumway Command Line Interface. Version: " + version);
+      writer.enter("Shumway Command Line Interface");
       systemOptions.trace(writer);
       writer.leave("");
     }
@@ -279,17 +282,28 @@ module Shumway.Shell {
 
     Shumway.Unit.writer = new IndentingWriter();
 
+    var writerFlags = WriterFlags.None;
+    if (writersOption.value.indexOf("r") >= 0) {
+      writerFlags |= WriterFlags.Runtime;
+    }
+    if (writersOption.value.indexOf("i") >= 0) {
+      writerFlags |= WriterFlags.Interpreter;
+    }
+    Shumway.AVMX.setWriters(writerFlags);
+
     if (compileOption.value) {
-      var abcs = [];
+      var buffers = [];
       files.forEach(function (file) {
         var buffer = new Uint8Array(read(file, "binary"));
         if (file.endsWith(".abc")) {
-          abcs.push(new AbcFile(buffer, file));
+          buffers.push(buffer);
         } else if (file.endsWith(".swf")) {
-          abcs.push.apply(abcs, extractABCsFromSWF(buffer));
+          buffers.push.apply(buffers, extractABCsFromSWF(buffer));
         }
       });
-      Compiler.baselineCompileABCs(abcs.slice(0, 1), abcs.slice(1));
+      verbose && writer.writeLn("Loading " + buffers.length + " ABCs");
+      Shumway.Debug.notImplemented("Compile");
+      Shumway.AVM2.timelineBuffer.createSnapshot().trace(new IndentingWriter());
     }
 
     if (parseOption.value) {
@@ -297,7 +311,7 @@ module Shumway.Shell {
         var start = dateNow();
         writer.debugLn("Parsing: " + file);
         profile && SWF.timelineBuffer.reset();
-        parseFile(file, parseForDatabaseOption.value, symbolFilterOption.value.split(","));
+        parseFile(file, symbolFilterOption.value.split(","));
         var elapsed = dateNow() - start;
         if (verbose) {
           verbose && writer.writeLn("Total Parse Time: " + (elapsed).toFixed(2) + " ms.");
@@ -307,16 +321,15 @@ module Shumway.Shell {
     }
 
     if (executeOption.value) {
-      var shouldLoadPlayerGlobal = loadPlayerGlobalOption.value;
-      if (!shouldLoadPlayerGlobal) {
+      var shouldLoadPlayerGlobalCatalog = loadPlayerGlobalCatalogOption.value;
+      if (!shouldLoadPlayerGlobalCatalog) {
         // We need to load player globals if any swfs need to be executed.
         files.forEach(file => {
           if (file.endsWith(".swf")) {
-            shouldLoadPlayerGlobal = true;
+            shouldLoadPlayerGlobalCatalog = true;
           }
         });
       }
-      initializeAVM2(shouldLoadPlayerGlobal, loadShellLibOption.value);
       files.forEach(function (file) {
         executeFile(file);
       });
@@ -336,7 +349,7 @@ module Shumway.Shell {
 
   function disassembleABCFile(file: string) {
     var buffer = read(file, "binary");
-    var abc = new AbcFile(new Uint8Array(buffer), file);
+    var abc = new ABCFile(new Uint8Array(buffer), file);
     abc.trace(writer);
   }
 
@@ -353,10 +366,12 @@ module Shumway.Shell {
 
   function executeSWFFile(file: string, runDuration: number, runCount: number) {
     function runSWF(file: any) {
-      flash.display.Loader.reset();
-      flash.display.DisplayObject.reset();
-      flash.display.MovieClip.reset();
-      var player = new Shumway.Player.Player(new ShellGFXServer());
+      // REDUX:
+      // flash.display.Loader.reset();
+      // flash.display.DisplayObject.reset();
+      // flash.display.MovieClip.reset();
+      var securityDomain = createSecurityDomain(builtinABCPath, null, null);
+      var player = new Shumway.Player.Player(securityDomain, new ShellGFXServer());
       player.load(file);
     }
     var asyncLoading = true;
@@ -367,22 +382,25 @@ module Shumway.Shell {
       (<any>Shumway.FileLoadingService.instance).setBaseUrl(file);
       runSWF(read(file, 'binary'));
     }
-    console.info("Running: " + file);
     microTaskQueue.run(runDuration, runCount, true);
   }
 
   function executeABCFile(file: string) {
-    verboseOption.value && writer.writeLn("Running ABC: " + file);
-    var buffer = read(file, "binary");
-    try {
-      Runtime.AVM2.instance.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
-    } catch (x) {
-      writer.writeLns(x.stack);
-    }
-    verboseOption.value && writer.outdent();
+    var securityDomain = createSecurityDomain(builtinABCPath, null, null);
+    var buffer = new Uint8Array(read(file, "binary"));
+    var abc = new ABCFile(buffer);
+    securityDomain.application.loadABC(abc);
+    securityDomain.application.executeABC(abc);
   }
 
   function executeUnitTestFile(file: string) {
+    var securityDomain = createSecurityDomain(builtinABCPath, null, null);
+    Shumway.AVMX.AS.installClassLoaders(securityDomain.application, jsGlobal);
+
+    // Make the securityDomain available on the global object for ease of use
+    // in unit tests.
+    jsGlobal.securityDomain = securityDomain;
+
     writer.writeLn("Running test file: " + file + " ...");
     var start = dateNow();
     load(file);
@@ -424,15 +442,14 @@ module Shumway.Shell {
     return true;
   }
 
-  function extractABCsFromSWF(buffer: Uint8Array): AbcFile [] {
-    var abcs = [];
+  function extractABCsFromSWF(buffer: Uint8Array): Uint8Array [] {
+    var abcData = [];
     try {
       var loadListener: ILoadListener = {
         onLoadOpen: function(file: Shumway.SWF.SWFFile) {
           for (var i = 0; i < file.abcBlocks.length; i++) {
             var abcBlock = file.abcBlocks[i];
-            var abcFile = new AbcFile(abcBlock.data, "TAG" + i);
-            abcs.push(abcFile);
+            abcData.push(abcBlock.data);
           }
         },
         onLoadProgress: function(update: LoadProgressUpdate) {
@@ -452,16 +469,17 @@ module Shumway.Shell {
       writer.redLn("Cannot parse SWF, reason: " + x);
       return null;
     }
-    return abcs;
+    return abcData;
   }
 
   /**
    * Parses file.
    */
-  function parseFile(file: string, parseForDatabase: boolean, symbolFilters: string []): boolean {
+  function parseFile(file: string, symbolFilters: string []): boolean {
     var fileName = file.replace(/^.*[\\\/]/, '');
-    function parseABC(buffer: ArrayBuffer) {
-      new AbcFile(new Uint8Array(buffer), "ABC");
+    function parseABC(buffer: Uint8Array) {
+      var abcFile = new ABCFile(buffer, "ABC");
+      abcFile.trace(writer);
     }
     var buffers = [];
     if (file.endsWith(".swf")) {
@@ -474,7 +492,9 @@ module Shumway.Shell {
         var swfFile: Shumway.SWF.SWFFile;
         var loadListener: ILoadListener = {
           onLoadOpen: function(file: Shumway.SWF.SWFFile) {
-
+            for (var i = 0; i < file.abcBlocks.length; i++) {
+              parseABC(file.abcBlocks[i].data);
+            }
           },
           onLoadProgress: function(update: LoadProgressUpdate) {
 
@@ -483,44 +503,7 @@ module Shumway.Shell {
           },
           onLoadComplete: function() {
             writer.redLn("Load complete:");
-            // TODO: re-enable all-tags parsing somehow. SWFFile isn't the right tool for that.
-          //  var symbols = {};
-          //  var tags = result.tags;
-          //  var counter = new Metrics.Counter(true);
-          //  for (var i = 0; i < tags.length; i++) {
-          //    var tag = tags[i];
-          //    assert(tag.code !== undefined);
-          //    if (ignoreTag(tag.code, symbolFilters)) {
-          //      continue;
-          //    }
-          //    var startTag = dateNow();
-          //    if (!parseForDatabase) {
-          //      if (tag.code === SWF_TAG_CODE_DO_ABC || tag.code === SWF_TAG_CODE_DO_ABC_) {
-          //        parseABC(tag.data);
-          //      } else {
-          //        parseSymbol(tag, symbols);
-          //      }
-          //    }
-          //    var tagName = SwfTag[tag.code];
-          //    if (tagName) {
-          //      tagName = tagName.substring("CODE_".length);
-          //    } else {
-          //      tagName = "TAG" + tag.code;
-          //    }
-          //    counter.count(tagName, 1, dateNow() - startTag);
-          //  }
-          //  if (parseForDatabase) {
-          //    writer.writeLn(JSON.stringify({
-          //                                    size: buffer.byteLength,
-          //                                    time: dateNow() - startSWF,
-          //                                    name: fileNameWithoutExtension,
-          //                                    tags: counter.toJSON()
-          //                                  }, null, 0));
-          //  } else if (verbose) {
-          //    writer.enter("Tag Frequency:");
-          //    counter.traceSorted(writer);
-          //    writer.outdent();
-          //  }
+
           },
           onNewEagerlyParsedSymbols(dictionaryEntries: SWF.EagerlyParsedDictionaryEntry[],
                                     delta: number): Promise<any> {
@@ -538,51 +521,26 @@ module Shumway.Shell {
         return false;
       }
     } else if (file.endsWith(".abc")) {
-      parseABC(read(file, "binary"));
+      parseABC(new Uint8Array(read(file, "binary")));
     }
     return true;
   }
 
-  function createAVM2(builtinLibPath, shellLibPath?,  libraryPathInfo?) {
-    var buffer = read(builtinLibPath, 'binary');
-    var mode = interpreterOption.value ? Runtime.ExecutionMode.INTERPRET : Runtime.ExecutionMode.COMPILE;
-    Runtime.AVM2.initialize(mode, mode);
-    var avm2Instance = Runtime.AVM2.instance;
-    Shumway.AVM2.AS.linkNatives(avm2Instance);
-    avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
-    if (libraryPathInfo) {
-      loadPlayerglobal(libraryPathInfo.abcs, libraryPathInfo.catalog);
-    }
-    if (shellLibPath) {
-      var buffer = read(shellLibPath, 'binary');
-      avm2Instance.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "shell.abc"));
-    }
+  function createSecurityDomain(builtinABCPath: string, shellABCPath: string, libraryPathInfo): ISecurityDomain {
+    var buffer = read(builtinABCPath, 'binary');
+    var securityDomain = <ISecurityDomain>new AVMX.SecurityDomain();
+    var builtinABC = new ABCFile(new Uint8Array(buffer));
+    securityDomain.system.loadABC(builtinABC);
+    securityDomain.addCatalog(loadPlayerGlobalCatalog());
+    securityDomain.initialize();
+    securityDomain.system.executeABC(builtinABC);
+    return securityDomain;
   }
 
-  function initializeAVM2(loadPlayerglobal: boolean, loadShellLib: boolean) {
-    createAVM2(builtinLibPath, loadShellLib ? shellLibPath : undefined, loadPlayerglobal ? playerglobalInfo : undefined);
-  }
-
-  function loadPlayerglobal(abcsPath, catalogPath) {
-    var playerglobal = Shumway.AVM2.Runtime.playerglobal = {
-      abcs: read(abcsPath, 'binary').buffer,
-      map: Object.create(null),
-      scripts: Object.create(null)
-    };
-    var catalog = JSON.parse(read(catalogPath));
-    for (var i = 0; i < catalog.length; i++) {
-      var abc = catalog[i];
-      playerglobal.scripts[abc.name] = abc;
-      if (typeof abc.defs === 'string') {
-        playerglobal.map[abc.defs] = abc.name;
-        writer.writeLn(abc.defs)
-      } else {
-        for (var j = 0; j < abc.defs.length; j++) {
-          var def = abc.defs[j];
-          playerglobal.map[def] = abc.name;
-        }
-      }
-    }
+  function loadPlayerGlobalCatalog(): AVMX.ABCCatalog {
+    var abcs = read(playerglobalInfo.abcs, 'binary');
+    var index = JSON.parse(read(playerglobalInfo.catalog));
+    return new AVMX.ABCCatalog(abcs, index);
   }
 }
 

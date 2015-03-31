@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 // Class: StringTools
-module Shumway.AVM2.AS.flash.globalization {
+module Shumway.AVMX.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class StringTools extends ASNative {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
+  export class StringTools extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,9 +29,8 @@ module Shumway.AVM2.AS.flash.globalization {
     static instanceSymbols: string [] = null; // [];
     
     constructor (requestedLocaleIDName: string) {
+      super();
       requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
-      false && super();
-      dummyConstructor("public flash.globalization.StringTools");
     }
     
     // JS -> AS Bindings

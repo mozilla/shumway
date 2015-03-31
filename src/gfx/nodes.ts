@@ -368,17 +368,17 @@ module Shumway.GFX {
     /**
      * All sorts of flags.
      */
-    public _flags: NodeFlags;
+    _flags: NodeFlags;
 
     /**
      * Index of this node in its parent's children list.
      */
-    public _index: number;
+    _index: number;
 
     /**
      * Parent node. This is |null| for the root node and for |Renderables| which have more than one parent.
      */
-    public _parent: Group;
+    _parent: Group;
 
     /**
      * Number of sibillings to clip.

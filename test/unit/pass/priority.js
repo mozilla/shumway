@@ -16,7 +16,7 @@
       traceOutput.push(message);
     }
 
-    EventDispatcher.broadcastEventDispatchQueue.reset();
+    EventDispatcher.axClass.broadcastEventDispatchQueue.reset();
     var stage = new Stage();
     var a = new DisplayObjectContainer();
     stage.addChild(a);

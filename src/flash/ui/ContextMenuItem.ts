@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 // Class: ContextMenuItem
-module Shumway.AVM2.AS.flash.ui {
+module Shumway.AVMX.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   export class ContextMenuItem extends flash.display.NativeMenuItem {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -33,7 +30,7 @@ module Shumway.AVM2.AS.flash.ui {
     
     constructor (caption: string, separatorBefore: boolean = false,
                  enabled: boolean = true, visible: boolean = true) {
-      false && super();
+      super();
       caption = asCoerceString(caption); separatorBefore = !!separatorBefore; enabled = !!enabled; visible = !!visible;
       this._caption = caption ? caption : "";
       this._separatorBefore = separatorBefore;

@@ -25,8 +25,8 @@ module Shumway.Player.Window {
     private _parent;
     private _fontOrImageRequests: PromiseWrapper<any>[];
 
-    constructor(window, parent?) {
-      super();
+    constructor(securityDomain: ISecurityDomain, window, parent?) {
+      super(securityDomain);
 
       this._window = window;
       this._parent = parent || window.parent;

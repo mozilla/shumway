@@ -17,7 +17,7 @@ module Shumway.Remoting.Player {
   import MessageTag = Shumway.Remoting.MessageTag;
   import MessageBits = Shumway.Remoting.MessageBits;
 
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import Stage = flash.display.Stage;
   import Graphics = flash.display.Graphics;
   import NetStream = flash.net.NetStream;
@@ -123,8 +123,8 @@ module Shumway.Remoting.Player {
         if (cursor === MouseCursor.AUTO) {
           var node = currentMouseTarget;
           do {
-            if (flash.display.SimpleButton.isType(node) ||
-                (flash.display.Sprite.isType(node) &&
+            if (stage.securityDomain.flash.display.SimpleButton.axClass.axIsType(node) ||
+                (stage.securityDomain.flash.display.Sprite.axClass.axIsType(node) &&
                  (<flash.display.Sprite>node).buttonMode) &&
                  (<any>currentMouseTarget).useHandCursor)
             {
@@ -185,33 +185,35 @@ module Shumway.Remoting.Player {
     }
 
     writeTextContent(textContent: Shumway.TextContent) {
-      if (textContent.flags & Shumway.TextContentFlags.Dirty) {
-        writer && writer.writeLn("Sending TextContent: " + textContent._id);
-        this.output.writeInt(MessageTag.UpdateTextContent);
-        this.output.writeInt(textContent._id);
-        this.output.writeInt(-1);
-        this._writeRectangle(textContent.bounds);
-        this._writeMatrix(textContent.matrix || flash.geom.Matrix.FROZEN_IDENTITY_MATRIX);
-        this.output.writeInt(textContent.backgroundColor);
-        this.output.writeInt(textContent.borderColor);
-        this.output.writeInt(textContent.autoSize);
-        this.output.writeBoolean(textContent.wordWrap);
-        this.output.writeInt(textContent.scrollV);
-        this.output.writeInt(textContent.scrollH);
-        this._writeAsset(textContent.plainText);
-        this._writeAsset(textContent.textRunData.toPlainObject());
-        var coords = textContent.coords;
-        if (coords) {
-          var numCoords = coords.length;
-          this.output.writeInt(numCoords);
-          for (var i = 0; i < numCoords; i++) {
-            this.output.writeInt(coords[i]);
-          }
-        } else {
-          this.output.writeInt(0);
-        }
-        textContent.flags &= ~Shumway.TextContentFlags.Dirty
+      if (!(textContent.flags & Shumway.TextContentFlags.Dirty)) {
+        return;
       }
+      writer && writer.writeLn("Sending TextContent: " + textContent._id);
+      this.output.writeInt(MessageTag.UpdateTextContent);
+      this.output.writeInt(textContent._id);
+      this.output.writeInt(-1);
+      this._writeRectangle(textContent.bounds);
+      var identity = textContent._securityDomain.flash.geom.Matrix.axClass.FROZEN_IDENTITY_MATRIX;
+      this._writeMatrix(textContent.matrix || identity);
+      this.output.writeInt(textContent.backgroundColor);
+      this.output.writeInt(textContent.borderColor);
+      this.output.writeInt(textContent.autoSize);
+      this.output.writeBoolean(textContent.wordWrap);
+      this.output.writeInt(textContent.scrollV);
+      this.output.writeInt(textContent.scrollH);
+      this._writeAsset(textContent.plainText);
+      this._writeAsset(textContent.textRunData.toPlainObject());
+      var coords = textContent.coords;
+      if (coords) {
+        var numCoords = coords.length;
+        this.output.writeInt(numCoords);
+        for (var i = 0; i < numCoords; i++) {
+          this.output.writeInt(coords[i]);
+        }
+      } else {
+        this.output.writeInt(0);
+      }
+      textContent.flags &= ~Shumway.TextContentFlags.Dirty
     }
 
     /**
@@ -251,7 +253,7 @@ module Shumway.Remoting.Player {
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
 
       var video: Video = null;
-      if (flash.media.Video.isType(displayObject)) {
+      if (displayObject.securityDomain.flash.media.Video.axClass.axIsType(displayObject)) {
         video = <Video>displayObject;
       }
 
@@ -268,7 +270,7 @@ module Shumway.Remoting.Player {
         hasMask = displayObject._hasFlags(DisplayObjectFlags.DirtyMask);
       }
       var bitmap: Bitmap = null;
-      if (display.Bitmap.isType(displayObject)) {
+      if (displayObject.securityDomain.flash.display.Bitmap.axClass.axIsType(displayObject)) {
         bitmap = <Bitmap>displayObject;
       }
 
@@ -301,7 +303,7 @@ module Shumway.Remoting.Player {
       if (hasMiscellaneousProperties) {
         this.output.writeInt(displayObject._ratio);
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
-        this._writeFilters(displayObject.filters);
+        this._writeFilters(displayObject._filters);
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
         this.output.writeBoolean(displayObject.cacheAsBitmap);
         if (bitmap) {
@@ -382,7 +384,7 @@ module Shumway.Remoting.Player {
       }
 
       var bitmap: Bitmap = null;
-      if (display.Bitmap.isType(displayObject)) {
+      if (displayObject.securityDomain.flash.display.Bitmap.axClass.axIsType(displayObject)) {
         bitmap = <Bitmap>displayObject;
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);
@@ -391,7 +393,7 @@ module Shumway.Remoting.Player {
       }
 
       var video: Video = null;
-      if (flash.media.Video.isType(displayObject)) {
+      if (displayObject.securityDomain.flash.media.Video.axClass.axIsType(displayObject)) {
         video = <Video>displayObject;
         if (video._netStream) {
           this.writeNetStream(video._netStream, video._getContentBounds());
@@ -407,7 +409,7 @@ module Shumway.Remoting.Player {
     {
       this.output.writeInt(MessageTag.DrawToBitmap);
       this.output.writeInt(bitmapData._id);
-      if (BitmapData.isType(source)) {
+      if (bitmapData.securityDomain.flash.display.BitmapData.axClass.axIsType(source)) {
         this.output.writeInt(IDMask.Asset | source._id);
       } else {
         this.output.writeInt(source._id);
@@ -449,11 +451,19 @@ module Shumway.Remoting.Player {
     }
 
     private _writeFilters(filters: flash.filters.BitmapFilter []) {
+      if (!filters || filters.length === 0) {
+        this.output.writeInt(0);
+        return;
+      }
+      var securityDomain = filters[0].securityDomain;
       var count = 0;
+      var blurFilterClass = securityDomain.flash.filters.BlurFilter.axClass;
+      var dropShadowFilterClass = securityDomain.flash.filters.DropShadowFilter.axClass;
+      var glowFilterClass = securityDomain.flash.filters.GlowFilter.axClass;
       for (var i = 0; i < filters.length; i++) {
-        if (flash.filters.BlurFilter.isType(filters[i]) ||
-            flash.filters.DropShadowFilter.isType(filters[i]) ||
-            flash.filters.GlowFilter.isType(filters[i])) {
+        if (blurFilterClass.axIsType(filters[i]) ||
+            dropShadowFilterClass.axIsType(filters[i]) ||
+            glowFilterClass.axIsType(filters[i])) {
           count ++;
         } else {
           Shumway.Debug.somewhatImplemented(filters[i].toString());
@@ -462,13 +472,13 @@ module Shumway.Remoting.Player {
       this.output.writeInt(count);
       for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
-        if (flash.filters.BlurFilter.isType(filter)) {
+        if (blurFilterClass.axIsType(filter)) {
           var blurFilter = <flash.filters.BlurFilter>filter;
           this.output.writeInt(FilterType.Blur);
           this.output.writeFloat(blurFilter.blurX);
           this.output.writeFloat(blurFilter.blurY);
           this.output.writeInt(blurFilter.quality);
-        } else if (flash.filters.DropShadowFilter.isType(filter)) {
+        } else if (dropShadowFilterClass.axIsType(filter)) {
           var dropShadowFilter = <flash.filters.DropShadowFilter>filter;
           this.output.writeInt(FilterType.DropShadow);
           this.output.writeFloat(dropShadowFilter.alpha);
@@ -482,7 +492,7 @@ module Shumway.Remoting.Player {
           this.output.writeBoolean(dropShadowFilter.knockout);
           this.output.writeInt(dropShadowFilter.quality);
           this.output.writeFloat(dropShadowFilter.strength);
-        } else if (flash.filters.GlowFilter.isType(filter)) {
+        } else if (glowFilterClass.axIsType(filter)) {
           var glowFilter = <flash.filters.GlowFilter>filter;
           this.output.writeInt(FilterType.DropShadow);
           this.output.writeFloat(glowFilter.alpha);
@@ -546,8 +556,11 @@ module Shumway.Remoting.Player {
   }
 
   export class PlayerChannelDeserializer {
-    input: IDataInput;
-    inputAssets: any[];
+
+    constructor(private securityDomain: ISecurityDomain, private input: IDataInput,
+                private inputAssets: any[]) {
+      // ..
+    }
 
     public read(): any {
       var input = this.input;
@@ -583,7 +596,7 @@ module Shumway.Remoting.Player {
       return {
         tag: MessageTag.MouseEvent,
         type: type,
-        point: new Point(pX, pY),
+        point: new this.securityDomain.flash.geom.Point(pX, pY),
         ctrlKey: !!(flags & KeyboardEventFlags.CtrlKey),
         altKey: !!(flags & KeyboardEventFlags.AltKey),
         shiftKey: !!(flags & KeyboardEventFlags.ShiftKey),

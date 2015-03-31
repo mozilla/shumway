@@ -18,7 +18,7 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVM2.AS.flash;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export class AVM1TextFormat extends flash.text.TextFormat {
     static createAVM1Class(): typeof AVM1TextFormat {
@@ -59,14 +59,14 @@ module Shumway.AVM1.Lib {
       var result = {};
       var textWidth = measureTextField.textWidth;
       var textHeight = measureTextField.textHeight;
-      result.asSetPublicProperty('width', textWidth);
-      result.asSetPublicProperty('height', textHeight);
-      result.asSetPublicProperty('textFieldWidth', textWidth + 4);
-      result.asSetPublicProperty('textFieldHeight', textHeight + 4);
+      result.axSetPublicProperty('width', textWidth);
+      result.axSetPublicProperty('height', textHeight);
+      result.axSetPublicProperty('textFieldWidth', textWidth + 4);
+      result.axSetPublicProperty('textFieldHeight', textHeight + 4);
       var metrics = measureTextField.getLineMetrics(0);
-      result.asSetPublicProperty('ascent',
+      result.axSetPublicProperty('ascent',
         metrics.asGetPublicProperty('ascent'));
-      result.asSetPublicProperty('descent',
+      result.axSetPublicProperty('descent',
         metrics.asGetPublicProperty('descent'));
       return result;
     }

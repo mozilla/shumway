@@ -14,47 +14,33 @@
  * limitations under the License.
  */
 /// <reference path='../references.ts'/>
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import FileLoadingService = Shumway.FileLoadingService;
-  import throwError = Shumway.AVM2.Runtime.throwError;
-
-  import utils = Shumway.AVM2.AS.flash.utils;
 
   export class URLStream extends flash.events.EventDispatcher implements flash.utils.IDataInput {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
+
+    // List of static symbols to link.
+    static classSymbols: string [] = null; // [];
+
+    // List of instance symbols to link.
+    static instanceSymbols: string [] = null; // [];
+
+    constructor () {
+      super();
       this._buffer = new utils.ByteArray();
       this._writePosition = 0;
       this._connected = false;
-    };
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
-    constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.net.URLStream");
     }
 
     private _buffer: utils.ByteArray;
     private _writePosition: number;
     private _session;
 
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
     private _connected: boolean;
     // _diskCacheEnabled: boolean;
     get connected(): boolean {
@@ -107,19 +93,21 @@ module Shumway.AVM2.AS.flash.net {
         self._writePosition = self._buffer.position;
         self._buffer.position = readPosition;
 
-        self.dispatchEvent(new ProgressEvent(ProgressEvent.PROGRESS,
+        self.dispatchEvent(new this.securityDomain.flash.events.ProgressEvent(ProgressEvent.PROGRESS,
           false, false, progressState.bytesLoaded, progressState.bytesTotal));
       };
       session.onerror = function (error) {
         self._connected = false;
-        self.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR, false, false, error));
+        self.dispatchEvent(new this.securityDomain.flash.events.IOErrorEvent(IOErrorEvent.IO_ERROR,
+                                                                             false, false, error));
       };
       session.onopen = function () {
         self._connected = true;
-        self.dispatchEvent(new Event(Event.OPEN, false, false));
+        self.dispatchEvent(new this.securityDomain.flash.events.Event(Event.OPEN, false, false));
       };
       session.onhttpstatus = function (location: string, httpStatus: number, httpHeaders: any) {
-        var httpStatusEvent = new HTTPStatusEvent(HTTPStatusEvent.HTTP_STATUS, false, false, httpStatus);
+        var httpStatusEvent = new this.securityDomain.flash.events.HTTPStatusEvent(HTTPStatusEvent.HTTP_STATUS,
+                                                                                   false, false, httpStatus);
         var headers = [];
         httpHeaders.split(/(?:\n|\r?\n)/g).forEach(function (h) {
           var m = /^([^:]+): (.*)$/.exec(h);
@@ -130,13 +118,14 @@ module Shumway.AVM2.AS.flash.net {
             }
           }
         });
-        httpStatusEvent.asSetPublicProperty('responseHeaders', headers);
-        httpStatusEvent.asSetPublicProperty('responseURL', location);
+        httpStatusEvent.axSetPublicProperty('responseHeaders', headers);
+        httpStatusEvent.axSetPublicProperty('responseURL', location);
         self.dispatchEvent(httpStatusEvent);
       };
       session.onclose = function () {
         self._connected = false;
-        self.dispatchEvent(new Event(Event.COMPLETE, false, false));
+        self.dispatchEvent(new this.securityDomain.flash.events.Event(Event.COMPLETE, false,
+                                                                      false));
       };
       session.open(request._toFileRequest());
       this._session = session;
@@ -144,7 +133,7 @@ module Shumway.AVM2.AS.flash.net {
     readBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
       offset = offset >>> 0; length = length >>> 0;
       if (length < 0) {
-        throwError('ArgumentError', Errors.InvalidArgumentError, "length");
+        this.securityDomain.throwError('ArgumentError', Errors.InvalidArgumentError, "length");
       }
 
       this._buffer.readBytes(bytes, offset, length);

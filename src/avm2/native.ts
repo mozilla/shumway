@@ -36,7 +36,7 @@ module Shumway.AVM2.AS {
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import HasNext2Info = Shumway.AVM2.Runtime.HasNext2Info;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import assert = Shumway.Debug.assert;
@@ -50,7 +50,7 @@ module Shumway.AVM2.AS {
   import ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
   import InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
 
-  import Int32Vector = Shumway.AVM2.AS.Int32Vector;
+  // import Int32Vector = Shumway.AVM2.AS.Int32Vector;
   import Uint32Vector = Shumway.AVM2.AS.Uint32Vector;
   import Float64Vector = Shumway.AVM2.AS.Float64Vector;
   import asCompare = Shumway.AVM2.Runtime.asCompare;
@@ -151,10 +151,6 @@ module Shumway.AVM2.AS {
       // ! The AS3 instanceConstructor is ignored.
       self.baseClass = baseClass;
       ASClass.create(self, baseClass, this.instanceConstructor);
-    }
-
-    public static initializeFrom(value: any) {
-      return ASClassPrototype.initializeFrom.call(this, value);
     }
 
     public static coerce: (value: any) => any = Runtime.asCoerceObject;
@@ -397,29 +393,6 @@ module Shumway.AVM2.AS {
     }
 
     /**
-     * Creates an object of this class but doesn't run the constructors, just the initializers.
-     */
-    public initializeFrom(value: any): any {
-      var o = Object.create(this.traitsPrototype);
-      ASClass.runInitializers(o, value);
-      return o;
-    }
-
-    /**
-     * Calls the initializers of an object in order.
-     */
-    static runInitializers(self: Object, argument: any) {
-      argument = argument || self.class.defaultInitializerArgument;
-      var cls: ASClass = self.class;
-      var initializers = cls.initializers;
-      if (initializers) {
-        for (var i = 0; i < initializers.length; i++) {
-          initializers[i].call(self, argument);
-        }
-      }
-    }
-
-    /**
      * Some AS3 classes have two parallel constructor chains:
      *
      * Consider the following inheritance hierarchy, (superClass <- subClass)
@@ -455,7 +428,6 @@ module Shumway.AVM2.AS {
         release || assert (self.instanceConstructorNoInitialize === self.instanceConstructor);
         var previousConstructor: any = self;
         self.instanceConstructor = <any>function () {
-          ASClass.runInitializers(this, undefined);
           return self.instanceConstructorNoInitialize.apply(this, arguments);
         };
         self.instanceConstructor.prototype = self.traitsPrototype;
@@ -1175,30 +1147,30 @@ module Shumway.AVM2.AS {
       release || assertUnreachable('ASString references must be delegated to String');
     }
 
-    match(re) {
-      if (re === (void 0) || re === null) {
-        return null;
-      } else {
-        if (re instanceof XRegExp && re.global) {
-          var matches = [], m;
-          while ((m = re.exec(this))) {
-            matches.push(m[0]);
-          }
-          return matches;
-        }
-        if (!(re instanceof XRegExp) && !(typeof re === 'string')) {
-          re = String(re);
-        }
-        return this.match(re);
-      }
-    }
+    //match(re) {
+    //  if (re === (void 0) || re === null) {
+    //    return null;
+    //  } else {
+    //    if (re instanceof XRegExp && re.global) {
+    //      var matches = [], m;
+    //      while ((m = re.exec(this))) {
+    //        matches.push(m[0]);
+    //      }
+    //      return matches;
+    //    }
+    //    if (!(re instanceof XRegExp) && !(typeof re === 'string')) {
+    //      re = String(re);
+    //    }
+    //    return this.match(re);
+    //  }
+    //}
 
-    search(re): number {
-      if (re instanceof XRegExp) {
-        return this.search(re);
-      }
-      return (<string><any>this).indexOf(asCoerceString(re));
-    }
+    //search(re): number {
+    //  if (re instanceof XRegExp) {
+    //    return this.search(re);
+    //  }
+    //  return (<string><any>this).indexOf(asCoerceString(re));
+    //}
 
     toUpperCase() {
       // avmshell bug compatibility
@@ -1396,7 +1368,7 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASVector<T> extends ASNative {
+  export class ASVector<T> extends ASObject {
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
     public static instanceConstructor: any = ASVector;
@@ -1525,7 +1497,7 @@ module Shumway.AVM2.AS {
         if (deep) {
           v = ASJSON.transformJSValueToAS(v, true);
         }
-        result.asSetPublicProperty(keys[i], v);
+        result.axSetPublicProperty(keys[i], v);
       }
       return result;
     }
@@ -1564,20 +1536,20 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASError extends ASNative {
+  export class ASError extends ASObject {
     public static instanceConstructor: any = null;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
 
-    public static getErrorMessage = Shumway.AVM2.getErrorMessage;
+    public static getErrorMessage = null;
     public static throwError(type: typeof ASError, id: number /*, ...rest */) {
-      var info = getErrorInfo(id);
+      var info = null; // getErrorInfo(id);
 
       var args = [info];
       for (var i = 2; i < arguments.length; i++) {
         args.push(arguments[i]);
       }
-      var message = formatErrorMessage.apply(null, args);
+      var message = null; // formatErrorMessage.apply(null, args);
       throw new type(message, id);
     }
 
@@ -1666,9 +1638,9 @@ module Shumway.AVM2.AS {
   }
 
   export class ASRegExp extends ASObject {
-    public static instanceConstructor: any = XRegExp;
-    public static staticNatives: any [] = [XRegExp];
-    public static instanceNatives: any [] = [XRegExp.prototype];
+    //public static instanceConstructor: any = XRegExp;
+    //public static staticNatives: any [] = [XRegExp];
+    //public static instanceNatives: any [] = [XRegExp.prototype];
 
     static classInitializer: any = function() {
       defineNonEnumerableProperty(this, '$Bglength', 1);
@@ -1813,7 +1785,7 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASMath extends ASNative {
+  export class ASMath extends ASObject {
     public static staticNatives: any [] = [Math];
 
     static classInitializer: any = function() {
@@ -1828,7 +1800,7 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASDate extends ASNative {
+  export class ASDate extends ASObject {
     public static staticNatives: any [] = [Date];
     public static instanceNatives: any [] = [Date.prototype];
     public static instanceConstructor: any = Date;
@@ -1961,10 +1933,10 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["StringClass"]              = ASString;
     builtinNativeClasses["ArrayClass"]               = ASArray;
     builtinNativeClasses["VectorClass"]              = ASVector;
-    builtinNativeClasses["ObjectVectorClass"]        = AS.GenericVector;
-    builtinNativeClasses["IntVectorClass"]           = AS.Int32Vector;
-    builtinNativeClasses["UIntVectorClass"]          = AS.Uint32Vector;
-    builtinNativeClasses["DoubleVectorClass"]        = AS.Float64Vector;
+    // builtinNativeClasses["ObjectVectorClass"]        = AS.GenericVector;
+    //builtinNativeClasses["IntVectorClass"]           = AS.Int32Vector;
+    //builtinNativeClasses["UIntVectorClass"]          = AS.Uint32Vector;
+    //builtinNativeClasses["DoubleVectorClass"]        = AS.Float64Vector;
     builtinNativeClasses["JSONClass"]                = ASJSON;
     builtinNativeClasses["XMLClass"]                 = ASXML;
     builtinNativeClasses["XMLListClass"]             = ASXMLList;

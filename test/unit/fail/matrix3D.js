@@ -5,7 +5,6 @@
   var Rectangle = flash.geom.Rectangle;
   var Vector3D = flash.geom.Vector3D;
   var Matrix3D = flash.geom.Matrix3D;
-  var Float64Vector = Shumway.AVM2.AS.Float64Vector;
 
   // Original at https://raw.github.com/richardlord/Coral/master/native/test/NativeMatrix3DUnitTest.as
   /*
@@ -39,7 +38,7 @@
    */
 
   function makeVector(array) {
-    return Float64Vector.callable(array);
+    return securityDomain.Float64Vector.axApply(null, [array]);
   }
   
   var e = 0.001;
@@ -237,23 +236,23 @@
     u.normalize();
     m.appendRotation( 120, u, p );
     
-    var v  = m.deltaTransformVector( Vector3D.X_AXIS );
-    Assert.assertTrue( "New rotation transform on x axis", v.nearEquals( Vector3D.Y_AXIS, e ) );
+    var v  = m.deltaTransformVector( Vector3D.axClass.X_AXIS );
+    Assert.assertTrue( "New rotation transform on x axis", v.nearEquals( Vector3D.axClass.Y_AXIS, e ) );
     
-    v = m.deltaTransformVector( Vector3D.Y_AXIS );
-    Assert.assertTrue( "New rotation transform on y axis", v.nearEquals( Vector3D.Z_AXIS, e ) );
+    v = m.deltaTransformVector( Vector3D.axClass.Y_AXIS );
+    Assert.assertTrue( "New rotation transform on y axis", v.nearEquals( Vector3D.axClass.Z_AXIS, e ) );
     
-    v = m.deltaTransformVector( Vector3D.Z_AXIS );
-    Assert.assertTrue( "New rotation transform on z axis", v.nearEquals( Vector3D.X_AXIS, e ) );
+    v = m.deltaTransformVector( Vector3D.axClass.Z_AXIS );
+    Assert.assertTrue( "New rotation transform on z axis", v.nearEquals( Vector3D.axClass.X_AXIS, e ) );
     
-    var q  = m.transformVector( p.add( Vector3D.X_AXIS ) );
-    Assert.assertTrue( "New rotation transform on p + x axis", q.nearEquals( p.add( Vector3D.Y_AXIS ), e ) );
+    var q  = m.transformVector( p.add( Vector3D.axClass.X_AXIS ) );
+    Assert.assertTrue( "New rotation transform on p + x axis", q.nearEquals( p.add( Vector3D.axClass.Y_AXIS ), e ) );
     
-    q = m.transformVector( p.add( Vector3D.Y_AXIS ) );
-    Assert.assertTrue( "New rotation transform on p + y axis", q.nearEquals( p.add( Vector3D.Z_AXIS ), e ) );
+    q = m.transformVector( p.add( Vector3D.axClass.Y_AXIS ) );
+    Assert.assertTrue( "New rotation transform on p + y axis", q.nearEquals( p.add( Vector3D.axClass.Z_AXIS ), e ) );
     
-    q = m.transformVector( p.add( Vector3D.Z_AXIS ) );
-    Assert.assertTrue( "New rotation transform on p + z axis", q.nearEquals( p.add( Vector3D.X_AXIS ), e ) );
+    q = m.transformVector( p.add( Vector3D.axClass.Z_AXIS ) );
+    Assert.assertTrue( "New rotation transform on p + z axis", q.nearEquals( p.add( Vector3D.axClass.X_AXIS ), e ) );
   }
 
   function append() 
@@ -435,7 +434,7 @@
     m.transformVectors( v, r );
     for( var i  = 0; i < 9; ++i )
     {
-      eqFloat(r.asGetNumericProperty(i), t.asGetNumericProperty(i), "Points transform " + i, e);
+      eqFloat(r.axGetNumericProperty(i), t.axGetNumericProperty(i), "Points transform " + i, e);
     }
   }
 
@@ -444,9 +443,9 @@
     var m   = randomMatrix();
     var p  = m.position;
     var r  = m.rawData;
-    eqFloat(p.x, r.asGetNumericProperty(12), "Position x get correct", e);
-    eqFloat(p.y, r.asGetNumericProperty(13), "Position y get correct", e);
-    eqFloat(p.z, r.asGetNumericProperty(14), "Position z get correct", e);
+    eqFloat(p.x, r.axGetNumericProperty(12), "Position x get correct", e);
+    eqFloat(p.y, r.axGetNumericProperty(13), "Position y get correct", e);
+    eqFloat(p.z, r.axGetNumericProperty(14), "Position z get correct", e);
   }
 
   function setPosition() 
@@ -456,9 +455,9 @@
     m.position = p;
     var r  = m.rawData;
 
-    eqFloat(p.x, r.asGetNumericProperty(12), "Position x set correct", e);
-    eqFloat(p.y, r.asGetNumericProperty(13), "Position y set correct", e);
-    eqFloat(p.z, r.asGetNumericProperty(14), "Position z set correct", e);
+    eqFloat(p.x, r.axGetNumericProperty(12), "Position x set correct", e);
+    eqFloat(p.y, r.axGetNumericProperty(13), "Position y set correct", e);
+    eqFloat(p.z, r.axGetNumericProperty(14), "Position z set correct", e);
   }
 
   function getRawData16() 
@@ -529,7 +528,7 @@
     var r2  = m2.rawData;
     for( var i  = 0; i < 16; ++i )
     {
-      if( r1.asGetNumericProperty(i) != r2.asGetNumericProperty(i) ) return false;
+      if( r1.axGetNumericProperty(i) != r2.axGetNumericProperty(i) ) return false;
     }
     return true;
   }
@@ -540,9 +539,9 @@
     var r2  = m2.rawData;
     for( var i  = 0; i < 16; ++i )
     {
-      if( Math.abs( r1.asGetNumericProperty(i) - r2.asGetNumericProperty(i) ) > e )
+      if( Math.abs( r1.axGetNumericProperty(i) - r2.axGetNumericProperty(i) ) > e )
       {
-        print( "Fails at " + i + " : " + r1.asGetNumericProperty(i) + " != " + r2.asGetNumericProperty(i) );
+        print( "Fails at " + i + " : " + r1.axGetNumericProperty(i) + " != " + r2.axGetNumericProperty(i) );
         return false;
       }
     }
@@ -557,7 +556,7 @@
     }
     for( var i  = 0; i < v1.length; ++i )
     {
-      if( Math.abs( v1.asGetNumericProperty(i) - v2.asGetNumericProperty(i) ) > e ) return false;
+      if( Math.abs( v1.axGetNumericProperty(i) - v2.axGetNumericProperty(i) ) > e ) return false;
     }
     return true;
   }

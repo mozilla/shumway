@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 // Class: AccessibilityImplementation
-module Shumway.AVM2.AS.flash.accessibility {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  export class AccessibilityImplementation extends ASNative {
+module Shumway.AVMX.AS.flash.accessibility {
+  export class AccessibilityImplementation extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -33,8 +27,7 @@ module Shumway.AVM2.AS.flash.accessibility {
     static instanceSymbols: string [] = null; // ["stub", "errno", "get_accRole", "get_accName", "get_accValue", "get_accState", "get_accDefaultAction", "accDoDefaultAction", "isLabeledBy", "getChildIDArray", "accLocation", "get_accSelection", "get_accFocus", "accSelect", "get_selectionAnchorIndex", "get_selectionActiveIndex"];
     
     constructor () {
-      false && super();
-      dummyConstructor("public flash.accessibility.AccessibilityImplementation");
+      super();
     }
     
     // JS -> AS Bindings

@@ -24,9 +24,8 @@ module.exports = function(grunt) {
       grunt.option("color", false);
   }
 
-  // Don't use `--removeComments` here beause it strips out closure annotations that are
-  // needed by the build system.
-  var commonArguments = 'node utils/typescript/tsc --target ES5 --removeComments --sourcemap -d --out build/ts/';
+  var tscCommand = 'node_modules/typescript/bin/tsc';
+  var commonArguments = tscCommand + ' --target ES5 --removeComments --sourcemap -d --out build/ts/';
 
   var defaultBrowserManifestFile = './resources/browser_manifests/browser_manifest.json';
   var defaultTestsManifestFile = 'test_manifest.json';
@@ -97,7 +96,7 @@ module.exports = function(grunt) {
         cmd: commonArguments + 'player.js src/player/references.ts'
       },
       build_shell_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
+        cmd: tscCommand + ' --target ES5 --sourcemap --out build/ts/shell.js src/shell/references.ts'
       },
       build_playerglobal: {
         cmd: 'node build.js -t ' + (+grunt.option('threads') || 9) +
@@ -158,6 +157,13 @@ module.exports = function(grunt) {
       test_avm2_quick: {
         cmd: 'node src/shell/numbers.js -i test/avm2/pass/ -c i -j ' + (+grunt.option('threads') || 9)
       },
+      test_avm2_redux_pass: {
+        cmd: 'node src/shell/numbers.js -i test/avm2/redux-pass.txt -c i -j ' + (+grunt.option('threads') || 9)
+      },
+      test_avm2_redux: {
+        cmd: 'node src/shell/numbers.js -i test/avm2/redux-pass.txt -c i -j ' + (+grunt.option('threads') || 9) + " && " +
+             'node src/shell/numbers.js -i test/avm2/redux-fail.txt -c i -j ' + (+grunt.option('threads') || 9)
+      },
       test_avm2: {
         cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
                                       ' -j ' + (+grunt.option('threads') || 9)
@@ -183,6 +189,9 @@ module.exports = function(grunt) {
           console.info("Instrumenting " + path + " (" + targetPath + "), this may take a while if the file is large.");
           return 'swfmill swf2xml ' + path + ' | xsltproc utils/instrument-swf.xslt - | swfmill xml2swf stdin ' + targetPath;
         }
+      },
+      install_js_travis: {
+        cmd: "make -C utils/ install-js"
       }
     },
     parallel: {
@@ -213,7 +222,7 @@ module.exports = function(grunt) {
           grunt: true
         },
         tasks: [
-          'exec:build_avm1_ts',
+          // 'exec:build_avm1_ts', // REDUX: Temporarily disabled.
           'exec:build_flash_ts'
         ]
       },
@@ -577,8 +586,11 @@ module.exports = function(grunt) {
     'exec:gate'
   ]);
   grunt.registerTask('travis', [
+    'exec:install_js_travis',
     // Duplicates almost all of "build" because we don't want to do the costly "playerglobal" task.
-    'parallel:base',
+    // 'parallel:base',
+    'generate-version',
+    'exec:build_base_ts',
     'exec:build_tools_ts',
     'exec:build_gfx_base_ts',
     'parallel:tier2',
@@ -586,9 +598,11 @@ module.exports = function(grunt) {
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
-    'tslint:all',
+    // 'tslint:all', REDUX: Temporarily commented out.
     'exec:spell',
-    'closure'
+    // 'closure', REDUX: Temporarily commented out.
+    'exec:test_avm2_redux_pass',
+    'exec:gate'
   ]);
   grunt.registerTask('smoke', [
     'exec:smoke_parse'

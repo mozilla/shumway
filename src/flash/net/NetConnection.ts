@@ -14,23 +14,17 @@
  * limitations under the License.
  */
 // Class: NetConnection
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
   import Telemetry = Shumway.Telemetry;
-  import events = Shumway.AVM2.AS.flash.events;
 
   export class NetConnection extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -38,8 +32,7 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = ["close", "addHeader", "call"];
     
     constructor () {
-      false && super(undefined);
-      dummyConstructor("public flash.net.NetConnection");
+      super();
     }
     
     // JS -> AS Bindings
@@ -87,23 +80,21 @@ module Shumway.AVM2.AS.flash.net {
 
       somewhatImplemented("public flash.net.NetConnection::connect");
       this._uri = command;
+      var netStatusEventCtor = this.securityDomain.flash.events.NetStatusEvent;
       if (!command) {
         this._connected = true;
-        this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
-          false, false,
+        this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS, false, false,
           wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
       } else {
         var parsedURL = RtmpJs.parseConnectionString(command);
         if (!parsedURL || !parsedURL.host ||
             (parsedURL.protocol !== 'rtmp' && parsedURL.protocol !== 'rtmpt' && parsedURL.protocol !== 'rtmps')) {
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
-            false, false,
+          this.dispatchEvent(new netStatusEventCtor(events.NetStatusEvent.NET_STATUS, false, false,
             wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Failed'})));
           return;
         }
 
-        var service: display.IRootElementService =
-          Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        var service: display.IRootElementService = this.securityDomain.player;
 
         var rtmpProps = wrapJSObject({
           app: parsedURL.app,
@@ -137,7 +128,7 @@ module Shumway.AVM2.AS.flash.net {
         };
         rtmpConnection.onconnected = function (e) {
           this._connected = true;
-          this.dispatchEvent(new events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
+          this.dispatchEvent(new this.securityDomain.flash.events.NetStatusEvent(events.NetStatusEvent.NET_STATUS,
             false, false,
             wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
         }.bind(this);

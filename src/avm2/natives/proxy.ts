@@ -16,9 +16,7 @@
 
 module Shumway.AVM2.AS {
   import notImplemented = Shumway.Debug.notImplemented;
-  import Namespace = Shumway.AVM2.ABC.Namespace;
-  import Multiname = Shumway.AVM2.ABC.Multiname;
-  import throwError = Shumway.AVM2.Runtime.throwError;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export module flash.utils {
     var _asGetProperty = Object.prototype.asGetProperty;
@@ -32,7 +30,7 @@ module Shumway.AVM2.AS {
     /**
      * The Proxy class lets you override the default behavior of ActionScript operations (such as retrieving and modifying properties) on an object.
      */
-    export class Proxy extends ASNative {
+    export class Proxy extends ASObject {
       public static protocol: IProtocol = Proxy.prototype;
 
       native_getProperty(name) {

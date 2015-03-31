@@ -1,4 +1,4 @@
-module Shumway.AVM2 {
+module Shumway.AVMX {
   /*
    * XRegExp 3.0.0-pre
    * <http://xregexp.com/>
@@ -74,7 +74,7 @@ module Shumway.AVM2 {
       correctExecNpcg = nativ.exec.call(/()??/, '')[1] === undefined,
 
   // Check for flag y support
-      hasNativeY = RegExp.prototype.sticky !== undefined,
+      hasNativeY = (<any>RegExp).prototype.sticky !== undefined,
 
   // Tracker for known flags, including addon flags
       registeredFlags = {
@@ -1668,4 +1668,4 @@ module Shumway.AVM2 {
   }());
 }
 
-Shumway.AVM2.XRegExp.install({ natives: true });
+Shumway.AVMX.XRegExp.install({ natives: true });

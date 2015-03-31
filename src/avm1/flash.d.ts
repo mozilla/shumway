@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-declare module Shumway.AVM2.AS.flash {
+declare module Shumway.AVMX.AS.flash {
   module display {
     class DisplayObject extends events.EventDispatcher {
       stage: Stage;
@@ -98,7 +98,7 @@ declare module Shumway.AVM2.AS.flash {
       _getAbsFrameNumber(frame: string, sceneName: string): number;
       callFrame(frame: number): void;
     }
-    class Graphics extends ASNative {
+    class Graphics extends ASObject {
       beginFill: Function;
       beginBitmapFill: Function;
       clear();
@@ -127,7 +127,7 @@ declare module Shumway.AVM2.AS.flash {
       getSymbolById(id: number): any;
     }
     class AVM1Movie extends DisplayObject {}
-    class BitmapData extends ASNative {}
+    class BitmapData extends ASObject {}
     class Bitmap extends DisplayObject {
       constructor();
     }
@@ -158,14 +158,14 @@ declare module Shumway.AVM2.AS.flash {
     }
   }
   module events {
-    class EventDispatcher extends ASNative {
+    class EventDispatcher extends ASObject {
       public addEventListener(type: string, listener: (event: Event) => void, useCapture?: boolean,
                               priority?: number, useWeakReference?: boolean): void;
       public removeEventListener(type: string, listener: (event: Event) => void,
                                  useCapture?: boolean): void;
     }
 
-    class Event extends ASNative  {
+    class Event extends ASObject  {
       static COMPLETE: string;
       static OPEN: string;
       static INIT: string;
@@ -193,21 +193,21 @@ declare module Shumway.AVM2.AS.flash {
     }
   }
   module geom {
-    class ColorTransform extends ASNative {}
-    class Matrix extends ASNative {}
-    class Point extends ASNative {
+    class ColorTransform extends ASObject {}
+    class Matrix extends ASObject {}
+    class Point extends ASObject {
       public x: number;
       public y: number;
       constructor(x: number, y: number);
     }
-    class Rectangle extends ASNative {
+    class Rectangle extends ASObject {
       public x: number;
       public y: number;
       public width: number;
       public height: number;
       constructor(x: number, y: number, width: number, height: number);
     }
-    class Transform extends ASNative {
+    class Transform extends ASObject {
       matrix: Matrix;
       concatenatedMatrix: Matrix;
       colorTransform: ColorTransform;
@@ -218,18 +218,18 @@ declare module Shumway.AVM2.AS.flash {
     class SoundMixer {
       static stopAll(): void;
     }
-    class Sound extends ASNative {
+    class Sound extends ASObject {
       play(startTime: number, loops: number, sndTransform?: flash.media.SoundTransform): SoundChannel;
     }
-    class SoundChannel extends ASNative {
+    class SoundChannel extends ASObject {
       soundTransform: SoundTransform;
       stop();
     }
-    class SoundTransform extends ASNative  {}
+    class SoundTransform extends ASObject  {}
     class SoundSymbol {}
   }
   module net {
-    class URLRequest extends ASNative {
+    class URLRequest extends ASObject {
       constructor(url: string);
       method: string;
     }
@@ -239,7 +239,7 @@ declare module Shumway.AVM2.AS.flash {
       constructor(request?: URLRequest);
       _ignoreDecodeErrors: boolean;
     }
-    class SharedObject extends ASNative {}
+    class SharedObject extends ASObject {}
   }
   module system {
     class Capabilities {
@@ -286,7 +286,7 @@ declare module Shumway.AVM2.AS.flash {
       defaultTextFormat: TextFormat;
       _symbol: TextSymbol;
     }
-    class TextFormat extends ASNative {
+    class TextFormat extends ASObject {
       constructor(...args);
     }
     class TextSymbol extends display.DisplaySymbol {
@@ -294,12 +294,12 @@ declare module Shumway.AVM2.AS.flash {
     }
   }
   module ui {
-    class ContextMenu extends ASNative {}
-    class ContextMenuItem extends ASNative {}
+    class ContextMenu extends ASObject {}
+    class ContextMenuItem extends ASObject {}
   }
   module utils {
     function getTimer(): Timer;
-    class Timer extends ASNative {}
+    class Timer extends ASObject {}
     class SetIntervalTimer extends Timer {
       constructor(closure: Function, delay: number, repeat: boolean, ... args);
       reference: number;

@@ -233,7 +233,7 @@ module Shumway.AVM1.Lib {
     release || Debug.assert(proto);
 
     var avm1Object: any = Object.create(proto);
-    avm1Object.asSetPublicProperty('__proto__', ctor.asGetPublicProperty('prototype'));
+    avm1Object.axSetPublicProperty('__proto__', ctor.asGetPublicProperty('prototype'));
     avm1Object.asDefinePublicProperty('__constructor__', {
       value: ctor,
       writable: true,
@@ -253,19 +253,19 @@ module Shumway.AVM1.Lib {
     if (as3Object._as2Object) {
       return as3Object._as2Object;
     }
-    if (flash.display.MovieClip.isType(as3Object)) {
+    if (this.securityDomain.flash.display.MovieClip.axClass.axIsType(as3Object)) {
       if (<flash.display.MovieClip>as3Object._avm1SymbolClass) {
         return createAVM1Object(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
       }
       return createAVM1Object(context.globals.MovieClip, as3Object, context);
     }
-    if (flash.display.SimpleButton.isType(as3Object)) {
+    if (this.securityDomain.flash.display.SimpleButton.axClass.axIsType(as3Object)) {
       return createAVM1Object(context.globals.Button, as3Object, context);
     }
-    if (flash.text.TextField.isType(as3Object)) {
+    if (this.securityDomain.flash.text.TextField.axClass.axIsType(as3Object)) {
       return createAVM1Object(context.globals.TextField, as3Object, context);
     }
-    if (flash.display.BitmapData.isType(as3Object)) {
+    if (this.securityDomain.flash.display.BitmapData.axClass.axIsType(as3Object)) {
       return new as3Object;
     }
 
@@ -325,7 +325,7 @@ module Shumway.AVM1.Lib {
     var wrappedFn = wrapAVM1Object(fn, staticMembers);
     var prototype = (<any>fn).prototype;
     var wrappedPrototype = wrapAVM1Object(prototype, members);
-    wrappedFn.asSetPublicProperty('prototype', wrappedPrototype);
+    wrappedFn.axSetPublicProperty('prototype', wrappedPrototype);
     return wrappedFn;
   }
 
@@ -337,7 +337,7 @@ module Shumway.AVM1.Lib {
     }
     isAvm1ObjectMethodsInstalled = true;
     var c: any = Shumway.AVM2.AS.ASObject, p = c.asGetPublicProperty('prototype');
-    c.asSetPublicProperty('registerClass', function registerClass(name, theClass) {
+    c.axSetPublicProperty('registerClass', function registerClass(name, theClass) {
       AVM1Context.instance.registerClass(name, theClass);
     });
     p.asDefinePublicProperty('addProperty', {
@@ -405,7 +405,7 @@ module Shumway.AVM1.Lib {
     release || Debug.assert(instanceAVM1);
 
     if (placeObjectTag.variableName) {
-      instanceAVM1.asSetPublicProperty('variable', placeObjectTag.variableName);
+      instanceAVM1.axSetPublicProperty('variable', placeObjectTag.variableName);
     }
 
     var events = placeObjectTag.events;

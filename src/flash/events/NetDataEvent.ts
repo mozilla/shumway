@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 // Class: NetDataEvent
-module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
+module Shumway.AVMX.AS.flash.events {
   export class NetDataEvent extends flash.events.Event {
 
     static classInitializer: any = null;
-    static initializer: any = null;
 
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    timestamp: number;
+    info: ASObject;
+
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false,
                 timestamp: number = 0, info: ASObject = null) {
-      super(undefined, undefined, undefined);
-      dummyConstructor("public flash.events.NetDataEvent");
+      super(type, bubbles, cancelable);
+      this.timestamp = +timestamp;
+      this.info = info;
     }
 
     // JS -> AS Bindings

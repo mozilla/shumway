@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 // Class: Socket
-module Shumway.AVM2.AS.flash.net {
+module Shumway.AVMX.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import Errors = Shumway.AVM2.Errors;
-  import throwError = Shumway.AVM2.Runtime.throwError;
 
   export class Socket extends flash.events.EventDispatcher implements flash.utils.IDataInput, flash.utils.IDataOutput {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -37,9 +31,8 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = null; // ["timeout", "timeout", "connect", "close"];
     
     constructor (host: string = null, port: number /*int*/ = 0) {
+      super(undefined);
       host = asCoerceString(host); port = port | 0;
-      false && super(undefined);
-      dummyConstructor("public flash.net.Socket");
     }
     
     // JS -> AS Bindings
@@ -190,7 +183,7 @@ module Shumway.AVM2.AS.flash.net {
     internalConnect(host, port) {
       host = asCoerceString(host); port |= 0;
       somewhatImplemented("flash.net.Socket::internalConnect");
-      throwError('SecurityError', Errors.SocketConnectError, host, port);
+      this.securityDomain.throwError('SecurityError', Errors.SocketConnectError, host, port);
     }
     didFailureOccur(): boolean {
       somewhatImplemented("flash.net.Socket::didFailureOccur");

@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 // Class: URLRequestHeader
-module Shumway.AVM2.AS.flash.net {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+module Shumway.AVMX.AS.flash.net {
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
-  export class URLRequestHeader extends ASNative {
+  export class URLRequestHeader extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -32,16 +29,12 @@ module Shumway.AVM2.AS.flash.net {
     static instanceSymbols: string [] = ["name!", "value!"];
     
     constructor (name: string = "", value: string = "") {
-      name = asCoerceString(name); value = asCoerceString(value);
-      false && super();
+      super();
+      this.name = asCoerceString(name);
+      this.value = asCoerceString(value);
     }
-    
-    // JS -> AS Bindings
     
     name: string;
     value: string;
-    
-    // AS -> JS Bindings
-    
   }
 }

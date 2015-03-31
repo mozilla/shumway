@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 // Class: SecurityDomain
-module Shumway.AVM2.AS.flash.system {
+module Shumway.AVMX.AS.flash.system {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import dummyConstructor = Shumway.Debug.dummyConstructor;
-  export class SecurityDomain extends ASNative {
+  export class SecurityDomain extends ASObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
     
@@ -34,14 +30,12 @@ module Shumway.AVM2.AS.flash.system {
     static _currentDomain: SecurityDomain;
     
     constructor () {
-      false && super();
+      super();
     }
-    
-    // JS -> AS Bindings
-    
-    
+
     // AS -> JS Bindings
     static get currentDomain(): flash.system.SecurityDomain {
+      // REDUX: properly implement this, now that we can
       if (!this._currentDomain) {
         this._currentDomain = new system.SecurityDomain();
       }

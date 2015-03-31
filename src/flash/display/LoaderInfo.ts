@@ -14,38 +14,27 @@
  * limitations under the License.
  */
 // Class: LoaderInfo
-module Shumway.AVM2.AS.flash.display {
+module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   import SWFFile = Shumway.SWF.SWFFile;
   import SWFFrame = Shumway.SWF.SWFFrame;
 
   export class LoaderInfo extends flash.events.EventDispatcher {
 
-    // Called whenever the class is initialized.
-    static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["parameters", "uncaughtErrorEvents",
-                                              // "dispatchEvent"];
+    static classInitializer = null;
+    static axClass: typeof LoaderInfo;
 
     // Constructing LoaderInfo without providing this token throws, preventing it from AS3.
     static CtorToken = {};
     constructor (token: Object) {
-      false && super();
       if (token !== LoaderInfo.CtorToken) {
-        throwError('ArgumentError', Errors.CantInstantiateError, 'LoaderInfo$');
+        this.securityDomain.throwError('ArgumentError', Errors.CantInstantiateError, 'LoaderInfo$');
       }
-      flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      super();
       this._loader = null;
       this._loaderUrl = '';
       this.reset();
@@ -127,7 +116,7 @@ module Shumway.AVM2.AS.flash.display {
         // same as the SWF file's own URL.
 
         // The loaderURL value can be changed by player settings.
-        var service: IRootElementService = Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+        var service: IRootElementService = this.securityDomain.player;
         return (this._url === service.swfUrl && service.loaderUrl) || this._url;
       }
       return this._loaderUrl;
@@ -155,26 +144,29 @@ module Shumway.AVM2.AS.flash.display {
 
     get applicationDomain(): flash.system.ApplicationDomain {
       somewhatImplemented("public flash.display.LoaderInfo::get applicationDomain");
-      return this._file ? flash.system.ApplicationDomain.currentDomain : null;
+      // REDUX:
+      // return this._file ? flash.system.ApplicationDomain.currentDomain : null;
+      return null;
+
       // return this._applicationDomain;
     }
 
     get swfVersion(): number /*uint*/ {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       if (!(this._file instanceof SWFFile)) {
-        throwError('Error', Errors.LoadingObjectNotSWFError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotSWFError);
       }
       return this._file.swfVersion;
     }
 
     get actionScriptVersion(): number /*uint*/ {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       if (!(this._file instanceof SWFFile)) {
-        throwError('Error', Errors.LoadingObjectNotSWFError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotSWFError);
       }
       return this._file.useAVM1 ?
              ActionScriptVersion.ACTIONSCRIPT2 :
@@ -183,24 +175,24 @@ module Shumway.AVM2.AS.flash.display {
 
     get frameRate(): number {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       if (!(this._file instanceof SWFFile)) {
-        throwError('Error', Errors.LoadingObjectNotSWFError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotSWFError);
       }
       return this._file.frameRate;
     }
 
     get width(): number /*int*/ {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       return (this._width / 20) | 0;
     }
 
     get height(): number /*int*/ {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       return (this._height / 20) | 0;
     }
@@ -217,7 +209,7 @@ module Shumway.AVM2.AS.flash.display {
     get sharedEvents(): flash.events.EventDispatcher {
       somewhatImplemented("public flash.display.LoaderInfo::get sharedEvents");
       if (!this._sharedEvents) {
-        this._sharedEvents = new flash.events.EventDispatcher();
+        this._sharedEvents = new this.securityDomain.flash.events.EventDispatcher();
       }
       return this._sharedEvents;
     }
@@ -239,21 +231,21 @@ module Shumway.AVM2.AS.flash.display {
     }
     get sameDomain(): boolean {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       somewhatImplemented("public flash.display.LoaderInfo::get sameDomain");
       return true;
     }
     get childAllowsParent(): boolean {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       somewhatImplemented("public flash.display.LoaderInfo::get childAllowsParent");
       return true;
     }
     get parentAllowsChild(): boolean {
       if (!this._file) {
-        throwError('Error', Errors.LoadingObjectNotInitializedError);
+        this.securityDomain.throwError('Error', Errors.LoadingObjectNotInitializedError);
       }
       somewhatImplemented("public flash.display.LoaderInfo::get parentAllowsChild");
       return true;
@@ -284,7 +276,7 @@ module Shumway.AVM2.AS.flash.display {
     get uncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
       somewhatImplemented("public flash.display.LoaderInfo::_getUncaughtErrorEvents");
       if (!this._uncaughtErrorEvents) {
-        this._uncaughtErrorEvents = new events.UncaughtErrorEvents();
+        this._uncaughtErrorEvents = new this.securityDomain.flash.events.UncaughtErrorEvents();
       }
       return this._uncaughtErrorEvents;
     }
@@ -292,11 +284,11 @@ module Shumway.AVM2.AS.flash.display {
     // TODO: activate this override while keeping the ability to dispatch events from TS.
     //dispatchEvent(event: events.Event): boolean {
     //  // TODO: this should be `IllegalOperationError`, but we don't include that class.
-    //  throwError('Error', Errors.InvalidLoaderInfoMethodError);
+    //  this.securityDomain.throwError('Error', Errors.InvalidLoaderInfoMethodError);
     //  return false;
     //}
 
-    getSymbolResolver(classDefinition: ASClass, symbolId: number): () => any {
+    getSymbolResolver(classDefinition: AXClass, symbolId: number): () => any {
       return this.resolveClassSymbol.bind(this, classDefinition, symbolId);
     }
 
@@ -335,7 +327,7 @@ module Shumway.AVM2.AS.flash.display {
           if (data.definition) {
             data = data.definition;
           }
-          symbol = flash.display.BitmapSymbol.FromData(data);
+          symbol = flash.display.BitmapSymbol.FromData(data, this);
           break;
         case 'label':
           symbol = flash.text.TextSymbol.FromLabelData(data, this);
@@ -356,15 +348,14 @@ module Shumway.AVM2.AS.flash.display {
           if (data.definition) {
             data = data.definition;
           }
-          symbol = flash.text.FontSymbol.FromData(data);
-          var font = flash.text.Font.initializeFrom(symbol);
-          flash.text.Font.instanceConstructorNoInitialize.call(font);
+          symbol = flash.text.FontSymbol.FromData(data, this);
+          var font = constructClassFromSymbol(symbol, symbol.symbolClass);
           break;
         case 'sound':
-          symbol = flash.media.SoundSymbol.FromData(data);
+          symbol = flash.media.SoundSymbol.FromData(data, this);
           break;
         case 'binary':
-          symbol = Timeline.BinarySymbol.FromData(data);
+          symbol = Timeline.BinarySymbol.FromData(data, this);
           break;
       }
       release || assert(symbol, "Unknown symbol type " + data.type);
@@ -376,7 +367,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _registerFontOrImage(symbol: Timeline.EagerlyResolvedSymbol, data: any) {
-      var resolver: Timeline.IAssetResolver = AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'];
+      var resolver: Timeline.IAssetResolver =  this.securityDomain.player;
       switch (data.type) {
         case 'font':
           resolver.registerFont(<Timeline.EagerlyResolvedSymbol><any>symbol, data);

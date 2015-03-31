@@ -2,6 +2,7 @@
   "name": "shumway",
   "version": "0.7.0",
   "devDependencies": {
+    "typescript": "1.4.1",
     "grunt": "~0.4.2",
     "grunt-tslint": "~0.4.2",
     "grunt-contrib-jshint": "~0.7.2",
