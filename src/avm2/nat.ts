@@ -954,9 +954,9 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgcharCodeAt', asProto.generic_charCodeAt);
       addPrototypeFunctionAlias(proto, '$Bgconcat', asProto.generic_concat);
       addPrototypeFunctionAlias(proto, '$BglocaleCompare', asProto.generic_localeCompare);
-      addPrototypeFunctionAlias(proto, '$Bgmatch', asProto.generic_match);
-      addPrototypeFunctionAlias(proto, '$Bgreplace', asProto.generic_replace);
-      addPrototypeFunctionAlias(proto, '$Bgsearch', asProto.generic_search);
+      addPrototypeFunctionAlias(proto, '$Bgmatch', asProto.match);
+      addPrototypeFunctionAlias(proto, '$Bgreplace', asProto.replace);
+      addPrototypeFunctionAlias(proto, '$Bgsearch', asProto.search);
       addPrototypeFunctionAlias(proto, '$Bgslice', asProto.generic_slice);
       addPrototypeFunctionAlias(proto, '$Bgsplit', asProto.generic_split);
       addPrototypeFunctionAlias(proto, '$Bgsubstring', asProto.generic_substring);
@@ -990,16 +990,29 @@ module Shumway.AVMX.AS {
       return this.value.localeCompare.apply(this.value, arguments);
     }
     match(pattern) {
-      var result = this.value.match(this.securityDomain.AXRegExp.axIsType(pattern) ?
-                                      pattern.value : pattern);
+      if (this.securityDomain.AXRegExp.axIsType(pattern)) {
+        pattern = pattern.value;
+      }
+      var result = this.value.match(pattern);
+      if (!result) {
+        return null;
+      }
       return this.securityDomain.createArray(result);
     }
     replace(pattern, repl) {
+      if (this.securityDomain.AXRegExp.axIsType(pattern)) {
+        pattern = pattern.value;
+      }
+      if (this.securityDomain.AXFunction.axIsType(repl)) {
+        repl = repl.value;
+      }
       return this.value.replace(pattern, repl);
     }
     search(pattern) {
-      return this.value.search(this.securityDomain.AXRegExp.axIsType(pattern) ?
-                                 pattern.value : pattern);
+      if (this.securityDomain.AXRegExp.axIsType(pattern)) {
+        pattern = pattern.value;
+      }
+      return this.value.search(pattern);
     }
     slice(start?: number, end?: number) {
       return this.value.slice(start, end);
@@ -1443,13 +1456,17 @@ module Shumway.AVMX.AS {
       this._dotall = false;
       this._extended = false;
       this._captureNames = [];
+      debugger;
       if (flags) {
         var f = '';
         for (var i = 0; i < flags.length; i++) {
           var flag = flags[i];
           if (flag === 's') {
+            // With the s flag set, . will match the newline character.
             this._dotall = true;
           } else if (flag === 'x') {
+            // With the x flag set, spaces in the regular expression, will be ignored as part of
+            // the pattern.
             this._extended = true;
           } else {
             f += flag;
@@ -1461,6 +1478,7 @@ module Shumway.AVMX.AS {
     }
 
     private _parse(pattern: string): string {
+      debugger;
       var result = '';
       var captureNames = this._captureNames;
       for (var i = 0; i < pattern.length; i++) {
@@ -1503,13 +1521,13 @@ module Shumway.AVMX.AS {
             }
             break;
           case '[':
-            if (/\[[^]]*\]/.exec(pattern.substr(i))) {
+            if (/\[[^\]]*\]/.exec(pattern.substr(i))) {
               result += RegExp.lastMatch;
               i += RegExp.lastMatch.length - 1;
             }
             break;
           case '{':
-            if (/\{(\d)\}/.exec(pattern.substr(i))) {
+            if (/\{[^\{]*?,[^\{]*?\}/.exec(pattern.substr(i))) {
               result += RegExp.lastMatch;
               i += RegExp.lastMatch.length - 1;
             }
@@ -1581,11 +1599,15 @@ module Shumway.AVMX.AS {
         return null;
       }
       var asResult = this.securityDomain.createArray(<string []>result);
+      asResult.axSetPublicProperty('index', result.index);
+      asResult.axSetPublicProperty('input', result.input);
       var captureNames = this._captureNames;
       for (var i = 0; i < captureNames.length; i++) {
         var name = captureNames[i];
         if (name !== null) {
-          asResult.axSetPublicProperty(name, result[i + 1] || '');
+          var value = result[i + 1] || '';
+          result[name] = value;
+          asResult.axSetPublicProperty(name, value);
         }
       }
       return asResult;
