@@ -468,9 +468,22 @@ module Shumway.AVMX {
     return x;
   }
 
+  function axImplementsInterface(type: AXClass) {
+    var interfaces = (<AXClass>this).classInfo.instanceInfo.getInterfaces(this.axClass);
+    return interfaces.has(type);
+  }
+
   function axIsTypeObject(x: any) {
     // FIXME
     return this.dPrototype.isPrototypeOf(this.securityDomain.box(x));
+  }
+
+  function axIsTypeInterface(x: any) {
+    if (!x || typeof x !== 'object') {
+      return false;
+    }
+    release || checkValue(x);
+    return (<AXClass>x).axImplementsInterface(this);
   }
 
   function axAsType(x: any): any {
@@ -479,6 +492,10 @@ module Shumway.AVMX {
 
   function axIsInstanceOfObject(x: any) {
     return this.dPrototype.isPrototypeOf(this.securityDomain.box(x));
+  }
+
+  function axIsInstanceOfInterface(x: any) {
+    return false;
   }
 
   /**
@@ -625,6 +642,7 @@ module Shumway.AVMX {
     D(AXBasePrototype, "axNextName", Op.axNextName);
     D(AXBasePrototype, "axNextValue", Op.axNextValue);
     D(AXBasePrototype, "axGetEnumerableKeys", Op.axGetEnumerableKeys);
+    D(AXBasePrototype, "axImplementsInterface", axImplementsInterface);
 
     // Helper methods borrowed from Object.prototype.
     D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
@@ -677,6 +695,7 @@ module Shumway.AVMX {
     axIsType: any;
     axAsType: any;
     axIsInstanceOf: any;
+    axImplementsInterface: (x: AXClass) => boolean;
   }
 
   export interface AXFunction extends AXObject {
@@ -1005,6 +1024,8 @@ module Shumway.AVMX {
           axClass.dPrototype = Object.create(this.objectPrototype);
           axClass.tPrototype = Object.create(axClass.dPrototype);
           axClass.tPrototype.axInitializer = axInterfaceInitializer;
+          axClass.axIsInstanceOf = axIsInstanceOfInterface;
+          axClass.axIsType = axIsTypeInterface;
         } else {
           // For direct descendants of Object, we want the dynamic prototype to inherit from
           // Object's tPrototype because Foo.prototype is always a proper instance of Object.

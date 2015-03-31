@@ -375,8 +375,8 @@ module Shumway.AVMX {
           case Bytecode.RETURNVOID:
             return;
           case Bytecode.RETURNVALUE:
-            if (methodInfo.returnType) {
-              // return asCoerceByMultiname(method, method.returnType, stack.pop());
+            if (methodInfo.returnTypeNameIndex) {
+              return methodInfo.getType().axCoerce(stack.pop());
             }
             return stack.pop();
           case Bytecode.CONSTRUCTSUPER:

@@ -622,17 +622,21 @@ module Shumway.AVMX {
   export class InstanceInfo extends Info {
     public classInfo: ClassInfo = null;
     public runtimeTraits: RuntimeTraits = null;
+
+    private _interfaces: Set<AXClass>;
+
     constructor(
       public abc: ABCFile,
       public name: Multiname | number,
       public superName: Multiname | number,
       public flags: number,
       public protectedNs: number,
-      public interfaces: number [],
+      public interfaceNameIndices: number [],
       public initializer: MethodInfo | number,
       public traits: Traits
     ) {
       super();
+      this._interfaces = null;
     }
 
     getInitializer(): MethodInfo {
@@ -662,6 +666,26 @@ module Shumway.AVMX {
         this.superName = this.abc.getMultiname(<number>this.superName);
       }
       return <Multiname>this.superName;
+    }
+
+    getInterfaces(ownerClass: AXClass): Set<AXClass> {
+      if (this._interfaces) {
+        return this._interfaces;
+      }
+
+      var superClassInterfaces;
+      var superClass = ownerClass.superClass;
+      if (superClass) {
+        superClassInterfaces = superClass.classInfo.instanceInfo.getInterfaces(superClass);
+      }
+      var SetCtor: any = Set;
+      var interfaces = this._interfaces = new SetCtor(superClassInterfaces);
+      for (var i = 0; i < this.interfaceNameIndices.length; i++) {
+        var mn = this.abc.getMultiname(this.interfaceNameIndices[i]);
+        var type = this.abc.applicationDomain.getClass(mn);
+        interfaces.add(type);
+      }
+      return interfaces;
     }
 
     toString() {
@@ -810,11 +834,12 @@ module Shumway.AVMX {
   export class MethodInfo {
     public trait: MethodTraitInfo = null;
     private _body: MethodBodyInfo;
+    private _returnType: AXClass;
     constructor(
       public abc: ABCFile,
       private _index: number,
       public name: number,
-      public returnType: number,
+      public returnTypeNameIndex: number,
       public parameters: ParameterInfo [],
       public optionalCount: number,
       public flags: number
@@ -842,14 +867,27 @@ module Shumway.AVMX {
       return this._body || (this._body = this.abc.getMethodBodyInfo(this._index));
     }
 
+    getType(): AXClass {
+      if (this._returnType !== undefined) {
+        return this._returnType;
+      }
+      if (this.returnTypeNameIndex === 0) {
+        this._returnType = null;
+      } else {
+        var mn = this.abc.getMultiname(this.returnTypeNameIndex);
+        this._returnType = this.abc.applicationDomain.getClass(mn);
+      }
+      return this._returnType;
+    }
+
     toString() {
       var str = "anonymous";
       if (this.name) {
         str = this.abc.getString(this.name);
       }
       str += " (" + this.parameters.join(", ") + ")";
-      if (this.returnType) {
-        str += ": " + this.abc.getMultiname(this.returnType).name;
+      if (this.returnTypeNameIndex) {
+        str += ": " + this.abc.getMultiname(this.returnTypeNameIndex).name;
       }
       return str;
     }
