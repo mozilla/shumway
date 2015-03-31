@@ -121,3 +121,7 @@ test/avm2/pass/reg-2.abc
 test/avm2/pass/reg-3.abc
 test/avm2/pass/names-2.abc
 test/avm2/pass/class-defaults.abc
+test/avm2/pass/coerce-1.abc
+test/avm2/pass/call-2.abc
+test/avm2/pass/type-4.abc
+test/avm2/pass/type-5.abc

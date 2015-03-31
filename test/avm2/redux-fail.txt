@@ -11,9 +11,7 @@ test/avm2/pass/xml-2.abc
 test/avm2/pass/xml-10.abc
 test/avm2/pass/vectors.abc
 test/avm2/pass/vectors-4.abc
-test/avm2/pass/type-5.abc
 test/avm2/pass/trait-types-0.abc
-test/avm2/pass/type-4.abc
 test/avm2/pass/toString.abc
 test/avm2/pass/tmp.abc
 test/avm2/pass/proxy-4.abc
@@ -36,8 +34,6 @@ test/avm2/pass/for.abc
 test/avm2/pass/dynamic-0.abc
 test/avm2/pass/describeTypeJSON.abc
 test/avm2/pass/describetype.abc
-test/avm2/pass/coerce-1.abc
 test/avm2/pass/classes-6.abc
 test/avm2/pass/call-apply.abc
-test/avm2/pass/call-2.abc
 test/avm2/pass/base.abc
