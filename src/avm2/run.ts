@@ -863,6 +863,7 @@ module Shumway.AVMX {
     public AXNumber: AXClass;
     public AXString: AXClass;
     public AXBoolean: AXClass;
+    public AXRegExp: AXClass;
 
     public AXXML: AXXMLClass;
     public AXXMLList: AXXMLListClass;
@@ -1366,6 +1367,7 @@ module Shumway.AVMX {
       });
 
       this.prepareNativeClass("AXMethodClosure", "MethodClosure", false);
+      this.prepareNativeClass("AXRegExp", "RegExp", false);
 
       this.prepareNativeClass("AXXML", "XML", false);
       this.prepareNativeClass("AXXMLList", "XMLList", false);

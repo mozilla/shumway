@@ -49,6 +49,7 @@ module Shumway.AVMX.AS {
   import pushMany = Shumway.ArrayUtilities.pushMany;
   import Scope = Shumway.AVMX.Scope;
 
+  import defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
   import copyOwnPropertyDescriptors = Shumway.ObjectUtilities.copyOwnPropertyDescriptors;
   import copyPropertiesByList = Shumway.ObjectUtilities.copyPropertiesByList;
@@ -977,13 +978,16 @@ module Shumway.AVMX.AS {
       return this.value.localeCompare.apply(this.value, arguments);
     }
     match(pattern) {
-      return this.value.match(pattern);
+      var result = this.value.match(this.securityDomain.AXRegExp.axIsType(pattern) ?
+                                      pattern.value : pattern);
+      return this.securityDomain.createArray(result);
     }
     replace(pattern, repl) {
       return this.value.replace(pattern, repl);
     }
     search(pattern) {
-      return this.value.search(pattern);
+      return this.value.search(this.securityDomain.AXRegExp.axIsType(pattern) ?
+                                 pattern.value : pattern);
     }
     slice(start?: number, end?: number) {
       return this.value.slice(start, end);
@@ -1207,92 +1211,177 @@ module Shumway.AVMX.AS {
     }
   }
 
-  // REDUX: This is just copied over from the old code, needs to be fixed up.
   export class ASRegExp extends ASObject {
     static classInitializer: any = function() {
+      var proto: any = this.dPrototype;
+      var asProto: any = ASRegExp.prototype;
+      addPrototypeFunctionAlias(proto, '$BgtoString', asProto.ecmaToString);
+      addPrototypeFunctionAlias(proto, '$Bgexec', asProto.exec);
+      addPrototypeFunctionAlias(proto, '$Bgtest', asProto.test);
     }
 
-    constructor() {
+    value: RegExp;
+
+    private _dotall: boolean;
+    private _extended: boolean;
+    private _source: string;
+    private _captureNames: string [];
+
+    constructor(pattern: string = '', flags?: string) {
       super();
-      notImplemented("RegExp::constructor");
+      this._dotall = false;
+      this._extended = false;
+      this._captureNames = [];
+      if (flags) {
+        var f = '';
+        for (var i = 0; i < flags.length; i++) {
+          var flag = flags[i];
+          if (flag === 's') {
+            this._dotall = true;
+          } else if (flag === 'x') {
+            this._extended = true;
+          } else {
+            f += flag;
+          }
+        }
+      }
+      this.value = new RegExp(this._parse(pattern), f);
+      this._source = pattern;
+    }
+
+    private _parse(pattern: string): string {
+      var result = '';
+      var captureNames = this._captureNames;
+      for (var i = 0; i < pattern.length; i++) {
+        var char = pattern[i];
+        switch (char) {
+          case '(':
+            result += char;
+            if (pattern[i + 1] === '?') {
+              switch (pattern[i + 2]) {
+                case ':':
+                case '+':
+                case '!':
+                  result += '?' + pattern[i + 2];
+                  i += 2;
+                  break;
+                default:
+                  if (/\(\?P<([\w$]+)>/.exec(pattern.substr(i))) {
+                    var name = RegExp.$1;
+                    if (name !== 'length') {
+                      captureNames.push(name);
+                    }
+                    if (captureNames.indexOf(name) > -1) {
+                      // TODO: Handle the case were same name is used for multiple groups.
+                    }
+                    i += RegExp.lastMatch.length - 1;
+                  } else {
+                    result += '?';
+                    i++;
+                  }
+              }
+            } else {
+              captureNames.push(null);
+            }
+            break;
+          case '\\':
+            result += char;
+            if (/c[A-Z]|x[0-9,a-z,A-Z]{2}|u[0-9,a-z,A-Z]{4}|./.exec(pattern.substr(i + 1))) {
+              result += RegExp.lastMatch;
+              i += RegExp.lastMatch.length;
+            }
+            break;
+          case '[':
+            if (/\[[^]]*\]/.exec(pattern.substr(i))) {
+              result += RegExp.lastMatch;
+              i += RegExp.lastMatch.length - 1;
+            }
+            break;
+          case '{':
+            if (/\{(\d)\}/.exec(pattern.substr(i))) {
+              result += RegExp.lastMatch;
+              i += RegExp.lastMatch.length - 1;
+            }
+            break;
+          case '.':
+            if (this._dotall) {
+              result += '[\\s\\S]';
+            } else {
+              result += char;
+            }
+            break;
+          case ' ':
+            if (!this._extended) {
+              result += char;
+            }
+            break;
+          default:
+            result += char;
+        }
+      }
+      return result;
     }
 
     ecmaToString(): string {
-      var r: any = this;
-      var out = "/" + r.source + "/";
-      if (r.global)       out += "g";
-      if (r.ignoreCase)   out += "i";
-      if (r.multiline)    out += "m";
-      if (r.dotall)       out += "s";
-      if (r.extended)     out += "x";
+      var out = "/" + this._source + "/";
+      if (this.value.global)     out += "g";
+      if (this.value.ignoreCase) out += "i";
+      if (this.value.multiline)  out += "m";
+      if (this._dotall)          out += "s";
+      if (this._extended)        out += "x";
       return out;
     }
 
-    get native_source(): string {
-      var self: any = this;
-      return self.source;
+    get source(): string {
+      return this._source;
     }
 
-    get native_global(): boolean {
-      var self: any = this;
-      return self.global;
+    get global(): boolean {
+      return this.value.global;
     }
 
-    get native_ignoreCase(): boolean {
-      var self: any = this;
-      return self.ignoreCase;
+    get ignoreCase(): boolean {
+      return this.value.ignoreCase;
     }
 
-    get native_multiline(): boolean {
-      var self: any = this;
-      return self.multiline;
+    get multiline(): boolean {
+      return this.value.multiline;
     }
 
-    get native_lastIndex(): number /*int*/ {
-      var self: any = this;
-      return self.lastIndex;
+    get lastIndex(): number {
+      return this.value.lastIndex;
     }
 
-    set native_lastIndex(i: number /*int*/) {
-      var self: any = this;
-      i = i | 0;
-      self.lastIndex = i;
+    set lastIndex(value: number) {
+      this.value.lastIndex = value;
     }
 
-    get native_dotall(): boolean {
-      var self: any = this;
-      return self.dotall;
+    get dotall(): boolean {
+      return this._dotall;
     }
 
-    get native_extended(): boolean {
-      var self: any = this;
-      return self.extended;
+    get extended(): boolean {
+      return this._extended;
     }
 
-    exec(s: string = ""): any {
-      // REDUX:
-      //var result = RegExp.prototype.exec.apply(this, arguments);
-      //if (!result) {
-      //  return result;
-      //}
-      //// For some reason named groups in AS3 are set to the empty string instead of
-      //// undefined as is the case for indexed groups. Here we just emulate the AS3
-      //// behaviour.
-      //var keys = Object.keys(result);
-      //for (var i = 0; i < keys.length; i++) {
-      //  var k = keys[i];
-      //  if (!isNumeric(k)) {
-      //    if (result[k] === undefined) {
-      //      result[k] = "";
-      //    }
-      //  }
-      //}
-      //Shumway.AVM2.Runtime.publicizeProperties(result);
-      //return result;
+    exec(str: string = ''): ASArray {
+      var result = this.value.exec(str);
+      if (!result) {
+        return null;
+      }
+      var asResult = this.securityDomain.createArray(<string []>result);
+      var captureNames = this._captureNames;
+      for (var i = 0; i < captureNames.length; i++) {
+        var name = captureNames[i];
+        if (name !== null) {
+          asResult.axSetPublicProperty(name, result[i + 1] || '');
+        }
+      }
+      return asResult;
     }
 
-    test(s: string = ""): boolean {
-      return this.exec(s) !== null;
+    test(str: string = ''): boolean {
+      return this.exec(str) !== null;
     }
   }
 
