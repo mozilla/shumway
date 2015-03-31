@@ -330,9 +330,7 @@ module Shumway.Shell {
           }
         });
       }
-      files.forEach(function (file) {
-        executeFile(file);
-      });
+      executeFiles(files);
     } else if (disassembleOption.value) {
       files.forEach(function (file) {
         if (file.endsWith(".abc")) {
@@ -353,14 +351,23 @@ module Shumway.Shell {
     abc.trace(writer);
   }
 
-  function executeFile(file: string): boolean {
-    if (file.endsWith(".js")) {
-      executeUnitTestFile(file);
-    } else if (file.endsWith(".abc")) {
-      executeABCFile(file);
-    } else if (file.endsWith(".swf")) {
-      executeSWFFile(file, microTaskDurationOption.value, microTaskCountOption.value);
+  function executeFiles(files: string []): boolean {
+    // If we're only dealign with .abc files, run them all in the same domain.
+    if (files.every(function (file) {
+        return file.endsWith(".abc");
+      })) {
+      executeABCFiles(files);
+      return;
     }
+    files.forEach(function (file) {
+      if (file.endsWith(".js")) {
+        executeUnitTestFile(file);
+      } else if (file.endsWith(".abc")) {
+        executeABCFiles([file]);
+      } else if (file.endsWith(".swf")) {
+        executeSWFFile(file, microTaskDurationOption.value, microTaskCountOption.value);
+      }
+    });
     return true;
   }
 
@@ -385,12 +392,19 @@ module Shumway.Shell {
     microTaskQueue.run(runDuration, runCount, true);
   }
 
-  function executeABCFile(file: string) {
+  function executeABCFiles(files: string []) {
     var securityDomain = createSecurityDomain(builtinABCPath, null, null);
-    var buffer = new Uint8Array(read(file, "binary"));
-    var abc = new ABCFile(buffer);
-    securityDomain.application.loadABC(abc);
-    securityDomain.application.executeABC(abc);
+    files.forEach(function (file) {
+      var buffer = new Uint8Array(read(file, "binary"));
+      var abc = new ABCFile(buffer);
+      securityDomain.application.loadABC(abc);
+      try {
+        securityDomain.application.executeABC(abc);
+      } catch (x) {
+        writer.redLn('Exception encountered while running ' + file + ': ' + '(' + x + ')');
+        writer.redLns(x.stack);
+      }
+    });
   }
 
   function executeUnitTestFile(file: string) {
