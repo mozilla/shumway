@@ -72,16 +72,13 @@ module Shumway.AVMX.AS {
       addPrototypeFunctionAlias(proto, '$BgsetUTCMilliseconds', asProto.setUTCMilliseconds);
     };
 
-    static parse(s): number {
-      notImplemented("Date::parse");
-      return -1;
+    static parse(date: string): number {
+      return Date.parse(date);
     }
 
-    static UTC(year, month, date = 1, hours = 0, minutes = 0, seconds = 0, ms = 0, ... rest): number {
-      notImplemented("Date::UTC");
-      return -1;
+    static UTC(year: number, month: number, date: number = 1, hour: number = 0, minute: number = 0, second: number = 0, millisecond: number = 0) {
+      return Date.parse.apply(null, arguments);
     }
-
 
     constructor(yearOrTimevalue: any, month: number, date: number = 1, hour: number = 0, minute: number = 0, second: number = 0, millisecond: number = 0) {
       super();
