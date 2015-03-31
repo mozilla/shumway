@@ -48,6 +48,7 @@ module Shumway.AVMX.AS.flash.display {
                                                               symbol.hitTestState.placeObjectTag,
                                                               true);
       }
+      this._updateButton();
     }
 
     protected _initializeFields() {

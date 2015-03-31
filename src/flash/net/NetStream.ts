@@ -51,7 +51,7 @@ module Shumway.AVMX.AS.flash.net {
       this._peerID = asCoerceString(peerID);
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._isDirty = true;
-      this._soundTransform = new flash.media.SoundTransform();
+      this._soundTransform = new this.securityDomain.flash.media.SoundTransform();
 
       this._contentTypeHint = null;
       this._checkPolicyFile = true;
@@ -198,7 +198,7 @@ module Shumway.AVMX.AS.flash.net {
       var audioBytesPerSecond = 32;
       var videoBytesPerSecond = 200;
       var dataBytesPerSecond = 1;
-      return new NetStreamInfo(
+      return new this.securityDomain.flash.net.NetStreamInfo(
         audioBytesPerSecond + videoBytesPerSecond,
         (audioBytesPerSecond + videoBytesPerSecond + dataBytesPerSecond) * (bufferSeconds + playedSeconds),
         audioBytesPerSecond + videoBytesPerSecond,
@@ -583,6 +583,7 @@ module Shumway.AVMX.AS.flash.net {
    * buffers data before passing to the MSE.
    */
   class VideoStream {
+    private _securityDomain: ISecurityDomain;
     private _domReady: PromiseWrapper<any>;
     private _metadataReady: PromiseWrapper<any>;
     private _started: boolean;
@@ -607,6 +608,7 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     constructor(netStream: NetStream) {
+      this._securityDomain = netStream.securityDomain;
       this._domReady = new PromiseWrapper<any>();
       this._metadataReady = new PromiseWrapper<any>();
       this._started = false;
@@ -657,9 +659,9 @@ module Shumway.AVMX.AS.flash.net {
 
       this.openInDataGenerationMode();
 
-      var request = new net.URLRequest(url);
+      var request = new this._securityDomain.flash.net.URLRequest(url);
       request._checkPolicyFile = checkPolicyFile;
-      var stream = new net.URLStream();
+      var stream = new this._securityDomain.flash.net.URLStream();
       stream.addEventListener('httpStatus', function (e) {
         var responseHeaders = e.axGetPublicProperty('responseHeaders');
         var contentTypeHeader = responseHeaders.filter(function (h) {
@@ -674,7 +676,7 @@ module Shumway.AVMX.AS.flash.net {
       }.bind(this));
       stream.addEventListener('progress', function (e) {
         var available = stream.bytesAvailable;
-        var bytes = new utils.ByteArray();
+        var bytes = new request.securityDomain.flash.utils.ByteArray();
         stream.readBytes(bytes, 0, available);
         var chunk = new Uint8Array((<any> bytes)._buffer, 0, bytes.length);
         this.appendBytes(chunk);
@@ -776,7 +778,7 @@ module Shumway.AVMX.AS.flash.net {
         var contentType = this._detectContentType(buffer);
         if (contentType === FLV_MIME_TYPE) {
           // FLV data needs to be parsed and wrapped with MP4 tags.
-          var flvDecoder = new FlvMp4Decoder();
+          var flvDecoder = new FlvMp4Decoder(this._securityDomain);
           flvDecoder.onHeader = function (contentType) {
             this._mediaSourceBuffer = this._mediaSource.addSourceBuffer(contentType);
             this._mediaSourceBufferLock = Promise.resolve(undefined);
@@ -935,7 +937,7 @@ module Shumway.AVMX.AS.flash.net {
     private _flvParser: RtmpJs.FLV.FLVParser;
     private _mp4Mux: RtmpJs.MP4.MP4Mux;
 
-    constructor() {
+    constructor(private _securityDomain: ISecurityDomain) {
       this._flvParser = new RtmpJs.FLV.FLVParser();
       this._flvParser.onHeader = this._onFlvHeader.bind(this);
       this._flvParser.onTag = this._onFlvTag.bind(this);
@@ -950,7 +952,7 @@ module Shumway.AVMX.AS.flash.net {
 
     private _onFlvTag(tag: RtmpJs.FLV.FLVTag)  {
       if (tag.type === 18) {
-        var ba = new flash.utils.ByteArray();
+        var ba = new this._securityDomain.flash.utils.ByteArray();
         ba.writeRawBytes(tag.data);
         ba.position = 0;
         var name = AMF0.read(ba);

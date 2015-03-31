@@ -32,7 +32,7 @@ module Shumway.AVMX.AS.flash.net {
 
     constructor () {
       super();
-      this._buffer = new utils.ByteArray();
+      this._buffer = new this.securityDomain.flash.utils.ByteArray();
       this._writePosition = 0;
       this._connected = false;
     }
@@ -86,6 +86,7 @@ module Shumway.AVMX.AS.flash.net {
       var session = FileLoadingService.instance.createSession();
       var self = this;
       var initStream = true;
+      var eventsPackage = this.securityDomain.flash.events;
       session.onprogress = function (data, progressState) {
         var readPosition = self._buffer.position;
         self._buffer.position = self._writePosition;
@@ -93,39 +94,40 @@ module Shumway.AVMX.AS.flash.net {
         self._writePosition = self._buffer.position;
         self._buffer.position = readPosition;
 
-        self.dispatchEvent(new this.securityDomain.flash.events.ProgressEvent(ProgressEvent.PROGRESS,
-          false, false, progressState.bytesLoaded, progressState.bytesTotal));
+        self.dispatchEvent(new eventsPackage.ProgressEvent(ProgressEvent.PROGRESS, false, false,
+                                                           progressState.bytesLoaded,
+                                                           progressState.bytesTotal));
       };
       session.onerror = function (error) {
         self._connected = false;
-        self.dispatchEvent(new this.securityDomain.flash.events.IOErrorEvent(IOErrorEvent.IO_ERROR,
-                                                                             false, false, error));
+        self.dispatchEvent(new eventsPackage.IOErrorEvent(IOErrorEvent.IO_ERROR, false, false,
+                                                          error));
       };
       session.onopen = function () {
         self._connected = true;
-        self.dispatchEvent(new this.securityDomain.flash.events.Event(Event.OPEN, false, false));
+        self.dispatchEvent(new eventsPackage.Event(Event.OPEN, false, false));
       };
       session.onhttpstatus = function (location: string, httpStatus: number, httpHeaders: any) {
-        var httpStatusEvent = new this.securityDomain.flash.events.HTTPStatusEvent(HTTPStatusEvent.HTTP_STATUS,
-                                                                                   false, false, httpStatus);
+        var httpStatusEvent = new eventsPackage.HTTPStatusEvent(HTTPStatusEvent.HTTP_STATUS, false,
+                                                                false, httpStatus);
         var headers = [];
         httpHeaders.split(/(?:\n|\r?\n)/g).forEach(function (h) {
           var m = /^([^:]+): (.*)$/.exec(h);
           if (m) {
-            headers.push(new flash.net.URLRequestHeader(m[1], m[2]));
+            headers.push(new self.securityDomain.flash.net.URLRequestHeader(m[1], m[2]));
             if (m[1] === 'Location') { // Headers have redirect location
               location = m[2];
             }
           }
         });
-        httpStatusEvent.axSetPublicProperty('responseHeaders', headers);
+        var boxedHeaders = self.securityDomain.createArray(headers);
+        httpStatusEvent.axSetPublicProperty('responseHeaders', boxedHeaders);
         httpStatusEvent.axSetPublicProperty('responseURL', location);
         self.dispatchEvent(httpStatusEvent);
       };
       session.onclose = function () {
         self._connected = false;
-        self.dispatchEvent(new this.securityDomain.flash.events.Event(Event.COMPLETE, false,
-                                                                      false));
+        self.dispatchEvent(new eventsPackage.Event(Event.COMPLETE, false, false));
       };
       session.open(request._toFileRequest());
       this._session = session;
