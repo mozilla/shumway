@@ -1148,8 +1148,7 @@ module Shumway.AVMX.AS {
   }
 
   export class ASDate extends ASObject {
-    public static staticNatives: any [] = [Date];
-    public static instanceNatives: any [] = [Date.prototype];
+    value: Date;
 
     static classInitializer: any = function() {
       var proto: any = this.dPrototype;
@@ -1214,6 +1213,194 @@ module Shumway.AVMX.AS {
 
     constructor() {
       super();
+      this.value = new Date();
+    }
+
+    toString()              { return this.value.toString(); }
+    valueOf()               { return this.value.valueOf(); }
+    setTime(value = 0)      { this.value.setTime(value); }
+    toDateString()          { return this.value.toDateString(); }
+    toTimeString()          { return this.value.toTimeString(); }
+    toLocaleString()        { return this.value.toLocaleString(); }
+    toLocaleDateString()    { return this.value.toLocaleDateString(); }
+    toLocaleTimeString()    { return this.value.toLocaleTimeString(); }
+    toUTCString()           { return this.value.toUTCString(); }
+
+    getUTCFullYear()        { return this.value.getUTCFullYear(); }
+    getUTCMonth()           { return this.value.getUTCMonth(); }
+    getUTCDate()            { return this.value.getUTCDate(); }
+    getUTCDay()             { return this.value.getUTCDay(); }
+    getUTCHours()           { return this.value.getUTCHours(); }
+    getUTCMinutes()         { return this.value.getUTCMinutes(); }
+    getUTCSeconds()         { return this.value.getUTCSeconds(); }
+    getUTCMilliseconds()    { return this.value.getUTCMilliseconds(); }
+    getFullYear()           { return this.value.getFullYear(); }
+    getMonth()              { return this.value.getMonth(); }
+    getDate()               { return this.value.getDate(); }
+    getDay()                { return this.value.getDay(); }
+    getHours()              { return this.value.getHours(); }
+    getMinutes()            { return this.value.getMinutes(); }
+    getSeconds()            { return this.value.getSeconds(); }
+    getMilliseconds()       { return this.value.getMilliseconds(); }
+    getTimezoneOffset()     { return this.value.getTimezoneOffset(); }
+    getTime()               { return this.value.getTime(); }
+
+    setFullYear(year=undefined, month=undefined, date=undefined) {
+      this.value.setFullYear(year, month, date);
+    }
+    setMonth(month=undefined, date=undefined) {
+      this.value.setMonth(month, date);
+    }
+    setDate(date=undefined) {
+      this.value.setDate(date);
+    }
+    setHours(hour=undefined, min=undefined, sec=undefined, ms=undefined) {
+      this.value.setHours(hour, min, sec, ms);
+    }
+    setMinutes(min=undefined, sec=undefined, ms=undefined) {
+      this.value.setMinutes(min, sec, ms);
+    }
+    setSeconds(sec=undefined, ms=undefined) {
+      this.value.setSeconds(sec, ms);
+    }
+    setMilliseconds(ms=undefined) {
+      this.value.setMilliseconds(ms);
+    }
+    setUTCFullYear(year=undefined, month=undefined, date=undefined) {
+      this.value.setUTCFullYear(year, month, date);
+    }
+    setUTCMonth(month=undefined, date=undefined) {
+      this.value.setUTCMonth(month, date);
+    }
+    setUTCDate(date=undefined) {
+      this.value.setUTCDate(date);
+    }
+    setUTCHours(hour=undefined, min=undefined, sec=undefined, ms=undefined) {
+      this.value.setUTCHours(hour, min, sec, ms);
+    }
+    setUTCMinutes(min=undefined, sec=undefined, ms=undefined) {
+      this.value.setUTCMinutes(min, sec, ms);
+    }
+    setUTCSeconds(sec=undefined, ms=undefined) {
+      this.value.setUTCSeconds(sec, ms);
+    }
+    setUTCMilliseconds(ms=undefined) {
+      this.value.setUTCMilliseconds(ms);
+    }
+
+    get fullYear(): number {
+      return this.value.getFullYear();
+    }
+    set fullYear(value: number) {
+      this.value.setFullYear(value);
+    }
+
+    get month(): number {
+      return this.value.getMonth();
+    }
+    set month(value: number) {
+      this.value.setMonth(value);
+    }
+
+    get date(): number {
+      return this.value.getDate();
+    }
+    set date(value: number) {
+      this.value.setDate(value);
+    }
+
+    get hours(): number {
+      return this.value.getHours();
+    }
+    set hours(value: number) {
+      this.value.setHours(value);
+    }
+
+    get minutes(): number {
+      return this.value.getMinutes();
+    }
+    set minutes(value: number) {
+      this.value.setMinutes(value);
+    }
+
+    get seconds(): number {
+      return this.value.getSeconds();
+    }
+    set seconds(value: number) {
+      this.value.setSeconds(value);
+    }
+
+    get milliseconds(): number {
+      return this.value.getMilliseconds();
+    }
+    set milliseconds(value: number) {
+      this.value.setMilliseconds(value);
+    }
+
+    get fullYearUTC(): number {
+      return this.value.getUTCFullYear();
+    }
+    set fullYearUTC(value: number) {
+      this.value.setUTCFullYear(value);
+    }
+
+    get monthUTC(): number {
+      return this.value.getUTCMonth();
+    }
+    set monthUTC(value: number) {
+      this.value.setUTCMonth(value);
+    }
+
+    get dateUTC(): number {
+      return this.value.getUTCDate();
+    }
+    set dateUTC(value: number) {
+      this.value.setUTCDate(value);
+    }
+
+    get hoursUTC(): number {
+      return this.value.getUTCHours();
+    }
+    set hoursUTC(value: number) {
+      this.value.setUTCHours(value);
+    }
+
+    get minutesUTC(): number {
+      return this.value.getUTCMinutes();
+    }
+    set minutesUTC(value: number) {
+      this.value.setUTCMinutes(value);
+    }
+
+    get secondsUTC(): number {
+      return this.value.getUTCSeconds();
+    }
+    set secondsUTC(value: number) {
+      this.value.setUTCSeconds(value);
+    }
+
+    get millisecondsUTC(): number {
+      return this.value.getUTCMilliseconds();
+    }
+    set millisecondsUTC(value: number) {
+      this.value.setUTCMilliseconds(value);
+    }
+
+    get time(): number {
+      return this.value.getTime();
+    }
+    set time(value: number) {
+      this.value.setTime(value);
+    }
+
+    get timezoneOffset(): number {
+      return this.value.getTimezoneOffset();
+    }
+    get day(): number {
+      return this.value.getDay();
+    }
+    get dayUTC(): number {
+      return this.value.getUTCDay();
     }
   }
 
