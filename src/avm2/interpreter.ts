@@ -595,29 +595,29 @@ module Shumway.AVM2 {
             stack[stack.length - 2] = boxValue(stack.pop()).asHasProperty(null, stack[stack.length - 1]);
             break;
           case OP.increment_i:
-            stack[stack.length - 1] = (stack[stack.length - 1] | 0) + 1;
+            stack[stack.length - 1] = (stack[stack.length - 1] | 0) + 1 | 0;
             break;
           case OP.decrement_i:
-            stack[stack.length - 1] = (stack[stack.length - 1] | 0) - 1;
+            stack[stack.length - 1] = (stack[stack.length - 1] | 0) - 1 | 0;
             break;
           case OP.inclocal_i:
-            locals[bc.index] = (locals[bc.index] | 0) + 1;
+            locals[bc.index] = (locals[bc.index] | 0) + 1 | 0;
             break;
           case OP.declocal_i:
-            locals[bc.index] = (locals[bc.index] | 0) - 1;
+            locals[bc.index] = (locals[bc.index] | 0) - 1 | 0;
             break;
           case OP.negate_i:
             // Negation entails casting to int
             stack[stack.length - 1] = ~stack[stack.length - 1];
             break;
           case OP.add_i:
-            stack[stack.length - 2] = stack[stack.length - 2] + stack.pop() | 0;
+            stack[stack.length - 2] = (stack[stack.length - 2] | 0) + stack.pop() | 0;
             break;
           case OP.subtract_i:
-            stack[stack.length - 2] = stack[stack.length - 2] - stack.pop() | 0;
+            stack[stack.length - 2] = (stack[stack.length - 2] | 0) - stack.pop() | 0;
             break;
           case OP.multiply_i:
-            stack[stack.length - 2] = stack[stack.length - 2] * stack.pop() | 0;
+            stack[stack.length - 2] = (stack[stack.length - 2] | 0) * stack.pop() | 0;
             break;
           case OP.getlocal0:
           case OP.getlocal1:
