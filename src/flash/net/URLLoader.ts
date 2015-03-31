@@ -31,7 +31,7 @@ module Shumway.AVMX.AS.flash.net {
     
     constructor (request?: flash.net.URLRequest) {
       super();
-      var stream = this._stream = new URLStream();
+      var stream = this._stream = new this.securityDomain.flash.net.URLStream();
 
       stream.addEventListener(Event.OPEN, this.onStreamOpen.bind(this));
       stream.addEventListener(Event.COMPLETE, this.onStreamComplete.bind(this));
@@ -85,7 +85,7 @@ module Shumway.AVMX.AS.flash.net {
     }
 
     complete() {
-      var response = new utils.ByteArray();
+      var response = new this.securityDomain.flash.utils.ByteArray();
       this._stream.readBytes(response);
 
       if (this.$BgdataFormat === 'binary') {
@@ -95,7 +95,7 @@ module Shumway.AVMX.AS.flash.net {
 
       var data = response.toString();
       if (response.length > 0 && this.$BgdataFormat === 'variables') {
-        var variable: URLVariables = new URLVariables();
+        var variable: URLVariables = new this.securityDomain.flash.net.URLVariables();
         if (this._ignoreDecodeErrors) {
           variable._ignoreDecodingErrors = true;
         }
