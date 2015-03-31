@@ -644,6 +644,9 @@ module Shumway.AVMX {
     D(AXBasePrototype, "axGetEnumerableKeys", Op.axGetEnumerableKeys);
     D(AXBasePrototype, "axImplementsInterface", axImplementsInterface);
 
+    // Dummy traits object so Object.prototype lookups succeed.
+    D(AXBasePrototype, "traits", new RuntimeTraits([], null, null, Object.create(null)));
+
     // Helper methods borrowed from Object.prototype.
     D(AXBasePrototype, "isPrototypeOf", Object.prototype.isPrototypeOf);
     D(AXBasePrototype, "hasOwnProperty", Object.prototype.hasOwnProperty);
