@@ -525,6 +525,10 @@ module Shumway.AVMX.AS {
 
     value: any [];
 
+    public static axApply(self: ASArray, args: any[]): ASArray {
+      return this.securityDomain.AXArray.axBox(Array.apply(Array, args));
+    }
+
     push() {
       return this.value.push.apply(this.value, arguments);
     }

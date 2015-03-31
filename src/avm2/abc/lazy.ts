@@ -684,6 +684,8 @@ module Shumway.AVMX {
         var mn = this.abc.getMultiname(this.interfaceNameIndices[i]);
         var type = this.abc.applicationDomain.getClass(mn);
         interfaces.add(type);
+        var implementedInterfaces = type.classInfo.instanceInfo.getInterfaces(type);
+        implementedInterfaces.forEach((iface) => interfaces.add(iface));
       }
       return interfaces;
     }
