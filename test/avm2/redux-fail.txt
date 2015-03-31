@@ -24,7 +24,6 @@ test/avm2/pass/json.abc
 test/avm2/pass/iss-1057.abc
 test/avm2/pass/iss-1034.abc
 test/avm2/pass/interfaceCast.abc
-test/avm2/pass/interface-2.abc
 test/avm2/pass/inline-2.abc
 test/avm2/pass/inject.abc
 test/avm2/pass/in-1.abc
