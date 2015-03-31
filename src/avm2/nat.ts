@@ -1460,7 +1460,6 @@ module Shumway.AVMX.AS {
       this._dotall = false;
       this._extended = false;
       this._captureNames = [];
-      debugger;
       if (flags) {
         var f = '';
         for (var i = 0; i < flags.length; i++) {
@@ -1482,7 +1481,6 @@ module Shumway.AVMX.AS {
     }
 
     private _parse(pattern: string): string {
-      debugger;
       var result = '';
       var captureNames = this._captureNames;
       for (var i = 0; i < pattern.length; i++) {

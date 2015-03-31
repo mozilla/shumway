@@ -17,7 +17,8 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
+  import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export class AVM1BitmapData extends flash.display.BitmapData {
     static createAVM1Class(): typeof AVM1BitmapData {
@@ -30,7 +31,7 @@ module Shumway.AVM1.Lib {
       symbolId = asCoerceString(symbolId);
       var symbol = AVM1Context.instance.getAsset(symbolId);
       if (symbol && symbol.symbolProps instanceof flash.display.BitmapSymbol) {
-        var bitmap = AVM1BitmapData.initializeFrom(symbol);
+        var bitmap = (<any>AVM1BitmapData).initializeFrom(symbol); // REDUX
         bitmap.class.instanceConstructorNoInitialize.call(bitmap);
         return bitmap;
       }

@@ -17,7 +17,8 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
   export class AVM1Sound extends AVM1NativeObject {
     static createAVM1Class(): typeof AVM1Sound {
@@ -48,7 +49,7 @@ module Shumway.AVM1.Lib {
       }
 
       var props: flash.media.SoundSymbol = Object.create(symbol.symbolProps);
-      var sound: flash.media.Sound = flash.media.Sound.initializeFrom(props);
+      var sound: flash.media.Sound = (<any>flash.media.Sound).initializeFrom(props); // REDUX
       flash.media.Sound.instanceConstructorNoInitialize.call(sound);
       this._linkageID = id;
       this._sound = sound;
@@ -59,11 +60,11 @@ module Shumway.AVM1.Lib {
     public getBytesTotal(): number { return 0; }
 
     public getPan(): number {
-      var transform = this._channel && this._channel.soundTransform;
-      return transform ? transform.asGetPublicProperty('pan') * 100 : 0;
+      var transform: ASObject = this._channel && this._channel.soundTransform;
+      return transform ? transform.axGetPublicProperty('pan') * 100 : 0;
     }
     public setPan(value: number): void {
-      var transform = this._channel && this._channel.soundTransform;
+      var transform: ASObject = this._channel && this._channel.soundTransform;
       if (transform) {
         transform.axSetPublicProperty('pan', value / 100);
         this._channel.soundTransform = transform;
@@ -74,11 +75,11 @@ module Shumway.AVM1.Lib {
     public setTransform(transformObject: any): void {}
 
     public getVolume(): number {
-      var transform = this._channel && this._channel.soundTransform;
-      return transform ? transform.asGetPublicProperty('volume') * 100 : 0;
+      var transform: ASObject = this._channel && this._channel.soundTransform;
+      return transform ? transform.axGetPublicProperty('volume') * 100 : 0;
     }
     public setVolume(value: number): void {
-      var transform = this._channel && this._channel.soundTransform;
+      var transform: ASObject = this._channel && this._channel.soundTransform;
       if (transform) {
         transform.axSetPublicProperty('volume', value / 100);
         this._channel.soundTransform = transform;

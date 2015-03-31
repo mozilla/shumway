@@ -17,7 +17,7 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
   export class AVM1ExternalInterface {
     static createAVM1Class(): typeof AVM1ExternalInterface {
@@ -27,13 +27,13 @@ module Shumway.AVM1.Lib {
     }
 
     public static get available():Boolean {
-      return flash.external.ExternalInterface.asGetPublicProperty('available');
+      return (<any>flash).external.ExternalInterface.asGetPublicProperty('available'); // REDUX
     }
 
     public static addCallback(methodName: string, instance: any, method: Function): boolean {
       try {
-        flash.external.ExternalInterface.asCallPublicProperty('addCallback', [methodName, function () {
-          return method.apply(instance, arguments);
+        (<any>flash).external.ExternalInterface.asCallPublicProperty('addCallback', [methodName, function () {
+          return method.apply(instance, arguments);  // REDUX
         }]);
         return true;
       } catch (e) {
@@ -43,7 +43,7 @@ module Shumway.AVM1.Lib {
 
     public static call(methodName: string): any {
       var args = Array.prototype.slice.call(arguments, 0);
-      return flash.external.ExternalInterface.asCallPublicProperty('call', args);
+      return (<any>flash).external.ExternalInterface.asCallPublicProperty('call', args); // REDUX
     }
   }
 }

@@ -17,7 +17,7 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
 
   export class AVM1System {
     static createAVM1Class():typeof AVM1System {

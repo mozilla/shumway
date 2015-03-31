@@ -17,8 +17,9 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  import flash = Shumway.AVM2.AS.flash;
+  import flash = Shumway.AVMX.AS.flash;
   import asCoerceString = Shumway.AVMX.asCoerceString;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
   export class AVM1TextFormat extends flash.text.TextFormat {
     static createAVM1Class(): typeof AVM1TextFormat {
@@ -56,7 +57,7 @@ module Shumway.AVM1.Lib {
       }
       measureTextField.defaultTextFormat = this;
       measureTextField.text = text;
-      var result = {};
+      var result: ASObject = <any> {}; // REDUX
       var textWidth = measureTextField.textWidth;
       var textHeight = measureTextField.textHeight;
       result.axSetPublicProperty('width', textWidth);

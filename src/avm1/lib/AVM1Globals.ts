@@ -19,11 +19,11 @@
 module Shumway.AVM1.Lib {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
+  import forEachPublicProperty = Shumway.AVMX.forEachPublicProperty;
   import assert = Shumway.Debug.assert;
-  import flash = Shumway.AVM2.AS.flash;
-  import ASObject = Shumway.AVM2.AS.ASObject;
-  import ASFunction = Shumway.AVM2.AS.ASFunction;
+  import flash = Shumway.AVMX.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
+  import ASFunction = Shumway.AVMX.AS.ASFunction;
 
   var _escape: (str: string) => string = jsGlobal.escape;
 
@@ -54,21 +54,24 @@ module Shumway.AVM1.Lib {
     public static instance: AVM1Globals;
 
     public _global: AVM1Globals;
-    public flash;
+    public flash: ASObject;
+    public securityDomain: ISecurityDomain;
 
     constructor(context: AVM1Context) {
       AVM1Globals.instance = this;
       this._global = this;
+      this.securityDomain = context.securityDomain;
 
       // Initializing all global objects/classes
-      var classes = ['Object', 'Function', 'Array', 'Number', 'Math', 'Boolean', 'Date', 'RegExp', 'String'];
-      classes.forEach(function (className) {
-        Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass(className);
-      });
+      // REDUX
+      //var classes = ['Object', 'Function', 'Array', 'Number', 'Math', 'Boolean', 'Date', 'RegExp', 'String'];
+      //classes.forEach(function (className) {
+      //  Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass(className);
+      //});
 
       var swfVersion = context.loaderInfo.swfVersion;
       if (swfVersion >= 8) {
-        this._initializeFlashObject();
+        this._initializeFlashObject(context);
       }
 
       this.AsBroadcaster.initializeWithContext(this.Stage, context);
@@ -466,7 +469,7 @@ module Shumway.AVM1.Lib {
     }
 
     public trace(expression: any): any {
-      Shumway.AVM2.AS.Natives.print(expression);
+      Shumway.AVMX.AS.Natives.print(this.securityDomain, expression); // REDUX
     }
 
     public unloadMovie(target) {
@@ -490,15 +493,15 @@ module Shumway.AVM1.Lib {
     public parseFloat: (str: string) => number = parseFloat;
     public parseInt: (s: string, radix?: number) => number = parseInt;
 
-    public Object =  Shumway.AVM2.AS.ASObject;
-    public Function = Shumway.AVM2.AS.ASFunction;
-    public Array = Shumway.AVM2.AS.ASArray;
-    public Number = Shumway.AVM2.AS.ASNumber;
-    public Math = Shumway.AVM2.AS.ASMath;
-    public Boolean = Shumway.AVM2.AS.ASBoolean;
-    public Date = Shumway.AVM2.AS.ASDate;
-    public RegExp = Shumway.AVM2.AS.ASRegExp;
-    public String = Shumway.AVM2.AS.ASString;
+    public Object =  Shumway.AVMX.AS.ASObject;
+    public Function = Shumway.AVMX.AS.ASFunction;
+    public Array = Shumway.AVMX.AS.ASArray;
+    public Number = Shumway.AVMX.AS.ASNumber;
+    public Math = Shumway.AVMX.AS.ASMath;
+    public Boolean = Shumway.AVMX.AS.ASBoolean;
+    public Date = Shumway.AVMX.AS.ASDate;
+    public RegExp = Shumway.AVMX.AS.ASRegExp;
+    public String = Shumway.AVMX.AS.ASString;
 
     public undefined: any = undefined;
     public MovieClip = AVM1MovieClip.createAVM1Class();
@@ -518,25 +521,26 @@ module Shumway.AVM1.Lib {
     public ContextMenuItem = flash.ui.ContextMenuItem;
     public TextFormat = AVM1TextFormat.createAVM1Class();
 
-    private _initializeFlashObject(): void {
-      this.flash = {};
+    private _initializeFlashObject(context: AVM1Context): void {
+      var securityDomain = context.securityDomain;
+      this.flash = securityDomain.createObject();
       this.flash.axSetPublicProperty('_MovieClip', this.MovieClip); // ???
-      var display = {};
+      var display: ASObject = securityDomain.createObject();
       display.axSetPublicProperty('BitmapData', AVM1BitmapData.createAVM1Class());
       this.flash.axSetPublicProperty('display', display);
-      var external = {};
+      var external: ASObject = securityDomain.createObject();
       external.axSetPublicProperty('ExternalInterface', AVM1ExternalInterface.createAVM1Class());
       this.flash.axSetPublicProperty('external', external);
-      var filters = {};
+      var filters: ASObject = securityDomain.createObject();
       this.flash.axSetPublicProperty('filters', filters);
-      var geom = {};
+      var geom: ASObject = securityDomain.createObject();
       geom.axSetPublicProperty('ColorTransform', flash.geom.ColorTransform);
       geom.axSetPublicProperty('Matrix', flash.geom.Matrix);
       geom.axSetPublicProperty('Point', flash.geom.Point);
       geom.axSetPublicProperty('Rectangle', flash.geom.Rectangle);
       geom.axSetPublicProperty('Transform', AVM1Transform.createAVM1Class());
       this.flash.axSetPublicProperty('geom', geom);
-      var text = {};
+      var text: ASObject = securityDomain.createObject();
       this.flash.axSetPublicProperty('text', text);
     }
 

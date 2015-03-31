@@ -238,7 +238,7 @@ module.exports = function(grunt) {
           grunt: true
         },
         tasks: [
-          // 'exec:build_avm1_ts', // REDUX: Temporarily disabled.
+          'exec:build_avm1_ts',
           'exec:build_flash_ts'
         ]
       },

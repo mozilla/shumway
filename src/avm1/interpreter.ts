@@ -17,6 +17,7 @@
 
 module Shumway.AVM1 {
   import Multiname = Shumway.AVMX.Multiname;
+  import ASObject = Shumway.AVMX.AS.ASObject;
   import forEachPublicProperty = Shumway.AVMX.forEachPublicProperty;
   var construct = null; // REDUX: Shumway.AVM2.Runtime.construct;
   import isNumeric = Shumway.isNumeric;
@@ -182,6 +183,7 @@ module Shumway.AVM1 {
     constructor(loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) {
       super();
       this.loaderInfo = loaderInfo;
+      this.securityDomain = loaderInfo.securityDomain; // REDUX:
       var GlobalsClass = Lib.AVM1Globals.createAVM1Class();
       this.globals = new GlobalsClass(this);
       this.initialScope = new AVM1ScopeListItem(this.globals, null);
@@ -512,7 +514,7 @@ module Shumway.AVM1 {
       case 'object':
         if (typeof value === 'function' &&
             value.asGetPublicProperty('toString') ===
-              AVMX.AS.ASFunction.traitsPrototype.asGetPublicProperty('toString')) {
+            (<any>AVMX.AS.ASFunction).traitsPrototype.asGetPublicProperty('toString')) { // REDUX
           // Printing AVM1 thing instead of 'function Function() {}' when
           // native AS3 Function.prototype.toString is found.
           return '[type Function]';
@@ -1956,7 +1958,7 @@ module Shumway.AVM1 {
 
       var count = +stack.pop();
       count = fixArgsCount(count, stack.length >> 1);
-      var obj = {};
+      var obj: ASObject = ectx.context.securityDomain.createObject();
       as2SetupInternalProperties(obj, null, AVM1Object);
       for (var i = 0; i < count; i++) {
         var value = stack.pop();
