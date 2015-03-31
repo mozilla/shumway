@@ -20,6 +20,7 @@ module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import notImplemented = Shumway.Debug.notImplemented;
   import Namespace = Shumway.AVMX.Namespace;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
   var _asGetProperty = null; // REDUX Object.prototype.asGetProperty;
   var _asSetProperty = null; // REDUX Object.prototype.asSetProperty;
@@ -29,11 +30,11 @@ module Shumway.AVM1.Lib {
   var _asHasTraitProperty = null; // REDUX Object.prototype.asHasTraitProperty;
   var _asDeleteProperty = null; // REDUX Object.prototype.asDeleteProperty;
 
-  export class AVM1Proxy<T> extends Shumway.AVM2.AS.ASObject {
+  export class AVM1Proxy<T> extends ASObject {
     private _target:T;
 
     constructor() {
-      false && super();
+      super();
     }
 
     public setTarget(target:T) {
@@ -129,7 +130,8 @@ module Shumway.AVM1.Lib {
       (<any>this._target).axSetPublicProperty(name, boundMethod); // REDUX
     }
 
-    public static wrap<T>(cls: T, natives: { methods?: string[]; }): any {
+    public static wrap<T>(securityDomain: ISecurityDomain, cls: T, natives: { methods?: string[]; }) {
+      // REDUX
       var wrapped = <any>function () {
         var nativeThis: any = Object.create((<any>cls).prototype);
         AVM1TextFormat.apply(nativeThis, arguments);

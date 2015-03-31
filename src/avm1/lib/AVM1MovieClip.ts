@@ -48,8 +48,8 @@ module Shumway.AVM1.Lib {
   }
 
   export class AVM1MovieClip extends AVM1SymbolBase<flash.display.MovieClip> {
-    public static createAVM1Class(): typeof AVM1MovieClip {
-      return wrapAVM1Class(AVM1MovieClip,
+    public static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1MovieClip {
+      return wrapAVM1Class(securityDomain, AVM1MovieClip,
         [],
         ['_alpha', 'attachAudio', 'attachBitmap', 'attachMovie',
           'beginFill', 'beginBitmapFill', 'beginGradientFill', 'blendMode',

@@ -17,9 +17,11 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
-  export class AVM1Stage {
-    public static createAVM1Class(): typeof AVM1Stage {
-      return wrapAVM1Class(AVM1Stage,
+  import ASObject = Shumway.AVMX.AS.ASObject;
+
+  export class AVM1Stage extends ASObject {
+    public static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Stage {
+      return wrapAVM1Class(securityDomain, AVM1Stage,
         ['align', 'displayState', 'fullScreenSourceRect', 'height', 'scaleMode',
           'showMenu', 'width'],
         []);

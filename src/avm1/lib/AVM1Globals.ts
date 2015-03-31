@@ -24,14 +24,15 @@ module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import ASObject = Shumway.AVMX.AS.ASObject;
   import ASFunction = Shumway.AVMX.AS.ASFunction;
+  import AXClass = Shumway.AVMX.AXClass;
 
   var _escape: (str: string) => string = jsGlobal.escape;
 
   var _internalTimeouts: number[] = [];
 
-  export class AVM1Globals {
-    static createAVM1Class(): typeof AVM1Globals {
-      return wrapAVM1Class(AVM1Globals,
+  export class AVM1Globals extends ASObject {
+    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Globals {
+      return wrapAVM1Class(securityDomain, AVM1Globals,
         [],
         ['_global', 'flash', 'ASSetPropFlags', 'call', 'chr', 'clearInterval', 'clearTimeout',
           'duplicateMovieClip', 'fscommand', 'escape', 'unescape', 'getTimer', 'getURL',
@@ -58,25 +59,18 @@ module Shumway.AVM1.Lib {
     public securityDomain: ISecurityDomain;
 
     constructor(context: AVM1Context) {
+      super();
+
       AVM1Globals.instance = this;
       this._global = this;
       this.securityDomain = context.securityDomain;
 
-      // Initializing all global objects/classes
-      // REDUX
-      //var classes = ['Object', 'Function', 'Array', 'Number', 'Math', 'Boolean', 'Date', 'RegExp', 'String'];
-      //classes.forEach(function (className) {
-      //  Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass(className);
-      //});
+      this._initBuiltins(context);
 
       var swfVersion = context.loaderInfo.swfVersion;
       if (swfVersion >= 8) {
         this._initializeFlashObject(context);
       }
-
-      this.AsBroadcaster.initializeWithContext(this.Stage, context);
-      this.AsBroadcaster.initializeWithContext(this.Key, context);
-      this.AsBroadcaster.initializeWithContext(this.Mouse, context);
     }
 
     public asfunction(link) {
@@ -493,43 +487,78 @@ module Shumway.AVM1.Lib {
     public parseFloat: (str: string) => number = parseFloat;
     public parseInt: (s: string, radix?: number) => number = parseInt;
 
-    public Object =  Shumway.AVMX.AS.ASObject;
-    public Function = Shumway.AVMX.AS.ASFunction;
-    public Array = Shumway.AVMX.AS.ASArray;
-    public Number = Shumway.AVMX.AS.ASNumber;
-    public Math = Shumway.AVMX.AS.ASMath;
-    public Boolean = Shumway.AVMX.AS.ASBoolean;
-    public Date = Shumway.AVMX.AS.ASDate;
-    public RegExp = Shumway.AVMX.AS.ASRegExp;
-    public String = Shumway.AVMX.AS.ASString;
+    public Object: ASObject;
+    public Function: ASObject;
+    public Array: ASObject;
+    public Number: ASObject;
+    public Math: ASObject;
+    public Boolean: ASObject;
+    public Date: ASObject;
+    public RegExp: ASObject;
+    public String: ASObject;
 
     public undefined: any = undefined;
-    public MovieClip = AVM1MovieClip.createAVM1Class();
-    public AsBroadcaster = AVM1Broadcaster.createAVM1Class();
-    public System = AVM1System.createAVM1Class();
-    public Stage = AVM1Stage.createAVM1Class();
-    public Button = AVM1Button.createAVM1Class();
-    public TextField = AVM1TextField.createAVM1Class();
-    public Color = AVM1Color.createAVM1Class();
-    public Key = AVM1Key.createAVM1Class();
-    public Mouse = AVM1Mouse.createAVM1Class();
-    public MovieClipLoader = AVM1MovieClipLoader.createAVM1Class();
+    public MovieClip: ASObject;
+    public AsBroadcaster: ASObject;
+    public System: ASObject;
+    public Stage: ASObject;
+    public Button: ASObject;
+    public TextField: ASObject;
+    public Color: ASObject;
+    public Key: ASObject;
+    public Mouse: ASObject;
+    public MovieClipLoader: ASObject;
 
-    public Sound = AVM1Sound.createAVM1Class();
-    public SharedObject = flash.net.SharedObject;
-    public ContextMenu = flash.ui.ContextMenu;
-    public ContextMenuItem = flash.ui.ContextMenuItem;
-    public TextFormat = AVM1TextFormat.createAVM1Class();
+    public Sound: ASObject;
+    public SharedObject: typeof flash.net.SharedObject;
+    public ContextMenu: typeof flash.ui.ContextMenu;
+    public ContextMenuItem: typeof flash.ui.ContextMenuItem;
+    public TextFormat: ASObject;
+
+    private _initBuiltins(context: AVM1Context) {
+      var securityDomain: ISecurityDomain = context.securityDomain;
+
+      this.Object = securityDomain.AXObject.axConstruct; // REDUX
+      this.Function = securityDomain.AXFunction.axConstruct;
+      this.Array = securityDomain.AXArray.axConstruct;
+      this.Number = securityDomain.AXNumber.axConstruct;
+      this.Math = securityDomain.AXMath.axConstruct;
+      this.Boolean = securityDomain.AXBoolean.axConstruct;
+      this.Date = securityDomain.AXDate.axConstruct;
+      this.RegExp = securityDomain.AXRegExp.axConstruct;
+      this.String = securityDomain.AXString.axConstruct;
+
+      this.MovieClip = AVM1MovieClip.createAVM1Class(securityDomain);
+      this.AsBroadcaster = AVM1Broadcaster.createAVM1Class(securityDomain);
+      this.System = AVM1System.createAVM1Class(securityDomain);
+      this.Stage = AVM1Stage.createAVM1Class(securityDomain);
+      this.Button = AVM1Button.createAVM1Class(securityDomain);
+      this.TextField = AVM1TextField.createAVM1Class(securityDomain);
+      this.Color = AVM1Color.createAVM1Class(securityDomain);
+      this.Key = AVM1Key.createAVM1Class(securityDomain);
+      this.Mouse = AVM1Mouse.createAVM1Class(securityDomain);
+      this.MovieClipLoader = AVM1MovieClipLoader.createAVM1Class(securityDomain);
+
+      this.Sound = AVM1Sound.createAVM1Class(securityDomain);
+      this.SharedObject = securityDomain.flash.net.SharedObject;
+      this.ContextMenu = securityDomain.flash.ui.ContextMenu;
+      this.ContextMenuItem = securityDomain.flash.ui.ContextMenuItem;
+      this.TextFormat = AVM1TextFormat.createAVM1Class(securityDomain);
+
+      AVM1Broadcaster.initializeWithContext(this.Stage, context);
+      AVM1Broadcaster.initializeWithContext(this.Key, context);
+      AVM1Broadcaster.initializeWithContext(this.Mouse, context);
+    }
 
     private _initializeFlashObject(context: AVM1Context): void {
       var securityDomain = context.securityDomain;
       this.flash = securityDomain.createObject();
       this.flash.axSetPublicProperty('_MovieClip', this.MovieClip); // ???
       var display: ASObject = securityDomain.createObject();
-      display.axSetPublicProperty('BitmapData', AVM1BitmapData.createAVM1Class());
+      display.axSetPublicProperty('BitmapData', AVM1BitmapData.createAVM1Class(securityDomain));
       this.flash.axSetPublicProperty('display', display);
       var external: ASObject = securityDomain.createObject();
-      external.axSetPublicProperty('ExternalInterface', AVM1ExternalInterface.createAVM1Class());
+      external.axSetPublicProperty('ExternalInterface', AVM1ExternalInterface.createAVM1Class(securityDomain));
       this.flash.axSetPublicProperty('external', external);
       var filters: ASObject = securityDomain.createObject();
       this.flash.axSetPublicProperty('filters', filters);
@@ -538,7 +567,7 @@ module Shumway.AVM1.Lib {
       geom.axSetPublicProperty('Matrix', flash.geom.Matrix);
       geom.axSetPublicProperty('Point', flash.geom.Point);
       geom.axSetPublicProperty('Rectangle', flash.geom.Rectangle);
-      geom.axSetPublicProperty('Transform', AVM1Transform.createAVM1Class());
+      geom.axSetPublicProperty('Transform', AVM1Transform.createAVM1Class(securityDomain));
       this.flash.axSetPublicProperty('geom', geom);
       var text: ASObject = securityDomain.createObject();
       this.flash.axSetPublicProperty('text', text);

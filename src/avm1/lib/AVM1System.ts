@@ -18,10 +18,11 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1System {
-    static createAVM1Class():typeof AVM1System {
-      return wrapAVM1Class(AVM1System,
+  export class AVM1System extends ASObject {
+    static createAVM1Class(securityDomain: ISecurityDomain):typeof AVM1System {
+      return wrapAVM1Class(securityDomain, AVM1System,
         ['capabilities', 'security'],
         []);
     }

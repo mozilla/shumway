@@ -21,8 +21,8 @@ module Shumway.AVM1.Lib {
   import asCoerceString = Shumway.AVMX.asCoerceString;
 
   export class AVM1BitmapData extends flash.display.BitmapData {
-    static createAVM1Class(): typeof AVM1BitmapData {
-      var wrapped = AVM1Proxy.wrap(AVM1BitmapData, null);
+    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1BitmapData {
+      var wrapped = AVM1Proxy.wrap(securityDomain, AVM1BitmapData, null);
       wrapped.axSetPublicProperty('loadBitmap', AVM1BitmapData.loadBitmap);
       return wrapped;
     }

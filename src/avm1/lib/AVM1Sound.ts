@@ -21,8 +21,8 @@ module Shumway.AVM1.Lib {
   import ASObject = Shumway.AVMX.AS.ASObject;
 
   export class AVM1Sound extends AVM1NativeObject {
-    static createAVM1Class(): typeof AVM1Sound {
-      return wrapAVM1Class(AVM1Sound,
+    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Sound {
+      return wrapAVM1Class(securityDomain, AVM1Sound,
         [],
         ['attachSound', 'duration', 'getBytesLoaded', 'getBytesTotal',
          'getPan', 'setPan', 'getTransform', 'setTransform', 'getVolume', 'setVolume',

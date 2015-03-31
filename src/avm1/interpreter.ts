@@ -184,7 +184,7 @@ module Shumway.AVM1 {
       super();
       this.loaderInfo = loaderInfo;
       this.securityDomain = loaderInfo.securityDomain; // REDUX:
-      var GlobalsClass = Lib.AVM1Globals.createAVM1Class();
+      var GlobalsClass = Lib.AVM1Globals.createAVM1Class(loaderInfo.securityDomain);
       this.globals = new GlobalsClass(this);
       this.initialScope = new AVM1ScopeListItem(this.globals, null);
       this.assets = {};

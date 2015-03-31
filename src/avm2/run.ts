@@ -893,6 +893,8 @@ module Shumway.AVMX {
     public AXString: AXClass;
     public AXBoolean: AXClass;
     public AXRegExp: AXClass;
+    public AXMath: AXClass;
+    public AXDate: AXClass;
 
     public AXXML: AXXMLClass;
     public AXXMLList: AXXMLListClass;
@@ -999,6 +1001,15 @@ module Shumway.AVMX {
       var array = Object.create(this.AXArray.tPrototype);
       array.value = value;
       return array;
+    }
+
+    /**
+     * Constructs an AXFunction in this security domain and sets its value to the given function.
+     */
+    boxFunction(value: Function) {
+      var fn = Object.create(this.AXFunction.tPrototype);
+      fn.value = value;
+      return fn;
     }
 
     /**

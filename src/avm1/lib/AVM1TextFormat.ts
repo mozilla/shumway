@@ -22,8 +22,8 @@ module Shumway.AVM1.Lib {
   import ASObject = Shumway.AVMX.AS.ASObject;
 
   export class AVM1TextFormat extends flash.text.TextFormat {
-    static createAVM1Class(): typeof AVM1TextFormat {
-      return AVM1Proxy.wrap(AVM1TextFormat, {
+    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1TextFormat {
+      return AVM1Proxy.wrap(securityDomain, AVM1TextFormat, {
         methods: ['getTextExtent']
       });
     }

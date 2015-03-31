@@ -38,6 +38,9 @@ interface ISecurityDomain {
       MouseEvent: typeof flashPackage.events.MouseEvent;
       ProgressEvent: typeof flashPackage.events.ProgressEvent;
     };
+    external: {
+      ExternalInterface: typeof flashPackage.external.ExternalInterface;
+    };
     text: {
       TextField: typeof flashPackage.text.TextField;
       TextFormat: typeof flashPackage.text.TextFormat;
@@ -51,6 +54,11 @@ interface ISecurityDomain {
     }
     net: {
       URLRequest: typeof flashPackage.net.URLRequest;
+      SharedObject: typeof flashPackage.net.SharedObject;
+    }
+    ui: {
+      ContextMenu: typeof flashPackage.ui.ContextMenu;
+      ContextMenuItem: typeof flashPackage.ui.ContextMenuItem;
     }
     utils: {
       ByteArray: typeof flashPackage.utils.ByteArray;

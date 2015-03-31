@@ -21,8 +21,8 @@ module Shumway.AVM1.Lib {
   import notImplemented = Shumway.Debug.notImplemented;
 
   export class AVM1TextField extends AVM1SymbolBase<flash.text.TextField> {
-    static createAVM1Class(): typeof AVM1TextField  {
-      return wrapAVM1Class(AVM1TextField,
+    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1TextField  {
+      return wrapAVM1Class(securityDomain, AVM1TextField,
         [],
         [ '_alpha', 'antiAliasType', 'autoSize', 'background', 'backgroundColor',
           'border', 'borderColor', 'bottomScroll', 'condenseWhite', 'embedFonts',
