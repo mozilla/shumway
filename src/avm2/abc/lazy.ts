@@ -889,7 +889,8 @@ module Shumway.AVMX {
       var str = CONSTANT[this.kind] + " ";
       str += this.isAttribute() ? "@" : "";
       if (this.isRuntimeNamespace()) {
-        str += "[" + this.namespaces.map(x => String(x)).join(", ") + "]::" + this._nameToString();
+        var namespaces = this.namespaces ? this.namespaces.map(x => String(x)).join(", ") : null;
+        str += "[" + namespaces + "]::" + this._nameToString();
       } else if (this.isQName()) {
         str += this.namespaces[0] + "::";
         str += this._nameToString();
