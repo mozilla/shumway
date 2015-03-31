@@ -170,11 +170,11 @@ module.exports = function(grunt) {
       },
       test_avm2_acceptance_parse: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/acceptance/ -name "*.abc" | parallel --halt 2 --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d {}'
+        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
       },
       test_avm2_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/acceptance/ -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc {}'
+        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc {}'
       },
       test_avm2_acceptance_ecma3_date: {
         maxBuffer: Infinity,

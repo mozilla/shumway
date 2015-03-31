@@ -25,6 +25,9 @@ declare var quit;
 declare var read;
 declare var help;
 
+// Number of errors thrown, used for shell scripting to return non-zero exit codes.
+var errors = 0;
+
 var homePath = "";
 //load(homePath + "build/libs/relooper.js");
 var builtinABCPath = homePath + "build/libs/builtin.abc";
@@ -332,23 +335,35 @@ module Shumway.Shell {
       }
       executeFiles(files);
     } else if (disassembleOption.value) {
+      var securityDomain = createSecurityDomain(builtinABCPath, null, null);
       files.forEach(function (file) {
         if (file.endsWith(".abc")) {
-          disassembleABCFile(file);
+          disassembleABCFile(securityDomain, file);
         }
       });
     }
-
+    if (errors) {
+      quit(1);
+    }
     if (Shumway.Unit.everFailed) {
       writer.errorLn('Some unit tests failed');
       quit(1);
     }
   }
 
-  function disassembleABCFile(file: string) {
-    var buffer = read(file, "binary");
-    var abc = new ABCFile(new Uint8Array(buffer), file);
-    abc.trace(writer);
+  function disassembleABCFile(securityDomain: ISecurityDomain, file: string) {
+    try {
+      var buffer = read(file, "binary");
+      var abc = new ABCFile(new Uint8Array(buffer), file);
+      // We need to load the ABCFile in a |securityDomain| because the parser may
+      // throw verifier errors.
+      securityDomain.application.loadABC(abc);
+      abc.trace(writer);
+    } catch (x) {
+      writer.redLn('Exception encountered while running ' + file + ': ' + '(' + x + ')');
+      writer.redLns(x.stack);
+      errors ++;
+    }
   }
 
   function executeFiles(files: string []): boolean {
@@ -395,14 +410,18 @@ module Shumway.Shell {
   function executeABCFiles(files: string []) {
     var securityDomain = createSecurityDomain(builtinABCPath, null, null);
     files.forEach(function (file) {
-      var buffer = new Uint8Array(read(file, "binary"));
-      var abc = new ABCFile(buffer);
-      securityDomain.application.loadABC(abc);
       try {
+        var buffer = new Uint8Array(read(file, "binary"));
+        var abc = new ABCFile(buffer);
+        securityDomain.application.loadABC(abc);
+        if (verbose) {
+          writer.writeLn("executeABC: " + file);
+        }
         securityDomain.application.executeABC(abc);
       } catch (x) {
         writer.redLn('Exception encountered while running ' + file + ': ' + '(' + x + ')');
         writer.redLns(x.stack);
+        errors ++;
       }
     });
   }
