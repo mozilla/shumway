@@ -106,3 +106,12 @@ test/avm2/pass/vectors-numeric-2.abc
 test/avm2/pass/vectors-errors.abc
 test/avm2/pass/vectors-numeric.abc
 test/avm2/pass/switch-3.abc
+test/avm2/pass/date-0.abc
+test/avm2/pass/for-3.abc
+test/avm2/pass/props-5.abc
+test/avm2/pass/props-get.abc
+test/avm2/pass/sort.abc
+test/avm2/pass/type-2.abc
+test/avm2/pass/str-0.abc
+test/avm2/pass/vectors-generic.abc
+test/avm2/pass/vectors-int.abc
