@@ -56,14 +56,12 @@ module Shumway.AVM1.Lib {
 
     public _global: AVM1Globals;
     public flash: ASObject;
-    public securityDomain: ISecurityDomain;
 
     constructor(context: AVM1Context) {
       super();
 
       AVM1Globals.instance = this;
       this._global = this;
-      this.securityDomain = context.securityDomain;
 
       this._initBuiltins(context);
 
@@ -127,7 +125,7 @@ module Shumway.AVM1.Lib {
     public getTimer = Shumway.AVM2.AS.FlashUtilScript_getTimer;
 
     public getURL(url, target?, method?) {
-      var request = new flash.net.URLRequest(String(url));
+      var request = new this.securityDomain.flash.net.URLRequest(String(url));
       if (method) {
         request.method = method;
       }
@@ -135,7 +133,7 @@ module Shumway.AVM1.Lib {
         this.loadMovieNum(url, +target.substr(6), method);
         return;
       }
-      Shumway.AVM2.AS.FlashNetScript_navigateToURL(request, target);
+      Shumway.AVMX.AS.FlashNetScript_navigateToURL(this.securityDomain, request, target);
     }
 
     public getVersion() {
@@ -516,7 +514,7 @@ module Shumway.AVM1.Lib {
     public TextFormat: ASObject;
 
     private _initBuiltins(context: AVM1Context) {
-      var securityDomain: ISecurityDomain = context.securityDomain;
+      var securityDomain = this.securityDomain;
 
       this.Object = wrapAVM1Builtin(securityDomain.AXObject);
       this.Function = wrapAVM1Builtin(securityDomain.AXFunction);
@@ -551,7 +549,8 @@ module Shumway.AVM1.Lib {
     }
 
     private _initializeFlashObject(context: AVM1Context): void {
-      var securityDomain = context.securityDomain;
+      var securityDomain = this.securityDomain;
+
       this.flash = securityDomain.createObject();
       this.flash.axSetPublicProperty('_MovieClip', this.MovieClip); // ???
       var display: ASObject = securityDomain.createObject();

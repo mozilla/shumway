@@ -121,17 +121,6 @@ module Shumway.AVM1 {
     }
   }
 
-  class AVM1FunctionClosure extends Shumway.AVMX.AS.ASObject {
-    constructor() {
-      super();
-      this.axSetPublicProperty('toString', this.toString);
-    }
-
-    toString(): string {
-      return <string><any>this;
-    }
-  }
-
   class AVM1CallFrame {
     public inSequence: boolean;
 
@@ -513,13 +502,13 @@ module Shumway.AVM1 {
         return (<Lib.AVM1MovieClip> value).__targetPath;
       case 'object':
         if (typeof value === 'function' &&
-            value.asGetPublicProperty('toString') ===
-            (<any>AVMX.AS.ASFunction).traitsPrototype.asGetPublicProperty('toString')) { // REDUX
+            value.axGetPublicProperty('toString') ===
+            (<any>AVMX.AS.ASFunction).traitsPrototype.axGetPublicProperty('toString')) { // REDUX
           // Printing AVM1 thing instead of 'function Function() {}' when
           // native AS3 Function.prototype.toString is found.
           return '[type Function]';
         }
-        var result = value.asCallPublicProperty('toString', null);
+        var result = value.axCallPublicProperty('toString', null);
         if (typeof result === 'string') {
           return result;
         }
@@ -558,7 +547,7 @@ module Shumway.AVM1 {
       return typeof obj === 'object';
     }
 
-    var baseProto = constructor.asGetPublicProperty('prototype');
+    var baseProto = constructor.axGetPublicProperty('prototype');
     if (!baseProto) {
       return false;
     }
@@ -567,7 +556,7 @@ module Shumway.AVM1 {
       if (proto === baseProto) {
         return true; // found the type if the chain
       }
-      proto = proto.asGetPublicProperty('__proto__');
+      proto = proto.axGetPublicProperty('__proto__');
     }
     // TODO interface check
     return false;
@@ -596,20 +585,20 @@ module Shumway.AVM1 {
         processed[name] = true;
       });
       // checking entire prototype chain
-      obj = obj.asGetPublicProperty('__proto__');
+      obj = obj.axGetPublicProperty('__proto__');
     } while (obj);
   }
 
   function avm1CheckLinkProperty(obj, name: string): ResolvePropertyResult {
     // TODO ignore deleted properties
     do {
-      if (obj.asHasProperty(undefined, name, 0)) {
+      if (obj.axHasPublicProperty(name)) {
         __resolvePropertyResult.link = obj;
         __resolvePropertyResult.name = name;
         return __resolvePropertyResult;
       }
       // checking entire prototype chain
-      obj = obj.asGetPublicProperty('__proto__');
+      obj = obj.axGetPublicProperty('__proto__');
     } while (obj);
     return null;
   }
@@ -688,7 +677,7 @@ module Shumway.AVM1 {
 
   function as2GetProperty(obj, name: string): any {
     var resolved = avm1ResolveProperty(obj, name, false);
-    return resolved ? resolved.link.asGetPublicProperty(resolved.name) : undefined;
+    return resolved ? resolved.link.axGetPublicProperty(resolved.name) : undefined;
   }
 
   function as2SetProperty(obj, name: string, value: any): any {
@@ -696,7 +685,7 @@ module Shumway.AVM1 {
     if (!resolved) {
       return; // probably obj is undefined or null
     }
-    var definition = resolved.link.asGetPropertyDescriptor(undefined, resolved.name, 0);
+    var definition = resolved.link.axGetPropertyDescriptor(undefined, resolved.name, 0);
     if (definition && !('value' in definition)) {
       // Using setter or getter
       resolved.link.axSetPublicProperty(resolved.name, value);
@@ -739,15 +728,15 @@ module Shumway.AVM1 {
       // Some built-in and AVM2 classes we can use
       result = construct(ctor, args);
       //  __proto__ and __constructor__ can be assigned later
-      as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
+      as2SetupInternalProperties(result, ctor.axGetPublicProperty('prototype'), ctor);
     } else if (isFunction(ctor)) {
       // Finding right prototype object
-      var proto = ctor.asGetPublicProperty('prototype');
+      var proto = ctor.axGetPublicProperty('prototype');
       while (proto && !proto.initAVM1ObjectInstance) {
-        proto = proto.asGetPublicProperty('__proto__');
+        proto = proto.axGetPublicProperty('__proto__');
       }
       result = proto ? Object.create(proto) : {};
-      as2SetupInternalProperties(result, ctor.asGetPublicProperty('prototype'), ctor);
+      as2SetupInternalProperties(result, ctor.axGetPublicProperty('prototype'), ctor);
       if (proto) {
         proto.initAVM1ObjectInstance.call(result, AVM1Context.instance);
       }
@@ -780,7 +769,7 @@ module Shumway.AVM1 {
     }
 
     // Skippig one chain link
-    proto = proto.asGetPublicProperty('__proto__');
+    proto = proto.axGetPublicProperty('__proto__');
     if (!proto) {
       return null;
     }
@@ -792,7 +781,7 @@ module Shumway.AVM1 {
     return {
       target: resolved.link,
       name: resolved.name,
-      obj: resolved.link.asGetPublicProperty(resolved.name)
+      obj: resolved.link.axGetPublicProperty(resolved.name)
     };
   }
 
@@ -1018,7 +1007,12 @@ module Shumway.AVM1 {
         }
 
         var newScopeContainer;
-        var newScope: any = new AVM1FunctionClosure();
+        // Builds function closure (it shall return 'this' in toString).
+        var newScope: any = currentContext.securityDomain.createObject();
+        newScope.axSetPublicProperty('toString', currentContext.securityDomain.boxFunction(function () {
+          return this;
+        }));
+
         var thisArg = isGlobalObject(this) ? scope : this;
         var argumentsClone;
         var supperWrapper;
@@ -1061,7 +1055,7 @@ module Shumway.AVM1 {
                 registers[i] = _global;
                 break;
               case ArgumentAssignmentType.Parent:
-                registers[i] = scope.asGetPublicProperty('_parent');
+                registers[i] = scope.axGetPublicProperty('_parent');
                 break;
               case ArgumentAssignmentType.Root:
                 registers[i] = currentContext.resolveLevel(0);
@@ -1159,7 +1153,7 @@ module Shumway.AVM1 {
         obj = _global;
         for (i = 0; i < objPath.length; i++) {
           resolved = avm1ResolveProperty(obj, objPath[i], false);
-          obj = resolved && resolved.link.asGetPublicProperty(resolved.name);
+          obj = resolved && resolved.link.axGetPublicProperty(resolved.name);
           if (!obj) {
             avm1Warn(objPath.slice(0, i + 1) + ' is undefined');
             return null;
@@ -1610,7 +1604,7 @@ module Shumway.AVM1 {
       stack.push(undefined);
 
       var resolved = avm1ResolveGetVariable(ectx, variableName);
-      stack[sp] = resolved ? resolved.link.asGetPublicProperty(resolved.name) : undefined;
+      stack[sp] = resolved ? resolved.link.axGetPublicProperty(resolved.name) : undefined;
     }
     function avm1_0x1D_ActionSetVariable(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1765,9 +1759,9 @@ module Shumway.AVM1 {
 
       // TODO fix this bind scope lookup, e.g. calling function in with() might require binding
       var resolved = avm1ResolveGetVariable(ectx, functionName);
-      var fn = resolved ? resolved.link.asGetPublicProperty(resolved.name) : undefined;
+      var fn = resolved ? resolved.link.axGetPublicProperty(resolved.name) : undefined;
       // AVM1 simply ignores attempts to invoke non-functions.
-      if (!(fn instanceof Function)) {
+      if (!fn || !(fn.value instanceof Function)) {
         avm1Warn("AVM1 warning: function '" + functionName +
                                           (fn ? "' is not callable" : "' is undefined"));
         return;
@@ -1907,7 +1901,7 @@ module Shumway.AVM1 {
       var objectName = stack.pop();
       stack.push(null);
       var resolved = avm1ResolveGetVariable(ectx, objectName);
-      var obj = resolved ? resolved.link.asGetPublicProperty(resolved.name) : undefined;
+      var obj = resolved ? resolved.link.axGetPublicProperty(resolved.name) : undefined;
       // AVM1 just ignores lookups on non-existant containers. We warned in GetVariable already.
       if (isNullOrUndefined(obj)) {
         return;
@@ -1991,7 +1985,7 @@ module Shumway.AVM1 {
         ctor = obj;
       } else {
         var resolvedName = as2ResolveProperty(obj, methodName, false);
-        ctor = obj.asGetPublicProperty(resolvedName);
+        ctor = obj.axGetPublicProperty(resolvedName);
       }
 
       var result = as2Construct(ctor, args);
@@ -2011,7 +2005,7 @@ module Shumway.AVM1 {
       stack.push(undefined);
 
       var resolved = avm1ResolveGetVariable(ectx, objectName);
-      var obj = resolved ? resolved.link.asGetPublicProperty(resolved.name) : undefined;
+      var obj = resolved ? resolved.link.axGetPublicProperty(resolved.name) : undefined;
 
       var result = createBuiltinType(obj, args);
       if (result === undefined) {
@@ -2241,6 +2235,7 @@ module Shumway.AVM1 {
 
       var fn = avm1DefineFunction(ectx, functionBody, functionName,
         functionParams, registerCount, registerAllocation, suppressArguments);
+      fn = ectx.context.securityDomain.boxFunction(fn);
       if (functionName) {
         scope.axSetPublicProperty(functionName, fn);
       } else {
@@ -2252,8 +2247,8 @@ module Shumway.AVM1 {
 
       var constrSuper = stack.pop();
       var constr = stack.pop();
-      var prototype = constr.asGetPublicProperty('prototype');
-      var prototypeSuper = constrSuper.asGetPublicProperty('prototype');
+      var prototype = constr.axGetPublicProperty('prototype');
+      var prototypeSuper = constrSuper.axGetPublicProperty('prototype');
       prototype.axSetPublicProperty('__proto__', prototypeSuper);
       prototype.axSetPublicProperty('__constructor__', constrSuper);
     }
@@ -3046,7 +3041,7 @@ module Shumway.AVM1 {
             for(var q = 0; q < stack.length; q++) {
               var item = stack[q];
               if (item && typeof item === 'object') {
-                var constr = item.asGetPublicProperty('__constructor__');
+                var constr = item.axGetPublicProperty('__constructor__');
                 stackDump.push('[' + (constr ? constr.name : 'Object') + ']');
 
               } else {

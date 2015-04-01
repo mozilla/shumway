@@ -188,7 +188,7 @@ module Shumway.AVMX.AS.flash.display {
       if (symbol.isAVM1Object) {
         if (symbol.frameScripts) {
           var avm1MovieClip = Shumway.AVM1.Lib.getAVM1Object(this, symbol.avm1Context);
-          avm1MovieClip.context = symbol.avm1Context;
+          // avm1MovieClip.context = symbol.avm1Context; // REDUX
           var data = symbol.frameScripts;
           for (var i = 0; i < data.length; i += 2) {
             avm1MovieClip.addFrameScript(data[i], data[i + 1]);
@@ -666,7 +666,7 @@ module Shumway.AVMX.AS.flash.display {
         return;
       }
       try {
-        frameScript.$Bgcall(this);
+        frameScript.call(this); // REDUX ? why it was frameScript.$Bgcall(this);
       } catch (e) {
         Telemetry.instance.reportTelemetry({ topic: 'error', error: Telemetry.ErrorTypes.AVM2_ERROR });
 

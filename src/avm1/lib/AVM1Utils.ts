@@ -227,13 +227,17 @@ module Shumway.AVM1.Lib {
 
   function createAVM1Object(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
     // We need to walk on __proto__ to find right ctor.prototype.
-    var proto = ctor.prototype;
+    var proto = ctor.axGetPublicProperty('prototype');
     while (proto && !proto.initAVM1SymbolInstance) {
       proto = proto.asGetPublicProperty('__proto__');
     }
     release || Debug.assert(proto);
-
-    var avm1Object: any = Object.create(proto); // REDUX
+    if (!release) { // Just to verify prototype chain
+      function CheckClass() {}
+      CheckClass.prototype = context.securityDomain.AXObject.tPrototype;
+      Debug.assert(proto instanceof CheckClass);
+    }
+    var avm1Object = Object.create(proto); // context.securityDomain.createObject();
     avm1Object.axSetPublicProperty('__proto__', ctor.axGetPublicProperty('prototype'));
     avm1Object.axDefinePublicProperty('__constructor__', {
       value: ctor,
@@ -243,7 +247,7 @@ module Shumway.AVM1.Lib {
     });
     (<any>nativeObject)._as2Object = avm1Object;
     (<IAVM1SymbolBase>avm1Object).initAVM1SymbolInstance(context, nativeObject);
-    ctor.call(avm1Object);
+    ctor.value.axCall(avm1Object); // REDUX ? why not ctor.axCall(avm1Object)
     return avm1Object;
   }
 
@@ -276,23 +280,30 @@ module Shumway.AVM1.Lib {
 
   export function wrapAVM1Object<T extends ASObject>(securityDomain: ISecurityDomain, obj: T, members: string[]): T  {
     var wrap: any;
+    var lastPrototype: any;
     if (typeof obj === 'function') {
       wrap = securityDomain.boxFunction(function () {
         return (<any>obj).apply(this, arguments);
       });
+      lastPrototype = Function.prototype;
     } else {
       release || Debug.assert(typeof obj === 'object' && obj !== null);
       wrap = securityDomain.createObject();
+      lastPrototype = ASObject.prototype;
     }
     // Coping all members
-    Object.getOwnPropertyNames(obj).forEach(function (name) {
-      if (wrap.hasOwnProperty(name)) {
-        // Object.defineProperty will error e.g. on function name or length
-        return;
-      }
-      Object.defineProperty(wrap, name,
-        Object.getOwnPropertyDescriptor(obj, name));
-    });
+    var p = obj;
+    do {
+      Object.getOwnPropertyNames(p).forEach(function (name) {
+        if (wrap.hasOwnProperty(name)) {
+          // Object.defineProperty will error e.g. on function name or length
+          return;
+        }
+        Object.defineProperty(wrap, name,
+          Object.getOwnPropertyDescriptor(p, name));
+      });
+      p = Object.getPrototypeOf(p);
+    } while (p !== lastPrototype);
 
     if (!members) {
       return wrap;
@@ -328,6 +339,7 @@ module Shumway.AVM1.Lib {
     var prototype = (<any>fn).prototype;
     var wrappedPrototype = wrapAVM1Object(securityDomain, prototype, members);
     wrappedFn.axSetPublicProperty('prototype', wrappedPrototype);
+    (<any>wrappedFn).prototype = wrappedPrototype; // REDUX ? why axContruct is using prototype vs $Bgprototype
     return wrappedFn;
   }
 
