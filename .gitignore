@@ -1,5 +1,6 @@
 *~
 .DS_Store
+.idea/*
 
 src/avm2/generated/
 
