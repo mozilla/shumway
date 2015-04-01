@@ -25,26 +25,47 @@ if (arguments.length > 2) {
     });
   }
 
-  var dictionary = Object.create(null);
+  var passPatterns = [];
+  var failPatterns = [];
 
   fs.readFileSync("utils/spell/dictionary").toString().split("\n").forEach(function (k) {
-    dictionary[k] = true;
+    if (k[0] === "-") {
+      failPatterns.push(k.substring(1));
+    } else if (k[0] === "+") {
+      passPatterns.push(k.substring(1));
+    }
   });
 
-  function isWord(name) {
-    if (!isNaN(name)) {
-      return true;
+  function isPassWord(name) {
+    for (var i = 0; i < passPatterns.length; i++) {
+      if (name.match(passPatterns[i])) {
+        return true;
+      }
     }
-    return dictionary[name.toLowerCase()];
+    return false;
+  }
+
+  function isFailWord(name) {
+    for (var i = 0; i < failPatterns.length; i++) {
+      if (name.match(failPatterns[i])) {
+        return true;
+      }
+    }
+    return false;
   }
 
   for (var k in identifiers) {
-    var words = split(k);
+    var words = [k]; // split(k);
     for (var i = 0; i < words.length; i++) {
       var word = words[i];
-      if (!isWord(word)) {
+      if (isFailWord(word)) {
         var location = identifiers[k]
-        console.info("Identifier \"" + k + "\" (" + word + ")" + " is not a word. " + location);
+        console.info("Identifier \"" + k + "\" (" + word + ")" + " is a fail word. " + location);
+        continue;
+      }
+      if (!isPassWord(word)) {
+        var location = identifiers[k]
+        console.info("Identifier \"" + k + "\" (" + word + ")" + " is not a pass word. " + location);
       }
     }
   }
@@ -64,11 +85,16 @@ if (arguments.length > 2) {
     if (commentTokens) {
       for (var i = 0; i < commentTokens.length; i++) {
         var token = commentTokens[i];
-        var words = split(token);
+        var words = [token];
         for (var j = 0; j < words.length; j++) {
           var word = words[j];
-          if (!isWord(word)) {
-            console.info("Comment \"" + token + "\" (" + word + ")" + " is not a word. ");
+          if (isFailWord(word)) {
+            var location = identifiers[k]
+            console.info("Comment \"" + word + "\" is a fail word. " + file + ":" + comment.loc.start.line);
+            continue;
+          }
+          if (!isPassWord(word)) {
+            console.info("Comment \"" + word + "\" is not a pass word. " + file + ":" + comment.loc.start.line);
           }
         }
       }

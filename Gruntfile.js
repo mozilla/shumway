@@ -25,7 +25,7 @@ module.exports = function(grunt) {
   }
 
   var tscCommand = 'node_modules/typescript/bin/tsc';
-  var commonArguments = tscCommand + ' --target ES5 --removeComments --sourcemap -d --out build/ts/';
+  var commonArguments = tscCommand + ' --target ES5 --sourcemap -d --out build/ts/';
 
   var defaultBrowserManifestFile = './resources/browser_manifests/browser_manifest.json';
   var defaultTestsManifestFile = 'test_manifest.json';
@@ -149,7 +149,7 @@ module.exports = function(grunt) {
       },
       spell: {
         // TODO: Add more files.
-        cmd: 'node utils/spell/spell.js build/ts/player.js'
+        cmd: 'node utils/spell/spell.js build/ts/flash.js build/ts/avm2.js'
       },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
