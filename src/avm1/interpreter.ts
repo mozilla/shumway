@@ -1767,7 +1767,8 @@ module Shumway.AVM1 {
         return;
       }
       release || assert(stack.length === sp + 1);
-      stack[sp] = fn.apply(resolved.obj || null, args);
+      // REDUX
+      stack[sp] = fn.axApply(resolved.obj || null, args);
     }
     function avm1_0x52_ActionCallMethod(ectx: ExecutionContext) {
       var stack = ectx.stack;
