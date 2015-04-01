@@ -1132,10 +1132,12 @@ module Shumway.AVMX {
     }
 
     createFunction(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean): AXFunction {
-      return this.AXFunction.axBox(function () {
+      var fun = this.AXFunction.axBox(function () {
         var self = this === jsGlobal ? scope.global.object : this;
         return interpret(self, methodInfo, scope, sliceArguments(arguments));
       });
+      fun.receiver = {scope: scope};
+      return fun;
     }
 
     createMethodClosure(receiver: AXObject, method: Function): AXFunction {
