@@ -111,7 +111,7 @@ module.exports = function(grunt) {
       debug_server: {
         cmd: 'node examples/inspector/debug/server.js'
       },
-      gate: {
+      unit_test: {
         cmd: '"utils/jsshell/js" build/ts/shell.js -x -g ' +
                 (grunt.option('verbose') ? '-v ' : '') +
                 (grunt.option('tests') || expandFilePattern('test/unit/pass/*.js'))
@@ -575,17 +575,16 @@ module.exports = function(grunt) {
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('playerglobal-single', ['exec:build_playerglobal_single']);
 
-  grunt.registerTask('base', ['exec:build_base_ts', 'exec:gate']);
-  grunt.registerTask('swf', ['exec:build_swf_ts', 'exec:gate']);
-  grunt.registerTask('flash', ['parallel:flash', 'exec:gate']);
-  grunt.registerTask('avm1', ['parallel:avm1', 'exec:gate']);
-  grunt.registerTask('player', ['exec:build_player_ts', 'exec:gate']);
-  grunt.registerTask('shell', ['exec:build_shell_ts', 'exec:gate']);
-  grunt.registerTask('tools', ['exec:build_tools_ts', 'exec:gate']);
-  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'exec:gate']);
+  grunt.registerTask('base', ['exec:build_base_ts', 'gate']);
+  grunt.registerTask('swf', ['exec:build_swf_ts', 'gate']);
+  grunt.registerTask('flash', ['parallel:flash', 'gate']);
+  grunt.registerTask('avm1', ['parallel:avm1', 'gate']);
+  grunt.registerTask('player', ['exec:build_player_ts', 'gate']);
+  grunt.registerTask('shell', ['exec:build_shell_ts', 'gate']);
+  grunt.registerTask('tools', ['exec:build_tools_ts', 'gate']);
+  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'gate']);
   grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts']);
-  grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts', 'exec:gate']);
-  grunt.registerTask('gate', ['exec:gate']);
+  grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts', 'gate']);
   grunt.registerTask('perf', ['exec:perf']);
   grunt.registerTask('gfx-test', ['exec:gfx-test']);
   grunt.registerTask('build', [
@@ -602,37 +601,30 @@ module.exports = function(grunt) {
   ]);
   grunt.registerTask('shu', [
     'build',
-    'exec:gate'
+    'gate'
   ]);
+  // Runs on travis. Run this if you want to make sure your local build will succeed on travis.
   grunt.registerTask('travis', [
     'exec:install_js_travis',
     'exec:install_avmshell_travis',
-    'buildlibs',
-    // Duplicates almost all of "build" because we don't want to do the costly "playerglobal" task.
-    // 'parallel:base',
-    'generate-version',
-    'exec:build_base_ts',
-    'exec:build_tools_ts',
-    'exec:build_gfx_base_ts',
-    'parallel:tier2',
-    'copy_relooper',
-    'parallel:natives',
-    'exec:build_player_ts',
-    'exec:build_shell_ts',
-    'tslint:all', // REDUX: Temporarily commented out.
+    'build',
+    'gate'
+  ]);
+  // Run this before checking in any code.
+  grunt.registerTask('gate', [
+    'tslint:all',
     'exec:spell',
     // 'closure', REDUX: Temporarily commented out.
-    'exec:test_avm2_redux_pass',
-    'exec:test_avm2_acceptance',
-    'exec:gate'
+    'test',
   ]);
   grunt.registerTask('smoke', [
     'exec:smoke_parse'
   ]);
   grunt.registerTask('test', [
-    'exec:gate',
-    'exec:test_avm2_quick',
-    'exec:tracetest',
+    'exec:test_avm2_redux_pass',
+    'exec:test_avm2_acceptance',
+    'exec:unit_test'
+    // 'exec:tracetest'
     // 'exec:tracetest_swfdec'
   ]);
   grunt.registerTask('mozcentralshu', [
