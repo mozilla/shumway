@@ -447,7 +447,12 @@ module Shumway.Shell {
           var buffer = new Uint8Array(read(file, "binary"));
           var abc = new ABCFile(buffer);
           securityDomain.application.loadABC(abc);
+          var t = dateNow();
           securityDomain.application.executeABC(abc);
+          var e = (dateNow() - t);
+          if (e > 100) {
+            printErr("Test: " + file + " is very slow (" + e.toFixed() + " ms), consider disabling it.");
+          }
           if (verbose) {
             writer.writeLn("executeABC PASS: " + file);
           }
