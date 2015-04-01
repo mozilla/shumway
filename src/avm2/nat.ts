@@ -71,7 +71,9 @@ module Shumway.AVMX.AS {
     }
 
     export function debugBreak(v: any) {
+      /* tslint:disable */
       debugger;
+      /* tslint:enable */
     }
 
     export function bugzilla(n) {
