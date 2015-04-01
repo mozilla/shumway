@@ -575,16 +575,16 @@ module.exports = function(grunt) {
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('playerglobal-single', ['exec:build_playerglobal_single']);
 
-  grunt.registerTask('base', ['exec:build_base_ts', 'gate']);
-  grunt.registerTask('swf', ['exec:build_swf_ts', 'gate']);
-  grunt.registerTask('flash', ['parallel:flash', 'gate']);
-  grunt.registerTask('avm1', ['parallel:avm1', 'gate']);
-  grunt.registerTask('player', ['exec:build_player_ts', 'gate']);
-  grunt.registerTask('shell', ['exec:build_shell_ts', 'gate']);
-  grunt.registerTask('tools', ['exec:build_tools_ts', 'gate']);
-  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'gate']);
-  grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts']);
-  grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts', 'gate']);
+  grunt.registerTask('base', ['exec:build_base_ts', 'quick-test']);
+  grunt.registerTask('swf', ['exec:build_swf_ts', 'quick-test']);
+  grunt.registerTask('flash', ['parallel:flash', 'quick-test']);
+  grunt.registerTask('avm1', ['parallel:avm1', 'quick-test']);
+  grunt.registerTask('player', ['exec:build_player_ts', 'quick-test']);
+  grunt.registerTask('shell', ['exec:build_shell_ts', 'quick-test']);
+  grunt.registerTask('tools', ['exec:build_tools_ts', 'quick-test']);
+  grunt.registerTask('avm2', ['exec:build_avm2_ts', 'copy_relooper', 'quick-test', 'exec:test_avm2_quick']);
+  grunt.registerTask('gfx', ['exec:build_gfx_base_ts', 'exec:build_gfx_ts', 'quick-test']);
+  grunt.registerTask('gfx-base', ['exec:build_gfx_base_ts']);
   grunt.registerTask('perf', ['exec:perf']);
   grunt.registerTask('gfx-test', ['exec:gfx-test']);
   grunt.registerTask('build', [
@@ -620,6 +620,11 @@ module.exports = function(grunt) {
   grunt.registerTask('smoke', [
     'exec:smoke_parse'
   ]);
+  // Quick sanity test that runs after a module is compiled.
+  grunt.registerTask('quick-test', [
+    'exec:unit_test'
+  ]);
+  // Runs all tests.
   grunt.registerTask('test', [
     'exec:test_avm2_redux_pass',
     'exec:test_avm2_acceptance',
