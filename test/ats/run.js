@@ -1,25 +1,45 @@
-var CACHE_DIR = "./swfs/";
-var DOWNLOAD_BASE = "http://areweflashyet.com/swfs/";
+var CACHE_DIR = './swfs/';
+var DOWNLOAD_BASE = 'http://areweflashyet.com/swfs/';
 
-var taskName = "list";
-var conditions = { };
-
-// TODO: Accept proper command line options.
-if (process.argv.length > 2) {
-  taskName = process.argv[2];
-  if (process.argv.length > 3) {
-    conditions.file = { $regex: process.argv[3] };
-    token = process.argv[4] || null;
+function parseOptions() {
+  function describeCheck(fn, text) {
+    fn.toString = function () {
+      return text;
+    };
+    return fn;
   }
+
+  var yargs = require('yargs')
+    .usage('Usage: $0')
+    .boolean([])
+    .string(['task', 'db', 'force'])
+    .alias('task', 't').alias('db', 'd').alias('force', 'f')
+    .describe('task', 'Name of the task to run')
+    .describe('db', 'MongoDB connection URL')
+    .describe('force', 'Ignore version lock')
+    .default('task', 'list')
+    .default('db', 'ats');
+
+  var result = yargs.argv;
+  if (result.help) {
+    yargs.showHelp();
+    process.exit(0);
+  }
+  return result;
 }
+
+var options = parseOptions();
+var taskName = options.task;
 
 var fs = require('fs');
 var http = require('http');
 var mongojs = require("mongojs");
 var task = require("./tasks/" + taskName);
+var version = require('../../build/version/version.json').version;
 
-var db = mongojs(process.env.ATS_DB_URL || "ats", ["swfs"]);
+console.log('Current Shumway version is ' + version);
 
+var db = mongojs(options.db || "ats", ["swfs"]);
 db.on('error', function(err) {
   handle_error(err);
 });
@@ -45,72 +65,82 @@ function get_file(fileName, cb) {
   });
 }
 
+var startTime = +new Date;
+var numTasks = 0;
+var numErrors = 0;
+var numRegressions = 0;
+
 function handle_error(err) {
   console.error(err.toString());
   db.close();
   process.exit(1);
 }
-
-var startTime = +new Date;
-function wrap_up() {
-  db.close();
-  console.log("Finished " + n + " tasks in " + ((+new Date - startTime) / 1000).toFixed(2) + "s.");
-}
-
-var swfs = db.swfs.find(conditions, { timeout: false });
-var i = 0;
-var n = 0;
-swfs.count(function (err, val) {
+function handleResult(doc, err, result, time, cb) {
+  var updates = Object.create(null);
+  $set = updates.$set = Object.create(null);
+  $set[lastKey] = { time: startTime, version: version };
   if (err) {
-    handle_error(err);
+    numErrors++;
+    if (resultKey in doc) {
+      numRegressions++;
+      $set[regressedKey] = true;
+      $unset = updates.$unset = Object.create(null);
+      $unset[resultKey] = true;
+    }
+    $set[errorKey] = err.message;
+  } else {
+    $set[resultKey] = result;
+    $set[timeKey] = +new Date - time;
+    if (errorKey in doc) {
+      $unset = updates.$unset = Object.create(null);
+      $unset[errorKey] = true;
+      $unset[regressedKey] = true;
+    }
   }
-  n = val;
-  swfs.next(next);
-});
-
-function next(err, swf) {
-  i++;
-  if (err) {
-    handle_error(err);
-  }
-  get_file(swf.file, function (err, path) {
+  db.swfs.update({ _id: doc._id }, updates, function (err) {
     if (err) {
       handle_error(err);
-    } else {
-      swf.path = path;
-      var time = +new Date;
-      console.log("Run task " + i + " of " + n);
-      task.run(swf, function (err, result) {
-        var updates = Object.create(null);
-        $set = updates.$set = Object.create(null);
-        $set[taskName + '_last'] = time;
-        if (err) {
-          if (taskName + '_result' in swf) {
-            $set[taskName + '_regressed'] = true;
-            $unset = updates.$unset = Object.create(null);
-            $unset[taskName + '_result'] = true;
-          }
-          $set[taskName + '_error'] = err.message;
-        } else {
-          $set[taskName + '_result'] = result;
-          $set[taskName + '_time'] = +new Date - time;
-          if (taskName + '_error' in swf) {
-            $unset = updates.$unset = Object.create(null);
-            $unset[taskName + '_error'] = true;
-            $unset[taskName + '_regressed'] = true;
-          }
-        }
-        db.swfs.update({ _id: swf._id }, updates, function (err) {
-          if (err) {
-            handle_error(err);
-          }
-          if (i < n) {
-            swfs.next(next);
-          } else {
-            wrap_up();
-          }
-        });
-      });
     }
+    cb();
   });
 }
+function wrap_up() {
+  db.close();
+  console.log("Finished " + numTasks + " tasks in " + ((+new Date - startTime) / 1000).toFixed(2) + "s. " +
+              numErrors + " Errors. " + numRegressions + ' Regressions.');
+}
+
+var lastKey = taskName + '_last';
+var resultKey = taskName + '_result';
+var errorKey = taskName + '_error';
+var timeKey = taskName + '_time';
+var regressedKey = taskName + '_regressed';
+
+var conditions = {};
+conditions[lastKey + '.version'] = { $ne: version };
+
+function next() {
+  db.swfs.findOne(conditions, function (err, doc) {
+    if (err) {
+      handle_error(err);
+    }
+    if (doc === null) {
+      wrap_up();
+      return;
+    }
+    numTasks++;
+    get_file(doc.file, function (err, path) {
+      if (err) {
+        handle_error(err);
+      }
+      doc.path = path;
+      var time = +new Date;
+      console.log("Run task " + doc._id);
+      task.run(doc, function (err, result) {
+        handleResult(doc, err, result, time, next);
+      });
+    });
+  });
+}
+
+next();
