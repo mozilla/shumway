@@ -420,7 +420,7 @@ module Shumway.AVMX {
             break;
           case Bytecode.APPLYTYPE:
             popManyInto(stack, u30(), args);
-            stack[stack.length - 1] = securityDomain.applyType(methodInfo, stack[stack.length - 1], args);
+            stack[stack.length - 1] = securityDomain.applyType(stack[stack.length - 1], args);
             break;
           case Bytecode.NEWOBJECT:
             object = Object.create(securityDomain.AXObject.tPrototype);
@@ -506,6 +506,13 @@ module Shumway.AVMX {
           case Bytecode.SETSLOT:
             value = stack.pop();
             box(stack.pop()).axSetSlot(u30(), value);
+            break;
+          case Bytecode.GETGLOBALSLOT:
+            stack[stack.length - 1] = savedScope.global.object.axGetSlot(u30());
+            break;
+          case Bytecode.SETGLOBALSLOT:
+            value = stack.pop();
+            savedScope.global.object.axSetSlot(u30(), value);
             break;
           //case Bytecode.esc_xattr:
           //  stack[stack.length - 1] = Runtime.escapeXMLAttribute(stack[stack.length - 1]);
@@ -662,17 +669,16 @@ module Shumway.AVMX {
             (<number []>local)[index] = ((<number []>local)[index] | 0) - 1;
             break;
           case Bytecode.NEGATE_I:
-            // Negation entails casting to int
-            stack[stack.length - 1] = ~stack[stack.length - 1];
+            stack[stack.length - 1] = -(stack[stack.length - 1] | 0);
             break;
           case Bytecode.ADD_I:
-            stack[stack.length - 2] = stack[stack.length - 2] + stack.pop() | 0;
+            stack[stack.length - 2] = (stack[stack.length - 2]|0) + (stack.pop()|0) | 0;
             break;
           case Bytecode.SUBTRACT_I:
-            stack[stack.length - 2] = stack[stack.length - 2] - stack.pop() | 0;
+            stack[stack.length - 2] = (stack[stack.length - 2]|0) - (stack.pop()|0) | 0;
             break;
           case Bytecode.MULTIPLY_I:
-            stack[stack.length - 2] = stack[stack.length - 2] * stack.pop() | 0;
+            stack[stack.length - 2] = (stack[stack.length - 2]|0) * (stack.pop()|0) | 0;
             break;
           case Bytecode.GETLOCAL0:
           case Bytecode.GETLOCAL1:
@@ -710,11 +716,9 @@ module Shumway.AVMX {
         }
         // TODO: e = translateError(e);
 
-        // All script exceptions must have a security domain, if they don't then this
-        // must be a VM exception.
-        if (!e.securityDomain) {
-          throw e;
-        }
+        // All script exceptions must be primitive or have a security domain, if they don't then
+        // this must be a VM exception.
+        checkValue(e);
 
         for (var i = 0; i < exceptions.length; i++) {
           var handler = exceptions[i];

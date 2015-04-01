@@ -71,7 +71,9 @@ module Shumway.AVMX.AS {
     }
 
     export function debugBreak(v: any) {
+      /* tslint:disable */
       debugger;
+      /* tslint:enable */
     }
 
     export function bugzilla(n) {
@@ -98,8 +100,8 @@ module Shumway.AVMX.AS {
     export var notImplemented: (x: any) => void = Shumway.Debug.notImplemented;
   }
 
-  var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
-  var nativeFunctions: Shumway.Map<Function> = Shumway.ObjectUtilities.createMap<Function>();
+  var nativeClasses: Shumway.MapObject<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var nativeFunctions: Shumway.MapObject<Function> = Shumway.ObjectUtilities.createMap<Function>();
 
   /**
    * Searches for natives using a string path "a.b.c...".
@@ -535,6 +537,10 @@ module Shumway.AVMX.AS {
       return this.securityDomain.AXArray.axBox(Array.apply(Array, args));
     }
 
+    public static axConstruct(args: any[]): ASArray {
+      return this.securityDomain.AXArray.axBox(Array.apply(Array, args));
+    }
+
     push() {
       return this.value.push.apply(this.value, arguments);
     }
@@ -807,7 +813,6 @@ module Shumway.AVMX.AS {
       if (typeof mn.name === 'number') {
         release || assert(mn.isRuntimeName());
         return delete this.value[mn.name];
-        return;
       }
       var name = asCoerceName(mn.name);
       var namespaces = mn.namespaces;
@@ -856,6 +861,7 @@ module Shumway.AVMX.AS {
 
     private _prototype: AXObject;
     protected value: Function;
+    protected receiver: {scope: Scope};
 
     get prototype(): AXObject {
       if (!this._prototype) {
@@ -878,10 +884,16 @@ module Shumway.AVMX.AS {
     }
 
     call(thisArg: any) {
+      if (!thisArg || typeof thisArg !== 'object') {
+        thisArg = this.receiver.scope.global.object;
+      }
       return this.value.apply(thisArg, sliceArguments(arguments, 1));
     }
 
     apply(thisArg: any, argArray?: ASArray): any {
+      if (!thisArg || typeof thisArg !== 'object') {
+        thisArg = this.receiver.scope.global.object;
+      }
       return this.value.apply(thisArg, argArray ? argArray.value : undefined);
     }
 
@@ -903,12 +915,10 @@ module Shumway.AVMX.AS {
     }
     static Create(receiver: AXObject, method: Function) {
       var closure: ASMethodClosure = Object.create(this.securityDomain.AXMethodClosure.tPrototype);
-      closure.receiver = receiver;
+      closure.receiver = <any>receiver;
       closure.value = method;
       return closure;
     }
-
-    private receiver: AXObject;
 
     get prototype(): AXObject {
       return null;
@@ -1182,273 +1192,6 @@ module Shumway.AVMX.AS {
     }
   }
 
-  export class ASDate extends ASObject {
-    value: Date;
-
-    static classInitializer: any = function() {
-      var proto: any = this.dPrototype;
-      var asProto: any = ASDate.prototype;
-      addPrototypeFunctionAlias(proto, '$BgtoString', asProto.toString);
-      addPrototypeFunctionAlias(proto, '$BgvalueOf', asProto.valueOf);
-
-      addPrototypeFunctionAlias(proto, '$BgtoDateString', asProto.toDateString);
-      addPrototypeFunctionAlias(proto, '$BgtoTimeString', asProto.toTimeString);
-      addPrototypeFunctionAlias(proto, '$BgtoLocaleString', asProto.toLocaleString);
-      addPrototypeFunctionAlias(proto, '$BgtoLocaleDateString', asProto.toLocaleDateString);
-      addPrototypeFunctionAlias(proto, '$BgtoLocaleTimeString', asProto.toLocaleTimeString);
-      addPrototypeFunctionAlias(proto, '$BgtoUTCString', asProto.toUTCString);
-
-      // NB: The default AS implementation of |toJSON| is not ES5-compliant, but
-      // the native JS one obviously is.
-      addPrototypeFunctionAlias(proto, '$BgtoJSON', asProto.toJSON);
-
-      addPrototypeFunctionAlias(proto, '$BggetUTCFullYear', asProto.getUTCFullYear);
-      addPrototypeFunctionAlias(proto, '$BggetUTCMonth', asProto.getUTCMonth);
-      addPrototypeFunctionAlias(proto, '$BggetUTCDate', asProto.getUTCDate);
-      addPrototypeFunctionAlias(proto, '$BggetUTCDay', asProto.getUTCDay);
-      addPrototypeFunctionAlias(proto, '$BggetUTCHours', asProto.getUTCHours);
-      addPrototypeFunctionAlias(proto, '$BggetUTCMinutes', asProto.getUTCMinutes);
-      addPrototypeFunctionAlias(proto, '$BggetUTCSeconds', asProto.getUTCSeconds);
-      addPrototypeFunctionAlias(proto, '$BggetUTCMilliseconds', asProto.getUTCMilliseconds);
-      addPrototypeFunctionAlias(proto, '$BggetFullYear', asProto.getFullYear);
-      addPrototypeFunctionAlias(proto, '$BggetMonth', asProto.getMonth);
-      addPrototypeFunctionAlias(proto, '$BggetDate', asProto.getDate);
-      addPrototypeFunctionAlias(proto, '$BggetDay', asProto.getDay);
-      addPrototypeFunctionAlias(proto, '$BggetHours', asProto.getHours);
-      addPrototypeFunctionAlias(proto, '$BggetMinutes', asProto.getMinutes);
-      addPrototypeFunctionAlias(proto, '$BggetSeconds', asProto.getSeconds);
-      addPrototypeFunctionAlias(proto, '$BggetMilliseconds', asProto.getMilliseconds);
-      addPrototypeFunctionAlias(proto, '$BggetTimezoneOffset', asProto.getTimezoneOffset);
-      addPrototypeFunctionAlias(proto, '$BggetTime', asProto.getTime);
-      addPrototypeFunctionAlias(proto, '$BgsetFullYear', asProto.setFullYear);
-      addPrototypeFunctionAlias(proto, '$BgsetMonth', asProto.setMonth);
-      addPrototypeFunctionAlias(proto, '$BgsetDate', asProto.setDate);
-      addPrototypeFunctionAlias(proto, '$BgsetHours', proto.setHours);
-      addPrototypeFunctionAlias(proto, '$BgsetMinutes', asProto.setMinutes);
-      addPrototypeFunctionAlias(proto, '$BgsetSeconds', asProto.setSeconds);
-      addPrototypeFunctionAlias(proto, '$BgsetMilliseconds', asProto.setMilliseconds);
-      addPrototypeFunctionAlias(proto, '$BgsetUTCFullYear', asProto.setUTCFullYear);
-      addPrototypeFunctionAlias(proto, '$BgsetUTCMonth', asProto.setUTCMonth);
-      addPrototypeFunctionAlias(proto, '$BgsetUTCDate', asProto.setUTCDate);
-      addPrototypeFunctionAlias(proto, '$BgsetUTCHours', asProto.setUTCHours);
-      addPrototypeFunctionAlias(proto, '$BgsetUTCMinutes', asProto.setUTCMinutes);
-      addPrototypeFunctionAlias(proto, '$BgsetUTCSeconds', asProto.setUTCSeconds);
-      addPrototypeFunctionAlias(proto, '$BgsetUTCMilliseconds', asProto.setUTCMilliseconds);
-    };
-
-    static parse(s): number {
-      notImplemented("Date::parse");
-      return -1;
-    }
-
-    static UTC(year, month, date = 1, hours = 0, minutes = 0, seconds = 0, ms = 0, ... rest): number {
-      notImplemented("Date::UTC");
-      return -1;
-    }
-
-
-    constructor(yearOrTimevalue: any, month: number, date: number = 1, hour: number = 0, minute: number = 0, second: number = 0, millisecond: number = 0) {
-      super();
-      switch (arguments.length) {
-        case  0: this.value = new Date(); break;
-        case  1: this.value = new Date(yearOrTimevalue); break;
-        case  2: this.value = new Date(yearOrTimevalue, month); break;
-        case  3: this.value = new Date(yearOrTimevalue, month, date); break;
-        case  4: this.value = new Date(yearOrTimevalue, month, date, hour); break;
-        case  5: this.value = new Date(yearOrTimevalue, month, date, hour, minute); break;
-        case  6: this.value = new Date(yearOrTimevalue, month, date, hour, minute, second); break;
-        default: this.value = new Date(yearOrTimevalue, month, date, hour, minute, second, millisecond); break;
-      }
-    }
-
-    toString()              { return this.value.toString(); }
-    valueOf()               { return this.value.valueOf(); }
-    setTime(value = 0)      { this.value.setTime(value); }
-    toDateString()          { return this.value.toDateString(); }
-    toTimeString()          { return this.value.toTimeString(); }
-    toLocaleString()        { return this.value.toLocaleString(); }
-    toLocaleDateString()    { return this.value.toLocaleDateString(); }
-    toLocaleTimeString()    { return this.value.toLocaleTimeString(); }
-    toUTCString()           { return this.value.toUTCString(); }
-
-    getUTCFullYear()        { return this.value.getUTCFullYear(); }
-    getUTCMonth()           { return this.value.getUTCMonth(); }
-    getUTCDate()            { return this.value.getUTCDate(); }
-    getUTCDay()             { return this.value.getUTCDay(); }
-    getUTCHours()           { return this.value.getUTCHours(); }
-    getUTCMinutes()         { return this.value.getUTCMinutes(); }
-    getUTCSeconds()         { return this.value.getUTCSeconds(); }
-    getUTCMilliseconds()    { return this.value.getUTCMilliseconds(); }
-    getFullYear()           { return this.value.getFullYear(); }
-    getMonth()              { return this.value.getMonth(); }
-    getDate()               { return this.value.getDate(); }
-    getDay()                { return this.value.getDay(); }
-    getHours()              { return this.value.getHours(); }
-    getMinutes()            { return this.value.getMinutes(); }
-    getSeconds()            { return this.value.getSeconds(); }
-    getMilliseconds()       { return this.value.getMilliseconds(); }
-    getTimezoneOffset()     { return this.value.getTimezoneOffset(); }
-    getTime()               { return this.value.getTime(); }
-
-    setFullYear(year: number, month: number, date: number) {
-      this.value.setFullYear.apply(this.value, arguments);
-    }
-    setMonth(month: number, date: number) {
-      this.value.setMonth.apply(this.value, arguments);
-    }
-    setDate(date: number) {
-      this.value.setDate.apply(this.value, arguments);
-    }
-    setHours(hour: number, minutes: number, seconds: number, milliseconds: number) {
-      this.value.setHours.apply(this.value, arguments);
-    }
-    setMinutes(minutes: number, seconds: number, milliseconds: number) {
-      this.value.setMinutes.apply(this.value, arguments);
-    }
-    setSeconds(seconds: number, milliseconds: number) {
-      this.value.setSeconds.apply(this.value, arguments);
-    }
-    setMilliseconds(milliseconds: number) {
-      this.value.setMilliseconds.apply(this.value, arguments);
-    }
-    setUTCFullYear(year: number, month: number, date: number) {
-      this.value.setUTCFullYear.apply(this.value, arguments);
-    }
-    setUTCMonth(month: number, date: number) {
-      this.value.setUTCMonth.apply(this.value, arguments);
-    }
-    setUTCDate(date: number) {
-      this.value.setUTCDate.apply(this.value, arguments);
-    }
-    setUTCHours(hour: number, minutes: number, seconds: number, milliseconds: number) {
-      this.value.setUTCHours.apply(this.value, arguments);
-    }
-    setUTCMinutes(minutes: number, seconds: number, milliseconds: number) {
-      this.value.setUTCMinutes.apply(this.value, arguments);
-    }
-    setUTCSeconds(seconds: number, milliseconds: number) {
-      this.value.setUTCSeconds.apply(this.value, arguments);
-    }
-    setUTCMilliseconds(milliseconds: number) {
-      this.value.setUTCMilliseconds.apply(this.value, arguments);
-    }
-
-    get fullYear(): number {
-      return this.value.getFullYear();
-    }
-    set fullYear(value: number) {
-      this.value.setFullYear(value);
-    }
-
-    get month(): number {
-      return this.value.getMonth();
-    }
-    set month(value: number) {
-      this.value.setMonth(value);
-    }
-
-    get date(): number {
-      return this.value.getDate();
-    }
-    set date(value: number) {
-      this.value.setDate(value);
-    }
-
-    get hours(): number {
-      return this.value.getHours();
-    }
-    set hours(value: number) {
-      this.value.setHours(value);
-    }
-
-    get minutes(): number {
-      return this.value.getMinutes();
-    }
-    set minutes(value: number) {
-      this.value.setMinutes(value);
-    }
-
-    get seconds(): number {
-      return this.value.getSeconds();
-    }
-    set seconds(value: number) {
-      this.value.setSeconds(value);
-    }
-
-    get milliseconds(): number {
-      return this.value.getMilliseconds();
-    }
-    set milliseconds(value: number) {
-      this.value.setMilliseconds(value);
-    }
-
-    get fullYearUTC(): number {
-      return this.value.getUTCFullYear();
-    }
-    set fullYearUTC(value: number) {
-      this.value.setUTCFullYear(value);
-    }
-
-    get monthUTC(): number {
-      return this.value.getUTCMonth();
-    }
-    set monthUTC(value: number) {
-      this.value.setUTCMonth(value);
-    }
-
-    get dateUTC(): number {
-      return this.value.getUTCDate();
-    }
-    set dateUTC(value: number) {
-      this.value.setUTCDate(value);
-    }
-
-    get hoursUTC(): number {
-      return this.value.getUTCHours();
-    }
-    set hoursUTC(value: number) {
-      this.value.setUTCHours(value);
-    }
-
-    get minutesUTC(): number {
-      return this.value.getUTCMinutes();
-    }
-    set minutesUTC(value: number) {
-      this.value.setUTCMinutes(value);
-    }
-
-    get secondsUTC(): number {
-      return this.value.getUTCSeconds();
-    }
-    set secondsUTC(value: number) {
-      this.value.setUTCSeconds(value);
-    }
-
-    get millisecondsUTC(): number {
-      return this.value.getUTCMilliseconds();
-    }
-    set millisecondsUTC(value: number) {
-      this.value.setUTCMilliseconds(value);
-    }
-
-    get time(): number {
-      return this.value.getTime();
-    }
-    set time(value: number) {
-      this.value.setTime(value);
-    }
-
-    get timezoneOffset(): number {
-      return this.value.getTimezoneOffset();
-    }
-    get day(): number {
-      return this.value.getDay();
-    }
-    get dayUTC(): number {
-      return this.value.getUTCDay();
-    }
-  }
-
   export class ASRegExp extends ASObject {
     static classInitializer: any = function() {
       var proto: any = this.dPrototype;
@@ -1465,29 +1208,51 @@ module Shumway.AVMX.AS {
     private _source: string;
     private _captureNames: string [];
 
-    constructor(pattern: string = '', flags?: string) {
+    constructor(pattern: any, flags?: string) {
       super();
       this._dotall = false;
       this._extended = false;
       this._captureNames = [];
-      if (flags) {
-        var f = '';
-        for (var i = 0; i < flags.length; i++) {
-          var flag = flags[i];
-          if (flag === 's') {
-            // With the s flag set, . will match the newline character.
-            this._dotall = true;
-          } else if (flag === 'x') {
-            // With the x flag set, spaces in the regular expression, will be ignored as part of
-            // the pattern.
-            this._extended = true;
-          } else {
-            f += flag;
+      var source;
+      if (pattern === undefined) {
+        pattern = source = '';
+      } else if (this.securityDomain.AXRegExp.axIsType(pattern)) {
+        if (flags) {
+          this.securityDomain.throwError("TypeError", Errors.RegExpFlagsArgumentError);
+        }
+        source = pattern.source;
+        pattern = pattern.value;
+      } else {
+        pattern = String(pattern);
+        // Escape all forward slashes.
+        source = pattern.replace(/(^|^[\/]|(?:\\\\)+)\//g, '$1\\/');
+        if (flags) {
+          var f = flags;
+          flags = '';
+          for (var i = 0; i < f.length; i++) {
+            var flag = f[i];
+            switch (flag) {
+              case 's':
+                // With the s flag set, . will match the newline character.
+                this._dotall = true;
+                break;
+              case 'x':
+                // With the x flag set, spaces in the regular expression, will be ignored as part of
+                // the pattern.
+                this._extended = true;
+              case 'g':
+              case 'i':
+              case 'm':
+                // Only keep valid flags since an ECMAScript compatible RegExp implementation will
+                // throw on invalid ones. We have to avoid that in ActionScript.
+                flags += flag;
+            }
           }
         }
+        pattern = this._parse(source);
       }
-      this.value = new RegExp(this._parse(pattern), f);
-      this._source = pattern;
+      this.value = new RegExp(pattern, flags);
+      this._source = source;
     }
 
     private _parse(pattern: string): string {
@@ -1796,8 +1561,8 @@ module Shumway.AVMX.AS {
     }
   }
 
-  var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
-  var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var builtinNativeClasses: Shumway.MapObject<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var nativeClasses: Shumway.MapObject<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
   var nativeClassLoaderNames: {
     name: string;
     alias: string;
@@ -1817,6 +1582,7 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
 
+    builtinNativeClasses["__AS3__.vec.Vector"] = Vector;
     builtinNativeClasses["__AS3__.vec.Vector$object"] = GenericVector;
     builtinNativeClasses["__AS3__.vec.Vector$int"] = Int32Vector;
     builtinNativeClasses["__AS3__.vec.Vector$uint"] = Uint32Vector;
@@ -2229,7 +1995,7 @@ module Shumway.AVMX.AS {
         release || assert(axClass, "Class " + mn + " is not found.");
         release || assert(axClass.axConstruct);
         var loader: any = function () {
-          return axClass.axConstruct(arguments);
+          return axClass.axConstruct(<any>arguments);
         };
         loader.axIsType = function (value: any) {
           return axClass.axIsType(value);

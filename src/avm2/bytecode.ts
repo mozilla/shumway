@@ -787,7 +787,7 @@ module Shumway.AVM2 {
   import BIT_INDEX_MASK = Shumway.BitSets.BIT_INDEX_MASK;
 
   export class BlockSet extends Shumway.BitSets.Uint32ArrayBitSet {
-    constructor(length: number, public blockById: Shumway.Map<Bytecode>) {
+    constructor(length: number, public blockById: Shumway.MapObject<Bytecode>) {
       super(length);
     }
 
@@ -867,7 +867,7 @@ module Shumway.AVM2 {
       }
     }
 
-    makeBlockSetFactory(length: number, blockById: Shumway.Map<Bytecode>) {
+    makeBlockSetFactory(length: number, blockById: Shumway.MapObject<Bytecode>) {
       release || assert (!this.boundBlockSet);
       this.boundBlockSet = <any>(function blockSet() {
         return new Shumway.AVM2.BlockSet(length, blockById);
@@ -1039,7 +1039,7 @@ module Shumway.AVM2 {
       var bytecodes = this.bytecodes;
       var exceptions = this.methodInfo.exceptions;
       var hasExceptions = exceptions.length > 0;
-      var blockById: Shumway.Map<Bytecode> = {};
+      var blockById: Shumway.MapObject<Bytecode> = {};
       var code: Bytecode;
       var pc, end;
       var id = 0;

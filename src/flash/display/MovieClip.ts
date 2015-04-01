@@ -43,9 +43,9 @@ module Shumway.AVMX.AS.flash.display {
 
   class MovieClipSoundsManager {
     private _mc: MovieClip;
-    private _startSoundRegistrations: Map<any>;
+    private _startSoundRegistrations: MapObject<any>;
     private _soundStream: MovieClipSoundStream;
-    private _soundClips: Map<SoundClip>;
+    private _soundClips: MapObject<SoundClip>;
 
     constructor(mc: MovieClip) {
       this._mc = mc;
@@ -319,7 +319,7 @@ module Shumway.AVMX.AS.flash.display {
 
     private _sounds: MovieClipSoundsManager;
 
-    private _buttonFrames: Shumway.Map<number>;
+    private _buttonFrames: Shumway.MapObject<number>;
     private _currentButtonState: string;
 
     get currentFrame(): number /*int*/ {

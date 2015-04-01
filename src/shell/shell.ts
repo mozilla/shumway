@@ -24,6 +24,8 @@ declare var load;
 declare var quit;
 declare var read;
 declare var help;
+declare var timeout;
+declare var printErr;
 
 // Number of errors thrown, used for shell scripting to return non-zero exit codes.
 var errors = 0;
@@ -251,7 +253,7 @@ module Shumway.Shell {
 
     try {
       argumentParser.parse(commandLineArguments).filter(function (value, index, array) {
-        if (value.endsWith(".abc") || value.endsWith(".swf") || value.endsWith(".js")) {
+        if (value.endsWith(".abc") || value.endsWith(".swf") || value.endsWith(".js") || value.endsWith(".json")) {
           files.push(value);
         } else {
           return true;
@@ -377,6 +379,8 @@ module Shumway.Shell {
     files.forEach(function (file) {
       if (file.endsWith(".js")) {
         executeUnitTestFile(file);
+      } else if (file.endsWith(".json")) {
+        executeJSONFile(file);
       } else if (file.endsWith(".abc")) {
         executeABCFiles([file]);
       } else if (file.endsWith(".swf")) {
@@ -407,20 +411,96 @@ module Shumway.Shell {
     microTaskQueue.run(runDuration, runCount, true);
   }
 
+  function executeJSONFile(file: string) {
+    if (verbose) {
+      writer.writeLn("executeJSON: " + file);
+    }
+    // Remove comments
+    var json = JSON.parse(read(file, "text").split("\n").filter(function (line) {
+      return line.trim().indexOf("//") !== 0;
+    }).join("\n"));
+
+    json.forEach(function (run, i) {
+      printErr("Running batch " + (i + 1) + " of " + json.length + " (" + run[1].length + " tests)");
+      var securityDomain = createSecurityDomain(builtinABCPath, null, null);
+      // Run libraries.
+      run[0].forEach(function (file) {
+        var buffer = new Uint8Array(read(file, "binary"));
+        var abc = new ABCFile(buffer);
+        if (verbose) {
+          writer.writeLn("executeABC: " + file);
+        }
+        securityDomain.application.loadABC(abc);
+        securityDomain.application.executeABC(abc);
+      });
+      // Run files.
+      run[1].forEach(function (file) {
+        try {
+          if (verbose) {
+            writer.writeLn("executeABC: " + file);
+          }
+          timeout(10, function () {
+            writer.writeLn("TIMEDOUT!");
+            throw new Error("Timeout");
+            return true;
+          });
+          var buffer = new Uint8Array(read(file, "binary"));
+          var abc = new ABCFile(buffer);
+          securityDomain.application.loadABC(abc);
+          var t = dateNow();
+          securityDomain.application.executeABC(abc);
+          var e = (dateNow() - t);
+          if (e > 100) {
+            printErr("Test: " + file + " is very slow (" + e.toFixed() + " ms), consider disabling it.");
+          }
+          if (verbose) {
+            writer.writeLn("executeABC PASS: " + file);
+          }
+        } catch (x) {
+          if (verbose) {
+            writer.writeLn("executeABC FAIL: " + file);
+          }
+          writer.writeLn("EXCEPTED!");
+          try {
+            writer.redLn('Exception encountered while running ' + file + ': ' + '(' + x + ')');
+            writer.redLns(x.stack);
+          } catch (y) {
+            writer.writeLn("Error printing error.");
+          }
+          errors ++;
+        }
+      });
+    });
+  }
+
   function executeABCFiles(files: string []) {
     var securityDomain = createSecurityDomain(builtinABCPath, null, null);
     files.forEach(function (file) {
       try {
-        var buffer = new Uint8Array(read(file, "binary"));
-        var abc = new ABCFile(buffer);
-        securityDomain.application.loadABC(abc);
         if (verbose) {
           writer.writeLn("executeABC: " + file);
         }
+        timeout(5, function () {
+          throw new Error("Timeout");
+          return true;
+        });
+        var buffer = new Uint8Array(read(file, "binary"));
+        var abc = new ABCFile(buffer);
+        securityDomain.application.loadABC(abc);
         securityDomain.application.executeABC(abc);
+        if (verbose) {
+          writer.writeLn("executeABC PASS: " + file);
+        }
       } catch (x) {
-        writer.redLn('Exception encountered while running ' + file + ': ' + '(' + x + ')');
-        writer.redLns(x.stack);
+        if (verbose) {
+          writer.writeLn("executeABC FAIL: " + file);
+        }
+        try {
+          writer.redLn('Exception encountered while running ' + file + ': ' + '(' + x + ')');
+          writer.redLns(x.stack);
+        } catch (y) {
+          writer.writeLn("Error printing error.");
+        }
         errors ++;
       }
     });

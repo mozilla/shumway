@@ -349,7 +349,7 @@ module Shumway.AVMX {
           (caches.traitsCache || (caches.traitsCache = [])).push(traits);
         }
 
-        var obj = objectClass ? objectClass.axConstruct(null, []) : ba.securityDomain.createObject();
+        var obj = objectClass ? objectClass.axConstruct([]) : ba.securityDomain.createObject();
         (caches.objectsCache || (caches.objectsCache = [])).push(obj);
         for (var i = 0; i < traits.members.length; i++) {
           var value = readAmf3Data(ba, caches);

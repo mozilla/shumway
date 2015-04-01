@@ -300,7 +300,7 @@ module Shumway.AVMX {
     if (!release) {
       method.toString = function () {
         return "Interpret " + methodTraitInfo.toString();
-      }
+      };
     }
     methodTraitInfo.method = method;
     return method;
@@ -321,7 +321,7 @@ module Shumway.AVMX {
           }
           return native.apply(this, args);
       }
-    }
+    };
   }
 
   export class TraitInfo {
@@ -766,7 +766,7 @@ module Shumway.AVMX {
 
     getInitializer(): MethodInfo {
       if (typeof this.initializer === "number") {
-        return this.initializer = this.abc.getMethodInfo(<number>this.initializer)
+        return this.initializer = this.abc.getMethodInfo(<number>this.initializer);
       }
       return <MethodInfo>this.initializer;
     }
@@ -2001,11 +2001,11 @@ module Shumway.AVMX {
   }
 
   export class ABCCatalog {
-    map: Shumway.Map<Shumway.Map<string>>;
+    map: Shumway.MapObject<Shumway.MapObject<string>>;
     abcs: Uint8Array;
-    scripts: Shumway.Map<any>;
+    scripts: Shumway.MapObject<any>;
     constructor(abcs: Uint8Array, index: any) {
-      this.map = ObjectUtilities.createMap<Shumway.Map<string>>();
+      this.map = ObjectUtilities.createMap<Shumway.MapObject<string>>();
       this.abcs = abcs;
       this.scripts = ObjectUtilities.createMap<string>();
       for (var i = 0; i < index.length; i++) {

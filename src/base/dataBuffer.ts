@@ -333,7 +333,7 @@ module Shumway.ArrayUtilities {
     }
 
     writeBoolean(value: boolean): void {
-      this.writeByte(!!value ? 1 : 0)
+      this.writeByte(!!value ? 1 : 0);
     }
 
     writeByte(value: number /*int*/): void {

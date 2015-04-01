@@ -121,7 +121,7 @@ module Shumway.AVMX {
   //  XMLUnterminatedElement               : {code: 1096, message: "XML parser failure: Unterminated element."},
   //  XMLUnterminatedProcessingInstruction : {code: 1097, message: "XML parser failure: Unterminated processing instruction."},
     XMLNamespaceWithPrefixAndNoURI       : {code: 1098, message: "Illegal prefix %1 for no namespace."},
-  //  RegExpFlagsArgumentError             : {code: 1100, message: "Cannot supply flags when constructing one RegExp from another."},
+    RegExpFlagsArgumentError             : {code: 1100, message: "Cannot supply flags when constructing one RegExp from another."},
   //  NoScopeError                         : {code: 1101, message: "Cannot verify method %1 with unknown scope."},
   //  IllegalDefaultValue                  : {code: 1102, message: "Illegal default value for type %1."},
   //  CannotExtendFinalClass               : {code: 1103, message: "Class %1 cannot extend final base class."},
@@ -348,7 +348,7 @@ module Shumway.AVMX {
   //  SecurityContentAccessDeniedError                          : { code: 2193, message: "Security sandbox violation: %1: %2 cannot access %3."},
   //  LoaderParamError                                          : { code: 2194, message: "Parameter %1 cannot be a Loader."},
   //  LoaderAsyncError                                          : { code: 2195, message: "Error thrown as Loader called %1."},
-    ObjectWithStringsParamError                               : { code: 2196, message: "Parameter %1 must be an Object with only String values."},
+    ObjectWithStringsParamError                               : { code: 2196, message: "Parameter %1 must be an Object with only String values."}
   //  SystemUpdaterPlayerNotSupportedError                      : { code: 2200, message: "The SystemUpdater class is not supported by this player."},
   //  SystemUpdaterOSNotSupportedError                          : { code: 2201, message: "The requested update type is not supported on this operating system."},
   //  SystemUpdaterBusy                                         : { code: 2202, message: "Only one SystemUpdater action is allowed at a time."},

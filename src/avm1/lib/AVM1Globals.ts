@@ -485,15 +485,15 @@ module Shumway.AVM1.Lib {
     public parseFloat: (str: string) => number = parseFloat;
     public parseInt: (s: string, radix?: number) => number = parseInt;
 
-    public Object: ASObject;
-    public Function: ASObject;
-    public Array: ASObject;
-    public Number: ASObject;
-    public Math: ASObject;
-    public Boolean: ASObject;
-    public Date: ASObject;
-    public RegExp: ASObject;
-    public String: ASObject;
+    public Object: (args: any[]) => AVMX.AXObject;
+    public Function: (args: any[]) => AVMX.AXObject;
+    public Array: (args: any[]) => AVMX.AXObject;
+    public Number: (args: any[]) => AVMX.AXObject;
+    public Math: (args: any[]) => AVMX.AXObject;
+    public Boolean: (args: any[]) => AVMX.AXObject;
+    public Date: (args: any[]) => AVMX.AXObject;
+    public RegExp: (args: any[]) => AVMX.AXObject;
+    public String: (args: any[]) => AVMX.AXObject;
 
     public undefined: any = undefined;
     public MovieClip: ASObject;

@@ -93,7 +93,19 @@ module Shumway.AVMX.AS {
     }
   }
 
+  export class Vector extends ASObject {
+    static axIsType(x: AXObject) {
+      return this.dPrototype.isPrototypeOf(x) ||
+             this.securityDomain.Int32Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.securityDomain.Uint32Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.securityDomain.Float64Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.securityDomain.ObjectVector.axClass.dPrototype.isPrototypeOf(x);
+    }
+  }
+
   export class GenericVector extends BaseVector {
+
+    static axClass: typeof GenericVector;
 
     static CASEINSENSITIVE = 1;
     static DESCENDING = 2;
@@ -132,8 +144,20 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
     }
 
-    newThisType(): GenericVector {
-      return new GenericVector();
+    static axApply(self: GenericVector, args: any[]) {
+      var object = args[0];
+      if (self.axClass.axIsType(object)) {
+        return object;
+      }
+      var length = object.axGetPublicProperty("length");
+      if (length !== undefined) {
+        var v = self.axClass.axConstruct([length, false]);
+        for (var i = 0; i < length; i++) {
+          v.axSetNumericProperty(i, object.axGetPublicProperty(i));
+        }
+        return v;
+      }
+      Shumway.Debug.unexpected();
     }
 
     static defaultCompareFunction(a, b) {
@@ -161,32 +185,22 @@ module Shumway.AVMX.AS {
       return result;
     }
 
+    axClass: AXClass;
+
+    static type: AXClass;
+
     private _fixed: boolean;
     private _buffer: any [];
-    private _type: ASClass;
     private _defaultValue: any;
 
-    constructor (length: number /*uint*/ = 0, fixed: boolean = false, type: ASClass = ASObject) {
+    constructor (length: number /*uint*/ = 0, fixed: boolean = false) {
       false && super();
       length = length >>> 0; fixed = !!fixed;
       this._fixed = !!fixed;
       this._buffer = new Array(length);
-      this._type = type;
       // TODO: FIX ME
       // this._defaultValue = type ? type.defaultValue : null;
       this._fill(0, length, this._defaultValue);
-    }
-
-    /**
-     * Creates a new class that is bound to this type.
-     */
-    public static applyType(factoryType: AXClass, type: AXClass): AXClass {
-      var axClass = factoryType.securityDomain.createSyntheticClass(factoryType);
-      axClass.tPrototype.axInitializer = function (length: number /*uint*/ = 0, fixed: boolean = false) {
-        // factoryType.tPrototype.axInitializer points to the GenericVector constructor.
-        factoryType.tPrototype.axInitializer.call(this, length, fixed, type);
-      }
-      return axClass;
     }
 
     ///**
@@ -256,19 +270,19 @@ module Shumway.AVMX.AS {
       if (arguments.length === 0) {
         return this._buffer.sort();
       }
-      if (sortBehavior instanceof Function) {
-        return this._buffer.sort(<(a: any, b: any) => number>sortBehavior);
+      if (this.securityDomain.AXFunction.axIsType(sortBehavior)) {
+        return this._buffer.sort(<(a: any, b: any) => number>sortBehavior.value);
       } else {
         var options = sortBehavior|0;
         release || assertNotImplemented (!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
         release || assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
-        if (options && GenericVector.NUMERIC) {
+        if (options & GenericVector.NUMERIC) {
           if (options & GenericVector.DESCENDING) {
             return this._buffer.sort((a, b) => asCoerceNumber(b) - asCoerceNumber(a));
           }
           return this._buffer.sort((a, b) => asCoerceNumber(a) - asCoerceNumber(b));
         }
-        if (options && GenericVector.CASEINSENSITIVE) {
+        if (options & GenericVector.CASEINSENSITIVE) {
           if (options & GenericVector.DESCENDING) {
             return this._buffer.sort((a, b) => <any>asCoerceString(b).toLowerCase() -
                                                <any>asCoerceString(a).toLowerCase());
@@ -303,7 +317,7 @@ module Shumway.AVMX.AS {
      * as |this| for each of the elements in the vector.
      */
     filter(callback, thisObject) {
-      var v = new GenericVector(0, false, this._type);
+      var v = <GenericVector><any>this.axClass.axConstruct([0, false]);
       for (var i = 0; i < this._buffer.length; i++) {
         if (callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
           v.push(this.axGetNumericProperty(i));
@@ -360,7 +374,7 @@ module Shumway.AVMX.AS {
       if (!this.securityDomain.isCallable(callback)) {
         this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
-      var v = new GenericVector(0, false, this._type);
+      var v = <GenericVector><any>this.axClass.axConstruct([0, false]);
       for (var i = 0; i < this._buffer.length; i++) {
         v.push(callback.call(thisObject, this.axGetNumericProperty(i), i, this));
       }
@@ -397,12 +411,7 @@ module Shumway.AVMX.AS {
     }
 
     _coerce(v) {
-      if (this._type) {
-        return this._type.axCoerce(v);
-      } else if (v === undefined) {
-        return null;
-      }
-      return v;
+      return (<any>this.axClass).type.axCoerce(v);
     }
 
     shift() {
@@ -428,7 +437,7 @@ module Shumway.AVMX.AS {
       var length = buffer.length;
       var first = Math.min(Math.max(start, 0), length);
       var last = Math.min(Math.max(end, first), length);
-      var result = new GenericVector(last - first, this.fixed, this._type);
+      var result = <GenericVector><any>this.axClass.axConstruct([last - first, this.fixed]);
       result._buffer = buffer.slice(first, last);
       return result;
     }
@@ -447,7 +456,7 @@ module Shumway.AVMX.AS {
       for (var i = 2; i < insertCount + 2; i++) {
         items[i] = this._coerce(arguments[i]);
       }
-      var result = new GenericVector(deleteCount, this.fixed, this._type);
+      var result =<GenericVector><any>this.axClass.axConstruct([deleteCount, this.fixed]);
       result._buffer = buffer.splice.apply(buffer, items);
       return result;
     }

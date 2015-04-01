@@ -1,3 +1,4 @@
+/* tslint:disable */
 /*
  * Copyright 2014 Mozilla Foundation
  *
@@ -56,7 +57,7 @@ interface Object extends IProtocol {
   hash: number;
   runtimeId: number;
 
-  resolutionMap: Shumway.Map<Shumway.Map<string>>;
+  resolutionMap: Shumway.MapObject<Shumway.MapObject<string>>;
   bindings: Shumway.AVM2.Runtime.Bindings;
 
   getNamespaceResolutionMap: any;
@@ -72,7 +73,7 @@ interface Object extends IProtocol {
   asLength: number;
   asSlots: Shumway.AVM2.Runtime.SlotInfoMap;
   asIsNativePrototype: boolean;
-  asOpenMethods: Shumway.Map<Function>;
+  asOpenMethods: Shumway.MapObject<Function>;
   asIsClass: boolean;
 
   // E4X
@@ -112,7 +113,7 @@ module Shumway.AVM2.Runtime {
   var callCounter = new Shumway.Metrics.Counter(true);
   var counter = Shumway.Metrics.Counter.instance;
 
-  import Map = Shumway.Map;
+  import Map = Shumway.MapObject;
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import Hashes = Shumway.AVM2.ABC.Hashes;
   import Multiname = Shumway.AVM2.ABC.Multiname;

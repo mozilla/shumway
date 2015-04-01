@@ -41,6 +41,9 @@ module Shumway.AVMX.AS {
   import clamp = Shumway.NumberUtilities.clamp;
 
   export class Float64Vector extends BaseVector {
+
+    static axClass: typeof Float64Vector;
+
     static EXTRA_CAPACITY = 4;
     static INITIAL_CAPACITY = 10;
     static DEFAULT_VALUE = 0;
@@ -151,7 +154,7 @@ module Shumway.AVMX.AS {
       return str;
     }
 
-    toLocaleString(){
+    toLocaleString() {
       var str = "";
       for (var i = 0; i < this._length; i++) {
         str += this._buffer[this._offset + i];
@@ -375,18 +378,17 @@ module Shumway.AVMX.AS {
       if (arguments.length === 0) {
         return Array.prototype.sort.call(this._view());
       }
-      // REDUX: The instanceof check here is probably broken.
-      if (sortBehavior instanceof Function) {
-        return Array.prototype.sort.call(this._view(), sortBehavior);
-      } else {
-        var options = sortBehavior|0;
-        release || assertNotImplemented (!(options & Float64Vector.UNIQUESORT), "UNIQUESORT");
-        release || assertNotImplemented (!(options & Float64Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
-        if (options & Float64Vector.DESCENDING) {
-          return Array.prototype.sort.call(this._view(), (a, b) => b - a);
-        }
-        return Array.prototype.sort.call(this._view(), (a, b) => a - b);
+      if (this.securityDomain.AXFunction.axIsType(sortBehavior)) {
+        return Array.prototype.sort.call(this._view(), sortBehavior.value);
       }
+      var options = sortBehavior | 0;
+      release || assertNotImplemented(!(options & Float64Vector.UNIQUESORT), "UNIQUESORT");
+      release || assertNotImplemented(!(options & Float64Vector.RETURNINDEXEDARRAY),
+                                      "RETURNINDEXEDARRAY");
+      if (options & Float64Vector.DESCENDING) {
+        return Array.prototype.sort.call(this._view(), (a, b) => b - a);
+      }
+      return Array.prototype.sort.call(this._view(), (a, b) => a - b);
     }
 
     shift() {
@@ -531,7 +533,7 @@ module Shumway.AVMX.AS {
     }
 
     axHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.axNextNameIndex(hasNext2Info.index)
+      hasNext2Info.index = this.axNextNameIndex(hasNext2Info.index);
     }
   }
 }

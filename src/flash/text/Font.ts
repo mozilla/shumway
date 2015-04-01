@@ -27,8 +27,8 @@ module Shumway.AVMX.AS.flash.text {
     static axClass: typeof Font;
 
     private static _fonts: Font[];
-    private static _fontsBySymbolId: Shumway.Map<Font>;
-    private static _fontsByName: Shumway.Map<Font>;
+    private static _fontsBySymbolId: Shumway.MapObject<Font>;
+    private static _fontsByName: Shumway.MapObject<Font>;
 
     static DEVICE_FONT_METRICS_WIN: Object;
     static DEVICE_FONT_METRICS_LINUX: Object;
