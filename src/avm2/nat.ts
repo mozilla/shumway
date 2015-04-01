@@ -1642,7 +1642,7 @@ module Shumway.AVMX.AS {
     return <any>securityDomain.application.getClass(Multiname.FromSimpleName(simpleName));
   }
 
-  function FlashUtilScript_getTimer(securityDomain: SecurityDomain) {
+  export function FlashUtilScript_getTimer(securityDomain: SecurityDomain) {
     return Date.now() - (<any>securityDomain).flash.display.Loader.axClass.runtimeStartTime;
   }
 
@@ -1661,7 +1661,8 @@ module Shumway.AVMX.AS {
     }
     if (url.toLowerCase().indexOf('fscommand:') === 0) {
       var fscommand = (<any>securityDomain).flash.system.fscommand;
-      fscommand.call(null, url.substring('fscommand:'.length), window_);
+      fscommand.axCall(securityDomain.createObject(), // REDUX ? why
+        url.substring('fscommand:'.length), window_);
       return;
     }
     // TODO handle other methods than GET

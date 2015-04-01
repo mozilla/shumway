@@ -56,6 +56,9 @@ interface ISecurityDomain {
       URLRequest: typeof flashPackage.net.URLRequest;
       SharedObject: typeof flashPackage.net.SharedObject;
     }
+    system: {
+      fscommand: typeof flashPackage.system.fscommand;
+    }
     ui: {
       ContextMenu: typeof flashPackage.ui.ContextMenu;
       ContextMenuItem: typeof flashPackage.ui.ContextMenuItem;
@@ -321,9 +324,7 @@ declare module Shumway.AVMX.AS.flash {
       static version: string;
     }
     class Security {}
-    class FSCommand {
-      static _fscommand(command: string, args?: string): void;
-    }
+    function fscommand(command: string, args: string): void;
   }
   module text {
     class TextField extends flash.display.DisplayObject {

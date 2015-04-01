@@ -115,14 +115,18 @@ module Shumway.AVM1.Lib {
       nativeTarget.duplicateMovieClip(newname, depth, null);
     }
 
-    public fscommand = flash.system.FSCommand._fscommand;
+    public fscommand(command: string, args?: string) {
+      return this.securityDomain.flash.system.fscommand(command, args);
+    }
 
     public getAVM1Property(target, index) {
       var nativeTarget = AVM1Utils.resolveTarget(target);
       return nativeTarget[PropertiesIndexMap[index]];
     }
 
-    public getTimer = Shumway.AVM2.AS.FlashUtilScript_getTimer;
+    public getTimer(): number {
+      return Shumway.AVMX.AS.FlashUtilScript_getTimer(this.securityDomain);
+    }
 
     public getURL(url, target?, method?) {
       var request = new this.securityDomain.flash.net.URLRequest(String(url));
