@@ -607,6 +607,7 @@ module.exports = function(grunt) {
   grunt.registerTask('travis', [
     'exec:install_js_travis',
     'exec:install_avmshell_travis',
+    'buildlibs',
     // Duplicates almost all of "build" because we don't want to do the costly "playerglobal" task.
     // 'parallel:base',
     'generate-version',
