@@ -69,8 +69,8 @@ module Shumway.AVM2.Verifier {
     static Dictionary: TraitsType;
 
     static _cache = {
-      byQN: <Shumway.Map<Type>>Object.create(null),
-      byHash: <Shumway.Map<Type>>Object.create(null)
+      byQN: <Shumway.MapObject<Type>>Object.create(null),
+      byHash: <Shumway.MapObject<Type>>Object.create(null)
     };
 
     static from(info: Info, domain: ApplicationDomain): Type {

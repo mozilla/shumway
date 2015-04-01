@@ -22,7 +22,7 @@ module Shumway.AVMX.AS.flash.events {
 
     static axClass: typeof Event;
 
-    static _instances: Shumway.Map<Event>;
+    static _instances: Shumway.MapObject<Event>;
 
     static classInitializer: any = function () {
       var self: typeof Event = this;

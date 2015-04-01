@@ -121,7 +121,7 @@ module Shumway.AVM2.AS {
     public static typeScriptPrototype: Object;
     public static defaultValue: any = null;
     public static native_prototype: Object;
-    public static implementedInterfaces: Shumway.Map<ASClass>;
+    public static implementedInterfaces: Shumway.MapObject<ASClass>;
     public static isInterface: () => boolean;
     public static applyType: (type: ASClass) => ASClass;
     public static protocol: IProtocol;
@@ -620,7 +620,7 @@ module Shumway.AVM2.AS {
     /**
      * Set of implemented interfaces.
      */
-    implementedInterfaces: Shumway.Map<ASClass>;
+    implementedInterfaces: Shumway.MapObject<ASClass>;
 
     defaultValue: any;
 
@@ -1913,7 +1913,7 @@ module Shumway.AVM2.AS {
     get dayUTC(): number { return (<any>this).getUTCDay(); }
   }
 
-  var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var builtinNativeClasses: Shumway.MapObject<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
   var isInitialized: boolean = false;
 
@@ -1987,8 +1987,8 @@ module Shumway.AVM2.AS {
   }
 
 
-  var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
-  var nativeFunctions: Shumway.Map<Function> = Shumway.ObjectUtilities.createMap<Function>();
+  var nativeClasses: Shumway.MapObject<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var nativeFunctions: Shumway.MapObject<Function> = Shumway.ObjectUtilities.createMap<Function>();
 
   export function registerNativeClass(name: string, cls: ASClass) {
     release || assert (!nativeClasses[name], "Native class: " + name + " is already registered.");

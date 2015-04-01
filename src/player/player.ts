@@ -254,7 +254,7 @@ module Shumway.Player {
     /**
      * Movie parameters, such as flashvars.
      */
-    public movieParams: Map<string>;
+    public movieParams: MapObject<string>;
 
     /**
      * Initial stage alignment: l|r|t|tr|tl.

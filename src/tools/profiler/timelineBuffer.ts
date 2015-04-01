@@ -38,7 +38,7 @@ module Shumway.Tools.Profiler {
     private _depth: number;
     private _data: any [];
     private _kinds: TimelineItemKind [];
-    private _kindNameMap: Shumway.Map<TimelineItemKind>;
+    private _kindNameMap: Shumway.MapObject<TimelineItemKind>;
     private _marks: Shumway.CircularBuffer;
     private _times: Shumway.CircularBuffer;
     private _stack: number [];

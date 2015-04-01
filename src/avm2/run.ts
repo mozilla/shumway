@@ -689,7 +689,7 @@ module Shumway.AVMX {
     tPrototype: AXObject;
     dPrototype: AXObject;
     axBox: any;
-    axConstruct: any;
+    axConstruct: (args: any[]) => AXObject;
     axApply: any;
     axCoerce: any;
     axIsType: any;
@@ -917,6 +917,7 @@ module Shumway.AVMX {
     private rootClassPrototype: AXObject;
 
     private nativeClasses: any;
+    private vectorClasses: Map<AXClass, AXClass>;
 
     private _catalogs: ABCCatalog [];
 
@@ -926,6 +927,7 @@ module Shumway.AVMX {
       this.classAliases = new AliasesCache();
       this.application = new ApplicationDomain(this, this.system);
       this.nativeClasses = Object.create(null);
+      this.vectorClasses = new Map<AXClass, AXClass>();
       this._catalogs = [];
     }
 
@@ -960,27 +962,50 @@ module Shumway.AVMX {
     }
 
     applyType(axClass: AXClass, types: AXClass []): AXClass {
-      var factoryClassName = axClass.classInfo.instanceInfo.getName().name;
-      if (factoryClassName === "Vector") {
-        release || assert(types.length === 1);
-        var type = types[0];
-        var typeClassName;
-        if (!isNullOrUndefined(type)) {
-          typeClassName = type.classInfo.instanceInfo.getName().name.toLowerCase();
-          switch (typeClassName) {
-            case "number":
-            case "double":
-              return <any>this.Float64Vector.axClass;
-            case "int":
-              return <any>this.Int32Vector.axClass;
-            case "uint":
-              return <any>this.Uint32Vector.axClass;
-          }
-        }
-        return <any>this.ObjectVector.axClass.applyType(type);
-      } else {
-        Shumway.Debug.notImplemented(factoryClassName);
+      release || assert(axClass.classInfo.instanceInfo.getName().name === "Vector");
+      release || assert(types.length === 1);
+      var type = types[0] || this.AXObject;
+      return this.getVectorClass(type);
+    }
+
+    getVectorClass(type: AXClass): AXClass {
+      var vectorClass = this.vectorClasses.get(type);
+      if (vectorClass) {
+        return vectorClass;
       }
+      var typeClassName = type ?
+                          type.classInfo.instanceInfo.getName().getMangledName() :
+                          '$BgObject';
+      switch (typeClassName) {
+        case "$BgNumber":
+        case "$Bgdouble":
+          vectorClass = <any>this.Float64Vector.axClass;
+          break;
+        case "$Bgint":
+          vectorClass = <any>this.Int32Vector.axClass;
+          break;
+        case "$Bguint":
+          vectorClass = <any>this.Uint32Vector.axClass;
+          break;
+        default:
+          vectorClass = this.createVectorClass(type);
+      }
+      this.vectorClasses.set(type, vectorClass);
+      return vectorClass;
+    }
+
+    createVectorClass(type: AXClass): AXClass {
+      var genericVectorClass = this.ObjectVector.axClass;
+      var axClass: AXClass = Object.create(genericVectorClass);
+      // Put the superClass tPrototype on the prototype chain so we have access
+      // to all factory protocol handlers by default.
+      axClass.tPrototype = Object.create(genericVectorClass.tPrototype);
+      axClass.tPrototype.axClass = axClass;
+      // We don't need a new dPrototype object.
+      axClass.dPrototype = <any>genericVectorClass.dPrototype;
+      axClass.superClass = <any>genericVectorClass;
+      (<any>axClass).type = type;
+      return axClass;
     }
 
     /**

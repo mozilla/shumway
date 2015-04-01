@@ -98,7 +98,8 @@ module Shumway.AVMX.AS {
       return this.dPrototype.isPrototypeOf(x) ||
              this.securityDomain.Int32Vector.axClass.dPrototype.isPrototypeOf(x) ||
              this.securityDomain.Uint32Vector.axClass.dPrototype.isPrototypeOf(x) ||
-             this.securityDomain.Float64Vector.axClass.dPrototype.isPrototypeOf(x);
+             this.securityDomain.Float64Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.securityDomain.ObjectVector.axClass.dPrototype.isPrototypeOf(x);
     }
   }
 
@@ -186,35 +187,20 @@ module Shumway.AVMX.AS {
 
     axClass: AXClass;
 
+    static type: AXClass;
+
     private _fixed: boolean;
     private _buffer: any [];
-    private _type: AXClass;
     private _defaultValue: any;
 
-    constructor (length: number /*uint*/ = 0, fixed: boolean = false, type?: AXClass) {
+    constructor (length: number /*uint*/ = 0, fixed: boolean = false) {
       false && super();
       length = length >>> 0; fixed = !!fixed;
       this._fixed = !!fixed;
       this._buffer = new Array(length);
-      this._type = type || this.securityDomain.AXObject;
       // TODO: FIX ME
       // this._defaultValue = type ? type.defaultValue : null;
       this._fill(0, length, this._defaultValue);
-    }
-
-    /**
-     * Creates a new class that is bound to this type.
-     */
-    public static applyType(type: AXClass): AXClass {
-      var axClass: AXClass = Object.create(this);
-      // Put the superClass tPrototype on the prototype chain so we have access
-      // to all factory protocol handlers by default.
-      axClass.tPrototype = Object.create(this.tPrototype);
-      axClass.tPrototype.axClass = axClass;
-      // We don't need a new dPrototype object.
-      axClass.dPrototype = <any>this.dPrototype;
-      axClass.superClass = <any>this;
-      return axClass;
     }
 
     ///**
@@ -331,7 +317,7 @@ module Shumway.AVMX.AS {
      * as |this| for each of the elements in the vector.
      */
     filter(callback, thisObject) {
-      var v = new GenericVector(0, false, this._type);
+      var v = <GenericVector><any>this.axClass.axConstruct([0, false]);
       for (var i = 0; i < this._buffer.length; i++) {
         if (callback.call(thisObject, this.axGetNumericProperty(i), i, this)) {
           v.push(this.axGetNumericProperty(i));
@@ -388,7 +374,7 @@ module Shumway.AVMX.AS {
       if (!this.securityDomain.isCallable(callback)) {
         this.securityDomain.throwError("ArgumentError", Errors.CheckTypeFailedError);
       }
-      var v = new GenericVector(0, false, this._type);
+      var v = <GenericVector><any>this.axClass.axConstruct([0, false]);
       for (var i = 0; i < this._buffer.length; i++) {
         v.push(callback.call(thisObject, this.axGetNumericProperty(i), i, this));
       }
@@ -425,12 +411,7 @@ module Shumway.AVMX.AS {
     }
 
     _coerce(v) {
-      if (this._type) {
-        return this._type.axCoerce(v);
-      } else if (v === undefined) {
-        return null;
-      }
-      return v;
+      return (<any>this.axClass).type.axCoerce(v);
     }
 
     shift() {
@@ -456,7 +437,7 @@ module Shumway.AVMX.AS {
       var length = buffer.length;
       var first = Math.min(Math.max(start, 0), length);
       var last = Math.min(Math.max(end, first), length);
-      var result = new GenericVector(last - first, this.fixed, this._type);
+      var result = <GenericVector><any>this.axClass.axConstruct([last - first, this.fixed]);
       result._buffer = buffer.slice(first, last);
       return result;
     }
@@ -475,7 +456,7 @@ module Shumway.AVMX.AS {
       for (var i = 2; i < insertCount + 2; i++) {
         items[i] = this._coerce(arguments[i]);
       }
-      var result = new GenericVector(deleteCount, this.fixed, this._type);
+      var result =<GenericVector><any>this.axClass.axConstruct([deleteCount, this.fixed]);
       result._buffer = buffer.splice.apply(buffer, items);
       return result;
     }
