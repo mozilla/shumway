@@ -24,6 +24,7 @@ declare var load;
 declare var quit;
 declare var read;
 declare var help;
+declare var timeout;
 
 // Number of errors thrown, used for shell scripting to return non-zero exit codes.
 var errors = 0;
@@ -411,16 +412,24 @@ module Shumway.Shell {
     var securityDomain = createSecurityDomain(builtinABCPath, null, null);
     files.forEach(function (file) {
       try {
-        var buffer = new Uint8Array(read(file, "binary"));
-        var abc = new ABCFile(buffer);
-        securityDomain.application.loadABC(abc);
         if (verbose) {
           writer.writeLn("executeABC: " + file);
         }
+        timeout(5, function () {
+          throw new Error("Timeout");
+          return true;
+        });
+        var buffer = new Uint8Array(read(file, "binary"));
+        var abc = new ABCFile(buffer);
+        securityDomain.application.loadABC(abc);
         securityDomain.application.executeABC(abc);
       } catch (x) {
-        writer.redLn('Exception encountered while running ' + file + ': ' + '(' + x + ')');
-        writer.redLns(x.stack);
+        try {
+          writer.redLn('Exception encountered while running ' + file + ': ' + '(' + x + ')');
+          writer.redLns(x.stack);
+        } catch (y) {
+          writer.writeLn("Error printing error.");
+        }
         errors ++;
       }
     });

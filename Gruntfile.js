@@ -168,21 +168,21 @@ module.exports = function(grunt) {
         cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
                                       ' -j ' + (+grunt.option('threads') || 9)
       },
+      test_avm2_acceptance: {
+        maxBuffer: Infinity,
+        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N400 utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc {} | egrep -o "(PASSED|FAILED)" | sort | uniq -c'
+      },
       test_avm2_acceptance_parse: {
         maxBuffer: Infinity,
         cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
       },
-      test_avm2_acceptance: {
+      test_avm2_acceptance_trace: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc {}'
+        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N400 utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc {}'
       },
-      test_avm2_acceptance_ecma3_date: {
+      test_avm2_acceptance_abcasm: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/acceptance/ecma3/date -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc {}'
-      },
-      test_avm2_acceptance_ecma3_regexp: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/acceptance/ecma3/regexp -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc {}'
+        cmd: 'find -L test/avm2/acceptance/abcasm/coverage -name "*.abc" | parallel --no-notice -X -N400 utils/jsshell/js build/ts/shell.js -x test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc test/avm2/acceptance/abcasm/abs_helper.abc {}'
       },
       test_avm2_baseline: {
         cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
