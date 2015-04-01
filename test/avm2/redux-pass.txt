@@ -114,7 +114,6 @@ test/avm2/pass/sort.abc
 test/avm2/pass/type-2.abc
 test/avm2/pass/str-0.abc
 test/avm2/pass/vectors-generic.abc
-test/avm2/pass/vectors-int.abc
 test/avm2/pass/reg-0.abc
 test/avm2/pass/reg-1.abc
 test/avm2/pass/reg-2.abc
