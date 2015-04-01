@@ -1564,8 +1564,9 @@ module Shumway.AVMX {
     public findDefiningScript(mn: Multiname, execute: boolean): ScriptInfo {
       release || assert(mn instanceof Multiname);
       // Look in parent domain first.
+      var script: ScriptInfo;
       if (this.parent) {
-        var script = this.parent.findDefiningScript(mn, execute);
+        script = this.parent.findDefiningScript(mn, execute);
         if (script) {
           return script;
         }
@@ -1574,17 +1575,9 @@ module Shumway.AVMX {
       // Search through the loaded abcs.
       for (var i = 0; i < this._abcs.length; i++) {
         var abc = this._abcs[i];
-        var scripts = abc.scripts;
-        for (var j = 0; j < scripts.length; j++) {
-          var script = scripts[j];
-          var traits = script.traits;
-          traits.resolve();
-          if (traits.getTrait(mn)) {
-            if (execute) {
-              this._ensureScriptIsExecuted(script);
-            }
-            return script;
-          }
+        script = this._findDefiningScriptInABC(abc, mn, execute);
+        if (script) {
+          return script;
         }
       }
 
@@ -1592,16 +1585,29 @@ module Shumway.AVMX {
       var abc = this.system.securityDomain.findDefiningABC(mn);
       if (abc) {
         this.loadABC(abc);
-        return this.findDefiningScript(mn, execute);
+        script = this._findDefiningScriptInABC(abc, mn, execute);
+        release || assert(script, 'Shall find class in loaded ABC');
+        return script;
       }
 
       return null;
     }
 
-    private _ensureScriptIsExecuted(script: ScriptInfo) {
-      if (script.state === ScriptInfoState.None) {
-        this.executeScript(script);
+    private _findDefiningScriptInABC(abc: ABCFile, mn: Multiname, execute: boolean): ScriptInfo {
+      var scripts = abc.scripts;
+      for (var j = 0; j < scripts.length; j++) {
+        var script = scripts[j];
+        var traits = script.traits;
+        traits.resolve();
+        if (traits.getTrait(mn)) {
+          // Ensure script is executed.
+          if (execute && script.state === ScriptInfoState.None) {
+            this.executeScript(script);
+          }
+          return script;
+        }
       }
+      return null;
     }
   }
 
