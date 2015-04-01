@@ -685,8 +685,8 @@ module Shumway.AVMX.AS.flash.display {
       if (this.loaderInfo && this.loaderInfo._avm1Context) {
         context = contentLoaderInfo._avm1Context = this.loaderInfo._avm1Context;
       } else {
-        Shumway.AVM1.Lib.installObjectMethods();
         context = Shumway.AVM1.AVM1Context.create(contentLoaderInfo);
+        Shumway.AVM1.Lib.installObjectMethods(context);
         contentLoaderInfo._avm1Context = context;
         var display = this.securityDomain.flash.display;
         if (this === display.Loader.axClass.getRootLoader()) {

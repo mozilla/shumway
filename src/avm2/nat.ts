@@ -180,6 +180,8 @@ module Shumway.AVMX.AS {
     static axSetNumericProperty: (nm: number, value: any) => void;
     static axGetNumericProperty: (nm: number) => any;
 
+    static axDefinePublicProperty: (nm: any, descriptor: any) => any;
+
     static axCoerce: (v: any) => any;
     static axConstruct: (argArray?: any []) => any;
 
@@ -456,6 +458,10 @@ module Shumway.AVMX.AS {
 
     axGetNumericProperty(nm: number): any {
       return this.axGetPublicProperty(nm);
+    }
+
+    axDefinePublicProperty(nm: any, descriptor: any): any {
+      Object.defineProperty(this, Multiname.getPublicMangledName(nm), descriptor);
     }
 
     axEnumerableKeys: any [];
@@ -1640,12 +1646,12 @@ module Shumway.AVMX.AS {
     return Date.now() - (<any>securityDomain).flash.display.Loader.axClass.runtimeStartTime;
   }
 
-  function FlashNetScript_navigateToURL(securityDomain: SecurityDomain, request, window_) {
+  export function FlashNetScript_navigateToURL(securityDomain: SecurityDomain, request, window_) {
     if (request === null || request === undefined) {
       securityDomain.throwError('TypeError', Errors.NullPointerError, 'request');
     }
     var RequestClass = (<any>securityDomain).flash.net.URLRequest.axClass;
-    if (!RequestClass.isInstanceOf(request)) {
+    if (!RequestClass.axIsType(request)) {
       securityDomain.throwError('TypeError', Errors.CheckTypeFailedError, request,
                                 'flash.net.URLRequest');
     }
@@ -1653,9 +1659,9 @@ module Shumway.AVMX.AS {
     if (isNullOrUndefined(url)) {
       securityDomain.throwError('TypeError', Errors.NullPointerError, 'url');
     }
-    if (url.indexOf('fscommand:') === 0) {
+    if (url.toLowerCase().indexOf('fscommand:') === 0) {
       var fscommand = (<any>securityDomain).flash.system.fscommand;
-      fscommand.axCall(null, url.substring('fscommand:'.length), window_);
+      fscommand.call(null, url.substring('fscommand:'.length), window_);
       return;
     }
     // TODO handle other methods than GET

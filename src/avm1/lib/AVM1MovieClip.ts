@@ -23,16 +23,6 @@ module Shumway.AVM1.Lib {
 
   import Multiname = Shumway.AVMX.Multiname;
   import Namespace = Shumway.AVMX.Namespace;
-  var resolveMultinameProperty = null; // REDUX Shumway.AVMX.resolveMultinameProperty;
-
-  var _asGetProperty = null; // REDUX Object.prototype.asGetProperty;
-  var _asSetProperty = null; // REDUX Object.prototype.asSetProperty;
-  var _asCallProperty = null; // REDUX Object.prototype.asCallProperty;
-  var _asHasProperty = null; // REDUX Object.prototype.asHasProperty;
-  var _asHasOwnProperty = null; // REDUX Object.prototype.asHasOwnProperty;
-  var _asHasTraitProperty = null; // REDUX Object.prototype.asHasTraitProperty;
-  var _asDeleteProperty = null; // REDUX Object.prototype.asDeleteProperty;
-  var _asGetEnumerableKeys = null; // REDUX Object.prototype.asGetEnumerableKeys;
 
   class AVM1MovieClipButtonModeEvent extends AVM1EventHandler {
     constructor(public propertyName: string,
@@ -771,9 +761,9 @@ module Shumway.AVM1.Lib {
       return null;
     }
 
-    public asGetProperty(namespaces: Namespace [], name: any, flags: number) {
-      if (_asHasProperty.call(this, namespaces, name, flags)) {
-        return _asGetProperty.call(this, namespaces, name, flags);
+    public axGetProperty(mn: Shumway.AVMX.Multiname) {
+      if (super.axHasProperty(mn)) {
+        return super.axGetProperty(mn);
       }
       if (typeof name === 'string' && name[0] === '_') {
         var level = this._resolveLevelNProperty(name);
@@ -781,15 +771,18 @@ module Shumway.AVM1.Lib {
           return level;
         }
       }
+      // REDUX
+      /*
       var resolved = resolveMultinameProperty(namespaces, name, flags);
       if (Multiname.isPublicQualifiedName(resolved) && this.isAVM1Instance) {
         return this.__lookupChild((<any>Multiname).getNameFromPublicQualifiedName(resolved)); // REDUX
       }
+      */
       return undefined;
     }
 
-    public asHasProperty(namespaces: Namespace [], name: any, flags: number) {
-      if (_asHasProperty.call(this, namespaces, name, flags)) {
+    public axHasProperty(mn: Shumway.AVMX.Multiname): boolean {
+      if (super.axHasProperty(mn)) {
         return true;
       }
       if (typeof name === 'string' && name[0] === '_') {
@@ -798,15 +791,18 @@ module Shumway.AVM1.Lib {
           return true;
         }
       }
+      // REDUX
+      /*
       var resolved = resolveMultinameProperty(namespaces, name, flags);
       if (Multiname.isPublicQualifiedName(resolved) && this.isAVM1Instance) {
         return !!this.__lookupChild((<any>Multiname).getNameFromPublicQualifiedName(resolved)); // REDUX
       }
+      */
       return false;
     }
 
-    public asGetEnumerableKeys() {
-      var keys = _asGetEnumerableKeys.call(this);
+    public axGetEnumerableKeys(): any [] {
+      var keys = super.axGetEnumerableKeys();
       // if it's a movie listing the children as well
       if (!this.isAVM1Instance) {
         return keys; // not initialized yet
@@ -816,8 +812,8 @@ module Shumway.AVM1.Lib {
       for (var i = 0, length = as3MovieClip._children.length; i < length; i++) {
         var child = as3MovieClip._children[i];
         var name = child.name;
-        if (!_asHasProperty.call(this, undefined, name, 0)) {
-          keys.push((<any>Multiname).getPublicQualifiedName(name)); // REDUX
+        if (!super.axHasPublicProperty(name)) {
+          keys.push('REDUX!' + name); // REDUX
         }
       }
       return keys;

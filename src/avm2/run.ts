@@ -32,6 +32,8 @@ interface IMetaobjectProtocol {
   axSetNumericProperty(nm: number, value: any);
   axGetNumericProperty(nm: number): any;
 
+  axDefinePublicProperty(nm: any, description: any): any;
+
   axGetSlot(i: number): any;
   axSetSlot(i: number, value: any);
 
@@ -432,10 +434,10 @@ module Shumway.AVMX {
 
   var rn = new Multiname(null, 0, CONSTANT.RTQNameL, [Namespace.PUBLIC], null);
 
-  function axFunctionConstruct() {
+  function axFunctionConstruct(argArray?: any []) {
     release || assert(this.prototype);
     var object = Object.create(this.prototype);
-    this.value.apply(object, arguments);
+    this.value.apply(object, argArray);
     return object;
   }
 
@@ -1429,6 +1431,9 @@ module Shumway.AVMX {
 
       this.prepareNativeClass("AXMethodClosure", "MethodClosure", false);
       this.prepareNativeClass("AXRegExp", "RegExp", false);
+
+      this.prepareNativeClass("AXMath", "Math", false);
+      this.prepareNativeClass("AXDate", "Date", false);
 
       this.prepareNativeClass("AXXML", "XML", false);
       this.prepareNativeClass("AXXMLList", "XMLList", false);

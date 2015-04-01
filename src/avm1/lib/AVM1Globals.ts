@@ -56,14 +56,12 @@ module Shumway.AVM1.Lib {
 
     public _global: AVM1Globals;
     public flash: ASObject;
-    public securityDomain: ISecurityDomain;
 
     constructor(context: AVM1Context) {
       super();
 
       AVM1Globals.instance = this;
       this._global = this;
-      this.securityDomain = context.securityDomain;
 
       this._initBuiltins(context);
 
@@ -127,7 +125,7 @@ module Shumway.AVM1.Lib {
     public getTimer = Shumway.AVM2.AS.FlashUtilScript_getTimer;
 
     public getURL(url, target?, method?) {
-      var request = new flash.net.URLRequest(String(url));
+      var request = new this.securityDomain.flash.net.URLRequest(String(url));
       if (method) {
         request.method = method;
       }
@@ -135,7 +133,7 @@ module Shumway.AVM1.Lib {
         this.loadMovieNum(url, +target.substr(6), method);
         return;
       }
-      Shumway.AVM2.AS.FlashNetScript_navigateToURL(request, target);
+      Shumway.AVMX.AS.FlashNetScript_navigateToURL(this.securityDomain, request, target);
     }
 
     public getVersion() {
@@ -487,15 +485,15 @@ module Shumway.AVM1.Lib {
     public parseFloat: (str: string) => number = parseFloat;
     public parseInt: (s: string, radix?: number) => number = parseInt;
 
-    public Object: (args: any[]) => AVMX.AXObject;
-    public Function: (args: any[]) => AVMX.AXObject;
-    public Array: (args: any[]) => AVMX.AXObject;
-    public Number: (args: any[]) => AVMX.AXObject;
-    public Math: (args: any[]) => AVMX.AXObject;
-    public Boolean: (args: any[]) => AVMX.AXObject;
-    public Date: (args: any[]) => AVMX.AXObject;
-    public RegExp: (args: any[]) => AVMX.AXObject;
-    public String: (args: any[]) => AVMX.AXObject;
+    public Object: ASObject;
+    public Function: ASObject;
+    public Array: ASObject;
+    public Number: ASObject;
+    public Math: ASObject;
+    public Boolean: ASObject;
+    public Date: ASObject;
+    public RegExp: ASObject;
+    public String: ASObject;
 
     public undefined: any = undefined;
     public MovieClip: ASObject;
@@ -510,23 +508,23 @@ module Shumway.AVM1.Lib {
     public MovieClipLoader: ASObject;
 
     public Sound: ASObject;
-    public SharedObject: typeof flash.net.SharedObject;
-    public ContextMenu: typeof flash.ui.ContextMenu;
-    public ContextMenuItem: typeof flash.ui.ContextMenuItem;
+    public SharedObject: ASObject;
+    public ContextMenu: ASObject;
+    public ContextMenuItem: ASObject;
     public TextFormat: ASObject;
 
     private _initBuiltins(context: AVM1Context) {
-      var securityDomain: ISecurityDomain = context.securityDomain;
+      var securityDomain = this.securityDomain;
 
-      this.Object = securityDomain.AXObject.axConstruct; // REDUX
-      this.Function = securityDomain.AXFunction.axConstruct;
-      this.Array = securityDomain.AXArray.axConstruct;
-      this.Number = securityDomain.AXNumber.axConstruct;
-      this.Math = securityDomain.AXMath.axConstruct;
-      this.Boolean = securityDomain.AXBoolean.axConstruct;
-      this.Date = securityDomain.AXDate.axConstruct;
-      this.RegExp = securityDomain.AXRegExp.axConstruct;
-      this.String = securityDomain.AXString.axConstruct;
+      this.Object = wrapAVM1Builtin(securityDomain.AXObject);
+      this.Function = wrapAVM1Builtin(securityDomain.AXFunction);
+      this.Array = wrapAVM1Builtin(securityDomain.AXArray);
+      this.Number = wrapAVM1Builtin(securityDomain.AXNumber);
+      this.Math = wrapAVM1Builtin(securityDomain.AXMath);
+      this.Boolean = wrapAVM1Builtin(securityDomain.AXBoolean);
+      this.Date = wrapAVM1Builtin(securityDomain.AXDate);
+      this.RegExp = wrapAVM1Builtin(securityDomain.AXRegExp);
+      this.String = wrapAVM1Builtin(securityDomain.AXString);
 
       this.MovieClip = AVM1MovieClip.createAVM1Class(securityDomain);
       this.AsBroadcaster = AVM1Broadcaster.createAVM1Class(securityDomain);
@@ -540,9 +538,9 @@ module Shumway.AVM1.Lib {
       this.MovieClipLoader = AVM1MovieClipLoader.createAVM1Class(securityDomain);
 
       this.Sound = AVM1Sound.createAVM1Class(securityDomain);
-      this.SharedObject = securityDomain.flash.net.SharedObject;
-      this.ContextMenu = securityDomain.flash.ui.ContextMenu;
-      this.ContextMenuItem = securityDomain.flash.ui.ContextMenuItem;
+      this.SharedObject = wrapAVM1Builtin(securityDomain.flash.net.SharedObject.axClass);
+      this.ContextMenu = wrapAVM1Builtin(securityDomain.flash.ui.ContextMenu.axClass);
+      this.ContextMenuItem = wrapAVM1Builtin(securityDomain.flash.ui.ContextMenuItem.axClass);
       this.TextFormat = AVM1TextFormat.createAVM1Class(securityDomain);
 
       AVM1Broadcaster.initializeWithContext(this.Stage, context);
@@ -551,7 +549,8 @@ module Shumway.AVM1.Lib {
     }
 
     private _initializeFlashObject(context: AVM1Context): void {
-      var securityDomain = context.securityDomain;
+      var securityDomain = this.securityDomain;
+
       this.flash = securityDomain.createObject();
       this.flash.axSetPublicProperty('_MovieClip', this.MovieClip); // ???
       var display: ASObject = securityDomain.createObject();
@@ -563,10 +562,10 @@ module Shumway.AVM1.Lib {
       var filters: ASObject = securityDomain.createObject();
       this.flash.axSetPublicProperty('filters', filters);
       var geom: ASObject = securityDomain.createObject();
-      geom.axSetPublicProperty('ColorTransform', flash.geom.ColorTransform);
-      geom.axSetPublicProperty('Matrix', flash.geom.Matrix);
-      geom.axSetPublicProperty('Point', flash.geom.Point);
-      geom.axSetPublicProperty('Rectangle', flash.geom.Rectangle);
+      geom.axSetPublicProperty('ColorTransform', wrapAVM1Builtin(securityDomain.flash.geom.ColorTransform.axClass));
+      geom.axSetPublicProperty('Matrix', wrapAVM1Builtin(securityDomain.flash.geom.Matrix.axClass));
+      geom.axSetPublicProperty('Point', wrapAVM1Builtin(securityDomain.flash.geom.Point.axClass));
+      geom.axSetPublicProperty('Rectangle', wrapAVM1Builtin(securityDomain.flash.geom.Rectangle.axClass));
       geom.axSetPublicProperty('Transform', AVM1Transform.createAVM1Class(securityDomain));
       this.flash.axSetPublicProperty('geom', geom);
       var text: ASObject = securityDomain.createObject();

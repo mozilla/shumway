@@ -19,6 +19,7 @@
 module Shumway.AVM1.Lib {
   import ASObject = Shumway.AVMX.AS.ASObject;
   import flash = Shumway.AVMX.AS.flash;
+  import AXClass = Shumway.AVMX.AXClass;
 
   export interface IAVM1SymbolBase {
     isAVM1Instance: boolean;
@@ -180,7 +181,7 @@ module Shumway.AVM1.Lib {
     static addProperty(obj: any, propertyName: string, getter: () => any,
                        setter: (v:any) => any, enumerable:boolean = true): any
     {
-      obj.asDefinePublicProperty(propertyName, {
+      obj.axDefinePublicProperty(propertyName, {
         get: getter,
         set: setter || undefined,
         enumerable: enumerable,
@@ -226,15 +227,19 @@ module Shumway.AVM1.Lib {
 
   function createAVM1Object(ctor, nativeObject: flash.display.DisplayObject, context: AVM1Context) {
     // We need to walk on __proto__ to find right ctor.prototype.
-    var proto = ctor.prototype;
+    var proto = ctor.axGetPublicProperty('prototype');
     while (proto && !proto.initAVM1SymbolInstance) {
       proto = proto.asGetPublicProperty('__proto__');
     }
     release || Debug.assert(proto);
-
-    var avm1Object: any = Object.create(proto);
-    avm1Object.axSetPublicProperty('__proto__', ctor.asGetPublicProperty('prototype'));
-    avm1Object.asDefinePublicProperty('__constructor__', {
+    if (!release) { // Just to verify prototype chain
+      function CheckClass() {}
+      CheckClass.prototype = context.securityDomain.AXObject.tPrototype;
+      Debug.assert(proto instanceof CheckClass);
+    }
+    var avm1Object = Object.create(proto); // context.securityDomain.createObject();
+    avm1Object.axSetPublicProperty('__proto__', ctor.axGetPublicProperty('prototype'));
+    avm1Object.axDefinePublicProperty('__constructor__', {
       value: ctor,
       writable: true,
       enumerable: false,
@@ -242,7 +247,7 @@ module Shumway.AVM1.Lib {
     });
     (<any>nativeObject)._as2Object = avm1Object;
     (<IAVM1SymbolBase>avm1Object).initAVM1SymbolInstance(context, nativeObject);
-    ctor.call(avm1Object);
+    ctor.value.axCall(avm1Object); // REDUX ? why not ctor.axCall(avm1Object)
     return avm1Object;
   }
 
@@ -275,23 +280,30 @@ module Shumway.AVM1.Lib {
 
   export function wrapAVM1Object<T extends ASObject>(securityDomain: ISecurityDomain, obj: T, members: string[]): T  {
     var wrap: any;
+    var lastPrototype: any;
     if (typeof obj === 'function') {
       wrap = securityDomain.boxFunction(function () {
         return (<any>obj).apply(this, arguments);
       });
+      lastPrototype = Function.prototype;
     } else {
       release || Debug.assert(typeof obj === 'object' && obj !== null);
       wrap = securityDomain.createObject();
+      lastPrototype = ASObject.prototype;
     }
     // Coping all members
-    Object.getOwnPropertyNames(obj).forEach(function (name) {
-      if (wrap.hasOwnProperty(name)) {
-        // Object.defineProperty will error e.g. on function name or length
-        return;
-      }
-      Object.defineProperty(wrap, name,
-        Object.getOwnPropertyDescriptor(obj, name));
-    });
+    var p = obj;
+    do {
+      Object.getOwnPropertyNames(p).forEach(function (name) {
+        if (wrap.hasOwnProperty(name)) {
+          // Object.defineProperty will error e.g. on function name or length
+          return;
+        }
+        Object.defineProperty(wrap, name,
+          Object.getOwnPropertyDescriptor(p, name));
+      });
+      p = Object.getPrototypeOf(p);
+    } while (p !== lastPrototype);
 
     if (!members) {
       return wrap;
@@ -312,7 +324,7 @@ module Shumway.AVM1.Lib {
       var setter = function(value) {
         this[memberName] = value;
       };
-      wrap.asDefinePublicProperty(definedAs, {
+      wrap.axDefinePublicProperty(definedAs, {
         get: getter,
         set: setter,
         enumerable: false,
@@ -327,21 +339,29 @@ module Shumway.AVM1.Lib {
     var prototype = (<any>fn).prototype;
     var wrappedPrototype = wrapAVM1Object(securityDomain, prototype, members);
     wrappedFn.axSetPublicProperty('prototype', wrappedPrototype);
+    (<any>wrappedFn).prototype = wrappedPrototype; // REDUX ? why axContruct is using prototype vs $Bgprototype
     return wrappedFn;
+  }
+
+  export function wrapAVM1Builtin(avm2Class: any): ASObject {
+    return avm2Class.securityDomain.boxFunction(function () {
+      return avm2Class.axConstruct.call(this, arguments);
+    });
   }
 
   var isAvm1ObjectMethodsInstalled: boolean = false;
 
-  export function installObjectMethods(): any {
+  export function installObjectMethods(context: AVM1Context): any {
     if (isAvm1ObjectMethodsInstalled) {
       return;
     }
     isAvm1ObjectMethodsInstalled = true;
-    var c: any = Shumway.AVM2.AS.ASObject, p = c.asGetPublicProperty('prototype');
-    c.axSetPublicProperty('registerClass', function registerClass(name, theClass) {
+    var securityDomain = context.securityDomain;
+    var c: any = securityDomain.AXObject, p = c.axGetPublicProperty('prototype');
+    c.axSetPublicProperty('registerClass', securityDomain.boxFunction(function registerClass(name, theClass) {
       AVM1Context.instance.registerClass(name, theClass);
-    });
-    p.asDefinePublicProperty('addProperty', {
+    }));
+    p.axDefinePublicProperty('addProperty', {
       value: function addProperty(name, getter, setter) {
         if (typeof name !== 'string' || name === '') {
           return false;
@@ -352,7 +372,7 @@ module Shumway.AVM1.Lib {
         if (typeof setter !== 'function' && setter !== null) {
           return false;
         }
-        this.asDefinePublicProperty(name, {
+        this.axDefinePublicProperty(name, {
           get: getter,
           set: setter || undefined,
           configurable: true,
@@ -370,7 +390,7 @@ module Shumway.AVM1.Lib {
       writable: true,
       enumerable: false
     });
-    p.asDefinePublicProperty('__proto__', {
+    p.axDefinePublicProperty('__proto__', {
       get: function () {
         return this.__proto__avm1;
       },
