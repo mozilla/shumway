@@ -716,11 +716,9 @@ module Shumway.AVMX {
         }
         // TODO: e = translateError(e);
 
-        // All script exceptions must have a security domain, if they don't then this
-        // must be a VM exception.
-        if (!e.securityDomain) {
-          throw e;
-        }
+        // All script exceptions must be primitive or have a security domain, if they don't then
+        // this must be a VM exception.
+        checkValue(e);
 
         for (var i = 0; i < exceptions.length; i++) {
           var handler = exceptions[i];

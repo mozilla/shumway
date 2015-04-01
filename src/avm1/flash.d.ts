@@ -14,9 +14,68 @@
  * limitations under the License.
  */
 
+import flashPackage = Shumway.AVMX.AS.flash;
+interface ISecurityDomain {
+  flash?: {
+    display: {
+      EventDispatcher: typeof flashPackage.events.EventDispatcher;
+      DisplayObject: typeof flashPackage.display.DisplayObject;
+      DisplayObjectContainer: typeof flashPackage.display.DisplayObjectContainer;
+      AVM1Movie: typeof flashPackage.display.AVM1Movie;
+      Stage: typeof flashPackage.display.Stage;
+      Loader: typeof flashPackage.display.Loader;
+      LoaderInfo: typeof flashPackage.display.LoaderInfo;
+      MovieClip: typeof flashPackage.display.MovieClip;
+      Graphics: typeof flashPackage.display.Graphics;
+      Bitmap: typeof flashPackage.display.Bitmap;
+      BitmapData: typeof flashPackage.display.BitmapData;
+      SimpleButton: typeof flashPackage.display.SimpleButton;
+    };
+    events: {
+      EventDispatcher: typeof flashPackage.events.EventDispatcher;
+      Event: typeof flashPackage.events.Event;
+      KeyboardEvent: typeof flashPackage.events.KeyboardEvent;
+      MouseEvent: typeof flashPackage.events.MouseEvent;
+      ProgressEvent: typeof flashPackage.events.ProgressEvent;
+    };
+    external: {
+      ExternalInterface: typeof flashPackage.external.ExternalInterface;
+    };
+    text: {
+      TextField: typeof flashPackage.text.TextField;
+      TextFormat: typeof flashPackage.text.TextFormat;
+    };
+    geom: {
+      Point: typeof flashPackage.geom.Point;
+      Rectangle: typeof flashPackage.geom.Rectangle;
+      Matrix: typeof flashPackage.geom.Matrix;
+      ColorTransform: typeof flashPackage.geom.ColorTransform;
+      Transform: typeof flashPackage.geom.Transform;
+    }
+    net: {
+      URLRequest: typeof flashPackage.net.URLRequest;
+      SharedObject: typeof flashPackage.net.SharedObject;
+    }
+    ui: {
+      ContextMenu: typeof flashPackage.ui.ContextMenu;
+      ContextMenuItem: typeof flashPackage.ui.ContextMenuItem;
+    }
+    utils: {
+      ByteArray: typeof flashPackage.utils.ByteArray;
+    }
+    media: {
+      Sound: typeof flashPackage.media.Sound;
+      SoundChannel: typeof flashPackage.media.SoundChannel;
+      SoundTransform: typeof flashPackage.media.SoundTransform;
+    }
+  }
+}
+
 declare module Shumway.AVMX.AS.flash {
   module display {
     class DisplayObject extends events.EventDispatcher {
+      static axClass: typeof DisplayObject;
+
       stage: Stage;
       parent: DisplayObjectContainer;
       _parent: DisplayObject; // TODO remove
@@ -87,6 +146,8 @@ declare module Shumway.AVMX.AS.flash {
       _lookupChildByName(name: string): DisplayObject;
     }
     class MovieClip extends DisplayObjectContainer {
+      static axClass: typeof MovieClip;
+
       _as2SymbolClass;
       _name: string;
       numChildren: number;
@@ -127,11 +188,15 @@ declare module Shumway.AVMX.AS.flash {
       getSymbolById(id: number): any;
     }
     class AVM1Movie extends DisplayObject {}
-    class BitmapData extends ASObject {}
+    class BitmapData extends ASObject {
+      static axClass: typeof BitmapData;
+    }
     class Bitmap extends DisplayObject {
       constructor();
     }
     class SimpleButton extends DisplayObject {
+      static axClass: typeof SimpleButton;
+
       _symbol: ButtonSymbol;
     }
 
@@ -252,6 +317,8 @@ declare module Shumway.AVMX.AS.flash {
   }
   module text {
     class TextField extends flash.display.DisplayObject {
+      static axClass: typeof TextField;
+
       getLineMetrics(index: number);
 
       _name: string; // TODO remove

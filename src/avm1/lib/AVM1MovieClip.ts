@@ -48,8 +48,8 @@ module Shumway.AVM1.Lib {
   }
 
   export class AVM1MovieClip extends AVM1SymbolBase<flash.display.MovieClip> {
-    public static createAVM1Class(): typeof AVM1MovieClip {
-      return wrapAVM1Class(AVM1MovieClip,
+    public static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1MovieClip {
+      return wrapAVM1Class(securityDomain, AVM1MovieClip,
         [],
         ['_alpha', 'attachAudio', 'attachBitmap', 'attachMovie',
           'beginFill', 'beginBitmapFill', 'beginGradientFill', 'blendMode',
@@ -207,8 +207,7 @@ module Shumway.AVM1.Lib {
       var nativeAS3Object = this.as3Object;
       nativeAS3Object.addTimelineObjectAtDepth(mc, Math.min(nativeAS3Object.numChildren, depth));
       // Bitmaps aren't reflected in AVM1, so the rest here doesn't apply.
-      var securityDomain: any = this.context.securityDomain; // REDUX
-      if (securityDomain.flash.display.Bitmap.axIsType(mc)) {
+      if (this.context.securityDomain.flash.display.Bitmap.axIsType(mc)) {
         return null;
       }
       var as2mc = getAVM1Object(mc, this.context);
@@ -330,8 +329,7 @@ module Shumway.AVM1.Lib {
         // child is null if it hasn't been constructed yet. This can happen in InitActionBlocks.
         if (child && child._depth === depth) {
           // Somewhat absurdly, this method returns the mc if a bitmap is at the given depth.
-          var securityDomain: any = this.context.securityDomain; // REDUX
-          if (securityDomain.flash.display.Bitmap.axIsType(child)) {
+          if (this.context.securityDomain.flash.display.Bitmap.axIsType(child)) {
             return this;
           }
           return getAVM1Object(child, this.context);

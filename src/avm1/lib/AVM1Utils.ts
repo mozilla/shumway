@@ -37,7 +37,7 @@ module Shumway.AVM1.Lib {
     public onUnbind(target: IAVM1SymbolBase): void {}
   }
 
-  export class AVM1NativeObject {
+  export class AVM1NativeObject extends ASObject {
     _context: AVM1Context;
 
     public get context() {
@@ -253,7 +253,7 @@ module Shumway.AVM1.Lib {
     if (as3Object._as2Object) {
       return as3Object._as2Object;
     }
-    var securityDomain: any = context.securityDomain; // REDUX
+    var securityDomain = context.securityDomain;
     if (securityDomain.flash.display.MovieClip.axClass.axIsType(as3Object)) {
       if (<flash.display.MovieClip>as3Object._avm1SymbolClass) {
         return createAVM1Object(<flash.display.MovieClip>as3Object._avm1SymbolClass, as3Object, context);
@@ -273,26 +273,26 @@ module Shumway.AVM1.Lib {
     return null;
   }
 
-  export function wrapAVM1Object<T>(obj: T, members: string[]): T  {
+  export function wrapAVM1Object<T extends ASObject>(securityDomain: ISecurityDomain, obj: T, members: string[]): T  {
     var wrap: any;
     if (typeof obj === 'function') {
-      // Coping all members if we wrapping a function
-      wrap = function () {
+      wrap = securityDomain.boxFunction(function () {
         return (<any>obj).apply(this, arguments);
-      };
-      Object.getOwnPropertyNames(obj).forEach(function (name) {
-        if (wrap.hasOwnProperty(name)) {
-          // Object.defineProperty will error e.g. on name or length
-          return;
-        }
-        Object.defineProperty(wrap, name,
-          Object.getOwnPropertyDescriptor(obj, name));
       });
     } else {
-      // Using prototype chain in case of the object
-      Debug.assert(typeof obj === 'object' && obj !== null);
-      wrap = Object.create(obj);
+      release || Debug.assert(typeof obj === 'object' && obj !== null);
+      wrap = securityDomain.createObject();
     }
+    // Coping all members
+    Object.getOwnPropertyNames(obj).forEach(function (name) {
+      if (wrap.hasOwnProperty(name)) {
+        // Object.defineProperty will error e.g. on function name or length
+        return;
+      }
+      Object.defineProperty(wrap, name,
+        Object.getOwnPropertyDescriptor(obj, name));
+    });
+
     if (!members) {
       return wrap;
     }
@@ -322,11 +322,10 @@ module Shumway.AVM1.Lib {
     return wrap;
   }
 
-  export function wrapAVM1Class<T>(fn: T, staticMembers: string[], members: string[]): T  {
-    // REDUX
-    var wrappedFn: any = wrapAVM1Object(fn, staticMembers);
+  export function wrapAVM1Class<T extends ASObject>(securityDomain: ISecurityDomain, fn: T, staticMembers: string[], members: string[]): T  {
+    var wrappedFn = wrapAVM1Object(securityDomain, fn, staticMembers);
     var prototype = (<any>fn).prototype;
-    var wrappedPrototype = wrapAVM1Object(prototype, members);
+    var wrappedPrototype = wrapAVM1Object(securityDomain, prototype, members);
     wrappedFn.axSetPublicProperty('prototype', wrappedPrototype);
     return wrappedFn;
   }

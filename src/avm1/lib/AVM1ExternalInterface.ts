@@ -18,23 +18,24 @@
 
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1ExternalInterface {
-    static createAVM1Class(): typeof AVM1ExternalInterface {
-      return wrapAVM1Class(AVM1ExternalInterface,
+  export class AVM1ExternalInterface extends ASObject {
+    static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1ExternalInterface {
+      return wrapAVM1Class(securityDomain, AVM1ExternalInterface,
         ['available', 'addCallback', 'call'],
         []);
     }
 
-    public static get available():Boolean {
-      return (<any>flash).external.ExternalInterface.asGetPublicProperty('available'); // REDUX
+    public static get available(): boolean {
+      return this.securityDomain.flash.external.ExternalInterface.available;
     }
 
     public static addCallback(methodName: string, instance: any, method: Function): boolean {
       try {
-        (<any>flash).external.ExternalInterface.asCallPublicProperty('addCallback', [methodName, function () {
-          return method.apply(instance, arguments);  // REDUX
-        }]);
+        this.securityDomain.flash.external.ExternalInterface.addCallback(methodName, function () {
+          return method.apply(instance, arguments);
+        });
         return true;
       } catch (e) {
       }
@@ -43,7 +44,7 @@ module Shumway.AVM1.Lib {
 
     public static call(methodName: string): any {
       var args = Array.prototype.slice.call(arguments, 0);
-      return (<any>flash).external.ExternalInterface.asCallPublicProperty('call', args); // REDUX
+      return this.securityDomain.flash.external.ExternalInterface.call(args);
     }
   }
 }

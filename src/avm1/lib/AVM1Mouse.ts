@@ -19,10 +19,11 @@
 module Shumway.AVM1.Lib {
   import flash = Shumway.AVMX.AS.flash;
   import assert = Shumway.Debug.assert;
+  import ASObject = Shumway.AVMX.AS.ASObject;
 
-  export class AVM1Mouse {
-    public static createAVM1Class(): typeof AVM1Mouse {
-      return wrapAVM1Class(AVM1Mouse, ['show', 'hide'], []);
+  export class AVM1Mouse extends ASObject {
+    public static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Mouse {
+      return wrapAVM1Class(securityDomain, AVM1Mouse, ['show', 'hide'], []);
     }
 
     public static _bind(stage: flash.display.Stage, context: AVM1Context) {

@@ -17,6 +17,8 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM1.Lib {
+  import ASObject = Shumway.AVMX.AS.ASObject;
+
   function _updateAllSymbolEvents(symbolInstance: IAVM1SymbolBase) {
     if (!symbolInstance.isAVM1Instance) {
       return;
@@ -24,15 +26,15 @@ module Shumway.AVM1.Lib {
     symbolInstance.updateAllEvents();
   }
 
-  export class AVM1Broadcaster {
+  export class AVM1Broadcaster extends ASObject {
     private static _context: AVM1Context;
 
     public static setAVM1Context(context: AVM1Context) {
       this._context = context;
     }
 
-    public static createAVM1Class(): typeof AVM1Broadcaster {
-      return wrapAVM1Class(AVM1Broadcaster, ['initialize'], []);
+    public static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1Broadcaster {
+      return wrapAVM1Class(securityDomain, AVM1Broadcaster, ['initialize'], []);
     }
 
     public static initialize(obj: any): void {
