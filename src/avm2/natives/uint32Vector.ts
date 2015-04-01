@@ -41,6 +41,9 @@ module Shumway.AVMX.AS {
   import clamp = Shumway.NumberUtilities.clamp;
 
   export class Uint32Vector extends BaseVector {
+
+    static axClass: typeof Uint32Vector;
+
     static EXTRA_CAPACITY = 4;
     static INITIAL_CAPACITY = 10;
     static DEFAULT_VALUE = 0;

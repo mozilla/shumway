@@ -186,10 +186,6 @@ module Shumway.AVMX {
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import ASClass = Shumway.AVMX.AS.ASClass;
 
-  function axApplyIdentity(self, args) {
-    return args[0];
-  }
-
   function axBoxIdentity(args) {
     return args[0];
   }
@@ -675,6 +671,7 @@ module Shumway.AVMX {
     $BgtoString: AXCallable;
     $BgvalueOf: AXCallable;
     axInitializer: any;
+    axClass: AXClass;
   }
 
   export interface AXGlobal extends AXObject {
@@ -873,8 +870,7 @@ module Shumway.AVMX {
    * Default axApply.
    */
   function axDefaultApply(self, args: any []) {
-    // TODO: Coerce.
-    return args ? args[0] : undefined;
+    return this.axCoerce(args ? args[0] : undefined);
   }
 
   /**
@@ -900,6 +896,11 @@ module Shumway.AVMX {
     public AXXMLList: AXXMLListClass;
     public AXNamespace: AXNamespaceClass;
     public AXQName: AXQNameClass;
+
+    public ObjectVector: typeof AS.GenericVector;
+    public Int32Vector: typeof AS.Int32Vector;
+    public Uint32Vector: typeof AS.Uint32Vector;
+    public Float64Vector: typeof AS.Float64Vector;
 
     public get xmlParser(): AS.XMLParser {
       return this._xmlParser || (this._xmlParser = new AS.XMLParser(this));
@@ -958,7 +959,7 @@ module Shumway.AVMX {
       throw axClass.axConstruct([message, id]);
     }
 
-    applyType(methodInfo: MethodInfo, axClass: AXClass, types: AXClass []): AXClass {
+    applyType(axClass: AXClass, types: AXClass []): AXClass {
       var factoryClassName = axClass.classInfo.instanceInfo.getName().name;
       if (factoryClassName === "Vector") {
         release || assert(types.length === 1);
@@ -968,19 +969,15 @@ module Shumway.AVMX {
           typeClassName = type.classInfo.instanceInfo.getName().name.toLowerCase();
           switch (typeClassName) {
             case "number":
-              typeClassName = "double";
-            case "int":
-            case "uint":
             case "double":
-              rn.namespaces = [Namespace.VECTOR_PACKAGE];
-              rn.name = "Vector$" + typeClassName;
-              return <AXClass>methodInfo.abc.applicationDomain.getProperty(rn, true, true);
+              return <any>this.Float64Vector.axClass;
+            case "int":
+              return <any>this.Int32Vector.axClass;
+            case "uint":
+              return <any>this.Uint32Vector.axClass;
           }
         }
-        rn.namespaces = [Namespace.VECTOR_PACKAGE];
-        rn.name = "Vector$object";
-        var objectVector = <any>methodInfo.abc.applicationDomain.getProperty(rn, true, true);
-        return objectVector.applyType(objectVector, type);
+        return <any>this.ObjectVector.axClass.applyType(type);
       } else {
         Shumway.Debug.notImplemented(factoryClassName);
       }
@@ -1017,12 +1014,14 @@ module Shumway.AVMX {
      * handlers.
      */
     createSyntheticClass(superClass: AXClass): AXClass {
-      var axClass = Object.create(this.AXClass.tPrototype);
+      var axClass: AXClass = Object.create(superClass);
       // Put the superClass tPrototype on the prototype chain so we have access
       // to all factory protocol handlers by default.
       axClass.tPrototype = Object.create(superClass.tPrototype);
+      axClass.tPrototype.axClass = axClass;
       // We don't need a new dPrototype object.
       axClass.dPrototype = superClass.dPrototype;
+      axClass.superClass = superClass;
       return axClass;
     }
 
@@ -1225,7 +1224,6 @@ module Shumway.AVMX {
       };
 
       var D = defineNonEnumerableProperty;
-      D(rootClassPrototype, "axApply", axApplyIdentity);
       D(rootClassPrototype, "axBox", axBoxIdentity);
       D(rootClassPrototype, "axCoerce", axCoerce);
       D(rootClassPrototype, "axIsType", axIsTypeObject);

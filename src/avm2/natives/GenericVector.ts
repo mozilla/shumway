@@ -95,6 +95,8 @@ module Shumway.AVMX.AS {
 
   export class GenericVector extends BaseVector {
 
+    static axClass: typeof GenericVector;
+
     static CASEINSENSITIVE = 1;
     static DESCENDING = 2;
     static UNIQUESORT = 4;
@@ -132,8 +134,20 @@ module Shumway.AVMX.AS {
       defineNonEnumerableProperty(proto, '$Bgsort', asProto.sort);
     }
 
-    newThisType(): GenericVector {
-      return new GenericVector();
+    static axApply(self: GenericVector, args: any[]) {
+      var object = args[0];
+      if (self.axClass.axIsType(object)) {
+        return object;
+      }
+      var length = object.axGetPublicProperty("length");
+      if (length !== undefined) {
+        var v = self.axClass.axConstruct([length, false]);
+        for (var i = 0; i < length; i++) {
+          v.axSetNumericProperty(i, object.axGetPublicProperty(i));
+        }
+        return v;
+      }
+      Shumway.Debug.unexpected();
     }
 
     static defaultCompareFunction(a, b) {
@@ -161,17 +175,19 @@ module Shumway.AVMX.AS {
       return result;
     }
 
+    axClass: AXClass;
+
     private _fixed: boolean;
     private _buffer: any [];
-    private _type: ASClass;
+    private _type: AXClass;
     private _defaultValue: any;
 
-    constructor (length: number /*uint*/ = 0, fixed: boolean = false, type: ASClass = ASObject) {
+    constructor (length: number /*uint*/ = 0, fixed: boolean = false, type?: AXClass) {
       false && super();
       length = length >>> 0; fixed = !!fixed;
       this._fixed = !!fixed;
       this._buffer = new Array(length);
-      this._type = type;
+      this._type = type || this.securityDomain.AXObject;
       // TODO: FIX ME
       // this._defaultValue = type ? type.defaultValue : null;
       this._fill(0, length, this._defaultValue);
@@ -180,12 +196,15 @@ module Shumway.AVMX.AS {
     /**
      * Creates a new class that is bound to this type.
      */
-    public static applyType(factoryType: AXClass, type: AXClass): AXClass {
-      var axClass = factoryType.securityDomain.createSyntheticClass(factoryType);
-      axClass.tPrototype.axInitializer = function (length: number /*uint*/ = 0, fixed: boolean = false) {
-        // factoryType.tPrototype.axInitializer points to the GenericVector constructor.
-        factoryType.tPrototype.axInitializer.call(this, length, fixed, type);
-      };
+    public static applyType(type: AXClass): AXClass {
+      var axClass: AXClass = Object.create(this);
+      // Put the superClass tPrototype on the prototype chain so we have access
+      // to all factory protocol handlers by default.
+      axClass.tPrototype = Object.create(this.tPrototype);
+      axClass.tPrototype.axClass = axClass;
+      // We don't need a new dPrototype object.
+      axClass.dPrototype = <any>this.dPrototype;
+      axClass.superClass = <any>this;
       return axClass;
     }
 

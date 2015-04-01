@@ -45,7 +45,7 @@ module Shumway.AVMX.AS.flash.display {
       this._displayState = null;
       this._fullScreenSourceRect = null;
       this._mouseLock = false;
-      this._stageVideos = new GenericVector(0, true, ASObject);
+      this._stageVideos = new GenericVector(0, true, this.securityDomain.AXObject);
       this._stage3Ds = null; // TODO
       this._colorARGB = 0xFFFFFFFF;
       this._fullScreenWidth = 0;
