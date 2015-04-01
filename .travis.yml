@@ -1,4 +1,4 @@
-language: java node_js
+language: java
 node_js:
   - "0.10"
 
