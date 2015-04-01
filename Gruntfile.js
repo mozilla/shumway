@@ -171,7 +171,7 @@ module.exports = function(grunt) {
       // Runs tamarin acceptance tests and tests against current baseline. If you get more tests to pass, update the baseline.
       test_avm2_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance-pass.json | egrep -o "(PASSED|FAILED|EXCEPTED)" | sort | uniq -c | tee test/avm2/acceptance-results.txt && ' +
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance-pass.json | egrep -o "(PASSED|FAILED|EXCEPTED|TIMEDOUT)" | sort | uniq -c | tee test/avm2/acceptance-results.txt && ' +
              'diff test/avm2/acceptance-results.txt test/avm2/acceptance-baseline.txt'
       },
       // Same as above, but it doesn't do any post processing of stdout.
