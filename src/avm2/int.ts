@@ -662,17 +662,16 @@ module Shumway.AVMX {
             (<number []>local)[index] = ((<number []>local)[index] | 0) - 1;
             break;
           case Bytecode.NEGATE_I:
-            // Negation entails casting to int
-            stack[stack.length - 1] = ~stack[stack.length - 1];
+            stack[stack.length - 1] = -(stack[stack.length - 1] | 0);
             break;
           case Bytecode.ADD_I:
-            stack[stack.length - 2] = stack[stack.length - 2] + stack.pop() | 0;
+            stack[stack.length - 2] = (stack[stack.length - 2]|0) + (stack.pop()|0) | 0;
             break;
           case Bytecode.SUBTRACT_I:
-            stack[stack.length - 2] = stack[stack.length - 2] - stack.pop() | 0;
+            stack[stack.length - 2] = (stack[stack.length - 2]|0) - (stack.pop()|0) | 0;
             break;
           case Bytecode.MULTIPLY_I:
-            stack[stack.length - 2] = stack[stack.length - 2] * stack.pop() | 0;
+            stack[stack.length - 2] = (stack[stack.length - 2]|0) * (stack.pop()|0) | 0;
             break;
           case Bytecode.GETLOCAL0:
           case Bytecode.GETLOCAL1:
