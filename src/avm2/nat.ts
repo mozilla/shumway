@@ -992,7 +992,6 @@ module Shumway.AVMX.AS {
       return this.value.localeCompare.apply(this.value, arguments);
     }
     match(pattern) {
-      debugger;
       if (this.securityDomain.AXRegExp.axIsType(pattern)) {
         pattern = pattern.value;
       }
