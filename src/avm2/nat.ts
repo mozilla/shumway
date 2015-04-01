@@ -100,8 +100,8 @@ module Shumway.AVMX.AS {
     export var notImplemented: (x: any) => void = Shumway.Debug.notImplemented;
   }
 
-  var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
-  var nativeFunctions: Shumway.Map<Function> = Shumway.ObjectUtilities.createMap<Function>();
+  var nativeClasses: Shumway.MapObject<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var nativeFunctions: Shumway.MapObject<Function> = Shumway.ObjectUtilities.createMap<Function>();
 
   /**
    * Searches for natives using a string path "a.b.c...".
@@ -1550,8 +1550,8 @@ module Shumway.AVMX.AS {
     }
   }
 
-  var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
-  var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var builtinNativeClasses: Shumway.MapObject<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var nativeClasses: Shumway.MapObject<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
   var nativeClassLoaderNames: {
     name: string;
     alias: string;
@@ -1571,6 +1571,7 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
 
+    builtinNativeClasses["__AS3__.vec.Vector"] = Vector;
     builtinNativeClasses["__AS3__.vec.Vector$object"] = GenericVector;
     builtinNativeClasses["__AS3__.vec.Vector$int"] = Int32Vector;
     builtinNativeClasses["__AS3__.vec.Vector$uint"] = Uint32Vector;
@@ -1983,7 +1984,7 @@ module Shumway.AVMX.AS {
         release || assert(axClass, "Class " + mn + " is not found.");
         release || assert(axClass.axConstruct);
         var loader: any = function () {
-          return axClass.axConstruct(arguments);
+          return axClass.axConstruct(<any>arguments);
         };
         loader.axIsType = function (value: any) {
           return axClass.axIsType(value);

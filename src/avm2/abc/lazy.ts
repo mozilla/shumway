@@ -2001,11 +2001,11 @@ module Shumway.AVMX {
   }
 
   export class ABCCatalog {
-    map: Shumway.Map<Shumway.Map<string>>;
+    map: Shumway.MapObject<Shumway.MapObject<string>>;
     abcs: Uint8Array;
-    scripts: Shumway.Map<any>;
+    scripts: Shumway.MapObject<any>;
     constructor(abcs: Uint8Array, index: any) {
-      this.map = ObjectUtilities.createMap<Shumway.Map<string>>();
+      this.map = ObjectUtilities.createMap<Shumway.MapObject<string>>();
       this.abcs = abcs;
       this.scripts = ObjectUtilities.createMap<string>();
       for (var i = 0; i < index.length; i++) {

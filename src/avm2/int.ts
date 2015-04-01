@@ -420,7 +420,7 @@ module Shumway.AVMX {
             break;
           case Bytecode.APPLYTYPE:
             popManyInto(stack, u30(), args);
-            stack[stack.length - 1] = securityDomain.applyType(methodInfo, stack[stack.length - 1], args);
+            stack[stack.length - 1] = securityDomain.applyType(stack[stack.length - 1], args);
             break;
           case Bytecode.NEWOBJECT:
             object = Object.create(securityDomain.AXObject.tPrototype);

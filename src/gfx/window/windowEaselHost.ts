@@ -25,7 +25,7 @@ module Shumway.GFX.Window {
   import DisplayParameters = Shumway.Remoting.DisplayParameters;
 
   export class WindowEaselHost extends EaselHost {
-    private _timelineRequests: Map<(data) => void>;
+    private _timelineRequests: MapObject<(data) => void>;
     private _window;
     private _playerWindow;
 

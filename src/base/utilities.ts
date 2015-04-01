@@ -336,7 +336,7 @@ module Shumway {
     return performance.now();
   }
 
-  export interface Map<T> {
+  export interface MapObject<T> {
     [name: string]: T
   }
 
@@ -719,12 +719,12 @@ module Shumway {
       return !!(d && !!d.set);
     }
 
-    export function createMap<T>():Map<T> {
+    export function createMap<T>():MapObject<T> {
       return Object.create(null);
     }
 
-    export function createArrayMap<T>():Map<T> {
-      return <Map<T>><any>[];
+    export function createArrayMap<T>():MapObject<T> {
+      return <MapObject<T>><any>[];
     }
 
     export function defineReadOnlyProperty(object: Object, name: string, value: any) {
@@ -736,7 +736,7 @@ module Shumway {
       });
     }
 
-    export function getOwnPropertyDescriptors(object: Object): Map<PropertyDescriptor> {
+    export function getOwnPropertyDescriptors(object: Object): MapObject<PropertyDescriptor> {
       var o = ObjectUtilities.createMap<PropertyDescriptor>();
       var properties = Object.getOwnPropertyNames(object);
       for (var i = 0; i < properties.length; i++) {

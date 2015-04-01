@@ -46,7 +46,7 @@ module Shumway.AVMX.AS.flash.external {
     // static call: (functionName: string) => any;
 
     private static initialized: boolean = false;
-    private static registeredCallbacks: Shumway.Map<(request: string, args: any []) => any> = Object.create(null);
+    private static registeredCallbacks: Shumway.MapObject<(request: string, args: any []) => any> = Object.create(null);
 
     private static _getAvailable(): boolean {
       return ExternalInterfaceService.instance.enabled;

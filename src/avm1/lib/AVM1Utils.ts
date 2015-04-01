@@ -67,9 +67,9 @@ module Shumway.AVM1.Lib {
       this._as3Object = as3Object;
     }
 
-    private _eventsMap: Map<AVM1EventHandler>;
+    private _eventsMap: MapObject<AVM1EventHandler>;
     private _events: AVM1EventHandler[];
-    private _eventsListeners: Map<Function>;
+    private _eventsListeners: MapObject<Function>;
 
     public bindEvents(events: AVM1EventHandler[], autoUnbind: boolean = true) {
       this._events = events;

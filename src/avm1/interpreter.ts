@@ -110,7 +110,7 @@ module Shumway.AVM1 {
     "tabEnabled", "tabIndex", "tabIndex", "tabStops", "toLowerCase", "toString",
     "toUpperCase", "trackAsMenu", "UNIQUESORT", "updateAfterEvent",
     "updateProperties", "useCodepage", "useHandCursor", "UTC", "valueOf"];
-  var as2IdentifiersCaseMap: Map<string> = null;
+  var as2IdentifiersCaseMap: MapObject<string> = null;
 
   class AVM1ScopeListItem {
     constructor(public scope, public next: AVM1ScopeListItem) {
@@ -175,10 +175,10 @@ module Shumway.AVM1 {
     defaultTarget;
     currentTarget;
 
-    private assets: Map<number>;
+    private assets: MapObject<number>;
     private assetsSymbols: Array<any>;
     private assetsClasses: Array<any>;
-    private eventObservers: Map<IAVM1EventPropertyObserver[]>;
+    private eventObservers: MapObject<IAVM1EventPropertyObserver[]>;
 
     constructor(loaderInfo: Shumway.AVMX.AS.flash.display.LoaderInfo) {
       super();

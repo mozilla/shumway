@@ -123,7 +123,7 @@ module Shumway.AVMX.AS.flash.events {
      * The queues start off compact but can have null values if event targets are removed.
      * Periodically we compact them if too many null values exist.
      */
-    private _queues: Shumway.Map<EventDispatcher []>;
+    private _queues: Shumway.MapObject<EventDispatcher []>;
 
     constructor() {
       this.reset();
@@ -214,8 +214,8 @@ module Shumway.AVMX.AS.flash.events {
     /*
      * Keep two lists of listeners, one for capture events and one for all others.
      */
-    private _captureListeners: Shumway.Map<EventListenerList>;
-    private _targetOrBubblingListeners: Shumway.Map<EventListenerList>;
+    private _captureListeners: Shumway.MapObject<EventListenerList>;
+    private _targetOrBubblingListeners: Shumway.MapObject<EventListenerList>;
 
     protected _fieldsInitialized: boolean;
 
@@ -256,7 +256,7 @@ module Shumway.AVMX.AS.flash.events {
     /**
      * Lazily construct listeners lists to avoid object allocation.
      */
-    private _getListeners(useCapture: boolean): Shumway.Map<EventListenerList> {
+    private _getListeners(useCapture: boolean): Shumway.MapObject<EventListenerList> {
       if (useCapture) {
         return this._captureListeners || (this._captureListeners = Object.create(null));
       }

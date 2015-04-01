@@ -186,10 +186,6 @@ module Shumway.AVMX {
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import ASClass = Shumway.AVMX.AS.ASClass;
 
-  function axApplyIdentity(self, args) {
-    return args[0];
-  }
-
   function axBoxIdentity(args) {
     return args[0];
   }
@@ -675,6 +671,7 @@ module Shumway.AVMX {
     $BgtoString: AXCallable;
     $BgvalueOf: AXCallable;
     axInitializer: any;
+    axClass: AXClass;
   }
 
   export interface AXGlobal extends AXObject {
@@ -692,7 +689,7 @@ module Shumway.AVMX {
     tPrototype: AXObject;
     dPrototype: AXObject;
     axBox: any;
-    axConstruct: any;
+    axConstruct: (args: any[]) => AXObject;
     axApply: any;
     axCoerce: any;
     axIsType: any;
@@ -873,8 +870,7 @@ module Shumway.AVMX {
    * Default axApply.
    */
   function axDefaultApply(self, args: any []) {
-    // TODO: Coerce.
-    return args ? args[0] : undefined;
+    return this.axCoerce(args ? args[0] : undefined);
   }
 
   /**
@@ -901,6 +897,11 @@ module Shumway.AVMX {
     public AXNamespace: AXNamespaceClass;
     public AXQName: AXQNameClass;
 
+    public ObjectVector: typeof AS.GenericVector;
+    public Int32Vector: typeof AS.Int32Vector;
+    public Uint32Vector: typeof AS.Uint32Vector;
+    public Float64Vector: typeof AS.Float64Vector;
+
     public get xmlParser(): AS.XMLParser {
       return this._xmlParser || (this._xmlParser = new AS.XMLParser(this));
     }
@@ -916,6 +917,7 @@ module Shumway.AVMX {
     private rootClassPrototype: AXObject;
 
     private nativeClasses: any;
+    private vectorClasses: Map<AXClass, AXClass>;
 
     private _catalogs: ABCCatalog [];
 
@@ -925,6 +927,7 @@ module Shumway.AVMX {
       this.classAliases = new AliasesCache();
       this.application = new ApplicationDomain(this, this.system);
       this.nativeClasses = Object.create(null);
+      this.vectorClasses = new Map<AXClass, AXClass>();
       this._catalogs = [];
     }
 
@@ -958,32 +961,51 @@ module Shumway.AVMX {
       throw axClass.axConstruct([message, id]);
     }
 
-    applyType(methodInfo: MethodInfo, axClass: AXClass, types: AXClass []): AXClass {
-      var factoryClassName = axClass.classInfo.instanceInfo.getName().name;
-      if (factoryClassName === "Vector") {
-        release || assert(types.length === 1);
-        var type = types[0];
-        var typeClassName;
-        if (!isNullOrUndefined(type)) {
-          typeClassName = type.classInfo.instanceInfo.getName().name.toLowerCase();
-          switch (typeClassName) {
-            case "number":
-              typeClassName = "double";
-            case "int":
-            case "uint":
-            case "double":
-              rn.namespaces = [Namespace.VECTOR_PACKAGE];
-              rn.name = "Vector$" + typeClassName;
-              return <AXClass>methodInfo.abc.applicationDomain.getProperty(rn, true, true);
-          }
-        }
-        rn.namespaces = [Namespace.VECTOR_PACKAGE];
-        rn.name = "Vector$object";
-        var objectVector = <any>methodInfo.abc.applicationDomain.getProperty(rn, true, true);
-        return objectVector.applyType(objectVector, type);
-      } else {
-        Shumway.Debug.notImplemented(factoryClassName);
+    applyType(axClass: AXClass, types: AXClass []): AXClass {
+      release || assert(axClass.classInfo.instanceInfo.getName().name === "Vector");
+      release || assert(types.length === 1);
+      var type = types[0] || this.AXObject;
+      return this.getVectorClass(type);
+    }
+
+    getVectorClass(type: AXClass): AXClass {
+      var vectorClass = this.vectorClasses.get(type);
+      if (vectorClass) {
+        return vectorClass;
       }
+      var typeClassName = type ?
+                          type.classInfo.instanceInfo.getName().getMangledName() :
+                          '$BgObject';
+      switch (typeClassName) {
+        case "$BgNumber":
+        case "$Bgdouble":
+          vectorClass = <any>this.Float64Vector.axClass;
+          break;
+        case "$Bgint":
+          vectorClass = <any>this.Int32Vector.axClass;
+          break;
+        case "$Bguint":
+          vectorClass = <any>this.Uint32Vector.axClass;
+          break;
+        default:
+          vectorClass = this.createVectorClass(type);
+      }
+      this.vectorClasses.set(type, vectorClass);
+      return vectorClass;
+    }
+
+    createVectorClass(type: AXClass): AXClass {
+      var genericVectorClass = this.ObjectVector.axClass;
+      var axClass: AXClass = Object.create(genericVectorClass);
+      // Put the superClass tPrototype on the prototype chain so we have access
+      // to all factory protocol handlers by default.
+      axClass.tPrototype = Object.create(genericVectorClass.tPrototype);
+      axClass.tPrototype.axClass = axClass;
+      // We don't need a new dPrototype object.
+      axClass.dPrototype = <any>genericVectorClass.dPrototype;
+      axClass.superClass = <any>genericVectorClass;
+      (<any>axClass).type = type;
+      return axClass;
     }
 
     /**
@@ -1017,12 +1039,14 @@ module Shumway.AVMX {
      * handlers.
      */
     createSyntheticClass(superClass: AXClass): AXClass {
-      var axClass = Object.create(this.AXClass.tPrototype);
+      var axClass: AXClass = Object.create(superClass);
       // Put the superClass tPrototype on the prototype chain so we have access
       // to all factory protocol handlers by default.
       axClass.tPrototype = Object.create(superClass.tPrototype);
+      axClass.tPrototype.axClass = axClass;
       // We don't need a new dPrototype object.
       axClass.dPrototype = superClass.dPrototype;
+      axClass.superClass = superClass;
       return axClass;
     }
 
@@ -1051,13 +1075,6 @@ module Shumway.AVMX {
           }
           axClass.tPrototype = Object.create(axClass.dPrototype);
           axClass.tPrototype.axInitializer = this.createInitializerFunction(classInfo, classScope);
-          axClass.axCoerce = function (x: any) {
-            if (x == null) {
-              return null;
-            }
-            checkParameterType(x, "?", this);
-            return x;
-          };
         }
       } else {
         axClass.tPrototype.axInitializer = this.createInitializerFunction(classInfo, classScope);
@@ -1225,7 +1242,6 @@ module Shumway.AVMX {
       };
 
       var D = defineNonEnumerableProperty;
-      D(rootClassPrototype, "axApply", axApplyIdentity);
       D(rootClassPrototype, "axBox", axBoxIdentity);
       D(rootClassPrototype, "axCoerce", axCoerce);
       D(rootClassPrototype, "axIsType", axIsTypeObject);
