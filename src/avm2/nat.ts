@@ -855,6 +855,7 @@ module Shumway.AVMX.AS {
 
     private _prototype: AXObject;
     protected value: Function;
+    protected receiver: {scope: Scope};
 
     get prototype(): AXObject {
       if (!this._prototype) {
@@ -877,10 +878,16 @@ module Shumway.AVMX.AS {
     }
 
     call(thisArg: any) {
+      if (!thisArg || typeof thisArg !== 'object') {
+        thisArg = this.receiver.scope.global.object;
+      }
       return this.value.apply(thisArg, sliceArguments(arguments, 1));
     }
 
     apply(thisArg: any, argArray?: ASArray): any {
+      if (!thisArg || typeof thisArg !== 'object') {
+        thisArg = this.receiver.scope.global.object;
+      }
       return this.value.apply(thisArg, argArray ? argArray.value : undefined);
     }
 
@@ -902,12 +909,10 @@ module Shumway.AVMX.AS {
     }
     static Create(receiver: AXObject, method: Function) {
       var closure: ASMethodClosure = Object.create(this.securityDomain.AXMethodClosure.tPrototype);
-      closure.receiver = receiver;
+      closure.receiver = <any>receiver;
       closure.value = method;
       return closure;
     }
-
-    private receiver: AXObject;
 
     get prototype(): AXObject {
       return null;
