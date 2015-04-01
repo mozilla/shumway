@@ -25,6 +25,7 @@ declare var quit;
 declare var read;
 declare var help;
 declare var timeout;
+declare var printErr;
 
 // Number of errors thrown, used for shell scripting to return non-zero exit codes.
 var errors = 0;
@@ -419,7 +420,8 @@ module Shumway.Shell {
       return line.trim().indexOf("//") !== 0;
     }).join("\n"));
 
-    json.forEach(function (run) {
+    json.forEach(function (run, i) {
+      printErr("Running batch " + (i + 1) + " of " + json.length + " (" + run[1].length + " tests)");
       var securityDomain = createSecurityDomain(builtinABCPath, null, null);
       // Run libraries.
       run[0].forEach(function (file) {
@@ -437,7 +439,8 @@ module Shumway.Shell {
           if (verbose) {
             writer.writeLn("executeABC: " + file);
           }
-          timeout(5, function () {
+          timeout(10, function () {
+            writer.writeLn("TIMEDOUT!");
             throw new Error("Timeout");
             return true;
           });
