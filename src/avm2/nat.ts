@@ -1571,6 +1571,7 @@ module Shumway.AVMX.AS {
     builtinNativeClasses["String"]              = ASString;
     builtinNativeClasses["Array"]               = ASArray;
 
+    builtinNativeClasses["__AS3__.vec.Vector"] = Vector;
     builtinNativeClasses["__AS3__.vec.Vector$object"] = GenericVector;
     builtinNativeClasses["__AS3__.vec.Vector$int"] = Int32Vector;
     builtinNativeClasses["__AS3__.vec.Vector$uint"] = Uint32Vector;

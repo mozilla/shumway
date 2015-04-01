@@ -128,3 +128,4 @@ test/avm2/pass/type-5.abc
 test/avm2/pass/interface-2.abc
 test/avm2/pass/tmp.abc
 test/avm2/pass/interfaceCast.abc
+test/avm2/pass/inline-2.abc

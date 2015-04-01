@@ -1050,13 +1050,6 @@ module Shumway.AVMX {
           }
           axClass.tPrototype = Object.create(axClass.dPrototype);
           axClass.tPrototype.axInitializer = this.createInitializerFunction(classInfo, classScope);
-          axClass.axCoerce = function (x: any) {
-            if (x == null) {
-              return null;
-            }
-            checkParameterType(x, "?", this);
-            return x;
-          };
         }
       } else {
         axClass.tPrototype.axInitializer = this.createInitializerFunction(classInfo, classScope);

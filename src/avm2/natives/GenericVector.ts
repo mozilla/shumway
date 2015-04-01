@@ -93,6 +93,15 @@ module Shumway.AVMX.AS {
     }
   }
 
+  export class Vector extends ASObject {
+    static axIsType(x: AXObject) {
+      return this.dPrototype.isPrototypeOf(x) ||
+             this.securityDomain.Int32Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.securityDomain.Uint32Vector.axClass.dPrototype.isPrototypeOf(x) ||
+             this.securityDomain.Float64Vector.axClass.dPrototype.isPrototypeOf(x);
+    }
+  }
+
   export class GenericVector extends BaseVector {
 
     static axClass: typeof GenericVector;
