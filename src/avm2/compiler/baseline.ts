@@ -1438,7 +1438,6 @@ module Shumway.AVM2.Compiler {
   }
 
   function emitScript(emitter: Emitter, scriptInfo: ScriptInfo) {
-    scriptInfo.abc.hash
     emitter.writeLn("// Script: " + scriptInfo.name);
 
     emitMethodTraits(emitter, mangleScript(scriptInfo), scriptInfo.traits);

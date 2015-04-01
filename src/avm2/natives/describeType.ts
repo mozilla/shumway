@@ -250,7 +250,7 @@ module Shumway.AVM2.AS {
   }
 
   function publicName(str: string) {
-    return Multiname.getPublicQualifiedName(str)
+    return Multiname.getPublicQualifiedName(str);
   }
 
   function unmangledQualifiedName(mn) {

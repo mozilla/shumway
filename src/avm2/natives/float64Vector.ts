@@ -151,7 +151,7 @@ module Shumway.AVMX.AS {
       return str;
     }
 
-    toLocaleString(){
+    toLocaleString() {
       var str = "";
       for (var i = 0; i < this._length; i++) {
         str += this._buffer[this._offset + i];
@@ -531,7 +531,7 @@ module Shumway.AVMX.AS {
     }
 
     axHasNext2(hasNext2Info: HasNext2Info) {
-      hasNext2Info.index = this.axNextNameIndex(hasNext2Info.index)
+      hasNext2Info.index = this.axNextNameIndex(hasNext2Info.index);
     }
   }
 }

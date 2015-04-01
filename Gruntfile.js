@@ -53,7 +53,7 @@ module.exports = function(grunt) {
       options: {
         configuration: grunt.file.readJSON("tslint.json")
       },
-      all: ['src/flash/**/*.ts'] // TODO: Add more directories.
+      all: ['src/base/**/*.ts', 'src/flash/**/*.ts', 'src/avm2/**/*.ts'] // TODO: Add more directories.
     },
     exec: {
       build_web: {
@@ -618,7 +618,7 @@ module.exports = function(grunt) {
     'parallel:natives',
     'exec:build_player_ts',
     'exec:build_shell_ts',
-    // 'tslint:all', REDUX: Temporarily commented out.
+    'tslint:all', // REDUX: Temporarily commented out.
     'exec:spell',
     // 'closure', REDUX: Temporarily commented out.
     'exec:test_avm2_redux_pass',

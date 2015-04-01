@@ -805,7 +805,7 @@ module Shumway.AVM2.Verifier {
             } else if (trait.isClass()) {
               return Type.from(trait.classInfo, self.domain);
             } else if (trait.isMethod()) {
-              return new MethodType(trait.methodInfo, self.domain)
+              return new MethodType(trait.methodInfo, self.domain);
             }
           } else if (isNumericMultiname(mn) && traitsType.isParameterizedType()) {
             var parameter = traitsType.asParameterizedType().parameter;
@@ -1348,7 +1348,7 @@ module Shumway.AVM2.Verifier {
             type = pop();
             pop();
             if (type === Type.Class) {
-              push(type)
+              push(type);
             } else if (type.isTraitsType()) {
               push(type.instanceType());
             } else {
@@ -1469,7 +1469,8 @@ module Shumway.AVM2.Verifier {
             // Nop.
             break;
           default:
-            console.info("Not Implemented: " + bc);
+            notImplemented(bc);
+            break;
         }
       }
     }

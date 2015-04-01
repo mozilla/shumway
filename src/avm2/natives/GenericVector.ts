@@ -185,7 +185,7 @@ module Shumway.AVMX.AS {
       axClass.tPrototype.axInitializer = function (length: number /*uint*/ = 0, fixed: boolean = false) {
         // factoryType.tPrototype.axInitializer points to the GenericVector constructor.
         factoryType.tPrototype.axInitializer.call(this, length, fixed, type);
-      }
+      };
       return axClass;
     }
 

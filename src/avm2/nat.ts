@@ -805,7 +805,6 @@ module Shumway.AVMX.AS {
       if (typeof mn.name === 'number') {
         release || assert(mn.isRuntimeName());
         return delete this.value[mn.name];
-        return;
       }
       var name = asCoerceName(mn.name);
       var namespaces = mn.namespaces;

@@ -955,7 +955,7 @@ module Shumway.AVMX {
       rn.namespaces = [Namespace.PUBLIC];
       rn.name = errorClass;
       var axClass: AXClass = <any>this.application.getProperty(rn, true, true);
-      throw axClass.axConstruct([message, id])
+      throw axClass.axConstruct([message, id]);
     }
 
     applyType(methodInfo: MethodInfo, axClass: AXClass, types: AXClass []): AXClass {
@@ -975,7 +975,6 @@ module Shumway.AVMX {
               rn.namespaces = [Namespace.VECTOR_PACKAGE];
               rn.name = "Vector$" + typeClassName;
               return <AXClass>methodInfo.abc.applicationDomain.getProperty(rn, true, true);
-              break;
           }
         }
         rn.namespaces = [Namespace.VECTOR_PACKAGE];
@@ -1586,6 +1585,6 @@ module Shumway.AVMX {
   export function createMethod(methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean) {
     return function () {
       return interpret(this, methodInfo, scope, sliceArguments(arguments));
-    }
+    };
   }
 }

@@ -300,7 +300,7 @@ module Shumway.AVMX {
     if (!release) {
       method.toString = function () {
         return "Interpret " + methodTraitInfo.toString();
-      }
+      };
     }
     methodTraitInfo.method = method;
     return method;
@@ -321,7 +321,7 @@ module Shumway.AVMX {
           }
           return native.apply(this, args);
       }
-    }
+    };
   }
 
   export class TraitInfo {
@@ -766,7 +766,7 @@ module Shumway.AVMX {
 
     getInitializer(): MethodInfo {
       if (typeof this.initializer === "number") {
-        return this.initializer = this.abc.getMethodInfo(<number>this.initializer)
+        return this.initializer = this.abc.getMethodInfo(<number>this.initializer);
       }
       return <MethodInfo>this.initializer;
     }

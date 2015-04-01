@@ -1,3 +1,4 @@
+/* tslint:disable */
 /*
  * Copyright 2014 Mozilla Foundation
  *

@@ -112,7 +112,7 @@ declare var Uint8ClampedArray: {
   new (array: number[]): Uint8ClampedArray;
   new (buffer: ArrayBuffer, byteOffset?: number, length?: number): Uint8ClampedArray;
   BYTES_PER_ELEMENT: number;
-}
+};
 
 declare module Shumway {
   var version: string;
@@ -381,11 +381,11 @@ module Shumway {
     }
 
     export function top(array: any []) {
-      return array.length && array[array.length - 1]
+      return array.length && array[array.length - 1];
     }
 
     export function last(array: any []) {
-      return array.length && array[array.length - 1]
+      return array.length && array[array.length - 1];
     }
 
     export function peek(array: any []) {
@@ -402,7 +402,7 @@ module Shumway {
       return -1;
     }
 
-    export function equals<T>(a: T [], b: T []): boolean{
+    export function equals<T>(a: T [], b: T []): boolean {
       if (a.length !== b.length) {
         return false;
       }
@@ -774,7 +774,7 @@ module Shumway {
         if (hasOwnProperty(template, property) && (!filter || filter(property))) {
           var descriptor = Object.getOwnPropertyDescriptor(template, property);
           if (!overwrite && hasOwnProperty(object, property)) {
-            continue
+            continue;
           }
           release || Debug.assert (descriptor);
           try {
@@ -1707,7 +1707,7 @@ module Shumway {
         // the shift by 0 fixes the sign on the high part
         // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
-      }
+      };
     }
 
     /**
@@ -1721,7 +1721,7 @@ module Shumway {
         i |= (i >> 8);
         i |= (i >> 16);
         return 32 - IntegerUtilities.ones(i);
-      }
+      };
     }
   }
 
@@ -2585,7 +2585,7 @@ module Shumway {
       var type = (shouldUseSingleWord ? <any>Uint32BitSet : <any>Uint32ArrayBitSet);
       return function () {
         return new type(length);
-      }
+      };
     }
   }
 
@@ -3056,7 +3056,7 @@ module Shumway {
       return Color.FromARGB(ColorUtilities.RGBAToARGB(rgba));
     }
     public toRGBA() {
-      return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255)
+      return (this.r * 255) << 24 | (this.g * 255) << 16 | (this.b * 255) << 8 | (this.a * 255);
     }
     public toCSSStyle() {
       return ColorUtilities.rgbaToCSSStyle(this.toRGBA());
@@ -3504,11 +3504,21 @@ module Shumway {
   export module ExternalInterfaceService {
     export var instance: IExternalInterfaceService = {
       enabled: false,
-      initJS(callback: (functionName: string, args: any[]) => any) { },
-      registerCallback(functionName: string) { },
-      unregisterCallback(functionName: string) { },
-      eval(expression: string): any { },
-      call(request: string): any { },
+      initJS(callback: (functionName: string, args: any[]) => any) {
+        // ...
+      },
+      registerCallback(functionName: string) {
+        // ...
+      },
+      unregisterCallback(functionName: string) {
+        // ...
+      },
+      eval(expression: string): any {
+        // ...
+      },
+      call(request: string): any {
+        // ...
+      },
       getId(): string { return null; }
     };
   }
