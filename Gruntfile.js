@@ -168,21 +168,21 @@ module.exports = function(grunt) {
         cmd: 'node src/shell/numbers.js -c icb -i ' + (grunt.option('include') || 'test/avm2/pass/') +
                                       ' -j ' + (+grunt.option('threads') || 9)
       },
+      // Runs tamarin acceptance tests and tests against current baseline. If you get more tests to pass, update the baseline.
       test_avm2_acceptance: {
         maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N400 utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc {} | egrep -o "(PASSED|FAILED)" | sort | uniq -c'
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance-pass.json | egrep -o "(PASSED|FAILED|EXCEPTED)" | sort | uniq -c | tee test/avm2/acceptance-results.txt && ' +
+             'diff test/avm2/acceptance-results.txt test/avm2/acceptance-baseline.txt'
       },
+      // Same as above, but it doesn't do any post processing of stdout.
+      test_avm2_acceptance_trace: {
+        maxBuffer: Infinity,
+        cmd: 'utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance-pass.json'
+      },
+      // Parses all ABCs in the acceptance suite. This is useful to run if you've made changes to the parser.
       test_avm2_acceptance_parse: {
         maxBuffer: Infinity,
         cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N50 --timeout 200% utils/jsshell/js build/ts/shell.js -d -v {}'
-      },
-      test_avm2_acceptance_trace: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/acceptance -name "*.abc" | parallel --no-notice -X -N400 utils/jsshell/js build/ts/shell.js -x -v test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc {}'
-      },
-      test_avm2_acceptance_abcasm: {
-        maxBuffer: Infinity,
-        cmd: 'find -L test/avm2/acceptance/abcasm/coverage -name "*.abc" | parallel --no-notice -X -N400 utils/jsshell/js build/ts/shell.js -x test/avm2/acceptance/Assert.abc test/avm2/acceptance/Utils.abc test/avm2/acceptance/DateUtils.abc test/avm2/acceptance/abcasm/abs_helper.abc {}'
       },
       test_avm2_baseline: {
         cmd: 'node src/shell/numbers.js -c b -i ' + (grunt.option('include') || 'test/avm2/pass/') +
@@ -622,6 +622,7 @@ module.exports = function(grunt) {
     'exec:spell',
     // 'closure', REDUX: Temporarily commented out.
     'exec:test_avm2_redux_pass',
+    'exec:test_avm2_acceptance',
     'exec:gate'
   ]);
   grunt.registerTask('smoke', [
