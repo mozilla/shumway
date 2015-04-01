@@ -507,6 +507,13 @@ module Shumway.AVMX {
             value = stack.pop();
             box(stack.pop()).axSetSlot(u30(), value);
             break;
+          case Bytecode.GETGLOBALSLOT:
+            stack[stack.length - 1] = savedScope.global.object.axGetSlot(u30());
+            break;
+          case Bytecode.SETGLOBALSLOT:
+            value = stack.pop();
+            savedScope.global.object.axSetSlot(u30(), value);
+            break;
           //case Bytecode.esc_xattr:
           //  stack[stack.length - 1] = Runtime.escapeXMLAttribute(stack[stack.length - 1]);
           //  break;
