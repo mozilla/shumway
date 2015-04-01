@@ -1213,7 +1213,6 @@ module Shumway.AVMX.AS {
         pattern = String(pattern);
         // Escape all forward slashes.
         source = pattern.replace(/(^|^[\/]|(?:\\\\)+)\//g, '$1\\/');
-        pattern = this._parse(source);
         if (flags) {
           var f = flags;
           flags = '';
@@ -1237,6 +1236,7 @@ module Shumway.AVMX.AS {
             }
           }
         }
+        pattern = this._parse(source);
       }
       this.value = new RegExp(pattern, flags);
       this._source = source;
