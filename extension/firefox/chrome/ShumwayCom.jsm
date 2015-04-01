@@ -39,6 +39,14 @@ function getBoolPref(pref, def) {
   }
 }
 
+function getCharPref(pref, def) {
+  try {
+    return Services.prefs.getCharPref(pref);
+  } catch (ex) {
+    return def;
+  }
+}
+
 function log(aMsg) {
   let msg = 'ShumwayCom.js: ' + (aMsg.join ? aMsg.join('') : aMsg);
   Services.console.logStringMessage(msg);
@@ -312,7 +320,8 @@ ShumwayChromeActions.prototype = {
       playerSettings: {
         turboMode: getBoolPref('shumway.turboMode', false),
         hud: getBoolPref('shumway.hud', false),
-        forceHidpi: getBoolPref('shumway.force_hidpi', false)
+        forceHidpi: getBoolPref('shumway.force_hidpi', false),
+        env: getCharPref('shumway.environment', 'dev')
       }
     }
   },
