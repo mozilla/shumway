@@ -106,7 +106,7 @@ if (disableBundleSelection || commandLineArguments.indexOf('--bundle') >= 0) {
 
   load("build/ts/flash.js");
 
-  // REDUX: load("build/ts/avm1.js");
+  load("build/ts/avm1.js");
 
   load("build/ts/gfx-base.js");
   load("build/ts/player.js");
