@@ -17,37 +17,21 @@
 module Shumway.AVMX.AS.flash.system {
   import asCoerceString = Shumway.AVMX.asCoerceString;
 
-  export class FSCommand extends ASObject {
-    
-    // Called whenever the class is initialized.
-    static classInitializer: any = null;
-
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
-    constructor () {
-      super();
-    }
-
-    static _fscommand(command: string, args: string): void {
-      command = asCoerceString(command); args = asCoerceString(args);
-      console.log('FSCommand: ' + command + '; ' + args);
-      command = command.toLowerCase();
-      if (command === 'debugger') {
-        /* tslint:disable */
-        debugger;
-        /* tslint:enable */
-        return;
-      }
-
-      this.securityDomain.player.executeFSCommand(command, args);
-    }
-  }
-
   export interface IFSCommandListener {
     executeFSCommand(command: string, args: string);
+  }
+
+  export function fscommand(command: string, args: string): void {
+    command = asCoerceString(command); args = asCoerceString(args);
+    console.log('FSCommand: ' + command + '; ' + args);
+    command = command.toLowerCase();
+    if (command === 'debugger') {
+      /* tslint:disable */
+      debugger;
+      /* tslint:enable */
+      return;
+    }
+
+    this.securityDomain.player.executeFSCommand(command, args);
   }
 }

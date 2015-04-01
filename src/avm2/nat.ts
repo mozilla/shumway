@@ -2011,18 +2011,24 @@ module Shumway.AVMX.AS {
     });
   }
 
+  var createContainersFromPath = function (pathTokens, container) {
+    for (var i = 0, j = pathTokens.length; i < j; i++) {
+      if (!container[pathTokens[i]]) {
+        container[pathTokens[i]] = Object.create(null);
+      }
+      container = container[pathTokens[i]];
+    }
+    return container;
+  };
+
   function makeClassLoader(applicationDomain: ApplicationDomain, container: Object,
                            classPath: string, aliasPath: string, nsType: NamespaceType) {
     runtimeWriter && runtimeWriter.writeLn("Defining Memoizer: " + classPath);
     var aliasPathTokens = aliasPath.split(".");
-    for (var i = 0, j = aliasPathTokens.length - 1; i < j; i++) {
-      if (!container[aliasPathTokens[i]]) {
-        container[aliasPathTokens[i]] = Object.create(null);
-      }
-      container = container[aliasPathTokens[i]];
-    }
+    var aliasClassName = aliasPathTokens.pop();
+    container = createContainersFromPath(aliasPathTokens, container);
     var mn = Multiname.FromFQNString(classPath, nsType);
-    defineClassLoader(applicationDomain, container, mn, aliasPathTokens.pop());
+    defineClassLoader(applicationDomain, container, mn, aliasClassName);
   }
 
   /**
@@ -2034,6 +2040,20 @@ module Shumway.AVMX.AS {
       var loaderAlias = nativeClassLoaderNames[i].alias;
       var nsType = nativeClassLoaderNames[i].nsType;
       makeClassLoader(applicationDomain, container, loaderName, loaderAlias, nsType);
+    }
+  }
+
+  /**
+   * Installs all the previously registered native functions on the SecurityDomain.
+   *
+   * Note that this doesn't use memoizers and doesn't run the functions' AS3 script.
+   */
+  export function installNativeFunctions(securityDomain: SecurityDomain) {
+    for (var i in nativeFunctions) {
+      var pathTokens = i.split('.');
+      var funName = pathTokens.pop();
+      var container = createContainersFromPath(pathTokens, securityDomain);
+      container[funName] = securityDomain.boxFunction(nativeFunctions[i]);
     }
   }
 }

@@ -482,7 +482,6 @@ module Shumway.Shell {
         }
         timeout(5, function () {
           throw new Error("Timeout");
-          return true;
         });
         var buffer = new Uint8Array(read(file, "binary"));
         var abc = new ABCFile(buffer);

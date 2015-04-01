@@ -1470,6 +1470,7 @@ module Shumway.AVMX {
 
       // Install class loaders on the security domain.
       AS.installClassLoaders(this.application, this);
+      AS.installNativeFunctions(this);
     }
   }
 

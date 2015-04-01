@@ -104,6 +104,7 @@ interface ISecurityDomain {
       LoaderContext: typeof flashPackage.system.LoaderContext;
       JPEGLoaderContext: typeof flashPackage.system.JPEGLoaderContext;
       ApplicationDomain: typeof flashPackage.system.ApplicationDomain;
+      fscommand: typeof flashPackage.system.fscommand;
     }
   }
 }
@@ -225,7 +226,6 @@ module Shumway.AVMX.AS {
   M("flash.net.Socket", flash.net.Socket);
   M("flash.net.URLVariables", flash.net.URLVariables);
 
-  M("flash.system.FSCommand", flash.system.FSCommand);
   M("flash.system.Capabilities", flash.system.Capabilities);
   M("flash.system.Security", flash.system.Security);
   M("flash.system.SecurityDomain", flash.system.SecurityDomain);
@@ -238,6 +238,8 @@ module Shumway.AVMX.AS {
 
   M("flash.utils.Timer", flash.utils.Timer);
   M("flash.utils.ByteArray", flash.utils.ByteArray);
+
+  registerNativeFunction('flash.system.fscommand', flash.system.fscommand);
 
   export function constructClassFromSymbol(symbol: Timeline.Symbol, axClass: ASClass) {
     var instance = Object.create(axClass.tPrototype);
