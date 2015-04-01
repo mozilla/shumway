@@ -258,14 +258,22 @@ declare module Shumway.AVMX.AS.flash {
     }
   }
   module geom {
-    class ColorTransform extends ASObject {}
-    class Matrix extends ASObject {}
+    class ColorTransform extends ASObject {
+      static axClass: typeof ColorTransform;
+    }
+    class Matrix extends ASObject {
+      static axClass: typeof Matrix;
+    }
     class Point extends ASObject {
+      static axClass: typeof Point;
+
       public x: number;
       public y: number;
       constructor(x: number, y: number);
     }
     class Rectangle extends ASObject {
+      static axClass: typeof Rectangle;
+
       public x: number;
       public y: number;
       public width: number;
@@ -304,7 +312,9 @@ declare module Shumway.AVMX.AS.flash {
       constructor(request?: URLRequest);
       _ignoreDecodeErrors: boolean;
     }
-    class SharedObject extends ASObject {}
+    class SharedObject extends ASObject {
+      static axClass: typeof SharedObject;
+    }
   }
   module system {
     class Capabilities {
@@ -361,8 +371,12 @@ declare module Shumway.AVMX.AS.flash {
     }
   }
   module ui {
-    class ContextMenu extends ASObject {}
-    class ContextMenuItem extends ASObject {}
+    class ContextMenu extends ASObject {
+      static axClass: typeof ContextMenu;
+    }
+    class ContextMenuItem extends ASObject {
+      static axClass: typeof ContextMenuItem;
+    }
   }
   module utils {
     function getTimer(): Timer;

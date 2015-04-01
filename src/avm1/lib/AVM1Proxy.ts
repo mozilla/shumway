@@ -144,7 +144,7 @@ module Shumway.AVM1.Lib {
         }
       };
       wrapped.prototype = AVM1Proxy.prototype;
-      return wrapped;
+      return securityDomain.boxFunction(wrapped);
     }
   }
 }

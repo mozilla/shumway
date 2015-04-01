@@ -178,6 +178,8 @@ module Shumway.AVMX.AS {
     static axSetNumericProperty: (nm: number, value: any) => void;
     static axGetNumericProperty: (nm: number) => any;
 
+    static axDefinePublicProperty: (nm: any, descriptor: any) => any;
+
     static axCoerce: (v: any) => any;
     static axConstruct: (argArray?: any []) => any;
 
@@ -454,6 +456,10 @@ module Shumway.AVMX.AS {
 
     axGetNumericProperty(nm: number): any {
       return this.axGetPublicProperty(nm);
+    }
+
+    axDefinePublicProperty(nm: any, descriptor: any): any {
+      Object.defineProperty(this, Multiname.getPublicMangledName(nm), descriptor);
     }
 
     axEnumerableKeys: any [];

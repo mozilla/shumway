@@ -23,7 +23,7 @@ module Shumway.AVM1.Lib {
   export class AVM1BitmapData extends flash.display.BitmapData {
     static createAVM1Class(securityDomain: ISecurityDomain): typeof AVM1BitmapData {
       var wrapped = AVM1Proxy.wrap(securityDomain, AVM1BitmapData, null);
-      wrapped.axSetPublicProperty('loadBitmap', AVM1BitmapData.loadBitmap);
+      wrapped.axSetPublicProperty('loadBitmap', securityDomain.boxFunction(AVM1BitmapData.loadBitmap));
       return wrapped;
     }
 

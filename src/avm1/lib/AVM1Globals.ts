@@ -510,23 +510,23 @@ module Shumway.AVM1.Lib {
     public MovieClipLoader: ASObject;
 
     public Sound: ASObject;
-    public SharedObject: typeof flash.net.SharedObject;
-    public ContextMenu: typeof flash.ui.ContextMenu;
-    public ContextMenuItem: typeof flash.ui.ContextMenuItem;
+    public SharedObject: ASObject;
+    public ContextMenu: ASObject;
+    public ContextMenuItem: ASObject;
     public TextFormat: ASObject;
 
     private _initBuiltins(context: AVM1Context) {
       var securityDomain: ISecurityDomain = context.securityDomain;
 
-      this.Object = securityDomain.AXObject.axConstruct; // REDUX
-      this.Function = securityDomain.AXFunction.axConstruct;
-      this.Array = securityDomain.AXArray.axConstruct;
-      this.Number = securityDomain.AXNumber.axConstruct;
-      this.Math = securityDomain.AXMath.axConstruct;
-      this.Boolean = securityDomain.AXBoolean.axConstruct;
-      this.Date = securityDomain.AXDate.axConstruct;
-      this.RegExp = securityDomain.AXRegExp.axConstruct;
-      this.String = securityDomain.AXString.axConstruct;
+      this.Object = wrapAVM1Builtin(securityDomain.AXObject);
+      this.Function = wrapAVM1Builtin(securityDomain.AXFunction);
+      this.Array = wrapAVM1Builtin(securityDomain.AXArray);
+      this.Number = wrapAVM1Builtin(securityDomain.AXNumber);
+      this.Math = wrapAVM1Builtin(securityDomain.AXMath);
+      this.Boolean = wrapAVM1Builtin(securityDomain.AXBoolean);
+      this.Date = wrapAVM1Builtin(securityDomain.AXDate);
+      this.RegExp = wrapAVM1Builtin(securityDomain.AXRegExp);
+      this.String = wrapAVM1Builtin(securityDomain.AXString);
 
       this.MovieClip = AVM1MovieClip.createAVM1Class(securityDomain);
       this.AsBroadcaster = AVM1Broadcaster.createAVM1Class(securityDomain);
@@ -540,9 +540,9 @@ module Shumway.AVM1.Lib {
       this.MovieClipLoader = AVM1MovieClipLoader.createAVM1Class(securityDomain);
 
       this.Sound = AVM1Sound.createAVM1Class(securityDomain);
-      this.SharedObject = securityDomain.flash.net.SharedObject;
-      this.ContextMenu = securityDomain.flash.ui.ContextMenu;
-      this.ContextMenuItem = securityDomain.flash.ui.ContextMenuItem;
+      this.SharedObject = wrapAVM1Builtin(securityDomain.flash.net.SharedObject.axClass);
+      this.ContextMenu = wrapAVM1Builtin(securityDomain.flash.ui.ContextMenu.axClass);
+      this.ContextMenuItem = wrapAVM1Builtin(securityDomain.flash.ui.ContextMenuItem.axClass);
       this.TextFormat = AVM1TextFormat.createAVM1Class(securityDomain);
 
       AVM1Broadcaster.initializeWithContext(this.Stage, context);
@@ -563,10 +563,10 @@ module Shumway.AVM1.Lib {
       var filters: ASObject = securityDomain.createObject();
       this.flash.axSetPublicProperty('filters', filters);
       var geom: ASObject = securityDomain.createObject();
-      geom.axSetPublicProperty('ColorTransform', flash.geom.ColorTransform);
-      geom.axSetPublicProperty('Matrix', flash.geom.Matrix);
-      geom.axSetPublicProperty('Point', flash.geom.Point);
-      geom.axSetPublicProperty('Rectangle', flash.geom.Rectangle);
+      geom.axSetPublicProperty('ColorTransform', wrapAVM1Builtin(securityDomain.flash.geom.ColorTransform.axClass));
+      geom.axSetPublicProperty('Matrix', wrapAVM1Builtin(securityDomain.flash.geom.Matrix.axClass));
+      geom.axSetPublicProperty('Point', wrapAVM1Builtin(securityDomain.flash.geom.Point.axClass));
+      geom.axSetPublicProperty('Rectangle', wrapAVM1Builtin(securityDomain.flash.geom.Rectangle.axClass));
       geom.axSetPublicProperty('Transform', AVM1Transform.createAVM1Class(securityDomain));
       this.flash.axSetPublicProperty('geom', geom);
       var text: ASObject = securityDomain.createObject();

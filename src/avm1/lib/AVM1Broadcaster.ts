@@ -42,16 +42,16 @@ module Shumway.AVM1.Lib {
     }
 
     public static initializeWithContext(obj: any, context: AVM1Context): void {
-      obj.axSetPublicProperty('_listeners', []);
-      obj.axSetPublicProperty('broadcastMessage', function broadcastMessage(eventName: string, ...args): void {
-        avm1BroadcastEvent(context, this, eventName, args);
-      });
-      obj.axSetPublicProperty('addListener', function addListener(listener: any): void {
+      obj.axSetPublicProperty('_listeners', context.securityDomain.createArray([]));
+      obj.axSetPublicProperty('broadcastMessage', context.securityDomain.boxFunction(function broadcastMessage(eventName: string, ...args): void {
+        avm1BroadcastEvent(context, this, eventName, context.securityDomain.createArray(args));
+      }));
+      obj.axSetPublicProperty('addListener', context.securityDomain.boxFunction(function addListener(listener: any): void {
         var listeners: any[] = context.utils.getProperty(this, '_listeners');
         listeners.push(listener);
         _updateAllSymbolEvents(<any>this);
-      });
-      obj.axSetPublicProperty('removeListener', function removeListener(listener: any): boolean {
+      }));
+      obj.axSetPublicProperty('removeListener', context.securityDomain.boxFunction(function removeListener(listener: any): boolean {
         var listeners: any[] = context.utils.getProperty(this, '_listeners');
         var i = listeners.indexOf(listener);
         if (i < 0) {
@@ -60,7 +60,7 @@ module Shumway.AVM1.Lib {
         listeners.splice(i, 1);
         _updateAllSymbolEvents(<any>this);
         return true;
-      });
+      }));
     }
   }
 }

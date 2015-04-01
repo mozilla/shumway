@@ -185,7 +185,7 @@ module Shumway.AVM1 {
       this.loaderInfo = loaderInfo;
       this.securityDomain = loaderInfo.securityDomain; // REDUX:
       var GlobalsClass = Lib.AVM1Globals.createAVM1Class(loaderInfo.securityDomain);
-      this.globals = new GlobalsClass(this);
+      this.globals = GlobalsClass.axConstruct([this]);
       this.initialScope = new AVM1ScopeListItem(this.globals, null);
       this.assets = {};
       // TODO: remove this list and always retrieve symbols from LoaderInfo.
@@ -725,7 +725,7 @@ module Shumway.AVM1 {
 
   function as2SetupInternalProperties(obj, proto, ctor) {
     obj.axSetPublicProperty('__proto__', proto);
-    obj.asDefinePublicProperty('__constructor__', {
+    obj.axDefinePublicProperty('__constructor__', {
       value: ctor,
       writable: true,
       enumerable: false,
@@ -1220,7 +1220,7 @@ module Shumway.AVM1 {
 
       // TODO refactor that
       if (variableName === 'this') {
-        scope.asDefinePublicProperty('this', {
+        scope.axDefinePublicProperty('this', {
           value: currentTarget,
           configurable: true
         });
