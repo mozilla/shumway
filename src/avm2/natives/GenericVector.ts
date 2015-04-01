@@ -270,19 +270,19 @@ module Shumway.AVMX.AS {
       if (arguments.length === 0) {
         return this._buffer.sort();
       }
-      if (sortBehavior instanceof Function) {
-        return this._buffer.sort(<(a: any, b: any) => number>sortBehavior);
+      if (this.securityDomain.AXFunction.axIsType(sortBehavior)) {
+        return this._buffer.sort(<(a: any, b: any) => number>sortBehavior.value);
       } else {
         var options = sortBehavior|0;
         release || assertNotImplemented (!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
         release || assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
-        if (options && GenericVector.NUMERIC) {
+        if (options & GenericVector.NUMERIC) {
           if (options & GenericVector.DESCENDING) {
             return this._buffer.sort((a, b) => asCoerceNumber(b) - asCoerceNumber(a));
           }
           return this._buffer.sort((a, b) => asCoerceNumber(a) - asCoerceNumber(b));
         }
-        if (options && GenericVector.CASEINSENSITIVE) {
+        if (options & GenericVector.CASEINSENSITIVE) {
           if (options & GenericVector.DESCENDING) {
             return this._buffer.sort((a, b) => <any>asCoerceString(b).toLowerCase() -
                                                <any>asCoerceString(a).toLowerCase());

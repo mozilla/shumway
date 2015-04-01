@@ -376,18 +376,17 @@ module Shumway.AVMX.AS {
       if (arguments.length === 0) {
         return Array.prototype.sort.call(this._view());
       }
-      // REDUX: The instanceof check here is probably broken.
-      if (sortBehavior instanceof Function) {
-        return Array.prototype.sort.call(this._view(), sortBehavior);
-      } else {
-        var options = sortBehavior|0;
-        release || assertNotImplemented (!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
-        release || assertNotImplemented (!(options & Int32Vector.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
-        if (options & Int32Vector.DESCENDING) {
-          return Array.prototype.sort.call(this._view(), (a, b) => b - a);
-        }
-        return Array.prototype.sort.call(this._view(), (a, b) => a - b);
+      if (this.securityDomain.AXFunction.axIsType(sortBehavior)) {
+        return Array.prototype.sort.call(this._view(), sortBehavior.value);
       }
+      var options = sortBehavior | 0;
+      release || assertNotImplemented(!(options & Int32Vector.UNIQUESORT), "UNIQUESORT");
+      release || assertNotImplemented(!(options & Int32Vector.RETURNINDEXEDARRAY),
+                                      "RETURNINDEXEDARRAY");
+      if (options & Int32Vector.DESCENDING) {
+        return Array.prototype.sort.call(this._view(), (a, b) => b - a);
+      }
+      return Array.prototype.sort.call(this._view(), (a, b) => a - b);
     }
 
     shift() {
