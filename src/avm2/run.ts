@@ -599,6 +599,9 @@ module Shumway.AVMX {
     var T = traits.traits;
     for (var i = 0; i < T.length; i++) {
       var t = T[i];
+      if (!release && (t.kind === TRAIT.Slot || t.kind === TRAIT.Const)) {
+        checkValue(t.value);
+      }
       Object.defineProperty(object, t.name.getMangledName(), t);
     }
   }
