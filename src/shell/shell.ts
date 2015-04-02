@@ -426,7 +426,7 @@ module Shumway.Shell {
         if (!frameCount) {
           return true;
         }
-        hash = HashUtilities.mixWords(hash, player.stage.hashCode());
+        hash = HashUtilities.mixHash(hash, player.stage.hashCode());
         // Exit if we've executed enough frames.
         return player.framesPlayed <= frameCount;
       });

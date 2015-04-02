@@ -27,7 +27,6 @@
 module Shumway.AVMX.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-  import mixWords = Shumway.HashUtilities.mixWords;
   import abstractMethod = Shumway.Debug.abstractMethod;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import asCoerceString = Shumway.AVMX.asCoerceString;
@@ -2039,25 +2038,11 @@ module Shumway.AVMX.AS.flash.display {
     }
 
     public hashCode(): number {
-      var i = 0;
-      var hash = 0;
-      this.visit(function (node) {
-        hash = mixWords(hash, i++);
-        // Can't use |_id| yet because it is not unique per security domain.
-        // hash = mixWords(hash, node._id);
-        hash = mixWords(hash, node.getBounds(null).hashCode());
-        return VisitorFlags.Continue;
-      }, VisitorFlags.None);
-      return hash;
+      return this.getBounds(null).hashCode();
     }
 
     public getAncestorCount(): number {
-      var i = 0;
-      this.visit(function (node) {
-        i++;
-        return VisitorFlags.Continue;
-      }, VisitorFlags.None);
-      return i;
+      return 0;
     }
 
     public debugTrace(maxDistance = 1024, name = "") {

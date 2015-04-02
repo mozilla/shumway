@@ -19,6 +19,7 @@ module Shumway.AVMX.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVMX.asCoerceString;
+  import mixHash = Shumway.HashUtilities.mixHash;
   import checkParameterType = Shumway.AVMX.checkParameterType;
   import clamp = Shumway.NumberUtilities.clamp;
   import Multiname = Shumway.AVMX.Multiname;
@@ -686,6 +687,31 @@ module Shumway.AVMX.AS.flash.display {
           this.removeChildAt(beginIndex);
         }
       }
+    }
+
+    public hashCode(): number {
+      var hash = 0;
+      for (var i = 0; i < this.numChildren; i++) {
+        var child = this.getChildAt(i);
+        if (child) {
+          hash = mixHash(hash, this.getChildAt(i).hashCode());
+        }
+      }
+      return mixHash(hash, this.getBounds(null).hashCode());
+    }
+
+    /**
+     * This is a very slow recursive function that should not be used in performance critical code.
+     */
+    public getAncestorCount(): number {
+      var count = 0;
+      for (var i = 0; i < this.numChildren; i++) {
+        var child = this.getChildAt(i);
+        if (child) {
+          count += 1 + this.getChildAt(i).getAncestorCount();
+        }
+      }
+      return count;
     }
   }
 }
