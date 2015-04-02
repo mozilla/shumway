@@ -2054,7 +2054,7 @@ module Shumway.AVMX.AS.flash.display {
     public getAncestorCount(): number {
       var i = 0;
       this.visit(function (node) {
-        i++
+        i++;
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
       return i;
