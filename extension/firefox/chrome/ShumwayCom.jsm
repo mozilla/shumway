@@ -352,8 +352,7 @@ ShumwayChromeActions.prototype = {
     if (!this.isUserInputInProgress()) {
       return;
     }
-    log('!!navigateTo: ' + url + ' ... ' + target);
-    var embedTag = this.embedTag.wrappedJSObject;
+    var embedTag = this.embedTag;
     var window = embedTag ? embedTag.ownerDocument.defaultView : this.window;
     window.open(url, target);
   },
@@ -461,7 +460,7 @@ ShumwayChromeActions.prototype = {
       "&rep_platform=All&target_milestone=---&version=Trunk&product=Firefox" +
       "&component=Shumway&short_desc=&comment={comment}" +
       "&bug_file_loc={url}";
-    var windowUrl = this.window.parent.wrappedJSObject.location + '';
+    var windowUrl = this.window.parent.location.href + '';
     var url = urlTemplate.split('{url}').join(encodeURIComponent(windowUrl));
     var params = {
       swf: encodeURIComponent(this.url)
@@ -488,8 +487,8 @@ ShumwayChromeActions.prototype = {
 
     // TODO check more security stuff ?
     if (!this.externalInterface) {
-      var parentWindow = this.window.parent.wrappedJSObject;
-      var embedTag = this.embedTag.wrappedJSObject;
+      var parentWindow = this.window.parent; // hosted page -- parent of PlayPreview frame
+      var embedTag = this.embedTag;
       this.externalInterface = new ExternalInterface(parentWindow, embedTag, function (call) {
         this.onExternalCallback(call);
       }.bind(this));
