@@ -920,7 +920,7 @@ module Shumway.AVMX.AS {
 
     private _prototype: AXObject;
     protected value: Function;
-    protected receiver: {scope: Scope};
+    protected receiver: {scope: Scope; classInfo: ClassInfo};
 
     get prototype(): AXObject {
       if (!this._prototype) {
@@ -944,14 +944,20 @@ module Shumway.AVMX.AS {
 
     call(thisArg: any) {
       if (!thisArg || typeof thisArg !== 'object') {
-        thisArg = this.receiver.scope.global.object;
+        var receiver = this.receiver;
+        thisArg = receiver.scope ?
+                  receiver.scope.global.object :
+                  this.receiver.classInfo.abc.scripts[0].global;
       }
       return this.value.apply(thisArg, sliceArguments(arguments, 1));
     }
 
     apply(thisArg: any, argArray?: ASArray): any {
       if (!thisArg || typeof thisArg !== 'object') {
-        thisArg = this.receiver.scope.global.object;
+        var receiver = this.receiver;
+        thisArg = receiver.scope ?
+                  receiver.scope.global.object :
+                  this.receiver.classInfo.abc.scripts[0].global;
       }
       return this.value.apply(thisArg, argArray ? argArray.value : undefined);
     }
