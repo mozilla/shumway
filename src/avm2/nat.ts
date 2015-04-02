@@ -920,7 +920,7 @@ module Shumway.AVMX.AS {
 
     private _prototype: AXObject;
     protected value: Function;
-    protected receiver: {scope: Scope; classInfo: ClassInfo};
+    protected receiver: {scope: Scope};
 
     get prototype(): AXObject {
       if (!this._prototype) {
@@ -944,20 +944,14 @@ module Shumway.AVMX.AS {
 
     call(thisArg: any) {
       if (!thisArg || typeof thisArg !== 'object') {
-        var receiver = this.receiver;
-        thisArg = receiver.scope ?
-                  receiver.scope.global.object :
-                  this.receiver.classInfo.abc.scripts[0].global;
+        thisArg = this.receiver.scope.global.object;
       }
       return this.value.apply(thisArg, sliceArguments(arguments, 1));
     }
 
     apply(thisArg: any, argArray?: ASArray): any {
       if (!thisArg || typeof thisArg !== 'object') {
-        var receiver = this.receiver;
-        thisArg = receiver.scope ?
-                  receiver.scope.global.object :
-                  this.receiver.classInfo.abc.scripts[0].global;
+        thisArg = this.receiver.scope.global.object;
       }
       return this.value.apply(thisArg, argArray ? argArray.value : undefined);
     }
@@ -1000,6 +994,14 @@ module Shumway.AVMX.AS {
 
     axApply(ignoredThisArg: any, argArray?: any[]): any {
       return this.value.apply(this.receiver, argArray);
+    }
+
+    call(ignoredThisArg: any) {
+      return this.value.apply(this.receiver, sliceArguments(arguments, 1));
+    }
+
+    apply(ignoredThisArg: any, argArray?: ASArray): any {
+      return this.value.apply(this.receiver, argArray ? argArray.value : undefined);
     }
   }
 
