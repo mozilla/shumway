@@ -299,7 +299,7 @@ module Shumway.AVMX {
     } else {
       method = function () {
         var self = this === jsGlobal ? scope.global.object : this;
-        return interpret(self, methodInfo, scope, sliceArguments(arguments));
+        return interpret(self, methodInfo, scope, <any>arguments);
       };
     }
     if (!release) {
