@@ -104,6 +104,8 @@ module Shumway.AVMX {
         arg = callArgs[i];
       } else if (p.hasOptionalValue()) {
         arg = p.getOptionalValue();
+      } else {
+        arg = undefined;
       }
       rn = p.getType();
       if (rn && !rn.isAnyName()) {
